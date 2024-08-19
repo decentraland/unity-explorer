@@ -27,46 +27,89 @@ namespace DCL.BadgesAPIService
             return new List<string> { "Explorer", "Socializer", "Collector", "Creator", "Builder" };
         }
 
-        public async UniTask<BadgesData> FetchBadgesAsync(string walletId, bool includeLockedBadges, int limit, int offset, CancellationToken ct)
+        public async UniTask<BadgesInfo> FetchBadgesAsync(string walletId, bool includeLockedBadges, int limit, int offset, CancellationToken ct)
         {
             var url = $"{baseURL}/{walletId}";
 
-            //BadgesData badgesResponse = await webRequestController.GetAsync(url, ct, reportCategory: ReportCategory.BADGES_WEB_REQUEST)
-            //                                                      .CreateFromJson<BadgesData>(WRJsonParser.Unity);
+            //BadgesResponse badgesResponse = await webRequestController.GetAsync(url, ct, reportCategory: ReportCategory.BADGES_WEB_REQUEST)
+            //                                                      .CreateFromJson<BadgesResponse>(WRJsonParser.Unity);
 
-            //return badgesResponse;
+            //return ResponseToBadgesInfo(badgesResponse);
 
             await UniTask.Delay(1000, cancellationToken: ct);
-            return GetMockedResponse();
+            return ResponseToBadgesInfo(GetMockedResponse());
         }
 
-        private static BadgesData GetMockedResponse()
+        private BadgesInfo ResponseToBadgesInfo(BadgesResponse badgesResponse)
         {
-            BadgesData mockedData = new BadgesData
+            BadgesInfo ret = new BadgesInfo
             {
-                unlocked = new List<BadgeInfo>
+                unlocked = new List<BadgeInfo>(),
+                locked = new List<BadgeInfo>(),
+            };
+
+            foreach (var badge in badgesResponse.unlocked)
+                ret.unlocked.Add(ResponseToBadgeInfo(badge));
+
+            foreach (var badge in badgesResponse.locked)
+                ret.locked.Add(ResponseToBadgeInfo(badge));
+
+            return ret;
+        }
+
+        private static BadgeInfo ResponseToBadgeInfo(BadgeData badge)
+        {
+            return new BadgeInfo
+            {
+                id = badge.id,
+                isLocked = badge.isLocked,
+                category = badge.category,
+                name = badge.name,
+                description = badge.description,
+                image = badge.image,
+                awardedAt = badge.awardedAt,
+                isTier = badge.isTier,
+                totalStepsToUnlock = badge.totalStepsToUnlock,
+                completedSteps = badge.completedSteps,
+                tiers = Array.ConvertAll(badge.tiers, tier => new BadgeTierInfo
+                {
+                    tierId = tier.tierId,
+                    tierName = tier.tierName,
+                    description = tier.description,
+                    image = tier.image,
+                    awardedAt = tier.awardedAt,
+                    stepsToUnlock = tier.stepsToUnlock,
+                }),
+            };
+        }
+
+        private static BadgesResponse GetMockedResponse()
+        {
+            BadgesResponse mockedResponse = new BadgesResponse
+            {
+                unlocked = new List<BadgeData>
                 {
                     new()
                     {
-                        badge_id = "decentraland-citizen",
-                        awarded_at = "1722005503466",
+                        id = "decentraland-citizen",
+                        awardedAt = "1722005503466",
                         name = "Decentraland Citizen",
                         description = "Landed in Decentraland",
-                        imageUrl = "https://dejpknyizje2n.cloudfront.net/media/carstickers/versions/pixel-art-golden-medal-award-sticker-u8c98-x450.png",
+                        image = "https://dejpknyizje2n.cloudfront.net/media/carstickers/versions/pixel-art-golden-medal-award-sticker-u8c98-x450.png",
                         isTier = false,
                         isLocked = false,
                         category = "Explorer",
                         totalStepsToUnlock = 0,
                         completedSteps = 0,
-                        tiers = Array.Empty<BadgeTier>(),
+                        tiers = Array.Empty<BadgeTierData>(),
                     },
                     new()
                     {
-                        badge_id = "emote-creator",
-                        awarded_at = "1722005503466",
+                        id = "emote-creator",
+                        awardedAt = "1722005503466",
                         name = "Emote Creator",
                         description = "50 emotes published",
-                        imageUrl = "https://images.vexels.com/media/users/3/236713/isolated/preview/2e816f91528e052edec36e8f3e9f52e1-1up-gaming-pixel-art-badge.png?w=360",
+                        image = "https://images.vexels.com/media/users/3/236713/isolated/preview/2e816f91528e052edec36e8f3e9f52e1-1up-gaming-pixel-art-badge.png?w=360",
                         isTier = true,
                         isLocked = false,
                         category = "Socializer",
@@ -74,63 +117,69 @@ namespace DCL.BadgesAPIService
                         completedSteps = 50,
                         tiers = new[]
                         {
-                            new BadgeTier
+                            new BadgeTierData
                             {
-                                tier_id = "emote-creator-starter",
-                                name = "Emote Creator Starter",
-                                previewModelUrl = "",
-                                awarded_at = "1722005503466",
+                                tierId = "emote-creator-starter",
+                                tierName = "Emote Creator Starter",
+                                description = "Landed in Decentraland (Starter)",
+                                image = "",
+                                awardedAt = "1722005503466",
                                 stepsToUnlock = 8,
                             },
-                            new BadgeTier
+                            new BadgeTierData
                             {
-                                tier_id = "emote-creator-bronze",
-                                name = "Emote Creator Bronze",
-                                previewModelUrl = "",
-                                awarded_at = "",
+                                tierId = "emote-creator-bronze",
+                                tierName = "Emote Creator Bronze",
+                                description = "Landed in Decentraland (Bronze)",
+                                image = "",
+                                awardedAt = "",
                                 stepsToUnlock = 16,
                             },
-                            new BadgeTier
+                            new BadgeTierData
                             {
-                                tier_id = "emote-creator-silver",
-                                name = "Emote Creator Silver",
-                                previewModelUrl = "",
-                                awarded_at = "",
+                                tierId = "emote-creator-silver",
+                                tierName = "Emote Creator Silver",
+                                description = "Landed in Decentraland (Silver)",
+                                image = "",
+                                awardedAt = "",
                                 stepsToUnlock = 24,
                             },
-                            new BadgeTier
+                            new BadgeTierData
                             {
-                                tier_id = "emote-creator-gold",
-                                name = "Emote Creator Gold",
-                                previewModelUrl = "",
-                                awarded_at = "",
+                                tierId = "emote-creator-gold",
+                                tierName = "Emote Creator Gold",
+                                description = "Landed in Decentraland (Gold)",
+                                image = "",
+                                awardedAt = "",
                                 stepsToUnlock = 32,
                             },
-                            new BadgeTier
+                            new BadgeTierData
                             {
-                                tier_id = "emote-creator-platinum",
-                                name = "Emote Creator Platinum",
-                                previewModelUrl = "",
-                                awarded_at = "",
+                                tierId = "emote-creator-platinum",
+                                tierName = "Emote Creator Platinum",
+                                description = "Landed in Decentraland (Platinum)",
+                                image = "",
+                                awardedAt = "",
                                 stepsToUnlock = 40,
                             },
-                            new BadgeTier
+                            new BadgeTierData
                             {
-                                tier_id = "emote-creator-diamond",
-                                name = "Emote Creator Diamond",
-                                previewModelUrl = "",
-                                awarded_at = "",
+                                tierId = "emote-creator-diamond",
+                                tierName = "Emote Creator Diamond",
+                                description = "Landed in Decentraland (StarteDiamond)",
+                                image = "",
+                                awardedAt = "",
                                 stepsToUnlock = 50,
                             },
                         },
                     },
                     new()
                     {
-                        badge_id = "traveler",
-                        awarded_at = "1722005503466",
+                        id = "traveler",
+                        awardedAt = "1722005503466",
                         name = "Traveler",
                         description = "Visit 10 scenes in Genesis City",
-                        imageUrl = "https://juststickers.in/wp-content/uploads/2017/06/8-bit-swag-badge.png",
+                        image = "https://juststickers.in/wp-content/uploads/2017/06/8-bit-swag-badge.png",
                         isTier = true,
                         isLocked = false,
                         category = "Explorer",
@@ -138,80 +187,86 @@ namespace DCL.BadgesAPIService
                         completedSteps = 2,
                         tiers = new[]
                         {
-                            new BadgeTier
+                            new BadgeTierData
                             {
-                                tier_id = "traveler-starter",
-                                name = "Traveler Starter",
-                                previewModelUrl = "",
-                                awarded_at = "1722005503466",
+                                tierId = "traveler-starter",
+                                tierName = "Traveler Starter",
+                                description = "Visit 10 scenes in Genesis City (Starter)",
+                                image = "",
+                                awardedAt = "1722005503466",
                                 stepsToUnlock = 1,
                             },
-                            new BadgeTier
+                            new BadgeTierData
                             {
-                                tier_id = "traveler-bronze",
-                                name = "Traveler Bronze",
-                                previewModelUrl = "",
-                                awarded_at = "",
+                                tierId = "traveler-bronze",
+                                tierName = "Traveler Bronze",
+                                description = "Visit 10 scenes in Genesis City (Bronze)",
+                                image = "",
+                                awardedAt = "",
                                 stepsToUnlock = 2,
                             },
-                            new BadgeTier
+                            new BadgeTierData
                             {
-                                tier_id = "traveler-silver",
-                                name = "Traveler Silver",
-                                previewModelUrl = "",
-                                awarded_at = "",
+                                tierId = "traveler-silver",
+                                tierName = "Traveler Silver",
+                                description = "Visit 10 scenes in Genesis City (Silver)",
+                                image = "",
+                                awardedAt = "",
                                 stepsToUnlock = 4,
                             },
-                            new BadgeTier
+                            new BadgeTierData
                             {
-                                tier_id = "traveler-gold",
-                                name = "Traveler Gold",
-                                previewModelUrl = "",
-                                awarded_at = "",
+                                tierId = "traveler-gold",
+                                tierName = "Traveler Gold",
+                                description = "Visit 10 scenes in Genesis City (Gold)",
+                                image = "",
+                                awardedAt = "",
                                 stepsToUnlock = 6,
                             },
-                            new BadgeTier
+                            new BadgeTierData
                             {
-                                tier_id = "traveler-platinum",
-                                name = "Traveler Platinum",
-                                previewModelUrl = "",
-                                awarded_at = "",
+                                tierId = "traveler-platinum",
+                                tierName = "Traveler Platinum",
+                                description = "Visit 10 scenes in Genesis City (Platinum)",
+                                image = "",
+                                awardedAt = "",
                                 stepsToUnlock = 8,
                             },
-                            new BadgeTier
+                            new BadgeTierData
                             {
-                                tier_id = "traveler-diamond",
-                                name = "Traveler Diamond",
-                                previewModelUrl = "",
-                                awarded_at = "",
+                                tierId = "traveler-diamond",
+                                tierName = "Traveler Diamond",
+                                description = "Visit 10 scenes in Genesis City (Diamond)",
+                                image = "",
+                                awardedAt = "",
                                 stepsToUnlock = 10,
                             },
                         },
                     },
                 },
-                locked = new List<BadgeInfo>
+                locked = new List<BadgeData>
                 {
                     new()
                     {
-                        badge_id = "chat-user",
-                        awarded_at = "1722005503466",
+                        id = "chat-user",
+                        awardedAt = "1722005503466",
                         name = "Chat User",
                         description = "Write something in the chat",
-                        imageUrl = "https://dejpknyizje2n.cloudfront.net/media/carstickers/versions/pixel-art-golden-trophy-sticker-u3310-x450.png",
+                        image = "https://dejpknyizje2n.cloudfront.net/media/carstickers/versions/pixel-art-golden-trophy-sticker-u3310-x450.png",
                         isTier = false,
                         isLocked = true,
                         category = "Socializer",
                         totalStepsToUnlock = 0,
                         completedSteps = 0,
-                        tiers = Array.Empty<BadgeTier>(),
+                        tiers = Array.Empty<BadgeTierData>(),
                     },
                     new()
                     {
-                        badge_id = "world-jumper",
-                        awarded_at = "1722005503466",
+                        id = "world-jumper",
+                        awardedAt = "1722005503466",
                         name = "World Jumper",
                         description = "Jump into 6 worlds",
-                        imageUrl = "",
+                        image = "",
                         isTier = true,
                         isLocked = true,
                         category = "Socializer",
@@ -219,52 +274,58 @@ namespace DCL.BadgesAPIService
                         completedSteps = 0,
                         tiers = new[]
                         {
-                            new BadgeTier
+                            new BadgeTierData
                             {
-                                tier_id = "world-jumper-starter",
-                                name = "World Jumper Starter",
-                                previewModelUrl = "",
-                                awarded_at = "1722005503466",
+                                tierId = "world-jumper-starter",
+                                tierName = "World Jumper Starter",
+                                description = "Jump into 6 worlds (Starter)",
+                                image = "",
+                                awardedAt = "1722005503466",
                                 stepsToUnlock = 1,
                             },
-                            new BadgeTier
+                            new BadgeTierData
                             {
-                                tier_id = "world-jumper-bronze",
-                                name = "World Jumper Bronze",
-                                previewModelUrl = "",
-                                awarded_at = "1722005503466",
+                                tierId = "world-jumper-bronze",
+                                tierName = "World Jumper Bronze",
+                                description = "Jump into 6 worlds (Bronze)",
+                                image = "",
+                                awardedAt = "1722005503466",
                                 stepsToUnlock = 2,
                             },
-                            new BadgeTier
+                            new BadgeTierData
                             {
-                                tier_id = "world-jumper-silver",
-                                name = "World Jumper Silver",
-                                previewModelUrl = "",
-                                awarded_at = "1722005503466",
+                                tierId = "world-jumper-silver",
+                                tierName = "World Jumper Silver",
+                                description = "Jump into 6 worlds (Silver)",
+                                image = "",
+                                awardedAt = "1722005503466",
                                 stepsToUnlock = 3,
                             },
-                            new BadgeTier
+                            new BadgeTierData
                             {
-                                tier_id = "world-jumper-gold",
-                                name = "World Jumper Gold",
-                                previewModelUrl = "",
-                                awarded_at = "1722005503466",
+                                tierId = "world-jumper-gold",
+                                tierName = "World Jumper Gold",
+                                description = "Jump into 6 worlds (Gold)",
+                                image = "",
+                                awardedAt = "1722005503466",
                                 stepsToUnlock = 4,
                             },
-                            new BadgeTier
+                            new BadgeTierData
                             {
-                                tier_id = "world-jumper-platinum",
-                                name = "World Jumper Platinum",
-                                previewModelUrl = "",
-                                awarded_at = "1722005503466",
+                                tierId = "world-jumper-platinum",
+                                tierName = "World Jumper Platinum",
+                                description = "Jump into 6 worlds (Platinum)",
+                                image = "",
+                                awardedAt = "1722005503466",
                                 stepsToUnlock = 5,
                             },
-                            new BadgeTier
+                            new BadgeTierData
                             {
-                                tier_id = "world-jumper-diamond",
-                                name = "World Jumper Diamond",
-                                previewModelUrl = "",
-                                awarded_at = "1722005503466",
+                                tierId = "world-jumper-diamond",
+                                tierName = "World Jumper Diamond",
+                                description = "Jump into 6 worlds (SilveDiamond)",
+                                image = "",
+                                awardedAt = "1722005503466",
                                 stepsToUnlock = 6,
                             },
                         },
@@ -272,7 +333,7 @@ namespace DCL.BadgesAPIService
                 },
             };
 
-            return mockedData;
+            return mockedResponse;
         }
     }
 }

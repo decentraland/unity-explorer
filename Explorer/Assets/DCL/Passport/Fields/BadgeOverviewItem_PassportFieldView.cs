@@ -42,8 +42,8 @@ namespace DCL.Passport.Fields
             BadgeNameText.text = badgeInfo.name;
 
             imageController?.SetImage(DefaultBadgeSprite);
-            if (!string.IsNullOrEmpty(badgeInfo.imageUrl))
-                imageController?.RequestImage(badgeInfo.imageUrl, hideImageWhileLoading: true);
+            if (!string.IsNullOrEmpty(badgeInfo.image))
+                imageController?.RequestImage(badgeInfo.image, hideImageWhileLoading: true);
         }
 
         public void OnPointerEnter(PointerEventData eventData) =>

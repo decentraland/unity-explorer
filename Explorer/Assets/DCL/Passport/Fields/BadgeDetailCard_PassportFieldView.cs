@@ -88,7 +88,7 @@ namespace DCL.Passport.Fields
             BadgeNameText.text = badgeInfo.name;
             BadgeCategory = badgeInfo.category;
             BadgeImage.SetColor(badgeInfo.isLocked ? LockedBadgeImageColor : NonLockedBadgeImageColor);
-            BadgeDateText.text = !badgeInfo.isLocked ? PassportUtils.FormatTimestampDate(badgeInfo.awarded_at) : "--";
+            BadgeDateText.text = !badgeInfo.isLocked ? PassportUtils.FormatTimestampDate(badgeInfo.awardedAt) : "--";
             BadgeDateText.gameObject.SetActive((!badgeInfo.isLocked && (!badgeInfo.isTier || (badgeInfo.isTier && badgeInfo.completedSteps == badgeInfo.totalStepsToUnlock))) || badgeInfo is { isLocked: true, isTier: false });
             TopTierMark.SetActive(badgeInfo.isTier && badgeInfo.completedSteps == badgeInfo.totalStepsToUnlock);
             NextTierTitle.SetActive(!badgeInfo.isLocked && badgeInfo.isTier && badgeInfo.completedSteps < badgeInfo.totalStepsToUnlock);
@@ -101,8 +101,8 @@ namespace DCL.Passport.Fields
             }
 
             imageController?.SetImage(DefaultBadgeSprite);
-            if (!string.IsNullOrEmpty(badgeInfo.imageUrl))
-                imageController?.RequestImage(badgeInfo.imageUrl, hideImageWhileLoading: true);
+            if (!string.IsNullOrEmpty(badgeInfo.image))
+                imageController?.RequestImage(badgeInfo.image, hideImageWhileLoading: true);
         }
 
         public void OnPointerEnter(PointerEventData eventData) =>
