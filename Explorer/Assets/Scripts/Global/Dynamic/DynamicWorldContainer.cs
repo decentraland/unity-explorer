@@ -167,8 +167,8 @@ namespace Global.Dynamic
 
             IDebugContainerBuilder debugBuilder = dynamicWorldDependencies.DebugContainerBuilder;
 
-            // TODO: it might be useful to cache the third-party nft providers info at start so we avoid undesired delays in the UI.
-            // However the chance of using this information is quite low, so its preferable to do it lazy avoiding extra http request & memory allocations
+            // If we have many undesired delays when using the third-party providers, it might be useful to cache it at app's bootstrap
+            // So far, the chance of using it is quite low, so it's preferable to do it lazy avoiding extra requests & memory allocations
             IThirdPartyNftProviderSource thirdPartyNftProviderSource = new RealmThirdPartyNftProviderSource(staticContainer.WebRequestsContainer.WebRequestController,
                 staticContainer.RealmData);
 
