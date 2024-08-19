@@ -18,7 +18,7 @@ namespace DCL.WebRequests.Analytics
         private readonly Type[] requestTypes;
 
         private readonly Dictionary<Type, Dictionary<string, ElementBinding<ulong>>> ongoingRequests = new ();
-        private readonly DebugWidgetVisibilityBinding visibilityBinding;
+        private readonly DebugWidgetVisibilityBinding? visibilityBinding;
 
         private float lastTimeSinceMetricsUpdate;
 
@@ -30,9 +30,9 @@ namespace DCL.WebRequests.Analytics
             this.webRequestsAnalyticsContainer = webRequestsAnalyticsContainer;
             this.requestTypes = requestTypes;
 
-            DebugWidgetBuilder widget = debugContainerBuilder
-                                       .AddWidget("Web Requests")
-                                       .SetVisibilityBinding(visibilityBinding = new DebugWidgetVisibilityBinding(true));
+            DebugWidgetBuilder? widget = debugContainerBuilder
+                                       .TryAddWidget("Web Requests")
+                                      ?.SetVisibilityBinding(visibilityBinding = new DebugWidgetVisibilityBinding(true));
 
             foreach (Type requestType in requestTypes)
             {
@@ -43,7 +43,7 @@ namespace DCL.WebRequests.Analytics
                 {
                     bindings.Add(metric.Key.Name, new ElementBinding<ulong>(0));
                     var requestMetricUnit = metric.Value().GetUnit();
-                    widget.AddMarker(requestType.Name + "-" + metric.Key.Name, bindings[metric.Key.Name], requestMetricUnit);
+                    widget?.AddMarker(requestType.Name + "-" + metric.Key.Name, bindings[metric.Key.Name], requestMetricUnit);
                 }
 
                 ongoingRequests[requestType] = bindings;
@@ -52,7 +52,7 @@ namespace DCL.WebRequests.Analytics
 
         protected override void Update(float t)
         {
-            if (visibilityBinding.IsExpanded && lastTimeSinceMetricsUpdate > THROTTLE)
+            if (visibilityBinding is { IsExpanded: true } && lastTimeSinceMetricsUpdate > THROTTLE)
             {
                 lastTimeSinceMetricsUpdate = 0;
 
