@@ -3,6 +3,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
     public enum DecentralandUrl
     {
         Host,
+        Genesis,
 
         ArchipelagoStatus,
         GatekeeperStatus,

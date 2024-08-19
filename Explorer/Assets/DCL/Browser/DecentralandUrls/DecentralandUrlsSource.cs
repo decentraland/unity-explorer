@@ -50,12 +50,13 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.Notification => $"https://notifications.decentraland.{ENV}/notifications",
                 DecentralandUrl.NotificationRead => $"https://notifications.decentraland.{ENV}/notifications/read",
                 DecentralandUrl.FeatureFlags => $"https://feature-flags.decentraland.{ENV}",
-                DecentralandUrl.Market => $"https://market.decentraland.org",
-                DecentralandUrl.AssetBundlesCDN => $"https://ab-cdn.decentraland.org",
+                DecentralandUrl.Market => "https://market.decentraland.org",
+                DecentralandUrl.AssetBundlesCDN => "https://ab-cdn.decentraland.org",
                 DecentralandUrl.ArchipelagoStatus => $"https://archipelago-stats.decentraland.{ENV}/status",
                 DecentralandUrl.GatekeeperStatus => $"https://comms-gatekeeper.decentraland.{ENV}/status",
-                DecentralandUrl.Badges => $"https://badges.decentraland.zone/badges", //TODO (Santi) Replace it by $"https://badges.decentraland.{ENV}/badges"
-                _ => throw new ArgumentOutOfRangeException(nameof(decentralandUrl), decentralandUrl, null)
+                DecentralandUrl.Genesis => $"https://realm-provider-ea.decentraland.{ENV}/main",
+                DecentralandUrl.Badges => $"https://badges.decentraland.{ENV}/badges",
+                _ => throw new ArgumentOutOfRangeException(nameof(decentralandUrl), decentralandUrl, null!)
             };
     }
 }
