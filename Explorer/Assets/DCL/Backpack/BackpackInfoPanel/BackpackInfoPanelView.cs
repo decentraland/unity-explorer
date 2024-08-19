@@ -25,6 +25,15 @@ namespace DCL.Backpack
         public TMP_Text RarityName { get; private set; }
 
         [field: SerializeField]
+        public GameObject ThirdPartyRarityBackgroundPanel { get; private set; }
+
+        [field: SerializeField]
+        public TMP_Text ThirdPartyCollectionName { get; private set; }
+
+        [field: SerializeField]
+        public GameObject ThirdPartyCollectionContainer { get; private set; }
+
+        [field: SerializeField]
         public Image CategoryImage { get; private set; }
 
         [field: SerializeField]

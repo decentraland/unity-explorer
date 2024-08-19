@@ -6,7 +6,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 {
     public class DefaultFaceFeaturesHandler : IDefaultFaceFeaturesHandler
     {
-        private readonly IWearableCatalog wearableCatalog;
+        private readonly IWearableCache wearableCache;
 
         private readonly FacialFeaturesTextures[] sharedFacialFeatures = new FacialFeaturesTextures[BodyShape.COUNT];
 
@@ -14,9 +14,9 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
         private readonly bool isInitialized = false;
 
-        public DefaultFaceFeaturesHandler(IWearableCatalog wearableCatalog)
+        public DefaultFaceFeaturesHandler(IWearableCache wearableCache)
         {
-            this.wearableCatalog = wearableCatalog;
+            this.wearableCache = wearableCache;
         }
 
         public FacialFeaturesTextures GetDefaultFacialFeaturesDictionary(BodyShape bodyShape)
@@ -54,7 +54,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                 foreach (string facialFeature in WearablesConstants.FACIAL_FEATURES)
                 {
                     // TODO it's quite dangerous to call it like this without any checks
-                    var result = (WearableTextureAsset) wearableCatalog.GetDefaultWearable(bodyShape, facialFeature)
+                    var result = (WearableTextureAsset) wearableCache.GetDefaultWearable(bodyShape, facialFeature)
                                                 .WearableAssetResults[bodyShape]
                                                 .Results[WearablePolymorphicBehaviour.MAIN_ASSET_INDEX]!
                                                 .Value.Asset;
