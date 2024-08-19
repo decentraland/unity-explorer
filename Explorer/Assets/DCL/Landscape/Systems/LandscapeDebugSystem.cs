@@ -39,8 +39,8 @@ namespace DCL.Landscape.Systems
             cullDistance = new ElementBinding<int>((int)landscapeData.DetailDistance);
             lastCullDistanceApplied = (int)landscapeData.DetailDistance;
 
-            debugBuilder.AddWidget("Landscape")
-                        .AddIntFieldWithConfirmation(realmPartitionSettings.MaxLoadingDistanceInParcels, "Set Load Radius", OnLoadRadiusConfirm)
+            debugBuilder.TryAddWidget("Landscape")
+                        ?.AddIntFieldWithConfirmation(realmPartitionSettings.MaxLoadingDistanceInParcels, "Set Load Radius", OnLoadRadiusConfirm)
                         .AddIntSliderField("LOD bias %", lodBias, 1, 250)
                         .AddIntSliderField("Detail Density %", detailDensity, 0, 100)
                         .AddIntSliderField("Grass Distance", detailDistance, 0, 300)
