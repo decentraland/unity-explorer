@@ -1,10 +1,11 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Profiles;
+using System;
 using System.Threading;
 
 namespace DCL.UI.ProfileElements
 {
-    public class UserWalletAddressElementController
+    public class UserWalletAddressElementController : IDisposable
     {
         public readonly UserWalletAddressElement Element;
 
@@ -29,15 +30,6 @@ namespace DCL.UI.ProfileElements
         {
             currentProfile = profile;
             Element.UserWalletAddressText.text = $"{profile.UserId[..5]}...{profile.UserId[^5..]}";
-            WaitUntilToNextFrameAsync().Forget();
-        }
-
-
-        private async UniTaskVoid WaitUntilToNextFrameAsync()
-        {
-            Element.LayoutGroup.spacing =- 0.00001f;
-            await UniTask.NextFrame(PlayerLoopTiming.LastUpdate);
-            Element.LayoutGroup.spacing =+ 0.00001f;
         }
 
         public void Dispose()
