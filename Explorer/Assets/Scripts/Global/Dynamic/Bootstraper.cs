@@ -5,10 +5,7 @@ using DCL.Audio;
 using DCL.CommandLine;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
-using DCL.EmotesWheel;
 using DCL.FeatureFlags;
-using DCL.Input;
-using DCL.Input.Component;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Notifications.NewNotification;
 using DCL.PerformanceAndDiagnostics.DotNetLogging;
@@ -18,7 +15,6 @@ using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.UI.MainUI;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
-using ECS.SceneLifeCycle.Realm;
 using MVC;
 using SceneRunner.Debugging;
 using System;
@@ -84,7 +80,6 @@ namespace Global.Dynamic
             PluginSettingsContainer scenePluginSettingsContainer,
             DynamicSceneLoaderSettings settings,
             DynamicSettings dynamicSettings,
-            RealmLaunchSettings launchSettings,
             UIDocument uiToolkitRoot,
             UIDocument cursorRoot,
             ISplashScreen splashScreen,
@@ -121,10 +116,7 @@ namespace Global.Dynamic
                     EnableLOD = debugSettings.EnableLOD && !realmLaunchSettings.IsLocalSceneDevelopmentRealm,
                     EnableAnalytics = EnableAnalytics,
                     HybridSceneParams = realmLaunchSettings.CreateHybridSceneParams(startingParcel),
-                    // main
-                    LocalSceneDevelopmentRealm = bootstrapContainer.LocalSceneDevelopment ? launchSettings.StartingRealmUrl(decentralandUrlsSource) : string.Empty,
-                    // feat/tpw
-                    LocalSceneDevelopmentRealm = realmLaunchSettings.GetLocalSceneDevelopmentRealm() ?? string.Empty,
+                    LocalSceneDevelopmentRealm = realmLaunchSettings.GetLocalSceneDevelopmentRealm(decentralandUrlsSource) ?? string.Empty,
                     AppParameters = applicationParametersParser.AppParameters,
                 },
                 backgroundMusic,

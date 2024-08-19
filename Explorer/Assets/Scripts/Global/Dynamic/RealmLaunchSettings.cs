@@ -59,9 +59,8 @@ namespace Global.Dynamic
             return new HybridSceneParams();
         }
 
-        // TODO: add decentraland urls as param
-        public string? GetLocalSceneDevelopmentRealm() =>
-            IsLocalSceneDevelopmentRealm ? GetStartingRealm() : null;
+        public string? GetLocalSceneDevelopmentRealm(IDecentralandUrlsSource decentralandUrlsSource) =>
+            IsLocalSceneDevelopmentRealm ? GetStartingRealm(decentralandUrlsSource) : null;
 
         public string GetStartingRealm(IDecentralandUrlsSource decentralandUrlsSource)
         {

@@ -1,3 +1,5 @@
+using DCL.Browser.DecentralandUrls;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using Global.Dynamic;
 using NUnit.Framework;
 
@@ -13,11 +15,12 @@ namespace Global.Tests.EditMode
             {
                 "decentraland://?realm=http://127.0.0.1:8000&position=100,100&local-scene=true",
             });
+            DecentralandUrlsSource dclUrlSource = new (DecentralandEnvironment.Org);
 
             realmLaunchSettings.ApplyConfig(applicationParametersParser);
 
             Assert.IsTrue(realmLaunchSettings.IsLocalSceneDevelopmentRealm);
-            Assert.AreEqual("http://127.0.0.1:8000", realmLaunchSettings.GetLocalSceneDevelopmentRealm());
+            Assert.AreEqual("http://127.0.0.1:8000", realmLaunchSettings.GetLocalSceneDevelopmentRealm(dclUrlSource));
             Assert.AreEqual(100, realmLaunchSettings.TargetScene.x);
             Assert.AreEqual(100, realmLaunchSettings.TargetScene.y);
         }
@@ -30,11 +33,12 @@ namespace Global.Tests.EditMode
             {
                 "decentraland://?realm=http://127.0.0.1:8000&position=70,70",
             });
+            DecentralandUrlsSource dclUrlSource = new (DecentralandEnvironment.Org);
 
             realmLaunchSettings.ApplyConfig(applicationParametersParser);
 
             Assert.IsFalse(realmLaunchSettings.IsLocalSceneDevelopmentRealm);
-            Assert.AreEqual("http://127.0.0.1:8000", realmLaunchSettings.GetStartingRealm());
+            Assert.AreEqual("http://127.0.0.1:8000", realmLaunchSettings.GetStartingRealm(dclUrlSource));
             Assert.AreEqual(70, realmLaunchSettings.TargetScene.x);
             Assert.AreEqual(70, realmLaunchSettings.TargetScene.y);
         }
@@ -65,10 +69,11 @@ namespace Global.Tests.EditMode
                 "--realm",
                 realm,
             });
+            DecentralandUrlsSource dclUrlSource = new (DecentralandEnvironment.Org);
 
             realmLaunchSettings.ApplyConfig(applicationParametersParser);
 
-            Assert.AreEqual(realm, realmLaunchSettings.GetStartingRealm());
+            Assert.AreEqual(realm, realmLaunchSettings.GetStartingRealm(dclUrlSource));
         }
 
         [TestCase("metadyne.dcl.eth")]
@@ -81,10 +86,11 @@ namespace Global.Tests.EditMode
                 "--realm",
                 world,
             });
+            DecentralandUrlsSource dclUrlSource = new (DecentralandEnvironment.Org);
 
             realmLaunchSettings.ApplyConfig(applicationParametersParser);
 
-            Assert.AreEqual($"https://worlds-content-server.decentraland.org/world/{world}", realmLaunchSettings.GetStartingRealm());
+            Assert.AreEqual($"https://worlds-content-server.decentraland.org/world/{world}", realmLaunchSettings.GetStartingRealm(dclUrlSource));
         }
     }
 }
