@@ -2,7 +2,6 @@
 using Arch.System;
 using Arch.SystemGroups;
 using DCL.Character.CharacterMotion.Components;
-using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Movement.Settings;
@@ -71,20 +70,14 @@ namespace DCL.Multiplayer.Movement.Systems
                 if (!isMoving && sendRate < STAND_SEND_RATE)
                     sendRate = Mathf.Min(2 * sendRate, STAND_SEND_RATE);
 
-                SendMessage(ref playerMovement, view, in anim, in stun, in move);
+                SendMessage(ref playerMovement, in anim, in stun, in move);
             }
+
+            return;
 
             bool IsMoving(PlayerMovementNetworkComponent playerMovement) =>
                 Vector3.SqrMagnitude(playerMovement.LastSentMessage.position - playerMovement.Character.transform.position) > POSITION_MOVE_EPSILON * POSITION_MOVE_EPSILON ||
                 Vector3.SqrMagnitude(playerMovement.LastSentMessage.velocity - playerMovement.Character.velocity) > VELOCITY_MOVE_EPSILON * VELOCITY_MOVE_EPSILON;
-
-            foreach (SendRuleBase sendRule in settings.SendRules)
-                if (timeDiff > sendRule.MinTimeDelta
-                    && sendRule.IsSendConditionMet(timeDiff, in playerMovement.LastSentMessage, in anim, in stun, in move, in jump, playerMovement.Character, settings))
-                {
-                    SendMessage(ref playerMovement, in anim, in stun, in move);
-                    return;
-                }
         }
 
         private static void UpdateMessagePerSecondTimer(float t, ref PlayerMovementNetworkComponent playerMovement)
