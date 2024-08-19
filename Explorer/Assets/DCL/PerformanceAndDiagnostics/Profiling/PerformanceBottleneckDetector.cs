@@ -14,8 +14,10 @@ namespace DCL.Profiling
         }
 
         private const float K_NEAR_FULL_FRAME_TIME_THRESHOLD_PERCENT = 0.2f;
-        private readonly FrameTiming[] frameTimings = new FrameTiming[1];
 
+        public readonly bool IsFrameTimingSupported = FrameTimingManager.IsFeatureEnabled();
+
+        private readonly FrameTiming[] frameTimings = new FrameTiming[1];
         public FrameTiming FrameTiming => frameTimings[0];
 
         public bool TryCapture()
@@ -33,7 +35,7 @@ namespace DCL.Profiling
             if (timing.gpuFrameTime == 0)
                 return PerformanceBottleneck.INDETERMINATE;
 
-            double fullFrameTime = timing.cpuFrameTime + timing.gpuFrameTime;
+            float fullFrameTime = Mathf.Max((float)timing.cpuFrameTime, (float)timing.gpuFrameTime);
             double fullFrameTimeWithMargin = (1.0 - K_NEAR_FULL_FRAME_TIME_THRESHOLD_PERCENT) * fullFrameTime;
 
             // GPU time is close to frame time, CPU times are not

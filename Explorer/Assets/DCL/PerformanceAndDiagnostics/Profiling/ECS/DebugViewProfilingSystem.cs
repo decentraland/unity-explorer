@@ -105,20 +105,22 @@ namespace DCL.Profiling.ECS
                     UpdateFrameStatisticsView(profiler);
                 }
 
-                if (frameTimingsEnabled && bottleneckDetector.TryCapture())
-                    UpdateFrameTimings(bottleneckDetector.FrameTiming);
+                if (frameTimingsEnabled && bottleneckDetector.IsFrameTimingSupported && bottleneckDetector.TryCapture())
+                    UpdateFrameTimings();
 
                 framesSinceMetricsUpdate++;
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void UpdateFrameTimings(FrameTiming frameTiming)
+        private void UpdateFrameTimings()
         {
+            var frameTiming = bottleneckDetector.FrameTiming;
+
             bottleneck.Value = bottleneckDetector.DetermineBottleneck().ToString();
-            gpuFrameTime.Value = frameTiming.gpuFrameTime.ToString("F2",CultureInfo.InvariantCulture);
-            cpuFrameTime.Value = frameTiming.cpuFrameTime.ToString("F2",CultureInfo.InvariantCulture);
-            cpuMainThreadFrameTime.Value = frameTiming.cpuMainThreadFrameTime.ToString("F2",CultureInfo.InvariantCulture);
+            gpuFrameTime.Value = frameTiming.gpuFrameTime.ToString("F2", CultureInfo.InvariantCulture);
+            cpuFrameTime.Value = frameTiming.cpuFrameTime.ToString("F2", CultureInfo.InvariantCulture);
+            cpuMainThreadFrameTime.Value = frameTiming.cpuMainThreadFrameTime.ToString("F2", CultureInfo.InvariantCulture);
             cpuRenderThreadFrameTime.Value = frameTiming.cpuRenderThreadFrameTime.ToString("F2", CultureInfo.InvariantCulture);
             cpuMainThreadPresentWaitTime.Value = frameTiming.cpuMainThreadPresentWaitTime.ToString(CultureInfo.InvariantCulture);
         }
