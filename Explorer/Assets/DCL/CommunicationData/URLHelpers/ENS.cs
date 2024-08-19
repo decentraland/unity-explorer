@@ -1,5 +1,5 @@
-﻿using System;
-using System.Text.RegularExpressions;
+﻿using DCL.CommunicationData.URLHelpers;
+using System;
 
 namespace CommunicationData.URLHelpers
 {
@@ -12,7 +12,7 @@ namespace CommunicationData.URLHelpers
             this.ens = ens;
         }
 
-        public bool IsValid => !string.IsNullOrEmpty(ens) && Regex.IsMatch(ens, @"^[a-zA-Z0-9.]+\.eth$");
+        public bool IsValid => !string.IsNullOrEmpty(ens) && ens.IsEns();
 
         public bool Equals (ENS other) => Equals(other.ens);
 
@@ -21,13 +21,4 @@ namespace CommunicationData.URLHelpers
 
         public override string ToString() => ens;
     }
-
-    public static class ENSUtils
-    {
-        private const string WORLD_URL = "https://worlds-content-server.decentraland.org/world/";
-
-        public static string ConvertEnsToWorldUrl(ENS ens) =>
-            WORLD_URL + ens.ToString().ToLower();
-    }
-
 }

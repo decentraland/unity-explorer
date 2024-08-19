@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.CommunicationData.URLHelpers;
 using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.Utilities;
@@ -52,7 +53,7 @@ namespace PortableExperiences.Controller
         {
             string worldUrl = string.Empty;
 
-            if (ens.IsValid) { worldUrl = ENSUtils.ConvertEnsToWorldUrl(ens); }
+            if (ens.IsValid) { worldUrl = ens.ConvertEnsToWorldUrl(); }
 
             if (!worldUrl.IsValidUrl()) throw new ArgumentException("Invalid Spawn params. Provide a valid ENS name");
 
