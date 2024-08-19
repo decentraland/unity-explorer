@@ -38,7 +38,6 @@ namespace ECS.Unity.Materials.Systems
             if (!materialComponent.Data.IsPbrMaterial)
                 return;
 
-            // if there are no textures to load we can construct a material right away
             if (materialComponent.Status is not StreamableLoading.LifeCycle.LoadingInProgress)
                 return;
 
