@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine.UIElements;
+using Utility.Types;
 
 namespace DCL.DebugUtilities
 {
@@ -14,6 +15,7 @@ namespace DCL.DebugUtilities
         private readonly Func<DebugWidget> widgetFactoryMethod;
         private readonly Func<DebugControl> controlFactoryMethod;
         private readonly Dictionary<Type, IDebugElementFactory> factories;
+        private readonly ISet<string>? allowOnlyNames;
 
         private bool isBuilt;
         private DebugContainer? container;
@@ -38,16 +40,21 @@ namespace DCL.DebugUtilities
         public DebugContainerBuilder(
             Func<DebugWidget> widgetFactoryMethod,
             Func<DebugControl> controlFactoryMethod,
-            Dictionary<Type, IDebugElementFactory> factories
+            Dictionary<Type, IDebugElementFactory> factories,
+            ISet<string>? allowOnlyNames
         )
         {
             this.widgetFactoryMethod = widgetFactoryMethod;
             this.controlFactoryMethod = controlFactoryMethod;
             this.factories = factories;
+            this.allowOnlyNames = allowOnlyNames;
         }
 
-        public DebugWidgetBuilder AddWidget(string name)
+        public Result<DebugWidgetBuilder> AddWidget(string name)
         {
+            if (allowOnlyNames != null && allowOnlyNames.Contains(name) == false)
+                return Result<DebugWidgetBuilder>.ErrorResult($"Name {name} not allowed");
+
             if (isBuilt)
                 throw new InvalidOperationException("Container has already been built");
 
@@ -59,7 +66,7 @@ namespace DCL.DebugUtilities
             var w = new DebugWidgetBuilder(name);
             names.Add(name);
             widgetBuilders.Add(w);
-            return w;
+            return Result<DebugWidgetBuilder>.SuccessResult(w);
         }
 
         public void BuildWithFlex(UIDocument debugRootCanvas)

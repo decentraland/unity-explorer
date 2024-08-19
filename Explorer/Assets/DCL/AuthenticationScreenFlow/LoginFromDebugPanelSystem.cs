@@ -21,7 +21,7 @@ namespace DCL.AuthenticationScreenFlow
         private readonly IWeb3VerifiedAuthenticator web3Authenticator;
         private readonly IMVCManager mvcManager;
         private readonly IRealmData realmData;
-        private readonly DebugWidgetVisibilityBinding widgetVisibility;
+        private readonly DebugWidgetVisibilityBinding? widgetVisibility;
         private CancellationTokenSource? cancellationTokenSource;
 
         public LoginFromDebugPanelSystem(World world,
@@ -35,8 +35,8 @@ namespace DCL.AuthenticationScreenFlow
             this.mvcManager = mvcManager;
             this.realmData = realmData;
 
-            debugContainerBuilder.AddWidget("Web3 Authentication")
-                                 .SetVisibilityBinding(widgetVisibility = new DebugWidgetVisibilityBinding(false))
+            debugContainerBuilder.TryAddWidget("Web3 Authentication")
+                                ?.SetVisibilityBinding(widgetVisibility = new DebugWidgetVisibilityBinding(false))
                                  .AddSingleButton("Login", Login)
                                  .AddSingleButton("Open Auth UI", OpenAuthenticationFlow)
                                  .AddSingleButton("Logout", Logout);
@@ -44,7 +44,7 @@ namespace DCL.AuthenticationScreenFlow
 
         protected override void Update(float t)
         {
-            widgetVisibility.SetVisible(realmData.Configured);
+            widgetVisibility?.SetVisible(realmData.Configured);
         }
 
         private void Logout()

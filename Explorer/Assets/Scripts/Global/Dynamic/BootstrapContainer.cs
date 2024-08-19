@@ -2,6 +2,7 @@
 using DCL.AssetsProvision;
 using DCL.Browser;
 using DCL.Browser.DecentralandUrls;
+using DCL.CommandLine;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PerformanceAndDiagnostics.Analytics;
@@ -34,6 +35,7 @@ namespace Global.Dynamic
         public IWeb3VerifiedAuthenticator? Web3Authenticator { get; private set; }
         public IAnalyticsController? Analytics { get; private set; }
         public IDebugSettings DebugSettings { get; private set; }
+        public ICommandLineArgs CommandLineArgs { get; private set; }
         public IReportsHandlingSettings ReportHandlingSettings => reportHandlingSettings.Value;
         public bool LocalSceneDevelopment { get; private set; }
 
@@ -66,13 +68,14 @@ namespace Global.Dynamic
                 DecentralandUrlsSource = decentralandUrlsSource,
                 WebBrowser = browser,
                 DebugSettings = debugSettings,
+                CommandLineArgs = new CommandLineArgs(),
                 LocalSceneDevelopment = appParametersParser.LocalSceneDevelopment || launchSettings.GetStartingRealm() == IRealmNavigator.LOCALHOST,
             };
 
             await bootstrapContainer.InitializeContainerAsync<BootstrapContainer, BootstrapSettings>(settingsContainer, ct, async container =>
             {
                 container.reportHandlingSettings = await ProvideReportHandlingSettingsAsync(container.AssetsProvisioner!, container.settings, ct);
-                (container.Bootstrap, container.Analytics) = await CreateBootstrapperAsync(debugSettings, container, container.settings, ct);
+                (container.Bootstrap, container.Analytics) = await CreateBootstrapperAsync(debugSettings, container.CommandLineArgs, container, container.settings, ct);
                 (container.IdentityCache, container.VerifiedEthereumApi, container.Web3Authenticator) = CreateWeb3Dependencies(sceneLoaderSettings, browser, container);
 
                 container.diagnosticsContainer = container.enableAnalytics
@@ -83,12 +86,12 @@ namespace Global.Dynamic
             return bootstrapContainer;
         }
 
-        private static async UniTask<(IBootstrap, IAnalyticsController)> CreateBootstrapperAsync(IDebugSettings debugSettings, BootstrapContainer container, BootstrapSettings bootstrapSettings, CancellationToken ct)
+        private static async UniTask<(IBootstrap, IAnalyticsController)> CreateBootstrapperAsync(IDebugSettings debugSettings, ICommandLineArgs commandLineArgs, BootstrapContainer container, BootstrapSettings bootstrapSettings, CancellationToken ct)
         {
             AnalyticsConfiguration analyticsConfig = (await container.AssetsProvisioner.ProvideMainAssetAsync(bootstrapSettings.AnalyticsConfigRef, ct)).Value;
             container.enableAnalytics = analyticsConfig.Mode != AnalyticsMode.DISABLED;
 
-            var coreBootstrap = new Bootstrap(debugSettings)
+            var coreBootstrap = new Bootstrap(debugSettings, commandLineArgs)
             {
                 EnableAnalytics = container.enableAnalytics,
             };
