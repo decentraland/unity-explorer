@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using DCL.Optimization.ThreadSafePool;
 using UnityEngine;
 using UnityEngine.Profiling;
 
@@ -10,8 +11,11 @@ namespace Utility.Multithreading
     {
         private static readonly CustomSampler SAMPLER;
 
-        private readonly object _lock = new();
-        private readonly Queue<ManualResetEventSlim> _queue = new();
+        private static readonly ThreadSafeObjectPool<ManualResetEventSlim> MANUAL_RESET_EVENT_SLIM_POOL =
+            new(() => new ManualResetEventSlim(false));
+
+        private readonly object queueLock = new();
+        private readonly Queue<ManualResetEventSlim> queue = new();
 
         public bool Acquired { get; private set; }
 
@@ -22,12 +26,12 @@ namespace Utility.Multithreading
 
         public void Acquire()
         {
-            var waiter = new ManualResetEventSlim(false);
+            var waiter = MANUAL_RESET_EVENT_SLIM_POOL.Get();
 
-            lock (_lock)
+            lock (queueLock)
             {
-                _queue.Enqueue(waiter);
-                if (_queue.Count == 1)
+                queue.Enqueue(waiter);
+                if (queue.Count == 1)
                     waiter.Set(); // If there is only one item in the queue, signal it right away so Wait() is ignored
             }
 
@@ -37,27 +41,32 @@ namespace Utility.Multithreading
 
         public void Release()
         {
-            lock (_lock)
+            lock (queueLock)
             {
                 // The one releasing should be the one at the top of the queue
                 // If the queue is empty, then our logic is wrong
-                var finishedWaiter = _queue.Dequeue();
+                var finishedWaiter = queue.Dequeue();
                 finishedWaiter.Dispose(); // Clean up the finished waiter
+                MANUAL_RESET_EVENT_SLIM_POOL.Release(finishedWaiter);
                 Acquired = false;
-                
-                if (_queue.Count > 0)
-                    _queue.Peek().Set(); // Signal the next waiter in line
+
+                if (queue.Count > 0)
+                    queue.Peek().Set(); // Signal the next waiter in line
             }
         }
 
         public void Dispose()
         {
-            lock (_lock)
+            lock (queueLock)
             {
                 Acquired = false;
-                foreach (var manualResetEventSlim in _queue)
+                foreach (var manualResetEventSlim in queue)
+                {
                     manualResetEventSlim.Dispose(); // Clean up waiters. Nothing to do here
-                _queue.Clear();
+                    MANUAL_RESET_EVENT_SLIM_POOL.Release(manualResetEventSlim);
+                }
+
+                queue.Clear();
             }
         }
 
