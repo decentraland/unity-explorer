@@ -7,6 +7,7 @@ using DCL.Optimization.PerformanceBudgeting;
 using ECS;
 using ECS.Abstract;
 using System;
+using System.Globalization;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 using static DCL.Utilities.ConversionUtils;
@@ -22,6 +23,8 @@ namespace DCL.Profiling.ECS
         private readonly IDebugViewProfiler profiler;
         private readonly MemoryBudget memoryBudget;
 
+        private readonly PerformanceBottleneckDetector bottleneckDetector = new ();
+
         private DebugWidgetVisibilityBinding visibilityBinding;
         private DebugWidgetVisibilityBinding memoryVisibilityBinding;
 
@@ -29,10 +32,21 @@ namespace DCL.Profiling.ECS
         private ElementBinding<string> fps;
         private ElementBinding<string> minfps;
         private ElementBinding<string> maxfps;
+
+        private ElementBinding<string> gpuFrameTime;
+        private ElementBinding<string> cpuFrameTime;
+        private ElementBinding<string> cpuMainThreadFrameTime;
+        private ElementBinding<string> cpuMainThreadPresentWaitTime;
+        private ElementBinding<string> cpuRenderThreadFrameTime;
+
+        private ElementBinding<string> bottleneck;
+
         private ElementBinding<string> usedMemory;
         private ElementBinding<string> memoryCheckpoints;
 
         private int framesSinceMetricsUpdate;
+
+        private bool frameTimingsEnabled;
 
         private DebugViewProfilingSystem(World world, IRealmData realmData, IDebugViewProfiler profiler, MemoryBudget memoryBudget, IDebugContainerBuilder debugBuilder) : base(world)
         {
@@ -53,7 +67,14 @@ namespace DCL.Profiling.ECS
                             .AddCustomMarker("Frame rate:", fps = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("Min FPS last 1k frames:", minfps = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("Max FPS last 1k frames:", maxfps = new ElementBinding<string>(string.Empty))
-                            .AddCustomMarker("Hiccups last 1k frames:", hiccups = new ElementBinding<string>(string.Empty));
+                            .AddCustomMarker("Hiccups last 1k frames:", hiccups = new ElementBinding<string>(string.Empty))
+                            .AddToggleField("Enable Bottleneck detector", evt => frameTimingsEnabled = evt.newValue, frameTimingsEnabled)
+                            .AddCustomMarker("GPU:", gpuFrameTime = new ElementBinding<string>(string.Empty))
+                            .AddCustomMarker("CPU:", cpuFrameTime = new ElementBinding<string>(string.Empty))
+                            .AddCustomMarker("CPU MainThread:", cpuMainThreadFrameTime = new ElementBinding<string>(string.Empty))
+                            .AddCustomMarker("CPU MainThread PresentWait:", cpuMainThreadPresentWaitTime = new ElementBinding<string>(string.Empty))
+                            .AddCustomMarker("CPU RenderThread:", cpuRenderThreadFrameTime = new ElementBinding<string>(string.Empty))
+                            .AddCustomMarker("Bottleneck:", bottleneck = new ElementBinding<string>(string.Empty));
 
                 debugBuilder.AddWidget("Memory")
                             .SetVisibilityBinding(memoryVisibilityBinding = new DebugWidgetVisibilityBinding(true))
@@ -84,8 +105,22 @@ namespace DCL.Profiling.ECS
                     UpdateFrameStatisticsView(profiler);
                 }
 
+                if (frameTimingsEnabled && bottleneckDetector.TryCapture())
+                    UpdateFrameTimings(bottleneckDetector.FrameTiming);
+
                 framesSinceMetricsUpdate++;
             }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void UpdateFrameTimings(FrameTiming frameTiming)
+        {
+            bottleneck.Value = bottleneckDetector.DetermineBottleneck().ToString();
+            gpuFrameTime.Value = frameTiming.gpuFrameTime.ToString(CultureInfo.InvariantCulture);
+            cpuFrameTime.Value = frameTiming.cpuFrameTime.ToString(CultureInfo.InvariantCulture);
+            cpuMainThreadFrameTime.Value = frameTiming.cpuMainThreadFrameTime.ToString(CultureInfo.InvariantCulture);
+            cpuMainThreadPresentWaitTime.Value = frameTiming.cpuMainThreadPresentWaitTime.ToString(CultureInfo.InvariantCulture);
+            cpuRenderThreadFrameTime.Value = frameTiming.cpuRenderThreadFrameTime.ToString(CultureInfo.InvariantCulture);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -112,7 +147,7 @@ namespace DCL.Profiling.ECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void UpdateFrameStatisticsView(IDebugViewProfiler debugProfiler)
         {
-            var frameTimeStats = debugProfiler.CalculateMainThreadFrameTimesNs();
+            FrameTimeStats? frameTimeStats = debugProfiler.CalculateMainThreadFrameTimesNs();
 
             if (frameTimeStats.HasValue)
             {

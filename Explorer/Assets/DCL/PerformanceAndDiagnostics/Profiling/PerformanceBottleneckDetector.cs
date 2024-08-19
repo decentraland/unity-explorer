@@ -14,15 +14,19 @@ namespace DCL.Profiling
         }
 
         private const float K_NEAR_FULL_FRAME_TIME_THRESHOLD_PERCENT = 0.2f;
-
         private readonly FrameTiming[] frameTimings = new FrameTiming[1];
 
-        public PerformanceBottleneck Capture()
+        public FrameTiming FrameTiming => frameTimings[0];
+
+        public bool TryCapture()
         {
             FrameTimingManager.CaptureFrameTimings();
             uint numFrames = FrameTimingManager.GetLatestTimings((uint)frameTimings.Length, frameTimings);
-            return numFrames <= 0 ? PerformanceBottleneck.INDETERMINATE : DetermineBottleneck(frameTimings[0]);
+            return numFrames > 0;
         }
+
+        public PerformanceBottleneck DetermineBottleneck() =>
+            DetermineBottleneck(frameTimings[0]);
 
         private static PerformanceBottleneck DetermineBottleneck(FrameTiming timing)
         {
