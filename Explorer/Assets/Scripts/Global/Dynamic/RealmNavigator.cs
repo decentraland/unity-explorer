@@ -6,6 +6,7 @@ using DCL.Ipfs;
 using DCL.Landscape;
 using DCL.MapRenderer;
 using DCL.MapRenderer.MapLayers;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Entities;
 using DCL.ParcelsService;
@@ -33,14 +34,13 @@ namespace Global.Dynamic
 {
     public class RealmNavigator : IRealmNavigator
     {
-        private readonly URLDomain genesisDomain = URLDomain.FromString(IRealmNavigator.GENESIS_URL);
-
         private readonly ILoadingScreen loadingScreen;
         private readonly IMapRenderer mapRenderer;
         private readonly IGlobalRealmController realmController;
         private readonly ITeleportController teleportController;
         private readonly IRoomHub roomHub;
         private readonly IRemoteEntities remoteEntities;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly ObjectProxy<World> globalWorldProxy;
         private readonly RoadPlugin roadsPlugin;
         private readonly TerrainGenerator genesisTerrain;
@@ -62,6 +62,7 @@ namespace Global.Dynamic
             ITeleportController teleportController,
             IRoomHub roomHub,
             IRemoteEntities remoteEntities,
+            IDecentralandUrlsSource decentralandUrlsSource,
             ObjectProxy<World> globalWorldProxy,
             RoadPlugin roadsPlugin,
             TerrainGenerator genesisTerrain,
@@ -84,6 +85,7 @@ namespace Global.Dynamic
             this.cameraSamplingData = cameraSamplingData;
             this.roomHub = roomHub;
             this.remoteEntities = remoteEntities;
+            this.decentralandUrlsSource = decentralandUrlsSource;
             this.globalWorldProxy = globalWorldProxy;
         }
 
@@ -168,9 +170,12 @@ namespace Global.Dynamic
             {
                 bool isGenesis = !realmController.RealmData.ScenesAreFixed;
 
-                if (!isLocal && !isGenesis) { await TryChangeRealmAsync(genesisDomain, ct, parcel); }
-                else
+                if (!isLocal && !isGenesis)
                 {
+                    var url = URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Genesis));
+                    await TryChangeRealmAsync(url, ct, parcel);
+                }
+                else
                     await loadingScreen.ShowWhileExecuteTaskAsync(async parentLoadReport =>
                     {
                         ct.ThrowIfCancellationRequested();
@@ -184,7 +189,6 @@ namespace Global.Dynamic
 
                         parentLoadReport.SetProgress(RealFlowLoadingStatus.PROGRESS[Completed]);
                     }, ct);
-                }
             }
             catch (TimeoutException) { }
         }

@@ -7,6 +7,7 @@ using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Movement.Settings;
 using ECS.Abstract;
+using UnityEngine;
 using Random = UnityEngine.Random;
 
 namespace DCL.Multiplayer.Movement.Systems
@@ -15,8 +16,16 @@ namespace DCL.Multiplayer.Movement.Systems
     [LogCategory(ReportCategory.MULTIPLAYER_MOVEMENT)]
     public partial class PlayerMovementNetSendSystem : BaseUnityLoopSystem
     {
+        private const float POSITION_MOVE_EPSILON =  0.0001f; // 1 mm
+        private const float VELOCITY_MOVE_EPSILON = 0.01f; // 1 cm/s
+
+        private const float MOVE_SEND_RATE = 0.1f;
+        private const float STAND_SEND_RATE = 1f;
+
         private readonly MultiplayerMovementMessageBus messageBus;
         private readonly IMultiplayerMovementSettings settings;
+
+        private float sendRate = MOVE_SEND_RATE;
 
         public PlayerMovementNetSendSystem(World world, MultiplayerMovementMessageBus messageBus, IMultiplayerMovementSettings settings) : base(world)
         {
@@ -53,13 +62,22 @@ namespace DCL.Multiplayer.Movement.Systems
 
             float timeDiff = UnityEngine.Time.unscaledTime - playerMovement.LastSentMessage.timestamp;
 
-            foreach (SendRuleBase sendRule in settings.SendRules)
-                if (timeDiff > sendRule.MinTimeDelta
-                    && sendRule.IsSendConditionMet(timeDiff, in playerMovement.LastSentMessage, in anim, in stun, in move, in jump, playerMovement.Character, settings))
-                {
-                    SendMessage(ref playerMovement, view, in anim, in stun, in move);
-                    return;
-                }
+
+            bool isMoving = IsMoving(playerMovement);
+            if (isMoving && sendRate > MOVE_SEND_RATE)
+                sendRate = MOVE_SEND_RATE;
+
+            if (timeDiff > sendRate)
+            {
+                if (!isMoving && sendRate < STAND_SEND_RATE)
+                    sendRate = Mathf.Min(2 * sendRate, STAND_SEND_RATE);
+
+                SendMessage(ref playerMovement, view, in anim, in stun, in move);
+            }
+
+            bool IsMoving(PlayerMovementNetworkComponent playerMovement) =>
+                Vector3.SqrMagnitude(playerMovement.LastSentMessage.position - playerMovement.Character.transform.position) > POSITION_MOVE_EPSILON * POSITION_MOVE_EPSILON ||
+                Vector3.SqrMagnitude(playerMovement.LastSentMessage.velocity - playerMovement.Character.velocity) > VELOCITY_MOVE_EPSILON * VELOCITY_MOVE_EPSILON;
         }
 
         private static void UpdateMessagePerSecondTimer(float t, ref PlayerMovementNetworkComponent playerMovement)
