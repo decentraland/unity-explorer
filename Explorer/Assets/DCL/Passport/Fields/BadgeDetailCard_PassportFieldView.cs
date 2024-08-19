@@ -89,14 +89,14 @@ namespace DCL.Passport.Fields
             BadgeCategory = badgeInfo.category;
             BadgeImage.SetColor(badgeInfo.isLocked ? LockedBadgeImageColor : NonLockedBadgeImageColor);
             BadgeDateText.text = !badgeInfo.isLocked ? PassportUtils.FormatTimestampDate(badgeInfo.awardedAt) : "--";
-            BadgeDateText.gameObject.SetActive((!badgeInfo.isLocked && (!badgeInfo.isTier || (badgeInfo.isTier && badgeInfo.completedSteps == badgeInfo.totalStepsToUnlock))) || badgeInfo is { isLocked: true, isTier: false });
-            TopTierMark.SetActive(badgeInfo.isTier && badgeInfo.completedSteps == badgeInfo.totalStepsToUnlock);
-            NextTierTitle.SetActive(!badgeInfo.isLocked && badgeInfo.isTier && badgeInfo.completedSteps < badgeInfo.totalStepsToUnlock);
-            ProgressBar.gameObject.SetActive(badgeInfo.isTier && badgeInfo.completedSteps < badgeInfo.totalStepsToUnlock);
+            BadgeDateText.gameObject.SetActive((!badgeInfo.isLocked && (!badgeInfo.isTier || (badgeInfo.isTier && badgeInfo.currentProgress == badgeInfo.totalProgress))) || badgeInfo is { isLocked: true, isTier: false });
+            TopTierMark.SetActive(badgeInfo.isTier && badgeInfo.currentProgress == badgeInfo.totalProgress);
+            NextTierTitle.SetActive(!badgeInfo.isLocked && badgeInfo.isTier && badgeInfo.currentProgress < badgeInfo.totalProgress);
+            ProgressBar.gameObject.SetActive(badgeInfo.isTier && badgeInfo.currentProgress < badgeInfo.totalProgress);
 
             if (badgeInfo.isTier)
             {
-                int progressPercentage = badgeInfo.isLocked ? 0 : badgeInfo.completedSteps * 100 / badgeInfo.totalStepsToUnlock;
+                int progressPercentage = badgeInfo.isLocked ? 0 : badgeInfo.currentProgress * 100 / badgeInfo.totalProgress;
                 ProgressBarFill.sizeDelta = new Vector2((!badgeInfo.isLocked ? progressPercentage : 0) * (ProgressBar.sizeDelta.x / 100), ProgressBarFill.sizeDelta.y);
             }
 

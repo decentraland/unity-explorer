@@ -3,6 +3,7 @@ using DCL.BadgesAPIService;
 using DCL.Diagnostics;
 using DCL.Passport.Fields;
 using DCL.Profiles;
+using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.WebRequests;
 using System;
@@ -25,6 +26,7 @@ namespace DCL.Passport.Modules
         private readonly BadgeInfo_PassportModuleView badgeInfoModuleView;
         private readonly BadgesAPIClient badgesAPIClient;
         private readonly PassportErrorsController passportErrorsController;
+        private readonly ISelfProfile selfProfile;
 
         private readonly IObjectPool<ButtonWithSelectableStateView> badgesFilterButtonsPool;
         private readonly List<ButtonWithSelectableStateView> instantiatedBadgesFilterButtons = new ();
@@ -38,22 +40,26 @@ namespace DCL.Passport.Modules
         private readonly List<BadgeDetailCard_PassportFieldView> instantiatedEmptyItems = new ();
 
         private Profile currentProfile;
+        private bool isOwnProfile;
         private string? currentFilter;
         private List<string> badgeCategories;
         private CancellationTokenSource fetchBadgesCts;
         private CancellationTokenSource fetchBadgeCategoriesCts;
+        private CancellationTokenSource checkProfileCts;
 
         public BadgesDetails_PassportModuleController(
             BadgesDetails_PassportModuleView view,
             BadgeInfo_PassportModuleView badgeInfoModuleView,
             BadgesAPIClient badgesAPIClient,
             PassportErrorsController passportErrorsController,
-            IWebRequestController webRequestController)
+            IWebRequestController webRequestController,
+            ISelfProfile selfProfile)
         {
             this.view = view;
             this.badgeInfoModuleView = badgeInfoModuleView;
             this.badgesAPIClient = badgesAPIClient;
             this.passportErrorsController = passportErrorsController;
+            this.selfProfile = selfProfile;
 
             badgesFilterButtonsPool = new ObjectPool<ButtonWithSelectableStateView>(
                 InstantiateBadgesFilterButtonPrefab,
@@ -109,7 +115,9 @@ namespace DCL.Passport.Modules
         {
             currentProfile = profile;
             LoadBadgeCategories();
-            LoadBadgeDetailCards();
+
+            checkProfileCts = checkProfileCts.SafeRestart();
+            CheckProfileAndLoadBadgesAsync(checkProfileCts.Token).Forget();
         }
 
         public void Clear()
@@ -229,6 +237,13 @@ namespace DCL.Passport.Modules
             ShowBadgesInGridByCategory(categoryFilter);
         }
 
+        private async UniTaskVoid CheckProfileAndLoadBadgesAsync(CancellationToken ct)
+        {
+            var ownProfile = await selfProfile.ProfileAsync(ct);
+            isOwnProfile = ownProfile?.UserId == currentProfile.UserId;
+            LoadBadgeDetailCards();
+        }
+
         private void LoadBadgeDetailCards()
         {
             ClearBadgeDetailCards();
@@ -246,7 +261,7 @@ namespace DCL.Passport.Modules
             try
             {
                 view.LoadingSpinner.SetActive(true);
-                var badges = await badgesAPIClient.FetchBadgesAsync(walletId, true, 0, 0, ct);
+                var badges = await badgesAPIClient.FetchBadgesAsync(walletId, isOwnProfile, 0, 0, ct);
 
                 foreach (var unlockedBadge in badges.unlocked)
                     CreateBadgeDetailCard(unlockedBadge);
@@ -308,7 +323,7 @@ namespace DCL.Passport.Modules
                     badgeDetailCard.SetAsSelected(!firstElementSelected);
                     if (!firstElementSelected)
                     {
-                        badgeInfoModuleView.Setup(badgeDetailCard.Model);
+                        badgeInfoModuleView.Setup(badgeDetailCard.Model, isOwnProfile);
                         badgeInfoModuleView.SetAsLoading(false);
                     }
                     firstElementSelected = true;
@@ -328,7 +343,7 @@ namespace DCL.Passport.Modules
                         instantiateBadgeByCategory.SetAsSelected(false);
 
                 badgeDetailCard.SetAsSelected(true);
-                badgeInfoModuleView.Setup(badge);
+                badgeInfoModuleView.Setup(badge, isOwnProfile);
             });
 
             // Place badge into the corresponding category container
@@ -405,6 +420,7 @@ namespace DCL.Passport.Modules
 
         private void ClearBadgeDetailCards()
         {
+            checkProfileCts.SafeCancelAndDispose();
             fetchBadgesCts.SafeCancelAndDispose();
 
             ClearEmptyItems();

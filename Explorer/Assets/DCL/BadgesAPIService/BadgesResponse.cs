@@ -21,19 +21,20 @@ namespace DCL.BadgesAPIService
         public string image;
         public string awardedAt;
         public bool isTier;
-        public int totalStepsToUnlock;
-        public int completedSteps;
+        public int totalProgress;
+        public int currentProgress;
+        public int currentTier;
         public BadgeTierData[] tiers;
     }
 
     [Serializable]
     public class BadgeTierData
     {
-        public string tierId;
-        public string tierName;
+        public string id;
+        public bool isLocked;
+        public string name;
         public string description;
         public string image;
         public string awardedAt;
-        public int stepsToUnlock;
     }
 }
