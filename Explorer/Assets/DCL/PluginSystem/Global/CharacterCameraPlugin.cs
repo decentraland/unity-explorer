@@ -11,6 +11,7 @@ using DCL.CharacterCamera;
 using DCL.CharacterCamera.Components;
 using DCL.CharacterCamera.Settings;
 using DCL.CharacterCamera.Systems;
+using DCL.CommandLine;
 using DCL.DebugUtilities;
 using ECS.Prioritization.Components;
 using System.Threading;
@@ -28,6 +29,7 @@ namespace DCL.PluginSystem.Global
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly ExposedCameraData exposedCameraData;
         private readonly IDebugContainerBuilder debugBuilder;
+        private readonly ICommandLineArgs commandLineArgs;
         private readonly DCLInput input;
         private readonly RealmSamplingData realmSamplingData;
         private ProvidedInstance<CinemachinePreset> providedCinemachinePreset;
@@ -38,12 +40,14 @@ namespace DCL.PluginSystem.Global
             RealmSamplingData realmSamplingData,
             ExposedCameraData exposedCameraData,
             IDebugContainerBuilder debugBuilder,
+            ICommandLineArgs commandLineArgs,
             DCLInput input)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.realmSamplingData = realmSamplingData;
             this.exposedCameraData = exposedCameraData;
             this.debugBuilder = debugBuilder;
+            this.commandLineArgs = commandLineArgs;
             this.input = input;
         }
 
@@ -96,7 +100,7 @@ namespace DCL.PluginSystem.Global
 
             // Register systems
             ControlCinemachineVirtualCameraSystem.InjectToWorld(ref builder, cinemachineCameraAudioSettings.Value);
-            ApplyCinemachineCameraInputSystem.InjectToWorld(ref builder, input);
+            ApplyCinemachineCameraInputSystem.InjectToWorld(ref builder, input, commandLineArgs.HasDebugFlag());
             PrepareExposedCameraDataSystem.InjectToWorld(ref builder);
             ChinemachineFieldOfViewSystem.InjectToWorld(ref builder);
             ApplyCinemachineSettingsSystem.InjectToWorld(ref builder, debugBuilder);
