@@ -127,6 +127,8 @@ namespace Global.Dynamic
 
         public RealFlowLoadingStatus RealFlowLoadingStatus { get; private set; } = null!;
 
+        private MultiplayerMovementMessageBus multiplayerMovementMessageBus;
+
         public override void Dispose()
         {
             MvcManager.Dispose();
@@ -415,6 +417,8 @@ namespace Global.Dynamic
 
             var currentSceneInfo = new CurrentSceneInfo();
 
+            container.multiplayerMovementMessageBus = new MultiplayerMovementMessageBus(container.MessagePipesHub, entityParticipantTable);
+
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
                 new MultiplayerPlugin(
@@ -525,7 +529,7 @@ namespace Global.Dynamic
                 staticContainer.CharacterContainer.CreateGlobalPlugin(),
                 staticContainer.QualityContainer.CreatePlugin(),
                 landscapePlugin,
-                new MultiplayerMovementPlugin(assetsProvisioner, new MultiplayerMovementMessageBus(container.MessagePipesHub, entityParticipantTable)),
+                new MultiplayerMovementPlugin(assetsProvisioner, container.multiplayerMovementMessageBus),
                 container.LODContainer.LODPlugin,
                 container.LODContainer.RoadPlugin,
                 new AudioPlaybackPlugin(genesisTerrain, assetsProvisioner, dynamicWorldParams.EnableLandscape),
@@ -595,6 +599,7 @@ namespace Global.Dynamic
         public void InitializeWorldRelatedModules(World world, Entity playerEntity)
         {
             reloadSceneController!.Initialize(world, playerEntity);
+            multiplayerMovementMessageBus.InjectWorld(world);
         }
     }
 }

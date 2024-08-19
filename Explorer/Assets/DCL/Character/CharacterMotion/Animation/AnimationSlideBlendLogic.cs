@@ -29,7 +29,7 @@ namespace DCL.CharacterMotion.Animation
             view.SetAnimatorFloat(AnimationHashes.SLIDE_BLEND, animationComponent.States.SlideBlendValue);
         }
 
-        public static float CalculateBlendValue(float dt, in float slideBlendValue, bool isSliding, ICharacterControllerSettings settings)
+        public static float CalculateBlendValue(float dt, float slideBlendValue, bool isSliding, ICharacterControllerSettings settings)
         {
             float targetSlideBlend = isSliding ? 1f : 0f;
 

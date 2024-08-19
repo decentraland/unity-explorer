@@ -25,20 +25,16 @@ namespace DCL.Multiplayer.Movement.Systems
         private const float ZERO_VELOCITY_THRESHOLD = 0.01f;
 
         private readonly IMultiplayerMovementSettings settings;
-        private readonly MultiplayerMovementMessageBus messageBus;
         private readonly ICharacterControllerSettings characterControllerSettings;
 
         internal RemotePlayersMovementSystem(World world, MultiplayerMovementMessageBus messageBus, IMultiplayerMovementSettings settings, ICharacterControllerSettings characterControllerSettings) : base(world)
         {
             this.settings = settings;
-            this.messageBus = messageBus;
-
             this.characterControllerSettings = characterControllerSettings;
         }
 
         protected override void Update(float t)
         {
-            messageBus.InjectWorld(World!);
             UpdateRemotePlayersMovementQuery(World, t);
         }
 

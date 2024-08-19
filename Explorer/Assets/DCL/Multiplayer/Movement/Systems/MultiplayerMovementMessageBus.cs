@@ -126,11 +126,11 @@ namespace DCL.Multiplayer.Movement.Systems
 
         private void Inbox(NetworkMovementMessage fullMovementMessage, string @for)
         {
-            Enqueue(@for, fullMovementMessage);
+            TryEnqueue(@for, fullMovementMessage);
             ReportHub.Log(ReportCategory.MULTIPLAYER_MOVEMENT, $"Movement from {@for} - {fullMovementMessage}");
         }
 
-        private void Enqueue(string walletId, NetworkMovementMessage fullMovementMessage)
+        private void TryEnqueue(string walletId, NetworkMovementMessage fullMovementMessage)
         {
             if (entityParticipantTable.Has(walletId) == false)
             {
