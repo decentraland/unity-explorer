@@ -2,12 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using DCL.Optimization.ThreadSafePool;
-using UnityEngine;
 using UnityEngine.Profiling;
 
 namespace Utility.Multithreading
 {
-    public class MutexSync : IDisposable
+    public class MultithreadSync : IDisposable
     {
         private static readonly CustomSampler SAMPLER;
 
@@ -19,7 +18,7 @@ namespace Utility.Multithreading
 
         public bool Acquired { get; private set; }
 
-        static MutexSync()
+        static MultithreadSync()
         {
             SAMPLER = CustomSampler.Create("MutexSync.Wait");
         }
@@ -80,17 +79,17 @@ namespace Utility.Multithreading
 
         public readonly struct Scope : IDisposable
         {
-            private readonly MutexSync mutex;
+            private readonly MultithreadSync multithreadSync;
 
-            public Scope(MutexSync mutex)
+            public Scope(MultithreadSync multithreadSync)
             {
-                this.mutex = mutex;
-                mutex.Acquire();
+                this.multithreadSync = multithreadSync;
+                multithreadSync.Acquire();
             }
 
             public void Dispose()
             {
-                mutex.Release();
+                multithreadSync.Release();
             }
         }
     }
