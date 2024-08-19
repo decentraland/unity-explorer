@@ -72,8 +72,8 @@ namespace DCL.Profiling.ECS
                             .AddCustomMarker("GPU:", gpuFrameTime = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("CPU:", cpuFrameTime = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("CPU MainThread:", cpuMainThreadFrameTime = new ElementBinding<string>(string.Empty))
-                            .AddCustomMarker("CPU MainThread PresentWait:", cpuMainThreadPresentWaitTime = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("CPU RenderThread:", cpuRenderThreadFrameTime = new ElementBinding<string>(string.Empty))
+                            .AddCustomMarker("CPU MainThread PresentWait:", cpuMainThreadPresentWaitTime = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("Bottleneck:", bottleneck = new ElementBinding<string>(string.Empty));
 
                 debugBuilder.AddWidget("Memory")
@@ -116,11 +116,11 @@ namespace DCL.Profiling.ECS
         private void UpdateFrameTimings(FrameTiming frameTiming)
         {
             bottleneck.Value = bottleneckDetector.DetermineBottleneck().ToString();
-            gpuFrameTime.Value = frameTiming.gpuFrameTime.ToString(CultureInfo.InvariantCulture);
-            cpuFrameTime.Value = frameTiming.cpuFrameTime.ToString(CultureInfo.InvariantCulture);
-            cpuMainThreadFrameTime.Value = frameTiming.cpuMainThreadFrameTime.ToString(CultureInfo.InvariantCulture);
+            gpuFrameTime.Value = frameTiming.gpuFrameTime.ToString("F2",CultureInfo.InvariantCulture);
+            cpuFrameTime.Value = frameTiming.cpuFrameTime.ToString("F2",CultureInfo.InvariantCulture);
+            cpuMainThreadFrameTime.Value = frameTiming.cpuMainThreadFrameTime.ToString("F2",CultureInfo.InvariantCulture);
+            cpuRenderThreadFrameTime.Value = frameTiming.cpuRenderThreadFrameTime.ToString("F2", CultureInfo.InvariantCulture);
             cpuMainThreadPresentWaitTime.Value = frameTiming.cpuMainThreadPresentWaitTime.ToString(CultureInfo.InvariantCulture);
-            cpuRenderThreadFrameTime.Value = frameTiming.cpuRenderThreadFrameTime.ToString(CultureInfo.InvariantCulture);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
