@@ -39,7 +39,9 @@ namespace DCL.SDKComponents.CameraControl.CameraDirector.Systems
         private void SetupVirtualCamera(in Entity entity, TransformComponent transform, PBVirtualCamera pbVirtualCamera)
         {
             var virtualCameraInstance = poolRegistry.Get();
-            virtualCameraInstance.transform.SetParent(transform.Transform, false);
+            virtualCameraInstance.transform.SetParent(transform.Transform);
+            virtualCameraInstance.transform.localPosition = UnityEngine.Vector3.zero;
+            virtualCameraInstance.transform.localRotation = UnityEngine.Quaternion.identity;
 
             // TODO: Use pbVirtualCamera values for transition speed/time...
 
