@@ -1,11 +1,7 @@
 ﻿namespace DCL.Profiling
 {
-    public interface IAnalyticsReportProfiler : IBudgetProfiler
+    public interface IAnalyticsReportProfiler : IMemoryProfiler
     {
-        long SystemUsedMemoryInBytes { get; }
-
-        long GcUsedMemoryInBytes { get; }
-
         AnalyticsFrameTimeReport? GetMainThreadFramesNs(int[] percentile);
 
         AnalyticsFrameTimeReport? GetGpuThreadFramesNs(int[] percentile);

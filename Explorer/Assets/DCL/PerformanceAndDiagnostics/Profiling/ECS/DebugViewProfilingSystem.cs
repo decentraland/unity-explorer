@@ -6,7 +6,9 @@ using DCL.DebugUtilities.UIBindings;
 using DCL.Optimization.PerformanceBudgeting;
 using ECS;
 using ECS.Abstract;
+using SceneRuntime;
 using System;
+using System.Globalization;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 using static DCL.Utilities.ConversionUtils;
@@ -21,6 +23,7 @@ namespace DCL.Profiling.ECS
         private readonly IRealmData realmData;
         private readonly IDebugViewProfiler profiler;
         private readonly MemoryBudget memoryBudget;
+        private readonly V8EngineFactory v8EngineFactory;
 
         private DebugWidgetVisibilityBinding visibilityBinding;
         private DebugWidgetVisibilityBinding memoryVisibilityBinding;
@@ -30,15 +33,20 @@ namespace DCL.Profiling.ECS
         private ElementBinding<string> minfps;
         private ElementBinding<string> maxfps;
         private ElementBinding<string> usedMemory;
+        private ElementBinding<string> gcUsedMemory;
+        private ElementBinding<string> jsHeapSize;
+        private ElementBinding<string> jsEnginesCount;
+
         private ElementBinding<string> memoryCheckpoints;
 
         private int framesSinceMetricsUpdate;
 
-        private DebugViewProfilingSystem(World world, IRealmData realmData, IDebugViewProfiler profiler, MemoryBudget memoryBudget, IDebugContainerBuilder debugBuilder) : base(world)
+        private DebugViewProfilingSystem(World world, IRealmData realmData, IDebugViewProfiler profiler, MemoryBudget memoryBudget, IDebugContainerBuilder debugBuilder, V8EngineFactory v8EngineFactory) : base(world)
         {
             this.realmData = realmData;
             this.profiler = profiler;
             this.memoryBudget = memoryBudget;
+            this.v8EngineFactory = v8EngineFactory;
 
             CreateView();
             return;
@@ -48,7 +56,7 @@ namespace DCL.Profiling.ECS
                 var version = new ElementBinding<string>(Application.version);
 
                 debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.PERFORMANCE)
-                            ?.SetVisibilityBinding(visibilityBinding = new DebugWidgetVisibilityBinding(true))
+                           ?.SetVisibilityBinding(visibilityBinding = new DebugWidgetVisibilityBinding(true))
                             .AddCustomMarker("Version:", version)
                             .AddCustomMarker("Frame rate:", fps = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("Min FPS last 1k frames:", minfps = new ElementBinding<string>(string.Empty))
@@ -56,10 +64,13 @@ namespace DCL.Profiling.ECS
                             .AddCustomMarker("Hiccups last 1k frames:", hiccups = new ElementBinding<string>(string.Empty));
 
                 debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.MEMORY)
-                            ?.SetVisibilityBinding(memoryVisibilityBinding = new DebugWidgetVisibilityBinding(true))
+                           ?.SetVisibilityBinding(memoryVisibilityBinding = new DebugWidgetVisibilityBinding(true))
                             .AddSingleButton("Resources.UnloadUnusedAssets", () => Resources.UnloadUnusedAssets())
                             .AddSingleButton("GC.Collect", GC.Collect)
                             .AddCustomMarker("Total Used Memory [MB]:", usedMemory = new ElementBinding<string>(string.Empty))
+                            .AddCustomMarker("Gc Used Memory [MB]:", gcUsedMemory = new ElementBinding<string>(string.Empty))
+                            .AddCustomMarker("Js Heap Size [MB]:", jsHeapSize = new ElementBinding<string>(string.Empty))
+                            .AddCustomMarker("Js Engines Count:", jsEnginesCount = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("Memory Budget Thresholds [MB]:", memoryCheckpoints = new ElementBinding<string>(string.Empty))
                             .AddSingleButton("Memory NORMAL", () => this.memoryBudget.SimulatedMemoryUsage = MemoryUsageStatus.Normal)
                             .AddSingleButton("Memory WARNING", () => this.memoryBudget.SimulatedMemoryUsage = MemoryUsageStatus.Warning)
@@ -89,12 +100,15 @@ namespace DCL.Profiling.ECS
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void UpdateMemoryView(IBudgetProfiler memoryProfiler)
+        private void UpdateMemoryView(IMemoryProfiler memoryProfiler)
         {
             usedMemory.Value = $"<color={GetMemoryUsageColor()}>{(ulong)BytesFormatter.Convert((ulong)memoryProfiler.TotalUsedMemoryInBytes, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte)}</color>";
+            gcUsedMemory.Value = BytesFormatter.Convert((ulong)memoryProfiler.GcUsedMemoryInBytes, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte).ToString("F0", CultureInfo.InvariantCulture);
+            jsHeapSize.Value = BytesFormatter.Convert(v8EngineFactory.GetTotalJsHeapSizeInMB(), BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte).ToString("F0", CultureInfo.InvariantCulture);
+            jsEnginesCount.Value = v8EngineFactory.ActiveEnginesCount.ToString();
+
             (float warning, float full) memoryRanges = memoryBudget.GetMemoryRanges();
             memoryCheckpoints.Value = $"<color=green>{memoryRanges.warning}</color> | <color=red>{memoryRanges.full}</color>";
-
             return;
 
             string GetMemoryUsageColor()
@@ -112,7 +126,7 @@ namespace DCL.Profiling.ECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void UpdateFrameStatisticsView(IDebugViewProfiler debugProfiler)
         {
-            var frameTimeStats = debugProfiler.CalculateMainThreadFrameTimesNs();
+            FrameTimeStats? frameTimeStats = debugProfiler.CalculateMainThreadFrameTimesNs();
 
             if (frameTimeStats.HasValue)
             {

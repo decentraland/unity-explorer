@@ -1,5 +1,4 @@
-﻿using DCL.DebugUtilities;
-using DCL.Diagnostics;
+﻿using DCL.Diagnostics;
 using Microsoft.ClearScript.V8;
 using System.Collections.Concurrent;
 
@@ -44,14 +43,14 @@ namespace SceneRuntime
                 engine.Dispose();
         }
 
-        public float GetTotalJsHeapSize()
+        public ulong GetTotalJsHeapSizeInMB()
         {
             ulong totalHeapSize = 0;
 
             foreach (V8ScriptEngine? engine in activeEngines.Values)
                 totalHeapSize += engine.GetRuntimeHeapInfo().UsedHeapSize;
 
-            return (float)BytesFormatter.Convert(totalHeapSize, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte);
+            return  totalHeapSize;
         }
 
         public long GetJsHeapSizeByEngineName(SceneShortInfo sceneInfo)

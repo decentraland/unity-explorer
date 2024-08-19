@@ -65,13 +65,13 @@ namespace DCL.Analytics.Systems
                 ["quality_level"] = QualitySettings.names[QualitySettings.GetQualityLevel()],
                 ["player_count"] = 0, // TODO (Vit): How many users where nearby the current user
 
-                ["used_jsheap_size"] = v8EngineFactory.GetTotalJsHeapSize(),
+                ["used_jsheap_size"] = (float)BytesFormatter.Convert(v8EngineFactory.GetTotalJsHeapSizeInMB(), BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte),
                 ["v8_engines"] = v8EngineFactory.ActiveEnginesCount,
 
                 // Memory
-                ["total_used_memory"] = BytesFormatter.Convert((ulong)profiler.TotalUsedMemoryInBytes, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte),
-                ["system_used_memory"] = BytesFormatter.Convert((ulong)profiler.SystemUsedMemoryInBytes, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte),
-                ["gc_used_memory"] = BytesFormatter.Convert((ulong)profiler.GcUsedMemoryInBytes, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte),
+                ["total_used_memory"] = (float)BytesFormatter.Convert((ulong)profiler.TotalUsedMemoryInBytes, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte),
+                ["system_used_memory"] = (float)BytesFormatter.Convert((ulong)profiler.SystemUsedMemoryInBytes, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte),
+                ["gc_used_memory"] = (float)BytesFormatter.Convert((ulong)profiler.GcUsedMemoryInBytes, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte),
 
                 // MainThread
                 ["samples"] = mainThreadReport.Value.Samples,
