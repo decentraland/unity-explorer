@@ -7,6 +7,8 @@ using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.EmotesWheel;
 using DCL.FeatureFlags;
+using DCL.Input;
+using DCL.Input.Component;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Notifications.NewNotification;
 using DCL.PerformanceAndDiagnostics.DotNetLogging;
@@ -190,16 +192,14 @@ namespace Global.Dynamic
                 ct
             );
 
-            splashScreen.HideSplash();
             OpenDefaultUI(dynamicWorldContainer.MvcManager, ct);
+            splashScreen.HideSplash();
         }
 
         private static void OpenDefaultUI(IMVCManager mvcManager, CancellationToken ct)
         {
-            // TODO: all of these UIs should be part of a single canvas. We cannot make a proper layout by having them separately
-            mvcManager.ShowAsync(MainUIController.IssueCommand(), ct).Forget();
             mvcManager.ShowAsync(NewNotificationController.IssueCommand(), ct).Forget();
-            mvcManager.ShowAsync(PersistentEmoteWheelOpenerController.IssueCommand(), ct).Forget();
+            mvcManager.ShowAsync(MainUIController.IssueCommand(), ct).Forget();
         }
     }
 }
