@@ -8,6 +8,7 @@ using DCL.AvatarRendering.Emotes.Equipped;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.AvatarRendering.Wearables.ThirdParty;
 using DCL.Backpack.BackpackBus;
 using DCL.Browser;
 using DCL.CharacterPreview;
@@ -93,6 +94,7 @@ namespace Global.Dynamic
     {
         private ECSReloadScene? reloadSceneController;
         private LocalSceneDevelopmentController? localSceneDevelopmentController;
+        private ECSWearablesProvider? wearablesProvider;
 
         public IMVCManager MvcManager { get; private set; } = null!;
 
@@ -165,6 +167,11 @@ namespace Global.Dynamic
 
             IDebugContainerBuilder debugBuilder = dynamicWorldDependencies.DebugContainerBuilder;
 
+            // If we have many undesired delays when using the third-party providers, it might be useful to cache it at app's bootstrap
+            // So far, the chance of using it is quite low, so it's preferable to do it lazy avoiding extra requests & memory allocations
+            IThirdPartyNftProviderSource thirdPartyNftProviderSource = new RealmThirdPartyNftProviderSource(staticContainer.WebRequestsContainer.WebRequestController,
+                staticContainer.RealmData);
+
             var placesAPIService = new PlacesAPIService(new PlacesAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource));
             var mapPathEventBus = new MapPathEventBus();
             INotificationsBusController notificationsBusController = new NotificationsBusController();
@@ -211,7 +218,8 @@ namespace Global.Dynamic
             container.ParcelServiceContainer = parcelServiceContainer;
 
             var nftInfoAPIClient = new OpenSeaAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
-            var wearableCatalog = new WearableCatalog();
+            var wearableCatalog = new WearableCache();
+            container.wearablesProvider = new ECSWearablesProvider(identityCache);
             var characterPreviewFactory = new CharacterPreviewFactory(staticContainer.ComponentsContainer.ComponentPoolsRegistry);
             IWebBrowser webBrowser = bootstrapContainer.WebBrowser;
             ChatEntryConfigurationSO chatEntryConfiguration = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.ChatEntryConfiguration, ct)).Value;
@@ -312,6 +320,7 @@ namespace Global.Dynamic
                 parcelServiceContainer.TeleportController,
                 container.RoomHub,
                 remoteEntities,
+                bootstrapContainer.DecentralandUrlsSource,
                 staticContainer.GlobalWorldProxy,
                 container.LODContainer.RoadPlugin,
                 genesisTerrain,
@@ -369,7 +378,7 @@ namespace Global.Dynamic
             var chatCommandsFactory = new Dictionary<Regex, Func<IChatCommand>>
             {
                 { GoToChatCommand.REGEX, () => new GoToChatCommand(realmNavigator) },
-                { ChangeRealmChatCommand.REGEX, () => new ChangeRealmChatCommand(realmNavigator) },
+                { ChangeRealmChatCommand.REGEX, () => new ChangeRealmChatCommand(realmNavigator, bootstrapContainer.DecentralandUrlsSource) },
                 { DebugPanelChatCommand.REGEX, () => new DebugPanelChatCommand(debugBuilder) },
                 { ShowEntityInfoChatCommand.REGEX, () => new ShowEntityInfoChatCommand(worldInfoHub) },
                 { ClearChatCommand.REGEX, () => new ClearChatCommand(chatHistory) },
@@ -507,7 +516,9 @@ namespace Global.Dynamic
                     characterPreviewEventBus,
                     mapPathEventBus,
                     chatEntryConfiguration,
-                    backpackEventBus
+                    backpackEventBus,
+                    thirdPartyNftProviderSource,
+                    container.wearablesProvider
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
@@ -594,6 +605,7 @@ namespace Global.Dynamic
         public void InitializeWorldRelatedModules(World world, Entity playerEntity)
         {
             reloadSceneController!.Initialize(world, playerEntity);
+            wearablesProvider!.Initialize(world);
         }
     }
 }

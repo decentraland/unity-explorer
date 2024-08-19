@@ -8,7 +8,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
     /// <summary>
     ///     Defines the functionalities for wearable catalog. Works like cache by storing instances of <see cref="IWearable" /> by string keys.
     /// </summary>
-    public interface IWearableCatalog
+    public interface IWearableCache
     {
         /// <summary>
         ///     Retrieves a wearable by its DTO or adds a new one if it doesn't exist.

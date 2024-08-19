@@ -1,7 +1,7 @@
 using CommunicationData.URLHelpers;
 using System.Text.RegularExpressions;
 
-namespace ECS.SceneLifeCycle.Realm
+namespace DCL.CommunicationData.URLHelpers
 {
     public static class EnsExtensions
     {
