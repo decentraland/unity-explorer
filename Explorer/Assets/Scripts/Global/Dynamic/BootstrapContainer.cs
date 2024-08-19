@@ -2,6 +2,7 @@
 using DCL.AssetsProvision;
 using DCL.Browser;
 using DCL.Browser.DecentralandUrls;
+using DCL.CommandLine;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PerformanceAndDiagnostics.Analytics;
@@ -33,6 +34,7 @@ namespace Global.Dynamic
         public IWeb3VerifiedAuthenticator? Web3Authenticator { get; private set; }
         public IAnalyticsController? Analytics { get; private set; }
         public IDebugSettings DebugSettings { get; private set; }
+        public ICommandLineArgs CommandLineArgs { get; private set; }
         public IReportsHandlingSettings ReportHandlingSettings => reportHandlingSettings.Value;
         public ApplicationParametersParser ApplicationParametersParser { get; private set; }
 
@@ -66,13 +68,15 @@ namespace Global.Dynamic
                 WebBrowser = browser,
                 ApplicationParametersParser = appParametersParser,
                 DebugSettings = debugSettings,
+                CommandLineArgs = new CommandLineArgs(),
+                LocalSceneDevelopment = appParametersParser.LocalSceneDevelopment || launchSettings.StartingRealmUrl(decentralandUrlsSource) == IRealmNavigator.LOCALHOST,
             };
 
             await bootstrapContainer.InitializeContainerAsync<BootstrapContainer, BootstrapSettings>(settingsContainer, ct, async container =>
             {
                 container.reportHandlingSettings = await ProvideReportHandlingSettingsAsync(container.AssetsProvisioner!, container.settings, ct);
-                (container.Bootstrap, container.Analytics) = await CreateBootstrapperAsync(debugSettings, container, container.settings, appParametersParser, realmLaunchSettings, ct);
-                (container.IdentityCache, container.VerifiedEthereumApi, container.Web3Authenticator) = CreateWeb3Dependencies(sceneLoaderSettings, browser, container, decentralandUrlsSource);
+                (container.Bootstrap, container.Analytics) = await CreateBootstrapperAsync(debugSettings, container.CommandLineArgs, appParametersParser, container, container.settings, ct);
+                (container.IdentityCache, container.VerifiedEthereumApi, container.Web3Authenticator) = CreateWeb3Dependencies(sceneLoaderSettings, browser, container);
 
                 container.diagnosticsContainer = container.enableAnalytics
                     ? DiagnosticsContainer.Create(container.ReportHandlingSettings, realmLaunchSettings.IsLocalSceneDevelopmentRealm, (ReportHandler.DebugLog, new CriticalLogsAnalyticsHandler(container.Analytics)))
@@ -82,16 +86,17 @@ namespace Global.Dynamic
             return bootstrapContainer;
         }
 
-        private static async UniTask<(IBootstrap, IAnalyticsController?)> CreateBootstrapperAsync(IDebugSettings debugSettings,
-            BootstrapContainer container, BootstrapSettings bootstrapSettings,
+        private static async UniTask<(IBootstrap, IAnalyticsController)> CreateBootstrapperAsync(IDebugSettings debugSettings,
+            ICommandLineArgs commandLineArgs,
             ApplicationParametersParser applicationParametersParser,
-            RealmLaunchSettings realmLaunchSettings,
+            BootstrapContainer container,
+            BootstrapSettings bootstrapSettings,
             CancellationToken ct)
         {
             AnalyticsConfiguration analyticsConfig = (await container.AssetsProvisioner.ProvideMainAssetAsync(bootstrapSettings.AnalyticsConfigRef, ct)).Value;
             container.enableAnalytics = analyticsConfig.Mode != AnalyticsMode.DISABLED;
 
-            var coreBootstrap = new Bootstrap(debugSettings, applicationParametersParser, realmLaunchSettings)
+            var coreBootstrap = new Bootstrap(debugSettings, commandLineArgs, applicationParametersParser, container.DecentralandUrlsSource)
             {
                 EnableAnalytics = container.enableAnalytics,
             };

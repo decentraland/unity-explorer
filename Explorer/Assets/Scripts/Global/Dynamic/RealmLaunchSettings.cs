@@ -1,4 +1,5 @@
-﻿using DCL.CommunicationData.URLHelpers;
+using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.CommunicationData.URLHelpers;
 using ECS.SceneLifeCycle.Realm;
 using System;
 using System.Collections.Generic;
@@ -58,14 +59,15 @@ namespace Global.Dynamic
             return new HybridSceneParams();
         }
 
+        // TODO: add decentraland urls as param
         public string? GetLocalSceneDevelopmentRealm() =>
             IsLocalSceneDevelopmentRealm ? GetStartingRealm() : null;
 
-        public string GetStartingRealm()
+        public string GetStartingRealm(IDecentralandUrlsSource decentralandUrlsSource)
         {
             return initialRealm switch
                    {
-                       InitialRealm.GenesisCity => IRealmNavigator.GENESIS_URL,
+                       InitialRealm.GenesisCity => decentralandUrlsSource.Url(DecentralandUrl.Genesis),
                        InitialRealm.SDK => IRealmNavigator.SDK_TEST_SCENES_URL,
                        InitialRealm.Goerli => IRealmNavigator.GOERLI_URL,
                        InitialRealm.StreamingWorld => IRealmNavigator.STREAM_WORLD_URL,
@@ -73,7 +75,7 @@ namespace Global.Dynamic
                        InitialRealm.World => IRealmNavigator.WORLDS_DOMAIN + "/" + targetWorld,
                        InitialRealm.Localhost => IRealmNavigator.LOCALHOST,
                        InitialRealm.Custom => customRealm,
-                       _ => IRealmNavigator.GENESIS_URL,
+                       _ => decentralandUrlsSource.Url(DecentralandUrl.Genesis),
                    };
         }
 
