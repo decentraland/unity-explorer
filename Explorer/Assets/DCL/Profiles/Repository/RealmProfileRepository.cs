@@ -22,6 +22,8 @@ namespace DCL.Profiles
         private readonly IProfileCache profileCache;
         private readonly URLBuilder urlBuilder = new ();
         private readonly Dictionary<string, byte[]> files = new ();
+        // Catalyst servers requires a face thumbnail texture of 256x256
+        // Otherwise it will fail when the profile is published
         private readonly byte[] whiteTexturePng = new Texture2D(256, 256).EncodeToPNG();
 
         public RealmProfileRepository(IWebRequestController webRequestController,
