@@ -312,6 +312,7 @@ namespace Global.Dynamic
                 parcelServiceContainer.TeleportController,
                 container.RoomHub,
                 remoteEntities,
+                bootstrapContainer.DecentralandUrlsSource,
                 staticContainer.GlobalWorldProxy,
                 container.LODContainer.RoadPlugin,
                 genesisTerrain,
@@ -369,7 +370,7 @@ namespace Global.Dynamic
             var chatCommandsFactory = new Dictionary<Regex, Func<IChatCommand>>
             {
                 { GoToChatCommand.REGEX, () => new GoToChatCommand(realmNavigator) },
-                { ChangeRealmChatCommand.REGEX, () => new ChangeRealmChatCommand(realmNavigator) },
+                { ChangeRealmChatCommand.REGEX, () => new ChangeRealmChatCommand(realmNavigator, bootstrapContainer.DecentralandUrlsSource) },
                 { DebugPanelChatCommand.REGEX, () => new DebugPanelChatCommand(debugBuilder) },
                 { ShowEntityInfoChatCommand.REGEX, () => new ShowEntityInfoChatCommand(worldInfoHub) },
                 { ClearChatCommand.REGEX, () => new ClearChatCommand(chatHistory) },
