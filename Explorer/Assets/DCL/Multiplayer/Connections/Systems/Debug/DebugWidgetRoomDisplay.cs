@@ -18,13 +18,25 @@ namespace DCL.Multiplayer.Connections.Systems.Debug
 
         private readonly DebugWidgetVisibilityBinding visibilityBinding = new (true);
 
-        public DebugWidgetRoomDisplay(
+        public static bool TryCreate(
             string roomName,
             IConnectiveRoom connectiveRoom,
-            IDebugContainerBuilder debugBuilder, Action<DebugWidgetBuilder>? postBuildAction = null
-        ) : this(
-            connectiveRoom, debugBuilder.AddWidget(roomName)!, postBuildAction
-        ) { }
+            IDebugContainerBuilder debugBuilder,
+            Action<DebugWidgetBuilder>? postBuildAction,
+            out DebugWidgetRoomDisplay? display
+        )
+        {
+            var widget = debugBuilder.TryAddWidget(roomName);
+
+            if (widget == null)
+            {
+                display = null;
+                return false;
+            }
+
+            display = new DebugWidgetRoomDisplay(connectiveRoom, widget, postBuildAction);
+            return true;
+        }
 
         public DebugWidgetRoomDisplay(IConnectiveRoom connectiveRoom, DebugWidgetBuilder widgetBuilder, Action<DebugWidgetBuilder>? postBuildAction = null)
         {

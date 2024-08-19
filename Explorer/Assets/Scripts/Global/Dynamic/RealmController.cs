@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.CommunicationData.URLHelpers;
 using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.LOD.Components;
@@ -13,14 +14,12 @@ using DCL.WebRequests;
 using ECS;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Components;
-using ECS.SceneLifeCycle.Realm;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
 using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using DCL.LOD;
 using Unity.Mathematics;
 
 namespace Global.Dynamic
