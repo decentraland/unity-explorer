@@ -10,10 +10,13 @@ namespace DCL.Utilities
         /// <summary>
         /// Unity SphereCast with Debug gizmos.
         /// </summary>
-        public static bool SphereCast(Ray ray, float radius, out RaycastHit hitInfo, float maxDistance, int layerMask, QueryTriggerInteraction queryTriggerInteraction)
+        public static bool SphereCast(Ray ray, float radius, out RaycastHit hitInfo, float maxDistance, int layerMask,
+            QueryTriggerInteraction queryTriggerInteraction)
         {
             bool hasHit = Physics.SphereCast(ray, radius, out hitInfo, maxDistance, layerMask, queryTriggerInteraction);
-            if (Application.isEditor) DebugUtils.DrawRaycast(ray.origin, maxDistance, hasHit, hitInfo, radius);
+#if UNITY_EDITOR && DEBUG_RAYCAST
+            DebugUtils.DrawRaycast(ray.origin, maxDistance, hasHit, hitInfo, radius);
+#endif
             return hasHit;
         }
 
@@ -23,7 +26,9 @@ namespace DCL.Utilities
         public static bool Raycast(Ray ray, out RaycastHit hitInfo, float maxDistance, int layerMask, QueryTriggerInteraction queryTriggerInteraction)
         {
             bool hasHit = Physics.Raycast(ray, out hitInfo, maxDistance, layerMask, queryTriggerInteraction);
-            if (Application.isEditor) DebugUtils.DrawRaycast(ray.origin, maxDistance, hasHit, hitInfo, 0.1f);
+#if UNITY_EDITOR && DEBUG_RAYCAST
+            DebugUtils.DrawRaycast(ray.origin, maxDistance, hasHit, hitInfo, 0.1f);
+#endif
             return hasHit;
         }
     }

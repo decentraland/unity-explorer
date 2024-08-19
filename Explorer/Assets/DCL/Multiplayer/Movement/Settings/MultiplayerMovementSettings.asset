@@ -13,8 +13,7 @@ MonoBehaviour:
   m_Name: MultiplayerMovementSettings
   m_EditorClassIdentifier: 
   <InboxCount>k__BackingField: 0
-  <SendRules>k__BackingField:
-  - {fileID: 11400000, guid: edb22be6b5998b94d882122dd5227f2c, type: 2}
+  <SendRules>k__BackingField: []
   <SelfSending>k__BackingField: 0
   <Latency>k__BackingField: 0
   <LatencyJitter>k__BackingField: 0
