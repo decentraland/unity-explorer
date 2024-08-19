@@ -5,7 +5,6 @@ using DCL.Utilities.Extensions;
 using Microsoft.ClearScript;
 using Microsoft.ClearScript.JavaScript;
 using Microsoft.ClearScript.V8;
-using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis;
 using SceneRuntime.Apis.Modules.EngineApi;
 using SceneRuntime.ModuleHub;
@@ -22,6 +21,8 @@ namespace SceneRuntime
     {
         internal readonly V8ScriptEngine engine;
         private readonly IInstancePoolsProvider instancePoolsProvider;
+        private readonly SceneShortInfo sceneShortInfo;
+        private readonly V8EngineFactory engineFactory;
 
         private readonly JsApiBunch jsApiBunch;
 
@@ -37,12 +38,16 @@ namespace SceneRuntime
             (string validateCode, string jsInitCode) initCode,
             IReadOnlyDictionary<string, string> jsModules,
             IInstancePoolsProvider instancePoolsProvider,
-            SceneShortInfo sceneShortInfo
+            SceneShortInfo sceneShortInfo,
+            V8EngineFactory engineFactory
         )
         {
             this.instancePoolsProvider = instancePoolsProvider;
+            this.sceneShortInfo = sceneShortInfo;
+            this.engineFactory = engineFactory;
             resetableSource = new JSTaskResolverResetable();
-            engine = V8EngineFactory.Create();
+
+            engine = engineFactory.Create(sceneShortInfo);
             jsApiBunch = new JsApiBunch(engine);
 
             var moduleHub = new SceneModuleHub(engine);
@@ -92,7 +97,7 @@ namespace SceneRuntime
 
         public void Dispose()
         {
-            engine.Dispose();
+            engineFactory.DisposeEngine(sceneShortInfo, engine);
             jsApiBunch.Dispose();
         }
 

@@ -6,6 +6,7 @@ using DCL.Profiling;
 using DCL.Profiling.ECS;
 using ECS;
 using ECS.Abstract;
+using SceneRuntime;
 using Segment.Serialization;
 using UnityEngine;
 using World = Arch.Core.World;
@@ -23,14 +24,16 @@ namespace DCL.Analytics.Systems
         private readonly IAnalyticsController analytics;
         private readonly IRealmData realmData;
         private readonly IAnalyticsReportProfiler profiler;
+        private readonly V8EngineFactory v8EngineFactory;
         private readonly AnalyticsConfiguration config;
 
         private float lastReportTime;
 
-        public PerformanceAnalyticsSystem(World world, IAnalyticsController analytics, IRealmData realmData, IAnalyticsReportProfiler profiler) : base(world)
+        public PerformanceAnalyticsSystem(World world, IAnalyticsController analytics, IRealmData realmData, IAnalyticsReportProfiler profiler, V8EngineFactory v8EngineFactory) : base(world)
         {
             this.realmData = realmData;
             this.profiler = profiler;
+            this.v8EngineFactory = v8EngineFactory;
             this.analytics = analytics;
             config = analytics.Configuration;
         }
@@ -60,10 +63,10 @@ namespace DCL.Analytics.Systems
             {
                 // TODO (Vit): include more detailed quality information (renderFeatures, fog, etc). Probably from QualitySettingsAsset.cs
                 ["quality_level"] = QualitySettings.names[QualitySettings.GetQualityLevel()],
-
-                //["scenes_load_radius"] =
                 ["player_count"] = 0, // TODO (Vit): How many users where nearby the current user
-                ["used_jsheap_size"] = 0, // TODO (Vit): use V8ScriptEngine.GetRuntimeHeapInfo(). Get the ref from V8EngineFactory, but maybe expose it in upper level
+
+                ["used_jsheap_size"] = v8EngineFactory.GetTotalJsHeapSize(),
+                ["v8_engines"] = v8EngineFactory.ActiveEnginesCount,
 
                 // Memory
                 ["total_used_memory"] = BytesFormatter.Convert((ulong)profiler.TotalUsedMemoryInBytes, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte),

@@ -40,7 +40,7 @@ namespace DCL.PluginSystem.Global
             walkedDistanceAnalytics.Initialize();
 
             PlayerParcelChangedAnalyticsSystem.InjectToWorld(ref builder, analytics, realmData, scenesCache, arguments.PlayerEntity);
-            PerformanceAnalyticsSystem.InjectToWorld(ref builder, analytics, realmData, profiler);
+            PerformanceAnalyticsSystem.InjectToWorld(ref builder, analytics, realmData, profiler, arguments.V8EngineFactory);
             TimeSpentInWorldAnalyticsSystem.InjectToWorld(ref builder, analytics, realmData);
             BadgesHeightReachedSystem.InjectToWorld(ref builder, analytics, realmData, arguments.PlayerEntity);
             AnalyticsEmotesSystem.InjectToWorld(ref builder, analytics, realmData, arguments.PlayerEntity);

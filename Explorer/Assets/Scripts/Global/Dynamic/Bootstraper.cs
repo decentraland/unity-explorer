@@ -111,7 +111,8 @@ namespace Global.Dynamic
                     StartParcel = startingParcel,
                     EnableLandscape = debugSettings.EnableLandscape && !bootstrapContainer.LocalSceneDevelopment,
                     EnableLOD = debugSettings.EnableLOD && !bootstrapContainer.LocalSceneDevelopment,
-                    EnableAnalytics = EnableAnalytics, HybridSceneParams = launchSettings.CreateHybridSceneParams(startingParcel),
+                    EnableAnalytics = EnableAnalytics,
+                    HybridSceneParams = launchSettings.CreateHybridSceneParams(startingParcel),
                     LocalSceneDevelopmentRealm = bootstrapContainer.LocalSceneDevelopment ? launchSettings.StartingRealmUrl(decentralandUrlsSource) : string.Empty,
                     AppParameters = appParameters,
                 },
@@ -166,7 +167,7 @@ namespace Global.Dynamic
                 !bootstrapContainer.LocalSceneDevelopment
             );
 
-            (globalWorld, playerEntity) = dynamicWorldContainer.GlobalWorldFactory.Create(sceneSharedContainer.SceneFactory);
+            (globalWorld, playerEntity) = dynamicWorldContainer.GlobalWorldFactory.Create(sceneSharedContainer.SceneFactory, sceneSharedContainer.V8EngineFactory);
             dynamicWorldContainer.RealmController.GlobalWorld = globalWorld;
 
             staticContainer.DebugContainerBuilder.BuildWithFlex(debugUiRoot);

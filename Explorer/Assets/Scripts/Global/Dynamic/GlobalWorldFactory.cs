@@ -35,6 +35,7 @@ using System.Collections.Generic;
 using System.Threading;
 using DCL.LOD;
 using ECS.SceneLifeCycle.CurrentScene;
+using SceneRuntime;
 using SystemGroups.Visualiser;
 using Utility;
 
@@ -100,7 +101,7 @@ namespace Global.Dynamic
             physicsTickProvider = staticContainer.PhysicsTickProvider;
         }
 
-        public (GlobalWorld, Entity) Create(ISceneFactory sceneFactory)
+        public (GlobalWorld, Entity) Create(ISceneFactory sceneFactory, V8EngineFactory v8EngineFactory)
         {
             var world = World.Create();
 
@@ -169,7 +170,7 @@ namespace Global.Dynamic
 
             IEmoteProvider emoteProvider = new EcsEmoteProvider(world, realmData);
 
-            var pluginArgs = new GlobalPluginArguments(playerEntity, emoteProvider);
+            var pluginArgs = new GlobalPluginArguments(playerEntity, emoteProvider, v8EngineFactory);
 
             foreach (IDCLGlobalPlugin plugin in globalPlugins)
                 plugin.InjectToWorld(ref builder, pluginArgs);

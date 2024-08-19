@@ -20,12 +20,26 @@ namespace SceneRuntime.Factory.Tests
     {
         private readonly ISceneExceptionsHandler sceneExceptionsHandler = new RethrowSceneExceptionsHandler();
 
+        private V8EngineFactory engineFactory;
+
+        [SetUp]
+        public void SetUp()
+        {
+            engineFactory = new V8EngineFactory();
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            engineFactory.DisposeAll();
+        }
+
         [UnityTest]
         public IEnumerator CreateBySourceCode() =>
             UniTask.ToCoroutine(async () =>
             {
                 // Arrange
-                var factory = new SceneRuntimeFactory(TestWebRequestController.INSTANCE, new IRealmData.Fake());
+                var factory = new SceneRuntimeFactory(TestWebRequestController.INSTANCE, new IRealmData.Fake(), engineFactory);
 
                 var sourceCode = @"
                 const engineApi = require('~system/EngineApi')
@@ -58,7 +72,7 @@ namespace SceneRuntime.Factory.Tests
             UniTask.ToCoroutine(async () =>
             {
                 // Arrange
-                var factory = new SceneRuntimeFactory(TestWebRequestController.INSTANCE, new IRealmData.Fake());
+                var factory = new SceneRuntimeFactory(TestWebRequestController.INSTANCE, new IRealmData.Fake(), engineFactory);
                 var path = URLAddress.FromString($"file://{Application.dataPath + "/../TestResources/Scenes/Cube/cube.js"}");
 
                 // Act
@@ -81,14 +95,14 @@ namespace SceneRuntime.Factory.Tests
         public void WrapInModuleCommonJs()
         {
             // Arrange
-            var factory = new SceneRuntimeFactory(TestWebRequestController.INSTANCE, new IRealmData.Fake());
+            var factory = new SceneRuntimeFactory(TestWebRequestController.INSTANCE, new IRealmData.Fake(), engineFactory);
             var sourceCode = "console.log('Hello, world!');";
 
             // Act
             string moduleWrapper = factory.WrapInModuleCommonJs(sourceCode);
 
             // Assert: Check that the module compiles
-            V8EngineFactory.Create().Compile(moduleWrapper);
+            engineFactory.Create(new SceneShortInfo()).Compile(moduleWrapper);
         }
     }
 }

@@ -21,6 +21,7 @@ using NUnit.Framework;
 using SceneRunner.ECSWorld;
 using SceneRunner.Scene;
 using SceneRunner.Tests.TestUtils;
+using SceneRuntime;
 using SceneRuntime.Factory;
 using System.Threading;
 using System.Threading.Tasks;
@@ -35,10 +36,11 @@ namespace SceneRunner.Tests
         public void SetUp()
         {
             path = $"file://{Application.dataPath + "/../TestResources/Scenes/Cube/cube.js"}";
+            engineFactory = new V8EngineFactory();
 
             ECSWorldFacade ecsWorldFacade = TestSystemsWorld.Create();
 
-            sceneRuntimeFactory = new SceneRuntimeFactory(TestWebRequestController.INSTANCE, new IRealmData.Fake());
+            sceneRuntimeFactory = new SceneRuntimeFactory(TestWebRequestController.INSTANCE, new IRealmData.Fake(), engineFactory);
 
             ecsWorldFactory = Substitute.For<IECSWorldFactory>();
             ecsWorldFactory.CreateWorld(in Arg.Any<ECSWorldFactoryArgs>()).Returns(ecsWorldFacade);
@@ -71,7 +73,10 @@ namespace SceneRunner.Tests
         public void TearDown()
         {
             sceneFacade?.DisposeAsync().Forget();
+            engineFactory.DisposeAll();
         }
+
+        private V8EngineFactory engineFactory;
 
         private SceneRuntimeFactory sceneRuntimeFactory;
         private IECSWorldFactory ecsWorldFactory;
@@ -94,7 +99,7 @@ namespace SceneRunner.Tests
 
             Assert.IsNotNull(sceneFacade);
 
-            var deps = sceneFacadeImpl.deps;
+            SceneInstanceDependencies.WithRuntimeAndJsAPIBase deps = sceneFacadeImpl.deps;
 
             Assert.IsNotNull(deps.Runtime);
             Assert.IsNotNull(deps.RuntimeImplementation);

@@ -34,7 +34,7 @@ namespace SceneRuntime.Tests
         }
 
         private static SceneRuntimeFactory NewSceneRuntimeFactory() =>
-            new (TestWebRequestController.INSTANCE, new IRealmData.Fake());
+            new (TestWebRequestController.INSTANCE, new IRealmData.Fake(), new V8EngineFactory());
 
         [UnityTest]
         public IEnumerator EngineApi_GetState() =>
