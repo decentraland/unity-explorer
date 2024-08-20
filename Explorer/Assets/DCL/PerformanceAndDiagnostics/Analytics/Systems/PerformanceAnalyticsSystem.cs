@@ -6,6 +6,7 @@ using DCL.Profiling;
 using DCL.Profiling.ECS;
 using ECS;
 using ECS.Abstract;
+using ECS.SceneLifeCycle;
 using SceneRuntime;
 using Segment.Serialization;
 using UnityEngine;
@@ -25,15 +26,18 @@ namespace DCL.Analytics.Systems
         private readonly IRealmData realmData;
         private readonly IAnalyticsReportProfiler profiler;
         private readonly V8EngineFactory v8EngineFactory;
+        private readonly IScenesCache scenesCache;
         private readonly AnalyticsConfiguration config;
 
         private float lastReportTime;
 
-        public PerformanceAnalyticsSystem(World world, IAnalyticsController analytics, IRealmData realmData, IAnalyticsReportProfiler profiler, V8EngineFactory v8EngineFactory) : base(world)
+        public PerformanceAnalyticsSystem(World world, IAnalyticsController analytics, IRealmData realmData, IAnalyticsReportProfiler profiler, V8EngineFactory v8EngineFactory,
+            IScenesCache scenesCache) : base(world)
         {
             this.realmData = realmData;
             this.profiler = profiler;
             this.v8EngineFactory = v8EngineFactory;
+            this.scenesCache = scenesCache;
             this.analytics = analytics;
             config = analytics.Configuration;
         }
@@ -66,6 +70,9 @@ namespace DCL.Analytics.Systems
                 ["player_count"] = 0, // TODO (Vit): How many users where nearby the current user
 
                 ["used_jsheap_size"] = (float)BytesFormatter.Convert(v8EngineFactory.GetTotalJsHeapSizeInMB(), BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte),
+                ["current_scene_jsheap_size"] = scenesCache is { CurrentScene: { SceneStateProvider: { IsCurrent: true } } }
+                    ? BytesFormatter.Convert((ulong)v8EngineFactory.GetJsHeapSizeBySceneInfo(scenesCache.CurrentScene.Info), BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte)
+                    : -1,
                 ["v8_engines"] = v8EngineFactory.ActiveEnginesCount,
 
                 // Memory
