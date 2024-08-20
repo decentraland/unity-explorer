@@ -48,7 +48,7 @@ namespace Plugins.RustEthereum.SignServerWrap
                 fixed (byte* signature = buffer) { NativeMethods.SignServerSignMessage(message, signature); }
             }
 
-            return buffer.ToHex()!;
+            return buffer.ToHex(true)!;
         }
 
         public bool Verify(string message, string signature) =>
