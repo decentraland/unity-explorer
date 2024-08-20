@@ -1,7 +1,9 @@
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Web3.Abstract;
 using DCL.Web3.Accounts;
+using DCL.Web3.Accounts.Factory;
 using DCL.Web3.Chains;
 using DCL.Web3.Identities;
 using Newtonsoft.Json;
@@ -25,6 +27,7 @@ namespace DCL.Web3.Authenticators
         private readonly string signatureUrl;
         private readonly IWeb3IdentityCache identityCache;
         private readonly HashSet<string> whitelistMethods;
+        private readonly IWeb3AccountFactory accountFactory = new Web3AccountFactory();
 
         private SocketIO? webSocket;
         private UniTaskCompletionSource<SocketIOResponse>? signatureOutcomeTask;
@@ -101,7 +104,7 @@ namespace DCL.Web3.Authenticators
             {
                 await ConnectToServerAsync();
 
-                var ephemeralAccount = NethereumAccount.CreateRandom();
+                var ephemeralAccount = accountFactory.CreateRandomAccount();
 
                 // 1 week expiration day, just like unity-renderer
                 DateTime sessionExpiration = DateTime.UtcNow.AddDays(7);

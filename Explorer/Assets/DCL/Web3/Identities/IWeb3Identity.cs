@@ -1,4 +1,5 @@
-using DCL.Web3.Accounts;
+using DCL.Web3.Abstract;
+using DCL.Web3.Accounts.Factory;
 using DCL.Web3.Chains;
 using System;
 
@@ -16,10 +17,12 @@ namespace DCL.Web3.Identities
 
         class Random : IWeb3Identity
         {
+            private static readonly IWeb3AccountFactory ACCOUNT_FACTORY = new Web3AccountFactory();
+
             public Random(IWeb3Account? account = null) : this(
-                NethereumAccount.CreateRandom().Address,
+                ACCOUNT_FACTORY.CreateRandomAccount().Address,
                 DateTime.MaxValue,
-                account ?? NethereumAccount.CreateRandom(),
+                account ?? ACCOUNT_FACTORY.CreateRandomAccount(),
                 false,
                 AuthChain.Create()
             ) { }

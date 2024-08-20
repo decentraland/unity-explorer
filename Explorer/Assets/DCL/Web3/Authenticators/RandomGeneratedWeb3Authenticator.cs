@@ -1,5 +1,7 @@
 using Cysharp.Threading.Tasks;
+using DCL.Web3.Abstract;
 using DCL.Web3.Accounts;
+using DCL.Web3.Accounts.Factory;
 using DCL.Web3.Chains;
 using DCL.Web3.Identities;
 using System;
@@ -9,14 +11,16 @@ namespace DCL.Web3.Authenticators
 {
     public class RandomGeneratedWeb3Authenticator : IWeb3Authenticator
     {
+        private readonly IWeb3AccountFactory accountFactory = new Web3AccountFactory();
+
         public void Dispose()
         {
         }
 
         public UniTask<IWeb3Identity> LoginAsync(CancellationToken ct)
         {
-            var signer = NethereumAccount.CreateRandom();
-            var ephemeralAccount = NethereumAccount.CreateRandom();
+            var signer = accountFactory.CreateRandomAccount();
+            var ephemeralAccount = accountFactory.CreateRandomAccount();
             DateTime expiration = DateTime.Now.AddMinutes(600);
 
             var ephemeralMessage = $"Decentraland Login\nEphemeral address: {ephemeralAccount.Address}\nExpiration: {expiration:s}";

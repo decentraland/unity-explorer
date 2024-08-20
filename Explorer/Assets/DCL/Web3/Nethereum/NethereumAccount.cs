@@ -1,4 +1,5 @@
-﻿using Nethereum.Signer;
+﻿using DCL.Web3.Abstract;
+using Nethereum.Signer;
 
 namespace DCL.Web3.Accounts
 {
@@ -11,14 +12,14 @@ namespace DCL.Web3.Accounts
 
         public EthECKey Key => key;
 
-        public NethereumAccount(EthECKey key)
+        private NethereumAccount(EthECKey key)
         {
             this.key = key;
             Address = new Web3Address(key.GetPublicAddress());
         }
 
-        public static NethereumAccount CreateRandom() =>
-            new (EthECKey.GenerateKey());
+        public static NethereumAccount CreateForVerifyOnly(EthECKey key) =>
+            new (key);
 
         public string Sign(string message) =>
             signer.EncodeUTF8AndSign(message, key);

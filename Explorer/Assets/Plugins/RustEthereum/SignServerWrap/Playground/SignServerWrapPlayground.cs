@@ -1,3 +1,4 @@
+using DCL.Web3.Abstract;
 using DCL.Web3.Accounts;
 using Nethereum.Signer;
 using UnityEngine;
@@ -23,7 +24,7 @@ namespace Plugins.RustEthereum.SignServerWrap.Playground
         {
             var key = EthECKey.GenerateKey()!;
             rustEthereumAccount = new RustEthereumAccount(key);
-            nethereumAccount = new NethereumAccount(key);
+            nethereumAccount = NethereumAccount.CreateForVerifyOnly(key)!;
         }
 
         private void Update()

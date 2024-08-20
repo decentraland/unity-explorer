@@ -13,7 +13,7 @@ namespace Plugins.RustEthereum.SignServerWrap.Tests
         public void TestSign()
         {
             var key = new EthECKey(TEST_KEY);
-            var verifiedAccount = new NethereumAccount(key);
+            var verifiedAccount = NethereumAccount.CreateForVerifyOnly(key);
             string verifiedSignature = verifiedAccount.Sign(MESSAGE + MESSAGE + MESSAGE + MESSAGE);
 
             var testableAccount = new RustEthereumAccount(key);

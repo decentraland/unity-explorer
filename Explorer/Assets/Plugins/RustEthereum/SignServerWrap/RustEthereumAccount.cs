@@ -1,5 +1,6 @@
 using DCL.Utilities.Extensions;
 using DCL.Web3;
+using DCL.Web3.Abstract;
 using DCL.Web3.Accounts;
 using Nethereum.Hex.HexConvertors.Extensions;
 using Nethereum.Signer;
@@ -13,11 +14,9 @@ namespace Plugins.RustEthereum.SignServerWrap
 
         public Web3Address Address { get; }
 
-
-
         public RustEthereumAccount(EthECKey key)
         {
-            this.verifierAccount = new NethereumAccount(key);
+            this.verifierAccount = NethereumAccount.CreateForVerifyOnly(key);
 
             Address = new Web3Address(key.GetPublicAddress()!);
             byte[] bytes = key.GetPrivateKeyAsBytes().EnsureNotNull();
@@ -43,13 +42,10 @@ namespace Plugins.RustEthereum.SignServerWrap
 
             unsafe
             {
-                fixed (byte* signature = buffer)
-                {
-                    NativeMethods.SignServerSignMessage(message, signature);
-                }
+                fixed (byte* signature = buffer) { NativeMethods.SignServerSignMessage(message, signature); }
             }
 
-           return buffer.ToHex()!;
+            return buffer.ToHex()!;
         }
 
         public bool Verify(string message, string signature) =>

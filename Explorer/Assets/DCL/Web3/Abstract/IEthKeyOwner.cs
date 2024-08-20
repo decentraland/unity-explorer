@@ -1,6 +1,6 @@
 using Nethereum.Signer;
 
-namespace DCL.Web3.Accounts
+namespace DCL.Web3.Abstract
 {
     public interface IEthKeyOwner
     {
