@@ -27,7 +27,7 @@ MonoBehaviour:
   - rid: 892605770607624196
   - rid: 7615904969758605314
   - rid: 634089542387236867
-  - rid: 1970080021194735618
+  - rid: 1970080114618138626
   references:
     version: 2
     RefIds:
@@ -144,8 +144,8 @@ MonoBehaviour:
         <RaycastFrameBudgetMs>k__BackingField: 3
         <PlayerOriginRaycastMaxDistance>k__BackingField: 200
         <GlobalInputPropagationBucketThreshold>k__BackingField: 3
-    - rid: 1970080021194735618
-      type: {class: CameraDirectorPlugin/Settings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
+    - rid: 1970080114618138626
+      type: {class: MainCameraPlugin/Settings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
       data:
         VirtualCameraPrefab:
           m_AssetGUID: 4f24a591312ba473ab5ac65d6658cb94
