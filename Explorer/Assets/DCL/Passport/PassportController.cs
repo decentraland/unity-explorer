@@ -10,6 +10,7 @@ using DCL.Diagnostics;
 using DCL.Input;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Passport.Modules;
+using DCL.Passport.Modules.Badges;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.WebRequests;

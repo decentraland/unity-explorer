@@ -1,12 +1,12 @@
 using DCL.BadgesAPIService;
-using DCL.Passport.Fields;
+using DCL.Passport.Fields.Badges;
 using DCL.Passport.Utils;
 using DCL.UI;
 using DCL.WebRequests;
 using TMPro;
 using UnityEngine;
 
-namespace DCL.Passport.Modules
+namespace DCL.Passport.Modules.Badges
 {
     public class BadgeInfo_PassportModuleView : MonoBehaviour
     {

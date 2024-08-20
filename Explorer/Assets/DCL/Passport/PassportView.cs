@@ -1,6 +1,7 @@
 using DCL.CharacterPreview;
 using DCL.Passport.Modals;
 using DCL.Passport.Modules;
+using DCL.Passport.Modules.Badges;
 using DCL.UI;
 using MVC;
 using UnityEngine;

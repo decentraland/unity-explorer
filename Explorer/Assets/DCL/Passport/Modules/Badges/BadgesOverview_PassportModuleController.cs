@@ -1,7 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.BadgesAPIService;
 using DCL.Diagnostics;
-using DCL.Passport.Fields;
+using DCL.Passport.Fields.Badges;
 using DCL.Profiles;
 using DCL.WebRequests;
 using System;
@@ -11,7 +11,7 @@ using UnityEngine.Pool;
 using Utility;
 using Object = UnityEngine.Object;
 
-namespace DCL.Passport.Modules
+namespace DCL.Passport.Modules.Badges
 {
     public class BadgesOverview_PassportModuleController : IPassportModuleController
     {

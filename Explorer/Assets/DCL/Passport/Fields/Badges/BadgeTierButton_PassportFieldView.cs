@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-namespace DCL.Passport.Fields
+namespace DCL.Passport.Fields.Badges
 {
     public class BadgeTierButton_PassportFieldView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {

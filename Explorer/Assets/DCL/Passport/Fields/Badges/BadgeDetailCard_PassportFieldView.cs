@@ -7,7 +7,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-namespace DCL.Passport.Fields
+namespace DCL.Passport.Fields.Badges
 {
     public class BadgeDetailCard_PassportFieldView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
@@ -63,6 +63,8 @@ namespace DCL.Passport.Fields
 
         public BadgeInfo Model { get; private set; }
 
+        public bool IsSelected { get; private set; }
+
         private ImageController? imageController;
 
         public void ConfigureImageController(IWebRequestController webRequestController)
@@ -79,8 +81,11 @@ namespace DCL.Passport.Fields
         public void SetInvisible(bool isInvisible) =>
             SubContainerTransform.gameObject.SetActive(!isInvisible);
 
-        public void SetAsSelected(bool isSelected) =>
+        public void SetAsSelected(bool isSelected)
+        {
             SelectedOutline.SetActive(isSelected);
+            IsSelected = isSelected;
+        }
 
         public void Setup(BadgeInfo badgeInfo)
         {

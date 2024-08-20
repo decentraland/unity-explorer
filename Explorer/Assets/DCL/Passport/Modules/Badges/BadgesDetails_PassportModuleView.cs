@@ -1,8 +1,8 @@
-using DCL.Passport.Fields;
+using DCL.Passport.Fields.Badges;
 using DCL.UI;
 using UnityEngine;
 
-namespace DCL.Passport.Modules
+namespace DCL.Passport.Modules.Badges
 {
     public class BadgesDetails_PassportModuleView : MonoBehaviour
     {

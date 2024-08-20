@@ -1,7 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.BadgesAPIService;
 using DCL.Diagnostics;
-using DCL.Passport.Fields;
+using DCL.Passport.Fields.Badges;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI;
@@ -13,7 +13,7 @@ using UnityEngine.Pool;
 using Utility;
 using Object = UnityEngine.Object;
 
-namespace DCL.Passport.Modules
+namespace DCL.Passport.Modules.Badges
 {
     public class BadgesDetails_PassportModuleController : IPassportModuleController
     {
@@ -335,16 +335,7 @@ namespace DCL.Passport.Modules
         {
             var badgeDetailCard = badgeDetailCardsPool.Get();
             badgeDetailCard.Setup(badge);
-
-            badgeDetailCard.Button.onClick.AddListener(() =>
-            {
-                foreach (var instantiatedBadge in instantiatedBadgeDetailCards)
-                    foreach (var instantiateBadgeByCategory in instantiatedBadge.Value)
-                        instantiateBadgeByCategory.SetAsSelected(false);
-
-                badgeDetailCard.SetAsSelected(true);
-                badgeInfoModuleView.Setup(badge, isOwnProfile);
-            });
+            badgeDetailCard.Button.onClick.AddListener(() => { SelectBadgeCard(badgeDetailCard); });
 
             // Place badge into the corresponding category container
             foreach (var badgesCategoryContainer in instantiatedBadgesCategoryContainers)
@@ -361,6 +352,19 @@ namespace DCL.Passport.Modules
                 instantiatedBadgeDetailCards.Add(badge.category.ToLower(), new List<BadgeDetailCard_PassportFieldView>());
 
             instantiatedBadgeDetailCards[badge.category.ToLower()].Add(badgeDetailCard);
+        }
+
+        private void SelectBadgeCard(BadgeDetailCard_PassportFieldView badgeDetailCard)
+        {
+            if (badgeDetailCard.IsSelected)
+                return;
+
+            foreach (var instantiatedBadge in instantiatedBadgeDetailCards)
+                foreach (var instantiateBadgeByCategory in instantiatedBadge.Value)
+                    instantiateBadgeByCategory.SetAsSelected(false);
+
+            badgeDetailCard.SetAsSelected(true);
+            badgeInfoModuleView.Setup(badgeDetailCard.Model, isOwnProfile);
         }
 
         private void CreateEmptyDetailCards()

@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace DCL.Passport.Fields
+namespace DCL.Passport.Fields.Badges
 {
     public class BadgesCategoryContainer_PassportFieldView : MonoBehaviour
     {
