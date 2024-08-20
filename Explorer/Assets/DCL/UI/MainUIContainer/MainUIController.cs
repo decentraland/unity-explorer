@@ -1,7 +1,9 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Chat;
+using DCL.EmotesWheel;
 using DCL.Minimap;
 using DCL.SidebarBus;
+using DCL.UI.ConnectionStatusPanel;
 using DCL.UI.Sidebar;
 using DG.Tweening;
 using MVC;
@@ -52,6 +54,8 @@ namespace DCL.UI.MainUI
             mvcManager.ShowAsync(SidebarController.IssueCommand()).Forget();
             mvcManager.ShowAsync(MinimapController.IssueCommand()).Forget();
             mvcManager.ShowAsync(ChatController.IssueCommand()).Forget();
+            mvcManager.ShowAsync(ConnectionStatusPanelController.IssueCommand()).Forget();
+            mvcManager.ShowAsync(PersistentEmoteWheelOpenerController.IssueCommand()).Forget();
             showingSidebar = true;
         }
 

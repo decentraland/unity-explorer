@@ -1,6 +1,5 @@
 ﻿using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
-using DCL.AssetsProvision;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.World.Dependencies;
@@ -20,7 +19,7 @@ namespace DCL.PluginSystem.World
     public class MaterialsPlugin : IDCLWorldPlugin<MaterialsPlugin.Settings>
     {
         private readonly IPerformanceBudget capFrameTimeBudget;
-        private readonly IAssetsProvisioner assetsProvisioner;
+        private readonly MemoryBudget memoryBudgetProvider;
 
         private readonly IExtendedObjectPool<Texture2D> videoTexturePool;
 
@@ -30,13 +29,11 @@ namespace DCL.PluginSystem.World
         private DestroyMaterial destroyMaterial = null!;
 
         private int loadingAttemptsCount;
-        private readonly MemoryBudget memoryBudgetProvider;
 
-        public MaterialsPlugin(ECSWorldSingletonSharedDependencies sharedDependencies, IAssetsProvisioner assetsProvisioner, IExtendedObjectPool<Texture2D> videoTexturePool)
+        public MaterialsPlugin(ECSWorldSingletonSharedDependencies sharedDependencies, IExtendedObjectPool<Texture2D> videoTexturePool)
         {
             memoryBudgetProvider = sharedDependencies.MemoryBudget;
             capFrameTimeBudget = sharedDependencies.FrameTimeBudget;
-            this.assetsProvisioner = assetsProvisioner;
             this.videoTexturePool = videoTexturePool;
         }
 
