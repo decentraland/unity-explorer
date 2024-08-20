@@ -1,13 +1,14 @@
 using DCL.AvatarRendering.Wearables.Components;
+using System.Collections.Generic;
 
 namespace DCL.AvatarRendering.Wearables.Helpers
 {
     public struct WearablesResponse
     {
-        public readonly IWearable[] Wearables;
+        public readonly IReadOnlyList<IWearable> Wearables;
         public readonly int TotalAmount;
 
-        public WearablesResponse(IWearable[] wearables, int totalAmount)
+        public WearablesResponse(IReadOnlyList<IWearable> wearables, int totalAmount)
         {
             Wearables = wearables;
             TotalAmount = totalAmount;

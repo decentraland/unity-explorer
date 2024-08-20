@@ -61,8 +61,8 @@ namespace DCL.Profiling.ECS
             {
                 var version = new ElementBinding<string>(Application.version);
 
-                debugBuilder.AddWidget("Performance")
-                            .SetVisibilityBinding(visibilityBinding = new DebugWidgetVisibilityBinding(true))
+                debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.PERFORMANCE)
+                            ?.SetVisibilityBinding(visibilityBinding = new DebugWidgetVisibilityBinding(true))
                             .AddCustomMarker("Version:", version)
                             .AddCustomMarker("Frame rate:", fps = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("Min FPS last 1k frames:", minfps = new ElementBinding<string>(string.Empty))
@@ -76,8 +76,8 @@ namespace DCL.Profiling.ECS
                             .AddCustomMarker("CPU MainThread PresentWait:", cpuMainThreadPresentWaitTime = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("Bottleneck:", bottleneck = new ElementBinding<string>(string.Empty));
 
-                debugBuilder.AddWidget("Memory")
-                            .SetVisibilityBinding(memoryVisibilityBinding = new DebugWidgetVisibilityBinding(true))
+                debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.MEMORY)
+                            ?.SetVisibilityBinding(memoryVisibilityBinding = new DebugWidgetVisibilityBinding(true))
                             .AddSingleButton("Resources.UnloadUnusedAssets", () => Resources.UnloadUnusedAssets())
                             .AddSingleButton("GC.Collect", GC.Collect)
                             .AddCustomMarker("Total Used Memory [MB]:", usedMemory = new ElementBinding<string>(string.Empty))

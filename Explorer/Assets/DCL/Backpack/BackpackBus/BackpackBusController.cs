@@ -13,7 +13,7 @@ namespace DCL.Backpack.BackpackBus
 {
     public class BackpackBusController : IDisposable
     {
-        private readonly IWearableCatalog wearableCatalog;
+        private readonly IWearableCache wearableCache;
         private readonly IBackpackEventBus backpackEventBus;
         private readonly IBackpackCommandBus backpackCommandBus;
         private readonly IEquippedEmotes equippedEmotes;
@@ -23,14 +23,14 @@ namespace DCL.Backpack.BackpackBus
         private readonly IReadOnlyEquippedWearables equippedWearables;
 
         public BackpackBusController(
-            IWearableCatalog wearableCatalog,
+            IWearableCache wearableCache,
             IBackpackEventBus backpackEventBus,
             IBackpackCommandBus backpackCommandBus,
             IReadOnlyEquippedWearables equippedWearables,
             IEquippedEmotes equippedEmotes,
             IEmoteCache emoteCache)
         {
-            this.wearableCatalog = wearableCatalog;
+            this.wearableCache = wearableCache;
             this.backpackEventBus = backpackEventBus;
             this.backpackCommandBus = backpackCommandBus;
             this.equippedEmotes = equippedEmotes;
@@ -94,7 +94,7 @@ namespace DCL.Backpack.BackpackBus
 
         private void HandleSelectWearableCommand(BackpackSelectWearableCommand command)
         {
-            if (wearableCatalog.TryGetWearable(command.Id, out IWearable wearable))
+            if (wearableCache.TryGetWearable(command.Id, out IWearable wearable))
                 backpackEventBus.SendWearableSelect(wearable);
         }
 
@@ -106,7 +106,7 @@ namespace DCL.Backpack.BackpackBus
 
         private void HandleEquipWearableCommand(BackpackEquipWearableCommand command)
         {
-            if (!wearableCatalog.TryGetWearable(command.Id, out IWearable wearable))
+            if (!wearableCache.TryGetWearable(command.Id, out IWearable wearable))
             {
                 ReportHub.LogError(new ReportData(ReportCategory.WEARABLE), $"Cannot equip wearable, not found: {command.Id}");
                 return;
@@ -182,7 +182,7 @@ namespace DCL.Backpack.BackpackBus
 
         private void HandleUnEquipWearableCommand(BackpackUnEquipWearableCommand command)
         {
-            if (!wearableCatalog.TryGetWearable(command.Id, out IWearable? wearable))
+            if (!wearableCache.TryGetWearable(command.Id, out IWearable? wearable))
             {
                 ReportHub.LogError(new ReportData(ReportCategory.WEARABLE), $"Cannot un-equip wearable, not found: {command.Id}");
                 return;

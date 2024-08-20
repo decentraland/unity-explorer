@@ -17,4 +17,24 @@ namespace Utility.Types
         public static Result ErrorResult(string errorMessage) =>
             new (false, errorMessage);
     }
+
+    public readonly struct Result<T>
+    {
+        public readonly T Value;
+        public readonly string? ErrorMessage;
+
+        public bool Success => ErrorMessage == null;
+
+        private Result(T value, string? errorMessage)
+        {
+            this.Value = value;
+            this.ErrorMessage = errorMessage;
+        }
+
+        public static Result<T> SuccessResult(T value) =>
+            new (value, null);
+
+        public static Result<T> ErrorResult(string errorMessage) =>
+            new (default(T)!, errorMessage);
+    }
 }
