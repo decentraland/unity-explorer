@@ -43,7 +43,7 @@ namespace SceneRuntime.Apis.Modules.PortableExperiencesApi
         [PublicAPI("Used by StreamingAssets/Js/Modules/PortableExperiences.js")]
         public object Exit()
         {
-            try { return ExitAsync(cancellationTokenSource.Token).ReportAndRethrowException(exceptionsHandler).ToDisconnectedPromise(); }
+            try { return ExitAsync().ReportAndRethrowException(exceptionsHandler).ToDisconnectedPromise(); }
             catch (Exception e) { return Task.FromException(e).ToPromise(); }
         }
 
@@ -66,13 +66,13 @@ namespace SceneRuntime.Apis.Modules.PortableExperiencesApi
             if (!portableExperiencesController.CanKillPortableExperience(ens))
                 return new IPortableExperiencesController.ExitResponse { status = false };
 
-            return await portableExperiencesController.UnloadPortableExperienceByEnsAsync(ens, ct);
+            return portableExperiencesController.UnloadPortableExperienceByEns(ens);
         }
 
-        private async UniTask<IPortableExperiencesController.ExitResponse> ExitAsync(CancellationToken ct)
+        private async UniTask<IPortableExperiencesController.ExitResponse> ExitAsync()
         {
             await UniTask.SwitchToMainThread();
-            return await portableExperiencesController.UnloadPortableExperienceByEnsAsync(new ENS(sceneData.SceneEntityDefinition.id), ct);
+            return portableExperiencesController.UnloadPortableExperienceByEns(new ENS(sceneData.SceneEntityDefinition.id));
         }
 
         private List<IPortableExperiencesController.SpawnResponse> GetLoadedPortableExperiences(CancellationToken ct) =>

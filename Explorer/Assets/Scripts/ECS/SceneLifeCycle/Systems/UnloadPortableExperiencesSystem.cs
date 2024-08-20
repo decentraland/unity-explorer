@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using CommunicationData.URLHelpers;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
@@ -24,16 +25,16 @@ namespace ECS.SceneLifeCycle.Systems
         private void UnloadPortableExperienceRealm(in Entity entity, ref PortableExperienceComponent portableExperienceComponent)
         {
             //We start another query from here using the data from the px component to match all other entities that were created by this PX
-            UnloadLoadedPortableExperienceSceneQuery(World, portableExperienceComponent.Ens.ToString());
+            UnloadLoadedPortableExperienceSceneQuery(World, portableExperienceComponent.Ens);
             World.Remove<PortableExperienceRealmComponent, PortableExperienceComponent>(entity);
         }
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void UnloadLoadedPortableExperienceScene([Data] string sceneEntityId, in Entity entity, ref PortableExperienceComponent portableExperienceComponent)
+        private void UnloadLoadedPortableExperienceScene([Data] ENS sceneEntityId, in Entity entity, ref PortableExperienceComponent portableExperienceComponent)
         {
             //We only set to destroy those entities that have the same ens than the PX
-            if (portableExperienceComponent.Ens.ToString() == sceneEntityId) World.Add<DeleteEntityIntention>(entity);
+            if (portableExperienceComponent.Ens.Equals(sceneEntityId)) World.Add<DeleteEntityIntention>(entity);
         }
     }
 }

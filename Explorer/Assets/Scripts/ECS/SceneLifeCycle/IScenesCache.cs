@@ -1,5 +1,7 @@
 ﻿using DCL.Optimization.Pools;
+using ECS.SceneLifeCycle.SceneDefinition;
 using SceneRunner.Scene;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -9,6 +11,7 @@ namespace ECS.SceneLifeCycle
     {
         IReadOnlyCollection<ISceneFacade> Scenes { get; }
         IReadOnlyCollection<ISceneFacade> PortableExperiencesScenes { get; }
+        ISceneFacade? CurrentScene { get; }
 
         void Add(ISceneFacade sceneFacade, IReadOnlyList<Vector2Int> parcels);
 
@@ -29,18 +32,21 @@ namespace ECS.SceneLifeCycle
         void RemovePortableExperienceFacade(string sceneUrn);
 
         void ClearScenes(bool clearPortableExperiences = false);
+
+        void SetCurrentScene(ISceneFacade sceneFacade);
     }
 
     public class ScenesCache : IScenesCache
     {
         private readonly Dictionary<Vector2Int, ISceneFacade> scenesByParcels = new (PoolConstants.SCENES_COUNT * 2);
         private readonly HashSet<Vector2Int> nonRealSceneByParcel = new (PoolConstants.SCENES_COUNT * 2);
-        private readonly Dictionary<string, ISceneFacade> portableExperienceScenesByUrn = new (PoolConstants.SCENES_COUNT / 2);
+        private readonly Dictionary<string, ISceneFacade> portableExperienceScenesByUrn = new (PoolConstants.PORTABLE_EXPERIENCES_INITIAL_COUNT);
 
         private readonly HashSet<ISceneFacade> scenes = new (PoolConstants.SCENES_COUNT);
 
         public IReadOnlyCollection<ISceneFacade> Scenes => scenes;
         public IReadOnlyCollection<ISceneFacade> PortableExperiencesScenes => portableExperienceScenesByUrn.Values;
+        public ISceneFacade? CurrentScene { get; private set; }
 
         public void Add(ISceneFacade sceneFacade, IReadOnlyList<Vector2Int> parcels)
         {
@@ -99,6 +105,11 @@ namespace ECS.SceneLifeCycle
             nonRealSceneByParcel.Clear();
             if (clearPortableExperiences) portableExperienceScenesByUrn.Clear();
             scenes.Clear();
+        }
+
+        public void SetCurrentScene(ISceneFacade sceneFacade)
+        {
+            CurrentScene = sceneFacade;
         }
     }
 }

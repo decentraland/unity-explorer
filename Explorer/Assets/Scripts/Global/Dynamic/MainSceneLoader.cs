@@ -205,7 +205,7 @@ namespace Global.Dynamic
                 await bootstrap.UserInitializationAsync(dynamicWorldContainer!, globalWorld, playerEntity, splashScreen, ct);
 
                 //TODO: Implement loading this (or more addresses) from Unleash
-                if (debugSettings.portableExperiencesEnsToLoad != null && staticContainer != null)
+                if (debugSettings.portableExperiencesEnsToLoad != null)
                 {
                     foreach (string pxEns in debugSettings.portableExperiencesEnsToLoad)
                     {

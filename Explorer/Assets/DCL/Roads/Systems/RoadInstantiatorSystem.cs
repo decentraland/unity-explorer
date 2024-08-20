@@ -48,11 +48,9 @@ namespace DCL.Roads.Systems
         }
 
         [Query]
-        [None(typeof(DeleteEntityIntention))]
+        [None(typeof(DeleteEntityIntention), typeof(PortableExperienceComponent))]
         private void InstantiateRoad(ref RoadInfo roadInfo, ref SceneDefinitionComponent sceneDefinitionComponent, ref PartitionComponent partitionComponent)
         {
-            if (sceneDefinitionComponent.IsPortableExperience) return;
-
             if (!roadInfo.IsDirty) return;
 
             if (partitionComponent.IsBehind) return;

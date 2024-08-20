@@ -21,12 +21,8 @@ using GetSceneDefinition = ECS.SceneLifeCycle.SceneDefinition.GetSceneDefinition
 
 namespace PortableExperiences.Controller
 {
-    public class PortableExperiencesController : IPortableExperiencesController
+    public class ECSPortableExperiencesController : IPortableExperiencesController
     {
-        private static readonly QueryDescription GET_SCENE_DEFINITION = new QueryDescription().WithAll<GetSceneDefinition>();
-        private static readonly QueryDescription SCENE_DEFINITION_COMPONENT = new QueryDescription().WithAll<SceneDefinitionComponent>();
-
-
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IWebRequestController webRequestController;
         private readonly IScenesCache scenesCache;
@@ -37,7 +33,7 @@ namespace PortableExperiences.Controller
         public Dictionary<ENS, Entity> PortableExperienceEntities { get; } = new ();
         private World world => globalWorldProxy.Object;
 
-        public PortableExperiencesController(
+        public ECSPortableExperiencesController(
             ObjectProxy<World> world,
             IWeb3IdentityCache web3IdentityCache,
             IWebRequestController webRequestController,
@@ -84,22 +80,13 @@ namespace PortableExperiences.Controller
             Entity portableExperienceEntity = world.Create(new PortableExperienceRealmComponent(realmData, parentSceneName, isGlobalPortableExperience), new PortableExperienceComponent(ens));
             PortableExperienceEntities.Add(ens, portableExperienceEntity);
 
-            WaitToKill(ens).Forget();
-
             return new IPortableExperiencesController.SpawnResponse
                 { name = realmData.RealmName, ens = ens.ToString(), parent_cid = parentSceneName, pid = portableExperienceEntity.Id.ToString() };
         }
 
-        private async UniTaskVoid WaitToKill(ENS ens)
-        {
-            await UniTask.Delay(5000);
-            await UnloadPortableExperienceByEnsAsync(ens, CancellationToken.None);
-        }
-
-
         public bool CanKillPortableExperience(ENS ens)
         {
-            ISceneFacade currentSceneFacade = scenesCache.Scenes.FirstOrDefault(s => s.SceneStateProvider.IsCurrent);
+            ISceneFacade currentSceneFacade = scenesCache.CurrentScene;
             if (currentSceneFacade == null) return false;
 
             if (PortableExperienceEntities.TryGetValue(ens, out Entity portableExperienceEntity))
@@ -132,7 +119,7 @@ namespace PortableExperiences.Controller
             return spawnResponsesList;
         }
 
-        public async UniTask<IPortableExperiencesController.ExitResponse> UnloadPortableExperienceByEnsAsync(ENS ens, CancellationToken ct)
+        public IPortableExperiencesController.ExitResponse UnloadPortableExperienceByEns(ENS ens)
         {
             if (!ens.IsValid) throw new ArgumentException($"The provided ens {ens.ToString()} is invalid");
 
@@ -146,36 +133,6 @@ namespace PortableExperiences.Controller
             }
 
             return new IPortableExperiencesController.ExitResponse { status = false };
-        }
-
-        private void GetEntitiesToDestroy(string url, QueryDescription queryDescription, Func<Chunk, string, Entity> iterationFunc, ref List<Entity> entities)
-        {
-            Query query = world.Query(queryDescription);
-
-            foreach (Chunk chunk in query.GetChunkIterator())
-            {
-                Entity entity = iterationFunc.Invoke(chunk, url);
-
-                if (entity != Entity.Null) { entities.Add(entity); }
-            }
-        }
-
-        private Entity CheckGetSceneDefinitions(Chunk chunk, string url)
-        {
-            GetSceneDefinition first = chunk.GetFirst<GetSceneDefinition>();
-
-            if (first.IpfsPath.EntityId == url) { return chunk.Entity(0); }
-
-            return Entity.Null;
-        }
-
-        private Entity CheckSceneDefinitionComponents(Chunk chunk, string url)
-        {
-            SceneDefinitionComponent first = chunk.GetFirst<SceneDefinitionComponent>();
-
-            if (first.IpfsPath.EntityId == url) { return chunk.Entity(0); }
-
-            return Entity.Null;
         }
     }
 }

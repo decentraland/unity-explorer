@@ -181,7 +181,7 @@ namespace Global
             container.ExposedGlobalDataContainer = exposedGlobalDataContainer;
             container.WebRequestsContainer = WebRequestsContainer.Create(web3IdentityProvider, container.DebugContainerBuilder);
             container.PhysicsTickProvider = new PhysicsTickProvider();
-            container.PortableExperiencesController = new PortableExperiencesController(container.GlobalWorldProxy, web3IdentityProvider, container.WebRequestsContainer.WebRequestController, container.ScenesCache);
+            container.PortableExperiencesController = new ECSPortableExperiencesController(container.GlobalWorldProxy, web3IdentityProvider, container.WebRequestsContainer.WebRequestController, container.ScenesCache);
 
             container.FeatureFlagsCache = new FeatureFlagsCache();
 

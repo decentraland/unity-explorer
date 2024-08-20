@@ -78,6 +78,7 @@ namespace ECS.SceneLifeCycle.Systems
                 currentScene.SetIsCurrent(true);
 
             lastParcelProcessed = parcel;
+            scenesCache.SetCurrentScene(currentScene);
         }
 
         private void UpdateCurrentSceneInfo(Vector2Int parcel)
