@@ -63,6 +63,11 @@ namespace Global
 
             foreach (string uriQueryKey in uriQuery.AllKeys)
                 AppParameters[uriQueryKey] = uriQuery.Get(uriQueryKey);
+
+            // Patch for WinOS affecting the 'realm' parameter in deep links putting a '/' at the end
+            string realmParam = "realm";
+            if (AppParameters.TryGetValue(realmParam, out string? realmParamValue) && realmParamValue.EndsWith('/'))
+                AppParameters[realmParam] = realmParamValue.Remove(realmParamValue.Length - 1);
         }
     }
 }
