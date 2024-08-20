@@ -25,14 +25,15 @@ namespace DCL.ECSComponents {
       byte[] descriptorData = global::System.Convert.FromBase64String(
           string.Concat(
             "CjBkZWNlbnRyYWxhbmQvc2RrL2NvbXBvbmVudHMvdmlydHVhbF9jYW1lcmEu",
-            "cHJvdG8SG2RlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50cyJWCg9QQlZpcnR1",
-            "YWxDYW1lcmESGQoPdHJhbnNpdGlvbl90aW1lGAEgASgCSAASGgoQdHJhbnNp",
-            "dGlvbl9zcGVlZBgCIAEoAkgAQgwKCnRyYW5zaXRpb25CFKoCEURDTC5FQ1ND",
-            "b21wb25lbnRzYgZwcm90bzM="));
+            "cHJvdG8SG2RlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50cxo6ZGVjZW50cmFs",
+            "YW5kL3Nkay9jb21wb25lbnRzL2NvbW1vbi9jYW1lcmFfdHJhbnNpdGlvbi5w",
+            "cm90byJjCg9QQlZpcnR1YWxDYW1lcmESUAoSZGVmYXVsdF90cmFuc2l0aW9u",
+            "GAEgASgLMjQuZGVjZW50cmFsYW5kLnNkay5jb21wb25lbnRzLmNvbW1vbi5D",
+            "YW1lcmFUcmFuc2l0aW9uQhSqAhFEQ0wuRUNTQ29tcG9uZW50c2IGcHJvdG8z"));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
-          new pbr::FileDescriptor[] { },
+          new pbr::FileDescriptor[] { global::DCL.ECSComponents.CameraTransitionReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBVirtualCamera), global::DCL.ECSComponents.PBVirtualCamera.Parser, new[]{ "TransitionTime", "TransitionSpeed" }, new[]{ "Transition" }, null, null, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBVirtualCamera), global::DCL.ECSComponents.PBVirtualCamera.Parser, new[]{ "DefaultTransition" }, null, null, null, null)
           }));
     }
     #endregion
@@ -73,15 +74,7 @@ namespace DCL.ECSComponents {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public PBVirtualCamera(PBVirtualCamera other) : this() {
-      switch (other.TransitionCase) {
-        case TransitionOneofCase.TransitionTime:
-          TransitionTime = other.TransitionTime;
-          break;
-        case TransitionOneofCase.TransitionSpeed:
-          TransitionSpeed = other.TransitionSpeed;
-          break;
-      }
-
+      defaultTransition_ = other.defaultTransition_ != null ? other.defaultTransition_.Clone() : null;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -91,52 +84,16 @@ namespace DCL.ECSComponents {
       return new PBVirtualCamera(this);
     }
 
-    /// <summary>Field number for the "transition_time" field.</summary>
-    public const int TransitionTimeFieldNumber = 1;
-    /// <summary>
-    /// seconds
-    /// </summary>
+    /// <summary>Field number for the "default_transition" field.</summary>
+    public const int DefaultTransitionFieldNumber = 1;
+    private global::DCL.ECSComponents.CameraTransition defaultTransition_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public float TransitionTime {
-      get { return transitionCase_ == TransitionOneofCase.TransitionTime ? (float) transition_ : 0F; }
+    public global::DCL.ECSComponents.CameraTransition DefaultTransition {
+      get { return defaultTransition_; }
       set {
-        transition_ = value;
-        transitionCase_ = TransitionOneofCase.TransitionTime;
+        defaultTransition_ = value;
       }
-    }
-
-    /// <summary>Field number for the "transition_speed" field.</summary>
-    public const int TransitionSpeedFieldNumber = 2;
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public float TransitionSpeed {
-      get { return transitionCase_ == TransitionOneofCase.TransitionSpeed ? (float) transition_ : 0F; }
-      set {
-        transition_ = value;
-        transitionCase_ = TransitionOneofCase.TransitionSpeed;
-      }
-    }
-
-    private object transition_;
-    /// <summary>Enum of possible cases for the "transition" oneof.</summary>
-    public enum TransitionOneofCase {
-      None = 0,
-      TransitionTime = 1,
-      TransitionSpeed = 2,
-    }
-    private TransitionOneofCase transitionCase_ = TransitionOneofCase.None;
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public TransitionOneofCase TransitionCase {
-      get { return transitionCase_; }
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void ClearTransition() {
-      transitionCase_ = TransitionOneofCase.None;
-      transition_ = null;
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -154,9 +111,7 @@ namespace DCL.ECSComponents {
       if (ReferenceEquals(other, this)) {
         return true;
       }
-      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(TransitionTime, other.TransitionTime)) return false;
-      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(TransitionSpeed, other.TransitionSpeed)) return false;
-      if (TransitionCase != other.TransitionCase) return false;
+      if (!object.Equals(DefaultTransition, other.DefaultTransition)) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -164,9 +119,7 @@ namespace DCL.ECSComponents {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override int GetHashCode() {
       int hash = 1;
-      if (transitionCase_ == TransitionOneofCase.TransitionTime) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(TransitionTime);
-      if (transitionCase_ == TransitionOneofCase.TransitionSpeed) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(TransitionSpeed);
-      hash ^= (int) transitionCase_;
+      if (defaultTransition_ != null) hash ^= DefaultTransition.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -185,13 +138,9 @@ namespace DCL.ECSComponents {
     #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       output.WriteRawMessage(this);
     #else
-      if (transitionCase_ == TransitionOneofCase.TransitionTime) {
-        output.WriteRawTag(13);
-        output.WriteFloat(TransitionTime);
-      }
-      if (transitionCase_ == TransitionOneofCase.TransitionSpeed) {
-        output.WriteRawTag(21);
-        output.WriteFloat(TransitionSpeed);
+      if (defaultTransition_ != null) {
+        output.WriteRawTag(10);
+        output.WriteMessage(DefaultTransition);
       }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
@@ -203,13 +152,9 @@ namespace DCL.ECSComponents {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
-      if (transitionCase_ == TransitionOneofCase.TransitionTime) {
-        output.WriteRawTag(13);
-        output.WriteFloat(TransitionTime);
-      }
-      if (transitionCase_ == TransitionOneofCase.TransitionSpeed) {
-        output.WriteRawTag(21);
-        output.WriteFloat(TransitionSpeed);
+      if (defaultTransition_ != null) {
+        output.WriteRawTag(10);
+        output.WriteMessage(DefaultTransition);
       }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
@@ -221,11 +166,8 @@ namespace DCL.ECSComponents {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public int CalculateSize() {
       int size = 0;
-      if (transitionCase_ == TransitionOneofCase.TransitionTime) {
-        size += 1 + 4;
-      }
-      if (transitionCase_ == TransitionOneofCase.TransitionSpeed) {
-        size += 1 + 4;
+      if (defaultTransition_ != null) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(DefaultTransition);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -239,15 +181,12 @@ namespace DCL.ECSComponents {
       if (other == null) {
         return;
       }
-      switch (other.TransitionCase) {
-        case TransitionOneofCase.TransitionTime:
-          TransitionTime = other.TransitionTime;
-          break;
-        case TransitionOneofCase.TransitionSpeed:
-          TransitionSpeed = other.TransitionSpeed;
-          break;
+      if (other.defaultTransition_ != null) {
+        if (defaultTransition_ == null) {
+          DefaultTransition = new global::DCL.ECSComponents.CameraTransition();
+        }
+        DefaultTransition.MergeFrom(other.DefaultTransition);
       }
-
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
 
@@ -263,12 +202,11 @@ namespace DCL.ECSComponents {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
             break;
-          case 13: {
-            TransitionTime = input.ReadFloat();
-            break;
-          }
-          case 21: {
-            TransitionSpeed = input.ReadFloat();
+          case 10: {
+            if (defaultTransition_ == null) {
+              DefaultTransition = new global::DCL.ECSComponents.CameraTransition();
+            }
+            input.ReadMessage(DefaultTransition);
             break;
           }
         }
@@ -286,12 +224,11 @@ namespace DCL.ECSComponents {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
-          case 13: {
-            TransitionTime = input.ReadFloat();
-            break;
-          }
-          case 21: {
-            TransitionSpeed = input.ReadFloat();
+          case 10: {
+            if (defaultTransition_ == null) {
+              DefaultTransition = new global::DCL.ECSComponents.CameraTransition();
+            }
+            input.ReadMessage(DefaultTransition);
             break;
           }
         }

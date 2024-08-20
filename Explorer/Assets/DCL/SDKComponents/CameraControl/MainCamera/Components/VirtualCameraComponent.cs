@@ -1,6 +1,6 @@
 using Cinemachine;
 
-namespace DCL.SDKComponents.CameraControl.CameraDirector.Components
+namespace DCL.SDKComponents.CameraControl.MainCamera.Components
 {
     public struct VirtualCameraComponent
     {

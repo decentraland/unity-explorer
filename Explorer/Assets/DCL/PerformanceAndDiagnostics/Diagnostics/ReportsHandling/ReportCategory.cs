@@ -233,7 +233,7 @@ namespace DCL.Diagnostics
         /// <summary>
         ///     CameraDirector and VirtualCamera SDK components
         /// </summary>
-        public const string CAMERA_DIRECTOR = nameof(CAMERA_DIRECTOR);
+        public const string SDK_MAIN_CAMERA = nameof(SDK_MAIN_CAMERA);
 
         /// <summary>
         ///     Roads related systems

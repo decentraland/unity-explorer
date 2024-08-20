@@ -6,7 +6,7 @@ using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.ResourcesUnloading;
-using DCL.SDKComponents.CameraControl.CameraDirector.Systems;
+using DCL.SDKComponents.CameraControl.MainCamera.Systems;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Systems;
 using System;
@@ -18,12 +18,12 @@ using Object = UnityEngine.Object;
 
 namespace DCL.PluginSystem.World
 {
-    public class CameraDirectorPlugin : IDCLWorldPlugin<CameraDirectorPlugin.Settings>
+    public class MainCameraPlugin : IDCLWorldPlugin<MainCameraPlugin.Settings>
     {
         [Serializable]
         public class Settings : IDCLPluginSettings
         {
-            [field: Header(nameof(CameraDirectorPlugin) + "." + nameof(Settings))]
+            [field: Header(nameof(MainCameraPlugin) + "." + nameof(Settings))]
             [field: Space]
             [field: SerializeField]
             public AssetReferenceGameObject VirtualCameraPrefab;
@@ -34,7 +34,7 @@ namespace DCL.PluginSystem.World
         private readonly CacheCleaner cacheCleaner;
         private IComponentPool<CinemachineVirtualCamera>? virtualCameraPoolRegistry;
 
-        public CameraDirectorPlugin(
+        public MainCameraPlugin(
             IComponentPoolsRegistry poolsRegistry,
             IAssetsProvisioner assetsProvisioner,
             CacheCleaner cacheCleaner)
@@ -73,10 +73,10 @@ namespace DCL.PluginSystem.World
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
-            // finalizeWorldSystems.Add(CameraDirectorSystem.InjectToWorld(ref builder, virtualCameraPoolRegistry));
-            CameraDirectorSystem.InjectToWorld(ref builder, virtualCameraPoolRegistry, persistentEntities.Camera, sharedDependencies.EntitiesMap);
+            // finalizeWorldSystems.Add(MainCameraSystem.InjectToWorld(ref builder, virtualCameraPoolRegistry));
+            MainCameraSystem.InjectToWorld(ref builder, virtualCameraPoolRegistry, persistentEntities.Camera, sharedDependencies.EntitiesMap);
 
-            ResetDirtyFlagSystem<PBCameraDirector>.InjectToWorld(ref builder);
+            ResetDirtyFlagSystem<PBMainCamera>.InjectToWorld(ref builder);
             // ResetDirtyFlagSystem<PBVirtualCamera>.InjectToWorld(ref builder);
         }
 

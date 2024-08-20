@@ -7,7 +7,7 @@ using CRDT;
 using CrdtEcsBridge.Components.Transform;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
-using DCL.SDKComponents.CameraControl.CameraDirector.Components;
+using DCL.SDKComponents.CameraControl.MainCamera.Components;
 using DCL.Utilities;
 using ECS.Abstract;
 using ECS.Groups;
@@ -15,17 +15,17 @@ using ECS.LifeCycle;
 using ECS.Unity.Transforms.Components;
 using System.Collections.Generic;
 
-namespace DCL.SDKComponents.CameraControl.CameraDirector.Systems
+namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
 {
     [UpdateInGroup(typeof(SyncedInitializationFixedUpdateThrottledGroup))]
-    [LogCategory(ReportCategory.CAMERA_DIRECTOR)]
-    public partial class CameraDirectorSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
+    [LogCategory(ReportCategory.SDK_MAIN_CAMERA)]
+    public partial class MainCameraSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
         private readonly IComponentPool<CinemachineVirtualCamera> poolRegistry;
         private readonly Dictionary<CRDTEntity,Entity> entitiesMap;
         private readonly Entity cameraEntity;
 
-        public CameraDirectorSystem(
+        public MainCameraSystem(
             World world,
             IComponentPool<CinemachineVirtualCamera> poolRegistry,
             Entity cameraEntity,
@@ -38,8 +38,8 @@ namespace DCL.SDKComponents.CameraControl.CameraDirector.Systems
 
         protected override void Update(float t)
         {
-            SetupCameraDirectorQuery(World);
-            UpdateCameraDirectorQuery(World);
+            SetupMainCameraQuery(World);
+            UpdateMainCameraQuery(World);
 
             SetupVirtualCameraQuery(World);
 
@@ -48,24 +48,24 @@ namespace DCL.SDKComponents.CameraControl.CameraDirector.Systems
         }
 
         [Query]
-        private void UpdateCameraDirector(in Entity entity, ref CameraDirectorComponent cameraDirectorComponent, PBCameraDirector pbCameraDirector)
+        private void UpdateMainCamera(in Entity entity, ref MainCameraComponent mainCameraComponent, PBMainCamera pbMainCamera)
         {
             if (entity != cameraEntity) return;
 
             // Cannot check by pbComponent.IsDirty since the VirtualCamera may not yet be on the target CRDTEntity
             // when the pbComponent is dirty...
-            if (pbCameraDirector.VirtualCameraEntity == cameraDirectorComponent.virtualCameraCRDTEntity) return;
+            if (pbMainCamera.VirtualCameraEntity == mainCameraComponent.virtualCameraCRDTEntity) return;
 
-            CinemachineVirtualCamera? oldVirtualCamera = cameraDirectorComponent.virtualCameraInstance;
-            cameraDirectorComponent.virtualCameraInstance = null;
+            CinemachineVirtualCamera? oldVirtualCamera = mainCameraComponent.virtualCameraInstance;
+            mainCameraComponent.virtualCameraInstance = null;
 
-            if (pbCameraDirector.VirtualCameraEntity > 0)
+            if (pbMainCamera.VirtualCameraEntity > 0)
             {
-                int virtualCamCRDTEntity = (int)pbCameraDirector.VirtualCameraEntity;
+                int virtualCamCRDTEntity = (int)pbMainCamera.VirtualCameraEntity;
                 if (TryGetCinemachineVirtualCamera(virtualCamCRDTEntity, out var virtualCameraInstance))
                 {
-                    cameraDirectorComponent.virtualCameraCRDTEntity = virtualCamCRDTEntity;
-                    cameraDirectorComponent.virtualCameraInstance = virtualCameraInstance;
+                    mainCameraComponent.virtualCameraCRDTEntity = virtualCamCRDTEntity;
+                    mainCameraComponent.virtualCameraInstance = virtualCameraInstance;
                     virtualCameraInstance!.enabled = true;
                 }
             }
@@ -75,13 +75,13 @@ namespace DCL.SDKComponents.CameraControl.CameraDirector.Systems
         }
 
         [Query]
-        [All(typeof(PBCameraDirector))]
-        [None(typeof(CameraDirectorComponent))]
-        private void SetupCameraDirector(in Entity entity)
+        [All(typeof(PBMainCamera))]
+        [None(typeof(MainCameraComponent))]
+        private void SetupMainCamera(in Entity entity)
         {
             if (entity != cameraEntity) return;
 
-            World.Add(entity, new CameraDirectorComponent());
+            World.Add(entity, new MainCameraComponent());
         }
 
         [Query]

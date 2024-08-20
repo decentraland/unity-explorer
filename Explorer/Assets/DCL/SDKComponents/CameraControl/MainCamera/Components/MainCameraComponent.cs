@@ -1,13 +1,13 @@
 using Cinemachine;
 
-namespace DCL.SDKComponents.CameraControl.CameraDirector.Components
+namespace DCL.SDKComponents.CameraControl.MainCamera.Components
 {
-    public struct CameraDirectorComponent
+    public struct MainCameraComponent
     {
         internal CinemachineVirtualCamera? virtualCameraInstance;
         internal int virtualCameraCRDTEntity;
 
-        public CameraDirectorComponent(int virtualCamCRDTEntity = 0)
+        public MainCameraComponent(int virtualCamCRDTEntity = 0)
         {
             virtualCameraCRDTEntity = virtualCamCRDTEntity;
             virtualCameraInstance = null;

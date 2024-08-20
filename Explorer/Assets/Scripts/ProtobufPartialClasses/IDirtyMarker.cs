@@ -172,7 +172,7 @@ namespace DCL.ECSComponents
         public bool IsDirty { get; set; }
     }
 
-    public partial class PBCameraDirector : IDirtyMarker
+    public partial class PBMainCamera : IDirtyMarker
     {
         public bool IsDirty { get; set; }
     }
