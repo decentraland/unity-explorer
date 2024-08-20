@@ -6,6 +6,12 @@ namespace DCL.BadgesAPIService
     [Serializable]
     public class BadgesResponse
     {
+        public ProfileBadgesData data;
+    }
+
+    [Serializable]
+    public class ProfileBadgesData
+    {
         public List<BadgeData> achieved;
         public List<BadgeData> notAchieved;
     }
@@ -39,6 +45,7 @@ namespace DCL.BadgesAPIService
         public string description;
         public BadgeTierCriteria criteria;
         public string completedAt;
+        public string image;
     }
 
     [Serializable]

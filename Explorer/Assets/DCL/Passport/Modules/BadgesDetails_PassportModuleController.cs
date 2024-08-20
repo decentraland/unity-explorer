@@ -261,7 +261,7 @@ namespace DCL.Passport.Modules
             try
             {
                 view.LoadingSpinner.SetActive(true);
-                var badges = await badgesAPIClient.FetchBadgesAsync(walletId, isOwnProfile, 0, 0, ct);
+                var badges = await badgesAPIClient.FetchBadgesAsync(walletId, isOwnProfile, 0, ct);
 
                 foreach (var unlockedBadge in badges.unlocked)
                     CreateBadgeDetailCard(unlockedBadge);
