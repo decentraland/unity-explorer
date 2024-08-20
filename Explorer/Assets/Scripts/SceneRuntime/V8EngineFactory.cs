@@ -1,4 +1,5 @@
-﻿using DCL.Diagnostics;
+﻿using DCL.DebugUtilities;
+using DCL.Diagnostics;
 using Microsoft.ClearScript.V8;
 using System.Collections.Concurrent;
 
@@ -43,22 +44,46 @@ namespace SceneRuntime
                 engine.Dispose();
         }
 
-        public ulong GetTotalJsHeapSizeInMB()
+        public JsMemorySizeInfo GetEnginesSumMemoryData()
         {
-            ulong totalHeapSize = 0;
+            var totalHeapSize = new JsMemorySizeInfo();
 
             foreach (V8ScriptEngine? engine in activeEngines.Values)
-                totalHeapSize += engine.GetRuntimeHeapInfo().UsedHeapSize;
+            {
+                V8RuntimeHeapInfo? heapInfo = engine.GetRuntimeHeapInfo();
+                totalHeapSize.UsedHeapSize += heapInfo.UsedHeapSize;
+                totalHeapSize.TotalHeapSize += heapInfo.TotalHeapSize;
+                totalHeapSize.HeapSizeLimit += heapInfo.HeapSizeLimit;
+                totalHeapSize.TotalHeapSizeExecutable += heapInfo.TotalHeapSizeExecutable;
+            }
 
-            return  totalHeapSize;
+            totalHeapSize.HeapSizeLimit /= (ulong)activeEngines.Count;
+
+            totalHeapSize.UsedHeapSize = BytesFormatter.Convert(totalHeapSize.UsedHeapSize, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte);
+            totalHeapSize.TotalHeapSize = BytesFormatter.Convert(totalHeapSize.TotalHeapSize, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte);
+
+            return totalHeapSize;
         }
 
-        public long GetJsHeapSizeBySceneInfo(SceneShortInfo sceneInfo)
-        {
-            if (activeEngines.TryGetValue(sceneInfo, out V8ScriptEngine? engine))
-                return (long)engine.GetRuntimeHeapInfo().UsedHeapSize;
+        public JsMemorySizeInfo GetEnginesMemoryDataForScene(SceneShortInfo sceneInfo) =>
+            activeEngines.TryGetValue(sceneInfo, out V8ScriptEngine? engine)
+                ? new JsMemorySizeInfo(engine.GetRuntimeHeapInfo())
+                : new JsMemorySizeInfo();
+    }
 
-            return -1;
+    public struct JsMemorySizeInfo
+    {
+        public float UsedHeapSize;
+        public float HeapSizeLimit;
+        public float TotalHeapSize;
+        public float TotalHeapSizeExecutable;
+
+        public JsMemorySizeInfo(V8RuntimeHeapInfo heapInfo)
+        {
+            UsedHeapSize = heapInfo.UsedHeapSize;
+            TotalHeapSize = heapInfo.TotalHeapSize;
+            HeapSizeLimit = heapInfo.HeapSizeLimit;
+            TotalHeapSizeExecutable = heapInfo.TotalHeapSizeExecutable;
         }
     }
 }

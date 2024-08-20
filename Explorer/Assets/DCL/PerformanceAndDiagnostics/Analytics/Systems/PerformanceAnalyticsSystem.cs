@@ -63,17 +63,27 @@ namespace DCL.Analytics.Systems
             if (!mainThreadReport.HasValue || !gpuFrameTimeReport.HasValue)
                 return;
 
+            bool isCurrentScene = scenesCache is { CurrentScene: { SceneStateProvider: { IsCurrent: true } } };
+            JsMemorySizeInfo totalJsMemoryData = v8EngineFactory.GetEnginesSumMemoryData();
+            JsMemorySizeInfo currentSceneJsMemoryData = isCurrentScene? v8EngineFactory.GetEnginesMemoryDataForScene(scenesCache.CurrentScene.Info) : new JsMemorySizeInfo();
+
             analytics.Track(General.PERFORMANCE_REPORT, new JsonObject
             {
                 // TODO (Vit): include more detailed quality information (renderFeatures, fog, etc). Probably from QualitySettingsAsset.cs
                 ["quality_level"] = QualitySettings.names[QualitySettings.GetQualityLevel()],
                 ["player_count"] = 0, // TODO (Vit): How many users where nearby the current user
 
-                ["used_jsheap_size"] = (float)BytesFormatter.Convert(v8EngineFactory.GetTotalJsHeapSizeInMB(), BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte),
-                ["current_scene_jsheap_size"] = scenesCache is { CurrentScene: { SceneStateProvider: { IsCurrent: true } } }
-                    ? BytesFormatter.Convert((ulong)v8EngineFactory.GetJsHeapSizeBySceneInfo(scenesCache.CurrentScene.Info), BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte)
-                    : -1,
-                ["v8_engines"] = v8EngineFactory.ActiveEnginesCount,
+                ["jsheap_used"] = (float)BytesFormatter.Convert(totalJsMemoryData.UsedHeapSize, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte),
+                ["jsheap_total"] = (float)BytesFormatter.Convert(totalJsMemoryData.TotalHeapSize, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte),
+                ["jsheap_total_executable"] = (float)BytesFormatter.Convert(totalJsMemoryData.TotalHeapSizeExecutable, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte),
+                ["jsheap_limit"] = (float)BytesFormatter.Convert(totalJsMemoryData.HeapSizeLimit, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte),
+
+                ["jsheap_used_current_scene"] = !isCurrentScene? -1f : (float)BytesFormatter.Convert(currentSceneJsMemoryData.UsedHeapSize, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte),
+                ["jsheap_total_current_scene"] = !isCurrentScene? -1f : (float)BytesFormatter.Convert(currentSceneJsMemoryData.TotalHeapSize, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte),
+                ["jsheap_total_executable_current_scene"] = !isCurrentScene? -1f : (float)BytesFormatter.Convert(currentSceneJsMemoryData.TotalHeapSizeExecutable, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte),
+                ["jsheap_limit_current_scene"] = !isCurrentScene? -1f : (float)BytesFormatter.Convert(currentSceneJsMemoryData.HeapSizeLimit, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte),
+
+                ["running_v8_engines"] = v8EngineFactory.ActiveEnginesCount,
 
                 // Memory
                 ["total_used_memory"] = (float)BytesFormatter.Convert((ulong)profiler.TotalUsedMemoryInBytes, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte),

@@ -38,8 +38,10 @@ namespace DCL.Profiling.ECS
         private ElementBinding<string> maxfps;
         private ElementBinding<string> usedMemory;
         private ElementBinding<string> gcUsedMemory;
+
         private ElementBinding<string> jsHeapSize;
         private ElementBinding<string> jsHeapSizeCurrentScene;
+
         private ElementBinding<string> jsEnginesCount;
 
         private ElementBinding<string> memoryCheckpoints;
@@ -112,10 +114,16 @@ namespace DCL.Profiling.ECS
         {
             usedMemory.Value = $"<color={GetMemoryUsageColor()}>{(ulong)BytesFormatter.Convert((ulong)memoryProfiler.TotalUsedMemoryInBytes, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte)}</color>";
             gcUsedMemory.Value = BytesFormatter.Convert((ulong)memoryProfiler.GcUsedMemoryInBytes, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte).ToString("F0", CultureInfo.InvariantCulture);
-            jsHeapSize.Value = BytesFormatter.Convert(v8EngineFactory.GetTotalJsHeapSizeInMB(), BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte).ToString("F0", CultureInfo.InvariantCulture);
+
+            bool isCurrentScene = scenesCache is { CurrentScene: { SceneStateProvider: { IsCurrent: true } } };
+            JsMemorySizeInfo totalJsMemoryData = v8EngineFactory.GetEnginesSumMemoryData();
+            JsMemorySizeInfo currentSceneJsMemoryData = isCurrentScene? v8EngineFactory.GetEnginesMemoryDataForScene(scenesCache.CurrentScene.Info) : new JsMemorySizeInfo();
+
+
+            jsHeapSize.Value =  BytesFormatter.Convert(v8EngineFactory.GetEnginesSumMemoryData(), BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte).ToString("F0", CultureInfo.InvariantCulture);
 
             jsHeapSizeCurrentScene.Value = scenesCache is { CurrentScene: { SceneStateProvider: { IsCurrent: true } } }
-                ? BytesFormatter.Convert((ulong)v8EngineFactory.GetJsHeapSizeBySceneInfo(scenesCache.CurrentScene.Info), BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte).ToString("F0", CultureInfo.InvariantCulture)
+                ? BytesFormatter.Convert((ulong)v8EngineFactory.GetEnginesMemoryDataForScene(scenesCache.CurrentScene.Info), BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte).ToString("F0", CultureInfo.InvariantCulture)
                 : string.Empty;
 
             jsEnginesCount.Value = v8EngineFactory.ActiveEnginesCount.ToString();
