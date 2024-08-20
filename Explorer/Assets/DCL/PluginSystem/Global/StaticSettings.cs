@@ -1,19 +1,13 @@
-﻿using Arch.SystemGroups;
-using Cysharp.Threading.Tasks;
-using DCL.AssetsProvision;
-using DCL.Character;
-using DCL.Diagnostics;
-using DCL.LOD;
+﻿using DCL.LOD;
 using DCL.Optimization.PerformanceBudgeting;
 using ECS.Prioritization;
 using System;
 using System.Collections.Generic;
 using DCL.Roads.Settings;
 using DCL.AvatarRendering;
-using DCL.MapRenderer;
-using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using UnityEngine.Profiling;
 
 namespace DCL.PluginSystem.Global
 {
@@ -30,8 +24,20 @@ namespace DCL.PluginSystem.Global
         // Performance budgeting
         [field: Header("Performance Budgeting")] [field: Space]
         [field: SerializeField]
-        public int FrameTimeCap { get; private set; } = 33; // in [ms]. Table: 33ms ~ 30fps | 16ms ~ 60fps | 11ms ~ 90 fps | 8ms ~ 120fps
+        private int frameTimeCap = 33; // in [ms]. Table: 33ms ~ 30fps | 16ms ~ 60fps | 11ms ~ 90 fps | 8ms ~ 120fps
+        [SerializeField]
+        private int frameTimeCapDeepProfiler = 300;
 
+        public int FrameTimeCap
+        {
+            get
+            {
+                bool isDeepProfiling = Profiler.enabled && Profiler.enableBinaryLog;
+                return isDeepProfiling ? frameTimeCapDeepProfiler : frameTimeCap;
+            }
+        }
+
+        [field: Space]
         [field: SerializeField]
         public int ScenesLoadingBudget { get; private set; } = 100;
 

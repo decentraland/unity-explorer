@@ -27,7 +27,7 @@ namespace DCL.ResourcesUnloading.Tests
         private IReleasablePerformanceBudget releasablePerformanceBudget;
 
         // Caches
-        private WearableCatalog wearableCatalog;
+        private WearableCache wearableCache;
         private WearableAssetsCache wearableAssetsCache;
         private TexturesCache texturesCache;
         private AudioClipsCache audioClipsCache;
@@ -50,7 +50,7 @@ namespace DCL.ResourcesUnloading.Tests
             assetBundleCache = new AssetBundleCache();
             gltfContainerAssetsCache = new GltfContainerAssetsCache();
             wearableAssetsCache = new WearableAssetsCache(100);
-            wearableCatalog = new WearableCatalog();
+            wearableCache = new WearableCache();
             lodAssets = new LODCache(new GameObjectPool<LODGroup>(new GameObject().transform));
             roadAssets = new RoadAssetsPool(new List<GameObject>());
 
@@ -61,7 +61,7 @@ namespace DCL.ResourcesUnloading.Tests
             cacheCleaner.Register(gltfContainerAssetsCache);
             cacheCleaner.Register(assetBundleCache);
             cacheCleaner.Register(wearableAssetsCache);
-            cacheCleaner.Register(wearableCatalog);
+            cacheCleaner.Register(wearableCache);
             cacheCleaner.Register(lodAssets);
             cacheCleaner.Register(roadAssets);
         }
@@ -76,7 +76,7 @@ namespace DCL.ResourcesUnloading.Tests
             assetBundleCache.Dispose();
             gltfContainerAssetsCache.Dispose();
             wearableAssetsCache.Dispose();
-            wearableCatalog.Unload(releasablePerformanceBudget);
+            wearableCache.Unload(releasablePerformanceBudget);
             lodAssets.Unload(releasablePerformanceBudget, 3);
             roadAssets.Unload(releasablePerformanceBudget, 3);
         }
@@ -145,7 +145,7 @@ namespace DCL.ResourcesUnloading.Tests
             // Assert
             Assert.That(texturesCache.cache.Count, Is.EqualTo(0));
             Assert.That(audioClipsCache.cache.Count, Is.EqualTo(0));
-            Assert.That(wearableCatalog.WearableAssetsInCatalog, Is.EqualTo(0));
+            Assert.That(wearableCache.WearableAssetsInCatalog, Is.EqualTo(0));
             Assert.That(wearableAssetsCache.cache.Count, Is.EqualTo(0));
             Assert.That(gltfContainerAssetsCache.cache.Count, Is.EqualTo(0));
             Assert.That(assetBundleCache.cache.Count, Is.EqualTo(0));
@@ -172,7 +172,7 @@ namespace DCL.ResourcesUnloading.Tests
             var wearableAsset = new WearableRegularAsset(new GameObject(), new List<WearableRegularAsset.RendererInfo>(10), assetBundleData);
             assetBundleData.AddReference();
             var wearable = new Wearable { WearableAssetResults = { [0] = new StreamableLoadingResult<WearableAssetBase>(wearableAsset) } };
-            wearableCatalog.AddWearable(hashID, wearable, true); // add to cache
+            wearableCache.AddWearable(hashID, wearable, true); // add to cache
 
             var cachedWearable = new CachedWearable(wearableAsset, new GameObject());
             wearableAsset.AddReference();

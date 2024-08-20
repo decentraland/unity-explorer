@@ -237,7 +237,10 @@ namespace Global.Dynamic
         {
             AssetPromise<SceneEntityDefinition, GetSceneDefinition>[] promises = await realmController.WaitForFixedScenePromisesAsync(ct);
 
-            if (!promises.Any(p => p.Result!.Value.Asset!.metadata.scene.DecodedParcels.Contains(parcelToTeleport)))
+            if (!promises.Any(p =>
+                    p.Result.HasValue
+                    && (p.Result.Value.Asset?.metadata.scene.DecodedParcels.Contains(parcelToTeleport) ?? false)
+                ))
                 parcelToTeleport = promises[0].Result!.Value.Asset!.metadata.scene.DecodedBase;
 
             WaitForSceneReadiness? waitForSceneReadiness = await teleportController.TeleportToSceneSpawnPointAsync(parcelToTeleport, processReport, ct);
