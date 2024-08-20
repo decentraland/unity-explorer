@@ -10,7 +10,6 @@ using DCL.PluginSystem;
 using DCL.Web3;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
-using ECS.SceneLifeCycle.Realm;
 using Segment.Analytics;
 using System;
 using System.Collections.Generic;
@@ -37,7 +36,7 @@ namespace Global.Dynamic
         public IDebugSettings DebugSettings { get; private set; }
         public ICommandLineArgs CommandLineArgs { get; private set; }
         public IReportsHandlingSettings ReportHandlingSettings => reportHandlingSettings.Value;
-        public bool LocalSceneDevelopment { get; private set; }
+        public ApplicationParametersParser ApplicationParametersParser { get; private set; }
 
         public override void Dispose()
         {
@@ -54,44 +53,50 @@ namespace Global.Dynamic
             DebugSettings debugSettings,
             DynamicSceneLoaderSettings sceneLoaderSettings,
             IPluginSettingsContainer settingsContainer,
-            RealmLaunchSettings launchSettings,
-            CancellationToken ct
-        )
+            RealmLaunchSettings realmLaunchSettings,
+            ApplicationParametersParser applicationParametersParser,
+            CancellationToken ct)
         {
             var decentralandUrlsSource = new DecentralandUrlsSource(sceneLoaderSettings.DecentralandEnvironment);
             var browser = new UnityAppWebBrowser(decentralandUrlsSource);
-            var appParametersParser = new ApplicationParametersParser(launchSettings);
+            var appParametersParser = applicationParametersParser;
 
             var bootstrapContainer = new BootstrapContainer
             {
                 AssetsProvisioner = new AddressablesProvisioner(),
                 DecentralandUrlsSource = decentralandUrlsSource,
                 WebBrowser = browser,
+                ApplicationParametersParser = appParametersParser,
                 DebugSettings = debugSettings,
                 CommandLineArgs = new CommandLineArgs(),
-                LocalSceneDevelopment = appParametersParser.LocalSceneDevelopment || launchSettings.StartingRealmUrl(decentralandUrlsSource) == IRealmNavigator.LOCALHOST,
             };
 
             await bootstrapContainer.InitializeContainerAsync<BootstrapContainer, BootstrapSettings>(settingsContainer, ct, async container =>
             {
                 container.reportHandlingSettings = await ProvideReportHandlingSettingsAsync(container.AssetsProvisioner!, container.settings, ct);
-                (container.Bootstrap, container.Analytics) = await CreateBootstrapperAsync(debugSettings, container.CommandLineArgs, container, container.settings, ct);
-                (container.IdentityCache, container.VerifiedEthereumApi, container.Web3Authenticator) = CreateWeb3Dependencies(sceneLoaderSettings, browser, container);
+                (container.Bootstrap, container.Analytics) = await CreateBootstrapperAsync(debugSettings, container.CommandLineArgs, appParametersParser, container, container.settings, realmLaunchSettings, ct);
+                (container.IdentityCache, container.VerifiedEthereumApi, container.Web3Authenticator) = CreateWeb3Dependencies(sceneLoaderSettings, browser, container, decentralandUrlsSource);
 
                 container.diagnosticsContainer = container.enableAnalytics
-                    ? DiagnosticsContainer.Create(container.ReportHandlingSettings, container.LocalSceneDevelopment, (ReportHandler.DebugLog, new CriticalLogsAnalyticsHandler(container.Analytics)))
-                    : DiagnosticsContainer.Create(container.ReportHandlingSettings, container.LocalSceneDevelopment);
+                    ? DiagnosticsContainer.Create(container.ReportHandlingSettings, realmLaunchSettings.IsLocalSceneDevelopmentRealm, (ReportHandler.DebugLog, new CriticalLogsAnalyticsHandler(container.Analytics)))
+                    : DiagnosticsContainer.Create(container.ReportHandlingSettings);
             });
 
             return bootstrapContainer;
         }
 
-        private static async UniTask<(IBootstrap, IAnalyticsController)> CreateBootstrapperAsync(IDebugSettings debugSettings, ICommandLineArgs commandLineArgs, BootstrapContainer container, BootstrapSettings bootstrapSettings, CancellationToken ct)
+        private static async UniTask<(IBootstrap, IAnalyticsController)> CreateBootstrapperAsync(IDebugSettings debugSettings,
+            ICommandLineArgs commandLineArgs,
+            ApplicationParametersParser applicationParametersParser,
+            BootstrapContainer container,
+            BootstrapSettings bootstrapSettings,
+            RealmLaunchSettings realmLaunchSettings,
+            CancellationToken ct)
         {
             AnalyticsConfiguration analyticsConfig = (await container.AssetsProvisioner.ProvideMainAssetAsync(bootstrapSettings.AnalyticsConfigRef, ct)).Value;
             container.enableAnalytics = analyticsConfig.Mode != AnalyticsMode.DISABLED;
 
-            var coreBootstrap = new Bootstrap(debugSettings, commandLineArgs, container.DecentralandUrlsSource)
+            var coreBootstrap = new Bootstrap(debugSettings, commandLineArgs, container.DecentralandUrlsSource, applicationParametersParser, realmLaunchSettings)
             {
                 EnableAnalytics = container.enableAnalytics,
             };
@@ -134,7 +139,8 @@ namespace Global.Dynamic
         }
 
         private static (LogWeb3IdentityCache identityCache, IVerifiedEthereumApi web3VerifiedAuthenticator, IWeb3VerifiedAuthenticator web3Authenticator)
-            CreateWeb3Dependencies(DynamicSceneLoaderSettings sceneLoaderSettings, IWebBrowser webBrowser, BootstrapContainer container)
+            CreateWeb3Dependencies(DynamicSceneLoaderSettings sceneLoaderSettings, IWebBrowser webBrowser, BootstrapContainer container,
+                IDecentralandUrlsSource decentralandUrlsSource)
         {
             var identityCache = new LogWeb3IdentityCache(
                 new ProxyIdentityCache(
@@ -147,8 +153,8 @@ namespace Global.Dynamic
 
             var dappWeb3Authenticator = new DappWeb3Authenticator(
                 webBrowser,
-                GetAuthUrl(sceneLoaderSettings.AuthWebSocketUrl, sceneLoaderSettings.AuthWebSocketUrlDev),
-                GetAuthUrl(sceneLoaderSettings.AuthSignatureUrl, sceneLoaderSettings.AuthSignatureUrlDev),
+                decentralandUrlsSource.Url(DecentralandUrl.ApiAuth),
+                decentralandUrlsSource.Url(DecentralandUrl.AuthSignature),
                 identityCache, new HashSet<string>(sceneLoaderSettings.Web3WhitelistMethods));
 
             IWeb3VerifiedAuthenticator coreWeb3Authenticator = new ProxyVerifiedWeb3Authenticator(dappWeb3Authenticator, identityCache);
@@ -157,10 +163,6 @@ namespace Global.Dynamic
                 coreWeb3Authenticator = new IdentityAnalyticsDecorator(coreWeb3Authenticator, container.Analytics!);
 
             return (identityCache, dappWeb3Authenticator, coreWeb3Authenticator);
-
-            // Allow devUrl only in DebugBuilds (Debug.isDebugBuild is always true in Editor)
-            string GetAuthUrl(string releaseUrl, string devUrl) =>
-                Application.isEditor || !Debug.isDebugBuild ? releaseUrl : devUrl;
         }
 
         public static async UniTask<ProvidedAsset<ReportsHandlingSettings>> ProvideReportHandlingSettingsAsync(IAssetsProvisioner assetsProvisioner, BootstrapSettings settings, CancellationToken ct)
