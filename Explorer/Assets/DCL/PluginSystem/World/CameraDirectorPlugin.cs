@@ -2,11 +2,13 @@ using Arch.SystemGroups;
 using Cinemachine;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.ResourcesUnloading;
 using DCL.SDKComponents.CameraControl.CameraDirector.Systems;
 using ECS.LifeCycle;
+using ECS.LifeCycle.Systems;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -50,8 +52,17 @@ namespace DCL.PluginSystem.World
         private async UniTask CreateVirtualCameraPoolAsync(Settings settings, CancellationToken ct)
         {
             CinemachineVirtualCamera virtualCameraPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.VirtualCameraPrefab, ct: ct)).Value.GetComponent<CinemachineVirtualCamera>();
-            virtualCameraPoolRegistry = poolsRegistry.AddGameObjectPool(() => Object.Instantiate(virtualCameraPrefab, Vector3.zero, Quaternion.identity), onRelease: OnPoolRelease, onGet: OnPoolGet);
+            virtualCameraPoolRegistry = poolsRegistry.AddGameObjectPool(() => InstantiateSDKVirtualCameraPrefab(virtualCameraPrefab), onRelease: OnPoolRelease, onGet: OnPoolGet);
             cacheCleaner.Register(virtualCameraPoolRegistry);
+        }
+
+        // Dedicated method to make sure the GO name is purged for the Cinemachine Transition Blends based on GO name
+        // TODO: Can we avoid this ???
+        private CinemachineVirtualCamera InstantiateSDKVirtualCameraPrefab(CinemachineVirtualCamera virtualCameraPrefab)
+        {
+            var instance = Object.Instantiate(virtualCameraPrefab, Vector3.zero, Quaternion.identity);
+            instance.name = instance.name.Replace("(Clone)", string.Empty);
+            return instance;
         }
 
         private static void OnPoolRelease(CinemachineVirtualCamera virtualCam) =>
@@ -62,11 +73,11 @@ namespace DCL.PluginSystem.World
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
-            // ResetDirtyFlagSystem<PBCameraDirector>.InjectToWorld(ref builder);
-            // ResetDirtyFlagSystem<PBVirtualCamera>.InjectToWorld(ref builder);
-
-            CameraDirectorSystem.InjectToWorld(ref builder, virtualCameraPoolRegistry);
             // finalizeWorldSystems.Add(CameraDirectorSystem.InjectToWorld(ref builder, virtualCameraPoolRegistry));
+            CameraDirectorSystem.InjectToWorld(ref builder, virtualCameraPoolRegistry, persistentEntities.Camera, sharedDependencies.EntitiesMap);
+
+            ResetDirtyFlagSystem<PBCameraDirector>.InjectToWorld(ref builder);
+            // ResetDirtyFlagSystem<PBVirtualCamera>.InjectToWorld(ref builder);
         }
 
         public void Dispose()
