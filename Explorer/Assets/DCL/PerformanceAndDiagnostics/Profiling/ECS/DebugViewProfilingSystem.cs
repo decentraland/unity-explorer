@@ -6,6 +6,8 @@ using DCL.DebugUtilities.UIBindings;
 using DCL.Optimization.PerformanceBudgeting;
 using ECS;
 using ECS.Abstract;
+using ECS.SceneLifeCycle;
+using ECS.SceneLifeCycle.CurrentScene;
 using SceneRuntime;
 using System;
 using System.Globalization;
@@ -24,6 +26,8 @@ namespace DCL.Profiling.ECS
         private readonly IDebugViewProfiler profiler;
         private readonly MemoryBudget memoryBudget;
         private readonly V8EngineFactory v8EngineFactory;
+        private readonly IScenesCache scenesCache;
+        private readonly CurrentSceneInfo currentSceneInfo;
 
         private DebugWidgetVisibilityBinding visibilityBinding;
         private DebugWidgetVisibilityBinding memoryVisibilityBinding;
@@ -35,18 +39,21 @@ namespace DCL.Profiling.ECS
         private ElementBinding<string> usedMemory;
         private ElementBinding<string> gcUsedMemory;
         private ElementBinding<string> jsHeapSize;
+        private ElementBinding<string> jsHeapSizeCurrentScene;
         private ElementBinding<string> jsEnginesCount;
 
         private ElementBinding<string> memoryCheckpoints;
 
         private int framesSinceMetricsUpdate;
 
-        private DebugViewProfilingSystem(World world, IRealmData realmData, IDebugViewProfiler profiler, MemoryBudget memoryBudget, IDebugContainerBuilder debugBuilder, V8EngineFactory v8EngineFactory) : base(world)
+        private DebugViewProfilingSystem(World world, IRealmData realmData, IDebugViewProfiler profiler, MemoryBudget memoryBudget, IDebugContainerBuilder debugBuilder,
+            V8EngineFactory v8EngineFactory, IScenesCache scenesCache) : base(world)
         {
             this.realmData = realmData;
             this.profiler = profiler;
             this.memoryBudget = memoryBudget;
             this.v8EngineFactory = v8EngineFactory;
+            this.scenesCache = scenesCache;
 
             CreateView();
             return;
@@ -69,7 +76,8 @@ namespace DCL.Profiling.ECS
                             .AddSingleButton("GC.Collect", GC.Collect)
                             .AddCustomMarker("Total Used Memory [MB]:", usedMemory = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("Gc Used Memory [MB]:", gcUsedMemory = new ElementBinding<string>(string.Empty))
-                            .AddCustomMarker("Js Heap Size [MB]:", jsHeapSize = new ElementBinding<string>(string.Empty))
+                            .AddCustomMarker("Js Heap Size (Total) [MB]:", jsHeapSize = new ElementBinding<string>(string.Empty))
+                            .AddCustomMarker("Js Heap Size (Current Scene) [MB]:", jsHeapSizeCurrentScene = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("Js Engines Count:", jsEnginesCount = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("Memory Budget Thresholds [MB]:", memoryCheckpoints = new ElementBinding<string>(string.Empty))
                             .AddSingleButton("Memory NORMAL", () => this.memoryBudget.SimulatedMemoryUsage = MemoryUsageStatus.Normal)
@@ -105,6 +113,11 @@ namespace DCL.Profiling.ECS
             usedMemory.Value = $"<color={GetMemoryUsageColor()}>{(ulong)BytesFormatter.Convert((ulong)memoryProfiler.TotalUsedMemoryInBytes, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte)}</color>";
             gcUsedMemory.Value = BytesFormatter.Convert((ulong)memoryProfiler.GcUsedMemoryInBytes, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte).ToString("F0", CultureInfo.InvariantCulture);
             jsHeapSize.Value = BytesFormatter.Convert(v8EngineFactory.GetTotalJsHeapSizeInMB(), BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte).ToString("F0", CultureInfo.InvariantCulture);
+
+            jsHeapSizeCurrentScene.Value = scenesCache is { CurrentScene: { SceneStateProvider: { IsCurrent: true } } }
+                ? BytesFormatter.Convert((ulong)v8EngineFactory.GetJsHeapSizeBySceneInfo(scenesCache.CurrentScene.Info), BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte).ToString("F0", CultureInfo.InvariantCulture)
+                : string.Empty;
+
             jsEnginesCount.Value = v8EngineFactory.ActiveEnginesCount.ToString();
 
             (float warning, float full) memoryRanges = memoryBudget.GetMemoryRanges();

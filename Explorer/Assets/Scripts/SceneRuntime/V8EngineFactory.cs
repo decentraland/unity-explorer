@@ -53,7 +53,7 @@ namespace SceneRuntime
             return  totalHeapSize;
         }
 
-        public long GetJsHeapSizeByEngineName(SceneShortInfo sceneInfo)
+        public long GetJsHeapSizeBySceneInfo(SceneShortInfo sceneInfo)
         {
             if (activeEngines.TryGetValue(sceneInfo, out V8ScriptEngine? engine))
                 return (long)engine.GetRuntimeHeapInfo().UsedHeapSize;
