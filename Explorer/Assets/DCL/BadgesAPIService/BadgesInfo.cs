@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using UnityEngine.Serialization;
 
 namespace DCL.BadgesAPIService
 {
@@ -20,11 +19,12 @@ namespace DCL.BadgesAPIService
         public string name;
         public string description;
         public string image;
-        public string awardedAt;
+        public string completedAt;
         public bool isTier;
-        public int totalProgress;
-        public int currentProgress;
-        public int currentTier;
+        public int nextTierTotalProgress;
+        public int nextTierCurrentProgress;
+        public int? lastCompletedTierIndex;
+        public int nextTierToCompleteIndex;
         public BadgeTierInfo[] tiers;
     }
 

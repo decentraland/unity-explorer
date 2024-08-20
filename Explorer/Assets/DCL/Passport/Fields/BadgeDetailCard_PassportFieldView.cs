@@ -88,15 +88,15 @@ namespace DCL.Passport.Fields
             BadgeNameText.text = badgeInfo.name;
             BadgeCategory = badgeInfo.category;
             BadgeImage.SetColor(badgeInfo.isLocked ? LockedBadgeImageColor : NonLockedBadgeImageColor);
-            BadgeDateText.text = !badgeInfo.isLocked ? PassportUtils.FormatTimestampDate(badgeInfo.awardedAt) : "--";
-            BadgeDateText.gameObject.SetActive((!badgeInfo.isLocked && (!badgeInfo.isTier || (badgeInfo.isTier && badgeInfo.currentProgress == badgeInfo.totalProgress))) || badgeInfo is { isLocked: true, isTier: false });
-            TopTierMark.SetActive(badgeInfo.isTier && badgeInfo.currentProgress == badgeInfo.totalProgress);
-            NextTierTitle.SetActive(!badgeInfo.isLocked && badgeInfo.isTier && badgeInfo.currentProgress < badgeInfo.totalProgress);
-            ProgressBar.gameObject.SetActive(badgeInfo.isTier && badgeInfo.currentProgress < badgeInfo.totalProgress);
+            BadgeDateText.text = !string.IsNullOrEmpty(badgeInfo.completedAt) ? PassportUtils.FormatTimestampDate(badgeInfo.completedAt) : "--";
+            BadgeDateText.gameObject.SetActive(!string.IsNullOrEmpty(badgeInfo.completedAt));
+            TopTierMark.SetActive(badgeInfo.isTier && !string.IsNullOrEmpty(badgeInfo.completedAt));
+            NextTierTitle.SetActive(badgeInfo is { isTier: true, nextTierCurrentProgress: > 0 } && string.IsNullOrEmpty(badgeInfo.completedAt));
+            ProgressBar.gameObject.SetActive(badgeInfo.isTier && string.IsNullOrEmpty(badgeInfo.completedAt));
 
             if (badgeInfo.isTier)
             {
-                int progressPercentage = badgeInfo.isLocked ? 0 : badgeInfo.currentProgress * 100 / badgeInfo.totalProgress;
+                int progressPercentage = badgeInfo.isLocked ? 0 : badgeInfo.nextTierCurrentProgress * 100 / badgeInfo.nextTierTotalProgress;
                 ProgressBarFill.sizeDelta = new Vector2((!badgeInfo.isLocked ? progressPercentage : 0) * (ProgressBar.sizeDelta.x / 100), ProgressBarFill.sizeDelta.y);
             }
 

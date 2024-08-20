@@ -6,35 +6,44 @@ namespace DCL.BadgesAPIService
     [Serializable]
     public class BadgesResponse
     {
-        public List<BadgeData> unlocked;
-        public List<BadgeData> locked;
+        public List<BadgeData> achieved;
+        public List<BadgeData> notAchieved;
     }
 
     [Serializable]
     public class BadgeData
     {
         public string id;
-        public bool isLocked;
-        public string category;
         public string name;
         public string description;
-        public string image;
-        public string awardedAt;
+        public string category;
         public bool isTier;
-        public int totalProgress;
-        public int currentProgress;
-        public int currentTier;
+        public string completedAt;
+        public BadgeProgressData progress;
         public BadgeTierData[] tiers;
+        public string image;
+    }
+
+    [Serializable]
+    public class BadgeProgressData
+    {
+        public int stepsDone;
+        public int? stepsTarget;
     }
 
     [Serializable]
     public class BadgeTierData
     {
-        public string id;
-        public bool isLocked;
-        public string name;
+        public string tierId;
+        public string tierName;
         public string description;
-        public string image;
-        public string awardedAt;
+        public BadgeTierCriteria criteria;
+        public string completedAt;
+    }
+
+    [Serializable]
+    public class BadgeTierCriteria
+    {
+        public int steps;
     }
 }

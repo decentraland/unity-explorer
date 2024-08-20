@@ -91,27 +91,27 @@ namespace DCL.Passport.Modules
             if (badgeInfo.tiers.Length == 0)
             {
                 BadgeNameText.text = badgeInfo.name;
-                BadgeDateText.text = !badgeInfo.isLocked ? $"Unlocked: {PassportUtils.FormatTimestampDate(badgeInfo.awardedAt)}" : "Locked";
+                BadgeDateText.text = !badgeInfo.isLocked ? $"Unlocked: {PassportUtils.FormatTimestampDate(badgeInfo.completedAt)}" : "Locked";
                 BadgeDescriptionText.text = badgeInfo.description;
             }
             else
-                SelectTier(0, badgeInfo);
+                SelectTier(badgeInfo.lastCompletedTierIndex ?? 0, badgeInfo);
         }
 
         public void SelectTier(int tierIndex, BadgeInfo badgeInfo)
         {
             var tier = badgeInfo.tiers[tierIndex];
-            BadgeTierInfo? nextTier = badgeInfo.currentTier < badgeInfo.tiers.Length - 1 ? badgeInfo.tiers[badgeInfo.currentTier + 1] : null;
-            BadgeNameText.text = tier.name;
+            var nextTierToComplete = badgeInfo.tiers[badgeInfo.nextTierToCompleteIndex];
+            BadgeNameText.text = $"{badgeInfo.name} {tier.name}";
             BadgeDateText.text = !tier.isLocked ? $"Unlocked: {PassportUtils.FormatTimestampDate(tier.awardedAt)}" : "Locked";
             BadgeDescriptionText.text = tier.description;
-            TopTierMark.SetActive(badgeInfo.currentProgress == badgeInfo.totalProgress);
-            NextTierContainer.SetActive(badgeInfo.currentProgress < badgeInfo.totalProgress);
-            NextTierValueText.text = nextTier != null ? nextTier.name : tier.name;
-            NextTierDescriptionText.text = nextTier != null ? nextTier.description : badgeInfo.description;
-            int tierProgressPercentage = tier.isLocked ? 0 : badgeInfo.currentProgress * 100 / badgeInfo.totalProgress;
-            NextTierProgressBarFill.sizeDelta = new Vector2((!tier.isLocked ? tierProgressPercentage : 0) * (NextTierProgressBar.sizeDelta.x / 100), NextTierProgressBarFill.sizeDelta.y);
-            NextTierProgressValueText.text = $"{badgeInfo.currentProgress}/{badgeInfo.totalProgress}";
+            TopTierMark.SetActive(!string.IsNullOrEmpty(badgeInfo.completedAt));
+            NextTierContainer.SetActive(string.IsNullOrEmpty(badgeInfo.completedAt) && badgeInfo.nextTierCurrentProgress > 0);
+            NextTierValueText.text = nextTierToComplete.name;
+            NextTierDescriptionText.text = nextTierToComplete.description;
+            int nextTierProgressPercentage = tier.isLocked ? 0 : badgeInfo.nextTierCurrentProgress * 100 / badgeInfo.nextTierTotalProgress;
+            NextTierProgressBarFill.sizeDelta = new Vector2((!tier.isLocked ? nextTierProgressPercentage : 0) * (NextTierProgressBar.sizeDelta.x / 100), NextTierProgressBarFill.sizeDelta.y);
+            NextTierProgressValueText.text = $"{badgeInfo.nextTierCurrentProgress}/{badgeInfo.nextTierTotalProgress}";
         }
 
         public void SetAsLoading(bool isLoading)
