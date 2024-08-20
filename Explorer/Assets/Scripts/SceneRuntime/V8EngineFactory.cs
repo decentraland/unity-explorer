@@ -46,23 +46,33 @@ namespace SceneRuntime
 
         public JsMemorySizeInfo GetEnginesSumMemoryData()
         {
-            var totalHeapSize = new JsMemorySizeInfo();
+            ulong usedHeapSize = 0;
+            ulong totalHeapSize = 0;
+            ulong heapSizeLimit = 0;
+            ulong totalHeapSizeExecutable = 0;
 
-            foreach (V8ScriptEngine? engine in activeEngines.Values)
+            if (activeEngines.Values.Count > 0)
             {
-                V8RuntimeHeapInfo? heapInfo = engine.GetRuntimeHeapInfo();
-                totalHeapSize.UsedHeapSize += heapInfo.UsedHeapSize;
-                totalHeapSize.TotalHeapSize += heapInfo.TotalHeapSize;
-                totalHeapSize.HeapSizeLimit += heapInfo.HeapSizeLimit;
-                totalHeapSize.TotalHeapSizeExecutable += heapInfo.TotalHeapSizeExecutable;
+                foreach (V8ScriptEngine? engine in activeEngines.Values)
+                {
+                    V8RuntimeHeapInfo? heapInfo = engine.GetRuntimeHeapInfo();
+
+                    usedHeapSize += heapInfo.UsedHeapSize;
+                    totalHeapSize += heapInfo.TotalHeapSize;
+                    heapSizeLimit += heapInfo.HeapSizeLimit;
+                    totalHeapSizeExecutable += heapInfo.TotalHeapSizeExecutable;
+                }
+
+                heapSizeLimit /= (ulong)activeEngines.Count;
             }
 
-            totalHeapSize.HeapSizeLimit /= (ulong)activeEngines.Count;
-
-            totalHeapSize.UsedHeapSize = BytesFormatter.Convert(totalHeapSize.UsedHeapSize, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte);
-            totalHeapSize.TotalHeapSize = BytesFormatter.Convert(totalHeapSize.TotalHeapSize, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte);
-
-            return totalHeapSize;
+            return new JsMemorySizeInfo
+            {
+                UsedHeapSizeMB = usedHeapSize.ByteToMB(),
+                TotalHeapSizeMB = totalHeapSize.ByteToMB(),
+                HeapSizeLimitMB = heapSizeLimit.ByteToMB(),
+                TotalHeapSizeExecutableMB = totalHeapSizeExecutable.ByteToMB(),
+            };
         }
 
         public JsMemorySizeInfo GetEnginesMemoryDataForScene(SceneShortInfo sceneInfo) =>
@@ -73,17 +83,17 @@ namespace SceneRuntime
 
     public struct JsMemorySizeInfo
     {
-        public float UsedHeapSize;
-        public float HeapSizeLimit;
-        public float TotalHeapSize;
-        public float TotalHeapSizeExecutable;
+        public float UsedHeapSizeMB;
+        public float HeapSizeLimitMB;
+        public float TotalHeapSizeMB;
+        public float TotalHeapSizeExecutableMB;
 
         public JsMemorySizeInfo(V8RuntimeHeapInfo heapInfo)
         {
-            UsedHeapSize = heapInfo.UsedHeapSize;
-            TotalHeapSize = heapInfo.TotalHeapSize;
-            HeapSizeLimit = heapInfo.HeapSizeLimit;
-            TotalHeapSizeExecutable = heapInfo.TotalHeapSizeExecutable;
+            UsedHeapSizeMB = heapInfo.UsedHeapSize.ByteToMB();
+            TotalHeapSizeMB = heapInfo.TotalHeapSize.ByteToMB();
+            HeapSizeLimitMB = heapInfo.HeapSizeLimit.ByteToMB();
+            TotalHeapSizeExecutableMB = heapInfo.TotalHeapSizeExecutable.ByteToMB();
         }
     }
 }

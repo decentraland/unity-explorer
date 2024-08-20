@@ -65,7 +65,7 @@ namespace DCL.Analytics.Systems
 
             bool isCurrentScene = scenesCache is { CurrentScene: { SceneStateProvider: { IsCurrent: true } } };
             JsMemorySizeInfo totalJsMemoryData = v8EngineFactory.GetEnginesSumMemoryData();
-            JsMemorySizeInfo currentSceneJsMemoryData = isCurrentScene? v8EngineFactory.GetEnginesMemoryDataForScene(scenesCache.CurrentScene.Info) : new JsMemorySizeInfo();
+            JsMemorySizeInfo currentSceneJsMemoryData = isCurrentScene ? v8EngineFactory.GetEnginesMemoryDataForScene(scenesCache.CurrentScene.Info) : new JsMemorySizeInfo();
 
             analytics.Track(General.PERFORMANCE_REPORT, new JsonObject
             {
@@ -73,22 +73,22 @@ namespace DCL.Analytics.Systems
                 ["quality_level"] = QualitySettings.names[QualitySettings.GetQualityLevel()],
                 ["player_count"] = 0, // TODO (Vit): How many users where nearby the current user
 
-                ["jsheap_used"] = (float)BytesFormatter.Convert(totalJsMemoryData.UsedHeapSize, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte),
-                ["jsheap_total"] = (float)BytesFormatter.Convert(totalJsMemoryData.TotalHeapSize, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte),
-                ["jsheap_total_executable"] = (float)BytesFormatter.Convert(totalJsMemoryData.TotalHeapSizeExecutable, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte),
-                ["jsheap_limit"] = (float)BytesFormatter.Convert(totalJsMemoryData.HeapSizeLimit, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte),
+                // JS runtime memory
+                ["jsheap_used"] = totalJsMemoryData.UsedHeapSizeMB,
+                ["jsheap_total"] = totalJsMemoryData.TotalHeapSizeMB,
+                ["jsheap_total_executable"] = totalJsMemoryData.TotalHeapSizeExecutableMB,
+                ["jsheap_limit"] = totalJsMemoryData.HeapSizeLimitMB,
 
-                ["jsheap_used_current_scene"] = !isCurrentScene? -1f : (float)BytesFormatter.Convert(currentSceneJsMemoryData.UsedHeapSize, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte),
-                ["jsheap_total_current_scene"] = !isCurrentScene? -1f : (float)BytesFormatter.Convert(currentSceneJsMemoryData.TotalHeapSize, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte),
-                ["jsheap_total_executable_current_scene"] = !isCurrentScene? -1f : (float)BytesFormatter.Convert(currentSceneJsMemoryData.TotalHeapSizeExecutable, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte),
-                ["jsheap_limit_current_scene"] = !isCurrentScene? -1f : (float)BytesFormatter.Convert(currentSceneJsMemoryData.HeapSizeLimit, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte),
+                ["jsheap_used_current_scene"] = !isCurrentScene ? -1f : currentSceneJsMemoryData.UsedHeapSizeMB,
+                ["jsheap_total_current_scene"] = !isCurrentScene ? -1f : currentSceneJsMemoryData.TotalHeapSizeMB,
+                ["jsheap_total_executable_current_scene"] = !isCurrentScene ? -1f : currentSceneJsMemoryData.TotalHeapSizeExecutableMB,
 
                 ["running_v8_engines"] = v8EngineFactory.ActiveEnginesCount,
 
                 // Memory
-                ["total_used_memory"] = (float)BytesFormatter.Convert((ulong)profiler.TotalUsedMemoryInBytes, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte),
-                ["system_used_memory"] = (float)BytesFormatter.Convert((ulong)profiler.SystemUsedMemoryInBytes, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte),
-                ["gc_used_memory"] = (float)BytesFormatter.Convert((ulong)profiler.GcUsedMemoryInBytes, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte),
+                ["total_used_memory"] = ((ulong)profiler.TotalUsedMemoryInBytes).ByteToMB(),
+                ["system_used_memory"] = ((ulong)profiler.SystemUsedMemoryInBytes).ByteToMB(),
+                ["gc_used_memory"] =  ((ulong)profiler.GcUsedMemoryInBytes).ByteToMB(),
 
                 // MainThread
                 ["samples"] = mainThreadReport.Value.Samples,
