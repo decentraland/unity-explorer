@@ -8,16 +8,19 @@ using System;
 
 namespace Plugins.RustEthereum.SignServerWrap
 {
-    public class RustEthereumAccount : IWeb3Account
+    public class RustEthereumAccount : IWeb3Account, IEthKeyOwner
     {
         private readonly IWeb3Account verifierAccount;
 
         public Web3Address Address { get; }
 
+        public EthECKey Key { get; }
+
         public RustEthereumAccount(EthECKey key)
         {
             this.verifierAccount = NethereumAccount.CreateForVerifyOnly(key);
 
+            Key = key;
             Address = new Web3Address(key.GetPublicAddress()!);
             byte[] bytes = key.GetPrivateKeyAsBytes().EnsureNotNull();
             var bytesLen = new UIntPtr((ulong)bytes.Length);
