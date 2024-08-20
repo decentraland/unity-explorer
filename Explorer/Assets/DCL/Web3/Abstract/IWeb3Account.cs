@@ -4,6 +4,8 @@ namespace DCL.Web3.Abstract
     {
         public Web3Address Address { get; }
 
+        public string PrivateKey { get; }
+
         string Sign(string message);
 
         /// <summary>

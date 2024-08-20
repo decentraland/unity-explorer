@@ -35,14 +35,11 @@ namespace DCL.Web3.Identities
 
             public string Serialize(IWeb3Identity identity)
             {
-                var account = identity.EphemeralAccount as IEthKeyOwner
-                              ?? throw new Exception("The identity account is not an IEthKeyOwner");
-
                 jsonRoot.Clear();
                 jsonRoot.address = identity.Address;
                 jsonRoot.expiration = $"{identity.Expiration:O}";
                 jsonRoot.ephemeralAuthChain.AddRange(identity.AuthChain);
-                jsonRoot.key = account.Key.GetPrivateKey()!;
+                jsonRoot.key = identity.EphemeralAccount.PrivateKey;
 
                 return JsonConvert.SerializeObject(jsonRoot);
             }

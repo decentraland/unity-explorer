@@ -3,14 +3,14 @@ using Nethereum.Signer;
 
 namespace DCL.Web3.Accounts
 {
-    public class NethereumAccount : IWeb3Account, IEthKeyOwner
+    public class NethereumAccount : IWeb3Account
     {
-        private static readonly EthereumMessageSigner signer = new ();
+        private static readonly EthereumMessageSigner SIGNER = new ();
         internal readonly EthECKey key;
 
         public Web3Address Address { get; }
 
-        public EthECKey Key => key;
+        public string PrivateKey => key.GetPrivateKey()!;
 
         private NethereumAccount(EthECKey key)
         {
@@ -22,9 +22,9 @@ namespace DCL.Web3.Accounts
             new (key);
 
         public string Sign(string message) =>
-            signer.EncodeUTF8AndSign(message, key);
+            SIGNER.EncodeUTF8AndSign(message, key);
 
         public bool Verify(string message, string signature) =>
-            signer.EncodeUTF8AndEcRecover(message, signature) == Address;
+            SIGNER.EncodeUTF8AndEcRecover(message, signature) == Address;
     }
 }
