@@ -13,7 +13,8 @@ namespace DCL.BadgesAPIService
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
 
-        private string baseURL => decentralandUrlsSource.Url(DecentralandUrl.Badges);
+        private string categoriesBaseURL => decentralandUrlsSource.Url(DecentralandUrl.BadgeCategories);
+        private string badgesBaseURL => decentralandUrlsSource.Url(DecentralandUrl.Badges);
 
         public BadgesAPIClient(IWebRequestController webRequestController, IDecentralandUrlsSource decentralandUrlsSource)
         {
@@ -21,18 +22,20 @@ namespace DCL.BadgesAPIService
             this.decentralandUrlsSource = decentralandUrlsSource;
         }
 
-        public static async UniTask<List<string>> FetchBadgeCategoriesAsync(CancellationToken ct)
+        public async UniTask<List<string>> FetchBadgeCategoriesAsync(CancellationToken ct)
         {
-            await UniTask.Delay(500, cancellationToken: ct);
-            return new List<string> { "Explorer", "Socializer", "Collector", "Creator", "Builder" };
+            CategoriesResponse badgesResponse = await webRequestController.GetAsync(categoriesBaseURL, ct, reportCategory: ReportCategory.BADGES_WEB_REQUEST)
+                                                                          .CreateFromJson<CategoriesResponse>(WRJsonParser.Unity);
+
+            return badgesResponse.data;
         }
 
         public async UniTask<BadgesInfo> FetchBadgesAsync(string walletId, bool includeLockedBadges, int limit, int offset, CancellationToken ct)
         {
-            var url = $"{baseURL}/{walletId}";
+            //var url = $"{badgesBaseURL}/{walletId}";
 
             //BadgesResponse badgesResponse = await webRequestController.GetAsync(url, ct, reportCategory: ReportCategory.BADGES_WEB_REQUEST)
-            //                                                      .CreateFromJson<BadgesResponse>(WRJsonParser.Unity);
+            //                                                          .CreateFromJson<BadgesResponse>(WRJsonParser.Unity);
 
             //return ResponseToBadgesInfo(badgesResponse);
 

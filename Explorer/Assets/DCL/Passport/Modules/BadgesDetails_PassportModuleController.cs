@@ -172,7 +172,7 @@ namespace DCL.Passport.Modules
         {
             try
             {
-                badgeCategories = await BadgesAPIClient.FetchBadgeCategoriesAsync(ct);
+                badgeCategories = await badgesAPIClient.FetchBadgeCategoriesAsync(ct);
 
                 foreach (string category in badgeCategories)
                 {
