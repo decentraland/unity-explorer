@@ -1,0 +1,28 @@
+{
+    "name": "RustEthereum.SignServer.Tests",
+    "rootNamespace": "",
+    "references": [
+    "GUID:5ab29fa8ae5769b49ab29e390caca7a4",
+    "GUID:9428ba407ade34e4ebcf01cca4669d4b"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll",
+        "Nethereum.Signer.dll",
+        "NSubstitute.dll",
+        "Arch.dll",
+        "Arch.System.dll",
+        "Arch.SystemGroups.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
