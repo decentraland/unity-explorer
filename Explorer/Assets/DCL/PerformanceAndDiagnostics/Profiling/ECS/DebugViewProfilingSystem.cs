@@ -39,8 +39,10 @@ namespace DCL.Profiling.ECS
         private ElementBinding<string> usedMemory;
         private ElementBinding<string> gcUsedMemory;
 
-        private ElementBinding<string> jsHeapSize;
-        private ElementBinding<string> jsHeapSizeCurrentScene;
+        private ElementBinding<string> jsHeapUsedSize;
+        private ElementBinding<string> jsHeapTotalSize;
+        private ElementBinding<string> jsHeapTotalExecutable;
+        private ElementBinding<string> jsHeapLimit;
 
         private ElementBinding<string> jsEnginesCount;
 
@@ -78,8 +80,10 @@ namespace DCL.Profiling.ECS
                             .AddSingleButton("GC.Collect", GC.Collect)
                             .AddCustomMarker("Total Used Memory [MB]:", usedMemory = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("Gc Used Memory [MB]:", gcUsedMemory = new ElementBinding<string>(string.Empty))
-                            .AddCustomMarker("Js Heap Size (Total) [MB]:", jsHeapSize = new ElementBinding<string>(string.Empty))
-                            .AddCustomMarker("Js Heap Size (Current Scene) [MB]:", jsHeapSizeCurrentScene = new ElementBinding<string>(string.Empty))
+                            .AddCustomMarker("Js-Heap Total [MB]:", jsHeapTotalSize = new ElementBinding<string>(string.Empty))
+                            .AddCustomMarker("Js-Heap Used [MB]:", jsHeapUsedSize = new ElementBinding<string>(string.Empty))
+                            .AddCustomMarker("Js-Heap Total Exec [MB]:", jsHeapTotalExecutable = new ElementBinding<string>(string.Empty))
+                            .AddCustomMarker("Js Heap Limit per engine [MB]:", jsHeapLimit = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("Js Engines Count:", jsEnginesCount = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("Memory Budget Thresholds [MB]:", memoryCheckpoints = new ElementBinding<string>(string.Empty))
                             .AddSingleButton("Memory NORMAL", () => this.memoryBudget.SimulatedMemoryUsage = MemoryUsageStatus.Normal)
@@ -117,14 +121,12 @@ namespace DCL.Profiling.ECS
 
             bool isCurrentScene = scenesCache is { CurrentScene: { SceneStateProvider: { IsCurrent: true } } };
             JsMemorySizeInfo totalJsMemoryData = v8EngineFactory.GetEnginesSumMemoryData();
-            JsMemorySizeInfo currentSceneJsMemoryData = isCurrentScene? v8EngineFactory.GetEnginesMemoryDataForScene(scenesCache.CurrentScene.Info) : new JsMemorySizeInfo();
+            JsMemorySizeInfo currentSceneJsMemoryData = isCurrentScene ? v8EngineFactory.GetEnginesMemoryDataForScene(scenesCache.CurrentScene.Info) : new JsMemorySizeInfo();
 
-
-            jsHeapSize.Value =  BytesFormatter.Convert(v8EngineFactory.GetEnginesSumMemoryData(), BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte).ToString("F0", CultureInfo.InvariantCulture);
-
-            jsHeapSizeCurrentScene.Value = scenesCache is { CurrentScene: { SceneStateProvider: { IsCurrent: true } } }
-                ? BytesFormatter.Convert((ulong)v8EngineFactory.GetEnginesMemoryDataForScene(scenesCache.CurrentScene.Info), BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte).ToString("F0", CultureInfo.InvariantCulture)
-                : string.Empty;
+            jsHeapUsedSize.Value = $"{totalJsMemoryData.UsedHeapSizeMB:F1} | {currentSceneJsMemoryData.UsedHeapSizeMB:F1}";
+            jsHeapTotalSize.Value = $"{totalJsMemoryData.TotalHeapSizeMB:F1} | {currentSceneJsMemoryData.TotalHeapSizeMB:F1}";
+            jsHeapTotalExecutable.Value = $"{totalJsMemoryData.TotalHeapSizeExecutableMB:F1} | {currentSceneJsMemoryData.TotalHeapSizeExecutableMB:F1}";
+            jsHeapLimit.Value = $"{totalJsMemoryData.HeapSizeLimitMB:F1}";
 
             jsEnginesCount.Value = v8EngineFactory.ActiveEnginesCount.ToString();
 
