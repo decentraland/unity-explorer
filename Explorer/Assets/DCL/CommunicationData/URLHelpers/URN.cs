@@ -7,6 +7,7 @@ namespace CommunicationData.URLHelpers
     public readonly struct URN
     {
         private const int SHORTEN_URN_PARTS = 6;
+        private const int THIRD_PARTY_V2_SHORTEN_URN_PARTS = 7;
         private const string THIRD_PARTY_PART_ID = "collections-thirdparty";
 
         private readonly string urn;
@@ -120,33 +121,31 @@ namespace CommunicationData.URLHelpers
 
         public URN Shorten()
         {
-            if (string.IsNullOrEmpty(urn)) return urn;
-            // Third party collections do not include the tokenId and have 7 parts, so we must keep all of them
-            if (IsThirdPartyCollection()) return urn;
+            if (string.IsNullOrEmpty(urn)) return this;
+            if (CountParts() <= SHORTEN_URN_PARTS) return this;
 
-            int index = -1;
+            int index;
 
-            for (var i = 0; i < SHORTEN_URN_PARTS; i++)
+            if (IsThirdPartyCollection())
             {
-                index = urn.IndexOf(':', index + 1);
-                if (index == -1) break;
+                index = -1;
+
+                // Third party v2 contains 10 parts, on which 3 are reserved for the tokenId
+                // "id": urn:decentraland:amoy:collections-thirdparty:back-to-the-future:amoy-eb54:tuxedo-6751:amoy:0x1d9fb685c257e74f869ba302e260c0b68f5ebb37:12
+                // "tokenId": amoy:0x1d9fb685c257e74f869ba302e260c0b68f5ebb37:12
+                for (var i = 0; i < THIRD_PARTY_V2_SHORTEN_URN_PARTS; i++)
+                {
+                    index = urn.IndexOf(':', index + 1);
+                    if (index == -1) break;
+                }
+
+                return index != -1 ? urn[..index] : urn;
             }
 
-            return index != -1 ? urn[..index] : urn;
-        }
+            // TokenId is always placed in the last part for regular nfts
+            index = urn.LastIndexOf(':');
 
-        public bool IsExtended()
-        {
-            // Third party collections do not apply to shortened/extended rules
-            if (IsThirdPartyCollection()) return false;
-
-            var count = 0;
-
-            foreach (char c in urn)
-                if (c == ':')
-                    count++;
-
-            return count >= SHORTEN_URN_PARTS;
+            return index != -1 ? urn[..index] : this;
         }
 
         public static implicit operator URN(int urn) =>
@@ -158,8 +157,22 @@ namespace CommunicationData.URLHelpers
         public static implicit operator URN(string urn) =>
             new (urn);
 
-        private bool IsThirdPartyCollection() =>
+        public bool IsThirdPartyCollection() =>
             !string.IsNullOrEmpty(urn) && urn.Contains(THIRD_PARTY_PART_ID);
+
+        private int CountParts()
+        {
+            int count = 1;
+            int index = urn.IndexOf(':');
+
+            while (index != -1)
+            {
+                count++;
+                index = urn.IndexOf(':', index + 1);
+            }
+
+            return count;
+        }
     }
 
     public class URNIgnoreCaseEqualityComparer : IEqualityComparer<URN>

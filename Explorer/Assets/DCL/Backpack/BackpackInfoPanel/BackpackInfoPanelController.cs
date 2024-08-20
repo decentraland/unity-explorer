@@ -1,10 +1,13 @@
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Equipped;
+using DCL.AvatarRendering.Wearables.ThirdParty;
 using DCL.Backpack.BackpackBus;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using Utility;
 
@@ -21,6 +24,7 @@ namespace DCL.Backpack
         private readonly NftTypeIconSO categoryIcons;
         private readonly NftTypeIconSO rarityInfoPanelBackgrounds;
         private readonly NFTColorsSO rarityColors;
+        private readonly IThirdPartyNftProviderSource thirdPartyNftProviderSource;
         private readonly HideCategoriesController hideCategoriesController;
         private CancellationTokenSource? cts;
 
@@ -31,13 +35,15 @@ namespace DCL.Backpack
             NftTypeIconSO rarityInfoPanelBackgrounds,
             NFTColorsSO rarityColors,
             IReadOnlyEquippedWearables equippedWearables,
-            AttachmentType attachmentType)
+            AttachmentType attachmentType,
+            IThirdPartyNftProviderSource thirdPartyNftProviderSource)
         {
             this.view = view;
             this.backpackEventBus = backpackEventBus;
             this.categoryIcons = categoryIcons;
             this.rarityInfoPanelBackgrounds = rarityInfoPanelBackgrounds;
             this.rarityColors = rarityColors;
+            this.thirdPartyNftProviderSource = thirdPartyNftProviderSource;
 
             hideCategoriesController = new HideCategoriesController(
                 view.HideCategoryGridView,
@@ -50,6 +56,12 @@ namespace DCL.Backpack
 
             if ((attachmentType & AttachmentType.Emote) != 0)
                 backpackEventBus.SelectEmoteEvent += SetPanelContent;
+        }
+
+        public void Dispose()
+        {
+            backpackEventBus.SelectWearableEvent -= SetPanelContent;
+            backpackEventBus.SelectEmoteEvent -= SetPanelContent;
         }
 
         public async UniTask InitialiseAssetsAsync(IAssetsProvisioner assetsProvisioner, CancellationToken ct)
@@ -70,6 +82,15 @@ namespace DCL.Backpack
             view.RarityBackground.sprite = rarityInfoPanelBackgrounds.GetTypeImage(wearable.GetRarity());
             view.RarityBackgroundPanel.color = rarityColors.GetColor(wearable.GetRarity());
             view.RarityName.text = wearable.GetRarity();
+
+            bool isThirdParty = wearable.IsThirdParty();
+            view.RarityBackgroundPanel.gameObject.SetActive(!isThirdParty);
+            view.ThirdPartyRarityBackgroundPanel.SetActive(isThirdParty);
+            view.ThirdPartyCollectionContainer.SetActive(false);
+
+            if (isThirdParty)
+                TrySetThirdPartyProviderNameAsync(wearable, cts.Token).Forget();
+
             WaitForThumbnailAsync(wearable, cts.Token).Forget();
         }
 
@@ -92,10 +113,18 @@ namespace DCL.Backpack
             view.WearableThumbnail.gameObject.SetActive(true);
         }
 
-        public void Dispose()
+        private async UniTaskVoid TrySetThirdPartyProviderNameAsync(IAvatarAttachment nft, CancellationToken ct)
         {
-            backpackEventBus.SelectWearableEvent -= SetPanelContent;
-            backpackEventBus.SelectEmoteEvent -= SetPanelContent;
+            IReadOnlyList<ThirdPartyNftProviderDefinition> tpws = await thirdPartyNftProviderSource.GetAsync(ct);
+            URN urn = nft.GetUrn();
+
+            foreach (ThirdPartyNftProviderDefinition tpw in tpws)
+            {
+                if (!urn.ToString().StartsWith(tpw.urn)) continue;
+                view.ThirdPartyCollectionContainer.SetActive(true);
+                view.ThirdPartyCollectionName.text = $"Collection <b>{tpw.name}</b>";
+                break;
+            }
         }
 
         [Flags]
