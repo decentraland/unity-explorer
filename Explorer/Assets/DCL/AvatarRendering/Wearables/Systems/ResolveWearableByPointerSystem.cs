@@ -188,7 +188,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                     var failedDTOList = WearableComponentsUtils.POINTERS_POOL.Get();
                     failedDTOList.AddRange(promise.LoadingIntention.Pointers);
 
-                    foreach (AvatarAttachmentDTO assetEntity in promiseResult.Asset.Value)
+                    foreach (WearableDTO assetEntity in promiseResult.Asset.Value)
                     {
                         bool isWearableInCatalog = wearableCache.TryGetElement(assetEntity.Metadata.id, out var component);
 
