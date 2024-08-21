@@ -18,6 +18,7 @@ namespace DCL.Passport.Modules.Badges
         private readonly IObjectPool<BadgeTierButton_PassportFieldView> badgeTierButtonsPool;
         private readonly List<BadgeTierButton_PassportFieldView> instantiatedBadgeTierButtons = new ();
 
+        private bool isOwnProfile;
         private BadgeInfo currentBadgeInfo;
         private CancellationTokenSource loadBadgeTierButtonsCts;
 
@@ -42,8 +43,9 @@ namespace DCL.Passport.Modules.Badges
             badgeInfoModuleView.ConfigureImageController(webRequestController);
         }
 
-        public void Setup(BadgeInfo badgeInfo)
+        public void Setup(BadgeInfo badgeInfo, bool isOwnProfileBadge)
         {
+            this.isOwnProfile = isOwnProfileBadge;
             currentBadgeInfo = badgeInfo;
             badgeInfoModuleView.Setup(badgeInfo);
             SetAsLoading(badgeInfo.isTier);
@@ -95,7 +97,12 @@ namespace DCL.Passport.Modules.Badges
             await UniTask.Delay(1000, cancellationToken: ct);
 
             foreach (BadgeTierInfo tier in currentBadgeInfo.tiers)
+            {
+                if (!isOwnProfile && tier.isLocked)
+                    continue;
+
                 CreateBadgeTierButton(tier);
+            }
 
             SelectLastCompletedTierButton();
             SetAsLoading(false);
@@ -121,7 +128,8 @@ namespace DCL.Passport.Modules.Badges
                 break;
             }
 
-            SelectTierButton(instantiatedBadgeTierButtons[selectedIndex]);
+            if (selectedIndex < instantiatedBadgeTierButtons.Count)
+                SelectTierButton(instantiatedBadgeTierButtons[selectedIndex]);
         }
 
         private void SelectTierButton(BadgeTierButton_PassportFieldView selectedTierButton)

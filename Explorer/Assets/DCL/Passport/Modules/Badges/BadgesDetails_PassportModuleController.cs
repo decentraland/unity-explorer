@@ -266,8 +266,11 @@ namespace DCL.Passport.Modules.Badges
                 foreach (var unlockedBadge in badges.unlocked)
                     CreateBadgeDetailCard(unlockedBadge);
 
-                foreach (var lockedBadge in badges.locked)
-                    CreateBadgeDetailCard(lockedBadge);
+                if (isOwnProfile)
+                {
+                    foreach (var lockedBadge in badges.locked)
+                        CreateBadgeDetailCard(lockedBadge);
+                }
 
                 instantiatedBadgesFilterButtons[0].gameObject.SetActive(true);
                 foreach (var badgesCategorySeparator in instantiatedBadgesCategorySeparators)
@@ -322,7 +325,7 @@ namespace DCL.Passport.Modules.Badges
                 {
                     badgeDetailCard.SetAsSelected(!firstElementSelected);
                     if (!firstElementSelected)
-                        badgeInfoController.Setup(badgeDetailCard.Model);
+                        badgeInfoController.Setup(badgeDetailCard.Model, isOwnProfile);
 
                     firstElementSelected = true;
                 }
@@ -362,7 +365,7 @@ namespace DCL.Passport.Modules.Badges
                     instantiateBadgeByCategory.SetAsSelected(false);
 
             badgeDetailCard.SetAsSelected(true);
-            badgeInfoController.Setup(badgeDetailCard.Model);
+            badgeInfoController.Setup(badgeDetailCard.Model, isOwnProfile);
         }
 
         private void CreateEmptyDetailCards()
