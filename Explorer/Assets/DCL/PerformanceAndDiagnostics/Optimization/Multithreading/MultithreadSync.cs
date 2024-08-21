@@ -28,13 +28,10 @@ namespace Utility.Multithreading
             var waiter = MANUAL_RESET_EVENT_SLIM_POOL.Get();
 
             lock (queueLock)
-            {
                 queue.Enqueue(waiter);
-                if (queue.Count == 1)
-                    waiter.Set(); // If there is only one item in the queue, signal it right away so Wait() is ignored
-            }
 
-            waiter.Wait();
+            if (queue.Count > 1)
+                waiter.Wait(); // There is already one thread doing work. Wait for the signal 
             Acquired = true;
         }
 
