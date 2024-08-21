@@ -219,6 +219,12 @@ namespace SceneRunner.Tests
 
             var list = new ConcurrentBag<int>();
 
+            await UniTask.WhenAll(fps.Select((fps, i) => CreateAndLaunch(fps, lifeTimeMs[i])));
+
+            // It is not reliable to count the threads exactly as the agent can have a limited capacity
+            Assert.GreaterOrEqual(list.Distinct().Count(), Mathf.Min(2, fps.Length - 2));
+            return;
+
             async UniTask CreateAndLaunch(int fps, int lifeTime)
             {
                 var sceneFacade = (SceneFacade)await sceneFactory.CreateSceneFromFileAsync(path, Substitute.For<IPartitionComponent>(), CancellationToken.None);
@@ -233,13 +239,8 @@ namespace SceneRunner.Tests
 
                 list.Add(Thread.CurrentThread.ManagedThreadId);
 
-                await Task.Delay(waitTime - lifeTime);
+                await Task.Delay(waitTime - lifeTime, cancellationTokenSource.Token);
             }
-
-            await UniTask.WhenAll(fps.Select((fps, i) => CreateAndLaunch(fps, lifeTimeMs[i])));
-
-            // It is not reliable to count the threads exactly as the agent can have a limited capacity
-            Assert.GreaterOrEqual(list.Distinct().Count(), Mathf.Min(2, fps.Length - 2));
         }
 
         [Test]

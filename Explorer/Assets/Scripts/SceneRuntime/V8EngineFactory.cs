@@ -12,20 +12,21 @@ namespace SceneRuntime
 
         public V8ScriptEngine Create(SceneShortInfo sceneInfo)
         {
-            var engine = new V8ScriptEngine();
-
-            // IL2CPP does not support dynamic bindings!
-            engine.DisableDynamicBinding = true;
-            engine.UseReflectionBindFallback = true;
-            engine.AllowReflection = true;
-
-            if (!activeEngines.TryAdd(sceneInfo, engine))
+            if (!activeEngines.ContainsKey(sceneInfo))
             {
-                activeEngines[sceneInfo].Dispose();
+                var engine = new V8ScriptEngine();
+
+                // IL2CPP does not support dynamic bindings!
+                engine.DisableDynamicBinding = true;
+                engine.UseReflectionBindFallback = true;
+                engine.AllowReflection = true;
+
                 activeEngines[sceneInfo] = engine;
             }
+            else
+                ReportHub.LogError(ReportData.UNSPECIFIED, $"Trying to create V8 engine for scene that already have one running engine. Scene: {sceneInfo.ToString()}");
 
-            return engine;
+            return activeEngines[sceneInfo];
         }
 
         public void DisposeEngine(SceneShortInfo scene, V8ScriptEngine engine)
