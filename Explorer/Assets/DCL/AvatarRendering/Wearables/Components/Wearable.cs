@@ -51,12 +51,12 @@ namespace DCL.AvatarRendering.Wearables.Components
 
         public bool IsOnChain()
         {
-            var id = ((Loading.Components.IAvatarAttachment)this).GetUrn().ToString();
-            return !id.StartsWith("urn:decentraland:off-chain:base-avatars:");
+            var id = ((IAvatarAttachment)this).GetUrn().ToString();
+            bool startsWith = id.StartsWith("urn:decentraland:off-chain:base-avatars:", StringComparison.Ordinal);
+            return startsWith == false;
         }
 
-        public AvatarAttachmentDTO DTO =>
-            Model.Asset!;
+        public AvatarAttachmentDTO DTO => Model.Asset!;
 
         public string GetCategory() =>
             Model.Asset!.metadata.data.category;

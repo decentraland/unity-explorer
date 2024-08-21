@@ -5,6 +5,7 @@ using ECS;
 using ECS.Prioritization.Components;
 using System.Threading;
 using CommunicationData.URLHelpers;
+using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Loading.DTO;
 using DCL.AvatarRendering.Thumbnails.Utils;
 using DCL.Diagnostics;

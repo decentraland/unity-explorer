@@ -13,7 +13,7 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
 {
     public abstract partial class ResolveElementsByPointersSystem<TIntention, TElement, TDTO, TDTOList> : BaseUnityLoopSystem
         where TIntention: IAssetIntention, IPointersLoadingIntention, IEquatable<TIntention>
-        where TElement: IAvatarAttachment<TDTO> where TDTO : AvatarAttachmentDTO
+        where TElement: IAvatarAttachment<TDTO> where TDTO: AvatarAttachmentDTO
     {
         private readonly IAvatarElementCache<TElement, TDTO> cache;
         private readonly ListObjectPool<URN> pointersPool;
@@ -35,7 +35,7 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
 
             foreach (var pointerID in promise.LoadingIntention.Pointers)
                 if (cache.TryGetElement(pointerID, out var component))
-                    component.FinalizeLoading();
+                    component.UpdateLoadingStatus(false);
 
             promise.ForgetLoading(World!);
             World!.Destroy(entity);
