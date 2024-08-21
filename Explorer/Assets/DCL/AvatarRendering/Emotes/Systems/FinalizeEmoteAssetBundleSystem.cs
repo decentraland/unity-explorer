@@ -14,6 +14,8 @@ using UnityEngine;
 using AssetBundleManifestPromise = ECS.StreamableLoading.Common.AssetPromise<SceneRunner.Scene.SceneAssetBundleManifest, DCL.AvatarRendering.Wearables.Components.GetWearableAssetBundleManifestIntention>;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 using AudioPromise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.AudioClip, ECS.StreamableLoading.AudioClips.GetAudioClipIntention>;
+using EmotesFromRealmPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesDTOList,
+    DCL.AvatarRendering.Emotes.GetEmotesByPointersFromRealmIntention>;
 
 namespace DCL.AvatarRendering.Emotes
 {
@@ -23,12 +25,16 @@ namespace DCL.AvatarRendering.Emotes
     [UpdateAfter(typeof(Load.LoadSceneEmotesSystem))]
     public partial class FinalizeEmoteAssetBundleSystem : BaseUnityLoopSystem
     {
-        public FinalizeEmoteAssetBundleSystem(World world) : base(world)
+        private readonly IEmoteCache emoteCache;
+
+        public FinalizeEmoteAssetBundleSystem(World world, IEmoteCache emoteCache) : base(world)
         {
+            this.emoteCache = emoteCache;
         }
 
         protected override void Update(float t)
         {
+            FinalizeEmoteDTOQuery(World!);
             FinalizeAssetBundleManifestLoadingQuery(World);
             FinalizeAssetBundleLoadingQuery(World);
             FinalizeAudioClipPromiseQuery(World);
@@ -47,6 +53,34 @@ namespace DCL.AvatarRendering.Emotes
             if (promise.SafeTryConsume(World!, out StreamableLoadingResult<SceneAssetBundleManifest> result))
             {
                 emote.UpdateManifest(result);
+                World!.Destroy(entity);
+            }
+        }
+
+        [Query]
+        private void FinalizeEmoteDTO(
+            Entity entity,
+            ref EmotesFromRealmPromise promise
+        )
+        {
+            if (promise.TryForgetWithEntityIfCancelled(entity, World!))
+                return;
+
+            if (promise.SafeTryConsume(World!, out StreamableLoadingResult<EmotesDTOList> promiseResult))
+            {
+                if (!promiseResult.Succeeded)
+                {
+                    foreach (var pointerID in promise.LoadingIntention.Pointers)
+                        if (emoteCache.TryGetElement(pointerID, out IEmote component))
+                            component.UpdateLoadingStatus(false);
+                }
+                else
+                    foreach (EmoteDTO assetEntity in promiseResult.Asset.Value)
+                    {
+                        IEmote component = emoteCache.GetOrAddByDTO(assetEntity);
+                        component.ApplyAndMarkAsLoaded(assetEntity);
+                    }
+
                 World!.Destroy(entity);
             }
         }

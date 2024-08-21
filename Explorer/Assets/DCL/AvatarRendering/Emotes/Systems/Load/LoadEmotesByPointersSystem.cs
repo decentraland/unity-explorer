@@ -16,7 +16,6 @@ using ECS;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Cache;
-using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
 using System;
@@ -62,9 +61,7 @@ namespace DCL.AvatarRendering.Emotes.Load
         protected override void Update(float t)
         {
             base.Update(t);
-
             GetEmotesFromRealmQuery(World!, t);
-            FinalizeEmoteDTOQuery(World!);
         }
 
         protected override EmotesDTOList CreateAssetFromListOfDTOs(List<EmoteDTO> list) =>
@@ -176,36 +173,6 @@ namespace DCL.AvatarRendering.Emotes.Load
 
             if (isSucceeded)
                 World!.Add(entity, new StreamableResult(new EmotesResolution(resolvedEmotesTmp.ToList(), intention.Pointers.Count)));
-        }
-
-        [Query]
-        private void FinalizeEmoteDTO(
-            Entity entity,
-            ref EmotesFromRealmPromise promise
-        )
-        {
-            if (promise.TryForgetWithEntityIfCancelled(entity, World!))
-                return;
-
-            if (promise.SafeTryConsume(World!, out StreamableLoadingResult<EmotesDTOList> promiseResult))
-            {
-                if (!promiseResult.Succeeded)
-                {
-                    foreach (var pointerID in promise.LoadingIntention.Pointers)
-                        if (emoteCache.TryGetElement(pointerID, out IEmote component))
-                            component.UpdateLoadingStatus(false);;
-                }
-                else
-                {
-                    foreach (EmoteDTO assetEntity in promiseResult.Asset.Value)
-                    {
-                        IEmote component = emoteCache.GetOrAddByDTO(assetEntity);
-                        component.ApplyAndMarkAsLoaded(assetEntity);
-                    }
-                }
-
-                World!.Destroy(entity);
-            }
         }
 
         private bool CreateAssetBundlePromiseIfRequired(IEmote component, in GetEmotesByPointersIntention intention, IPartitionComponent partitionComponent)
