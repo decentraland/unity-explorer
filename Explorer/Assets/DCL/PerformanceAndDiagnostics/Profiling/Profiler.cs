@@ -74,8 +74,8 @@ namespace DCL.Profiling
             return new FrameTimeStats(minFrameTime, maxFrameTime, hiccupCount);
         }
 
-        public AnalyticsFrameTimeReport? GetMainThreadFramesNs(int[] percentile) =>
-            GetFrameStatsWithPercentiles(mainThreadTimeRecorder, percentile);
+        public (AnalyticsFrameTimeReport?, long[]) GetMainThreadFramesNs(int[] percentile) =>
+            (GetFrameStatsWithPercentiles(mainThreadTimeRecorder, percentile), samplesArray);
 
         public AnalyticsFrameTimeReport? GetGpuThreadFramesNs(int[] percentile) =>
             GetFrameStatsWithPercentiles(gpuFrameTimeRecorder, percentile);

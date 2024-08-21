@@ -2,7 +2,7 @@
 {
     public interface IAnalyticsReportProfiler : IMemoryProfiler
     {
-        AnalyticsFrameTimeReport? GetMainThreadFramesNs(int[] percentile);
+        (AnalyticsFrameTimeReport?, long[]) GetMainThreadFramesNs(int[] percentile);
 
         AnalyticsFrameTimeReport? GetGpuThreadFramesNs(int[] percentile);
     }

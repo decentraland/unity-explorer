@@ -9,6 +9,7 @@ using ECS.Abstract;
 using ECS.SceneLifeCycle;
 using SceneRuntime;
 using Segment.Serialization;
+using System.Text;
 using UnityEngine;
 using World = Arch.Core.World;
 using static DCL.PerformanceAndDiagnostics.Analytics.AnalyticsEvents;
@@ -30,6 +31,7 @@ namespace DCL.Analytics.Systems
         private readonly AnalyticsConfiguration config;
 
         private float lastReportTime;
+        private readonly StringBuilder stringBuilder = new ();
 
         public PerformanceAnalyticsSystem(World world, IAnalyticsController analytics, IRealmData realmData, IAnalyticsReportProfiler profiler, V8EngineFactory v8EngineFactory,
             IScenesCache scenesCache) : base(world)
@@ -57,7 +59,7 @@ namespace DCL.Analytics.Systems
 
         private void ReportPerformanceMetrics()
         {
-            AnalyticsFrameTimeReport? mainThreadReport = profiler.GetMainThreadFramesNs(percentiles);
+            (AnalyticsFrameTimeReport? mainThreadReport, long[] samplesArray) = profiler.GetMainThreadFramesNs(percentiles);
             AnalyticsFrameTimeReport? gpuFrameTimeReport = profiler.GetGpuThreadFramesNs(percentiles);
 
             if (!mainThreadReport.HasValue || !gpuFrameTimeReport.HasValue)
@@ -88,10 +90,11 @@ namespace DCL.Analytics.Systems
                 // Memory
                 ["total_used_memory"] = ((ulong)profiler.TotalUsedMemoryInBytes).ByteToMB(),
                 ["system_used_memory"] = ((ulong)profiler.SystemUsedMemoryInBytes).ByteToMB(),
-                ["gc_used_memory"] =  ((ulong)profiler.GcUsedMemoryInBytes).ByteToMB(),
+                ["gc_used_memory"] = ((ulong)profiler.GcUsedMemoryInBytes).ByteToMB(),
 
                 // MainThread
-                ["samples"] = mainThreadReport.Value.Samples,
+                ["samples"] = GetSamplesArrayAsString(samplesArray),
+                ["samples_amount"] = mainThreadReport.Value.Samples,
                 ["total_time"] = mainThreadReport.Value.SumTime * NS_TO_MS,
 
                 ["hiccups_in_thousand_frames"] = mainThreadReport.Value.Stats.HiccupCount,
@@ -133,6 +136,24 @@ namespace DCL.Analytics.Systems
                 ["gpu_frame_time_percentile_90"] = gpuFrameTimeReport.Value.Percentiles[6] * NS_TO_MS,
                 ["gpu_frame_time_percentile_95"] = gpuFrameTimeReport.Value.Percentiles[7] * NS_TO_MS,
             });
+        }
+
+        private string GetSamplesArrayAsString(long[] samplesArray)
+        {
+            stringBuilder.Clear();
+            stringBuilder.Append("[");
+
+            for (var i = 0; i < samplesArray.Length; i++)
+            {
+                stringBuilder.AppendFormat("{0:0.000}", samplesArray[i]* NS_TO_MS);
+
+                if (i < samplesArray.Length - 1)
+                    stringBuilder.Append(",");
+            }
+
+            stringBuilder.Append("]'");
+
+            return stringBuilder.ToString();
         }
     }
 }
