@@ -25,18 +25,22 @@ namespace DCL.ECSComponents {
       byte[] descriptorData = global::System.Convert.FromBase64String(
           string.Concat(
             "CjdkZWNlbnRyYWxhbmQvc2RrL2NvbXBvbmVudHMvcGxheWVyX2lucHV0X21v",
-            "dmVtZW50LnByb3RvEhtkZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVudHMikgIK",
+            "dmVtZW50LnByb3RvEhtkZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVudHMiwQMK",
             "FVBCUGxheWVySW5wdXRNb3ZlbWVudBJXCghzdGFuZGFyZBgBIAEoCzJDLmRl",
             "Y2VudHJhbGFuZC5zZGsuY29tcG9uZW50cy5QQlBsYXllcklucHV0TW92ZW1l",
-            "bnQuU3RhbmRhcmRNb3ZlbWVudEgAGpcBChBTdGFuZGFyZE1vdmVtZW50EhMK",
-            "C2Rpc2FibGVfYWxsGAEgASgIEhQKDGRpc2FibGVfd2FsaxgCIAEoCBITCgtk",
-            "aXNhYmxlX3J1bhgDIAEoCBIUCgxkaXNhYmxlX2p1bXAYBCABKAgSFQoNZGlz",
-            "YWJsZV9lbW90ZRgFIAEoCBIWCg5kaXNhYmxlX2NhbWVyYRgGIAEoCEIGCgRt",
-            "b2RlQhSqAhFEQ0wuRUNTQ29tcG9uZW50c2IGcHJvdG8z"));
+            "bnQuU3RhbmRhcmRNb3ZlbWVudEgAGsYCChBTdGFuZGFyZE1vdmVtZW50EhgK",
+            "C2Rpc2FibGVfYWxsGAEgASgISACIAQESGQoMZGlzYWJsZV93YWxrGAIgASgI",
+            "SAGIAQESGAoLZGlzYWJsZV9qb2cYAyABKAhIAogBARIYCgtkaXNhYmxlX3J1",
+            "bhgEIAEoCEgDiAEBEhkKDGRpc2FibGVfanVtcBgFIAEoCEgEiAEBEhoKDWRp",
+            "c2FibGVfZW1vdGUYBiABKAhIBYgBARIbCg5kaXNhYmxlX2NhbWVyYRgHIAEo",
+            "CEgGiAEBQg4KDF9kaXNhYmxlX2FsbEIPCg1fZGlzYWJsZV93YWxrQg4KDF9k",
+            "aXNhYmxlX2pvZ0IOCgxfZGlzYWJsZV9ydW5CDwoNX2Rpc2FibGVfanVtcEIQ",
+            "Cg5fZGlzYWJsZV9lbW90ZUIRCg9fZGlzYWJsZV9jYW1lcmFCBgoEbW9kZUIU",
+            "qgIRRENMLkVDU0NvbXBvbmVudHNiBnByb3RvMw=="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBPlayerInputMovement), global::DCL.ECSComponents.PBPlayerInputMovement.Parser, new[]{ "Standard" }, new[]{ "Mode" }, null, null, new pbr::GeneratedClrTypeInfo[] { new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBPlayerInputMovement.Types.StandardMovement), global::DCL.ECSComponents.PBPlayerInputMovement.Types.StandardMovement.Parser, new[]{ "DisableAll", "DisableWalk", "DisableRun", "DisableJump", "DisableEmote", "DisableCamera" }, null, null, null, null)})
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBPlayerInputMovement), global::DCL.ECSComponents.PBPlayerInputMovement.Parser, new[]{ "Standard" }, new[]{ "Mode" }, null, null, new pbr::GeneratedClrTypeInfo[] { new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBPlayerInputMovement.Types.StandardMovement), global::DCL.ECSComponents.PBPlayerInputMovement.Types.StandardMovement.Parser, new[]{ "DisableAll", "DisableWalk", "DisableJog", "DisableRun", "DisableJump", "DisableEmote", "DisableCamera" }, new[]{ "DisableAll", "DisableWalk", "DisableJog", "DisableRun", "DisableJump", "DisableEmote", "DisableCamera" }, null, null, null)})
           }));
     }
     #endregion
@@ -288,6 +292,7 @@ namespace DCL.ECSComponents {
       {
         private static readonly pb::MessageParser<StandardMovement> _parser = new pb::MessageParser<StandardMovement>(() => new StandardMovement());
         private pb::UnknownFieldSet _unknownFields;
+        private int _hasBits0;
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
         public static pb::MessageParser<StandardMovement> Parser { get { return _parser; } }
@@ -315,8 +320,10 @@ namespace DCL.ECSComponents {
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
         public StandardMovement(StandardMovement other) : this() {
+          _hasBits0 = other._hasBits0;
           disableAll_ = other.disableAll_;
           disableWalk_ = other.disableWalk_;
+          disableJog_ = other.disableJog_;
           disableRun_ = other.disableRun_;
           disableJump_ = other.disableJump_;
           disableEmote_ = other.disableEmote_;
@@ -336,10 +343,23 @@ namespace DCL.ECSComponents {
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
         public bool DisableAll {
-          get { return disableAll_; }
+          get { if ((_hasBits0 & 1) != 0) { return disableAll_; } else { return false; } }
           set {
+            _hasBits0 |= 1;
             disableAll_ = value;
           }
+        }
+        /// <summary>Gets whether the "disable_all" field is set</summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public bool HasDisableAll {
+          get { return (_hasBits0 & 1) != 0; }
+        }
+        /// <summary>Clears the value of the "disable_all" field</summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void ClearDisableAll() {
+          _hasBits0 &= ~1;
         }
 
         /// <summary>Field number for the "disable_walk" field.</summary>
@@ -348,58 +368,148 @@ namespace DCL.ECSComponents {
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
         public bool DisableWalk {
-          get { return disableWalk_; }
+          get { if ((_hasBits0 & 2) != 0) { return disableWalk_; } else { return false; } }
           set {
+            _hasBits0 |= 2;
             disableWalk_ = value;
           }
         }
+        /// <summary>Gets whether the "disable_walk" field is set</summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public bool HasDisableWalk {
+          get { return (_hasBits0 & 2) != 0; }
+        }
+        /// <summary>Clears the value of the "disable_walk" field</summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void ClearDisableWalk() {
+          _hasBits0 &= ~2;
+        }
+
+        /// <summary>Field number for the "disable_jog" field.</summary>
+        public const int DisableJogFieldNumber = 3;
+        private bool disableJog_;
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public bool DisableJog {
+          get { if ((_hasBits0 & 4) != 0) { return disableJog_; } else { return false; } }
+          set {
+            _hasBits0 |= 4;
+            disableJog_ = value;
+          }
+        }
+        /// <summary>Gets whether the "disable_jog" field is set</summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public bool HasDisableJog {
+          get { return (_hasBits0 & 4) != 0; }
+        }
+        /// <summary>Clears the value of the "disable_jog" field</summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void ClearDisableJog() {
+          _hasBits0 &= ~4;
+        }
 
         /// <summary>Field number for the "disable_run" field.</summary>
-        public const int DisableRunFieldNumber = 3;
+        public const int DisableRunFieldNumber = 4;
         private bool disableRun_;
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
         public bool DisableRun {
-          get { return disableRun_; }
+          get { if ((_hasBits0 & 8) != 0) { return disableRun_; } else { return false; } }
           set {
+            _hasBits0 |= 8;
             disableRun_ = value;
           }
         }
+        /// <summary>Gets whether the "disable_run" field is set</summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public bool HasDisableRun {
+          get { return (_hasBits0 & 8) != 0; }
+        }
+        /// <summary>Clears the value of the "disable_run" field</summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void ClearDisableRun() {
+          _hasBits0 &= ~8;
+        }
 
         /// <summary>Field number for the "disable_jump" field.</summary>
-        public const int DisableJumpFieldNumber = 4;
+        public const int DisableJumpFieldNumber = 5;
         private bool disableJump_;
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
         public bool DisableJump {
-          get { return disableJump_; }
+          get { if ((_hasBits0 & 16) != 0) { return disableJump_; } else { return false; } }
           set {
+            _hasBits0 |= 16;
             disableJump_ = value;
           }
         }
+        /// <summary>Gets whether the "disable_jump" field is set</summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public bool HasDisableJump {
+          get { return (_hasBits0 & 16) != 0; }
+        }
+        /// <summary>Clears the value of the "disable_jump" field</summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void ClearDisableJump() {
+          _hasBits0 &= ~16;
+        }
 
         /// <summary>Field number for the "disable_emote" field.</summary>
-        public const int DisableEmoteFieldNumber = 5;
+        public const int DisableEmoteFieldNumber = 6;
         private bool disableEmote_;
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
         public bool DisableEmote {
-          get { return disableEmote_; }
+          get { if ((_hasBits0 & 32) != 0) { return disableEmote_; } else { return false; } }
           set {
+            _hasBits0 |= 32;
             disableEmote_ = value;
           }
         }
+        /// <summary>Gets whether the "disable_emote" field is set</summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public bool HasDisableEmote {
+          get { return (_hasBits0 & 32) != 0; }
+        }
+        /// <summary>Clears the value of the "disable_emote" field</summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void ClearDisableEmote() {
+          _hasBits0 &= ~32;
+        }
 
         /// <summary>Field number for the "disable_camera" field.</summary>
-        public const int DisableCameraFieldNumber = 6;
+        public const int DisableCameraFieldNumber = 7;
         private bool disableCamera_;
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
         public bool DisableCamera {
-          get { return disableCamera_; }
+          get { if ((_hasBits0 & 64) != 0) { return disableCamera_; } else { return false; } }
           set {
+            _hasBits0 |= 64;
             disableCamera_ = value;
           }
+        }
+        /// <summary>Gets whether the "disable_camera" field is set</summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public bool HasDisableCamera {
+          get { return (_hasBits0 & 64) != 0; }
+        }
+        /// <summary>Clears the value of the "disable_camera" field</summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void ClearDisableCamera() {
+          _hasBits0 &= ~64;
         }
 
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -419,6 +529,7 @@ namespace DCL.ECSComponents {
           }
           if (DisableAll != other.DisableAll) return false;
           if (DisableWalk != other.DisableWalk) return false;
+          if (DisableJog != other.DisableJog) return false;
           if (DisableRun != other.DisableRun) return false;
           if (DisableJump != other.DisableJump) return false;
           if (DisableEmote != other.DisableEmote) return false;
@@ -430,12 +541,13 @@ namespace DCL.ECSComponents {
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
         public override int GetHashCode() {
           int hash = 1;
-          if (DisableAll != false) hash ^= DisableAll.GetHashCode();
-          if (DisableWalk != false) hash ^= DisableWalk.GetHashCode();
-          if (DisableRun != false) hash ^= DisableRun.GetHashCode();
-          if (DisableJump != false) hash ^= DisableJump.GetHashCode();
-          if (DisableEmote != false) hash ^= DisableEmote.GetHashCode();
-          if (DisableCamera != false) hash ^= DisableCamera.GetHashCode();
+          if (HasDisableAll) hash ^= DisableAll.GetHashCode();
+          if (HasDisableWalk) hash ^= DisableWalk.GetHashCode();
+          if (HasDisableJog) hash ^= DisableJog.GetHashCode();
+          if (HasDisableRun) hash ^= DisableRun.GetHashCode();
+          if (HasDisableJump) hash ^= DisableJump.GetHashCode();
+          if (HasDisableEmote) hash ^= DisableEmote.GetHashCode();
+          if (HasDisableCamera) hash ^= DisableCamera.GetHashCode();
           if (_unknownFields != null) {
             hash ^= _unknownFields.GetHashCode();
           }
@@ -454,28 +566,32 @@ namespace DCL.ECSComponents {
         #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
           output.WriteRawMessage(this);
         #else
-          if (DisableAll != false) {
+          if (HasDisableAll) {
             output.WriteRawTag(8);
             output.WriteBool(DisableAll);
           }
-          if (DisableWalk != false) {
+          if (HasDisableWalk) {
             output.WriteRawTag(16);
             output.WriteBool(DisableWalk);
           }
-          if (DisableRun != false) {
+          if (HasDisableJog) {
             output.WriteRawTag(24);
+            output.WriteBool(DisableJog);
+          }
+          if (HasDisableRun) {
+            output.WriteRawTag(32);
             output.WriteBool(DisableRun);
           }
-          if (DisableJump != false) {
-            output.WriteRawTag(32);
+          if (HasDisableJump) {
+            output.WriteRawTag(40);
             output.WriteBool(DisableJump);
           }
-          if (DisableEmote != false) {
-            output.WriteRawTag(40);
+          if (HasDisableEmote) {
+            output.WriteRawTag(48);
             output.WriteBool(DisableEmote);
           }
-          if (DisableCamera != false) {
-            output.WriteRawTag(48);
+          if (HasDisableCamera) {
+            output.WriteRawTag(56);
             output.WriteBool(DisableCamera);
           }
           if (_unknownFields != null) {
@@ -488,28 +604,32 @@ namespace DCL.ECSComponents {
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
         void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
-          if (DisableAll != false) {
+          if (HasDisableAll) {
             output.WriteRawTag(8);
             output.WriteBool(DisableAll);
           }
-          if (DisableWalk != false) {
+          if (HasDisableWalk) {
             output.WriteRawTag(16);
             output.WriteBool(DisableWalk);
           }
-          if (DisableRun != false) {
+          if (HasDisableJog) {
             output.WriteRawTag(24);
+            output.WriteBool(DisableJog);
+          }
+          if (HasDisableRun) {
+            output.WriteRawTag(32);
             output.WriteBool(DisableRun);
           }
-          if (DisableJump != false) {
-            output.WriteRawTag(32);
+          if (HasDisableJump) {
+            output.WriteRawTag(40);
             output.WriteBool(DisableJump);
           }
-          if (DisableEmote != false) {
-            output.WriteRawTag(40);
+          if (HasDisableEmote) {
+            output.WriteRawTag(48);
             output.WriteBool(DisableEmote);
           }
-          if (DisableCamera != false) {
-            output.WriteRawTag(48);
+          if (HasDisableCamera) {
+            output.WriteRawTag(56);
             output.WriteBool(DisableCamera);
           }
           if (_unknownFields != null) {
@@ -522,22 +642,25 @@ namespace DCL.ECSComponents {
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
         public int CalculateSize() {
           int size = 0;
-          if (DisableAll != false) {
+          if (HasDisableAll) {
             size += 1 + 1;
           }
-          if (DisableWalk != false) {
+          if (HasDisableWalk) {
             size += 1 + 1;
           }
-          if (DisableRun != false) {
+          if (HasDisableJog) {
             size += 1 + 1;
           }
-          if (DisableJump != false) {
+          if (HasDisableRun) {
             size += 1 + 1;
           }
-          if (DisableEmote != false) {
+          if (HasDisableJump) {
             size += 1 + 1;
           }
-          if (DisableCamera != false) {
+          if (HasDisableEmote) {
+            size += 1 + 1;
+          }
+          if (HasDisableCamera) {
             size += 1 + 1;
           }
           if (_unknownFields != null) {
@@ -552,22 +675,25 @@ namespace DCL.ECSComponents {
           if (other == null) {
             return;
           }
-          if (other.DisableAll != false) {
+          if (other.HasDisableAll) {
             DisableAll = other.DisableAll;
           }
-          if (other.DisableWalk != false) {
+          if (other.HasDisableWalk) {
             DisableWalk = other.DisableWalk;
           }
-          if (other.DisableRun != false) {
+          if (other.HasDisableJog) {
+            DisableJog = other.DisableJog;
+          }
+          if (other.HasDisableRun) {
             DisableRun = other.DisableRun;
           }
-          if (other.DisableJump != false) {
+          if (other.HasDisableJump) {
             DisableJump = other.DisableJump;
           }
-          if (other.DisableEmote != false) {
+          if (other.HasDisableEmote) {
             DisableEmote = other.DisableEmote;
           }
-          if (other.DisableCamera != false) {
+          if (other.HasDisableCamera) {
             DisableCamera = other.DisableCamera;
           }
           _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
@@ -594,18 +720,22 @@ namespace DCL.ECSComponents {
                 break;
               }
               case 24: {
-                DisableRun = input.ReadBool();
+                DisableJog = input.ReadBool();
                 break;
               }
               case 32: {
-                DisableJump = input.ReadBool();
+                DisableRun = input.ReadBool();
                 break;
               }
               case 40: {
-                DisableEmote = input.ReadBool();
+                DisableJump = input.ReadBool();
                 break;
               }
               case 48: {
+                DisableEmote = input.ReadBool();
+                break;
+              }
+              case 56: {
                 DisableCamera = input.ReadBool();
                 break;
               }
@@ -633,18 +763,22 @@ namespace DCL.ECSComponents {
                 break;
               }
               case 24: {
-                DisableRun = input.ReadBool();
+                DisableJog = input.ReadBool();
                 break;
               }
               case 32: {
-                DisableJump = input.ReadBool();
+                DisableRun = input.ReadBool();
                 break;
               }
               case 40: {
-                DisableEmote = input.ReadBool();
+                DisableJump = input.ReadBool();
                 break;
               }
               case 48: {
+                DisableEmote = input.ReadBool();
+                break;
+              }
+              case 56: {
                 DisableCamera = input.ReadBool();
                 break;
               }
