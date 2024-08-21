@@ -47,6 +47,7 @@ namespace DCL.CharacterMotion.Animation
         public void AnimEvent_Jump()
         {
             var movementState = GetMovementState();
+            if (movementState == MovementKind.None) return;
 
             if (TryPlayAnimEventFX(lastJumpTime, jumpIntervalSeconds, centerBottomTransform, AvatarAnimationEventType.Jump,
                     movementState switch
@@ -62,6 +63,7 @@ namespace DCL.CharacterMotion.Animation
         public void AnimEvent_Land()
         {
             var movementState = GetMovementState();
+            if (movementState == MovementKind.None) return;
 
             if (TryPlayAnimEventFX(lastLandTime, landIntervalSeconds, centerBottomTransform, AvatarAnimationEventType.Land,
                     movementState switch
@@ -77,6 +79,7 @@ namespace DCL.CharacterMotion.Animation
             if (!AvatarAnimator.GetBool(AnimationHashes.GROUNDED)) return;
 
             var movementState = GetMovementState();
+            if (movementState == MovementKind.None) return;
 
             float interval = GetIntervalFor(movementState);
 
@@ -211,8 +214,7 @@ namespace DCL.CharacterMotion.Animation
                        {
                            (int)MovementKind.Run => MovementKind.Run,
                            (int)MovementKind.Jog => MovementKind.Jog,
-                           (int)MovementKind.Walk => MovementKind.Walk,
-                           _ => MovementKind.None,
+                           _ => MovementKind.Walk,
                        };
             }
 
