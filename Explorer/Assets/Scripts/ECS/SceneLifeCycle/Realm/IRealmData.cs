@@ -1,6 +1,8 @@
 ﻿using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Ipfs;
+using System;
+using System.Collections.Generic;
 
 namespace ECS
 {
@@ -67,7 +69,14 @@ namespace ECS
 
     public static class RealmDataExtensions
     {
-        public static UniTask WaitConfiguredAsync(this IRealmData realmData) =>
-            UniTask.WaitUntil(() => realmData.Configured);
+        private static readonly Dictionary<IRealmData, Func<bool>> CACHE = new ();
+
+        public static UniTask WaitConfiguredAsync(this IRealmData realmData)
+        {
+            if (CACHE.TryGetValue(realmData, out var func) == false)
+                CACHE[realmData] = func = () => realmData.Configured;
+
+            return UniTask.WaitUntil(func!);
+        }
     }
 }
