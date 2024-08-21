@@ -15,6 +15,7 @@ namespace Utility.Multithreading
 
         private readonly object queueLock = new();
         private readonly Queue<ManualResetEventSlim> queue = new();
+        private bool IsDisposing;
 
         public bool Acquired { get; private set; }
 
@@ -37,6 +38,9 @@ namespace Utility.Multithreading
 
         public void Release()
         {
+            if (IsDisposing)
+                return;
+            
             lock (queueLock)
             {
                 // The one releasing should be the one at the top of the queue
@@ -52,6 +56,7 @@ namespace Utility.Multithreading
 
         public void Dispose()
         {
+            IsDisposing = true;
             lock (queueLock)
             {
                 Acquired = false;
