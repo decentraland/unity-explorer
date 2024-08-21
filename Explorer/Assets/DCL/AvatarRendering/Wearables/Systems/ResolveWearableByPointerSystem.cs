@@ -214,7 +214,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
         [Query]
         private void FinalizeAssetBundleManifestLoading([Data] bool defaultWearablesResolved, Entity entity, ref AssetBundleManifestPromise promise, ref IWearable wearable, ref BodyShape bodyShape)
         {
-            if (promise.TryForgetLoadingWithEntity(entity, World!))
+            if (promise.TryForgetWithEntityIfCancelled(entity, World!))
             {
                 wearable.UpdateLoadingStatus(false);
                 wearable.ManifestResult = null;

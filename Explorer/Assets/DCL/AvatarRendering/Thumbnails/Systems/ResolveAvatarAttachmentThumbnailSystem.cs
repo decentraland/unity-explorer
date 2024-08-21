@@ -27,13 +27,10 @@ namespace DCL.AvatarRendering.Thumbnails.Systems
         }
 
         [Query]
-        private void CompleteWearableABThumbnailDownload(in Entity entity, ref IAvatarAttachment wearable, ref AssetBundlePromise promise)
+        private void CompleteWearableABThumbnailDownload(Entity entity, ref IAvatarAttachment wearable, ref AssetBundlePromise promise)
         {
-            if (promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested)
-            {
-                World.Destroy(entity);
+            if (promise.TryForgetWithEntityIfCancelled(entity, World!))
                 return;
-            }
 
             if (promise.TryConsume(World, out var result))
             {
@@ -50,13 +47,10 @@ namespace DCL.AvatarRendering.Thumbnails.Systems
         }
 
         [Query]
-        private void CompleteWearableThumbnailDownload(in Entity entity, ref IAvatarAttachment wearable, ref Promise promise)
+        private void CompleteWearableThumbnailDownload(Entity entity, ref IAvatarAttachment wearable, ref Promise promise)
         {
-            if (promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested)
-            {
-                World.Destroy(entity);
+            if (promise.TryForgetWithEntityIfCancelled(entity, World!))
                 return;
-            }
 
             if (promise.TryConsume(World, out StreamableLoadingResult<Texture2D> result))
             {

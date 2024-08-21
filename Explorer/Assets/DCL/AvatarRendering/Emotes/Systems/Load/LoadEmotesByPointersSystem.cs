@@ -184,7 +184,7 @@ namespace DCL.AvatarRendering.Emotes.Load
             ref EmotesFromRealmPromise promise
         )
         {
-            if (promise.TryForgetLoadingWithEntity(entity, World!))
+            if (promise.TryForgetWithEntityIfCancelled(entity, World!))
                 return;
 
             if (promise.SafeTryConsume(World!, out StreamableLoadingResult<EmotesDTOList> promiseResult))
