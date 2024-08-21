@@ -151,7 +151,7 @@ namespace DCL.Analytics.Systems
                     stringBuilder.Append(",");
             }
 
-            stringBuilder.Append("]'");
+            stringBuilder.Append("]");
 
             return stringBuilder.ToString();
         }
