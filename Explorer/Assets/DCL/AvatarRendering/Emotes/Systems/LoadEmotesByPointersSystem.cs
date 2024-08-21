@@ -85,7 +85,7 @@ namespace DCL.AvatarRendering.Emotes
                 return;
             }
 
-            if (intention.IsTimeout(dt))
+            if (intention.Timeout.IsTimeout(dt))
             {
                 if (World!.Has<StreamableResult>(entity) == false)
                 {

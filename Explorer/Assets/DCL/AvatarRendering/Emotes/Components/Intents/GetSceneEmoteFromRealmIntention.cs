@@ -17,17 +17,19 @@ namespace DCL.AvatarRendering.Emotes
         public bool Loop { get; }
         public AssetSource PermittedSources { get; }
         public BodyShape BodyShape { get; }
-        public int Timeout { get; }
         public bool IsAssetBundleProcessed { get; set; }
-        public float ElapsedTime { get; set; }
 
-        public GetSceneEmoteFromRealmIntention(string sceneId,
+        public LoadTimeout Timeout;
+
+        public GetSceneEmoteFromRealmIntention(
+            string sceneId,
             SceneAssetBundleManifest assetBundleManifest,
             string emoteHash,
             bool loop,
             BodyShape bodyShape,
             AssetSource permittedSources = AssetSource.ALL,
-            int timeout = StreamableLoadingDefaults.TIMEOUT) : this()
+            int timeout = StreamableLoadingDefaults.TIMEOUT
+        ) : this()
         {
             SceneId = sceneId;
             AssetBundleManifest = assetBundleManifest;
@@ -36,7 +38,7 @@ namespace DCL.AvatarRendering.Emotes
             CancellationTokenSource = new CancellationTokenSource();
             PermittedSources = permittedSources;
             BodyShape = bodyShape;
-            Timeout = timeout;
+            Timeout = new LoadTimeout(timeout);
         }
 
         public bool Equals(GetSceneEmoteFromRealmIntention other) =>

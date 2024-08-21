@@ -55,13 +55,9 @@ namespace DCL.AvatarRendering.Emotes
                 return;
             }
 
-            intention.ElapsedTime += dt;
-
             URN urn = GetUrn(intention.SceneId, intention.EmoteHash, intention.Loop);
 
-            bool isTimeout = intention.ElapsedTime >= intention.Timeout;
-
-            if (isTimeout)
+            if (intention.Timeout.IsTimeout(dt))
             {
                 if (!World.Has<StreamableResult>(entity))
                 {

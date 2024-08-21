@@ -21,9 +21,8 @@ namespace DCL.AvatarRendering.Emotes
         public HashSet<URN> SuccessfulPointers { get; }
         public AssetSource PermittedSources { get; }
         public BodyShape BodyShape { get; }
-        public int Timeout { get; }
 
-        public float ElapsedTime;
+        public LoadTimeout Timeout;
 
         private readonly List<URN> pointers;
 
@@ -38,7 +37,7 @@ namespace DCL.AvatarRendering.Emotes
             SuccessfulPointers = POINTERS_HASHSET_POOL.Get();
             PermittedSources = permittedSources;
             BodyShape = bodyShape;
-            Timeout = timeout;
+            Timeout = new LoadTimeout(timeout);
         }
 
         public bool Equals(GetEmotesByPointersIntention other) =>
@@ -49,12 +48,6 @@ namespace DCL.AvatarRendering.Emotes
 
         public override int GetHashCode() =>
             Pointers != null ? Pointers.GetHashCode() : 0;
-
-        public bool IsTimeout(float deltaTime)
-        {
-            ElapsedTime += deltaTime;
-            return ElapsedTime >= Timeout;
-        }
 
         public void Dispose()
         {
