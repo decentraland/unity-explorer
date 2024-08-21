@@ -46,22 +46,47 @@ namespace DCL.CharacterMotion.Animation
         [PublicAPI("Used by Animation Events")]
         public void AnimEvent_Jump()
         {
-            if (TryPlayAnimEventFX(lastJumpTime, jumpIntervalSeconds, centerBottomTransform, AvatarAnimationEventType.Jump))
+            var movementState = GetMovementState();
+
+            if (TryPlayAnimEventFX(lastJumpTime, jumpIntervalSeconds, centerBottomTransform, AvatarAnimationEventType.Jump,
+                    movementState switch
+                    {
+                        MovementKind.Jog => AvatarAudioClipType.JumpStartJog,
+                        MovementKind.Run => AvatarAudioClipType.JumpStartRun,
+                        _ => AvatarAudioClipType.JumpStartWalk
+                        }))
                 lastJumpTime = currentTime;
         }
 
         [PublicAPI("Used by Animation Events")]
         public void AnimEvent_Land()
         {
-            if (TryPlayAnimEventFX(lastLandTime, landIntervalSeconds, centerBottomTransform, AvatarAnimationEventType.Land))
-                lastLandTime = currentTime;
+            var movementState = GetMovementState();
+
+            if (TryPlayAnimEventFX(lastLandTime, landIntervalSeconds, centerBottomTransform, AvatarAnimationEventType.Land,
+                    movementState switch
+                    {
+                        MovementKind.Jog => AvatarAudioClipType.JumpLandJog,
+                        MovementKind.Run => AvatarAudioClipType.JumpLandRun,
+                        _ => AvatarAudioClipType.JumpLandWalk
+                    })) { lastLandTime = currentTime; }
         }
 
         private void PlayStepSoundForFoot(Transform footTransform)
         {
             if (!AvatarAnimator.GetBool(AnimationHashes.GROUNDED)) return;
 
-            if (TryPlayAnimEventFX(lastFootstepTime, GetIntervalFor(GetMovementState()), footTransform, AvatarAnimationEventType.Step))
+            var movementState = GetMovementState();
+
+            float interval = GetIntervalFor(movementState);
+
+            if (TryPlayAnimEventFX(lastFootstepTime, interval, footTransform, AvatarAnimationEventType.Step,
+                    movementState switch
+                    {
+                        MovementKind.Jog => AvatarAudioClipType.StepJog,
+                        MovementKind.Run => AvatarAudioClipType.StepRun,
+                        _ => AvatarAudioClipType.StepWalk,
+                    }))
             {
                 lastFootstepTime = currentTime;
                 PlayerStepped?.Invoke();
@@ -80,27 +105,12 @@ namespace DCL.CharacterMotion.Animation
                 };
         }
 
-        private bool TryPlayAnimEventFX(float lastPlayedTime, float interval, Transform vfxAttach, AvatarAnimationEventType eventType)
+        private bool TryPlayAnimEventFX(float lastPlayedTime, float interval, Transform vfxAttach, AvatarAnimationEventType eventType, AvatarAudioClipType audioClipType)
         {
             currentTime = UnityEngine.Time.time;
             if (currentTime - lastPlayedTime < interval) return false;
-            lastJumpTime = currentTime;
 
-            switch (GetMovementState())
-            {
-                case MovementKind.None:
-                case MovementKind.Walk:
-                    PlaySfxWithParticles(AvatarAudioClipType.JumpStartWalk, vfxAttach, eventType);
-                    break;
-                case MovementKind.Jog:
-                    PlaySfxWithParticles(AvatarAudioClipType.JumpStartJog, vfxAttach, eventType);
-                    break;
-                case MovementKind.Run:
-                    PlaySfxWithParticles(AvatarAudioClipType.JumpStartRun, vfxAttach, eventType);
-                    break;
-                default: throw new ArgumentOutOfRangeException();
-            }
-
+            PlaySfxWithParticles(audioClipType, vfxAttach, eventType);
             return true;
         }
 
