@@ -124,5 +124,10 @@ namespace DCL.AvatarRendering.Loading.Components
         StreamableLoadingResult<TModelDTO> Model { get; set; }
 
         bool IsOnChain();
+
+        public void ResolvedFailedDTO(StreamableLoadingResult<TModelDTO> result)
+        {
+            Model = result;
+        }
     }
 }

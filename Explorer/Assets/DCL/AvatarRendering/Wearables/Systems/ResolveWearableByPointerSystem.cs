@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using AssetManagement;
 using CommunicationData.URLHelpers;
+using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Loading.Systems;
 using DCL.AvatarRendering.Wearables.Components;
@@ -187,21 +188,21 @@ namespace DCL.AvatarRendering.Wearables.Systems
                     var failedDTOList = WearableComponentsUtils.POINTERS_POOL.Get();
                     failedDTOList.AddRange(promise.LoadingIntention.Pointers);
 
-                    foreach (WearableDTO assetEntity in promiseResult.Asset.Value)
+                    foreach (AvatarAttachmentDTO assetEntity in promiseResult.Asset.Value)
                     {
-                        bool isWearableInCatalog = wearableCache.TryGetElement(assetEntity.metadata.id, out var component);
+                        bool isWearableInCatalog = wearableCache.TryGetElement(assetEntity.Metadata.id, out var component);
 
                         if (!isWearableInCatalog)
                         {
                             //A wearable that has a DTO request should already have an empty representation in the catalog at this point
-                            ReportHub.LogError(new ReportData(GetReportCategory()), $"Requested wearable {assetEntity.metadata.id} is not in the catalog");
+                            ReportHub.LogError(new ReportData(GetReportCategory()), $"Requested wearable {assetEntity.Metadata.id} is not in the catalog");
                             continue;
                         }
 
                         if (!component.TryResolveDTO(new StreamableLoadingResult<WearableDTO>(assetEntity)))
-                            ReportHub.LogError(new ReportData(GetReportCategory()), $"Wearable DTO has already been initialized: {assetEntity.metadata.id}");
+                            ReportHub.LogError(new ReportData(GetReportCategory()), $"Wearable DTO has already been initialized: {assetEntity.Metadata.id}");
 
-                        failedDTOList.Remove(assetEntity.metadata.id);
+                        failedDTOList.Remove(assetEntity.Metadata.id);
                         component.IsLoading = false;
                     }
 
@@ -214,20 +215,6 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
                 promise.LoadingIntention.ReleasePointers();
                 World.Destroy(entity);
-
-                void ReportAndFinalizeWithError(URN urn)
-                {
-                    //We have some missing pointers that were not completed. We have to consider them as failure
-                    var e = new ArgumentNullException($"Wearable DTO is null for for {urn}");
-                    ReportHub.LogError(new ReportData(GetReportCategory()), e);
-
-                    if (wearableCache.TryGetElement(urn, out var component))
-                    {
-                        //If its not in the catalog, we cannot determine which one has failed
-                        component.ResolvedFailedDTO(new StreamableLoadingResult<WearableDTO>(e));
-                        component.IsLoading = false;
-                    }
-                }
             }
         }
 
