@@ -184,7 +184,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             {
                 IWearable resultWearable = visibleWearables[i];
 
-                var instance = resultWearable.AppendToAvatar(wearableAssetsCache, usedCategories, ref facialFeatureTexture, ref avatarShapeComponent, attachPoint, GetReportCategory());
+                var instance = resultWearable.AppendToAvatar(wearableAssetsCache, usedCategories, ref facialFeatureTexture, ref avatarShapeComponent, attachPoint);
 
                 if (resultWearable.Type == WearableType.BodyShape)
                     bodyShape = instance;
