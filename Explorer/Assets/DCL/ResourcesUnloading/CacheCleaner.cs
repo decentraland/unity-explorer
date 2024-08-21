@@ -1,5 +1,6 @@
 ﻿using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.Emotes;
+using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.LOD;
 using DCL.Optimization.PerformanceBudgeting;
@@ -12,7 +13,6 @@ using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.NFTShapes;
 using ECS.StreamableLoading.Textures;
 using ECS.Unity.GLTFContainer.Asset.Cache;
-using ECS.Unity.GLTFContainer.Asset.Components;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -39,7 +39,7 @@ namespace DCL.ResourcesUnloading
         private IStreamableCache<AudioClip, GetAudioClipIntention> audioClipsCache;
         private IStreamableCache<Texture2D, GetNFTShapeIntention> nftShapeCache = new IStreamableCache<Texture2D, GetNFTShapeIntention>.Fake();
 
-        private IWearableAssetsCache wearableAssetsCache;
+        private IAttachmentsAssetsCache wearableAssetsCache;
         private IWearableCache wearableCache;
         private IProfileCache? profileCache;
         private IStreamableCache<Profile, GetProfileIntention>? profileIntentionCache;
@@ -95,7 +95,7 @@ namespace DCL.ResourcesUnloading
         public void Register(IGltfContainerAssetsCache gltfContainerAssetsCache) =>
             this.gltfContainerAssetsCache = gltfContainerAssetsCache;
 
-        public void Register(IWearableAssetsCache wearableAssetsCache) =>
+        public void Register(IAttachmentsAssetsCache wearableAssetsCache) =>
             this.wearableAssetsCache = wearableAssetsCache;
 
         public void Register(IStreamableCache<Texture2D, GetTextureIntention> texturesCache) =>
