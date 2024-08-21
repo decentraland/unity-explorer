@@ -71,8 +71,8 @@ MonoBehaviour:
   <ProgressBar>k__BackingField: {fileID: 8074991929852742615}
   <ProgressBarFill>k__BackingField: {fileID: 6226304240553801147}
   <NormalBackgroundColor>k__BackingField: {r: 0, g: 0, b: 0, a: 0.4}
-  <HoverBackgroundColor>k__BackingField: {r: 1, g: 1, b: 1, a: 0.050980393}
-  <LockedBadgeImageColor>k__BackingField: {r: 1, g: 1, b: 1, a: 0.050980393}
+  <HoverBackgroundColor>k__BackingField: {r: 1, g: 1, b: 1, a: 0.03137255}
+  <LockedBadgeImageColor>k__BackingField: {r: 1, g: 1, b: 1, a: 0.03137255}
   <NonLockedBadgeImageColor>k__BackingField: {r: 1, g: 1, b: 1, a: 1}
 --- !u!1 &2549124844008324019
 GameObject:
