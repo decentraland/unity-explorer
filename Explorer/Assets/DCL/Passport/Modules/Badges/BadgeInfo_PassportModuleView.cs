@@ -80,7 +80,7 @@ namespace DCL.Passport.Modules.Badges
         public void StopLoadingImage() =>
             imageController?.StopLoading();
 
-        public void Setup(BadgeInfo badgeInfo, bool isOwnProfile)
+        public void Setup(BadgeInfo badgeInfo)
         {
             TierSection.SetActive(badgeInfo.tiers.Length > 0);
             Badge2DImage.SetColor(badgeInfo.isLocked ? LockedImageColor : UnlockedImageColor);

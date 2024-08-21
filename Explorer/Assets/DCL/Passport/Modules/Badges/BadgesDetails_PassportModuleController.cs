@@ -23,10 +23,11 @@ namespace DCL.Passport.Modules.Badges
         private const string ALL_FILTER = "All";
 
         private readonly BadgesDetails_PassportModuleView view;
-        private readonly BadgeInfo_PassportModuleView badgeInfoModuleView;
         private readonly BadgesAPIClient badgesAPIClient;
         private readonly PassportErrorsController passportErrorsController;
         private readonly ISelfProfile selfProfile;
+
+        private readonly BadgeInfo_PassportModuleSubController badgeInfoController;
 
         private readonly IObjectPool<ButtonWithSelectableStateView> badgesFilterButtonsPool;
         private readonly List<ButtonWithSelectableStateView> instantiatedBadgesFilterButtons = new ();
@@ -56,7 +57,6 @@ namespace DCL.Passport.Modules.Badges
             ISelfProfile selfProfile)
         {
             this.view = view;
-            this.badgeInfoModuleView = badgeInfoModuleView;
             this.badgesAPIClient = badgesAPIClient;
             this.passportErrorsController = passportErrorsController;
             this.selfProfile = selfProfile;
@@ -108,7 +108,7 @@ namespace DCL.Passport.Modules.Badges
                 },
                 actionOnRelease: emptyItemView => emptyItemView.gameObject.SetActive(false));
 
-            badgeInfoModuleView.ConfigureImageController(webRequestController);
+            badgeInfoController = new BadgeInfo_PassportModuleSubController(badgeInfoModuleView, webRequestController);
         }
 
         public void Setup(Profile profile)
@@ -126,7 +126,7 @@ namespace DCL.Passport.Modules.Badges
             ClearBadgeDetailCards();
             ClearBadgesCategorySeparators();
             ClearBadgesCategoryContainers();
-            badgeInfoModuleView.StopLoadingImage();
+            badgeInfoController.Clear();
         }
 
         public void Dispose() =>
@@ -247,7 +247,7 @@ namespace DCL.Passport.Modules.Badges
         private void LoadBadgeDetailCards()
         {
             ClearBadgeDetailCards();
-            badgeInfoModuleView.SetAsLoading(true);
+            badgeInfoController.SetAsLoading(true);
 
             if (string.IsNullOrEmpty(currentProfile.UserId))
                 return;
@@ -323,8 +323,8 @@ namespace DCL.Passport.Modules.Badges
                     badgeDetailCard.SetAsSelected(!firstElementSelected);
                     if (!firstElementSelected)
                     {
-                        badgeInfoModuleView.Setup(badgeDetailCard.Model, isOwnProfile);
-                        badgeInfoModuleView.SetAsLoading(false);
+                        badgeInfoController.Setup(badgeDetailCard.Model);
+                        badgeInfoController.SetAsLoading(false);
                     }
                     firstElementSelected = true;
                 }
@@ -364,7 +364,7 @@ namespace DCL.Passport.Modules.Badges
                     instantiateBadgeByCategory.SetAsSelected(false);
 
             badgeDetailCard.SetAsSelected(true);
-            badgeInfoModuleView.Setup(badgeDetailCard.Model, isOwnProfile);
+            badgeInfoController.Setup(badgeDetailCard.Model);
         }
 
         private void CreateEmptyDetailCards()
