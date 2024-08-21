@@ -1,4 +1,5 @@
 ﻿using CommunicationData.URLHelpers;
+using DCL.AvatarRendering.Loading;
 using System.Linq;
 
 namespace DCL.AvatarRendering.Wearables.Components

@@ -1,3 +1,4 @@
+using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Wearables;
 using System;
 

@@ -1,8 +1,8 @@
-﻿using System;
+﻿#nullable disable
 
-#nullable disable
+using System;
 
-namespace DCL.AvatarRendering.Wearables
+namespace DCL.AvatarRendering.Loading
 {
     public abstract class AvatarAttachmentDTO<TMetadata> : AvatarAttachmentDTO where TMetadata : AvatarAttachmentDTO.MetadataBase
     {

@@ -1,3 +1,4 @@
+using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
 using ECS.StreamableLoading.Common.Components;

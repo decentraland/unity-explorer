@@ -6,7 +6,7 @@ using System.Threading;
 
 namespace DCL.AvatarRendering.Wearables.Components.Intentions
 {
-    public struct GetWearableByParamIntention : IEquatable<GetWearableByParamIntention>, ILoadingIntention
+    public struct GetWearableByParamIntention : IEquatable<GetWearableByParamIntention>, ICountedLoadingIntention<IWearable>
     {
         public CancellationTokenSource CancellationTokenSource => CommonArguments.CancellationTokenSource;
 
@@ -19,7 +19,17 @@ namespace DCL.AvatarRendering.Wearables.Components.Intentions
 
         //Used for pooling
         public List<IWearable> Results;
-        public int TotalAmount;
+        public int TotalAmount { get; private set; }
+
+        public void SetTotal(int total)
+        {
+            TotalAmount = total;
+        }
+
+        public void AppendToResult(IWearable resultElement)
+        {
+            Results.Add(resultElement);
+        }
 
         public GetWearableByParamIntention(IReadOnlyList<(string, string)> requestParams, string userID, List<IWearable> results, int totalAmount)
         {

@@ -1,32 +1,38 @@
+using DCL.AvatarRendering.Loading;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 
 namespace DCL.AvatarRendering.Emotes
 {
     [Serializable]
-    public struct LambdaOwnedEmoteElementDTO
+    public class LambdaOwnedEmoteElementDTO : ILambdaResponseElement<EmoteDTO>
     {
         public string type;
         public string urn;
         public string name;
         public string category;
         public EmoteDTO entity;
-        public IndividualDataDTO[] individualData;
+        public ElementIndividualDataDto[] individualData;
 
-        [Serializable]
-        public struct IndividualDataDTO
-        {
-            public string id;
-            public string tokenId;
-            public string transferredAt;
-            public string price;
-        }
+        [JsonIgnore]
+        public EmoteDTO Entity => entity;
+
+        [JsonIgnore]
+        public IReadOnlyList<ElementIndividualDataDto> IndividualData => individualData;
+
     }
 
     [Serializable]
-    public struct LambdaOwnedEmoteElementList
+    public struct LambdaOwnedEmoteElementList : ILambdaResponse<LambdaOwnedEmoteElementDTO>
     {
         public List<LambdaOwnedEmoteElementDTO> elements;
         public int totalAmount;
+
+        [JsonIgnore]
+        public IReadOnlyList<LambdaOwnedEmoteElementDTO> Elements => elements;
+
+        [JsonIgnore]
+        public int TotalAmount => totalAmount;
     }
 }

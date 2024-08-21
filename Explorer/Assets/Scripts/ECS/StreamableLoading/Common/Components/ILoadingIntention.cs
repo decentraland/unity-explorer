@@ -15,6 +15,15 @@ namespace ECS.StreamableLoading.Common.Components
         CommonLoadingArguments CommonArguments { get; set; }
     }
 
+    public interface ICountedLoadingIntention<in TResultElement> : ILoadingIntention
+    {
+        int TotalAmount { get; }
+
+        void SetTotal(int total); //TODO refactor it may cause inconsistency because there are 2 sources of truth
+
+        void AppendToResult(TResultElement resultElement);
+    }
+
     public static class LoadingIntentionExtensions
     {
         public static bool IsCancelled<T>(this ref T intention) where T: struct, ILoadingIntention =>
