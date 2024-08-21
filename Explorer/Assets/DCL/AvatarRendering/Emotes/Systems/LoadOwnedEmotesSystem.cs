@@ -14,6 +14,7 @@ using ECS.StreamableLoading.Common.Systems;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using Utility.Multithreading;
 
 namespace DCL.AvatarRendering.Emotes
 {
@@ -55,14 +56,20 @@ namespace DCL.AvatarRendering.Emotes
 
 
             if (lambdaResponse.elements.Count == 0) return EmptyResult(lambdaResponse);
-            var emotes = ParsedEmotes(lambdaResponse);
-            return new StreamableLoadingResult<EmotesResolution>(new EmotesResolution(emotes, lambdaResponse.totalAmount));
+
+            EmotesResolution emotesResolution;
+
+            await using (await ExecuteOnThreadPoolScope.NewScopeWithReturnOnMainThreadAsync())
+            {
+                var emotes = ParsedEmotes(lambdaResponse);
+                emotesResolution = new EmotesResolution(emotes, lambdaResponse.totalAmount);
+            }
+
+            return new StreamableLoadingResult<EmotesResolution>(emotesResolution);
         }
 
         private IReadOnlyList<IEmote> ParsedEmotes(LambdaOwnedEmoteElementList lambdaResponse)
         {
-            // The following logic is not thread-safe!
-            // TODO make it thread-safe: cache and CreateWearableThumbnailPromise
             var emotes = new IEmote[lambdaResponse.elements.Count];
 
             for (var i = 0; i < lambdaResponse.elements.Count; i++)
