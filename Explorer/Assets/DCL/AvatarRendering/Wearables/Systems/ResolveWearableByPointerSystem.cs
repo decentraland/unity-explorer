@@ -185,21 +185,15 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 }
                 else
                 {
-                    var failedDTOList = WearableComponentsUtils.POINTERS_POOL.Get();
-                    failedDTOList.AddRange(promise.LoadingIntention.Pointers);
+                    using var _ = WearableComponentsUtils.POINTERS_POOL.Get(out var failedDTOList);
+                    failedDTOList!.AddRange(promise.LoadingIntention.Pointers);
 
                     foreach (WearableDTO assetEntity in promiseResult.Asset.Value)
                     {
-                        bool isWearableInCatalog = wearableCache.TryGetElement(assetEntity.Metadata.id, out var component);
-
-                        if (!isWearableInCatalog)
-                        {
-                            //A wearable that has a DTO request should already have an empty representation in the catalog at this point
-                            ReportHub.LogError(new ReportData(GetReportCategory()), $"Requested wearable {assetEntity.Metadata.id} is not in the catalog");
+                        if (wearableCache.TryGetElementWithLogs(assetEntity, GetReportCategory(), out var component) == false)
                             continue;
-                        }
 
-                        if (!component.TryResolveDTO(new StreamableLoadingResult<WearableDTO>(assetEntity)))
+                        if (component!.TryResolveDTO(new StreamableLoadingResult<WearableDTO>(assetEntity)) == false)
                             ReportHub.LogError(new ReportData(GetReportCategory()), $"Wearable DTO has already been initialized: {assetEntity.Metadata.id}");
 
                         failedDTOList.Remove(assetEntity.Metadata.id);
@@ -209,8 +203,6 @@ namespace DCL.AvatarRendering.Wearables.Systems
                     //If this list is not empty, it means we have at least one unresolvedDTO that was not completed. We need to finalize it as error
                     foreach (var urn in failedDTOList)
                         ReportAndFinalizeWithError(urn);
-
-                    WearableComponentsUtils.POINTERS_POOL.Release(failedDTOList);
                 }
 
                 promise.LoadingIntention.ReleasePointers();

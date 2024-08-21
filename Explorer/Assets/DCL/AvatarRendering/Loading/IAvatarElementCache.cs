@@ -1,6 +1,7 @@
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Components;
+using DCL.Diagnostics;
 using DCL.Optimization.PerformanceBudgeting;
 using System.Collections.Generic;
 
@@ -9,7 +10,7 @@ namespace DCL.AvatarRendering.Loading
     /// <summary>
     ///     Avatar elements cache, each implementation should be thread safe.
     /// </summary>
-    public interface IAvatarElementCache<TElement, in TDTO> where TElement: IAvatarAttachment<TDTO>
+    public interface IAvatarElementCache<TElement, in TDTO> where TElement: IAvatarAttachment<TDTO> where TDTO: AvatarAttachmentDTO
     {
         /// <summary>
         ///     Attempts to retrieve an element from the catalog.
@@ -38,5 +39,26 @@ namespace DCL.AvatarRendering.Loading
         void SetOwnedNft(URN urn, NftBlockchainOperationEntry operation);
 
         bool TryGetOwnedNftRegistry(URN nftUrn, out IReadOnlyDictionary<URN, NftBlockchainOperationEntry> registry);
+    }
+
+    public static class AvatarElementCache
+    {
+        public static bool TryGetElementWithLogs<TElement, TDTO>(this IAvatarElementCache<TElement, TDTO> cache, TDTO assetDTO, string reportCategory, out TElement? element)
+            where TElement: IAvatarAttachment<TDTO>
+            where TDTO: AvatarAttachmentDTO
+        {
+            string? id = assetDTO.Metadata?.id;
+
+            bool isWearableInCatalog = cache.TryGetElement(id ?? string.Empty, out element);
+
+            if (isWearableInCatalog == false)
+            {
+                //A wearable that has a DTO request should already have an empty representation in the catalog at this point
+                ReportHub.LogError(reportCategory, $"Requested {typeof(TDTO).Name} '{id}' is not in the catalog");
+                return false;
+            }
+
+            return true;
+        }
     }
 }
