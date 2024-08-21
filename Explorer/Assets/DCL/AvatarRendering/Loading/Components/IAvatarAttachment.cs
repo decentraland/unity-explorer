@@ -129,5 +129,11 @@ namespace DCL.AvatarRendering.Loading.Components
         {
             Model = result;
         }
+
+        public void ApplyAndMarkAsLoaded(TModelDTO modelDTO)
+        {
+            Model = new StreamableLoadingResult<TModelDTO>(modelDTO);
+            IsLoading = false;
+        }
     }
 }

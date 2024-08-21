@@ -53,7 +53,7 @@ namespace ECS.StreamableLoading.Common
         /// <summary>
         ///     Returns the asset if the loading is finished
         /// </summary>
-        public  bool TryGetResult(World world, out StreamableLoadingResult<TAsset> result)
+        public bool TryGetResult(World world, out StreamableLoadingResult<TAsset> result)
         {
             if (Result.HasValue)
             {
@@ -131,6 +131,18 @@ namespace ECS.StreamableLoading.Common
 
             LoadingIntention.CancellationTokenSource.Cancel();
             Entity = EntityReference.Null;
+        }
+
+        public bool TryForgetLoading(Entity selfEntity, World world)
+        {
+            if (LoadingIntention.CancellationTokenSource.IsCancellationRequested)
+            {
+                ForgetLoading(world);
+                world.Destroy(selfEntity);
+                return true;
+            }
+
+            return false;
         }
 
         public bool Equals(AssetPromise<TAsset, TLoadingIntention> other) =>

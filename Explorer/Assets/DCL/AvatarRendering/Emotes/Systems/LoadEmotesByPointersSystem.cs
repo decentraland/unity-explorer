@@ -187,15 +187,13 @@ namespace DCL.AvatarRendering.Emotes
         }
 
         [Query]
-        private void FinalizeEmoteDTO(in Entity entity,
-            ref AssetPromise<EmotesDTOList, GetEmotesByPointersFromRealmIntention> promise)
+        private void FinalizeEmoteDTO(
+            Entity entity,
+            ref AssetPromise<EmotesDTOList, GetEmotesByPointersFromRealmIntention> promise
+        )
         {
-            if (promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested)
-            {
-                promise.ForgetLoading(World);
-                World.Destroy(entity);
+            if (promise.TryForgetLoading(entity, World))
                 return;
-            }
 
             if (promise.SafeTryConsume(World, out StreamableLoadingResult<EmotesDTOList> promiseResult))
             {
@@ -210,8 +208,7 @@ namespace DCL.AvatarRendering.Emotes
                     foreach (EmoteDTO assetEntity in promiseResult.Asset.Value)
                     {
                         IEmote component = emoteCache.GetOrAddByDTO(assetEntity);
-                        component.Model = new StreamableLoadingResult<EmoteDTO>(assetEntity);
-                        component.IsLoading = false;
+                        component.ApplyAndMarkAsLoaded(assetEntity);
                     }
                 }
 
