@@ -141,4 +141,19 @@ namespace DCL.AvatarRendering.Loading.Components
             UpdateLoadingStatus(false);
         }
     }
+
+    public static class AvatarAttachmentExtensions
+    {
+        public static void UpdateManifest(this IAvatarAttachment avatarAttachment, StreamableLoadingResult<SceneAssetBundleManifest> result)
+        {
+            avatarAttachment.ManifestResult = result;
+            avatarAttachment.UpdateLoadingStatus(false);
+        }
+
+        public static void ResetManifest(this IAvatarAttachment avatarAttachment)
+        {
+            avatarAttachment.ManifestResult = null;
+            avatarAttachment.UpdateLoadingStatus(false);
+        }
+    }
 }

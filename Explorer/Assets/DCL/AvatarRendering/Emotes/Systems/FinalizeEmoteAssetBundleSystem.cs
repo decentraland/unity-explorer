@@ -40,15 +40,13 @@ namespace DCL.AvatarRendering.Emotes
         {
             if (promise.TryForgetWithEntityIfCancelled(entity, World!))
             {
-                emote.ManifestResult = null;
-                emote.UpdateLoadingStatus(false);
+                emote.ResetManifest();
                 return;
             }
 
             if (promise.SafeTryConsume(World!, out StreamableLoadingResult<SceneAssetBundleManifest> result))
             {
-                emote.ManifestResult = result;
-                emote.UpdateLoadingStatus(false);
+                emote.UpdateManifest(result);
                 World!.Destroy(entity);
             }
         }
