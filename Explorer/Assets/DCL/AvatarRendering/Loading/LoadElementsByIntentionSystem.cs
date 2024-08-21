@@ -11,6 +11,7 @@ using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
 using System;
 using System.Threading;
+using Utility.Multithreading;
 
 namespace DCL.AvatarRendering.Loading
 {
@@ -53,7 +54,9 @@ namespace DCL.AvatarRendering.Loading
                     )
                 );
 
-            Load(ref intention, lambdaResponse);
+            await using (await ExecuteOnThreadPoolScope.NewScopeWithReturnOnMainThreadAsync())
+                Load(ref intention, lambdaResponse);
+
             return new StreamableLoadingResult<TAsset>(AssetFromPreparedIntention(in intention));
         }
 
