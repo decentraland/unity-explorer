@@ -10,6 +10,8 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
     public struct BoneMatrixCalculationJob : IJobParallelForTransform
     {
         public NativeArray<float4x4> BonesMatricesResult;
+
+        [NativeDisableParallelForRestriction]
         public NativeArray<Matrix4x4> AvatarTransform;
         public int EndIndex;
 
@@ -17,7 +19,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
         {
             if (index >= EndIndex)
                 return;
-            BonesMatricesResult[index] = AvatarTransform[index] * transform.localToWorldMatrix;
+            BonesMatricesResult[index] = AvatarTransform[index / 62] * transform.localToWorldMatrix;
         }
     }
 }

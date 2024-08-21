@@ -16,6 +16,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
     {
         private NativeArray<Matrix4x4> MatrixFromAllAvatars;
         private Matrix4x4* matrixPtr;
+        
 
         private NativeArray<Matrix4x4> BufferArrayForBulkCopy;
         private Matrix4x4* BufferArrayForBulkCopyPtr;
@@ -72,27 +73,21 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 
         public  int AddAvatar(ref AvatarBase avatarBase, ref AvatarTransformMatrixComponent transformMatrixComponent)
         {
-            if (AvatarToIndexDictionary.TryAdd(avatarBase.RandomID, AvatarIndex))
+            if (!AvatarToIndexDictionary.TryGetValue(avatarBase.RandomID, out int currentIndex))
             {
+                AvatarToIndexDictionary.Add(avatarBase.RandomID, AvatarIndex);
                 int indexInDictionary = AvatarIndex * BONES_ARRAY_LENGTH;
                 for (int i = 0; i < BONES_ARRAY_LENGTH; i++)
                 {
                     bonesCombined[indexInDictionary + i] = transformMatrixComponent.bones[i];
                 }
 
+                currentIndex = AvatarIndex;
                 AvatarIndex++;
             }
 
             //Setup of data
-            int currentIndex = AvatarToIndexDictionary[avatarBase.RandomID];
-            int baseIndex = currentIndex * BONES_ARRAY_LENGTH;
-            var transformMatrix = avatarBase.transform.worldToLocalMatrix;
-
-            // Bulk copy through a ittermediatery array
-            for (int i = 0; i < BONES_ARRAY_LENGTH; i++)
-                BufferArrayForBulkCopyPtr[i] = transformMatrix;
-            UnsafeUtility.MemCpy(matrixPtr + baseIndex, BufferArrayForBulkCopyPtr, sizeToCopy);
-
+            matrixPtr[currentIndex] = avatarBase.transform.worldToLocalMatrix;
             return currentIndex;
         }
 
