@@ -38,8 +38,8 @@ namespace DCL.AvatarRendering.Emotes
 
             foreach (EmbeddedEmote embeddedEmote in emotes)
             {
-                var emote = new Emote();
                 var model = new EmoteDTO();
+                var emote = new Emote(new StreamableLoadingResult<EmoteDTO>(), false);
                 model.id = embeddedEmote.id;
 
                 // No content hashes available
@@ -64,7 +64,6 @@ namespace DCL.AvatarRendering.Emotes
                 model.metadata.emoteDataADR74 = embeddedEmote.entity;
 
                 emote.Model = new StreamableLoadingResult<EmoteDTO>(model);
-                emote.IsLoading = false;
                 emote.ThumbnailAssetResult = new StreamableLoadingResult<Sprite>(embeddedEmote.thumbnail);
 
                 WearableRegularAsset asset = CreateWearableAsset(embeddedEmote.prefab);

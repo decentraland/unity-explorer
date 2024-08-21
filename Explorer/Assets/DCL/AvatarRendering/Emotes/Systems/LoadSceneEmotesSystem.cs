@@ -145,7 +145,7 @@ namespace DCL.AvatarRendering.Emotes
                     manifest: intention.AssetBundleManifest),
                 partitionComponent);
 
-            emote.IsLoading = true;
+            emote.UpdateLoadingStatus(true);
             World.Create(promise, emote, intention.BodyShape);
 
             return true;

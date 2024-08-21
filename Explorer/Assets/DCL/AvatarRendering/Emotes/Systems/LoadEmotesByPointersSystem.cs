@@ -184,7 +184,7 @@ namespace DCL.AvatarRendering.Emotes
             ref AssetPromise<EmotesDTOList, GetEmotesByPointersFromRealmIntention> promise
         )
         {
-            if (promise.TryForgetLoading(entity, World!))
+            if (promise.TryForgetLoadingWithEntity(entity, World!))
                 return;
 
             if (promise.SafeTryConsume(World!, out StreamableLoadingResult<EmotesDTOList> promiseResult))
@@ -193,7 +193,7 @@ namespace DCL.AvatarRendering.Emotes
                 {
                     foreach (var pointerID in promise.LoadingIntention.Pointers)
                         if (emoteCache.TryGetElement(pointerID, out IEmote component))
-                            component.IsLoading = false;
+                            component.UpdateLoadingStatus(false);;
                 }
                 else
                 {
@@ -244,7 +244,7 @@ namespace DCL.AvatarRendering.Emotes
 
                 TryCreateAudioClipPromises(component, intention.BodyShape, partitionComponent);
 
-                component.IsLoading = true;
+                component.UpdateLoadingStatus(true);
                 World!.Create(promise, component, intention.BodyShape);
                 return true;
             }

@@ -37,7 +37,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                 partitionComponent);
 
             component.ManifestResult = new StreamableLoadingResult<SceneAssetBundleManifest>();
-            component.IsLoading = true;
+            component.UpdateLoadingStatus(true);
             world.Create(promise, component, bodyShape);
             return true;
         }
@@ -214,7 +214,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                     manifest: sceneAssetBundleManifest, cancellationTokenSource: intention.CancellationTokenSource),
                 partitionComponent);
 
-            wearable.IsLoading = true;
+            wearable.UpdateLoadingStatus(true);
             world.Create(promise, wearable, intention.BodyShape, index); // Add an index to the promise so we know to which slot of the WearableAssets it belongs
         }
 

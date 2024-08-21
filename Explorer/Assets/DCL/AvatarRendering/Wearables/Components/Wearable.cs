@@ -33,7 +33,12 @@ namespace DCL.AvatarRendering.Wearables.Components
 
         public WearableType Type { get; private set; }
 
-        public bool IsLoading { get; set; } = true;
+        public bool IsLoading { get; private set; } = true;
+
+        public void UpdateLoadingStatus(bool isLoading)
+        {
+            IsLoading = isLoading;
+        }
 
         public Wearable() { }
 
@@ -74,11 +79,6 @@ namespace DCL.AvatarRendering.Wearables.Components
                 Type = WearableType.BodyShape;
             else
                 Type = WearableType.Regular;
-        }
-
-        public void ResolvedFailedDTO(StreamableLoadingResult<WearableDTO> result)
-        {
-            Model = result;
         }
 
         public bool TryGetFileHashConditional(BodyShape bodyShape, Func<string, bool> contentMatch, out string? hash)

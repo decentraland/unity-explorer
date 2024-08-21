@@ -15,10 +15,21 @@ namespace DCL.AvatarRendering.Emotes
         public StreamableLoadingResult<EmoteDTO> Model { get; set; }
         public StreamableLoadingResult<AudioClip>?[] AudioAssetResults { get; set; } = new StreamableLoadingResult<AudioClip>?[BodyShape.COUNT];
 
-        public bool IsLoading { get; set; } = true;
+        public bool IsLoading { get; private set; }
+
+        public Emote(StreamableLoadingResult<EmoteDTO> model, bool isLoading = true)
+        {
+            Model = model;
+            IsLoading = isLoading;
+        }
+
+        public void UpdateLoadingStatus(bool isLoading)
+        {
+            IsLoading = isLoading;
+        }
 
         public bool IsOnChain() =>
-            IsOnChain(id: ((IAvatarAttachment<EmoteDTO>) this).GetUrn().ToString());
+            IsOnChain(id: ((IAvatarAttachment<EmoteDTO>)this).GetUrn().ToString());
 
         public static bool IsOnChain(string id) =>
             id.StartsWith("urn:") && !id.StartsWith("urn:decentraland:off-chain:");

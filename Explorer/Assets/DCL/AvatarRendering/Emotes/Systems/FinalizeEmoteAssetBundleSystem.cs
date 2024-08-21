@@ -41,7 +41,7 @@ namespace DCL.AvatarRendering.Emotes
             if (promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested)
             {
                 emote.ManifestResult = null;
-                emote.IsLoading = false;
+                emote.UpdateLoadingStatus(false);
                 promise.ForgetLoading(World);
                 World.Destroy(entity);
                 return;
@@ -50,7 +50,7 @@ namespace DCL.AvatarRendering.Emotes
             if (promise.SafeTryConsume(World, out StreamableLoadingResult<SceneAssetBundleManifest> result))
             {
                 emote.ManifestResult = result;
-                emote.IsLoading = false;
+                emote.UpdateLoadingStatus(false);
                 World.Destroy(entity);
             }
         }
@@ -83,7 +83,7 @@ namespace DCL.AvatarRendering.Emotes
                         emote.AssetResults[bodyShape] = asset;
                 }
 
-                emote.IsLoading = false;
+                emote.UpdateLoadingStatus(false);
                 World.Destroy(entity);
             }
         }
@@ -111,7 +111,7 @@ namespace DCL.AvatarRendering.Emotes
 
         private static void ResetEmoteResultOnCancellation(IEmote emote, BodyShape bodyShape)
         {
-            emote.IsLoading = false;
+            emote.UpdateLoadingStatus(false);
 
             if (emote.AssetResults[bodyShape] is { IsInitialized: false })
                 emote.AssetResults[bodyShape] = null;

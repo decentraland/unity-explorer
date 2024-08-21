@@ -35,7 +35,7 @@ namespace DCL.AvatarRendering.Loading.Systems
 
             foreach (var pointerID in promise.LoadingIntention.Pointers)
                 if (cache.TryGetElement(pointerID, out var component))
-                    component.IsLoading = false;
+                    component.FinalizeLoading();
 
             promise.ForgetLoading(World!);
             World!.Destroy(entity);
@@ -49,11 +49,9 @@ namespace DCL.AvatarRendering.Loading.Systems
             ReportHub.LogError(new ReportData(GetReportCategory()), e);
 
             if (cache.TryGetElement(urn, out var component))
-            {
+
                 //If its not in the catalog, we cannot determine which one has failed
                 component.ResolvedFailedDTO(new StreamableLoadingResult<TDTO>(e));
-                component.IsLoading = false;
-            }
         }
 
         /*[Query]

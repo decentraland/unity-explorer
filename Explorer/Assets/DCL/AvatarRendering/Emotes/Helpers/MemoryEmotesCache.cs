@@ -43,11 +43,12 @@ namespace DCL.AvatarRendering.Emotes
             {
                 return TryGetElement(emoteDto.metadata.id, out IEmote existingEmote)
                     ? existingEmote
-                    : AddEmote(emoteDto.metadata.id, new Emote
-                    {
-                        Model = new StreamableLoadingResult<EmoteDTO>(emoteDto),
-                        IsLoading = false,
-                    }, qualifiedForUnloading);
+                    : AddEmote(
+                        emoteDto.metadata.id,
+                        new Emote(
+                            new StreamableLoadingResult<EmoteDTO>(emoteDto), false),
+                        qualifiedForUnloading
+                    );
             }
         }
 

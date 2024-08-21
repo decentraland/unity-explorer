@@ -197,7 +197,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                             ReportHub.LogError(new ReportData(GetReportCategory()), $"Wearable DTO has already been initialized: {assetEntity.Metadata.id}");
 
                         failedDTOList.Remove(assetEntity.Metadata.id);
-                        component.IsLoading = false;
+                        component.UpdateLoadingStatus(false);
                     }
 
                     //If this list is not empty, it means we have at least one unresolvedDTO that was not completed. We need to finalize it as error
@@ -211,14 +211,12 @@ namespace DCL.AvatarRendering.Wearables.Systems
         }
 
         [Query]
-        private void FinalizeAssetBundleManifestLoading([Data] bool defaultWearablesResolved, in Entity entity, ref AssetBundleManifestPromise promise, ref IWearable wearable, ref BodyShape bodyShape)
+        private void FinalizeAssetBundleManifestLoading([Data] bool defaultWearablesResolved, Entity entity, ref AssetBundleManifestPromise promise, ref IWearable wearable, ref BodyShape bodyShape)
         {
-            if (promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested)
+            if (promise.TryForgetLoadingWithEntity(entity, World!))
             {
-                wearable.IsLoading = false;
+                wearable.UpdateLoadingStatus(false);
                 wearable.ManifestResult = null;
-                promise.ForgetLoading(World);
-                World.Destroy(entity);
                 return;
             }
 
@@ -229,7 +227,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 else
                     SetDefaultWearables(defaultWearablesResolved, wearable, in bodyShape);
 
-                wearable.IsLoading = false;
+                wearable.UpdateLoadingStatus(false);
                 World.Destroy(entity);
             }
         }
@@ -260,7 +258,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 else
                     SetDefaultWearables(defaultWearablesResolved, wearable, in bodyShape);
 
-                wearable.IsLoading = !AllAssetsAreLoaded(wearable, bodyShape);
+                wearable.UpdateLoadingStatus(!AllAssetsAreLoaded(wearable, bodyShape));
                 World.Destroy(entity);
             }
         }
@@ -284,7 +282,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
             if (component.TryCreateAssetBundlePromise(in intention, customStreamingSubdirectory, partitionComponent, World))
             {
-                component.IsLoading = true;
+                component.UpdateLoadingStatus(true);
                 return true;
             }
 
@@ -361,7 +359,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
         /// </summary>
         private static void ResetWearableResultOnCancellation(IWearable wearable, in BodyShape bodyShape, int index)
         {
-            wearable.IsLoading = false;
+            wearable.UpdateLoadingStatus(false);
 
             void ResetBodyShape(BodyShape bs)
             {

@@ -12,7 +12,9 @@ namespace DCL.AvatarRendering.Loading.Components
         private const string THUMBNAIL_DEFAULT_KEY = "thumbnail.png";
         private const string DEFAULT_RARITY = "base";
 
-        bool IsLoading { get; set; }
+        bool IsLoading { get; }
+
+        public void UpdateLoadingStatus(bool isLoading);
 
         /// <summary>
         ///     Might be never resolved if Wearable is loaded from the Embedded Source
@@ -128,12 +130,18 @@ namespace DCL.AvatarRendering.Loading.Components
         public void ResolvedFailedDTO(StreamableLoadingResult<TModelDTO> result)
         {
             Model = result;
+            UpdateLoadingStatus(false);
+        }
+
+        public void FinalizeLoading()
+        {
+            UpdateLoadingStatus(false);
         }
 
         public void ApplyAndMarkAsLoaded(TModelDTO modelDTO)
         {
             Model = new StreamableLoadingResult<TModelDTO>(modelDTO);
-            IsLoading = false;
+            UpdateLoadingStatus(false);
         }
     }
 }
