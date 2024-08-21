@@ -36,10 +36,7 @@ namespace DCL.AvatarRendering.Emotes
             using (OwnedBunch<RemoteEmoteIntention> emoteIntentions = emotesMessageBus.EmoteIntentions())
             {
                 if (!emoteIntentions.Available())
-                {
-                    HashSetPool<RemoteEmoteIntention>.Release(savedIntentions!);
                     return;
-                }
 
                 foreach (RemoteEmoteIntention remoteEmoteIntention in emoteIntentions.Collection())
                 {
