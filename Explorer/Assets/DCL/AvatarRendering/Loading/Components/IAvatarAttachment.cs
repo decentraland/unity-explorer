@@ -23,27 +23,27 @@ namespace DCL.AvatarRendering.Loading.Components
 
         StreamableLoadingResult<Sprite>? ThumbnailAssetResult { get; set; }
 
-        AvatarAttachmentDTO GetDTO();
+        AvatarAttachmentDTO DTO { get; }
 
         string GetHash() =>
-            GetDTO().id;
+            DTO.id;
 
         URN GetUrn() =>
-            GetDTO().Metadata.id;
+            DTO.Metadata.id;
 
         string GetName(string langCode = "en")
         {
-            string result = GetDTO().Metadata.name;
+            string result = DTO.Metadata.name;
 
-            if (GetDTO().Metadata.i18n == null)
+            if (DTO.Metadata.i18n == null)
                 return result;
 
-            for (var i = 0; i < GetDTO().Metadata.i18n.Length; i++)
+            for (var i = 0; i < DTO.Metadata.i18n.Length; i++)
             {
-                if (GetDTO().Metadata.i18n[i].code != langCode)
+                if (DTO.Metadata.i18n[i].code != langCode)
                     continue;
 
-                result = GetDTO().Metadata.i18n[i].text;
+                result = DTO.Metadata.i18n[i].text;
                 break;
             }
 
@@ -51,14 +51,14 @@ namespace DCL.AvatarRendering.Loading.Components
         }
 
         string GetCategory() =>
-            GetDTO().Metadata.AbstractData.category;
+            DTO.Metadata.AbstractData.category;
 
         string GetDescription() =>
-            GetDTO().Metadata.description;
+            DTO.Metadata.description;
 
         string GetRarity()
         {
-            string result = GetDTO().Metadata.rarity ?? DEFAULT_RARITY;
+            string result = DTO.Metadata.rarity ?? DEFAULT_RARITY;
 
             if (string.IsNullOrEmpty(result))
                 result = DEFAULT_RARITY;
@@ -67,14 +67,14 @@ namespace DCL.AvatarRendering.Loading.Components
         }
 
         bool IsUnisex() =>
-            GetDTO().Metadata.AbstractData.representations.Length > 1;
+            DTO.Metadata.AbstractData.representations.Length > 1;
 
         bool IsThirdParty() =>
             GetUrn().IsThirdPartyCollection();
 
         URLPath GetThumbnail()
         {
-            AvatarAttachmentDTO wearableDTO = GetDTO();
+            AvatarAttachmentDTO wearableDTO = DTO;
 
             string thumbnailHash = wearableDTO.Metadata.thumbnail;
 
@@ -86,7 +86,7 @@ namespace DCL.AvatarRendering.Loading.Components
 
         bool TryGetMainFileHash(BodyShape bodyShape, out string? hash)
         {
-            AvatarAttachmentDTO wearableDTO = GetDTO();
+            AvatarAttachmentDTO wearableDTO = DTO;
 
             // The length of arrays is small, so O(N) complexity is fine
             // Avoid iterator allocations with "for" loop
@@ -104,7 +104,7 @@ namespace DCL.AvatarRendering.Loading.Components
 
         bool TryGetContentHashByKey(string key, out string? hash)
         {
-            AvatarAttachmentDTO wearableDTO = GetDTO();
+            AvatarAttachmentDTO wearableDTO = DTO;
 
             for (var i = 0; i < wearableDTO.content.Length; i++)
                 if (wearableDTO.content[i].file == key)

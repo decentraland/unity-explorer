@@ -34,7 +34,7 @@ namespace DCL.AvatarRendering.Emotes
         public static bool IsOnChain(string id) =>
             id.StartsWith("urn:") && !id.StartsWith("urn:decentraland:off-chain:");
 
-        public AvatarAttachmentDTO GetDTO() =>
+        public AvatarAttachmentDTO DTO =>
             Model.Asset!;
 
         public override string ToString() =>

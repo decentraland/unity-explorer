@@ -54,7 +54,7 @@ namespace DCL.AvatarRendering.Wearables.Components
             return !id.StartsWith("urn:decentraland:off-chain:base-avatars:");
         }
 
-        public AvatarAttachmentDTO GetDTO() =>
+        public AvatarAttachmentDTO DTO =>
             Model.Asset!;
 
         public string GetCategory() =>
@@ -83,7 +83,7 @@ namespace DCL.AvatarRendering.Wearables.Components
 
         public bool TryGetFileHashConditional(BodyShape bodyShape, Func<string, bool> contentMatch, out string? hash)
         {
-            AvatarAttachmentDTO wearableDTO = GetDTO();
+            AvatarAttachmentDTO wearableDTO = DTO;
 
             for (var i = 0; i < wearableDTO.Metadata.AbstractData.representations.Length; i++)
             {
@@ -99,7 +99,7 @@ namespace DCL.AvatarRendering.Wearables.Components
 
                         if (mainFileKey != contentKey && contentMatch(contentKey))
                         {
-                            Loading.Components.IAvatarAttachment attachment = this;
+                            IAvatarAttachment attachment = this;
                             return attachment.TryGetContentHashByKey(contentKey, out hash);
                         }
                     }
@@ -114,7 +114,7 @@ namespace DCL.AvatarRendering.Wearables.Components
 
         public void GetHidingList(string bodyShapeType, HashSet<string> hideListResult)
         {
-            AvatarAttachmentDTO dto = GetDTO();
+            AvatarAttachmentDTO dto = DTO;
 
             AvatarAttachmentDTO.Representation? representation = GetRepresentation(bodyShapeType);
             AvatarAttachmentDTO.DataBase? data = dto.Metadata.AbstractData;
@@ -151,7 +151,7 @@ namespace DCL.AvatarRendering.Wearables.Components
 
         public bool IsCompatibleWithBodyShape(string bodyShape)
         {
-            foreach (AvatarAttachmentDTO.Representation dataRepresentation in GetDTO().Metadata.AbstractData.representations)
+            foreach (AvatarAttachmentDTO.Representation dataRepresentation in DTO.Metadata.AbstractData.representations)
             {
                 if (dataRepresentation.bodyShapes.Contains(bodyShape))
                     return true;
@@ -181,7 +181,7 @@ namespace DCL.AvatarRendering.Wearables.Components
 
         private AvatarAttachmentDTO.Representation? GetRepresentation(string bodyShapeType)
         {
-            AvatarAttachmentDTO dto = GetDTO();
+            AvatarAttachmentDTO dto = DTO;
 
             foreach (AvatarAttachmentDTO.Representation representation in dto.Metadata.AbstractData.representations)
             {
@@ -195,7 +195,7 @@ namespace DCL.AvatarRendering.Wearables.Components
         private string[]? GetReplacesList(string bodyShapeType)
         {
             AvatarAttachmentDTO.Representation? representation = GetRepresentation(bodyShapeType);
-            AvatarAttachmentDTO dto = GetDTO();
+            AvatarAttachmentDTO dto = DTO;
 
             if (representation == null)
             {
@@ -220,7 +220,7 @@ namespace DCL.AvatarRendering.Wearables.Components
                 if (wearableItem == null)
                     continue;
 
-                if (result.Contains(wearableItem.GetDTO().Metadata.AbstractData.category))
+                if (result.Contains(wearableItem.GetCategory()))
                     continue;
 
                 HashSet<string> wearableHidesList = new (StringComparer.OrdinalIgnoreCase);
