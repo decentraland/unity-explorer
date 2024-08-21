@@ -58,7 +58,7 @@ namespace DCL.AvatarRendering.Emotes
                 LambdaOwnedEmoteElementDTO element = lambdaResponse.elements[i];
                 EmoteDTO emoteDto = element.entity;
 
-                IEmote emote = emoteCache.GetOrAddEmoteByDTO(emoteDto);
+                IEmote emote = emoteCache.GetOrAddByDTO(emoteDto);
 
                 foreach (LambdaOwnedEmoteElementDTO.IndividualDataDTO individualData in element.individualData)
                 {

@@ -162,7 +162,7 @@ namespace DCL.Backpack.BackpackBus
 
         private void HandleEmoteEquipCommand(BackpackEquipEmoteCommand command)
         {
-            if (!emoteCache.TryGetEmote(command.Id, out IEmote emote))
+            if (!emoteCache.TryGetElement(command.Id, out IEmote emote))
             {
                 ReportHub.LogError(new ReportData(ReportCategory.EMOTE), $"Cannot equip emote, not found: {command.Id}");
                 return;
@@ -211,7 +211,7 @@ namespace DCL.Backpack.BackpackBus
 
         private void HandleSelectEmoteCommand(BackpackSelectEmoteCommand command)
         {
-            if (emoteCache.TryGetEmote(command.Id, out IEmote emote))
+            if (emoteCache.TryGetElement(command.Id, out IEmote emote))
                 backpackEventBus.SendEmoteSelect(emote);
         }
 

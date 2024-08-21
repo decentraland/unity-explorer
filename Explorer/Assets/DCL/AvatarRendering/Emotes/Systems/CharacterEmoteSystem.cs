@@ -160,7 +160,7 @@ namespace DCL.AvatarRendering.Emotes
                 if (avatarView.GetAnimatorFloat(AnimationHashes.MOVEMENT_BLEND) > 0.1f)
                     return;
 
-                if (emoteCache.TryGetEmote(emoteId.Shorten(), out IEmote emote))
+                if (emoteCache.TryGetElement(emoteId.Shorten(), out IEmote emote))
                 {
                     // emote failed to load? remove intent
                     if (emote.ManifestResult is { IsInitialized: true, Succeeded: false })

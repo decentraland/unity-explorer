@@ -181,7 +181,7 @@ namespace DCL.AvatarRendering.Emotes
                 URN shortenedPointer = loadingIntentionPointer;
                 shortenedPointer = shortenedPointer.Shorten();
 
-                if (!emoteCache.TryGetEmote(shortenedPointer, out IEmote emote))
+                if (!emoteCache.TryGetElement(shortenedPointer, out IEmote emote))
                 {
                     if (!intention.ProcessedPointers.Contains(loadingIntentionPointer))
                     {
@@ -264,14 +264,14 @@ namespace DCL.AvatarRendering.Emotes
                 if (!promiseResult.Succeeded)
                 {
                     foreach (string pointerID in promise.LoadingIntention.Pointers)
-                        if (emoteCache.TryGetEmote(pointerID, out IEmote component))
+                        if (emoteCache.TryGetElement(pointerID, out IEmote component))
                             component.IsLoading = false;
                 }
                 else
                 {
                     foreach (EmoteDTO assetEntity in promiseResult.Asset.Value)
                     {
-                        IEmote component = emoteCache.GetOrAddEmoteByDTO(assetEntity);
+                        IEmote component = emoteCache.GetOrAddByDTO(assetEntity);
                         component.Model = new StreamableLoadingResult<EmoteDTO>(assetEntity);
                         component.IsLoading = false;
                     }

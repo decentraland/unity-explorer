@@ -123,7 +123,7 @@ namespace DCL.Multiplayer.SDK.Tests
         {
             internal readonly Dictionary<URN, IEmote> emotes = new ();
 
-            public bool TryGetEmote(URN urn, out IEmote emote)
+            public bool TryGetElement(URN urn, out IEmote emote)
             {
                 if (!emotes.TryGetValue(urn, out emote)) return false;
                 return true;
@@ -134,7 +134,7 @@ namespace DCL.Multiplayer.SDK.Tests
                 throw new NotImplementedException();
             }
 
-            public IEmote GetOrAddEmoteByDTO(EmoteDTO emoteDto, bool qualifiedForUnloading = true) =>
+            public IEmote GetOrAddByDTO(EmoteDTO emoteDto, bool qualifiedForUnloading = true) =>
                 throw new NotImplementedException();
 
             public void Unload(IPerformanceBudget frameTimeBudget)

@@ -40,7 +40,7 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
             if (!componentFound)
                 emoteCommandComponent = new AvatarEmoteCommandComponent();
 
-            if (emoteCache.TryGetEmote(emoteIntent.EmoteId.Shorten(), out IEmote emote))
+            if (emoteCache.TryGetElement(emoteIntent.EmoteId.Shorten(), out IEmote emote))
             {
                 emoteCommandComponent.IsDirty = true;
                 emoteCommandComponent.PlayingEmote = emoteIntent.EmoteId;

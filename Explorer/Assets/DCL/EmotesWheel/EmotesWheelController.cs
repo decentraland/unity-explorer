@@ -157,7 +157,7 @@ namespace DCL.EmotesWheel
 
         private async UniTaskVoid SetUpSlotAsync(int slot, URN emoteUrn, CancellationToken ct)
         {
-            if (!emoteCache.TryGetEmote(emoteUrn, out IEmote emote))
+            if (!emoteCache.TryGetElement(emoteUrn, out IEmote emote))
             {
                 ReportHub.LogError(new ReportData(), $"Could not setup emote wheel slot {slot} for {emoteUrn}, missing emote in cache");
                 return;
@@ -194,7 +194,7 @@ namespace DCL.EmotesWheel
 
         private void UpdateCurrentEmote(int slot)
         {
-            if (!emoteCache.TryGetEmote(currentEmotes[slot], out IEmote emote))
+            if (!emoteCache.TryGetElement(currentEmotes[slot], out IEmote emote))
                 ClearCurrentEmote(slot);
             else
                 viewInstance.CurrentEmoteName.text = emote.GetName();

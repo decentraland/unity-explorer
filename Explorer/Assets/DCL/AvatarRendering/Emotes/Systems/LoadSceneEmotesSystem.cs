@@ -70,7 +70,7 @@ namespace DCL.AvatarRendering.Emotes
                 return;
             }
 
-            if (!emoteCache.TryGetEmote(urn, out IEmote emote))
+            if (!emoteCache.TryGetElement(urn, out IEmote emote))
             {
                 var dto = new EmoteDTO
                 {
@@ -105,7 +105,7 @@ namespace DCL.AvatarRendering.Emotes
                     },
                 };
 
-                emote = emoteCache.GetOrAddEmoteByDTO(dto);
+                emote = emoteCache.GetOrAddByDTO(dto);
             }
 
             if (emote.IsLoading) return;
