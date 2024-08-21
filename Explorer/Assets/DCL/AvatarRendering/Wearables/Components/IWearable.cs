@@ -20,8 +20,6 @@ namespace DCL.AvatarRendering.Wearables.Components
         /// </summary>
         bool TryResolveDTO(StreamableLoadingResult<WearableDTO> result);
 
-        void ResolvedFailedDTO(StreamableLoadingResult<WearableDTO> result);
-
         bool TryGetFileHashConditional(BodyShape bodyShape, Func<string, bool> contentMatch, out string? hash);
 
         void GetHidingList(string bodyShapeType, HashSet<string> hideListResult);
