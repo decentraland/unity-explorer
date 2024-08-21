@@ -1,7 +1,6 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.ComputeShader;
 using DCL.AvatarRendering.AvatarShape.Helpers;
@@ -20,7 +19,6 @@ using DCL.Utilities;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.StreamableLoading.Common;
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
@@ -48,14 +46,14 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         private readonly IPerformanceBudget memoryBudget;
         private readonly ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy;
         private readonly IDefaultFaceFeaturesHandler defaultFaceFeaturesHandler;
-        private readonly IWearableCatalog wearableCatalog;
+        private readonly IWearableCache wearableCache;
         private readonly IWearable?[] fallbackBodyShape = new IWearable[1];
 
         public AvatarInstantiatorSystem(World world, IPerformanceBudget instantiationFrameTimeBudget, IPerformanceBudget memoryBudget,
             IComponentPool<AvatarBase> avatarPoolRegistry, IAvatarMaterialPoolHandler avatarMaterialPoolHandler, IObjectPool<UnityEngine.ComputeShader> computeShaderPool,
             IWearableAssetsCache wearableAssetsCache, CustomSkinning skinningStrategy, FixedComputeBufferHandler vertOutBuffer,
             ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy, IDefaultFaceFeaturesHandler defaultFaceFeaturesHandler,
-            IWearableCatalog wearableCatalog) : base(world)
+            IWearableCache wearableCache) : base(world)
         {
             this.instantiationFrameTimeBudget = instantiationFrameTimeBudget;
             this.avatarPoolRegistry = avatarPoolRegistry;
@@ -68,7 +66,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             computeShaderSkinningPool = computeShaderPool;
             this.mainPlayerAvatarBaseProxy = mainPlayerAvatarBaseProxy;
             this.defaultFaceFeaturesHandler = defaultFaceFeaturesHandler;
-            this.wearableCatalog = wearableCatalog;
+            this.wearableCache = wearableCache;
         }
 
         public override void Dispose()
@@ -172,7 +170,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                 if (fallbackBodyShape[0] == null)
 
                     // Could be a very rare case on which the body shape is not available. This case will make the flow fail
-                    if (wearableCatalog.TryGetWearable(BodyShape.MALE, out IWearable maleBody))
+                    if (wearableCache.TryGetWearable(BodyShape.MALE, out IWearable maleBody))
                         fallbackBodyShape[0] = maleBody;
 
                 visibleWearables = fallbackBodyShape!;

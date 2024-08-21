@@ -61,6 +61,9 @@ namespace DCL.AvatarRendering.Wearables.Components
         bool IsUnisex() =>
             GetDTO().Metadata.AbstractData.representations.Length > 1;
 
+        bool IsThirdParty() =>
+            GetUrn().IsThirdPartyCollection();
+
         bool IsOnChain();
 
         AvatarAttachmentDTO GetDTO();
