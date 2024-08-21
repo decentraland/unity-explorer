@@ -78,5 +78,10 @@ namespace ECS
 
             return UniTask.WaitUntil(func!);
         }
+
+        public static void RemoveFromWaitConfiguredCache(this IRealmData realmData)
+        {
+            CACHE.Remove(realmData);
+        }
     }
 }

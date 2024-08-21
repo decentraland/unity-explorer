@@ -74,6 +74,7 @@ namespace ECS
         {
             Configured = false;
             ipfs = InvalidIpfsRealm.Instance;
+            this.RemoveFromWaitConfiguredCache();
         }
 
         private void Validate()
