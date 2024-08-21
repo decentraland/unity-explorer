@@ -50,6 +50,12 @@ namespace DCL.AvatarRendering.Emotes
         public override int GetHashCode() =>
             Pointers != null ? Pointers.GetHashCode() : 0;
 
+        public bool IsTimeout(float deltaTime)
+        {
+            ElapsedTime += deltaTime;
+            return ElapsedTime >= Timeout;
+        }
+
         public void Dispose()
         {
             POINTERS_POOL.Release(pointers);

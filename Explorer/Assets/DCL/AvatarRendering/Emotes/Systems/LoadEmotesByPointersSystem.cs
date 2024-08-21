@@ -7,7 +7,6 @@ using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Loading.Systems;
-using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.AvatarRendering.Wearables.Systems;
 using DCL.Diagnostics;
@@ -64,8 +63,8 @@ namespace DCL.AvatarRendering.Emotes
         {
             base.Update(t);
 
-            GetEmotesFromRealmQuery(World, t);
-            FinalizeEmoteDTOQuery(World);
+            GetEmotesFromRealmQuery(World!, t);
+            FinalizeEmoteDTOQuery(World!);
         }
 
         protected override EmotesDTOList CreateAssetFromListOfDTOs(List<EmoteDTO> list) =>
@@ -79,19 +78,15 @@ namespace DCL.AvatarRendering.Emotes
         {
             if (intention.CancellationTokenSource.IsCancellationRequested)
             {
-                if (!World.Has<StreamableResult>(entity))
+                if (World!.Has<StreamableResult>(entity) == false)
                     World.Add(entity, new StreamableResult(new OperationCanceledException("Pointer request cancelled")));
 
                 return;
             }
 
-            intention.ElapsedTime += dt;
-
-            bool isTimeout = intention.ElapsedTime >= intention.Timeout;
-
-            if (isTimeout)
+            if (intention.IsTimeout(dt))
             {
-                if (!World.Has<StreamableResult>(entity))
+                if (World.Has<StreamableResult>(entity) == false)
                 {
                     var pointersStrLog = string.Join(",", intention.Pointers);
                     ReportHub.LogWarning(GetReportCategory(), $"Loading emotes timed out, {pointersStrLog}");
@@ -101,8 +96,8 @@ namespace DCL.AvatarRendering.Emotes
                 return;
             }
 
-            List<URN> missingPointersTmp = ListPool<URN>.Get();
-            List<IEmote> resolvedEmotesTmp = ListPool<IEmote>.Get();
+            using var _ = ListPool<URN>.Get(out var missingPointersTmp)!;
+            using var __ = ListPool<IEmote>.Get(out var resolvedEmotesTmp)!;
 
             foreach (URN loadingIntentionPointer in intention.Pointers)
             {
@@ -141,10 +136,6 @@ namespace DCL.AvatarRendering.Emotes
                     partitionComponent);
 
                 World.Create(promise, intention.BodyShape, partitionComponent);
-
-                ListPool<URN>.Release(missingPointersTmp);
-                ListPool<IEmote>.Release(resolvedEmotesTmp);
-
                 return;
             }
 
@@ -181,9 +172,6 @@ namespace DCL.AvatarRendering.Emotes
 
             if (isSucceeded)
                 World.Add(entity, new StreamableResult(new EmotesResolution(resolvedEmotesTmp.ToList(), intention.Pointers.Count)));
-
-            ListPool<URN>.Release(missingPointersTmp);
-            ListPool<IEmote>.Release(resolvedEmotesTmp);
         }
 
         [Query]
@@ -245,7 +233,7 @@ namespace DCL.AvatarRendering.Emotes
                         manifest: manifest, cancellationTokenSource: intention.CancellationTokenSource),
                     partitionComponent);
 
-                TryCreateAudioClipPromise(component, intention.BodyShape, partitionComponent);
+                TryCreateAudioClipPromises(component, intention.BodyShape, partitionComponent);
 
                 component.IsLoading = true;
                 World.Create(promise, component, intention.BodyShape);
@@ -255,11 +243,11 @@ namespace DCL.AvatarRendering.Emotes
             return false;
         }
 
-        private void TryCreateAudioClipPromise(IEmote component, BodyShape bodyShape, IPartitionComponent partitionComponent)
+        private void TryCreateAudioClipPromises(IEmote component, BodyShape bodyShape, IPartitionComponent partitionComponent)
         {
             AvatarAttachmentDTO.Content[]? content = component.Model.Asset!.content;
 
-            foreach (AvatarAttachmentDTO.Content item in content)
+            foreach (AvatarAttachmentDTO.Content item in content ?? Array.Empty<AvatarAttachmentDTO.Content>())
             {
                 var audioType = item.file.ToAudioType();
 
