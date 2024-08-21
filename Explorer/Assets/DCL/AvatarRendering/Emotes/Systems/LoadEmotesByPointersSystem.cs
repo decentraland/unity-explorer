@@ -86,7 +86,7 @@ namespace DCL.AvatarRendering.Emotes
 
             if (intention.IsTimeout(dt))
             {
-                if (World.Has<StreamableResult>(entity) == false)
+                if (World!.Has<StreamableResult>(entity) == false)
                 {
                     var pointersStrLog = string.Join(",", intention.Pointers);
                     ReportHub.LogWarning(GetReportCategory(), $"Loading emotes timed out, {pointersStrLog}");
@@ -118,7 +118,7 @@ namespace DCL.AvatarRendering.Emotes
                 {
                     if (!intention.ProcessedPointers.Contains(loadingIntentionPointer))
                     {
-                        missingPointersTmp.Add(shortenedPointer);
+                        missingPointersTmp!.Add(shortenedPointer);
                         intention.ProcessedPointers.Add(loadingIntentionPointer);
                     }
 
@@ -126,22 +126,26 @@ namespace DCL.AvatarRendering.Emotes
                 }
 
                 if (emote.Model.Succeeded)
-                    resolvedEmotesTmp.Add(emote);
+                    resolvedEmotesTmp!.Add(emote);
             }
 
-            if (missingPointersTmp.Count > 0)
+            if (missingPointersTmp!.Count > 0)
             {
-                var promise = EmotesFromRealmPromise.Create(World, new GetEmotesByPointersFromRealmIntention(missingPointersTmp.ToList(),
-                        new CommonLoadingArguments(realmData.Ipfs.EntitiesActiveEndpoint)),
-                    partitionComponent);
+                var promise = EmotesFromRealmPromise.Create(
+                    World!,
+                    new GetEmotesByPointersFromRealmIntention(missingPointersTmp.ToList(),
+                        new CommonLoadingArguments(realmData.Ipfs.EntitiesActiveEndpoint)
+                    ),
+                    partitionComponent
+                );
 
-                World.Create(promise, intention.BodyShape, partitionComponent);
+                World!.Create(promise, intention.BodyShape, partitionComponent);
                 return;
             }
 
             var emotesWithResponse = 0;
 
-            foreach (IEmote emote in resolvedEmotesTmp)
+            foreach (IEmote emote in resolvedEmotesTmp!)
             {
                 if (emote.ManifestResult is { Exception: not null })
                     emotesWithResponse++;
@@ -171,7 +175,7 @@ namespace DCL.AvatarRendering.Emotes
             bool isSucceeded = emotesWithResponse == intention.Pointers.Count;
 
             if (isSucceeded)
-                World.Add(entity, new StreamableResult(new EmotesResolution(resolvedEmotesTmp.ToList(), intention.Pointers.Count)));
+                World!.Add(entity, new StreamableResult(new EmotesResolution(resolvedEmotesTmp.ToList(), intention.Pointers.Count)));
         }
 
         [Query]
@@ -180,10 +184,10 @@ namespace DCL.AvatarRendering.Emotes
             ref AssetPromise<EmotesDTOList, GetEmotesByPointersFromRealmIntention> promise
         )
         {
-            if (promise.TryForgetLoading(entity, World))
+            if (promise.TryForgetLoading(entity, World!))
                 return;
 
-            if (promise.SafeTryConsume(World, out StreamableLoadingResult<EmotesDTOList> promiseResult))
+            if (promise.SafeTryConsume(World!, out StreamableLoadingResult<EmotesDTOList> promiseResult))
             {
                 if (!promiseResult.Succeeded)
                 {
@@ -200,7 +204,7 @@ namespace DCL.AvatarRendering.Emotes
                     }
                 }
 
-                World.Destroy(entity);
+                World!.Destroy(entity);
             }
         }
 
@@ -214,7 +218,7 @@ namespace DCL.AvatarRendering.Emotes
                 && component.GetUrn().IsValid())
             {
                 // The resolution of the AB promise will be finalized by FinalizeEmoteAssetBundleSystem
-                return component.CreateAssetBundleManifestPromise(World, intention.BodyShape, intention.CancellationTokenSource, partitionComponent);
+                return component.CreateAssetBundleManifestPromise(World!, intention.BodyShape, intention.CancellationTokenSource, partitionComponent);
             }
 
             if (!component.TryGetMainFileHash(intention.BodyShape, out string? hash))
@@ -225,18 +229,23 @@ namespace DCL.AvatarRendering.Emotes
                 SceneAssetBundleManifest? manifest = !EnumUtils.HasFlag(intention.PermittedSources, AssetSource.WEB) ? null : component.ManifestResult?.Asset;
 
                 // The resolution of the AB promise will be finalized by FinalizeEmoteAssetBundleSystem
-                var promise = AssetBundlePromise.Create(World,
-                    GetAssetBundleIntention.FromHash(typeof(GameObject),
+                var promise = AssetBundlePromise.Create(
+                    World!,
+                    GetAssetBundleIntention.FromHash(
+                        typeof(GameObject),
                         hash! + PlatformUtils.GetCurrentPlatform(),
                         permittedSources: intention.PermittedSources,
                         customEmbeddedSubDirectory: customStreamingSubdirectory,
-                        manifest: manifest, cancellationTokenSource: intention.CancellationTokenSource),
-                    partitionComponent);
+                        manifest: manifest,
+                        cancellationTokenSource: intention.CancellationTokenSource
+                    ),
+                    partitionComponent
+                );
 
                 TryCreateAudioClipPromises(component, intention.BodyShape, partitionComponent);
 
                 component.IsLoading = true;
-                World.Create(promise, component, intention.BodyShape);
+                World!.Create(promise, component, intention.BodyShape);
                 return true;
             }
 
@@ -259,8 +268,8 @@ namespace DCL.AvatarRendering.Emotes
                 URLAddress url = urlBuilder.Build();
 
                 // The resolution of the audio promise will be finalized by FinalizeEmoteAssetBundleSystem
-                AudioPromise promise = AudioUtils.CreateAudioClipPromise(World, url.Value, audioType, partitionComponent);
-                World.Create(promise, component, bodyShape);
+                AudioPromise promise = AudioUtils.CreateAudioClipPromise(World!, url.Value, audioType, partitionComponent);
+                World!.Create(promise, component, bodyShape);
             }
         }
     }
