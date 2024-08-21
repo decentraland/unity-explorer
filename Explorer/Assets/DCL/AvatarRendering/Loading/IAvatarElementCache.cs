@@ -49,16 +49,13 @@ namespace DCL.AvatarRendering.Loading
         {
             string? id = assetDTO.Metadata?.id;
 
-            bool isWearableInCatalog = cache.TryGetElement(id ?? string.Empty, out element);
+            bool inCatalog = cache.TryGetElement(id ?? string.Empty, out element);
 
-            if (isWearableInCatalog == false)
-            {
-                //A wearable that has a DTO request should already have an empty representation in the catalog at this point
+            //An element that has a DTO request should already have an empty representation in the catalog at this point
+            if (inCatalog == false)
                 ReportHub.LogError(reportCategory, $"Requested {typeof(TDTO).Name} '{id}' is not in the catalog");
-                return false;
-            }
 
-            return true;
+            return inCatalog;
         }
     }
 }
