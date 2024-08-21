@@ -62,7 +62,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0, b: 0, a: 0.4}
+  m_Color: {r: 0, g: 0, b: 0, a: 0.49019608}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -303,7 +303,7 @@ MonoBehaviour:
   m_FillClockwise: 1
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
-  m_PixelsPerUnitMultiplier: 1.8
+  m_PixelsPerUnitMultiplier: 1.5
 --- !u!1 &4746730671402803157
 GameObject:
   m_ObjectHideFlags: 0
@@ -368,8 +368,8 @@ MonoBehaviour:
   <DefaultTierSprite>k__BackingField: {fileID: 21300000, guid: d2bc0e4246537449fbc27b863cc9b0c3, type: 3}
   <SelectedOutline>k__BackingField: {fileID: 4292382795869077674}
   <NormalBackgroundColor>k__BackingField: {r: 0, g: 0, b: 0, a: 0.4}
-  <HoverBackgroundColor>k__BackingField: {r: 1, g: 1, b: 1, a: 0.050980393}
-  <LockedBadgeImageColor>k__BackingField: {r: 1, g: 1, b: 1, a: 0.050980393}
+  <HoverBackgroundColor>k__BackingField: {r: 1, g: 1, b: 1, a: 0.03137255}
+  <LockedBadgeImageColor>k__BackingField: {r: 1, g: 1, b: 1, a: 0.03137255}
   <NonLockedBadgeImageColor>k__BackingField: {r: 1, g: 1, b: 1, a: 1}
 --- !u!1001 &3617892534231648036
 PrefabInstance:
