@@ -40,6 +40,8 @@ namespace DCL.AvatarRendering.Emotes
         protected override async UniTask<StreamableLoadingResult<EmotesResolution>> FlowInternalAsync(GetOwnedEmotesFromRealmIntention intention,
             IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
+            await realmData.WaitConfiguredAsync();
+
             LambdaOwnedEmoteElementList lambdaResponse =
                 await webRequestController.GetAsync(new CommonArguments(intention.CommonArguments.URL, attemptsCount: intention.CommonArguments.Attempts),
                         ct, GetReportCategory())

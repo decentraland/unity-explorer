@@ -29,7 +29,6 @@ namespace DCL.AvatarRendering.Wearables.Systems
         private readonly URLSubdirectory wearablesSubdirectory;
         private readonly IWearableCache wearableCache;
         private readonly IWebRequestController webRequestController;
-        private readonly Func<bool> isRealmDataReady;
 
         internal IURLBuilder urlBuilder = new URLBuilder();
 
@@ -43,17 +42,15 @@ namespace DCL.AvatarRendering.Wearables.Systems
             this.wearableCache = wearableCache;
             this.webRequestController = webRequestController;
             this.wearablesSubdirectory = wearablesSubdirectory;
-
-            isRealmDataReady = () => realmData.Configured;
         }
 
         protected override async UniTask<StreamableLoadingResult<WearablesResponse>> FlowInternalAsync(GetWearableByParamIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
-            await UniTask.WaitUntil(isRealmDataReady, cancellationToken: ct);
+            await realmData.WaitConfiguredAsync();
 
             WearableDTO.LambdaResponse lambdaResponse =
                 await webRequestController.GetAsync(new CommonArguments(BuildURL(intention.UserID, intention.Params), attemptsCount: 1), ct, GetReportCategory())
-                   .CreateFromJson<WearableDTO.LambdaResponse>(WRJsonParser.Unity);
+                                          .CreateFromJson<WearableDTO.LambdaResponse>(WRJsonParser.Unity);
 
             // The following logic is not thread-safe!
             // TODO make it thread-safe: cache and CreateWearableThumbnailPromise
@@ -94,11 +91,8 @@ namespace DCL.AvatarRendering.Wearables.Systems
                       .AppendSubDirectory(URLSubdirectory.FromString(userID))
                       .AppendSubDirectory(wearablesSubdirectory);
 
-            if (urlEncodedParams.Count > 0)
-            {
-                for (var i = 0; i < urlEncodedParams.Count; i++)
-                    urlBuilder.AppendParameter(urlEncodedParams[i]);
-            }
+            for (var i = 0; i < urlEncodedParams.Count; i++)
+                urlBuilder.AppendParameter(urlEncodedParams[i]);
 
             return urlBuilder.Build();
         }
