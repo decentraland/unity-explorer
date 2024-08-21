@@ -60,15 +60,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
             mainCameraComponent.virtualCameraInstance = null;
 
             if (pbMainCamera.VirtualCameraEntity > 0)
-            {
-                int virtualCamCRDTEntity = (int)pbMainCamera.VirtualCameraEntity;
-                if (TryGetCinemachineVirtualCamera(virtualCamCRDTEntity, out var virtualCameraInstance))
-                {
-                    mainCameraComponent.virtualCameraCRDTEntity = virtualCamCRDTEntity;
-                    mainCameraComponent.virtualCameraInstance = virtualCameraInstance;
-                    virtualCameraInstance!.enabled = true;
-                }
-            }
+                ApplyVirtualCamera(ref mainCameraComponent, (int)pbMainCamera.VirtualCameraEntity);
 
             if (oldVirtualCamera != null)
                 oldVirtualCamera.enabled = false;
@@ -101,6 +93,37 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
         public void FinalizeComponents(in Query query)
         {
             // throw new NotImplementedException();
+        }
+
+        private void ApplyVirtualCamera(ref MainCameraComponent mainCameraComponent, int virtualCamCRDTEntity)
+        {
+            if (!TryGetCinemachineVirtualCamera(virtualCamCRDTEntity, out var virtualCameraInstance)) return;
+
+            ConfigureVirtualCameraTransition(virtualCamCRDTEntity);
+
+            mainCameraComponent.virtualCameraCRDTEntity = virtualCamCRDTEntity;
+            mainCameraComponent.virtualCameraInstance = virtualCameraInstance;
+            virtualCameraInstance!.enabled = true;
+        }
+
+        private void ConfigureVirtualCameraTransition(int virtualCamCRDTEntity)
+        {
+            var pbVirtualCamera = World.Get<PBVirtualCamera>(entitiesMap[virtualCamCRDTEntity]);
+
+            // Using custom blends array doesn't work because there's no direct way of getting the custom blend index,
+            // and we would have to hardcode it...
+            var brain = UnityEngine.GameObject.FindObjectOfType<CinemachineBrain>(); // TODO: Inject from somewhere...
+
+            if (pbVirtualCamera.DefaultTransition.TransitionCase == CameraTransition.TransitionOneofCase.Time)
+            {
+                brain.m_DefaultBlend.m_Style = pbVirtualCamera.DefaultTransition.Time.Value <= 0 ? CinemachineBlendDefinition.Style.Cut : CinemachineBlendDefinition.Style.EaseInOut;
+                brain.m_DefaultBlend.m_Time = pbVirtualCamera.DefaultTransition.Time.Value;
+            }
+            // else
+            // {
+            //     // calculate time
+            //     sdkVirtualCameraBlend.
+            // }
         }
 
         private bool TryGetCinemachineVirtualCamera(CRDTEntity targetEntity, out CinemachineVirtualCamera? virtualCameraInstance)

@@ -57,7 +57,7 @@ namespace DCL.PluginSystem.World
         }
 
         // Dedicated method to make sure the GO name is purged for the Cinemachine Transition Blends based on GO name
-        // TODO: Can we avoid this ???
+        // TODO: Can we avoid this GO renaming???
         private CinemachineVirtualCamera InstantiateSDKVirtualCameraPrefab(CinemachineVirtualCamera virtualCameraPrefab)
         {
             var instance = Object.Instantiate(virtualCameraPrefab, Vector3.zero, Quaternion.identity);

@@ -152,6 +152,7 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+        CinemachineBlenderSettings: {fileID: 11400000, guid: 44cb95d012b756149ae3c66d1d3c8973, type: 2}
     - rid: 4753057106328551424
       type: {class: SceneUIPlugin/Settings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
       data:

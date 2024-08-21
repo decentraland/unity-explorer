@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Character Camera Blends
   m_EditorClassIdentifier: 
   m_CustomBlends:
-  - m_From: FirstPersonCameraSettings
+  - m_From: '**ANY CAMERA**'
     m_To: ThirdPersonCameraSettings
     m_Blend:
       m_Style: 1
@@ -24,7 +24,7 @@ MonoBehaviour:
         m_PreInfinity: 0
         m_PostInfinity: 0
         m_RotationOrder: 0
-  - m_From: ThirdPersonCameraSettings
+  - m_From: '**ANY CAMERA**'
     m_To: FirstPersonCameraSettings
     m_Blend:
       m_Style: 1
@@ -35,7 +35,7 @@ MonoBehaviour:
         m_PreInfinity: 0
         m_PostInfinity: 0
         m_RotationOrder: 0
-  - m_From: ThirdPersonCameraSettings
+  - m_From: '**ANY CAMERA**'
     m_To: DroneViewCameraSettings
     m_Blend:
       m_Style: 1
@@ -46,33 +46,11 @@ MonoBehaviour:
         m_PreInfinity: 0
         m_PostInfinity: 0
         m_RotationOrder: 0
-  - m_From: DroneViewCameraSettings
-    m_To: ThirdPersonCameraSettings
-    m_Blend:
-      m_Style: 1
-      m_Time: 0.5
-      m_CustomCurve:
-        serializedVersion: 2
-        m_Curve: []
-        m_PreInfinity: 0
-        m_PostInfinity: 0
-        m_RotationOrder: 0
-  - m_From: DroneViewCameraSettings
-    m_To: ThirdPersonCameraSettings
-    m_Blend:
-      m_Style: 1
-      m_Time: 2
-      m_CustomCurve:
-        serializedVersion: 2
-        m_Curve: []
-        m_PreInfinity: 0
-        m_PostInfinity: 0
-        m_RotationOrder: 0
   - m_From: '**ANY CAMERA**'
-    m_To: SDKVirtualCamera
+    m_To: PreviewCamera
     m_Blend:
       m_Style: 0
-      m_Time: 2
+      m_Time: 0.5
       m_CustomCurve:
         serializedVersion: 2
         m_Curve: []
