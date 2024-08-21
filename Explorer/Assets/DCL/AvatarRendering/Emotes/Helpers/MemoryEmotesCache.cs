@@ -18,42 +18,57 @@ namespace DCL.AvatarRendering.Emotes
         private readonly Dictionary<URN, IEmote> emotes =
             new (new Dictionary<URN, IEmote>(), URNIgnoreCaseEqualityComparer.Default);
 
+        private readonly object threadLock = new ();
+
         public bool TryGetEmote(URN urn, out IEmote emote)
         {
-            if (!emotes.TryGetValue(urn, out emote))
-                return false;
+            lock (threadLock)
+            {
+                if (!emotes.TryGetValue(urn, out emote))
+                    return false;
 
-            UpdateListedCachePriority(urn);
+                UpdateListedCachePriority(urn);
 
-            return true;
+                return true;
+            }
         }
 
-        public void Set(URN urn, IEmote emote) =>
-            emotes[urn] = emote;
+        public void Set(URN urn, IEmote emote)
+        {
+            lock (threadLock) { emotes[urn] = emote; }
+        }
 
-        public IEmote GetOrAddEmoteByDTO(EmoteDTO emoteDto, bool qualifiedForUnloading = true) =>
-            TryGetEmote(emoteDto.metadata.id, out IEmote existingEmote)
-                ? existingEmote
-                : AddEmote(emoteDto.metadata.id, new Emote
-                {
-                    Model = new StreamableLoadingResult<EmoteDTO>(emoteDto),
-                    IsLoading = false,
-                }, qualifiedForUnloading);
+        public IEmote GetOrAddEmoteByDTO(EmoteDTO emoteDto, bool qualifiedForUnloading = true)
+        {
+            lock (threadLock)
+            {
+                return TryGetEmote(emoteDto.metadata.id, out IEmote existingEmote)
+                    ? existingEmote
+                    : AddEmote(emoteDto.metadata.id, new Emote
+                    {
+                        Model = new StreamableLoadingResult<EmoteDTO>(emoteDto),
+                        IsLoading = false,
+                    }, qualifiedForUnloading);
+            }
+        }
 
         public void Unload(IPerformanceBudget frameTimeBudget)
         {
-            for (LinkedListNode<(URN key, long lastUsedFrame)> node = listedCacheKeys.First; frameTimeBudget.TrySpendBudget() && node != null; node = node.Next)
+            lock (threadLock)
             {
-                URN urn = node.Value.key;
+                for (LinkedListNode<(URN key, long lastUsedFrame)> node = listedCacheKeys.First; frameTimeBudget.TrySpendBudget() && node != null; node = node.Next)
+                {
+                    URN urn = node.Value.key;
 
-                if (!emotes.TryGetValue(urn, out IEmote emote))
-                    continue;
+                    if (!emotes.TryGetValue(urn, out IEmote emote))
+                        continue;
 
-                if (!TryUnloadAllWearableAssets(emote)) continue;
+                    if (!TryUnloadAllWearableAssets(emote)) continue;
 
-                emotes.Remove(urn);
-                cacheKeysDictionary.Remove(urn);
-                listedCacheKeys.Remove(node);
+                    emotes.Remove(urn);
+                    cacheKeysDictionary.Remove(urn);
+                    listedCacheKeys.Remove(node);
+                }
             }
         }
 
