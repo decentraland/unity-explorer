@@ -71,7 +71,8 @@ namespace DCL.Diagnostics
         [HideInCallstack]
         internal override void LogInternal(LogType logType, ReportData category, Object context, object message)
         {
-            unityLogHandler.LogFormat(logType, context, $"{GetReportDataPrefix(in category)}{message}");
+            var escapedMessage = message.ToString().Replace("{", "{{").Replace("}", "}}");
+            unityLogHandler.LogFormat(logType, context, $"{GetReportDataPrefix(in category)}{escapedMessage}");
         }
 
         [HideInCallstack]
