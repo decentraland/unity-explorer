@@ -9,6 +9,7 @@ namespace Global
 {
     public class ApplicationParametersParser
     {
+        private const string REALM_PARAM = "realm";
         public Dictionary<string, string> AppParameters { get; private set; } = new ();
 
         public ApplicationParametersParser(string[] args)
@@ -64,10 +65,9 @@ namespace Global
             foreach (string uriQueryKey in uriQuery.AllKeys)
                 AppParameters[uriQueryKey] = uriQuery.Get(uriQueryKey);
 
-            // Patch for WinOS affecting the 'realm' parameter in deep links putting a '/' at the end
-            string realmParam = "realm";
-            if (AppParameters.TryGetValue(realmParam, out string? realmParamValue) && realmParamValue.EndsWith('/'))
-                AppParameters[realmParam] = realmParamValue.Remove(realmParamValue.Length - 1);
+            // Patch for WinOS sometimes affecting the 'realm' parameter in deep links putting a '/' at the end
+            if (AppParameters.TryGetValue(REALM_PARAM, out string? realmParamValue) && realmParamValue.EndsWith('/'))
+                AppParameters[REALM_PARAM] = realmParamValue.Remove(realmParamValue.Length - 1);
         }
     }
 }
