@@ -4,7 +4,7 @@ using Arch.SystemGroups.DefaultSystemGroups;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Loading;
-using DCL.AvatarRendering.Loading.Systems;
+using DCL.AvatarRendering.Loading.Systems.Abstract;
 using DCL.Diagnostics;
 using DCL.WebRequests;
 using ECS;

@@ -14,7 +14,7 @@ using System.Text;
 using System.Threading;
 using UnityEngine;
 
-namespace DCL.AvatarRendering.Loading.Systems
+namespace DCL.AvatarRendering.Loading.Systems.Abstract
 {
     public abstract class LoadElementsByPointersSystem<TAsset, TIntention, TDTO> : LoadSystemBase<TAsset, TIntention> where TIntention: struct, IPointersLoadingIntention
     {

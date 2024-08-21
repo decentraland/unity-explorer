@@ -6,7 +6,7 @@ using AssetManagement;
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Loading.DTO;
-using DCL.AvatarRendering.Loading.Systems;
+using DCL.AvatarRendering.Loading.Systems.Abstract;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.AvatarRendering.Wearables.Systems;
 using DCL.Diagnostics;

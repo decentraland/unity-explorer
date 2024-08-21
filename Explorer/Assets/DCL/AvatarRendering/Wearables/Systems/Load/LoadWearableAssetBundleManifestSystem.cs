@@ -3,6 +3,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.Thumbnails.Utils;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.Diagnostics;
 using DCL.Optimization.PerformanceBudgeting;
@@ -33,7 +34,7 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
         protected override async UniTask<StreamableLoadingResult<SceneAssetBundleManifest>> FlowInternalAsync(GetWearableAssetBundleManifestIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
             return new StreamableLoadingResult<SceneAssetBundleManifest>(
-                await LoadWearableAssetBundleManifestUtils.LoadWearableAssetBundleManifestAsync(webRequestController, assetBundleURL, intention.Hash, GetReportCategory(), ct));
+                await LoadThumbnailsUtils.LoadAssetBundleManifestAsync(webRequestController, assetBundleURL, intention.Hash, GetReportCategory(), ct));
         }
     }
 }

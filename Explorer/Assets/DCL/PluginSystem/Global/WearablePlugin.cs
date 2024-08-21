@@ -3,10 +3,12 @@ using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.AvatarRendering.Thumbnails.Systems;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.AvatarRendering.Wearables.Systems;
+using DCL.AvatarRendering.Wearables.Systems.Load;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.ResourcesUnloading;
@@ -20,11 +22,6 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
-using Utility.Multithreading;
-using LoadDefaultWearablesSystem = DCL.AvatarRendering.Wearables.Systems.Load.LoadDefaultWearablesSystem;
-using LoadWearableAssetBundleManifestSystem = DCL.AvatarRendering.Wearables.Systems.Load.LoadWearableAssetBundleManifestSystem;
-using LoadWearablesByParamSystem = DCL.AvatarRendering.Wearables.Systems.Load.LoadWearablesByParamSystem;
-using LoadWearablesDTOByPointersSystem = DCL.AvatarRendering.Wearables.Systems.Load.LoadWearablesDTOByPointersSystem;
 
 namespace DCL.AvatarRendering.Wearables
 {

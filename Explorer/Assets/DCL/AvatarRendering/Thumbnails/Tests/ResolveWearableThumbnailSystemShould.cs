@@ -1,8 +1,7 @@
 using CommunicationData.URLHelpers;
+using DCL.AvatarRendering.Thumbnails.Systems;
 using DCL.AvatarRendering.Wearables.Components;
-using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
-using DCL.AvatarRendering.Wearables.Systems;
 using ECS;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Tests;
@@ -11,7 +10,6 @@ using ECS.StreamableLoading.Textures;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
-using SceneRunner.Scene;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.Texture2D, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
 namespace DCL.AvatarRendering.Wearables.Tests

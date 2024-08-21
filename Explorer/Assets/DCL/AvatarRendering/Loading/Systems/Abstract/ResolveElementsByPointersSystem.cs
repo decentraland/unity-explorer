@@ -1,5 +1,4 @@
 using Arch.Core;
-using Arch.System;
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Loading.DTO;
@@ -10,7 +9,7 @@ using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using System;
 
-namespace DCL.AvatarRendering.Loading.Systems
+namespace DCL.AvatarRendering.Loading.Systems.Abstract
 {
     public abstract partial class ResolveElementsByPointersSystem<TIntention, TElement, TDTO, TDTOList> : BaseUnityLoopSystem
         where TIntention: IAssetIntention, IPointersLoadingIntention, IEquatable<TIntention>
