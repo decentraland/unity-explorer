@@ -3,20 +3,19 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Text.RegularExpressions;
 using System.Web;
+using UnityEngine;
 
 namespace Global.AppArgs
 {
     public class ApplicationParametersParser : IAppArgs
     {
-        private readonly Dictionary<string, string> appParameters;
+        private readonly Dictionary<string, string> appParameters = new ();
 
-        public ApplicationParametersParser() : this(Environment.GetCommandLineArgs())
-        {
-        }
+        public ApplicationParametersParser() : this(Environment.GetCommandLineArgs()) { }
 
         public ApplicationParametersParser(string[] args)
         {
-            appParameters = ParseApplicationParameters(args);
+            ParseApplicationParameters(args);
         }
 
         public bool HasFlag(string flagName) =>
@@ -25,7 +24,7 @@ namespace Global.AppArgs
         public bool TryGetValue(string flagName, out string? value) =>
             appParameters.TryGetValue(flagName, out value);
 
-        private Dictionary<string, string> ParseApplicationParameters(string[] cmdArgs)
+        private void ParseApplicationParameters(string[] cmdArgs)
         {
             var deepLinkFound = false;
             string lastKeyStored = string.Empty;
@@ -58,15 +57,12 @@ namespace Global.AppArgs
             }
 
             // in MacOS the deep link string doesn't come in the cmd args...
-#if !UNITY_EDITOR && UNITY_STANDALONE_OSX
-            if (!string.IsNullOrEmpty(Application.absoluteURL) && Application.absoluteURL.StartsWith("decentraland"))
-            {
+#if UNITY_STANDALONE_OSX
+            if (!string.IsNullOrEmpty(Application.absoluteURL ?? string.Empty) && Application.absoluteURL!.StartsWith("decentraland", StringComparison.Ordinal))
+
                 // Regex patch for MacOS removing the ':' from the realm parameter protocol
                 ProcessDeepLinkParameters(Regex.Replace(Application.absoluteURL, @"(https?)//(.*?)$", @"$1://$2"));
-            }
 #endif
-
-            return appParameters;
         }
 
         private void ProcessDeepLinkParameters(string deepLinkString)
@@ -74,7 +70,7 @@ namespace Global.AppArgs
             // Update deep link so that Uri class allows the host name
             deepLinkString = Regex.Replace(deepLinkString, @"^decentraland:/+", "https://decentraland.org/?");
 
-            if (!Uri.TryCreate(deepLinkString, UriKind.Absolute, out Uri? res)) return;
+            if (!Uri.TryCreate(deepLinkString, UriKind.Absolute, out Uri? _)) return;
 
             var uri = new Uri(deepLinkString);
             NameValueCollection uriQuery = HttpUtility.ParseQueryString(uri.Query);
