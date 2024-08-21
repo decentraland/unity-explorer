@@ -20,7 +20,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
             urlBuilder.AppendDomain(assetBundleURL)
                 .AppendSubDirectory(URLSubdirectory.FromString("manifest"))
-                .AppendPath(URLPath.FromString($"{hash}{PlatformUtils.GetPlatform()}.json"));
+                .AppendPath(URLPath.FromString($"{hash}{PlatformUtils.GetCurrentPlatform()}.json"));
 
             var sceneAbDto = await webRequestController.GetAsync(new CommonArguments(urlBuilder.Build(), attemptsCount: 1), ct, reportCategory)
                 .CreateFromJson<SceneAbDto>(WRJsonParser.Unity, WRThreadFlags.SwitchBackToMainThread);

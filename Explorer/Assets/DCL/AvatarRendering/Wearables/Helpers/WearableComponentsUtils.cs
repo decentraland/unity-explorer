@@ -67,7 +67,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         {
             if (attachment.ThumbnailAssetResult != null)
                 return;
-            
+
             URLPath thumbnailPath = attachment.GetThumbnail();
 
             if (string.IsNullOrEmpty(thumbnailPath.Value))
@@ -83,15 +83,15 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                                                        "Trying to get the texture through content server");
                 CreateWearableThumbnailTexturePromise(realmData, thumbnailPath, attachment, world, partitionComponent, cancellationTokenSource);
                 return;
-            }                
+            }
 
-            
+
             var promise = AssetBundlePromise.Create(world,
                 GetAssetBundleIntention.FromHash(typeof(Texture2D),
-                    hash: thumbnailPath.Value + PlatformUtils.GetPlatform(),
+                    hash: thumbnailPath.Value + PlatformUtils.GetCurrentPlatform(),
                     permittedSources: AssetSource.ALL,
                     manifest: attachment.ManifestResult?.Asset,
-                    cancellationTokenSource: cancellationTokenSource), 
+                    cancellationTokenSource: cancellationTokenSource),
                 partitionComponent);
 
             world.Create(attachment, promise, partitionComponent);
@@ -122,7 +122,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             var urlBuilder = urlBuilderScope.Value;
             urlBuilder.Clear();
             urlBuilder.AppendDomain(realmData.Ipfs.ContentBaseUrl).AppendPath(thumbnailPath);
-            
+
             var promise = Promise.Create(world,
                 new GetTextureIntention
                 {

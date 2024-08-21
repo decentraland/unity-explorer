@@ -137,7 +137,7 @@ namespace DCL.AvatarRendering.Emotes
             // The resolution of the AB promise will be finalized by FinalizeEmoteAssetBundleSystem
             var promise = AssetBundlePromise.Create(World,
                 GetAssetBundleIntention.FromHash(typeof(GameObject),
-                    intention.EmoteHash + PlatformUtils.GetPlatform(),
+                    intention.EmoteHash + PlatformUtils.GetCurrentPlatform(),
                     permittedSources: intention.PermittedSources,
                     customEmbeddedSubDirectory: customStreamingSubdirectory,
                     cancellationTokenSource: intention.CancellationTokenSource,

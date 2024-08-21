@@ -206,7 +206,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             var promise = AssetBundlePromise.Create(world,
                 GetAssetBundleIntention.FromHash(
                     expectedObjectType,
-                    hash + PlatformUtils.GetPlatform(),
+                    hash + PlatformUtils.GetCurrentPlatform(),
                     permittedSources: intention.PermittedSources,
                     customEmbeddedSubDirectory: customStreamingSubdirectory,
                     manifest: sceneAssetBundleManifest, cancellationTokenSource: intention.CancellationTokenSource),
