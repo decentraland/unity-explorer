@@ -1,13 +1,11 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
-using DCL.Diagnostics;
 using DCL.Multiplayer.Emotes;
 using DCL.Multiplayer.Profiles.Bunches;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Web3.Identities;
 using ECS.Abstract;
-using System.Collections.Generic;
 using UnityEngine.Pool;
 
 namespace DCL.AvatarRendering.Emotes
