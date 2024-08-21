@@ -24,6 +24,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape.Helpers;
 using DCL.AvatarRendering.Emotes;
+using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Loading.Components;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -126,33 +127,33 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
                                        }));
 
             system = new AvatarInstantiatorSystem(world, budget, budget, avatarPoolRegistry, materialPoolHandler, computeShaderPool,
-                Substitute.For<IWearableAssetsCache>(), new ComputeShaderSkinning(), new FixedComputeBufferHandler(10000, 4, 4),
+                Substitute.For<IAttachmentsAssetsCache>(), new ComputeShaderSkinning(), new FixedComputeBufferHandler(10000, 4, 4),
                 new ObjectProxy<AvatarBase>(), defaultFaceFeaturesHandler, new WearableCache());
         }
 
         private IEmote GetMockEmote(string materialName, string category)
         {
-            (IEmote mockWearable, WearableRegularAsset wearableAsset) = GetMockedAvatarAttachment<IEmote>(materialName, category);
+            (IEmote mockWearable, AttachmentRegularAsset wearableAsset) = GetMockedAvatarAttachment<IEmote>(materialName, category);
 
             mockWearable.AssetResults.Returns(
-                new StreamableLoadingResult<WearableRegularAsset>?[] { new StreamableLoadingResult<WearableRegularAsset>(wearableAsset) });
+                new StreamableLoadingResult<AttachmentRegularAsset>?[] { new StreamableLoadingResult<AttachmentRegularAsset>(wearableAsset) });
 
             return mockWearable;
         }
 
         private IWearable GetMockWearable(string materialName, string category)
         {
-            (IWearable mockWearable, WearableRegularAsset wearableAsset) = GetMockedAvatarAttachment<IWearable>(materialName, category);
+            (IWearable mockWearable, AttachmentRegularAsset wearableAsset) = GetMockedAvatarAttachment<IWearable>(materialName, category);
 
             mockWearable.WearableAssetResults.Returns(new WearableAssets[]
             {
-                new StreamableLoadingResult<WearableAssetBase>(wearableAsset),
+                new StreamableLoadingResult<AttachmentAssetBase>(wearableAsset),
             });
 
             return mockWearable;
         }
 
-        private (T, WearableRegularAsset) GetMockedAvatarAttachment<T>(string materialName, string category) where T: class, IAvatarAttachment
+        private (T, AttachmentRegularAsset) GetMockedAvatarAttachment<T>(string materialName, string category) where T: class, IAvatarAttachment
         {
             T mockWearable = Substitute.For<T>();
 
@@ -175,9 +176,9 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             skinnedMeshRenderer.material = fakeABMaterial;
             mockWearable.GetCategory().Returns(category);
 
-            var rendererInfo = new WearableRegularAsset.RendererInfo(skinnedMeshRenderer, fakeABMaterial);
+            var rendererInfo = new AttachmentRegularAsset.RendererInfo(skinnedMeshRenderer, fakeABMaterial);
 
-            var wearableAsset = new WearableRegularAsset(avatarGameObject, new List<WearableRegularAsset.RendererInfo> { rendererInfo }, null);
+            var wearableAsset = new AttachmentRegularAsset(avatarGameObject, new List<AttachmentRegularAsset.RendererInfo> { rendererInfo }, null);
             wearableAsset.AddReference();
 
             return (mockWearable, wearableAsset);
@@ -226,7 +227,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
 
             system.Update(0);
 
-            foreach (CachedWearable wearable in world.Get<AvatarShapeComponent>(avatarEntity).InstantiatedWearables)
+            foreach (var wearable in world.Get<AvatarShapeComponent>(avatarEntity).InstantiatedWearables)
                 wearable.OriginalAsset.AddReference();
 
             // Assert

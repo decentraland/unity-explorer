@@ -27,7 +27,7 @@ namespace DCL.AvatarRendering.Loading.Assets
 
         public int AssetsCount => cache.Count;
 
-        internal Dictionary<AttachmentAssetBase, List<CachedAttachment>> cache { get; }
+        public Dictionary<AttachmentAssetBase, List<CachedAttachment>> cache { get; }
 
         public AttachmentsAssetsCache(int initialCapacity)
         {
