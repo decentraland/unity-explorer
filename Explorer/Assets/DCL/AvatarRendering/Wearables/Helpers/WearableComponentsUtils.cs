@@ -5,13 +5,11 @@ using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.Optimization.Pools;
 using ECS;
 using ECS.Prioritization.Components;
-using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using System.Threading.Tasks;
 using AssetManagement;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Wearables.Systems;
@@ -38,13 +36,13 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
         internal static readonly HashSetObjectPool<string> CATEGORIES_POOL = new (hashsetInstanceDefaultCapacity: WearablesConstants.CATEGORIES_PRIORITY.Count, defaultCapacity: PoolConstants.AVATARS_COUNT);
 
-        internal static readonly Sprite DEFAULT_THUMBNAIL = Sprite.Create(Texture2D.grayTexture, new Rect(0, 0, 1, 1), new Vector2());
+        internal static readonly Sprite DEFAULT_THUMBNAIL = Sprite.Create(Texture2D.grayTexture!, new Rect(0, 0, 1, 1), new Vector2())!;
 
         private static readonly IExtendedObjectPool<URLBuilder> URL_BUILDER_POOL = new ExtendedObjectPool<URLBuilder>(() => new URLBuilder(), defaultCapacity: 2);
 
         public static GetWearablesByPointersIntention CreateGetWearablesByPointersIntention(BodyShape bodyShape, IReadOnlyCollection<string> wearables, IReadOnlyCollection<string> forceRender)
         {
-            List<URN> pointers = POINTERS_POOL.Get();
+            List<URN> pointers = POINTERS_POOL.Get()!;
             pointers.Add(bodyShape);
 
             foreach (string wearable in wearables)
@@ -55,7 +53,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
         public static GetWearablesByPointersIntention CreateGetWearablesByPointersIntention(BodyShape bodyShape, IReadOnlyCollection<URN> wearables, IReadOnlyCollection<string> forceRender)
         {
-            List<URN> pointers = POINTERS_POOL.Get();
+            List<URN> pointers = POINTERS_POOL.Get()!;
             pointers.Add(bodyShape);
             pointers.AddRange(wearables);
 
@@ -83,7 +81,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                 return;
             }
 
-            if (!await TryResolveAssetBundleManifestAsync(requestController, assetBundleURL, realmData, attachment, world, partitionComponent, cancellationTokenSource, thumbnailPath))
+            if (!await TryResolveAssetBundleManifestAsync(requestController, assetBundleURL, attachment, cancellationTokenSource))
             {
                 ReportHub.Log(
                     ReportCategory.WEARABLE,
@@ -109,20 +107,15 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             world.Create(attachment, promise, partitionComponent);
         }
 
-        private static async UniTask<bool> TryResolveAssetBundleManifestAsync(IWebRequestController requestController, URLDomain assetBundleURL, IRealmData realmData, IAvatarAttachment attachment, World world, IPartitionComponent partitionComponent, CancellationTokenSource? cancellationTokenSource, URLPath thumbnailPath)
+        private static async UniTask<bool> TryResolveAssetBundleManifestAsync(IWebRequestController requestController, URLDomain assetBundleURL, IAvatarAttachment attachment, CancellationTokenSource? cancellationTokenSource)
         {
             if (attachment.ManifestResult?.Asset == null)
-            {
                 try
                 {
-                    attachment.ManifestResult  = new StreamableLoadingResult<SceneAssetBundleManifest>(
-                        await LoadWearableAssetBundleManifestUtils.LoadWearableAssetBundleManifestAsync(requestController, assetBundleURL, attachment.GetHash(), ReportCategory.WEARABLE, cancellationTokenSource?.Token ?? new CancellationToken()));
+                    var asset = await LoadWearableAssetBundleManifestUtils.LoadWearableAssetBundleManifestAsync(requestController, assetBundleURL, attachment.GetHash(), ReportCategory.WEARABLE, cancellationTokenSource?.Token ?? CancellationToken.None);
+                    attachment.ManifestResult = new StreamableLoadingResult<SceneAssetBundleManifest>(asset);
                 }
-                catch (Exception)
-                {
-                    return false;
-                }
-            }
+                catch (Exception) { return false; }
 
             return true;
         }
@@ -148,37 +141,36 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
         public static void ExtractVisibleWearables(string bodyShapeId, IReadOnlyList<IWearable> wearables, int wearableCount, ref HideWearablesResolution hideWearablesResolution)
         {
-            Dictionary<string, IWearable> wearablesByCategory = DictionaryPool<string, IWearable>.Get();
-            List<IWearable> visibleWearables = WEARABLES_POOL.Get();
+            Dictionary<string, IWearable> wearablesByCategory = DictionaryPool<string, IWearable>.Get()!;
+            List<IWearable> visibleWearables = WEARABLES_POOL.Get()!;
 
-            for (var i = 0; i < wearableCount; i++) { wearablesByCategory[wearables[i].GetCategory()] = wearables[i]; }
+            for (var i = 0; i < wearableCount; i++) { wearablesByCategory[wearables[i]!.GetCategory()] = wearables[i]; }
 
-            HashSet<string> hidingList = CATEGORIES_POOL.Get();
-            HashSet<string> combinedHidingList = CATEGORIES_POOL.Get();
+            HashSet<string> hidingList = CATEGORIES_POOL.Get()!;
+            HashSet<string> combinedHidingList = CATEGORIES_POOL.Get()!;
 
             for (var index = 0; index < WearablesConstants.CATEGORIES_PRIORITY.Count; index++)
             {
-                string priorityCategory = WearablesConstants.CATEGORIES_PRIORITY[index];
+                string priorityCategory = WearablesConstants.CATEGORIES_PRIORITY[index]!;
                 hidingList.Clear();
 
                 //If the category is already on the hidden list, then we dont care about what its trying to hide. This avoid possible cyclic hidden categories
                 //Also, if the category is not equipped, then we cant do anything
                 if (combinedHidingList.Contains(priorityCategory) || !wearablesByCategory.TryGetValue(priorityCategory, out IWearable wearable)) continue;
 
-                wearable.GetHidingList(bodyShapeId, hidingList);
+                wearable!.GetHidingList(bodyShapeId, hidingList);
 
                 foreach (string categoryToHide in hidingList)
                     combinedHidingList.Add(categoryToHide);
             }
 
             if (hideWearablesResolution.ForceRender != null)
-                foreach (string category in hideWearablesResolution.ForceRender) { combinedHidingList.Remove(category); }
+                foreach (string category in hideWearablesResolution.ForceRender)
+                    combinedHidingList.Remove(category);
 
             foreach (IWearable wearable in wearables)
-            {
                 if (!combinedHidingList.Contains(wearable.GetCategory()))
                     visibleWearables.Add(wearable);
-            }
 
             hideWearablesResolution.VisibleWearables = visibleWearables;
             hideWearablesResolution.HiddenCategories = combinedHidingList;
