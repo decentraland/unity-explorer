@@ -1,8 +1,11 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AssetsProvision.Provisions;
+using DCL.Browser.DecentralandUrls;
+using DCL.CommandLine;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.PluginSystem;
@@ -126,8 +129,10 @@ namespace DCL.SDKComponents.AudioSources.Tests.PlayMode
             // First load the common global plugin
             (StaticContainer? staticContainer, bool isLoaded)
                 = await StaticContainer.CreateAsync(
+                    new DecentralandUrlsSource(DecentralandEnvironment.Org),
                     assetProvisioner,
                     reportHandlingSettings.Value,
+                    new CommandLineArgs(),
                     new DebugViewsCatalog(),
                     globalSettingsContainer,
                     web3IdentityCache,
@@ -140,9 +145,16 @@ namespace DCL.SDKComponents.AudioSources.Tests.PlayMode
 
             await UniTask.WhenAll(staticContainer.ECSWorldPlugins.Select(gp => sceneSettingsContainer.InitializePluginAsync(gp, ct)));
 
-            var sceneSharedContainer = SceneSharedContainer.Create(in staticContainer,
-                Substitute.For<IMVCManager>(), web3IdentityCache, profileRepository, IWebRequestController.DEFAULT, new IRoomHub.Fake(),
-                Substitute.For<IRealmData>(), new IMessagePipesHub.Fake());
+            var sceneSharedContainer = SceneSharedContainer.Create(
+                in staticContainer,
+                Substitute.For<IDecentralandUrlsSource>(),
+                Substitute.For<IMVCManager>(),
+                web3IdentityCache, profileRepository,
+                IWebRequestController.DEFAULT,
+                new IRoomHub.Fake(),
+                Substitute.For<IRealmData>(),
+                new IMessagePipesHub.Fake()
+            );
 
             return (staticContainer, sceneSharedContainer);
         }

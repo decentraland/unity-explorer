@@ -1,7 +1,7 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Equipped;
-using DCL.AvatarRendering.Emotes.OwnedNftHub;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
@@ -50,8 +50,8 @@ namespace DCL.Profiles.Self.Playground
                 ),
                 web3IdentityCache,
                 new EquippedWearables(),
-                new WearableCatalog(),
-                new OwnedNftHub(),
+                new WearableCache(),
+                new MemoryEmotesCache(),
                 new EquippedEmotes(),
                 new List<string>()
             );

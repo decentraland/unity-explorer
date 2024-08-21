@@ -12,6 +12,7 @@ using LiveKit.Internal.FFIClients.Pools.Memory;
 using System;
 using System.Threading;
 using Utility.Multithreading;
+using Utility.Types;
 using Vector3 = UnityEngine.Vector3;
 
 namespace DCL.Multiplayer.Connections.Archipelago.SignFlow
@@ -99,8 +100,11 @@ namespace DCL.Multiplayer.Connections.Archipelago.SignFlow
             return LightResult<string>.FAILURE;
         }
 
-        public async UniTask SendHeartbeatAsync(Vector3 playerPosition, CancellationToken token)
+        public async UniTask<Result> SendHeartbeatAsync(Vector3 playerPosition, CancellationToken token)
         {
+            if (connection.IsConnected == false)
+                return Result.ErrorResult("Archipelago is disconnected");
+
             try
             {
                 using SmartWrap<Position> position = multiPool.TempResource<Position>();
@@ -116,8 +120,13 @@ namespace DCL.Multiplayer.Connections.Archipelago.SignFlow
                 clientPacket.value.Heartbeat = heartbeat.value;
 
                 await connection.SendAsync(clientPacket.value, memoryPool, token);
+                return Result.SuccessResult();
             }
-            catch (Exception e) { ReportHub.LogException(new Exception($"Cannot send heartbeat for position {playerPosition}", e), ReportCategory.LIVEKIT); }
+            catch (Exception e)
+            {
+                ReportHub.LogException(new Exception($"Cannot send heartbeat for position {playerPosition}", e), ReportCategory.LIVEKIT);
+                return Result.ErrorResult(e.Message ?? string.Empty);
+            }
         }
 
         public async UniTaskVoid StartListeningForConnectionStringAsync(Action<string> onNewConnectionString, CancellationToken token)

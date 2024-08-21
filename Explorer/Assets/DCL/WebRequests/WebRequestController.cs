@@ -3,6 +3,7 @@ using DCL.Diagnostics;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
 using System;
+using UnityEngine.Networking;
 using Utility.Multithreading;
 
 namespace DCL.WebRequests
@@ -23,21 +24,21 @@ namespace DCL.WebRequests
         public async UniTask<TResult?> SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp, TResult>(RequestEnvelope<TWebRequest, TWebRequestArgs> envelope, TWebRequestOp op)
             where TWebRequestArgs: struct
             where TWebRequest: struct, ITypedWebRequest
-            where TWebRequestOp : IWebRequestOp<TWebRequest, TResult>
+            where TWebRequestOp: IWebRequestOp<TWebRequest, TResult>
         {
-            await using var scope = await ExecuteOnMainThreadScope.NewScopeWithReturnOnOriginalThreadAsync();
+            await using ExecuteOnMainThreadScope scope = await ExecuteOnMainThreadScope.NewScopeWithReturnOnOriginalThreadAsync();
 
-                int attemptsLeft = envelope.CommonArguments.TotalAttempts();
+            int attemptsLeft = envelope.CommonArguments.TotalAttempts();
 
             // ensure disposal of headersInfo
-            using var _ = envelope;
+            using RequestEnvelope<TWebRequest, TWebRequestArgs> _ = envelope;
 
             while (attemptsLeft > 0)
             {
                 TWebRequest request = envelope.InitializedWebRequest(web3IdentityCache);
 
                 // No matter what we must release UnityWebRequest, otherwise it crashes in the destructor
-                using var wr = request.UnityWebRequest;
+                using UnityWebRequest wr = request.UnityWebRequest;
 
                 try
                 {
@@ -45,6 +46,7 @@ namespace DCL.WebRequests
 
                     // if no exception is thrown Request is successful and the continuation op can be executed
                     return await op.ExecuteAsync(request, envelope.Ct);
+
                     // After the operation is executed, the flow may continue in the background thread
                 }
                 catch (UnityWebRequestException exception)

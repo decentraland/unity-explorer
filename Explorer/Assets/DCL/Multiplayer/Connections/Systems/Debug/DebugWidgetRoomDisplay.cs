@@ -16,13 +16,27 @@ namespace DCL.Multiplayer.Connections.Systems.Debug
         private readonly ElementBinding<string> connectionQuality;
         private readonly ElementBinding<string> connectiveState;
 
-        public DebugWidgetRoomDisplay(
+        private readonly DebugWidgetVisibilityBinding visibilityBinding = new (true);
+
+        public static bool TryCreate(
             string roomName,
             IConnectiveRoom connectiveRoom,
-            IDebugContainerBuilder debugBuilder, Action<DebugWidgetBuilder>? postBuildAction = null
-        ) : this(
-            connectiveRoom, debugBuilder.AddWidget(roomName)!, postBuildAction
-        ) { }
+            IDebugContainerBuilder debugBuilder,
+            Action<DebugWidgetBuilder>? postBuildAction,
+            out DebugWidgetRoomDisplay? display
+        )
+        {
+            var widget = debugBuilder.TryAddWidget(roomName);
+
+            if (widget == null)
+            {
+                display = null;
+                return false;
+            }
+
+            display = new DebugWidgetRoomDisplay(connectiveRoom, widget, postBuildAction);
+            return true;
+        }
 
         public DebugWidgetRoomDisplay(IConnectiveRoom connectiveRoom, DebugWidgetBuilder widgetBuilder, Action<DebugWidgetBuilder>? postBuildAction = null)
         {
@@ -36,7 +50,7 @@ namespace DCL.Multiplayer.Connections.Systems.Debug
             connectiveState = new ElementBinding<string>(string.Empty);
 
             widgetBuilder
-               .SetVisibilityBinding(new DebugWidgetVisibilityBinding(true))!
+               .SetVisibilityBinding(visibilityBinding)!
                .AddCustomMarker("Room State", stateScene)!
                .AddCustomMarker("Connecting State", connectiveState)!
                .AddCustomMarker("Connection Quality", connectionQuality)!
@@ -71,6 +85,9 @@ namespace DCL.Multiplayer.Connections.Systems.Debug
 
         public void Update()
         {
+            if (visibilityBinding.IsConnectedAndExpanded == false)
+                return;
+
             connectionQuality.SetAndUpdate(room.Room().Participants.LocalParticipant().ConnectionQuality.ToString());
             connectiveState.SetAndUpdate(room.Room().Info.ConnectionState.ToString());
             stateScene.SetAndUpdate(room.CurrentState().ToString());

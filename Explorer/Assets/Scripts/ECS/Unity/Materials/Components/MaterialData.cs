@@ -1,22 +1,48 @@
 ﻿using DCL.ECSComponents;
 using ECS.Unity.Materials.Components.Defaults;
 using ECS.Unity.Textures.Components;
+using System;
 using UnityEngine;
 
 namespace ECS.Unity.Materials.Components
 {
     public readonly struct MaterialData
     {
+        /// <summary>
+        ///     Textures are moved to a separate struct to prevent copying of the whole MaterialData when the rest of the data is not needed
+        /// </summary>
+        public readonly struct TexturesData : IEquatable<TexturesData>
+        {
+            public readonly TextureComponent? AlbedoTexture;
+            public readonly TextureComponent? AlphaTexture;
+            public readonly TextureComponent? EmissiveTexture;
+            public readonly TextureComponent? BumpTexture;
+
+            public TexturesData(TextureComponent? albedoTexture, TextureComponent? alphaTexture, TextureComponent? emissiveTexture, TextureComponent? bumpTexture)
+            {
+                AlbedoTexture = albedoTexture;
+                AlphaTexture = alphaTexture;
+                EmissiveTexture = emissiveTexture;
+                BumpTexture = bumpTexture;
+            }
+
+            public bool Equals(TexturesData other) =>
+                Nullable.Equals(AlbedoTexture, other.AlbedoTexture) && Nullable.Equals(AlphaTexture, other.AlphaTexture) && Nullable.Equals(EmissiveTexture, other.EmissiveTexture) && Nullable.Equals(BumpTexture, other.BumpTexture);
+
+            public override bool Equals(object? obj) =>
+                obj is TexturesData other && Equals(other);
+
+            public override int GetHashCode() =>
+                HashCode.Combine(AlbedoTexture, AlphaTexture, EmissiveTexture, BumpTexture);
+        }
+
         public readonly bool IsPbrMaterial;
-        public readonly TextureComponent? AlbedoTexture;
         public readonly float AlphaTest;
 
         // Cast shadows is not a part of Material, it's a part of Renderer
         public readonly bool CastShadows;
 
-        public readonly TextureComponent? AlphaTexture;
-        public readonly TextureComponent? EmissiveTexture;
-        public readonly TextureComponent? BumpTexture;
+        public readonly TexturesData Textures;
 
         public readonly Color AlbedoColor;
         public readonly Color DiffuseColor;
@@ -39,12 +65,11 @@ namespace ECS.Unity.Materials.Components
             float specularIntensity, float emissiveIntensity, float directIntensity)
         {
             IsPbrMaterial = isPbrMaterial;
-            AlbedoTexture = albedoTexture;
+
+            Textures = new TexturesData(albedoTexture, alphaTexture, emissiveTexture, bumpTexture);
+
             AlphaTest = alphaTest;
             CastShadows = castShadows;
-            AlphaTexture = alphaTexture;
-            EmissiveTexture = emissiveTexture;
-            BumpTexture = bumpTexture;
             AlbedoColor = albedoColor;
             DiffuseColor = diffuseColor;
             EmissiveColor = emissiveColor;

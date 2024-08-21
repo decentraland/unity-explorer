@@ -15,7 +15,6 @@ namespace DCL.Audio.Systems
     [UpdateBefore(typeof(WritePointerEventResultsSystem))]
     public partial class InteractionsAudioSystem : BaseUnityLoopSystem
     {
-
         private readonly IInteractionsAudioConfigs interactionsAudioConfigs;
 
         private InteractionsAudioSystem(World world, IInteractionsAudioConfigs interactionsAudioConfigs) : base(world)
@@ -28,20 +27,22 @@ namespace DCL.Audio.Systems
             PlayAudioForPointerEventsQuery(World);
         }
 
-
         [Query]
         [None(typeof(DeleteEntityIntention))]
         private void PlayAudioForPointerEvents(ref PBPointerEvents pbPointerEvents)
         {
             AppendPointerEventResultsIntent intent = pbPointerEvents.AppendPointerEventResultsIntent;
+            int count = intent.ValidIndicesCount();
 
-            foreach (byte validIndex in intent.ValidIndices)
+            for (var i = 0; i < count; i++)
             {
+                byte validIndex = intent.ValidIndexAt(i);
                 PBPointerEvents.Types.Entry entry = pbPointerEvents.PointerEvents[validIndex];
 
                 if (entry.EventType == PointerEventType.PetDown)
                 {
                     PBPointerEvents.Types.Info info = entry.EventInfo;
+
                     switch (info.Button)
                     {
                         case InputAction.IaPointer:
@@ -57,6 +58,5 @@ namespace DCL.Audio.Systems
                 }
             }
         }
-
     }
 }

@@ -1,6 +1,7 @@
 using DCL.Diagnostics;
 using System;
 using UnityEngine;
+using UnityEngine.Assertions;
 using UnityEngine.Pool;
 using Utility;
 
@@ -34,8 +35,19 @@ namespace DCL.Optimization.Pools
         public PooledObject<T> Get(out T v) =>
             gameObjectPool.Get(out v);
 
-        public void Release(T element) =>
+        public void Release(T element)
+        {
+            // If Application is quitting game objects can be already destroyed
+            if (UnityObjectUtils.IsQuitting) return;
+
+            if (element == null)
+            {
+                ReportHub.LogError(ReportCategory.ENGINE, $"Trying to release `null` reference of type {typeof(T).Name} to the pool");
+                return;
+            }
+
             gameObjectPool.Release(element);
+        }
 
         public T Get() =>
             gameObjectPool.Get();

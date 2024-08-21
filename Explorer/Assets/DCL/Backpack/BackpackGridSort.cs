@@ -1,3 +1,6 @@
+using DCL.AvatarRendering.Wearables;
+using System;
+
 namespace DCL.Backpack
 {
     public struct BackpackGridSort
@@ -17,5 +20,19 @@ namespace DCL.Backpack
         Date,
         Rarity,
         Name,
+    }
+
+    public static class NftOrderByOperationExtensions
+    {
+        public static IWearablesProvider.SortingField ToSortingField(this NftOrderByOperation nftOrderByOperation)
+        {
+            return nftOrderByOperation switch
+                   {
+                       NftOrderByOperation.Date => IWearablesProvider.SortingField.Date,
+                       NftOrderByOperation.Name => IWearablesProvider.SortingField.Name,
+                       NftOrderByOperation.Rarity => IWearablesProvider.SortingField.Rarity,
+                       _ => throw new ArgumentOutOfRangeException(nameof(nftOrderByOperation), nftOrderByOperation, null)
+                   };
+        }
     }
 }

@@ -5,6 +5,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.Diagnostics;
 using DCL.LOD;
+using DCL.LOD.Systems;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Roads.Components;
 using DCL.Roads.Settings;

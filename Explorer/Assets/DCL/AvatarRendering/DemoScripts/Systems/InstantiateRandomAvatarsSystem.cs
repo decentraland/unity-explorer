@@ -58,7 +58,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
         private readonly IEntityParticipantTable entityParticipantTable;
         private readonly IComponentPool<Transform> transformPool;
 
-        private readonly DebugWidgetVisibilityBinding debugVisibilityBinding;
+        private readonly DebugWidgetVisibilityBinding? debugVisibilityBinding;
         private readonly ElementBinding<ulong> totalAvatarsInstantiated;
 
         private SingleInstanceEntity camera;
@@ -86,8 +86,8 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
             transformPool = componentPools;
             this.avatarRandomizerAsset = avatarRandomizerAsset;
 
-            debugBuilder.AddWidget("Avatar Debug")
-                        .SetVisibilityBinding(debugVisibilityBinding = new DebugWidgetVisibilityBinding(false))
+            debugBuilder.TryAddWidget("Avatar Debug")
+                        ?.SetVisibilityBinding(debugVisibilityBinding = new DebugWidgetVisibilityBinding(false))
                         .AddIntFieldWithConfirmation(30, "Instantiate", AddRandomAvatar)
                         .AddSingleButton("Instantiate Self Replica", AddRandomSelfReplicaAvatar)
                         .AddControl(new DebugConstLabelDef("Total Avatars"), new DebugLongMarkerDef(totalAvatarsInstantiated = new ElementBinding<ulong>(0), DebugLongMarkerDef.Unit.NoFormat))
@@ -95,8 +95,8 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
                         .AddSingleButton("Destroy Random Amount of Avatars", DestroyRandomAmountOfAvatars)
                         .AddSingleButton("Randomize Wearables of Avatars", RandomizeWearablesOfAvatars);
 
-            debugBuilder.AddWidget("Avatar Creator")
-                .AddStringFieldsWithConfirmation(3, "Instantiate Male", InstantiateMaleAvatar)
+            debugBuilder.TryAddWidget("Avatar Creator")
+                ?.AddStringFieldsWithConfirmation(3, "Instantiate Male", InstantiateMaleAvatar)
                 .AddStringFieldsWithConfirmation(3, "Instantiate Female", InstantiateFemaleAvatar);
         }
 
@@ -125,7 +125,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
 
         private void SetDebugViewActivity()
         {
-            debugVisibilityBinding.SetVisible(realmData.Configured && defaultWearableState.GetDefaultWearablesState(World).ResolvedState == DefaultWearablesComponent.State.Success);
+            debugVisibilityBinding?.SetVisible(realmData.Configured && defaultWearableState.GetDefaultWearablesState(World).ResolvedState == DefaultWearablesComponent.State.Success);
         }
 
         private void RandomizeWearablesOfAvatars()

@@ -1,5 +1,4 @@
 ﻿using Cysharp.Threading.Tasks;
-using JetBrains.Annotations;
 
 namespace DCL.AsyncLoadReporting
 {
@@ -8,7 +7,7 @@ namespace DCL.AsyncLoadReporting
     /// </summary>
     public class AsyncLoadProcessReport
     {
-        [CanBeNull] private readonly AsyncLoadProcessReport parent;
+        private readonly AsyncLoadProcessReport? parent;
 
         private readonly float offset;
         private readonly float until;

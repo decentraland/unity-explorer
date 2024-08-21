@@ -1,6 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.AsyncLoadReporting;
-using JetBrains.Annotations;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -9,7 +8,7 @@ namespace ECS.SceneLifeCycle.Reporting
 {
     public static class WaitForSceneReadinessExtensions
     {
-        public static UniTask ToUniTask([CanBeNull] this WaitForSceneReadiness waitForSceneReadiness, CancellationToken ct) =>
+        public static UniTask ToUniTask(this WaitForSceneReadiness? waitForSceneReadiness, CancellationToken ct) =>
             waitForSceneReadiness?.ExecuteAsync(ct) ?? UniTask.CompletedTask;
     }
 

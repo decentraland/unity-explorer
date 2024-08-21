@@ -11,7 +11,7 @@ namespace ECS.Unity.Textures.Components
         public readonly bool IsVideoTexture;
         public readonly int VideoPlayerEntity;
 
-        public TextureComponent(string src, TextureWrapMode wrapMode= TextureWrapMode.Clamp, FilterMode filterMode= FilterMode.Bilinear,  bool isVideoTexture = false, int videoPlayerEntity = 0)
+        public TextureComponent(string src, TextureWrapMode wrapMode = TextureWrapMode.Clamp, FilterMode filterMode = FilterMode.Bilinear, bool isVideoTexture = false, int videoPlayerEntity = 0)
         {
             Src = src;
             WrapMode = wrapMode;
@@ -21,12 +21,12 @@ namespace ECS.Unity.Textures.Components
         }
 
         public bool Equals(TextureComponent other) =>
-            Src == other.Src && WrapMode == other.WrapMode && FilterMode == other.FilterMode && IsVideoTexture == other.IsVideoTexture;
+            Src == other.Src && WrapMode == other.WrapMode && FilterMode == other.FilterMode && IsVideoTexture == other.IsVideoTexture && VideoPlayerEntity == other.VideoPlayerEntity;
 
         public override bool Equals(object obj) =>
             obj is TextureComponent other && Equals(other);
 
         public override int GetHashCode() =>
-            HashCode.Combine(Src, (int)WrapMode, (int)FilterMode, IsVideoTexture);
+            HashCode.Combine(Src, (int)WrapMode, (int)FilterMode, IsVideoTexture, VideoPlayerEntity);
     }
 }

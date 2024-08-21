@@ -69,6 +69,9 @@ namespace ECS.Unity.SceneBoundsChecker
 
             if (!collider || !primitiveCollider.SDKCollider.IsActiveByEntity) return;
 
+            if (!primitiveCollider.SDKCollider.HasMoved())
+                return;
+
             collider.enabled = true; // enable it to calculate
             primitiveCollider.SDKCollider.ForceActiveBySceneBounds(sceneGeometry.CircumscribedPlanes.Intersects(collider.bounds));
         }
@@ -102,6 +105,9 @@ namespace ECS.Unity.SceneBoundsChecker
                     // if sdk collider is disabled by entity it's not needed to process it
                     // it will be processed in the frame it's enabled again
                     if (!sdkCollider.IsActiveByEntity)
+                        continue;
+
+                    if (!sdkCollider.HasMoved())
                         continue;
 
                     // Unity doesn't calculate bounds if the component is disabled

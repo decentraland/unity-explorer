@@ -4,7 +4,7 @@
 #include "Avatar_CelShading_Input.hlsl"
 #include "Avatar_CelShading_SurfaceData.hlsl"
 #include "Avatar_CelShading_Lighting.hlsl"
-#include "Packages/com.decentraland.unity-shared-dependencies/Runtime/Shaders/URP/FadeDithering.hlsl"
+#include "Assets/git-submodules/unity-shared-dependencies/Runtime/Shaders/URP/FadeDithering.hlsl"
 
 #if (defined(_NORMALMAP) || (defined(_PARALLAXMAP) && !defined(REQUIRES_TANGENT_SPACE_VIEW_DIR_INTERPOLATOR))) || defined(_DETAIL)
 #define REQUIRES_WORLD_SPACE_TANGENT_INTERPOLATOR

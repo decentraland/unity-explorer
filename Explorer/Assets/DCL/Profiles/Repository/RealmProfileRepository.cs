@@ -22,7 +22,9 @@ namespace DCL.Profiles
         private readonly IProfileCache profileCache;
         private readonly URLBuilder urlBuilder = new ();
         private readonly Dictionary<string, byte[]> files = new ();
-        private readonly byte[] whiteTexturePng = Texture2D.whiteTexture!.EncodeToPNG()!;
+        // Catalyst servers requires a face thumbnail texture of 256x256
+        // Otherwise it will fail when the profile is published
+        private readonly byte[] whiteTexturePng = new Texture2D(256, 256).EncodeToPNG();
 
         public RealmProfileRepository(IWebRequestController webRequestController,
             IRealmData realm,
@@ -120,7 +122,7 @@ namespace DCL.Profiles
             }
             catch (UnityWebRequestException e)
             {
-                if (e.ResponseCode == 404)
+                if (e.ResponseCode == WebRequestUtils.NOT_FOUND)
                     return null;
 
                 throw;

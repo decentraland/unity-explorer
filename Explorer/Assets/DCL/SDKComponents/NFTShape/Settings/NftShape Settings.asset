@@ -15,7 +15,7 @@ MonoBehaviour:
   pairs:
   - nftFrameType: 0
     prefab:
-      m_AssetGUID: fd29dbb6c443041429f61480d858f979
+      m_AssetGUID: 9682a05204b49a546a7ddf99b9caa9b4
       m_SubObjectName: 
       m_SubObjectType: 
       m_EditorAssetChanged: 0

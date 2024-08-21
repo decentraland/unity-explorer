@@ -11,8 +11,6 @@ namespace DCL.Quality.Runtime
 {
     public class EnvironmentSettingsRuntime : IQualitySettingRuntime
     {
-        private const float UNITY_DEFAULT_LOD_BIAS = 0.8f;
-
         private PersistentSetting<int> sceneLoadRadius;
         private PersistentSetting<int> lod1Threshold;
         private PersistentSetting<float> terrainLODBias;
@@ -102,7 +100,7 @@ namespace DCL.Quality.Runtime
 
         private void SetTerrainLodBias(float lodBias)
         {
-            float tempLodBias = UNITY_DEFAULT_LOD_BIAS * lodBias / 100f;
+            float tempLodBias = lodBias / 100f;
             if (!(Math.Abs(QualitySettings.lodBias - tempLodBias) > 0.005f))
                 return;
 

@@ -15,12 +15,12 @@ namespace DCL.Multiplayer.Connections.Archipelago.AdapterAddress
             this.log = log;
         }
 
-        public async UniTask<string> AdapterUrlAsync(string aboutUrl, CancellationToken token)
+        public string AdapterUrlAsync(string unrefinedComms)
         {
-            log($"AdapterUrlAsync started with url: {aboutUrl}");
-            string? result = await origin.AdapterUrlAsync(aboutUrl, token);
-            log($"AdapterUrlAsync finished with url: {aboutUrl} and with result: {result}");
-            return result;
+            log($"Original comms adapter is: {unrefinedComms}");
+            unrefinedComms = origin.AdapterUrlAsync(unrefinedComms);
+            log($"Modified comms adapter is: {unrefinedComms}");
+            return unrefinedComms;
         }
     }
 }

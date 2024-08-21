@@ -3,10 +3,14 @@ using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
+using DCL.Input;
+using DCL.Input.Component;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
+using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
+using LiveKit.Proto;
 using SceneRunner.Debugging;
 using System;
 using System.Linq;
@@ -16,18 +20,40 @@ using UnityEngine.UIElements;
 
 namespace Global.Dynamic
 {
-    [Serializable]
-    public class DebugSettings
+    public interface IDebugSettings
     {
-        public bool showSplash;
-        public bool showAuthentication;
-        public bool showLoading;
-        public bool enableLandscape;
-        public bool enableLOD;
+        bool ShowSplash { get; }
+        bool ShowAuthentication { get; }
+        bool ShowLoading { get; }
+        bool EnableLandscape { get; }
+        bool EnableLOD { get; }
+        bool EnableEmulateNoLivekitConnection { get; }
+        bool OverrideConnectionQuality { get; }
+        ConnectionQuality ConnectionQuality { get; }
+    }
 
-        // To avoid configuration issues, force full flow on build (Debug.isDebugBuild is always true in Editor)
-        public DebugSettings Get() =>
-            Debug.isDebugBuild ? this : Release();
+    [Serializable]
+    public class DebugSettings : IDebugSettings
+    {
+        private static readonly DebugSettings RELEASE_SETTINGS = Release();
+
+        [SerializeField]
+        private bool showSplash;
+        [SerializeField]
+        private bool showAuthentication;
+        [SerializeField]
+        private bool showLoading;
+        [SerializeField]
+        private bool enableLandscape;
+        [SerializeField]
+        private bool enableLOD;
+        [SerializeField]
+        private bool enableEmulateNoLivekitConnection;
+        [Space]
+        [SerializeField]
+        private bool overrideConnectionQuality;
+        [SerializeField]
+        private ConnectionQuality connectionQuality;
 
         public static DebugSettings Release() =>
             new ()
@@ -37,7 +63,20 @@ namespace Global.Dynamic
                 showLoading = true,
                 enableLandscape = true,
                 enableLOD = true,
+                enableEmulateNoLivekitConnection = false,
+                overrideConnectionQuality = false,
+                connectionQuality = ConnectionQuality.QualityExcellent
             };
+
+        // To avoid configuration issues, force full flow on build (Debug.isDebugBuild is always true in Editor)
+        public bool ShowSplash => Debug.isDebugBuild ? this.showSplash : RELEASE_SETTINGS.showSplash;
+        public bool ShowAuthentication => Debug.isDebugBuild ? this.showAuthentication : RELEASE_SETTINGS.showAuthentication;
+        public bool ShowLoading => Debug.isDebugBuild ? this.showLoading : RELEASE_SETTINGS.showLoading;
+        public bool EnableLandscape => Debug.isDebugBuild ? this.enableLandscape : RELEASE_SETTINGS.enableLandscape;
+        public bool EnableLOD => Debug.isDebugBuild ? this.enableLOD : RELEASE_SETTINGS.enableLOD;
+        public bool EnableEmulateNoLivekitConnection => Debug.isDebugBuild ? this.enableEmulateNoLivekitConnection : RELEASE_SETTINGS.enableEmulateNoLivekitConnection;
+        public bool OverrideConnectionQuality => Debug.isDebugBuild ? this.overrideConnectionQuality : RELEASE_SETTINGS.overrideConnectionQuality;
+        public ConnectionQuality ConnectionQuality => Debug.isDebugBuild ? this.connectionQuality : RELEASE_SETTINGS.connectionQuality;
     }
 
     public class MainSceneLoader : MonoBehaviour
@@ -49,7 +88,7 @@ namespace Global.Dynamic
         [SerializeField] private DebugViewsCatalog debugViewsCatalog = new ();
 
         [Space]
-        [SerializeField] private DebugSettings debugSettings;
+        [SerializeField] private DebugSettings debugSettings = new ();
 
         [Header("References")]
         [SerializeField] private PluginSettingsContainer globalPluginSettingsContainer = null!;
@@ -103,13 +142,23 @@ namespace Global.Dynamic
 
         private async UniTask InitializeFlowAsync(CancellationToken ct)
         {
-            bootstrapContainer = await BootstrapContainer.CreateAsync(debugSettings, sceneLoaderSettings: settings, globalPluginSettingsContainer, destroyCancellationToken);
+            var applicationParametersParser = new ApplicationParametersParser(Environment.GetCommandLineArgs());
+
+            settings.ApplyConfig(applicationParametersParser);
+            launchSettings.ApplyConfig(applicationParametersParser);
+
+            bootstrapContainer = await BootstrapContainer.CreateAsync(debugSettings, sceneLoaderSettings: settings,
+                globalPluginSettingsContainer, launchSettings,
+                applicationParametersParser,
+                destroyCancellationToken);
 
             IBootstrap bootstrap = bootstrapContainer!.Bootstrap;
 
             try
             {
-                bootstrap.PreInitializeSetup(launchSettings, cursorRoot, debugUiRoot, splashRoot, destroyCancellationToken);
+                var splashScreen = new SplashScreen(splashScreenAnimation, splashRoot, debugSettings.ShowSplash);
+
+                bootstrap.PreInitializeSetup(cursorRoot, debugUiRoot, splashScreen, destroyCancellationToken);
 
                 bool isLoaded;
                 (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugViewsCatalog, ct);
@@ -121,7 +170,7 @@ namespace Global.Dynamic
                 }
 
                 (dynamicWorldContainer, isLoaded) = await bootstrap.LoadDynamicWorldContainerAsync(bootstrapContainer, staticContainer!, scenePluginSettingsContainer, settings,
-                    dynamicSettings, launchSettings, uiToolkitRoot, cursorRoot, splashScreenAnimation, backgroundMusic, worldInfoTool.EnsureNotNull(), destroyCancellationToken);
+                    dynamicSettings, uiToolkitRoot, cursorRoot, splashScreen, backgroundMusic, worldInfoTool.EnsureNotNull(), destroyCancellationToken);
 
                 if (!isLoaded)
                 {
@@ -129,7 +178,9 @@ namespace Global.Dynamic
                     return;
                 }
 
-                await bootstrap.InitializeFeatureFlagsAsync(bootstrapContainer.IdentityCache.Identity!, staticContainer!, ct);
+                await bootstrap.InitializeFeatureFlagsAsync(bootstrapContainer.IdentityCache!.Identity, bootstrapContainer.DecentralandUrlsSource, staticContainer!, ct);
+
+                DisableShortcuts();
 
                 if (await bootstrap.InitializePluginsAsync(staticContainer!, dynamicWorldContainer!, scenePluginSettingsContainer, globalPluginSettingsContainer, ct))
                 {
@@ -139,8 +190,14 @@ namespace Global.Dynamic
 
                 Entity playerEntity;
                 (globalWorld, playerEntity) = bootstrap.CreateGlobalWorldAndPlayer(bootstrapContainer, staticContainer!, dynamicWorldContainer!, debugUiRoot);
+
+                dynamicWorldContainer!.InitializeWorldRelatedModules(globalWorld.EcsWorld, playerEntity);
+                staticContainer!.PlayerEntityProxy.SetObject(playerEntity);
+
                 await bootstrap.LoadStartingRealmAsync(dynamicWorldContainer!, ct);
-                await bootstrap.UserInitializationAsync(dynamicWorldContainer!, globalWorld, playerEntity, splashScreenAnimation, splashRoot, ct);
+                await bootstrap.UserInitializationAsync(dynamicWorldContainer!, globalWorld, playerEntity, splashScreen, ct);
+
+                RestoreShortcuts();
             }
             catch (OperationCanceledException)
             {
@@ -152,6 +209,16 @@ namespace Global.Dynamic
                 GameReports.PrintIsDead();
                 throw;
             }
+        }
+
+        private void DisableShortcuts()
+        {
+            staticContainer!.InputProxy.StrictObject.Shortcuts.Disable();
+        }
+
+        private void RestoreShortcuts()
+        {
+            globalWorld!.EcsWorld.CacheInputMap().GetInputMapComponent(globalWorld.EcsWorld).Active |= InputMapComponent.Kind.Shortcuts;
         }
 
         [ContextMenu(nameof(ValidateSettingsAsync))]

@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Audio;
 using DCL.Diagnostics;
 using DCL.Utilities.Extensions;
 using DG.Tweening;
@@ -7,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.Audio;
 using UnityEngine.Localization.SmartFormat.PersistentVariables;
 using Utility;
 
@@ -16,6 +18,9 @@ namespace DCL.SceneLoadingScreens
     {
         private readonly ISceneTipsProvider sceneTipsProvider;
         private readonly TimeSpan minimumDisplayDuration;
+        private readonly AudioMixerVolumesController audioMixerVolumesController;
+
+        private readonly AudioMixerGroup audioMixerGroupController;
 
         private int currentTip;
         private SceneTips tips;
@@ -26,10 +31,12 @@ namespace DCL.SceneLoadingScreens
 
         public SceneLoadingScreenController(ViewFactoryMethod viewFactory,
             ISceneTipsProvider sceneTipsProvider,
-            TimeSpan minimumDisplayDuration) : base(viewFactory)
+            TimeSpan minimumDisplayDuration,
+            AudioMixerVolumesController audioMixerVolumesController) : base(viewFactory)
         {
             this.sceneTipsProvider = sceneTipsProvider;
             this.minimumDisplayDuration = minimumDisplayDuration;
+            this.audioMixerVolumesController = audioMixerVolumesController;
         }
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
@@ -80,6 +87,10 @@ namespace DCL.SceneLoadingScreens
             base.OnViewShow();
             viewInstance.RootCanvasGroup.alpha = 1f;
             viewInstance.ContentCanvasGroup.alpha = 1f;
+
+            audioMixerVolumesController.MuteGroup(AudioMixerExposedParam.World_Volume);
+            audioMixerVolumesController.MuteGroup(AudioMixerExposedParam.Avatar_Volume);
+            audioMixerVolumesController.MuteGroup(AudioMixerExposedParam.Chat_Volume);
         }
 
         protected override void OnViewClose()
@@ -87,6 +98,10 @@ namespace DCL.SceneLoadingScreens
             base.OnViewClose();
             tipsRotationCancellationToken?.SafeCancelAndDispose();
             tipsFadeCancellationToken?.SafeCancelAndDispose();
+
+            audioMixerVolumesController.UnmuteGroup(AudioMixerExposedParam.World_Volume);
+            audioMixerVolumesController.UnmuteGroup(AudioMixerExposedParam.Avatar_Volume);
+            audioMixerVolumesController.UnmuteGroup(AudioMixerExposedParam.Chat_Volume);
         }
 
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)

@@ -4,7 +4,7 @@ using System;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics
 {
-    public class ChatEventsAnalytics: IDisposable
+    public class ChatEventsAnalytics : IDisposable
     {
         private readonly IAnalyticsController analytics;
         private readonly ChatController chatController;
@@ -33,7 +33,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
                 return;
             }
 
-            analytics.Track(AnalyticsEvents.Chat.BUBBLE_SWITCHED, new JsonObject
+            analytics.Track(AnalyticsEvents.UI.BUBBLE_SWITCHED, new JsonObject
             {
                 { "is_visible", isVisible },
             });

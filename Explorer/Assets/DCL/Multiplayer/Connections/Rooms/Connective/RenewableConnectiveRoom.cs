@@ -15,11 +15,12 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
             this.factory = factory;
         }
 
-        public void Start()
+        public async UniTask<bool> StartAsync()
         {
             current = factory();
-            current!.Start();
+            var task = current!.StartAsync();
             room.Assign(current.Room(), out _);
+            return await task;
         }
 
         public async UniTask StopAsync()

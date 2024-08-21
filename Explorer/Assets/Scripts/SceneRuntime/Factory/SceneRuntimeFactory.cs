@@ -33,18 +33,13 @@ namespace SceneRuntime.Factory
         private static readonly IReadOnlyCollection<string> JS_MODULE_NAMES = new JsModulesNameList().ToList();
         private readonly IJsSceneLocalSourceCode jsSceneLocalSourceCode = new IJsSceneLocalSourceCode.Default();
 
-        public SceneRuntimeFactory(IWebRequestController webRequestController, IRealmData realmData)
+        public SceneRuntimeFactory(IWebRequestController webRequestController, IRealmData realmData, bool cacheJsSources = true)
         {
             this.realmData = realmData;
             jsSourcesCache = EnabledJsScenesFileCachingOrIgnore();
 
-            webJsSources = new CachedWebJsSources(
-                new WebJsSources(
-                    new JsCodeResolver(webRequestController)
-                ),
-                new MemoryJsSourcesCache()
-            );
-
+            var nonCachedWebJsSources = new WebJsSources(new JsCodeResolver(webRequestController));
+            webJsSources = cacheJsSources ? new CachedWebJsSources(nonCachedWebJsSources, new MemoryJsSourcesCache()) : nonCachedWebJsSources;
         }
 
         /// <summary>

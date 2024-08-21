@@ -11,7 +11,7 @@ namespace DCL.SDKComponents.TextShape.Component
     {
         [Header("Font")]
         public Font font = Font.FSerif;
-        public bool fontAutoSize = true;
+        public bool fontAutoSize;
         public float fontSize = 10;
 
         [Header("Frame")]

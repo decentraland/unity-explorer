@@ -68,7 +68,7 @@ namespace CrdtEcsBridge.RestrictedActions
 
         public void TriggerEmote(URN urn)
         {
-            world.Add(playerEntity, new CharacterEmoteIntent { EmoteId = urn, Spatial = true });
+            world.Add(playerEntity, new CharacterEmoteIntent { EmoteId = urn, Spatial = true, TriggerSource = TriggerSource.SCENE});
         }
     }
 }

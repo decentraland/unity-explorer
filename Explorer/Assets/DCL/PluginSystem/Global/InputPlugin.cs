@@ -89,6 +89,7 @@ namespace DCL.PluginSystem.Global
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
             InputMapComponent.Kind startingDisabledInputs = InputMapComponent.Kind.EmoteWheel;
+            startingDisabledInputs |= InputMapComponent.Kind.Shortcuts;
             builder.World.Create(new InputMapComponent(~startingDisabledInputs));
 
             ApplyInputMapsSystem.InjectToWorld(ref builder, dclInput);

@@ -10,6 +10,7 @@ using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.Profiling;
+using DCL.Utilities.Extensions;
 using ECS.LifeCycle;
 using System;
 using System.Collections.Generic;
@@ -24,19 +25,19 @@ namespace DCL.PluginSystem.World
     public class InteractionPlugin : IDCLWorldPlugin<InteractionPlugin.Settings>
     {
         private readonly IGlobalInputEvents globalInputEvents;
-        private readonly IProfilingProvider profilingProvider;
+        private readonly IBudgetProfiler profiler;
         private readonly ECSWorldSingletonSharedDependencies sharedDependencies;
         private readonly IComponentPoolsRegistry poolsRegistry;
         private readonly IAssetsProvisioner assetsProvisioner;
 
-        private IReleasablePerformanceBudget raycastBudget;
-        private Settings settings;
-        private InteractionSettingsData interactionData;
+        private IReleasablePerformanceBudget raycastBudget = null!;
+        private Settings settings = null!;
+        private InteractionSettingsData interactionData = null!;
 
-        public InteractionPlugin(ECSWorldSingletonSharedDependencies sharedDependencies, IProfilingProvider profilingProvider, IGlobalInputEvents globalInputEvents, IComponentPoolsRegistry poolsRegistry, IAssetsProvisioner assetsProvisioner)
+        public InteractionPlugin(ECSWorldSingletonSharedDependencies sharedDependencies, IBudgetProfiler profiler, IGlobalInputEvents globalInputEvents, IComponentPoolsRegistry poolsRegistry, IAssetsProvisioner assetsProvisioner)
         {
             this.sharedDependencies = sharedDependencies;
-            this.profilingProvider = profilingProvider;
+            this.profiler = profiler;
             this.globalInputEvents = globalInputEvents;
             this.poolsRegistry = poolsRegistry;
             this.assetsProvisioner = assetsProvisioner;
@@ -47,32 +48,43 @@ namespace DCL.PluginSystem.World
         public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
         {
             this.settings = settings;
-            raycastBudget = new FrameTimeSharedBudget(settings.RaycastFrameBudgetMs, profilingProvider);
+            raycastBudget = new FrameTimeSharedBudget(settings.RaycastFrameBudgetMs, profiler);
             interactionData = (await assetsProvisioner.ProvideMainAssetAsync(this.settings.Data, ct)).Value;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sceneDeps,
             in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
-            IComponentPool<PBRaycastResult>? raycastResultPool = sharedDependencies.ComponentPoolsRegistry.GetReferenceTypePool<PBRaycastResult>();
+            IComponentPool<PBRaycastResult> raycastResultPool = sharedDependencies
+                                                               .ComponentPoolsRegistry
+                                                               .GetReferenceTypePool<PBRaycastResult>()
+                                                               .EnsureNotNull();
 
-            InitializeRaycastSystem.InjectToWorld(ref builder, raycastResultPool);
+            InitializeRaycastSystem.InjectToWorld(ref builder);
 
             sceneIsCurrentListeners.Add(
-            ExecuteRaycastSystem.InjectToWorld(ref builder, sceneDeps.SceneData, raycastBudget, settings.RaycastBucketThreshold,
-                sharedDependencies.ComponentPoolsRegistry.GetReferenceTypePool<RaycastHit>(),
-                raycastResultPool,
-                sceneDeps.EntityCollidersSceneCache,
-                sceneDeps.EntitiesMap,
-                sceneDeps.EcsToCRDTWriter,
-                sceneDeps.SceneStateProvider)
+                ExecuteRaycastSystem.InjectToWorld(
+                    ref builder,
+                    sceneDeps.SceneData,
+                    raycastBudget,
+                    settings.RaycastBucketThreshold,
+                    sharedDependencies.ComponentPoolsRegistry.GetReferenceTypePool<RaycastHit>(),
+                    raycastResultPool,
+                    sceneDeps.EntityCollidersSceneCache,
+                    sceneDeps.EntitiesMap,
+                    sceneDeps.EcsToCRDTWriter,
+                    sceneDeps.SceneStateProvider
+                )
             );
 
-            WritePointerEventResultsSystem.InjectToWorld(ref builder, sceneDeps.SceneData,
+            WritePointerEventResultsSystem.InjectToWorld(
+                ref builder,
+                sceneDeps.SceneData,
                 sceneDeps.EcsToCRDTWriter,
                 sceneDeps.SceneStateProvider,
                 globalInputEvents,
-                poolsRegistry.GetReferenceTypePool<RaycastHit>());
+                poolsRegistry.GetReferenceTypePool<RaycastHit>()
+            );
 
             sceneIsCurrentListeners.Add(InteractionHighlightSystem.InjectToWorld(ref builder, interactionData,
                 sceneDeps.SceneStateProvider));

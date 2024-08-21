@@ -14,11 +14,13 @@ namespace SceneRunner.Scene.ExceptionsHandling
     public class SceneExceptionsHandler : ISceneExceptionsHandler
     {
         // Experiment with this, maybe tolerance should be 0
-        internal const int ECS_EXCEPTIONS_PER_MINUTE_TOLERANCE = 3;
+        internal const int JAVASCRIPT_EXCEPTIONS_PER_MINUTE_TOLERANCE = 30;
+        internal const int ENGINE_EXCEPTIONS_PER_MINUTE_TOLERANCE = 3;
 
         private static readonly ThreadSafeObjectPool<SceneExceptionsHandler> POOL = new (() => new SceneExceptionsHandler(), defaultCapacity: PoolConstants.SCENES_COUNT);
 
-        private readonly ExceptionEntry?[] ecsExceptionsBag = new ExceptionEntry?[ECS_EXCEPTIONS_PER_MINUTE_TOLERANCE];
+        private readonly ExceptionEntry?[] javascriptRegisteredExceptions = new ExceptionEntry?[JAVASCRIPT_EXCEPTIONS_PER_MINUTE_TOLERANCE];
+        private readonly ExceptionEntry?[] engineRegisteredExceptions = new ExceptionEntry?[ENGINE_EXCEPTIONS_PER_MINUTE_TOLERANCE];
         private SceneShortInfo sceneShortInfo;
 
         private ISceneStateProvider? sceneState;
@@ -28,19 +30,20 @@ namespace SceneRunner.Scene.ExceptionsHandling
         public void Dispose()
         {
             sceneState = null;
-            Array.Clear(ecsExceptionsBag, 0, ecsExceptionsBag.Length);
+            Array.Clear(javascriptRegisteredExceptions, 0, javascriptRegisteredExceptions.Length);
+            Array.Clear(engineRegisteredExceptions, 0, engineRegisteredExceptions.Length);
             POOL.Release(this);
         }
 
         public ISystemGroupExceptionHandler.Action Handle(Exception exception, Type systemGroupType) =>
-            Handle(exception, new ReportData(ReportCategory.ECS, sceneShortInfo: sceneShortInfo));
+            Handle(exception, new ReportData(ReportCategory.ECS, sceneShortInfo: sceneShortInfo), engineRegisteredExceptions);
 
         public void OnEngineException(Exception exception, string category)
         {
             // Can be already disposed of
             if (sceneState == null) return;
 
-            if (Handle(exception, new ReportData(category, sceneShortInfo: sceneShortInfo)) != ISystemGroupExceptionHandler.Action.Continue)
+            if (Handle(exception, new ReportData(category, sceneShortInfo: sceneShortInfo), engineRegisteredExceptions) != ISystemGroupExceptionHandler.Action.Continue)
                 sceneState!.State = SceneState.EngineError;
         }
 
@@ -49,7 +52,10 @@ namespace SceneRunner.Scene.ExceptionsHandling
             // Can be already disposed of
             if (sceneState == null) return;
 
-            if (Handle(exception, new ReportData(ReportCategory.JAVASCRIPT, sceneShortInfo: sceneShortInfo, sceneTickNumber: sceneState.TickNumber)) != ISystemGroupExceptionHandler.Action.Continue)
+            // Stopping the scene execution after a javascript exception causes some scenes to not work at all, since they intentionally have execution errors. ie: events-board-api goerli 78,1.
+            // In order to keep the scenes running we need to increase the error tolerance. Scenes that exceed will need a fix on the scene level.
+            // This works different from the old kernel. The sdk7 runtime just does a try/catch: https://github.com/decentraland/scene-runtime/blob/adbf9e78c3b5d85d619c41494a177dfd7b6b5581/src/worker-sdk7/sdk7-runtime.ts#L119-L130
+            if (Handle(exception, new ReportData(ReportCategory.JAVASCRIPT, sceneShortInfo: sceneShortInfo, sceneTickNumber: sceneState.TickNumber), javascriptRegisteredExceptions) != ISystemGroupExceptionHandler.Action.Continue)
                 sceneState!.State = SceneState.JavaScriptError;
         }
 
@@ -96,33 +102,23 @@ namespace SceneRunner.Scene.ExceptionsHandling
             return handler;
         }
 
-        private ISystemGroupExceptionHandler.Action Handle(Exception exception, ReportData reportData)
+        private ISystemGroupExceptionHandler.Action Handle(Exception exception, ReportData reportData, ExceptionEntry?[] registeredExceptions)
         {
             // 60 seconds
             const float INTERVAL_TICKS = 60 * 10000 * 1000;
 
-            // Report exception
-            if (exception is EcsSystemException ecsSystemException)
-            {
-                // Add scene information, we don't add this info in the BaseUnityLoopSystem as we would need to propagate it for all systems
-                // and it's inconvenient and cumbersome
-                ecsSystemException.reportData.SceneShortInfo = sceneShortInfo;
-
-                ReportHub.LogException(ecsSystemException);
-            }
-            else
-                ReportHub.LogException(exception, reportData);
+            ReportException(exception, reportData);
 
             long time = DateTime.UtcNow.Ticks;
 
             var validRangeStartIndex = 0;
             int validRangeEndIndex = -1;
 
-            lock (ecsExceptionsBag)
+            lock (registeredExceptions)
             {
-                for (var i = 0; i < ecsExceptionsBag.Length; i++)
+                for (var i = 0; i < registeredExceptions.Length; i++)
                 {
-                    ExceptionEntry? e = ecsExceptionsBag[i];
+                    ExceptionEntry? e = registeredExceptions[i];
 
                     if (!e.HasValue)
                         break;
@@ -133,9 +129,9 @@ namespace SceneRunner.Scene.ExceptionsHandling
                         validRangeStartIndex = i;
                         validRangeEndIndex = i;
 
-                        for (++i; i < ecsExceptionsBag.Length; i++)
+                        for (++i; i < registeredExceptions.Length; i++)
                         {
-                            e = ecsExceptionsBag[i];
+                            e = registeredExceptions[i];
 
                             if (!e.HasValue)
                                 break;
@@ -148,10 +144,10 @@ namespace SceneRunner.Scene.ExceptionsHandling
                 }
 
                 // All tolerance is used
-                if (validRangeEndIndex == ecsExceptionsBag.Length - 1 && validRangeStartIndex == 0)
+                if (validRangeEndIndex == registeredExceptions.Length - 1 && validRangeStartIndex == 0)
                 {
                     // log an aggregated exception
-                    ReportHub.LogException(new SceneExecutionException(ecsExceptionsBag.Select(e => e!.Value.Exception).Append(exception), new ReportData(ReportCategory.ECS, sceneShortInfo: sceneShortInfo)));
+                    ReportHub.LogException(new SceneExecutionException(registeredExceptions.Select(e => e!.Value.Exception).Append(exception), new ReportData(ReportCategory.ECS, sceneShortInfo: sceneShortInfo)));
 
                     // Put the scene into the error state
                     sceneState!.State = SceneState.EcsError;
@@ -160,18 +156,32 @@ namespace SceneRunner.Scene.ExceptionsHandling
 
                 // Shift the array to the left
                 if (validRangeStartIndex > -1)
-                    Array.Copy(ecsExceptionsBag, validRangeStartIndex, ecsExceptionsBag, 0, validRangeEndIndex - validRangeStartIndex + 1);
+                    Array.Copy(registeredExceptions, validRangeStartIndex, registeredExceptions, 0, validRangeEndIndex - validRangeStartIndex + 1);
 
                 int firstEmptySlot = validRangeEndIndex - validRangeStartIndex + 1;
 
                 // Clear the rest of the array
-                Array.Clear(ecsExceptionsBag, firstEmptySlot, ecsExceptionsBag.Length - firstEmptySlot);
+                Array.Clear(registeredExceptions, firstEmptySlot, registeredExceptions.Length - firstEmptySlot);
 
                 // Write to the first available slot
-                ecsExceptionsBag[firstEmptySlot] = new ExceptionEntry { Time = time, Exception = exception };
+                registeredExceptions[firstEmptySlot] = new ExceptionEntry { Time = time, Exception = exception };
 
                 return ISystemGroupExceptionHandler.Action.Continue;
             }
+        }
+
+        private void ReportException(Exception exception, ReportData reportData)
+        {
+            if (exception is EcsSystemException ecsSystemException)
+            {
+                // Add scene information, we don't add this info in the BaseUnityLoopSystem as we would need to propagate it for all systems
+                // and it's inconvenient and cumbersome
+                ecsSystemException.reportData.SceneShortInfo = sceneShortInfo;
+
+                ReportHub.LogException(ecsSystemException);
+            }
+            else
+                ReportHub.LogException(exception, reportData);
         }
 
         private struct ExceptionEntry

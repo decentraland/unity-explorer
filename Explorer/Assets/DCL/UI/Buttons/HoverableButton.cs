@@ -20,22 +20,18 @@ namespace DCL.UI.Buttons
         [field: SerializeField]
         public AudioClipConfig ButtonHoveredAudio { get; private set; }
 
-        public void OnEnable()
+        public void Awake()
         {
             Button.onClick.AddListener(OnButtonPressed);
         }
 
-        private void OnDisable()
+        private void OnDestroy()
         {
             Button.onClick.RemoveListener(OnButtonPressed);
         }
 
-        private void OnButtonPressed()
+        public void OnPointerEnter(PointerEventData eventData)
         {
-            UIAudioEventsBus.Instance.SendPlayAudioEvent(ButtonPressedAudio);
-        }
-
-        public void OnPointerEnter(PointerEventData eventData) {
             UIAudioEventsBus.Instance.SendPlayAudioEvent(ButtonHoveredAudio);
             OnButtonHover?.Invoke();
         }
@@ -43,5 +39,9 @@ namespace DCL.UI.Buttons
         public void OnPointerExit(PointerEventData eventData) =>
             OnButtonUnhover?.Invoke();
 
+        internal void OnButtonPressed()
+        {
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(ButtonPressedAudio);
+        }
     }
 }

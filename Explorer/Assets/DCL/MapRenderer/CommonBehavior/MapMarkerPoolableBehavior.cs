@@ -10,7 +10,7 @@ namespace DCL.MapRenderer.CommonBehavior
     {
         internal readonly IObjectPool<T> objectsPool;
 
-        internal T instance { get; private set; }
+        internal T? instance { get; private set; }
 
         internal bool isVisible { get; private set; }
 
@@ -31,7 +31,7 @@ namespace DCL.MapRenderer.CommonBehavior
 
         public T OnBecameVisible()
         {
-            instance = objectsPool.Get();
+            if (instance == null) { instance = objectsPool.Get(); }
             instance.transform.localPosition = currentPosition;
             isVisible = true;
             return instance;

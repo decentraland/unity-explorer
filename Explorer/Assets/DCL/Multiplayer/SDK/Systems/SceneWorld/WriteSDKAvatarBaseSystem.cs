@@ -1,6 +1,7 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using Arch.SystemGroups.Metadata;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
@@ -10,12 +11,13 @@ using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
 using ECS.Unity.ColorComponent;
+using System;
 
 namespace DCL.Multiplayer.SDK.Systems.SceneWorld
 {
     [UpdateInGroup(typeof(SyncedPreRenderingSystemGroup))]
     [UpdateBefore(typeof(CleanUpGroup))]
-    [LogCategory(ReportCategory.PLAYER_AVATAR_BASE)]
+    [LogCategory(ReportCategory.PLAYER_SDK_DATA)]
     public partial class WriteSDKAvatarBaseSystem : BaseUnityLoopSystem
     {
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
@@ -33,14 +35,14 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void UpdateAvatarBase(PlayerCRDTEntity playerCRDTEntity, Profile profile)
+        private void UpdateAvatarBase(PlayerSceneCRDTEntity playerCRDTEntity, SDKProfile profile)
         {
             if (!profile.IsDirty) return;
 
-            ecsToCRDTWriter.PutMessage<PBAvatarBase, Profile>(static (pbComponent, profile) =>
+            ecsToCRDTWriter.PutMessage<PBAvatarBase, SDKProfile>(static (pbComponent, profile) =>
             {
                 pbComponent.Name = profile.Name;
-                Avatar avatar = profile.Avatar;
+                SDKProfile.SDKAvatar avatar = profile.Avatar;
                 pbComponent.BodyShapeUrn = avatar.BodyShape;
                 pbComponent.SkinColor = avatar.SkinColor.ToColor3();
                 pbComponent.EyesColor = avatar.EyesColor.ToColor3();
@@ -50,7 +52,7 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
-        private void HandleComponentRemoval(PlayerCRDTEntity playerCRDTEntity)
+        private void HandleComponentRemoval(PlayerSceneCRDTEntity playerCRDTEntity)
         {
             ecsToCRDTWriter.DeleteMessage<PBAvatarBase>(playerCRDTEntity.CRDTEntity);
         }

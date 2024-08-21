@@ -64,7 +64,7 @@ namespace ECS.Unity.PrimitiveColliders.Systems
             if (meshCollider.IsDirty && meshCollider.MeshCase != component.SDKType)
             {
                 Release(ref component);
-                component.Collider = null; // it will be a signal to instantiate a new collider
+                component.Invalidate(); // it will be a signal to instantiate a new collider
             }
         }
 

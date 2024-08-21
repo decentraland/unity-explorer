@@ -1,4 +1,5 @@
-﻿using ECS.Prioritization.Components;
+﻿using System;
+using ECS.Prioritization.Components;
 
 namespace ECS.Prioritization
 {
@@ -47,5 +48,7 @@ namespace ECS.Prioritization
         /// </summary>
         /// <returns>FPS</returns>
         int GetSceneUpdateFrequency(in PartitionComponent partition);
+
+        Action<int>? OnMaxLoadingDistanceInParcelsChanged { get; set; }
     }
 }

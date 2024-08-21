@@ -69,7 +69,7 @@ Material:
     - _SubsurfaceIndirect: 0.1
     - _SubsurfaceKwToggle: 1
     - _WINDQUALITY: 4
-    - _WindQuality: 4
+    - _WindQuality: 0
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _HueVariationColor: {r: 0.18039212, g: 0.36470586, b: 0.6117647, a: 0.6509804}

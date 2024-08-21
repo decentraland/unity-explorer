@@ -1,0 +1,16 @@
+{
+  "name": "SidebarBus",
+  "rootNamespace": "",
+  "references": [
+    "GUID:e169fa6683c924c7e99a85981a91d953"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

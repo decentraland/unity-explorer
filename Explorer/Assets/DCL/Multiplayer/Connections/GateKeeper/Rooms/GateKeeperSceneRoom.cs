@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.GateKeeper.Meta;
 using DCL.Multiplayer.Connections.Rooms.Connective;
 using DCL.WebRequests;
@@ -20,12 +21,12 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
         public GateKeeperSceneRoom(
             IWebRequestController webRequests,
             IMetaDataSource metaDataSource,
-            string sceneHandleUrl = "https://comms-gatekeeper.decentraland.zone/get-scene-adapter"
+            IDecentralandUrlsSource decentralandUrlsSource
         )
         {
             this.webRequests = webRequests;
             this.metaDataSource = metaDataSource;
-            this.sceneHandleUrl = sceneHandleUrl;
+            this.sceneHandleUrl = decentralandUrlsSource.Url(DecentralandUrl.GateKeeperSceneAdapter);
 
             connectiveRoom = new ConnectiveRoom(
                 static _ => UniTask.CompletedTask,
@@ -34,8 +35,8 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
             );
         }
 
-        public void Start() =>
-            connectiveRoom.Start();
+        public UniTask<bool> StartAsync() =>
+            connectiveRoom.StartAsync();
 
         public UniTask StopAsync() =>
             connectiveRoom.StopAsync();

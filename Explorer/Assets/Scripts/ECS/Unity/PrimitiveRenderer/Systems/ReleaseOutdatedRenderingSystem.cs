@@ -11,6 +11,7 @@ using ECS.LifeCycle.Components;
 using ECS.Unity.Groups;
 using ECS.Unity.Materials;
 using ECS.Unity.PrimitiveRenderer.Components;
+using UnityEngine;
 
 namespace ECS.Unity.PrimitiveRenderer.Systems
 {
@@ -24,10 +25,13 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
     public partial class ReleaseOutdatedRenderingSystem : BaseUnityLoopSystem
     {
         private readonly IComponentPoolsRegistry poolsRegistry;
+        private readonly IComponentPool<MeshRenderer> rendererPoolRegistry;
+
 
         internal ReleaseOutdatedRenderingSystem(World world, IComponentPoolsRegistry poolsRegistry) : base(world)
         {
             this.poolsRegistry = poolsRegistry;
+            rendererPoolRegistry = poolsRegistry.GetReferenceTypePool<MeshRenderer>();
         }
 
         protected override void Update(float t)
@@ -42,6 +46,7 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
         private void HandleComponentRemoval(ref PrimitiveMeshRendererComponent rendererComponent)
         {
             Release(ref rendererComponent);
+            rendererPoolRegistry.Release(rendererComponent.MeshRenderer);
         }
 
         [Query]

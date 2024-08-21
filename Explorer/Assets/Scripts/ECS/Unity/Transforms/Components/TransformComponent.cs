@@ -48,7 +48,7 @@ namespace ECS.Unity.Transforms.Components
         public TransformComponent(Transform transform)
         {
             Transform = transform;
-            Children = HashSetPool<EntityReference>.Get();
+            Children = HashSetPool<EntityReference>.Get()!;
             Parent = EntityReference.Null;
 
             Cached = new CachedTransform(transform);
@@ -91,6 +91,13 @@ namespace ECS.Unity.Transforms.Components
         {
             Cached.WorldRotation = Transform.rotation = rotation;
             Cached.LocalRotation = Transform.localRotation;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Apply(Vector3 worldPosition)
+        {
+            Cached.WorldPosition = Transform.position = worldPosition;
+            Cached.LocalPosition = Transform.localPosition;
         }
 
         readonly Transform IPoolableComponentProvider<Transform>.PoolableComponent => Transform;

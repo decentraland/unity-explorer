@@ -86,12 +86,11 @@ namespace DCL.WebRequests
         public static Adapter<GenericHeadRequest, GenericHeadArguments> HeadAsync(
             this IWebRequestController controller,
             CommonArguments commonArguments,
-            GenericHeadArguments arguments,
             CancellationToken ct,
             string reportCategory = ReportCategory.GENERIC_WEB_REQUEST,
             WebRequestHeadersInfo? headersInfo = null,
             WebRequestSignInfo? signInfo = null) =>
-            new (controller, commonArguments, arguments, ct, reportCategory, headersInfo, signInfo, null, HEAD_GENERIC);
+            new (controller, commonArguments, default(GenericHeadArguments), ct, reportCategory, headersInfo, signInfo, null, HEAD_GENERIC);
 
         private static async UniTask SwitchToMainThreadAsync(WRThreadFlags flags)
         {
@@ -160,6 +159,9 @@ namespace DCL.WebRequests
             public UniTask<byte[]> GetDataCopyAsync() =>
                 SendAsync<GetDataCopyOp<TRequest>, byte[]>(new GetDataCopyOp<TRequest>());
 
+            public UniTask<int> StatusCodeAsync() =>
+                SendAsync<StatusCodeOp<TRequest>, int>(new StatusCodeOp<TRequest>());
+
             public UniTask<T> OverwriteFromJsonAsync<T>(
                 T targetObject,
                 WRJsonParser jsonParser,
@@ -191,6 +193,12 @@ namespace DCL.WebRequests
         {
             public UniTask<string?> ExecuteAsync(TRequest webRequest, CancellationToken ct) =>
                 UniTask.FromResult(webRequest.UnityWebRequest.downloadHandler.text)!;
+        }
+
+        public struct StatusCodeOp<TRequest> : IWebRequestOp<TRequest, int> where TRequest: struct, ITypedWebRequest, IGenericDownloadHandlerRequest
+        {
+            public UniTask<int> ExecuteAsync(TRequest webRequest, CancellationToken ct) =>
+                UniTask.FromResult((int)webRequest.UnityWebRequest.responseCode);
         }
 
         public struct CreateFromJsonOp<T, TRequest> : IWebRequestOp<TRequest, T> where TRequest: struct, ITypedWebRequest, IGenericDownloadHandlerRequest

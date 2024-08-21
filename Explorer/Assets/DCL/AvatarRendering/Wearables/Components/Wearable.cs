@@ -43,19 +43,30 @@ namespace DCL.AvatarRendering.Wearables.Components
             IsLoading = false;
         }
 
+        public bool IsOnChain()
+        {
+            var id = ((IAvatarAttachment) this).GetUrn().ToString();
+            return !id.StartsWith("urn:decentraland:off-chain:base-avatars:");
+        }
+
         public AvatarAttachmentDTO GetDTO() =>
             WearableDTO.Asset!;
 
         public string GetCategory() =>
             WearableDTO.Asset!.metadata.data.category;
 
-        public void ResolveDTO(StreamableLoadingResult<WearableDTO> result)
+        public bool TryResolveDTO(StreamableLoadingResult<WearableDTO> result)
         {
-            Assert.IsTrue(!WearableDTO.IsInitialized || !WearableDTO.Succeeded);
+            if (WearableDTO.IsInitialized)
+                return false;
 
+            ResolveDTO(result);
+            return true;
+        }
+
+        private void ResolveDTO(StreamableLoadingResult<WearableDTO> result)
+        {
             WearableDTO = result;
-
-            if (!result.Succeeded) return;
 
             if (IsFacialFeature())
                 Type = WearableType.FacialFeature;
@@ -63,6 +74,11 @@ namespace DCL.AvatarRendering.Wearables.Components
                 Type = WearableType.BodyShape;
             else
                 Type = WearableType.Regular;
+        }
+
+        public void ResolvedFailedDTO(StreamableLoadingResult<WearableDTO> result)
+        {
+            WearableDTO = result;
         }
 
         public bool TryGetFileHashConditional(BodyShape bodyShape, Func<string, bool> contentMatch, out string? hash)
@@ -193,6 +209,27 @@ namespace DCL.AvatarRendering.Wearables.Components
                 return dto.Metadata.AbstractData.replaces;
 
             return representation.Value.overrideReplaces;
+        }
+
+        public static HashSet<string> ComposeHiddenCategories(string bodyShapeId, List<IWearable> wearables)
+        {
+            HashSet<string> result = new HashSet<string>();
+
+            foreach (var wearableItem in wearables)
+            {
+                if (wearableItem == null)
+                    continue;
+
+                if (result.Contains(wearableItem.GetDTO().Metadata.AbstractData.category))
+                    continue;
+
+                HashSet<string> wearableHidesList = new (StringComparer.OrdinalIgnoreCase);
+                wearableItem.GetHidingList(bodyShapeId, wearableHidesList);
+
+                result.UnionWith(wearableHidesList);
+            }
+
+            return result;
         }
     }
 }

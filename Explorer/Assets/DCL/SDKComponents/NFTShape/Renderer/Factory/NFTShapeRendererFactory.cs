@@ -22,7 +22,7 @@ namespace DCL.SDKComponents.NFTShape.Renderer.Factory
             shape.transform.SetParent(parent);
             shape.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
             var renderer = new NftShapeRenderer(shape.transform, framesPool);
-            renderer.Apply(nftShape);
+            renderer.Apply(nftShape, true);
             return renderer;
         }
 

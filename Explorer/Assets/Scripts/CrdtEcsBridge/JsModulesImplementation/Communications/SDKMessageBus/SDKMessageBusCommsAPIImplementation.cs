@@ -1,5 +1,3 @@
-using DCL.Multiplayer.Connections.Messaging;
-using Decentraland.Kernel.Comms.Rfc4;
 using SceneRunner.Scene;
 using SceneRuntime;
 using SceneRuntime.Apis.Modules.CommunicationsControllerApi.SDKMessageBus;
@@ -12,7 +10,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications.SDKMessageBus
 {
     public class SDKMessageBusCommsAPIImplementation : CommunicationsControllerAPIImplementationBase, ISDKMessageBusCommsControllerAPI
     {
-        public List<CommsPayload> SceneCommsMessages { get; } = new List<CommsPayload>();
+        public List<CommsPayload> SceneCommsMessages { get; } = new ();
 
         public SDKMessageBusCommsAPIImplementation(ISceneData sceneData, ICommunicationControllerHub messagePipesHub, IJsOperations jsOperations, ISceneStateProvider sceneStateProvider) : base(sceneData, messagePipesHub, jsOperations, sceneStateProvider)
         {
@@ -28,22 +26,19 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications.SDKMessageBus
             messagePipesHub.SendMessage(encodedMessage, sceneData.SceneEntityDefinition.id, cancellationTokenSource.Token);
         }
 
-        protected override void OnMessageReceived(ReceivedMessage<Scene> receivedMessage)
+        protected override void OnMessageReceived(ICommunicationControllerHub.SceneMessage receivedMessage)
         {
-            using (receivedMessage)
+            ReadOnlySpan<byte> decodedMessage = receivedMessage.Data.Span;
+            MsgType msgType = DecodeMessage(ref decodedMessage);
+
+            if (msgType != MsgType.String || decodedMessage.Length == 0)
+                return;
+
+            SceneCommsMessages.Add(new CommsPayload
             {
-                ReadOnlySpan<byte> decodedMessage = receivedMessage.Payload.Data.Span;
-                MsgType msgType = DecodeMessage(ref decodedMessage);
-
-                if (msgType != MsgType.String || decodedMessage.Length == 0)
-                    return;
-
-                SceneCommsMessages.Add(new CommsPayload()
-                {
-                    sender = receivedMessage.FromWalletId,
-                    message = Encoding.UTF8.GetString(decodedMessage)
-                });
-            }
+                sender = receivedMessage.WalletId,
+                message = Encoding.UTF8.GetString(decodedMessage)
+            });
         }
     }
 }

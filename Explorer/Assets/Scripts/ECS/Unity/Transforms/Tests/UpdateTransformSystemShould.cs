@@ -1,7 +1,10 @@
+using Arch.SystemGroups.UnityBridge;
 using CrdtEcsBridge.Components.Transform;
+using CrdtEcsBridge.UpdateGate;
 using ECS.TestSuite;
 using ECS.Unity.Transforms.Components;
 using ECS.Unity.Transforms.Systems;
+using NSubstitute;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -23,7 +26,13 @@ namespace ECS.Unity.Transforms.Tests
 
             world.Create(sdkTransform, testTransformComponent);
 
-            system = new UpdateTransformSystem(world);
+            var systemGroupsUpdateGate = Substitute.For<ISystemGroupsUpdateGate>();
+            systemGroupsUpdateGate.ShouldThrottle(Arg.Any<System.Type>(), Arg.Any<TimeProvider.Info>()).Returns(false);
+
+            var systemsUpdateGate = Substitute.For<ISystemsUpdateGate>();
+            systemsUpdateGate.IsOpen<SDKTransform>().Returns(true);
+
+            system = new UpdateTransformSystem(world, systemGroupsUpdateGate, systemsUpdateGate);
         }
 
         [TearDown]

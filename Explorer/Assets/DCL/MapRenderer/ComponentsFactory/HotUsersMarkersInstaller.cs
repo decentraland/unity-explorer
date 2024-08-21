@@ -16,7 +16,7 @@ namespace DCL.MapRenderer.ComponentsFactory
         private const int HOT_USER_MARKERS_PREWARM_COUNT = 30;
 
         private IAssetsProvisioner assetsProvisioner;
-        private MapRendererSettings mapSettings;
+        private IMapRendererSettings mapSettings;
 
         public async UniTask InstallAsync(
             Dictionary<MapLayer, IMapLayerController> writer,
@@ -24,17 +24,17 @@ namespace DCL.MapRenderer.ComponentsFactory
             ICoordsUtils coordsUtils,
             IMapCullingController cullingController,
             IAssetsProvisioner assetsProv,
-            MapRendererSettings settings,
+            IMapRendererSettings settings,
             CancellationToken cancellationToken)
         {
             assetsProvisioner = assetsProv;
             mapSettings = settings;
-            var prefab = await GetPrefabAsync(cancellationToken);
+            HotUserMarkerObject? prefab = await GetPrefabAsync(cancellationToken);
 
             var objectsPool = new ObjectPool<HotUserMarkerObject>(
                 () => CreatePoolMethod(configuration, prefab, coordsUtils),
-                actionOnGet: (obj) => obj.gameObject.SetActive(true),
-                actionOnRelease: (obj) => obj.gameObject.SetActive(false),
+                actionOnGet: obj => obj.gameObject.SetActive(true),
+                actionOnRelease: obj => obj.gameObject.SetActive(false),
                 defaultCapacity: HOT_USER_MARKERS_PREWARM_COUNT);
 
             IHotUserMarker CreateWrap() =>
@@ -50,13 +50,15 @@ namespace DCL.MapRenderer.ComponentsFactory
         private static HotUserMarkerObject CreatePoolMethod(MapRendererConfiguration configuration, HotUserMarkerObject prefab, ICoordsUtils coordsUtils)
         {
             HotUserMarkerObject markerObject = Object.Instantiate(prefab, configuration.HotUserMarkersRoot);
+
             for (var i = 0; i < markerObject.spriteRenderers.Length; i++)
                 markerObject.spriteRenderers[i].sortingOrder = MapRendererDrawOrder.HOT_USER_MARKERS;
 
             coordsUtils.SetObjectScale(markerObject);
             return markerObject;
         }
+
         private async UniTask<HotUserMarkerObject> GetPrefabAsync(CancellationToken cancellationToken) =>
-            (await assetsProvisioner.ProvideMainAssetAsync(mapSettings.UserMarker, cancellationToken)).Value.GetComponent<HotUserMarkerObject>();
+            (await assetsProvisioner.ProvideMainAssetAsync(mapSettings.UserMarker, cancellationToken)).Value;
     }
 }

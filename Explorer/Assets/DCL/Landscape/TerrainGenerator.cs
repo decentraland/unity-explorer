@@ -121,7 +121,10 @@ namespace DCL.Landscape
             UniTask.Yield(PlayerLoopTiming.LastPostLateUpdate);
 
             ReEnableChunksDetails();
-            grassRenderer.Render();
+
+            if(grassRenderer)
+                grassRenderer.Render();
+
             await ReEnableTerrainAsync(postRealmLoadReport);
             IsTerrainShown = true;
 

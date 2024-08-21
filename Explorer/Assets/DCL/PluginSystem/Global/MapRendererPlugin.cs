@@ -1,5 +1,4 @@
 using Arch.SystemGroups;
-using Cysharp.Threading.Tasks;
 using DCL.MapRenderer;
 
 namespace DCL.PluginSystem.Global

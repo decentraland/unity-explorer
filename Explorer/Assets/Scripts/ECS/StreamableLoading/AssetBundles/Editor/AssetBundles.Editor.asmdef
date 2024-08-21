@@ -1,7 +1,11 @@
 {
     "name": "AssetBundles.Editor",
     "rootNamespace": "",
-    "references": [],
+    "references": [
+        "GUID:fa7b3fdbb04d67549916da7bd2af58ab",
+        "GUID:c5ecc461727906345a35491a0440694f",
+        "GUID:5c1ff9bd975acec488150743d53a93ca"
+    ],
     "includePlatforms": [
         "Editor"
     ],

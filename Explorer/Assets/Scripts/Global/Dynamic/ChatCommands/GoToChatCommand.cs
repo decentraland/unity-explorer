@@ -16,8 +16,7 @@ namespace Global.Dynamic.ChatCommands
         private const string COMMAND_GOTO_LOCAL = "goto-local";
         private const string PARAMETER_RANDOM = "random";
 
-        public static readonly Regex REGEX = new ($@"^/({COMMAND_GOTO}|{COMMAND_GOTO_LOCAL})\s+(?:(-?\d+),(-?\d+)|{PARAMETER_RANDOM})$", RegexOptions.Compiled);
-
+        public static readonly Regex REGEX = new ($@"^/({COMMAND_GOTO}|{COMMAND_GOTO_LOCAL})\s+(?:(-?\d+)\s*,\s*(-?\d+)|{PARAMETER_RANDOM})$", RegexOptions.Compiled);
         private readonly IRealmNavigator realmNavigator;
 
         private int x;

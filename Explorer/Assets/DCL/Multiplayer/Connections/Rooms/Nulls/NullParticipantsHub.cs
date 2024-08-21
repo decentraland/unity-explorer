@@ -14,10 +14,10 @@ namespace DCL.Multiplayer.Connections.Rooms.Nulls
         public Participant LocalParticipant() =>
             NULL_PARTICIPANT;
 
-        public Participant? RemoteParticipant(string sid) =>
+        public Participant? RemoteParticipant(string identity) =>
             null;
 
-        public IReadOnlyCollection<string> RemoteParticipantSids() =>
+        public IReadOnlyCollection<string> RemoteParticipantIdentities() =>
             ArraySegment<string>.Empty;
     }
 }

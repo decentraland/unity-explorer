@@ -124,7 +124,17 @@ namespace DCL.SDKComponents.Animator.Systems
                 if (sdkAnimationState.Playing)
                 {
                     animator.SetLayerWeight(layerIndex, sdkAnimationState.Weight);
-                    animator.SetTrigger($"{name}_Trigger");
+
+                    bool isAnimationAlreadyPlaying = animator.GetCurrentAnimatorStateInfo(layerIndex).IsName(name);
+
+                    // This check fixes a border case that happens on sdk-goerli-plaza pirate island (78,7) with opening the chest the first time.
+                    // The AB converter sets the first clip in the animator to play as default, since it is required by the sdk definitions.
+                    // The scene first asks to play another clip (not the default one).
+                    // Eventually the scene finally decides to play the default clip, but it was already playing since it was never modified.
+                    // So the trigger gets enabled and makes the execution play twice (after it finishes), although is set to loop:false
+                    // The fix consists on avoid triggering the animation if it is already playing, to avoid stacking the trigger.
+                    if (!isAnimationAlreadyPlaying)
+                        animator.SetTrigger($"{name}_Trigger");
 
                     // Animators don't support speed by state, just a global speed
                     animator.speed = sdkAnimationState.Speed;

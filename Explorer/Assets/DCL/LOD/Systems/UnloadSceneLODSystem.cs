@@ -20,10 +20,12 @@ namespace ECS.SceneLifeCycle.Systems
     public partial class UnloadSceneLODSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
         private readonly IScenesCache scenesCache;
+        private readonly ILODCache lodCache;
 
-        public UnloadSceneLODSystem(World world, IScenesCache scenesCache) : base(world)
+        public UnloadSceneLODSystem(World world, IScenesCache scenesCache, ILODCache lodCache) : base(world)
         {
             this.scenesCache = scenesCache;
+            this.lodCache = lodCache;
         }
 
         protected override void Update(float t)
@@ -34,13 +36,14 @@ namespace ECS.SceneLifeCycle.Systems
         public void FinalizeComponents(in Query query)
         {
             AbortSucceededLODPromisesQuery(World);
+            DestroySceneLODQuery(World);
         }
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
         private void UnloadLOD(in Entity entity, ref SceneDefinitionComponent sceneDefinitionComponent, ref SceneLODInfo sceneLODInfo)
         {
-            sceneLODInfo.DisposeSceneLODAndRemoveFromCache(scenesCache, sceneDefinitionComponent.Parcels, World);
+            sceneLODInfo.DisposeSceneLODAndRemoveFromCache(scenesCache, sceneDefinitionComponent.Parcels, lodCache, World);
             World.Remove<SceneLODInfo, VisualSceneState, DeleteEntityIntention>(entity);
         }
 
@@ -51,6 +54,12 @@ namespace ECS.SceneLifeCycle.Systems
                 result.Asset!.Dispose();
             else
                 sceneLODInfo.CurrentLODPromise.ForgetLoading(World);
+        }
+
+        [Query]
+        private void DestroySceneLOD(ref SceneDefinitionComponent sceneDefinitionComponent, ref SceneLODInfo sceneLODInfo)
+        {
+            sceneLODInfo.DisposeSceneLODAndRemoveFromCache(scenesCache, sceneDefinitionComponent.Parcels, lodCache, World);
         }
     }
 }

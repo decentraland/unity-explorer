@@ -22,7 +22,7 @@ namespace DCL.UI
         RectTransform GetRectTransform();
     }
 
-    public class SectionSelectorController<T> where T : unmanaged, Enum
+    public class SectionSelectorController<T> where T: unmanaged, Enum
     {
         private readonly Dictionary<T, ISection> sections;
         private T previousSection;
@@ -38,8 +38,8 @@ namespace DCL.UI
             if (selectorToggle.tabAnimator == null)
                 return;
 
-            if(isOn)
-                selectorToggle.tabAnimator.SetTrigger(AnimationHashes.ACTIVE);
+            if (isOn)
+                selectorToggle.tabAnimator.SetTrigger(UIAnimationHashes.ACTIVE);
             else
             {
                 selectorToggle.tabAnimator.Rebind();
@@ -54,10 +54,7 @@ namespace DCL.UI
 
             SetAnimationState(true, selectorToggle);
 
-            if (animate)
-            {
-                AnimatePanelsAsync(sections[previousSection], sections[section], section, ct);
-            }
+            if (animate) { AnimatePanelsAsync(sections[previousSection], sections[section], section, ct); }
             else
             {
                 sections[previousSection].Deactivate();
@@ -71,10 +68,7 @@ namespace DCL.UI
 
         public void ResetAnimators()
         {
-            foreach (var keyValuePair in sections)
-            {
-                keyValuePair.Value.ResetAnimator();
-            }
+            foreach (KeyValuePair<T, ISection> keyValuePair in sections) { keyValuePair.Value.ResetAnimator(); }
         }
 
         private void SetPanelsPosition(RectTransform panelClosing, RectTransform panelOpening)
@@ -87,8 +81,8 @@ namespace DCL.UI
         {
             panelOpening.Activate();
             panelOpening.ResetAnimator();
-            panelOpening.Animate(AnimationHashes.IN);
-            panelClosing.Animate(AnimationHashes.OUT);
+            panelOpening.Animate(UIAnimationHashes.IN);
+            panelClosing.Animate(UIAnimationHashes.OUT);
             panelClosing.Deactivate();
             previousSection = newSection;
         }

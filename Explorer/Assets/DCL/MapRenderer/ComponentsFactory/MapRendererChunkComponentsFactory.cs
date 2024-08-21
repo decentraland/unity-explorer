@@ -1,6 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
-using DCL.Diagnostics;
 using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapCameraController;
@@ -10,9 +9,10 @@ using DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas;
 using DCL.MapRenderer.MapLayers.ParcelHighlight;
 using DCL.MapRenderer.MapLayers.Pins;
 using DCL.MapRenderer.MapLayers.SatelliteAtlas;
+using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.NotificationsBusController.NotificationsBus;
 using DCL.PlacesAPIService;
 using DCL.WebRequests;
-using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -24,38 +24,47 @@ namespace DCL.MapRenderer.ComponentsFactory
 {
     public class MapRendererChunkComponentsFactory : IMapRendererComponentsFactory
     {
+        private readonly IAssetsProvisioner assetsProvisioner;
+
+        private readonly IWebRequestController webRequestController;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
+        private readonly MapRendererTextureContainer textureContainer;
+        private readonly IPlacesAPIService placesAPIService;
+        private readonly IMapRendererSettings mapSettings;
+        private readonly IMapPathEventBus mapPathEventBus;
+        private readonly INotificationsBusController notificationsBusController;
         private PlayerMarkerInstaller playerMarkerInstaller { get; }
         private SceneOfInterestsMarkersInstaller sceneOfInterestMarkerInstaller { get; }
         private PinMarkerInstaller pinMarkerInstaller { get; }
         private FavoritesMarkersInstaller favoritesMarkersInstaller { get; }
         private HotUsersMarkersInstaller hotUsersMarkersInstaller { get; }
-
-        private readonly IAssetsProvisioner assetsProvisioner;
-
-        private readonly IWebRequestController webRequestController;
-        private readonly MapRendererTextureContainer textureContainer;
-        private readonly IPlacesAPIService placesAPIService;
-        private readonly MapRendererSettings mapSettings;
+        private MapPathInstaller mapPathInstaller { get; }
 
         public MapRendererChunkComponentsFactory(
             IAssetsProvisioner assetsProvisioner,
-            MapRendererSettings settings,
+            IMapRendererSettings settings,
             IWebRequestController webRequestController,
+            IDecentralandUrlsSource decentralandUrlsSource,
             MapRendererTextureContainer textureContainer,
-            IPlacesAPIService placesAPIService)
+            IPlacesAPIService placesAPIService,
+            IMapPathEventBus mapPathEventBus,
+            INotificationsBusController notificationsBusController)
         {
             this.assetsProvisioner = assetsProvisioner;
-            this.mapSettings = settings;
+            mapSettings = settings;
             this.webRequestController = webRequestController;
+            this.decentralandUrlsSource = decentralandUrlsSource;
             this.textureContainer = textureContainer;
             this.placesAPIService = placesAPIService;
+            this.mapPathEventBus = mapPathEventBus;
+            this.notificationsBusController = notificationsBusController;
         }
 
         async UniTask<MapRendererComponents> IMapRendererComponentsFactory.CreateAsync(CancellationToken cancellationToken)
         {
-            MapRendererConfiguration configuration = Object.Instantiate((await assetsProvisioner.ProvideMainAssetAsync(mapSettings.MapRendererConfiguration, ct: CancellationToken.None)).Value.GetComponent<MapRendererConfiguration>());
-            var coordsUtils = new ChunkCoordsUtils(MapRendererSettings.PARCEL_SIZE);
-            IMapCullingController cullingController = new MapCullingController(new MapCullingRectVisibilityChecker(MapRendererSettings.CULLING_BOUNDS_IN_PARCELS * MapRendererSettings.PARCEL_SIZE));
+            MapRendererConfiguration configuration = Object.Instantiate((await assetsProvisioner.ProvideMainAssetAsync(mapSettings.MapRendererConfiguration, ct: cancellationToken)).Value);
+            var coordsUtils = new ChunkCoordsUtils(IMapRendererSettings.PARCEL_SIZE);
+            IMapCullingController cullingController = new MapCullingController(new MapCullingRectVisibilityChecker(IMapRendererSettings.CULLING_BOUNDS_IN_PARCELS * IMapRendererSettings.PARCEL_SIZE));
             var layers = new Dictionary<MapLayer, IMapLayerController>();
             var zoomScalingLayers = new List<IZoomScalingLayer>();
 
@@ -69,8 +78,8 @@ namespace DCL.MapRenderer.ComponentsFactory
                 defaultCapacity: 1
             );
 
-            MapCameraObject mapCameraObjectPrefab = (await assetsProvisioner.ProvideMainAssetAsync(mapSettings.MapCameraObject, ct: CancellationToken.None)).Value.GetComponent<MapCameraObject>();
-            PinMarkerController pinMarkerController = await pinMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, mapSettings, assetsProvisioner, cancellationToken);
+            MapCameraObject mapCameraObjectPrefab = (await assetsProvisioner.ProvideMainAssetAsync(mapSettings.MapCameraObject, ct: cancellationToken)).Value;
+            PinMarkerController pinMarkerController = await pinMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, mapSettings, assetsProvisioner, mapPathEventBus, cancellationToken);
 
             IObjectPool<IMapCameraControllerInternal> cameraControllersPool = new ObjectPool<IMapCameraControllerInternal>(
                 CameraControllerBuilder,
@@ -79,14 +88,14 @@ namespace DCL.MapRenderer.ComponentsFactory
                 x => x.Dispose()
             );
 
-
             await UniTask.WhenAll(
                 CreateAtlasAsync(layers, configuration, coordsUtils, cullingController, cancellationToken),
                 CreateSatelliteAtlasAsync(layers, configuration, coordsUtils, cullingController, cancellationToken),
-                playerMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, mapSettings, assetsProvisioner, cancellationToken),
+                playerMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, mapSettings, assetsProvisioner, mapPathEventBus, cancellationToken),
                 sceneOfInterestMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, assetsProvisioner, mapSettings, placesAPIService, cancellationToken),
                 favoritesMarkersInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, placesAPIService, assetsProvisioner, mapSettings, cancellationToken),
-                hotUsersMarkersInstaller.InstallAsync(layers, configuration, coordsUtils, cullingController, assetsProvisioner, mapSettings, cancellationToken)
+                hotUsersMarkersInstaller.InstallAsync(layers, configuration, coordsUtils, cullingController, assetsProvisioner, mapSettings, cancellationToken),
+                mapPathInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, mapSettings, assetsProvisioner, mapPathEventBus, notificationsBusController, cancellationToken)
                 /* List of other creators that can be executed in parallel */);
 
             return new MapRendererComponents(configuration, layers, zoomScalingLayers, cullingController, cameraControllersPool);
@@ -125,7 +134,7 @@ namespace DCL.MapRenderer.ComponentsFactory
 
         private UniTask CreateAtlasAsync(Dictionary<MapLayer, IMapLayerController> layers, MapRendererConfiguration configuration, ICoordsUtils coordsUtils, IMapCullingController cullingController, CancellationToken cancellationToken)
         {
-            var chunkAtlas = new ParcelChunkAtlasController(configuration.AtlasRoot, MapRendererSettings.ATLAS_CHUNK_SIZE, coordsUtils, cullingController, chunkBuilder: CreateChunkAsync);
+            var chunkAtlas = new ParcelChunkAtlasController(configuration.AtlasRoot, IMapRendererSettings.ATLAS_CHUNK_SIZE, coordsUtils, cullingController, chunkBuilder: CreateChunkAsync);
 
             // initialize Atlas but don't block the flow (to accelerate loading time)
             chunkAtlas.InitializeAsync(cancellationToken).SuppressCancellationThrow().Forget();
@@ -137,11 +146,19 @@ namespace DCL.MapRenderer.ComponentsFactory
             {
                 SpriteRenderer atlasChunkPrefab = await GetAtlasChunkPrefabAsync(parent, ct);
 
-                var chunk = new ParcelChunkController(webRequestController, atlasChunkPrefab, chunkLocalPosition, coordsCenter, parent);
+                var chunk = new ParcelChunkController(
+                    webRequestController,
+                    decentralandUrlsSource,
+                    atlasChunkPrefab,
+                    chunkLocalPosition,
+                    coordsCenter,
+                    parent
+                );
+
                 chunk.SetDrawOrder(MapRendererDrawOrder.ATLAS);
 
                 // If it takes more than CHUNKS_MAX_WAIT_TIME to load the chunk, it will be finished asynchronously
-                await chunk.LoadImageAsync(MapRendererSettings.ATLAS_CHUNK_SIZE, MapRendererSettings.PARCEL_SIZE, coordsCenter, ct);
+                await chunk.LoadImageAsync(IMapRendererSettings.ATLAS_CHUNK_SIZE, IMapRendererSettings.PARCEL_SIZE, coordsCenter, ct);
 
                 return chunk;
             }
@@ -160,9 +177,9 @@ namespace DCL.MapRenderer.ComponentsFactory
         }
 
         internal async Task<SpriteRenderer> GetAtlasChunkPrefabAsync(Transform parent, CancellationToken ct) =>
-            (await assetsProvisioner.ProvideInstanceAsync(mapSettings.AtlasChunk, parent, ct: ct)).Value.GetComponent<SpriteRenderer>();
+            (await assetsProvisioner.ProvideInstanceAsync(mapSettings.AtlasChunk, parent, ct: ct)).Value;
 
         private async UniTask<ParcelHighlightMarkerObject> GetParcelHighlightMarkerPrefabAsync(CancellationToken ct) =>
-            (await assetsProvisioner.ProvideMainAssetAsync(mapSettings.ParcelHighlight, ct: ct)).Value.GetComponent<ParcelHighlightMarkerObject>();
+            (await assetsProvisioner.ProvideMainAssetAsync(mapSettings.ParcelHighlight, ct: ct)).Value;
     }
 }

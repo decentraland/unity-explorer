@@ -7,7 +7,7 @@ using Utility;
 
 namespace DCL.SDKComponents.MediaStream
 {
-    public struct MediaPlayerComponent : IPoolableComponentProvider<MediaPlayer>
+    public struct MediaPlayerComponent
     {
         public const float DEFAULT_VOLUME = 1f;
         public const float DEFAULT_PLAYBACK_RATE = 1f;
@@ -20,9 +20,6 @@ namespace DCL.SDKComponents.MediaStream
 
         public CancellationTokenSource Cts;
         public OpenMediaPromise OpenMediaPromise;
-
-        public MediaPlayer PoolableComponent => MediaPlayer;
-        public Type PoolableComponentType => typeof(MediaPlayer);
 
         public bool IsPlaying => MediaPlayer.Control.IsPlaying();
         public float CurrentTime => (float)MediaPlayer.Control.GetCurrentTime();

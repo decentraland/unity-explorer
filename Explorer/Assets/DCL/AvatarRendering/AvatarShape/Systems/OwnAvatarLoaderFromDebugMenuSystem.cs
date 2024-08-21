@@ -21,7 +21,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
     {
         private readonly Entity ownPlayerEntity;
         private readonly IRealmData realmData;
-        private readonly DebugWidgetVisibilityBinding widgetVisibility;
+        private readonly DebugWidgetVisibilityBinding? widgetVisibility;
 
         private CancellationTokenSource? fetchProfileCancellationToken;
 
@@ -35,14 +35,14 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             this.ownPlayerEntity = ownPlayerEntity;
             this.realmData = realmData;
 
-            debugContainerBuilder.AddWidget("Profile: Avatar Shape")
-                                 .SetVisibilityBinding(widgetVisibility = new DebugWidgetVisibilityBinding(false))
+            debugContainerBuilder.TryAddWidget("Profile: Avatar Shape")
+                                 ?.SetVisibilityBinding(widgetVisibility = new DebugWidgetVisibilityBinding(false))
                                  .AddStringFieldWithConfirmation("0x..", "Set Address", UpdateProfileForOwnAvatar);
         }
 
         protected override void Update(float t)
         {
-            widgetVisibility.SetVisible(realmData.Configured);
+            widgetVisibility?.SetVisible(realmData.Configured);
         }
 
         private void UpdateProfileForOwnAvatar(string profileId)

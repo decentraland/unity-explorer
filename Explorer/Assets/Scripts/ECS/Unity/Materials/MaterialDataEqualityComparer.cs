@@ -7,12 +7,9 @@ namespace ECS.Unity.Materials
     {
         public static bool Equals(in MaterialData x, in MaterialData y) =>
             x.IsPbrMaterial == y.IsPbrMaterial
-            && Nullable.Equals(x.AlbedoTexture, y.AlbedoTexture)
+            && x.Textures.Equals(y.Textures)
             && x.AlphaTest.Equals(y.AlphaTest)
             && x.CastShadows == y.CastShadows
-            && Nullable.Equals(x.AlphaTexture, y.AlphaTexture)
-            && Nullable.Equals(x.EmissiveTexture, y.EmissiveTexture)
-            && Nullable.Equals(x.BumpTexture, y.BumpTexture)
             && x.AlbedoColor.Equals(y.AlbedoColor)
             && x.DiffuseColor.Equals(y.DiffuseColor)
             && x.EmissiveColor.Equals(y.EmissiveColor)
@@ -28,12 +25,9 @@ namespace ECS.Unity.Materials
         {
             var hashCode = new HashCode();
             hashCode.Add(obj.IsPbrMaterial);
-            hashCode.Add(obj.AlbedoTexture);
+            hashCode.Add(obj.Textures);
             hashCode.Add(obj.AlphaTest);
             hashCode.Add(obj.CastShadows);
-            hashCode.Add(obj.AlphaTexture);
-            hashCode.Add(obj.EmissiveTexture);
-            hashCode.Add(obj.BumpTexture);
             hashCode.Add(obj.AlbedoColor);
             hashCode.Add(obj.DiffuseColor);
             hashCode.Add(obj.EmissiveColor);

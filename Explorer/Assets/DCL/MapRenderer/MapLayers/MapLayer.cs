@@ -14,6 +14,8 @@ namespace DCL.MapRenderer.MapLayers
         Favorites = 1 << 7,
         Pins = 1 << 8,
         PlayerMarker = 1 << 9,
+        Path = 1 << 10,
+
         // Add yours
     }
 }

@@ -17,7 +17,6 @@ using ECS.StreamableLoading.Common.Systems;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using Utility.Multithreading;
 
 namespace DCL.AvatarRendering.Wearables.Systems
 {
@@ -28,7 +27,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
         private readonly URLSubdirectory lambdaSubdirectory;
         private readonly IRealmData realmData;
         private readonly URLSubdirectory wearablesSubdirectory;
-        private readonly IWearableCatalog wearableCatalog;
+        private readonly IWearableCache wearableCache;
         private readonly IWebRequestController webRequestController;
         private readonly Func<bool> isRealmDataReady;
 
@@ -37,11 +36,11 @@ namespace DCL.AvatarRendering.Wearables.Systems
         public LoadWearablesByParamSystem(
             World world, IWebRequestController webRequestController, IStreamableCache<WearablesResponse, GetWearableByParamIntention> cache,
             IRealmData realmData, URLSubdirectory lambdaSubdirectory, URLSubdirectory wearablesSubdirectory,
-            IWearableCatalog wearableCatalog) : base(world, cache)
+            IWearableCache wearableCache) : base(world, cache)
         {
             this.realmData = realmData;
             this.lambdaSubdirectory = lambdaSubdirectory;
-            this.wearableCatalog = wearableCatalog;
+            this.wearableCache = wearableCache;
             this.webRequestController = webRequestController;
             this.wearablesSubdirectory = wearablesSubdirectory;
 
@@ -56,18 +55,16 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 await webRequestController.GetAsync(new CommonArguments(BuildURL(intention.UserID, intention.Params), attemptsCount: 1), ct, GetReportCategory())
                    .CreateFromJson<WearableDTO.LambdaResponse>(WRJsonParser.Unity);
 
-
             // The following logic is not thread-safe!
             // TODO make it thread-safe: cache and CreateWearableThumbnailPromise
 
             intention.TotalAmount = lambdaResponse.totalAmount;
 
-            for (var i = 0; i < lambdaResponse.elements.Count; i++)
+            foreach (var element in lambdaResponse.elements)
             {
-                WearableDTO.LambdaResponseElementDto element = lambdaResponse.elements[i];
                 WearableDTO wearableDto = element.entity;
 
-                IWearable wearable = wearableCatalog.GetOrAddWearableByDTO(wearableDto);
+                IWearable wearable = wearableCache.GetOrAddWearableByDTO(wearableDto);
 
                 foreach (WearableDTO.LambdaResponseIndividualDataDto individualData in element.individualData)
                 {
@@ -77,16 +74,16 @@ namespace DCL.AvatarRendering.Wearables.Systems
                     long.TryParse(individualData.transferredAt, out long transferredAt);
                     decimal.TryParse(individualData.price, out decimal price);
 
-                    wearableCatalog.SetOwnedNft(wearableDto.metadata.id,
+                    wearableCache.SetOwnedNft(wearableDto.metadata.id,
                         new NftBlockchainOperationEntry(individualData.id,
                             individualData.tokenId, DateTimeOffset.FromUnixTimeSeconds(transferredAt).DateTime,
                             price));
                 }
+
                 intention.Results.Add(wearable);
             }
 
-
-            return new StreamableLoadingResult<WearablesResponse>(new WearablesResponse(intention.Results.ToArray(), intention.TotalAmount));
+            return new StreamableLoadingResult<WearablesResponse>(new WearablesResponse(intention.Results, intention.TotalAmount));
         }
 
         private URLAddress BuildURL(string userID, IReadOnlyList<(string, string)> urlEncodedParams)

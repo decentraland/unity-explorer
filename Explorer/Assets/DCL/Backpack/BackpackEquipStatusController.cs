@@ -14,12 +14,12 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using Utility;
+using Utility.Multithreading;
 
 namespace DCL.Backpack
 {
     public class BackpackEquipStatusController : IDisposable
     {
-        private readonly Func<(World, Entity)> ecsContextProvider;
         private readonly IBackpackEventBus backpackEventBus;
         private readonly IEquippedEmotes equippedEmotes;
         private readonly IEquippedWearables equippedWearables;
@@ -27,8 +27,8 @@ namespace DCL.Backpack
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly ICollection<string> forceRender;
 
-        private World? world;
-        private Entity? playerEntity;
+        private readonly World world;
+        private readonly Entity playerEntity;
         private CancellationTokenSource? publishProfileCts;
 
         public BackpackEquipStatusController(
@@ -37,14 +37,13 @@ namespace DCL.Backpack
             IEquippedWearables equippedWearables,
             ISelfProfile selfProfile,
             ICollection<string> forceRender,
-            Func<(World, Entity)> ecsContextProvider,
-            IWeb3IdentityCache web3IdentityCache
-        )
+            IWeb3IdentityCache web3IdentityCache,
+            World world,
+            Entity playerEntity)
         {
             this.backpackEventBus = backpackEventBus;
             this.equippedEmotes = equippedEmotes;
             this.equippedWearables = equippedWearables;
-            this.ecsContextProvider = ecsContextProvider;
             this.web3IdentityCache = web3IdentityCache;
             this.selfProfile = selfProfile;
             this.forceRender = forceRender;
@@ -57,6 +56,9 @@ namespace DCL.Backpack
             backpackEventBus.ChangeColorEvent += ChangeColor;
             backpackEventBus.ForceRenderEvent += SetForceRender;
             backpackEventBus.UnEquipAllEvent += UnEquipAll;
+
+            this.world = world;
+            this.playerEntity = playerEntity;
         }
 
         public void Dispose()
@@ -79,7 +81,7 @@ namespace DCL.Backpack
             forceRender.Clear();
         }
 
-        private void EquipEmote(int slot, IEmote emote)
+        private void EquipEmote(int slot, IEmote emote, bool _)
         {
             equippedEmotes.EquipEmote(slot, emote);
         }
@@ -132,6 +134,7 @@ namespace DCL.Backpack
             {
                 var profile = await selfProfile.PublishAsync(ct);
                 // TODO: is it a single responsibility issue? perhaps we can move it elsewhere?
+                MultithreadingUtility.AssertMainThread(nameof(PublishProfileAsync), true);
                 UpdateAvatarInWorld(profile!);
             }
 
@@ -141,21 +144,14 @@ namespace DCL.Backpack
 
         private void UpdateAvatarInWorld(Profile profile)
         {
-            if (world == null || !playerEntity.HasValue)
-            {
-                (World? w, Entity e) = ecsContextProvider.Invoke();
-                world = w;
-                playerEntity = e;
-            }
-
             profile.IsDirty = true;
 
-            bool found = world.Has<Profile>(playerEntity.Value);
+            bool found = world.Has<Profile>(playerEntity);
 
             if (found)
-                world.Set(playerEntity.Value, profile);
+                world.Set(playerEntity, profile);
             else
-                world.Add(playerEntity.Value, profile);
+                world.Add(playerEntity, profile);
         }
     }
 }

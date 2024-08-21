@@ -40,7 +40,9 @@ namespace DCL.Rendering.Avatar
             // readying it for rendering
             public override void Configure(CommandBuffer cmd, RenderTextureDescriptor cameraTextureDescriptor)
             {
-                ConfigureTarget(outlineRTHandle_Colour, outlineRTHandle_Depth);
+                if (outlineRTHandle_Colour != null && outlineRTHandle_Depth != null)
+                    ConfigureTarget(outlineRTHandle_Colour, outlineRTHandle_Depth);
+
                 // ConfigureTarget(outlineRTHandle_Colour, outlineRTHandle_Depth);
                 // ConfigureClear(ClearFlag.All, Color.clear);
                 // ConfigureColorStoreAction(RenderBufferStoreAction.Resolve);

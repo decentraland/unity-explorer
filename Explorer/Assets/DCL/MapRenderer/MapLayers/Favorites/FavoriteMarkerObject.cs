@@ -3,15 +3,14 @@ using UnityEngine;
 
 namespace DCL.MapRenderer.MapLayers.Favorites
 {
-    internal class FavoriteMarkerObject : MapRendererMarkerBase
+    public class FavoriteMarkerObject : MapRendererMarkerBase
     {
+        private const float Y_POSITION_OFFSET = -0.2f;
         [field: SerializeField] internal TextMeshPro title { get; set; }
         [field: SerializeField] internal SpriteRenderer[] renderers { get; private set; }
-
-        private float titleBaseScale;
         private Vector3 titleBasePosition;
 
-        private const float Y_POSITION_OFFSET = -0.2f;
+        private float titleBaseScale;
 
         private void Awake()
         {
@@ -31,7 +30,7 @@ namespace DCL.MapRenderer.MapLayers.Favorites
                 ? titleBasePosition.y + yOffset
                 : titleBasePosition.y / positionFactor;
 
-            title.transform.localPosition =  new Vector3(titleBasePosition.x, yValue, titleBasePosition.z);
+            title.transform.localPosition = new Vector3(titleBasePosition.x, yValue, titleBasePosition.z);
 
             float textScaleFactor = baseScale / newScale; // Calculate the inverse scale factor
             title.transform.localScale = new Vector3(titleBaseScale * textScaleFactor, titleBaseScale * textScaleFactor, 1f);

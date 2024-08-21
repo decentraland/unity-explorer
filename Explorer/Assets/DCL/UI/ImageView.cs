@@ -10,5 +10,11 @@ namespace DCL.UI
 
         [field: SerializeField]
         internal Image Image { get; private set; }
+
+        public void SetImage(Sprite sprite)
+        {
+            Image.sprite = sprite;
+            LoadingObject.SetActive(false);
+        }
     }
 }

@@ -21,7 +21,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
     {
         private readonly string definitionsPath = $"{Application.dataPath}/../TestResources/Wearables/DefaultWearableDefinition.txt";
 
-        private WearableCatalog wearableCatalog;
+        private WearableCache wearableCache;
         private GameObject emptyDefaultWearable;
 
         [SetUp]
@@ -29,12 +29,12 @@ namespace DCL.AvatarRendering.Wearables.Tests
         {
             var partialTargetList = new List<WearableDTO>(64);
             JsonConvert.PopulateObject(File.ReadAllText(definitionsPath), partialTargetList);
-            wearableCatalog = new WearableCatalog();
+            wearableCache = new WearableCache();
             emptyDefaultWearable = new GameObject();
 
             system = new LoadDefaultWearablesSystem(world, new WearablesDTOList(partialTargetList),
                 emptyDefaultWearable,
-                wearableCatalog);
+                wearableCache);
 
             system.Initialize();
         }
@@ -82,10 +82,10 @@ namespace DCL.AvatarRendering.Wearables.Tests
         {
             //Look for an empty and a non-empty default wearable
             IWearable tiaraDefaultWearable =
-                wearableCatalog.GetDefaultWearable(BodyShape.MALE, WearablesConstants.Categories.TIARA);
+                wearableCache.GetDefaultWearable(BodyShape.MALE, WearablesConstants.Categories.TIARA);
 
             IWearable upperBodyDefaultWearable =
-                wearableCatalog.GetDefaultWearable(BodyShape.MALE, WearablesConstants.Categories.UPPER_BODY);
+                wearableCache.GetDefaultWearable(BodyShape.MALE, WearablesConstants.Categories.UPPER_BODY);
 
             Assert.AreEqual(((WearableRegularAsset)tiaraDefaultWearable.WearableAssetResults[BodyShape.MALE].Results[0].Value.Asset).MainAsset,
                 emptyDefaultWearable);
@@ -102,15 +102,15 @@ namespace DCL.AvatarRendering.Wearables.Tests
         [Test]
         public void HasUnloadPolicySet()
         {
-            int defaultWearableCount = wearableCatalog.wearablesCache.Keys.Count;
-            wearableCatalog.AddEmptyWearable("Wearable_To_Be_Unloaded");
-            Assert.AreEqual(wearableCatalog.wearablesCache.Keys.Count, defaultWearableCount + 1);
+            int defaultWearableCount = wearableCache.wearablesCache.Keys.Count;
+            wearableCache.AddEmptyWearable("Wearable_To_Be_Unloaded");
+            Assert.AreEqual(wearableCache.wearablesCache.Keys.Count, defaultWearableCount + 1);
 
             IReleasablePerformanceBudget concurrentBudgetProvider = Substitute.For<IReleasablePerformanceBudget>();
             concurrentBudgetProvider.TrySpendBudget().Returns(true);
-            wearableCatalog.Unload(concurrentBudgetProvider);
+            wearableCache.Unload(concurrentBudgetProvider);
 
-            Assert.AreEqual(wearableCatalog.wearablesCache.Keys.Count, defaultWearableCount);
+            Assert.AreEqual(wearableCache.wearablesCache.Keys.Count, defaultWearableCount);
         }
     }
 }

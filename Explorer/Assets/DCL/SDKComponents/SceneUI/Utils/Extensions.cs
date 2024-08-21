@@ -1,4 +1,5 @@
 using DCL.ECSComponents;
+using DCL.Input.UnityInputSystem.Blocks;
 using DCL.SDKComponents.SceneUI.Classes;
 using DCL.SDKComponents.SceneUI.Components;
 using Google.Protobuf.Collections;
@@ -40,7 +41,7 @@ namespace DCL.SDKComponents.SceneUI.Utils
             }
         }
 
-        public static DCLUVs ToDCLUVs([CanBeNull] this RepeatedField<float> uvs) =>
+        public static DCLUVs ToDCLUVs(this RepeatedField<float>? uvs) =>
             uvs is not { Count: 8 }
                 ? DCLUVs.Default
                 : new DCLUVs(
@@ -78,7 +79,7 @@ namespace DCL.SDKComponents.SceneUI.Utils
             uiTransformComponent.Transform.UnregisterCallback(uiTransformComponent.currentOnPointerUpCallback);
         }
 
-        public static void RegisterInputCallbacks(this UIInputComponent uiInputComponent)
+        public static void RegisterInputCallbacks(this UIInputComponent uiInputComponent, IInputBlock inputBlock)
         {
             EventCallback<ChangeEvent<string>> newOnChangeCallback = evt =>
             {
@@ -95,17 +96,35 @@ namespace DCL.SDKComponents.SceneUI.Utils
                 uiInputComponent.IsOnSubmitTriggered = true;
             };
 
+            EventCallback<FocusInEvent> newOnFocusInCallback = evt =>
+            {
+                evt.StopPropagation();
+                inputBlock.BlockMovement();
+            };
+
+            EventCallback<FocusOutEvent> newOnFocusOutCallback = evt =>
+            {
+                evt.StopPropagation();
+                inputBlock.UnblockMovement();
+            };
+
             uiInputComponent.UnregisterInputCallbacks();
             uiInputComponent.TextField.RegisterCallback(newOnChangeCallback);
             uiInputComponent.currentOnValueChanged = newOnChangeCallback;
             uiInputComponent.TextField.RegisterCallback(newOnSubmitCallback);
             uiInputComponent.currentOnSubmit = newOnSubmitCallback;
+            uiInputComponent.TextField.RegisterCallback(newOnFocusInCallback);
+            uiInputComponent.currentOnFocusIn = newOnFocusInCallback;
+            uiInputComponent.TextField.RegisterCallback(newOnFocusOutCallback);
+            uiInputComponent.currentOnFocusOut = newOnFocusOutCallback;
         }
 
         public static void UnregisterInputCallbacks(this UIInputComponent uiInputComponent)
         {
             uiInputComponent.TextField.UnregisterCallback(uiInputComponent.currentOnValueChanged);
             uiInputComponent.TextField.UnregisterCallback(uiInputComponent.currentOnSubmit);
+            uiInputComponent.TextField.UnregisterCallback(uiInputComponent.currentOnFocusIn);
+            uiInputComponent.TextField.UnregisterCallback(uiInputComponent.currentOnFocusOut);
         }
 
         public static void RegisterDropdownCallbacks(this UIDropdownComponent uiDropdownComponent)

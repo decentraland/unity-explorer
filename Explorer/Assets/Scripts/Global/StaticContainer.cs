@@ -5,12 +5,15 @@ using DCL.AssetsProvision;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Character;
 using DCL.Character.Plugin;
+using DCL.CommandLine;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.Gizmos.Plugin;
+using DCL.Input.UnityInputSystem.Blocks;
 using DCL.Interaction.Utility;
-using DCL.Ipfs;
+using DCL.MapRenderer;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
@@ -33,6 +36,7 @@ using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Reporting;
 using System.Collections.Generic;
 using System.Threading;
+using DCL.LOD;
 using ECS.SceneLifeCycle.Components;
 using SceneRunner.Mapping;
 using UnityEngine;
@@ -49,6 +53,8 @@ namespace Global
     public class StaticContainer : IDCLPlugin<StaticSettings>
     {
         public readonly ObjectProxy<World> GlobalWorldProxy = new ();
+        public readonly ObjectProxy<Entity> PlayerEntityProxy = new ();
+        public readonly ObjectProxy<DCLInput> InputProxy = new ();
         public readonly ObjectProxy<AvatarBase> MainPlayerAvatarBaseProxy = new ();
         public readonly ObjectProxy<IRoomHub> RoomHubProxy = new ();
         public readonly RealmData RealmData = new ();
@@ -58,51 +64,41 @@ namespace Global
         private ProvidedAsset<PartitionSettingsAsset> partitionSettings;
         private ProvidedAsset<RealmPartitionSettingsAsset> realmPartitionSettings;
 
+        private IAssetsProvisioner assetsProvisioner;
+
         public ComponentsContainer ComponentsContainer { get; private set; }
-
         public CharacterContainer CharacterContainer { get; private set; }
-
         public QualityContainer QualityContainer { get; private set; }
-
         public ExposedGlobalDataContainer ExposedGlobalDataContainer { get; private set; }
-
         public WebRequestsContainer WebRequestsContainer { get; private set; }
-
         public IReadOnlyList<IDCLWorldPlugin> ECSWorldPlugins { get; private set; }
 
         /// <summary>
         ///     Some plugins may implement both interfaces
         /// </summary>
         public IReadOnlyList<IDCLGlobalPlugin> SharedPlugins { get; private set; }
-
         public ECSWorldSingletonSharedDependencies SingletonSharedDependencies { get; private set; }
-
-        public IProfilingProvider ProfilingProvider { get; private set; }
-
+        public Profiler Profiler { get; private set; }
         public PhysicsTickProvider PhysicsTickProvider { get; private set; }
-
         public IEntityCollidersGlobalCache EntityCollidersGlobalCache { get; private set; }
-
         public IPartitionSettings PartitionSettings => partitionSettings.Value;
-
         public IRealmPartitionSettings RealmPartitionSettings => realmPartitionSettings.Value;
         public StaticSettings StaticSettings { get; private set; }
         public CacheCleaner CacheCleaner { get; private set; }
         public IEthereumApi EthereumApi { get; private set; }
+        public IInputBlock InputBlock { get; private set; }
         public IScenesCache ScenesCache { get; private set; }
         public ISceneReadinessReportQueue SceneReadinessReportQueue { get; private set; }
         public FeatureFlagsCache FeatureFlagsCache { get; private set; }
         public IFeatureFlagsProvider FeatureFlagsProvider { get; private set; }
-
         public IDebugContainerBuilder DebugContainerBuilder { get; private set; }
-
-        private IAssetsProvisioner assetsProvisioner;
 
         public void Dispose()
         {
             realmPartitionSettings.Dispose();
             partitionSettings.Dispose();
             QualityContainer.Dispose();
+            Profiler.Dispose();
         }
 
         public async UniTask InitializeAsync(StaticSettings settings, CancellationToken ct)
@@ -127,8 +123,10 @@ namespace Global
         }
 
         public static async UniTask<(StaticContainer? container, bool success)> CreateAsync(
+            IDecentralandUrlsSource decentralandUrlsSource,
             IAssetsProvisioner assetsProvisioner,
             IReportsHandlingSettings reportHandlingSettings,
+            ICommandLineArgs commandLineArgs,
             DebugViewsCatalog debugViewsCatalog,
             IPluginSettingsContainer settingsContainer,
             IWeb3IdentityCache web3IdentityProvider,
@@ -139,15 +137,16 @@ namespace Global
 
             var componentsContainer = ComponentsContainer.Create();
             var exposedGlobalDataContainer = ExposedGlobalDataContainer.Create();
-            var profilingProvider = new ProfilingProvider();
+            var profilingProvider = new Profiler();
 
             var container = new StaticContainer();
 
-            container.DebugContainerBuilder = DebugUtilitiesContainer.Create(debugViewsCatalog).Builder;
+            container.DebugContainerBuilder = DebugUtilitiesContainer.Create(debugViewsCatalog, commandLineArgs.HasDebugFlag()).Builder;
             container.EthereumApi = ethereumApi;
             container.ScenesCache = new ScenesCache();
             container.SceneReadinessReportQueue = new SceneReadinessReportQueue(container.ScenesCache);
 
+            container.InputBlock = new InputBlock(container.InputProxy, container.GlobalWorldProxy, container.PlayerEntityProxy);
 
             container.assetsProvisioner = assetsProvisioner;
             var exposedPlayerTransform = new ExposedTransform();
@@ -177,13 +176,14 @@ namespace Global
 
             container.ComponentsContainer = componentsContainer;
             container.SingletonSharedDependencies = sharedDependencies;
-            container.ProfilingProvider = profilingProvider;
+            container.Profiler = profilingProvider;
             container.EntityCollidersGlobalCache = new EntityCollidersGlobalCache();
             container.ExposedGlobalDataContainer = exposedGlobalDataContainer;
             container.WebRequestsContainer = WebRequestsContainer.Create(web3IdentityProvider, container.DebugContainerBuilder);
             container.PhysicsTickProvider = new PhysicsTickProvider();
 
             container.FeatureFlagsCache = new FeatureFlagsCache();
+
             container.FeatureFlagsProvider = new HttpFeatureFlagsProvider(container.WebRequestsContainer.WebRequestController,
                 container.FeatureFlagsCache);
 
@@ -196,19 +196,19 @@ namespace Global
             {
                 new TransformsPlugin(sharedDependencies, exposedPlayerTransform, exposedGlobalDataContainer.ExposedCameraData),
                 new BillboardPlugin(exposedGlobalDataContainer.ExposedCameraData),
-                new NFTShapePlugin(container.assetsProvisioner, sharedDependencies.FrameTimeBudget, componentsContainer.ComponentPoolsRegistry, container.WebRequestsContainer.WebRequestController, container.CacheCleaner),
+                new NFTShapePlugin(decentralandUrlsSource, container.assetsProvisioner, sharedDependencies.FrameTimeBudget, componentsContainer.ComponentPoolsRegistry, container.WebRequestsContainer.WebRequestController, container.CacheCleaner),
                 new TextShapePlugin(sharedDependencies.FrameTimeBudget, container.CacheCleaner, componentsContainer.ComponentPoolsRegistry),
-                new MaterialsPlugin(sharedDependencies, container.assetsProvisioner, videoTexturePool),
+                new MaterialsPlugin(sharedDependencies, videoTexturePool),
                 textureResolvePlugin,
                 new AssetsCollidersPlugin(sharedDependencies, container.PhysicsTickProvider),
                 new AvatarShapePlugin(container.GlobalWorldProxy),
                 new AvatarAttachPlugin(container.MainPlayerAvatarBaseProxy, componentsContainer.ComponentPoolsRegistry),
                 new PrimitivesRenderingPlugin(sharedDependencies),
                 new VisibilityPlugin(),
-                new AudioSourcesPlugin(sharedDependencies, container.WebRequestsContainer.WebRequestController, container.CacheCleaner),
+                new AudioSourcesPlugin(sharedDependencies, container.WebRequestsContainer.WebRequestController, container.CacheCleaner, container.assetsProvisioner),
                 assetBundlePlugin, new GltfContainerPlugin(sharedDependencies, container.CacheCleaner, container.SceneReadinessReportQueue, container.SingletonSharedDependencies.SceneAssetLock),
                 new InteractionPlugin(sharedDependencies, profilingProvider, exposedGlobalDataContainer.GlobalInputEvents, componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner),
-                new SceneUIPlugin(sharedDependencies, container.assetsProvisioner),
+                new SceneUIPlugin(sharedDependencies, container.assetsProvisioner, container.InputBlock),
                 container.CharacterContainer.CreateWorldPlugin(componentsContainer.ComponentPoolsRegistry),
                 new AnimatorPlugin(),
                 new TweenPlugin(),

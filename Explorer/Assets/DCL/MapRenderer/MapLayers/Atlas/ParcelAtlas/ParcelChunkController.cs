@@ -1,6 +1,7 @@
 ﻿using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.WebRequests;
 using System.Threading;
 using UnityEngine;
@@ -11,15 +12,25 @@ namespace DCL.MapRenderer.MapLayers.Atlas
     public class ParcelChunkController : IChunkController
     {
         private const int PIXELS_PER_UNIT = 50;
-        private const string CHUNKS_API = "https://api.decentraland.org/v1/map.png";
 
         private readonly SpriteRenderer spriteRenderer;
 
         private readonly IWebRequestController webRequestController;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
 
-        public ParcelChunkController(IWebRequestController webRequestController, SpriteRenderer prefab, Vector3 chunkLocalPosition, Vector2Int coordsCenter, Transform parent)
+        private string CHUNKS_API => decentralandUrlsSource.Url(DecentralandUrl.ApiChunks);
+
+        public ParcelChunkController(
+            IWebRequestController webRequestController,
+            IDecentralandUrlsSource decentralandUrlsSource,
+            SpriteRenderer prefab,
+            Vector3 chunkLocalPosition,
+            Vector2Int coordsCenter,
+            Transform parent
+        )
         {
             this.webRequestController = webRequestController;
+            this.decentralandUrlsSource = decentralandUrlsSource;
 
             spriteRenderer = Object.Instantiate(prefab, parent);
 #if UNITY_EDITOR

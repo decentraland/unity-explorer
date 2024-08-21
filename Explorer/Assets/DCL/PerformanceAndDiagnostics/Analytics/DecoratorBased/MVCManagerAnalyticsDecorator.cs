@@ -1,6 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Chat;
 using DCL.ExplorePanel;
+using DCL.Passport;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -28,6 +29,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             {
                 { typeof(ChatController), CreateAnalytics<ChatController>(c => new ChatEventsAnalytics(analytics, c)) },
                 { typeof(ExplorePanelController), CreateAnalytics<ExplorePanelController>(c => new MapEventsAnalytics(analytics, c.NavmapController)) },
+                { typeof(PassportController), CreateAnalytics<PassportController>(c => new OpenPassportAnalytics(analytics, c)) },
             };
 
             Func<IController, IDisposable> CreateAnalytics<T>(Func<T, IDisposable> factory) where T : IController =>

@@ -5,6 +5,6 @@ namespace DCL.NftInfoAPIService
 {
     public interface INftMarketAPIClient
     {
-        UniTask<NftInfo> FetchNftInfoAsync(string contractAddress, string tokenId, CancellationToken ct);
+        UniTask<NftInfo> FetchNftInfoAsync(string chain, string contractAddress, string tokenId, CancellationToken ct);
     }
 }

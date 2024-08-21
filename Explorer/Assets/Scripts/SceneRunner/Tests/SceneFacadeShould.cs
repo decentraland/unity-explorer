@@ -16,8 +16,11 @@ using CrdtEcsBridge.RestrictedActions;
 using CrdtEcsBridge.UpdateGate;
 using CrdtEcsBridge.WorldSynchronizer;
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.Interaction.Utility;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.PluginSystem.World;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.Profiles;
 using DCL.Time;
@@ -77,17 +80,31 @@ namespace SceneRunner.Tests
 
                                 InitializationTestSystem1.InjectToWorld(ref builder);
                                 SimulationTestSystem1.InjectToWorld(ref builder);
-                                return new ECSWorldFacade(builder.Finish(), world, Array.Empty<IFinalizeWorldSystem>(), Array.Empty<ISceneIsCurrentListener>());
+                                return new ECSWorldFacade(builder.Finish(), world, new PersistentEntities(), Array.Empty<IFinalizeWorldSystem>(), Array.Empty<ISceneIsCurrentListener>());
                             });
 
             sharedPoolsProvider = Substitute.For<ISharedPoolsProvider>().EnsureNotNull();
             crdtSerializer = Substitute.For<ICRDTSerializer>().EnsureNotNull();
             componentsRegistry = Substitute.For<ISDKComponentsRegistry>().EnsureNotNull();
 
-            sceneFactory = new SceneFactory(ecsWorldFactory, sceneRuntimeFactory, sharedPoolsProvider, crdtSerializer, componentsRegistry,
-                new SceneEntityFactory(), new EntityCollidersGlobalCache(), Substitute.For<IEthereumApi>(), Substitute.For<IMVCManager>(),
-                Substitute.For<IProfileRepository>(), Substitute.For<IWeb3IdentityCache>(), IWebRequestController.DEFAULT,
-                new IRoomHub.Fake(), Substitute.For<IRealmData>(), Substitute.For<ICommunicationControllerHub>());
+            sceneFactory = new SceneFactory(
+                ecsWorldFactory,
+                sceneRuntimeFactory,
+                sharedPoolsProvider,
+                crdtSerializer,
+                componentsRegistry,
+                new SceneEntityFactory(),
+                new EntityCollidersGlobalCache(),
+                Substitute.For<IEthereumApi>(),
+                Substitute.For<IMVCManager>(),
+                Substitute.For<IProfileRepository>(),
+                Substitute.For<IWeb3IdentityCache>(),
+                Substitute.For<IDecentralandUrlsSource>(),
+                IWebRequestController.DEFAULT,
+                new IRoomHub.Fake(),
+                Substitute.For<IRealmData>(),
+                Substitute.For<ICommunicationControllerHub>()
+            );
         }
 
         [OneTimeTearDown]
@@ -234,6 +251,7 @@ namespace SceneRunner.Tests
             var apis = new List<IJsApiWrapper>();
 
             var runtime = sceneFacade.deps.Runtime;
+
             runtime.When(r => r.Register(Arg.Any<string>(), Arg.Any<IJsApiWrapper>()))
                    .Do(info => apis.Add(info.ArgAt<IJsApiWrapper>(1)));
 
@@ -353,6 +371,7 @@ namespace SceneRunner.Tests
                     Substitute.For<ICRDTDeserializer>(),
                     Substitute.For<IECSToCRDTWriter>(),
                     Substitute.For<ISystemGroupsUpdateGate>(),
+                    Substitute.For<ISystemsUpdateGate>(),
                     Substitute.For<IWorldTimeProvider>(),
                     new ECSWorldInstanceSharedDependencies()),
                 Substitute.For<ISceneRuntime>()) { }

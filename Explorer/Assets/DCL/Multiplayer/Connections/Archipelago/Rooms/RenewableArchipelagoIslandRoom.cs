@@ -17,11 +17,11 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
             this.factory = factory;
         }
 
-        public void Start()
+        public UniTask<bool> StartAsync()
         {
             current = factory()!;
             room.Assign(current.Room(), out _);
-            current.Start();
+            return current.StartAsync();
         }
 
         public async UniTask StopAsync()

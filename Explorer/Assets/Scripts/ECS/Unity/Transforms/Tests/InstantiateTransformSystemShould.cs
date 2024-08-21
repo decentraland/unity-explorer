@@ -1,4 +1,5 @@
 using Arch.Core;
+using Arch.SystemGroups;
 using CRDT;
 using CrdtEcsBridge.Components.Transform;
 using DCL.Optimization.Pools;
@@ -7,7 +8,9 @@ using ECS.Unity.Transforms.Components;
 using ECS.Unity.Transforms.Systems;
 using NSubstitute;
 using NUnit.Framework;
+using System;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace ECS.Unity.Transforms.Tests
 {
@@ -37,6 +40,15 @@ namespace ECS.Unity.Transforms.Tests
         private IComponentPoolsRegistry componentRegistry;
         private IComponentPool<Transform> transformPool;
         private Transform testTransform;
+
+        [Test]
+        public void CheckProperUpdateGroupForThrottling()
+        {
+            Type currentCroup = ((UpdateInGroupAttribute)Attribute.GetCustomAttribute(typeof(UpdateTransformSystem), typeof(UpdateInGroupAttribute)))?.GroupType!;
+            Type expectedThrottlingGroup = ((UpdateInGroupAttribute)Attribute.GetCustomAttribute(currentCroup, typeof(UpdateInGroupAttribute))).GroupType!;
+
+            Assert.AreEqual(UpdateTransformSystem.THROTTLING_GROUP_TYPE, expectedThrottlingGroup);
+        }
 
         [Test]
         public void InstantiateTransformComponent()

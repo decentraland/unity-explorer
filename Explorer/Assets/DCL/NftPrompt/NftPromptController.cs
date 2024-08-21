@@ -56,7 +56,7 @@ namespace DCL.NftPrompt
         protected override void OnViewShow()
         {
             cursor.Unlock();
-            RequestNft(inputData.ContractAddress, inputData.TokenId, result =>
+            RequestNft(inputData.Chain, inputData.ContractAddress, inputData.TokenId, result =>
             {
                 if (result != NftPromptResultType.ViewOnMarket || string.IsNullOrEmpty(marketUrl))
                     return;
@@ -73,7 +73,7 @@ namespace DCL.NftPrompt
                 viewInstance.ButtonClose.OnClickAsync(ct),
                 viewInstance.ButtonCancel.OnClickAsync(ct));
 
-        private void RequestNft(string contractAddress, string tokenId, Action<NftPromptResultType> result)
+        private void RequestNft(string chain, string contractAddress, string tokenId, Action<NftPromptResultType> result)
         {
             resultCallback = result;
 
@@ -84,20 +84,19 @@ namespace DCL.NftPrompt
             }
 
             cts = cts.SafeRestart();
-            FetchNftInfoAsync(contractAddress, tokenId, cts.Token).Forget();
+            FetchNftInfoAsync(chain, contractAddress, tokenId, cts.Token).Forget();
         }
 
-        private async UniTask FetchNftInfoAsync(string contractAddress, string tokenId, CancellationToken ct)
+        private async UniTask FetchNftInfoAsync(string chain, string contractAddress, string tokenId, CancellationToken ct)
         {
             try
             {
                 SetLoading();
-                var nftInfo = await nftInfoAPIClient.FetchNftInfoAsync(contractAddress, tokenId, ct);
+                var nftInfo = await nftInfoAPIClient.FetchNftInfoAsync(chain, contractAddress, tokenId, ct);
                 await UniTask.SwitchToMainThread();
                 SetNftInfo(nftInfo);
             }
-            catch (OperationCanceledException)
-            {}
+            catch (OperationCanceledException) { }
             catch (Exception)
             {
                 ReportHub.LogError(ReportCategory.NFT_INFO_WEB_REQUEST, "OpenExternalUrl: Player is not inside of scene");

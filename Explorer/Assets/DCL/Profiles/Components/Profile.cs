@@ -19,7 +19,7 @@ namespace DCL.Profiles
 
         internal HashSet<string>? blocked;
         internal List<string>? interests;
-        internal List<string>? links;
+        internal List<LinkJsonDto>? links;
 
         private string userId;
         private string name;
@@ -63,20 +63,20 @@ namespace DCL.Profiles
         }
 
         public bool HasConnectedWeb3 { get; internal set; }
-        public string? Description { get; internal set; }
+        public string? Description { get; set; }
         public int TutorialStep { get; internal set; }
         public string? Email { get; internal set; }
-        public string? Country { get; internal set; }
-        public string? EmploymentStatus { get; internal set; }
-        public string? Gender { get; internal set; }
-        public string? Pronouns { get; internal set; }
-        public string? RelationshipStatus { get; internal set; }
-        public string? SexualOrientation { get; internal set; }
-        public string? Language { get; internal set; }
-        public string? Profession { get; internal set; }
-        public string? RealName { get; internal set; }
-        public string? Hobbies { get; internal set; }
-        public DateTime? Birthdate { get; internal set; }
+        public string? Country { get; set; }
+        public string? EmploymentStatus { get; set; }
+        public string? Gender { get; set; }
+        public string? Pronouns { get; set; }
+        public string? RelationshipStatus { get; set; }
+        public string? SexualOrientation { get; set; }
+        public string? Language { get; set; }
+        public string? Profession { get; set; }
+        public string? RealName { get; set; }
+        public string? Hobbies { get; set; }
+        public DateTime? Birthdate { get; set; }
         public int Version { get; internal set; }
         public Avatar Avatar { get; internal set; }
 
@@ -87,7 +87,11 @@ namespace DCL.Profiles
 
         public IReadOnlyCollection<string>? Blocked => blocked;
         public IReadOnlyCollection<string>? Interests => interests;
-        public IReadOnlyCollection<string>? Links => links;
+        public List<LinkJsonDto>? Links
+        {
+            get => links;
+            set => links = value;
+        }
 
         public static Profile Create() =>
             POOL.Get();
@@ -165,6 +169,14 @@ namespace DCL.Profiles
                 return result;
 
             return string.IsNullOrEmpty(UserId) || UserId.Length < 4 ? result : $"{result}#{UserId[^4..]}";
+        }
+
+        public void ClearLinks()
+        {
+            if (Links == null)
+                Links = new List<LinkJsonDto>();
+            else
+                Links.Clear();
         }
     }
 }

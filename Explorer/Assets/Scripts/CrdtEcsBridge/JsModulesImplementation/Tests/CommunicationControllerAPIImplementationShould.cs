@@ -73,7 +73,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
             byte[] data = GetRandomBytes(50).Prepend((byte)CommunicationsControllerAPIImplementation.MsgType.Uint8Array).ToArray();
 
             var receivedMessage = new ReceivedMessage<Scene>(new Scene { Data = ByteString.CopyFrom(data), SceneId = SCENE_ID }, new Packet(), WALLET_ID, Substitute.For<IMultiPool>());
-            communicationControllerHub.onSceneMessage.Invoke(receivedMessage);
+            communicationControllerHub.onSceneMessage.Invoke(ICommunicationControllerHub.SceneMessage.CopyFrom(receivedMessage));
 
             byte[] walletBytes = Encoding.UTF8.GetBytes(receivedMessage.FromWalletId);
 
@@ -104,14 +104,14 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
         private class TestCommunicationControllerHub : ICommunicationControllerHub
         {
             internal readonly List<byte[]> sendMessageCalls = new ();
-            internal Action<ReceivedMessage<Scene>> onSceneMessage;
+            internal Action<ICommunicationControllerHub.SceneMessage> onSceneMessage;
 
-            public void SetSceneMessageHandler(Action<ReceivedMessage<Scene>> onSceneMessage)
+            public void SetSceneMessageHandler(Action<ICommunicationControllerHub.SceneMessage> onSceneMessage)
             {
                 this.onSceneMessage = onSceneMessage;
             }
 
-            public void RemoveSceneMessageHandler(Action<ReceivedMessage<Scene>> onSceneMessage)
+            public void RemoveSceneMessageHandler(Action<ICommunicationControllerHub.SceneMessage> onSceneMessage)
             {
 
             }

@@ -144,6 +144,12 @@ namespace Utility.Storage
             }
         }
 
+        public void ForceSave(T newValue)
+        {
+            EnsureMainThread();
+            setValue!(key, newValue);
+        }
+
         [Conditional("DEBUG")]
         private void EnsureMainThread()
         {

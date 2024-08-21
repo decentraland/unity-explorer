@@ -1,8 +1,6 @@
-﻿using System.Collections.Generic;
-using DCL.AvatarRendering.Wearables.Components;
+﻿using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using ECS.StreamableLoading.Common.Components;
-using Google.Protobuf.WellKnownTypes;
 using NSubstitute;
 using NUnit.Framework;
 using UnityEngine;
@@ -13,7 +11,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
     {
         private IDefaultFaceFeaturesHandler defaultFaceFeaturesHandler;
 
-        private IWearableCatalog wearableCatalog;
+        private IWearableCache wearableCache;
 
         private Texture eyesTexture;
         private Texture mouthTexture;
@@ -22,13 +20,13 @@ namespace DCL.AvatarRendering.Wearables.Tests
         [SetUp]
         public void SetUp()
         {
-            wearableCatalog = Substitute.For<IWearableCatalog>();
+            wearableCache = Substitute.For<IWearableCache>();
 
             eyesTexture = CreateFacialFeatureWearable(1, WearablesConstants.Categories.EYES);
             mouthTexture = CreateFacialFeatureWearable(2, WearablesConstants.Categories.MOUTH);
             eyebrowsTexture = CreateFacialFeatureWearable(3, WearablesConstants.Categories.EYEBROWS);
 
-            defaultFaceFeaturesHandler = new DefaultFaceFeaturesHandler(wearableCatalog);
+            defaultFaceFeaturesHandler = new DefaultFaceFeaturesHandler(wearableCache);
         }
 
         private Texture CreateFacialFeatureWearable(int resolution, string category)
@@ -52,7 +50,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
 
             mock.WearableAssetResults.Returns(array);
 
-            wearableCatalog.GetDefaultWearable(Arg.Any<BodyShape>(), category).Returns(mock);
+            wearableCache.GetDefaultWearable(Arg.Any<BodyShape>(), category).Returns(mock);
 
             return tex;
         }

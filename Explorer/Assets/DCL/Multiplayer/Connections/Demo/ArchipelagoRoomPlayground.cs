@@ -1,17 +1,18 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
+using DCL.Browser.DecentralandUrls;
 using DCL.Character.Components;
 using DCL.Multiplayer.Connections.Archipelago.AdapterAddress.Current;
 using DCL.Multiplayer.Connections.Archipelago.LiveConnections;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
 using DCL.Multiplayer.Connections.Archipelago.SignFlow;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.FfiClients;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.Pools;
 using DCL.Multiplayer.Connections.Systems;
 using DCL.UserInAppInitializationFlow;
 using DCL.Web3.Identities;
-using DCL.WebRequests;
 using ECS;
 using ECS.Abstract;
 using LiveKit.Internal.FFIClients;
@@ -58,13 +59,13 @@ namespace DCL.Multiplayer.Connections.Demo
                 multiPool
             ).WithLog();
 
-            IWeb3IdentityCache? identityCache = await ArchipelagoFakeIdentityCache.NewAsync();
+            IWeb3IdentityCache? identityCache = await ArchipelagoFakeIdentityCache.NewAsync(new DecentralandUrlsSource(DecentralandEnvironment.Zone));
 
             var archipelagoIslandRoom = new ArchipelagoIslandRoom(
                 identityCache,
                 signFlow,
                 loonCharacterObject,
-                ICurrentAdapterAddress.NewDefault(IWebRequestController.DEFAULT, new IRealmData.Fake())
+                ICurrentAdapterAddress.NewDefault(new IRealmData.Fake())
             );
             var realFlowLoadingStatus = new RealFlowLoadingStatus();
             realFlowLoadingStatus.SetStage(RealFlowLoadingStatus.Stage.Completed);

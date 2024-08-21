@@ -93,6 +93,7 @@ Material:
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _PlaneClipping: {r: -2.1474836e+9, g: 2.1474836e+9, b: -2.1474836e+9, a: 2.1474836e+9}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
+    - _VerticalClipping: {r: -2.1474836e+9, g: 2.1474836e+9, b: 0, a: 0}
   m_BuildTextureStacks: []
 --- !u!114 &5218572137218344763
 MonoBehaviour:

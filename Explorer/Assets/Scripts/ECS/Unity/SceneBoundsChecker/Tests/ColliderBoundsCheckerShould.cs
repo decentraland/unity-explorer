@@ -1,4 +1,5 @@
-﻿using DCL.Time;
+﻿using DCL.ECSComponents;
+using DCL.Time;
 using ECS.Prioritization.Components;
 using ECS.TestSuite;
 using ECS.Unity.PrimitiveColliders.Components;
@@ -47,13 +48,12 @@ namespace ECS.Unity.SceneBoundsChecker.Tests
             collider.center = new Vector3(-50, 0, -50);
             collider.size = Vector3.one;
 
-            var component = new PrimitiveColliderComponent
-            {
-                Collider = collider,
-                SDKCollider = new SDKCollider(collider),
-            };
+            var component = new PrimitiveColliderComponent();
+            component.AssignCollider(new SDKCollider(collider), typeof(BoxCollider), PBMeshCollider.MeshOneofCase.Box);
             component.SDKCollider.IsActiveByEntity = true;
             collider.enabled = true;
+            //Simulate movement
+            collider.transform.position += Vector3.one * 0.01f;
 
             world.Create(component);
 
@@ -69,13 +69,13 @@ namespace ECS.Unity.SceneBoundsChecker.Tests
             collider.center = new Vector3(-50, 0, -50);
             collider.size = Vector3.one;
 
-            var component = new PrimitiveColliderComponent
-            {
-                Collider = collider,
-                SDKCollider = new SDKCollider(collider),
-            };
+            var component = new PrimitiveColliderComponent();
+            component.AssignCollider(new SDKCollider(collider), typeof(BoxCollider), PBMeshCollider.MeshOneofCase.Box);
+
             component.SDKCollider.IsActiveByEntity = true;
             collider.enabled = true;
+            //Simulate movement
+            collider.transform.position += Vector3.one * 0.01f;
 
             world.Create(component);
 
@@ -90,13 +90,13 @@ namespace ECS.Unity.SceneBoundsChecker.Tests
             collider.center = new Vector3(-20, 0, -20);
             collider.size = Vector3.one;
 
-            var component = new PrimitiveColliderComponent
-            {
-                Collider = collider,
-                SDKCollider = new SDKCollider(collider),
-            };
+            var component = new PrimitiveColliderComponent();
+            component.AssignCollider(new SDKCollider(collider), typeof(BoxCollider), PBMeshCollider.MeshOneofCase.Box);
+
             component.SDKCollider.IsActiveByEntity = true;
             collider.enabled = true;
+            //Simulate movement
+            collider.transform.position += Vector3.one * 0.01f;
 
             world.Create(component);
 

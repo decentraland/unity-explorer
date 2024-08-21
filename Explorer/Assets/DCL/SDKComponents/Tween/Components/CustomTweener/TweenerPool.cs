@@ -1,4 +1,5 @@
-﻿using DCL.ECSComponents;
+﻿using CrdtEcsBridge.Components.Transform;
+using DCL.ECSComponents;
 using UnityEngine;
 using UnityEngine.Pool;
 
@@ -17,7 +18,7 @@ namespace DCL.SDKComponents.Tween.Components
             scaleTweenersPool = new ObjectPool<ScaleTweener>(() => new ScaleTweener());
         }
 
-        public ICustomTweener GetTweener(PBTween pbTween, Transform entityTransform, float durationInSeconds)
+        public ICustomTweener GetTweener(PBTween pbTween, SDKTransform sdkTransform, Transform entityTransform, float durationInSeconds)
         {
             ICustomTweener tweener = null;
             switch (pbTween.ModeCase)
@@ -33,7 +34,7 @@ namespace DCL.SDKComponents.Tween.Components
                     break;
             }
 
-            tweener!.Initialize(pbTween, entityTransform, durationInSeconds);
+            tweener!.Initialize(pbTween, sdkTransform, entityTransform, durationInSeconds);
             return tweener;
         }
 

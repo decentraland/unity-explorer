@@ -9,6 +9,7 @@ using DCL.Diagnostics;
 using DCL.Input.Crosshair;
 using DCL.Input.Utils;
 using DCL.Interaction.PlayerOriginated.Components;
+using DCL.Utilities.Extensions;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using UnityEngine;
@@ -34,6 +35,7 @@ namespace DCL.Input.Systems
         private bool isAtDistance;
         private bool isHoveringAnInteractable;
         private bool wantsToUnlockForced;
+        private bool shouldBeLocked;
 
         private readonly Mouse mouseDevice;
         private readonly DCLInput.ShortcutsActions shortcuts;
@@ -47,7 +49,7 @@ namespace DCL.Input.Systems
             cameraActions = dclInput.Camera;
             uiActions = dclInput.UI;
             shortcuts = dclInput.Shortcuts;
-            mouseDevice = InputSystem.GetDevice<Mouse>();
+            mouseDevice = InputSystem.GetDevice<Mouse>().EnsureNotNull("Mouse not found");
             interactionCache = new InteractionCache();
         }
 
@@ -75,8 +77,22 @@ namespace DCL.Input.Systems
         protected override void Update(float t)
         {
             GetSDKInteractionStateQuery(World);
+            CheckExternalCameraLockQuery(World);
             UpdateCursorQuery(World);
         }
+
+        [Query]
+        private void CheckExternalCameraLock(ref CameraComponent cameraComponent, ref CameraInput input)
+        {
+            shouldBeLocked = false;
+            if (cameraComponent.IsDirty)
+            {
+                shouldBeLocked = cameraComponent.CameraInputLocks > 0;
+                cameraComponent.IsDirty = false;
+            }
+        }
+
+
 
         [Query]
         private void GetSDKInteractionState(in HoverStateComponent hoverStateComponent)
@@ -156,7 +172,8 @@ namespace DCL.Input.Systems
             bool inputWantsToUnlock = cameraActions.Unlock.WasPressedThisFrame();
             bool isTemporalLock = cameraActions.TemporalLock.IsPressed();
 
-            if (!isMouseOutOfBounds && inputWantsToLock && cursorComponent is { CursorState: CursorState.Free, IsOverUI: false })
+            if (!isMouseOutOfBounds && (inputWantsToLock || shouldBeLocked ) && cursorComponent is
+                    { CursorState: CursorState.Free, IsOverUI: false })
             {
                 if (raycastResults.Count == 0 && !isHoveringAnInteractable)
                 {

@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace DCL.MapRenderer.MapLayers.ParcelHighlight
 {
-    internal class ParcelHighlightMarkerObject : MapRendererMarkerBase
+    public class ParcelHighlightMarkerObject : MapRendererMarkerBase
     {
         [field: SerializeField]
         internal SpriteRenderer spriteRenderer { get; private set; }
@@ -21,7 +21,7 @@ namespace DCL.MapRenderer.MapLayers.ParcelHighlight
 
         public void SetScale(float baseScale, float newScale)
         {
-            text.transform.localScale = new Vector3(textBaseScale * newScale/baseScale, textBaseScale * newScale/baseScale, 1f);
+            text.transform.localScale = new Vector3(textBaseScale * newScale / baseScale, textBaseScale * newScale / baseScale, 1f);
         }
     }
 }

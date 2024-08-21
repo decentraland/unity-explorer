@@ -38,10 +38,10 @@ namespace CrdtEcsBridge.UpdateGate.Tests
         [TestCase(typeof(PhysicsSystemGroup))]
         [TestCase(typeof(PostPhysicsSystemGroup))]
         [TestCase(typeof(PreRenderingSystemGroup))]
-        public void CloseGroupOnInvocation(Type systemGroup)
+        public void CloseGroupOnUpdateFinished(Type systemGroup)
         {
             updateGate.Open();
-            updateGate.ShouldThrottle(systemGroup, new TimeProvider.Info());
+            updateGate.OnSystemGroupUpdateFinished(systemGroup, false);
             Assert.That(updateGate.OpenGroups, Does.Not.Contains(systemGroup));
         }
     }

@@ -104,7 +104,7 @@ namespace DCL.CharacterPreview
 
         public void PlayEmote(string emoteId)
         {
-            globalWorld.Add(characterPreviewEntity, new CharacterEmoteIntent { EmoteId = emoteId });
+            globalWorld.Add(characterPreviewEntity, new CharacterEmoteIntent { EmoteId = emoteId, TriggerSource = TriggerSource.PREVIEW});
         }
 
         public void StopEmotes()
@@ -112,5 +112,11 @@ namespace DCL.CharacterPreview
             ref CharacterEmoteComponent emoteComponent = ref globalWorld.Get<CharacterEmoteComponent>(characterPreviewEntity);
             emoteComponent.StopEmote = true;
         }
+
+        public void SetPreviewPlatformActive(bool isActive) =>
+            characterPreviewAvatarContainer.SetPreviewPlatformActive(isActive);
+
+        public void SetCharacterPreviewAvatarContainerActive(bool isActive) =>
+            characterPreviewAvatarContainer.gameObject.SetActive(isActive);
     }
 }

@@ -22,8 +22,8 @@ module.exports.getCurrentRealm = async function() {
     return { currentRealm : {
             displayName : runtimeResponse.realmName,
             serverName : runtimeResponse.realmName,
-            protocol: 'v3',
-            domain: runtimeResponse.baseUrl,
+            protocol: runtimeResponse.protocol,
+            domain: runtimeResponse.domain,
             layer: '',
             room: ''
         }}

@@ -36,7 +36,7 @@ namespace DCL.SDKComponents.TextShape
             tmpText.text = textShape.Text;
 
             tmpText.color = textShape.TextColor?.ToUnityColor() ?? Color.white;
-            tmpText.fontSize = textShape.HasFontSize? (int)textShape.FontSize : 10; // in unity-renderer the default font size is 100
+            tmpText.fontSize = textShape.HasFontSize? textShape.FontSize : 10; // in unity-renderer the default font size is 100
             tmpText.richText = true;
             tmpText.overflowMode = TextOverflowModes.Overflow;
             tmpText.enableAutoSizing = textShape.HasFontAutoSize ? textShape.FontAutoSize : tmpText.fontSize == 0;

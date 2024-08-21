@@ -1,6 +1,8 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.Browser.DecentralandUrls;
 using DCL.DebugUtilities;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Profiles;
@@ -26,6 +28,7 @@ namespace Global.Tests
             PluginSettingsContainer sceneSettingsContainer = await Addressables.LoadAssetAsync<PluginSettingsContainer>(WORLD_CONTAINER_ADDRESS);
 
             return await StaticSceneLauncher.InstallAsync(
+                new DecentralandUrlsSource(DecentralandEnvironment.Org),
                 new AddressablesProvisioner(),
                 null,
                 new DebugViewsCatalog(),

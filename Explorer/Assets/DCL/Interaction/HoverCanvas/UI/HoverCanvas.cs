@@ -36,7 +36,7 @@ namespace DCL.Interaction.HoverCanvas.UI
             style.bottom = bottomLength;
         }
 
-        public void SetTooltip([CanBeNull] string hintText, [CanBeNull] string actionKeyText, [CanBeNull] Sprite icon, int index)
+        public void SetTooltip(string? hintText, string? actionKeyText, Sprite? icon, int index)
         {
             if (index >= tooltips.Count)
                 return;

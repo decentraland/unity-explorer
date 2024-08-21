@@ -25,13 +25,13 @@ namespace ECS.Unity.Materials.Tests
         {
             pbrMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/Scripts/ECS/Unity/Materials/MaterialReference/ShapeMaterial.mat");
 
-            IObjectPool<Material> pool = Substitute.For<IObjectPool<Material>>();
+            IObjectPool<Material> pool = Substitute.For<IObjectPool<Material>>()!;
             pool.Get().Returns(_ => new Material(pbrMat));
 
-            IReleasablePerformanceBudget frameTimeBudget = Substitute.For<IReleasablePerformanceBudget>();
+            IReleasablePerformanceBudget frameTimeBudget = Substitute.For<IReleasablePerformanceBudget>()!;
             frameTimeBudget.TrySpendBudget().Returns(true);
 
-            system = new CreatePBRMaterialSystem(world, pool, frameTimeBudget, frameTimeBudget);
+            system = new CreatePBRMaterialSystem(world!, pool, frameTimeBudget, frameTimeBudget);
             system.Initialize();
         }
 
@@ -47,7 +47,7 @@ namespace ECS.Unity.Materials.Tests
             CreateAndFinalizeTexturePromise(ref component.EmissiveTexPromise);
             CreateAndFinalizeTexturePromise(ref component.BumpTexPromise);
 
-            Entity e = world.Create(component);
+            Entity e = world!.Create(component, new ShouldInstanceMaterialComponent());
 
             system.Update(0);
 
@@ -71,7 +71,7 @@ namespace ECS.Unity.Materials.Tests
             component.BumpTexPromise = AssetPromise<Texture2D, GetTextureIntention>.Create(world, new GetTextureIntention(), PartitionComponent.TOP_PRIORITY);
             component.EmissiveTexPromise = AssetPromise<Texture2D, GetTextureIntention>.Create(world, new GetTextureIntention(), PartitionComponent.TOP_PRIORITY);
 
-            Entity e = world.Create(component);
+            Entity e = world.Create(component, new ShouldInstanceMaterialComponent());
 
             system.Update(0);
 

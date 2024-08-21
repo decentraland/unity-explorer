@@ -34,16 +34,30 @@ namespace ECS.Unity.Transforms.Systems
         protected override void Update(float t)
         {
             OrphanChildrenOfDeletedEntityQuery(World);
+            DereferenceParentingOfDeletedEntityQuery(World);
             DoParentingQuery(World);
         }
 
         [Query]
-        [All(typeof(SDKTransform), typeof(TransformComponent), typeof(DeleteEntityIntention))]
+        [All(typeof(SDKTransform), typeof(DeleteEntityIntention))]
+        private void DereferenceParentingOfDeletedEntity(in Entity entity, ref TransformComponent transformComponentToBeDeleted)
+        {
+            var parentTransform = World!.TryGetRef<TransformComponent>(transformComponentToBeDeleted.Parent, out bool exists);
+
+            if (exists && parentTransform.Children.Remove(World.Reference(entity)) == false)
+                ReportHub.LogError(
+                    GetReportCategory(),
+                    $"Entity {entity} is not a child of its parent {transformComponentToBeDeleted.Parent}"
+                );
+        }
+
+        [Query]
+        [All(typeof(SDKTransform), typeof(DeleteEntityIntention))]
         private void OrphanChildrenOfDeletedEntity(ref TransformComponent transformComponentToBeDeleted)
         {
             foreach (EntityReference childEntity in transformComponentToBeDeleted.Children)
             {
-                ref var transformComponent = ref World.Get<TransformComponent>(childEntity.Entity);
+                ref var transformComponent = ref World!.Get<TransformComponent>(childEntity.Entity);
 
                 SetNewChild(
                     ref transformComponent,

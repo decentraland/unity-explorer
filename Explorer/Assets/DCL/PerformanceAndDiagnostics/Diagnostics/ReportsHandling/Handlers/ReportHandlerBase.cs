@@ -22,10 +22,10 @@ namespace DCL.Diagnostics
         }
 
         [HideInCallstack]
-        public void Log(LogType logType, ReportData reportData, Object context, object message)
+        public void Log(LogType logType, ReportData reportData, Object context, object messageObj)
         {
-            if (IsLogMessageAllowed(message, reportData, logType))
-                LogInternal(logType, reportData, context, message);
+            if (IsLogMessageAllowed(messageObj, reportData, logType))
+                LogInternal(logType, reportData, context, messageObj);
         }
 
         [HideInCallstack]

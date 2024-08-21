@@ -7,7 +7,7 @@ namespace DCL.Optimization.PerformanceBudgeting.Tests
 {
     internal class MemoryBudgetProviderShould
     {
-        private const ulong BYTES_IN_MEGABYTE = 1024 * 1024;
+        private const long BYTES_IN_MEGABYTE = 1024 * 1024;
 
         private readonly Dictionary<MemoryUsageStatus, float> memoryThreshold = new ()
         {
@@ -17,38 +17,38 @@ namespace DCL.Optimization.PerformanceBudgeting.Tests
 
         private MemoryBudget memoryBudget;
 
-        private IProfilingProvider profilingProvider;
+        private IBudgetProfiler profiler;
         private ISystemMemory systemMemory;
 
         [SetUp]
         public void Setup()
         {
-            profilingProvider = Substitute.For<IProfilingProvider>();
+            profiler = Substitute.For<IBudgetProfiler>();
             systemMemory = Substitute.For<ISystemMemory>();
 
-            memoryBudget = new MemoryBudget(systemMemory, profilingProvider, memoryThreshold);
+            memoryBudget = new MemoryBudget(systemMemory, profiler, memoryThreshold);
         }
 
-        [TestCase((ulong)1000, (ulong)500, MemoryUsageStatus.Normal)]
-        [TestCase((ulong)1000, (ulong)810, MemoryUsageStatus.Warning)]
-        [TestCase((ulong)1000, (ulong)910, MemoryUsageStatus.Full)]
-        public void ReturnCorrectMemoryStatus_OnDifferentMemoryUsages(ulong systemMemoryInMB, ulong usedMemoryInMB, MemoryUsageStatus expectedUsage)
+        [TestCase(1000, 500, MemoryUsageStatus.Normal)]
+        [TestCase(1000, 810, MemoryUsageStatus.Warning)]
+        [TestCase(1000, 910, MemoryUsageStatus.Full)]
+        public void ReturnCorrectMemoryStatus_OnDifferentMemoryUsages(long systemMemoryInMB, long usedMemoryInMB, MemoryUsageStatus expectedUsage)
         {
             // Arrange
-            memoryBudget.ActualSystemMemory = systemMemoryInMB;
-            profilingProvider.TotalUsedMemoryInBytes.Returns(usedMemoryInMB * BYTES_IN_MEGABYTE);
+            memoryBudget.actualSystemMemory = systemMemoryInMB;
+            profiler.TotalUsedMemoryInBytes.Returns(usedMemoryInMB * BYTES_IN_MEGABYTE);
 
             // Act-Assert
             Assert.That(memoryBudget.GetMemoryUsageStatus(), Is.EqualTo(expectedUsage));
         }
 
-        [TestCase((ulong)1000, (ulong)810, true)]
-        [TestCase((ulong)1000, (ulong)910, false)]
-        public void CanSpendBudgetOnlyWhenMemoryIsNotFull(ulong systemMemoryInMB, ulong usedMemoryInMB, bool canSpendBudget)
+        [TestCase(1000, 810, true)]
+        [TestCase(1000, 910, false)]
+        public void CanSpendBudgetOnlyWhenMemoryIsNotFull(long systemMemoryInMB, long usedMemoryInMB, bool canSpendBudget)
         {
             // Arrange
-            profilingProvider.TotalUsedMemoryInBytes.Returns(usedMemoryInMB * BYTES_IN_MEGABYTE);
-            memoryBudget.ActualSystemMemory = systemMemoryInMB;
+            profiler.TotalUsedMemoryInBytes.Returns(usedMemoryInMB * BYTES_IN_MEGABYTE);
+            memoryBudget.actualSystemMemory = systemMemoryInMB;
 
             // Act-Assert
             Assert.That(memoryBudget.TrySpendBudget(), Is.EqualTo(canSpendBudget));

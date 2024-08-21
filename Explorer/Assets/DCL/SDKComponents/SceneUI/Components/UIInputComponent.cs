@@ -1,4 +1,5 @@
-﻿using DCL.SDKComponents.SceneUI.Classes;
+﻿using DCL.Input.UnityInputSystem.Blocks;
+using DCL.SDKComponents.SceneUI.Classes;
 using DCL.SDKComponents.SceneUI.Utils;
 using UnityEngine.UIElements;
 
@@ -11,10 +12,12 @@ namespace DCL.SDKComponents.SceneUI.Components
         public bool IsOnValueChangedTriggered;
         public bool IsOnSubmitTriggered;
 
-        internal EventCallback<ChangeEvent<string>> currentOnValueChanged;
-        internal EventCallback<KeyDownEvent> currentOnSubmit;
+        internal EventCallback<ChangeEvent<string>> currentOnValueChanged = static _ => { };
+        internal EventCallback<KeyDownEvent> currentOnSubmit = static _ => { };
+        internal EventCallback<FocusInEvent> currentOnFocusIn = static _ => { };
+        internal EventCallback<FocusOutEvent> currentOnFocusOut = static _ => { };
 
-        public void Initialize(string textFieldName, string styleClass)
+        public void Initialize(IInputBlock inputBlock, string textFieldName, string styleClass)
         {
             TextField.name = textFieldName;
             TextField.AddToClassList(styleClass);
@@ -23,7 +26,7 @@ namespace DCL.SDKComponents.SceneUI.Components
 
             IsOnValueChangedTriggered = false;
             IsOnSubmitTriggered = false;
-            this.RegisterInputCallbacks();
+            this.RegisterInputCallbacks(inputBlock);
         }
 
         public void Dispose()

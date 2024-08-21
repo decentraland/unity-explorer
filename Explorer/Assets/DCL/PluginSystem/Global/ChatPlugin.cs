@@ -6,8 +6,10 @@ using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.Emoji;
 using DCL.Input;
+using DCL.Input.UnityInputSystem.Blocks;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
+using DCL.UI.MainUI;
 using MVC;
 using System;
 using System.Threading;
@@ -25,8 +27,11 @@ namespace DCL.PluginSystem.Global
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly NametagsData nametagsData;
         private readonly DCLInput dclInput;
-        private ChatController chatController;
+        private readonly IInputBlock inputBlock;
         private readonly IEventSystem eventSystem;
+        private readonly MainUIView mainUIView;
+
+        private ChatController chatController;
 
         public ChatPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -36,7 +41,9 @@ namespace DCL.PluginSystem.Global
             IReadOnlyEntityParticipantTable entityParticipantTable,
             NametagsData nametagsData,
             DCLInput dclInput,
-            IEventSystem eventSystem
+            IEventSystem eventSystem,
+            MainUIView mainUIView,
+            IInputBlock inputBlock
         )
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -46,7 +53,9 @@ namespace DCL.PluginSystem.Global
             this.entityParticipantTable = entityParticipantTable;
             this.nametagsData = nametagsData;
             this.dclInput = dclInput;
+            this.inputBlock = inputBlock;
             this.eventSystem = eventSystem;
+            this.mainUIView = mainUIView;
         }
 
         protected override void InjectSystems(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
@@ -58,12 +67,16 @@ namespace DCL.PluginSystem.Global
             EmojiSectionView emojiSectionPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.EmojiSectionPrefab, ct)).Value;
             EmojiButton emojiButtonPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.EmojiButtonPrefab, ct)).Value;
             EmojiSuggestionView emojiSuggestionPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.EmojiSuggestionPrefab, ct)).Value;
-            ChatView chatView = (await assetsProvisioner.ProvideMainAssetAsync(settings.ChatPanelPrefab, ct: ct)).Value.GetComponent<ChatView>();
 
             return (ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) =>
             {
                 chatController = new ChatController(
-                    ChatController.CreateLazily(chatView, null),
+                    () =>
+                    {
+                        var view = mainUIView.ChatView;
+                        view.gameObject.SetActive(true);
+                        return view;
+                    },
                     chatEntryConfiguration,
                     chatMessagesBus,
                     chatHistory,
@@ -77,6 +90,7 @@ namespace DCL.PluginSystem.Global
                     builder.World,
                     arguments.PlayerEntity,
                     dclInput,
+                    inputBlock,
                     eventSystem
                 );
 
@@ -88,8 +102,6 @@ namespace DCL.PluginSystem.Global
         {
             [field: Header(nameof(ChatPlugin) + "." + nameof(ChatSettings))]
             [field: Space]
-            [field: SerializeField]
-            public ChatViewRef ChatPanelPrefab { get; private set; }
 
             [field: SerializeField]
             public EmojiButtonRef EmojiButtonPrefab { get; private set; }
@@ -108,6 +120,7 @@ namespace DCL.PluginSystem.Global
 
             [field: SerializeField]
             public TextAsset EmojiMappingJson { get; private set; }
+
 
             [Serializable]
             public class EmojiSuggestionPanelRef : ComponentReference<EmojiSuggestionPanelView>
@@ -140,10 +153,11 @@ namespace DCL.PluginSystem.Global
             }
 
             [Serializable]
-            public class ChatViewRef : ComponentReference<ChatView>
+            public class MainUIRef : ComponentReference<MainUIView>
             {
-                public ChatViewRef(string guid) : base(guid) { }
+                public MainUIRef(string guid) : base(guid) { }
             }
+
         }
     }
 }

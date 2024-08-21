@@ -16,12 +16,12 @@ namespace ECS.Unity.Textures.Components.Extensions
 
             if (self.IsVideoTexture())
             {
-                var textureComponent = new TextureComponent(URLAddress.EMPTY, self.GetWrapMode(), self.GetFilterMode(), self.IsVideoTexture(), self.GetVideoTextureId());
+                var textureComponent = new TextureComponent(URLAddress.EMPTY, self.GetWrapMode(), self.GetFilterMode(), true, self.GetVideoTextureId());
                 return textureComponent;
             }
 
             return self.TryGetTextureUrl(data, out URLAddress url)
-                ? new TextureComponent(url, self.GetWrapMode(), self.GetFilterMode(), self.IsVideoTexture())
+                ? new TextureComponent(url, self.GetWrapMode(), self.GetFilterMode())
                 : null;
         }
 

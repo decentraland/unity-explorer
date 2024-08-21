@@ -7,14 +7,15 @@ useReviewGroups: true
 reviewGroups:
   techleads:
     - mikhail-dcl
+    - dalkia
   devs:    
     - sandrade-dcl    
     - lorux0
     - davidejensen
     - popuz
     - pravusjif
-    - dalkia
     - fcolarich
+    - NickKhalow
   qa:
     - Ludmilafantaniella
     - anicalbano

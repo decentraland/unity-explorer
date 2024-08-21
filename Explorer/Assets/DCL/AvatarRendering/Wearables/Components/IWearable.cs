@@ -19,7 +19,9 @@ namespace DCL.AvatarRendering.Wearables.Components
         /// <summary>
         ///     DTO must be resolved only one
         /// </summary>
-        void ResolveDTO(StreamableLoadingResult<WearableDTO> result);
+        bool TryResolveDTO(StreamableLoadingResult<WearableDTO> result);
+
+        void ResolvedFailedDTO(StreamableLoadingResult<WearableDTO> result);
 
         bool TryGetFileHashConditional(BodyShape bodyShape, Func<string, bool> contentMatch, out string? hash);
 

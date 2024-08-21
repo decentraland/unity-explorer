@@ -11,8 +11,8 @@ namespace DCL.Nametags
         {
             this.nametagsData = nametagsData;
 
-            debugBuilder.AddWidget("Nametags")
-                        .AddToggleField("ShowNametags", OnShowNametagsToggled, nametagsData.showNameTags);
+            debugBuilder.TryAddWidget("Nametags")
+                        ?.AddToggleField("ShowNametags", OnShowNametagsToggled, nametagsData.showNameTags);
         }
 
         private void OnShowNametagsToggled(ChangeEvent<bool> evt)

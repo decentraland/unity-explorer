@@ -30,10 +30,13 @@ namespace DCL.CharacterMotion.Systems
 
         private HandsIKSystem(World world, IDebugContainerBuilder debugBuilder) : base(world)
         {
-            debugBuilder.AddWidget("Locomotion: Hands IK")
-                        .AddToggleField("Enabled", evt => { handsIkSystemIsEnabled = evt.newValue; }, true)
-                        .AddFloatField("Wall Distance", wallDistance = new ElementBinding<float>(0))
-                        .AddFloatField("IK Weight Speed", ikWeightSpeed = new ElementBinding<float>(0));
+            wallDistance = new ElementBinding<float>(0);
+            ikWeightSpeed = new ElementBinding<float>(0);
+
+            debugBuilder.TryAddWidget("Locomotion: Hands IK")
+                       ?.AddToggleField("Enabled", evt => { handsIkSystemIsEnabled = evt.newValue; }, true)
+                        .AddFloatField("Wall Distance", wallDistance)
+                        .AddFloatField("IK Weight Speed", ikWeightSpeed);
         }
 
         public override void Initialize()
@@ -106,6 +109,7 @@ namespace DCL.CharacterMotion.Systems
             var targetWeight = 0;
 
             Debug.DrawRay(rayOrigin, rayDirection * rayDistance, Color.blue, dt);
+
             if (Physics.SphereCast(rayOrigin, settings.FeetIKSphereSize, rayDirection, out RaycastHit hitInfo, rayDistance, PhysicsLayers.CHARACTER_ONLY_MASK))
             {
                 handIKTarget.position = Vector3.MoveTowards(handIKTarget.position, hitInfo.point, settings.IKPositionSpeed * dt);

@@ -16,7 +16,7 @@ namespace DCL.Backpack
         private const int MAX_HIDES = 15;
 
         private readonly BackpackCommandBus backpackCommandBus;
-        private readonly BackpackEventBus backpackEventBus;
+        private readonly IBackpackEventBus backpackEventBus;
         private readonly NftTypeIconSO rarityBackgrounds;
         private readonly IThumbnailProvider thumbnailProvider;
         private readonly Dictionary<string, (AvatarSlotView, CancellationTokenSource)> avatarSlots = new ();
@@ -29,7 +29,7 @@ namespace DCL.Backpack
         public BackpackSlotsController(
             AvatarSlotView[] avatarSlotViews,
             BackpackCommandBus backpackCommandBus,
-            BackpackEventBus backpackEventBus,
+            IBackpackEventBus backpackEventBus,
             NftTypeIconSO rarityBackgrounds,
             IThumbnailProvider thumbnailProvider)
         {

@@ -8,7 +8,7 @@ namespace DCL.WebRequests.Analytics
         private readonly Dictionary<Type, List<IRequestMetric>> requestTypesWithMetrics = new ();
         private readonly Dictionary<Type, Func<IRequestMetric>> requestMetricTypes = new ();
 
-        public IReadOnlyList<IRequestMetric> GetMetric(Type requestType) =>
+        public IReadOnlyList<IRequestMetric>? GetMetric(Type requestType) =>
             requestTypesWithMetrics.GetValueOrDefault(requestType);
 
         public IDictionary<Type, Func<IRequestMetric>> GetTrackedMetrics() =>

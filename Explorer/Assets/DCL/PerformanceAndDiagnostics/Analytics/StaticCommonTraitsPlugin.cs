@@ -10,6 +10,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         private readonly string sessionID = SystemInfo.deviceUniqueIdentifier + DateTime.Now.ToString("yyyyMMddHHmmssfff");
         private readonly string rendererVersion = Application.version;
         private readonly string runtime = Application.isEditor? "editor" : Debug.isDebugBuild ? "debug" : "release";
+        private readonly string os = SystemInfo.operatingSystem;
+
         public override PluginType Type => PluginType.Enrichment;
 
         public override TrackEvent Track(TrackEvent trackEvent)
@@ -18,6 +20,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             trackEvent.Context["session_id"] = sessionID;
             trackEvent.Context["renderer_version"] = rendererVersion;
             trackEvent.Context["runtime"] = runtime;
+            trackEvent.Context["operating_system"] = os;
 
             return trackEvent;
         }

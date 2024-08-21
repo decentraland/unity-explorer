@@ -2,8 +2,6 @@ using DCL.Audio;
 using System;
 using TMPro;
 using UnityEngine;
-using UnityEngine.EventSystems;
-using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 namespace DCL.UI
@@ -16,7 +14,6 @@ namespace DCL.UI
         [field: SerializeField]
         public Button clearSearchButton;
 
-
         [field: Header("Audio")]
         [field: SerializeField]
         public AudioClipConfig InputTextAudio { get; private set; }
@@ -26,6 +23,8 @@ namespace DCL.UI
         public AudioClipConfig SubmitAudio { get; private set; }
         [field: SerializeField]
         public AudioClipConfig SelectAudio { get; private set; }
+
+        public event Action Disabled;
 
         private void OnEnable()
         {
@@ -40,6 +39,8 @@ namespace DCL.UI
             inputField.onValueChanged.RemoveListener(OnValueChanged);
             clearSearchButton.onClick.RemoveListener(OnClearText);
             inputField.onSubmit.RemoveListener(OnSubmit);
+
+            Disabled?.Invoke();
         }
 
         private void OnSelect(string text)

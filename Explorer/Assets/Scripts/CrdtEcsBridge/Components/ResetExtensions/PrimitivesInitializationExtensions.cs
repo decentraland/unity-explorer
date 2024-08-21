@@ -1,5 +1,4 @@
 using Decentraland.Common;
-using System.Diagnostics.CodeAnalysis;
 
 namespace CrdtEcsBridge.Components.ResetExtensions
 {
@@ -11,7 +10,7 @@ namespace CrdtEcsBridge.Components.ResetExtensions
         public static void Reset(this Vector3 protoVector) =>
             protoVector.Set(UnityEngine.Vector3.zero);
 
-        public static void Set([NotNull] this Vector3 protoVector, UnityEngine.Vector3 unityVector)
+        public static void Set(this Vector3 protoVector, UnityEngine.Vector3 unityVector)
         {
             protoVector.X = unityVector.x;
             protoVector.Y = unityVector.y;

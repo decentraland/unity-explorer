@@ -18,117 +18,122 @@ MonoBehaviour:
   m_GUID: 8a4a1b7362f524e55a31f86b70c20d13
   m_SerializeEntries:
   - m_GUID: fd29dbb6c443041429f61480d858f979
-    m_Address: Assets/DCL/SDKComponents/NftShape/Imported/Prefabs/NFTShapeLoader.prefab
+    m_Address: NFTShapeLoader.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 695e9f0c5a896426f8a0045efcf9c213
-    m_Address: Assets/DCL/SDKComponents/NftShape/Imported/Prefabs/NFTShapeLoader_Minimal_White.prefab
+    m_Address: NFTShapeLoader_Minimal_White
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: ee56c3ff6240b40d58eea10d9e558999
-    m_Address: Assets/DCL/SDKComponents/NftShape/Imported/Prefabs/NFTShapeLoader_Metal_Rounded.prefab
+    m_Address: NFTShapeLoader_Metal_Rounded
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 82252b846586c4ea68f18303192254e4
-    m_Address: Assets/DCL/SDKComponents/NftShape/Imported/Prefabs/NFTShapeLoader_Gold_Rounded.prefab
+    m_Address: NFTShapeLoader_Gold_Rounded
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: e329ab307f0a246529a2f5bd742d140e
-    m_Address: Assets/DCL/SDKComponents/NftShape/Imported/Prefabs/NFTShapeLoader_Metal_Medium.prefab
+    m_Address: NFTShapeLoader_Metal_Medium
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: d0e0849b2528c49e189df095cd5d66d1
-    m_Address: Assets/DCL/SDKComponents/NftShape/Imported/Prefabs/NFTShapeLoader_Metal_Slim.prefab
+    m_Address: NFTShapeLoader_Metal_Slim
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 23da06bf866f744efa556b854189a283
-    m_Address: Assets/DCL/SDKComponents/NftShape/Imported/Prefabs/NFTShapeLoader_Blocky.prefab
+    m_Address: NFTShapeLoader_Blocky
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 2f3a56fb9371c4b9a802b01de9d796f7
-    m_Address: Assets/DCL/SDKComponents/NftShape/Imported/Prefabs/NFTShapeLoader_Gold_Wide.prefab
+    m_Address: NFTShapeLoader_Gold_Wide
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 3372d215f11c34e8d91f662fc2a4a808
-    m_Address: Assets/DCL/SDKComponents/NftShape/Imported/Prefabs/NFTShapeLoader_Gold_Carved.prefab
+    m_Address: NFTShapeLoader_Gold_Carved
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 0a0b2ecd79a88499e843af4d860035b9
-    m_Address: Assets/DCL/SDKComponents/NftShape/Imported/Prefabs/NFTShapeLoader_Wood_Twigs.prefab
+    m_Address: NFTShapeLoader_Wood_Twigs
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 30b1ff20c7057424a92eb7bff45bfeb0
-    m_Address: Assets/DCL/SDKComponents/NftShape/Imported/Prefabs/NFTShapeLoader_Minimal_Grey.prefab
+    m_Address: NFTShapeLoader_Minimal_Grey
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: a7d6bb6a7065a4399bc2faa511333576
-    m_Address: Assets/DCL/SDKComponents/NftShape/Imported/Prefabs/NFTShapeLoader_Minimal_Wide.prefab
+    m_Address: NFTShapeLoader_Minimal_Wide
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 21d6bad23693d4618b83ba5e17e15459
-    m_Address: Assets/DCL/SDKComponents/NftShape/Imported/Prefabs/NFTShapeLoader_Tape.prefab
+    m_Address: NFTShapeLoader_Tape
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 7b931da8b9b9a4160835e1cb4369ba55
-    m_Address: Assets/DCL/SDKComponents/NftShape/Imported/Prefabs/NFTShapeLoader_Wood_Slim.prefab
+    m_Address: NFTShapeLoader_Wood_Slim
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: a35a25e31750848e5ac08a9d33ca88c5
-    m_Address: Assets/DCL/SDKComponents/NftShape/Imported/Prefabs/NFTShapeLoader_Canvas.prefab
+    m_Address: NFTShapeLoader_Canvas
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 45cfde853ff47407a944fa821b1e86cc
-    m_Address: Assets/DCL/SDKComponents/NftShape/Imported/Prefabs/NFTShapeLoader_Diamond_Ornament.prefab
+    m_Address: NFTShapeLoader_Diamond_Ornament
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: a53c99a9091724ef3a0d34ae30bfd9bb
-    m_Address: Assets/DCL/SDKComponents/NftShape/Imported/Prefabs/NFTShapeLoader_Gold_Edges.prefab
+    m_Address: NFTShapeLoader_Gold_Edges
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: a3bb0076dce7e4720be93fc2a3662cc6
-    m_Address: Assets/DCL/SDKComponents/NftShape/Imported/Prefabs/NFTShapeLoader_Metal_Wide.prefab
+    m_Address: NFTShapeLoader_Metal_Wide
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: e94a8e2e9c82a4a3e94b2116ca483a41
-    m_Address: Assets/DCL/SDKComponents/NftShape/Imported/Prefabs/NFTShapeLoader_None.prefab
+    m_Address: NFTShapeLoader_None
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: a606312035d9249e682a746a390909d3
-    m_Address: Assets/DCL/SDKComponents/NftShape/Imported/Prefabs/NFTShapeLoader_Wood_Wide.prefab
+    m_Address: NFTShapeLoader_Wood_Wide
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: f2f0c874416fb47389b796119d907d8c
-    m_Address: Assets/DCL/SDKComponents/NftShape/Imported/Prefabs/NFTShapeLoader_Minimal_Black.prefab
+    m_Address: NFTShapeLoader_Minimal_Black
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 78f4669af89ab4f348977e9af22cba87
-    m_Address: Assets/DCL/SDKComponents/NftShape/Imported/Prefabs/NFTShapeLoader_Baroque_Ornament.prefab
+    m_Address: NFTShapeLoader_Baroque_Ornament
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: c9f0f497a0aab44109246aa6b1c6495d
-    m_Address: Assets/DCL/SDKComponents/NftShape/Imported/Prefabs/NFTShapeLoader_Pins.prefab
+    m_Address: NFTShapeLoader_Pins
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9682a05204b49a546a7ddf99b9caa9b4
+    m_Address: NFTShapeLoader_Classic
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

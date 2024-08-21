@@ -40,6 +40,7 @@ namespace DCL.EmotesWheel
 
         private void OpenEmoteWheel()
         {
+
             mvcManager.ShowAsync(EmotesWheelController.IssueCommand()).Forget();
         }
 

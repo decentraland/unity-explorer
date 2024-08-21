@@ -1,6 +1,6 @@
 namespace SceneRunner.Scene
 {
-    public class SceneStateProvider : ISceneStateProvider
+    public partial class SceneStateProvider : ISceneStateProvider
     {
         private SceneEngineStartInfo engineStartInfo;
 

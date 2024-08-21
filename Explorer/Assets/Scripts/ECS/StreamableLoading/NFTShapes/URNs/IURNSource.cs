@@ -1,4 +1,5 @@
 using CommunicationData.URLHelpers;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 
 namespace ECS.StreamableLoading.NFTShapes.URNs
 {
@@ -10,9 +11,7 @@ namespace ECS.StreamableLoading.NFTShapes.URNs
         {
             private readonly URLAddress url;
 
-            public Fake(string url) : this(URLAddress.FromString(url))
-            {
-            }
+            public Fake(string url) : this(URLAddress.FromString(url)) { }
 
             public Fake(URLAddress url)
             {
@@ -22,5 +21,8 @@ namespace ECS.StreamableLoading.NFTShapes.URNs
             public URLAddress UrlOrEmpty(URN urn) =>
                 url;
         }
+
+        public static string BaseURL(IDecentralandUrlsSource decentralandUrlsSource) =>
+            $"{decentralandUrlsSource.Url(DecentralandUrl.OpenSea)}/api/v2/chain/{{chain}}/contract/{{address}}/nfts/{{id}}";
     }
 }

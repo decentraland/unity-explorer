@@ -21,6 +21,14 @@ namespace DCL.Interaction.Raycast.Components
             this.nextEntity = nextEntity;
         }
 
+        public static HighlightComponent NewEntityHighlightComponent(bool isAtDistance, EntityReference entityRef) =>
+            new (
+                true,
+                isAtDistance,
+                entityRef,
+                entityRef
+            );
+
         public void Setup(bool atDistance, EntityReference newNextEntity)
         {
             isEnabled = true;

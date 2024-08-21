@@ -20,11 +20,13 @@ namespace DCL.Backpack.BackpackBus
     {
         public readonly string Id;
         public readonly int? Slot;
+        public readonly bool IsManuallyEquipped; // It will be true when the user manually equip an emote from the emotes grid
 
-        public BackpackEquipEmoteCommand(string id, int? slot = null)
+        public BackpackEquipEmoteCommand(string id, int? slot, bool isManuallyEquipped)
         {
             Id = id;
             Slot = slot;
+            IsManuallyEquipped = isManuallyEquipped;
         }
     }
 

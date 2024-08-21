@@ -16,7 +16,7 @@ namespace DCL.SDKComponents.Tween.Tests
     [TestFixture]
     public class TweenUpdaterSystemShould : UnitySystemTestBase<TweenUpdaterSystem>
     {
-        
+
         private Entity entity;
         private PBTween pbTween;
         private TweenerPool tweneerPool;
@@ -29,7 +29,7 @@ namespace DCL.SDKComponents.Tween.Tests
         public void SetUp()
         {
             tweneerPool = new TweenerPool();
-            system = new TweenUpdaterSystem(world, Substitute.For<IECSToCRDTWriter>(), tweneerPool);
+            system = new TweenUpdaterSystem(world, Substitute.For<IECSToCRDTWriter>(), tweneerPool, null);
             var crdtEntity = new CRDTEntity(1);
 
             var startVector = new Vector3() { X = 0, Y = 0, Z = 0};
@@ -58,7 +58,7 @@ namespace DCL.SDKComponents.Tween.Tests
             system?.Dispose();
         }
 
-        
+
         [Test]
         public void ChangingPBTweenCurrentTimeUpdatesTheTweenStateStatus()
         {
@@ -75,9 +75,9 @@ namespace DCL.SDKComponents.Tween.Tests
             world.Query(new QueryDescription().WithAll<SDKTweenComponent>(), (ref SDKTweenComponent comp) =>
                 Assert.IsTrue(comp.TweenStateStatus == TweenStateStatus.TsCompleted));
         }
-        
 
-        
+
+
         [Test]
         public void ChangingPBTweenPlayingValueUpdatesTheTweenStateStatus()
         {
@@ -100,8 +100,8 @@ namespace DCL.SDKComponents.Tween.Tests
             world.Query(new QueryDescription().WithAll<SDKTweenComponent>(), (ref SDKTweenComponent comp) =>
                 Assert.IsTrue(comp.TweenStateStatus == TweenStateStatus.TsActive));
         }
-        
+
 
     }
-    
+
 }

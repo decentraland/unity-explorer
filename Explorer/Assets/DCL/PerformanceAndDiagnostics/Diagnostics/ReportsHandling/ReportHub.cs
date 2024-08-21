@@ -10,11 +10,19 @@ namespace DCL.Diagnostics
     /// </summary>
     public static class ReportHub
     {
-        public static ReportHubLogger Instance { get; set; } =
+        public static ReportHubLogger Instance { get; private set; } =
             new (new (ReportHandler, IReportHandler)[]
             {
                 (ReportHandler.DebugLog, new DefaultReportLogger()),
             });
+
+        private static bool enforceUnconditionalVerboseLogs;
+
+        public static void Initialize(ReportHubLogger logger, bool logVerbose = false)
+        {
+            Instance = logger;
+            enforceUnconditionalVerboseLogs = logVerbose;
+        }
 
         /// <summary>
         ///     Logs a message.
@@ -54,16 +62,27 @@ namespace DCL.Diagnostics
         }
 
         /// <summary>
-        ///     Logs verbose info.
-        ///     This call will be stripped from the build, and therefore leads to zero overhead, unless "VERBOSE_LOGS" is defined
+        ///     Logs verbose info. This method is conditional and will be stripped from the production builds
         /// </summary>
         /// <param name="reportData">Report Data, try to provide as specific data as possible</param>
         /// <param name="message">Message</param>
         /// <param name="reportToHandlers">Handlers to report to, All by default</param>
         [HideInCallstack]
-        [Conditional("UNITY_EDITOR")] [Conditional("VERBOSE_LOGS")]
+        [Conditional("UNITY_EDITOR")] [Conditional("VERBOSE_LOGS")] // don't remove conditionals, otherwise strings will be allocated in production builds
         public static void Log(ReportData reportData, object message, ReportHandler reportToHandlers = ReportHandler.All)
         {
+            Instance.Log(LogType.Log, reportData, message, null, reportToHandlers);
+        }
+
+        /// <summary>
+        ///     Enforces Verbose logs even in production build.
+        ///     This method is unconditional so string interpolation should be avoided
+        /// </summary>
+        public static void Verbose(ReportData reportData, string message, ReportHandler reportToHandlers = ReportHandler.All)
+        {
+#if !UNITY_EDITOR && !VERBOSE_LOGS
+            if (!enforceUnconditionalVerboseLogs) return;
+#endif
             Instance.Log(LogType.Log, reportData, message, null, reportToHandlers);
         }
 

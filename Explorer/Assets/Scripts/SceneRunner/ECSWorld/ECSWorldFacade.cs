@@ -2,6 +2,7 @@ using Arch.Core;
 using Arch.SystemGroups;
 using CRDT;
 using DCL.Diagnostics;
+using DCL.PluginSystem.World;
 using ECS.LifeCycle;
 using System;
 using System.Collections.Generic;
@@ -14,6 +15,8 @@ namespace SceneRunner.ECSWorld
     public readonly struct ECSWorldFacade : IDisposable
     {
         public readonly World EcsWorld;
+        public readonly PersistentEntities PersistentEntities;
+
         private readonly IReadOnlyList<IFinalizeWorldSystem> finalizeWorldSystems;
         private readonly IReadOnlyList<ISceneIsCurrentListener> sceneIsCurrentListeners;
 
@@ -22,6 +25,7 @@ namespace SceneRunner.ECSWorld
         public ECSWorldFacade(
             SystemGroupWorld systemGroupWorld,
             World ecsWorld,
+            PersistentEntities persistentEntities,
             IReadOnlyList<IFinalizeWorldSystem> finalizeWorldSystems,
             IReadOnlyList<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
@@ -29,6 +33,7 @@ namespace SceneRunner.ECSWorld
             EcsWorld = ecsWorld;
             this.finalizeWorldSystems = finalizeWorldSystems;
             this.sceneIsCurrentListeners = sceneIsCurrentListeners;
+            PersistentEntities = persistentEntities;
         }
 
         public void Initialize()

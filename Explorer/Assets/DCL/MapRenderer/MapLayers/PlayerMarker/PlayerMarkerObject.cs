@@ -2,7 +2,7 @@
 
 namespace DCL.MapRenderer.MapLayers.PlayerMarker
 {
-    internal class PlayerMarkerObject : MapRendererMarkerBase
+    public class PlayerMarkerObject : MapRendererMarkerBase
     {
         [SerializeField] private SpriteRenderer compass;
         [SerializeField] private SpriteRenderer circle;

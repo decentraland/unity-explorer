@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
+// ReSharper disable InconsistentNaming
 
 namespace DCL.Rendering.Highlight
 {
@@ -38,14 +39,14 @@ namespace DCL.Rendering.Highlight
             private RenderTextureDescriptor highLightRTDescriptor_Depth;
             private RenderTextureDescriptor highLightRTDescriptor_Colour_Blur;
 
-            private readonly Dictionary<Renderer, HighlightSettings> m_HighLightRenderers;
+            private readonly IReadOnlyDictionary<Renderer, HighlightSettings> m_HighLightRenderers;
 
             private FilteringSettings m_FilteringSettings;
 
-            public HighlightInputRenderPass(Dictionary<Renderer, HighlightSettings> _HighLightRenderers)
+            public HighlightInputRenderPass(IReadOnlyDictionary<Renderer, HighlightSettings> highLightRenderers)
             {
                 m_FilteringSettings = new FilteringSettings(RenderQueueRange.opaque);
-                m_HighLightRenderers = _HighLightRenderers;
+                m_HighLightRenderers = highLightRenderers;
             }
 
             public void Setup(Material _highLightInputMaterial,
@@ -97,9 +98,9 @@ namespace DCL.Rendering.Highlight
 
             private void ExecuteCommand(ScriptableRenderContext context, RenderingData renderingData, bool clear, string bufferName, string profilerTag)
             {
-                CommandBuffer commandBuffer = CommandBufferPool.Get(bufferName);
+                CommandBuffer commandBuffer = CommandBufferPool.Get(bufferName)!;
 
-                using (new ProfilingScope(null, new ProfilingSampler(profilerTag)))
+                using (new ProfilingScope(null!, new ProfilingSampler(profilerTag)))
                 {
                     foreach ((Renderer renderer, HighlightSettings settings) in m_HighLightRenderers)
                     {
@@ -127,7 +128,7 @@ namespace DCL.Rendering.Highlight
                             var materialToUse = new Material(renderer.sharedMaterial);
                             materialToUse.SetColor(highlightColour, !clear ? settings.Color : Color.clear);
                             materialToUse.SetFloat(outlineWidth, !clear ? settings.Width : 0);
-                            materialToUse.SetVector(highlightObjectOffset, !clear ? settings.Offset : Vector3.zero);
+                            materialToUse.SetVector(highlightObjectOffset, Vector3.zero);
                             commandBuffer.DrawRenderer(renderer, materialToUse, 0, originalMaterialOutlinerPass);
                         }
                         else
@@ -135,7 +136,7 @@ namespace DCL.Rendering.Highlight
                             var materialToUse = new Material(highLightInputMaterial);
                             materialToUse.SetColor(highlightColour, !clear ? settings.Color : Color.clear);
                             materialToUse.SetFloat(outlineWidth, !clear ? settings.Width : 0);
-                            materialToUse.SetVector(highlightObjectOffset, !clear ? settings.Offset : Vector3.zero);
+                            materialToUse.SetVector(highlightObjectOffset, Vector3.zero);
                             commandBuffer.DrawRenderer(renderer, materialToUse, 0, 0);
                         }
                     }
@@ -151,8 +152,8 @@ namespace DCL.Rendering.Highlight
                 if (_nBlurCount == 0)
                     return nOutputTexture;
 
-                CommandBuffer cmd = CommandBufferPool.Get(bufferName);
-                using (new ProfilingScope(null, new ProfilingSampler(profilerTag)))
+                CommandBuffer cmd = CommandBufferPool.Get(bufferName)!;
+                using (new ProfilingScope(null!, new ProfilingSampler(profilerTag)))
                 {
                     for (int nBlurPass = 0; nBlurPass < _nBlurCount; ++nBlurPass)
                     {

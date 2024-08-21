@@ -4,7 +4,6 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
 using DCL.ECSComponents;
 using DCL.Interaction.Raycast.Components;
-using DCL.Optimization.Pools;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Unity.Transforms.Components;
@@ -15,19 +14,14 @@ namespace DCL.Interaction.Raycast.Systems
     [ThrottlingEnabled] // as we react on Scene Changes
     public partial class InitializeRaycastSystem : BaseUnityLoopSystem
     {
-        private readonly IComponentPool<PBRaycastResult> raycastComponentPool;
-
-        internal InitializeRaycastSystem(World world,
-            IComponentPool<PBRaycastResult> raycastComponentPool
-        ) : base(world)
+        internal InitializeRaycastSystem(World world) : base(world)
         {
-            this.raycastComponentPool = raycastComponentPool;
         }
 
         protected override void Update(float t)
         {
-            HandleChangedComponentQuery(World);
-            HandleNewComponentQuery(World);
+            HandleChangedComponentQuery(World!);
+            HandleNewComponentQuery(World!);
         }
 
         [Query]
@@ -36,7 +30,7 @@ namespace DCL.Interaction.Raycast.Systems
         private void HandleNewComponent(in Entity entity)
         {
             var comp = new RaycastComponent();
-            World.Add(entity, comp);
+            World!.Add(entity, comp);
         }
 
         [Query]

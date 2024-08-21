@@ -15,7 +15,7 @@ namespace SceneRuntime.Apis.Modules.FetchApi
             this.origin = origin;
         }
 
-        public async UniTask<object> FetchAsync(string requestMethod, string url, object headers, bool hasBody, string body,
+        public async UniTask<ISimpleFetchApi.Response> FetchAsync(string requestMethod, string url, object headers, bool hasBody, string body,
             string redirect, int timeout, IWebRequestController webController, CancellationToken ct)
         {
             string args = $"request method: {requestMethod} "
@@ -30,7 +30,7 @@ namespace SceneRuntime.Apis.Modules.FetchApi
 
             try
             {
-                object result = await origin.FetchAsync(requestMethod, url, headers, hasBody, body, redirect, timeout, webController, ct);
+                ISimpleFetchApi.Response result = await origin.FetchAsync(requestMethod, url, headers, hasBody, body, redirect, timeout, webController, ct);
                 ReportHub.Log(ReportCategory.GENERIC_WEB_REQUEST, $"SimpleFetchApi, Fetch request successes with: {args}");
                 return result;
             }

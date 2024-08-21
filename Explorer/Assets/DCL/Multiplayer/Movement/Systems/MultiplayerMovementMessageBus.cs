@@ -7,6 +7,7 @@ using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.Messaging.Pipe;
 using DCL.Multiplayer.Profiles.Tables;
 using Decentraland.Kernel.Comms.Rfc4;
+using LiveKit.Proto;
 using System;
 using System.Threading;
 using UnityEngine;

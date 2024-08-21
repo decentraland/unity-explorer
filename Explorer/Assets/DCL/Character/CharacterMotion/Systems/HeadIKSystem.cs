@@ -32,12 +32,17 @@ namespace DCL.CharacterMotion.Systems
 
         private HeadIKSystem(World world, IDebugContainerBuilder builder) : base(world)
         {
-            builder.AddWidget("Locomotion: Head IK")
-                   .AddToggleField("Enabled", (evt) => { headIKIsEnabled = evt.newValue; }, true)
-                   .AddFloatField("Vertical Limit", verticalLimit = new ElementBinding<float>(0))
-                   .AddFloatField("Horizontal Limit", horizontalLimit = new ElementBinding<float>(0))
-                   .AddFloatField("Horizontal Reset", horizontalReset = new ElementBinding<float>(0))
-                   .AddFloatField("Rotation Speed", speed = new ElementBinding<float>(0));
+            verticalLimit = new ElementBinding<float>(0);
+            horizontalLimit = new ElementBinding<float>(0);
+            horizontalReset = new ElementBinding<float>(0);
+            speed = new ElementBinding<float>(0);
+
+            builder.TryAddWidget("Locomotion: Head IK")
+                  ?.AddToggleField("Enabled", (evt) => { headIKIsEnabled = evt.newValue; }, true)
+                   .AddFloatField("Vertical Limit", verticalLimit)
+                   .AddFloatField("Horizontal Limit", horizontalLimit)
+                   .AddFloatField("Horizontal Reset", horizontalReset)
+                   .AddFloatField("Rotation Speed", speed);
         }
 
         public override void Initialize()

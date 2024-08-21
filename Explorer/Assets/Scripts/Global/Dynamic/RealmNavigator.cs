@@ -6,23 +6,23 @@ using DCL.Ipfs;
 using DCL.Landscape;
 using DCL.MapRenderer;
 using DCL.MapRenderer.MapLayers;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Entities;
 using DCL.ParcelsService;
 using DCL.Roads.Systems;
-using ECS.SceneLifeCycle.Components;
 using DCL.SceneLoadingScreens.LoadingScreen;
+using DCL.UserInAppInitializationFlow;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
+using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Realm;
 using ECS.SceneLifeCycle.Reporting;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
 using System;
-using System.Threading;
-using DCL.UserInAppInitializationFlow;
-using ECS.Prioritization.Components;
 using System.Linq;
+using System.Threading;
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
@@ -34,14 +34,13 @@ namespace Global.Dynamic
 {
     public class RealmNavigator : IRealmNavigator
     {
-        private readonly URLDomain genesisDomain = URLDomain.FromString(IRealmNavigator.GENESIS_URL);
-
         private readonly ILoadingScreen loadingScreen;
         private readonly IMapRenderer mapRenderer;
-        private readonly IRealmController realmController;
+        private readonly IGlobalRealmController realmController;
         private readonly ITeleportController teleportController;
         private readonly IRoomHub roomHub;
         private readonly IRemoteEntities remoteEntities;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly ObjectProxy<World> globalWorldProxy;
         private readonly RoadPlugin roadsPlugin;
         private readonly TerrainGenerator genesisTerrain;
@@ -52,17 +51,18 @@ namespace Global.Dynamic
         private readonly ObjectProxy<Entity> cameraEntity;
         private readonly CameraSamplingData cameraSamplingData;
 
-        public event Action<bool> RealmChanged;
+        public event Action<bool>? RealmChanged;
 
-        public URLDomain CurrentRealm { get; private set; }
+        public URLDomain? CurrentRealm { get; private set; }
 
         public RealmNavigator(
             ILoadingScreen loadingScreen,
             IMapRenderer mapRenderer,
-            IRealmController realmController,
+            IGlobalRealmController realmController,
             ITeleportController teleportController,
             IRoomHub roomHub,
             IRemoteEntities remoteEntities,
+            IDecentralandUrlsSource decentralandUrlsSource,
             ObjectProxy<World> globalWorldProxy,
             RoadPlugin roadsPlugin,
             TerrainGenerator genesisTerrain,
@@ -85,16 +85,14 @@ namespace Global.Dynamic
             this.cameraSamplingData = cameraSamplingData;
             this.roomHub = roomHub;
             this.remoteEntities = remoteEntities;
+            this.decentralandUrlsSource = decentralandUrlsSource;
             this.globalWorldProxy = globalWorldProxy;
         }
 
         public async UniTask<bool> TryChangeRealmAsync(URLDomain realm, CancellationToken ct, Vector2Int parcelToTeleport = default)
         {
-            if (realm == CurrentRealm || realm == realmController.GetRealm().Ipfs.CatalystBaseUrl)
-            {
-                CurrentRealm = realm;
+            if (realm == CurrentRealm || realm == realmController.RealmData.Ipfs.CatalystBaseUrl)
                 return false;
-            }
 
             World world = globalWorldProxy.Object.EnsureNotNull();
 
@@ -150,7 +148,7 @@ namespace Global.Dynamic
         public async UniTask InitializeTeleportToSpawnPointAsync(AsyncLoadProcessReport teleportLoadReport, CancellationToken ct, Vector2Int parcelToTeleport)
         {
             World world = globalWorldProxy.Object.EnsureNotNull();
-            bool isGenesis = !realmController.GetRealm().ScenesAreFixed;
+            bool isGenesis = !realmController.RealmData.ScenesAreFixed;
             UniTask waitForSceneReadiness;
 
             if (isGenesis)
@@ -170,11 +168,14 @@ namespace Global.Dynamic
 
             try
             {
-                bool isGenesis = !realmController.GetRealm().ScenesAreFixed;
+                bool isGenesis = !realmController.RealmData.ScenesAreFixed;
 
-                if (!isLocal && !isGenesis) { await TryChangeRealmAsync(genesisDomain, ct, parcel); }
-                else
+                if (!isLocal && !isGenesis)
                 {
+                    var url = URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Genesis));
+                    await TryChangeRealmAsync(url, ct, parcel);
+                }
+                else
                     await loadingScreen.ShowWhileExecuteTaskAsync(async parentLoadReport =>
                     {
                         ct.ThrowIfCancellationRequested();
@@ -188,7 +189,6 @@ namespace Global.Dynamic
 
                         parentLoadReport.SetProgress(RealFlowLoadingStatus.PROGRESS[Completed]);
                     }, ct);
-                }
             }
             catch (TimeoutException) { }
         }
@@ -197,7 +197,7 @@ namespace Global.Dynamic
         {
             if (landscapeEnabled)
             {
-                bool isGenesis = !realmController.GetRealm().ScenesAreFixed;
+                bool isGenesis = !realmController.RealmData.ScenesAreFixed;
 
                 if (isGenesis)
                 {
@@ -212,14 +212,14 @@ namespace Global.Dynamic
                 else
                 {
                     genesisTerrain.Hide();
-                    await GenerateWorldTerrainAsync((uint)realmController.GetRealm().GetHashCode(), landscapeLoadReport, ct);
+                    await GenerateWorldTerrainAsync((uint)realmController.RealmData.GetHashCode(), landscapeLoadReport, ct);
                 }
             }
         }
 
         public async UniTask SwitchMiscVisibilityAsync()
         {
-            bool isGenesis = !realmController.GetRealm().ScenesAreFixed;
+            bool isGenesis = !realmController.RealmData.ScenesAreFixed;
 
             RealmChanged?.Invoke(isGenesis);
             mapRenderer.SetSharedLayer(MapLayer.PlayerMarker, isGenesis);
@@ -235,9 +235,12 @@ namespace Global.Dynamic
 
         private async UniTask<UniTask> TeleportToWorldSpawnPointAsync(Vector2Int parcelToTeleport, AsyncLoadProcessReport processReport, CancellationToken ct)
         {
-            AssetPromise<SceneEntityDefinition, GetSceneDefinition>[] promises = await WaitForFixedScenePromisesAsync(ct);
+            AssetPromise<SceneEntityDefinition, GetSceneDefinition>[] promises = await realmController.WaitForFixedScenePromisesAsync(ct);
 
-            if (!promises.Any(p => p.Result!.Value.Asset!.metadata.scene.DecodedParcels.Contains(parcelToTeleport)))
+            if (!promises.Any(p =>
+                    p.Result.HasValue
+                    && (p.Result.Value.Asset?.metadata.scene.DecodedParcels.Contains(parcelToTeleport) ?? false)
+                ))
                 parcelToTeleport = promises[0].Result!.Value.Asset!.metadata.scene.DecodedBase;
 
             WaitForSceneReadiness? waitForSceneReadiness = await teleportController.TeleportToSceneSpawnPointAsync(parcelToTeleport, processReport, ct);
@@ -257,7 +260,7 @@ namespace Global.Dynamic
             if (!worldsTerrain.IsInitialized)
                 return;
 
-            AssetPromise<SceneEntityDefinition, GetSceneDefinition>[] promises = await WaitForFixedScenePromisesAsync(ct);
+            AssetPromise<SceneEntityDefinition, GetSceneDefinition>[] promises = await realmController.WaitForFixedScenePromisesAsync(ct);
 
             var decodedParcelsAmount = 0;
 
@@ -274,16 +277,6 @@ namespace Global.Dynamic
 
                 await worldsTerrain.GenerateTerrainAsync(ownedParcels, worldSeed, processReport, cancellationToken: ct);
             }
-        }
-
-        private async UniTask<AssetPromise<SceneEntityDefinition, GetSceneDefinition>[]> WaitForFixedScenePromisesAsync(CancellationToken ct)
-        {
-            FixedScenePointers fixedScenePointers = default;
-
-            await UniTask.WaitUntil(() => realmController.GlobalWorld.EcsWorld.TryGet(realmController.RealmEntity, out fixedScenePointers)
-                                          && fixedScenePointers.AllPromisesResolved, cancellationToken: ct);
-
-            return fixedScenePointers.Promises!;
         }
     }
 }

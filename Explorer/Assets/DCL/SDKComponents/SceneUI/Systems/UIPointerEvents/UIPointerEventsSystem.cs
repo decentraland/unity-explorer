@@ -45,7 +45,6 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIPointerEvents
         {
             if (sdkModel.IsDirty)
             {
-                uiTransformComponent.Transform.pickingMode = PickingMode.Position;
                 uiTransformComponent.RegisterPointerCallbacks();
             }
 

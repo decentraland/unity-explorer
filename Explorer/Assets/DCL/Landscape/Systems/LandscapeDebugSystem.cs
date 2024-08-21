@@ -17,7 +17,6 @@ namespace DCL.Landscape.Systems
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     public partial class LandscapeDebugSystem : BaseUnityLoopSystem
     {
-        private const float UNITY_DEFAULT_LOD_BIAS = 0.8f;
         private readonly SatelliteFloor floor;
         private readonly RealmPartitionSettingsAsset realmPartitionSettings;
         private readonly LandscapeData landscapeData;
@@ -40,8 +39,8 @@ namespace DCL.Landscape.Systems
             cullDistance = new ElementBinding<int>((int)landscapeData.DetailDistance);
             lastCullDistanceApplied = (int)landscapeData.DetailDistance;
 
-            debugBuilder.AddWidget("Landscape")
-                        .AddIntFieldWithConfirmation(realmPartitionSettings.MaxLoadingDistanceInParcels, "Set Load Radius", OnLoadRadiusConfirm)
+            debugBuilder.TryAddWidget("Landscape")
+                        ?.AddIntFieldWithConfirmation(realmPartitionSettings.MaxLoadingDistanceInParcels, "Set Load Radius", OnLoadRadiusConfirm)
                         .AddIntSliderField("LOD bias %", lodBias, 1, 250)
                         .AddIntSliderField("Detail Density %", detailDensity, 0, 100)
                         .AddIntSliderField("Grass Distance", detailDistance, 0, 300)
@@ -73,7 +72,7 @@ namespace DCL.Landscape.Systems
 
         protected override void Update(float t)
         {
-            float tempLodBias = UNITY_DEFAULT_LOD_BIAS * lodBias.Value / 100f;
+            float tempLodBias = lodBias.Value / 100f;
             float tempDensity = detailDensity.Value / 100f;
             int tempDistance = detailDistance.Value;
 

@@ -27,7 +27,7 @@ namespace DCL.Backpack.EmotesSection
 
         private readonly BackpackGridView view;
         private readonly BackpackCommandBus commandBus;
-        private readonly BackpackEventBus eventBus;
+        private readonly IBackpackEventBus eventBus;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly NftTypeIconSO rarityBackgrounds;
         private readonly NFTColorsSO rarityColors;
@@ -52,7 +52,7 @@ namespace DCL.Backpack.EmotesSection
         public BackpackEmoteGridController(
             BackpackGridView view,
             BackpackCommandBus commandBus,
-            BackpackEventBus eventBus,
+            IBackpackEventBus eventBus,
             IWeb3IdentityCache web3IdentityCache,
             NftTypeIconSO rarityBackgrounds,
             NFTColorsSO rarityColors,
@@ -266,7 +266,7 @@ namespace DCL.Backpack.EmotesSection
             commandBus.SendCommand(new BackpackUnEquipEmoteCommand(itemId));
 
         private void EquipItem(string itemId) =>
-            commandBus.SendCommand(new BackpackEquipEmoteCommand(itemId));
+            commandBus.SendCommand(new BackpackEquipEmoteCommand(itemId, null, true));
 
         private void OnFilterCategory(string category)
         {
@@ -336,7 +336,7 @@ namespace DCL.Backpack.EmotesSection
             backpackItemView.EquippedSlotLabel.gameObject.SetActive(false);
         }
 
-        private void OnEquip(int slot, IEmote emote)
+        private void OnEquip(int slot, IEmote emote, bool _)
         {
             if (!usedPoolItems.TryGetValue(emote.GetUrn(), out BackpackEmoteGridItemView backpackItemView)) return;
             backpackItemView.IsEquipped = true;
