@@ -5,6 +5,7 @@ using DCL.UI;
 using DCL.WebRequests;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace DCL.Passport.Modules.Badges
 {
@@ -17,7 +18,10 @@ namespace DCL.Passport.Modules.Badges
         public GameObject MainLoadingSpinner { get; private set; }
 
         [field: SerializeField]
-        public ImageView Badge2DImage { get; private set; }
+        public ImageView LockedBadge2DImage { get; private set; }
+
+        [field: SerializeField]
+        public RawImage UnlockedBadge3DImage { get; private set; }
 
         [field: SerializeField]
         public Sprite DefaultBadgeSprite { get; private set; }
@@ -61,12 +65,6 @@ namespace DCL.Passport.Modules.Badges
         [field: SerializeField]
         public TMP_Text NextTierProgressValueText { get; private set; }
 
-        [field: SerializeField]
-        public Color UnlockedImageColor { get; private set; }
-
-        [field: SerializeField]
-        public Color LockedImageColor { get; private set; }
-
         private ImageController? imageController;
 
         public void ConfigureImageController(IWebRequestController webRequestController)
@@ -74,7 +72,7 @@ namespace DCL.Passport.Modules.Badges
             if (imageController != null)
                 return;
 
-            imageController = new ImageController(Badge2DImage, webRequestController);
+            imageController = new ImageController(LockedBadge2DImage, webRequestController);
         }
 
         public void StopLoadingImage() =>
@@ -83,7 +81,8 @@ namespace DCL.Passport.Modules.Badges
         public void Setup(BadgeInfo badgeInfo)
         {
             TierSection.SetActive(badgeInfo.tiers.Length > 0);
-            Badge2DImage.SetColor(badgeInfo.isLocked ? LockedImageColor : UnlockedImageColor);
+            LockedBadge2DImage.gameObject.SetActive(badgeInfo.isLocked);
+            UnlockedBadge3DImage.gameObject.SetActive(!badgeInfo.isLocked);
             imageController?.SetImage(DefaultBadgeSprite);
         }
 
@@ -95,7 +94,7 @@ namespace DCL.Passport.Modules.Badges
                 BadgeDateText.text = !badgeInfo.isLocked ? $"Unlocked: {PassportUtils.FormatTimestampDate(badgeInfo.completedAt)}" : "Locked";
                 BadgeDescriptionText.text = badgeInfo.description;
 
-                if (!string.IsNullOrEmpty(badgeInfo.image))
+                if (!string.IsNullOrEmpty(badgeInfo.image) && badgeInfo.isLocked)
                     imageController?.RequestImage(badgeInfo.image, hideImageWhileLoading: true);
             }
             else
@@ -117,9 +116,6 @@ namespace DCL.Passport.Modules.Badges
             BadgeNameText.text = $"{badgeInfo.name} {tier.name}";
             BadgeDateText.text = !tier.isLocked ? $"Unlocked: {PassportUtils.FormatTimestampDate(tier.awardedAt)}" : "Locked";
             BadgeDescriptionText.text = tier.description;
-
-            if (!string.IsNullOrEmpty(tier.image))
-                imageController?.RequestImage(tier.image, hideImageWhileLoading: true);
         }
 
         public void SetAsLoading(bool isLoading)
