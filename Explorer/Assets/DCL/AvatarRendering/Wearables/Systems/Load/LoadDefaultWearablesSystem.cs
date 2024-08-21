@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using AssetManagement;
 using CommunicationData.URLHelpers;
+using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
@@ -85,15 +86,15 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
             boneWeights[0].weight0 = 1; // 100% influence from the first (and only) bone
             mesh.boneWeights = boneWeights;
 
-            var rendererInfos = new List<WearableRegularAsset.RendererInfo>();
+            var rendererInfos = new List<AttachmentRegularAsset.RendererInfo>();
             foreach (var skinnedMeshRenderer in emptyDefaultWearable.GetComponentsInChildren<SkinnedMeshRenderer>())
             {
                 skinnedMeshRenderer.sharedMesh = mesh;
-                rendererInfos.Add(new WearableRegularAsset.RendererInfo(skinnedMeshRenderer, skinnedMeshRenderer.sharedMaterial));
+                rendererInfos.Add(new AttachmentRegularAsset.RendererInfo(skinnedMeshRenderer, skinnedMeshRenderer.sharedMaterial));
             }
 
             IWearable emptyWearable = wearableCache.GetOrAddByDTO(wearableDTO, false);
-            var wearableAsset = new WearableRegularAsset(emptyDefaultWearable, rendererInfos, null);
+            var wearableAsset = new AttachmentRegularAsset(emptyDefaultWearable, rendererInfos, null);
             wearableAsset.AddReference();
 
             // only game-objects here

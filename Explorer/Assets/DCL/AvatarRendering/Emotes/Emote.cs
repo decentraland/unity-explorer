@@ -1,4 +1,5 @@
 using DCL.AvatarRendering.Loading;
+using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Loading.DTO;
 using DCL.AvatarRendering.Wearables.Helpers;
@@ -11,7 +12,7 @@ namespace DCL.AvatarRendering.Emotes
     public class Emote : IEmote
     {
         public StreamableLoadingResult<SceneAssetBundleManifest>? ManifestResult { get; set; }
-        public StreamableLoadingResult<WearableRegularAsset>?[] AssetResults { get; } = new StreamableLoadingResult<WearableRegularAsset>?[BodyShape.COUNT];
+        public StreamableLoadingResult<AttachmentRegularAsset>?[] AssetResults { get; } = new StreamableLoadingResult<AttachmentRegularAsset>?[BodyShape.COUNT];
         public StreamableLoadingResult<Sprite>? ThumbnailAssetResult { get; set; }
         public StreamableLoadingResult<EmoteDTO> Model { get; set; }
         public StreamableLoadingResult<AudioClip>?[] AudioAssetResults { get; set; } = new StreamableLoadingResult<AudioClip>?[BodyShape.COUNT];

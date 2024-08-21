@@ -1,4 +1,5 @@
 ﻿using CommunicationData.URLHelpers;
+using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.Optimization.PerformanceBudgeting;
@@ -143,7 +144,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
                 for (var j = 0; j < assets.Results?.Length; j++)
                 {
-                    StreamableLoadingResult<WearableAssetBase>? result = assets.Results[j];
+                    StreamableLoadingResult<AttachmentAssetBase>? result = assets.Results[j];
 
                     if (result is not { Succeeded: true })
                     {
@@ -151,7 +152,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                         continue;
                     }
 
-                    WearableAssetBase? wearableAsset = result.Value.Asset;
+                    AttachmentAssetBase? wearableAsset = result.Value.Asset;
 
                     if (wearableAsset is { ReferenceCount: 0 })
                     {

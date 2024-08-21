@@ -23,6 +23,7 @@ using System.Threading;
 using DCL.AvatarRendering;
 using DCL.AvatarRendering.AvatarShape;
 using DCL.AvatarRendering.AvatarShape.Helpers;
+using DCL.AvatarRendering.Loading.Assets;
 using DCL.Multiplayer.Profiles.Tables;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -47,7 +48,7 @@ namespace DCL.PluginSystem.Global
         private readonly IPerformanceBudget memoryBudget;
         private readonly IRealmData realmData;
 
-        private readonly WearableAssetsCache wearableAssetsCache = new (100);
+        private readonly AttachmentsAssetsCache attachmentsAssetsCache = new (100);
 
         // late init
         private IComponentPool<AvatarBase> avatarPoolRegistry = null!;
@@ -100,12 +101,12 @@ namespace DCL.PluginSystem.Global
             this.wearableCache = wearableCache;
             componentPoolsRegistry = poolsRegistry;
 
-            cacheCleaner.Register(wearableAssetsCache);
+            cacheCleaner.Register(attachmentsAssetsCache);
         }
 
         public void Dispose()
         {
-            wearableAssetsCache.Dispose();
+            attachmentsAssetsCache.Dispose();
         }
 
         public async UniTask InitializeAsync(AvatarShapeSettings settings, CancellationToken ct)
@@ -137,7 +138,7 @@ namespace DCL.PluginSystem.Global
                 cacheCleaner.Register(extendedObjectPool.Pool);
 
             AvatarInstantiatorSystem.InjectToWorld(ref builder, frameTimeCapBudget, memoryBudget, avatarPoolRegistry, avatarMaterialPoolHandler,
-                computeShaderPool, wearableAssetsCache, skinningStrategy, vertOutBuffer, mainPlayerAvatarBaseProxy, defaultFaceFeaturesHandler,
+                computeShaderPool, attachmentsAssetsCache, skinningStrategy, vertOutBuffer, mainPlayerAvatarBaseProxy, defaultFaceFeaturesHandler,
                 wearableCache);
 
             MakeVertsOutBufferDefragmentationSystem.InjectToWorld(ref builder, vertOutBuffer, skinningStrategy);
@@ -146,7 +147,7 @@ namespace DCL.PluginSystem.Global
             FinishAvatarMatricesCalculationSystem.InjectToWorld(ref builder, skinningStrategy);
 
             AvatarShapeVisibilitySystem.InjectToWorld(ref builder);
-            AvatarCleanUpSystem.InjectToWorld(ref builder, frameTimeCapBudget, vertOutBuffer, avatarMaterialPoolHandler, avatarPoolRegistry, computeShaderPool, wearableAssetsCache, mainPlayerAvatarBaseProxy);
+            AvatarCleanUpSystem.InjectToWorld(ref builder, frameTimeCapBudget, vertOutBuffer, avatarMaterialPoolHandler, avatarPoolRegistry, computeShaderPool, attachmentsAssetsCache, mainPlayerAvatarBaseProxy);
             TrackTransformMatrixSystem.InjectToWorld(ref builder);
 
             NametagPlacementSystem.InjectToWorld(ref builder, nametagViewPool, chatEntryConfiguration, nametagsData, chatBubbleConfiguration);

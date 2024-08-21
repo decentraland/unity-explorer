@@ -4,18 +4,18 @@ using System.Collections.Generic;
 using UnityEngine;
 using Utility;
 
-namespace DCL.AvatarRendering.Wearables.Helpers
+namespace DCL.AvatarRendering.Loading.Assets
 {
     /// <summary>
     ///     We need to store the original asset to be able to release it later
     /// </summary>
-    public readonly struct CachedWearable : IDisposable
+    public readonly struct CachedAttachment : IDisposable
     {
-        public readonly WearableRegularAsset OriginalAsset;
+        public readonly AttachmentRegularAsset OriginalAsset;
         public readonly GameObject Instance;
         public readonly List<Renderer> Renderers;
 
-        public CachedWearable(WearableRegularAsset originalAsset, GameObject instance)
+        public CachedAttachment(AttachmentRegularAsset originalAsset, GameObject instance)
         {
             OriginalAsset = originalAsset;
             Instance = instance;
@@ -32,7 +32,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             ProfilingCounters.CachedWearablesAmount.Value--;
         }
 
-        public static implicit operator GameObject(CachedWearable cachedWearable) =>
-            cachedWearable.Instance;
+        public static implicit operator GameObject(CachedAttachment cachedAttachment) =>
+            cachedAttachment.Instance;
     }
 }

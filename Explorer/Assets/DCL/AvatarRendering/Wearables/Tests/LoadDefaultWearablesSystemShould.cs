@@ -1,4 +1,5 @@
 ﻿using AssetManagement;
+using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
@@ -88,7 +89,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
             IWearable upperBodyDefaultWearable =
                 wearableCache.GetDefaultWearable(BodyShape.MALE, WearablesConstants.Categories.UPPER_BODY);
 
-            Assert.AreEqual(((WearableRegularAsset)tiaraDefaultWearable.WearableAssetResults[BodyShape.MALE].Results[0].Value.Asset).MainAsset,
+            Assert.AreEqual(((AttachmentRegularAsset)tiaraDefaultWearable.WearableAssetResults[BodyShape.MALE].Results[0].Value.Asset).MainAsset,
                 emptyDefaultWearable);
 
             Assert.AreEqual(tiaraDefaultWearable.GetUrn().ToString(), WearablesConstants.EMPTY_DEFAULT_WEARABLE);

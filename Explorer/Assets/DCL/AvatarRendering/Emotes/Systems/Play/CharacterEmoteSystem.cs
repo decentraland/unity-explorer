@@ -6,6 +6,7 @@ using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.AvatarShape;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
+using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Character.CharacterMotion.Components;
@@ -171,13 +172,13 @@ namespace DCL.AvatarRendering.Emotes.Play
                     }
 
                     BodyShape bodyShape = avatarShapeComponent.BodyShape;
-                    StreamableLoadingResult<WearableRegularAsset>? streamableAsset = emote.AssetResults[bodyShape];
+                    StreamableLoadingResult<AttachmentRegularAsset>? streamableAsset = emote.AssetResults[bodyShape];
 
                     // the emote is still loading? dont remove the intent yet, wait for it
                     if (streamableAsset == null)
                         return;
 
-                    StreamableLoadingResult<WearableRegularAsset> streamableAssetValue = streamableAsset.Value;
+                    StreamableLoadingResult<AttachmentRegularAsset> streamableAssetValue = streamableAsset.Value;
                     GameObject? mainAsset;
 
                     if (streamableAssetValue is { Succeeded: false } || (mainAsset = streamableAssetValue.Asset?.MainAsset) == null)

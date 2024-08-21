@@ -1,4 +1,5 @@
 using CommunicationData.URLHelpers;
+using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Thumbnails.Systems;
 using DCL.AvatarRendering.Wearables.Components;
@@ -22,7 +23,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
         public void Setup()
         {
             wearableCache = new WearableCache();
-            mockedDefaultAB = new StreamableLoadingResult<WearableAssetBase>(new WearableRegularAsset(null, null, null));
+            mockedDefaultAB = new StreamableLoadingResult<AttachmentAssetBase>(new AttachmentRegularAsset(null, null, null));
 
             IWearable mockDefaultWearable = CreateMockWearable(defaultWearableUrn, false);
             wearableCache.wearablesCache.Add(mockDefaultWearable.GetUrn(), mockDefaultWearable);
@@ -30,7 +31,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
             system = new ResolveAvatarAttachmentThumbnailSystem(world);
         }
 
-        private StreamableLoadingResult<WearableAssetBase> mockedDefaultAB;
+        private StreamableLoadingResult<AttachmentAssetBase> mockedDefaultAB;
         private readonly string defaultWearableUrn = "urn:decentraland:off-chain:base-avatars:green_hoodie";
         private readonly string unisexTestUrn = "urn:decentraland:off-chain:base-avatars:red_hoodie_unisex";
         private WearableCache wearableCache;

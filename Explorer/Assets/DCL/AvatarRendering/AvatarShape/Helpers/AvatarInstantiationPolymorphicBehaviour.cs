@@ -1,5 +1,6 @@
 ﻿using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
+using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
@@ -12,7 +13,7 @@ namespace DCL.AvatarRendering.AvatarShape.Helpers
     {
         public static GameObject? AppendToAvatar(
             this IWearable resultWearable,
-            IWearableAssetsCache wearableAssetsCache,
+            IAttachmentsAssetsCache wearableAssetsCache,
             ISet<string> usedCategories,
             ref FacialFeaturesTextures facialFeaturesTextures,
             ref AvatarShapeComponent avatarShapeComponent,
@@ -29,20 +30,20 @@ namespace DCL.AvatarRendering.AvatarShape.Helpers
                 case WearableType.FacialFeature:
 
                     var texturesSet = facialFeaturesTextures.Value[category];
-                    texturesSet[TextureArrayConstants.MAINTEX_ORIGINAL_TEXTURE] = ((WearableTextureAsset)mainAsset).Texture;
+                    texturesSet[TextureArrayConstants.MAINTEX_ORIGINAL_TEXTURE] = ((AttachmentTextureAsset)mainAsset).Texture;
 
                     // Mask is optional
                     var maskAssetRes = originalAssets[WearablePolymorphicBehaviour.MASK_ASSET_INDEX];
 
                     if (maskAssetRes is { Asset: not null })
-                        texturesSet[TextureArrayConstants.MASK_ORIGINAL_TEXTURE_ID] = ((WearableTextureAsset)maskAssetRes.Value.Asset!).Texture;
+                        texturesSet[TextureArrayConstants.MASK_ORIGINAL_TEXTURE_ID] = ((AttachmentTextureAsset)maskAssetRes.Value.Asset!).Texture;
 
                     return null;
                 default:
                 {
-                    var regularAsset = (WearableRegularAsset)mainAsset;
+                    var regularAsset = (AttachmentRegularAsset)mainAsset;
 
-                    CachedWearable instantiatedWearable =
+                    var instantiatedWearable =
                         wearableAssetsCache.InstantiateWearable(regularAsset, parent);
 
                     avatarShapeComponent.InstantiatedWearables.Add(instantiatedWearable);

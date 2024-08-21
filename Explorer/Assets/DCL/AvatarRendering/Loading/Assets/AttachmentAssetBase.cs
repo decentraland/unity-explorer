@@ -1,23 +1,22 @@
 ﻿using DCL.Optimization.Pools;
 using DCL.Profiling;
 using ECS.StreamableLoading.AssetBundles;
-using JetBrains.Annotations;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Assertions;
 using Utility.Primitives;
 
-namespace DCL.AvatarRendering.Wearables.Helpers
+namespace DCL.AvatarRendering.Loading.Assets
 {
     /// <summary>
     /// Facial feature is represented by the main texture and the optional mask
     /// </summary>
-    public class WearableTextureAsset : WearableAssetBase
+    public class AttachmentTextureAsset : AttachmentAssetBase
     {
         public readonly Texture Texture;
 
-        public WearableTextureAsset(Texture texture, AssetBundleData assetBundleData)  : base(assetBundleData)
+        public AttachmentTextureAsset(Texture texture, AssetBundleData assetBundleData)  : base(assetBundleData)
         {
             this.Texture = texture;
         }
@@ -27,16 +26,16 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         }
     }
 
-    public class WearableRegularAsset : WearableAssetBase
+    public class AttachmentRegularAsset : AttachmentAssetBase
     {
-        internal static readonly ListObjectPool<RendererInfo> RENDERER_INFO_POOL = new (listInstanceDefaultCapacity: 3, defaultCapacity: 500);
+        public static readonly ListObjectPool<RendererInfo> RENDERER_INFO_POOL = new (listInstanceDefaultCapacity: 3, defaultCapacity: 500);
 
         private readonly List<RendererInfo> rendererInfos;
         public readonly GameObject MainAsset;
 
         public IReadOnlyList<RendererInfo> RendererInfos => rendererInfos;
 
-        public WearableRegularAsset(GameObject mainAsset, List<RendererInfo> rendererInfos, AssetBundleData? assetBundleData) : base(assetBundleData)
+        public AttachmentRegularAsset(GameObject mainAsset, List<RendererInfo> rendererInfos, AssetBundleData? assetBundleData) : base(assetBundleData)
         {
             MainAsset = mainAsset;
             this.rendererInfos = rendererInfos;
@@ -81,13 +80,13 @@ namespace DCL.AvatarRendering.Wearables.Helpers
     /// <summary>
     ///     Represents an original wearable asset
     /// </summary>
-    public abstract class WearableAssetBase : IDisposable
+    public abstract class AttachmentAssetBase : IDisposable
     {
         protected readonly AssetBundleData? assetBundleData;
 
         private bool disposed;
 
-        protected WearableAssetBase(AssetBundleData? assetBundleData)
+        protected AttachmentAssetBase(AssetBundleData? assetBundleData)
         {
             this.assetBundleData = assetBundleData;
         }

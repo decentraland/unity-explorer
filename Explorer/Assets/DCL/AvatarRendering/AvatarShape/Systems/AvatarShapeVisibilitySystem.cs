@@ -58,7 +58,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         [Query]
         private void UpdateWearableRendererBounds(ref AvatarShapeComponent avatarShape)
         {
-            foreach (CachedWearable wearable in avatarShape.InstantiatedWearables)
+            foreach (var wearable in avatarShape.InstantiatedWearables)
             {
                 foreach (Renderer renderer in wearable.Renderers)
                 {
@@ -84,7 +84,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
         private static void ToggleAvatarShape(ref AvatarShapeComponent avatarShape, bool toggle)
         {
-            foreach (CachedWearable wearable in avatarShape.InstantiatedWearables)
+            foreach (var wearable in avatarShape.InstantiatedWearables)
             foreach (Renderer renderer in wearable.Renderers)
                 renderer.enabled = toggle;
         }

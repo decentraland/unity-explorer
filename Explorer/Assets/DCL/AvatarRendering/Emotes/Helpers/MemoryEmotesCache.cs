@@ -1,4 +1,5 @@
 using CommunicationData.URLHelpers;
+using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Optimization.PerformanceBudgeting;
@@ -127,8 +128,8 @@ namespace DCL.AvatarRendering.Emotes
 
             for (var i = 0; i < emote.AssetResults.Length; i++)
             {
-                StreamableLoadingResult<WearableRegularAsset>? result = emote.AssetResults[i];
-                WearableRegularAsset? wearableAsset = emote.AssetResults[i]?.Asset;
+                StreamableLoadingResult<AttachmentRegularAsset>? result = emote.AssetResults[i];
+                AttachmentRegularAsset? wearableAsset = emote.AssetResults[i]?.Asset;
 
                 if (wearableAsset == null || wearableAsset.ReferenceCount == 0)
                 {

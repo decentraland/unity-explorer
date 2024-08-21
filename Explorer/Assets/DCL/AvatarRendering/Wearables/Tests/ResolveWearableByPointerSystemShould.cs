@@ -1,6 +1,7 @@
 using Arch.Core;
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Loading;
+using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Loading.DTO;
 using DCL.AvatarRendering.Wearables.Components;
@@ -35,9 +36,9 @@ namespace DCL.AvatarRendering.Wearables.Tests
 
             wearableCache = new WearableCache();
 
-            mockedAB = new StreamableLoadingResult<WearableAssetBase>(new WearableRegularAsset(null, null, null));
+            mockedAB = new StreamableLoadingResult<AttachmentAssetBase>(new AttachmentRegularAsset(null, null, null));
 
-            mockedDefaultAB = new StreamableLoadingResult<WearableAssetBase>(new WearableRegularAsset(null, null, null));
+            mockedDefaultAB = new StreamableLoadingResult<AttachmentAssetBase>(new AttachmentRegularAsset(null, null, null));
 
             IWearable mockDefaultWearable = CreateMockWearable(defaultWearableUrn, false, true);
 
@@ -55,9 +56,9 @@ namespace DCL.AvatarRendering.Wearables.Tests
         private readonly string unisexTestUrn = "urn:decentraland:off-chain:base-avatars:red_hoodie_unisex";
         private readonly string defaultWearableUrn = "urn:decentraland:off-chain:base-avatars:green_hoodie";
 
-        private StreamableLoadingResult<WearableAssetBase> mockedDefaultAB;
+        private StreamableLoadingResult<AttachmentAssetBase> mockedDefaultAB;
         private StreamableLoadingResult<SceneAssetBundleManifest> mockedABManifest;
-        private StreamableLoadingResult<WearableAssetBase> mockedAB;
+        private StreamableLoadingResult<AttachmentAssetBase> mockedAB;
 
         private IWearable CreateMockWearable(URN urn, bool isUnisex, bool isDefaultWearable)
         {

@@ -13,6 +13,7 @@ using System.Threading;
 using AssetManagement;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Loading;
+using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Loading.DTO;
 using DCL.AvatarRendering.Thumbnails.Utils;
@@ -99,6 +100,13 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
             CATEGORIES_POOL.Release(hidingList);
             DictionaryPool<string, IWearable>.Release(wearablesByCategory);
+        }
+
+
+        public static void SetAssetResult(this IWearable wearable, BodyShape bodyShape, int index, StreamableLoadingResult<AttachmentAssetBase> wearableResult)
+        {
+            ref var asset = ref wearable.WearableAssetResults[bodyShape];
+            asset.Results[index] = wearableResult;
         }
     }
 }

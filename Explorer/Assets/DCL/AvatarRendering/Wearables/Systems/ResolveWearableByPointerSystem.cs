@@ -5,6 +5,7 @@ using Arch.SystemGroups.DefaultSystemGroups;
 using AssetManagement;
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Loading;
+using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Loading.DTO;
 using DCL.AvatarRendering.Loading.Systems.Abstract;
@@ -306,7 +307,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
             {
                 ReportHub.LogError(GetReportCategory(), $"Default wearable {wearable.DTO.GetHash()} failed to load");
 
-                StreamableLoadingResult<WearableAssetBase> failedResult = new StreamableLoadingResult<AssetBundleData>(new Exception("Default wearable failed to load"))
+                StreamableLoadingResult<AttachmentAssetBase> failedResult = new StreamableLoadingResult<AssetBundleData>(new Exception("Default wearable failed to load"))
                    .ToWearableAsset(wearable);
 
                 if (wearable.IsUnisex() && wearable.HasSameModelsForAllGenders())
@@ -323,7 +324,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 {
                     // the destination array might be not created if DTO itself has failed to load
                     ref var result = ref wearable.WearableAssetResults[bs];
-                    result.Results ??= new StreamableLoadingResult<WearableAssetBase>?[1]; // default capacity, can't tell without the DTO
+                    result.Results ??= new StreamableLoadingResult<AttachmentAssetBase>?[1]; // default capacity, can't tell without the DTO
                     result.ReplacedWithDefaults = true;
                     result.Results[0] = failedResult;
                 }
@@ -348,7 +349,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
                 // the destination array might be not created if DTO itself has failed to load
                 ref var result = ref wearable.WearableAssetResults[bs];
-                result.Results ??= new StreamableLoadingResult<WearableAssetBase>?[defaultWearableResults.Results.Length];
+                result.Results ??= new StreamableLoadingResult<AttachmentAssetBase>?[defaultWearableResults.Results.Length];
                 result.ReplacedWithDefaults = true;
 
                 Array.Copy(defaultWearableResults.Results, result.Results, defaultWearableResults.Results.Length);
@@ -382,7 +383,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
         private static void SetWearableResult(IWearable wearable, StreamableLoadingResult<AssetBundleData> result, in BodyShape bodyShape, int index)
         {
-            StreamableLoadingResult<WearableAssetBase> wearableResult = result.ToWearableAsset(wearable);
+            StreamableLoadingResult<AttachmentAssetBase> wearableResult = result.ToWearableAsset(wearable);
 
             if (wearable.IsUnisex() && wearable.HasSameModelsForAllGenders())
             {

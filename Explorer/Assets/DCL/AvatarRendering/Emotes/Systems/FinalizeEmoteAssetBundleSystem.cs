@@ -2,6 +2,7 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
@@ -98,7 +99,7 @@ namespace DCL.AvatarRendering.Emotes
             {
                 if (result.Succeeded)
                 {
-                    var asset = new StreamableLoadingResult<WearableRegularAsset>(result.ToRegularAsset());
+                    var asset = new StreamableLoadingResult<AttachmentRegularAsset>(result.ToRegularAsset());
 
                     if (emote.IsUnisex())
                     {

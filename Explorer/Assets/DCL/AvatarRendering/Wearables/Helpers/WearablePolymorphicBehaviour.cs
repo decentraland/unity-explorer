@@ -2,6 +2,7 @@ using Arch.Core;
 using AssetManagement;
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Loading;
+using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Loading.DTO;
 using DCL.AvatarRendering.Wearables.Components;
@@ -131,7 +132,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             void SetByRef(BodyShape bs)
             {
                 ref WearableAssets resultForBody = ref wearable.WearableAssetResults[bs];
-                resultForBody.Results ??= new StreamableLoadingResult<WearableAssetBase>?[size];
+                resultForBody.Results ??= new StreamableLoadingResult<AttachmentAssetBase>?[size];
             }
         }
 
@@ -147,7 +148,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                     out string mainFileHash))
             {
                 // If there is no mask, we don't need to create a promise for it, and it's not an exception
-                wearableAssets.Results[MASK_ASSET_INDEX] = new StreamableLoadingResult<WearableAssetBase>((WearableTextureAsset)null);
+                wearableAssets.Results[MASK_ASSET_INDEX] = new StreamableLoadingResult<AttachmentAssetBase>((AttachmentTextureAsset)null);
                 return false;
             }
 
@@ -178,7 +179,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             if (!wearable.TryGetMainFileHash(bodyShape, out string? mainFileHash))
             {
                 wearableAssets.Results[MAIN_ASSET_INDEX] =
-                    new StreamableLoadingResult<WearableAssetBase>(new Exception("Main file hash not found"));
+                    new StreamableLoadingResult<AttachmentAssetBase>(new Exception("Main file hash not found"));
 
                 return false;
             }
@@ -220,51 +221,51 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             world.Create(promise, wearable, intention.BodyShape, index); // Add an index to the promise so we know to which slot of the WearableAssets it belongs
         }
 
-        public static StreamableLoadingResult<WearableAssetBase> ToWearableAsset(this StreamableLoadingResult<AssetBundleData> result, IWearable wearable)
+        public static StreamableLoadingResult<AttachmentAssetBase> ToWearableAsset(this StreamableLoadingResult<AssetBundleData> result, IWearable wearable)
         {
-            if (!result.Succeeded) return new StreamableLoadingResult<WearableAssetBase>(result.Exception!);
+            if (!result.Succeeded) return new StreamableLoadingResult<AttachmentAssetBase>(result.Exception!);
 
             switch (wearable.Type)
             {
                 case WearableType.FacialFeature:
-                    return new StreamableLoadingResult<WearableAssetBase>(new WearableTextureAsset(result.Asset!.GetMainAsset<Texture>(), result.Asset));
+                    return new StreamableLoadingResult<AttachmentAssetBase>(new AttachmentTextureAsset(result.Asset!.GetMainAsset<Texture>(), result.Asset));
                 default:
-                    return new StreamableLoadingResult<WearableAssetBase>(ToRegularAsset(result));
+                    return new StreamableLoadingResult<AttachmentAssetBase>(ToRegularAsset(result));
             }
         }
 
-        public static WearableRegularAsset ToRegularAsset(this StreamableLoadingResult<AssetBundleData> result)
+        public static AttachmentRegularAsset ToRegularAsset(this StreamableLoadingResult<AssetBundleData> result)
         {
             GameObject go = result.Asset!.GetMainAsset<GameObject>();
 
             // collect all renderers
-            List<WearableRegularAsset.RendererInfo> rendererInfos = WearableRegularAsset.RENDERER_INFO_POOL.Get();
+            List<AttachmentRegularAsset.RendererInfo> rendererInfos = AttachmentRegularAsset.RENDERER_INFO_POOL.Get();
 
             using PoolExtensions.Scope<List<SkinnedMeshRenderer>> pooledList = go.GetComponentsInChildrenIntoPooledList<SkinnedMeshRenderer>();
 
             foreach (SkinnedMeshRenderer skinnedMeshRenderer in pooledList.Value)
-                rendererInfos.Add(new WearableRegularAsset.RendererInfo(skinnedMeshRenderer, skinnedMeshRenderer.sharedMaterial));
+                rendererInfos.Add(new AttachmentRegularAsset.RendererInfo(skinnedMeshRenderer, skinnedMeshRenderer.sharedMaterial));
 
-            return new WearableRegularAsset(go, rendererInfos, result.Asset);
+            return new AttachmentRegularAsset(go, rendererInfos, result.Asset);
         }
 
-        public static void AssignWearableAsset(this IWearable wearable, WearableRegularAsset wearableRegularAsset, BodyShape bodyShape)
+        public static void AssignWearableAsset(this IWearable wearable, AttachmentRegularAsset attachmentRegularAsset, BodyShape bodyShape)
         {
             ref WearableAssets results = ref wearable.WearableAssetResults[bodyShape];
-            results.Results ??= new StreamableLoadingResult<WearableAssetBase>?[1];
+            results.Results ??= new StreamableLoadingResult<AttachmentAssetBase>?[1];
 
-            results.Results[MAIN_ASSET_INDEX] = new StreamableLoadingResult<WearableAssetBase>(wearableRegularAsset);
+            results.Results[MAIN_ASSET_INDEX] = new StreamableLoadingResult<AttachmentAssetBase>(attachmentRegularAsset);
         }
 
         public static bool HasEssentialAssetsResolved(this IWearable wearable, BodyShape bodyShape)
         {
-            StreamableLoadingResult<WearableAssetBase>?[] results = wearable.WearableAssetResults[bodyShape].Results;
+            StreamableLoadingResult<AttachmentAssetBase>?[] results = wearable.WearableAssetResults[bodyShape].Results;
 
             if (wearable.Type == WearableType.FacialFeature)
             {
                 if (results.Length <= 0) return false;
                 // Exclude texture mask from required assets
-                StreamableLoadingResult<WearableAssetBase>? mainFileAsset = results[0];
+                StreamableLoadingResult<AttachmentAssetBase>? mainFileAsset = results[0];
                 return mainFileAsset is { Succeeded: true };
             }
 

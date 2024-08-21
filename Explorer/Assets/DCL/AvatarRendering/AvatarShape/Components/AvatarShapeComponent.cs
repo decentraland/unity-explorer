@@ -1,3 +1,4 @@
+using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using System.Collections.Generic;
@@ -24,7 +25,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         public string ID;
         public string Name;
 
-        public readonly List<CachedWearable> InstantiatedWearables;
+        public readonly List<CachedAttachment> InstantiatedWearables;
 
         public AvatarShapeComponent(string name, string id, BodyShape bodyShape, WearablePromise wearablePromise, EmotePromise emotePromise,
             Color skinColor, Color hairColor, Color eyesColor)
@@ -35,7 +36,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             IsDirty = true;
             WearablePromise = wearablePromise;
             EmotePromise = emotePromise;
-            InstantiatedWearables = new List<CachedWearable>();
+            InstantiatedWearables = new List<CachedAttachment>();
             SkinColor = skinColor;
             HairColor = hairColor;
             EyesColor = eyesColor;
@@ -48,7 +49,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             ID = id;
             Name = name;
 
-            InstantiatedWearables = new List<CachedWearable>();
+            InstantiatedWearables = new List<CachedAttachment>();
         }
     }
 }

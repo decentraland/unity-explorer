@@ -8,7 +8,7 @@ using Utility;
 using Utility.Multithreading;
 using Utility.PriorityQueue;
 
-namespace DCL.AvatarRendering.Wearables.Helpers
+namespace DCL.AvatarRendering.Loading.Assets
 {
     /// <summary>
     ///     <para>
@@ -18,27 +18,27 @@ namespace DCL.AvatarRendering.Wearables.Helpers
     ///         It keeps a limited reasonable number of unique assets
     ///     </para>
     /// </summary>
-    public class WearableAssetsCache : IWearableAssetsCache, IDisposable
+    public class AttachmentsAssetsCache : IAttachmentsAssetsCache, IDisposable
     {
         // string is hash here which is retrieved via IWearable.GetMainFileHash
-        private readonly ListObjectPool<CachedWearable> listPool;
+        private readonly ListObjectPool<CachedAttachment> listPool;
         private readonly Transform parentContainer;
-        private readonly SimplePriorityQueue<WearableAssetBase, long> unloadQueue = new ();
+        private readonly SimplePriorityQueue<AttachmentAssetBase, long> unloadQueue = new ();
 
-        public int WearablesAssesCount => cache.Count;
+        public int AssetsCount => cache.Count;
 
-        internal Dictionary<WearableAssetBase, List<CachedWearable>> cache { get; }
+        internal Dictionary<AttachmentAssetBase, List<CachedAttachment>> cache { get; }
 
-        public WearableAssetsCache(int initialCapacity)
+        public AttachmentsAssetsCache(int initialCapacity)
         {
-            var parentContainerGo = new GameObject($"POOL_CONTAINER_{nameof(WearableAssetsCache)}");
+            var parentContainerGo = new GameObject($"POOL_CONTAINER_{nameof(AttachmentsAssetsCache)}");
             parentContainerGo.SetActive(false);
             parentContainer = parentContainerGo.transform;
 
-            cache = new Dictionary<WearableAssetBase, List<CachedWearable>>(initialCapacity);
+            cache = new Dictionary<AttachmentAssetBase, List<CachedAttachment>>(initialCapacity);
 
             // instantiate a couple of lists to prevent runtime allocations
-            listPool = new ListObjectPool<CachedWearable>(defaultCapacity: initialCapacity);
+            listPool = new ListObjectPool<CachedAttachment>(defaultCapacity: initialCapacity);
         }
 
         public void Dispose()
@@ -46,9 +46,9 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             UnityObjectUtils.SafeDestroyGameObject(parentContainer);
         }
 
-        public bool TryGet(WearableAssetBase asset, out CachedWearable instance)
+        public bool TryGet(AttachmentAssetBase asset, out CachedAttachment instance)
         {
-            if (cache.TryGetValue(asset, out List<CachedWearable> list) && list.Count > 0)
+            if (cache.TryGetValue(asset, out List<CachedAttachment> list) && list!.Count > 0)
             {
                 // Remove from the tail of the list
                 instance = list[^1];
@@ -66,35 +66,35 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                 return true;
             }
 
-            instance = default(CachedWearable);
+            instance = default(CachedAttachment);
             return false;
         }
 
-        public void Release(CachedWearable cachedWearable)
+        public void Release(CachedAttachment cachedAttachment)
         {
-            WearableAssetBase asset = cachedWearable.OriginalAsset;
+            AttachmentAssetBase asset = cachedAttachment.OriginalAsset;
 
-            if (!cache.TryGetValue(asset, out List<CachedWearable> list))
+            if (!cache.TryGetValue(asset, out List<CachedAttachment> list))
             {
-                cache[asset] = list = listPool.Get();
+                cache[asset] = list = listPool.Get()!;
                 unloadQueue.Enqueue(asset, MultithreadingUtility.FrameCount);
             }
             else
                 unloadQueue.TryUpdatePriority(asset, MultithreadingUtility.FrameCount);
 
-            list.Add(cachedWearable);
+            list!.Add(cachedAttachment);
 
             ProfilingCounters.CachedWearablesInCacheAmount.Value++;
 
             // This logic should not be executed if the application is quitting
             if (!UnityObjectUtils.IsQuitting)
             {
-                cachedWearable.Instance.SetActive(false);
+                cachedAttachment.Instance.SetActive(false);
 
-                foreach (Renderer renderer in cachedWearable.Renderers)
+                foreach (Renderer renderer in cachedAttachment.Renderers)
                     renderer.enabled = true;
 
-                cachedWearable.Instance.transform.SetParent(parentContainer);
+                cachedAttachment.Instance.transform.SetParent(parentContainer);
             }
         }
 
@@ -104,11 +104,11 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
             while (frameTimeBudget.TrySpendBudget()
                    && unloadedAmount < maxUnloadAmount && unloadQueue.Count > 0
-                   && unloadQueue.TryDequeue(out WearableAssetBase key) && cache.TryGetValue(key, out List<CachedWearable> assets))
+                   && unloadQueue.TryDequeue(out AttachmentAssetBase key) && cache.TryGetValue(key, out List<CachedAttachment> assets))
             {
-                unloadedAmount += assets.Count;
+                unloadedAmount += assets!.Count;
 
-                foreach (CachedWearable asset in assets)
+                foreach (CachedAttachment asset in assets)
                     asset.Dispose();
 
                 assets.Clear();

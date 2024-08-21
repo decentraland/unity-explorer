@@ -4,6 +4,7 @@ using DCL.Optimization.Pools;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using DCL.AvatarRendering.AvatarShape.Helpers;
+using DCL.AvatarRendering.Loading.Assets;
 using DCL.Diagnostics;
 using Unity.Collections;
 using Unity.Mathematics;
@@ -16,7 +17,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 {
     public class ComputeShaderSkinning : CustomSkinning
     {
-        public override AvatarCustomSkinningComponent Initialize(IList<CachedWearable> gameObjects,
+        public override AvatarCustomSkinningComponent Initialize(IList<CachedAttachment> gameObjects,
             UnityEngine.ComputeShader skinningShader, IAvatarMaterialPoolHandler avatarMaterialPool, AvatarShapeComponent avatarShapeComponent,
             in FacialFeaturesTextures facialFeatureTexture)
         {
@@ -146,11 +147,11 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             return list;
         }
 
-        private void CreateMeshData(List<MeshData> targetList, IList<CachedWearable> wearables)
+        private void CreateMeshData(List<MeshData> targetList, IList<CachedAttachment> wearables)
         {
             for (var i = 0; i < wearables.Count; i++)
             {
-                CachedWearable cachedWearable = wearables[i];
+                CachedAttachment cachedWearable = wearables[i];
                 GameObject instance = cachedWearable.Instance;
 
                 using (PoolExtensions.Scope<List<Renderer>> pooledList = instance.GetComponentsInChildrenIntoPooledList<Renderer>(true))

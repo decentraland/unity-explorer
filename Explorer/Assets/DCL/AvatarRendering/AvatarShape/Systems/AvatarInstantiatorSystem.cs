@@ -7,6 +7,7 @@ using DCL.AvatarRendering.AvatarShape.Helpers;
 using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.Emotes;
+using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
@@ -42,7 +43,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         private readonly CustomSkinning skinningStrategy;
         private readonly TextureArrayContainer textureArrays;
         private readonly FixedComputeBufferHandler vertOutBuffer;
-        private readonly IWearableAssetsCache wearableAssetsCache;
+        private readonly IAttachmentsAssetsCache wearableAssetsCache;
         private readonly IPerformanceBudget memoryBudget;
         private readonly ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy;
         private readonly IDefaultFaceFeaturesHandler defaultFaceFeaturesHandler;
@@ -51,7 +52,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
         public AvatarInstantiatorSystem(World world, IPerformanceBudget instantiationFrameTimeBudget, IPerformanceBudget memoryBudget,
             IComponentPool<AvatarBase> avatarPoolRegistry, IAvatarMaterialPoolHandler avatarMaterialPoolHandler, IObjectPool<UnityEngine.ComputeShader> computeShaderPool,
-            IWearableAssetsCache wearableAssetsCache, CustomSkinning skinningStrategy, FixedComputeBufferHandler vertOutBuffer,
+            IAttachmentsAssetsCache wearableAssetsCache, CustomSkinning skinningStrategy, FixedComputeBufferHandler vertOutBuffer,
             ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy, IDefaultFaceFeaturesHandler defaultFaceFeaturesHandler,
             IWearableCache wearableCache) : base(world)
         {

@@ -1,4 +1,5 @@
-﻿using DCL.AvatarRendering.Wearables.Helpers;
+﻿using DCL.AvatarRendering.Loading.Assets;
+using DCL.AvatarRendering.Wearables.Helpers;
 using ECS.StreamableLoading.Common.Components;
 using UnityEngine.Assertions;
 
@@ -13,7 +14,7 @@ namespace DCL.AvatarRendering.Wearables.Components
         /// <summary>
         ///     If the element is null it's a signal that the intent to load it was not yet created
         /// </summary>
-        public StreamableLoadingResult<WearableAssetBase>?[] Results;
+        public StreamableLoadingResult<AttachmentAssetBase>?[] Results;
 
         /// <summary>
         ///     Whether the results were replaced with default ones
@@ -29,10 +30,10 @@ namespace DCL.AvatarRendering.Wearables.Components
         /// <summary>
         /// Compatibility with the previous code to create the result with a single asset
         /// </summary>
-        public static implicit operator WearableAssets(StreamableLoadingResult<WearableAssetBase> result)
+        public static implicit operator WearableAssets(StreamableLoadingResult<AttachmentAssetBase> result)
         {
-            Assert.IsTrue(!result.Succeeded || result.Asset is WearableRegularAsset);
-            return new WearableAssets { Results = new StreamableLoadingResult<WearableAssetBase>?[] { result } };
+            Assert.IsTrue(!result.Succeeded || result.Asset is AttachmentRegularAsset);
+            return new WearableAssets { Results = new StreamableLoadingResult<AttachmentAssetBase>?[] { result } };
         }
     }
 }

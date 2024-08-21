@@ -1,32 +1,29 @@
-﻿using DCL.AvatarRendering.Loading.Components;
-using DCL.AvatarRendering.Wearables.Components;
-using DCL.Optimization.Pools;
-using ECS.StreamableLoading.Common.Components;
+﻿using DCL.Optimization.Pools;
 using System.Collections.Generic;
 using UnityEngine;
 using Utility;
 
-namespace DCL.AvatarRendering.Wearables.Helpers
+namespace DCL.AvatarRendering.Loading.Assets
 {
-    public static class WearableAssetUtility
+    public static class AttachmentAssetUtility
     {
-        public static void ReleaseAssets(this IWearableAssetsCache cache, IList<CachedWearable> instantiatedWearables)
+        public static void ReleaseAssets(this IAttachmentsAssetsCache cache, IList<CachedAttachment> instantiatedWearables)
         {
-            foreach (CachedWearable cachedWearable in instantiatedWearables)
+            foreach (CachedAttachment cachedWearable in instantiatedWearables)
                 cache.Release(cachedWearable);
 
             instantiatedWearables.Clear();
         }
 
-        public static CachedWearable InstantiateWearable(this IWearableAssetsCache wearableAssetsCache, WearableRegularAsset originalAsset, Transform parent)
+        public static CachedAttachment InstantiateWearable(this IAttachmentsAssetsCache attachmentsAssetsCache, AttachmentRegularAsset originalAsset, Transform parent)
         {
-            if (wearableAssetsCache.TryGet(originalAsset, out CachedWearable cachedWearable))
+            if (attachmentsAssetsCache.TryGet(originalAsset, out CachedAttachment cachedWearable))
                 cachedWearable.Instance.transform.SetParent(parent);
             else
             {
                 var instantiatedWearable = Object.Instantiate(originalAsset.MainAsset, parent);
                 instantiatedWearable.name = originalAsset.GetInstanceName();
-                cachedWearable = new CachedWearable(originalAsset, instantiatedWearable);
+                cachedWearable = new CachedAttachment(originalAsset, instantiatedWearable);
             }
 
             cachedWearable.Instance.transform.ResetLocalTRS();
@@ -42,12 +39,6 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
             cachedWearable.Instance.gameObject.SetActive(true);
             return cachedWearable;
-        }
-
-        public static void SetAssetResult(this IWearable wearable, BodyShape bodyShape, int index, StreamableLoadingResult<WearableAssetBase> wearableResult)
-        {
-            ref var asset = ref wearable.WearableAssetResults[bodyShape];
-            asset.Results[index] = wearableResult;
         }
     }
 }
