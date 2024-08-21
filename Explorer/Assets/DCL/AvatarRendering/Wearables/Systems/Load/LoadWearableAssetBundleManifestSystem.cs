@@ -31,10 +31,15 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
             this.webRequestController = webRequestController;
         }
 
-        protected override async UniTask<StreamableLoadingResult<SceneAssetBundleManifest>> FlowInternalAsync(GetWearableAssetBundleManifestIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
-        {
-            return new StreamableLoadingResult<SceneAssetBundleManifest>(
-                await LoadThumbnailsUtils.LoadAssetBundleManifestAsync(webRequestController, assetBundleURL, intention.Hash, GetReportCategory(), ct));
-        }
+        protected override async UniTask<StreamableLoadingResult<SceneAssetBundleManifest>> FlowInternalAsync(GetWearableAssetBundleManifestIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct) =>
+            new (
+                await LoadThumbnailsUtils.LoadAssetBundleManifestAsync(
+                    webRequestController,
+                    assetBundleURL,
+                    intention.Hash,
+                    GetReportCategory(),
+                    ct
+                )
+            );
     }
 }
