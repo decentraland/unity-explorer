@@ -3,6 +3,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.Emotes;
+using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables;
 using DCL.Backpack;
 using DCL.DebugUtilities;
@@ -95,7 +96,7 @@ namespace DCL.PluginSystem.Global
         {
             var customStreamingSubdirectory = URLSubdirectory.FromString("/Emotes/");
 
-            FinalizeEmoteAssetBundleSystem.InjectToWorld(ref builder);
+            FinalizeEmoteAssetBundleSystem.InjectToWorld(ref builder, emoteCache);
 
             LoadEmotesByPointersSystem.InjectToWorld(ref builder, webRequestController,
                 new NoCache<EmotesDTOList, GetEmotesByPointersFromRealmIntention>(false, false),
