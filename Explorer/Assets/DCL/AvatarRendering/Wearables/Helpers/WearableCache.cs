@@ -15,8 +15,8 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
         internal Dictionary<URN, IWearable> wearablesCache { get; } = new (new Dictionary<URN, IWearable>(), URNIgnoreCaseEqualityComparer.Default);
 
-        public IWearable GetOrAddWearableByDTO(WearableDTO wearableDto, bool qualifiedForUnloading = true) =>
-            TryGetWearable(wearableDto.metadata.id, out IWearable existingWearable)
+        public IWearable GetOrAddByDTO(WearableDTO wearableDto, bool qualifiedForUnloading = true) =>
+            TryGetElement(wearableDto.metadata.id, out IWearable existingWearable)
                 ? existingWearable
                 : AddWearable(wearableDto.metadata.id, new Wearable(new StreamableLoadingResult<WearableDTO>(wearableDto)), qualifiedForUnloading);
 
@@ -36,14 +36,14 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             return wearable;
         }
 
-        public bool TryGetWearable(URN wearableURN, out IWearable wearable)
+        public void Set(URN urn, IWearable element)
         {
-            if (wearablesCache.TryGetValue(wearableURN, out wearable))
-            {
-                UpdateListedCachePriority(@for: wearableURN);
-                return true;
-            }
+            wearablesCache[urn] = element;
+            UpdateListedCachePriority(urn);
+        }
 
+        public bool TryGetElement(URN wearableURN, out IWearable wearable)
+        {
             if (wearablesCache.TryGetValue(wearableURN, out wearable))
             {
                 UpdateListedCachePriority(@for: wearableURN);
@@ -53,7 +53,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             return false;
         }
 
-        public IWearable GetDefaultWearable(BodyShape bodyShape, string category)
+        public IWearable? GetDefaultWearable(BodyShape bodyShape, string category)
         {
             string wearableURN = WearablesConstants.DefaultWearables.GetDefaultWearable(bodyShape, category);
 
@@ -103,6 +103,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             {
                 ownedWearableRegistry = new Dictionary<URN, NftBlockchainOperationEntry>(new Dictionary<URN, NftBlockchainOperationEntry>(),
                     URNIgnoreCaseEqualityComparer.Default);
+
                 ownedNftsRegistry[nftUrn] = ownedWearableRegistry;
             }
 

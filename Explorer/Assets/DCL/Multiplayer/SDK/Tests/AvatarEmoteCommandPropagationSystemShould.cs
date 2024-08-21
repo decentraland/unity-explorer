@@ -123,13 +123,13 @@ namespace DCL.Multiplayer.SDK.Tests
         {
             internal readonly Dictionary<URN, IEmote> emotes = new ();
 
-            public bool TryGetElement(URN urn, out IEmote emote)
+            public bool TryGetElement(URN urn, out IEmote element)
             {
-                if (!emotes.TryGetValue(urn, out emote)) return false;
+                if (!emotes.TryGetValue(urn, out element)) return false;
                 return true;
             }
 
-            public void Set(URN urn, IEmote emote)
+            public void Set(URN urn, IEmote element)
             {
                 throw new NotImplementedException();
             }

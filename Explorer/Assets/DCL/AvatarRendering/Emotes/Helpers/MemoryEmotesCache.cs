@@ -17,9 +17,9 @@ namespace DCL.AvatarRendering.Emotes
         private readonly Dictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>> ownedNftsRegistry = new (new Dictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>>(),
             URNIgnoreCaseEqualityComparer.Default);
 
-        public bool TryGetElement(URN urn, out IEmote emote)
+        public bool TryGetElement(URN urn, out IEmote element)
         {
-            if (!emotes.TryGetValue(urn, out emote))
+            if (!emotes.TryGetValue(urn, out element))
                 return false;
 
             UpdateListedCachePriority(urn);
@@ -27,8 +27,8 @@ namespace DCL.AvatarRendering.Emotes
             return true;
         }
 
-        public void Set(URN urn, IEmote emote) =>
-            emotes[urn] = emote;
+        public void Set(URN urn, IEmote element) =>
+            emotes[urn] = element;
 
         public IEmote GetOrAddByDTO(EmoteDTO emoteDto, bool qualifiedForUnloading = true) =>
             TryGetElement(emoteDto.metadata.id, out IEmote existingEmote)

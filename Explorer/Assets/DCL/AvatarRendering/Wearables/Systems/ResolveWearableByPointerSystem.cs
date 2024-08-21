@@ -106,7 +106,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 URN shortenedPointer = loadingIntentionPointer;
                 loadingIntentionPointer = shortenedPointer.Shorten();
 
-                if (!wearableCache.TryGetWearable(loadingIntentionPointer, out IWearable wearable))
+                if (!wearableCache.TryGetElement(loadingIntentionPointer, out IWearable wearable))
                 {
                     wearableCache.AddEmptyWearable(loadingIntentionPointer);
                     missingPointers.Add(loadingIntentionPointer);
@@ -173,7 +173,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
             {
                 foreach (string pointerID in promise.LoadingIntention.Pointers)
                 {
-                    wearableCache.TryGetWearable(pointerID, out IWearable component);
+                    wearableCache.TryGetElement(pointerID, out IWearable component);
                     component.IsLoading = false;
                 }
 
@@ -197,7 +197,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
                     foreach (WearableDTO assetEntity in promiseResult.Asset.Value)
                     {
-                        bool isWearableInCatalog = wearableCache.TryGetWearable(assetEntity.metadata.id, out var component);
+                        bool isWearableInCatalog = wearableCache.TryGetElement(assetEntity.metadata.id, out var component);
 
                         if (!isWearableInCatalog)
                         {
@@ -228,7 +228,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                     //We have some missing pointers that were not completed. We have to consider them as failure
                     var e = new ArgumentNullException($"Wearable DTO is null for for {urn}");
                     ReportHub.LogError(new ReportData(GetReportCategory()), e);
-                    if (wearableCache.TryGetWearable(urn, out var component))
+                    if (wearableCache.TryGetElement(urn, out var component))
                     {
                         //If its not in the catalog, we cannot determine which one has failed
                         component.ResolvedFailedDTO(new StreamableLoadingResult<WearableDTO>(e));

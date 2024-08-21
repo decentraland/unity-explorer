@@ -64,7 +64,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
             {
                 WearableDTO wearableDto = element.entity;
 
-                IWearable wearable = wearableCache.GetOrAddWearableByDTO(wearableDto);
+                IWearable wearable = wearableCache.GetOrAddByDTO(wearableDto);
 
                 foreach (WearableDTO.LambdaResponseIndividualDataDto individualData in element.individualData)
                 {
