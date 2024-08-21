@@ -2,9 +2,9 @@
 
 using System;
 
-namespace DCL.AvatarRendering.Loading
+namespace DCL.AvatarRendering.Loading.DTO
 {
-    public abstract class AvatarAttachmentDTO<TMetadata> : AvatarAttachmentDTO where TMetadata : AvatarAttachmentDTO.MetadataBase
+    public abstract class AvatarAttachmentDTO<TMetadata> : AvatarAttachmentDTO where TMetadata: AvatarAttachmentDTO.MetadataBase
     {
         public TMetadata metadata;
 
@@ -76,5 +76,11 @@ namespace DCL.AvatarRendering.Loading
             public string text;
         }
 
+    }
+
+    public static class AvatarAttachmentDTOExtensions
+    {
+        public static string GetHash(this AvatarAttachmentDTO DTO) =>
+            DTO.id;
     }
 }

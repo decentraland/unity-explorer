@@ -5,7 +5,7 @@ using Arch.SystemGroups.DefaultSystemGroups;
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Loading.Components;
-using DCL.AvatarRendering.Wearables;
+using DCL.AvatarRendering.Loading.DTO;
 using DCL.Diagnostics;
 using ECS.Abstract;
 using ECS.Prioritization.Components;

@@ -1,5 +1,6 @@
 using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Loading.Components;
+using DCL.AvatarRendering.Loading.DTO;
 using DCL.AvatarRendering.Wearables.Helpers;
 using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;

@@ -2,6 +2,7 @@ using Arch.Core;
 using Arch.System;
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Loading.Components;
+using DCL.AvatarRendering.Loading.DTO;
 using DCL.Diagnostics;
 using DCL.Optimization.Pools;
 using ECS.Abstract;

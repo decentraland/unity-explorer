@@ -1,6 +1,8 @@
 using Arch.Core;
 using CommunicationData.URLHelpers;
+using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Loading.Components;
+using DCL.AvatarRendering.Loading.DTO;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
@@ -76,7 +78,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
                 x[1] = "mockedHash";
                 return true;
             });
-            wearable.GetHash().Returns((string)urn);
+            wearable.DTO.GetHash().Returns((string)urn);
             return wearable;
         }
 

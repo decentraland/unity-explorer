@@ -6,6 +6,7 @@ using AssetManagement;
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Loading.Components;
+using DCL.AvatarRendering.Loading.DTO;
 using DCL.AvatarRendering.Loading.Systems;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
@@ -303,7 +304,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
         {
             if (!defaultWearablesLoaded)
             {
-                ReportHub.LogError(GetReportCategory(), $"Default wearable {wearable.GetHash()} failed to load");
+                ReportHub.LogError(GetReportCategory(), $"Default wearable {wearable.DTO.GetHash()} failed to load");
 
                 StreamableLoadingResult<WearableAssetBase> failedResult = new StreamableLoadingResult<AssetBundleData>(new Exception("Default wearable failed to load"))
                    .ToWearableAsset(wearable);
@@ -328,7 +329,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 }
             }
 
-            ReportHub.Log(GetReportCategory(), $"Request for wearable with hash {wearable.GetHash()} and urn {wearable.GetUrn()} failed, loading default wearable");
+            ReportHub.Log(GetReportCategory(), $"Request for wearable with hash {wearable.DTO.GetHash()} and urn {wearable.GetUrn()} failed, loading default wearable");
 
             if (wearable.IsUnisex() && wearable.HasSameModelsForAllGenders())
             {

@@ -12,7 +12,9 @@ using System.Collections.Generic;
 using System.Threading;
 using AssetManagement;
 using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Loading.Components;
+using DCL.AvatarRendering.Loading.DTO;
 using DCL.AvatarRendering.Wearables.Systems;
 using DCL.Diagnostics;
 using DCL.WebRequests;
@@ -86,7 +88,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             {
                 ReportHub.Log(
                     ReportCategory.WEARABLE,
-                    $"Cannot load the thumbnail of the wearable {attachment.GetUrn()} {attachment.GetHash()} since it doesnt have an AB manifest. " +
+                    $"Cannot load the thumbnail of the wearable {attachment.GetUrn()} {attachment.DTO.GetHash()} since it doesnt have an AB manifest. " +
                     "Trying to get the texture through content server"
                 );
 
@@ -113,7 +115,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             if (attachment.ManifestResult?.Asset == null)
                 try
                 {
-                    var asset = await LoadWearableAssetBundleManifestUtils.LoadWearableAssetBundleManifestAsync(requestController, assetBundleURL, attachment.GetHash(), ReportCategory.WEARABLE, cancellationTokenSource?.Token ?? CancellationToken.None);
+                    var asset = await LoadWearableAssetBundleManifestUtils.LoadWearableAssetBundleManifestAsync(requestController, assetBundleURL, attachment.DTO.GetHash(), ReportCategory.WEARABLE, cancellationTokenSource?.Token ?? CancellationToken.None);
                     attachment.ManifestResult = new StreamableLoadingResult<SceneAssetBundleManifest>(asset);
                 }
                 catch (Exception) { return false; }

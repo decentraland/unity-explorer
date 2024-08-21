@@ -1,4 +1,5 @@
 using DCL.AvatarRendering.Loading;
+using DCL.AvatarRendering.Loading.DTO;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;

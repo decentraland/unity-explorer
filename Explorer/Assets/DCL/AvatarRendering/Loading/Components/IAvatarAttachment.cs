@@ -1,7 +1,7 @@
 using CommunicationData.URLHelpers;
+using DCL.AvatarRendering.Loading.DTO;
 using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
-using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
@@ -24,9 +24,6 @@ namespace DCL.AvatarRendering.Loading.Components
         StreamableLoadingResult<Sprite>? ThumbnailAssetResult { get; set; }
 
         AvatarAttachmentDTO DTO { get; }
-
-        string GetHash() =>
-            DTO.id;
 
         URN GetUrn() =>
             DTO.Metadata.id;
@@ -118,7 +115,7 @@ namespace DCL.AvatarRendering.Loading.Components
         }
 
         public string ToString() =>
-            $"AvatarAttachment({GetHash()} | {GetUrn()})";
+            $"AvatarAttachment({DTO.GetHash()} | {GetUrn()})";
     }
 
     public partial interface IAvatarAttachment<TModelDTO> : IAvatarAttachment

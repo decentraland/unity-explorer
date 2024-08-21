@@ -1,7 +1,9 @@
 using Arch.Core;
 using AssetManagement;
 using CommunicationData.URLHelpers;
+using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Loading.Components;
+using DCL.AvatarRendering.Loading.DTO;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.Optimization.Pools;
@@ -33,7 +35,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             where T: IAvatarAttachment
         {
             var promise = AssetBundleManifestPromise.Create(world,
-                new GetWearableAssetBundleManifestIntention(component.GetHash(), new CommonLoadingArguments(component.GetHash(), cancellationTokenSource: cts)),
+                new GetWearableAssetBundleManifestIntention(component.DTO.GetHash(), new CommonLoadingArguments(component.DTO.GetHash(), cancellationTokenSource: cts)),
                 partitionComponent);
 
             component.ManifestResult = new StreamableLoadingResult<SceneAssetBundleManifest>();
