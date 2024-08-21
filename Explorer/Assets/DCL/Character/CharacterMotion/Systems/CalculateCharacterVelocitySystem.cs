@@ -9,8 +9,6 @@ using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
-using DCL.Input;
-using DCL.SDKComponents.PlayerInputMovement.Components;
 using DCL.Time.Systems;
 using ECS.Abstract;
 using UnityEngine;
@@ -103,11 +101,9 @@ namespace DCL.CharacterMotion.Systems
             settings.StopTimeSec = stopTime.Value;
 
             ResolveVelocityQuery(World, t, fixedTick.GetPhysicsTickComponent(World).Tick, in camera.GetCameraComponent(World));
-            ResolveVelocity2Query(World, t, fixedTick.GetPhysicsTickComponent(World).Tick, in camera.GetCameraComponent(World));
         }
 
         [Query]
-        [None(typeof(PlayerInputMovementComponent))]
         private void ResolveVelocity(
             [Data] float dt,
             [Data] int physicsTick,
@@ -136,62 +132,6 @@ namespace DCL.CharacterMotion.Systems
                 ApplyFirstPersonRotation.Execute(ref rigidTransform, in cameraComponent);
             else
                 ApplyThirdPersonRotation.Execute(ref rigidTransform, in movementInput);
-
-            ApplyConditionalRotation.Execute(ref rigidTransform, in settings);
-        }
-
-        [Query]
-        private void ResolveVelocity2(
-            [Data] float dt,
-            [Data] int physicsTick,
-            [Data] in CameraComponent cameraComponent,
-            ref ICharacterControllerSettings settings,
-            ref CharacterRigidTransform rigidTransform,
-            ref CharacterController characterController,
-            ref JumpInputComponent jump,
-            ref MovementInputComponent movementInput,
-            in PlayerInputMovementComponent playerInputMovementComponent)
-        {
-            if(playerInputMovementComponent.disable_all) return;
-
-            if (playerInputMovementComponent.disable_run && movementInput.Kind == MovementKind.Run)
-            {
-                movementInput.Kind = MovementKind.Jog;
-            }
-
-            if (playerInputMovementComponent.disable_jog && movementInput.Kind == MovementKind.Jog)
-            {
-                movementInput.Kind = MovementKind.Walk;
-            }
-
-            if (playerInputMovementComponent.disable_walk && movementInput.Kind == MovementKind.Walk)
-            {
-                movementInput.Kind = MovementKind.None;
-                movementInput.Axes = Vector2.zero;
-            }
-
-            // Apply velocity based on input
-            ApplyCharacterMovementVelocity.Execute(settings, ref rigidTransform, in cameraComponent, in movementInput, dt);
-
-            // Apply velocity based on edge slip
-            ApplyEdgeSlip.Execute(dt, settings, ref rigidTransform, characterController);
-
-            // Apply velocity multiplier based on walls
-            ApplyWallSlide.Execute(ref rigidTransform, characterController, in settings);
-
-            // Apply vertical velocity
-            if(!playerInputMovementComponent.disable_jump)
-                ApplyJump.Execute(settings, ref rigidTransform, ref jump, in movementInput, physicsTick);
-            ApplyGravity.Execute(settings, ref rigidTransform, in jump, physicsTick, dt);
-            ApplyAirDrag.Execute(settings, ref rigidTransform, dt);
-
-            if (playerInputMovementComponent.disable_camera)
-            {
-                if (cameraComponent.Mode == CameraMode.FirstPerson)
-                    ApplyFirstPersonRotation.Execute(ref rigidTransform, in cameraComponent);
-                else
-                    ApplyThirdPersonRotation.Execute(ref rigidTransform, in movementInput);
-            }
 
             ApplyConditionalRotation.Execute(ref rigidTransform, in settings);
         }
