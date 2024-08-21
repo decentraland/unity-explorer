@@ -4,7 +4,6 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
 using UnityEngine;
-using IAvatarAttachment = DCL.AvatarRendering.Loading.Components.IAvatarAttachment;
 
 namespace DCL.AvatarRendering.Emotes
 {
@@ -19,7 +18,7 @@ namespace DCL.AvatarRendering.Emotes
         public bool IsLoading { get; set; } = true;
 
         public bool IsOnChain() =>
-            IsOnChain(id: ((IAvatarAttachment) this).GetUrn().ToString());
+            IsOnChain(id: ((IAvatarAttachment<EmoteDTO>) this).GetUrn().ToString());
 
         public static bool IsOnChain(string id) =>
             id.StartsWith("urn:") && !id.StartsWith("urn:decentraland:off-chain:");
@@ -28,7 +27,7 @@ namespace DCL.AvatarRendering.Emotes
             Model.Asset!;
 
         public override string ToString() =>
-            ((IAvatarAttachment)this).ToString();
+            ((IAvatarAttachment<EmoteDTO>)this).ToString();
 
         public bool IsLooping() =>
             Model.Asset.metadata.emoteDataADR74.loop;

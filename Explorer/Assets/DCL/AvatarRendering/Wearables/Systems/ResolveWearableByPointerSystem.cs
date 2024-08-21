@@ -5,6 +5,7 @@ using Arch.SystemGroups.DefaultSystemGroups;
 using AssetManagement;
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Loading.Components;
+using DCL.AvatarRendering.Loading.Systems;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
@@ -30,7 +31,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [UpdateBefore(typeof(PrepareGlobalAssetBundleLoadingParametersSystem))]
     [LogCategory(ReportCategory.WEARABLE)]
-    public partial class ResolveWearableByPointerSystem : BaseUnityLoopSystem
+    public partial class ResolveWearableByPointerSystem : ResolveElementsByPointersSystem<GetWearableDTOByPointersIntention, IWearable, WearableDTO, WearablesDTOList>
     {
         private readonly URLSubdirectory customStreamingSubdirectory;
         private readonly IRealmData realmData;
@@ -38,8 +39,12 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
         private SingleInstanceEntity defaultWearablesState;
 
-        public ResolveWearableByPointerSystem(World world, IWearableCache wearableCache, IRealmData realmData,
-            URLSubdirectory customStreamingSubdirectory) : base(world)
+        public ResolveWearableByPointerSystem(
+            World world,
+            IWearableCache wearableCache,
+            IRealmData realmData,
+            URLSubdirectory customStreamingSubdirectory
+        ) : base(world, wearableCache, WearableComponentsUtils.POINTERS_POOL)
         {
             this.wearableCache = wearableCache;
             this.realmData = realmData;
@@ -111,15 +116,13 @@ namespace DCL.AvatarRendering.Wearables.Systems
                     continue;
                 }
 
-                if (wearable.WearableDTO.Succeeded)
+                if (wearable.Model.Succeeded)
                 {
                     finishedDTOs++;
                     resolvedDTOs.Add(wearable);
                 }
-                else if (wearable.WearableDTO.Exception != null)
-                {
+                else if (wearable.Model.Exception != null)
                     finishedDTOs++;
-                }
             }
 
             if (missingPointers.Count > 0)
@@ -166,22 +169,12 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
         //TODO extract!!!
         [Query]
-        private void FinalizeWearableDTO(in Entity entity, ref AssetPromise<WearablesDTOList, GetWearableDTOByPointersIntention> promise, ref BodyShape bodyShape)
+        private void FinalizeWearableDTO(Entity entity, ref AssetPromise<WearablesDTOList, GetWearableDTOByPointersIntention> promise, ref BodyShape bodyShape)
         {
-            if (promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested)
-            {
-                foreach (var pointerID in promise.LoadingIntention.Pointers)
-                {
-                    wearableCache.TryGetElement(pointerID, out IWearable component);
-                    component.IsLoading = false;
-                }
-
-                promise.ForgetLoading(World);
-                World.Destroy(entity);
+            if (TryFinalizeIfCancelled(entity, promise))
                 return;
-            }
 
-            if (promise.SafeTryConsume(World, out StreamableLoadingResult<WearablesDTOList> promiseResult))
+            if (promise.SafeTryConsume(World!, out StreamableLoadingResult<WearablesDTOList> promiseResult))
             {
                 if (!promiseResult.Succeeded)
                 {
@@ -227,6 +220,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                     //We have some missing pointers that were not completed. We have to consider them as failure
                     var e = new ArgumentNullException($"Wearable DTO is null for for {urn}");
                     ReportHub.LogError(new ReportData(GetReportCategory()), e);
+
                     if (wearableCache.TryGetElement(urn, out var component))
                     {
                         //If its not in the catalog, we cannot determine which one has failed
@@ -262,8 +256,14 @@ namespace DCL.AvatarRendering.Wearables.Systems
         }
 
         [Query]
-        private void FinalizeAssetBundleLoading([Data] bool defaultWearablesResolved, in Entity entity, ref AssetBundlePromise promise, ref IWearable wearable, in BodyShape bodyShape,
-            int index)
+        private void FinalizeAssetBundleLoading(
+            [Data] bool defaultWearablesResolved,
+            Entity entity,
+            ref AssetBundlePromise promise,
+            ref IWearable wearable,
+            in BodyShape bodyShape,
+            int index
+        )
         {
             if (promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested)
             {

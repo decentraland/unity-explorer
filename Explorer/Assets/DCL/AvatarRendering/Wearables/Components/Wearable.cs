@@ -27,7 +27,7 @@ namespace DCL.AvatarRendering.Wearables.Components
 
         public WearableAssets[] WearableAssetResults { get; } = new WearableAssets[BodyShape.COUNT];
 
-        public StreamableLoadingResult<WearableDTO> WearableDTO { get; private set; }
+        public StreamableLoadingResult<WearableDTO> Model { get; set; }
 
         public StreamableLoadingResult<Sprite>? ThumbnailAssetResult { get; set; }
 
@@ -35,9 +35,7 @@ namespace DCL.AvatarRendering.Wearables.Components
 
         public bool IsLoading { get; set; } = true;
 
-        public Wearable()
-        {
-        }
+        public Wearable() { }
 
         public Wearable(StreamableLoadingResult<WearableDTO> dto)
         {
@@ -47,19 +45,19 @@ namespace DCL.AvatarRendering.Wearables.Components
 
         public bool IsOnChain()
         {
-            var id = ((Loading.Components.IAvatarAttachment) this).GetUrn().ToString();
+            var id = ((Loading.Components.IAvatarAttachment)this).GetUrn().ToString();
             return !id.StartsWith("urn:decentraland:off-chain:base-avatars:");
         }
 
         public AvatarAttachmentDTO GetDTO() =>
-            WearableDTO.Asset!;
+            Model.Asset!;
 
         public string GetCategory() =>
-            WearableDTO.Asset!.metadata.data.category;
+            Model.Asset!.metadata.data.category;
 
         public bool TryResolveDTO(StreamableLoadingResult<WearableDTO> result)
         {
-            if (WearableDTO.IsInitialized)
+            if (Model.IsInitialized)
                 return false;
 
             ResolveDTO(result);
@@ -68,7 +66,7 @@ namespace DCL.AvatarRendering.Wearables.Components
 
         private void ResolveDTO(StreamableLoadingResult<WearableDTO> result)
         {
-            WearableDTO = result;
+            Model = result;
 
             if (IsFacialFeature())
                 Type = WearableType.FacialFeature;
@@ -80,7 +78,7 @@ namespace DCL.AvatarRendering.Wearables.Components
 
         public void ResolvedFailedDTO(StreamableLoadingResult<WearableDTO> result)
         {
-            WearableDTO = result;
+            Model = result;
         }
 
         public bool TryGetFileHashConditional(BodyShape bodyShape, Func<string, bool> contentMatch, out string? hash)

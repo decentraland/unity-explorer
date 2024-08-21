@@ -1,12 +1,15 @@
 using CommunicationData.URLHelpers;
 using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace DCL.AvatarRendering.Loading.Components
 {
-    public partial interface IAvatarAttachment
+    public interface IAvatarAttachment
     {
+        private const string THUMBNAIL_DEFAULT_KEY = "thumbnail.png";
         private const string DEFAULT_RARITY = "base";
 
         bool IsLoading { get; set; }
@@ -17,6 +20,8 @@ namespace DCL.AvatarRendering.Loading.Components
         StreamableLoadingResult<SceneAssetBundleManifest>? ManifestResult { get; set; }
 
         StreamableLoadingResult<Sprite>? ThumbnailAssetResult { get; set; }
+
+        AvatarAttachmentDTO GetDTO();
 
         string GetHash() =>
             GetDTO().id;
@@ -52,6 +57,7 @@ namespace DCL.AvatarRendering.Loading.Components
         string GetRarity()
         {
             string result = GetDTO().Metadata.rarity ?? DEFAULT_RARITY;
+
             if (string.IsNullOrEmpty(result))
                 result = DEFAULT_RARITY;
 
@@ -64,11 +70,59 @@ namespace DCL.AvatarRendering.Loading.Components
         bool IsThirdParty() =>
             GetUrn().IsThirdPartyCollection();
 
-        bool IsOnChain();
+        URLPath GetThumbnail()
+        {
+            AvatarAttachmentDTO wearableDTO = GetDTO();
 
-        AvatarAttachmentDTO GetDTO();
+            string thumbnailHash = wearableDTO.Metadata.thumbnail;
+
+            if (thumbnailHash == THUMBNAIL_DEFAULT_KEY && TryGetContentHashByKey(THUMBNAIL_DEFAULT_KEY, out string? hash))
+                thumbnailHash = hash!;
+
+            return new URLPath(thumbnailHash!);
+        }
+
+        bool TryGetMainFileHash(BodyShape bodyShape, out string? hash)
+        {
+            AvatarAttachmentDTO wearableDTO = GetDTO();
+
+            // The length of arrays is small, so O(N) complexity is fine
+            // Avoid iterator allocations with "for" loop
+            for (var i = 0; i < wearableDTO.Metadata.AbstractData.representations.Length; i++)
+            {
+                var representation = wearableDTO.Metadata.AbstractData.representations[i];
+
+                if (representation.bodyShapes.Contains(bodyShape))
+                    return TryGetContentHashByKey(representation.mainFile, out hash);
+            }
+
+            hash = null;
+            return false;
+        }
+
+        bool TryGetContentHashByKey(string key, out string? hash)
+        {
+            AvatarAttachmentDTO wearableDTO = GetDTO();
+
+            for (var i = 0; i < wearableDTO.content.Length; i++)
+                if (wearableDTO.content[i].file == key)
+                {
+                    hash = wearableDTO.content[i].hash;
+                    return true;
+                }
+
+            hash = null;
+            return false;
+        }
 
         public string ToString() =>
             $"AvatarAttachment({GetHash()} | {GetUrn()})";
+    }
+
+    public partial interface IAvatarAttachment<TModelDTO> : IAvatarAttachment
+    {
+        StreamableLoadingResult<TModelDTO> Model { get; set; }
+
+        bool IsOnChain();
     }
 }

@@ -44,7 +44,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
             wearable.IsUnisex().Returns(isUnisex);
             wearable.GetCategory().Returns(WearablesConstants.Categories.UPPER_BODY);
             wearable.GetThumbnail().Returns(new URLPath("bafybeie7lzqakerm4n4x7557g3va4sv7aeoniexlomdgjskuoubo6s3mku"));
-            wearable.WearableDTO.Returns(new StreamableLoadingResult<WearableDTO>(new WearableDTO { id = urn }));
+            wearable.Model.Returns(new StreamableLoadingResult<WearableDTO>(new WearableDTO { id = urn }));
             return wearable;
         }
 

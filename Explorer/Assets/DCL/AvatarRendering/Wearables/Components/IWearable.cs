@@ -6,11 +6,9 @@ using System.Collections.Generic;
 
 namespace DCL.AvatarRendering.Wearables.Components
 {
-    public interface IWearable : IAvatarAttachment
+    public interface IWearable : IAvatarAttachment<WearableDTO>
     {
         WearableType Type { get; }
-
-        StreamableLoadingResult<WearableDTO> WearableDTO { get; }
 
         /// <summary>
         ///     Per <see cref="BodyShape" /> [MALE, FEMALE]

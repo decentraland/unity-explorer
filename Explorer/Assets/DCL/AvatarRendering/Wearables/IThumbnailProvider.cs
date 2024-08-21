@@ -1,7 +1,7 @@
 using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.Loading.Components;
 using System.Threading;
 using UnityEngine;
-using IAvatarAttachment = DCL.AvatarRendering.Loading.Components.IAvatarAttachment;
 
 namespace DCL.AvatarRendering.Wearables
 {

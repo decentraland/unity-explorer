@@ -70,7 +70,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
                 wearableAssets[BodyShape.MALE] = mockedDefaultAB;
 
             wearable.WearableAssetResults.Returns(wearableAssets);
-            wearable.WearableDTO.Returns(new StreamableLoadingResult<WearableDTO>(new WearableDTO { id = urn }));
+            wearable.Model.Returns(new StreamableLoadingResult<WearableDTO>(new WearableDTO { id = urn }));
             wearable.TryGetMainFileHash(Arg.Any<BodyShape>(), out Arg.Any<string>()).Returns(x =>
             {
                 x[1] = "mockedHash";
