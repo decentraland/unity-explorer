@@ -136,6 +136,34 @@ PrefabInstance:
       propertyPath: <IconImage>k__BackingField
       value: 
       objectReference: {fileID: 0}
+    - target: {fileID: 6606272585209996661, guid: a2ddc9ce89858b441953c8b428a72288, type: 3}
+      propertyPath: <SelectedTextColor>k__BackingField.b
+      value: 0.9882353
+      objectReference: {fileID: 0}
+    - target: {fileID: 6606272585209996661, guid: a2ddc9ce89858b441953c8b428a72288, type: 3}
+      propertyPath: <SelectedTextColor>k__BackingField.g
+      value: 0.9882353
+      objectReference: {fileID: 0}
+    - target: {fileID: 6606272585209996661, guid: a2ddc9ce89858b441953c8b428a72288, type: 3}
+      propertyPath: <SelectedTextColor>k__BackingField.r
+      value: 0.9882353
+      objectReference: {fileID: 0}
+    - target: {fileID: 6606272585209996661, guid: a2ddc9ce89858b441953c8b428a72288, type: 3}
+      propertyPath: <UnselectedTextColor>k__BackingField.b
+      value: 0.9882353
+      objectReference: {fileID: 0}
+    - target: {fileID: 6606272585209996661, guid: a2ddc9ce89858b441953c8b428a72288, type: 3}
+      propertyPath: <UnselectedTextColor>k__BackingField.g
+      value: 0.9882353
+      objectReference: {fileID: 0}
+    - target: {fileID: 6606272585209996661, guid: a2ddc9ce89858b441953c8b428a72288, type: 3}
+      propertyPath: <UnselectedTextColor>k__BackingField.r
+      value: 0.9882353
+      objectReference: {fileID: 0}
+    - target: {fileID: 6606272585209996661, guid: a2ddc9ce89858b441953c8b428a72288, type: 3}
+      propertyPath: <UnselectedBackgroundColor>k__BackingField.a
+      value: 0.03137255
+      objectReference: {fileID: 0}
     - target: {fileID: 7772745777469362834, guid: a2ddc9ce89858b441953c8b428a72288, type: 3}
       propertyPath: m_IsActive
       value: 0
