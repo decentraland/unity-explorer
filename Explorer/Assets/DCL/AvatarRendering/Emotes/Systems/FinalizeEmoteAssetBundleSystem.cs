@@ -45,22 +45,20 @@ namespace DCL.AvatarRendering.Emotes
                 return;
             }
 
-            if (promise.SafeTryConsume(World, out StreamableLoadingResult<SceneAssetBundleManifest> result))
+            if (promise.SafeTryConsume(World!, out StreamableLoadingResult<SceneAssetBundleManifest> result))
             {
                 emote.ManifestResult = result;
                 emote.UpdateLoadingStatus(false);
-                World.Destroy(entity);
+                World!.Destroy(entity);
             }
         }
 
         [Query]
-        private void FinalizeAssetBundleLoading(in Entity entity, ref AssetBundlePromise promise, ref IEmote emote, ref BodyShape bodyShape)
+        private void FinalizeAssetBundleLoading(Entity entity, ref AssetBundlePromise promise, ref IEmote emote, ref BodyShape bodyShape)
         {
-            if (promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested)
+            if (promise.TryForgetWithEntityIfCancelled(entity, World!))
             {
                 ResetEmoteResultOnCancellation(emote, bodyShape);
-                promise.ForgetLoading(World);
-                World.Destroy(entity);
                 return;
             }
 
@@ -82,29 +80,25 @@ namespace DCL.AvatarRendering.Emotes
                 }
 
                 emote.UpdateLoadingStatus(false);
-                World.Destroy(entity);
+                World!.Destroy(entity);
             }
         }
 
         [Query]
-        private void FinalizeAudioClipPromise(in Entity entity, ref IEmote emote, ref AudioPromise promise, BodyShape bodyShape)
+        private void FinalizeAudioClipPromise(Entity entity, ref IEmote emote, ref AudioPromise promise, BodyShape bodyShape)
         {
-            if (promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested)
-            {
-                promise.ForgetLoading(World);
-                World.Destroy(entity);
+            if (promise.TryForgetWithEntityIfCancelled(entity, World!))
                 return;
-            }
 
             if (promise.IsConsumed) return;
 
-            if (!promise.SafeTryConsume(World, out StreamableLoadingResult<AudioClip> result))
+            if (!promise.SafeTryConsume(World!, out StreamableLoadingResult<AudioClip> result))
                 return;
 
             if (result.Succeeded)
                 emote.AudioAssetResults[bodyShape] = result;
 
-            World.Destroy(entity);
+            World!.Destroy(entity);
         }
 
         private static void ResetEmoteResultOnCancellation(IEmote emote, BodyShape bodyShape)
