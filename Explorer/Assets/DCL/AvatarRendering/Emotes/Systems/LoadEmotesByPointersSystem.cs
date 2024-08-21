@@ -4,15 +4,11 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using AssetManagement;
 using CommunicationData.URLHelpers;
-using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.AvatarRendering.Wearables.Systems;
 using DCL.Diagnostics;
-using DCL.Optimization.PerformanceBudgeting;
-using DCL.Optimization.Pools;
-using DCL.Optimization.ThreadSafePool;
 using DCL.SDKComponents.AudioSources;
 using DCL.WebRequests;
 using ECS;
@@ -21,13 +17,10 @@ using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
-using ECS.StreamableLoading.Common.Systems;
 using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
@@ -44,17 +37,9 @@ namespace DCL.AvatarRendering.Emotes
     /// </summary>
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [LogCategory(ReportCategory.EMOTE)]
-    public partial class LoadEmotesByPointersSystem : LoadSystemBase<EmotesDTOList, GetEmotesByPointersFromRealmIntention>
+    public partial class LoadEmotesByPointersSystem : LoadElementsByPointersSystem<EmotesDTOList, GetEmotesByPointersFromRealmIntention, EmoteDTO>
     {
-        // When the number of wearables to request is greater than MAX_WEARABLES_PER_REQUEST, we split the request into several smaller ones.
-        // In this way we avoid to send a very long url string that would fail due to the web request size limitations.
-        private const int MAX_WEARABLES_PER_REQUEST = 200;
-
-        private static readonly ThreadSafeListPool<EmoteDTO> DTO_POOL = new (MAX_WEARABLES_PER_REQUEST, 50);
-
-        private readonly StringBuilder bodyBuilder = new ();
         private readonly URLSubdirectory customStreamingSubdirectory;
-        private readonly IWebRequestController webRequestController;
         private readonly IEmoteCache emoteCache;
         private readonly IRealmData realmData;
         private readonly URLBuilder urlBuilder;
@@ -65,9 +50,8 @@ namespace DCL.AvatarRendering.Emotes
             IEmoteCache emoteCache,
             IRealmData realmData,
             URLSubdirectory customStreamingSubdirectory)
-            : base(world, cache)
+            : base(world, cache, webRequestController)
         {
-            this.webRequestController = webRequestController;
             this.emoteCache = emoteCache;
             this.realmData = realmData;
             this.customStreamingSubdirectory = customStreamingSubdirectory;
@@ -82,57 +66,8 @@ namespace DCL.AvatarRendering.Emotes
             FinalizeEmoteDTOQuery(World);
         }
 
-        protected override async UniTask<StreamableLoadingResult<EmotesDTOList>> FlowInternalAsync(
-            GetEmotesByPointersFromRealmIntention intention, IAcquiredBudget acquiredBudget,
-            IPartitionComponent partition, CancellationToken ct)
-        {
-            var finalTargetList = new List<EmoteDTO>();
-
-            int numberOfPartialRequests = (intention.Pointers.Count + MAX_WEARABLES_PER_REQUEST - 1) / MAX_WEARABLES_PER_REQUEST;
-
-            var pointer = 0;
-
-            for (var i = 0; i < numberOfPartialRequests; i++)
-            {
-                int numberOfWearablesToRequest = Mathf.Min(intention.Pointers.Count - pointer, MAX_WEARABLES_PER_REQUEST);
-
-                await DoPartialRequestAsync(intention.CommonArguments.URL, intention.Pointers,
-                    pointer, pointer + numberOfWearablesToRequest, finalTargetList, ct);
-
-                pointer += numberOfWearablesToRequest;
-            }
-
-            return new StreamableLoadingResult<EmotesDTOList>(new EmotesDTOList(finalTargetList));
-        }
-
-        private async UniTask DoPartialRequestAsync(URLAddress url,
-            IReadOnlyList<URN> wearablesToRequest, int startIndex, int endIndex, List<EmoteDTO> results, CancellationToken ct)
-        {
-            await UniTask.SwitchToMainThread();
-
-            bodyBuilder.Clear();
-            bodyBuilder.Append("{\"pointers\":[");
-
-            for (int i = startIndex; i < endIndex; ++i)
-            {
-                // String Builder has overloads for int to prevent allocations
-                bodyBuilder.Append('\"');
-                bodyBuilder.Append(wearablesToRequest[i]);
-                bodyBuilder.Append('\"');
-
-                if (i != wearablesToRequest.Count - 1)
-                    bodyBuilder.Append(",");
-            }
-
-            bodyBuilder.Append("]}");
-
-            using PoolExtensions.Scope<List<EmoteDTO>> dtoPooledList = DTO_POOL.AutoScope();
-
-            await webRequestController.PostAsync(new CommonArguments(url), GenericPostArguments.CreateJson(bodyBuilder.ToString()), ct)
-                                      .OverwriteFromJsonAsync(dtoPooledList.Value, WRJsonParser.Newtonsoft, WRThreadFlags.SwitchToThreadPool);
-
-            lock (results) { results.AddRange(dtoPooledList.Value); }
-        }
+        protected override EmotesDTOList CreateAssetFromListOfDTOs(List<EmoteDTO> list) =>
+            new (list);
 
         [Query]
         [None(typeof(StreamableResult))]

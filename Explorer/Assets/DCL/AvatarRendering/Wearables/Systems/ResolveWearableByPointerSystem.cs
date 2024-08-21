@@ -220,7 +220,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                     WearableComponentsUtils.POINTERS_POOL.Release(failedDTOList);
                 }
 
-                WearableComponentsUtils.POINTERS_POOL.Release(promise.LoadingIntention.Pointers);
+                promise.LoadingIntention.ReleasePointers();
                 World.Destroy(entity);
 
                 void ReportAndFinalizeWithError(URN urn)

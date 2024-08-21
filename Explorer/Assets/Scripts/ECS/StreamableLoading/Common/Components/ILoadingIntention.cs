@@ -1,5 +1,6 @@
 ﻿using AssetManagement;
 using CommunicationData.URLHelpers;
+using System.Collections.Generic;
 using System.Threading;
 using Utility;
 
@@ -22,6 +23,11 @@ namespace ECS.StreamableLoading.Common.Components
         void SetTotal(int total); //TODO refactor it may cause inconsistency because there are 2 sources of truth
 
         void AppendToResult(TResultElement resultElement);
+    }
+
+    public interface IPointersLoadingIntention : ILoadingIntention
+    {
+        IReadOnlyList<URN> Pointers { get; }
     }
 
     public static class LoadingIntentionExtensions
