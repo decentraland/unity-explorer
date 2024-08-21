@@ -192,11 +192,11 @@ namespace DCL.Passport.Modules.Badges
 
         private void CreateFilterButton(string badgeCategory)
         {
-            var allBadgesFilterButton = badgesFilterButtonsPool.Get();
-            allBadgesFilterButton.SetSelected(badgeCategory == ALL_FILTER);
-            allBadgesFilterButton.Text.text = badgeCategory;
-            allBadgesFilterButton.Button.onClick.AddListener(() => OnBadgesFilterButtonClicked(badgeCategory));
-            instantiatedBadgesFilterButtons.Add(allBadgesFilterButton);
+            var badgeFilterButton = badgesFilterButtonsPool.Get();
+            badgeFilterButton.SetSelected(badgeCategory == ALL_FILTER);
+            badgeFilterButton.Text.text = badgeCategory;
+            badgeFilterButton.Button.onClick.AddListener(() => OnBadgesFilterButtonClicked(badgeCategory));
+            instantiatedBadgesFilterButtons.Add(badgeFilterButton);
         }
 
         private void CreateCategorySeparator(string badgeCategory)
@@ -322,10 +322,8 @@ namespace DCL.Passport.Modules.Badges
                 {
                     badgeDetailCard.SetAsSelected(!firstElementSelected);
                     if (!firstElementSelected)
-                    {
                         badgeInfoController.Setup(badgeDetailCard.Model);
-                        badgeInfoController.SetAsLoading(false);
-                    }
+
                     firstElementSelected = true;
                 }
             }

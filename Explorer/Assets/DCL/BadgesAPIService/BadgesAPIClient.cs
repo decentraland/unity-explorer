@@ -298,7 +298,7 @@ namespace DCL.BadgesAPIService
                                 {
                                     tierId = "traveler-diamond",
                                     tierName = "Diamond",
-                                    description = "Visit 60 scenes in Genesis City (Diamond)",
+                                    description = "Visit 60 scenes in Genesis City",
                                     completedAt = null,
                                     criteria = new BadgeTierCriteria
                                     {

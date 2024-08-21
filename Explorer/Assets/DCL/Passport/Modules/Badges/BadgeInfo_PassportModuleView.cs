@@ -85,7 +85,10 @@ namespace DCL.Passport.Modules.Badges
             TierSection.SetActive(badgeInfo.tiers.Length > 0);
             Badge2DImage.SetColor(badgeInfo.isLocked ? LockedImageColor : UnlockedImageColor);
             imageController?.SetImage(DefaultBadgeSprite);
+        }
 
+        public void SelectBadge(BadgeInfo badgeInfo)
+        {
             if (!badgeInfo.isTier)
             {
                 BadgeNameText.text = badgeInfo.name;
@@ -96,23 +99,24 @@ namespace DCL.Passport.Modules.Badges
                     imageController?.RequestImage(badgeInfo.image, hideImageWhileLoading: true);
             }
             else
-                SelectTier(badgeInfo.lastCompletedTierIndex ?? 0, badgeInfo);
+            {
+                var nextTierToComplete = badgeInfo.tiers[badgeInfo.nextTierToCompleteIndex];
+                TopTierMark.SetActive(!string.IsNullOrEmpty(badgeInfo.completedAt));
+                NextTierContainer.SetActive(string.IsNullOrEmpty(badgeInfo.completedAt) && badgeInfo.nextTierCurrentProgress > 0);
+                NextTierValueText.text = nextTierToComplete.name;
+                NextTierDescriptionText.text = nextTierToComplete.description;
+                int nextTierProgressPercentage = badgeInfo.isLocked ? 0 : badgeInfo.nextTierCurrentProgress * 100 / badgeInfo.nextTierTotalProgress;
+                NextTierProgressBarFill.sizeDelta = new Vector2((!badgeInfo.isLocked ? nextTierProgressPercentage : 0) * (NextTierProgressBar.sizeDelta.x / 100), NextTierProgressBarFill.sizeDelta.y);
+                NextTierProgressValueText.text = $"{badgeInfo.nextTierCurrentProgress}/{badgeInfo.nextTierTotalProgress}";
+            }
         }
 
-        public void SelectTier(int tierIndex, BadgeInfo badgeInfo)
+        public void SelectBadgeTier(int tierIndex, BadgeInfo badgeInfo)
         {
             var tier = badgeInfo.tiers[tierIndex];
-            var nextTierToComplete = badgeInfo.tiers[badgeInfo.nextTierToCompleteIndex];
             BadgeNameText.text = $"{badgeInfo.name} {tier.name}";
             BadgeDateText.text = !tier.isLocked ? $"Unlocked: {PassportUtils.FormatTimestampDate(tier.awardedAt)}" : "Locked";
             BadgeDescriptionText.text = tier.description;
-            TopTierMark.SetActive(!string.IsNullOrEmpty(badgeInfo.completedAt));
-            NextTierContainer.SetActive(string.IsNullOrEmpty(badgeInfo.completedAt) && badgeInfo.nextTierCurrentProgress > 0);
-            NextTierValueText.text = nextTierToComplete.name;
-            NextTierDescriptionText.text = nextTierToComplete.description;
-            int nextTierProgressPercentage = tier.isLocked ? 0 : badgeInfo.nextTierCurrentProgress * 100 / badgeInfo.nextTierTotalProgress;
-            NextTierProgressBarFill.sizeDelta = new Vector2((!tier.isLocked ? nextTierProgressPercentage : 0) * (NextTierProgressBar.sizeDelta.x / 100), NextTierProgressBarFill.sizeDelta.y);
-            NextTierProgressValueText.text = $"{badgeInfo.nextTierCurrentProgress}/{badgeInfo.nextTierTotalProgress}";
 
             if (!string.IsNullOrEmpty(tier.image))
                 imageController?.RequestImage(tier.image, hideImageWhileLoading: true);
