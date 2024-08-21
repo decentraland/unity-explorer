@@ -154,7 +154,7 @@ namespace DCL.BadgesAPIService
                                     {
                                         steps = 1,
                                     },
-                                    image = "https://images.vexels.com/media/users/3/236713/isolated/preview/2e816f91528e052edec36e8f3e9f52e1-1up-gaming-pixel-art-badge.png?w=360",
+                                    image = "https://picsum.photos/seed/1/300/300",
                                 },
                                 new BadgeTierData
                                 {
@@ -166,7 +166,7 @@ namespace DCL.BadgesAPIService
                                     {
                                         steps = 10,
                                     },
-                                    image = "https://images.vexels.com/media/users/3/236713/isolated/preview/2e816f91528e052edec36e8f3e9f52e1-1up-gaming-pixel-art-badge.png?w=360",
+                                    image = "https://picsum.photos/seed/2/300/300",
                                 },
                                 new BadgeTierData
                                 {
@@ -178,7 +178,7 @@ namespace DCL.BadgesAPIService
                                     {
                                         steps = 20,
                                     },
-                                    image = "https://images.vexels.com/media/users/3/236713/isolated/preview/2e816f91528e052edec36e8f3e9f52e1-1up-gaming-pixel-art-badge.png?w=360",
+                                    image = "https://picsum.photos/seed/3/300/300",
                                 },
                                 new BadgeTierData
                                 {
@@ -190,7 +190,7 @@ namespace DCL.BadgesAPIService
                                     {
                                         steps = 30,
                                     },
-                                    image = "https://images.vexels.com/media/users/3/236713/isolated/preview/2e816f91528e052edec36e8f3e9f52e1-1up-gaming-pixel-art-badge.png?w=360",
+                                    image = "https://picsum.photos/seed/4/300/300",
                                 },
                                 new BadgeTierData
                                 {
@@ -202,7 +202,7 @@ namespace DCL.BadgesAPIService
                                     {
                                         steps = 40,
                                     },
-                                    image = "https://images.vexels.com/media/users/3/236713/isolated/preview/2e816f91528e052edec36e8f3e9f52e1-1up-gaming-pixel-art-badge.png?w=360",
+                                    image = "https://picsum.photos/seed/5/300/300",
                                 },
                                 new BadgeTierData
                                 {
@@ -214,7 +214,7 @@ namespace DCL.BadgesAPIService
                                     {
                                         steps = 50,
                                     },
-                                    image = "https://images.vexels.com/media/users/3/236713/isolated/preview/2e816f91528e052edec36e8f3e9f52e1-1up-gaming-pixel-art-badge.png?w=360",
+                                    image = "https://picsum.photos/seed/6/300/300",
                                 },
                             },
                         },
@@ -244,7 +244,7 @@ namespace DCL.BadgesAPIService
                                     {
                                         steps = 10,
                                     },
-                                    image = "https://juststickers.in/wp-content/uploads/2017/06/8-bit-swag-badge.png",
+                                    image = "https://picsum.photos/seed/7/300/300",
                                 },
                                 new BadgeTierData
                                 {
@@ -256,7 +256,7 @@ namespace DCL.BadgesAPIService
                                     {
                                         steps = 20,
                                     },
-                                    image = "https://juststickers.in/wp-content/uploads/2017/06/8-bit-swag-badge.png",
+                                    image = "https://picsum.photos/seed/8/300/300",
                                 },
                                 new BadgeTierData
                                 {
@@ -268,7 +268,7 @@ namespace DCL.BadgesAPIService
                                     {
                                         steps = 30,
                                     },
-                                    image = "https://juststickers.in/wp-content/uploads/2017/06/8-bit-swag-badge.png",
+                                    image = "https://picsum.photos/seed/9/300/300",
                                 },
                                 new BadgeTierData
                                 {
@@ -280,7 +280,7 @@ namespace DCL.BadgesAPIService
                                     {
                                         steps = 40,
                                     },
-                                    image = "https://juststickers.in/wp-content/uploads/2017/06/8-bit-swag-badge.png",
+                                    image = "https://picsum.photos/seed/10/300/300",
                                 },
                                 new BadgeTierData
                                 {
@@ -292,7 +292,7 @@ namespace DCL.BadgesAPIService
                                     {
                                         steps = 50,
                                     },
-                                    image = "https://juststickers.in/wp-content/uploads/2017/06/8-bit-swag-badge.png",
+                                    image = "https://picsum.photos/seed/11/300/300",
                                 },
                                 new BadgeTierData
                                 {
@@ -304,7 +304,7 @@ namespace DCL.BadgesAPIService
                                     {
                                         steps = 60,
                                     },
-                                    image = "https://juststickers.in/wp-content/uploads/2017/06/8-bit-swag-badge.png",
+                                    image = "https://picsum.photos/seed/12/300/300",
                                 },
                             },
                         },
@@ -416,6 +416,22 @@ namespace DCL.BadgesAPIService
                                     image = "",
                                 },
                             },
+                        },
+                        new()
+                        {
+                            id = "do-nothing",
+                            completedAt = null,
+                            name = "Do Nothing",
+                            description = "Do nothing during 5 minutes",
+                            image = "https://images.vexels.com/content/236707/preview/afk-gaming-pixel-art-badge-b103c0.png",
+                            isTier = false,
+                            category = "Builder",
+                            progress = new BadgeProgressData
+                            {
+                                stepsDone = 1,
+                                stepsTarget = 1,
+                            },
+                            tiers = Array.Empty<BadgeTierData>(),
                         },
                     },
                 }
