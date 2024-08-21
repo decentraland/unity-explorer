@@ -107,11 +107,12 @@ namespace DCL.AvatarRendering.Emotes
             {
                 // Some old emotes contain references to the avatar for easier animation, since emotes 2.0 those meshes can be shown, so in order to avoid having to update those emotes,
                 // we hide renderers this specific conditions in order to avoid hiding unintentional stuff
-                bool endsWithReference = renderer.name.EndsWith("_reference", StringComparison.InvariantCultureIgnoreCase);
-                bool endsWithBaseMesh = renderer.name.EndsWith("_basemesh", StringComparison.InvariantCultureIgnoreCase);
-                bool startsWithMask = renderer.name.StartsWith("m_mask_", StringComparison.InvariantCultureIgnoreCase);
-
-                if (endsWithReference || endsWithBaseMesh || startsWithMask)
+                if (renderer.name.EndsWith("_reference", StringComparison.InvariantCultureIgnoreCase)
+                    || renderer.name.EndsWith("_basemesh", StringComparison.InvariantCultureIgnoreCase)
+                    || renderer.name.StartsWith("m_mask_", StringComparison.InvariantCultureIgnoreCase)
+                    // Applies for emotes like: urn:decentraland:matic:collections-v2:0x5f6ca7e5c8055c4cb8736d065f619cdd0cf28752:4
+                    // On which skinned mesh renderers, like the head, should be invisible
+                    || renderer.name.StartsWith("f_", StringComparison.InvariantCultureIgnoreCase))
                     renderer.forceRenderingOff = true;
             }
 
