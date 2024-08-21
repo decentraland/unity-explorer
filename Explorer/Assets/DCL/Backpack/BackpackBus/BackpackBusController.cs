@@ -94,7 +94,7 @@ namespace DCL.Backpack.BackpackBus
 
         private void HandleSelectWearableCommand(BackpackSelectWearableCommand command)
         {
-            if (wearableCache.TryGetWearable(command.Id, out IWearable wearable))
+            if (wearableCache.TryGetElement(command.Id, out IWearable wearable))
                 backpackEventBus.SendWearableSelect(wearable);
         }
 
@@ -106,7 +106,7 @@ namespace DCL.Backpack.BackpackBus
 
         private void HandleEquipWearableCommand(BackpackEquipWearableCommand command)
         {
-            if (!wearableCache.TryGetWearable(command.Id, out IWearable wearable))
+            if (!wearableCache.TryGetElement(command.Id, out IWearable wearable))
             {
                 ReportHub.LogError(new ReportData(ReportCategory.WEARABLE), $"Cannot equip wearable, not found: {command.Id}");
                 return;
@@ -182,7 +182,7 @@ namespace DCL.Backpack.BackpackBus
 
         private void HandleUnEquipWearableCommand(BackpackUnEquipWearableCommand command)
         {
-            if (!wearableCache.TryGetWearable(command.Id, out IWearable? wearable))
+            if (!wearableCache.TryGetElement(command.Id, out IWearable? wearable))
             {
                 ReportHub.LogError(new ReportData(ReportCategory.WEARABLE), $"Cannot un-equip wearable, not found: {command.Id}");
                 return;

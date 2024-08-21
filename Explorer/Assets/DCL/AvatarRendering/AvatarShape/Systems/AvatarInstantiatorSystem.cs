@@ -170,7 +170,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                 if (fallbackBodyShape[0] == null)
 
                     // Could be a very rare case on which the body shape is not available. This case will make the flow fail
-                    if (wearableCache.TryGetWearable(BodyShape.MALE, out IWearable maleBody))
+                    if (wearableCache.TryGetElement(BodyShape.MALE, out IWearable maleBody))
                         fallbackBodyShape[0] = maleBody;
 
                 visibleWearables = fallbackBodyShape!;
