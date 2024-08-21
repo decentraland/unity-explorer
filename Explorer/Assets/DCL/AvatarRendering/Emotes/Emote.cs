@@ -1,10 +1,10 @@
 using DCL.AvatarRendering.Loading;
-using DCL.AvatarRendering.Wearables;
-using DCL.AvatarRendering.Wearables.Components;
+using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
 using UnityEngine;
+using IAvatarAttachment = DCL.AvatarRendering.Loading.Components.IAvatarAttachment;
 
 namespace DCL.AvatarRendering.Emotes
 {

@@ -1,5 +1,5 @@
 using AssetManagement;
-using DCL.AvatarRendering.Wearables;
+using DCL.AvatarRendering.Loading.Components;
 using ECS.StreamableLoading;
 using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;

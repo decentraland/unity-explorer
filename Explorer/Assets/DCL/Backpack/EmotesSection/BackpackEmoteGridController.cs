@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Equipped;
+using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
@@ -16,6 +17,7 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
+using IAvatarAttachment = DCL.AvatarRendering.Loading.Components.IAvatarAttachment;
 using Object = UnityEngine.Object;
 
 namespace DCL.Backpack.EmotesSection

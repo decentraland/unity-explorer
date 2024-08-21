@@ -1,4 +1,4 @@
-using DCL.AvatarRendering.Wearables;
+using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using System.Collections.Generic;
 using UnityEngine;

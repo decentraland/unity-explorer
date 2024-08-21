@@ -1,4 +1,5 @@
 using DCL.AvatarRendering.Loading;
+using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
 using ECS.StreamableLoading.Common.Components;
@@ -46,7 +47,7 @@ namespace DCL.AvatarRendering.Wearables.Components
 
         public bool IsOnChain()
         {
-            var id = ((IAvatarAttachment) this).GetUrn().ToString();
+            var id = ((Loading.Components.IAvatarAttachment) this).GetUrn().ToString();
             return !id.StartsWith("urn:decentraland:off-chain:base-avatars:");
         }
 
@@ -100,7 +101,7 @@ namespace DCL.AvatarRendering.Wearables.Components
 
                         if (mainFileKey != contentKey && contentMatch(contentKey))
                         {
-                            IAvatarAttachment attachment = this;
+                            Loading.Components.IAvatarAttachment attachment = this;
                             return attachment.TryGetContentHashByKey(contentKey, out hash);
                         }
                     }
@@ -163,7 +164,7 @@ namespace DCL.AvatarRendering.Wearables.Components
 
         public bool HasSameModelsForAllGenders()
         {
-            IAvatarAttachment attachment = this;
+            Loading.Components.IAvatarAttachment attachment = this;
 
             attachment.TryGetMainFileHash(BodyShape.MALE, out string? maleHash);
             attachment.TryGetMainFileHash(BodyShape.FEMALE, out string? femaleHash);

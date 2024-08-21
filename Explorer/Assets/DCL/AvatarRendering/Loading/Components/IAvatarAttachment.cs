@@ -1,10 +1,9 @@
 using CommunicationData.URLHelpers;
-using DCL.AvatarRendering.Loading;
 using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
 using UnityEngine;
 
-namespace DCL.AvatarRendering.Wearables.Components
+namespace DCL.AvatarRendering.Loading.Components
 {
     public partial interface IAvatarAttachment
     {

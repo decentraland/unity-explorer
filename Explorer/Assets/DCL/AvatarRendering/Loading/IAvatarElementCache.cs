@@ -2,13 +2,14 @@ using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.Optimization.PerformanceBudgeting;
 using System.Collections.Generic;
+using IAvatarAttachment = DCL.AvatarRendering.Loading.Components.IAvatarAttachment;
 
 namespace DCL.AvatarRendering.Loading
 {
     /// <summary>
     ///     Avatar elements cache, each implementation should be thread safe.
     /// </summary>
-    public interface IAvatarElementCache<TElement, in TDTO>
+    public interface IAvatarElementCache<TElement, in TDTO> where TElement: IAvatarAttachment
     {
         /// <summary>
         ///     Attempts to retrieve an element from the catalog.

@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using System.Threading;
 using AssetManagement;
 using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Systems;
 using DCL.Diagnostics;
 using DCL.WebRequests;
@@ -22,6 +23,7 @@ using UnityEngine.Pool;
 using Utility;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.Texture2D, ECS.StreamableLoading.Textures.GetTextureIntention>;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
+using IAvatarAttachment = DCL.AvatarRendering.Loading.Components.IAvatarAttachment;
 
 namespace DCL.AvatarRendering.Wearables.Helpers
 {

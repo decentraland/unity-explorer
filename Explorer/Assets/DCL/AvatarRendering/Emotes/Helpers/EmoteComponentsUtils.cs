@@ -1,5 +1,5 @@
 ﻿using CommunicationData.URLHelpers;
-using DCL.AvatarRendering.Wearables;
+using DCL.AvatarRendering.Loading.Components;
 using System.Collections.Generic;
 using static DCL.AvatarRendering.Wearables.Helpers.WearableComponentsUtils;
 
@@ -12,10 +12,8 @@ namespace DCL.AvatarRendering.Emotes
             List<URN> pointers = POINTERS_POOL.Get();
 
             foreach (URN emote in emotes)
-            {
                 if (!emote.IsNullOrEmpty())
                     pointers.Add(emote);
-            }
 
             return new GetEmotesByPointersIntention(pointers, bodyShape);
         }
@@ -25,10 +23,8 @@ namespace DCL.AvatarRendering.Emotes
             List<URN> pointers = POINTERS_POOL.Get();
 
             foreach (URN emote in emotes)
-            {
                 if (!emote.IsNullOrEmpty())
                     pointers.Add(emote);
-            }
 
             return new GetEmotesByPointersIntention(pointers, bodyShape);
         }

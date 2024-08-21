@@ -1,4 +1,5 @@
 ﻿using AssetManagement;
+using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
@@ -8,7 +9,6 @@ using ECS.StreamableLoading.Common.Components;
 using ECS.TestSuite;
 using Newtonsoft.Json;
 using NUnit.Framework;
-using System;
 using System.Collections.Generic;
 using System.IO;
 using DCL.Optimization.PerformanceBudgeting;

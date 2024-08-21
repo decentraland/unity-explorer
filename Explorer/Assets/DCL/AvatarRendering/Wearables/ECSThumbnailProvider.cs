@@ -1,6 +1,5 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
-using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using ECS;
 using ECS.Prioritization.Components;
@@ -10,7 +9,7 @@ using DCL.WebRequests;
 using UnityEngine;
 using ThumbnailPromise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.Texture2D, ECS.StreamableLoading.Textures.GetTextureIntention>;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
-
+using IAvatarAttachment = DCL.AvatarRendering.Loading.Components.IAvatarAttachment;
 
 namespace DCL.AvatarRendering.Wearables
 {
@@ -20,7 +19,7 @@ namespace DCL.AvatarRendering.Wearables
         private readonly World world;
         private readonly URLDomain assetBundleURL;
         private readonly IWebRequestController requestController;
-        
+
 
         public ECSThumbnailProvider(IRealmData realmData,
             World world, URLDomain assetBundleURL, IWebRequestController requestController)

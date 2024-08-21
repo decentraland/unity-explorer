@@ -1,6 +1,6 @@
-﻿using DCL.AvatarRendering.Wearables.Components;
+﻿using DCL.AvatarRendering.Loading.Components;
+using DCL.AvatarRendering.Wearables.Components;
 using DCL.Optimization.Pools;
-using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
 using System.Collections.Generic;
 using UnityEngine;

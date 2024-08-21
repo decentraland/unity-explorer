@@ -1,5 +1,6 @@
 using AssetManagement;
 using CommunicationData.URLHelpers;
+using DCL.AvatarRendering.Loading.Components;
 using DCL.Profiling;
 using ECS.StreamableLoading.Common.Components;
 using System;

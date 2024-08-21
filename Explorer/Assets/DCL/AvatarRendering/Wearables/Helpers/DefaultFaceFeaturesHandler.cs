@@ -1,3 +1,4 @@
+using DCL.AvatarRendering.Loading.Components;
 using System.Collections.Generic;
 using DCL.WebRequests;
 using UnityEngine;

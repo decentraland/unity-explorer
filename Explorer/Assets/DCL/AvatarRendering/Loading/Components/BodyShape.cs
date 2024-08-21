@@ -4,7 +4,7 @@ using DCL.ECSComponents;
 using System;
 using System.Collections.Generic;
 
-namespace DCL.AvatarRendering.Wearables
+namespace DCL.AvatarRendering.Loading.Components
 {
     public readonly struct BodyShape : IEquatable<BodyShape>
     {

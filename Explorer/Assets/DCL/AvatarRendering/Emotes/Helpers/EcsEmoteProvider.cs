@@ -1,7 +1,7 @@
 using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.AvatarRendering.Wearables;
+using DCL.AvatarRendering.Loading.Components;
 using DCL.Web3;
 using ECS;
 using ECS.Prioritization.Components;
@@ -10,7 +10,6 @@ using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using UnityEngine.Pool;
 using PromiseByPointers = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
     DCL.AvatarRendering.Emotes.GetEmotesByPointersIntention>;
 using OwnedEmotesPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,

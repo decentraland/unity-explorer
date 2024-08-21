@@ -1,6 +1,7 @@
 using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.WebRequests;
@@ -18,7 +19,7 @@ namespace DCL.AvatarRendering.Loading.Systems
     public abstract class LoadElementsByIntentionSystem<TAsset, TIntention, TAvatarElement, TAvatarElementDTO> :
         LoadSystemBase<TAsset, TIntention>
         where TIntention: struct, ICountedLoadingIntention<TAvatarElement>
-        where TAvatarElementDTO: AvatarAttachmentDTO
+        where TAvatarElementDTO: AvatarAttachmentDTO where TAvatarElement : IAvatarAttachment
     {
         private readonly IAvatarElementCache<TAvatarElement, TAvatarElementDTO> avatarElementCache;
         private readonly IWebRequestController webRequestController;

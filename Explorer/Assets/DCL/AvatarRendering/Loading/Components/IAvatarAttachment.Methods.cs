@@ -1,8 +1,7 @@
 ﻿using CommunicationData.URLHelpers;
-using DCL.AvatarRendering.Loading;
 using System.Linq;
 
-namespace DCL.AvatarRendering.Wearables.Components
+namespace DCL.AvatarRendering.Loading.Components
 {
     public partial interface IAvatarAttachment
     {
