@@ -8,6 +8,7 @@ using DCL.Multiplayer.SDK.Components;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using SceneRunner.Scene;
+using CharacterEmoteSystem = DCL.AvatarRendering.Emotes.Play.CharacterEmoteSystem;
 
 namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
 {

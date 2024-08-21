@@ -3,11 +3,10 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using CommunicationData.URLHelpers;
-using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape;
+using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.Loading.Components;
-using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Character.CharacterMotion.Components;
 using DCL.Character.Components;
@@ -25,7 +24,7 @@ using System;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 
-namespace DCL.AvatarRendering.Emotes
+namespace DCL.AvatarRendering.Emotes.Play
 {
     [LogCategory(ReportCategory.EMOTE)]
     [UpdateInGroup(typeof(PresentationSystemGroup))]

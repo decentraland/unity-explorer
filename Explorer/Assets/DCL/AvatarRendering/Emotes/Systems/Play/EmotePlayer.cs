@@ -8,7 +8,7 @@ using UnityEngine;
 using UnityEngine.Pool;
 using Object = UnityEngine.Object;
 
-namespace DCL.AvatarRendering.Emotes
+namespace DCL.AvatarRendering.Emotes.Play
 {
     public class EmotePlayer
     {

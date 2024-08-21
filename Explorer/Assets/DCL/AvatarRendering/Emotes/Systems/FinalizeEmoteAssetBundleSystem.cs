@@ -35,15 +35,13 @@ namespace DCL.AvatarRendering.Emotes
         }
 
         [Query]
-        private void FinalizeAssetBundleManifestLoading(in Entity entity, ref AssetBundleManifestPromise promise,
+        private void FinalizeAssetBundleManifestLoading(Entity entity, ref AssetBundleManifestPromise promise,
             ref IEmote emote)
         {
-            if (promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested)
+            if (promise.TryForgetWithEntityIfCancelled(entity, World!))
             {
                 emote.ManifestResult = null;
                 emote.UpdateLoadingStatus(false);
-                promise.ForgetLoading(World);
-                World.Destroy(entity);
                 return;
             }
 
