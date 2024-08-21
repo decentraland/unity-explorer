@@ -22,10 +22,11 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
         protected override void Update(float t)
         {
-            TrackUnfinishedMatrixCalculationQuery(World);
-            TrackAbandonedTransformMatrixQuery(World);
+            //TrackUnfinishedMatrixCalculationQuery(World);
+            //TrackAbandonedTransformMatrixQuery(World);
         }
 
+        /*
         [Query]
         private void TrackAbandonedTransformMatrix(Entity entity, ref AvatarTransformMatrixComponent avatarTransformMatrixComponent, in DeleteEntityIntention deleteEntityIntention)
         {
@@ -51,5 +52,6 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         {
             return string.Join(",", archetype.Types.Select(p => p.Type.Name));
         }
+        */
     }
 }

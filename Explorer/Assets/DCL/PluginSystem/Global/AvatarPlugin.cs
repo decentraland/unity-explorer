@@ -22,6 +22,7 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using DCL.AvatarRendering;
 using DCL.AvatarRendering.AvatarShape;
+using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.Helpers;
 using DCL.Multiplayer.Profiles.Tables;
 using UnityEngine;
@@ -29,7 +30,6 @@ using UnityEngine.AddressableAssets;
 using UnityEngine.Pool;
 using Utility;
 using Object = UnityEngine.Object;
-using StartAvatarMatricesCalculationSystem = DCL.AvatarRendering.AvatarShape.Systems.StartAvatarMatricesCalculationSystem;
 
 namespace DCL.PluginSystem.Global
 {
@@ -142,8 +142,10 @@ namespace DCL.PluginSystem.Global
 
             MakeVertsOutBufferDefragmentationSystem.InjectToWorld(ref builder, vertOutBuffer, skinningStrategy);
 
-            StartAvatarMatricesCalculationSystem.InjectToWorld(ref builder);
-            FinishAvatarMatricesCalculationSystem.InjectToWorld(ref builder, skinningStrategy);
+            var jobWrapper = AvatarTransformMatrixJobWrapper.Create();
+
+            StartAvatarMatricesCalculationSystem.InjectToWorld(ref builder, ref jobWrapper);
+            FinishAvatarMatricesCalculationSystem.InjectToWorld(ref builder, skinningStrategy, ref jobWrapper);
 
             AvatarShapeVisibilitySystem.InjectToWorld(ref builder);
             AvatarCleanUpSystem.InjectToWorld(ref builder, frameTimeCapBudget, vertOutBuffer, avatarMaterialPoolHandler, avatarPoolRegistry, computeShaderPool, wearableAssetsCache, mainPlayerAvatarBaseProxy);
