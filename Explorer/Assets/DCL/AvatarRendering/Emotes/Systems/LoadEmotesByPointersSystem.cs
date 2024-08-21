@@ -5,6 +5,7 @@ using Arch.SystemGroups.DefaultSystemGroups;
 using AssetManagement;
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Loading;
+using DCL.AvatarRendering.Loading.Systems;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.AvatarRendering.Wearables.Systems;
@@ -199,7 +200,7 @@ namespace DCL.AvatarRendering.Emotes
             {
                 if (!promiseResult.Succeeded)
                 {
-                    foreach (string pointerID in promise.LoadingIntention.Pointers)
+                    foreach (var pointerID in promise.LoadingIntention.Pointers)
                         if (emoteCache.TryGetElement(pointerID, out IEmote component))
                             component.IsLoading = false;
                 }

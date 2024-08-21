@@ -19,9 +19,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using Cysharp.Threading.Tasks;
-using UnityEngine;
-using UnityEngine.Assertions;
 using Utility;
 using AssetBundleManifestPromise = ECS.StreamableLoading.Common.AssetPromise<SceneRunner.Scene.SceneAssetBundleManifest, DCL.AvatarRendering.Wearables.Components.GetWearableAssetBundleManifestIntention>;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
@@ -50,12 +47,12 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
         public override void Initialize()
         {
-            defaultWearablesState = World.CacheDefaultWearablesState();
+            defaultWearablesState = World!.CacheDefaultWearablesState();
         }
 
         protected override void Update(float t)
         {
-            bool defaultWearablesResolved = defaultWearablesState.GetDefaultWearablesState(World).ResolvedState == DefaultWearablesComponent.State.Success;
+            bool defaultWearablesResolved = defaultWearablesState.GetDefaultWearablesState(World!).ResolvedState == DefaultWearablesComponent.State.Success;
 
             // Only DTO loading requires realmData
             if (realmData.Configured)
@@ -74,7 +71,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
         {
             if (wearablesByPointersIntention.CancellationTokenSource.IsCancellationRequested)
             {
-                World.Add(entity, new StreamableResult(new Exception("Pointer request cancelled")));
+                World!.Add(entity, new StreamableResult(new Exception("Pointer request cancelled")));
                 return;
             }
 
@@ -83,8 +80,8 @@ namespace DCL.AvatarRendering.Wearables.Systems
             if (wearablesByPointersIntention.FallbackToDefaultWearables && !defaultWearablesResolved)
                 return; // Wait for default wearables to be resolved
 
-            List<URN> missingPointers = WearableComponentsUtils.POINTERS_POOL.Get();
-            List<IWearable> resolvedDTOs = WearableComponentsUtils.WEARABLES_POOL.Get();
+            List<URN> missingPointers = WearableComponentsUtils.POINTERS_POOL.Get()!;
+            List<IWearable> resolvedDTOs = WearableComponentsUtils.WEARABLES_POOL.Get()!;
 
             var successfulResults = 0;
             int finishedDTOs = 0;
@@ -171,7 +168,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
         {
             if (promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested)
             {
-                foreach (string pointerID in promise.LoadingIntention.Pointers)
+                foreach (var pointerID in promise.LoadingIntention.Pointers)
                 {
                     wearableCache.TryGetElement(pointerID, out IWearable component);
                     component.IsLoading = false;

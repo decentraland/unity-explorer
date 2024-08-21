@@ -13,7 +13,7 @@ using System;
 using System.Threading;
 using Utility.Multithreading;
 
-namespace DCL.AvatarRendering.Loading
+namespace DCL.AvatarRendering.Loading.Systems
 {
     public abstract class LoadElementsByIntentionSystem<TAsset, TIntention, TAvatarElement, TAvatarElementDTO> :
         LoadSystemBase<TAsset, TIntention>

@@ -4,6 +4,7 @@ using Arch.SystemGroups.DefaultSystemGroups;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Loading;
+using DCL.AvatarRendering.Loading.Systems;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
