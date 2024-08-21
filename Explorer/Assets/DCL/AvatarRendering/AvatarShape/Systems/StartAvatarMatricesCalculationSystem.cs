@@ -27,7 +27,6 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
         protected override void Update(float t)
         {
-            jobWrapper.Reset();
             ExecuteQuery(World);
             jobWrapper.ScheduleBoneMatrixCalculation();
         }

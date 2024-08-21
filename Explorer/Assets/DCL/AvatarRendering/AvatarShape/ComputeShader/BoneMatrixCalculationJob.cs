@@ -11,12 +11,12 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
     {
         public NativeArray<float4x4> BonesMatricesResult;
         public NativeArray<Matrix4x4> AvatarTransform;
-        public int BonesLength;
+        public int EndIndex;
 
         public void Execute(int index, TransformAccess transform)
         {
-            //n amount of bones per avatar
-            //BonesMatricesResult[index] = AvatarTransform[index / BonesLength] * transform.localToWorldMatrix;
+            if (index >= EndIndex)
+                return;
             BonesMatricesResult[index] = AvatarTransform[index] * transform.localToWorldMatrix;
         }
     }

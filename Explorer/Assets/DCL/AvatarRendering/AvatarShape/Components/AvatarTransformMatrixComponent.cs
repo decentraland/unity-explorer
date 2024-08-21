@@ -11,19 +11,16 @@ namespace DCL.AvatarRendering.AvatarShape.Components
     public struct AvatarTransformMatrixComponent : IDisposable
     {
         public int IndexInGlobalJobArray;
-
-        public TransformAccessArray bones;
-
+        public Transform[] bones;
 
         public void Dispose()
         {
-            bones.Dispose();
         }
 
         public static AvatarTransformMatrixComponent Create(Transform avatarBaseTransform, Transform[] bones) =>
             new ()
             {
-                bones = new TransformAccessArray(bones),
+                bones = bones
             };
     }
 }
