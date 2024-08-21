@@ -3,18 +3,27 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Text.RegularExpressions;
 using System.Web;
-using UnityEngine;
 
-namespace Global
+namespace Global.AppArgs
 {
-    public class ApplicationParametersParser
+    public class ApplicationParametersParser : IAppArgs
     {
-        public Dictionary<string, string> AppParameters { get; private set; } = new ();
+        private readonly Dictionary<string, string> appParameters;
+
+        public ApplicationParametersParser() : this(Environment.GetCommandLineArgs())
+        {
+        }
 
         public ApplicationParametersParser(string[] args)
         {
-            AppParameters = ParseApplicationParameters(args);
+            appParameters = ParseApplicationParameters(args);
         }
+
+        public bool HasFlag(string flagName) =>
+            appParameters.ContainsKey(flagName);
+
+        public bool TryGetValue(string flagName, out string? value) =>
+            appParameters.TryGetValue(flagName, out value);
 
         private Dictionary<string, string> ParseApplicationParameters(string[] cmdArgs)
         {
@@ -30,7 +39,7 @@ namespace Global
                     if (arg.Length > 2)
                     {
                         lastKeyStored = arg.Substring(2);
-                        AppParameters[lastKeyStored] = string.Empty;
+                        appParameters[lastKeyStored] = string.Empty;
                     }
                     else
                         lastKeyStored = string.Empty;
@@ -45,7 +54,7 @@ namespace Global
                     ProcessDeepLinkParameters(arg);
                 }
                 else if (!string.IsNullOrEmpty(lastKeyStored))
-                    AppParameters[lastKeyStored] = arg;
+                    appParameters[lastKeyStored] = arg;
             }
 
             // in MacOS the deep link string doesn't come in the cmd args...
@@ -57,7 +66,7 @@ namespace Global
             }
 #endif
 
-            return AppParameters;
+            return appParameters;
         }
 
         private void ProcessDeepLinkParameters(string deepLinkString)
@@ -71,7 +80,7 @@ namespace Global
             NameValueCollection uriQuery = HttpUtility.ParseQueryString(uri.Query);
 
             foreach (string uriQueryKey in uriQuery.AllKeys)
-                AppParameters[uriQueryKey] = uriQuery.Get(uriQueryKey);
+                appParameters[uriQueryKey] = uriQuery.Get(uriQueryKey);
         }
     }
 }
