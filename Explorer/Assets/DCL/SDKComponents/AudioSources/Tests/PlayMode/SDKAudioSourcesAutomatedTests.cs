@@ -2,6 +2,7 @@
 using DCL.AssetsProvision;
 using DCL.AssetsProvision.Provisions;
 using DCL.Browser.DecentralandUrls;
+using DCL.CommandLine;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -131,6 +132,7 @@ namespace DCL.SDKComponents.AudioSources.Tests.PlayMode
                     new DecentralandUrlsSource(DecentralandEnvironment.Org),
                     assetProvisioner,
                     reportHandlingSettings.Value,
+                    new CommandLineArgs(),
                     new DebugViewsCatalog(),
                     globalSettingsContainer,
                     web3IdentityCache,

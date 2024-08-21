@@ -17,14 +17,14 @@ namespace DCL.SceneLoadingScreens.SplashScreen
             this.showSplash = showSplash;
         }
 
-        public void ShowSplash()
+        public void Show()
         {
             splashRoot.SetActive(showSplash);
             splashScreenAnimation.transform.SetSiblingIndex(1);
             splashScreenAnimation.SetBool(AnimationHashes.ENABLE, true);
         }
 
-        public void HideSplash()
+        public void Hide()
         {
             splashScreenAnimation.SetBool(AnimationHashes.ENABLE, false);
         }

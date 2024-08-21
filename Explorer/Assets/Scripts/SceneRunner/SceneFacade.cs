@@ -124,10 +124,7 @@ namespace SceneRunner
                     if (ct.IsCancellationRequested) break;
 
                     // 2. don't try to run the update loop if the scene is not running
-                    if (SceneStateProvider.State is SceneState.Disposing
-                        or SceneState.Disposed
-                        or SceneState.JavaScriptError
-                        or SceneState.EngineError)
+                    if (SceneStateProvider.IsNotRunningState())
                         break;
 
                     stopWatch.Restart();
