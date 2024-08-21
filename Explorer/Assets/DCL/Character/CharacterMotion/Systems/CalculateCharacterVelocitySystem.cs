@@ -28,37 +28,37 @@ namespace DCL.CharacterMotion.Systems
         private SingleInstanceEntity fixedTick;
         private SingleInstanceEntity entitySettings;
 
-        private readonly ElementBinding<float> cameraRunFov;
-        private readonly ElementBinding<float> cameraFovSpeed;
-        private readonly ElementBinding<float> walkSpeed;
-        private readonly ElementBinding<float> jogSpeed;
-        private readonly ElementBinding<float> runSpeed;
-        private readonly ElementBinding<float> jogJumpHeight;
-        private readonly ElementBinding<float> runJumpHeight;
-        private readonly ElementBinding<float> jumpHold;
-        private readonly ElementBinding<float> jumpHoldGravity;
-        private readonly ElementBinding<float> gravity;
-        private readonly ElementBinding<float> airAcc;
-        private readonly ElementBinding<float> maxAirAcc;
-        private readonly ElementBinding<float> airDrag;
-        private readonly ElementBinding<float> stopTime;
+        private readonly ElementBinding<float> cameraRunFov = new (0);
+        private readonly ElementBinding<float> cameraFovSpeed = new (0);
+        private readonly ElementBinding<float> walkSpeed = new (0);
+        private readonly ElementBinding<float> jogSpeed = new (0);
+        private readonly ElementBinding<float> runSpeed = new (0);
+        private readonly ElementBinding<float> jogJumpHeight = new (0);
+        private readonly ElementBinding<float> runJumpHeight = new (0);
+        private readonly ElementBinding<float> jumpHold = new (0);
+        private readonly ElementBinding<float> jumpHoldGravity = new (0);
+        private readonly ElementBinding<float> gravity = new (0);
+        private readonly ElementBinding<float> airAcc = new (0);
+        private readonly ElementBinding<float> maxAirAcc = new (0);
+        private readonly ElementBinding<float> airDrag = new (0);
+        private readonly ElementBinding<float> stopTime = new (0);
 
         public CalculateCharacterVelocitySystem(World world, IDebugContainerBuilder debugBuilder) : base(world)
         {
-            debugBuilder.AddWidget("Locomotion: Base")
-                        .AddFloatField("Camera Run FOV", cameraRunFov = new ElementBinding<float>(0))
-                        .AddFloatField("Walk Speed", walkSpeed = new ElementBinding<float>(0))
-                        .AddFloatField("Jog Speed", jogSpeed = new ElementBinding<float>(0))
-                        .AddFloatField("Run Speed", runSpeed = new ElementBinding<float>(0))
-                        .AddFloatField("Jog Jump Height", jogJumpHeight = new ElementBinding<float>(0))
-                        .AddFloatField("Run Jump Height", runJumpHeight = new ElementBinding<float>(0))
-                        .AddFloatField("Jump Hold Time", jumpHold = new ElementBinding<float>(0))
-                        .AddFloatField("Jump Hold Gravity Scale", jumpHoldGravity = new ElementBinding<float>(0))
-                        .AddFloatField("Gravity", gravity = new ElementBinding<float>(0))
-                        .AddFloatField("Air Acceleration", airAcc = new ElementBinding<float>(0))
-                        .AddFloatField("Max Air Acceleration", maxAirAcc = new ElementBinding<float>(0))
-                        .AddFloatField("Air Drag", airDrag = new ElementBinding<float>(0))
-                        .AddFloatField("Grounded Stop Time", stopTime = new ElementBinding<float>(0))
+            debugBuilder.TryAddWidget("Locomotion: Base")
+                       ?.AddFloatField("Camera Run FOV", cameraRunFov)
+                        .AddFloatField("Walk Speed", walkSpeed)
+                        .AddFloatField("Jog Speed", jogSpeed)
+                        .AddFloatField("Run Speed", runSpeed)
+                        .AddFloatField("Jog Jump Height", jogJumpHeight)
+                        .AddFloatField("Run Jump Height", runJumpHeight)
+                        .AddFloatField("Jump Hold Time", jumpHold)
+                        .AddFloatField("Jump Hold Gravity Scale", jumpHoldGravity)
+                        .AddFloatField("Gravity", gravity)
+                        .AddFloatField("Air Acceleration", airAcc)
+                        .AddFloatField("Max Air Acceleration", maxAirAcc)
+                        .AddFloatField("Air Drag", airDrag)
+                        .AddFloatField("Grounded Stop Time", stopTime)
                 ;
         }
 

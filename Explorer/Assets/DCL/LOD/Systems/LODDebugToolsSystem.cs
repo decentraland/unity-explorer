@@ -12,7 +12,7 @@ using UnityEngine;
 
 namespace DCL.LOD.Systems
 {
-    
+
     [UpdateInGroup(typeof(RealmGroup))]
     [LogCategory(ReportCategory.LOD)]
     public partial class LODDebugToolsSystem : BaseUnityLoopSystem
@@ -29,19 +29,19 @@ namespace DCL.LOD.Systems
             this.lodSettingsAsset = lodSettingsAsset;
             lodSettingsAsset.IsColorDebugging = false;
 
-            var debugWidgetBuilder = debugBuilder.AddWidget("LOD");
+            var debugWidgetBuilder = debugBuilder.TryAddWidget("LOD");
             debugWidgetBuilder
-                .AddSingleButton("LOD Debugging", ToggleLODColor)
+                ?.AddSingleButton("LOD Debugging", ToggleLODColor)
                 .AddToggleField("Enable LOD Streaming", evt => lodSettingsAsset.EnableLODStreaming = evt.newValue, lodSettingsAsset.EnableLODStreaming);
 
             for (int i = 0; i < lodSettingsAsset.LodPartitionBucketThresholds.Length; i++)
             {
                 int index = i;
                 debugWidgetBuilder
-                    .AddIntFieldWithConfirmation(lodSettingsAsset.LodPartitionBucketThresholds[i], $"LOD {i + 1} Threshold",  newValue => SetLOD(newValue, index));
+                    ?.AddIntFieldWithConfirmation(lodSettingsAsset.LodPartitionBucketThresholds[i], $"LOD {i + 1} Threshold",  newValue => SetLOD(newValue, index));
             }
 
-            debugWidgetBuilder.AddIntFieldWithConfirmation(lodSettingsAsset.SDK7LodThreshold, "SDK 7 Threshold",  newValue =>
+            debugWidgetBuilder?.AddIntFieldWithConfirmation(lodSettingsAsset.SDK7LodThreshold, "SDK 7 Threshold",  newValue =>
             {
                 lodSettingsAsset.SDK7LodThreshold = newValue;
             });
@@ -86,7 +86,7 @@ namespace DCL.LOD.Systems
                 UnloadSceneLODInfoDebugQuery(World);
             }
         }
-     
+
 
         [Query]
         [All(typeof(SceneLODInfo))]
