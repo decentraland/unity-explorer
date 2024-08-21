@@ -13,7 +13,7 @@ namespace DCL.AvatarRendering.Loading.Systems
 {
     public abstract partial class ResolveElementsByPointersSystem<TIntention, TElement, TDTO, TDTOList> : BaseUnityLoopSystem
         where TIntention: IAssetIntention, IPointersLoadingIntention, IEquatable<TIntention>
-        where TElement: IAvatarAttachment<TDTO>
+        where TElement: IAvatarAttachment<TDTO> where TDTO : AvatarAttachmentDTO
     {
         private readonly IAvatarElementCache<TElement, TDTO> cache;
         private readonly ListObjectPool<URN> pointersPool;
