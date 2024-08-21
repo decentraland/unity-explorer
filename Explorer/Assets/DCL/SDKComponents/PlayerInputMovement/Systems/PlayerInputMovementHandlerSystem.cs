@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Systems;
+using DCL.ECSComponents;
 using DCL.SDKComponents.PlayerInputMovement.Components;
 using ECS.Abstract;
 using ECS.LifeCycle;
@@ -11,9 +12,8 @@ using UnityEngine;
 
 namespace DCL.SDKComponents.PlayerInputMovement.Systems
 {
-    //[UpdateBefore(input)]
     [UpdateInGroup(typeof(SimulationSystemGroup))]
-    [UpdateBefore(typeof(CalculateCharacterVelocitySystem))]
+   // [UpdateBefore(typeof(CalculateCharacterVelocitySystem))]
     public partial class PlayerInputMovementHandlerSystem: BaseUnityLoopSystem, IFinalizeWorldSystem
     {
         public PlayerInputMovementHandlerSystem(World world) : base(world)
@@ -24,26 +24,34 @@ namespace DCL.SDKComponents.PlayerInputMovement.Systems
         {
             //throw new NotImplementedException();
             ApplyModifiersQuery(World);
-            testQuery(World);
+            ApplyModifiers2Query(World);
         }
 
         [Query]
-        [All(typeof(PlayerInputMovementComponent))]
-        private void test()
-        {
-            var a = 2;// random code to add a breakpoint
-        }
-
-        [Query]
-        private void ApplyModifiers(ref MovementInputComponent movementInput, in PlayerInputMovementComponent playerInputMovementComponent)
-        {
-            var a = 2;// random code to add a breakpoint
-            if (playerInputMovementComponent.disable_all)
+        private void ApplyModifiers2(ref MovementInputComponent movementInput,in PBPlayerInputMovement playerInputMovement){
+            if(playerInputMovement.Standard.DisableAll)
             {
                 movementInput.Kind = MovementKind.None;
                 movementInput.Axes = Vector2.zero;
                 movementInput.AutoWalk = false;
             }
+        }
+
+        [Query]
+        private void ApplyModifiers(in PBPlayerInputMovement playerInputMovementComponent)
+        {
+            if(playerInputMovementComponent.Standard.DisableAll)
+            {
+                    // movementInput.Kind = MovementKind.None;
+                    // movementInput.Axes = Vector2.zero;
+                    // movementInput.AutoWalk = false;
+            }
+            // if (playerInputMovementComponent.disable_all)
+            // {
+            //     movementInput.Kind = MovementKind.None;
+            //     movementInput.Axes = Vector2.zero;
+            //     movementInput.AutoWalk = false;
+            // }
         }
 
         public void FinalizeComponents(in Query query)
