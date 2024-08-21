@@ -17,62 +17,84 @@ namespace DCL.AvatarRendering.Emotes
         private readonly Dictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>> ownedNftsRegistry = new (new Dictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>>(),
             URNIgnoreCaseEqualityComparer.Default);
 
+        private readonly object lockObject = new ();
+
         public bool TryGetElement(URN urn, out IEmote element)
         {
-            if (!emotes.TryGetValue(urn, out element))
-                return false;
+            lock (lockObject)
+            {
+                if (!emotes.TryGetValue(urn, out element))
+                    return false;
 
-            UpdateListedCachePriority(urn);
+                UpdateListedCachePriority(urn);
 
-            return true;
+                return true;
+            }
         }
 
-        public void Set(URN urn, IEmote element) =>
-            emotes[urn] = element;
+        public void Set(URN urn, IEmote element)
+        {
+            lock (lockObject) { emotes[urn] = element; }
+        }
 
-        public IEmote GetOrAddByDTO(EmoteDTO emoteDto, bool qualifiedForUnloading = true) =>
-            TryGetElement(emoteDto.metadata.id, out IEmote existingEmote)
-                ? existingEmote
-                : AddEmote(emoteDto.metadata.id, new Emote
-                {
-                    Model = new StreamableLoadingResult<EmoteDTO>(emoteDto),
-                    IsLoading = false,
-                }, qualifiedForUnloading);
+        public IEmote GetOrAddByDTO(EmoteDTO emoteDto, bool qualifiedForUnloading = true)
+        {
+            lock (lockObject)
+            {
+                return TryGetElement(emoteDto.metadata.id, out IEmote existingEmote)
+                    ? existingEmote
+                    : AddEmote(emoteDto.metadata.id, new Emote
+                    {
+                        Model = new StreamableLoadingResult<EmoteDTO>(emoteDto),
+                        IsLoading = false,
+                    }, qualifiedForUnloading);
+            }
+        }
 
         public void Unload(IPerformanceBudget frameTimeBudget)
         {
-            for (LinkedListNode<(URN key, long lastUsedFrame)> node = listedCacheKeys.First; frameTimeBudget.TrySpendBudget() && node != null; node = node.Next)
+            lock (lockObject)
             {
-                URN urn = node.Value.key;
+                for (LinkedListNode<(URN key, long lastUsedFrame)> node = listedCacheKeys.First; frameTimeBudget.TrySpendBudget() && node != null; node = node.Next)
+                {
+                    URN urn = node.Value.key;
 
-                if (!emotes.TryGetValue(urn, out IEmote emote))
-                    continue;
+                    if (!emotes.TryGetValue(urn, out IEmote emote))
+                        continue;
 
-                if (!TryUnloadAllWearableAssets(emote)) continue;
+                    if (!TryUnloadAllWearableAssets(emote)) continue;
 
-                emotes.Remove(urn);
-                cacheKeysDictionary.Remove(urn);
-                listedCacheKeys.Remove(node);
+                    emotes.Remove(urn);
+                    cacheKeysDictionary.Remove(urn);
+                    listedCacheKeys.Remove(node);
+                }
             }
         }
 
         public void SetOwnedNft(URN nftUrn, NftBlockchainOperationEntry entry)
         {
-            if (!ownedNftsRegistry.TryGetValue(nftUrn, out Dictionary<URN, NftBlockchainOperationEntry> ownedWearableRegistry))
+            lock (lockObject)
             {
-                ownedWearableRegistry = new Dictionary<URN, NftBlockchainOperationEntry>(new Dictionary<URN, NftBlockchainOperationEntry>(),
-                    URNIgnoreCaseEqualityComparer.Default);
-                ownedNftsRegistry[nftUrn] = ownedWearableRegistry;
-            }
+                if (!ownedNftsRegistry.TryGetValue(nftUrn, out Dictionary<URN, NftBlockchainOperationEntry> ownedWearableRegistry))
+                {
+                    ownedWearableRegistry = new Dictionary<URN, NftBlockchainOperationEntry>(new Dictionary<URN, NftBlockchainOperationEntry>(),
+                        URNIgnoreCaseEqualityComparer.Default);
 
-            ownedWearableRegistry[entry.Urn] = entry;
+                    ownedNftsRegistry[nftUrn] = ownedWearableRegistry;
+                }
+
+                ownedWearableRegistry[entry.Urn] = entry;
+            }
         }
 
         public bool TryGetOwnedNftRegistry(URN nftUrn, out IReadOnlyDictionary<URN, NftBlockchainOperationEntry> registry)
         {
-            bool result = ownedNftsRegistry.TryGetValue(nftUrn, out Dictionary<URN, NftBlockchainOperationEntry> r);
-            registry = r;
-            return result;
+            lock (lockObject)
+            {
+                bool result = ownedNftsRegistry.TryGetValue(nftUrn, out Dictionary<URN, NftBlockchainOperationEntry> r);
+                registry = r;
+                return result;
+            }
         }
 
         private IEmote AddEmote(URN urn, IEmote wearable, bool qualifiedForUnloading)

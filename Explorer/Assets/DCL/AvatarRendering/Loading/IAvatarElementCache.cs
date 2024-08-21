@@ -5,7 +5,9 @@ using System.Collections.Generic;
 
 namespace DCL.AvatarRendering.Loading
 {
-    // TODO thread safe
+    /// <summary>
+    ///     Avatar elements cache, each implementation should be thread safe.
+    /// </summary>
     public interface IAvatarElementCache<TElement, in TDTO>
     {
         /// <summary>
