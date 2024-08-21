@@ -18,6 +18,7 @@ namespace DCL.Profiling
         private ProfilerRecorder systemUsedMemoryRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "System Used Memory");
         private ProfilerRecorder totalUsedMemoryRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "Total Used Memory");
         private ProfilerRecorder gcUsedMemoryRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "GC Used Memory"); // Mono/IL2CPP heap size
+        private ProfilerRecorder gcAllocatedInFrameRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "GC Allocated In Frame");
 
         private ProfilerRecorder mainThreadTimeRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Internal, "Main Thread", FRAME_BUFFER_SIZE);
         private ProfilerRecorder gpuFrameTimeRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Render, "GPU Frame Time", FRAME_BUFFER_SIZE);
@@ -28,12 +29,14 @@ namespace DCL.Profiling
 
         public ulong CurrentFrameTimeValueNs => (ulong)mainThreadTimeRecorder.CurrentValue;
         public long LastFrameTimeValueNs => mainThreadTimeRecorder.LastValue;
+        public float TotalGcAlloc => GetRecorderSamplesSum(gcAllocatedInFrameRecorder);
 
         public void Dispose()
         {
             systemUsedMemoryRecorder.Dispose();
             totalUsedMemoryRecorder.Dispose();
             gcUsedMemoryRecorder.Dispose();
+            gcAllocatedInFrameRecorder.Dispose();
 
             mainThreadTimeRecorder.Dispose();
             gpuFrameTimeRecorder.Dispose();
@@ -72,6 +75,27 @@ namespace DCL.Profiling
             }
 
             return new FrameTimeStats(minFrameTime, maxFrameTime, hiccupCount);
+        }
+
+        private static float GetRecorderSamplesSum(ProfilerRecorder recorder)
+        {
+            int samplesCount = recorder.Capacity;
+
+            if (samplesCount == 0)
+                return 0;
+
+            float r = 0;
+
+            unsafe
+            {
+                ProfilerRecorderSample* samples = stackalloc ProfilerRecorderSample[samplesCount];
+                recorder.CopyTo(samples, samplesCount);
+
+                for (var i = 0; i < samplesCount; ++i)
+                    r += samples[i].Value;
+            }
+
+            return r;
         }
 
         public (AnalyticsFrameTimeReport?, long[]) GetMainThreadFramesNs(int[] percentile) =>

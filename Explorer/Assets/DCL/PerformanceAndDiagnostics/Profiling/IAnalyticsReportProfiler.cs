@@ -5,6 +5,8 @@
         (AnalyticsFrameTimeReport?, long[]) GetMainThreadFramesNs(int[] percentile);
 
         AnalyticsFrameTimeReport? GetGpuThreadFramesNs(int[] percentile);
+
+        float TotalGcAlloc { get; }
     }
 
     public readonly struct AnalyticsFrameTimeReport

@@ -91,6 +91,7 @@ namespace DCL.Analytics.Systems
                 ["total_used_memory"] = ((ulong)profiler.TotalUsedMemoryInBytes).ByteToMB(),
                 ["system_used_memory"] = ((ulong)profiler.SystemUsedMemoryInBytes).ByteToMB(),
                 ["gc_used_memory"] = ((ulong)profiler.GcUsedMemoryInBytes).ByteToMB(),
+                ["total_gc_alloc"] = ((ulong)profiler.TotalGcAlloc).ByteToMB(),
 
                 // MainThread
                 ["samples"] = GetSamplesArrayAsString(samplesArray),
