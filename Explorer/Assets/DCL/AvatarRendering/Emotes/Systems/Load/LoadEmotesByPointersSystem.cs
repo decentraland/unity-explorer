@@ -4,7 +4,6 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using AssetManagement;
 using CommunicationData.URLHelpers;
-using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Loading.DTO;
 using DCL.AvatarRendering.Loading.Systems;
@@ -32,7 +31,7 @@ using EmotesFromRealmPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.Ava
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 using AudioPromise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.AudioClip, ECS.StreamableLoading.AudioClips.GetAudioClipIntention>;
 
-namespace DCL.AvatarRendering.Emotes
+namespace DCL.AvatarRendering.Emotes.Load
 {
     /// <summary>
     ///     TODO this system should be generalized with <see cref="ResolveWearableByPointerSystem" />
@@ -182,7 +181,7 @@ namespace DCL.AvatarRendering.Emotes
         [Query]
         private void FinalizeEmoteDTO(
             Entity entity,
-            ref AssetPromise<EmotesDTOList, GetEmotesByPointersFromRealmIntention> promise
+            ref EmotesFromRealmPromise promise
         )
         {
             if (promise.TryForgetLoadingWithEntity(entity, World!))

@@ -17,7 +17,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace DCL.AvatarRendering.Wearables.Systems
+namespace DCL.AvatarRendering.Wearables.Systems.Load
 {
     [UpdateInGroup(typeof(InitializationSystemGroup))] // It is updated first so other systems can depend on it asap
     [LogCategory(ReportCategory.WEARABLE)]

@@ -16,6 +16,7 @@ using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Loading.DTO;
 using DCL.AvatarRendering.Wearables.Systems;
+using DCL.AvatarRendering.Wearables.Systems.Load;
 using DCL.Diagnostics;
 using DCL.WebRequests;
 using ECS.StreamableLoading.AssetBundles;

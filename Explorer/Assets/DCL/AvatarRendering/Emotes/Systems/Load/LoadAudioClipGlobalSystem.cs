@@ -7,7 +7,7 @@ using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Cache;
 using UnityEngine;
 
-namespace DCL.AvatarRendering.Emotes
+namespace DCL.AvatarRendering.Emotes.Load
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [LogCategory(ReportCategory.SDK_AUDIO_SOURCES)]

@@ -19,8 +19,8 @@ namespace DCL.AvatarRendering.Emotes
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [LogCategory(ReportCategory.EMOTE)]
-    [UpdateAfter(typeof(LoadEmotesByPointersSystem))]
-    [UpdateAfter(typeof(LoadSceneEmotesSystem))]
+    [UpdateAfter(typeof(Load.LoadEmotesByPointersSystem))]
+    [UpdateAfter(typeof(Load.LoadSceneEmotesSystem))]
     public partial class FinalizeEmoteAssetBundleSystem : BaseUnityLoopSystem
     {
         public FinalizeEmoteAssetBundleSystem(World world) : base(world)

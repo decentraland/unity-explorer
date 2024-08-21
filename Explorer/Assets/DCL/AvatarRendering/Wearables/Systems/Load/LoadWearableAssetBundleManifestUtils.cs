@@ -1,28 +1,26 @@
-﻿using System.Threading;
-using CommunicationData.URLHelpers;
+﻿using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.Optimization.PerformanceBudgeting;
 using DCL.WebRequests;
-using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
+using System.Threading;
 using Utility;
 
-namespace DCL.AvatarRendering.Wearables.Systems
+namespace DCL.AvatarRendering.Wearables.Systems.Load
 {
     public static class LoadWearableAssetBundleManifestUtils
     {
-        private static readonly URLBuilder urlBuilder = new ();
+        private static readonly URLBuilder URL_BUILDER = new ();
 
         public static async UniTask<SceneAssetBundleManifest> LoadWearableAssetBundleManifestAsync(IWebRequestController webRequestController, URLDomain assetBundleURL,
             string hash, string reportCategory, CancellationToken ct)
         {
-            urlBuilder.Clear();
+            URL_BUILDER.Clear();
 
-            urlBuilder.AppendDomain(assetBundleURL)
+            URL_BUILDER.AppendDomain(assetBundleURL)
                 .AppendSubDirectory(URLSubdirectory.FromString("manifest"))
                 .AppendPath(URLPath.FromString($"{hash}{PlatformUtils.GetCurrentPlatform()}.json"));
 
-            var sceneAbDto = await webRequestController.GetAsync(new CommonArguments(urlBuilder.Build(), attemptsCount: 1), ct, reportCategory)
+            var sceneAbDto = await webRequestController.GetAsync(new CommonArguments(URL_BUILDER.Build(), attemptsCount: 1), ct, reportCategory)
                 .CreateFromJson<SceneAbDto>(WRJsonParser.Unity, WRThreadFlags.SwitchBackToMainThread);
 
             return new SceneAssetBundleManifest(assetBundleURL, sceneAbDto.Version, sceneAbDto.Files);

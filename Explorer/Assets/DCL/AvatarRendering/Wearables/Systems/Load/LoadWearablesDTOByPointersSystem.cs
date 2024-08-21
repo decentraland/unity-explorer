@@ -9,7 +9,7 @@ using DCL.WebRequests;
 using ECS.StreamableLoading.Cache;
 using System.Collections.Generic;
 
-namespace DCL.AvatarRendering.Wearables.Systems
+namespace DCL.AvatarRendering.Wearables.Systems.Load
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [LogCategory(ReportCategory.WEARABLE)]

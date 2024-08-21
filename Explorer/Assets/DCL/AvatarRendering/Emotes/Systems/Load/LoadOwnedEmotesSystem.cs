@@ -10,7 +10,7 @@ using DCL.WebRequests;
 using ECS;
 using ECS.StreamableLoading.Cache;
 
-namespace DCL.AvatarRendering.Emotes
+namespace DCL.AvatarRendering.Emotes.Load
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [LogCategory(ReportCategory.EMOTE)]

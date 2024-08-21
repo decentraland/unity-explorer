@@ -14,6 +14,7 @@ using System.IO;
 using DCL.Optimization.PerformanceBudgeting;
 using NSubstitute;
 using UnityEngine;
+using LoadDefaultWearablesSystem = DCL.AvatarRendering.Wearables.Systems.Load.LoadDefaultWearablesSystem;
 
 namespace DCL.AvatarRendering.Wearables.Tests
 {

@@ -13,9 +13,8 @@ using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
 using SceneRunner.Scene;
 using System.Threading;
-using Utility;
 
-namespace DCL.AvatarRendering.Wearables.Systems
+namespace DCL.AvatarRendering.Wearables.Systems.Load
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [LogCategory(ReportCategory.ASSET_BUNDLES)]
