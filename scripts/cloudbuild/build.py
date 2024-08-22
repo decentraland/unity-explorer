@@ -49,6 +49,8 @@ def clone_current_target():
         body['settings']['advanced']['unity']['playerExporter']['buildOptions'] = options
         body['settings']['remoteCacheStrategy'] = remoteCacheStrategy
 
+        print(f"Using cache strategy target: {remoteCacheStrategy}")
+
         # Remove cache for new targets
         if 'buildTargetCopyCache' in body['settings']:
             del body['settings']['buildTargetCopyCache']
