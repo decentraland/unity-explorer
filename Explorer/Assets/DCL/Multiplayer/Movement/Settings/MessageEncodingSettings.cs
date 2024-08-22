@@ -9,29 +9,34 @@ namespace DCL.Multiplayer.Movement.Settings
         public bool encodePosition;
         public bool encodeVelocity;
 
-        // 18 + 2 + 7 = 26
-        public const float TIMESTAMP_QUANTUM = 0.01f;
-        public const int TIMESTAMP_BITS = 18;
-
-        // Animations
+        // 32
+        // - (2 + 7) [Anim]
         private const int MOVEMENT_KIND_BITS = 2;
         public const int MOVEMENT_KIND_MASK = 0x3;
+        public  int MOVEMENT_KIND_START_BIT => TIMESTAMP_BITS;
+        public  int SLIDING_BIT => MOVEMENT_KIND_START_BIT + MOVEMENT_KIND_BITS;
+        public  int STUNNED_BIT => SLIDING_BIT + 1;
+        public  int GROUNDED_BIT => STUNNED_BIT + 1;
+        public  int JUMPING_BIT => GROUNDED_BIT + 1;
+        public  int LONG_JUMP_BIT => JUMPING_BIT + 1;
+        public  int FALLING_BIT => LONG_JUMP_BIT + 1;
+        public  int LONG_FALL_BIT => FALLING_BIT + 1;
 
-        public const int MOVEMENT_KIND_START_BIT = TIMESTAMP_BITS;
-        public const int SLIDING_BIT = MOVEMENT_KIND_START_BIT + MOVEMENT_KIND_BITS;
-        public const int STUNNED_BIT = SLIDING_BIT + 1;
-        public const int GROUNDED_BIT = STUNNED_BIT + 1;
-        public const int JUMPING_BIT = GROUNDED_BIT + 1;
-        public const int LONG_JUMP_BIT = JUMPING_BIT + 1;
-        public const int FALLING_BIT = LONG_JUMP_BIT + 1;
-        public const int LONG_FALL_BIT = FALLING_BIT + 1;
+        // 23
+        [Header("TIMESTAMP [23]")]
+        // - 16 [Time] // 11 min for 0.01f quantum
+        // - 15 [Time] // 5 min for 0.01f quantum
+        public float TIMESTAMP_QUANTUM = 0.02f;
+        public int TIMESTAMP_BITS = 18;
 
-        // 17 + 8 + 8 + 8 + 8 + 8 + 8 = 64
+        // timeData left = 7 bit
+
+        // 64
+        // - 17 [Parcel]
         public const int PARCEL_BITS = 17;
 
-        // 8 + 8 + 13 + 6 + 6 + 6 = 47
-        public int Budget = 47;
-
+        // 47
+        [Header("POSITION [47]")]
         public int XZ_BITS = 9;
 
         [Space]

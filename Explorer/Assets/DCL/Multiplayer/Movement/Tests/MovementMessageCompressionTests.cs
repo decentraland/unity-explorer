@@ -212,13 +212,13 @@ namespace DCL.Multiplayer.Movement.Tests
         {
             // Arrange
             var originalMessage = new NetworkMovementMessage { timestamp = t };
-
+            var timestampEncoder = new TimestampEncoder(Settings);
             // Act
             NetworkMovementMessage decompressedMessage = encoder.Decompress(encoder.Compress(originalMessage));
 
             // Assert
-            Assert.AreEqual(t % TimestampEncoder.BUFFER, decompressedMessage.timestamp, MessageEncodingSettings.TIMESTAMP_QUANTUM);
-            Debug.Log($"Timestamp quantization = {MessageEncodingSettings.TIMESTAMP_QUANTUM}, buffer size = {TimestampEncoder.BUFFER / 60} min | original: {t} | decompressed: {decompressedMessage.timestamp}");
+            Assert.AreEqual(t % timestampEncoder.BUFFER, decompressedMessage.timestamp, Settings.TIMESTAMP_QUANTUM);
+            Debug.Log($"Timestamp quantization = {Settings.TIMESTAMP_QUANTUM}, buffer size = {timestampEncoder.BUFFER / 60} min | original: {t} | decompressed: {decompressedMessage.timestamp}");
         }
     }
 }

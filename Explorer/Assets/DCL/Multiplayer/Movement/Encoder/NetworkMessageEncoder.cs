@@ -22,19 +22,19 @@ namespace DCL.Multiplayer.Movement
                 original = message,
             };
 
-        private static int CompressTemporalData(float timestamp, MovementKind movementKind, bool isSliding, AnimationStates animState, bool isStunned)
+        private int CompressTemporalData(float timestamp, MovementKind movementKind, bool isSliding, AnimationStates animState, bool isStunned)
         {
-            int temporalData = TimestampEncoder.Compress(timestamp);
+            int temporalData = new TimestampEncoder(settings).Compress(timestamp);
 
             // Animations
-            temporalData |= ((int)movementKind & MessageEncodingSettings.MOVEMENT_KIND_MASK) << MessageEncodingSettings.MOVEMENT_KIND_START_BIT;
-            if (isSliding) temporalData |= 1 << MessageEncodingSettings.SLIDING_BIT;
-            if (isStunned) temporalData |= 1 << MessageEncodingSettings.STUNNED_BIT;
-            if (animState.IsGrounded) temporalData |= 1 << MessageEncodingSettings.GROUNDED_BIT;
-            if (animState.IsJumping) temporalData |= 1 << MessageEncodingSettings.JUMPING_BIT;
-            if (animState.IsLongJump) temporalData |= 1 << MessageEncodingSettings.LONG_JUMP_BIT;
-            if (animState.IsFalling) temporalData |= 1 << MessageEncodingSettings.FALLING_BIT;
-            if (animState.IsLongFall) temporalData |= 1 << MessageEncodingSettings.LONG_FALL_BIT;
+            temporalData |= ((int)movementKind & MessageEncodingSettings.MOVEMENT_KIND_MASK) << settings.MOVEMENT_KIND_START_BIT;
+            if (isSliding) temporalData |= 1 << settings.SLIDING_BIT;
+            if (isStunned) temporalData |= 1 << settings.STUNNED_BIT;
+            if (animState.IsGrounded) temporalData |= 1 << settings.GROUNDED_BIT;
+            if (animState.IsJumping) temporalData |= 1 << settings.JUMPING_BIT;
+            if (animState.IsLongJump) temporalData |= 1 << settings.LONG_JUMP_BIT;
+            if (animState.IsFalling) temporalData |= 1 << settings.FALLING_BIT;
+            if (animState.IsLongFall) temporalData |= 1 << settings.LONG_FALL_BIT;
 
             return temporalData;
         }
@@ -83,25 +83,26 @@ namespace DCL.Multiplayer.Movement
                 // Decompressed movement data
                 position = settings.encodePosition? movementData.position : compressedMessage.original.position,
                 velocity = settings.encodeVelocity? movementData.velocity : compressedMessage.original.velocity,
+                rotationY = compressedMessage.original.rotationY,
 
                 // Decompress temporal data
-                timestamp = settings.encodeTimestamp? TimestampEncoder.Decompress(compressedTemporalData) : compressedMessage.original.timestamp,
-                movementKind = (MovementKind)((compressedTemporalData >> MessageEncodingSettings.MOVEMENT_KIND_START_BIT) & MessageEncodingSettings.MOVEMENT_KIND_MASK),
+                timestamp = settings.encodeTimestamp? new TimestampEncoder(settings).Decompress(compressedTemporalData) : compressedMessage.original.timestamp,
+                movementKind = (MovementKind)((compressedTemporalData >> settings.MOVEMENT_KIND_START_BIT) & MessageEncodingSettings.MOVEMENT_KIND_MASK),
 
                 animState = new AnimationStates
                 {
                     MovementBlendValue = 0f,
                     SlideBlendValue = 0f,
 
-                    IsGrounded = (compressedTemporalData & (1 << MessageEncodingSettings.GROUNDED_BIT)) != 0,
-                    IsJumping = (compressedTemporalData & (1 << MessageEncodingSettings.JUMPING_BIT)) != 0,
-                    IsLongJump = (compressedTemporalData & (1 << MessageEncodingSettings.LONG_JUMP_BIT)) != 0,
-                    IsFalling = (compressedTemporalData & (1 << MessageEncodingSettings.FALLING_BIT)) != 0,
-                    IsLongFall = (compressedTemporalData & (1 << MessageEncodingSettings.LONG_FALL_BIT)) != 0,
+                    IsGrounded = (compressedTemporalData & (1 << settings.GROUNDED_BIT)) != 0,
+                    IsJumping = (compressedTemporalData & (1 << settings.JUMPING_BIT)) != 0,
+                    IsLongJump = (compressedTemporalData & (1 << settings.LONG_JUMP_BIT)) != 0,
+                    IsFalling = (compressedTemporalData & (1 << settings.FALLING_BIT)) != 0,
+                    IsLongFall = (compressedTemporalData & (1 << settings.LONG_FALL_BIT)) != 0,
                 },
 
-                isStunned = (compressedTemporalData & (1 << MessageEncodingSettings.STUNNED_BIT)) != 0,
-                isSliding = (compressedTemporalData & (1 << MessageEncodingSettings.SLIDING_BIT)) != 0,
+                isStunned = (compressedTemporalData & (1 << settings.STUNNED_BIT)) != 0,
+                isSliding = (compressedTemporalData & (1 << settings.SLIDING_BIT)) != 0,
             };
         }
 
@@ -172,21 +173,27 @@ namespace DCL.Multiplayer.Movement
     /// <summary>
     ///     Encode timepsamp as a circular buffer
     /// </summary>
-    public static class TimestampEncoder
+    public class TimestampEncoder
     {
-        public const float BUFFER = STEPS * MessageEncodingSettings.TIMESTAMP_QUANTUM;
-        private const int STEPS = 1 << MessageEncodingSettings.TIMESTAMP_BITS; // 2^TIMESTAMP_BITS
+        private readonly MessageEncodingSettings settings;
+        public float BUFFER => STEPS * settings.TIMESTAMP_QUANTUM;
+        private int STEPS => 1 << settings.TIMESTAMP_BITS; // 2^TIMESTAMP_BITS
 
-        public static int Compress(float timestamp)
+        public TimestampEncoder(MessageEncodingSettings settings)
         {
-            float normalizedTimestamp = timestamp % BUFFER; // Normalize timestamp within the round buffer
-            return Mathf.RoundToInt(normalizedTimestamp / MessageEncodingSettings.TIMESTAMP_QUANTUM) % STEPS;
+            this.settings = settings;
         }
 
-        public static float Decompress(long data)
+        public int Compress(float timestamp)
         {
-            const int MASK = STEPS - 1;
-            return (int)(data & MASK) * MessageEncodingSettings.TIMESTAMP_QUANTUM % BUFFER;
+            float normalizedTimestamp = timestamp % BUFFER; // Normalize timestamp within the round buffer
+            return Mathf.RoundToInt(normalizedTimestamp / settings.TIMESTAMP_QUANTUM) % STEPS;
+        }
+
+        public float Decompress(long data)
+        {
+            int MASK = STEPS - 1;
+            return (int)(data & MASK) * settings.TIMESTAMP_QUANTUM % BUFFER;
         }
     }
 

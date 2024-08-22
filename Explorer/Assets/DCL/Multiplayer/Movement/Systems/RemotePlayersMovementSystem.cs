@@ -197,7 +197,7 @@ namespace DCL.Multiplayer.Movement.Systems
         private float Interpolate(float deltaTime, ref CharacterTransform transComp, ref RemotePlayerMovementComponent remotePlayerMovement,
             ref InterpolationComponent intComp)
         {
-            float unusedTime = Interpolation.Execute(deltaTime, ref transComp, ref intComp, settings.InterpolationSettings.LookAtTimeDelta);
+            float unusedTime = Interpolation.Execute(deltaTime, ref transComp, ref intComp, settings.InterpolationSettings.LookAtTimeDelta, characterControllerSettings.RotationSpeed);
 
             if (intComp.Time < intComp.TotalDuration)
                 return -1;
