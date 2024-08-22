@@ -13,13 +13,13 @@ namespace DCL.PluginSystem.Global
 
         public readonly IEmoteProvider EmoteProvider;
 
-        public readonly V8EngineFactory V8EngineFactory;
+        public readonly V8ActiveEngines V8ActiveEngines;
 
-        public GlobalPluginArguments(Entity playerEntity, IEmoteProvider emoteProvider, V8EngineFactory v8EngineFactory)
+        public GlobalPluginArguments(Entity playerEntity, IEmoteProvider emoteProvider, V8ActiveEngines v8ActiveEngines)
         {
             PlayerEntity = playerEntity;
             EmoteProvider = emoteProvider;
-            V8EngineFactory = v8EngineFactory;
+            V8ActiveEngines = v8ActiveEngines;
         }
     }
 }

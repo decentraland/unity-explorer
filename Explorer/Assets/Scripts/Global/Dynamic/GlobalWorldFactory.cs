@@ -101,7 +101,7 @@ namespace Global.Dynamic
             physicsTickProvider = staticContainer.PhysicsTickProvider;
         }
 
-        public (GlobalWorld, Entity) Create(ISceneFactory sceneFactory, V8EngineFactory v8EngineFactory)
+        public (GlobalWorld, Entity) Create(ISceneFactory sceneFactory, V8ActiveEngines v8ActiveEngines)
         {
             var world = World.Create();
 
@@ -170,7 +170,7 @@ namespace Global.Dynamic
 
             IEmoteProvider emoteProvider = new EcsEmoteProvider(world, realmData);
 
-            var pluginArgs = new GlobalPluginArguments(playerEntity, emoteProvider, v8EngineFactory);
+            var pluginArgs = new GlobalPluginArguments(playerEntity, emoteProvider, v8ActiveEngines);
 
             foreach (IDCLGlobalPlugin plugin in globalPlugins)
                 plugin.InjectToWorld(ref builder, pluginArgs);

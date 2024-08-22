@@ -21,17 +21,19 @@ namespace SceneRuntime.Factory.Tests
         private readonly ISceneExceptionsHandler sceneExceptionsHandler = new RethrowSceneExceptionsHandler();
 
         private V8EngineFactory engineFactory;
+        private V8ActiveEngines activeEngines;
 
         [SetUp]
         public void SetUp()
         {
-            engineFactory = new V8EngineFactory();
+            activeEngines = new V8ActiveEngines();
+            engineFactory = new V8EngineFactory(activeEngines);
         }
 
         [TearDown]
         public void TearDown()
         {
-            engineFactory.DisposeAll();
+            activeEngines.Clear();
         }
 
         [UnityTest]
@@ -39,7 +41,7 @@ namespace SceneRuntime.Factory.Tests
             UniTask.ToCoroutine(async () =>
             {
                 // Arrange
-                var factory = new SceneRuntimeFactory(TestWebRequestController.INSTANCE, new IRealmData.Fake(), engineFactory);
+                var factory = new SceneRuntimeFactory(TestWebRequestController.INSTANCE, new IRealmData.Fake(), engineFactory, activeEngines);
 
                 var sourceCode = @"
                 const engineApi = require('~system/EngineApi')
@@ -72,7 +74,7 @@ namespace SceneRuntime.Factory.Tests
             UniTask.ToCoroutine(async () =>
             {
                 // Arrange
-                var factory = new SceneRuntimeFactory(TestWebRequestController.INSTANCE, new IRealmData.Fake(), engineFactory);
+                var factory = new SceneRuntimeFactory(TestWebRequestController.INSTANCE, new IRealmData.Fake(), engineFactory, activeEngines);
                 var path = URLAddress.FromString($"file://{Application.dataPath + "/../TestResources/Scenes/Cube/cube.js"}");
 
                 // Act
@@ -95,7 +97,7 @@ namespace SceneRuntime.Factory.Tests
         public void WrapInModuleCommonJs()
         {
             // Arrange
-            var factory = new SceneRuntimeFactory(TestWebRequestController.INSTANCE, new IRealmData.Fake(), engineFactory);
+            var factory = new SceneRuntimeFactory(TestWebRequestController.INSTANCE, new IRealmData.Fake(), engineFactory, activeEngines);
             var sourceCode = "console.log('Hello, world!');";
 
             // Act

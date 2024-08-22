@@ -25,18 +25,18 @@ namespace DCL.Analytics.Systems
         private readonly IAnalyticsController analytics;
         private readonly IRealmData realmData;
         private readonly IAnalyticsReportProfiler profiler;
-        private readonly V8EngineFactory v8EngineFactory;
+        private readonly V8ActiveEngines v8ActiveEngines;
         private readonly IScenesCache scenesCache;
         private readonly AnalyticsConfiguration config;
 
         private float lastReportTime;
 
-        public PerformanceAnalyticsSystem(World world, IAnalyticsController analytics, IRealmData realmData, IAnalyticsReportProfiler profiler, V8EngineFactory v8EngineFactory,
+        public PerformanceAnalyticsSystem(World world, IAnalyticsController analytics, IRealmData realmData, IAnalyticsReportProfiler profiler, V8ActiveEngines v8ActiveEngines,
             IScenesCache scenesCache) : base(world)
         {
             this.realmData = realmData;
             this.profiler = profiler;
-            this.v8EngineFactory = v8EngineFactory;
+            this.v8ActiveEngines = v8ActiveEngines;
             this.scenesCache = scenesCache;
             this.analytics = analytics;
             config = analytics.Configuration;
@@ -64,8 +64,8 @@ namespace DCL.Analytics.Systems
                 return;
 
             bool isCurrentScene = scenesCache is { CurrentScene: { SceneStateProvider: { IsCurrent: true } } };
-            JsMemorySizeInfo totalJsMemoryData = v8EngineFactory.GetEnginesSumMemoryData();
-            JsMemorySizeInfo currentSceneJsMemoryData = isCurrentScene ? v8EngineFactory.GetEnginesMemoryDataForScene(scenesCache.CurrentScene.Info) : new JsMemorySizeInfo();
+            JsMemorySizeInfo totalJsMemoryData = v8ActiveEngines.GetEnginesSumMemoryData();
+            JsMemorySizeInfo currentSceneJsMemoryData = isCurrentScene ? v8ActiveEngines.GetEnginesMemoryDataForScene(scenesCache.CurrentScene.Info) : new JsMemorySizeInfo();
 
             analytics.Track(General.PERFORMANCE_REPORT, new JsonObject
             {
@@ -83,7 +83,7 @@ namespace DCL.Analytics.Systems
                 ["jsheap_total_current_scene"] = !isCurrentScene ? -1f : currentSceneJsMemoryData.TotalHeapSizeMB,
                 ["jsheap_total_executable_current_scene"] = !isCurrentScene ? -1f : currentSceneJsMemoryData.TotalHeapSizeExecutableMB,
 
-                ["running_v8_engines"] = v8EngineFactory.ActiveEnginesCount,
+                ["running_v8_engines"] = v8ActiveEngines.Count,
 
                 // Memory
                 ["total_used_memory"] = ((ulong)profiler.TotalUsedMemoryInBytes).ByteToMB(),

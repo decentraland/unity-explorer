@@ -12,11 +12,9 @@ using CrdtEcsBridge.ECSToCRDTWriter;
 using CrdtEcsBridge.JsModulesImplementation.Communications;
 using CrdtEcsBridge.OutgoingMessages;
 using CrdtEcsBridge.PoolsProviders;
-using CrdtEcsBridge.RestrictedActions;
 using CrdtEcsBridge.UpdateGate;
 using CrdtEcsBridge.WorldSynchronizer;
 using Cysharp.Threading.Tasks;
-using DCL.Diagnostics;
 using DCL.Interaction.Utility;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.RoomHubs;
@@ -63,15 +61,17 @@ namespace SceneRunner.Tests
     [TestFixture]
     public class SceneFacadeShould
     {
+        private V8ActiveEngines activeEngines;
         private V8EngineFactory engineFactory;
 
         [SetUp]
         public void SetUp()
         {
             path = $"file://{Application.dataPath + "/../TestResources/Scenes/Cube/cube.js"}";
-            engineFactory = new V8EngineFactory();
+            activeEngines = new V8ActiveEngines();
+            engineFactory = new V8EngineFactory(activeEngines);
 
-            sceneRuntimeFactory = new SceneRuntimeFactory(TestWebRequestController.INSTANCE, new IRealmData.Fake(), engineFactory);
+            sceneRuntimeFactory = new SceneRuntimeFactory(TestWebRequestController.INSTANCE, new IRealmData.Fake(), engineFactory, activeEngines);
 
             ecsWorldFactory = Substitute.For<IECSWorldFactory>().EnsureNotNull();
 
@@ -120,7 +120,7 @@ namespace SceneRunner.Tests
             }
 
             sceneFacades.Clear();
-            engineFactory.DisposeAll();
+            activeEngines.Clear();
         }
 
         private SceneRuntimeFactory sceneRuntimeFactory = null!;

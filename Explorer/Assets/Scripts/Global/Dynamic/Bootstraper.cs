@@ -170,7 +170,7 @@ namespace Global.Dynamic
                 !realmLaunchSettings.IsLocalSceneDevelopmentRealm
             );
 
-            (globalWorld, playerEntity) = dynamicWorldContainer.GlobalWorldFactory.Create(sceneSharedContainer.SceneFactory, sceneSharedContainer.V8EngineFactory);
+            (globalWorld, playerEntity) = dynamicWorldContainer.GlobalWorldFactory.Create(sceneSharedContainer.SceneFactory, sceneSharedContainer.V8ActiveEngines);
             dynamicWorldContainer.RealmController.GlobalWorld = globalWorld;
 
             staticContainer.DebugContainerBuilder.BuildWithFlex(debugUiRoot);

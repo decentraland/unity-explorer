@@ -25,7 +25,7 @@ namespace DCL.Profiling.ECS
         private readonly IRealmData realmData;
         private readonly IDebugViewProfiler profiler;
         private readonly MemoryBudget memoryBudget;
-        private readonly V8EngineFactory v8EngineFactory;
+        private readonly V8ActiveEngines v8ActiveEngines;
         private readonly IScenesCache scenesCache;
         private readonly CurrentSceneInfo currentSceneInfo;
 
@@ -64,12 +64,12 @@ namespace DCL.Profiling.ECS
         private bool frameTimingsEnabled;
 
         private DebugViewProfilingSystem(World world, IRealmData realmData, IDebugViewProfiler profiler, MemoryBudget memoryBudget, IDebugContainerBuilder debugBuilder,
-            V8EngineFactory v8EngineFactory, IScenesCache scenesCache) : base(world)
+            V8ActiveEngines v8ActiveEngines, IScenesCache scenesCache) : base(world)
         {
             this.realmData = realmData;
             this.profiler = profiler;
             this.memoryBudget = memoryBudget;
-            this.v8EngineFactory = v8EngineFactory;
+            this.v8ActiveEngines = v8ActiveEngines;
             this.scenesCache = scenesCache;
 
             CreateView();
@@ -156,15 +156,15 @@ namespace DCL.Profiling.ECS
             gcUsedMemory.Value = BytesFormatter.Convert((ulong)memoryProfiler.GcUsedMemoryInBytes, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte).ToString("F0", CultureInfo.InvariantCulture);
 
             bool isCurrentScene = scenesCache is { CurrentScene: { SceneStateProvider: { IsCurrent: true } } };
-            JsMemorySizeInfo totalJsMemoryData = v8EngineFactory.GetEnginesSumMemoryData();
-            JsMemorySizeInfo currentSceneJsMemoryData = isCurrentScene ? v8EngineFactory.GetEnginesMemoryDataForScene(scenesCache.CurrentScene.Info) : new JsMemorySizeInfo();
+            JsMemorySizeInfo totalJsMemoryData = v8ActiveEngines.GetEnginesSumMemoryData();
+            JsMemorySizeInfo currentSceneJsMemoryData = isCurrentScene ? v8ActiveEngines.GetEnginesMemoryDataForScene(scenesCache.CurrentScene.Info) : new JsMemorySizeInfo();
 
             jsHeapUsedSize.Value = $"{totalJsMemoryData.UsedHeapSizeMB:F1} | {currentSceneJsMemoryData.UsedHeapSizeMB:F1}";
             jsHeapTotalSize.Value = $"{totalJsMemoryData.TotalHeapSizeMB:F1} | {currentSceneJsMemoryData.TotalHeapSizeMB:F1}";
             jsHeapTotalExecutable.Value = $"{totalJsMemoryData.TotalHeapSizeExecutableMB:F1} | {currentSceneJsMemoryData.TotalHeapSizeExecutableMB:F1}";
             jsHeapLimit.Value = $"{totalJsMemoryData.HeapSizeLimitMB:F1}";
 
-            jsEnginesCount.Value = v8EngineFactory.ActiveEnginesCount.ToString();
+            jsEnginesCount.Value = v8ActiveEngines.Count.ToString();
 
             (float warning, float full) memoryRanges = memoryBudget.GetMemoryRanges();
             memoryCheckpoints.Value = $"<color=green>{memoryRanges.warning}</color> | <color=red>{memoryRanges.full}</color>";

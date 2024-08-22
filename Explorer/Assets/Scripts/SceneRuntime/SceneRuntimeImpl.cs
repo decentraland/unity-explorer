@@ -23,6 +23,7 @@ namespace SceneRuntime
         private readonly IInstancePoolsProvider instancePoolsProvider;
         private readonly SceneShortInfo sceneShortInfo;
         private readonly V8EngineFactory engineFactory;
+        private readonly V8ActiveEngines activeEngines;
 
         private readonly JsApiBunch jsApiBunch;
 
@@ -39,12 +40,14 @@ namespace SceneRuntime
             IReadOnlyDictionary<string, string> jsModules,
             IInstancePoolsProvider instancePoolsProvider,
             SceneShortInfo sceneShortInfo,
-            V8EngineFactory engineFactory
+            V8EngineFactory engineFactory,
+            V8ActiveEngines activeEngines
         )
         {
             this.instancePoolsProvider = instancePoolsProvider;
             this.sceneShortInfo = sceneShortInfo;
             this.engineFactory = engineFactory;
+            this.activeEngines = activeEngines;
             resetableSource = new JSTaskResolverResetable();
 
             engine = engineFactory.Create(sceneShortInfo);
@@ -97,7 +100,7 @@ namespace SceneRuntime
 
         public void Dispose()
         {
-            engineFactory.DisposeEngine(sceneShortInfo, engine);
+            activeEngines.TryRemove(sceneShortInfo, engine);
             jsApiBunch.Dispose();
         }
 

@@ -33,8 +33,11 @@ namespace SceneRuntime.Tests
             poolsProvider.GetAPIRawDataPool(Arg.Any<int>()).Returns(c => new PoolableByteArray(new byte[c.Arg<int>()], c.Arg<int>(), null));
         }
 
-        private static SceneRuntimeFactory NewSceneRuntimeFactory() =>
-            new (TestWebRequestController.INSTANCE, new IRealmData.Fake(), new V8EngineFactory());
+        private static SceneRuntimeFactory NewSceneRuntimeFactory()
+        {
+            var activeEngines = new V8ActiveEngines();
+            return new SceneRuntimeFactory(TestWebRequestController.INSTANCE, new IRealmData.Fake(), new V8EngineFactory(activeEngines), activeEngines);
+        }
 
         [UnityTest]
         public IEnumerator EngineApi_GetState() =>
