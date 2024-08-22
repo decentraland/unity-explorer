@@ -8,6 +8,8 @@ using ECS.SceneLifeCycle.SceneDefinition;
 using SceneRunner.Scene;
 using System.Collections.Generic;
 using System.Linq;
+using DCL.LOD.Components;
+using ECS.SceneLifeCycle;
 using UnityEngine;
 using Utility;
 
@@ -68,19 +70,23 @@ namespace DCL.LOD.Systems
             return newSlots.ToArray();
         }
 
-        public static void CheckSceneReadiness(ISceneReadinessReportQueue sceneReadinessReportQueue, SceneDefinitionComponent sceneDefinitionComponent)
+        public static void UpdateLoadingScreen(SceneLODInfo sceneLODInfo,
+            SceneDefinitionComponent sceneDefinitionComponent, ISceneReadinessReportQueue sceneReadinessReportQueue,
+            IScenesCache scenesCache)
         {
-            if (sceneReadinessReportQueue.TryDequeue(sceneDefinitionComponent.Parcels, out var reports))
+            if (sceneLODInfo.HasLOD(0))
             {
-                for (int i = 0; i < reports!.Value.Count; i++)
+                scenesCache.AddNonRealScene(sceneDefinitionComponent.Parcels);
+                if (sceneReadinessReportQueue.TryDequeue(sceneDefinitionComponent.Parcels, out var reports))
                 {
-                    var report = reports.Value[i];
-                    report.SetProgress(1f);
+                    for (var i = 0; i < reports!.Value.Count; i++)
+                    {
+                        var report = reports.Value[i];
+                        report.SetProgress(1f);
+                    }
                 }
             }
+
         }
-        
-        
-        
     }
 }

@@ -16,10 +16,11 @@ namespace DCL.LOD
         {
             //Only try to release SceneLODInfo that has been initialized
             if (!string.IsNullOrEmpty(sceneLODInfo.id))
+            {
                 lodCache.Release(sceneLODInfo.id, sceneLODInfo.metadata);
-            
-            sceneLODInfo.Dispose(world);
-            scenesCache.RemoveNonRealScene(parcels);
+                sceneLODInfo.Dispose(world);
+                scenesCache.RemoveNonRealScene(parcels);
+            }
         }
     }
 }

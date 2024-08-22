@@ -40,13 +40,13 @@ namespace DCL.LOD.Systems
         {
             //If LODs are not enabled, we can consider the scene as ready,
             //and check scene readiness so not to block the loading screen
-            scenesCache.AddNonRealScene(sceneDefinitionComponent.Parcels);
-            LODUtils.CheckSceneReadiness(sceneReadinessReportQueue, sceneDefinitionComponent);
+            LODUtils.UpdateLoadingScreen(sceneLODInfo, sceneDefinitionComponent, sceneReadinessReportQueue,
+                scenesCache);
         }
 
         [Query]
-        [All(typeof(DeleteEntityIntention))]
-        private void UnloadLOD(in Entity entity, ref SceneLODInfo sceneLODInfo, ref SceneDefinitionComponent sceneDefinitionComponent)
+        [All(typeof(DeleteEntityIntention), typeof(SceneLODInfo), typeof(SceneDefinitionComponent))]
+        private void UnloadLOD(in Entity entity)
         {
             World.Remove<SceneLODInfo, VisualSceneState, DeleteEntityIntention>(entity);
         }
