@@ -29,7 +29,7 @@ namespace DCL.BadgesAPIService
             CategoriesResponse badgesResponse = await webRequestController.GetAsync(categoriesBaseURL, ct, reportCategory: ReportCategory.BADGES_WEB_REQUEST)
                                                                           .CreateFromJson<CategoriesResponse>(WRJsonParser.Unity);
 
-            return badgesResponse.data;
+            return badgesResponse.data.categories;
         }
 
         public async UniTask<BadgesInfo> FetchBadgesAsync(string walletId, bool includeLocked, int limitUnlocked, CancellationToken ct)
