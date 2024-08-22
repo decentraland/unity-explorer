@@ -53,7 +53,7 @@ on:
         default: 'none'
       cache:
         required: true
-        default: false
+        default: true
         type: boolean
       cache_strategy:
         required: true
@@ -87,6 +87,8 @@ jobs:
       sentry_environment: ${{ steps.get_sentry.outputs.environment }}
       sentry_upload_symbols: ${{ steps.get_sentry.outputs.upload_symbols }}
       sentry_enabled: ${{ steps.get_sentry.outputs.sentry_enabled }}
+      use_cache: ${{ steps.set_defaults.outputs.use_cache }}
+      cache_strategy: ${{ steps.set_defaults.outputs.cache_strategy }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -116,6 +118,12 @@ jobs:
             echo "upload_symbols=false" >> "$GITHUB_OUTPUT"
             echo "sentry_enabled=false" >> "$GITHUB_OUTPUT"
           fi
+
+      - name: Set default values
+          id: set_defaults
+          run: |
+            echo "use_cache=${{ github.event.inputs.cache || inputs.cache || 'true' }}" >> $GITHUB_OUTPUT
+            echo "cache_strategy=${{ github.event.inputs.cache_strategy || inputs.cache_strategy || 'workspace' }}" >> $GITHUB_OUTPUT
 
       - name: Get BuildOptions
         id: get_options
@@ -176,10 +184,10 @@ jobs:
           POLL_TIME: 60 # In seconds (int)
           TARGET: t_${{ matrix.target }}
           BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
-          USE_CACHE: ${{ github.event.inputs.cache || inputs.cache}}
           COMMIT_SHA: ${{ needs.prebuild.outputs.commit_sha }}
           BUILD_OPTIONS: ${{ needs.prebuild.outputs.options }}
-          CACHE_STRATEGY: ${{ github.event.inputs.cache_strategy || inputs.cache_strategy}} #Possible values: { none, library, workspace, inherit }
+          USE_CACHE: ${{ needs.prebuild.outputs.use_cache }}
+          CACHE_STRATEGY: ${{ needs.prebuild.outputs.cache_strategy }} #Possible values: { none, library, workspace, inherit }
           # Any ENV variables starting with "PARAM_" will be passed to Unity without the prefix
           # (The "PARAM_" prefix exists to allow any future values config-free)
           # e.g.: PARAM_ALLOW_DEBUG -> In Unity will be available as "ALLOW_DEBUG"
