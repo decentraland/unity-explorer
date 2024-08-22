@@ -59,8 +59,6 @@ namespace DCL.Passport.Fields.Badges
         [field: SerializeField]
         public Color NonLockedBadgeImageColor { get; private set; }
 
-        public string BadgeCategory { get; private set; }
-
         public BadgeInfo Model { get; private set; }
 
         public bool IsSelected { get; private set; }
@@ -91,7 +89,6 @@ namespace DCL.Passport.Fields.Badges
         {
             Model = badgeInfo;
             BadgeNameText.text = badgeInfo.name;
-            BadgeCategory = badgeInfo.category;
             BadgeImage.SetColor(badgeInfo.isLocked ? LockedBadgeImageColor : NonLockedBadgeImageColor);
             BadgeDateText.text = !string.IsNullOrEmpty(badgeInfo.completedAt) ? PassportUtils.FormatTimestampDate(badgeInfo.completedAt) : "--";
             BadgeDateText.gameObject.SetActive(!string.IsNullOrEmpty(badgeInfo.completedAt));

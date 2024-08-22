@@ -50,7 +50,6 @@ namespace DCL.Passport.Modules.Badges
             badgeInfoModuleView.Setup(badgeInfo);
             SetAsLoading(badgeInfo.isTier);
 
-            badgeInfoModuleView.SelectBadge(badgeInfo);
             if (badgeInfo.isTier)
                 LoadTierButtons();
         }
@@ -62,11 +61,7 @@ namespace DCL.Passport.Modules.Badges
         {
             loadBadgeTierButtonsCts.SafeCancelAndDispose();
             badgeInfoModuleView.StopLoadingImage();
-            ClearBadgeTierButtons();
-        }
 
-        private void ClearBadgeTierButtons()
-        {
             foreach (BadgeTierButton_PassportFieldView badgeTierButtons in instantiatedBadgeTierButtons)
             {
                 badgeTierButtons.StopLoadingImage();
@@ -94,6 +89,7 @@ namespace DCL.Passport.Modules.Badges
 
         private async UniTaskVoid LoadTierButtonsAsync(string badgeId, CancellationToken ct)
         {
+            // TODO (Santi): This is a placeholder, we should replace this with the real API call
             await UniTask.Delay(1000, cancellationToken: ct);
 
             foreach (BadgeTierInfo tier in currentBadgeInfo.tiers)

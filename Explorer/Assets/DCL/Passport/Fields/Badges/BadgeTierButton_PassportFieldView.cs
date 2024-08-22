@@ -57,9 +57,7 @@ namespace DCL.Passport.Fields.Badges
         public void Setup(BadgeTierInfo tierInfo)
         {
             Model = tierInfo;
-
             TierImage.SetColor(tierInfo.isLocked ? LockedBadgeImageColor : NonLockedBadgeImageColor);
-
             imageController?.SetImage(DefaultTierSprite);
             if (!string.IsNullOrEmpty(tierInfo.image))
                 imageController?.RequestImage(tierInfo.image, hideImageWhileLoading: true);

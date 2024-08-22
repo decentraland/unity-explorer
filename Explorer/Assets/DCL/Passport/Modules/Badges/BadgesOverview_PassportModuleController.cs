@@ -20,7 +20,6 @@ namespace DCL.Passport.Modules.Badges
         private readonly BadgesOverview_PassportModuleView view;
         private readonly BadgesAPIClient badgesAPIClient;
         private readonly PassportErrorsController passportErrorsController;
-
         private readonly IObjectPool<BadgeOverviewItem_PassportFieldView> badgesOverviewItemsPool;
         private readonly List<BadgeOverviewItem_PassportFieldView> instantiatedBadgesOverviewItems = new ();
 
@@ -55,8 +54,18 @@ namespace DCL.Passport.Modules.Badges
             LoadBadgesOverviewItems();
         }
 
-        public void Clear() =>
-            ClearBadgesOverviewItems();
+        public void Clear()
+        {
+            fetchBadgesCts.SafeCancelAndDispose();
+
+            foreach (BadgeOverviewItem_PassportFieldView badgeOverviewItem in instantiatedBadgesOverviewItems)
+            {
+                badgeOverviewItem.StopLoadingImage();
+                badgesOverviewItemsPool.Release(badgeOverviewItem);
+            }
+
+            instantiatedBadgesOverviewItems.Clear();
+        }
 
         public void Dispose() =>
             Clear();
@@ -69,7 +78,7 @@ namespace DCL.Passport.Modules.Badges
 
         private void LoadBadgesOverviewItems()
         {
-            ClearBadgesOverviewItems();
+            Clear();
 
             if (string.IsNullOrEmpty(currentProfile.UserId))
                 return;
@@ -100,19 +109,6 @@ namespace DCL.Passport.Modules.Badges
                 passportErrorsController.Show(ERROR_MESSAGE);
                 ReportHub.LogError(ReportCategory.PROFILE, $"{ERROR_MESSAGE} ERROR: {e.Message}");
             }
-        }
-
-        private void ClearBadgesOverviewItems()
-        {
-            fetchBadgesCts.SafeCancelAndDispose();
-
-            foreach (BadgeOverviewItem_PassportFieldView badgeOverviewItem in instantiatedBadgesOverviewItems)
-            {
-                badgeOverviewItem.StopLoadingImage();
-                badgesOverviewItemsPool.Release(badgeOverviewItem);
-            }
-
-            instantiatedBadgesOverviewItems.Clear();
         }
     }
 }

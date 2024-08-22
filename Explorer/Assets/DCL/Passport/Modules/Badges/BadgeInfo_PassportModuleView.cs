@@ -84,10 +84,7 @@ namespace DCL.Passport.Modules.Badges
             LockedBadge2DImage.gameObject.SetActive(badgeInfo.isLocked);
             UnlockedBadge3DImage.gameObject.SetActive(!badgeInfo.isLocked);
             imageController?.SetImage(DefaultBadgeSprite);
-        }
 
-        public void SelectBadge(BadgeInfo badgeInfo)
-        {
             if (!badgeInfo.isTier)
             {
                 BadgeNameText.text = badgeInfo.name;

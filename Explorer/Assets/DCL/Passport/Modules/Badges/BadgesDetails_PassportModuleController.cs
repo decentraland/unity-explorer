@@ -26,9 +26,7 @@ namespace DCL.Passport.Modules.Badges
         private readonly BadgesAPIClient badgesAPIClient;
         private readonly PassportErrorsController passportErrorsController;
         private readonly ISelfProfile selfProfile;
-
         private readonly BadgeInfo_PassportModuleSubController badgeInfoController;
-
         private readonly IObjectPool<ButtonWithSelectableStateView> badgesFilterButtonsPool;
         private readonly List<ButtonWithSelectableStateView> instantiatedBadgesFilterButtons = new ();
         private readonly IObjectPool<BadgesCategorySeparator_PassportFieldView> badgesCategorySeparatorsPool;
@@ -272,27 +270,7 @@ namespace DCL.Passport.Modules.Badges
                         CreateBadgeDetailCard(lockedBadge);
                 }
 
-                instantiatedBadgesFilterButtons[0].gameObject.SetActive(true);
-                foreach (var badgesCategorySeparator in instantiatedBadgesCategorySeparators)
-                {
-                    if (!instantiatedBadgeDetailCards.TryGetValue(badgesCategorySeparator.CategoryText.text.ToLower(), out List<BadgeDetailCard_PassportFieldView> badgeDetailCards))
-                        continue;
-
-                    badgesCategorySeparator.gameObject.SetActive(badgeDetailCards.Count > 0);
-
-                    if (badgeDetailCards.Count == 0)
-                        continue;
-
-                    foreach (var filterButton in instantiatedBadgesFilterButtons)
-                    {
-                        if (!string.Equals(filterButton.Text.text, badgesCategorySeparator.CategoryText.text, StringComparison.CurrentCultureIgnoreCase))
-                            continue;
-
-                        filterButton.gameObject.SetActive(true);
-                        break;
-                    }
-                }
-
+                ActivateOnlyCategoriesInUse();
                 CreateEmptyDetailCards();
                 ShowBadgesInGridByCategory(ALL_FILTER);
                 SelectFirstBadge();
@@ -304,6 +282,30 @@ namespace DCL.Passport.Modules.Badges
                 const string ERROR_MESSAGE = "There was an error loading badges. Please try again!";
                 passportErrorsController.Show(ERROR_MESSAGE);
                 ReportHub.LogError(ReportCategory.PROFILE, $"{ERROR_MESSAGE} ERROR: {e.Message}");
+            }
+        }
+
+        private void ActivateOnlyCategoriesInUse()
+        {
+            instantiatedBadgesFilterButtons[0].gameObject.SetActive(true);
+            foreach (var badgesCategorySeparator in instantiatedBadgesCategorySeparators)
+            {
+                if (!instantiatedBadgeDetailCards.TryGetValue(badgesCategorySeparator.CategoryText.text.ToLower(), out List<BadgeDetailCard_PassportFieldView> badgeDetailCards))
+                    continue;
+
+                badgesCategorySeparator.gameObject.SetActive(badgeDetailCards.Count > 0);
+
+                if (badgeDetailCards.Count == 0)
+                    continue;
+
+                foreach (var filterButton in instantiatedBadgesFilterButtons)
+                {
+                    if (!string.Equals(filterButton.Text.text, badgesCategorySeparator.CategoryText.text, StringComparison.CurrentCultureIgnoreCase))
+                        continue;
+
+                    filterButton.gameObject.SetActive(true);
+                    break;
+                }
             }
         }
 
@@ -399,12 +401,9 @@ namespace DCL.Passport.Modules.Badges
                 badgesCategorySeparator.gameObject.SetActive(category == ALL_FILTER && instantiatedBadgeDetailCards.ContainsKey(badgesCategorySeparator.CategoryText.text.ToLower()));
 
             foreach (var badgesCategoryContainer in instantiatedBadgesCategoryContainers)
-            {
-                if (category == ALL_FILTER)
-                    badgesCategoryContainer.gameObject.SetActive(instantiatedBadgeDetailCards.ContainsKey(badgesCategoryContainer.Category.ToLower()));
-                else
-                    badgesCategoryContainer.gameObject.SetActive(badgesCategoryContainer.Category.Equals(category, StringComparison.CurrentCultureIgnoreCase));
-            }
+                badgesCategoryContainer.gameObject.SetActive(category == ALL_FILTER ?
+                    instantiatedBadgeDetailCards.ContainsKey(badgesCategoryContainer.Category.ToLower()) :
+                    badgesCategoryContainer.Category.Equals(category, StringComparison.CurrentCultureIgnoreCase));
 
             SelectFirstBadge();
         }

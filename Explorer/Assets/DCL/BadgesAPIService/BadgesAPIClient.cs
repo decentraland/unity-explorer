@@ -224,7 +224,7 @@ namespace DCL.BadgesAPIService
                             completedAt = null,
                             name = "Traveler",
                             description = "Visit 60 scenes in Genesis City",
-                            image = "https://juststickers.in/wp-content/uploads/2017/06/8-bit-swag-badge.png",
+                            image = "https://art.pixilart.com/2af1a2ad84482b0.png",
                             isTier = true,
                             category = "Explorer",
                             progress = new BadgeProgressData
