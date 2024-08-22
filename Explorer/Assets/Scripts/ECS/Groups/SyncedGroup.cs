@@ -9,25 +9,37 @@ namespace ECS.Groups
     [UpdateInGroup(typeof(InitializationSystemGroup))]
     public partial class SyncedInitializationSystemGroup : SyncedGroup
     {
-        public SyncedInitializationSystemGroup(MutexSync mutexSync, ISceneStateProvider sceneStateProvider) : base(mutexSync, sceneStateProvider) { }
+        public SyncedInitializationSystemGroup(MultithreadSync multithreadSync, ISceneStateProvider sceneStateProvider)
+            : base(multithreadSync, sceneStateProvider)
+        {
+        }
     }
 
     [UpdateInGroup(typeof(SimulationSystemGroup))]
     public partial class SyncedSimulationSystemGroup : SyncedGroup
     {
-        public SyncedSimulationSystemGroup(MutexSync mutexSync, ISceneStateProvider sceneStateProvider) : base(mutexSync, sceneStateProvider) { }
+        public SyncedSimulationSystemGroup(MultithreadSync multithreadSync, ISceneStateProvider sceneStateProvider) :
+            base(multithreadSync, sceneStateProvider)
+        {
+        }
     }
 
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     public partial class SyncedPresentationSystemGroup : SyncedGroup
     {
-        public SyncedPresentationSystemGroup(MutexSync mutexSync, ISceneStateProvider sceneStateProvider) : base(mutexSync, sceneStateProvider) { }
+        public SyncedPresentationSystemGroup(MultithreadSync multithreadSync, ISceneStateProvider sceneStateProvider) :
+            base(multithreadSync, sceneStateProvider)
+        {
+        }
     }
 
     [UpdateInGroup(typeof(PreRenderingSystemGroup))]
     public partial class SyncedPreRenderingSystemGroup : SyncedGroup
     {
-        public SyncedPreRenderingSystemGroup(MutexSync mutexSync, ISceneStateProvider sceneStateProvider) : base(mutexSync, sceneStateProvider) { }
+        public SyncedPreRenderingSystemGroup(MultithreadSync multithreadSync, ISceneStateProvider sceneStateProvider) :
+            base(multithreadSync, sceneStateProvider)
+        {
+        }
     }
 
     /// <summary>
@@ -37,12 +49,12 @@ namespace ECS.Groups
     /// </summary>
     public abstract class SyncedGroup : CustomGroupBase<float>
     {
-        [CanBeNull] private readonly MutexSync mutexSync;
+        [CanBeNull] private readonly MultithreadSync multithreadSync;
         private readonly ISceneStateProvider sceneStateProvider;
 
-        protected SyncedGroup([CanBeNull] MutexSync mutexSync, ISceneStateProvider sceneStateProvider)
+        protected SyncedGroup([CanBeNull] MultithreadSync multithreadSync, ISceneStateProvider sceneStateProvider)
         {
-            this.mutexSync = mutexSync;
+            this.multithreadSync = multithreadSync;
             this.sceneStateProvider = sceneStateProvider;
         }
 
@@ -57,7 +69,7 @@ namespace ECS.Groups
                 return;
 
             // If Mutex is not acquired throttle the system
-            if (mutexSync is not null && !mutexSync.Acquired) return;
+            if (multithreadSync is not null && !multithreadSync.Acquired) return;
 
             BeforeUpdateInternal(in t, throttle);
         }
@@ -68,7 +80,7 @@ namespace ECS.Groups
                 return;
 
             // If Mutex is not acquired throttle the system
-            if (mutexSync is not null && !mutexSync.Acquired) return;
+            if (multithreadSync is not null && !multithreadSync.Acquired) return;
 
             UpdateInternal(in t, throttle);
         }
@@ -79,7 +91,7 @@ namespace ECS.Groups
                 return;
 
             // If Mutex is not acquired throttle the system
-            if (mutexSync is not null && !mutexSync.Acquired) return;
+            if (multithreadSync is not null && !multithreadSync.Acquired) return;
 
             AfterUpdateInternal(in t, throttle);
         }
@@ -87,7 +99,7 @@ namespace ECS.Groups
         public override void Dispose()
         {
             // If Mutex is not acquired throttle the system
-            if (mutexSync is not null && !mutexSync.Acquired) return;
+            if (multithreadSync is not null && !multithreadSync.Acquired) return;
 
             DisposeInternal();
         }
