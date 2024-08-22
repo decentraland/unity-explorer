@@ -5,10 +5,4 @@
         long LastFrameTimeValueNs { get; }
         FrameTimeStats? CalculateMainThreadFrameTimesNs();
     }
-
-    public interface IMemoryProfiler : IBudgetProfiler
-    {
-        long SystemUsedMemoryInBytes { get; }
-        long GcUsedMemoryInBytes { get; }
-    }
 }
