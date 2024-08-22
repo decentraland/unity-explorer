@@ -127,15 +127,17 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
             // and we would have to hardcode it...
             if (pbVirtualCamera.DefaultTransition.TransitionCase == CameraTransition.TransitionOneofCase.Time)
             {
-                cameraData.CinemachineBrain!.m_DefaultBlend.m_Style = pbVirtualCamera.DefaultTransition.Time.Value <= 0 ? CinemachineBlendDefinition.Style.Cut : CinemachineBlendDefinition.Style.EaseInOut;
-                cameraData.CinemachineBrain!.m_DefaultBlend.m_Time = pbVirtualCamera.DefaultTransition.Time.Value;
+                float timeValue = pbVirtualCamera.DefaultTransition.Time.Value;
+                cameraData.CinemachineBrain!.m_DefaultBlend.m_Time = timeValue;
+                cameraData.CinemachineBrain!.m_DefaultBlend.m_Style = timeValue <= 0 ? CinemachineBlendDefinition.Style.Cut : CinemachineBlendDefinition.Style.EaseInOut;
             }
             else
             {
-                cameraData.CinemachineBrain!.m_DefaultBlend.m_Style = pbVirtualCamera.DefaultTransition.Speed.Value <= 0 ? CinemachineBlendDefinition.Style.Cut : CinemachineBlendDefinition.Style.EaseInOut;
+                float speedValue = pbVirtualCamera.DefaultTransition.Speed.Value;
+                cameraData.CinemachineBrain!.m_DefaultBlend.m_Style = speedValue <= 0 ? CinemachineBlendDefinition.Style.Cut : CinemachineBlendDefinition.Style.EaseInOut;
 
                 // SPEED = 1 -> 1 Meter per second
-                float blendTime = distanceBetweenCameras / pbVirtualCamera.DefaultTransition.Speed.Value;
+                float blendTime = distanceBetweenCameras / speedValue;
                 if (blendTime == 0)
                     cameraData.CinemachineBrain!.m_DefaultBlend.m_Style = CinemachineBlendDefinition.Style.Cut;
                 else
