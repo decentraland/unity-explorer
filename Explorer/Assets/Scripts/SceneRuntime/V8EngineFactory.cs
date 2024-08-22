@@ -21,13 +21,6 @@ namespace SceneRuntime
             engine.UseReflectionBindFallback = true;
             engine.AllowReflection = true;
 
-            if (!activeEngines.TryAdd(sceneInfo, engine))
-            {
-                ReportHub.LogWarning(ReportData.UNSPECIFIED, $"Trying to create same V8 engine for scene that already have one running engine. Replacing running engine with new one... Scene: {sceneInfo.ToString()}");
-                activeEngines[sceneInfo].Dispose();
-                activeEngines[sceneInfo] = engine;
-            }
-
             activeEngines.TryAdd(sceneInfo, engine);
 
             return engine;
