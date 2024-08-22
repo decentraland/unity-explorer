@@ -41,7 +41,12 @@ namespace DCL.BadgesAPIService
     {
         public int stepsDone;
         public int? nextStepsTarget;
-        public string lastTierCompletedAt;
+        public string lastCompletedTierAt;
+
+        public int totalStepsTarget;
+        public string lastCompletedTierName;
+        public string lastCompletedTierImage;
+
     }
 
     [Serializable]

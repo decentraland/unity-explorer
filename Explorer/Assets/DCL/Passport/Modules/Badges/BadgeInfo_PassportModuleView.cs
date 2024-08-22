@@ -101,13 +101,13 @@ namespace DCL.Passport.Modules.Badges
             {
                 var nextTierToComplete = badgeInfo.tiers[badgeInfo.nextTierToCompleteIndex];
                 TopTierMark.SetActive(isOwnProfile && !string.IsNullOrEmpty(badgeInfo.completedAt));
-                NextTierContainer.SetActive(isOwnProfile && string.IsNullOrEmpty(badgeInfo.completedAt) && badgeInfo.nextTierCurrentProgress > 0);
+                NextTierContainer.SetActive(isOwnProfile && string.IsNullOrEmpty(badgeInfo.completedAt) && badgeInfo.stepsDone > 0);
                 NextTierValueText.text = nextTierToComplete.name;
                 NextTierDescriptionText.text = nextTierToComplete.description;
                 NextTierDescriptionText.gameObject.SetActive(isOwnProfile);
-                int nextTierProgressPercentage = badgeInfo.isLocked ? 0 : badgeInfo.nextTierCurrentProgress * 100 / badgeInfo.nextTierTotalProgress;
+                int nextTierProgressPercentage = badgeInfo.isLocked ? 0 : badgeInfo.stepsDone * 100 / (badgeInfo.nextStepsTarget ?? badgeInfo.totalStepsTarget);
                 NextTierProgressBarFill.sizeDelta = new Vector2((!badgeInfo.isLocked ? nextTierProgressPercentage : 0) * (NextTierProgressBar.sizeDelta.x / 100), NextTierProgressBarFill.sizeDelta.y);
-                NextTierProgressValueText.text = $"{badgeInfo.nextTierCurrentProgress}/{badgeInfo.nextTierTotalProgress}";
+                NextTierProgressValueText.text = $"{badgeInfo.stepsDone}/{badgeInfo.nextStepsTarget ?? badgeInfo.totalStepsTarget}";
                 NextTierProgressBarContainer.SetActive(isOwnProfile);
             }
         }

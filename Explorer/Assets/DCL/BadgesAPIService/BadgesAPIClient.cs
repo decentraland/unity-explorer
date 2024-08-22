@@ -97,9 +97,12 @@ namespace DCL.BadgesAPIService
                 image = badge.image,
                 completedAt = badge.completedAt,
                 isTier = badge.isTier,
-                nextTierTotalProgress = badge.progress.nextStepsTarget ?? 1,
-                nextTierCurrentProgress = badge.progress.stepsDone,
-                lastTierCompletedAt = badge.progress.lastTierCompletedAt,
+                nextStepsTarget = badge.progress.nextStepsTarget,
+                stepsDone = badge.progress.stepsDone,
+                lastCompletedTierAt = badge.progress.lastCompletedTierAt,
+                totalStepsTarget = badge.progress.totalStepsTarget,
+                lastCompletedTierName = badge.progress.lastCompletedTierName,
+                lastCompletedTierImage = badge.progress.lastCompletedTierImage,
                 lastCompletedTierIndex = lastCompletedTierIndex,
                 nextTierToCompleteIndex = nextTierToCompleteIndex,
                 tiers = Array.ConvertAll(badge.tiers, tier => new BadgeTierInfo
@@ -156,7 +159,10 @@ namespace DCL.BadgesAPIService
                             {
                                 stepsDone = 1,
                                 nextStepsTarget = null,
-                                lastTierCompletedAt = null,
+                                totalStepsTarget = 1,
+                                lastCompletedTierAt = null,
+                                lastCompletedTierName = null,
+                                lastCompletedTierImage = null,
                             },
                             tiers = Array.Empty<TierData>(),
                         },
@@ -172,8 +178,11 @@ namespace DCL.BadgesAPIService
                             progress = new BadgeProgressData
                             {
                                 stepsDone = 50,
-                                nextStepsTarget = 50,
-                                lastTierCompletedAt = "1722005503466",
+                                nextStepsTarget = null,
+                                totalStepsTarget = 50,
+                                lastCompletedTierAt = "1722005503466",
+                                lastCompletedTierName = "Diamond",
+                                lastCompletedTierImage = "https://picsum.photos/seed/6/300/300",
                             },
                             tiers = new[]
                             {
@@ -264,7 +273,10 @@ namespace DCL.BadgesAPIService
                             {
                                 stepsDone = 23,
                                 nextStepsTarget = 30,
-                                lastTierCompletedAt = "1722005503466",
+                                totalStepsTarget = 60,
+                                lastCompletedTierAt = "1722005503466",
+                                lastCompletedTierName = "Bronze",
+                                lastCompletedTierImage = "https://picsum.photos/seed/8/300/300",
                             },
                             tiers = new[]
                             {
@@ -356,9 +368,12 @@ namespace DCL.BadgesAPIService
                             category = "Socializer",
                             progress = new BadgeProgressData
                             {
-                                stepsDone = 1,
+                                stepsDone = 0,
                                 nextStepsTarget = 1,
-                                lastTierCompletedAt = null,
+                                totalStepsTarget = 1,
+                                lastCompletedTierAt = null,
+                                lastCompletedTierName = null,
+                                lastCompletedTierImage = null,
                             },
                             tiers = Array.Empty<TierData>(),
                         },
@@ -375,7 +390,10 @@ namespace DCL.BadgesAPIService
                             {
                                 stepsDone = 0,
                                 nextStepsTarget = 1,
-                                lastTierCompletedAt = null,
+                                totalStepsTarget = 6,
+                                lastCompletedTierAt = null,
+                                lastCompletedTierName = null,
+                                lastCompletedTierImage = null,
                             },
                             tiers = new[]
                             {
@@ -464,9 +482,12 @@ namespace DCL.BadgesAPIService
                             category = "Builder",
                             progress = new BadgeProgressData
                             {
-                                stepsDone = 1,
+                                stepsDone = 0,
                                 nextStepsTarget = 1,
-                                lastTierCompletedAt = null,
+                                totalStepsTarget = 1,
+                                lastCompletedTierAt = null,
+                                lastCompletedTierName = null,
+                                lastCompletedTierImage = null,
                             },
                             tiers = Array.Empty<TierData>(),
                         },
