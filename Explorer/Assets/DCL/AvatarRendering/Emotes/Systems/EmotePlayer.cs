@@ -170,16 +170,19 @@ namespace DCL.AvatarRendering.Emotes
 
             if (uniqueClips.Count == 1)
                 avatarClip = uniqueClips[0];
-            else
+            else if (uniqueClips.Count > 1)
             {
                 foreach (AnimationClip animationClip in uniqueClips)
                 {
+                    // Many 2.0 emotes are not following naming conventions: https://docs.decentraland.org/creator/emotes/props-and-sounds/#naming-conventions
+                    // Some examples:
+                    // urn:decentraland:matic:collections-v2:0xca53b9436be1d663e050eb9ce523decbc656365c:1
+                    // urn:decentraland:matic:collections-v2:0xfcc2c46c83a9faa5c639e81d0ad19e27b5517e57:0
+                    // So they won't work because of the naming checks
+                    // Creators need to either fix the emotes, or we need to apply a fallback based on sorting rule
                     if (animationClip.name.Contains("_avatar", StringComparison.OrdinalIgnoreCase))
                         avatarClip = animationClip;
 
-                    // Many 2.0 emotes are not following naming conventions: https://docs.decentraland.org/creator/emotes/props-and-sounds/#naming-conventions
-                    // So they won't work because of this check
-                    // Creators need to either fix the emotes, or we need to assign the prop clip to those which does not contain any "_avatar" in the name
                     if (animationClip.name.Contains("_prop", StringComparison.OrdinalIgnoreCase))
                     {
                         propClip = animationClip;
