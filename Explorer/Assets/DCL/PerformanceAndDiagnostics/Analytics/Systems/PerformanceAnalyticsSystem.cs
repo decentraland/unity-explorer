@@ -9,8 +9,6 @@ using ECS.Abstract;
 using ECS.SceneLifeCycle;
 using SceneRuntime;
 using Segment.Serialization;
-using System.Collections.Generic;
-using System.Text;
 using UnityEngine;
 using World = Arch.Core.World;
 using static DCL.PerformanceAndDiagnostics.Analytics.AnalyticsEvents;
@@ -32,7 +30,6 @@ namespace DCL.Analytics.Systems
         private readonly AnalyticsConfiguration config;
 
         private float lastReportTime;
-        private readonly StringBuilder stringBuilder = new ();
 
         public PerformanceAnalyticsSystem(World world, IAnalyticsController analytics, IRealmData realmData, IAnalyticsReportProfiler profiler, V8EngineFactory v8EngineFactory,
             IScenesCache scenesCache) : base(world)
@@ -60,8 +57,8 @@ namespace DCL.Analytics.Systems
 
         private void ReportPerformanceMetrics()
         {
-            (AnalyticsFrameTimeReport? mainThreadReport, IReadOnlyList<long>  samplesArray) = profiler.GetMainThreadFramesNs(percentiles);
-            AnalyticsFrameTimeReport? gpuFrameTimeReport = profiler.GetGpuThreadFramesNs(percentiles);
+            (AnalyticsFrameTimeReport? gpuFrameTimeReport, AnalyticsFrameTimeReport? mainThreadReport, string samplesArray)
+                = profiler.GetFrameTimesNs(percentiles);
 
             if (!mainThreadReport.HasValue || !gpuFrameTimeReport.HasValue)
                 return;
@@ -95,7 +92,7 @@ namespace DCL.Analytics.Systems
                 ["total_gc_alloc"] = ((ulong)profiler.TotalGcAlloc).ByteToMB(),
 
                 // MainThread
-                ["samples"] = GetSamplesArrayAsString(samplesArray),
+                ["samples"] = samplesArray,
                 ["samples_amount"] = mainThreadReport.Value.Samples,
                 ["total_time"] = mainThreadReport.Value.SumTime * NS_TO_MS,
 
@@ -138,24 +135,6 @@ namespace DCL.Analytics.Systems
                 ["gpu_frame_time_percentile_90"] = gpuFrameTimeReport.Value.Percentiles[6] * NS_TO_MS,
                 ["gpu_frame_time_percentile_95"] = gpuFrameTimeReport.Value.Percentiles[7] * NS_TO_MS,
             });
-        }
-
-        private string GetSamplesArrayAsString(IReadOnlyList<long> samplesArray)
-        {
-            stringBuilder.Clear();
-            stringBuilder.Append("[");
-
-            for (var i = 0; i < samplesArray.Count; i++)
-            {
-                stringBuilder.AppendFormat("{0:0.000}", samplesArray[i]* NS_TO_MS);
-
-                if (i < samplesArray.Count - 1)
-                    stringBuilder.Append(",");
-            }
-
-            stringBuilder.Append("]");
-
-            return stringBuilder.ToString();
         }
     }
 }

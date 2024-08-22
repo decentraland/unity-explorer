@@ -1,12 +1,13 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using Unity.Profiling;
 
 namespace DCL.Profiling
 {
     public interface IAnalyticsReportProfiler : IMemoryProfiler
     {
-        (AnalyticsFrameTimeReport?, IReadOnlyList<long>) GetMainThreadFramesNs(int[] percentile);
-
-        AnalyticsFrameTimeReport? GetGpuThreadFramesNs(int[] percentile);
+        (AnalyticsFrameTimeReport? gpuFrameTime, AnalyticsFrameTimeReport? mainThreadFrameTime, string mainThreadSamples)
+            GetFrameTimesNs(int[] percentile);
 
         float TotalGcAlloc { get; }
     }
