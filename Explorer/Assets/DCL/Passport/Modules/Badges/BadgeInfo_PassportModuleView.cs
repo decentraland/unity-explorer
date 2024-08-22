@@ -80,7 +80,7 @@ namespace DCL.Passport.Modules.Badges
 
         public void Setup(BadgeInfo badgeInfo)
         {
-            TierSection.SetActive(badgeInfo.tiers.Length > 0);
+            TierSection.SetActive(badgeInfo.isTier);
             LockedBadge2DImage.gameObject.SetActive(badgeInfo.isLocked);
             UnlockedBadge3DImage.gameObject.SetActive(!badgeInfo.isLocked);
             imageController?.SetImage(DefaultBadgeSprite);
