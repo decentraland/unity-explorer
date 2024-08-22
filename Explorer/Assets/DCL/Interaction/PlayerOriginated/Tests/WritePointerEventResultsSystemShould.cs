@@ -28,7 +28,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
         public void SetUp()
         {
             ISceneData sceneData = Substitute.For<ISceneData>();
-            sceneData.Geometry.Returns(new ParcelMathHelper.SceneGeometry(Vector3.zero, new ParcelMathHelper.SceneCircumscribedPlanes()));
+            sceneData.Geometry.Returns(new ParcelMathHelper.SceneGeometry(Vector3.zero, new ParcelMathHelper.SceneCircumscribedPlanes(), 0.0f));
 
             sceneStateProvider = Substitute.For<ISceneStateProvider>();
             sceneStateProvider.TickNumber.Returns(123u);
