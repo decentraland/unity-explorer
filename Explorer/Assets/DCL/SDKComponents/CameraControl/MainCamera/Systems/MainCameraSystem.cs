@@ -14,6 +14,7 @@ using ECS.Groups;
 using ECS.LifeCycle;
 using ECS.Unity.Transforms.Components;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
 {
@@ -59,8 +60,9 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
             CinemachineVirtualCamera? oldVirtualCamera = mainCameraComponent.virtualCameraInstance;
             mainCameraComponent.virtualCameraInstance = null;
 
+            // TODO: Fix null oldVirtualCamera distance calculation by having a reference of the real main camera transform or position...
             if (pbMainCamera.VirtualCameraEntity > 0)
-                ApplyVirtualCamera(ref mainCameraComponent, (int)pbMainCamera.VirtualCameraEntity);
+                ApplyVirtualCamera(ref mainCameraComponent, (int)pbMainCamera.VirtualCameraEntity, oldVirtualCamera?.transform.position);
 
             if (oldVirtualCamera != null)
                 oldVirtualCamera.enabled = false;
@@ -84,9 +86,6 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
             virtualCameraInstance.transform.SetParent(transform.Transform);
             virtualCameraInstance.transform.localPosition = UnityEngine.Vector3.zero;
             virtualCameraInstance.transform.localRotation = UnityEngine.Quaternion.identity;
-
-            // TODO: Use pbVirtualCamera values for transition speed/time...
-
             World.Add(entity, new VirtualCameraComponent(virtualCameraInstance));
         }
 
@@ -95,35 +94,42 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
             // throw new NotImplementedException();
         }
 
-        private void ApplyVirtualCamera(ref MainCameraComponent mainCameraComponent, int virtualCamCRDTEntity)
+        private void ApplyVirtualCamera(ref MainCameraComponent mainCameraComponent, int virtualCamCRDTEntity, Vector3? previousCameraPosition)
         {
             if (!TryGetCinemachineVirtualCamera(virtualCamCRDTEntity, out var virtualCameraInstance)) return;
 
-            ConfigureVirtualCameraTransition(virtualCamCRDTEntity);
+            ConfigureVirtualCameraTransition(virtualCamCRDTEntity,
+                previousCameraPosition.HasValue ? Vector3.Distance(virtualCameraInstance!.transform.position, previousCameraPosition.Value) : 0f);
 
             mainCameraComponent.virtualCameraCRDTEntity = virtualCamCRDTEntity;
             mainCameraComponent.virtualCameraInstance = virtualCameraInstance;
             virtualCameraInstance!.enabled = true;
         }
 
-        private void ConfigureVirtualCameraTransition(int virtualCamCRDTEntity)
+        private void ConfigureVirtualCameraTransition(int virtualCamCRDTEntity, float distanceBetweenCameras)
         {
             var pbVirtualCamera = World.Get<PBVirtualCamera>(entitiesMap[virtualCamCRDTEntity]);
 
             // Using custom blends array doesn't work because there's no direct way of getting the custom blend index,
             // and we would have to hardcode it...
-            var brain = UnityEngine.GameObject.FindObjectOfType<CinemachineBrain>(); // TODO: Inject from somewhere...
+            var brain = GameObject.FindObjectOfType<CinemachineBrain>(); // TODO: Inject from somewhere...
 
             if (pbVirtualCamera.DefaultTransition.TransitionCase == CameraTransition.TransitionOneofCase.Time)
             {
                 brain.m_DefaultBlend.m_Style = pbVirtualCamera.DefaultTransition.Time.Value <= 0 ? CinemachineBlendDefinition.Style.Cut : CinemachineBlendDefinition.Style.EaseInOut;
                 brain.m_DefaultBlend.m_Time = pbVirtualCamera.DefaultTransition.Time.Value;
             }
-            // else
-            // {
-            //     // calculate time
-            //     sdkVirtualCameraBlend.
-            // }
+            else
+            {
+                brain.m_DefaultBlend.m_Style = pbVirtualCamera.DefaultTransition.Speed.Value <= 0 ? CinemachineBlendDefinition.Style.Cut : CinemachineBlendDefinition.Style.EaseInOut;
+
+                // Calculate time; SPEED = 1 -> 1 Meter
+                float blendTime = distanceBetweenCameras / pbVirtualCamera.DefaultTransition.Speed.Value;
+                if (blendTime == 0)
+                    brain.m_DefaultBlend.m_Style = CinemachineBlendDefinition.Style.Cut;
+                else
+                    brain.m_DefaultBlend.m_Time = blendTime;
+            }
         }
 
         private bool TryGetCinemachineVirtualCamera(CRDTEntity targetEntity, out CinemachineVirtualCamera? virtualCameraInstance)
