@@ -55,11 +55,10 @@ namespace DCL.Character.CharacterCamera.Systems
         }
 
         [Query]
-        [None(typeof(CameraBlockerComponent))]
-        private void HandleCameraInput([Data] float dt, in CameraComponent cameraComponent)
+        private void HandleCameraInput([Data] float dt, in CameraComponent cameraComponent, in InputModifierComponent modifierComponent)
         {
             // this blocks the user of changing the current camera, but the SDK still can do it
-            if (!cameraComponent.CameraInputChangeEnabled)
+            if (!cameraComponent.CameraInputChangeEnabled || modifierComponent.DisableCamera)
                 return;
 
             HandleZoomingQuery(World);

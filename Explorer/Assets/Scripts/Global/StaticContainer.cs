@@ -218,7 +218,7 @@ namespace Global
                 new MapPinPlugin(container.GlobalWorldProxy),
                 new MultiplayerPlugin(),
                 new RealmInfoPlugin(container.RealmData, container.RoomHubProxy),
-                new PlayerInputMovementPlugin(),
+                new InputModifierPlugin(container.GlobalWorldProxy, container.PlayerEntityProxy),
 
 #if UNITY_EDITOR
                 new GizmosWorldPlugin(),

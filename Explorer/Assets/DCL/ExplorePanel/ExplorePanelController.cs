@@ -240,15 +240,17 @@ namespace DCL.ExplorePanel
 
         private void BlockUnwantedActions()
         {
-            world.AddOrGet<CameraBlockerComponent>(playerEntity);
-            world.AddOrGet<MovementBlockerComponent>(playerEntity);
+            ref var inputModifier = ref world.Get<InputModifierComponent>(playerEntity);
+            inputModifier.DisableAll = true;
+
             dclInput.Camera.Disable();
         }
 
         private void UnblockUnwantedActions()
         {
-            world.TryRemove<CameraBlockerComponent>(playerEntity);
-            world.TryRemove<MovementBlockerComponent>(playerEntity);
+            ref var inputModifier = ref world.Get<InputModifierComponent>(playerEntity);
+            inputModifier.DisableAll = false;
+
             dclInput.Camera.Enable();
         }
 

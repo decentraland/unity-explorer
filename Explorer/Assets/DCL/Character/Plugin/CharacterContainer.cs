@@ -8,6 +8,7 @@ using DCL.AssetsProvision;
 using DCL.Character.Components;
 using DCL.CharacterCamera;
 using DCL.CharacterCamera.Systems;
+using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Systems;
 using DCL.Multiplayer.Movement;
 using DCL.Optimization.Pools;
@@ -84,7 +85,8 @@ namespace DCL.Character.Plugin
                 new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY),
                 new PlayerComponent(characterObject.Value.CameraFocus),
                 new CharacterTransform(characterObject.Value.Transform),
-                new PlayerMovementNetworkComponent(characterObject.Value.Controller));
+                new PlayerMovementNetworkComponent(characterObject.Value.Controller),
+                new InputModifierComponent());
 
         public class GlobalPlugin : IDCLGlobalPluginWithoutSettings
         {

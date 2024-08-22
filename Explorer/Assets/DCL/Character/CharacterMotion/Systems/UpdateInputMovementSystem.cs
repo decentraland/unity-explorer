@@ -29,32 +29,32 @@ namespace DCL.CharacterMotion.Systems
         protected override void Update(float t)
         {
             UpdateInputQuery(World);
-            ResetInputQuery(World);
         }
 
         [Query]
-        [All(typeof(MovementBlockerComponent))]
-        private void ResetInput(ref MovementInputComponent inputToUpdate)
+        private void UpdateInput(ref MovementInputComponent inputToUpdate, ref InputModifierComponent inputModifierComponent)
         {
-            inputToUpdate.Axes = Vector2.zero;
-        }
-
-        [Query]
-        [None(typeof(MovementBlockerComponent))]
-        private void UpdateInput(ref MovementInputComponent inputToUpdate)
-        {
-            inputToUpdate.Axes = movementAxis.ReadValue<Vector2>();
-
-            if (!movementAxis.enabled)
+            if (inputModifierComponent is { DisableAll: true } or { DisableWalk: true, DisableJog: true, DisableRun: true })
+            {
                 inputToUpdate.Axes = Vector2.zero;
+                return;
+            }
 
-            if (autoWalkAction.WasPerformedThisFrame()) { inputToUpdate.AutoWalk = !inputToUpdate.AutoWalk; }
+            inputToUpdate.Axes = movementAxis.enabled ? movementAxis.ReadValue<Vector2>() : Vector2.zero;
 
-            if (inputToUpdate.Axes.sqrMagnitude > 0.1f) { inputToUpdate.AutoWalk = false; }
+            if (!inputModifierComponent.DisableWalk && autoWalkAction.WasPerformedThisFrame())
+                inputToUpdate.AutoWalk = !inputToUpdate.AutoWalk;
+
+            if (inputToUpdate is { AutoWalk: true, Axes: { sqrMagnitude: > 0.1f } })
+                inputToUpdate.AutoWalk = false;
 
             // Running action wins over walking
-            inputToUpdate.Kind = sprintAction.IsPressed() ? MovementKind.Run :
-                walkAction.IsPressed() ? MovementKind.Walk : MovementKind.Jog;
+            if (!inputModifierComponent.DisableRun && sprintAction.IsPressed())
+                inputToUpdate.Kind = MovementKind.Run;
+            else if (!inputModifierComponent.DisableWalk && walkAction.IsPressed())
+                inputToUpdate.Kind = MovementKind.Walk;
+            else if(!inputModifierComponent.DisableJog)
+                inputToUpdate.Kind = MovementKind.Jog;
 
             if (inputToUpdate.AutoWalk)
             {

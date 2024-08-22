@@ -31,9 +31,10 @@ namespace DCL.CharacterCamera.Systems
         }
 
         [Query]
-        [All(typeof(CameraBlockerComponent))]
-        private void ResetInput(ref CameraInput cameraInput)
+        private void ResetInput(ref CameraInput cameraInput, in InputModifierComponent inputModifierComponent)
         {
+            if(!inputModifierComponent.DisableCamera) return;
+
             cameraInput.ZoomIn = false;
             cameraInput.ZoomOut = false;
             cameraInput.Delta = Vector2.zero;
@@ -42,9 +43,10 @@ namespace DCL.CharacterCamera.Systems
         }
 
         [Query]
-        [None(typeof(CameraBlockerComponent))]
-        private void UpdateInput(ref CameraInput cameraInput, ref CursorComponent cursorComponent)
+        private void UpdateInput(ref CameraInput cameraInput, ref CursorComponent cursorComponent, in InputModifierComponent inputModifierComponent)
         {
+            if(inputModifierComponent.DisableCamera) return;
+
             cameraInput.ZoomIn = cameraActions.Zoom.ReadValue<Vector2>().y > 0
                                  || cameraActions.ZoomIn.WasPressedThisFrame();
 

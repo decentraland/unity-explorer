@@ -1,7 +1,6 @@
 using Arch.Core;
 using DCL.CharacterMotion.Components;
 using DCL.Utilities;
-using System;
 
 namespace DCL.Input.UnityInputSystem.Blocks
 {
@@ -20,7 +19,8 @@ namespace DCL.Input.UnityInputSystem.Blocks
 
         public void BlockMovement()
         {
-            globalWorld.StrictObject.AddOrGet(playerEntity.StrictObject, new MovementBlockerComponent());
+            ref var inputModifier = ref globalWorld.StrictObject.Get<InputModifierComponent>(playerEntity.StrictObject);
+            inputModifier.DisableAll = true;
             dclInput.StrictObject.Shortcuts.Disable();
             dclInput.StrictObject.Camera.Disable();
             dclInput.StrictObject.Player.Disable();
@@ -28,7 +28,8 @@ namespace DCL.Input.UnityInputSystem.Blocks
 
         public void UnblockMovement()
         {
-            globalWorld.StrictObject.Remove<MovementBlockerComponent>(playerEntity.StrictObject);
+            ref var inputModifier = ref globalWorld.StrictObject.Get<InputModifierComponent>(playerEntity.StrictObject);
+            inputModifier.DisableAll = false;
             dclInput.StrictObject.Shortcuts.Enable();
             dclInput.StrictObject.Camera.Enable();
             dclInput.StrictObject.Player.Enable();

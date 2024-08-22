@@ -162,11 +162,19 @@ namespace DCL.Chat
             }
         }
 
-        private void OnChatViewPointerExit() =>
-            world.TryRemove<CameraBlockerComponent>(cameraEntity);
+        private void OnChatViewPointerExit()
+        {
+            //world.TryRemove<CameraBlockerComponent>(cameraEntity);
+            ref var inputModifier = ref world.Get<InputModifierComponent>(playerEntity);
+            inputModifier.DisableCamera = false;
+        }
 
-        private void OnChatViewPointerEnter() =>
-            world.AddOrGet(cameraEntity, new CameraBlockerComponent());
+        private void OnChatViewPointerEnter()
+        {
+            //world.AddOrGet(cameraEntity, new CameraBlockerComponent());
+            ref var inputModifier = ref world.Get<InputModifierComponent>(playerEntity);
+            inputModifier.DisableCamera = true;
+        }
 
         private void AddEmojiFromSuggestion(string emojiCode, bool shouldClose)
         {
