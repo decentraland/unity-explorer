@@ -16,18 +16,14 @@ namespace DCL.Multiplayer.Movement.Systems
     [LogCategory(ReportCategory.MULTIPLAYER_MOVEMENT)]
     public partial class RemotePlayersMovementSystem : BaseUnityLoopSystem
     {
-        // Amount of positions with delta below MinPositionDelta, that will be skip in one frame.
-        private const int SAME_POSITION_BATCH = 10;
-
         // Amount of positions with timestamp that older than timestamp of the last passed message, that will be skip in one frame.
-        private const int OLD_MESSAGES_BATCH = 10;
         private const int BEHIND_EXTRAPOLATION_BATCH = 10;
         private const float ZERO_VELOCITY_THRESHOLD = 0.01f;
 
         private readonly IMultiplayerMovementSettings settings;
         private readonly ICharacterControllerSettings characterControllerSettings;
 
-        internal RemotePlayersMovementSystem(World world, MultiplayerMovementMessageBus messageBus, IMultiplayerMovementSettings settings, ICharacterControllerSettings characterControllerSettings) : base(world)
+        internal RemotePlayersMovementSystem(World world, IMultiplayerMovementSettings settings, ICharacterControllerSettings characterControllerSettings) : base(world)
         {
             this.settings = settings;
             this.characterControllerSettings = characterControllerSettings;
@@ -70,11 +66,8 @@ namespace DCL.Multiplayer.Movement.Systems
             }
 
             // Filter old messages that arrived too late
-            for (var i = 0; i < OLD_MESSAGES_BATCH && playerInbox.Count > 0; i++)
-            {
-                if (playerInbox.First.timestamp <= remotePlayerMovement.PastMessage.timestamp)
-                    playerInbox.Dequeue();
-            }
+            while (playerInbox.Count > 0 && playerInbox.First.timestamp <= remotePlayerMovement.PastMessage.timestamp)
+                playerInbox.Dequeue();
 
             // When there is no messages, we extrapolate
             if (playerInbox.Count == 0 && settings.UseExtrapolation && remotePlayerMovement is { Initialized: true, WasTeleported: false })
@@ -160,7 +153,7 @@ namespace DCL.Multiplayer.Movement.Systems
         {
             // Filter messages with the same position
             if (settings.InterpolationSettings.UseSpeedUp)
-                for (var i = 0; i < SAME_POSITION_BATCH && playerInbox.Count > 0 && Vector3.SqrMagnitude(playerInbox.First.position - remote.position) < settings.MinPositionDelta; i++)
+                while (playerInbox.Count > 0 && Vector3.SqrMagnitude(playerInbox.First.position - remote.position) < settings.MinPositionDelta)
                     remote = playerInbox.Dequeue();
 
             transComp.Transform.position = remote.position;
@@ -171,7 +164,9 @@ namespace DCL.Multiplayer.Movement.Systems
         {
             float sqrDistance = Vector3.SqrMagnitude(remotePlayerMovement.PastMessage.position - remote.position);
 
-            return sqrDistance > settings.MinTeleportDistance ||
+            return
+                // UnityEngine.Time.time - remotePlayerMovement.LastMessageEnqueueTime > 5 ||
+                sqrDistance > settings.MinTeleportDistance ||
                    (settings.InterpolationSettings.UseSpeedUp && sqrDistance < settings.MinPositionDelta);
         }
 

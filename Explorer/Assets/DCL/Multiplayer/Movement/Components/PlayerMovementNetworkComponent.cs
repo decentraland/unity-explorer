@@ -4,8 +4,6 @@ namespace DCL.Multiplayer.Movement
 {
     public struct PlayerMovementNetworkComponent
     {
-        public const int MAX_MESSAGES_PER_SEC = 10; // 10 Hz == 10 [msg/sec]
-
         public readonly CharacterController Character;
 
         public bool IsFirstMessage;

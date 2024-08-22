@@ -17,6 +17,6 @@ MonoBehaviour:
   <UseSpeedUp>k__BackingField: 1
   <MaxSpeedUpTimeDivider>k__BackingField: 2
   <CatchUpMessagesMin>k__BackingField: 3
-  <UseBlend>k__BackingField: 1
+  <UseBlend>k__BackingField: 0
   <BlendType>k__BackingField: 1
   <MaxBlendSpeed>k__BackingField: 5

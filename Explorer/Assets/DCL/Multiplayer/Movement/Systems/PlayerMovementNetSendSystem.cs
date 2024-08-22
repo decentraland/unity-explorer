@@ -15,11 +15,13 @@ namespace DCL.Multiplayer.Movement.Systems
     [LogCategory(ReportCategory.MULTIPLAYER_MOVEMENT)]
     public partial class PlayerMovementNetSendSystem : BaseUnityLoopSystem
     {
-        private const float POSITION_MOVE_EPSILON =  0.0001f; // 1 mm
-        private const float VELOCITY_MOVE_EPSILON = 0.01f; // 1 cm/s
+        private const int MAX_MESSAGES_PER_SEC = 10; // 10 Hz == 10 [msg/sec]
 
         private const float MOVE_SEND_RATE = 0.1f;
         private const float STAND_SEND_RATE = 1f;
+
+        private const float POSITION_MOVE_EPSILON = 0.0001f; // 1 mm
+        private const float VELOCITY_MOVE_EPSILON = 0.01f; // 1 cm/s
 
         private readonly MultiplayerMovementMessageBus messageBus;
         private readonly IMultiplayerMovementSettings settings;
@@ -49,7 +51,7 @@ namespace DCL.Multiplayer.Movement.Systems
         {
             UpdateMessagePerSecondTimer(t, ref playerMovement);
 
-            if (playerMovement.MessagesSentInSec >= PlayerMovementNetworkComponent.MAX_MESSAGES_PER_SEC) return;
+            if (playerMovement.MessagesSentInSec >= MAX_MESSAGES_PER_SEC) return;
 
             if (playerMovement.IsFirstMessage)
             {
@@ -60,8 +62,15 @@ namespace DCL.Multiplayer.Movement.Systems
 
             float timeDiff = UnityEngine.Time.unscaledTime - playerMovement.LastSentMessage.timestamp;
 
+            if (playerMovement.LastSentMessage.animState.IsGrounded != anim.States.IsGrounded
+                || playerMovement.LastSentMessage.animState.IsJumping != anim.States.IsJumping)
+            {
+                SendMessage(ref playerMovement, in anim, in stun, in move);
+                return;
+            }
 
             bool isMoving = IsMoving(playerMovement);
+
             if (isMoving && sendRate > MOVE_SEND_RATE)
                 sendRate = MOVE_SEND_RATE;
 
@@ -86,6 +95,8 @@ namespace DCL.Multiplayer.Movement.Systems
                 playerMovement.MessagesPerSecResetCooldown -= t;
             else
             {
+                Debug.Log($"VVV Mps {playerMovement.MessagesSentInSec}");
+
                 playerMovement.MessagesPerSecResetCooldown = 1; // 1 [sec]
                 playerMovement.MessagesSentInSec = 0;
             }
@@ -94,6 +105,7 @@ namespace DCL.Multiplayer.Movement.Systems
         private void SendMessage(ref PlayerMovementNetworkComponent playerMovement, in CharacterAnimationComponent animation, in StunComponent playerStunComponent, in MovementInputComponent movement)
         {
             playerMovement.MessagesSentInSec++;
+            Debug.Log($"VVV Send {UnityEngine.Time.unscaledTime}");
 
             playerMovement.LastSentMessage = new NetworkMovementMessage
             {
@@ -124,7 +136,7 @@ namespace DCL.Multiplayer.Movement.Systems
 
             // Debug purposes. Simulate package lost when Running
             if (settings.SelfSending
-                && movement.Kind != MovementKind.RUN // simulate package lost when Running
+                // && movement.Kind != MovementKind.RUN // simulate package lost when Running
                )
                 messageBus.SelfSendWithDelayAsync(playerMovement.LastSentMessage, settings.Latency + (settings.Latency * Random.Range(0, settings.LatencyJitter))).Forget();
         }

@@ -7,7 +7,7 @@ namespace Utility
 {
     public static class ParcelMathHelper
     {
-        public const float PARCEL_SIZE = 16.0f;
+        public const int PARCEL_SIZE = 16;
         public const float SQR_PARCEL_SIZE = PARCEL_SIZE * PARCEL_SIZE;
 
         public static readonly SceneGeometry UNDEFINED_SCENE_GEOMETRY = new (

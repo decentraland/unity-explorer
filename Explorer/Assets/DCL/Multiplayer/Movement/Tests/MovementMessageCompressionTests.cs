@@ -1,7 +1,7 @@
 using DCL.CharacterMotion.Components;
-using DCL.Multiplayer.Movement.Systems;
 using NUnit.Framework;
 using UnityEngine;
+using Utility;
 
 namespace DCL.Multiplayer.Movement.Tests
 {
@@ -85,14 +85,14 @@ namespace DCL.Multiplayer.Movement.Tests
         [TestCase(-70f, 116f)]
         [TestCase(-1000f, 1000f)]
         [TestCase(1000f, -1000f)]
-        [TestCase(ParcelEncoder.MAX_X * ParcelEncoder.PARCEL_SIZE, ParcelEncoder.MAX_Y * ParcelEncoder.PARCEL_SIZE)]
-        [TestCase(ParcelEncoder.MIN_X * ParcelEncoder.PARCEL_SIZE, ParcelEncoder.MIN_Y * ParcelEncoder.PARCEL_SIZE)]
-        [TestCase((ParcelEncoder.MAX_X * ParcelEncoder.PARCEL_SIZE) - 0.001f, (ParcelEncoder.MAX_Y * ParcelEncoder.PARCEL_SIZE) - 0.001f)]
-        [TestCase((ParcelEncoder.MIN_X * ParcelEncoder.PARCEL_SIZE) + 0.001f, (ParcelEncoder.MIN_Y * ParcelEncoder.PARCEL_SIZE) + 0.001f)]
+        [TestCase(ParcelEncoder.MAX_X * ParcelMathHelper.PARCEL_SIZE, ParcelEncoder.MAX_Y * ParcelMathHelper.PARCEL_SIZE)]
+        [TestCase(ParcelEncoder.MIN_X * ParcelMathHelper.PARCEL_SIZE, ParcelEncoder.MIN_Y * ParcelMathHelper.PARCEL_SIZE)]
+        [TestCase((ParcelEncoder.MAX_X * ParcelMathHelper.PARCEL_SIZE) - 0.001f, (ParcelEncoder.MAX_Y * ParcelMathHelper.PARCEL_SIZE) - 0.001f)]
+        [TestCase((ParcelEncoder.MIN_X * ParcelMathHelper.PARCEL_SIZE) + 0.001f, (ParcelEncoder.MIN_Y * ParcelMathHelper.PARCEL_SIZE) + 0.001f)]
         public void ShouldCorrectlyEncodeAndDecodeXZPositions(float x, float z)
         {
             // Arrange
-            float stepSize = CompressionConfig.PARCEL_SIZE / Mathf.Pow(2, CompressionConfig.XZ_BITS);
+            float stepSize = ParcelMathHelper.PARCEL_SIZE / Mathf.Pow(2, CompressionConfig.XZ_BITS);
             float quantizationError = (stepSize / 2f) + 0.0002f; // there is a small deviation at 8.0f point (less then 0.0002f)
 
             var originalMessage = new NetworkMovementMessage { position = new Vector3(x, 0f, z) };

@@ -2,12 +2,12 @@
 {
     public static class CompressionConfig
     {
-        // temporalData = 18 + 2 + 7 = 27
+        // 17 + 2 + 7 = 26
         public const float TIMESTAMP_QUANTUM = 0.01f;
         public const int TIMESTAMP_BITS = 18;
 
         // Animations
-        public const int MOVEMENT_KIND_BITS = 2;
+        private const int MOVEMENT_KIND_BITS = 2;
         public const int MOVEMENT_KIND_MASK = 0x3;
 
         public const int MOVEMENT_KIND_START_BIT = TIMESTAMP_BITS;
@@ -19,16 +19,16 @@
         public const int FALLING_BIT = LONG_JUMP_BIT + 1;
         public const int LONG_FALL_BIT = FALLING_BIT + 1;
 
-        // 17 + 8 + 8 + 13 + 6 + 6 + 6 = 64
-        public const int PARCEL_SIZE = 16;
+        // 17 + 8 + 8 + 8 + 8 + 8 + 8 = 64
         public const int PARCEL_BITS = 17;
 
-        public const int XZ_BITS = 8;
+        // 8 + 8 + 13 + 6 + 6 + 6 = 47
+        public const int XZ_BITS = 9;
 
         public const int Y_MAX = 500;
         public const int Y_BITS = 13;
 
         public const int MAX_VELOCITY = 40;
-        public const int VELOCITY_BITS = 6;
+        public const int VELOCITY_BITS = 1;
     }
 }

@@ -12,6 +12,7 @@ namespace DCL.Multiplayer.Movement
             {
                 temporalData = CompressTemporalData(message.timestamp, message.movementKind, message.isSliding, message.animState, message.isStunned),
                 movementData = CompressMovementData(message.position, message.velocity),
+                original = message,
             };
 
         private static int CompressTemporalData(float timestamp, MovementKind movementKind, bool isSliding, AnimationStates animState, bool isStunned)
@@ -38,12 +39,12 @@ namespace DCL.Multiplayer.Movement
             int parcelIndex = ParcelEncoder.Encode(parcel);
 
             var relativePosition = new Vector2(
-                position.x - (parcel.x * ParcelEncoder.PARCEL_SIZE),
-                position.z - (parcel.y * ParcelEncoder.PARCEL_SIZE) // Y is Z in this case
+                position.x - (parcel.x * ParcelMathHelper.PARCEL_SIZE),
+                position.z - (parcel.y * ParcelMathHelper.PARCEL_SIZE) // Y is Z in this case
             );
 
-            int compressedX = FloatQuantizer.Compress(relativePosition.x, 0, PARCEL_SIZE, XZ_BITS);
-            int compressedZ = FloatQuantizer.Compress(relativePosition.y, 0, PARCEL_SIZE, XZ_BITS);
+            int compressedX = FloatQuantizer.Compress(relativePosition.x, 0, ParcelMathHelper.PARCEL_SIZE, XZ_BITS);
+            int compressedZ = FloatQuantizer.Compress(relativePosition.y, 0, ParcelMathHelper.PARCEL_SIZE, XZ_BITS);
             int compressedY = FloatQuantizer.Compress(position.y, 0, Y_MAX, Y_BITS);
 
             int compressedVelocityX = FloatQuantizer.Compress(velocity.x, -MAX_VELOCITY, MAX_VELOCITY, VELOCITY_BITS);
@@ -67,8 +68,8 @@ namespace DCL.Multiplayer.Movement
             return new NetworkMovementMessage
             {
                 // Decompressed movement data
-                position = movementData.position,
-                velocity = movementData.velocity,
+                position = movementData.position, //compressedMessage.original.position,
+                velocity = compressedMessage.original.velocity, //movementData.velocity, //compressedMessage.original.velocity,
 
                 // Decompress temporal data
                 timestamp = TimestampEncoder.Decompress(compressedTemporalData),
@@ -104,14 +105,14 @@ namespace DCL.Multiplayer.Movement
             var extractedZ = (int)((movementData >> (PARCEL_BITS + XZ_BITS)) & XZ_MASK);
             var extractedY = (int)((movementData >> (PARCEL_BITS + XZ_BITS + XZ_BITS)) & Y_MASK);
 
-            float decompressedX = FloatQuantizer.Decompress(extractedX, 0, PARCEL_SIZE, XZ_BITS);
-            float decompressedZ = FloatQuantizer.Decompress(extractedZ, 0, PARCEL_SIZE, XZ_BITS);
+            float decompressedX = FloatQuantizer.Decompress(extractedX, 0, ParcelMathHelper.PARCEL_SIZE, XZ_BITS);
+            float decompressedZ = FloatQuantizer.Decompress(extractedZ, 0, ParcelMathHelper.PARCEL_SIZE, XZ_BITS);
             float decompressedY = FloatQuantizer.Decompress(extractedY, 0, Y_MAX, Y_BITS);
 
             var worldPosition = new Vector3(
-                (parcel.x * ParcelEncoder.PARCEL_SIZE) + decompressedX,
+                (parcel.x * ParcelMathHelper.PARCEL_SIZE) + decompressedX,
                 decompressedY,
-                (parcel.y * ParcelEncoder.PARCEL_SIZE) + decompressedZ
+                (parcel.y * ParcelMathHelper.PARCEL_SIZE) + decompressedZ
             );
 
             var extractedVelocityX = (int)((movementData >> (PARCEL_BITS + XZ_BITS + XZ_BITS + Y_BITS)) & VELOCITY_MASK);
@@ -131,8 +132,6 @@ namespace DCL.Multiplayer.Movement
     /// </summary>
     public static class ParcelEncoder
     {
-        public const int PARCEL_SIZE = 16;
-
         // TODO (Vit): now hardcoded, but it should depend on the Genesis Size + Landscape margins settings
         public const int MIN_X = -152;
         public const int MAX_X = 164;

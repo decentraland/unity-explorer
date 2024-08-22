@@ -15,11 +15,11 @@ MonoBehaviour:
   <CharacterControllerSettings>k__BackingField: {fileID: 11400000, guid: df2e68b45160aee4eaaf2475e21525e4, type: 2}
   <InboxCount>k__BackingField: 0
   <SendRules>k__BackingField: []
-  <SelfSending>k__BackingField: 0
-  <Latency>k__BackingField: 0
-  <LatencyJitter>k__BackingField: 0
+  <SelfSending>k__BackingField: 1
+  <Latency>k__BackingField: 0.3
+  <LatencyJitter>k__BackingField: 3
   <MinPositionDelta>k__BackingField: 0.001
   <MinTeleportDistance>k__BackingField: 100
   <InterpolationSettings>k__BackingField: {fileID: 11400000, guid: bc6d8c8af4871f14082de8f9d29040c6, type: 2}
-  <UseExtrapolation>k__BackingField: 1
+  <UseExtrapolation>k__BackingField: 0
   <ExtrapolationSettings>k__BackingField: {fileID: 11400000, guid: 1c9e6c7c419eba54eafe152d131a4305, type: 2}

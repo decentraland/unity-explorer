@@ -3,6 +3,7 @@
 using DCL.CharacterMotion.Animation;
 using DCL.CharacterMotion.Settings;
 using System;
+using UnityEngine;
 using UnityEngine.Pool;
 using Utility.PriorityQueue;
 
@@ -25,6 +26,8 @@ namespace DCL.Multiplayer.Movement
 
         public readonly SimplePriorityQueue<NetworkMovementMessage>? Queue => disposed ? null : queue;
 
+        public float LastMessageEnqueueTime;
+
         public RemotePlayerMovementComponent(IObjectPool<SimplePriorityQueue<NetworkMovementMessage>> queuePool)
         {
             this.queuePool = queuePool;
@@ -36,6 +39,8 @@ namespace DCL.Multiplayer.Movement
             WasTeleported = false;
 
             WasPassedThisFrame = false;
+
+            LastMessageEnqueueTime = 0;
         }
 
         public void Enqueue(NetworkMovementMessage message)
@@ -44,6 +49,8 @@ namespace DCL.Multiplayer.Movement
                 queue.Dequeue();
 
             queue.Enqueue(message, message.timestamp);
+            LastMessageEnqueueTime = Time.time;
+            Debug.Log($"VVV lastTime {LastMessageEnqueueTime}");
         }
 
         public void AddPassed(NetworkMovementMessage message, ICharacterControllerSettings settings, bool wasTeleported = false)

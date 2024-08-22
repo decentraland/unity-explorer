@@ -7,5 +7,6 @@ namespace DCL.Multiplayer.Movement
     {
         public int temporalData;
         public long movementData;
+        public NetworkMovementMessage original;
     }
 }
