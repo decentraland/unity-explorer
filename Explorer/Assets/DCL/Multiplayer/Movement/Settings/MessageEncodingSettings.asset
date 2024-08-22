@@ -12,8 +12,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fdd34dbbd3504f25993a0e0edaed2108, type: 3}
   m_Name: MessageEncodingSettings
   m_EditorClassIdentifier: 
-  XZ_BITS: 9
+  encodeTimestamp: 0
+  encodePosition: 0
+  encodeVelocity: 0
+  Budget: 47
+  XZ_BITS: 10
   Y_MAX: 500
-  Y_BITS: 13
+  Y_BITS: 9
   MAX_VELOCITY: 40
-  VELOCITY_BITS: 1
+  VELOCITY_BITS: 6

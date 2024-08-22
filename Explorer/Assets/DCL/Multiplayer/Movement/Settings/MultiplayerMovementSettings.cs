@@ -6,9 +6,9 @@ namespace DCL.Multiplayer.Movement.Settings
 {
     public class MultiplayerMovementSettings : ScriptableObject, IMultiplayerMovementSettings
     {
-        public MessageEncodingSettings EncodingSettings;
         [field: SerializeField] public CharacterControllerSettings CharacterControllerSettings { get; set; }
         [field: SerializeField] public int InboxCount { get; set; }
+        public MessageEncodingSettings EncodingSettings;
 
         [field: Header("SENDING RULES")]
         [field: SerializeField] public List<SendRuleBase> SendRules { get; set; }

@@ -81,11 +81,11 @@ namespace DCL.Multiplayer.Movement
             return new NetworkMovementMessage
             {
                 // Decompressed movement data
-                position = movementData.position, //compressedMessage.original.position,
-                velocity = compressedMessage.original.velocity, //movementData.velocity, //compressedMessage.original.velocity,
+                position = settings.encodePosition? movementData.position : compressedMessage.original.position,
+                velocity = settings.encodeVelocity? movementData.velocity : compressedMessage.original.velocity,
 
                 // Decompress temporal data
-                timestamp = TimestampEncoder.Decompress(compressedTemporalData),
+                timestamp = settings.encodeTimestamp? TimestampEncoder.Decompress(compressedTemporalData) : compressedMessage.original.timestamp,
                 movementKind = (MovementKind)((compressedTemporalData >> MessageEncodingSettings.MOVEMENT_KIND_START_BIT) & MessageEncodingSettings.MOVEMENT_KIND_MASK),
 
                 animState = new AnimationStates

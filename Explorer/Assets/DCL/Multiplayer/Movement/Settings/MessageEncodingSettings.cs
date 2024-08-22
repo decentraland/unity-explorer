@@ -5,7 +5,11 @@ namespace DCL.Multiplayer.Movement.Settings
     [CreateAssetMenu(fileName = "MessageEncodingSettings", menuName = "DCL/MessageEncodingSettings")]
     public class MessageEncodingSettings : ScriptableObject
     {
-        // 17 + 2 + 7 = 26
+        public bool encodeTimestamp;
+        public bool encodePosition;
+        public bool encodeVelocity;
+
+        // 18 + 2 + 7 = 26
         public const float TIMESTAMP_QUANTUM = 0.01f;
         public const int TIMESTAMP_BITS = 18;
 
@@ -26,11 +30,15 @@ namespace DCL.Multiplayer.Movement.Settings
         public const int PARCEL_BITS = 17;
 
         // 8 + 8 + 13 + 6 + 6 + 6 = 47
+        public int Budget = 47;
+
         public int XZ_BITS = 9;
 
+        [Space]
         public int Y_MAX = 500;
         public int Y_BITS = 13;
 
+        [Space]
         public int MAX_VELOCITY = 40;
         public int VELOCITY_BITS = 1;
     }
