@@ -4,11 +4,9 @@ using Arch.SystemGroups;
 using DCL.Diagnostics;
 using Cinemachine;
 using CRDT;
-using CrdtEcsBridge.Components.Transform;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using DCL.SDKComponents.CameraControl.MainCamera.Components;
-using DCL.Utilities;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle;
@@ -79,13 +77,14 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
         }
 
         [Query]
+        [All(typeof(PBVirtualCamera))]
         [None(typeof(VirtualCameraComponent))]
-        private void SetupVirtualCamera(in Entity entity, TransformComponent transform, PBVirtualCamera pbVirtualCamera)
+        private void SetupVirtualCamera(in Entity entity, TransformComponent transform)
         {
             var virtualCameraInstance = poolRegistry.Get();
             virtualCameraInstance.transform.SetParent(transform.Transform);
-            virtualCameraInstance.transform.localPosition = UnityEngine.Vector3.zero;
-            virtualCameraInstance.transform.localRotation = UnityEngine.Quaternion.identity;
+            virtualCameraInstance.transform.localPosition = Vector3.zero;
+            virtualCameraInstance.transform.localRotation = Quaternion.identity;
             World.Add(entity, new VirtualCameraComponent(virtualCameraInstance));
         }
 
@@ -123,7 +122,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
             {
                 brain.m_DefaultBlend.m_Style = pbVirtualCamera.DefaultTransition.Speed.Value <= 0 ? CinemachineBlendDefinition.Style.Cut : CinemachineBlendDefinition.Style.EaseInOut;
 
-                // Calculate time; SPEED = 1 -> 1 Meter
+                // SPEED = 1 -> 1 Meter per second
                 float blendTime = distanceBetweenCameras / pbVirtualCamera.DefaultTransition.Speed.Value;
                 if (blendTime == 0)
                     brain.m_DefaultBlend.m_Style = CinemachineBlendDefinition.Style.Cut;

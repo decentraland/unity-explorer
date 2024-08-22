@@ -73,10 +73,9 @@ namespace DCL.PluginSystem.World
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
-            // finalizeWorldSystems.Add(MainCameraSystem.InjectToWorld(ref builder, virtualCameraPoolRegistry));
-            MainCameraSystem.InjectToWorld(ref builder, virtualCameraPoolRegistry, persistentEntities.Camera, sharedDependencies.EntitiesMap);
+            finalizeWorldSystems.Add(MainCameraSystem.InjectToWorld(ref builder, virtualCameraPoolRegistry, persistentEntities.Camera, sharedDependencies.EntitiesMap));
 
-            ResetDirtyFlagSystem<PBMainCamera>.InjectToWorld(ref builder);
+            // ResetDirtyFlagSystem<PBMainCamera>.InjectToWorld(ref builder);
             // ResetDirtyFlagSystem<PBVirtualCamera>.InjectToWorld(ref builder);
         }
 
