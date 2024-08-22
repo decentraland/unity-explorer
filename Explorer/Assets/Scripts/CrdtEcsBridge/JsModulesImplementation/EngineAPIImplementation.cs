@@ -33,7 +33,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
         private readonly CustomSampler deserializeBatchSampler;
         private readonly ISceneExceptionsHandler exceptionsHandler;
         private readonly IInstancePoolsProvider instancePoolsProvider;
-        private readonly MutexSync mutexSync;
+        private readonly MultithreadSync multithreadSync;
         private readonly IOutgoingCRDTMessagesProvider outgoingCrtdMessagesProvider;
         private readonly CustomSampler outgoingMessagesSampler;
         private readonly ISystemGroupsUpdateGate systemGroupsUpdateGate;
@@ -54,7 +54,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
             IOutgoingCRDTMessagesProvider outgoingCrtdMessagesProvider,
             ISystemGroupsUpdateGate systemGroupsUpdateGate,
             ISceneExceptionsHandler exceptionsHandler,
-            MutexSync mutexSync)
+            MultithreadSync multithreadSync)
         {
             sharedPoolsProvider = poolsProvider;
             this.instancePoolsProvider = instancePoolsProvider;
@@ -63,7 +63,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
             this.crdtSerializer = crdtSerializer;
             this.crdtWorldSynchronizer = crdtWorldSynchronizer;
             this.outgoingCrtdMessagesProvider = outgoingCrtdMessagesProvider;
-            this.mutexSync = mutexSync;
+            this.multithreadSync = multithreadSync;
             this.systemGroupsUpdateGate = systemGroupsUpdateGate;
             this.exceptionsHandler = exceptionsHandler;
 
@@ -245,7 +245,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
         {
             try
             {
-                using MutexSync.Scope mutex = mutexSync.GetScope();
+                using var mutex = multithreadSync.GetScope();
 
                 applyBufferSampler.Begin();
 
