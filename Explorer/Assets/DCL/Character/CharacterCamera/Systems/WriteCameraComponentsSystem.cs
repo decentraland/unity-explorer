@@ -27,8 +27,6 @@ namespace DCL.CharacterCamera.Systems
         private readonly byte propagationThreshold;
         private readonly IComponentPool<SDKTransform> sdkTransformPool;
         private readonly Entity cameraEntity;
-        
-
 
         internal WriteCameraComponentsSystem(World world, IECSToCRDTWriter ecsToCrdtWriter, IExposedCameraData exposedCameraData, ISceneData sceneData, IPartitionComponent scenePartition,
             byte propagationThreshold, IComponentPool<SDKTransform> sdkTransformPool, Entity cameraEntity) : base(world)
@@ -58,7 +56,9 @@ namespace DCL.CharacterCamera.Systems
 
                 World.Add(cameraEntity, newComponent);
             }
-            
+
+            // TODO: Put new PBMainCamera component here during this Initialization...
+
             PropagateCameraData(false);
         }
 
