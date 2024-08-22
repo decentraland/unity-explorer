@@ -41,5 +41,6 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
 
         BadgeCategories,
         Badges,
+        BadgeTiers,
     }
 }

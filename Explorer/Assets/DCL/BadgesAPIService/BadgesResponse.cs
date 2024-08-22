@@ -10,6 +10,12 @@ namespace DCL.BadgesAPIService
     }
 
     [Serializable]
+    public class TiersResponse
+    {
+        public List<TierData> data;
+    }
+
+    [Serializable]
     public class ProfileBadgesData
     {
         public List<BadgeData> achieved;
@@ -26,7 +32,7 @@ namespace DCL.BadgesAPIService
         public bool isTier;
         public string completedAt;
         public BadgeProgressData progress;
-        public BadgeTierData[] tiers;
+        public TierData[] tiers;
         public string image;
     }
 
@@ -38,7 +44,7 @@ namespace DCL.BadgesAPIService
     }
 
     [Serializable]
-    public class BadgeTierData
+    public class TierData
     {
         public string tierId;
         public string tierName;

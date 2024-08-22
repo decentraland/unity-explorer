@@ -16,6 +16,7 @@ namespace DCL.BadgesAPIService
 
         private string categoriesBaseURL => decentralandUrlsSource.Url(DecentralandUrl.BadgeCategories);
         private string badgesBaseURL => decentralandUrlsSource.Url(DecentralandUrl.Badges);
+        private string tiersBaseURL => decentralandUrlsSource.Url(DecentralandUrl.BadgeTiers);
 
         public BadgesAPIClient(IWebRequestController webRequestController, IDecentralandUrlsSource decentralandUrlsSource)
         {
@@ -33,7 +34,6 @@ namespace DCL.BadgesAPIService
 
         public async UniTask<BadgesInfo> FetchBadgesAsync(string walletId, bool includeLocked, int limitUnlocked, CancellationToken ct)
         {
-            //walletId = "0x6438c3b1fa97ba144ea38fcbcee5f0ccf4539b1d";
             /*StringBuilder url = new StringBuilder($"{badgesBaseURL}/{walletId}?includeLocked={(includeLocked ? "true" : "false")}");
             if (limitUnlocked > 0)
                 url.Append($"&limitUnlocked={limitUnlocked}");
@@ -47,21 +47,31 @@ namespace DCL.BadgesAPIService
             return ResponseToBadgesInfo(GetMockedResponse());
         }
 
+        public async UniTask<TiersInfo> FetchTiersAsync(string badgeId, CancellationToken ct)
+        {
+            var url = $"{tiersBaseURL}/{badgeId}";
+
+            TiersResponse tiersResponse = await webRequestController.GetAsync(url, ct, reportCategory: ReportCategory.BADGES_WEB_REQUEST)
+                                                                    .CreateFromJson<TiersResponse>(WRJsonParser.Newtonsoft);
+
+            return ResponseToTiersInfo(tiersResponse);
+        }
+
         private BadgesInfo ResponseToBadgesInfo(BadgesResponse badgesResponse)
         {
-            BadgesInfo ret = new BadgesInfo
+            BadgesInfo badgesInfo = new BadgesInfo
             {
                 unlocked = new List<BadgeInfo>(),
                 locked = new List<BadgeInfo>(),
             };
 
             foreach (var badge in badgesResponse.data.achieved)
-                ret.unlocked.Add(ResponseToBadgeInfo(badge, false));
+                badgesInfo.unlocked.Add(ResponseToBadgeInfo(badge, false));
 
             foreach (var badge in badgesResponse.data.notAchieved)
-                ret.locked.Add(ResponseToBadgeInfo(badge, true));
+                badgesInfo.locked.Add(ResponseToBadgeInfo(badge, true));
 
-            return ret;
+            return badgesInfo;
         }
 
         private static BadgeInfo ResponseToBadgeInfo(BadgeData badge, bool isLocked)
@@ -103,6 +113,26 @@ namespace DCL.BadgesAPIService
             };
         }
 
+        private TiersInfo ResponseToTiersInfo(TiersResponse badgesResponse)
+        {
+            TiersInfo tiersInfo = new TiersInfo { tiers = new List<BadgeTierInfo>() };
+
+            foreach (var tier in badgesResponse.data)
+            {
+                tiersInfo.tiers.Add(new BadgeTierInfo
+                {
+                    id = tier.tierId,
+                    isLocked = tier.completedAt == null,
+                    name = tier.tierName,
+                    description = tier.description,
+                    awardedAt = tier.completedAt,
+                    image = tier.image,
+                });
+            }
+
+            return tiersInfo;
+        }
+
         // TODO (Santi): Remove this function when the API is ready
         private static BadgesResponse GetMockedResponse()
         {
@@ -126,7 +156,7 @@ namespace DCL.BadgesAPIService
                                 stepsDone = 1,
                                 stepsTarget = null,
                             },
-                            tiers = Array.Empty<BadgeTierData>(),
+                            tiers = Array.Empty<TierData>(),
                         },
                         new()
                         {
@@ -144,7 +174,7 @@ namespace DCL.BadgesAPIService
                             },
                             tiers = new[]
                             {
-                                new BadgeTierData
+                                new TierData
                                 {
                                     tierId = "emote-creator-starter",
                                     tierName = "Starter",
@@ -156,7 +186,7 @@ namespace DCL.BadgesAPIService
                                     },
                                     image = "https://picsum.photos/seed/1/300/300",
                                 },
-                                new BadgeTierData
+                                new TierData
                                 {
                                     tierId = "emote-creator-bronze",
                                     tierName = "Bronze",
@@ -168,7 +198,7 @@ namespace DCL.BadgesAPIService
                                     },
                                     image = "https://picsum.photos/seed/2/300/300",
                                 },
-                                new BadgeTierData
+                                new TierData
                                 {
                                     tierId = "emote-creator-silver",
                                     tierName = "Silver",
@@ -180,7 +210,7 @@ namespace DCL.BadgesAPIService
                                     },
                                     image = "https://picsum.photos/seed/3/300/300",
                                 },
-                                new BadgeTierData
+                                new TierData
                                 {
                                     tierId = "emote-creator-gold",
                                     tierName = "Gold",
@@ -192,7 +222,7 @@ namespace DCL.BadgesAPIService
                                     },
                                     image = "https://picsum.photos/seed/4/300/300",
                                 },
-                                new BadgeTierData
+                                new TierData
                                 {
                                     tierId = "emote-creator-platinum",
                                     tierName = "Platinum",
@@ -204,7 +234,7 @@ namespace DCL.BadgesAPIService
                                     },
                                     image = "https://picsum.photos/seed/5/300/300",
                                 },
-                                new BadgeTierData
+                                new TierData
                                 {
                                     tierId = "emote-creator-diamond",
                                     tierName = "Diamond",
@@ -234,7 +264,7 @@ namespace DCL.BadgesAPIService
                             },
                             tiers = new[]
                             {
-                                new BadgeTierData
+                                new TierData
                                 {
                                     tierId = "traveler-starter",
                                     tierName = "Starter",
@@ -246,7 +276,7 @@ namespace DCL.BadgesAPIService
                                     },
                                     image = "https://picsum.photos/seed/7/300/300",
                                 },
-                                new BadgeTierData
+                                new TierData
                                 {
                                     tierId = "traveler-bronze",
                                     tierName = "Bronze",
@@ -258,7 +288,7 @@ namespace DCL.BadgesAPIService
                                     },
                                     image = "https://picsum.photos/seed/8/300/300",
                                 },
-                                new BadgeTierData
+                                new TierData
                                 {
                                     tierId = "traveler-silver",
                                     tierName = "Silver",
@@ -270,7 +300,7 @@ namespace DCL.BadgesAPIService
                                     },
                                     image = "https://picsum.photos/seed/9/300/300",
                                 },
-                                new BadgeTierData
+                                new TierData
                                 {
                                     tierId = "traveler-gold",
                                     tierName = "Gold",
@@ -282,7 +312,7 @@ namespace DCL.BadgesAPIService
                                     },
                                     image = "https://picsum.photos/seed/10/300/300",
                                 },
-                                new BadgeTierData
+                                new TierData
                                 {
                                     tierId = "traveler-platinum",
                                     tierName = "Platinum",
@@ -294,7 +324,7 @@ namespace DCL.BadgesAPIService
                                     },
                                     image = "https://picsum.photos/seed/11/300/300",
                                 },
-                                new BadgeTierData
+                                new TierData
                                 {
                                     tierId = "traveler-diamond",
                                     tierName = "Diamond",
@@ -325,7 +355,7 @@ namespace DCL.BadgesAPIService
                                 stepsDone = 1,
                                 stepsTarget = 1,
                             },
-                            tiers = Array.Empty<BadgeTierData>(),
+                            tiers = Array.Empty<TierData>(),
                         },
                         new()
                         {
@@ -343,7 +373,7 @@ namespace DCL.BadgesAPIService
                             },
                             tiers = new[]
                             {
-                                new BadgeTierData
+                                new TierData
                                 {
                                     tierId = "world-jumper-starter",
                                     tierName = "Starter",
@@ -355,7 +385,7 @@ namespace DCL.BadgesAPIService
                                     },
                                     image = "",
                                 },
-                                new BadgeTierData
+                                new TierData
                                 {
                                     tierId = "world-jumper-bronze",
                                     tierName = "Bronze",
@@ -367,7 +397,7 @@ namespace DCL.BadgesAPIService
                                     },
                                     image = "",
                                 },
-                                new BadgeTierData
+                                new TierData
                                 {
                                     tierId = "world-jumper-silver",
                                     tierName = "Silver",
@@ -379,7 +409,7 @@ namespace DCL.BadgesAPIService
                                     },
                                     image = "",
                                 },
-                                new BadgeTierData
+                                new TierData
                                 {
                                     tierId = "world-jumper-gold",
                                     tierName = "Gold",
@@ -391,7 +421,7 @@ namespace DCL.BadgesAPIService
                                     },
                                     image = "",
                                 },
-                                new BadgeTierData
+                                new TierData
                                 {
                                     tierId = "world-jumper-platinum",
                                     tierName = "Platinum",
@@ -403,7 +433,7 @@ namespace DCL.BadgesAPIService
                                     },
                                     image = "",
                                 },
-                                new BadgeTierData
+                                new TierData
                                 {
                                     tierId = "world-jumper-diamond",
                                     tierName = "Diamond",
@@ -431,7 +461,7 @@ namespace DCL.BadgesAPIService
                                 stepsDone = 1,
                                 stepsTarget = 1,
                             },
-                            tiers = Array.Empty<BadgeTierData>(),
+                            tiers = Array.Empty<TierData>(),
                         },
                     },
                 }

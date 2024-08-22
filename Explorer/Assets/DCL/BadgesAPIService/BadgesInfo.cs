@@ -11,6 +11,12 @@ namespace DCL.BadgesAPIService
     }
 
     [Serializable]
+    public class TiersInfo
+    {
+        public List<BadgeTierInfo> tiers;
+    }
+
+    [Serializable]
     public class BadgeInfo
     {
         public string id;
