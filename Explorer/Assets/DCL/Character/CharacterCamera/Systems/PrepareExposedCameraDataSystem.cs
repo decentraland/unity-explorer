@@ -1,6 +1,7 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using Cinemachine;
 using DCL.Character.CharacterCamera.Components;
 using DCL.CharacterCamera.Components;
 using ECS.Abstract;
@@ -15,7 +16,12 @@ namespace DCL.CharacterCamera.Systems
     [UpdateAfter(typeof(ApplyCinemachineCameraInputSystem))]
     public partial class PrepareExposedCameraDataSystem : BaseUnityLoopSystem
     {
-        internal PrepareExposedCameraDataSystem(World world) : base(world) { }
+        private readonly CinemachineBrain cinemachineBrain;
+
+        internal PrepareExposedCameraDataSystem(World world, CinemachineBrain cinemachineBrain) : base(world)
+        {
+            this.cinemachineBrain = cinemachineBrain;
+        }
 
         protected override void Update(float t)
         {
@@ -30,6 +36,7 @@ namespace DCL.CharacterCamera.Systems
             Transform transform = cameraComponent.Camera.transform;
             exposedCameraData.WorldPosition.Value = transform.position;
             exposedCameraData.WorldRotation.Value = transform.rotation;
+            exposedCameraData.CinemachineBrain = cinemachineBrain;
         }
     }
 }

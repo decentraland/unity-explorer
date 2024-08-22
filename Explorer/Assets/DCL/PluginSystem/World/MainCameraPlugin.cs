@@ -2,6 +2,7 @@ using Arch.SystemGroups;
 using Cinemachine;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.CharacterCamera;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.ResourcesUnloading;
@@ -30,16 +31,19 @@ namespace DCL.PluginSystem.World
         private readonly IComponentPoolsRegistry poolsRegistry;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly CacheCleaner cacheCleaner;
+        private readonly IExposedCameraData cameraData;
         private IComponentPool<CinemachineVirtualCamera>? virtualCameraPoolRegistry;
 
         public MainCameraPlugin(
             IComponentPoolsRegistry poolsRegistry,
             IAssetsProvisioner assetsProvisioner,
-            CacheCleaner cacheCleaner)
+            CacheCleaner cacheCleaner,
+            IExposedCameraData cameraData)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.poolsRegistry = poolsRegistry;
             this.cacheCleaner = cacheCleaner;
+            this.cameraData = cameraData;
         }
 
         public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
@@ -62,7 +66,14 @@ namespace DCL.PluginSystem.World
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
-            finalizeWorldSystems.Add(MainCameraSystem.InjectToWorld(ref builder, virtualCameraPoolRegistry, persistentEntities.Camera, sharedDependencies.EntitiesMap));
+            finalizeWorldSystems.Add(MainCameraSystem.InjectToWorld(
+                ref builder,
+                virtualCameraPoolRegistry,
+                persistentEntities.Camera,
+                sharedDependencies.EntitiesMap,
+                sharedDependencies.SceneStateProvider,
+                cameraData
+                ));
 
             // ResetDirtyFlagSystem<PBMainCamera>.InjectToWorld(ref builder);
             // ResetDirtyFlagSystem<PBVirtualCamera>.InjectToWorld(ref builder);

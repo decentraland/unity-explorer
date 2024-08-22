@@ -1,4 +1,5 @@
 using Arch.Core;
+using Cinemachine;
 using DCL.Utilities;
 using System.Collections.Generic;
 using UnityEngine;
@@ -17,6 +18,7 @@ namespace DCL.CharacterCamera
         public CanBeDirty<bool> PointerIsLocked;
         public CanBeDirty<CameraType> CameraType = CanBeDirty.FromEnum<CameraType>();
         public ObjectProxy<Entity> CameraEntityProxy { get; } = new ();
+        public CinemachineBrain? CinemachineBrain { get; set; }
 
         CanBeDirty<Vector3> IExposedCameraData.WorldPosition => WorldPosition;
         CanBeDirty<Quaternion> IExposedCameraData.WorldRotation => WorldRotation;
