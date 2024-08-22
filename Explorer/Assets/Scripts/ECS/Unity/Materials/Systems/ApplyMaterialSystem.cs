@@ -45,7 +45,7 @@ namespace ECS.Unity.Materials.Systems
                     materialComponent.Status = StreamableLoading.LifeCycle.Applied;
 
                     ReleaseMaterial.TryReleaseDefault(ref meshRendererComponent);
-                    ConfigureSceneMaterial.EnableSceneBounds(materialComponent.Result, sceneData.Geometry.CircumscribedPlanes);
+                    ConfigureSceneMaterial.EnableSceneBounds(materialComponent.Result, sceneData.Geometry.CircumscribedPlanes, sceneData.Geometry.Height);
 
                     meshRendererComponent.MeshRenderer.sharedMaterial = materialComponent.Result;
                     meshRendererComponent.MeshRenderer.shadowCastingMode = materialComponent.Data.CastShadows ? ShadowCastingMode.On : ShadowCastingMode.Off;

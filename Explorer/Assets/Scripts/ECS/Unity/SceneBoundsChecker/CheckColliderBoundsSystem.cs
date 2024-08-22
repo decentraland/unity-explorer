@@ -73,7 +73,8 @@ namespace ECS.Unity.SceneBoundsChecker
                 return;
 
             collider.enabled = true; // enable it to calculate
-            primitiveCollider.SDKCollider.ForceActiveBySceneBounds(sceneGeometry.CircumscribedPlanes.Intersects(collider.bounds));
+            primitiveCollider.SDKCollider.ForceActiveBySceneBounds(collider.bounds.max.y <= sceneGeometry.Height
+                                                                    && sceneGeometry.CircumscribedPlanes.Intersects(collider.bounds));
         }
 
         [Query]
@@ -118,7 +119,7 @@ namespace ECS.Unity.SceneBoundsChecker
                     // While the collider remains inactive, the bounds will continue to be zero, causing incorrect calculations.
                     // Therefore, it is necessary to force the collider to be activated at least once
                     sdkCollider.ForceActiveBySceneBounds(colliderBounds.extents == Vector3.zero
-                                                         || sceneGeometry.CircumscribedPlanes.Intersects(colliderBounds));
+                                                         || (colliderBounds.max.y <= sceneGeometry.Height && sceneGeometry.CircumscribedPlanes.Intersects(colliderBounds)));
 
                     // write the structure back
                     colliders[i] = sdkCollider;
