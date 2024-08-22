@@ -26,7 +26,7 @@ namespace DCL.Multiplayer.Emotes
         private EmoteSendIdProvider sendIdProvider;
 
         private readonly HashSet<RemoteEmoteIntention> emoteIntentions = new (PoolConstants.AVATARS_COUNT);
-        private readonly MutexSync sync = new ();
+        private readonly MultithreadSync sync = new();
 
         public MultiplayerEmotesMessageBus(IMessagePipesHub messagePipesHub)
         {

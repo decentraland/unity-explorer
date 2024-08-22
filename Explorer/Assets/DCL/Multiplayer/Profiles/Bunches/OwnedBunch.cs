@@ -9,10 +9,10 @@ namespace DCL.Multiplayer.Profiles.Bunches
     /// <typeparam name="T"></typeparam>
     public readonly struct OwnedBunch<T> : IBunch<T> where T: struct
     {
-        private readonly MutexSync.Scope ownership;
+        private readonly MultithreadSync.Scope ownership;
         private readonly HashSet<T> set;
 
-        public OwnedBunch(MutexSync ownership, HashSet<T> set)
+        public OwnedBunch(MultithreadSync ownership, HashSet<T> set)
         {
             this.ownership = ownership.GetScope();
             this.set = set;
