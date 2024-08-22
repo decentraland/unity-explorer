@@ -5,6 +5,7 @@ using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Messaging;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.Messaging.Pipe;
+using DCL.Multiplayer.Movement.Settings;
 using DCL.Multiplayer.Profiles.Tables;
 using Decentraland.Kernel.Comms.Rfc4;
 using System;
@@ -18,6 +19,9 @@ namespace DCL.Multiplayer.Movement.Systems
         private readonly IMessagePipesHub messagePipesHub;
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly CancellationTokenSource cancellationTokenSource = new ();
+
+        private NetworkMessageEncoder messageEncoder;
+
         private World globalWorld = null!;
         private bool isDisposed;
 
@@ -31,6 +35,11 @@ namespace DCL.Multiplayer.Movement.Systems
 
             this.messagePipesHub.IslandPipe().Subscribe<MovementCompressed>(Packet.MessageOneofCase.MovementCompressed, OnMessageReceived);
             this.messagePipesHub.ScenePipe().Subscribe<MovementCompressed>(Packet.MessageOneofCase.MovementCompressed, OnMessageReceived);
+        }
+
+        public void InitializeEncoder(MessageEncodingSettings messageEncodingSettings)
+        {
+            messageEncoder = new NetworkMessageEncoder(messageEncodingSettings);
         }
 
         public void Dispose()
@@ -77,7 +86,7 @@ namespace DCL.Multiplayer.Movement.Systems
                     movementData = receivedMessage.Payload.MovementData,
                 };
 
-                Inbox(message.Decompress(), receivedMessage.FromWalletId);
+                Inbox(messageEncoder.Decompress(message), receivedMessage.FromWalletId);
             }
         }
 
@@ -114,7 +123,7 @@ namespace DCL.Multiplayer.Movement.Systems
         private void WriteAndSend(NetworkMovementMessage message, IMessagePipe messagePipe)
         {
             MessageWrap<MovementCompressed> messageWrap = messagePipe.NewMessage<MovementCompressed>();
-            WriteToProto(message.Compress(), messageWrap.Payload);
+            WriteToProto(messageEncoder.Compress(message), messageWrap.Payload);
             messageWrap.SendAndDisposeAsync(cancellationTokenSource.Token).Forget();
         }
 
@@ -149,9 +158,9 @@ namespace DCL.Multiplayer.Movement.Systems
         /// </summary>
         public async UniTaskVoid SelfSendWithDelayAsync(NetworkMovementMessage message, float delay)
         {
-            CompressedNetworkMovementMessage compressedMessage = message.Compress();
+            CompressedNetworkMovementMessage compressedMessage = messageEncoder.Compress(message);
             await UniTask.Delay(TimeSpan.FromSeconds(delay), cancellationToken: cancellationTokenSource.Token);
-            NetworkMovementMessage decompressedMessage = compressedMessage.Decompress();
+            NetworkMovementMessage decompressedMessage = messageEncoder.Decompress(compressedMessage);
 
             Inbox(decompressedMessage, @for: RemotePlayerMovementComponent.TEST_ID);
         }

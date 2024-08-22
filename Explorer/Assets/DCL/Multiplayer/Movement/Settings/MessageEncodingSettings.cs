@@ -1,6 +1,9 @@
-﻿namespace DCL.Multiplayer.Movement
+﻿using UnityEngine;
+
+namespace DCL.Multiplayer.Movement.Settings
 {
-    public static class CompressionConfig
+    [CreateAssetMenu(fileName = "MessageEncodingSettings", menuName = "DCL/MessageEncodingSettings")]
+    public class MessageEncodingSettings : ScriptableObject
     {
         // 17 + 2 + 7 = 26
         public const float TIMESTAMP_QUANTUM = 0.01f;
@@ -23,12 +26,12 @@
         public const int PARCEL_BITS = 17;
 
         // 8 + 8 + 13 + 6 + 6 + 6 = 47
-        public const int XZ_BITS = 9;
+        public int XZ_BITS = 9;
 
-        public const int Y_MAX = 500;
-        public const int Y_BITS = 13;
+        public int Y_MAX = 500;
+        public int Y_BITS = 13;
 
-        public const int MAX_VELOCITY = 40;
-        public const int VELOCITY_BITS = 1;
+        public int MAX_VELOCITY = 40;
+        public int VELOCITY_BITS = 1;
     }
 }

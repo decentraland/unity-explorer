@@ -1,17 +1,38 @@
 using DCL.CharacterMotion.Components;
+using DCL.Multiplayer.Movement.Settings;
 using NUnit.Framework;
+using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
-using Utility;
+using static Utility.ParcelMathHelper;
 
 namespace DCL.Multiplayer.Movement.Tests
 {
     [TestFixture]
     public class MovementMessageCompressionTests
     {
+        private NetworkMessageEncoder encoder;
+
+        private static MessageEncodingSettings settings;
+        private static MessageEncodingSettings Settings
+        {
+            get
+            {
+                settings ??= LoadSettings();
+                return settings;
+            }
+        }
+
+        private static MessageEncodingSettings LoadSettings()
+        {
+            string[] guids = AssetDatabase.FindAssets("t:MessageEncodingSettings");
+            string path = AssetDatabase.GUIDToAssetPath(guids[0]);
+            return AssetDatabase.LoadAssetAtPath<MessageEncodingSettings>(path);
+        }
+
         [TestCase(0f, 0f)]
         [TestCase(5f, 0.751f)]
         [TestCase(-5f, -1000f)]
-
         // We don't pass blend values with the message, so they should be reset to 0 on decompress
         public void ShouldResetBlendsToZeroOnDecompress(float moveBlend, float slideBlend)
         {
@@ -26,7 +47,7 @@ namespace DCL.Multiplayer.Movement.Tests
             };
 
             // ACT
-            NetworkMovementMessage decompressedMessage = originalMessage.Compress().Decompress();
+            NetworkMovementMessage decompressedMessage = encoder.Decompress(encoder.Compress(originalMessage));
 
             // ASSERT
             Assert.That(decompressedMessage.animState.MovementBlendValue, Is.EqualTo(0f));
@@ -57,7 +78,7 @@ namespace DCL.Multiplayer.Movement.Tests
             };
 
             // ACT
-            NetworkMovementMessage decompressedMessage = originalMessage.Compress().Decompress();
+            NetworkMovementMessage decompressedMessage = encoder.Decompress(encoder.Compress(originalMessage));
 
             // ASSERT
             Assert.AreEqual(originalMessage.isStunned, decompressedMessage.isStunned);
@@ -85,20 +106,20 @@ namespace DCL.Multiplayer.Movement.Tests
         [TestCase(-70f, 116f)]
         [TestCase(-1000f, 1000f)]
         [TestCase(1000f, -1000f)]
-        [TestCase(ParcelEncoder.MAX_X * ParcelMathHelper.PARCEL_SIZE, ParcelEncoder.MAX_Y * ParcelMathHelper.PARCEL_SIZE)]
-        [TestCase(ParcelEncoder.MIN_X * ParcelMathHelper.PARCEL_SIZE, ParcelEncoder.MIN_Y * ParcelMathHelper.PARCEL_SIZE)]
-        [TestCase((ParcelEncoder.MAX_X * ParcelMathHelper.PARCEL_SIZE) - 0.001f, (ParcelEncoder.MAX_Y * ParcelMathHelper.PARCEL_SIZE) - 0.001f)]
-        [TestCase((ParcelEncoder.MIN_X * ParcelMathHelper.PARCEL_SIZE) + 0.001f, (ParcelEncoder.MIN_Y * ParcelMathHelper.PARCEL_SIZE) + 0.001f)]
+        [TestCase(ParcelEncoder.MAX_X * PARCEL_SIZE, ParcelEncoder.MAX_Y * PARCEL_SIZE)]
+        [TestCase(ParcelEncoder.MIN_X * PARCEL_SIZE, ParcelEncoder.MIN_Y * PARCEL_SIZE)]
+        [TestCase((ParcelEncoder.MAX_X * PARCEL_SIZE) - 0.001f, (ParcelEncoder.MAX_Y * PARCEL_SIZE) - 0.001f)]
+        [TestCase((ParcelEncoder.MIN_X * PARCEL_SIZE) + 0.001f, (ParcelEncoder.MIN_Y * PARCEL_SIZE) + 0.001f)]
         public void ShouldCorrectlyEncodeAndDecodeXZPositions(float x, float z)
         {
             // Arrange
-            float stepSize = ParcelMathHelper.PARCEL_SIZE / Mathf.Pow(2, CompressionConfig.XZ_BITS);
+            float stepSize = PARCEL_SIZE / Mathf.Pow(2, settings.XZ_BITS);
             float quantizationError = (stepSize / 2f) + 0.0002f; // there is a small deviation at 8.0f point (less then 0.0002f)
 
             var originalMessage = new NetworkMovementMessage { position = new Vector3(x, 0f, z) };
 
             // Act
-            NetworkMovementMessage decompressedMessage = originalMessage.Compress().Decompress();
+            NetworkMovementMessage decompressedMessage = encoder.Decompress(encoder.Compress(originalMessage));
 
             // Assert
             Assert.AreEqual(originalMessage.position.x, decompressedMessage.position.x, quantizationError);
@@ -107,35 +128,49 @@ namespace DCL.Multiplayer.Movement.Tests
             Debug.Log($" XZ quantization error = {quantizationError} | original: {originalMessage.position.x}, {originalMessage.position.z} | decompressed: {decompressedMessage.position.x}, {decompressedMessage.position.z}");
         }
 
+        private static IEnumerable<float> GetYMaxTestCases()
+        {
+            yield return Settings.Y_MAX / 8f;
+            yield return Settings.Y_MAX / 4f;
+            yield return Settings.Y_MAX / 3f;
+            yield return Settings.Y_MAX / 2f;
+            yield return Settings.Y_MAX;
+            yield return Settings.Y_MAX + 0.05f;
+            yield return 10 * Settings.Y_MAX;
+        }
+
         [TestCase(-5.751f)]
         [TestCase(-0.001f)]
         [TestCase(0f)]
         [TestCase(0.751f)]
         [TestCase(4.521f)]
         [TestCase(17.25f)]
-        [TestCase(CompressionConfig.Y_MAX / 8)]
-        [TestCase(CompressionConfig.Y_MAX / 4)]
-        [TestCase(CompressionConfig.Y_MAX / 3)]
-        [TestCase(CompressionConfig.Y_MAX / 2)]
-        [TestCase(CompressionConfig.Y_MAX)]
-        [TestCase(CompressionConfig.Y_MAX + 0.05f)]
-        [TestCase(10 * CompressionConfig.Y_MAX)]
+        [TestCaseSource(nameof(GetYMaxTestCases))]
         public void ShouldCorrectlyEncodeAndDecodeYPositions(float y)
         {
             // Arrange
-            float stepSize = CompressionConfig.Y_MAX / Mathf.Pow(2, CompressionConfig.Y_BITS);
+            float stepSize = settings.Y_MAX / Mathf.Pow(2, settings.Y_BITS);
             float quantizationError = stepSize / 2f;
 
             var originalMessage = new NetworkMovementMessage { position = new Vector3(0f, y, 0f) };
 
             // Act
-            NetworkMovementMessage decompressedMessage = originalMessage.Compress().Decompress();
+            NetworkMovementMessage decompressedMessage = encoder.Decompress(encoder.Compress(originalMessage));
 
             // Assert
             Assert.That(decompressedMessage.position.y, Is.GreaterThanOrEqualTo(0));
-            Assert.AreEqual(Mathf.Clamp(originalMessage.position.y, 0, CompressionConfig.Y_MAX), decompressedMessage.position.y, quantizationError);
+            Assert.AreEqual(Mathf.Clamp(originalMessage.position.y, 0, settings.Y_MAX), decompressedMessage.position.y, quantizationError);
 
             Debug.Log($"Y quantization error = {quantizationError} | original: {originalMessage.position.y} | decompressed: {decompressedMessage.position.y}");
+        }
+
+        private static IEnumerable<TestCaseData> GetMaxVelocityTestCases()
+        {
+            yield return new TestCaseData(20.241f, 30f, Settings.MAX_VELOCITY - 0.003f);
+            yield return new TestCaseData(-20.241f, -30f, -Settings.MAX_VELOCITY + 0.023f);
+            yield return new TestCaseData(Settings.MAX_VELOCITY / 2f, Settings.MAX_VELOCITY / 2f, Settings.MAX_VELOCITY / 2f);
+            yield return new TestCaseData(Settings.MAX_VELOCITY, -Settings.MAX_VELOCITY, Settings.MAX_VELOCITY);
+            yield return new TestCaseData(-Settings.MAX_VELOCITY, Settings.MAX_VELOCITY, -Settings.MAX_VELOCITY);
         }
 
         [TestCase(0, 0, 0)]
@@ -143,21 +178,17 @@ namespace DCL.Multiplayer.Movement.Tests
         [TestCase(-1.153f, -2.753f, -3.523f)]
         [TestCase(5.153f, 10f, 15.523f)]
         [TestCase(-5.153f, -10f, -15.523f)]
-        [TestCase(20.241f, 30f, CompressionConfig.MAX_VELOCITY - 0.003f)]
-        [TestCase(-20.241f, -30f, -CompressionConfig.MAX_VELOCITY + 0.023f)]
-        [TestCase(CompressionConfig.MAX_VELOCITY / 2f, CompressionConfig.MAX_VELOCITY / 2f, CompressionConfig.MAX_VELOCITY / 2f)]
-        [TestCase(CompressionConfig.MAX_VELOCITY, -CompressionConfig.MAX_VELOCITY, CompressionConfig.MAX_VELOCITY)]
-        [TestCase(-CompressionConfig.MAX_VELOCITY, CompressionConfig.MAX_VELOCITY, -CompressionConfig.MAX_VELOCITY)]
+        [TestCaseSource(nameof(GetMaxVelocityTestCases))]
         public void ShouldCorrectlyCompressAndDecompressVelocity(float x, float y, float z)
         {
             // Arrange
-            float stepSize = 2 * CompressionConfig.MAX_VELOCITY / Mathf.Pow(2, CompressionConfig.VELOCITY_BITS);
+            float stepSize = 2 * settings.MAX_VELOCITY / Mathf.Pow(2, settings.VELOCITY_BITS);
             float quantizationError = (stepSize / 2f) + 0.01f; // there is a small deviation at zero (< 0.01f)
 
             var originalMessage = new NetworkMovementMessage { velocity = new Vector3(x, y, z) };
 
             // Act
-            NetworkMovementMessage decompressedMessage = originalMessage.Compress().Decompress();
+            NetworkMovementMessage decompressedMessage = encoder.Decompress(encoder.Compress(originalMessage));
 
             // Assert
             Assert.AreEqual(originalMessage.velocity.x, decompressedMessage.velocity.x, quantizationError);
@@ -183,11 +214,11 @@ namespace DCL.Multiplayer.Movement.Tests
             var originalMessage = new NetworkMovementMessage { timestamp = t };
 
             // Act
-            NetworkMovementMessage decompressedMessage = originalMessage.Compress().Decompress();
+            NetworkMovementMessage decompressedMessage = encoder.Decompress(encoder.Compress(originalMessage));
 
             // Assert
-            Assert.AreEqual(t % TimestampEncoder.BUFFER, decompressedMessage.timestamp, CompressionConfig.TIMESTAMP_QUANTUM);
-            Debug.Log($"Timestamp quantization = {CompressionConfig.TIMESTAMP_QUANTUM}, buffer size = {TimestampEncoder.BUFFER / 60} min | original: {t} | decompressed: {decompressedMessage.timestamp}");
+            Assert.AreEqual(t % TimestampEncoder.BUFFER, decompressedMessage.timestamp, MessageEncodingSettings.TIMESTAMP_QUANTUM);
+            Debug.Log($"Timestamp quantization = {MessageEncodingSettings.TIMESTAMP_QUANTUM}, buffer size = {TimestampEncoder.BUFFER / 60} min | original: {t} | decompressed: {decompressedMessage.timestamp}");
         }
     }
 }
