@@ -29,6 +29,7 @@ namespace DCL.BadgesAPIService
         public bool isTier;
         public int nextTierTotalProgress;
         public int nextTierCurrentProgress;
+        public string lastTierCompletedAt;
         public int? lastCompletedTierIndex;
         public int nextTierToCompleteIndex;
         public BadgeTierInfo[] tiers;

@@ -60,6 +60,9 @@ namespace DCL.Passport.Modules.Badges
         public RectTransform NextTierProgressBar { get; private set; }
 
         [field: SerializeField]
+        public GameObject NextTierProgressBarContainer { get; private set; }
+
+        [field: SerializeField]
         public RectTransform NextTierProgressBarFill { get; private set; }
 
         [field: SerializeField]
@@ -78,7 +81,7 @@ namespace DCL.Passport.Modules.Badges
         public void StopLoadingImage() =>
             imageController?.StopLoading();
 
-        public void Setup(BadgeInfo badgeInfo)
+        public void Setup(BadgeInfo badgeInfo, bool isOwnProfile)
         {
             TierSection.SetActive(badgeInfo.isTier);
             LockedBadge2DImage.gameObject.SetActive(badgeInfo.isLocked);
@@ -97,13 +100,15 @@ namespace DCL.Passport.Modules.Badges
             else
             {
                 var nextTierToComplete = badgeInfo.tiers[badgeInfo.nextTierToCompleteIndex];
-                TopTierMark.SetActive(!string.IsNullOrEmpty(badgeInfo.completedAt));
-                NextTierContainer.SetActive(string.IsNullOrEmpty(badgeInfo.completedAt) && badgeInfo.nextTierCurrentProgress > 0);
+                TopTierMark.SetActive(isOwnProfile && !string.IsNullOrEmpty(badgeInfo.completedAt));
+                NextTierContainer.SetActive(isOwnProfile && string.IsNullOrEmpty(badgeInfo.completedAt) && badgeInfo.nextTierCurrentProgress > 0);
                 NextTierValueText.text = nextTierToComplete.name;
                 NextTierDescriptionText.text = nextTierToComplete.description;
+                NextTierDescriptionText.gameObject.SetActive(isOwnProfile);
                 int nextTierProgressPercentage = badgeInfo.isLocked ? 0 : badgeInfo.nextTierCurrentProgress * 100 / badgeInfo.nextTierTotalProgress;
                 NextTierProgressBarFill.sizeDelta = new Vector2((!badgeInfo.isLocked ? nextTierProgressPercentage : 0) * (NextTierProgressBar.sizeDelta.x / 100), NextTierProgressBarFill.sizeDelta.y);
                 NextTierProgressValueText.text = $"{badgeInfo.nextTierCurrentProgress}/{badgeInfo.nextTierTotalProgress}";
+                NextTierProgressBarContainer.SetActive(isOwnProfile);
             }
         }
 

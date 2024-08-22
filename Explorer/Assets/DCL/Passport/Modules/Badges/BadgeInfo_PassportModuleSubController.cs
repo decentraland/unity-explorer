@@ -47,7 +47,7 @@ namespace DCL.Passport.Modules.Badges
         {
             this.isOwnProfile = isOwnProfileBadge;
             currentBadgeInfo = badgeInfo;
-            badgeInfoModuleView.Setup(badgeInfo);
+            badgeInfoModuleView.Setup(badgeInfo, isOwnProfile);
             SetAsLoading(badgeInfo.isTier);
 
             if (badgeInfo.isTier)

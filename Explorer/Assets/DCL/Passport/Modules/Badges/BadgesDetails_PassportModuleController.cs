@@ -337,7 +337,7 @@ namespace DCL.Passport.Modules.Badges
         private void CreateBadgeDetailCard(BadgeInfo badge)
         {
             var badgeDetailCard = badgeDetailCardsPool.Get();
-            badgeDetailCard.Setup(badge);
+            badgeDetailCard.Setup(badge, isOwnProfile);
             badgeDetailCard.Button.onClick.AddListener(() => { SelectBadgeCard(badgeDetailCard); });
 
             // Place badge into the corresponding category container

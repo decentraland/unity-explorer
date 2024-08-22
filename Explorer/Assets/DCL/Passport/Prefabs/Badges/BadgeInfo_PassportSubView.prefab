@@ -203,6 +203,7 @@ MonoBehaviour:
   <NextTierValueText>k__BackingField: {fileID: 5243723824965145378}
   <NextTierDescriptionText>k__BackingField: {fileID: 6267087643615186405}
   <NextTierProgressBar>k__BackingField: {fileID: 7047782645285880734}
+  <NextTierProgressBarContainer>k__BackingField: {fileID: 4800062101727484193}
   <NextTierProgressBarFill>k__BackingField: {fileID: 2326033637731831319}
   <NextTierProgressValueText>k__BackingField: {fileID: 8327448739598134556}
 --- !u!1 &1585193957589129029

@@ -85,16 +85,23 @@ namespace DCL.Passport.Fields.Badges
             IsSelected = isSelected;
         }
 
-        public void Setup(BadgeInfo badgeInfo)
+        public void Setup(BadgeInfo badgeInfo, bool isOwnProfile)
         {
             Model = badgeInfo;
             BadgeNameText.text = badgeInfo.name;
             BadgeImage.SetColor(badgeInfo.isLocked ? LockedBadgeImageColor : NonLockedBadgeImageColor);
-            BadgeDateText.text = !string.IsNullOrEmpty(badgeInfo.completedAt) ? PassportUtils.FormatTimestampDate(badgeInfo.completedAt) : "--";
-            BadgeDateText.gameObject.SetActive(!string.IsNullOrEmpty(badgeInfo.completedAt));
-            TopTierMark.SetActive(badgeInfo.isTier && !string.IsNullOrEmpty(badgeInfo.completedAt));
-            NextTierTitle.SetActive(badgeInfo is { isTier: true, nextTierCurrentProgress: > 0 } && string.IsNullOrEmpty(badgeInfo.completedAt));
-            ProgressBar.gameObject.SetActive(badgeInfo.isTier && string.IsNullOrEmpty(badgeInfo.completedAt));
+
+            if (!string.IsNullOrEmpty(badgeInfo.completedAt))
+                BadgeDateText.text = PassportUtils.FormatTimestampDate(badgeInfo.completedAt);
+            else if (!string.IsNullOrEmpty(badgeInfo.lastTierCompletedAt))
+                BadgeDateText.text = PassportUtils.FormatTimestampDate(badgeInfo.lastTierCompletedAt);
+            else
+                BadgeDateText.text = "--";
+
+            BadgeDateText.gameObject.SetActive(!string.IsNullOrEmpty(badgeInfo.completedAt) || (!isOwnProfile && !string.IsNullOrEmpty(badgeInfo.lastTierCompletedAt)));
+            TopTierMark.SetActive(isOwnProfile && badgeInfo.isTier && !string.IsNullOrEmpty(badgeInfo.completedAt));
+            NextTierTitle.SetActive(isOwnProfile && badgeInfo is { isTier: true, nextTierCurrentProgress: > 0 } && string.IsNullOrEmpty(badgeInfo.completedAt));
+            ProgressBar.gameObject.SetActive(isOwnProfile && badgeInfo.isTier && string.IsNullOrEmpty(badgeInfo.completedAt));
 
             if (badgeInfo.isTier)
             {

@@ -83,7 +83,7 @@ namespace DCL.BadgesAPIService
                 if (badge.progress.stepsDone >= badge.tiers[i].criteria.steps)
                     lastCompletedTierIndex = i;
 
-                if (badge.progress.stepsTarget == badge.tiers[i].criteria.steps)
+                if (badge.progress.nextStepsTarget == badge.tiers[i].criteria.steps)
                     nextTierToCompleteIndex = i;
             }
 
@@ -97,8 +97,9 @@ namespace DCL.BadgesAPIService
                 image = badge.image,
                 completedAt = badge.completedAt,
                 isTier = badge.isTier,
-                nextTierTotalProgress = badge.progress.stepsTarget ?? 1,
+                nextTierTotalProgress = badge.progress.nextStepsTarget ?? 1,
                 nextTierCurrentProgress = badge.progress.stepsDone,
+                lastTierCompletedAt = badge.progress.lastTierCompletedAt,
                 lastCompletedTierIndex = lastCompletedTierIndex,
                 nextTierToCompleteIndex = nextTierToCompleteIndex,
                 tiers = Array.ConvertAll(badge.tiers, tier => new BadgeTierInfo
@@ -154,14 +155,15 @@ namespace DCL.BadgesAPIService
                             progress = new BadgeProgressData
                             {
                                 stepsDone = 1,
-                                stepsTarget = null,
+                                nextStepsTarget = null,
+                                lastTierCompletedAt = null,
                             },
                             tiers = Array.Empty<TierData>(),
                         },
                         new()
                         {
                             id = "emote-creator",
-                            completedAt = "1722005503466    ",
+                            completedAt = "1722005503466",
                             name = "Emote Creator",
                             description = "50 emotes published",
                             image = "https://images.vexels.com/media/users/3/236713/isolated/preview/2e816f91528e052edec36e8f3e9f52e1-1up-gaming-pixel-art-badge.png?w=360",
@@ -170,7 +172,8 @@ namespace DCL.BadgesAPIService
                             progress = new BadgeProgressData
                             {
                                 stepsDone = 50,
-                                stepsTarget = 50,
+                                nextStepsTarget = 50,
+                                lastTierCompletedAt = "1722005503466",
                             },
                             tiers = new[]
                             {
@@ -260,7 +263,8 @@ namespace DCL.BadgesAPIService
                             progress = new BadgeProgressData
                             {
                                 stepsDone = 23,
-                                stepsTarget = 30,
+                                nextStepsTarget = 30,
+                                lastTierCompletedAt = "1722005503466",
                             },
                             tiers = new[]
                             {
@@ -353,7 +357,8 @@ namespace DCL.BadgesAPIService
                             progress = new BadgeProgressData
                             {
                                 stepsDone = 1,
-                                stepsTarget = 1,
+                                nextStepsTarget = 1,
+                                lastTierCompletedAt = null,
                             },
                             tiers = Array.Empty<TierData>(),
                         },
@@ -369,7 +374,8 @@ namespace DCL.BadgesAPIService
                             progress = new BadgeProgressData
                             {
                                 stepsDone = 0,
-                                stepsTarget = 1,
+                                nextStepsTarget = 1,
+                                lastTierCompletedAt = null,
                             },
                             tiers = new[]
                             {
@@ -459,7 +465,8 @@ namespace DCL.BadgesAPIService
                             progress = new BadgeProgressData
                             {
                                 stepsDone = 1,
-                                stepsTarget = 1,
+                                nextStepsTarget = 1,
+                                lastTierCompletedAt = null,
                             },
                             tiers = Array.Empty<TierData>(),
                         },
