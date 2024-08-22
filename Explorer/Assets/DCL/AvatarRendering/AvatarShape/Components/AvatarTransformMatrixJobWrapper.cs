@@ -17,12 +17,9 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         private NativeArray<Matrix4x4> MatrixFromAllAvatars;
         private Matrix4x4* matrixPtr;
         
-
-        private NativeArray<Matrix4x4> BufferArrayForBulkCopy;
-        private Matrix4x4* BufferArrayForBulkCopyPtr;
-
         private TransformAccessArray bonesCombined;
-        private BoneMatrixCalculationJob job;
+        public BoneMatrixCalculationJob job;
+
         private JobHandle handle;
 
         internal bool disposed { get;  }
@@ -30,26 +27,20 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 
         private int AvatarIndex;
         private static int BONES_PER_AVATAR_LENGTH;
-        private const int BONES_ARRAY_LENGTH = 62;
+        private static readonly int BONES_ARRAY_LENGTH = ComputeShaderConstants.BONE_COUNT;
         private const int TOTAL_AVATAR_SUPPORTED = 100;
 
-        private readonly Dictionary<int, int> AvatarToIndexDictionary = new ();
-
-        // Calculate the size of the memory block you want to copy
-        private readonly int sizeToCopy = sizeof(Matrix4x4) * BONES_ARRAY_LENGTH;
 
         public static AvatarTransformMatrixJobWrapper Create()
         {
             BONES_PER_AVATAR_LENGTH = TOTAL_AVATAR_SUPPORTED * BONES_ARRAY_LENGTH;
             var bonesCombined = new TransformAccessArray(BONES_PER_AVATAR_LENGTH);
             var matrixFromAllAvatars = new NativeArray<Matrix4x4>(BONES_PER_AVATAR_LENGTH, Allocator.Persistent);
-            var tempArrayForCopying = new NativeArray<Matrix4x4>(BONES_ARRAY_LENGTH, Allocator.Persistent);
-
             for (int i = 0; i < BONES_PER_AVATAR_LENGTH; i++)
                 bonesCombined.Add(null);
             return new AvatarTransformMatrixJobWrapper
             {
-                MatrixFromAllAvatars = matrixFromAllAvatars, matrixPtr = (Matrix4x4*)matrixFromAllAvatars.GetUnsafePtr(), BufferArrayForBulkCopy = tempArrayForCopying, BufferArrayForBulkCopyPtr = (Matrix4x4*)tempArrayForCopying.GetUnsafePtr(),
+                MatrixFromAllAvatars = matrixFromAllAvatars, matrixPtr = (Matrix4x4*)matrixFromAllAvatars.GetUnsafePtr(),
                 bonesCombined = bonesCombined, job = new BoneMatrixCalculationJob
                 {
                     BonesMatricesResult = new NativeArray<float4x4>(BONES_PER_AVATAR_LENGTH, Allocator.Persistent)
@@ -71,29 +62,20 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             completed = true;
         }
 
-        public  int AddAvatar(ref AvatarBase avatarBase, ref AvatarTransformMatrixComponent transformMatrixComponent)
+        public void UpdateAvatar(ref AvatarBase avatarBase, ref AvatarTransformMatrixComponent transformMatrixComponent)
         {
-            if (!AvatarToIndexDictionary.TryGetValue(avatarBase.RandomID, out int currentIndex))
+            if (transformMatrixComponent.IndexInGlobalJobArray == -1)
             {
-                AvatarToIndexDictionary.Add(avatarBase.RandomID, AvatarIndex);
-                int indexInDictionary = AvatarIndex * BONES_ARRAY_LENGTH;
+                //Add all bones to the bonesCombined array with the current available index
                 for (int i = 0; i < BONES_ARRAY_LENGTH; i++)
-                {
-                    bonesCombined[indexInDictionary + i] = transformMatrixComponent.bones[i];
-                }
-
-                currentIndex = AvatarIndex;
+                    bonesCombined[AvatarIndex * BONES_ARRAY_LENGTH + i] = transformMatrixComponent.bones[i];
+                //Set the index for this avatar
+                transformMatrixComponent.IndexInGlobalJobArray = AvatarIndex;
                 AvatarIndex++;
             }
 
             //Setup of data
-            matrixPtr[currentIndex] = avatarBase.transform.worldToLocalMatrix;
-            return currentIndex;
-        }
-
-        public NativeArray<float4x4> GetResultForIndex(int index)
-        {
-            return job.BonesMatricesResult.GetSubArray(index * BONES_ARRAY_LENGTH, BONES_ARRAY_LENGTH);
+            matrixPtr[transformMatrixComponent.IndexInGlobalJobArray] = avatarBase.transform.worldToLocalMatrix;
         }
 
         public void Dispose()

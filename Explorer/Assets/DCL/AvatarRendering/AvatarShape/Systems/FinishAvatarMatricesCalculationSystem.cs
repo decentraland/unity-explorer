@@ -35,7 +35,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         private void Execute(ref AvatarTransformMatrixComponent avatarTransformMatrixComponent,
             ref AvatarCustomSkinningComponent computeShaderSkinning)
         {
-            skinningStrategy.ComputeSkinning(jobWrapper.GetResultForIndex(avatarTransformMatrixComponent.IndexInGlobalJobArray), ref computeShaderSkinning);
+            skinningStrategy.ComputeSkinning(jobWrapper.job.BonesMatricesResult, avatarTransformMatrixComponent.IndexInGlobalJobArray, ref computeShaderSkinning);
         }
     }
 }

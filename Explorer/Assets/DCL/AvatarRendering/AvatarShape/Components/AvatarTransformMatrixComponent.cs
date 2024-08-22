@@ -20,6 +20,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         public static AvatarTransformMatrixComponent Create(Transform avatarBaseTransform, Transform[] bones) =>
             new ()
             {
+                IndexInGlobalJobArray = -1,
                 bones = bones
             };
     }
