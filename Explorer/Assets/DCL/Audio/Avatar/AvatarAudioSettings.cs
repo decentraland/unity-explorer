@@ -29,6 +29,7 @@ namespace DCL.Audio.Avatar
             BlowKiss,
             ThrowMoney,
             FootstepSlide,
+            None,
         }
 
         /// <summary>
