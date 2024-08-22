@@ -1,8 +1,10 @@
-﻿namespace DCL.Profiling
+﻿using System.Collections.Generic;
+
+namespace DCL.Profiling
 {
     public interface IAnalyticsReportProfiler : IMemoryProfiler
     {
-        (AnalyticsFrameTimeReport?, long[]) GetMainThreadFramesNs(int[] percentile);
+        (AnalyticsFrameTimeReport?, IReadOnlyList<long>) GetMainThreadFramesNs(int[] percentile);
 
         AnalyticsFrameTimeReport? GetGpuThreadFramesNs(int[] percentile);
 

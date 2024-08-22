@@ -9,6 +9,7 @@ using ECS.Abstract;
 using ECS.SceneLifeCycle;
 using SceneRuntime;
 using Segment.Serialization;
+using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
 using World = Arch.Core.World;
@@ -59,7 +60,7 @@ namespace DCL.Analytics.Systems
 
         private void ReportPerformanceMetrics()
         {
-            (AnalyticsFrameTimeReport? mainThreadReport, long[] samplesArray) = profiler.GetMainThreadFramesNs(percentiles);
+            (AnalyticsFrameTimeReport? mainThreadReport, IReadOnlyList<long>  samplesArray) = profiler.GetMainThreadFramesNs(percentiles);
             AnalyticsFrameTimeReport? gpuFrameTimeReport = profiler.GetGpuThreadFramesNs(percentiles);
 
             if (!mainThreadReport.HasValue || !gpuFrameTimeReport.HasValue)
@@ -139,16 +140,16 @@ namespace DCL.Analytics.Systems
             });
         }
 
-        private string GetSamplesArrayAsString(long[] samplesArray)
+        private string GetSamplesArrayAsString(IReadOnlyList<long> samplesArray)
         {
             stringBuilder.Clear();
             stringBuilder.Append("[");
 
-            for (var i = 0; i < samplesArray.Length; i++)
+            for (var i = 0; i < samplesArray.Count; i++)
             {
                 stringBuilder.AppendFormat("{0:0.000}", samplesArray[i]* NS_TO_MS);
 
-                if (i < samplesArray.Length - 1)
+                if (i < samplesArray.Count - 1)
                     stringBuilder.Append(",");
             }
 

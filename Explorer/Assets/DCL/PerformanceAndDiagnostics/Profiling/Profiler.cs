@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Unity.Profiling;
 
 namespace DCL.Profiling
@@ -98,7 +99,7 @@ namespace DCL.Profiling
             return r;
         }
 
-        public (AnalyticsFrameTimeReport?, long[]) GetMainThreadFramesNs(int[] percentile) =>
+        public (AnalyticsFrameTimeReport?, IReadOnlyList<long>) GetMainThreadFramesNs(int[] percentile) =>
             (GetFrameStatsWithPercentiles(mainThreadTimeRecorder, percentile), samplesArray);
 
         public AnalyticsFrameTimeReport? GetGpuThreadFramesNs(int[] percentile) =>
