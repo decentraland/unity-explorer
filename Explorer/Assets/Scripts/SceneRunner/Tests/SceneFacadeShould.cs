@@ -372,7 +372,7 @@ namespace SceneRunner.Tests
                     new URLAddress(),
                     new SceneEcsExecutor(),
                     Substitute.For<ISceneData>(),
-                    new MutexSync(),
+                    new MultithreadSync(),
                     Substitute.For<ICRDTDeserializer>(),
                     Substitute.For<IECSToCRDTWriter>(),
                     Substitute.For<ISystemGroupsUpdateGate>(),
