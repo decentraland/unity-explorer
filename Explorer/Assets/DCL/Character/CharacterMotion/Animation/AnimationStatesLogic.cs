@@ -25,7 +25,7 @@ namespace DCL.CharacterMotion.Animation
             animationComponent.States.IsLongFall = !isGrounded && verticalVelocity < settings.AnimationLongFallSpeed;
             animationComponent.States.IsLongJump = verticalVelocity > settings.RunJumpHeight * settings.RunJumpHeight * settings.JumpGravityFactor;
 
-            bool jumpStateChanged = rigidTransform.JustJumped != animationComponent.States.IsJumping;
+            bool jumpStateChanged = rigidTransform.JustJumped && !animationComponent.States.IsJumping;
             SetAnimatorParameters(view, ref animationComponent.States, rigidTransform.JustJumped, jumpStateChanged, stunComponent.IsStunned);
         }
 
