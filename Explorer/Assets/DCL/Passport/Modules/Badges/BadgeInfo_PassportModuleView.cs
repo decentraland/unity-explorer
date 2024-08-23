@@ -94,7 +94,7 @@ namespace DCL.Passport.Modules.Badges
             if (!badgeInfo.isTier)
             {
                 BadgeNameText.text = badgeInfo.name;
-                BadgeDateText.text = !badgeInfo.isLocked ? $"Unlocked: {PassportUtils.FormatTimestampDate(badgeInfo.completedAt)}" : "Locked";
+                BadgeDateText.text = !badgeInfo.isLocked ? $"Unlocked: {BadgesUtils.FormatTimestampDate(badgeInfo.completedAt)}" : "Locked";
                 BadgeDescriptionText.text = badgeInfo.description;
 
                 if (!string.IsNullOrEmpty(badgeInfo.image) && badgeInfo.isLocked)
@@ -112,13 +112,17 @@ namespace DCL.Passport.Modules.Badges
                 var nextTierToComplete = tiers[nextTierToCompleteIndex];
                 TopTierMark.SetActive(isOwnProfile && !string.IsNullOrEmpty(badgeInfo.completedAt));
                 NextTierContainer.SetActive(isOwnProfile && string.IsNullOrEmpty(badgeInfo.completedAt) && badgeInfo.progress.stepsDone > 0);
-                NextTierValueText.text = nextTierToComplete.tierName;
-                NextTierDescriptionText.text = nextTierToComplete.description;
                 NextTierDescriptionText.gameObject.SetActive(isOwnProfile);
-                int nextTierProgressPercentage = badgeInfo.isLocked ? 0 : badgeInfo.progress.stepsDone * 100 / (badgeInfo.progress.nextStepsTarget ?? badgeInfo.progress.totalStepsTarget);
-                NextTierProgressBarFill.sizeDelta = new Vector2((!badgeInfo.isLocked ? nextTierProgressPercentage : 0) * (NextTierProgressBar.sizeDelta.x / 100), NextTierProgressBarFill.sizeDelta.y);
-                NextTierProgressValueText.text = $"{badgeInfo.progress.stepsDone}/{badgeInfo.progress.nextStepsTarget ?? badgeInfo.progress.totalStepsTarget}";
                 NextTierProgressBarContainer.SetActive(isOwnProfile);
+
+                if (isOwnProfile)
+                {
+                    NextTierValueText.text = nextTierToComplete.tierName;
+                    NextTierDescriptionText.text = nextTierToComplete.description;
+                    int nextTierProgressPercentage = badgeInfo.isLocked ? 0 : badgeInfo.progress.stepsDone!.Value * 100 / (badgeInfo.progress.nextStepsTarget ?? badgeInfo.progress.totalStepsTarget!.Value);
+                    NextTierProgressBarFill.sizeDelta = new Vector2((!badgeInfo.isLocked ? nextTierProgressPercentage : 0) * (NextTierProgressBar.sizeDelta.x / 100), NextTierProgressBarFill.sizeDelta.y);
+                    NextTierProgressValueText.text = $"{badgeInfo.progress.stepsDone}/{badgeInfo.progress.nextStepsTarget ?? badgeInfo.progress.totalStepsTarget}";
+                }
             }
         }
 
@@ -126,7 +130,8 @@ namespace DCL.Passport.Modules.Badges
         {
             var tier = currentTiers[tierIndex];
             BadgeNameText.text = $"{badgeInfo.name} {tier.tierName}";
-            BadgeDateText.text = tier.completedAt != null ? $"Unlocked: {PassportUtils.FormatTimestampDate(tier.completedAt)}" : "Locked";
+            string tierCompletedAt = badgeInfo.GetTierCompletedDate(tier.tierId);
+            BadgeDateText.text = !string.IsNullOrEmpty(tierCompletedAt) ? $"Unlocked: {BadgesUtils.FormatTimestampDate(tierCompletedAt)}" : "Locked";
             BadgeDescriptionText.text = tier.description;
         }
 

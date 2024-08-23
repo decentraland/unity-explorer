@@ -91,7 +91,7 @@ namespace DCL.Passport.Fields.Badges
             BadgeNameText.text = !string.IsNullOrEmpty(badgeInfo.progress.lastCompletedTierName) ? $"{badgeInfo.name} {badgeInfo.progress.lastCompletedTierName}" : badgeInfo.name;
             BadgeImage.SetColor(badgeInfo.isLocked ? LockedBadgeImageColor : NonLockedBadgeImageColor);
             string completedAtToLoad = !string.IsNullOrEmpty(badgeInfo.progress.lastCompletedTierAt) ? badgeInfo.progress.lastCompletedTierAt : badgeInfo.completedAt;
-            BadgeDateText.text = !string.IsNullOrEmpty(completedAtToLoad) ? PassportUtils.FormatTimestampDate(completedAtToLoad) : "—";
+            BadgeDateText.text = !string.IsNullOrEmpty(completedAtToLoad) ? BadgesUtils.FormatTimestampDate(completedAtToLoad) : "—";
             BadgeDateText.gameObject.SetActive(
                 (!badgeInfo.isLocked && !string.IsNullOrEmpty(badgeInfo.completedAt)) ||
                 badgeInfo is { isLocked: true, isTier: false } ||
@@ -100,9 +100,9 @@ namespace DCL.Passport.Fields.Badges
             NextTierTitle.SetActive(isOwnProfile && badgeInfo.isTier && badgeInfo.progress.stepsDone > 0 && string.IsNullOrEmpty(badgeInfo.completedAt));
             ProgressBar.gameObject.SetActive(isOwnProfile && badgeInfo.isTier && string.IsNullOrEmpty(badgeInfo.completedAt));
 
-            if (badgeInfo.isTier)
+            if (isOwnProfile && badgeInfo.isTier)
             {
-                int progressPercentage = badgeInfo.isLocked ? 0 : badgeInfo.progress.stepsDone * 100 / (badgeInfo.progress.nextStepsTarget ?? badgeInfo.progress.totalStepsTarget);
+                int progressPercentage = badgeInfo.isLocked ? 0 : badgeInfo.progress.stepsDone!.Value * 100 / (badgeInfo.progress.nextStepsTarget ?? badgeInfo.progress.totalStepsTarget!.Value);
                 ProgressBarFill.sizeDelta = new Vector2((!badgeInfo.isLocked ? progressPercentage : 0) * (ProgressBar.sizeDelta.x / 100), ProgressBarFill.sizeDelta.y);
             }
 

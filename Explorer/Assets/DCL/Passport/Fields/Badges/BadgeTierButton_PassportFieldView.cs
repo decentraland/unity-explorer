@@ -54,10 +54,10 @@ namespace DCL.Passport.Fields.Badges
         public void SetAsSelected(bool isSelected) =>
             SelectedOutline.SetActive(isSelected);
 
-        public void Setup(TierData tierData)
+        public void Setup(TierData tierData, string completedAt)
         {
             Model = tierData;
-            TierImage.SetColor(tierData.completedAt == null ? LockedBadgeImageColor : NonLockedBadgeImageColor);
+            TierImage.SetColor(string.IsNullOrEmpty(completedAt) ? LockedBadgeImageColor : NonLockedBadgeImageColor);
             imageController?.SetImage(DefaultTierSprite);
             if (!string.IsNullOrEmpty(tierData.image))
                 imageController?.RequestImage(tierData.image, hideImageWhileLoading: true);

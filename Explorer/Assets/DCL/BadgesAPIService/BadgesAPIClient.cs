@@ -32,7 +32,7 @@ namespace DCL.BadgesAPIService
 
         public async UniTask<List<LatestAchievedBadgeData>> FetchLatestAchievedBadgesAsync(string walletId, CancellationToken ct)
         {
-            /*var url = $"{badgesBaseUrl}/users/{walletId}/preview";
+            /*var url = $"{badgesBaseUrl}/users/{walletId}/overview";
 
             LatestAchievedBadgesResponse latestAchievedBadgesResponse = await webRequestController.GetAsync(url, ct, reportCategory: ReportCategory.BADGES_WEB_REQUEST)
                                                                                                   .CreateFromJson<LatestAchievedBadgesResponse>(WRJsonParser.Unity);
@@ -42,9 +42,9 @@ namespace DCL.BadgesAPIService
             return GetLatestAchievedBadgesMockedResponse().data.latestAchievedBadges;
         }
 
-        public async UniTask<BadgesInfo> FetchBadgesAsync(string walletId, bool includeLocked, CancellationToken ct)
+        public async UniTask<BadgesInfo> FetchBadgesAsync(string walletId, bool showProgress, CancellationToken ct)
         {
-            /*var url = $"{badgesBaseUrl}/users/{walletId}/badges?includeLocked={includeLocked}";
+            /*var url = $"{badgesBaseUrl}/users/{walletId}/badges?showProgress={showProgress}";
 
             BadgesResponse badgesResponse = await webRequestController.GetAsync(url, ct, reportCategory: ReportCategory.BADGES_WEB_REQUEST)
                                                                       .CreateFromJson<BadgesResponse>(WRJsonParser.Newtonsoft);
@@ -100,6 +100,7 @@ namespace DCL.BadgesAPIService
                     totalStepsTarget = badge.progress.totalStepsTarget,
                     lastCompletedTierName = badge.progress.lastCompletedTierName,
                     lastCompletedTierImage = badge.progress.lastCompletedTierImage,
+                    achievedTiers = badge.progress.achievedTiers,
                 },
                 image = badge.image,
                 isLocked = isLocked,
@@ -164,6 +165,7 @@ namespace DCL.BadgesAPIService
                                 lastCompletedTierAt = null,
                                 lastCompletedTierName = null,
                                 lastCompletedTierImage = null,
+                                achievedTiers = new List<AchievedTierData>(),
                             },
                         },
                         new()
@@ -183,6 +185,39 @@ namespace DCL.BadgesAPIService
                                 lastCompletedTierAt = "1722005503466",
                                 lastCompletedTierName = "Diamond",
                                 lastCompletedTierImage = "https://picsum.photos/seed/6/300/300",
+                                achievedTiers = new List<AchievedTierData>
+                                {
+                                    new()
+                                    {
+                                        tierId = "emote-creator-starter",
+                                        completedAt = "1722005503466",
+                                    },
+                                    new()
+                                    {
+                                        tierId = "emote-creator-bronze",
+                                        completedAt = "1722005503466",
+                                    },
+                                    new()
+                                    {
+                                        tierId = "emote-creator-silver",
+                                        completedAt = "1722005503466",
+                                    },
+                                    new()
+                                    {
+                                        tierId = "emote-creator-gold",
+                                        completedAt = "1722005503466",
+                                    },
+                                    new()
+                                    {
+                                        tierId = "emote-creator-platinum",
+                                        completedAt = "1722005503466",
+                                    },
+                                    new()
+                                    {
+                                        tierId = "emote-creator-diamond",
+                                        completedAt = "1722005503466",
+                                    },
+                                },
                             },
                         },
                         new()
@@ -202,6 +237,19 @@ namespace DCL.BadgesAPIService
                                 lastCompletedTierAt = "1722005503466",
                                 lastCompletedTierName = "Bronze",
                                 lastCompletedTierImage = "https://picsum.photos/seed/8/300/300",
+                                achievedTiers = new List<AchievedTierData>
+                                {
+                                    new()
+                                    {
+                                        tierId = "traveler-starter",
+                                        completedAt = "1722005503466",
+                                    },
+                                    new()
+                                    {
+                                        tierId = "traveler-bronze",
+                                        completedAt = "1722005503466",
+                                    },
+                                },
                             },
                         },
                     },
@@ -224,6 +272,7 @@ namespace DCL.BadgesAPIService
                                 lastCompletedTierAt = null,
                                 lastCompletedTierName = null,
                                 lastCompletedTierImage = null,
+                                achievedTiers = new List<AchievedTierData>(),
                             },
                         },
                         new()
@@ -243,6 +292,7 @@ namespace DCL.BadgesAPIService
                                 lastCompletedTierAt = null,
                                 lastCompletedTierName = null,
                                 lastCompletedTierImage = null,
+                                achievedTiers = new List<AchievedTierData>(),
                             },
                         },
                         new()
@@ -262,6 +312,7 @@ namespace DCL.BadgesAPIService
                                 lastCompletedTierAt = null,
                                 lastCompletedTierName = null,
                                 lastCompletedTierImage = null,
+                                achievedTiers = new List<AchievedTierData>(),
                             },
                         },
                     },
@@ -280,7 +331,6 @@ namespace DCL.BadgesAPIService
                     tierId = "emote-creator-starter",
                     tierName = "Starter",
                     description = "1 emote published",
-                    completedAt = "1722005503466",
                     criteria = new BadgeTierCriteria
                     {
                         steps = 1,
@@ -292,7 +342,6 @@ namespace DCL.BadgesAPIService
                     tierId = "emote-creator-bronze",
                     tierName = "Bronze",
                     description = "10 emotes published",
-                    completedAt = "1722005503466",
                     criteria = new BadgeTierCriteria
                     {
                         steps = 10,
@@ -304,7 +353,6 @@ namespace DCL.BadgesAPIService
                     tierId = "emote-creator-silver",
                     tierName = "Silver",
                     description = "20 emotes published",
-                    completedAt = "1722005503466",
                     criteria = new BadgeTierCriteria
                     {
                         steps = 20,
@@ -316,7 +364,6 @@ namespace DCL.BadgesAPIService
                     tierId = "emote-creator-gold",
                     tierName = "Gold",
                     description = "30 emotes published",
-                    completedAt = "1722005503466",
                     criteria = new BadgeTierCriteria
                     {
                         steps = 30,
@@ -328,7 +375,6 @@ namespace DCL.BadgesAPIService
                     tierId = "emote-creator-platinum",
                     tierName = "Platinum",
                     description = "40 emotes published",
-                    completedAt = "1722005503466",
                     criteria = new BadgeTierCriteria
                     {
                         steps = 40,
@@ -340,7 +386,6 @@ namespace DCL.BadgesAPIService
                     tierId = "emote-creator-diamond",
                     tierName = "Diamond",
                     description = "50 emotes published",
-                    completedAt = "1722005503466",
                     criteria = new BadgeTierCriteria
                     {
                         steps = 50,
@@ -356,7 +401,6 @@ namespace DCL.BadgesAPIService
                     tierId = "traveler-starter",
                     tierName = "Starter",
                     description = "Visit 10 scenes in Genesis City",
-                    completedAt = "1722005503466",
                     criteria = new BadgeTierCriteria
                     {
                         steps = 10,
@@ -368,7 +412,6 @@ namespace DCL.BadgesAPIService
                     tierId = "traveler-bronze",
                     tierName = "Bronze",
                     description = "Visit 20 scenes in Genesis City",
-                    completedAt = "1722005503466",
                     criteria = new BadgeTierCriteria
                     {
                         steps = 20,
@@ -380,7 +423,6 @@ namespace DCL.BadgesAPIService
                     tierId = "traveler-silver",
                     tierName = "Silver",
                     description = "Visit 30 scenes in Genesis City",
-                    completedAt = null,
                     criteria = new BadgeTierCriteria
                     {
                         steps = 30,
@@ -392,7 +434,6 @@ namespace DCL.BadgesAPIService
                     tierId = "traveler-gold",
                     tierName = "Gold",
                     description = "Visit 40 scenes in Genesis City",
-                    completedAt = null,
                     criteria = new BadgeTierCriteria
                     {
                         steps = 40,
@@ -404,7 +445,6 @@ namespace DCL.BadgesAPIService
                     tierId = "traveler-platinum",
                     tierName = "Platinum",
                     description = "Visit 50 scenes in Genesis City",
-                    completedAt = null,
                     criteria = new BadgeTierCriteria
                     {
                         steps = 50,
@@ -416,7 +456,6 @@ namespace DCL.BadgesAPIService
                     tierId = "traveler-diamond",
                     tierName = "Diamond",
                     description = "Visit 60 scenes in Genesis City",
-                    completedAt = null,
                     criteria = new BadgeTierCriteria
                     {
                         steps = 60,
@@ -432,7 +471,6 @@ namespace DCL.BadgesAPIService
                     tierId = "world-jumper-starter",
                     tierName = "Starter",
                     description = "Jump into 1 world",
-                    completedAt = null,
                     criteria = new BadgeTierCriteria
                     {
                         steps = 1,
@@ -444,7 +482,6 @@ namespace DCL.BadgesAPIService
                     tierId = "world-jumper-bronze",
                     tierName = "Bronze",
                     description = "Jump into 2 worlds",
-                    completedAt = null,
                     criteria = new BadgeTierCriteria
                     {
                         steps = 2,
@@ -456,7 +493,6 @@ namespace DCL.BadgesAPIService
                     tierId = "world-jumper-silver",
                     tierName = "Silver",
                     description = "Jump into 3 worlds",
-                    completedAt = null,
                     criteria = new BadgeTierCriteria
                     {
                         steps = 3,
@@ -468,7 +504,6 @@ namespace DCL.BadgesAPIService
                     tierId = "world-jumper-gold",
                     tierName = "Gold",
                     description = "Jump into 4 worlds",
-                    completedAt = null,
                     criteria = new BadgeTierCriteria
                     {
                         steps = 4,
@@ -480,7 +515,6 @@ namespace DCL.BadgesAPIService
                     tierId = "world-jumper-platinum",
                     tierName = "Platinum",
                     description = "Jump into 5 worlds",
-                    completedAt = null,
                     criteria = new BadgeTierCriteria
                     {
                         steps = 5,
@@ -492,7 +526,6 @@ namespace DCL.BadgesAPIService
                     tierId = "world-jumper-diamond",
                     tierName = "Diamond",
                     description = "Jump into 6 worlds",
-                    completedAt = null,
                     criteria = new BadgeTierCriteria
                     {
                         steps = 6,

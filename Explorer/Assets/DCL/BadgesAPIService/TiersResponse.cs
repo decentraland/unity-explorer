@@ -23,7 +23,6 @@ namespace DCL.BadgesAPIService
         public string description;
         public string image;
         public BadgeTierCriteria criteria;
-        public string completedAt;
     }
 
     [Serializable]

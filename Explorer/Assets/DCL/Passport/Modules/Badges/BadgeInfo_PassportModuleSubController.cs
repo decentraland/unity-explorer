@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.BadgesAPIService;
 using DCL.Diagnostics;
 using DCL.Passport.Fields.Badges;
+using DCL.Passport.Utils;
 using DCL.Profiles;
 using DCL.WebRequests;
 using System;
@@ -112,10 +113,11 @@ namespace DCL.Passport.Modules.Badges
 
                 foreach (TierData tier in tiers)
                 {
-                    if (!isOwnProfile && tier.completedAt == null)
+                    string tierCompletedAt = badgeInfo.GetTierCompletedDate(tier.tierId);
+                    if (!isOwnProfile && string.IsNullOrEmpty(tierCompletedAt))
                         continue;
 
-                    CreateBadgeTierButton(tier);
+                    CreateBadgeTierButton(tier, tierCompletedAt);
                 }
 
                 badgeInfoModuleView.Setup(badgeInfo, tiers, isOwnProfile);
@@ -131,10 +133,10 @@ namespace DCL.Passport.Modules.Badges
             }
         }
 
-        private void CreateBadgeTierButton(TierData tierData)
+        private void CreateBadgeTierButton(TierData tierData, string completedAt)
         {
             var badgeTierButton = badgeTierButtonsPool.Get();
-            badgeTierButton.Setup(tierData);
+            badgeTierButton.Setup(tierData, completedAt);
             badgeTierButton.Button.onClick.AddListener(() => SelectTierButton(badgeTierButton));
             instantiatedBadgeTierButtons.Add(badgeTierButton);
         }
