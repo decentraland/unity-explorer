@@ -226,7 +226,7 @@ namespace DCL.Passport
         private void UpdateBackgroundColor(string profileName)
         {
             Color.RGBToHSV(chatEntryConfiguration.GetNameColor(profileName), out float h, out float s, out float v);
-            viewInstance?.BackgroundImage.material.SetColor(BG_SHADER_COLOR_1, Color.HSVToRGB(h, s, Mathf.Clamp01(v - 0.2f)));
+            viewInstance?.BackgroundImage.material.SetColor(BG_SHADER_COLOR_1, Color.HSVToRGB(h, s, Mathf.Clamp01(v - 0.3f)));
         }
 
         private void SetupPassportModules(Profile profile, PassportSection passportSection)
