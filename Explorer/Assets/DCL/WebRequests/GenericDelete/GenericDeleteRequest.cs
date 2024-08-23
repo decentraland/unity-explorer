@@ -15,14 +15,6 @@ namespace DCL.WebRequests.GenericDelete
             unityWebRequest.method = "DELETE";
 
             return new GenericDeleteRequest(unityWebRequest);
-
-            // if (arguments.MultipartFormSections != null)
-            //     return new GenericDeleteRequest(UnityWebRequest.Post(commonArguments.URL, arguments.MultipartFormSections));
-            //
-            // if (arguments.WWWForm != null)
-            //     return new GenericDeleteRequest(UnityWebRequest.Post(commonArguments.URL, arguments.WWWForm));
-            //
-            // return new GenericDeleteRequest(UnityWebRequest.Post(commonArguments.URL, arguments.PostData, arguments.ContentType));
         }
 
         private GenericDeleteRequest(UnityWebRequest unityWebRequest)
