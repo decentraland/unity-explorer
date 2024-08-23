@@ -1,11 +1,11 @@
 ﻿using DCL.AssetsProvision;
-using DCL.CommandLine;
 using DCL.DebugUtilities;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
+using Global.AppArgs;
 using SceneRunner.Debugging;
 using System.Collections.Generic;
 using SceneRunner.Scene;
@@ -18,7 +18,7 @@ namespace Global.Dynamic
     public readonly struct DynamicWorldDependencies
     {
         public readonly IDebugContainerBuilder DebugContainerBuilder;
-        public readonly ICommandLineArgs CommandLineArgs;
+        public readonly IAppArgs CommandLineArgs;
         public readonly IAssetsProvisioner AssetsProvisioner;
         public readonly StaticContainer StaticContainer;
         public readonly IPluginSettingsContainer SettingsContainer;
@@ -32,7 +32,7 @@ namespace Global.Dynamic
 
         public DynamicWorldDependencies(
             IDebugContainerBuilder debugContainerBuilder,
-            ICommandLineArgs commandLineArgs,
+            IAppArgs commandLineArgs,
             IAssetsProvisioner assetsProvisioner,
             StaticContainer staticContainer,
             IPluginSettingsContainer settingsContainer,
@@ -70,7 +70,7 @@ namespace Global.Dynamic
         public bool EnableAnalytics { get; init; }
         public HybridSceneParams HybridSceneParams { get; init; }
         public string LocalSceneDevelopmentRealm { get; init; }
-        public Dictionary<string, string> AppParameters { get; init; }
+        public IAppArgs AppParameters { get; init; }
     }
 
     public struct HybridSceneParams

@@ -2,7 +2,6 @@
 using DCL.AssetsProvision;
 using DCL.Browser;
 using DCL.Browser.DecentralandUrls;
-using DCL.CommandLine;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PerformanceAndDiagnostics.Analytics;
@@ -10,6 +9,7 @@ using DCL.PluginSystem;
 using DCL.Web3;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
+using Global.AppArgs;
 using Segment.Analytics;
 using System;
 using System.Collections.Generic;
@@ -34,9 +34,9 @@ namespace Global.Dynamic
         public IWeb3VerifiedAuthenticator? Web3Authenticator { get; private set; }
         public IAnalyticsController? Analytics { get; private set; }
         public IDebugSettings DebugSettings { get; private set; }
-        public ICommandLineArgs CommandLineArgs { get; private set; }
+        public IAppArgs CommandLineArgs { get; private set; }
         public IReportsHandlingSettings ReportHandlingSettings => reportHandlingSettings.Value;
-        public ApplicationParametersParser ApplicationParametersParser { get; private set; }
+        public IAppArgs ApplicationParametersParser { get; private set; }
 
         public override void Dispose()
         {
@@ -54,27 +54,25 @@ namespace Global.Dynamic
             DynamicSceneLoaderSettings sceneLoaderSettings,
             IPluginSettingsContainer settingsContainer,
             RealmLaunchSettings realmLaunchSettings,
-            ApplicationParametersParser applicationParametersParser,
+            IAppArgs applicationParametersParser,
             CancellationToken ct)
         {
             var decentralandUrlsSource = new DecentralandUrlsSource(sceneLoaderSettings.DecentralandEnvironment);
             var browser = new UnityAppWebBrowser(decentralandUrlsSource);
-            var appParametersParser = applicationParametersParser;
 
             var bootstrapContainer = new BootstrapContainer
             {
                 AssetsProvisioner = new AddressablesProvisioner(),
                 DecentralandUrlsSource = decentralandUrlsSource,
                 WebBrowser = browser,
-                ApplicationParametersParser = appParametersParser,
-                DebugSettings = debugSettings,
-                CommandLineArgs = new CommandLineArgs(),
+                ApplicationParametersParser = applicationParametersParser,
+                DebugSettings = debugSettings
             };
 
             await bootstrapContainer.InitializeContainerAsync<BootstrapContainer, BootstrapSettings>(settingsContainer, ct, async container =>
             {
                 container.reportHandlingSettings = await ProvideReportHandlingSettingsAsync(container.AssetsProvisioner!, container.settings, ct);
-                (container.Bootstrap, container.Analytics) = await CreateBootstrapperAsync(debugSettings, container.CommandLineArgs, appParametersParser, container, container.settings, realmLaunchSettings, ct);
+                (container.Bootstrap, container.Analytics) = await CreateBootstrapperAsync(debugSettings, applicationParametersParser, container, container.settings, realmLaunchSettings, ct);
                 (container.IdentityCache, container.VerifiedEthereumApi, container.Web3Authenticator) = CreateWeb3Dependencies(sceneLoaderSettings, browser, container, decentralandUrlsSource);
 
                 container.diagnosticsContainer = container.enableAnalytics
@@ -86,8 +84,7 @@ namespace Global.Dynamic
         }
 
         private static async UniTask<(IBootstrap, IAnalyticsController)> CreateBootstrapperAsync(IDebugSettings debugSettings,
-            ICommandLineArgs commandLineArgs,
-            ApplicationParametersParser applicationParametersParser,
+            IAppArgs appArgs,
             BootstrapContainer container,
             BootstrapSettings bootstrapSettings,
             RealmLaunchSettings realmLaunchSettings,
@@ -96,7 +93,7 @@ namespace Global.Dynamic
             AnalyticsConfiguration analyticsConfig = (await container.AssetsProvisioner.ProvideMainAssetAsync(bootstrapSettings.AnalyticsConfigRef, ct)).Value;
             container.enableAnalytics = analyticsConfig.Mode != AnalyticsMode.DISABLED;
 
-            var coreBootstrap = new Bootstrap(debugSettings, commandLineArgs, container.DecentralandUrlsSource, applicationParametersParser, realmLaunchSettings)
+            var coreBootstrap = new Bootstrap(debugSettings, appArgs, container.DecentralandUrlsSource, realmLaunchSettings)
             {
                 EnableAnalytics = container.enableAnalytics,
             };
