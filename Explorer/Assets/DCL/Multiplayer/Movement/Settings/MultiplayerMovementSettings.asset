@@ -17,8 +17,8 @@ MonoBehaviour:
   EncodingSettings: {fileID: 11400000, guid: 90d495bdfa8cf4d4ba2c7477da7e25f0, type: 2}
   <SendRules>k__BackingField: []
   <SelfSending>k__BackingField: 1
-  <Latency>k__BackingField: 0
-  <LatencyJitter>k__BackingField: 0
+  <Latency>k__BackingField: 0.2
+  <LatencyJitter>k__BackingField: 3
   <MinPositionDelta>k__BackingField: 0.001
   <MinTeleportDistance>k__BackingField: 100
   <InterpolationSettings>k__BackingField: {fileID: 11400000, guid: bc6d8c8af4871f14082de8f9d29040c6, type: 2}
