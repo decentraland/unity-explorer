@@ -1,6 +1,7 @@
 ﻿using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.WebRequests.GenericDelete;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -15,6 +16,7 @@ namespace DCL.WebRequests
         internal static readonly InitializeRequest<GenericGetArguments, GenericGetRequest> GET_GENERIC = GenericGetRequest.Initialize;
         internal static readonly InitializeRequest<GenericPostArguments, GenericPostRequest> POST_GENERIC = GenericPostRequest.Initialize;
         internal static readonly InitializeRequest<GenericPutArguments, GenericPutRequest> PUT_GENERIC = GenericPutRequest.Initialize;
+        internal static readonly InitializeRequest<GenericDeleteArguments, GenericDeleteRequest> DELETE_GENERIC = GenericDeleteRequest.Initialize;
         internal static readonly InitializeRequest<GenericPatchArguments, GenericPatchRequest> PATCH_GENERIC = GenericPatchRequest.Initialize;
         internal static readonly InitializeRequest<GenericHeadArguments, GenericHeadRequest> HEAD_GENERIC = GenericHeadRequest.Initialize;
 
@@ -105,6 +107,18 @@ namespace DCL.WebRequests
             WebRequestHeadersInfo? headersInfo = null,
             WebRequestSignInfo? signInfo = null) where TOp: struct, IWebRequestOp<GenericPutRequest, TResult> =>
             controller.SendAsync<GenericPutRequest, GenericPutArguments, TOp, TResult>(PUT_GENERIC, commonArguments, arguments, webRequestOp, ct, reportCategory, headersInfo, signInfo);
+
+        public static UniTask<TResult> DeleteAsync<TOp, TResult>(
+            this IWebRequestController controller,
+            CommonArguments commonArguments,
+            TOp webRequestOp,
+            GenericDeleteArguments arguments,
+            CancellationToken ct,
+            string reportCategory = ReportCategory.GENERIC_WEB_REQUEST,
+            WebRequestHeadersInfo? headersInfo = null,
+            WebRequestSignInfo? signInfo = null
+        ) where TOp: struct, IWebRequestOp<GenericDeleteRequest, TResult> =>
+            controller.SendAsync<GenericDeleteRequest, GenericDeleteArguments, TOp, TResult>(DELETE_GENERIC, commonArguments, arguments, webRequestOp, ct, reportCategory, headersInfo, signInfo);
 
         public static UniTask<TResult> PatchAsync<TOp, TResult>(
             this IWebRequestController controller,
