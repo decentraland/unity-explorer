@@ -6,8 +6,6 @@ namespace ECS.Unity.SceneBoundsChecker
 {
     public class GizmosDrawSceneBounds : SceneGizmosProviderBase
     {
-        private const float HEIGHT = 10f;
-
         private static readonly Color[] RANDOM_COLORS =
         {
             Color.red,
@@ -28,10 +26,11 @@ namespace ECS.Unity.SceneBoundsChecker
             // so it's possible to distinguish between different scenes
             pickedColor = RANDOM_COLORS[Mathf.Abs(SceneData.SceneShortInfo.BaseParcel.GetHashCode()) % RANDOM_COLORS.Length];
 
+            float sceneHeight = SceneData.Geometry.Height;
             ParcelMathHelper.SceneCircumscribedPlanes planes = SceneData.Geometry.CircumscribedPlanes;
 
-            center = new Vector3(planes.MinX + ((planes.MaxX - planes.MinX) / 2), HEIGHT / 2, planes.MinZ + ((planes.MaxZ - planes.MinZ) / 2));
-            size = new Vector3(planes.MaxX - planes.MinX, HEIGHT, planes.MaxZ - planes.MinZ);
+            center = new Vector3(planes.MinX + ((planes.MaxX - planes.MinX) / 2), sceneHeight / 2, planes.MinZ + ((planes.MaxZ - planes.MinZ) / 2));
+            size = new Vector3(planes.MaxX - planes.MinX, sceneHeight, planes.MaxZ - planes.MinZ);
         }
 
         public override void OnDrawGizmosSelected()

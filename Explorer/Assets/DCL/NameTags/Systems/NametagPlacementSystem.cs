@@ -3,12 +3,11 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.AvatarShape.Components;
-using DCL.AvatarRendering.AvatarShape.Systems;
 using DCL.Character.Components;
 using DCL.CharacterCamera;
+using DCL.CharacterMotion.Systems;
 using DCL.Chat;
 using DCL.Diagnostics;
-using DCL.Multiplayer.Profiles.Systems;
 using DCL.Profiles;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
@@ -20,8 +19,7 @@ using UnityEngine.Pool;
 namespace DCL.Nametags
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
-    [UpdateAfter(typeof(MultiplayerProfilesSystem))]
-    [UpdateAfter(typeof(AvatarInstantiatorSystem))]
+    [UpdateAfter(typeof(InterpolateCharacterSystem))]
     [LogCategory(ReportCategory.AVATAR)]
     public partial class NametagPlacementSystem : BaseUnityLoopSystem
     {
