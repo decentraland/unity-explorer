@@ -3,6 +3,7 @@ using DCL.Passport.Fields.Badges;
 using DCL.Passport.Utils;
 using DCL.UI;
 using DCL.WebRequests;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -69,6 +70,7 @@ namespace DCL.Passport.Modules.Badges
         public TMP_Text NextTierProgressValueText { get; private set; }
 
         private ImageController? imageController;
+        private List<TierData> currentTiers = new ();
 
         public void ConfigureImageController(IWebRequestController webRequestController)
         {
@@ -81,8 +83,9 @@ namespace DCL.Passport.Modules.Badges
         public void StopLoadingImage() =>
             imageController?.StopLoading();
 
-        public void Setup(BadgeInfo badgeInfo, bool isOwnProfile)
+        public void Setup(BadgeInfo badgeInfo, List<TierData> tiers, bool isOwnProfile)
         {
+            currentTiers = tiers;
             TierSection.SetActive(badgeInfo.isTier);
             LockedBadge2DImage.gameObject.SetActive(badgeInfo.isLocked);
             UnlockedBadge3DImage.gameObject.SetActive(!badgeInfo.isLocked);
@@ -99,7 +102,14 @@ namespace DCL.Passport.Modules.Badges
             }
             else
             {
-                var nextTierToComplete = badgeInfo.tiers[badgeInfo.nextTierToCompleteIndex];
+                var nextTierToCompleteIndex = 0;
+                for (var i = 0; i < tiers.Count; i++)
+                {
+                    if (badgeInfo.progress.nextStepsTarget == tiers[i].criteria.steps)
+                        nextTierToCompleteIndex = i;
+                }
+
+                var nextTierToComplete = tiers[nextTierToCompleteIndex];
                 TopTierMark.SetActive(isOwnProfile && !string.IsNullOrEmpty(badgeInfo.completedAt));
                 NextTierContainer.SetActive(isOwnProfile && string.IsNullOrEmpty(badgeInfo.completedAt) && badgeInfo.progress.stepsDone > 0);
                 NextTierValueText.text = nextTierToComplete.tierName;
@@ -114,7 +124,7 @@ namespace DCL.Passport.Modules.Badges
 
         public void SelectBadgeTier(int tierIndex, BadgeInfo badgeInfo)
         {
-            var tier = badgeInfo.tiers[tierIndex];
+            var tier = currentTiers[tierIndex];
             BadgeNameText.text = $"{badgeInfo.name} {tier.tierName}";
             BadgeDateText.text = tier.completedAt != null ? $"Unlocked: {PassportUtils.FormatTimestampDate(tier.completedAt)}" : "Locked";
             BadgeDescriptionText.text = tier.description;

@@ -43,6 +43,7 @@ namespace DCL.Passport.Modules.Badges
         private string? currentFilter;
         private List<string> badgeCategories;
         private CancellationTokenSource fetchBadgesCts;
+        private CancellationTokenSource fetchTiersCts;
         private CancellationTokenSource fetchBadgeCategoriesCts;
         private CancellationTokenSource checkProfileCts;
 
@@ -106,7 +107,7 @@ namespace DCL.Passport.Modules.Badges
                 },
                 actionOnRelease: emptyItemView => emptyItemView.gameObject.SetActive(false));
 
-            badgeInfoController = new BadgeInfo_PassportModuleSubController(badgeInfoModuleView, webRequestController);
+            badgeInfoController = new BadgeInfo_PassportModuleSubController(badgeInfoModuleView, webRequestController, badgesAPIClient);
         }
 
         public void Setup(Profile profile)
@@ -259,7 +260,7 @@ namespace DCL.Passport.Modules.Badges
             try
             {
                 view.LoadingSpinner.SetActive(true);
-                var badges = await badgesAPIClient.FetchBadgesAsync(walletId, isOwnProfile, 0, ct);
+                var badges = await badgesAPIClient.FetchBadgesAsync(walletId, isOwnProfile, ct);
 
                 foreach (var unlockedBadge in badges.achieved)
                     CreateBadgeDetailCard(unlockedBadge);
@@ -312,6 +313,7 @@ namespace DCL.Passport.Modules.Badges
         private void SelectFirstBadge()
         {
             var firstElementSelected = false;
+            BadgeDetailCard_PassportFieldView cardToSelect = null;
             foreach (string? category in badgeCategories)
             {
                 if (currentFilter != ALL_FILTER && !string.Equals(category, currentFilter, StringComparison.CurrentCultureIgnoreCase))
@@ -325,13 +327,15 @@ namespace DCL.Passport.Modules.Badges
 
                 foreach (var badgeDetailCard in badgeDetailCards)
                 {
-                    badgeDetailCard.SetAsSelected(!firstElementSelected);
+                    badgeDetailCard.SetAsSelected(false);
                     if (!firstElementSelected)
-                        badgeInfoController.Setup(badgeDetailCard.Model, isOwnProfile);
+                        cardToSelect = badgeDetailCard;
 
                     firstElementSelected = true;
                 }
             }
+
+            SelectBadgeCard(cardToSelect);
         }
 
         private void CreateBadgeDetailCard(BadgeInfo badge)
@@ -367,7 +371,7 @@ namespace DCL.Passport.Modules.Badges
                     instantiateBadgeByCategory.SetAsSelected(false);
 
             badgeDetailCard.SetAsSelected(true);
-            badgeInfoController.Setup(badgeDetailCard.Model, isOwnProfile);
+            badgeInfoController.Setup(badgeDetailCard.Model, currentProfile, isOwnProfile);
         }
 
         private void CreateEmptyDetailCards()

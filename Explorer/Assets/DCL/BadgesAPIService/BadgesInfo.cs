@@ -11,21 +11,8 @@ namespace DCL.BadgesAPIService
     }
 
     [Serializable]
-    public class BadgeInfo
+    public class BadgeInfo : BadgeData
     {
-        public string id;
-        public string name;
-        public string description;
-        public string category;
-        public bool isTier;
-        public string completedAt;
-        public BadgeProgressData progress;
-        public string image;
-
-        // Extra fields
         public bool isLocked;
-        public int? lastCompletedTierIndex;
-        public int nextTierToCompleteIndex;
-        public TierData[] tiers;
     }
 }

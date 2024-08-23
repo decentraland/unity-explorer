@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.BadgesAPIService;
 using DCL.Passport.Fields.Badges;
+using DCL.Profiles;
 using DCL.WebRequests;
 using System.Collections.Generic;
 using System.Threading;
@@ -15,18 +16,22 @@ namespace DCL.Passport.Modules.Badges
         private const int BADGE_TIER_BUTTON_POOL_DEFAULT_CAPACITY = 6;
 
         private readonly BadgeInfo_PassportModuleView badgeInfoModuleView;
+        private readonly BadgesAPIClient badgesAPIClient;
         private readonly IObjectPool<BadgeTierButton_PassportFieldView> badgeTierButtonsPool;
         private readonly List<BadgeTierButton_PassportFieldView> instantiatedBadgeTierButtons = new ();
 
+        private Profile currentProfile;
         private bool isOwnProfile;
         private BadgeInfo currentBadgeInfo;
         private CancellationTokenSource loadBadgeTierButtonsCts;
 
         public BadgeInfo_PassportModuleSubController(
             BadgeInfo_PassportModuleView badgeInfoModuleView,
-            IWebRequestController webRequestController)
+            IWebRequestController webRequestController,
+            BadgesAPIClient badgesAPIClient)
         {
             this.badgeInfoModuleView = badgeInfoModuleView;
+            this.badgesAPIClient = badgesAPIClient;
 
             badgeTierButtonsPool = new ObjectPool<BadgeTierButton_PassportFieldView>(
                 InstantiateBadgeTierButtonPrefab,
@@ -43,15 +48,19 @@ namespace DCL.Passport.Modules.Badges
             badgeInfoModuleView.ConfigureImageController(webRequestController);
         }
 
-        public void Setup(BadgeInfo badgeInfo, bool isOwnProfileBadge)
+        public void Setup(BadgeInfo badgeInfo, Profile profile, bool isOwnProfileBadge)
         {
             this.isOwnProfile = isOwnProfileBadge;
+            this.currentProfile = profile;
             currentBadgeInfo = badgeInfo;
-            badgeInfoModuleView.Setup(badgeInfo, isOwnProfile);
-            SetAsLoading(badgeInfo.isTier);
 
             if (badgeInfo.isTier)
                 LoadTierButtons();
+            else
+            {
+                badgeInfoModuleView.Setup(badgeInfo, new List<TierData>(), isOwnProfile);
+                SetAsLoading(false);
+            }
         }
 
         public void SetAsLoading(bool isLoading) =>
@@ -59,8 +68,13 @@ namespace DCL.Passport.Modules.Badges
 
         public void Clear()
         {
-            loadBadgeTierButtonsCts.SafeCancelAndDispose();
             badgeInfoModuleView.StopLoadingImage();
+            ClearTiers();
+        }
+
+        private void ClearTiers()
+        {
+            loadBadgeTierButtonsCts.SafeCancelAndDispose();
 
             foreach (BadgeTierButton_PassportFieldView badgeTierButtons in instantiatedBadgeTierButtons)
             {
@@ -84,15 +98,14 @@ namespace DCL.Passport.Modules.Badges
             SetAsLoading(true);
 
             loadBadgeTierButtonsCts = loadBadgeTierButtonsCts.SafeRestart();
-            LoadTierButtonsAsync(currentBadgeInfo.id, loadBadgeTierButtonsCts.Token).Forget();
+            LoadTierButtonsAsync(currentBadgeInfo, loadBadgeTierButtonsCts.Token).Forget();
         }
 
-        private async UniTaskVoid LoadTierButtonsAsync(string badgeId, CancellationToken ct)
+        private async UniTaskVoid LoadTierButtonsAsync(BadgeInfo badgeInfo, CancellationToken ct)
         {
-            // TODO (Santi): This is a placeholder, we should replace this with the real API call
-            await UniTask.Delay(1000, cancellationToken: ct);
+            List<TierData> tiers = await badgesAPIClient.FetchTiersAsync(currentProfile.UserId, badgeInfo.id, ct);
 
-            foreach (TierData tier in currentBadgeInfo.tiers)
+            foreach (TierData tier in tiers)
             {
                 if (!isOwnProfile && tier.completedAt == null)
                     continue;
@@ -100,7 +113,8 @@ namespace DCL.Passport.Modules.Badges
                 CreateBadgeTierButton(tier);
             }
 
-            SelectLastCompletedTierButton();
+            badgeInfoModuleView.Setup(badgeInfo, tiers, isOwnProfile);
+            SelectLastCompletedTierButton(badgeInfo, tiers);
             SetAsLoading(false);
         }
 
@@ -112,12 +126,19 @@ namespace DCL.Passport.Modules.Badges
             instantiatedBadgeTierButtons.Add(badgeTierButton);
         }
 
-        private void SelectLastCompletedTierButton()
+        private void SelectLastCompletedTierButton(BadgeInfo badge, List<TierData> tiers)
         {
+            int? lastCompletedTierIndex = null;
+            for (var i = 0; i < tiers.Count; i++)
+            {
+                if (badge.progress.stepsDone >= tiers[i].criteria.steps)
+                    lastCompletedTierIndex = i;
+            }
+
             var selectedIndex = 0;
             for (var i = 0; i < instantiatedBadgeTierButtons.Count; i++)
             {
-                if (i != currentBadgeInfo.lastCompletedTierIndex)
+                if (i != lastCompletedTierIndex)
                     continue;
 
                 selectedIndex = i;

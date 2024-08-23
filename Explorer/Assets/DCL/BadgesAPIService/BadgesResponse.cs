@@ -26,7 +26,6 @@ namespace DCL.BadgesAPIService
         public bool isTier;
         public string completedAt;
         public BadgeProgressData progress;
-        public TierData[] tiers;
         public string image;
     }
 
@@ -39,22 +38,5 @@ namespace DCL.BadgesAPIService
         public string lastCompletedTierAt;
         public string lastCompletedTierName;
         public string lastCompletedTierImage;
-    }
-
-    [Serializable]
-    public class TierData
-    {
-        public string tierId;
-        public string tierName;
-        public string description;
-        public string image;
-        public BadgeTierCriteria criteria;
-        public string completedAt;
-    }
-
-    [Serializable]
-    public class BadgeTierCriteria
-    {
-        public int steps;
     }
 }

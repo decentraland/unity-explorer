@@ -4,7 +4,6 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.WebRequests;
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Threading;
 
 namespace DCL.BadgesAPIService
@@ -42,19 +41,27 @@ namespace DCL.BadgesAPIService
             return GetLatestAchievedBadgesMockedResponse().data.latestAchievedBadges;
         }
 
-        public async UniTask<BadgesInfo> FetchBadgesAsync(string walletId, bool includeLocked, int limitUnlocked, CancellationToken ct)
+        public async UniTask<BadgesInfo> FetchBadgesAsync(string walletId, bool includeLocked, CancellationToken ct)
         {
-            /*StringBuilder url = new StringBuilder($"{badgesBaseUrl}/{walletId}?includeLocked={(includeLocked ? "true" : "false")}");
-            if (limitUnlocked > 0)
-                url.Append($"&limitUnlocked={limitUnlocked}");
+            var url = $"{badgesBaseUrl}/users/{walletId}/badges?includeLocked={includeLocked}";
 
-            BadgesResponse badgesResponse = await webRequestController.GetAsync(url.ToString(), ct, reportCategory: ReportCategory.BADGES_WEB_REQUEST)
+            BadgesResponse badgesResponse = await webRequestController.GetAsync(url, ct, reportCategory: ReportCategory.BADGES_WEB_REQUEST)
                                                                       .CreateFromJson<BadgesResponse>(WRJsonParser.Newtonsoft);
 
-            return ResponseToBadgesInfo(badgesResponse);*/
-
-            await UniTask.Delay(1000, cancellationToken: ct);
+            //return ResponseToBadgesInfo(badgesResponse);
             return ResponseToBadgesInfo(GetBadgesMockedResponse());
+        }
+
+        public async UniTask<List<TierData>> FetchTiersAsync(string walletId, string badgeId, CancellationToken ct)
+        {
+            /*var url = $"{badgesBaseUrl}/users/{walletId}/badges/{badgeId}/tiers";
+
+            TiersResponse tiersResponse = await webRequestController.GetAsync(url, ct, reportCategory: ReportCategory.BADGES_WEB_REQUEST)
+                                                                    .CreateFromJson<TiersResponse>(WRJsonParser.Unity);
+
+            return tiersResponse.data.tiers;*/
+            await UniTask.Delay(1000, cancellationToken: ct);
+            return GetTiersMockedResponse(badgeId).data.tiers;
         }
 
         private BadgesInfo ResponseToBadgesInfo(BadgesResponse badgesResponse)
@@ -74,20 +81,8 @@ namespace DCL.BadgesAPIService
             return badgesInfo;
         }
 
-        private static BadgeInfo ResponseToBadgeInfo(BadgeData badge, bool isLocked)
-        {
-            int? lastCompletedTierIndex = null;
-            var nextTierToCompleteIndex = 0;
-            for (var i = 0; i < badge.tiers.Length; i++)
-            {
-                if (badge.progress.stepsDone >= badge.tiers[i].criteria.steps)
-                    lastCompletedTierIndex = i;
-
-                if (badge.progress.nextStepsTarget == badge.tiers[i].criteria.steps)
-                    nextTierToCompleteIndex = i;
-            }
-
-            return new BadgeInfo
+        private static BadgeInfo ResponseToBadgeInfo(BadgeData badge, bool isLocked) =>
+            new()
             {
                 id = badge.id,
                 name = badge.name,
@@ -106,18 +101,7 @@ namespace DCL.BadgesAPIService
                 },
                 image = badge.image,
                 isLocked = isLocked,
-                lastCompletedTierIndex = lastCompletedTierIndex,
-                nextTierToCompleteIndex = nextTierToCompleteIndex,
-                tiers = Array.ConvertAll(badge.tiers, tier => new TierData
-                {
-                    tierId = tier.tierId,
-                    tierName = tier.tierName,
-                    description = tier.description,
-                    completedAt = tier.completedAt,
-                    image = tier.image,
-                }),
             };
-        }
 
         // TODO (Santi): Remove these functions when the API is ready
         private static LatestAchievedBadgesResponse GetLatestAchievedBadgesMockedResponse()
@@ -146,8 +130,8 @@ namespace DCL.BadgesAPIService
                             name = "Traveler Bronze",
                             image = "https://picsum.photos/seed/8/300/300",
                         },
-                    }
-                }
+                    },
+                },
             };
 
             return mockedResponse;
@@ -179,7 +163,6 @@ namespace DCL.BadgesAPIService
                                 lastCompletedTierName = null,
                                 lastCompletedTierImage = null,
                             },
-                            tiers = Array.Empty<TierData>(),
                         },
                         new()
                         {
@@ -199,81 +182,6 @@ namespace DCL.BadgesAPIService
                                 lastCompletedTierName = "Diamond",
                                 lastCompletedTierImage = "https://picsum.photos/seed/6/300/300",
                             },
-                            tiers = new[]
-                            {
-                                new TierData
-                                {
-                                    tierId = "emote-creator-starter",
-                                    tierName = "Starter",
-                                    description = "1 emote published",
-                                    completedAt = "1722005503466",
-                                    criteria = new BadgeTierCriteria
-                                    {
-                                        steps = 1,
-                                    },
-                                    image = "https://picsum.photos/seed/1/300/300",
-                                },
-                                new TierData
-                                {
-                                    tierId = "emote-creator-bronze",
-                                    tierName = "Bronze",
-                                    description = "10 emotes published",
-                                    completedAt = "1722005503466",
-                                    criteria = new BadgeTierCriteria
-                                    {
-                                        steps = 10,
-                                    },
-                                    image = "https://picsum.photos/seed/2/300/300",
-                                },
-                                new TierData
-                                {
-                                    tierId = "emote-creator-silver",
-                                    tierName = "Silver",
-                                    description = "20 emotes published",
-                                    completedAt = "1722005503466",
-                                    criteria = new BadgeTierCriteria
-                                    {
-                                        steps = 20,
-                                    },
-                                    image = "https://picsum.photos/seed/3/300/300",
-                                },
-                                new TierData
-                                {
-                                    tierId = "emote-creator-gold",
-                                    tierName = "Gold",
-                                    description = "30 emotes published",
-                                    completedAt = "1722005503466",
-                                    criteria = new BadgeTierCriteria
-                                    {
-                                        steps = 30,
-                                    },
-                                    image = "https://picsum.photos/seed/4/300/300",
-                                },
-                                new TierData
-                                {
-                                    tierId = "emote-creator-platinum",
-                                    tierName = "Platinum",
-                                    description = "40 emotes published",
-                                    completedAt = "1722005503466",
-                                    criteria = new BadgeTierCriteria
-                                    {
-                                        steps = 40,
-                                    },
-                                    image = "https://picsum.photos/seed/5/300/300",
-                                },
-                                new TierData
-                                {
-                                    tierId = "emote-creator-diamond",
-                                    tierName = "Diamond",
-                                    description = "50 emotes published",
-                                    completedAt = "1722005503466",
-                                    criteria = new BadgeTierCriteria
-                                    {
-                                        steps = 50,
-                                    },
-                                    image = "https://picsum.photos/seed/6/300/300",
-                                },
-                            },
                         },
                         new()
                         {
@@ -292,81 +200,6 @@ namespace DCL.BadgesAPIService
                                 lastCompletedTierAt = "1722005503466",
                                 lastCompletedTierName = "Bronze",
                                 lastCompletedTierImage = "https://picsum.photos/seed/8/300/300",
-                            },
-                            tiers = new[]
-                            {
-                                new TierData
-                                {
-                                    tierId = "traveler-starter",
-                                    tierName = "Starter",
-                                    description = "Visit 10 scenes in Genesis City",
-                                    completedAt = "1722005503466",
-                                    criteria = new BadgeTierCriteria
-                                    {
-                                        steps = 10,
-                                    },
-                                    image = "https://picsum.photos/seed/7/300/300",
-                                },
-                                new TierData
-                                {
-                                    tierId = "traveler-bronze",
-                                    tierName = "Bronze",
-                                    description = "Visit 20 scenes in Genesis City",
-                                    completedAt = "1722005503466",
-                                    criteria = new BadgeTierCriteria
-                                    {
-                                        steps = 20,
-                                    },
-                                    image = "https://picsum.photos/seed/8/300/300",
-                                },
-                                new TierData
-                                {
-                                    tierId = "traveler-silver",
-                                    tierName = "Silver",
-                                    description = "Visit 30 scenes in Genesis City",
-                                    completedAt = null,
-                                    criteria = new BadgeTierCriteria
-                                    {
-                                        steps = 30,
-                                    },
-                                    image = "https://picsum.photos/seed/9/300/300",
-                                },
-                                new TierData
-                                {
-                                    tierId = "traveler-gold",
-                                    tierName = "Gold",
-                                    description = "Visit 40 scenes in Genesis City",
-                                    completedAt = null,
-                                    criteria = new BadgeTierCriteria
-                                    {
-                                        steps = 40,
-                                    },
-                                    image = "https://picsum.photos/seed/10/300/300",
-                                },
-                                new TierData
-                                {
-                                    tierId = "traveler-platinum",
-                                    tierName = "Platinum",
-                                    description = "Visit 50 scenes in Genesis City",
-                                    completedAt = null,
-                                    criteria = new BadgeTierCriteria
-                                    {
-                                        steps = 50,
-                                    },
-                                    image = "https://picsum.photos/seed/11/300/300",
-                                },
-                                new TierData
-                                {
-                                    tierId = "traveler-diamond",
-                                    tierName = "Diamond",
-                                    description = "Visit 60 scenes in Genesis City",
-                                    completedAt = null,
-                                    criteria = new BadgeTierCriteria
-                                    {
-                                        steps = 60,
-                                    },
-                                    image = "https://picsum.photos/seed/12/300/300",
-                                },
                             },
                         },
                     },
@@ -390,7 +223,6 @@ namespace DCL.BadgesAPIService
                                 lastCompletedTierName = null,
                                 lastCompletedTierImage = null,
                             },
-                            tiers = Array.Empty<TierData>(),
                         },
                         new()
                         {
@@ -409,81 +241,6 @@ namespace DCL.BadgesAPIService
                                 lastCompletedTierAt = null,
                                 lastCompletedTierName = null,
                                 lastCompletedTierImage = null,
-                            },
-                            tiers = new[]
-                            {
-                                new TierData
-                                {
-                                    tierId = "world-jumper-starter",
-                                    tierName = "Starter",
-                                    description = "Jump into 1 world",
-                                    completedAt = null,
-                                    criteria = new BadgeTierCriteria
-                                    {
-                                        steps = 1,
-                                    },
-                                    image = "",
-                                },
-                                new TierData
-                                {
-                                    tierId = "world-jumper-bronze",
-                                    tierName = "Bronze",
-                                    description = "Jump into 2 worlds",
-                                    completedAt = null,
-                                    criteria = new BadgeTierCriteria
-                                    {
-                                        steps = 2,
-                                    },
-                                    image = "",
-                                },
-                                new TierData
-                                {
-                                    tierId = "world-jumper-silver",
-                                    tierName = "Silver",
-                                    description = "Jump into 3 worlds",
-                                    completedAt = null,
-                                    criteria = new BadgeTierCriteria
-                                    {
-                                        steps = 3,
-                                    },
-                                    image = "",
-                                },
-                                new TierData
-                                {
-                                    tierId = "world-jumper-gold",
-                                    tierName = "Gold",
-                                    description = "Jump into 4 worlds",
-                                    completedAt = null,
-                                    criteria = new BadgeTierCriteria
-                                    {
-                                        steps = 4,
-                                    },
-                                    image = "",
-                                },
-                                new TierData
-                                {
-                                    tierId = "world-jumper-platinum",
-                                    tierName = "Platinum",
-                                    description = "Jump into 5 worlds",
-                                    completedAt = null,
-                                    criteria = new BadgeTierCriteria
-                                    {
-                                        steps = 5,
-                                    },
-                                    image = "",
-                                },
-                                new TierData
-                                {
-                                    tierId = "world-jumper-diamond",
-                                    tierName = "Diamond",
-                                    description = "Jump into 6 worlds",
-                                    completedAt = null,
-                                    criteria = new BadgeTierCriteria
-                                    {
-                                        steps = 6,
-                                    },
-                                    image = "",
-                                },
                             },
                         },
                         new()
@@ -504,13 +261,261 @@ namespace DCL.BadgesAPIService
                                 lastCompletedTierName = null,
                                 lastCompletedTierImage = null,
                             },
-                            tiers = Array.Empty<TierData>(),
                         },
                     },
-                }
+                },
             };
 
             return mockedResponse;
+        }
+
+        private static TiersResponse GetTiersMockedResponse(string badgeId)
+        {
+            List<TierData> emoteCreatorTiers = new List<TierData>
+            {
+                new()
+                {
+                    tierId = "emote-creator-starter",
+                    tierName = "Starter",
+                    description = "1 emote published",
+                    completedAt = "1722005503466",
+                    criteria = new BadgeTierCriteria
+                    {
+                        steps = 1,
+                    },
+                    image = "https://picsum.photos/seed/1/300/300",
+                },
+                new TierData
+                {
+                    tierId = "emote-creator-bronze",
+                    tierName = "Bronze",
+                    description = "10 emotes published",
+                    completedAt = "1722005503466",
+                    criteria = new BadgeTierCriteria
+                    {
+                        steps = 10,
+                    },
+                    image = "https://picsum.photos/seed/2/300/300",
+                },
+                new TierData
+                {
+                    tierId = "emote-creator-silver",
+                    tierName = "Silver",
+                    description = "20 emotes published",
+                    completedAt = "1722005503466",
+                    criteria = new BadgeTierCriteria
+                    {
+                        steps = 20,
+                    },
+                    image = "https://picsum.photos/seed/3/300/300",
+                },
+                new TierData
+                {
+                    tierId = "emote-creator-gold",
+                    tierName = "Gold",
+                    description = "30 emotes published",
+                    completedAt = "1722005503466",
+                    criteria = new BadgeTierCriteria
+                    {
+                        steps = 30,
+                    },
+                    image = "https://picsum.photos/seed/4/300/300",
+                },
+                new TierData
+                {
+                    tierId = "emote-creator-platinum",
+                    tierName = "Platinum",
+                    description = "40 emotes published",
+                    completedAt = "1722005503466",
+                    criteria = new BadgeTierCriteria
+                    {
+                        steps = 40,
+                    },
+                    image = "https://picsum.photos/seed/5/300/300",
+                },
+                new TierData
+                {
+                    tierId = "emote-creator-diamond",
+                    tierName = "Diamond",
+                    description = "50 emotes published",
+                    completedAt = "1722005503466",
+                    criteria = new BadgeTierCriteria
+                    {
+                        steps = 50,
+                    },
+                    image = "https://picsum.photos/seed/6/300/300",
+                },
+            };
+
+            List<TierData> travelerTiers = new List<TierData>
+            {
+                new()
+                {
+                    tierId = "traveler-starter",
+                    tierName = "Starter",
+                    description = "Visit 10 scenes in Genesis City",
+                    completedAt = "1722005503466",
+                    criteria = new BadgeTierCriteria
+                    {
+                        steps = 10,
+                    },
+                    image = "https://picsum.photos/seed/7/300/300",
+                },
+                new TierData
+                {
+                    tierId = "traveler-bronze",
+                    tierName = "Bronze",
+                    description = "Visit 20 scenes in Genesis City",
+                    completedAt = "1722005503466",
+                    criteria = new BadgeTierCriteria
+                    {
+                        steps = 20,
+                    },
+                    image = "https://picsum.photos/seed/8/300/300",
+                },
+                new TierData
+                {
+                    tierId = "traveler-silver",
+                    tierName = "Silver",
+                    description = "Visit 30 scenes in Genesis City",
+                    completedAt = null,
+                    criteria = new BadgeTierCriteria
+                    {
+                        steps = 30,
+                    },
+                    image = "https://picsum.photos/seed/9/300/300",
+                },
+                new TierData
+                {
+                    tierId = "traveler-gold",
+                    tierName = "Gold",
+                    description = "Visit 40 scenes in Genesis City",
+                    completedAt = null,
+                    criteria = new BadgeTierCriteria
+                    {
+                        steps = 40,
+                    },
+                    image = "https://picsum.photos/seed/10/300/300",
+                },
+                new TierData
+                {
+                    tierId = "traveler-platinum",
+                    tierName = "Platinum",
+                    description = "Visit 50 scenes in Genesis City",
+                    completedAt = null,
+                    criteria = new BadgeTierCriteria
+                    {
+                        steps = 50,
+                    },
+                    image = "https://picsum.photos/seed/11/300/300",
+                },
+                new TierData
+                {
+                    tierId = "traveler-diamond",
+                    tierName = "Diamond",
+                    description = "Visit 60 scenes in Genesis City",
+                    completedAt = null,
+                    criteria = new BadgeTierCriteria
+                    {
+                        steps = 60,
+                    },
+                    image = "https://picsum.photos/seed/12/300/300",
+                },
+            };
+
+            List<TierData> worldJumperTiers = new List<TierData>
+            {
+                new()
+                {
+                    tierId = "world-jumper-starter",
+                    tierName = "Starter",
+                    description = "Jump into 1 world",
+                    completedAt = null,
+                    criteria = new BadgeTierCriteria
+                    {
+                        steps = 1,
+                    },
+                    image = "",
+                },
+                new TierData
+                {
+                    tierId = "world-jumper-bronze",
+                    tierName = "Bronze",
+                    description = "Jump into 2 worlds",
+                    completedAt = null,
+                    criteria = new BadgeTierCriteria
+                    {
+                        steps = 2,
+                    },
+                    image = "",
+                },
+                new TierData
+                {
+                    tierId = "world-jumper-silver",
+                    tierName = "Silver",
+                    description = "Jump into 3 worlds",
+                    completedAt = null,
+                    criteria = new BadgeTierCriteria
+                    {
+                        steps = 3,
+                    },
+                    image = "",
+                },
+                new TierData
+                {
+                    tierId = "world-jumper-gold",
+                    tierName = "Gold",
+                    description = "Jump into 4 worlds",
+                    completedAt = null,
+                    criteria = new BadgeTierCriteria
+                    {
+                        steps = 4,
+                    },
+                    image = "",
+                },
+                new TierData
+                {
+                    tierId = "world-jumper-platinum",
+                    tierName = "Platinum",
+                    description = "Jump into 5 worlds",
+                    completedAt = null,
+                    criteria = new BadgeTierCriteria
+                    {
+                        steps = 5,
+                    },
+                    image = "",
+                },
+                new TierData
+                {
+                    tierId = "world-jumper-diamond",
+                    tierName = "Diamond",
+                    description = "Jump into 6 worlds",
+                    completedAt = null,
+                    criteria = new BadgeTierCriteria
+                    {
+                        steps = 6,
+                    },
+                    image = "",
+                },
+            };
+
+            List<TierData> tiersResult = new List<TierData>();
+            switch (badgeId)
+            {
+                case "emote-creator":
+                    tiersResult = emoteCreatorTiers;
+                    break;
+                case "traveler":
+                    tiersResult = travelerTiers;
+                    break;
+                case "world-jumper":
+                    tiersResult = worldJumperTiers;
+                    break;
+            }
+
+            TiersResponse tiersResponse = new TiersResponse { data = new TiersData { tiers = tiersResult } };
+
+            return tiersResponse;
         }
     }
 }
