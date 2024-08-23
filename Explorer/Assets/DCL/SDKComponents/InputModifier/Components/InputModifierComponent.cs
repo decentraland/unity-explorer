@@ -1,6 +1,4 @@
-using System;
-
-namespace DCL.SDKComponents.PlayerInputMovement.Components
+namespace DCL.SDKComponents.InputModifier.Components
 {
     /// <summary>
     /// Allows systems to modify different aspects of the player input.

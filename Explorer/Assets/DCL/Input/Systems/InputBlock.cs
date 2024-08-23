@@ -1,5 +1,5 @@
 using Arch.Core;
-using DCL.CharacterMotion.Components;
+using DCL.SDKComponents.InputModifier.Components;
 using DCL.Utilities;
 
 namespace DCL.Input.UnityInputSystem.Blocks

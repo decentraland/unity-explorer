@@ -5,6 +5,7 @@ using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
 using DCL.Input;
 using DCL.Input.Systems;
+using DCL.SDKComponents.InputModifier.Components;
 using UnityEngine;
 using UnityEngine.InputSystem;
 

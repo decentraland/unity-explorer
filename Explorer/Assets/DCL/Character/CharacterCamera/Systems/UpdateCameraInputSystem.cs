@@ -6,6 +6,7 @@ using DCL.CharacterCamera.Components;
 using DCL.CharacterMotion.Components;
 using DCL.Input;
 using DCL.Input.Systems;
+using DCL.SDKComponents.InputModifier.Components;
 using UnityEngine;
 
 namespace DCL.CharacterCamera.Systems

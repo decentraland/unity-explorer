@@ -1,5 +1,3 @@
-using System;
-
 namespace DCL.Input.UnityInputSystem.Blocks
 {
     public interface IInputBlock

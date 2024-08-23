@@ -10,6 +10,7 @@ using DCL.CharacterCamera.Settings;
 using DCL.CharacterMotion.Components;
 using DCL.Input;
 using DCL.Input.Component;
+using DCL.SDKComponents.InputModifier.Components;
 using ECS.Abstract;
 using UnityEngine;
 
