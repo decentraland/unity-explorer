@@ -107,7 +107,7 @@ namespace DCL.Passport.Modules.Badges
                 },
                 actionOnRelease: emptyItemView => emptyItemView.gameObject.SetActive(false));
 
-            badgeInfoController = new BadgeInfo_PassportModuleSubController(badgeInfoModuleView, webRequestController, badgesAPIClient);
+            badgeInfoController = new BadgeInfo_PassportModuleSubController(badgeInfoModuleView, webRequestController, badgesAPIClient, passportErrorsController);
         }
 
         public void Setup(Profile profile)
@@ -371,7 +371,7 @@ namespace DCL.Passport.Modules.Badges
                     instantiateBadgeByCategory.SetAsSelected(false);
 
             badgeDetailCard.SetAsSelected(true);
-            badgeInfoController.Setup(badgeDetailCard.Model, currentProfile, isOwnProfile);
+            badgeInfoController.Setup(badgeDetailCard.Model, isOwnProfile);
         }
 
         private void CreateEmptyDetailCards()

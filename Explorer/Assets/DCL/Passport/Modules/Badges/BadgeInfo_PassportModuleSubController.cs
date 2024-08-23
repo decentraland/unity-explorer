@@ -1,13 +1,15 @@
 using Cysharp.Threading.Tasks;
 using DCL.BadgesAPIService;
+using DCL.Diagnostics;
 using DCL.Passport.Fields.Badges;
 using DCL.Profiles;
 using DCL.WebRequests;
+using System;
 using System.Collections.Generic;
 using System.Threading;
-using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
+using Object = UnityEngine.Object;
 
 namespace DCL.Passport.Modules.Badges
 {
@@ -17,10 +19,10 @@ namespace DCL.Passport.Modules.Badges
 
         private readonly BadgeInfo_PassportModuleView badgeInfoModuleView;
         private readonly BadgesAPIClient badgesAPIClient;
+        private readonly PassportErrorsController passportErrorsController;
         private readonly IObjectPool<BadgeTierButton_PassportFieldView> badgeTierButtonsPool;
         private readonly List<BadgeTierButton_PassportFieldView> instantiatedBadgeTierButtons = new ();
 
-        private Profile currentProfile;
         private bool isOwnProfile;
         private BadgeInfo currentBadgeInfo;
         private CancellationTokenSource loadBadgeTierButtonsCts;
@@ -28,10 +30,12 @@ namespace DCL.Passport.Modules.Badges
         public BadgeInfo_PassportModuleSubController(
             BadgeInfo_PassportModuleView badgeInfoModuleView,
             IWebRequestController webRequestController,
-            BadgesAPIClient badgesAPIClient)
+            BadgesAPIClient badgesAPIClient,
+            PassportErrorsController passportErrorsController)
         {
             this.badgeInfoModuleView = badgeInfoModuleView;
             this.badgesAPIClient = badgesAPIClient;
+            this.passportErrorsController = passportErrorsController;
 
             badgeTierButtonsPool = new ObjectPool<BadgeTierButton_PassportFieldView>(
                 InstantiateBadgeTierButtonPrefab,
@@ -48,10 +52,9 @@ namespace DCL.Passport.Modules.Badges
             badgeInfoModuleView.ConfigureImageController(webRequestController);
         }
 
-        public void Setup(BadgeInfo badgeInfo, Profile profile, bool isOwnProfileBadge)
+        public void Setup(BadgeInfo badgeInfo, bool isOwnProfileBadge)
         {
             this.isOwnProfile = isOwnProfileBadge;
-            this.currentProfile = profile;
             currentBadgeInfo = badgeInfo;
 
             if (badgeInfo.isTier)
@@ -103,19 +106,29 @@ namespace DCL.Passport.Modules.Badges
 
         private async UniTaskVoid LoadTierButtonsAsync(BadgeInfo badgeInfo, CancellationToken ct)
         {
-            List<TierData> tiers = await badgesAPIClient.FetchTiersAsync(currentProfile.UserId, badgeInfo.id, ct);
-
-            foreach (TierData tier in tiers)
+            try
             {
-                if (!isOwnProfile && tier.completedAt == null)
-                    continue;
+                List<TierData> tiers = await badgesAPIClient.FetchTiersAsync(badgeInfo.id, ct);
 
-                CreateBadgeTierButton(tier);
+                foreach (TierData tier in tiers)
+                {
+                    if (!isOwnProfile && tier.completedAt == null)
+                        continue;
+
+                    CreateBadgeTierButton(tier);
+                }
+
+                badgeInfoModuleView.Setup(badgeInfo, tiers, isOwnProfile);
+                SelectLastCompletedTierButton(badgeInfo, tiers);
+                SetAsLoading(false);
             }
-
-            badgeInfoModuleView.Setup(badgeInfo, tiers, isOwnProfile);
-            SelectLastCompletedTierButton(badgeInfo, tiers);
-            SetAsLoading(false);
+            catch (OperationCanceledException) { }
+            catch (Exception e)
+            {
+                const string ERROR_MESSAGE = "There was an error loading tiers. Please try again!";
+                passportErrorsController.Show(ERROR_MESSAGE);
+                ReportHub.LogError(ReportCategory.PROFILE, $"{ERROR_MESSAGE} ERROR: {e.Message}");
+            }
         }
 
         private void CreateBadgeTierButton(TierData tierData)

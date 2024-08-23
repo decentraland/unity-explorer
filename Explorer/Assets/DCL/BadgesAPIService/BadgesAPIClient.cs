@@ -32,29 +32,31 @@ namespace DCL.BadgesAPIService
 
         public async UniTask<List<LatestAchievedBadgeData>> FetchLatestAchievedBadgesAsync(string walletId, CancellationToken ct)
         {
-            var url = $"{badgesBaseUrl}/users/{walletId}/preview";
+            /*var url = $"{badgesBaseUrl}/users/{walletId}/preview";
 
             LatestAchievedBadgesResponse latestAchievedBadgesResponse = await webRequestController.GetAsync(url, ct, reportCategory: ReportCategory.BADGES_WEB_REQUEST)
                                                                                                   .CreateFromJson<LatestAchievedBadgesResponse>(WRJsonParser.Unity);
 
-            //return latestAchievedBadgesResponse.data.latestAchievedBadges;
+            return latestAchievedBadgesResponse.data.latestAchievedBadges;*/
+            await UniTask.Delay(1000, cancellationToken: ct);
             return GetLatestAchievedBadgesMockedResponse().data.latestAchievedBadges;
         }
 
         public async UniTask<BadgesInfo> FetchBadgesAsync(string walletId, bool includeLocked, CancellationToken ct)
         {
-            var url = $"{badgesBaseUrl}/users/{walletId}/badges?includeLocked={includeLocked}";
+            /*var url = $"{badgesBaseUrl}/users/{walletId}/badges?includeLocked={includeLocked}";
 
             BadgesResponse badgesResponse = await webRequestController.GetAsync(url, ct, reportCategory: ReportCategory.BADGES_WEB_REQUEST)
                                                                       .CreateFromJson<BadgesResponse>(WRJsonParser.Newtonsoft);
 
-            //return ResponseToBadgesInfo(badgesResponse);
+            return ResponseToBadgesInfo(badgesResponse);*/
+            await UniTask.Delay(1000, cancellationToken: ct);
             return ResponseToBadgesInfo(GetBadgesMockedResponse());
         }
 
-        public async UniTask<List<TierData>> FetchTiersAsync(string walletId, string badgeId, CancellationToken ct)
+        public async UniTask<List<TierData>> FetchTiersAsync(string badgeId, CancellationToken ct)
         {
-            /*var url = $"{badgesBaseUrl}/users/{walletId}/badges/{badgeId}/tiers";
+            /*var url = $"{badgesBaseUrl}/badges/{badgeId}/tiers";
 
             TiersResponse tiersResponse = await webRequestController.GetAsync(url, ct, reportCategory: ReportCategory.BADGES_WEB_REQUEST)
                                                                     .CreateFromJson<TiersResponse>(WRJsonParser.Unity);
