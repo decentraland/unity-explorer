@@ -92,5 +92,21 @@ namespace Global.Tests.EditMode
 
             Assert.AreEqual($"https://worlds-content-server.decentraland.org/world/{world}", realmLaunchSettings.GetStartingRealm(dclUrlSource));
         }
+
+        [Test]
+        [TestCase("metadyne.dcl.eth")]
+        [TestCase("dialogic.dcl.eth")]
+        public void IgnoreWindowsRealmInvalidation(string world)
+        {
+            RealmLaunchSettings realmLaunchSettings = new RealmLaunchSettings();
+            ApplicationParametersParser applicationParametersParser = new (new[]
+            {
+                $"decentraland://realm={world}/", // WinOS on some occasions adds that final '/'
+            });
+
+            realmLaunchSettings.ApplyConfig(applicationParametersParser);
+
+            Assert.AreEqual(world, realmLaunchSettings.targetWorld);
+        }
     }
 }

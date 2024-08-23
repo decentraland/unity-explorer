@@ -12,7 +12,7 @@ namespace Utility
 
         public static readonly SceneGeometry UNDEFINED_SCENE_GEOMETRY = new (
             Vector3.zero,
-            new SceneCircumscribedPlanes(float.MinValue, float.MaxValue, float.MinValue, float.MaxValue));
+            new SceneCircumscribedPlanes(float.MinValue, float.MaxValue, float.MinValue, float.MaxValue), float.MaxValue);
 
         public static readonly Vector3 RoadPivotDeviation  =  new (8, 0, 8);
 
@@ -74,10 +74,11 @@ namespace Utility
             circumscribedPlaneMaxZ += EXTEND_AMOUNT;
 
             Vector3 baseParcelPosition = GetPositionByParcelPosition(baseParcel);
+            float sceneHeight = Mathf.Log(parcelsCorners.Count + 1, 2) * 20; // log2(n+1) x 20, where n is the amount of parcels
 
             return new SceneGeometry(
                 baseParcelPosition,
-                new SceneCircumscribedPlanes(circumscribedPlaneMinX, circumscribedPlaneMaxX, circumscribedPlaneMinZ, circumscribedPlaneMaxZ));
+                new SceneCircumscribedPlanes(circumscribedPlaneMinX, circumscribedPlaneMaxX, circumscribedPlaneMinZ, circumscribedPlaneMaxZ), sceneHeight);
         }
 
         public static ParcelCorners CalculateCorners(Vector2Int parcelPosition)
@@ -193,10 +194,16 @@ namespace Utility
             /// </summary>
             public readonly SceneCircumscribedPlanes CircumscribedPlanes;
 
-            public SceneGeometry(Vector3 baseParcelPosition, SceneCircumscribedPlanes circumscribedPlanes)
+            /// <summary>
+            /// The height of the scene (in meters) according to the amount of parcels.
+            /// </summary>
+            public readonly float Height;
+
+            public SceneGeometry(Vector3 baseParcelPosition, SceneCircumscribedPlanes circumscribedPlanes, float sceneHeight)
             {
                 BaseParcelPosition = baseParcelPosition;
                 CircumscribedPlanes = circumscribedPlanes;
+                Height = sceneHeight;
             }
         }
     }
