@@ -12,7 +12,7 @@ namespace DCL.Multiplayer.Profiles.RemoveIntentions
     {
         private readonly IRoomHub roomHub;
         private readonly HashSet<RemoveIntention> list = new ();
-        private readonly MutexSync mutex = new ();
+        private readonly MultithreadSync multithreadSync = new();
 
         public ThreadSafeRemoveIntentions(IRoomHub roomHub)
         {
@@ -29,7 +29,7 @@ namespace DCL.Multiplayer.Profiles.RemoveIntentions
         {
             if (connectionupdate is ConnectionUpdate.Disconnected)
             {
-                using MutexSync.Scope _ = mutex.GetScope();
+                using var _ = multithreadSync.GetScope();
 
                 foreach (string identity in room.Participants.RemoteParticipantIdentities())
                 {
@@ -56,11 +56,11 @@ namespace DCL.Multiplayer.Profiles.RemoveIntentions
         }
 
         public OwnedBunch<RemoveIntention> Bunch() =>
-            new (mutex, list);
+            new(multithreadSync, list);
 
         private void ThreadSafeAdd(RemoveIntention intention)
         {
-            using MutexSync.Scope _ = mutex.GetScope();
+            using var _ = multithreadSync.GetScope();
             list.Add(intention);
         }
     }

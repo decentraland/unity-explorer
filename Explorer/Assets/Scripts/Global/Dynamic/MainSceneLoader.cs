@@ -10,6 +10,7 @@ using DCL.PluginSystem.Global;
 using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
+using Global.AppArgs;
 using LiveKit.Proto;
 using SceneRunner.Debugging;
 using System;

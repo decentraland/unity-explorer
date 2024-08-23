@@ -9,7 +9,7 @@ namespace SceneRunner.Scene
 {
     public interface ISceneData
     {
-        public bool SceneLoadingConcluded { get; set; } 
+        public bool SceneLoadingConcluded { get; set; }
         SceneShortInfo SceneShortInfo { get; }
 
         IReadOnlyList<Vector2Int> Parcels { get; }
@@ -72,7 +72,7 @@ namespace SceneRunner.Scene
 
             public ISceneContent SceneContent => new SceneNonHashedContent(new URLDomain());
             public SceneEntityDefinition SceneEntityDefinition => new (string.Empty, new SceneMetadata());
-            public ParcelMathHelper.SceneGeometry Geometry => new (Vector3.zero, new ParcelMathHelper.SceneCircumscribedPlanes());
+            public ParcelMathHelper.SceneGeometry Geometry => new (Vector3.zero, new ParcelMathHelper.SceneCircumscribedPlanes(), 0.0f);
             public SceneAssetBundleManifest AssetBundleManifest => SceneAssetBundleManifest.NULL;
             public StaticSceneMessages StaticSceneMessages => StaticSceneMessages.EMPTY;
 
