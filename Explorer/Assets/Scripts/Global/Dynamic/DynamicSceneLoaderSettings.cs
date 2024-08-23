@@ -1,4 +1,5 @@
 ﻿using DCL.Multiplayer.Connections.DecentralandUrls;
+using Global.AppArgs;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -14,12 +15,10 @@ namespace Global.Dynamic
         [field: SerializeField] public List<string> Realms { get; private set; }
         [field: SerializeField] public List<string> Web3WhitelistMethods { get; private set; }
 
-        public void ApplyConfig(ApplicationParametersParser applicationParametersParser)
+        public void ApplyConfig(IAppArgs applicationParametersParser)
         {
-            Dictionary<string, string> applicationParams = applicationParametersParser.AppParameters;
-
-            if (applicationParams.TryGetValue(ENV_PARAM, out string environment))
-                ParseEnvironment(environment);
+            if (applicationParametersParser.TryGetValue(ENV_PARAM, out string? environment))
+                ParseEnvironment(environment!);
         }
 
         private void ParseEnvironment(string environment)

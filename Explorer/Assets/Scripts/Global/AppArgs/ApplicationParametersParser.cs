@@ -3,21 +3,28 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Text.RegularExpressions;
 using System.Web;
-using UnityEngine;
 
-namespace Global
+namespace Global.AppArgs
 {
-    public class ApplicationParametersParser
+    public class ApplicationParametersParser : IAppArgs
     {
         private const string REALM_PARAM = "realm";
-        public Dictionary<string, string> AppParameters { get; private set; } = new ();
+        private readonly Dictionary<string, string> appParameters = new ();
+
+        public ApplicationParametersParser() : this(Environment.GetCommandLineArgs()) { }
 
         public ApplicationParametersParser(string[] args)
         {
-            AppParameters = ParseApplicationParameters(args);
+            ParseApplicationParameters(args);
         }
 
-        private Dictionary<string, string> ParseApplicationParameters(string[] cmdArgs)
+        public bool HasFlag(string flagName) =>
+            appParameters.ContainsKey(flagName);
+
+        public bool TryGetValue(string flagName, out string? value) =>
+            appParameters.TryGetValue(flagName, out value);
+
+        private void ParseApplicationParameters(string[] cmdArgs)
         {
             var deepLinkFound = false;
             string lastKeyStored = string.Empty;
@@ -31,7 +38,7 @@ namespace Global
                     if (arg.Length > 2)
                     {
                         lastKeyStored = arg.Substring(2);
-                        AppParameters[lastKeyStored] = string.Empty;
+                        appParameters[lastKeyStored] = string.Empty;
                     }
                     else
                         lastKeyStored = string.Empty;
@@ -46,10 +53,8 @@ namespace Global
                     ProcessDeepLinkParameters(arg);
                 }
                 else if (!string.IsNullOrEmpty(lastKeyStored))
-                    AppParameters[lastKeyStored] = arg;
+                    appParameters[lastKeyStored] = arg;
             }
-
-            return AppParameters;
         }
 
         private void ProcessDeepLinkParameters(string deepLinkString)
@@ -57,17 +62,17 @@ namespace Global
             // Update deep link so that Uri class allows the host name
             deepLinkString = Regex.Replace(deepLinkString, @"^decentraland:/+", "https://decentraland.org/?");
 
-            if (!Uri.TryCreate(deepLinkString, UriKind.Absolute, out Uri? res)) return;
+            if (!Uri.TryCreate(deepLinkString, UriKind.Absolute, out Uri? _)) return;
 
             var uri = new Uri(deepLinkString);
             NameValueCollection uriQuery = HttpUtility.ParseQueryString(uri.Query);
 
             foreach (string uriQueryKey in uriQuery.AllKeys)
-                AppParameters[uriQueryKey] = uriQuery.Get(uriQueryKey);
+                appParameters[uriQueryKey] = uriQuery.Get(uriQueryKey);
 
             // Patch for WinOS sometimes affecting the 'realm' parameter in deep links putting a '/' at the end
-            if (AppParameters.TryGetValue(REALM_PARAM, out string? realmParamValue) && realmParamValue.EndsWith('/'))
-                AppParameters[REALM_PARAM] = realmParamValue.Remove(realmParamValue.Length - 1);
+            if (appParameters.TryGetValue(REALM_PARAM, out string? realmParamValue) && realmParamValue.EndsWith('/'))
+                appParameters[REALM_PARAM] = realmParamValue.Remove(realmParamValue.Length - 1);
         }
     }
 }
