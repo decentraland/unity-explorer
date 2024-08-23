@@ -101,13 +101,13 @@ namespace DCL.Passport.Modules.Badges
             {
                 var nextTierToComplete = badgeInfo.tiers[badgeInfo.nextTierToCompleteIndex];
                 TopTierMark.SetActive(isOwnProfile && !string.IsNullOrEmpty(badgeInfo.completedAt));
-                NextTierContainer.SetActive(isOwnProfile && string.IsNullOrEmpty(badgeInfo.completedAt) && badgeInfo.stepsDone > 0);
-                NextTierValueText.text = nextTierToComplete.name;
+                NextTierContainer.SetActive(isOwnProfile && string.IsNullOrEmpty(badgeInfo.completedAt) && badgeInfo.progress.stepsDone > 0);
+                NextTierValueText.text = nextTierToComplete.tierName;
                 NextTierDescriptionText.text = nextTierToComplete.description;
                 NextTierDescriptionText.gameObject.SetActive(isOwnProfile);
-                int nextTierProgressPercentage = badgeInfo.isLocked ? 0 : badgeInfo.stepsDone * 100 / (badgeInfo.nextStepsTarget ?? badgeInfo.totalStepsTarget);
+                int nextTierProgressPercentage = badgeInfo.isLocked ? 0 : badgeInfo.progress.stepsDone * 100 / (badgeInfo.progress.nextStepsTarget ?? badgeInfo.progress.totalStepsTarget);
                 NextTierProgressBarFill.sizeDelta = new Vector2((!badgeInfo.isLocked ? nextTierProgressPercentage : 0) * (NextTierProgressBar.sizeDelta.x / 100), NextTierProgressBarFill.sizeDelta.y);
-                NextTierProgressValueText.text = $"{badgeInfo.stepsDone}/{badgeInfo.nextStepsTarget ?? badgeInfo.totalStepsTarget}";
+                NextTierProgressValueText.text = $"{badgeInfo.progress.stepsDone}/{badgeInfo.progress.nextStepsTarget ?? badgeInfo.progress.totalStepsTarget}";
                 NextTierProgressBarContainer.SetActive(isOwnProfile);
             }
         }
@@ -115,8 +115,8 @@ namespace DCL.Passport.Modules.Badges
         public void SelectBadgeTier(int tierIndex, BadgeInfo badgeInfo)
         {
             var tier = badgeInfo.tiers[tierIndex];
-            BadgeNameText.text = $"{badgeInfo.name} {tier.name}";
-            BadgeDateText.text = !tier.isLocked ? $"Unlocked: {PassportUtils.FormatTimestampDate(tier.awardedAt)}" : "Locked";
+            BadgeNameText.text = $"{badgeInfo.name} {tier.tierName}";
+            BadgeDateText.text = tier.completedAt != null ? $"Unlocked: {PassportUtils.FormatTimestampDate(tier.completedAt)}" : "Locked";
             BadgeDescriptionText.text = tier.description;
         }
 

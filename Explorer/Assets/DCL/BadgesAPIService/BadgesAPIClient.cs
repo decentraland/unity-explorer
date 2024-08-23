@@ -61,15 +61,15 @@ namespace DCL.BadgesAPIService
         {
             BadgesInfo badgesInfo = new BadgesInfo
             {
-                unlocked = new List<BadgeInfo>(),
-                locked = new List<BadgeInfo>(),
+                achieved = new List<BadgeInfo>(),
+                notAchieved = new List<BadgeInfo>(),
             };
 
             foreach (var badge in badgesResponse.data.achieved)
-                badgesInfo.unlocked.Add(ResponseToBadgeInfo(badge, false));
+                badgesInfo.achieved.Add(ResponseToBadgeInfo(badge, false));
 
             foreach (var badge in badgesResponse.data.notAchieved)
-                badgesInfo.locked.Add(ResponseToBadgeInfo(badge, true));
+                badgesInfo.notAchieved.Add(ResponseToBadgeInfo(badge, true));
 
             return badgesInfo;
         }
@@ -90,28 +90,30 @@ namespace DCL.BadgesAPIService
             return new BadgeInfo
             {
                 id = badge.id,
-                isLocked = isLocked,
-                category = badge.category,
                 name = badge.name,
                 description = badge.description,
-                image = badge.image,
-                completedAt = badge.completedAt,
+                category = badge.category,
                 isTier = badge.isTier,
-                nextStepsTarget = badge.progress.nextStepsTarget,
-                stepsDone = badge.progress.stepsDone,
-                lastCompletedTierAt = badge.progress.lastCompletedTierAt,
-                totalStepsTarget = badge.progress.totalStepsTarget,
-                lastCompletedTierName = badge.progress.lastCompletedTierName,
-                lastCompletedTierImage = badge.progress.lastCompletedTierImage,
+                completedAt = badge.completedAt,
+                progress = new BadgeProgressData
+                {
+                    nextStepsTarget = badge.progress.nextStepsTarget,
+                    stepsDone = badge.progress.stepsDone,
+                    lastCompletedTierAt = badge.progress.lastCompletedTierAt,
+                    totalStepsTarget = badge.progress.totalStepsTarget,
+                    lastCompletedTierName = badge.progress.lastCompletedTierName,
+                    lastCompletedTierImage = badge.progress.lastCompletedTierImage,
+                },
+                image = badge.image,
+                isLocked = isLocked,
                 lastCompletedTierIndex = lastCompletedTierIndex,
                 nextTierToCompleteIndex = nextTierToCompleteIndex,
-                tiers = Array.ConvertAll(badge.tiers, tier => new BadgeTierInfo
+                tiers = Array.ConvertAll(badge.tiers, tier => new TierData
                 {
-                    id = tier.tierId,
-                    isLocked = tier.completedAt == null,
-                    name = tier.tierName,
+                    tierId = tier.tierId,
+                    tierName = tier.tierName,
                     description = tier.description,
-                    awardedAt = tier.completedAt,
+                    completedAt = tier.completedAt,
                     image = tier.image,
                 }),
             };

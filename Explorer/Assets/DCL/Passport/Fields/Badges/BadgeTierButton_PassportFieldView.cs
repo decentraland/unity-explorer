@@ -36,7 +36,7 @@ namespace DCL.Passport.Fields.Badges
         [field: SerializeField]
         public Color NonLockedBadgeImageColor { get; private set; }
 
-        public BadgeTierInfo Model { get; private set; }
+        public TierData Model { get; private set; }
 
         private ImageController? imageController;
 
@@ -54,13 +54,13 @@ namespace DCL.Passport.Fields.Badges
         public void SetAsSelected(bool isSelected) =>
             SelectedOutline.SetActive(isSelected);
 
-        public void Setup(BadgeTierInfo tierInfo)
+        public void Setup(TierData tierData)
         {
-            Model = tierInfo;
-            TierImage.SetColor(tierInfo.isLocked ? LockedBadgeImageColor : NonLockedBadgeImageColor);
+            Model = tierData;
+            TierImage.SetColor(tierData.completedAt == null ? LockedBadgeImageColor : NonLockedBadgeImageColor);
             imageController?.SetImage(DefaultTierSprite);
-            if (!string.IsNullOrEmpty(tierInfo.image))
-                imageController?.RequestImage(tierInfo.image, hideImageWhileLoading: true);
+            if (!string.IsNullOrEmpty(tierData.image))
+                imageController?.RequestImage(tierData.image, hideImageWhileLoading: true);
         }
 
         public void OnPointerEnter(PointerEventData eventData) =>

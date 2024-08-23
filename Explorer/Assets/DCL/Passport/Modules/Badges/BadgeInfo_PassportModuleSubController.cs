@@ -92,9 +92,9 @@ namespace DCL.Passport.Modules.Badges
             // TODO (Santi): This is a placeholder, we should replace this with the real API call
             await UniTask.Delay(1000, cancellationToken: ct);
 
-            foreach (BadgeTierInfo tier in currentBadgeInfo.tiers)
+            foreach (TierData tier in currentBadgeInfo.tiers)
             {
-                if (!isOwnProfile && tier.isLocked)
+                if (!isOwnProfile && tier.completedAt == null)
                     continue;
 
                 CreateBadgeTierButton(tier);
@@ -104,10 +104,10 @@ namespace DCL.Passport.Modules.Badges
             SetAsLoading(false);
         }
 
-        private void CreateBadgeTierButton(BadgeTierInfo tierInfo)
+        private void CreateBadgeTierButton(TierData tierData)
         {
             var badgeTierButton = badgeTierButtonsPool.Get();
-            badgeTierButton.Setup(tierInfo);
+            badgeTierButton.Setup(tierData);
             badgeTierButton.Button.onClick.AddListener(() => SelectTierButton(badgeTierButton));
             instantiatedBadgeTierButtons.Add(badgeTierButton);
         }
@@ -133,9 +133,9 @@ namespace DCL.Passport.Modules.Badges
             for (var i = 0; i < instantiatedBadgeTierButtons.Count; i++)
             {
                 BadgeTierButton_PassportFieldView tierButton = instantiatedBadgeTierButtons[i];
-                tierButton.SetAsSelected(tierButton.Model.id == selectedTierButton.Model.id);
+                tierButton.SetAsSelected(tierButton.Model.tierId == selectedTierButton.Model.tierId);
 
-                if (tierButton.Model.id == selectedTierButton.Model.id)
+                if (tierButton.Model.tierId == selectedTierButton.Model.tierId)
                     badgeInfoModuleView.SelectBadgeTier(i, currentBadgeInfo);
             }
         }

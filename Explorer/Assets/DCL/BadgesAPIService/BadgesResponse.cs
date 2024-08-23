@@ -35,12 +35,10 @@ namespace DCL.BadgesAPIService
     {
         public int stepsDone;
         public int? nextStepsTarget;
-        public string lastCompletedTierAt;
-
         public int totalStepsTarget;
+        public string lastCompletedTierAt;
         public string lastCompletedTierName;
         public string lastCompletedTierImage;
-
     }
 
     [Serializable]
@@ -49,9 +47,9 @@ namespace DCL.BadgesAPIService
         public string tierId;
         public string tierName;
         public string description;
+        public string image;
         public BadgeTierCriteria criteria;
         public string completedAt;
-        public string image;
     }
 
     [Serializable]
