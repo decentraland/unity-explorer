@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.Networking;
 using Utility.Times;
 
 namespace DCL.WebRequests
@@ -134,6 +135,10 @@ namespace DCL.WebRequests
             try { await HeadAsync<WebRequestUtils.NoOp<GenericHeadRequest>, WebRequestUtils.NoResult>(controller, new CommonArguments(url), new WebRequestUtils.NoOp<GenericHeadRequest>(), default(GenericHeadArguments), ct); }
             catch (UnityWebRequestException unityWebRequestException)
             {
+                // Endpoint was unreacheable
+                if (unityWebRequestException.Result == UnityWebRequest.Result.ConnectionError)
+                    return false;
+                
                 // HEAD request might not be fully supported by the streaming platforms
                 switch (unityWebRequestException.ResponseCode)
                 {
