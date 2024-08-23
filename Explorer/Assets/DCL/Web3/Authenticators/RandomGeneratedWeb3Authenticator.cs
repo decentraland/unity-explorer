@@ -1,7 +1,5 @@
 using Cysharp.Threading.Tasks;
 using DCL.Web3.Abstract;
-using DCL.Web3.Accounts;
-using DCL.Web3.Accounts.Factory;
 using DCL.Web3.Chains;
 using DCL.Web3.Identities;
 using System;
@@ -12,7 +10,12 @@ namespace DCL.Web3.Authenticators
 {
     public class RandomGeneratedWeb3Authenticator : IWeb3Authenticator
     {
-        private readonly IWeb3AccountFactory accountFactory = new Web3AccountFactory();
+        private readonly IWeb3AccountFactory accountFactory;
+
+        public RandomGeneratedWeb3Authenticator(IWeb3AccountFactory accountFactory)
+        {
+            this.accountFactory = accountFactory;
+        }
 
         public void Dispose() { }
 

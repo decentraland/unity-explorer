@@ -17,12 +17,16 @@ namespace DCL.Web3.Identities
 
         class Random : IWeb3Identity
         {
-            private static readonly IWeb3AccountFactory ACCOUNT_FACTORY = new Web3AccountFactory();
+            public Random() : this(new Web3AccountFactory()) { }
 
-            public Random(IWeb3Account? account = null) : this(
-                ACCOUNT_FACTORY.CreateRandomAccount().Address,
+            public Random(IWeb3AccountFactory web3AccountFactory) : this(
+                web3AccountFactory.CreateRandomAccount()
+            ) { }
+
+            public Random(IWeb3Account account) : this(
+                account.Address,
                 DateTime.MaxValue,
-                account ?? ACCOUNT_FACTORY.CreateRandomAccount(),
+                account,
                 false,
                 AuthChain.Create()
             ) { }

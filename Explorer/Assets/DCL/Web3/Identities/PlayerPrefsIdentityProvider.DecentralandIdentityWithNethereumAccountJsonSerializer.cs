@@ -1,5 +1,4 @@
 using DCL.Web3.Abstract;
-using DCL.Web3.Accounts.Factory;
 using DCL.Web3.Chains;
 using Nethereum.Signer;
 using Newtonsoft.Json;
@@ -13,7 +12,12 @@ namespace DCL.Web3.Identities
         public class DecentralandIdentityWithNethereumAccountJsonSerializer : IWeb3IdentityJsonSerializer
         {
             private readonly IdentityJsonDto jsonRoot = new ();
-            private readonly IWeb3AccountFactory accountFactory = new Web3AccountFactory();
+            private readonly IWeb3AccountFactory accountFactory;
+
+            public DecentralandIdentityWithNethereumAccountJsonSerializer(IWeb3AccountFactory accountFactory)
+            {
+                this.accountFactory = accountFactory;
+            }
 
             public IWeb3Identity? Deserialize(string json)
             {

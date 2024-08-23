@@ -26,8 +26,8 @@ namespace DCL.Web3.Authenticators
         private readonly string serverUrl;
         private readonly string signatureUrl;
         private readonly IWeb3IdentityCache identityCache;
+        private readonly IWeb3AccountFactory web3AccountFactory;
         private readonly HashSet<string> whitelistMethods;
-        private readonly IWeb3AccountFactory accountFactory = new Web3AccountFactory();
 
         private SocketIO? webSocket;
         private UniTaskCompletionSource<SocketIOResponse>? signatureOutcomeTask;
@@ -38,12 +38,15 @@ namespace DCL.Web3.Authenticators
             string serverUrl,
             string signatureUrl,
             IWeb3IdentityCache identityCache,
-            HashSet<string> whitelistMethods)
+            IWeb3AccountFactory web3AccountFactory,
+            HashSet<string> whitelistMethods
+        )
         {
             this.webBrowser = webBrowser;
             this.serverUrl = serverUrl;
             this.signatureUrl = signatureUrl;
             this.identityCache = identityCache;
+            this.web3AccountFactory = web3AccountFactory;
             this.whitelistMethods = whitelistMethods;
         }
 
@@ -104,7 +107,7 @@ namespace DCL.Web3.Authenticators
             {
                 await ConnectToServerAsync();
 
-                var ephemeralAccount = accountFactory.CreateRandomAccount();
+                var ephemeralAccount = web3AccountFactory.CreateRandomAccount();
 
                 // 1 week expiration day, just like unity-renderer
                 DateTime sessionExpiration = DateTime.UtcNow.AddDays(7);
@@ -264,7 +267,7 @@ namespace DCL.Web3.Authenticators
             private readonly IWeb3VerifiedAuthenticator originAuth;
             private readonly IVerifiedEthereumApi originApi;
 
-            public Default(IWeb3IdentityCache identityCache, IDecentralandUrlsSource decentralandUrlsSource)
+            public Default(IWeb3IdentityCache identityCache, IDecentralandUrlsSource decentralandUrlsSource, IWeb3AccountFactory web3AccountFactory)
             {
                 string serverUrl = decentralandUrlsSource.Url(DecentralandUrl.ApiAuth);
                 string signatureUrl = decentralandUrlsSource.Url(DecentralandUrl.AuthSignature);
@@ -274,6 +277,7 @@ namespace DCL.Web3.Authenticators
                     serverUrl,
                     signatureUrl,
                     identityCache,
+                    web3AccountFactory,
                     new HashSet<string>(
                         new[]
                         {
