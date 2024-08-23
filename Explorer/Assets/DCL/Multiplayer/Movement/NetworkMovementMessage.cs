@@ -18,6 +18,8 @@ namespace DCL.Multiplayer.Movement
 
         public AnimationStates animState;
 
+        public int tier;
+
         public override string ToString() =>
             JsonUtility.ToJson(this);
 

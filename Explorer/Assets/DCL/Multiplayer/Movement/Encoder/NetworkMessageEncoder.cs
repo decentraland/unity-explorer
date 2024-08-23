@@ -17,13 +17,13 @@ namespace DCL.Multiplayer.Movement
         public CompressedNetworkMovementMessage Compress(NetworkMovementMessage message) =>
             new ()
             {
-                temporalData = CompressTemporalData(message.timestamp, message.movementKind, message.isSliding, message.animState, message.isStunned, message.rotationY),
+                temporalData = CompressTemporalData(message.timestamp, message.movementKind, message.isSliding, message.animState, message.isStunned, message.rotationY, message.tier),
                 movementData = CompressMovementData(message.position, message.velocity),
                 original = message,
             };
 
         private int CompressTemporalData(float timestamp, MovementKind movementKind, bool isSliding, AnimationStates animState, bool isStunned,
-            float rotationY)
+            float rotationY, int tier)
         {
             int temporalData = new TimestampEncoder(settings).Compress(timestamp);
 
@@ -37,8 +37,10 @@ namespace DCL.Multiplayer.Movement
             if (animState.IsFalling) temporalData |= 1 << settings.FALLING_BIT;
             if (animState.IsLongFall) temporalData |= 1 << settings.LONG_FALL_BIT;
 
-            int compressedRotation = FloatQuantizer.Compress(rotationY, 0f, 360f, 8);
-            temporalData |= compressedRotation << (settings.LONG_FALL_BIT + 1);
+            int compressedRotation = FloatQuantizer.Compress(rotationY, 0f, 360f, settings.ROTATION_Y);
+            temporalData |= compressedRotation << settings.ROTATION_START_BIT;
+
+            // temporalData |= (tier & 0x3) << (settings.LONG_FALL_BIT + 1 + settings.TIER_START_BIT);
 
             return temporalData;
         }
@@ -82,14 +84,17 @@ namespace DCL.Multiplayer.Movement
             (Vector3 position, Vector3 velocity) movementData = DecompressMovementData(compressedMessage.movementData);
             int compressedTemporalData = compressedMessage.temporalData;
 
-            int compressedRotation = (compressedTemporalData >> (settings.LONG_FALL_BIT + 1)) & 0xFF;
+            int rotationMask = (1 << settings.ROTATION_Y) - 1;
+            int compressedRotation = (compressedTemporalData >> settings.ROTATION_START_BIT) & rotationMask;
+
+            // int tier = (compressedTemporalData >> settings.TIER_START_BIT) & 0x3;
 
             return new NetworkMovementMessage
             {
                 // Decompressed movement data
                 position = settings.encodePosition? movementData.position : compressedMessage.original.position,
                 velocity = settings.encodeVelocity? movementData.velocity : compressedMessage.original.velocity,
-                rotationY = FloatQuantizer.Decompress(compressedRotation, 0f, 360f, 8),
+                rotationY = FloatQuantizer.Decompress(compressedRotation, 0f, 360f, settings.ROTATION_Y),
 
                 // Decompress temporal data
                 timestamp = settings.encodeTimestamp? new TimestampEncoder(settings).Decompress(compressedTemporalData) : compressedMessage.original.timestamp,

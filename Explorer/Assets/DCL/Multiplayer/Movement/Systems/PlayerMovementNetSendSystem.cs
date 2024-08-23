@@ -86,6 +86,7 @@ namespace DCL.Multiplayer.Movement.Systems
             return;
 
             bool IsMoving(PlayerMovementNetworkComponent playerMovement) =>
+                Mathf.Abs(playerMovement.LastSentMessage.rotationY - playerMovement.Character.transform.eulerAngles.y) > 0.1f ||
                 Vector3.SqrMagnitude(playerMovement.LastSentMessage.position - playerMovement.Character.transform.position) > POSITION_MOVE_EPSILON * POSITION_MOVE_EPSILON ||
                 Vector3.SqrMagnitude(playerMovement.LastSentMessage.velocity - playerMovement.Character.velocity) > VELOCITY_MOVE_EPSILON * VELOCITY_MOVE_EPSILON;
         }
@@ -107,7 +108,13 @@ namespace DCL.Multiplayer.Movement.Systems
         {
             playerMovement.MessagesSentInSec++;
             Debug.Log($"VVV [send] {UnityEngine.Time.unscaledTime}");
-            var lastSentMessage = playerMovement.LastSentMessage;
+            NetworkMovementMessage lastSentMessage = playerMovement.LastSentMessage;
+
+            float dist = (playerMovement.Character.transform.position - playerMovement.LastSentMessage.position).magnitude;
+            float speed = dist / (UnityEngine.Time.unscaledTime - playerMovement.LastSentMessage.timestamp);
+
+            Debug.Log($"VVV [speed] {lastSentMessage.velocity} | {speed}");
+
             playerMovement.LastSentMessage = new NetworkMovementMessage
             {
                 timestamp = UnityEngine.Time.unscaledTime,
@@ -133,7 +140,6 @@ namespace DCL.Multiplayer.Movement.Systems
 
                 movementKind = movement.Kind,
             };
-            Debug.Log($"VVV [speed] {lastSentMessage.velocity} | {(playerMovement.LastSentMessage.position-lastSentMessage.position).magnitude}| {playerMovement.LastSentMessage.movementKind} | {playerMovement.LastSentMessage.timestamp-lastSentMessage.timestamp}");;
 
             messageBus.Send(playerMovement.LastSentMessage);
 
@@ -141,11 +147,7 @@ namespace DCL.Multiplayer.Movement.Systems
             if (settings.SelfSending
 
                 // && movement.Kind != MovementKind.RUN // simulate package lost when Running
-               )
-            {
-
-                messageBus.SelfSendWithDelayAsync(playerMovement.LastSentMessage, settings.Latency + (settings.Latency * Random.Range(0, settings.LatencyJitter))).Forget();
-            }
+               ) { messageBus.SelfSendWithDelayAsync(playerMovement.LastSentMessage, settings.Latency + (settings.Latency * Random.Range(0, settings.LatencyJitter))).Forget(); }
         }
     }
 }

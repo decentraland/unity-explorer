@@ -41,7 +41,7 @@ namespace DCL.Multiplayer.Movement
             direction.y = 0;
 
             // Avoid flickering for small direction changes
-            if (direction.sqrMagnitude > MIN_DIRECTION_SQR_MAGNITUDE) // &&  if (!stunComponent.IsStunned)
+            // if (direction.sqrMagnitude > MIN_DIRECTION_SQR_MAGNITUDE) // &&  if (!stunComponent.IsStunned)
             {
                 var lookRotation = Quaternion.LookRotation(direction, Vector3.up);
                 lookRotation.eulerAngles = new Vector3(lookRotation.eulerAngles.x, yRotation, lookRotation.eulerAngles.z);

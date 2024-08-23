@@ -27,9 +27,11 @@ namespace DCL.Multiplayer.Movement.Settings
         // - 16 [Time] // 11 min for 0.01f quantum
         // - 15 [Time] // 5 min for 0.01f quantum
         public float TIMESTAMP_QUANTUM = 0.02f;
-        public int TIMESTAMP_BITS = 18;
+        public int TIMESTAMP_BITS = 15;
+        public int ROTATION_Y = 8;
 
-        // timeData left = 7 bit
+        public int ROTATION_START_BIT => LONG_FALL_BIT + 1;
+        public int TIER_START_BIT => ROTATION_START_BIT + ROTATION_Y;
 
         // 64
         // - 17 [Parcel]
