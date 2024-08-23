@@ -106,8 +106,8 @@ namespace DCL.Multiplayer.Movement.Systems
         private void SendMessage(ref PlayerMovementNetworkComponent playerMovement, in CharacterAnimationComponent animation, in StunComponent playerStunComponent, in MovementInputComponent movement)
         {
             playerMovement.MessagesSentInSec++;
-            Debug.Log($"VVV Send {UnityEngine.Time.unscaledTime}");
-
+            Debug.Log($"VVV [send] {UnityEngine.Time.unscaledTime}");
+            var lastSentMessage = playerMovement.LastSentMessage;
             playerMovement.LastSentMessage = new NetworkMovementMessage
             {
                 timestamp = UnityEngine.Time.unscaledTime,
@@ -133,14 +133,19 @@ namespace DCL.Multiplayer.Movement.Systems
 
                 movementKind = movement.Kind,
             };
+            Debug.Log($"VVV [speed] {lastSentMessage.velocity} | {(playerMovement.LastSentMessage.position-lastSentMessage.position).magnitude}| {playerMovement.LastSentMessage.movementKind} | {playerMovement.LastSentMessage.timestamp-lastSentMessage.timestamp}");;
 
             messageBus.Send(playerMovement.LastSentMessage);
 
             // Debug purposes. Simulate package lost when Running
             if (settings.SelfSending
+
                 // && movement.Kind != MovementKind.RUN // simulate package lost when Running
                )
+            {
+
                 messageBus.SelfSendWithDelayAsync(playerMovement.LastSentMessage, settings.Latency + (settings.Latency * Random.Range(0, settings.LatencyJitter))).Forget();
+            }
         }
     }
 }

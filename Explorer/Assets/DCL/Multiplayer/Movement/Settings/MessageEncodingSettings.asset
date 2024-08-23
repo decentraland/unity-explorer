@@ -15,9 +15,10 @@ MonoBehaviour:
   encodeTimestamp: 0
   encodePosition: 0
   encodeVelocity: 0
-  Budget: 47
+  TIMESTAMP_QUANTUM: 0.01
+  TIMESTAMP_BITS: 15
   XZ_BITS: 10
-  Y_MAX: 500
+  Y_MAX: 200
   Y_BITS: 9
-  MAX_VELOCITY: 40
+  MAX_VELOCITY: 50
   VELOCITY_BITS: 6
