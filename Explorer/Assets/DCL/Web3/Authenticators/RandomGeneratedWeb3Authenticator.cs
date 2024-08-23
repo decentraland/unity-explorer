@@ -6,6 +6,7 @@ using DCL.Web3.Chains;
 using DCL.Web3.Identities;
 using System;
 using System.Threading;
+using Utility.Tasks;
 
 namespace DCL.Web3.Authenticators
 {
@@ -13,9 +14,7 @@ namespace DCL.Web3.Authenticators
     {
         private readonly IWeb3AccountFactory accountFactory = new Web3AccountFactory();
 
-        public void Dispose()
-        {
-        }
+        public void Dispose() { }
 
         public UniTask<IWeb3Identity> LoginAsync(CancellationToken ct)
         {
@@ -38,9 +37,12 @@ namespace DCL.Web3.Authenticators
             });
 
             // To keep cohesiveness between the platform, convert the user address to lower case
-            return new UniTask<IWeb3Identity>(
-                new DecentralandIdentity(new Web3Address(signer.Address.ToString().ToLower()), ephemeralAccount, expiration, authChain)
-            );
+            return new DecentralandIdentity(
+                new Web3Address(signer),
+                ephemeralAccount,
+                expiration,
+                authChain
+            ).AsUniTaskResult<IWeb3Identity>();
         }
 
         public UniTask LogoutAsync(CancellationToken cancellationToken) =>

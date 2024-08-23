@@ -137,7 +137,7 @@ namespace DCL.Web3.Authenticators
                 AuthChain authChain = CreateAuthChain(response, ephemeralMessage);
 
                 // To keep cohesiveness between the platform, convert the user address to lower case
-                return new DecentralandIdentity(new Web3Address(response.sender.ToLower()),
+                return new DecentralandIdentity(new Web3Address(response.sender),
                     ephemeralAccount, sessionExpiration, authChain);
             }
             finally
