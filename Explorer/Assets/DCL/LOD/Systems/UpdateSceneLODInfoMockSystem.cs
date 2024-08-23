@@ -38,10 +38,20 @@ namespace DCL.LOD.Systems
         [None(typeof(DeleteEntityIntention))]
         private void UpdateLODLevel(ref SceneLODInfo sceneLODInfo, SceneDefinitionComponent sceneDefinitionComponent)
         {
+            if (sceneLODInfo.IsInitialized())
+                return;
+
+            //Mocking a failed LOD_0
+            sceneLODInfo.CurrentLODLevelPromise = 0;
+            sceneLODInfo.AddFailedLOD();
+            
             //If LODs are not enabled, we can consider the scene as ready,
             //and check scene readiness so not to block the loading screen
-            LODUtils.UpdateLoadingScreen(sceneLODInfo, sceneDefinitionComponent, sceneReadinessReportQueue,
+            LODUtils.TryReportSceneLoadedForLOD(sceneLODInfo, sceneDefinitionComponent, sceneReadinessReportQueue,
                 scenesCache);
+
+            //Complete initialization
+            sceneLODInfo.id = sceneDefinitionComponent.Definition.id!;
         }
 
         [Query]

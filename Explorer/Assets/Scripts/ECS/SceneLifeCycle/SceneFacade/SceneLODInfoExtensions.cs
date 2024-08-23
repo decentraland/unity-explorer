@@ -15,7 +15,7 @@ namespace DCL.LOD
                                                                 World world)
         {
             //Only try to release SceneLODInfo that has been initialized
-            if (!string.IsNullOrEmpty(sceneLODInfo.id))
+            if (sceneLODInfo.IsInitialized())
             {
                 lodCache.Release(sceneLODInfo.id, sceneLODInfo.metadata);
                 sceneLODInfo.Dispose(world);

@@ -70,23 +70,26 @@ namespace DCL.LOD.Systems
             return newSlots.ToArray();
         }
 
-        public static void UpdateLoadingScreen(SceneLODInfo sceneLODInfo,
+        public static void TryReportSceneLoadedForLOD(SceneLODInfo sceneLODInfo,
             SceneDefinitionComponent sceneDefinitionComponent, ISceneReadinessReportQueue sceneReadinessReportQueue,
             IScenesCache scenesCache)
         {
             if (sceneLODInfo.HasLOD(0))
+                ReportSceneLoaded(sceneDefinitionComponent, sceneReadinessReportQueue, scenesCache);
+        }
+
+        public static void ReportSceneLoaded(SceneDefinitionComponent sceneDefinitionComponent,
+            ISceneReadinessReportQueue sceneReadinessReportQueue, IScenesCache scenesCache)
+        {
+            scenesCache.AddNonRealScene(sceneDefinitionComponent.Parcels);
+            if (sceneReadinessReportQueue.TryDequeue(sceneDefinitionComponent.Parcels, out var reports))
             {
-                scenesCache.AddNonRealScene(sceneDefinitionComponent.Parcels);
-                if (sceneReadinessReportQueue.TryDequeue(sceneDefinitionComponent.Parcels, out var reports))
+                for (var i = 0; i < reports!.Value.Count; i++)
                 {
-                    for (var i = 0; i < reports!.Value.Count; i++)
-                    {
-                        var report = reports.Value[i];
-                        report.SetProgress(1f);
-                    }
+                    var report = reports.Value[i];
+                    report.SetProgress(1f);
                 }
             }
-
         }
     }
 }

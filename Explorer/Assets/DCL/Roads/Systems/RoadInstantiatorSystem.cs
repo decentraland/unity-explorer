@@ -79,16 +79,9 @@ namespace DCL.Roads.Systems
             }
             roadInfo.IsDirty = false;
 
+            
             //In case this is a road teleport destination, we need to release the loading screen
-            scenesCache.AddNonRealScene(sceneDefinitionComponent.Parcels);
-            if (sceneReadinessReportQueue.TryDequeue(sceneDefinitionComponent.Parcels, out var reports))
-            {
-                for (var i = 0; i < reports!.Value.Count; i++)
-                {
-                    var report = reports.Value[i];
-                    report.SetProgress(1f);
-                }
-            }
+            LODUtils.ReportSceneLoaded(sceneDefinitionComponent, sceneReadinessReportQueue, scenesCache);
         }
 
 

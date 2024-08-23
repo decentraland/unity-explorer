@@ -51,8 +51,7 @@ namespace DCL.LOD.Systems
         [None(typeof(DeleteEntityIntention))]
         private void InitializeSceneLOD(ref SceneLODInfo sceneLODInfo, SceneDefinitionComponent sceneDefinitionComponent)
         {
-            // Means its already initialized
-            if (!string.IsNullOrEmpty(sceneLODInfo.id))
+            if (sceneLODInfo.IsInitialized())
                 return;
 
             string sceneID = sceneDefinitionComponent.Definition.id!;
@@ -60,7 +59,7 @@ namespace DCL.LOD.Systems
             if (lodCache.TryGet(sceneID, out var cacheInfo))
             {
                 sceneLODInfo.metadata = cacheInfo;
-                LODUtils.UpdateLoadingScreen(sceneLODInfo, sceneDefinitionComponent, sceneReadinessReportQueue,
+                LODUtils.TryReportSceneLoadedForLOD(sceneLODInfo, sceneDefinitionComponent, sceneReadinessReportQueue,
                     scenesCache);
             }
             else
