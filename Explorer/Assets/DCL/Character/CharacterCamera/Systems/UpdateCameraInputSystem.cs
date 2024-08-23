@@ -34,6 +34,7 @@ namespace DCL.CharacterCamera.Systems
         [Query]
         private void ResetInput(ref CameraInput cameraInput, in InputModifierComponent inputModifierComponent)
         {
+            // TODO: Review if we continue using InputModifierComponent, a new interface or remove block camera from InputModifierComponent
             if(!inputModifierComponent.DisableCamera) return;
 
             cameraInput.ZoomIn = false;
@@ -46,6 +47,7 @@ namespace DCL.CharacterCamera.Systems
         [Query]
         private void UpdateInput(ref CameraInput cameraInput, ref CursorComponent cursorComponent, in InputModifierComponent inputModifierComponent)
         {
+            // TODO: Review if we continue using InputModifierComponent, a new interface or remove block camera from InputModifierComponent
             if(inputModifierComponent.DisableCamera) return;
 
             cameraInput.ZoomIn = cameraActions.Zoom.ReadValue<Vector2>().y > 0

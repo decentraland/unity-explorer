@@ -172,7 +172,7 @@ namespace DCL.ECSComponents
         public bool IsDirty { get; set; }
     }
 
-    public partial class PBPlayerInputMovement : IDirtyMarker
+    public partial class PBInputModifier : IDirtyMarker
     {
         public bool IsDirty { get; set; }
     }

@@ -30,11 +30,11 @@ namespace DCL.SDKComponents.PlayerInputMovement.Systems
         }
 
         [Query]
-        private void ApplyModifiers(in PBPlayerInputMovement pbInputModifier, ref InputModifierComponent inputModifier)
+        private void ApplyModifiers(in PBInputModifier pbInputModifier, ref InputModifierComponent inputModifier)
         {
             //Debug.Log($"{UnityEngine.Time.frameCount} IG- ApplyModifiers Axes: {movementInput.Axes} {movementInput.Kind}");
 
-            PBPlayerInputMovement.Types.StandardMovement? pb = pbInputModifier.Standard;
+            PBInputModifier.Types.StandardInput? pb = pbInputModifier.Standard;
             inputModifier.DisableAll = pb.DisableAll;
             inputModifier.DisableWalk = pb.DisableWalk;
             inputModifier.DisableJog = pb.DisableJog;

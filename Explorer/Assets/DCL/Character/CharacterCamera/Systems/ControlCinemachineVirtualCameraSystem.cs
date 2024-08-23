@@ -30,6 +30,9 @@ namespace DCL.Character.CharacterCamera.Systems
         internal ControlCinemachineVirtualCameraSystem(World world, ICinemachineCameraAudioSettings cinemachineCameraAudioSettings) : base(world)
         {
             this.cinemachineCameraAudioSettings = cinemachineCameraAudioSettings;
+
+            // ref var inputModifier = ref world.Get<InputModifierComponent>(playerEntity.StrictObject);
+            // inputModifier.DisableAll = true;
         }
 
         public override void Initialize()
@@ -56,10 +59,11 @@ namespace DCL.Character.CharacterCamera.Systems
         }
 
         [Query]
-        private void HandleCameraInput([Data] float dt, in CameraComponent cameraComponent, in InputModifierComponent modifierComponent)
+        private void HandleCameraInput([Data] float dt, in CameraComponent cameraComponent)//, in InputModifierComponent modifierComponent)
         {
             // this blocks the user of changing the current camera, but the SDK still can do it
-            if (!cameraComponent.CameraInputChangeEnabled || modifierComponent.DisableCamera)
+            // TODO: Review if we continue using InputModifierComponent, a new interface or remove block camera from InputModifierComponent
+            if (!cameraComponent.CameraInputChangeEnabled)// || modifierComponent.DisableCamera)
                 return;
 
             HandleZoomingQuery(World);
