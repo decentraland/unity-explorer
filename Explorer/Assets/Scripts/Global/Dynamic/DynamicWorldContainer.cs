@@ -67,6 +67,7 @@ using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.CurrentScene;
 using ECS.SceneLifeCycle.LocalSceneDevelopment;
 using ECS.SceneLifeCycle.Realm;
+using Global.AppArgs;
 using Global.Dynamic.ChatCommands;
 using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Internal.FFIClients.Pools.Memory;
@@ -610,10 +611,12 @@ namespace Global.Dynamic
             wearablesProvider!.Initialize(world);
         }
 
-        private static URN[]? ParseSelfForcedEmotes(ApplicationParametersParser appParams)
+        private static URN[]? ParseSelfForcedEmotes(IAppArgs appParams)
         {
-            if (!appParams.AppParameters.TryGetValue("self-force-emotes", out string csv))
+            if (!appParams.TryGetValue("self-force-emotes", out string? csv))
                 return null;
+
+            if (string.IsNullOrEmpty(csv)) return null;
 
             string[] emotes = csv.Split(',');
             return emotes.Select(s => new URN(s)).ToArray();
