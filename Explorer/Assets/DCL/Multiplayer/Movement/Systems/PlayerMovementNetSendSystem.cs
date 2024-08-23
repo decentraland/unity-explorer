@@ -112,7 +112,7 @@ namespace DCL.Multiplayer.Movement.Systems
                 timestamp = UnityEngine.Time.unscaledTime,
                 position = playerMovement.Character.transform.position,
                 velocity = playerMovement.Character.velocity,
-                rotationY = playerMovement.Character.transform.eulerAngles.y * Mathf.Deg2Rad,
+                rotationY = playerMovement.Character.transform.eulerAngles.y,
 
                 isStunned = playerStunComponent.IsStunned,
                 isSliding = animation.IsSliding,

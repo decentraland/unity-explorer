@@ -30,12 +30,12 @@ namespace DCL.Multiplayer.Movement
                 transComp.Transform.position = intComp.End.position;
             }
 
-            LookAt(deltaTime, ref transComp, lookDirection, rotationSpeed);
+            LookAt(deltaTime, ref transComp, lookDirection, rotationSpeed, intComp.End.rotationY);
 
             return remainedDeltaTime;
         }
 
-        private static void LookAt(float dt, ref CharacterTransform transComp, Vector3 direction, float rotationSpeed)
+        private static void LookAt(float dt, ref CharacterTransform transComp, Vector3 direction, float rotationSpeed, float yRotation)
         {
             // Flattened to have ground plane direction only (XZ)
             direction.y = 0;
@@ -44,6 +44,7 @@ namespace DCL.Multiplayer.Movement
             if (direction.sqrMagnitude > MIN_DIRECTION_SQR_MAGNITUDE) // &&  if (!stunComponent.IsStunned)
             {
                 var lookRotation = Quaternion.LookRotation(direction, Vector3.up);
+                lookRotation.eulerAngles = new Vector3(lookRotation.eulerAngles.x, yRotation, lookRotation.eulerAngles.z);
                 transComp.Transform.rotation = Quaternion.RotateTowards(transComp.Transform.rotation, lookRotation, rotationSpeed * dt);
             }
         }

@@ -17,12 +17,13 @@ namespace DCL.Multiplayer.Movement
         public CompressedNetworkMovementMessage Compress(NetworkMovementMessage message) =>
             new ()
             {
-                temporalData = CompressTemporalData(message.timestamp, message.movementKind, message.isSliding, message.animState, message.isStunned),
+                temporalData = CompressTemporalData(message.timestamp, message.movementKind, message.isSliding, message.animState, message.isStunned, message.rotationY),
                 movementData = CompressMovementData(message.position, message.velocity),
                 original = message,
             };
 
-        private int CompressTemporalData(float timestamp, MovementKind movementKind, bool isSliding, AnimationStates animState, bool isStunned)
+        private int CompressTemporalData(float timestamp, MovementKind movementKind, bool isSliding, AnimationStates animState, bool isStunned,
+            float rotationY)
         {
             int temporalData = new TimestampEncoder(settings).Compress(timestamp);
 
@@ -35,6 +36,9 @@ namespace DCL.Multiplayer.Movement
             if (animState.IsLongJump) temporalData |= 1 << settings.LONG_JUMP_BIT;
             if (animState.IsFalling) temporalData |= 1 << settings.FALLING_BIT;
             if (animState.IsLongFall) temporalData |= 1 << settings.LONG_FALL_BIT;
+
+            int compressedRotation = FloatQuantizer.Compress(rotationY, 0f, 360f, 8);
+            temporalData |= compressedRotation << (settings.LONG_FALL_BIT + 1);
 
             return temporalData;
         }
@@ -78,12 +82,14 @@ namespace DCL.Multiplayer.Movement
             (Vector3 position, Vector3 velocity) movementData = DecompressMovementData(compressedMessage.movementData);
             int compressedTemporalData = compressedMessage.temporalData;
 
+            int compressedRotation = (compressedTemporalData >> (settings.LONG_FALL_BIT + 1)) & 0xFF;
+
             return new NetworkMovementMessage
             {
                 // Decompressed movement data
                 position = settings.encodePosition? movementData.position : compressedMessage.original.position,
                 velocity = settings.encodeVelocity? movementData.velocity : compressedMessage.original.velocity,
-                rotationY = compressedMessage.original.rotationY,
+                rotationY = FloatQuantizer.Decompress(compressedRotation, 0f, 360f, 8),
 
                 // Decompress temporal data
                 timestamp = settings.encodeTimestamp? new TimestampEncoder(settings).Decompress(compressedTemporalData) : compressedMessage.original.timestamp,
