@@ -122,8 +122,8 @@ jobs:
       - name: Set default values
         id: set_defaults
         run: |
-          echo "use_cache=${{ github.event.inputs.cache || inputs.cache || 'true' }}" >> $GITHUB_OUTPUT
-          echo "cache_strategy=${{ github.event.inputs.cache_strategy || inputs.cache_strategy || 'workspace' }}" >> $GITHUB_OUTPUT
+          echo "use_cache=${{ github.event.inputs.cache != null && github.event.inputs.cache != '' ? github.event.inputs.cache : (inputs.cache != null && inputs.cache != '' ? inputs.cache : 'true') }}" >> $GITHUB_OUTPUT
+          echo "cache_strategy=${{ github.event.inputs.cache_strategy != null && github.event.inputs.cache_strategy != '' ? github.event.inputs.cache_strategy : (inputs.cache_strategy != null && inputs.cache_strategy != '' ? inputs.cache_strategy : 'workspace') }}" >> $GITHUB_OUTPUT
 
       - name: Get BuildOptions
         id: get_options
