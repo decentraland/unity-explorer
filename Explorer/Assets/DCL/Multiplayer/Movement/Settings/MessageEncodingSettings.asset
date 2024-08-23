@@ -12,14 +12,33 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fdd34dbbd3504f25993a0e0edaed2108, type: 3}
   m_Name: MessageEncodingSettings
   m_EditorClassIdentifier: 
-  encodeTimestamp: 0
-  encodePosition: 0
-  encodeVelocity: 0
+  encodeTimestamp: 1
+  encodePosition: 1
+  encodeVelocity: 1
   TIMESTAMP_QUANTUM: 0.01
-  TIMESTAMP_BITS: 13
-  ROTATION_Y: 8
-  XZ_BITS: 10
-  Y_MAX: 200
-  Y_BITS: 12
-  MAX_VELOCITY: 5
-  VELOCITY_BITS: 5
+  TIMESTAMP_BITS: 12
+  ROTATION_Y: 6
+  tier0:
+    XZ_BITS: 10
+    Y_MAX: 10
+    Y_BITS: 9
+    MAX_VELOCITY: 10
+    VELOCITY_BITS: 6
+  tier1:
+    XZ_BITS: 10
+    Y_MAX: 10
+    Y_BITS: 9
+    MAX_VELOCITY: 10
+    VELOCITY_BITS: 6
+  tier2:
+    XZ_BITS: 10
+    Y_MAX: 10
+    Y_BITS: 9
+    MAX_VELOCITY: 10
+    VELOCITY_BITS: 6
+  tier3:
+    XZ_BITS: 10
+    Y_MAX: 10
+    Y_BITS: 9
+    MAX_VELOCITY: 10
+    VELOCITY_BITS: 6

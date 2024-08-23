@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 namespace DCL.Multiplayer.Movement.Settings
 {
@@ -28,10 +29,10 @@ namespace DCL.Multiplayer.Movement.Settings
         // - 15 [Time] // 5 min for 0.01f quantum
         public float TIMESTAMP_QUANTUM = 0.02f;
         public int TIMESTAMP_BITS = 15;
-        public int ROTATION_Y = 8;
+        public int ROTATION_Y_BITS = 8;
 
         public int ROTATION_START_BIT => LONG_FALL_BIT + 1;
-        public int TIER_START_BIT => ROTATION_START_BIT + ROTATION_Y;
+        public int TIER_START_BIT => ROTATION_START_BIT + ROTATION_Y_BITS;
 
         // 64
         // - 17 [Parcel]
@@ -39,6 +40,28 @@ namespace DCL.Multiplayer.Movement.Settings
 
         // 47
         [Header("POSITION [47]")]
+        public MovementEncodingConfig tier0;
+        public MovementEncodingConfig tier1;
+        public MovementEncodingConfig tier2;
+        public MovementEncodingConfig tier3;
+
+        public MovementEncodingConfig GetConfigForTier(int tier)
+        {
+            return tier switch
+                   {
+                       0 => tier0,
+                       1 => tier1,
+                       2 => tier2,
+                       3 => tier3,
+                       _ => throw new ArgumentOutOfRangeException()
+                   };
+        }
+
+    }
+
+    [Serializable]
+    public class MovementEncodingConfig
+    {
         public int XZ_BITS = 9;
 
         [Space]

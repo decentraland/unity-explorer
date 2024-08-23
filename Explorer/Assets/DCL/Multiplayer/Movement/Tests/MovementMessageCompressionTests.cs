@@ -113,7 +113,7 @@ namespace DCL.Multiplayer.Movement.Tests
         public void ShouldCorrectlyEncodeAndDecodeXZPositions(float x, float z)
         {
             // Arrange
-            float stepSize = PARCEL_SIZE / Mathf.Pow(2, settings.XZ_BITS);
+            float stepSize = PARCEL_SIZE / Mathf.Pow(2, settings.tier3.XZ_BITS);
             float quantizationError = (stepSize / 2f) + 0.0002f; // there is a small deviation at 8.0f point (less then 0.0002f)
 
             var originalMessage = new NetworkMovementMessage { position = new Vector3(x, 0f, z) };
@@ -130,13 +130,13 @@ namespace DCL.Multiplayer.Movement.Tests
 
         private static IEnumerable<float> GetYMaxTestCases()
         {
-            yield return Settings.Y_MAX / 8f;
-            yield return Settings.Y_MAX / 4f;
-            yield return Settings.Y_MAX / 3f;
-            yield return Settings.Y_MAX / 2f;
-            yield return Settings.Y_MAX;
-            yield return Settings.Y_MAX + 0.05f;
-            yield return 10 * Settings.Y_MAX;
+            yield return Settings.tier3.Y_MAX / 8f;
+            yield return Settings.tier3.Y_MAX / 4f;
+            yield return Settings.tier3.Y_MAX / 3f;
+            yield return Settings.tier3.Y_MAX / 2f;
+            yield return Settings.tier3.Y_MAX;
+            yield return Settings.tier3.Y_MAX + 0.05f;
+            yield return 10 * Settings.tier3.Y_MAX;
         }
 
         [TestCase(-5.751f)]
@@ -149,7 +149,7 @@ namespace DCL.Multiplayer.Movement.Tests
         public void ShouldCorrectlyEncodeAndDecodeYPositions(float y)
         {
             // Arrange
-            float stepSize = settings.Y_MAX / Mathf.Pow(2, settings.Y_BITS);
+            float stepSize = settings.tier3.Y_MAX / Mathf.Pow(2, settings.tier3.Y_BITS);
             float quantizationError = stepSize / 2f;
 
             var originalMessage = new NetworkMovementMessage { position = new Vector3(0f, y, 0f) };
@@ -159,18 +159,18 @@ namespace DCL.Multiplayer.Movement.Tests
 
             // Assert
             Assert.That(decompressedMessage.position.y, Is.GreaterThanOrEqualTo(0));
-            Assert.AreEqual(Mathf.Clamp(originalMessage.position.y, 0, settings.Y_MAX), decompressedMessage.position.y, quantizationError);
+            Assert.AreEqual(Mathf.Clamp(originalMessage.position.y, 0, settings.tier3.Y_MAX), decompressedMessage.position.y, quantizationError);
 
             Debug.Log($"Y quantization error = {quantizationError} | original: {originalMessage.position.y} | decompressed: {decompressedMessage.position.y}");
         }
 
         private static IEnumerable<TestCaseData> GetMaxVelocityTestCases()
         {
-            yield return new TestCaseData(20.241f, 30f, Settings.MAX_VELOCITY - 0.003f);
-            yield return new TestCaseData(-20.241f, -30f, -Settings.MAX_VELOCITY + 0.023f);
-            yield return new TestCaseData(Settings.MAX_VELOCITY / 2f, Settings.MAX_VELOCITY / 2f, Settings.MAX_VELOCITY / 2f);
-            yield return new TestCaseData(Settings.MAX_VELOCITY, -Settings.MAX_VELOCITY, Settings.MAX_VELOCITY);
-            yield return new TestCaseData(-Settings.MAX_VELOCITY, Settings.MAX_VELOCITY, -Settings.MAX_VELOCITY);
+            yield return new TestCaseData(20.241f, 30f, Settings.tier3.MAX_VELOCITY - 0.003f);
+            yield return new TestCaseData(-20.241f, -30f, -Settings.tier3.MAX_VELOCITY + 0.023f);
+            yield return new TestCaseData(Settings.tier3.MAX_VELOCITY / 2f, Settings.tier3.MAX_VELOCITY / 2f, Settings.tier3.MAX_VELOCITY / 2f);
+            yield return new TestCaseData(Settings.tier3.MAX_VELOCITY, -Settings.tier3.MAX_VELOCITY, Settings.tier3.MAX_VELOCITY);
+            yield return new TestCaseData(-Settings.tier3.MAX_VELOCITY, Settings.tier3.MAX_VELOCITY, -Settings.tier3.MAX_VELOCITY);
         }
 
         [TestCase(0, 0, 0)]
@@ -182,7 +182,7 @@ namespace DCL.Multiplayer.Movement.Tests
         public void ShouldCorrectlyCompressAndDecompressVelocity(float x, float y, float z)
         {
             // Arrange
-            float stepSize = 2 * settings.MAX_VELOCITY / Mathf.Pow(2, settings.VELOCITY_BITS);
+            float stepSize = 2 * settings.tier3.MAX_VELOCITY / Mathf.Pow(2, settings.tier3.VELOCITY_BITS);
             float quantizationError = (stepSize / 2f) + 0.01f; // there is a small deviation at zero (< 0.01f)
 
             var originalMessage = new NetworkMovementMessage { velocity = new Vector3(x, y, z) };

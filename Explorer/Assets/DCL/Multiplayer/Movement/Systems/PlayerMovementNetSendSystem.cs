@@ -113,6 +113,14 @@ namespace DCL.Multiplayer.Movement.Systems
             float dist = (playerMovement.Character.transform.position - playerMovement.LastSentMessage.position).magnitude;
             float speed = dist / (UnityEngine.Time.unscaledTime - playerMovement.LastSentMessage.timestamp);
 
+            int tier = speed switch
+                       {
+                           < 0.001f => 0,
+                           < 2 => 1,
+                           < 12 => 2,
+                           _ => 3,
+                       };
+
             Debug.Log($"VVV [speed] {lastSentMessage.velocity} | {speed}");
 
             playerMovement.LastSentMessage = new NetworkMovementMessage
@@ -121,6 +129,7 @@ namespace DCL.Multiplayer.Movement.Systems
                 position = playerMovement.Character.transform.position,
                 velocity = playerMovement.Character.velocity,
                 rotationY = playerMovement.Character.transform.eulerAngles.y,
+                tier = tier,
 
                 isStunned = playerStunComponent.IsStunned,
                 isSliding = animation.IsSliding,
