@@ -53,6 +53,9 @@ namespace DCL.SDKComponents.SceneUI.Components
         /// </summary>
         internal bool layoutIsDirty;
 
+        internal bool ContainsNode(CRDTEntity entity) =>
+            nodes != null && nodes.ContainsKey(entity);
+
         public void AddChild(EntityReference thisEntity, CRDTEntity childEntity, ref UITransformRelationLinkedData childComponent)
         {
             Node newNode = Node.POOL.Get();

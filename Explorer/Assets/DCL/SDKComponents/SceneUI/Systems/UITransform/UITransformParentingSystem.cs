@@ -23,7 +23,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
         private readonly Entity sceneRoot;
         private readonly IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap;
 
-        private UITransformParentingSystem(World world, IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap, Entity sceneRoot) : base(world)
+        internal UITransformParentingSystem(World world, IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap, Entity sceneRoot) : base(world)
         {
             this.sceneRoot = sceneRoot;
             this.entitiesMap = entitiesMap;
@@ -36,7 +36,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
         }
 
         [Query]
-        [All(typeof(PBUiTransform), typeof(UITransformComponent), typeof(DeleteEntityIntention))]
+        [All(typeof(PBUiTransform), typeof(DeleteEntityIntention))]
         [None(typeof(SceneRootComponent))]
         private void OrphanChildrenOfDeletedEntity(CRDTEntity sdkEntity, ref UITransformComponent uiTransformComponentToBeDeleted)
         {
