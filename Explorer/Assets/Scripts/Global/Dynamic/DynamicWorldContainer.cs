@@ -612,7 +612,7 @@ namespace Global.Dynamic
 
         private static URN[]? ParseSelfForcedEmotes(ApplicationParametersParser appParams)
         {
-            if (!appParams.AppParameters.TryGetValue("--self-force-emotes", out string csv))
+            if (!appParams.AppParameters.TryGetValue("self-force-emotes", out string csv))
                 return null;
 
             string[] emotes = csv.Split(',');
