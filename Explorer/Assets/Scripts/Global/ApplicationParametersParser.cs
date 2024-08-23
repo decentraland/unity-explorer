@@ -9,6 +9,7 @@ namespace Global
 {
     public class ApplicationParametersParser
     {
+        private const string REALM_PARAM = "realm";
         public Dictionary<string, string> AppParameters { get; private set; } = new ();
 
         public ApplicationParametersParser(string[] args)
@@ -40,22 +41,13 @@ namespace Global
                     deepLinkFound = true;
                     lastKeyStored = string.Empty;
 
-                    // When started in local scene development mode (AKA preview mode) command line arguments are used
-                    // Example (Windows) -> start decentraland://"realm=http://127.0.0.1:8000&position=100,100&otherparam=blahblah"
+                    // Application parameters may come embedded in a deep link:
+                    // Example (Windows) -> start decentraland://"realm=http://127.0.0.1:8000&position=100,100&local-scene=true&otherparam=blahblah"
                     ProcessDeepLinkParameters(arg);
                 }
                 else if (!string.IsNullOrEmpty(lastKeyStored))
                     AppParameters[lastKeyStored] = arg;
             }
-
-            // in MacOS the deep link string doesn't come in the cmd args...
-#if !UNITY_EDITOR && UNITY_STANDALONE_OSX
-            if (!string.IsNullOrEmpty(Application.absoluteURL) && Application.absoluteURL.StartsWith("decentraland"))
-            {
-                // Regex patch for MacOS removing the ':' from the realm parameter protocol
-                ProcessDeepLinkParameters(Regex.Replace(Application.absoluteURL, @"(https?)//(.*?)$", @"$1://$2"));
-            }
-#endif
 
             return AppParameters;
         }
@@ -72,6 +64,10 @@ namespace Global
 
             foreach (string uriQueryKey in uriQuery.AllKeys)
                 AppParameters[uriQueryKey] = uriQuery.Get(uriQueryKey);
+
+            // Patch for WinOS sometimes affecting the 'realm' parameter in deep links putting a '/' at the end
+            if (AppParameters.TryGetValue(REALM_PARAM, out string? realmParamValue) && realmParamValue.EndsWith('/'))
+                AppParameters[REALM_PARAM] = realmParamValue.Remove(realmParamValue.Length - 1);
         }
     }
 }
