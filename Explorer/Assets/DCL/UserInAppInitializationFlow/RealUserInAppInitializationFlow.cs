@@ -16,7 +16,7 @@ using DCL.UserInAppInitializationFlow.StartupOperations;
 using DCL.UserInAppInitializationFlow.StartupOperations.Struct;
 using DCL.Web3.Identities;
 using ECS.SceneLifeCycle.Realm;
-using System.Collections.Generic;
+using Global.AppArgs;
 using UnityEngine;
 using Utility.Types;
 
@@ -49,7 +49,8 @@ namespace DCL.UserInAppInitializationFlow
             IFeatureFlagsProvider featureFlagsProvider,
             IWeb3IdentityCache web3IdentityCache,
             IRealmController realmController,
-            Dictionary<string, string> appParameters)
+            IAppArgs appParameters
+        )
         {
             this.mvcManager = mvcManager;
             this.backgroundMusic = backgroundMusic;

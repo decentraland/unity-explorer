@@ -2,6 +2,7 @@ using DCL.DebugUtilities.Views;
 using System;
 using System.Collections.Generic;
 using UnityEngine.UIElements;
+using Utility.Types;
 
 namespace DCL.DebugUtilities
 {
@@ -11,10 +12,9 @@ namespace DCL.DebugUtilities
 
         public DebugContainer Container => throw new InvalidOperationException("Container is null implementation");
 
-        public DebugWidgetBuilder AddWidget(string name) =>
-
+        public Result<DebugWidgetBuilder> AddWidget(string name) =>
             //ignore
-            new (name);
+            Result<DebugWidgetBuilder>.ErrorResult("Null implementation");
 
         public IReadOnlyDictionary<string, DebugWidget> Widgets { get; } = new Dictionary<string, DebugWidget>();
 

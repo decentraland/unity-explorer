@@ -20,6 +20,7 @@ using System.Collections.Generic;
 using System.Threading;
 using DCL.PerformanceAndDiagnostics.DotNetLogging;
 using DCL.Utilities.Extensions;
+using Global.AppArgs;
 using Global.Dynamic;
 using UnityEngine;
 
@@ -154,6 +155,7 @@ namespace Global.Static
                 decentralandUrlsSource,
                 assetsProvisioner,
                 reportHandlingSettings,
+                new ApplicationParametersParser(),
                 debugViewsCatalog,
                 globalSettingsContainer,
                 web3IdentityProvider,
