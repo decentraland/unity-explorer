@@ -91,7 +91,7 @@ namespace DCL.Passport.Fields.Badges
             BadgeNameText.text = !string.IsNullOrEmpty(badgeInfo.progress.lastCompletedTierName) ? $"{badgeInfo.name} {badgeInfo.progress.lastCompletedTierName}" : badgeInfo.name;
             BadgeImage.SetColor(badgeInfo.isLocked ? LockedBadgeImageColor : NonLockedBadgeImageColor);
             string completedAtToLoad = !string.IsNullOrEmpty(badgeInfo.progress.lastCompletedTierAt) ? badgeInfo.progress.lastCompletedTierAt : badgeInfo.completedAt;
-            BadgeDateText.text = !string.IsNullOrEmpty(completedAtToLoad) ? PassportUtils.FormatTimestampDate(completedAtToLoad) : "-";
+            BadgeDateText.text = !string.IsNullOrEmpty(completedAtToLoad) ? PassportUtils.FormatTimestampDate(completedAtToLoad) : "—";
             BadgeDateText.gameObject.SetActive(
                 (!badgeInfo.isLocked && !string.IsNullOrEmpty(badgeInfo.completedAt)) ||
                 badgeInfo is { isLocked: true, isTier: false } ||
