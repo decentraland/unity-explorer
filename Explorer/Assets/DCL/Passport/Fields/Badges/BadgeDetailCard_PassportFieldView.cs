@@ -90,11 +90,12 @@ namespace DCL.Passport.Fields.Badges
             Model = badgeInfo;
             BadgeNameText.text = !string.IsNullOrEmpty(badgeInfo.lastCompletedTierName) ? $"{badgeInfo.name} {badgeInfo.lastCompletedTierName}" : badgeInfo.name;
             BadgeImage.SetColor(badgeInfo.isLocked ? LockedBadgeImageColor : NonLockedBadgeImageColor);
-
             string completedAtToLoad = !string.IsNullOrEmpty(badgeInfo.lastCompletedTierAt) ? badgeInfo.lastCompletedTierAt : badgeInfo.completedAt;
-            BadgeDateText.text = !string.IsNullOrEmpty(completedAtToLoad) ? PassportUtils.FormatTimestampDate(completedAtToLoad) : "--";
-
-            BadgeDateText.gameObject.SetActive(!string.IsNullOrEmpty(badgeInfo.completedAt) || (!isOwnProfile && !string.IsNullOrEmpty(badgeInfo.lastCompletedTierAt)));
+            BadgeDateText.text = !string.IsNullOrEmpty(completedAtToLoad) ? PassportUtils.FormatTimestampDate(completedAtToLoad) : "-";
+            BadgeDateText.gameObject.SetActive(
+                (!badgeInfo.isLocked && !string.IsNullOrEmpty(badgeInfo.completedAt)) ||
+                badgeInfo is { isLocked: true, isTier: false } ||
+                (!isOwnProfile && !string.IsNullOrEmpty(badgeInfo.lastCompletedTierAt)));
             TopTierMark.SetActive(isOwnProfile && badgeInfo.isTier && !string.IsNullOrEmpty(badgeInfo.completedAt));
             NextTierTitle.SetActive(isOwnProfile && badgeInfo is { isTier: true, stepsDone: > 0 } && string.IsNullOrEmpty(badgeInfo.completedAt));
             ProgressBar.gameObject.SetActive(isOwnProfile && badgeInfo.isTier && string.IsNullOrEmpty(badgeInfo.completedAt));
