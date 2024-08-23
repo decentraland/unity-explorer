@@ -1,6 +1,7 @@
 using Arch.Core;
 using DCL.Character.Components;
 using DCL.MapRenderer.MapCameraController;
+using UnityEngine;
 using Utility;
 
 namespace DCL.Navmap
@@ -8,7 +9,6 @@ namespace DCL.Navmap
     public class NavmapLocationController
     {
         private const float TRANSITION_TIME = 0.5f;
-        private const float IMMEDIATE_TRANSITION = 0;
 
         private IMapCameraController cameraController;
         private CharacterTransform playerTransformComponent;
@@ -28,18 +28,27 @@ namespace DCL.Navmap
         public void InjectCameraController(IMapCameraController controller)
         {
             this.cameraController = controller;
-            CenterToPlayer(IMMEDIATE_TRANSITION);
+
+            if (TryGetCoordinates(out var coordinates))
+                cameraController.SetPosition(coordinates);
         }
 
         private void CenterToPlayer()
         {
-            CenterToPlayer(TRANSITION_TIME);
+            if (TryGetCoordinates(out var coordinates))
+                cameraController.TranslateTo(coordinates, TRANSITION_TIME);
         }
 
-        private void CenterToPlayer(float duration)
+        private bool TryGetCoordinates(out Vector2 coordinates)
         {
             if (world.TryGet(playerEntity, out playerTransformComponent))
-                cameraController.TranslateTo(ParcelMathHelper.WorldToGridPositionUnclamped(playerTransformComponent.Transform.position), duration);
+            {
+                coordinates = ParcelMathHelper.WorldToGridPositionUnclamped(playerTransformComponent.Transform.position);
+                return true;
+            }
+
+            coordinates = Vector2.zero;
+            return false;
         }
     }
 }
