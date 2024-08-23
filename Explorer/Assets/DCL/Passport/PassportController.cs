@@ -197,7 +197,7 @@ namespace DCL.Passport
                 if (profile == null)
                     return;
 
-                viewInstance.BackgroundImage.material.SetColor(BG_SHADER_COLOR_1, chatEntryConfiguration.GetNameColor(profile.Name));
+                UpdateBackgroundColor(profile.Name);
 
                 if (sectionToLoad == PassportSection.OVERVIEW)
                 {
@@ -221,6 +221,12 @@ namespace DCL.Passport
                 passportErrorsController!.Show(ERROR_MESSAGE);
                 ReportHub.LogError(ReportCategory.PROFILE, $"{ERROR_MESSAGE} ERROR: {e.Message}");
             }
+        }
+
+        private void UpdateBackgroundColor(string profileName)
+        {
+            Color.RGBToHSV(chatEntryConfiguration.GetNameColor(profileName), out float h, out float s, out float v);
+            viewInstance?.BackgroundImage.material.SetColor(BG_SHADER_COLOR_1, Color.HSVToRGB(h, s, Mathf.Clamp01(v - 0.2f)));
         }
 
         private void SetupPassportModules(Profile profile, PassportSection passportSection)
