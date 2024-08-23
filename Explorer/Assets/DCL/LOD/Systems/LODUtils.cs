@@ -74,7 +74,8 @@ namespace DCL.LOD.Systems
             SceneDefinitionComponent sceneDefinitionComponent, ISceneReadinessReportQueue sceneReadinessReportQueue,
             IScenesCache scenesCache)
         {
-            if (sceneLODInfo.HasLOD(0))
+            //We have to report ready scenes for LOD_0 which are not SDK7. Only then we can consider this scenes as loaded
+            if (sceneLODInfo.HasLOD(0) && !sceneDefinitionComponent.IsSDK7)
                 ReportSceneLoaded(sceneDefinitionComponent, sceneReadinessReportQueue, scenesCache);
         }
 

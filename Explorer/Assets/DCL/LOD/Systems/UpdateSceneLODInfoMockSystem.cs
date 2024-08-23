@@ -40,8 +40,8 @@ namespace DCL.LOD.Systems
         {
             //If LODs are not enabled, we can consider the scene as ready,
             //and check scene readiness so not to block the loading screen
-            LODUtils.ReportSceneLoaded(sceneDefinitionComponent, sceneReadinessReportQueue,
-                scenesCache);
+            if (!sceneDefinitionComponent.IsSDK7)
+                LODUtils.ReportSceneLoaded(sceneDefinitionComponent, sceneReadinessReportQueue, scenesCache);
 
             World.Add<MockSceneLODInfo>(entity);
         }

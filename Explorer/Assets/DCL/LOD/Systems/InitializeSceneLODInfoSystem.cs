@@ -1,14 +1,11 @@
-﻿using System.Collections.Generic;
-using Arch.Core;
+﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using Arch.SystemGroups.Metadata;
 using DCL.Diagnostics;
 using DCL.LOD.Components;
 using DCL.Optimization.Pools;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
-using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Reporting;
 using ECS.SceneLifeCycle.SceneDefinition;
