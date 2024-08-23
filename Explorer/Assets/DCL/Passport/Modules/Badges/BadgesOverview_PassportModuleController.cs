@@ -107,7 +107,7 @@ namespace DCL.Passport.Modules.Badges
             {
                 const string ERROR_MESSAGE = "There was an error loading badges. Please try again!";
                 passportErrorsController.Show(ERROR_MESSAGE);
-                ReportHub.LogError(ReportCategory.PROFILE, $"{ERROR_MESSAGE} ERROR: {e.Message}");
+                ReportHub.LogError(ReportCategory.BADGES, $"{ERROR_MESSAGE} ERROR: {e.Message}");
             }
         }
     }

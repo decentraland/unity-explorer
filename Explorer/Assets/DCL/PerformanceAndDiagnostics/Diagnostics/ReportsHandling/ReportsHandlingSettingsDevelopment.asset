@@ -296,6 +296,14 @@ MonoBehaviour:
       Severity: 0
     - Category: PLAYER_SDK_DATA
       Severity: 4
+    - Category: BADGES_WEB_REQUEST
+      Severity: 4
+    - Category: BADGES_WEB_REQUEST
+      Severity: 0
+    - Category: BADGES
+      Severity: 0
+    - Category: BADGES
+      Severity: 4
   sentryMatrix:
     entries: []
   debounceEnabled: 1

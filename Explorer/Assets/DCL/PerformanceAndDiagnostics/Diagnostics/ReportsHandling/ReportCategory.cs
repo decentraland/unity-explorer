@@ -100,11 +100,6 @@ namespace DCL.Diagnostics
         public const string AUDIO_CLIP_WEB_REQUEST = nameof(AUDIO_CLIP_WEB_REQUEST);
 
         /// <summary>
-        ///     Badges related web request
-        /// </summary>
-        public const string BADGES_WEB_REQUEST = nameof(BADGES_WEB_REQUEST);
-
-        /// <summary>
         ///     Non-granular Streamable category
         /// </summary>
         public const string STREAMABLE_LOADING = nameof(STREAMABLE_LOADING);
@@ -262,6 +257,8 @@ namespace DCL.Diagnostics
         public const string SETTINGS_MENU = nameof(SETTINGS_MENU);
 
         public const string BACKPACK = nameof(BACKPACK);
+
+        public const string BADGES = nameof(BADGES);
 
         /// <summary>
         ///     Whatever is coming from external pure C# plugins

@@ -24,7 +24,7 @@ namespace DCL.BadgesAPIService
         public async UniTask<List<string>> FetchBadgeCategoriesAsync(CancellationToken ct)
         {
             var url = $"{badgesBaseUrl}/categories";
-            CategoriesResponse badgesResponse = await webRequestController.GetAsync(url, ct, reportCategory: ReportCategory.BADGES_WEB_REQUEST)
+            CategoriesResponse badgesResponse = await webRequestController.GetAsync(url, ct, reportCategory: ReportCategory.BADGES)
                                                                           .CreateFromJson<CategoriesResponse>(WRJsonParser.Unity);
 
             return badgesResponse.data.categories;
@@ -34,7 +34,7 @@ namespace DCL.BadgesAPIService
         {
             /*var url = $"{badgesBaseUrl}/users/{walletId}/overview";
 
-            LatestAchievedBadgesResponse latestAchievedBadgesResponse = await webRequestController.GetAsync(url, ct, reportCategory: ReportCategory.BADGES_WEB_REQUEST)
+            LatestAchievedBadgesResponse latestAchievedBadgesResponse = await webRequestController.GetAsync(url, ct, reportCategory: ReportCategory.BADGES)
                                                                                                   .CreateFromJson<LatestAchievedBadgesResponse>(WRJsonParser.Unity);
 
             return latestAchievedBadgesResponse.data.latestAchievedBadges;*/
@@ -46,7 +46,7 @@ namespace DCL.BadgesAPIService
         {
             /*var url = $"{badgesBaseUrl}/users/{walletId}/badges?showProgress={showProgress}";
 
-            BadgesResponse badgesResponse = await webRequestController.GetAsync(url, ct, reportCategory: ReportCategory.BADGES_WEB_REQUEST)
+            BadgesResponse badgesResponse = await webRequestController.GetAsync(url, ct, reportCategory: ReportCategory.BADGES)
                                                                       .CreateFromJson<BadgesResponse>(WRJsonParser.Newtonsoft);
 
             return ResponseToBadgesInfo(badgesResponse);*/
@@ -58,7 +58,7 @@ namespace DCL.BadgesAPIService
         {
             /*var url = $"{badgesBaseUrl}/badges/{badgeId}/tiers";
 
-            TiersResponse tiersResponse = await webRequestController.GetAsync(url, ct, reportCategory: ReportCategory.BADGES_WEB_REQUEST)
+            TiersResponse tiersResponse = await webRequestController.GetAsync(url, ct, reportCategory: ReportCategory.BADGES)
                                                                     .CreateFromJson<TiersResponse>(WRJsonParser.Unity);
 
             return tiersResponse.data.tiers;*/

@@ -3,7 +3,6 @@ using DCL.BadgesAPIService;
 using DCL.Diagnostics;
 using DCL.Passport.Fields.Badges;
 using DCL.Passport.Utils;
-using DCL.Profiles;
 using DCL.WebRequests;
 using System;
 using System.Collections.Generic;
@@ -129,7 +128,7 @@ namespace DCL.Passport.Modules.Badges
             {
                 const string ERROR_MESSAGE = "There was an error loading tiers. Please try again!";
                 passportErrorsController.Show(ERROR_MESSAGE);
-                ReportHub.LogError(ReportCategory.PROFILE, $"{ERROR_MESSAGE} ERROR: {e.Message}");
+                ReportHub.LogError(ReportCategory.BADGES, $"{ERROR_MESSAGE} ERROR: {e.Message}");
             }
         }
 
