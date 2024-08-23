@@ -14,6 +14,7 @@ using DCL.Backpack.BackpackBus;
 using DCL.Backpack.CharacterPreview;
 using DCL.Backpack.EmotesSection;
 using DCL.CharacterPreview;
+using DCL.Input;
 using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.Utilities.Extensions;
@@ -44,6 +45,7 @@ namespace DCL.PluginSystem.Global
         private readonly IBackpackEventBus backpackEventBus;
         private readonly IThirdPartyNftProviderSource thirdPartyNftProviderSource;
         private readonly IWearablesProvider wearablesProvider;
+        private readonly ICursor cursor;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
         private readonly URLDomain assetBundleURL;
         private readonly IWebRequestController webRequestController;
@@ -72,7 +74,8 @@ namespace DCL.PluginSystem.Global
             CharacterPreviewEventBus characterPreviewEventBus,
             IBackpackEventBus backpackEventBus,
             IThirdPartyNftProviderSource thirdPartyNftProviderSource,
-            IWearablesProvider wearablesProvider)
+            IWearablesProvider wearablesProvider,
+            ICursor cursor)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.web3Identity = web3Identity;
@@ -94,6 +97,7 @@ namespace DCL.PluginSystem.Global
             this.backpackEventBus = backpackEventBus;
             this.thirdPartyNftProviderSource = thirdPartyNftProviderSource;
             this.wearablesProvider = wearablesProvider;
+            this.cursor = cursor;
         }
 
         internal async UniTask<ContinueInitialization> InitializeAsync(
@@ -207,7 +211,8 @@ namespace DCL.PluginSystem.Global
                     emotesController,
                     backpackCharacterPreviewController,
                     thumbnailProvider,
-                    dclInput
+                    dclInput,
+                    cursor
                 );
             };
         }
