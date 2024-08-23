@@ -14,6 +14,9 @@ namespace DCL.Multiplayer.Movement.Settings
         // - (2 + 7) [Anim]
         private const int MOVEMENT_KIND_BITS = 2;
         public const int MOVEMENT_KIND_MASK = 0x3;
+
+        public const int TWO_BITS_MASK = 0x3;
+
         public  int MOVEMENT_KIND_START_BIT => TIMESTAMP_BITS;
         public  int SLIDING_BIT => MOVEMENT_KIND_START_BIT + MOVEMENT_KIND_BITS;
         public  int STUNNED_BIT => SLIDING_BIT + 1;

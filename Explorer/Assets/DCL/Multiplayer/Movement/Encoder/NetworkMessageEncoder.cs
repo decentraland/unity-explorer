@@ -40,15 +40,14 @@ namespace DCL.Multiplayer.Movement
             int compressedRotation = FloatQuantizer.Compress(rotationY, 0f, 360f, encodingSettings.ROTATION_Y_BITS);
             temporalData |= compressedRotation << encodingSettings.ROTATION_START_BIT;
 
-            // temporalData |= (tier & 0x3) << (encodingSettings.LONG_FALL_BIT + 1 + encodingSettings.TIER_START_BIT);
-            Debug.Log($"VVV compressed tier {tier}");
+            temporalData |= (tier & 0x3) << encodingSettings.TIER_START_BIT;
+            Debug.Log($"VVV compressed {timestamp} {tier}");
 
             return temporalData;
         }
 
         private long CompressMovementData(Vector3 position, Vector3 velocity, MovementEncodingConfig settings)
         {
-
             Vector2Int parcel = position.ToParcel();
 
             int parcelIndex = ParcelEncoder.Encode(parcel);
@@ -85,12 +84,13 @@ namespace DCL.Multiplayer.Movement
         {
             int compressedTemporalData = compressedMessage.temporalData;
             int tier = (compressedMessage.temporalData >> encodingSettings.TIER_START_BIT) & 0x3;
-            Debug.Log($"VVV decompressed tier {tier}");
 
             (Vector3 position, Vector3 velocity) movementData = DecompressMovementData(compressedMessage.movementData, encodingSettings.GetConfigForTier(tier));
 
             int rotationMask = (1 << encodingSettings.ROTATION_Y_BITS) - 1;
             int compressedRotation = (compressedTemporalData >> encodingSettings.ROTATION_START_BIT) & rotationMask;
+            float timestamp = new TimestampEncoder(encodingSettings).Decompress(compressedTemporalData);
+            Debug.Log($"VVV decompressed {timestamp} {tier}");
 
             return new NetworkMovementMessage
             {
@@ -101,7 +101,7 @@ namespace DCL.Multiplayer.Movement
                 rotationY = FloatQuantizer.Decompress(compressedRotation, 0f, 360f, encodingSettings.ROTATION_Y_BITS),
 
                 // Decompress temporal data
-                timestamp = encodingSettings.encodeTimestamp? new TimestampEncoder(encodingSettings).Decompress(compressedTemporalData) : compressedMessage.original.timestamp,
+                timestamp = encodingSettings.encodeTimestamp? timestamp : compressedMessage.original.timestamp,
                 movementKind = (MovementKind)((compressedTemporalData >> encodingSettings.MOVEMENT_KIND_START_BIT) & MessageEncodingSettings.MOVEMENT_KIND_MASK),
 
                 animState = new AnimationStates

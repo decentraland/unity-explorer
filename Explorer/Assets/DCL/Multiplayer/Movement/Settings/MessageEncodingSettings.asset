@@ -15,29 +15,29 @@ MonoBehaviour:
   encodeTimestamp: 1
   encodePosition: 1
   encodeVelocity: 1
-  TIMESTAMP_QUANTUM: 0.01
-  TIMESTAMP_BITS: 12
-  ROTATION_Y: 6
+  TIMESTAMP_QUANTUM: 0.02
+  TIMESTAMP_BITS: 14
+  ROTATION_Y_BITS: 7
   tier0:
-    XZ_BITS: 10
+    XZ_BITS: 8
     Y_MAX: 10
     Y_BITS: 9
     MAX_VELOCITY: 10
     VELOCITY_BITS: 6
   tier1:
-    XZ_BITS: 10
+    XZ_BITS: 8
     Y_MAX: 10
     Y_BITS: 9
     MAX_VELOCITY: 10
     VELOCITY_BITS: 6
   tier2:
-    XZ_BITS: 10
+    XZ_BITS: 8
     Y_MAX: 10
     Y_BITS: 9
     MAX_VELOCITY: 10
     VELOCITY_BITS: 6
   tier3:
-    XZ_BITS: 10
+    XZ_BITS: 8
     Y_MAX: 10
     Y_BITS: 9
     MAX_VELOCITY: 10
