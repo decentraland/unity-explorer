@@ -39,8 +39,6 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
 
         AssetBundlesCDN,
 
-        BadgeCategories,
         Badges,
-        BadgeTiers,
     }
 }

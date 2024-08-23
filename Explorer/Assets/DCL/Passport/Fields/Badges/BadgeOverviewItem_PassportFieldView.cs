@@ -37,14 +37,13 @@ namespace DCL.Passport.Fields.Badges
         public void StopLoadingImage() =>
             imageController?.StopLoading();
 
-        public void Setup(BadgeInfo badgeInfo)
+        public void Setup(LatestAchievedBadgeData badgeData)
         {
-            BadgeNameText.text = !string.IsNullOrEmpty(badgeInfo.lastCompletedTierName) ? $"{badgeInfo.name} {badgeInfo.lastCompletedTierName}" : badgeInfo.name;
+            BadgeNameText.text = badgeData.name;
 
             imageController?.SetImage(DefaultBadgeSprite);
-            string imageToLoad = !string.IsNullOrEmpty(badgeInfo.lastCompletedTierImage) ? badgeInfo.lastCompletedTierImage : badgeInfo.image;
-            if (!string.IsNullOrEmpty(imageToLoad))
-                imageController?.RequestImage(imageToLoad, hideImageWhileLoading: true);
+            if (!string.IsNullOrEmpty(badgeData.image))
+                imageController?.RequestImage(badgeData.image, hideImageWhileLoading: true);
         }
 
         public void OnPointerEnter(PointerEventData eventData) =>

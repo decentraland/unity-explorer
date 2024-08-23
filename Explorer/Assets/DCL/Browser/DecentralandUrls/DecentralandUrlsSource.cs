@@ -55,9 +55,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.ArchipelagoStatus => $"https://archipelago-stats.decentraland.{ENV}/status",
                 DecentralandUrl.GatekeeperStatus => $"https://comms-gatekeeper.decentraland.{ENV}/status",
                 DecentralandUrl.Genesis => $"https://realm-provider-ea.decentraland.{ENV}/main",
-                DecentralandUrl.BadgeCategories => $"https://badges.decentraland.zone/categories", //TODO (Santi) Replace it by $"https://badges.decentraland.{ENV}/categories"
-                DecentralandUrl.Badges => $"https://badges.decentraland.zone/badges", //TODO (Santi) Replace it by $"https://badges.decentraland.{ENV}/badges"
-                DecentralandUrl.BadgeTiers => $"https://badges.decentraland.zone/tiers", //TODO (Santi) Replace it by $"https://badges.decentraland.{ENV}/tiers"
+                DecentralandUrl.Badges => $"https://badges.decentraland.zone", //TODO (Santi) Replace it by $"https://badges.decentraland.{ENV}/badges"
                 _ => throw new ArgumentOutOfRangeException(nameof(decentralandUrl), decentralandUrl, null!)
             };
     }

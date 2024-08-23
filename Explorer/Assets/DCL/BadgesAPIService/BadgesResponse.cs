@@ -10,12 +10,6 @@ namespace DCL.BadgesAPIService
     }
 
     [Serializable]
-    public class TiersResponse
-    {
-        public List<TierData> data;
-    }
-
-    [Serializable]
     public class ProfileBadgesData
     {
         public List<BadgeData> achieved;

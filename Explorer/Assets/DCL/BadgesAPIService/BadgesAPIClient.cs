@@ -14,9 +14,7 @@ namespace DCL.BadgesAPIService
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
 
-        private string categoriesBaseURL => decentralandUrlsSource.Url(DecentralandUrl.BadgeCategories);
-        private string badgesBaseURL => decentralandUrlsSource.Url(DecentralandUrl.Badges);
-        private string tiersBaseURL => decentralandUrlsSource.Url(DecentralandUrl.BadgeTiers);
+        private string badgesBaseUrl => decentralandUrlsSource.Url(DecentralandUrl.Badges);
 
         public BadgesAPIClient(IWebRequestController webRequestController, IDecentralandUrlsSource decentralandUrlsSource)
         {
@@ -26,15 +24,27 @@ namespace DCL.BadgesAPIService
 
         public async UniTask<List<string>> FetchBadgeCategoriesAsync(CancellationToken ct)
         {
-            CategoriesResponse badgesResponse = await webRequestController.GetAsync(categoriesBaseURL, ct, reportCategory: ReportCategory.BADGES_WEB_REQUEST)
+            var url = $"{badgesBaseUrl}/categories";
+            CategoriesResponse badgesResponse = await webRequestController.GetAsync(url, ct, reportCategory: ReportCategory.BADGES_WEB_REQUEST)
                                                                           .CreateFromJson<CategoriesResponse>(WRJsonParser.Unity);
 
             return badgesResponse.data.categories;
         }
 
+        public async UniTask<List<LatestAchievedBadgeData>> FetchLatestAchievedBadgesAsync(string walletId, CancellationToken ct)
+        {
+            var url = $"{badgesBaseUrl}/users/{walletId}/preview";
+
+            LatestAchievedBadgesResponse latestAchievedBadgesResponse = await webRequestController.GetAsync(url, ct, reportCategory: ReportCategory.BADGES_WEB_REQUEST)
+                                                                                                  .CreateFromJson<LatestAchievedBadgesResponse>(WRJsonParser.Unity);
+
+            //return latestAchievedBadgesResponse.data.latestAchievedBadges;
+            return GetLatestAchievedBadgesMockedResponse().data.latestAchievedBadges;
+        }
+
         public async UniTask<BadgesInfo> FetchBadgesAsync(string walletId, bool includeLocked, int limitUnlocked, CancellationToken ct)
         {
-            /*StringBuilder url = new StringBuilder($"{badgesBaseURL}/{walletId}?includeLocked={(includeLocked ? "true" : "false")}");
+            /*StringBuilder url = new StringBuilder($"{badgesBaseUrl}/{walletId}?includeLocked={(includeLocked ? "true" : "false")}");
             if (limitUnlocked > 0)
                 url.Append($"&limitUnlocked={limitUnlocked}");
 
@@ -44,17 +54,7 @@ namespace DCL.BadgesAPIService
             return ResponseToBadgesInfo(badgesResponse);*/
 
             await UniTask.Delay(1000, cancellationToken: ct);
-            return ResponseToBadgesInfo(GetMockedResponse());
-        }
-
-        public async UniTask<TiersInfo> FetchTiersAsync(string badgeId, CancellationToken ct)
-        {
-            var url = $"{tiersBaseURL}/{badgeId}";
-
-            TiersResponse tiersResponse = await webRequestController.GetAsync(url, ct, reportCategory: ReportCategory.BADGES_WEB_REQUEST)
-                                                                    .CreateFromJson<TiersResponse>(WRJsonParser.Newtonsoft);
-
-            return ResponseToTiersInfo(tiersResponse);
+            return ResponseToBadgesInfo(GetBadgesMockedResponse());
         }
 
         private BadgesInfo ResponseToBadgesInfo(BadgesResponse badgesResponse)
@@ -117,28 +117,41 @@ namespace DCL.BadgesAPIService
             };
         }
 
-        private TiersInfo ResponseToTiersInfo(TiersResponse badgesResponse)
+        // TODO (Santi): Remove these functions when the API is ready
+        private static LatestAchievedBadgesResponse GetLatestAchievedBadgesMockedResponse()
         {
-            TiersInfo tiersInfo = new TiersInfo { tiers = new List<BadgeTierInfo>() };
-
-            foreach (var tier in badgesResponse.data)
+            LatestAchievedBadgesResponse mockedResponse = new LatestAchievedBadgesResponse
             {
-                tiersInfo.tiers.Add(new BadgeTierInfo
+                data = new LatestAchievedBadgesData
                 {
-                    id = tier.tierId,
-                    isLocked = tier.completedAt == null,
-                    name = tier.tierName,
-                    description = tier.description,
-                    awardedAt = tier.completedAt,
-                    image = tier.image,
-                });
-            }
+                    latestAchievedBadges = new List<LatestAchievedBadgeData>
+                    {
+                        new LatestAchievedBadgeData
+                        {
+                            id = "decentraland-citizen",
+                            name = "Decentraland Citizen",
+                            image = "https://dejpknyizje2n.cloudfront.net/media/carstickers/versions/pixel-art-golden-medal-award-sticker-u8c98-x450.png",
+                        },
+                        new LatestAchievedBadgeData
+                        {
+                            id = "emote-creator",
+                            name = "Emote Creator Diamond",
+                            image = "https://picsum.photos/seed/6/300/300",
+                        },
+                        new LatestAchievedBadgeData
+                        {
+                            id = "traveler",
+                            name = "Traveler Bronze",
+                            image = "https://picsum.photos/seed/8/300/300",
+                        },
+                    }
+                }
+            };
 
-            return tiersInfo;
+            return mockedResponse;
         }
 
-        // TODO (Santi): Remove this function when the API is ready
-        private static BadgesResponse GetMockedResponse()
+        private static BadgesResponse GetBadgesMockedResponse()
         {
             BadgesResponse mockedResponse = new BadgesResponse
             {
