@@ -4199,7 +4199,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1001436015316186579, guid: d3b1c0d4cb6ff45f2a76af7807b296a3, type: 3}
       propertyPath: m_Pivot.y
-      value: 1.35
+      value: -0.35
       objectReference: {fileID: 0}
     - target: {fileID: 1001436015316186579, guid: d3b1c0d4cb6ff45f2a76af7807b296a3, type: 3}
       propertyPath: m_AnchorMax.x
@@ -4259,7 +4259,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1001436015316186579, guid: d3b1c0d4cb6ff45f2a76af7807b296a3, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 88.835205
+      value: -120.26477
       objectReference: {fileID: 0}
     - target: {fileID: 1001436015316186579, guid: d3b1c0d4cb6ff45f2a76af7807b296a3, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
