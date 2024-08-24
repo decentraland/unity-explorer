@@ -1,37 +1,32 @@
 using Arch.Core;
-using DCL.CharacterMotion.Components;
+using DCL.Input.Component;
 using DCL.Utilities;
-using System;
 
 namespace DCL.Input.UnityInputSystem.Blocks
 {
     public class InputBlock : IInputBlock
     {
-        private readonly ObjectProxy<DCLInput> dclInput;
         private readonly ObjectProxy<World> globalWorld;
-        private readonly ObjectProxy<Entity> playerEntity;
 
-        public InputBlock(ObjectProxy<DCLInput> dclInput, ObjectProxy<World> globalWorld, ObjectProxy<Entity> playerEntity)
+        public InputBlock(ObjectProxy<World> globalWorld)
         {
-            this.dclInput = dclInput;
             this.globalWorld = globalWorld;
-            this.playerEntity = playerEntity;
         }
 
         public void BlockMovement()
         {
-            globalWorld.StrictObject.AddOrGet(playerEntity.StrictObject, new MovementBlockerComponent());
-            dclInput.StrictObject.Shortcuts.Disable();
-            dclInput.StrictObject.Camera.Disable();
-            dclInput.StrictObject.Player.Disable();
+            ref var inputMapComponent = ref globalWorld.StrictObject.CacheInputMap().GetInputMapComponent(globalWorld.StrictObject);
+            inputMapComponent.BlockInput(InputMapComponent.Kind.Camera);
+            inputMapComponent.BlockInput(InputMapComponent.Kind.Shortcuts);
+            inputMapComponent.BlockInput(InputMapComponent.Kind.Player);
         }
 
         public void UnblockMovement()
         {
-            globalWorld.StrictObject.Remove<MovementBlockerComponent>(playerEntity.StrictObject);
-            dclInput.StrictObject.Shortcuts.Enable();
-            dclInput.StrictObject.Camera.Enable();
-            dclInput.StrictObject.Player.Enable();
+            ref var inputMapComponent = ref globalWorld.StrictObject.CacheInputMap().GetInputMapComponent(globalWorld.StrictObject);
+            inputMapComponent.UnblockInput(InputMapComponent.Kind.Camera);
+            inputMapComponent.UnblockInput(InputMapComponent.Kind.Shortcuts);
+            inputMapComponent.UnblockInput(InputMapComponent.Kind.Player);
         }
     }
 }

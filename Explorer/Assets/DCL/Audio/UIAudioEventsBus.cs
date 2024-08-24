@@ -2,15 +2,35 @@ using System;
 
 namespace DCL.Audio
 {
-    public class UIAudioEventsBus : IDisposable
+    public interface IUIAudioEventsBus
+    {
+        event Action<AudioClipConfig>? PlayUIAudioEvent;
+        event Action<AudioClipConfig>? PlayContinuousUIAudioEvent;
+        event Action<AudioClipConfig>? StopContinuousUIAudioEvent;
+
+        void SendPlayAudioEvent(AudioClipConfig audioClipConfig);
+
+        void SendPlayContinuousAudioEvent(AudioClipConfig audioClipConfig);
+
+        void SendStopPlayingContinuousAudioEvent(AudioClipConfig audioClipConfig);
+
+        UIAudioEventsBus.PlayAudioScope NewPlayAudioScope(AudioClipConfig config);
+    }
+
+    public class UIAudioEventsBus : IDisposable, IUIAudioEventsBus
     {
         private static UIAudioEventsBus? instance;
 
         public static UIAudioEventsBus Instance => instance ??= new UIAudioEventsBus();
 
-        public event Action<AudioClipConfig> PlayUIAudioEvent;
-        public event Action<AudioClipConfig> PlayContinuousUIAudioEvent;
-        public event Action<AudioClipConfig> StopContinuousUIAudioEvent;
+        public UIAudioEventsBus()
+        {
+            instance = this;
+        }
+
+        public event Action<AudioClipConfig>? PlayUIAudioEvent;
+        public event Action<AudioClipConfig>? PlayContinuousUIAudioEvent;
+        public event Action<AudioClipConfig>? StopContinuousUIAudioEvent;
 
         public void Dispose() { }
 

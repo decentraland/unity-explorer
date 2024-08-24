@@ -1,20 +1,21 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Backpack;
-using DCL.CharacterMotion.Components;
+using DCL.Input;
+using DCL.Input.Component;
 using DCL.Navmap;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
 using DCL.Settings;
 using DCL.UI;
 using DCL.UI.ProfileElements;
+using ECS.Abstract;
 using MVC;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using UnityEngine.InputSystem;
 using Utility;
-using Utility.Arch;
 
 namespace DCL.ExplorePanel
 {
@@ -29,6 +30,8 @@ namespace DCL.ExplorePanel
         private readonly DCLInput dclInput;
         private readonly INotificationsBusController notificationBusController;
         private readonly IMVCManager mvcManager;
+        private readonly SingleInstanceEntity inputMapsEntity;
+
         private Dictionary<ExploreSections, TabSelectorView> tabsBySections;
         private Dictionary<ExploreSections, ISection> exploreSections;
 
@@ -55,7 +58,8 @@ namespace DCL.ExplorePanel
             ProfileMenuController profileMenuController,
             DCLInput dclInput,
             INotificationsBusController notificationBusController,
-            IMVCManager mvcManager)
+            IMVCManager mvcManager,
+            SingleInstanceEntity inputMapsEntity)
             : base(viewFactory)
         {
             NavmapController = navmapController;
@@ -69,6 +73,7 @@ namespace DCL.ExplorePanel
             this.mvcManager = mvcManager;
             this.profileMenuController = profileMenuController;
             this.notificationBusController.SubscribeToNotificationTypeClick(NotificationType.REWARD_ASSIGNMENT, OnRewardAssigned);
+            this.inputMapsEntity = inputMapsEntity;
         }
 
         private void OnRewardAssigned(object[] parameters)
@@ -240,16 +245,18 @@ namespace DCL.ExplorePanel
 
         private void BlockUnwantedActions()
         {
-            world.AddOrGet<CameraBlockerComponent>(playerEntity);
-            world.AddOrGet<MovementBlockerComponent>(playerEntity);
-            dclInput.Camera.Disable();
+            ref var inputMapComponent = ref inputMapsEntity.GetInputMapComponent(world);
+            inputMapComponent.BlockInput(InputMapComponent.Kind.Camera);
+            inputMapComponent.BlockInput(InputMapComponent.Kind.FreeCamera);
+            inputMapComponent.BlockInput(InputMapComponent.Kind.Player);
         }
 
         private void UnblockUnwantedActions()
         {
-            world.TryRemove<CameraBlockerComponent>(playerEntity);
-            world.TryRemove<MovementBlockerComponent>(playerEntity);
-            dclInput.Camera.Enable();
+            ref var inputMapComponent = ref inputMapsEntity.GetInputMapComponent(world);
+            inputMapComponent.UnblockInput(InputMapComponent.Kind.Camera);
+            inputMapComponent.UnblockInput(InputMapComponent.Kind.FreeCamera);
+            inputMapComponent.UnblockInput(InputMapComponent.Kind.Player);
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct)

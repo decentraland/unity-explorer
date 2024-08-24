@@ -1,6 +1,7 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.Audio;
 using DCL.Chat;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
@@ -30,6 +31,7 @@ namespace DCL.PluginSystem.Global
         private readonly IInputBlock inputBlock;
         private readonly IEventSystem eventSystem;
         private readonly MainUIView mainUIView;
+        private readonly IUIAudioEventsBus audioEventsBus;
 
         private ChatController chatController;
 
@@ -43,7 +45,7 @@ namespace DCL.PluginSystem.Global
             DCLInput dclInput,
             IEventSystem eventSystem,
             MainUIView mainUIView,
-            IInputBlock inputBlock
+            IUIAudioEventsBus audioEventsBus
         )
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -53,9 +55,9 @@ namespace DCL.PluginSystem.Global
             this.entityParticipantTable = entityParticipantTable;
             this.nametagsData = nametagsData;
             this.dclInput = dclInput;
-            this.inputBlock = inputBlock;
             this.eventSystem = eventSystem;
             this.mainUIView = mainUIView;
+            this.audioEventsBus = audioEventsBus;
         }
 
         protected override void InjectSystems(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
@@ -90,8 +92,9 @@ namespace DCL.PluginSystem.Global
                     builder.World,
                     arguments.PlayerEntity,
                     dclInput,
-                    inputBlock,
-                    eventSystem
+                    eventSystem,
+                    audioEventsBus,
+                    builder.World.CacheInputMap()
                 );
 
                 mvcManager.RegisterController(chatController);

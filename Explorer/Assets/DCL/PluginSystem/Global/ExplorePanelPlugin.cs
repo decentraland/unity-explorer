@@ -14,6 +14,8 @@ using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Chat;
 using DCL.ExplorePanel;
+using DCL.Input;
+using DCL.Input.UnityInputSystem.Blocks;
 using DCL.Landscape.Settings;
 using DCL.MapRenderer;
 using DCL.Navmap;
@@ -200,7 +202,7 @@ namespace DCL.PluginSystem.Global
                     ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackSubPlugin.backpackController!, arguments.PlayerEntity, builder.World,
                     new ProfileWidgetController(() => explorePanelView.ProfileWidget, web3IdentityCache, profileRepository, webRequestController),
                     new ProfileMenuController(() => explorePanelView.ProfileMenuView, explorePanelView.ProfileMenuView.ProfileMenu, web3IdentityCache, profileRepository, webRequestController, builder.World, arguments.PlayerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager, chatEntryConfiguration),
-                    dclInput, notificationsBusController, mvcManager));
+                    dclInput, notificationsBusController, mvcManager, builder.World.CacheInputMap()));
 
                 inputHandler = new ExplorePanelInputHandler(dclInput, mvcManager);
             };

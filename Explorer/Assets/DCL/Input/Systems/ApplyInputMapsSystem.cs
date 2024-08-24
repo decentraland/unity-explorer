@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using DCL.Diagnostics;
 using DCL.Input.Component;
 using ECS.Abstract;
 using UnityEngine.InputSystem;
@@ -68,10 +69,17 @@ namespace DCL.Input.Systems
 
         private static void SetActionMapEnabled(bool enabled, InputActionMap map)
         {
+            if (map.enabled == enabled) return;
+            ReportHub.LogError(ReportData.UNSPECIFIED, $"{enabled} - {map.name}");
+
             if (enabled)
+            {
                 map.Enable();
+            }
             else
+            {
                 map.Disable();
+            }
         }
     }
 }

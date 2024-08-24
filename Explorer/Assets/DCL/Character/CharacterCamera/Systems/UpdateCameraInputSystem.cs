@@ -45,35 +45,52 @@ namespace DCL.CharacterCamera.Systems
         [None(typeof(CameraBlockerComponent))]
         private void UpdateInput(ref CameraInput cameraInput, ref CursorComponent cursorComponent)
         {
-            cameraInput.ZoomIn = cameraActions.Zoom.ReadValue<Vector2>().y > 0
-                                 || cameraActions.ZoomIn.WasPressedThisFrame();
-
-            cameraInput.ZoomOut = cameraActions.Zoom.ReadValue<Vector2>().y < 0
-                                  || cameraActions.ZoomOut.WasPressedThisFrame();
-
-            Vector2 currentDelta = cameraActions.Delta.ReadValue<Vector2>();
-
-            if (currentDelta.sqrMagnitude > CURSOR_DIRTY_THRESHOLD)
-                cursorComponent.PositionIsDirty = true;
-
-            cameraInput.Delta = cursorComponent.CursorState != CursorState.Free ? currentDelta : Vector2.zero;
-
-            cameraInput.FreeMovement = freeCameraActions.Movement.ReadValue<Vector2>();
-            cameraInput.FreePanning = freeCameraActions.Panning.ReadValue<Vector2>();
-            cameraInput.FreeFOV = freeCameraActions.FOV.ReadValue<Vector2>();
-
-            if (freeCameraActions.Sprint.IsPressed())
+            if (!cameraActions.enabled)
             {
-                cameraInput.FreeMovement *= 10;
-                cameraInput.FreePanning *= 10;
-                cameraInput.FreeFOV *= 2;
+                cameraInput.ZoomIn = false;
+                cameraInput.ZoomOut = false;
+                cameraInput.Delta = Vector2.zero;
+            }
+            else
+            {
+                cameraInput.ZoomIn = cameraActions.Zoom.ReadValue<Vector2>().y > 0
+                                     || cameraActions.ZoomIn.WasPressedThisFrame();
+
+                cameraInput.ZoomOut = cameraActions.Zoom.ReadValue<Vector2>().y < 0
+                                      || cameraActions.ZoomOut.WasPressedThisFrame();
+
+                Vector2 currentDelta = cameraActions.Delta.ReadValue<Vector2>();
+
+                if (currentDelta.sqrMagnitude > CURSOR_DIRTY_THRESHOLD)
+                    cursorComponent.PositionIsDirty = true;
+
+                cameraInput.Delta = cursorComponent.CursorState != CursorState.Free ? currentDelta : Vector2.zero;
             }
 
-            if (freeCameraActions.Slow.IsPressed())
+            if (!freeCameraActions.enabled)
             {
-                cameraInput.FreeMovement *= 0.5f;
-                cameraInput.FreePanning *= 0.5f;
-                cameraInput.FreeFOV *= 0.5f;
+                cameraInput.FreeMovement = Vector2.zero;
+                cameraInput.FreePanning = Vector2.zero;
+            }
+            else
+            {
+                cameraInput.FreeMovement = freeCameraActions.Movement.ReadValue<Vector2>();
+                cameraInput.FreePanning = freeCameraActions.Panning.ReadValue<Vector2>();
+                cameraInput.FreeFOV = freeCameraActions.FOV.ReadValue<Vector2>();
+
+                if (freeCameraActions.Sprint.IsPressed())
+                {
+                    cameraInput.FreeMovement *= 10;
+                    cameraInput.FreePanning *= 10;
+                    cameraInput.FreeFOV *= 2;
+                }
+
+                if (freeCameraActions.Slow.IsPressed())
+                {
+                    cameraInput.FreeMovement *= 0.5f;
+                    cameraInput.FreePanning *= 0.5f;
+                    cameraInput.FreeFOV *= 0.5f;
+                }
             }
         }
     }

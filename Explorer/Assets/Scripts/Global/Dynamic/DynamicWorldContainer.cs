@@ -16,7 +16,6 @@ using DCL.Chat;
 using DCL.Chat.Commands;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
-using DCL.CommandLine;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.Input;
@@ -423,6 +422,8 @@ namespace Global.Dynamic
 
             var currentSceneInfo = new CurrentSceneInfo();
 
+            var uiAudioEventsBus = new UIAudioEventsBus();
+
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
                 new MultiplayerPlugin(
@@ -488,7 +489,7 @@ namespace Global.Dynamic
                 new ErrorPopupPlugin(container.MvcManager, assetsProvisioner),
                 new ConnectionStatusPanelPlugin(container.UserInAppInAppInitializationFlow, container.MvcManager, mainUIView, roomsStatus, currentSceneInfo, container.reloadSceneController),
                 new MinimapPlugin(container.MvcManager, container.MapRendererContainer, placesAPIService, staticContainer.RealmData, container.ChatMessagesBus, realmNavigator, staticContainer.ScenesCache, mainUIView, mapPathEventBus),
-                new ChatPlugin(assetsProvisioner, container.MvcManager, container.ChatMessagesBus, chatHistory, entityParticipantTable, nametagsData, dclInput, unityEventSystem, mainUIView, staticContainer.InputBlock),
+                new ChatPlugin(assetsProvisioner, container.MvcManager, container.ChatMessagesBus, chatHistory, entityParticipantTable, nametagsData, dclInput, unityEventSystem, mainUIView, uiAudioEventsBus),
                 new ExplorePanelPlugin(
                     assetsProvisioner,
                     container.MvcManager,
