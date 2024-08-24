@@ -31,7 +31,7 @@ namespace DCL.Input.Component
         {
             get => active;
 
-            set
+            private set
             {
                 active = value;
                 IsDirty = true;
@@ -51,7 +51,7 @@ namespace DCL.Input.Component
 
         public void UnblockInput(Kind kind)
         {
-            inputBlockCounters![kind] -= 1;
+            inputBlockCounters[kind] -= 1;
             ReportHub.LogError(ReportData.UNSPECIFIED, $"blockCounters DECREASED for {kind.ToString()} value {inputBlockCounters![kind]}");
 
             if (inputBlockCounters[kind] == 0) { Active |= kind; }
