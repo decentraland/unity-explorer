@@ -12,11 +12,9 @@ using CrdtEcsBridge.ECSToCRDTWriter;
 using CrdtEcsBridge.JsModulesImplementation.Communications;
 using CrdtEcsBridge.OutgoingMessages;
 using CrdtEcsBridge.PoolsProviders;
-using CrdtEcsBridge.RestrictedActions;
 using CrdtEcsBridge.UpdateGate;
 using CrdtEcsBridge.WorldSynchronizer;
 using Cysharp.Threading.Tasks;
-using DCL.Diagnostics;
 using DCL.Interaction.Utility;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.RoomHubs;
@@ -63,12 +61,17 @@ namespace SceneRunner.Tests
     [TestFixture]
     public class SceneFacadeShould
     {
+        private V8ActiveEngines activeEngines;
+        private V8EngineFactory engineFactory;
+
         [SetUp]
         public void SetUp()
         {
             path = $"file://{Application.dataPath + "/../TestResources/Scenes/Cube/cube.js"}";
+            activeEngines = new V8ActiveEngines();
+            engineFactory = new V8EngineFactory(activeEngines);
 
-            sceneRuntimeFactory = new SceneRuntimeFactory(TestWebRequestController.INSTANCE, new IRealmData.Fake());
+            sceneRuntimeFactory = new SceneRuntimeFactory(TestWebRequestController.INSTANCE, new IRealmData.Fake(), engineFactory, activeEngines);
 
             ecsWorldFactory = Substitute.For<IECSWorldFactory>().EnsureNotNull();
 
@@ -117,6 +120,7 @@ namespace SceneRunner.Tests
             }
 
             sceneFacades.Clear();
+            activeEngines.Clear();
         }
 
         private SceneRuntimeFactory sceneRuntimeFactory = null!;
@@ -215,9 +219,15 @@ namespace SceneRunner.Tests
 
             var list = new ConcurrentBag<int>();
 
-            async UniTask CreateAndLaunch(int fps, int lifeTime)
+            await UniTask.WhenAll(fps.Select((fps, i) => CreateAndLaunch(fps, lifeTimeMs[i], i.ToString())));
+
+            // It is not reliable to count the threads exactly as the agent can have a limited capacity
+            Assert.GreaterOrEqual(list.Distinct().Count(), Mathf.Min(2, fps.Length - 2));
+            return;
+
+            async UniTask CreateAndLaunch(int fps, int lifeTime, string id)
             {
-                var sceneFacade = (SceneFacade)await sceneFactory.CreateSceneFromFileAsync(path, Substitute.For<IPartitionComponent>(), CancellationToken.None);
+                var sceneFacade = (SceneFacade)await sceneFactory.CreateSceneFromFileAsync(path, Substitute.For<IPartitionComponent>(), CancellationToken.None, id);
                 sceneFacades.Add(sceneFacade);
 
                 var cancellationTokenSource = new CancellationTokenSource();
@@ -229,13 +239,8 @@ namespace SceneRunner.Tests
 
                 list.Add(Thread.CurrentThread.ManagedThreadId);
 
-                await Task.Delay(waitTime - lifeTime);
+                await Task.Delay(waitTime - lifeTime, cancellationTokenSource.Token);
             }
-
-            await UniTask.WhenAll(fps.Select((fps, i) => CreateAndLaunch(fps, lifeTimeMs[i])));
-
-            // It is not reliable to count the threads exactly as the agent can have a limited capacity
-            Assert.GreaterOrEqual(list.Distinct().Count(), Mathf.Min(2, fps.Length - 2));
         }
 
         [Test]

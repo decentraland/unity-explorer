@@ -1,5 +1,6 @@
 ﻿using Arch.Core;
 using DCL.AvatarRendering.Emotes;
+using SceneRuntime;
 
 namespace DCL.PluginSystem.Global
 {
@@ -12,10 +13,13 @@ namespace DCL.PluginSystem.Global
 
         public readonly IEmoteProvider EmoteProvider;
 
-        public GlobalPluginArguments(Entity playerEntity, IEmoteProvider emoteProvider)
+        public readonly V8ActiveEngines V8ActiveEngines;
+
+        public GlobalPluginArguments(Entity playerEntity, IEmoteProvider emoteProvider, V8ActiveEngines v8ActiveEngines)
         {
             PlayerEntity = playerEntity;
             EmoteProvider = emoteProvider;
+            V8ActiveEngines = v8ActiveEngines;
         }
     }
 }
