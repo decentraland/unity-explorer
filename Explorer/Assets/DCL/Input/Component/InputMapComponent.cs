@@ -38,31 +38,6 @@ namespace DCL.Input.Component
             }
         }
 
-        public void BlockInput(Kind kind)
-        {
-            inputBlockCounters[kind] += 1;
-            ReportHub.LogError(ReportData.UNSPECIFIED, $"blockCounters INCREASED for {kind.ToString()} value {inputBlockCounters![kind]}");
-
-            if (inputBlockCounters[kind] == 1)
-            {
-                Active &= ~kind;
-            }
-        }
-
-        public void UnblockInput(Kind kind)
-        {
-            inputBlockCounters[kind] -= 1;
-            ReportHub.LogError(ReportData.UNSPECIFIED, $"blockCounters DECREASED for {kind.ToString()} value {inputBlockCounters![kind]}");
-
-            if (inputBlockCounters[kind] == 0) { Active |= kind; }
-
-            if (inputBlockCounters[kind] < 0)
-            {
-                ReportHub.LogError(ReportData.UNSPECIFIED, $"blockCounters LESS THAN ZERO!!!!! for {kind.ToString()} value {inputBlockCounters![kind]}");
-                inputBlockCounters[kind] = 0;
-            }
-        }
-
         public bool IsDirty;
 
         public InputMapComponent(Kind flags)
@@ -76,7 +51,29 @@ namespace DCL.Input.Component
                 Kind kind = VALUES[i];
                 inputBlockCounters.Add(kind, EnumUtils.HasFlag(active, kind) ? 0 : 1);
                 ReportHub.LogError(ReportData.UNSPECIFIED, $"Added BlockCounter for {kind.ToString()} value {inputBlockCounters![kind]}");
+            }
+        }
 
+        public void BlockInput(Kind kind)
+        {
+            inputBlockCounters[kind] += 1;
+
+            if (inputBlockCounters[kind] == 1) { Active &= ~kind; }
+        }
+
+        public void UnblockInput(Kind kind)
+        {
+            inputBlockCounters[kind] -= 1;
+
+            switch (inputBlockCounters[kind])
+            {
+                case 0:
+                    Active |= kind;
+                    break;
+                case < 0:
+                    ReportHub.LogWarning(ReportCategory.INPUT, $"Block Counter is less than zero for {kind.ToString()} but it should not be. Something is trying to unlock an input without blocking it first or double unlocking is happening");
+                    inputBlockCounters[kind] = 0;
+                    break;
             }
         }
     }
