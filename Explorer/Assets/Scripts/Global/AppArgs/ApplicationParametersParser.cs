@@ -84,7 +84,11 @@ namespace Global.AppArgs
             NameValueCollection uriQuery = HttpUtility.ParseQueryString(uri.Query);
 
             foreach (string uriQueryKey in uriQuery.AllKeys)
+            {
+                // if the deep link is not constructed correctly (AKA 'decentraland://?&blabla=blabla') a 'null' parameter can be detected...
+                if (uriQueryKey == null) continue;
                 appParameters[uriQueryKey] = uriQuery.Get(uriQueryKey);
+            }
 
             // Patch for WinOS sometimes affecting the 'realm' parameter in deep links putting a '/' at the end
             if (appParameters.TryGetValue(REALM_PARAM, out string? realmParamValue) && realmParamValue.EndsWith('/'))
