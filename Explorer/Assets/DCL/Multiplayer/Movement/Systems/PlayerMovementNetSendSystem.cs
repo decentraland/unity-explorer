@@ -18,21 +18,20 @@ namespace DCL.Multiplayer.Movement.Systems
     {
         private const int MAX_MESSAGES_PER_SEC = 10; // 10 Hz == 10 [msg/sec]
 
-        private const float MOVE_SEND_RATE = 0.1f;
-        private const float STAND_SEND_RATE = 1f;
-
         private const float POSITION_MOVE_EPSILON = 0.0001f; // 1 mm
         private const float VELOCITY_MOVE_EPSILON = 0.01f; // 1 cm/s
 
         private readonly MultiplayerMovementMessageBus messageBus;
         private readonly IMultiplayerMovementSettings settings;
 
-        private float sendRate = MOVE_SEND_RATE;
+        private float sendRate;
 
         public PlayerMovementNetSendSystem(World world, MultiplayerMovementMessageBus messageBus, IMultiplayerMovementSettings settings) : base(world)
         {
             this.messageBus = messageBus;
             this.settings = settings;
+
+            sendRate = this.settings.MoveSendRate;
         }
 
         protected override void Update(float t)
@@ -72,13 +71,13 @@ namespace DCL.Multiplayer.Movement.Systems
 
             bool isMoving = IsMoving(playerMovement);
 
-            if (isMoving && sendRate > MOVE_SEND_RATE)
-                sendRate = MOVE_SEND_RATE;
+            if (isMoving && sendRate > settings.MoveSendRate)
+                sendRate = settings.MoveSendRate;
 
             if (timeDiff > sendRate)
             {
-                if (!isMoving && sendRate < STAND_SEND_RATE)
-                    sendRate = Mathf.Min(2 * sendRate, STAND_SEND_RATE);
+                if (!isMoving && sendRate < settings.StandSendRate)
+                    sendRate = Mathf.Min(2 * sendRate, settings.StandSendRate);
 
                 SendMessage(ref playerMovement, in anim, in stun, in move);
             }
@@ -152,8 +151,7 @@ namespace DCL.Multiplayer.Movement.Systems
 
             // Debug purposes. Simulate package lost when Running
             if (settings.SelfSending
-
-                // && movement.Kind != MovementKind.RUN // simulate package lost when Running
+                && movement.Kind != MovementKind.RUN // simulate package lost when Running
                ) { messageBus.SelfSendWithDelayAsync(playerMovement.LastSentMessage, settings.Latency + (settings.Latency * Random.Range(0, settings.LatencyJitter))).Forget(); }
         }
     }

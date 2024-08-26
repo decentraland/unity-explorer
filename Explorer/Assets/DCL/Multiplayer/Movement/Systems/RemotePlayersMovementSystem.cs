@@ -60,6 +60,13 @@ namespace DCL.Multiplayer.Movement.Systems
                 if (playerInbox.Count == 0) return;
             }
 
+            // We wait delay of 2 messages for more stability of interpolation
+            if (remotePlayerMovement.InitialCooldownTime < 2 * settings.MoveSendRate)
+            {
+                remotePlayerMovement.InitialCooldownTime += deltaTime;
+                return;
+            }
+
             if (intComp.Enabled)
             {
                 deltaTime = Interpolate(deltaTime, ref transComp, ref remotePlayerMovement, ref intComp);
@@ -71,7 +78,7 @@ namespace DCL.Multiplayer.Movement.Systems
                 playerInbox.Dequeue();
 
             // When there is no messages, we extrapolate
-            if (playerInbox.Count == 0 && settings.UseExtrapolation && remotePlayerMovement is { Initialized: true, WasTeleported: false })
+            if (settings.UseExtrapolation && playerInbox.Count == 0 && remotePlayerMovement is { Initialized: true, WasTeleported: false })
             {
                 if (!extComp.Enabled && remotePlayerMovement.PastMessage.velocity.sqrMagnitude > settings.ExtrapolationSettings.MinSpeed)
                     extComp.Restart(from: remotePlayerMovement.PastMessage, settings.ExtrapolationSettings.TotalMoveDuration);
@@ -92,14 +99,7 @@ namespace DCL.Multiplayer.Movement.Systems
         {
             NetworkMovementMessage remote = playerInbox.Dequeue();
 
-            // Filter messages that could possibly be from another time buffer period
-            while (playerInbox.Count > 0 &&
-                   (remotePlayerMovement.PastMessage.position - remote.position).sqrMagnitude > settings.InterpolationSettings.PositionSingularityThreshold &&
-                   (remotePlayerMovement.PastMessage.position - playerInbox.First.position).sqrMagnitude > settings.InterpolationSettings.PositionSingularityThreshold)
-                remote = playerInbox.Dequeue();
-
             var isBlend = false;
-
             if (extComp.Enabled)
             {
                 // if we success with stop of extrapolation, then we can start to blend
@@ -159,9 +159,9 @@ namespace DCL.Multiplayer.Movement.Systems
         private void TeleportFiltered(ref NetworkMovementMessage remote, ref CharacterTransform transComp, ref RemotePlayerMovementComponent remotePlayerMovement,
             SimplePriorityQueue<NetworkMovementMessage> playerInbox)
         {
-            // Filter messages with the same position
+            // Filter messages with the same position and rotation
             if (settings.InterpolationSettings.UseSpeedUp)
-                while (playerInbox.Count > 0
+                while (playerInbox.Count > settings.InterpolationSettings.CatchUpMessagesMin
                        && Mathf.Abs(playerInbox.First.rotationY - remote.rotationY) < settings.MinRotationDelta
                        && Vector3.SqrMagnitude(playerInbox.First.position - remote.position) < settings.MinPositionDelta)
                     remote = playerInbox.Dequeue();
@@ -183,11 +183,14 @@ namespace DCL.Multiplayer.Movement.Systems
         {
             RemotePlayerInterpolationSettings? intSettings = settings.InterpolationSettings;
 
-            InterpolationType spline = intSettings.UseBlend ? intSettings.BlendType :
+            bool useLinear = remotePlayerMovement.PastMessage.velocity.sqrMagnitude < ZERO_VELOCITY_THRESHOLD || remote.velocity.sqrMagnitude < ZERO_VELOCITY_THRESHOLD ||
+                             remotePlayerMovement.PastMessage.animState.IsGrounded != remote.animState.IsGrounded || remotePlayerMovement.PastMessage.animState.IsJumping != remote.animState.IsJumping;
 
-                // Interpolate linearly to/from zero velocities to avoid position overshooting
-                remote.velocity.sqrMagnitude < ZERO_VELOCITY_THRESHOLD || remotePlayerMovement.PastMessage.velocity.sqrMagnitude < ZERO_VELOCITY_THRESHOLD ? InterpolationType.Linear :
+            // Interpolate linearly to/from zero velocities to avoid position overshooting
+            InterpolationType spline = intSettings.UseBlend ? intSettings.BlendType :
+                useLinear ? InterpolationType.Linear :
                 intSettings.InterpolationType;
+
 
             intComp.Restart(remotePlayerMovement.PastMessage, remote, spline, characterControllerSettings);
 

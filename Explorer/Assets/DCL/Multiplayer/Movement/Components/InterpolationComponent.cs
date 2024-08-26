@@ -5,8 +5,6 @@ namespace DCL.Multiplayer.Movement
 {
     public struct InterpolationComponent
     {
-        private const float EPSILON = 0.01f;
-
         public NetworkMovementMessage Start;
         public NetworkMovementMessage End;
 
@@ -19,9 +17,6 @@ namespace DCL.Multiplayer.Movement
         public void Restart(NetworkMovementMessage from, NetworkMovementMessage to, InterpolationType interpolationType, ICharacterControllerSettings settings)
         {
             SplineType = interpolationType;
-
-            if (Start.velocity.sqrMagnitude < EPSILON)
-                SplineType = InterpolationType.FullMonotonicHermite;
 
             Start = from;
             End = to;

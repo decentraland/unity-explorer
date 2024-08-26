@@ -26,7 +26,7 @@ namespace DCL.Multiplayer.Movement
 
         public readonly SimplePriorityQueue<NetworkMovementMessage>? Queue => disposed ? null : queue;
 
-        public float LastMessageEnqueueTime;
+        public float InitialCooldownTime;
 
         public RemotePlayerMovementComponent(IObjectPool<SimplePriorityQueue<NetworkMovementMessage>> queuePool)
         {
@@ -40,7 +40,7 @@ namespace DCL.Multiplayer.Movement
 
             WasPassedThisFrame = false;
 
-            LastMessageEnqueueTime = 0;
+            InitialCooldownTime = 0;
         }
 
         public void Enqueue(NetworkMovementMessage message)
@@ -49,8 +49,6 @@ namespace DCL.Multiplayer.Movement
                 queue.Dequeue();
 
             queue.Enqueue(message, message.timestamp);
-            LastMessageEnqueueTime = Time.time;
-            Debug.Log($"VVV lastTime {LastMessageEnqueueTime}");
         }
 
         public void AddPassed(NetworkMovementMessage message, ICharacterControllerSettings settings, bool wasTeleported = false)
