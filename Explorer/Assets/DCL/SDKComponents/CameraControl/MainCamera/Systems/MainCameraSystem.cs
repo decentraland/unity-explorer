@@ -79,9 +79,6 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
                     virtualCameraCRDTEntity,
                     hasPreviousVirtualCamera ? previousVirtualCamera!.transform.position : cinemachineCurrentActiveCamPos
                 );
-
-                // Only after applying a new virtual camera 'previousVirtualCamera' may be different from 'mainCameraComponent.virtualCameraInstance'
-                // hasPreviousVirtualCamera |= previousVirtualCamera != mainCameraComponent.virtualCameraInstance;
             }
             else
             {
