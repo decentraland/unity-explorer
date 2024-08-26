@@ -45,37 +45,60 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
 
         protected override void Update(float t)
         {
-            if (cameraData.CinemachineBrain == null) return;
-
             SetupVirtualCameraQuery(World);
             SetupMainCameraQuery(World);
-            UpdateMainCameraQuery(World);
+
+            HandleVirtualCameraChangeQuery(World);
+            DisableVirtualCameraOnSceneLeaveQuery(World);
 
             // HandleEntityDestructionQuery(World);
             // HandleComponentRemovalQuery(World);
         }
 
         [Query]
-        private void UpdateMainCamera(in Entity entity, ref MainCameraComponent mainCameraComponent, PBMainCamera pbMainCamera)
+        private void HandleVirtualCameraChange(in Entity entity, ref MainCameraComponent mainCameraComponent, PBMainCamera pbMainCamera)
         {
-            if (entity != cameraEntity) return;
+            if (entity != cameraEntity || !sceneStateProvider.IsCurrent) return;
 
             // Cannot check by pbComponent.IsDirty since the VirtualCamera may not yet be on the target CRDTEntity
-            // when the pbComponent is dirty...
-            if (sceneStateProvider.IsCurrent && pbMainCamera.VirtualCameraEntity == mainCameraComponent.virtualCameraCRDTEntity) return;
+            // when the pbComponent is dirty and may have to be re-checked on subsequent updates...
+            if (pbMainCamera.VirtualCameraEntity == mainCameraComponent.virtualCameraCRDTEntity &&
+                 (mainCameraComponent.virtualCameraInstance == null || mainCameraComponent.virtualCameraInstance.enabled))
+                return;
 
-            CinemachineVirtualCamera? oldVirtualCamera = mainCameraComponent.virtualCameraInstance;
-            mainCameraComponent.virtualCameraInstance = null;
+            int virtualCameraCRDTEntity = (int)pbMainCamera.VirtualCameraEntity;
+            mainCameraComponent.virtualCameraCRDTEntity = virtualCameraCRDTEntity;
 
-            if (sceneStateProvider.IsCurrent && pbMainCamera.VirtualCameraEntity > 0)
+            CinemachineVirtualCamera? previousVirtualCamera = mainCameraComponent.virtualCameraInstance;
+            bool hasPreviousVirtualCamera = previousVirtualCamera != null && previousVirtualCamera.enabled;
+            if (virtualCameraCRDTEntity > 0)
+            {
+                Vector3 cinemachineCurrentActiveCamPos = cameraData.CinemachineBrain!.ActiveVirtualCamera.VirtualCameraGameObject.transform.position;
                 ApplyVirtualCamera(
-                        ref mainCameraComponent,
-                        (int)pbMainCamera.VirtualCameraEntity,
-                        oldVirtualCamera != null ? oldVirtualCamera.transform.position : cameraData.CinemachineBrain.ActiveVirtualCamera.VirtualCameraGameObject.transform.position
-                    );
+                    ref mainCameraComponent,
+                    virtualCameraCRDTEntity,
+                    hasPreviousVirtualCamera ? previousVirtualCamera!.transform.position : cinemachineCurrentActiveCamPos
+                );
 
-            if (oldVirtualCamera != null)
-                oldVirtualCamera.enabled = false;
+                // Only after applying a new virtual camera 'previousVirtualCamera' may be different from 'mainCameraComponent.virtualCameraInstance'
+                // hasPreviousVirtualCamera |= previousVirtualCamera != mainCameraComponent.virtualCameraInstance;
+            }
+            else
+            {
+                mainCameraComponent.virtualCameraInstance = null;
+            }
+
+            if (hasPreviousVirtualCamera)
+                previousVirtualCamera!.enabled = false;
+        }
+
+        [Query]
+        private void DisableVirtualCameraOnSceneLeave(MainCameraComponent mainCameraComponent)
+        {
+            if (sceneStateProvider.IsCurrent) return;
+
+            if (mainCameraComponent.virtualCameraInstance != null && mainCameraComponent.virtualCameraInstance.enabled)
+                mainCameraComponent.virtualCameraInstance.enabled = false;
         }
 
         [Query]
