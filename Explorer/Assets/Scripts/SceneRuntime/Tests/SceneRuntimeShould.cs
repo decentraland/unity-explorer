@@ -8,7 +8,6 @@ using JetBrains.Annotations;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene.ExceptionsHandling;
-using SceneRuntime.Apis.Modules;
 using SceneRuntime.Apis.Modules.EngineApi;
 using SceneRuntime.Factory;
 using System;
@@ -33,8 +32,11 @@ namespace SceneRuntime.Tests
             poolsProvider.GetAPIRawDataPool(Arg.Any<int>()).Returns(c => new PoolableByteArray(new byte[c.Arg<int>()], c.Arg<int>(), null));
         }
 
-        private static SceneRuntimeFactory NewSceneRuntimeFactory() =>
-            new (TestWebRequestController.INSTANCE, new IRealmData.Fake());
+        private static SceneRuntimeFactory NewSceneRuntimeFactory()
+        {
+            var activeEngines = new V8ActiveEngines();
+            return new SceneRuntimeFactory(TestWebRequestController.INSTANCE, new IRealmData.Fake(), new V8EngineFactory(activeEngines), activeEngines);
+        }
 
         [UnityTest]
         public IEnumerator EngineApi_GetState() =>

@@ -2,7 +2,6 @@
 using DCL.AssetsProvision;
 using DCL.Browser;
 using DCL.Browser.DecentralandUrls;
-using DCL.CommandLine;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -22,6 +21,7 @@ using System.Threading;
 using DCL.PerformanceAndDiagnostics.DotNetLogging;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Accounts.Factory;
+using Global.AppArgs;
 using Global.Dynamic;
 using UnityEngine;
 
@@ -172,7 +172,7 @@ namespace Global.Static
                 decentralandUrlsSource,
                 assetsProvisioner,
                 reportHandlingSettings,
-                new CommandLineArgs(),
+                new ApplicationParametersParser(),
                 debugViewsCatalog,
                 globalSettingsContainer,
                 web3IdentityProvider,

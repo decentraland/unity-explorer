@@ -20,7 +20,7 @@ namespace SceneRunner
         /// <param name="partitionProvider"></param>
         /// <param name="ct"></param>
         /// <returns>Scene Facade on the background thread</returns>
-        UniTask<ISceneFacade> CreateSceneFromFileAsync(string jsCodeUrl, IPartitionComponent partitionProvider, CancellationToken ct);
+        UniTask<ISceneFacade> CreateSceneFromFileAsync(string jsCodeUrl, IPartitionComponent partitionProvider, CancellationToken ct, string id = "");
 
         /// <summary>
         ///     Create a scene from the directory with the scene.json file (just like it is in the goerli-plaza repo)
