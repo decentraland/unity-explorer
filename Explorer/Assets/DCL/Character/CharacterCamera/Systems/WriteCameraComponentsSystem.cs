@@ -42,14 +42,13 @@ namespace DCL.CharacterCamera.Systems
 
         public override void Initialize()
         {
-            // set camera position for a newly created scene
+            // Set camera position for a newly created scene
             var sdkTransform = ExposedTransformUtils.Put(ecsToCrdtWriter, exposedCameraData, SpecialEntitiesID.CAMERA_ENTITY, sceneData.Geometry.BaseParcelPosition, false)
                 .EnsureNotNull();
 
             if (!World.Has<SDKTransform>(cameraEntity))
             {
                 var newComponent = sdkTransformPool.Get();
-                // Copy all fields
                 newComponent.Position = sdkTransform.Position;
                 newComponent.Rotation = sdkTransform.Rotation;
                 newComponent.Scale = sdkTransform.Scale;
@@ -57,7 +56,10 @@ namespace DCL.CharacterCamera.Systems
                 World.Add(cameraEntity, newComponent);
             }
 
-            // TODO: Put new PBMainCamera component here during this Initialization...
+            // Initialize SDK Main Camera component
+            PBMainCamera pbMainCamera = new PBMainCamera();
+            ecsToCrdtWriter.PutMessage(pbMainCamera, SpecialEntitiesID.CAMERA_ENTITY);
+            World.Add(cameraEntity, pbMainCamera);
 
             PropagateCameraData(false);
         }
