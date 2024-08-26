@@ -7,6 +7,7 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
 using DCL.Backpack.CharacterPreview;
 using DCL.Backpack.EmotesSection;
+using DCL.Input;
 using DCL.Input.UnityInputSystem.Blocks;
 using DCL.Profiles;
 using DCL.UI;
@@ -29,6 +30,7 @@ namespace DCL.Backpack
         private readonly RectTransform rectTransform;
         private readonly AvatarController avatarController;
         private readonly BackpackCharacterPreviewController backpackCharacterPreviewController;
+        private readonly ICursor cursor;
         private readonly World world;
         private readonly Entity playerEntity;
         private readonly BackpackEmoteGridController backpackEmoteGridController;
@@ -60,7 +62,8 @@ namespace DCL.Backpack
             EmotesController emotesController,
             BackpackCharacterPreviewController backpackCharacterPreviewController,
             IThumbnailProvider thumbnailProvider,
-            IInputBlock inputBlock)
+            IInputBlock inputBlock,
+            ICursor cursor)
         {
             this.view = view;
             this.backpackCommandBus = backpackCommandBus;
@@ -113,6 +116,7 @@ namespace DCL.Backpack
             }
 
             this.backpackCharacterPreviewController = backpackCharacterPreviewController;
+            this.cursor = cursor;
             view.TipsButton.onClick.AddListener(ToggleTipsContent);
             view.TipsPanelDeselectable.OnDeselectEvent += ToggleTipsContent;
         }
@@ -201,11 +205,13 @@ namespace DCL.Backpack
 
             view.gameObject.SetActive(true);
             backpackCharacterPreviewController.OnShow();
+
             foreach ((BackpackSections section, TabSelectorView? tab) in tabsBySections)
-            {
                 ToggleSection(section == BackpackSections.Avatar, tab, section, true);
-            }
+
             sectionSelectorController.SetAnimationState(true, tabsBySections[BackpackSections.Avatar]);
+
+            cursor.Unlock();
         }
 
         public void Deactivate()

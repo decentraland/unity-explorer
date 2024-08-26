@@ -3,7 +3,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Web3;
-using System.Collections.Generic;
+using Global.AppArgs;
 
 namespace DCL.FeatureFlags
 {
@@ -16,7 +16,7 @@ namespace DCL.FeatureFlags
             this IFeatureFlagsProvider featureFlagsProvider,
             IDecentralandUrlsSource decentralandUrlsSource,
             Web3Address? userAddress,
-            Dictionary<string, string> appParameters,
+            IAppArgs appParameters,
             CancellationToken ct)
         {
             FeatureFlagOptions options = FeatureFlagOptions.NewFeatureFlagOptions(decentralandUrlsSource);

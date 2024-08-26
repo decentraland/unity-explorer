@@ -23,9 +23,9 @@ namespace DCL.ResourcesUnloading.Tests
             releaseMemorySystem = new ReleaseMemorySystem(world, cacheCleaner, memoryBudgetProvider);
         }
 
-        [TestCase(MemoryUsageStatus.Normal, 0)]
-        [TestCase(MemoryUsageStatus.Warning, 1)]
-        [TestCase(MemoryUsageStatus.Full, 1)]
+        [TestCase(MemoryUsageStatus.NORMAL, 0)]
+        [TestCase(MemoryUsageStatus.WARNING, 1)]
+        [TestCase(MemoryUsageStatus.FULL, 1)]
         public void UnloadCacheWhenMemoryUsageIsNotNormal(MemoryUsageStatus memoryUsageStatus, int callsAmount)
         {
             // Arrange

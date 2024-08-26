@@ -48,6 +48,8 @@ namespace DCL.Navmap
         private readonly Dictionary<NavmapSections, TabSelectorView> tabsBySections;
         private readonly Dictionary<NavmapSections, ISection> mapSections;
         private readonly Mouse mouse;
+        private readonly StringBuilder parcelTitleStringBuilder = new ();
+
         private CancellationTokenSource animationCts;
         private IMapCameraController cameraController;
 
@@ -56,7 +58,6 @@ namespace DCL.Navmap
         private Vector2 lastParcelHovered;
         private NavmapSections lastShownSection;
         private MapRenderImage.ParcelClickData lastParcelClicked;
-        private StringBuilder parcelTitleStringBuilder = new StringBuilder();
 
         public IReadOnlyDictionary<MapLayer, IMapLayerParameter> LayersParameters { get; } = new Dictionary<MapLayer, IMapLayerParameter>
             { { MapLayer.PlayerMarker, new PlayerMarkerParameter { BackgroundIsActive = true } } };
