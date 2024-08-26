@@ -7,17 +7,26 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
     public class StaticCommonTraitsPlugin : EventPlugin
     {
         private readonly string dclRendererType = SystemInfo.deviceType.ToString(); // Desktop, Console, Handeheld (Mobile), Unknown
-        private readonly string sessionID = SystemInfo.deviceUniqueIdentifier + DateTime.Now.ToString("yyyyMMddHHmmssfff");
         private readonly string rendererVersion = Application.version;
         private readonly string runtime = Application.isEditor? "editor" : Debug.isDebugBuild ? "debug" : "release";
         private readonly string os = SystemInfo.operatingSystem;
 
+        private readonly string sessionId;
+        private readonly string launcherAnonymousId;
+
         public override PluginType Type => PluginType.Enrichment;
+
+        public StaticCommonTraitsPlugin(string launcherAnonymousId, string sessionId)
+        {
+            this.sessionId = !string.IsNullOrEmpty(this.sessionId) ? sessionId : SystemInfo.deviceUniqueIdentifier + DateTime.Now.ToString("yyyyMMddHHmmssfff");
+            this.launcherAnonymousId = launcherAnonymousId;
+        }
 
         public override TrackEvent Track(TrackEvent trackEvent)
         {
             trackEvent.Context["dcl_renderer_type"] = dclRendererType;
-            trackEvent.Context["session_id"] = sessionID;
+            trackEvent.Context["session_id"] = sessionId;
+            trackEvent.Context["launcher_anonymous_id"] = launcherAnonymousId;
             trackEvent.Context["renderer_version"] = rendererVersion;
             trackEvent.Context["runtime"] = runtime;
             trackEvent.Context["operating_system"] = os;

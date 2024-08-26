@@ -106,7 +106,10 @@ namespace Global.Dynamic
             {
                 IAnalyticsService service = CreateAnalyticsService(analyticsConfig);
 
-                var analyticsController = new AnalyticsController(service, analyticsConfig);
+                appArgs.TryGetValue("launcher_anonymous_id", out string? launcherAnonymousId);
+                appArgs.TryGetValue("session_id", out string? sessionId);
+
+                var analyticsController = new AnalyticsController(service, analyticsConfig, launcherAnonymousId!, sessionId!);
 
                 return (new BootstrapAnalyticsDecorator(coreBootstrap, analyticsController), analyticsController);
             }

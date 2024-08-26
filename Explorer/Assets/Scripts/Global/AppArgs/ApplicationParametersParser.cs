@@ -36,8 +36,7 @@ namespace Global.AppArgs
         private void AddAlwaysInEditorFlags()
         {
             foreach ((string? key, string? value) in ALWAYS_IN_EDITOR)
-                if (appParameters.ContainsKey(key) == false)
-                    appParameters[key] = value;
+                appParameters.TryAdd(key, value);
         }
 
         private void ParseApplicationParameters(string[] cmdArgs)
@@ -53,7 +52,7 @@ namespace Global.AppArgs
                 {
                     if (arg.Length > 2)
                     {
-                        lastKeyStored = arg.Substring(2);
+                        lastKeyStored = arg[2..];
                         appParameters[lastKeyStored] = string.Empty;
                     }
                     else

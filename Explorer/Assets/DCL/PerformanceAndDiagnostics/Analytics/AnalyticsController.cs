@@ -15,12 +15,12 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         private readonly IAnalyticsService analytics;
         public AnalyticsConfiguration Configuration { get; }
 
-        public AnalyticsController(IAnalyticsService analyticsService, AnalyticsConfiguration configuration)
+        public AnalyticsController(IAnalyticsService analyticsService, AnalyticsConfiguration configuration, string launcherAnonymousId, string sessionId)
         {
             analytics = analyticsService;
             Configuration = configuration;
 
-            analytics.AddPlugin(new StaticCommonTraitsPlugin());
+            analytics.AddPlugin(new StaticCommonTraitsPlugin(launcherAnonymousId, sessionId));
 
             analytics.Track(AnalyticsEvents.General.SYSTEM_INFO_REPORT, new JsonObject
             {
