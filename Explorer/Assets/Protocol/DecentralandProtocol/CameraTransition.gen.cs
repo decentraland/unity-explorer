@@ -26,20 +26,15 @@ namespace DCL.ECSComponents {
           string.Concat(
             "CjpkZWNlbnRyYWxhbmQvc2RrL2NvbXBvbmVudHMvY29tbW9uL2NhbWVyYV90",
             "cmFuc2l0aW9uLnByb3RvEiJkZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVudHMu",
-            "Y29tbW9uIt4BChBDYW1lcmFUcmFuc2l0aW9uEhMKC2Zyb21fZW50aXR5GAEg",
-            "ASgNEhEKCXRvX2VudGl0eRgCIAEoDRJICgR0aW1lGAMgASgLMjguZGVjZW50",
-            "cmFsYW5kLnNkay5jb21wb25lbnRzLmNvbW1vbi5DYW1lcmFUcmFuc2l0aW9u",
-            "VGltZUgAEkoKBXNwZWVkGAQgASgLMjkuZGVjZW50cmFsYW5kLnNkay5jb21w",
-            "b25lbnRzLmNvbW1vbi5DYW1lcmFUcmFuc2l0aW9uU3BlZWRIAEIMCgp0cmFu",
-            "c2l0aW9uIiUKFENhbWVyYVRyYW5zaXRpb25UaW1lEg0KBXZhbHVlGAEgASgC",
-            "IiYKFUNhbWVyYVRyYW5zaXRpb25TcGVlZBINCgV2YWx1ZRgBIAEoAkIUqgIR",
-            "RENMLkVDU0NvbXBvbmVudHNiBnByb3RvMw=="));
+            "Y29tbW9uIpYBChBDYW1lcmFUcmFuc2l0aW9uEhgKC2Zyb21fZW50aXR5GAEg",
+            "ASgNSAGIAQESFgoJdG9fZW50aXR5GAIgASgNSAKIAQESDgoEdGltZRgDIAEo",
+            "AkgAEg8KBXNwZWVkGAQgASgCSABCEQoPdHJhbnNpdGlvbl9tb2RlQg4KDF9m",
+            "cm9tX2VudGl0eUIMCgpfdG9fZW50aXR5QhSqAhFEQ0wuRUNTQ29tcG9uZW50",
+            "c2IGcHJvdG8z"));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.CameraTransition), global::DCL.ECSComponents.CameraTransition.Parser, new[]{ "FromEntity", "ToEntity", "Time", "Speed" }, new[]{ "Transition" }, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.CameraTransitionTime), global::DCL.ECSComponents.CameraTransitionTime.Parser, new[]{ "Value" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.CameraTransitionSpeed), global::DCL.ECSComponents.CameraTransitionSpeed.Parser, new[]{ "Value" }, null, null, null, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.CameraTransition), global::DCL.ECSComponents.CameraTransition.Parser, new[]{ "FromEntity", "ToEntity", "Time", "Speed" }, new[]{ "TransitionMode", "FromEntity", "ToEntity" }, null, null, null)
           }));
     }
     #endregion
@@ -53,6 +48,7 @@ namespace DCL.ECSComponents {
   {
     private static readonly pb::MessageParser<CameraTransition> _parser = new pb::MessageParser<CameraTransition>(() => new CameraTransition());
     private pb::UnknownFieldSet _unknownFields;
+    private int _hasBits0;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pb::MessageParser<CameraTransition> Parser { get { return _parser; } }
@@ -80,14 +76,15 @@ namespace DCL.ECSComponents {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public CameraTransition(CameraTransition other) : this() {
+      _hasBits0 = other._hasBits0;
       fromEntity_ = other.fromEntity_;
       toEntity_ = other.toEntity_;
-      switch (other.TransitionCase) {
-        case TransitionOneofCase.Time:
-          Time = other.Time.Clone();
+      switch (other.TransitionModeCase) {
+        case TransitionModeOneofCase.Time:
+          Time = other.Time;
           break;
-        case TransitionOneofCase.Speed:
-          Speed = other.Speed.Clone();
+        case TransitionModeOneofCase.Speed:
+          Speed = other.Speed;
           break;
       }
 
@@ -106,10 +103,23 @@ namespace DCL.ECSComponents {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public uint FromEntity {
-      get { return fromEntity_; }
+      get { if ((_hasBits0 & 1) != 0) { return fromEntity_; } else { return 0; } }
       set {
+        _hasBits0 |= 1;
         fromEntity_ = value;
       }
+    }
+    /// <summary>Gets whether the "from_entity" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasFromEntity {
+      get { return (_hasBits0 & 1) != 0; }
+    }
+    /// <summary>Clears the value of the "from_entity" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearFromEntity() {
+      _hasBits0 &= ~1;
     }
 
     /// <summary>Field number for the "to_entity" field.</summary>
@@ -118,21 +128,34 @@ namespace DCL.ECSComponents {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public uint ToEntity {
-      get { return toEntity_; }
+      get { if ((_hasBits0 & 2) != 0) { return toEntity_; } else { return 0; } }
       set {
+        _hasBits0 |= 2;
         toEntity_ = value;
       }
+    }
+    /// <summary>Gets whether the "to_entity" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasToEntity {
+      get { return (_hasBits0 & 2) != 0; }
+    }
+    /// <summary>Clears the value of the "to_entity" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearToEntity() {
+      _hasBits0 &= ~2;
     }
 
     /// <summary>Field number for the "time" field.</summary>
     public const int TimeFieldNumber = 3;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public global::DCL.ECSComponents.CameraTransitionTime Time {
-      get { return transitionCase_ == TransitionOneofCase.Time ? (global::DCL.ECSComponents.CameraTransitionTime) transition_ : null; }
+    public float Time {
+      get { return transitionModeCase_ == TransitionModeOneofCase.Time ? (float) transitionMode_ : 0F; }
       set {
-        transition_ = value;
-        transitionCase_ = value == null ? TransitionOneofCase.None : TransitionOneofCase.Time;
+        transitionMode_ = value;
+        transitionModeCase_ = TransitionModeOneofCase.Time;
       }
     }
 
@@ -140,33 +163,33 @@ namespace DCL.ECSComponents {
     public const int SpeedFieldNumber = 4;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public global::DCL.ECSComponents.CameraTransitionSpeed Speed {
-      get { return transitionCase_ == TransitionOneofCase.Speed ? (global::DCL.ECSComponents.CameraTransitionSpeed) transition_ : null; }
+    public float Speed {
+      get { return transitionModeCase_ == TransitionModeOneofCase.Speed ? (float) transitionMode_ : 0F; }
       set {
-        transition_ = value;
-        transitionCase_ = value == null ? TransitionOneofCase.None : TransitionOneofCase.Speed;
+        transitionMode_ = value;
+        transitionModeCase_ = TransitionModeOneofCase.Speed;
       }
     }
 
-    private object transition_;
-    /// <summary>Enum of possible cases for the "transition" oneof.</summary>
-    public enum TransitionOneofCase {
+    private object transitionMode_;
+    /// <summary>Enum of possible cases for the "transition_mode" oneof.</summary>
+    public enum TransitionModeOneofCase {
       None = 0,
       Time = 3,
       Speed = 4,
     }
-    private TransitionOneofCase transitionCase_ = TransitionOneofCase.None;
+    private TransitionModeOneofCase transitionModeCase_ = TransitionModeOneofCase.None;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public TransitionOneofCase TransitionCase {
-      get { return transitionCase_; }
+    public TransitionModeOneofCase TransitionModeCase {
+      get { return transitionModeCase_; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void ClearTransition() {
-      transitionCase_ = TransitionOneofCase.None;
-      transition_ = null;
+    public void ClearTransitionMode() {
+      transitionModeCase_ = TransitionModeOneofCase.None;
+      transitionMode_ = null;
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -186,9 +209,9 @@ namespace DCL.ECSComponents {
       }
       if (FromEntity != other.FromEntity) return false;
       if (ToEntity != other.ToEntity) return false;
-      if (!object.Equals(Time, other.Time)) return false;
-      if (!object.Equals(Speed, other.Speed)) return false;
-      if (TransitionCase != other.TransitionCase) return false;
+      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(Time, other.Time)) return false;
+      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(Speed, other.Speed)) return false;
+      if (TransitionModeCase != other.TransitionModeCase) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -196,11 +219,11 @@ namespace DCL.ECSComponents {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override int GetHashCode() {
       int hash = 1;
-      if (FromEntity != 0) hash ^= FromEntity.GetHashCode();
-      if (ToEntity != 0) hash ^= ToEntity.GetHashCode();
-      if (transitionCase_ == TransitionOneofCase.Time) hash ^= Time.GetHashCode();
-      if (transitionCase_ == TransitionOneofCase.Speed) hash ^= Speed.GetHashCode();
-      hash ^= (int) transitionCase_;
+      if (HasFromEntity) hash ^= FromEntity.GetHashCode();
+      if (HasToEntity) hash ^= ToEntity.GetHashCode();
+      if (transitionModeCase_ == TransitionModeOneofCase.Time) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(Time);
+      if (transitionModeCase_ == TransitionModeOneofCase.Speed) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(Speed);
+      hash ^= (int) transitionModeCase_;
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -219,21 +242,21 @@ namespace DCL.ECSComponents {
     #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       output.WriteRawMessage(this);
     #else
-      if (FromEntity != 0) {
+      if (HasFromEntity) {
         output.WriteRawTag(8);
         output.WriteUInt32(FromEntity);
       }
-      if (ToEntity != 0) {
+      if (HasToEntity) {
         output.WriteRawTag(16);
         output.WriteUInt32(ToEntity);
       }
-      if (transitionCase_ == TransitionOneofCase.Time) {
-        output.WriteRawTag(26);
-        output.WriteMessage(Time);
+      if (transitionModeCase_ == TransitionModeOneofCase.Time) {
+        output.WriteRawTag(29);
+        output.WriteFloat(Time);
       }
-      if (transitionCase_ == TransitionOneofCase.Speed) {
-        output.WriteRawTag(34);
-        output.WriteMessage(Speed);
+      if (transitionModeCase_ == TransitionModeOneofCase.Speed) {
+        output.WriteRawTag(37);
+        output.WriteFloat(Speed);
       }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
@@ -245,21 +268,21 @@ namespace DCL.ECSComponents {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
-      if (FromEntity != 0) {
+      if (HasFromEntity) {
         output.WriteRawTag(8);
         output.WriteUInt32(FromEntity);
       }
-      if (ToEntity != 0) {
+      if (HasToEntity) {
         output.WriteRawTag(16);
         output.WriteUInt32(ToEntity);
       }
-      if (transitionCase_ == TransitionOneofCase.Time) {
-        output.WriteRawTag(26);
-        output.WriteMessage(Time);
+      if (transitionModeCase_ == TransitionModeOneofCase.Time) {
+        output.WriteRawTag(29);
+        output.WriteFloat(Time);
       }
-      if (transitionCase_ == TransitionOneofCase.Speed) {
-        output.WriteRawTag(34);
-        output.WriteMessage(Speed);
+      if (transitionModeCase_ == TransitionModeOneofCase.Speed) {
+        output.WriteRawTag(37);
+        output.WriteFloat(Speed);
       }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
@@ -271,17 +294,17 @@ namespace DCL.ECSComponents {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public int CalculateSize() {
       int size = 0;
-      if (FromEntity != 0) {
+      if (HasFromEntity) {
         size += 1 + pb::CodedOutputStream.ComputeUInt32Size(FromEntity);
       }
-      if (ToEntity != 0) {
+      if (HasToEntity) {
         size += 1 + pb::CodedOutputStream.ComputeUInt32Size(ToEntity);
       }
-      if (transitionCase_ == TransitionOneofCase.Time) {
-        size += 1 + pb::CodedOutputStream.ComputeMessageSize(Time);
+      if (transitionModeCase_ == TransitionModeOneofCase.Time) {
+        size += 1 + 4;
       }
-      if (transitionCase_ == TransitionOneofCase.Speed) {
-        size += 1 + pb::CodedOutputStream.ComputeMessageSize(Speed);
+      if (transitionModeCase_ == TransitionModeOneofCase.Speed) {
+        size += 1 + 4;
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -295,24 +318,18 @@ namespace DCL.ECSComponents {
       if (other == null) {
         return;
       }
-      if (other.FromEntity != 0) {
+      if (other.HasFromEntity) {
         FromEntity = other.FromEntity;
       }
-      if (other.ToEntity != 0) {
+      if (other.HasToEntity) {
         ToEntity = other.ToEntity;
       }
-      switch (other.TransitionCase) {
-        case TransitionOneofCase.Time:
-          if (Time == null) {
-            Time = new global::DCL.ECSComponents.CameraTransitionTime();
-          }
-          Time.MergeFrom(other.Time);
+      switch (other.TransitionModeCase) {
+        case TransitionModeOneofCase.Time:
+          Time = other.Time;
           break;
-        case TransitionOneofCase.Speed:
-          if (Speed == null) {
-            Speed = new global::DCL.ECSComponents.CameraTransitionSpeed();
-          }
-          Speed.MergeFrom(other.Speed);
+        case TransitionModeOneofCase.Speed:
+          Speed = other.Speed;
           break;
       }
 
@@ -339,22 +356,12 @@ namespace DCL.ECSComponents {
             ToEntity = input.ReadUInt32();
             break;
           }
-          case 26: {
-            global::DCL.ECSComponents.CameraTransitionTime subBuilder = new global::DCL.ECSComponents.CameraTransitionTime();
-            if (transitionCase_ == TransitionOneofCase.Time) {
-              subBuilder.MergeFrom(Time);
-            }
-            input.ReadMessage(subBuilder);
-            Time = subBuilder;
+          case 29: {
+            Time = input.ReadFloat();
             break;
           }
-          case 34: {
-            global::DCL.ECSComponents.CameraTransitionSpeed subBuilder = new global::DCL.ECSComponents.CameraTransitionSpeed();
-            if (transitionCase_ == TransitionOneofCase.Speed) {
-              subBuilder.MergeFrom(Speed);
-            }
-            input.ReadMessage(subBuilder);
-            Speed = subBuilder;
+          case 37: {
+            Speed = input.ReadFloat();
             break;
           }
         }
@@ -380,400 +387,12 @@ namespace DCL.ECSComponents {
             ToEntity = input.ReadUInt32();
             break;
           }
-          case 26: {
-            global::DCL.ECSComponents.CameraTransitionTime subBuilder = new global::DCL.ECSComponents.CameraTransitionTime();
-            if (transitionCase_ == TransitionOneofCase.Time) {
-              subBuilder.MergeFrom(Time);
-            }
-            input.ReadMessage(subBuilder);
-            Time = subBuilder;
+          case 29: {
+            Time = input.ReadFloat();
             break;
           }
-          case 34: {
-            global::DCL.ECSComponents.CameraTransitionSpeed subBuilder = new global::DCL.ECSComponents.CameraTransitionSpeed();
-            if (transitionCase_ == TransitionOneofCase.Speed) {
-              subBuilder.MergeFrom(Speed);
-            }
-            input.ReadMessage(subBuilder);
-            Speed = subBuilder;
-            break;
-          }
-        }
-      }
-    }
-    #endif
-
-  }
-
-  public sealed partial class CameraTransitionTime : pb::IMessage<CameraTransitionTime>
-  #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-      , pb::IBufferMessage
-  #endif
-  {
-    private static readonly pb::MessageParser<CameraTransitionTime> _parser = new pb::MessageParser<CameraTransitionTime>(() => new CameraTransitionTime());
-    private pb::UnknownFieldSet _unknownFields;
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public static pb::MessageParser<CameraTransitionTime> Parser { get { return _parser; } }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public static pbr::MessageDescriptor Descriptor {
-      get { return global::DCL.ECSComponents.CameraTransitionReflection.Descriptor.MessageTypes[1]; }
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    pbr::MessageDescriptor pb::IMessage.Descriptor {
-      get { return Descriptor; }
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public CameraTransitionTime() {
-      OnConstruction();
-    }
-
-    partial void OnConstruction();
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public CameraTransitionTime(CameraTransitionTime other) : this() {
-      value_ = other.value_;
-      _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public CameraTransitionTime Clone() {
-      return new CameraTransitionTime(this);
-    }
-
-    /// <summary>Field number for the "value" field.</summary>
-    public const int ValueFieldNumber = 1;
-    private float value_;
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public float Value {
-      get { return value_; }
-      set {
-        value_ = value;
-      }
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public override bool Equals(object other) {
-      return Equals(other as CameraTransitionTime);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public bool Equals(CameraTransitionTime other) {
-      if (ReferenceEquals(other, null)) {
-        return false;
-      }
-      if (ReferenceEquals(other, this)) {
-        return true;
-      }
-      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(Value, other.Value)) return false;
-      return Equals(_unknownFields, other._unknownFields);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public override int GetHashCode() {
-      int hash = 1;
-      if (Value != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(Value);
-      if (_unknownFields != null) {
-        hash ^= _unknownFields.GetHashCode();
-      }
-      return hash;
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public override string ToString() {
-      return pb::JsonFormatter.ToDiagnosticString(this);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void WriteTo(pb::CodedOutputStream output) {
-    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-      output.WriteRawMessage(this);
-    #else
-      if (Value != 0F) {
-        output.WriteRawTag(13);
-        output.WriteFloat(Value);
-      }
-      if (_unknownFields != null) {
-        _unknownFields.WriteTo(output);
-      }
-    #endif
-    }
-
-    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
-      if (Value != 0F) {
-        output.WriteRawTag(13);
-        output.WriteFloat(Value);
-      }
-      if (_unknownFields != null) {
-        _unknownFields.WriteTo(ref output);
-      }
-    }
-    #endif
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public int CalculateSize() {
-      int size = 0;
-      if (Value != 0F) {
-        size += 1 + 4;
-      }
-      if (_unknownFields != null) {
-        size += _unknownFields.CalculateSize();
-      }
-      return size;
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void MergeFrom(CameraTransitionTime other) {
-      if (other == null) {
-        return;
-      }
-      if (other.Value != 0F) {
-        Value = other.Value;
-      }
-      _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void MergeFrom(pb::CodedInputStream input) {
-    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-      input.ReadRawMessage(this);
-    #else
-      uint tag;
-      while ((tag = input.ReadTag()) != 0) {
-        switch(tag) {
-          default:
-            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
-            break;
-          case 13: {
-            Value = input.ReadFloat();
-            break;
-          }
-        }
-      }
-    #endif
-    }
-
-    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
-      uint tag;
-      while ((tag = input.ReadTag()) != 0) {
-        switch(tag) {
-          default:
-            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
-            break;
-          case 13: {
-            Value = input.ReadFloat();
-            break;
-          }
-        }
-      }
-    }
-    #endif
-
-  }
-
-  public sealed partial class CameraTransitionSpeed : pb::IMessage<CameraTransitionSpeed>
-  #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-      , pb::IBufferMessage
-  #endif
-  {
-    private static readonly pb::MessageParser<CameraTransitionSpeed> _parser = new pb::MessageParser<CameraTransitionSpeed>(() => new CameraTransitionSpeed());
-    private pb::UnknownFieldSet _unknownFields;
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public static pb::MessageParser<CameraTransitionSpeed> Parser { get { return _parser; } }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public static pbr::MessageDescriptor Descriptor {
-      get { return global::DCL.ECSComponents.CameraTransitionReflection.Descriptor.MessageTypes[2]; }
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    pbr::MessageDescriptor pb::IMessage.Descriptor {
-      get { return Descriptor; }
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public CameraTransitionSpeed() {
-      OnConstruction();
-    }
-
-    partial void OnConstruction();
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public CameraTransitionSpeed(CameraTransitionSpeed other) : this() {
-      value_ = other.value_;
-      _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public CameraTransitionSpeed Clone() {
-      return new CameraTransitionSpeed(this);
-    }
-
-    /// <summary>Field number for the "value" field.</summary>
-    public const int ValueFieldNumber = 1;
-    private float value_;
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public float Value {
-      get { return value_; }
-      set {
-        value_ = value;
-      }
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public override bool Equals(object other) {
-      return Equals(other as CameraTransitionSpeed);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public bool Equals(CameraTransitionSpeed other) {
-      if (ReferenceEquals(other, null)) {
-        return false;
-      }
-      if (ReferenceEquals(other, this)) {
-        return true;
-      }
-      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(Value, other.Value)) return false;
-      return Equals(_unknownFields, other._unknownFields);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public override int GetHashCode() {
-      int hash = 1;
-      if (Value != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(Value);
-      if (_unknownFields != null) {
-        hash ^= _unknownFields.GetHashCode();
-      }
-      return hash;
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public override string ToString() {
-      return pb::JsonFormatter.ToDiagnosticString(this);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void WriteTo(pb::CodedOutputStream output) {
-    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-      output.WriteRawMessage(this);
-    #else
-      if (Value != 0F) {
-        output.WriteRawTag(13);
-        output.WriteFloat(Value);
-      }
-      if (_unknownFields != null) {
-        _unknownFields.WriteTo(output);
-      }
-    #endif
-    }
-
-    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
-      if (Value != 0F) {
-        output.WriteRawTag(13);
-        output.WriteFloat(Value);
-      }
-      if (_unknownFields != null) {
-        _unknownFields.WriteTo(ref output);
-      }
-    }
-    #endif
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public int CalculateSize() {
-      int size = 0;
-      if (Value != 0F) {
-        size += 1 + 4;
-      }
-      if (_unknownFields != null) {
-        size += _unknownFields.CalculateSize();
-      }
-      return size;
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void MergeFrom(CameraTransitionSpeed other) {
-      if (other == null) {
-        return;
-      }
-      if (other.Value != 0F) {
-        Value = other.Value;
-      }
-      _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void MergeFrom(pb::CodedInputStream input) {
-    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-      input.ReadRawMessage(this);
-    #else
-      uint tag;
-      while ((tag = input.ReadTag()) != 0) {
-        switch(tag) {
-          default:
-            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
-            break;
-          case 13: {
-            Value = input.ReadFloat();
-            break;
-          }
-        }
-      }
-    #endif
-    }
-
-    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
-      uint tag;
-      while ((tag = input.ReadTag()) != 0) {
-        switch(tag) {
-          default:
-            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
-            break;
-          case 13: {
-            Value = input.ReadFloat();
+          case 37: {
+            Speed = input.ReadFloat();
             break;
           }
         }

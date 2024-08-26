@@ -166,6 +166,10 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
             ConfigureVirtualCameraTransition(virtualCamCRDTEntity,
                 previousCameraPosition.HasValue ? Vector3.Distance(virtualCameraInstance!.transform.position, previousCameraPosition.Value) : 0f);
 
+            // var rig = virtualCameraInstance.GetRig(1);
+            // var cinemachinePOV = rig.GetCinemachineComponent<CinemachinePOV>();
+            // var cinemachineHardLookAt = rig.GetCinemachineComponent<CinemachineHardLookAt>();
+
             mainCameraComponent.virtualCameraCRDTEntity = virtualCamCRDTEntity;
             mainCameraComponent.virtualCameraInstance = virtualCameraInstance;
             virtualCameraInstance!.enabled = true;
@@ -177,15 +181,15 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
 
             // Using custom blends array doesn't work because there's no direct way of getting the custom blend index,
             // and we would have to hardcode it...
-            if (pbVirtualCamera.DefaultTransition.TransitionCase == CameraTransition.TransitionOneofCase.Time)
+            if (pbVirtualCamera.DefaultTransition.TransitionModeCase == CameraTransition.TransitionModeOneofCase.Time)
             {
-                float timeValue = pbVirtualCamera.DefaultTransition.Time.Value;
+                float timeValue = pbVirtualCamera.DefaultTransition.Time;
                 cameraData.CinemachineBrain!.m_DefaultBlend.m_Time = timeValue;
                 cameraData.CinemachineBrain!.m_DefaultBlend.m_Style = timeValue <= 0 ? CinemachineBlendDefinition.Style.Cut : CinemachineBlendDefinition.Style.EaseInOut;
             }
             else
             {
-                float speedValue = pbVirtualCamera.DefaultTransition.Speed.Value;
+                float speedValue = pbVirtualCamera.DefaultTransition.Speed;
                 cameraData.CinemachineBrain!.m_DefaultBlend.m_Style = speedValue <= 0 ? CinemachineBlendDefinition.Style.Cut : CinemachineBlendDefinition.Style.EaseInOut;
 
                 // SPEED = 1 -> 1 Meter per second

@@ -27,13 +27,15 @@ namespace DCL.ECSComponents {
             "CjBkZWNlbnRyYWxhbmQvc2RrL2NvbXBvbmVudHMvdmlydHVhbF9jYW1lcmEu",
             "cHJvdG8SG2RlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50cxo6ZGVjZW50cmFs",
             "YW5kL3Nkay9jb21wb25lbnRzL2NvbW1vbi9jYW1lcmFfdHJhbnNpdGlvbi5w",
-            "cm90byJjCg9QQlZpcnR1YWxDYW1lcmESUAoSZGVmYXVsdF90cmFuc2l0aW9u",
-            "GAEgASgLMjQuZGVjZW50cmFsYW5kLnNkay5jb21wb25lbnRzLmNvbW1vbi5D",
-            "YW1lcmFUcmFuc2l0aW9uQhSqAhFEQ0wuRUNTQ29tcG9uZW50c2IGcHJvdG8z"));
+            "cm90byKTAQoPUEJWaXJ0dWFsQ2FtZXJhElAKEmRlZmF1bHRfdHJhbnNpdGlv",
+            "bhgBIAEoCzI0LmRlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50cy5jb21tb24u",
+            "Q2FtZXJhVHJhbnNpdGlvbhIbCg5sb29rX2F0X2VudGl0eRgCIAEoDUgAiAEB",
+            "QhEKD19sb29rX2F0X2VudGl0eUIUqgIRRENMLkVDU0NvbXBvbmVudHNiBnBy",
+            "b3RvMw=="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::DCL.ECSComponents.CameraTransitionReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBVirtualCamera), global::DCL.ECSComponents.PBVirtualCamera.Parser, new[]{ "DefaultTransition" }, null, null, null, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBVirtualCamera), global::DCL.ECSComponents.PBVirtualCamera.Parser, new[]{ "DefaultTransition", "LookAtEntity" }, new[]{ "LookAtEntity" }, null, null, null)
           }));
     }
     #endregion
@@ -47,6 +49,7 @@ namespace DCL.ECSComponents {
   {
     private static readonly pb::MessageParser<PBVirtualCamera> _parser = new pb::MessageParser<PBVirtualCamera>(() => new PBVirtualCamera());
     private pb::UnknownFieldSet _unknownFields;
+    private int _hasBits0;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pb::MessageParser<PBVirtualCamera> Parser { get { return _parser; } }
@@ -74,7 +77,9 @@ namespace DCL.ECSComponents {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public PBVirtualCamera(PBVirtualCamera other) : this() {
+      _hasBits0 = other._hasBits0;
       defaultTransition_ = other.defaultTransition_ != null ? other.defaultTransition_.Clone() : null;
+      lookAtEntity_ = other.lookAtEntity_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -96,6 +101,31 @@ namespace DCL.ECSComponents {
       }
     }
 
+    /// <summary>Field number for the "look_at_entity" field.</summary>
+    public const int LookAtEntityFieldNumber = 2;
+    private uint lookAtEntity_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public uint LookAtEntity {
+      get { if ((_hasBits0 & 1) != 0) { return lookAtEntity_; } else { return 0; } }
+      set {
+        _hasBits0 |= 1;
+        lookAtEntity_ = value;
+      }
+    }
+    /// <summary>Gets whether the "look_at_entity" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasLookAtEntity {
+      get { return (_hasBits0 & 1) != 0; }
+    }
+    /// <summary>Clears the value of the "look_at_entity" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearLookAtEntity() {
+      _hasBits0 &= ~1;
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -112,6 +142,7 @@ namespace DCL.ECSComponents {
         return true;
       }
       if (!object.Equals(DefaultTransition, other.DefaultTransition)) return false;
+      if (LookAtEntity != other.LookAtEntity) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -120,6 +151,7 @@ namespace DCL.ECSComponents {
     public override int GetHashCode() {
       int hash = 1;
       if (defaultTransition_ != null) hash ^= DefaultTransition.GetHashCode();
+      if (HasLookAtEntity) hash ^= LookAtEntity.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -142,6 +174,10 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(10);
         output.WriteMessage(DefaultTransition);
       }
+      if (HasLookAtEntity) {
+        output.WriteRawTag(16);
+        output.WriteUInt32(LookAtEntity);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -156,6 +192,10 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(10);
         output.WriteMessage(DefaultTransition);
       }
+      if (HasLookAtEntity) {
+        output.WriteRawTag(16);
+        output.WriteUInt32(LookAtEntity);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -168,6 +208,9 @@ namespace DCL.ECSComponents {
       int size = 0;
       if (defaultTransition_ != null) {
         size += 1 + pb::CodedOutputStream.ComputeMessageSize(DefaultTransition);
+      }
+      if (HasLookAtEntity) {
+        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(LookAtEntity);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -186,6 +229,9 @@ namespace DCL.ECSComponents {
           DefaultTransition = new global::DCL.ECSComponents.CameraTransition();
         }
         DefaultTransition.MergeFrom(other.DefaultTransition);
+      }
+      if (other.HasLookAtEntity) {
+        LookAtEntity = other.LookAtEntity;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -209,6 +255,10 @@ namespace DCL.ECSComponents {
             input.ReadMessage(DefaultTransition);
             break;
           }
+          case 16: {
+            LookAtEntity = input.ReadUInt32();
+            break;
+          }
         }
       }
     #endif
@@ -229,6 +279,10 @@ namespace DCL.ECSComponents {
               DefaultTransition = new global::DCL.ECSComponents.CameraTransition();
             }
             input.ReadMessage(DefaultTransition);
+            break;
+          }
+          case 16: {
+            LookAtEntity = input.ReadUInt32();
             break;
           }
         }
