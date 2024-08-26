@@ -83,6 +83,7 @@ namespace ECS.SceneLifeCycle.Systems
         {
             scenesCache.TryGetByParcel(parcel, out var currentScene);
             currentSceneInfo.Update(currentScene);
+            scenesCache.SetCurrentScene(currentScene);
         }
     }
 }

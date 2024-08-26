@@ -22,7 +22,13 @@ namespace CrdtEcsBridge.JsModulesImplementation
         private bool reportedSceneReady;
 
         public SDKObservableEventsEngineAPIImplementation(ISharedPoolsProvider poolsProvider, IInstancePoolsProvider instancePoolsProvider, ICRDTProtocol crdtProtocol, ICRDTDeserializer crdtDeserializer, ICRDTSerializer crdtSerializer,
-            ICRDTWorldSynchronizer crdtWorldSynchronizer, IOutgoingCRDTMessagesProvider outgoingCrtdMessagesProvider, ISystemGroupsUpdateGate systemGroupsUpdateGate, ISceneExceptionsHandler exceptionsHandler, MutexSync mutexSync) : base(poolsProvider, instancePoolsProvider, crdtProtocol, crdtDeserializer, crdtSerializer, crdtWorldSynchronizer, outgoingCrtdMessagesProvider, systemGroupsUpdateGate, exceptionsHandler, mutexSync) { }
+            ICRDTWorldSynchronizer crdtWorldSynchronizer, IOutgoingCRDTMessagesProvider outgoingCrtdMessagesProvider,
+            ISystemGroupsUpdateGate systemGroupsUpdateGate, ISceneExceptionsHandler exceptionsHandler,
+            MultithreadSync multithreadSync) : base(poolsProvider, instancePoolsProvider, crdtProtocol,
+            crdtDeserializer, crdtSerializer, crdtWorldSynchronizer, outgoingCrtdMessagesProvider,
+            systemGroupsUpdateGate, exceptionsHandler, multithreadSync)
+        {
+        }
 
         public bool EnableSDKObservableMessagesDetection { get; set; } = false;
         public List<SDKObservableEvent> SdkObservableEvents { get; } = new ();
