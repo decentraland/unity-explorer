@@ -106,6 +106,10 @@ namespace DCL.DebugUtilities
         public static double Convert(ulong numberOfUnits, DataSizeUnit dataSize, DataSizeUnit destination) =>
             numberOfUnits * CountBitsInUnit(dataSize) / (double)CountBitsInUnit(destination);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static float ByteToMB(this ulong numberOfUnits) =>
+            numberOfUnits * CountBitsInUnit(DataSizeUnit.Byte) / (float)CountBitsInUnit(DataSizeUnit.Megabyte);
+
         private static ulong CountBitsInUnit(DataSizeUnit sourceUnit)
         {
             switch (sourceUnit)
