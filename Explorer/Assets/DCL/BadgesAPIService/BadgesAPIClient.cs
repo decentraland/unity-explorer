@@ -315,6 +315,26 @@ namespace DCL.BadgesAPIService
                                 achievedTiers = new List<AchievedTierData>(),
                             },
                         },
+                        new()
+                        {
+                            id = "completed-store-and-submitted-one-collection",
+                            completedAt = null,
+                            name = "Open for Business",
+                            description = "Complete Store Information and submit at least 1 collection",
+                            image = "https://www.coywolf.news/wp-content/uploads/2020/07/gmb-badge.png",
+                            isTier = false,
+                            category = "Explorer",
+                            progress = new BadgeProgressData
+                            {
+                                stepsDone = 1,
+                                nextStepsTarget = 2,
+                                totalStepsTarget = 2,
+                                lastCompletedTierAt = null,
+                                lastCompletedTierName = null,
+                                lastCompletedTierImage = null,
+                                achievedTiers = new List<AchievedTierData>(),
+                            },
+                        },
                     },
                 },
             };

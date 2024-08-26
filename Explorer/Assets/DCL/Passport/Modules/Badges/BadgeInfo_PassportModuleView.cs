@@ -69,6 +69,18 @@ namespace DCL.Passport.Modules.Badges
         [field: SerializeField]
         public TMP_Text NextTierProgressValueText { get; private set; }
 
+        [field: SerializeField]
+        public RectTransform SimpleBadgeProgressBar { get; private set; }
+
+        [field: SerializeField]
+        public GameObject SimpleBadgeProgressBarContainer { get; private set; }
+
+        [field: SerializeField]
+        public RectTransform SimpleBadgeProgressBarFill { get; private set; }
+
+        [field: SerializeField]
+        public TMP_Text SimpleBadgeProgressValueText { get; private set; }
+
         private ImageController? imageController;
         private List<TierData> currentTiers = new ();
 
@@ -87,6 +99,7 @@ namespace DCL.Passport.Modules.Badges
         {
             currentTiers = tiers;
             TierSection.SetActive(badgeInfo.isTier);
+            SimpleBadgeProgressBarContainer.SetActive(isOwnProfile && !badgeInfo.isTier && badgeInfo.progress.totalStepsTarget is > 1);
             LockedBadge2DImage.gameObject.SetActive(badgeInfo.isLocked);
             UnlockedBadge3DImage.gameObject.SetActive(!badgeInfo.isLocked);
             imageController?.SetImage(DefaultBadgeSprite);
@@ -96,6 +109,13 @@ namespace DCL.Passport.Modules.Badges
                 BadgeNameText.text = badgeInfo.name;
                 BadgeDateText.text = !badgeInfo.isLocked ? $"Unlocked: {BadgesUtils.FormatTimestampDate(badgeInfo.completedAt)}" : "Locked";
                 BadgeDescriptionText.text = badgeInfo.description;
+
+                if (badgeInfo.progress.stepsDone != null && badgeInfo.progress.totalStepsTarget != null)
+                {
+                    int simpleBadgeProgressPercentage = badgeInfo.progress.stepsDone!.Value * 100 / badgeInfo.progress.totalStepsTarget!.Value;
+                    SimpleBadgeProgressBarFill.sizeDelta = new Vector2(simpleBadgeProgressPercentage * (SimpleBadgeProgressBar.sizeDelta.x / 100), SimpleBadgeProgressBarFill.sizeDelta.y);
+                    SimpleBadgeProgressValueText.text = $"{badgeInfo.progress.stepsDone ?? 0}/{badgeInfo.progress.totalStepsTarget ?? 0}";
+                }
 
                 if (!string.IsNullOrEmpty(badgeInfo.image) && badgeInfo.isLocked)
                     imageController?.RequestImage(badgeInfo.image, hideImageWhileLoading: true);

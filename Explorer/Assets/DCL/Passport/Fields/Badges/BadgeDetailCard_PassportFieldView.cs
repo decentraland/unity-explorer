@@ -88,22 +88,32 @@ namespace DCL.Passport.Fields.Badges
         public void Setup(BadgeInfo badgeInfo, bool isOwnProfile)
         {
             Model = badgeInfo;
+            bool showProgressBar = isOwnProfile && ((badgeInfo.isTier && string.IsNullOrEmpty(badgeInfo.completedAt)) || (!badgeInfo.isTier && badgeInfo.progress.totalStepsTarget is > 1));
             BadgeNameText.text = !string.IsNullOrEmpty(badgeInfo.progress.lastCompletedTierName) ? $"{badgeInfo.name} {badgeInfo.progress.lastCompletedTierName}" : badgeInfo.name;
             BadgeImage.SetColor(badgeInfo.isLocked ? LockedBadgeImageColor : NonLockedBadgeImageColor);
             string completedAtToLoad = !string.IsNullOrEmpty(badgeInfo.progress.lastCompletedTierAt) ? badgeInfo.progress.lastCompletedTierAt : badgeInfo.completedAt;
             BadgeDateText.text = !string.IsNullOrEmpty(completedAtToLoad) ? BadgesUtils.FormatTimestampDate(completedAtToLoad) : "—";
             BadgeDateText.gameObject.SetActive(
-                (!badgeInfo.isLocked && !string.IsNullOrEmpty(badgeInfo.completedAt)) ||
-                badgeInfo is { isLocked: true, isTier: false } ||
-                (!isOwnProfile && !string.IsNullOrEmpty(badgeInfo.progress.lastCompletedTierAt)));
+                !showProgressBar &&
+                ((!badgeInfo.isLocked && !string.IsNullOrEmpty(badgeInfo.completedAt)) ||
+                 badgeInfo is { isLocked: true, isTier: false } ||
+                 (!isOwnProfile && !string.IsNullOrEmpty(badgeInfo.progress.lastCompletedTierAt))));
             TopTierMark.SetActive(isOwnProfile && badgeInfo.isTier && !string.IsNullOrEmpty(badgeInfo.completedAt));
             NextTierTitle.SetActive(isOwnProfile && badgeInfo.isTier && badgeInfo.progress.stepsDone > 0 && string.IsNullOrEmpty(badgeInfo.completedAt));
-            ProgressBar.gameObject.SetActive(isOwnProfile && badgeInfo.isTier && string.IsNullOrEmpty(badgeInfo.completedAt));
+            ProgressBar.gameObject.SetActive(showProgressBar);
 
-            if (isOwnProfile && badgeInfo.isTier)
+            if (isOwnProfile)
             {
-                int progressPercentage = badgeInfo.isLocked ? 0 : badgeInfo.progress.stepsDone!.Value * 100 / (badgeInfo.progress.nextStepsTarget ?? badgeInfo.progress.totalStepsTarget!.Value);
-                ProgressBarFill.sizeDelta = new Vector2((!badgeInfo.isLocked ? progressPercentage : 0) * (ProgressBar.sizeDelta.x / 100), ProgressBarFill.sizeDelta.y);
+                if (badgeInfo.isTier)
+                {
+                    int progressPercentage = badgeInfo.isLocked ? 0 : badgeInfo.progress.stepsDone!.Value * 100 / (badgeInfo.progress.nextStepsTarget ?? badgeInfo.progress.totalStepsTarget!.Value);
+                    ProgressBarFill.sizeDelta = new Vector2((!badgeInfo.isLocked ? progressPercentage : 0) * (ProgressBar.sizeDelta.x / 100), ProgressBarFill.sizeDelta.y);
+                }
+                else if (badgeInfo.progress.stepsDone != null && badgeInfo.progress.totalStepsTarget != null)
+                {
+                    int simpleBadgeProgressPercentage = badgeInfo.progress.stepsDone!.Value * 100 / badgeInfo.progress.totalStepsTarget!.Value;
+                    ProgressBarFill.sizeDelta = new Vector2(simpleBadgeProgressPercentage * (ProgressBar.sizeDelta.x / 100), ProgressBarFill.sizeDelta.y);
+                }
             }
 
             imageController?.SetImage(DefaultBadgeSprite);
