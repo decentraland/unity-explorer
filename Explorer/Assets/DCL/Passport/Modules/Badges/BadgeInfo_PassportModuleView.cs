@@ -102,13 +102,9 @@ namespace DCL.Passport.Modules.Badges
                 BadgeNameText.text = badgeInfo.name;
                 BadgeDateText.text = !badgeInfo.isLocked ? $"Unlocked: {BadgesUtils.FormatTimestampDate(badgeInfo.completedAt)}" : "Locked";
                 BadgeDescriptionText.text = badgeInfo.description;
-
-                if (badgeInfo.progress.stepsDone != null && badgeInfo.progress.totalStepsTarget != null)
-                {
-                    int simpleBadgeProgressPercentage = badgeInfo.progress.stepsDone!.Value * 100 / badgeInfo.progress.totalStepsTarget!.Value;
-                    SimpleBadgeProgressBarFill.sizeDelta = new Vector2(simpleBadgeProgressPercentage * (SimpleBadgeProgressBar.sizeDelta.x / 100), SimpleBadgeProgressBarFill.sizeDelta.y);
-                    SimpleBadgeProgressValueText.text = $"{badgeInfo.progress.stepsDone ?? 0}/{badgeInfo.progress.totalStepsTarget ?? 0}";
-                }
+                int simpleBadgeProgressPercentage = badgeInfo.progress.stepsDone * 100 / badgeInfo.progress.totalStepsTarget;
+                SimpleBadgeProgressBarFill.sizeDelta = new Vector2(simpleBadgeProgressPercentage * (SimpleBadgeProgressBar.sizeDelta.x / 100), SimpleBadgeProgressBarFill.sizeDelta.y);
+                SimpleBadgeProgressValueText.text = $"{badgeInfo.progress.stepsDone}/{badgeInfo.progress.totalStepsTarget}";
             }
             else
             {
@@ -129,7 +125,7 @@ namespace DCL.Passport.Modules.Badges
                 {
                     NextTierValueText.text = nextTierToComplete.tierName;
                     NextTierDescriptionText.text = nextTierToComplete.description;
-                    int nextTierProgressPercentage = badgeInfo.isLocked ? 0 : badgeInfo.progress.stepsDone!.Value * 100 / (badgeInfo.progress.nextStepsTarget ?? badgeInfo.progress.totalStepsTarget!.Value);
+                    int nextTierProgressPercentage = badgeInfo.isLocked ? 0 : badgeInfo.progress.stepsDone * 100 / (badgeInfo.progress.nextStepsTarget ?? badgeInfo.progress.totalStepsTarget);
                     NextTierProgressBarFill.sizeDelta = new Vector2((!badgeInfo.isLocked ? nextTierProgressPercentage : 0) * (NextTierProgressBar.sizeDelta.x / 100), NextTierProgressBarFill.sizeDelta.y);
                     NextTierProgressValueText.text = $"{badgeInfo.progress.stepsDone}/{badgeInfo.progress.nextStepsTarget ?? badgeInfo.progress.totalStepsTarget}";
                 }

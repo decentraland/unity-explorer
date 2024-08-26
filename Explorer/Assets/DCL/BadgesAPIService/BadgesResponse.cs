@@ -32,9 +32,9 @@ namespace DCL.BadgesAPIService
     [Serializable]
     public class BadgeProgressData
     {
-        public int? stepsDone;
+        public int stepsDone;
         public int? nextStepsTarget;
-        public int? totalStepsTarget;
+        public int totalStepsTarget;
         public string lastCompletedTierAt;
         public string lastCompletedTierName;
         public string lastCompletedTierImage;

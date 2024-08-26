@@ -106,12 +106,12 @@ namespace DCL.Passport.Fields.Badges
             {
                 if (badgeInfo.isTier)
                 {
-                    int progressPercentage = badgeInfo.isLocked ? 0 : badgeInfo.progress.stepsDone!.Value * 100 / (badgeInfo.progress.nextStepsTarget ?? badgeInfo.progress.totalStepsTarget!.Value);
+                    int progressPercentage = badgeInfo.isLocked ? 0 : badgeInfo.progress.stepsDone * 100 / (badgeInfo.progress.nextStepsTarget ?? badgeInfo.progress.totalStepsTarget);
                     ProgressBarFill.sizeDelta = new Vector2((!badgeInfo.isLocked ? progressPercentage : 0) * (ProgressBar.sizeDelta.x / 100), ProgressBarFill.sizeDelta.y);
                 }
-                else if (badgeInfo.progress.stepsDone != null && badgeInfo.progress.totalStepsTarget != null)
+                else
                 {
-                    int simpleBadgeProgressPercentage = badgeInfo.progress.stepsDone!.Value * 100 / badgeInfo.progress.totalStepsTarget!.Value;
+                    int simpleBadgeProgressPercentage = badgeInfo.progress.stepsDone * 100 / badgeInfo.progress.totalStepsTarget;
                     ProgressBarFill.sizeDelta = new Vector2(simpleBadgeProgressPercentage * (ProgressBar.sizeDelta.x / 100), ProgressBarFill.sizeDelta.y);
                 }
             }

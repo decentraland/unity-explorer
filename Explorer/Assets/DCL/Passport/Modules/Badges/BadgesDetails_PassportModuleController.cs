@@ -274,7 +274,6 @@ namespace DCL.Passport.Modules.Badges
                 ActivateOnlyCategoriesInUse();
                 CreateEmptyDetailCards();
                 ShowBadgesInGridByCategory(ALL_FILTER);
-                SelectFirstBadge();
                 view.LoadingSpinner.SetActive(false);
             }
             catch (OperationCanceledException) { }
@@ -306,27 +305,23 @@ namespace DCL.Passport.Modules.Badges
                 if (badgeDetailCards.Count == 0)
                     continue;
 
-                if (numberOfActiveSeparators > 1)
+                foreach (var filterButton in instantiatedBadgesFilterButtons)
                 {
-                    view.BadgesFilterButtonsContainer.gameObject.SetActive(true);
-                    foreach (var filterButton in instantiatedBadgesFilterButtons)
-                    {
-                        if (!string.Equals(filterButton.Text.text, badgesCategorySeparator.CategoryText.text, StringComparison.CurrentCultureIgnoreCase))
-                            continue;
+                    if (!string.Equals(filterButton.Text.text, badgesCategorySeparator.CategoryText.text, StringComparison.CurrentCultureIgnoreCase))
+                        continue;
 
-                        filterButton.gameObject.SetActive(true);
-                        break;
-                    }
+                    filterButton.gameObject.SetActive(true);
+                    break;
                 }
-                else
-                    view.BadgesFilterButtonsContainer.gameObject.SetActive(false);
             }
+
+            view.BadgesFilterButtonsContainer.gameObject.SetActive(numberOfActiveSeparators > 1);
         }
 
         private void SelectFirstBadge()
         {
             var firstElementSelected = false;
-            BadgeDetailCard_PassportFieldView cardToSelect = null;
+            BadgeDetailCard_PassportFieldView? cardToSelect = null;
             foreach (string? category in badgeCategories)
             {
                 if (currentFilter != ALL_FILTER && !string.Equals(category, currentFilter, StringComparison.CurrentCultureIgnoreCase))
@@ -348,7 +343,10 @@ namespace DCL.Passport.Modules.Badges
                 }
             }
 
-            SelectBadgeCard(cardToSelect);
+            if (cardToSelect != null)
+                SelectBadgeCard(cardToSelect);
+
+            badgeInfoController.SetAsEmpty(cardToSelect == null);
         }
 
         private void CreateBadgeDetailCard(BadgeInfo badge)

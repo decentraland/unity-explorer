@@ -16,13 +16,16 @@ namespace DCL.Passport.Utils
         {
             string tierCompletedAt = string.Empty;
 
-            foreach (var achievedTier in badgeInfo.progress.achievedTiers)
+            if (badgeInfo.progress.achievedTiers != null)
             {
-                if (tierId != achievedTier.tierId)
-                    continue;
+                foreach (var achievedTier in badgeInfo.progress.achievedTiers)
+                {
+                    if (tierId != achievedTier.tierId)
+                        continue;
 
-                tierCompletedAt = achievedTier.completedAt;
-                break;
+                    tierCompletedAt = achievedTier.completedAt;
+                    break;
+                }
             }
 
             return tierCompletedAt;
