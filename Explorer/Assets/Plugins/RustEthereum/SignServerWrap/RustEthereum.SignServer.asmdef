@@ -1,0 +1,18 @@
+{
+    "name": "RustEthereum.SignServer",
+    "rootNamespace": "",
+    "references": [
+        "GUID:166b65e6dfc848bb9fb075f53c293a38",
+        "GUID:ca4e81cdd6a34d1aa54c32ad41fc5b3b",
+        "GUID:1d67e2d749f242e7a5dc246253ef5832"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": ["Nethereum.Signer.dll"],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

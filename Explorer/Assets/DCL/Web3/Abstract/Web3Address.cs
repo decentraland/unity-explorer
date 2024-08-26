@@ -1,3 +1,4 @@
+using DCL.Web3.Abstract;
 using System;
 
 namespace DCL.Web3
@@ -6,9 +7,12 @@ namespace DCL.Web3
     {
         private readonly string address;
 
+        public Web3Address(IWeb3Account web3Account) : this(web3Account.Address.address) {
+        }
+
         public Web3Address(string address)
         {
-            this.address = address;
+            this.address = address.ToLower();
         }
 
         public override string ToString() =>
