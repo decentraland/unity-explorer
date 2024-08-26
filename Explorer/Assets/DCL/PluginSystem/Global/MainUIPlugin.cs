@@ -30,21 +30,20 @@ namespace DCL.PluginSystem.Global
 
         protected override async UniTask<ContinueInitialization?> InitializeInternalAsync(Settings settings, CancellationToken ct)
         {
-            return (ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) =>
-            {
-                var mainUIController = new MainUIController(
-                    () =>
-                    {
-                        MainUIView view = mainUIView;
-                        view.gameObject.SetActive(true);
-                        return view;
-                    },
-                    sidebarBus,
-                    mvcManager
-                );
+            var mainUIController = new MainUIController(
+                () =>
+                {
+                    MainUIView view = mainUIView;
+                    view.gameObject.SetActive(true);
+                    return view;
+                },
+                sidebarBus,
+                mvcManager
+            );
 
-                mvcManager.RegisterController(mainUIController);
-            };
+            mvcManager.RegisterController(mainUIController);
+
+            return (ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) => { };
         }
 
         public class Settings : IDCLPluginSettings { }

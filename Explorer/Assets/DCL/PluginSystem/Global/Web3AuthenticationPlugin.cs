@@ -33,6 +33,7 @@ namespace DCL.PluginSystem.Global
         private readonly ISplashScreen splashScreen;
         private readonly FeatureFlagsCache featureFlagsCache;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
+        private readonly Arch.Core.World world;
         private readonly AudioMixerVolumesController audioMixerVolumesController;
 
         private CancellationTokenSource? cancellationTokenSource;
@@ -51,7 +52,8 @@ namespace DCL.PluginSystem.Global
             ISplashScreen splashScreen,
             AudioMixerVolumesController audioMixerVolumesController,
             FeatureFlagsCache featureFlagsCache,
-            CharacterPreviewEventBus characterPreviewEventBus
+            CharacterPreviewEventBus characterPreviewEventBus,
+            Arch.Core.World world
         )
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -67,6 +69,7 @@ namespace DCL.PluginSystem.Global
             this.featureFlagsCache = featureFlagsCache;
             this.audioMixerVolumesController = audioMixerVolumesController;
             this.characterPreviewEventBus = characterPreviewEventBus;
+            this.world = world;
         }
 
         public void Dispose() { }
@@ -77,14 +80,13 @@ namespace DCL.PluginSystem.Global
 
             ControllerBase<AuthenticationScreenView, ControllerNoData>.ViewFactoryMethod authScreenFactory = AuthenticationScreenController.CreateLazily(authScreenPrefab, null);
 
-            authenticationScreenController = new AuthenticationScreenController(authScreenFactory, web3Authenticator, selfProfile, featureFlagsCache, webBrowser, storedIdentityProvider, characterPreviewFactory, splashScreen, characterPreviewEventBus, audioMixerVolumesController);
+            authenticationScreenController = new AuthenticationScreenController(authScreenFactory, web3Authenticator, selfProfile, featureFlagsCache, webBrowser, storedIdentityProvider, characterPreviewFactory, splashScreen, characterPreviewEventBus, audioMixerVolumesController, world);
             mvcManager.RegisterController(authenticationScreenController);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
             LoginFromDebugPanelSystem.InjectToWorld(ref builder, debugContainerBuilder, web3Authenticator, mvcManager, realmData);
-            authenticationScreenController.SetWorld(builder.World);
         }
     }
 

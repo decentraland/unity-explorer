@@ -1,3 +1,4 @@
+using Arch.Core;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.Rooms.Status;
@@ -19,6 +20,8 @@ namespace DCL.PluginSystem.Global
         private readonly IRoomsStatus roomsStatus;
         private readonly ICurrentSceneInfo currentSceneInfo;
         private readonly ECSReloadScene ecsReloadScene;
+        private readonly Arch.Core.World world;
+        private readonly Entity playerEntity;
 
         public ConnectionStatusPanelPlugin(
             IUserInAppInitializationFlow userInAppInitializationFlow,
@@ -26,7 +29,9 @@ namespace DCL.PluginSystem.Global
             MainUIView mainUIView,
             IRoomsStatus roomsStatus,
             ICurrentSceneInfo currentSceneInfo,
-            ECSReloadScene ecsReloadScene
+            ECSReloadScene ecsReloadScene,
+            Arch.Core.World world,
+            Entity playerEntity
         )
         {
             this.userInAppInitializationFlow = userInAppInitializationFlow;
@@ -35,30 +40,33 @@ namespace DCL.PluginSystem.Global
             this.roomsStatus = roomsStatus;
             this.currentSceneInfo = currentSceneInfo;
             this.ecsReloadScene = ecsReloadScene;
+            this.world = world;
+            this.playerEntity = playerEntity;
         }
 
-        protected override UniTask<ContinueInitialization?> InitializeInternalAsync(ConnectionStatusPanelSettings settings, CancellationToken ct) =>
-            UniTask.FromResult<ContinueInitialization?>(
-                (ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) =>
-                {
-                    mvcManager.RegisterController(
-                        new ConnectionStatusPanelController(() =>
-                            {
-                                var view = mainUIView.ConnectionStatusPanelView;
-                                view!.gameObject.SetActive(true);
-                                return view;
-                            },
-                            userInAppInitializationFlow,
-                            mvcManager,
-                            currentSceneInfo,
-                            ecsReloadScene,
-                            roomsStatus,
-                            builder.World!,
-                            arguments.PlayerEntity
-                        )
-                    );
-                }
+        protected override UniTask<ContinueInitialization?> InitializeInternalAsync(ConnectionStatusPanelSettings settings, CancellationToken ct)
+        {
+            mvcManager.RegisterController(
+                new ConnectionStatusPanelController(() =>
+                    {
+                        var view = mainUIView.ConnectionStatusPanelView;
+                        view!.gameObject.SetActive(true);
+                        return view;
+                    },
+                    userInAppInitializationFlow,
+                    mvcManager,
+                    currentSceneInfo,
+                    ecsReloadScene,
+                    roomsStatus,
+                    world,
+                    playerEntity
+                )
             );
+
+            return UniTask.FromResult<ContinueInitialization?>(
+                (ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) => { }
+            );
+        }
 
         protected override void InjectSystems(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
 

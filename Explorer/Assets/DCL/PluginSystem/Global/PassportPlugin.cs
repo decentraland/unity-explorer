@@ -1,3 +1,4 @@
+using Arch.Core;
 using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
@@ -25,7 +26,6 @@ namespace DCL.PluginSystem.Global
     {
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IMVCManager mvcManager;
-        private PassportController passportController;
         private readonly ICursor cursor;
         private readonly IProfileRepository profileRepository;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
@@ -38,6 +38,10 @@ namespace DCL.PluginSystem.Global
         private readonly DCLInput dclInput;
         private readonly IWebBrowser webBrowser;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
+        private readonly Arch.Core.World world;
+        private readonly Entity playerEntity;
+
+        private PassportController? passportController;
 
         public PassportPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -53,7 +57,9 @@ namespace DCL.PluginSystem.Global
             ISelfProfile selfProfile,
             DCLInput dclInput,
             IWebBrowser webBrowser,
-            IDecentralandUrlsSource decentralandUrlsSource
+            IDecentralandUrlsSource decentralandUrlsSource,
+            Arch.Core.World world,
+            Entity playerEntity
         )
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -70,6 +76,8 @@ namespace DCL.PluginSystem.Global
             this.dclInput = dclInput;
             this.webBrowser = webBrowser;
             this.decentralandUrlsSource = decentralandUrlsSource;
+            this.world = world;
+            this.playerEntity = playerEntity;
         }
 
         protected override void InjectSystems(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
@@ -84,32 +92,36 @@ namespace DCL.PluginSystem.Global
 
             PassportView chatView = (await assetsProvisioner.ProvideMainAssetAsync(passportSettings.PassportPrefab, ct: ct)).Value.GetComponent<PassportView>();
 
-            return (ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) =>
-            {
-                ECSThumbnailProvider thumbnailProvider = new ECSThumbnailProvider(realmData, builder.World, assetBundleURL, webRequestController);
+            ECSThumbnailProvider thumbnailProvider = new ECSThumbnailProvider(realmData, world, assetBundleURL, webRequestController);
 
-                passportController = new PassportController(
-                    PassportController.CreateLazily(chatView, null),
-                    cursor,
-                    profileRepository,
-                    characterPreviewFactory,
-                    chatEntryConfiguration,
-                    rarityBackgroundsMapping,
-                    rarityColorMappings,
-                    categoryIconsMapping,
-                    characterPreviewEventBus,
-                    mvcManager,
-                    selfProfile,
-                    builder.World,
-                    arguments.PlayerEntity,
-                    thumbnailProvider,
-                    dclInput,
-                    webBrowser,
-                    decentralandUrlsSource
-                );
+            passportController = new PassportController(
+                PassportController.CreateLazily(chatView, null),
+                cursor,
+                profileRepository,
+                characterPreviewFactory,
+                chatEntryConfiguration,
+                rarityBackgroundsMapping,
+                rarityColorMappings,
+                categoryIconsMapping,
+                characterPreviewEventBus,
+                mvcManager,
+                selfProfile,
+                world,
+                playerEntity,
+                thumbnailProvider,
+                dclInput,
+                webBrowser,
+                decentralandUrlsSource
+            );
 
-                mvcManager.RegisterController(passportController);
-            };
+            mvcManager.RegisterController(passportController);
+
+            return (ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) => { };
+        }
+
+        public override void Dispose()
+        {
+            passportController?.Dispose();
         }
 
         public class PassportSettings : IDCLPluginSettings

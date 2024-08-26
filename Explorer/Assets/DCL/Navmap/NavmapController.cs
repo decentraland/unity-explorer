@@ -48,11 +48,10 @@ namespace DCL.Navmap
         private readonly Dictionary<NavmapSections, ISection> mapSections;
         private readonly Mouse mouse;
         private readonly StringBuilder parcelTitleStringBuilder = new ();
+        private readonly NavmapLocationController navmapLocationController;
 
         private CancellationTokenSource animationCts;
         private IMapCameraController cameraController;
-
-        private NavmapLocationController navmapLocationController;
 
         private Vector2 lastParcelHovered;
         private NavmapSections lastShownSection;
@@ -71,7 +70,9 @@ namespace DCL.Navmap
             DCLInput dclInput,
             IRealmNavigator realmNavigator,
             IRealmData realmData,
-            IMapPathEventBus mapPathEventBus)
+            IMapPathEventBus mapPathEventBus,
+            World world,
+            Entity playerEntity)
         {
             this.navmapView = navmapView;
             this.mapRenderer = mapRenderer;
@@ -127,6 +128,8 @@ namespace DCL.Navmap
             navmapView.WorldsWarningNotificationView.SetText(WORLDS_WARNING_MESSAGE);
             navmapView.WorldsWarningNotificationView.Hide();
             mouse = InputSystem.GetDevice<Mouse>();
+
+            navmapLocationController = new NavmapLocationController(navmapView.LocationView, world, playerEntity);
         }
 
         public void Dispose()
@@ -198,13 +201,8 @@ namespace DCL.Navmap
             }
         }
 
-        public async UniTask InitialiseAssetsAsync(IAssetsProvisioner assetsProvisioner, CancellationToken ct) =>
+        public async UniTask InitializeAssetsAsync(IAssetsProvisioner assetsProvisioner, CancellationToken ct) =>
             await searchBarController.InitialiseAssetsAsync(assetsProvisioner, ct);
-
-        public void InitialiseWorldDependencies(World world, Entity playerEntity)
-        {
-            navmapLocationController = new NavmapLocationController(navmapView.LocationView, world, playerEntity);
-        }
 
         private void OnResultClicked(string coordinates)
         {

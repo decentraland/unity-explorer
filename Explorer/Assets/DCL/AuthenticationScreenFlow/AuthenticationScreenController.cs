@@ -48,13 +48,13 @@ namespace DCL.AuthenticationScreenFlow
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
         private readonly FeatureFlagsCache featureFlagsCache;
         private readonly AudioMixerVolumesController audioMixerVolumesController;
+        private readonly World? world;
 
         private AuthenticationScreenCharacterPreviewController? characterPreviewController;
         private CancellationTokenSource? loginCancellationToken;
         private CancellationTokenSource? verificationCountdownCancellationToken;
         private UniTaskCompletionSource? lifeCycleTask;
         private StringVariable? profileNameLabel;
-        private World? world;
         private float originalWorldAudioVolume;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
@@ -69,7 +69,8 @@ namespace DCL.AuthenticationScreenFlow
             ICharacterPreviewFactory characterPreviewFactory,
             ISplashScreen splashScreenAnimator,
             CharacterPreviewEventBus characterPreviewEventBus,
-            AudioMixerVolumesController audioMixerVolumesController)
+            AudioMixerVolumesController audioMixerVolumesController,
+            World world)
             : base(viewFactory)
         {
             this.web3Authenticator = web3Authenticator;
@@ -82,6 +83,7 @@ namespace DCL.AuthenticationScreenFlow
             this.characterPreviewEventBus = characterPreviewEventBus;
             this.featureFlagsCache = featureFlagsCache;
             this.audioMixerVolumesController = audioMixerVolumesController;
+            this.world = world;
         }
 
         public override void Dispose()
@@ -395,11 +397,6 @@ namespace DCL.AuthenticationScreenFlow
         private void RequestAlphaAccess()
         {
             webBrowser.OpenUrl(REQUEST_BETA_ACCESS_LINK);
-        }
-
-        public void SetWorld(World world)
-        {
-            this.world = world;
         }
     }
 }

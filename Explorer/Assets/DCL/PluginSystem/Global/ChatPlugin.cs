@@ -1,3 +1,4 @@
+using Arch.Core;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
@@ -28,6 +29,8 @@ namespace DCL.PluginSystem.Global
         private readonly NametagsData nametagsData;
         private readonly DCLInput dclInput;
         private readonly IInputBlock inputBlock;
+        private readonly Arch.Core.World world;
+        private readonly Entity playerEntity;
         private readonly IEventSystem eventSystem;
         private readonly MainUIView mainUIView;
 
@@ -43,7 +46,9 @@ namespace DCL.PluginSystem.Global
             DCLInput dclInput,
             IEventSystem eventSystem,
             MainUIView mainUIView,
-            IInputBlock inputBlock
+            IInputBlock inputBlock,
+            Arch.Core.World world,
+            Entity playerEntity
         )
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -54,6 +59,8 @@ namespace DCL.PluginSystem.Global
             this.nametagsData = nametagsData;
             this.dclInput = dclInput;
             this.inputBlock = inputBlock;
+            this.world = world;
+            this.playerEntity = playerEntity;
             this.eventSystem = eventSystem;
             this.mainUIView = mainUIView;
         }
@@ -68,41 +75,39 @@ namespace DCL.PluginSystem.Global
             EmojiButton emojiButtonPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.EmojiButtonPrefab, ct)).Value;
             EmojiSuggestionView emojiSuggestionPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.EmojiSuggestionPrefab, ct)).Value;
 
-            return (ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) =>
-            {
-                chatController = new ChatController(
-                    () =>
-                    {
-                        var view = mainUIView.ChatView;
-                        view.gameObject.SetActive(true);
-                        return view;
-                    },
-                    chatEntryConfiguration,
-                    chatMessagesBus,
-                    chatHistory,
-                    entityParticipantTable,
-                    nametagsData,
-                    emojiPanelConfig,
-                    settings.EmojiMappingJson,
-                    emojiSectionPrefab,
-                    emojiButtonPrefab,
-                    emojiSuggestionPrefab,
-                    builder.World,
-                    arguments.PlayerEntity,
-                    dclInput,
-                    inputBlock,
-                    eventSystem
-                );
+            chatController = new ChatController(
+                () =>
+                {
+                    var view = mainUIView.ChatView;
+                    view.gameObject.SetActive(true);
+                    return view;
+                },
+                chatEntryConfiguration,
+                chatMessagesBus,
+                chatHistory,
+                entityParticipantTable,
+                nametagsData,
+                emojiPanelConfig,
+                settings.EmojiMappingJson,
+                emojiSectionPrefab,
+                emojiButtonPrefab,
+                emojiSuggestionPrefab,
+                world,
+                playerEntity,
+                dclInput,
+                inputBlock,
+                eventSystem
+            );
 
-                mvcManager.RegisterController(chatController);
-            };
+            mvcManager.RegisterController(chatController);
+
+            return (ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) => { };
         }
 
         public class ChatSettings : IDCLPluginSettings
         {
             [field: Header(nameof(ChatPlugin) + "." + nameof(ChatSettings))]
             [field: Space]
-
             [field: SerializeField]
             public EmojiButtonRef EmojiButtonPrefab { get; private set; }
 
@@ -120,7 +125,6 @@ namespace DCL.PluginSystem.Global
 
             [field: SerializeField]
             public TextAsset EmojiMappingJson { get; private set; }
-
 
             [Serializable]
             public class EmojiSuggestionPanelRef : ComponentReference<EmojiSuggestionPanelView>
@@ -157,7 +161,6 @@ namespace DCL.PluginSystem.Global
             {
                 public MainUIRef(string guid) : base(guid) { }
             }
-
         }
     }
 }

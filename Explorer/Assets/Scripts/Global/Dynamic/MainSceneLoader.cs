@@ -3,7 +3,6 @@ using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
-using DCL.Input;
 using DCL.Input.Component;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
@@ -222,7 +221,7 @@ namespace Global.Dynamic
 
         private void RestoreShortcuts()
         {
-            globalWorld!.EcsWorld.CacheInputMap().GetInputMapComponent(globalWorld.EcsWorld).Active |= InputMapKind.Shortcuts;
+            dynamicWorldContainer!.InputGroupToggle.Enable(InputMapKind.Shortcuts);
         }
 
         [ContextMenu(nameof(ValidateSettingsAsync))]
