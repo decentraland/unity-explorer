@@ -12,6 +12,7 @@ using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.Pools;
 using DCL.Multiplayer.Connections.Systems;
 using DCL.UserInAppInitializationFlow;
+using DCL.Web3.Accounts.Factory;
 using DCL.Web3.Identities;
 using ECS;
 using ECS.Abstract;
@@ -59,7 +60,7 @@ namespace DCL.Multiplayer.Connections.Demo
                 multiPool
             ).WithLog();
 
-            IWeb3IdentityCache? identityCache = await ArchipelagoFakeIdentityCache.NewAsync(new DecentralandUrlsSource(DecentralandEnvironment.Zone));
+            IWeb3IdentityCache? identityCache = await ArchipelagoFakeIdentityCache.NewAsync(new DecentralandUrlsSource(DecentralandEnvironment.Zone), new Web3AccountFactory());
 
             var archipelagoIslandRoom = new ArchipelagoIslandRoom(
                 identityCache,

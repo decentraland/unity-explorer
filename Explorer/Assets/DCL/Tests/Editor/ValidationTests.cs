@@ -34,6 +34,7 @@ namespace DCL.Tests.Editor
         private readonly IReadOnlyCollection<string> pathIgnores = new List<string>
         {
             "node_modules",
+            "sign-server"
         };
 
         [Test]
