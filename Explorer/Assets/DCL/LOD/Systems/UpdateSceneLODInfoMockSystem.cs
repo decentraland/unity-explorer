@@ -35,20 +35,22 @@ namespace DCL.LOD.Systems
 
         [Query]
         [All(typeof(SceneLODInfo), typeof(PartitionComponent))]
-        [None(typeof(DeleteEntityIntention))]
-        private void UpdateLODLevel(ref SceneLODInfo sceneLODInfo, SceneDefinitionComponent sceneDefinitionComponent)
+        [None(typeof(DeleteEntityIntention), typeof(MockSceneLODInfo))]
+        private void UpdateLODLevel(in Entity entity, SceneDefinitionComponent sceneDefinitionComponent)
         {
             //If LODs are not enabled, we can consider the scene as ready,
             //and check scene readiness so not to block the loading screen
-            scenesCache.AddNonRealScene(sceneDefinitionComponent.Parcels);
-            LODUtils.CheckSceneReadiness(sceneReadinessReportQueue, sceneDefinitionComponent);
+            if (!sceneDefinitionComponent.IsSDK7)
+                LODUtils.ReportSDK6SceneLoaded(sceneDefinitionComponent, sceneReadinessReportQueue, scenesCache);
+
+            World.Add<MockSceneLODInfo>(entity);
         }
 
         [Query]
-        [All(typeof(DeleteEntityIntention))]
-        private void UnloadLOD(in Entity entity, ref SceneLODInfo sceneLODInfo, ref SceneDefinitionComponent sceneDefinitionComponent)
+        [All(typeof(DeleteEntityIntention), typeof(SceneLODInfo), typeof(SceneDefinitionComponent))]
+        private void UnloadLOD(in Entity entity)
         {
-            World.Remove<SceneLODInfo, VisualSceneState, DeleteEntityIntention>(entity);
+            World.Remove<SceneLODInfo, VisualSceneState, DeleteEntityIntention, MockSceneLODInfo>(entity);
         }
     }
 }

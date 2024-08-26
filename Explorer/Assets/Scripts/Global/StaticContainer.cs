@@ -5,7 +5,6 @@ using DCL.AssetsProvision;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Character;
 using DCL.Character.Plugin;
-using DCL.CommandLine;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
@@ -38,6 +37,7 @@ using System.Collections.Generic;
 using System.Threading;
 using DCL.LOD;
 using ECS.SceneLifeCycle.Components;
+using Global.AppArgs;
 using SceneRunner.Mapping;
 using UnityEngine;
 using Utility;
@@ -126,7 +126,7 @@ namespace Global
             IDecentralandUrlsSource decentralandUrlsSource,
             IAssetsProvisioner assetsProvisioner,
             IReportsHandlingSettings reportHandlingSettings,
-            ICommandLineArgs commandLineArgs,
+            IAppArgs appArgs,
             DebugViewsCatalog debugViewsCatalog,
             IPluginSettingsContainer settingsContainer,
             IWeb3IdentityCache web3IdentityProvider,
@@ -141,7 +141,7 @@ namespace Global
 
             var container = new StaticContainer();
 
-            container.DebugContainerBuilder = DebugUtilitiesContainer.Create(debugViewsCatalog, commandLineArgs.HasDebugFlag()).Builder;
+            container.DebugContainerBuilder = DebugUtilitiesContainer.Create(debugViewsCatalog, appArgs.HasDebugFlag()).Builder;
             container.EthereumApi = ethereumApi;
             container.ScenesCache = new ScenesCache();
             container.SceneReadinessReportQueue = new SceneReadinessReportQueue(container.ScenesCache);

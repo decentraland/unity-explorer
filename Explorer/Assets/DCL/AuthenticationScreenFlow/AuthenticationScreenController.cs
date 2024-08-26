@@ -1,6 +1,7 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
+using DCL.Web3;
 using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Diagnostics;
@@ -10,13 +11,12 @@ using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.UI;
-using DCL.Web3;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using MVC;
 using System;
-using System.Collections.Generic;
 using System.Threading;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEngine.Localization.SmartFormat.PersistentVariables;
@@ -34,6 +34,7 @@ namespace DCL.AuthenticationScreenFlow
             Loading,
             Finalize,
         }
+
         private const int ANIMATION_DELAY = 300;
 
         private const string REQUEST_BETA_ACCESS_LINK = "https://68zbqa0m12c.typeform.com/to/y9fZeNWm";
@@ -153,6 +154,7 @@ namespace DCL.AuthenticationScreenFlow
             IWeb3Identity? storedIdentity = storedIdentityProvider.Identity;
 
             if (storedIdentity is { IsExpired: false }
+
                 // Force to re-login if the identity will expire in 24hs or less, so we mitigate the chances on
                 // getting the identity expired while in-world, provoking signed-fetch requests to fail
                 && storedIdentity.Expiration - DateTime.UtcNow > TimeSpan.FromDays(1))

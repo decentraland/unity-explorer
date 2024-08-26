@@ -11,9 +11,9 @@ using DCL.CharacterCamera;
 using DCL.CharacterCamera.Components;
 using DCL.CharacterCamera.Settings;
 using DCL.CharacterCamera.Systems;
-using DCL.CommandLine;
 using DCL.DebugUtilities;
 using ECS.Prioritization.Components;
+using Global.AppArgs;
 using System.Threading;
 using UnityEngine;
 using ApplyCinemachineSettingsSystem = DCL.Character.CharacterCamera.Systems.ApplyCinemachineSettingsSystem;
@@ -29,7 +29,7 @@ namespace DCL.PluginSystem.Global
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly ExposedCameraData exposedCameraData;
         private readonly IDebugContainerBuilder debugBuilder;
-        private readonly ICommandLineArgs commandLineArgs;
+        private readonly IAppArgs commandLineArgs;
         private readonly DCLInput input;
         private readonly RealmSamplingData realmSamplingData;
         private ProvidedInstance<CinemachinePreset> providedCinemachinePreset;
@@ -40,7 +40,7 @@ namespace DCL.PluginSystem.Global
             RealmSamplingData realmSamplingData,
             ExposedCameraData exposedCameraData,
             IDebugContainerBuilder debugBuilder,
-            ICommandLineArgs commandLineArgs,
+            IAppArgs commandLineArgs,
             DCLInput input)
         {
             this.assetsProvisioner = assetsProvisioner;
