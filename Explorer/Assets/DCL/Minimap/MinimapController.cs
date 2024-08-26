@@ -153,6 +153,7 @@ namespace DCL.Minimap
         {
             Vector3 position = transformComponent.Position;
 
+            // TODO: this is always null, why keep this branch?
             if (mapCameraController == null)
             {
                 mapCameraController = mapRenderer.RentCamera(new MapCameraInput(
