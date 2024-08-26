@@ -1,6 +1,4 @@
 using Cysharp.Threading.Tasks;
-using DCL.Character.CharacterMotion.Components;
-using DG.Tweening;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -47,14 +45,15 @@ namespace DCL.UI
             }
         }
 
-        public async UniTaskVoid OnTabSelectorToggleValueChangedAsync(bool isOn, TabSelectorView selectorToggle, T section, CancellationToken ct, bool animate = true)
+        public UniTaskVoid OnTabSelectorToggleValueChangedAsync(bool isOn, TabSelectorView selectorToggle, T section, CancellationToken ct, bool animate = true)
         {
             if (!isOn || EnumUtils.Equals(section, previousSection))
-                return;
+                return new UniTaskVoid();
 
             SetAnimationState(true, selectorToggle);
 
-            if (animate) { AnimatePanelsAsync(sections[previousSection], sections[section], section, ct); }
+            if (animate)
+                AnimatePanelsAsync(sections[previousSection], sections[section], section, ct);
             else
             {
                 sections[previousSection].Deactivate();
@@ -64,6 +63,7 @@ namespace DCL.UI
                 SetPanelsPosition(sections[previousSection].GetRectTransform(), sections[section].GetRectTransform());
                 previousSection = section;
             }
+            return new UniTaskVoid();
         }
 
         public void ResetAnimators()

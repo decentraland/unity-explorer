@@ -2,7 +2,6 @@
 using DCL.AssetsProvision;
 using DCL.Browser;
 using DCL.Browser.DecentralandUrls;
-using DCL.CommandLine;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -21,6 +20,8 @@ using System.Collections.Generic;
 using System.Threading;
 using DCL.PerformanceAndDiagnostics.DotNetLogging;
 using DCL.Utilities.Extensions;
+using DCL.Web3.Accounts.Factory;
+using Global.AppArgs;
 using Global.Dynamic;
 using UnityEngine;
 
@@ -66,26 +67,42 @@ namespace Global.Static
                 DotNetLoggingPlugin.Initialize();
 
                 if (useStoredCredentials && useRealAuthentication) // avoid storing invalid credentials
-                    identityCache = new ProxyIdentityCache(new MemoryWeb3IdentityCache(),
-                        new PlayerPrefsIdentityProvider(new PlayerPrefsIdentityProvider.DecentralandIdentityWithNethereumAccountJsonSerializer()));
+                    identityCache = new ProxyIdentityCache(
+                        new MemoryWeb3IdentityCache(),
+                        new PlayerPrefsIdentityProvider(
+                            new PlayerPrefsIdentityProvider.DecentralandIdentityWithNethereumAccountJsonSerializer(
+                                new Web3AccountFactory()
+                            )
+                        )
+                    );
                 else
                     identityCache = new MemoryWeb3IdentityCache();
 
+                var web3AccountFactory = new Web3AccountFactory();
+
                 var decentralandUrlsSource = new DecentralandUrlsSource(DecentralandEnvironment.Org);
 
-                var dappWeb3Authenticator = new DappWeb3Authenticator(new UnityAppWebBrowser(decentralandUrlsSource),
-                    authenticationServerUrl, authenticationSignatureUrl,
+                var dappWeb3Authenticator = new DappWeb3Authenticator(
+                    new UnityAppWebBrowser(decentralandUrlsSource),
+                    authenticationServerUrl,
+                    authenticationSignatureUrl,
                     identityCache,
-                    new HashSet<string>(ethWhitelistMethods));
+                    web3AccountFactory,
+                    new HashSet<string>(ethWhitelistMethods)
+                );
 
                 IWeb3Authenticator web3Authenticator;
 
                 if (useRealAuthentication)
-                    web3Authenticator = new ProxyWeb3Authenticator(dappWeb3Authenticator,
-                        identityCache);
+                    web3Authenticator = new ProxyWeb3Authenticator(
+                        dappWeb3Authenticator,
+                        identityCache
+                    );
                 else
-                    web3Authenticator = new ProxyWeb3Authenticator(new RandomGeneratedWeb3Authenticator(),
-                        identityCache);
+                    web3Authenticator = new ProxyWeb3Authenticator(
+                        new RandomGeneratedWeb3Authenticator(web3AccountFactory),
+                        identityCache
+                    );
 
                 if (useRealAuthentication)
                 {
@@ -155,7 +172,7 @@ namespace Global.Static
                 decentralandUrlsSource,
                 assetsProvisioner,
                 reportHandlingSettings,
-                new CommandLineArgs(),
+                new ApplicationParametersParser(),
                 debugViewsCatalog,
                 globalSettingsContainer,
                 web3IdentityProvider,
