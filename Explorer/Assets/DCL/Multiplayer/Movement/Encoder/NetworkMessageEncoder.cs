@@ -8,10 +8,12 @@ namespace DCL.Multiplayer.Movement
     public class NetworkMessageEncoder
     {
         private readonly MessageEncodingSettings encodingSettings;
+        private readonly TimestampEncoder timestampEncoder;
 
         public NetworkMessageEncoder(MessageEncodingSettings encodingSettings)
         {
             this.encodingSettings = encodingSettings;
+            this.timestampEncoder = new TimestampEncoder(encodingSettings);
         }
 
         public CompressedNetworkMovementMessage Compress(NetworkMovementMessage message) =>
@@ -25,7 +27,7 @@ namespace DCL.Multiplayer.Movement
         private int CompressTemporalData(float timestamp, MovementKind movementKind, bool isSliding, AnimationStates animState, bool isStunned,
             float rotationY, int tier)
         {
-            int temporalData = new TimestampEncoder(encodingSettings).Compress(timestamp);
+            int temporalData = timestampEncoder.Compress(timestamp);
 
             // Animations
             temporalData |= ((int)movementKind & MessageEncodingSettings.MOVEMENT_KIND_MASK) << encodingSettings.MOVEMENT_KIND_START_BIT;
@@ -46,7 +48,7 @@ namespace DCL.Multiplayer.Movement
             return temporalData;
         }
 
-        private long CompressMovementData(Vector3 position, Vector3 velocity, MovementEncodingConfig settings)
+        private static long CompressMovementData(Vector3 position, Vector3 velocity, MovementEncodingConfig settings)
         {
             Vector2Int parcel = position.ToParcel();
 
@@ -89,7 +91,7 @@ namespace DCL.Multiplayer.Movement
 
             int rotationMask = (1 << encodingSettings.ROTATION_Y_BITS) - 1;
             int compressedRotation = (compressedTemporalData >> encodingSettings.ROTATION_START_BIT) & rotationMask;
-            float timestamp = new TimestampEncoder(encodingSettings).Decompress(compressedTemporalData);
+            float timestamp = timestampEncoder.Decompress(compressedTemporalData);
             Debug.Log($"VVV decompressed {timestamp} {tier}");
 
             return new NetworkMovementMessage
@@ -121,7 +123,7 @@ namespace DCL.Multiplayer.Movement
             };
         }
 
-        private (Vector3 position, Vector3 velocity) DecompressMovementData(long movementData, MovementEncodingConfig settings)
+        private static (Vector3 position, Vector3 velocity) DecompressMovementData(long movementData, MovementEncodingConfig settings)
         {
             const int PARCEL_BITS = MessageEncodingSettings.PARCEL_BITS;
             const int PARCEL_MASK = (1 << PARCEL_BITS) - 1;
@@ -162,73 +164,6 @@ namespace DCL.Multiplayer.Movement
             float decompressedVelocityZ = FloatQuantizer.Decompress(extractedVelocityZ, -maxVelocity, maxVelocity, velocityBits);
 
             return (worldPosition, velocity: new Vector3(decompressedVelocityX, decompressedVelocityY, decompressedVelocityZ));
-        }
-    }
-
-    /// <summary>
-    ///     Flatten (x,y) parcel coordinates into 1-dimensional array
-    /// </summary>
-    public static class ParcelEncoder
-    {
-        // TODO (Vit): now hardcoded, but it should depend on the Genesis Size + Landscape margins settings
-        public const int MIN_X = -152;
-        public const int MAX_X = 164;
-        public const int MIN_Y = -152;
-        public const int MAX_Y = 160;
-
-        private const int WIDTH = MAX_X - MIN_X + 1;
-
-        public static int Encode(Vector2Int parcel) =>
-            parcel.x - MIN_X + ((parcel.y - MIN_Y) * WIDTH);
-
-        public static Vector2Int Decode(int index) =>
-            new ((index % WIDTH) + MIN_X, (index / WIDTH) + MIN_Y);
-    }
-
-    /// <summary>
-    ///     Encode timepsamp as a circular buffer
-    /// </summary>
-    public class TimestampEncoder
-    {
-        private readonly MessageEncodingSettings settings;
-        public float BUFFER => STEPS * settings.TIMESTAMP_QUANTUM;
-        private int STEPS => 1 << settings.TIMESTAMP_BITS; // 2^TIMESTAMP_BITS
-
-        public TimestampEncoder(MessageEncodingSettings settings)
-        {
-            this.settings = settings;
-        }
-
-        public int Compress(float timestamp)
-        {
-            float normalizedTimestamp = timestamp % BUFFER; // Normalize timestamp within the round buffer
-            return Mathf.RoundToInt(normalizedTimestamp / settings.TIMESTAMP_QUANTUM) % STEPS;
-        }
-
-        public float Decompress(long data)
-        {
-            int MASK = STEPS - 1;
-            return (int)(data & MASK) * settings.TIMESTAMP_QUANTUM % BUFFER;
-        }
-    }
-
-    /// <summary>
-    ///     Compress float via scaled integer approach (fixed-size quantization)
-    /// </summary>
-    public static class FloatQuantizer
-    {
-        public static int Compress(float value, float minValue, float maxValue, int bits)
-        {
-            int maxStep = (1 << bits) - 1;
-            float normalizedValue = (value - minValue) / (maxValue - minValue);
-            return Mathf.RoundToInt(Mathf.Clamp01(normalizedValue) * maxStep);
-        }
-
-        public static float Decompress(int compressed, float minValue, float maxValue, int bits)
-        {
-            float maxStep = (1 << bits) - 1f;
-            float normalizedValue = compressed / maxStep;
-            return (normalizedValue * (maxValue - minValue)) + minValue;
         }
     }
 }

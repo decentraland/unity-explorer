@@ -18,6 +18,9 @@ namespace DCL.Multiplayer.Movement
         {
             SplineType = interpolationType;
 
+            if (Start.velocity.sqrMagnitude < 0.0001f)
+                SplineType = InterpolationType.FullMonotonicHermite;
+
             Start = from;
             End = to;
 

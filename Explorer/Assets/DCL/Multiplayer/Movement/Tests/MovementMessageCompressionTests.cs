@@ -217,8 +217,8 @@ namespace DCL.Multiplayer.Movement.Tests
             NetworkMovementMessage decompressedMessage = encoder.Decompress(encoder.Compress(originalMessage));
 
             // Assert
-            Assert.AreEqual(t % timestampEncoder.BUFFER, decompressedMessage.timestamp, Settings.TIMESTAMP_QUANTUM);
-            Debug.Log($"Timestamp quantization = {Settings.TIMESTAMP_QUANTUM}, buffer size = {timestampEncoder.BUFFER / 60} min | original: {t} | decompressed: {decompressedMessage.timestamp}");
+            Assert.AreEqual(t % timestampEncoder.BufferSize, decompressedMessage.timestamp, Settings.TIMESTAMP_QUANTUM);
+            Debug.Log($"Timestamp quantization = {Settings.TIMESTAMP_QUANTUM}, buffer size = {timestampEncoder.BufferSize / 60} min | original: {t} | decompressed: {decompressedMessage.timestamp}");
         }
     }
 }
