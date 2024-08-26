@@ -96,8 +96,6 @@ namespace DCL.Multiplayer.Movement.Systems
                 playerMovement.MessagesPerSecResetCooldown -= t;
             else
             {
-                Debug.Log($"VVV Mps {playerMovement.MessagesSentInSec}");
-
                 playerMovement.MessagesPerSecResetCooldown = 1; // 1 [sec]
                 playerMovement.MessagesSentInSec = 0;
             }
@@ -106,19 +104,17 @@ namespace DCL.Multiplayer.Movement.Systems
         private void SendMessage(ref PlayerMovementNetworkComponent playerMovement, in CharacterAnimationComponent animation, in StunComponent playerStunComponent, in MovementInputComponent movement)
         {
             playerMovement.MessagesSentInSec++;
-            Debug.Log($"VVV [send] {UnityEngine.Time.unscaledTime}");
 
             // We use this calculation instead of Character.velocity because, Character.velocity is 0 in some cases (moving platform)
             float dist = (playerMovement.Character.transform.position - playerMovement.LastSentMessage.position).magnitude;
             float speed = dist / (UnityEngine.Time.unscaledTime - playerMovement.LastSentMessage.timestamp);
 
-            int tier = speed switch
-                       {
-                           < 0.001f => 0,
-                           < 2 => 1,
-                           < 12 => 2,
-                           _ => 3,
-                       };
+            int tier;
+
+            if (speed < settings.VelocityTiers[0]) tier = 0;
+            else if (speed < settings.VelocityTiers[1]) tier = 1;
+            else if (speed < settings.VelocityTiers[2]) tier = 2;
+            else tier = 3;
 
             playerMovement.LastSentMessage = new NetworkMovementMessage
             {

@@ -14,6 +14,7 @@ namespace DCL.Multiplayer.Movement.Settings
         [field: Header("SENDING RULES")]
         [field: SerializeField] public float MoveSendRate { get; set; }
         [field: SerializeField] public float StandSendRate { get; set; }
+        [field: SerializeField] public float[] VelocityTiers { get; set;}
 
         [field: SerializeField] public List<SendRuleBase> SendRules { get; set; }
 

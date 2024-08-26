@@ -11,6 +11,8 @@ namespace DCL.Multiplayer.Movement.Settings
         float MoveSendRate{ get; }
         float StandSendRate{ get; }
 
+        float[] VelocityTiers { get; }
+
         // TEST NETWORK
         bool SelfSending { get; }
         float Latency { get; }
