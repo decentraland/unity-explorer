@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using Arch.SystemGroups.Metadata;
 using Cinemachine;
 using DCL.Audio;
 using DCL.Character.CharacterCamera.Components;
@@ -10,8 +11,10 @@ using DCL.CharacterCamera.Settings;
 using DCL.CharacterMotion.Components;
 using DCL.Input;
 using DCL.Input.Component;
+using DCL.Input.Systems;
 using DCL.SDKComponents.InputModifier.Components;
 using ECS.Abstract;
+using System;
 using UnityEngine;
 
 namespace DCL.Character.CharacterCamera.Systems
@@ -30,9 +33,6 @@ namespace DCL.Character.CharacterCamera.Systems
         internal ControlCinemachineVirtualCameraSystem(World world, ICinemachineCameraAudioSettings cinemachineCameraAudioSettings) : base(world)
         {
             this.cinemachineCameraAudioSettings = cinemachineCameraAudioSettings;
-
-            // ref var inputModifier = ref world.Get<InputModifierComponent>(playerEntity.StrictObject);
-            // inputModifier.DisableAll = true;
         }
 
         public override void Initialize()
@@ -59,11 +59,11 @@ namespace DCL.Character.CharacterCamera.Systems
         }
 
         [Query]
-        private void HandleCameraInput([Data] float dt, in CameraComponent cameraComponent)//, in InputModifierComponent modifierComponent)
+        [None(typeof(CameraBlockerComponent))]
+        private void HandleCameraInput([Data] float dt, in CameraComponent cameraComponent)
         {
             // this blocks the user of changing the current camera, but the SDK still can do it
-            // TODO: Review if we continue using InputModifierComponent, a new interface or remove block camera from InputModifierComponent
-            if (!cameraComponent.CameraInputChangeEnabled)// || modifierComponent.DisableCamera)
+            if (!cameraComponent.CameraInputChangeEnabled)
                 return;
 
             HandleZoomingQuery(World);

@@ -2,6 +2,7 @@ using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Backpack;
 using DCL.CharacterMotion.Components;
+using DCL.Input.Systems;
 using DCL.Navmap;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
@@ -241,6 +242,7 @@ namespace DCL.ExplorePanel
 
         private void BlockUnwantedActions()
         {
+            world.AddOrGet<CameraBlockerComponent>(playerEntity);
             ref var inputModifier = ref world.Get<InputModifierComponent>(playerEntity);
             inputModifier.DisableAll = true;
 
@@ -249,6 +251,7 @@ namespace DCL.ExplorePanel
 
         private void UnblockUnwantedActions()
         {
+            world.TryRemove<CameraBlockerComponent>(playerEntity);
             ref var inputModifier = ref world.Get<InputModifierComponent>(playerEntity);
             inputModifier.DisableAll = false;
 

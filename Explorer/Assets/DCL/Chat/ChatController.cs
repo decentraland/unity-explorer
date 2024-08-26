@@ -7,6 +7,7 @@ using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.Emoji;
 using DCL.Input;
+using DCL.Input.Systems;
 using DCL.Input.UnityInputSystem.Blocks;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
@@ -162,21 +163,11 @@ namespace DCL.Chat
             }
         }
 
-        private void OnChatViewPointerExit()
-        {
-            //world.TryRemove<CameraBlockerComponent>(cameraEntity);
-            // TODO: Review if we continue using InputModifierComponent, a new interface or remove block camera from InputModifierComponent
-            // ref var inputModifier = ref world.Get<InputModifierComponent>(playerEntity);
-            // inputModifier.DisableCamera = false;
-        }
+        private void OnChatViewPointerExit() =>
+            world.TryRemove<CameraBlockerComponent>(cameraEntity);
 
-        private void OnChatViewPointerEnter()
-        {
-            //world.AddOrGet(cameraEntity, new CameraBlockerComponent());
-            // TODO: Review if we continue using InputModifierComponent, a new interface or remove block camera from InputModifierComponent
-            // ref var inputModifier = ref world.Get<InputModifierComponent>(playerEntity);
-            // inputModifier.DisableCamera = true;
-        }
+        private void OnChatViewPointerEnter() =>
+            world.AddOrGet(cameraEntity, new CameraBlockerComponent());
 
         private void AddEmojiFromSuggestion(string emojiCode, bool shouldClose)
         {
