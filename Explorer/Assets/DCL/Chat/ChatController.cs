@@ -291,6 +291,7 @@ namespace DCL.Chat
 
             if (viewInstance!.EmojiPanel.gameObject.activeInHierarchy)
             {
+                viewInstance!.EmojiPanelButton.SetState(false);
                 emojiPanelController!.SetPanelVisibility(false);
                 UnblockUnwantedInputs();
             }
