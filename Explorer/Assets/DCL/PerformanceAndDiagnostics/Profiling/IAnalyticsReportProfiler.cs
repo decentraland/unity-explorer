@@ -1,14 +1,15 @@
-﻿namespace DCL.Profiling
+﻿using System;
+using System.Collections.Generic;
+using Unity.Profiling;
+
+namespace DCL.Profiling
 {
-    public interface IAnalyticsReportProfiler : IBudgetProfiler
+    public interface IAnalyticsReportProfiler : IMemoryProfiler
     {
-        long SystemUsedMemoryInBytes { get; }
+        (AnalyticsFrameTimeReport? gpuFrameTime, AnalyticsFrameTimeReport? mainThreadFrameTime, string mainThreadSamples)
+            GetFrameTimesNs(int[] percentile);
 
-        long GcUsedMemoryInBytes { get; }
-
-        AnalyticsFrameTimeReport? GetMainThreadFramesNs(int[] percentile);
-
-        AnalyticsFrameTimeReport? GetGpuThreadFramesNs(int[] percentile);
+        float TotalGcAlloc { get; }
     }
 
     public readonly struct AnalyticsFrameTimeReport

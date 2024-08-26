@@ -11,8 +11,8 @@ namespace DCL.Optimization.PerformanceBudgeting.Tests
 
         private readonly Dictionary<MemoryUsageStatus, float> memoryThreshold = new ()
         {
-            { MemoryUsageStatus.Warning, 0.8f },
-            { MemoryUsageStatus.Full, 0.9f },
+            { MemoryUsageStatus.WARNING, 0.8f },
+            { MemoryUsageStatus.FULL, 0.9f },
         };
 
         private MemoryBudget memoryBudget;
@@ -29,9 +29,9 @@ namespace DCL.Optimization.PerformanceBudgeting.Tests
             memoryBudget = new MemoryBudget(systemMemory, profiler, memoryThreshold);
         }
 
-        [TestCase(1000, 500, MemoryUsageStatus.Normal)]
-        [TestCase(1000, 810, MemoryUsageStatus.Warning)]
-        [TestCase(1000, 910, MemoryUsageStatus.Full)]
+        [TestCase(1000, 500, MemoryUsageStatus.NORMAL)]
+        [TestCase(1000, 810, MemoryUsageStatus.WARNING)]
+        [TestCase(1000, 910, MemoryUsageStatus.FULL)]
         public void ReturnCorrectMemoryStatus_OnDifferentMemoryUsages(long systemMemoryInMB, long usedMemoryInMB, MemoryUsageStatus expectedUsage)
         {
             // Arrange
