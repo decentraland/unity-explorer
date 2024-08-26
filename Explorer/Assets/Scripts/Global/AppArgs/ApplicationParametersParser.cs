@@ -87,7 +87,7 @@ namespace Global.AppArgs
             {
                 // if the deep link is not constructed correctly (AKA 'decentraland://?&blabla=blabla') a 'null' parameter can be detected...
                 if (uriQueryKey == null) continue;
-                AppParameters[uriQueryKey] = uriQuery.Get(uriQueryKey);
+                appParameters[uriQueryKey] = uriQuery.Get(uriQueryKey);
             }
 
             // Patch for WinOS sometimes affecting the 'realm' parameter in deep links putting a '/' at the end
