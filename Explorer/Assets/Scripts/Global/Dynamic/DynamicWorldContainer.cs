@@ -519,7 +519,8 @@ namespace Global.Dynamic
                     chatEntryConfiguration,
                     backpackEventBus,
                     thirdPartyNftProviderSource,
-                    container.wearablesProvider
+                    container.wearablesProvider,
+                    staticContainer.InputBlock
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
@@ -559,9 +560,9 @@ namespace Global.Dynamic
                     staticContainer.WebRequestsContainer.WebRequestController,
                     characterPreviewEventBus,
                     selfProfile,
-                    dclInput,
                     webBrowser,
-                    bootstrapContainer.DecentralandUrlsSource
+                    bootstrapContainer.DecentralandUrlsSource,
+                    staticContainer.InputBlock
                 ),
             };
 

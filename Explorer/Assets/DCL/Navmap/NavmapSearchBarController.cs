@@ -1,5 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.Input.Component;
+using DCL.Input.UnityInputSystem.Blocks;
 using DCL.PlacesAPIService;
 using DCL.UI;
 using DCL.WebRequests;
@@ -24,10 +26,10 @@ namespace DCL.Navmap
         private readonly FloatingPanelView floatingPanelView;
         private readonly HistoryRecordPanelView historyRecordPanelView;
         private readonly SearchResultPanelController searchResultPanelController;
-        private readonly DCLInput dclInput;
+        private readonly IInputBlock inputBlock;
 
         private CancellationTokenSource cts;
-        private bool isAlreadySelected = false;
+        private bool isAlreadySelected;
         private string[] previousSearches;
         private string previousSearchesString;
         private string playerPrefsPreviousSearches;
@@ -39,13 +41,13 @@ namespace DCL.Navmap
             IPlacesAPIService placesAPIService,
             FloatingPanelView floatingPanelView,
             IWebRequestController webRequestController,
-            DCLInput dclInput)
+            IInputBlock inputBlock)
         {
             this.view = view;
             this.historyRecordPanelView = historyRecordPanelView;
             this.placesAPIService = placesAPIService;
             this.floatingPanelView = floatingPanelView;
-            this.dclInput = dclInput;
+            this.inputBlock = inputBlock;
 
             searchResultPanelController = new SearchResultPanelController(searchResultPanelView, webRequestController);
             searchResultPanelController.OnResultClicked += ClickedResult;
@@ -114,11 +116,11 @@ namespace DCL.Navmap
             if (isSelected)
             {
                 GetAndShowPreviousSearches();
-                dclInput.Shortcuts.Disable();
+                inputBlock.BlockInputs(InputMapComponent.Kind.Shortcuts, true);
             }
             else
             {
-                dclInput.Shortcuts.Enable();
+                inputBlock.UnblockInputs(InputMapComponent.Kind.Shortcuts, true);
             }
         }
 

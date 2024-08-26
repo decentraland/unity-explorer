@@ -45,7 +45,8 @@ namespace DCL.PluginSystem.Global
             DCLInput dclInput,
             IEventSystem eventSystem,
             MainUIView mainUIView,
-            IUIAudioEventsBus audioEventsBus
+            IUIAudioEventsBus audioEventsBus,
+            IInputBlock inputBlock
         )
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -58,6 +59,7 @@ namespace DCL.PluginSystem.Global
             this.eventSystem = eventSystem;
             this.mainUIView = mainUIView;
             this.audioEventsBus = audioEventsBus;
+            this.inputBlock = inputBlock;
         }
 
         protected override void InjectSystems(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
@@ -94,7 +96,7 @@ namespace DCL.PluginSystem.Global
                     dclInput,
                     eventSystem,
                     audioEventsBus,
-                    builder.World.CacheInputMap()
+                    inputBlock
                 );
 
                 mvcManager.RegisterController(chatController);

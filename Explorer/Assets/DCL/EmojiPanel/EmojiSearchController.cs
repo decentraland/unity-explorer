@@ -1,3 +1,5 @@
+using DCL.Input.Component;
+using DCL.Input.UnityInputSystem.Blocks;
 using DCL.UI;
 using System;
 using System.Collections.Generic;
@@ -14,22 +16,22 @@ namespace DCL.Emoji
         public event Action<string> OnSearchTextChanged;
 
         private readonly SearchBarView view;
-        private readonly DCLInput dclInput;
         private CancellationTokenSource cts;
         private readonly IObjectPool<EmojiButton> searchItemsPool;
         private readonly List<EmojiButton> usedPoolItems = new ();
+        private readonly IInputBlock inputBlock;
 
-        public EmojiSearchController(SearchBarView view, Transform parent, EmojiButton emojiButton, DCLInput dclInput)
+        public EmojiSearchController(SearchBarView view, Transform parent, EmojiButton emojiButton, IInputBlock inputBlock)
         {
             this.view = view;
-            this.dclInput = dclInput;
+            this.inputBlock = inputBlock;
 
             view.inputField.onValueChanged.AddListener(OnValueChanged);
-            view.inputField.onSelect.AddListener(DisableDCLInput);
-            view.inputField.onDeselect.AddListener(EnableDCLInput);
-            view.inputField.onDeselect.AddListener(EnableDCLInput);
-            view.inputField.onEndEdit.AddListener(EnableDCLInput);
-            view.Disabled += EnableDCLInput;
+            view.inputField.onSelect.AddListener(BlockUnwantedInputs);
+            view.inputField.onDeselect.AddListener(UnblockUnwantedInputs);
+            view.inputField.onDeselect.AddListener(UnblockUnwantedInputs);
+            view.inputField.onEndEdit.AddListener(UnblockUnwantedInputs);
+            view.Disabled += UnblockUnwantedInputs;
 
             view.clearSearchButton.onClick.AddListener(ClearSearch);
 
@@ -48,27 +50,25 @@ namespace DCL.Emoji
             ReleaseAllSearchResults();
 
             view.inputField.onValueChanged.RemoveListener(OnValueChanged);
-            view.inputField.onSelect.RemoveListener(DisableDCLInput);
-            view.inputField.onDeselect.RemoveListener(EnableDCLInput);
-            view.inputField.onEndEdit.RemoveListener(EnableDCLInput);
-            view.Disabled -= EnableDCLInput;
+            view.inputField.onSelect.RemoveListener(BlockUnwantedInputs);
+            view.inputField.onDeselect.RemoveListener(UnblockUnwantedInputs);
+            view.inputField.onEndEdit.RemoveListener(UnblockUnwantedInputs);
+            view.Disabled -= UnblockUnwantedInputs;
 
             view.clearSearchButton.onClick.RemoveListener(ClearSearch);
         }
 
-        private void DisableDCLInput(string _)
+        private void BlockUnwantedInputs(string _)
         {
-            dclInput.Shortcuts.Disable();
-            dclInput.Player.Disable();
+            inputBlock.BlockInputs(InputMapComponent.Kind.Shortcuts | InputMapComponent.Kind.Player);
         }
 
-        private void EnableDCLInput(string _) =>
-            EnableDCLInput();
+        private void UnblockUnwantedInputs(string _) =>
+            UnblockUnwantedInputs();
 
-        private void EnableDCLInput()
+        private void UnblockUnwantedInputs()
         {
-            dclInput.Shortcuts.Enable();
-            dclInput.Player.Enable();
+            inputBlock.UnblockInputs(InputMapComponent.Kind.Shortcuts | InputMapComponent.Kind.Player);
         }
 
         private EmojiButton CreatePoolElements(Transform parent, EmojiButton emojiButton)

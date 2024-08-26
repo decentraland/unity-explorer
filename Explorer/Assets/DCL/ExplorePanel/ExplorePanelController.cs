@@ -1,15 +1,14 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Backpack;
-using DCL.Input;
 using DCL.Input.Component;
+using DCL.Input.UnityInputSystem.Blocks;
 using DCL.Navmap;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
 using DCL.Settings;
 using DCL.UI;
 using DCL.UI.ProfileElements;
-using ECS.Abstract;
 using MVC;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,14 +22,12 @@ namespace DCL.ExplorePanel
     {
         private readonly SettingsController settingsController;
         private readonly BackpackController backpackController;
-        private readonly Entity playerEntity;
-        private readonly World world;
         private readonly ProfileWidgetController profileWidgetController;
         private readonly ProfileMenuController profileMenuController;
         private readonly DCLInput dclInput;
         private readonly INotificationsBusController notificationBusController;
         private readonly IMVCManager mvcManager;
-        private readonly SingleInstanceEntity inputMapsEntity;
+        private readonly IInputBlock inputBlock;
 
         private Dictionary<ExploreSections, TabSelectorView> tabsBySections;
         private Dictionary<ExploreSections, ISection> exploreSections;
@@ -52,28 +49,24 @@ namespace DCL.ExplorePanel
             NavmapController navmapController,
             SettingsController settingsController,
             BackpackController backpackController,
-            Entity playerEntity,
-            World world,
             ProfileWidgetController profileWidgetController,
             ProfileMenuController profileMenuController,
             DCLInput dclInput,
             INotificationsBusController notificationBusController,
             IMVCManager mvcManager,
-            SingleInstanceEntity inputMapsEntity)
+            IInputBlock inputBlock)
             : base(viewFactory)
         {
             NavmapController = navmapController;
             this.settingsController = settingsController;
             this.backpackController = backpackController;
-            this.playerEntity = playerEntity;
-            this.world = world;
             this.profileWidgetController = profileWidgetController;
             this.dclInput = dclInput;
             this.notificationBusController = notificationBusController;
             this.mvcManager = mvcManager;
             this.profileMenuController = profileMenuController;
             this.notificationBusController.SubscribeToNotificationTypeClick(NotificationType.REWARD_ASSIGNMENT, OnRewardAssigned);
-            this.inputMapsEntity = inputMapsEntity;
+            this.inputBlock = inputBlock;
         }
 
         private void OnRewardAssigned(object[] parameters)
@@ -245,23 +238,17 @@ namespace DCL.ExplorePanel
 
         private void BlockUnwantedActions()
         {
-            ref var inputMapComponent = ref inputMapsEntity.GetInputMapComponent(world);
-            inputMapComponent.BlockInput(InputMapComponent.Kind.Camera);
-            inputMapComponent.BlockInput(InputMapComponent.Kind.FreeCamera);
-            inputMapComponent.BlockInput(InputMapComponent.Kind.Player);
+            inputBlock.BlockInputs(InputMapComponent.Kind.Camera | InputMapComponent.Kind.Player);
         }
 
         private void UnblockUnwantedActions()
         {
-            ref var inputMapComponent = ref inputMapsEntity.GetInputMapComponent(world);
-            inputMapComponent.UnblockInput(InputMapComponent.Kind.Camera);
-            inputMapComponent.UnblockInput(InputMapComponent.Kind.FreeCamera);
-            inputMapComponent.UnblockInput(InputMapComponent.Kind.Player);
+            inputBlock.UnblockInputs(InputMapComponent.Kind.Camera | InputMapComponent.Kind.Player);
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct)
         {
-            return UniTask.WhenAny(viewInstance.CloseButton.OnClickAsync(ct),
+            return UniTask.WhenAny(viewInstance!.CloseButton.OnClickAsync(ct),
                 UniTask.WaitUntil(() => isControlClosing, PlayerLoopTiming.Update, ct),
                 viewInstance.ProfileMenuView.SystemMenuView.LogoutButton.OnClickAsync(ct));
         }

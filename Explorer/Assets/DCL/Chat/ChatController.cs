@@ -10,6 +10,7 @@ using DCL.Diagnostics;
 using DCL.Emoji;
 using DCL.Input;
 using DCL.Input.Component;
+using DCL.Input.UnityInputSystem.Blocks;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
 using ECS.Abstract;
@@ -53,7 +54,7 @@ namespace DCL.Chat
         private readonly DCLInput dclInput;
         private readonly ChatCommandsHandler commandsHandler;
         private readonly IUIAudioEventsBus audioEventsBus;
-        private readonly SingleInstanceEntity inputMapsEntity;
+        private readonly IInputBlock inputBlock;
 
         private CancellationTokenSource cts;
         private CancellationTokenSource emojiPanelCts;
@@ -84,7 +85,7 @@ namespace DCL.Chat
             DCLInput dclInput,
             IEventSystem eventSystem,
             IUIAudioEventsBus audioEventsBus,
-            SingleInstanceEntity inputMapsEntity
+            IInputBlock inputBlock
         ) : base(viewFactory)
         {
             this.chatEntryConfiguration = chatEntryConfiguration;
@@ -102,7 +103,7 @@ namespace DCL.Chat
             this.dclInput = dclInput;
             this.eventSystem = eventSystem;
             this.audioEventsBus = audioEventsBus;
-            this.inputMapsEntity = inputMapsEntity;
+            this.inputBlock = inputBlock;
 
             chatMessagesBus.MessageAdded += OnMessageAdded;
             chatHistory.OnMessageAdded += CreateChatEntry;
@@ -122,7 +123,7 @@ namespace DCL.Chat
             viewInstance.InputField.onDeselect.AddListener(OnInputDeselected);
             viewInstance.CloseChatButton.onClick.AddListener(CloseChat);
             viewInstance.LoopList.InitListView(0, OnGetItemByIndex);
-            emojiPanelController = new EmojiPanelController(viewInstance.EmojiPanel, emojiPanelConfiguration, emojiMappingJson, emojiSectionViewPrefab, emojiButtonPrefab, dclInput);
+            emojiPanelController = new EmojiPanelController(viewInstance.EmojiPanel, emojiPanelConfiguration, emojiMappingJson, emojiSectionViewPrefab, emojiButtonPrefab, inputBlock);
             emojiPanelController.OnEmojiSelected += AddEmojiToInput;
 
             emojiSuggestionPanelController = new EmojiSuggestionPanel(viewInstance.EmojiSuggestionPanel, emojiSuggestionViewPrefab, dclInput);
@@ -263,19 +264,13 @@ namespace DCL.Chat
         private void BlockUnwantedInputActions()
         {
             world.AddOrGet(cameraEntity, new CameraBlockerComponent());
-            ref var inputMapComponent = ref inputMapsEntity.GetInputMapComponent(world);
-            inputMapComponent.BlockInput(InputMapComponent.Kind.Camera);
-            inputMapComponent.BlockInput(InputMapComponent.Kind.Shortcuts);
-            inputMapComponent.BlockInput(InputMapComponent.Kind.Player);
+            inputBlock.BlockInputs(InputMapComponent.Kind.Camera | InputMapComponent.Kind.Shortcuts | InputMapComponent.Kind.Player);
         }
 
         private void UnblockUnwantedInputActions()
         {
             world.TryRemove<CameraBlockerComponent>(cameraEntity);
-            ref var inputMapComponent = ref inputMapsEntity.GetInputMapComponent(world);
-            inputMapComponent.UnblockInput(InputMapComponent.Kind.Camera);
-            inputMapComponent.UnblockInput(InputMapComponent.Kind.Player);
-            inputMapComponent.UnblockInput(InputMapComponent.Kind.Shortcuts);
+            inputBlock.UnblockInputs(InputMapComponent.Kind.Camera | InputMapComponent.Kind.Shortcuts | InputMapComponent.Kind.Player);
         }
 
         private void OnSubmitAction(InputAction.CallbackContext obj)

@@ -193,6 +193,7 @@ namespace Global.Dynamic
 
                 dynamicWorldContainer!.InitializeWorldRelatedModules(globalWorld.EcsWorld, playerEntity);
                 staticContainer!.PlayerEntityProxy.SetObject(playerEntity);
+                staticContainer.InputBlock.Initialize();
 
                 await bootstrap.LoadStartingRealmAsync(dynamicWorldContainer!, ct);
                 await bootstrap.UserInitializationAsync(dynamicWorldContainer!, globalWorld, playerEntity, splashScreen, ct);
@@ -223,12 +224,9 @@ namespace Global.Dynamic
 
         private void RestoreInputs()
         {
-            // We enable Inputs through the component so the block counters can be properly updated and the component Active flags are up-to-date as well
+            // We enable Inputs through the inputBlock so the block counters can be properly updated and the component Active flags are up-to-date as well
             // We restore all inputs except EmoteWheel as it should be disabled by default
-            ref var inputMapComponent = ref globalWorld!.EcsWorld.CacheInputMap().GetInputMapComponent(globalWorld.EcsWorld);
-            inputMapComponent.UnblockInput(InputMapComponent.Kind.Shortcuts);
-            inputMapComponent.UnblockInput(InputMapComponent.Kind.Player);
-            inputMapComponent.UnblockInput(InputMapComponent.Kind.Emotes);
+            staticContainer!.InputBlock.UnblockInputs(InputMapComponent.Kind.Shortcuts | InputMapComponent.Kind.Player | InputMapComponent.Kind.Emotes);
         }
 
         [ContextMenu(nameof(ValidateSettingsAsync))]

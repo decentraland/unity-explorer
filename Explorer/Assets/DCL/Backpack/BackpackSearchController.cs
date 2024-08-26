@@ -1,5 +1,9 @@
+using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Backpack.BackpackBus;
+using DCL.Input;
+using DCL.Input.Component;
+using DCL.Input.UnityInputSystem.Blocks;
 using DCL.UI;
 using System.Threading;
 using Utility;
@@ -11,18 +15,18 @@ namespace DCL.Backpack
         private const int SEARCH_AWAIT_TIME = 1000;
         private readonly SearchBarView view;
         private readonly IBackpackCommandBus commandBus;
-        private readonly DCLInput dclInput;
+        private readonly IInputBlock inputBlock;
 
         private CancellationTokenSource? searchCancellationToken;
 
         public BackpackSearchController(SearchBarView view,
             IBackpackCommandBus commandBus,
             IBackpackEventBus backpackEventBus,
-            DCLInput dclInput)
+            IInputBlock inputBlock)
         {
             this.view = view;
             this.commandBus = commandBus;
-            this.dclInput = dclInput;
+            this.inputBlock = inputBlock;
 
             backpackEventBus.SearchEvent += OnSearchEvent;
 
@@ -33,11 +37,15 @@ namespace DCL.Backpack
             view.clearSearchButton.gameObject.SetActive(false);
         }
 
-        private void RestoreInput(string text) =>
-            dclInput.Shortcuts.Enable();
+        private void RestoreInput(string text)
+        {
+            inputBlock.UnblockInputs(InputMapComponent.Kind.Shortcuts, true);
+        }
 
-        private void DisableShortcutsInput(string text) =>
-            dclInput.Shortcuts.Disable();
+        private void DisableShortcutsInput(string text)
+        {
+            inputBlock.BlockInputs(InputMapComponent.Kind.Shortcuts, true);
+        }
 
         private void OnSearchEvent(string searchString)
         {
