@@ -87,7 +87,7 @@ public class AvatarTransformMatrixJobWrapperShould : MonoBehaviour
     }
 
     [Test]
-    public void MatrixAndBoolArraysResizeCorrectly()
+    public void MatrixAndBoolArraysResize()
     {
         // Fill the wrapper to trigger a resize
         for (int i = 0; i < AvatarTransformMatrixJobWrapper.AVATAR_ARRAY_SIZE + 1; i++)
