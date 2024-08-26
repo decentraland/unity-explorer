@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.ComputeShader;
 using ECS.Abstract;
@@ -11,9 +12,7 @@ using UnityEngine;
 
 namespace DCL.AvatarRendering.AvatarShape.Systems
 {
-    [UpdateInGroup(typeof(AvatarGroup))]
-    [UpdateAfter(typeof(StartAvatarMatricesCalculationSystem))]
-    [UpdateAfter(typeof(AvatarInstantiatorSystem))]
+    [UpdateInGroup(typeof(PreRenderingSystemGroup))]
     public partial class FinishAvatarMatricesCalculationSystem : BaseUnityLoopSystem
     {
         private readonly CustomSkinning skinningStrategy;
