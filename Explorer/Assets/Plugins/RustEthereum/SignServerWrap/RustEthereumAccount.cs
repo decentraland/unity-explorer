@@ -2,7 +2,6 @@ using DCL.Utilities.Extensions;
 using DCL.Web3;
 using DCL.Web3.Abstract;
 using DCL.Web3.Accounts;
-using Nethereum.Hex.HexConvertors.Extensions;
 using Nethereum.Signer;
 using System;
 
@@ -41,17 +40,23 @@ namespace Plugins.RustEthereum.SignServerWrap
         {
             const int SIZE_OF_SIGN = 65;
 
-            var buffer = new byte[SIZE_OF_SIGN];
-
             unsafe
             {
-                fixed (byte* signature = buffer) { NativeMethods.SignServerSignMessage(message, signature); }
+                byte* signatureBuffer = stackalloc byte[SIZE_OF_SIGN];
+                NativeMethods.SignServerSignMessage(message, signatureBuffer);
+                return ToHex(new Span<byte>(signatureBuffer, SIZE_OF_SIGN), true);
             }
-
-            return buffer.ToHex(true)!;
         }
 
         public bool Verify(string message, string signature) =>
             verifierAccount.Verify(message, signature);
+
+        public static string ToHex(ReadOnlySpan<byte> value, bool prefix = false)
+        {
+            string currentPrefix = prefix ? "0x" : "";
+            var buffer = new string[value.Length];
+            for (var i = 0; i < value.Length; i++) buffer[i] = value[i].ToString("x2");
+            return currentPrefix + string.Concat(buffer);
+        }
     }
 }
