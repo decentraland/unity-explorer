@@ -71,9 +71,6 @@ namespace DCL.Input.Systems
         {
             if (map.enabled == enabled) return;
 
-            string text = enabled ? "ENABLED" : "DISABLED";
-            ReportHub.LogError(ReportData.UNSPECIFIED, $"{text} - {map.name}");
-
             if (enabled)
             {
                 map.Enable();
