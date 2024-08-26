@@ -43,6 +43,7 @@ namespace DCL.Notifications.NewNotification
             notificationsBusController.SubscribeToNotificationTypeReceived(NotificationType.REWARD_ASSIGNMENT, QueueNewNotification);
             notificationsBusController.SubscribeToNotificationTypeReceived(NotificationType.EVENTS_STARTED, QueueNewNotification);
             notificationsBusController.SubscribeToNotificationTypeReceived(NotificationType.INTERNAL_ARRIVED_TO_DESTINATION, QueueNewNotification);
+            notificationsBusController.SubscribeToNotificationTypeReceived(NotificationType.BADGE_GRANTED, QueueNewNotification);
             cts = new CancellationTokenSource();
             cts.Token.ThrowIfCancellationRequested();
         }
