@@ -1,0 +1,14 @@
+[package]
+name = "sign_server"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+alloy-primitives = "0.7.7"
+alloy-signer = "0.2.1"
+alloy-signer-local = "0.2.1"
+hex = "0.4.3"
+lazy_static = "1.5.0"
+
+[lib]
+crate-type = ["lib", "cdylib"]
