@@ -20,6 +20,7 @@ namespace DCL.LOD.Components
 
         public AssetPromise<AssetBundleData, GetAssetBundleIntention> CurrentLODPromise;
         public byte CurrentLODLevelPromise;
+
         
         public void Dispose(World world)
         {
@@ -135,5 +136,9 @@ namespace DCL.LOD.Components
                    CurrentLODLevelPromise == lodForAcquisition;
         }
 
+        public bool IsInitialized()
+        {
+            return !string.IsNullOrEmpty(id);
+        }
     }
 }
