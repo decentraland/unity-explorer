@@ -21,7 +21,6 @@ namespace DCL.Multiplayer.Movement
             {
                 temporalData = CompressTemporalData(message.timestamp, message.movementKind, message.isSliding, message.animState, message.isStunned, message.rotationY, message.tier),
                 movementData = CompressMovementData(message.position, message.velocity, encodingSettings.GetConfigForTier(message.tier)),
-                original = message,
             };
 
         private int CompressTemporalData(float timestamp, MovementKind movementKind, bool isSliding, AnimationStates animState, bool isStunned,
@@ -30,7 +29,7 @@ namespace DCL.Multiplayer.Movement
             int temporalData = timestampEncoder.Compress(timestamp);
 
             // Animations
-            temporalData |= ((int)movementKind & MessageEncodingSettings.MOVEMENT_KIND_MASK) << encodingSettings.MOVEMENT_KIND_START_BIT;
+            temporalData |= ((int)movementKind & MessageEncodingSettings.TWO_BITS_MASK) << encodingSettings.MOVEMENT_KIND_START_BIT;
             if (isSliding) temporalData |= 1 << encodingSettings.SLIDING_BIT;
             if (isStunned) temporalData |= 1 << encodingSettings.STUNNED_BIT;
             if (animState.IsGrounded) temporalData |= 1 << encodingSettings.GROUNDED_BIT;
@@ -42,7 +41,7 @@ namespace DCL.Multiplayer.Movement
             int compressedRotation = FloatQuantizer.Compress(rotationY, 0f, 360f, encodingSettings.ROTATION_Y_BITS);
             temporalData |= compressedRotation << encodingSettings.ROTATION_START_BIT;
 
-            temporalData |= (tier & 0x3) << encodingSettings.TIER_START_BIT;
+            temporalData |= (tier & MessageEncodingSettings.TWO_BITS_MASK) << encodingSettings.TIER_START_BIT;
 
             return temporalData;
         }
@@ -59,15 +58,13 @@ namespace DCL.Multiplayer.Movement
             );
 
             int xzBits = settings.XZ_BITS;
-            int yMax = settings.Y_MAX;
             int yBits = settings.Y_BITS;
-            int maxVelocity = settings.MAX_VELOCITY;
-            int velocityBits = settings.VELOCITY_BITS;
-
             int compressedX = FloatQuantizer.Compress(relativePosition.x, 0, ParcelMathHelper.PARCEL_SIZE, xzBits);
             int compressedZ = FloatQuantizer.Compress(relativePosition.y, 0, ParcelMathHelper.PARCEL_SIZE, xzBits);
-            int compressedY = FloatQuantizer.Compress(position.y, 0, yMax, yBits);
+            int compressedY = FloatQuantizer.Compress(position.y, 0, settings.Y_MAX, yBits);
 
+            int maxVelocity = settings.MAX_VELOCITY;
+            int velocityBits = settings.VELOCITY_BITS;
             int compressedVelocityX = FloatQuantizer.Compress(velocity.x, -maxVelocity, maxVelocity, velocityBits);
             int compressedVelocityY = FloatQuantizer.Compress(velocity.y, -maxVelocity, maxVelocity, velocityBits);
             int compressedVelocityZ = FloatQuantizer.Compress(velocity.z, -maxVelocity, maxVelocity, velocityBits);
@@ -84,7 +81,7 @@ namespace DCL.Multiplayer.Movement
         public NetworkMovementMessage Decompress(CompressedNetworkMovementMessage compressedMessage)
         {
             int compressedTemporalData = compressedMessage.temporalData;
-            int tier = (compressedMessage.temporalData >> encodingSettings.TIER_START_BIT) & 0x3;
+            int tier = (compressedMessage.temporalData >> encodingSettings.TIER_START_BIT) & MessageEncodingSettings.TWO_BITS_MASK;
 
             (Vector3 position, Vector3 velocity) movementData = DecompressMovementData(compressedMessage.movementData, encodingSettings.GetConfigForTier(tier));
 
@@ -96,13 +93,13 @@ namespace DCL.Multiplayer.Movement
             {
                 tier = tier,
                 // Decompressed movement data
-                position = encodingSettings.encodePosition? movementData.position : compressedMessage.original.position,
-                velocity = encodingSettings.encodeVelocity? movementData.velocity : compressedMessage.original.velocity,
+                position = movementData.position,
+                velocity = movementData.velocity,
                 rotationY = FloatQuantizer.Decompress(compressedRotation, 0f, 360f, encodingSettings.ROTATION_Y_BITS),
 
                 // Decompress temporal data
-                timestamp = encodingSettings.encodeTimestamp? timestamp : compressedMessage.original.timestamp,
-                movementKind = (MovementKind)((compressedTemporalData >> encodingSettings.MOVEMENT_KIND_START_BIT) & MessageEncodingSettings.MOVEMENT_KIND_MASK),
+                timestamp = timestamp,
+                movementKind = (MovementKind)((compressedTemporalData >> encodingSettings.MOVEMENT_KIND_START_BIT) & MessageEncodingSettings.TWO_BITS_MASK),
 
                 animState = new AnimationStates
                 {

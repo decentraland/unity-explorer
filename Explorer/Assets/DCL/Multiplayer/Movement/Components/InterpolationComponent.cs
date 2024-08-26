@@ -5,6 +5,8 @@ namespace DCL.Multiplayer.Movement
 {
     public struct InterpolationComponent
     {
+        private const float EPSILON = 0.01f;
+
         public NetworkMovementMessage Start;
         public NetworkMovementMessage End;
 
@@ -18,7 +20,7 @@ namespace DCL.Multiplayer.Movement
         {
             SplineType = interpolationType;
 
-            if (Start.velocity.sqrMagnitude < 0.0001f)
+            if (Start.velocity.sqrMagnitude < EPSILON)
                 SplineType = InterpolationType.FullMonotonicHermite;
 
             Start = from;
