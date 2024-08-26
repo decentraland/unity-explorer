@@ -103,16 +103,7 @@ namespace DCL.Multiplayer.Profiles.Entities
         {
             bool ContainsInRoom(IRoom room)
             {
-                foreach (string? identity in room.Participants.RemoteParticipantIdentities())
-                {
-                    if (identity != null
-                        && room.Participants.RemoteParticipant(identity) is { } participant
-                        && participant.Identity == wallet
-                       )
-                        return true;
-                }
-
-                return false;
+                return room.Participants.RemoteParticipant(wallet) != null;
             }
 
             return ContainsInRoom(roomHub.IslandRoom()) || ContainsInRoom(roomHub.SceneRoom());

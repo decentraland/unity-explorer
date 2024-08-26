@@ -1,5 +1,6 @@
 using DCL.Browser.DecentralandUrls;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using Global.AppArgs;
 using Global.Dynamic;
 using NUnit.Framework;
 
