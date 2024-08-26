@@ -8,6 +8,7 @@ using DCL.Character.Components;
 using DCL.CharacterPreview.Components;
 using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
+using DCL.MapRenderer.MapLayers.UsersMarker;
 using ECS.LifeCycle.Components;
 using MVC;
 using System.Collections.Generic;
