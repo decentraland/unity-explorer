@@ -12,9 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fdd34dbbd3504f25993a0e0edaed2108, type: 3}
   m_Name: MessageEncodingSettings
   m_EditorClassIdentifier: 
-  encodeTimestamp: 1
-  encodePosition: 1
-  encodeVelocity: 1
   TIMESTAMP_QUANTUM: 0.02
   TIMESTAMP_BITS: 15
   ROTATION_Y_BITS: 6

@@ -8,23 +8,16 @@ namespace DCL.Multiplayer.Movement.Settings
     {
         public const int TWO_BITS_MASK = 0x3;
 
-        // 64
-        // - 17 [Parcel]
         public const int PARCEL_BITS = 17;
-
-        // 32
-        // - (2 + 7) [Anim]
         private const int MOVEMENT_KIND_BITS = 2;
 
-        // 23
-        [Header("TIMESTAMP [23]")]
-        // - 16 [Time] // 11 min for 0.01f quantum
-        // - 15 [Time] // 5 min for 0.01f quantum
+        // 32 - 9 (Anim) - 2 (Tiers) = 21
+        [Header("TIMESTAMP [21]")]
         public float TIMESTAMP_QUANTUM = 0.02f;
         public int TIMESTAMP_BITS = 15;
-        public int ROTATION_Y_BITS = 8;
+        public int ROTATION_Y_BITS = 6;
 
-        // 47
+        // 64 - 17 (Parcel) = 47
         [Header("POSITION [47]")]
         public MovementEncodingConfig tier0;
         public MovementEncodingConfig tier1;

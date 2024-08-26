@@ -20,6 +20,7 @@ MonoBehaviour:
   <Latency>k__BackingField: 0
   <LatencyJitter>k__BackingField: 0
   <MinPositionDelta>k__BackingField: 0.001
+  <MinRotationDelta>k__BackingField: 0.01
   <MinTeleportDistance>k__BackingField: 100
   <InterpolationSettings>k__BackingField: {fileID: 11400000, guid: bc6d8c8af4871f14082de8f9d29040c6, type: 2}
   <UseExtrapolation>k__BackingField: 0
