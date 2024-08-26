@@ -23,7 +23,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
     [LogCategory(ReportCategory.SDK_MAIN_CAMERA)]
     public partial class MainCameraSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
-        private readonly IComponentPool<CinemachineVirtualCamera> poolRegistry;
+        private readonly IComponentPool<CinemachineFreeLook> poolRegistry;
         private readonly Dictionary<CRDTEntity,Entity> entitiesMap;
         private readonly Entity cameraEntity;
         private readonly ISceneStateProvider sceneStateProvider;
@@ -31,7 +31,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
 
         public MainCameraSystem(
             World world,
-            IComponentPool<CinemachineVirtualCamera> poolRegistry,
+            IComponentPool<CinemachineFreeLook> poolRegistry,
             Entity cameraEntity,
             Dictionary<CRDTEntity,Entity> entitiesMap,
             ISceneStateProvider sceneStateProvider,
@@ -72,7 +72,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
             int virtualCameraCRDTEntity = (int)pbMainCamera.VirtualCameraEntity;
             mainCameraComponent.virtualCameraCRDTEntity = virtualCameraCRDTEntity;
 
-            CinemachineVirtualCamera? previousVirtualCamera = mainCameraComponent.virtualCameraInstance;
+            CinemachineFreeLook? previousVirtualCamera = mainCameraComponent.virtualCameraInstance;
             bool hasPreviousVirtualCamera = previousVirtualCamera != null && previousVirtualCamera.enabled;
             if (virtualCameraCRDTEntity > 0)
             {
@@ -161,7 +161,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
 
         private void ApplyVirtualCamera(ref MainCameraComponent mainCameraComponent, int virtualCamCRDTEntity, Vector3? previousCameraPosition)
         {
-            if (!TryGetCinemachineVirtualCamera(virtualCamCRDTEntity, out var virtualCameraInstance)) return;
+            if (!TryGetCinemachineFreeLook(virtualCamCRDTEntity, out var virtualCameraInstance)) return;
 
             ConfigureVirtualCameraTransition(virtualCamCRDTEntity,
                 previousCameraPosition.HasValue ? Vector3.Distance(virtualCameraInstance!.transform.position, previousCameraPosition.Value) : 0f);
@@ -197,7 +197,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
             }
         }
 
-        private bool TryGetCinemachineVirtualCamera(CRDTEntity targetEntity, out CinemachineVirtualCamera? virtualCameraInstance)
+        private bool TryGetCinemachineFreeLook(CRDTEntity targetEntity, out CinemachineFreeLook? virtualCameraInstance)
         {
             virtualCameraInstance = null;
             if (!entitiesMap.TryGetValue(targetEntity, out Entity virtualCameraEntity)

@@ -4,9 +4,9 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Components
 {
     public struct VirtualCameraComponent
     {
-        internal readonly CinemachineVirtualCamera virtualCameraInstance;
+        internal readonly CinemachineFreeLook virtualCameraInstance;
 
-        public VirtualCameraComponent(CinemachineVirtualCamera virtualCameraInstance)
+        public VirtualCameraComponent(CinemachineFreeLook virtualCameraInstance)
         {
             this.virtualCameraInstance = virtualCameraInstance;
         }

@@ -32,7 +32,7 @@ namespace DCL.PluginSystem.World
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly CacheCleaner cacheCleaner;
         private readonly IExposedCameraData cameraData;
-        private IComponentPool<CinemachineVirtualCamera>? virtualCameraPoolRegistry;
+        private IComponentPool<CinemachineFreeLook>? virtualCameraPoolRegistry;
 
         public MainCameraPlugin(
             IComponentPoolsRegistry poolsRegistry,
@@ -53,15 +53,15 @@ namespace DCL.PluginSystem.World
 
         private async UniTask CreateVirtualCameraPoolAsync(Settings settings, CancellationToken ct)
         {
-            CinemachineVirtualCamera virtualCameraPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.VirtualCameraPrefab, ct: ct)).Value.GetComponent<CinemachineVirtualCamera>();
+            CinemachineFreeLook virtualCameraPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.VirtualCameraPrefab, ct: ct)).Value.GetComponent<CinemachineFreeLook>();
             virtualCameraPoolRegistry = poolsRegistry.AddGameObjectPool(() => Object.Instantiate(virtualCameraPrefab, Vector3.zero, Quaternion.identity), onRelease: OnPoolRelease, onGet: OnPoolGet);
             cacheCleaner.Register(virtualCameraPoolRegistry);
         }
 
-        private static void OnPoolRelease(CinemachineVirtualCamera virtualCam) =>
+        private static void OnPoolRelease(CinemachineFreeLook virtualCam) =>
             virtualCam.enabled = false;
 
-        private static void OnPoolGet(CinemachineVirtualCamera virtualCam) =>
+        private static void OnPoolGet(CinemachineFreeLook virtualCam) =>
             virtualCam.enabled = false;
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
@@ -75,7 +75,6 @@ namespace DCL.PluginSystem.World
                 cameraData
                 ));
 
-            // ResetDirtyFlagSystem<PBMainCamera>.InjectToWorld(ref builder);
             // ResetDirtyFlagSystem<PBVirtualCamera>.InjectToWorld(ref builder);
         }
 
