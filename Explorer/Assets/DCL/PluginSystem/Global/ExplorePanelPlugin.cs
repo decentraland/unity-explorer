@@ -46,7 +46,7 @@ using UnityEngine.Audio;
 // ReSharper disable UnusedAutoPropertyAccessor.Local
 namespace DCL.PluginSystem.Global
 {
-    public class ExplorePanelPlugin : DCLGlobalPluginBase<ExplorePanelPlugin.ExplorePanelSettings>
+    public class ExplorePanelPlugin : IDCLGlobalPlugin<ExplorePanelPlugin.ExplorePanelSettings>
     {
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly MapRendererContainer mapRendererContainer;
@@ -157,7 +157,7 @@ namespace DCL.PluginSystem.Global
             this.playerEntity = playerEntity;
         }
 
-        public override void Dispose()
+        public void Dispose()
         {
             navmapController?.Dispose();
             settingsController?.Dispose();
@@ -165,7 +165,9 @@ namespace DCL.PluginSystem.Global
             inputHandler?.Dispose();
         }
 
-        protected override async UniTask<ContinueInitialization?> InitializeInternalAsync(ExplorePanelSettings settings, CancellationToken ct)
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
+
+        public async UniTask InitializeAsync(ExplorePanelSettings settings, CancellationToken ct)
         {
             backpackSubPlugin = new BackpackSubPlugin(
                 assetsProvisioner,
@@ -206,7 +208,7 @@ namespace DCL.PluginSystem.Global
             navmapController = new NavmapController(navmapView: explorePanelView.GetComponentInChildren<NavmapView>(), mapRendererContainer.MapRenderer, placesAPIService, webRequestController, webBrowser, dclInput, realmNavigator, realmData, mapPathEventBus, world, playerEntity);
 
             await navmapController.InitializeAssetsAsync(assetsProvisioner, ct);
-            ContinueInitialization backpackInitialization = await backpackSubPlugin.InitializeAsync(settings.BackpackSettings, explorePanelView.GetComponentInChildren<BackpackView>(), ct);
+            await backpackSubPlugin.InitializeAsync(settings.BackpackSettings, explorePanelView.GetComponentInChildren<BackpackView>(), ct);
 
             mvcManager.RegisterController(new
                 ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackSubPlugin.backpackController!, playerEntity, world,
@@ -215,12 +217,7 @@ namespace DCL.PluginSystem.Global
                     dclInput, notificationsBusController, mvcManager));
 
             inputHandler = new ExplorePanelInputHandler(dclInput, mvcManager);
-
-            return (ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) =>
-                backpackInitialization.Invoke(ref builder, arguments);
         }
-
-        protected override void InjectSystems(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
 
         public class ExplorePanelSettings : IDCLPluginSettings
         {

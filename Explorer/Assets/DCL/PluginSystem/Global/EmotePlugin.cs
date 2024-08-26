@@ -29,7 +29,7 @@ using CharacterEmoteSystem = DCL.AvatarRendering.Emotes.CharacterEmoteSystem;
 
 namespace DCL.PluginSystem.Global
 {
-    public class EmotePlugin : DCLGlobalPluginBase<EmotePlugin.EmoteSettings>
+    public class EmotePlugin : IDCLGlobalPlugin<EmotePlugin.EmoteSettings>
     {
         private readonly IWebRequestController webRequestController;
         private readonly IEmoteCache emoteCache;
@@ -93,14 +93,12 @@ namespace DCL.PluginSystem.Global
             cacheCleaner.Register(audioClipsCache);
         }
 
-        public override void Dispose()
+        public void Dispose()
         {
-            base.Dispose();
-
             emotesWheelController?.Dispose();
         }
 
-        protected override void InjectSystems(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
             var customStreamingSubdirectory = URLSubdirectory.FromString("/Emotes/");
 
@@ -124,7 +122,7 @@ namespace DCL.PluginSystem.Global
             LoadSceneEmotesSystem.InjectToWorld(ref builder, emoteCache, customStreamingSubdirectory);
         }
 
-        protected override async UniTask<ContinueInitialization?> InitializeInternalAsync(EmoteSettings settings, CancellationToken ct)
+        public async UniTask InitializeAsync(EmoteSettings settings, CancellationToken ct)
         {
             EmbeddedEmotesData embeddedEmotesData = (await assetsProvisioner.ProvideMainAssetAsync(settings.EmbeddedEmotes, ct)).Value;
 
@@ -152,8 +150,6 @@ namespace DCL.PluginSystem.Global
                 dclInput, mvcManager, cursor, inputGroupToggle);
 
             mvcManager.RegisterController(emotesWheelController);
-
-            return (ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) => { };
         }
 
         [Serializable]

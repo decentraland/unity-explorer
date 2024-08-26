@@ -172,6 +172,7 @@ namespace Global.Dynamic
                     return;
                 }
 
+                // TODO: this entity should be a SingleInstanceEntity and resolved with an extension method like the rest, instead of passing it everywhere
                 Entity playerEntity = bootstrap.CreatePlayerEntity(staticContainer!);
 
                 (dynamicWorldContainer, isLoaded) = await bootstrap.LoadDynamicWorldContainerAsync(bootstrapContainer, staticContainer!, scenePluginSettingsContainer, settings,

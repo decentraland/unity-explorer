@@ -22,7 +22,7 @@ using UnityEngine.AddressableAssets;
 
 namespace DCL.PluginSystem.Global
 {
-    public class PassportPlugin : DCLGlobalPluginBase<PassportPlugin.PassportSettings>
+    public class PassportPlugin : IDCLGlobalPlugin<PassportPlugin.PassportSettings>
     {
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IMVCManager mvcManager;
@@ -80,9 +80,14 @@ namespace DCL.PluginSystem.Global
             this.playerEntity = playerEntity;
         }
 
-        protected override void InjectSystems(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
+        public void Dispose()
+        {
+            passportController?.Dispose();
+        }
 
-        protected override async UniTask<ContinueInitialization?> InitializeInternalAsync(PassportSettings passportSettings, CancellationToken ct)
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
+
+        public async UniTask InitializeAsync(PassportSettings passportSettings, CancellationToken ct)
         {
             (NFTColorsSO rarityColorMappings, NftTypeIconSO categoryIconsMapping, NftTypeIconSO rarityBackgroundsMapping, NftTypeIconSO rarityInfoPanelBackgroundsMapping) = await UniTask.WhenAll(
                 assetsProvisioner.ProvideMainAssetValueAsync(passportSettings.RarityColorMappings, ct),
@@ -115,13 +120,6 @@ namespace DCL.PluginSystem.Global
             );
 
             mvcManager.RegisterController(passportController);
-
-            return (ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) => { };
-        }
-
-        public override void Dispose()
-        {
-            passportController?.Dispose();
         }
 
         public class PassportSettings : IDCLPluginSettings

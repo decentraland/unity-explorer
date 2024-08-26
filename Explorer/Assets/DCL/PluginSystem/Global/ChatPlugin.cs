@@ -19,7 +19,7 @@ using UnityEngine.AddressableAssets;
 
 namespace DCL.PluginSystem.Global
 {
-    public class ChatPlugin : DCLGlobalPluginBase<ChatPlugin.ChatSettings>
+    public class ChatPlugin : IDCLGlobalPlugin<ChatPlugin.ChatSettings>
     {
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IMVCManager mvcManager;
@@ -65,9 +65,11 @@ namespace DCL.PluginSystem.Global
             this.mainUIView = mainUIView;
         }
 
-        protected override void InjectSystems(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
+        public void Dispose() { }
 
-        protected override async UniTask<ContinueInitialization?> InitializeInternalAsync(ChatSettings settings, CancellationToken ct)
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
+
+        public async UniTask InitializeAsync(ChatSettings settings, CancellationToken ct)
         {
             ChatEntryConfigurationSO chatEntryConfiguration = (await assetsProvisioner.ProvideMainAssetAsync(settings.ChatEntryConfiguration, ct)).Value;
             EmojiPanelConfigurationSO emojiPanelConfig = (await assetsProvisioner.ProvideMainAssetAsync(settings.EmojiPanelConfiguration, ct)).Value;
@@ -100,8 +102,6 @@ namespace DCL.PluginSystem.Global
             );
 
             mvcManager.RegisterController(chatController);
-
-            return (ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) => { };
         }
 
         public class ChatSettings : IDCLPluginSettings

@@ -1,16 +1,13 @@
 ﻿using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
-using DCL.AssetsProvision;
 using DCL.SidebarBus;
 using DCL.UI.MainUI;
 using MVC;
-using System;
 using System.Threading;
-using UnityEngine;
 
 namespace DCL.PluginSystem.Global
 {
-    public class MainUIPlugin : DCLGlobalPluginBase<MainUIPlugin.Settings>
+    public class MainUIPlugin : IDCLGlobalPlugin<MainUIPlugin.Settings>
     {
         private readonly IMVCManager mvcManager;
         private readonly ISidebarBus sidebarBus;
@@ -26,9 +23,14 @@ namespace DCL.PluginSystem.Global
             this.mainUIView = mainUIView;
         }
 
-        protected override void InjectSystems(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
+        public void Dispose()
+        {
+            mvcManager.Dispose();
+        }
 
-        protected override async UniTask<ContinueInitialization?> InitializeInternalAsync(Settings settings, CancellationToken ct)
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
+
+        public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
         {
             var mainUIController = new MainUIController(
                 () =>
@@ -42,8 +44,6 @@ namespace DCL.PluginSystem.Global
             );
 
             mvcManager.RegisterController(mainUIController);
-
-            return (ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) => { };
         }
 
         public class Settings : IDCLPluginSettings { }

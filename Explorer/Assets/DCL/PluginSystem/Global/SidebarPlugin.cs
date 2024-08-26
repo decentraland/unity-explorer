@@ -5,7 +5,6 @@ using DCL.AssetsProvision;
 using DCL.Backpack;
 using DCL.Browser;
 using DCL.Chat;
-using DCL.ExplorePanel;
 using DCL.Notifications;
 using DCL.Notifications.NotificationsMenu;
 using DCL.NotificationsBusController.NotificationsBus;
@@ -25,7 +24,7 @@ using UnityEngine.AddressableAssets;
 
 namespace DCL.PluginSystem.Global
 {
-    public class SidebarPlugin : DCLGlobalPluginBase<SidebarPlugin.SidebarSettings>
+    public class SidebarPlugin : IDCLGlobalPlugin<SidebarPlugin.SidebarSettings>
     {
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IMVCManager mvcManager;
@@ -80,9 +79,11 @@ namespace DCL.PluginSystem.Global
             this.playerEntity = playerEntity;
         }
 
-        protected override void InjectSystems(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
+        public void Dispose() { }
 
-        protected override async UniTask<ContinueInitialization?> InitializeInternalAsync(SidebarSettings settings, CancellationToken ct)
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
+
+        public async UniTask InitializeAsync(SidebarSettings settings, CancellationToken ct)
         {
             NotificationIconTypes notificationIconTypes = (await assetsProvisioner.ProvideMainAssetAsync(settings.NotificationIconTypesSO, ct: ct)).Value;
             NftTypeIconSO rarityBackgroundMapping = await assetsProvisioner.ProvideMainAssetValueAsync(settings.RarityColorMappings, ct);
@@ -103,8 +104,6 @@ namespace DCL.PluginSystem.Global
                 web3IdentityCache,
                 profileRepository
             ));
-
-            return (ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) => { };
         }
 
         public class SidebarSettings : IDCLPluginSettings

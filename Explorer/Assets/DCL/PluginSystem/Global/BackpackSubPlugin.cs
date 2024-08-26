@@ -109,7 +109,7 @@ namespace DCL.PluginSystem.Global
             this.playerEntity = playerEntity;
         }
 
-        internal async UniTask<ContinueInitialization> InitializeAsync(
+        internal async UniTask InitializeAsync(
             BackpackSettings backpackSettings,
             BackpackView view,
             CancellationToken ct)
@@ -218,8 +218,6 @@ namespace DCL.PluginSystem.Global
                 dclInput,
                 cursor
             );
-
-            return (ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments args) => { };
         }
 
         public void Dispose()

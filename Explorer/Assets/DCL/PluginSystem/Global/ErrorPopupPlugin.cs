@@ -10,7 +10,7 @@ using UnityEngine.AddressableAssets;
 
 namespace DCL.PluginSystem.Global
 {
-    public class ErrorPopupPlugin : DCLGlobalPluginBase<ErrorPopupPlugin.ErrorPopupSettings>
+    public class ErrorPopupPlugin : IDCLGlobalPlugin<ErrorPopupPlugin.ErrorPopupSettings>
     {
         private readonly IMVCManager mvcManager;
         private readonly IAssetsProvisioner assetsProvisioner;
@@ -21,16 +21,21 @@ namespace DCL.PluginSystem.Global
             this.assetsProvisioner = assetsProvisioner;
         }
 
-        protected override async UniTask<ContinueInitialization?> InitializeInternalAsync(ErrorPopupSettings errorPopupSettings, CancellationToken ct)
+        public void Dispose()
         {
-            var reference = errorPopupSettings.ErrorPopup.EnsureNotNull("ErrorPopup is null in settings");
+        }
+
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
+        {
+        }
+
+        public async UniTask InitializeAsync(ErrorPopupSettings settings, CancellationToken ct)
+        {
+            var reference = settings.ErrorPopup.EnsureNotNull("ErrorPopup is null in settings");
             var errorPopupPrefab = (await assetsProvisioner.ProvideMainAssetAsync(reference, ct: CancellationToken.None)).Value;
             var errorPopupView = errorPopupPrefab.GetComponent<ErrorPopupView>().EnsureNotNull($"{nameof(ErrorPopupView)} not found in the asset");
             mvcManager.RegisterController(new ErrorPopupController(errorPopupView));
-            return static (ref ArchSystemsWorldBuilder<Arch.Core.World> _, in GlobalPluginArguments _) => { };
         }
-
-        protected override void InjectSystems(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
 
         public class ErrorPopupSettings : IDCLPluginSettings
         {

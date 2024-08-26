@@ -12,7 +12,7 @@ using System.Threading;
 
 namespace DCL.PluginSystem.Global
 {
-    public class ConnectionStatusPanelPlugin : DCLGlobalPluginBase<ConnectionStatusPanelPlugin.ConnectionStatusPanelSettings>
+    public class ConnectionStatusPanelPlugin : IDCLGlobalPlugin<ConnectionStatusPanelPlugin.ConnectionStatusPanelSettings>
     {
         private readonly IUserInAppInitializationFlow userInAppInitializationFlow;
         private readonly IMVCManager mvcManager;
@@ -44,7 +44,11 @@ namespace DCL.PluginSystem.Global
             this.playerEntity = playerEntity;
         }
 
-        protected override UniTask<ContinueInitialization?> InitializeInternalAsync(ConnectionStatusPanelSettings settings, CancellationToken ct)
+        public void Dispose() { }
+
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
+
+        public async UniTask InitializeAsync(ConnectionStatusPanelSettings settings, CancellationToken ct)
         {
             mvcManager.RegisterController(
                 new ConnectionStatusPanelController(() =>
@@ -62,13 +66,7 @@ namespace DCL.PluginSystem.Global
                     playerEntity
                 )
             );
-
-            return UniTask.FromResult<ContinueInitialization?>(
-                (ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) => { }
-            );
         }
-
-        protected override void InjectSystems(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
 
         public class ConnectionStatusPanelSettings : IDCLPluginSettings { }
     }
