@@ -5,6 +5,8 @@ using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.ComputeShader;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
+using Unity.Collections;
+using Unity.Mathematics;
 using UnityEngine;
 
 namespace DCL.AvatarRendering.AvatarShape.Systems
@@ -16,6 +18,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
     {
         private readonly CustomSkinning skinningStrategy;
         private readonly AvatarTransformMatrixJobWrapper jobWrapper;
+        private NativeArray<float4x4> currentResult;
 
         internal FinishAvatarMatricesCalculationSystem(World world, CustomSkinning skinningStrategy,
             AvatarTransformMatrixJobWrapper jobWrapper) : base(world)
@@ -27,6 +30,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         protected override void Update(float t)
         {
             jobWrapper.CompleteBoneMatrixCalculations();
+            currentResult = jobWrapper.job.BonesMatricesResult;
             ExecuteQuery(World);
         }
 
@@ -36,7 +40,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         private void Execute(ref AvatarTransformMatrixComponent avatarTransformMatrixComponent,
             ref AvatarCustomSkinningComponent computeShaderSkinning)
         {
-            skinningStrategy.ComputeSkinning(jobWrapper.job.BonesMatricesResult, avatarTransformMatrixComponent.IndexInGlobalJobArray, ref computeShaderSkinning);
+            skinningStrategy.ComputeSkinning(currentResult, avatarTransformMatrixComponent.IndexInGlobalJobArray, ref computeShaderSkinning);
         }
     }
 }
