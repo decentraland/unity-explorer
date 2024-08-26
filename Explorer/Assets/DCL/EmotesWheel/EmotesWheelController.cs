@@ -8,6 +8,7 @@ using DCL.Diagnostics;
 using DCL.ExplorePanel;
 using DCL.Input;
 using DCL.Input.Component;
+using DCL.Input.UnityInputSystem.Blocks;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI;
@@ -29,7 +30,7 @@ namespace DCL.EmotesWheel
         private readonly World world;
         private readonly Entity playerEntity;
         private readonly IThumbnailProvider thumbnailProvider;
-        private readonly SingleInstanceEntity inputMapsEntity;
+        private readonly IInputBlock inputBlock;
         private readonly DCLInput.EmoteWheelActions emoteWheelInput;
         private readonly IMVCManager mvcManager;
         private readonly ICursor cursor;
@@ -48,7 +49,7 @@ namespace DCL.EmotesWheel
             World world,
             Entity playerEntity,
             IThumbnailProvider thumbnailProvider,
-            SingleInstanceEntity inputMapsEntity,
+            IInputBlock inputBlock,
             DCLInput dclInput,
             IMVCManager mvcManager,
             ICursor cursor)
@@ -60,7 +61,7 @@ namespace DCL.EmotesWheel
             this.world = world;
             this.playerEntity = playerEntity;
             this.thumbnailProvider = thumbnailProvider;
-            this.inputMapsEntity = inputMapsEntity;
+            this.inputBlock = inputBlock;
             this.dclInput = dclInput;
             emoteWheelInput = this.dclInput.EmoteWheel;
             this.mvcManager = mvcManager;
@@ -101,6 +102,7 @@ namespace DCL.EmotesWheel
 
         protected override void OnBeforeViewShow()
         {
+            UnblockUnwantedInputs();
             cursor.Unlock();
             fetchProfileCts = fetchProfileCts.SafeRestart();
             InitializeEverythingAsync(fetchProfileCts.Token).Forget();
@@ -120,18 +122,11 @@ namespace DCL.EmotesWheel
             }
         }
 
-        protected override void OnViewShow()
-        {
-            base.OnViewShow();
-
-            UnblockUnwantedInputActions();
-        }
-
         protected override void OnViewClose()
         {
             base.OnViewClose();
 
-            BlockUnwantedInputActions();
+            BlockUnwantedInputs();
 
             fetchProfileCts.SafeCancelAndDispose();
             slotSetUpCts.SafeCancelAndDispose();
@@ -236,22 +231,18 @@ namespace DCL.EmotesWheel
             Close();
         }
 
-        private void UnblockUnwantedInputActions()
+        private void UnblockUnwantedInputs()
         {
-            ref InputMapComponent inputMapComponent = ref inputMapsEntity.GetInputMapComponent(world);
-            inputMapComponent.UnblockInput(InputMapComponent.Kind.EmoteWheel);
-            inputMapComponent.BlockInput(InputMapComponent.Kind.Emotes);
+            inputBlock.UnblockInputs(InputMapComponent.Kind.EmoteWheel, true);
             // We also disable shortcuts because the wheel can be opened and closed with the same key bind
             // If we leave it enabled, it will close and then re-open instantly
-            inputMapComponent.BlockInput(InputMapComponent.Kind.Shortcuts);
+            inputBlock.BlockInputs(InputMapComponent.Kind.Emotes | InputMapComponent.Kind.Shortcuts);
         }
 
-        private void BlockUnwantedInputActions()
+        private void BlockUnwantedInputs()
         {
-            ref InputMapComponent inputMapComponent = ref inputMapsEntity.GetInputMapComponent(world);
-            inputMapComponent.BlockInput(InputMapComponent.Kind.EmoteWheel);
-            inputMapComponent.UnblockInput(InputMapComponent.Kind.Emotes);
-            inputMapComponent.UnblockInput(InputMapComponent.Kind.Shortcuts);
+            inputBlock.BlockInputs(InputMapComponent.Kind.EmoteWheel, true);
+            inputBlock.UnblockInputs(InputMapComponent.Kind.Emotes | InputMapComponent.Kind.Shortcuts);
         }
 
         private void ListenToSlotsInput(InputActionMap inputActionMap)

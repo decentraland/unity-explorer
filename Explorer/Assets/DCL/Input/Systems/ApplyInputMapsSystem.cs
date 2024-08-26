@@ -70,7 +70,9 @@ namespace DCL.Input.Systems
         private static void SetActionMapEnabled(bool enabled, InputActionMap map)
         {
             if (map.enabled == enabled) return;
-            ReportHub.LogError(ReportData.UNSPECIFIED, $"{enabled} - {map.name}");
+
+            string text = enabled ? "ENABLED" : "DISABLED";
+            ReportHub.LogError(ReportData.UNSPECIFIED, $"{text} - {map.name}");
 
             if (enabled)
             {

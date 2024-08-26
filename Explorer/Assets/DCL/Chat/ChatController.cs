@@ -176,7 +176,7 @@ namespace DCL.Chat
                     {
                         viewInstance!.EmojiPanelButton.SetState(false);
                         viewInstance.EmojiPanel.gameObject.SetActive(false);
-                        UnblockUnwantedInputActions();
+                        UnblockUnwantedInputs();
                     }
                     emojiSuggestionPanelController!.SetPanelVisibility(false);
                 }
@@ -257,17 +257,17 @@ namespace DCL.Chat
             emojiSuggestionPanelController!.SetPanelVisibility(false);
             viewInstance.EmojiPanel.EmojiContainer.gameObject.SetActive(toggle);
             viewInstance.InputField.ActivateInputField();
-            if (toggle) BlockUnwantedInputActions();
-            else UnblockUnwantedInputActions();
+            if (toggle) BlockUnwantedInputs();
+            else UnblockUnwantedInputs();
         }
 
-        private void BlockUnwantedInputActions()
+        private void BlockUnwantedInputs()
         {
             world.AddOrGet(cameraEntity, new CameraBlockerComponent());
             inputBlock.BlockInputs(InputMapComponent.Kind.Camera | InputMapComponent.Kind.Shortcuts | InputMapComponent.Kind.Player);
         }
 
-        private void UnblockUnwantedInputActions()
+        private void UnblockUnwantedInputs()
         {
             world.TryRemove<CameraBlockerComponent>(cameraEntity);
             inputBlock.UnblockInputs(InputMapComponent.Kind.Camera | InputMapComponent.Kind.Shortcuts | InputMapComponent.Kind.Player);
@@ -292,7 +292,7 @@ namespace DCL.Chat
             if (viewInstance!.EmojiPanel.gameObject.activeInHierarchy)
             {
                 emojiPanelController!.SetPanelVisibility(false);
-                UnblockUnwantedInputActions();
+                UnblockUnwantedInputs();
             }
 
             if (string.IsNullOrWhiteSpace(viewInstance!.InputField.text))
@@ -374,7 +374,7 @@ namespace DCL.Chat
             viewInstance!.EmojiPanelButton.SetColor(false);
             viewInstance.CharacterCounter.gameObject.SetActive(false);
             viewInstance.StartChatEntriesFadeout();
-            UnblockUnwantedInputActions();
+            UnblockUnwantedInputs();
         }
 
         private void OnInputSelected(string inputText)
@@ -394,7 +394,7 @@ namespace DCL.Chat
             viewInstance.EmojiPanelButton.SetColor(true);
             viewInstance.CharacterCounter.gameObject.SetActive(true);
             viewInstance.StopChatEntriesFadeout();
-            BlockUnwantedInputActions();
+            BlockUnwantedInputs();
         }
 
         private void OnInputChanged(string inputText)

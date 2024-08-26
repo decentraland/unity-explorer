@@ -137,7 +137,7 @@ namespace DCL.ExplorePanel
             if (profileMenuController.State is ControllerState.ViewFocused or ControllerState.ViewBlurred)
                 profileMenuController.HideViewAsync(CancellationToken.None).Forget();
 
-            BlockUnwantedActions();
+            BlockUnwantedInputs();
             RegisterHotkeys();
         }
 
@@ -223,7 +223,7 @@ namespace DCL.ExplorePanel
             profileWidgetCts.SafeCancelAndDispose();
             profileMenuCts.SafeCancelAndDispose();
 
-            UnblockUnwantedActions();
+            UnblockUnwantedInputs();
             UnRegisterHotkeys();
         }
 
@@ -236,12 +236,12 @@ namespace DCL.ExplorePanel
             dclInput.Shortcuts.Backpack.performed -= OnBackpackHotkeyPressed;
         }
 
-        private void BlockUnwantedActions()
+        private void BlockUnwantedInputs()
         {
             inputBlock.BlockInputs(InputMapComponent.Kind.Camera | InputMapComponent.Kind.Player);
         }
 
-        private void UnblockUnwantedActions()
+        private void UnblockUnwantedInputs()
         {
             inputBlock.UnblockInputs(InputMapComponent.Kind.Camera | InputMapComponent.Kind.Player);
         }
