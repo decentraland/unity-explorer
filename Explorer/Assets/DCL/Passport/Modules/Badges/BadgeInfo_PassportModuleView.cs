@@ -1,8 +1,6 @@
 using DCL.BadgesAPIService;
 using DCL.Passport.Fields.Badges;
 using DCL.Passport.Utils;
-using DCL.UI;
-using DCL.WebRequests;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -12,6 +10,8 @@ namespace DCL.Passport.Modules.Badges
 {
     public class BadgeInfo_PassportModuleView : MonoBehaviour
     {
+        public static readonly int IS_STOPPED_3D_IMAGE_ANIMATION_PARAM = Animator.StringToHash("IsStopped");
+
         [field: SerializeField]
         public GameObject MainContainer { get; private set; }
 
@@ -19,10 +19,16 @@ namespace DCL.Passport.Modules.Badges
         public GameObject MainLoadingSpinner { get; private set; }
 
         [field: SerializeField]
-        public ImageView LockedBadge2DImage { get; private set; }
+        public RawImage Badge3DImage { get; private set; }
 
         [field: SerializeField]
-        public RawImage UnlockedBadge3DImage { get; private set; }
+        public Color Badge3DImageUnlockedColor { get; private set; }
+
+        [field: SerializeField]
+        public Color Badge3DImageLockedColor { get; private set; }
+
+        [field: SerializeField]
+        public Animator Badge3DAnimator { get; private set; }
 
         [field: SerializeField]
         public Sprite DefaultBadgeSprite { get; private set; }
@@ -81,28 +87,15 @@ namespace DCL.Passport.Modules.Badges
         [field: SerializeField]
         public TMP_Text SimpleBadgeProgressValueText { get; private set; }
 
-        private ImageController? imageController;
         private List<TierData> currentTiers = new ();
-
-        public void ConfigureImageController(IWebRequestController webRequestController)
-        {
-            if (imageController != null)
-                return;
-
-            imageController = new ImageController(LockedBadge2DImage, webRequestController);
-        }
-
-        public void StopLoadingImage() =>
-            imageController?.StopLoading();
 
         public void Setup(BadgeInfo badgeInfo, List<TierData> tiers, bool isOwnProfile)
         {
             currentTiers = tiers;
             TierSection.SetActive(badgeInfo.isTier);
             SimpleBadgeProgressBarContainer.SetActive(isOwnProfile && !badgeInfo.isTier && badgeInfo.progress.totalStepsTarget is > 1);
-            LockedBadge2DImage.gameObject.SetActive(badgeInfo.isLocked);
-            UnlockedBadge3DImage.gameObject.SetActive(!badgeInfo.isLocked);
-            imageController?.SetImage(DefaultBadgeSprite);
+            Badge3DImage.color = badgeInfo.isLocked ? Badge3DImageLockedColor : Badge3DImageUnlockedColor;
+            Badge3DAnimator.SetBool(IS_STOPPED_3D_IMAGE_ANIMATION_PARAM, badgeInfo.isLocked);
 
             if (!badgeInfo.isTier)
             {
@@ -116,9 +109,6 @@ namespace DCL.Passport.Modules.Badges
                     SimpleBadgeProgressBarFill.sizeDelta = new Vector2(simpleBadgeProgressPercentage * (SimpleBadgeProgressBar.sizeDelta.x / 100), SimpleBadgeProgressBarFill.sizeDelta.y);
                     SimpleBadgeProgressValueText.text = $"{badgeInfo.progress.stepsDone ?? 0}/{badgeInfo.progress.totalStepsTarget ?? 0}";
                 }
-
-                if (!string.IsNullOrEmpty(badgeInfo.image) && badgeInfo.isLocked)
-                    imageController?.RequestImage(badgeInfo.image, hideImageWhileLoading: true);
             }
             else
             {

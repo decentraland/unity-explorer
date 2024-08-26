@@ -48,8 +48,6 @@ namespace DCL.Passport.Modules.Badges
                     badgeTierButton.transform.SetAsLastSibling();
                 },
                 actionOnRelease: badgeTierButton => badgeTierButton.gameObject.SetActive(false));
-
-            badgeInfoModuleView.ConfigureImageController(webRequestController);
         }
 
         public void Setup(BadgeInfo badgeInfo, bool isOwnProfileBadge)
@@ -69,11 +67,8 @@ namespace DCL.Passport.Modules.Badges
         public void SetAsLoading(bool isLoading) =>
             badgeInfoModuleView.SetAsLoading(isLoading);
 
-        public void Clear()
-        {
-            badgeInfoModuleView.StopLoadingImage();
+        public void Clear() =>
             ClearTiers();
-        }
 
         private void ClearTiers()
         {
