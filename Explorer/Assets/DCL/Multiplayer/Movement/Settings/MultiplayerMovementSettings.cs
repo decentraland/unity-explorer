@@ -27,6 +27,7 @@ namespace DCL.Multiplayer.Movement.Settings
         [field: Tooltip("Minimal position (sqr) delta to consider a new position. "
                         + "If delta is less then this value, then player will just teleport to this position without any transition.")]
         [field: SerializeField] public float MinPositionDelta { get; set; } = 0.001f;
+        [field: SerializeField] public float MinRotationDelta { get; set; } = 0.01f;
 
         [field: Min(0)]
         [field: Tooltip("Minimal distance after which player will be teleported instead of interpolated. "

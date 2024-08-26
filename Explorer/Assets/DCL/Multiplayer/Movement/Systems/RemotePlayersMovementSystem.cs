@@ -161,7 +161,9 @@ namespace DCL.Multiplayer.Movement.Systems
         {
             // Filter messages with the same position
             if (settings.InterpolationSettings.UseSpeedUp)
-                while (playerInbox.Count > 0 && Vector3.SqrMagnitude(playerInbox.First.position - remote.position) < settings.MinPositionDelta)
+                while (playerInbox.Count > 0
+                       && Mathf.Abs(playerInbox.First.rotationY - remote.rotationY) < settings.MinRotationDelta
+                       && Vector3.SqrMagnitude(playerInbox.First.position - remote.position) < settings.MinPositionDelta)
                     remote = playerInbox.Dequeue();
 
             transComp.Transform.position = remote.position;
@@ -170,13 +172,10 @@ namespace DCL.Multiplayer.Movement.Systems
 
         private bool CanTeleport(in RemotePlayerMovementComponent remotePlayerMovement, in NetworkMovementMessage remote)
         {
-            float sqrDistance = Vector3.SqrMagnitude(remotePlayerMovement.PastMessage.position - remote.position);
+            float posDiff = Vector3.SqrMagnitude(remotePlayerMovement.PastMessage.position - remote.position);
+            float rotDiff = Mathf.Abs(remotePlayerMovement.PastMessage.rotationY - remote.rotationY);
 
-            return
-
-                // UnityEngine.Time.time - remotePlayerMovement.LastMessageEnqueueTime > 5 ||
-                sqrDistance > settings.MinTeleportDistance ||
-                (settings.InterpolationSettings.UseSpeedUp && sqrDistance < settings.MinPositionDelta);
+            return posDiff > settings.MinTeleportDistance || (settings.InterpolationSettings.UseSpeedUp && rotDiff < settings.MinRotationDelta && posDiff < settings.MinPositionDelta);
         }
 
         private void StartInterpolation(float deltaTime, ref CharacterTransform transComp, ref RemotePlayerMovementComponent remotePlayerMovement,

@@ -15,6 +15,7 @@ namespace DCL.Multiplayer.Movement.Settings
 
         // TELEPORTATION
         float MinPositionDelta { get; set; }
+        float MinRotationDelta { get; set; }
         float MinTeleportDistance { get; set; }
 
         // INTERPOLATION
