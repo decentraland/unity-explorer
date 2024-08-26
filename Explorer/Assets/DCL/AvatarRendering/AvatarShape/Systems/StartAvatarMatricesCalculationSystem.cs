@@ -36,7 +36,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         [None(typeof(DeleteEntityIntention))]
         private void Execute(ref AvatarBase avatarBase, ref AvatarTransformMatrixComponent transformMatrixComponent)
         {
-            avatarTransformMatrixBatchJob.UpdateAvatar(ref avatarBase, ref transformMatrixComponent);
+            avatarTransformMatrixBatchJob.UpdateAvatar(avatarBase, ref transformMatrixComponent);
         }
     }
 }

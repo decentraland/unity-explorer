@@ -14,14 +14,14 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 {
     public unsafe class AvatarTransformMatrixJobWrapper : IDisposable
     {
-        private const int AVATAR_ARRAY_SIZE = 100;
+        internal const int AVATAR_ARRAY_SIZE = 100;
         private static readonly int BONES_ARRAY_LENGTH = ComputeShaderConstants.BONE_COUNT;
         private static readonly int BONES_PER_AVATAR_LENGTH = AVATAR_ARRAY_SIZE * BONES_ARRAY_LENGTH;
 
-        private NativeArray<Matrix4x4> matrixFromAllAvatars;
+        internal NativeArray<Matrix4x4> matrixFromAllAvatars;
         private Matrix4x4* matrixPtr;
 
-        private NativeArray<bool> updateAvatar;
+        internal NativeArray<bool> updateAvatar;
         private bool* updateAvatarPtr;
 
         private TransformAccessArray bonesCombined;
@@ -33,7 +33,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 
         private int avatarIndex;
         private int nextResizeValue;
-        private int currentAvatarAmountSupported;
+        internal int currentAvatarAmountSupported;
 
         public AvatarTransformMatrixJobWrapper()
         {
@@ -72,7 +72,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             handle.Complete();
         }
 
-        public void UpdateAvatar(ref AvatarBase avatarBase, ref AvatarTransformMatrixComponent transformMatrixComponent)
+        public void UpdateAvatar(AvatarBase avatarBase, ref AvatarTransformMatrixComponent transformMatrixComponent)
         {
             if (transformMatrixComponent.IndexInGlobalJobArray == -1)
             {
