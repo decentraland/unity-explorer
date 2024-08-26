@@ -75,6 +75,8 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
         private int lastIndexInstantiated;
         private readonly AvatarRandomizerAsset avatarRandomizerAsset;
 
+        private bool networkAvatar;
+
         internal InstantiateRandomAvatarsSystem(
             World world,
             IDebugContainerBuilder debugBuilder,
@@ -88,9 +90,11 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
             this.entityParticipantTable = entityParticipantTable;
             transformPool = componentPools;
             this.avatarRandomizerAsset = avatarRandomizerAsset;
+            networkAvatar = true;
 
             debugBuilder.TryAddWidget("Avatar Debug")
                         ?.SetVisibilityBinding(debugVisibilityBinding = new DebugWidgetVisibilityBinding(false))
+                .AddToggleField("Network avatar", evt => networkAvatar = evt.newValue, true)
                         .AddIntFieldWithConfirmation(30, "Instantiate", AddRandomAvatar)
                         .AddSingleButton("Instantiate Self Replica", AddRandomSelfReplicaAvatar)
                         .AddControl(new DebugConstLabelDef("Total Avatars"), new DebugLongMarkerDef(totalAvatarsInstantiated = new ElementBinding<ulong>(0), DebugLongMarkerDef.Unit.NoFormat))
@@ -308,39 +312,55 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
             else { transformComp.Transform.position = new Vector3(startXPosition + (avatarIndex * 2), 3, startZPosition); }
 
             transformComp.Transform.name = $"RANDOM_AVATAR_{avatarIndex}";
-
-            CharacterController characterController = transformComp.Transform.gameObject.AddComponent<CharacterController>();
-            characterController.radius = 0.4f;
-            characterController.height = 2;
-            characterController.center = Vector3.up;
-            characterController.slopeLimit = 50f;
-            characterController.gameObject.layer = PhysicsLayers.CHARACTER_LAYER;
-
+            
             HashSet<URN> wearablesURN = new HashSet<URN>();
             foreach (string wearable in wearables)
                 wearablesURN.Add(new URN(wearable));
 
-            var avatarShape = Profile.Create(
+            var profile = Profile.Create(
                 StringUtils.GenerateRandomString(5),
                 StringUtils.GenerateRandomString(5),
                 new Avatar(BodyShape.FromStringSafe(bodyShape), wearablesURN, WearablesConstants.DefaultColors.GetRandomEyesColor(), WearablesConstants.DefaultColors.GetRandomHairColor(), WearablesConstants.DefaultColors.GetRandomSkinColor()));
 
-            World.Create(avatarShape,
-                transformComp,
-                characterController,
-                new CharacterRigidTransform(),
-                new CharacterAnimationComponent(),
-                new CharacterEmoteComponent(),
-                new CharacterPlatformComponent(),
-                new StunComponent(),
-                new FeetIKComponent(),
-                new HandsIKComponent(),
-                new HeadIKComponent(),
-                new JumpInputComponent(),
-                new MovementInputComponent(),
-                characterControllerSettings,
-                new RandomAvatar()
-            );
+
+            if (networkAvatar)
+            {
+                World.Create(profile,
+                    transformComp,
+                    new CharacterAnimationComponent(),
+                    new CharacterEmoteComponent(),
+                    new RandomAvatar());
+                // new RemotePlayerMovementComponent(queuePool),
+                // new InterpolationComponent(),
+                //new ExtrapolationComponent()
+                //remoteAvatarCollider,
+            }
+            else
+            {
+                var characterController = transformComp.Transform.gameObject.AddComponent<CharacterController>();
+                characterController.radius = 0.4f;
+                characterController.height = 2;
+                characterController.center = Vector3.up;
+                characterController.slopeLimit = 50f;
+                characterController.gameObject.layer = PhysicsLayers.CHARACTER_LAYER;
+
+                World.Create(profile,
+                    transformComp,
+                    characterController,
+                    new CharacterRigidTransform(),
+                    new CharacterAnimationComponent(),
+                    new CharacterEmoteComponent(),
+                    new CharacterPlatformComponent(),
+                    new StunComponent(),
+                    new FeetIKComponent(),
+                    new HandsIKComponent(),
+                    new HeadIKComponent(),
+                    new JumpInputComponent(),
+                    new MovementInputComponent(),
+                    characterControllerSettings,
+                    new RandomAvatar()
+                );
+            }
         }
 
         private void GenerateSelfReplicaAvatar(Vector3 cameraPosition, in ICharacterControllerSettings characterControllerSettings)
