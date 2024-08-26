@@ -288,25 +288,38 @@ namespace DCL.Passport.Modules.Badges
 
         private void ActivateOnlyCategoriesInUse()
         {
+            var numberOfActiveSeparators = 0;
             instantiatedBadgesFilterButtons[0].gameObject.SetActive(true);
             foreach (var badgesCategorySeparator in instantiatedBadgesCategorySeparators)
             {
                 if (!instantiatedBadgeDetailCards.TryGetValue(badgesCategorySeparator.CategoryText.text.ToLower(), out List<BadgeDetailCard_PassportFieldView> badgeDetailCards))
                     continue;
 
-                badgesCategorySeparator.gameObject.SetActive(badgeDetailCards.Count > 0);
+                if (badgeDetailCards.Count > 0)
+                {
+                    badgesCategorySeparator.gameObject.SetActive(true);
+                    numberOfActiveSeparators++;
+                }
+                else
+                    badgesCategorySeparator.gameObject.SetActive(false);
 
                 if (badgeDetailCards.Count == 0)
                     continue;
 
-                foreach (var filterButton in instantiatedBadgesFilterButtons)
+                if (numberOfActiveSeparators > 1)
                 {
-                    if (!string.Equals(filterButton.Text.text, badgesCategorySeparator.CategoryText.text, StringComparison.CurrentCultureIgnoreCase))
-                        continue;
+                    view.BadgesFilterButtonsContainer.gameObject.SetActive(true);
+                    foreach (var filterButton in instantiatedBadgesFilterButtons)
+                    {
+                        if (!string.Equals(filterButton.Text.text, badgesCategorySeparator.CategoryText.text, StringComparison.CurrentCultureIgnoreCase))
+                            continue;
 
-                    filterButton.gameObject.SetActive(true);
-                    break;
+                        filterButton.gameObject.SetActive(true);
+                        break;
+                    }
                 }
+                else
+                    view.BadgesFilterButtonsContainer.gameObject.SetActive(false);
             }
         }
 
