@@ -21,6 +21,7 @@ build_healthy = True
 parser = argparse.ArgumentParser()
 parser.add_argument('--resume', help='Resume tracking a running build stored in build_info.json', action='store_true')
 parser.add_argument('--cancel', help='Cancel a running build stored in build_info.json', action='store_true')
+parser.add_argument('--delete', help='Delete build target after PR is closed or merged', action='store_true')
 
 def get_target(target):
     response = requests.get(f'{URL}/buildtargets/{target}', headers=HEADERS)
@@ -40,19 +41,19 @@ def get_target(target):
 # So we *always* create a new target, no matter what
 # by appending the commit's SHA
 def clone_current_target():
-    def generate_body(template_target, name, branch, options, cache):
+    def generate_body(template_target, name, branch, options, remoteCacheStrategy):
         body = get_target(template_target)
 
         body['name'] = name
         body['settings']['scm']['branch'] = branch
         body['settings']['advanced']['unity']['playerExporter']['buildOptions'] = options
+        body['settings']['remoteCacheStrategy'] = remoteCacheStrategy
 
-        # Copy cache check
-        if cache:
-            body['settings']['buildTargetCopyCache'] = template_target
-        else:
-            if 'buildTargetCopyCache' in body['settings']:
-                del body['settings']['buildTargetCopyCache']
+        print(f"Using cache strategy target: {remoteCacheStrategy}")
+
+        # Remove cache for new targets
+        if 'buildTargetCopyCache' in body['settings']:
+            del body['settings']['buildTargetCopyCache']
 
         return body
 
@@ -66,15 +67,19 @@ def clone_current_target():
         new_target_name,
         os.getenv('BRANCH_NAME'),
         os.getenv('BUILD_OPTIONS').split(','),
-        False)
+        os.getenv('CACHE_STRATEGY'))
 
     existing_target = get_target(new_target_name)
     
     if 'error' in existing_target:
-        # Create new target
+        # Create new target without cache
         response = requests.post(f'{URL}/buildtargets', headers=HEADERS, json=body)
+        print("No cache build target used for new target")
     else:
-        # Target exists, update it
+        # Target exists, update it and use cache based on new_target_name
+        if os.getenv('USE_CACHE'):
+            body['settings']['buildTargetCopyCache'] = new_target_name
+            print(f"Using cache build target: {new_target_name}")
         response = requests.put(f'{URL}/buildtargets/{new_target_name}', headers=HEADERS, json=body)
 
     if response.status_code == 200 or response.status_code == 201:
@@ -321,8 +326,11 @@ def delete_current_target():
 # Entrypoint here ->
 args = parser.parse_args()
 
+# MODE: Delete
+if args.delete:
+    delete_current_target()
 # MODE: Resume
-if args.resume or args.cancel:
+elif args.resume or args.cancel:
     build_info = utils.read_build_info()
     if build_info is None:
         sys.exit(1)
@@ -377,10 +385,7 @@ if not build_healthy:
     sys.exit(1)
 
 # Cleanup (only if build is healthy)
-if get_any_running_builds(os.getenv('TARGET')):
-    delete_build(id)
-else:
-    # Deleting the parent target also removes all builds
-    delete_current_target()
+# We only delete all artifacts, not the build target
+delete_build(id)
 
 utils.delete_build_info()

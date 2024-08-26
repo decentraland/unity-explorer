@@ -4,8 +4,8 @@ using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Web3.Identities;
+using Global.AppArgs;
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using Utility.Types;
 
@@ -16,9 +16,9 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
         private readonly IFeatureFlagsProvider featureFlagsProvider;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
-        private readonly Dictionary<string, string> appParameters;
+        private readonly IAppArgs appParameters;
 
-        public InitializeFeatureFlagsStartupOperation(IFeatureFlagsProvider featureFlagsProvider, IWeb3IdentityCache web3IdentityCache, IDecentralandUrlsSource decentralandUrlsSource, Dictionary<string, string> appParameters)
+        public InitializeFeatureFlagsStartupOperation(IFeatureFlagsProvider featureFlagsProvider, IWeb3IdentityCache web3IdentityCache, IDecentralandUrlsSource decentralandUrlsSource, IAppArgs appParameters)
         {
             this.featureFlagsProvider = featureFlagsProvider;
             this.web3IdentityCache = web3IdentityCache;

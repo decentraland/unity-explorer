@@ -25,6 +25,7 @@ namespace DCL.Profiles.Self
         private readonly IEquippedEmotes equippedEmotes;
         private readonly IEmoteCache emoteCache;
         private readonly IReadOnlyList<string> forceRender;
+        private readonly IReadOnlyList<URN>? forcedEmotes;
         private readonly ProfileBuilder profileBuilder = new ();
 
         public SelfProfile(
@@ -34,8 +35,8 @@ namespace DCL.Profiles.Self
             IWearableCache wearableCache,
             IEmoteCache emoteCache,
             IEquippedEmotes equippedEmotes,
-            IReadOnlyList<string> forceRender
-        )
+            IReadOnlyList<string> forceRender,
+            IReadOnlyList<URN>? forcedEmotes)
         {
             this.profileRepository = profileRepository;
             this.web3IdentityCache = web3IdentityCache;
@@ -44,17 +45,24 @@ namespace DCL.Profiles.Self
             this.emoteCache = emoteCache;
             this.equippedEmotes = equippedEmotes;
             this.forceRender = forceRender;
+            this.forcedEmotes = forcedEmotes;
         }
 
-        public UniTask<Profile?> ProfileAsync(CancellationToken ct)
+        public async UniTask<Profile?> ProfileAsync(CancellationToken ct)
         {
             if (web3IdentityCache.Identity == null)
                 throw new Web3IdentityMissingException("Web3 Identity is not initialized");
 
-            return profileRepository.GetAsync(
+            Profile? profile = await profileRepository.GetAsync(
                 web3IdentityCache.Identity.Address,
                 ct
             );
+
+            if (profile != null && forcedEmotes != null)
+                for (var slot = 0; slot < forcedEmotes.Count; slot++)
+                    profile.Avatar.emotes[slot] = forcedEmotes[slot];
+
+            return profile;
         }
 
         public async UniTask<Profile?> PublishAsync(CancellationToken ct)

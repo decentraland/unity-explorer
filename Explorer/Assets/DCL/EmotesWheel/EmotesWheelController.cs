@@ -33,6 +33,7 @@ namespace DCL.EmotesWheel
         private readonly SingleInstanceEntity currentInputMapsEntity;
         private readonly DCLInput.EmoteWheelActions emoteWheelInput;
         private readonly IMVCManager mvcManager;
+        private readonly ICursor cursor;
         private readonly URN[] currentEmotes = new URN[Avatar.MAX_EQUIPPED_EMOTES];
         private UniTaskCompletionSource? closeViewTask;
         private CancellationTokenSource? fetchProfileCts;
@@ -50,7 +51,8 @@ namespace DCL.EmotesWheel
             IThumbnailProvider thumbnailProvider,
             SingleInstanceEntity currentInputMapsEntity,
             DCLInput dclInput,
-            IMVCManager mvcManager)
+            IMVCManager mvcManager,
+            ICursor cursor)
             : base(viewFactory)
         {
             this.selfProfile = selfProfile;
@@ -63,6 +65,7 @@ namespace DCL.EmotesWheel
             this.dclInput = dclInput;
             emoteWheelInput = this.dclInput.EmoteWheel;
             this.mvcManager = mvcManager;
+            this.cursor = cursor;
 
             emoteWheelInput.Customize.performed += OpenBackpack;
             emoteWheelInput.Close.performed += Close;
@@ -99,6 +102,11 @@ namespace DCL.EmotesWheel
 
         protected override void OnBeforeViewShow()
         {
+            cursor.Unlock();
+            fetchProfileCts = fetchProfileCts.SafeRestart();
+            InitializeEverythingAsync(fetchProfileCts.Token).Forget();
+            return;
+
             async UniTaskVoid InitializeEverythingAsync(CancellationToken ct)
             {
                 Profile? profile = await selfProfile.ProfileAsync(ct);
@@ -111,9 +119,6 @@ namespace DCL.EmotesWheel
 
                 SetUpSlots(profile);
             }
-
-            fetchProfileCts = fetchProfileCts.SafeRestart();
-            InitializeEverythingAsync(fetchProfileCts.Token).Forget();
         }
 
         protected override void OnViewShow()

@@ -49,6 +49,7 @@ namespace DCL.PluginSystem.Global
         private readonly AudioClipsCache audioClipsCache;
         private readonly URLDomain assetBundleURL;
         private readonly MainUIView mainUIView;
+        private readonly ICursor cursor;
         private AudioSource? audioSourceReference;
         private EmotesWheelController? emotesWheelController;
 
@@ -65,7 +66,8 @@ namespace DCL.PluginSystem.Global
             IWeb3IdentityCache web3IdentityCache,
             IReadOnlyEntityParticipantTable entityParticipantTable,
             URLDomain assetBundleURL,
-            MainUIView mainUIView)
+            MainUIView mainUIView,
+            ICursor cursor)
         {
             this.messageBus = messageBus;
             this.debugBuilder = debugBuilder;
@@ -80,6 +82,7 @@ namespace DCL.PluginSystem.Global
             this.emoteCache = emoteCache;
             this.realmData = realmData;
             this.mainUIView = mainUIView;
+            this.cursor = cursor;
 
             audioClipsCache = new AudioClipsCache();
             cacheCleaner.Register(audioClipsCache);
@@ -143,7 +146,7 @@ namespace DCL.PluginSystem.Global
 
                 emotesWheelController = new EmotesWheelController(EmotesWheelController.CreateLazily(emotesWheelPrefab, null),
                     selfProfile, emoteCache, emoteWheelRarityBackgrounds, builder.World, arguments.PlayerEntity, thumbnailProvider,
-                    builder.World.CacheInputMap(), dclInput, mvcManager);
+                    builder.World.CacheInputMap(), dclInput, mvcManager, cursor);
 
                 mvcManager.RegisterController(emotesWheelController);
             };
