@@ -85,7 +85,7 @@ namespace DCL.LOD.Systems
                     sceneLODInfo.AddFailedLOD();
                 }
 
-                LODUtils.TryReportSceneLoadedForLOD(sceneLODInfo, sceneDefinitionComponent, sceneReadinessReportQueue,
+                LODUtils.TryReportSDK6SceneLoadedForLOD(sceneLODInfo, sceneDefinitionComponent, sceneReadinessReportQueue,
                     scenesCache);
             }
         }

@@ -81,7 +81,7 @@ namespace DCL.Roads.Systems
 
             
             //In case this is a road teleport destination, we need to release the loading screen
-            LODUtils.ReportSceneLoaded(sceneDefinitionComponent, sceneReadinessReportQueue, scenesCache);
+            LODUtils.ReportSDK6SceneLoaded(sceneDefinitionComponent, sceneReadinessReportQueue, scenesCache);
         }
 
 

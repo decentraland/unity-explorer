@@ -70,16 +70,16 @@ namespace DCL.LOD.Systems
             return newSlots.ToArray();
         }
 
-        public static void TryReportSceneLoadedForLOD(SceneLODInfo sceneLODInfo,
+        public static void TryReportSDK6SceneLoadedForLOD(SceneLODInfo sceneLODInfo,
             SceneDefinitionComponent sceneDefinitionComponent, ISceneReadinessReportQueue sceneReadinessReportQueue,
             IScenesCache scenesCache)
         {
             //We have to report ready scenes for LOD_0 which are not SDK7. Only then we can consider this scenes as loaded
-            if (sceneLODInfo.HasLOD(0) && !sceneDefinitionComponent.IsSDK7)
-                ReportSceneLoaded(sceneDefinitionComponent, sceneReadinessReportQueue, scenesCache);
+            if (!sceneDefinitionComponent.IsSDK7 && sceneLODInfo.HasLOD(0))
+                ReportSDK6SceneLoaded(sceneDefinitionComponent, sceneReadinessReportQueue, scenesCache);
         }
 
-        public static void ReportSceneLoaded(SceneDefinitionComponent sceneDefinitionComponent,
+        public static void ReportSDK6SceneLoaded(SceneDefinitionComponent sceneDefinitionComponent,
             ISceneReadinessReportQueue sceneReadinessReportQueue, IScenesCache scenesCache)
         {
             scenesCache.AddNonRealScene(sceneDefinitionComponent.Parcels);

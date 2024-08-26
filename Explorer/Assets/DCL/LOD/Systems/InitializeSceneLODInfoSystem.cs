@@ -56,7 +56,7 @@ namespace DCL.LOD.Systems
             if (lodCache.TryGet(sceneID, out var cacheInfo))
             {
                 sceneLODInfo.metadata = cacheInfo;
-                LODUtils.TryReportSceneLoadedForLOD(sceneLODInfo, sceneDefinitionComponent, sceneReadinessReportQueue,
+                LODUtils.TryReportSDK6SceneLoadedForLOD(sceneLODInfo, sceneDefinitionComponent, sceneReadinessReportQueue,
                     scenesCache);
             }
             else
