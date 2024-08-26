@@ -388,8 +388,6 @@ namespace DCL.Chat
 
             audioEventsBus.SendPlayAudioEvent(viewInstance!.EnterInputAudio);
 
-            ReportHub.LogError(ReportData.UNSPECIFIED, $"Input Selected - {isInputSelected}");
-
             if (isInputSelected) return;
 
             isInputSelected = true;

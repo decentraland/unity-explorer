@@ -221,13 +221,15 @@ namespace Global.Dynamic
             staticContainer.InputProxy.StrictObject.Player.Disable();
             staticContainer.InputProxy.StrictObject.Emotes.Disable();
             staticContainer.InputProxy.StrictObject.EmoteWheel.Disable();
+            staticContainer.InputProxy.StrictObject.FreeCamera.Disable();
+            staticContainer.InputProxy.StrictObject.Camera.Disable();
         }
 
         private void RestoreInputs()
         {
             // We enable Inputs through the inputBlock so the block counters can be properly updated and the component Active flags are up-to-date as well
-            // We restore all inputs except EmoteWheel as it should be disabled by default
-            staticContainer!.InputBlock.UnblockInputs(InputMapComponent.Kind.Shortcuts | InputMapComponent.Kind.Player | InputMapComponent.Kind.Emotes);
+            // We restore all inputs except EmoteWheel and FreeCamera as they should be disabled by default
+            staticContainer!.InputBlock.UnblockInputs(InputMapComponent.Kind.Shortcuts | InputMapComponent.Kind.Player | InputMapComponent.Kind.Emotes | InputMapComponent.Kind.Camera);
         }
 
         [ContextMenu(nameof(ValidateSettingsAsync))]

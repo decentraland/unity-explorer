@@ -29,7 +29,6 @@ namespace DCL.Emoji
             view.inputField.onValueChanged.AddListener(OnValueChanged);
             view.inputField.onSelect.AddListener(BlockUnwantedInputs);
             view.inputField.onDeselect.AddListener(UnblockUnwantedInputs);
-            view.inputField.onDeselect.AddListener(UnblockUnwantedInputs);
             view.inputField.onEndEdit.AddListener(UnblockUnwantedInputs);
             view.Disabled += UnblockUnwantedInputs;
 

@@ -120,25 +120,23 @@ namespace DCL.Character.CharacterCamera.Systems
 
         private void SetActiveCamera(CameraMode targetCameraMode, ICinemachinePreset cinemachinePreset, ref CameraComponent camera, ref CinemachineCameraState cameraState)
         {
-            ref InputMapComponent inputMapComponent = ref inputMap.GetInputMapComponent(World);
-
-            if (camera.Mode == CameraMode.Free)
-            {
-                // Disable Player input
-                inputMapComponent.UnblockInput(InputMapComponent.Kind.FreeCamera);
-                inputMapComponent.BlockInput(InputMapComponent.Kind.Player);
-            }
-            else
-            {
-                // Disable FreeCamera input
-                inputMapComponent.UnblockInput(InputMapComponent.Kind.Player);
-                inputMapComponent.BlockInput(InputMapComponent.Kind.FreeCamera);
-            }
-
             CameraMode currentCameraMode = GetCurrentCameraMode(cameraState.CurrentCamera, cinemachinePreset);
 
             cameraState.CurrentCamera.enabled = false;
             camera.Mode = targetCameraMode;
+
+            if (targetCameraMode != CameraMode.Free && currentCameraMode == CameraMode.Free)
+            {
+                ref InputMapComponent inputMapComponent = ref inputMap.GetInputMapComponent(World);
+                inputMapComponent.UnblockInput(InputMapComponent.Kind.Player);
+                inputMapComponent.BlockInput(InputMapComponent.Kind.FreeCamera);
+            }
+            else if (targetCameraMode == CameraMode.Free && currentCameraMode != CameraMode.Free)
+            {
+                ref InputMapComponent inputMapComponent = ref inputMap.GetInputMapComponent(World);
+                inputMapComponent.UnblockInput(InputMapComponent.Kind.FreeCamera);
+                inputMapComponent.BlockInput(InputMapComponent.Kind.Player);
+            }
 
             switch (camera.Mode)
             {
