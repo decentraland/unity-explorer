@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Utilities.Extensions;
 using DCL.WebRequests;
+using DCL.WebRequests.GenericDelete;
 using Microsoft.ClearScript;
 using SceneRuntime.Apis.Modules.FetchApi;
 using System;
@@ -21,6 +22,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
             GET,
             POST,
             PUT,
+            DELETE,
             PATCH,
             HEAD,
             INVALID,
@@ -46,18 +48,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
                 throw new ArgumentException("Invalid request method.");
 
             var commonArguments = new CommonArguments(URLAddress.FromString(url), timeout: timeout);
-            var webRequestHeaders = new WebRequestHeadersInfo();
-
-            if (headers is IScriptObject scriptObject)
-            {
-                IEnumerable<string> propertyNames = scriptObject.PropertyNames.EnsureNotNull();
-
-                foreach (string name in propertyNames)
-                {
-                    var property = scriptObject.GetProperty(name).EnsureNotNull().ToString()!;
-                    webRequestHeaders.Add(name, property);
-                }
-            }
+            var webRequestHeaders = HeadersFromJsObject(headers);
 
             try
             {
@@ -68,15 +59,19 @@ namespace CrdtEcsBridge.JsModulesImplementation
                     case RequestMethod.GET:
                         return await webController.GetAsync<GenerateResponseOp<GenericGetRequest>, ISimpleFetchApi.Response>(commonArguments, new GenerateResponseOp<GenericGetRequest>(), ct, ReportCategory.SCENE_FETCH_REQUEST, webRequestHeaders);
                     case RequestMethod.POST:
-                        string postContentType = webRequestHeaders.HeaderOrNull("content-type", true) ?? string.Empty;
+                        string postContentType = webRequestHeaders.HeaderContentType();
                         var postArguments = GenericPostArguments.Create(body, postContentType);
                         return await webController.PostAsync<GenerateResponseOp<GenericPostRequest>, ISimpleFetchApi.Response>(commonArguments, new GenerateResponseOp<GenericPostRequest>(), postArguments, ct, ReportCategory.SCENE_FETCH_REQUEST, webRequestHeaders);
                     case RequestMethod.PUT:
-                        string putContentType = webRequestHeaders.HeaderOrNull("content-type", true) ?? string.Empty;
+                        string putContentType = webRequestHeaders.HeaderContentType();
                         var putArguments = GenericPutArguments.Create(body, putContentType);
                         return await webController.PutAsync<GenerateResponseOp<GenericPutRequest>, ISimpleFetchApi.Response>(commonArguments, new GenerateResponseOp<GenericPutRequest>(), putArguments, ct, ReportCategory.SCENE_FETCH_REQUEST, webRequestHeaders);
+                    case RequestMethod.DELETE:
+                        string deleteContentType = webRequestHeaders.HeaderContentType();
+                        var deleteArguments = GenericDeleteArguments.Create(body, deleteContentType);
+                        return await webController.DeleteAsync<GenerateResponseOp<GenericDeleteRequest>, ISimpleFetchApi.Response>(commonArguments, new GenerateResponseOp<GenericDeleteRequest>(), deleteArguments, ct, ReportCategory.SCENE_FETCH_REQUEST, webRequestHeaders);
                     case RequestMethod.PATCH:
-                        string patchContentType = webRequestHeaders.HeaderOrNull("content-type", true) ?? string.Empty;
+                        string patchContentType = webRequestHeaders.HeaderContentType();
                         var patchArguments = GenericPatchArguments.Create(body, patchContentType);
                         return await webController.PatchAsync<GenerateResponseOp<GenericPatchRequest>, ISimpleFetchApi.Response>(commonArguments, new GenerateResponseOp<GenericPatchRequest>(), patchArguments, ct, ReportCategory.SCENE_FETCH_REQUEST, webRequestHeaders);
                     case RequestMethod.HEAD: throw new NotImplementedException();
@@ -125,6 +120,24 @@ namespace CrdtEcsBridge.JsModulesImplementation
 
                 return result;
             }
+        }
+
+        private static WebRequestHeadersInfo HeadersFromJsObject(object headers)
+        {
+            var webRequestHeaders = new WebRequestHeadersInfo();
+
+            if (headers is IScriptObject scriptObject)
+            {
+                IEnumerable<string> propertyNames = scriptObject.PropertyNames.EnsureNotNull();
+
+                foreach (string name in propertyNames)
+                {
+                    var property = scriptObject.GetProperty(name).EnsureNotNull().ToString()!;
+                    webRequestHeaders.Add(name, property);
+                }
+            }
+
+            return webRequestHeaders;
         }
 
         private static RequestMethod ParseRequestMethod(string request) =>

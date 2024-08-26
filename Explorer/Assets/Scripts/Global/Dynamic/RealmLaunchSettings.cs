@@ -1,6 +1,7 @@
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.CommunicationData.URLHelpers;
 using ECS.SceneLifeCycle.Realm;
+using Global.AppArgs;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -78,18 +79,16 @@ namespace Global.Dynamic
                    };
         }
 
-        public void ApplyConfig(ApplicationParametersParser applicationParameters)
+        public void ApplyConfig(IAppArgs applicationParameters)
         {
-            Dictionary<string,string> appParameters = applicationParameters.AppParameters;
+            if (applicationParameters.TryGetValue(APP_PARAMETER_REALM, out string? realm))
+                ParseRealmAppParameter(applicationParameters, realm);
 
-            if (appParameters.TryGetValue(APP_PARAMETER_REALM, out string? realm))
-                ParseRealmAppParameter(appParameters, realm);
-
-            if (appParameters.TryGetValue(APP_PARAMETER_POSITION, out string? position))
+            if (applicationParameters.TryGetValue(APP_PARAMETER_POSITION, out string? position))
                 ParsePositionAppParameter(position);
         }
 
-        private void ParseRealmAppParameter(Dictionary<string, string> appParameters, string realmParamValue)
+        private void ParseRealmAppParameter(IAppArgs appParameters, string realmParamValue)
         {
             if (string.IsNullOrEmpty(realmParamValue)) return;
 

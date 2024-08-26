@@ -14,16 +14,16 @@ namespace ECS.LifeCycle.Systems
     [UpdateBefore(typeof(SyncedInitializationSystemGroup))] // Before any other scene system
     public partial class LockECSSystem : BaseUnityLoopSystem
     {
-        private readonly MutexSync mutexSync;
+        private readonly MultithreadSync multithreadSync;
 
-        internal LockECSSystem(World world, MutexSync mutexSync) : base(world)
+        internal LockECSSystem(World world, MultithreadSync multithreadSync) : base(world)
         {
-            this.mutexSync = mutexSync;
+            this.multithreadSync = multithreadSync;
         }
 
         protected override void Update(float t)
         {
-            mutexSync.Acquire();
+            multithreadSync.Acquire();
         }
     }
 }
