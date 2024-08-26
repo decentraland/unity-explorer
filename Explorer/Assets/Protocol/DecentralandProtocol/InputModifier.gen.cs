@@ -25,22 +25,20 @@ namespace DCL.ECSComponents {
       byte[] descriptorData = global::System.Convert.FromBase64String(
           string.Concat(
             "CjBkZWNlbnRyYWxhbmQvc2RrL2NvbXBvbmVudHMvaW5wdXRfbW9kaWZpZXIu",
-            "cHJvdG8SG2RlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50cyKvAwoPUEJJbnB1",
+            "cHJvdG8SG2RlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50cyL/AgoPUEJJbnB1",
             "dE1vZGlmaWVyEk4KCHN0YW5kYXJkGAEgASgLMjouZGVjZW50cmFsYW5kLnNk",
             "ay5jb21wb25lbnRzLlBCSW5wdXRNb2RpZmllci5TdGFuZGFyZElucHV0SAAa",
-            "wwIKDVN0YW5kYXJkSW5wdXQSGAoLZGlzYWJsZV9hbGwYASABKAhIAIgBARIZ",
+            "kwIKDVN0YW5kYXJkSW5wdXQSGAoLZGlzYWJsZV9hbGwYASABKAhIAIgBARIZ",
             "CgxkaXNhYmxlX3dhbGsYAiABKAhIAYgBARIYCgtkaXNhYmxlX2pvZxgDIAEo",
             "CEgCiAEBEhgKC2Rpc2FibGVfcnVuGAQgASgISAOIAQESGQoMZGlzYWJsZV9q",
-            "dW1wGAUgASgISASIAQESGgoNZGlzYWJsZV9lbW90ZRgGIAEoCEgFiAEBEhsK",
-            "DmRpc2FibGVfY2FtZXJhGAcgASgISAaIAQFCDgoMX2Rpc2FibGVfYWxsQg8K",
-            "DV9kaXNhYmxlX3dhbGtCDgoMX2Rpc2FibGVfam9nQg4KDF9kaXNhYmxlX3J1",
-            "bkIPCg1fZGlzYWJsZV9qdW1wQhAKDl9kaXNhYmxlX2Vtb3RlQhEKD19kaXNh",
-            "YmxlX2NhbWVyYUIGCgRtb2RlQhSqAhFEQ0wuRUNTQ29tcG9uZW50c2IGcHJv",
-            "dG8z"));
+            "dW1wGAUgASgISASIAQESGgoNZGlzYWJsZV9lbW90ZRgGIAEoCEgFiAEBQg4K",
+            "DF9kaXNhYmxlX2FsbEIPCg1fZGlzYWJsZV93YWxrQg4KDF9kaXNhYmxlX2pv",
+            "Z0IOCgxfZGlzYWJsZV9ydW5CDwoNX2Rpc2FibGVfanVtcEIQCg5fZGlzYWJs",
+            "ZV9lbW90ZUIGCgRtb2RlQhSqAhFEQ0wuRUNTQ29tcG9uZW50c2IGcHJvdG8z"));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBInputModifier), global::DCL.ECSComponents.PBInputModifier.Parser, new[]{ "Standard" }, new[]{ "Mode" }, null, null, new pbr::GeneratedClrTypeInfo[] { new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBInputModifier.Types.StandardInput), global::DCL.ECSComponents.PBInputModifier.Types.StandardInput.Parser, new[]{ "DisableAll", "DisableWalk", "DisableJog", "DisableRun", "DisableJump", "DisableEmote", "DisableCamera" }, new[]{ "DisableAll", "DisableWalk", "DisableJog", "DisableRun", "DisableJump", "DisableEmote", "DisableCamera" }, null, null, null)})
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBInputModifier), global::DCL.ECSComponents.PBInputModifier.Parser, new[]{ "Standard" }, new[]{ "Mode" }, null, null, new pbr::GeneratedClrTypeInfo[] { new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBInputModifier.Types.StandardInput), global::DCL.ECSComponents.PBInputModifier.Types.StandardInput.Parser, new[]{ "DisableAll", "DisableWalk", "DisableJog", "DisableRun", "DisableJump", "DisableEmote" }, new[]{ "DisableAll", "DisableWalk", "DisableJog", "DisableRun", "DisableJump", "DisableEmote" }, null, null, null)})
           }));
     }
     #endregion
@@ -327,7 +325,6 @@ namespace DCL.ECSComponents {
           disableRun_ = other.disableRun_;
           disableJump_ = other.disableJump_;
           disableEmote_ = other.disableEmote_;
-          disableCamera_ = other.disableCamera_;
           _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
         }
 
@@ -487,31 +484,6 @@ namespace DCL.ECSComponents {
           _hasBits0 &= ~32;
         }
 
-        /// <summary>Field number for the "disable_camera" field.</summary>
-        public const int DisableCameraFieldNumber = 7;
-        private bool disableCamera_;
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-        public bool DisableCamera {
-          get { if ((_hasBits0 & 64) != 0) { return disableCamera_; } else { return false; } }
-          set {
-            _hasBits0 |= 64;
-            disableCamera_ = value;
-          }
-        }
-        /// <summary>Gets whether the "disable_camera" field is set</summary>
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-        public bool HasDisableCamera {
-          get { return (_hasBits0 & 64) != 0; }
-        }
-        /// <summary>Clears the value of the "disable_camera" field</summary>
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-        public void ClearDisableCamera() {
-          _hasBits0 &= ~64;
-        }
-
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
         public override bool Equals(object other) {
@@ -533,7 +505,6 @@ namespace DCL.ECSComponents {
           if (DisableRun != other.DisableRun) return false;
           if (DisableJump != other.DisableJump) return false;
           if (DisableEmote != other.DisableEmote) return false;
-          if (DisableCamera != other.DisableCamera) return false;
           return Equals(_unknownFields, other._unknownFields);
         }
 
@@ -547,7 +518,6 @@ namespace DCL.ECSComponents {
           if (HasDisableRun) hash ^= DisableRun.GetHashCode();
           if (HasDisableJump) hash ^= DisableJump.GetHashCode();
           if (HasDisableEmote) hash ^= DisableEmote.GetHashCode();
-          if (HasDisableCamera) hash ^= DisableCamera.GetHashCode();
           if (_unknownFields != null) {
             hash ^= _unknownFields.GetHashCode();
           }
@@ -590,10 +560,6 @@ namespace DCL.ECSComponents {
             output.WriteRawTag(48);
             output.WriteBool(DisableEmote);
           }
-          if (HasDisableCamera) {
-            output.WriteRawTag(56);
-            output.WriteBool(DisableCamera);
-          }
           if (_unknownFields != null) {
             _unknownFields.WriteTo(output);
           }
@@ -628,10 +594,6 @@ namespace DCL.ECSComponents {
             output.WriteRawTag(48);
             output.WriteBool(DisableEmote);
           }
-          if (HasDisableCamera) {
-            output.WriteRawTag(56);
-            output.WriteBool(DisableCamera);
-          }
           if (_unknownFields != null) {
             _unknownFields.WriteTo(ref output);
           }
@@ -658,9 +620,6 @@ namespace DCL.ECSComponents {
             size += 1 + 1;
           }
           if (HasDisableEmote) {
-            size += 1 + 1;
-          }
-          if (HasDisableCamera) {
             size += 1 + 1;
           }
           if (_unknownFields != null) {
@@ -692,9 +651,6 @@ namespace DCL.ECSComponents {
           }
           if (other.HasDisableEmote) {
             DisableEmote = other.DisableEmote;
-          }
-          if (other.HasDisableCamera) {
-            DisableCamera = other.DisableCamera;
           }
           _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
         }
@@ -735,10 +691,6 @@ namespace DCL.ECSComponents {
                 DisableEmote = input.ReadBool();
                 break;
               }
-              case 56: {
-                DisableCamera = input.ReadBool();
-                break;
-              }
             }
           }
         #endif
@@ -776,10 +728,6 @@ namespace DCL.ECSComponents {
               }
               case 48: {
                 DisableEmote = input.ReadBool();
-                break;
-              }
-              case 56: {
-                DisableCamera = input.ReadBool();
                 break;
               }
             }

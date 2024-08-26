@@ -40,7 +40,6 @@ namespace DCL.SDKComponents.PlayerInputMovement.Systems
             inputModifier.DisableJog = pb.DisableJog;
             inputModifier.DisableRun = pb.DisableRun;
             inputModifier.DisableJump = pb.DisableJump;
-            inputModifier.DisableCamera = pb.DisableCamera;
             inputModifier.DisableEmote = pb.DisableEmote;
         }
 
