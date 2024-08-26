@@ -40,13 +40,9 @@ namespace DCL.Multiplayer.Movement
             // Flattened to have ground plane direction only (XZ)
             direction.y = 0;
 
-            // Avoid flickering for small direction changes
-            // if (direction.sqrMagnitude > MIN_DIRECTION_SQR_MAGNITUDE) // &&  if (!stunComponent.IsStunned)
-            {
-                var lookRotation = Quaternion.LookRotation(direction, Vector3.up);
-                lookRotation.eulerAngles = new Vector3(lookRotation.eulerAngles.x, yRotation, lookRotation.eulerAngles.z);
-                transComp.Transform.rotation = Quaternion.RotateTowards(transComp.Transform.rotation, lookRotation, rotationSpeed * dt);
-            }
+            var lookRotation = Quaternion.LookRotation(direction, Vector3.up);
+            lookRotation.eulerAngles = new Vector3(lookRotation.eulerAngles.x, yRotation, lookRotation.eulerAngles.z);
+            transComp.Transform.rotation = Quaternion.RotateTowards(transComp.Transform.rotation, lookRotation, rotationSpeed * dt);
         }
 
         private static Vector3 DoTransition(NetworkMovementMessage start, NetworkMovementMessage end, float time, float totalDuration, InterpolationType blendType)
