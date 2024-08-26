@@ -148,12 +148,15 @@ namespace Global.Dynamic
             settings.ApplyConfig(applicationParametersParser);
             launchSettings.ApplyConfig(applicationParametersParser);
 
+            World world = World.Create();
+
             bootstrapContainer = await BootstrapContainer.CreateAsync(debugSettings, sceneLoaderSettings: settings,
                 globalPluginSettingsContainer, launchSettings,
                 applicationParametersParser,
+                world,
                 destroyCancellationToken);
 
-            IBootstrap bootstrap = bootstrapContainer!.Bootstrap;
+            IBootstrap bootstrap = bootstrapContainer!.Bootstrap!;
 
             try
             {
@@ -170,8 +173,10 @@ namespace Global.Dynamic
                     return;
                 }
 
+                Entity playerEntity = bootstrap.CreatePlayerEntity(staticContainer!);
+
                 (dynamicWorldContainer, isLoaded) = await bootstrap.LoadDynamicWorldContainerAsync(bootstrapContainer, staticContainer!, scenePluginSettingsContainer, settings,
-                    dynamicSettings, uiToolkitRoot, cursorRoot, splashScreen, backgroundMusic, worldInfoTool.EnsureNotNull(), destroyCancellationToken);
+                    dynamicSettings, uiToolkitRoot, cursorRoot, splashScreen, backgroundMusic, worldInfoTool.EnsureNotNull(), playerEntity, destroyCancellationToken);
 
                 if (!isLoaded)
                 {
@@ -189,10 +194,8 @@ namespace Global.Dynamic
                     return;
                 }
 
-                Entity playerEntity;
-                (globalWorld, playerEntity) = bootstrap.CreateGlobalWorldAndPlayer(bootstrapContainer, staticContainer!, dynamicWorldContainer!, debugUiRoot);
+                globalWorld = bootstrap.CreateGlobalWorld(bootstrapContainer, staticContainer!, dynamicWorldContainer!, debugUiRoot, playerEntity);
 
-                dynamicWorldContainer!.InitializeWorldRelatedModules(globalWorld.EcsWorld, playerEntity);
                 staticContainer!.PlayerEntityProxy.SetObject(playerEntity);
 
                 await bootstrap.LoadStartingRealmAsync(dynamicWorldContainer!, ct);
@@ -219,7 +222,7 @@ namespace Global.Dynamic
 
         private void RestoreShortcuts()
         {
-            globalWorld!.EcsWorld.CacheInputMap().GetInputMapComponent(globalWorld.EcsWorld).Active |= InputMapComponent.Kind.Shortcuts;
+            globalWorld!.EcsWorld.CacheInputMap().GetInputMapComponent(globalWorld.EcsWorld).Active |= InputMapKind.Shortcuts;
         }
 
         [ContextMenu(nameof(ValidateSettingsAsync))]

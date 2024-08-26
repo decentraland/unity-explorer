@@ -11,7 +11,6 @@ using DCL.Input.Component;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI;
-using ECS.Abstract;
 using MVC;
 using System.Threading;
 using UnityEngine;
@@ -29,10 +28,10 @@ namespace DCL.EmotesWheel
         private readonly World world;
         private readonly Entity playerEntity;
         private readonly IThumbnailProvider thumbnailProvider;
-        private readonly SingleInstanceEntity currentInputMapsEntity;
         private readonly DCLInput.EmoteWheelActions emoteWheelInput;
         private readonly IMVCManager mvcManager;
         private readonly ICursor cursor;
+        private readonly IInputGroupToggle inputGroupToggle;
         private readonly URN[] currentEmotes = new URN[Avatar.MAX_EQUIPPED_EMOTES];
         private UniTaskCompletionSource? closeViewTask;
         private CancellationTokenSource? fetchProfileCts;
@@ -48,10 +47,10 @@ namespace DCL.EmotesWheel
             World world,
             Entity playerEntity,
             IThumbnailProvider thumbnailProvider,
-            SingleInstanceEntity currentInputMapsEntity,
             DCLInput dclInput,
             IMVCManager mvcManager,
-            ICursor cursor)
+            ICursor cursor,
+            IInputGroupToggle inputGroupToggle)
             : base(viewFactory)
         {
             this.selfProfile = selfProfile;
@@ -60,11 +59,11 @@ namespace DCL.EmotesWheel
             this.world = world;
             this.playerEntity = playerEntity;
             this.thumbnailProvider = thumbnailProvider;
-            this.currentInputMapsEntity = currentInputMapsEntity;
             this.dclInput = dclInput;
             emoteWheelInput = this.dclInput.EmoteWheel;
             this.mvcManager = mvcManager;
             this.cursor = cursor;
+            this.inputGroupToggle = inputGroupToggle;
 
             emoteWheelInput.Customize.performed += OpenBackpack;
             emoteWheelInput.Close.performed += Close;
@@ -238,21 +237,18 @@ namespace DCL.EmotesWheel
 
         private void EnableInputActions()
         {
-            ref InputMapComponent inputMapComponent = ref currentInputMapsEntity.GetInputMapComponent(world);
-            inputMapComponent.Active |= InputMapComponent.Kind.EmoteWheel;
-            inputMapComponent.Active &= ~InputMapComponent.Kind.Emotes;
-
+            inputGroupToggle.Enable(InputMapKind.EmoteWheel);
+            inputGroupToggle.Disable(InputMapKind.Emotes);
             // We also disable shortcuts because the wheel can be opened and closed with the same key bind
             // If we leave it enabled, it will close and then re-open instantly
-            inputMapComponent.Active &= ~InputMapComponent.Kind.Shortcuts;
+            inputGroupToggle.Disable(InputMapKind.Shortcuts);
         }
 
         private void DisableInputActions()
         {
-            ref InputMapComponent inputMapComponent = ref currentInputMapsEntity.GetInputMapComponent(world);
-            inputMapComponent.Active &= ~InputMapComponent.Kind.EmoteWheel;
-            inputMapComponent.Active |= InputMapComponent.Kind.Emotes;
-            inputMapComponent.Active |= InputMapComponent.Kind.Shortcuts;
+            inputGroupToggle.Disable(InputMapKind.EmoteWheel);
+            inputGroupToggle.Enable(InputMapKind.Emotes);
+            inputGroupToggle.Enable(InputMapKind.Shortcuts);
         }
 
         private void ListenToSlotsInput(InputActionMap inputActionMap)

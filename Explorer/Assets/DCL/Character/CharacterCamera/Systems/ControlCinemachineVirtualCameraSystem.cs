@@ -125,14 +125,14 @@ namespace DCL.Character.CharacterCamera.Systems
             if (camera.Mode == CameraMode.Free)
             {
                 // Disable Player input
-                inputMapComponent.Active |= InputMapComponent.Kind.FreeCamera;
-                inputMapComponent.Active &= ~InputMapComponent.Kind.Player;
+                inputMapComponent.Active |= InputMapKind.FreeCamera;
+                inputMapComponent.Active &= ~InputMapKind.Player;
             }
             else
             {
                 // Disable FreeCamera input
-                inputMapComponent.Active |= InputMapComponent.Kind.Player;
-                inputMapComponent.Active &= ~InputMapComponent.Kind.FreeCamera;
+                inputMapComponent.Active |= InputMapKind.Player;
+                inputMapComponent.Active &= ~InputMapKind.FreeCamera;
             }
 
             CameraMode currentCameraMode = GetCurrentCameraMode(cameraState.CurrentCamera, cinemachinePreset);

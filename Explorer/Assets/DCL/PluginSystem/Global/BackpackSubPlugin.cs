@@ -46,6 +46,7 @@ namespace DCL.PluginSystem.Global
         private readonly IThirdPartyNftProviderSource thirdPartyNftProviderSource;
         private readonly IWearablesProvider wearablesProvider;
         private readonly ICursor cursor;
+        private readonly IEmoteProvider emoteProvider;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
         private readonly URLDomain assetBundleURL;
         private readonly IWebRequestController webRequestController;
@@ -75,7 +76,8 @@ namespace DCL.PluginSystem.Global
             IBackpackEventBus backpackEventBus,
             IThirdPartyNftProviderSource thirdPartyNftProviderSource,
             IWearablesProvider wearablesProvider,
-            ICursor cursor)
+            ICursor cursor,
+            IEmoteProvider emoteProvider)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.web3Identity = web3Identity;
@@ -98,6 +100,7 @@ namespace DCL.PluginSystem.Global
             this.thirdPartyNftProviderSource = thirdPartyNftProviderSource;
             this.wearablesProvider = wearablesProvider;
             this.cursor = cursor;
+            this.emoteProvider = emoteProvider;
         }
 
         internal async UniTask<ContinueInitialization> InitializeAsync(
@@ -176,7 +179,7 @@ namespace DCL.PluginSystem.Global
 
                 var emoteGridController = new BackpackEmoteGridController(emoteView.GridView, backpackCommandBus, backpackEventBus,
                     web3Identity, rarityBackgroundsMapping, rarityColorMappings, categoryIconsMapping, equippedEmotes,
-                    sortController, pageButtonView, emoteGridPool, args.EmoteProvider, embeddedEmotes, thumbnailProvider);
+                    sortController, pageButtonView, emoteGridPool, emoteProvider, embeddedEmotes, thumbnailProvider);
 
                 var emotesController = new EmotesController(emoteView,
                     new BackpackEmoteSlotsController(emoteView.Slots, backpackEventBus, backpackCommandBus, rarityBackgroundsMapping), emoteGridController);

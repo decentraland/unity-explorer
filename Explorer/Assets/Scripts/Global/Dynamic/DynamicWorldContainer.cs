@@ -130,6 +130,8 @@ namespace Global.Dynamic
 
         public RealFlowLoadingStatus RealFlowLoadingStatus { get; private set; } = null!;
 
+        public IInputGroupToggle InputGroupToggle { get; private set; } = null!;
+
         public override void Dispose()
         {
             MvcManager.Dispose();
@@ -158,6 +160,8 @@ namespace Global.Dynamic
             DynamicWorldDependencies dynamicWorldDependencies,
             DynamicWorldParams dynamicWorldParams,
             AudioClipConfig backgroundMusic,
+            World world,
+            Entity playerEntity,
             CancellationToken ct)
         {
             var container = new DynamicWorldContainer();
@@ -220,7 +224,7 @@ namespace Global.Dynamic
 
             var nftInfoAPIClient = new OpenSeaAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
             var wearableCatalog = new WearableCache();
-            container.wearablesProvider = new ECSWearablesProvider(identityCache);
+            container.wearablesProvider = new ECSWearablesProvider(identityCache, world);
             var characterPreviewFactory = new CharacterPreviewFactory(staticContainer.ComponentsContainer.ComponentPoolsRegistry);
             IWebBrowser webBrowser = bootstrapContainer.WebBrowser;
             ChatEntryConfigurationSO chatEntryConfiguration = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.ChatEntryConfiguration, ct)).Value;
@@ -252,6 +256,7 @@ namespace Global.Dynamic
             var forceRender = new List<string>();
             var selfProfile = new SelfProfile(container.ProfileRepository, identityCache, equippedWearables, wearableCatalog,
                 emotesCache, equippedEmotes, forceRender, ParseSelfForcedEmotes(bootstrapContainer.ApplicationParametersParser));
+            IEmoteProvider emoteProvider = new EcsEmoteProvider(world, staticContainer.RealmData);
 
             var metaDataSource = new LogMetaDataSource(new MetaDataSource(staticContainer.RealmData, staticContainer.CharacterContainer.CharacterObject, placesAPIService));
             var gateKeeperSceneRoom = new GateKeeperSceneRoom(staticContainer.WebRequestsContainer.WebRequestController, metaDataSource, bootstrapContainer.DecentralandUrlsSource);
@@ -278,7 +283,7 @@ namespace Global.Dynamic
                 staticContainer.PartitionDataContainer,
                 staticContainer.SingletonSharedDependencies.SceneAssetLock);
 
-            container.reloadSceneController = new ECSReloadScene(staticContainer.ScenesCache);
+            container.reloadSceneController = new ECSReloadScene(staticContainer.ScenesCache, world, playerEntity);
             bool localSceneDevelopment = !string.IsNullOrEmpty(dynamicWorldParams.LocalSceneDevelopmentRealm);
 
             if (localSceneDevelopment)
@@ -425,6 +430,8 @@ namespace Global.Dynamic
 
             var currentSceneInfo = new CurrentSceneInfo();
 
+            ECSInputGroupToggle inputGroupToggle = new ECSInputGroupToggle(world);
+
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
                 new MultiplayerPlugin(
@@ -453,7 +460,7 @@ namespace Global.Dynamic
                 new GlobalInteractionPlugin(dclInput, dynamicWorldDependencies.RootUIDocument, assetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents, dclCursor, unityEventSystem, container.MvcManager),
                 new CharacterCameraPlugin(assetsProvisioner, realmSamplingData, exposedGlobalDataContainer.ExposedCameraData, debugBuilder, dynamicWorldDependencies.CommandLineArgs, dclInput),
                 new WearablePlugin(assetsProvisioner, staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, assetBundlesURL, staticContainer.CacheCleaner, wearableCatalog),
-                new EmotePlugin(staticContainer.WebRequestsContainer.WebRequestController, emotesCache, staticContainer.RealmData, multiplayerEmotesMessageBus, debugBuilder, assetsProvisioner, selfProfile, container.MvcManager, dclInput, staticContainer.CacheCleaner, identityCache, entityParticipantTable, assetBundlesURL, mainUIView, dclCursor),
+                new EmotePlugin(staticContainer.WebRequestsContainer.WebRequestController, emotesCache, staticContainer.RealmData, multiplayerEmotesMessageBus, debugBuilder, assetsProvisioner, selfProfile, container.MvcManager, dclInput, staticContainer.CacheCleaner, identityCache, entityParticipantTable, assetBundlesURL, mainUIView, dclCursor, inputGroupToggle, world, playerEntity),
                 new ProfilingPlugin(staticContainer.Profiler, staticContainer.RealmData, staticContainer.SingletonSharedDependencies.MemoryBudget, debugBuilder, staticContainer.ScenesCache),
                 new AvatarPlugin(
                     staticContainer.ComponentsContainer.ComponentPoolsRegistry,
@@ -521,7 +528,8 @@ namespace Global.Dynamic
                     backpackEventBus,
                     thirdPartyNftProviderSource,
                     container.wearablesProvider,
-                    dclCursor
+                    dclCursor,
+                    emoteProvider
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
@@ -592,7 +600,8 @@ namespace Global.Dynamic
                 dynamicWorldParams.HybridSceneParams,
                 container.CharacterDataPropagationUtility,
                 currentSceneInfo,
-                container.LODContainer.LodCache
+                container.LODContainer.LodCache,
+                world
             );
 
             container.GlobalPlugins = globalPlugins;
@@ -603,12 +612,6 @@ namespace Global.Dynamic
             BuildReloadSceneWidget(debugBuilder, container.ChatMessagesBus);
 
             return (container, true);
-        }
-
-        public void InitializeWorldRelatedModules(World world, Entity playerEntity)
-        {
-            reloadSceneController!.Initialize(world, playerEntity);
-            wearablesProvider!.Initialize(world);
         }
 
         private static URN[]? ParseSelfForcedEmotes(IAppArgs appParams)

@@ -26,7 +26,6 @@ using DCL.Quality;
 using DCL.Settings;
 using DCL.Settings.Configuration;
 using DCL.UI.ProfileElements;
-using DCL.UI.Sidebar;
 using DCL.UserInAppInitializationFlow;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
@@ -71,6 +70,7 @@ namespace DCL.PluginSystem.Global
         private readonly IThirdPartyNftProviderSource thirdPartyNftProviderSource;
         private readonly IWearablesProvider wearablesProvider;
         private readonly ICursor cursor;
+        private readonly IEmoteProvider emoteProvider;
 
         private readonly IMapPathEventBus mapPathEventBus;
         private readonly ICollection<string> forceRender;
@@ -114,7 +114,8 @@ namespace DCL.PluginSystem.Global
             IBackpackEventBus backpackEventBus,
             IThirdPartyNftProviderSource thirdPartyNftProviderSource,
             IWearablesProvider wearablesProvider,
-            ICursor cursor)
+            ICursor cursor,
+            IEmoteProvider emoteProvider)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -146,6 +147,7 @@ namespace DCL.PluginSystem.Global
             this.thirdPartyNftProviderSource = thirdPartyNftProviderSource;
             this.wearablesProvider = wearablesProvider;
             this.cursor = cursor;
+            this.emoteProvider = emoteProvider;
         }
 
         public override void Dispose()
@@ -177,7 +179,8 @@ namespace DCL.PluginSystem.Global
                 backpackEventBus,
                 thirdPartyNftProviderSource,
                 wearablesProvider,
-                cursor
+                cursor,
+                emoteProvider
             );
 
             ExplorePanelView panelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.ExplorePanelPrefab, ct: ct)).GetComponent<ExplorePanelView>();

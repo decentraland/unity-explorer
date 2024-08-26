@@ -1,31 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Utility;
 
 namespace DCL.Input.Component
 {
     public struct InputMapComponent
     {
-        public static readonly IReadOnlyList<Kind> VALUES = EnumUtils.Values<Kind>();
+        public static readonly IReadOnlyList<InputMapKind> VALUES = EnumUtils.Values<InputMapKind>();
 
-        [Flags]
-        public enum Kind
-        {
-            None = 0,
-            Player = 1,
-            Camera = 1 << 1,
-            FreeCamera = 1 << 2,
-            EmoteWheel = 1 << 3,
-            Emotes = 1 << 4,
-            Shortcuts = 1 << 5,
-        }
-
-        private Kind active;
+        private InputMapKind active;
 
         /// <summary>
         ///     Active maps flags
         /// </summary>
-        public Kind Active
+        public InputMapKind Active
         {
             get => active;
 
@@ -38,7 +25,7 @@ namespace DCL.Input.Component
 
         public bool IsDirty;
 
-        public InputMapComponent(Kind flags)
+        public InputMapComponent(InputMapKind flags)
         {
             active = flags;
             IsDirty = true;

@@ -1,9 +1,7 @@
 ﻿#nullable enable
 using DCL.Web3.Identities;
 using ECS;
-using JetBrains.Annotations;
 using Segment.Serialization;
-using System;
 using UnityEngine;
 using Utility;
 using static DCL.PerformanceAndDiagnostics.Analytics.IAnalyticsController;

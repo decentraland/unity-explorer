@@ -92,7 +92,7 @@ namespace DCL.CharacterCamera.Tests
         public void InitInputMapComponent()
         {
             // third person
-            Assert.That(inputMap.GetInputMapComponent(world).Active, Is.EqualTo(InputMapComponent.Kind.Player));
+            Assert.That(inputMap.GetInputMapComponent(world).Active, Is.EqualTo(InputMapKind.Player));
             Assert.That(world.Get<CinemachineCameraState>(entity).CurrentCamera, Is.EqualTo(thirdPersonCameraData.Camera));
         }
 

@@ -1,3 +1,4 @@
+using Arch.Core;
 using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
@@ -45,6 +46,9 @@ namespace DCL.PluginSystem.Global
         private readonly URLDomain assetBundleURL;
         private readonly MainUIView mainUIView;
         private readonly ICursor cursor;
+        private readonly IInputGroupToggle inputGroupToggle;
+        private readonly Arch.Core.World world;
+        private readonly Entity playerEntity;
         private AudioSource? audioSourceReference;
         private EmotesWheelController? emotesWheelController;
 
@@ -62,7 +66,10 @@ namespace DCL.PluginSystem.Global
             IReadOnlyEntityParticipantTable entityParticipantTable,
             URLDomain assetBundleURL,
             MainUIView mainUIView,
-            ICursor cursor)
+            ICursor cursor,
+            IInputGroupToggle inputGroupToggle,
+            Arch.Core.World world,
+            Entity playerEntity)
         {
             this.messageBus = messageBus;
             this.debugBuilder = debugBuilder;
@@ -78,6 +85,9 @@ namespace DCL.PluginSystem.Global
             this.realmData = realmData;
             this.mainUIView = mainUIView;
             this.cursor = cursor;
+            this.inputGroupToggle = inputGroupToggle;
+            this.world = world;
+            this.playerEntity = playerEntity;
 
             audioClipsCache = new AudioClipsCache();
             cacheCleaner.Register(audioClipsCache);
@@ -135,16 +145,15 @@ namespace DCL.PluginSystem.Global
 
             NftTypeIconSO emoteWheelRarityBackgrounds = (await assetsProvisioner.ProvideMainAssetAsync(settings.EmoteWheelRarityBackgrounds, ct)).Value;
 
-            return (ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) =>
-            {
-                IThumbnailProvider thumbnailProvider = new ECSThumbnailProvider(realmData, builder.World, assetBundleURL, webRequestController);
+            IThumbnailProvider thumbnailProvider = new ECSThumbnailProvider(realmData, world, assetBundleURL, webRequestController);
 
-                emotesWheelController = new EmotesWheelController(EmotesWheelController.CreateLazily(emotesWheelPrefab, null),
-                    selfProfile, emoteCache, emoteWheelRarityBackgrounds, builder.World, arguments.PlayerEntity, thumbnailProvider,
-                    builder.World.CacheInputMap(), dclInput, mvcManager, cursor);
+            emotesWheelController = new EmotesWheelController(EmotesWheelController.CreateLazily(emotesWheelPrefab, null),
+                selfProfile, emoteCache, emoteWheelRarityBackgrounds, world, playerEntity, thumbnailProvider,
+                dclInput, mvcManager, cursor, inputGroupToggle);
 
-                mvcManager.RegisterController(emotesWheelController);
-            };
+            mvcManager.RegisterController(emotesWheelController);
+
+            return (ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) => { };
         }
 
         [Serializable]

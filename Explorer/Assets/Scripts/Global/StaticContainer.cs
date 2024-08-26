@@ -11,7 +11,6 @@ using DCL.FeatureFlags;
 using DCL.Gizmos.Plugin;
 using DCL.Input.UnityInputSystem.Blocks;
 using DCL.Interaction.Utility;
-using DCL.MapRenderer;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Optimization.PerformanceBudgeting;
@@ -32,13 +31,12 @@ using DCL.WebRequests.Analytics;
 using ECS;
 using ECS.Prioritization;
 using ECS.SceneLifeCycle;
-using ECS.SceneLifeCycle.Reporting;
-using System.Collections.Generic;
-using System.Threading;
-using DCL.LOD;
 using ECS.SceneLifeCycle.Components;
+using ECS.SceneLifeCycle.Reporting;
 using Global.AppArgs;
 using SceneRunner.Mapping;
+using System.Collections.Generic;
+using System.Threading;
 using UnityEngine;
 using Utility;
 using MultiplayerPlugin = DCL.PluginSystem.World.MultiplayerPlugin;
@@ -112,16 +110,6 @@ namespace Global
                 );
         }
 
-        private static async UniTask<bool> InitializeContainersAsync(StaticContainer target, IPluginSettingsContainer settings, CancellationToken ct)
-        {
-            ((StaticContainer plugin, bool success), (CharacterContainer plugin, bool success)) results = await UniTask.WhenAll(
-                settings.InitializePluginAsync(target, ct),
-                settings.InitializePluginAsync(target.CharacterContainer, ct)
-            );
-
-            return results.Item1.success && results.Item2.success;
-        }
-
         public static async UniTask<(StaticContainer? container, bool success)> CreateAsync(
             IDecentralandUrlsSource decentralandUrlsSource,
             IAssetsProvisioner assetsProvisioner,
@@ -131,6 +119,7 @@ namespace Global
             IPluginSettingsContainer settingsContainer,
             IWeb3IdentityCache web3IdentityProvider,
             IEthereumApi ethereumApi,
+            World world,
             CancellationToken ct)
         {
             ProfilingCounters.CleanAllCounters();
@@ -141,6 +130,7 @@ namespace Global
 
             var container = new StaticContainer();
 
+            container.GlobalWorldProxy.SetObject(world);
             container.DebugContainerBuilder = DebugUtilitiesContainer.Create(debugViewsCatalog, appArgs.HasDebugFlag()).Builder;
             container.EthereumApi = ethereumApi;
             container.ScenesCache = new ScenesCache();
@@ -232,6 +222,16 @@ namespace Global
             };
 
             return (container, true);
+        }
+
+        private static async UniTask<bool> InitializeContainersAsync(StaticContainer target, IPluginSettingsContainer settings, CancellationToken ct)
+        {
+            ((StaticContainer plugin, bool success), (CharacterContainer plugin, bool success)) results = await UniTask.WhenAll(
+                settings.InitializePluginAsync(target, ct),
+                settings.InitializePluginAsync(target.CharacterContainer, ct)
+            );
+
+            return results.Item1.success && results.Item2.success;
         }
     }
 }
