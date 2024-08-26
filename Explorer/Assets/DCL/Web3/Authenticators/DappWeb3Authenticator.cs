@@ -1,7 +1,9 @@
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Web3.Abstract;
 using DCL.Web3.Accounts;
+using DCL.Web3.Accounts.Factory;
 using DCL.Web3.Chains;
 using DCL.Web3.Identities;
 using Newtonsoft.Json;
@@ -24,6 +26,7 @@ namespace DCL.Web3.Authenticators
         private readonly string serverUrl;
         private readonly string signatureUrl;
         private readonly IWeb3IdentityCache identityCache;
+        private readonly IWeb3AccountFactory web3AccountFactory;
         private readonly HashSet<string> whitelistMethods;
 
         private SocketIO? webSocket;
@@ -35,12 +38,15 @@ namespace DCL.Web3.Authenticators
             string serverUrl,
             string signatureUrl,
             IWeb3IdentityCache identityCache,
-            HashSet<string> whitelistMethods)
+            IWeb3AccountFactory web3AccountFactory,
+            HashSet<string> whitelistMethods
+        )
         {
             this.webBrowser = webBrowser;
             this.serverUrl = serverUrl;
             this.signatureUrl = signatureUrl;
             this.identityCache = identityCache;
+            this.web3AccountFactory = web3AccountFactory;
             this.whitelistMethods = whitelistMethods;
         }
 
@@ -101,7 +107,7 @@ namespace DCL.Web3.Authenticators
             {
                 await ConnectToServerAsync();
 
-                var ephemeralAccount = NethereumAccount.CreateRandom();
+                var ephemeralAccount = web3AccountFactory.CreateRandomAccount();
 
                 // 1 week expiration day, just like unity-renderer
                 DateTime sessionExpiration = DateTime.UtcNow.AddDays(7);
@@ -134,7 +140,7 @@ namespace DCL.Web3.Authenticators
                 AuthChain authChain = CreateAuthChain(response, ephemeralMessage);
 
                 // To keep cohesiveness between the platform, convert the user address to lower case
-                return new DecentralandIdentity(new Web3Address(response.sender.ToLower()),
+                return new DecentralandIdentity(new Web3Address(response.sender),
                     ephemeralAccount, sessionExpiration, authChain);
             }
             finally
@@ -261,7 +267,7 @@ namespace DCL.Web3.Authenticators
             private readonly IWeb3VerifiedAuthenticator originAuth;
             private readonly IVerifiedEthereumApi originApi;
 
-            public Default(IWeb3IdentityCache identityCache, IDecentralandUrlsSource decentralandUrlsSource)
+            public Default(IWeb3IdentityCache identityCache, IDecentralandUrlsSource decentralandUrlsSource, IWeb3AccountFactory web3AccountFactory)
             {
                 string serverUrl = decentralandUrlsSource.Url(DecentralandUrl.ApiAuth);
                 string signatureUrl = decentralandUrlsSource.Url(DecentralandUrl.AuthSignature);
@@ -271,6 +277,7 @@ namespace DCL.Web3.Authenticators
                     serverUrl,
                     signatureUrl,
                     identityCache,
+                    web3AccountFactory,
                     new HashSet<string>(
                         new[]
                         {

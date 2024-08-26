@@ -14,6 +14,7 @@ using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Chat;
 using DCL.ExplorePanel;
+using DCL.Input;
 using DCL.Landscape.Settings;
 using DCL.MapRenderer;
 using DCL.Navmap;
@@ -69,6 +70,7 @@ namespace DCL.PluginSystem.Global
         private readonly IBackpackEventBus backpackEventBus;
         private readonly IThirdPartyNftProviderSource thirdPartyNftProviderSource;
         private readonly IWearablesProvider wearablesProvider;
+        private readonly ICursor cursor;
 
         private readonly IMapPathEventBus mapPathEventBus;
         private readonly ICollection<string> forceRender;
@@ -111,7 +113,8 @@ namespace DCL.PluginSystem.Global
             ChatEntryConfigurationSO chatEntryConfiguration,
             IBackpackEventBus backpackEventBus,
             IThirdPartyNftProviderSource thirdPartyNftProviderSource,
-            IWearablesProvider wearablesProvider)
+            IWearablesProvider wearablesProvider,
+            ICursor cursor)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -142,6 +145,7 @@ namespace DCL.PluginSystem.Global
             this.backpackEventBus = backpackEventBus;
             this.thirdPartyNftProviderSource = thirdPartyNftProviderSource;
             this.wearablesProvider = wearablesProvider;
+            this.cursor = cursor;
         }
 
         public override void Dispose()
@@ -172,7 +176,8 @@ namespace DCL.PluginSystem.Global
                 characterPreviewEventBus,
                 backpackEventBus,
                 thirdPartyNftProviderSource,
-                wearablesProvider
+                wearablesProvider,
+                cursor
             );
 
             ExplorePanelView panelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.ExplorePanelPrefab, ct: ct)).GetComponent<ExplorePanelView>();

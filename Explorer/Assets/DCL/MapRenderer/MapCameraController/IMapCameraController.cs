@@ -49,7 +49,7 @@ namespace DCL.MapRenderer.MapCameraController
 
         void SetPositionAndZoom(Vector2 coordinates, float zoom);
 
-        void TranslateTo(Vector2 coordinates, float duration, Action onComplete = null);
+        void TranslateTo(Vector2 coordinates, float duration, Action? onComplete = null);
 
         /// <summary>
         /// Pauses rendering without releasing
