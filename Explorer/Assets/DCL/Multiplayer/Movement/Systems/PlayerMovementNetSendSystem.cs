@@ -108,7 +108,6 @@ namespace DCL.Multiplayer.Movement.Systems
         {
             playerMovement.MessagesSentInSec++;
             Debug.Log($"VVV [send] {UnityEngine.Time.unscaledTime}");
-            NetworkMovementMessage lastSentMessage = playerMovement.LastSentMessage;
 
             float dist = (playerMovement.Character.transform.position - playerMovement.LastSentMessage.position).magnitude;
             float speed = dist / (UnityEngine.Time.unscaledTime - playerMovement.LastSentMessage.timestamp);
@@ -120,8 +119,6 @@ namespace DCL.Multiplayer.Movement.Systems
                            < 12 => 2,
                            _ => 3,
                        };
-
-            Debug.Log($"VVV [speed] {lastSentMessage.velocity} | {speed}");
 
             playerMovement.LastSentMessage = new NetworkMovementMessage
             {

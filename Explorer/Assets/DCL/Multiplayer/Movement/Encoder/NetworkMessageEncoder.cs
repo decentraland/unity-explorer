@@ -43,7 +43,6 @@ namespace DCL.Multiplayer.Movement
             temporalData |= compressedRotation << encodingSettings.ROTATION_START_BIT;
 
             temporalData |= (tier & 0x3) << encodingSettings.TIER_START_BIT;
-            Debug.Log($"VVV compressed {timestamp} {tier}");
 
             return temporalData;
         }
@@ -92,7 +91,6 @@ namespace DCL.Multiplayer.Movement
             int rotationMask = (1 << encodingSettings.ROTATION_Y_BITS) - 1;
             int compressedRotation = (compressedTemporalData >> encodingSettings.ROTATION_START_BIT) & rotationMask;
             float timestamp = timestampEncoder.Decompress(compressedTemporalData);
-            Debug.Log($"VVV decompressed {timestamp} {tier}");
 
             return new NetworkMovementMessage
             {

@@ -23,6 +23,12 @@ namespace DCL.Multiplayer.Movement.Tests
             }
         }
 
+        [SetUp]
+        public void SetUp()
+        {
+            encoder = new NetworkMessageEncoder(Settings);
+        }
+
         private static MessageEncodingSettings LoadSettings()
         {
             string[] guids = AssetDatabase.FindAssets("t:MessageEncodingSettings");
@@ -152,7 +158,11 @@ namespace DCL.Multiplayer.Movement.Tests
             float stepSize = settings.tier3.Y_MAX / Mathf.Pow(2, settings.tier3.Y_BITS);
             float quantizationError = stepSize / 2f;
 
-            var originalMessage = new NetworkMovementMessage { position = new Vector3(0f, y, 0f) };
+            var originalMessage = new NetworkMovementMessage
+            {
+                position = new Vector3(0f, y, 0f),
+                tier = 3,
+            };
 
             // Act
             NetworkMovementMessage decompressedMessage = encoder.Decompress(encoder.Compress(originalMessage));
@@ -183,9 +193,16 @@ namespace DCL.Multiplayer.Movement.Tests
         {
             // Arrange
             float stepSize = 2 * settings.tier3.MAX_VELOCITY / Mathf.Pow(2, settings.tier3.VELOCITY_BITS);
-            float quantizationError = (stepSize / 2f) + 0.01f; // there is a small deviation at zero (< 0.01f)
+            float quantizationError = stepSize / 2f;
 
-            var originalMessage = new NetworkMovementMessage { velocity = new Vector3(x, y, z) };
+            var originalMessage = new NetworkMovementMessage
+            {
+                velocity = new Vector3(x, y, z),
+                tier = 3,
+            };
+
+            if(originalMessage.velocity.magnitude < 0.001f)
+                quantizationError += 0.015f; // there is velocity deviation at zero (< 0.015f)
 
             // Act
             NetworkMovementMessage decompressedMessage = encoder.Decompress(encoder.Compress(originalMessage));

@@ -91,6 +91,13 @@ namespace DCL.Multiplayer.Movement.Systems
             ref InterpolationComponent intComp, ref ExtrapolationComponent extComp, SimplePriorityQueue<NetworkMovementMessage> playerInbox)
         {
             NetworkMovementMessage remote = playerInbox.Dequeue();
+
+            // Filter messages that could possibly be from another time buffer period
+            while (playerInbox.Count > 0 &&
+                   (remotePlayerMovement.PastMessage.position - remote.position).sqrMagnitude > settings.InterpolationSettings.PositionSingularityThreshold &&
+                   (remotePlayerMovement.PastMessage.position - playerInbox.First.position).sqrMagnitude > settings.InterpolationSettings.PositionSingularityThreshold)
+                remote = playerInbox.Dequeue();
+
             var isBlend = false;
 
             if (extComp.Enabled)
@@ -166,9 +173,10 @@ namespace DCL.Multiplayer.Movement.Systems
             float sqrDistance = Vector3.SqrMagnitude(remotePlayerMovement.PastMessage.position - remote.position);
 
             return
+
                 // UnityEngine.Time.time - remotePlayerMovement.LastMessageEnqueueTime > 5 ||
                 sqrDistance > settings.MinTeleportDistance ||
-                   (settings.InterpolationSettings.UseSpeedUp && sqrDistance < settings.MinPositionDelta);
+                (settings.InterpolationSettings.UseSpeedUp && sqrDistance < settings.MinPositionDelta);
         }
 
         private void StartInterpolation(float deltaTime, ref CharacterTransform transComp, ref RemotePlayerMovementComponent remotePlayerMovement,
