@@ -17,7 +17,8 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         private readonly CustomSkinning skinningStrategy;
         private readonly AvatarTransformMatrixJobWrapper jobWrapper;
 
-        internal FinishAvatarMatricesCalculationSystem(World world, CustomSkinning skinningStrategy, ref AvatarTransformMatrixJobWrapper jobWrapper) : base(world)
+        internal FinishAvatarMatricesCalculationSystem(World world, CustomSkinning skinningStrategy,
+            AvatarTransformMatrixJobWrapper jobWrapper) : base(world)
         {
             this.skinningStrategy = skinningStrategy;
             this.jobWrapper = jobWrapper;

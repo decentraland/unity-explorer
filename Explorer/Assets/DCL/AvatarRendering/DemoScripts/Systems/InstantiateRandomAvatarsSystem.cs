@@ -34,11 +34,13 @@ using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using ECS.Unity.Transforms.Components;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
 using Utility.PriorityQueue;
 using Avatar = DCL.Profiles.Avatar;
+using Object = UnityEngine.Object;
 using ParamPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Helpers.WearablesResponse, DCL.AvatarRendering.Wearables.Components.Intentions.GetWearableByParamIntention>;
 using Random = UnityEngine.Random;
 using RaycastHit = UnityEngine.RaycastHit;
@@ -52,7 +54,8 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
     {
         private const int MAX_AVATAR_NUMBER = 1000;
 
-        private static readonly QueryDescription AVATARS_QUERY = new QueryDescription().WithAll<Profile, RandomAvatar>().WithNone<PlayerComponent>();
+        private static readonly QueryDescription AVATARS_QUERY = new QueryDescription()
+            .WithAll<Profile, RandomAvatar, CharacterTransform>().WithNone<PlayerComponent>();
 
         private readonly IRealmData realmData;
         private readonly IEntityParticipantTable entityParticipantTable;
@@ -146,9 +149,11 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
 
         private void DestroyRandomAmountOfAvatars()
         {
+            
             World.Query(in AVATARS_QUERY,
-                entity =>
+                (Entity entity, ref CharacterTransform transformComponent) =>  
                 {
+                    Object.Destroy(transformComponent.Transform.gameObject.GetComponent<CharacterController>());
                     if (Random.Range(0, 3) == 0)
                     {
                         World.Add(entity, new DeleteEntityIntention());
@@ -159,8 +164,13 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
 
         private void DestroyAllAvatars()
         {
-            // Input events are processed before Update
-            World.Add(in AVATARS_QUERY, new DeleteEntityIntention());
+            World.Query(in AVATARS_QUERY,
+                (Entity entity, ref CharacterTransform transformComponent) =>
+                {
+                    Object.Destroy(transformComponent.Transform.gameObject.GetComponent<CharacterController>());
+                    World.Add(entity, new DeleteEntityIntention());
+                });
+            
             totalAvatarsInstantiated.Value = 0;
         }
 

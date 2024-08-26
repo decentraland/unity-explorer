@@ -18,24 +18,25 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
     [UpdateAfter(typeof(AvatarInstantiatorSystem))] // right after AvatarBase is instantiated
     public partial class StartAvatarMatricesCalculationSystem : BaseUnityLoopSystem
     {
-        private readonly AvatarTransformMatrixJobWrapper jobWrapper;
+        private readonly AvatarTransformMatrixJobWrapper avatarTransformMatrixBatchJob;
 
-        internal StartAvatarMatricesCalculationSystem(World world, ref AvatarTransformMatrixJobWrapper jobWrapper) : base(world)
+        internal StartAvatarMatricesCalculationSystem(World world, AvatarTransformMatrixJobWrapper jobWrapper) :
+            base(world)
         {
-            this.jobWrapper = jobWrapper;
+            avatarTransformMatrixBatchJob = jobWrapper;
         }
 
         protected override void Update(float t)
         {
             ExecuteQuery(World);
-            jobWrapper.ScheduleBoneMatrixCalculation();
+            avatarTransformMatrixBatchJob.ScheduleBoneMatrixCalculation();
         }
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
         private void Execute(ref AvatarBase avatarBase, ref AvatarTransformMatrixComponent transformMatrixComponent)
         {
-            jobWrapper.UpdateAvatar(ref avatarBase, ref transformMatrixComponent);
+            avatarTransformMatrixBatchJob.UpdateAvatar(ref avatarBase, ref transformMatrixComponent);
         }
     }
 }

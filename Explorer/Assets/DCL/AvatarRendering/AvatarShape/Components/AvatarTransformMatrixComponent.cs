@@ -8,20 +8,18 @@ using UnityEngine.Jobs;
 
 namespace DCL.AvatarRendering.AvatarShape.Components
 {
-    public struct AvatarTransformMatrixComponent : IDisposable
+    public struct AvatarTransformMatrixComponent 
     {
         public int IndexInGlobalJobArray;
         public Transform[] bones;
 
-        public void Dispose()
+        public static AvatarTransformMatrixComponent Create(Transform[] bones)
         {
-        }
-
-        public static AvatarTransformMatrixComponent Create(Transform avatarBaseTransform, Transform[] bones) =>
-            new ()
+            return new AvatarTransformMatrixComponent
             {
                 IndexInGlobalJobArray = -1,
                 bones = bones
             };
+        }
     }
 }

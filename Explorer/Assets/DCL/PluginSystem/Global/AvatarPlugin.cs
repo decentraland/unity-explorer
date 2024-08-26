@@ -69,6 +69,8 @@ namespace DCL.PluginSystem.Global
         private readonly TextureArrayContainerFactory textureArrayContainerFactory;
         private readonly IWearableCache wearableCache;
 
+        private readonly AvatarTransformMatrixJobWrapper avatarTransformMatrixJobWrapper;
+
         public AvatarPlugin(
             IComponentPoolsRegistry poolsRegistry,
             IAssetsProvisioner assetsProvisioner,
@@ -99,6 +101,7 @@ namespace DCL.PluginSystem.Global
             this.textureArrayContainerFactory = textureArrayContainerFactory;
             this.wearableCache = wearableCache;
             componentPoolsRegistry = poolsRegistry;
+            avatarTransformMatrixJobWrapper = new AvatarTransformMatrixJobWrapper();
 
             cacheCleaner.Register(wearableAssetsCache);
         }
@@ -106,6 +109,7 @@ namespace DCL.PluginSystem.Global
         public void Dispose()
         {
             wearableAssetsCache.Dispose();
+            avatarTransformMatrixJobWrapper.Dispose();
         }
 
         public async UniTask InitializeAsync(AvatarShapeSettings settings, CancellationToken ct)
@@ -136,19 +140,22 @@ namespace DCL.PluginSystem.Global
             foreach (var extendedObjectPool in avatarMaterialPoolHandler.GetAllMaterialsPools())
                 cacheCleaner.Register(extendedObjectPool.Pool);
 
+            
             AvatarInstantiatorSystem.InjectToWorld(ref builder, frameTimeCapBudget, memoryBudget, avatarPoolRegistry, avatarMaterialPoolHandler,
                 computeShaderPool, wearableAssetsCache, skinningStrategy, vertOutBuffer, mainPlayerAvatarBaseProxy, defaultFaceFeaturesHandler,
-                wearableCache);
+                wearableCache, avatarTransformMatrixJobWrapper);
 
             MakeVertsOutBufferDefragmentationSystem.InjectToWorld(ref builder, vertOutBuffer, skinningStrategy);
 
-            var jobWrapper = AvatarTransformMatrixJobWrapper.Create();
 
-            StartAvatarMatricesCalculationSystem.InjectToWorld(ref builder, ref jobWrapper);
-            FinishAvatarMatricesCalculationSystem.InjectToWorld(ref builder, skinningStrategy, ref jobWrapper);
+            StartAvatarMatricesCalculationSystem.InjectToWorld(ref builder, avatarTransformMatrixJobWrapper);
+            FinishAvatarMatricesCalculationSystem.InjectToWorld(ref builder, skinningStrategy,
+                avatarTransformMatrixJobWrapper);
 
             AvatarShapeVisibilitySystem.InjectToWorld(ref builder);
-            AvatarCleanUpSystem.InjectToWorld(ref builder, frameTimeCapBudget, vertOutBuffer, avatarMaterialPoolHandler, avatarPoolRegistry, computeShaderPool, wearableAssetsCache, mainPlayerAvatarBaseProxy);
+            AvatarCleanUpSystem.InjectToWorld(ref builder, frameTimeCapBudget, vertOutBuffer, avatarMaterialPoolHandler,
+                avatarPoolRegistry, computeShaderPool, wearableAssetsCache, mainPlayerAvatarBaseProxy,
+                avatarTransformMatrixJobWrapper);
             TrackTransformMatrixSystem.InjectToWorld(ref builder);
 
             NametagPlacementSystem.InjectToWorld(ref builder, nametagViewPool, chatEntryConfiguration, nametagsData, chatBubbleConfiguration);

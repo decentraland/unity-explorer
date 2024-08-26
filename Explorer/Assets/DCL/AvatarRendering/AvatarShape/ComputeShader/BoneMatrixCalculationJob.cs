@@ -13,11 +13,12 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 
         [NativeDisableParallelForRestriction]
         public NativeArray<Matrix4x4> AvatarTransform;
-        public int EndIndex;
+
+        [NativeDisableParallelForRestriction] public NativeArray<bool> UpdateAvatar;
 
         public void Execute(int index, TransformAccess transform)
         {
-            if (index >= EndIndex)
+            if (!UpdateAvatar[index / 62])
                 return;
             BonesMatricesResult[index] = AvatarTransform[index / 62] * transform.localToWorldMatrix;
         }

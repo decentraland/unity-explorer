@@ -32,6 +32,9 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         private readonly IObjectPool<UnityEngine.ComputeShader> computeShaderSkinningPool;
         private readonly IWearableAssetsCache wearableAssetsCache;
 
+        private readonly AvatarTransformMatrixJobWrapper avatarTransformMatrixBatchJob;
+
+
         internal AvatarCleanUpSystem(
             World world,
             IPerformanceBudget instantiationFrameTimeBudget,
@@ -40,7 +43,8 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             IComponentPool<AvatarBase> avatarPoolRegistry,
             IObjectPool<UnityEngine.ComputeShader> computeShaderSkinningPool,
             IWearableAssetsCache wearableAssetsCache,
-            ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy) : base(world)
+            ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy,
+            AvatarTransformMatrixJobWrapper avatarTransformMatrixBatchJob) : base(world)
         {
             this.instantiationFrameTimeBudget = instantiationFrameTimeBudget;
             this.vertOutBuffer = vertOutBuffer;
@@ -49,6 +53,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             this.computeShaderSkinningPool = computeShaderSkinningPool;
             this.wearableAssetsCache = wearableAssetsCache;
             this.mainPlayerAvatarBaseProxy = mainPlayerAvatarBaseProxy;
+            this.avatarTransformMatrixBatchJob = avatarTransformMatrixBatchJob;
         }
 
         protected override void Update(float t)
@@ -84,7 +89,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                 deleteEntityIntention.DeferDeletion = true;
                 return;
             }
-
+            
             InternalDestroyAvatar(ref avatarShapeComponent, ref skinningComponent, ref avatarTransformMatrixComponent, avatarBase);
             deleteEntityIntention.DeferDeletion = false;
         }
@@ -96,9 +101,10 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             if (mainPlayerAvatarBaseProxy.Object == avatarBase)
                 mainPlayerAvatarBaseProxy.ReleaseObject();
 
-            ReleaseAvatar.Execute(vertOutBuffer, wearableAssetsCache, avatarMaterialPoolHandler, computeShaderSkinningPool, avatarShapeComponent, ref skinningComponent);
+            ReleaseAvatar.Execute(vertOutBuffer, wearableAssetsCache, avatarMaterialPoolHandler,
+                computeShaderSkinningPool, avatarShapeComponent, ref skinningComponent,
+                ref avatarTransformMatrixComponent, avatarTransformMatrixBatchJob);
 
-            avatarTransformMatrixComponent.Dispose();
             avatarPoolRegistry.Release(avatarBase);
         }
     }
