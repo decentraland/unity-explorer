@@ -27,9 +27,19 @@ on:
           - deep
       cache:
         description: 'Enable to use workspace caching in cloud runners'
-        required: true
+        required: false
         default: true
         type: boolean
+      cache_strategy:
+        description: 'Select cache strategy'
+        required: true
+        default: 'workspace'
+        type: choice
+        options:
+          - none
+          - library
+          - workspace
+          - inherit
       version:
         description: 'Override for build version to use'
         required: false
@@ -40,9 +50,15 @@ on:
       profile:
         required: true
         type: string
+        default: 'none'
       cache:
         required: true
+        default: true
         type: boolean
+      cache_strategy:
+        required: true
+        default: 'workspace'
+        type: string
       version:
         required: true
         type: string
@@ -71,6 +87,8 @@ jobs:
       sentry_environment: ${{ steps.get_sentry.outputs.environment }}
       sentry_upload_symbols: ${{ steps.get_sentry.outputs.upload_symbols }}
       sentry_enabled: ${{ steps.get_sentry.outputs.sentry_enabled }}
+      use_cache: ${{ steps.set_defaults.outputs.use_cache }}
+      cache_strategy: ${{ steps.set_defaults.outputs.cache_strategy }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -100,6 +118,27 @@ jobs:
             echo "upload_symbols=false" >> "$GITHUB_OUTPUT"
             echo "sentry_enabled=false" >> "$GITHUB_OUTPUT"
           fi
+
+      - name: Set default values
+        id: set_defaults
+        run: |
+          if [ "${{ github.event.inputs.cache }}" ]; then
+            use_cache=${{ github.event.inputs.cache }}
+          elif [ "${{ inputs.cache }}" ]; then
+            use_cache=${{ inputs.cache }}
+          else
+            use_cache='true'
+          fi
+          echo "use_cache=${use_cache}" >> $GITHUB_OUTPUT
+
+          if [ "${{ github.event.inputs.cache_strategy }}" ]; then
+            cache_strategy=${{ github.event.inputs.cache_strategy }}
+          elif [ "${{ inputs.cache_strategy }}" ]; then
+            cache_strategy=${{ inputs.cache_strategy }}
+          else
+            cache_strategy='workspace'
+          fi
+          echo "cache_strategy=${cache_strategy}" >> $GITHUB_OUTPUT
 
       - name: Get BuildOptions
         id: get_options
@@ -160,9 +199,10 @@ jobs:
           POLL_TIME: 60 # In seconds (int)
           TARGET: t_${{ matrix.target }}
           BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
-          USE_CACHE: ${{ github.event.inputs.cache || inputs.cache }}
           COMMIT_SHA: ${{ needs.prebuild.outputs.commit_sha }}
           BUILD_OPTIONS: ${{ needs.prebuild.outputs.options }}
+          USE_CACHE: ${{ needs.prebuild.outputs.use_cache }}
+          CACHE_STRATEGY: ${{ needs.prebuild.outputs.cache_strategy }} #Possible values: { none, library, workspace, inherit }
           # Any ENV variables starting with "PARAM_" will be passed to Unity without the prefix
           # (The "PARAM_" prefix exists to allow any future values config-free)
           # e.g.: PARAM_ALLOW_DEBUG -> In Unity will be available as "ALLOW_DEBUG"

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Text.RegularExpressions;
 using System.Web;
+using UnityEngine;
 
 namespace Global.AppArgs
 {
@@ -11,11 +12,19 @@ namespace Global.AppArgs
         private const string REALM_PARAM = "realm";
         private readonly Dictionary<string, string> appParameters = new ();
 
+        private static readonly IReadOnlyDictionary<string, string> ALWAYS_IN_EDITOR = new Dictionary<string, string>
+        {
+            [IAppArgs.DEBUG_FLAG] = string.Empty,
+        };
+
         public ApplicationParametersParser() : this(Environment.GetCommandLineArgs()) { }
 
         public ApplicationParametersParser(string[] args)
         {
             ParseApplicationParameters(args);
+
+            if (Application.isEditor)
+                AddAlwaysInEditorFlags();
         }
 
         public bool HasFlag(string flagName) =>
@@ -23,6 +32,13 @@ namespace Global.AppArgs
 
         public bool TryGetValue(string flagName, out string? value) =>
             appParameters.TryGetValue(flagName, out value);
+
+        private void AddAlwaysInEditorFlags()
+        {
+            foreach ((string? key, string? value) in ALWAYS_IN_EDITOR)
+                if (appParameters.ContainsKey(key) == false)
+                    appParameters[key] = value;
+        }
 
         private void ParseApplicationParameters(string[] cmdArgs)
         {
