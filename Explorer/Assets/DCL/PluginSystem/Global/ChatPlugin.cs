@@ -31,7 +31,6 @@ namespace DCL.PluginSystem.Global
         private readonly IInputBlock inputBlock;
         private readonly IEventSystem eventSystem;
         private readonly MainUIView mainUIView;
-        private readonly IUIAudioEventsBus audioEventsBus;
 
         private ChatController chatController;
 
@@ -45,7 +44,6 @@ namespace DCL.PluginSystem.Global
             DCLInput dclInput,
             IEventSystem eventSystem,
             MainUIView mainUIView,
-            IUIAudioEventsBus audioEventsBus,
             IInputBlock inputBlock
         )
         {
@@ -58,7 +56,6 @@ namespace DCL.PluginSystem.Global
             this.dclInput = dclInput;
             this.eventSystem = eventSystem;
             this.mainUIView = mainUIView;
-            this.audioEventsBus = audioEventsBus;
             this.inputBlock = inputBlock;
         }
 
@@ -95,7 +92,6 @@ namespace DCL.PluginSystem.Global
                     arguments.PlayerEntity,
                     dclInput,
                     eventSystem,
-                    audioEventsBus,
                     inputBlock
                 );
 
