@@ -47,7 +47,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.ApiChunks => $"https://api.decentraland.{ENV}/v1/map.png",
                 DecentralandUrl.PeerAbout => $"https://peer.decentraland.{ENV}/about",
                 DecentralandUrl.DAO => $"https://decentraland.{ENV}/dao/",
-                DecentralandUrl.Notification => $"https://notifications.decentraland.{ENV}/notifications",
+                DecentralandUrl.Notification => $"https://notifications.decentraland.zone/notifications", //TODO (Santi) Replace it by $"https://notifications.decentraland.{ENV}/notifications"
                 DecentralandUrl.NotificationRead => $"https://notifications.decentraland.{ENV}/notifications/read",
                 DecentralandUrl.FeatureFlags => $"https://feature-flags.decentraland.{ENV}",
                 DecentralandUrl.Market => "https://market.decentraland.org",
