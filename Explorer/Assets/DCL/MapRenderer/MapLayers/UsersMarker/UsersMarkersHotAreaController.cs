@@ -9,6 +9,7 @@ using DCL.CharacterPreview.Components;
 using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapLayers.UsersMarker;
+using ECS.Groups;
 using ECS.LifeCycle.Components;
 using MVC;
 using System.Collections.Generic;
@@ -56,15 +57,14 @@ namespace DCL.MapRenderer.MapLayers.Users
             untrackSystem.Activate();
         }
 
-        [All(typeof(CharacterTransform))]
-        [None(typeof(PlayerComponent), typeof(CharacterPreviewComponent))]
         [Query]
+        [None(typeof(PlayerComponent), typeof(CharacterPreviewComponent), typeof(DeleteEntityIntention))]
         private void SetPlayerMarker(in CharacterTransform transformComponent, in AvatarShapeComponent avatarShape)
         {
             if (!isEnabled)
                 return;
 
-            if(markers.TryGetValue(avatarShape.ID, out var marker))
+            if (markers.TryGetValue(avatarShape.ID, out var marker))
             {
                 marker.UpdateMarkerPosition(avatarShape.ID, transformComponent.Transform.position);
                 mapCullingController.SetTrackedObjectPositionDirty(marker);
@@ -78,7 +78,8 @@ namespace DCL.MapRenderer.MapLayers.Users
         }
 
         [Query]
-        private void RemoveMarker(in AvatarShapeComponent avatarShape, in DeleteEntityIntention deleteEntityIntention)
+        [All(typeof(DeleteEntityIntention))]
+        private void RemoveMarker(in AvatarShapeComponent avatarShape)
         {
             if (markers.TryGetValue(avatarShape.ID, out var marker))
             {
@@ -116,6 +117,7 @@ namespace DCL.MapRenderer.MapLayers.Users
         internal TrackPlayersPositionSystem(World world) : base(world) { }
     }
 
+    [UpdateAfter(typeof(TrackPlayersPositionSystem))]
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     public partial class RemovedTrackedPlayersPositionSystem : ControllerECSBridgeSystem
     {
