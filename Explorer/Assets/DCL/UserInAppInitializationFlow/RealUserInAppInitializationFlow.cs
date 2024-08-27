@@ -104,13 +104,13 @@ namespace DCL.UserInAppInitializationFlow
                     await ShowAuthenticationScreenAsync(ct);
                 }
 
-                var showResult = await LoadingScreen(showLoading)
+                var loadingResult = await LoadingScreen(showLoading)
                    .ShowWhileExecuteTaskAsync(
                         async parentLoadReport => result = await startupOperation.ExecuteAsync(parentLoadReport, ct),
                         ct
                     );
 
-                ApplyErrorIfTimeout(ref result, showResult);
+                ApplyErrorIfLoadingScreenError(ref result, loadingResult);
 
                 if (result.Success == false)
                     ReportHub.LogError(ReportCategory.DEBUG, result.ErrorMessage!);
@@ -120,10 +120,10 @@ namespace DCL.UserInAppInitializationFlow
             while (result.Success == false && showAuthentication);
         }
 
-        private static void ApplyErrorIfTimeout(ref Result result, ILoadingScreen.ShowResult showResult)
+        private static void ApplyErrorIfLoadingScreenError(ref Result result, ILoadingScreen.LoadResult showResult)
         {
-            if (showResult == ILoadingScreen.ShowResult.Timeout)
-                result = Result.ErrorResult("Loading timed out");
+            if (!showResult.Success)
+                result = Result.ErrorResult(showResult.ErrorMessage);
         }
 
         private async UniTask ShowAuthenticationScreenAsync(CancellationToken ct)
