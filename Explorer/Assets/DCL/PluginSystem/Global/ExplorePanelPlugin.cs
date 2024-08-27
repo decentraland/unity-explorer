@@ -4,14 +4,17 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Equipped;
+using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.AvatarRendering.Wearables.ThirdParty;
 using DCL.Backpack;
 using DCL.Backpack.BackpackBus;
 using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Chat;
 using DCL.ExplorePanel;
+using DCL.Input;
 using DCL.Landscape.Settings;
 using DCL.MapRenderer;
 using DCL.Navmap;
@@ -56,7 +59,7 @@ namespace DCL.PluginSystem.Global
         private readonly IEquippedEmotes equippedEmotes;
         private readonly IWeb3Authenticator web3Authenticator;
         private readonly IWeb3IdentityCache web3IdentityCache;
-        private readonly IWearableCatalog wearableCatalog;
+        private readonly IWearableCache wearableCache;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
         private readonly IWebBrowser webBrowser;
         private readonly IRealmNavigator realmNavigator;
@@ -65,6 +68,9 @@ namespace DCL.PluginSystem.Global
         private readonly IWebRequestController webRequestController;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
         private readonly IBackpackEventBus backpackEventBus;
+        private readonly IThirdPartyNftProviderSource thirdPartyNftProviderSource;
+        private readonly IWearablesProvider wearablesProvider;
+        private readonly ICursor cursor;
 
         private readonly IMapPathEventBus mapPathEventBus;
         private readonly ICollection<string> forceRender;
@@ -85,7 +91,7 @@ namespace DCL.PluginSystem.Global
             IPlacesAPIService placesAPIService,
             IWebRequestController webRequestController,
             IWeb3IdentityCache web3IdentityCache,
-            IWearableCatalog wearableCatalog,
+            IWearableCache wearableCache,
             ICharacterPreviewFactory characterPreviewFactory,
             IProfileRepository profileRepository,
             IWeb3Authenticator web3Authenticator,
@@ -105,7 +111,10 @@ namespace DCL.PluginSystem.Global
             CharacterPreviewEventBus characterPreviewEventBus,
             IMapPathEventBus mapPathEventBus,
             ChatEntryConfigurationSO chatEntryConfiguration,
-            IBackpackEventBus backpackEventBus)
+            IBackpackEventBus backpackEventBus,
+            IThirdPartyNftProviderSource thirdPartyNftProviderSource,
+            IWearablesProvider wearablesProvider,
+            ICursor cursor)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -113,7 +122,7 @@ namespace DCL.PluginSystem.Global
             this.placesAPIService = placesAPIService;
             this.webRequestController = webRequestController;
             this.web3IdentityCache = web3IdentityCache;
-            this.wearableCatalog = wearableCatalog;
+            this.wearableCache = wearableCache;
             this.characterPreviewFactory = characterPreviewFactory;
             this.profileRepository = profileRepository;
             this.web3Authenticator = web3Authenticator;
@@ -134,6 +143,9 @@ namespace DCL.PluginSystem.Global
             this.mapPathEventBus = mapPathEventBus;
             this.chatEntryConfiguration = chatEntryConfiguration;
             this.backpackEventBus = backpackEventBus;
+            this.thirdPartyNftProviderSource = thirdPartyNftProviderSource;
+            this.wearablesProvider = wearablesProvider;
+            this.cursor = cursor;
         }
 
         public override void Dispose()
@@ -150,7 +162,7 @@ namespace DCL.PluginSystem.Global
                 assetsProvisioner,
                 web3IdentityCache,
                 characterPreviewFactory,
-                wearableCatalog,
+                wearableCache,
                 selfProfile,
                 equippedWearables,
                 equippedEmotes,
@@ -162,7 +174,10 @@ namespace DCL.PluginSystem.Global
                 assetBundleURL,
                 webRequestController,
                 characterPreviewEventBus,
-                backpackEventBus
+                backpackEventBus,
+                thirdPartyNftProviderSource,
+                wearablesProvider,
+                cursor
             );
 
             ExplorePanelView panelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.ExplorePanelPrefab, ct: ct)).GetComponent<ExplorePanelView>();

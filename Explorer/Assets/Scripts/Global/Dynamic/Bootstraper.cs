@@ -4,22 +4,20 @@ using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
-using DCL.EmotesWheel;
 using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Notifications.NewNotification;
 using DCL.PerformanceAndDiagnostics.DotNetLogging;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
-using DCL.UI.MainUI;
 using DCL.SceneLoadingScreens.SplashScreen;
+using DCL.UI.MainUI;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
-using ECS.SceneLifeCycle.Realm;
+using Global.AppArgs;
 using MVC;
 using SceneRunner.Debugging;
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -29,27 +27,37 @@ namespace Global.Dynamic
     public class Bootstrap : IBootstrap
     {
         private readonly IDebugSettings debugSettings;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
+        private readonly IAppArgs appArgs;
+        private readonly RealmLaunchSettings realmLaunchSettings;
 
-        private URLDomain startingRealm = URLDomain.FromString(IRealmNavigator.GENESIS_URL);
+        private URLDomain? startingRealm;
         private Vector2Int startingParcel;
         private DynamicWorldDependencies dynamicWorldDependencies;
-        private Dictionary<string, string> appParameters = new ();
 
         public bool EnableAnalytics { private get; init; }
 
-        public Bootstrap(IDebugSettings debugSettings)
+        public Bootstrap(IDebugSettings debugSettings,
+            IAppArgs appArgs,
+            IDecentralandUrlsSource decentralandUrlsSource,
+            RealmLaunchSettings realmLaunchSettings)
         {
             this.debugSettings = debugSettings;
+            this.decentralandUrlsSource = decentralandUrlsSource;
+            this.appArgs = appArgs;
+            this.realmLaunchSettings = realmLaunchSettings;
         }
 
-        public void PreInitializeSetup(RealmLaunchSettings launchSettings, UIDocument cursorRoot, UIDocument debugUiRoot,
-            ISplashScreen splashScreen, CancellationToken _)
+        public void PreInitializeSetup(UIDocument cursorRoot,
+            UIDocument debugUiRoot,
+            ISplashScreen splashScreen,
+            CancellationToken _)
         {
-            splashScreen.ShowSplash();
+            splashScreen.Show();
             cursorRoot.EnsureNotNull();
 
-            startingRealm = URLDomain.FromString(launchSettings.GetStartingRealm());
-            startingParcel = launchSettings.TargetScene;
+            startingRealm = URLDomain.FromString(realmLaunchSettings.GetStartingRealm(decentralandUrlsSource));
+            startingParcel = realmLaunchSettings.TargetScene;
 
             // Hides the debug UI during the initial flow
             debugUiRoot.rootVisualElement.EnsureNotNull().style.display = DisplayStyle.None;
@@ -60,42 +68,53 @@ namespace Global.Dynamic
         }
 
         public async UniTask<(StaticContainer?, bool)> LoadStaticContainerAsync(BootstrapContainer bootstrapContainer, PluginSettingsContainer globalPluginSettingsContainer, DebugViewsCatalog debugViewsCatalog, CancellationToken ct) =>
-            await StaticContainer.CreateAsync(bootstrapContainer.DecentralandUrlsSource, bootstrapContainer.AssetsProvisioner, bootstrapContainer.ReportHandlingSettings, debugViewsCatalog, globalPluginSettingsContainer,
+            await StaticContainer.CreateAsync(bootstrapContainer.DecentralandUrlsSource, bootstrapContainer.AssetsProvisioner, bootstrapContainer.ReportHandlingSettings, appArgs, debugViewsCatalog, globalPluginSettingsContainer,
                 bootstrapContainer.IdentityCache, bootstrapContainer.VerifiedEthereumApi, ct);
 
-        public async UniTask<(DynamicWorldContainer?, bool)> LoadDynamicWorldContainerAsync(BootstrapContainer bootstrapContainer, StaticContainer staticContainer,
-            PluginSettingsContainer scenePluginSettingsContainer, DynamicSceneLoaderSettings settings, DynamicSettings dynamicSettings, RealmLaunchSettings launchSettings,
-            UIDocument uiToolkitRoot, UIDocument cursorRoot, ISplashScreen splashScreen, AudioClipConfig backgroundMusic, WorldInfoTool worldInfoTool,
-            CancellationToken ct)
+        public async UniTask<(DynamicWorldContainer?, bool)> LoadDynamicWorldContainerAsync(
+            BootstrapContainer bootstrapContainer,
+            StaticContainer staticContainer,
+            PluginSettingsContainer scenePluginSettingsContainer,
+            DynamicSceneLoaderSettings settings,
+            DynamicSettings dynamicSettings,
+            UIDocument uiToolkitRoot,
+            UIDocument cursorRoot,
+            ISplashScreen splashScreen,
+            AudioClipConfig backgroundMusic,
+            WorldInfoTool worldInfoTool,
+            CancellationToken ct
+        )
         {
             dynamicWorldDependencies = new DynamicWorldDependencies
-            {
-                DebugContainerBuilder = staticContainer.DebugContainerBuilder,
-                AssetsProvisioner = bootstrapContainer.AssetsProvisioner,
-                StaticContainer = staticContainer,
-                SettingsContainer = scenePluginSettingsContainer,
-                DynamicSettings = dynamicSettings,
-                Web3Authenticator = bootstrapContainer.Web3Authenticator,
-                Web3IdentityCache = bootstrapContainer.IdentityCache,
-                RootUIDocument = uiToolkitRoot,
-                CursorUIDocument = cursorRoot,
-                SplashScreen = splashScreen,
-                WorldInfoTool = worldInfoTool,
-            };
+            (
+                staticContainer.DebugContainerBuilder,
+                appArgs,
+                bootstrapContainer.AssetsProvisioner,
+                staticContainer,
+                scenePluginSettingsContainer,
+                uiToolkitRoot,
+                cursorRoot,
+                dynamicSettings,
+                bootstrapContainer.Web3Authenticator,
+                bootstrapContainer.IdentityCache,
+                splashScreen,
+                worldInfoTool
+            );
 
             return await DynamicWorldContainer.CreateAsync(
                 bootstrapContainer,
                 dynamicWorldDependencies,
                 new DynamicWorldParams
                 {
-                    StaticLoadPositions = launchSettings.GetPredefinedParcels(),
+                    StaticLoadPositions = realmLaunchSettings.GetPredefinedParcels(),
                     Realms = settings.Realms,
                     StartParcel = startingParcel,
-                    EnableLandscape = debugSettings.EnableLandscape && !bootstrapContainer.LocalSceneDevelopment,
-                    EnableLOD = debugSettings.EnableLOD && !bootstrapContainer.LocalSceneDevelopment,
-                    EnableAnalytics = EnableAnalytics, HybridSceneParams = launchSettings.CreateHybridSceneParams(startingParcel),
-                    LocalSceneDevelopmentRealm = bootstrapContainer.LocalSceneDevelopment ? launchSettings.GetStartingRealm() : string.Empty,
-                    AppParameters = appParameters,
+                    EnableLandscape = debugSettings.EnableLandscape && !realmLaunchSettings.IsLocalSceneDevelopmentRealm,
+                    EnableLOD = debugSettings.EnableLOD && !realmLaunchSettings.IsLocalSceneDevelopmentRealm,
+                    EnableAnalytics = EnableAnalytics,
+                    HybridSceneParams = realmLaunchSettings.CreateHybridSceneParams(startingParcel),
+                    LocalSceneDevelopmentRealm = realmLaunchSettings.GetLocalSceneDevelopmentRealm(decentralandUrlsSource) ?? string.Empty,
+                    AppParameters = appArgs,
                 },
                 backgroundMusic,
                 ct);
@@ -121,7 +140,7 @@ namespace Global.Dynamic
 
         public async UniTask InitializeFeatureFlagsAsync(IWeb3Identity? identity, IDecentralandUrlsSource decentralandUrlsSource, StaticContainer staticContainer, CancellationToken ct)
         {
-            try { await staticContainer.FeatureFlagsProvider.InitializeAsync(decentralandUrlsSource, identity?.Address, appParameters, ct); }
+            try { await staticContainer.FeatureFlagsProvider.InitializeAsync(decentralandUrlsSource, identity?.Address, appArgs, ct); }
             catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, new ReportData(ReportCategory.FEATURE_FLAGS)); }
         }
 
@@ -145,26 +164,30 @@ namespace Global.Dynamic
                 dynamicWorldContainer.RoomHub,
                 dynamicWorldContainer.RealmController.RealmData,
                 dynamicWorldContainer.MessagePipesHub,
-                !bootstrapContainer.LocalSceneDevelopment
+                !realmLaunchSettings.IsLocalSceneDevelopmentRealm
             );
 
-            (globalWorld, playerEntity) = dynamicWorldContainer.GlobalWorldFactory.Create(sceneSharedContainer.SceneFactory);
+            (globalWorld, playerEntity) = dynamicWorldContainer.GlobalWorldFactory.Create(sceneSharedContainer.SceneFactory, sceneSharedContainer.V8ActiveEngines);
             dynamicWorldContainer.RealmController.GlobalWorld = globalWorld;
 
             staticContainer.DebugContainerBuilder.BuildWithFlex(debugUiRoot);
+            staticContainer.DebugContainerBuilder.IsVisible = appArgs.HasDebugFlag();
 
             return (globalWorld, playerEntity);
         }
 
         public async UniTask LoadStartingRealmAsync(DynamicWorldContainer dynamicWorldContainer, CancellationToken ct)
         {
-            await dynamicWorldContainer.RealmController.SetRealmAsync(startingRealm, ct);
+            if (startingRealm.HasValue == false)
+                throw new InvalidOperationException("Starting realm is not set");
+
+            await dynamicWorldContainer.RealmController.SetRealmAsync(startingRealm.Value, ct);
         }
 
         public async UniTask UserInitializationAsync(DynamicWorldContainer dynamicWorldContainer,
             GlobalWorld globalWorld, Entity playerEntity, ISplashScreen splashScreen, CancellationToken ct)
         {
-            splashScreen.ShowSplash();
+            splashScreen.Show();
 
             await dynamicWorldContainer.UserInAppInAppInitializationFlow.ExecuteAsync(
                 debugSettings.ShowAuthentication,
@@ -175,16 +198,14 @@ namespace Global.Dynamic
                 ct
             );
 
-            splashScreen.HideSplash();
             OpenDefaultUI(dynamicWorldContainer.MvcManager, ct);
+            splashScreen.Hide();
         }
 
         private static void OpenDefaultUI(IMVCManager mvcManager, CancellationToken ct)
         {
-            // TODO: all of these UIs should be part of a single canvas. We cannot make a proper layout by having them separately
-            mvcManager.ShowAsync(MainUIController.IssueCommand(), ct).Forget();
             mvcManager.ShowAsync(NewNotificationController.IssueCommand(), ct).Forget();
-            mvcManager.ShowAsync(PersistentEmoteWheelOpenerController.IssueCommand(), ct).Forget();
+            mvcManager.ShowAsync(MainUIController.IssueCommand(), ct).Forget();
         }
     }
 }

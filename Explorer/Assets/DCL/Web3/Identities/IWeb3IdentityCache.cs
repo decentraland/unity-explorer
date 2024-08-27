@@ -1,3 +1,4 @@
+using DCL.Web3.Accounts.Factory;
 using System;
 
 namespace DCL.Web3.Identities
@@ -50,7 +51,9 @@ namespace DCL.Web3.Identities
                     new ProxyIdentityCache(
                         new MemoryWeb3IdentityCache(),
                         new PlayerPrefsIdentityProvider(
-                            new PlayerPrefsIdentityProvider.DecentralandIdentityWithNethereumAccountJsonSerializer()
+                            new PlayerPrefsIdentityProvider.DecentralandIdentityWithNethereumAccountJsonSerializer(
+                                new Web3AccountFactory()
+                            )
                         )
                     )
                 );

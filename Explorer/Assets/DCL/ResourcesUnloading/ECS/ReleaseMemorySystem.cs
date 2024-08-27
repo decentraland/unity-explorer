@@ -20,7 +20,7 @@ namespace DCL.PluginSystem.Global
 
         protected override void Update(float t)
         {
-            if (memoryBudgetProvider.GetMemoryUsageStatus() != MemoryUsageStatus.Normal)
+            if (memoryBudgetProvider.GetMemoryUsageStatus() != MemoryUsageStatus.NORMAL)
                 cacheCleaner.UnloadCache();
 
             cacheCleaner.UpdateProfilingCounters();

@@ -1,6 +1,7 @@
 using Arch.Core;
 using ECS.Abstract;
 using ECS.StreamableLoading.Common.Components;
+using ECS.Unity.Materials.Components;
 using ECS.Unity.Textures.Components;
 using UnityEngine;
 using UnityEngine.Pool;
@@ -20,6 +21,14 @@ namespace ECS.Unity.Materials.Systems
 
         protected Material CreateNewMaterialInstance() =>
             materialsPool.Get();
+
+        protected void DestroyEntityReferencesForPromises(ref MaterialComponent materialComponent)
+        {
+            DestroyEntityReference(ref materialComponent.AlbedoTexPromise);
+            DestroyEntityReference(ref materialComponent.EmissiveTexPromise);
+            DestroyEntityReference(ref materialComponent.AlphaTexPromise);
+            DestroyEntityReference(ref materialComponent.BumpTexPromise);
+        }
 
         protected void DestroyEntityReference(ref Promise? promise)
         {

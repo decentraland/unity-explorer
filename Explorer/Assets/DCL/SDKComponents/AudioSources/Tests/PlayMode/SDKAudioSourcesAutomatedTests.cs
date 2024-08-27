@@ -8,10 +8,10 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.PluginSystem;
-using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World;
 using DCL.Profiles;
 using DCL.Web3;
+using DCL.Web3.Accounts.Factory;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
@@ -19,6 +19,7 @@ using ECS;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AudioClips;
 using Global;
+using Global.AppArgs;
 using Global.Dynamic;
 using MVC;
 using NSubstitute;
@@ -90,8 +91,9 @@ namespace DCL.SDKComponents.AudioSources.Tests.PlayMode
             try
             {
                 var identityCache = new MemoryWeb3IdentityCache();
+                var web3AccountFactory = new Web3AccountFactory();
 
-                var web3Authenticator = new ProxyWeb3Authenticator(new RandomGeneratedWeb3Authenticator(), identityCache);
+                var web3Authenticator = new ProxyWeb3Authenticator(new RandomGeneratedWeb3Authenticator(web3AccountFactory), identityCache);
                 await web3Authenticator.LoginAsync(ct);
 
                 SceneSharedContainer sceneSharedContainer;
@@ -131,6 +133,7 @@ namespace DCL.SDKComponents.AudioSources.Tests.PlayMode
                     new DecentralandUrlsSource(DecentralandEnvironment.Org),
                     assetProvisioner,
                     reportHandlingSettings.Value,
+                    new ApplicationParametersParser(),
                     new DebugViewsCatalog(),
                     globalSettingsContainer,
                     web3IdentityCache,

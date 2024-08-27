@@ -8,11 +8,13 @@ using DCL.AvatarRendering.Emotes.Equipped;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.AvatarRendering.Wearables.ThirdParty;
 using DCL.Backpack;
 using DCL.Backpack.BackpackBus;
 using DCL.Backpack.CharacterPreview;
 using DCL.Backpack.EmotesSection;
 using DCL.CharacterPreview;
+using DCL.Input;
 using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.Utilities.Extensions;
@@ -29,7 +31,7 @@ namespace DCL.PluginSystem.Global
     internal class BackpackSubPlugin : IDisposable
     {
         private readonly IAssetsProvisioner assetsProvisioner;
-        private readonly IWearableCatalog wearableCatalog;
+        private readonly IWearableCache wearableCache;
         private readonly ISelfProfile selfProfile;
         private readonly IEquippedWearables equippedWearables;
         private readonly IEquippedEmotes equippedEmotes;
@@ -41,6 +43,9 @@ namespace DCL.PluginSystem.Global
         private readonly IWeb3IdentityCache web3Identity;
         private readonly BackpackCommandBus backpackCommandBus;
         private readonly IBackpackEventBus backpackEventBus;
+        private readonly IThirdPartyNftProviderSource thirdPartyNftProviderSource;
+        private readonly IWearablesProvider wearablesProvider;
+        private readonly ICursor cursor;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
         private readonly URLDomain assetBundleURL;
         private readonly IWebRequestController webRequestController;
@@ -55,7 +60,7 @@ namespace DCL.PluginSystem.Global
             IAssetsProvisioner assetsProvisioner,
             IWeb3IdentityCache web3Identity,
             ICharacterPreviewFactory characterPreviewFactory,
-            IWearableCatalog wearableCatalog,
+            IWearableCache wearableCache,
             ISelfProfile selfProfile,
             IEquippedWearables equippedWearables,
             IEquippedEmotes equippedEmotes,
@@ -67,12 +72,15 @@ namespace DCL.PluginSystem.Global
             URLDomain assetBundleURL,
             IWebRequestController webRequestController,
             CharacterPreviewEventBus characterPreviewEventBus,
-            IBackpackEventBus backpackEventBus)
+            IBackpackEventBus backpackEventBus,
+            IThirdPartyNftProviderSource thirdPartyNftProviderSource,
+            IWearablesProvider wearablesProvider,
+            ICursor cursor)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.web3Identity = web3Identity;
             this.characterPreviewFactory = characterPreviewFactory;
-            this.wearableCatalog = wearableCatalog;
+            this.wearableCache = wearableCache;
             this.selfProfile = selfProfile;
             this.equippedWearables = equippedWearables;
             this.equippedEmotes = equippedEmotes;
@@ -87,6 +95,9 @@ namespace DCL.PluginSystem.Global
 
             backpackCommandBus = new BackpackCommandBus();
             this.backpackEventBus = backpackEventBus;
+            this.thirdPartyNftProviderSource = thirdPartyNftProviderSource;
+            this.wearablesProvider = wearablesProvider;
+            this.cursor = cursor;
         }
 
         internal async UniTask<ContinueInitialization> InitializeAsync(
@@ -97,7 +108,7 @@ namespace DCL.PluginSystem.Global
             // Initialize assets that do not require World
             var sortController = new BackpackSortController(view.BackpackSortView);
 
-            busController = new BackpackBusController(wearableCatalog, backpackEventBus, backpackCommandBus, equippedWearables, equippedEmotes, emoteCache);
+            busController = new BackpackBusController(wearableCache, backpackEventBus, backpackCommandBus, equippedWearables, equippedEmotes, emoteCache);
 
             (NFTColorsSO rarityColorMappings, NftTypeIconSO categoryIconsMapping, NftTypeIconSO rarityBackgroundsMapping, NftTypeIconSO rarityInfoPanelBackgroundsMapping) = await UniTask.WhenAll(
                 assetsProvisioner.ProvideMainAssetValueAsync(backpackSettings.RarityColorMappings, ct),
@@ -122,7 +133,8 @@ namespace DCL.PluginSystem.Global
                 rarityInfoPanelBackgroundsMapping,
                 rarityColorMappings,
                 equippedWearables,
-                BackpackInfoPanelController.AttachmentType.Wearable
+                BackpackInfoPanelController.AttachmentType.Wearable,
+                thirdPartyNftProviderSource
             );
 
             EmotesView emoteView = view.GetComponentInChildren<EmotesView>().EnsureNotNull();
@@ -134,7 +146,8 @@ namespace DCL.PluginSystem.Global
                 rarityInfoPanelBackgroundsMapping,
                 rarityColorMappings,
                 equippedWearables,
-                BackpackInfoPanelController.AttachmentType.Emote
+                BackpackInfoPanelController.AttachmentType.Emote,
+                thirdPartyNftProviderSource
             );
 
             //not injected anywhere
@@ -155,9 +168,10 @@ namespace DCL.PluginSystem.Global
 
                 var gridController = new BackpackGridController(
                     avatarView.backpackGridView, backpackCommandBus, backpackEventBus,
-                    web3Identity, rarityBackgroundsMapping, rarityColorMappings, categoryIconsMapping,
-                    equippedWearables, sortController, pageButtonView, gridPool, world,
-                    thumbnailProvider, colorToggle, hairColors, eyesColors, bodyshapeColors
+                    rarityBackgroundsMapping, rarityColorMappings, categoryIconsMapping,
+                    equippedWearables, sortController, pageButtonView, gridPool,
+                    thumbnailProvider, colorToggle, hairColors, eyesColors, bodyshapeColors,
+                    wearablesProvider
                 );
 
                 var emoteGridController = new BackpackEmoteGridController(emoteView.GridView, backpackCommandBus, backpackEventBus,
@@ -197,7 +211,8 @@ namespace DCL.PluginSystem.Global
                     emotesController,
                     backpackCharacterPreviewController,
                     thumbnailProvider,
-                    dclInput
+                    dclInput,
+                    cursor
                 );
             };
         }
