@@ -12,7 +12,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
 {
     public abstract class CommunicationsControllerAPIImplementationBase : ICommunicationsControllerAPI
     {
-        internal enum MsgType
+        public enum MsgType
         {
             String = 1, // SDK scenes MessageBus messages
             Uint8Array = 2,
@@ -103,7 +103,18 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
             communicationControllerHub.SendMessage(message, sceneData.SceneEntityDefinition.id!, cancellationTokenSource.Token);
         }
 
-        protected virtual void OnMessageReceived(ICommunicationControllerHub.SceneMessage receivedMessage) { }
+        private void OnMessageReceived(ICommunicationControllerHub.SceneMessage receivedMessage)
+        {
+            ReadOnlySpan<byte> decodedMessage = receivedMessage.Data.Span;
+            MsgType msgType = DecodeMessage(ref decodedMessage);
+
+            if (decodedMessage.Length == 0)
+                return;
+
+            OnMessageReceived(msgType, decodedMessage, receivedMessage.FromWalletId);
+        }
+
+        protected abstract void OnMessageReceived(MsgType messageType, ReadOnlySpan<byte> decodedMessage, string fromWalletId);
 
         internal static MsgType DecodeMessage(ref ReadOnlySpan<byte> value)
         {

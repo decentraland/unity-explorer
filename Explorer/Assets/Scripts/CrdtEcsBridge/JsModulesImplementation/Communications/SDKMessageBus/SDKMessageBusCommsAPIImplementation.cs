@@ -31,17 +31,14 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications.SDKMessageBus
             communicationControllerHub.SendMessage(encodedMessage, sceneData.SceneEntityDefinition.id, cancellationTokenSource.Token);
         }
 
-        protected override void OnMessageReceived(ICommunicationControllerHub.SceneMessage receivedMessage)
+        protected override void OnMessageReceived(MsgType messageType, ReadOnlySpan<byte> decodedMessage, string fromWalletId)
         {
-            ReadOnlySpan<byte> decodedMessage = receivedMessage.Data.Span;
-            MsgType msgType = DecodeMessage(ref decodedMessage);
-
-            if (msgType != MsgType.String || decodedMessage.Length == 0)
+            if (messageType != MsgType.String)
                 return;
 
             messages.Add(new CommsPayload
             {
-                sender = receivedMessage.FromWalletId,
+                sender = fromWalletId,
                 message = Encoding.UTF8.GetString(decodedMessage)
             });
         }
