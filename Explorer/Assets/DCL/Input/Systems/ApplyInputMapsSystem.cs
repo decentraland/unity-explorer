@@ -38,27 +38,27 @@ namespace DCL.Input.Systems
 
                 for (var i = 0; i < InputMapComponent.VALUES.Count; i++)
                 {
-                    InputMapKind value = InputMapComponent.VALUES[i];
+                    InputMapComponent.Kind value = InputMapComponent.VALUES[i];
                     bool isActive = EnumUtils.HasFlag(inputMapComponent.Active, value);
 
                     switch (value)
                     {
-                        case InputMapKind.Camera:
+                        case InputMapComponent.Kind.Camera:
                             SetActionMapEnabled(isActive, dclInput.Camera);
                             break;
-                        case InputMapKind.FreeCamera:
+                        case InputMapComponent.Kind.FreeCamera:
                             SetActionMapEnabled(isActive, dclInput.FreeCamera);
                             break;
-                        case InputMapKind.Player:
+                        case InputMapComponent.Kind.Player:
                             SetActionMapEnabled(isActive, dclInput.Player);
                             break;
-                        case InputMapKind.EmoteWheel:
+                        case InputMapComponent.Kind.EmoteWheel:
                             SetActionMapEnabled(isActive, dclInput.EmoteWheel);
                             break;
-                        case InputMapKind.Emotes:
+                        case InputMapComponent.Kind.Emotes:
                             SetActionMapEnabled(isActive, dclInput.Emotes);
                             break;
-                        case InputMapKind.Shortcuts:
+                        case InputMapComponent.Kind.Shortcuts:
                             SetActionMapEnabled(isActive, dclInput.Shortcuts);
                             break;
                     }

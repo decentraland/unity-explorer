@@ -16,7 +16,6 @@ using DCL.CharacterPreview;
 using DCL.Chat;
 using DCL.ExplorePanel;
 using DCL.Input;
-using DCL.Input.UnityInputSystem.Blocks;
 using DCL.Landscape.Settings;
 using DCL.MapRenderer;
 using DCL.Navmap;
@@ -209,13 +208,13 @@ namespace DCL.PluginSystem.Global
             ProvidedAsset<QualitySettingsAsset> qualitySettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.QualitySettingsAsset, ct);
             settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>(), settingsMenuConfiguration.Value, generalAudioMixer.Value, realmPartitionSettings.Value, landscapeData.Value, qualitySettingsAsset.Value);
 
-            navmapController = new NavmapController(navmapView: explorePanelView.GetComponentInChildren<NavmapView>(), mapRendererContainer.MapRenderer, placesAPIService, webRequestController, webBrowser, dclInput, realmNavigator, realmData, mapPathEventBus, inputBlock, world, playerEntity);
+            navmapController = new NavmapController(navmapView: explorePanelView.GetComponentInChildren<NavmapView>(), mapRendererContainer.MapRenderer, placesAPIService, webRequestController, webBrowser, dclInput, realmNavigator, realmData, mapPathEventBus, world, playerEntity, inputBlock);
 
             await navmapController.InitializeAssetsAsync(assetsProvisioner, ct);
             await backpackSubPlugin.InitializeAsync(settings.BackpackSettings, explorePanelView.GetComponentInChildren<BackpackView>(), ct);
 
             mvcManager.RegisterController(new
-                ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackSubPlugin.backpackController!, playerEntity, world,
+                ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackSubPlugin.backpackController!,
                     new ProfileWidgetController(() => explorePanelView.ProfileWidget, web3IdentityCache, profileRepository, webRequestController),
                     new ProfileMenuController(() => explorePanelView.ProfileMenuView, explorePanelView.ProfileMenuView.ProfileMenu, web3IdentityCache, profileRepository, webRequestController, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager, chatEntryConfiguration),
                     dclInput, notificationsBusController, mvcManager, inputBlock));

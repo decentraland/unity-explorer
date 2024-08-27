@@ -9,7 +9,7 @@ using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.Gizmos.Plugin;
-using DCL.Input.UnityInputSystem.Blocks;
+using DCL.Input;
 using DCL.Interaction.Utility;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.RoomHubs;
@@ -136,7 +136,7 @@ namespace Global
             container.ScenesCache = new ScenesCache();
             container.SceneReadinessReportQueue = new SceneReadinessReportQueue(container.ScenesCache);
 
-            container.InputBlock = new InputBlock(container.GlobalWorldProxy);
+            container.InputBlock = new ECSInputBlock(container.GlobalWorldProxy);
 
             container.assetsProvisioner = assetsProvisioner;
             var exposedPlayerTransform = new ExposedTransform();

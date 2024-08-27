@@ -197,7 +197,6 @@ namespace Global.Dynamic
                 globalWorld = bootstrap.CreateGlobalWorld(bootstrapContainer, staticContainer!, dynamicWorldContainer!, debugUiRoot, playerEntity);
 
                 staticContainer!.PlayerEntityProxy.SetObject(playerEntity);
-                staticContainer.InputBlock.Initialize();
 
                 await bootstrap.LoadStartingRealmAsync(dynamicWorldContainer!, ct);
                 await bootstrap.UserInitializationAsync(dynamicWorldContainer!, globalWorld, playerEntity, splashScreen, ct);
@@ -232,11 +231,7 @@ namespace Global.Dynamic
         {
             // We enable Inputs through the inputBlock so the block counters can be properly updated and the component Active flags are up-to-date as well
             // We restore all inputs except EmoteWheel and FreeCamera as they should be disabled by default
-            staticContainer!.InputBlock.UnblockInputs(InputMapComponent.Kind.Shortcuts , InputMapComponent.Kind.Player , InputMapComponent.Kind.Emotes , InputMapComponent.Kind.Camera);
-            dynamicWorldContainer!.InputGroupToggle.Enable(InputMapKind.Shortcuts);
-            dynamicWorldContainer!.InputGroupToggle.Enable(InputMapKind.Player);
-            dynamicWorldContainer!.InputGroupToggle.Enable(InputMapKind.Emotes);
-            dynamicWorldContainer!.InputGroupToggle.Enable(InputMapKind.Camera);
+            staticContainer!.InputBlock.Enable(InputMapComponent.Kind.Shortcuts, InputMapComponent.Kind.Player, InputMapComponent.Kind.Emotes, InputMapComponent.Kind.Camera);
         }
 
         [ContextMenu(nameof(ValidateSettingsAsync))]

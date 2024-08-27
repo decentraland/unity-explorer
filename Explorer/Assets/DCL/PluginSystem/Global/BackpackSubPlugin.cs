@@ -16,7 +16,6 @@ using DCL.Backpack.EmotesSection;
 using DCL.CharacterPreview;
 using DCL.Input;
 using DCL.Utilities.Extensions;
-using DCL.Input.UnityInputSystem.Blocks;
 using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.Web3.Identities;

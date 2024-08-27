@@ -8,7 +8,6 @@ using DCL.Diagnostics;
 using DCL.ExplorePanel;
 using DCL.Input;
 using DCL.Input.Component;
-using DCL.Input.UnityInputSystem.Blocks;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI;
@@ -33,7 +32,6 @@ namespace DCL.EmotesWheel
         private readonly DCLInput.EmoteWheelActions emoteWheelInput;
         private readonly IMVCManager mvcManager;
         private readonly ICursor cursor;
-        private readonly IInputGroupToggle inputGroupToggle;
         private readonly URN[] currentEmotes = new URN[Avatar.MAX_EQUIPPED_EMOTES];
         private UniTaskCompletionSource? closeViewTask;
         private CancellationTokenSource? fetchProfileCts;
@@ -52,8 +50,7 @@ namespace DCL.EmotesWheel
             IInputBlock inputBlock,
             DCLInput dclInput,
             IMVCManager mvcManager,
-            ICursor cursor,
-            IInputGroupToggle inputGroupToggle)
+            ICursor cursor)
             : base(viewFactory)
         {
             this.selfProfile = selfProfile;
@@ -67,7 +64,6 @@ namespace DCL.EmotesWheel
             emoteWheelInput = this.dclInput.EmoteWheel;
             this.mvcManager = mvcManager;
             this.cursor = cursor;
-            this.inputGroupToggle = inputGroupToggle;
 
             emoteWheelInput.Customize.performed += OpenBackpack;
             emoteWheelInput.Close.performed += Close;
@@ -235,18 +231,14 @@ namespace DCL.EmotesWheel
 
         private void UnblockUnwantedInputs()
         {
-            inputBlock.UnblockInputs(InputMapComponent.Kind.EmoteWheel);
-            inputBlock.BlockInputs(InputMapComponent.Kind.Emotes);
-            inputGroupToggle.Enable(InputMapKind.EmoteWheel);
-            inputGroupToggle.Disable(InputMapKind.Emotes);
+            inputBlock.Enable(InputMapComponent.Kind.EmoteWheel);
+            inputBlock.Disable(InputMapComponent.Kind.Emotes);
         }
 
         private void BlockUnwantedInputs()
         {
-            inputBlock.BlockInputs(InputMapComponent.Kind.EmoteWheel);
-            inputBlock.UnblockInputs(InputMapComponent.Kind.Emotes);
-            inputGroupToggle.Disable(InputMapKind.EmoteWheel);
-            inputGroupToggle.Enable(InputMapKind.Emotes);
+            inputBlock.Disable(InputMapComponent.Kind.EmoteWheel);
+            inputBlock.Enable(InputMapComponent.Kind.Emotes);
         }
 
         private void ListenToSlotsInput(InputActionMap inputActionMap)

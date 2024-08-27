@@ -130,8 +130,6 @@ namespace Global.Dynamic
 
         public RealFlowLoadingStatus RealFlowLoadingStatus { get; private set; } = null!;
 
-        public IInputGroupToggle InputGroupToggle { get; private set; } = null!;
-
         public override void Dispose()
         {
             MvcManager.Dispose();
@@ -430,8 +428,6 @@ namespace Global.Dynamic
 
             var currentSceneInfo = new CurrentSceneInfo();
 
-            container.InputGroupToggle = new ECSInputGroupToggle(world);
-
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
                 new MultiplayerPlugin(
@@ -461,7 +457,7 @@ namespace Global.Dynamic
                 new CharacterCameraPlugin(assetsProvisioner, realmSamplingData, exposedGlobalDataContainer.ExposedCameraData, debugBuilder, dynamicWorldDependencies.CommandLineArgs, dclInput),
                 new WearablePlugin(assetsProvisioner, staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, assetBundlesURL, staticContainer.CacheCleaner, wearableCatalog),
                 new EmotePlugin(staticContainer.WebRequestsContainer.WebRequestController, emotesCache, staticContainer.RealmData, multiplayerEmotesMessageBus, debugBuilder,
-                    assetsProvisioner, selfProfile, container.MvcManager, dclInput, staticContainer.CacheCleaner, identityCache, entityParticipantTable, assetBundlesURL, mainUIView, dclCursor, container.InputGroupToggle, staticContainer.InputBlock, world, playerEntity),
+                    assetsProvisioner, selfProfile, container.MvcManager, dclInput, staticContainer.CacheCleaner, identityCache, entityParticipantTable, assetBundlesURL, mainUIView, dclCursor, staticContainer.InputBlock, world, playerEntity),
                 new ProfilingPlugin(staticContainer.Profiler, staticContainer.RealmData, staticContainer.SingletonSharedDependencies.MemoryBudget, debugBuilder, staticContainer.ScenesCache),
                 new AvatarPlugin(
                     staticContainer.ComponentsContainer.ComponentPoolsRegistry,
@@ -529,8 +525,8 @@ namespace Global.Dynamic
                     backpackEventBus,
                     thirdPartyNftProviderSource,
                     container.wearablesProvider,
-                    staticContainer.InputBlock,
                     dclCursor,
+                    staticContainer.InputBlock,
                     emoteProvider,
                     world,
                     playerEntity

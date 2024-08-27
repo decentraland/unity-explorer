@@ -8,7 +8,6 @@ using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.Emoji;
 using DCL.Input;
-using DCL.Input.UnityInputSystem.Blocks;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
 using DCL.UI.MainUI;
@@ -99,8 +98,8 @@ namespace DCL.PluginSystem.Global
                 world,
                 playerEntity,
                 dclInput,
-                inputBlock,
-                eventSystem
+                eventSystem,
+                inputBlock
             );
 
             mvcManager.RegisterController(chatController);

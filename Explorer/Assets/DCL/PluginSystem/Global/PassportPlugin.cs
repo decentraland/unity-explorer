@@ -9,7 +9,6 @@ using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Chat;
 using DCL.Input;
-using DCL.Input.UnityInputSystem.Blocks;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Passport;
 using DCL.Profiles;
