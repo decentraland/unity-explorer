@@ -21,7 +21,7 @@ namespace DCL.BadgesAPIService
         public string tierId;
         public string tierName;
         public string description;
-        public string image;
+        public BadgeAssetsData assets;
         public BadgeTierCriteria criteria;
     }
 

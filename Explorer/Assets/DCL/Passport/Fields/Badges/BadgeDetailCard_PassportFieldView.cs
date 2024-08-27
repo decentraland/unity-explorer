@@ -117,7 +117,10 @@ namespace DCL.Passport.Fields.Badges
             }
 
             imageController?.SetImage(DefaultBadgeSprite);
-            string imageToLoad = !string.IsNullOrEmpty(badgeInfo.progress.lastCompletedTierImage) ? badgeInfo.progress.lastCompletedTierImage : badgeInfo.image;
+            string imageToLoad = !string.IsNullOrEmpty(badgeInfo.progress.lastCompletedTierImage) ?
+                badgeInfo.progress.lastCompletedTierImage :
+                badgeInfo.assets != null && badgeInfo.assets.textures2d != null ? badgeInfo.assets.textures2d.normal : "";
+
             if (!string.IsNullOrEmpty(imageToLoad))
                 imageController?.RequestImage(imageToLoad, hideImageWhileLoading: true);
         }

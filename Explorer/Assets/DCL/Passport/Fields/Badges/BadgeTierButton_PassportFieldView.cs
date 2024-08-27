@@ -59,8 +59,8 @@ namespace DCL.Passport.Fields.Badges
             Model = tierData;
             TierImage.SetColor(string.IsNullOrEmpty(completedAt) ? LockedBadgeImageColor : NonLockedBadgeImageColor);
             imageController?.SetImage(DefaultTierSprite);
-            if (!string.IsNullOrEmpty(tierData.image))
-                imageController?.RequestImage(tierData.image, hideImageWhileLoading: true);
+            if (tierData.assets is { textures2d: not null } && !string.IsNullOrEmpty(tierData.assets.textures2d.normal))
+                imageController?.RequestImage(tierData.assets.textures2d.normal, hideImageWhileLoading: true);
         }
 
         public void OnPointerEnter(PointerEventData eventData) =>

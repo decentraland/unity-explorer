@@ -1,3 +1,4 @@
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 
@@ -25,8 +26,8 @@ namespace DCL.BadgesAPIService
         public string category;
         public bool isTier;
         public string completedAt;
+        public BadgeAssetsData assets;
         public BadgeProgressData progress;
-        public string image;
     }
 
     [Serializable]
@@ -46,5 +47,23 @@ namespace DCL.BadgesAPIService
     {
         public string tierId;
         public string completedAt;
+    }
+
+    [Serializable]
+    public class BadgeAssetsData
+    {
+        [JsonProperty("2d")]
+        public BadgeTexturesData textures2d;
+
+        [JsonProperty("3d")]
+        public BadgeTexturesData textures3d;
+    }
+
+    [Serializable]
+    public class BadgeTexturesData
+    {
+        public string normal;
+        public string hrm;
+        public string baseColor;
     }
 }

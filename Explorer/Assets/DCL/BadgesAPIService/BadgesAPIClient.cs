@@ -92,6 +92,7 @@ namespace DCL.BadgesAPIService
                 category = badge.category,
                 isTier = badge.isTier,
                 completedAt = badge.completedAt,
+                assets = badge.assets,
                 progress = new BadgeProgressData
                 {
                     nextStepsTarget = badge.progress.nextStepsTarget,
@@ -102,7 +103,6 @@ namespace DCL.BadgesAPIService
                     lastCompletedTierImage = badge.progress.lastCompletedTierImage,
                     achievedTiers = badge.progress.achievedTiers,
                 },
-                image = badge.image,
                 isLocked = isLocked,
             };
 
@@ -154,7 +154,19 @@ namespace DCL.BadgesAPIService
                             completedAt = "1722005503466",
                             name = "Decentraland Citizen",
                             description = "Landed in Decentraland",
-                            image = "https://dejpknyizje2n.cloudfront.net/media/carstickers/versions/pixel-art-golden-medal-award-sticker-u8c98-x450.png",
+                            assets = new BadgeAssetsData
+                            {
+                                textures2d = new BadgeTexturesData
+                                {
+                                    normal = "https://dejpknyizje2n.cloudfront.net/media/carstickers/versions/pixel-art-golden-medal-award-sticker-u8c98-x450.png",
+                                },
+                                textures3d = new BadgeTexturesData
+                                {
+                                    normal = "https://dejpknyizje2n.cloudfront.net/media/carstickers/versions/pixel-art-golden-medal-award-sticker-u8c98-x450.png",
+                                    hrm = "https://dejpknyizje2n.cloudfront.net/media/carstickers/versions/pixel-art-golden-medal-award-sticker-u8c98-x450.png",
+                                    baseColor = "https://dejpknyizje2n.cloudfront.net/media/carstickers/versions/pixel-art-golden-medal-award-sticker-u8c98-x450.png",
+                                },
+                            },
                             isTier = false,
                             category = "Explorer",
                             progress = new BadgeProgressData
@@ -174,7 +186,19 @@ namespace DCL.BadgesAPIService
                             completedAt = "1722005503466",
                             name = "Emote Creator",
                             description = "50 emotes published",
-                            image = "https://images.vexels.com/media/users/3/236713/isolated/preview/2e816f91528e052edec36e8f3e9f52e1-1up-gaming-pixel-art-badge.png?w=360",
+                            assets = new BadgeAssetsData
+                            {
+                                textures2d = new BadgeTexturesData
+                                {
+                                    normal = "https://images.vexels.com/media/users/3/236713/isolated/preview/2e816f91528e052edec36e8f3e9f52e1-1up-gaming-pixel-art-badge.png?w=360",
+                                },
+                                textures3d = new BadgeTexturesData
+                                {
+                                    normal = "https://images.vexels.com/media/users/3/236713/isolated/preview/2e816f91528e052edec36e8f3e9f52e1-1up-gaming-pixel-art-badge.png?w=360",
+                                    hrm = "https://images.vexels.com/media/users/3/236713/isolated/preview/2e816f91528e052edec36e8f3e9f52e1-1up-gaming-pixel-art-badge.png?w=360",
+                                    baseColor = "https://images.vexels.com/media/users/3/236713/isolated/preview/2e816f91528e052edec36e8f3e9f52e1-1up-gaming-pixel-art-badge.png?w=360",
+                                },
+                            },
                             isTier = true,
                             category = "Socializer",
                             progress = new BadgeProgressData
@@ -226,7 +250,19 @@ namespace DCL.BadgesAPIService
                             completedAt = null,
                             name = "Traveler",
                             description = "Visit 60 scenes in Genesis City",
-                            image = "https://art.pixilart.com/2af1a2ad84482b0.png",
+                            assets = new BadgeAssetsData
+                            {
+                                textures2d = new BadgeTexturesData
+                                {
+                                    normal = "https://art.pixilart.com/2af1a2ad84482b0.png",
+                                },
+                                textures3d = new BadgeTexturesData
+                                {
+                                    normal = "https://art.pixilart.com/2af1a2ad84482b0.png",
+                                    hrm = "https://art.pixilart.com/2af1a2ad84482b0.png",
+                                    baseColor = "https://art.pixilart.com/2af1a2ad84482b0.png",
+                                },
+                            },
                             isTier = true,
                             category = "Explorer",
                             progress = new BadgeProgressData
@@ -261,7 +297,19 @@ namespace DCL.BadgesAPIService
                             completedAt = null,
                             name = "Chat User",
                             description = "Write something in the chat",
-                            image = "https://dejpknyizje2n.cloudfront.net/media/carstickers/versions/pixel-art-golden-trophy-sticker-u3310-x450.png",
+                            assets = new BadgeAssetsData
+                            {
+                                textures2d = new BadgeTexturesData
+                                {
+                                    normal = "https://dejpknyizje2n.cloudfront.net/media/carstickers/versions/pixel-art-golden-trophy-sticker-u3310-x450.png",
+                                },
+                                textures3d = new BadgeTexturesData
+                                {
+                                    normal = "https://dejpknyizje2n.cloudfront.net/media/carstickers/versions/pixel-art-golden-trophy-sticker-u3310-x450.png",
+                                    hrm = "https://dejpknyizje2n.cloudfront.net/media/carstickers/versions/pixel-art-golden-trophy-sticker-u3310-x450.png",
+                                    baseColor = "https://dejpknyizje2n.cloudfront.net/media/carstickers/versions/pixel-art-golden-trophy-sticker-u3310-x450.png",
+                                },
+                            },
                             isTier = false,
                             category = "Socializer",
                             progress = new BadgeProgressData
@@ -281,7 +329,19 @@ namespace DCL.BadgesAPIService
                             completedAt = null,
                             name = "World Jumper",
                             description = "Jump into 6 worlds",
-                            image = "",
+                            assets = new BadgeAssetsData
+                            {
+                                textures2d = new BadgeTexturesData
+                                {
+                                    normal = "",
+                                },
+                                textures3d = new BadgeTexturesData
+                                {
+                                    normal = "",
+                                    hrm = "",
+                                    baseColor = "",
+                                },
+                            },
                             isTier = true,
                             category = "Socializer",
                             progress = new BadgeProgressData
@@ -301,7 +361,19 @@ namespace DCL.BadgesAPIService
                             completedAt = null,
                             name = "Do Nothing",
                             description = "Do nothing during 5 minutes",
-                            image = "https://images.vexels.com/content/236707/preview/afk-gaming-pixel-art-badge-b103c0.png",
+                            assets = new BadgeAssetsData
+                            {
+                                textures2d = new BadgeTexturesData
+                                {
+                                    normal = "https://images.vexels.com/content/236707/preview/afk-gaming-pixel-art-badge-b103c0.png",
+                                },
+                                textures3d = new BadgeTexturesData
+                                {
+                                    normal = "https://images.vexels.com/content/236707/preview/afk-gaming-pixel-art-badge-b103c0.png",
+                                    hrm = "https://images.vexels.com/content/236707/preview/afk-gaming-pixel-art-badge-b103c0.png",
+                                    baseColor = "https://images.vexels.com/content/236707/preview/afk-gaming-pixel-art-badge-b103c0.png",
+                                },
+                            },
                             isTier = false,
                             category = "Builder",
                             progress = new BadgeProgressData
@@ -321,7 +393,19 @@ namespace DCL.BadgesAPIService
                             completedAt = null,
                             name = "Open for Business",
                             description = "Complete Store Information and submit at least 1 collection",
-                            image = "https://www.coywolf.news/wp-content/uploads/2020/07/gmb-badge.png",
+                            assets = new BadgeAssetsData
+                            {
+                                textures2d = new BadgeTexturesData
+                                {
+                                    normal = "https://www.coywolf.news/wp-content/uploads/2020/07/gmb-badge.png",
+                                },
+                                textures3d = new BadgeTexturesData
+                                {
+                                    normal = "https://www.coywolf.news/wp-content/uploads/2020/07/gmb-badge.png",
+                                    hrm = "https://www.coywolf.news/wp-content/uploads/2020/07/gmb-badge.png",
+                                    baseColor = "https://www.coywolf.news/wp-content/uploads/2020/07/gmb-badge.png",
+                                },
+                            },
                             isTier = false,
                             category = "Explorer",
                             progress = new BadgeProgressData
@@ -355,7 +439,19 @@ namespace DCL.BadgesAPIService
                     {
                         steps = 1,
                     },
-                    image = "https://picsum.photos/seed/1/300/300",
+                    assets = new BadgeAssetsData
+                    {
+                        textures2d = new BadgeTexturesData
+                        {
+                            normal = "https://picsum.photos/seed/1/300/300",
+                        },
+                        textures3d = new BadgeTexturesData
+                        {
+                            normal = "https://picsum.photos/seed/1/300/300",
+                            hrm = "https://picsum.photos/seed/1/300/300",
+                            baseColor = "https://picsum.photos/seed/1/300/300",
+                        },
+                    },
                 },
                 new TierData
                 {
@@ -366,7 +462,19 @@ namespace DCL.BadgesAPIService
                     {
                         steps = 10,
                     },
-                    image = "https://picsum.photos/seed/2/300/300",
+                    assets = new BadgeAssetsData
+                    {
+                        textures2d = new BadgeTexturesData
+                        {
+                            normal = "https://picsum.photos/seed/2/300/300",
+                        },
+                        textures3d = new BadgeTexturesData
+                        {
+                            normal = "https://picsum.photos/seed/2/300/300",
+                            hrm = "https://picsum.photos/seed/2/300/300",
+                            baseColor = "https://picsum.photos/seed/2/300/300",
+                        },
+                    },
                 },
                 new TierData
                 {
@@ -377,7 +485,19 @@ namespace DCL.BadgesAPIService
                     {
                         steps = 20,
                     },
-                    image = "https://picsum.photos/seed/3/300/300",
+                    assets = new BadgeAssetsData
+                    {
+                        textures2d = new BadgeTexturesData
+                        {
+                            normal = "https://picsum.photos/seed/3/300/300",
+                        },
+                        textures3d = new BadgeTexturesData
+                        {
+                            normal = "https://picsum.photos/seed/3/300/300",
+                            hrm = "https://picsum.photos/seed/3/300/300",
+                            baseColor = "https://picsum.photos/seed/3/300/300",
+                        },
+                    },
                 },
                 new TierData
                 {
@@ -388,7 +508,19 @@ namespace DCL.BadgesAPIService
                     {
                         steps = 30,
                     },
-                    image = "https://picsum.photos/seed/4/300/300",
+                    assets = new BadgeAssetsData
+                    {
+                        textures2d = new BadgeTexturesData
+                        {
+                            normal = "https://picsum.photos/seed/4/300/300",
+                        },
+                        textures3d = new BadgeTexturesData
+                        {
+                            normal = "https://picsum.photos/seed/4/300/300",
+                            hrm = "https://picsum.photos/seed/4/300/300",
+                            baseColor = "https://picsum.photos/seed/4/300/300",
+                        },
+                    },
                 },
                 new TierData
                 {
@@ -399,7 +531,19 @@ namespace DCL.BadgesAPIService
                     {
                         steps = 40,
                     },
-                    image = "https://picsum.photos/seed/5/300/300",
+                    assets = new BadgeAssetsData
+                    {
+                        textures2d = new BadgeTexturesData
+                        {
+                            normal = "https://picsum.photos/seed/5/300/300",
+                        },
+                        textures3d = new BadgeTexturesData
+                        {
+                            normal = "https://picsum.photos/seed/5/300/300",
+                            hrm = "https://picsum.photos/seed/5/300/300",
+                            baseColor = "https://picsum.photos/seed/5/300/300",
+                        },
+                    },
                 },
                 new TierData
                 {
@@ -410,7 +554,19 @@ namespace DCL.BadgesAPIService
                     {
                         steps = 50,
                     },
-                    image = "https://picsum.photos/seed/6/300/300",
+                    assets = new BadgeAssetsData
+                    {
+                        textures2d = new BadgeTexturesData
+                        {
+                            normal = "https://picsum.photos/seed/6/300/300",
+                        },
+                        textures3d = new BadgeTexturesData
+                        {
+                            normal = "https://picsum.photos/seed/6/300/300",
+                            hrm = "https://picsum.photos/seed/6/300/300",
+                            baseColor = "https://picsum.photos/seed/6/300/300",
+                        },
+                    },
                 },
             };
 
@@ -425,7 +581,19 @@ namespace DCL.BadgesAPIService
                     {
                         steps = 10,
                     },
-                    image = "https://picsum.photos/seed/7/300/300",
+                    assets = new BadgeAssetsData
+                    {
+                        textures2d = new BadgeTexturesData
+                        {
+                            normal = "https://picsum.photos/seed/7/300/300",
+                        },
+                        textures3d = new BadgeTexturesData
+                        {
+                            normal = "https://picsum.photos/seed/7/300/300",
+                            hrm = "https://picsum.photos/seed/7/300/300",
+                            baseColor = "https://picsum.photos/seed/7/300/300",
+                        },
+                    },
                 },
                 new TierData
                 {
@@ -436,7 +604,19 @@ namespace DCL.BadgesAPIService
                     {
                         steps = 20,
                     },
-                    image = "https://picsum.photos/seed/8/300/300",
+                    assets = new BadgeAssetsData
+                    {
+                        textures2d = new BadgeTexturesData
+                        {
+                            normal = "https://picsum.photos/seed/8/300/300",
+                        },
+                        textures3d = new BadgeTexturesData
+                        {
+                            normal = "https://picsum.photos/seed/8/300/300",
+                            hrm = "https://picsum.photos/seed/8/300/300",
+                            baseColor = "https://picsum.photos/seed/8/300/300",
+                        },
+                    },
                 },
                 new TierData
                 {
@@ -447,7 +627,19 @@ namespace DCL.BadgesAPIService
                     {
                         steps = 30,
                     },
-                    image = "https://picsum.photos/seed/9/300/300",
+                    assets = new BadgeAssetsData
+                    {
+                        textures2d = new BadgeTexturesData
+                        {
+                            normal = "https://picsum.photos/seed/9/300/300",
+                        },
+                        textures3d = new BadgeTexturesData
+                        {
+                            normal = "https://picsum.photos/seed/9/300/300",
+                            hrm = "https://picsum.photos/seed/9/300/300",
+                            baseColor = "https://picsum.photos/seed/9/300/300",
+                        },
+                    },
                 },
                 new TierData
                 {
@@ -458,7 +650,19 @@ namespace DCL.BadgesAPIService
                     {
                         steps = 40,
                     },
-                    image = "https://picsum.photos/seed/10/300/300",
+                    assets = new BadgeAssetsData
+                    {
+                        textures2d = new BadgeTexturesData
+                        {
+                            normal = "https://picsum.photos/seed/10/300/300",
+                        },
+                        textures3d = new BadgeTexturesData
+                        {
+                            normal = "https://picsum.photos/seed/10/300/300",
+                            hrm = "https://picsum.photos/seed/10/300/300",
+                            baseColor = "https://picsum.photos/seed/10/300/300",
+                        },
+                    },
                 },
                 new TierData
                 {
@@ -469,7 +673,19 @@ namespace DCL.BadgesAPIService
                     {
                         steps = 50,
                     },
-                    image = "https://picsum.photos/seed/11/300/300",
+                    assets = new BadgeAssetsData
+                    {
+                        textures2d = new BadgeTexturesData
+                        {
+                            normal = "https://picsum.photos/seed/11/300/300",
+                        },
+                        textures3d = new BadgeTexturesData
+                        {
+                            normal = "https://picsum.photos/seed/11/300/300",
+                            hrm = "https://picsum.photos/seed/11/300/300",
+                            baseColor = "https://picsum.photos/seed/11/300/300",
+                        },
+                    },
                 },
                 new TierData
                 {
@@ -480,7 +696,19 @@ namespace DCL.BadgesAPIService
                     {
                         steps = 60,
                     },
-                    image = "https://picsum.photos/seed/12/300/300",
+                    assets = new BadgeAssetsData
+                    {
+                        textures2d = new BadgeTexturesData
+                        {
+                            normal = "https://picsum.photos/seed/12/300/300",
+                        },
+                        textures3d = new BadgeTexturesData
+                        {
+                            normal = "https://picsum.photos/seed/12/300/300",
+                            hrm = "https://picsum.photos/seed/12/300/300",
+                            baseColor = "https://picsum.photos/seed/12/300/300",
+                        },
+                    },
                 },
             };
 
@@ -495,7 +723,19 @@ namespace DCL.BadgesAPIService
                     {
                         steps = 1,
                     },
-                    image = "",
+                    assets = new BadgeAssetsData
+                    {
+                        textures2d = new BadgeTexturesData
+                        {
+                            normal = "",
+                        },
+                        textures3d = new BadgeTexturesData
+                        {
+                            normal = "",
+                            hrm = "",
+                            baseColor = "",
+                        },
+                    },
                 },
                 new TierData
                 {
@@ -506,7 +746,19 @@ namespace DCL.BadgesAPIService
                     {
                         steps = 2,
                     },
-                    image = "",
+                    assets = new BadgeAssetsData
+                    {
+                        textures2d = new BadgeTexturesData
+                        {
+                            normal = "",
+                        },
+                        textures3d = new BadgeTexturesData
+                        {
+                            normal = "",
+                            hrm = "",
+                            baseColor = "",
+                        },
+                    },
                 },
                 new TierData
                 {
@@ -517,7 +769,19 @@ namespace DCL.BadgesAPIService
                     {
                         steps = 3,
                     },
-                    image = "",
+                    assets = new BadgeAssetsData
+                    {
+                        textures2d = new BadgeTexturesData
+                        {
+                            normal = "",
+                        },
+                        textures3d = new BadgeTexturesData
+                        {
+                            normal = "",
+                            hrm = "",
+                            baseColor = "",
+                        },
+                    },
                 },
                 new TierData
                 {
@@ -528,7 +792,19 @@ namespace DCL.BadgesAPIService
                     {
                         steps = 4,
                     },
-                    image = "",
+                    assets = new BadgeAssetsData
+                    {
+                        textures2d = new BadgeTexturesData
+                        {
+                            normal = "",
+                        },
+                        textures3d = new BadgeTexturesData
+                        {
+                            normal = "",
+                            hrm = "",
+                            baseColor = "",
+                        },
+                    },
                 },
                 new TierData
                 {
@@ -539,7 +815,19 @@ namespace DCL.BadgesAPIService
                     {
                         steps = 5,
                     },
-                    image = "",
+                    assets = new BadgeAssetsData
+                    {
+                        textures2d = new BadgeTexturesData
+                        {
+                            normal = "",
+                        },
+                        textures3d = new BadgeTexturesData
+                        {
+                            normal = "",
+                            hrm = "",
+                            baseColor = "",
+                        },
+                    },
                 },
                 new TierData
                 {
@@ -550,7 +838,19 @@ namespace DCL.BadgesAPIService
                     {
                         steps = 6,
                     },
-                    image = "",
+                    assets = new BadgeAssetsData
+                    {
+                        textures2d = new BadgeTexturesData
+                        {
+                            normal = "",
+                        },
+                        textures3d = new BadgeTexturesData
+                        {
+                            normal = "",
+                            hrm = "",
+                            baseColor = "",
+                        },
+                    },
                 },
             };
 
