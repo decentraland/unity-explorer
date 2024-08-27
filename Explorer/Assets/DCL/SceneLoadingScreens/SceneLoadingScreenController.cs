@@ -262,12 +262,12 @@ namespace DCL.SceneLoadingScreens
 
         private void BlockUnwantedInputs()
         {
-            inputBlock.BlockInputs(InputMapComponent.Kind.Camera | InputMapComponent.Kind.Shortcuts | InputMapComponent.Kind.Player);
+            inputBlock.BlockInputs(InputMapComponent.Kind.Camera , InputMapComponent.Kind.Shortcuts , InputMapComponent.Kind.Player);
         }
 
         private void UnblockUnwantedInputs()
         {
-            inputBlock.UnblockInputs(InputMapComponent.Kind.Camera | InputMapComponent.Kind.Shortcuts | InputMapComponent.Kind.Player);
+            inputBlock.UnblockInputs(InputMapComponent.Kind.Camera , InputMapComponent.Kind.Shortcuts , InputMapComponent.Kind.Player);
         }
 
     }

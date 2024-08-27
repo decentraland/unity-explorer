@@ -6,18 +6,17 @@ namespace DCL.Input.UnityInputSystem.Blocks
     public interface IInputBlock
     {
         public void Initialize();
-        public void BlockInputs(InputMapComponent.Kind kinds, bool singleValue = false);
-        public void UnblockInputs(InputMapComponent.Kind kinds, bool singleValue = false);
+        public void BlockInputs(params InputMapComponent.Kind[] kinds);
+        public void UnblockInputs(params InputMapComponent.Kind[] kinds);
 
         class Fake : IInputBlock
         {
             public void Initialize(){}
-            public void BlockInputs(InputMapComponent.Kind kinds, bool singleValue)
+            public void BlockInputs(params InputMapComponent.Kind[] kinds)
             {
                 //ignore
             }
-
-            public void UnblockInputs(InputMapComponent.Kind kinds, bool singleValue)
+            public void UnblockInputs(params InputMapComponent.Kind[] kinds)
             {
                 //ignore
             }

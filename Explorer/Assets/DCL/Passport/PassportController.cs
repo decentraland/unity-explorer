@@ -118,7 +118,7 @@ namespace DCL.Passport
             LoadUserProfileAsync(currentUserId, characterPreviewLoadingCts.Token).Forget();
             viewInstance!.MainScroll.verticalNormalizedPosition = 1;
 
-            inputBlock.BlockInputs(InputMapComponent.Kind.Shortcuts | InputMapComponent.Kind.Camera | InputMapComponent.Kind.Player);
+            inputBlock.BlockInputs(InputMapComponent.Kind.Shortcuts , InputMapComponent.Kind.Camera , InputMapComponent.Kind.Player);
 
             viewInstance.ErrorNotification.Hide(true);
 
@@ -129,7 +129,7 @@ namespace DCL.Passport
         {
             passportErrorsController!.Hide(true);
 
-            inputBlock.UnblockInputs(InputMapComponent.Kind.Shortcuts | InputMapComponent.Kind.Camera | InputMapComponent.Kind.Player);
+            inputBlock.UnblockInputs(InputMapComponent.Kind.Shortcuts , InputMapComponent.Kind.Camera , InputMapComponent.Kind.Player);
 
             characterPreviewController!.OnHide();
 

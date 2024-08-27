@@ -21,37 +21,23 @@ namespace DCL.Input.UnityInputSystem.Blocks
             inputMap = globalWorld.StrictObject.CacheInputMap();
         }
 
-        public void BlockInputs(InputMapComponent.Kind kinds, bool singleValue = false)
+        public void BlockInputs(params InputMapComponent.Kind[] kinds)
         {
             ref var inputMapComponent = ref inputMap.GetInputMapComponent(globalWorld.StrictObject);
 
-            if (singleValue)
+            foreach (var kind in kinds)
             {
-                inputMapComponent.BlockInput(kinds);
-                return;
-            }
-
-            for (var i = 0; i < InputMapComponent.VALUES.Count; i++)
-            {
-                InputMapComponent.Kind kind = InputMapComponent.VALUES[i];
-                if (EnumUtils.HasFlag(kinds, kind)) { inputMapComponent.BlockInput(kind); }
+                inputMapComponent.BlockInput(kind);
             }
         }
 
-        public void UnblockInputs(InputMapComponent.Kind kinds, bool singleValue = false)
+        public void UnblockInputs(params InputMapComponent.Kind[] kinds)
         {
             ref var inputMapComponent = ref inputMap.GetInputMapComponent(globalWorld.StrictObject);
 
-            if (singleValue)
+            foreach (var kind in kinds)
             {
-                inputMapComponent.UnblockInput(kinds);
-                return;
-            }
-
-            for (var i = 0; i < InputMapComponent.VALUES.Count; i++)
-            {
-                InputMapComponent.Kind kind = InputMapComponent.VALUES[i];
-                if (EnumUtils.HasFlag(kinds, kind)) { inputMapComponent.UnblockInput(kind); }
+                inputMapComponent.UnblockInput(kind);
             }
         }
     }

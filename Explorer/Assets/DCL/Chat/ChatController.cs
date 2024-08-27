@@ -261,13 +261,13 @@ namespace DCL.Chat
         private void BlockUnwantedInputs()
         {
             world.AddOrGet(cameraEntity, new CameraBlockerComponent());
-            inputBlock.BlockInputs(InputMapComponent.Kind.Camera | InputMapComponent.Kind.Shortcuts | InputMapComponent.Kind.Player);
+            inputBlock.BlockInputs(InputMapComponent.Kind.Camera , InputMapComponent.Kind.Shortcuts , InputMapComponent.Kind.Player);
         }
 
         private void UnblockUnwantedInputs()
         {
             world.TryRemove<CameraBlockerComponent>(cameraEntity);
-            inputBlock.UnblockInputs(InputMapComponent.Kind.Camera | InputMapComponent.Kind.Shortcuts | InputMapComponent.Kind.Player);
+            inputBlock.UnblockInputs(InputMapComponent.Kind.Camera , InputMapComponent.Kind.Shortcuts , InputMapComponent.Kind.Player);
         }
 
         private void OnSubmitAction(InputAction.CallbackContext obj)

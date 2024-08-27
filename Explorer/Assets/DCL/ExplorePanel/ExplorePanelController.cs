@@ -238,12 +238,12 @@ namespace DCL.ExplorePanel
 
         private void BlockUnwantedInputs()
         {
-            inputBlock.BlockInputs(InputMapComponent.Kind.Camera | InputMapComponent.Kind.Player);
+            inputBlock.BlockInputs(InputMapComponent.Kind.Camera , InputMapComponent.Kind.Player);
         }
 
         private void UnblockUnwantedInputs()
         {
-            inputBlock.UnblockInputs(InputMapComponent.Kind.Camera | InputMapComponent.Kind.Player);
+            inputBlock.UnblockInputs(InputMapComponent.Kind.Camera , InputMapComponent.Kind.Player);
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct)

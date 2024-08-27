@@ -232,16 +232,16 @@ namespace DCL.EmotesWheel
 
         private void UnblockUnwantedInputs()
         {
-            inputBlock.UnblockInputs(InputMapComponent.Kind.EmoteWheel, true);
+            inputBlock.UnblockInputs(InputMapComponent.Kind.EmoteWheel);
             // We also disable shortcuts because the wheel can be opened and closed with the same key bind
             // If we leave it enabled, it will close and then re-open instantly
-            inputBlock.BlockInputs(InputMapComponent.Kind.Emotes | InputMapComponent.Kind.Shortcuts);
+            inputBlock.BlockInputs(InputMapComponent.Kind.Emotes , InputMapComponent.Kind.Shortcuts);
         }
 
         private void BlockUnwantedInputs()
         {
-            inputBlock.BlockInputs(InputMapComponent.Kind.EmoteWheel, true);
-            inputBlock.UnblockInputs(InputMapComponent.Kind.Emotes | InputMapComponent.Kind.Shortcuts);
+            inputBlock.BlockInputs(InputMapComponent.Kind.EmoteWheel);
+            inputBlock.UnblockInputs(InputMapComponent.Kind.Emotes, InputMapComponent.Kind.Shortcuts);
         }
 
         private void ListenToSlotsInput(InputActionMap inputActionMap)
