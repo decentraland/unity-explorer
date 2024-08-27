@@ -24,11 +24,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications.SDKMessageBus
         public void Send(string data)
         {
             byte[] dataBytes = Encoding.UTF8.GetBytes(data);
-            Span<byte> encodedMessage = stackalloc byte[dataBytes.Length + 1];
-            encodedMessage[0] = (byte)MsgType.String;
-            dataBytes.CopyTo(encodedMessage[1..]);
-
-            communicationControllerHub.SendMessage(encodedMessage, sceneData.SceneEntityDefinition.id, cancellationTokenSource.Token);
+            EncodeAndSendMessage(MsgType.String, dataBytes);
         }
 
         protected override void OnMessageReceived(MsgType messageType, ReadOnlySpan<byte> decodedMessage, string fromWalletId)

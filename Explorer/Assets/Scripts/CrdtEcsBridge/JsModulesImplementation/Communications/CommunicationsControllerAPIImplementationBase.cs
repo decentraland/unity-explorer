@@ -19,10 +19,9 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
         }
 
         protected readonly List<IMemoryOwner<byte>> eventsToProcess = new ();
-        protected readonly CancellationTokenSource cancellationTokenSource = new ();
-        protected readonly ICommunicationControllerHub communicationControllerHub;
-        protected readonly ISceneData sceneData;
-
+        private readonly CancellationTokenSource cancellationTokenSource = new ();
+        private readonly ICommunicationControllerHub communicationControllerHub;
+        private readonly ISceneData sceneData;
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IJsOperations jsOperations;
         private readonly Action<ICommunicationControllerHub.SceneMessage> onMessageReceivedCached;
@@ -64,22 +63,8 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
                 return jsOperations.ConvertToScriptTypedArrays(Array.Empty<IMemoryOwner<byte>>());
 
             foreach (PoolableByteArray poolable in data)
-            {
-                if (poolable.Length == 0)
-                    continue;
-
-                Memory<byte> message = poolable.Memory;
-
-                EncodeAndSend();
-
-                void EncodeAndSend()
-                {
-                    Span<byte> encodedMessage = stackalloc byte[message.Length + 1];
-                    encodedMessage[0] = (byte)MsgType.Uint8Array;
-                    message.Span.CopyTo(encodedMessage[1..]);
-                    SendMessage(encodedMessage);
-                }
-            }
+                if (poolable.Length > 0)
+                    EncodeAndSendMessage(MsgType.Uint8Array, poolable.Memory.Span);
 
             lock (eventsToProcess)
             {
@@ -98,8 +83,11 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
             eventsToProcess.Clear();
         }
 
-        private void SendMessage(ReadOnlySpan<byte> message)
+        protected void EncodeAndSendMessage(MsgType msgType, ReadOnlySpan<byte> message)
         {
+            Span<byte> encodedMessage = stackalloc byte[message.Length + 1];
+            encodedMessage[0] = (byte)msgType;
+            message.CopyTo(encodedMessage[1..]);
             communicationControllerHub.SendMessage(message, sceneData.SceneEntityDefinition.id!, cancellationTokenSource.Token);
         }
 
