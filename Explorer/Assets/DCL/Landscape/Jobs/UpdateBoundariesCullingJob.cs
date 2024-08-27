@@ -2,12 +2,13 @@
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
+using UnityEngine;
 
 namespace DCL.Landscape.Jobs
 {
     public struct VisibleBounds
     {
-        public AABB Bounds;
+        public Bounds Bounds;
         public bool IsVisible;
         public bool IsAtDistance;
         public bool IsDirty;
@@ -41,7 +42,7 @@ namespace DCL.Landscape.Jobs
 
             if (isVisible)
             {
-                float sqrDist = terrain.Bounds.DistanceSq(cameraPosition);
+                float sqrDist = terrain.Bounds.SqrDistance(cameraPosition);
                 isAtDistance = sqrDist < detailDistanceSqr;
             }
 
@@ -54,7 +55,7 @@ namespace DCL.Landscape.Jobs
 
         // got this one from https://forum.unity.com/threads/managed-version-of-geometryutility-testplanesaabb.473575/
         // thanks kind internet fellow :)
-        private bool TestPlanesAABB(AABB bounds)
+        private bool TestPlanesAABB(Bounds bounds)
         {
             for (var i = 0; i < cameraPlanes.Length; i++)
             {
@@ -62,7 +63,7 @@ namespace DCL.Landscape.Jobs
                 float3 planeNormal = plane.xyz;
                 float planeDistance = plane.w;
                 float3 normalSign = math.sign(planeNormal);
-                float3 testPoint = bounds.Center + (bounds.Extents * normalSign);
+                float3 testPoint = new float3(bounds.center) + (bounds.extents * normalSign);
 
                 float dot = math.dot(testPoint, planeNormal);
 
