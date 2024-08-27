@@ -57,7 +57,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.SignFlow
 
             if (result.Success == false)
             {
-                ReportHub.LogError(ReportCategory.LIVEKIT, $"Cannot message for sign for address {ethereumAddress}: {result.ErrorMessage}");
+                ReportHub.LogError(ReportCategory.LIVEKIT, $"Cannot message for sign for address {ethereumAddress}: {result.Error?.Message}");
                 return LightResult<string>.FAILURE;
             }
 
@@ -149,7 +149,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.SignFlow
 
                     if (result.Success == false)
                     {
-                        ReportHub.LogError(ReportCategory.LIVEKIT, $"Cannot listen for connection string: {result.ErrorMessage}");
+                        ReportHub.LogError(ReportCategory.LIVEKIT, $"Cannot listen for connection string: {result.Error?.Message}");
                         continue;
                     }
 
