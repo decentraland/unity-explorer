@@ -37,9 +37,9 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
                 return;
 
             // Wallet Id
-            int walletBytesCount = Encoding.UTF8.GetByteCount(receivedMessage.WalletId);
+            int walletBytesCount = Encoding.UTF8.GetByteCount(receivedMessage.FromWalletId);
             Span<byte> senderBytes = stackalloc byte[walletBytesCount];
-            Encoding.UTF8.GetBytes(receivedMessage.WalletId, senderBytes);
+            Encoding.UTF8.GetBytes(receivedMessage.FromWalletId, senderBytes);
 
             int messageLength = senderBytes.Length + decodedMessage.Length + 1;
 

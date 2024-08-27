@@ -17,13 +17,13 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
         {
             public readonly ReadOnlyMemory<byte> Data;
             public readonly string SceneId;
-            public readonly string WalletId;
+            public readonly string FromWalletId;
 
             private SceneMessage(in ReceivedMessage<Scene> message)
             {
                 Data = message.Payload.Data.Memory;
                 SceneId = message.Payload.SceneId;
-                WalletId = message.FromWalletId;
+                FromWalletId = message.FromWalletId;
             }
 
             public static SceneMessage CopyFrom(in ReceivedMessage<Scene> message) =>

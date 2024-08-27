@@ -36,7 +36,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications.SDKMessageBus
 
             SceneCommsMessages.Add(new CommsPayload
             {
-                sender = receivedMessage.WalletId,
+                sender = receivedMessage.FromWalletId,
                 message = Encoding.UTF8.GetString(decodedMessage)
             });
         }
