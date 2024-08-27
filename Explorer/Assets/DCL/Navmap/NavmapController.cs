@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Audio;
 using DCL.Browser;
+using DCL.Input.UnityInputSystem.Blocks;
 using DCL.MapRenderer;
 using DCL.MapRenderer.CommonBehavior;
 using DCL.MapRenderer.ConsumerUtils;
@@ -72,7 +73,8 @@ namespace DCL.Navmap
             IRealmData realmData,
             IMapPathEventBus mapPathEventBus,
             World world,
-            Entity playerEntity)
+            Entity playerEntity,
+            IInputBlock inputBlock)
         {
             this.navmapView = navmapView;
             this.mapRenderer = mapRenderer;
@@ -83,7 +85,7 @@ namespace DCL.Navmap
 
             zoomController = new NavmapZoomController(navmapView.zoomView, dclInput);
             filterController = new NavmapFilterController(this.navmapView.filterView, mapRenderer, webBrowser);
-            searchBarController = new NavmapSearchBarController(navmapView.SearchBarView, navmapView.SearchBarResultPanel, navmapView.HistoryRecordPanelView, placesAPIService, navmapView.floatingPanelView, webRequestController, dclInput);
+            searchBarController = new NavmapSearchBarController(navmapView.SearchBarView, navmapView.SearchBarResultPanel, navmapView.HistoryRecordPanelView, placesAPIService, navmapView.floatingPanelView, webRequestController, inputBlock);
             FloatingPanelController = new FloatingPanelController(navmapView.floatingPanelView, placesAPIService, webRequestController, realmNavigator, mapPathEventBus);
             FloatingPanelController.OnJumpIn += _ => searchBarController.ResetSearch();
             FloatingPanelController.OnSetAsDestination += SetDestination;

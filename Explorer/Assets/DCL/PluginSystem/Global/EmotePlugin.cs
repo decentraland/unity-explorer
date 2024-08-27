@@ -9,6 +9,7 @@ using DCL.Backpack;
 using DCL.DebugUtilities;
 using DCL.EmotesWheel;
 using DCL.Input;
+using DCL.Input.UnityInputSystem.Blocks;
 using DCL.Multiplayer.Emotes;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Profiles.Self;
@@ -46,6 +47,7 @@ namespace DCL.PluginSystem.Global
         private readonly URLDomain assetBundleURL;
         private readonly MainUIView mainUIView;
         private readonly ICursor cursor;
+        private readonly IInputBlock inputBlock;
         private readonly IInputGroupToggle inputGroupToggle;
         private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
@@ -68,6 +70,7 @@ namespace DCL.PluginSystem.Global
             MainUIView mainUIView,
             ICursor cursor,
             IInputGroupToggle inputGroupToggle,
+            IInputBlock inputBlock,
             Arch.Core.World world,
             Entity playerEntity)
         {
@@ -88,6 +91,7 @@ namespace DCL.PluginSystem.Global
             this.inputGroupToggle = inputGroupToggle;
             this.world = world;
             this.playerEntity = playerEntity;
+            this.inputBlock = inputBlock;
 
             audioClipsCache = new AudioClipsCache();
             cacheCleaner.Register(audioClipsCache);
@@ -147,7 +151,7 @@ namespace DCL.PluginSystem.Global
 
             emotesWheelController = new EmotesWheelController(EmotesWheelController.CreateLazily(emotesWheelPrefab, null),
                 selfProfile, emoteCache, emoteWheelRarityBackgrounds, world, playerEntity, thumbnailProvider,
-                dclInput, mvcManager, cursor, inputGroupToggle);
+                dclInput, mvcManager, cursor, inputGroupToggle, inputBlock);
 
             mvcManager.RegisterController(emotesWheelController);
         }

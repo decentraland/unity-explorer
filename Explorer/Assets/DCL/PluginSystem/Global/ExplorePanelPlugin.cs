@@ -16,6 +16,7 @@ using DCL.CharacterPreview;
 using DCL.Chat;
 using DCL.ExplorePanel;
 using DCL.Input;
+using DCL.Input.UnityInputSystem.Blocks;
 using DCL.Landscape.Settings;
 using DCL.MapRenderer;
 using DCL.Navmap;
@@ -83,6 +84,7 @@ namespace DCL.PluginSystem.Global
         private readonly URLDomain assetBundleURL;
         private readonly INotificationsBusController notificationsBusController;
         private readonly ChatEntryConfigurationSO chatEntryConfiguration;
+        private readonly IInputBlock inputBlock;
 
         private NavmapController? navmapController;
         private SettingsController? settingsController;
@@ -118,6 +120,7 @@ namespace DCL.PluginSystem.Global
             IThirdPartyNftProviderSource thirdPartyNftProviderSource,
             IWearablesProvider wearablesProvider,
             ICursor cursor,
+            IInputBlock inputBlock,
             IEmoteProvider emoteProvider,
             Arch.Core.World world,
             Entity playerEntity)
@@ -151,6 +154,7 @@ namespace DCL.PluginSystem.Global
             this.backpackEventBus = backpackEventBus;
             this.thirdPartyNftProviderSource = thirdPartyNftProviderSource;
             this.wearablesProvider = wearablesProvider;
+            this.inputBlock = inputBlock;
             this.cursor = cursor;
             this.emoteProvider = emoteProvider;
             this.world = world;
@@ -181,13 +185,13 @@ namespace DCL.PluginSystem.Global
                 settings.EmbeddedEmotesAsURN(),
                 forceRender,
                 realmData,
-                dclInput,
                 assetBundleURL,
                 webRequestController,
                 characterPreviewEventBus,
                 backpackEventBus,
                 thirdPartyNftProviderSource,
                 wearablesProvider,
+                inputBlock,
                 cursor,
                 emoteProvider,
                 world,
@@ -205,7 +209,7 @@ namespace DCL.PluginSystem.Global
             ProvidedAsset<QualitySettingsAsset> qualitySettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.QualitySettingsAsset, ct);
             settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>(), settingsMenuConfiguration.Value, generalAudioMixer.Value, realmPartitionSettings.Value, landscapeData.Value, qualitySettingsAsset.Value);
 
-            navmapController = new NavmapController(navmapView: explorePanelView.GetComponentInChildren<NavmapView>(), mapRendererContainer.MapRenderer, placesAPIService, webRequestController, webBrowser, dclInput, realmNavigator, realmData, mapPathEventBus, world, playerEntity);
+            navmapController = new NavmapController(navmapView: explorePanelView.GetComponentInChildren<NavmapView>(), mapRendererContainer.MapRenderer, placesAPIService, webRequestController, webBrowser, dclInput, realmNavigator, realmData, mapPathEventBus, inputBlock, world, playerEntity);
 
             await navmapController.InitializeAssetsAsync(assetsProvisioner, ct);
             await backpackSubPlugin.InitializeAsync(settings.BackpackSettings, explorePanelView.GetComponentInChildren<BackpackView>(), ct);
@@ -214,7 +218,7 @@ namespace DCL.PluginSystem.Global
                 ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackSubPlugin.backpackController!, playerEntity, world,
                     new ProfileWidgetController(() => explorePanelView.ProfileWidget, web3IdentityCache, profileRepository, webRequestController),
                     new ProfileMenuController(() => explorePanelView.ProfileMenuView, explorePanelView.ProfileMenuView.ProfileMenu, web3IdentityCache, profileRepository, webRequestController, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager, chatEntryConfiguration),
-                    dclInput, notificationsBusController, mvcManager));
+                    dclInput, notificationsBusController, mvcManager, inputBlock));
 
             inputHandler = new ExplorePanelInputHandler(dclInput, mvcManager);
         }

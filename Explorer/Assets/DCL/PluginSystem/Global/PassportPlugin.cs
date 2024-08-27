@@ -9,6 +9,7 @@ using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Chat;
 using DCL.Input;
+using DCL.Input.UnityInputSystem.Blocks;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Passport;
 using DCL.Profiles;
@@ -35,9 +36,9 @@ namespace DCL.PluginSystem.Global
         private readonly IWebRequestController webRequestController;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
         private readonly ISelfProfile selfProfile;
-        private readonly DCLInput dclInput;
         private readonly IWebBrowser webBrowser;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
+        private readonly IInputBlock inputBlock;
         private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
 
@@ -55,9 +56,9 @@ namespace DCL.PluginSystem.Global
             IWebRequestController webRequestController,
             CharacterPreviewEventBus characterPreviewEventBus,
             ISelfProfile selfProfile,
-            DCLInput dclInput,
             IWebBrowser webBrowser,
             IDecentralandUrlsSource decentralandUrlsSource,
+            IInputBlock inputBlock,
             Arch.Core.World world,
             Entity playerEntity
         )
@@ -73,9 +74,9 @@ namespace DCL.PluginSystem.Global
             this.webRequestController = webRequestController;
             this.characterPreviewEventBus = characterPreviewEventBus;
             this.selfProfile = selfProfile;
-            this.dclInput = dclInput;
             this.webBrowser = webBrowser;
             this.decentralandUrlsSource = decentralandUrlsSource;
+            this.inputBlock = inputBlock;
             this.world = world;
             this.playerEntity = playerEntity;
         }
@@ -114,9 +115,9 @@ namespace DCL.PluginSystem.Global
                 world,
                 playerEntity,
                 thumbnailProvider,
-                dclInput,
                 webBrowser,
-                decentralandUrlsSource
+                decentralandUrlsSource,
+                inputBlock
             );
 
             mvcManager.RegisterController(passportController);

@@ -68,10 +68,10 @@ namespace DCL.Input.Systems
 
         private static void SetActionMapEnabled(bool enabled, InputActionMap map)
         {
-            if (enabled)
-                map.Enable();
-            else
-                map.Disable();
+            if (map.enabled == enabled) return;
+
+            if (enabled) map.Enable();
+            else map.Disable();
         }
     }
 }
