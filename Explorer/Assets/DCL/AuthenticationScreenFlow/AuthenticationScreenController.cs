@@ -1,7 +1,6 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
-using DCL.Web3;
 using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Diagnostics;
@@ -11,12 +10,12 @@ using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.UI;
+using DCL.Utilities;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using MVC;
 using System;
 using System.Threading;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEngine.Localization.SmartFormat.PersistentVariables;
@@ -27,6 +26,17 @@ namespace DCL.AuthenticationScreenFlow
 {
     public class AuthenticationScreenController : ControllerBase<AuthenticationScreenView>
     {
+        public enum AuthenticationStatus : byte
+        {
+            Init = 0,
+
+            Login = 1,
+            VerificationInProgress = 2,
+            FetchingProfile = 3,
+            LoggedIn = 4,
+            LoggedInCached = 5,
+        }
+
         private enum ViewState
         {
             Login,
@@ -58,6 +68,8 @@ namespace DCL.AuthenticationScreenFlow
         private float originalWorldAudioVolume;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
+
+        public ReactiveProperty<AuthenticationStatus> CurrentState { get; } = new (AuthenticationStatus.Init);
 
         public AuthenticationScreenController(
             ViewFactoryMethod viewFactory,
@@ -166,7 +178,11 @@ namespace DCL.AuthenticationScreenFlow
                 {
                     if (IsUserAllowedToAccessToBeta(storedIdentity))
                     {
+                        CurrentState.Value = AuthenticationStatus.FetchingProfile;
+
                         await FetchProfileAsync(loginCancellationToken.Token);
+
+                        CurrentState.Value = AuthenticationStatus.LoggedInCached;
                         SwitchState(ViewState.Finalize);
                     }
                     else
@@ -228,10 +244,12 @@ namespace DCL.AuthenticationScreenFlow
 
                     if (IsUserAllowedToAccessToBeta(identity))
                     {
+                        CurrentState.Value = AuthenticationStatus.FetchingProfile;
                         SwitchState(ViewState.Loading);
 
                         await FetchProfileAsync(ct);
 
+                        CurrentState.Value = AuthenticationStatus.LoggedIn;
                         SwitchState(ViewState.Finalize);
                     }
                     else
@@ -264,6 +282,7 @@ namespace DCL.AuthenticationScreenFlow
                              verificationCountdownCancellationToken.Token)
                         .Forget();
 
+            CurrentState.Value = AuthenticationStatus.VerificationInProgress;
             SwitchState(ViewState.LoginInProgress);
         }
 
@@ -322,6 +341,8 @@ namespace DCL.AuthenticationScreenFlow
                     viewInstance.VerificationCodeHintContainer.SetActive(false);
                     viewInstance.LoginButton.interactable = true;
                     viewInstance.RestrictedUserContainer.SetActive(false);
+
+                    CurrentState.Value = AuthenticationStatus.Login;
                     break;
                 case ViewState.LoginInProgress:
                     ResetAnimator(viewInstance.VerificationAnimator);
