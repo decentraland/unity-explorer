@@ -12,7 +12,6 @@ using DCL.Input.UnityInputSystem.Blocks;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI;
-using ECS.Abstract;
 using MVC;
 using System.Threading;
 using UnityEngine;

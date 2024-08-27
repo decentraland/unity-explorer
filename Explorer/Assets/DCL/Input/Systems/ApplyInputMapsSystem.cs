@@ -1,7 +1,6 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
-using DCL.Diagnostics;
 using DCL.Input.Component;
 using ECS.Abstract;
 using UnityEngine.InputSystem;
@@ -71,14 +70,8 @@ namespace DCL.Input.Systems
         {
             if (map.enabled == enabled) return;
 
-            if (enabled)
-            {
-                map.Enable();
-            }
-            else
-            {
-                map.Disable();
-            }
+            if (enabled) map.Enable();
+            else map.Disable();
         }
     }
 }

@@ -50,7 +50,6 @@ namespace DCL.Input.Component
             {
                 Kind kind = VALUES[i];
                 inputBlockCounters.Add(kind, EnumUtils.HasFlag(active, kind) ? 0 : 1);
-                ReportHub.LogError(ReportData.UNSPECIFIED, $"Added BlockCounter for {kind.ToString()} value {inputBlockCounters![kind]}");
             }
         }
 

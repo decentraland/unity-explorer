@@ -1,4 +1,3 @@
-using Arch.Core;
 using DCL.AvatarRendering.Wearables;
 using DCL.Backpack.BackpackBus;
 using DCL.Input.UnityInputSystem.Blocks;

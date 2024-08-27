@@ -14,6 +14,12 @@ namespace DCL.CharacterCamera.Systems
     public partial class UpdateCameraInputSystem : UpdateInputSystem<CameraInput, CameraComponent>
     {
         private const float CURSOR_DIRTY_THRESHOLD = 1f;
+        private const float SPRINT_CAMERA_INPUT_FREE_MOVEMENT_MODIFIER = 10;
+        private const float SPRINT_CAMERA_INPUT_FREE_PANNING_MODIFIER = 10;
+        private const float SPRINT_CAMERA_INPUT_FREE_FOV_MODIFIER = 2;
+        private const float SLOW_CAMERA_INPUT_FREE_MOVEMENT_MODIFIER = 0.5f;
+        private const float SLOW_CAMERA_INPUT_FREE_PANNING_MODIFIER = 0.5f;
+        private const float SLOW_CAMERA_INPUT_FREE_FOV_MODIFIER = 0.5f;
 
         private readonly DCLInput.CameraActions cameraActions;
         private readonly DCLInput.FreeCameraActions freeCameraActions;
@@ -80,16 +86,16 @@ namespace DCL.CharacterCamera.Systems
 
                 if (freeCameraActions.Sprint.IsPressed())
                 {
-                    cameraInput.FreeMovement *= 10;
-                    cameraInput.FreePanning *= 10;
-                    cameraInput.FreeFOV *= 2;
+                    cameraInput.FreeMovement *= SPRINT_CAMERA_INPUT_FREE_MOVEMENT_MODIFIER;
+                    cameraInput.FreePanning *= SPRINT_CAMERA_INPUT_FREE_PANNING_MODIFIER;
+                    cameraInput.FreeFOV *= SPRINT_CAMERA_INPUT_FREE_FOV_MODIFIER;
                 }
 
                 if (freeCameraActions.Slow.IsPressed())
                 {
-                    cameraInput.FreeMovement *= 0.5f;
-                    cameraInput.FreePanning *= 0.5f;
-                    cameraInput.FreeFOV *= 0.5f;
+                    cameraInput.FreeMovement *= SLOW_CAMERA_INPUT_FREE_MOVEMENT_MODIFIER;
+                    cameraInput.FreePanning *= SLOW_CAMERA_INPUT_FREE_PANNING_MODIFIER;
+                    cameraInput.FreeFOV *= SLOW_CAMERA_INPUT_FREE_FOV_MODIFIER;
                 }
             }
         }

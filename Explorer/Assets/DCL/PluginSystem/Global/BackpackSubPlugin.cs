@@ -40,7 +40,6 @@ namespace DCL.PluginSystem.Global
         private readonly IReadOnlyCollection<URN> embeddedEmotes;
         private readonly ICollection<string> forceRender;
         private readonly IRealmData realmData;
-        private readonly DCLInput dclInput;
         private readonly IWeb3IdentityCache web3Identity;
         private readonly BackpackCommandBus backpackCommandBus;
         private readonly IBackpackEventBus backpackEventBus;
@@ -70,7 +69,6 @@ namespace DCL.PluginSystem.Global
             IReadOnlyCollection<URN> embeddedEmotes,
             ICollection<string> forceRender,
             IRealmData realmData,
-            DCLInput dclInput,
             URLDomain assetBundleURL,
             IWebRequestController webRequestController,
             CharacterPreviewEventBus characterPreviewEventBus,
@@ -91,16 +89,16 @@ namespace DCL.PluginSystem.Global
             this.embeddedEmotes = embeddedEmotes;
             this.forceRender = forceRender;
             this.realmData = realmData;
-            this.dclInput = dclInput;
             this.assetBundleURL = assetBundleURL;
             this.webRequestController = webRequestController;
             this.characterPreviewEventBus = characterPreviewEventBus;
-
-            backpackCommandBus = new BackpackCommandBus();
             this.backpackEventBus = backpackEventBus;
             this.thirdPartyNftProviderSource = thirdPartyNftProviderSource;
             this.wearablesProvider = wearablesProvider;
             this.cursor = cursor;
+            this.inputBlock = inputBlock;
+
+            backpackCommandBus = new BackpackCommandBus();
         }
 
         internal async UniTask<ContinueInitialization> InitializeAsync(

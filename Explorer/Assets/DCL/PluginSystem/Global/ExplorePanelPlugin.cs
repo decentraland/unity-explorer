@@ -27,7 +27,6 @@ using DCL.Quality;
 using DCL.Settings;
 using DCL.Settings.Configuration;
 using DCL.UI.ProfileElements;
-using DCL.UI.Sidebar;
 using DCL.UserInAppInitializationFlow;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
@@ -175,7 +174,6 @@ namespace DCL.PluginSystem.Global
                 settings.EmbeddedEmotesAsURN(),
                 forceRender,
                 realmData,
-                dclInput,
                 assetBundleURL,
                 webRequestController,
                 characterPreviewEventBus,

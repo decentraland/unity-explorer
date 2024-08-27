@@ -1,7 +1,5 @@
-using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Backpack.BackpackBus;
-using DCL.Input;
 using DCL.Input.Component;
 using DCL.Input.UnityInputSystem.Blocks;
 using DCL.UI;
