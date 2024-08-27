@@ -14,7 +14,9 @@ namespace ECS.StreamableLoading.AssetBundles
     {
         private static readonly string[] COMMON_SHADERS =
         {
-            "dcl/scene_ignore_windows", "dcl/scene_ignore_mac", "dcl/universal render pipeline/lit_ignore_windows", "dcl/universal render pipeline/lit_ignore_mac"
+            "dcl/scene_ignore_windows", "dcl/scene_ignore_mac",
+            "dcl/universal render pipeline/lit_ignore_windows",
+            "dcl/universal render pipeline/lit_ignore_mac"
         };
 
         private readonly URLDomain streamingAssetURL;
@@ -37,7 +39,6 @@ namespace ECS.StreamableLoading.AssetBundles
                 CommonLoadingArguments ca = assetBundleIntention.CommonArguments;
                 ca.Attempts = 1;
                 ca.CurrentSource = AssetSource.EMBEDDED;
-                Debug.Log(assetBundleIntention.Hash);
                 ca.URL = GetStreamingAssetsUrl(assetBundleIntention.Hash, assetBundleIntention.CommonArguments.CustomEmbeddedSubDirectory);
                 assetBundleIntention.CommonArguments = ca;
                 return;
