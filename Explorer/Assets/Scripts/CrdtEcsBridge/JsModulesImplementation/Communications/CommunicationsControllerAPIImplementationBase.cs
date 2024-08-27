@@ -20,22 +20,22 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
 
         protected readonly List<IMemoryOwner<byte>> eventsToProcess = new ();
         private readonly CancellationTokenSource cancellationTokenSource = new ();
-        private readonly ICommunicationControllerHub communicationControllerHub;
+        private readonly ISceneCommunicationPipe sceneCommunicationPipe;
         private readonly ISceneData sceneData;
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IJsOperations jsOperations;
-        private readonly Action<ICommunicationControllerHub.SceneMessage> onMessageReceivedCached;
+        private readonly Action<ISceneCommunicationPipe.SceneMessage> onMessageReceivedCached;
 
         internal IReadOnlyList<IMemoryOwner<byte>> EventsToProcess => eventsToProcess;
 
         protected CommunicationsControllerAPIImplementationBase(
             ISceneData sceneData,
-            ICommunicationControllerHub communicationControllerHub,
+            ISceneCommunicationPipe sceneCommunicationPipe,
             IJsOperations jsOperations,
             ISceneStateProvider sceneStateProvider)
         {
             this.sceneData = sceneData;
-            this.communicationControllerHub = communicationControllerHub;
+            this.sceneCommunicationPipe = sceneCommunicationPipe;
             this.jsOperations = jsOperations;
             this.sceneStateProvider = sceneStateProvider;
 
@@ -52,9 +52,9 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
         public void OnSceneIsCurrentChanged(bool isCurrent)
         {
             if (isCurrent)
-                communicationControllerHub.SetSceneMessageHandler(onMessageReceivedCached);
+                sceneCommunicationPipe.SetSceneMessageHandler(onMessageReceivedCached);
             else
-                communicationControllerHub.RemoveSceneMessageHandler(onMessageReceivedCached);
+                sceneCommunicationPipe.RemoveSceneMessageHandler(onMessageReceivedCached);
         }
 
         public object SendBinary(IReadOnlyList<PoolableByteArray> data)
@@ -88,7 +88,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
             Span<byte> encodedMessage = stackalloc byte[message.Length + 1];
             encodedMessage[0] = (byte)msgType;
             message.CopyTo(encodedMessage[1..]);
-            communicationControllerHub.SendMessage(message, sceneData.SceneEntityDefinition.id!, cancellationTokenSource.Token);
+            sceneCommunicationPipe.SendMessage(message, sceneData.SceneEntityDefinition.id!, cancellationTokenSource.Token);
         }
 
         private static MsgType DecodeMessage(ref ReadOnlySpan<byte> value)
@@ -98,7 +98,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
             return msgType;
         }
 
-        private void OnMessageReceived(ICommunicationControllerHub.SceneMessage receivedMessage)
+        private void OnMessageReceived(ISceneCommunicationPipe.SceneMessage receivedMessage)
         {
             ReadOnlySpan<byte> decodedMessage = receivedMessage.Data.Span;
             MsgType msgType = DecodeMessage(ref decodedMessage);

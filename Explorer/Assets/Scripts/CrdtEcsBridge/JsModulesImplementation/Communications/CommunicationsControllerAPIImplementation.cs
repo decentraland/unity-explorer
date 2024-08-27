@@ -13,7 +13,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
 
         public CommunicationsControllerAPIImplementation(
             ISceneData sceneData,
-            ICommunicationControllerHub messagePipesHub,
+            ISceneCommunicationPipe messagePipesHub,
             IJsOperations jsOperations,
             ICRDTMemoryAllocator crdtMemoryAllocator,
             ISceneStateProvider sceneStateProvider) : base(

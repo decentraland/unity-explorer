@@ -13,12 +13,12 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
     ///     We can't subscribe to the `Scene` message multiple times
     ///     so Hub handles the subscription and the API implementation handles the message processing
     /// </summary>
-    public class CommunicationControllerHub : ICommunicationControllerHub
+    public class SceneCommunicationPipe : ISceneCommunicationPipe
     {
-        private Action<ICommunicationControllerHub.SceneMessage>? onSceneMessage;
+        private Action<ISceneCommunicationPipe.SceneMessage>? onSceneMessage;
         private readonly IMessagePipe messagePipe;
 
-        public CommunicationControllerHub(IMessagePipesHub messagePipesHub)
+        public SceneCommunicationPipe(IMessagePipesHub messagePipesHub)
         {
             messagePipe = messagePipesHub.ScenePipe();
             messagePipe.Subscribe<Scene>(Packet.MessageOneofCase.Scene, InvokeCurrentHandler);
@@ -27,15 +27,15 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
         private void InvokeCurrentHandler(ReceivedMessage<Scene> message)
         {
             using (message)
-                onSceneMessage?.Invoke(ICommunicationControllerHub.SceneMessage.CopyFrom(in message));
+                onSceneMessage?.Invoke(ISceneCommunicationPipe.SceneMessage.CopyFrom(in message));
         }
 
-        public void RemoveSceneMessageHandler(Action<ICommunicationControllerHub.SceneMessage> onSceneMessage)
+        public void RemoveSceneMessageHandler(Action<ISceneCommunicationPipe.SceneMessage> onSceneMessage)
         {
             lock (this) { this.onSceneMessage -= onSceneMessage; }
         }
 
-        public void SetSceneMessageHandler(Action<ICommunicationControllerHub.SceneMessage> onSceneMessage)
+        public void SetSceneMessageHandler(Action<ISceneCommunicationPipe.SceneMessage> onSceneMessage)
         {
             lock (this) { this.onSceneMessage += onSceneMessage; }
         }

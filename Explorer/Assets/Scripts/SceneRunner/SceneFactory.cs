@@ -50,7 +50,7 @@ namespace SceneRunner
         private readonly ISharedPoolsProvider sharedPoolsProvider;
         private readonly IMVCManager mvcManager;
         private readonly IRealmData? realmData;
-        private readonly ICommunicationControllerHub messagePipesHub;
+        private readonly ISceneCommunicationPipe messagePipesHub;
 
         private IGlobalWorldActions globalWorldActions = null!;
 
@@ -70,7 +70,7 @@ namespace SceneRunner
             IWebRequestController webRequestController,
             IRoomHub roomHub,
             IRealmData? realmData,
-            ICommunicationControllerHub messagePipesHub)
+            ISceneCommunicationPipe messagePipesHub)
         {
             this.ecsWorldFactory = ecsWorldFactory;
             this.sceneRuntimeFactory = sceneRuntimeFactory;

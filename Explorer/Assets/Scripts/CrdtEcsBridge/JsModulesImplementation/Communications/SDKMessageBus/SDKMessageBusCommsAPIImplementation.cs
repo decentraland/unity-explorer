@@ -14,7 +14,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications.SDKMessageBus
 
         public IReadOnlyList<CommsPayload> SceneCommsMessages => messages;
 
-        public SDKMessageBusCommsAPIImplementation(ISceneData sceneData, ICommunicationControllerHub communicationControllerHub, IJsOperations jsOperations, ISceneStateProvider sceneStateProvider) : base(sceneData, communicationControllerHub, jsOperations, sceneStateProvider) { }
+        public SDKMessageBusCommsAPIImplementation(ISceneData sceneData, ISceneCommunicationPipe sceneCommunicationPipe, IJsOperations jsOperations, ISceneStateProvider sceneStateProvider) : base(sceneData, sceneCommunicationPipe, jsOperations, sceneStateProvider) { }
 
         public void ClearMessages()
         {

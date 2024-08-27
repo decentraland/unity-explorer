@@ -5,7 +5,7 @@ using System.Threading;
 
 namespace CrdtEcsBridge.JsModulesImplementation.Communications
 {
-    public interface ICommunicationControllerHub
+    public interface ISceneCommunicationPipe
     {
         void SetSceneMessageHandler(Action<SceneMessage> onSceneMessage);
 
