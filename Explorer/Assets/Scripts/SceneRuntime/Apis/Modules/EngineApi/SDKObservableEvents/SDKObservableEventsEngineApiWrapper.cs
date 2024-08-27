@@ -27,7 +27,7 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
             if (engineApi.SdkObservableEventSubscriptions.Count == 0)
             {
                 engineApi.SdkObservableEvents.Clear();
-                commsApi.SceneCommsMessages.Clear();
+                commsApi.ClearMessages();
                 return null;
             }
 
@@ -58,7 +58,7 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
             foreach (CommsPayload currentPayload in commsApi.SceneCommsMessages)
                 engineApi.SdkObservableEvents.Add(SDKObservableUtils.GenerateSDKObservableEvent(SDKObservableEventIds.Comms, currentPayload));
 
-            commsApi.SceneCommsMessages.Clear();
+            commsApi.ClearMessages();
         }
 
         [UsedImplicitly]

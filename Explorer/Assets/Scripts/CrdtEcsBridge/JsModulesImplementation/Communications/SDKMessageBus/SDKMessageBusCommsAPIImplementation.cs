@@ -10,15 +10,20 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications.SDKMessageBus
 {
     public class SDKMessageBusCommsAPIImplementation : CommunicationsControllerAPIImplementationBase, ISDKMessageBusCommsControllerAPI
     {
-        public List<CommsPayload> SceneCommsMessages { get; } = new ();
+        private readonly List<CommsPayload> messages = new ();
 
-        public SDKMessageBusCommsAPIImplementation(ISceneData sceneData, ICommunicationControllerHub messagePipesHub, IJsOperations jsOperations, ISceneStateProvider sceneStateProvider) : base(sceneData, messagePipesHub, jsOperations, sceneStateProvider)
+        public IReadOnlyList<CommsPayload> SceneCommsMessages => messages;
+
+        public SDKMessageBusCommsAPIImplementation(ISceneData sceneData, ICommunicationControllerHub messagePipesHub, IJsOperations jsOperations, ISceneStateProvider sceneStateProvider) : base(sceneData, messagePipesHub, jsOperations, sceneStateProvider) { }
+
+        public void ClearMessages()
         {
+            messages.Clear();
         }
 
         public void Send(string data)
         {
-            var dataBytes = Encoding.UTF8.GetBytes(data);
+            byte[] dataBytes = Encoding.UTF8.GetBytes(data);
             Span<byte> encodedMessage = stackalloc byte[dataBytes.Length + 1];
             encodedMessage[0] = (byte)MsgType.String;
             dataBytes.CopyTo(encodedMessage[1..]);
@@ -34,7 +39,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications.SDKMessageBus
             if (msgType != MsgType.String || decodedMessage.Length == 0)
                 return;
 
-            SceneCommsMessages.Add(new CommsPayload
+            messages.Add(new CommsPayload
             {
                 sender = receivedMessage.FromWalletId,
                 message = Encoding.UTF8.GetString(decodedMessage)
