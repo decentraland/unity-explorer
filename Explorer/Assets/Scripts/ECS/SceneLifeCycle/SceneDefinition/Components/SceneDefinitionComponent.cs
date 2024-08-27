@@ -27,14 +27,19 @@ namespace ECS.SceneLifeCycle.SceneDefinition
             var decodedParcels = definition.metadata.scene.DecodedParcels;
             Definition = definition;
             Parcels = new Vector2Int[decodedParcels.Count];
-            ParcelsCorners = new ParcelMathHelper.ParcelCorners[Parcels.Length];
-            for (int i = 0; i < Parcels.Length; i++)
+            ParcelsCorners = new ParcelMathHelper.ParcelCorners[decodedParcels.Count];
+
+            for (int i = 0; i < decodedParcels.Count; i++)
             {
                 Parcels[i] = decodedParcels[i];
+            }
+
+            for (int i = 0; i < Parcels.Length; i++)
+            {
                 ParcelsCorners[i] = ParcelMathHelper.CalculateCorners(Parcels[i]);
             }
-            IpfsPath = ipfsPath;
 
+            IpfsPath = ipfsPath;
             IsEmpty = false;
             IsSDK7 = definition.metadata?.runtimeVersion == "7";
             SceneGeometry = ParcelMathHelper.CreateSceneGeometry(ParcelsCorners, Definition.metadata.scene.DecodedBase);
