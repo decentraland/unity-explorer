@@ -345,8 +345,6 @@ namespace DCL.Passport.Modules.Badges
 
             if (cardToSelect != null)
                 SelectBadgeCard(cardToSelect);
-
-            badgeInfoController.SetAsEmpty(cardToSelect == null);
         }
 
         private void CreateBadgeDetailCard(BadgeInfo badge)

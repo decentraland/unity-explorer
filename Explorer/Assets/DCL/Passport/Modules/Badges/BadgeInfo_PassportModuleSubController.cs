@@ -74,12 +74,6 @@ namespace DCL.Passport.Modules.Badges
         public void SetAsLoading(bool isLoading) =>
             badgeInfoModuleView.SetAsLoading(isLoading);
 
-        public void SetAsEmpty(bool isEmpty)
-        {
-            SetAsLoading(false);
-            badgeInfoModuleView.MainContainer.SetActive(!isEmpty);
-        }
-
         public void Clear()
         {
             loadBadge3DImageCts.SafeCancelAndDispose();
