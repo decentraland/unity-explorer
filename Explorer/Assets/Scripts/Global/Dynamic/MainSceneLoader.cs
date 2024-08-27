@@ -181,7 +181,7 @@ namespace Global.Dynamic
 
                 await bootstrap.InitializeFeatureFlagsAsync(bootstrapContainer.IdentityCache!.Identity, bootstrapContainer.DecentralandUrlsSource, staticContainer!, ct);
 
-                DisableShortcuts();
+                DisableInputs();
 
                 if (await bootstrap.InitializePluginsAsync(staticContainer!, dynamicWorldContainer!, scenePluginSettingsContainer, globalPluginSettingsContainer, ct))
                 {
@@ -194,11 +194,12 @@ namespace Global.Dynamic
 
                 dynamicWorldContainer!.InitializeWorldRelatedModules(globalWorld.EcsWorld, playerEntity);
                 staticContainer!.PlayerEntityProxy.SetObject(playerEntity);
+                staticContainer.InputBlock.Initialize();
 
                 await bootstrap.LoadStartingRealmAsync(dynamicWorldContainer!, ct);
                 await bootstrap.UserInitializationAsync(dynamicWorldContainer!, globalWorld, playerEntity, splashScreen, ct);
 
-                RestoreShortcuts();
+                RestoreInputs();
             }
             catch (OperationCanceledException)
             {
@@ -212,14 +213,23 @@ namespace Global.Dynamic
             }
         }
 
-        private void DisableShortcuts()
+        private void DisableInputs()
         {
+            // We disable Inputs directly because otherwise before login (so before the Input component was created and the system that handles it is working)
+            // all inputs will be valid, and it allows for weird behaviour, including opening menus that are not ready to be open yet.
             staticContainer!.InputProxy.StrictObject.Shortcuts.Disable();
+            staticContainer.InputProxy.StrictObject.Player.Disable();
+            staticContainer.InputProxy.StrictObject.Emotes.Disable();
+            staticContainer.InputProxy.StrictObject.EmoteWheel.Disable();
+            staticContainer.InputProxy.StrictObject.FreeCamera.Disable();
+            staticContainer.InputProxy.StrictObject.Camera.Disable();
         }
 
-        private void RestoreShortcuts()
+        private void RestoreInputs()
         {
-            globalWorld!.EcsWorld.CacheInputMap().GetInputMapComponent(globalWorld.EcsWorld).Active |= InputMapComponent.Kind.Shortcuts;
+            // We enable Inputs through the inputBlock so the block counters can be properly updated and the component Active flags are up-to-date as well
+            // We restore all inputs except EmoteWheel and FreeCamera as they should be disabled by default
+            staticContainer!.InputBlock.UnblockInputs(InputMapComponent.Kind.Shortcuts , InputMapComponent.Kind.Player , InputMapComponent.Kind.Emotes , InputMapComponent.Kind.Camera);
         }
 
         [ContextMenu(nameof(ValidateSettingsAsync))]
