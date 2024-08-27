@@ -47,7 +47,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         {
             ID = id;
             Name = name;
-
+            IsVisible = true;
             InstantiatedWearables = new List<CachedWearable>();
         }
     }
