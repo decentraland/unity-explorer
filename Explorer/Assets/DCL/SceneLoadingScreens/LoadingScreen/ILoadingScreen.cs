@@ -31,7 +31,7 @@ namespace DCL.SceneLoadingScreens.LoadingScreen
                 CancellationToken ct)
             {
                 await operation(AsyncLoadProcessReport.Create());
-                return new LoadResult { Success = true };
+                return LoadResult.SuccessResult;
             }
         }
     }
