@@ -1,8 +1,6 @@
-﻿using Cysharp.Threading.Tasks;
-using DCL.MapRenderer.CommonBehavior;
+﻿using DCL.MapRenderer.CommonBehavior;
 using DCL.MapRenderer.CoordsUtils;
-using DCL.MapRenderer.Culling;
-using System.Threading;
+using DCL.MapRenderer.MapLayers.UsersMarker;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility;

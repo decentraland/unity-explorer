@@ -11,6 +11,9 @@ using ECS.SceneLifeCycle.Realm;
 using Global.Dynamic;
 using MVC;
 using System.Threading;
+using ECS.SceneLifeCycle;
+using ECS.SceneLifeCycle.Realm;
+using Utility.Tasks;
 
 namespace DCL.PluginSystem.Global
 {
@@ -62,8 +65,14 @@ namespace DCL.PluginSystem.Global
                     view.gameObject.SetActive(true);
                     return view;
                 },
-                mapRendererContainer.MapRenderer, mvcManager, placesAPIService,
-                realmData, chatMessagesBus, realmNavigator, scenesCache, mapPathEventBus);
+                mapRendererContainer.MapRenderer,
+                mvcManager,
+                placesAPIService,
+                realmData,
+                chatMessagesBus,
+                realmNavigator,
+                scenesCache,
+                mapPathEventBus);
 
             mvcManager.RegisterController(minimapController);
         }
