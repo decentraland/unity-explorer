@@ -35,7 +35,7 @@ namespace DCL.Roads.Systems
 
         [Query]
         [All(typeof(DeleteEntityIntention), typeof(VisualSceneState))]
-        private void UnloadRoad(Entity entity, ref RoadInfo roadInfo, ref SceneDefinitionComponent sceneDefinitionComponent)
+        private void UnloadRoad(ref RoadInfo roadInfo, ref SceneDefinitionComponent sceneDefinitionComponent)
         {
             roadInfo.Dispose(roadAssetPool);
             scenesCache.RemoveNonRealScene(sceneDefinitionComponent.Parcels);

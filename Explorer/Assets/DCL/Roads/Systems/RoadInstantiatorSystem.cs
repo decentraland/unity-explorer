@@ -78,8 +78,10 @@ namespace DCL.Roads.Systems
                     $"Road with coords for {sceneDefinitionComponent.Definition.metadata.scene.DecodedBase} do not have a description");
             }
             roadInfo.IsDirty = false;
-            scenesCache.AddNonRealScene(sceneDefinitionComponent.Parcels);
-            LODUtils.CheckSceneReadiness(sceneReadinessReportQueue, sceneDefinitionComponent);
+
+            
+            //In case this is a road teleport destination, we need to release the loading screen
+            LODUtils.ReportSDK6SceneLoaded(sceneDefinitionComponent, sceneReadinessReportQueue, scenesCache);
         }
 
 
