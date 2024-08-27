@@ -54,7 +54,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
         {
             var result = await origin.ReceiveAsync(token);
 
-            if (result.State is IArchipelagoLiveConnection.ReceiveResponse.ConnectionClosed)
+            if (result.Error?.State is IArchipelagoLiveConnection.ReceiveResponse.ConnectionClosed)
             {
                 log("Connection error on receiving, ensure to reconnect...");
                 await EnsureReconnectAsync(token);
