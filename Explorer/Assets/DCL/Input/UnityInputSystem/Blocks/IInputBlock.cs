@@ -1,21 +1,22 @@
+using DCL.Input.Component;
 using System;
 
 namespace DCL.Input.UnityInputSystem.Blocks
 {
     public interface IInputBlock
     {
-        void BlockMovement();
-
-        void UnblockMovement();
+        public void Initialize();
+        public void BlockInputs(params InputMapComponent.Kind[] kinds);
+        public void UnblockInputs(params InputMapComponent.Kind[] kinds);
 
         class Fake : IInputBlock
         {
-            public void BlockMovement()
+            public void Initialize(){}
+            public void BlockInputs(params InputMapComponent.Kind[] kinds)
             {
                 //ignore
             }
-
-            public void UnblockMovement()
+            public void UnblockInputs(params InputMapComponent.Kind[] kinds)
             {
                 //ignore
             }
