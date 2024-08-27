@@ -3,11 +3,13 @@ using Cinemachine;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.CharacterCamera;
+using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.ResourcesUnloading;
 using DCL.SDKComponents.CameraControl.MainCamera.Systems;
 using ECS.LifeCycle;
+using ECS.LifeCycle.Systems;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -75,7 +77,7 @@ namespace DCL.PluginSystem.World
                 cameraData
                 ));
 
-            // ResetDirtyFlagSystem<PBVirtualCamera>.InjectToWorld(ref builder);
+            ResetDirtyFlagSystem<PBVirtualCamera>.InjectToWorld(ref builder);
         }
 
         public void Dispose()
