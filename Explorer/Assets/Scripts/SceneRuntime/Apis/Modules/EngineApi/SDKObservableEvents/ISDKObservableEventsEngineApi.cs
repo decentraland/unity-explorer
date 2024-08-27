@@ -6,9 +6,14 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
 {
     public interface ISDKObservableEventsEngineApi : IEngineApi
     {
-        List<SDKObservableEvent> SdkObservableEvents { get; }
-        HashSet<string> SdkObservableEventSubscriptions { get; }
+        void AddSDKObservableEvent(SDKObservableEvent sdkObservableEvent);
+
+        void ClearSDKObservableEvents();
+
         PoolableSDKObservableEventArray? ConsumeSDKObservableEvents();
+
+        HashSet<string> SdkObservableEventSubscriptions { get; }
+
         bool EnableSDKObservableMessagesDetection { set; }
     }
 }
