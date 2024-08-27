@@ -11,6 +11,7 @@ using MVC;
 using System.Threading;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Realm;
+using Utility.Tasks;
 
 namespace DCL.PluginSystem.Global
 {
@@ -41,20 +42,32 @@ namespace DCL.PluginSystem.Global
             this.mainUIView = mainUIView;
         }
 
-        protected override async UniTask<ContinueInitialization?> InitializeInternalAsync(MinimapSettings settings, CancellationToken ct)
+        protected override UniTask<ContinueInitialization?> InitializeInternalAsync(MinimapSettings settings, CancellationToken ct)
         {
-            return (ref ArchSystemsWorldBuilder<Arch.Core.World> world, in GlobalPluginArguments _) =>
+            ContinueInitialization initialization = (ref ArchSystemsWorldBuilder<Arch.Core.World> world, in GlobalPluginArguments _) =>
             {
-                mvcManager.RegisterController(new MinimapController(
-                    () =>
-                    {
-                        MinimapView? view = mainUIView.MinimapView;
-                        view.gameObject.SetActive(true);
-                        return view;
-                    },
-                    mapRendererContainer.MapRenderer, mvcManager, placesAPIService, TrackPlayerPositionSystem.InjectToWorld(ref world),
-                    realmData, chatMessagesBus, realmNavigator, scenesCache, mapPathEventBus));
+                mvcManager.RegisterController(
+                    new MinimapController(
+                        () =>
+                        {
+                            MinimapView? view = mainUIView.MinimapView;
+                            view.gameObject.SetActive(true);
+                            return view;
+                        },
+                        mapRendererContainer.MapRenderer,
+                        mvcManager,
+                        placesAPIService,
+                        TrackPlayerPositionSystem.InjectToWorld(ref world),
+                        realmData,
+                        chatMessagesBus,
+                        realmNavigator,
+                        scenesCache,
+                        mapPathEventBus
+                    )
+                );
             };
+
+            return initialization.AsUniTaskResult<ContinueInitialization?>();
         }
 
         protected override void InjectSystems(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
