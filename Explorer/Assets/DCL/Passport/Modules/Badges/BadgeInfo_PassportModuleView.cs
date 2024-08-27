@@ -19,6 +19,9 @@ namespace DCL.Passport.Modules.Badges
         public GameObject MainLoadingSpinner { get; private set; }
 
         [field: SerializeField]
+        public GameObject ImageLoadingSpinner { get; private set; }
+
+        [field: SerializeField]
         public RawImage Badge3DImage { get; private set; }
 
         [field: SerializeField]
@@ -29,6 +32,9 @@ namespace DCL.Passport.Modules.Badges
 
         [field: SerializeField]
         public Animator Badge3DAnimator { get; private set; }
+
+        [field: SerializeField]
+        public Material Badge3DMaterial { get; private set; }
 
         [field: SerializeField]
         public Sprite DefaultBadgeSprite { get; private set; }
@@ -139,12 +145,27 @@ namespace DCL.Passport.Modules.Badges
             string tierCompletedAt = badgeInfo.GetTierCompletedDate(tier.tierId);
             BadgeDateText.text = !string.IsNullOrEmpty(tierCompletedAt) ? $"Unlocked: {BadgesUtils.FormatTimestampDate(tierCompletedAt)}" : "Locked";
             BadgeDescriptionText.text = tier.description;
+            Badge3DImage.color = string.IsNullOrEmpty(tierCompletedAt) ? Badge3DImageLockedColor : Badge3DImageUnlockedColor;
+            Badge3DAnimator.SetBool(IS_STOPPED_3D_IMAGE_ANIMATION_PARAM, string.IsNullOrEmpty(tierCompletedAt));
         }
 
         public void SetAsLoading(bool isLoading)
         {
             MainLoadingSpinner.SetActive(isLoading);
             MainContainer.SetActive(!isLoading);
+        }
+
+        public void SetImageAsLoading(bool isLoading)
+        {
+            ImageLoadingSpinner.SetActive(isLoading);
+            Badge3DImage.gameObject.SetActive(!isLoading);
+        }
+
+        public void Set3DImage(Texture2D baseColor, Texture2D normal, Texture2D hrm)
+        {
+            Badge3DMaterial.SetTexture("_baseColor", baseColor);
+            Badge3DMaterial.SetTexture("_normal", normal);
+            Badge3DMaterial.SetTexture("_hrm", hrm);
         }
     }
 }

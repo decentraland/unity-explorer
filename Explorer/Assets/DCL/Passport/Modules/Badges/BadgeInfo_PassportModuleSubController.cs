@@ -1,13 +1,14 @@
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.BadgesAPIService;
 using DCL.Diagnostics;
 using DCL.Passport.Fields.Badges;
 using DCL.Passport.Utils;
 using DCL.WebRequests;
-using Google.Api;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
 using Object = UnityEngine.Object;
@@ -19,6 +20,7 @@ namespace DCL.Passport.Modules.Badges
         private const int BADGE_TIER_BUTTON_POOL_DEFAULT_CAPACITY = 6;
 
         private readonly BadgeInfo_PassportModuleView badgeInfoModuleView;
+        private readonly IWebRequestController webRequestController;
         private readonly BadgesAPIClient badgesAPIClient;
         private readonly PassportErrorsController passportErrorsController;
         private readonly IObjectPool<BadgeTierButton_PassportFieldView> badgeTierButtonsPool;
@@ -27,6 +29,7 @@ namespace DCL.Passport.Modules.Badges
         private bool isOwnProfile;
         private BadgeInfo currentBadgeInfo;
         private CancellationTokenSource loadBadgeTierButtonsCts;
+        private CancellationTokenSource loadBadge3DImageCts;
 
         public BadgeInfo_PassportModuleSubController(
             BadgeInfo_PassportModuleView badgeInfoModuleView,
@@ -35,6 +38,7 @@ namespace DCL.Passport.Modules.Badges
             PassportErrorsController passportErrorsController)
         {
             this.badgeInfoModuleView = badgeInfoModuleView;
+            this.webRequestController = webRequestController;
             this.badgesAPIClient = badgesAPIClient;
             this.passportErrorsController = passportErrorsController;
 
@@ -61,6 +65,8 @@ namespace DCL.Passport.Modules.Badges
             else
             {
                 badgeInfoModuleView.Setup(badgeInfo, new List<TierData>(), isOwnProfile);
+                loadBadge3DImageCts = loadBadge3DImageCts.SafeRestart();
+                LoadBadge3DImageAsync(badgeInfo.assets, loadBadge3DImageCts.Token).Forget();
                 SetAsLoading(false);
             }
         }
@@ -74,8 +80,11 @@ namespace DCL.Passport.Modules.Badges
             badgeInfoModuleView.MainContainer.SetActive(!isEmpty);
         }
 
-        public void Clear() =>
+        public void Clear()
+        {
+            loadBadge3DImageCts.SafeCancelAndDispose();
             ClearTiers();
+        }
 
         private void ClearTiers()
         {
@@ -173,7 +182,41 @@ namespace DCL.Passport.Modules.Badges
                 tierButton.SetAsSelected(tierButton.Model.tierId == selectedTierButton.Model.tierId);
 
                 if (tierButton.Model.tierId == selectedTierButton.Model.tierId)
+                {
                     badgeInfoModuleView.SelectBadgeTier(i, currentBadgeInfo);
+
+                    loadBadge3DImageCts = loadBadge3DImageCts.SafeRestart();
+                    LoadBadge3DImageAsync(tierButton.Model.assets, loadBadge3DImageCts.Token).Forget();
+                }
+            }
+        }
+
+        private async UniTask LoadBadge3DImageAsync(BadgeAssetsData? assets, CancellationToken ct)
+        {
+            try
+            {
+                badgeInfoModuleView.SetImageAsLoading(true);
+
+                if (assets?.textures3d == null)
+                    return;
+
+                string baseColorUrl = assets.textures3d.baseColor;
+                string normalUrl = assets.textures3d.normal;
+                string hrmUrl = assets.textures3d.hrm;
+
+                Texture2D baseColorTexture = await webRequestController.GetTextureAsync(new CommonArguments(URLAddress.FromString(baseColorUrl)), new GetTextureArguments(false), GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp), ct);
+                Texture2D normalTexture = await webRequestController.GetTextureAsync(new CommonArguments(URLAddress.FromString(normalUrl)), new GetTextureArguments(false), GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp), ct);
+                Texture2D hrmTexture = await webRequestController.GetTextureAsync(new CommonArguments(URLAddress.FromString(hrmUrl)), new GetTextureArguments(false), GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp), ct);
+
+                badgeInfoModuleView.Set3DImage(baseColorTexture, normalTexture, hrmTexture);
+                badgeInfoModuleView.SetImageAsLoading(false);
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception e)
+            {
+                const string ERROR_MESSAGE = "There was an error loading badge textures. Please try again!";
+                passportErrorsController.Show(ERROR_MESSAGE);
+                ReportHub.LogError(ReportCategory.BADGES, $"{ERROR_MESSAGE} ERROR: {e.Message}");
             }
         }
     }

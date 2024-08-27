@@ -247,10 +247,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <MainContainer>k__BackingField: {fileID: 5242678451131758154}
   <MainLoadingSpinner>k__BackingField: {fileID: 2356664135297845385}
+  <ImageLoadingSpinner>k__BackingField: {fileID: 707054564195466416}
   <Badge3DImage>k__BackingField: {fileID: 3850944021201886613}
   <Badge3DImageUnlockedColor>k__BackingField: {r: 1, g: 1, b: 1, a: 1}
   <Badge3DImageLockedColor>k__BackingField: {r: 1, g: 1, b: 1, a: 0.2}
   <Badge3DAnimator>k__BackingField: {fileID: 4775803898855288964}
+  <Badge3DMaterial>k__BackingField: {fileID: 2100000, guid: 493478f41d9de0944bc5cf983afbb6f7, type: 2}
   <DefaultBadgeSprite>k__BackingField: {fileID: 21300000, guid: d2bc0e4246537449fbc27b863cc9b0c3, type: 3}
   <BadgeNameText>k__BackingField: {fileID: 4895039616460394219}
   <BadgeDateText>k__BackingField: {fileID: 8868651118548766628}
@@ -2495,6 +2497,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: d565b61885fb1ef41b1582a285e748e9, type: 3}
+--- !u!1 &707054564195466416 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2336035712942851721, guid: d565b61885fb1ef41b1582a285e748e9, type: 3}
+  m_PrefabInstance: {fileID: 3000719496897215033}
+  m_PrefabAsset: {fileID: 0}
 --- !u!224 &4149271630673527782 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 1166888513132788191, guid: d565b61885fb1ef41b1582a285e748e9, type: 3}
