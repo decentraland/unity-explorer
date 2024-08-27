@@ -11,15 +11,12 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         private readonly string runtime = Application.isEditor? "editor" : Debug.isDebugBuild ? "debug" : "release";
         private readonly string os = SystemInfo.operatingSystem;
 
-        private readonly string sessionId;
-        private readonly string launcherAnonymousId;
-
         public override PluginType Type => PluginType.Enrichment;
 
-        public StaticCommonTraitsPlugin(string launcherAnonymousId, string sessionId)
+        public StaticCommonTraitsPlugin(LauncherTraits launcherTraits)
         {
-            this.sessionId = !string.IsNullOrEmpty(this.sessionId) ? sessionId : SystemInfo.deviceUniqueIdentifier + DateTime.Now.ToString("yyyyMMddHHmmssfff");
-            this.launcherAnonymousId = launcherAnonymousId;
+            this.sessionId = !string.IsNullOrEmpty(launcherTraits.SessionId) ? launcherTraits.SessionId : SystemInfo.deviceUniqueIdentifier + DateTime.Now.ToString("yyyyMMddHHmmssfff");
+            this.launcherAnonymousId = launcherTraits.LauncherAnonymousId;
         }
 
         public override TrackEvent Track(TrackEvent trackEvent)
@@ -33,5 +30,11 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
             return trackEvent;
         }
+    }
+
+    public struct LauncherTraits
+    {
+        public string LauncherAnonymousId;
+        public string SessionId;
     }
 }

@@ -109,7 +109,13 @@ namespace Global.Dynamic
                 appArgs.TryGetValue("launcher_anonymous_id", out string? launcherAnonymousId);
                 appArgs.TryGetValue("session_id", out string? sessionId);
 
-                var analyticsController = new AnalyticsController(service, analyticsConfig, launcherAnonymousId!, sessionId!);
+                LauncherTraits launcherTraits = new LauncherTraits
+                {
+                    LauncherAnonymousId = launcherAnonymousId!,
+                    SessionId = sessionId!,
+                };
+
+                var analyticsController = new AnalyticsController(service, analyticsConfig, launcherTraits);
 
                 return (new BootstrapAnalyticsDecorator(coreBootstrap, analyticsController), analyticsController);
             }
