@@ -16,10 +16,10 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         public override PluginType Type => PluginType.Enrichment;
 
-        public StaticCommonTraitsPlugin(string launcherAnonymousId, string sessionId)
+        public StaticCommonTraitsPlugin(LauncherTraits launcherTraits)
         {
-            this.sessionId = !string.IsNullOrEmpty(this.sessionId) ? sessionId : SystemInfo.deviceUniqueIdentifier + DateTime.Now.ToString("yyyyMMddHHmmssfff");
-            this.launcherAnonymousId = launcherAnonymousId;
+            this.sessionId = !string.IsNullOrEmpty(launcherTraits.SessionId) ? launcherTraits.SessionId : SystemInfo.deviceUniqueIdentifier + DateTime.Now.ToString("yyyyMMddHHmmssfff");
+            this.launcherAnonymousId = launcherTraits.LauncherAnonymousId;
         }
 
         public override TrackEvent Track(TrackEvent trackEvent)
@@ -33,5 +33,11 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
             return trackEvent;
         }
+    }
+
+    public struct LauncherTraits
+    {
+        public string LauncherAnonymousId;
+        public string SessionId;
     }
 }

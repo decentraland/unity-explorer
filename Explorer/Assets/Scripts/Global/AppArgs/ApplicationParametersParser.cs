@@ -44,15 +44,13 @@ namespace Global.AppArgs
             var deepLinkFound = false;
             string lastKeyStored = string.Empty;
 
-            for (int i = 0; i < cmdArgs.Length; i++)
+            foreach (string arg in cmdArgs)
             {
-                string arg = cmdArgs[i];
-
                 if (arg.StartsWith("--"))
                 {
                     if (arg.Length > 2)
                     {
-                        lastKeyStored = arg[2..];
+                        lastKeyStored = arg.Substring(2);
                         appParameters[lastKeyStored] = string.Empty;
                     }
                     else

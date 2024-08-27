@@ -20,7 +20,11 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             analytics = analyticsService;
             Configuration = configuration;
 
-            analytics.AddPlugin(new StaticCommonTraitsPlugin(launcherAnonymousId, sessionId));
+            analytics.AddPlugin(new StaticCommonTraitsPlugin(new LauncherTraits
+            {
+                LauncherAnonymousId = launcherAnonymousId,
+                SessionId = sessionId,
+            }));
 
             analytics.Track(AnalyticsEvents.General.SYSTEM_INFO_REPORT, new JsonObject
             {
