@@ -56,7 +56,7 @@ namespace Global.AppArgs
                 {
                     if (arg.Length > 2)
                     {
-                        lastKeyStored = arg[2..];
+                        lastKeyStored = arg.Substring(2);
                         appParameters[lastKeyStored] = string.Empty;
                     }
                     else

@@ -102,7 +102,6 @@ namespace DCL.UserInAppInitializationFlow
                 {
                     loadingStatus.SetStage(RealFlowLoadingStatus.Stage.AuthenticationScreenShown);
                     await ShowAuthenticationScreenAsync(ct);
-                    loadingStatus.SetStage(RealFlowLoadingStatus.Stage.AuthenticationScreenShown);
                 }
 
                 var showResult = await LoadingScreen(showLoading)
