@@ -33,7 +33,7 @@ namespace DCL.CharacterMotion.Systems
         }
 
         [Query]
-        private void UpdateInput(ref MovementInputComponent inputToUpdate, ref InputModifierComponent inputModifierComponent)
+        private void UpdateInput(ref MovementInputComponent inputToUpdate, in InputModifierComponent inputModifierComponent)
         {
             if (inputModifierComponent is { DisableAll: true } or { DisableWalk: true, DisableJog: true, DisableRun: true })
             {

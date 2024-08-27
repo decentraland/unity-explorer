@@ -25,15 +25,16 @@ namespace DCL.PluginSystem.World
 
         public void Dispose()
         {
-            // throw new NotImplementedException();
+            // Ignore for now
         }
 
         public UniTask Initialize(IPluginSettingsContainer container, CancellationToken ct) => UniTask.CompletedTask;
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
-            InputModifierHandlerSystem.InjectToWorld(ref builder, globalWorldProxy, playerEntity);
             ResetDirtyFlagSystem<PBInputModifier>.InjectToWorld(ref builder);
+
+            InputModifierHandlerSystem.InjectToWorld(ref builder, globalWorldProxy, playerEntity);
         }
     }
 }

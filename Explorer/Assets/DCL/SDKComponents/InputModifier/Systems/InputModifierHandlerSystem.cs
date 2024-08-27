@@ -27,26 +27,47 @@ namespace DCL.SDKComponents.PlayerInputMovement.Systems
         protected override void Update(float t)
         {
             ApplyModifiersQuery(World);
+            ApplyModifiers2Query(World);
         }
 
         [Query]
-        private void ApplyModifiers(in PBInputModifier pbInputModifier, ref InputModifierComponent inputModifier)
+        void ApplyModifiers(in PBInputModifier pbInputModifier)
         {
-            //Debug.Log($"{UnityEngine.Time.frameCount} IG- ApplyModifiers Axes: {movementInput.Axes} {movementInput.Kind}");
-
+            ref var inputModifier = ref globalWorld.Get<InputModifierComponent>(playerEntity.StrictObject);
             PBInputModifier.Types.StandardInput? pb = pbInputModifier.Standard;
-            inputModifier.DisableAll = pb.DisableAll;
-            inputModifier.DisableWalk = pb.DisableWalk;
-            inputModifier.DisableJog = pb.DisableJog;
-            inputModifier.DisableRun = pb.DisableRun;
-            inputModifier.DisableJump = pb.DisableJump;
-            inputModifier.DisableEmote = pb.DisableEmote;
+
+            bool disableAll = pb.DisableAll;
+            inputModifier.DisableAll = disableAll;
+
+            if (!disableAll)
+            {
+                inputModifier.DisableWalk = pb.DisableWalk;
+                inputModifier.DisableJog = pb.DisableJog;
+                inputModifier.DisableRun = pb.DisableRun;
+                inputModifier.DisableJump = pb.DisableJump;
+                inputModifier.DisableEmote = pb.DisableEmote;
+            }
+        }
+
+        [Query]
+        private void ApplyModifiers2(in PBInputModifier pbInputModifier, ref InputModifierComponent inputModifier)
+        {
+            var a = 2; // TODO remove random code used to add a breakpoint
+
+            //     //Debug.Log($"{UnityEngine.Time.frameCount} IG- ApplyModifiers Axes: {movementInput.Axes} {movementInput.Kind}");
+            //
+            //     PBInputModifier.Types.StandardInput? pb = pbInputModifier.Standard;
+            //     inputModifier.DisableAll = pb.DisableAll;
+            //     inputModifier.DisableWalk = pb.DisableWalk;
+            //     inputModifier.DisableJog = pb.DisableJog;
+            //     inputModifier.DisableRun = pb.DisableRun;
+            //     inputModifier.DisableJump = pb.DisableJump;
+            //     inputModifier.DisableEmote = pb.DisableEmote;
         }
 
         public void FinalizeComponents(in Query query)
         {
-            //World.Remove<PlayerInputMovementComponent>(FinalizeComponents_QueryDescription);
-            //throw new NotImplementedException();
+            // Ignore for now
         }
     }
 }
