@@ -90,13 +90,13 @@ namespace CrdtEcsBridge.JsModulesImplementation
                         bool onPlayerConnectedSubscribed = SdkObservableEventSubscriptions.Contains(SDKObservableEventIds.PlayerConnected);
 
                         if (onEnterSceneSubscribed)
-                            SdkObservableEvents.Add(SDKObservableUtils.GenerateSDKObservableEvent(SDKObservableEventIds.EnterScene, new UserIdPayload
+                            SdkObservableEvents.Add(SDKObservableUtils.NewSDKObservableEventFromData(SDKObservableEventIds.EnterScene, new UserIdPayload
                             {
                                 userId = playerIdentityData.Address,
                             }));
 
                         if (onPlayerConnectedSubscribed)
-                            SdkObservableEvents.Add(SDKObservableUtils.GenerateSDKObservableEvent(SDKObservableEventIds.PlayerConnected, new UserIdPayload
+                            SdkObservableEvents.Add(SDKObservableUtils.NewSDKObservableEventFromData(SDKObservableEventIds.PlayerConnected, new UserIdPayload
                             {
                                 userId = playerIdentityData.Address,
                             }));
@@ -111,13 +111,13 @@ namespace CrdtEcsBridge.JsModulesImplementation
                         if (EnableSDKObservableMessagesDetection)
                         {
                             if (SdkObservableEventSubscriptions.Contains(SDKObservableEventIds.LeaveScene))
-                                SdkObservableEvents.Add(SDKObservableUtils.GenerateSDKObservableEvent(SDKObservableEventIds.LeaveScene, new UserIdPayload
+                                SdkObservableEvents.Add(SDKObservableUtils.NewSDKObservableEventFromData(SDKObservableEventIds.LeaveScene, new UserIdPayload
                                 {
                                     userId = userIdEntitiesMap[pendingMessage.Entity],
                                 }));
 
                             if (SdkObservableEventSubscriptions.Contains(SDKObservableEventIds.PlayerDisconnected))
-                                SdkObservableEvents.Add(SDKObservableUtils.GenerateSDKObservableEvent(SDKObservableEventIds.PlayerDisconnected, new UserIdPayload
+                                SdkObservableEvents.Add(SDKObservableUtils.NewSDKObservableEventFromData(SDKObservableEventIds.PlayerDisconnected, new UserIdPayload
                                 {
                                     userId = userIdEntitiesMap[pendingMessage.Entity],
                                 }));
@@ -142,7 +142,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
 
                             if (SdkObservableEventSubscriptions.Contains(SDKObservableEventIds.SceneReady))
                             {
-                                SdkObservableEvents.Add(SDKObservableUtils.GenerateSDKObservableEvent(SDKObservableEventIds.SceneReady, new SceneReadyPayload()));
+                                SdkObservableEvents.Add(SDKObservableUtils.NewSDKObservableEventFromData(SDKObservableEventIds.SceneReady, new SceneReadyPayload()));
                                 reportedSceneReady = true;
                             }
 
@@ -152,7 +152,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
                             {
                                 var realmInfo = (PBRealmInfo)message.Message;
 
-                                SdkObservableEvents.Add(SDKObservableUtils.GenerateSDKObservableEvent(SDKObservableEventIds.RealmChanged, new RealmChangedPayload
+                                SdkObservableEvents.Add(SDKObservableUtils.NewSDKObservableEventFromData(SDKObservableEventIds.RealmChanged, new RealmChangedPayload
                                 {
                                     domain = realmInfo.BaseUrl,
                                     room = realmInfo.Room,
@@ -168,7 +168,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
                             {
                                 if (!userIdEntitiesMap.ContainsKey(message.Entity)) break;
 
-                                SdkObservableEvents.Add(SDKObservableUtils.GenerateSDKObservableEvent(SDKObservableEventIds.ProfileChanged, new ProfileChangedPayload
+                                SdkObservableEvents.Add(SDKObservableUtils.NewSDKObservableEventFromData(SDKObservableEventIds.ProfileChanged, new ProfileChangedPayload
                                 {
                                     ethAddress = userIdEntitiesMap[message.Entity],
                                     version = 0,
@@ -187,7 +187,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
                         {
                             var avatarEmoteCommand = (PBAvatarEmoteCommand) message.Message;
 
-                            SdkObservableEvents.Add(SDKObservableUtils.GenerateSDKObservableEvent(SDKObservableEventIds.PlayerExpression, new PlayerExpressionPayload
+                            SdkObservableEvents.Add(SDKObservableUtils.NewSDKObservableEventFromData(SDKObservableEventIds.PlayerExpression, new PlayerExpressionPayload
                             {
                                 expressionId = avatarEmoteCommand.EmoteUrn,
                             }));
