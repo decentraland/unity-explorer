@@ -109,7 +109,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
         {
             if (sceneStateProvider.IsCurrent) return;
 
-            DisableCurrentVirtualCamera(mainCameraComponent);
+            DisableActiveVirtualCamera(mainCameraComponent);
         }
 
         [Query]
@@ -140,6 +140,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
         private void HandleVirtualCameraRemoval(Entity entity, in VirtualCameraComponent component)
         {
             component.virtualCameraInstance.enabled = false;
+            poolRegistry.Release(component.virtualCameraInstance);
             World.Remove<VirtualCameraComponent>(entity);
         }
 
@@ -147,7 +148,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
         [None(typeof(DeleteEntityIntention), typeof(PBMainCamera))]
         private void HandleMainCameraRemoval(Entity entity, in MainCameraComponent component)
         {
-            DisableCurrentVirtualCamera(component);
+            DisableActiveVirtualCamera(component);
             World.Remove<MainCameraComponent>(entity);
         }
 
@@ -156,18 +157,32 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
         private void HandleVirtualCameraEntityDestruction(in VirtualCameraComponent component)
         {
             component.virtualCameraInstance.enabled = false;
+            poolRegistry.Release(component.virtualCameraInstance);
         }
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
         private void HandleMainCameraEntityDestruction(in MainCameraComponent component)
         {
-            DisableCurrentVirtualCamera(component);
+            DisableActiveVirtualCamera(component);
+        }
+
+        [Query]
+        private void FinalizeMainCameraComponent(in MainCameraComponent mainCameraComponent)
+        {
+            DisableActiveVirtualCamera(mainCameraComponent);
+        }
+
+        [Query]
+        private void FinalizeVirtualCameraComponents(in VirtualCameraComponent virtualCameraComponent)
+        {
+            poolRegistry.Release(virtualCameraComponent.virtualCameraInstance);
         }
 
         public void FinalizeComponents(in Query query)
         {
-            // throw new NotImplementedException();
+            FinalizeMainCameraComponentQuery(World);
+            FinalizeVirtualCameraComponentsQuery(World);
         }
 
         private int GetPBVirtualCameraLookAtCRDTEntity(in PBVirtualCamera pbVirtualCamera, int virtualCameraCRDTEntity)
@@ -252,7 +267,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
             return true;
         }
 
-        private void DisableCurrentVirtualCamera(in MainCameraComponent mainCameraComponent)
+        private void DisableActiveVirtualCamera(in MainCameraComponent mainCameraComponent)
         {
             if (mainCameraComponent.virtualCameraInstance != null && mainCameraComponent.virtualCameraInstance.enabled)
                 mainCameraComponent.virtualCameraInstance.enabled = false;
