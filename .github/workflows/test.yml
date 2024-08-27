@@ -8,8 +8,6 @@ on:
       - synchronize
       - ready_for_review
       - labeled
-    paths:
-      - 'Explorer/**'
   merge_group: {}
   push: { branches: [main] }
 
