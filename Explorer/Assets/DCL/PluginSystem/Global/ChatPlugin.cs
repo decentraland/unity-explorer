@@ -1,6 +1,7 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.Audio;
 using DCL.Chat;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
@@ -53,9 +54,9 @@ namespace DCL.PluginSystem.Global
             this.entityParticipantTable = entityParticipantTable;
             this.nametagsData = nametagsData;
             this.dclInput = dclInput;
-            this.inputBlock = inputBlock;
             this.eventSystem = eventSystem;
             this.mainUIView = mainUIView;
+            this.inputBlock = inputBlock;
         }
 
         protected override void InjectSystems(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
@@ -90,8 +91,8 @@ namespace DCL.PluginSystem.Global
                     builder.World,
                     arguments.PlayerEntity,
                     dclInput,
-                    inputBlock,
-                    eventSystem
+                    eventSystem,
+                    inputBlock
                 );
 
                 mvcManager.RegisterController(chatController);

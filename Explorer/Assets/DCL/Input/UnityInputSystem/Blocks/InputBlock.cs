@@ -1,37 +1,44 @@
 using Arch.Core;
-using DCL.CharacterMotion.Components;
+using DCL.Input.Component;
 using DCL.Utilities;
-using System;
+using ECS.Abstract;
+using Utility;
 
 namespace DCL.Input.UnityInputSystem.Blocks
 {
     public class InputBlock : IInputBlock
     {
-        private readonly ObjectProxy<DCLInput> dclInput;
         private readonly ObjectProxy<World> globalWorld;
-        private readonly ObjectProxy<Entity> playerEntity;
+        private SingleInstanceEntity inputMap;
 
-        public InputBlock(ObjectProxy<DCLInput> dclInput, ObjectProxy<World> globalWorld, ObjectProxy<Entity> playerEntity)
+        public InputBlock(ObjectProxy<World> globalWorld)
         {
-            this.dclInput = dclInput;
             this.globalWorld = globalWorld;
-            this.playerEntity = playerEntity;
         }
 
-        public void BlockMovement()
+        public void Initialize()
         {
-            globalWorld.StrictObject.AddOrGet(playerEntity.StrictObject, new MovementBlockerComponent());
-            dclInput.StrictObject.Shortcuts.Disable();
-            dclInput.StrictObject.Camera.Disable();
-            dclInput.StrictObject.Player.Disable();
+            inputMap = globalWorld.StrictObject.CacheInputMap();
         }
 
-        public void UnblockMovement()
+        public void BlockInputs(params InputMapComponent.Kind[] kinds)
         {
-            globalWorld.StrictObject.Remove<MovementBlockerComponent>(playerEntity.StrictObject);
-            dclInput.StrictObject.Shortcuts.Enable();
-            dclInput.StrictObject.Camera.Enable();
-            dclInput.StrictObject.Player.Enable();
+            ref var inputMapComponent = ref inputMap.GetInputMapComponent(globalWorld.StrictObject);
+
+            foreach (var kind in kinds)
+            {
+                inputMapComponent.BlockInput(kind);
+            }
+        }
+
+        public void UnblockInputs(params InputMapComponent.Kind[] kinds)
+        {
+            ref var inputMapComponent = ref inputMap.GetInputMapComponent(globalWorld.StrictObject);
+
+            foreach (var kind in kinds)
+            {
+                inputMapComponent.UnblockInput(kind);
+            }
         }
     }
 }
