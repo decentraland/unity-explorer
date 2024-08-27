@@ -96,11 +96,11 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void HandleActiveVirtualCameraDirtyState(in PBVirtualCamera pbVirtualCamera, ref VirtualCameraComponent virtualCameraComponent)
+        private void HandleActiveVirtualCameraDirtyState(CRDTEntity crdtEntity, in PBVirtualCamera pbVirtualCamera, ref VirtualCameraComponent virtualCameraComponent)
         {
             if (!pbVirtualCamera.IsDirty || cameraData.CinemachineBrain!.ActiveVirtualCamera.VirtualCameraGameObject != virtualCameraComponent.virtualCameraInstance.gameObject) return;
 
-            virtualCameraComponent.lookAtCRDTEntity = GetPBVirtualCameraLookAtCRDTEntity(pbVirtualCamera);
+            virtualCameraComponent.lookAtCRDTEntity = GetPBVirtualCameraLookAtCRDTEntity(pbVirtualCamera, crdtEntity.Id);
             ConfigureCameraLookAt(virtualCameraComponent);
         }
 
@@ -124,7 +124,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
 
         [Query]
         [None(typeof(VirtualCameraComponent), typeof(DeleteEntityIntention))]
-        private void SetupVirtualCamera(Entity entity, in PBVirtualCamera pbVirtualCamera, in TransformComponent transform)
+        private void SetupVirtualCamera(Entity entity, CRDTEntity crdtEntity, in PBVirtualCamera pbVirtualCamera, in TransformComponent transform)
         {
             if (!sceneStateProvider.IsCurrent) return;
 
@@ -132,7 +132,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
             virtualCameraInstance.transform.SetParent(transform.Transform);
             virtualCameraInstance.transform.localPosition = Vector3.zero;
             virtualCameraInstance.transform.localRotation = Quaternion.identity;
-            World.Add(entity, new VirtualCameraComponent(virtualCameraInstance, GetPBVirtualCameraLookAtCRDTEntity(pbVirtualCamera)));
+            World.Add(entity, new VirtualCameraComponent(virtualCameraInstance, GetPBVirtualCameraLookAtCRDTEntity(pbVirtualCamera, crdtEntity.Id)));
         }
 
         [Query]
@@ -170,8 +170,17 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
             // throw new NotImplementedException();
         }
 
-        private int GetPBVirtualCameraLookAtCRDTEntity(in PBVirtualCamera pbVirtualCamera) =>
-            pbVirtualCamera.HasLookAtEntity ? (int)pbVirtualCamera.LookAtEntity : -1;
+        private int GetPBVirtualCameraLookAtCRDTEntity(in PBVirtualCamera pbVirtualCamera, int virtualCameraCRDTEntity)
+        {
+            if (pbVirtualCamera.HasLookAtEntity)
+            {
+                int targetEntity = (int)pbVirtualCamera.LookAtEntity;
+                if (targetEntity != virtualCameraCRDTEntity)
+                    return targetEntity;
+            }
+
+            return -1;
+        }
 
         private void ApplyVirtualCamera(ref MainCameraComponent mainCameraComponent, int virtualCamCRDTEntity, Vector3? previousCameraPosition)
         {
