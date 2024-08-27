@@ -77,15 +77,16 @@ namespace DCL.LOD.Systems
                     var newLod = new LODAsset(instantiatedLOD, result.Asset,
                         GetTextureSlot(sceneLODInfo.CurrentLODLevelPromise, sceneDefinitionComponent.Definition, instantiatedLOD));
 
-                    CheckSceneReadinessAndClean(ref sceneLODInfo, sceneDefinitionComponent);
                     sceneLODInfo.AddSuccessLOD(instantiatedLOD, newLod, defaultFOV, defaultLodBias, realmPartitionSettings.MaxLoadingDistanceInParcels);
                 }
                 else
                 {
                     ReportHub.LogWarning(GetReportCategory(), $"LOD request for {sceneLODInfo.CurrentLODPromise.LoadingIntention.Hash} failed");
-                    CheckSceneReadinessAndClean(ref sceneLODInfo, sceneDefinitionComponent);
                     sceneLODInfo.AddFailedLOD();
                 }
+
+                LODUtils.TryReportSDK6SceneLoadedForLOD(sceneLODInfo, sceneDefinitionComponent, sceneReadinessReportQueue,
+                    scenesCache);
             }
         }
 
@@ -96,17 +97,6 @@ namespace DCL.LOD.Systems
                 slots = LODUtils.ApplyTextureArrayToLOD(sceneDefinitionComponent.id, sceneDefinitionComponent.metadata.scene.DecodedBase, instantiatedLOD, lodTextureArrayContainer);
             return slots;
         }
-
-
-        private void CheckSceneReadinessAndClean(ref SceneLODInfo sceneLODInfo, SceneDefinitionComponent sceneDefinitionComponent)
-        {
-            if (sceneLODInfo.CurrentLODLevelPromise == 0)
-            {
-                scenesCache.AddNonRealScene(sceneDefinitionComponent.Parcels);
-                LODUtils.CheckSceneReadiness(sceneReadinessReportQueue, sceneDefinitionComponent);
-            }
-        }
-        
 
     }
 }

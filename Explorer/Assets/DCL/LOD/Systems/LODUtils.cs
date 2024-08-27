@@ -8,6 +8,8 @@ using ECS.SceneLifeCycle.SceneDefinition;
 using SceneRunner.Scene;
 using System.Collections.Generic;
 using System.Linq;
+using DCL.LOD.Components;
+using ECS.SceneLifeCycle;
 using UnityEngine;
 using Utility;
 
@@ -68,19 +70,27 @@ namespace DCL.LOD.Systems
             return newSlots.ToArray();
         }
 
-        public static void CheckSceneReadiness(ISceneReadinessReportQueue sceneReadinessReportQueue, SceneDefinitionComponent sceneDefinitionComponent)
+        public static void TryReportSDK6SceneLoadedForLOD(SceneLODInfo sceneLODInfo,
+            SceneDefinitionComponent sceneDefinitionComponent, ISceneReadinessReportQueue sceneReadinessReportQueue,
+            IScenesCache scenesCache)
         {
+            //We have to report ready scenes for LOD_0 which are not SDK7. Only then we can consider this scenes as loaded
+            if (!sceneDefinitionComponent.IsSDK7 && sceneLODInfo.HasLOD(0))
+                ReportSDK6SceneLoaded(sceneDefinitionComponent, sceneReadinessReportQueue, scenesCache);
+        }
+
+        public static void ReportSDK6SceneLoaded(SceneDefinitionComponent sceneDefinitionComponent,
+            ISceneReadinessReportQueue sceneReadinessReportQueue, IScenesCache scenesCache)
+        {
+            scenesCache.AddNonRealScene(sceneDefinitionComponent.Parcels);
             if (sceneReadinessReportQueue.TryDequeue(sceneDefinitionComponent.Parcels, out var reports))
             {
-                for (int i = 0; i < reports!.Value.Count; i++)
+                for (var i = 0; i < reports!.Value.Count; i++)
                 {
                     var report = reports.Value[i];
                     report.SetProgress(1f);
                 }
             }
         }
-        
-        
-        
     }
 }

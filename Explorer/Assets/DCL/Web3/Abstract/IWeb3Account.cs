@@ -1,8 +1,10 @@
-namespace DCL.Web3.Accounts
+namespace DCL.Web3.Abstract
 {
     public interface IWeb3Account
     {
         public Web3Address Address { get; }
+
+        public string PrivateKey { get; }
 
         string Sign(string message);
 

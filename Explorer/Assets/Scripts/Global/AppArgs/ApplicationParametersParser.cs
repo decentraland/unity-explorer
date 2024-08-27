@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Text.RegularExpressions;
@@ -19,11 +20,13 @@ namespace Global.AppArgs
 
         public ApplicationParametersParser() : this(Environment.GetCommandLineArgs()) { }
 
-        public ApplicationParametersParser(string[] args)
+        public ApplicationParametersParser(string[] args) : this(true, args) { }
+
+        public ApplicationParametersParser(bool useInEditorFlags = true, params string[] args)
         {
             ParseApplicationParameters(args);
 
-            if (Application.isEditor)
+            if (useInEditorFlags && Application.isEditor)
                 AddAlwaysInEditorFlags();
         }
 
@@ -32,6 +35,9 @@ namespace Global.AppArgs
 
         public bool TryGetValue(string flagName, out string? value) =>
             appParameters.TryGetValue(flagName, out value);
+
+        public IEnumerable<string> Flags() =>
+            appParameters.Keys;
 
         private void AddAlwaysInEditorFlags()
         {
@@ -84,7 +90,11 @@ namespace Global.AppArgs
             NameValueCollection uriQuery = HttpUtility.ParseQueryString(uri.Query);
 
             foreach (string uriQueryKey in uriQuery.AllKeys)
+            {
+                // if the deep link is not constructed correctly (AKA 'decentraland://?&blabla=blabla') a 'null' parameter can be detected...
+                if (uriQueryKey == null) continue;
                 appParameters[uriQueryKey] = uriQuery.Get(uriQueryKey);
+            }
 
             // Patch for WinOS sometimes affecting the 'realm' parameter in deep links putting a '/' at the end
             if (appParameters.TryGetValue(REALM_PARAM, out string? realmParamValue) && realmParamValue.EndsWith('/'))
