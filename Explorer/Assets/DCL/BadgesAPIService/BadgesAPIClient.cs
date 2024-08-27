@@ -125,13 +125,13 @@ namespace DCL.BadgesAPIService
                         {
                             id = "emote-creator",
                             name = "Emote Creator Diamond",
-                            image = "https://picsum.photos/seed/6/300/300",
+                            image = "https://images.vexels.com/media/users/3/236713/isolated/preview/2e816f91528e052edec36e8f3e9f52e1-1up-gaming-pixel-art-badge.png?w=360",
                         },
                         new LatestAchievedBadgeData
                         {
                             id = "traveler",
                             name = "Traveler Bronze",
-                            image = "https://picsum.photos/seed/8/300/300",
+                            image = "https://art.pixilart.com/2af1a2ad84482b0.png",
                         },
                     },
                 },
@@ -208,7 +208,7 @@ namespace DCL.BadgesAPIService
                                 totalStepsTarget = 50,
                                 lastCompletedTierAt = "1722005503466",
                                 lastCompletedTierName = "Diamond",
-                                lastCompletedTierImage = "https://picsum.photos/seed/6/300/300",
+                                lastCompletedTierImage = "https://images.vexels.com/media/users/3/236713/isolated/preview/2e816f91528e052edec36e8f3e9f52e1-1up-gaming-pixel-art-badge.png?w=360",
                                 achievedTiers = new List<AchievedTierData>
                                 {
                                     new()
@@ -272,7 +272,7 @@ namespace DCL.BadgesAPIService
                                 totalStepsTarget = 60,
                                 lastCompletedTierAt = "1722005503466",
                                 lastCompletedTierName = "Bronze",
-                                lastCompletedTierImage = "https://picsum.photos/seed/8/300/300",
+                                lastCompletedTierImage = "https://art.pixilart.com/2af1a2ad84482b0.png",
                                 achievedTiers = new List<AchievedTierData>
                                 {
                                     new()
@@ -333,13 +333,13 @@ namespace DCL.BadgesAPIService
                             {
                                 textures2d = new BadgeTexturesData
                                 {
-                                    normal = "",
+                                    normal = "https://cdn-icons-png.flaticon.com/512/3760/3760955.png",
                                 },
                                 textures3d = new BadgeTexturesData
                                 {
-                                    normal = "",
-                                    hrm = "",
-                                    baseColor = "",
+                                    normal = "https://cdn-icons-png.flaticon.com/512/3760/3760955.png",
+                                    hrm = "https://cdn-icons-png.flaticon.com/512/3760/3760955.png",
+                                    baseColor = "https://cdn-icons-png.flaticon.com/512/3760/3760955.png",
                                 },
                             },
                             isTier = true,
@@ -443,13 +443,13 @@ namespace DCL.BadgesAPIService
                     {
                         textures2d = new BadgeTexturesData
                         {
-                            normal = "https://picsum.photos/seed/1/300/300",
+                            normal = "https://images.vexels.com/media/users/3/236713/isolated/preview/2e816f91528e052edec36e8f3e9f52e1-1up-gaming-pixel-art-badge.png?w=360",
                         },
                         textures3d = new BadgeTexturesData
                         {
-                            normal = "https://picsum.photos/seed/1/300/300",
-                            hrm = "https://picsum.photos/seed/1/300/300",
-                            baseColor = "https://picsum.photos/seed/1/300/300",
+                            normal = "https://images.vexels.com/media/users/3/236713/isolated/preview/2e816f91528e052edec36e8f3e9f52e1-1up-gaming-pixel-art-badge.png?w=360",
+                            hrm = "https://images.vexels.com/media/users/3/236713/isolated/preview/2e816f91528e052edec36e8f3e9f52e1-1up-gaming-pixel-art-badge.png?w=360",
+                            baseColor = "https://images.vexels.com/media/users/3/236713/isolated/preview/2e816f91528e052edec36e8f3e9f52e1-1up-gaming-pixel-art-badge.png?w=360",
                         },
                     },
                 },
@@ -466,13 +466,13 @@ namespace DCL.BadgesAPIService
                     {
                         textures2d = new BadgeTexturesData
                         {
-                            normal = "https://picsum.photos/seed/2/300/300",
+                            normal = "https://images.vexels.com/media/users/3/236713/isolated/preview/2e816f91528e052edec36e8f3e9f52e1-1up-gaming-pixel-art-badge.png?w=360",
                         },
                         textures3d = new BadgeTexturesData
                         {
-                            normal = "https://picsum.photos/seed/2/300/300",
-                            hrm = "https://picsum.photos/seed/2/300/300",
-                            baseColor = "https://picsum.photos/seed/2/300/300",
+                            normal = "https://images.vexels.com/media/users/3/236713/isolated/preview/2e816f91528e052edec36e8f3e9f52e1-1up-gaming-pixel-art-badge.png?w=360",
+                            hrm = "https://images.vexels.com/media/users/3/236713/isolated/preview/2e816f91528e052edec36e8f3e9f52e1-1up-gaming-pixel-art-badge.png?w=360",
+                            baseColor = "https://images.vexels.com/media/users/3/236713/isolated/preview/2e816f91528e052edec36e8f3e9f52e1-1up-gaming-pixel-art-badge.png?w=360",
                         },
                     },
                 },
@@ -489,13 +489,13 @@ namespace DCL.BadgesAPIService
                     {
                         textures2d = new BadgeTexturesData
                         {
-                            normal = "https://picsum.photos/seed/3/300/300",
+                            normal = "https://images.vexels.com/media/users/3/236713/isolated/preview/2e816f91528e052edec36e8f3e9f52e1-1up-gaming-pixel-art-badge.png?w=360",
                         },
                         textures3d = new BadgeTexturesData
                         {
-                            normal = "https://picsum.photos/seed/3/300/300",
-                            hrm = "https://picsum.photos/seed/3/300/300",
-                            baseColor = "https://picsum.photos/seed/3/300/300",
+                            normal = "https://images.vexels.com/media/users/3/236713/isolated/preview/2e816f91528e052edec36e8f3e9f52e1-1up-gaming-pixel-art-badge.png?w=360",
+                            hrm = "https://images.vexels.com/media/users/3/236713/isolated/preview/2e816f91528e052edec36e8f3e9f52e1-1up-gaming-pixel-art-badge.png?w=360",
+                            baseColor = "https://images.vexels.com/media/users/3/236713/isolated/preview/2e816f91528e052edec36e8f3e9f52e1-1up-gaming-pixel-art-badge.png?w=360",
                         },
                     },
                 },
@@ -512,13 +512,13 @@ namespace DCL.BadgesAPIService
                     {
                         textures2d = new BadgeTexturesData
                         {
-                            normal = "https://picsum.photos/seed/4/300/300",
+                            normal = "https://images.vexels.com/media/users/3/236713/isolated/preview/2e816f91528e052edec36e8f3e9f52e1-1up-gaming-pixel-art-badge.png?w=360",
                         },
                         textures3d = new BadgeTexturesData
                         {
-                            normal = "https://picsum.photos/seed/4/300/300",
-                            hrm = "https://picsum.photos/seed/4/300/300",
-                            baseColor = "https://picsum.photos/seed/4/300/300",
+                            normal = "https://images.vexels.com/media/users/3/236713/isolated/preview/2e816f91528e052edec36e8f3e9f52e1-1up-gaming-pixel-art-badge.png?w=360",
+                            hrm = "https://images.vexels.com/media/users/3/236713/isolated/preview/2e816f91528e052edec36e8f3e9f52e1-1up-gaming-pixel-art-badge.png?w=360",
+                            baseColor = "https://images.vexels.com/media/users/3/236713/isolated/preview/2e816f91528e052edec36e8f3e9f52e1-1up-gaming-pixel-art-badge.png?w=360",
                         },
                     },
                 },
@@ -535,13 +535,13 @@ namespace DCL.BadgesAPIService
                     {
                         textures2d = new BadgeTexturesData
                         {
-                            normal = "https://picsum.photos/seed/5/300/300",
+                            normal = "https://images.vexels.com/media/users/3/236713/isolated/preview/2e816f91528e052edec36e8f3e9f52e1-1up-gaming-pixel-art-badge.png?w=360",
                         },
                         textures3d = new BadgeTexturesData
                         {
-                            normal = "https://picsum.photos/seed/5/300/300",
-                            hrm = "https://picsum.photos/seed/5/300/300",
-                            baseColor = "https://picsum.photos/seed/5/300/300",
+                            normal = "https://images.vexels.com/media/users/3/236713/isolated/preview/2e816f91528e052edec36e8f3e9f52e1-1up-gaming-pixel-art-badge.png?w=360",
+                            hrm = "https://images.vexels.com/media/users/3/236713/isolated/preview/2e816f91528e052edec36e8f3e9f52e1-1up-gaming-pixel-art-badge.png?w=360",
+                            baseColor = "https://images.vexels.com/media/users/3/236713/isolated/preview/2e816f91528e052edec36e8f3e9f52e1-1up-gaming-pixel-art-badge.png?w=360",
                         },
                     },
                 },
@@ -558,13 +558,13 @@ namespace DCL.BadgesAPIService
                     {
                         textures2d = new BadgeTexturesData
                         {
-                            normal = "https://picsum.photos/seed/6/300/300",
+                            normal = "https://images.vexels.com/media/users/3/236713/isolated/preview/2e816f91528e052edec36e8f3e9f52e1-1up-gaming-pixel-art-badge.png?w=360",
                         },
                         textures3d = new BadgeTexturesData
                         {
-                            normal = "https://picsum.photos/seed/6/300/300",
-                            hrm = "https://picsum.photos/seed/6/300/300",
-                            baseColor = "https://picsum.photos/seed/6/300/300",
+                            normal = "https://images.vexels.com/media/users/3/236713/isolated/preview/2e816f91528e052edec36e8f3e9f52e1-1up-gaming-pixel-art-badge.png?w=360",
+                            hrm = "https://images.vexels.com/media/users/3/236713/isolated/preview/2e816f91528e052edec36e8f3e9f52e1-1up-gaming-pixel-art-badge.png?w=360",
+                            baseColor = "https://images.vexels.com/media/users/3/236713/isolated/preview/2e816f91528e052edec36e8f3e9f52e1-1up-gaming-pixel-art-badge.png?w=360",
                         },
                     },
                 },
@@ -585,13 +585,13 @@ namespace DCL.BadgesAPIService
                     {
                         textures2d = new BadgeTexturesData
                         {
-                            normal = "https://picsum.photos/seed/7/300/300",
+                            normal = "https://art.pixilart.com/2af1a2ad84482b0.png",
                         },
                         textures3d = new BadgeTexturesData
                         {
-                            normal = "https://picsum.photos/seed/7/300/300",
-                            hrm = "https://picsum.photos/seed/7/300/300",
-                            baseColor = "https://picsum.photos/seed/7/300/300",
+                            normal = "https://art.pixilart.com/2af1a2ad84482b0.png",
+                            hrm = "https://art.pixilart.com/2af1a2ad84482b0.png",
+                            baseColor = "https://art.pixilart.com/2af1a2ad84482b0.png",
                         },
                     },
                 },
@@ -608,13 +608,13 @@ namespace DCL.BadgesAPIService
                     {
                         textures2d = new BadgeTexturesData
                         {
-                            normal = "https://picsum.photos/seed/8/300/300",
+                            normal = "https://art.pixilart.com/2af1a2ad84482b0.png",
                         },
                         textures3d = new BadgeTexturesData
                         {
-                            normal = "https://picsum.photos/seed/8/300/300",
-                            hrm = "https://picsum.photos/seed/8/300/300",
-                            baseColor = "https://picsum.photos/seed/8/300/300",
+                            normal = "https://art.pixilart.com/2af1a2ad84482b0.png",
+                            hrm = "https://art.pixilart.com/2af1a2ad84482b0.png",
+                            baseColor = "https://art.pixilart.com/2af1a2ad84482b0.png",
                         },
                     },
                 },
@@ -631,13 +631,13 @@ namespace DCL.BadgesAPIService
                     {
                         textures2d = new BadgeTexturesData
                         {
-                            normal = "https://picsum.photos/seed/9/300/300",
+                            normal = "https://art.pixilart.com/2af1a2ad84482b0.png",
                         },
                         textures3d = new BadgeTexturesData
                         {
-                            normal = "https://picsum.photos/seed/9/300/300",
-                            hrm = "https://picsum.photos/seed/9/300/300",
-                            baseColor = "https://picsum.photos/seed/9/300/300",
+                            normal = "https://art.pixilart.com/2af1a2ad84482b0.png",
+                            hrm = "https://art.pixilart.com/2af1a2ad84482b0.png",
+                            baseColor = "https://art.pixilart.com/2af1a2ad84482b0.png",
                         },
                     },
                 },
@@ -654,13 +654,13 @@ namespace DCL.BadgesAPIService
                     {
                         textures2d = new BadgeTexturesData
                         {
-                            normal = "https://picsum.photos/seed/10/300/300",
+                            normal = "https://art.pixilart.com/2af1a2ad84482b0.png",
                         },
                         textures3d = new BadgeTexturesData
                         {
-                            normal = "https://picsum.photos/seed/10/300/300",
-                            hrm = "https://picsum.photos/seed/10/300/300",
-                            baseColor = "https://picsum.photos/seed/10/300/300",
+                            normal = "https://art.pixilart.com/2af1a2ad84482b0.png",
+                            hrm = "https://art.pixilart.com/2af1a2ad84482b0.png",
+                            baseColor = "https://art.pixilart.com/2af1a2ad84482b0.png",
                         },
                     },
                 },
@@ -677,13 +677,13 @@ namespace DCL.BadgesAPIService
                     {
                         textures2d = new BadgeTexturesData
                         {
-                            normal = "https://picsum.photos/seed/11/300/300",
+                            normal = "https://art.pixilart.com/2af1a2ad84482b0.png",
                         },
                         textures3d = new BadgeTexturesData
                         {
-                            normal = "https://picsum.photos/seed/11/300/300",
-                            hrm = "https://picsum.photos/seed/11/300/300",
-                            baseColor = "https://picsum.photos/seed/11/300/300",
+                            normal = "https://art.pixilart.com/2af1a2ad84482b0.png",
+                            hrm = "https://art.pixilart.com/2af1a2ad84482b0.png",
+                            baseColor = "https://art.pixilart.com/2af1a2ad84482b0.png",
                         },
                     },
                 },
@@ -700,13 +700,13 @@ namespace DCL.BadgesAPIService
                     {
                         textures2d = new BadgeTexturesData
                         {
-                            normal = "https://picsum.photos/seed/12/300/300",
+                            normal = "https://art.pixilart.com/2af1a2ad84482b0.png",
                         },
                         textures3d = new BadgeTexturesData
                         {
-                            normal = "https://picsum.photos/seed/12/300/300",
-                            hrm = "https://picsum.photos/seed/12/300/300",
-                            baseColor = "https://picsum.photos/seed/12/300/300",
+                            normal = "https://art.pixilart.com/2af1a2ad84482b0.png",
+                            hrm = "https://art.pixilart.com/2af1a2ad84482b0.png",
+                            baseColor = "https://art.pixilart.com/2af1a2ad84482b0.png",
                         },
                     },
                 },
@@ -727,13 +727,13 @@ namespace DCL.BadgesAPIService
                     {
                         textures2d = new BadgeTexturesData
                         {
-                            normal = "",
+                            normal = "https://cdn-icons-png.flaticon.com/512/3760/3760955.png",
                         },
                         textures3d = new BadgeTexturesData
                         {
-                            normal = "",
-                            hrm = "",
-                            baseColor = "",
+                            normal = "https://cdn-icons-png.flaticon.com/512/3760/3760955.png",
+                            hrm = "https://cdn-icons-png.flaticon.com/512/3760/3760955.png",
+                            baseColor = "https://cdn-icons-png.flaticon.com/512/3760/3760955.png",
                         },
                     },
                 },
@@ -750,13 +750,13 @@ namespace DCL.BadgesAPIService
                     {
                         textures2d = new BadgeTexturesData
                         {
-                            normal = "",
+                            normal = "https://cdn-icons-png.flaticon.com/512/3760/3760955.png",
                         },
                         textures3d = new BadgeTexturesData
                         {
-                            normal = "",
-                            hrm = "",
-                            baseColor = "",
+                            normal = "https://cdn-icons-png.flaticon.com/512/3760/3760955.png",
+                            hrm = "https://cdn-icons-png.flaticon.com/512/3760/3760955.png",
+                            baseColor = "https://cdn-icons-png.flaticon.com/512/3760/3760955.png",
                         },
                     },
                 },
@@ -773,13 +773,13 @@ namespace DCL.BadgesAPIService
                     {
                         textures2d = new BadgeTexturesData
                         {
-                            normal = "",
+                            normal = "https://cdn-icons-png.flaticon.com/512/3760/3760955.png",
                         },
                         textures3d = new BadgeTexturesData
                         {
-                            normal = "",
-                            hrm = "",
-                            baseColor = "",
+                            normal = "https://cdn-icons-png.flaticon.com/512/3760/3760955.png",
+                            hrm = "https://cdn-icons-png.flaticon.com/512/3760/3760955.png",
+                            baseColor = "https://cdn-icons-png.flaticon.com/512/3760/3760955.png",
                         },
                     },
                 },
@@ -796,13 +796,13 @@ namespace DCL.BadgesAPIService
                     {
                         textures2d = new BadgeTexturesData
                         {
-                            normal = "",
+                            normal = "https://cdn-icons-png.flaticon.com/512/3760/3760955.png",
                         },
                         textures3d = new BadgeTexturesData
                         {
-                            normal = "",
-                            hrm = "",
-                            baseColor = "",
+                            normal = "https://cdn-icons-png.flaticon.com/512/3760/3760955.png",
+                            hrm = "https://cdn-icons-png.flaticon.com/512/3760/3760955.png",
+                            baseColor = "https://cdn-icons-png.flaticon.com/512/3760/3760955.png",
                         },
                     },
                 },
@@ -819,13 +819,13 @@ namespace DCL.BadgesAPIService
                     {
                         textures2d = new BadgeTexturesData
                         {
-                            normal = "",
+                            normal = "https://cdn-icons-png.flaticon.com/512/3760/3760955.png",
                         },
                         textures3d = new BadgeTexturesData
                         {
-                            normal = "",
-                            hrm = "",
-                            baseColor = "",
+                            normal = "https://cdn-icons-png.flaticon.com/512/3760/3760955.png",
+                            hrm = "https://cdn-icons-png.flaticon.com/512/3760/3760955.png",
+                            baseColor = "https://cdn-icons-png.flaticon.com/512/3760/3760955.png",
                         },
                     },
                 },
@@ -842,13 +842,13 @@ namespace DCL.BadgesAPIService
                     {
                         textures2d = new BadgeTexturesData
                         {
-                            normal = "",
+                            normal = "https://cdn-icons-png.flaticon.com/512/3760/3760955.png",
                         },
                         textures3d = new BadgeTexturesData
                         {
-                            normal = "",
-                            hrm = "",
-                            baseColor = "",
+                            normal = "https://cdn-icons-png.flaticon.com/512/3760/3760955.png",
+                            hrm = "https://cdn-icons-png.flaticon.com/512/3760/3760955.png",
+                            baseColor = "https://cdn-icons-png.flaticon.com/512/3760/3760955.png",
                         },
                     },
                 },
