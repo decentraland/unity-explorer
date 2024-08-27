@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading;
 using Utility.Multithreading;
 using Utility.Ownership;
+using Utility.Types;
 
 namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
 {
@@ -59,10 +60,11 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
                 await current!.Value.WebSocket.SendAsync(data.DangerousArraySegment(), WebSocketMessageType.Binary, true, token)!;
         }
 
-        public async UniTask<MemoryWrap> ReceiveAsync(CancellationToken token)
+        public async UniTask<EnumResult<MemoryWrap, IArchipelagoLiveConnection.ReceiveResponse>> ReceiveAsync(CancellationToken token)
         {
             if (IsWebSocketInvalid())
-                throw new InvalidOperationException(
+                return EnumResult<MemoryWrap, IArchipelagoLiveConnection.ReceiveResponse>.ErrorResult(
+                    IArchipelagoLiveConnection.ReceiveResponse.MessageError,
                     $"Cannot receive data, ensure that connection is correct, the connection is invalid: {current?.WebSocket.State}"
                 );
 
@@ -77,12 +79,13 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
 
             return result.MessageType switch
                    {
-                       WebSocketMessageType.Text => throw new NotSupportedException(
-                           $"Expected Binary, Text messages are not supported: {AsText(result, buffer)}"
+                       WebSocketMessageType.Text => EnumResult<MemoryWrap, IArchipelagoLiveConnection.ReceiveResponse>.ErrorResult(IArchipelagoLiveConnection.ReceiveResponse.MessageError, $"Expected Binary, Text messages are not supported: {AsText(result, buffer)}"),
+                       WebSocketMessageType.Binary => EnumResult<MemoryWrap, IArchipelagoLiveConnection.ReceiveResponse>.SuccessResult(CopiedMemory(buffer, result.Count), IArchipelagoLiveConnection.ReceiveResponse.Success),
+                       WebSocketMessageType.Close => ConnectionClosedException.NewErrorResult(current!.Value.WebSocket),
+                       _ => EnumResult<MemoryWrap, IArchipelagoLiveConnection.ReceiveResponse>.ErrorResult(
+                           IArchipelagoLiveConnection.ReceiveResponse.MessageError,
+                           $"Unknown message type: {result.MessageType}"
                        ),
-                       WebSocketMessageType.Binary => CopiedMemory(buffer, result.Count),
-                       WebSocketMessageType.Close => throw new ConnectionClosedException(current!.Value.WebSocket),
-                       _ => throw new ArgumentOutOfRangeException(),
                    };
         }
 

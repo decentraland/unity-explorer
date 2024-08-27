@@ -2,8 +2,8 @@ using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.Messaging;
 using Google.Protobuf;
 using LiveKit.Internal.FFIClients.Pools.Memory;
-using Nethereum.Model;
 using System.Threading;
+using Utility.Types;
 
 namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
 {
@@ -20,7 +20,14 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
         /// <returns>returns a memory chunk ang gives the ownership for it</returns>
         UniTask SendAsync(MemoryWrap data, CancellationToken token);
 
-        UniTask<MemoryWrap> ReceiveAsync(CancellationToken token);
+        UniTask<EnumResult<MemoryWrap, ReceiveResponse>> ReceiveAsync(CancellationToken token);
+
+        enum ReceiveResponse
+        {
+            MessageError,
+            ConnectionClosed,
+            Success,
+        }
     }
 
     public static class ArchipelagoLiveConnectionExtensions
@@ -41,17 +48,17 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
         /// <summary>
         ///     Takes ownership for the data and returns the ownership for the result
         /// </summary>
-        public static async UniTask<MemoryWrap> SendAndReceiveAsync(this IArchipelagoLiveConnection archipelagoLiveConnection, MemoryWrap data, CancellationToken token)
+        public static async UniTask<EnumResult<MemoryWrap, IArchipelagoLiveConnection.ReceiveResponse>> SendAndReceiveAsync(this IArchipelagoLiveConnection archipelagoLiveConnection, MemoryWrap data, CancellationToken token)
         {
             await archipelagoLiveConnection.SendAsync(data, token);
             return await archipelagoLiveConnection.ReceiveAsync(token);
         }
 
-        public static async UniTask<MemoryWrap> SendAndReceiveAsync<T>(this IArchipelagoLiveConnection connection, T message, IMemoryPool memoryPool, CancellationToken token) where T: IMessage
+        public static async UniTask<EnumResult<MemoryWrap, IArchipelagoLiveConnection.ReceiveResponse>> SendAndReceiveAsync<T>(this IArchipelagoLiveConnection connection, T message, IMemoryPool memoryPool, CancellationToken token) where T: IMessage
         {
             using MemoryWrap memory = memoryPool.Memory(message);
             message.WriteTo(memory);
-            MemoryWrap result = await connection.SendAndReceiveAsync(memory, token);
+            var result = await connection.SendAndReceiveAsync(memory, token);
             return result;
         }
 

@@ -4,6 +4,7 @@ using DCL.Multiplayer.Connections.Typing;
 using LiveKit.Internal.FFIClients.Pools.Memory;
 using System;
 using System.Threading;
+using Utility.Types;
 
 namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
 {
@@ -59,11 +60,11 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
             log($"ArchipelagoLiveConnection SendAsync finished with size: {data.Length} and content: {data.HexReadableString()}");
         }
 
-        public async UniTask<MemoryWrap> ReceiveAsync(CancellationToken token)
+        public async UniTask<Result<MemoryWrap>> ReceiveAsync(CancellationToken token)
         {
             log("ArchipelagoLiveConnection ReceiveAsync start");
-            MemoryWrap result = await origin.ReceiveAsync(token);
-            log($"ArchipelagoLiveConnection ReceiveAsync finished with size: {result.Length}");
+            var result = await origin.ReceiveAsync(token);
+            log($"ArchipelagoLiveConnection ReceiveAsync finished with error: {result.ErrorMessage ?? "no error"}, size: {(result.Success ? result.Value.Length : 0)}");
             return result;
         }
     }

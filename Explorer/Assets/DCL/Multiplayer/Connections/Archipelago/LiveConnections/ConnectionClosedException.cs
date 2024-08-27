@@ -1,5 +1,7 @@
+using LiveKit.Internal.FFIClients.Pools.Memory;
 using System;
 using System.Net.WebSockets;
+using Utility.Types;
 
 namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
 {
@@ -13,5 +15,11 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
         {
             this.webSocket = webSocket;
         }
+
+        public static EnumResult<MemoryWrap, IArchipelagoLiveConnection.ReceiveResponse> NewErrorResult(WebSocket webSocket) =>
+            EnumResult<MemoryWrap, IArchipelagoLiveConnection.ReceiveResponse>.ErrorResult(
+                IArchipelagoLiveConnection.ReceiveResponse.ConnectionClosed,
+                $"WebSocket closed with state: {webSocket.State} with status: {webSocket.CloseStatus} with description: {webSocket.CloseStatusDescription} - Connection closed"
+            );
     }
 }

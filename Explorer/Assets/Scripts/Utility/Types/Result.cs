@@ -37,4 +37,26 @@ namespace Utility.Types
         public static Result<T> ErrorResult(string errorMessage) =>
             new (default(T)!, errorMessage);
     }
+
+    public readonly struct EnumResult<TValue, TEnum>
+    {
+        public readonly TValue Value;
+        public readonly TEnum State;
+        public readonly string? ErrorMessage;
+
+        public bool Success => ErrorMessage == null;
+
+        private EnumResult(TValue value, TEnum state, string? errorMessage)
+        {
+            this.Value = value;
+            this.State = state;
+            this.ErrorMessage = errorMessage;
+        }
+
+        public static EnumResult<TValue, TEnum> SuccessResult(TValue value, TEnum state) =>
+            new (value, state, null);
+
+        public static EnumResult<TValue, TEnum> ErrorResult(TEnum state, string errorMessage) =>
+            new (default(TValue)!, state, errorMessage);
+    }
 }

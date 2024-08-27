@@ -4,7 +4,7 @@ using LiveKit.Internal.FFIClients.Pools.Memory;
 using System;
 using System.Net.Sockets;
 using System.Threading;
-using UnityEngine;
+using Utility.Types;
 
 namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
 {
@@ -50,15 +50,18 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
             }
         }
 
-        public async UniTask<MemoryWrap> ReceiveAsync(CancellationToken token)
+        public async UniTask<EnumResult<MemoryWrap, IArchipelagoLiveConnection.ReceiveResponse>> ReceiveAsync(CancellationToken token)
         {
-            try { return await origin.ReceiveAsync(token); }
-            catch (ConnectionClosedException)
+            var result = await origin.ReceiveAsync(token);
+
+            if (result.State is IArchipelagoLiveConnection.ReceiveResponse.ConnectionClosed)
             {
                 log("Connection error on receiving, ensure to reconnect...");
                 await EnsureReconnectAsync(token);
                 return await ReceiveAsync(token);
             }
+
+            return result;
         }
 
         private async UniTask EnsureReconnectAsync(CancellationToken token)
