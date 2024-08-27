@@ -1,5 +1,4 @@
 ﻿using CrdtEcsBridge.PoolsProviders;
-using DCL.Diagnostics;
 using JetBrains.Annotations;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis.Modules.CommunicationsControllerApi.SDKMessageBus;
@@ -24,7 +23,7 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
         public override ScriptableSDKObservableEventArray? SendBatch()
         {
             // If there are no subscriptions at all there is nothing to handle
-            if (engineApi.SdkObservableEventSubscriptions.Count == 0)
+            if (engineApi.IsAnySubscription() == false)
             {
                 engineApi.ClearSDKObservableEvents();
                 commsApi.ClearMessages();
@@ -50,7 +49,7 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
 
         private void DetectSceneMessageBusCommsObservableEvent()
         {
-            if (!engineApi.SdkObservableEventSubscriptions.Contains(SDKObservableEventIds.Comms))
+            if (!engineApi.HasSubscription(SDKObservableEventIds.Comms))
                 return;
 
             if (commsApi.SceneCommsMessages.Count == 0) return;
@@ -64,23 +63,13 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
         [UsedImplicitly]
         public void SubscribeToSDKObservableEvent(string eventId)
         {
-            if (eventId == SDKObservableEventIds.PlayerClicked)
-            {
-                ReportHub.LogWarning(new ReportData(ReportCategory.SDK_OBSERVABLES), "Scene subscribed to unsupported SDK Observable 'PlayerClicked'");
-                return;
-            }
-
-            engineApi.SdkObservableEventSubscriptions.Add(eventId);
-            engineApi.EnableSDKObservableMessagesDetection = true;
+            engineApi.TryAddSubscription(eventId);
         }
 
         [UsedImplicitly]
         public void UnsubscribeFromSDKObservableEvent(string eventId)
         {
-            engineApi.SdkObservableEventSubscriptions.Remove(eventId);
-
-            if (engineApi.SdkObservableEventSubscriptions.Count == 0)
-                engineApi.EnableSDKObservableMessagesDetection = false;
+            engineApi.RemoveSubscriptionIfExists(eventId);
         }
     }
 }

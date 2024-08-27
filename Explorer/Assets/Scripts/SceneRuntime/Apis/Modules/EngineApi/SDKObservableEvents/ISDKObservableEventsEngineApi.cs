@@ -1,6 +1,5 @@
 using CrdtEcsBridge.PoolsProviders;
 using SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents.Events;
-using System.Collections.Generic;
 
 namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
 {
@@ -12,8 +11,12 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
 
         PoolableSDKObservableEventArray? ConsumeSDKObservableEvents();
 
-        HashSet<string> SdkObservableEventSubscriptions { get; }
+        void TryAddSubscription(string eventId);
 
-        bool EnableSDKObservableMessagesDetection { set; }
+        void RemoveSubscriptionIfExists(string eventId);
+
+        bool HasSubscription(string eventId);
+
+        bool IsAnySubscription();
     }
 }
