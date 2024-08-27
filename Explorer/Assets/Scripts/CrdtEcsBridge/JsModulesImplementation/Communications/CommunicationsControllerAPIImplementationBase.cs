@@ -91,6 +91,13 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
             communicationControllerHub.SendMessage(message, sceneData.SceneEntityDefinition.id!, cancellationTokenSource.Token);
         }
 
+        private static MsgType DecodeMessage(ref ReadOnlySpan<byte> value)
+        {
+            var msgType = (MsgType)value[0];
+            value = value[1..];
+            return msgType;
+        }
+
         private void OnMessageReceived(ICommunicationControllerHub.SceneMessage receivedMessage)
         {
             ReadOnlySpan<byte> decodedMessage = receivedMessage.Data.Span;
@@ -103,12 +110,5 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
         }
 
         protected abstract void OnMessageReceived(MsgType messageType, ReadOnlySpan<byte> decodedMessage, string fromWalletId);
-
-        internal static MsgType DecodeMessage(ref ReadOnlySpan<byte> value)
-        {
-            var msgType = (MsgType)value[0];
-            value = value[1..];
-            return msgType;
-        }
     }
 }
