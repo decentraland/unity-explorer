@@ -48,7 +48,7 @@ namespace DCL.AuthenticationScreenFlow
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
         private readonly FeatureFlagsCache featureFlagsCache;
         private readonly AudioMixerVolumesController audioMixerVolumesController;
-        private readonly World? world;
+        private readonly World world;
 
         private AuthenticationScreenCharacterPreviewController? characterPreviewController;
         private CancellationTokenSource? loginCancellationToken;
@@ -117,7 +117,6 @@ namespace DCL.AuthenticationScreenFlow
             viewInstance.VersionText.text = "editor-version";
 #endif
 
-            Assert.IsNotNull(world);
             characterPreviewController = new AuthenticationScreenCharacterPreviewController(viewInstance.CharacterPreviewView, characterPreviewFactory, world!, characterPreviewEventBus);
         }
 
