@@ -8,6 +8,7 @@ using DCL.Backpack.BackpackBus;
 using DCL.Backpack.CharacterPreview;
 using DCL.Backpack.EmotesSection;
 using DCL.Input;
+using DCL.Input.UnityInputSystem.Blocks;
 using DCL.Profiles;
 using DCL.UI;
 using ECS.StreamableLoading.Common;
@@ -61,7 +62,7 @@ namespace DCL.Backpack
             EmotesController emotesController,
             BackpackCharacterPreviewController backpackCharacterPreviewController,
             IThumbnailProvider thumbnailProvider,
-            DCLInput dclInput,
+            IInputBlock inputBlock,
             ICursor cursor)
         {
             this.view = view;
@@ -84,7 +85,7 @@ namespace DCL.Backpack
                 gridController,
                 wearableInfoPanelController,
                 thumbnailProvider,
-                dclInput);
+                inputBlock);
 
             backpackSections = new Dictionary<BackpackSections, ISection>
             {
