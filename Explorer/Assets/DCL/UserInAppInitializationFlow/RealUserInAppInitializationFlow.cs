@@ -106,10 +106,7 @@ namespace DCL.UserInAppInitializationFlow
 
                 var showResult = await LoadingScreen(showLoading)
                    .ShowWhileExecuteTaskAsync(
-                        async parentLoadReport =>
-                        {
-                            result = await startupOperation.ExecuteAsync(parentLoadReport, ct);
-                        },
+                        async parentLoadReport => result = await startupOperation.ExecuteAsync(parentLoadReport, ct),
                         ct
                     );
 
