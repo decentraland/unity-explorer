@@ -28,7 +28,7 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
             if (reloadRealm)
                 await realmController.RestartRealmAsync(ct);
 
-            report.SetProgress(loadingStatus.SetStage(RealFlowLoadingStatus.Stage.ProfileLoaded));
+            report.SetProgress(loadingStatus.SetStage(RealFlowLoadingStatus.Stage.RealmRestarted));
             return Result.SuccessResult();
         }
     }

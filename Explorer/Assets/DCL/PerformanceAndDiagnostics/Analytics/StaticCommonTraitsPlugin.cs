@@ -6,6 +6,9 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 {
     public class StaticCommonTraitsPlugin : EventPlugin
     {
+        private readonly string sessionId;
+        private readonly string launcherAnonymousId;
+
         private readonly string dclRendererType = SystemInfo.deviceType.ToString(); // Desktop, Console, Handeheld (Mobile), Unknown
         private readonly string rendererVersion = Application.version;
         private readonly string runtime = Application.isEditor? "editor" : Debug.isDebugBuild ? "debug" : "release";

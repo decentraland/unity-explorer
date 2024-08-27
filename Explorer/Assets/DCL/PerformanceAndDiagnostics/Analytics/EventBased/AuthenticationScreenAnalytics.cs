@@ -11,6 +11,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         private readonly IAnalyticsController analytics;
         private readonly AuthenticationScreenController authenticationController;
 
+        private int stepsCounter;
+
         public AuthenticationScreenAnalytics(IAnalyticsController analytics, AuthenticationScreenController authenticationController)
         {
             this.analytics = analytics;
@@ -28,7 +30,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         {
             analytics.Track(AnalyticsEvents.General.INITIAL_LOADING, new JsonObject
             {
-                { STAGE_KEY, $"7.0.{(byte)state} - authentication state: {state.ToString()}" },
+                { STAGE_KEY, $"7.0.{++stepsCounter} - authentication state: {state.ToString()}" },
             });
         }
     }

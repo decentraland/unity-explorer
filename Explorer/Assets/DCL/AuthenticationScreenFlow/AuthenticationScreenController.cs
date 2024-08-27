@@ -26,15 +26,16 @@ namespace DCL.AuthenticationScreenFlow
 {
     public class AuthenticationScreenController : ControllerBase<AuthenticationScreenView>
     {
-        public enum AuthenticationStatus : byte
+        public enum AuthenticationStatus
         {
-            Init = 0,
+            Init,
+            FetchingProfileCached,
+            LoggedInCached,
 
-            Login = 1,
-            VerificationInProgress = 2,
-            FetchingProfile = 3,
-            LoggedIn = 4,
-            LoggedInCached = 5,
+            Login,
+            VerificationInProgress,
+            FetchingProfile,
+            LoggedIn,
         }
 
         private enum ViewState
@@ -178,7 +179,7 @@ namespace DCL.AuthenticationScreenFlow
                 {
                     if (IsUserAllowedToAccessToBeta(storedIdentity))
                     {
-                        CurrentState.Value = AuthenticationStatus.FetchingProfile;
+                        CurrentState.Value = AuthenticationStatus.FetchingProfileCached;
 
                         await FetchProfileAsync(loginCancellationToken.Token);
 

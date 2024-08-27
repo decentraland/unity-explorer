@@ -131,7 +131,7 @@ namespace Global.Dynamic
 
             analytics.Track(General.INITIAL_LOADING, new JsonObject
             {
-                { STAGE_KEY, "9 - end" },
+                { STAGE_KEY, "8 - end" },
             });
         }
 
