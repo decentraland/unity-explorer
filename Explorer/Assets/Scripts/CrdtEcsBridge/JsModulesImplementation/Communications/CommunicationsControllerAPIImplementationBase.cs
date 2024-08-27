@@ -10,7 +10,7 @@ using Utility;
 
 namespace CrdtEcsBridge.JsModulesImplementation.Communications
 {
-    public class CommunicationsControllerAPIImplementationBase : ICommunicationsControllerAPI
+    public abstract class CommunicationsControllerAPIImplementationBase : ICommunicationsControllerAPI
     {
         internal enum MsgType
         {
@@ -18,16 +18,18 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
             Uint8Array = 2,
         }
 
+        protected readonly List<IMemoryOwner<byte>> eventsToProcess = new ();
         protected readonly CancellationTokenSource cancellationTokenSource = new ();
         protected readonly ICommunicationControllerHub communicationControllerHub;
         protected readonly ISceneData sceneData;
-        protected readonly ISceneStateProvider sceneStateProvider;
-        protected readonly IJsOperations jsOperations;
-        protected readonly Action<ICommunicationControllerHub.SceneMessage> onMessageReceivedCached;
-        protected readonly List<IMemoryOwner<byte>> eventsToProcess = new ();
+
+        private readonly ISceneStateProvider sceneStateProvider;
+        private readonly IJsOperations jsOperations;
+        private readonly Action<ICommunicationControllerHub.SceneMessage> onMessageReceivedCached;
+
         internal IReadOnlyList<IMemoryOwner<byte>> EventsToProcess => eventsToProcess;
 
-        public CommunicationsControllerAPIImplementationBase(
+        protected CommunicationsControllerAPIImplementationBase(
             ISceneData sceneData,
             ICommunicationControllerHub communicationControllerHub,
             IJsOperations jsOperations,
