@@ -239,16 +239,12 @@ namespace DCL.EmotesWheel
         {
             inputGroupToggle.Enable(InputMapKind.EmoteWheel);
             inputGroupToggle.Disable(InputMapKind.Emotes);
-            // We also disable shortcuts because the wheel can be opened and closed with the same key bind
-            // If we leave it enabled, it will close and then re-open instantly
-            inputGroupToggle.Disable(InputMapKind.Shortcuts);
         }
 
         private void DisableInputActions()
         {
             inputGroupToggle.Disable(InputMapKind.EmoteWheel);
             inputGroupToggle.Enable(InputMapKind.Emotes);
-            inputGroupToggle.Enable(InputMapKind.Shortcuts);
         }
 
         private void ListenToSlotsInput(InputActionMap inputActionMap)
