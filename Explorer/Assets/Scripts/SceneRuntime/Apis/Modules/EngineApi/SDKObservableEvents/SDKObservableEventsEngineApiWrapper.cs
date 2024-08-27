@@ -64,12 +64,14 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
         [UsedImplicitly]
         public void SubscribeToSDKObservableEvent(string eventId)
         {
-            engineApi.SdkObservableEventSubscriptions.Add(eventId);
-
             if (eventId == SDKObservableEventIds.PlayerClicked)
+            {
                 ReportHub.LogWarning(new ReportData(ReportCategory.SDK_OBSERVABLES), "Scene subscribed to unsupported SDK Observable 'PlayerClicked'");
-            else
-                engineApi.EnableSDKObservableMessagesDetection = true;
+                return;
+            }
+
+            engineApi.SdkObservableEventSubscriptions.Add(eventId);
+            engineApi.EnableSDKObservableMessagesDetection = true;
         }
 
         [UsedImplicitly]
