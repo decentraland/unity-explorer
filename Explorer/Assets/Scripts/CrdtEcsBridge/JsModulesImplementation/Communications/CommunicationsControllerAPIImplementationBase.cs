@@ -19,7 +19,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
         }
 
         protected readonly CancellationTokenSource cancellationTokenSource = new ();
-        protected readonly ICommunicationControllerHub messagePipesHub;
+        protected readonly ICommunicationControllerHub communicationControllerHub;
         protected readonly ISceneData sceneData;
         protected readonly ISceneStateProvider sceneStateProvider;
         protected readonly IJsOperations jsOperations;
@@ -29,12 +29,12 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
 
         public CommunicationsControllerAPIImplementationBase(
             ISceneData sceneData,
-            ICommunicationControllerHub messagePipesHub,
+            ICommunicationControllerHub communicationControllerHub,
             IJsOperations jsOperations,
             ISceneStateProvider sceneStateProvider)
         {
             this.sceneData = sceneData;
-            this.messagePipesHub = messagePipesHub;
+            this.communicationControllerHub = communicationControllerHub;
             this.jsOperations = jsOperations;
             this.sceneStateProvider = sceneStateProvider;
 
@@ -51,9 +51,9 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
         public void OnSceneIsCurrentChanged(bool isCurrent)
         {
             if (isCurrent)
-                messagePipesHub.SetSceneMessageHandler(onMessageReceivedCached);
+                communicationControllerHub.SetSceneMessageHandler(onMessageReceivedCached);
             else
-                messagePipesHub.RemoveSceneMessageHandler(onMessageReceivedCached);
+                communicationControllerHub.RemoveSceneMessageHandler(onMessageReceivedCached);
         }
 
         public object SendBinary(IReadOnlyList<PoolableByteArray> data)
@@ -98,7 +98,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
 
         private void SendMessage(ReadOnlySpan<byte> message)
         {
-            messagePipesHub.SendMessage(message, sceneData.SceneEntityDefinition.id!, cancellationTokenSource.Token);
+            communicationControllerHub.SendMessage(message, sceneData.SceneEntityDefinition.id!, cancellationTokenSource.Token);
         }
 
         protected virtual void OnMessageReceived(ICommunicationControllerHub.SceneMessage receivedMessage) { }

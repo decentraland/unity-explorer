@@ -14,7 +14,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications.SDKMessageBus
 
         public IReadOnlyList<CommsPayload> SceneCommsMessages => messages;
 
-        public SDKMessageBusCommsAPIImplementation(ISceneData sceneData, ICommunicationControllerHub messagePipesHub, IJsOperations jsOperations, ISceneStateProvider sceneStateProvider) : base(sceneData, messagePipesHub, jsOperations, sceneStateProvider) { }
+        public SDKMessageBusCommsAPIImplementation(ISceneData sceneData, ICommunicationControllerHub communicationControllerHub, IJsOperations jsOperations, ISceneStateProvider sceneStateProvider) : base(sceneData, communicationControllerHub, jsOperations, sceneStateProvider) { }
 
         public void ClearMessages()
         {
@@ -28,7 +28,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications.SDKMessageBus
             encodedMessage[0] = (byte)MsgType.String;
             dataBytes.CopyTo(encodedMessage[1..]);
 
-            messagePipesHub.SendMessage(encodedMessage, sceneData.SceneEntityDefinition.id, cancellationTokenSource.Token);
+            communicationControllerHub.SendMessage(encodedMessage, sceneData.SceneEntityDefinition.id, cancellationTokenSource.Token);
         }
 
         protected override void OnMessageReceived(ICommunicationControllerHub.SceneMessage receivedMessage)
