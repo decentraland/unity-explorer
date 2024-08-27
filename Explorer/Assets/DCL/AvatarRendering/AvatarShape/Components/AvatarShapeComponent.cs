@@ -48,8 +48,8 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         {
             ID = id;
             Name = name;
-
             InstantiatedWearables = new List<CachedAttachment>();
+            IsVisible = true;
         }
     }
 }
