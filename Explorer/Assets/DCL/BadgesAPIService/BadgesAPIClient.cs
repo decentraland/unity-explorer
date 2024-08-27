@@ -162,9 +162,9 @@ namespace DCL.BadgesAPIService
                                 },
                                 textures3d = new BadgeTexturesData
                                 {
-                                    normal = "https://dejpknyizje2n.cloudfront.net/media/carstickers/versions/pixel-art-golden-medal-award-sticker-u8c98-x450.png",
-                                    hrm = "https://dejpknyizje2n.cloudfront.net/media/carstickers/versions/pixel-art-golden-medal-award-sticker-u8c98-x450.png",
-                                    baseColor = "https://dejpknyizje2n.cloudfront.net/media/carstickers/versions/pixel-art-golden-medal-award-sticker-u8c98-x450.png",
+                                    normal = "https://i.ibb.co/rMchTDg/Badge03-normal.png",
+                                    hrm = "https://i.ibb.co/PgkwB3D/Badge03-hrm.png",
+                                    baseColor = "https://i.ibb.co/b15RYpX/Badge03-basecolor.png",
                                 },
                             },
                             isTier = false,
@@ -194,9 +194,9 @@ namespace DCL.BadgesAPIService
                                 },
                                 textures3d = new BadgeTexturesData
                                 {
-                                    normal = "https://images.vexels.com/media/users/3/236713/isolated/preview/2e816f91528e052edec36e8f3e9f52e1-1up-gaming-pixel-art-badge.png?w=360",
-                                    hrm = "https://images.vexels.com/media/users/3/236713/isolated/preview/2e816f91528e052edec36e8f3e9f52e1-1up-gaming-pixel-art-badge.png?w=360",
-                                    baseColor = "https://images.vexels.com/media/users/3/236713/isolated/preview/2e816f91528e052edec36e8f3e9f52e1-1up-gaming-pixel-art-badge.png?w=360",
+                                    normal = "https://i.ibb.co/rMchTDg/Badge03-normal.png",
+                                    hrm = "https://i.ibb.co/PgkwB3D/Badge03-hrm.png",
+                                    baseColor = "https://i.ibb.co/b15RYpX/Badge03-basecolor.png",
                                 },
                             },
                             isTier = true,
@@ -258,9 +258,9 @@ namespace DCL.BadgesAPIService
                                 },
                                 textures3d = new BadgeTexturesData
                                 {
-                                    normal = "https://art.pixilart.com/2af1a2ad84482b0.png",
-                                    hrm = "https://art.pixilart.com/2af1a2ad84482b0.png",
-                                    baseColor = "https://art.pixilart.com/2af1a2ad84482b0.png",
+                                    normal = "https://i.ibb.co/rMchTDg/Badge03-normal.png",
+                                    hrm = "https://i.ibb.co/PgkwB3D/Badge03-hrm.png",
+                                    baseColor = "https://i.ibb.co/b15RYpX/Badge03-basecolor.png",
                                 },
                             },
                             isTier = true,
@@ -305,9 +305,9 @@ namespace DCL.BadgesAPIService
                                 },
                                 textures3d = new BadgeTexturesData
                                 {
-                                    normal = "https://dejpknyizje2n.cloudfront.net/media/carstickers/versions/pixel-art-golden-trophy-sticker-u3310-x450.png",
-                                    hrm = "https://dejpknyizje2n.cloudfront.net/media/carstickers/versions/pixel-art-golden-trophy-sticker-u3310-x450.png",
-                                    baseColor = "https://dejpknyizje2n.cloudfront.net/media/carstickers/versions/pixel-art-golden-trophy-sticker-u3310-x450.png",
+                                    normal = "https://i.ibb.co/rMchTDg/Badge03-normal.png",
+                                    hrm = "https://i.ibb.co/PgkwB3D/Badge03-hrm.png",
+                                    baseColor = "https://i.ibb.co/b15RYpX/Badge03-basecolor.png",
                                 },
                             },
                             isTier = false,
@@ -337,9 +337,9 @@ namespace DCL.BadgesAPIService
                                 },
                                 textures3d = new BadgeTexturesData
                                 {
-                                    normal = "https://cdn-icons-png.flaticon.com/512/3760/3760955.png",
-                                    hrm = "https://cdn-icons-png.flaticon.com/512/3760/3760955.png",
-                                    baseColor = "https://cdn-icons-png.flaticon.com/512/3760/3760955.png",
+                                    normal = "https://i.ibb.co/rMchTDg/Badge03-normal.png",
+                                    hrm = "https://i.ibb.co/PgkwB3D/Badge03-hrm.png",
+                                    baseColor = "https://i.ibb.co/b15RYpX/Badge03-basecolor.png",
                                 },
                             },
                             isTier = true,
@@ -369,9 +369,9 @@ namespace DCL.BadgesAPIService
                                 },
                                 textures3d = new BadgeTexturesData
                                 {
-                                    normal = "https://images.vexels.com/content/236707/preview/afk-gaming-pixel-art-badge-b103c0.png",
-                                    hrm = "https://images.vexels.com/content/236707/preview/afk-gaming-pixel-art-badge-b103c0.png",
-                                    baseColor = "https://images.vexels.com/content/236707/preview/afk-gaming-pixel-art-badge-b103c0.png",
+                                    normal = "https://i.ibb.co/rMchTDg/Badge03-normal.png",
+                                    hrm = "https://i.ibb.co/PgkwB3D/Badge03-hrm.png",
+                                    baseColor = "https://i.ibb.co/b15RYpX/Badge03-basecolor.png",
                                 },
                             },
                             isTier = false,
@@ -401,9 +401,9 @@ namespace DCL.BadgesAPIService
                                 },
                                 textures3d = new BadgeTexturesData
                                 {
-                                    normal = "https://www.coywolf.news/wp-content/uploads/2020/07/gmb-badge.png",
-                                    hrm = "https://www.coywolf.news/wp-content/uploads/2020/07/gmb-badge.png",
-                                    baseColor = "https://www.coywolf.news/wp-content/uploads/2020/07/gmb-badge.png",
+                                    normal = "https://i.ibb.co/rMchTDg/Badge03-normal.png",
+                                    hrm = "https://i.ibb.co/PgkwB3D/Badge03-hrm.png",
+                                    baseColor = "https://i.ibb.co/b15RYpX/Badge03-basecolor.png",
                                 },
                             },
                             isTier = false,
@@ -447,9 +447,9 @@ namespace DCL.BadgesAPIService
                         },
                         textures3d = new BadgeTexturesData
                         {
-                            normal = "https://images.vexels.com/media/users/3/236713/isolated/preview/2e816f91528e052edec36e8f3e9f52e1-1up-gaming-pixel-art-badge.png?w=360",
-                            hrm = "https://images.vexels.com/media/users/3/236713/isolated/preview/2e816f91528e052edec36e8f3e9f52e1-1up-gaming-pixel-art-badge.png?w=360",
-                            baseColor = "https://images.vexels.com/media/users/3/236713/isolated/preview/2e816f91528e052edec36e8f3e9f52e1-1up-gaming-pixel-art-badge.png?w=360",
+                            normal = "https://i.ibb.co/rMchTDg/Badge03-normal.png",
+                            hrm = "https://i.ibb.co/PgkwB3D/Badge03-hrm.png",
+                            baseColor = "https://i.ibb.co/b15RYpX/Badge03-basecolor.png",
                         },
                     },
                 },
@@ -470,9 +470,9 @@ namespace DCL.BadgesAPIService
                         },
                         textures3d = new BadgeTexturesData
                         {
-                            normal = "https://images.vexels.com/media/users/3/236713/isolated/preview/2e816f91528e052edec36e8f3e9f52e1-1up-gaming-pixel-art-badge.png?w=360",
-                            hrm = "https://images.vexels.com/media/users/3/236713/isolated/preview/2e816f91528e052edec36e8f3e9f52e1-1up-gaming-pixel-art-badge.png?w=360",
-                            baseColor = "https://images.vexels.com/media/users/3/236713/isolated/preview/2e816f91528e052edec36e8f3e9f52e1-1up-gaming-pixel-art-badge.png?w=360",
+                            normal = "https://i.ibb.co/rMchTDg/Badge03-normal.png",
+                            hrm = "https://i.ibb.co/PgkwB3D/Badge03-hrm.png",
+                            baseColor = "https://i.ibb.co/b15RYpX/Badge03-basecolor.png",
                         },
                     },
                 },
@@ -493,9 +493,9 @@ namespace DCL.BadgesAPIService
                         },
                         textures3d = new BadgeTexturesData
                         {
-                            normal = "https://images.vexels.com/media/users/3/236713/isolated/preview/2e816f91528e052edec36e8f3e9f52e1-1up-gaming-pixel-art-badge.png?w=360",
-                            hrm = "https://images.vexels.com/media/users/3/236713/isolated/preview/2e816f91528e052edec36e8f3e9f52e1-1up-gaming-pixel-art-badge.png?w=360",
-                            baseColor = "https://images.vexels.com/media/users/3/236713/isolated/preview/2e816f91528e052edec36e8f3e9f52e1-1up-gaming-pixel-art-badge.png?w=360",
+                            normal = "https://i.ibb.co/rMchTDg/Badge03-normal.png",
+                            hrm = "https://i.ibb.co/PgkwB3D/Badge03-hrm.png",
+                            baseColor = "https://i.ibb.co/b15RYpX/Badge03-basecolor.png",
                         },
                     },
                 },
@@ -516,9 +516,9 @@ namespace DCL.BadgesAPIService
                         },
                         textures3d = new BadgeTexturesData
                         {
-                            normal = "https://images.vexels.com/media/users/3/236713/isolated/preview/2e816f91528e052edec36e8f3e9f52e1-1up-gaming-pixel-art-badge.png?w=360",
-                            hrm = "https://images.vexels.com/media/users/3/236713/isolated/preview/2e816f91528e052edec36e8f3e9f52e1-1up-gaming-pixel-art-badge.png?w=360",
-                            baseColor = "https://images.vexels.com/media/users/3/236713/isolated/preview/2e816f91528e052edec36e8f3e9f52e1-1up-gaming-pixel-art-badge.png?w=360",
+                            normal = "https://i.ibb.co/rMchTDg/Badge03-normal.png",
+                            hrm = "https://i.ibb.co/PgkwB3D/Badge03-hrm.png",
+                            baseColor = "https://i.ibb.co/b15RYpX/Badge03-basecolor.png",
                         },
                     },
                 },
@@ -539,9 +539,9 @@ namespace DCL.BadgesAPIService
                         },
                         textures3d = new BadgeTexturesData
                         {
-                            normal = "https://images.vexels.com/media/users/3/236713/isolated/preview/2e816f91528e052edec36e8f3e9f52e1-1up-gaming-pixel-art-badge.png?w=360",
-                            hrm = "https://images.vexels.com/media/users/3/236713/isolated/preview/2e816f91528e052edec36e8f3e9f52e1-1up-gaming-pixel-art-badge.png?w=360",
-                            baseColor = "https://images.vexels.com/media/users/3/236713/isolated/preview/2e816f91528e052edec36e8f3e9f52e1-1up-gaming-pixel-art-badge.png?w=360",
+                            normal = "https://i.ibb.co/rMchTDg/Badge03-normal.png",
+                            hrm = "https://i.ibb.co/PgkwB3D/Badge03-hrm.png",
+                            baseColor = "https://i.ibb.co/b15RYpX/Badge03-basecolor.png",
                         },
                     },
                 },
@@ -562,9 +562,9 @@ namespace DCL.BadgesAPIService
                         },
                         textures3d = new BadgeTexturesData
                         {
-                            normal = "https://images.vexels.com/media/users/3/236713/isolated/preview/2e816f91528e052edec36e8f3e9f52e1-1up-gaming-pixel-art-badge.png?w=360",
-                            hrm = "https://images.vexels.com/media/users/3/236713/isolated/preview/2e816f91528e052edec36e8f3e9f52e1-1up-gaming-pixel-art-badge.png?w=360",
-                            baseColor = "https://images.vexels.com/media/users/3/236713/isolated/preview/2e816f91528e052edec36e8f3e9f52e1-1up-gaming-pixel-art-badge.png?w=360",
+                            normal = "https://i.ibb.co/rMchTDg/Badge03-normal.png",
+                            hrm = "https://i.ibb.co/PgkwB3D/Badge03-hrm.png",
+                            baseColor = "https://i.ibb.co/b15RYpX/Badge03-basecolor.png",
                         },
                     },
                 },
@@ -589,9 +589,9 @@ namespace DCL.BadgesAPIService
                         },
                         textures3d = new BadgeTexturesData
                         {
-                            normal = "https://art.pixilart.com/2af1a2ad84482b0.png",
-                            hrm = "https://art.pixilart.com/2af1a2ad84482b0.png",
-                            baseColor = "https://art.pixilart.com/2af1a2ad84482b0.png",
+                            normal = "https://i.ibb.co/rMchTDg/Badge03-normal.png",
+                            hrm = "https://i.ibb.co/PgkwB3D/Badge03-hrm.png",
+                            baseColor = "https://i.ibb.co/b15RYpX/Badge03-basecolor.png",
                         },
                     },
                 },
@@ -612,9 +612,9 @@ namespace DCL.BadgesAPIService
                         },
                         textures3d = new BadgeTexturesData
                         {
-                            normal = "https://art.pixilart.com/2af1a2ad84482b0.png",
-                            hrm = "https://art.pixilart.com/2af1a2ad84482b0.png",
-                            baseColor = "https://art.pixilart.com/2af1a2ad84482b0.png",
+                            normal = "https://i.ibb.co/rMchTDg/Badge03-normal.png",
+                            hrm = "https://i.ibb.co/PgkwB3D/Badge03-hrm.png",
+                            baseColor = "https://i.ibb.co/b15RYpX/Badge03-basecolor.png",
                         },
                     },
                 },
@@ -635,9 +635,9 @@ namespace DCL.BadgesAPIService
                         },
                         textures3d = new BadgeTexturesData
                         {
-                            normal = "https://art.pixilart.com/2af1a2ad84482b0.png",
-                            hrm = "https://art.pixilart.com/2af1a2ad84482b0.png",
-                            baseColor = "https://art.pixilart.com/2af1a2ad84482b0.png",
+                            normal = "https://i.ibb.co/rMchTDg/Badge03-normal.png",
+                            hrm = "https://i.ibb.co/PgkwB3D/Badge03-hrm.png",
+                            baseColor = "https://i.ibb.co/b15RYpX/Badge03-basecolor.png",
                         },
                     },
                 },
@@ -658,9 +658,9 @@ namespace DCL.BadgesAPIService
                         },
                         textures3d = new BadgeTexturesData
                         {
-                            normal = "https://art.pixilart.com/2af1a2ad84482b0.png",
-                            hrm = "https://art.pixilart.com/2af1a2ad84482b0.png",
-                            baseColor = "https://art.pixilart.com/2af1a2ad84482b0.png",
+                            normal = "https://i.ibb.co/rMchTDg/Badge03-normal.png",
+                            hrm = "https://i.ibb.co/PgkwB3D/Badge03-hrm.png",
+                            baseColor = "https://i.ibb.co/b15RYpX/Badge03-basecolor.png",
                         },
                     },
                 },
@@ -681,9 +681,9 @@ namespace DCL.BadgesAPIService
                         },
                         textures3d = new BadgeTexturesData
                         {
-                            normal = "https://art.pixilart.com/2af1a2ad84482b0.png",
-                            hrm = "https://art.pixilart.com/2af1a2ad84482b0.png",
-                            baseColor = "https://art.pixilart.com/2af1a2ad84482b0.png",
+                            normal = "https://i.ibb.co/rMchTDg/Badge03-normal.png",
+                            hrm = "https://i.ibb.co/PgkwB3D/Badge03-hrm.png",
+                            baseColor = "https://i.ibb.co/b15RYpX/Badge03-basecolor.png",
                         },
                     },
                 },
@@ -704,9 +704,9 @@ namespace DCL.BadgesAPIService
                         },
                         textures3d = new BadgeTexturesData
                         {
-                            normal = "https://art.pixilart.com/2af1a2ad84482b0.png",
-                            hrm = "https://art.pixilart.com/2af1a2ad84482b0.png",
-                            baseColor = "https://art.pixilart.com/2af1a2ad84482b0.png",
+                            normal = "https://i.ibb.co/rMchTDg/Badge03-normal.png",
+                            hrm = "https://i.ibb.co/PgkwB3D/Badge03-hrm.png",
+                            baseColor = "https://i.ibb.co/b15RYpX/Badge03-basecolor.png",
                         },
                     },
                 },
@@ -731,9 +731,9 @@ namespace DCL.BadgesAPIService
                         },
                         textures3d = new BadgeTexturesData
                         {
-                            normal = "https://cdn-icons-png.flaticon.com/512/3760/3760955.png",
-                            hrm = "https://cdn-icons-png.flaticon.com/512/3760/3760955.png",
-                            baseColor = "https://cdn-icons-png.flaticon.com/512/3760/3760955.png",
+                            normal = "https://i.ibb.co/rMchTDg/Badge03-normal.png",
+                            hrm = "https://i.ibb.co/PgkwB3D/Badge03-hrm.png",
+                            baseColor = "https://i.ibb.co/b15RYpX/Badge03-basecolor.png",
                         },
                     },
                 },
@@ -754,9 +754,9 @@ namespace DCL.BadgesAPIService
                         },
                         textures3d = new BadgeTexturesData
                         {
-                            normal = "https://cdn-icons-png.flaticon.com/512/3760/3760955.png",
-                            hrm = "https://cdn-icons-png.flaticon.com/512/3760/3760955.png",
-                            baseColor = "https://cdn-icons-png.flaticon.com/512/3760/3760955.png",
+                            normal = "https://i.ibb.co/rMchTDg/Badge03-normal.png",
+                            hrm = "https://i.ibb.co/PgkwB3D/Badge03-hrm.png",
+                            baseColor = "https://i.ibb.co/b15RYpX/Badge03-basecolor.png",
                         },
                     },
                 },
@@ -777,9 +777,9 @@ namespace DCL.BadgesAPIService
                         },
                         textures3d = new BadgeTexturesData
                         {
-                            normal = "https://cdn-icons-png.flaticon.com/512/3760/3760955.png",
-                            hrm = "https://cdn-icons-png.flaticon.com/512/3760/3760955.png",
-                            baseColor = "https://cdn-icons-png.flaticon.com/512/3760/3760955.png",
+                            normal = "https://i.ibb.co/rMchTDg/Badge03-normal.png",
+                            hrm = "https://i.ibb.co/PgkwB3D/Badge03-hrm.png",
+                            baseColor = "https://i.ibb.co/b15RYpX/Badge03-basecolor.png",
                         },
                     },
                 },
@@ -800,9 +800,9 @@ namespace DCL.BadgesAPIService
                         },
                         textures3d = new BadgeTexturesData
                         {
-                            normal = "https://cdn-icons-png.flaticon.com/512/3760/3760955.png",
-                            hrm = "https://cdn-icons-png.flaticon.com/512/3760/3760955.png",
-                            baseColor = "https://cdn-icons-png.flaticon.com/512/3760/3760955.png",
+                            normal = "https://i.ibb.co/rMchTDg/Badge03-normal.png",
+                            hrm = "https://i.ibb.co/PgkwB3D/Badge03-hrm.png",
+                            baseColor = "https://i.ibb.co/b15RYpX/Badge03-basecolor.png",
                         },
                     },
                 },
@@ -823,9 +823,9 @@ namespace DCL.BadgesAPIService
                         },
                         textures3d = new BadgeTexturesData
                         {
-                            normal = "https://cdn-icons-png.flaticon.com/512/3760/3760955.png",
-                            hrm = "https://cdn-icons-png.flaticon.com/512/3760/3760955.png",
-                            baseColor = "https://cdn-icons-png.flaticon.com/512/3760/3760955.png",
+                            normal = "https://i.ibb.co/rMchTDg/Badge03-normal.png",
+                            hrm = "https://i.ibb.co/PgkwB3D/Badge03-hrm.png",
+                            baseColor = "https://i.ibb.co/b15RYpX/Badge03-basecolor.png",
                         },
                     },
                 },
@@ -846,9 +846,9 @@ namespace DCL.BadgesAPIService
                         },
                         textures3d = new BadgeTexturesData
                         {
-                            normal = "https://cdn-icons-png.flaticon.com/512/3760/3760955.png",
-                            hrm = "https://cdn-icons-png.flaticon.com/512/3760/3760955.png",
-                            baseColor = "https://cdn-icons-png.flaticon.com/512/3760/3760955.png",
+                            normal = "https://i.ibb.co/rMchTDg/Badge03-normal.png",
+                            hrm = "https://i.ibb.co/PgkwB3D/Badge03-hrm.png",
+                            baseColor = "https://i.ibb.co/b15RYpX/Badge03-basecolor.png",
                         },
                     },
                 },
