@@ -38,25 +38,23 @@ namespace Utility.Types
             new (default(T)!, errorMessage);
     }
 
-    public readonly struct EnumResult<TValue, TEnum>
+    public readonly struct EnumResult<TValue, TErrorEnum>
     {
         public readonly TValue Value;
-        public readonly TEnum State;
-        public readonly string? ErrorMessage;
+        public readonly (TErrorEnum State, string Message)? Error;
 
-        public bool Success => ErrorMessage == null;
+        public bool Success => Error == null;
 
-        private EnumResult(TValue value, TEnum state, string? errorMessage)
+        private EnumResult(TValue value, (TErrorEnum State, string Message)? error)
         {
             this.Value = value;
-            this.State = state;
-            this.ErrorMessage = errorMessage;
+            this.Error = error;
         }
 
-        public static EnumResult<TValue, TEnum> SuccessResult(TValue value, TEnum state) =>
-            new (value, state, null);
+        public static EnumResult<TValue, TErrorEnum> SuccessResult(TValue value) =>
+            new (value, null);
 
-        public static EnumResult<TValue, TEnum> ErrorResult(TEnum state, string errorMessage) =>
-            new (default(TValue)!, state, errorMessage);
+        public static EnumResult<TValue, TErrorEnum> ErrorResult(TErrorEnum state, string errorMessage) =>
+            new (default(TValue)!, (state, errorMessage));
     }
 }

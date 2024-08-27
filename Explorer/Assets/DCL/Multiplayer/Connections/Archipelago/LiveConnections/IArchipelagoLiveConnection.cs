@@ -26,7 +26,6 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
         {
             MessageError,
             ConnectionClosed,
-            Success,
         }
     }
 

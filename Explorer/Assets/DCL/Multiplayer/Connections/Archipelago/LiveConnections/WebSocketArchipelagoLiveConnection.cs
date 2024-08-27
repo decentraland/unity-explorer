@@ -80,7 +80,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
             return result.MessageType switch
                    {
                        WebSocketMessageType.Text => EnumResult<MemoryWrap, IArchipelagoLiveConnection.ReceiveResponse>.ErrorResult(IArchipelagoLiveConnection.ReceiveResponse.MessageError, $"Expected Binary, Text messages are not supported: {AsText(result, buffer)}"),
-                       WebSocketMessageType.Binary => EnumResult<MemoryWrap, IArchipelagoLiveConnection.ReceiveResponse>.SuccessResult(CopiedMemory(buffer, result.Count), IArchipelagoLiveConnection.ReceiveResponse.Success),
+                       WebSocketMessageType.Binary => EnumResult<MemoryWrap, IArchipelagoLiveConnection.ReceiveResponse>.SuccessResult(CopiedMemory(buffer, result.Count)),
                        WebSocketMessageType.Close => ConnectionClosedException.NewErrorResult(current!.Value.WebSocket),
                        _ => EnumResult<MemoryWrap, IArchipelagoLiveConnection.ReceiveResponse>.ErrorResult(
                            IArchipelagoLiveConnection.ReceiveResponse.MessageError,

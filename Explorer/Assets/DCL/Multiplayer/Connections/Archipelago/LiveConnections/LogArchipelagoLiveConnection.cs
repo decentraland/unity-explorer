@@ -60,11 +60,11 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
             log($"ArchipelagoLiveConnection SendAsync finished with size: {data.Length} and content: {data.HexReadableString()}");
         }
 
-        public async UniTask<Result<MemoryWrap>> ReceiveAsync(CancellationToken token)
+        public async UniTask<EnumResult<MemoryWrap, IArchipelagoLiveConnection.ReceiveResponse>> ReceiveAsync(CancellationToken token)
         {
             log("ArchipelagoLiveConnection ReceiveAsync start");
             var result = await origin.ReceiveAsync(token);
-            log($"ArchipelagoLiveConnection ReceiveAsync finished with error: {result.ErrorMessage ?? "no error"}, size: {(result.Success ? result.Value.Length : 0)}");
+            log($"ArchipelagoLiveConnection ReceiveAsync finished with error: {result.Error?.Message ?? "no error"}, size: {(result.Success ? result.Value.Length : 0)}");
             return result;
         }
     }
