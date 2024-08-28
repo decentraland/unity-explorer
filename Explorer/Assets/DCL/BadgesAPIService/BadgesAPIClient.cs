@@ -92,16 +92,7 @@ namespace DCL.BadgesAPIService
                 isTier = badge.isTier,
                 completedAt = badge.completedAt,
                 assets = badge.assets,
-                progress = new BadgeProgressData
-                {
-                    nextStepsTarget = badge.progress.nextStepsTarget,
-                    stepsDone = badge.progress.stepsDone,
-                    lastCompletedTierAt = badge.progress.lastCompletedTierAt,
-                    totalStepsTarget = badge.progress.totalStepsTarget,
-                    lastCompletedTierName = badge.progress.lastCompletedTierName,
-                    lastCompletedTierImage = badge.progress.lastCompletedTierImage,
-                    achievedTiers = badge.progress.achievedTiers,
-                },
+                progress = badge.progress,
                 isLocked = isLocked,
                 isNew = false,
             };
