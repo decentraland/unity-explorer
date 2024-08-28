@@ -227,7 +227,7 @@ namespace DCL.Navmap
                 new MapCameraInput(
                     this,
                     ACTIVE_MAP_LAYERS,
-                    ParcelMathHelper.WorldToGridPosition(new Vector3(0, 0, 0)),
+                    Vector3.zero.ToParcel(),
                     zoomController.ResetZoomToMidValue(),
                     navmapView.SatellitePixelPerfectMapRendererTextureProvider.GetPixelPerfectTextureResolution(),
                     navmapView.zoomView.zoomVerticalRange

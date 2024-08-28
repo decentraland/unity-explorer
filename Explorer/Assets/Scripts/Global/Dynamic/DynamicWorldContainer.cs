@@ -130,6 +130,8 @@ namespace Global.Dynamic
 
         public RealFlowLoadingStatus RealFlowLoadingStatus { get; private set; } = null!;
 
+        private MultiplayerMovementMessageBus multiplayerMovementMessageBus;
+
         public override void Dispose()
         {
             MvcManager.Dispose();
@@ -306,7 +308,7 @@ namespace Global.Dynamic
 
             var queuePoolFullMovementMessage = new ObjectPool<SimplePriorityQueue<NetworkMovementMessage>>(
                 () => new SimplePriorityQueue<NetworkMovementMessage>(),
-                actionOnRelease: x => x.Clear()
+                actionOnRelease: queue => queue.Clear()
             );
 
             var remoteEntities = new RemoteEntities(
@@ -429,6 +431,10 @@ namespace Global.Dynamic
 
             var currentSceneInfo = new CurrentSceneInfo();
 
+            var  messageEncodingSettings = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.CursorSettings, ct)).Value;
+
+            container.multiplayerMovementMessageBus = new MultiplayerMovementMessageBus(container.MessagePipesHub, entityParticipantTable, globalWorld);
+
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
                 new MultiplayerPlugin(
@@ -547,7 +553,7 @@ namespace Global.Dynamic
                 staticContainer.CharacterContainer.CreateGlobalPlugin(),
                 staticContainer.QualityContainer.CreatePlugin(),
                 landscapePlugin,
-                new MultiplayerMovementPlugin(assetsProvisioner, new MultiplayerMovementMessageBus(container.MessagePipesHub, entityParticipantTable, globalWorld)),
+                new MultiplayerMovementPlugin(assetsProvisioner, container.multiplayerMovementMessageBus),
                 container.LODContainer.LODPlugin,
                 container.LODContainer.RoadPlugin,
                 new AudioPlaybackPlugin(genesisTerrain, assetsProvisioner, dynamicWorldParams.EnableLandscape),

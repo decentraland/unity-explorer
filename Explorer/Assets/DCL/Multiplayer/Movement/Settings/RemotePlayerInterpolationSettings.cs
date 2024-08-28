@@ -7,6 +7,10 @@ namespace DCL.Multiplayer.Movement.Settings
         [field: SerializeField] public InterpolationType InterpolationType { get; set; }
 
         [field: Min(0)]
+        [field: Tooltip("Used in filtering out messages. Message is compared with 2 neighbour messages to see if it is a strange singularity to avoid using it.")]
+        [field: SerializeField] public float PositionSingularityThreshold { get; set; }
+
+        [field: Min(0)]
         [field: Tooltip("Player looks forward to its movement. This value defines how far in future he will look. "
                         + "It defines time delta in seconds for the next step (to look at).")]
         [field: SerializeField] public float LookAtTimeDelta { get; set; } = 0.003f;
