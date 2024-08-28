@@ -1,3 +1,4 @@
+using Cysharp.Threading.Tasks;
 using Decentraland.Kernel.Comms.Rfc4;
 using ECS.SceneLifeCycle;
 using Google.Protobuf;
@@ -21,15 +22,30 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
             this.origin = origin;
             this.room = room;
             this.scenesCache = scenesCache;
+            SendEvent().Forget();
         }
 
-        private void RoomOnConnectionUpdated(IRoom room, ConnectionUpdate connectionupdate)
+        private async UniTaskVoid SendEvent()
+        {
+            while (cancellationTokenSource.IsCancellationRequested == false)
+            {
+                await UniTask.Delay(TimeSpan.FromSeconds(0.5f));
+                SyncScene();
+            }
+        }
+
+        private void SyncScene()
         {
             var message = origin.NewMessage<Scene>();
             message.Payload.SceneId = SceneId();
             ReadOnlySpan<byte> span = stackalloc byte[] { 2 };
             message.Payload.Data = ByteString.CopyFrom(span);
             message.SendAndDisposeAsync(cancellationTokenSource.Token).Forget();
+        }
+
+        private void RoomOnConnectionUpdated(IRoom room, ConnectionUpdate connectionupdate)
+        {
+            SyncScene();
         }
 
         private string SceneId() =>
