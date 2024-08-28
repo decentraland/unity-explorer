@@ -27,6 +27,8 @@ parser.add_argument('--delete', help='Delete build target after PR is closed or 
 def get_target(target):
     response = requests.get(f'{URL}/buildtargets/{target}', headers=HEADERS)
 
+    print(f'get_target requesr url: "{URL}/buildtargets/{target}"')
+
     if response.status_code == 200:
         return response.json()
     elif response.status_code == 404:
@@ -61,6 +63,7 @@ def clone_current_target():
     # Set target name based on branch, without commit SHA
     base_target_name  = f'{re.sub(r'^t_', '', os.getenv('TARGET'))}-{re.sub('[^A-Za-z0-9]+', '-', os.getenv('BRANCH_NAME'))}'.lower()
 
+    print(f"Start clone_current_target for {base_target_name}")
     if is_release_workflow:
          # Use the tag version in the target name if it's a release workflow
         tag_version = os.getenv('TAG_VERSION', 'unknown-version')
@@ -90,6 +93,7 @@ def clone_current_target():
             print(f"Using cache build target: {new_target_name}")
         response = requests.put(f'{URL}/buildtargets/{new_target_name}', headers=HEADERS, json=body)
 
+    print(f"clone_current_target response status: {response.status_code}")
     if response.status_code == 200 or response.status_code == 201:
         # Override target ENV
         os.environ['TARGET'] = new_target_name
