@@ -2,10 +2,8 @@
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
-using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.Character.CharacterMotion.Components;
 using DCL.Character.CharacterMotion.Velocity;
-using DCL.Character.Components;
 using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
@@ -43,8 +41,6 @@ namespace DCL.CharacterMotion.Systems
         private readonly ElementBinding<float> maxAirAcc = new (0);
         private readonly ElementBinding<float> airDrag = new (0);
         private readonly ElementBinding<float> stopTime = new (0);
-
-        private bool mainPlayerIsVisible = true;
 
         public CalculateCharacterVelocitySystem(World world, IDebugContainerBuilder debugBuilder) : base(world)
         {
@@ -89,8 +85,6 @@ namespace DCL.CharacterMotion.Systems
 
         protected override void Update(float t)
         {
-            GetMainPlayerAvatarVisibilityQuery(World);
-
             ICharacterControllerSettings settings = entitySettings.GetCharacterSettings(World);
 
             settings.CameraFOVWhileRunning = cameraRunFov.Value;
@@ -108,13 +102,6 @@ namespace DCL.CharacterMotion.Systems
             settings.StopTimeSec = stopTime.Value;
 
             ResolveVelocityQuery(World, t, fixedTick.GetPhysicsTickComponent(World).Tick, in camera.GetCameraComponent(World));
-        }
-
-        [Query]
-        [All(typeof(PlayerComponent))]
-        private void GetMainPlayerAvatarVisibility(in AvatarShapeComponent visibilityComponent)
-        {
-            mainPlayerIsVisible = visibilityComponent.IsVisible;
         }
 
         [Query]
@@ -142,10 +129,10 @@ namespace DCL.CharacterMotion.Systems
             ApplyGravity.Execute(settings, ref rigidTransform, in jump, physicsTick, dt);
             ApplyAirDrag.Execute(settings, ref rigidTransform, dt);
 
-            if (mainPlayerIsVisible)
-                ApplyThirdPersonRotation.Execute(ref rigidTransform, in movementInput);
-            else
+            if (cameraComponent.Mode == CameraMode.FirstPerson)
                 ApplyFirstPersonRotation.Execute(ref rigidTransform, in cameraComponent);
+            else
+                ApplyThirdPersonRotation.Execute(ref rigidTransform, in movementInput);
 
             ApplyConditionalRotation.Execute(ref rigidTransform, in settings);
         }

@@ -8,6 +8,7 @@ using DCL.Optimization.Pools;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.ResourcesUnloading;
 using DCL.SDKComponents.CameraControl.MainCamera.Systems;
+using DCL.Utilities;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Systems;
 using System;
@@ -34,18 +35,21 @@ namespace DCL.PluginSystem.World
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly CacheCleaner cacheCleaner;
         private readonly IExposedCameraData cameraData;
+        private readonly ObjectProxy<Arch.Core.World> globalWorldProxy;
         private IComponentPool<CinemachineFreeLook>? virtualCameraPoolRegistry;
 
         public MainCameraPlugin(
             IComponentPoolsRegistry poolsRegistry,
             IAssetsProvisioner assetsProvisioner,
             CacheCleaner cacheCleaner,
-            IExposedCameraData cameraData)
+            IExposedCameraData cameraData,
+            ObjectProxy<Arch.Core.World> globalWorldProxy)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.poolsRegistry = poolsRegistry;
             this.cacheCleaner = cacheCleaner;
             this.cameraData = cameraData;
+            this.globalWorldProxy = globalWorldProxy;
         }
 
         public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
@@ -74,7 +78,8 @@ namespace DCL.PluginSystem.World
                 persistentEntities.Camera,
                 sharedDependencies.EntitiesMap,
                 sharedDependencies.SceneStateProvider,
-                cameraData
+                cameraData,
+                globalWorldProxy
                 ));
 
             ResetDirtyFlagSystem<PBVirtualCamera>.InjectToWorld(ref builder);

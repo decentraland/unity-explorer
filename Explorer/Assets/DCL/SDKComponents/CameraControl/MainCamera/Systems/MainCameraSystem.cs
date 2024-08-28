@@ -9,6 +9,7 @@ using DCL.CharacterCamera;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using DCL.SDKComponents.CameraControl.MainCamera.Components;
+using DCL.Utilities;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle;
@@ -24,11 +25,15 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
     [LogCategory(ReportCategory.SDK_MAIN_CAMERA)]
     public partial class MainCameraSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
+        private static readonly QueryDescription GLOBAL_WORLD_CAMERA_QUERY = new QueryDescription().WithAll<CameraComponent>();
+
         private readonly IComponentPool<CinemachineFreeLook> poolRegistry;
         private readonly Dictionary<CRDTEntity,Entity> entitiesMap;
         private readonly Entity cameraEntity;
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IExposedCameraData cameraData;
+        private readonly World globalWorld;
+        private CameraMode lastNonSDKCameraMode;
 
         public MainCameraSystem(
             World world,
@@ -36,13 +41,15 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
             Entity cameraEntity,
             Dictionary<CRDTEntity,Entity> entitiesMap,
             ISceneStateProvider sceneStateProvider,
-            IExposedCameraData cameraData) : base(world)
+            IExposedCameraData cameraData,
+            ObjectProxy<World> globalWorldProxy) : base(world)
         {
             this.poolRegistry = poolRegistry;
             this.cameraEntity = cameraEntity;
             this.entitiesMap = entitiesMap;
             this.sceneStateProvider = sceneStateProvider;
             this.cameraData = cameraData;
+            globalWorld = globalWorldProxy.Object!;
         }
 
         protected override void Update(float t)
@@ -93,6 +100,8 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
 
             if (hasPreviousVirtualCamera)
                 previousVirtualCamera!.enabled = false;
+
+            UpdateGlobalWorldCameraMode(mainCameraComponent.virtualCameraInstance != null);
         }
 
         [Query]
@@ -268,10 +277,32 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
             return true;
         }
 
+        private void UpdateGlobalWorldCameraMode(bool isAnyVirtualCameraActive)
+        {
+            globalWorld.Query(in GLOBAL_WORLD_CAMERA_QUERY,
+                (ref CameraComponent cameraComponent) =>
+                {
+                    if (isAnyVirtualCameraActive)
+                    {
+                        if (cameraComponent.Mode != CameraMode.SDKCamera)
+                        {
+                            lastNonSDKCameraMode = cameraComponent.Mode;
+                            cameraComponent.Mode = CameraMode.SDKCamera;
+                        }
+                    }
+                    else if (cameraComponent.Mode == CameraMode.SDKCamera)
+                    {
+                        cameraComponent.Mode = lastNonSDKCameraMode;
+                    }
+                });
+        }
+
         private void DisableActiveVirtualCamera(in MainCameraComponent mainCameraComponent)
         {
             if (mainCameraComponent.virtualCameraInstance != null && mainCameraComponent.virtualCameraInstance.enabled)
                 mainCameraComponent.virtualCameraInstance.enabled = false;
+
+            UpdateGlobalWorldCameraMode(false);
         }
     }
 }
