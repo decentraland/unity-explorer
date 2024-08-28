@@ -7,6 +7,8 @@ using DCL.CharacterPreview;
 using DCL.Chat;
 using DCL.Diagnostics;
 using DCL.Input;
+using DCL.Input.Component;
+using DCL.Input.UnityInputSystem.Blocks;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Passport.Modules;
 using DCL.Profiles;
@@ -39,18 +41,18 @@ namespace DCL.Passport
         private readonly ISelfProfile selfProfile;
         private readonly World world;
         private readonly IThumbnailProvider thumbnailProvider;
-        private readonly DCLInput dclInput;
         private readonly IWebBrowser webBrowser;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
+        private readonly IInputBlock inputBlock;
 
-        private string currentUserId;
-        private CancellationTokenSource characterPreviewLoadingCts;
-        private PassportErrorsController passportErrorsController;
-        private PassportCharacterPreviewController characterPreviewController;
+        private string? currentUserId;
+        private CancellationTokenSource? characterPreviewLoadingCts;
+        private PassportErrorsController? passportErrorsController;
+        private PassportCharacterPreviewController? characterPreviewController;
         private readonly PassportProfileInfoController passportProfileInfoController;
         private readonly List<IPassportModuleController> passportModules = new ();
 
-        public event Action<string> PassportOpened;
+        public event Action<string>? PassportOpened;
 
         public PassportController(
             ViewFactoryMethod viewFactory,
@@ -67,9 +69,9 @@ namespace DCL.Passport
             World world,
             Entity playerEntity,
             IThumbnailProvider thumbnailProvider,
-            DCLInput dclInput,
             IWebBrowser webBrowser,
-            IDecentralandUrlsSource decentralandUrlsSource
+            IDecentralandUrlsSource decentralandUrlsSource,
+            IInputBlock inputBlock
         ) : base(viewFactory)
         {
             this.cursor = cursor;
@@ -84,9 +86,9 @@ namespace DCL.Passport
             this.selfProfile = selfProfile;
             this.world = world;
             this.thumbnailProvider = thumbnailProvider;
-            this.dclInput = dclInput;
             this.webBrowser = webBrowser;
             this.decentralandUrlsSource = decentralandUrlsSource;
+            this.inputBlock = inputBlock;
             passportProfileInfoController = new PassportProfileInfoController(selfProfile, world, playerEntity);
         }
 
@@ -105,7 +107,7 @@ namespace DCL.Passport
 
         private void OnPublishError()
         {
-            passportErrorsController.Show();
+            passportErrorsController!.Show();
         }
 
         protected override void OnViewShow()
@@ -114,22 +116,22 @@ namespace DCL.Passport
             cursor.Unlock();
             characterPreviewLoadingCts = characterPreviewLoadingCts.SafeRestart();
             LoadUserProfileAsync(currentUserId, characterPreviewLoadingCts.Token).Forget();
-            viewInstance.MainScroll.verticalNormalizedPosition = 1;
-            dclInput.Shortcuts.Disable();
-            dclInput.Camera.Disable();
-            dclInput.Player.Disable();
+            viewInstance!.MainScroll.verticalNormalizedPosition = 1;
+
+            inputBlock.BlockInputs(InputMapComponent.Kind.Shortcuts , InputMapComponent.Kind.Camera , InputMapComponent.Kind.Player);
+
             viewInstance.ErrorNotification.Hide(true);
 
-            PassportOpened.Invoke(currentUserId);
+            PassportOpened?.Invoke(currentUserId);
         }
 
         protected override void OnViewClose()
         {
-            passportErrorsController.Hide(true);
-            dclInput.Shortcuts.Enable();
-            dclInput.Camera.Enable();
-            dclInput.Player.Enable();
-            characterPreviewController.OnHide();
+            passportErrorsController!.Hide(true);
+
+            inputBlock.UnblockInputs(InputMapComponent.Kind.Shortcuts , InputMapComponent.Kind.Camera , InputMapComponent.Kind.Player);
+
+            characterPreviewController!.OnHide();
 
             characterPreviewLoadingCts.SafeCancelAndDispose();
             foreach (IPassportModuleController module in passportModules)
@@ -143,9 +145,9 @@ namespace DCL.Passport
 
         public override void Dispose()
         {
-            passportErrorsController.Hide(true);
+            passportErrorsController?.Hide(true);
             characterPreviewLoadingCts.SafeCancelAndDispose();
-            characterPreviewController.Dispose();
+            characterPreviewController?.Dispose();
 
             passportProfileInfoController.OnProfilePublished -= SetupPassportModules;
             passportProfileInfoController.PublishError -= OnPublishError;
@@ -167,7 +169,7 @@ namespace DCL.Passport
                 viewInstance.BackgroundImage.material.SetColor(BG_SHADER_COLOR_1, chatEntryConfiguration.GetNameColor(profile.Name));
 
                 // Load avatar preview
-                characterPreviewController.Initialize(profile.Avatar);
+                characterPreviewController!.Initialize(profile.Avatar);
                 characterPreviewController.OnShow();
 
                 // Load passport modules
@@ -177,7 +179,7 @@ namespace DCL.Passport
             catch (Exception e)
             {
                 const string ERROR_MESSAGE = "There was an error while trying to load the profile. Please try again!";
-                passportErrorsController.Show(ERROR_MESSAGE);
+                passportErrorsController!.Show(ERROR_MESSAGE);
                 ReportHub.LogError(ReportCategory.PROFILE, $"{ERROR_MESSAGE} ERROR: {e.Message}");
             }
         }

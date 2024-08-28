@@ -8,8 +8,9 @@ using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiles;
 using DCL.Profiles.Self;
-using DCL.UI;
 using DCL.SceneLoadingScreens.SplashScreen;
+using DCL.UI;
+using DCL.Utilities;
 using DCL.Web3;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
@@ -27,6 +28,18 @@ namespace DCL.AuthenticationScreenFlow
 {
     public class AuthenticationScreenController : ControllerBase<AuthenticationScreenView>
     {
+        public enum AuthenticationStatus
+        {
+            Init,
+            FetchingProfileCached,
+            LoggedInCached,
+
+            Login,
+            VerificationInProgress,
+            FetchingProfile,
+            LoggedIn,
+        }
+
         private enum ViewState
         {
             Login,
@@ -34,6 +47,7 @@ namespace DCL.AuthenticationScreenFlow
             Loading,
             Finalize,
         }
+
         private const int ANIMATION_DELAY = 300;
 
         private const string REQUEST_BETA_ACCESS_LINK = "https://68zbqa0m12c.typeform.com/to/y9fZeNWm";
@@ -57,6 +71,8 @@ namespace DCL.AuthenticationScreenFlow
         private float originalWorldAudioVolume;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
+
+        public ReactiveProperty<AuthenticationStatus> CurrentState { get; } = new (AuthenticationStatus.Init);
 
         public AuthenticationScreenController(
             ViewFactoryMethod viewFactory,
@@ -153,6 +169,7 @@ namespace DCL.AuthenticationScreenFlow
             IWeb3Identity? storedIdentity = storedIdentityProvider.Identity;
 
             if (storedIdentity is { IsExpired: false }
+
                 // Force to re-login if the identity will expire in 24hs or less, so we mitigate the chances on
                 // getting the identity expired while in-world, provoking signed-fetch requests to fail
                 && storedIdentity.Expiration - DateTime.UtcNow > TimeSpan.FromDays(1))
@@ -164,7 +181,11 @@ namespace DCL.AuthenticationScreenFlow
                 {
                     if (IsUserAllowedToAccessToBeta(storedIdentity))
                     {
+                        CurrentState.Value = AuthenticationStatus.FetchingProfileCached;
+
                         await FetchProfileAsync(loginCancellationToken.Token);
+
+                        CurrentState.Value = AuthenticationStatus.LoggedInCached;
                         SwitchState(ViewState.Finalize);
                     }
                     else
@@ -182,7 +203,7 @@ namespace DCL.AuthenticationScreenFlow
             else
                 SwitchState(ViewState.Login);
 
-            splashScreenAnimator.HideSplash();
+            splashScreenAnimator.Hide();
         }
 
         private void ShowRestrictedUserPopup()
@@ -226,10 +247,12 @@ namespace DCL.AuthenticationScreenFlow
 
                     if (IsUserAllowedToAccessToBeta(identity))
                     {
+                        CurrentState.Value = AuthenticationStatus.FetchingProfile;
                         SwitchState(ViewState.Loading);
 
                         await FetchProfileAsync(ct);
 
+                        CurrentState.Value = AuthenticationStatus.LoggedIn;
                         SwitchState(ViewState.Finalize);
                     }
                     else
@@ -262,6 +285,7 @@ namespace DCL.AuthenticationScreenFlow
                              verificationCountdownCancellationToken.Token)
                         .Forget();
 
+            CurrentState.Value = AuthenticationStatus.VerificationInProgress;
             SwitchState(ViewState.LoginInProgress);
         }
 
@@ -320,6 +344,8 @@ namespace DCL.AuthenticationScreenFlow
                     viewInstance.VerificationCodeHintContainer.SetActive(false);
                     viewInstance.LoginButton.interactable = true;
                     viewInstance.RestrictedUserContainer.SetActive(false);
+
+                    CurrentState.Value = AuthenticationStatus.Login;
                     break;
                 case ViewState.LoginInProgress:
                     ResetAnimator(viewInstance.VerificationAnimator);

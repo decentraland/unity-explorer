@@ -8,14 +8,17 @@ using DCL.AvatarRendering.Emotes.Equipped;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.AvatarRendering.Wearables.ThirdParty;
 using DCL.Backpack;
 using DCL.Backpack.BackpackBus;
 using DCL.Backpack.CharacterPreview;
 using DCL.Backpack.EmotesSection;
 using DCL.CharacterPreview;
+using DCL.Input;
+using DCL.Utilities.Extensions;
+using DCL.Input.UnityInputSystem.Blocks;
 using DCL.Profiles.Self;
 using DCL.UI;
-using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
 using ECS;
 using System;
@@ -29,25 +32,28 @@ namespace DCL.PluginSystem.Global
     internal class BackpackSubPlugin : IDisposable
     {
         private readonly IAssetsProvisioner assetsProvisioner;
-        private readonly IWearableCatalog wearableCatalog;
+        private readonly IWearableCache wearableCache;
+        private readonly ISelfProfile selfProfile;
         private readonly IEquippedWearables equippedWearables;
         private readonly IEquippedEmotes equippedEmotes;
         private readonly IEmoteCache emoteCache;
         private readonly IReadOnlyCollection<URN> embeddedEmotes;
+        private readonly ICollection<string> forceRender;
         private readonly IRealmData realmData;
-        private readonly DCLInput dclInput;
         private readonly IWeb3IdentityCache web3Identity;
         private readonly BackpackCommandBus backpackCommandBus;
         private readonly IBackpackEventBus backpackEventBus;
+        private readonly IThirdPartyNftProviderSource thirdPartyNftProviderSource;
+        private readonly IWearablesProvider wearablesProvider;
+        private readonly ICursor cursor;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
-        private readonly BackpackEquipStatusController backpackEquipStatusController;
         private readonly URLDomain assetBundleURL;
         private readonly IWebRequestController webRequestController;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
+        private readonly IInputBlock inputBlock;
 
         private BackpackBusController? busController;
-        private Arch.Core.World? world;
-        private Entity? playerEntity;
+        private BackpackEquipStatusController? backpackEquipStatusController;
 
         internal BackpackController? backpackController { get; private set; }
 
@@ -55,7 +61,7 @@ namespace DCL.PluginSystem.Global
             IAssetsProvisioner assetsProvisioner,
             IWeb3IdentityCache web3Identity,
             ICharacterPreviewFactory characterPreviewFactory,
-            IWearableCatalog wearableCatalog,
+            IWearableCache wearableCache,
             ISelfProfile selfProfile,
             IEquippedWearables equippedWearables,
             IEquippedEmotes equippedEmotes,
@@ -63,38 +69,36 @@ namespace DCL.PluginSystem.Global
             IReadOnlyCollection<URN> embeddedEmotes,
             ICollection<string> forceRender,
             IRealmData realmData,
-            DCLInput dclInput,
             URLDomain assetBundleURL,
             IWebRequestController webRequestController,
             CharacterPreviewEventBus characterPreviewEventBus,
-            IBackpackEventBus backpackEventBus)
+            IBackpackEventBus backpackEventBus,
+            IThirdPartyNftProviderSource thirdPartyNftProviderSource,
+            IWearablesProvider wearablesProvider,
+            IInputBlock inputBlock,
+            ICursor cursor)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.web3Identity = web3Identity;
             this.characterPreviewFactory = characterPreviewFactory;
-            this.wearableCatalog = wearableCatalog;
+            this.wearableCache = wearableCache;
+            this.selfProfile = selfProfile;
             this.equippedWearables = equippedWearables;
             this.equippedEmotes = equippedEmotes;
             this.emoteCache = emoteCache;
             this.embeddedEmotes = embeddedEmotes;
+            this.forceRender = forceRender;
             this.realmData = realmData;
-            this.dclInput = dclInput;
             this.assetBundleURL = assetBundleURL;
             this.webRequestController = webRequestController;
             this.characterPreviewEventBus = characterPreviewEventBus;
+            this.backpackEventBus = backpackEventBus;
+            this.thirdPartyNftProviderSource = thirdPartyNftProviderSource;
+            this.wearablesProvider = wearablesProvider;
+            this.cursor = cursor;
+            this.inputBlock = inputBlock;
 
             backpackCommandBus = new BackpackCommandBus();
-            this.backpackEventBus = backpackEventBus;
-
-            backpackEquipStatusController = new BackpackEquipStatusController(
-                backpackEventBus,
-                equippedEmotes,
-                equippedWearables,
-                selfProfile,
-                forceRender,
-                ProvideEcsContext,
-                web3Identity
-            );
         }
 
         internal async UniTask<ContinueInitialization> InitializeAsync(
@@ -105,7 +109,7 @@ namespace DCL.PluginSystem.Global
             // Initialize assets that do not require World
             var sortController = new BackpackSortController(view.BackpackSortView);
 
-            busController = new BackpackBusController(wearableCatalog, backpackEventBus, backpackCommandBus, equippedWearables, equippedEmotes, emoteCache);
+            busController = new BackpackBusController(wearableCache, backpackEventBus, backpackCommandBus, equippedWearables, equippedEmotes, emoteCache);
 
             (NFTColorsSO rarityColorMappings, NftTypeIconSO categoryIconsMapping, NftTypeIconSO rarityBackgroundsMapping, NftTypeIconSO rarityInfoPanelBackgroundsMapping) = await UniTask.WhenAll(
                 assetsProvisioner.ProvideMainAssetValueAsync(backpackSettings.RarityColorMappings, ct),
@@ -130,7 +134,8 @@ namespace DCL.PluginSystem.Global
                 rarityInfoPanelBackgroundsMapping,
                 rarityColorMappings,
                 equippedWearables,
-                BackpackInfoPanelController.AttachmentType.Wearable
+                BackpackInfoPanelController.AttachmentType.Wearable,
+                thirdPartyNftProviderSource
             );
 
             EmotesView emoteView = view.GetComponentInChildren<EmotesView>().EnsureNotNull();
@@ -142,7 +147,8 @@ namespace DCL.PluginSystem.Global
                 rarityInfoPanelBackgroundsMapping,
                 rarityColorMappings,
                 equippedWearables,
-                BackpackInfoPanelController.AttachmentType.Emote
+                BackpackInfoPanelController.AttachmentType.Emote,
+                thirdPartyNftProviderSource
             );
 
             //not injected anywhere
@@ -156,16 +162,17 @@ namespace DCL.PluginSystem.Global
 
             return (ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments args) =>
             {
-                world = builder.World!;
-                playerEntity = args.PlayerEntity;
+                Arch.Core.World world = builder.World!;
+                Entity playerEntity = args.PlayerEntity;
 
                 var thumbnailProvider = new ECSThumbnailProvider(realmData, builder.World, assetBundleURL, webRequestController);
 
                 var gridController = new BackpackGridController(
                     avatarView.backpackGridView, backpackCommandBus, backpackEventBus,
-                    web3Identity, rarityBackgroundsMapping, rarityColorMappings, categoryIconsMapping,
-                    equippedWearables, sortController, pageButtonView, gridPool, world,
-                    thumbnailProvider, colorToggle, hairColors, eyesColors, bodyshapeColors
+                    rarityBackgroundsMapping, rarityColorMappings, categoryIconsMapping,
+                    equippedWearables, sortController, pageButtonView, gridPool,
+                    thumbnailProvider, colorToggle, hairColors, eyesColors, bodyshapeColors,
+                    wearablesProvider
                 );
 
                 var emoteGridController = new BackpackEmoteGridController(emoteView.GridView, backpackCommandBus, backpackEventBus,
@@ -177,6 +184,17 @@ namespace DCL.PluginSystem.Global
 
                 var backpackCharacterPreviewController = new BackpackCharacterPreviewController(view.CharacterPreviewView,
                     characterPreviewFactory, backpackEventBus, world, equippedEmotes, characterPreviewEventBus);
+
+                backpackEquipStatusController = new BackpackEquipStatusController(
+                    backpackEventBus,
+                    equippedEmotes,
+                    equippedWearables,
+                    selfProfile,
+                    forceRender,
+                    web3Identity,
+                    world,
+                    playerEntity
+                );
 
                 backpackController = new BackpackController(
                     view,
@@ -194,7 +212,8 @@ namespace DCL.PluginSystem.Global
                     emotesController,
                     backpackCharacterPreviewController,
                     thumbnailProvider,
-                    dclInput
+                    inputBlock,
+                    cursor
                 );
             };
         }
@@ -205,8 +224,5 @@ namespace DCL.PluginSystem.Global
             backpackController?.Dispose();
             backpackEquipStatusController?.Dispose();
         }
-
-        private (Arch.Core.World, Entity) ProvideEcsContext() =>
-            (world!, playerEntity!.Value);
     }
 }

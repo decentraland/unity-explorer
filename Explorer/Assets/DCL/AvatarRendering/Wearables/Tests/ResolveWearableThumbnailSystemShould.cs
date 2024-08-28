@@ -22,11 +22,11 @@ namespace DCL.AvatarRendering.Wearables.Tests
         [SetUp]
         public void Setup()
         {
-            wearableCatalog = new WearableCatalog();
+            wearableCache = new WearableCache();
             mockedDefaultAB = new StreamableLoadingResult<WearableAssetBase>(new WearableRegularAsset(null, null, null));
 
             IWearable mockDefaultWearable = CreateMockWearable(defaultWearableUrn, false);
-            wearableCatalog.wearablesCache.Add(mockDefaultWearable.GetUrn(), mockDefaultWearable);
+            wearableCache.wearablesCache.Add(mockDefaultWearable.GetUrn(), mockDefaultWearable);
             realmData = new RealmData(new TestIpfsRealm());
             system = new ResolveAvatarAttachmentThumbnailSystem(world);
         }
@@ -34,7 +34,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
         private StreamableLoadingResult<WearableAssetBase> mockedDefaultAB;
         private readonly string defaultWearableUrn = "urn:decentraland:off-chain:base-avatars:green_hoodie";
         private readonly string unisexTestUrn = "urn:decentraland:off-chain:base-avatars:red_hoodie_unisex";
-        private WearableCatalog wearableCatalog;
+        private WearableCache wearableCache;
         private RealmData realmData;
 
         private IWearable CreateMockWearable(URN urn, bool isUnisex)
@@ -53,7 +53,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
         {
             //Arrange
             IWearable mockedWearable = CreateMockWearable(unisexTestUrn, false);
-            wearableCatalog.wearablesCache.Add(mockedWearable.GetUrn(), mockedWearable);
+            wearableCache.wearablesCache.Add(mockedWearable.GetUrn(), mockedWearable);
             var urlBuilder = new URLBuilder();
             urlBuilder.AppendDomain(realmData.Ipfs.ContentBaseUrl).AppendPath(mockedWearable.GetThumbnail());
 

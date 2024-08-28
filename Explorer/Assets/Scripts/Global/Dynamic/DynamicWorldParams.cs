@@ -5,6 +5,7 @@ using DCL.PluginSystem.Global;
 using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
+using Global.AppArgs;
 using SceneRunner.Debugging;
 using System.Collections.Generic;
 using SceneRunner.Scene;
@@ -14,19 +15,49 @@ using UnityEngine.UIElements;
 
 namespace Global.Dynamic
 {
-    public struct DynamicWorldDependencies
+    public readonly struct DynamicWorldDependencies
     {
-        public IDebugContainerBuilder DebugContainerBuilder;
-        public IAssetsProvisioner AssetsProvisioner;
-        public StaticContainer StaticContainer;
-        public IPluginSettingsContainer SettingsContainer;
-        public UIDocument RootUIDocument;
-        public UIDocument CursorUIDocument;
-        public DynamicSettings DynamicSettings;
-        public IWeb3VerifiedAuthenticator Web3Authenticator;
-        public IWeb3IdentityCache Web3IdentityCache;
-        public ISplashScreen SplashScreen;
-        public WorldInfoTool WorldInfoTool;
+        public readonly IDebugContainerBuilder DebugContainerBuilder;
+        public readonly IAppArgs CommandLineArgs;
+        public readonly IAssetsProvisioner AssetsProvisioner;
+        public readonly StaticContainer StaticContainer;
+        public readonly IPluginSettingsContainer SettingsContainer;
+        public readonly UIDocument RootUIDocument;
+        public readonly UIDocument CursorUIDocument;
+        public readonly DynamicSettings DynamicSettings;
+        public readonly IWeb3VerifiedAuthenticator Web3Authenticator;
+        public readonly IWeb3IdentityCache Web3IdentityCache;
+        public readonly ISplashScreen SplashScreen;
+        public readonly WorldInfoTool WorldInfoTool;
+
+        public DynamicWorldDependencies(
+            IDebugContainerBuilder debugContainerBuilder,
+            IAppArgs commandLineArgs,
+            IAssetsProvisioner assetsProvisioner,
+            StaticContainer staticContainer,
+            IPluginSettingsContainer settingsContainer,
+            UIDocument rootUIDocument,
+            UIDocument cursorUIDocument,
+            DynamicSettings dynamicSettings,
+            IWeb3VerifiedAuthenticator web3Authenticator,
+            IWeb3IdentityCache web3IdentityCache,
+            ISplashScreen splashScreen,
+            WorldInfoTool worldInfoTool
+        )
+        {
+            DebugContainerBuilder = debugContainerBuilder;
+            CommandLineArgs = commandLineArgs;
+            AssetsProvisioner = assetsProvisioner;
+            StaticContainer = staticContainer;
+            SettingsContainer = settingsContainer;
+            RootUIDocument = rootUIDocument;
+            CursorUIDocument = cursorUIDocument;
+            DynamicSettings = dynamicSettings;
+            Web3Authenticator = web3Authenticator;
+            Web3IdentityCache = web3IdentityCache;
+            SplashScreen = splashScreen;
+            WorldInfoTool = worldInfoTool;
+        }
     }
 
     public struct DynamicWorldParams
@@ -39,7 +70,7 @@ namespace Global.Dynamic
         public bool EnableAnalytics { get; init; }
         public HybridSceneParams HybridSceneParams { get; init; }
         public string LocalSceneDevelopmentRealm { get; init; }
-        public Dictionary<string, string> AppParameters { get; init; }
+        public IAppArgs AppParameters { get; init; }
     }
 
     public struct HybridSceneParams
@@ -49,6 +80,5 @@ namespace Global.Dynamic
         public Vector2Int StartParcel { get; init; }
 
         public string World { get; init; }
-
     }
 }

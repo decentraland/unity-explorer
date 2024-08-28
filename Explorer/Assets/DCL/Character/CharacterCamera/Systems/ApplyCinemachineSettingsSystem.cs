@@ -28,8 +28,8 @@ namespace DCL.Character.CharacterCamera.Systems
             sensitivitySlider = new ElementBinding<float>(currentSens);
             noiseSlider = new ElementBinding<float>(0.5f);
 
-            debugBuilder.AddWidget("Camera")
-                        .AddFloatSliderField("Sensitivity", sensitivitySlider, 0.01f, 100f)
+            debugBuilder.TryAddWidget("Camera")
+                        ?.AddFloatSliderField("Sensitivity", sensitivitySlider, 0.01f, 100f)
                         .AddToggleField("Enable Noise", OnNoiseChange, false)
                         .AddFloatSliderField("Noise Value", noiseSlider, 0, 20);
         }

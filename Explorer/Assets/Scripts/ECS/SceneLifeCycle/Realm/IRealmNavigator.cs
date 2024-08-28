@@ -9,7 +9,6 @@ namespace ECS.SceneLifeCycle.Realm
 {
     public interface IRealmNavigator
     {
-        public const string GENESIS_URL = "https://realm-provider.decentraland.org/main";
         public const string WORLDS_DOMAIN = "https://worlds-content-server.decentraland.org/world";
         public const string LOCALHOST = "http://127.0.0.1:8000";
 
@@ -24,7 +23,7 @@ namespace ECS.SceneLifeCycle.Realm
 
         UniTask<bool> TryChangeRealmAsync(URLDomain realm, CancellationToken ct, Vector2Int parcelToTeleport = default);
 
-        UniTask TryInitializeTeleportToParcelAsync(Vector2Int parcel, CancellationToken ct, bool isLocal = false);
+        UniTask<bool> TryInitializeTeleportToParcelAsync(Vector2Int parcel, CancellationToken ct, bool isLocal = false);
 
         UniTask InitializeTeleportToSpawnPointAsync(AsyncLoadProcessReport teleportLoadReport, CancellationToken ct, Vector2Int parcelToTeleport = default);
 

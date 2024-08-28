@@ -34,6 +34,8 @@ using SceneRunner.Scene;
 using System.Collections.Generic;
 using System.Threading;
 using DCL.LOD;
+using ECS.SceneLifeCycle.CurrentScene;
+using SceneRuntime;
 using SystemGroups.Visualiser;
 using Utility;
 
@@ -60,6 +62,7 @@ namespace Global.Dynamic
         private readonly IScenesCache scenesCache;
         private readonly ILODCache lodCache;
         private readonly CharacterContainer characterContainer;
+        private readonly CurrentSceneInfo currentSceneInfo;
 
         private readonly HybridSceneParams hybridSceneParams;
         private readonly ICharacterDataPropagationUtility characterDataPropagationUtility;
@@ -70,6 +73,7 @@ namespace Global.Dynamic
             IReadOnlyList<IDCLGlobalPlugin> globalPlugins, IDebugContainerBuilder debugContainerBuilder,
             IScenesCache scenesCache, HybridSceneParams hybridSceneParams,
             ICharacterDataPropagationUtility characterDataPropagationUtility,
+            CurrentSceneInfo currentSceneInfo,
             ILODCache lodCache)
         {
             partitionedWorldsAggregateFactory = staticContainer.SingletonSharedDependencies.AggregateFactory;
@@ -90,13 +94,14 @@ namespace Global.Dynamic
             this.scenesCache = scenesCache;
             this.hybridSceneParams = hybridSceneParams;
             this.characterDataPropagationUtility = characterDataPropagationUtility;
+            this.currentSceneInfo = currentSceneInfo;
             this.lodCache = lodCache;
 
             memoryBudget = staticContainer.SingletonSharedDependencies.MemoryBudget;
             physicsTickProvider = staticContainer.PhysicsTickProvider;
         }
 
-        public (GlobalWorld, Entity) Create(ISceneFactory sceneFactory)
+        public (GlobalWorld, Entity) Create(ISceneFactory sceneFactory, V8ActiveEngines v8ActiveEngines)
         {
             var world = World.Create();
 
@@ -161,15 +166,15 @@ namespace Global.Dynamic
 
             OwnAvatarLoaderFromDebugMenuSystem.InjectToWorld(ref builder, playerEntity, debugContainerBuilder, realmData);
 
-            UpdateCurrentSceneSystem.InjectToWorld(ref builder, realmData, scenesCache, playerEntity, staticContainer.SingletonSharedDependencies.SceneAssetLock);
+            UpdateCurrentSceneSystem.InjectToWorld(ref builder, realmData, scenesCache, currentSceneInfo, playerEntity, staticContainer.SingletonSharedDependencies.SceneAssetLock);
 
             IEmoteProvider emoteProvider = new EcsEmoteProvider(world, realmData);
 
-            var pluginArgs = new GlobalPluginArguments(playerEntity, emoteProvider);
+            var pluginArgs = new GlobalPluginArguments(playerEntity, emoteProvider, v8ActiveEngines);
 
             foreach (IDCLGlobalPlugin plugin in globalPlugins)
                 plugin.InjectToWorld(ref builder, pluginArgs);
-            
+
             var finalizeWorldSystems = new IFinalizeWorldSystem[]
             {
                 UnloadSceneSystem.InjectToWorld(ref builder, scenesCache, staticContainer.SingletonSharedDependencies.SceneAssetLock), UnloadSceneLODSystem.InjectToWorld(ref builder, scenesCache, lodCache),

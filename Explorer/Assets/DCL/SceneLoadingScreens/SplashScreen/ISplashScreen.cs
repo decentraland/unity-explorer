@@ -2,8 +2,8 @@ namespace DCL.SceneLoadingScreens.SplashScreen
 {
     public interface ISplashScreen
     {
-        void ShowSplash();
+        void Show();
 
-        void HideSplash();
+        void Hide();
     }
 }

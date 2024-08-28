@@ -12,10 +12,13 @@ namespace DCL.MapRenderer.MapLayers.Pins
 {
     internal class PinMarker : IPinMarker
     {
+        private const float MAP_MIN_PIN_SCALE = 22;
+        private const float MINIMAP_MIN_SIZE_FOR_PIN = 35;
+
         private readonly IMapCullingController cullingController;
 
         private MapMarkerPoolableBehavior<PinMarkerObject> poolableBehavior;
-        private float currentNewScale;
+        private float currentNewScale = MINIMAP_MIN_SIZE_FOR_PIN;
         private CancellationTokenSource pulseCancellationTokenSource;
         private CancellationTokenSource selectionCancellationTokenSource;
 
@@ -50,7 +53,6 @@ namespace DCL.MapRenderer.MapLayers.Pins
         {
             pulseCancellationTokenSource = pulseCancellationTokenSource.SafeRestart();
             selectionCancellationTokenSource = selectionCancellationTokenSource.SafeRestart();
-            IsDestination = false;
             ParcelPosition = parcelPosition;
             poolableBehavior.SetCurrentPosition(position);
         }
@@ -96,6 +98,7 @@ namespace DCL.MapRenderer.MapLayers.Pins
         {
             Title = title;
             Description = description;
+            IsDestination = false;
         }
 
         public void SetTexture(Texture2D texture)
@@ -107,12 +110,9 @@ namespace DCL.MapRenderer.MapLayers.Pins
         public void OnBecameVisible()
         {
             poolableBehavior.OnBecameVisible();
-
-            if (poolableBehavior.instance == null) return;
-
-            if (Icon != null) { poolableBehavior.instance.SetTexture(Icon); }
-            poolableBehavior.instance.SetAsDestination(IsDestination);
-            poolableBehavior.instance.SetScale(currentNewScale);
+            if (Icon != null) { poolableBehavior.instance?.SetTexture(Icon); }
+            poolableBehavior.instance?.SetAsDestination(IsDestination);
+            poolableBehavior.instance?.SetScale(currentNewScale);
             ResetPulseAnimation();
         }
 
@@ -125,21 +125,31 @@ namespace DCL.MapRenderer.MapLayers.Pins
 
         public void SetZoom(float baseScale, float baseZoom, float zoom)
         {
-            currentBaseScale = baseScale;
-            currentNewScale = Math.Max(zoom / baseZoom * baseScale, baseScale);
+            currentBaseScale = Math.Max(baseScale, MAP_MIN_PIN_SCALE);
+            currentNewScale = Math.Max(zoom / baseZoom * currentBaseScale, currentBaseScale);
             poolableBehavior.instance?.SetScale(currentNewScale);
         }
 
-        public void ResetScale(float scale)
+        public void ResetScale()
         {
-            currentNewScale = scale;
-            poolableBehavior.instance?.SetScale(scale);
+            currentNewScale = MINIMAP_MIN_SIZE_FOR_PIN;
+            poolableBehavior.instance?.SetScale(currentNewScale);
         }
 
         private void ResetPulseAnimation()
         {
             pulseCancellationTokenSource = pulseCancellationTokenSource.SafeRestart();
-            if (IsDestination) PinMarkerHelper.PulseScaleAsync(poolableBehavior.instance.pulseScalingParent, ct: pulseCancellationTokenSource.Token).Forget();
+            if (!IsDestination && poolableBehavior.instance != null) PinMarkerHelper.PulseScaleAsync(poolableBehavior.instance.pulseScalingParent, ct: pulseCancellationTokenSource.Token).Forget();
+        }
+
+        public void Show(Action? onFinish = null)
+        {
+            poolableBehavior.instance?.SetVisibility(true, onFinish);
+        }
+
+        public void Hide(Action? onFinish)
+        {
+            poolableBehavior.instance?.SetVisibility(false, onFinish);
         }
     }
 }

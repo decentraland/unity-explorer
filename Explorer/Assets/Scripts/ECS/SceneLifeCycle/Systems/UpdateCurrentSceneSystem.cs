@@ -1,9 +1,8 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
 using DCL.Character.Components;
-using DCL.Optimization.PerformanceBudgeting;
 using ECS.Abstract;
-using SceneRunner.Scene;
+using ECS.SceneLifeCycle.CurrentScene;
 using UnityEngine;
 using Utility;
 
@@ -18,15 +17,17 @@ namespace ECS.SceneLifeCycle.Systems
         private readonly Entity playerEntity;
         private readonly IRealmData realmData;
         private readonly IScenesCache scenesCache;
+        private readonly CurrentSceneInfo currentSceneInfo;
 
         private Vector2Int lastParcelProcessed;
 
         private readonly SceneAssetLock sceneAssetLock;
 
-        internal UpdateCurrentSceneSystem(World world, IRealmData realmData, IScenesCache scenesCache, Entity playerEntity, SceneAssetLock sceneAssetLock) : base(world)
+        internal UpdateCurrentSceneSystem(World world, IRealmData realmData, IScenesCache scenesCache, CurrentSceneInfo currentSceneInfo, Entity playerEntity, SceneAssetLock sceneAssetLock) : base(world)
         {
             this.realmData = realmData;
             this.scenesCache = scenesCache;
+            this.currentSceneInfo = currentSceneInfo;
             this.playerEntity = playerEntity;
             this.sceneAssetLock = sceneAssetLock;
             ResetProcessedParcel();
@@ -49,6 +50,7 @@ namespace ECS.SceneLifeCycle.Systems
             Vector2Int parcel = ParcelMathHelper.FloorToParcel(playerPos);
             UpdateSceneReadiness(parcel);
             UpdateCurrentScene(parcel);
+            UpdateCurrentSceneInfo(parcel);
         }
 
         private void UpdateSceneReadiness(Vector2Int parcel)
@@ -75,6 +77,13 @@ namespace ECS.SceneLifeCycle.Systems
                 currentScene.SetIsCurrent(true);
 
             lastParcelProcessed = parcel;
+        }
+
+        private void UpdateCurrentSceneInfo(Vector2Int parcel)
+        {
+            scenesCache.TryGetByParcel(parcel, out var currentScene);
+            currentSceneInfo.Update(currentScene);
+            scenesCache.SetCurrentScene(currentScene);
         }
     }
 }

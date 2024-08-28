@@ -8,6 +8,7 @@ using DCL.Backpack;
 using DCL.DebugUtilities;
 using DCL.EmotesWheel;
 using DCL.Input;
+using DCL.Input.UnityInputSystem.Blocks;
 using DCL.Multiplayer.Emotes;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Profiles.Self;
@@ -44,6 +45,8 @@ namespace DCL.PluginSystem.Global
         private readonly AudioClipsCache audioClipsCache;
         private readonly URLDomain assetBundleURL;
         private readonly MainUIView mainUIView;
+        private readonly ICursor cursor;
+        private readonly IInputBlock inputBlock;
         private AudioSource? audioSourceReference;
         private EmotesWheelController? emotesWheelController;
 
@@ -60,7 +63,9 @@ namespace DCL.PluginSystem.Global
             IWeb3IdentityCache web3IdentityCache,
             IReadOnlyEntityParticipantTable entityParticipantTable,
             URLDomain assetBundleURL,
-            MainUIView mainUIView)
+            MainUIView mainUIView,
+            ICursor cursor,
+            IInputBlock inputBlock)
         {
             this.messageBus = messageBus;
             this.debugBuilder = debugBuilder;
@@ -75,6 +80,8 @@ namespace DCL.PluginSystem.Global
             this.emoteCache = emoteCache;
             this.realmData = realmData;
             this.mainUIView = mainUIView;
+            this.cursor = cursor;
+            this.inputBlock = inputBlock;
 
             audioClipsCache = new AudioClipsCache();
             cacheCleaner.Register(audioClipsCache);
@@ -138,7 +145,7 @@ namespace DCL.PluginSystem.Global
 
                 emotesWheelController = new EmotesWheelController(EmotesWheelController.CreateLazily(emotesWheelPrefab, null),
                     selfProfile, emoteCache, emoteWheelRarityBackgrounds, builder.World, arguments.PlayerEntity, thumbnailProvider,
-                    builder.World.CacheInputMap(), dclInput, mvcManager);
+                    inputBlock, dclInput, mvcManager, cursor);
 
                 mvcManager.RegisterController(emotesWheelController);
             };
