@@ -45,7 +45,7 @@ namespace DCL.Minimap
         private CancellationTokenSource cts;
 
         private MapRendererTrackPlayerPosition mapRendererTrackPlayerPosition;
-        private IMapCameraController mapCameraController;
+        private IMapCameraController? mapCameraController;
         private Vector2Int previousParcelPosition;
 
         public IReadOnlyDictionary<MapLayer, IMapLayerParameter> LayersParameters { get; } = new Dictionary<MapLayer, IMapLayerParameter>
@@ -153,7 +153,6 @@ namespace DCL.Minimap
         {
             Vector3 position = transformComponent.Position;
 
-            // TODO: this is always null, why keep this branch?
             if (mapCameraController == null)
             {
                 mapCameraController = mapRenderer.RentCamera(new MapCameraInput(
