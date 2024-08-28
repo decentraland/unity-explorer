@@ -10,7 +10,6 @@ using DCL.Diagnostics;
 using DCL.Emoji;
 using DCL.Input;
 using DCL.Input.Component;
-using DCL.Input.UnityInputSystem.Blocks;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
 using ECS.Abstract;
@@ -261,13 +260,13 @@ namespace DCL.Chat
         private void BlockUnwantedInputs()
         {
             world.AddOrGet(cameraEntity, new CameraBlockerComponent());
-            inputBlock.BlockInputs(InputMapComponent.Kind.Camera , InputMapComponent.Kind.Shortcuts , InputMapComponent.Kind.Player);
+            inputBlock.Disable(InputMapComponent.Kind.Camera , InputMapComponent.Kind.Shortcuts , InputMapComponent.Kind.Player);
         }
 
         private void UnblockUnwantedInputs()
         {
             world.TryRemove<CameraBlockerComponent>(cameraEntity);
-            inputBlock.UnblockInputs(InputMapComponent.Kind.Camera , InputMapComponent.Kind.Shortcuts , InputMapComponent.Kind.Player);
+            inputBlock.Enable(InputMapComponent.Kind.Camera , InputMapComponent.Kind.Shortcuts , InputMapComponent.Kind.Player);
         }
 
         private void OnSubmitAction(InputAction.CallbackContext obj)

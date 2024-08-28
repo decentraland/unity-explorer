@@ -221,7 +221,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
         {
             foreach (ParamPromise assetPromise in randomAvatarRequest.CollectionPromise)
             {
-                if (!assetPromise.TryGetResult(World, out StreamableLoadingResult<WearablesResponse> collection))
+                if (!assetPromise.TryGetResult(World, out StreamableLoadingResult<WearablesResponse> _))
                     return;
             }
 
@@ -362,7 +362,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
             var transformComp = new CharacterTransform(transformPool.Get());
 
             transformComp.Transform.position = StartRandomPosition(0, startXPosition, startZPosition);
-            transformComp.Transform.name = $"RANDOM_AVATAR_{avatarIndex}";
+            transformComp.Transform.name = "SELF_REPLICA";
 
             CharacterController characterController = transformComp.Transform.gameObject.AddComponent<CharacterController>();
             characterController.radius = 0.4f;

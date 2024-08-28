@@ -28,17 +28,13 @@ namespace DCL.AvatarRendering.Wearables
 
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly List<(string, string)> requestParameters = new ();
-
-        private World? world;
+        private readonly World world;
 
         public ECSWearablesProvider(
-            IWeb3IdentityCache web3IdentityCache)
+            IWeb3IdentityCache web3IdentityCache,
+            World world)
         {
             this.web3IdentityCache = web3IdentityCache;
-        }
-
-        public void Initialize(World world)
-        {
             this.world = world;
         }
 

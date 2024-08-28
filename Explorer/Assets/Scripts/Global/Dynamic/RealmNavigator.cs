@@ -42,7 +42,7 @@ namespace Global.Dynamic
         private readonly IRoomHub roomHub;
         private readonly IRemoteEntities remoteEntities;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
-        private readonly ObjectProxy<World> globalWorldProxy;
+        private readonly World globalWorld;
         private readonly RoadPlugin roadsPlugin;
         private readonly TerrainGenerator genesisTerrain;
         private readonly WorldTerrainGenerator worldsTerrain;
@@ -64,7 +64,7 @@ namespace Global.Dynamic
             IRoomHub roomHub,
             IRemoteEntities remoteEntities,
             IDecentralandUrlsSource decentralandUrlsSource,
-            ObjectProxy<World> globalWorldProxy,
+            World globalWorld,
             RoadPlugin roadsPlugin,
             TerrainGenerator genesisTerrain,
             WorldTerrainGenerator worldsTerrain,
@@ -87,7 +87,7 @@ namespace Global.Dynamic
             this.roomHub = roomHub;
             this.remoteEntities = remoteEntities;
             this.decentralandUrlsSource = decentralandUrlsSource;
-            this.globalWorldProxy = globalWorldProxy;
+            this.globalWorld = globalWorld;
         }
 
         public async UniTask<bool> TryChangeRealmAsync(URLDomain realm, CancellationToken ct,
@@ -95,8 +95,6 @@ namespace Global.Dynamic
         {
             if (realm == CurrentRealm || realm == realmController.RealmData.Ipfs.CatalystBaseUrl)
                 return false;
-
-            var world = globalWorldProxy.Object.EnsureNotNull();
 
             ct.ThrowIfCancellationRequested();
 
@@ -109,11 +107,11 @@ namespace Global.Dynamic
                 {
                     ct.ThrowIfCancellationRequested();
 
-                    remoteEntities.ForceRemoveAll(world);
+                    remoteEntities.ForceRemoveAll(globalWorld);
                     await roomHub.StopIfNotAsync();
 
                     // By removing the CameraSamplingData, we stop the ring calculation
-                    world.Remove<CameraSamplingData>(cameraEntity.Object);
+                    globalWorld.Remove<CameraSamplingData>(cameraEntity.Object);
 
                     await ChangeRealmAsync(realm, ct);
                     parentLoadReport.SetProgress(RealFlowLoadingStatus.PROGRESS[ProfileLoaded]);
@@ -137,8 +135,8 @@ namespace Global.Dynamic
             );
             if (!loadResult.Success)
             {
-                if (!world.Has<CameraSamplingData>(cameraEntity.Object))
-                    world.Add(cameraEntity.Object, cameraSamplingData);
+                if (!globalWorld.Has<CameraSamplingData>(cameraEntity.Object))
+                    globalWorld.Add(cameraEntity.Object, cameraSamplingData);
 
                 ReportHub.LogError(ReportCategory.REALM,
                     $"Error trying to teleport to a realm {realm}: {loadResult.ErrorMessage}");
@@ -153,7 +151,6 @@ namespace Global.Dynamic
         public async UniTask InitializeTeleportToSpawnPointAsync(AsyncLoadProcessReport teleportLoadReport,
             CancellationToken ct, Vector2Int parcelToTeleport)
         {
-            var world = globalWorldProxy.Object.EnsureNotNull();
             var isGenesis = !realmController.RealmData.ScenesAreFixed;
             UniTask waitForSceneReadiness;
 
@@ -164,7 +161,7 @@ namespace Global.Dynamic
 
             // add camera sampling data to the camera entity to start partitioning
             Assert.IsTrue(cameraEntity.Configured);
-            world.Add(cameraEntity.Object, cameraSamplingData);
+            globalWorld.Add(cameraEntity.Object, cameraSamplingData);
             await waitForSceneReadiness;
         }
 
@@ -214,7 +211,7 @@ namespace Global.Dynamic
 
                 if (isGenesis)
                 {
-                    //TODO (Juani): The world terrain would be hidden. We need to implement the re-usage when going back
+                    //TODO (Juani): The globalWorld terrain would be hidden. We need to implement the re-usage when going back
                     worldsTerrain.SwitchVisibility(false);
 
                     if (!genesisTerrain.IsTerrainGenerated)

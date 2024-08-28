@@ -66,6 +66,13 @@ on:
         required: false
         type: boolean
         default: false
+      is_release_build:
+        type: boolean
+        required: false
+        default: false
+      tag_version:
+        type: string
+        required: false
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -202,7 +209,10 @@ jobs:
           COMMIT_SHA: ${{ needs.prebuild.outputs.commit_sha }}
           BUILD_OPTIONS: ${{ needs.prebuild.outputs.options }}
           USE_CACHE: ${{ needs.prebuild.outputs.use_cache }}
-          CACHE_STRATEGY: ${{ needs.prebuild.outputs.cache_strategy }} #Possible values: { none, library, workspace, inherit }
+          CACHE_STRATEGY: ${{ needs.prebuild.outputs.cache_strategy }}
+          IS_RELEASE_BUILD: ${{ inputs.is_release_build }}
+          TAG_VERSION: ${{ inputs.tag_version }}
+          #Possible values: { none, library, workspace, inherit }
           # Any ENV variables starting with "PARAM_" will be passed to Unity without the prefix
           # (The "PARAM_" prefix exists to allow any future values config-free)
           # e.g.: PARAM_ALLOW_DEBUG -> In Unity will be available as "ALLOW_DEBUG"
@@ -214,6 +224,7 @@ jobs:
           PARAM_SENTRY_ENABLED: ${{ needs.prebuild.outputs.sentry_enabled }}
           PARAM_SENTRY_UPLOAD_DEBUG_SYMBOLS: ${{ needs.prebuild.outputs.sentry_upload_symbols }}
           PARAM_SEGMENT_WRITE_KEY: ${{ secrets.SEGMENT_WRITE_KEY }}
+
         run: python -u scripts/cloudbuild/build.py
 
       - name: Upload artifact

@@ -13,11 +13,11 @@ namespace DCL.PluginSystem.World
 {
     public class AvatarShapePlugin : IDCLWorldPlugin
     {
-        private readonly ObjectProxy<Arch.Core.World> globalWorldProxy;
+        private readonly Arch.Core.World globalWorld;
 
-        public AvatarShapePlugin(ObjectProxy<Arch.Core.World> globalWorldProxy)
+        public AvatarShapePlugin(Arch.Core.World globalWorld)
         {
-            this.globalWorldProxy = globalWorldProxy;
+            this.globalWorld = globalWorld;
         }
 
         public UniTask Initialize(IPluginSettingsContainer container, CancellationToken ct) =>
@@ -31,7 +31,7 @@ namespace DCL.PluginSystem.World
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
             ResetDirtyFlagSystem<PBAvatarShape>.InjectToWorld(ref builder);
-            var avatarShapeHandlerSystem = AvatarShapeHandlerSystem.InjectToWorld(ref builder, globalWorldProxy);
+            var avatarShapeHandlerSystem = AvatarShapeHandlerSystem.InjectToWorld(ref builder, globalWorld);
             finalizeWorldSystems.Add(avatarShapeHandlerSystem);
         }
     }

@@ -1,7 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Backpack.BackpackBus;
+using DCL.Input;
 using DCL.Input.Component;
-using DCL.Input.UnityInputSystem.Blocks;
 using DCL.UI;
 using System.Threading;
 using Utility;
@@ -37,12 +37,12 @@ namespace DCL.Backpack
 
         private void RestoreInput(string text)
         {
-            inputBlock.UnblockInputs(InputMapComponent.Kind.Shortcuts);
+            inputBlock.Enable(InputMapComponent.Kind.Shortcuts);
         }
 
         private void DisableShortcutsInput(string text)
         {
-            inputBlock.BlockInputs(InputMapComponent.Kind.Shortcuts);
+            inputBlock.Disable(InputMapComponent.Kind.Shortcuts);
         }
 
         private void OnSearchEvent(string searchString)
