@@ -27,7 +27,7 @@ MonoBehaviour:
   - rid: 892605770607624196
   - rid: 7615904969758605314
   - rid: 634089542387236867
-  - rid: 1970080114618138626
+  - rid: 1970080267461197826
   references:
     version: 2
     RefIds:
@@ -110,12 +110,12 @@ MonoBehaviour:
           m_SubObjectType: 
           m_EditorAssetChanged: 0
         <DefaultMask256>k__BackingField:
-          m_AssetGUID: b0989591ebd3293419eece13d705a1e3
+          m_AssetGUID: 6bdb4b9ae9bf04745acee14bf4c684e1
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
         <DefaultMask512>k__BackingField:
-          m_AssetGUID: b7201c2efeb480b4293d5baae77973d6
+          m_AssetGUID: f3fd7329d073f964aaec82eb9acc9ed3
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
@@ -144,7 +144,7 @@ MonoBehaviour:
         <RaycastFrameBudgetMs>k__BackingField: 3
         <PlayerOriginRaycastMaxDistance>k__BackingField: 200
         <GlobalInputPropagationBucketThreshold>k__BackingField: 3
-    - rid: 1970080114618138626
+    - rid: 1970080267461197826
       type: {class: MainCameraPlugin/Settings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
       data:
         VirtualCameraPrefab:
@@ -152,7 +152,6 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
-        CinemachineBlenderSettings: {fileID: 11400000, guid: 44cb95d012b756149ae3c66d1d3c8973, type: 2}
     - rid: 4753057106328551424
       type: {class: SceneUIPlugin/Settings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
       data:

@@ -15,9 +15,10 @@ using DCL.Backpack.CharacterPreview;
 using DCL.Backpack.EmotesSection;
 using DCL.CharacterPreview;
 using DCL.Input;
+using DCL.Utilities.Extensions;
+using DCL.Input.UnityInputSystem.Blocks;
 using DCL.Profiles.Self;
 using DCL.UI;
-using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
 using ECS;
 using System;
@@ -39,7 +40,6 @@ namespace DCL.PluginSystem.Global
         private readonly IReadOnlyCollection<URN> embeddedEmotes;
         private readonly ICollection<string> forceRender;
         private readonly IRealmData realmData;
-        private readonly DCLInput dclInput;
         private readonly IWeb3IdentityCache web3Identity;
         private readonly BackpackCommandBus backpackCommandBus;
         private readonly IBackpackEventBus backpackEventBus;
@@ -50,6 +50,7 @@ namespace DCL.PluginSystem.Global
         private readonly URLDomain assetBundleURL;
         private readonly IWebRequestController webRequestController;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
+        private readonly IInputBlock inputBlock;
 
         private BackpackBusController? busController;
         private BackpackEquipStatusController? backpackEquipStatusController;
@@ -68,13 +69,13 @@ namespace DCL.PluginSystem.Global
             IReadOnlyCollection<URN> embeddedEmotes,
             ICollection<string> forceRender,
             IRealmData realmData,
-            DCLInput dclInput,
             URLDomain assetBundleURL,
             IWebRequestController webRequestController,
             CharacterPreviewEventBus characterPreviewEventBus,
             IBackpackEventBus backpackEventBus,
             IThirdPartyNftProviderSource thirdPartyNftProviderSource,
             IWearablesProvider wearablesProvider,
+            IInputBlock inputBlock,
             ICursor cursor)
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -88,16 +89,16 @@ namespace DCL.PluginSystem.Global
             this.embeddedEmotes = embeddedEmotes;
             this.forceRender = forceRender;
             this.realmData = realmData;
-            this.dclInput = dclInput;
             this.assetBundleURL = assetBundleURL;
             this.webRequestController = webRequestController;
             this.characterPreviewEventBus = characterPreviewEventBus;
-
-            backpackCommandBus = new BackpackCommandBus();
             this.backpackEventBus = backpackEventBus;
             this.thirdPartyNftProviderSource = thirdPartyNftProviderSource;
             this.wearablesProvider = wearablesProvider;
             this.cursor = cursor;
+            this.inputBlock = inputBlock;
+
+            backpackCommandBus = new BackpackCommandBus();
         }
 
         internal async UniTask<ContinueInitialization> InitializeAsync(
@@ -211,7 +212,7 @@ namespace DCL.PluginSystem.Global
                     emotesController,
                     backpackCharacterPreviewController,
                     thumbnailProvider,
-                    dclInput,
+                    inputBlock,
                     cursor
                 );
             };
