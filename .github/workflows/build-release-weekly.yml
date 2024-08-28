@@ -5,9 +5,9 @@ on:
   # schedule:
   #  - cron: '10 0 * * 3'
   ## For testing only!
-  # push:
-  #   branches:
-  #     - feat/unity-cloud-build
+  push:
+    branches:
+      - fix/release-build-workflow
 
 jobs:
   get-info:
