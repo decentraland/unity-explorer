@@ -82,7 +82,7 @@ namespace DCL.Multiplayer.Profiles.Entities
             foreach (string wallet in tempRemoveAll) TryRemove(wallet, world);
         }
 
-        private void TryRemove(string walletId, World world)
+        public void TryRemove(string walletId, World world)
         {
             if (entityParticipantTable.Has(walletId) == false)
                 return;

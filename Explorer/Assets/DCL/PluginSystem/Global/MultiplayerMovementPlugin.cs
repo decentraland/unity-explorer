@@ -1,9 +1,13 @@
-﻿using Arch.SystemGroups;
+﻿using Arch.Core;
+using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.DebugUtilities;
 using DCL.Multiplayer.Movement.Settings;
 using DCL.Multiplayer.Movement.Systems;
+using DCL.Multiplayer.Profiles.Entities;
 using System.Threading;
+using Utility;
 using PlayerMovementNetSendSystem = DCL.Multiplayer.Movement.Systems.PlayerMovementNetSendSystem;
 using RemotePlayersMovementSystem = DCL.Multiplayer.Movement.Systems.RemotePlayersMovementSystem;
 
@@ -13,17 +17,27 @@ namespace DCL.PluginSystem.Global
     {
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly MultiplayerMovementMessageBus messageBus;
+        private readonly IDebugContainerBuilder debugBuilder;
+        private readonly RemoteEntities remoteEntities;
+        private readonly ExposedTransform playerTransform;
 
         private ProvidedAsset<MultiplayerMovementSettings> settings;
+        private Entity? selfReplicaEntity;
+        private MultiplayerMovementDebug multiplayerMovementDebug;
 
-        public MultiplayerMovementPlugin(IAssetsProvisioner assetsProvisioner, MultiplayerMovementMessageBus messageBus)
+        public MultiplayerMovementPlugin(IAssetsProvisioner assetsProvisioner, MultiplayerMovementMessageBus messageBus, IDebugContainerBuilder debugBuilder
+          , RemoteEntities remoteEntities, ExposedTransform playerTransform)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.messageBus = messageBus;
+            this.debugBuilder = debugBuilder;
+            this.remoteEntities = remoteEntities;
+            this.playerTransform = playerTransform;
         }
 
         public void Dispose()
         {
+            multiplayerMovementDebug.Dispose();
             messageBus.Dispose();
             settings.Dispose();
         }
@@ -40,6 +54,8 @@ namespace DCL.PluginSystem.Global
             RemotePlayersMovementSystem.InjectToWorld(ref builder, settings.Value, settings.Value.CharacterControllerSettings);
             RemotePlayerAnimationSystem.InjectToWorld(ref builder, settings.Value.ExtrapolationSettings);
             CleanUpRemoteMotionSystem.InjectToWorld(ref builder);
+
+            multiplayerMovementDebug = new MultiplayerMovementDebug(builder.World, debugBuilder, remoteEntities, playerTransform, settings);
         }
     }
 }

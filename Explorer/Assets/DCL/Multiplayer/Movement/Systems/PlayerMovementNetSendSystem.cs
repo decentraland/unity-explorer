@@ -150,5 +150,7 @@ namespace DCL.Multiplayer.Movement.Systems
                 && movement.Kind != MovementKind.RUN // simulate package lost when Running
                ) { messageBus.SelfSendWithDelayAsync(playerMovement.LastSentMessage, settings.Latency + (settings.Latency * Random.Range(0, settings.LatencyJitter))).Forget(); }
         }
+
+
     }
 }

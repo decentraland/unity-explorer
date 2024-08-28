@@ -23,6 +23,7 @@ using DCL.DebugUtilities.UIBindings;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Multiplayer.Movement;
+using DCL.Multiplayer.Movement.Settings;
 using DCL.Multiplayer.Profiles.Entities;
 using DCL.Multiplayer.Profiles.RemoteProfiles;
 using DCL.Multiplayer.Profiles.Tables;
@@ -72,29 +73,22 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
         private bool requestDone;
         private int lastIndexInstantiated;
         private readonly AvatarRandomizerAsset avatarRandomizerAsset;
-        private readonly RemoteEntities remoteEntities;
-        private readonly ExposedTransform playerTransform;
 
         internal InstantiateRandomAvatarsSystem(
             World world,
             IDebugContainerBuilder debugBuilder,
             IRealmData realmData,
             IComponentPool<Transform> componentPools,
-            AvatarRandomizerAsset avatarRandomizerAsset,
-            RemoteEntities remoteEntities,
-            ExposedTransform playerTransform
+            AvatarRandomizerAsset avatarRandomizerAsset
         ) : base(world)
         {
             this.realmData = realmData;
             transformPool = componentPools;
             this.avatarRandomizerAsset = avatarRandomizerAsset;
-            this.remoteEntities = remoteEntities;
-            this.playerTransform = playerTransform;
 
             debugBuilder.TryAddWidget("Avatar Debug")
                        ?.SetVisibilityBinding(debugVisibilityBinding = new DebugWidgetVisibilityBinding(false))
                         .AddIntFieldWithConfirmation(30, "Instantiate", AddRandomAvatar)
-                        .AddSingleButton("Instantiate Self Replica", AddRandomSelfReplicaAvatar)
                         .AddControl(new DebugConstLabelDef("Total Avatars"), new DebugLongMarkerDef(totalAvatarsInstantiated = new ElementBinding<ulong>(0), DebugLongMarkerDef.Unit.NoFormat))
                         .AddSingleButton("Destroy All Avatars", DestroyAllAvatars)
                         .AddSingleButton("Destroy Random Amount of Avatars", DestroyRandomAmountOfAvatars)
@@ -169,13 +163,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
             totalAvatarsInstantiated.Value = 0;
         }
 
-        private void AddRandomSelfReplicaAvatar() =>
-            AddRandomAvatar(1, true);
-
-        private void AddRandomAvatar(int number) =>
-            AddRandomAvatar(number, false);
-
-        private void AddRandomAvatar(int number, bool isSelfReplica)
+        private void AddRandomAvatar(int number)
         {
             int avatarsToInstantiate = Mathf.Clamp(number, 0, MAX_AVATAR_NUMBER - (int)totalAvatarsInstantiated.Value);
             totalAvatarsInstantiated.Value += (uint)avatarsToInstantiate;
@@ -200,7 +188,6 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
             {
                 RandomAvatarsToInstantiate = avatarsToInstantiate,
                 CollectionPromise = collectionPromises,
-                IsSelfReplica = isSelfReplica,
             };
 
             World.Create(randomAvatarRequest);
@@ -238,10 +225,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
                     ReportHub.LogError(GetReportCategory(), $"Collection {assetPromise.LoadingIntention.Params[0].Item2} couldn't be loaded!");
             }
 
-            if (randomAvatarRequest.IsSelfReplica)
-                GenerateSelfReplicaAvatar();
-            else
-                GenerateRandomAvatars(randomAvatarRequest.RandomAvatarsToInstantiate, cameraComponent.Camera.transform.position, characterControllerSettings);
+            GenerateRandomAvatars(randomAvatarRequest.RandomAvatarsToInstantiate, cameraComponent.Camera.transform.position, characterControllerSettings);
 
             requestDone = true;
             World.Destroy(entity);
@@ -339,27 +323,6 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
                 characterControllerSettings,
                 new RandomAvatar()
             );
-        }
-
-        private void GenerateSelfReplicaAvatar()
-        {
-            RemoteProfile remoteProfile = new RemoteProfile(Profile.NewRandomProfile(RemotePlayerMovementComponent.TEST_ID), RemotePlayerMovementComponent.TEST_ID);
-
-            var selfReplicaEntity = remoteEntities.TryCreateOrUpdateRemoteEntity(remoteProfile, World);
-
-            var transformComp = World.Get<CharacterTransform>(selfReplicaEntity);
-
-            transformComp.Transform.position = playerTransform.Position;
-            transformComp.Transform.name = RemotePlayerMovementComponent.TEST_ID;
-
-            TrailRenderer trail = transformComp.Transform.gameObject.AddComponent<TrailRenderer>();
-            trail.time = 1.0f; // The time in seconds that the trail will fade out over
-            trail.startWidth = 0.07f; // The starting width of the trail
-            trail.endWidth = 0.07f; // The end
-            trail.material = new Material(Shader.Find("Unlit/Color"))
-            {
-                color = Color.yellow,
-            };
         }
 
         private static Vector3 StartRandomPosition(float spawnArea, float startXPosition, float startZPosition)

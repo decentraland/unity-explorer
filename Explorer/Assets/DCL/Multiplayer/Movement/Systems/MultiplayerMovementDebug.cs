@@ -1,0 +1,75 @@
+﻿using Arch.Core;
+using DCL.AssetsProvision;
+using DCL.Character.Components;
+using DCL.DebugUtilities;
+using DCL.Multiplayer.Movement.Settings;
+using DCL.Multiplayer.Profiles.Entities;
+using DCL.Multiplayer.Profiles.RemoteProfiles;
+using DCL.Profiles;
+using System;
+using UnityEngine;
+using Utility;
+
+namespace DCL.Multiplayer.Movement.Systems
+{
+    public class MultiplayerMovementDebug : IDisposable
+    {
+        private readonly RemoteEntities remoteEntities;
+        private readonly ExposedTransform playerTransform;
+        private readonly ProvidedAsset<MultiplayerMovementSettings> settings;
+
+        private Entity? selfReplicaEntity;
+
+        public MultiplayerMovementDebug(World world, IDebugContainerBuilder debugBuilder, RemoteEntities remoteEntities, ExposedTransform playerTransform, ProvidedAsset<MultiplayerMovementSettings> settings)
+        {
+            this.remoteEntities = remoteEntities;
+            this.playerTransform = playerTransform;
+            this.settings = settings;
+
+            debugBuilder.TryAddWidget("Multiplayer Movement")
+                       ?.AddSingleButton("Instantiate Self-Replica", () => InstantiateSelfReplica(world))
+                        .AddSingleButton("Remove Self-Replica", () => RemoveSelfReplica(world));
+        }
+
+        public void Dispose()
+        {
+            settings.Value.SelfSending = false;
+        }
+
+        private void InstantiateSelfReplica(World world)
+        {
+            if (selfReplicaEntity != null)
+                RemoveSelfReplica(world);
+
+            var remoteProfile = new RemoteProfile(Profile.NewRandomProfile(RemotePlayerMovementComponent.TEST_ID), RemotePlayerMovementComponent.TEST_ID);
+
+            selfReplicaEntity = remoteEntities.TryCreateOrUpdateRemoteEntity(remoteProfile, world);
+
+            CharacterTransform transformComp = world.Get<CharacterTransform>(selfReplicaEntity.Value);
+
+            transformComp.Transform.position = playerTransform.Position;
+            transformComp.Transform.rotation = playerTransform.Rotation;
+            transformComp.Transform.name = RemotePlayerMovementComponent.TEST_ID;
+
+            TrailRenderer trail = transformComp.Transform.gameObject.TryAddComponent<TrailRenderer>();
+            trail.time = 1.0f; // The time in seconds that the trail will fade out over
+            trail.startWidth = 0.07f; // The starting width of the trail
+            trail.endWidth = 0.07f; // The end
+
+            trail.material = new Material(Shader.Find("Unlit/Color"))
+            {
+                color = Color.yellow,
+            };
+
+            settings.Value.SelfSending = true;
+        }
+
+        private void RemoveSelfReplica(World world)
+        {
+            remoteEntities.TryRemove(RemotePlayerMovementComponent.TEST_ID, world);
+
+            settings.Value.SelfSending = false;
+            selfReplicaEntity = null;
+        }
+    }
+}
