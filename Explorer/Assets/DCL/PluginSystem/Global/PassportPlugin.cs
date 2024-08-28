@@ -9,6 +9,7 @@ using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Chat;
 using DCL.Input;
+using DCL.Input.UnityInputSystem.Blocks;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Passport;
 using DCL.Profiles;
@@ -36,10 +37,10 @@ namespace DCL.PluginSystem.Global
         private readonly IWebRequestController webRequestController;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
         private readonly ISelfProfile selfProfile;
-        private readonly DCLInput dclInput;
         private readonly IWebBrowser webBrowser;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly BadgesAPIClient badgesAPIClient;
+        private readonly IInputBlock inputBlock;
 
         public PassportPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -53,10 +54,10 @@ namespace DCL.PluginSystem.Global
             IWebRequestController webRequestController,
             CharacterPreviewEventBus characterPreviewEventBus,
             ISelfProfile selfProfile,
-            DCLInput dclInput,
             IWebBrowser webBrowser,
             IDecentralandUrlsSource decentralandUrlsSource,
-            BadgesAPIClient badgesAPIClient
+            BadgesAPIClient badgesAPIClient,
+            IInputBlock inputBlock
         )
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -70,10 +71,10 @@ namespace DCL.PluginSystem.Global
             this.webRequestController = webRequestController;
             this.characterPreviewEventBus = characterPreviewEventBus;
             this.selfProfile = selfProfile;
-            this.dclInput = dclInput;
             this.webBrowser = webBrowser;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.badgesAPIClient = badgesAPIClient;
+            this.inputBlock = inputBlock;
         }
 
         protected override void InjectSystems(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
@@ -107,11 +108,11 @@ namespace DCL.PluginSystem.Global
                     builder.World,
                     arguments.PlayerEntity,
                     thumbnailProvider,
-                    dclInput,
                     webBrowser,
                     decentralandUrlsSource,
                     badgesAPIClient,
-                    webRequestController
+                    webRequestController,
+                    inputBlock
                 );
 
                 mvcManager.RegisterController(passportController);

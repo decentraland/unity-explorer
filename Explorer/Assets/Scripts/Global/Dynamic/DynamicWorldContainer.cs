@@ -456,7 +456,8 @@ namespace Global.Dynamic
                 new GlobalInteractionPlugin(dclInput, dynamicWorldDependencies.RootUIDocument, assetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents, dclCursor, unityEventSystem, container.MvcManager),
                 new CharacterCameraPlugin(assetsProvisioner, realmSamplingData, exposedGlobalDataContainer.ExposedCameraData, debugBuilder, dynamicWorldDependencies.CommandLineArgs, dclInput),
                 new WearablePlugin(assetsProvisioner, staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, assetBundlesURL, staticContainer.CacheCleaner, wearableCatalog),
-                new EmotePlugin(staticContainer.WebRequestsContainer.WebRequestController, emotesCache, staticContainer.RealmData, multiplayerEmotesMessageBus, debugBuilder, assetsProvisioner, selfProfile, container.MvcManager, dclInput, staticContainer.CacheCleaner, identityCache, entityParticipantTable, assetBundlesURL, mainUIView, dclCursor),
+                new EmotePlugin(staticContainer.WebRequestsContainer.WebRequestController, emotesCache, staticContainer.RealmData, multiplayerEmotesMessageBus, debugBuilder,
+                    assetsProvisioner, selfProfile, container.MvcManager, dclInput, staticContainer.CacheCleaner, identityCache, entityParticipantTable, assetBundlesURL, mainUIView, dclCursor, staticContainer.InputBlock),
                 new ProfilingPlugin(staticContainer.Profiler, staticContainer.RealmData, staticContainer.SingletonSharedDependencies.MemoryBudget, debugBuilder, staticContainer.ScenesCache),
                 new AvatarPlugin(
                     staticContainer.ComponentsContainer.ComponentPoolsRegistry,
@@ -472,8 +473,7 @@ namespace Global.Dynamic
                     entityParticipantTable,
                     nametagsData,
                     container.DefaultTexturesContainer.TextureArrayContainerFactory,
-                    wearableCatalog
-                ),
+                    wearableCatalog),
                 new MainUIPlugin(container.MvcManager, sidebarBus, mainUIView),
                 new ProfilePlugin(container.ProfileRepository, profileCache, staticContainer.CacheCleaner, new ProfileIntentionCache()),
                 new MapRendererPlugin(container.MapRendererContainer.MapRenderer),
@@ -524,13 +524,14 @@ namespace Global.Dynamic
                     backpackEventBus,
                     thirdPartyNftProviderSource,
                     container.wearablesProvider,
+                    staticContainer.InputBlock,
                     dclCursor
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
                 new Web3AuthenticationPlugin(assetsProvisioner, dynamicWorldDependencies.Web3Authenticator, debugBuilder, container.MvcManager, selfProfile, webBrowser, staticContainer.RealmData, identityCache, characterPreviewFactory, dynamicWorldDependencies.SplashScreen, audioMixerVolumesController, staticContainer.FeatureFlagsCache, characterPreviewEventBus),
                 new StylizedSkyboxPlugin(assetsProvisioner, dynamicSettings.DirectionalLight, debugBuilder),
-                new LoadingScreenPlugin(assetsProvisioner, container.MvcManager, audioMixerVolumesController),
+                new LoadingScreenPlugin(assetsProvisioner, container.MvcManager, audioMixerVolumesController, staticContainer.InputBlock),
                 new ExternalUrlPromptPlugin(assetsProvisioner, webBrowser, container.MvcManager, dclCursor), new TeleportPromptPlugin(assetsProvisioner, realmNavigator, container.MvcManager, staticContainer.WebRequestsContainer.WebRequestController, placesAPIService, dclCursor),
                 new ChangeRealmPromptPlugin(
                     assetsProvisioner,
@@ -564,10 +565,10 @@ namespace Global.Dynamic
                     staticContainer.WebRequestsContainer.WebRequestController,
                     characterPreviewEventBus,
                     selfProfile,
-                    dclInput,
                     webBrowser,
                     bootstrapContainer.DecentralandUrlsSource,
-                    badgesAPIClient
+                    badgesAPIClient,
+                    staticContainer.InputBlock
                 ),
             };
 

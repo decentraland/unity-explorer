@@ -10,7 +10,8 @@ import argparse
 # Local
 import utils
 
-# Force a build
+# Define whether this is a release workflow based on IS_RELEASE_BUILD
+is_release_workflow = os.getenv('IS_RELEASE_BUILD', 'false').lower() == 'true'
 
 URL = utils.create_base_url(os.getenv('ORG_ID'), os.getenv('PROJECT_ID'))
 HEADERS = utils.create_headers(os.getenv('API_KEY'))
@@ -58,7 +59,14 @@ def clone_current_target():
         return body
 
     # Set target name based on branch, without commit SHA
-    new_target_name = f'{re.sub(r'^t_', '', os.getenv('TARGET'))}-{re.sub('[^A-Za-z0-9]+', '-', os.getenv('BRANCH_NAME'))}'.lower()
+    base_target_name  = f'{re.sub(r'^t_', '', os.getenv('TARGET'))}-{re.sub('[^A-Za-z0-9]+', '-', os.getenv('BRANCH_NAME'))}'.lower()
+
+    if is_release_workflow:
+         # Use the tag version in the target name if it's a release workflow
+        tag_version = os.getenv('TAG_VERSION', 'unknown-version')
+        new_target_name = f"{base_target_name}-{tag_version}"
+    else:
+        new_target_name = base_target_name
 
     # Generate request body
     # Disabled cache for now as its not playing well with Unity and we delete builds anyway!

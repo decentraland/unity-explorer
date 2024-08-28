@@ -8,6 +8,8 @@ using DCL.CharacterPreview;
 using DCL.Chat;
 using DCL.Diagnostics;
 using DCL.Input;
+using DCL.Input.Component;
+using DCL.Input.UnityInputSystem.Blocks;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Passport.Modules;
 using DCL.Passport.Modules.Badges;
@@ -42,7 +44,6 @@ namespace DCL.Passport
         private readonly ISelfProfile selfProfile;
         private readonly World world;
         private readonly IThumbnailProvider thumbnailProvider;
-        private readonly DCLInput dclInput;
         private readonly IWebBrowser webBrowser;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly BadgesAPIClient badgesAPIClient;
@@ -50,6 +51,7 @@ namespace DCL.Passport
         private readonly PassportProfileInfoController passportProfileInfoController;
         private readonly List<IPassportModuleController> overviewPassportModules = new ();
         private readonly List<IPassportModuleController> badgesPassportModules = new ();
+        private readonly IInputBlock inputBlock;
 
         private string currentUserId;
         private CancellationTokenSource? characterPreviewLoadingCts;
@@ -76,11 +78,11 @@ namespace DCL.Passport
             World world,
             Entity playerEntity,
             IThumbnailProvider thumbnailProvider,
-            DCLInput dclInput,
             IWebBrowser webBrowser,
             IDecentralandUrlsSource decentralandUrlsSource,
             BadgesAPIClient badgesAPIClient,
-            IWebRequestController webRequestController
+            IWebRequestController webRequestController,
+            IInputBlock inputBlock
         ) : base(viewFactory)
         {
             this.cursor = cursor;
@@ -95,11 +97,12 @@ namespace DCL.Passport
             this.selfProfile = selfProfile;
             this.world = world;
             this.thumbnailProvider = thumbnailProvider;
-            this.dclInput = dclInput;
             this.webBrowser = webBrowser;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.badgesAPIClient = badgesAPIClient;
             this.webRequestController = webRequestController;
+            this.inputBlock = inputBlock;
+            
             passportProfileInfoController = new PassportProfileInfoController(selfProfile, world, playerEntity);
         }
 
@@ -133,20 +136,18 @@ namespace DCL.Passport
             badgesSectionAlreadyLoaded = false;
             cursor.Unlock();
             OpenOverviewSection();
-            dclInput.Shortcuts.Disable();
-            dclInput.Camera.Disable();
-            dclInput.Player.Disable();
             viewInstance.ErrorNotification.Hide(true);
-
             PassportOpened?.Invoke(currentUserId);
+
+            inputBlock.BlockInputs(InputMapComponent.Kind.Shortcuts , InputMapComponent.Kind.Camera , InputMapComponent.Kind.Player);
         }
 
         protected override void OnViewClose()
         {
             passportErrorsController!.Hide(true);
-            dclInput.Shortcuts.Enable();
-            dclInput.Camera.Enable();
-            dclInput.Player.Enable();
+
+            inputBlock.UnblockInputs(InputMapComponent.Kind.Shortcuts , InputMapComponent.Kind.Camera , InputMapComponent.Kind.Player);
+
             characterPreviewController!.OnHide();
 
             characterPreviewLoadingCts.SafeCancelAndDispose();
