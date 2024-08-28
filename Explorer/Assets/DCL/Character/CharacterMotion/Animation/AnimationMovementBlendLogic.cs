@@ -28,21 +28,6 @@ namespace DCL.CharacterMotion.Animation
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int GetMovementBlendId(float velocitySqrMagnitude, MovementKind speedState)
-        {
-            if (velocitySqrMagnitude <= 0)
-                return 0;
-
-            return speedState switch
-                   {
-                       MovementKind.WALK => 1,
-                       MovementKind.JOG => 2,
-                       MovementKind.RUN => 3,
-                       _ => 0,
-                   };
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float CalculateBlendValue(float dt, float currentMovementBlend, int movementBlendId, MovementKind movementKind, float velocityMagnitude, ICharacterControllerSettings settings)
         {
             float maxVelocity = SpeedLimit.Get(settings, movementKind);

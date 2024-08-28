@@ -66,8 +66,7 @@ namespace DCL.Multiplayer.Movement.Systems
 
             // movement blend
             animationComponent.States.MovementBlendValue = message.animState.MovementBlendValue;
-            int movementBlendId = AnimationMovementBlendLogic.GetMovementBlendId(message.velocity.sqrMagnitude, message.movementKind);
-            AnimationMovementBlendLogic.SetAnimatorParameters(ref animationComponent, view, message.animState.IsGrounded, movementBlendId);
+            AnimationMovementBlendLogic.SetAnimatorParameters(ref animationComponent, view, message.animState.IsGrounded, (int)message.movementKind);
 
             // slide
             animationComponent.IsSliding = message.isSliding;

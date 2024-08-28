@@ -1,5 +1,6 @@
 namespace DCL.CharacterMotion.Components
 {
+    // Number defines movement blend id in animator
     public enum MovementKind : byte
     {
         IDLE = 0,

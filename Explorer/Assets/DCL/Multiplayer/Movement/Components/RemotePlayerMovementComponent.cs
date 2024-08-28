@@ -57,10 +57,8 @@ namespace DCL.Multiplayer.Movement
             {
                 float totalDuration = message.timestamp - PastMessage.timestamp;
 
-                int movementBlendId = AnimationMovementBlendLogic.GetMovementBlendId(message.velocity.sqrMagnitude, message.movementKind);
-
                 message.animState.MovementBlendValue = AnimationMovementBlendLogic.CalculateBlendValue(totalDuration, PastMessage.animState.MovementBlendValue,
-                    movementBlendId, message.movementKind, message.velocity.magnitude, settings);
+                    (int)message.movementKind, message.movementKind, message.velocity.magnitude, settings);
 
                 message.animState.SlideBlendValue = AnimationSlideBlendLogic.CalculateBlendValue(totalDuration, PastMessage.animState.SlideBlendValue, message.isSliding, settings);
             }

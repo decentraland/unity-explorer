@@ -109,12 +109,10 @@ namespace DCL.Multiplayer.Movement.Systems
             float dist = (playerMovement.Character.transform.position - playerMovement.LastSentMessage.position).magnitude;
             float speed = dist / (UnityEngine.Time.unscaledTime - playerMovement.LastSentMessage.timestamp);
 
-            int tier;
+            var tier = 0;
 
-            if (speed < settings.VelocityTiers[0]) tier = 0;
-            else if (speed < settings.VelocityTiers[1]) tier = 1;
-            else if (speed < settings.VelocityTiers[2]) tier = 2;
-            else tier = 3;
+            while (tier < settings.VelocityTiers.Length && speed >= settings.VelocityTiers[tier])
+                tier++;
 
             playerMovement.LastSentMessage = new NetworkMovementMessage
             {
