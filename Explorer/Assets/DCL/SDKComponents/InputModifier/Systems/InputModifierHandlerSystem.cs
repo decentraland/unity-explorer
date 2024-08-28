@@ -1,6 +1,7 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using DCL.Character.Components;
 using DCL.CharacterMotion.Systems;
 using DCL.ECSComponents;
 using DCL.Input;
@@ -8,6 +9,7 @@ using DCL.SDKComponents.InputModifier.Components;
 using DCL.Utilities;
 using ECS.Abstract;
 using ECS.LifeCycle;
+using SceneRunner.Scene;
 
 namespace DCL.SDKComponents.PlayerInputMovement.Systems
 {
@@ -17,10 +19,12 @@ namespace DCL.SDKComponents.PlayerInputMovement.Systems
     {
         private readonly ObjectProxy<Entity> playerEntity;
         private readonly World globalWorld;
+        private readonly ISceneStateProvider sceneStateProvider;
 
-        public InputModifierHandlerSystem(World world, ObjectProxy<World> globalWorldProxy, ObjectProxy<Entity> playerEntity) : base(world)
+        public InputModifierHandlerSystem(World world, ObjectProxy<World> globalWorldProxy, ObjectProxy<Entity> playerEntity, ISceneStateProvider sceneStateProvider) : base(world)
         {
             this.playerEntity = playerEntity;
+            this.sceneStateProvider = sceneStateProvider;
             globalWorld = globalWorldProxy.Object;
         }
 
@@ -28,11 +32,30 @@ namespace DCL.SDKComponents.PlayerInputMovement.Systems
         {
             ApplyModifiersQuery(World);
             ApplyModifiers2Query(World);
+            ResetModifiersOnLeaveQuery(World);
         }
 
         [Query]
+        [All(typeof(PlayerComponent))]
+        private void ResetModifiersOnLeave()
+        {
+            if (sceneStateProvider.IsCurrent) return;
+
+            ref InputModifierComponent inputModifier = ref globalWorld.Get<InputModifierComponent>(playerEntity.StrictObject);
+            inputModifier.DisableAll = false;
+            inputModifier.DisableWalk = false;
+            inputModifier.DisableJog = false;
+            inputModifier.DisableRun = false;
+            inputModifier.DisableJump = false;
+            inputModifier.DisableEmote = false;
+        }
+
+        [Query]
+        [All(typeof(PlayerComponent))]
         void ApplyModifiers(in PBInputModifier pbInputModifier)
         {
+            if (!sceneStateProvider.IsCurrent) return;
+
             ref var inputModifier = ref globalWorld.Get<InputModifierComponent>(playerEntity.StrictObject);
             PBInputModifier.Types.StandardInput? pb = pbInputModifier.Standard;
 
@@ -50,6 +73,7 @@ namespace DCL.SDKComponents.PlayerInputMovement.Systems
         }
 
         [Query]
+        [All(typeof(PlayerComponent))]
         private void ApplyModifiers2(in PBInputModifier pbInputModifier, ref InputModifierComponent inputModifier)
         {
             var a = 2; // TODO remove random code used to add a breakpoint
