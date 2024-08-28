@@ -120,8 +120,7 @@ namespace DCL.SDKComponents.Animator.Systems
                 animator.SetBool($"{name}_Enabled", sdkAnimationState.Playing);
                 animator.SetBool($"{name}_Loop", sdkAnimationState.Loop);
 
-                if (sdkAnimationState.ShouldReset)
-                    animator.Play(name, layerIndex, 0f);
+                // TODO: it could be an edge case due sdkAnimationState.ShouldReset.. support it if need it
 
                 if (sdkAnimationState.Playing)
                 {
