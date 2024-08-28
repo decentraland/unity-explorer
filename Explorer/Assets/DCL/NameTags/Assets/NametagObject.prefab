@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 6881943969416278642}
   - component: {fileID: 7915797373785868185}
   - component: {fileID: 317692783042627670}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: NametagObject
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -165,7 +165,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3805515542839986840}
   - component: {fileID: 4273700018563800502}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: VerifiedIcon
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -254,7 +254,7 @@ GameObject:
   - component: {fileID: 4776442481111019983}
   - component: {fileID: 7731930107436225423}
   - component: {fileID: 1264101715097455992}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: MessageContent
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -427,7 +427,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3767848672727676458}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: VerifiedIconParent
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -464,7 +464,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8746724036618754241}
   - component: {fileID: 620214271584746127}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: BubblePeak
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -553,7 +553,7 @@ GameObject:
   - component: {fileID: 8736261668784474907}
   - component: {fileID: 5473976778977378180}
   - component: {fileID: 4673612476327640102}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: Name
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -725,7 +725,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2772156915741177195}
   - component: {fileID: 2640253797295083812}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: Background
   m_TagString: Untagged
   m_Icon: {fileID: 0}
