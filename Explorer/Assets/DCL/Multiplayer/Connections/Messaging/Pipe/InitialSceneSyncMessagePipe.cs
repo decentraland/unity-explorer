@@ -38,7 +38,7 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
         {
             var message = origin.NewMessage<Scene>();
             message.Payload.SceneId = SceneId();
-            ReadOnlySpan<byte> span = stackalloc byte[] { 2, 0 };
+            ReadOnlySpan<byte> span = stackalloc byte[] { 2 };
             message.Payload.Data = ByteString.CopyFrom(span);
             message.SendAndDisposeAsync(cancellationTokenSource.Token).Forget();
         }
