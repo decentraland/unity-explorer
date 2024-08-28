@@ -49,7 +49,7 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
         }
 
         private string SceneId() =>
-            scenesCache.CurrentScene.SceneData.SceneEntityDefinition.id ?? string.Empty;
+            scenesCache?.CurrentScene?.SceneData?.SceneEntityDefinition?.id ?? string.Empty;
 
         public void Dispose()
         {
