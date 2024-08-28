@@ -1,4 +1,4 @@
-﻿using DCL.Diagnostics;
+using DCL.Diagnostics;
 using System;
 using System.Collections.Generic;
 using Utility;

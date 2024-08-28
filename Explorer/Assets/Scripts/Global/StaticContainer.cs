@@ -9,9 +9,8 @@ using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.Gizmos.Plugin;
-using DCL.Input.UnityInputSystem.Blocks;
+using DCL.Input;
 using DCL.Interaction.Utility;
-using DCL.MapRenderer;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Optimization.PerformanceBudgeting;
@@ -32,13 +31,12 @@ using DCL.WebRequests.Analytics;
 using ECS;
 using ECS.Prioritization;
 using ECS.SceneLifeCycle;
-using ECS.SceneLifeCycle.Reporting;
-using System.Collections.Generic;
-using System.Threading;
-using DCL.LOD;
 using ECS.SceneLifeCycle.Components;
+using ECS.SceneLifeCycle.Reporting;
 using Global.AppArgs;
 using SceneRunner.Mapping;
+using System.Collections.Generic;
+using System.Threading;
 using UnityEngine;
 using Utility;
 using MultiplayerPlugin = DCL.PluginSystem.World.MultiplayerPlugin;
@@ -52,7 +50,6 @@ namespace Global
     /// </summary>
     public class StaticContainer : IDCLPlugin<StaticSettings>
     {
-        public readonly ObjectProxy<World> GlobalWorldProxy = new ();
         public readonly ObjectProxy<Entity> PlayerEntityProxy = new ();
         public readonly ObjectProxy<DCLInput> InputProxy = new ();
         public readonly ObjectProxy<AvatarBase> MainPlayerAvatarBaseProxy = new ();
@@ -112,16 +109,6 @@ namespace Global
                 );
         }
 
-        private static async UniTask<bool> InitializeContainersAsync(StaticContainer target, IPluginSettingsContainer settings, CancellationToken ct)
-        {
-            ((StaticContainer plugin, bool success), (CharacterContainer plugin, bool success)) results = await UniTask.WhenAll(
-                settings.InitializePluginAsync(target, ct),
-                settings.InitializePluginAsync(target.CharacterContainer, ct)
-            );
-
-            return results.Item1.success && results.Item2.success;
-        }
-
         public static async UniTask<(StaticContainer? container, bool success)> CreateAsync(
             IDecentralandUrlsSource decentralandUrlsSource,
             IAssetsProvisioner assetsProvisioner,
@@ -131,6 +118,7 @@ namespace Global
             IPluginSettingsContainer settingsContainer,
             IWeb3IdentityCache web3IdentityProvider,
             IEthereumApi ethereumApi,
+            World globalWorld,
             CancellationToken ct)
         {
             ProfilingCounters.CleanAllCounters();
@@ -141,12 +129,13 @@ namespace Global
 
             var container = new StaticContainer();
 
+
             container.DebugContainerBuilder = DebugUtilitiesContainer.Create(debugViewsCatalog, appArgs.HasDebugFlag()).Builder;
             container.EthereumApi = ethereumApi;
             container.ScenesCache = new ScenesCache();
             container.SceneReadinessReportQueue = new SceneReadinessReportQueue(container.ScenesCache);
 
-            container.InputBlock = new InputBlock(container.GlobalWorldProxy);
+            container.InputBlock = new ECSInputBlock(globalWorld);
 
             container.assetsProvisioner = assetsProvisioner;
             var exposedPlayerTransform = new ExposedTransform();
@@ -201,7 +190,7 @@ namespace Global
                 new MaterialsPlugin(sharedDependencies, videoTexturePool),
                 textureResolvePlugin,
                 new AssetsCollidersPlugin(sharedDependencies, container.PhysicsTickProvider),
-                new AvatarShapePlugin(container.GlobalWorldProxy),
+                new AvatarShapePlugin(globalWorld),
                 new AvatarAttachPlugin(container.MainPlayerAvatarBaseProxy, componentsContainer.ComponentPoolsRegistry),
                 new PrimitivesRenderingPlugin(sharedDependencies),
                 new VisibilityPlugin(),
@@ -213,9 +202,9 @@ namespace Global
                 new AnimatorPlugin(),
                 new TweenPlugin(),
                 new MediaPlayerPlugin(sharedDependencies, videoTexturePool, sharedDependencies.FrameTimeBudget, container.assetsProvisioner, container.WebRequestsContainer.WebRequestController, container.CacheCleaner),
-                new CharacterTriggerAreaPlugin(container.GlobalWorldProxy, container.MainPlayerAvatarBaseProxy, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, container.CharacterContainer.CharacterObject, componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner, container.CacheCleaner),
+                new CharacterTriggerAreaPlugin(globalWorld, container.MainPlayerAvatarBaseProxy, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, container.CharacterContainer.CharacterObject, componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner, container.CacheCleaner),
                 new InteractionsAudioPlugin(container.assetsProvisioner),
-                new MapPinPlugin(container.GlobalWorldProxy),
+                new MapPinPlugin(globalWorld),
                 new MultiplayerPlugin(),
                 new RealmInfoPlugin(container.RealmData, container.RoomHubProxy),
                 new MainCameraPlugin(componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner, container.CacheCleaner, exposedGlobalDataContainer.ExposedCameraData, container.GlobalWorldProxy),
@@ -233,6 +222,16 @@ namespace Global
             };
 
             return (container, true);
+        }
+
+        private static async UniTask<bool> InitializeContainersAsync(StaticContainer target, IPluginSettingsContainer settings, CancellationToken ct)
+        {
+            ((StaticContainer plugin, bool success), (CharacterContainer plugin, bool success)) results = await UniTask.WhenAll(
+                settings.InitializePluginAsync(target, ct),
+                settings.InitializePluginAsync(target.CharacterContainer, ct)
+            );
+
+            return results.Item1.success && results.Item2.success;
         }
     }
 }

@@ -1,8 +1,8 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Backpack;
+using DCL.Input;
 using DCL.Input.Component;
-using DCL.Input.UnityInputSystem.Blocks;
 using DCL.Navmap;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
@@ -238,12 +238,12 @@ namespace DCL.ExplorePanel
 
         private void BlockUnwantedInputs()
         {
-            inputBlock.BlockInputs(InputMapComponent.Kind.Camera , InputMapComponent.Kind.Player);
+            inputBlock.Disable(InputMapComponent.Kind.Camera , InputMapComponent.Kind.Player);
         }
 
         private void UnblockUnwantedInputs()
         {
-            inputBlock.UnblockInputs(InputMapComponent.Kind.Camera , InputMapComponent.Kind.Player);
+            inputBlock.Enable(InputMapComponent.Kind.Camera , InputMapComponent.Kind.Player);
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct)

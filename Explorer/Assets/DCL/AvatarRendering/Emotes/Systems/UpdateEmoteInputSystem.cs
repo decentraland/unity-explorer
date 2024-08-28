@@ -30,6 +30,7 @@ namespace DCL.AvatarRendering.Emotes
 
         private int triggeredEmote = -1;
         private bool isWheelBlocked;
+        private int framesAfterWheelWasClosed;
 
         public UpdateEmoteInputSystem(World world, DCLInput dclInput, IEmotesMessageBus messageBus,
             IMVCManager mvcManager) : base(world)
@@ -38,6 +39,8 @@ namespace DCL.AvatarRendering.Emotes
             emotesActions = dclInput.Emotes;
             this.messageBus = messageBus;
             this.mvcManager = mvcManager;
+
+            this.mvcManager.OnViewClosed += OnEmoteWheelClosed;
 
             GetReportCategory();
 
@@ -49,6 +52,8 @@ namespace DCL.AvatarRendering.Emotes
             base.Dispose();
 
             UnregisterSlotsInput(emotesActions.Get());
+
+            this.mvcManager.OnViewClosed -= OnEmoteWheelClosed;
         }
 
         private void OnSlotPerformed(InputAction.CallbackContext obj)
@@ -68,13 +73,20 @@ namespace DCL.AvatarRendering.Emotes
                 triggeredEmote = -1;
             }
 
-            if (shortcuts.EmoteWheel.WasReleasedThisFrame())
+            if (shortcuts.EmoteWheel.WasReleasedThisFrame()
+                // Close and open actions conflicts each other since they are assigned to the same input key
+                // we need to avoid opening it again after it has been recently closed
+                // We also have to consider race conditions so i see no other way than setting a delay
+                && framesAfterWheelWasClosed == 0)
             {
                 if (!isWheelBlocked)
                     OpenEmoteWheel();
 
                 isWheelBlocked = false;
             }
+
+            if (framesAfterWheelWasClosed > 0)
+                framesAfterWheelWasClosed--;
         }
 
         [Query]
@@ -135,5 +147,11 @@ namespace DCL.AvatarRendering.Emotes
 
         private void OpenEmoteWheel() =>
             mvcManager.ShowAsync(EmotesWheelController.IssueCommand()).Forget();
+
+        private void OnEmoteWheelClosed(IController obj)
+        {
+            if (obj is not EmotesWheelController) return;
+            framesAfterWheelWasClosed = 30;
+        }
     }
 }

@@ -33,13 +33,12 @@ jobs:
     name: Build Unity Cloud
     needs: get-info
     uses: ./.github/workflows/build-unitycloud.yml
-    env:
-      IS_RELEASE_BUILD: true  # This environment variable indicates a release build
-      TAG_VERSION: ${{ needs.get-info.outputs.tag_version }}
     with:
       profile: none
       cache: false
       cache_strategy: none
       version: ${{ needs.get-info.outputs.full_version }}
       sentry_enabled: true
+      is_release_build: true
+      tag_version: ${{ needs.get-info.outputs.tag_version }}
     secrets: inherit

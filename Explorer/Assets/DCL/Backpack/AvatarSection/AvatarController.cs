@@ -1,6 +1,6 @@
 using DCL.AvatarRendering.Wearables;
 using DCL.Backpack.BackpackBus;
-using DCL.Input.UnityInputSystem.Blocks;
+using DCL.Input;
 using DCL.UI;
 using System;
 using UnityEngine;

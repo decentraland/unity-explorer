@@ -8,7 +8,6 @@ using DCL.Chat;
 using DCL.Diagnostics;
 using DCL.Input;
 using DCL.Input.Component;
-using DCL.Input.UnityInputSystem.Blocks;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Passport.Modules;
 using DCL.Profiles;
@@ -118,7 +117,7 @@ namespace DCL.Passport
             LoadUserProfileAsync(currentUserId, characterPreviewLoadingCts.Token).Forget();
             viewInstance!.MainScroll.verticalNormalizedPosition = 1;
 
-            inputBlock.BlockInputs(InputMapComponent.Kind.Shortcuts , InputMapComponent.Kind.Camera , InputMapComponent.Kind.Player);
+            inputBlock.Disable(InputMapComponent.Kind.Shortcuts , InputMapComponent.Kind.Camera , InputMapComponent.Kind.Player);
 
             viewInstance.ErrorNotification.Hide(true);
 
@@ -129,7 +128,7 @@ namespace DCL.Passport
         {
             passportErrorsController!.Hide(true);
 
-            inputBlock.UnblockInputs(InputMapComponent.Kind.Shortcuts , InputMapComponent.Kind.Camera , InputMapComponent.Kind.Player);
+            inputBlock.Enable(InputMapComponent.Kind.Shortcuts , InputMapComponent.Kind.Camera , InputMapComponent.Kind.Player);
 
             characterPreviewController!.OnHide();
 

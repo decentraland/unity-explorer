@@ -30,4 +30,6 @@ jobs:
           API_KEY: ${{ secrets.UNITY_CLOUD_API_KEY }}
           ORG_ID: ${{ secrets.UNITY_CLOUD_ORG_ID }}
           PROJECT_ID: ${{ secrets.UNITY_CLOUD_PROJECT_ID }}
+          TARGET: t_${{ matrix.target }}
+          BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
         run: python -u scripts/cloudbuild/build.py --delete
