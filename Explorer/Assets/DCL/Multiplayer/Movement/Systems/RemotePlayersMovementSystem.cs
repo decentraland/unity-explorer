@@ -19,7 +19,7 @@ namespace DCL.Multiplayer.Movement.Systems
     {
         // Amount of positions with timestamp that older than timestamp of the last passed message, that will be skip in one frame.
         private const int BEHIND_EXTRAPOLATION_BATCH = 10;
-        private const float ZERO_VELOCITY_THRESHOLD = 0.01f;
+        private const float ZERO_VELOCITY_SQR_THRESHOLD = 0.01f * 0.01f;
 
         private readonly IMultiplayerMovementSettings settings;
         private readonly ICharacterControllerSettings characterControllerSettings;
@@ -80,7 +80,8 @@ namespace DCL.Multiplayer.Movement.Systems
             // When there is no messages, we extrapolate
             if (settings.UseExtrapolation && playerInbox.Count == 0 && remotePlayerMovement is { Initialized: true, WasTeleported: false })
             {
-                if (!extComp.Enabled && remotePlayerMovement.PastMessage.velocity.sqrMagnitude > settings.ExtrapolationSettings.MinSpeed)
+                float sqrMinSpeed = settings.ExtrapolationSettings.MinSpeed * settings.ExtrapolationSettings.MinSpeed;
+                if (!extComp.Enabled && remotePlayerMovement.PastMessage.velocitySqrMagnitude > sqrMinSpeed)
                     extComp.Restart(from: remotePlayerMovement.PastMessage, settings.ExtrapolationSettings.TotalMoveDuration);
 
                 if (extComp.Enabled)
@@ -143,6 +144,7 @@ namespace DCL.Multiplayer.Movement.Systems
 
                     position = transComp.Transform.position,
                     velocity = extComp.Start.velocity,
+                    velocitySqrMagnitude = extComp.Start.velocity.sqrMagnitude,
 
                     movementKind = extComp.Start.movementKind,
                     isSliding = extComp.Start.isSliding,
@@ -183,7 +185,7 @@ namespace DCL.Multiplayer.Movement.Systems
         {
             RemotePlayerInterpolationSettings? intSettings = settings.InterpolationSettings;
 
-            bool useLinear = remotePlayerMovement.PastMessage.velocity.sqrMagnitude < ZERO_VELOCITY_THRESHOLD || remote.velocity.sqrMagnitude < ZERO_VELOCITY_THRESHOLD ||
+            bool useLinear = remotePlayerMovement.PastMessage.velocitySqrMagnitude < ZERO_VELOCITY_SQR_THRESHOLD || remote.velocitySqrMagnitude < ZERO_VELOCITY_SQR_THRESHOLD ||
                              remotePlayerMovement.PastMessage.animState.IsGrounded != remote.animState.IsGrounded || remotePlayerMovement.PastMessage.animState.IsJumping != remote.animState.IsJumping;
 
             // Interpolate linearly to/from zero velocities to avoid position overshooting

@@ -10,6 +10,8 @@ namespace DCL.Multiplayer.Movement
         public float timestamp;
         public Vector3 position;
         public Vector3 velocity;
+        public float velocitySqrMagnitude;
+
         public float rotationY;
 
         public MovementKind movementKind;

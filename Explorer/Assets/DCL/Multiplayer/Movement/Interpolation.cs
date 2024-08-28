@@ -25,7 +25,7 @@ namespace DCL.Multiplayer.Movement
                 remainedDeltaTime = intComp.Time - intComp.TotalDuration;
                 intComp.Time = intComp.TotalDuration;
 
-                lookDirection = intComp.End.velocity.sqrMagnitude > MIN_DIRECTION_SQR_MAGNITUDE ? intComp.End.velocity : intComp.End.position - transComp.Transform.position;
+                lookDirection = intComp.End.velocitySqrMagnitude > MIN_DIRECTION_SQR_MAGNITUDE ? intComp.End.velocity : intComp.End.position - transComp.Transform.position;
 
                 transComp.Transform.position = intComp.End.position;
             }

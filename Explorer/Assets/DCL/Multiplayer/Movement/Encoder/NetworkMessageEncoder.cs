@@ -97,6 +97,7 @@ namespace DCL.Multiplayer.Movement
                 // Decompressed movement data
                 position = movementData.position,
                 velocity = movementData.velocity,
+                velocitySqrMagnitude = movementData.velocity.sqrMagnitude,
                 rotationY = FloatQuantizer.Decompress(compressedRotation, 0f, 360f, encodingSettings.ROTATION_Y_BITS),
 
                 // Decompress temporal data

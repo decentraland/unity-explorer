@@ -119,6 +119,8 @@ namespace DCL.Multiplayer.Movement.Systems
                 timestamp = UnityEngine.Time.unscaledTime,
                 position = playerMovement.Character.transform.position,
                 velocity = playerMovement.Character.velocity,
+                velocitySqrMagnitude = playerMovement.Character.velocity.sqrMagnitude,
+
                 rotationY = playerMovement.Character.transform.eulerAngles.y,
                 tier = tier,
 

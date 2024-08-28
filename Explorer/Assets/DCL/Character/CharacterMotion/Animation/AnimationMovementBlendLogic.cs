@@ -28,13 +28,13 @@ namespace DCL.CharacterMotion.Animation
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float CalculateBlendValue(float dt, float currentMovementBlend, MovementKind movementKind, float velocityMagnitude, ICharacterControllerSettings settings)
+        public static float CalculateBlendValue(float dt, float currentMovementBlend, MovementKind movementKind, float velocitySqrMagnitude, ICharacterControllerSettings settings)
         {
             float maxVelocity = SpeedLimit.Get(settings, movementKind);
             var targetBlend = 0f;
 
             if (maxVelocity > 0)
-                targetBlend = velocityMagnitude / maxVelocity * (int)movementKind;
+                targetBlend = Mathf.Sqrt(velocitySqrMagnitude) / maxVelocity * (int)movementKind;
 
             float result = Mathf.MoveTowards(currentMovementBlend, targetBlend, dt * settings.MovAnimBlendSpeed);
 

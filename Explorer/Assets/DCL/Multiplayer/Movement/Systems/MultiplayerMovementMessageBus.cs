@@ -101,12 +101,17 @@ namespace DCL.Multiplayer.Movement.Systems
             globalWorld = world;
         }
 
-        private static NetworkMovementMessage MovementMessage(Decentraland.Kernel.Comms.Rfc4.Movement proto) =>
-            new ()
+        private static NetworkMovementMessage MovementMessage(Decentraland.Kernel.Comms.Rfc4.Movement proto)
+        {
+            var vel = new Vector3(proto.VelocityX, proto.VelocityY, proto.VelocityZ);
+
+            return new NetworkMovementMessage
             {
                 timestamp = proto.Timestamp,
                 position = new Vector3(proto.PositionX, proto.PositionY, proto.PositionZ),
-                velocity = new Vector3(proto.VelocityX, proto.VelocityY, proto.VelocityZ),
+                velocity = vel,
+                velocitySqrMagnitude = vel.sqrMagnitude,
+
                 animState = new AnimationStates
                 {
                     MovementBlendValue = proto.MovementBlendValue,
@@ -119,6 +124,7 @@ namespace DCL.Multiplayer.Movement.Systems
                 },
                 isStunned = proto.IsStunned,
             };
+        }
 
         private void WriteAndSend(NetworkMovementMessage message, IMessagePipe messagePipe)
         {
