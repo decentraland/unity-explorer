@@ -214,8 +214,6 @@ namespace DCL.AuthenticationScreenFlow
 
         private bool IsUserAllowedToAccessToBeta(IWeb3Identity storedIdentity)
         {
-            return true;
-
 #if UNITY_EDITOR
             return true;
 #else
