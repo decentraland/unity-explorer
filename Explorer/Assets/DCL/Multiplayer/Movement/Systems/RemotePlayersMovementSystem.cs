@@ -1,7 +1,9 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.Character.Components;
+using DCL.CharacterMotion.Settings;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Movement.Settings;
 using ECS.Abstract;
@@ -11,23 +13,21 @@ using Utility.PriorityQueue;
 
 namespace DCL.Multiplayer.Movement.Systems
 {
-    [UpdateInGroup(typeof(RemoteMotionGroup))]
+    [UpdateInGroup(typeof(PresentationSystemGroup))]
     [LogCategory(ReportCategory.MULTIPLAYER_MOVEMENT)]
     public partial class RemotePlayersMovementSystem : BaseUnityLoopSystem
     {
-        // Amount of positions with delta below MinPositionDelta, that will be skip in one frame.
-        private const int SAME_POSITION_BATCH = 10;
-
         // Amount of positions with timestamp that older than timestamp of the last passed message, that will be skip in one frame.
-        private const int OLD_MESSAGES_BATCH = 10;
         private const int BEHIND_EXTRAPOLATION_BATCH = 10;
-        private const float ZERO_VELOCITY_THRESHOLD = 0.01f;
+        private const float ZERO_VELOCITY_SQR_THRESHOLD = 0.01f * 0.01f;
 
         private readonly IMultiplayerMovementSettings settings;
+        private readonly ICharacterControllerSettings characterControllerSettings;
 
-        internal RemotePlayersMovementSystem(World world, IMultiplayerMovementSettings settings) : base(world)
+        internal RemotePlayersMovementSystem(World world, IMultiplayerMovementSettings settings, ICharacterControllerSettings characterControllerSettings) : base(world)
         {
             this.settings = settings;
+            this.characterControllerSettings = characterControllerSettings;
         }
 
         protected override void Update(float t)
@@ -35,11 +35,11 @@ namespace DCL.Multiplayer.Movement.Systems
             UpdateRemotePlayersMovementQuery(World, t);
         }
 
-        private static void HandleFirstMessage(ref CharacterTransform transComp, in NetworkMovementMessage firstRemote, ref RemotePlayerMovementComponent remotePlayerMovement)
+        private void HandleFirstMessage(ref CharacterTransform transComp, in NetworkMovementMessage firstRemote, ref RemotePlayerMovementComponent remotePlayerMovement)
         {
             transComp.Transform.position = firstRemote.position;
 
-            remotePlayerMovement.AddPassed(firstRemote, wasTeleported: true);
+            remotePlayerMovement.AddPassed(firstRemote, characterControllerSettings, wasTeleported: true);
             remotePlayerMovement.Initialized = true;
         }
 
@@ -48,7 +48,7 @@ namespace DCL.Multiplayer.Movement.Systems
         private void UpdateRemotePlayersMovement([Data] float deltaTime, ref CharacterTransform transComp,
             ref RemotePlayerMovementComponent remotePlayerMovement, ref InterpolationComponent intComp, ref ExtrapolationComponent extComp)
         {
-            var playerInbox = remotePlayerMovement.Queue;
+            SimplePriorityQueue<NetworkMovementMessage>? playerInbox = remotePlayerMovement.Queue;
             if (playerInbox == null) return;
 
             settings.InboxCount = playerInbox.Count;
@@ -60,6 +60,13 @@ namespace DCL.Multiplayer.Movement.Systems
                 if (playerInbox.Count == 0) return;
             }
 
+            // We wait delay of 2 messages for more stability of interpolation
+            if (remotePlayerMovement.InitialCooldownTime < 2 * settings.MoveSendRate)
+            {
+                remotePlayerMovement.InitialCooldownTime += deltaTime;
+                return;
+            }
+
             if (intComp.Enabled)
             {
                 deltaTime = Interpolate(deltaTime, ref transComp, ref remotePlayerMovement, ref intComp);
@@ -67,13 +74,14 @@ namespace DCL.Multiplayer.Movement.Systems
             }
 
             // Filter old messages that arrived too late
-            for (var i = 0; i < OLD_MESSAGES_BATCH && playerInbox.Count > 0 && playerInbox.First.timestamp <= remotePlayerMovement.PastMessage.timestamp; i++)
+            while (playerInbox.Count > 0 && playerInbox.First.timestamp <= remotePlayerMovement.PastMessage.timestamp)
                 playerInbox.Dequeue();
 
             // When there is no messages, we extrapolate
-            if (playerInbox.Count == 0 && settings.UseExtrapolation && remotePlayerMovement is { Initialized: true, WasTeleported: false })
+            if (settings.UseExtrapolation && playerInbox.Count == 0 && remotePlayerMovement is { Initialized: true, WasTeleported: false })
             {
-                if (!extComp.Enabled && remotePlayerMovement.PastMessage.velocity.sqrMagnitude > settings.ExtrapolationSettings.MinSpeed)
+                float sqrMinSpeed = settings.ExtrapolationSettings.MinSpeed * settings.ExtrapolationSettings.MinSpeed;
+                if (!extComp.Enabled && remotePlayerMovement.PastMessage.velocitySqrMagnitude > sqrMinSpeed)
                     extComp.Restart(from: remotePlayerMovement.PastMessage, settings.ExtrapolationSettings.TotalMoveDuration);
 
                 if (extComp.Enabled)
@@ -91,12 +99,12 @@ namespace DCL.Multiplayer.Movement.Systems
             ref InterpolationComponent intComp, ref ExtrapolationComponent extComp, SimplePriorityQueue<NetworkMovementMessage> playerInbox)
         {
             NetworkMovementMessage remote = playerInbox.Dequeue();
-            var isBlend = false;
 
+            var isBlend = false;
             if (extComp.Enabled)
             {
                 // if we success with stop of extrapolation, then we can start to blend
-                if (StopExtrapolationIfCan(ref remote, ref transComp, ref remotePlayerMovement, ref extComp, playerInbox))
+                if (TryStopExtrapolation(ref remote, ref transComp, ref remotePlayerMovement, ref extComp, playerInbox))
                     isBlend = true;
                 else return;
             }
@@ -114,7 +122,7 @@ namespace DCL.Multiplayer.Movement.Systems
             StartInterpolation(deltaTime, ref transComp, ref remotePlayerMovement, ref intComp, remote, isBlend);
         }
 
-        private static bool StopExtrapolationIfCan(ref NetworkMovementMessage remote, ref CharacterTransform transComp,
+        private bool TryStopExtrapolation(ref NetworkMovementMessage remote, ref CharacterTransform transComp,
             ref RemotePlayerMovementComponent remotePlayerMovement, ref ExtrapolationComponent extComp, SimplePriorityQueue<NetworkMovementMessage> playerInbox)
         {
             float minExtTimestamp = extComp.Start.timestamp + Mathf.Min(extComp.Time, extComp.TotalMoveDuration);
@@ -136,12 +144,15 @@ namespace DCL.Multiplayer.Movement.Systems
 
                     position = transComp.Transform.position,
                     velocity = extComp.Start.velocity,
+                    velocitySqrMagnitude = extComp.Start.velocity.sqrMagnitude,
 
+                    movementKind = extComp.Start.movementKind,
+                    isSliding = extComp.Start.isSliding,
                     animState = extComp.Start.animState,
                     isStunned = extComp.Start.isStunned,
                 };
 
-                remotePlayerMovement.AddPassed(local);
+                remotePlayerMovement.AddPassed(local, characterControllerSettings);
             }
 
             return true;
@@ -150,21 +161,23 @@ namespace DCL.Multiplayer.Movement.Systems
         private void TeleportFiltered(ref NetworkMovementMessage remote, ref CharacterTransform transComp, ref RemotePlayerMovementComponent remotePlayerMovement,
             SimplePriorityQueue<NetworkMovementMessage> playerInbox)
         {
-            // Filter messages with the same position
+            // Filter messages with the same position and rotation
             if (settings.InterpolationSettings.UseSpeedUp)
-                for (var i = 0; i < SAME_POSITION_BATCH && playerInbox.Count > 0 && Vector3.SqrMagnitude(playerInbox.First.position - remote.position) < settings.MinPositionDelta; i++)
+                while (playerInbox.Count > settings.InterpolationSettings.CatchUpMessagesMin
+                       && Mathf.Abs(playerInbox.First.rotationY - remote.rotationY) < settings.MinRotationDelta
+                       && Vector3.SqrMagnitude(playerInbox.First.position - remote.position) < settings.MinPositionDelta)
                     remote = playerInbox.Dequeue();
 
             transComp.Transform.position = remote.position;
-            remotePlayerMovement.AddPassed(remote, wasTeleported: true);
+            remotePlayerMovement.AddPassed(remote, characterControllerSettings, wasTeleported: true);
         }
 
         private bool CanTeleport(in RemotePlayerMovementComponent remotePlayerMovement, in NetworkMovementMessage remote)
         {
-            float sqrDistance = Vector3.SqrMagnitude(remotePlayerMovement.PastMessage.position - remote.position);
+            float posDiff = Vector3.SqrMagnitude(remotePlayerMovement.PastMessage.position - remote.position);
+            float rotDiff = Mathf.Abs(remotePlayerMovement.PastMessage.rotationY - remote.rotationY);
 
-            return sqrDistance > settings.MinTeleportDistance ||
-                   (settings.InterpolationSettings.UseSpeedUp && sqrDistance < settings.MinPositionDelta);
+            return posDiff > settings.MinTeleportDistance || (settings.InterpolationSettings.UseSpeedUp && rotDiff < settings.MinRotationDelta && posDiff < settings.MinPositionDelta);
         }
 
         private void StartInterpolation(float deltaTime, ref CharacterTransform transComp, ref RemotePlayerMovementComponent remotePlayerMovement,
@@ -172,12 +185,16 @@ namespace DCL.Multiplayer.Movement.Systems
         {
             RemotePlayerInterpolationSettings? intSettings = settings.InterpolationSettings;
 
+            bool useLinear = remotePlayerMovement.PastMessage.velocitySqrMagnitude < ZERO_VELOCITY_SQR_THRESHOLD || remote.velocitySqrMagnitude < ZERO_VELOCITY_SQR_THRESHOLD ||
+                             remotePlayerMovement.PastMessage.animState.IsGrounded != remote.animState.IsGrounded || remotePlayerMovement.PastMessage.animState.IsJumping != remote.animState.IsJumping;
+
+            // Interpolate linearly to/from zero velocities to avoid position overshooting
             InterpolationType spline = intSettings.UseBlend ? intSettings.BlendType :
-                // Interpolate linearly to/from zero velocities to avoid position overshooting
-                remote.velocity.sqrMagnitude < ZERO_VELOCITY_THRESHOLD || remotePlayerMovement.PastMessage.velocity.sqrMagnitude < ZERO_VELOCITY_THRESHOLD ? InterpolationType.Linear :
+                useLinear ? InterpolationType.Linear :
                 intSettings.InterpolationType;
 
-            intComp.Restart(remotePlayerMovement.PastMessage, remote, spline);
+
+            intComp.Restart(remotePlayerMovement.PastMessage, remote, spline, characterControllerSettings);
 
             if (intSettings.UseBlend && isBlend)
                 SlowDownBlend(ref intComp, intSettings.MaxBlendSpeed);
@@ -193,13 +210,13 @@ namespace DCL.Multiplayer.Movement.Systems
         private float Interpolate(float deltaTime, ref CharacterTransform transComp, ref RemotePlayerMovementComponent remotePlayerMovement,
             ref InterpolationComponent intComp)
         {
-            float unusedTime = Interpolation.Execute(deltaTime, ref transComp, ref intComp, settings.InterpolationSettings.LookAtTimeDelta);
+            float unusedTime = Interpolation.Execute(deltaTime, ref transComp, ref intComp, settings.InterpolationSettings.LookAtTimeDelta, characterControllerSettings.RotationSpeed);
 
             if (intComp.Time < intComp.TotalDuration)
                 return -1;
 
             intComp.Stop();
-            remotePlayerMovement.AddPassed(intComp.End);
+            remotePlayerMovement.AddPassed(intComp.End, characterControllerSettings);
 
             return unusedTime;
         }
