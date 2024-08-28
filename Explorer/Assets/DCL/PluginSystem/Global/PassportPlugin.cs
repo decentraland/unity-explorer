@@ -1,3 +1,4 @@
+using Arch.Core;
 using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
@@ -9,7 +10,6 @@ using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Chat;
 using DCL.Input;
-using DCL.Input.UnityInputSystem.Blocks;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.Passport;
@@ -24,11 +24,10 @@ using UnityEngine.AddressableAssets;
 
 namespace DCL.PluginSystem.Global
 {
-    public class PassportPlugin : DCLGlobalPluginBase<PassportPlugin.PassportSettings>
+    public class PassportPlugin : IDCLGlobalPlugin<PassportPlugin.PassportSettings>
     {
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IMVCManager mvcManager;
-        private PassportController passportController;
         private readonly ICursor cursor;
         private readonly IProfileRepository profileRepository;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
@@ -43,6 +42,10 @@ namespace DCL.PluginSystem.Global
         private readonly BadgesAPIClient badgesAPIClient;
         private readonly IInputBlock inputBlock;
         private readonly INotificationsBusController notificationsBusController;
+        private readonly Arch.Core.World world;
+        private readonly Entity playerEntity;
+
+        private PassportController? passportController;
 
         public PassportPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -59,8 +62,10 @@ namespace DCL.PluginSystem.Global
             IWebBrowser webBrowser,
             IDecentralandUrlsSource decentralandUrlsSource,
             BadgesAPIClient badgesAPIClient,
+            INotificationsBusController notificationsBusController,
             IInputBlock inputBlock,
-            INotificationsBusController notificationsBusController
+            Arch.Core.World world,
+            Entity playerEntity
         )
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -79,11 +84,18 @@ namespace DCL.PluginSystem.Global
             this.badgesAPIClient = badgesAPIClient;
             this.inputBlock = inputBlock;
             this.notificationsBusController = notificationsBusController;
+            this.world = world;
+            this.playerEntity = playerEntity;
         }
 
-        protected override void InjectSystems(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
+        public void Dispose()
+        {
+            passportController?.Dispose();
+        }
 
-        protected override async UniTask<ContinueInitialization?> InitializeInternalAsync(PassportSettings passportSettings, CancellationToken ct)
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
+
+        public async UniTask InitializeAsync(PassportSettings passportSettings, CancellationToken ct)
         {
             (NFTColorsSO rarityColorMappings, NftTypeIconSO categoryIconsMapping, NftTypeIconSO rarityBackgroundsMapping, NftTypeIconSO rarityInfoPanelBackgroundsMapping) = await UniTask.WhenAll(
                 assetsProvisioner.ProvideMainAssetValueAsync(passportSettings.RarityColorMappings, ct),
@@ -93,35 +105,32 @@ namespace DCL.PluginSystem.Global
 
             PassportView chatView = (await assetsProvisioner.ProvideMainAssetAsync(passportSettings.PassportPrefab, ct: ct)).Value.GetComponent<PassportView>();
 
-            return (ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) =>
-            {
-                ECSThumbnailProvider thumbnailProvider = new ECSThumbnailProvider(realmData, builder.World, assetBundleURL, webRequestController);
+            ECSThumbnailProvider thumbnailProvider = new ECSThumbnailProvider(realmData, world, assetBundleURL, webRequestController);
 
-                passportController = new PassportController(
-                    PassportController.CreateLazily(chatView, null),
-                    cursor,
-                    profileRepository,
-                    characterPreviewFactory,
-                    chatEntryConfiguration,
-                    rarityBackgroundsMapping,
-                    rarityColorMappings,
-                    categoryIconsMapping,
-                    characterPreviewEventBus,
-                    mvcManager,
-                    selfProfile,
-                    builder.World,
-                    arguments.PlayerEntity,
-                    thumbnailProvider,
-                    webBrowser,
-                    decentralandUrlsSource,
-                    badgesAPIClient,
-                    webRequestController,
-                    inputBlock,
-                    notificationsBusController
-                );
+            passportController = new PassportController(
+                PassportController.CreateLazily(chatView, null),
+                cursor,
+                profileRepository,
+                characterPreviewFactory,
+                chatEntryConfiguration,
+                rarityBackgroundsMapping,
+                rarityColorMappings,
+                categoryIconsMapping,
+                characterPreviewEventBus,
+                mvcManager,
+                selfProfile,
+                world,
+                playerEntity,
+                thumbnailProvider,
+                webBrowser,
+                decentralandUrlsSource,
+                badgesAPIClient,
+                webRequestController,
+                inputBlock,
+                notificationBusController
+            );
 
-                mvcManager.RegisterController(passportController);
-            };
+            mvcManager.RegisterController(passportController);
         }
 
         public class PassportSettings : IDCLPluginSettings

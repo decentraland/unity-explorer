@@ -9,7 +9,6 @@ using DCL.Chat;
 using DCL.Diagnostics;
 using DCL.Input;
 using DCL.Input.Component;
-using DCL.Input.UnityInputSystem.Blocks;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
@@ -155,14 +154,14 @@ namespace DCL.Passport
             viewInstance!.ErrorNotification.Hide(true);
             PassportOpened?.Invoke(currentUserId);
 
-            inputBlock.BlockInputs(InputMapComponent.Kind.Shortcuts , InputMapComponent.Kind.Camera , InputMapComponent.Kind.Player);
+            inputBlock.Disable(InputMapComponent.Kind.Shortcuts , InputMapComponent.Kind.Camera , InputMapComponent.Kind.Player);
         }
 
         protected override void OnViewClose()
         {
             passportErrorsController!.Hide(true);
 
-            inputBlock.UnblockInputs(InputMapComponent.Kind.Shortcuts , InputMapComponent.Kind.Camera , InputMapComponent.Kind.Player);
+            inputBlock.Enable(InputMapComponent.Kind.Shortcuts , InputMapComponent.Kind.Camera , InputMapComponent.Kind.Player);
 
             characterPreviewController!.OnHide();
 

@@ -1,3 +1,4 @@
+using Arch.Core;
 using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
@@ -15,7 +16,6 @@ using DCL.CharacterPreview;
 using DCL.Chat;
 using DCL.ExplorePanel;
 using DCL.Input;
-using DCL.Input.UnityInputSystem.Blocks;
 using DCL.Landscape.Settings;
 using DCL.MapRenderer;
 using DCL.Navmap;
@@ -46,7 +46,7 @@ using UnityEngine.Audio;
 // ReSharper disable UnusedAutoPropertyAccessor.Local
 namespace DCL.PluginSystem.Global
 {
-    public class ExplorePanelPlugin : DCLGlobalPluginBase<ExplorePanelPlugin.ExplorePanelSettings>
+    public class ExplorePanelPlugin : IDCLGlobalPlugin<ExplorePanelPlugin.ExplorePanelSettings>
     {
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly MapRendererContainer mapRendererContainer;
@@ -71,6 +71,9 @@ namespace DCL.PluginSystem.Global
         private readonly IThirdPartyNftProviderSource thirdPartyNftProviderSource;
         private readonly IWearablesProvider wearablesProvider;
         private readonly ICursor cursor;
+        private readonly IEmoteProvider emoteProvider;
+        private readonly Arch.Core.World world;
+        private readonly Entity playerEntity;
 
         private readonly IMapPathEventBus mapPathEventBus;
         private readonly ICollection<string> forceRender;
@@ -115,9 +118,11 @@ namespace DCL.PluginSystem.Global
             IBackpackEventBus backpackEventBus,
             IThirdPartyNftProviderSource thirdPartyNftProviderSource,
             IWearablesProvider wearablesProvider,
+            ICursor cursor,
             IInputBlock inputBlock,
-            ICursor cursor
-            )
+            IEmoteProvider emoteProvider,
+            Arch.Core.World world,
+            Entity playerEntity)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -150,9 +155,12 @@ namespace DCL.PluginSystem.Global
             this.wearablesProvider = wearablesProvider;
             this.inputBlock = inputBlock;
             this.cursor = cursor;
+            this.emoteProvider = emoteProvider;
+            this.world = world;
+            this.playerEntity = playerEntity;
         }
 
-        public override void Dispose()
+        public void Dispose()
         {
             navmapController?.Dispose();
             settingsController?.Dispose();
@@ -160,7 +168,9 @@ namespace DCL.PluginSystem.Global
             inputHandler?.Dispose();
         }
 
-        protected override async UniTask<ContinueInitialization?> InitializeInternalAsync(ExplorePanelSettings settings, CancellationToken ct)
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
+
+        public async UniTask InitializeAsync(ExplorePanelSettings settings, CancellationToken ct)
         {
             backpackSubPlugin = new BackpackSubPlugin(
                 assetsProvisioner,
@@ -181,7 +191,10 @@ namespace DCL.PluginSystem.Global
                 thirdPartyNftProviderSource,
                 wearablesProvider,
                 inputBlock,
-                cursor
+                cursor,
+                emoteProvider,
+                world,
+                playerEntity
             );
 
             ExplorePanelView panelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.ExplorePanelPrefab, ct: ct)).GetComponent<ExplorePanelView>();
@@ -194,28 +207,20 @@ namespace DCL.PluginSystem.Global
             ProvidedAsset<LandscapeData> landscapeData = await assetsProvisioner.ProvideMainAssetAsync(settings.LandscapeData, ct);
             ProvidedAsset<QualitySettingsAsset> qualitySettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.QualitySettingsAsset, ct);
             settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>(), settingsMenuConfiguration.Value, generalAudioMixer.Value, realmPartitionSettings.Value, landscapeData.Value, qualitySettingsAsset.Value);
-            navmapController = new NavmapController(navmapView: explorePanelView.GetComponentInChildren<NavmapView>(), mapRendererContainer.MapRenderer, placesAPIService, webRequestController, webBrowser, dclInput, realmNavigator, realmData, mapPathEventBus, inputBlock);
-            await navmapController.InitialiseAssetsAsync(assetsProvisioner, ct);
 
-            ContinueInitialization? backpackInitialization = await backpackSubPlugin.InitializeAsync(settings.BackpackSettings, explorePanelView.GetComponentInChildren<BackpackView>(), ct);
+            navmapController = new NavmapController(navmapView: explorePanelView.GetComponentInChildren<NavmapView>(), mapRendererContainer.MapRenderer, placesAPIService, webRequestController, webBrowser, dclInput, realmNavigator, realmData, mapPathEventBus, world, playerEntity, inputBlock);
 
-            return (ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) =>
-            {
-                navmapController.InitialiseWorldDependencies(builder.World, arguments.PlayerEntity);
-                backpackInitialization.Invoke(ref builder, arguments);
+            await navmapController.InitializeAssetsAsync(assetsProvisioner, ct);
+            await backpackSubPlugin.InitializeAsync(settings.BackpackSettings, explorePanelView.GetComponentInChildren<BackpackView>(), ct);
 
-                mvcManager.RegisterController(new
-                    ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackSubPlugin.backpackController!,
+            mvcManager.RegisterController(new
+                ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackSubPlugin.backpackController!,
                     new ProfileWidgetController(() => explorePanelView.ProfileWidget, web3IdentityCache, profileRepository, webRequestController),
-                    new ProfileMenuController(() => explorePanelView.ProfileMenuView, explorePanelView.ProfileMenuView.ProfileMenu, web3IdentityCache, profileRepository, webRequestController, builder.World, arguments.PlayerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager, chatEntryConfiguration),
+                    new ProfileMenuController(() => explorePanelView.ProfileMenuView, explorePanelView.ProfileMenuView.ProfileMenu, web3IdentityCache, profileRepository, webRequestController, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager, chatEntryConfiguration),
                     dclInput, notificationsBusController, mvcManager, inputBlock));
 
-                inputHandler = new ExplorePanelInputHandler(dclInput, mvcManager);
-
-            };
+            inputHandler = new ExplorePanelInputHandler(dclInput, mvcManager);
         }
-
-        protected override void InjectSystems(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
 
         public class ExplorePanelSettings : IDCLPluginSettings
         {

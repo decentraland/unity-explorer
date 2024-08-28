@@ -1,6 +1,9 @@
 ﻿#nullable enable
 
+using DCL.CharacterMotion.Animation;
+using DCL.CharacterMotion.Settings;
 using System;
+using UnityEngine;
 using UnityEngine.Pool;
 using Utility.PriorityQueue;
 
@@ -9,6 +12,7 @@ namespace DCL.Multiplayer.Movement
     public struct RemotePlayerMovementComponent : IDisposable
     {
         public const string TEST_ID = "SelfReplica";
+        private const short MAX_MESSAGES = 10;
 
         private readonly IObjectPool<SimplePriorityQueue<NetworkMovementMessage>> queuePool;
         private readonly SimplePriorityQueue<NetworkMovementMessage> queue;
@@ -22,6 +26,8 @@ namespace DCL.Multiplayer.Movement
 
         public readonly SimplePriorityQueue<NetworkMovementMessage>? Queue => disposed ? null : queue;
 
+        public float InitialCooldownTime;
+
         public RemotePlayerMovementComponent(IObjectPool<SimplePriorityQueue<NetworkMovementMessage>> queuePool)
         {
             this.queuePool = queuePool;
@@ -33,10 +39,30 @@ namespace DCL.Multiplayer.Movement
             WasTeleported = false;
 
             WasPassedThisFrame = false;
+
+            InitialCooldownTime = 0;
         }
 
-        public void AddPassed(NetworkMovementMessage message, bool wasTeleported = false)
+        public void Enqueue(NetworkMovementMessage message)
         {
+            while (queue.Count > MAX_MESSAGES)
+                queue.Dequeue();
+
+            queue.Enqueue(message, message.timestamp);
+        }
+
+        public void AddPassed(NetworkMovementMessage message, ICharacterControllerSettings settings, bool wasTeleported = false)
+        {
+            if (!WasTeleported)
+            {
+                float totalDuration = message.timestamp - PastMessage.timestamp;
+
+                message.animState.MovementBlendValue = AnimationMovementBlendLogic.CalculateBlendValue(totalDuration, PastMessage.animState.MovementBlendValue,
+                    message.movementKind, message.velocitySqrMagnitude, settings);
+
+                message.animState.SlideBlendValue = AnimationSlideBlendLogic.CalculateBlendValue(totalDuration, PastMessage.animState.SlideBlendValue, message.isSliding, settings);
+            }
+
             PastMessage = message;
             WasTeleported = wasTeleported;
 

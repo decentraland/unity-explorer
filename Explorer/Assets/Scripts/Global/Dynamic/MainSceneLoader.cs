@@ -3,7 +3,6 @@ using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
-using DCL.Input;
 using DCL.Input.Component;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
@@ -148,12 +147,15 @@ namespace Global.Dynamic
             settings.ApplyConfig(applicationParametersParser);
             launchSettings.ApplyConfig(applicationParametersParser);
 
+            World world = World.Create();
+
             bootstrapContainer = await BootstrapContainer.CreateAsync(debugSettings, sceneLoaderSettings: settings,
                 globalPluginSettingsContainer, launchSettings,
                 applicationParametersParser,
+                world,
                 destroyCancellationToken);
 
-            IBootstrap bootstrap = bootstrapContainer!.Bootstrap;
+            IBootstrap bootstrap = bootstrapContainer!.Bootstrap!;
 
             try
             {
@@ -170,8 +172,10 @@ namespace Global.Dynamic
                     return;
                 }
 
+                Entity playerEntity = bootstrap.CreatePlayerEntity(staticContainer!);
+
                 (dynamicWorldContainer, isLoaded) = await bootstrap.LoadDynamicWorldContainerAsync(bootstrapContainer, staticContainer!, scenePluginSettingsContainer, settings,
-                    dynamicSettings, uiToolkitRoot, cursorRoot, splashScreen, backgroundMusic, worldInfoTool.EnsureNotNull(), destroyCancellationToken);
+                    dynamicSettings, uiToolkitRoot, cursorRoot, splashScreen, backgroundMusic, worldInfoTool.EnsureNotNull(), playerEntity, destroyCancellationToken);
 
                 if (!isLoaded)
                 {
@@ -189,12 +193,9 @@ namespace Global.Dynamic
                     return;
                 }
 
-                Entity playerEntity;
-                (globalWorld, playerEntity) = bootstrap.CreateGlobalWorldAndPlayer(bootstrapContainer, staticContainer!, dynamicWorldContainer!, debugUiRoot);
+                globalWorld = bootstrap.CreateGlobalWorld(bootstrapContainer, staticContainer!, dynamicWorldContainer!, debugUiRoot, playerEntity);
 
-                dynamicWorldContainer!.InitializeWorldRelatedModules(globalWorld.EcsWorld, playerEntity);
                 staticContainer!.PlayerEntityProxy.SetObject(playerEntity);
-                staticContainer.InputBlock.Initialize();
 
                 await bootstrap.LoadStartingRealmAsync(dynamicWorldContainer!, ct);
                 await bootstrap.UserInitializationAsync(dynamicWorldContainer!, globalWorld, playerEntity, splashScreen, ct);
@@ -229,7 +230,7 @@ namespace Global.Dynamic
         {
             // We enable Inputs through the inputBlock so the block counters can be properly updated and the component Active flags are up-to-date as well
             // We restore all inputs except EmoteWheel and FreeCamera as they should be disabled by default
-            staticContainer!.InputBlock.UnblockInputs(InputMapComponent.Kind.Shortcuts , InputMapComponent.Kind.Player , InputMapComponent.Kind.Emotes , InputMapComponent.Kind.Camera);
+            staticContainer!.InputBlock.Enable(InputMapComponent.Kind.Shortcuts, InputMapComponent.Kind.Player, InputMapComponent.Kind.Emotes, InputMapComponent.Kind.Camera);
         }
 
         [ContextMenu(nameof(ValidateSettingsAsync))]

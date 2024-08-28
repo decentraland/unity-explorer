@@ -1,5 +1,5 @@
+using DCL.Input;
 using DCL.Input.Component;
-using DCL.Input.UnityInputSystem.Blocks;
 using DCL.UI;
 using System;
 using System.Collections.Generic;
@@ -59,7 +59,7 @@ namespace DCL.Emoji
 
         private void BlockUnwantedInputs(string _)
         {
-            inputBlock.BlockInputs(InputMapComponent.Kind.Shortcuts , InputMapComponent.Kind.Player);
+            inputBlock.Disable(InputMapComponent.Kind.Shortcuts , InputMapComponent.Kind.Player);
         }
 
         private void UnblockUnwantedInputs(string _) =>
@@ -67,7 +67,7 @@ namespace DCL.Emoji
 
         private void UnblockUnwantedInputs()
         {
-            inputBlock.UnblockInputs(InputMapComponent.Kind.Shortcuts , InputMapComponent.Kind.Player);
+            inputBlock.Enable(InputMapComponent.Kind.Shortcuts , InputMapComponent.Kind.Player);
         }
 
         private EmojiButton CreatePoolElements(Transform parent, EmojiButton emojiButton)

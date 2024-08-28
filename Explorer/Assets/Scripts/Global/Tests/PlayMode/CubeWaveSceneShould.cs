@@ -12,7 +12,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 
-namespace Global.Tests
+namespace Global.Tests.PlayMode
 {
     /*
      https://github.com/decentraland/sdk7-goerli-plaza/blob/main/cube-wave-16x16/src/index.ts
@@ -65,10 +65,16 @@ namespace Global.Tests
     [TestFixture]
     public class CubeWaveSceneShould
     {
+        private const string PATH = "cube-wave-16x16";
+
+        private SceneSharedContainer? sceneSharedContainer;
+        private StaticContainer? staticContainer;
+        private ISceneFacade? sceneFacade;
+
         [SetUp]
         public async Task SetUp()
         {
-            (staticContainer, sceneSharedContainer) = await IntegrationTestsSuite.CreateStaticContainer();
+            (staticContainer, sceneSharedContainer) = await IntegrationTestsSuite.CreateStaticContainer(default(CancellationToken));
         }
 
         [TearDown]
@@ -80,11 +86,6 @@ namespace Global.Tests
             staticContainer?.Dispose();
         }
 
-        private SceneSharedContainer sceneSharedContainer;
-        private StaticContainer staticContainer;
-        private ISceneFacade sceneFacade;
-        private const string PATH = "cube-wave-16x16";
-
         [Test]
         public async Task EmitECSComponents()
         {
@@ -92,7 +93,7 @@ namespace Global.Tests
             await UniTask.WaitUntil(() => sceneSharedContainer != null && staticContainer != null);
 
             // It will switch to the background thread and assign SynchronizationContext
-            sceneFacade = await sceneSharedContainer.SceneFactory.CreateSceneFromStreamableDirectoryAsync(PATH, Substitute.For<IPartitionComponent>(), CancellationToken.None);
+            sceneFacade = await sceneSharedContainer!.SceneFactory.CreateSceneFromStreamableDirectoryAsync(PATH, Substitute.For<IPartitionComponent>(), CancellationToken.None);
 
             // It will call `IEngineAPI.GetState()`
             await sceneFacade.StartScene();

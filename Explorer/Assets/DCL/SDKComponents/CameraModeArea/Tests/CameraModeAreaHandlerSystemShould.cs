@@ -25,8 +25,6 @@ namespace DCL.SDKComponents.CameraModeArea.Tests
         public void Setup()
         {
             globalWorld = World.Create();
-            var globalWorldProxy = new ObjectProxy<World>();
-            globalWorldProxy.SetObject(globalWorld);
 
             cameraEntity = globalWorld.Create(
                 new CRDTEntity(SpecialEntitiesID.CAMERA_ENTITY),
@@ -36,7 +34,7 @@ namespace DCL.SDKComponents.CameraModeArea.Tests
             var cameraEntityProxy = new ObjectProxy<Entity>();
             cameraEntityProxy.SetObject(cameraEntity);
 
-            system = new CameraModeAreaHandlerSystem(world, globalWorldProxy, cameraEntityProxy);
+            system = new CameraModeAreaHandlerSystem(world, globalWorld, cameraEntityProxy);
 
             entity = world.Create(PartitionComponent.TOP_PRIORITY);
             AddTransformToEntity(entity);

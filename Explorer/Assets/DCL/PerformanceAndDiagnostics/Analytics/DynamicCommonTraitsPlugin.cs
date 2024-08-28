@@ -12,10 +12,10 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         private readonly IRealmData realmData;
         private readonly ExposedTransform playerTransform;
-        private readonly IWeb3IdentityCache identityCache;
+        private readonly IWeb3IdentityCache? identityCache;
         public override PluginType Type => PluginType.Enrichment;
 
-        public DynamicCommonTraitsPlugin(IRealmData realmData, IWeb3IdentityCache identityCache, ExposedTransform playerTransform)
+        public DynamicCommonTraitsPlugin(IRealmData realmData, IWeb3IdentityCache? identityCache, ExposedTransform playerTransform)
         {
             this.realmData = realmData;
             this.identityCache = identityCache;
@@ -27,7 +27,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             trackEvent.Context["dcl_eth_address"] = identityCache?.Identity?.Address == null ? NOT_CONFIGURED : identityCache.Identity.Address.ToString();
             trackEvent.Context["auth_chain"] = identityCache?.Identity?.AuthChain == null? NOT_CONFIGURED : identityCache.Identity.AuthChain.ToString();
             trackEvent.Context["realm"] = realmData is not { Configured: true } ? NOT_CONFIGURED : realmData.RealmName;
-            trackEvent.Context["parcel"] = playerTransform == null? NOT_CONFIGURED : ParcelMathHelper.FloorToParcel(playerTransform.Position.Value).ToString();
+            trackEvent.Context["parcel"] = playerTransform == null? NOT_CONFIGURED : playerTransform.Position.ToParcel().ToString();
             trackEvent.Context["position"] = playerTransform == null? NOT_CONFIGURED : playerTransform.Position.Value.ToShortString();
 
             return trackEvent;

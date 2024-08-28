@@ -1,7 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.Input;
 using DCL.Input.Component;
-using DCL.Input.UnityInputSystem.Blocks;
 using DCL.PlacesAPIService;
 using DCL.UI;
 using DCL.WebRequests;
@@ -116,11 +116,11 @@ namespace DCL.Navmap
             if (isSelected)
             {
                 GetAndShowPreviousSearches();
-                inputBlock.BlockInputs(InputMapComponent.Kind.Shortcuts);
+                inputBlock.Disable(InputMapComponent.Kind.Shortcuts);
             }
             else
             {
-                inputBlock.UnblockInputs(InputMapComponent.Kind.Shortcuts);
+                inputBlock.Enable(InputMapComponent.Kind.Shortcuts);
             }
         }
 
