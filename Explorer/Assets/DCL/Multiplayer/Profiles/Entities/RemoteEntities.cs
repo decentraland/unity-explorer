@@ -109,16 +109,15 @@ namespace DCL.Multiplayer.Profiles.Entities
             return ContainsInRoom(roomHub.IslandRoom()) || ContainsInRoom(roomHub.SceneRoom());
         }
 
-        public void TryCreateOrUpdateRemoteEntity(in RemoteProfile profile, World world)
+        public Entity TryCreateOrUpdateRemoteEntity(in RemoteProfile profile, World world)
         {
             if (entityParticipantTable.Has(profile.WalletId))
-            {
-                UpdateCharacter(profile, world);
-                return;
-            }
+                return UpdateCharacter(profile, world);
 
             Entity entity = CreateCharacter(profile, world);
             entityParticipantTable.Register(profile.WalletId, entity);
+
+            return entity;
         }
 
         private Entity CreateCharacter(RemoteProfile profile, World world)
@@ -156,20 +155,21 @@ namespace DCL.Multiplayer.Profiles.Entities
             return entity;
         }
 
-        private void UpdateCharacter(in RemoteProfile remoteProfile, World world)
+        private Entity UpdateCharacter(in RemoteProfile remoteProfile, World world)
         {
             var entity = entityParticipantTable.Entity(remoteProfile.WalletId);
             var profile = remoteProfile.Profile;
 
             if (world.TryGet(entity, out Profile? existingProfile))
                 if (existingProfile!.Version == profile.Version)
-                    return;
+                    return entity;
 
             world.Set(entity, profile);
             // Force to update the avatar through the profile
             profile.IsDirty = true;
 
             ProfileUtils.CreateProfilePicturePromise(profile, world, PartitionComponent.TOP_PRIORITY);
+            return entity;
         }
     }
 }

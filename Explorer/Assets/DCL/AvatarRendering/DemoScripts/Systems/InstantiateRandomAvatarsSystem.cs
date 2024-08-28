@@ -239,7 +239,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
             }
 
             if (randomAvatarRequest.IsSelfReplica)
-                GenerateSelfReplicaAvatar(cameraComponent.Camera.transform.position, characterControllerSettings);
+                GenerateSelfReplicaAvatar(cameraComponent.Camera.transform.position);
             else
                 GenerateRandomAvatars(randomAvatarRequest.RandomAvatarsToInstantiate, cameraComponent.Camera.transform.position, characterControllerSettings);
 
@@ -341,71 +341,27 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
             );
         }
 
-        private void GenerateSelfReplicaAvatar(Vector3 cameraPosition, in ICharacterControllerSettings characterControllerSettings)
+        private void GenerateSelfReplicaAvatar(Vector3 cameraPosition)
         {
             float startXPosition = cameraPosition.x;
             float startZPosition = cameraPosition.z;
 
-            Profile profile = new Profile();
-            RemoteProfile remoteProfile = new RemoteProfile(profile);
+            RemoteProfile remoteProfile = new RemoteProfile(Profile.NewRandomProfile(RemotePlayerMovementComponent.TEST_ID), RemotePlayerMovementComponent.TEST_ID);
 
-            remoteEntities.TryCreateOrUpdateRemoteEntity(remoteProfile, World);
+            var selfReplicaEntity = remoteEntities.TryCreateOrUpdateRemoteEntity(remoteProfile, World);
 
-            AvatarRandomizer currentRandomizer = randomizers[Random.Range(0, randomizers.Length)];
-
-            var wearables = new List<string>();
-
-            foreach (string randomAvatarWearable in currentRandomizer.GetRandomAvatarWearables())
-                wearables.Add(randomAvatarWearable);
-
-            // Create a transform, normally it will be created either by JS Scene or by Comms
-            var transformComp = new CharacterTransform(transformPool.Get());
-
+            var transformComp = World.Get<CharacterTransform>(selfReplicaEntity);
             transformComp.Transform.position = StartRandomPosition(0, startXPosition, startZPosition);
-            transformComp.Transform.name = "SELF_REPLICA";
-
-            CharacterController characterController = transformComp.Transform.gameObject.AddComponent<CharacterController>();
-            characterController.radius = 0.4f;
-            characterController.height = 2;
-            characterController.center = Vector3.up;
-            characterController.slopeLimit = 50f;
-            characterController.gameObject.layer = PhysicsLayers.CHARACTER_LAYER;
+            transformComp.Transform.name = RemotePlayerMovementComponent.TEST_ID;
 
             TrailRenderer trail = transformComp.Transform.gameObject.AddComponent<TrailRenderer>();
             trail.time = 1.0f; // The time in seconds that the trail will fade out over
             trail.startWidth = 0.07f; // The starting width of the trail
             trail.endWidth = 0.07f; // The end
-
             trail.material = new Material(Shader.Find("Unlit/Color"))
             {
                 color = Color.yellow,
             };
-
-            var avatarShape = new PBAvatarShape
-            {
-                Id = $"User{avatarIndex}",
-                Name = $"User{avatarIndex}",
-                BodyShape = currentRandomizer.BodyShape,
-                Wearables = { wearables },
-                SkinColor = WearablesConstants.DefaultColors.GetRandomSkinColor3(),
-                HairColor = WearablesConstants.DefaultColors.GetRandomHairColor3(),
-            };
-
-            var entity = World.Create(avatarShape,
-                transformComp,
-                new CharacterAnimationComponent(),
-                new CharacterEmoteComponent(),
-                new RemotePlayerMovementComponent(
-                    new ObjectPool<SimplePriorityQueue<NetworkMovementMessage>>(() => new SimplePriorityQueue<NetworkMovementMessage>())
-                ),
-                new InterpolationComponent(),
-                new ExtrapolationComponent(),
-                characterControllerSettings
-            );
-
-            entityParticipantTable.Register(RemotePlayerMovementComponent.TEST_ID, entity);
-
-
         }
 
         private static Vector3 StartRandomPosition(float spawnArea, float startXPosition, float startZPosition)
