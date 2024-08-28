@@ -35,7 +35,7 @@ namespace DCL.PluginSystem.World
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly CacheCleaner cacheCleaner;
         private readonly IExposedCameraData cameraData;
-        private readonly ObjectProxy<Arch.Core.World> globalWorldProxy;
+        private readonly Arch.Core.World globalWorld;
         private IComponentPool<CinemachineFreeLook>? virtualCameraPoolRegistry;
 
         public MainCameraPlugin(
@@ -43,13 +43,13 @@ namespace DCL.PluginSystem.World
             IAssetsProvisioner assetsProvisioner,
             CacheCleaner cacheCleaner,
             IExposedCameraData cameraData,
-            ObjectProxy<Arch.Core.World> globalWorldProxy)
+            Arch.Core.World globalWorld)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.poolsRegistry = poolsRegistry;
             this.cacheCleaner = cacheCleaner;
             this.cameraData = cameraData;
-            this.globalWorldProxy = globalWorldProxy;
+            this.globalWorld = globalWorld;
         }
 
         public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
@@ -79,7 +79,7 @@ namespace DCL.PluginSystem.World
                 sharedDependencies.EntitiesMap,
                 sharedDependencies.SceneStateProvider,
                 cameraData,
-                globalWorldProxy
+                globalWorld
                 ));
 
             ResetDirtyFlagSystem<PBVirtualCamera>.InjectToWorld(ref builder);

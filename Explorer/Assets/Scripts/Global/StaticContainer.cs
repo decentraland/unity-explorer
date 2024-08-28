@@ -207,7 +207,7 @@ namespace Global
                 new MapPinPlugin(globalWorld),
                 new MultiplayerPlugin(),
                 new RealmInfoPlugin(container.RealmData, container.RoomHubProxy),
-                new MainCameraPlugin(componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner, container.CacheCleaner, exposedGlobalDataContainer.ExposedCameraData, container.GlobalWorldProxy),
+                new MainCameraPlugin(componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner, container.CacheCleaner, exposedGlobalDataContainer.ExposedCameraData, globalWorld),
 
 #if UNITY_EDITOR
                 new GizmosWorldPlugin(),

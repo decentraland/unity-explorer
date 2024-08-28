@@ -9,7 +9,6 @@ using DCL.CharacterCamera;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using DCL.SDKComponents.CameraControl.MainCamera.Components;
-using DCL.Utilities;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle;
@@ -42,14 +41,14 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
             Dictionary<CRDTEntity,Entity> entitiesMap,
             ISceneStateProvider sceneStateProvider,
             IExposedCameraData cameraData,
-            ObjectProxy<World> globalWorldProxy) : base(world)
+            World globalWorld) : base(world)
         {
             this.poolRegistry = poolRegistry;
             this.cameraEntity = cameraEntity;
             this.entitiesMap = entitiesMap;
             this.sceneStateProvider = sceneStateProvider;
             this.cameraData = cameraData;
-            globalWorld = globalWorldProxy.Object!;
+            this.globalWorld = globalWorld;
         }
 
         protected override void Update(float t)
