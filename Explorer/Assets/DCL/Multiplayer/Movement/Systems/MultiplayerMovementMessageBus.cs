@@ -20,13 +20,14 @@ namespace DCL.Multiplayer.Movement.Systems
         private readonly IMessagePipesHub messagePipesHub;
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly CancellationTokenSource cancellationTokenSource = new ();
-        private World globalWorld = null!;
+        private readonly World globalWorld;
         private bool isDisposed;
 
-        public MultiplayerMovementMessageBus(IMessagePipesHub messagePipesHub, IReadOnlyEntityParticipantTable entityParticipantTable)
+        public MultiplayerMovementMessageBus(IMessagePipesHub messagePipesHub, IReadOnlyEntityParticipantTable entityParticipantTable, World globalWorld)
         {
             this.messagePipesHub = messagePipesHub;
             this.entityParticipantTable = entityParticipantTable;
+            this.globalWorld = globalWorld;
 
             this.messagePipesHub.IslandPipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Movement>(Packet.MessageOneofCase.Movement, OnMessageReceived);
             this.messagePipesHub.ScenePipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Movement>(Packet.MessageOneofCase.Movement, OnMessageReceived);
@@ -54,11 +55,6 @@ namespace DCL.Multiplayer.Movement.Systems
         {
             WriteAndSend(message, messagePipesHub.IslandPipe());
             WriteAndSend(message, messagePipesHub.ScenePipe());
-        }
-
-        public void InjectWorld(World world)
-        {
-            this.globalWorld = world;
         }
 
         private void WriteAndSend(NetworkMovementMessage message, IMessagePipe messagePipe)
