@@ -67,7 +67,9 @@ def clone_current_target():
     if is_release_workflow:
          # Use the tag version in the target name if it's a release workflow
         tag_version = os.getenv('TAG_VERSION', 'unknown-version')
-        new_target_name = f"{base_target_name}-{tag_version}"
+        # Remove dots from the tag version, as unity API does not allow . in the request
+        sanitized_tag_version = re.sub(r'\.', '-', tag_version)
+        new_target_name = f"{base_target_name}-{sanitized_tag_version}"
     else:
         new_target_name = base_target_name
 
