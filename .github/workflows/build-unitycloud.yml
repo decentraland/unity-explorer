@@ -86,7 +86,8 @@ jobs:
     if: |
       (github.ref == 'refs/heads/main') ||
       (github.event_name == 'pull_request' && !github.event.pull_request.draft) ||
-      (github.event_name == 'pull_request' && github.event.action == 'labeled' && github.event.label.name == 'force-build')
+      (github.event_name == 'pull_request' && github.event.action == 'labeled' && github.event.label.name == 'force-build') ||
+      (github.event_name == 'workflow_dispatch')
     outputs:
       commit_sha: ${{ steps.get_commit_sha.outputs.commit_sha }}
       options: ${{ steps.get_options.outputs.options }}
