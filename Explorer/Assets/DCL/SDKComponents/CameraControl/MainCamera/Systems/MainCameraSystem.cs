@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using DCL.Diagnostics;
 using Cinemachine;
 using CRDT;
+using CrdtEcsBridge.Components;
 using DCL.CharacterCamera;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
@@ -190,7 +191,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
             if (pbVirtualCamera.HasLookAtEntity)
             {
                 int targetEntity = (int)pbVirtualCamera.LookAtEntity;
-                if (targetEntity != virtualCameraCRDTEntity)
+                if (targetEntity != SpecialEntitiesID.CAMERA_ENTITY && targetEntity != virtualCameraCRDTEntity)
                     return targetEntity;
             }
 
