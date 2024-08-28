@@ -18,7 +18,7 @@ namespace DCL.MapRenderer.MapCameraController
         private readonly PinMarkerController markerController;
         private readonly Camera camera;
 
-        private IParcelHighlightMarker marker;
+        private IParcelHighlightMarker? marker;
 
         public bool HighlightEnabled { get; private set; }
 
@@ -64,26 +64,15 @@ namespace DCL.MapRenderer.MapCameraController
         public bool TryGetParcel(Vector2 normalizedCoordinates, out Vector2Int parcel, out IPinMarker? mark)
         {
             bool parcelExists = coordsUtils.TryGetCoordsWithinInteractableBounds(GetLocalPosition(normalizedCoordinates), out parcel);
-
             mark = null;
-
-            if (parcelExists)
-            {
-                mark = GetPinMarkerOnParcel(parcel);
-            }
-
+            if (parcelExists) { mark = GetPinMarkerOnParcel(parcel); }
             return parcelExists;
         }
 
         public IPinMarker? GetPinMarkerOnParcel(Vector2Int parcel)
         {
-            //if (markerController != null)
-            {
-                foreach (IPinMarker mark in markerController.markers.Values)
-                {
-                    if (mark.ParcelPosition == parcel) { return mark; }
-                }
-            }
+            foreach (IPinMarker mark in markerController.markers.Values)
+                if (mark.ParcelPosition == parcel) { return mark; }
             return null;
         }
 
