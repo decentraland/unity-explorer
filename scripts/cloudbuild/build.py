@@ -27,6 +27,8 @@ parser.add_argument('--delete', help='Delete build target after PR is closed or 
 def get_target(target):
     response = requests.get(f'{URL}/buildtargets/{target}', headers=HEADERS)
 
+    print(f'get_target requesr url: "{URL}/buildtargets/{target}"')
+
     if response.status_code == 200:
         return response.json()
     elif response.status_code == 404:
@@ -61,6 +63,7 @@ def clone_current_target():
     # Set target name based on branch, without commit SHA
     base_target_name  = f'{re.sub(r'^t_', '', os.getenv('TARGET'))}-{re.sub('[^A-Za-z0-9]+', '-', os.getenv('BRANCH_NAME'))}'.lower()
 
+    print(f"Start clone_current_target for {base_target_name}")
     if is_release_workflow:
          # Use the tag version in the target name if it's a release workflow
         tag_version = os.getenv('TAG_VERSION', 'unknown-version')
@@ -90,9 +93,11 @@ def clone_current_target():
             print(f"Using cache build target: {new_target_name}")
         response = requests.put(f'{URL}/buildtargets/{new_target_name}', headers=HEADERS, json=body)
 
+    print(f"clone_current_target response status: {response.status_code}")
     if response.status_code == 200 or response.status_code == 201:
         # Override target ENV
         os.environ['TARGET'] = new_target_name
+        print("Copying to TARGET env var. {new_target_name}")
     elif response.status_code == 500 and 'Build target name already in use for this project!' in response.text:
         print('Target update failed due to a possible race condition. Retrying...')
         time.sleep(2)  # Add a small delay before retrying
@@ -115,8 +120,11 @@ def set_parameters(params):
         'TEST_ENV_GIT': 'workflowDefault'
     }
     body = hardcoded_params | params
-    response = requests.put(f'{URL}/buildtargets/{os.getenv('TARGET')}/envvars', headers=HEADERS, json=body)
-
+    url = f'{URL}/buildtargets/{os.getenv("TARGET")}/envvars'
+    print(f"Request URL: {url}")
+    
+    response = requests.put(url, headers=HEADERS, json=body)
+    
     if response.status_code == 200:
         print("Parameters set successfully. Response:", response.json())
     else:
@@ -322,10 +330,14 @@ def get_any_running_builds(target, trueOnError = True):
             sys.exit(1)
 
 def delete_current_target():
-    response = requests.delete(f'{URL}/buildtargets/{os.getenv('TARGET')}', headers=HEADERS)
+
+    base_target_name  = f'{re.sub(r'^t_', '', os.getenv('TARGET'))}-{re.sub('[^A-Za-z0-9]+', '-', os.getenv('BRANCH_NAME'))}'.lower()
+    response = requests.delete(f'{URL}/buildtargets/{base_target_name}', headers=HEADERS)
 
     if response.status_code == 204:
-        print('Build target deleted successfully')
+        print(f'Build target deleted successfully: "{base_target_name}"')
+    elif response.status_code == 404:
+        print(f'Build target not found: "{base_target_name}"')
     else:
         print('Build target failed to be deleted with status code:', response.status_code)
         print('Response body:', response.text)
