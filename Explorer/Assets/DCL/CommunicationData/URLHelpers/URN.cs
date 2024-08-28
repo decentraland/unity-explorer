@@ -34,7 +34,7 @@ namespace CommunicationData.URLHelpers
         public bool Equals(int other) => Equals(other.ToString());
 
         public bool Equals(URN other) =>
-            Equals(other.originalUrn);
+            Equals(other.lowercaseUrn);
 
         public bool Equals(string other) =>
             string.Equals(lowercaseUrn, other);
