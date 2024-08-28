@@ -40,7 +40,8 @@ MonoBehaviour:
   - {fileID: 2784079933934147183}
   - {fileID: 3276125648839237000}
   - {fileID: 2152243025009476847}
-  m_RendererFeatureMap: 228dedc75e290e946f167000f309a32688dd9b82eb22772def8400d0a04dde1d
+  - {fileID: 1798844783772877419}
+  m_RendererFeatureMap: 228dedc75e290e946f167000f309a32688dd9b82eb22772def8400d0a04dde1d6bc2d8d6ccc7f618
   m_UseNativeRenderPass: 0
   postProcessData: {fileID: 11400000, guid: 3235692a041298c4f94f71909ca0b8a2, type: 2}
   xrSystemData: {fileID: 11400000, guid: 60e1133243b97e347b653163a8c01b64, type: 2}
@@ -79,6 +80,48 @@ MonoBehaviour:
   m_CopyDepthMode: 0
   m_AccurateGbufferNormals: 0
   m_IntermediateTextureMode: 1
+--- !u!114 &1798844783772877419
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6b3d386ba5cd94485973aee1479b272e, type: 3}
+  m_Name: RenderNameTags
+  m_EditorClassIdentifier: 
+  m_Active: 1
+  settings:
+    passTag: RenderNameTags
+    Event: 500
+    filterSettings:
+      RenderQueueType: 1
+      LayerMask:
+        serializedVersion: 2
+        m_Bits: 32
+      PassNames: []
+    overrideMaterial: {fileID: 0}
+    overrideMaterialPassIndex: 0
+    overrideShader: {fileID: 0}
+    overrideShaderPassIndex: 0
+    overrideMode: 0
+    overrideDepthState: 0
+    depthCompareFunction: 4
+    enableWrite: 1
+    stencilSettings:
+      overrideStencilState: 0
+      stencilReference: 0
+      stencilCompareFunction: 8
+      passOperation: 0
+      failOperation: 0
+      zFailOperation: 0
+    cameraSettings:
+      overrideCamera: 0
+      restoreCamera: 1
+      offset: {x: 0, y: 0, z: 0, w: 0}
+      cameraFieldOfView: 60
 --- !u!114 &2152243025009476847
 MonoBehaviour:
   m_ObjectHideFlags: 0

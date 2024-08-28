@@ -2,7 +2,7 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Audio;
-using DCL.Input.UnityInputSystem.Blocks;
+using DCL.Input;
 using DCL.SceneLoadingScreens;
 using MVC;
 using System;

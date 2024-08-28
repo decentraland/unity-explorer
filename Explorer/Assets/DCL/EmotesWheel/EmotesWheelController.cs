@@ -8,7 +8,6 @@ using DCL.Diagnostics;
 using DCL.ExplorePanel;
 using DCL.Input;
 using DCL.Input.Component;
-using DCL.Input.UnityInputSystem.Blocks;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI;
@@ -232,16 +231,14 @@ namespace DCL.EmotesWheel
 
         private void UnblockUnwantedInputs()
         {
-            inputBlock.UnblockInputs(InputMapComponent.Kind.EmoteWheel);
-            // We also disable shortcuts because the wheel can be opened and closed with the same key bind
-            // If we leave it enabled, it will close and then re-open instantly
-            inputBlock.BlockInputs(InputMapComponent.Kind.Emotes , InputMapComponent.Kind.Shortcuts);
+            inputBlock.Enable(InputMapComponent.Kind.EmoteWheel);
+            inputBlock.Disable(InputMapComponent.Kind.Emotes);
         }
 
         private void BlockUnwantedInputs()
         {
-            inputBlock.BlockInputs(InputMapComponent.Kind.EmoteWheel);
-            inputBlock.UnblockInputs(InputMapComponent.Kind.Emotes, InputMapComponent.Kind.Shortcuts);
+            inputBlock.Disable(InputMapComponent.Kind.EmoteWheel);
+            inputBlock.Enable(InputMapComponent.Kind.Emotes);
         }
 
         private void ListenToSlotsInput(InputActionMap inputActionMap)
