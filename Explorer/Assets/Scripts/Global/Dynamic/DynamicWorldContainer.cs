@@ -82,6 +82,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.Assertions.Must;
 using UnityEngine.Audio;
 using UnityEngine.EventSystems;
 using UnityEngine.Pool;
@@ -477,11 +478,11 @@ namespace Global.Dynamic
                     staticContainer.CacheCleaner,
                     chatEntryConfiguration,
                     new DefaultFaceFeaturesHandler(wearableCatalog),
-                    entityParticipantTable,
                     nametagsData,
                     container.DefaultTexturesContainer.TextureArrayContainerFactory,
                     wearableCatalog,
-                    remoteEntities),
+                    remoteEntities,
+                    staticContainer.CharacterContainer.Transform),
                 new MainUIPlugin(container.MvcManager, sidebarBus, mainUIView),
                 new ProfilePlugin(container.ProfileRepository, profileCache, staticContainer.CacheCleaner, new ProfileIntentionCache()),
                 new MapRendererPlugin(container.MapRendererContainer.MapRenderer),

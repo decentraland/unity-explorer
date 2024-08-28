@@ -57,7 +57,6 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
         private static readonly QueryDescription AVATARS_QUERY = new QueryDescription().WithAll<Profile, RandomAvatar>().WithNone<PlayerComponent>();
 
         private readonly IRealmData realmData;
-        private readonly IEntityParticipantTable entityParticipantTable;
         private readonly IComponentPool<Transform> transformPool;
 
         private readonly DebugWidgetVisibilityBinding? debugVisibilityBinding;
@@ -74,22 +73,23 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
         private int lastIndexInstantiated;
         private readonly AvatarRandomizerAsset avatarRandomizerAsset;
         private readonly RemoteEntities remoteEntities;
+        private readonly ExposedTransform playerTransform;
 
         internal InstantiateRandomAvatarsSystem(
             World world,
             IDebugContainerBuilder debugBuilder,
             IRealmData realmData,
-            IEntityParticipantTable entityParticipantTable,
             IComponentPool<Transform> componentPools,
             AvatarRandomizerAsset avatarRandomizerAsset,
-            RemoteEntities remoteEntities
+            RemoteEntities remoteEntities,
+            ExposedTransform playerTransform
         ) : base(world)
         {
             this.realmData = realmData;
-            this.entityParticipantTable = entityParticipantTable;
             transformPool = componentPools;
             this.avatarRandomizerAsset = avatarRandomizerAsset;
             this.remoteEntities = remoteEntities;
+            this.playerTransform = playerTransform;
 
             debugBuilder.TryAddWidget("Avatar Debug")
                        ?.SetVisibilityBinding(debugVisibilityBinding = new DebugWidgetVisibilityBinding(false))
@@ -239,7 +239,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
             }
 
             if (randomAvatarRequest.IsSelfReplica)
-                GenerateSelfReplicaAvatar(cameraComponent.Camera.transform.position);
+                GenerateSelfReplicaAvatar();
             else
                 GenerateRandomAvatars(randomAvatarRequest.RandomAvatarsToInstantiate, cameraComponent.Camera.transform.position, characterControllerSettings);
 
@@ -341,17 +341,15 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
             );
         }
 
-        private void GenerateSelfReplicaAvatar(Vector3 cameraPosition)
+        private void GenerateSelfReplicaAvatar()
         {
-            float startXPosition = cameraPosition.x;
-            float startZPosition = cameraPosition.z;
-
             RemoteProfile remoteProfile = new RemoteProfile(Profile.NewRandomProfile(RemotePlayerMovementComponent.TEST_ID), RemotePlayerMovementComponent.TEST_ID);
 
             var selfReplicaEntity = remoteEntities.TryCreateOrUpdateRemoteEntity(remoteProfile, World);
 
             var transformComp = World.Get<CharacterTransform>(selfReplicaEntity);
-            transformComp.Transform.position = StartRandomPosition(0, startXPosition, startZPosition);
+
+            transformComp.Transform.position = playerTransform.Position;
             transformComp.Transform.name = RemotePlayerMovementComponent.TEST_ID;
 
             TrailRenderer trail = transformComp.Transform.gameObject.AddComponent<TrailRenderer>();
