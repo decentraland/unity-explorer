@@ -34,7 +34,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
                 }, null);
 
             ecsToCRDTWriter = Substitute.For<IECSToCRDTWriter>();
-            system = new UIInputInstantiationSystem(world, poolsRegistry, ecsToCRDTWriter, new IInputBlock.Fake());
+            system = new UIInputInstantiationSystem(world, poolsRegistry, ecsToCRDTWriter, Substitute.For<IInputBlock>());
             entity = world.Create();
             uiTransformComponent = AddUITransformToEntity(entity);
             world.Add(entity, new CRDTEntity(500));

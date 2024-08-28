@@ -547,7 +547,7 @@ namespace Global.Dynamic
                 staticContainer.CharacterContainer.CreateGlobalPlugin(),
                 staticContainer.QualityContainer.CreatePlugin(),
                 landscapePlugin,
-                new MultiplayerMovementPlugin(assetsProvisioner, new MultiplayerMovementMessageBus(container.MessagePipesHub, entityParticipantTable)),
+                new MultiplayerMovementPlugin(assetsProvisioner, new MultiplayerMovementMessageBus(container.MessagePipesHub, entityParticipantTable, globalWorld)),
                 container.LODContainer.LODPlugin,
                 container.LODContainer.RoadPlugin,
                 new AudioPlaybackPlugin(genesisTerrain, assetsProvisioner, dynamicWorldParams.EnableLandscape),
