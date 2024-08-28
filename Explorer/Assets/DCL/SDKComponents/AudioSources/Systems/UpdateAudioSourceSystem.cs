@@ -54,6 +54,7 @@ namespace DCL.SDKComponents.AudioSources
         {
             CreateAudioSourceQuery(World);
             UpdateAudioSourceQuery(World);
+            UpdateAudioSourceMuteQuery(World);
         }
 
         [Query]
@@ -121,6 +122,21 @@ namespace DCL.SDKComponents.AudioSources
             }
 
             sdkComponent.IsDirty = false;
+        }
+
+        /// <summary>
+        /// Mutes an AudioSource depending on whether its world position in contained in the current scene.
+        /// If the AudioSource is in the bounding box of the scene, it is un-muted; otherwise it is muted.
+        /// </summary>
+        /// <param name="entity">The entity that contains the AudioSource and its Transform.</param>
+        /// <param name="component">The AudioSource component.</param>
+        [Query]
+        private void UpdateAudioSourceMute(in Entity entity, ref AudioSourceComponent component)
+        {
+            Vector3 audioWorldPosition = World.Get<TransformComponent>(entity).Transform.position;
+            component.Mute(audioWorldPosition.y > sceneData.Geometry.Height
+                            || audioWorldPosition.y < 0.0f
+                            || !sceneData.Geometry.CircumscribedPlanes.Intersects(audioWorldPosition));
         }
     }
 }

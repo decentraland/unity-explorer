@@ -121,21 +121,17 @@ namespace Utility
             }
         }
 
-        public static Vector2Int WorldToGridPosition(Vector3 worldPosition)
-        {
-            return new Vector2Int(
+        public static Vector2Int WorldToGridPosition(Vector3 worldPosition) =>
+            new (
                 (int)Mathf.Floor(worldPosition.x / PARCEL_SIZE),
                 (int)Mathf.Floor(worldPosition.z / PARCEL_SIZE)
             );
-        }
 
-        public static Vector2 WorldToGridPositionUnclamped(Vector3 worldPosition)
-        {
-            return new Vector2(
+        public static Vector2 WorldToGridPositionUnclamped(Vector3 worldPosition) =>
+            new (
                 worldPosition.x / PARCEL_SIZE,
                 worldPosition.z / PARCEL_SIZE
             );
-        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool Intersects(this in SceneCircumscribedPlanes boundingPlanes, Bounds bounds)
@@ -146,6 +142,17 @@ namespace Utility
             return boundingPlanes.MinX < min.x && boundingPlanes.MaxX > max.x
                                                && boundingPlanes.MinZ < min.z && boundingPlanes.MaxZ > max.z;
         }
+
+        /// <summary>
+        /// Checks whether a point is contained in the XZ projection of the bounding box of a scene.
+        /// </summary>
+        /// <param name="boundingPlanes">The project bounding-box rectangle.</param>
+        /// <param name="point">The point to check.</param>
+        /// <returns>True if the point intersects the rectangle; False otherwise.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool Intersects(this in SceneCircumscribedPlanes boundingPlanes, Vector3 point) =>
+            boundingPlanes.MinX < point.x && boundingPlanes.MaxX > point.x
+                                          && boundingPlanes.MinZ < point.z && boundingPlanes.MaxZ > point.z;
 
         public readonly struct ParcelCorners
         {
