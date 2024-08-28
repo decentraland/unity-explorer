@@ -433,7 +433,7 @@ namespace Global.Dynamic
 
             var  messageEncodingSettings = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.CursorSettings, ct)).Value;
 
-            container.multiplayerMovementMessageBus = new MultiplayerMovementMessageBus(container.MessagePipesHub, entityParticipantTable);
+            container.multiplayerMovementMessageBus = new MultiplayerMovementMessageBus(container.MessagePipesHub, entityParticipantTable, globalWorld);
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
@@ -621,13 +621,6 @@ namespace Global.Dynamic
             BuildReloadSceneWidget(debugBuilder, container.ChatMessagesBus);
 
             return (container, true);
-        }
-
-        public void InitializeWorldRelatedModules(World world, Entity playerEntity)
-        {
-            reloadSceneController!.Initialize(world, playerEntity);
-            wearablesProvider!.Initialize(world);
-            multiplayerMovementMessageBus.InjectWorld(world);
         }
 
         private static URN[]? ParseSelfForcedEmotes(IAppArgs appParams)

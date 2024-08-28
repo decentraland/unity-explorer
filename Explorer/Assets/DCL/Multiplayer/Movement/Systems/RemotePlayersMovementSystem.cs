@@ -32,7 +32,6 @@ namespace DCL.Multiplayer.Movement.Systems
 
         protected override void Update(float t)
         {
-            messageBus.InjectWorld(World!);
             UpdateRemotePlayersMovementQuery(World, t);
         }
 
