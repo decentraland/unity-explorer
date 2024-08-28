@@ -11,7 +11,6 @@ using LiveKit.Proto;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using UnityEngine;
 using Utility.Multithreading;
 
 namespace DCL.Multiplayer.Emotes
