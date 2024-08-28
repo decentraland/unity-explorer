@@ -8,11 +8,13 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
 {
     public class RestartRealmStartupOperation : IStartupOperation
     {
+        private readonly RealFlowLoadingStatus loadingStatus;
         private readonly IRealmController realmController;
         private bool reloadRealm;
 
-        public RestartRealmStartupOperation(IRealmController realmController)
+        public RestartRealmStartupOperation(RealFlowLoadingStatus loadingStatus, IRealmController realmController)
         {
+            this.loadingStatus = loadingStatus;
             this.realmController = realmController;
         }
 
@@ -26,6 +28,7 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
             if (reloadRealm)
                 await realmController.RestartRealmAsync(ct);
 
+            report.SetProgress(loadingStatus.SetStage(RealFlowLoadingStatus.Stage.RealmRestarted));
             return Result.SuccessResult();
         }
     }
