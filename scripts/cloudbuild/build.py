@@ -93,6 +93,7 @@ def clone_current_target():
     if response.status_code == 200 or response.status_code == 201:
         # Override target ENV
         os.environ['TARGET'] = new_target_name
+        print("Copying to TARGET env var. {new_target_name}")
     elif response.status_code == 500 and 'Build target name already in use for this project!' in response.text:
         print('Target update failed due to a possible race condition. Retrying...')
         time.sleep(2)  # Add a small delay before retrying
@@ -115,8 +116,11 @@ def set_parameters(params):
         'TEST_ENV_GIT': 'workflowDefault'
     }
     body = hardcoded_params | params
-    response = requests.put(f'{URL}/buildtargets/{os.getenv('TARGET')}/envvars', headers=HEADERS, json=body)
-
+    url = f'{URL}/buildtargets/{os.getenv("TARGET")}/envvars'
+    print(f"Request URL: {url}")
+    
+    response = requests.put(url, headers=HEADERS, json=body)
+    
     if response.status_code == 200:
         print("Parameters set successfully. Response:", response.json())
     else:
