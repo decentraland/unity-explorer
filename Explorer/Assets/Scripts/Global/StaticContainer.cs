@@ -146,7 +146,7 @@ namespace Global
             container.ScenesCache = new ScenesCache();
             container.SceneReadinessReportQueue = new SceneReadinessReportQueue(container.ScenesCache);
 
-            container.InputBlock = new InputBlock(container.InputProxy, container.GlobalWorldProxy, container.PlayerEntityProxy);
+            container.InputBlock = new InputBlock(container.GlobalWorldProxy);
 
             container.assetsProvisioner = assetsProvisioner;
             var exposedPlayerTransform = new ExposedTransform();

@@ -92,10 +92,10 @@ namespace DCL.Landscape.Systems
 
                 terrainVisibilities[i] = new VisibleBounds
                 {
-                    Bounds = new AABB
+                    Bounds = new Bounds
                     {
-                        Center = bounds.center,
-                        Extents = bounds.extents,
+                        center = bounds.center,
+                        extents = bounds.extents,
                     },
                 };
             }
