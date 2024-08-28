@@ -326,10 +326,14 @@ def get_any_running_builds(target, trueOnError = True):
             sys.exit(1)
 
 def delete_current_target():
-    response = requests.delete(f'{URL}/buildtargets/{os.getenv('TARGET')}', headers=HEADERS)
+
+    base_target_name  = f'{re.sub(r'^t_', '', os.getenv('TARGET'))}-{re.sub('[^A-Za-z0-9]+', '-', os.getenv('BRANCH_NAME'))}'.lower()
+    response = requests.delete(f'{URL}/buildtargets/{base_target_name}', headers=HEADERS)
 
     if response.status_code == 204:
-        print('Build target deleted successfully')
+        print(f'Build target deleted successfully: "{base_target_name}"')
+    elif response.status_code == 404:
+        print(f'Build target not found: "{base_target_name}"')
     else:
         print('Build target failed to be deleted with status code:', response.status_code)
         print('Response body:', response.text)
