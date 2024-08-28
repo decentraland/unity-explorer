@@ -27,7 +27,7 @@ parser.add_argument('--delete', help='Delete build target after PR is closed or 
 def get_target(target):
     response = requests.get(f'{URL}/buildtargets/{target}', headers=HEADERS)
 
-    print(f'get_target requesr url: "{URL}/buildtargets/{target}"')
+    print(f'get_target request url: "{URL}/buildtargets/{target}"')
 
     if response.status_code == 200:
         return response.json()
@@ -97,7 +97,7 @@ def clone_current_target():
     if response.status_code == 200 or response.status_code == 201:
         # Override target ENV
         os.environ['TARGET'] = new_target_name
-        print("Copying to TARGET env var. {new_target_name}")
+        print(f"Copying to TARGET env var. {new_target_name}")
     elif response.status_code == 500 and 'Build target name already in use for this project!' in response.text:
         print('Target update failed due to a possible race condition. Retrying...')
         time.sleep(2)  # Add a small delay before retrying
@@ -319,7 +319,7 @@ def get_any_running_builds(target, trueOnError = True):
             return False
         else:
             print('Found at least one running build on build target')
-            return True;
+            return True
     else:
         print('Failed to check running builds on build target with status code:', response.status_code)
         print('Response body:', response.text)
@@ -331,30 +331,33 @@ def get_any_running_builds(target, trueOnError = True):
 
 def delete_current_target():
 
-    target = 'macos'
-    base_target_name  = f'{target}-{re.sub('[^A-Za-z0-9]+', '-', os.getenv('BRANCH_NAME'))}'.lower()
-    response = requests.delete(f'{URL}/buildtargets/{base_target_name}', headers=HEADERS)
-
-    if response.status_code == 204:
-        print(f'Build target deleted successfully: "{base_target_name}"')
-    elif response.status_code == 404:
-        print(f'Build target not found: "{base_target_name}"')
+    # List of targets to delete
+    targets = ['macos', 'windows64']
+    
+    # Track successful deletions
+    successful_deletions = 0
+    
+    # Loop through each target
+    for target in targets:
+        base_target_name = f'{target}-{re.sub("[^A-Za-z0-9]+", "-", os.getenv("BRANCH_NAME"))}'.lower()
+        response = requests.delete(f'{URL}/buildtargets/{base_target_name}', headers=HEADERS)
+        
+        if response.status_code == 204:
+            print(f'Build target deleted successfully: "{base_target_name}"')
+            successful_deletions += 1
+        elif response.status_code == 404:
+            print(f'Build target not found: "{base_target_name}"')
+        else:
+            print('Build target failed to be deleted with status code:', response.status_code)
+            print('Response body:', response.text)
+            sys.exit(1)
+    
+    # Check if both targets were deleted successfully
+    if successful_deletions == len(targets):
+        print('Both build targets deleted successfully. Exiting...')
+        sys.exit(0)
     else:
-        print('Build target failed to be deleted with status code:', response.status_code)
-        print('Response body:', response.text)
-        sys.exit(1)
-
-    target = 'windows64'
-    base_target_name  = f'{target}-{re.sub('[^A-Za-z0-9]+', '-', os.getenv('BRANCH_NAME'))}'.lower()
-    response = requests.delete(f'{URL}/buildtargets/{base_target_name}', headers=HEADERS)
-
-    if response.status_code == 204:
-        print(f'Build target deleted successfully: "{base_target_name}"')
-    elif response.status_code == 404:
-        print(f'Build target not found: "{base_target_name}"')
-    else:
-        print('Build target failed to be deleted with status code:', response.status_code)
-        print('Response body:', response.text)
+        print(f'Only {successful_deletions} build target(s) deleted. Exiting...')
         sys.exit(1)
 
 # Entrypoint here ->
