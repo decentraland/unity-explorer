@@ -1,7 +1,7 @@
 ﻿using CRDT;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.ECSComponents;
-using DCL.Input.UnityInputSystem.Blocks;
+using DCL.Input;
 using DCL.Optimization.Pools;
 using DCL.SDKComponents.SceneUI.Components;
 using DCL.SDKComponents.SceneUI.Defaults;
@@ -34,7 +34,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
                 }, null);
 
             ecsToCRDTWriter = Substitute.For<IECSToCRDTWriter>();
-            system = new UIInputInstantiationSystem(world, poolsRegistry, ecsToCRDTWriter, new IInputBlock.Fake());
+            system = new UIInputInstantiationSystem(world, poolsRegistry, ecsToCRDTWriter, Substitute.For<IInputBlock>());
             entity = world.Create();
             uiTransformComponent = AddUITransformToEntity(entity);
             world.Add(entity, new CRDTEntity(500));

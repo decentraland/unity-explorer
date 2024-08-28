@@ -1,5 +1,5 @@
 using Cysharp.Threading.Tasks;
-using DCL.Input.UnityInputSystem.Blocks;
+using DCL.Input;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
