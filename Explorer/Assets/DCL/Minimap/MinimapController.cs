@@ -191,7 +191,7 @@ namespace DCL.Minimap
 
         private void GetPlaceInfoAsync(Vector3 playerPosition)
         {
-            Vector2Int playerParcelPosition = ParcelMathHelper.WorldToGridPosition(playerPosition);
+            Vector2Int playerParcelPosition = playerPosition.ToParcel();
 
             if (previousParcelPosition == playerParcelPosition)
                 return;

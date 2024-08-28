@@ -12,9 +12,7 @@ namespace DCL.Multiplayer.Movement.Systems
     [LogCategory(ReportCategory.MULTIPLAYER_MOVEMENT)]
     public partial class CleanUpRemoteMotionSystem : BaseUnityLoopSystem
     {
-        internal CleanUpRemoteMotionSystem(World world) : base(world)
-        {
-        }
+        internal CleanUpRemoteMotionSystem(World world) : base(world) { }
 
         protected override void Update(float t)
         {
