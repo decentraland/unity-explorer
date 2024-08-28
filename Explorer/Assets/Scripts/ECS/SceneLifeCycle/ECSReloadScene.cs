@@ -30,8 +30,7 @@ namespace ECS.SceneLifeCycle
 
         public async UniTask<bool> TryReloadSceneAsync(CancellationToken ct)
         {
-            var playerPos = world.Get<CharacterTransform>(playerEntity).Transform.position;
-            var parcel = ParcelMathHelper.FloorToParcel(playerPos);
+            var parcel =  world.Get<CharacterTransform>(playerEntity).Transform.ParcelPosition();
 
             if (!scenesCache.TryGetByParcel(parcel, out var sceneInCache)) return false;
 
