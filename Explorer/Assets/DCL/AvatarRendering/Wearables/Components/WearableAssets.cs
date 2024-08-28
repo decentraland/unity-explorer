@@ -1,5 +1,4 @@
 ﻿using DCL.AvatarRendering.Loading.Assets;
-using DCL.AvatarRendering.Wearables.Helpers;
 using ECS.StreamableLoading.Common.Components;
 using UnityEngine.Assertions;
 
@@ -14,7 +13,7 @@ namespace DCL.AvatarRendering.Wearables.Components
         /// <summary>
         ///     If the element is null it's a signal that the intent to load it was not yet created
         /// </summary>
-        public StreamableLoadingResult<AttachmentAssetBase>?[] Results;
+        public StreamableLoadingResult<AttachmentAssetBase>?[]? Results;
 
         /// <summary>
         ///     Whether the results were replaced with default ones
@@ -23,7 +22,7 @@ namespace DCL.AvatarRendering.Wearables.Components
 
         public void AddReference()
         {
-            for (var i = 0; i < Results.Length; i++)
+            for (var i = 0; i < Results?.Length; i++)
                 Results[i]?.Asset?.AddReference();
         }
 

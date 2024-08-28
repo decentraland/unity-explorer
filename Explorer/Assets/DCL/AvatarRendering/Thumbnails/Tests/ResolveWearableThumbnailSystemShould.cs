@@ -1,6 +1,7 @@
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Loading.Components;
+using DCL.AvatarRendering.Loading.DTO;
 using DCL.AvatarRendering.Thumbnails.Systems;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
@@ -10,8 +11,8 @@ using ECS.SceneLifeCycle.Tests;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
 using ECS.TestSuite;
-using NSubstitute;
 using NUnit.Framework;
+using System.Collections.Generic;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.Texture2D, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
 namespace DCL.AvatarRendering.Wearables.Tests
@@ -37,16 +38,25 @@ namespace DCL.AvatarRendering.Wearables.Tests
         private WearableCache wearableCache;
         private RealmData realmData;
 
-        private IWearable CreateMockWearable(URN urn, bool isUnisex)
-        {
-            IWearable wearable = Substitute.For<IWearable>();
-            wearable.GetUrn().Returns(urn);
-            wearable.IsUnisex().Returns(isUnisex);
-            wearable.GetCategory().Returns(WearablesConstants.Categories.UPPER_BODY);
-            wearable.GetThumbnail().Returns(new URLPath("bafybeie7lzqakerm4n4x7557g3va4sv7aeoniexlomdgjskuoubo6s3mku"));
-            wearable.Model.Returns(new StreamableLoadingResult<WearableDTO>(new WearableDTO { id = urn }));
-            return wearable;
-        }
+        private static IWearable CreateMockWearable(URN urn, bool isUnisex) =>
+            new IWearable.Fake(
+                new WearableDTO
+                {
+                    metadata = new WearableDTO.WearableMetadataDto
+                    {
+                        id = urn,
+                        thumbnail = "bafybeie7lzqakerm4n4x7557g3va4sv7aeoniexlomdgjskuoubo6s3mku",
+                        data =
+                        {
+                            representations = isUnisex
+                                ? new AvatarAttachmentDTO.Representation[] { new (), new () }
+                                : new AvatarAttachmentDTO.Representation[] { new () },
+                            category = WearablesConstants.Categories.UPPER_BODY,
+                        },
+                    },
+                },
+                model: new StreamableLoadingResult<WearableDTO>(new WearableDTO { id = urn })
+            );
 
         [Test]
         public void ResolveWearableThumbnail()

@@ -29,6 +29,11 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             }
         }
 
+        internal void AddToInternalCache(IWearable wearable)
+        {
+            wearablesCache.Add(wearable.GetUrn(), wearable);
+        }
+
         public void AddEmptyWearable(URN urn, bool qualifiedForUnloading = true)
         {
             lock (lockObject) { AddWearable(urn, new Wearable(), qualifiedForUnloading); }

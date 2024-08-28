@@ -33,6 +33,16 @@ namespace DCL.AvatarRendering.Loading.DTO
             public string[] contents;
             public string[] overrideHides;
             public string[] overrideReplaces;
+
+            public static Representation NewFakeRepresentation() =>
+                new()
+                {
+                    bodyShapes = Array.Empty<string>(),
+                    mainFile = string.Empty,
+                    contents = Array.Empty<string>(),
+                    overrideHides = Array.Empty<string>(),
+                    overrideReplaces = Array.Empty<string>(),
+                };
         }
 
         [Serializable]
@@ -75,7 +85,6 @@ namespace DCL.AvatarRendering.Loading.DTO
             public string code;
             public string text;
         }
-
     }
 
     public static class AvatarAttachmentDTOExtensions

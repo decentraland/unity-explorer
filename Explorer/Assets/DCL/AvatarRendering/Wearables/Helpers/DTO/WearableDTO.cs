@@ -12,7 +12,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         [Serializable]
         public class WearableMetadataDto : MetadataBase
         {
-            public DataDto data;
+            public DataDto data = new ();
             public override DataBase AbstractData => data;
 
             [Serializable]
