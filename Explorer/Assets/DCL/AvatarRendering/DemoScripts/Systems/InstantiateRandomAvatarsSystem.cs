@@ -300,7 +300,9 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
 
             transformComp.Transform.name = $"RANDOM_AVATAR_{avatarIndex}";
 
-            CharacterController characterController = transformComp.Transform.gameObject.AddComponent<CharacterController>();
+            CharacterController characterController = transformComp.Transform.TryGetComponent<CharacterController>(out var component)
+                ? component
+                : transformComp.Transform.gameObject.AddComponent<CharacterController>();
             characterController.radius = 0.4f;
             characterController.height = 2;
             characterController.center = Vector3.up;

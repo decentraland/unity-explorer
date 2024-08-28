@@ -3,7 +3,6 @@ using Arch.System;
 using Arch.SystemGroups;
 using DCL.Character.CharacterMotion.Components;
 using DCL.Character.Components;
-using DCL.CharacterMotion.Components;
 using DCL.Input;
 using DCL.Input.Systems;
 using ECS.Abstract;
@@ -34,9 +33,10 @@ namespace DCL.CharacterMotion.Systems
         }
 
         [Query]
-        [None(typeof(MovementBlockerComponent))]
         private void UpdateInput([Data] int tickValue, ref JumpInputComponent inputToUpdate)
         {
+            if (!inputAction.enabled) return;
+
             if (inputAction.WasPressedThisFrame())
                 inputToUpdate.Trigger.TickWhenJumpOccurred = tickValue + 1;
 

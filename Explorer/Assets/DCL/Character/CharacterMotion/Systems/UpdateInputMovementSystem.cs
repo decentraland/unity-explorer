@@ -29,24 +29,18 @@ namespace DCL.CharacterMotion.Systems
         protected override void Update(float t)
         {
             UpdateInputQuery(World);
-            ResetInputQuery(World);
         }
 
         [Query]
-        [All(typeof(MovementBlockerComponent))]
-        private static void ResetInput(ref MovementInputComponent inputToUpdate)
-        {
-            inputToUpdate.Axes = Vector2.zero;
-        }
-
-        [Query]
-        [None(typeof(MovementBlockerComponent))]
         private void UpdateInput(ref MovementInputComponent inputToUpdate)
         {
-            inputToUpdate.Axes = movementAxis.ReadValue<Vector2>();
-
             if (!movementAxis.enabled)
+            {
                 inputToUpdate.Axes = Vector2.zero;
+                return;
+            }
+
+            inputToUpdate.Axes = movementAxis.ReadValue<Vector2>();
 
             if (autoWalkAction.WasPerformedThisFrame()) { inputToUpdate.AutoWalk = !inputToUpdate.AutoWalk; }
 
