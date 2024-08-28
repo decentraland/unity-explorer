@@ -7,18 +7,18 @@ namespace DCL.Input
 {
     public class ECSInputBlock : IInputBlock
     {
-        private readonly ObjectProxy<World> globalWorld;
+        private readonly World globalWorld;
         private SingleInstanceEntity? inputMap;
 
-        public ECSInputBlock(ObjectProxy<World> globalWorld)
+        public ECSInputBlock(World globalWorld)
         {
             this.globalWorld = globalWorld;
         }
 
         public void Disable(params InputMapComponent.Kind[] kinds)
         {
-            inputMap ??= globalWorld.StrictObject.CacheInputMap();
-            ref var inputMapComponent = ref inputMap.Value.GetInputMapComponent(globalWorld.StrictObject);
+            inputMap ??= globalWorld.CacheInputMap();
+            ref InputMapComponent inputMapComponent = ref inputMap.Value.GetInputMapComponent(globalWorld);
 
             foreach (var kind in kinds)
                 inputMapComponent.BlockInput(kind);
@@ -26,8 +26,8 @@ namespace DCL.Input
 
         public void Enable(params InputMapComponent.Kind[] kinds)
         {
-            inputMap ??= globalWorld.StrictObject.CacheInputMap();
-            ref var inputMapComponent = ref inputMap.Value.GetInputMapComponent(globalWorld.StrictObject);
+            inputMap ??= globalWorld.CacheInputMap();
+            ref InputMapComponent inputMapComponent = ref inputMap.Value.GetInputMapComponent(globalWorld);
 
             foreach (var kind in kinds)
                 inputMapComponent.UnblockInput(kind);

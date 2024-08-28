@@ -50,7 +50,6 @@ namespace Global
     /// </summary>
     public class StaticContainer : IDCLPlugin<StaticSettings>
     {
-        public readonly ObjectProxy<World> GlobalWorldProxy = new ();
         public readonly ObjectProxy<Entity> PlayerEntityProxy = new ();
         public readonly ObjectProxy<DCLInput> InputProxy = new ();
         public readonly ObjectProxy<AvatarBase> MainPlayerAvatarBaseProxy = new ();
@@ -119,7 +118,7 @@ namespace Global
             IPluginSettingsContainer settingsContainer,
             IWeb3IdentityCache web3IdentityProvider,
             IEthereumApi ethereumApi,
-            World world,
+            World globalWorld,
             CancellationToken ct)
         {
             ProfilingCounters.CleanAllCounters();
@@ -130,13 +129,13 @@ namespace Global
 
             var container = new StaticContainer();
 
-            container.GlobalWorldProxy.SetObject(world);
+
             container.DebugContainerBuilder = DebugUtilitiesContainer.Create(debugViewsCatalog, appArgs.HasDebugFlag()).Builder;
             container.EthereumApi = ethereumApi;
             container.ScenesCache = new ScenesCache();
             container.SceneReadinessReportQueue = new SceneReadinessReportQueue(container.ScenesCache);
 
-            container.InputBlock = new ECSInputBlock(container.GlobalWorldProxy);
+            container.InputBlock = new ECSInputBlock(globalWorld);
 
             container.assetsProvisioner = assetsProvisioner;
             var exposedPlayerTransform = new ExposedTransform();
@@ -191,7 +190,7 @@ namespace Global
                 new MaterialsPlugin(sharedDependencies, videoTexturePool),
                 textureResolvePlugin,
                 new AssetsCollidersPlugin(sharedDependencies, container.PhysicsTickProvider),
-                new AvatarShapePlugin(container.GlobalWorldProxy),
+                new AvatarShapePlugin(globalWorld),
                 new AvatarAttachPlugin(container.MainPlayerAvatarBaseProxy, componentsContainer.ComponentPoolsRegistry),
                 new PrimitivesRenderingPlugin(sharedDependencies),
                 new VisibilityPlugin(),
@@ -203,9 +202,9 @@ namespace Global
                 new AnimatorPlugin(),
                 new TweenPlugin(),
                 new MediaPlayerPlugin(sharedDependencies, videoTexturePool, sharedDependencies.FrameTimeBudget, container.assetsProvisioner, container.WebRequestsContainer.WebRequestController, container.CacheCleaner),
-                new CharacterTriggerAreaPlugin(container.GlobalWorldProxy, container.MainPlayerAvatarBaseProxy, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, container.CharacterContainer.CharacterObject, componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner, container.CacheCleaner),
+                new CharacterTriggerAreaPlugin(globalWorld, container.MainPlayerAvatarBaseProxy, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, container.CharacterContainer.CharacterObject, componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner, container.CacheCleaner),
                 new InteractionsAudioPlugin(container.assetsProvisioner),
-                new MapPinPlugin(container.GlobalWorldProxy),
+                new MapPinPlugin(globalWorld),
                 new MultiplayerPlugin(),
                 new RealmInfoPlugin(container.RealmData, container.RoomHubProxy),
 
