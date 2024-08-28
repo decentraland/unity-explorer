@@ -23,6 +23,8 @@ using DCL.DebugUtilities.UIBindings;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Multiplayer.Movement;
+using DCL.Multiplayer.Profiles.Entities;
+using DCL.Multiplayer.Profiles.RemoteProfiles;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Optimization.Pools;
 using DCL.Profiles;
@@ -71,6 +73,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
         private bool requestDone;
         private int lastIndexInstantiated;
         private readonly AvatarRandomizerAsset avatarRandomizerAsset;
+        private readonly RemoteEntities remoteEntities;
 
         internal InstantiateRandomAvatarsSystem(
             World world,
@@ -78,16 +81,18 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
             IRealmData realmData,
             IEntityParticipantTable entityParticipantTable,
             IComponentPool<Transform> componentPools,
-            AvatarRandomizerAsset avatarRandomizerAsset
+            AvatarRandomizerAsset avatarRandomizerAsset,
+            RemoteEntities remoteEntities
         ) : base(world)
         {
             this.realmData = realmData;
             this.entityParticipantTable = entityParticipantTable;
             transformPool = componentPools;
             this.avatarRandomizerAsset = avatarRandomizerAsset;
+            this.remoteEntities = remoteEntities;
 
             debugBuilder.TryAddWidget("Avatar Debug")
-                        ?.SetVisibilityBinding(debugVisibilityBinding = new DebugWidgetVisibilityBinding(false))
+                       ?.SetVisibilityBinding(debugVisibilityBinding = new DebugWidgetVisibilityBinding(false))
                         .AddIntFieldWithConfirmation(30, "Instantiate", AddRandomAvatar)
                         .AddSingleButton("Instantiate Self Replica", AddRandomSelfReplicaAvatar)
                         .AddControl(new DebugConstLabelDef("Total Avatars"), new DebugLongMarkerDef(totalAvatarsInstantiated = new ElementBinding<ulong>(0), DebugLongMarkerDef.Unit.NoFormat))
@@ -181,14 +186,15 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
                 return;
             }
 
-            var collectionPromises = new List<ParamPromise>();
-
-            collectionPromises.Add(ParamPromise.Create(World,
-                new GetWearableByParamIntention(new[]
-                {
-                    ("collectionType", "base-wearable"), ("pageSize", "282"),
-                }, "DummyUser", new List<IWearable>(), 0),
-                PartitionComponent.TOP_PRIORITY));
+            var collectionPromises = new List<ParamPromise>
+            {
+                ParamPromise.Create(World,
+                    new GetWearableByParamIntention(new[]
+                    {
+                        ("collectionType", "base-wearable"), ("pageSize", "282"),
+                    }, "DummyUser", new List<IWearable>(), 0),
+                    PartitionComponent.TOP_PRIORITY),
+            };
 
             var randomAvatarRequest = new RandomAvatarRequest
             {
@@ -340,6 +346,11 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
             float startXPosition = cameraPosition.x;
             float startZPosition = cameraPosition.z;
 
+            Profile profile = new Profile();
+            RemoteProfile remoteProfile = new RemoteProfile(profile);
+
+            remoteEntities.TryCreateOrUpdateRemoteEntity(remoteProfile, World);
+
             AvatarRandomizer currentRandomizer = randomizers[Random.Range(0, randomizers.Length)];
 
             var wearables = new List<string>();
@@ -393,6 +404,8 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
             );
 
             entityParticipantTable.Register(RemotePlayerMovementComponent.TEST_ID, entity);
+
+
         }
 
         private static Vector3 StartRandomPosition(float spawnArea, float startXPosition, float startZPosition)

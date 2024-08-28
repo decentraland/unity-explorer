@@ -11,6 +11,7 @@ using LiveKit.Proto;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using UnityEngine;
 using Utility.Multithreading;
 
 namespace DCL.Multiplayer.Emotes
@@ -49,6 +50,7 @@ namespace DCL.Multiplayer.Emotes
 
         public void Send(URN emote, bool loopCyclePassed, bool sendToSelfReplica)
         {
+            Debug.Log($"VVV emote {emote}");
             if (cancellationTokenSource.IsCancellationRequested)
                 throw new Exception("EmoteMessagesBus is disposed");
 

@@ -23,6 +23,7 @@ using System.Threading;
 using DCL.AvatarRendering;
 using DCL.AvatarRendering.AvatarShape;
 using DCL.AvatarRendering.AvatarShape.Helpers;
+using DCL.Multiplayer.Profiles.Entities;
 using DCL.Multiplayer.Profiles.Tables;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -68,6 +69,7 @@ namespace DCL.PluginSystem.Global
         private readonly IEntityParticipantTable entityParticipantTable;
         private readonly TextureArrayContainerFactory textureArrayContainerFactory;
         private readonly IWearableCache wearableCache;
+        private readonly RemoteEntities remoteEntities;
 
         public AvatarPlugin(
             IComponentPoolsRegistry poolsRegistry,
@@ -83,7 +85,8 @@ namespace DCL.PluginSystem.Global
             IEntityParticipantTable entityParticipantTable,
             NametagsData nametagsData,
             TextureArrayContainerFactory textureArrayContainerFactory,
-            IWearableCache wearableCache)
+            IWearableCache wearableCache,
+            RemoteEntities remoteEntities)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.frameTimeCapBudget = frameTimeCapBudget;
@@ -98,6 +101,7 @@ namespace DCL.PluginSystem.Global
             this.nametagsData = nametagsData;
             this.textureArrayContainerFactory = textureArrayContainerFactory;
             this.wearableCache = wearableCache;
+            this.remoteEntities = remoteEntities;
             componentPoolsRegistry = poolsRegistry;
 
             cacheCleaner.Register(wearableAssetsCache);
@@ -152,7 +156,7 @@ namespace DCL.PluginSystem.Global
             NametagPlacementSystem.InjectToWorld(ref builder, nametagViewPool, chatEntryConfiguration, nametagsData, chatBubbleConfiguration);
 
             //Debug scripts
-            InstantiateRandomAvatarsSystem.InjectToWorld(ref builder, debugContainerBuilder, realmData, entityParticipantTable, transformPoolRegistry, avatarRandomizerAsset);
+            InstantiateRandomAvatarsSystem.InjectToWorld(ref builder, debugContainerBuilder, realmData, entityParticipantTable, transformPoolRegistry, avatarRandomizerAsset, remoteEntities);
         }
 
         private async UniTask CreateAvatarBasePoolAsync(AvatarShapeSettings settings, CancellationToken ct)
