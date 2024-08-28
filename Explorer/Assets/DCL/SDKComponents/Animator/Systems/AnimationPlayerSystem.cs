@@ -103,9 +103,8 @@ namespace DCL.SDKComponents.Animator.Systems
             foreach (SDKAnimationState sdkAnimationState in sdkAnimationStates)
                 isAnyAnimPlaying |= sdkAnimationState.Playing;
 
-            animator.enabled = isAnyAnimPlaying;
-
-            if (!isAnyAnimPlaying) return;
+            if (isAnyAnimPlaying)
+                animator.enabled = true;
 
             foreach (SDKAnimationState sdkAnimationState in sdkAnimationStates)
             {
@@ -120,6 +119,9 @@ namespace DCL.SDKComponents.Animator.Systems
 
                 animator.SetBool($"{name}_Enabled", sdkAnimationState.Playing);
                 animator.SetBool($"{name}_Loop", sdkAnimationState.Loop);
+
+                if (sdkAnimationState.ShouldReset)
+                    animator.Play(name, layerIndex, 0f);
 
                 if (sdkAnimationState.Playing)
                 {
@@ -142,8 +144,6 @@ namespace DCL.SDKComponents.Animator.Systems
                     // The animation state is reset automatically when the state is changed, either stops playing or exit on loop:false,
                     // it is how the animator works
                     // This behaviour could bring unexpected results since it works differently than unity-renderer
-                    // TODO: support reset
-                    // sdkAnimationState.ShouldReset
                 }
                 else
                 {
@@ -151,6 +151,14 @@ namespace DCL.SDKComponents.Animator.Systems
                     // otherwise it overrides the current playing state
                     animator.SetLayerWeight(layerIndex, 0f);
                 }
+            }
+
+            if (!isAnyAnimPlaying && animator.enabled)
+            {
+                // We need to apply the latest state before disabling the animator, otherwise we might get artifacts
+                // Like the turrets in metadynelabs.dcl.eth whose stops in the middle of the explosion animation when resetting the level
+                animator.Update(0);
+                animator.enabled = false;
             }
         }
     }
