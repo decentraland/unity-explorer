@@ -53,13 +53,12 @@ namespace DCL.CharacterMotion.Systems
             var movementKind = sprintAction.IsPressed() ? MovementKind.Run :
                 walkAction.IsPressed() ? MovementKind.Walk : MovementKind.Jog;
 
+            // Process fallbacks if a movement or combination of movements are blocked
             if (inputModifierComponent.DisableRun && movementKind == MovementKind.Run)
                 movementKind = inputModifierComponent.DisableJog ? MovementKind.Walk : MovementKind.Jog;
-
-            if (inputModifierComponent.DisableWalk && movementKind == MovementKind.Walk)
+            else if (inputModifierComponent.DisableWalk && movementKind == MovementKind.Walk)
                 movementKind = inputModifierComponent.DisableRun ? MovementKind.Jog : MovementKind.Run;
-
-            if (inputModifierComponent.DisableJog && movementKind == MovementKind.Jog)
+            else if (inputModifierComponent.DisableJog && movementKind == MovementKind.Jog)
                 movementKind = inputModifierComponent.DisableWalk ? MovementKind.Run : MovementKind.Walk;
 
             inputToUpdate.Kind = movementKind;
