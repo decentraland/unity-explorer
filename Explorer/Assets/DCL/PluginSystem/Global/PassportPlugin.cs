@@ -127,7 +127,7 @@ namespace DCL.PluginSystem.Global
                 badgesAPIClient,
                 webRequestController,
                 inputBlock,
-                notificationBusController
+                notificationsBusController
             );
 
             mvcManager.RegisterController(passportController);
