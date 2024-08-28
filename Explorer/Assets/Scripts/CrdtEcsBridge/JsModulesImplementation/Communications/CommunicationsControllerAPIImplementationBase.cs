@@ -103,9 +103,8 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
             ReadOnlySpan<byte> decodedMessage = receivedMessage.Data.Span;
             MsgType msgType = DecodeMessage(ref decodedMessage);
 
-            //TODO solve
-            // if (decodedMessage.Length == 0)
-            //     return;
+            if (decodedMessage.Length == 0)
+                return;
 
             OnMessageReceived(msgType, decodedMessage, receivedMessage.FromWalletId);
         }
