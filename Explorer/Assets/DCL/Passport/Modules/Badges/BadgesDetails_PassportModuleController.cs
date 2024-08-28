@@ -381,8 +381,10 @@ namespace DCL.Passport.Modules.Badges
 
         private void CreateBadgeDetailCard(BadgeInfo badge)
         {
+            if (isOwnProfile)
+                badge.isNew = BadgesUtils.IsBadgeNew(badge.id);
+
             var badgeDetailCard = badgeDetailCardsPool.Get();
-            badge.isNew = BadgesUtils.IsBadgeNew(badge.id);
             badgeDetailCard.Setup(badge, isOwnProfile);
             badgeDetailCard.Button.onClick.AddListener(() => { SelectBadgeCard(badgeDetailCard); });
 
@@ -415,7 +417,7 @@ namespace DCL.Passport.Modules.Badges
             badgeDetailCard.SetAsSelected(true);
             badgeInfoController.Setup(badgeDetailCard.Model, isOwnProfile);
 
-            if (!badgeDetailCard.Model.isLocked)
+            if (!badgeDetailCard.Model.isLocked && isOwnProfile)
             {
                 BadgesUtils.SetBadgeAsRead(badgeDetailCard.Model.id);
                 badgeDetailCard.SetAsNew(false);
