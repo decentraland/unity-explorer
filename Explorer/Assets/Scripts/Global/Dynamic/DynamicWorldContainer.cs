@@ -75,6 +75,7 @@ using LiveKit.Proto;
 using MVC;
 using MVC.PopupsController.PopupCloser;
 using SceneRunner.Debugging.Hub;
+using SceneRunner.Scene;
 using System;
 using System.Buffers;
 using System.Collections.Generic;
@@ -285,7 +286,7 @@ namespace Global.Dynamic
                 container.localSceneDevelopmentController = new LocalSceneDevelopmentController(container.reloadSceneController, dynamicWorldParams.LocalSceneDevelopmentRealm);
 
             container.RoomHub = localSceneDevelopment ? NullRoomHub.INSTANCE : new RoomHub(archipelagoIslandRoom, gateKeeperSceneRoom);
-            container.MessagePipesHub = new MessagePipesHub(container.RoomHub, multiPoolFactory()!, multiPoolFactory()!, memoryPool);
+            container.MessagePipesHub = new MessagePipesHub(container.RoomHub, multiPoolFactory()!, multiPoolFactory()!, memoryPool, staticContainer.ScenesCache);
 
             RoomsStatus roomsStatus = new RoomsStatus(
                 container.RoomHub,
