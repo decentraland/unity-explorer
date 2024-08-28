@@ -14,5 +14,6 @@ namespace DCL.BadgesAPIService
     public class BadgeInfo : BadgeData
     {
         public bool isLocked;
+        public bool isNew;
     }
 }

@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.BadgesAPIService;
 using DCL.Diagnostics;
 using DCL.Passport.Fields.Badges;
+using DCL.Passport.Utils;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI;
@@ -381,6 +382,7 @@ namespace DCL.Passport.Modules.Badges
         private void CreateBadgeDetailCard(BadgeInfo badge)
         {
             var badgeDetailCard = badgeDetailCardsPool.Get();
+            badge.isNew = BadgesUtils.IsBadgeNew(badge.id);
             badgeDetailCard.Setup(badge, isOwnProfile);
             badgeDetailCard.Button.onClick.AddListener(() => { SelectBadgeCard(badgeDetailCard); });
 
@@ -412,6 +414,12 @@ namespace DCL.Passport.Modules.Badges
 
             badgeDetailCard.SetAsSelected(true);
             badgeInfoController.Setup(badgeDetailCard.Model, isOwnProfile);
+
+            if (!badgeDetailCard.Model.isLocked)
+            {
+                BadgesUtils.SetBadgeAsRead(badgeDetailCard.Model.id);
+                badgeDetailCard.SetAsNew(false);
+            }
         }
 
         private void CreateEmptyDetailCards()

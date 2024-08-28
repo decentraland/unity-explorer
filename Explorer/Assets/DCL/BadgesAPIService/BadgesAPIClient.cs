@@ -2,7 +2,6 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.WebRequests;
-using System;
 using System.Collections.Generic;
 using System.Threading;
 
@@ -104,6 +103,7 @@ namespace DCL.BadgesAPIService
                     achievedTiers = badge.progress.achievedTiers,
                 },
                 isLocked = isLocked,
+                isNew = false,
             };
 
         // TODO (Santi): Remove these functions when the API is ready

@@ -21,6 +21,9 @@ namespace DCL.Passport.Fields.Badges
         public Button Button { get; private set; }
 
         [field: SerializeField]
+        public GameObject NewMark { get; private set; }
+
+        [field: SerializeField]
         public ImageView BadgeImage { get; private set; }
 
         [field: SerializeField]
@@ -85,6 +88,9 @@ namespace DCL.Passport.Fields.Badges
             IsSelected = isSelected;
         }
 
+        public void SetAsNew(bool isNew) =>
+            NewMark.SetActive(isNew);
+
         public void Setup(BadgeInfo badgeInfo, bool isOwnProfile)
         {
             Model = badgeInfo;
@@ -101,6 +107,7 @@ namespace DCL.Passport.Fields.Badges
             TopTierMark.SetActive(isOwnProfile && badgeInfo.isTier && !string.IsNullOrEmpty(badgeInfo.completedAt));
             NextTierTitle.SetActive(isOwnProfile && badgeInfo.isTier && badgeInfo.progress.stepsDone > 0 && string.IsNullOrEmpty(badgeInfo.completedAt));
             ProgressBar.gameObject.SetActive(showProgressBar);
+            SetAsNew(badgeInfo.isNew);
 
             if (isOwnProfile)
             {

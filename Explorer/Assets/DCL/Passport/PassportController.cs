@@ -15,6 +15,7 @@ using DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
 using DCL.Passport.Modules;
 using DCL.Passport.Modules.Badges;
+using DCL.Passport.Utils;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.WebRequests;
@@ -112,7 +113,8 @@ namespace DCL.Passport
             GetOwnProfileAsync(getOwnProfileCts.Token).Forget();
 
             passportProfileInfoController = new PassportProfileInfoController(selfProfile, world, playerEntity);
-            notificationBusController.SubscribeToNotificationTypeClick(NotificationType.BADGE_GRANTED, OnBadgeGranted);
+            notificationBusController.SubscribeToNotificationTypeReceived(NotificationType.BADGE_GRANTED, OnBadgeNotificationReceived);
+            notificationBusController.SubscribeToNotificationTypeClick(NotificationType.BADGE_GRANTED, OnBadgeNotificationClicked);
         }
 
         protected override void OnViewInstantiated()
@@ -302,7 +304,10 @@ namespace DCL.Passport
         private async UniTaskVoid GetOwnProfileAsync(CancellationToken ct) =>
             ownProfile = await selfProfile.ProfileAsync(ct);
 
-        private void OnBadgeGranted(object[] parameters)
+        private void OnBadgeNotificationReceived(INotification notification) =>
+            BadgesUtils.SetBadgeAsNew(((BadgeGrantedNotification)notification).Metadata.Id);
+
+        private void OnBadgeNotificationClicked(object[] parameters)
         {
             if (ownProfile == null || viewInstance == null || viewInstance.gameObject.activeSelf)
                 return;
