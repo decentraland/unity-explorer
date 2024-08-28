@@ -12,10 +12,10 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         private readonly IRealmData realmData;
         private readonly ExposedTransform playerTransform;
-        private readonly IWeb3IdentityCache identityCache;
+        private readonly IWeb3IdentityCache? identityCache;
         public override PluginType Type => PluginType.Enrichment;
 
-        public DynamicCommonTraitsPlugin(IRealmData realmData, IWeb3IdentityCache identityCache, ExposedTransform playerTransform)
+        public DynamicCommonTraitsPlugin(IRealmData realmData, IWeb3IdentityCache? identityCache, ExposedTransform playerTransform)
         {
             this.realmData = realmData;
             this.identityCache = identityCache;

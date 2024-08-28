@@ -20,7 +20,6 @@ namespace DCL.PluginSystem.Global
         {
             this.assetsProvisioner = assetsProvisioner;
             this.messageBus = messageBus;
-
         }
 
         public void Dispose()

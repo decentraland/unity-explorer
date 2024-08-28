@@ -3,7 +3,6 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using Cysharp.Threading.Tasks;
-using DCL.Character.CharacterMotion.Components;
 using DCL.Character.Components;
 using DCL.Chat.MessageBus;
 using DCL.Diagnostics;
@@ -19,12 +18,12 @@ using DCL.PlacesAPIService;
 using DCL.UI;
 using DG.Tweening;
 using ECS;
+using ECS.SceneLifeCycle;
+using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using ECS.SceneLifeCycle;
-using ECS.SceneLifeCycle.Realm;
 using UnityEngine;
 using Utility;
 
@@ -35,7 +34,6 @@ namespace DCL.Minimap
         private const MapLayer RENDER_LAYERS = MapLayer.SatelliteAtlas | MapLayer.ParcelsAtlas | MapLayer.PlayerMarker | MapLayer.ScenesOfInterest | MapLayer.Favorites | MapLayer.HotUsersMarkers | MapLayer.Pins;
         private const float ANIMATION_TIME = 0.2f;
 
-        public readonly BridgeSystemBinding<TrackPlayerPositionSystem> SystemBinding;
         private readonly IMapRenderer mapRenderer;
         private readonly IMVCManager mvcManager;
         private readonly IPlacesAPIService placesAPIService;
@@ -47,7 +45,7 @@ namespace DCL.Minimap
         private CancellationTokenSource cts;
 
         private MapRendererTrackPlayerPosition mapRendererTrackPlayerPosition;
-        private IMapCameraController mapCameraController;
+        private IMapCameraController? mapCameraController;
         private Vector2Int previousParcelPosition;
 
         public IReadOnlyDictionary<MapLayer, IMapLayerParameter> LayersParameters { get; } = new Dictionary<MapLayer, IMapLayerParameter>
@@ -60,7 +58,6 @@ namespace DCL.Minimap
             IMapRenderer mapRenderer,
             IMVCManager mvcManager,
             IPlacesAPIService placesAPIService,
-            TrackPlayerPositionSystem system,
             IRealmData realmData,
             IChatMessagesBus chatMessagesBus,
             IRealmNavigator realmNavigator,
@@ -71,13 +68,15 @@ namespace DCL.Minimap
             this.mapRenderer = mapRenderer;
             this.mvcManager = mvcManager;
             this.placesAPIService = placesAPIService;
-            SystemBinding = AddModule(new BridgeSystemBinding<TrackPlayerPositionSystem>(this, QueryPlayerPositionQuery, system));
             this.realmData = realmData;
             this.chatMessagesBus = chatMessagesBus;
             this.realmNavigator = realmNavigator;
             this.scenesCache = scenesCache;
             this.mapPathEventBus = mapPathEventBus;
         }
+
+        public void HookPlayerPositionTrackingSystem(TrackPlayerPositionSystem system) =>
+            AddModule(new BridgeSystemBinding<TrackPlayerPositionSystem>(this, QueryPlayerPositionQuery, system));
 
         private void OnRealmChanged(bool isGenesis)
         {
