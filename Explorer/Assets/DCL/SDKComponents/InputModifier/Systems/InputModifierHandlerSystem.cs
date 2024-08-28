@@ -1,7 +1,6 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using DCL.Character.Components;
 using DCL.CharacterMotion.Systems;
 using DCL.ECSComponents;
 using DCL.Input;
@@ -15,7 +14,7 @@ namespace DCL.SDKComponents.PlayerInputMovement.Systems
 {
     [UpdateInGroup(typeof(InputGroup))]
     [UpdateAfter(typeof(UpdateInputMovementSystem))]
-    public partial class InputModifierHandlerSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
+    public partial class InputModifierHandlerSystem : BaseUnityLoopSystem, ISceneIsCurrentListener
     {
         private readonly ObjectProxy<Entity> playerEntity;
         private readonly World globalWorld;
@@ -31,16 +30,10 @@ namespace DCL.SDKComponents.PlayerInputMovement.Systems
         protected override void Update(float t)
         {
             ApplyModifiersQuery(World);
-            ApplyModifiers2Query(World);
-            ResetModifiersOnLeaveQuery(World);
         }
 
-        [Query]
-        [All(typeof(PlayerComponent))]
         private void ResetModifiersOnLeave()
         {
-            if (sceneStateProvider.IsCurrent) return;
-
             ref InputModifierComponent inputModifier = ref globalWorld.Get<InputModifierComponent>(playerEntity.StrictObject);
             inputModifier.DisableAll = false;
             inputModifier.DisableWalk = false;
@@ -51,8 +44,7 @@ namespace DCL.SDKComponents.PlayerInputMovement.Systems
         }
 
         [Query]
-        [All(typeof(PlayerComponent))]
-        void ApplyModifiers(in PBInputModifier pbInputModifier)
+        private void ApplyModifiers(in PBInputModifier pbInputModifier)
         {
             if (!sceneStateProvider.IsCurrent) return;
 
@@ -72,26 +64,10 @@ namespace DCL.SDKComponents.PlayerInputMovement.Systems
             }
         }
 
-        [Query]
-        [All(typeof(PlayerComponent))]
-        private void ApplyModifiers2(in PBInputModifier pbInputModifier, ref InputModifierComponent inputModifier)
+        public void OnSceneIsCurrentChanged(bool value)
         {
-            var a = 2; // TODO remove random code used to add a breakpoint
-
-            //     //Debug.Log($"{UnityEngine.Time.frameCount} IG- ApplyModifiers Axes: {movementInput.Axes} {movementInput.Kind}");
-            //
-            //     PBInputModifier.Types.StandardInput? pb = pbInputModifier.Standard;
-            //     inputModifier.DisableAll = pb.DisableAll;
-            //     inputModifier.DisableWalk = pb.DisableWalk;
-            //     inputModifier.DisableJog = pb.DisableJog;
-            //     inputModifier.DisableRun = pb.DisableRun;
-            //     inputModifier.DisableJump = pb.DisableJump;
-            //     inputModifier.DisableEmote = pb.DisableEmote;
-        }
-
-        public void FinalizeComponents(in Query query)
-        {
-            // Ignore for now
+            if (!value)
+                ResetModifiersOnLeave();
         }
     }
 }

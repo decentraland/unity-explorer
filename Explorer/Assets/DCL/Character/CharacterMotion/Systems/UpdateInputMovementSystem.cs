@@ -50,12 +50,19 @@ namespace DCL.CharacterMotion.Systems
                 inputToUpdate.AutoWalk = false;
 
             // Running action wins over walking
-            if (!inputModifierComponent.DisableRun && sprintAction.IsPressed())
-                inputToUpdate.Kind = MovementKind.Run;
-            else if (!inputModifierComponent.DisableWalk && walkAction.IsPressed())
-                inputToUpdate.Kind = MovementKind.Walk;
-            else if(!inputModifierComponent.DisableJog)
-                inputToUpdate.Kind = MovementKind.Jog;
+            var movementKind = sprintAction.IsPressed() ? MovementKind.Run :
+                walkAction.IsPressed() ? MovementKind.Walk : MovementKind.Jog;
+
+            if (inputModifierComponent.DisableRun && movementKind == MovementKind.Run)
+                movementKind = inputModifierComponent.DisableJog ? MovementKind.Walk : MovementKind.Jog;
+
+            if (inputModifierComponent.DisableWalk && movementKind == MovementKind.Walk)
+                movementKind = inputModifierComponent.DisableRun ? MovementKind.Jog : MovementKind.Run;
+
+            if (inputModifierComponent.DisableJog && movementKind == MovementKind.Jog)
+                movementKind = inputModifierComponent.DisableWalk ? MovementKind.Run : MovementKind.Walk;
+
+            inputToUpdate.Kind = movementKind;
 
             if (inputToUpdate.AutoWalk)
             {
