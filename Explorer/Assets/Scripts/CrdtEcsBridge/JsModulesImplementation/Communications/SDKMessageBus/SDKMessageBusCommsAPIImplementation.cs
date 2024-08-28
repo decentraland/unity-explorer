@@ -10,7 +10,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications.SDKMessageBus
 {
     public class SDKMessageBusCommsAPIImplementation : CommunicationsControllerAPIImplementationBase, ISDKMessageBusCommsControllerAPI
     {
-        public List<CommsPayload> SceneCommsMessages { get; } = new List<CommsPayload>();
+        public List<CommsPayload> SceneCommsMessages { get; } = new ();
 
         public SDKMessageBusCommsAPIImplementation(ISceneData sceneData, ICommunicationControllerHub messagePipesHub, IJsOperations jsOperations, ISceneStateProvider sceneStateProvider) : base(sceneData, messagePipesHub, jsOperations, sceneStateProvider)
         {

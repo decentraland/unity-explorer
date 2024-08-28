@@ -1,3 +1,4 @@
+using DCL.Web3.Abstract;
 using DCL.Web3.Accounts;
 using DCL.Web3.Chains;
 using System;

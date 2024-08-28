@@ -77,7 +77,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
                 outgoingCrtdMessagesProvider = Substitute.For<IOutgoingCRDTMessagesProvider>(),
                 Substitute.For<ISystemGroupsUpdateGate>(),
                 new RethrowSceneExceptionsHandler(),
-                new MutexSync()
+                new MultithreadSync()
             );
 
             crdtDeserializer.When(d => d.DeserializeBatch(ref Arg.Any<ReadOnlyMemory<byte>>(), Arg.Any<IList<CRDTMessage>>()))

@@ -3,11 +3,15 @@ using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
+using DCL.Input;
+using DCL.Input.Component;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
+using Global.AppArgs;
+using LiveKit.Proto;
 using SceneRunner.Debugging;
 using System;
 using System.Linq;
@@ -25,6 +29,8 @@ namespace Global.Dynamic
         bool EnableLandscape { get; }
         bool EnableLOD { get; }
         bool EnableEmulateNoLivekitConnection { get; }
+        bool OverrideConnectionQuality { get; }
+        ConnectionQuality ConnectionQuality { get; }
     }
 
     [Serializable]
@@ -44,6 +50,11 @@ namespace Global.Dynamic
         private bool enableLOD;
         [SerializeField]
         private bool enableEmulateNoLivekitConnection;
+        [Space]
+        [SerializeField]
+        private bool overrideConnectionQuality;
+        [SerializeField]
+        private ConnectionQuality connectionQuality;
 
         public static DebugSettings Release() =>
             new ()
@@ -54,6 +65,8 @@ namespace Global.Dynamic
                 enableLandscape = true,
                 enableLOD = true,
                 enableEmulateNoLivekitConnection = false,
+                overrideConnectionQuality = false,
+                connectionQuality = ConnectionQuality.QualityExcellent
             };
 
         // To avoid configuration issues, force full flow on build (Debug.isDebugBuild is always true in Editor)
@@ -63,6 +76,8 @@ namespace Global.Dynamic
         public bool EnableLandscape => Debug.isDebugBuild ? this.enableLandscape : RELEASE_SETTINGS.enableLandscape;
         public bool EnableLOD => Debug.isDebugBuild ? this.enableLOD : RELEASE_SETTINGS.enableLOD;
         public bool EnableEmulateNoLivekitConnection => Debug.isDebugBuild ? this.enableEmulateNoLivekitConnection : RELEASE_SETTINGS.enableEmulateNoLivekitConnection;
+        public bool OverrideConnectionQuality => Debug.isDebugBuild ? this.overrideConnectionQuality : RELEASE_SETTINGS.overrideConnectionQuality;
+        public ConnectionQuality ConnectionQuality => Debug.isDebugBuild ? this.connectionQuality : RELEASE_SETTINGS.connectionQuality;
     }
 
     public class MainSceneLoader : MonoBehaviour
@@ -128,7 +143,15 @@ namespace Global.Dynamic
 
         private async UniTask InitializeFlowAsync(CancellationToken ct)
         {
-            bootstrapContainer = await BootstrapContainer.CreateAsync(debugSettings, sceneLoaderSettings: settings, globalPluginSettingsContainer, launchSettings, destroyCancellationToken);
+            var applicationParametersParser = new ApplicationParametersParser(Environment.GetCommandLineArgs());
+
+            settings.ApplyConfig(applicationParametersParser);
+            launchSettings.ApplyConfig(applicationParametersParser);
+
+            bootstrapContainer = await BootstrapContainer.CreateAsync(debugSettings, sceneLoaderSettings: settings,
+                globalPluginSettingsContainer, launchSettings,
+                applicationParametersParser,
+                destroyCancellationToken);
 
             IBootstrap bootstrap = bootstrapContainer!.Bootstrap;
 
@@ -136,7 +159,7 @@ namespace Global.Dynamic
             {
                 var splashScreen = new SplashScreen(splashScreenAnimation, splashRoot, debugSettings.ShowSplash);
 
-                bootstrap.PreInitializeSetup(launchSettings, cursorRoot, debugUiRoot, splashScreen, destroyCancellationToken);
+                bootstrap.PreInitializeSetup(cursorRoot, debugUiRoot, splashScreen, destroyCancellationToken);
 
                 bool isLoaded;
                 (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugViewsCatalog, ct);
@@ -148,7 +171,7 @@ namespace Global.Dynamic
                 }
 
                 (dynamicWorldContainer, isLoaded) = await bootstrap.LoadDynamicWorldContainerAsync(bootstrapContainer, staticContainer!, scenePluginSettingsContainer, settings,
-                    dynamicSettings, launchSettings, uiToolkitRoot, cursorRoot, splashScreen, backgroundMusic, worldInfoTool.EnsureNotNull(), destroyCancellationToken);
+                    dynamicSettings, uiToolkitRoot, cursorRoot, splashScreen, backgroundMusic, worldInfoTool.EnsureNotNull(), destroyCancellationToken);
 
                 if (!isLoaded)
                 {
@@ -157,6 +180,8 @@ namespace Global.Dynamic
                 }
 
                 await bootstrap.InitializeFeatureFlagsAsync(bootstrapContainer.IdentityCache!.Identity, bootstrapContainer.DecentralandUrlsSource, staticContainer!, ct);
+
+                DisableInputs();
 
                 if (await bootstrap.InitializePluginsAsync(staticContainer!, dynamicWorldContainer!, scenePluginSettingsContainer, globalPluginSettingsContainer, ct))
                 {
@@ -169,9 +194,12 @@ namespace Global.Dynamic
 
                 dynamicWorldContainer!.InitializeWorldRelatedModules(globalWorld.EcsWorld, playerEntity);
                 staticContainer!.PlayerEntityProxy.SetObject(playerEntity);
+                staticContainer.InputBlock.Initialize();
 
                 await bootstrap.LoadStartingRealmAsync(dynamicWorldContainer!, ct);
                 await bootstrap.UserInitializationAsync(dynamicWorldContainer!, globalWorld, playerEntity, splashScreen, ct);
+
+                RestoreInputs();
             }
             catch (OperationCanceledException)
             {
@@ -183,6 +211,25 @@ namespace Global.Dynamic
                 GameReports.PrintIsDead();
                 throw;
             }
+        }
+
+        private void DisableInputs()
+        {
+            // We disable Inputs directly because otherwise before login (so before the Input component was created and the system that handles it is working)
+            // all inputs will be valid, and it allows for weird behaviour, including opening menus that are not ready to be open yet.
+            staticContainer!.InputProxy.StrictObject.Shortcuts.Disable();
+            staticContainer.InputProxy.StrictObject.Player.Disable();
+            staticContainer.InputProxy.StrictObject.Emotes.Disable();
+            staticContainer.InputProxy.StrictObject.EmoteWheel.Disable();
+            staticContainer.InputProxy.StrictObject.FreeCamera.Disable();
+            staticContainer.InputProxy.StrictObject.Camera.Disable();
+        }
+
+        private void RestoreInputs()
+        {
+            // We enable Inputs through the inputBlock so the block counters can be properly updated and the component Active flags are up-to-date as well
+            // We restore all inputs except EmoteWheel and FreeCamera as they should be disabled by default
+            staticContainer!.InputBlock.UnblockInputs(InputMapComponent.Kind.Shortcuts , InputMapComponent.Kind.Player , InputMapComponent.Kind.Emotes , InputMapComponent.Kind.Camera);
         }
 
         [ContextMenu(nameof(ValidateSettingsAsync))]

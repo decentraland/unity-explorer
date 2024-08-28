@@ -14,7 +14,7 @@ Material:
   m_ValidKeywords:
   - BACKFACE_NORMAL_MODE_MIRROR
   - EFFECT_BILLBOARD
-  - _WINDQUALITY_FASTEST
+  - _WINDQUALITY_NONE
   m_InvalidKeywords: []
   m_LightmapFlags: 2
   m_EnableInstancingVariants: 1
@@ -69,8 +69,8 @@ Material:
     - _QueueOffset: 0
     - _SubsurfaceIndirect: 0.1
     - _SubsurfaceKwToggle: 1
-    - _WINDQUALITY: 1
-    - _WindQuality: 1
+    - _WINDQUALITY: 0
+    - _WindQuality: 0
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _HueVariationColor: {r: 0.7686275, g: 0.4117647, b: 0.06666665, a: 0.5019608}

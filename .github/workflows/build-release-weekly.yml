@@ -2,8 +2,8 @@ name: Build Weekly Release
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: '10 0 * * 3'
+  # schedule:
+  #  - cron: '10 0 * * 3'
   ## For testing only!
   # push:
   #   branches:
@@ -33,9 +33,13 @@ jobs:
     name: Build Unity Cloud
     needs: get-info
     uses: ./.github/workflows/build-unitycloud.yml
+    env:
+      IS_RELEASE_BUILD: true  # This environment variable indicates a release build
+      TAG_VERSION: ${{ needs.get-info.outputs.tag_version }}
     with:
       profile: none
       cache: false
+      cache_strategy: none
       version: ${{ needs.get-info.outputs.full_version }}
       sentry_enabled: true
     secrets: inherit

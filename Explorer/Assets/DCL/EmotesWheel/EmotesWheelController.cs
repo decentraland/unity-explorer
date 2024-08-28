@@ -8,10 +8,10 @@ using DCL.Diagnostics;
 using DCL.ExplorePanel;
 using DCL.Input;
 using DCL.Input.Component;
+using DCL.Input.UnityInputSystem.Blocks;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI;
-using ECS.Abstract;
 using MVC;
 using System.Threading;
 using UnityEngine;
@@ -29,9 +29,10 @@ namespace DCL.EmotesWheel
         private readonly World world;
         private readonly Entity playerEntity;
         private readonly IThumbnailProvider thumbnailProvider;
-        private readonly SingleInstanceEntity currentInputMapsEntity;
+        private readonly IInputBlock inputBlock;
         private readonly DCLInput.EmoteWheelActions emoteWheelInput;
         private readonly IMVCManager mvcManager;
+        private readonly ICursor cursor;
         private readonly URN[] currentEmotes = new URN[Avatar.MAX_EQUIPPED_EMOTES];
         private UniTaskCompletionSource? closeViewTask;
         private CancellationTokenSource? fetchProfileCts;
@@ -47,9 +48,10 @@ namespace DCL.EmotesWheel
             World world,
             Entity playerEntity,
             IThumbnailProvider thumbnailProvider,
-            SingleInstanceEntity currentInputMapsEntity,
+            IInputBlock inputBlock,
             DCLInput dclInput,
-            IMVCManager mvcManager)
+            IMVCManager mvcManager,
+            ICursor cursor)
             : base(viewFactory)
         {
             this.selfProfile = selfProfile;
@@ -58,10 +60,11 @@ namespace DCL.EmotesWheel
             this.world = world;
             this.playerEntity = playerEntity;
             this.thumbnailProvider = thumbnailProvider;
-            this.currentInputMapsEntity = currentInputMapsEntity;
+            this.inputBlock = inputBlock;
             this.dclInput = dclInput;
             emoteWheelInput = this.dclInput.EmoteWheel;
             this.mvcManager = mvcManager;
+            this.cursor = cursor;
 
             emoteWheelInput.Customize.performed += OpenBackpack;
             emoteWheelInput.Close.performed += Close;
@@ -82,7 +85,7 @@ namespace DCL.EmotesWheel
 
         protected override void OnViewInstantiated()
         {
-            viewInstance.OnClose += Close;
+            viewInstance!.OnClose += Close;
             viewInstance.EditButton.onClick.AddListener(OpenBackpack);
             viewInstance.CurrentEmoteName.text = "";
 
@@ -98,6 +101,12 @@ namespace DCL.EmotesWheel
 
         protected override void OnBeforeViewShow()
         {
+            UnblockUnwantedInputs();
+            cursor.Unlock();
+            fetchProfileCts = fetchProfileCts.SafeRestart();
+            InitializeEverythingAsync(fetchProfileCts.Token).Forget();
+            return;
+
             async UniTaskVoid InitializeEverythingAsync(CancellationToken ct)
             {
                 Profile? profile = await selfProfile.ProfileAsync(ct);
@@ -110,23 +119,13 @@ namespace DCL.EmotesWheel
 
                 SetUpSlots(profile);
             }
-
-            fetchProfileCts = fetchProfileCts.SafeRestart();
-            InitializeEverythingAsync(fetchProfileCts.Token).Forget();
-        }
-
-        protected override void OnViewShow()
-        {
-            base.OnViewShow();
-
-            EnableInputActions();
         }
 
         protected override void OnViewClose()
         {
             base.OnViewClose();
 
-            DisableInputActions();
+            BlockUnwantedInputs();
 
             fetchProfileCts.SafeCancelAndDispose();
             slotSetUpCts.SafeCancelAndDispose();
@@ -163,7 +162,7 @@ namespace DCL.EmotesWheel
                 return;
             }
 
-            EmoteWheelSlotView view = viewInstance.Slots[slot];
+            EmoteWheelSlotView view = viewInstance!.Slots[slot];
 
             view.BackgroundRarity.sprite = rarityBackgrounds.GetTypeImage(emote.GetRarity());
             view.EmptyContainer.SetActive(false);
@@ -173,7 +172,7 @@ namespace DCL.EmotesWheel
 
         private void SetUpEmptySlot(int slot)
         {
-            EmoteWheelSlotView view = viewInstance.Slots[slot];
+            EmoteWheelSlotView view = viewInstance!.Slots[slot];
 
             view.BackgroundRarity.sprite = rarityBackgrounds.GetTypeImage("empty");
             view.EmptyContainer.SetActive(true);
@@ -197,12 +196,12 @@ namespace DCL.EmotesWheel
             if (!emoteCache.TryGetEmote(currentEmotes[slot], out IEmote emote))
                 ClearCurrentEmote(slot);
             else
-                viewInstance.CurrentEmoteName.text = emote.GetName();
+                viewInstance!.CurrentEmoteName.text = emote.GetName();
         }
 
         private void ClearCurrentEmote(int slot)
         {
-            viewInstance.CurrentEmoteName.text = "";
+            viewInstance!.CurrentEmoteName.text = "";
         }
 
         private void PlayEmote(int slot)
@@ -231,23 +230,18 @@ namespace DCL.EmotesWheel
             Close();
         }
 
-        private void EnableInputActions()
+        private void UnblockUnwantedInputs()
         {
-            ref InputMapComponent inputMapComponent = ref currentInputMapsEntity.GetInputMapComponent(world);
-            inputMapComponent.Active |= InputMapComponent.Kind.EmoteWheel;
-            inputMapComponent.Active &= ~InputMapComponent.Kind.Emotes;
-
+            inputBlock.UnblockInputs(InputMapComponent.Kind.EmoteWheel);
             // We also disable shortcuts because the wheel can be opened and closed with the same key bind
             // If we leave it enabled, it will close and then re-open instantly
-            inputMapComponent.Active &= ~InputMapComponent.Kind.Shortcuts;
+            inputBlock.BlockInputs(InputMapComponent.Kind.Emotes , InputMapComponent.Kind.Shortcuts);
         }
 
-        private void DisableInputActions()
+        private void BlockUnwantedInputs()
         {
-            ref InputMapComponent inputMapComponent = ref currentInputMapsEntity.GetInputMapComponent(world);
-            inputMapComponent.Active &= ~InputMapComponent.Kind.EmoteWheel;
-            inputMapComponent.Active |= InputMapComponent.Kind.Emotes;
-            inputMapComponent.Active |= InputMapComponent.Kind.Shortcuts;
+            inputBlock.BlockInputs(InputMapComponent.Kind.EmoteWheel);
+            inputBlock.UnblockInputs(InputMapComponent.Kind.Emotes, InputMapComponent.Kind.Shortcuts);
         }
 
         private void ListenToSlotsInput(InputActionMap inputActionMap)

@@ -7,40 +7,49 @@ namespace CommunicationData.URLHelpers
     public readonly struct URN
     {
         private const int SHORTEN_URN_PARTS = 6;
+        private const int THIRD_PARTY_V2_SHORTEN_URN_PARTS = 7;
         private const string THIRD_PARTY_PART_ID = "collections-thirdparty";
 
-        private readonly string lowercaseUrn;
-        private readonly string originalUrn;
+        private readonly string urn;
 
         public URN(string urn)
         {
+            this.urn = urn;
+        }
+
+        public URN(int urn)
+        {
+            this.urn = urn.ToString();
+        }
+
+        public bool IsNullOrEmpty() =>
+            string.IsNullOrEmpty(urn);
+
+        public bool IsValid() =>
+            !IsNullOrEmpty() && urn.StartsWith("urn");
+
+        public bool Equals(int other) => Equals(other.ToString());
+
+        public bool Equals(URN other) =>
+            Equals(other.urn);
+
+        public bool Equals(string other) =>
             // Ignore case of all urn since the server returns urns with lower case or upper case representing the same content on different endpoints
             // For example a wearable in the profile (/lambdas/profiles/:address):
             // urn:decentraland:matic:collections-thirdparty:dolcegabbana-disco-drip:0x4bD77619a75C8EdA181e3587339E7011DA75bF0E:2a424e9c-c6fb-4783-99ed-63d260d90ed2
             // The same wearable in the content server (/content/entities/active):
             // urn:decentraland:matic:collections-thirdparty:dolcegabbana-disco-drip:0x4bd77619a75c8eda181e3587339e7011da75bf0e:2a424e9c-c6fb-4783-99ed-63d260d90ed2
-            this.originalUrn = urn;
-            this.lowercaseUrn = urn.ToLowerInvariant();
-        }
-
-        public bool IsNullOrEmpty() =>
-            string.IsNullOrEmpty(lowercaseUrn);
-
-        public bool IsValid() =>
-            !IsNullOrEmpty() && lowercaseUrn.StartsWith("urn");
-
-        public bool Equals(URN other) =>
-            string.Equals(lowercaseUrn, other.lowercaseUrn);
+            string.Equals(urn, other, StringComparison.OrdinalIgnoreCase);
 
         public override bool Equals(object obj) =>
             obj is URN other && Equals(other);
 
         public override string ToString() =>
-            this.originalUrn;
+            urn;
 
         public URLAddress ToUrlOrEmpty(URLAddress baseUrl)
         {
-            string currentUrn = this.originalUrn;
+            string currentUrn = this.urn;
             ReadOnlySpan<char> CutBeforeColon(ref int endIndex, out bool success)
             {
                 int atBeginning = endIndex;
@@ -108,50 +117,62 @@ namespace CommunicationData.URLHelpers
         }
 
         public override int GetHashCode() =>
-            lowercaseUrn != null ? StringComparer.OrdinalIgnoreCase.GetHashCode(lowercaseUrn) : 0;
+            urn != null ? StringComparer.OrdinalIgnoreCase.GetHashCode(urn) : 0;
 
         public URN Shorten()
         {
-            if (string.IsNullOrEmpty(originalUrn)) return originalUrn;
-            // Third party collections do not include the tokenId and have 7 parts, so we must keep all of them
-            if (IsThirdPartyCollection()) return originalUrn;
+            if (string.IsNullOrEmpty(urn)) return this;
+            if (CountParts() <= SHORTEN_URN_PARTS) return this;
 
-            int index = -1;
+            int index;
 
-            for (var i = 0; i < SHORTEN_URN_PARTS; i++)
+            if (IsThirdPartyCollection())
             {
-                index = lowercaseUrn.IndexOf(':', index + 1);
-                if (index == -1) break;
+                index = -1;
+
+                // Third party v2 contains 10 parts, on which 3 are reserved for the tokenId
+                // "id": urn:decentraland:amoy:collections-thirdparty:back-to-the-future:amoy-eb54:tuxedo-6751:amoy:0x1d9fb685c257e74f869ba302e260c0b68f5ebb37:12
+                // "tokenId": amoy:0x1d9fb685c257e74f869ba302e260c0b68f5ebb37:12
+                for (var i = 0; i < THIRD_PARTY_V2_SHORTEN_URN_PARTS; i++)
+                {
+                    index = urn.IndexOf(':', index + 1);
+                    if (index == -1) break;
+                }
+
+                return index != -1 ? urn[..index] : urn;
             }
 
-            return index != -1 ? originalUrn[..index] : originalUrn;
-        }
+            // TokenId is always placed in the last part for regular nfts
+            index = urn.LastIndexOf(':');
 
-        public bool IsExtended()
-        {
-            // Third party collections do not apply to shortened/extended rules
-            if (IsThirdPartyCollection()) return false;
-
-            var count = 0;
-
-            foreach (char c in originalUrn)
-                if (c == ':')
-                    count++;
-
-            return count >= SHORTEN_URN_PARTS;
+            return index != -1 ? urn[..index] : this;
         }
 
         public static implicit operator URN(int urn) =>
             urn.ToString();
 
         public static implicit operator string(URN urn) =>
-            urn.originalUrn;
+            urn.urn;
 
         public static implicit operator URN(string urn) =>
             new (urn);
 
-        private bool IsThirdPartyCollection() =>
-            !string.IsNullOrEmpty(lowercaseUrn) && lowercaseUrn.Contains(THIRD_PARTY_PART_ID);
+        public bool IsThirdPartyCollection() =>
+            !string.IsNullOrEmpty(urn) && urn.Contains(THIRD_PARTY_PART_ID);
+
+        private int CountParts()
+        {
+            int count = 1;
+            int index = urn.IndexOf(':');
+
+            while (index != -1)
+            {
+                count++;
+                index = urn.IndexOf(':', index + 1);
+            }
+
+            return count;
+        }
     }
 
     public class URNIgnoreCaseEqualityComparer : IEqualityComparer<URN>

@@ -19,7 +19,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
     [TestFixture]
     public class LoadWearableByParamSystemShould : LoadSystemBaseShould<LoadWearablesByParamSystem, WearablesResponse, GetWearableByParamIntention>
     {
-        private WearableCatalog wearableCatalog;
+        private WearableCache wearableCache;
         private readonly string existingURN = "urn:decentraland:off-chain:base-avatars:aviatorstyle";
 
         private string successPath => $"file://{Application.dataPath}/../TestResources/Wearables/SuccessUserParam";
@@ -30,30 +30,30 @@ namespace DCL.AvatarRendering.Wearables.Tests
 
         protected override LoadWearablesByParamSystem CreateSystem()
         {
-            wearableCatalog = new WearableCatalog();
+            wearableCache = new WearableCache();
 
             IRealmData realmData = Substitute.For<IRealmData>();
             realmData.Configured.Returns(true);
 
             return new LoadWearablesByParamSystem(world, TestWebRequestController.INSTANCE, cache, realmData,
-                URLSubdirectory.EMPTY, URLSubdirectory.FromString("Wearables"), wearableCatalog);
+                URLSubdirectory.EMPTY, URLSubdirectory.FromString("Wearables"), wearableCache);
         }
 
         protected override void AssertSuccess(WearablesResponse asset)
         {
             base.AssertSuccess(asset);
 
-            foreach (string wearableCatalogKey in wearableCatalog.wearablesCache.Keys)
+            foreach (string wearableCatalogKey in wearableCache.wearablesCache.Keys)
                 Debug.Log(wearableCatalogKey);
 
-            Assert.AreEqual(wearableCatalog.wearablesCache.Count, 1);
-            Assert.NotNull(wearableCatalog.wearablesCache[existingURN]);
+            Assert.AreEqual(wearableCache.wearablesCache.Count, 1);
+            Assert.NotNull(wearableCache.wearablesCache[existingURN]);
         }
 
         [Test]
         public async Task ConcludeSuccessOnExistingWearable()
         {
-            wearableCatalog.wearablesCache.Add(existingURN, Substitute.For<IWearable>());
+            wearableCache.wearablesCache.Add(existingURN, Substitute.For<IWearable>());
             await ConcludeSuccess();
         }
 

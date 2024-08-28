@@ -144,6 +144,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 493759110962425617, guid: aabac5666448b4345a76347f94ea32a4, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 805454476374755371, guid: aabac5666448b4345a76347f94ea32a4, type: 3}
+      propertyPath: m_PixelsPerUnitMultiplier
+      value: 2.2
+      objectReference: {fileID: 0}
     - target: {fileID: 981060080954595276, guid: aabac5666448b4345a76347f94ea32a4, type: 3}
       propertyPath: m_Sprite
       value: 
@@ -247,6 +255,10 @@ PrefabInstance:
     - target: {fileID: 6520438785063841496, guid: aabac5666448b4345a76347f94ea32a4, type: 3}
       propertyPath: m_Name
       value: BackpackEmoteGridItem
+      objectReference: {fileID: 0}
+    - target: {fileID: 8326074706031102082, guid: aabac5666448b4345a76347f94ea32a4, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 6.5
       objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 4151765688581695259, guid: aabac5666448b4345a76347f94ea32a4, type: 3}

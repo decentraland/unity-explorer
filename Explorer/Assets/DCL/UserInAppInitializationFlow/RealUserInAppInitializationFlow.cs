@@ -16,7 +16,7 @@ using DCL.UserInAppInitializationFlow.StartupOperations;
 using DCL.UserInAppInitializationFlow.StartupOperations.Struct;
 using DCL.Web3.Identities;
 using ECS.SceneLifeCycle.Realm;
-using System.Collections.Generic;
+using Global.AppArgs;
 using UnityEngine;
 using Utility.Types;
 
@@ -24,6 +24,7 @@ namespace DCL.UserInAppInitializationFlow
 {
     public class RealUserInAppInitializationFlow : IUserInAppInitializationFlow
     {
+        private readonly RealFlowLoadingStatus loadingStatus;
         private readonly IMVCManager mvcManager;
         private readonly AudioClipConfig backgroundMusic;
         private readonly ILoadingScreen loadingScreen;
@@ -49,19 +50,21 @@ namespace DCL.UserInAppInitializationFlow
             IFeatureFlagsProvider featureFlagsProvider,
             IWeb3IdentityCache web3IdentityCache,
             IRealmController realmController,
-            Dictionary<string, string> appParameters)
+            IAppArgs appParameters
+        )
         {
+            this.loadingStatus = loadingStatus;
             this.mvcManager = mvcManager;
             this.backgroundMusic = backgroundMusic;
             this.loadingScreen = loadingScreen;
 
-            var ensureLivekitConnectionStartupOperation = new EnsureLivekitConnectionStartupOperation(livekitHealthCheck);
-            var initializeFeatureFlagsStartupOperation = new InitializeFeatureFlagsStartupOperation(featureFlagsProvider, web3IdentityCache, decentralandUrlsSource, appParameters);
+            var ensureLivekitConnectionStartupOperation = new EnsureLivekitConnectionStartupOperation(loadingStatus, livekitHealthCheck);
+            var initializeFeatureFlagsStartupOperation = new InitializeFeatureFlagsStartupOperation(loadingStatus, featureFlagsProvider, web3IdentityCache, decentralandUrlsSource, appParameters);
             var preloadProfileStartupOperation = new PreloadProfileStartupOperation(loadingStatus, selfProfile);
-            var switchRealmMiscVisibilityStartupOperation = new SwitchRealmMiscVisibilityStartupOperation(realmNavigator);
-            loadPlayerAvatarStartupOperation = new LoadPlayerAvatarStartupOperation(selfProfile, mainPlayerAvatarBaseProxy);
+            var switchRealmMiscVisibilityStartupOperation = new SwitchRealmMiscVisibilityStartupOperation(loadingStatus, realmNavigator);
+            loadPlayerAvatarStartupOperation = new LoadPlayerAvatarStartupOperation(loadingStatus, selfProfile, mainPlayerAvatarBaseProxy);
             var loadLandscapeStartupOperation = new LoadLandscapeStartupOperation(loadingStatus, realmNavigator);
-            restartRealmStartupOperation = new RestartRealmStartupOperation(realmController);
+            restartRealmStartupOperation = new RestartRealmStartupOperation(loadingStatus, realmController);
             var teleportStartupOperation = new TeleportStartupOperation(loadingStatus, realmNavigator, startParcel);
 
             startupOperation = new SequentialStartupOperation(
@@ -84,6 +87,8 @@ namespace DCL.UserInAppInitializationFlow
             Entity playerEntity,
             CancellationToken ct)
         {
+            loadingStatus.SetStage(RealFlowLoadingStatus.Stage.Init);
+
             Result result = default;
 
             loadPlayerAvatarStartupOperation.AssignWorld(world, playerEntity);
@@ -93,15 +98,19 @@ namespace DCL.UserInAppInitializationFlow
 
             do
             {
-                if (showAuthentication) await ShowAuthenticationScreenAsync(ct);
+                if (showAuthentication)
+                {
+                    loadingStatus.SetStage(RealFlowLoadingStatus.Stage.AuthenticationScreenShown);
+                    await ShowAuthenticationScreenAsync(ct);
+                }
 
-                var showResult = await LoadingScreen(showLoading)
+                var loadingResult = await LoadingScreen(showLoading)
                    .ShowWhileExecuteTaskAsync(
                         async parentLoadReport => result = await startupOperation.ExecuteAsync(parentLoadReport, ct),
                         ct
                     );
 
-                ApplyErrorIfTimeout(ref result, showResult);
+                ApplyErrorIfLoadingScreenError(ref result, loadingResult);
 
                 if (result.Success == false)
                     ReportHub.LogError(ReportCategory.DEBUG, result.ErrorMessage!);
@@ -111,10 +120,10 @@ namespace DCL.UserInAppInitializationFlow
             while (result.Success == false && showAuthentication);
         }
 
-        private static void ApplyErrorIfTimeout(ref Result result, ILoadingScreen.ShowResult showResult)
+        private static void ApplyErrorIfLoadingScreenError(ref Result result, ILoadingScreen.LoadResult showResult)
         {
-            if (showResult == ILoadingScreen.ShowResult.Timeout)
-                result = Result.ErrorResult("Loading timed out");
+            if (!showResult.Success)
+                result = Result.ErrorResult(showResult.ErrorMessage);
         }
 
         private async UniTask ShowAuthenticationScreenAsync(CancellationToken ct)

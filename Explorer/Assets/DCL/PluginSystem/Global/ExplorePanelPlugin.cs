@@ -4,14 +4,18 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Equipped;
+using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.AvatarRendering.Wearables.ThirdParty;
 using DCL.Backpack;
 using DCL.Backpack.BackpackBus;
 using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Chat;
 using DCL.ExplorePanel;
+using DCL.Input;
+using DCL.Input.UnityInputSystem.Blocks;
 using DCL.Landscape.Settings;
 using DCL.MapRenderer;
 using DCL.Navmap;
@@ -23,7 +27,6 @@ using DCL.Quality;
 using DCL.Settings;
 using DCL.Settings.Configuration;
 using DCL.UI.ProfileElements;
-using DCL.UI.Sidebar;
 using DCL.UserInAppInitializationFlow;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
@@ -56,7 +59,7 @@ namespace DCL.PluginSystem.Global
         private readonly IEquippedEmotes equippedEmotes;
         private readonly IWeb3Authenticator web3Authenticator;
         private readonly IWeb3IdentityCache web3IdentityCache;
-        private readonly IWearableCatalog wearableCatalog;
+        private readonly IWearableCache wearableCache;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
         private readonly IWebBrowser webBrowser;
         private readonly IRealmNavigator realmNavigator;
@@ -65,6 +68,9 @@ namespace DCL.PluginSystem.Global
         private readonly IWebRequestController webRequestController;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
         private readonly IBackpackEventBus backpackEventBus;
+        private readonly IThirdPartyNftProviderSource thirdPartyNftProviderSource;
+        private readonly IWearablesProvider wearablesProvider;
+        private readonly ICursor cursor;
 
         private readonly IMapPathEventBus mapPathEventBus;
         private readonly ICollection<string> forceRender;
@@ -74,6 +80,7 @@ namespace DCL.PluginSystem.Global
         private readonly URLDomain assetBundleURL;
         private readonly INotificationsBusController notificationsBusController;
         private readonly ChatEntryConfigurationSO chatEntryConfiguration;
+        private readonly IInputBlock inputBlock;
 
         private NavmapController? navmapController;
         private SettingsController? settingsController;
@@ -85,7 +92,7 @@ namespace DCL.PluginSystem.Global
             IPlacesAPIService placesAPIService,
             IWebRequestController webRequestController,
             IWeb3IdentityCache web3IdentityCache,
-            IWearableCatalog wearableCatalog,
+            IWearableCache wearableCache,
             ICharacterPreviewFactory characterPreviewFactory,
             IProfileRepository profileRepository,
             IWeb3Authenticator web3Authenticator,
@@ -105,7 +112,12 @@ namespace DCL.PluginSystem.Global
             CharacterPreviewEventBus characterPreviewEventBus,
             IMapPathEventBus mapPathEventBus,
             ChatEntryConfigurationSO chatEntryConfiguration,
-            IBackpackEventBus backpackEventBus)
+            IBackpackEventBus backpackEventBus,
+            IThirdPartyNftProviderSource thirdPartyNftProviderSource,
+            IWearablesProvider wearablesProvider,
+            IInputBlock inputBlock,
+            ICursor cursor
+            )
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -113,7 +125,7 @@ namespace DCL.PluginSystem.Global
             this.placesAPIService = placesAPIService;
             this.webRequestController = webRequestController;
             this.web3IdentityCache = web3IdentityCache;
-            this.wearableCatalog = wearableCatalog;
+            this.wearableCache = wearableCache;
             this.characterPreviewFactory = characterPreviewFactory;
             this.profileRepository = profileRepository;
             this.web3Authenticator = web3Authenticator;
@@ -134,6 +146,10 @@ namespace DCL.PluginSystem.Global
             this.mapPathEventBus = mapPathEventBus;
             this.chatEntryConfiguration = chatEntryConfiguration;
             this.backpackEventBus = backpackEventBus;
+            this.thirdPartyNftProviderSource = thirdPartyNftProviderSource;
+            this.wearablesProvider = wearablesProvider;
+            this.inputBlock = inputBlock;
+            this.cursor = cursor;
         }
 
         public override void Dispose()
@@ -150,7 +166,7 @@ namespace DCL.PluginSystem.Global
                 assetsProvisioner,
                 web3IdentityCache,
                 characterPreviewFactory,
-                wearableCatalog,
+                wearableCache,
                 selfProfile,
                 equippedWearables,
                 equippedEmotes,
@@ -158,11 +174,14 @@ namespace DCL.PluginSystem.Global
                 settings.EmbeddedEmotesAsURN(),
                 forceRender,
                 realmData,
-                dclInput,
                 assetBundleURL,
                 webRequestController,
                 characterPreviewEventBus,
-                backpackEventBus
+                backpackEventBus,
+                thirdPartyNftProviderSource,
+                wearablesProvider,
+                inputBlock,
+                cursor
             );
 
             ExplorePanelView panelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.ExplorePanelPrefab, ct: ct)).GetComponent<ExplorePanelView>();
@@ -175,10 +194,9 @@ namespace DCL.PluginSystem.Global
             ProvidedAsset<LandscapeData> landscapeData = await assetsProvisioner.ProvideMainAssetAsync(settings.LandscapeData, ct);
             ProvidedAsset<QualitySettingsAsset> qualitySettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.QualitySettingsAsset, ct);
             settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>(), settingsMenuConfiguration.Value, generalAudioMixer.Value, realmPartitionSettings.Value, landscapeData.Value, qualitySettingsAsset.Value);
-
-            navmapController = new NavmapController(navmapView: explorePanelView.GetComponentInChildren<NavmapView>(), mapRendererContainer.MapRenderer, placesAPIService, webRequestController, webBrowser, dclInput, realmNavigator, realmData, mapPathEventBus);
-
+            navmapController = new NavmapController(navmapView: explorePanelView.GetComponentInChildren<NavmapView>(), mapRendererContainer.MapRenderer, placesAPIService, webRequestController, webBrowser, dclInput, realmNavigator, realmData, mapPathEventBus, inputBlock);
             await navmapController.InitialiseAssetsAsync(assetsProvisioner, ct);
+
             ContinueInitialization? backpackInitialization = await backpackSubPlugin.InitializeAsync(settings.BackpackSettings, explorePanelView.GetComponentInChildren<BackpackView>(), ct);
 
             return (ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) =>
@@ -187,12 +205,13 @@ namespace DCL.PluginSystem.Global
                 backpackInitialization.Invoke(ref builder, arguments);
 
                 mvcManager.RegisterController(new
-                    ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackSubPlugin.backpackController!, arguments.PlayerEntity, builder.World,
+                    ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackSubPlugin.backpackController!,
                     new ProfileWidgetController(() => explorePanelView.ProfileWidget, web3IdentityCache, profileRepository, webRequestController),
                     new ProfileMenuController(() => explorePanelView.ProfileMenuView, explorePanelView.ProfileMenuView.ProfileMenu, web3IdentityCache, profileRepository, webRequestController, builder.World, arguments.PlayerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager, chatEntryConfiguration),
-                    dclInput, notificationsBusController, mvcManager));
+                    dclInput, notificationsBusController, mvcManager, inputBlock));
 
                 inputHandler = new ExplorePanelInputHandler(dclInput, mvcManager);
+
             };
         }
 
