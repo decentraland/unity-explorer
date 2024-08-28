@@ -11,6 +11,8 @@ using DCL.Input;
 using DCL.Input.Component;
 using DCL.Input.UnityInputSystem.Blocks;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.NotificationsBusController.NotificationsBus;
+using DCL.NotificationsBusController.NotificationTypes;
 using DCL.Passport.Modules;
 using DCL.Passport.Modules.Badges;
 using DCL.Profiles;
@@ -53,7 +55,9 @@ namespace DCL.Passport
         private readonly List<IPassportModuleController> badgesPassportModules = new ();
         private readonly IInputBlock inputBlock;
 
+        private Profile? ownProfile;
         private string currentUserId;
+        private CancellationTokenSource getOwnProfileCts;
         private CancellationTokenSource? characterPreviewLoadingCts;
         private PassportErrorsController? passportErrorsController;
         private PassportCharacterPreviewController? characterPreviewController;
@@ -82,7 +86,8 @@ namespace DCL.Passport
             IDecentralandUrlsSource decentralandUrlsSource,
             BadgesAPIClient badgesAPIClient,
             IWebRequestController webRequestController,
-            IInputBlock inputBlock
+            IInputBlock inputBlock,
+            INotificationsBusController notificationBusController
         ) : base(viewFactory)
         {
             this.cursor = cursor;
@@ -103,7 +108,11 @@ namespace DCL.Passport
             this.webRequestController = webRequestController;
             this.inputBlock = inputBlock;
 
+            getOwnProfileCts = getOwnProfileCts.SafeRestart();
+            GetOwnProfileAsync(getOwnProfileCts.Token).Forget();
+
             passportProfileInfoController = new PassportProfileInfoController(selfProfile, world, playerEntity);
+            notificationBusController.SubscribeToNotificationTypeClick(NotificationType.BADGE_GRANTED, OnBadgeGranted);
         }
 
         protected override void OnViewInstantiated()
@@ -173,6 +182,7 @@ namespace DCL.Passport
         public override void Dispose()
         {
             passportErrorsController?.Hide(true);
+            getOwnProfileCts.SafeCancelAndDispose();
             characterPreviewLoadingCts.SafeCancelAndDispose();
             characterPreviewController?.Dispose();
 
@@ -287,6 +297,18 @@ namespace DCL.Passport
             LoadPassportSectionAsync(currentUserId, PassportSection.BADGES, characterPreviewLoadingCts.Token, badgeIdSelected).Forget();
             currentSection = PassportSection.BADGES;
             viewInstance.BadgeInfoModuleView.gameObject.SetActive(true);
+        }
+
+        private async UniTaskVoid GetOwnProfileAsync(CancellationToken ct) =>
+            ownProfile = await selfProfile.ProfileAsync(ct);
+
+        private void OnBadgeGranted(object[] parameters)
+        {
+            if (ownProfile == null || viewInstance == null || viewInstance.gameObject.activeSelf)
+                return;
+
+            // TODO (Santi): We have to receive all the notification data into 'parameters' to know if we have to open the passport with a specific badge selected
+            mvcManager.ShowAsync(IssueCommand(new Params(ownProfile.UserId))).Forget();
         }
     }
 }

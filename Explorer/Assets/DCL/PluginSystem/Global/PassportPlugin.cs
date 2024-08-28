@@ -11,6 +11,7 @@ using DCL.Chat;
 using DCL.Input;
 using DCL.Input.UnityInputSystem.Blocks;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.NotificationsBusController.NotificationsBus;
 using DCL.Passport;
 using DCL.Profiles;
 using DCL.Profiles.Self;
@@ -41,6 +42,7 @@ namespace DCL.PluginSystem.Global
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly BadgesAPIClient badgesAPIClient;
         private readonly IInputBlock inputBlock;
+        private readonly INotificationsBusController notificationsBusController;
 
         public PassportPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -57,7 +59,8 @@ namespace DCL.PluginSystem.Global
             IWebBrowser webBrowser,
             IDecentralandUrlsSource decentralandUrlsSource,
             BadgesAPIClient badgesAPIClient,
-            IInputBlock inputBlock
+            IInputBlock inputBlock,
+            INotificationsBusController notificationsBusController
         )
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -75,6 +78,7 @@ namespace DCL.PluginSystem.Global
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.badgesAPIClient = badgesAPIClient;
             this.inputBlock = inputBlock;
+            this.notificationsBusController = notificationsBusController;
         }
 
         protected override void InjectSystems(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
@@ -112,7 +116,8 @@ namespace DCL.PluginSystem.Global
                     decentralandUrlsSource,
                     badgesAPIClient,
                     webRequestController,
-                    inputBlock
+                    inputBlock,
+                    notificationsBusController
                 );
 
                 mvcManager.RegisterController(passportController);

@@ -568,7 +568,8 @@ namespace Global.Dynamic
                     webBrowser,
                     bootstrapContainer.DecentralandUrlsSource,
                     badgesAPIClient,
-                    staticContainer.InputBlock
+                    staticContainer.InputBlock,
+                    notificationsBusController
                 ),
             };
 
