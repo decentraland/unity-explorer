@@ -39,6 +39,7 @@ namespace DCL.Passport.Modules.Badges
         private readonly List<BadgeDetailCard_PassportFieldView> instantiatedEmptyItems = new ();
 
         private Profile currentProfile;
+        private string? currentBadgeIdToSelect;
         private bool isOwnProfile;
         private string? currentFilter;
         private List<string> badgeCategories;
@@ -109,6 +110,9 @@ namespace DCL.Passport.Modules.Badges
 
             badgeInfoController = new BadgeInfo_PassportModuleSubController(badgeInfoModuleView, webRequestController, badgesAPIClient, passportErrorsController);
         }
+
+        public void SetBadgeToSelect(string badgeId) =>
+            currentBadgeIdToSelect = badgeId;
 
         public void Setup(Profile profile)
         {
@@ -347,6 +351,33 @@ namespace DCL.Passport.Modules.Badges
                 SelectBadgeCard(cardToSelect);
         }
 
+        private void SelectSpecificBadge()
+        {
+            if (string.IsNullOrEmpty(currentBadgeIdToSelect))
+            {
+                SelectFirstBadge();
+                return;
+            }
+
+            BadgeDetailCard_PassportFieldView? cardToSelect = null;
+            foreach (var badgeDetailCard in instantiatedBadgeDetailCards)
+            {
+                foreach (var badgeCard in badgeDetailCard.Value)
+                {
+                    if (badgeCard.Model.id == currentBadgeIdToSelect)
+                    {
+                        badgeCard.SetAsSelected(false);
+                        cardToSelect = badgeCard;
+                    }
+                }
+            }
+
+            if (cardToSelect != null)
+                SelectBadgeCard(cardToSelect);
+
+            currentBadgeIdToSelect = null;
+        }
+
         private void CreateBadgeDetailCard(BadgeInfo badge)
         {
             var badgeDetailCard = badgeDetailCardsPool.Get();
@@ -418,7 +449,10 @@ namespace DCL.Passport.Modules.Badges
                     instantiatedBadgeDetailCards.ContainsKey(badgesCategoryContainer.Category.ToLower()) :
                     badgesCategoryContainer.Category.Equals(category, StringComparison.CurrentCultureIgnoreCase));
 
-            SelectFirstBadge();
+            if (string.IsNullOrEmpty(currentBadgeIdToSelect))
+                SelectFirstBadge();
+            else
+                SelectSpecificBadge();
         }
 
         private void ClearBadgesFilterButtons()

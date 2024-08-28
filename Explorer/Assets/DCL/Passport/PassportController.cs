@@ -102,14 +102,14 @@ namespace DCL.Passport
             this.badgesAPIClient = badgesAPIClient;
             this.webRequestController = webRequestController;
             this.inputBlock = inputBlock;
-            
+
             passportProfileInfoController = new PassportProfileInfoController(selfProfile, world, playerEntity);
         }
 
         protected override void OnViewInstantiated()
         {
             Assert.IsNotNull(world);
-            passportErrorsController = new PassportErrorsController(viewInstance.ErrorNotification);
+            passportErrorsController = new PassportErrorsController(viewInstance!.ErrorNotification);
             characterPreviewController = new PassportCharacterPreviewController(viewInstance.CharacterPreviewView, characterPreviewFactory, world, characterPreviewEventBus);
             overviewPassportModules.Add(new UserBasicInfo_PassportModuleController(viewInstance.UserBasicInfoModuleView, chatEntryConfiguration, selfProfile, passportErrorsController));
             overviewPassportModules.Add(new UserDetailedInfo_PassportModuleController(viewInstance.UserDetailedInfoModuleView, mvcManager, selfProfile, viewInstance.AddLinkModal, passportErrorsController, passportProfileInfoController));
@@ -121,7 +121,7 @@ namespace DCL.Passport
             passportProfileInfoController.OnProfilePublished += OnProfilePublished;
 
             viewInstance.OverviewSectionButton.Button.onClick.AddListener(OpenOverviewSection);
-            viewInstance.BadgesSectionButton.Button.onClick.AddListener(OpenBadgesSection);
+            viewInstance.BadgesSectionButton.Button.onClick.AddListener(() => OpenBadgesSection());
         }
 
         private void OnPublishError()
@@ -135,8 +135,13 @@ namespace DCL.Passport
             overviewSectionAlreadyLoaded = false;
             badgesSectionAlreadyLoaded = false;
             cursor.Unlock();
-            OpenOverviewSection();
-            viewInstance.ErrorNotification.Hide(true);
+
+            if (string.IsNullOrEmpty(inputData.BadgeIdSelected))
+                OpenOverviewSection();
+            else
+                OpenBadgesSection(inputData.BadgeIdSelected);
+
+            viewInstance!.ErrorNotification.Hide(true);
             PassportOpened?.Invoke(currentUserId);
 
             inputBlock.BlockInputs(InputMapComponent.Kind.Shortcuts , InputMapComponent.Kind.Camera , InputMapComponent.Kind.Player);
@@ -162,7 +167,7 @@ namespace DCL.Passport
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
             UniTask.WhenAny(
-                viewInstance.CloseButton.OnClickAsync(ct),
+                viewInstance!.CloseButton.OnClickAsync(ct),
                 viewInstance.BackgroundButton.OnClickAsync(ct));
 
         public override void Dispose()
@@ -181,7 +186,7 @@ namespace DCL.Passport
                 module.Dispose();
         }
 
-        private async UniTaskVoid LoadPassportSectionAsync(string userId, PassportSection sectionToLoad, CancellationToken ct)
+        private async UniTaskVoid LoadPassportSectionAsync(string userId, PassportSection sectionToLoad, CancellationToken ct, string? badgeIdSelected = null)
         {
             try
             {
@@ -208,7 +213,7 @@ namespace DCL.Passport
                 }
 
                 // Load passport modules
-                SetupPassportModules(profile, sectionToLoad);
+                SetupPassportModules(profile, sectionToLoad, badgeIdSelected);
 
                 if (sectionToLoad == PassportSection.OVERVIEW)
                     overviewSectionAlreadyLoaded = true;
@@ -230,11 +235,17 @@ namespace DCL.Passport
             viewInstance?.BackgroundImage.material.SetColor(BG_SHADER_COLOR_1, Color.HSVToRGB(h, s, Mathf.Clamp01(v - 0.3f)));
         }
 
-        private void SetupPassportModules(Profile profile, PassportSection passportSection)
+        private void SetupPassportModules(Profile profile, PassportSection passportSection, string? badgeIdSelected = null)
         {
             var passportModulesToSetup = passportSection == PassportSection.OVERVIEW ? overviewPassportModules : badgesPassportModules;
+
             foreach (IPassportModuleController module in passportModulesToSetup)
+            {
+                if (module is BadgesDetails_PassportModuleController badgesDetailsController && !string.IsNullOrEmpty(badgeIdSelected))
+                    badgesDetailsController.SetBadgeToSelect(badgeIdSelected);
+
                 module.Setup(profile);
+            }
         }
 
         private void OnProfilePublished(Profile profile) =>
@@ -245,7 +256,7 @@ namespace DCL.Passport
             if (currentSection == PassportSection.OVERVIEW)
                 return;
 
-            viewInstance.OverviewSectionButton.SetSelected(true);
+            viewInstance!.OverviewSectionButton.SetSelected(true);
             viewInstance.BadgesSectionButton.SetSelected(false);
             viewInstance.OverviewSectionPanel.SetActive(true);
             viewInstance.BadgesSectionPanel.SetActive(false);
@@ -259,12 +270,12 @@ namespace DCL.Passport
             viewInstance.BadgeInfoModuleView.gameObject.SetActive(false);
         }
 
-        private void OpenBadgesSection()
+        private void OpenBadgesSection(string? badgeIdSelected = null)
         {
             if (currentSection == PassportSection.BADGES)
                 return;
 
-            viewInstance.OverviewSectionButton.SetSelected(false);
+            viewInstance!.OverviewSectionButton.SetSelected(false);
             viewInstance.BadgesSectionButton.SetSelected(true);
             viewInstance.OverviewSectionPanel.SetActive(false);
             viewInstance.BadgesSectionPanel.SetActive(true);
@@ -273,7 +284,7 @@ namespace DCL.Passport
             viewInstance.CharacterPreviewView.gameObject.SetActive(false);
 
             characterPreviewLoadingCts = characterPreviewLoadingCts.SafeRestart();
-            LoadPassportSectionAsync(currentUserId, PassportSection.BADGES, characterPreviewLoadingCts.Token).Forget();
+            LoadPassportSectionAsync(currentUserId, PassportSection.BADGES, characterPreviewLoadingCts.Token, badgeIdSelected).Forget();
             currentSection = PassportSection.BADGES;
             viewInstance.BadgeInfoModuleView.gameObject.SetActive(true);
         }
