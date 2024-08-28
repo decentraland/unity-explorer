@@ -336,9 +336,6 @@ def delete_current_target():
     # List of targets to delete
     targets = ['macos', 'windows64']
     
-    # Track successful deletions
-    successful_deletions = 0
-    
     # Loop through each target
     for target in targets:
         base_target_name = f'{target}-{re.sub("[^A-Za-z0-9]+", "-", os.getenv("BRANCH_NAME"))}'.lower()
@@ -346,21 +343,14 @@ def delete_current_target():
         
         if response.status_code == 204:
             print(f'Build target deleted successfully: "{base_target_name}"')
-            successful_deletions += 1
         elif response.status_code == 404:
-            print(f'Build target not found: "{base_target_name}"')
+            print(f'Build target not found: "{base_target_name} - skip deletion"')
         else:
             print('Build target failed to be deleted with status code:', response.status_code)
             print('Response body:', response.text)
             sys.exit(1)
     
-    # Check if both targets were deleted successfully
-    if successful_deletions == len(targets):
-        print('Both build targets deleted successfully. Exiting...')
-        sys.exit(0)
-    else:
-        print(f'Only {successful_deletions} build target(s) deleted. Exiting...')
-        sys.exit(1)
+    sys.exit(0)
 
 # Entrypoint here ->
 args = parser.parse_args()
