@@ -18,6 +18,7 @@ using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
+using System.Linq;
 using UnityEngine;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData,
     ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
@@ -101,9 +102,9 @@ namespace DCL.LOD.Tests
             Assert.AreEqual(sceneLODInfoRetrieved.metadata.LODLoadedCount(), 1);
             Assert.AreEqual(SceneLODInfoUtils.HasLODResult(sceneLODInfoRetrieved.metadata.SuccessfullLODs, 0), true);
             Assert.AreEqual(SceneLODInfoUtils.HasLODResult(sceneLODInfoRetrieved.metadata.FailedLODs, 0), false);
-            scenesCache.Received().AddNonRealScene(DecodedParcels);
+            scenesCache.Received().AddNonRealScene(Arg.Is<Vector2Int[]>(arr => arr.SequenceEqual(DecodedParcels)));
         }
-        
+
         [Test]
         public void ResolveFailedPromise()
         {
@@ -120,7 +121,7 @@ namespace DCL.LOD.Tests
             Assert.AreEqual(sceneLODInfoRetrieved.metadata.LODLoadedCount(), 1);
             Assert.AreEqual(SceneLODInfoUtils.HasLODResult(sceneLODInfoRetrieved.metadata.FailedLODs, 0), true);
             Assert.AreEqual(SceneLODInfoUtils.HasLODResult(sceneLODInfoRetrieved.metadata.SuccessfullLODs, 0), false);
-            scenesCache.Received().AddNonRealScene(DecodedParcels);
+            scenesCache.Received().AddNonRealScene(Arg.Is<Vector2Int[]>(arr => arr.SequenceEqual(DecodedParcels)));
         }
 
 
@@ -151,7 +152,7 @@ namespace DCL.LOD.Tests
                 new StreamableLoadingResult<AssetBundleData>(fakeAssetBundleData));
             return (fakeAssetBundleData, promise);
         }
-         
+
     }
-   
+
 }
