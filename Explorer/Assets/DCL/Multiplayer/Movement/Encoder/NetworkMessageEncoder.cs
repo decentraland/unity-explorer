@@ -9,11 +9,13 @@ namespace DCL.Multiplayer.Movement
     {
         private readonly MessageEncodingSettings encodingSettings;
         private readonly TimestampEncoder timestampEncoder;
+        private readonly ParcelEncoder parcelEncoder;
 
         public NetworkMessageEncoder(MessageEncodingSettings encodingSettings)
         {
             this.encodingSettings = encodingSettings;
             this.timestampEncoder = new TimestampEncoder(encodingSettings);
+            parcelEncoder = new ParcelEncoder(encodingSettings.landscapeData.terrainData);
         }
 
         public CompressedNetworkMovementMessage Compress(NetworkMovementMessage message) =>
@@ -46,11 +48,11 @@ namespace DCL.Multiplayer.Movement
             return temporalData;
         }
 
-        private static long CompressMovementData(Vector3 position, Vector3 velocity, MovementEncodingConfig settings)
+        private long CompressMovementData(Vector3 position, Vector3 velocity, MovementEncodingConfig settings)
         {
             Vector2Int parcel = position.ToParcel();
 
-            int parcelIndex = ParcelEncoder.Encode(parcel);
+            int parcelIndex = parcelEncoder.Encode(parcel);
 
             var relativePosition = new Vector2(
                 position.x - (parcel.x * ParcelMathHelper.PARCEL_SIZE),
@@ -118,7 +120,7 @@ namespace DCL.Multiplayer.Movement
             };
         }
 
-        private static (Vector3 position, Vector3 velocity) DecompressMovementData(long movementData, MovementEncodingConfig settings)
+        private (Vector3 position, Vector3 velocity) DecompressMovementData(long movementData, MovementEncodingConfig settings)
         {
             const int PARCEL_BITS = MessageEncodingSettings.PARCEL_BITS;
             const int PARCEL_MASK = (1 << PARCEL_BITS) - 1;
@@ -134,7 +136,7 @@ namespace DCL.Multiplayer.Movement
             int velocityBits = settings.VELOCITY_BITS;
             int velocityMask = (1 << velocityBits) - 1;
 
-            Vector2Int parcel = ParcelEncoder.Decode((int)(movementData & PARCEL_MASK));
+            Vector2Int parcel = parcelEncoder.Decode((int)(movementData & PARCEL_MASK));
 
             var extractedX = (int)((movementData >> PARCEL_BITS) & xzMask);
             var extractedZ = (int)((movementData >> (PARCEL_BITS + xzBits)) & xzMask);

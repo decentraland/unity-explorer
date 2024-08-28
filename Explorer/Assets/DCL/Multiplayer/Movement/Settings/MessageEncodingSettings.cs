@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DCL.Landscape.Settings;
+using System;
 using UnityEngine;
 
 namespace DCL.Multiplayer.Movement.Settings
@@ -6,18 +7,20 @@ namespace DCL.Multiplayer.Movement.Settings
     [CreateAssetMenu(fileName = "MessageEncodingSettings", menuName = "DCL/MessageEncodingSettings")]
     public class MessageEncodingSettings : ScriptableObject
     {
+        public LandscapeData landscapeData;
+
         public const int TWO_BITS_MASK = 0x3;
 
         public const int PARCEL_BITS = 17;
         private const int MOVEMENT_KIND_BITS = 2;
 
-        // 32 - 9 (Anim) - 2 (Tiers) = 21
+        // int32 - 9 (Anim) - 2 (Tiers) = 21 bits
         [Header("TIMESTAMP [21]")]
         public float TIMESTAMP_QUANTUM = 0.02f;
         public int TIMESTAMP_BITS = 15;
         public int ROTATION_Y_BITS = 6;
 
-        // 64 - 17 (Parcel) = 47
+        // int64 - 17 (Parcel) = 47 bits
         [Header("POSITION [47]")]
         public MovementEncodingConfig tier0;
         public MovementEncodingConfig tier1;

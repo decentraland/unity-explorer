@@ -23,6 +23,8 @@ namespace DCL.Multiplayer.Movement.Tests
             }
         }
 
+        private static ParcelEncoder parcelEncoder => new (Settings.landscapeData.terrainData);
+
         [SetUp]
         public void SetUp()
         {
@@ -99,6 +101,14 @@ namespace DCL.Multiplayer.Movement.Tests
             Assert.AreEqual(originalMessage.animState.IsFalling, decompressedMessage.animState.IsFalling);
         }
 
+        private static IEnumerable<TestCaseData> GetParcelMinMaxTestCases()
+        {
+            yield return new TestCaseData(parcelEncoder.MaxX * PARCEL_SIZE, parcelEncoder.MaxY * PARCEL_SIZE);
+            yield return new TestCaseData(parcelEncoder.MinX * PARCEL_SIZE, parcelEncoder.MinY * PARCEL_SIZE);
+            yield return new TestCaseData((parcelEncoder.MaxX * PARCEL_SIZE) - 0.001f, (parcelEncoder.MaxY * PARCEL_SIZE) - 0.001f);
+            yield return new TestCaseData((parcelEncoder.MinX * PARCEL_SIZE) + 0.001f, (parcelEncoder.MinY * PARCEL_SIZE) + 0.001f);
+        }
+
         [TestCase(-1.2f, -5.5f)]
         [TestCase(-0.001f, -0.001f)]
         [TestCase(0, 0)]
@@ -112,10 +122,7 @@ namespace DCL.Multiplayer.Movement.Tests
         [TestCase(-70f, 116f)]
         [TestCase(-1000f, 1000f)]
         [TestCase(1000f, -1000f)]
-        [TestCase(ParcelEncoder.MAX_X * PARCEL_SIZE, ParcelEncoder.MAX_Y * PARCEL_SIZE)]
-        [TestCase(ParcelEncoder.MIN_X * PARCEL_SIZE, ParcelEncoder.MIN_Y * PARCEL_SIZE)]
-        [TestCase((ParcelEncoder.MAX_X * PARCEL_SIZE) - 0.001f, (ParcelEncoder.MAX_Y * PARCEL_SIZE) - 0.001f)]
-        [TestCase((ParcelEncoder.MIN_X * PARCEL_SIZE) + 0.001f, (ParcelEncoder.MIN_Y * PARCEL_SIZE) + 0.001f)]
+        [TestCaseSource(nameof(GetParcelMinMaxTestCases))]
         public void ShouldCorrectlyEncodeAndDecodeXZPositions(float x, float z)
         {
             // Arrange

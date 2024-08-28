@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fdd34dbbd3504f25993a0e0edaed2108, type: 3}
   m_Name: MessageEncodingSettings
   m_EditorClassIdentifier: 
+  landscapeData: {fileID: 11400000, guid: 32f2b877400526d4cbf648ba5c5064b4, type: 2}
   TIMESTAMP_QUANTUM: 0.02
   TIMESTAMP_BITS: 15
   ROTATION_Y_BITS: 6

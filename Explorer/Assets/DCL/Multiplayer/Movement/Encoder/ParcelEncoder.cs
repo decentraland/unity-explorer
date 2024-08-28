@@ -1,24 +1,32 @@
-﻿using UnityEngine;
+﻿using DCL.Landscape.Settings;
+using UnityEngine;
+using Utility;
 
 namespace DCL.Multiplayer.Movement
 {
     /// <summary>
     ///     Flatten (x,y) parcel coordinates into 1-dimensional array
     /// </summary>
-    public static class ParcelEncoder
+    public class ParcelEncoder
     {
-        // TODO (Vit): now hardcoded, but it should depend on the Genesis Size + Landscape margins settings
-        public const int MIN_X = -152;
-        public const int MAX_X = 164;
-        public const int MIN_Y = -152;
-        public const int MAX_Y = 160;
+        private readonly TerrainGenerationData terrainData;
 
-        private const int WIDTH = MAX_X - MIN_X + 1;
+        public int MinX => GenesisCityData.MIN_PARCEL.x - terrainData.borderPadding;
+        public int MinY => GenesisCityData.MIN_PARCEL.y - terrainData.borderPadding;
+        public int MaxX => GenesisCityData.MAX_PARCEL.x + terrainData.borderPadding;
+        public int MaxY => GenesisCityData.MAX_PARCEL.y + terrainData.borderPadding;
 
-        public static int Encode(Vector2Int parcel) =>
-            parcel.x - MIN_X + ((parcel.y - MIN_Y) * WIDTH);
+        private int width => MaxX - MinX + 1;
 
-        public static Vector2Int Decode(int index) =>
-            new ((index % WIDTH) + MIN_X, (index / WIDTH) + MIN_Y);
+        public ParcelEncoder(TerrainGenerationData terrainData)
+        {
+            this.terrainData = terrainData;
+        }
+
+        public int Encode(Vector2Int parcel) =>
+            parcel.x - MinX + ((parcel.y - MinY) * width);
+
+        public Vector2Int Decode(int index) =>
+            new ((index % width) + MinX, (index / width) + MinY);
     }
 }
