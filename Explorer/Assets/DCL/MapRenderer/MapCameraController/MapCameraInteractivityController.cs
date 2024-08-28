@@ -61,24 +61,30 @@ namespace DCL.MapRenderer.MapCameraController
             marker?.Deactivate();
         }
 
-        public bool TryGetParcel(Vector2 normalizedCoordinates, out Vector2Int parcel, out IPinMarker mark)
+        public bool TryGetParcel(Vector2 normalizedCoordinates, out Vector2Int parcel, out IPinMarker? mark)
         {
-            mark = null;
             bool parcelExists = coordsUtils.TryGetCoordsWithinInteractableBounds(GetLocalPosition(normalizedCoordinates), out parcel);
 
-            if (parcelExists && markerController != null)
+            mark = null;
+
+            if (parcelExists)
             {
-                foreach (IPinMarker pinMarker in markerController.markers.Values)
-                {
-                    if (pinMarker.ParcelPosition == parcel)
-                    {
-                        mark = pinMarker;
-                        break;
-                    }
-                }
+                mark = GetPinMarkerOnParcel(parcel);
             }
 
             return parcelExists;
+        }
+
+        public IPinMarker? GetPinMarkerOnParcel(Vector2Int parcel)
+        {
+            //if (markerController != null)
+            {
+                foreach (IPinMarker mark in markerController.markers.Values)
+                {
+                    if (mark.ParcelPosition == parcel) { return mark; }
+                }
+            }
+            return null;
         }
 
         public Vector2 GetNormalizedPosition(Vector2Int parcel)
