@@ -17,6 +17,7 @@ using SceneRunner.Scene;
 using UnityEngine;
 using Entity = Arch.Core.Entity;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.Texture2D, ECS.StreamableLoading.Textures.GetTextureIntention>;
+using Vector2 = Decentraland.Common.Vector2;
 
 namespace DCL.SDKComponents.MapPins.Systems
 {
@@ -37,8 +38,34 @@ namespace DCL.SDKComponents.MapPins.Systems
             this.partitionComponent = partitionComponent;
         }
 
+        private bool init;
+
         protected override void Update(float t)
         {
+            if (!init)
+            {
+                //TODO FRAN: REMOVE THIS -> ONLY FOR TESTING
+
+                Vector2 vector2 = new Vector2
+                {
+                        X = 50,
+                        Y = 50,
+                };
+                World.Create(new PBMapPin() {IconSize = 24, Description = "LE PIN", Title = "PIN: The beginning", Position = vector2 });
+                vector2 = new Vector2
+                {
+                    X = 40,
+                    Y = 50,
+                };
+                World.Create(new PBMapPin() {IconSize = 24, Description = "LE SECOND PIN", Title = "PIN PIN: The PIN returns", Position = vector2 });
+                vector2 = new Vector2
+                {
+                    X = 30,
+                    Y = 50,
+                };
+                World.Create(new PBMapPin() {IconSize = 24, Description = "LE THIRD PIN", Title = "PIN 3: The revenge of the PINS", Position = vector2 });
+                init = true;
+            }
             LoadMapPinQuery(World);
             UpdateMapPinQuery(World);
             HandleComponentRemovalQuery(World);

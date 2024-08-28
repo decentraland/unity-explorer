@@ -60,6 +60,7 @@ namespace DCL.MapRenderer.MapLayers.Pins
         public async UniTaskVoid AnimateSelectionAsync()
         {
             SetIconOutline(true);
+            pulseCancellationTokenSource = pulseCancellationTokenSource.SafeRestart();
 
             if (poolableBehavior.instance != null)
             {
@@ -71,11 +72,13 @@ namespace DCL.MapRenderer.MapLayers.Pins
         public async UniTaskVoid AnimateDeselectionAsync()
         {
             SetIconOutline(false);
+            pulseCancellationTokenSource = pulseCancellationTokenSource.SafeRestart();
 
             if (poolableBehavior.instance != null)
             {
                 selectionCancellationTokenSource = selectionCancellationTokenSource.SafeRestart();
                 await PinMarkerHelper.ScaleToAsync(poolableBehavior.instance.selectionScalingParent, Vector3.one, 0.5f, Ease.OutBack, selectionCancellationTokenSource.Token);
+                ResetPulseAnimation();
             }
         }
 
