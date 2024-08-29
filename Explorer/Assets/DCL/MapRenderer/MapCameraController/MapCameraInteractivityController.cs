@@ -71,7 +71,7 @@ namespace DCL.MapRenderer.MapCameraController
 
         public IPinMarker? GetPinMarkerOnParcel(Vector2Int parcel)
         {
-            if (markerController != null) //This is only triggered by tests
+            if (markerController != null) //This check is only needed for tests -_-
             {
                 foreach (IPinMarker mark in markerController.markers.Values)
                     if (mark.ParcelPosition == parcel) { return mark; }
