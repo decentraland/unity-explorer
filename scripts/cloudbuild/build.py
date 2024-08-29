@@ -24,6 +24,12 @@ parser.add_argument('--resume', help='Resume tracking a running build stored in 
 parser.add_argument('--cancel', help='Cancel a running build stored in build_info.json', action='store_true')
 parser.add_argument('--delete', help='Delete build target after PR is closed or merged', action='store_true')
 
+def validate_branch_name(branch_name):
+    #Validates the branch name to ensure it does not contain special characters like +, ., or @."""
+    if re.search(r'[+\.@]', branch_name):
+        print(f"Error: Branch name '{branch_name}' contains invalid characters (+, ., or @).")
+        sys.exit(1)
+
 def get_target(target):
     response = requests.get(f'{URL}/buildtargets/{target}', headers=HEADERS)
 
@@ -354,6 +360,10 @@ def delete_current_target():
 
 # Entrypoint here ->
 args = parser.parse_args()
+
+# Validate branch name before proceeding
+branch_name = os.getenv('BRANCH_NAME')
+validate_branch_name(branch_name)
 
 # MODE: Delete
 if args.delete:
