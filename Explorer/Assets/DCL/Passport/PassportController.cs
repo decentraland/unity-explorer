@@ -57,7 +57,7 @@ namespace DCL.Passport
 
         private Profile? ownProfile;
         private string currentUserId;
-        private CancellationTokenSource getOwnProfileCts;
+        private CancellationTokenSource? openPassportFromBadgeNotificationCts;
         private CancellationTokenSource? characterPreviewLoadingCts;
         private PassportErrorsController? passportErrorsController;
         private PassportCharacterPreviewController? characterPreviewController;
@@ -107,9 +107,6 @@ namespace DCL.Passport
             this.badgesAPIClient = badgesAPIClient;
             this.webRequestController = webRequestController;
             this.inputBlock = inputBlock;
-
-            getOwnProfileCts = getOwnProfileCts.SafeRestart();
-            GetOwnProfileAsync(getOwnProfileCts.Token).Forget();
 
             passportProfileInfoController = new PassportProfileInfoController(selfProfile, world, playerEntity);
             notificationBusController.SubscribeToNotificationTypeReceived(NotificationType.BADGE_GRANTED, OnBadgeNotificationReceived);
@@ -183,7 +180,7 @@ namespace DCL.Passport
         public override void Dispose()
         {
             passportErrorsController?.Hide(true);
-            getOwnProfileCts.SafeCancelAndDispose();
+            openPassportFromBadgeNotificationCts.SafeCancelAndDispose();
             characterPreviewLoadingCts.SafeCancelAndDispose();
             characterPreviewController?.Dispose();
 
@@ -308,11 +305,19 @@ namespace DCL.Passport
 
         private void OnBadgeNotificationClicked(object[] parameters)
         {
-            if (ownProfile == null || viewInstance == null || viewInstance.gameObject.activeSelf)
-                return;
+            openPassportFromBadgeNotificationCts = openPassportFromBadgeNotificationCts.SafeRestart();
+            OpenPassportFromBadgeNotificationAsync(CancellationToken.None).Forget();
+        }
 
-            // TODO (Santi): We have to receive all the notification data into 'parameters' to know if we have to open the passport with a specific badge selected
-            mvcManager.ShowAsync(IssueCommand(new Params(ownProfile.UserId))).Forget();
+        private async UniTaskVoid OpenPassportFromBadgeNotificationAsync(CancellationToken ct)
+        {
+            ownProfile ??= await selfProfile.ProfileAsync(ct);
+
+            if (ownProfile != null)
+            {
+                // TODO (Santi): We have to receive all the notification data into 'parameters' to know if we have to open the passport with a specific badge selected
+                mvcManager.ShowAsync(IssueCommand(new Params(ownProfile.UserId, "travelerrrrr")), ct).Forget();
+            }
         }
     }
 }

@@ -375,6 +375,8 @@ namespace DCL.Passport.Modules.Badges
 
             if (cardToSelect != null)
                 SelectBadgeCard(cardToSelect);
+            else
+                SelectFirstBadge();
 
             currentBadgeIdToSelect = null;
         }
