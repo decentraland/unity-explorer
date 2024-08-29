@@ -5,6 +5,8 @@ using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.Emotes;
 using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
+using DCL.Multiplayer.Emotes;
+using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
 using SceneRunner.Scene;
@@ -21,13 +23,13 @@ namespace CrdtEcsBridge.RestrictedActions
     {
         private readonly World world;
         private readonly Entity playerEntity;
+        private readonly IEmotesMessageBus messageBus;
 
-        public GlobalWorldActions(
-            World world,
-            Entity playerEntity)
+        public GlobalWorldActions(World world, Entity playerEntity, IEmotesMessageBus messageBus)
         {
             this.world = world;
             this.playerEntity = playerEntity;
+            this.messageBus = messageBus;
         }
 
         public void MoveAndRotatePlayer(Vector3 newPlayerPosition, Vector3? newCameraTarget)
@@ -46,7 +48,7 @@ namespace CrdtEcsBridge.RestrictedActions
                 return;
 
             // Rotate camera to look at new target (through ApplyCinemachineCameraInputSystem -> ForceLookAtQuery)
-            var camera = world.CacheCamera();
+            SingleInstanceEntity camera = world.CacheCamera();
             world.AddOrSet(camera, new CameraLookAtIntent(newCameraTarget.Value, newPlayerPosition));
         }
 
@@ -56,19 +58,20 @@ namespace CrdtEcsBridge.RestrictedActions
                 throw new Exception("Cannot resolve body shape of current player because its missing AvatarShapeComponent");
 
             var promise = SceneEmotePromise.Create(world,
-               new GetSceneEmoteFromRealmIntention(sceneId, abManifest, emoteHash, loop, avatarShape.BodyShape),
-               PartitionComponent.TOP_PRIORITY);
+                new GetSceneEmoteFromRealmIntention(sceneId, abManifest, emoteHash, loop, avatarShape.BodyShape),
+                PartitionComponent.TOP_PRIORITY);
 
             promise = await promise.ToUniTaskAsync(world, cancellationToken: ct);
 
             URN urn = promise.Result!.Value.Asset.Emotes[0].GetUrn();
-
-            TriggerEmote(urn);
+            bool isLooping = promise.Result!.Value.Asset.Emotes[0].IsLooping();
+            TriggerEmote(urn, isLooping);
         }
 
-        public void TriggerEmote(URN urn)
+        public void TriggerEmote(URN urn, bool isLooping)
         {
-            world.Add(playerEntity, new CharacterEmoteIntent { EmoteId = urn, Spatial = true, TriggerSource = TriggerSource.SCENE});
+            world.Add(playerEntity, new CharacterEmoteIntent { EmoteId = urn, Spatial = true, TriggerSource = TriggerSource.SCENE });
+            messageBus.Send(urn, isLooping, true);
         }
     }
 }

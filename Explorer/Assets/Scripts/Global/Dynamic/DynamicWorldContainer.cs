@@ -612,6 +612,7 @@ namespace Global.Dynamic
                 container.CharacterDataPropagationUtility,
                 currentSceneInfo,
                 container.LODContainer.LodCache,
+                multiplayerEmotesMessageBus,
                 globalWorld
             );
 
