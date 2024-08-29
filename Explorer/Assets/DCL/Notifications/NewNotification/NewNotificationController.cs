@@ -17,6 +17,7 @@ namespace DCL.Notifications.NewNotification
     public class NewNotificationController : ControllerBase<NewNotificationView>
     {
         private const float ANIMATION_DURATION = 0.5f;
+        private const float TIME_BEFORE_HIDE_NOTIFICATION = 5f;
 
         private readonly INotificationsBusController notificationsBusController;
         private readonly NotificationIconTypes notificationIconTypes;
@@ -40,10 +41,7 @@ namespace DCL.Notifications.NewNotification
             this.notificationIconTypes = notificationIconTypes;
             this.rarityBackgroundMapping = rarityBackgroundMapping;
             this.webRequestController = webRequestController;
-            notificationsBusController.SubscribeToNotificationTypeReceived(NotificationType.REWARD_ASSIGNMENT, QueueNewNotification);
-            notificationsBusController.SubscribeToNotificationTypeReceived(NotificationType.EVENTS_STARTED, QueueNewNotification);
-            notificationsBusController.SubscribeToNotificationTypeReceived(NotificationType.INTERNAL_ARRIVED_TO_DESTINATION, QueueNewNotification);
-            notificationsBusController.SubscribeToNotificationTypeReceived(NotificationType.BADGE_GRANTED, QueueNewNotification);
+            notificationsBusController.SubscribeToAllNotificationTypesReceived(QueueNewNotification);
             cts = new CancellationTokenSource();
             cts.Token.ThrowIfCancellationRequested();
         }
@@ -111,6 +109,7 @@ namespace DCL.Notifications.NewNotification
             viewInstance.NotificationView.HeaderText.text = notification.GetHeader();
             viewInstance.NotificationView.TitleText.text = notification.GetTitle();
             viewInstance.NotificationView.NotificationType = notification.Type;
+            viewInstance.NotificationView.Notification = notification;
             ProcessCustomMetadata(notification);
             if(!string.IsNullOrEmpty(notification.GetThumbnail()))
                 thumbnailImageController.RequestImage(notification.GetThumbnail(), true);
@@ -137,7 +136,7 @@ namespace DCL.Notifications.NewNotification
                 notificationCanvasGroup.interactable = true;
                 notificationCanvasGroup.blocksRaycasts = true;
                 await notificationCanvasGroup.DOFade(1, ANIMATION_DURATION).ToUniTask(cancellationToken: cts.Token);
-                await UniTask.Delay(TimeSpan.FromSeconds(3), cancellationToken: cts.Token);
+                await UniTask.Delay(TimeSpan.FromSeconds(TIME_BEFORE_HIDE_NOTIFICATION), cancellationToken: cts.Token);
             }
             catch (OperationCanceledException)
             {

@@ -1,4 +1,5 @@
 using DCL.NotificationsBusController.NotificationTypes;
+using System;
 using System.Collections.Generic;
 
 namespace DCL.NotificationsBusController.NotificationsBus
@@ -35,6 +36,26 @@ namespace DCL.NotificationsBusController.NotificationsBus
             notificationReceivedSubscribers.TryGetValue(desiredType, out NotificationReceivedDelegate thisEvent);
             thisEvent += listener;
             notificationReceivedSubscribers[desiredType] = thisEvent;
+        }
+
+        public void SubscribeToAllNotificationTypesClick(NotificationClickedDelegate listener)
+        {
+            foreach (NotificationType notificationType in Enum.GetValues(typeof(NotificationType)))
+            {
+                notificationClickedSubscribers.TryGetValue(notificationType, out NotificationClickedDelegate thisEvent);
+                thisEvent += listener;
+                notificationClickedSubscribers[notificationType] = thisEvent;
+            }
+        }
+
+        public void SubscribeToAllNotificationTypesReceived(NotificationReceivedDelegate listener)
+        {
+            foreach (NotificationType notificationType in Enum.GetValues(typeof(NotificationType)))
+            {
+                notificationReceivedSubscribers.TryGetValue(notificationType, out NotificationReceivedDelegate thisEvent);
+                thisEvent += listener;
+                notificationReceivedSubscribers[notificationType] = thisEvent;
+            }
         }
     }
 }

@@ -31,38 +31,38 @@ namespace DCL.BadgesAPIService
 
         public async UniTask<List<LatestAchievedBadgeData>> FetchLatestAchievedBadgesAsync(string walletId, CancellationToken ct)
         {
-            // var url = $"{badgesBaseUrl}/users/{walletId}/preview";
-            //
-            // LatestAchievedBadgesResponse latestAchievedBadgesResponse = await webRequestController.GetAsync(url, ct, reportCategory: ReportCategory.BADGES)
-            //                                                                                       .CreateFromJson<LatestAchievedBadgesResponse>(WRJsonParser.Newtonsoft);
-            //
-            // return latestAchievedBadgesResponse.data.latestAchievedBadges;
-            await UniTask.Delay(1000, cancellationToken: ct);
-            return GetLatestAchievedBadgesMockedResponse().data.latestAchievedBadges;
+            var url = $"{badgesBaseUrl}/users/{walletId}/preview";
+
+            LatestAchievedBadgesResponse latestAchievedBadgesResponse = await webRequestController.GetAsync(url, ct, reportCategory: ReportCategory.BADGES)
+                                                                                                  .CreateFromJson<LatestAchievedBadgesResponse>(WRJsonParser.Newtonsoft);
+
+            return latestAchievedBadgesResponse.data.latestAchievedBadges;
+            //await UniTask.Delay(1000, cancellationToken: ct);
+            //return GetLatestAchievedBadgesMockedResponse().data.latestAchievedBadges;
         }
 
         public async UniTask<BadgesInfo> FetchBadgesAsync(string walletId, bool includeNotAchieved, CancellationToken ct)
         {
-            // var url = $"{badgesBaseUrl}/users/{walletId}/badges?includeNotAchieved={(includeNotAchieved ? "true" : "false")}";
-            //
-            // BadgesResponse badgesResponse = await webRequestController.GetAsync(url, ct, reportCategory: ReportCategory.BADGES)
-            //                                                           .CreateFromJson<BadgesResponse>(WRJsonParser.Newtonsoft);
-            //
-            // return ResponseToBadgesInfo(badgesResponse);
-            await UniTask.Delay(1000, cancellationToken: ct);
-            return ResponseToBadgesInfo(GetBadgesMockedResponse());
+            var url = $"{badgesBaseUrl}/users/{walletId}/badges?includeNotAchieved={(includeNotAchieved ? "true" : "false")}";
+
+            BadgesResponse badgesResponse = await webRequestController.GetAsync(url, ct, reportCategory: ReportCategory.BADGES)
+                                                                      .CreateFromJson<BadgesResponse>(WRJsonParser.Newtonsoft);
+
+            return ResponseToBadgesInfo(badgesResponse);
+            //await UniTask.Delay(1000, cancellationToken: ct);
+            //return ResponseToBadgesInfo(GetBadgesMockedResponse());
         }
 
         public async UniTask<List<TierData>> FetchTiersAsync(string badgeId, CancellationToken ct)
         {
-            // var url = $"{badgesBaseUrl}/badges/{badgeId}/tiers";
-            //
-            // TiersResponse tiersResponse = await webRequestController.GetAsync(url, ct, reportCategory: ReportCategory.BADGES)
-            //                                                         .CreateFromJson<TiersResponse>(WRJsonParser.Newtonsoft);
-            //
-            // return tiersResponse.data.tiers;
-            await UniTask.Delay(1000, cancellationToken: ct);
-            return GetTiersMockedResponse(badgeId).data.tiers;
+            var url = $"{badgesBaseUrl}/badges/{badgeId}/tiers";
+
+            TiersResponse tiersResponse = await webRequestController.GetAsync(url, ct, reportCategory: ReportCategory.BADGES)
+                                                                    .CreateFromJson<TiersResponse>(WRJsonParser.Newtonsoft);
+
+            return tiersResponse.data.tiers;
+            //await UniTask.Delay(1000, cancellationToken: ct);
+            //return GetTiersMockedResponse(badgeId).data.tiers;
         }
 
         private BadgesInfo ResponseToBadgesInfo(BadgesResponse badgesResponse)

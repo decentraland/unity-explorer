@@ -315,10 +315,7 @@ namespace DCL.Passport
             ownProfile ??= await selfProfile.ProfileAsync(ct);
 
             if (ownProfile != null)
-            {
-                // TODO (Santi): We have to receive all the notification data into 'parameters' to know if we have to open the passport with a specific badge selected
                 mvcManager.ShowAsync(IssueCommand(new Params(ownProfile.UserId, badgeIdToOpen)), ct).Forget();
-            }
         }
     }
 }
