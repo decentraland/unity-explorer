@@ -1,7 +1,8 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Backpack;
-using DCL.CharacterMotion.Components;
+using DCL.Input;
+using DCL.Input.Component;
 using DCL.Navmap;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
@@ -14,7 +15,6 @@ using System.Linq;
 using System.Threading;
 using UnityEngine.InputSystem;
 using Utility;
-using Utility.Arch;
 
 namespace DCL.ExplorePanel
 {
@@ -22,13 +22,13 @@ namespace DCL.ExplorePanel
     {
         private readonly SettingsController settingsController;
         private readonly BackpackController backpackController;
-        private readonly Entity playerEntity;
-        private readonly World world;
         private readonly ProfileWidgetController profileWidgetController;
         private readonly ProfileMenuController profileMenuController;
         private readonly DCLInput dclInput;
         private readonly INotificationsBusController notificationBusController;
         private readonly IMVCManager mvcManager;
+        private readonly IInputBlock inputBlock;
+
         private Dictionary<ExploreSections, TabSelectorView> tabsBySections;
         private Dictionary<ExploreSections, ISection> exploreSections;
 
@@ -49,26 +49,24 @@ namespace DCL.ExplorePanel
             NavmapController navmapController,
             SettingsController settingsController,
             BackpackController backpackController,
-            Entity playerEntity,
-            World world,
             ProfileWidgetController profileWidgetController,
             ProfileMenuController profileMenuController,
             DCLInput dclInput,
             INotificationsBusController notificationBusController,
-            IMVCManager mvcManager)
+            IMVCManager mvcManager,
+            IInputBlock inputBlock)
             : base(viewFactory)
         {
             NavmapController = navmapController;
             this.settingsController = settingsController;
             this.backpackController = backpackController;
-            this.playerEntity = playerEntity;
-            this.world = world;
             this.profileWidgetController = profileWidgetController;
             this.dclInput = dclInput;
             this.notificationBusController = notificationBusController;
             this.mvcManager = mvcManager;
             this.profileMenuController = profileMenuController;
             this.notificationBusController.SubscribeToNotificationTypeClick(NotificationType.REWARD_ASSIGNMENT, OnRewardAssigned);
+            this.inputBlock = inputBlock;
         }
 
         private void OnRewardAssigned(object[] parameters)
@@ -139,7 +137,7 @@ namespace DCL.ExplorePanel
             if (profileMenuController.State is ControllerState.ViewFocused or ControllerState.ViewBlurred)
                 profileMenuController.HideViewAsync(CancellationToken.None).Forget();
 
-            BlockUnwantedActions();
+            BlockUnwantedInputs();
             RegisterHotkeys();
         }
 
@@ -225,7 +223,7 @@ namespace DCL.ExplorePanel
             profileWidgetCts.SafeCancelAndDispose();
             profileMenuCts.SafeCancelAndDispose();
 
-            UnblockUnwantedActions();
+            UnblockUnwantedInputs();
             UnRegisterHotkeys();
         }
 
@@ -238,23 +236,19 @@ namespace DCL.ExplorePanel
             dclInput.Shortcuts.Backpack.performed -= OnBackpackHotkeyPressed;
         }
 
-        private void BlockUnwantedActions()
+        private void BlockUnwantedInputs()
         {
-            world.AddOrGet<CameraBlockerComponent>(playerEntity);
-            world.AddOrGet<MovementBlockerComponent>(playerEntity);
-            dclInput.Camera.Disable();
+            inputBlock.Disable(InputMapComponent.Kind.Camera , InputMapComponent.Kind.Player);
         }
 
-        private void UnblockUnwantedActions()
+        private void UnblockUnwantedInputs()
         {
-            world.TryRemove<CameraBlockerComponent>(playerEntity);
-            world.TryRemove<MovementBlockerComponent>(playerEntity);
-            dclInput.Camera.Enable();
+            inputBlock.Enable(InputMapComponent.Kind.Camera , InputMapComponent.Kind.Player);
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct)
         {
-            return UniTask.WhenAny(viewInstance.CloseButton.OnClickAsync(ct),
+            return UniTask.WhenAny(viewInstance!.CloseButton.OnClickAsync(ct),
                 UniTask.WaitUntil(() => isControlClosing, PlayerLoopTiming.Update, ct),
                 viewInstance.ProfileMenuView.SystemMenuView.LogoutButton.OnClickAsync(ct));
         }

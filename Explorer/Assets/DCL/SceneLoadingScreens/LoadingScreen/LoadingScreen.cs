@@ -3,7 +3,7 @@ using DCL.AsyncLoadReporting;
 using MVC;
 using System;
 using System.Threading;
-using ShowResult = DCL.SceneLoadingScreens.LoadingScreen.ILoadingScreen.ShowResult;
+using UnityEngine;
 
 namespace DCL.SceneLoadingScreens.LoadingScreen
 {
@@ -17,7 +17,8 @@ namespace DCL.SceneLoadingScreens.LoadingScreen
             this.mvcManager = mvcManager;
         }
 
-        public async UniTask<ShowResult> ShowWhileExecuteTaskAsync(Func<AsyncLoadProcessReport, UniTask> operation, CancellationToken ct)
+        public async UniTask<ILoadingScreen.LoadResult> ShowWhileExecuteTaskAsync(
+            Func<AsyncLoadProcessReport, UniTask> operation, CancellationToken ct)
         {
             ct.ThrowIfCancellationRequested();
 
@@ -29,19 +30,24 @@ namespace DCL.SceneLoadingScreens.LoadingScreen
                                                                new SceneLoadingScreenController.Params(loadReport, timeout)), ct)
                                                       .AttachExternalCancellation(ct);
 
-            var succeed = false;
+            var result = ILoadingScreen.LoadResult.TimeoutResult;
 
             async UniTask ExecuteOperationAsync()
             {
-                await operation(loadReport);
-                succeed = true;
+                try
+                {
+                    await operation(loadReport);
+                    result = ILoadingScreen.LoadResult.SuccessResult;
+                }
+                catch (Exception e)
+                {
+                    result = ILoadingScreen.LoadResult.ExceptionResult(e.Message);
+                }
             }
 
             await UniTask.WhenAny(showLoadingScreenTask, ExecuteOperationAsync());
 
-            return succeed
-                ? ShowResult.Success
-                : ShowResult.Timeout;
+            return result;
         }
     }
 }

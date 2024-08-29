@@ -8,6 +8,7 @@ namespace DCL.MapRenderer.MapLayers.Pins
     public class PinMarkerObject : MapRendererMarkerBase
     {
         private const int SPRITE_SIZE = 36;
+        private static readonly Vector3 setAsDestinationPosition = new (0,0.6f,0);
         [field: SerializeField] internal SpriteRenderer mapPinIcon { get; private set; }
         [field: SerializeField] internal SpriteRenderer mapPinIconOutline { get; private set; }
         [field: SerializeField] internal SpriteRenderer[] renderers { get; private set; }
@@ -15,6 +16,7 @@ namespace DCL.MapRenderer.MapLayers.Pins
         [field: SerializeField] internal GameObject destinationAnimationElipse { get; private set; }
         [field: SerializeField] internal Transform selectionScalingParent { get; private set; }
         [field: SerializeField] internal Transform pulseScalingParent { get; private set; }
+
 
         public void SetScale(float newScale)
         {
@@ -28,6 +30,7 @@ namespace DCL.MapRenderer.MapLayers.Pins
 
         public void SetAsDestination(bool isDestination)
         {
+            pulseScalingParent.localPosition = isDestination ? setAsDestinationPosition : Vector3.zero;
             destinationBackground.SetActive(isDestination);
             destinationAnimationElipse.SetActive(isDestination);
         }

@@ -1,4 +1,4 @@
-﻿using DCL.Input.UnityInputSystem.Blocks;
+﻿using DCL.Input;
 using DCL.SDKComponents.SceneUI.Classes;
 using DCL.SDKComponents.SceneUI.Utils;
 using UnityEngine.UIElements;

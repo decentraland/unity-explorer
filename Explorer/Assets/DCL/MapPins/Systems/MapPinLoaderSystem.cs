@@ -23,17 +23,17 @@ namespace DCL.SDKComponents.MapPins.Systems
     [UpdateInGroup(typeof(ComponentInstantiationGroup))]
     public partial class MapPinLoaderSystem : BaseUnityLoopSystem
     {
-        private readonly ObjectProxy<World> globalWorldProxy;
+        private readonly World globalWorld;
         private readonly IPartitionComponent partitionComponent;
         private const int ATTEMPTS_COUNT = 6;
         private readonly ISceneData sceneData;
         private int xRounded;
         private int yRounded;
 
-        public MapPinLoaderSystem(World world, ISceneData sceneData, ObjectProxy<World> globalWorldProxy, IPartitionComponent partitionComponent) : base(world)
+        public MapPinLoaderSystem(World world, ISceneData sceneData, World globalWorld, IPartitionComponent partitionComponent) : base(world)
         {
             this.sceneData = sceneData;
-            this.globalWorldProxy = globalWorldProxy;
+            this.globalWorld = globalWorld;
             this.partitionComponent = partitionComponent;
         }
 
@@ -59,7 +59,7 @@ namespace DCL.SDKComponents.MapPins.Systems
             TextureComponent? mapPinTexture = pbMapPin.Texture.CreateTextureComponent(sceneData);
             TryCreateGetTexturePromise(in mapPinTexture, ref mapPinComponent.TexturePromise);
 
-            World.Add(entity, new MapPinHolderComponent(globalWorldProxy.Object!.Create(pbMapPin, mapPinComponent)));
+            World.Add(entity, new MapPinHolderComponent(globalWorld.Create(pbMapPin, mapPinComponent)));
         }
 
 
@@ -68,7 +68,7 @@ namespace DCL.SDKComponents.MapPins.Systems
         [Query]
         private void ResolvePromise(ref MapPinHolderComponent mapPinHolderComponent)
         {
-            MapPinComponent mapPinComponent = (MapPinComponent) globalWorldProxy.Object!.Get(mapPinHolderComponent.GlobalWorldEntity, typeof(MapPinComponent))!;
+            var mapPinComponent = (MapPinComponent)globalWorld.Get(mapPinHolderComponent.GlobalWorldEntity, typeof(MapPinComponent))!;
 
             if (mapPinComponent.TexturePromise is not null && !mapPinComponent.TexturePromise.Value.IsConsumed)
             {
@@ -77,7 +77,7 @@ namespace DCL.SDKComponents.MapPins.Systems
                     mapPinComponent.ThumbnailIsDirty = true;
                     mapPinComponent.Thumbnail = texture.Asset;
                     mapPinComponent.TexturePromise = null;
-                    globalWorldProxy.Object!.Set(mapPinHolderComponent.GlobalWorldEntity, mapPinComponent);
+                    globalWorld.Set(mapPinHolderComponent.GlobalWorldEntity, mapPinComponent);
                 }
             }
         }
@@ -88,7 +88,7 @@ namespace DCL.SDKComponents.MapPins.Systems
             if (!pbMapPin.IsDirty)
                 return;
 
-            MapPinComponent mapPinComponent = (MapPinComponent) globalWorldProxy.Object!.Get(mapPinHolderComponent.GlobalWorldEntity, typeof(MapPinComponent))!;
+            var mapPinComponent = (MapPinComponent)globalWorld.Get(mapPinHolderComponent.GlobalWorldEntity, typeof(MapPinComponent))!;
 
             xRounded = Mathf.RoundToInt(pbMapPin.Position.X);
             yRounded = Mathf.RoundToInt(pbMapPin.Position.Y);
@@ -102,14 +102,14 @@ namespace DCL.SDKComponents.MapPins.Systems
             TryCreateGetTexturePromise(in mapPinTexture, ref mapPinComponent.TexturePromise);
             pbMapPin.IsDirty = false;
 
-            globalWorldProxy.Object!.Set(mapPinHolderComponent.GlobalWorldEntity, mapPinComponent, pbMapPin);
+            globalWorld.Set(mapPinHolderComponent.GlobalWorldEntity, mapPinComponent, pbMapPin);
         }
 
         [Query]
         [None(typeof(PBMapPin), typeof(DeleteEntityIntention))]
         private void HandleComponentRemoval(in Entity entity, ref MapPinHolderComponent mapPinHolderComponent)
         {
-            globalWorldProxy.Object!.Add(mapPinHolderComponent.GlobalWorldEntity, new DeleteEntityIntention());
+            globalWorld.Add(mapPinHolderComponent.GlobalWorldEntity, new DeleteEntityIntention());
             World.Remove<MapPinHolderComponent>(entity);
         }
 
@@ -117,7 +117,7 @@ namespace DCL.SDKComponents.MapPins.Systems
         [All(typeof(DeleteEntityIntention))]
         private void HandleEntityDestruction(in Entity entity, ref MapPinHolderComponent mapPinHolderComponent)
         {
-            globalWorldProxy.Object!.Add(mapPinHolderComponent.GlobalWorldEntity, new DeleteEntityIntention());
+            globalWorld.Add(mapPinHolderComponent.GlobalWorldEntity, new DeleteEntityIntention());
             World.Remove<MapPinHolderComponent, PBMapPin>(entity);
         }
 

@@ -13,11 +13,11 @@ namespace DCL.PluginSystem.World
 {
     public class MapPinPlugin : IDCLWorldPluginWithoutSettings
     {
-        private readonly ObjectProxy<Arch.Core.World> globalWorldProxy;
+        private readonly Arch.Core.World globalWorld;
 
-        public MapPinPlugin(ObjectProxy<Arch.Core.World> globalWorldProxy)
+        public MapPinPlugin(Arch.Core.World globalWorld)
         {
-            this.globalWorldProxy = globalWorldProxy;
+            this.globalWorld = globalWorld;
         }
 
         public UniTask Initialize(IPluginSettingsContainer container, CancellationToken ct) =>
@@ -27,7 +27,7 @@ namespace DCL.PluginSystem.World
         {
             ResetDirtyFlagSystem<PBMapPin>.InjectToWorld(ref builder);
 
-            MapPinLoaderSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, globalWorldProxy, sharedDependencies.ScenePartition);
+            MapPinLoaderSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, globalWorld, sharedDependencies.ScenePartition);
         }
     }
 }

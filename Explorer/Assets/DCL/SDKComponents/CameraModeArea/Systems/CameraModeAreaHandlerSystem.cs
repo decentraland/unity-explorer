@@ -27,9 +27,9 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
         private readonly World globalWorld;
         private readonly ObjectProxy<Entity> cameraEntityProxy;
 
-        public CameraModeAreaHandlerSystem(World world, ObjectProxy<World> globalWorldProxy, ObjectProxy<Entity> cameraEntityProxy) : base(world)
+        public CameraModeAreaHandlerSystem(World world, World globalWorld, ObjectProxy<Entity> cameraEntityProxy) : base(world)
         {
-            globalWorld = globalWorldProxy.Object;
+            this.globalWorld = globalWorld;
             this.cameraEntityProxy = cameraEntityProxy;
         }
 

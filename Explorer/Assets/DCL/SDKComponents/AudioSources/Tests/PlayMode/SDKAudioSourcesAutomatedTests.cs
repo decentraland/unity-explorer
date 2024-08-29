@@ -1,4 +1,5 @@
-﻿using Cysharp.Threading.Tasks;
+﻿using Arch.Core;
+using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AssetsProvision.Provisions;
 using DCL.Browser.DecentralandUrls;
@@ -138,6 +139,7 @@ namespace DCL.SDKComponents.AudioSources.Tests.PlayMode
                     globalSettingsContainer,
                     web3IdentityCache,
                     ethereumApi,
+                    World.Create(),
                     ct
                 );
 

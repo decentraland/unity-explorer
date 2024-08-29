@@ -42,8 +42,7 @@ namespace Global.AppArgs
         private void AddAlwaysInEditorFlags()
         {
             foreach ((string? key, string? value) in ALWAYS_IN_EDITOR)
-                if (appParameters.ContainsKey(key) == false)
-                    appParameters[key] = value;
+                appParameters.TryAdd(key, value);
         }
 
         private void ParseApplicationParameters(string[] cmdArgs)
@@ -51,10 +50,8 @@ namespace Global.AppArgs
             var deepLinkFound = false;
             string lastKeyStored = string.Empty;
 
-            for (int i = 0; i < cmdArgs.Length; i++)
+            foreach (string arg in cmdArgs)
             {
-                string arg = cmdArgs[i];
-
                 if (arg.StartsWith("--"))
                 {
                     if (arg.Length > 2)

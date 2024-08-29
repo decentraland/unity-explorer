@@ -30,8 +30,8 @@ namespace ECS.SceneLifeCycle
 
     public class ScenesCache : IScenesCache
     {
-        private readonly Dictionary<Vector2Int, ISceneFacade> scenesByParcels = new (PoolConstants.SCENES_COUNT * 2);
-        private readonly HashSet<Vector2Int> nonRealSceneByParcel = new (PoolConstants.SCENES_COUNT * 2);
+        private readonly Dictionary<Vector2Int, ISceneFacade> scenesByParcels = new (PoolConstants.SCENES_COUNT);
+        private readonly HashSet<Vector2Int> nonRealSceneByParcel = new (PoolConstants.SCENES_COUNT);
 
         private readonly HashSet<ISceneFacade> scenes = new (PoolConstants.SCENES_COUNT);
 
