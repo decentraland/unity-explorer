@@ -400,7 +400,7 @@ else:
     set_parameters(get_param_env_variables())
 
     def get_clean_build_bool():
-        value = os.getenv('CLEAN_BUILD', 'false').lower()
+        value = os.getenv('CLEAN_BUILD', 'false').lower() 
         if value in ['true', '1']:
             return True
         elif value in ['false', '0']:
@@ -408,7 +408,7 @@ else:
         else:
             raise ValueError(f"Invalid boolean value for CLEAN_BUILD: {value}")
     # Run Build
-    id = run_build(os.getenv('BRANCH_NAME'), get_clean_build_bool)
+    id = run_build(os.getenv('BRANCH_NAME'), get_clean_build_bool())
 
     utils.persist_build_info(os.getenv('TARGET'), id)
     print(f'For more info and live logs, go to https://cloud.unity.com/ and search for target "{os.getenv('TARGET')}" and build ID "{id}"')
