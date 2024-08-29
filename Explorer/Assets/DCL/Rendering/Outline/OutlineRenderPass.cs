@@ -37,7 +37,7 @@ namespace DCL.Rendering.Avatar
             private ReportData m_ReportData = new ("DCL_RenderFeature_Outline_OutlinePass", ReportHint.SessionStatic);
 
             private OutlineRendererFeature_Settings m_Settings;
-
+            private ProfilingSampler m_Sampler;
             private Material outlineMaterial;
             private RTHandle outlineRTHandle;
             private RenderTextureDescriptor outlineRTDescriptor;
@@ -49,6 +49,8 @@ namespace DCL.Rendering.Avatar
                 outlineMaterial = _outlineMaterial;
                 outlineRTHandle = _outlineRTHandle;
                 outlineRTDescriptor = _outlineRTDescriptor;
+                m_Sampler = new ProfilingSampler(profilerTag);
+
                 //depthNormalsRTHandle = _depthNormalsRTHandle;
             }
 
@@ -74,7 +76,7 @@ namespace DCL.Rendering.Avatar
             {
                 CommandBuffer cmd = CommandBufferPool.Get("_OutlinePass");
 
-                using (new ProfilingScope(cmd, new ProfilingSampler(profilerTag)))
+                using (new ProfilingScope(cmd, m_Sampler))
                 {
                     // cmd.SetGlobalTexture(s_ColourTextureID, _renderingData.cameraData.renderer.cameraColorTargetHandle);
                     // cmd.SetGlobalTexture(s_DepthTextureID, _renderingData.cameraData.renderer.cameraDepthTargetHandle);
@@ -87,7 +89,6 @@ namespace DCL.Rendering.Avatar
                     //CoreUtils.DrawFullScreen(cmd, outlineMaterial, properties: null, (int)ShaderPasses.OutlineRender);
                     CoreUtils.DrawFullScreen(cmd, outlineMaterial, properties: null);
                 }
-
                 _context.ExecuteCommandBuffer(cmd);
                 CommandBufferPool.Release(cmd);
             }
