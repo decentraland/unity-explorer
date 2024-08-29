@@ -292,7 +292,7 @@ namespace Global.Dynamic
                 container.localSceneDevelopmentController = new LocalSceneDevelopmentController(container.reloadSceneController, dynamicWorldParams.LocalSceneDevelopmentRealm);
 
             container.RoomHub = localSceneDevelopment ? NullRoomHub.INSTANCE : new RoomHub(archipelagoIslandRoom, gateKeeperSceneRoom);
-            container.MessagePipesHub = new MessagePipesHub(container.RoomHub, multiPoolFactory()!, multiPoolFactory()!, memoryPool, staticContainer.ScenesCache);
+            container.MessagePipesHub = new MessagePipesHub(container.RoomHub, multiPoolFactory()!, multiPoolFactory()!, memoryPool);
 
             RoomsStatus roomsStatus = new RoomsStatus(
                 container.RoomHub,

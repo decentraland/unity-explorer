@@ -1,6 +1,5 @@
 using DCL.Multiplayer.Connections.Messaging.Pipe;
 using DCL.Multiplayer.Connections.RoomHubs;
-using ECS.SceneLifeCycle;
 using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Internal.FFIClients.Pools.Memory;
 
@@ -11,10 +10,9 @@ namespace DCL.Multiplayer.Connections.Messaging.Hubs
         private readonly IMessagePipe scenePipe;
         private readonly IMessagePipe islandPipe;
 
-        public MessagePipesHub(IRoomHub roomHub, IMultiPool sendingMultiPool, IMultiPool receivingMultiPool, IMemoryPool memoryPool, IScenesCache scenesCache) : this(
+        public MessagePipesHub(IRoomHub roomHub, IMultiPool sendingMultiPool, IMultiPool receivingMultiPool, IMemoryPool memoryPool) : this(
             new MessagePipe(roomHub.SceneRoom().DataPipe, sendingMultiPool, receivingMultiPool, memoryPool)
-               .WithLog("Scene")
-               .WithInitialSceneSync(roomHub.SceneRoom(), scenesCache),
+               .WithLog("Scene"),
             new MessagePipe(roomHub.IslandRoom().DataPipe, sendingMultiPool, receivingMultiPool, memoryPool)
                .WithLog("Island")
         ) { }

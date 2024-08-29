@@ -30,8 +30,5 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
     {
         public static LogMessagePipe WithLog(this IMessagePipe messagePipe, string fromPipe) =>
             new (messagePipe, fromPipe);
-
-        public static InitialSceneSyncMessagePipe WithInitialSceneSync(this IMessagePipe messagePipe, IRoom room, IScenesCache scenesCache) =>
-            new (messagePipe, room, scenesCache);
     }
 }
