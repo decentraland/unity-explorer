@@ -38,6 +38,24 @@ namespace Utility.Types
             new (default(T)!, errorMessage);
     }
 
+    public readonly struct EnumResult<TErrorEnum>
+    {
+        public readonly (TErrorEnum State, string Message)? Error;
+
+        public bool Success => Error == null;
+
+        private EnumResult((TErrorEnum State, string Message)? error)
+        {
+            this.Error = error;
+        }
+
+        public static EnumResult<TErrorEnum> SuccessResult() =>
+            new (null);
+
+        public static EnumResult<TErrorEnum> ErrorResult(TErrorEnum state, string errorMessage) =>
+            new ((state, errorMessage));
+    }
+
     public readonly struct EnumResult<TValue, TErrorEnum>
     {
         public readonly TValue Value;

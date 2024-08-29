@@ -39,11 +39,12 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
             this.log = log;
         }
 
-        public async UniTask ConnectAsync(string adapterUrl, CancellationToken token)
+        public async UniTask<Result> ConnectAsync(string adapterUrl, CancellationToken token)
         {
             log($"ArchipelagoLiveConnection ConnectAsync start to: {adapterUrl}");
-            await origin.ConnectAsync(adapterUrl, token);
-            log($"ArchipelagoLiveConnection ConnectAsync finished to: {adapterUrl}");
+            var result = await origin.ConnectAsync(adapterUrl, token);
+            log($"ArchipelagoLiveConnection ConnectAsync finished to: {adapterUrl} with result: {result.Success}");
+            return result;
         }
 
         public async UniTask DisconnectAsync(CancellationToken token)
@@ -53,14 +54,15 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
             log("ArchipelagoLiveConnection DisconnectAsync finished");
         }
 
-        public async UniTask SendAsync(MemoryWrap data, CancellationToken token)
+        public async UniTask<EnumResult<IArchipelagoLiveConnection.ResponseError>> SendAsync(MemoryWrap data, CancellationToken token)
         {
             log($"ArchipelagoLiveConnection SendAsync start with size: {data.Length} and content: {data.HexReadableString()}");
-            await origin.SendAsync(data, token);
+            var result = await origin.SendAsync(data, token);
             log($"ArchipelagoLiveConnection SendAsync finished with size: {data.Length} and content: {data.HexReadableString()}");
+            return result;
         }
 
-        public async UniTask<EnumResult<MemoryWrap, IArchipelagoLiveConnection.ReceiveResponse>> ReceiveAsync(CancellationToken token)
+        public async UniTask<EnumResult<MemoryWrap, IArchipelagoLiveConnection.ResponseError>> ReceiveAsync(CancellationToken token)
         {
             log("ArchipelagoLiveConnection ReceiveAsync start");
             var result = await origin.ReceiveAsync(token);
