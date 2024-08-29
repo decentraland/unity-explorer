@@ -60,7 +60,7 @@ namespace DCL.Multiplayer.Emotes
             SendTo(emote, sendId, messagePipesHub.IslandPipe());
             SendTo(emote, sendId, messagePipesHub.ScenePipe());
 
-            if (settings.SelfSending)
+            // if (settings.SelfSending)
                 SelfSendWithDelayAsync(emote, sendId).Forget();
         }
 
