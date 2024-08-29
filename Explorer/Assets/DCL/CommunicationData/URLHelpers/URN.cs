@@ -10,46 +10,44 @@ namespace CommunicationData.URLHelpers
         private const int THIRD_PARTY_V2_SHORTEN_URN_PARTS = 7;
         private const string THIRD_PARTY_PART_ID = "collections-thirdparty";
 
-        private readonly string urn;
+        private readonly string lowercaseUrn;
+        private readonly string originalUrn;
 
         public URN(string urn)
         {
-            this.urn = urn;
+            this.originalUrn = urn;
+            this.lowercaseUrn = this.originalUrn.ToLower();
         }
 
         public URN(int urn)
         {
-            this.urn = urn.ToString();
+            this.originalUrn = urn.ToString();
+            this.lowercaseUrn = this.originalUrn.ToLower();
         }
 
         public bool IsNullOrEmpty() =>
-            string.IsNullOrEmpty(urn);
+            string.IsNullOrEmpty(originalUrn);
 
         public bool IsValid() =>
-            !IsNullOrEmpty() && urn.StartsWith("urn");
+            !IsNullOrEmpty() && originalUrn.StartsWith("urn");
 
         public bool Equals(int other) => Equals(other.ToString());
 
         public bool Equals(URN other) =>
-            Equals(other.urn);
+            Equals(other.lowercaseUrn);
 
         public bool Equals(string other) =>
-            // Ignore case of all urn since the server returns urns with lower case or upper case representing the same content on different endpoints
-            // For example a wearable in the profile (/lambdas/profiles/:address):
-            // urn:decentraland:matic:collections-thirdparty:dolcegabbana-disco-drip:0x4bD77619a75C8EdA181e3587339E7011DA75bF0E:2a424e9c-c6fb-4783-99ed-63d260d90ed2
-            // The same wearable in the content server (/content/entities/active):
-            // urn:decentraland:matic:collections-thirdparty:dolcegabbana-disco-drip:0x4bd77619a75c8eda181e3587339e7011da75bf0e:2a424e9c-c6fb-4783-99ed-63d260d90ed2
-            string.Equals(urn, other, StringComparison.OrdinalIgnoreCase);
+            string.Equals(lowercaseUrn, other);
 
         public override bool Equals(object obj) =>
             obj is URN other && Equals(other);
 
         public override string ToString() =>
-            urn;
+            originalUrn;
 
         public URLAddress ToUrlOrEmpty(URLAddress baseUrl)
         {
-            string currentUrn = this.urn;
+            string currentUrn = this.originalUrn;
             ReadOnlySpan<char> CutBeforeColon(ref int endIndex, out bool success)
             {
                 int atBeginning = endIndex;
@@ -117,11 +115,11 @@ namespace CommunicationData.URLHelpers
         }
 
         public override int GetHashCode() =>
-            urn != null ? StringComparer.OrdinalIgnoreCase.GetHashCode(urn) : 0;
+            originalUrn != null ? StringComparer.OrdinalIgnoreCase.GetHashCode(originalUrn) : 0;
 
         public URN Shorten()
         {
-            if (string.IsNullOrEmpty(urn)) return this;
+            if (string.IsNullOrEmpty(originalUrn)) return this;
             if (CountParts() <= SHORTEN_URN_PARTS) return this;
 
             int index;
@@ -135,40 +133,40 @@ namespace CommunicationData.URLHelpers
                 // "tokenId": amoy:0x1d9fb685c257e74f869ba302e260c0b68f5ebb37:12
                 for (var i = 0; i < THIRD_PARTY_V2_SHORTEN_URN_PARTS; i++)
                 {
-                    index = urn.IndexOf(':', index + 1);
+                    index = originalUrn.IndexOf(':', index + 1);
                     if (index == -1) break;
                 }
 
-                return index != -1 ? urn[..index] : urn;
+                return index != -1 ? originalUrn[..index] : originalUrn;
             }
 
             // TokenId is always placed in the last part for regular nfts
-            index = urn.LastIndexOf(':');
+            index = originalUrn.LastIndexOf(':');
 
-            return index != -1 ? urn[..index] : this;
+            return index != -1 ? originalUrn[..index] : this;
         }
 
         public static implicit operator URN(int urn) =>
             urn.ToString();
 
         public static implicit operator string(URN urn) =>
-            urn.urn;
+            urn.originalUrn;
 
         public static implicit operator URN(string urn) =>
             new (urn);
 
         public bool IsThirdPartyCollection() =>
-            !string.IsNullOrEmpty(urn) && urn.Contains(THIRD_PARTY_PART_ID);
+            !string.IsNullOrEmpty(originalUrn) && originalUrn.Contains(THIRD_PARTY_PART_ID);
 
         private int CountParts()
         {
             int count = 1;
-            int index = urn.IndexOf(':');
+            int index = originalUrn.IndexOf(':');
 
             while (index != -1)
             {
                 count++;
-                index = urn.IndexOf(':', index + 1);
+                index = originalUrn.IndexOf(':', index + 1);
             }
 
             return count;
