@@ -24,7 +24,7 @@ namespace DCL.BadgesAPIService
         {
             var url = $"{badgesBaseUrl}/categories";
             CategoriesResponse badgesResponse = await webRequestController.GetAsync(url, ct, reportCategory: ReportCategory.BADGES)
-                                                                          .CreateFromJson<CategoriesResponse>(WRJsonParser.Unity);
+                                                                          .CreateFromJson<CategoriesResponse>(WRJsonParser.Newtonsoft);
 
             return badgesResponse.data.categories;
         }
@@ -34,7 +34,7 @@ namespace DCL.BadgesAPIService
             // var url = $"{badgesBaseUrl}/users/{walletId}/preview";
             //
             // LatestAchievedBadgesResponse latestAchievedBadgesResponse = await webRequestController.GetAsync(url, ct, reportCategory: ReportCategory.BADGES)
-            //                                                                                       .CreateFromJson<LatestAchievedBadgesResponse>(WRJsonParser.Unity);
+            //                                                                                       .CreateFromJson<LatestAchievedBadgesResponse>(WRJsonParser.Newtonsoft);
             //
             // return latestAchievedBadgesResponse.data.latestAchievedBadges;
             await UniTask.Delay(1000, cancellationToken: ct);
@@ -58,7 +58,7 @@ namespace DCL.BadgesAPIService
             // var url = $"{badgesBaseUrl}/badges/{badgeId}/tiers";
             //
             // TiersResponse tiersResponse = await webRequestController.GetAsync(url, ct, reportCategory: ReportCategory.BADGES)
-            //                                                         .CreateFromJson<TiersResponse>(WRJsonParser.Unity);
+            //                                                         .CreateFromJson<TiersResponse>(WRJsonParser.Newtonsoft);
             //
             // return tiersResponse.data.tiers;
             await UniTask.Delay(1000, cancellationToken: ct);
@@ -110,7 +110,7 @@ namespace DCL.BadgesAPIService
                         {
                             id = "decentraland-citizen",
                             name = "Decentraland Citizen",
-                            image = "https://dejpknyizje2n.cloudfront.net/media/carstickers/versions/pixel-art-golden-medal-award-sticker-u8c98-x450.png",
+                            image = "https://assets-cdn.decentraland.zone/decentraland-citizen/2d/normal.png",
                         },
                         new LatestAchievedBadgeData
                         {
@@ -122,7 +122,7 @@ namespace DCL.BadgesAPIService
                         {
                             id = "traveler",
                             name = "Traveler Bronze",
-                            image = "https://art.pixilart.com/2af1a2ad84482b0.png",
+                            image = "https://assets-cdn.decentraland.zone/traveler/starter/2d/normal.png",
                         },
                     },
                 },
@@ -149,13 +149,13 @@ namespace DCL.BadgesAPIService
                             {
                                 textures2d = new BadgeTexturesData
                                 {
-                                    normal = "https://dejpknyizje2n.cloudfront.net/media/carstickers/versions/pixel-art-golden-medal-award-sticker-u8c98-x450.png",
+                                    normal = "https://assets-cdn.decentraland.zone/decentraland-citizen/2d/normal.png",
                                 },
                                 textures3d = new BadgeTexturesData
                                 {
-                                    normal = "https://i.ibb.co/rMchTDg/Badge03-normal.png",
-                                    hrm = "https://i.ibb.co/PgkwB3D/Badge03-hrm.png",
-                                    baseColor = "https://i.ibb.co/b15RYpX/Badge03-basecolor.png",
+                                    normal = "https://assets-cdn.decentraland.zone/decentraland-citizen/3d/normal.png",
+                                    hrm = "https://assets-cdn.decentraland.zone/decentraland-citizen/3d/hrm.png",
+                                    baseColor = "https://assets-cdn.decentraland.zone/decentraland-citizen/3d/basecolor.png",
                                 },
                             },
                             isTier = false,
@@ -245,13 +245,13 @@ namespace DCL.BadgesAPIService
                             {
                                 textures2d = new BadgeTexturesData
                                 {
-                                    normal = "https://art.pixilart.com/2af1a2ad84482b0.png",
+                                    normal = "https://assets-cdn.decentraland.zone/traveler/starter/2d/normal.png",
                                 },
                                 textures3d = new BadgeTexturesData
                                 {
-                                    normal = "https://i.ibb.co/rMchTDg/Badge03-normal.png",
-                                    hrm = "https://i.ibb.co/PgkwB3D/Badge03-hrm.png",
-                                    baseColor = "https://i.ibb.co/b15RYpX/Badge03-basecolor.png",
+                                    normal = "https://assets-cdn.decentraland.zone/traveler/starter/3d/normal.png",
+                                    hrm = "https://assets-cdn.decentraland.zone/traveler/starter/3d/hrm.png",
+                                    baseColor = "https://assets-cdn.decentraland.zone/traveler/starter/3d/basecolor.png",
                                 },
                             },
                             isTier = true,
@@ -263,7 +263,7 @@ namespace DCL.BadgesAPIService
                                 totalStepsTarget = 60,
                                 lastCompletedTierAt = "1722005503466",
                                 lastCompletedTierName = "Bronze",
-                                lastCompletedTierImage = "https://art.pixilart.com/2af1a2ad84482b0.png",
+                                lastCompletedTierImage = "https://assets-cdn.decentraland.zone/traveler/bronze/2d/normal.png",
                                 achievedTiers = new List<AchievedTierData>
                                 {
                                     new()
@@ -576,13 +576,13 @@ namespace DCL.BadgesAPIService
                     {
                         textures2d = new BadgeTexturesData
                         {
-                            normal = "https://art.pixilart.com/2af1a2ad84482b0.png",
+                            normal = "https://assets-cdn.decentraland.zone/traveler/starter/2d/normal.png",
                         },
                         textures3d = new BadgeTexturesData
                         {
-                            normal = "https://i.ibb.co/rMchTDg/Badge03-normal.png",
-                            hrm = "https://i.ibb.co/PgkwB3D/Badge03-hrm.png",
-                            baseColor = "https://i.ibb.co/b15RYpX/Badge03-basecolor.png",
+                            normal = "https://assets-cdn.decentraland.zone/traveler/starter/3d/normal.png",
+                            hrm = "https://assets-cdn.decentraland.zone/traveler/starter/3d/hrm.png",
+                            baseColor = "https://assets-cdn.decentraland.zone/traveler/starter/3d/basecolor.png",
                         },
                     },
                 },
@@ -599,13 +599,13 @@ namespace DCL.BadgesAPIService
                     {
                         textures2d = new BadgeTexturesData
                         {
-                            normal = "https://art.pixilart.com/2af1a2ad84482b0.png",
+                            normal = "https://assets-cdn.decentraland.zone/traveler/bronze/2d/normal.png",
                         },
                         textures3d = new BadgeTexturesData
                         {
-                            normal = "https://i.ibb.co/rMchTDg/Badge03-normal.png",
-                            hrm = "https://i.ibb.co/PgkwB3D/Badge03-hrm.png",
-                            baseColor = "https://i.ibb.co/b15RYpX/Badge03-basecolor.png",
+                            normal = "https://assets-cdn.decentraland.zone/traveler/bronze/3d/normal.png",
+                            hrm = "https://assets-cdn.decentraland.zone/traveler/bronze/3d/hrm.png",
+                            baseColor = "https://assets-cdn.decentraland.zone/traveler/bronze/3d/basecolor.png",
                         },
                     },
                 },
@@ -622,13 +622,13 @@ namespace DCL.BadgesAPIService
                     {
                         textures2d = new BadgeTexturesData
                         {
-                            normal = "https://art.pixilart.com/2af1a2ad84482b0.png",
+                            normal = "https://assets-cdn.decentraland.zone/traveler/silver/2d/normal.png",
                         },
                         textures3d = new BadgeTexturesData
                         {
-                            normal = "https://i.ibb.co/rMchTDg/Badge03-normal.png",
-                            hrm = "https://i.ibb.co/PgkwB3D/Badge03-hrm.png",
-                            baseColor = "https://i.ibb.co/b15RYpX/Badge03-basecolor.png",
+                            normal = "https://assets-cdn.decentraland.zone/traveler/silver/3d/normal.png",
+                            hrm = "https://assets-cdn.decentraland.zone/traveler/silver/3d/hrm.png",
+                            baseColor = "https://assets-cdn.decentraland.zone/traveler/silver/3d/basecolor.png",
                         },
                     },
                 },
@@ -645,13 +645,13 @@ namespace DCL.BadgesAPIService
                     {
                         textures2d = new BadgeTexturesData
                         {
-                            normal = "https://art.pixilart.com/2af1a2ad84482b0.png",
+                            normal = "https://assets-cdn.decentraland.zone/traveler/gold/2d/normal.png",
                         },
                         textures3d = new BadgeTexturesData
                         {
-                            normal = "https://i.ibb.co/rMchTDg/Badge03-normal.png",
-                            hrm = "https://i.ibb.co/PgkwB3D/Badge03-hrm.png",
-                            baseColor = "https://i.ibb.co/b15RYpX/Badge03-basecolor.png",
+                            normal = "https://assets-cdn.decentraland.zone/traveler/gold/3d/normal.png",
+                            hrm = "https://assets-cdn.decentraland.zone/traveler/gold/3d/hrm.png",
+                            baseColor = "https://assets-cdn.decentraland.zone/traveler/gold/3d/basecolor.png",
                         },
                     },
                 },
@@ -668,13 +668,13 @@ namespace DCL.BadgesAPIService
                     {
                         textures2d = new BadgeTexturesData
                         {
-                            normal = "https://art.pixilart.com/2af1a2ad84482b0.png",
+                            normal = "https://assets-cdn.decentraland.zone/traveler/platinum/2d/normal.png",
                         },
                         textures3d = new BadgeTexturesData
                         {
-                            normal = "https://i.ibb.co/rMchTDg/Badge03-normal.png",
-                            hrm = "https://i.ibb.co/PgkwB3D/Badge03-hrm.png",
-                            baseColor = "https://i.ibb.co/b15RYpX/Badge03-basecolor.png",
+                            normal = "https://assets-cdn.decentraland.zone/traveler/platinum/3d/normal.png",
+                            hrm = "https://assets-cdn.decentraland.zone/traveler/platinum/3d/hrm.png",
+                            baseColor = "https://assets-cdn.decentraland.zone/traveler/platinum/3d/basecolor.png",
                         },
                     },
                 },
@@ -691,13 +691,13 @@ namespace DCL.BadgesAPIService
                     {
                         textures2d = new BadgeTexturesData
                         {
-                            normal = "https://art.pixilart.com/2af1a2ad84482b0.png",
+                            normal = "https://assets-cdn.decentraland.zone/traveler/diamond/2d/normal.png",
                         },
                         textures3d = new BadgeTexturesData
                         {
-                            normal = "https://i.ibb.co/rMchTDg/Badge03-normal.png",
-                            hrm = "https://i.ibb.co/PgkwB3D/Badge03-hrm.png",
-                            baseColor = "https://i.ibb.co/b15RYpX/Badge03-basecolor.png",
+                            normal = "https://assets-cdn.decentraland.zone/traveler/diamond/3d/normal.png",
+                            hrm = "https://assets-cdn.decentraland.zone/traveler/diamond/3d/hrm.png",
+                            baseColor = "https://assets-cdn.decentraland.zone/traveler/diamond/3d/basecolor.png",
                         },
                     },
                 },
