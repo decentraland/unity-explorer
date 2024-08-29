@@ -4,6 +4,7 @@ using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapLayers;
 using DCL.MapRenderer.MapLayers.Users;
+using DCL.MapRenderer.MapLayers.UsersMarker;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -50,10 +51,7 @@ namespace DCL.MapRenderer.ComponentsFactory
         private static HotUserMarkerObject CreatePoolMethod(MapRendererConfiguration configuration, HotUserMarkerObject prefab, ICoordsUtils coordsUtils)
         {
             HotUserMarkerObject markerObject = Object.Instantiate(prefab, configuration.HotUserMarkersRoot);
-
-            for (var i = 0; i < markerObject.spriteRenderers.Length; i++)
-                markerObject.spriteRenderers[i].sortingOrder = MapRendererDrawOrder.HOT_USER_MARKERS;
-
+            markerObject.UpdateSortOrder(MapRendererDrawOrder.HOT_USER_MARKERS);
             coordsUtils.SetObjectScale(markerObject);
             return markerObject;
         }

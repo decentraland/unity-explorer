@@ -31,12 +31,13 @@ namespace DCL.PluginSystem.Global
         public async UniTask InitializeAsync(MultiplayerCommunicationSettings settings, CancellationToken ct)
         {
             this.settings = await assetsProvisioner.ProvideMainAssetAsync(settings.spatialStateSettings, ct);
+            messageBus.InitializeEncoder(this.settings.Value.EncodingSettings);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
             PlayerMovementNetSendSystem.InjectToWorld(ref builder, messageBus, settings.Value);
-            RemotePlayersMovementSystem.InjectToWorld(ref builder, messageBus, settings.Value);
+            RemotePlayersMovementSystem.InjectToWorld(ref builder, settings.Value, settings.Value.CharacterControllerSettings);
             RemotePlayerAnimationSystem.InjectToWorld(ref builder, settings.Value.ExtrapolationSettings);
             CleanUpRemoteMotionSystem.InjectToWorld(ref builder);
         }
