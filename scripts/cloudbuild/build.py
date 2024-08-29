@@ -361,10 +361,6 @@ def delete_current_target():
 # Entrypoint here ->
 args = parser.parse_args()
 
-# Validate branch name before proceeding
-branch_name = os.getenv('BRANCH_NAME')
-validate_branch_name(branch_name)
-
 # MODE: Delete
 if args.delete:
     delete_current_target()
@@ -383,6 +379,11 @@ elif args.resume or args.cancel:
 
 # MODE: Create (default)
 else:
+
+    # Validate branch name before proceeding
+    branch_name = os.getenv('BRANCH_NAME')
+    validate_branch_name(branch_name)
+
     # Clone current target
     # This will clone the current $TARGET and replace the value in $TARGET with it
     # Also sets the branch to $BRANCH_NAME
