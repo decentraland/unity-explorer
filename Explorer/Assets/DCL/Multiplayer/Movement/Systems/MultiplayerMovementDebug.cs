@@ -39,39 +39,32 @@ namespace DCL.Multiplayer.Movement.Systems
 
         private void InstantiateSelfReplica(World world)
         {
-            try
-            {
-                if (selfReplicaEntity != null)
-                    RemoveSelfReplica(world);
+            if (selfReplicaEntity != null)
+                RemoveSelfReplica(world);
 
-                if (remoteEntities != null)
+            if (remoteEntities != null)
+            {
+                var remoteProfile = new RemoteProfile(Profile.NewRandomProfile(RemotePlayerMovementComponent.TEST_ID), RemotePlayerMovementComponent.TEST_ID);
+                selfReplicaEntity = remoteEntities.TryCreateOrUpdateRemoteEntity(remoteProfile, world);
+
+                if (world.TryGet(selfReplicaEntity.Value, out CharacterTransform transformComp))
                 {
-                    var remoteProfile = new RemoteProfile(Profile.NewRandomProfile(RemotePlayerMovementComponent.TEST_ID), RemotePlayerMovementComponent.TEST_ID);
-                    selfReplicaEntity = remoteEntities.TryCreateOrUpdateRemoteEntity(remoteProfile, world);
+                    transformComp.Transform.position = playerTransform.Position;
+                    transformComp.Transform.rotation = playerTransform.Rotation;
+                    transformComp.Transform.name = RemotePlayerMovementComponent.TEST_ID;
 
-                    if (world.TryGet(selfReplicaEntity.Value, out CharacterTransform transformComp))
+                    TrailRenderer trail = transformComp.Transform.gameObject.TryAddComponent<TrailRenderer>();
+                    trail.time = 1.0f; // The time in seconds that the trail will fade out over
+                    trail.startWidth = 0.07f; // The starting width of the trail
+                    trail.endWidth = 0.07f; // The end
+
+                    trail.material = new Material(Shader.Find("Unlit/Color"))
                     {
-                        transformComp.Transform.position = playerTransform.Position;
-                        transformComp.Transform.rotation = playerTransform.Rotation;
-                        transformComp.Transform.name = RemotePlayerMovementComponent.TEST_ID;
+                        color = Color.yellow,
+                    };
 
-                        TrailRenderer trail = transformComp.Transform.gameObject.TryAddComponent<TrailRenderer>();
-                        trail.time = 1.0f; // The time in seconds that the trail will fade out over
-                        trail.startWidth = 0.07f; // The starting width of the trail
-                        trail.endWidth = 0.07f; // The end
-
-                        trail.material = new Material(Shader.Find("Unlit/Color"))
-                        {
-                            color = Color.yellow,
-                        };
-
-                        settings.SelfSending = true;
-                    }
+                    settings.SelfSending = true;
                 }
-            }
-            catch (Exception e)
-            {
-                ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Error instantiating self-replica: {e}");
             }
         }
 
