@@ -37,7 +37,7 @@ namespace DCL.CharacterMotion
                 direction = Vector3.down,
             };
 
-            float downwardsSlopeDistance = input.Kind == MovementKind.Run ? settings.DownwardsSlopeRunRaycastDistance : settings.DownwardsSlopeJogRaycastDistance;
+            float downwardsSlopeDistance = input.Kind == MovementKind.RUN ? settings.DownwardsSlopeRunRaycastDistance : settings.DownwardsSlopeJogRaycastDistance;
 
             if (!DCLPhysics.Raycast(ray, out RaycastHit hit, downwardsSlopeDistance, PhysicsLayers.CHARACTER_ONLY_MASK, QueryTriggerInteraction.Ignore))
                 return Vector3.zero;

@@ -50,7 +50,7 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
         [None(typeof(PlayerCRDTEntity), typeof(DeleteEntityIntention), typeof(PlayerComponent))]
         private void AddRemotePlayerCRDTEntity(in Entity entity, ref CharacterTransform characterTransform)
         {
-            if (!scenesCache.TryGetByParcel(ParcelMathHelper.FloorToParcel(characterTransform.Transform.position), out ISceneFacade sceneFacade))
+            if (!scenesCache.TryGetByParcel(characterTransform.Transform.ParcelPosition(), out ISceneFacade sceneFacade))
                 return;
 
             if (sceneFacade.IsEmpty || !sceneFacade.SceneStateProvider.IsCurrent)
@@ -76,7 +76,7 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
         [None(typeof(PlayerCRDTEntity), typeof(DeleteEntityIntention))]
         private void AddOwnPlayerCRDTEntity(in Entity entity, ref CharacterTransform characterTransform)
         {
-            if (!scenesCache.TryGetByParcel(ParcelMathHelper.FloorToParcel(characterTransform.Transform.position), out ISceneFacade sceneFacade))
+            if (!scenesCache.TryGetByParcel(characterTransform.Transform.ParcelPosition(), out ISceneFacade sceneFacade))
                 return;
 
             if (sceneFacade.IsEmpty || !sceneFacade.SceneStateProvider.IsCurrent)
@@ -89,7 +89,7 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
         private void RemoveComponentOnOutsideCurrentScene(in Entity entity, ref CharacterTransform characterTransform, ref PlayerCRDTEntity playerCRDTEntity)
         {
             // Only target entities outside the current scene
-            if (scenesCache.TryGetByParcel(ParcelMathHelper.FloorToParcel(characterTransform.Transform.position), out ISceneFacade sceneFacade)
+            if (scenesCache.TryGetByParcel(characterTransform.Transform.ParcelPosition(), out ISceneFacade sceneFacade)
                 && !sceneFacade.IsEmpty && sceneFacade.SceneStateProvider.IsCurrent) return;
 
             RemoveComponent(entity, ref playerCRDTEntity);
@@ -99,7 +99,7 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
         [All(typeof(DeleteEntityIntention))]
         private void RemoveComponentOnPlayerDisconnect(Entity entity, ref CharacterTransform characterTransform, ref PlayerCRDTEntity playerCRDTEntity)
         {
-            if (!scenesCache.TryGetByParcel(ParcelMathHelper.FloorToParcel(characterTransform.Transform.position), out ISceneFacade sceneFacade)
+            if (!scenesCache.TryGetByParcel(characterTransform.Transform.ParcelPosition(), out ISceneFacade sceneFacade)
                 || sceneFacade.IsEmpty || !sceneFacade.SceneStateProvider.IsCurrent)
                 return;
 

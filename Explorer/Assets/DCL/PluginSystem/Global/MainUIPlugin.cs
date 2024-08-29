@@ -1,16 +1,13 @@
 ﻿using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
-using DCL.AssetsProvision;
 using DCL.SidebarBus;
 using DCL.UI.MainUI;
 using MVC;
-using System;
 using System.Threading;
-using UnityEngine;
 
 namespace DCL.PluginSystem.Global
 {
-    public class MainUIPlugin : DCLGlobalPluginBase<MainUIPlugin.Settings>
+    public class MainUIPlugin : IDCLGlobalPlugin<MainUIPlugin.Settings>
     {
         private readonly IMVCManager mvcManager;
         private readonly ISidebarBus sidebarBus;
@@ -26,25 +23,27 @@ namespace DCL.PluginSystem.Global
             this.mainUIView = mainUIView;
         }
 
-        protected override void InjectSystems(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
-
-        protected override async UniTask<ContinueInitialization?> InitializeInternalAsync(Settings settings, CancellationToken ct)
+        public void Dispose()
         {
-            return (ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) =>
-            {
-                var mainUIController = new MainUIController(
-                    () =>
-                    {
-                        MainUIView view = mainUIView;
-                        view.gameObject.SetActive(true);
-                        return view;
-                    },
-                    sidebarBus,
-                    mvcManager
-                );
+            mvcManager.Dispose();
+        }
 
-                mvcManager.RegisterController(mainUIController);
-            };
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
+
+        public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
+        {
+            var mainUIController = new MainUIController(
+                () =>
+                {
+                    MainUIView view = mainUIView;
+                    view.gameObject.SetActive(true);
+                    return view;
+                },
+                sidebarBus,
+                mvcManager
+            );
+
+            mvcManager.RegisterController(mainUIController);
         }
 
         public class Settings : IDCLPluginSettings { }

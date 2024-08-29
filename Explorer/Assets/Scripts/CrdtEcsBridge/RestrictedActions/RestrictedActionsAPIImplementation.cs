@@ -145,7 +145,7 @@ namespace CrdtEcsBridge.RestrictedActions
 
         private bool IsPositionValid(Vector3 floorPosition)
         {
-            var parcelToCheck = ParcelMathHelper.FloorToParcel(floorPosition);
+            var parcelToCheck = floorPosition.ToParcel();
 
             foreach (Vector2Int sceneParcel in sceneData.Parcels)
             {
