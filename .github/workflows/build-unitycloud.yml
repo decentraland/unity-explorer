@@ -130,12 +130,24 @@ jobs:
       - name: Set default values
         id: set_defaults
         run: |
-          if [ "${{ github.event.inputs.clean_build }}" ]; then
-            clean_build=${{ github.event.inputs.clean_build }}
-          elif [ "${{ inputs.clean_build }}" ]; then
-            clean_build=${{ inputs.clean_build }}
+          if [ -n "${{ github.event.inputs.clean_build }}" ]; then
+            if [ "${{ github.event.inputs.clean_build }}" = "true" ]; then
+                clean_build=false
+            elif [ "${{ github.event.inputs.clean_build }}" = "false" ]; then
+                clean_build=false
+            else
+                clean_build=true
+            fi
+          elif [ -n "${{ inputs.clean_build }}" ]; then
+              if [ "${{ inputs.clean_build }}" = "true" ]; then
+                  clean_build=true
+              elif [ "${{ inputs.clean_build }}" = "false" ]; then
+                  clean_build=false
+              else
+                  clean_build=false
+              fi
           else
-            clean_build='true'
+              clean_build=false
           fi
           echo "clean_build=${clean_build}" >> $GITHUB_OUTPUT
 
