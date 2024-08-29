@@ -119,7 +119,7 @@ namespace DCL.Notifications.NotificationsMenu
             notificationView.HeaderText.text = notificationData.GetHeader();
             notificationView.TitleText.text = notificationData.GetTitle();
             notificationView.NotificationType = notificationData.Type;
-            notificationView.NotificationId = notificationData.Id;
+            notificationView.Notification = notificationData;
             notificationView.CloseButton.gameObject.SetActive(false);
             notificationView.UnreadImage.SetActive(!notificationData.Read);
             notificationView.TimeText.text = TimestampUtilities.GetRelativeTime(notificationData.Timestamp);
@@ -140,9 +140,9 @@ namespace DCL.Notifications.NotificationsMenu
             }
         }
 
-        private void ClickedNotification(NotificationType notificationType, string notificationId)
+        private void ClickedNotification(NotificationType notificationType, INotification notification)
         {
-            notificationsBusController.ClickNotification(notificationType);
+            notificationsBusController.ClickNotification(notificationType, notification);
         }
 
         private async UniTask LoadNotificationThumbnailAsync(NotificationView notificationView, INotification notificationData,

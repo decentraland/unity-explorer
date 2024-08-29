@@ -10,9 +10,9 @@ namespace DCL.Notifications.NotificationEntry
 {
     public class NotificationView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
-        public event Action<NotificationType, string> NotificationClicked;
+        public event Action<NotificationType, INotification> NotificationClicked;
         public NotificationType NotificationType { get; set; }
-        public string NotificationId { get; set; }
+        public INotification Notification { get; set; }
 
         [field: SerializeField]
         public Color NormalColor { get; private set; }
@@ -60,7 +60,7 @@ namespace DCL.Notifications.NotificationEntry
 
         private void OnPointerClick()
         {
-            NotificationClicked?.Invoke(NotificationType, NotificationId);
+            NotificationClicked?.Invoke(NotificationType, Notification);
         }
 
         public void OnPointerEnter(PointerEventData eventData)

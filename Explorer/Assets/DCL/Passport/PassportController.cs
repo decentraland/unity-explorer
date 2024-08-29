@@ -297,26 +297,27 @@ namespace DCL.Passport
             viewInstance.BadgeInfoModuleView.gameObject.SetActive(true);
         }
 
-        private async UniTaskVoid GetOwnProfileAsync(CancellationToken ct) =>
-            ownProfile = await selfProfile.ProfileAsync(ct);
-
         private void OnBadgeNotificationReceived(INotification notification) =>
             BadgesUtils.SetBadgeAsNew(((BadgeGrantedNotification)notification).Metadata.Id);
 
         private void OnBadgeNotificationClicked(object[] parameters)
         {
+            string badgeIdToOpen = string.Empty;
+            if (parameters.Length > 0 && parameters[0] is BadgeGrantedNotification badgeNotification)
+                badgeIdToOpen = badgeNotification.Metadata.Id;
+
             openPassportFromBadgeNotificationCts = openPassportFromBadgeNotificationCts.SafeRestart();
-            OpenPassportFromBadgeNotificationAsync(CancellationToken.None).Forget();
+            OpenPassportFromBadgeNotificationAsync(badgeIdToOpen, openPassportFromBadgeNotificationCts.Token).Forget();
         }
 
-        private async UniTaskVoid OpenPassportFromBadgeNotificationAsync(CancellationToken ct)
+        private async UniTaskVoid OpenPassportFromBadgeNotificationAsync(string badgeIdToOpen, CancellationToken ct)
         {
             ownProfile ??= await selfProfile.ProfileAsync(ct);
 
             if (ownProfile != null)
             {
                 // TODO (Santi): We have to receive all the notification data into 'parameters' to know if we have to open the passport with a specific badge selected
-                mvcManager.ShowAsync(IssueCommand(new Params(ownProfile.UserId, "travelerrrrr")), ct).Forget();
+                mvcManager.ShowAsync(IssueCommand(new Params(ownProfile.UserId, badgeIdToOpen)), ct).Forget();
             }
         }
     }

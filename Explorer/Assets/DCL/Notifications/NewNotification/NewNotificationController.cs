@@ -63,10 +63,10 @@ namespace DCL.Notifications.NewNotification
             cts.Token.ThrowIfCancellationRequested();
         }
 
-        private void ClickedNotification(NotificationType notificationType, string _)
+        private void ClickedNotification(NotificationType notificationType, INotification notification)
         {
             StopAnimation();
-            notificationsBusController.ClickNotification(notificationType);
+            notificationsBusController.ClickNotification(notificationType, notification);
         }
 
         private void QueueNewNotification(INotification newNotification)
