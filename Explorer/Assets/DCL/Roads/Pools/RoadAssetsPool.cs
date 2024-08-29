@@ -12,22 +12,43 @@ namespace DCL.LOD
     public class RoadAssetsPool : IRoadAssetPool, IDisposable
     {
         private const string DEFAULT_ROAD_KEY = "OpenRoad_0";
+        private const int DEFAULT_CAPACITY = 10;
         private readonly Transform roadAssetParent;
 
-        private readonly Dictionary<string, IObjectPool<Transform>> roadAssetPoolDictionary;
+        private readonly IReadOnlyDictionary<string, IObjectPool<Transform>> roadAssetPoolDictionary;
 
         public RoadAssetsPool(IReadOnlyList<GameObject> roadPrefabs)
         {
             roadAssetParent = new GameObject("ROAD_ASSET_POOL").transform;
-            roadAssetPoolDictionary = new Dictionary<string, IObjectPool<Transform>>();
+            var dictionary = new Dictionary<string, IObjectPool<Transform>>();
 
             foreach (GameObject gameObject in roadPrefabs)
             {
                 IObjectPool<Transform> roadAssetPool
-                    = new ObjectPool<Transform>(() => Object.Instantiate(gameObject, roadAssetParent).transform,
-                        t => t.gameObject.SetActive(true), t => t.gameObject.SetActive(false), actionOnDestroy: UnityObjectUtils.SafeDestroyGameObject);
+                    = new ObjectPool<Transform>(
+                        () => Object.Instantiate(gameObject, roadAssetParent).transform,
+                        t => t.gameObject.SetActive(true),
+                        t => t.gameObject.SetActive(false),
+                        actionOnDestroy: UnityObjectUtils.SafeDestroyGameObject,
+                        defaultCapacity: DEFAULT_CAPACITY
+                    );
 
-                roadAssetPoolDictionary.Add(gameObject.name, roadAssetPool);
+                dictionary.Add(gameObject.name, roadAssetPool);
+            }
+
+            roadAssetPoolDictionary = dictionary;
+
+            Prewarm();
+        }
+
+        private void Prewarm()
+        {
+            var buffer = new List<Transform>(DEFAULT_CAPACITY);
+            foreach ((string _, IObjectPool<Transform> pool) in roadAssetPoolDictionary)
+            {
+                buffer.Clear();
+                for (var i = 0; i < DEFAULT_CAPACITY; i++) buffer.Add(pool.Get());
+                foreach (Transform transform in buffer) pool.Release(transform);
             }
         }
 
