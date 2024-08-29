@@ -15,14 +15,16 @@ namespace DCL.Multiplayer.Movement.Systems
 {
     public class MultiplayerMovementDebug : IDisposable
     {
+        private readonly Entity playerEntity;
         private readonly RemoteEntities? remoteEntities;
         private readonly ExposedTransform playerTransform;
         private readonly MultiplayerDebugSettings settings;
 
         private Entity? selfReplicaEntity;
 
-        public MultiplayerMovementDebug(World world, IDebugContainerBuilder debugBuilder, RemoteEntities remoteEntities, ExposedTransform playerTransform, ProvidedAsset<MultiplayerMovementSettings> settings)
+        public MultiplayerMovementDebug(World world, Entity playerEntity, IDebugContainerBuilder debugBuilder, RemoteEntities remoteEntities, ExposedTransform playerTransform, ProvidedAsset<MultiplayerMovementSettings> settings)
         {
+            this.playerEntity = playerEntity;
             this.remoteEntities = remoteEntities;
             this.playerTransform = playerTransform;
             this.settings = settings.Value.DebugSettings;
@@ -44,7 +46,9 @@ namespace DCL.Multiplayer.Movement.Systems
 
             if (remoteEntities != null)
             {
-                var remoteProfile = new RemoteProfile(Profile.NewRandomProfile(RemotePlayerMovementComponent.TEST_ID), RemotePlayerMovementComponent.TEST_ID);
+                var playerProfiler = world.Get<Profile>(playerEntity);
+                Profile profile = Profile.NewProfileWithAvatar(RemotePlayerMovementComponent.TEST_ID, playerProfiler.Avatar);
+                var remoteProfile = new RemoteProfile(profile, RemotePlayerMovementComponent.TEST_ID);
                 selfReplicaEntity = remoteEntities.TryCreateOrUpdateRemoteEntity(remoteProfile, world);
 
                 if (world.TryGet(selfReplicaEntity.Value, out CharacterTransform transformComp))

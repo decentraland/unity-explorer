@@ -55,7 +55,7 @@ namespace DCL.PluginSystem.Global
             RemotePlayerAnimationSystem.InjectToWorld(ref builder, settings.Value.ExtrapolationSettings);
             CleanUpRemoteMotionSystem.InjectToWorld(ref builder);
 
-            multiplayerMovementDebug = new MultiplayerMovementDebug(builder.World, debugBuilder, remoteEntities, playerTransform, settings);
+            multiplayerMovementDebug = new MultiplayerMovementDebug(builder.World, arguments.PlayerEntity, debugBuilder, remoteEntities, playerTransform, settings);
         }
     }
 }
