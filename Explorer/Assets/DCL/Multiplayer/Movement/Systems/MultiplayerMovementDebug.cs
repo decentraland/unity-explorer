@@ -27,7 +27,7 @@ namespace DCL.Multiplayer.Movement.Systems
             this.settings = settings;
 
             debugBuilder.TryAddWidget("Multiplayer Movement")
-                       ?.AddSingleButton("Instantiate Self-Replica", () => InstantiateSelfReplica(world))
+                        !.AddSingleButton("Instantiate Self-Replica", () => InstantiateSelfReplica(world))
                         .AddSingleButton("Remove Self-Replica", () => RemoveSelfReplica(world));
         }
 
