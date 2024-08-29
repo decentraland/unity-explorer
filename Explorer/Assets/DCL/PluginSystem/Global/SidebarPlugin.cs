@@ -1,10 +1,10 @@
-﻿using Arch.SystemGroups;
+﻿using Arch.Core;
+using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Backpack;
 using DCL.Browser;
 using DCL.Chat;
-using DCL.ExplorePanel;
 using DCL.Notifications;
 using DCL.Notifications.NotificationsMenu;
 using DCL.NotificationsBusController.NotificationsBus;
@@ -24,7 +24,7 @@ using UnityEngine.AddressableAssets;
 
 namespace DCL.PluginSystem.Global
 {
-    public class SidebarPlugin : DCLGlobalPluginBase<SidebarPlugin.SidebarSettings>
+    public class SidebarPlugin : IDCLGlobalPlugin<SidebarPlugin.SidebarSettings>
     {
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IMVCManager mvcManager;
@@ -40,6 +40,8 @@ namespace DCL.PluginSystem.Global
         private readonly IProfileCache profileCache;
         private readonly ISidebarBus sidebarBus;
         private readonly ChatEntryConfigurationSO chatEntryConfigurationSo;
+        private readonly Arch.Core.World world;
+        private readonly Entity playerEntity;
 
         public SidebarPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -55,7 +57,9 @@ namespace DCL.PluginSystem.Global
             IUserInAppInitializationFlow userInAppInitializationFlow,
             IProfileCache profileCache,
             ISidebarBus sidebarBus,
-            ChatEntryConfigurationSO chatEntryConfigurationSo)
+            ChatEntryConfigurationSO chatEntryConfigurationSo,
+            Arch.Core.World world,
+            Entity playerEntity)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -71,39 +75,41 @@ namespace DCL.PluginSystem.Global
             this.profileCache = profileCache;
             this.sidebarBus = sidebarBus;
             this.chatEntryConfigurationSo = chatEntryConfigurationSo;
+            this.world = world;
+            this.playerEntity = playerEntity;
         }
 
-        protected override void InjectSystems(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
+        public void Dispose() { }
 
-        protected override async UniTask<ContinueInitialization?> InitializeInternalAsync(SidebarSettings settings, CancellationToken ct)
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
+
+        public async UniTask InitializeAsync(SidebarSettings settings, CancellationToken ct)
         {
             NotificationIconTypes notificationIconTypes = (await assetsProvisioner.ProvideMainAssetAsync(settings.NotificationIconTypesSO, ct: ct)).Value;
             NftTypeIconSO rarityBackgroundMapping = await assetsProvisioner.ProvideMainAssetValueAsync(settings.RarityColorMappings, ct);
-            return (ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) =>
-            {
-                mvcManager.RegisterController(new SidebarController(() =>
-                    {
-                        SidebarView view = mainUIView.SidebarView;
-                        view.gameObject.SetActive(true);
-                        return view;
-                    },
-                    mvcManager,
-                    notificationsBusController,
-                    new NotificationsMenuController(mainUIView.SidebarView.NotificationsMenuView, notificationsRequestController, notificationsBusController, notificationIconTypes, webRequestController, sidebarBus, rarityBackgroundMapping),
-                    new ProfileWidgetController(() => mainUIView.SidebarView.ProfileWidget, web3IdentityCache, profileRepository, webRequestController),
-                    new ProfileMenuController(() => mainUIView.SidebarView.ProfileMenuView, mainUIView.SidebarView.ProfileMenuView.ProfileMenu, web3IdentityCache, profileRepository, webRequestController, builder.World, arguments.PlayerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager, chatEntryConfigurationSo),
-                    sidebarBus,
-                    chatEntryConfigurationSo,
-                    web3IdentityCache,
-                    profileRepository
-                ));
-            };
+
+            mvcManager.RegisterController(new SidebarController(() =>
+                {
+                    SidebarView view = mainUIView.SidebarView;
+                    view.gameObject.SetActive(true);
+                    return view;
+                },
+                mvcManager,
+                notificationsBusController,
+                new NotificationsMenuController(mainUIView.SidebarView.NotificationsMenuView, notificationsRequestController, notificationsBusController, notificationIconTypes, webRequestController, sidebarBus, rarityBackgroundMapping),
+                new ProfileWidgetController(() => mainUIView.SidebarView.ProfileWidget, web3IdentityCache, profileRepository, webRequestController),
+                new ProfileMenuController(() => mainUIView.SidebarView.ProfileMenuView, mainUIView.SidebarView.ProfileMenuView.ProfileMenu, web3IdentityCache, profileRepository, webRequestController, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager, chatEntryConfigurationSo),
+                sidebarBus,
+                chatEntryConfigurationSo,
+                web3IdentityCache,
+                profileRepository
+            ));
         }
 
         public class SidebarSettings : IDCLPluginSettings
         {
             [field: SerializeField]
-            public AssetReferenceT<NotificationIconTypes> NotificationIconTypesSO { get; private set;}
+            public AssetReferenceT<NotificationIconTypes> NotificationIconTypesSO { get; private set; }
 
             [field: SerializeField]
             public AssetReferenceT<NftTypeIconSO> RarityColorMappings { get; private set; }

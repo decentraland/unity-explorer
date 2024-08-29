@@ -181,14 +181,15 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
                 return;
             }
 
-            var collectionPromises = new List<ParamPromise>();
-
-            collectionPromises.Add(ParamPromise.Create(World,
-                new GetWearableByParamIntention(new[]
-                {
-                    ("collectionType", "base-wearable"), ("pageSize", "282"),
-                }, "DummyUser", new List<IWearable>(), 0),
-                PartitionComponent.TOP_PRIORITY));
+            var collectionPromises = new List<ParamPromise>
+            {
+                ParamPromise.Create(World,
+                    new GetWearableByParamIntention(new[]
+                    {
+                        ("collectionType", "base-wearable"), ("pageSize", "282"),
+                    }, "DummyUser", new List<IWearable>(), 0),
+                    PartitionComponent.TOP_PRIORITY),
+            };
 
             var randomAvatarRequest = new RandomAvatarRequest
             {
@@ -215,7 +216,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
         {
             foreach (ParamPromise assetPromise in randomAvatarRequest.CollectionPromise)
             {
-                if (!assetPromise.TryGetResult(World, out StreamableLoadingResult<WearablesResponse> collection))
+                if (!assetPromise.TryGetResult(World, out StreamableLoadingResult<WearablesResponse> _))
                     return;
             }
 
@@ -299,7 +300,9 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
 
             transformComp.Transform.name = $"RANDOM_AVATAR_{avatarIndex}";
 
-            CharacterController characterController = transformComp.Transform.gameObject.AddComponent<CharacterController>();
+            CharacterController characterController = transformComp.Transform.TryGetComponent<CharacterController>(out var component)
+                ? component
+                : transformComp.Transform.gameObject.AddComponent<CharacterController>();
             characterController.radius = 0.4f;
             characterController.height = 2;
             characterController.center = Vector3.up;
@@ -349,7 +352,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
             var transformComp = new CharacterTransform(transformPool.Get());
 
             transformComp.Transform.position = StartRandomPosition(0, startXPosition, startZPosition);
-            transformComp.Transform.name = $"RANDOM_AVATAR_{avatarIndex}";
+            transformComp.Transform.name = "SELF_REPLICA";
 
             CharacterController characterController = transformComp.Transform.gameObject.AddComponent<CharacterController>();
             characterController.radius = 0.4f;

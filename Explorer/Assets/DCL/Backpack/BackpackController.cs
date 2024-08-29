@@ -61,7 +61,7 @@ namespace DCL.Backpack
             EmotesController emotesController,
             BackpackCharacterPreviewController backpackCharacterPreviewController,
             IThumbnailProvider thumbnailProvider,
-            DCLInput dclInput,
+            IInputBlock inputBlock,
             ICursor cursor)
         {
             this.view = view;
@@ -84,7 +84,7 @@ namespace DCL.Backpack
                 gridController,
                 wearableInfoPanelController,
                 thumbnailProvider,
-                dclInput);
+                inputBlock);
 
             backpackSections = new Dictionary<BackpackSections, ISection>
             {

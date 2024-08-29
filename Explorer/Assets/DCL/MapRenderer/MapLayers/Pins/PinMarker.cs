@@ -18,7 +18,7 @@ namespace DCL.MapRenderer.MapLayers.Pins
         private readonly IMapCullingController cullingController;
 
         private MapMarkerPoolableBehavior<PinMarkerObject> poolableBehavior;
-        private float currentNewScale;
+        private float currentNewScale = MINIMAP_MIN_SIZE_FOR_PIN;
         private CancellationTokenSource pulseCancellationTokenSource;
         private CancellationTokenSource selectionCancellationTokenSource;
 

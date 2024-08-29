@@ -17,7 +17,7 @@ namespace DCL.PluginSystem.Global
         private readonly IMVCManager mvcManager;
         private readonly ICursor cursor;
         private readonly Action<string> changeRealmCallback;
-        private ChangeRealmPromptController changeRealmPromptController;
+        private ChangeRealmPromptController? changeRealmPromptController;
 
         public ChangeRealmPromptPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -46,7 +46,7 @@ namespace DCL.PluginSystem.Global
 
         public void Dispose()
         {
-            changeRealmPromptController.Dispose();
+            changeRealmPromptController?.Dispose();
         }
 
         public class ChangeRealmPromptSettings : IDCLPluginSettings

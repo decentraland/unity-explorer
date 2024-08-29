@@ -16,26 +16,21 @@ namespace ECS.SceneLifeCycle
     {
         private readonly IScenesCache scenesCache;
 
-        private Entity playerEntity;
-        private World? world;
+        private readonly Entity playerEntity;
+        private readonly World world;
 
-        public ECSReloadScene(IScenesCache scenesCache)
+        public ECSReloadScene(IScenesCache scenesCache,
+            World world,
+            Entity playerEntity)
         {
             this.scenesCache = scenesCache;
-        }
-
-        public void Initialize(World world, Entity playerEntity)
-        {
             this.world = world;
             this.playerEntity = playerEntity;
         }
 
         public async UniTask<bool> TryReloadSceneAsync(CancellationToken ct)
         {
-            if (world == null) return false;
-
-            var playerPos = world.Get<CharacterTransform>(playerEntity).Transform.position;
-            var parcel = ParcelMathHelper.FloorToParcel(playerPos);
+            var parcel =  world.Get<CharacterTransform>(playerEntity).Transform.ParcelPosition();
 
             if (!scenesCache.TryGetByParcel(parcel, out var sceneInCache)) return false;
 
