@@ -73,8 +73,8 @@ namespace ECS.Unity.SceneBoundsChecker
             if (!primitiveCollider.SDKCollider.HasMoved())
                 return;
 
-            // We use an auxiliary bounds object as Unity physics may take more than 1 frame to actually
-            // update the min-max of the collider bounds, leaving the collider disabled in the end...
+            // We use an auxiliary bounds object as Unity physics may take at least an extra frame to
+            // actually update the min-max of the collider bounds, leaving the collider disabled in the end...
             auxiliaryBounds.center = collider.transform.position;
             auxiliaryBounds.extents = collider.bounds.extents;
             primitiveCollider.SDKCollider.ForceActiveBySceneBounds(auxiliaryBounds.max.y <= sceneGeometry.Height
@@ -115,8 +115,8 @@ namespace ECS.Unity.SceneBoundsChecker
                     if (!sdkCollider.HasMoved())
                         continue;
 
-                    // We use an auxiliary bounds object as Unity physics may take more than 1 frame to actually
-                    // update the min-max of the collider bounds, leaving the collider disabled in the end...
+                    // We use an auxiliary bounds object as Unity physics may take at least an extra frame to
+                    // actually update the min-max of the collider bounds, leaving the collider disabled in the end...
                     auxiliaryBounds.center = sdkCollider.Collider.transform.position;
                     auxiliaryBounds.extents = sdkCollider.Collider.bounds.extents;
 
