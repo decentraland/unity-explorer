@@ -17,7 +17,7 @@ namespace DCL.Multiplayer.Emotes
 {
     public class MultiplayerEmotesMessageBus : IDisposable, IEmotesMessageBus
     {
-        private const float LATENCY = 0.1f;
+        private const float LATENCY = 0f;
 
         private readonly IMessagePipesHub messagePipesHub;
 

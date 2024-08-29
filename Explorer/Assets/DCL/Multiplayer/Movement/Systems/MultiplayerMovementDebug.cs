@@ -14,7 +14,7 @@ namespace DCL.Multiplayer.Movement.Systems
 {
     public class MultiplayerMovementDebug : IDisposable
     {
-        private readonly RemoteEntities remoteEntities;
+        private readonly RemoteEntities? remoteEntities;
         private readonly ExposedTransform playerTransform;
         private readonly ProvidedAsset<MultiplayerMovementSettings> settings;
 
@@ -27,7 +27,7 @@ namespace DCL.Multiplayer.Movement.Systems
             this.settings = settings;
 
             debugBuilder.TryAddWidget("Multiplayer Movement")
-                        !.AddSingleButton("Instantiate Self-Replica", () => InstantiateSelfReplica(world))
+                       ?.AddSingleButton("Instantiate Self-Replica", () => InstantiateSelfReplica(world))
                         .AddSingleButton("Remove Self-Replica", () => RemoveSelfReplica(world));
         }
 
@@ -41,31 +41,35 @@ namespace DCL.Multiplayer.Movement.Systems
             if (selfReplicaEntity != null)
                 RemoveSelfReplica(world);
 
-            var remoteProfile = new RemoteProfile(Profile.NewRandomProfile(RemotePlayerMovementComponent.TEST_ID), RemotePlayerMovementComponent.TEST_ID);
-
-            selfReplicaEntity = remoteEntities.TryCreateOrUpdateRemoteEntity(remoteProfile, world);
-
-            CharacterTransform transformComp = world.Get<CharacterTransform>(selfReplicaEntity.Value);
-
-            transformComp.Transform.position = playerTransform.Position;
-            transformComp.Transform.rotation = playerTransform.Rotation;
-            transformComp.Transform.name = RemotePlayerMovementComponent.TEST_ID;
-
-            TrailRenderer trail = transformComp.Transform.gameObject.TryAddComponent<TrailRenderer>();
-            trail.time = 1.0f; // The time in seconds that the trail will fade out over
-            trail.startWidth = 0.07f; // The starting width of the trail
-            trail.endWidth = 0.07f; // The end
-
-            trail.material = new Material(Shader.Find("Unlit/Color"))
+            if (remoteEntities != null)
             {
-                color = Color.yellow,
-            };
+                var remoteProfile = new RemoteProfile(Profile.NewRandomProfile(RemotePlayerMovementComponent.TEST_ID), RemotePlayerMovementComponent.TEST_ID);
+                selfReplicaEntity = remoteEntities.TryCreateOrUpdateRemoteEntity(remoteProfile, world);
 
-            settings.Value.SelfSending = true;
+                if (world.TryGet(selfReplicaEntity.Value, out CharacterTransform transformComp))
+                {
+                    transformComp.Transform.position = playerTransform.Position;
+                    transformComp.Transform.rotation = playerTransform.Rotation;
+                    transformComp.Transform.name = RemotePlayerMovementComponent.TEST_ID;
+
+                    TrailRenderer trail = transformComp.Transform.gameObject.TryAddComponent<TrailRenderer>();
+                    trail.time = 1.0f; // The time in seconds that the trail will fade out over
+                    trail.startWidth = 0.07f; // The starting width of the trail
+                    trail.endWidth = 0.07f; // The end
+
+                    trail.material = new Material(Shader.Find("Unlit/Color"))
+                    {
+                        color = Color.yellow,
+                    };
+
+                    settings.Value.SelfSending = true;
+                }
+            }
         }
 
         private void RemoveSelfReplica(World world)
         {
+            if (remoteEntities == null) return;
             remoteEntities.TryRemove(RemotePlayerMovementComponent.TEST_ID, world);
 
             settings.Value.SelfSending = false;
