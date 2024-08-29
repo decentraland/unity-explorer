@@ -37,7 +37,7 @@ namespace DCL.Rendering.Avatar
             private ReportData m_ReportData = new ("DCL_RenderFeature_Outline_OutlinePass", ReportHint.SessionStatic);
 
             private OutlineRendererFeature_Settings m_Settings;
-            private ProfilingSampler m_Sampler;
+            private ProfilingSampler m_Sampler = new (profilerTag);
             private Material outlineMaterial;
             private RTHandle outlineRTHandle;
             private RenderTextureDescriptor outlineRTDescriptor;
@@ -49,8 +49,6 @@ namespace DCL.Rendering.Avatar
                 outlineMaterial = _outlineMaterial;
                 outlineRTHandle = _outlineRTHandle;
                 outlineRTDescriptor = _outlineRTDescriptor;
-                m_Sampler = new ProfilingSampler(profilerTag);
-
                 //depthNormalsRTHandle = _depthNormalsRTHandle;
             }
 
