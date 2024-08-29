@@ -94,18 +94,29 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
 
             using MemoryWrap memory = memoryPool.Memory(BUFFER_SIZE);
             byte[] buffer = memory.DangerousBuffer();
-            WebSocketReceiveResult? result = await current!.Value.WebSocket.ReceiveAsync(buffer, token)!;
 
-            return result.MessageType switch
-                   {
-                       WebSocketMessageType.Text => EnumResult<MemoryWrap, IArchipelagoLiveConnection.ResponseError>.ErrorResult(IArchipelagoLiveConnection.ResponseError.MessageError, $"Expected Binary, Text messages are not supported: {AsText(result, buffer)}"),
-                       WebSocketMessageType.Binary => EnumResult<MemoryWrap, IArchipelagoLiveConnection.ResponseError>.SuccessResult(CopiedMemory(buffer, result.Count)),
-                       WebSocketMessageType.Close => ConnectionClosedException.NewErrorResult(current!.Value.WebSocket),
-                       _ => EnumResult<MemoryWrap, IArchipelagoLiveConnection.ResponseError>.ErrorResult(
-                           IArchipelagoLiveConnection.ResponseError.MessageError,
-                           $"Unknown message type: {result.MessageType}"
-                       ),
-                   };
+            try
+            {
+                WebSocketReceiveResult? result = await current!.Value.WebSocket.ReceiveAsync(buffer, token)!;
+
+                return result.MessageType switch
+                       {
+                           WebSocketMessageType.Text => EnumResult<MemoryWrap, IArchipelagoLiveConnection.ResponseError>.ErrorResult(IArchipelagoLiveConnection.ResponseError.MessageError, $"Expected Binary, Text messages are not supported: {AsText(result, buffer)}"),
+                           WebSocketMessageType.Binary => EnumResult<MemoryWrap, IArchipelagoLiveConnection.ResponseError>.SuccessResult(CopiedMemory(buffer, result.Count)),
+                           WebSocketMessageType.Close => ConnectionClosedException.NewErrorResult(current!.Value.WebSocket),
+                           _ => EnumResult<MemoryWrap, IArchipelagoLiveConnection.ResponseError>.ErrorResult(
+                               IArchipelagoLiveConnection.ResponseError.MessageError,
+                               $"Unknown message type: {result.MessageType}"
+                           ),
+                       };
+            }
+            catch (Exception e)
+            {
+                return EnumResult<MemoryWrap, IArchipelagoLiveConnection.ResponseError>.ErrorResult(
+                    IArchipelagoLiveConnection.ResponseError.MessageError,
+                    $"Cannot receive data, {e.Message}"
+                );
+            }
         }
 
         private static string AsText(WebSocketReceiveResult result, byte[] buffer)
