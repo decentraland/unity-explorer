@@ -8,7 +8,6 @@ using DCL.Backpack.BackpackBus;
 using DCL.Backpack.CharacterPreview;
 using DCL.Backpack.EmotesSection;
 using DCL.Input;
-using DCL.Input.UnityInputSystem.Blocks;
 using DCL.Profiles;
 using DCL.UI;
 using ECS.StreamableLoading.Common;
