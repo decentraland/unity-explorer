@@ -2,6 +2,7 @@
 using DCL.AssetsProvision;
 using DCL.Character.Components;
 using DCL.DebugUtilities;
+using DCL.Diagnostics;
 using DCL.Multiplayer.Movement.Settings;
 using DCL.Multiplayer.Profiles.Entities;
 using DCL.Multiplayer.Profiles.RemoteProfiles;
@@ -70,7 +71,7 @@ namespace DCL.Multiplayer.Movement.Systems
             }
             catch (Exception e)
             {
-                Debug.LogError($"Error instantiating self-replica: {e}");
+                ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Error instantiating self-replica: {e}");
             }
         }
 
