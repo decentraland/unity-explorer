@@ -80,7 +80,6 @@ def clone_current_target():
         new_target_name = base_target_name
 
     # Generate request body
-    # Disabled cache for now as its not playing well with Unity and we delete builds anyway!
     body = generate_body(
         os.getenv('TARGET'),
         new_target_name,
@@ -95,10 +94,9 @@ def clone_current_target():
         response = requests.post(f'{URL}/buildtargets', headers=HEADERS, json=body)
         print("No cache build target used for new target")
     else:
-        # Target exists, update it and use cache based on new_target_name
-        if os.getenv('USE_CACHE'):
-            body['settings']['buildTargetCopyCache'] = new_target_name
-            print(f"Using cache build target: {new_target_name}")
+
+        body['settings']['buildTargetCopyCache'] = new_target_name
+        print(f"Using cache build target: {new_target_name}")
         response = requests.put(f'{URL}/buildtargets/{new_target_name}', headers=HEADERS, json=body)
 
     print(f"clone_current_target response status: {response.status_code}")
@@ -151,13 +149,15 @@ def get_latest_build(target):
     print('Failed to get the latest build.')
     return None
     
-def run_build(branch):
+def run_build(branch, clean):
     max_retries = 10
     retry_delay = 30  # seconds
 
+    print(f'Triggering build for {branch}, clean build = {clean}')
     for attempt in range(max_retries):
         body = {
             'branch': branch,
+            'clean' : clean
         }
         try:
             response = requests.post(f'{URL}/buildtargets/{os.getenv('TARGET')}/builds', headers=HEADERS, json=body)
@@ -399,7 +399,7 @@ else:
     set_parameters(get_param_env_variables())
 
     # Run Build
-    id = run_build(os.getenv('BRANCH_NAME'))
+    id = run_build(os.getenv('BRANCH_NAME'), os.getenv('CLEAN_BUILD'))
 
     utils.persist_build_info(os.getenv('TARGET'), id)
     print(f'For more info and live logs, go to https://cloud.unity.com/ and search for target "{os.getenv('TARGET')}" and build ID "{id}"')
