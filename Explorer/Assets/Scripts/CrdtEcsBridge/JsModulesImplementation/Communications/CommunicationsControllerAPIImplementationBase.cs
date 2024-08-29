@@ -88,7 +88,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
             Span<byte> encodedMessage = stackalloc byte[message.Length + 1];
             encodedMessage[0] = (byte)msgType;
             message.CopyTo(encodedMessage[1..]);
-            sceneCommunicationPipe.SendMessage(message, sceneData.SceneEntityDefinition.id!, cancellationTokenSource.Token);
+            sceneCommunicationPipe.SendMessage(encodedMessage, sceneData.SceneEntityDefinition.id!, cancellationTokenSource.Token);
         }
 
         private static MsgType DecodeMessage(ref ReadOnlySpan<byte> value)
