@@ -4,6 +4,7 @@ using DCL.Multiplayer.Connections.Messaging;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.Messaging.Pipe;
 using DCL.Multiplayer.Movement;
+using DCL.Multiplayer.Movement.Settings;
 using DCL.Multiplayer.Profiles.Bunches;
 using DCL.Optimization.Pools;
 using Decentraland.Kernel.Comms.Rfc4;
@@ -20,6 +21,7 @@ namespace DCL.Multiplayer.Emotes
         private const float LATENCY = 0f;
 
         private readonly IMessagePipesHub messagePipesHub;
+        private readonly MultiplayerDebugSettings settings;
 
         private readonly CancellationTokenSource cancellationTokenSource = new ();
         private readonly EmotesDeduplication messageDeduplication;
@@ -28,9 +30,10 @@ namespace DCL.Multiplayer.Emotes
         private readonly HashSet<RemoteEmoteIntention> emoteIntentions = new (PoolConstants.AVATARS_COUNT);
         private readonly MultithreadSync sync = new();
 
-        public MultiplayerEmotesMessageBus(IMessagePipesHub messagePipesHub)
+        public MultiplayerEmotesMessageBus(IMessagePipesHub messagePipesHub, MultiplayerDebugSettings settings)
         {
             this.messagePipesHub = messagePipesHub;
+            this.settings = settings;
 
             messageDeduplication = new EmotesDeduplication();
 
@@ -47,7 +50,7 @@ namespace DCL.Multiplayer.Emotes
         public OwnedBunch<RemoteEmoteIntention> EmoteIntentions() =>
             new (sync, emoteIntentions);
 
-        public void Send(URN emote, bool loopCyclePassed, bool sendToSelfReplica)
+        public void Send(URN emote, bool loopCyclePassed)
         {
             if (cancellationTokenSource.IsCancellationRequested)
                 throw new Exception("EmoteMessagesBus is disposed");
@@ -57,7 +60,7 @@ namespace DCL.Multiplayer.Emotes
             SendTo(emote, sendId, messagePipesHub.IslandPipe());
             SendTo(emote, sendId, messagePipesHub.ScenePipe());
 
-            if (sendToSelfReplica)
+            if (settings.SelfSending)
                 SelfSendWithDelayAsync(emote, sendId).Forget();
         }
 

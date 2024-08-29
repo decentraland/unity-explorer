@@ -71,7 +71,7 @@ namespace CrdtEcsBridge.RestrictedActions
         public void TriggerEmote(URN urn, bool isLooping)
         {
             world.Add(playerEntity, new CharacterEmoteIntent { EmoteId = urn, Spatial = true, TriggerSource = TriggerSource.SCENE });
-            messageBus.Send(urn, isLooping, true);
+            messageBus.Send(urn, isLooping);
         }
     }
 }

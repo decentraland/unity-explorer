@@ -113,7 +113,7 @@ namespace DCL.AvatarRendering.Emotes
             ref var emoteIntent = ref World.AddOrGet(entity, newEmoteIntent);
             emoteIntent = newEmoteIntent;
 
-            messageBus.Send(emoteId, false, false);
+            messageBus.Send(emoteId, false);
         }
 
         private void ListenToSlotsInput(InputActionMap inputActionMap)

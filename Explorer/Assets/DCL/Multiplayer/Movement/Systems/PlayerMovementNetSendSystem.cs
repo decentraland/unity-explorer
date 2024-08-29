@@ -146,9 +146,10 @@ namespace DCL.Multiplayer.Movement.Systems
             messageBus.Send(playerMovement.LastSentMessage);
 
             // Debug purposes. Simulate package lost when Running
-            if (settings.SelfSending
+            if (settings.DebugSettings.SelfSending
                 && movement.Kind != MovementKind.RUN // simulate package lost when Running
-               ) { messageBus.SelfSendWithDelayAsync(playerMovement.LastSentMessage, settings.Latency + (settings.Latency * Random.Range(0, settings.LatencyJitter))).Forget(); }
+               ) { messageBus.SelfSendWithDelayAsync(playerMovement.LastSentMessage,
+                settings.DebugSettings.Latency + (settings.DebugSettings.Latency * Random.Range(0, settings.DebugSettings.LatencyJitter))).Forget(); }
         }
     }
 }

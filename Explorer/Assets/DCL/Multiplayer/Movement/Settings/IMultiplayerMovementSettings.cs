@@ -4,6 +4,8 @@ namespace DCL.Multiplayer.Movement.Settings
 {
     public interface IMultiplayerMovementSettings
     {
+        MultiplayerDebugSettings DebugSettings { get; set; }
+
         List<SendRuleBase> SendRules { get; set; }
 
         int InboxCount { get; set; }
@@ -12,11 +14,6 @@ namespace DCL.Multiplayer.Movement.Settings
         float StandSendRate{ get; }
 
         float[] VelocityTiers { get; }
-
-        // TEST NETWORK
-        bool SelfSending { get; }
-        float Latency { get; }
-        float LatencyJitter { get; }
 
         // TELEPORTATION
         float MinPositionDelta { get; }

@@ -16,7 +16,7 @@ namespace DCL.Multiplayer.Movement.Systems
     {
         private readonly RemoteEntities? remoteEntities;
         private readonly ExposedTransform playerTransform;
-        private readonly ProvidedAsset<MultiplayerMovementSettings> settings;
+        private readonly MultiplayerDebugSettings settings;
 
         private Entity? selfReplicaEntity;
 
@@ -24,7 +24,7 @@ namespace DCL.Multiplayer.Movement.Systems
         {
             this.remoteEntities = remoteEntities;
             this.playerTransform = playerTransform;
-            this.settings = settings;
+            this.settings = settings.Value.DebugSettings;
 
             debugBuilder.TryAddWidget("Multiplayer Movement")
                        ?.AddSingleButton("Instantiate Self-Replica", () => InstantiateSelfReplica(world))
@@ -33,7 +33,7 @@ namespace DCL.Multiplayer.Movement.Systems
 
         public void Dispose()
         {
-            settings.Value.SelfSending = false;
+            settings.SelfSending = false;
         }
 
         private void InstantiateSelfReplica(World world)
@@ -64,7 +64,7 @@ namespace DCL.Multiplayer.Movement.Systems
                             color = Color.yellow,
                         };
 
-                        settings.Value.SelfSending = true;
+                        settings.SelfSending = true;
                     }
                 }
             }
@@ -79,7 +79,7 @@ namespace DCL.Multiplayer.Movement.Systems
             if (remoteEntities == null) return;
             remoteEntities.TryRemove(RemotePlayerMovementComponent.TEST_ID, world);
 
-            settings.Value.SelfSending = false;
+            settings.SelfSending = false;
             selfReplicaEntity = null;
         }
     }

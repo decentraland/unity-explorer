@@ -11,21 +11,14 @@ namespace DCL.Multiplayer.Movement.Settings
 
         [field: SerializeField] public MessageEncodingSettings EncodingSettings { get; set; }
 
+        [field: SerializeField] public MultiplayerDebugSettings DebugSettings { get; set; }
+
         [field: Header("SENDING RULES")]
         [field: SerializeField] public float MoveSendRate { get; set; }
         [field: SerializeField] public float StandSendRate { get; set; }
         [field: SerializeField] public float[] VelocityTiers { get; set;}
 
         [field: SerializeField] public List<SendRuleBase> SendRules { get; set; }
-
-        [field: Header("TEST NETWORK")]
-        [field: SerializeField] public bool SelfSending { get; set; }
-
-        [field: Min(0)]
-        [field: SerializeField] public float Latency { get; set; } = 0.1f;
-
-        [field: Min(0)]
-        [field: SerializeField] public float LatencyJitter { get; set; } = 10;
 
         [field: Header("TELEPORTATION")]
         [field: Min(0)]
