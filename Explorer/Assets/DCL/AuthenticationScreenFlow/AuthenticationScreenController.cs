@@ -11,18 +11,21 @@ using DCL.Profiles.Self;
 using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.UI;
 using DCL.Utilities;
-using DCL.Web3;
+using Utility;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using MVC;
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.Assertions;
 using UnityEngine.Localization.SmartFormat.PersistentVariables;
 using UnityEngine.UI;
-using Utility;
+
+// used in IsUserAllowedToAccessToBeta method
+#if !UNITY_EDITOR
+using DCL.Web3;
+using System.Collections.Generic;
+#endif
 
 namespace DCL.AuthenticationScreenFlow
 {
