@@ -1,8 +1,6 @@
 ﻿using Arch.Core;
-using DCL.AssetsProvision;
 using DCL.Character.Components;
 using DCL.DebugUtilities;
-using DCL.Diagnostics;
 using DCL.Multiplayer.Movement.Settings;
 using DCL.Multiplayer.Profiles.Entities;
 using DCL.Multiplayer.Profiles.RemoteProfiles;
@@ -41,6 +39,8 @@ namespace DCL.Multiplayer.Movement.Systems
 
         private void InstantiateSelfReplica(World world)
         {
+            settings.SelfSending = true;
+
             if (selfReplicaEntity != null)
                 RemoveSelfReplica(world);
 
@@ -66,18 +66,17 @@ namespace DCL.Multiplayer.Movement.Systems
                     {
                         color = Color.yellow,
                     };
-
-                    settings.SelfSending = true;
                 }
             }
         }
 
         private void RemoveSelfReplica(World world)
         {
+            settings.SelfSending = false;
+
             if (remoteEntities == null) return;
             remoteEntities.TryRemove(RemotePlayerMovementComponent.TEST_ID, world);
 
-            settings.SelfSending = false;
             selfReplicaEntity = null;
         }
     }
