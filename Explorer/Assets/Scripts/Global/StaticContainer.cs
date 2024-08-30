@@ -62,41 +62,42 @@ namespace Global
         private ProvidedAsset<PartitionSettingsAsset> partitionSettings;
         private ProvidedAsset<RealmPartitionSettingsAsset> realmPartitionSettings;
 
-        private IAssetsProvisioner? assetsProvisioner;
+        private IAssetsProvisioner assetsProvisioner;
+
         public ComponentsContainer ComponentsContainer { get; private set; }
-        public CharacterContainer? CharacterContainer { get; private set; }
-        public QualityContainer? QualityContainer { get; private set; }
-        public ExposedGlobalDataContainer? ExposedGlobalDataContainer { get; private set; }
-        public WebRequestsContainer? WebRequestsContainer { get; private set; }
-        public IReadOnlyList<IDCLWorldPlugin>? ECSWorldPlugins { get; private set; }
+        public CharacterContainer CharacterContainer { get; private set; }
+        public QualityContainer QualityContainer { get; private set; }
+        public ExposedGlobalDataContainer ExposedGlobalDataContainer { get; private set; }
+        public WebRequestsContainer WebRequestsContainer { get; private set; }
+        public IReadOnlyList<IDCLWorldPlugin> ECSWorldPlugins { get; private set; }
 
         /// <summary>
         ///     Some plugins may implement both interfaces
         /// </summary>
-        public IReadOnlyList<IDCLGlobalPlugin>? SharedPlugins { get; private set; }
+        public IReadOnlyList<IDCLGlobalPlugin> SharedPlugins { get; private set; }
         public ECSWorldSingletonSharedDependencies SingletonSharedDependencies { get; private set; }
-        public Profiler? Profiler { get; private set; }
-        public PhysicsTickProvider? PhysicsTickProvider { get; private set; }
-        public IEntityCollidersGlobalCache? EntityCollidersGlobalCache { get; private set; }
+        public Profiler Profiler { get; private set; }
+        public PhysicsTickProvider PhysicsTickProvider { get; private set; }
+        public IEntityCollidersGlobalCache EntityCollidersGlobalCache { get; private set; }
         public IPartitionSettings PartitionSettings => partitionSettings.Value;
         public IRealmPartitionSettings RealmPartitionSettings => realmPartitionSettings.Value;
-        public StaticSettings? StaticSettings { get; private set; }
-        public CacheCleaner? CacheCleaner { get; private set; }
-        public IEthereumApi? EthereumApi { get; private set; }
-        public IInputBlock? InputBlock { get; private set; }
-        public IScenesCache? ScenesCache { get; private set; }
-        public ISceneReadinessReportQueue? SceneReadinessReportQueue { get; private set; }
-        public FeatureFlagsCache? FeatureFlagsCache { get; private set; }
-        public IFeatureFlagsProvider? FeatureFlagsProvider { get; private set; }
-        public IPortableExperiencesController? PortableExperiencesController { get; private set; }
-        public IDebugContainerBuilder? DebugContainerBuilder { get; private set; }
+        public StaticSettings StaticSettings { get; private set; }
+        public CacheCleaner CacheCleaner { get; private set; }
+        public IEthereumApi EthereumApi { get; private set; }
+        public IInputBlock InputBlock { get; private set; }
+        public IScenesCache ScenesCache { get; private set; }
+        public ISceneReadinessReportQueue SceneReadinessReportQueue { get; private set; }
+        public FeatureFlagsCache FeatureFlagsCache { get; private set; }
+        public IFeatureFlagsProvider FeatureFlagsProvider { get; private set; }
+        public IPortableExperiencesController PortableExperiencesController { get; private set; }
+        public IDebugContainerBuilder DebugContainerBuilder { get; private set; }
 
         public void Dispose()
         {
             realmPartitionSettings.Dispose();
             partitionSettings.Dispose();
-            QualityContainer?.Dispose();
-            Profiler?.Dispose();
+            QualityContainer.Dispose();
+            Profiler.Dispose();
         }
 
         public async UniTask InitializeAsync(StaticSettings settings, CancellationToken ct)
@@ -105,8 +106,8 @@ namespace Global
 
             (partitionSettings, realmPartitionSettings) =
                 await UniTask.WhenAll(
-                    assetsProvisioner!.ProvideMainAssetAsync(settings.PartitionSettings, ct, nameof(PartitionSettings)),
-                    assetsProvisioner!.ProvideMainAssetAsync(settings.RealmPartitionSettings, ct, nameof(RealmPartitionSettings))
+                    assetsProvisioner.ProvideMainAssetAsync(settings.PartitionSettings, ct, nameof(PartitionSettings)),
+                    assetsProvisioner.ProvideMainAssetAsync(settings.RealmPartitionSettings, ct, nameof(RealmPartitionSettings))
                 );
         }
 
@@ -145,7 +146,7 @@ namespace Global
             bool result = await InitializeContainersAsync(container, settingsContainer, ct);
 
             if (!result)
-                return (null, false);
+                return (null, false)!;
 
             StaticSettings staticSettings = settingsContainer.GetSettings<StaticSettings>();
 
@@ -229,7 +230,7 @@ namespace Global
         {
             ((StaticContainer plugin, bool success), (CharacterContainer plugin, bool success)) results = await UniTask.WhenAll(
                 settings.InitializePluginAsync(target, ct),
-                settings.InitializePluginAsync(target.CharacterContainer!, ct)
+                settings.InitializePluginAsync(target.CharacterContainer, ct)
             );
 
             return results.Item1.success && results.Item2.success;

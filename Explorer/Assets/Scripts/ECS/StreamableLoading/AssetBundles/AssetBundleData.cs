@@ -1,5 +1,4 @@
 ﻿using DCL.Profiling;
-using JetBrains.Annotations;
 using System;
 using UnityEngine;
 using UnityEngine.Assertions;
@@ -104,9 +103,7 @@ namespace ECS.StreamableLoading.AssetBundles
                 ProfilingCounters.ABReferencedAmount.Value--;
         }
 
-        public string GetInstanceName()
-        {
-            return $"AB:{AssetBundle.name}_{version}_{source}";
-        }
+        public string GetInstanceName() =>
+            $"AB:{AssetBundle.name}_{version}_{source}";
     }
 }

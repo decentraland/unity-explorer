@@ -4,7 +4,6 @@ using Cysharp.Threading.Tasks;
 using DCL.CommunicationData.URLHelpers;
 using DCL.Diagnostics;
 using DCL.Ipfs;
-using DCL.Utilities;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
@@ -17,7 +16,6 @@ using DCL.Utilities.Extensions;
 using ECS.LifeCycle.Components;
 using SceneRunner.Scene;
 using System.Linq;
-using GetSceneDefinition = ECS.SceneLifeCycle.SceneDefinition.GetSceneDefinition;
 
 namespace PortableExperiences.Controller
 {
@@ -26,20 +24,19 @@ namespace PortableExperiences.Controller
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IWebRequestController webRequestController;
         private readonly IScenesCache scenesCache;
-        private readonly ObjectProxy<World> globalWorldProxy;
-
+        private readonly World globalWorld;
         private readonly List<IPortableExperiencesController.SpawnResponse> spawnResponsesList = new ();
         private readonly ServerAbout serverAbout = new ();
         public Dictionary<ENS, Entity> PortableExperienceEntities { get; } = new ();
-        private World world => globalWorldProxy.Object;
+
 
         public ECSPortableExperiencesController(
-            ObjectProxy<World> world,
+            World globalWorld,
             IWeb3IdentityCache web3IdentityCache,
             IWebRequestController webRequestController,
             IScenesCache scenesCache)
         {
-            globalWorldProxy = world;
+            this.globalWorld = globalWorld;
             this.web3IdentityCache = web3IdentityCache;
             this.webRequestController = webRequestController;
             this.scenesCache = scenesCache;
@@ -77,7 +74,7 @@ namespace PortableExperiences.Controller
 
             ISceneFacade parentScene = scenesCache.Scenes.FirstOrDefault(s => s.SceneStateProvider.IsCurrent);
             string parentSceneName = parentScene != null ? parentScene.Info.Name : "main";
-            Entity portableExperienceEntity = world.Create(new PortableExperienceRealmComponent(realmData, parentSceneName, isGlobalPortableExperience), new PortableExperienceComponent(ens));
+            Entity portableExperienceEntity = globalWorld.Create(new PortableExperienceRealmComponent(realmData, parentSceneName, isGlobalPortableExperience), new PortableExperienceComponent(ens));
             PortableExperienceEntities.Add(ens, portableExperienceEntity);
 
             return new IPortableExperiencesController.SpawnResponse
@@ -91,7 +88,7 @@ namespace PortableExperiences.Controller
 
             if (PortableExperienceEntities.TryGetValue(ens, out Entity portableExperienceEntity))
             {
-                PortableExperienceRealmComponent portableExperienceRealmComponent = world.Get<PortableExperienceRealmComponent>(portableExperienceEntity);
+                PortableExperienceRealmComponent portableExperienceRealmComponent = globalWorld.Get<PortableExperienceRealmComponent>(portableExperienceEntity);
 
                 if (portableExperienceRealmComponent.IsGlobalPortableExperience) return false;
 
@@ -107,7 +104,7 @@ namespace PortableExperiences.Controller
 
             foreach (var portableExperience in PortableExperienceEntities)
             {
-                PortableExperienceRealmComponent pxRealmComponent = world.Get<PortableExperienceRealmComponent>(portableExperience.Value);
+                PortableExperienceRealmComponent pxRealmComponent = globalWorld.Get<PortableExperienceRealmComponent>(portableExperience.Value);
 
                 spawnResponsesList.Add(new IPortableExperiencesController.SpawnResponse {
                         name = pxRealmComponent.RealmData.RealmName,
@@ -125,7 +122,7 @@ namespace PortableExperiences.Controller
 
             if (PortableExperienceEntities.TryGetValue(ens, out Entity portableExperienceEntity))
             {
-                world.Add<DeleteEntityIntention>(portableExperienceEntity);
+                globalWorld.Add<DeleteEntityIntention>(portableExperienceEntity);
 
                 PortableExperienceEntities.Remove(ens);
 

@@ -10,7 +10,6 @@ using ECS.SceneLifeCycle.SceneDefinition;
 using Unity.Collections;
 using Unity.Jobs;
 using UnityEngine;
-using Utility;
 using static ECS.Prioritization.ScenesPartitioningUtils;
 using static Utility.ParcelMathHelper;
 
@@ -149,9 +148,9 @@ namespace ECS.SceneLifeCycle.Systems
 
         protected void AddCorners(ref SceneDefinitionComponent definition)
         {
-            var corners = new NativeArray<ParcelCorners>(definition.ParcelsCorners.Length, Allocator.Persistent);
+            var corners = new NativeArray<ParcelCorners>(definition.ParcelsCorners.Count, Allocator.Persistent);
 
-            for (var i = 0; i < definition.ParcelsCorners.Length; i++)
+            for (var i = 0; i < definition.ParcelsCorners.Count; i++)
                 corners[i] = definition.ParcelsCorners[i];
 
             partitionDataContainer.AddCorners(new ParcelCornersData(in corners));

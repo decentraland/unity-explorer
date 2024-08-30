@@ -130,7 +130,7 @@ namespace Global.Dynamic
 
         public RealFlowLoadingStatus RealFlowLoadingStatus { get; private set; } = null!;
 
-        private MultiplayerMovementMessageBus multiplayerMovementMessageBus;
+        private MultiplayerMovementMessageBus? multiplayerMovementMessageBus;
 
         public override void Dispose()
         {
@@ -240,9 +240,9 @@ namespace Global.Dynamic
             var satelliteView = new SatelliteFloor();
             var landscapePlugin = new LandscapePlugin(satelliteView, genesisTerrain, worldsTerrain, assetsProvisioner, debugBuilder, container.MapRendererContainer.TextureContainer, staticContainer.WebRequestsContainer.WebRequestController, dynamicWorldParams.EnableLandscape);
 
-            Func<IMultiPool> multiPoolFactory = () => new DCLMultiPool();
+            IMultiPool MultiPoolFactory() =>
+                new DCLMultiPool();
 
-            var multiPool = multiPoolFactory();
             var memoryPool = new ArrayMemoryPool(ArrayPool<byte>.Shared!);
             container.RealFlowLoadingStatus = new RealFlowLoadingStatus();
 
@@ -265,7 +265,7 @@ namespace Global.Dynamic
 
             var archipelagoIslandRoom = IArchipelagoIslandRoom.NewDefault(
                 identityCache,
-                multiPool,
+                MultiPoolFactory(),
                 staticContainer.CharacterContainer.CharacterObject,
                 currentAdapterAddress,
                 staticContainer.WebRequestsContainer.WebRequestController
@@ -290,7 +290,7 @@ namespace Global.Dynamic
                 container.localSceneDevelopmentController = new LocalSceneDevelopmentController(container.reloadSceneController, dynamicWorldParams.LocalSceneDevelopmentRealm);
 
             container.RoomHub = localSceneDevelopment ? NullRoomHub.INSTANCE : new RoomHub(archipelagoIslandRoom, gateKeeperSceneRoom);
-            container.MessagePipesHub = new MessagePipesHub(container.RoomHub, multiPoolFactory()!, multiPoolFactory()!, memoryPool);
+            container.MessagePipesHub = new MessagePipesHub(container.RoomHub, MultiPoolFactory(), MultiPoolFactory(), memoryPool);
 
             RoomsStatus roomsStatus = new RoomsStatus(
                 container.RoomHub,
