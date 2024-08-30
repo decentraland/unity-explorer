@@ -2,7 +2,6 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
-using DCL.CommandLine;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
@@ -15,6 +14,7 @@ using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.UI.MainUI;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
+using Global.AppArgs;
 using MVC;
 using SceneRunner.Debugging;
 using System;
@@ -28,9 +28,9 @@ namespace Global.Dynamic
     {
         private readonly IDebugSettings debugSettings;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
-        private readonly ICommandLineArgs commandLineArgs;
-        private readonly ApplicationParametersParser applicationParametersParser;
+        private readonly IAppArgs appArgs;
         private readonly RealmLaunchSettings realmLaunchSettings;
+        private readonly World world;
 
         private URLDomain? startingRealm;
         private Vector2Int startingParcel;
@@ -39,16 +39,16 @@ namespace Global.Dynamic
         public bool EnableAnalytics { private get; init; }
 
         public Bootstrap(IDebugSettings debugSettings,
-            ICommandLineArgs commandLineArgs,
+            IAppArgs appArgs,
             IDecentralandUrlsSource decentralandUrlsSource,
-            ApplicationParametersParser applicationParametersParser,
-            RealmLaunchSettings realmLaunchSettings)
+            RealmLaunchSettings realmLaunchSettings,
+            World world)
         {
             this.debugSettings = debugSettings;
             this.decentralandUrlsSource = decentralandUrlsSource;
-            this.commandLineArgs = commandLineArgs;
-            this.applicationParametersParser = applicationParametersParser;
+            this.appArgs = appArgs;
             this.realmLaunchSettings = realmLaunchSettings;
+            this.world = world;
         }
 
         public void PreInitializeSetup(UIDocument cursorRoot,
@@ -71,8 +71,8 @@ namespace Global.Dynamic
         }
 
         public async UniTask<(StaticContainer?, bool)> LoadStaticContainerAsync(BootstrapContainer bootstrapContainer, PluginSettingsContainer globalPluginSettingsContainer, DebugViewsCatalog debugViewsCatalog, CancellationToken ct) =>
-            await StaticContainer.CreateAsync(bootstrapContainer.DecentralandUrlsSource, bootstrapContainer.AssetsProvisioner, bootstrapContainer.ReportHandlingSettings, commandLineArgs, debugViewsCatalog, globalPluginSettingsContainer,
-                bootstrapContainer.IdentityCache, bootstrapContainer.VerifiedEthereumApi, ct);
+            await StaticContainer.CreateAsync(bootstrapContainer.DecentralandUrlsSource, bootstrapContainer.AssetsProvisioner, bootstrapContainer.ReportHandlingSettings, appArgs, debugViewsCatalog, globalPluginSettingsContainer,
+                bootstrapContainer.IdentityCache, bootstrapContainer.VerifiedEthereumApi, world, ct);
 
         public async UniTask<(DynamicWorldContainer?, bool)> LoadDynamicWorldContainerAsync(
             BootstrapContainer bootstrapContainer,
@@ -85,13 +85,14 @@ namespace Global.Dynamic
             ISplashScreen splashScreen,
             AudioClipConfig backgroundMusic,
             WorldInfoTool worldInfoTool,
+            Entity playerEntity,
             CancellationToken ct
         )
         {
             dynamicWorldDependencies = new DynamicWorldDependencies
             (
                 staticContainer.DebugContainerBuilder,
-                commandLineArgs,
+                appArgs,
                 bootstrapContainer.AssetsProvisioner,
                 staticContainer,
                 scenePluginSettingsContainer,
@@ -117,9 +118,11 @@ namespace Global.Dynamic
                     EnableAnalytics = EnableAnalytics,
                     HybridSceneParams = realmLaunchSettings.CreateHybridSceneParams(startingParcel),
                     LocalSceneDevelopmentRealm = realmLaunchSettings.GetLocalSceneDevelopmentRealm(decentralandUrlsSource) ?? string.Empty,
-                    AppParameters = applicationParametersParser.AppParameters,
+                    AppParameters = appArgs,
                 },
                 backgroundMusic,
+                world,
+                playerEntity,
                 ct);
         }
 
@@ -143,21 +146,19 @@ namespace Global.Dynamic
 
         public async UniTask InitializeFeatureFlagsAsync(IWeb3Identity? identity, IDecentralandUrlsSource decentralandUrlsSource, StaticContainer staticContainer, CancellationToken ct)
         {
-            try { await staticContainer.FeatureFlagsProvider.InitializeAsync(decentralandUrlsSource, identity?.Address, applicationParametersParser.AppParameters, ct); }
+            try { await staticContainer.FeatureFlagsProvider.InitializeAsync(decentralandUrlsSource, identity?.Address, appArgs, ct); }
             catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, new ReportData(ReportCategory.FEATURE_FLAGS)); }
         }
 
-        public (GlobalWorld, Entity) CreateGlobalWorldAndPlayer(
+        public GlobalWorld CreateGlobalWorld(
             BootstrapContainer bootstrapContainer,
             StaticContainer staticContainer,
             DynamicWorldContainer dynamicWorldContainer,
-            UIDocument debugUiRoot
+            UIDocument debugUiRoot,
+            Entity playerEntity
         )
         {
-            Entity playerEntity;
-            GlobalWorld globalWorld;
-
-            var sceneSharedContainer = SceneSharedContainer.Create(
+            SceneSharedContainer sceneSharedContainer = SceneSharedContainer.Create(
                 in staticContainer,
                 bootstrapContainer.DecentralandUrlsSource,
                 dynamicWorldContainer.MvcManager,
@@ -170,14 +171,18 @@ namespace Global.Dynamic
                 !realmLaunchSettings.IsLocalSceneDevelopmentRealm
             );
 
-            (globalWorld, playerEntity) = dynamicWorldContainer.GlobalWorldFactory.Create(sceneSharedContainer.SceneFactory);
+            GlobalWorld globalWorld = dynamicWorldContainer.GlobalWorldFactory.Create(sceneSharedContainer.SceneFactory,
+                sceneSharedContainer.V8ActiveEngines, playerEntity);
             dynamicWorldContainer.RealmController.GlobalWorld = globalWorld;
 
             staticContainer.DebugContainerBuilder.BuildWithFlex(debugUiRoot);
-            staticContainer.DebugContainerBuilder.IsVisible = commandLineArgs.HasDebugFlag();
+            staticContainer.DebugContainerBuilder.IsVisible = appArgs.HasDebugFlag();
 
-            return (globalWorld, playerEntity);
+            return globalWorld;
         }
+
+        public Entity CreatePlayerEntity(StaticContainer staticContainer) =>
+            staticContainer.CharacterContainer.CreatePlayerEntity(world);
 
         public async UniTask LoadStartingRealmAsync(DynamicWorldContainer dynamicWorldContainer, CancellationToken ct)
         {

@@ -80,8 +80,10 @@ namespace DCL.Roads.Systems
             }
 
             roadInfo.IsDirty = false;
-            scenesCache.AddNonRealScene(sceneDefinitionComponent.Parcels);
-            LODUtils.CheckSceneReadiness(sceneReadinessReportQueue, sceneDefinitionComponent);
+
+            
+            //In case this is a road teleport destination, we need to release the loading screen
+            LODUtils.ReportSDK6SceneLoaded(sceneDefinitionComponent, sceneReadinessReportQueue, scenesCache);
         }
     }
 }

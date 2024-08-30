@@ -15,8 +15,8 @@ namespace DCL.MapRenderer.MapCameraController
 
         private const int MAX_TEXTURE_SIZE = 4096;
 
-        public event Action<IMapActivityOwner, IMapCameraControllerInternal> OnReleasing;
-        public event Action<float, float> ZoomChanged;
+        public event Action<IMapActivityOwner, IMapCameraControllerInternal>? OnReleasing;
+        public event Action<float, float>? ZoomChanged;
 
         public MapLayer EnabledLayers { get; private set; }
 
@@ -33,13 +33,13 @@ namespace DCL.MapRenderer.MapCameraController
         private readonly IMapCullingController cullingController;
         private readonly MapCameraObject mapCameraObject;
 
-        private RenderTexture renderTexture;
+        private RenderTexture? renderTexture;
 
         // Zoom Thresholds in Parcels
         private Vector2Int zoomValues;
 
         private Rect cameraPositionBounds;
-        private Sequence translationSequence;
+        private Sequence? translationSequence;
 
         public MapCameraController(
             IMapInteractivityControllerInternal interactivityBehavior,
@@ -81,11 +81,11 @@ namespace DCL.MapRenderer.MapCameraController
         {
             if (!Camera) return;
 
-            if (renderTexture.IsCreated())
+            if (renderTexture != null && renderTexture.IsCreated())
                 renderTexture.Release();
 
             textureResolution = ClampTextureResolution(textureResolution);
-            renderTexture.width = textureResolution.x;
+            renderTexture!.width = textureResolution.x;
             renderTexture.height = textureResolution.y;
             renderTexture.Create();
 
@@ -124,7 +124,7 @@ namespace DCL.MapRenderer.MapCameraController
 
         public void SetPosition(Vector2 coordinates)
         {
-            translationSequence.Kill();
+            translationSequence?.Kill();
             translationSequence = null;
 
             Vector3 position = coordsUtils.CoordsToPositionUnclamped(coordinates);
@@ -140,7 +140,7 @@ namespace DCL.MapRenderer.MapCameraController
 
         private void SetLocalPositionClamped(Vector2 localCameraPosition)
         {
-            translationSequence.Kill();
+            translationSequence?.Kill();
             translationSequence = null;
 
             mapCameraObject.transform.localPosition = ClampLocalPosition(localCameraPosition);
@@ -148,7 +148,7 @@ namespace DCL.MapRenderer.MapCameraController
 
         public void SetPositionAndZoom(Vector2 coordinates, float zoom)
         {
-            translationSequence.Kill();
+            translationSequence?.Kill();
             translationSequence = null;
 
             SetCameraSize(zoom);
@@ -158,14 +158,14 @@ namespace DCL.MapRenderer.MapCameraController
             cullingController.SetCameraDirty(this);
         }
 
-        public void TranslateTo(Vector2 coordinates, float duration, Action onComplete = null)
+        public void TranslateTo(Vector2 coordinates, float duration, Action? onComplete = null)
         {
-            translationSequence = DOTween.Sequence();
+            translationSequence = DOTween.Sequence()!;
 
             Vector3 position = coordsUtils.CoordsToPositionUnclamped(coordinates);
             Vector3 targetPosition = ClampLocalPosition(new Vector3(position.x, position.y, CAMERA_HEIGHT));
 
-            translationSequence.Join(mapCameraObject.transform.DOLocalMove(targetPosition, duration).SetEase(Ease.OutQuart))
+            translationSequence.Join(mapCameraObject.transform.DOLocalMove(targetPosition, duration).SetEase(Ease.OutQuart)!)
                                .OnComplete(() =>
                                 {
                                     CalculateCameraPositionBounds();
@@ -245,14 +245,15 @@ namespace DCL.MapRenderer.MapCameraController
         public void Release(IMapActivityOwner owner)
         {
             cullingController.OnCameraRemoved(this);
-            renderTexture?.Release();
+            if (renderTexture != null)
+                renderTexture.Release();
             interactivityBehavior.Release();
             OnReleasing?.Invoke(owner, this);
         }
 
         public void Dispose()
         {
-            translationSequence.Kill();
+            translationSequence?.Kill();
             translationSequence = null;
 
             if (mapCameraObject != null)
@@ -260,7 +261,8 @@ namespace DCL.MapRenderer.MapCameraController
 
             interactivityBehavior.Dispose();
 
-            renderTexture?.Release();
+            if (renderTexture != null)
+                renderTexture.Release();
             renderTexture = null;
         }
     }

@@ -1,9 +1,7 @@
 ﻿#nullable enable
 using DCL.Web3.Identities;
 using ECS;
-using JetBrains.Annotations;
 using Segment.Serialization;
-using System;
 using UnityEngine;
 using Utility;
 using static DCL.PerformanceAndDiagnostics.Analytics.IAnalyticsController;
@@ -15,12 +13,12 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         private readonly IAnalyticsService analytics;
         public AnalyticsConfiguration Configuration { get; }
 
-        public AnalyticsController(IAnalyticsService analyticsService, AnalyticsConfiguration configuration)
+        public AnalyticsController(IAnalyticsService analyticsService, AnalyticsConfiguration configuration, LauncherTraits launcherTraits)
         {
             analytics = analyticsService;
             Configuration = configuration;
 
-            analytics.AddPlugin(new StaticCommonTraitsPlugin());
+            analytics.AddPlugin(new StaticCommonTraitsPlugin(launcherTraits));
 
             analytics.Track(AnalyticsEvents.General.SYSTEM_INFO_REPORT, new JsonObject
             {

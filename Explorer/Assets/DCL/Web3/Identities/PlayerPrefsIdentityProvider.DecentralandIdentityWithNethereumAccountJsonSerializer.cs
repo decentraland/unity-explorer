@@ -1,4 +1,4 @@
-using DCL.Web3.Accounts;
+using DCL.Web3.Abstract;
 using DCL.Web3.Chains;
 using Nethereum.Signer;
 using Newtonsoft.Json;
@@ -12,6 +12,12 @@ namespace DCL.Web3.Identities
         public class DecentralandIdentityWithNethereumAccountJsonSerializer : IWeb3IdentityJsonSerializer
         {
             private readonly IdentityJsonDto jsonRoot = new ();
+            private readonly IWeb3AccountFactory accountFactory;
+
+            public DecentralandIdentityWithNethereumAccountJsonSerializer(IWeb3AccountFactory accountFactory)
+            {
+                this.accountFactory = accountFactory;
+            }
 
             public IWeb3Identity? Deserialize(string json)
             {
@@ -26,21 +32,18 @@ namespace DCL.Web3.Identities
                     authChain.Set(link);
 
                 return new DecentralandIdentity(new Web3Address(jsonRoot.address),
-                    new NethereumAccount(new EthECKey(jsonRoot.key)),
+                    accountFactory.CreateAccount(new EthECKey(jsonRoot.key)),
                     DateTime.Parse(jsonRoot.expiration, null, DateTimeStyles.RoundtripKind),
                     authChain);
             }
 
             public string Serialize(IWeb3Identity identity)
             {
-                var account = identity.EphemeralAccount as IEthKeyOwner
-                              ?? throw new Exception("The identity account is not an IEthKeyOwner");
-
                 jsonRoot.Clear();
                 jsonRoot.address = identity.Address;
                 jsonRoot.expiration = $"{identity.Expiration:O}";
                 jsonRoot.ephemeralAuthChain.AddRange(identity.AuthChain);
-                jsonRoot.key = account.Key.GetPrivateKey()!;
+                jsonRoot.key = identity.EphemeralAccount.PrivateKey;
 
                 return JsonConvert.SerializeObject(jsonRoot);
             }

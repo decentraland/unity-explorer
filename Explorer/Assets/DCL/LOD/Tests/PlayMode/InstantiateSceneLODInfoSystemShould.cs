@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using Arch.Core;
 using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.Ipfs;
 using DCL.LOD.Components;
@@ -17,7 +16,7 @@ using ECS.StreamableLoading.Common.Components;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
-using SceneRunner.Scene;
+using System.Linq;
 using UnityEngine;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData,
     ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
@@ -26,15 +25,15 @@ namespace DCL.LOD.Tests
 {
     public class InstantiateSceneLODInfoSystemShould : UnitySystemTestBase<InstantiateSceneLODInfoSystem>
     {
-        private const string fakeHash = "FAKE_HASH";
+        private const string FAKE_HASH = "FAKE_HASH";
 
-        private static readonly Vector2Int[] DecodedParcels =
+        private static readonly Vector2Int[] DECODED_PARCELS =
         {
             new (0, 0)
         };
 
         private SceneLODInfo sceneLODInfo;
-        private GameObjectPool<LODGroup> lodGroupPool;
+        private GameObjectPool<LODGroup>? lodGroupPool;
         private SceneDefinitionComponent sceneDefinitionComponent;
         private IScenesCache scenesCache;
 
@@ -61,11 +60,11 @@ namespace DCL.LOD.Tests
 
             var sceneEntityDefinition = new SceneEntityDefinition
             {
-                id = fakeHash, metadata = new SceneMetadata
+                id = FAKE_HASH, metadata = new SceneMetadata
                 {
                     scene = new SceneMetadataScene
                     {
-                        DecodedBase = new Vector2Int(0, 0), DecodedParcels = DecodedParcels
+                        DecodedBase = new Vector2Int(0, 0), DecodedParcels = DECODED_PARCELS
                     }
                 }
             };
@@ -102,7 +101,7 @@ namespace DCL.LOD.Tests
             Assert.AreEqual(sceneLODInfoRetrieved.metadata.LODLoadedCount(), 1);
             Assert.AreEqual(SceneLODInfoUtils.HasLODResult(sceneLODInfoRetrieved.metadata.SuccessfullLODs, 0), true);
             Assert.AreEqual(SceneLODInfoUtils.HasLODResult(sceneLODInfoRetrieved.metadata.FailedLODs, 0), false);
-            scenesCache.Received().AddNonRealScene(DecodedParcels);
+            scenesCache.Received().AddNonRealScene(Arg.Is<Vector2Int[]>(arr => arr.SequenceEqual(DECODED_PARCELS)));
         }
 
         [Test]
@@ -121,7 +120,7 @@ namespace DCL.LOD.Tests
             Assert.AreEqual(sceneLODInfoRetrieved.metadata.LODLoadedCount(), 1);
             Assert.AreEqual(SceneLODInfoUtils.HasLODResult(sceneLODInfoRetrieved.metadata.FailedLODs, 0), true);
             Assert.AreEqual(SceneLODInfoUtils.HasLODResult(sceneLODInfoRetrieved.metadata.SuccessfullLODs, 0), false);
-            scenesCache.Received().AddNonRealScene(DecodedParcels);
+            scenesCache.Received().AddNonRealScene(Arg.Is<Vector2Int[]>(arr => arr.SequenceEqual(DECODED_PARCELS)));
         }
 
 

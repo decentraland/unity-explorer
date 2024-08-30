@@ -24,7 +24,7 @@ namespace DCL.PluginSystem.World
 {
     public class CharacterTriggerAreaPlugin : IDCLWorldPlugin<CharacterTriggerAreaSettings>
     {
-        private readonly ObjectProxy<Arch.Core.World> globalWorldProxy;
+        private readonly Arch.Core.World globalWorld;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly CacheCleaner cacheCleaner;
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
@@ -35,7 +35,7 @@ namespace DCL.PluginSystem.World
         private IComponentPool<CharacterTriggerArea.CharacterTriggerArea>? characterTriggerAreaPoolRegistry;
 
         public CharacterTriggerAreaPlugin(
-            ObjectProxy<Arch.Core.World> globalWorldProxy,
+            Arch.Core.World globalWorld,
             ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy,
             ObjectProxy<Entity> cameraEntityProxy,
             ICharacterObject characterObject,
@@ -43,7 +43,7 @@ namespace DCL.PluginSystem.World
             IAssetsProvisioner assetsProvisioner,
             CacheCleaner cacheCleaner)
         {
-            this.globalWorldProxy = globalWorldProxy;
+            this.globalWorld = globalWorld;
             this.assetsProvisioner = assetsProvisioner;
             componentPoolsRegistry = poolsRegistry;
             this.cacheCleaner = cacheCleaner;
@@ -69,8 +69,8 @@ namespace DCL.PluginSystem.World
             CharacterTriggerAreaHandlerSystem.InjectToWorld(ref builder, characterTriggerAreaPoolRegistry!, mainPlayerAvatarBaseProxy, sharedDependencies.SceneStateProvider, characterObject);
             CharacterTriggerAreaCleanUpRegisteredCollisionsSystem.InjectToWorld(ref builder);
 
-            finalizeWorldSystems.Add(AvatarModifierAreaHandlerSystem.InjectToWorld(ref builder, globalWorldProxy));
-            finalizeWorldSystems.Add(CameraModeAreaHandlerSystem.InjectToWorld(ref builder, globalWorldProxy, cameraEntityProxy));
+            finalizeWorldSystems.Add(AvatarModifierAreaHandlerSystem.InjectToWorld(ref builder, globalWorld));
+            finalizeWorldSystems.Add(CameraModeAreaHandlerSystem.InjectToWorld(ref builder, globalWorld, cameraEntityProxy));
             finalizeWorldSystems.Add(CharacterTriggerAreaCleanupSystem.InjectToWorld(ref builder, characterTriggerAreaPoolRegistry!));
         }
 

@@ -94,14 +94,14 @@ namespace SceneRunner
             this.portableExperiencesController = portableExperiencesController;
         }
 
-        public async UniTask<ISceneFacade> CreateSceneFromFileAsync(string jsCodeUrl, IPartitionComponent partitionProvider, CancellationToken ct)
+        public async UniTask<ISceneFacade> CreateSceneFromFileAsync(string jsCodeUrl, IPartitionComponent partitionProvider, CancellationToken ct, string id = "")
         {
             int lastSlash = jsCodeUrl.LastIndexOf("/", StringComparison.Ordinal);
             string mainScenePath = jsCodeUrl[(lastSlash + 1)..];
             var baseUrl = URLDomain.FromString(jsCodeUrl[..(lastSlash + 1)]);
 
             var sceneDefinition = new SceneEntityDefinition(
-                string.Empty,
+                id,
                 new SceneMetadata
                 {
                     main = mainScenePath,

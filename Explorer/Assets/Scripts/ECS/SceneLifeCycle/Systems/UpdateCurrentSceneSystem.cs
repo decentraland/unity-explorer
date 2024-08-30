@@ -47,7 +47,7 @@ namespace ECS.SceneLifeCycle.Systems
             }
 
             Vector3 playerPos = World.Get<CharacterTransform>(playerEntity).Transform.position;
-            Vector2Int parcel = ParcelMathHelper.FloorToParcel(playerPos);
+            Vector2Int parcel = playerPos.ToParcel();
             UpdateSceneReadiness(parcel);
             UpdateCurrentScene(parcel);
             UpdateCurrentSceneInfo(parcel);
@@ -85,6 +85,7 @@ namespace ECS.SceneLifeCycle.Systems
         {
             scenesCache.TryGetByParcel(parcel, out var currentScene);
             currentSceneInfo.Update(currentScene);
+            scenesCache.SetCurrentScene(currentScene);
         }
     }
 }

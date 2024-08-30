@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Audio;
 using DCL.Browser;
+using DCL.Input;
 using DCL.MapRenderer;
 using DCL.MapRenderer.CommonBehavior;
 using DCL.MapRenderer.ConsumerUtils;
@@ -47,15 +48,15 @@ namespace DCL.Navmap
         private readonly Dictionary<NavmapSections, TabSelectorView> tabsBySections;
         private readonly Dictionary<NavmapSections, ISection> mapSections;
         private readonly Mouse mouse;
+        private readonly StringBuilder parcelTitleStringBuilder = new ();
+        private readonly NavmapLocationController navmapLocationController;
+
         private CancellationTokenSource animationCts;
         private IMapCameraController cameraController;
-
-        private NavmapLocationController navmapLocationController;
 
         private Vector2 lastParcelHovered;
         private NavmapSections lastShownSection;
         private MapRenderImage.ParcelClickData lastParcelClicked;
-        private StringBuilder parcelTitleStringBuilder = new StringBuilder();
 
         public IReadOnlyDictionary<MapLayer, IMapLayerParameter> LayersParameters { get; } = new Dictionary<MapLayer, IMapLayerParameter>
             { { MapLayer.PlayerMarker, new PlayerMarkerParameter { BackgroundIsActive = true } } };
@@ -70,7 +71,10 @@ namespace DCL.Navmap
             DCLInput dclInput,
             IRealmNavigator realmNavigator,
             IRealmData realmData,
-            IMapPathEventBus mapPathEventBus)
+            IMapPathEventBus mapPathEventBus,
+            World world,
+            Entity playerEntity,
+            IInputBlock inputBlock)
         {
             this.navmapView = navmapView;
             this.mapRenderer = mapRenderer;
@@ -81,7 +85,7 @@ namespace DCL.Navmap
 
             zoomController = new NavmapZoomController(navmapView.zoomView, dclInput);
             filterController = new NavmapFilterController(this.navmapView.filterView, mapRenderer, webBrowser);
-            searchBarController = new NavmapSearchBarController(navmapView.SearchBarView, navmapView.SearchBarResultPanel, navmapView.HistoryRecordPanelView, placesAPIService, navmapView.floatingPanelView, webRequestController, dclInput);
+            searchBarController = new NavmapSearchBarController(navmapView.SearchBarView, navmapView.SearchBarResultPanel, navmapView.HistoryRecordPanelView, placesAPIService, navmapView.floatingPanelView, webRequestController, inputBlock);
             FloatingPanelController = new FloatingPanelController(navmapView.floatingPanelView, placesAPIService, webRequestController, realmNavigator, mapPathEventBus);
             FloatingPanelController.OnJumpIn += _ => searchBarController.ResetSearch();
             FloatingPanelController.OnSetAsDestination += SetDestination;
@@ -126,6 +130,8 @@ namespace DCL.Navmap
             navmapView.WorldsWarningNotificationView.SetText(WORLDS_WARNING_MESSAGE);
             navmapView.WorldsWarningNotificationView.Hide();
             mouse = InputSystem.GetDevice<Mouse>();
+
+            navmapLocationController = new NavmapLocationController(navmapView.LocationView, world, playerEntity);
         }
 
         public void Dispose()
@@ -197,13 +203,8 @@ namespace DCL.Navmap
             }
         }
 
-        public async UniTask InitialiseAssetsAsync(IAssetsProvisioner assetsProvisioner, CancellationToken ct) =>
+        public async UniTask InitializeAssetsAsync(IAssetsProvisioner assetsProvisioner, CancellationToken ct) =>
             await searchBarController.InitialiseAssetsAsync(assetsProvisioner, ct);
-
-        public void InitialiseWorldDependencies(World world, Entity playerEntity)
-        {
-            navmapLocationController = new NavmapLocationController(navmapView.LocationView, world, playerEntity);
-        }
 
         private void OnResultClicked(string coordinates)
         {
@@ -226,7 +227,7 @@ namespace DCL.Navmap
                 new MapCameraInput(
                     this,
                     ACTIVE_MAP_LAYERS,
-                    ParcelMathHelper.WorldToGridPosition(new Vector3(0, 0, 0)),
+                    Vector3.zero.ToParcel(),
                     zoomController.ResetZoomToMidValue(),
                     navmapView.SatellitePixelPerfectMapRendererTextureProvider.GetPixelPerfectTextureResolution(),
                     navmapView.zoomView.zoomVerticalRange

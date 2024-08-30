@@ -7,12 +7,12 @@ namespace Utility
 {
     public static class ParcelMathHelper
     {
-        public const float PARCEL_SIZE = 16.0f;
+        public const int PARCEL_SIZE = 16;
         public const float SQR_PARCEL_SIZE = PARCEL_SIZE * PARCEL_SIZE;
 
         public static readonly SceneGeometry UNDEFINED_SCENE_GEOMETRY = new (
             Vector3.zero,
-            new SceneCircumscribedPlanes(float.MinValue, float.MaxValue, float.MinValue, float.MaxValue));
+            new SceneCircumscribedPlanes(float.MinValue, float.MaxValue, float.MinValue, float.MaxValue), float.MaxValue);
 
         public static readonly Vector3 RoadPivotDeviation = new (8, 0, 8);
 
@@ -74,10 +74,11 @@ namespace Utility
             circumscribedPlaneMaxZ += EXTEND_AMOUNT;
 
             Vector3 baseParcelPosition = GetPositionByParcelPosition(baseParcel);
+            float sceneHeight = Mathf.Log(parcelsCorners.Count + 1, 2) * 20; // log2(n+1) x 20, where n is the amount of parcels
 
             return new SceneGeometry(
                 baseParcelPosition,
-                new SceneCircumscribedPlanes(circumscribedPlaneMinX, circumscribedPlaneMaxX, circumscribedPlaneMinZ, circumscribedPlaneMaxZ));
+                new SceneCircumscribedPlanes(circumscribedPlaneMinX, circumscribedPlaneMaxX, circumscribedPlaneMinZ, circumscribedPlaneMaxZ), sceneHeight);
         }
 
         public static ParcelCorners CalculateCorners(Vector2Int parcelPosition)
@@ -86,8 +87,6 @@ namespace Utility
             return new ParcelCorners(min, min + new Vector3(0, 0, PARCEL_SIZE), min + new Vector3(PARCEL_SIZE, 0, PARCEL_SIZE), min + new Vector3(PARCEL_SIZE, 0, 0));
         }
 
-        public static Vector2Int FloorToParcel(Vector3 position) =>
-            new (Mathf.FloorToInt(position.x / PARCEL_SIZE), Mathf.FloorToInt(position.z / PARCEL_SIZE));
 
         public static void ParcelsInRange(Vector3 position, int loadRadius, HashSet<int2> results)
         {
@@ -127,10 +126,16 @@ namespace Utility
             );
 
         public static Vector2 WorldToGridPositionUnclamped(Vector3 worldPosition) =>
-            new (
-                worldPosition.x / PARCEL_SIZE,
-                worldPosition.z / PARCEL_SIZE
-            );
+            new (worldPosition.x / PARCEL_SIZE, worldPosition.z / PARCEL_SIZE);
+
+        public static Vector2Int ToParcel(this Vector3 position) =>
+            new (Mathf.FloorToInt(position.x / PARCEL_SIZE), Mathf.FloorToInt(position.z / PARCEL_SIZE));
+
+        public static Vector2Int ParcelPosition(this Transform transform) =>
+            transform.position.ToParcel();
+
+        public static Vector2Int ToParcel(this CanBeDirty<Vector3> position) =>
+            position.Value.ToParcel();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool Intersects(this in SceneCircumscribedPlanes boundingPlanes, Bounds bounds)
@@ -189,10 +194,16 @@ namespace Utility
             /// </summary>
             public readonly SceneCircumscribedPlanes CircumscribedPlanes;
 
-            public SceneGeometry(Vector3 baseParcelPosition, SceneCircumscribedPlanes circumscribedPlanes)
+            /// <summary>
+            /// The height of the scene (in meters) according to the amount of parcels.
+            /// </summary>
+            public readonly float Height;
+
+            public SceneGeometry(Vector3 baseParcelPosition, SceneCircumscribedPlanes circumscribedPlanes, float sceneHeight)
             {
                 BaseParcelPosition = baseParcelPosition;
                 CircumscribedPlanes = circumscribedPlanes;
+                Height = sceneHeight;
             }
         }
     }

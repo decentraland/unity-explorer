@@ -3,6 +3,8 @@ using DCL.LOD.Components;
 using DCL.LOD.Systems;
 using DCL.Optimization.Pools;
 using ECS.Prioritization.Components;
+using ECS.SceneLifeCycle;
+using ECS.SceneLifeCycle.Reporting;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.TestSuite;
 using NSubstitute;
@@ -56,7 +58,9 @@ namespace DCL.LOD.Tests
 
             sceneDefinitionComponent = SceneDefinitionComponentFactory.CreateFromDefinition(sceneEntityDefinition, new IpfsPath());
             partitionComponent = new PartitionComponent();
-            system = new InitializeSceneLODInfoSystem(world, lodCache, LOD_LEVELS, lodGroupPool, new GameObject().transform);
+            system = new InitializeSceneLODInfoSystem(world, lodCache, LOD_LEVELS, lodGroupPool,
+                new GameObject().transform, Substitute.For<ISceneReadinessReportQueue>(),
+                Substitute.For<IScenesCache>());
         }
 
         [Test]

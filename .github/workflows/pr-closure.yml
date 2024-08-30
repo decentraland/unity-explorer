@@ -1,0 +1,35 @@
+name: Handle PR Closure
+
+on:
+  pull_request:
+    types:
+      - closed
+
+jobs:
+  handle-pr-closure:
+    name: Clean Up Unity Cloud Target
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.12.3
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r scripts/cloudbuild/requirements.txt
+
+      - name: Delete Unity Cloud target
+        env:
+          API_KEY: ${{ secrets.UNITY_CLOUD_API_KEY }}
+          ORG_ID: ${{ secrets.UNITY_CLOUD_ORG_ID }}
+          PROJECT_ID: ${{ secrets.UNITY_CLOUD_PROJECT_ID }}
+          TARGET: t_${{ matrix.target }}
+          BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
+        run: python -u scripts/cloudbuild/build.py --delete

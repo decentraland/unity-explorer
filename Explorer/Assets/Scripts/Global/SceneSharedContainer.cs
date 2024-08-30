@@ -12,6 +12,7 @@ using DCL.WebRequests;
 using ECS;
 using SceneRunner;
 using SceneRunner.ECSWorld;
+using SceneRuntime;
 using SceneRuntime.Factory;
 
 namespace Global
@@ -23,6 +24,7 @@ namespace Global
     public class SceneSharedContainer
     {
         public ISceneFactory SceneFactory { get; private set; }
+        public V8ActiveEngines V8ActiveEngines { get; private set; }
 
         public static SceneSharedContainer Create(in StaticContainer staticContainer,
             IDecentralandUrlsSource decentralandUrlsSource,
@@ -43,11 +45,14 @@ namespace Global
                 exposedGlobalDataContainer.CameraSamplingData,
                 staticContainer.ECSWorldPlugins);
 
+            var v8ActiveEngines = new V8ActiveEngines();
+
             return new SceneSharedContainer
             {
+                V8ActiveEngines = v8ActiveEngines,
                 SceneFactory = new SceneFactory(
                     ecsWorldFactory,
-                    new SceneRuntimeFactory(staticContainer.WebRequestsContainer.WebRequestController, realmData ?? new IRealmData.Fake(), cacheJsSources),
+                    new SceneRuntimeFactory(staticContainer.WebRequestsContainer.WebRequestController, realmData ?? new IRealmData.Fake(), new V8EngineFactory(v8ActiveEngines), v8ActiveEngines, cacheJsSources),
                     new SharedPoolsProvider(),
                     new CRDTSerializer(),
                     staticContainer.ComponentsContainer.SDKComponentsRegistry,

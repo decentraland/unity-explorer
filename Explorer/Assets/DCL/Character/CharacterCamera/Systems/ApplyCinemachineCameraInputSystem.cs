@@ -19,17 +19,18 @@ namespace DCL.CharacterCamera.Systems
     public partial class ApplyCinemachineCameraInputSystem : BaseUnityLoopSystem
     {
         private readonly DCLInput input;
-        private bool isFreeCameraAllowed;
+        private readonly bool isFreeCameraAllowed;
 
         internal ApplyCinemachineCameraInputSystem(World world, DCLInput input, bool isFreeCameraAllowed) : base(world)
         {
             this.input = input;
+            this.isFreeCameraAllowed = isFreeCameraAllowed;
         }
 
         protected override void Update(float t)
         {
-            ApplyQuery(World, t);
-            ForceLookAtQuery(World);
+            ApplyQuery(World!, t);
+            ForceLookAtQuery(World!);
         }
 
         [Query]

@@ -12,7 +12,7 @@ true;
         /// <summary>
         ///     Initial capacity of pools that should exist per scene context
         /// </summary>
-        public const int SCENES_COUNT = 50;
+        public const int SCENES_COUNT = 2000;
 
         /// <summary>
         ///     Initial capacity of pools that should exist for global context

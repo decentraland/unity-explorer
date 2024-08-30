@@ -1,7 +1,5 @@
 ﻿using DCL.Optimization.Pools;
-using ECS.SceneLifeCycle.SceneDefinition;
 using SceneRunner.Scene;
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -38,8 +36,8 @@ namespace ECS.SceneLifeCycle
 
     public class ScenesCache : IScenesCache
     {
-        private readonly Dictionary<Vector2Int, ISceneFacade> scenesByParcels = new (PoolConstants.SCENES_COUNT * 2);
-        private readonly HashSet<Vector2Int> nonRealSceneByParcel = new (PoolConstants.SCENES_COUNT * 2);
+        private readonly Dictionary<Vector2Int, ISceneFacade> scenesByParcels = new (PoolConstants.SCENES_COUNT);
+        private readonly HashSet<Vector2Int> nonRealSceneByParcel = new (PoolConstants.SCENES_COUNT);
         private readonly Dictionary<string, ISceneFacade> portableExperienceScenesByUrn = new (PoolConstants.PORTABLE_EXPERIENCES_INITIAL_COUNT);
 
         private readonly HashSet<ISceneFacade> scenes = new (PoolConstants.SCENES_COUNT);
@@ -72,7 +70,7 @@ namespace ECS.SceneLifeCycle
         {
             for (var i = 0; i < parcels.Count; i++)
             {
-                if (scenesByParcels.TryGetValue(parcels[i], out ISceneFacade sceneFacade))
+                if (scenesByParcels.TryGetValue(parcels[i], out ISceneFacade? sceneFacade))
                 {
                     scenes.Remove(sceneFacade);
                     scenesByParcels.Remove(parcels[i]);
@@ -109,7 +107,8 @@ namespace ECS.SceneLifeCycle
 
         public void SetCurrentScene(ISceneFacade sceneFacade)
         {
-            CurrentScene = sceneFacade;
+            if (CurrentScene != sceneFacade)
+                CurrentScene = sceneFacade;
         }
     }
 }

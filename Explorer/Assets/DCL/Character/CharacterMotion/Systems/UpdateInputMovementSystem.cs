@@ -29,37 +29,34 @@ namespace DCL.CharacterMotion.Systems
         protected override void Update(float t)
         {
             UpdateInputQuery(World);
-            ResetInputQuery(World);
         }
 
         [Query]
-        [All(typeof(MovementBlockerComponent))]
-        private void ResetInput(ref MovementInputComponent inputToUpdate)
-        {
-            inputToUpdate.Axes = Vector2.zero;
-        }
-
-        [Query]
-        [None(typeof(MovementBlockerComponent))]
         private void UpdateInput(ref MovementInputComponent inputToUpdate)
         {
-            inputToUpdate.Axes = movementAxis.ReadValue<Vector2>();
-
             if (!movementAxis.enabled)
+            {
                 inputToUpdate.Axes = Vector2.zero;
+                return;
+            }
+
+            inputToUpdate.Axes = movementAxis.ReadValue<Vector2>();
 
             if (autoWalkAction.WasPerformedThisFrame()) { inputToUpdate.AutoWalk = !inputToUpdate.AutoWalk; }
 
             if (inputToUpdate.Axes.sqrMagnitude > 0.1f) { inputToUpdate.AutoWalk = false; }
 
             // Running action wins over walking
-            inputToUpdate.Kind = sprintAction.IsPressed() ? MovementKind.Run :
-                walkAction.IsPressed() ? MovementKind.Walk : MovementKind.Jog;
+            inputToUpdate.Kind = sprintAction.IsPressed() ? MovementKind.RUN :
+                walkAction.IsPressed() ? MovementKind.WALK : MovementKind.JOG;
+
+            if (inputToUpdate.Axes == Vector2.zero)
+                inputToUpdate.Kind = MovementKind.IDLE;
 
             if (inputToUpdate.AutoWalk)
             {
                 inputToUpdate.Axes = new Vector2(0, 1);
-                inputToUpdate.Kind = MovementKind.Walk;
+                inputToUpdate.Kind = MovementKind.WALK;
             }
         }
     }

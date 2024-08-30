@@ -44,14 +44,14 @@ namespace ECS.SceneLifeCycle.Tests
             samplingData.IsDirty.Returns(true);
             samplingData.Forward.Returns(Vector3.forward);
             samplingData.Position.Returns(new Vector3(0, 0, 46)); // Partition #1
-            samplingData.Parcel.Returns(ParcelMathHelper.FloorToParcel(new Vector3(0, 0, 46)));
+            samplingData.Parcel.Returns(new Vector3(0, 0, 46).ToParcel());
 
             Entity e = world.Create(SceneDefinitionComponentFactory.CreateFromDefinition(new SceneEntityDefinition
             {
                 metadata = new SceneMetadata
                 {
                     scene = new SceneMetadataScene
-                        { DecodedParcels = new[] { ParcelMathHelper.FloorToParcel(Vector3.zero) } },
+                        { DecodedParcels = new[] { Vector3.zero.ToParcel() } },
                 },
             }, new IpfsPath()));
 
@@ -76,7 +76,7 @@ namespace ECS.SceneLifeCycle.Tests
             var coords = new Vector3(0, 0, 100);
 
             samplingData.Position.Returns(coords); // Partition #3
-            samplingData.Parcel.Returns(ParcelMathHelper.FloorToParcel(coords));
+            samplingData.Parcel.Returns(coords.ToParcel());
 
             // new entity without partition
             Entity e = world.Create(SceneDefinitionComponentFactory.CreateFromDefinition(new SceneEntityDefinition
@@ -84,7 +84,7 @@ namespace ECS.SceneLifeCycle.Tests
                 metadata = new SceneMetadata
                 {
                     scene = new SceneMetadataScene
-                        { DecodedParcels = new[] { ParcelMathHelper.FloorToParcel(Vector3.zero) } },
+                        { DecodedParcels = new[] { Vector3.zero.ToParcel() } },
                 },
             }, new IpfsPath()));
 
@@ -96,7 +96,7 @@ namespace ECS.SceneLifeCycle.Tests
             coords = new Vector3(0, 0, 46);
 
             samplingData.Position.Returns(coords); // Partition #1
-            samplingData.Parcel.Returns(ParcelMathHelper.FloorToParcel(coords));
+            samplingData.Parcel.Returns(coords.ToParcel());
 
             // Run for the second time
             system.Update(0);

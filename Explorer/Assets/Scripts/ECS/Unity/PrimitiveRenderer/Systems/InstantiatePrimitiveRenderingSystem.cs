@@ -128,7 +128,7 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
             rendererComponent.MeshRenderer.enabled = true;
             rendererComponent.MeshRenderer.forceRenderingOff = false;
 
-            rendererComponent.SetDefaultMaterial(sceneData.Geometry.CircumscribedPlanes);
+            rendererComponent.SetDefaultMaterial(sceneData.Geometry.CircumscribedPlanes, sceneData.Geometry.Height);
 
             changedMeshes.Add(entity, rendererComponent);
         }

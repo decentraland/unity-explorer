@@ -21,7 +21,6 @@ using ECS.Unity.EngineInfo;
 using ECS.Unity.Systems;
 using System.Collections.Generic;
 using SystemGroups.Visualiser;
-using Utility.Multithreading;
 
 namespace SceneRunner.ECSWorld
 {
@@ -62,7 +61,7 @@ namespace SceneRunner.ECSWorld
             var builder = new ArchSystemsWorldBuilder<World>(world, systemGroupsUpdateGate, systemGroupsUpdateGate,
                 sharedDependencies.SceneExceptionsHandler);
 
-            MutexSync mutex = sharedDependencies.MutexSync;
+            var mutex = sharedDependencies.MultithreadSync;
 
             builder
                .InjectCustomGroup(new SyncedInitializationSystemGroup(mutex, sharedDependencies.SceneStateProvider))

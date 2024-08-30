@@ -1,5 +1,4 @@
 ﻿using CommunicationData.URLHelpers;
-using Cysharp.Threading.Tasks;
 using DCL.Ipfs;
 using System.Collections.Generic;
 using System.Linq;
@@ -48,12 +47,15 @@ namespace ECS.SceneLifeCycle.SceneDefinition
         private static readonly SceneMetadataScene EMPTY_METADATA = new ();
         //This is considering a size of -150 to 150 parcels
         private const float PORTABLE_EXPERIENCE_MAX_VALUES = 2400f;
+        private const float PORTABLE_EXPERIENCE_MAX_HEIGHT = 300f;
+
         private static readonly ParcelMathHelper.SceneGeometry PORTABLE_EXPERIENCES_SCENE_GEOMETRY = new ParcelMathHelper.SceneGeometry(Vector3.zero,
             new ParcelMathHelper.SceneCircumscribedPlanes(
                 minX: -PORTABLE_EXPERIENCE_MAX_VALUES,
                 maxX: PORTABLE_EXPERIENCE_MAX_VALUES,
                 minZ: -PORTABLE_EXPERIENCE_MAX_VALUES,
-                maxZ: PORTABLE_EXPERIENCE_MAX_VALUES));
+                maxZ: PORTABLE_EXPERIENCE_MAX_VALUES),
+            PORTABLE_EXPERIENCE_MAX_HEIGHT);
         //PX don't care about parcel corners as they work on all the map.
         private static readonly IReadOnlyList<ParcelMathHelper.ParcelCorners> PORTABLE_EXPERIENCES_PARCEL_CORNERS = new List<ParcelMathHelper.ParcelCorners>();
 

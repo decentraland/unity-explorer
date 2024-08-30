@@ -149,9 +149,9 @@ namespace ECS.SceneLifeCycle.Systems
 
         protected void AddCorners(ref SceneDefinitionComponent definition)
         {
-            var corners = new NativeArray<ParcelCorners>(definition.ParcelsCorners.Count, Allocator.Persistent);
+            var corners = new NativeArray<ParcelCorners>(definition.ParcelsCorners.Length, Allocator.Persistent);
 
-            for (var i = 0; i < definition.ParcelsCorners.Count; i++)
+            for (var i = 0; i < definition.ParcelsCorners.Length; i++)
                 corners[i] = definition.ParcelsCorners[i];
 
             partitionDataContainer.AddCorners(new ParcelCornersData(in corners));
