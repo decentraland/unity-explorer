@@ -13,6 +13,9 @@ namespace DCL.Multiplayer.Movement.Systems
 {
     public class MultiplayerMovementDebug : IDisposable
     {
+        private const float TRAIL_LIFETIME = 1.0f; // The time in seconds that the trail will fade out over
+        private const float TRAIL_WIDTH = 0.07f;
+
         private readonly Entity playerEntity;
         private readonly RemoteEntities? remoteEntities;
         private readonly ExposedTransform playerTransform;
@@ -58,9 +61,9 @@ namespace DCL.Multiplayer.Movement.Systems
                     transformComp.Transform.name = RemotePlayerMovementComponent.TEST_ID;
 
                     TrailRenderer trail = transformComp.Transform.gameObject.TryAddComponent<TrailRenderer>();
-                    trail.time = 1.0f; // The time in seconds that the trail will fade out over
-                    trail.startWidth = 0.07f; // The starting width of the trail
-                    trail.endWidth = 0.07f; // The end
+                    trail.time = TRAIL_LIFETIME;
+                    trail.startWidth = TRAIL_WIDTH;
+                    trail.endWidth = TRAIL_WIDTH;
 
                     trail.material = new Material(Shader.Find("Unlit/Color"))
                     {
