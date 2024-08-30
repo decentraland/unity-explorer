@@ -4,7 +4,6 @@ using Arch.SystemGroups;
 using DCL.ECSComponents;
 using DCL.MapPins.Components;
 using DCL.SDKComponents.Utils;
-using DCL.Utilities;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
@@ -59,9 +58,9 @@ namespace DCL.SDKComponents.MapPins.Systems
             };
             pbMapPin.IsDirty = false;
             TextureComponent? mapPinTexture = pbMapPin.Texture.CreateTextureComponent(sceneData);
-            TryCreateGetTexturePromise(in mapPinTexture, ref mapPinComponent.TexturePromise);
+            bool hasTexturePromise = TryCreateGetTexturePromise(in mapPinTexture, ref mapPinComponent.TexturePromise);
 
-            World.Add(entity, new MapPinHolderComponent(globalWorld.Create(pbMapPin, mapPinComponent)));
+            World.Add(entity, new MapPinHolderComponent(globalWorld.Create(pbMapPin, mapPinComponent), hasTexturePromise));
         }
 
 
@@ -70,6 +69,9 @@ namespace DCL.SDKComponents.MapPins.Systems
         [Query]
         private void ResolvePromise(ref MapPinHolderComponent mapPinHolderComponent)
         {
+            if (!mapPinHolderComponent.HasTexturePromise)
+                return;
+
             var mapPinComponent = (MapPinComponent)globalWorld.Get(mapPinHolderComponent.GlobalWorldEntity, typeof(MapPinComponent))!;
 
             if (mapPinComponent.TexturePromise is not null && !mapPinComponent.TexturePromise.Value.IsConsumed)
@@ -79,6 +81,7 @@ namespace DCL.SDKComponents.MapPins.Systems
                     mapPinComponent.ThumbnailIsDirty = true;
                     mapPinComponent.Thumbnail = texture.Asset;
                     mapPinComponent.TexturePromise = null;
+                    mapPinHolderComponent.HasTexturePromise = false;
                     globalWorld.Set(mapPinHolderComponent.GlobalWorldEntity, mapPinComponent);
                 }
             }
@@ -101,7 +104,9 @@ namespace DCL.SDKComponents.MapPins.Systems
             mapPinComponent.IsDirty = true;
 
             TextureComponent? mapPinTexture = pbMapPin.Texture.CreateTextureComponent(sceneData);
-            TryCreateGetTexturePromise(in mapPinTexture, ref mapPinComponent.TexturePromise);
+
+            mapPinHolderComponent.HasTexturePromise = TryCreateGetTexturePromise(in mapPinTexture, ref mapPinComponent.TexturePromise);
+
             pbMapPin.IsDirty = false;
 
             globalWorld.Set(mapPinHolderComponent.GlobalWorldEntity, mapPinComponent, pbMapPin);
@@ -123,15 +128,15 @@ namespace DCL.SDKComponents.MapPins.Systems
             World.Remove<MapPinHolderComponent, PBMapPin>(entity);
         }
 
-        private void TryCreateGetTexturePromise(in TextureComponent? textureComponent, ref Promise? promise)
+        private bool TryCreateGetTexturePromise(in TextureComponent? textureComponent, ref Promise? promise)
         {
             if (textureComponent == null)
-                return;
+                return false;
 
             TextureComponent textureComponentValue = textureComponent.Value;
 
             if (TextureComponentUtils.Equals(ref textureComponentValue, ref promise))
-                return;
+                return false;
 
             promise = Promise.Create(World, new GetTextureIntention
             {
@@ -139,6 +144,8 @@ namespace DCL.SDKComponents.MapPins.Systems
                 WrapMode = textureComponentValue.WrapMode,
                 FilterMode = textureComponentValue.FilterMode,
             }, partitionComponent);
+
+            return true;
         }
 
     }
