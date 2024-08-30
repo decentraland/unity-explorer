@@ -46,23 +46,25 @@ namespace DCL.Multiplayer.Connections.Archipelago.SignFlow
             catch (Exception e) { ReportHub.LogException(new Exception($"Cannot ensure connection {adapterUrl}", e), ReportCategory.LIVEKIT); }
         }
 
-        public async UniTask<string> MessageForSignAsync(string ethereumAddress, CancellationToken token)
+        public async UniTask<LightResult<string>> MessageForSignAsync(string ethereumAddress, CancellationToken token)
         {
-            try
-            {
-                using SmartWrap<ChallengeRequestMessage> challenge = multiPool.TempResource<ChallengeRequestMessage>();
-                challenge.value.Address = ethereumAddress;
-                using SmartWrap<ClientPacket> clientPacket = multiPool.TempResource<ClientPacket>();
-                clientPacket.value.ClearMessage();
-                clientPacket.value.ChallengeRequest = challenge.value;
-                using MemoryWrap response = await connection.SendAndReceiveAsync(clientPacket.value, memoryPool, token);
-                using var serverPacket = new SmartWrap<ServerPacket>(response.AsMessageServerPacket(), multiPool);
-                using var challengeResponse = new SmartWrap<ChallengeResponseMessage>(serverPacket.value.ChallengeResponse!, multiPool);
-                return challengeResponse.value.ChallengeToSign!;
-            }
-            catch (Exception e) { ReportHub.LogException(new Exception($"Cannot message for sign for address {ethereumAddress}", e), ReportCategory.LIVEKIT); }
+            using SmartWrap<ChallengeRequestMessage> challenge = multiPool.TempResource<ChallengeRequestMessage>();
+            challenge.value.Address = ethereumAddress;
+            using SmartWrap<ClientPacket> clientPacket = multiPool.TempResource<ClientPacket>();
+            clientPacket.value.ClearMessage();
+            clientPacket.value.ChallengeRequest = challenge.value;
+            var result = await connection.SendAndReceiveAsync(clientPacket.value, memoryPool, token);
 
-            return string.Empty;
+            if (result.Success == false)
+            {
+                ReportHub.LogError(ReportCategory.LIVEKIT, $"Cannot message for sign for address {ethereumAddress}: {result.Error?.Message}");
+                return LightResult<string>.FAILURE;
+            }
+
+            using MemoryWrap response = result.Value;
+            using var serverPacket = new SmartWrap<ServerPacket>(response.AsMessageServerPacket(), multiPool);
+            using var challengeResponse = new SmartWrap<ChallengeResponseMessage>(serverPacket.value.ChallengeResponse!, multiPool);
+            return challengeResponse.value.ChallengeToSign!.AsSuccess();
         }
 
         public async UniTask<LightResult<string>> WelcomePeerIdAsync(string signedMessageAuthChainJson, CancellationToken token)
@@ -78,7 +80,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.SignFlow
 
                 var linkedToken = CancellationTokenSource.CreateLinkedTokenSource(new CancellationTokenSource().Token, token);
 
-                (bool hasResultLeft, MemoryWrap result) result = await UniTask.WhenAny(
+                (bool hasResultLeft, EnumResult<MemoryWrap, IArchipelagoLiveConnection.ResponseError> result) result = await UniTask.WhenAny(
                     connection.SendAndReceiveAsync(clientPacket.value, memoryPool, linkedToken.Token),
                     connection.WaitDisconnectAsync(linkedToken.Token)
                 );
@@ -87,7 +89,10 @@ namespace DCL.Multiplayer.Connections.Archipelago.SignFlow
 
                 if (result.hasResultLeft)
                 {
-                    using MemoryWrap response = result.result;
+                    if (result.result.Success == false)
+                        return LightResult<string>.FAILURE;
+
+                    using MemoryWrap response = result.result.Value;
                     using var serverPacket = new SmartWrap<ServerPacket>(response.AsMessageServerPacket(), multiPool);
                     using var welcomeMessage = new SmartWrap<WelcomeMessage>(serverPacket.value.Welcome!, multiPool);
                     return welcomeMessage.value.PeerId.AsSuccess();
@@ -140,7 +145,15 @@ namespace DCL.Multiplayer.Connections.Archipelago.SignFlow
                     if (connection.IsConnected == false)
                         throw new InvalidOperationException("Connection is not established");
 
-                    MemoryWrap response = await connection.ReceiveAsync(token);
+                    var result = await connection.ReceiveAsync(token);
+
+                    if (result.Success == false)
+                    {
+                        ReportHub.LogError(ReportCategory.LIVEKIT, $"Cannot listen for connection string: {result.Error?.Message}");
+                        continue;
+                    }
+
+                    using MemoryWrap response = result.Value;
                     using var serverPacket = new SmartWrap<ServerPacket>(response.AsMessageServerPacket(), multiPool);
 
                     if (serverPacket.value.MessageCase is ServerPacket.MessageOneofCase.IslandChanged)
