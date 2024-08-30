@@ -22,12 +22,12 @@ namespace DCL.Multiplayer.Movement.Systems
 
         private Entity? selfReplicaEntity;
 
-        public MultiplayerMovementDebug(World world, Entity playerEntity, IDebugContainerBuilder debugBuilder, RemoteEntities remoteEntities, ExposedTransform playerTransform, ProvidedAsset<MultiplayerMovementSettings> settings)
+        public MultiplayerMovementDebug(World world, Entity playerEntity, IDebugContainerBuilder debugBuilder, RemoteEntities remoteEntities, ExposedTransform playerTransform, MultiplayerDebugSettings settings)
         {
             this.playerEntity = playerEntity;
             this.remoteEntities = remoteEntities;
             this.playerTransform = playerTransform;
-            this.settings = settings.Value.DebugSettings;
+            this.settings = settings;
 
             debugBuilder.TryAddWidget("Multiplayer Movement")
                        ?.AddSingleButton("Instantiate Self-Replica", () => InstantiateSelfReplica(world))

@@ -20,19 +20,23 @@ namespace DCL.PluginSystem.Global
         private readonly IDebugContainerBuilder debugBuilder;
         private readonly RemoteEntities remoteEntities;
         private readonly ExposedTransform playerTransform;
+        private readonly ProvidedAsset<MultiplayerDebugSettings> debugSettings;
 
         private ProvidedAsset<MultiplayerMovementSettings> settings;
+
         private Entity? selfReplicaEntity;
         private MultiplayerMovementDebug multiplayerMovementDebug;
 
         public MultiplayerMovementPlugin(IAssetsProvisioner assetsProvisioner, MultiplayerMovementMessageBus messageBus, IDebugContainerBuilder debugBuilder
-          , RemoteEntities remoteEntities, ExposedTransform playerTransform)
+          , RemoteEntities remoteEntities, ExposedTransform playerTransform,
+            ProvidedAsset<MultiplayerDebugSettings> debugSettings)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.messageBus = messageBus;
             this.debugBuilder = debugBuilder;
             this.remoteEntities = remoteEntities;
             this.playerTransform = playerTransform;
+            this.debugSettings = debugSettings;
         }
 
         public void Dispose()
@@ -50,12 +54,12 @@ namespace DCL.PluginSystem.Global
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            PlayerMovementNetSendSystem.InjectToWorld(ref builder, messageBus, settings.Value);
+            PlayerMovementNetSendSystem.InjectToWorld(ref builder, messageBus, settings.Value, debugSettings.Value);
             RemotePlayersMovementSystem.InjectToWorld(ref builder, settings.Value, settings.Value.CharacterControllerSettings);
             RemotePlayerAnimationSystem.InjectToWorld(ref builder, settings.Value.ExtrapolationSettings);
             CleanUpRemoteMotionSystem.InjectToWorld(ref builder);
 
-            multiplayerMovementDebug = new MultiplayerMovementDebug(builder.World, arguments.PlayerEntity, debugBuilder, remoteEntities, playerTransform, settings);
+            multiplayerMovementDebug = new MultiplayerMovementDebug(builder.World, arguments.PlayerEntity, debugBuilder, remoteEntities, playerTransform, debugSettings.Value);
         }
     }
 }

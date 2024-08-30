@@ -1,5 +1,6 @@
 ﻿using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.AssetsProvision;
 using DCL.Multiplayer.Connections.Messaging;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.Messaging.Pipe;
@@ -21,7 +22,7 @@ namespace DCL.Multiplayer.Emotes
         private const float LATENCY = 0f;
 
         private readonly IMessagePipesHub messagePipesHub;
-        private readonly MultiplayerDebugSettings settings;
+        private readonly ProvidedAsset<MultiplayerDebugSettings> settings;
 
         private readonly CancellationTokenSource cancellationTokenSource = new ();
         private readonly EmotesDeduplication messageDeduplication;
@@ -30,7 +31,7 @@ namespace DCL.Multiplayer.Emotes
         private readonly HashSet<RemoteEmoteIntention> emoteIntentions = new (PoolConstants.AVATARS_COUNT);
         private readonly MultithreadSync sync = new();
 
-        public MultiplayerEmotesMessageBus(IMessagePipesHub messagePipesHub, MultiplayerDebugSettings settings)
+        public MultiplayerEmotesMessageBus(IMessagePipesHub messagePipesHub, ProvidedAsset<MultiplayerDebugSettings> settings)
         {
             this.messagePipesHub = messagePipesHub;
             this.settings = settings;
@@ -60,7 +61,7 @@ namespace DCL.Multiplayer.Emotes
             SendTo(emote, sendId, messagePipesHub.IslandPipe());
             SendTo(emote, sendId, messagePipesHub.ScenePipe());
 
-            // if (settings.SelfSending)
+            if (settings.Value.SelfSending)
                 SelfSendWithDelayAsync(emote, sendId).Forget();
         }
 

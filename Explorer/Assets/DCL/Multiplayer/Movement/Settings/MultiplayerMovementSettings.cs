@@ -11,8 +11,6 @@ namespace DCL.Multiplayer.Movement.Settings
 
         [field: SerializeField] public MessageEncodingSettings EncodingSettings { get; set; }
 
-        [field: SerializeField] public MultiplayerDebugSettings DebugSettings { get; set; }
-
         [field: Header("SENDING RULES")]
         [field: SerializeField] public float MoveSendRate { get; set; }
         [field: SerializeField] public float StandSendRate { get; set; }

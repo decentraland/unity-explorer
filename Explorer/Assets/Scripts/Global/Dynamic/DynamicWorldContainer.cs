@@ -36,6 +36,7 @@ using DCL.Multiplayer.Emotes;
 using DCL.Multiplayer.HealthChecks;
 using DCL.Multiplayer.HealthChecks.Struct;
 using DCL.Multiplayer.Movement;
+using DCL.Multiplayer.Movement.Settings;
 using DCL.Multiplayer.Movement.Systems;
 using DCL.Multiplayer.Profiles.BroadcastProfiles;
 using DCL.Multiplayer.Profiles.Entities;
@@ -198,7 +199,7 @@ namespace Global.Dynamic
             CursorSettings cursorSettings = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.CursorSettings, ct)).Value;
             ProvidedAsset<Texture2D> normalCursorAsset = await assetsProvisioner.ProvideMainAssetAsync(cursorSettings.NormalCursor, ct);
             ProvidedAsset<Texture2D> interactionCursorAsset = await assetsProvisioner.ProvideMainAssetAsync(cursorSettings.InteractionCursor, ct);
-            var multiplayerDebugSettings = await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.MultiplayerDebugSettings, ct);
+            ProvidedAsset<MultiplayerDebugSettings> multiplayerDebugSettings = await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.MultiplayerDebugSettings, ct);
 
             var unityEventSystem = new UnityEventSystem(EventSystem.current.EnsureNotNull());
             var dclCursor = new DCLCursor(normalCursorAsset.Value, interactionCursorAsset.Value);
@@ -421,7 +422,7 @@ namespace Global.Dynamic
             var notificationsRequestController = new NotificationsRequestController(staticContainer.WebRequestsContainer.WebRequestController, notificationsBusController, bootstrapContainer.DecentralandUrlsSource, identityCache);
             notificationsRequestController.StartGettingNewNotificationsOverTimeAsync(ct).SuppressCancellationThrow().Forget();
 
-            var multiplayerEmotesMessageBus = new MultiplayerEmotesMessageBus(container.MessagePipesHub, multiplayerDebugSettings.Value);
+            var multiplayerEmotesMessageBus = new MultiplayerEmotesMessageBus(container.MessagePipesHub, multiplayerDebugSettings);
 
             var remotePoses = new DebounceRemotePoses(new RemotePoses(container.RoomHub));
 
@@ -553,7 +554,7 @@ namespace Global.Dynamic
                 staticContainer.CharacterContainer.CreateGlobalPlugin(),
                 staticContainer.QualityContainer.CreatePlugin(),
                 landscapePlugin,
-                new MultiplayerMovementPlugin(assetsProvisioner, container.multiplayerMovementMessageBus, debugBuilder, remoteEntities, staticContainer.CharacterContainer.Transform),
+                new MultiplayerMovementPlugin(assetsProvisioner, container.multiplayerMovementMessageBus, debugBuilder, remoteEntities, staticContainer.CharacterContainer.Transform, multiplayerDebugSettings),
                 container.LODContainer.LODPlugin,
                 container.LODContainer.RoadPlugin,
                 new AudioPlaybackPlugin(genesisTerrain, assetsProvisioner, dynamicWorldParams.EnableLandscape),
