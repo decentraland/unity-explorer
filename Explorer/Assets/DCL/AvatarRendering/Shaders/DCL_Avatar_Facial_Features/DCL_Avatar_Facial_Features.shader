@@ -95,7 +95,7 @@ Shader "DCL/DCL_Avatar_Facial_Features"
             // Shader Stages
             #pragma vertex LitPassVertexSimple
             #pragma fragment LitPassFragmentSimple
-            #pragma enable_d3d11_debug_symbols
+            //#pragma enable_d3d11_debug_symbols
 
             // -------------------------------------
             // Material Keywords

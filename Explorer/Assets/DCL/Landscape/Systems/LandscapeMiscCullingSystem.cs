@@ -125,10 +125,10 @@ namespace DCL.Landscape.Systems
 
                     var cliffsBoundary = new VisibleBounds
                     {
-                        Bounds = new AABB
+                        Bounds = new Bounds()
                         {
-                            Center = bounds.center,
-                            Extents = bounds.extents + Vector3.one,
+                            center = bounds.center,
+                            extents = bounds.extents + Vector3.one,
                         },
                     };
 
@@ -157,10 +157,10 @@ namespace DCL.Landscape.Systems
 
                 waterBoundaries[i] = new VisibleBounds
                 {
-                    Bounds = new AABB
+                    Bounds = new Bounds()
                     {
-                        Center = bounds.center,
-                        Extents = bounds.extents + Vector3.one,
+                        center = bounds.center,
+                        extents = bounds.extents + Vector3.one,
                     },
                 };
             }

@@ -25,7 +25,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       byte[] descriptorData = global::System.Convert.FromBase64String(
           string.Concat(
             "CipkZWNlbnRyYWxhbmQva2VybmVsL2NvbW1zL3JmYzQvY29tbXMucHJvdG8S",
-            "HmRlY2VudHJhbGFuZC5rZXJuZWwuY29tbXMucmZjNCLCBQoGUGFja2V0EjwK",
+            "HmRlY2VudHJhbGFuZC5rZXJuZWwuY29tbXMucmZjNCKVBgoGUGFja2V0EjwK",
             "CHBvc2l0aW9uGAEgASgLMiguZGVjZW50cmFsYW5kLmtlcm5lbC5jb21tcy5y",
             "ZmM0LlBvc2l0aW9uSAASUQoPcHJvZmlsZV92ZXJzaW9uGAIgASgLMjYuZGVj",
             "ZW50cmFsYW5kLmtlcm5lbC5jb21tcy5yZmM0LkFubm91bmNlUHJvZmlsZVZl",
@@ -40,37 +40,41 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
             "ZXJuZWwuY29tbXMucmZjNC5Nb3ZlbWVudEgAEkMKDHBsYXllcl9lbW90ZRgJ",
             "IAEoCzIrLmRlY2VudHJhbGFuZC5rZXJuZWwuY29tbXMucmZjNC5QbGF5ZXJF",
             "bW90ZUgAEkEKC3NjZW5lX2Vtb3RlGAogASgLMiouZGVjZW50cmFsYW5kLmtl",
-            "cm5lbC5jb21tcy5yZmM0LlNjZW5lRW1vdGVIABIYChBwcm90b2NvbF92ZXJz",
-            "aW9uGAsgASgNQgkKB21lc3NhZ2UipQEKCFBvc2l0aW9uEg0KBWluZGV4GAEg",
-            "ASgNEhIKCnBvc2l0aW9uX3gYAyABKAISEgoKcG9zaXRpb25feRgEIAEoAhIS",
-            "Cgpwb3NpdGlvbl96GAUgASgCEhIKCnJvdGF0aW9uX3gYBiABKAISEgoKcm90",
-            "YXRpb25feRgHIAEoAhISCgpyb3RhdGlvbl96GAggASgCEhIKCnJvdGF0aW9u",
-            "X3cYCSABKAIiywIKCE1vdmVtZW50EhEKCXRpbWVzdGFtcBgBIAEoAhISCgpw",
-            "b3NpdGlvbl94GAIgASgCEhIKCnBvc2l0aW9uX3kYAyABKAISEgoKcG9zaXRp",
-            "b25fehgEIAEoAhISCgp2ZWxvY2l0eV94GAUgASgCEhIKCnZlbG9jaXR5X3kY",
-            "BiABKAISEgoKdmVsb2NpdHlfehgHIAEoAhIcChRtb3ZlbWVudF9ibGVuZF92",
-            "YWx1ZRgIIAEoAhIZChFzbGlkZV9ibGVuZF92YWx1ZRgJIAEoAhITCgtpc19n",
-            "cm91bmRlZBgKIAEoCBISCgppc19qdW1waW5nGAsgASgIEhQKDGlzX2xvbmdf",
-            "anVtcBgMIAEoCBIUCgxpc19sb25nX2ZhbGwYDSABKAgSEgoKaXNfZmFsbGlu",
-            "ZxgOIAEoCBISCgppc19zdHVubmVkGA8gASgIIjIKC1BsYXllckVtb3RlEhYK",
-            "DmluY3JlbWVudGFsX2lkGAEgASgNEgsKA3VybhgCIAEoCSI1CgpTY2VuZUVt",
-            "b3RlEhcKD3NjZW5lX2VudGl0eV9pZBgBIAEoCRIOCgZzb3VyY2UYAiABKAki",
-            "MQoWQW5ub3VuY2VQcm9maWxlVmVyc2lvbhIXCg9wcm9maWxlX3ZlcnNpb24Y",
-            "ASABKA0iOgoOUHJvZmlsZVJlcXVlc3QSDwoHYWRkcmVzcxgEIAEoCRIXCg9w",
-            "cm9maWxlX3ZlcnNpb24YAyABKA0iPwoPUHJvZmlsZVJlc3BvbnNlEhoKEnNl",
-            "cmlhbGl6ZWRfcHJvZmlsZRgBIAEoCRIQCghiYXNlX3VybBgCIAEoCSIqCgRD",
-            "aGF0Eg8KB21lc3NhZ2UYASABKAkSEQoJdGltZXN0YW1wGAIgASgBIicKBVNj",
-            "ZW5lEhAKCHNjZW5lX2lkGAEgASgJEgwKBGRhdGEYAiABKAwiiwEKBVZvaWNl",
-            "EhcKD2VuY29kZWRfc2FtcGxlcxgBIAEoDBINCgVpbmRleBgCIAEoDRI/CgVj",
-            "b2RlYxgDIAEoDjIwLmRlY2VudHJhbGFuZC5rZXJuZWwuY29tbXMucmZjNC5W",
-            "b2ljZS5Wb2ljZUNvZGVjIhkKClZvaWNlQ29kZWMSCwoHVkNfT1BVUxAAYgZw",
-            "cm90bzM="));
+            "cm5lbC5jb21tcy5yZmM0LlNjZW5lRW1vdGVIABJRChNtb3ZlbWVudF9jb21w",
+            "cmVzc2VkGAwgASgLMjIuZGVjZW50cmFsYW5kLmtlcm5lbC5jb21tcy5yZmM0",
+            "Lk1vdmVtZW50Q29tcHJlc3NlZEgAEhgKEHByb3RvY29sX3ZlcnNpb24YCyAB",
+            "KA1CCQoHbWVzc2FnZSKlAQoIUG9zaXRpb24SDQoFaW5kZXgYASABKA0SEgoK",
+            "cG9zaXRpb25feBgDIAEoAhISCgpwb3NpdGlvbl95GAQgASgCEhIKCnBvc2l0",
+            "aW9uX3oYBSABKAISEgoKcm90YXRpb25feBgGIAEoAhISCgpyb3RhdGlvbl95",
+            "GAcgASgCEhIKCnJvdGF0aW9uX3oYCCABKAISEgoKcm90YXRpb25fdxgJIAEo",
+            "AiLLAgoITW92ZW1lbnQSEQoJdGltZXN0YW1wGAEgASgCEhIKCnBvc2l0aW9u",
+            "X3gYAiABKAISEgoKcG9zaXRpb25feRgDIAEoAhISCgpwb3NpdGlvbl96GAQg",
+            "ASgCEhIKCnZlbG9jaXR5X3gYBSABKAISEgoKdmVsb2NpdHlfeRgGIAEoAhIS",
+            "Cgp2ZWxvY2l0eV96GAcgASgCEhwKFG1vdmVtZW50X2JsZW5kX3ZhbHVlGAgg",
+            "ASgCEhkKEXNsaWRlX2JsZW5kX3ZhbHVlGAkgASgCEhMKC2lzX2dyb3VuZGVk",
+            "GAogASgIEhIKCmlzX2p1bXBpbmcYCyABKAgSFAoMaXNfbG9uZ19qdW1wGAwg",
+            "ASgIEhQKDGlzX2xvbmdfZmFsbBgNIAEoCBISCgppc19mYWxsaW5nGA4gASgI",
+            "EhIKCmlzX3N0dW5uZWQYDyABKAgiQgoSTW92ZW1lbnRDb21wcmVzc2VkEhUK",
+            "DXRlbXBvcmFsX2RhdGEYASABKAUSFQoNbW92ZW1lbnRfZGF0YRgCIAEoAyIy",
+            "CgtQbGF5ZXJFbW90ZRIWCg5pbmNyZW1lbnRhbF9pZBgBIAEoDRILCgN1cm4Y",
+            "AiABKAkiNQoKU2NlbmVFbW90ZRIXCg9zY2VuZV9lbnRpdHlfaWQYASABKAkS",
+            "DgoGc291cmNlGAIgASgJIjEKFkFubm91bmNlUHJvZmlsZVZlcnNpb24SFwoP",
+            "cHJvZmlsZV92ZXJzaW9uGAEgASgNIjoKDlByb2ZpbGVSZXF1ZXN0Eg8KB2Fk",
+            "ZHJlc3MYBCABKAkSFwoPcHJvZmlsZV92ZXJzaW9uGAMgASgNIj8KD1Byb2Zp",
+            "bGVSZXNwb25zZRIaChJzZXJpYWxpemVkX3Byb2ZpbGUYASABKAkSEAoIYmFz",
+            "ZV91cmwYAiABKAkiKgoEQ2hhdBIPCgdtZXNzYWdlGAEgASgJEhEKCXRpbWVz",
+            "dGFtcBgCIAEoASInCgVTY2VuZRIQCghzY2VuZV9pZBgBIAEoCRIMCgRkYXRh",
+            "GAIgASgMIosBCgVWb2ljZRIXCg9lbmNvZGVkX3NhbXBsZXMYASABKAwSDQoF",
+            "aW5kZXgYAiABKA0SPwoFY29kZWMYAyABKA4yMC5kZWNlbnRyYWxhbmQua2Vy",
+            "bmVsLmNvbW1zLnJmYzQuVm9pY2UuVm9pY2VDb2RlYyIZCgpWb2ljZUNvZGVj",
+            "EgsKB1ZDX09QVVMQAGIGcHJvdG8z"));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.Packet), global::Decentraland.Kernel.Comms.Rfc4.Packet.Parser, new[]{ "Position", "ProfileVersion", "ProfileRequest", "ProfileResponse", "Chat", "Scene", "Voice", "Movement", "PlayerEmote", "SceneEmote", "ProtocolVersion" }, new[]{ "Message" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.Packet), global::Decentraland.Kernel.Comms.Rfc4.Packet.Parser, new[]{ "Position", "ProfileVersion", "ProfileRequest", "ProfileResponse", "Chat", "Scene", "Voice", "Movement", "PlayerEmote", "SceneEmote", "MovementCompressed", "ProtocolVersion" }, new[]{ "Message" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.Position), global::Decentraland.Kernel.Comms.Rfc4.Position.Parser, new[]{ "Index", "PositionX", "PositionY", "PositionZ", "RotationX", "RotationY", "RotationZ", "RotationW" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.Movement), global::Decentraland.Kernel.Comms.Rfc4.Movement.Parser, new[]{ "Timestamp", "PositionX", "PositionY", "PositionZ", "VelocityX", "VelocityY", "VelocityZ", "MovementBlendValue", "SlideBlendValue", "IsGrounded", "IsJumping", "IsLongJump", "IsLongFall", "IsFalling", "IsStunned" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.MovementCompressed), global::Decentraland.Kernel.Comms.Rfc4.MovementCompressed.Parser, new[]{ "TemporalData", "MovementData" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.PlayerEmote), global::Decentraland.Kernel.Comms.Rfc4.PlayerEmote.Parser, new[]{ "IncrementalId", "Urn" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.SceneEmote), global::Decentraland.Kernel.Comms.Rfc4.SceneEmote.Parser, new[]{ "SceneEntityId", "Source" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.AnnounceProfileVersion), global::Decentraland.Kernel.Comms.Rfc4.AnnounceProfileVersion.Parser, new[]{ "ProfileVersion" }, null, null, null, null),
@@ -150,6 +154,9 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
           break;
         case MessageOneofCase.SceneEmote:
           SceneEmote = other.SceneEmote.Clone();
+          break;
+        case MessageOneofCase.MovementCompressed:
+          MovementCompressed = other.MovementCompressed.Clone();
           break;
       }
 
@@ -282,6 +289,18 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       }
     }
 
+    /// <summary>Field number for the "movement_compressed" field.</summary>
+    public const int MovementCompressedFieldNumber = 12;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::Decentraland.Kernel.Comms.Rfc4.MovementCompressed MovementCompressed {
+      get { return messageCase_ == MessageOneofCase.MovementCompressed ? (global::Decentraland.Kernel.Comms.Rfc4.MovementCompressed) message_ : null; }
+      set {
+        message_ = value;
+        messageCase_ = value == null ? MessageOneofCase.None : MessageOneofCase.MovementCompressed;
+      }
+    }
+
     /// <summary>Field number for the "protocol_version" field.</summary>
     public const int ProtocolVersionFieldNumber = 11;
     private uint protocolVersion_;
@@ -308,6 +327,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       Movement = 8,
       PlayerEmote = 9,
       SceneEmote = 10,
+      MovementCompressed = 12,
     }
     private MessageOneofCase messageCase_ = MessageOneofCase.None;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -348,6 +368,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       if (!object.Equals(Movement, other.Movement)) return false;
       if (!object.Equals(PlayerEmote, other.PlayerEmote)) return false;
       if (!object.Equals(SceneEmote, other.SceneEmote)) return false;
+      if (!object.Equals(MovementCompressed, other.MovementCompressed)) return false;
       if (ProtocolVersion != other.ProtocolVersion) return false;
       if (MessageCase != other.MessageCase) return false;
       return Equals(_unknownFields, other._unknownFields);
@@ -367,6 +388,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       if (messageCase_ == MessageOneofCase.Movement) hash ^= Movement.GetHashCode();
       if (messageCase_ == MessageOneofCase.PlayerEmote) hash ^= PlayerEmote.GetHashCode();
       if (messageCase_ == MessageOneofCase.SceneEmote) hash ^= SceneEmote.GetHashCode();
+      if (messageCase_ == MessageOneofCase.MovementCompressed) hash ^= MovementCompressed.GetHashCode();
       if (ProtocolVersion != 0) hash ^= ProtocolVersion.GetHashCode();
       hash ^= (int) messageCase_;
       if (_unknownFields != null) {
@@ -431,6 +453,10 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
         output.WriteRawTag(88);
         output.WriteUInt32(ProtocolVersion);
       }
+      if (messageCase_ == MessageOneofCase.MovementCompressed) {
+        output.WriteRawTag(98);
+        output.WriteMessage(MovementCompressed);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -485,6 +511,10 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
         output.WriteRawTag(88);
         output.WriteUInt32(ProtocolVersion);
       }
+      if (messageCase_ == MessageOneofCase.MovementCompressed) {
+        output.WriteRawTag(98);
+        output.WriteMessage(MovementCompressed);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -524,6 +554,9 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       }
       if (messageCase_ == MessageOneofCase.SceneEmote) {
         size += 1 + pb::CodedOutputStream.ComputeMessageSize(SceneEmote);
+      }
+      if (messageCase_ == MessageOneofCase.MovementCompressed) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(MovementCompressed);
       }
       if (ProtocolVersion != 0) {
         size += 1 + pb::CodedOutputStream.ComputeUInt32Size(ProtocolVersion);
@@ -603,6 +636,12 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
             SceneEmote = new global::Decentraland.Kernel.Comms.Rfc4.SceneEmote();
           }
           SceneEmote.MergeFrom(other.SceneEmote);
+          break;
+        case MessageOneofCase.MovementCompressed:
+          if (MovementCompressed == null) {
+            MovementCompressed = new global::Decentraland.Kernel.Comms.Rfc4.MovementCompressed();
+          }
+          MovementCompressed.MergeFrom(other.MovementCompressed);
           break;
       }
 
@@ -715,6 +754,15 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
             ProtocolVersion = input.ReadUInt32();
             break;
           }
+          case 98: {
+            global::Decentraland.Kernel.Comms.Rfc4.MovementCompressed subBuilder = new global::Decentraland.Kernel.Comms.Rfc4.MovementCompressed();
+            if (messageCase_ == MessageOneofCase.MovementCompressed) {
+              subBuilder.MergeFrom(MovementCompressed);
+            }
+            input.ReadMessage(subBuilder);
+            MovementCompressed = subBuilder;
+            break;
+          }
         }
       }
     #endif
@@ -822,6 +870,15 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
           }
           case 88: {
             ProtocolVersion = input.ReadUInt32();
+            break;
+          }
+          case 98: {
+            global::Decentraland.Kernel.Comms.Rfc4.MovementCompressed subBuilder = new global::Decentraland.Kernel.Comms.Rfc4.MovementCompressed();
+            if (messageCase_ == MessageOneofCase.MovementCompressed) {
+              subBuilder.MergeFrom(MovementCompressed);
+            }
+            input.ReadMessage(subBuilder);
+            MovementCompressed = subBuilder;
             break;
           }
         }
@@ -2007,6 +2064,238 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
 
   }
 
+  public sealed partial class MovementCompressed : pb::IMessage<MovementCompressed>
+  #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      , pb::IBufferMessage
+  #endif
+  {
+    private static readonly pb::MessageParser<MovementCompressed> _parser = new pb::MessageParser<MovementCompressed>(() => new MovementCompressed());
+    private pb::UnknownFieldSet _unknownFields;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pb::MessageParser<MovementCompressed> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::Decentraland.Kernel.Comms.Rfc4.CommsReflection.Descriptor.MessageTypes[3]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public MovementCompressed() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public MovementCompressed(MovementCompressed other) : this() {
+      temporalData_ = other.temporalData_;
+      movementData_ = other.movementData_;
+      _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public MovementCompressed Clone() {
+      return new MovementCompressed(this);
+    }
+
+    /// <summary>Field number for the "temporal_data" field.</summary>
+    public const int TemporalDataFieldNumber = 1;
+    private int temporalData_;
+    /// <summary>
+    /// bit-compressed: timestamp + animations 
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int TemporalData {
+      get { return temporalData_; }
+      set {
+        temporalData_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "movement_data" field.</summary>
+    public const int MovementDataFieldNumber = 2;
+    private long movementData_;
+    /// <summary>
+    /// bit-compressed: position + velocity 
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public long MovementData {
+      get { return movementData_; }
+      set {
+        movementData_ = value;
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override bool Equals(object other) {
+      return Equals(other as MovementCompressed);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool Equals(MovementCompressed other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      if (TemporalData != other.TemporalData) return false;
+      if (MovementData != other.MovementData) return false;
+      return Equals(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override int GetHashCode() {
+      int hash = 1;
+      if (TemporalData != 0) hash ^= TemporalData.GetHashCode();
+      if (MovementData != 0L) hash ^= MovementData.GetHashCode();
+      if (_unknownFields != null) {
+        hash ^= _unknownFields.GetHashCode();
+      }
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void WriteTo(pb::CodedOutputStream output) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      output.WriteRawMessage(this);
+    #else
+      if (TemporalData != 0) {
+        output.WriteRawTag(8);
+        output.WriteInt32(TemporalData);
+      }
+      if (MovementData != 0L) {
+        output.WriteRawTag(16);
+        output.WriteInt64(MovementData);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(output);
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+      if (TemporalData != 0) {
+        output.WriteRawTag(8);
+        output.WriteInt32(TemporalData);
+      }
+      if (MovementData != 0L) {
+        output.WriteRawTag(16);
+        output.WriteInt64(MovementData);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(ref output);
+      }
+    }
+    #endif
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int CalculateSize() {
+      int size = 0;
+      if (TemporalData != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeInt32Size(TemporalData);
+      }
+      if (MovementData != 0L) {
+        size += 1 + pb::CodedOutputStream.ComputeInt64Size(MovementData);
+      }
+      if (_unknownFields != null) {
+        size += _unknownFields.CalculateSize();
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(MovementCompressed other) {
+      if (other == null) {
+        return;
+      }
+      if (other.TemporalData != 0) {
+        TemporalData = other.TemporalData;
+      }
+      if (other.MovementData != 0L) {
+        MovementData = other.MovementData;
+      }
+      _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(pb::CodedInputStream input) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      input.ReadRawMessage(this);
+    #else
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+        switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            break;
+          case 8: {
+            TemporalData = input.ReadInt32();
+            break;
+          }
+          case 16: {
+            MovementData = input.ReadInt64();
+            break;
+          }
+        }
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+        switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+            break;
+          case 8: {
+            TemporalData = input.ReadInt32();
+            break;
+          }
+          case 16: {
+            MovementData = input.ReadInt64();
+            break;
+          }
+        }
+      }
+    }
+    #endif
+
+  }
+
   public sealed partial class PlayerEmote : pb::IMessage<PlayerEmote>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
@@ -2021,7 +2310,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.Kernel.Comms.Rfc4.CommsReflection.Descriptor.MessageTypes[3]; }
+      get { return global::Decentraland.Kernel.Comms.Rfc4.CommsReflection.Descriptor.MessageTypes[4]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -2247,7 +2536,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.Kernel.Comms.Rfc4.CommsReflection.Descriptor.MessageTypes[4]; }
+      get { return global::Decentraland.Kernel.Comms.Rfc4.CommsReflection.Descriptor.MessageTypes[5]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -2473,7 +2762,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.Kernel.Comms.Rfc4.CommsReflection.Descriptor.MessageTypes[5]; }
+      get { return global::Decentraland.Kernel.Comms.Rfc4.CommsReflection.Descriptor.MessageTypes[6]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -2662,7 +2951,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.Kernel.Comms.Rfc4.CommsReflection.Descriptor.MessageTypes[6]; }
+      get { return global::Decentraland.Kernel.Comms.Rfc4.CommsReflection.Descriptor.MessageTypes[7]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -2888,7 +3177,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.Kernel.Comms.Rfc4.CommsReflection.Descriptor.MessageTypes[7]; }
+      get { return global::Decentraland.Kernel.Comms.Rfc4.CommsReflection.Descriptor.MessageTypes[8]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -3114,7 +3403,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.Kernel.Comms.Rfc4.CommsReflection.Descriptor.MessageTypes[8]; }
+      get { return global::Decentraland.Kernel.Comms.Rfc4.CommsReflection.Descriptor.MessageTypes[9]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -3340,7 +3629,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.Kernel.Comms.Rfc4.CommsReflection.Descriptor.MessageTypes[9]; }
+      get { return global::Decentraland.Kernel.Comms.Rfc4.CommsReflection.Descriptor.MessageTypes[10]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -3566,7 +3855,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.Kernel.Comms.Rfc4.CommsReflection.Descriptor.MessageTypes[10]; }
+      get { return global::Decentraland.Kernel.Comms.Rfc4.CommsReflection.Descriptor.MessageTypes[11]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]

@@ -102,43 +102,37 @@ namespace DCL.AvatarRendering.Emotes
             Animator animator = mainGameObject.GetComponent<Animator>().EnsureNotNull();
             EmoteReferences references = mainGameObject.AddComponent<EmoteReferences>()!;
             IReadOnlyList<Renderer> renderers = mainGameObject.GetComponentsInChildren<Renderer>()!;
-
-            foreach (Renderer renderer in renderers)
-            {
-                // Some old emotes contain references to the avatar for easier animation, since emotes 2.0 those meshes can be shown, so in order to avoid having to update those emotes,
-                // we hide renderers this specific conditions in order to avoid hiding unintentional stuff
-                bool endsWithReference = renderer.name.EndsWith("_reference", StringComparison.InvariantCultureIgnoreCase);
-                bool endsWithBaseMesh = renderer.name.EndsWith("_basemesh", StringComparison.InvariantCultureIgnoreCase);
-                bool startsWithMask = renderer.name.StartsWith("m_mask_", StringComparison.InvariantCultureIgnoreCase);
-
-                if (endsWithReference || endsWithBaseMesh || startsWithMask)
-                    renderer.forceRenderingOff = true;
-            }
-
-            AnimationClip? avatarClip = null;
-            AnimationClip? propClip = null;
-            var propClipHash = 0;
-
-            RuntimeAnimatorController rac = animator.runtimeAnimatorController!;
+            RuntimeAnimatorController runtimeAnimator = animator.runtimeAnimatorController!;
             List<AnimationClip> uniqueClips = ListPool<AnimationClip>.Get()!;
 
-            foreach (AnimationClip clip in rac.animationClips!)
-                if (!uniqueClips.Contains(clip))
-                    uniqueClips.Add(clip);
+            ExtractClips(runtimeAnimator, uniqueClips,
+                out AnimationClip? avatarClip, out AnimationClip? propClip, out int propClipHash);
 
             if (uniqueClips.Count == 1)
-                avatarClip = uniqueClips[0];
+            {
+                // We assume that only one animation means that there are no props in the emote, as stated in the docs:
+                // "The emote must have one animation for the avatar and one animation for the prop. Currently multiple animations are not allowed."
+                // We could also check if (propClip != null), but currently we have problems with many emotes that are not following naming conventions
+                foreach (Renderer renderer in renderers)
+                {
+                    // Disable the renderer too for possible performance optimizations such as shadow casting or material changes
+                    renderer.enabled = false;
+                    renderer.forceRenderingOff = true;
+                }
+            }
             else
             {
-                foreach (AnimationClip animationClip in uniqueClips)
+                foreach (Renderer renderer in renderers)
                 {
-                    if (animationClip.name.Contains("_avatar", StringComparison.OrdinalIgnoreCase))
-                        avatarClip = animationClip;
-
-                    if (animationClip.name.Contains("_prop", StringComparison.OrdinalIgnoreCase))
+                    // Some old emotes contain references to the avatar to ease animation production
+                    // Since emotes 2.0 only the renderers representing the props should be visible
+                    if (renderer.name.Contains("_reference", StringComparison.InvariantCultureIgnoreCase)
+                        || renderer.name.EndsWith("_basemesh", StringComparison.InvariantCultureIgnoreCase)
+                        || renderer.name.StartsWith("m_mask_", StringComparison.InvariantCultureIgnoreCase))
                     {
-                        propClip = animationClip;
-                        propClipHash = Animator.StringToHash(animationClip.name);
+                        // Disable the renderer too for possible performance optimizations such as shadow casting or material changes
+                        renderer.enabled = false;
+                        renderer.forceRenderingOff = true;
                     }
                 }
             }
@@ -158,6 +152,44 @@ namespace DCL.AvatarRendering.Emotes
                 return;
 
             pool!.Release(emoteReference);
+        }
+
+        private static void ExtractClips(RuntimeAnimatorController runtimeAnimator,
+            List<AnimationClip> uniqueClips,
+            out AnimationClip? avatarClip,
+            out AnimationClip? propClip,
+            out int propClipHash)
+        {
+            avatarClip = null;
+            propClip = null;
+            propClipHash = 0;
+
+            foreach (AnimationClip clip in runtimeAnimator.animationClips!)
+                if (!uniqueClips.Contains(clip))
+                    uniqueClips.Add(clip);
+
+            if (uniqueClips.Count == 1)
+                avatarClip = uniqueClips[0];
+            else if (uniqueClips.Count > 1)
+            {
+                foreach (AnimationClip animationClip in uniqueClips)
+                {
+                    // Many 2.0 emotes are not following naming conventions: https://docs.decentraland.org/creator/emotes/props-and-sounds/#naming-conventions
+                    // Some examples:
+                    // urn:decentraland:matic:collections-v2:0xca53b9436be1d663e050eb9ce523decbc656365c:1
+                    // urn:decentraland:matic:collections-v2:0xfcc2c46c83a9faa5c639e81d0ad19e27b5517e57:0
+                    // So they won't work because of the naming checks
+                    // Creators need to either fix the emotes, or we need to apply a fallback based on sorting rule
+                    if (animationClip.name.Contains("_avatar", StringComparison.OrdinalIgnoreCase))
+                        avatarClip = animationClip;
+
+                    if (animationClip.name.Contains("_prop", StringComparison.OrdinalIgnoreCase))
+                    {
+                        propClip = animationClip;
+                        propClipHash = Animator.StringToHash(animationClip.name);
+                    }
+                }
+            }
         }
     }
 }

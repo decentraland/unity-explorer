@@ -4,6 +4,7 @@ using DCL.Multiplayer.Connections.Typing;
 using LiveKit.Internal.FFIClients.Pools.Memory;
 using System;
 using System.Threading;
+using Utility.Types;
 
 namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
 {
@@ -38,11 +39,12 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
             this.log = log;
         }
 
-        public async UniTask ConnectAsync(string adapterUrl, CancellationToken token)
+        public async UniTask<Result> ConnectAsync(string adapterUrl, CancellationToken token)
         {
             log($"ArchipelagoLiveConnection ConnectAsync start to: {adapterUrl}");
-            await origin.ConnectAsync(adapterUrl, token);
-            log($"ArchipelagoLiveConnection ConnectAsync finished to: {adapterUrl}");
+            var result = await origin.ConnectAsync(adapterUrl, token);
+            log($"ArchipelagoLiveConnection ConnectAsync finished to: {adapterUrl} with result: {result.Success}");
+            return result;
         }
 
         public async UniTask DisconnectAsync(CancellationToken token)
@@ -52,18 +54,19 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
             log("ArchipelagoLiveConnection DisconnectAsync finished");
         }
 
-        public async UniTask SendAsync(MemoryWrap data, CancellationToken token)
+        public async UniTask<EnumResult<IArchipelagoLiveConnection.ResponseError>> SendAsync(MemoryWrap data, CancellationToken token)
         {
             log($"ArchipelagoLiveConnection SendAsync start with size: {data.Length} and content: {data.HexReadableString()}");
-            await origin.SendAsync(data, token);
+            var result = await origin.SendAsync(data, token);
             log($"ArchipelagoLiveConnection SendAsync finished with size: {data.Length} and content: {data.HexReadableString()}");
+            return result;
         }
 
-        public async UniTask<MemoryWrap> ReceiveAsync(CancellationToken token)
+        public async UniTask<EnumResult<MemoryWrap, IArchipelagoLiveConnection.ResponseError>> ReceiveAsync(CancellationToken token)
         {
             log("ArchipelagoLiveConnection ReceiveAsync start");
-            MemoryWrap result = await origin.ReceiveAsync(token);
-            log($"ArchipelagoLiveConnection ReceiveAsync finished with size: {result.Length}");
+            var result = await origin.ReceiveAsync(token);
+            log($"ArchipelagoLiveConnection ReceiveAsync finished with error: {result.Error?.Message ?? "no error"}, size: {(result.Success ? result.Value.Length : 0)}");
             return result;
         }
     }

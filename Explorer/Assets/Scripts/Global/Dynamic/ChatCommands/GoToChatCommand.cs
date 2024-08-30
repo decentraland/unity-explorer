@@ -42,11 +42,16 @@ namespace Global.Dynamic.ChatCommands
                 y = Random.Range(GenesisCityData.MIN_PARCEL.y, GenesisCityData.MAX_SQUARE_CITY_PARCEL.y);
             }
 
-            await realmNavigator.TryInitializeTeleportToParcelAsync(new Vector2Int(x, y), ct, isLocal);
+            var success = await realmNavigator.TryInitializeTeleportToParcelAsync(new Vector2Int(x, y), ct, isLocal);
 
-            return ct.IsCancellationRequested
-                ? "🔴 Error. The operation was canceled!"
-                : $"🟢 You teleported to {x},{y} in Genesis City";
+            if (ct.IsCancellationRequested)
+            {
+                return "🔴 Error. The operation was canceled!";
+            }
+
+            return success
+                ? $"🟢 You teleported to {x},{y} in Genesis City"
+                : "\ud83d\udd34 Teleport failed, please try again later!";
         }
     }
 }

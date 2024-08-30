@@ -6,6 +6,8 @@ using DCL.Profiling;
 using DCL.Profiling.ECS;
 using ECS;
 using ECS.Abstract;
+using ECS.SceneLifeCycle;
+using SceneRuntime;
 using Segment.Serialization;
 using UnityEngine;
 using World = Arch.Core.World;
@@ -23,14 +25,19 @@ namespace DCL.Analytics.Systems
         private readonly IAnalyticsController analytics;
         private readonly IRealmData realmData;
         private readonly IAnalyticsReportProfiler profiler;
+        private readonly V8ActiveEngines v8ActiveEngines;
+        private readonly IScenesCache scenesCache;
         private readonly AnalyticsConfiguration config;
 
         private float lastReportTime;
 
-        public PerformanceAnalyticsSystem(World world, IAnalyticsController analytics, IRealmData realmData, IAnalyticsReportProfiler profiler) : base(world)
+        public PerformanceAnalyticsSystem(World world, IAnalyticsController analytics, IRealmData realmData, IAnalyticsReportProfiler profiler, V8ActiveEngines v8ActiveEngines,
+            IScenesCache scenesCache) : base(world)
         {
             this.realmData = realmData;
             this.profiler = profiler;
+            this.v8ActiveEngines = v8ActiveEngines;
+            this.scenesCache = scenesCache;
             this.analytics = analytics;
             config = analytics.Configuration;
         }
@@ -50,28 +57,43 @@ namespace DCL.Analytics.Systems
 
         private void ReportPerformanceMetrics()
         {
-            AnalyticsFrameTimeReport? mainThreadReport = profiler.GetMainThreadFramesNs(percentiles);
-            AnalyticsFrameTimeReport? gpuFrameTimeReport = profiler.GetGpuThreadFramesNs(percentiles);
+            (AnalyticsFrameTimeReport? gpuFrameTimeReport, AnalyticsFrameTimeReport? mainThreadReport, string samplesArray)
+                = profiler.GetFrameTimesNs(percentiles);
 
             if (!mainThreadReport.HasValue || !gpuFrameTimeReport.HasValue)
                 return;
+
+            bool isCurrentScene = scenesCache is { CurrentScene: { SceneStateProvider: { IsCurrent: true } } };
+            JsMemorySizeInfo totalJsMemoryData = v8ActiveEngines.GetEnginesSumMemoryData();
+            JsMemorySizeInfo currentSceneJsMemoryData = isCurrentScene ? v8ActiveEngines.GetEnginesMemoryDataForScene(scenesCache.CurrentScene.Info) : new JsMemorySizeInfo();
 
             analytics.Track(General.PERFORMANCE_REPORT, new JsonObject
             {
                 // TODO (Vit): include more detailed quality information (renderFeatures, fog, etc). Probably from QualitySettingsAsset.cs
                 ["quality_level"] = QualitySettings.names[QualitySettings.GetQualityLevel()],
-
-                //["scenes_load_radius"] =
                 ["player_count"] = 0, // TODO (Vit): How many users where nearby the current user
-                ["used_jsheap_size"] = 0, // TODO (Vit): use V8ScriptEngine.GetRuntimeHeapInfo(). Get the ref from V8EngineFactory, but maybe expose it in upper level
+
+                // JS runtime memory
+                ["jsheap_used"] = totalJsMemoryData.UsedHeapSizeMB,
+                ["jsheap_total"] = totalJsMemoryData.TotalHeapSizeMB,
+                ["jsheap_total_executable"] = totalJsMemoryData.TotalHeapSizeExecutableMB,
+                ["jsheap_limit"] = totalJsMemoryData.HeapSizeLimitMB,
+
+                ["jsheap_used_current_scene"] = !isCurrentScene ? -1f : currentSceneJsMemoryData.UsedHeapSizeMB,
+                ["jsheap_total_current_scene"] = !isCurrentScene ? -1f : currentSceneJsMemoryData.TotalHeapSizeMB,
+                ["jsheap_total_executable_current_scene"] = !isCurrentScene ? -1f : currentSceneJsMemoryData.TotalHeapSizeExecutableMB,
+
+                ["running_v8_engines"] = v8ActiveEngines.Count,
 
                 // Memory
-                ["total_used_memory"] = BytesFormatter.Convert((ulong)profiler.TotalUsedMemoryInBytes, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte),
-                ["system_used_memory"] = BytesFormatter.Convert((ulong)profiler.SystemUsedMemoryInBytes, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte),
-                ["gc_used_memory"] = BytesFormatter.Convert((ulong)profiler.GcUsedMemoryInBytes, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte),
+                ["total_used_memory"] = ((ulong)profiler.TotalUsedMemoryInBytes).ByteToMB(),
+                ["system_used_memory"] = ((ulong)profiler.SystemUsedMemoryInBytes).ByteToMB(),
+                ["gc_used_memory"] = ((ulong)profiler.GcUsedMemoryInBytes).ByteToMB(),
+                ["total_gc_alloc"] = ((ulong)profiler.TotalGcAlloc).ByteToMB(),
 
                 // MainThread
-                ["samples"] = mainThreadReport.Value.Samples,
+                ["samples"] = samplesArray,
+                ["samples_amount"] = mainThreadReport.Value.Samples,
                 ["total_time"] = mainThreadReport.Value.SumTime * NS_TO_MS,
 
                 ["hiccups_in_thousand_frames"] = mainThreadReport.Value.Stats.HiccupCount,

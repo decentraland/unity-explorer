@@ -1,8 +1,10 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Text.RegularExpressions;
 using System.Web;
+using UnityEngine;
 
 namespace Global.AppArgs
 {
@@ -11,11 +13,21 @@ namespace Global.AppArgs
         private const string REALM_PARAM = "realm";
         private readonly Dictionary<string, string> appParameters = new ();
 
+        private static readonly IReadOnlyDictionary<string, string> ALWAYS_IN_EDITOR = new Dictionary<string, string>
+        {
+            [IAppArgs.DEBUG_FLAG] = string.Empty,
+        };
+
         public ApplicationParametersParser() : this(Environment.GetCommandLineArgs()) { }
 
-        public ApplicationParametersParser(string[] args)
+        public ApplicationParametersParser(string[] args) : this(true, args) { }
+
+        public ApplicationParametersParser(bool useInEditorFlags = true, params string[] args)
         {
             ParseApplicationParameters(args);
+
+            if (useInEditorFlags && Application.isEditor)
+                AddAlwaysInEditorFlags();
         }
 
         public bool HasFlag(string flagName) =>
@@ -24,15 +36,22 @@ namespace Global.AppArgs
         public bool TryGetValue(string flagName, out string? value) =>
             appParameters.TryGetValue(flagName, out value);
 
+        public IEnumerable<string> Flags() =>
+            appParameters.Keys;
+
+        private void AddAlwaysInEditorFlags()
+        {
+            foreach ((string? key, string? value) in ALWAYS_IN_EDITOR)
+                appParameters.TryAdd(key, value);
+        }
+
         private void ParseApplicationParameters(string[] cmdArgs)
         {
             var deepLinkFound = false;
             string lastKeyStored = string.Empty;
 
-            for (int i = 0; i < cmdArgs.Length; i++)
+            foreach (string arg in cmdArgs)
             {
-                string arg = cmdArgs[i];
-
                 if (arg.StartsWith("--"))
                 {
                     if (arg.Length > 2)
@@ -68,7 +87,11 @@ namespace Global.AppArgs
             NameValueCollection uriQuery = HttpUtility.ParseQueryString(uri.Query);
 
             foreach (string uriQueryKey in uriQuery.AllKeys)
+            {
+                // if the deep link is not constructed correctly (AKA 'decentraland://?&blabla=blabla') a 'null' parameter can be detected...
+                if (uriQueryKey == null) continue;
                 appParameters[uriQueryKey] = uriQuery.Get(uriQueryKey);
+            }
 
             // Patch for WinOS sometimes affecting the 'realm' parameter in deep links putting a '/' at the end
             if (appParameters.TryGetValue(REALM_PARAM, out string? realmParamValue) && realmParamValue.EndsWith('/'))

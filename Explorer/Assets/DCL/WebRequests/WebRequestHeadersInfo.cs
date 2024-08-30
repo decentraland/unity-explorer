@@ -8,6 +8,8 @@ namespace DCL.WebRequests
 {
     public struct WebRequestHeadersInfo : IDisposable
     {
+        private const string EMPTY_HEADER = "";
+
         private static readonly IReadOnlyDictionary<string, string> EMPTY_HEADERS = new Dictionary<string, string>();
 
         private static readonly ListObjectPool<WebRequestHeader> POOL = new (listInstanceDefaultCapacity: 4);
@@ -53,11 +55,19 @@ namespace DCL.WebRequests
 
             foreach (WebRequestHeader header in values)
             {
-                if (string.Equals(header.Name, key, caseInsensitive? StringComparison.InvariantCultureIgnoreCase : StringComparison.InvariantCulture))
+                if (string.Equals(header.Name, key, caseInsensitive ? StringComparison.InvariantCultureIgnoreCase : StringComparison.InvariantCulture))
                     return header.Value;
             }
+
             return null;
         }
+
+        public readonly string HeaderOrDefault(
+            string key,
+            bool caseInsensitive = false,
+            string defaultHeader = EMPTY_HEADER
+        ) =>
+            HeaderOrNull(key, caseInsensitive) ?? defaultHeader;
 
         public readonly IReadOnlyDictionary<string, string> AsDictionary() =>
             values?.ToDictionary(e => e.Name, e => e.Value) ?? EMPTY_HEADERS;
@@ -89,5 +99,11 @@ namespace DCL.WebRequests
                 values = null;
             }
         }
+    }
+
+    public static class WebRequestHeadersInfoExtensions
+    {
+        public static string HeaderContentType(this WebRequestHeadersInfo webRequestHeadersInfo) =>
+            webRequestHeadersInfo.HeaderOrDefault("content-type", true);
     }
 }

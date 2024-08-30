@@ -122,19 +122,21 @@ namespace DCL.MapRenderer
             mapPathRenderer.SetDestination(mapPosition);
             if (internalPinMarker.IsVisible) { internalPinMarker.Hide(internalPinMarker.OnBecameInvisible); }
 
-            if (pinMarker == null)
+            currentDestinationPin?.SetAsDestination(false);
+
+            //If the destination is a Map Pin
+            if (pinMarker != null)
+            {
+                currentDestinationPin = pinMarker;
+                pinMarker.SetAsDestination(true);
+            }
+            else
             {
                 currentDestinationPin = internalPinMarker;
                 internalPinMarker.SetAsDestination(true);
                 internalPinMarker.OnBecameVisible();
                 internalPinMarker.SetPosition(mapPosition, parcel);
                 internalPinMarker.Show(null);
-            }
-            else
-            {
-                if (currentDestinationPin != null) { currentDestinationPin.SetAsDestination(false); }
-                currentDestinationPin = pinMarker;
-                pinMarker.SetAsDestination(true);
             }
 
             mapPathEventBus.ShowPinInMinimap(currentDestinationPin);

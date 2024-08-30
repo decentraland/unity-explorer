@@ -201,6 +201,8 @@ half4 UniversalFragmentBlinnPhong_FacialFeatures(InputData inputData, SurfaceDat
 
     MixRealtimeAndBakedGI(mainLight, inputData.normalWS, inputData.bakedGI, aoFactor);
 
+    half envLightingMultiplier = 4.0; // To match MetaLighting on DCL/Toon shader 
+    inputData.bakedGI *= envLightingMultiplier;
     inputData.bakedGI *= surfaceData.albedo;
 
     LightingData lightingData = CreateLightingData(inputData, surfaceData);

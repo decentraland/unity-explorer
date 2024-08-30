@@ -1,4 +1,5 @@
-﻿using Cysharp.Threading.Tasks;
+﻿using Arch.Core;
+using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AssetsProvision.Provisions;
 using DCL.Browser.DecentralandUrls;
@@ -11,6 +12,7 @@ using DCL.PluginSystem;
 using DCL.PluginSystem.World;
 using DCL.Profiles;
 using DCL.Web3;
+using DCL.Web3.Accounts.Factory;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
@@ -90,8 +92,9 @@ namespace DCL.SDKComponents.AudioSources.Tests.PlayMode
             try
             {
                 var identityCache = new MemoryWeb3IdentityCache();
+                var web3AccountFactory = new Web3AccountFactory();
 
-                var web3Authenticator = new ProxyWeb3Authenticator(new RandomGeneratedWeb3Authenticator(), identityCache);
+                var web3Authenticator = new ProxyWeb3Authenticator(new RandomGeneratedWeb3Authenticator(web3AccountFactory), identityCache);
                 await web3Authenticator.LoginAsync(ct);
 
                 SceneSharedContainer sceneSharedContainer;
@@ -136,6 +139,7 @@ namespace DCL.SDKComponents.AudioSources.Tests.PlayMode
                     globalSettingsContainer,
                     web3IdentityCache,
                     ethereumApi,
+                    World.Create(),
                     ct
                 );
 
