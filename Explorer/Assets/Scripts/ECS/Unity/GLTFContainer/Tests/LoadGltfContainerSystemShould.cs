@@ -1,4 +1,5 @@
 ﻿using Arch.Core;
+using CRDT;
 using DCL.ECSComponents;
 using DCL.Interaction.Utility;
 using DCL.Optimization.PerformanceBudgeting;
@@ -106,7 +107,7 @@ namespace ECS.Unity.GLTFContainer.Tests
             var e = world.Create(component, new PBGltfContainer
             {
                 Src = GltfContainerTestResources.SCENE_WITH_COLLIDER_HASH
-            }, PartitionComponent.TOP_PRIORITY);
+            }, PartitionComponent.TOP_PRIORITY, new CRDTEntity());
             var transformComponent = AddTransformToEntity(e);
 
             ConfigureGltfContainerColliders.SetupColliders(ref component, result.Asset);
@@ -148,7 +149,7 @@ namespace ECS.Unity.GLTFContainer.Tests
             var e = world.Create(component, new PBGltfContainer
             {
                 Src = GltfContainerTestResources.RENDERER_WITH_LEGACY_ANIM_NAME, IsDirty = true
-            }, PartitionComponent.TOP_PRIORITY);
+            }, PartitionComponent.TOP_PRIORITY, new CRDTEntity());
             AddTransformToEntity(e);
 
             system.Update(0);
