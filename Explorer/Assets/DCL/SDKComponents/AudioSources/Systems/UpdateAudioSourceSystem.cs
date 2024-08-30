@@ -33,16 +33,18 @@ namespace DCL.SDKComponents.AudioSources
         private readonly ISceneData sceneData;
         private readonly IStreamableCache<AudioClip, GetAudioClipIntention> cache;
         private readonly AudioMixerGroup[] worldGroup;
+        private readonly ISceneStateProvider sceneStateProvider;
 
         internal UpdateAudioSourceSystem(World world, ISceneData sceneData, IStreamableCache<AudioClip, GetAudioClipIntention> cache, IComponentPoolsRegistry poolsRegistry,
             IPerformanceBudget frameTimeBudgetProvider,
-            IPerformanceBudget memoryBudgetProvider, AudioMixer audioMixer) : base(world)
+            IPerformanceBudget memoryBudgetProvider, AudioMixer audioMixer, ISceneStateProvider sceneStateProvider) : base(world)
         {
             this.world = world;
             this.sceneData = sceneData;
             this.frameTimeBudgetProvider = frameTimeBudgetProvider;
             this.memoryBudgetProvider = memoryBudgetProvider;
             this.cache = cache;
+            this.sceneStateProvider = sceneStateProvider;
 
             audioSourcesPool = poolsRegistry.GetReferenceTypePool<AudioSource>().EnsureNotNull();
 
@@ -54,7 +56,15 @@ namespace DCL.SDKComponents.AudioSources
         {
             CreateAudioSourceQuery(World);
             UpdateAudioSourceQuery(World);
-            UpdateAudioSourceMuteQuery(World);
+
+            if (sceneStateProvider.IsCurrent)
+            {
+                UpdateAudioSourceMuteQuery(World);
+            }
+            else
+            {
+                MuteAudioSourceQuery(World);
+            }
         }
 
         [Query]
@@ -137,6 +147,16 @@ namespace DCL.SDKComponents.AudioSources
             component.Mute(audioWorldPosition.y > sceneData.Geometry.Height
                             || audioWorldPosition.y < 0.0f
                             || !sceneData.Geometry.CircumscribedPlanes.Intersects(audioWorldPosition));
+        }
+
+        /// <summary>
+        /// Mutes an AudioSource.
+        /// </summary>
+        /// <param name="component">The AudioSource component.</param>
+        [Query]
+        private void MuteAudioSource(ref AudioSourceComponent component)
+        {
+            component.Mute(true);
         }
     }
 }
