@@ -120,8 +120,15 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
             IWeb3Identity identity = web3IdentityCache.EnsuredIdentity();
             await signFlow.EnsureConnectedAsync(adapterUrl, token);
             string ethereumAddress = identity.Address;
-            string messageForSign = await signFlow.MessageForSignAsync(ethereumAddress, token);
-            string signedMessage = identity.Sign(messageForSign).ToJson();
+            var messageForSignResult = await signFlow.MessageForSignAsync(ethereumAddress, token);
+
+            if (messageForSignResult.Success == false)
+            {
+                ReportHub.LogError(ReportCategory.ARCHIPELAGO_REQUEST, $"Cannot obtain a message to sign a welcome peer");
+                return LightResult<string>.FAILURE;
+            }
+
+            string signedMessage = identity.Sign(messageForSignResult.Result).ToJson();
             ReportHub.Log(ReportCategory.ARCHIPELAGO_REQUEST, $"Signed message: {signedMessage}");
             return await signFlow.WelcomePeerIdAsync(signedMessage, token);
         }

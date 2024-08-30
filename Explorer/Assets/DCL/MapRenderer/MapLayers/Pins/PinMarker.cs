@@ -57,25 +57,28 @@ namespace DCL.MapRenderer.MapLayers.Pins
             poolableBehavior.SetCurrentPosition(position);
         }
 
-        public async UniTaskVoid AnimateSelectionAsync()
+        public async UniTaskVoid AnimateSelectionAsync(CancellationToken ct)
         {
             SetIconOutline(true);
+            pulseCancellationTokenSource = pulseCancellationTokenSource.SafeRestartLinked(ct);
 
             if (poolableBehavior.instance != null)
             {
-                selectionCancellationTokenSource = selectionCancellationTokenSource.SafeRestart();
+                selectionCancellationTokenSource = selectionCancellationTokenSource.SafeRestartLinked(ct);
                 await PinMarkerHelper.ScaleToAsync(poolableBehavior.instance.selectionScalingParent, new Vector2 (1.5f, 1.5f), 0.5f, Ease.OutBack, selectionCancellationTokenSource.Token);
             }
         }
 
-        public async UniTaskVoid AnimateDeselectionAsync()
+        public async UniTaskVoid AnimateDeselectionAsync(CancellationToken ct)
         {
             SetIconOutline(false);
+            pulseCancellationTokenSource = pulseCancellationTokenSource.SafeRestartLinked(ct);
 
             if (poolableBehavior.instance != null)
             {
-                selectionCancellationTokenSource = selectionCancellationTokenSource.SafeRestart();
+                selectionCancellationTokenSource = selectionCancellationTokenSource.SafeRestartLinked(ct);
                 await PinMarkerHelper.ScaleToAsync(poolableBehavior.instance.selectionScalingParent, Vector3.one, 0.5f, Ease.OutBack, selectionCancellationTokenSource.Token);
+                ResetPulseAnimation();
             }
         }
 
