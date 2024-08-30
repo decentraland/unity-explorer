@@ -1,0 +1,30 @@
+{
+    "name": "DCL.Analytics.Playgrounds",
+    "rootNamespace": "",
+    "references": [
+        "GUID:fc4fd35fb877e904d8cedee73b2256f6",
+        "GUID:d28a7e4beeca475418c15757abf1b6f1",
+        "GUID:e0eedfa2deb9406daf86fd8368728e39",
+        "GUID:0b3eab7834a09c24ca4e84fe0d8a43ce",
+        "GUID:1d2c76eb8b48e0b40940e8b31a679ce1",
+        "GUID:166b65e6dfc848bb9fb075f53c293a38",
+        "GUID:1b8e1e1bd01505f478f0369c04a4fb2f",
+        "GUID:56e8195b069a4dca9c4c4f313c65f526",
+        "GUID:275e22790c04e9b47a5085d7b0c4432a"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "Segment.Analytics.CSharp.dll",
+        "Serialization.NET.dll",
+        "Coroutine.NET.dll",
+        "Arch.dll",
+        "Arch.System.dll"
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
