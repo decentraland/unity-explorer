@@ -19,6 +19,7 @@ namespace DCL.CharacterCamera
         public CanBeDirty<CameraType> CameraType = CanBeDirty.FromEnum<CameraType>();
         public ObjectProxy<Entity> CameraEntityProxy { get; } = new ();
         public CinemachineBrain? CinemachineBrain { get; set; }
+        public CameraMode CameraMode { get; set; }
 
         CanBeDirty<Vector3> IExposedCameraData.WorldPosition => WorldPosition;
         CanBeDirty<Quaternion> IExposedCameraData.WorldRotation => WorldRotation;

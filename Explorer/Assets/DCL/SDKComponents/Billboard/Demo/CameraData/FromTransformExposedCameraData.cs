@@ -19,6 +19,7 @@ namespace DCL.Billboard.Demo.CameraData
         public CanBeDirty<bool> PointerIsLocked { get; }
         public ObjectProxy<Entity> CameraEntityProxy { get; } = new ();
         public CinemachineBrain? CinemachineBrain { get; set; }
+        public CameraMode CameraMode { get; set; }
 
         public FromTransformExposedCameraData() : this((Camera.main ? Camera.main : throw new NullReferenceException("Camera not found"))!) { }
 

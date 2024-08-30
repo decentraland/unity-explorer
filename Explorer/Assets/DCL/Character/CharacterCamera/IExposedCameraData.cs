@@ -27,6 +27,7 @@ namespace DCL.CharacterCamera
         CanBeDirty<Vector3> IExposedTransform.Position => WorldPosition;
         CanBeDirty<Quaternion> IExposedTransform.Rotation => WorldRotation;
         CinemachineBrain? CinemachineBrain { get; set; }
+        CameraMode CameraMode { get; set; }
 
         public class Fake : IExposedCameraData
         {
@@ -37,6 +38,7 @@ namespace DCL.CharacterCamera
 
             public ObjectProxy<Entity> CameraEntityProxy { get; } = new ();
             public CinemachineBrain? CinemachineBrain { get; set; }
+            public CameraMode CameraMode { get; set; }
 
             public Fake(Vector3 worldPosition, Quaternion worldRotation, CameraType cameraType, bool pointerIsLocked)
             {
@@ -63,6 +65,7 @@ namespace DCL.CharacterCamera
             public CanBeDirty<bool> PointerIsLocked { get; }
             public ObjectProxy<Entity> CameraEntityProxy { get; } = new ();
             public CinemachineBrain? CinemachineBrain { get; set; }
+            public CameraMode CameraMode { get; set; }
 
             public Random()
             {

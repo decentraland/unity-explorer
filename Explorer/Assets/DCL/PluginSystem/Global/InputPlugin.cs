@@ -2,6 +2,7 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.Emotes;
+using DCL.CharacterCamera;
 using DCL.CharacterCamera.Systems;
 using DCL.CharacterMotion.Systems;
 using DCL.DebugUtilities;
@@ -42,6 +43,7 @@ namespace DCL.PluginSystem.Global
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly UIDocument rootUIDocument;
         private readonly UIDocument cursorUIDocument;
+        private readonly IExposedCameraData cameraData;
         private CrosshairCanvas crosshairCanvas = null!;
 
         public InputPlugin(
@@ -54,7 +56,8 @@ namespace DCL.PluginSystem.Global
             IMVCManager mvcManager,
             IDebugContainerBuilder debugContainerBuilder,
             UIDocument rootUIDocument,
-            UIDocument cursorUIDocument)
+            UIDocument cursorUIDocument,
+            IExposedCameraData cameraData)
         {
             this.dclInput = dclInput;
             this.cursor = cursor;
@@ -66,6 +69,7 @@ namespace DCL.PluginSystem.Global
             this.debugContainerBuilder = debugContainerBuilder;
             this.rootUIDocument = rootUIDocument;
             this.cursorUIDocument = cursorUIDocument;
+            this.cameraData = cameraData;
 
             dclInput.Enable();
         }
@@ -96,7 +100,7 @@ namespace DCL.PluginSystem.Global
             UpdateCameraInputSystem.InjectToWorld(ref builder, dclInput);
             DropPlayerFromFreeCameraSystem.InjectToWorld(ref builder, dclInput.FreeCamera.DropPlayer);
             UpdateEmoteInputSystem.InjectToWorld(ref builder, dclInput, messageBus, mvcManager);
-            UpdateCursorInputSystem.InjectToWorld(ref builder, dclInput, eventSystem, cursor, crosshairCanvas);
+            UpdateCursorInputSystem.InjectToWorld(ref builder, dclInput, eventSystem, cursor, crosshairCanvas, cameraData);
             UpdateShowHideUIInputSystem.InjectToWorld(ref builder, dclInput, mvcManager, debugContainerBuilder, rootUIDocument, cursorUIDocument);
         }
 
