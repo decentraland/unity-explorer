@@ -22,7 +22,7 @@ namespace DCL.MapRenderer.MapLayers.Pins
 
             while (!ct.IsCancellationRequested)
             {
-                await ScaleToAsync(transform, bigScale, duration, Ease.Linear, CancellationToken.None);
+                await ScaleToAsync(transform, bigScale, duration, Ease.Linear, ct);
                 //we always want to return to the originalScale even if it was canceled
                 await ScaleToAsync(transform, originalScale, duration, Ease.Linear, CancellationToken.None);
                 if (!ct.IsCancellationRequested) { await UniTask.Delay(TimeSpan.FromSeconds(delay), cancellationToken: ct); }

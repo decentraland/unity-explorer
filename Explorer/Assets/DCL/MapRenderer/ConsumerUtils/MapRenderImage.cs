@@ -1,10 +1,12 @@
 ﻿using DCL.MapRenderer.MapCameraController;
 using DCL.MapRenderer.MapLayers.Pins;
 using System;
+using System.Threading;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.Profiling;
 using UnityEngine.UI;
+using Utility;
 
 namespace DCL.MapRenderer.ConsumerUtils
 {
@@ -28,6 +30,7 @@ namespace DCL.MapRenderer.ConsumerUtils
         private IPinMarker? previousClickedMarker;
         private IPinMarker? previousMarker;
         private Vector2Int previousParcel;
+        private CancellationTokenSource cts = new CancellationTokenSource();
 
         private bool dragging => dragBehavior is { dragging: true };
 
@@ -36,6 +39,7 @@ namespace DCL.MapRenderer.ConsumerUtils
             base.OnDestroy();
 
             dragBehavior?.Dispose();
+            cts.SafeCancelAndDispose();
         }
 
         public void OnBeginDrag(PointerEventData eventData)
@@ -90,13 +94,13 @@ namespace DCL.MapRenderer.ConsumerUtils
         {
             if (newPinMarker != previousClickedMarker)
             {
-                previousClickedMarker?.AnimateDeselectionAsync().Forget();
-                newPinMarker?.AnimateSelectionAsync().Forget();
+                previousClickedMarker?.AnimateDeselectionAsync(cts.Token).Forget();
+                newPinMarker?.AnimateSelectionAsync(cts.Token).Forget();
                 previousClickedMarker = newPinMarker;
             }
             else if (previousClickedMarker != null && newPinMarker == null)
             {
-                previousClickedMarker.AnimateDeselectionAsync().Forget();
+                previousClickedMarker.AnimateDeselectionAsync(cts.Token).Forget();
                 previousClickedMarker = null;
             }
         }
@@ -189,7 +193,7 @@ namespace DCL.MapRenderer.ConsumerUtils
                 {
                     if (previousMarker != null)
                     {
-                        previousMarker.AnimateDeselectionAsync().Forget();
+                        previousMarker.AnimateDeselectionAsync(cts.Token).Forget();
                         previousMarker = null;
                     }
 
@@ -199,7 +203,7 @@ namespace DCL.MapRenderer.ConsumerUtils
                     else
                     {
                         previousMarker = pinMarker;
-                        pinMarker.AnimateSelectionAsync().Forget();
+                        pinMarker.AnimateSelectionAsync(cts.Token).Forget();
                         interactivityController!.RemoveHighlight();
                     }
 

@@ -1,9 +1,7 @@
-﻿using Arch.Core;
-using DCL.MapRenderer.CoordsUtils;
+﻿using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.MapLayers;
 using DCL.MapRenderer.MapLayers.ParcelHighlight;
 using DCL.MapRenderer.MapLayers.Pins;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
