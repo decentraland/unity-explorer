@@ -24,6 +24,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
     [LogCategory(ReportCategory.SDK_MAIN_CAMERA)]
     public partial class MainCameraSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
+        private const float MINIMUM_LOOK_AT_DISTANCE_SQR = 0.25f * 0.25f;
         private static readonly QueryDescription GLOBAL_WORLD_CAMERA_QUERY = new QueryDescription().WithAll<CameraComponent>();
 
         private readonly IComponentPool<CinemachineFreeLook> poolRegistry;
@@ -252,7 +253,8 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
         {
             var rig = virtualCameraComponent.virtualCameraInstance.GetRig(1); // Middle (Aiming) Rig
             if (entitiesMap.TryGetValue(virtualCameraComponent.lookAtCRDTEntity, out Entity lookAtEntity)
-                && World.TryGet(lookAtEntity, out TransformComponent transformComponent))
+                && World.TryGet(lookAtEntity, out TransformComponent transformComponent)
+                && (virtualCameraComponent.virtualCameraInstance.transform.position - transformComponent.Transform.position).sqrMagnitude >= MINIMUM_LOOK_AT_DISTANCE_SQR)
             {
                 virtualCameraComponent.virtualCameraInstance.m_LookAt = transformComponent.Transform;
                 rig.AddCinemachineComponent<CinemachineHardLookAt>();
