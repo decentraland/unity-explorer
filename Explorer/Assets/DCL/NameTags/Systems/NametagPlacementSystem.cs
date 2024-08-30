@@ -144,11 +144,11 @@ namespace DCL.Nametags
             }
 
             // To test bounds:
-#if UNITY_EDITOR
-            Bounds avatarBounds = avatarSkinningComponent.LocalBounds;
-            avatarBounds.center += characterTransform.Position;
-            avatarBounds.DrawInEditor(Color.red);
-#endif
+//#if UNITY_EDITOR
+//            Bounds avatarBounds = avatarSkinningComponent.LocalBounds;
+//            avatarBounds.center += characterTransform.Position;
+//            avatarBounds.DrawInEditor(Color.red);
+//#endif
 
             UpdateTagPosition(nametagView, camera.Camera, characterTransform.Position + new Vector3(0.0f, avatarSkinningComponent.LocalBounds.max.y, 0.0f));
             UpdateTagTransparencyAndScale(nametagView, camera.Camera, characterTransform.Position);
