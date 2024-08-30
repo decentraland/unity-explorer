@@ -1,6 +1,7 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
+using DCL.AuthenticationScreenFlow;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.Input.Component;
@@ -9,14 +10,12 @@ using DCL.PluginSystem.Global;
 using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
-using DCL.WebRequests;
 using Global.AppArgs;
 using LiveKit.Proto;
+using MVC;
 using SceneRunner.Debugging;
-using SceneRuntime.Apis.Modules.SignedFetch.Messages;
 using System;
 using System.Linq;
-using System.Text.RegularExpressions;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -84,12 +83,6 @@ namespace Global.Dynamic
 
     public class MainSceneLoader : MonoBehaviour
     {
-        [System.Serializable]
-        private struct GitHubRelease
-        {
-            public string tag_name;
-        }
-
         [Header("Startup Config")] [SerializeField]
         private RealmLaunchSettings launchSettings = null!;
 
@@ -181,39 +174,6 @@ namespace Global.Dynamic
                     return;
                 }
 
-                const string API_URL = "https://api.github.com/repos/decentraland/unity-explorer/releases/latest";
-                var webController = staticContainer.WebRequestsContainer.WebRequestController;
-                var response = await webController.GetAsync<FlatFetchResponse<GenericGetRequest>, FlatFetchResponse>(API_URL, new FlatFetchResponse<GenericGetRequest>(), ct);
-
-                GitHubRelease latestRelease = JsonUtility.FromJson<GitHubRelease>(response.body);
-                string latestVersion = latestRelease.tag_name.TrimStart('v');
-
-                var isOlder = IsOlder(ExtractSemanticVersion(Application.version), ExtractSemanticVersion(latestVersion));
-
-                if (isOlder)
-                {
-
-                }
-
-                (int, int, int) ExtractSemanticVersion(string versionString)
-                {
-                    Match match = Regex.Match(versionString, @"v?(\d+)\.?(\d*)\.?(\d*)");
-
-                    if (!match.Success) return (0, 0, 0); // Default if no version found
-
-                    var major = int.Parse(match.Groups[1].Value);
-                    int minor = match.Groups[2].Success ? int.Parse(match.Groups[2].Value) : 0;
-                    int patch = match.Groups[3].Success ? int.Parse(match.Groups[3].Value) : 0;
-                    return (major, minor, patch);
-                }
-
-                bool IsOlder((int, int, int) current, (int, int, int) latest)
-                {
-                    if (current.Item1 < latest.Item1) return true;
-                    if (current.Item2 < latest.Item2) return true;
-                    return current.Item3 < latest.Item3;
-                }
-
                 Entity playerEntity = bootstrap.CreatePlayerEntity(staticContainer!);
 
                 (dynamicWorldContainer, isLoaded) = await bootstrap.LoadDynamicWorldContainerAsync(bootstrapContainer, staticContainer!, scenePluginSettingsContainer, settings,
@@ -226,6 +186,19 @@ namespace Global.Dynamic
                 }
 
                 await bootstrap.InitializeFeatureFlagsAsync(bootstrapContainer.IdentityCache!.Identity, bootstrapContainer.DecentralandUrlsSource, staticContainer!, ct);
+
+                if (await ApplicationVersionGuard.VersionIsOlder(staticContainer!.WebRequestsContainer.WebRequestController, ct))
+                {
+                    var appVerRedirectionScreenPrefab = await bootstrapContainer.AssetsProvisioner.ProvideMainAssetAsync(dynamicSettings.AppVerRedirectionScreenPrefab, ct);
+
+                    ControllerBase<LauncherRedirectionScreenView, ControllerNoData>.ViewFactoryMethod authScreenFactory =
+                        LauncherRedirectionScreenController.CreateLazily(appVerRedirectionScreenPrefab.Value, null);
+
+                    var launcherRedirectionScreenController = new LauncherRedirectionScreenController(authScreenFactory);
+                    dynamicWorldContainer!.MvcManager.RegisterController(launcherRedirectionScreenController);
+
+                    // bootstrapContainer.WebBrowser
+                }
 
                 DisableInputs();
 

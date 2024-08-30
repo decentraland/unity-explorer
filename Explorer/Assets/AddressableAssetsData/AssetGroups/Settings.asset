@@ -17,28 +17,13 @@ MonoBehaviour:
     m_SerializedData: []
   m_GUID: 40b9f758a62fc5e4ab715f271ef8e59a
   m_SerializeEntries:
-  - m_GUID: 8d266ff458e71f2439f9c30bd7e68d4a
-    m_Address: Partition Settings
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 7899019423f09d049a8463a0751037a5
-    m_Address: Realm Partition Settings
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 6c1c35a66af59874a8373ebcd51572a4
-    m_Address: Reports Settings (Production)
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: df2e68b45160aee4eaaf2475e21525e4
-    m_Address: Character Controller Settings
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 0dd75559898ca8d4db9fc8ab99ac2269
     m_Address: Reports Settings (Development)
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 134b7bf082a11ae499e9e62958051ca7
+    m_Address: AnalyticsConfiguration
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -47,13 +32,28 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6c1c35a66af59874a8373ebcd51572a4
+    m_Address: Reports Settings (Production)
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7899019423f09d049a8463a0751037a5
+    m_Address: Realm Partition Settings
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8d266ff458e71f2439f9c30bd7e68d4a
+    m_Address: Partition Settings
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: b47b66eab8da46b4cbcc30100e4194e0
     m_Address: SettingsMenuConfiguration
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 134b7bf082a11ae499e9e62958051ca7
-    m_Address: AnalyticsConfiguration
+  - m_GUID: df2e68b45160aee4eaaf2475e21525e4
+    m_Address: Character Controller Settings
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

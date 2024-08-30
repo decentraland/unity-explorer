@@ -431,8 +431,6 @@ namespace Global.Dynamic
 
             var currentSceneInfo = new CurrentSceneInfo();
 
-            var  messageEncodingSettings = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.CursorSettings, ct)).Value;
-
             container.multiplayerMovementMessageBus = new MultiplayerMovementMessageBus(container.MessagePipesHub, entityParticipantTable, globalWorld);
 
             var globalPlugins = new List<IDCLGlobalPlugin>
