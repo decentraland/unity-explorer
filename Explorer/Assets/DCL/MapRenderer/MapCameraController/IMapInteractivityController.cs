@@ -19,6 +19,8 @@ namespace DCL.MapRenderer.MapCameraController
         /// </summary>
         bool TryGetParcel(Vector2 normalizedCoordinates, out Vector2Int parcel, out IPinMarker pinMarker);
 
+        IPinMarker? GetPinMarkerOnParcel(Vector2Int parcel);
+
         Vector2 GetNormalizedPosition(Vector2Int parcel);
     }
 }

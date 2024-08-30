@@ -45,7 +45,7 @@ namespace ECS.Unity.SceneBoundsChecker.Tests
         {
             scenePartition.Bucket.Returns((byte)(CheckColliderBoundsSystem.BUCKET_THRESHOLD + 1));
 
-            collider.center = new Vector3(-50, 0, -50);
+            collider.transform.position = new Vector3(-50, 0, -50);
             collider.size = Vector3.one;
 
             var component = new PrimitiveColliderComponent();
@@ -66,7 +66,7 @@ namespace ECS.Unity.SceneBoundsChecker.Tests
         [Test]
         public void DisableColliderOutOfBounds()
         {
-            collider.center = new Vector3(-50, 0, -50);
+            collider.transform.position = new Vector3(-50, 0, -50);
             collider.size = Vector3.one;
 
             var component = new PrimitiveColliderComponent();
@@ -74,6 +74,7 @@ namespace ECS.Unity.SceneBoundsChecker.Tests
 
             component.SDKCollider.IsActiveByEntity = true;
             collider.enabled = true;
+
             //Simulate movement
             collider.transform.position += Vector3.one * 0.01f;
 
@@ -87,7 +88,7 @@ namespace ECS.Unity.SceneBoundsChecker.Tests
         [Test]
         public void KeepColliderWithinBounds()
         {
-            collider.center = new Vector3(-20, 0, -20);
+            collider.transform.position = new Vector3(-20, 0, -20);
             collider.size = Vector3.one;
 
             var component = new PrimitiveColliderComponent();
@@ -108,7 +109,7 @@ namespace ECS.Unity.SceneBoundsChecker.Tests
         [Test]
         public void DisableColliderOutOfVerticalBounds()
         {
-            collider.center = new Vector3(0, 50, 0);
+            collider.transform.position = new Vector3(0, 50, 0);
             collider.size = Vector3.one;
 
             var component = new PrimitiveColliderComponent();
@@ -129,7 +130,7 @@ namespace ECS.Unity.SceneBoundsChecker.Tests
         [Test]
         public void KeepColliderWithinVerticalBounds()
         {
-            collider.center = new Vector3(0, 20, 0);
+            collider.transform.position = new Vector3(0, 20, 0);
             collider.size = Vector3.one;
 
             var component = new PrimitiveColliderComponent();

@@ -32,11 +32,11 @@ namespace DCL.Multiplayer.Connections.Archipelago.SignFlow
             log($"{PREFIX} Connect finish for {adapterUrl}");
         }
 
-        public async UniTask<string> MessageForSignAsync(string ethereumAddress, CancellationToken token)
+        public async UniTask<LightResult<string>> MessageForSignAsync(string ethereumAddress, CancellationToken token)
         {
             log($"{PREFIX} MessageForSignAsync start for address {ethereumAddress}");
-            string result = await origin.MessageForSignAsync(ethereumAddress, token);
-            log($"{PREFIX} MessageForSignAsync finish for address {ethereumAddress} with result {result}");
+            var result = await origin.MessageForSignAsync(ethereumAddress, token);
+            log($"{PREFIX} MessageForSignAsync finish for address {ethereumAddress} with result success: {result.Success}");
             return result;
         }
 
