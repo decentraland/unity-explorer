@@ -189,15 +189,16 @@ namespace Global.Dynamic
 
                 if (await ApplicationVersionGuard.VersionIsOlder(staticContainer!.WebRequestsContainer.WebRequestController, ct))
                 {
-                    var appVerRedirectionScreenPrefab = await bootstrapContainer.AssetsProvisioner.ProvideMainAssetAsync(dynamicSettings.AppVerRedirectionScreenPrefab, ct);
+                    ApplicationVersionGuard.LaunchExternalAppAndQuit();
 
-                    ControllerBase<LauncherRedirectionScreenView, ControllerNoData>.ViewFactoryMethod authScreenFactory =
-                        LauncherRedirectionScreenController.CreateLazily(appVerRedirectionScreenPrefab.Value, null);
-
-                    var launcherRedirectionScreenController = new LauncherRedirectionScreenController(authScreenFactory);
-                    dynamicWorldContainer!.MvcManager.RegisterController(launcherRedirectionScreenController);
-
-                    // bootstrapContainer.WebBrowser
+                    // var appVerRedirectionScreenPrefab = await bootstrapContainer.AssetsProvisioner.ProvideMainAssetAsync(dynamicSettings.AppVerRedirectionScreenPrefab, ct);
+                    //
+                    // ControllerBase<LauncherRedirectionScreenView, ControllerNoData>.ViewFactoryMethod authScreenFactory =
+                    //     LauncherRedirectionScreenController.CreateLazily(appVerRedirectionScreenPrefab.Value, null);
+                    //
+                    // // bootstrapContainer.WebBrowser
+                    // var launcherRedirectionScreenController = new LauncherRedirectionScreenController(authScreenFactory);
+                    // dynamicWorldContainer!.MvcManager.RegisterController(launcherRedirectionScreenController);
                 }
 
                 DisableInputs();

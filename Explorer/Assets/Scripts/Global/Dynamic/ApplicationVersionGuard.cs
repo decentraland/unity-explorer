@@ -2,14 +2,21 @@
 using DCL.WebRequests;
 using SceneRuntime.Apis.Modules.SignedFetch.Messages;
 using System;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
 using UnityEngine;
+using Debug = UnityEngine.Debug;
 
 namespace Global.Dynamic
 {
-    public class ApplicationVersionGuard
+    public static class ApplicationVersionGuard
     {
+        const string launcherPathWin = @"C:\Program Files\Decentraland Launcher\Decentraland Launcher.exe";
+        const string launcherPathMac = "/Applications/Decentraland Launcher.app";
+
         public static async UniTask<bool> VersionIsOlder(IWebRequestController webRequestController, CancellationToken ct)
         {
             const string API_URL = "https://api.github.com/repos/decentraland/unity-explorer/releases/latest";
@@ -39,6 +46,83 @@ namespace Global.Dynamic
             if (current.Item1 < latest.Item1) return true;
             if (current.Item2 < latest.Item2) return true;
             return current.Item3 < latest.Item3;
+        }
+
+        public static void LaunchExternalAppAndQuit()
+        {
+            string? launcherPath = GetLauncherPath();
+
+            if (string.IsNullOrEmpty(launcherPath))
+            {
+                Debug.LogError("Launcher path not found. Please check the installation or set the correct path.");
+                return;
+            }
+
+            try
+            {
+                ProcessStartInfo startInfo = new ProcessStartInfo
+                {
+                    UseShellExecute = true,
+                };
+
+                switch (Application.platform)
+                {
+                    case RuntimePlatform.WindowsEditor:
+                    case RuntimePlatform.WindowsPlayer:
+                        startInfo.FileName = launcherPath;
+                        break;
+                    case RuntimePlatform.OSXEditor:
+                    case RuntimePlatform.OSXPlayer:
+                        startInfo.FileName = "open";
+                        startInfo.Arguments = $"-n \"{launcherPath}\"";
+                        break;
+                    default:
+                        Debug.LogError("Unsupported platform for launching the application.");
+                        return;
+                }
+
+                Process.Start(startInfo);
+
+                // // Quit the Unity application
+                // Application.Quit();
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"Error launching external application: {e.Message}");
+            }
+        }
+
+        private static string? GetLauncherPath()
+        {
+            string[] possiblePaths;
+
+            if (Application.platform == RuntimePlatform.WindowsEditor || Application.platform == RuntimePlatform.WindowsPlayer)
+            {
+                possiblePaths = new[]
+                {
+                    launcherPathWin,
+                    @"C:\Program Files\Decentraland Launcher\Decentraland Launcher.exe",
+                    @"C:\Program Files (x86)\Decentraland Launcher\Decentraland Launcher.exe",
+                    Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"Programs\Decentraland Launcher\Decentraland Launcher.exe")
+                };
+            }
+            else if (Application.platform == RuntimePlatform.OSXEditor || Application.platform == RuntimePlatform.OSXPlayer)
+            {
+                possiblePaths = new[]
+                {
+                    launcherPathMac,
+                    "/Applications/Decentraland Launcher.app",
+                    $"{Environment.GetFolderPath(Environment.SpecialFolder.Personal)}/Applications/Decentraland Launcher.app"
+                };
+            }
+            else
+            {
+                Debug.LogError("Unsupported platform for launching the application.");
+                return null;
+            }
+
+            return possiblePaths.FirstOrDefault(path => File.Exists(path)
+                                                        || (Directory.Exists(path) && (Application.platform == RuntimePlatform.OSXEditor || Application.platform == RuntimePlatform.OSXPlayer)));
         }
 
         [Serializable]
