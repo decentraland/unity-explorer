@@ -29,7 +29,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.Playgrounds
                 new Profiler(),
                 new V8ActiveEngines(),
                 new ScenesCache(),
-                new JsonObjectBuilder()
+                new Utility.Json.JsonObjectBuilder()
             );
         }
 
