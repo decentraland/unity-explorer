@@ -46,7 +46,6 @@ namespace DCL.Passport.Modules.Badges
         private List<string> badgeCategories;
         private CancellationTokenSource fetchBadgesCts;
         private CancellationTokenSource fetchTiersCts;
-        private CancellationTokenSource fetchBadgeCategoriesCts;
         private CancellationTokenSource checkProfileCts;
 
         public BadgesDetails_PassportModuleController(
@@ -118,8 +117,6 @@ namespace DCL.Passport.Modules.Badges
         public void Setup(Profile profile)
         {
             currentProfile = profile;
-            LoadBadgeCategories();
-
             checkProfileCts = checkProfileCts.SafeRestart();
             CheckProfileAndLoadBadgesAsync(checkProfileCts.Token).Forget();
         }
@@ -160,19 +157,7 @@ namespace DCL.Passport.Modules.Badges
             return badgeDetailCareView;
         }
 
-        private void LoadBadgeCategories()
-        {
-            ClearBadgesFilterButtons();
-            ClearBadgesCategorySeparators();
-            ClearBadgesCategoryContainers();
-            CreateFilterButton(ALL_FILTER);
-            currentFilter = ALL_FILTER;
-
-            fetchBadgeCategoriesCts = fetchBadgeCategoriesCts.SafeRestart();
-            LoadBadgeCategoriesAsync(fetchBadgeCategoriesCts.Token).Forget();
-        }
-
-        private async UniTaskVoid LoadBadgeCategoriesAsync(CancellationToken ct)
+        private async UniTask LoadBadgeCategoriesAsync(CancellationToken ct)
         {
             try
             {
@@ -250,7 +235,7 @@ namespace DCL.Passport.Modules.Badges
 
         private void LoadBadgeDetailCards()
         {
-            ClearBadgeDetailCards();
+            Clear();
             badgeInfoController.SetAsLoading(true);
 
             if (string.IsNullOrEmpty(currentProfile.UserId))
@@ -264,6 +249,10 @@ namespace DCL.Passport.Modules.Badges
         {
             try
             {
+                CreateFilterButton(ALL_FILTER);
+                currentFilter = ALL_FILTER;
+                await LoadBadgeCategoriesAsync(ct);
+
                 view.LoadingSpinner.SetActive(true);
                 var badges = await badgesAPIClient.FetchBadgesAsync(walletId, isOwnProfile, ct);
 
@@ -305,10 +294,10 @@ namespace DCL.Passport.Modules.Badges
                     numberOfActiveSeparators++;
                 }
                 else
+                {
                     badgesCategorySeparator.gameObject.SetActive(false);
-
-                if (badgeDetailCards.Count == 0)
                     continue;
+                }
 
                 foreach (var filterButton in instantiatedBadgesFilterButtons)
                 {
@@ -469,8 +458,6 @@ namespace DCL.Passport.Modules.Badges
 
         private void ClearBadgesFilterButtons()
         {
-            fetchBadgeCategoriesCts.SafeCancelAndDispose();
-
             foreach (ButtonWithSelectableStateView badgesFilterButton in instantiatedBadgesFilterButtons)
             {
                 badgesFilterButton.Button.onClick.RemoveAllListeners();
