@@ -22,7 +22,6 @@ using UnityEngine;
 namespace DCL.SDKComponents.AvatarModifierArea.Systems
 {
     [UpdateInGroup(typeof(SyncedInitializationFixedUpdateThrottledGroup))]
-    [UpdateBefore(typeof(CharacterTriggerAreaCleanUpRegisteredCollisionsSystem))]
     [LogCategory(ReportCategory.CAMERA_MODE_AREA)]
     public partial class AvatarModifierAreaHandlerSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
@@ -70,9 +69,11 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
                 foreach (Transform avatarTransform in triggerAreaComponent.CurrentAvatarsInside) { CorrectAvatarHidingState(avatarTransform, modifierAreaComponent.ExcludedIds); }
             }
 
-            foreach (Transform avatarTransform in triggerAreaComponent.ExitedThisFrame) { ToggleAvatarHiding(avatarTransform, false, modifierAreaComponent.ExcludedIds); }
+            foreach (Transform avatarTransform in triggerAreaComponent.ExitedAvatarsToBeProcessed) { ToggleAvatarHiding(avatarTransform, false, modifierAreaComponent.ExcludedIds); }
+            triggerAreaComponent.TryClearExitedAvatarsToBeProcessed();
 
-            foreach (Transform avatarTransform in triggerAreaComponent.EnteredThisFrame) { ToggleAvatarHiding(avatarTransform, true, modifierAreaComponent.ExcludedIds); }
+            foreach (Transform avatarTransform in triggerAreaComponent.EnteredAvatarsToBeProcessed) { ToggleAvatarHiding(avatarTransform, true, modifierAreaComponent.ExcludedIds); }
+            triggerAreaComponent.TryClearEnteredAvatarsToBeProcessed();
         }
 
         [Query]

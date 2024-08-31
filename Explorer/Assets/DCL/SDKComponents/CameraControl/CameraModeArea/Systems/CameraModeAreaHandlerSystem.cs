@@ -18,7 +18,6 @@ using ECS.Unity.Transforms.Components;
 namespace DCL.SDKComponents.CameraModeArea.Systems
 {
     [UpdateInGroup(typeof(SyncedInitializationFixedUpdateThrottledGroup))]
-    [UpdateBefore(typeof(CharacterTriggerAreaCleanUpRegisteredCollisionsSystem))]
     [LogCategory(ReportCategory.CAMERA_MODE_AREA)]
     public partial class CameraModeAreaHandlerSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
@@ -26,11 +25,13 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
 
         private readonly World globalWorld;
         private readonly ObjectProxy<Entity> cameraEntityProxy;
+        private readonly IExposedCameraData cameraData;
 
-        public CameraModeAreaHandlerSystem(World world, World globalWorld, ObjectProxy<Entity> cameraEntityProxy) : base(world)
+        public CameraModeAreaHandlerSystem(World world, World globalWorld, ObjectProxy<Entity> cameraEntityProxy, IExposedCameraData cameraData) : base(world)
         {
             this.globalWorld = globalWorld;
             this.cameraEntityProxy = cameraEntityProxy;
+            this.cameraData = cameraData;
         }
 
         protected override void Update(float t)
@@ -56,8 +57,18 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
         [All(typeof(TransformComponent))]
         private void UpdateCameraModeArea(ref PBCameraModeArea pbCameraModeArea, ref CharacterTriggerAreaComponent characterTriggerAreaComponent)
         {
-            if (characterTriggerAreaComponent.EnteredThisFrame!.Count > 0) { OnEnteredCameraModeArea((CameraMode)pbCameraModeArea.Mode); }
-            else if (characterTriggerAreaComponent.ExitedThisFrame!.Count > 0) { OnExitedCameraModeArea(); }
+            if (cameraData.CameraMode == CameraMode.SDKCamera) return;
+
+            if (characterTriggerAreaComponent.EnteredAvatarsToBeProcessed!.Count > 0)
+            {
+                OnEnteredCameraModeArea((CameraMode)pbCameraModeArea.Mode);
+                characterTriggerAreaComponent.TryClearEnteredAvatarsToBeProcessed();
+            }
+            else if (characterTriggerAreaComponent.ExitedAvatarsToBeProcessed!.Count > 0)
+            {
+                OnExitedCameraModeArea();
+                characterTriggerAreaComponent.TryClearExitedAvatarsToBeProcessed();
+            }
 
             if (pbCameraModeArea.IsDirty)
             {
@@ -85,6 +96,7 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
         internal void OnEnteredCameraModeArea(CameraMode targetCameraMode)
         {
             ref CameraComponent camera = ref globalWorld.Get<CameraComponent>(cameraEntityProxy.Object!);
+
             cameraModeBeforeLastAreaEnter = camera.Mode;
             camera.Mode = targetCameraMode;
             camera.AddCameraInputLock();
