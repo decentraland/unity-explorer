@@ -66,12 +66,18 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 
         private bool disposed;
 
-        internal AvatarCustomSkinningComponent(int vertCount, Buffers buffers, List<MaterialSetup> materials, UnityEngine.ComputeShader computeShaderInstance)
+        /// <summary>
+        ///
+        /// </summary>
+        public Bounds LocalBounds { get; private set; }
+
+        internal AvatarCustomSkinningComponent(int vertCount, Buffers buffers, List<MaterialSetup> materials, UnityEngine.ComputeShader computeShaderInstance, Bounds localBounds)
         {
             this.vertCount = vertCount;
             this.buffers = buffers;
             this.materials = materials;
             this.computeShaderInstance = computeShaderInstance;
+            this.LocalBounds = localBounds;
             VertsOutRegion = default(FixedComputeBufferHandler.Slice);
 
             disposed = false;
