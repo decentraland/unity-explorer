@@ -1,10 +1,12 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using Arch.SystemGroups.DefaultSystemGroups;
 using CRDT;
 using CrdtEcsBridge.Components;
 using DCL.Character.Components;
 using DCL.Diagnostics;
+using DCL.Multiplayer.Profiles.Systems;
 using DCL.Multiplayer.SDK.Components;
 using DCL.Profiles;
 using ECS.Abstract;
@@ -17,8 +19,8 @@ using Utility;
 namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
 {
     // Currently implemented to track reserved entities only on the CURRENT SCENE
-    [UpdateInGroup(typeof(SyncedPreRenderingSystemGroup))]
-    [UpdateBefore(typeof(CleanUpGroup))]
+    [UpdateInGroup(typeof(PresentationSystemGroup))]
+    [UpdateAfter(typeof(MultiplayerProfilesSystem))]
     [LogCategory(ReportCategory.PLAYER_SDK_DATA)]
     public partial class PlayerCRDTEntitiesHandlerSystem : BaseUnityLoopSystem
     {
