@@ -2,7 +2,7 @@ using System.Collections.Generic;
 
 namespace DCL.AvatarRendering.Loading
 {
-    public interface ILambdaResponse<out TResponseElement>
+    public interface IAttachmentLambdaResponse<out TResponseElement>
     {
         IReadOnlyList<TResponseElement> Elements { get; }
         int TotalAmount { get; }

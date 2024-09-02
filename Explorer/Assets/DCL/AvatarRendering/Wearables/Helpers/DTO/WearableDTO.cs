@@ -22,7 +22,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         }
 
         [Serializable]
-        public struct LambdaResponse : ILambdaResponse<LambdaResponseElementDto>
+        public struct LambdaResponse : IAttachmentLambdaResponse<LambdaResponseElementDto>
         {
             public List<LambdaResponseElementDto> elements;
             public int totalAmount;

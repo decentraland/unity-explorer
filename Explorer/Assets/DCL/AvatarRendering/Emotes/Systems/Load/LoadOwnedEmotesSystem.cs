@@ -24,7 +24,7 @@ namespace DCL.AvatarRendering.Emotes.Load
             IEmoteCache emoteCache
         ) : base(world, cache, emoteCache, webRequestController, realmData) { }
 
-        protected override async UniTask<ILambdaResponse<ILambdaResponseElement<EmoteDTO>>> ParsedResponseAsync(GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> adapter) =>
+        protected override async UniTask<IAttachmentLambdaResponse<ILambdaResponseElement<EmoteDTO>>> ParsedResponseAsync(GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> adapter) =>
             await adapter.CreateFromJson<LambdaOwnedEmoteElementList>(WRJsonParser.Unity);
 
         protected override EmotesResolution AssetFromPreparedIntention(in GetOwnedEmotesFromRealmIntention intention) =>

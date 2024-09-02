@@ -24,7 +24,7 @@ namespace DCL.AvatarRendering.Emotes
     }
 
     [Serializable]
-    public struct LambdaOwnedEmoteElementList : ILambdaResponse<LambdaOwnedEmoteElementDTO>
+    public struct LambdaOwnedEmoteElementList : IAttachmentLambdaResponse<LambdaOwnedEmoteElementDTO>
     {
         public List<LambdaOwnedEmoteElementDTO> elements;
         public int totalAmount;

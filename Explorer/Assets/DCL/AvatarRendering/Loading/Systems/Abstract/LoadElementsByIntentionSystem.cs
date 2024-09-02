@@ -62,7 +62,7 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
             return new StreamableLoadingResult<TAsset>(AssetFromPreparedIntention(in intention));
         }
 
-        private void Load<TResponseElement>(ref TIntention intention, ILambdaResponse<TResponseElement> lambdaResponse) where TResponseElement: ILambdaResponseElement<TAvatarElementDTO>
+        private void Load<TResponseElement>(ref TIntention intention, IAttachmentLambdaResponse<TResponseElement> lambdaResponse) where TResponseElement: ILambdaResponseElement<TAvatarElementDTO>
         {
             intention.SetTotal(lambdaResponse.TotalAmount);
 
@@ -95,7 +95,7 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
             }
         }
 
-        protected abstract UniTask<ILambdaResponse<ILambdaResponseElement<TAvatarElementDTO>>> ParsedResponseAsync(GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> adapter);
+        protected abstract UniTask<IAttachmentLambdaResponse<ILambdaResponseElement<TAvatarElementDTO>>> ParsedResponseAsync(GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> adapter);
 
         protected abstract TAsset AssetFromPreparedIntention(in TIntention intention);
 
