@@ -1,5 +1,6 @@
 using Arch.Core;
 using CommunicationData.URLHelpers;
+using DCL.AvatarRendering.AvatarShape.Tests.EditMode;
 using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Loading.DTO;
@@ -66,7 +67,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
             if (isDefaultWearable)
                 wearableAssets[BodyShape.MALE] = mockedDefaultAB;
 
-            return new IWearable.Fake(
+            return new FakeWearable(
                 new WearableDTO
                 {
                     id = urn,

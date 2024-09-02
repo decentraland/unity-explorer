@@ -1,4 +1,5 @@
 using CommunicationData.URLHelpers;
+using DCL.AvatarRendering.AvatarShape.Tests.EditMode;
 using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Loading.DTO;
@@ -39,7 +40,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
         private RealmData realmData;
 
         private static IWearable CreateMockWearable(URN urn, bool isUnisex) =>
-            new IWearable.Fake(
+            new FakeWearable(
                 new WearableDTO
                 {
                     metadata = new WearableDTO.WearableMetadataDto

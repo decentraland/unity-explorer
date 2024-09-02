@@ -1,4 +1,5 @@
 using DCL.AvatarRendering.AvatarShape.Helpers;
+using DCL.AvatarRendering.AvatarShape.Tests.EditMode;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
@@ -29,7 +30,7 @@ namespace DCL.Tests
                 },
             };
 
-            upperMockWearable = new IWearable.Fake(
+            upperMockWearable = new FakeWearable(
                 mockDto,
                 new HashSet<string>
                 {
@@ -50,7 +51,7 @@ namespace DCL.Tests
                 },
             };
 
-            upperSkinWearable = new IWearable.Fake(
+            upperSkinWearable = new FakeWearable(
                 skinDto,
                 new HashSet<string>
                 {
