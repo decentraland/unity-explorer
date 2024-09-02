@@ -114,7 +114,7 @@ namespace DCL.Passport.Modules.Badges
             }
             else
             {
-                var nextTierToCompleteIndex = 0;
+                int nextTierToCompleteIndex = tiers.Count - 1;
                 for (var i = 0; i < tiers.Count; i++)
                 {
                     if (badgeInfo.progress.nextStepsTarget == tiers[i].criteria.steps)
