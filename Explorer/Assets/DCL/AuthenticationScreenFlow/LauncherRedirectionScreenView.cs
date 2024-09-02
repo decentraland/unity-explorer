@@ -1,14 +1,15 @@
 ﻿using MVC;
-using System;
-using UnityEngine.EventSystems;
+using UnityEngine;
+using UnityEngine.UI;
 
 namespace DCL.AuthenticationScreenFlow
 {
-    public class LauncherRedirectionScreenView : ViewBase, IView, IPointerClickHandler
+    public class LauncherRedirectionScreenView : ViewBase, IView
     {
-        public void OnPointerClick(PointerEventData eventData)
-        {
-            throw new NotImplementedException();
-        }
+        [field: SerializeField]
+        public Button CloseWithLauncherButton { get; private set; } = null!;
+
+        [field: SerializeField]
+        public Button CloseButton { get; private set; } = null!;
     }
 }

@@ -1,7 +1,8 @@
 ﻿using Cysharp.Threading.Tasks;
+using Global.Dynamic;
 using MVC;
-using System;
 using System.Threading;
+using UnityEngine;
 
 namespace DCL.AuthenticationScreenFlow
 {
@@ -11,9 +12,24 @@ namespace DCL.AuthenticationScreenFlow
         {
         }
 
-        public override CanvasOrdering.SortingLayer Layer { get; }
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
+
+        protected override void OnViewInstantiated()
+        {
+            base.OnViewInstantiated();
+
+            viewInstance.CloseButton.onClick.AddListener(Application.Quit);
+            viewInstance.CloseWithLauncherButton.onClick.AddListener(ApplicationVersionGuard.LaunchExternalAppAndQuit);
+        }
+
+        public override void Dispose()
+        {
+            base.Dispose();
+            viewInstance.CloseButton.onClick.RemoveListener(Application.Quit);
+            viewInstance.CloseWithLauncherButton.onClick.RemoveListener(ApplicationVersionGuard.LaunchExternalAppAndQuit);
+        }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
-            throw new NotImplementedException();
+            UniTask.Never(ct);
     }
 }

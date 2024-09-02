@@ -83,8 +83,8 @@ namespace Global.Dynamic
 
                 Process.Start(startInfo);
 
-                // // Quit the Unity application
-                // Application.Quit();
+                // Quit the Unity application
+                Application.Quit();
             }
             catch (Exception e)
             {

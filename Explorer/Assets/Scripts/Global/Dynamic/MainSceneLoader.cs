@@ -189,16 +189,17 @@ namespace Global.Dynamic
 
                 if (await ApplicationVersionGuard.VersionIsOlder(staticContainer!.WebRequestsContainer.WebRequestController, ct))
                 {
-                    ApplicationVersionGuard.LaunchExternalAppAndQuit();
+                    splashScreen.Hide();
 
-                    // var appVerRedirectionScreenPrefab = await bootstrapContainer.AssetsProvisioner.ProvideMainAssetAsync(dynamicSettings.AppVerRedirectionScreenPrefab, ct);
-                    //
-                    // ControllerBase<LauncherRedirectionScreenView, ControllerNoData>.ViewFactoryMethod authScreenFactory =
-                    //     LauncherRedirectionScreenController.CreateLazily(appVerRedirectionScreenPrefab.Value, null);
-                    //
-                    // // bootstrapContainer.WebBrowser
-                    // var launcherRedirectionScreenController = new LauncherRedirectionScreenController(authScreenFactory);
-                    // dynamicWorldContainer!.MvcManager.RegisterController(launcherRedirectionScreenController);
+                    var appVerRedirectionScreenPrefab = await bootstrapContainer.AssetsProvisioner.ProvideMainAssetAsync(dynamicSettings.AppVerRedirectionScreenPrefab, ct);
+
+                    ControllerBase<LauncherRedirectionScreenView, ControllerNoData>.ViewFactoryMethod authScreenFactory =
+                        LauncherRedirectionScreenController.CreateLazily(appVerRedirectionScreenPrefab.Value.GetComponent<LauncherRedirectionScreenView>(), null);
+
+                    var launcherRedirectionScreenController = new LauncherRedirectionScreenController(authScreenFactory);
+                    dynamicWorldContainer!.MvcManager.RegisterController(launcherRedirectionScreenController);
+
+                    await dynamicWorldContainer!.MvcManager.ShowAsync(LauncherRedirectionScreenController.IssueCommand(), ct);
                 }
 
                 DisableInputs();
