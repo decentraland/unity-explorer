@@ -52,6 +52,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d23ca58b5a012ef46a39310b9a2e4e05
+    m_Address: MultiplayerDebugSettings
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: df2e68b45160aee4eaaf2475e21525e4
     m_Address: Character Controller Settings
     m_ReadOnly: 0

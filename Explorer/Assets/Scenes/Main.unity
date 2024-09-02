@@ -536,6 +536,11 @@ MonoBehaviour:
       m_SubObjectName: 
       m_SubObjectType: 
       m_EditorAssetChanged: 0
+    <MultiplayerDebugSettings>k__BackingField:
+      m_AssetGUID: d23ca58b5a012ef46a39310b9a2e4e05
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_EditorAssetChanged: 0
     <AppVerRedirectionScreenPrefab>k__BackingField:
       m_AssetGUID: f2df2b2c3721c5840b06c8fe73d5d665
       m_SubObjectName: 
