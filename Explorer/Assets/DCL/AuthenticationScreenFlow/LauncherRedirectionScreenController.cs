@@ -12,7 +12,7 @@ namespace DCL.AuthenticationScreenFlow
         {
         }
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
 
         protected override void OnViewInstantiated()
         {
