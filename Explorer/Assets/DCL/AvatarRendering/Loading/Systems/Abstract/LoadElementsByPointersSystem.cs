@@ -1,6 +1,7 @@
 using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.Loading.Components;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.Optimization.ThreadSafePool;
@@ -36,7 +37,7 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
             TIntention intention, IAcquiredBudget acquiredBudget,
             IPartitionComponent partition, CancellationToken ct)
         {
-            var finalTargetList = new List<TDTO>();
+            var finalTargetList = RepoolableList<TDTO>.NewList();
 
             int numberOfPartialRequests = (intention.Pointers.Count + MAX_WEARABLES_PER_REQUEST - 1) / MAX_WEARABLES_PER_REQUEST;
 
@@ -47,7 +48,7 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
                 int numberOfWearablesToRequest = Mathf.Min(intention.Pointers.Count - pointer, MAX_WEARABLES_PER_REQUEST);
 
                 await DoPartialRequestAsync(intention.CommonArguments.URL, intention.Pointers,
-                    pointer, pointer + numberOfWearablesToRequest, finalTargetList, ct);
+                    pointer, pointer + numberOfWearablesToRequest, finalTargetList.List, ct);
 
                 pointer += numberOfWearablesToRequest;
             }
@@ -55,7 +56,7 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
             return new StreamableLoadingResult<TAsset>(CreateAssetFromListOfDTOs(finalTargetList));
         }
 
-        protected abstract TAsset CreateAssetFromListOfDTOs(List<TDTO> list);
+        protected abstract TAsset CreateAssetFromListOfDTOs(RepoolableList<TDTO> list);
 
         private async UniTask DoPartialRequestAsync(URLAddress url,
             IReadOnlyList<URN> wearablesToRequest, int startIndex, int endIndex, List<TDTO> results, CancellationToken ct)

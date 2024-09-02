@@ -40,15 +40,16 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
         public override void Initialize()
         {
             var pointersRequest = new List<URN>[BodyShape.COUNT];
+            using var consumedDefaultWearableDefinition = defaultWearableDefinition.ConsumeAttachments();
 
             for (var i = 0; i < BodyShape.VALUES.Count; i++)
-                pointersRequest[BodyShape.VALUES[i]] = new List<URN>(defaultWearableDefinition.Value.Count);
+                pointersRequest[BodyShape.VALUES[i]] = new List<URN>(consumedDefaultWearableDefinition.Value.Count);
 
             var state = new DefaultWearablesComponent(new AssetPromise<WearablesResolution, GetWearablesByPointersIntention>[BodyShape.COUNT]);
 
-            for (var i = 0; i < defaultWearableDefinition.Value.Count; i++)
+            for (var i = 0; i < consumedDefaultWearableDefinition.Value.Count; i++)
             {
-                WearableDTO dto = defaultWearableDefinition.Value[i];
+                WearableDTO dto = consumedDefaultWearableDefinition.Value[i];
                 IWearable wearable = wearableCache.GetOrAddByDTO(dto, false);
 
                 BodyShape analyzedBodyShape = wearable.IsCompatibleWithBodyShape(BodyShape.MALE) ? BodyShape.MALE : BodyShape.FEMALE;

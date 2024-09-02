@@ -1,15 +1,18 @@
-﻿using System.Collections.Generic;
+﻿using DCL.AvatarRendering.Loading.Components;
 
 namespace DCL.AvatarRendering.Wearables.Helpers
 {
     // ReSharper disable once InconsistentNaming
-    public readonly struct WearablesDTOList
+    public readonly struct WearablesDTOList : IAttachmentsDTOList<WearableDTO>
     {
-        public readonly IReadOnlyList<WearableDTO> Value;
+        private readonly RepoolableList<WearableDTO> value;
 
-        public WearablesDTOList(IReadOnlyList<WearableDTO> value)
+        public WearablesDTOList(RepoolableList<WearableDTO> value)
         {
-            Value = value;
+            this.value = value;
         }
+
+        public ConsumedAttachmentsDTOList<WearableDTO> ConsumeAttachments() =>
+            IAttachmentsDTOList<WearableDTO>.DefaultConsumeAttachments(value);
     }
 }

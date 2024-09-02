@@ -190,17 +190,18 @@ namespace DCL.AvatarRendering.Wearables.Systems
                     using var _ = WearableComponentsUtils.POINTERS_POOL.Get(out var failedDTOList);
                     failedDTOList!.AddRange(promise.LoadingIntention.Pointers);
 
-                    foreach (WearableDTO assetEntity in promiseResult.Asset.Value)
-                    {
-                        if (wearableCache.TryGetElementWithLogs(assetEntity, GetReportCategory(), out var component) == false)
-                            continue;
+                    using (var list = promise.Result.Value.Asset.ConsumeAttachments())
+                        foreach (WearableDTO assetEntity in list.Value)
+                        {
+                            if (wearableCache.TryGetElementWithLogs(assetEntity, GetReportCategory(), out var component) == false)
+                                continue;
 
-                        if (component!.TryResolveDTO(new StreamableLoadingResult<WearableDTO>(assetEntity)) == false)
-                            ReportHub.LogError(new ReportData(GetReportCategory()), $"Wearable DTO has already been initialized: {assetEntity.Metadata.id}");
+                            if (component!.TryResolveDTO(new StreamableLoadingResult<WearableDTO>(assetEntity)) == false)
+                                ReportHub.LogError(new ReportData(GetReportCategory()), $"Wearable DTO has already been initialized: {assetEntity.Metadata.id}");
 
-                        failedDTOList.Remove(assetEntity.Metadata.id);
-                        component.UpdateLoadingStatus(false);
-                    }
+                            failedDTOList.Remove(assetEntity.Metadata.id);
+                            component.UpdateLoadingStatus(false);
+                        }
 
                     //If this list is not empty, it means we have at least one unresolvedDTO that was not completed. We need to finalize it as error
                     foreach (var urn in failedDTOList)

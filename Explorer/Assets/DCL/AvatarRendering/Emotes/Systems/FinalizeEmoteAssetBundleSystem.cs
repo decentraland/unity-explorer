@@ -76,11 +76,12 @@ namespace DCL.AvatarRendering.Emotes
                             component.UpdateLoadingStatus(false);
                 }
                 else
-                    foreach (EmoteDTO assetEntity in promiseResult.Asset.Value)
-                    {
-                        IEmote component = emoteCache.GetOrAddByDTO(assetEntity);
-                        component.ApplyAndMarkAsLoaded(assetEntity);
-                    }
+                    using (var list = promiseResult.Asset.ConsumeAttachments())
+                        foreach (EmoteDTO assetEntity in list.Value)
+                        {
+                            IEmote component = emoteCache.GetOrAddByDTO(assetEntity);
+                            component.ApplyAndMarkAsLoaded(assetEntity);
+                        }
 
                 World!.Destroy(entity);
             }

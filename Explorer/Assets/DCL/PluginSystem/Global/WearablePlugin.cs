@@ -3,6 +3,7 @@ using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Thumbnails.Systems;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
@@ -60,7 +61,7 @@ namespace DCL.AvatarRendering.Wearables
             var partialTargetList = new List<WearableDTO>(64);
             JsonConvert.PopulateObject(defaultWearableDefinition.Value.text, partialTargetList);
 
-            defaultWearablesDTOs = new WearablesDTOList(partialTargetList);
+            defaultWearablesDTOs = new WearablesDTOList(partialTargetList.AsRepoolableList());
 
             var defaultEmptyWearable =
                 await assetsProvisioner.ProvideMainAssetAsync(settings.defaultEmptyWearable, ct: ct);

@@ -64,7 +64,7 @@ namespace DCL.AvatarRendering.Emotes.Load
             GetEmotesFromRealmQuery(World!, t);
         }
 
-        protected override EmotesDTOList CreateAssetFromListOfDTOs(List<EmoteDTO> list) =>
+        protected override EmotesDTOList CreateAssetFromListOfDTOs(RepoolableList<EmoteDTO> list) =>
             new (list);
 
         [Query]

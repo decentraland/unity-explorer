@@ -34,7 +34,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
             wearableCache = new WearableCache();
             emptyDefaultWearable = new GameObject();
 
-            system = new LoadDefaultWearablesSystem(world, new WearablesDTOList(partialTargetList),
+            system = new LoadDefaultWearablesSystem(world, new WearablesDTOList(partialTargetList.AsRepoolableList()),
                 emptyDefaultWearable,
                 wearableCache);
 
