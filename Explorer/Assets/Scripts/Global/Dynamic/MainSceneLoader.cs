@@ -200,6 +200,7 @@ namespace Global.Dynamic
                     dynamicWorldContainer!.MvcManager.RegisterController(launcherRedirectionScreenController);
 
                     await dynamicWorldContainer!.MvcManager.ShowAsync(LauncherRedirectionScreenController.IssueCommand(), ct);
+                    return;
                 }
 
                 DisableInputs();
