@@ -2,8 +2,8 @@ using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.Messaging;
 using Google.Protobuf;
 using LiveKit.Internal.FFIClients.Pools.Memory;
-using Nethereum.Model;
 using System.Threading;
+using Utility.Types;
 
 namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
 {
@@ -11,16 +11,22 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
     {
         bool IsConnected { get; }
 
-        UniTask ConnectAsync(string adapterUrl, CancellationToken token);
+        UniTask<Result> ConnectAsync(string adapterUrl, CancellationToken token);
 
         UniTask DisconnectAsync(CancellationToken token);
 
         /// <param name="data">takes the ownership for the data</param>
         /// <param name="token">cancellation token</param>
         /// <returns>returns a memory chunk ang gives the ownership for it</returns>
-        UniTask SendAsync(MemoryWrap data, CancellationToken token);
+        UniTask<EnumResult<ResponseError>> SendAsync(MemoryWrap data, CancellationToken token);
 
-        UniTask<MemoryWrap> ReceiveAsync(CancellationToken token);
+        UniTask<EnumResult<MemoryWrap, ResponseError>> ReceiveAsync(CancellationToken token);
+
+        enum ResponseError
+        {
+            MessageError,
+            ConnectionClosed,
+        }
     }
 
     public static class ArchipelagoLiveConnectionExtensions
@@ -41,17 +47,17 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
         /// <summary>
         ///     Takes ownership for the data and returns the ownership for the result
         /// </summary>
-        public static async UniTask<MemoryWrap> SendAndReceiveAsync(this IArchipelagoLiveConnection archipelagoLiveConnection, MemoryWrap data, CancellationToken token)
+        public static async UniTask<EnumResult<MemoryWrap, IArchipelagoLiveConnection.ResponseError>> SendAndReceiveAsync(this IArchipelagoLiveConnection archipelagoLiveConnection, MemoryWrap data, CancellationToken token)
         {
             await archipelagoLiveConnection.SendAsync(data, token);
             return await archipelagoLiveConnection.ReceiveAsync(token);
         }
 
-        public static async UniTask<MemoryWrap> SendAndReceiveAsync<T>(this IArchipelagoLiveConnection connection, T message, IMemoryPool memoryPool, CancellationToken token) where T: IMessage
+        public static async UniTask<EnumResult<MemoryWrap, IArchipelagoLiveConnection.ResponseError>> SendAndReceiveAsync<T>(this IArchipelagoLiveConnection connection, T message, IMemoryPool memoryPool, CancellationToken token) where T: IMessage
         {
             using MemoryWrap memory = memoryPool.Memory(message);
             message.WriteTo(memory);
-            MemoryWrap result = await connection.SendAndReceiveAsync(memory, token);
+            var result = await connection.SendAndReceiveAsync(memory, token);
             return result;
         }
 

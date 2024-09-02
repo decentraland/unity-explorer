@@ -15,6 +15,9 @@ using ECS.Prioritization.Components;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.Pool;
+#if UNITY_EDITOR
+using Utility.Editor;
+#endif
 
 namespace DCL.Nametags
 {
@@ -23,7 +26,6 @@ namespace DCL.Nametags
     [LogCategory(ReportCategory.AVATAR)]
     public partial class NametagPlacementSystem : BaseUnityLoopSystem
     {
-        private const float NAMETAG_HEIGHT_MULTIPLIER = 2.1f;
         private const float NAMETAG_SCALE_MULTIPLIER = 0.15f;
 
         private readonly IObjectPool<NametagView> nametagViewPool;
@@ -132,7 +134,7 @@ namespace DCL.Nametags
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void UpdateTag([Data] in CameraComponent camera, Entity e, NametagView nametagView, in CharacterTransform characterTransform, in PartitionComponent partitionComponent)
+        private void UpdateTag([Data] in CameraComponent camera, Entity e, NametagView nametagView, in AvatarCustomSkinningComponent avatarSkinningComponent, in CharacterTransform characterTransform, in PartitionComponent partitionComponent)
         {
             if (partitionComponent.IsBehind || IsOutOfRenderRange(camera, characterTransform) || (camera.Mode == CameraMode.FirstPerson && World.Has<PlayerComponent>(e)))
             {
@@ -141,14 +143,21 @@ namespace DCL.Nametags
                 return;
             }
 
-            UpdateTagPosition(nametagView, camera.Camera, characterTransform.Position);
+            // To test bounds:
+//#if UNITY_EDITOR
+//            Bounds avatarBounds = avatarSkinningComponent.LocalBounds;
+//            avatarBounds.center += characterTransform.Position;
+//            avatarBounds.DrawInEditor(Color.red);
+//#endif
+
+            UpdateTagPosition(nametagView, camera.Camera, characterTransform.Position + new Vector3(0.0f, avatarSkinningComponent.LocalBounds.max.y, 0.0f));
             UpdateTagTransparencyAndScale(nametagView, camera.Camera, characterTransform.Position);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void UpdateTagPosition(NametagView view, Camera camera, Vector3 characterPosition)
+        private void UpdateTagPosition(NametagView view, Camera camera, Vector3 newPosition)
         {
-            view.transform.position = characterPosition + (Vector3.up * NAMETAG_HEIGHT_MULTIPLIER);
+            view.transform.position = newPosition;
             view.transform.LookAt(view.transform.position + camera.transform.rotation * Vector3.forward, camera.transform.rotation * Vector3.up);
         }
 
