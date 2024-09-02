@@ -187,7 +187,8 @@ namespace Global.Dynamic
 
                 await bootstrap.InitializeFeatureFlagsAsync(bootstrapContainer.IdentityCache!.Identity, bootstrapContainer.DecentralandUrlsSource, staticContainer!, ct);
 
-                if (await ApplicationVersionGuard.VersionIsOlder(staticContainer!.WebRequestsContainer.WebRequestController, ct))
+                var versions = await ApplicationVersionGuard.GetVersions(staticContainer!.WebRequestsContainer.WebRequestController, ct);
+                if (versions.current.IsOlderThan(versions.latest))
                 {
                     splashScreen.Hide();
 
@@ -196,7 +197,7 @@ namespace Global.Dynamic
                     ControllerBase<LauncherRedirectionScreenView, ControllerNoData>.ViewFactoryMethod authScreenFactory =
                         LauncherRedirectionScreenController.CreateLazily(appVerRedirectionScreenPrefab.Value.GetComponent<LauncherRedirectionScreenView>(), null);
 
-                    var launcherRedirectionScreenController = new LauncherRedirectionScreenController(authScreenFactory);
+                    var launcherRedirectionScreenController = new LauncherRedirectionScreenController(authScreenFactory, versions.current, versions.latest);
                     dynamicWorldContainer!.MvcManager.RegisterController(launcherRedirectionScreenController);
 
                     await dynamicWorldContainer!.MvcManager.ShowAsync(LauncherRedirectionScreenController.IssueCommand(), ct);

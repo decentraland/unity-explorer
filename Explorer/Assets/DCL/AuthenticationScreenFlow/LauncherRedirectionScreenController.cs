@@ -8,8 +8,13 @@ namespace DCL.AuthenticationScreenFlow
 {
     public class LauncherRedirectionScreenController: ControllerBase<LauncherRedirectionScreenView>
     {
-        public LauncherRedirectionScreenController(ViewFactoryMethod viewFactory) : base(viewFactory)
+        private readonly string current;
+        private readonly string latest;
+
+        public LauncherRedirectionScreenController(ViewFactoryMethod viewFactory, string current, string latest) : base(viewFactory)
         {
+            this.current = current;
+            this.latest = latest;
         }
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
@@ -18,6 +23,7 @@ namespace DCL.AuthenticationScreenFlow
         {
             base.OnViewInstantiated();
 
+            viewInstance.SetVersions(current, latest);
             viewInstance.CloseButton.onClick.AddListener(Application.Quit);
             viewInstance.CloseWithLauncherButton.onClick.AddListener(ApplicationVersionGuard.LaunchExternalAppAndQuit);
         }
@@ -28,6 +34,12 @@ namespace DCL.AuthenticationScreenFlow
             viewInstance.CloseButton.onClick.RemoveListener(Application.Quit);
             viewInstance.CloseWithLauncherButton.onClick.RemoveListener(ApplicationVersionGuard.LaunchExternalAppAndQuit);
         }
+
+        // protected override void OnViewShow()
+        // {
+        //     viewInstance.SetVersions();
+        //     base.OnViewShow();
+        // }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
             UniTask.Never(ct);
