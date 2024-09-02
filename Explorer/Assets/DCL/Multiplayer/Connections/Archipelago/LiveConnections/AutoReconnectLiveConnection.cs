@@ -2,9 +2,8 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using LiveKit.Internal.FFIClients.Pools.Memory;
 using System;
-using System.Net.Sockets;
 using System.Threading;
-using UnityEngine;
+using Utility.Types;
 
 namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
 {
@@ -27,7 +26,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
             this.log = log;
         }
 
-        public UniTask ConnectAsync(string adapterUrl, CancellationToken token)
+        public UniTask<Result> ConnectAsync(string adapterUrl, CancellationToken token)
         {
             cachedAdapterUrl = adapterUrl;
             return origin.ConnectAsync(adapterUrl, token);
@@ -39,26 +38,32 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
             return origin.DisconnectAsync(token);
         }
 
-        public async UniTask SendAsync(MemoryWrap data, CancellationToken token)
+        public async UniTask<EnumResult<IArchipelagoLiveConnection.ResponseError>> SendAsync(MemoryWrap data, CancellationToken token)
         {
-            try { await origin.SendAsync(data, token); }
-            catch (SocketException e)
+            var result = await origin.SendAsync(data, token);
+
+            if (result.Error?.State is IArchipelagoLiveConnection.ResponseError.ConnectionClosed)
             {
-                log($"Connection lost on sending, trying to reconnect... {e}");
+                log("Connection error on sending, ensure to reconnect...");
                 await EnsureReconnectAsync(token);
-                await SendAsync(data, token);
+                return await SendAsync(data, token);
             }
+
+            return result;
         }
 
-        public async UniTask<MemoryWrap> ReceiveAsync(CancellationToken token)
+        public async UniTask<EnumResult<MemoryWrap, IArchipelagoLiveConnection.ResponseError>> ReceiveAsync(CancellationToken token)
         {
-            try { return await origin.ReceiveAsync(token); }
-            catch (ConnectionClosedException)
+            var result = await origin.ReceiveAsync(token);
+
+            if (result.Error?.State is IArchipelagoLiveConnection.ResponseError.ConnectionClosed)
             {
                 log("Connection error on receiving, ensure to reconnect...");
                 await EnsureReconnectAsync(token);
                 return await ReceiveAsync(token);
             }
+
+            return result;
         }
 
         private async UniTask EnsureReconnectAsync(CancellationToken token)
