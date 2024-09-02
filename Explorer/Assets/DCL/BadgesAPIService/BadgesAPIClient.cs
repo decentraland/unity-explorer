@@ -114,15 +114,15 @@ namespace DCL.BadgesAPIService
                         },
                         new LatestAchievedBadgeData
                         {
-                            id = "emote-creator",
-                            name = "Emote Creator Diamond",
-                            image = "https://images.vexels.com/media/users/3/236713/isolated/preview/2e816f91528e052edec36e8f3e9f52e1-1up-gaming-pixel-art-badge.png?w=360",
-                        },
-                        new LatestAchievedBadgeData
-                        {
                             id = "traveler",
                             name = "Traveler Bronze",
                             image = "https://assets-cdn.decentraland.zone/traveler/starter/2d/normal.png",
+                        },
+                        new LatestAchievedBadgeData
+                        {
+                            id = "emote-creator",
+                            name = "Emote Creator Diamond",
+                            image = "https://images.vexels.com/media/users/3/236713/isolated/preview/2e816f91528e052edec36e8f3e9f52e1-1up-gaming-pixel-art-badge.png?w=360",
                         },
                     },
                 },
@@ -334,44 +334,12 @@ namespace DCL.BadgesAPIService
                                 },
                             },
                             isTier = true,
-                            category = "Socializer",
-                            progress = new BadgeProgressData
-                            {
-                                stepsDone = 0,
-                                nextStepsTarget = 1,
-                                totalStepsTarget = 6,
-                                lastCompletedTierAt = null,
-                                lastCompletedTierName = null,
-                                lastCompletedTierImage = null,
-                                achievedTiers = null,
-                            },
-                        },
-                        new()
-                        {
-                            id = "do-nothing",
-                            completedAt = null,
-                            name = "Do Nothing",
-                            description = "Do nothing during 5 minutes",
-                            assets = new BadgeAssetsData
-                            {
-                                textures2d = new BadgeTexturesData
-                                {
-                                    normal = "https://images.vexels.com/content/236707/preview/afk-gaming-pixel-art-badge-b103c0.png",
-                                },
-                                textures3d = new BadgeTexturesData
-                                {
-                                    normal = "https://i.ibb.co/rMchTDg/Badge03-normal.png",
-                                    hrm = "https://i.ibb.co/PgkwB3D/Badge03-hrm.png",
-                                    baseColor = "https://i.ibb.co/b15RYpX/Badge03-basecolor.png",
-                                },
-                            },
-                            isTier = false,
                             category = "Builder",
                             progress = new BadgeProgressData
                             {
                                 stepsDone = 0,
                                 nextStepsTarget = 1,
-                                totalStepsTarget = 1,
+                                totalStepsTarget = 6,
                                 lastCompletedTierAt = null,
                                 lastCompletedTierName = null,
                                 lastCompletedTierImage = null,
