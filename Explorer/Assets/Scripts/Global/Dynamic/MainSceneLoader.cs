@@ -184,7 +184,7 @@ namespace Global.Dynamic
 
                 await bootstrap.InitializeFeatureFlagsAsync(bootstrapContainer.IdentityCache!.Identity, bootstrapContainer.DecentralandUrlsSource, staticContainer!, ct);
 
-                if (debugSettings.EnableVersionUpdateGuard && await DoesApplicationRequireVersionUpdate(ct, splashScreen))
+                if (debugSettings.EnableVersionUpdateGuard && await DoesApplicationRequireVersionUpdateAsync(ct, splashScreen))
                 {
                     // stop bootstrapping;
                     return;
@@ -219,7 +219,7 @@ namespace Global.Dynamic
             }
         }
 
-        private async UniTask<bool> DoesApplicationRequireVersionUpdate(CancellationToken ct, SplashScreen splashScreen)
+        private async UniTask<bool> DoesApplicationRequireVersionUpdateAsync(CancellationToken ct, SplashScreen splashScreen)
         {
             var appVersionGuard = new ApplicationVersionGuard(staticContainer!.WebRequestsContainer.WebRequestController, bootstrapContainer!.WebBrowser);
 
