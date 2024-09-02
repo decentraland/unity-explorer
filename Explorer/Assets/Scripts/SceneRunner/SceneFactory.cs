@@ -49,7 +49,7 @@ namespace SceneRunner
         private readonly ISDKComponentsRegistry sdkComponentsRegistry;
         private readonly ISharedPoolsProvider sharedPoolsProvider;
         private readonly IMVCManager mvcManager;
-        private readonly IRealmData? realmData;
+        private readonly IRealmData realmData;
         private readonly ICommunicationControllerHub messagePipesHub;
 
         private IGlobalWorldActions globalWorldActions = null!;
@@ -69,7 +69,7 @@ namespace SceneRunner
             IDecentralandUrlsSource decentralandUrlsSource,
             IWebRequestController webRequestController,
             IRoomHub roomHub,
-            IRealmData? realmData,
+            IRealmData realmData,
             ICommunicationControllerHub messagePipesHub)
         {
             this.ecsWorldFactory = ecsWorldFactory;
@@ -172,7 +172,7 @@ namespace SceneRunner
 
             if (ENABLE_SDK_OBSERVABLES)
             {
-                var sdkCommsControllerAPI = new SDKMessageBusCommsAPIImplementation(sceneData, messagePipesHub, sceneRuntime, deps.SceneStateProvider);
+                var sdkCommsControllerAPI = new SDKMessageBusCommsAPIImplementation(realmData, sceneData, messagePipesHub, sceneRuntime, deps.SceneStateProvider);
                 sceneRuntime.RegisterSDKMessageBusCommsApi(sdkCommsControllerAPI);
 
                 runtimeDeps = new SceneInstanceDependencies.WithRuntimeJsAndSDKObservablesEngineAPI(deps, sceneRuntime, sharedPoolsProvider, crdtSerializer, mvcManager, globalWorldActions, realmData!, messagePipesHub);
