@@ -19,14 +19,18 @@ namespace DCL.ApplicationVersionGuard
 {
     public class ApplicationVersionGuard
     {
-        private const string API_URL = "https://api.github.com/repos/decentraland/unity-explorer/releases/latest";
-        private const string LAUNCHER_API_URL = "https://api.github.com/repos/decentraland/launcher/releases/latest";
+        private const string EXPLORER_LATEST_RELEASE_URL = "https://api.github.com/repos/decentraland/unity-explorer/releases/latest";
+        private const string LAUNCHER_LATEST_RELEASE_URL = "https://api.github.com/repos/decentraland/launcher/releases/latest";
+        private const string LAUNCHER_DOWNLOAD_URL = "https://github.com/decentraland/launcher/releases/download";
 
         private const string LAUNCHER_EXECUTABLE_NAME = "Decentraland Launcher";
         private const string LAUNCHER_PATH_MAC = "/Applications/" + LAUNCHER_EXECUTABLE_NAME + ".app";
         private const string LAUNCHER_PATH_WIN_MAIN = @"C:\Program Files\Decentraland Launcher\" + LAUNCHER_EXECUTABLE_NAME + ".exe";
         private const string LAUNCHER_PATH_WIN_86 = @"C:\Program Files (x86)\Decentraland Launcher\" + LAUNCHER_EXECUTABLE_NAME + ".exe";
         private const string LAUNCHER_PATH_WIN_COMBINED = @"Programs\Decentraland Launcher\" + LAUNCHER_EXECUTABLE_NAME + ".exe";
+        private const string DECENTRALAND_LAUNCHER_WIN_X64_EXE = "Decentraland-Launcher-win-x64.exe";
+        private const string DECENTRALAND_LAUNCHER_MAC_ARM_64DMG = "Decentraland-Launcher-mac-arm64.dmg";
+        private const string DECENTRALAND_LAUNCHER_MAC_X_64DMG = "Decentraland-Launcher-mac-x64.dmg";
 
         private readonly IWebRequestController webRequestController;
         private readonly IWebBrowser webBrowser;
@@ -39,7 +43,7 @@ namespace DCL.ApplicationVersionGuard
 
         public async UniTask<(string current, string latest)> GetVersionsAsync(CancellationToken ct)
         {
-            FlatFetchResponse response = await webRequestController.GetAsync<FlatFetchResponse<GenericGetRequest>, FlatFetchResponse>(API_URL, new FlatFetchResponse<GenericGetRequest>(), ct);
+            FlatFetchResponse response = await webRequestController.GetAsync<FlatFetchResponse<GenericGetRequest>, FlatFetchResponse>(EXPLORER_LATEST_RELEASE_URL, new FlatFetchResponse<GenericGetRequest>(), ct);
 
             GitHubRelease latestRelease = JsonUtility.FromJson<GitHubRelease>(response.body);
             string latestVersion = latestRelease.tag_name.TrimStart('v');
@@ -52,95 +56,87 @@ namespace DCL.ApplicationVersionGuard
             string? launcherPath = GetLauncherPath();
 
             if (string.IsNullOrEmpty(launcherPath))
-                await DownloadAndRunLauncherAsync(ct);
+            {
+                await DownloadLauncherAsync(ct);
+                Quit();
+            }
             else
-                RunLauncherAndQuit(launcherPath);
+            {
+                ProcessStartInfo startInfo = PrepareLauncherStartInfo(launcherPath);
+
+                try { Process.Start(startInfo); }
+                catch (Exception e)
+                {
+                    if (e is not OperationCanceledException)
+                        ReportHub.LogException(e, ReportCategory.UNSPECIFIED);
+                }
+                finally { Quit(); }
+            }
         }
 
-        private async UniTask DownloadAndRunLauncherAsync(CancellationToken ct)
+        private static void Quit()
+        {
+#if UNITY_EDITOR
+            EditorApplication.isPlaying = false;
+#else
+                Application.Quit();
+#endif
+        }
+
+        private async UniTask DownloadLauncherAsync(CancellationToken ct)
         {
             string downloadUrl = await GetLauncherDownloadUrlAsync(ct);
 
-            if (string.IsNullOrEmpty(downloadUrl))
+            if (!string.IsNullOrEmpty(downloadUrl))
+                webBrowser.OpenUrl(downloadUrl);
+            else
+                ReportHub.LogError(ReportCategory.UNSPECIFIED, "Failed to get launcher download URL.");
+
+            return;
+
+            async UniTask<string> GetLauncherDownloadUrlAsync(CancellationToken ct)
             {
-                Debug.LogError("Failed to get launcher download URL.");
-                return;
+                FlatFetchResponse response = await webRequestController.GetAsync<FlatFetchResponse<GenericGetRequest>, FlatFetchResponse>(LAUNCHER_LATEST_RELEASE_URL, new FlatFetchResponse<GenericGetRequest>(), ct);
+
+                GitHubRelease latestRelease = JsonUtility.FromJson<GitHubRelease>(response.body);
+                string version = latestRelease.tag_name.TrimStart('v');
+
+                string assetName = GetLauncherAssetName();
+                return $"{LAUNCHER_DOWNLOAD_URL}/{version}/{assetName}";
             }
-
-            webBrowser.OpenUrl(downloadUrl);
-
-            Debug.Log($"Downloading launcher from: {downloadUrl}");
-
-            // You might want to show a message to the user here
-        }
-
-        private async UniTask<string> GetLauncherDownloadUrlAsync(CancellationToken ct)
-        {
-            FlatFetchResponse response = await webRequestController.GetAsync<FlatFetchResponse<GenericGetRequest>, FlatFetchResponse>(LAUNCHER_API_URL, new FlatFetchResponse<GenericGetRequest>(), ct);
-
-            GitHubRelease latestRelease = JsonUtility.FromJson<GitHubRelease>(response.body);
-            string version = latestRelease.tag_name.TrimStart('v');
-
-            string assetName = GetLauncherAssetName();
-            return $"https://github.com/decentraland/launcher/releases/download/{version}/{assetName}";
         }
 
         private static string GetLauncherAssetName()
         {
+            return Application.platform switch
+                   {
+                       RuntimePlatform.WindowsEditor or RuntimePlatform.WindowsPlayer => DECENTRALAND_LAUNCHER_WIN_X64_EXE,
+                       RuntimePlatform.OSXEditor or RuntimePlatform.OSXPlayer => SystemInfo.processorType.ToLower().Contains("arm") ? DECENTRALAND_LAUNCHER_MAC_ARM_64DMG : DECENTRALAND_LAUNCHER_MAC_X_64DMG,
+                       _ => throw new NotSupportedException("Unsupported platform for launcher download."),
+                   };
+        }
+
+        private static ProcessStartInfo PrepareLauncherStartInfo(string launcherPath)
+        {
+            var startInfo = new ProcessStartInfo
+            {
+                UseShellExecute = true,
+            };
+
             switch (Application.platform)
             {
                 case RuntimePlatform.WindowsEditor:
                 case RuntimePlatform.WindowsPlayer:
-                    return "Decentraland-Launcher-win-x64.exe";
+                    startInfo.FileName = launcherPath;
+                    return startInfo;
                 case RuntimePlatform.OSXEditor:
                 case RuntimePlatform.OSXPlayer:
-                    return SystemInfo.processorType.ToLower().Contains("arm")
-                        ? "Decentraland-Launcher-mac-arm64.dmg"
-                        : "Decentraland-Launcher-mac-x64.dmg";
+                    startInfo.FileName = "open";
+                    startInfo.Arguments = $"-n \"{launcherPath}\"";
+                    return startInfo;
                 default:
-                    throw new NotSupportedException("Unsupported platform for launcher download.");
-            }
-        }
-
-        private static void RunLauncherAndQuit(string launcherPath)
-        {
-            try
-            {
-                var startInfo = new ProcessStartInfo
-                {
-                    UseShellExecute = true,
-                };
-
-                switch (Application.platform)
-                {
-                    case RuntimePlatform.WindowsEditor:
-                    case RuntimePlatform.WindowsPlayer:
-                        startInfo.FileName = launcherPath;
-                        break;
-                    case RuntimePlatform.OSXEditor:
-                    case RuntimePlatform.OSXPlayer:
-                        startInfo.FileName = "open";
-                        startInfo.Arguments = $"-n \"{launcherPath}\"";
-                        break;
-                    default:
-                        ReportHub.LogError(ReportCategory.UNSPECIFIED, "Unsupported platform for launching the application.");
-                        return;
-                }
-
-                Process.Start(startInfo);
-            }
-            catch (Exception e)
-            {
-                if (e is not OperationCanceledException)
-                    ReportHub.LogException(e, ReportCategory.UNSPECIFIED);
-            }
-            finally
-            {
-#if UNITY_EDITOR
-                EditorApplication.isPlaying = false;
-#else
-                Application.Quit();
-#endif
+                    ReportHub.LogError(ReportCategory.UNSPECIFIED, "Unsupported platform for launching the application.");
+                    return startInfo;
             }
         }
 
@@ -170,7 +166,7 @@ namespace DCL.ApplicationVersionGuard
 
                     break;
                 default:
-                    Debug.LogError("Unsupported platform for launching the application.");
+                    ReportHub.LogError(ReportCategory.UNSPECIFIED, "Unsupported platform for launching the application.");
                     return null;
             }
 
