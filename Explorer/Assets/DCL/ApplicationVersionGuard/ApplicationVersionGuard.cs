@@ -1,4 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.WebRequests;
 using SceneRuntime.Apis.Modules.SignedFetch.Messages;
 using System;
@@ -24,7 +25,7 @@ namespace Global.Dynamic
         private const string LAUNCHER_PATH_WIN_86 = @"C:\Program Files (x86)\Decentraland Launcher\" + LAUNCHER_EXECUTABLE_NAME + ".exe";
         private const string LAUNCHER_PATH_WIN_COMBINED = @"Programs\Decentraland Launcher\" + LAUNCHER_EXECUTABLE_NAME + ".exe";
 
-        public static async UniTask<(string current, string latest)> GetVersions(IWebRequestController webRequestController, CancellationToken ct)
+        public static async UniTask<(string current, string latest)> GetVersionsAsync(IWebRequestController webRequestController, CancellationToken ct)
         {
             var response = await webRequestController.GetAsync<FlatFetchResponse<GenericGetRequest>, FlatFetchResponse>(API_URL, new FlatFetchResponse<GenericGetRequest>(), ct);
 
@@ -92,11 +93,15 @@ namespace Global.Dynamic
                 Process.Start(startInfo);
 
                 // Quit the Unity application
+#if UNITY_EDITOR
+                UnityEditor.EditorApplication.isPlaying = false;
+#else
                 Application.Quit();
+#endif
             }
             catch (Exception e)
             {
-                Debug.LogError($"Error launching external application: {e.Message}");
+                ReportHub.LogException(e, ReportCategory.UNSPECIFIED);
             }
         }
 

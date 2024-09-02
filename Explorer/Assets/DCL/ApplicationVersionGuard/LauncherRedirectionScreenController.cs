@@ -6,10 +6,12 @@ using UnityEngine;
 
 namespace DCL.AuthenticationScreenFlow
 {
-    public class LauncherRedirectionScreenController: ControllerBase<LauncherRedirectionScreenView>
+    public class LauncherRedirectionScreenController : ControllerBase<LauncherRedirectionScreenView>
     {
         private readonly string current;
         private readonly string latest;
+
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
 
         public LauncherRedirectionScreenController(ViewFactoryMethod viewFactory, string current, string latest) : base(viewFactory)
         {
@@ -17,22 +19,29 @@ namespace DCL.AuthenticationScreenFlow
             this.latest = latest;
         }
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
-
         protected override void OnViewInstantiated()
         {
             base.OnViewInstantiated();
 
             viewInstance.SetVersions(current, latest);
-            viewInstance.CloseButton.onClick.AddListener(Application.Quit);
+            viewInstance.CloseButton.onClick.AddListener(Quit);
             viewInstance.CloseWithLauncherButton.onClick.AddListener(ApplicationVersionGuard.LaunchExternalAppAndQuit);
         }
 
         public override void Dispose()
         {
             base.Dispose();
-            viewInstance.CloseButton.onClick.RemoveListener(Application.Quit);
+            viewInstance.CloseButton.onClick.RemoveListener(Quit);
             viewInstance.CloseWithLauncherButton.onClick.RemoveListener(ApplicationVersionGuard.LaunchExternalAppAndQuit);
+        }
+
+        private static void Quit()
+        {
+#if UNITY_EDITOR
+            UnityEditor.EditorApplication.isPlaying = false;
+#else
+            Application.Quit();
+#endif
         }
 
         // protected override void OnViewShow()

@@ -17,8 +17,7 @@ namespace DCL.AuthenticationScreenFlow
         [field: SerializeField]
         public Button CloseButton { get; private set; } = null!;
 
-        [field: SerializeField]
-        public TMP_Text Description { get; private set; } = null!;
+        [SerializeField] private TMP_Text Description  = null!;
 
         public void SetVersions(string current, string latest)
         {

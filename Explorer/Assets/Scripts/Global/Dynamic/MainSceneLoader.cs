@@ -24,11 +24,11 @@ namespace Global.Dynamic
 {
     public interface IDebugSettings
     {
-        bool ShowSplash { get; }
         bool ShowAuthentication { get; }
         bool ShowLoading { get; }
         bool EnableLandscape { get; }
         bool EnableLOD { get; }
+        bool EnableVersionUpdateGuard { get; }
         bool EnableEmulateNoLivekitConnection { get; }
         bool OverrideConnectionQuality { get; }
         ConnectionQuality ConnectionQuality { get; }
@@ -39,23 +39,17 @@ namespace Global.Dynamic
     {
         private static readonly DebugSettings RELEASE_SETTINGS = Release();
 
-        [SerializeField]
-        private bool showSplash;
-        [SerializeField]
-        private bool showAuthentication;
-        [SerializeField]
-        private bool showLoading;
-        [SerializeField]
-        private bool enableLandscape;
-        [SerializeField]
-        private bool enableLOD;
-        [SerializeField]
-        private bool enableEmulateNoLivekitConnection;
+        [SerializeField] private bool showSplash;
+        [SerializeField] private bool showAuthentication;
+        [SerializeField] private bool showLoading;
+        [SerializeField] private bool enableLandscape;
+        [SerializeField] private bool enableLOD;
+        [SerializeField] private bool enableVersionUpdateGuard;
+        [SerializeField] private bool enableEmulateNoLivekitConnection;
+
         [Space]
-        [SerializeField]
-        private bool overrideConnectionQuality;
-        [SerializeField]
-        private ConnectionQuality connectionQuality;
+        [SerializeField] private bool overrideConnectionQuality;
+        [SerializeField] private ConnectionQuality connectionQuality;
 
         public static DebugSettings Release() =>
             new ()
@@ -65,6 +59,7 @@ namespace Global.Dynamic
                 showLoading = true,
                 enableLandscape = true,
                 enableLOD = true,
+                enableVersionUpdateGuard = true,
                 enableEmulateNoLivekitConnection = false,
                 overrideConnectionQuality = false,
                 connectionQuality = ConnectionQuality.QualityExcellent
@@ -76,6 +71,7 @@ namespace Global.Dynamic
         public bool ShowLoading => Debug.isDebugBuild ? this.showLoading : RELEASE_SETTINGS.showLoading;
         public bool EnableLandscape => Debug.isDebugBuild ? this.enableLandscape : RELEASE_SETTINGS.enableLandscape;
         public bool EnableLOD => Debug.isDebugBuild ? this.enableLOD : RELEASE_SETTINGS.enableLOD;
+        public bool EnableVersionUpdateGuard => Debug.isDebugBuild ? this.enableVersionUpdateGuard : RELEASE_SETTINGS.enableVersionUpdateGuard;
         public bool EnableEmulateNoLivekitConnection => Debug.isDebugBuild ? this.enableEmulateNoLivekitConnection : RELEASE_SETTINGS.enableEmulateNoLivekitConnection;
         public bool OverrideConnectionQuality => Debug.isDebugBuild ? this.overrideConnectionQuality : RELEASE_SETTINGS.overrideConnectionQuality;
         public ConnectionQuality ConnectionQuality => Debug.isDebugBuild ? this.connectionQuality : RELEASE_SETTINGS.connectionQuality;
@@ -187,20 +183,9 @@ namespace Global.Dynamic
 
                 await bootstrap.InitializeFeatureFlagsAsync(bootstrapContainer.IdentityCache!.Identity, bootstrapContainer.DecentralandUrlsSource, staticContainer!, ct);
 
-                var versions = await ApplicationVersionGuard.GetVersions(staticContainer!.WebRequestsContainer.WebRequestController, ct);
-                if (versions.current.IsOlderThan(versions.latest))
+                if (debugSettings.EnableVersionUpdateGuard && await DoesApplicationRequireVersionUpdate(ct, splashScreen))
                 {
-                    splashScreen.Hide();
-
-                    var appVerRedirectionScreenPrefab = await bootstrapContainer.AssetsProvisioner.ProvideMainAssetAsync(dynamicSettings.AppVerRedirectionScreenPrefab, ct);
-
-                    ControllerBase<LauncherRedirectionScreenView, ControllerNoData>.ViewFactoryMethod authScreenFactory =
-                        LauncherRedirectionScreenController.CreateLazily(appVerRedirectionScreenPrefab.Value.GetComponent<LauncherRedirectionScreenView>(), null);
-
-                    var launcherRedirectionScreenController = new LauncherRedirectionScreenController(authScreenFactory, versions.current, versions.latest);
-                    dynamicWorldContainer!.MvcManager.RegisterController(launcherRedirectionScreenController);
-
-                    await dynamicWorldContainer!.MvcManager.ShowAsync(LauncherRedirectionScreenController.IssueCommand(), ct);
+                    // stop bootstrapping;
                     return;
                 }
 
@@ -231,6 +216,28 @@ namespace Global.Dynamic
                 GameReports.PrintIsDead();
                 throw;
             }
+        }
+
+        private async UniTask<bool> DoesApplicationRequireVersionUpdate(CancellationToken ct, SplashScreen splashScreen)
+        {
+            var versions = await ApplicationVersionGuard.GetVersionsAsync(staticContainer!.WebRequestsContainer.WebRequestController, ct);
+            if (versions.current.IsOlderThan(versions.latest))
+            {
+                splashScreen.Hide();
+
+                var appVerRedirectionScreenPrefab = await bootstrapContainer.AssetsProvisioner.ProvideMainAssetAsync(dynamicSettings.AppVerRedirectionScreenPrefab, ct);
+
+                ControllerBase<LauncherRedirectionScreenView, ControllerNoData>.ViewFactoryMethod authScreenFactory =
+                    LauncherRedirectionScreenController.CreateLazily(appVerRedirectionScreenPrefab.Value.GetComponent<LauncherRedirectionScreenView>(), null);
+
+                var launcherRedirectionScreenController = new LauncherRedirectionScreenController(authScreenFactory, versions.current, versions.latest);
+                dynamicWorldContainer!.MvcManager.RegisterController(launcherRedirectionScreenController);
+
+                await dynamicWorldContainer!.MvcManager.ShowAsync(LauncherRedirectionScreenController.IssueCommand(), ct);
+                return true;
+            }
+
+            return false;
         }
 
         private void DisableInputs()
