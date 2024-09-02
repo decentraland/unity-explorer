@@ -4,7 +4,6 @@ using UnityEngine;
 
 namespace DCL.Multiplayer.Movement.Settings
 {
-    [CreateAssetMenu(fileName = "MessageEncodingSettings", menuName = "DCL/MessageEncodingSettings")]
     public class MessageEncodingSettings : ScriptableObject
     {
         public LandscapeData landscapeData;

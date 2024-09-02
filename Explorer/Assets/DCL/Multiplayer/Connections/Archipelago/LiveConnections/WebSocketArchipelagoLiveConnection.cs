@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading;
 using Utility.Multithreading;
 using Utility.Ownership;
+using Utility.Types;
 
 namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
 {
@@ -34,12 +35,16 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
             current = Current.New(webSocketFactory);
         }
 
-        public async UniTask ConnectAsync(string adapterUrl, CancellationToken token)
+        public async UniTask<Result> ConnectAsync(string adapterUrl, CancellationToken token)
         {
             TryUpdateWebSocket();
 
-            try { await current!.Value.WebSocket.ConnectAsync(new Uri(adapterUrl), token).AsUniTask(false); }
-            catch (Exception e) { throw new Exception($"Cannot connect to adapter url: {adapterUrl}", e); }
+            try
+            {
+                await current!.Value.WebSocket.ConnectAsync(new Uri(adapterUrl), token).AsUniTask(false);
+                return Result.SuccessResult();
+            }
+            catch (Exception e) { return Result.ErrorResult($"Cannot connect to adapter url: {adapterUrl}, {e.Message}"); }
         }
 
         public UniTask DisconnectAsync(CancellationToken token)
@@ -48,21 +53,37 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
             return current!.Value.WebSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, token)!.AsUniTask();
         }
 
-        public async UniTask SendAsync(MemoryWrap data, CancellationToken token)
+        public async UniTask<EnumResult<IArchipelagoLiveConnection.ResponseError>> SendAsync(MemoryWrap data, CancellationToken token)
         {
             if (IsWebSocketInvalid())
-                throw new InvalidOperationException(
-                    $"Cannot send data, ensure that connection is correct, the connection is invalid: {current?.WebSocket.State}"
-                );
+                return EnumResult<IArchipelagoLiveConnection.ResponseError>
+                   .ErrorResult(
+                        IArchipelagoLiveConnection.ResponseError.MessageError,
+                        $"Cannot send data, ensure that connection is correct, the connection is invalid: {current?.WebSocket.State}"
+                    );
 
-            using (data)
-                await current!.Value.WebSocket.SendAsync(data.DangerousArraySegment(), WebSocketMessageType.Binary, true, token)!;
+            try
+            {
+                using (data)
+                    await current!.Value.WebSocket.SendAsync(data.DangerousArraySegment(), WebSocketMessageType.Binary, true, token)!;
+
+                return EnumResult<IArchipelagoLiveConnection.ResponseError>.SuccessResult();
+            }
+            catch (Exception e)
+            {
+                return EnumResult<IArchipelagoLiveConnection.ResponseError>
+                   .ErrorResult(
+                        IArchipelagoLiveConnection.ResponseError.ConnectionClosed,
+                        $"Cannot send data, {e.Message}"
+                    );
+            }
         }
 
-        public async UniTask<MemoryWrap> ReceiveAsync(CancellationToken token)
+        public async UniTask<EnumResult<MemoryWrap, IArchipelagoLiveConnection.ResponseError>> ReceiveAsync(CancellationToken token)
         {
             if (IsWebSocketInvalid())
-                throw new InvalidOperationException(
+                return EnumResult<MemoryWrap, IArchipelagoLiveConnection.ResponseError>.ErrorResult(
+                    IArchipelagoLiveConnection.ResponseError.MessageError,
                     $"Cannot receive data, ensure that connection is correct, the connection is invalid: {current?.WebSocket.State}"
                 );
 
@@ -73,17 +94,29 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
 
             using MemoryWrap memory = memoryPool.Memory(BUFFER_SIZE);
             byte[] buffer = memory.DangerousBuffer();
-            WebSocketReceiveResult? result = await current!.Value.WebSocket.ReceiveAsync(buffer, token)!;
 
-            return result.MessageType switch
-                   {
-                       WebSocketMessageType.Text => throw new NotSupportedException(
-                           $"Expected Binary, Text messages are not supported: {AsText(result, buffer)}"
-                       ),
-                       WebSocketMessageType.Binary => CopiedMemory(buffer, result.Count),
-                       WebSocketMessageType.Close => throw new ConnectionClosedException(current!.Value.WebSocket),
-                       _ => throw new ArgumentOutOfRangeException(),
-                   };
+            try
+            {
+                WebSocketReceiveResult? result = await current!.Value.WebSocket.ReceiveAsync(buffer, token)!;
+
+                return result.MessageType switch
+                       {
+                           WebSocketMessageType.Text => EnumResult<MemoryWrap, IArchipelagoLiveConnection.ResponseError>.ErrorResult(IArchipelagoLiveConnection.ResponseError.MessageError, $"Expected Binary, Text messages are not supported: {AsText(result, buffer)}"),
+                           WebSocketMessageType.Binary => EnumResult<MemoryWrap, IArchipelagoLiveConnection.ResponseError>.SuccessResult(CopiedMemory(buffer, result.Count)),
+                           WebSocketMessageType.Close => ConnectionClosedException.NewErrorResult(current!.Value.WebSocket),
+                           _ => EnumResult<MemoryWrap, IArchipelagoLiveConnection.ResponseError>.ErrorResult(
+                               IArchipelagoLiveConnection.ResponseError.MessageError,
+                               $"Unknown message type: {result.MessageType}"
+                           ),
+                       };
+            }
+            catch (Exception e)
+            {
+                return EnumResult<MemoryWrap, IArchipelagoLiveConnection.ResponseError>.ErrorResult(
+                    IArchipelagoLiveConnection.ResponseError.MessageError,
+                    $"Cannot receive data, {e.Message}"
+                );
+            }
         }
 
         private static string AsText(WebSocketReceiveResult result, byte[] buffer)

@@ -1,9 +1,7 @@
-﻿using Arch.Core;
-using DCL.MapRenderer.CoordsUtils;
+﻿using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.MapLayers;
 using DCL.MapRenderer.MapLayers.ParcelHighlight;
 using DCL.MapRenderer.MapLayers.Pins;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
@@ -18,7 +16,7 @@ namespace DCL.MapRenderer.MapCameraController
         private readonly PinMarkerController markerController;
         private readonly Camera camera;
 
-        private IParcelHighlightMarker marker;
+        private IParcelHighlightMarker? marker;
 
         public bool HighlightEnabled { get; private set; }
 
@@ -61,24 +59,22 @@ namespace DCL.MapRenderer.MapCameraController
             marker?.Deactivate();
         }
 
-        public bool TryGetParcel(Vector2 normalizedCoordinates, out Vector2Int parcel, out IPinMarker mark)
+        public bool TryGetParcel(Vector2 normalizedCoordinates, out Vector2Int parcel, out IPinMarker? mark)
         {
-            mark = null;
             bool parcelExists = coordsUtils.TryGetCoordsWithinInteractableBounds(GetLocalPosition(normalizedCoordinates), out parcel);
-
-            if (parcelExists && markerController != null)
-            {
-                foreach (IPinMarker pinMarker in markerController.markers.Values)
-                {
-                    if (pinMarker.ParcelPosition == parcel)
-                    {
-                        mark = pinMarker;
-                        break;
-                    }
-                }
-            }
-
+            mark = null;
+            if (parcelExists) { mark = GetPinMarkerOnParcel(parcel); }
             return parcelExists;
+        }
+
+        public IPinMarker? GetPinMarkerOnParcel(Vector2Int parcel)
+        {
+            if (markerController != null) //This check is only needed for tests -_-
+            {
+                foreach (IPinMarker mark in markerController.markers.Values)
+                    if (mark.ParcelPosition == parcel) { return mark; }
+            }
+            return null;
         }
 
         public Vector2 GetNormalizedPosition(Vector2Int parcel)

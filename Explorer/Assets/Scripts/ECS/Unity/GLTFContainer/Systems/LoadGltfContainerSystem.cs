@@ -3,6 +3,7 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
+using CRDT;
 using DCL.ECSComponents;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
@@ -12,6 +13,7 @@ using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.GLTFContainer.Components.Defaults;
 using System.Threading;
 using DCL.Diagnostics;
+using DCL.Interaction.Utility;
 using SceneRunner.Scene;
 using UnityEngine.Assertions;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.Unity.GLTFContainer.Asset.Components.GltfContainerAsset, ECS.Unity.GLTFContainer.Asset.Components.GetGltfContainerAssetIntention>;
@@ -27,11 +29,14 @@ namespace ECS.Unity.GLTFContainer.Systems
     {
         private readonly EntityEventBuffer<GltfContainerComponent> eventsBuffer;
         private readonly ISceneData sceneData;
+        private readonly IEntityCollidersSceneCache entityCollidersSceneCache;
 
-        internal LoadGltfContainerSystem(World world, EntityEventBuffer<GltfContainerComponent> eventsBuffer, ISceneData sceneData) : base(world)
+        internal LoadGltfContainerSystem(World world, EntityEventBuffer<GltfContainerComponent> eventsBuffer, ISceneData sceneData,
+            IEntityCollidersSceneCache entityCollidersSceneCache) : base(world)
         {
             this.eventsBuffer = eventsBuffer;
             this.sceneData = sceneData;
+            this.entityCollidersSceneCache = entityCollidersSceneCache;
         }
 
         protected override void Update(float t)
@@ -66,7 +71,8 @@ namespace ECS.Unity.GLTFContainer.Systems
 
         // SDK Component was changed
         [Query]
-        private void ReconfigureGltfContainer(Entity entity, ref GltfContainerComponent component, ref PBGltfContainer sdkComponent, ref PartitionComponent partitionComponent)
+        private void ReconfigureGltfContainer(Entity entity, ref GltfContainerComponent component, ref PBGltfContainer sdkComponent, ref PartitionComponent partitionComponent,
+            ref CRDTEntity sdkEntity)
         {
             if (!sdkComponent.IsDirty) return;
 
@@ -116,9 +122,11 @@ namespace ECS.Unity.GLTFContainer.Systems
                         ConfigureGltfContainerColliders.SetupInvisibleColliders(ref component, result.Asset);
                     }
 
+                    entityCollidersSceneCache.Associate(in component, World.Reference(entity), sdkEntity);
+
                     return;
             }
         }
-        
+
     }
 }
