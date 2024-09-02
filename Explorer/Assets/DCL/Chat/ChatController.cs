@@ -365,8 +365,6 @@ namespace DCL.Chat
 
         private void OnInputDeselected(string inputText)
         {
-            ReportHub.LogError(ReportData.UNSPECIFIED, $"Input Deselected");
-
             isInputSelected = false;
             viewInstance!.EmojiPanelButton.SetColor(false);
             viewInstance.CharacterCounter.gameObject.SetActive(false);

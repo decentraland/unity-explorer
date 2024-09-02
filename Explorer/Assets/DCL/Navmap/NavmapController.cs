@@ -208,8 +208,9 @@ namespace DCL.Navmap
 
         private void OnResultClicked(string coordinates)
         {
-            VectorUtilities.TryParseVector2Int(coordinates, out Vector2Int result);
-            FloatingPanelController.HandlePanelVisibility(result, null, true);
+            if (VectorUtilities.TryParseVector2Int(coordinates, out Vector2Int result))
+                //This will trigger a "parcel clicked" event with the data from the parcel
+                this.navmapView.SatelliteRenderImage.OnSearchResultParcelSelected(result);
         }
 
         private void OnParcelClicked(MapRenderImage.ParcelClickData clickedParcel)

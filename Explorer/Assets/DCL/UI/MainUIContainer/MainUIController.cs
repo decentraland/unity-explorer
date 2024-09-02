@@ -49,7 +49,7 @@ namespace DCL.UI.MainUI
         {
             sidebarBus.SidebarBlockStatusChange += OnSidebarBlockStatusChanged;
             sidebarBus.SidebarAutohideStatusChange += OnSidebarAutohideStatusChanged;
-            viewInstance.pointerDetectionArea.OnEnterArea += OnPointerEnter;
+            viewInstance!.pointerDetectionArea.OnEnterArea += OnPointerEnter;
             viewInstance.pointerDetectionArea.OnExitArea += OnPointerExit;
             mvcManager.ShowAsync(SidebarController.IssueCommand()).Forget();
             mvcManager.ShowAsync(MinimapController.IssueCommand()).Forget();
