@@ -13,7 +13,7 @@ namespace PortableExperiences.Controller
 
         bool CanKillPortableExperience(ENS ens);
 
-        UniTask<SpawnResponse> CreatePortableExperienceByEnsAsync(ENS ens, CancellationToken ct, bool isGlobalPortableExperience = false);
+        UniTask<SpawnResponse> CreatePortableExperienceByEnsAsync(ENS ens, CancellationToken ct, bool isGlobalPortableExperience = false, bool force = false);
 
         ExitResponse UnloadPortableExperienceByEns(ENS ens);
 

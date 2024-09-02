@@ -3,6 +3,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.CommunicationData.URLHelpers;
 using DCL.Diagnostics;
+using DCL.FeatureFlags;
 using DCL.Ipfs;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
@@ -27,6 +28,7 @@ namespace PortableExperiences.Controller
         private readonly World globalWorld;
         private readonly List<IPortableExperiencesController.SpawnResponse> spawnResponsesList = new ();
         private readonly ServerAbout serverAbout = new ();
+        private readonly FeatureFlagsCache featureFlagsCache;
         public Dictionary<ENS, Entity> PortableExperienceEntities { get; } = new ();
 
 
@@ -34,16 +36,22 @@ namespace PortableExperiences.Controller
             World globalWorld,
             IWeb3IdentityCache web3IdentityCache,
             IWebRequestController webRequestController,
-            IScenesCache scenesCache)
+            IScenesCache scenesCache,
+            FeatureFlagsCache featureFlagsCache)
         {
             this.globalWorld = globalWorld;
             this.web3IdentityCache = web3IdentityCache;
             this.webRequestController = webRequestController;
             this.scenesCache = scenesCache;
+            this.featureFlagsCache = featureFlagsCache;
         }
 
-        public async UniTask<IPortableExperiencesController.SpawnResponse> CreatePortableExperienceByEnsAsync(ENS ens, CancellationToken ct, bool isGlobalPortableExperience = false)
+        public async UniTask<IPortableExperiencesController.SpawnResponse> CreatePortableExperienceByEnsAsync(ENS ens, CancellationToken ct, bool isGlobalPortableExperience = false, bool force = false)
         {
+            if (!force && !featureFlagsCache.Configuration.IsEnabled("PortableExperiences")) throw new Exception("Portable Experiences are disabled");
+
+            if (!force && !featureFlagsCache.Configuration.IsEnabled("GlobalPortableExperiences") && !isGlobalPortableExperience) throw new Exception("Only Global Portable Experiences are allowed");
+
             string worldUrl = string.Empty;
 
             if (ens.IsValid) { worldUrl = ens.ConvertEnsToWorldUrl(); }
@@ -62,6 +70,7 @@ namespace PortableExperiences.Controller
                 //The loaded realm does not have any fixed scene, so it cannot be loaded as a Portable Experience
                 throw new Exception($"Scene not Available in provided Portable Experience with ens: {ens}");
             }
+
             var realmData = new RealmData();
             realmData.Reconfigure(
                 new IpfsRealm(web3IdentityCache, webRequestController, portableExperiencePath, result),
@@ -83,6 +92,8 @@ namespace PortableExperiences.Controller
 
         public bool CanKillPortableExperience(ENS ens)
         {
+            if (!featureFlagsCache.Configuration.IsEnabled("PortableExperiences")) return false;
+
             ISceneFacade currentSceneFacade = scenesCache.CurrentScene;
             if (currentSceneFacade == null) return false;
 

@@ -14,6 +14,7 @@ using Global.AppArgs;
 using LiveKit.Proto;
 using SceneRunner.Debugging;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using UnityEngine;
@@ -206,14 +207,24 @@ namespace Global.Dynamic
 
                 await bootstrap.UserInitializationAsync(dynamicWorldContainer!, globalWorld, playerEntity, splashScreen, ct);
 
-                //TODO: Implement loading this (or more addresses) from Unleash
                 if (debugSettings.portableExperiencesEnsToLoad != null)
                 {
                     foreach (string pxEns in debugSettings.portableExperiencesEnsToLoad)
                     {
-                        await staticContainer.PortableExperiencesController!.CreatePortableExperienceByEnsAsync(new ENS(pxEns), ct, true);
+                        staticContainer.PortableExperiencesController!.CreatePortableExperienceByEnsAsync(new ENS(pxEns), ct, true, true).Forget();
                     }
                 }
+
+                if (staticContainer.FeatureFlagsCache.Configuration.IsEnabled("GlobalPortableExperience", "csv-variant"))
+                {
+                    if (!staticContainer.FeatureFlagsCache.Configuration.TryGetCsvPayload("GlobalPortableExperience", "csv-variant", out List<List<string>>? csv)) return;
+
+                    foreach (string value in csv[0])
+                    {
+                        staticContainer.PortableExperiencesController!.CreatePortableExperienceByEnsAsync(new ENS(value), ct, true).Forget();
+                    }
+                }
+
                 RestoreInputs();
             }
             catch (OperationCanceledException)

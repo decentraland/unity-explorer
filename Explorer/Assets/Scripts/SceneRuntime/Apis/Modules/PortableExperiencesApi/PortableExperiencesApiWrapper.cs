@@ -55,7 +55,7 @@ namespace SceneRuntime.Apis.Modules.PortableExperiencesApi
         private async UniTask<IPortableExperiencesController.SpawnResponse> SpawnAsync(URN pid, ENS ens, CancellationToken ct)
         {
             await UniTask.SwitchToMainThread();
-            //Check if pid is valid, if not, check if ens is valid, else, return error.
+            //We should check if pid is valid, if not, check if ens is valid, else, return error, for now we only support loading by ens.
             return await portableExperiencesController.CreatePortableExperienceByEnsAsync(ens, ct);
         }
 

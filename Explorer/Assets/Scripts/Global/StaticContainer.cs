@@ -146,7 +146,7 @@ namespace Global
             bool result = await InitializeContainersAsync(container, settingsContainer, ct);
 
             if (!result)
-                return (null, false)!;
+                return (null, false);
 
             StaticSettings staticSettings = settingsContainer.GetSettings<StaticSettings>();
 
@@ -172,9 +172,9 @@ namespace Global
             container.ExposedGlobalDataContainer = exposedGlobalDataContainer;
             container.WebRequestsContainer = WebRequestsContainer.Create(web3IdentityProvider, container.DebugContainerBuilder);
             container.PhysicsTickProvider = new PhysicsTickProvider();
-            container.PortableExperiencesController = new ECSPortableExperiencesController(globalWorld, web3IdentityProvider, container.WebRequestsContainer.WebRequestController, container.ScenesCache);
 
             container.FeatureFlagsCache = new FeatureFlagsCache();
+            container.PortableExperiencesController = new ECSPortableExperiencesController(globalWorld, web3IdentityProvider, container.WebRequestsContainer.WebRequestController, container.ScenesCache, container.FeatureFlagsCache);
 
             container.FeatureFlagsProvider = new HttpFeatureFlagsProvider(container.WebRequestsContainer.WebRequestController,
                 container.FeatureFlagsCache);
