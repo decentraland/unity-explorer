@@ -1,4 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.Browser;
 using DCL.Diagnostics;
 using DCL.WebRequests;
 using SceneRuntime.Apis.Modules.SignedFetch.Messages;
@@ -6,28 +7,39 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Text.RegularExpressions;
 using System.Threading;
 using UnityEngine;
 using Debug = UnityEngine.Debug;
 
-namespace Global.Dynamic
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
+
+namespace DCL.ApplicationVersionGuard
 {
-    public static class ApplicationVersionGuard
+    public class ApplicationVersionGuard
     {
         private const string API_URL = "https://api.github.com/repos/decentraland/unity-explorer/releases/latest";
+        private const string LAUNCHER_API_URL = "https://api.github.com/repos/decentraland/launcher/releases/latest";
 
         private const string LAUNCHER_EXECUTABLE_NAME = "Decentraland Launcher";
-
         private const string LAUNCHER_PATH_MAC = "/Applications/" + LAUNCHER_EXECUTABLE_NAME + ".app";
-
         private const string LAUNCHER_PATH_WIN_MAIN = @"C:\Program Files\Decentraland Launcher\" + LAUNCHER_EXECUTABLE_NAME + ".exe";
         private const string LAUNCHER_PATH_WIN_86 = @"C:\Program Files (x86)\Decentraland Launcher\" + LAUNCHER_EXECUTABLE_NAME + ".exe";
         private const string LAUNCHER_PATH_WIN_COMBINED = @"Programs\Decentraland Launcher\" + LAUNCHER_EXECUTABLE_NAME + ".exe";
 
-        public static async UniTask<(string current, string latest)> GetVersionsAsync(IWebRequestController webRequestController, CancellationToken ct)
+        private readonly IWebRequestController webRequestController;
+        private readonly IWebBrowser webBrowser;
+
+        public ApplicationVersionGuard(IWebRequestController webRequestController, IWebBrowser webBrowser)
         {
-            var response = await webRequestController.GetAsync<FlatFetchResponse<GenericGetRequest>, FlatFetchResponse>(API_URL, new FlatFetchResponse<GenericGetRequest>(), ct);
+            this.webRequestController = webRequestController;
+            this.webBrowser = webBrowser;
+        }
+
+        public async UniTask<(string current, string latest)> GetVersionsAsync(CancellationToken ct)
+        {
+            FlatFetchResponse response = await webRequestController.GetAsync<FlatFetchResponse<GenericGetRequest>, FlatFetchResponse>(API_URL, new FlatFetchResponse<GenericGetRequest>(), ct);
 
             GitHubRelease latestRelease = JsonUtility.FromJson<GitHubRelease>(response.body);
             string latestVersion = latestRelease.tag_name.TrimStart('v');
@@ -35,41 +47,66 @@ namespace Global.Dynamic
             return (Application.version, latestVersion);
         }
 
-        public static bool IsOlderThan(this string current, string latest) =>
-            current.ToSemanticVersion().IsOlderThan(latest.ToSemanticVersion());
-
-        private static bool IsOlderThan(this (int, int, int) current, (int, int, int) latest)
-        {
-            if (current.Item1 < latest.Item1) return true;
-            if (current.Item2 < latest.Item2) return true;
-            return current.Item3 < latest.Item3;
-        }
-
-        private static (int, int, int) ToSemanticVersion(this string versionString)
-        {
-            Match match = Regex.Match(versionString, @"v?(\d+)\.?(\d*)\.?(\d*)");
-
-            if (!match.Success) return (0, 0, 0); // Default if no version found
-
-            var major = int.Parse(match.Groups[1].Value);
-            int minor = match.Groups[2].Success ? int.Parse(match.Groups[2].Value) : 0;
-            int patch = match.Groups[3].Success ? int.Parse(match.Groups[3].Value) : 0;
-            return (major, minor, patch);
-        }
-
-        public static void LaunchExternalAppAndQuit()
+        public async UniTask LaunchOrDownloadLauncherAsync(CancellationToken ct = default)
         {
             string? launcherPath = GetLauncherPath();
 
             if (string.IsNullOrEmpty(launcherPath))
+                await DownloadAndRunLauncherAsync(ct);
+            else
+                RunLauncherAndQuit(launcherPath);
+        }
+
+        private async UniTask DownloadAndRunLauncherAsync(CancellationToken ct)
+        {
+            string downloadUrl = await GetLauncherDownloadUrlAsync(ct);
+
+            if (string.IsNullOrEmpty(downloadUrl))
             {
-                Debug.LogError("Launcher path not found. Please check the installation or set the correct path.");
+                Debug.LogError("Failed to get launcher download URL.");
                 return;
             }
 
+            webBrowser.OpenUrl(downloadUrl);
+
+            Debug.Log($"Downloading launcher from: {downloadUrl}");
+
+            // You might want to show a message to the user here
+        }
+
+        private async UniTask<string> GetLauncherDownloadUrlAsync(CancellationToken ct)
+        {
+            FlatFetchResponse response = await webRequestController.GetAsync<FlatFetchResponse<GenericGetRequest>, FlatFetchResponse>(LAUNCHER_API_URL, new FlatFetchResponse<GenericGetRequest>(), ct);
+
+            GitHubRelease latestRelease = JsonUtility.FromJson<GitHubRelease>(response.body);
+            string version = latestRelease.tag_name.TrimStart('v');
+
+            string assetName = GetLauncherAssetName();
+            return $"https://github.com/decentraland/launcher/releases/download/{version}/{assetName}";
+        }
+
+        private static string GetLauncherAssetName()
+        {
+            switch (Application.platform)
+            {
+                case RuntimePlatform.WindowsEditor:
+                case RuntimePlatform.WindowsPlayer:
+                    return "Decentraland-Launcher-win-x64.exe";
+                case RuntimePlatform.OSXEditor:
+                case RuntimePlatform.OSXPlayer:
+                    return SystemInfo.processorType.ToLower().Contains("arm")
+                        ? "Decentraland-Launcher-mac-arm64.dmg"
+                        : "Decentraland-Launcher-mac-x64.dmg";
+                default:
+                    throw new NotSupportedException("Unsupported platform for launcher download.");
+            }
+        }
+
+        private static void RunLauncherAndQuit(string launcherPath)
+        {
             try
             {
-                ProcessStartInfo startInfo = new ProcessStartInfo
+                var startInfo = new ProcessStartInfo
                 {
                     UseShellExecute = true,
                 };
@@ -86,22 +123,24 @@ namespace Global.Dynamic
                         startInfo.Arguments = $"-n \"{launcherPath}\"";
                         break;
                     default:
-                        Debug.LogError("Unsupported platform for launching the application.");
+                        ReportHub.LogError(ReportCategory.UNSPECIFIED, "Unsupported platform for launching the application.");
                         return;
                 }
 
                 Process.Start(startInfo);
-
-                // Quit the Unity application
-#if UNITY_EDITOR
-                UnityEditor.EditorApplication.isPlaying = false;
-#else
-                Application.Quit();
-#endif
             }
             catch (Exception e)
             {
-                ReportHub.LogException(e, ReportCategory.UNSPECIFIED);
+                if (e is not OperationCanceledException)
+                    ReportHub.LogException(e, ReportCategory.UNSPECIFIED);
+            }
+            finally
+            {
+#if UNITY_EDITOR
+                EditorApplication.isPlaying = false;
+#else
+                Application.Quit();
+#endif
             }
         }
 
@@ -117,7 +156,7 @@ namespace Global.Dynamic
                     {
                         LAUNCHER_PATH_WIN_MAIN,
                         LAUNCHER_PATH_WIN_86,
-                        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), LAUNCHER_PATH_WIN_COMBINED)
+                        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), LAUNCHER_PATH_WIN_COMBINED),
                     };
 
                     break;

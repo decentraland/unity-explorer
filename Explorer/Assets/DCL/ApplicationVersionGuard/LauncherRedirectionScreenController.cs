@@ -1,20 +1,24 @@
 ﻿using Cysharp.Threading.Tasks;
-using Global.Dynamic;
 using MVC;
 using System.Threading;
+
+#if !UNITY_EDITOR
 using UnityEngine;
+#endif
 
 namespace DCL.AuthenticationScreenFlow
 {
     public class LauncherRedirectionScreenController : ControllerBase<LauncherRedirectionScreenView>
     {
+        private readonly ApplicationVersionGuard.ApplicationVersionGuard versionGuard;
         private readonly string current;
         private readonly string latest;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
 
-        public LauncherRedirectionScreenController(ViewFactoryMethod viewFactory, string current, string latest) : base(viewFactory)
+        public LauncherRedirectionScreenController(ApplicationVersionGuard.ApplicationVersionGuard versionGuard, ViewFactoryMethod viewFactory, string current, string latest) : base(viewFactory)
         {
+            this.versionGuard = versionGuard;
             this.current = current;
             this.latest = latest;
         }
@@ -25,14 +29,19 @@ namespace DCL.AuthenticationScreenFlow
 
             viewInstance.SetVersions(current, latest);
             viewInstance.CloseButton.onClick.AddListener(Quit);
-            viewInstance.CloseWithLauncherButton.onClick.AddListener(ApplicationVersionGuard.LaunchExternalAppAndQuit);
+            viewInstance.CloseWithLauncherButton.onClick.AddListener(HandleVersionUpdate);
         }
 
         public override void Dispose()
         {
             base.Dispose();
             viewInstance.CloseButton.onClick.RemoveListener(Quit);
-            viewInstance.CloseWithLauncherButton.onClick.RemoveListener(ApplicationVersionGuard.LaunchExternalAppAndQuit);
+            viewInstance.CloseWithLauncherButton.onClick.RemoveListener(HandleVersionUpdate);
+        }
+
+        private void HandleVersionUpdate()
+        {
+            versionGuard.LaunchOrDownloadLauncherAsync().Forget();
         }
 
         private static void Quit()
@@ -43,12 +52,6 @@ namespace DCL.AuthenticationScreenFlow
             Application.Quit();
 #endif
         }
-
-        // protected override void OnViewShow()
-        // {
-        //     viewInstance.SetVersions();
-        //     base.OnViewShow();
-        // }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
             UniTask.Never(ct);

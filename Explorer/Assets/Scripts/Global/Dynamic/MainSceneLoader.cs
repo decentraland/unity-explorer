@@ -1,5 +1,6 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
+using DCL.ApplicationVersionGuard;
 using DCL.Audio;
 using DCL.AuthenticationScreenFlow;
 using DCL.DebugUtilities;
@@ -220,17 +221,19 @@ namespace Global.Dynamic
 
         private async UniTask<bool> DoesApplicationRequireVersionUpdate(CancellationToken ct, SplashScreen splashScreen)
         {
-            var versions = await ApplicationVersionGuard.GetVersionsAsync(staticContainer!.WebRequestsContainer.WebRequestController, ct);
+            var appVersionGuard = new ApplicationVersionGuard(staticContainer!.WebRequestsContainer.WebRequestController, bootstrapContainer!.WebBrowser);
+
+            var versions = await appVersionGuard.GetVersionsAsync(ct);
             if (versions.current.IsOlderThan(versions.latest))
             {
                 splashScreen.Hide();
 
-                var appVerRedirectionScreenPrefab = await bootstrapContainer.AssetsProvisioner.ProvideMainAssetAsync(dynamicSettings.AppVerRedirectionScreenPrefab, ct);
+                var appVerRedirectionScreenPrefab = await bootstrapContainer!.AssetsProvisioner!.ProvideMainAssetAsync(dynamicSettings.AppVerRedirectionScreenPrefab, ct);
 
                 ControllerBase<LauncherRedirectionScreenView, ControllerNoData>.ViewFactoryMethod authScreenFactory =
                     LauncherRedirectionScreenController.CreateLazily(appVerRedirectionScreenPrefab.Value.GetComponent<LauncherRedirectionScreenView>(), null);
 
-                var launcherRedirectionScreenController = new LauncherRedirectionScreenController(authScreenFactory, versions.current, versions.latest);
+                var launcherRedirectionScreenController = new LauncherRedirectionScreenController(appVersionGuard, authScreenFactory, versions.current, versions.latest);
                 dynamicWorldContainer!.MvcManager.RegisterController(launcherRedirectionScreenController);
 
                 await dynamicWorldContainer!.MvcManager.ShowAsync(LauncherRedirectionScreenController.IssueCommand(), ct);
