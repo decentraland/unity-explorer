@@ -13,11 +13,6 @@ namespace DCL.Multiplayer.Movement.Settings
 
         float[] VelocityTiers { get; }
 
-        // TEST NETWORK
-        bool SelfSending { get; }
-        float Latency { get; }
-        float LatencyJitter { get; }
-
         // TELEPORTATION
         float MinPositionDelta { get; }
         float MinRotationDelta { get; }
