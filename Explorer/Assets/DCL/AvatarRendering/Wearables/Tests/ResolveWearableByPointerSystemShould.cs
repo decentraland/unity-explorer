@@ -26,7 +26,7 @@ using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.Streama
 namespace DCL.AvatarRendering.Wearables.Tests
 {
     [TestFixture]
-    public class ResolveWearableByPointerSystemShould : UnitySystemTestBase<ResolveWearableByPointerSystem>
+    public class ResolveWearableByPointerSystemShould : UnitySystemTestBase<FinilizeWearableLoadingSystem>
     {
         [SetUp]
         public void Setup()
@@ -48,7 +48,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
                 ResolvedState = DefaultWearablesComponent.State.Success,
             });
 
-            system = new ResolveWearableByPointerSystem(world, wearableStorage, new RealmData(new TestIpfsRealm()), URLSubdirectory.EMPTY);
+            system = new FinilizeWearableLoadingSystem(world, wearableStorage, new RealmData(new TestIpfsRealm()), URLSubdirectory.EMPTY);
         }
 
         private WearableStorage wearableStorage;

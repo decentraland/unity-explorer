@@ -99,7 +99,7 @@ namespace DCL.PluginSystem.Global
         {
             var customStreamingSubdirectory = URLSubdirectory.FromString("/Emotes/");
 
-            FinalizeEmoteAssetBundleSystem.InjectToWorld(ref builder, emoteStorage);
+            FinalizeEmoteLoadingSystem.InjectToWorld(ref builder, emoteStorage);
 
             LoadEmotesByPointersSystem.InjectToWorld(ref builder, webRequestController,
                 new NoCache<EmotesDTOList, GetEmotesByPointersFromRealmIntention>(false, false),

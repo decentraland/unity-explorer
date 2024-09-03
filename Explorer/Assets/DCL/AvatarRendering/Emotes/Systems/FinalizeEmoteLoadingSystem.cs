@@ -24,11 +24,11 @@ namespace DCL.AvatarRendering.Emotes
     [LogCategory(ReportCategory.EMOTE)]
     [UpdateAfter(typeof(Load.LoadEmotesByPointersSystem))]
     [UpdateAfter(typeof(Load.LoadSceneEmotesSystem))]
-    public partial class FinalizeEmoteAssetBundleSystem : BaseUnityLoopSystem
+    public partial class FinalizeEmoteLoadingSystem : BaseUnityLoopSystem
     {
         private readonly IEmoteStorage emoteStorage;
 
-        public FinalizeEmoteAssetBundleSystem(World world, IEmoteStorage emoteStorage) : base(world)
+        public FinalizeEmoteLoadingSystem(World world, IEmoteStorage emoteStorage) : base(world)
         {
             this.emoteStorage = emoteStorage;
         }

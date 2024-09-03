@@ -34,7 +34,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [UpdateBefore(typeof(PrepareGlobalAssetBundleLoadingParametersSystem))]
     [LogCategory(ReportCategory.WEARABLE)]
-    public partial class ResolveWearableByPointerSystem : ResolveElementsByPointersSystem<GetWearableDTOByPointersIntention, IWearable, WearableDTO, WearablesDTOList>
+    public partial class FinilizeWearableLoadingSystem : ResolveElementsByPointersSystem<GetWearableDTOByPointersIntention, IWearable, WearableDTO, WearablesDTOList>
     {
         private readonly URLSubdirectory customStreamingSubdirectory;
         private readonly IRealmData realmData;
@@ -42,7 +42,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
         private SingleInstanceEntity defaultWearablesState;
 
-        public ResolveWearableByPointerSystem(
+        public FinilizeWearableLoadingSystem(
             World world,
             IWearableStorage wearableStorage,
             IRealmData realmData,
