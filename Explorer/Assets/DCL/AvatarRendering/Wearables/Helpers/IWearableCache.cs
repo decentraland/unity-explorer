@@ -1,5 +1,4 @@
-﻿using CommunicationData.URLHelpers;
-using DCL.AvatarRendering.Loading;
+﻿using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Components;
 
@@ -10,13 +9,6 @@ namespace DCL.AvatarRendering.Wearables.Helpers
     /// </summary>
     public interface IWearableCache : IAvatarElementCache<IWearable, WearableDTO>
     {
-        /// <summary>
-        ///     Adds an empty wearable to the catalog.
-        /// </summary>
-        /// <param name="urn">The loading intention pointer.</param>
-        /// <param name="qualifiedForUnloading">Determines if the wearable should be unloaded when memory is full</param>
-        void AddEmptyWearable(URN urn, bool qualifiedForUnloading = true);
-
         /// <summary>
         ///     Retrieves default wearable from the catalog.
         /// </summary>

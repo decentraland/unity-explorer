@@ -114,7 +114,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
                 if (!wearableCache.TryGetElement(loadingIntentionPointer, out IWearable wearable))
                 {
-                    wearableCache.AddEmptyWearable(loadingIntentionPointer);
+                    wearableCache.Set(loadingIntentionPointer, IWearable.NewEmpty());
                     missingPointers.Add(loadingIntentionPointer);
                     continue;
                 }

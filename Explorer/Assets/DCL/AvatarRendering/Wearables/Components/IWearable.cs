@@ -30,5 +30,8 @@ namespace DCL.AvatarRendering.Wearables.Components
         bool IsCompatibleWithBodyShape(string bodyShape);
 
         bool HasSameModelsForAllGenders();
+
+        public static IWearable NewEmpty() =>
+            new Wearable();
     }
 }

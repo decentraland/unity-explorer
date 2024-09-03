@@ -34,11 +34,6 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             wearablesCache.Add(wearable.GetUrn(), wearable);
         }
 
-        public void AddEmptyWearable(URN urn, bool qualifiedForUnloading = true)
-        {
-            lock (lockObject) { AddWearable(urn, new Wearable(), qualifiedForUnloading); }
-        }
-
         public void Set(URN urn, IWearable element)
         {
             lock (lockObject)
@@ -128,13 +123,16 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
         internal IWearable AddWearable(URN urn, IWearable wearable, bool qualifiedForUnloading)
         {
-            wearablesCache.Add(urn, wearable);
+            lock (lockObject)
+            {
+                wearablesCache.Add(urn, wearable);
 
-            if (qualifiedForUnloading)
-                cacheKeysDictionary[urn] =
-                    listedCacheKeys.AddLast((urn, MultithreadingUtility.FrameCount));
+                if (qualifiedForUnloading)
+                    cacheKeysDictionary[urn] =
+                        listedCacheKeys.AddLast((urn, MultithreadingUtility.FrameCount));
 
-            return wearable;
+                return wearable;
+            }
         }
 
         private static bool TryUnloadAllWearableAssets(IWearable wearable)
