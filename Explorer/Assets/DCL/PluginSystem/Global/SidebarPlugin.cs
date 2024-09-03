@@ -102,7 +102,8 @@ namespace DCL.PluginSystem.Global
                 sidebarBus,
                 chatEntryConfigurationSo,
                 web3IdentityCache,
-                profileRepository
+                profileRepository,
+                webBrowser
             ));
         }
 

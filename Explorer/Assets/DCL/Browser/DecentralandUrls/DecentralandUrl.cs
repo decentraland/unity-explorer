@@ -33,6 +33,8 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         Notification,
         NotificationRead,
 
+        Help,
+
         FeatureFlags,
 
         Market,
