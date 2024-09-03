@@ -14,29 +14,22 @@ namespace DCL.AvatarRendering.Wearables.Components.Intentions
 
         //ValidParams: pageNum, pageSize, includeEntities (bool), rarity, category, name, orderBy, direction,
         //collectionType (base-wearable, on-chain, third-party), thirdPartyCollectionId
-        public IReadOnlyList<(string, string)> Params;
-        public string UserID;
+        public readonly IReadOnlyList<(string, string)> Params;
+        public readonly string UserID;
 
         //Used for pooling
-        public List<IWearable> Results;
-        public int TotalAmount { get; private set; }
-
-        public void SetTotal(int total)
-        {
-            TotalAmount = total;
-        }
+        public readonly List<IWearable> Results;
 
         public void AppendToResult(IWearable resultElement)
         {
             Results.Add(resultElement);
         }
 
-        public GetWearableByParamIntention(IReadOnlyList<(string, string)> requestParams, string userID, List<IWearable> results, int totalAmount)
+        public GetWearableByParamIntention(IReadOnlyList<(string, string)> requestParams, string userID, List<IWearable> results)
         {
             Params = requestParams;
             UserID = userID;
             Results = results;
-            TotalAmount = totalAmount;
             CommonArguments = new CommonLoadingArguments(URLAddress.EMPTY, cancellationTokenSource: new CancellationTokenSource());
         }
 

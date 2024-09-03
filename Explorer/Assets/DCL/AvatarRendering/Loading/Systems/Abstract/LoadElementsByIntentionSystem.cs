@@ -64,9 +64,7 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
 
         private void Load<TResponseElement>(ref TIntention intention, IAttachmentLambdaResponse<TResponseElement> lambdaResponse) where TResponseElement: ILambdaResponseElement<TAvatarElementDTO>
         {
-            intention.SetTotal(lambdaResponse.TotalAmount);
-
-            foreach (var element in lambdaResponse.Elements)
+            foreach (var element in lambdaResponse.CountedElements())
             {
                 var elementDTO = element.Entity;
 

@@ -28,7 +28,7 @@ namespace DCL.AvatarRendering.Emotes.Load
             await adapter.CreateFromJson<LambdaOwnedEmoteElementList>(WRJsonParser.Unity);
 
         protected override EmotesResolution AssetFromPreparedIntention(in GetOwnedEmotesFromRealmIntention intention) =>
-            new (intention.Result, intention.TotalAmount);
+            new (intention.Result);
 
         protected override URLAddress BuildUrlFromIntention(in GetOwnedEmotesFromRealmIntention intention) =>
             intention.CommonArguments.URL;

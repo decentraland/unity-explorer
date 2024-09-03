@@ -175,8 +175,7 @@ namespace DCL.AvatarRendering.Emotes.Load
                     entity,
                     new StreamableResult(
                         new EmotesResolution(
-                            resolvedEmotesTmp,
-                            intention.Pointers.Count
+                            resolvedEmotesTmp
                         )
                     )
                 );
