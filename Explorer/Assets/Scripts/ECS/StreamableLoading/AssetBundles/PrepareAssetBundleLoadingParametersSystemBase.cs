@@ -5,19 +5,13 @@ using ECS.Abstract;
 using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Linq;
-using UnityEngine;
 using Utility;
 
 namespace ECS.StreamableLoading.AssetBundles
 {
     public abstract class PrepareAssetBundleLoadingParametersSystemBase : BaseUnityLoopSystem
     {
-        private static readonly string[] COMMON_SHADERS =
-        {
-            "dcl/scene_ignore_windows", "dcl/scene_ignore_mac",
-            "dcl/universal render pipeline/lit_ignore_windows",
-            "dcl/universal render pipeline/lit_ignore_mac"
-        };
+        private static readonly string[] COMMON_SHADERS = { "dcl/scene_ignore_windows", "dcl/scene_ignore_mac" };
 
         private readonly URLDomain streamingAssetURL;
 
