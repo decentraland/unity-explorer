@@ -41,9 +41,14 @@ namespace DCL.PluginSystem.Global
 
         public void Dispose()
         {
-            multiplayerMovementDebug.Dispose();
-            messageBus.Dispose();
-            settings.Dispose();
+            if (multiplayerMovementDebug != null)
+                multiplayerMovementDebug.Dispose();
+
+            if (messageBus != null)
+                messageBus.Dispose();
+
+            if (settings.Value != null)
+                settings.Dispose();
         }
 
         public async UniTask InitializeAsync(MultiplayerCommunicationSettings settings, CancellationToken ct)
