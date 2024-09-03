@@ -1,7 +1,6 @@
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Loading.DTO;
-using DCL.AvatarRendering.Wearables.Components;
 using DCL.Diagnostics;
 using DCL.Optimization.PerformanceBudgeting;
 using System.Collections.Generic;

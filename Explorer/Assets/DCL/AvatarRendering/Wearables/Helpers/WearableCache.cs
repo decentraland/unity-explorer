@@ -1,4 +1,5 @@
 ﻿using CommunicationData.URLHelpers;
+using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Components;

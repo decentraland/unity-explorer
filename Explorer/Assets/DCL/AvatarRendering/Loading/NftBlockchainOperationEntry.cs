@@ -1,9 +1,9 @@
 using CommunicationData.URLHelpers;
 using System;
 
-namespace DCL.AvatarRendering.Wearables.Components
+namespace DCL.AvatarRendering.Loading
 {
-    public class NftBlockchainOperationEntry
+    public struct NftBlockchainOperationEntry
     {
         public URN Urn { get; }
         public string TokenId { get; }
