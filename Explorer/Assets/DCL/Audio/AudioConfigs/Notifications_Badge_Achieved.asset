@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Notifications_Badge_Achieved
   m_EditorClassIdentifier: 
   audioClips:
-  - {fileID: 8300000, guid: ed028b65fb0acd945b199f3c72af6d79, type: 3}
+  - {fileID: 8300000, guid: 5c0145f381a078945a5626ed9358eabf, type: 3}
   relativeVolume: 1
   audioCategory: 0
   pitchVariation: 0
