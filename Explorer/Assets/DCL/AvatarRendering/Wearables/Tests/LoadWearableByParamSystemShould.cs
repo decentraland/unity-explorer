@@ -68,13 +68,13 @@ namespace DCL.AvatarRendering.Wearables.Tests
 
             system.urlBuilder = urlBuilder;
 
-            return new GetWearableByParamIntention(Array.Empty<(string, string)>(), successPath, new List<IWearable>(), totalAmount);
+            return new GetWearableByParamIntention(Array.Empty<(string, string)>(), successPath, new List<IWearable>());
         }
 
         protected override GetWearableByParamIntention CreateNotFoundIntention() =>
-            new (Array.Empty<(string, string)>(), failPath, new List<IWearable>(), totalAmount);
+            new (Array.Empty<(string, string)>(), failPath, new List<IWearable>());
 
         protected override GetWearableByParamIntention CreateWrongTypeIntention() =>
-            new (Array.Empty<(string, string)>(), wrongTypePath, new List<IWearable>(), totalAmount);
+            new (Array.Empty<(string, string)>(), wrongTypePath, new List<IWearable>());
     }
 }
