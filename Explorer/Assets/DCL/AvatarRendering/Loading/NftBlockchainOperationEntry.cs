@@ -3,7 +3,7 @@ using System;
 
 namespace DCL.AvatarRendering.Wearables.Components
 {
-    public class NftBlockchainOperationEntry
+    public readonly struct NftBlockchainOperationEntry
     {
         public URN Urn { get; }
         public string TokenId { get; }

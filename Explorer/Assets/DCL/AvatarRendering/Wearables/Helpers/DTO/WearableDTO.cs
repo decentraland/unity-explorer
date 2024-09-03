@@ -28,7 +28,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             public int totalAmount;
 
             [JsonIgnore]
-            public IReadOnlyList<LambdaResponseElementDto> Elements => elements;
+            public IReadOnlyList<LambdaResponseElementDto> Page => elements;
 
             [JsonIgnore]
             public int TotalAmount => totalAmount;

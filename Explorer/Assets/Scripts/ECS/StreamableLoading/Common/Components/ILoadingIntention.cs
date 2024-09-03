@@ -20,7 +20,7 @@ namespace ECS.StreamableLoading.Common.Components
     {
         int TotalAmount { get; }
 
-        void SetTotal(int total); //TODO refactor it may cause inconsistency because there are 2 sources of truth
+        void SetTotal(int total);
 
         void AppendToResult(TResultElement resultElement);
     }

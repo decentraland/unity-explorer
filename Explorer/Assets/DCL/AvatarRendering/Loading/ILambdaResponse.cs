@@ -4,7 +4,14 @@ namespace DCL.AvatarRendering.Loading
 {
     public interface IAttachmentLambdaResponse<out TResponseElement>
     {
-        IReadOnlyList<TResponseElement> Elements { get; }
+        /// <summary>
+        ///     Page of fetched elements
+        /// </summary>
+        IReadOnlyList<TResponseElement> Page { get; }
+
+        /// <summary>
+        ///     Total amount of elements that can be fetched
+        /// </summary>
         int TotalAmount { get; }
     }
 

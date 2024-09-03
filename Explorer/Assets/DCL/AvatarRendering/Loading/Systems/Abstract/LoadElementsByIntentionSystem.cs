@@ -66,7 +66,7 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
         {
             intention.SetTotal(lambdaResponse.TotalAmount);
 
-            foreach (var element in lambdaResponse.Elements)
+            foreach (var element in lambdaResponse.Page)
             {
                 var elementDTO = element.Entity;
 

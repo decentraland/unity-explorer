@@ -30,7 +30,7 @@ namespace DCL.AvatarRendering.Emotes
         public int totalAmount;
 
         [JsonIgnore]
-        public IReadOnlyList<LambdaOwnedEmoteElementDTO> Elements => elements;
+        public IReadOnlyList<LambdaOwnedEmoteElementDTO> Page => elements;
 
         [JsonIgnore]
         public int TotalAmount => totalAmount;
