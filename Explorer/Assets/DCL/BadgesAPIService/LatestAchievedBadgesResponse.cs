@@ -20,6 +20,7 @@ namespace DCL.BadgesAPIService
     {
         public string id;
         public string name;
+        public string tierName;
         public string image;
     }
 }

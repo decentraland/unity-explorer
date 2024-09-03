@@ -39,7 +39,7 @@ namespace DCL.Passport.Fields.Badges
 
         public void Setup(LatestAchievedBadgeData badgeData)
         {
-            BadgeNameText.text = badgeData.name;
+            BadgeNameText.text = $"{badgeData.name} {(string.IsNullOrEmpty(badgeData.tierName) ? string.Empty : badgeData.tierName)}";
 
             imageController?.SetImage(DefaultBadgeSprite);
             if (!string.IsNullOrEmpty(badgeData.image))
