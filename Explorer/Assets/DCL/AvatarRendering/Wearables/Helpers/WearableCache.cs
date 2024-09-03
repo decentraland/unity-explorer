@@ -68,9 +68,6 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                 if (wearablesCache.TryGetValue(wearableURN, out IWearable wearable))
                     return wearable;
 
-                if (wearablesCache.TryGetValue(wearableURN, out wearable))
-                    return wearable;
-
                 return null;
             }
         }
