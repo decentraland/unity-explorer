@@ -62,13 +62,8 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             lock (lockObject)
             {
                 string wearableURN = WearablesConstants.DefaultWearables.GetDefaultWearable(bodyShape, category);
-
                 UpdateListedCachePriority(wearableURN);
-
-                if (wearablesCache.TryGetValue(wearableURN, out IWearable wearable))
-                    return wearable;
-
-                return null;
+                return wearablesCache.TryGetValue(wearableURN, out IWearable wearable) ? wearable : null;
             }
         }
 
