@@ -54,7 +54,11 @@ namespace DCL.SDKComponents.AudioSources.Tests
             budgetProvider.TrySpendBudget().Returns(true);
 
             IStreamableCache<AudioClip, GetAudioClipIntention> cache = Substitute.For<IStreamableCache<AudioClip, GetAudioClipIntention>>();
-            return new UpdateAudioSourceSystem(world, ECSTestUtils.SceneDataSub(), cache, poolsRegistry, budgetProvider, budgetProvider, null);
+
+            ISceneStateProvider sceneStateProvider = Substitute.For<ISceneStateProvider>();
+            sceneStateProvider.IsCurrent.Returns(true);
+
+            return new UpdateAudioSourceSystem(world, ECSTestUtils.SceneDataSub(), cache, poolsRegistry, budgetProvider, budgetProvider, null, sceneStateProvider);
         }
 
         [Test]
