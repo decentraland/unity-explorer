@@ -7,6 +7,7 @@ using DCL.DebugUtilities;
 using DCL.GlobalPartitioning;
 using DCL.Ipfs;
 using DCL.LOD;
+using DCL.Multiplayer.Emotes;
 using DCL.Multiplayer.SDK.Systems.GlobalWorld;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
@@ -59,6 +60,7 @@ namespace Global.Dynamic
         private readonly StaticContainer staticContainer;
         private readonly IScenesCache scenesCache;
         private readonly ILODCache lodCache;
+        private readonly IEmotesMessageBus emotesMessageBus;
         private readonly World world;
         private readonly CurrentSceneInfo currentSceneInfo;
         private readonly HybridSceneParams hybridSceneParams;
@@ -72,6 +74,7 @@ namespace Global.Dynamic
             ICharacterDataPropagationUtility characterDataPropagationUtility,
             CurrentSceneInfo currentSceneInfo,
             ILODCache lodCache,
+            IEmotesMessageBus emotesMessageBus,
             World world)
         {
             partitionedWorldsAggregateFactory = staticContainer.SingletonSharedDependencies.AggregateFactory;
@@ -93,6 +96,7 @@ namespace Global.Dynamic
             this.characterDataPropagationUtility = characterDataPropagationUtility;
             this.currentSceneInfo = currentSceneInfo;
             this.lodCache = lodCache;
+            this.emotesMessageBus = emotesMessageBus;
             this.world = world;
 
             memoryBudget = staticContainer.SingletonSharedDependencies.MemoryBudget;
@@ -179,7 +183,7 @@ namespace Global.Dynamic
 
             var globalWorld = new GlobalWorld(world, worldSystems, finalizeWorldSystems, cameraSamplingData, realmSamplingData, destroyCancellationSource);
 
-            sceneFactory.SetGlobalWorldActions(new GlobalWorldActions(globalWorld.EcsWorld, playerEntity));
+            sceneFactory.SetGlobalWorldActions(new GlobalWorldActions(globalWorld.EcsWorld, playerEntity, emotesMessageBus));
 
             return globalWorld;
         }
