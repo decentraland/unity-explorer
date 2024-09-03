@@ -26,11 +26,11 @@ namespace DCL.AvatarRendering.Emotes
     [UpdateAfter(typeof(Load.LoadSceneEmotesSystem))]
     public partial class FinalizeEmoteAssetBundleSystem : BaseUnityLoopSystem
     {
-        private readonly IEmoteCache emoteCache;
+        private readonly IEmoteStorage emoteStorage;
 
-        public FinalizeEmoteAssetBundleSystem(World world, IEmoteCache emoteCache) : base(world)
+        public FinalizeEmoteAssetBundleSystem(World world, IEmoteStorage emoteStorage) : base(world)
         {
-            this.emoteCache = emoteCache;
+            this.emoteStorage = emoteStorage;
         }
 
         protected override void Update(float t)
@@ -72,14 +72,14 @@ namespace DCL.AvatarRendering.Emotes
                 if (!promiseResult.Succeeded)
                 {
                     foreach (var pointerID in promise.LoadingIntention.Pointers)
-                        if (emoteCache.TryGetElement(pointerID, out IEmote component))
+                        if (emoteStorage.TryGetElement(pointerID, out IEmote component))
                             component.UpdateLoadingStatus(false);
                 }
                 else
                     using (var list = promiseResult.Asset.ConsumeAttachments())
                         foreach (EmoteDTO assetEntity in list.Value)
                         {
-                            IEmote component = emoteCache.GetOrAddByDTO(assetEntity);
+                            IEmote component = emoteStorage.GetOrAddByDTO(assetEntity);
                             component.ApplyAndMarkAsLoaded(assetEntity);
                         }
 

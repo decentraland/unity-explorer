@@ -6,7 +6,7 @@ using ECS.StreamableLoading.Common.Components;
 
 namespace DCL.AvatarRendering.Wearables.Helpers
 {
-    public partial class WearableCache
+    public partial class WearableStorage
     {
         public int WearableAssetsInCatalog
         {

@@ -38,14 +38,14 @@ namespace DCL.AvatarRendering.Emotes.Play
         // todo: use this to add nice Debug UI to trigger any emote?
         private readonly IDebugContainerBuilder debugContainerBuilder;
 
-        private readonly IEmoteCache emoteCache;
+        private readonly IEmoteStorage emoteStorage;
         private readonly EmotePlayer emotePlayer;
         private readonly IEmotesMessageBus messageBus;
 
-        public CharacterEmoteSystem(World world, IEmoteCache emoteCache, IEmotesMessageBus messageBus, AudioSource audioSource, IDebugContainerBuilder debugContainerBuilder) : base(world)
+        public CharacterEmoteSystem(World world, IEmoteStorage emoteStorage, IEmotesMessageBus messageBus, AudioSource audioSource, IDebugContainerBuilder debugContainerBuilder) : base(world)
         {
             this.messageBus = messageBus;
-            this.emoteCache = emoteCache;
+            this.emoteStorage = emoteStorage;
             this.debugContainerBuilder = debugContainerBuilder;
             emotePlayer = new EmotePlayer(audioSource);
         }
@@ -161,7 +161,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                 if (avatarView.GetAnimatorFloat(AnimationHashes.MOVEMENT_BLEND) > 0.1f)
                     return;
 
-                if (emoteCache.TryGetElement(emoteId.Shorten(), out IEmote emote))
+                if (emoteStorage.TryGetElement(emoteId.Shorten(), out IEmote emote))
                 {
                     // emote failed to load? remove intent
                     if (emote.ManifestResult is { IsInitialized: true, Succeeded: false })

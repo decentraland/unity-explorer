@@ -39,19 +39,19 @@ namespace DCL.AvatarRendering.Emotes.Load
     public partial class LoadEmotesByPointersSystem : LoadElementsByPointersSystem<EmotesDTOList, GetEmotesByPointersFromRealmIntention, EmoteDTO>
     {
         private readonly URLSubdirectory customStreamingSubdirectory;
-        private readonly IEmoteCache emoteCache;
+        private readonly IEmoteStorage emoteStorage;
         private readonly IRealmData realmData;
         private readonly URLBuilder urlBuilder;
 
         public LoadEmotesByPointersSystem(World world,
             IWebRequestController webRequestController,
             IStreamableCache<EmotesDTOList, GetEmotesByPointersFromRealmIntention> cache,
-            IEmoteCache emoteCache,
+            IEmoteStorage emoteStorage,
             IRealmData realmData,
             URLSubdirectory customStreamingSubdirectory)
             : base(world, cache, webRequestController)
         {
-            this.emoteCache = emoteCache;
+            this.emoteStorage = emoteStorage;
             this.realmData = realmData;
             this.customStreamingSubdirectory = customStreamingSubdirectory;
             urlBuilder = new URLBuilder();
@@ -110,7 +110,7 @@ namespace DCL.AvatarRendering.Emotes.Load
                 URN shortenedPointer = loadingIntentionPointer;
                 shortenedPointer = shortenedPointer.Shorten();
 
-                if (!emoteCache.TryGetElement(shortenedPointer, out IEmote emote))
+                if (!emoteStorage.TryGetElement(shortenedPointer, out IEmote emote))
                 {
                     if (!intention.ProcessedPointers.Contains(loadingIntentionPointer))
                     {

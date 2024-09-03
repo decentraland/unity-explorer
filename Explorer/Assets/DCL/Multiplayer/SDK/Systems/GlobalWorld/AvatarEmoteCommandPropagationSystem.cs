@@ -17,11 +17,11 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
     [LogCategory(ReportCategory.PLAYER_SDK_DATA)]
     public partial class AvatarEmoteCommandPropagationSystem : BaseUnityLoopSystem
     {
-        private readonly IEmoteCache emoteCache;
+        private readonly IEmoteStorage emoteStorage;
 
-        public AvatarEmoteCommandPropagationSystem(World world, IEmoteCache emoteCache) : base(world)
+        public AvatarEmoteCommandPropagationSystem(World world, IEmoteStorage emoteStorage) : base(world)
         {
-            this.emoteCache = emoteCache;
+            this.emoteStorage = emoteStorage;
         }
 
         protected override void Update(float t)
@@ -41,7 +41,7 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
             if (!componentFound)
                 emoteCommandComponent = new AvatarEmoteCommandComponent();
 
-            if (emoteCache.TryGetElement(emoteIntent.EmoteId.Shorten(), out IEmote emote))
+            if (emoteStorage.TryGetElement(emoteIntent.EmoteId.Shorten(), out IEmote emote))
             {
                 emoteCommandComponent.IsDirty = true;
                 emoteCommandComponent.PlayingEmote = emoteIntent.EmoteId;

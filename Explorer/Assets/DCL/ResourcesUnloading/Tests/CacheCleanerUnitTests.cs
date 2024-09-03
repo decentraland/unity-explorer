@@ -22,7 +22,7 @@ namespace DCL.ResourcesUnloading.Tests
 
         // Mocks
         private IReleasablePerformanceBudget releasablePerformanceBudget;
-        private IWearableCache wearableCache;
+        private IWearableStorage wearableStorage;
         private IAttachmentsAssetsCache attachmentsAssetsCache;
         private IStreamableCache<Texture2D, GetTextureIntention> texturesCache;
         private IStreamableCache<AudioClip, GetAudioClipIntention> audioClipsCache;
@@ -42,7 +42,7 @@ namespace DCL.ResourcesUnloading.Tests
 
             materialPool = Substitute.For<IExtendedObjectPool<Material>>();
 
-            wearableCache = Substitute.For<IWearableCache>();
+            wearableStorage = Substitute.For<IWearableStorage>();
             attachmentsAssetsCache = Substitute.For<IAttachmentsAssetsCache>();
 
             texturesCache = Substitute.For<IStreamableCache<Texture2D, GetTextureIntention>>();
@@ -56,7 +56,7 @@ namespace DCL.ResourcesUnloading.Tests
 
             cacheCleaner = new CacheCleaner(releasablePerformanceBudget);
 
-            cacheCleaner.Register(wearableCache);
+            cacheCleaner.Register(wearableStorage);
             cacheCleaner.Register(texturesCache);
             cacheCleaner.Register(audioClipsCache);
             cacheCleaner.Register(gltfContainerAssetsCache);
@@ -82,7 +82,7 @@ namespace DCL.ResourcesUnloading.Tests
             texturesCache.Received(callsAmount).Unload(releasablePerformanceBudget, Arg.Any<int>());
             audioClipsCache.Received(callsAmount).Unload(releasablePerformanceBudget, Arg.Any<int>());
             attachmentsAssetsCache.Received(callsAmount).Unload(releasablePerformanceBudget, Arg.Any<int>());
-            wearableCache.Received(callsAmount).Unload(Arg.Any<IReleasablePerformanceBudget>());
+            wearableStorage.Received(callsAmount).Unload(Arg.Any<IReleasablePerformanceBudget>());
             gltfContainerAssetsCache.Received(callsAmount).Unload(releasablePerformanceBudget, Arg.Any<int>());
             assetBundleCache.Received(callsAmount).Unload(releasablePerformanceBudget, Arg.Any<int>());
             materialPool.Received(callsAmount).ClearThrottled(Arg.Any<int>());

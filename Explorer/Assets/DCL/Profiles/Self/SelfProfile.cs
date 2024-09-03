@@ -21,9 +21,9 @@ namespace DCL.Profiles.Self
         private readonly IProfileRepository profileRepository;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IEquippedWearables equippedWearables;
-        private readonly IWearableCache wearableCache;
+        private readonly IWearableStorage wearableStorage;
         private readonly IEquippedEmotes equippedEmotes;
-        private readonly IEmoteCache emoteCache;
+        private readonly IEmoteStorage emoteStorage;
         private readonly IReadOnlyList<string> forceRender;
         private readonly IReadOnlyList<URN>? forcedEmotes;
         private readonly ProfileBuilder profileBuilder = new ();
@@ -32,8 +32,8 @@ namespace DCL.Profiles.Self
             IProfileRepository profileRepository,
             IWeb3IdentityCache web3IdentityCache,
             IEquippedWearables equippedWearables,
-            IWearableCache wearableCache,
-            IEmoteCache emoteCache,
+            IWearableStorage wearableStorage,
+            IEmoteStorage emoteStorage,
             IEquippedEmotes equippedEmotes,
             IReadOnlyList<string> forceRender,
             IReadOnlyList<URN>? forcedEmotes)
@@ -41,8 +41,8 @@ namespace DCL.Profiles.Self
             this.profileRepository = profileRepository;
             this.web3IdentityCache = web3IdentityCache;
             this.equippedWearables = equippedWearables;
-            this.wearableCache = wearableCache;
-            this.emoteCache = emoteCache;
+            this.wearableStorage = wearableStorage;
+            this.emoteStorage = emoteStorage;
             this.equippedEmotes = equippedEmotes;
             this.forceRender = forceRender;
             this.forcedEmotes = forcedEmotes;
@@ -133,7 +133,7 @@ namespace DCL.Profiles.Self
 
                 URN uniqueUrn = w.GetUrn();
 
-                if (wearableCache.TryGetOwnedNftRegistry(uniqueUrn, out IReadOnlyDictionary<URN, NftBlockchainOperationEntry>? registry))
+                if (wearableStorage.TryGetOwnedNftRegistry(uniqueUrn, out IReadOnlyDictionary<URN, NftBlockchainOperationEntry>? registry))
                     uniqueUrn = registry.First().Value.Urn;
                 else
                 {
@@ -156,7 +156,7 @@ namespace DCL.Profiles.Self
 
                 URN uniqueUrn = w.GetUrn();
 
-                if (emoteCache.TryGetOwnedNftRegistry(uniqueUrn, out IReadOnlyDictionary<URN, NftBlockchainOperationEntry>? registry))
+                if (emoteStorage.TryGetOwnedNftRegistry(uniqueUrn, out IReadOnlyDictionary<URN, NftBlockchainOperationEntry>? registry))
                     uniqueUrn = registry.First().Value.Urn;
                 else
                 {

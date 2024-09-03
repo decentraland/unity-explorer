@@ -13,7 +13,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
     {
         private IDefaultFaceFeaturesHandler defaultFaceFeaturesHandler;
 
-        private IWearableCache wearableCache;
+        private IWearableStorage wearableStorage;
 
         private Texture eyesTexture;
         private Texture mouthTexture;
@@ -22,13 +22,13 @@ namespace DCL.AvatarRendering.Wearables.Tests
         [SetUp]
         public void SetUp()
         {
-            wearableCache = Substitute.For<IWearableCache>();
+            wearableStorage = Substitute.For<IWearableStorage>();
 
             eyesTexture = CreateFacialFeatureWearable(1, WearablesConstants.Categories.EYES);
             mouthTexture = CreateFacialFeatureWearable(2, WearablesConstants.Categories.MOUTH);
             eyebrowsTexture = CreateFacialFeatureWearable(3, WearablesConstants.Categories.EYEBROWS);
 
-            defaultFaceFeaturesHandler = new DefaultFaceFeaturesHandler(wearableCache);
+            defaultFaceFeaturesHandler = new DefaultFaceFeaturesHandler(wearableStorage);
         }
 
         private Texture CreateFacialFeatureWearable(int resolution, string category)
@@ -52,7 +52,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
 
             mock.WearableAssetResults.Returns(array);
 
-            wearableCache.GetDefaultWearable(Arg.Any<BodyShape>(), category).Returns(mock);
+            wearableStorage.GetDefaultWearable(Arg.Any<BodyShape>(), category).Returns(mock);
 
             return tex;
         }

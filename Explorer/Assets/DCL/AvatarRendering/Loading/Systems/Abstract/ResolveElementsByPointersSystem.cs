@@ -15,16 +15,16 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
         where TIntention: IAssetIntention, IPointersLoadingIntention, IEquatable<TIntention>
         where TElement: IAvatarAttachment<TDTO> where TDTO: AvatarAttachmentDTO
     {
-        private readonly IAvatarElementCache<TElement, TDTO> cache;
+        private readonly IAvatarElementStorage<TElement, TDTO> storage;
         private readonly ListObjectPool<URN> pointersPool;
 
         protected ResolveElementsByPointersSystem(
             World world,
-            IAvatarElementCache<TElement, TDTO> cache,
+            IAvatarElementStorage<TElement, TDTO> storage,
             ListObjectPool<URN> pointersPool
         ) : base(world)
         {
-            this.cache = cache;
+            this.storage = storage;
             this.pointersPool = pointersPool;
         }
 
@@ -34,7 +34,7 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
                 return false;
 
             foreach (var pointerID in promise.LoadingIntention.Pointers)
-                if (cache.TryGetElement(pointerID, out var component))
+                if (storage.TryGetElement(pointerID, out var component))
                     component.UpdateLoadingStatus(false);
 
             promise.ForgetLoading(World!);
@@ -48,7 +48,7 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
             var e = new ArgumentNullException($"Wearable DTO is null for for {urn}");
             ReportHub.LogError(new ReportData(GetReportCategory()), e);
 
-            if (cache.TryGetElement(urn, out var component))
+            if (storage.TryGetElement(urn, out var component))
 
                 //If its not in the catalog, we cannot determine which one has failed
                 component.ResolvedFailedDTO(new StreamableLoadingResult<TDTO>(e));

@@ -24,14 +24,14 @@ namespace DCL.AvatarRendering.Emotes.Load
         private const string SCENE_EMOTE_PREFIX = "urn:decentraland:off-chain:scene-emote";
 
         private readonly URLSubdirectory customStreamingSubdirectory;
-        private readonly IEmoteCache emoteCache;
+        private readonly IEmoteStorage emoteStorage;
 
         public LoadSceneEmotesSystem(World world,
-            IEmoteCache emoteCache,
+            IEmoteStorage emoteStorage,
             URLSubdirectory customStreamingSubdirectory)
             : base(world)
         {
-            this.emoteCache = emoteCache;
+            this.emoteStorage = emoteStorage;
             this.customStreamingSubdirectory = customStreamingSubdirectory;
         }
 
@@ -67,7 +67,7 @@ namespace DCL.AvatarRendering.Emotes.Load
                 return;
             }
 
-            if (!emoteCache.TryGetElement(urn, out IEmote emote))
+            if (!emoteStorage.TryGetElement(urn, out IEmote emote))
             {
                 var dto = new EmoteDTO
                 {
@@ -102,7 +102,7 @@ namespace DCL.AvatarRendering.Emotes.Load
                     },
                 };
 
-                emote = emoteCache.GetOrAddByDTO(dto);
+                emote = emoteStorage.GetOrAddByDTO(dto);
             }
 
             if (emote.IsLoading) return;

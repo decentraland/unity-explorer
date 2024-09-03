@@ -20,7 +20,7 @@ namespace DCL.Multiplayer.SDK.Tests
     {
         private readonly URN emoteUrn1 = new ("thunder-kiss-65");
         private readonly URN emoteUrn2 = new ("more-human-than-human");
-        private readonly FakeEmoteCache emoteCache = new ();
+        private readonly FakeEmoteStorage emoteStorage = new ();
         private Entity entity;
         private World sceneWorld;
         private PlayerCRDTEntity playerCRDTEntity;
@@ -36,11 +36,11 @@ namespace DCL.Multiplayer.SDK.Tests
             emote1.IsLooping().Returns(true);
             IEmote emote2 = Substitute.For<IEmote>();
             emote2.IsLooping().Returns(false);
-            emoteCache.emotes.Clear();
-            emoteCache.emotes.Add(emoteUrn1, emote1);
-            emoteCache.emotes.Add(emoteUrn2, emote2);
+            emoteStorage.emotes.Clear();
+            emoteStorage.emotes.Add(emoteUrn1, emote1);
+            emoteStorage.emotes.Add(emoteUrn2, emote2);
 
-            system = new AvatarEmoteCommandPropagationSystem(world, emoteCache);
+            system = new AvatarEmoteCommandPropagationSystem(world, emoteStorage);
 
             playerCRDTEntity = new PlayerCRDTEntity(
                 SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM,
@@ -75,7 +75,7 @@ namespace DCL.Multiplayer.SDK.Tests
             Assert.IsTrue(sceneWorld.TryGet(playerCRDTEntity.SceneWorldEntity, out AvatarEmoteCommandComponent sceneEmoteCommand));
 
             Assert.AreEqual(emoteIntent.EmoteId, sceneEmoteCommand.PlayingEmote);
-            Assert.AreEqual(emoteCache.emotes[emoteIntent.EmoteId].IsLooping(), sceneEmoteCommand.LoopingEmote);
+            Assert.AreEqual(emoteStorage.emotes[emoteIntent.EmoteId].IsLooping(), sceneEmoteCommand.LoopingEmote);
 
             // Update emote intent with different emote
             emoteIntent.EmoteId = emoteUrn2;
@@ -85,7 +85,7 @@ namespace DCL.Multiplayer.SDK.Tests
             Assert.IsTrue(sceneWorld.TryGet(playerCRDTEntity.SceneWorldEntity, out sceneEmoteCommand));
 
             Assert.AreEqual(emoteIntent.EmoteId, sceneEmoteCommand.PlayingEmote);
-            Assert.AreEqual(emoteCache.emotes[emoteIntent.EmoteId].IsLooping(), sceneEmoteCommand.LoopingEmote);
+            Assert.AreEqual(emoteStorage.emotes[emoteIntent.EmoteId].IsLooping(), sceneEmoteCommand.LoopingEmote);
         }
 
         [Test]
@@ -105,7 +105,7 @@ namespace DCL.Multiplayer.SDK.Tests
             Assert.IsTrue(sceneWorld.TryGet(playerCRDTEntity.SceneWorldEntity, out AvatarEmoteCommandComponent sceneEmoteCommand));
 
             Assert.AreEqual(emoteIntent.EmoteId, sceneEmoteCommand.PlayingEmote);
-            Assert.AreEqual(emoteCache.emotes[emoteIntent.EmoteId].IsLooping(), sceneEmoteCommand.LoopingEmote);
+            Assert.AreEqual(emoteStorage.emotes[emoteIntent.EmoteId].IsLooping(), sceneEmoteCommand.LoopingEmote);
 
             // Update emote intent with different emote + remove PlayerCRDTEntity
             emoteIntent.EmoteId = emoteUrn2;
@@ -116,10 +116,10 @@ namespace DCL.Multiplayer.SDK.Tests
             Assert.IsTrue(sceneWorld.TryGet(playerCRDTEntity.SceneWorldEntity, out sceneEmoteCommand));
 
             Assert.AreNotEqual(emoteIntent.EmoteId, sceneEmoteCommand.PlayingEmote);
-            Assert.AreNotEqual(emoteCache.emotes[emoteIntent.EmoteId].IsLooping(), sceneEmoteCommand.LoopingEmote);
+            Assert.AreNotEqual(emoteStorage.emotes[emoteIntent.EmoteId].IsLooping(), sceneEmoteCommand.LoopingEmote);
         }
 
-        private class FakeEmoteCache : IEmoteCache
+        private class FakeEmoteStorage : IEmoteStorage
         {
             internal readonly Dictionary<URN, IEmote> emotes = new ();
 

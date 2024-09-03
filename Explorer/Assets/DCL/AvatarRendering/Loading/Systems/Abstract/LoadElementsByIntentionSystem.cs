@@ -22,19 +22,19 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
         where TIntention: struct, IAttachmentsLoadingIntention<TAvatarElement>
         where TAvatarElementDTO: AvatarAttachmentDTO where TAvatarElement : IAvatarAttachment<TAvatarElementDTO>
     {
-        private readonly IAvatarElementCache<TAvatarElement, TAvatarElementDTO> avatarElementCache;
+        private readonly IAvatarElementStorage<TAvatarElement, TAvatarElementDTO> avatarElementStorage;
         private readonly IWebRequestController webRequestController;
         private readonly IRealmData realmData;
 
         protected LoadElementsByIntentionSystem(
             World world,
             IStreamableCache<TAsset, TIntention> cache,
-            IAvatarElementCache<TAvatarElement, TAvatarElementDTO> avatarElementCache,
+            IAvatarElementStorage<TAvatarElement, TAvatarElementDTO> avatarElementStorage,
             IWebRequestController webRequestController,
             IRealmData realmData
         ) : base(world, cache)
         {
-            this.avatarElementCache = avatarElementCache;
+            this.avatarElementStorage = avatarElementStorage;
             this.webRequestController = webRequestController;
             this.realmData = realmData;
         }
@@ -70,7 +70,7 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
             {
                 var elementDTO = element.Entity;
 
-                var wearable = avatarElementCache.GetOrAddByDTO(elementDTO);
+                var wearable = avatarElementStorage.GetOrAddByDTO(elementDTO);
 
                 foreach (var individualData in element.IndividualData)
                 {
@@ -80,7 +80,7 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
                     long.TryParse(individualData.transferredAt, out long transferredAt);
                     decimal.TryParse(individualData.price, out decimal price);
 
-                    avatarElementCache.SetOwnedNft(
+                    avatarElementStorage.SetOwnedNft(
                         elementDTO.Metadata.id,
                         new NftBlockchainOperationEntry(
                             individualData.id,

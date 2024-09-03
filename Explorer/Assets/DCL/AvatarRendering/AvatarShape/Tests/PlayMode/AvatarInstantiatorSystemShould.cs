@@ -129,7 +129,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
 
             system = new AvatarInstantiatorSystem(world, budget, budget, avatarPoolRegistry, materialPoolHandler, computeShaderPool,
                 Substitute.For<IAttachmentsAssetsCache>(), new ComputeShaderSkinning(), new FixedComputeBufferHandler(10000, 4, 4),
-                new ObjectProxy<AvatarBase>(), defaultFaceFeaturesHandler, new WearableCache());
+                new ObjectProxy<AvatarBase>(), defaultFaceFeaturesHandler, new WearableStorage());
         }
 
         private IEmote GetMockEmote(string materialName, string category)

@@ -47,14 +47,14 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         private readonly IPerformanceBudget memoryBudget;
         private readonly ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy;
         private readonly IDefaultFaceFeaturesHandler defaultFaceFeaturesHandler;
-        private readonly IWearableCache wearableCache;
+        private readonly IWearableStorage wearableStorage;
         private readonly IWearable?[] fallbackBodyShape = new IWearable[1];
 
         public AvatarInstantiatorSystem(World world, IPerformanceBudget instantiationFrameTimeBudget, IPerformanceBudget memoryBudget,
             IComponentPool<AvatarBase> avatarPoolRegistry, IAvatarMaterialPoolHandler avatarMaterialPoolHandler, IObjectPool<UnityEngine.ComputeShader> computeShaderPool,
             IAttachmentsAssetsCache wearableAssetsCache, CustomSkinning skinningStrategy, FixedComputeBufferHandler vertOutBuffer,
             ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy, IDefaultFaceFeaturesHandler defaultFaceFeaturesHandler,
-            IWearableCache wearableCache) : base(world)
+            IWearableStorage wearableStorage) : base(world)
         {
             this.instantiationFrameTimeBudget = instantiationFrameTimeBudget;
             this.avatarPoolRegistry = avatarPoolRegistry;
@@ -67,7 +67,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             computeShaderSkinningPool = computeShaderPool;
             this.mainPlayerAvatarBaseProxy = mainPlayerAvatarBaseProxy;
             this.defaultFaceFeaturesHandler = defaultFaceFeaturesHandler;
-            this.wearableCache = wearableCache;
+            this.wearableStorage = wearableStorage;
         }
 
         public override void Dispose()
@@ -171,7 +171,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                 if (fallbackBodyShape[0] == null)
 
                     // Could be a very rare case on which the body shape is not available. This case will make the flow fail
-                    if (wearableCache.TryGetElement(BodyShape.MALE, out IWearable maleBody))
+                    if (wearableStorage.TryGetElement(BodyShape.MALE, out IWearable maleBody))
                         fallbackBodyShape[0] = maleBody;
 
                 visibleWearables = fallbackBodyShape!;

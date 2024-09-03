@@ -68,7 +68,7 @@ namespace DCL.PluginSystem.Global
         private readonly DefaultFaceFeaturesHandler defaultFaceFeaturesHandler;
         private readonly IEntityParticipantTable entityParticipantTable;
         private readonly TextureArrayContainerFactory textureArrayContainerFactory;
-        private readonly IWearableCache wearableCache;
+        private readonly IWearableStorage wearableStorage;
 
         public AvatarPlugin(
             IComponentPoolsRegistry poolsRegistry,
@@ -84,7 +84,7 @@ namespace DCL.PluginSystem.Global
             IEntityParticipantTable entityParticipantTable,
             NametagsData nametagsData,
             TextureArrayContainerFactory textureArrayContainerFactory,
-            IWearableCache wearableCache)
+            IWearableStorage wearableStorage)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.frameTimeCapBudget = frameTimeCapBudget;
@@ -98,7 +98,7 @@ namespace DCL.PluginSystem.Global
             this.memoryBudget = memoryBudget;
             this.nametagsData = nametagsData;
             this.textureArrayContainerFactory = textureArrayContainerFactory;
-            this.wearableCache = wearableCache;
+            this.wearableStorage = wearableStorage;
             componentPoolsRegistry = poolsRegistry;
 
             cacheCleaner.Register(attachmentsAssetsCache);
@@ -139,7 +139,7 @@ namespace DCL.PluginSystem.Global
 
             AvatarInstantiatorSystem.InjectToWorld(ref builder, frameTimeCapBudget, memoryBudget, avatarPoolRegistry, avatarMaterialPoolHandler,
                 computeShaderPool, attachmentsAssetsCache, skinningStrategy, vertOutBuffer, mainPlayerAvatarBaseProxy, defaultFaceFeaturesHandler,
-                wearableCache);
+                wearableStorage);
 
             MakeVertsOutBufferDefragmentationSystem.InjectToWorld(ref builder, vertOutBuffer, skinningStrategy);
 

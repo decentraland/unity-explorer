@@ -40,12 +40,12 @@ namespace DCL.ResourcesUnloading
         private IStreamableCache<Texture2D, GetNFTShapeIntention> nftShapeCache = new IStreamableCache<Texture2D, GetNFTShapeIntention>.Fake();
 
         private IAttachmentsAssetsCache wearableAssetsCache;
-        private IWearableCache wearableCache;
+        private IWearableStorage wearableStorage;
         private IProfileCache? profileCache;
         private IStreamableCache<Profile, GetProfileIntention>? profileIntentionCache;
         private IRoadAssetPool roadCache;
 
-        private IEmoteCache? emoteCache;
+        private IEmoteStorage? emoteCache;
 
         public CacheCleaner(IPerformanceBudget fpsCapBudget)
         {
@@ -62,7 +62,7 @@ namespace DCL.ResourcesUnloading
             texturesCache.Unload(fpsCapBudget, TEXTURE_UNLOAD_CHUNK);
             audioClipsCache.Unload(fpsCapBudget, AUDIO_CLIP_UNLOAD_CHUNK);
             wearableAssetsCache.Unload(fpsCapBudget, WEARABLES_UNLOAD_CHUNK);
-            wearableCache.Unload(fpsCapBudget);
+            wearableStorage.Unload(fpsCapBudget);
             emoteCache?.Unload(fpsCapBudget);
             gltfContainerAssetsCache.Unload(fpsCapBudget, GLTF_UNLOAD_CHUNK);
             assetBundleCache.Unload(fpsCapBudget, AB_UNLOAD_CHUNK);
@@ -107,8 +107,8 @@ namespace DCL.ResourcesUnloading
         public void Register(IStreamableCache<AudioClip, GetAudioClipIntention> audioClipsCache) =>
             this.audioClipsCache = audioClipsCache;
 
-        public void Register(IWearableCache cache) =>
-            wearableCache = cache;
+        public void Register(IWearableStorage storage) =>
+            wearableStorage = storage;
 
         public void Register<T>(IExtendedObjectPool<T> extendedObjectPool) where T: class =>
             avatarPools.Add(extendedObjectPool);
@@ -119,13 +119,13 @@ namespace DCL.ResourcesUnloading
         public void Register(IStreamableCache<Profile, GetProfileIntention> profileIntentionCache) =>
             this.profileIntentionCache = profileIntentionCache;
 
-        public void Register(IEmoteCache emoteCache) =>
-            this.emoteCache = emoteCache;
+        public void Register(IEmoteStorage emoteStorage) =>
+            this.emoteCache = emoteStorage;
 
         public void UpdateProfilingCounters()
         {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-            ProfilingCounters.WearablesAssetsInCatalogAmount.Value = ((WearableCache)wearableCache).WearableAssetsInCatalog;
+            ProfilingCounters.WearablesAssetsInCatalogAmount.Value = ((WearableStorage)wearableStorage).WearableAssetsInCatalog;
             ProfilingCounters.WearablesAssetsInCacheAmount.Value = wearableAssetsCache.AssetsCount;
 #endif
         }

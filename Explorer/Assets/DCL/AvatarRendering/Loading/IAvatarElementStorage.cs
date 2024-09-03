@@ -11,7 +11,7 @@ namespace DCL.AvatarRendering.Loading
     /// <summary>
     ///     Avatar elements cache, each implementation should be thread safe.
     /// </summary>
-    public interface IAvatarElementCache<TElement, in TDTO> where TElement: IAvatarAttachment<TDTO> where TDTO: AvatarAttachmentDTO
+    public interface IAvatarElementStorage<TElement, in TDTO> where TElement: IAvatarAttachment<TDTO> where TDTO: AvatarAttachmentDTO
     {
         /// <summary>
         ///     Attempts to retrieve an element from the catalog.
@@ -44,13 +44,13 @@ namespace DCL.AvatarRendering.Loading
 
     public static class AvatarElementCache
     {
-        public static bool TryGetElementWithLogs<TElement, TDTO>(this IAvatarElementCache<TElement, TDTO> cache, TDTO assetDTO, string reportCategory, out TElement? element)
+        public static bool TryGetElementWithLogs<TElement, TDTO>(this IAvatarElementStorage<TElement, TDTO> storage, TDTO assetDTO, string reportCategory, out TElement? element)
             where TElement: IAvatarAttachment<TDTO>
             where TDTO: AvatarAttachmentDTO
         {
             string? id = assetDTO.Metadata?.id;
 
-            bool inCatalog = cache.TryGetElement(id ?? string.Empty, out element);
+            bool inCatalog = storage.TryGetElement(id ?? string.Empty, out element);
 
             //An element that has a DTO request should already have an empty representation in the catalog at this point
             if (inCatalog == false)

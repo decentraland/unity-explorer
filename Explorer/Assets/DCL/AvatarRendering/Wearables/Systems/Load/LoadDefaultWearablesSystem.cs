@@ -25,15 +25,15 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
     public partial class LoadDefaultWearablesSystem : BaseUnityLoopSystem
     {
         private readonly WearablesDTOList defaultWearableDefinition;
-        private readonly IWearableCache wearableCache;
+        private readonly IWearableStorage wearableStorage;
         private readonly GameObject emptyDefaultWearable;
 
         internal LoadDefaultWearablesSystem(World world,
             WearablesDTOList defaultWearableDefinition, GameObject emptyDefaultWearable,
-            IWearableCache wearableCache) : base(world)
+            IWearableStorage wearableStorage) : base(world)
         {
             this.defaultWearableDefinition = defaultWearableDefinition;
-            this.wearableCache = wearableCache;
+            this.wearableStorage = wearableStorage;
             this.emptyDefaultWearable = emptyDefaultWearable;
         }
 
@@ -50,7 +50,7 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
             for (var i = 0; i < consumedDefaultWearableDefinition.Value.Count; i++)
             {
                 WearableDTO dto = consumedDefaultWearableDefinition.Value[i];
-                IWearable wearable = wearableCache.GetOrAddByDTO(dto, false);
+                IWearable wearable = wearableStorage.GetOrAddByDTO(dto, false);
 
                 BodyShape analyzedBodyShape = wearable.IsCompatibleWithBodyShape(BodyShape.MALE) ? BodyShape.MALE : BodyShape.FEMALE;
                 pointersRequest[analyzedBodyShape].Add(wearable.GetUrn());
@@ -94,7 +94,7 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
                 rendererInfos.Add(new AttachmentRegularAsset.RendererInfo(skinnedMeshRenderer, skinnedMeshRenderer.sharedMaterial));
             }
 
-            IWearable emptyWearable = wearableCache.GetOrAddByDTO(wearableDTO, false);
+            IWearable emptyWearable = wearableStorage.GetOrAddByDTO(wearableDTO, false);
             var wearableAsset = new AttachmentRegularAsset(emptyDefaultWearable, rendererInfos, null);
             wearableAsset.AddReference();
 

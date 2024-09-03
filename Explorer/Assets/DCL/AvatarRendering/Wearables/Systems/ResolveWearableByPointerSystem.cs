@@ -38,18 +38,18 @@ namespace DCL.AvatarRendering.Wearables.Systems
     {
         private readonly URLSubdirectory customStreamingSubdirectory;
         private readonly IRealmData realmData;
-        private readonly IWearableCache wearableCache;
+        private readonly IWearableStorage wearableStorage;
 
         private SingleInstanceEntity defaultWearablesState;
 
         public ResolveWearableByPointerSystem(
             World world,
-            IWearableCache wearableCache,
+            IWearableStorage wearableStorage,
             IRealmData realmData,
             URLSubdirectory customStreamingSubdirectory
-        ) : base(world, wearableCache, WearableComponentsUtils.POINTERS_POOL)
+        ) : base(world, wearableStorage, WearableComponentsUtils.POINTERS_POOL)
         {
-            this.wearableCache = wearableCache;
+            this.wearableStorage = wearableStorage;
             this.realmData = realmData;
             this.customStreamingSubdirectory = customStreamingSubdirectory;
         }
@@ -112,9 +112,9 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 URN shortenedPointer = loadingIntentionPointer;
                 loadingIntentionPointer = shortenedPointer.Shorten();
 
-                if (!wearableCache.TryGetElement(loadingIntentionPointer, out IWearable wearable))
+                if (!wearableStorage.TryGetElement(loadingIntentionPointer, out IWearable wearable))
                 {
-                    wearableCache.Set(loadingIntentionPointer, IWearable.NewEmpty());
+                    wearableStorage.Set(loadingIntentionPointer, IWearable.NewEmpty());
                     missingPointers.Add(loadingIntentionPointer);
                     continue;
                 }
@@ -193,7 +193,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                     using (var list = promise.Result.Value.Asset.ConsumeAttachments())
                         foreach (WearableDTO assetEntity in list.Value)
                         {
-                            if (wearableCache.TryGetElementWithLogs(assetEntity, GetReportCategory(), out var component) == false)
+                            if (wearableStorage.TryGetElementWithLogs(assetEntity, GetReportCategory(), out var component) == false)
                                 continue;
 
                             if (component!.TryResolveDTO(new StreamableLoadingResult<WearableDTO>(assetEntity)) == false)
@@ -345,7 +345,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
             void CopyDefaultResults(BodyShape bs)
             {
-                IWearable defaultWearable = wearableCache.GetDefaultWearable(bs, wearable.GetCategory());
+                IWearable defaultWearable = wearableStorage.GetDefaultWearable(bs, wearable.GetCategory());
                 var defaultWearableResults = defaultWearable.WearableAssetResults[bs];
 
                 // the destination array might be not created if DTO itself has failed to load

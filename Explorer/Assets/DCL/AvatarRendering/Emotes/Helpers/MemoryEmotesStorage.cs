@@ -9,7 +9,7 @@ using Utility.Multithreading;
 
 namespace DCL.AvatarRendering.Emotes
 {
-    public class MemoryEmotesCache : IEmoteCache
+    public class MemoryEmotesStorage : IEmoteStorage
     {
         private readonly LinkedList<(URN key, long lastUsedFrame)> listedCacheKeys = new ();
         private readonly Dictionary<URN, LinkedListNode<(URN key, long lastUsedFrame)>> cacheKeysDictionary = new (new Dictionary<URN, LinkedListNode<(URN key, long lastUsedFrame)>>(),
