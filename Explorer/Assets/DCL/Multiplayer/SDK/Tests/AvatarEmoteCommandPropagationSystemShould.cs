@@ -2,7 +2,7 @@ using Arch.Core;
 using CommunicationData.URLHelpers;
 using CrdtEcsBridge.Components;
 using DCL.AvatarRendering.Emotes;
-using DCL.AvatarRendering.Loading;
+using DCL.AvatarRendering.Wearables.Components;
 using DCL.Multiplayer.SDK.Components;
 using DCL.Multiplayer.SDK.Systems.GlobalWorld;
 using DCL.Optimization.PerformanceBudgeting;
