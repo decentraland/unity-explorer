@@ -19,7 +19,6 @@ using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Pool;
@@ -94,7 +93,7 @@ namespace DCL.AvatarRendering.Emotes.Load
             }
 
             using var _ = ListPool<URN>.Get(out var missingPointersTmp)!;
-            using var __ = ListPool<IEmote>.Get(out var resolvedEmotesTmp)!;
+            var resolvedEmotesTmp = RepoolableList<IEmote>.NewList();
 
             foreach (URN loadingIntentionPointer in intention.Pointers)
             {
@@ -123,7 +122,7 @@ namespace DCL.AvatarRendering.Emotes.Load
                 }
 
                 if (emote.Model.Succeeded)
-                    resolvedEmotesTmp!.Add(emote);
+                    resolvedEmotesTmp.List.Add(emote);
             }
 
             if (missingPointersTmp!.Count > 0)
@@ -142,7 +141,7 @@ namespace DCL.AvatarRendering.Emotes.Load
 
             var emotesWithResponse = 0;
 
-            foreach (IEmote emote in resolvedEmotesTmp!)
+            foreach (IEmote emote in resolvedEmotesTmp.List)
             {
                 if (emote.ManifestResult is { Exception: not null })
                     emotesWithResponse++;
@@ -172,7 +171,15 @@ namespace DCL.AvatarRendering.Emotes.Load
             bool isSucceeded = emotesWithResponse == intention.Pointers.Count;
 
             if (isSucceeded)
-                World!.Add(entity, new StreamableResult(new EmotesResolution(resolvedEmotesTmp.ToList(), intention.Pointers.Count)));
+                World!.Add(
+                    entity,
+                    new StreamableResult(
+                        new EmotesResolution(
+                            resolvedEmotesTmp,
+                            intention.Pointers.Count
+                        )
+                    )
+                );
         }
 
         private bool CreateAssetBundlePromiseIfRequired(IEmote component, in GetEmotesByPointersIntention intention, IPartitionComponent partitionComponent)

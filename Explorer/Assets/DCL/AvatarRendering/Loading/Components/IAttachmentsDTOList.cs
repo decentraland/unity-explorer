@@ -7,32 +7,32 @@ namespace DCL.AvatarRendering.Loading.Components
 {
     public interface IAttachmentsDTOList<T>
     {
-        ConsumedAttachmentsDTOList<T> ConsumeAttachments();
+        ConsumedList<T> ConsumeAttachments();
 
-        static ConsumedAttachmentsDTOList<T> DefaultConsumeAttachments(RepoolableList<T> value)
+        static ConsumedList<T> DefaultConsumeAttachments(RepoolableList<T> value)
         {
             if (value.IsDisposed)
             {
                 ReportHub.LogError(ReportCategory.AVATAR, $"Double consumption of {typeof(T).Name} occurred");
-                return ConsumedAttachmentsDTOList<T>.NewEmpty();
+                return ConsumedList<T>.NewEmpty();
             }
 
-            return new ConsumedAttachmentsDTOList<T>(value);
+            return new ConsumedList<T>(value);
         }
     }
 
-    public readonly struct ConsumedAttachmentsDTOList<T> : IDisposable
+    public readonly struct ConsumedList<T> : IDisposable
     {
         private readonly RepoolableList<T> value;
 
         public IReadOnlyList<T> Value => value.List;
 
-        public ConsumedAttachmentsDTOList(RepoolableList<T> value)
+        public ConsumedList(RepoolableList<T> value)
         {
             this.value = value;
         }
 
-        public static ConsumedAttachmentsDTOList<T> NewEmpty() =>
+        public static ConsumedList<T> NewEmpty() =>
             new (RepoolableList<T>.NewList());
 
         public void Dispose()
@@ -92,6 +92,13 @@ namespace DCL.AvatarRendering.Loading.Components
         /// </summary>
         public static RepoolableList<T> FromList(List<T> list) =>
             new (list);
+
+        public static RepoolableList<T> FromElement(T element)
+        {
+            var output = NewList();
+            output.List.Add(element);
+            return output;
+        }
 
         public void Dispose()
         {

@@ -1,23 +1,23 @@
+using DCL.AvatarRendering.Loading.Components;
 using ECS.StreamableLoading.Common.Components;
 using System;
-using System.Collections.Generic;
 using System.Threading;
-using UnityEngine.Pool;
 
 namespace DCL.AvatarRendering.Emotes
 {
     public struct GetOwnedEmotesFromRealmIntention : ICountedLoadingIntention<IEmote>, IEquatable<GetOwnedEmotesFromRealmIntention>
     {
-        public List<IEmote> Result;
+        public RepoolableList<IEmote> Result { get; }
 
         public CancellationTokenSource CancellationTokenSource { get; }
+
         public CommonLoadingArguments CommonArguments { get; set; }
 
         public GetOwnedEmotesFromRealmIntention(CommonLoadingArguments commonArguments) : this()
         {
             CommonArguments = commonArguments;
             CancellationTokenSource = new CancellationTokenSource();
-            Result = ListPool<IEmote>.Get()!;
+            Result = RepoolableList<IEmote>.NewList();
         }
 
         public bool Equals(GetOwnedEmotesFromRealmIntention other) =>
@@ -38,7 +38,7 @@ namespace DCL.AvatarRendering.Emotes
 
         public void AppendToResult(IEmote resultElement)
         {
-            Result.Add(resultElement);
+            Result.List.Add(resultElement);
         }
     }
 }

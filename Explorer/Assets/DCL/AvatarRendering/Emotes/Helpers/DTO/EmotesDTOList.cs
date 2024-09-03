@@ -11,7 +11,7 @@ namespace DCL.AvatarRendering.Emotes
             this.value = value;
         }
 
-        public ConsumedAttachmentsDTOList<EmoteDTO> ConsumeAttachments() =>
+        public ConsumedList<EmoteDTO> ConsumeAttachments() =>
             IAttachmentsDTOList<EmoteDTO>.DefaultConsumeAttachments(value);
     }
 }

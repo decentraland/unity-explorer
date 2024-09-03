@@ -236,22 +236,26 @@ namespace DCL.Passport.Modules
             }
         }
 
-        private int CalculateMissingEmptyItems(int totalItems)
+        private static int CalculateMissingEmptyItems(int totalItems)
         {
             int remainder = totalItems % 6;
             int missingItems = remainder == 0 ? 0 : 6 - remainder;
             return missingItems;
         }
 
-        private async UniTaskVoid AwaitEquippedItemsPromiseAsync(WearablePromise equippedWearablesPromise, EmotePromise equippedEmotesPromise, CancellationToken ct)
+        private async UniTaskVoid AwaitEquippedItemsPromiseAsync(
+            WearablePromise equippedWearablesPromise,
+            EmotePromise equippedEmotesPromise,
+            CancellationToken ct
+        )
         {
             try
             {
                 var wearablesUniTaskAsync = await equippedWearablesPromise.ToUniTaskAsync(world, cancellationToken: ct);
                 var emotesUniTaskAsync = await equippedEmotesPromise.ToUniTaskAsync(world, cancellationToken: ct);
                 var currentWearables = wearablesUniTaskAsync.Result!.Value.Asset.Wearables;
-                var currentEmotes = emotesUniTaskAsync.Result!.Value.Asset.Emotes;
-                SetGridElements(currentWearables, currentEmotes);
+                using var consumed = emotesUniTaskAsync.Result!.Value.Asset.ConsumeEmotes();
+                SetGridElements(currentWearables, consumed.Value);
             }
             catch (OperationCanceledException) { }
             catch (Exception e)

@@ -62,7 +62,8 @@ namespace CrdtEcsBridge.RestrictedActions
 
             promise = await promise.ToUniTaskAsync(world, cancellationToken: ct);
 
-            URN urn = promise.Result!.Value.Asset.Emotes[0].GetUrn();
+            using var consumed = promise.Result!.Value.Asset.ConsumeEmotes();
+            URN urn = consumed.Value[0].GetUrn();
 
             TriggerEmote(urn);
         }

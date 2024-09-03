@@ -12,7 +12,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             this.value = value;
         }
 
-        public ConsumedAttachmentsDTOList<WearableDTO> ConsumeAttachments() =>
+        public ConsumedList<WearableDTO> ConsumeAttachments() =>
             IAttachmentsDTOList<WearableDTO>.DefaultConsumeAttachments(value);
     }
 }

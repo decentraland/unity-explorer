@@ -7,7 +7,6 @@ using ECS;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
-using System;
 using System.Collections.Generic;
 using System.Threading;
 using PromiseByPointers = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
@@ -30,15 +29,26 @@ namespace DCL.AvatarRendering.Emotes
             this.realmData = realmData;
         }
 
-        public async UniTask<(IReadOnlyList<IEmote> emotes, int totalAmount)> GetOwnedEmotesAsync(Web3Address userId, CancellationToken ct,
-            int? pageNum = null, int? pageSize = null, URN? collectionId = null,
-            IEmoteProvider.OrderOperation? orderOperation = null, string? name = null)
+        public async UniTask<int> GetOwnedEmotesAsync(
+            Web3Address userId,
+            CancellationToken ct,
+            IEmoteProvider.OwnedEmotesRequestOptions requestOptions,
+            List<IEmote> output
+        )
         {
+            output.Clear();
+
             urlBuilder.Clear();
 
             urlBuilder.AppendDomain(realmData.Ipfs.LambdasBaseUrl)
                       .AppendPath(URLPath.FromString($"/users/{userId}/emotes"))
                       .AppendParameter(new URLParameter("includeEntities", "true"));
+
+            int? pageNum = requestOptions.pageNum;
+            int? pageSize = requestOptions.pageSize;
+            URN? collectionId = requestOptions.collectionId;
+            IEmoteProvider.OrderOperation? orderOperation = requestOptions.orderOperation;
+            string? name = requestOptions.name;
 
             if (pageNum != null)
                 urlBuilder.AppendParameter(new URLParameter("pageNum", pageNum.ToString()));
@@ -66,27 +76,32 @@ namespace DCL.AvatarRendering.Emotes
                                                                  .ToUniTaskAsync(world, cancellationToken: ct);
 
             if (!promise.Result.HasValue)
-                return (ArraySegment<IEmote>.Empty, 0);
+                return 0;
 
             if (!promise.Result.Value.Succeeded)
-                throw promise.Result.Value.Exception;
+                throw promise.Result.Value.Exception!;
 
-            return (promise.Result.Value.Asset.Emotes, promise.Result.Value.Asset.TotalAmount);
+            using var emotes = promise.Result.Value.Asset.ConsumeEmotes();
+            output.AddRange(emotes.Value);
+            return promise.Result.Value.Asset.TotalAmount;
         }
 
-        public async UniTask<IReadOnlyList<IEmote>> GetEmotesAsync(IReadOnlyCollection<URN> emoteIds, BodyShape bodyShape, CancellationToken ct)
+        public async UniTask GetEmotesAsync(IReadOnlyCollection<URN> emoteIds, BodyShape bodyShape, CancellationToken ct, List<IEmote> output)
         {
+            output.Clear();
+
             using GetEmotesByPointersIntention intention = EmoteComponentsUtils.CreateGetEmotesByPointersIntention(bodyShape, emoteIds);
             var promise = PromiseByPointers.Create(world, intention, PartitionComponent.TOP_PRIORITY);
             promise = await promise.ToUniTaskAsync(world, cancellationToken: ct);
 
             if (!promise.Result.HasValue)
-                return Array.Empty<IEmote>();
+                return;
 
             if (!promise.Result.Value.Succeeded)
                 throw promise.Result.Value.Exception!;
 
-            return promise.Result.Value.Asset.Emotes;
+            using var emotes = promise.Result.Value.Asset.ConsumeEmotes();
+            output.AddRange(emotes.Value);
         }
     }
 }
