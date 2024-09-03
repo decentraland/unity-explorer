@@ -1,6 +1,8 @@
 using DCL.Optimization.PerformanceBudgeting;
 using System;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using Utility;
 
 namespace ECS.StreamableLoading.Common.Components
 {
@@ -47,6 +49,10 @@ namespace ECS.StreamableLoading.Common.Components
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SetAllowed(IAcquiredBudget budget)
         {
+#if UNITY_EDITOR
+            if (Value is not Status.Forbidden && Value is not Status.NotStarted)
+                throw new InvalidOperationException($"Unexpected transition from \"{Value}\" to \"Allowed\"");
+#endif
             AcquiredBudget = budget;
             Value = Status.Allowed;
         }
@@ -56,7 +62,7 @@ namespace ECS.StreamableLoading.Common.Components
         {
 #if UNITY_EDITOR
             if (Value is Status.Finished)
-                throw new InvalidOperationException();
+                throw new InvalidOperationException($"Unexpected transition from \"{Value}\" to \"Forbidden\"");
 #endif
             Value = Status.Forbidden;
         }
@@ -66,7 +72,7 @@ namespace ECS.StreamableLoading.Common.Components
         {
 #if UNITY_EDITOR
             if (Value is not Status.Allowed)
-                throw new InvalidOperationException();
+                throw new InvalidOperationException($"Unexpected transition from \"{Value}\" to \"InProgress\"");
 #endif
             Value = Status.InProgress;
         }
@@ -76,7 +82,7 @@ namespace ECS.StreamableLoading.Common.Components
         {
 #if UNITY_EDITOR
             if (Value is not Status.InProgress)
-                throw new InvalidOperationException();
+                throw new InvalidOperationException($"Unexpected transition from \"{Value}\" to \"Finished\"");
 #endif
             Value = Status.Finished;
         }
@@ -89,7 +95,7 @@ namespace ECS.StreamableLoading.Common.Components
         {
 #if UNITY_EDITOR
             if (Value is not Status.InProgress)
-                throw new InvalidOperationException();
+                throw new InvalidOperationException($"Unexpected transition from \"{Value}\" to \"NotStarted\"");
 #endif
             Value = Status.NotStarted;
         }

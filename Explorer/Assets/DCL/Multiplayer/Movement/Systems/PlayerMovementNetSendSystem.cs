@@ -23,13 +23,16 @@ namespace DCL.Multiplayer.Movement.Systems
 
         private readonly MultiplayerMovementMessageBus messageBus;
         private readonly IMultiplayerMovementSettings settings;
+        private readonly MultiplayerDebugSettings debugSettings;
 
         private float sendRate;
 
-        public PlayerMovementNetSendSystem(World world, MultiplayerMovementMessageBus messageBus, IMultiplayerMovementSettings settings) : base(world)
+        public PlayerMovementNetSendSystem(World world, MultiplayerMovementMessageBus messageBus, IMultiplayerMovementSettings settings,
+            MultiplayerDebugSettings debugSettings) : base(world)
         {
             this.messageBus = messageBus;
             this.settings = settings;
+            this.debugSettings = debugSettings;
 
             sendRate = this.settings.MoveSendRate;
         }
@@ -146,9 +149,14 @@ namespace DCL.Multiplayer.Movement.Systems
             messageBus.Send(playerMovement.LastSentMessage);
 
             // Debug purposes. Simulate package lost when Running
-            if (settings.SelfSending
+            if (debugSettings.SelfSending
                 && movement.Kind != MovementKind.RUN // simulate package lost when Running
-               ) { messageBus.SelfSendWithDelayAsync(playerMovement.LastSentMessage, settings.Latency + (settings.Latency * Random.Range(0, settings.LatencyJitter))).Forget(); }
+               )
+            {
+                messageBus.SelfSendWithDelayAsync(playerMovement.LastSentMessage,
+                               debugSettings.Latency + (debugSettings.Latency * Random.Range(0, debugSettings.LatencyJitter)))
+                          .Forget();
+            }
         }
     }
 }
