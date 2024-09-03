@@ -33,16 +33,18 @@ namespace DCL.SDKComponents.AudioSources
         private readonly ISceneData sceneData;
         private readonly IStreamableCache<AudioClip, GetAudioClipIntention> cache;
         private readonly AudioMixerGroup[] worldGroup;
+        private readonly ISceneStateProvider sceneStateProvider;
 
         internal UpdateAudioSourceSystem(World world, ISceneData sceneData, IStreamableCache<AudioClip, GetAudioClipIntention> cache, IComponentPoolsRegistry poolsRegistry,
             IPerformanceBudget frameTimeBudgetProvider,
-            IPerformanceBudget memoryBudgetProvider, AudioMixer audioMixer) : base(world)
+            IPerformanceBudget memoryBudgetProvider, AudioMixer audioMixer, ISceneStateProvider sceneStateProvider) : base(world)
         {
             this.world = world;
             this.sceneData = sceneData;
             this.frameTimeBudgetProvider = frameTimeBudgetProvider;
             this.memoryBudgetProvider = memoryBudgetProvider;
             this.cache = cache;
+            this.sceneStateProvider = sceneStateProvider;
 
             audioSourcesPool = poolsRegistry.GetReferenceTypePool<AudioSource>().EnsureNotNull();
 
@@ -54,6 +56,8 @@ namespace DCL.SDKComponents.AudioSources
         {
             CreateAudioSourceQuery(World);
             UpdateAudioSourceQuery(World);
+
+            MuteAudioSourceQuery(World, !sceneStateProvider.IsCurrent);
         }
 
         [Query]
@@ -121,6 +125,17 @@ namespace DCL.SDKComponents.AudioSources
             }
 
             sdkComponent.IsDirty = false;
+        }
+
+        /// <summary>
+        /// Mutes an AudioSource.
+        /// </summary>
+        /// <param name="component">The AudioSource component.</param>
+        /// <param name="mute">Whether the AudioSource has to be muted or not.</param>
+        [Query]
+        private void MuteAudioSource(ref AudioSourceComponent component, [Data] bool mute)
+        {
+            component.Mute(mute);
         }
     }
 }
