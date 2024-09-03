@@ -93,11 +93,7 @@ namespace DCL.CharacterPreview
             inputEventBus.OnPointerDownEvent -= OnPointerDown;
             inputEventBus.OnDraggingEvent -= OnDrag;
 
-            try { DictionaryPool<CharacterPreviewInputAction, Sprite>.Release(cursorReplacementSprites); }
-            catch (Exception e)
-            {
-                throw;
-            }
+            DictionaryPool<CharacterPreviewInputAction, Sprite>.Release(cursorReplacementSprites);
         }
     }
 }
