@@ -4,16 +4,14 @@ using Arch.SystemGroups;
 using DCL.Diagnostics;
 using Cinemachine;
 using CRDT;
-using CrdtEcsBridge.Components;
 using DCL.CharacterCamera;
 using DCL.ECSComponents;
-using DCL.Optimization.Pools;
 using DCL.SDKComponents.CameraControl.MainCamera.Components;
+using DCL.SDKComponents.CameraModeArea.Systems;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
-using ECS.Unity.Transforms.Components;
 using SceneRunner.Scene;
 using System.Collections.Generic;
 using UnityEngine;
@@ -21,13 +19,12 @@ using UnityEngine;
 namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
 {
     [UpdateInGroup(typeof(SyncedInitializationFixedUpdateThrottledGroup))]
+    [UpdateBefore(typeof(CameraModeAreaHandlerSystem))]
     [LogCategory(ReportCategory.SDK_MAIN_CAMERA)]
     public partial class MainCameraSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
-        private const float MINIMUM_LOOK_AT_DISTANCE_SQR = 0.25f * 0.25f;
         private static readonly QueryDescription GLOBAL_WORLD_CAMERA_QUERY = new QueryDescription().WithAll<CameraComponent>();
 
-        private readonly IComponentPool<CinemachineFreeLook> poolRegistry;
         private readonly Dictionary<CRDTEntity,Entity> entitiesMap;
         private readonly Entity cameraEntity;
         private readonly ISceneStateProvider sceneStateProvider;
@@ -37,14 +34,12 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
 
         public MainCameraSystem(
             World world,
-            IComponentPool<CinemachineFreeLook> poolRegistry,
             Entity cameraEntity,
             Dictionary<CRDTEntity,Entity> entitiesMap,
             ISceneStateProvider sceneStateProvider,
             IExposedCameraData cameraData,
             World globalWorld) : base(world)
         {
-            this.poolRegistry = poolRegistry;
             this.cameraEntity = cameraEntity;
             this.entitiesMap = entitiesMap;
             this.sceneStateProvider = sceneStateProvider;
@@ -54,16 +49,12 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
 
         protected override void Update(float t)
         {
-            SetupVirtualCameraQuery(World);
             SetupMainCameraQuery(World);
 
-            HandleActiveVirtualCameraDirtyStateQuery(World);
             HandleVirtualCameraChangeQuery(World);
             DisableVirtualCameraOnSceneLeaveQuery(World);
 
-            HandleVirtualCameraRemovalQuery(World);
             HandleMainCameraRemovalQuery(World);
-            HandleVirtualCameraEntityDestructionQuery(World);
             HandleMainCameraEntityDestructionQuery(World);
         }
 
@@ -110,8 +101,8 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
         {
             if (!pbVirtualCamera.IsDirty || cameraData.CinemachineBrain!.ActiveVirtualCamera.VirtualCameraGameObject != virtualCameraComponent.virtualCameraInstance.gameObject) return;
 
-            virtualCameraComponent.lookAtCRDTEntity = GetPBVirtualCameraLookAtCRDTEntity(pbVirtualCamera, crdtEntity.Id);
-            ConfigureCameraLookAt(virtualCameraComponent);
+            virtualCameraComponent.lookAtCRDTEntity = VirtualCameraUtils.GetPBVirtualCameraLookAtCRDTEntity(pbVirtualCamera, crdtEntity.Id);
+            VirtualCameraUtils.ConfigureCameraLookAt(World, in entitiesMap, virtualCameraComponent);
         }
 
         [Query]
@@ -133,41 +124,11 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
         }
 
         [Query]
-        [None(typeof(VirtualCameraComponent), typeof(DeleteEntityIntention))]
-        private void SetupVirtualCamera(Entity entity, CRDTEntity crdtEntity, in PBVirtualCamera pbVirtualCamera, in TransformComponent transform)
-        {
-            if (!sceneStateProvider.IsCurrent) return;
-
-            var virtualCameraInstance = poolRegistry.Get();
-            virtualCameraInstance.transform.SetParent(transform.Transform);
-            virtualCameraInstance.transform.localPosition = Vector3.zero;
-            virtualCameraInstance.transform.localRotation = Quaternion.identity;
-            World.Add(entity, new VirtualCameraComponent(virtualCameraInstance, GetPBVirtualCameraLookAtCRDTEntity(pbVirtualCamera, crdtEntity.Id)));
-        }
-
-        [Query]
-        [None(typeof(DeleteEntityIntention), typeof(PBVirtualCamera))]
-        private void HandleVirtualCameraRemoval(Entity entity, in VirtualCameraComponent component)
-        {
-            component.virtualCameraInstance.enabled = false;
-            poolRegistry.Release(component.virtualCameraInstance);
-            World.Remove<VirtualCameraComponent>(entity);
-        }
-
-        [Query]
         [None(typeof(DeleteEntityIntention), typeof(PBMainCamera))]
         private void HandleMainCameraRemoval(Entity entity, in MainCameraComponent component)
         {
             DisableActiveVirtualCamera(component);
             World.Remove<MainCameraComponent>(entity);
-        }
-
-        [Query]
-        [All(typeof(DeleteEntityIntention))]
-        private void HandleVirtualCameraEntityDestruction(in VirtualCameraComponent component)
-        {
-            component.virtualCameraInstance.enabled = false;
-            poolRegistry.Release(component.virtualCameraInstance);
         }
 
         [Query]
@@ -183,99 +144,25 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
             DisableActiveVirtualCamera(mainCameraComponent);
         }
 
-        [Query]
-        private void FinalizeVirtualCameraComponents(in VirtualCameraComponent virtualCameraComponent)
-        {
-            poolRegistry.Release(virtualCameraComponent.virtualCameraInstance);
-        }
-
         public void FinalizeComponents(in Query query)
         {
             FinalizeMainCameraComponentQuery(World);
-            FinalizeVirtualCameraComponentsQuery(World);
-        }
-
-        private int GetPBVirtualCameraLookAtCRDTEntity(in PBVirtualCamera pbVirtualCamera, int virtualCameraCRDTEntity)
-        {
-            if (pbVirtualCamera.HasLookAtEntity)
-            {
-                int targetEntity = (int)pbVirtualCamera.LookAtEntity;
-                if (targetEntity != SpecialEntitiesID.CAMERA_ENTITY && targetEntity != virtualCameraCRDTEntity)
-                    return targetEntity;
-            }
-
-            return -1;
         }
 
         private void ApplyVirtualCamera(ref MainCameraComponent mainCameraComponent, int virtualCamCRDTEntity, Vector3? previousCameraPosition)
         {
-            if (!TryGetVirtualCameraComponent(virtualCamCRDTEntity, out var virtualCameraComponent)) return;
+            if (!VirtualCameraUtils.TryGetVirtualCameraComponent(World, in entitiesMap, virtualCamCRDTEntity, out var virtualCameraComponent)) return;
 
             var virtualCameraInstance = virtualCameraComponent!.Value.virtualCameraInstance;
 
-            ConfigureVirtualCameraTransition(virtualCamCRDTEntity,
+            VirtualCameraUtils.ConfigureVirtualCameraTransition(World, in entitiesMap, cameraData, virtualCamCRDTEntity,
                 previousCameraPosition.HasValue ? Vector3.Distance(virtualCameraInstance.transform.position, previousCameraPosition.Value) : 0f);
 
-            ConfigureCameraLookAt(virtualCameraComponent.Value);
+            VirtualCameraUtils.ConfigureCameraLookAt(World, in entitiesMap, virtualCameraComponent.Value);
 
             mainCameraComponent.virtualCameraCRDTEntity = virtualCamCRDTEntity;
             mainCameraComponent.virtualCameraInstance = virtualCameraInstance;
             virtualCameraInstance.enabled = true;
-        }
-
-        private void ConfigureVirtualCameraTransition(int virtualCamCRDTEntity, float distanceBetweenCameras)
-        {
-            var pbVirtualCamera = World.Get<PBVirtualCamera>(entitiesMap[virtualCamCRDTEntity]);
-
-            // Using custom blends array doesn't work because there's no direct way of getting the custom blend index,
-            // and we would have to hardcode it...
-            if (pbVirtualCamera.DefaultTransition.TransitionModeCase == CameraTransition.TransitionModeOneofCase.Time)
-            {
-                float timeValue = pbVirtualCamera.DefaultTransition.Time;
-                cameraData.CinemachineBrain!.m_DefaultBlend.m_Time = timeValue;
-                cameraData.CinemachineBrain!.m_DefaultBlend.m_Style = timeValue <= 0 ? CinemachineBlendDefinition.Style.Cut : CinemachineBlendDefinition.Style.EaseInOut;
-            }
-            else
-            {
-                float speedValue = pbVirtualCamera.DefaultTransition.Speed;
-                cameraData.CinemachineBrain!.m_DefaultBlend.m_Style = speedValue <= 0 ? CinemachineBlendDefinition.Style.Cut : CinemachineBlendDefinition.Style.EaseInOut;
-
-                // SPEED = 1 -> 1 meter per second
-                float blendTime = distanceBetweenCameras / speedValue;
-                if (blendTime == 0)
-                    cameraData.CinemachineBrain!.m_DefaultBlend.m_Style = CinemachineBlendDefinition.Style.Cut;
-                else
-                    cameraData.CinemachineBrain!.m_DefaultBlend.m_Time = blendTime;
-            }
-        }
-
-        private void ConfigureCameraLookAt(in VirtualCameraComponent virtualCameraComponent)
-        {
-            var rig = virtualCameraComponent.virtualCameraInstance.GetRig(1); // Middle (Aiming) Rig
-            if (entitiesMap.TryGetValue(virtualCameraComponent.lookAtCRDTEntity, out Entity lookAtEntity)
-                && World.TryGet(lookAtEntity, out TransformComponent transformComponent)
-                && (virtualCameraComponent.virtualCameraInstance.transform.position - transformComponent.Transform.position).sqrMagnitude >= MINIMUM_LOOK_AT_DISTANCE_SQR)
-            {
-                virtualCameraComponent.virtualCameraInstance.m_LookAt = transformComponent.Transform;
-                rig.AddCinemachineComponent<CinemachineHardLookAt>();
-            }
-            else
-            {
-                rig.AddCinemachineComponent<CinemachinePOV>();
-                virtualCameraComponent.virtualCameraInstance.m_LookAt = null;
-            }
-        }
-
-        private bool TryGetVirtualCameraComponent(int targetCRDTEntity, out VirtualCameraComponent? returnComponent)
-        {
-            returnComponent = null;
-            if (!entitiesMap.TryGetValue(targetCRDTEntity, out Entity virtualCameraEntity)
-                || !World.TryGet(virtualCameraEntity, out VirtualCameraComponent virtualCameraComponent))
-                return false;
-
-            returnComponent = virtualCameraComponent;
-
-            return true;
         }
 
         private void UpdateGlobalWorldCameraMode(bool isAnyVirtualCameraActive)
