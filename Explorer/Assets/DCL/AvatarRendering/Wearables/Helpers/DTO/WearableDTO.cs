@@ -25,11 +25,8 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             public List<LambdaResponseElementDto> elements;
             public int totalAmount;
 
-            [JsonIgnore]
-            public IReadOnlyList<LambdaResponseElementDto> Page => elements;
-
-            [JsonIgnore]
-            public int TotalAmount => totalAmount;
+            public IEnumerable<LambdaResponseElementDto> CountedElements() =>
+                IAttachmentLambdaResponse<LambdaResponseElementDto>.DefaultCountedElements(totalAmount, elements);
         }
 
         [Serializable]

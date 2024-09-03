@@ -29,7 +29,7 @@ namespace DCL.AvatarRendering.Emotes
             public readonly OrderOperation? orderOperation;
             public readonly string? name;
 
-            public OwnedEmotesRequestOptions(int? pageNum, int? pageSize, URN? collectionId, OrderOperation? orderOperation, string? name)
+            public OwnedEmotesRequestOptions(int? pageNum, int? pageSize, URN? collectionId, IEmoteProvider.OrderOperation? orderOperation, string? name)
             {
                 this.pageNum = pageNum;
                 this.pageSize = pageSize;

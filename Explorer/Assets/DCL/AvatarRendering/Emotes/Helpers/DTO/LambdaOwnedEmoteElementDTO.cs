@@ -28,10 +28,7 @@ namespace DCL.AvatarRendering.Emotes
         public List<LambdaOwnedEmoteElementDTO> elements;
         public int totalAmount;
 
-        [JsonIgnore]
-        public IReadOnlyList<LambdaOwnedEmoteElementDTO> Page => elements;
-
-        [JsonIgnore]
-        public int TotalAmount => totalAmount;
+        public IEnumerable<LambdaOwnedEmoteElementDTO> CountedElements() =>
+            IAttachmentLambdaResponse<LambdaOwnedEmoteElementDTO>.DefaultCountedElements(totalAmount, elements);
     }
 }
