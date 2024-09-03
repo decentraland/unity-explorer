@@ -250,7 +250,7 @@ namespace DCL.Passport
             foreach (IPassportModuleController module in passportModulesToSetup)
             {
                 if (module is BadgesDetails_PassportModuleController badgesDetailsController && !string.IsNullOrEmpty(badgeIdSelected))
-                    badgesDetailsController.SetBadgeToSelect(badgeIdSelected);
+                    badgesDetailsController.SetBadgeByDefault(badgeIdSelected);
 
                 module.Setup(profile);
             }

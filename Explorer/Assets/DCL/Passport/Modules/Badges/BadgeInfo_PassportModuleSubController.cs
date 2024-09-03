@@ -18,6 +18,7 @@ namespace DCL.Passport.Modules.Badges
     public class BadgeInfo_PassportModuleSubController
     {
         private const int BADGE_TIER_BUTTON_POOL_DEFAULT_CAPACITY = 6;
+        private static readonly int IS_STOPPED_3D_IMAGE_ANIMATION_PARAM = Animator.StringToHash("IsStopped");
 
         private readonly BadgeInfo_PassportModuleView badgeInfoModuleView;
         private readonly IWebRequestController webRequestController;
@@ -28,6 +29,7 @@ namespace DCL.Passport.Modules.Badges
 
         private bool isOwnProfile;
         private BadgeInfo currentBadgeInfo;
+        private List<TierData> currentTiers = new ();
         private CancellationTokenSource loadBadgeTierButtonsCts;
         private CancellationTokenSource loadBadge3DImageCts;
 
@@ -64,34 +66,23 @@ namespace DCL.Passport.Modules.Badges
                 LoadTierButtons();
             else
             {
-                badgeInfoModuleView.Setup(badgeInfo, new List<TierData>(), isOwnProfile);
+                SetupBadgeInfoView(badgeInfo, new List<TierData>());
                 loadBadge3DImageCts = loadBadge3DImageCts.SafeRestart();
                 LoadBadge3DImageAsync(badgeInfo.assets, loadBadge3DImageCts.Token).Forget();
                 SetAsLoading(false);
             }
         }
 
-        public void SetAsLoading(bool isLoading) =>
-            badgeInfoModuleView.SetAsLoading(isLoading);
+        public void SetAsLoading(bool isLoading)
+        {
+            badgeInfoModuleView.MainLoadingSpinner.SetActive(isLoading);
+            badgeInfoModuleView.MainContainer.SetActive(!isLoading);
+        }
 
         public void Clear()
         {
             loadBadge3DImageCts.SafeCancelAndDispose();
             ClearTiers();
-        }
-
-        private void ClearTiers()
-        {
-            loadBadgeTierButtonsCts.SafeCancelAndDispose();
-
-            foreach (BadgeTierButton_PassportFieldView badgeTierButtons in instantiatedBadgeTierButtons)
-            {
-                badgeTierButtons.StopLoadingImage();
-                badgeTierButtons.Button.onClick.RemoveAllListeners();
-                badgeTierButtonsPool.Release(badgeTierButtons);
-            }
-
-            instantiatedBadgeTierButtons.Clear();
         }
 
         private BadgeTierButton_PassportFieldView InstantiateBadgeTierButtonPrefab()
@@ -124,7 +115,7 @@ namespace DCL.Passport.Modules.Badges
                     CreateBadgeTierButton(tier, tierCompletedAt);
                 }
 
-                badgeInfoModuleView.Setup(badgeInfo, tiers, isOwnProfile);
+                SetupBadgeInfoView(badgeInfo, tiers);
                 SelectLastCompletedTierButton(badgeInfo, tiers);
                 SetAsLoading(false);
             }
@@ -168,6 +159,20 @@ namespace DCL.Passport.Modules.Badges
                 SelectTierButton(instantiatedBadgeTierButtons[selectedIndex]);
         }
 
+        private void ClearTiers()
+        {
+            loadBadgeTierButtonsCts.SafeCancelAndDispose();
+
+            foreach (BadgeTierButton_PassportFieldView badgeTierButtons in instantiatedBadgeTierButtons)
+            {
+                badgeTierButtons.StopLoadingImage();
+                badgeTierButtons.Button.onClick.RemoveAllListeners();
+                badgeTierButtonsPool.Release(badgeTierButtons);
+            }
+
+            instantiatedBadgeTierButtons.Clear();
+        }
+
         private void SelectTierButton(BadgeTierButton_PassportFieldView selectedTierButton)
         {
             for (var i = 0; i < instantiatedBadgeTierButtons.Count; i++)
@@ -177,10 +182,64 @@ namespace DCL.Passport.Modules.Badges
 
                 if (tierButton.Model.tierId == selectedTierButton.Model.tierId)
                 {
-                    badgeInfoModuleView.SelectBadgeTier(i, currentBadgeInfo);
+                    SelectBadgeTier(i, currentBadgeInfo);
 
                     loadBadge3DImageCts = loadBadge3DImageCts.SafeRestart();
                     LoadBadge3DImageAsync(tierButton.Model.assets, loadBadge3DImageCts.Token).Forget();
+                }
+            }
+        }
+
+        private void SelectBadgeTier(int tierIndex, BadgeInfo badgeInfo)
+        {
+            var tier = currentTiers[tierIndex];
+            badgeInfoModuleView.BadgeNameText.text = $"{badgeInfo.name} {tier.tierName}";
+            string tierCompletedAt = badgeInfo.GetTierCompletedDate(tier.tierId);
+            badgeInfoModuleView.BadgeDateText.text = !string.IsNullOrEmpty(tierCompletedAt) ? $"Unlocked: {BadgesUtils.FormatTimestampDate(tierCompletedAt)}" : "Locked";
+            badgeInfoModuleView.BadgeDescriptionText.text = tier.description;
+            badgeInfoModuleView.Badge3DImage.color = string.IsNullOrEmpty(tierCompletedAt) ? badgeInfoModuleView.Badge3DImageLockedColor : badgeInfoModuleView.Badge3DImageUnlockedColor;
+            badgeInfoModuleView.Badge3DAnimator.SetBool(IS_STOPPED_3D_IMAGE_ANIMATION_PARAM, string.IsNullOrEmpty(tierCompletedAt));
+        }
+
+        private void SetupBadgeInfoView(BadgeInfo badgeInfo, List<TierData> tiers)
+        {
+            currentTiers = tiers;
+            badgeInfoModuleView.TierSection.SetActive(badgeInfo.isTier);
+            badgeInfoModuleView.SimpleBadgeProgressBarContainer.SetActive(isOwnProfile && !badgeInfo.isTier && badgeInfo.progress.totalStepsTarget is > 1);
+            badgeInfoModuleView.Badge3DImage.color = badgeInfo.isLocked ? badgeInfoModuleView.Badge3DImageLockedColor : badgeInfoModuleView.Badge3DImageUnlockedColor;
+            badgeInfoModuleView.Badge3DAnimator.SetBool(IS_STOPPED_3D_IMAGE_ANIMATION_PARAM, badgeInfo.isLocked);
+
+            if (!badgeInfo.isTier)
+            {
+                badgeInfoModuleView.BadgeNameText.text = badgeInfo.name;
+                badgeInfoModuleView.BadgeDateText.text = !badgeInfo.isLocked ? $"Unlocked: {BadgesUtils.FormatTimestampDate(badgeInfo.completedAt)}" : "Locked";
+                badgeInfoModuleView.BadgeDescriptionText.text = badgeInfo.description;
+                int simpleBadgeProgressPercentage = badgeInfo.progress.stepsDone * 100 / badgeInfo.progress.totalStepsTarget;
+                badgeInfoModuleView.SimpleBadgeProgressBarFill.sizeDelta = new Vector2(simpleBadgeProgressPercentage * (badgeInfoModuleView.SimpleBadgeProgressBar.sizeDelta.x / 100), badgeInfoModuleView.SimpleBadgeProgressBarFill.sizeDelta.y);
+                badgeInfoModuleView.SimpleBadgeProgressValueText.text = $"{badgeInfo.progress.stepsDone}/{badgeInfo.progress.totalStepsTarget}";
+            }
+            else
+            {
+                int nextTierToCompleteIndex = tiers.Count - 1;
+                for (var i = 0; i < tiers.Count; i++)
+                {
+                    if (badgeInfo.progress.nextStepsTarget == tiers[i].criteria.steps)
+                        nextTierToCompleteIndex = i;
+                }
+
+                var nextTierToComplete = tiers[nextTierToCompleteIndex];
+                badgeInfoModuleView.TopTierMark.SetActive(isOwnProfile && !string.IsNullOrEmpty(badgeInfo.completedAt));
+                badgeInfoModuleView.NextTierContainer.SetActive(isOwnProfile && string.IsNullOrEmpty(badgeInfo.completedAt) && badgeInfo.progress.stepsDone > 0);
+                badgeInfoModuleView.NextTierDescriptionText.gameObject.SetActive(isOwnProfile);
+                badgeInfoModuleView.NextTierProgressBarContainer.SetActive(isOwnProfile);
+
+                if (isOwnProfile)
+                {
+                    badgeInfoModuleView.NextTierValueText.text = nextTierToComplete.tierName;
+                    badgeInfoModuleView.NextTierDescriptionText.text = nextTierToComplete.description;
+                    int nextTierProgressPercentage = badgeInfo.isLocked ? 0 : badgeInfo.progress.stepsDone * 100 / (badgeInfo.progress.nextStepsTarget ?? badgeInfo.progress.totalStepsTarget);
+                    badgeInfoModuleView.NextTierProgressBarFill.sizeDelta = new Vector2((!badgeInfo.isLocked ? nextTierProgressPercentage : 0) * (badgeInfoModuleView.NextTierProgressBar.sizeDelta.x / 100), badgeInfoModuleView.NextTierProgressBarFill.sizeDelta.y);
+                    badgeInfoModuleView.NextTierProgressValueText.text = $"{badgeInfo.progress.stepsDone}/{badgeInfo.progress.nextStepsTarget ?? badgeInfo.progress.totalStepsTarget}";
                 }
             }
         }
@@ -189,7 +248,7 @@ namespace DCL.Passport.Modules.Badges
         {
             try
             {
-                badgeInfoModuleView.SetImageAsLoading(true);
+                SetBadgeInfoViewAsLoading(true);
 
                 if (assets?.textures3d == null)
                     return;
@@ -205,8 +264,8 @@ namespace DCL.Passport.Modules.Badges
                 Texture2D hrmTexture = await webRequestController.GetTextureAsync(new CommonArguments(URLAddress.FromString(hrmUrl)), new GetTextureArguments(false), GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp), ct);
                 hrmTexture.filterMode = FilterMode.Bilinear;
 
-                badgeInfoModuleView.Set3DImage(baseColorTexture, normalTexture, hrmTexture);
-                badgeInfoModuleView.SetImageAsLoading(false);
+                Set3DImage(baseColorTexture, normalTexture, hrmTexture);
+                SetBadgeInfoViewAsLoading(false);
             }
             catch (OperationCanceledException) { }
             catch (Exception e)
@@ -215,6 +274,19 @@ namespace DCL.Passport.Modules.Badges
                 passportErrorsController.Show(ERROR_MESSAGE);
                 ReportHub.LogError(ReportCategory.BADGES, $"{ERROR_MESSAGE} ERROR: {e.Message}");
             }
+        }
+
+        private void SetBadgeInfoViewAsLoading(bool isLoading)
+        {
+            badgeInfoModuleView.ImageLoadingSpinner.SetActive(isLoading);
+            badgeInfoModuleView.Badge3DImage.gameObject.SetActive(!isLoading);
+        }
+
+        private void Set3DImage(Texture2D baseColor, Texture2D normal, Texture2D hrm)
+        {
+            badgeInfoModuleView.Badge3DMaterial.SetTexture("_baseColor", baseColor);
+            badgeInfoModuleView.Badge3DMaterial.SetTexture("_normal", normal);
+            badgeInfoModuleView.Badge3DMaterial.SetTexture("_hrm", hrm);
         }
     }
 }
