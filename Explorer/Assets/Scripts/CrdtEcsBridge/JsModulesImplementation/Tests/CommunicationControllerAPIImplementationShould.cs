@@ -5,6 +5,7 @@ using DCL.Ipfs;
 using DCL.Multiplayer.Connections.Messaging;
 using DCL.Multiplayer.Connections.Messaging.Pipe;
 using Decentraland.Kernel.Comms.Rfc4;
+using ECS;
 using Google.Protobuf;
 using LiveKit.Internal.FFIClients.Pools;
 using NSubstitute;
@@ -39,7 +40,10 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
             var sceneStateProvider = Substitute.For<ISceneStateProvider>();
             sceneStateProvider.IsCurrent.Returns(true);
 
-            api = new CommunicationsControllerAPIImplementation(sceneData, communicationControllerHub, jsOperations = Substitute.For<IJsOperations>(), crdtMemoryAllocator, sceneStateProvider);
+            IRealmData realmData = Substitute.For<IRealmData>();
+            realmData.ScenesAreFixed.Returns(false);
+
+            api = new CommunicationsControllerAPIImplementation(realmData, sceneData, communicationControllerHub, jsOperations = Substitute.For<IJsOperations>(), crdtMemoryAllocator, sceneStateProvider);
             api.OnSceneIsCurrentChanged(true);
         }
 
@@ -55,7 +59,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
 
             api.SendBinary(outerArray);
 
-            var expectedCalls = outerArray.Select(o => o.Prepend((byte)CommunicationsControllerAPIImplementation.MsgType.Uint8Array).ToArray()).ToList();
+            var expectedCalls = outerArray.Select(o => o.Prepend((byte)CommunicationsControllerAPIImplementationBase.MsgType.Uint8Array).ToArray()).ToList();
 
             // Assert the 2d array is equal
             CollectionAssert.AreEqual(expectedCalls, communicationControllerHub.sendMessageCalls);
@@ -70,7 +74,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
             const string WALLET_ID = "0x71C7656EC7ab88b098defB751B7401B5f6d8976F";
             const string SCENE_ID = "TEST_SCENE";
 
-            byte[] data = GetRandomBytes(50).Prepend((byte)CommunicationsControllerAPIImplementation.MsgType.Uint8Array).ToArray();
+            byte[] data = GetRandomBytes(50).Prepend((byte)CommunicationsControllerAPIImplementationBase.MsgType.Uint8Array).ToArray();
 
             var receivedMessage = new ReceivedMessage<Scene>(new Scene { Data = ByteString.CopyFrom(data), SceneId = SCENE_ID }, new Packet(), WALLET_ID, Substitute.For<IMultiPool>());
             communicationControllerHub.onSceneMessage.Invoke(ICommunicationControllerHub.SceneMessage.CopyFrom(receivedMessage));
