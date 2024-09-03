@@ -1,5 +1,6 @@
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.Profiling;
 using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Collections.Generic;
@@ -9,7 +10,7 @@ namespace DCL.AvatarRendering.Wearables.Components.Intentions
 {
     public struct GetWearableDTOByPointersIntention : IEquatable<GetWearableDTOByPointersIntention>, IPointersLoadingIntention
     {
-        private List<URN> pointers;
+        private readonly List<URN> pointers;
         private bool released;
 
         public CancellationTokenSource CancellationTokenSource => CommonArguments.CancellationTokenSource;
@@ -31,6 +32,7 @@ namespace DCL.AvatarRendering.Wearables.Components.Intentions
             this.pointers = pointers;
             CommonArguments = commonArguments;
             released = false;
+            ProfilingCounters.GetWearablesIntentionAmount.Value++;
         }
 
         public bool Equals(GetWearableDTOByPointersIntention other) =>
@@ -44,9 +46,9 @@ namespace DCL.AvatarRendering.Wearables.Components.Intentions
 
         public void ReleasePointers()
         {
-            //TODO as well for emotes
             released = true;
             WearableComponentsUtils.POINTERS_POOL.Release(pointers);
+            ProfilingCounters.GetWearablesIntentionAmount.Value--;
         }
     }
 }

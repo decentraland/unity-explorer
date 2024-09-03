@@ -43,7 +43,6 @@ namespace DCL.AvatarRendering.Wearables.Components.Intentions
         public void Dispose()
         {
             POINTERS_POOL.Release(Pointers);
-
             ProfilingCounters.GetWearablesIntentionAmount.Value--;
         }
 
