@@ -80,7 +80,7 @@ namespace DCL.ParcelsService
             {
                 // Override parcel as it's a new target
                 parcel = sceneDef.metadata.scene.DecodedBase;
-                Vector3 parcelBaseWorldPosition = ParcelMathHelper.GetPositionByParcelPosition(parcel);
+                Vector3 parcelBaseWorldPosition = GetPositionByParcelPositionWithErrorCompensation(parcel);
                 targetWorldPosition = parcelBaseWorldPosition;
 
                 List<SpawnPoint>? spawnPoints = sceneDef.metadata.spawnPoints;
@@ -97,7 +97,7 @@ namespace DCL.ParcelsService
                 }
             }
             else
-                targetWorldPosition = ParcelMathHelper.GetPositionByParcelPosition(parcel, true);
+                targetWorldPosition = GetPositionByParcelPositionWithErrorCompensation(parcel, true);
 
             await UniTask.Yield(PlayerLoopTiming.LastPostLateUpdate);
 
@@ -118,6 +118,17 @@ namespace DCL.ParcelsService
             }
 
             return new WaitForSceneReadiness(parcel, loadReport, sceneReadinessReportQueue);
+        }
+
+        /// <summary>
+        ///     Pulls position a little bit towards the center of the parcel to compensate a possible float error
+        ///     that shifts position outside the parcel
+        /// </summary>
+        private static Vector3 GetPositionByParcelPositionWithErrorCompensation(Vector2Int parcel, bool adaptYPositionToTerrain = false)
+        {
+            const float EPSILON = 0.0001f;
+
+            return ParcelMathHelper.GetPositionByParcelPosition(parcel, adaptYPositionToTerrain) + new Vector3(EPSILON, 0, EPSILON);
         }
 
         // TODO: this method should be removed, implies possible mantainance efforts and its only for debugging purposes
