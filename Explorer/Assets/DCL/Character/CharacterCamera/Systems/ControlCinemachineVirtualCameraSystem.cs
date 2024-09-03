@@ -58,9 +58,10 @@ namespace DCL.Character.CharacterCamera.Systems
         [None(typeof(CameraBlockerComponent))]
         private void HandleCameraInput([Data] float dt, in CameraComponent cameraComponent)
         {
+            if (cameraComponent.Mode == CameraMode.SDKCamera) return;
+
             // this blocks the user of changing the current camera, but the SDK still can do it
-            if (!cameraComponent.CameraInputChangeEnabled)
-                return;
+            if (!cameraComponent.CameraInputChangeEnabled) return;
 
             HandleZoomingQuery(World);
             HandleSwitchStateQuery(World);
@@ -71,6 +72,7 @@ namespace DCL.Character.CharacterCamera.Systems
         [Query]
         private void UpdateCameraState(ref CameraComponent cameraComponent, ref ICinemachinePreset cinemachinePreset, ref CinemachineCameraState state)
         {
+            if (cameraComponent.Mode == CameraMode.SDKCamera) return;
             SwitchCamera(cameraComponent.Mode, ref cinemachinePreset, ref cameraComponent, ref state);
         }
 
