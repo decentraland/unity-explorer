@@ -3,7 +3,6 @@ using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.UI;
 using DG.Tweening;
-using System;
 using System.Threading;
 using TMPro;
 using UnityEngine;
