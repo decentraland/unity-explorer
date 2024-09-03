@@ -1,7 +1,7 @@
 using DCL.Diagnostics;
+using DCL.Optimization.ThreadSafePool;
 using System;
 using System.Collections.Generic;
-using UnityEngine.Pool;
 
 namespace DCL.AvatarRendering.Loading.Components
 {
@@ -47,7 +47,7 @@ namespace DCL.AvatarRendering.Loading.Components
     /// </summary>
     public class RepoolableList<T> : IDisposable
     {
-        private static readonly ObjectPool<RepoolableList<T>> POOL = new (
+        private static readonly ThreadSafeObjectPool<RepoolableList<T>> POOL = new (
             () => new RepoolableList<T>(),
             actionOnGet: l => l.isDisposed = false,
             actionOnRelease: l =>
