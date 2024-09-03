@@ -2,11 +2,13 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Loading.Components;
+using DCL.AvatarRendering.Loading.Systems.Abstract;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
-using ECS.Abstract;
+using DCL.Optimization.Pools;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
@@ -24,14 +26,9 @@ namespace DCL.AvatarRendering.Emotes
     [LogCategory(ReportCategory.EMOTE)]
     [UpdateAfter(typeof(Load.LoadEmotesByPointersSystem))]
     [UpdateAfter(typeof(Load.LoadSceneEmotesSystem))]
-    public partial class FinalizeEmoteLoadingSystem : BaseUnityLoopSystem
+    public partial class FinalizeEmoteLoadingSystem : FinalizeElementsLoadingSystem<GetEmotesByPointersFromRealmIntention, IEmote, EmoteDTO, EmotesDTOList>
     {
-        private readonly IEmoteStorage emoteStorage;
-
-        public FinalizeEmoteLoadingSystem(World world, IEmoteStorage emoteStorage) : base(world)
-        {
-            this.emoteStorage = emoteStorage;
-        }
+        public FinalizeEmoteLoadingSystem(World world, IEmoteStorage emoteStorage) : base(world, emoteStorage, new ListObjectPool<URN>()) { }
 
         protected override void Update(float t)
         {
@@ -42,8 +39,11 @@ namespace DCL.AvatarRendering.Emotes
         }
 
         [Query]
-        private void FinalizeAssetBundleManifestLoading(Entity entity, ref AssetBundleManifestPromise promise,
-            ref IEmote emote)
+        private void FinalizeAssetBundleManifestLoading(
+            Entity entity,
+            ref AssetBundleManifestPromise promise,
+            ref IEmote emote
+        )
         {
             if (promise.TryForgetWithEntityIfCancelled(entity, World!))
             {
@@ -72,14 +72,14 @@ namespace DCL.AvatarRendering.Emotes
                 if (!promiseResult.Succeeded)
                 {
                     foreach (var pointerID in promise.LoadingIntention.Pointers)
-                        if (emoteStorage.TryGetElement(pointerID, out IEmote component))
+                        if (storage.TryGetElement(pointerID, out IEmote component))
                             component.UpdateLoadingStatus(false);
                 }
                 else
                     using (var list = promiseResult.Asset.ConsumeAttachments())
                         foreach (EmoteDTO assetEntity in list.Value)
                         {
-                            IEmote component = emoteStorage.GetOrAddByDTO(assetEntity);
+                            IEmote component = storage.GetOrAddByDTO(assetEntity);
                             component.ApplyAndMarkAsLoaded(assetEntity);
                         }
 
