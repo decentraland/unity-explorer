@@ -17,9 +17,12 @@ namespace DCL.Rendering.Avatar
             private RTHandle outlineRTHandle_Depth;
             private RenderTextureDescriptor outlineRTDescriptor_Colour;
             private RenderTextureDescriptor outlineRTDescriptor_Depth;
-            private ProfilingSampler m_Sampler = new (profilerTag);
 
             private FilteringSettings m_FilteringSettings;
+
+            public OutlineDrawPass()
+            {
+            }
 
             public void Setup(  RTHandle _outlineRTHandle_Colour,
                                 RTHandle _outlineRTHandle_Depth,
@@ -50,7 +53,7 @@ namespace DCL.Rendering.Avatar
             {
                 CommandBuffer cmd = CommandBufferPool.Get("_OutlineDrawPass");
 
-                using (new ProfilingScope(cmd, m_Sampler))
+                using (new ProfilingScope(cmd, new ProfilingSampler(profilerTag)))
                 {
                     // Create the draw settings, which configures a new draw call to the GPU
                     //CoreUtils.SetRenderTarget(cmd, renderingData.cameraData.renderer.cameraColorTargetHandle, renderingData.cameraData.renderer.cameraDepthTargetHandle, clearFlag: ClearFlag.None, clearColor: Color.black, miplevel: 0, cubemapFace: CubemapFace.Unknown, depthSlice: -1);
