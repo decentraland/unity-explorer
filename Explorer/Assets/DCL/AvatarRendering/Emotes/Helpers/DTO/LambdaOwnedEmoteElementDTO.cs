@@ -20,6 +20,7 @@ namespace DCL.AvatarRendering.Emotes
 
         [JsonIgnore]
         public IReadOnlyList<ElementIndividualDataDto> IndividualData => individualData;
+
     }
 
     [Serializable]
@@ -28,7 +29,10 @@ namespace DCL.AvatarRendering.Emotes
         public List<LambdaOwnedEmoteElementDTO> elements;
         public int totalAmount;
 
-        public IEnumerable<LambdaOwnedEmoteElementDTO> CountedElements() =>
-            IAttachmentLambdaResponse<LambdaOwnedEmoteElementDTO>.DefaultCountedElements(totalAmount, elements);
+        [JsonIgnore]
+        public IReadOnlyList<LambdaOwnedEmoteElementDTO> Elements => elements;
+
+        [JsonIgnore]
+        public int TotalAmount => totalAmount;
     }
 }

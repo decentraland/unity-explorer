@@ -232,13 +232,13 @@ namespace DCL.Backpack
 
             try
             {
-                IReadOnlyList<IWearable> wearables = await wearablesProvider.GetAsync(CURRENT_PAGE_SIZE, pageNumber, ct,
+                (IReadOnlyList<IWearable>? wearables, int totalAmount) = await wearablesProvider.GetAsync(CURRENT_PAGE_SIZE, pageNumber, ct,
                     currentSort.OrderByOperation.ToSortingField(),
                     currentSort.SortAscending ? IWearablesProvider.OrderBy.Ascending : IWearablesProvider.OrderBy.Descending,
                     currentCategory, collectionType, currentSearch, results);
 
                 if (refreshPageSelector)
-                    pageSelectorController.Configure(wearables.Count, CURRENT_PAGE_SIZE);
+                    pageSelectorController.Configure(totalAmount, CURRENT_PAGE_SIZE);
 
                 currentPageWearables = wearables;
 

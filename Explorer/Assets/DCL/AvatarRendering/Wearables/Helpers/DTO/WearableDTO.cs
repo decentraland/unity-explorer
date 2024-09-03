@@ -16,7 +16,9 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             public override DataBase AbstractData => data;
 
             [Serializable]
-            public class DataDto : DataBase { }
+            public class DataDto : DataBase
+            {
+            }
         }
 
         [Serializable]
@@ -25,8 +27,11 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             public List<LambdaResponseElementDto> elements;
             public int totalAmount;
 
-            public IEnumerable<LambdaResponseElementDto> CountedElements() =>
-                IAttachmentLambdaResponse<LambdaResponseElementDto>.DefaultCountedElements(totalAmount, elements);
+            [JsonIgnore]
+            public IReadOnlyList<LambdaResponseElementDto> Elements => elements;
+
+            [JsonIgnore]
+            public int TotalAmount => totalAmount;
         }
 
         [Serializable]

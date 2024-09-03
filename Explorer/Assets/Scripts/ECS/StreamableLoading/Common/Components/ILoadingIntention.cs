@@ -18,6 +18,10 @@ namespace ECS.StreamableLoading.Common.Components
 
     public interface ICountedLoadingIntention<in TResultElement> : ILoadingIntention
     {
+        int TotalAmount { get; }
+
+        void SetTotal(int total); //TODO refactor it may cause inconsistency because there are 2 sources of truth
+
         void AppendToResult(TResultElement resultElement);
     }
 
