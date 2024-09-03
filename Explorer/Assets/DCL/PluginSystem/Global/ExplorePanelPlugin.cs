@@ -216,7 +216,7 @@ namespace DCL.PluginSystem.Global
             mvcManager.RegisterController(new
                 ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackSubPlugin.backpackController!,
                     new ProfileWidgetController(() => explorePanelView.ProfileWidget, web3IdentityCache, profileRepository, webRequestController),
-                    new ProfileMenuController(() => explorePanelView.ProfileMenuView, explorePanelView.ProfileMenuView.ProfileMenu, web3IdentityCache, profileRepository, webRequestController, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager, chatEntryConfiguration),
+                    new ProfileMenuController(() => explorePanelView.ProfileMenuView, web3IdentityCache, profileRepository, webRequestController, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager, chatEntryConfiguration),
                     dclInput, notificationsBusController, mvcManager, inputBlock));
 
             inputHandler = new ExplorePanelInputHandler(dclInput, mvcManager);
@@ -230,7 +230,7 @@ namespace DCL.PluginSystem.Global
             public AssetReferenceGameObject ExplorePanelPrefab;
 
             [field: SerializeField]
-            public BackpackSettings BackpackSettings { get; private set; }
+            public BackpackSettings? BackpackSettings { get; private set; }
 
             [field: SerializeField]
             public string[] EmbeddedEmotes { get; private set; }

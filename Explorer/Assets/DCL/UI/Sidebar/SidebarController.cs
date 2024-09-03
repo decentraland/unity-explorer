@@ -77,7 +77,7 @@ namespace DCL.UI.Sidebar
 
             viewInstance.settingsButton.onClick.AddListener(() => OpenExplorePanelInSection(ExploreSections.Settings));
             viewInstance.mapButton.onClick.AddListener(() => OpenExplorePanelInSection(ExploreSections.Navmap));
-            viewInstance.ProfileWidget.OpenProfileButton.onClick.AddListener(OpenProfileWidget);
+            viewInstance.ProfileWidget.OpenProfileButton.onClick.AddListener(OpenProfileMenu);
             viewInstance.sidebarSettingsButton.onClick.AddListener(OpenSidebarSettings);
             viewInstance.notificationsButton.onClick.AddListener(OpenNotificationsPanel);
             viewInstance.autoHideToggle.onValueChanged.AddListener(OnAutoHideToggleChanged);
@@ -150,11 +150,20 @@ namespace DCL.UI.Sidebar
             systemMenuCts.SafeCancelAndDispose();
         }
 
-        private void OpenProfileWidget()
+        private void OpenProfileMenu()
         {
+            if (profileMenuController.State is ControllerState.ViewFocused or ControllerState.ViewBlurred)
+            {
+                //Profile is already open
+                return;
+            }
+
             CloseAllWidgets();
             sidebarBus.BlockSidebar();
-            ToggleSystemMenu();
+
+            systemMenuCts = systemMenuCts.SafeRestart();
+            viewInstance!.ProfileMenuView.gameObject.SetActive(true);
+            profileMenuController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Overlay, 0), new ControllerNoData(), systemMenuCts.Token).Forget();
         }
 
         private void OpenNotificationsPanel()
@@ -162,21 +171,6 @@ namespace DCL.UI.Sidebar
             CloseAllWidgets();
             sidebarBus.BlockSidebar();
             notificationsMenuController.ToggleNotificationsPanel(false);
-        }
-
-        private void ToggleSystemMenu()
-        {
-            systemMenuCts = systemMenuCts.SafeRestart();
-
-            if (profileMenuController.State is ControllerState.ViewFocused or ControllerState.ViewBlurred)
-            {
-                profileMenuController.HideViewAsync(systemMenuCts.Token).Forget();
-                sidebarBus.UnblockSidebar();
-            }
-            else
-            {
-                profileMenuController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Overlay, 0), new ControllerNoData(), systemMenuCts.Token).Forget();
-            }
         }
 
         private void OpenExplorePanelInSection(ExploreSections section, BackpackSections backpackSection = BackpackSections.Avatar)

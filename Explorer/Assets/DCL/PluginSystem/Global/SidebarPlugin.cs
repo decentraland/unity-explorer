@@ -98,7 +98,7 @@ namespace DCL.PluginSystem.Global
                 notificationsBusController,
                 new NotificationsMenuController(mainUIView.SidebarView.NotificationsMenuView, notificationsRequestController, notificationsBusController, notificationIconTypes, webRequestController, sidebarBus, rarityBackgroundMapping),
                 new ProfileWidgetController(() => mainUIView.SidebarView.ProfileWidget, web3IdentityCache, profileRepository, webRequestController),
-                new ProfileMenuController(() => mainUIView.SidebarView.ProfileMenuView, mainUIView.SidebarView.ProfileMenuView.ProfileMenu, web3IdentityCache, profileRepository, webRequestController, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager, chatEntryConfigurationSo),
+                new ProfileMenuController(() => mainUIView.SidebarView.ProfileMenuView, web3IdentityCache, profileRepository, webRequestController, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager, chatEntryConfigurationSo),
                 sidebarBus,
                 chatEntryConfigurationSo,
                 web3IdentityCache,
