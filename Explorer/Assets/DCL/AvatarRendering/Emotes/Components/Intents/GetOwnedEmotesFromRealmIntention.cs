@@ -29,6 +29,13 @@ namespace DCL.AvatarRendering.Emotes
         public override int GetHashCode() =>
             CommonArguments.GetHashCode();
 
+        public int TotalAmount { get; private set; }
+
+        public void SetTotal(int total)
+        {
+            TotalAmount = total;
+        }
+
         public void AppendToResult(IEmote resultElement)
         {
             Result.List.Add(resultElement);

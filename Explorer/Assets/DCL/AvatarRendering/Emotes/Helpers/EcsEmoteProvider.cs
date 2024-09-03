@@ -83,7 +83,7 @@ namespace DCL.AvatarRendering.Emotes
 
             using var emotes = promise.Result.Value.Asset.ConsumeEmotes();
             output.AddRange(emotes.Value);
-            return emotes.Value.Count;
+            return promise.Result.Value.Asset.TotalAmount;
         }
 
         public async UniTask GetEmotesAsync(IReadOnlyCollection<URN> emoteIds, BodyShape bodyShape, CancellationToken ct, List<IEmote> output)

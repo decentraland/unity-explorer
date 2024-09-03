@@ -5,7 +5,6 @@ using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.Web3.Identities;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
-using System;
 using System.Collections.Generic;
 using System.Threading;
 using ParamPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Helpers.WearablesResponse, DCL.AvatarRendering.Wearables.Components.Intentions.GetWearableByParamIntention>;
@@ -43,7 +42,7 @@ namespace DCL.AvatarRendering.Wearables
             this.world = world;
         }
 
-        public async UniTask<IReadOnlyList<IWearable>> GetAsync(int pageSize, int pageNumber, CancellationToken ct,
+        public async UniTask<(IReadOnlyList<IWearable> results, int totalAmount)> GetAsync(int pageSize, int pageNumber, CancellationToken ct,
             IWearablesProvider.SortingField sortingField = IWearablesProvider.SortingField.Date, IWearablesProvider.OrderBy orderBy = IWearablesProvider.OrderBy.Descending,
             string? category = null, IWearablesProvider.CollectionType collectionType = IWearablesProvider.CollectionType.All,
             string? name = null, List<IWearable>? results = null)
@@ -73,19 +72,20 @@ namespace DCL.AvatarRendering.Wearables
             results ??= new List<IWearable>();
 
             var wearablesPromise = ParamPromise.Create(world!,
-                new GetWearableByParamIntention(requestParameters, web3IdentityCache.Identity!.Address, results),
+                new GetWearableByParamIntention(requestParameters, web3IdentityCache.Identity!.Address, results, 0),
                 PartitionComponent.TOP_PRIORITY);
 
             wearablesPromise = await wearablesPromise.ToUniTaskAsync(world!, cancellationToken: ct);
 
             ct.ThrowIfCancellationRequested();
 
-            if (wearablesPromise.Result == null) return ArraySegment<IWearable>.Empty;
-            if (!wearablesPromise.Result.HasValue) return ArraySegment<IWearable>.Empty;
-            if (!wearablesPromise.Result!.Value.Succeeded) return ArraySegment<IWearable>.Empty;
+            if (wearablesPromise.Result == null) return (results, 0);
+            if (!wearablesPromise.Result.HasValue) return (results, 0);
+            if (!wearablesPromise.Result!.Value.Succeeded) return (results, 0);
 
             // Should be the same assigned in the intention as `results`
-            return (wearablesPromise.Result.Value.Asset.Wearables);
+            return (wearablesPromise.Result.Value.Asset.Wearables,
+                wearablesPromise.Result.Value.Asset.TotalAmount);
         }
 
         private static string GetDirectionParamValue(IWearablesProvider.OrderBy orderBy)

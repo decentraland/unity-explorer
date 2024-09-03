@@ -188,7 +188,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
                 new GetWearableByParamIntention(new[]
                 {
                     ("collectionType", "base-wearable"), ("pageSize", "282"),
-                }, "DummyUser", new List<IWearable>()),
+                }, "DummyUser", new List<IWearable>(), 0),
                 PartitionComponent.TOP_PRIORITY));
 
             var randomAvatarRequest = new RandomAvatarRequest

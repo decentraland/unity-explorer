@@ -123,7 +123,7 @@ namespace DCL.AvatarRendering.Emotes.Load
 
             if (!intention.IsAssetBundleProcessed) return;
 
-            World.Add(entity, new StreamableResult(new EmotesResolution(RepoolableList<IEmote>.FromElement(emote))));
+            World.Add(entity, new StreamableResult(new EmotesResolution(RepoolableList<IEmote>.FromElement(emote), 1)));
         }
 
         private bool CreateAssetBundlePromiseIfRequired(IEmote emote, in GetSceneEmoteFromRealmIntention intention, IPartitionComponent partitionComponent)
