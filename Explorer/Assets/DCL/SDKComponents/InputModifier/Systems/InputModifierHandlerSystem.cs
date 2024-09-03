@@ -1,19 +1,17 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using DCL.CharacterMotion.Systems;
 using DCL.ECSComponents;
-using DCL.Input;
 using DCL.SDKComponents.InputModifier.Components;
 using DCL.Utilities;
 using ECS.Abstract;
+using ECS.Groups;
 using ECS.LifeCycle;
 using SceneRunner.Scene;
 
 namespace DCL.SDKComponents.PlayerInputMovement.Systems
 {
-    [UpdateInGroup(typeof(InputGroup))]
-    [UpdateAfter(typeof(UpdateInputMovementSystem))]
+    [UpdateInGroup(typeof(SyncedInitializationSystemGroup))]
     public partial class InputModifierHandlerSystem : BaseUnityLoopSystem, ISceneIsCurrentListener
     {
         private readonly ObjectProxy<Entity> playerEntity;
