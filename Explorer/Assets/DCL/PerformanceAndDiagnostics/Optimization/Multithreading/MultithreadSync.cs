@@ -36,7 +36,8 @@ namespace Utility.Multithreading
             }
 
             if (shouldWait)
-                waiter.Wait(TimeSpan.FromSeconds(3)); // There is already one thread doing work. Wait for the signal
+                if (!waiter.Wait(TimeSpan.FromSeconds(3))) // There is already one thread doing work. Wait for the signal
+                    throw new TimeoutException($"{nameof(MultithreadSync)} timeout");
             Acquired = true;
         }
 
