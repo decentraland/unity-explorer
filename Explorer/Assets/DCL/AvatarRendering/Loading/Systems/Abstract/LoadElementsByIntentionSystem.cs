@@ -19,7 +19,7 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
 {
     public abstract class LoadElementsByIntentionSystem<TAsset, TIntention, TAvatarElement, TAvatarElementDTO> :
         LoadSystemBase<TAsset, TIntention>
-        where TIntention: struct, ICountedLoadingIntention<TAvatarElement>
+        where TIntention: struct, IAttachmentsLoadingIntention<TAvatarElement>
         where TAvatarElementDTO: AvatarAttachmentDTO where TAvatarElement : IAvatarAttachment<TAvatarElementDTO>
     {
         private readonly IAvatarElementCache<TAvatarElement, TAvatarElementDTO> avatarElementCache;

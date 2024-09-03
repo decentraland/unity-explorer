@@ -1,4 +1,5 @@
 using CommunicationData.URLHelpers;
+using DCL.AvatarRendering.Loading.Components;
 using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Collections.Generic;
@@ -6,7 +7,7 @@ using System.Threading;
 
 namespace DCL.AvatarRendering.Wearables.Components.Intentions
 {
-    public struct GetWearableByParamIntention : IEquatable<GetWearableByParamIntention>, ICountedLoadingIntention<IWearable>
+    public struct GetWearableByParamIntention : IEquatable<GetWearableByParamIntention>, IAttachmentsLoadingIntention<IWearable>
     {
         public CancellationTokenSource CancellationTokenSource => CommonArguments.CancellationTokenSource;
 

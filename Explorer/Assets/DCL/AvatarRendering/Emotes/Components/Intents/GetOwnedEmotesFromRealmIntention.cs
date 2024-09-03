@@ -5,7 +5,7 @@ using System.Threading;
 
 namespace DCL.AvatarRendering.Emotes
 {
-    public struct GetOwnedEmotesFromRealmIntention : ICountedLoadingIntention<IEmote>, IEquatable<GetOwnedEmotesFromRealmIntention>
+    public struct GetOwnedEmotesFromRealmIntention : IAttachmentsLoadingIntention<IEmote>, IEquatable<GetOwnedEmotesFromRealmIntention>
     {
         public RepoolableList<IEmote> Result { get; }
 

@@ -16,15 +16,6 @@ namespace ECS.StreamableLoading.Common.Components
         CommonLoadingArguments CommonArguments { get; set; }
     }
 
-    public interface ICountedLoadingIntention<in TResultElement> : ILoadingIntention
-    {
-        int TotalAmount { get; }
-
-        void SetTotal(int total);
-
-        void AppendToResult(TResultElement resultElement);
-    }
-
     public interface IPointersLoadingIntention : ILoadingIntention
     {
         IReadOnlyList<URN> Pointers { get; }
