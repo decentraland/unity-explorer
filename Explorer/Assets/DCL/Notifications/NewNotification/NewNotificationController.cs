@@ -16,6 +16,8 @@ namespace DCL.Notifications.NewNotification
 {
     public class NewNotificationController : ControllerBase<NewNotificationView>
     {
+        private static readonly int SHOW_BADGE_TRIGGER = Animator.StringToHash("Show");
+        private static readonly int HIDE_BADGE_TRIGGER = Animator.StringToHash("Hide");
         private const float ANIMATION_DURATION = 0.5f;
         private const float TIME_BEFORE_HIDE_NOTIFICATION = 5f;
 
@@ -26,6 +28,7 @@ namespace DCL.Notifications.NewNotification
         private readonly Queue<INotification> notificationQueue = new ();
         private bool isDisplaying;
         private ImageController thumbnailImageController;
+        private ImageController badgeThumbnailImageController;
         private CancellationTokenSource cts;
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
@@ -52,6 +55,8 @@ namespace DCL.Notifications.NewNotification
             viewInstance.NotificationView.NotificationClicked += ClickedNotification;
             viewInstance.NotificationView.CloseButton.onClick.AddListener(StopAnimation);
             viewInstance.SystemNotificationView.CloseButton.onClick.AddListener(StopAnimation);
+            badgeThumbnailImageController = new ImageController(viewInstance.BadgeNotificationView.NotificationImage, webRequestController);
+            viewInstance.BadgeNotificationView.NotificationClicked += ClickedNotification;
         }
 
         private void StopAnimation()
@@ -86,6 +91,9 @@ namespace DCL.Notifications.NewNotification
                     case NotificationType.INTERNAL_ARRIVED_TO_DESTINATION:
                         await ProcessArrivedNotificationAsync(notification);
                         break;
+                    case NotificationType.BADGE_GRANTED:
+                        await ProcessBadgeNotificationAsync(notification);
+                        break;
                     default:
                         await ProcessDefaultNotificationAsync(notification);
                         break;
@@ -119,6 +127,22 @@ namespace DCL.Notifications.NewNotification
             await AnimateNotificationCanvasGroupAsync(viewInstance.NotificationViewCanvasGroup);
         }
 
+        private async UniTask ProcessBadgeNotificationAsync(INotification notification)
+        {
+            if (viewInstance == null)
+                return;
+
+            viewInstance.BadgeNotificationView.HeaderText.text = notification.GetHeader();
+            viewInstance.BadgeNotificationView.TitleText.text = notification.GetTitle();
+            viewInstance.BadgeNotificationView.NotificationType = notification.Type;
+            viewInstance.BadgeNotificationView.Notification = notification;
+
+            if(!string.IsNullOrEmpty(notification.GetThumbnail()))
+                badgeThumbnailImageController.RequestImage(notification.GetThumbnail(), true, true);
+
+            await AnimateBadgeNotificationAsync();
+        }
+
         private void ProcessCustomMetadata(INotification notification)
         {
             switch (notification)
@@ -146,6 +170,24 @@ namespace DCL.Notifications.NewNotification
                 notificationCanvasGroup.interactable = false;
                 notificationCanvasGroup.blocksRaycasts = false;
                 await notificationCanvasGroup.DOFade(0, ANIMATION_DURATION).ToUniTask();
+            }
+        }
+
+        private async UniTask AnimateBadgeNotificationAsync()
+        {
+            if (viewInstance == null)
+                return;
+
+            try
+            {
+                viewInstance.BadgeNotificationView.PlayNotificationAudio();
+                viewInstance.BadgeNotificationAnimator.SetTrigger(SHOW_BADGE_TRIGGER);
+                await UniTask.Delay(TimeSpan.FromSeconds(TIME_BEFORE_HIDE_NOTIFICATION), cancellationToken: cts.Token);
+            }
+            catch (OperationCanceledException) { }
+            finally
+            {
+                viewInstance.BadgeNotificationAnimator.SetTrigger(HIDE_BADGE_TRIGGER);
             }
         }
 
