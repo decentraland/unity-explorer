@@ -22,8 +22,6 @@ namespace DCL.AvatarRendering.Emotes.Load
     [LogCategory(ReportCategory.EMOTE)]
     public partial class LoadSceneEmotesSystem : BaseUnityLoopSystem
     {
-        private const string SCENE_EMOTE_PREFIX = "urn:decentraland:off-chain:scene-emote";
-
         private readonly URLSubdirectory customStreamingSubdirectory;
         private readonly IEmoteStorage emoteStorage;
 
@@ -53,7 +51,7 @@ namespace DCL.AvatarRendering.Emotes.Load
                     static i => $"Scene emote request cancelled {i.EmoteHash}"))
                 return;
 
-            URN urn = GetUrn(intention.SceneId, intention.EmoteHash, intention.Loop);
+            URN urn = intention.NewSceneEmoteURN();
 
             if (intention.Timeout.IsTimeout(dt))
             {
@@ -144,8 +142,5 @@ namespace DCL.AvatarRendering.Emotes.Load
 
             return true;
         }
-
-        private static URN GetUrn(string sceneId, string emoteHash, bool loop) =>
-            new ($"{SCENE_EMOTE_PREFIX}:{sceneId}-{emoteHash}-{loop.ToString().ToLower()}");
     }
 }

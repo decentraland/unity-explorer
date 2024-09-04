@@ -1,4 +1,5 @@
 using AssetManagement;
+using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Loading.Components;
 using ECS.StreamableLoading;
 using ECS.StreamableLoading.Common.Components;
@@ -10,6 +11,8 @@ namespace DCL.AvatarRendering.Emotes
 {
     public struct GetSceneEmoteFromRealmIntention : IEquatable<GetSceneEmoteFromRealmIntention>, IAssetIntention
     {
+        private const string SCENE_EMOTE_PREFIX = "urn:decentraland:off-chain:scene-emote";
+
         public CancellationTokenSource CancellationTokenSource { get; }
         public string SceneId { get; }
         public SceneAssetBundleManifest AssetBundleManifest { get; }
@@ -43,5 +46,8 @@ namespace DCL.AvatarRendering.Emotes
 
         public bool Equals(GetSceneEmoteFromRealmIntention other) =>
             EmoteHash == other.EmoteHash && Loop == other.Loop && BodyShape.Equals(other.BodyShape);
+
+        public readonly URN NewSceneEmoteURN() =>
+            $"{SCENE_EMOTE_PREFIX}:{SceneId}-{EmoteHash}-{Loop.ToString().ToLower()}";
     }
 }
