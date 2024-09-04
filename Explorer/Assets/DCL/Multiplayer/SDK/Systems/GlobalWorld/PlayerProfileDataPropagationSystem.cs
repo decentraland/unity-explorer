@@ -1,6 +1,7 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.Character.Components;
 using DCL.Diagnostics;
 using DCL.Multiplayer.SDK.Components;
@@ -12,9 +13,8 @@ using SceneRunner.Scene;
 
 namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
 {
-    [UpdateInGroup(typeof(SyncedPreRenderingSystemGroup))]
+    [UpdateInGroup(typeof(PresentationSystemGroup))]
     [UpdateAfter(typeof(PlayerCRDTEntitiesHandlerSystem))]
-    [UpdateBefore(typeof(CleanUpGroup))]
     [LogCategory(ReportCategory.PLAYER_SDK_DATA)]
     public partial class PlayerProfileDataPropagationSystem : BaseUnityLoopSystem
     {
