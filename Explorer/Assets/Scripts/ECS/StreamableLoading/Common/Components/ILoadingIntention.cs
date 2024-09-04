@@ -1,5 +1,7 @@
-﻿using AssetManagement;
+﻿using Arch.Core;
+using AssetManagement;
 using CommunicationData.URLHelpers;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using Utility;
@@ -64,5 +66,28 @@ namespace ECS.StreamableLoading.Common.Components
 
         public static bool AreUrlEquals<TIntention>(this TIntention intention, TIntention other) where TIntention: struct, ILoadingIntention =>
             intention.CommonArguments.URL == other.CommonArguments.URL;
+
+        public static bool TryCancelByRequest<TIntention, TStreamableResult>(
+            this TIntention intention,
+            World world,
+            Entity entity,
+            Func<TIntention, string> errorMessage
+        ) where TIntention: IAssetIntention
+        {
+            if (intention.CancellationTokenSource.IsCancellationRequested)
+            {
+                if (world.Has<StreamableLoadingResult<TStreamableResult>>(entity) == false)
+                    world.Add(
+                        entity,
+                        new StreamableLoadingResult<TStreamableResult>(
+                            new OperationCanceledException(errorMessage(intention)!)
+                        )
+                    );
+
+                return true;
+            }
+
+            return false;
+        }
     }
 }

@@ -8,7 +8,6 @@ using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Loading.DTO;
 using DCL.AvatarRendering.Loading.Systems.Abstract;
 using DCL.AvatarRendering.Wearables.Helpers;
-using DCL.AvatarRendering.Wearables.Systems;
 using DCL.Diagnostics;
 using DCL.SDKComponents.AudioSources;
 using DCL.WebRequests;
@@ -70,7 +69,12 @@ namespace DCL.AvatarRendering.Emotes.Load
             ref GetEmotesByPointersIntention intention,
             ref IPartitionComponent partitionComponent)
         {
-            if (TryCancelByRequest(entity, in intention)) return;
+            if (intention.TryCancelByRequest<GetEmotesByPointersIntention, EmotesResolution>(
+                    World!,
+                    entity,
+                    static _ => "Pointer request cancelled"))
+                return;
+
             if (TryCancelByTimeout(entity, ref intention, dt)) return;
 
             using var _ = ListPool<URN>.Get(out var missingPointersTmp)!;
@@ -82,7 +86,7 @@ namespace DCL.AvatarRendering.Emotes.Load
             if (success) World!.Add(entity, NewEmotesResult(resolvedEmotesTmp, intention.Pointers.Count));
         }
 
-        private StreamableResult NewEmotesResult(RepoolableList<IEmote> resolvedEmotesTmp, int pointersCount) =>
+        private static StreamableResult NewEmotesResult(RepoolableList<IEmote> resolvedEmotesTmp, int pointersCount) =>
             new (new EmotesResolution(resolvedEmotesTmp, pointersCount));
 
         private void HandleResolvedEmotes(
@@ -176,19 +180,6 @@ namespace DCL.AvatarRendering.Emotes.Load
                 if (emote.Model.Succeeded)
                     mutResolvedEmotesTmp.List.Add(emote);
             }
-        }
-
-        private bool TryCancelByRequest(Entity entity, in GetEmotesByPointersIntention intention)
-        {
-            if (intention.CancellationTokenSource.IsCancellationRequested)
-            {
-                if (World!.Has<StreamableResult>(entity) == false)
-                    World.Add(entity, new StreamableResult(new OperationCanceledException("Pointer request cancelled")));
-
-                return true;
-            }
-
-            return false;
         }
 
         private bool TryCancelByTimeout(Entity entity, ref GetEmotesByPointersIntention intention, float dt)

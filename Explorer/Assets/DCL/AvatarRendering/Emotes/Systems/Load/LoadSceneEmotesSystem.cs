@@ -9,6 +9,7 @@ using DCL.Diagnostics;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AssetBundles;
+using ECS.StreamableLoading.Common.Components;
 using System;
 using UnityEngine;
 using Utility;
@@ -46,13 +47,11 @@ namespace DCL.AvatarRendering.Emotes.Load
             ref GetSceneEmoteFromRealmIntention intention,
             ref IPartitionComponent partitionComponent)
         {
-            if (intention.CancellationTokenSource.IsCancellationRequested)
-            {
-                if (!World.Has<StreamableResult>(entity))
-                    World.Add(entity, new StreamableResult(new OperationCanceledException($"Scene emote request cancelled {intention.EmoteHash}")));
-
+            if (intention.TryCancelByRequest<GetSceneEmoteFromRealmIntention, EmotesResolution>(
+                    World!,
+                    entity,
+                    static i => $"Scene emote request cancelled {i.EmoteHash}"))
                 return;
-            }
 
             URN urn = GetUrn(intention.SceneId, intention.EmoteHash, intention.Loop);
 
