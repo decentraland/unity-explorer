@@ -37,8 +37,8 @@ namespace ECS.TestSuite
             cachedWorld = null;
         }
 
-        protected TransformComponent AddTransformToEntity(in Entity entity, bool isDirty = false) =>
-            EcsTestsUtils.AddTransformToEntity(world, entity, isDirty);
+        protected TransformComponent AddTransformToEntity(in Entity entity, bool isDirty = false, World world = null) =>
+            EcsTestsUtils.AddTransformToEntity(world ?? this.world, entity, isDirty);
 
         protected UITransformComponent AddUITransformToEntity(in Entity entity, bool isDirty = false)
         {

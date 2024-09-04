@@ -4,6 +4,7 @@ using Arch.SystemGroups.Metadata;
 using DCL.Diagnostics;
 using System;
 using System.Linq;
+using UnityEngine;
 using UnityEngine.Profiling;
 
 namespace ECS.Abstract
@@ -31,7 +32,10 @@ namespace ECS.Abstract
             updateSampler = CustomSampler.Create($"{GetType().Name}.Update");
             genericUpdateSampler = CreateGenericSamplerIfRequired();
 
-            sceneInfo = world.Get<SceneShortInfo>(new SingleInstanceEntity(SCENE_INFO_QUERY, world));
+            var entity = new SingleInstanceEntity(SCENE_INFO_QUERY, world, false);
+
+            if (entity != Entity.Null)
+                sceneInfo = world.Get<SceneShortInfo>(entity);
         }
 
         private CustomSampler? CreateGenericSamplerIfRequired()
@@ -69,7 +73,7 @@ namespace ECS.Abstract
 
         // Look for category starting from the class itself and then groups recursively
         // if not found fall back to "ECS"
-        protected string GetReportCategory()
+        protected internal string GetReportCategory()
         {
             if (cachedCategory != null) return cachedCategory;
 

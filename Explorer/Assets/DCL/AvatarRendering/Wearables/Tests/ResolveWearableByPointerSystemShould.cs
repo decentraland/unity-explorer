@@ -45,6 +45,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
             });
 
             system = new ResolveWearableByPointerSystem(world, wearableCache, new RealmData(new TestIpfsRealm()), URLSubdirectory.EMPTY);
+            system.Initialize();
         }
 
         private WearableCache wearableCache;
