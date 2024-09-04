@@ -23,6 +23,7 @@ namespace SceneRunner.EmptyScene
         public ISceneStateProvider SceneStateProvider { get; }
         public SceneEcsExecutor EcsExecutor { get; }
         public PersistentEntities PersistentEntities => default;
+        public ISceneData SceneData { get; }
 
         public bool IsEmpty => true;
 

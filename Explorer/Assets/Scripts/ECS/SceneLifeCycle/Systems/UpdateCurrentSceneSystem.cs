@@ -1,8 +1,11 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
 using DCL.Character.Components;
+using DCL.DebugUtilities;
+using DCL.DebugUtilities.UIBindings;
 using ECS.Abstract;
 using ECS.SceneLifeCycle.CurrentScene;
+using SceneRunner.Scene;
 using UnityEngine;
 using Utility;
 
@@ -23,7 +26,12 @@ namespace ECS.SceneLifeCycle.Systems
 
         private readonly SceneAssetLock sceneAssetLock;
 
-        internal UpdateCurrentSceneSystem(World world, IRealmData realmData, IScenesCache scenesCache, CurrentSceneInfo currentSceneInfo, Entity playerEntity, SceneAssetLock sceneAssetLock) : base(world)
+        private ElementBinding<string> sceneNameBinding;
+        private ElementBinding<string> sceneParcelsBinding;
+        private ElementBinding<string> sceneHeightBinding;
+
+        internal UpdateCurrentSceneSystem(World world, IRealmData realmData, IScenesCache scenesCache, CurrentSceneInfo currentSceneInfo,
+                                            Entity playerEntity, SceneAssetLock sceneAssetLock, IDebugContainerBuilder debugBuilder) : base(world)
         {
             this.realmData = realmData;
             this.scenesCache = scenesCache;
@@ -31,6 +39,11 @@ namespace ECS.SceneLifeCycle.Systems
             this.playerEntity = playerEntity;
             this.sceneAssetLock = sceneAssetLock;
             ResetProcessedParcel();
+
+            debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.CURRENT_SCENE)
+                         .AddCustomMarker("Name:", sceneNameBinding = new ElementBinding<string>(string.Empty))
+                         .AddCustomMarker("Parcels:", sceneParcelsBinding = new ElementBinding<string>(string.Empty))
+                         .AddCustomMarker("Height (m):", sceneHeightBinding = new ElementBinding<string>(string .Empty));
         }
 
         private void ResetProcessedParcel()
@@ -51,6 +64,9 @@ namespace ECS.SceneLifeCycle.Systems
             UpdateSceneReadiness(parcel);
             UpdateCurrentScene(parcel);
             UpdateCurrentSceneInfo(parcel);
+
+            RefreshSceneDebugInfo();
+
         }
 
         private void UpdateSceneReadiness(Vector2Int parcel)
@@ -59,6 +75,7 @@ namespace ECS.SceneLifeCycle.Systems
                 return;
 
             sceneAssetLock.TryLock(currentScene);
+
             if (!currentScene.SceneStateProvider.IsCurrent)
                 currentScene.SetIsCurrent(true);
         }
@@ -66,7 +83,6 @@ namespace ECS.SceneLifeCycle.Systems
         private void UpdateCurrentScene(Vector2Int parcel)
         {
             if (lastParcelProcessed == parcel) return;
-
             scenesCache.TryGetByParcel(lastParcelProcessed, out var lastProcessedScene);
             scenesCache.TryGetByParcel(parcel, out var currentScene);
 
@@ -84,6 +100,30 @@ namespace ECS.SceneLifeCycle.Systems
             scenesCache.TryGetByParcel(parcel, out var currentScene);
             currentSceneInfo.Update(currentScene);
             scenesCache.SetCurrentScene(currentScene);
+        }
+
+        private void RefreshSceneDebugInfo()
+        {
+            if (scenesCache.CurrentScene != null)
+            {
+                if (sceneNameBinding.Value != scenesCache.CurrentScene.Info.Name)
+                {
+                    sceneNameBinding.Value = scenesCache.CurrentScene.Info.Name;
+
+                    if (scenesCache.CurrentScene.SceneData.Parcels != null)
+                    {
+                        sceneParcelsBinding.Value = scenesCache.CurrentScene.SceneData.Parcels.Count.ToString();
+                    }
+
+                    sceneHeightBinding.Value = scenesCache.CurrentScene.SceneData.Geometry.Height.ToString();
+                }
+            }
+            else
+            {
+                sceneNameBinding.Value = "<No data>";
+                sceneParcelsBinding.Value = "<No data>";
+                sceneHeightBinding.Value = "<No data>";
+            }
         }
     }
 }
