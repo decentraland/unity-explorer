@@ -9,7 +9,7 @@ namespace DCL.AvatarRendering.Emotes
     {
         public static GetEmotesByPointersIntention CreateGetEmotesByPointersIntention(BodyShape bodyShape, IReadOnlyCollection<string> emotes)
         {
-            List<URN> pointers = POINTERS_POOL.Get();
+            List<URN> pointers = POINTERS_POOL.Get()!;
 
             foreach (URN emote in emotes)
                 if (!emote.IsNullOrEmpty())
@@ -20,7 +20,7 @@ namespace DCL.AvatarRendering.Emotes
 
         public static GetEmotesByPointersIntention CreateGetEmotesByPointersIntention(BodyShape bodyShape, IReadOnlyCollection<URN> emotes)
         {
-            List<URN> pointers = POINTERS_POOL.Get();
+            List<URN> pointers = POINTERS_POOL.Get()!;
 
             foreach (URN emote in emotes)
                 if (!emote.IsNullOrEmpty())

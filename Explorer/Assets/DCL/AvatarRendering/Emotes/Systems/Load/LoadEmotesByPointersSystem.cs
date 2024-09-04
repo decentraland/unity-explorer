@@ -19,6 +19,7 @@ using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Pool;
@@ -31,9 +32,6 @@ using AudioPromise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.Audio
 
 namespace DCL.AvatarRendering.Emotes.Load
 {
-    /// <summary>
-    ///     TODO this system should be generalized with <see cref="ResolveWearableByPointerSystem" />
-    /// </summary>
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [LogCategory(ReportCategory.EMOTE)]
     public partial class LoadEmotesByPointersSystem : LoadElementsByPointersSystem<EmotesDTOList, GetEmotesByPointersFromRealmIntention, EmoteDTO>
@@ -72,76 +70,31 @@ namespace DCL.AvatarRendering.Emotes.Load
             ref GetEmotesByPointersIntention intention,
             ref IPartitionComponent partitionComponent)
         {
-            if (intention.CancellationTokenSource.IsCancellationRequested)
-            {
-                if (World!.Has<StreamableResult>(entity) == false)
-                    World.Add(entity, new StreamableResult(new OperationCanceledException("Pointer request cancelled")));
-
-                return;
-            }
-
-            if (intention.Timeout.IsTimeout(dt))
-            {
-                if (World!.Has<StreamableResult>(entity) == false)
-                {
-                    var pointersStrLog = string.Join(",", intention.Pointers);
-                    ReportHub.LogWarning(GetReportCategory(), $"Loading emotes timed out, {pointersStrLog}");
-                    World.Add(entity, new StreamableResult(new TimeoutException($"Emote intention timeout {pointersStrLog}")));
-                }
-
-                return;
-            }
+            if (TryCancelByRequest(entity, in intention)) return;
+            if (TryCancelByTimeout(entity, ref intention, dt)) return;
 
             using var _ = ListPool<URN>.Get(out var missingPointersTmp)!;
             var resolvedEmotesTmp = RepoolableList<IEmote>.NewList();
 
-            foreach (URN loadingIntentionPointer in intention.Pointers)
-            {
-                if (loadingIntentionPointer.IsNullOrEmpty())
-                {
-                    ReportHub.LogError(
-                        GetReportCategory(),
-                        "ResolveWearableByPointerSystem: Null pointer found in the list of pointers"
-                    );
+            HandlePointers(in intention, missingPointersTmp!, resolvedEmotesTmp);
+            if (TryCancelByMissingPointers(missingPointersTmp!, partitionComponent, intention.BodyShape)) return;
+            HandleResolvedEmotes(in intention, partitionComponent, resolvedEmotesTmp.List, out bool success);
+            if (success) World!.Add(entity, NewEmotesResult(resolvedEmotesTmp, intention.Pointers.Count));
+        }
 
-                    continue;
-                }
+        private StreamableResult NewEmotesResult(RepoolableList<IEmote> resolvedEmotesTmp, int pointersCount) =>
+            new (new EmotesResolution(resolvedEmotesTmp, pointersCount));
 
-                URN shortenedPointer = loadingIntentionPointer;
-                shortenedPointer = shortenedPointer.Shorten();
-
-                if (!emoteStorage.TryGetElement(shortenedPointer, out IEmote emote))
-                {
-                    if (!intention.ProcessedPointers.Contains(loadingIntentionPointer))
-                    {
-                        missingPointersTmp!.Add(shortenedPointer);
-                        intention.ProcessedPointers.Add(loadingIntentionPointer);
-                    }
-
-                    continue;
-                }
-
-                if (emote.Model.Succeeded)
-                    resolvedEmotesTmp.List.Add(emote);
-            }
-
-            if (missingPointersTmp!.Count > 0)
-            {
-                var promise = EmotesFromRealmPromise.Create(
-                    World!,
-                    new GetEmotesByPointersFromRealmIntention(missingPointersTmp.ToList(),
-                        new CommonLoadingArguments(realmData.Ipfs.EntitiesActiveEndpoint)
-                    ),
-                    partitionComponent
-                );
-
-                World!.Create(promise, intention.BodyShape, partitionComponent);
-                return;
-            }
-
+        private void HandleResolvedEmotes(
+            in GetEmotesByPointersIntention intention,
+            IPartitionComponent partitionComponent,
+            IEnumerable<IEmote> resolvedEmotes,
+            out bool success
+        )
+        {
             var emotesWithResponse = 0;
 
-            foreach (IEmote emote in resolvedEmotesTmp.List)
+            foreach (IEmote emote in resolvedEmotes)
             {
                 if (emote.ManifestResult is { Exception: not null })
                     emotesWithResponse++;
@@ -156,30 +109,103 @@ namespace DCL.AvatarRendering.Emotes.Load
                     emotesWithResponse++;
 
                 if (emote.AssetResults[intention.BodyShape] is { Succeeded: true })
-                {
+
                     // Reference must be added only once when the wearable is resolved
                     if (!intention.SuccessfulPointers.Contains(emote.GetUrn()))
                     {
                         intention.SuccessfulPointers.Add(emote.GetUrn());
 
                         // We need to add a reference here, so it is not lost if the flow interrupts in between (i.e. before creating instances of CachedWearable)
-                        emote.AssetResults[intention.BodyShape]?.Asset.AddReference();
+                        emote.AssetResults[intention.BodyShape]?.Asset?.AddReference();
                     }
-                }
             }
 
-            bool isSucceeded = emotesWithResponse == intention.Pointers.Count;
+            success = emotesWithResponse == intention.Pointers.Count;
+        }
 
-            if (isSucceeded)
-                World!.Add(
-                    entity,
-                    new StreamableResult(
-                        new EmotesResolution(
-                            resolvedEmotesTmp,
-                            intention.Pointers.Count
-                        )
-                    )
+        private bool TryCancelByMissingPointers(ICollection<URN> missingPointersTmp, IPartitionComponent partitionComponent, BodyShape forBodyShape)
+        {
+            if (missingPointersTmp.Count > 0)
+            {
+                var promise = EmotesFromRealmPromise.Create(
+                    World!,
+                    new GetEmotesByPointersFromRealmIntention(missingPointersTmp.ToList(),
+                        new CommonLoadingArguments(realmData.Ipfs.EntitiesActiveEndpoint)
+                    ),
+                    partitionComponent
                 );
+
+                World!.Create(promise, forBodyShape, partitionComponent);
+                return true;
+            }
+
+            return false;
+        }
+
+        private void HandlePointers(
+            in GetEmotesByPointersIntention intention,
+            ICollection<URN> mutMissingPointersTmp,
+            RepoolableList<IEmote> mutResolvedEmotesTmp
+        )
+        {
+            foreach (URN loadingIntentionPointer in intention.Pointers)
+            {
+                if (loadingIntentionPointer.IsNullOrEmpty())
+                {
+                    ReportHub.LogError(
+                        GetReportCategory(),
+                        "ResolveWearableByPointerSystem: Null pointer found in the list of pointers"
+                    );
+
+                    continue;
+                }
+
+                URN shortenedPointer = loadingIntentionPointer.Shorten();
+
+                if (!emoteStorage.TryGetElement(shortenedPointer, out IEmote emote))
+                {
+                    if (!intention.ProcessedPointers.Contains(loadingIntentionPointer))
+                    {
+                        mutMissingPointersTmp.Add(shortenedPointer);
+                        intention.ProcessedPointers.Add(loadingIntentionPointer);
+                    }
+
+                    continue;
+                }
+
+                if (emote.Model.Succeeded)
+                    mutResolvedEmotesTmp.List.Add(emote);
+            }
+        }
+
+        private bool TryCancelByRequest(Entity entity, in GetEmotesByPointersIntention intention)
+        {
+            if (intention.CancellationTokenSource.IsCancellationRequested)
+            {
+                if (World!.Has<StreamableResult>(entity) == false)
+                    World.Add(entity, new StreamableResult(new OperationCanceledException("Pointer request cancelled")));
+
+                return true;
+            }
+
+            return false;
+        }
+
+        private bool TryCancelByTimeout(Entity entity, ref GetEmotesByPointersIntention intention, float dt)
+        {
+            if (intention.Timeout.IsTimeout(dt))
+            {
+                if (World!.Has<StreamableResult>(entity) == false)
+                {
+                    var pointersStrLog = string.Join(",", intention.Pointers);
+                    ReportHub.LogWarning(GetReportCategory(), $"Loading emotes timed out, {pointersStrLog}");
+                    World.Add(entity, new StreamableResult(new TimeoutException($"Emote intention timeout {pointersStrLog}")));
+                }
+
+                return true;
+            }
+
+            return false;
         }
 
         private bool CreateAssetBundlePromiseIfRequired(IEmote component, in GetEmotesByPointersIntention intention, IPartitionComponent partitionComponent)
