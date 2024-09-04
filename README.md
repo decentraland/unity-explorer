@@ -1,6 +1,6 @@
 # unity-explorer
 
-Explorer renderer 
+Explorer renderer.
 
 ## Submodule installation required
 
