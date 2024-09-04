@@ -144,7 +144,7 @@ jobs:
           elif [ "${{ inputs.cache_strategy }}" ]; then
             cache_strategy=${{ inputs.cache_strategy }}
           else
-            cache_strategy='workspace'
+            cache_strategy='library'
           fi
           echo "cache_strategy=${cache_strategy}" >> $GITHUB_OUTPUT
 
