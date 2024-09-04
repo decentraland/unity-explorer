@@ -15,7 +15,7 @@ namespace DCL.Multiplayer.Movement
 
             if (ext.Velocity.sqrMagnitude > settings.MinSpeed)
             {
-                var newPosition = transComp.Transform.position + (ext.Velocity * deltaTime);
+                Vector3 newPosition = transComp.Transform.position + (ext.Velocity * deltaTime);
 
                 // Clamp the Y position to avoid passing the floor (for both cases - above and below the floor)
                 if (transComp.Transform.position.y * newPosition.y <= 0)

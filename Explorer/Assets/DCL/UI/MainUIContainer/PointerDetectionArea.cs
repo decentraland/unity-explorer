@@ -8,6 +8,9 @@ namespace DCL.UI.MainUI
     [RequireComponent(typeof(Image))]
     public class PointerDetectionArea : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
+        public event Action OnEnterArea;
+        public event Action OnExitArea;
+
         public void OnPointerEnter(PointerEventData eventData)
         {
             OnEnterArea?.Invoke();
@@ -17,8 +20,5 @@ namespace DCL.UI.MainUI
         {
             OnExitArea?.Invoke();
         }
-
-        public event Action OnEnterArea;
-        public event Action OnExitArea;
     }
 }

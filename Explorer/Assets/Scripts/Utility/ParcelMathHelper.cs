@@ -7,7 +7,7 @@ namespace Utility
 {
     public static class ParcelMathHelper
     {
-        public const float PARCEL_SIZE = 16.0f;
+        public const int PARCEL_SIZE = 16;
         public const float SQR_PARCEL_SIZE = PARCEL_SIZE * PARCEL_SIZE;
 
         public static readonly SceneGeometry UNDEFINED_SCENE_GEOMETRY = new (
@@ -87,8 +87,6 @@ namespace Utility
             return new ParcelCorners(min, min + new Vector3(0, 0, PARCEL_SIZE), min + new Vector3(PARCEL_SIZE, 0, PARCEL_SIZE), min + new Vector3(PARCEL_SIZE, 0, 0));
         }
 
-        public static Vector2Int FloorToParcel(Vector3 position) =>
-            new (Mathf.FloorToInt(position.x / PARCEL_SIZE), Mathf.FloorToInt(position.z / PARCEL_SIZE));
 
         public static void ParcelsInRange(Vector3 position, int loadRadius, HashSet<int2> results)
         {
@@ -121,21 +119,17 @@ namespace Utility
             }
         }
 
-        public static Vector2Int WorldToGridPosition(Vector3 worldPosition)
-        {
-            return new Vector2Int(
-                (int)Mathf.Floor(worldPosition.x / PARCEL_SIZE),
-                (int)Mathf.Floor(worldPosition.z / PARCEL_SIZE)
-            );
-        }
+        public static Vector2 WorldToGridPositionUnclamped(Vector3 worldPosition) =>
+            new (worldPosition.x / PARCEL_SIZE, worldPosition.z / PARCEL_SIZE);
 
-        public static Vector2 WorldToGridPositionUnclamped(Vector3 worldPosition)
-        {
-            return new Vector2(
-                worldPosition.x / PARCEL_SIZE,
-                worldPosition.z / PARCEL_SIZE
-            );
-        }
+        public static Vector2Int ToParcel(this Vector3 position) =>
+            new (Mathf.FloorToInt(position.x / PARCEL_SIZE), Mathf.FloorToInt(position.z / PARCEL_SIZE));
+
+        public static Vector2Int ParcelPosition(this Transform transform) =>
+            transform.position.ToParcel();
+
+        public static Vector2Int ToParcel(this CanBeDirty<Vector3> position) =>
+            position.Value.ToParcel();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool Intersects(this in SceneCircumscribedPlanes boundingPlanes, Bounds bounds)
@@ -146,6 +140,17 @@ namespace Utility
             return boundingPlanes.MinX < min.x && boundingPlanes.MaxX > max.x
                                                && boundingPlanes.MinZ < min.z && boundingPlanes.MaxZ > max.z;
         }
+
+        /// <summary>
+        /// Checks whether a point is contained in the XZ projection of the bounding box of a scene.
+        /// </summary>
+        /// <param name="boundingPlanes">The project bounding-box rectangle.</param>
+        /// <param name="point">The point to check.</param>
+        /// <returns>True if the point intersects the rectangle; False otherwise.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool Intersects(this in SceneCircumscribedPlanes boundingPlanes, Vector3 point) =>
+            boundingPlanes.MinX < point.x && boundingPlanes.MaxX > point.x
+                                          && boundingPlanes.MinZ < point.z && boundingPlanes.MaxZ > point.z;
 
         public readonly struct ParcelCorners
         {

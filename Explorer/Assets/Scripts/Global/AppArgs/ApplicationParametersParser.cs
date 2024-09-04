@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Text.RegularExpressions;
@@ -19,11 +20,13 @@ namespace Global.AppArgs
 
         public ApplicationParametersParser() : this(Environment.GetCommandLineArgs()) { }
 
-        public ApplicationParametersParser(string[] args)
+        public ApplicationParametersParser(string[] args) : this(true, args) { }
+
+        public ApplicationParametersParser(bool useInEditorFlags = true, params string[] args)
         {
             ParseApplicationParameters(args);
 
-            if (Application.isEditor)
+            if (useInEditorFlags && Application.isEditor)
                 AddAlwaysInEditorFlags();
         }
 
@@ -33,11 +36,13 @@ namespace Global.AppArgs
         public bool TryGetValue(string flagName, out string? value) =>
             appParameters.TryGetValue(flagName, out value);
 
+        public IEnumerable<string> Flags() =>
+            appParameters.Keys;
+
         private void AddAlwaysInEditorFlags()
         {
             foreach ((string? key, string? value) in ALWAYS_IN_EDITOR)
-                if (appParameters.ContainsKey(key) == false)
-                    appParameters[key] = value;
+                appParameters.TryAdd(key, value);
         }
 
         private void ParseApplicationParameters(string[] cmdArgs)
@@ -45,10 +50,8 @@ namespace Global.AppArgs
             var deepLinkFound = false;
             string lastKeyStored = string.Empty;
 
-            for (int i = 0; i < cmdArgs.Length; i++)
+            foreach (string arg in cmdArgs)
             {
-                string arg = cmdArgs[i];
-
                 if (arg.StartsWith("--"))
                 {
                     if (arg.Length > 2)

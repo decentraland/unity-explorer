@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.MapRenderer.Culling;
 using System;
+using System.Threading;
 using UnityEngine;
 
 namespace DCL.MapRenderer.MapLayers.Pins
@@ -21,9 +22,9 @@ namespace DCL.MapRenderer.MapLayers.Pins
 
         void SetData(string title, string description);
 
-        UniTaskVoid AnimateSelectionAsync();
+        UniTaskVoid AnimateSelectionAsync(CancellationToken ct);
 
-        UniTaskVoid AnimateDeselectionAsync();
+        UniTaskVoid AnimateDeselectionAsync(CancellationToken ct);
 
         void SetAsDestination(bool isDestination);
 

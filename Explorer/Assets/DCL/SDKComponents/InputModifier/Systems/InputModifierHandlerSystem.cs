@@ -3,7 +3,6 @@ using Arch.System;
 using Arch.SystemGroups;
 using DCL.ECSComponents;
 using DCL.SDKComponents.InputModifier.Components;
-using DCL.Utilities;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle;
@@ -14,15 +13,15 @@ namespace DCL.SDKComponents.PlayerInputMovement.Systems
     [UpdateInGroup(typeof(SyncedInitializationSystemGroup))]
     public partial class InputModifierHandlerSystem : BaseUnityLoopSystem, ISceneIsCurrentListener
     {
-        private readonly ObjectProxy<Entity> playerEntity;
+        private readonly Entity playerEntity;
         private readonly World globalWorld;
         private readonly ISceneStateProvider sceneStateProvider;
 
-        public InputModifierHandlerSystem(World world, ObjectProxy<World> globalWorldProxy, ObjectProxy<Entity> playerEntity, ISceneStateProvider sceneStateProvider) : base(world)
+        public InputModifierHandlerSystem(World world, World globalWorld, Entity playerEntity, ISceneStateProvider sceneStateProvider) : base(world)
         {
             this.playerEntity = playerEntity;
             this.sceneStateProvider = sceneStateProvider;
-            globalWorld = globalWorldProxy.Object;
+            this.globalWorld = globalWorld;
         }
 
         protected override void Update(float t)
@@ -32,7 +31,7 @@ namespace DCL.SDKComponents.PlayerInputMovement.Systems
 
         private void ResetModifiersOnLeave()
         {
-            ref InputModifierComponent inputModifier = ref globalWorld.Get<InputModifierComponent>(playerEntity.StrictObject);
+            ref InputModifierComponent inputModifier = ref globalWorld.Get<InputModifierComponent>(playerEntity);
             inputModifier.DisableAll = false;
             inputModifier.DisableWalk = false;
             inputModifier.DisableJog = false;
@@ -46,7 +45,7 @@ namespace DCL.SDKComponents.PlayerInputMovement.Systems
         {
             if (!sceneStateProvider.IsCurrent) return;
 
-            ref var inputModifier = ref globalWorld.Get<InputModifierComponent>(playerEntity.StrictObject);
+            ref var inputModifier = ref globalWorld.Get<InputModifierComponent>(playerEntity);
             PBInputModifier.Types.StandardInput? pb = pbInputModifier.Standard;
 
             bool disableAll = pb.DisableAll;

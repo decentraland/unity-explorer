@@ -1,4 +1,5 @@
-﻿using System;
+using DCL.Diagnostics;
+using System;
 using System.Collections.Generic;
 using Utility;
 
@@ -11,16 +12,17 @@ namespace DCL.Input.Component
         [Flags]
         public enum Kind
         {
-            None = 0,
-            Player = 1,
-            Camera = 1 << 1,
-            FreeCamera = 1 << 2,
-            EmoteWheel = 1 << 3,
-            Emotes = 1 << 4,
-            Shortcuts = 1 << 5,
+            NONE = 0,
+            PLAYER = 1,
+            CAMERA = 1 << 1,
+            FREE_CAMERA = 1 << 2,
+            EMOTE_WHEEL = 1 << 3,
+            EMOTES = 1 << 4,
+            SHORTCUTS = 1 << 5,
         }
 
         private Kind active;
+        private readonly Dictionary<Kind, int> inputBlockCounters;
 
         /// <summary>
         ///     Active maps flags
@@ -29,7 +31,7 @@ namespace DCL.Input.Component
         {
             get => active;
 
-            set
+            private set
             {
                 active = value;
                 IsDirty = true;
@@ -42,6 +44,36 @@ namespace DCL.Input.Component
         {
             active = flags;
             IsDirty = true;
+            inputBlockCounters = new Dictionary<Kind, int>(VALUES.Count);
+
+            for (var i = 0; i < VALUES.Count; i++)
+            {
+                Kind kind = VALUES[i];
+                inputBlockCounters.Add(kind, EnumUtils.HasFlag(active, kind) ? 0 : 1);
+            }
+        }
+
+        public void BlockInput(Kind kind)
+        {
+            inputBlockCounters[kind] += 1;
+
+            if (inputBlockCounters[kind] == 1) { Active &= ~kind; }
+        }
+
+        public void UnblockInput(Kind kind)
+        {
+            inputBlockCounters[kind] -= 1;
+
+            switch (inputBlockCounters[kind])
+            {
+                case 0:
+                    Active |= kind;
+                    break;
+                case < 0:
+                    ReportHub.LogWarning(ReportCategory.INPUT, $"Block Counter is less than zero for {kind.ToString()} but it should not be. Something is trying to unlock an input without blocking it first or double unlocking is happening");
+                    inputBlockCounters[kind] = 0;
+                    break;
+            }
         }
     }
 }

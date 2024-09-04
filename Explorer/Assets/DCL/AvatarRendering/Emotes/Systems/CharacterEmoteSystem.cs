@@ -213,7 +213,7 @@ namespace DCL.AvatarRendering.Emotes
             if ((prevTag != AnimationHashes.EMOTE || currentTag != AnimationHashes.EMOTE_LOOP)
                 && (prevTag != AnimationHashes.EMOTE_LOOP || currentTag != AnimationHashes.EMOTE)) return;
 
-            messageBus.Send(animationComponent.EmoteUrn, true, true);
+            messageBus.Send(animationComponent.EmoteUrn, true);
         }
 
         [Query]

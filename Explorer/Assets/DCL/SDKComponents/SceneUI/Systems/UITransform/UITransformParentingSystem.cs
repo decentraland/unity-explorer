@@ -23,7 +23,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
         private readonly Entity sceneRoot;
         private readonly IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap;
 
-        private UITransformParentingSystem(World world, IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap, Entity sceneRoot) : base(world)
+        internal UITransformParentingSystem(World world, IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap, Entity sceneRoot) : base(world)
         {
             this.sceneRoot = sceneRoot;
             this.entitiesMap = entitiesMap;
@@ -36,10 +36,13 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
         }
 
         [Query]
-        [All(typeof(PBUiTransform), typeof(UITransformComponent), typeof(DeleteEntityIntention))]
+        [All(typeof(PBUiTransform), typeof(DeleteEntityIntention))]
         [None(typeof(SceneRootComponent))]
-        private void OrphanChildrenOfDeletedEntity(ref UITransformComponent uiTransformComponentToBeDeleted)
+        private void OrphanChildrenOfDeletedEntity(CRDTEntity sdkEntity, ref UITransformComponent uiTransformComponentToBeDeleted)
         {
+            // Remove deleted entity from the parent list
+            RemoveFromParent(uiTransformComponentToBeDeleted, sdkEntity);
+
             var head = uiTransformComponentToBeDeleted.RelationData.head;
             if (head == null) return;
 
@@ -62,7 +65,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
         }
 
         [Query]
-        [None(typeof(SceneRootComponent))]
+        [None(typeof(SceneRootComponent), typeof(DeleteEntityIntention))]
         private void DoUITransformParenting(CRDTEntity sdkEntity, ref PBUiTransform sdkModel, ref UITransformComponent uiTransformComponent)
         {
             if (!sdkModel.IsDirty)

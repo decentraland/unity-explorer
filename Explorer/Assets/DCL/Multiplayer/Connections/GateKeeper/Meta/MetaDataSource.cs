@@ -30,7 +30,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
         private async UniTask<string?> ParcelIdAsync(CancellationToken token)
         {
             Vector3 position = characterObject.Position;
-            Vector2Int parcel = ParcelMathHelper.WorldToGridPosition(position);
+            Vector2Int parcel = position.ToParcel();
             PlacesData.PlaceInfo? result = await placesAPIService.GetPlaceAsync(parcel, token);
             return result?.id;
         }

@@ -4,7 +4,6 @@ using Cysharp.Threading.Tasks;
 using DCL.ECSComponents;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.SDKComponents.PlayerInputMovement.Systems;
-using DCL.Utilities;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Systems;
 using System.Collections.Generic;
@@ -14,12 +13,12 @@ namespace DCL.PluginSystem.World
 {
     public class InputModifierPlugin: IDCLWorldPlugin
     {
-        private readonly ObjectProxy<Arch.Core.World> globalWorldProxy;
-        private readonly ObjectProxy<Entity> playerEntity;
+        private readonly Arch.Core.World world;
+        private readonly Entity playerEntity;
 
-        public InputModifierPlugin(ObjectProxy<Arch.Core.World> globalWorldProxy, ObjectProxy<Entity> playerEntity)
+        public InputModifierPlugin(Arch.Core.World world, Entity playerEntity)
         {
-            this.globalWorldProxy = globalWorldProxy;
+            this.world = world;
             this.playerEntity = playerEntity;
         }
 
@@ -34,7 +33,7 @@ namespace DCL.PluginSystem.World
             in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
             ResetDirtyFlagSystem<PBInputModifier>.InjectToWorld(ref builder);
-            var system = InputModifierHandlerSystem.InjectToWorld(ref builder, globalWorldProxy, playerEntity, sharedDependencies.SceneStateProvider);
+            var system = InputModifierHandlerSystem.InjectToWorld(ref builder, world, playerEntity, sharedDependencies.SceneStateProvider);
             sceneIsCurrentListeners.Add(system);
         }
     }

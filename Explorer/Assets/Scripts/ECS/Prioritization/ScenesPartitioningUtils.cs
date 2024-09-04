@@ -36,7 +36,7 @@ namespace ECS.Prioritization
                 partitionDiscreteData.Position = position;
                 partitionDiscreteData.Rotation = rotation;
                 partitionDiscreteData.Forward = camTransform.forward;
-                partitionDiscreteData.Parcel = FloorToParcel(position);
+                partitionDiscreteData.Parcel = position.ToParcel();
                 partitionDiscreteData.IsDirty = true;
             }
             else partitionDiscreteData.IsDirty = false;

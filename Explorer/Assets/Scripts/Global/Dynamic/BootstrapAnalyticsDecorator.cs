@@ -44,9 +44,9 @@ namespace Global.Dynamic
             core.PreInitializeSetup(cursorRoot, debugUiRoot, splashScreen, ct);
         }
 
-        public async UniTask<(StaticContainer?, bool)> LoadStaticContainerAsync(BootstrapContainer bootstrapContainer, PluginSettingsContainer globalPluginSettingsContainer, DebugViewsCatalog debugViewsCatalog, CancellationToken ct)
+        public async UniTask<(StaticContainer?, bool)> LoadStaticContainerAsync(BootstrapContainer bootstrapContainer, PluginSettingsContainer globalPluginSettingsContainer, DebugViewsCatalog debugViewsCatalog, Entity playerEntity, CancellationToken ct)
         {
-            (StaticContainer? container, bool isSuccess) result = await core.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugViewsCatalog, ct);
+            (StaticContainer? container, bool isSuccess) result = await core.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugViewsCatalog, playerEntity, ct);
 
             analytics.SetCommonParam(result.container!.RealmData, bootstrapContainer.IdentityCache, result.container.CharacterContainer.Transform);
 
@@ -62,11 +62,12 @@ namespace Global.Dynamic
         public async UniTask<(DynamicWorldContainer?, bool)> LoadDynamicWorldContainerAsync(BootstrapContainer bootstrapContainer, StaticContainer staticContainer, PluginSettingsContainer scenePluginSettingsContainer, DynamicSceneLoaderSettings settings, DynamicSettings dynamicSettings,
             UIDocument uiToolkitRoot, UIDocument cursorRoot, ISplashScreen splashScreen, AudioClipConfig backgroundMusic,
             WorldInfoTool worldInfoTool,
+            Entity playerEntity,
             CancellationToken ct)
         {
             (DynamicWorldContainer? container, bool) result =
                 await core.LoadDynamicWorldContainerAsync(bootstrapContainer, staticContainer, scenePluginSettingsContainer,
-                    settings, dynamicSettings, uiToolkitRoot, cursorRoot, splashScreen, backgroundMusic, worldInfoTool, ct);
+                    settings, dynamicSettings, uiToolkitRoot, cursorRoot, splashScreen, backgroundMusic, worldInfoTool, playerEntity, ct);
 
             analytics.Track(General.INITIAL_LOADING, new JsonObject
             {
@@ -89,6 +90,9 @@ namespace Global.Dynamic
             return result;
         }
 
+        public void InitializePlayerEntity(StaticContainer staticContainer, Entity playerEntity) =>
+            core.InitializePlayerEntity(staticContainer, playerEntity);
+
         public async UniTask<bool> InitializePluginsAsync(StaticContainer staticContainer, DynamicWorldContainer dynamicWorldContainer, PluginSettingsContainer scenePluginSettingsContainer, PluginSettingsContainer globalPluginSettingsContainer, CancellationToken ct)
         {
             bool anyFailure = await core.InitializePluginsAsync(staticContainer, dynamicWorldContainer, scenePluginSettingsContainer, globalPluginSettingsContainer, ct);
@@ -102,9 +106,13 @@ namespace Global.Dynamic
             return anyFailure;
         }
 
-        public (GlobalWorld, Entity) CreateGlobalWorldAndPlayer(BootstrapContainer bootstrapContainer, StaticContainer staticContainer, DynamicWorldContainer dynamicWorldContainer, UIDocument debugUiRoot)
+        public GlobalWorld CreateGlobalWorld(BootstrapContainer bootstrapContainer,
+            StaticContainer staticContainer,
+            DynamicWorldContainer dynamicWorldContainer,
+            UIDocument debugUiRoot,
+            Entity playerEntity)
         {
-            (GlobalWorld, Entity) result = core.CreateGlobalWorldAndPlayer(bootstrapContainer, staticContainer, dynamicWorldContainer, debugUiRoot);
+            GlobalWorld result = core.CreateGlobalWorld(bootstrapContainer, staticContainer, dynamicWorldContainer, debugUiRoot, playerEntity);
 
             analytics.Track(General.INITIAL_LOADING, new JsonObject
             {

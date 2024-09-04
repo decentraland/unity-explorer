@@ -35,13 +35,13 @@ namespace DCL.CharacterMotion.Systems
         [Query]
         private void UpdateInput(ref MovementInputComponent inputToUpdate, in InputModifierComponent inputModifierComponent)
         {
-            if (inputModifierComponent is { DisableAll: true } or { DisableWalk: true, DisableJog: true, DisableRun: true })
+            if (!movementAxis.enabled || inputModifierComponent is { DisableAll: true } or { DisableWalk: true, DisableJog: true, DisableRun: true })
             {
                 inputToUpdate.Axes = Vector2.zero;
                 return;
             }
 
-            inputToUpdate.Axes = movementAxis.enabled ? movementAxis.ReadValue<Vector2>() : Vector2.zero;
+            inputToUpdate.Axes = movementAxis.ReadValue<Vector2>();
 
             if (!inputModifierComponent.DisableWalk && autoWalkAction.WasPerformedThisFrame())
                 inputToUpdate.AutoWalk = !inputToUpdate.AutoWalk;
@@ -49,45 +49,51 @@ namespace DCL.CharacterMotion.Systems
             if (inputToUpdate is { AutoWalk: true, Axes: { sqrMagnitude: > 0.1f } })
                 inputToUpdate.AutoWalk = false;
 
-            bool runPressed = sprintAction.IsPressed();
-            bool walkPressed = walkAction.IsPressed();
+            if (inputToUpdate.Axes == Vector2.zero)
+                inputToUpdate.Kind = MovementKind.IDLE;
+            else
+            {
+                bool runPressed = sprintAction.IsPressed();
+                bool walkPressed = walkAction.IsPressed();
 
-            inputToUpdate.Kind = ProcessInputMovementKind(inputModifierComponent, runPressed, walkPressed);
+                inputToUpdate.Kind = ProcessInputMovementKind(inputModifierComponent, runPressed, walkPressed);
+            }
 
             if (inputToUpdate.AutoWalk)
             {
                 inputToUpdate.Axes = new Vector2(0, 1);
-                inputToUpdate.Kind = MovementKind.Walk;
+                inputToUpdate.Kind = MovementKind.WALK;
             }
         }
 
         private static MovementKind ProcessInputMovementKind(InputModifierComponent inputModifierComponent, bool runPressed, bool walkPressed)
         {
+            // Running action wins over walking
             if (runPressed)
             {
                 if (inputModifierComponent.DisableRun)
-                    return inputModifierComponent.DisableJog ? MovementKind.Walk : MovementKind.Jog;
+                    return inputModifierComponent.DisableJog ? MovementKind.WALK : MovementKind.JOG;
 
-                return MovementKind.Run;
+                return MovementKind.RUN;
             }
 
             if (walkPressed)
             {
                 if (inputModifierComponent.DisableWalk)
-                    return inputModifierComponent.DisableJog ? MovementKind.Run : MovementKind.Jog;
+                    return inputModifierComponent.DisableJog ? MovementKind.RUN : MovementKind.JOG;
 
-                return MovementKind.Walk;
+                return MovementKind.WALK;
             }
 
             if (inputModifierComponent.DisableJog)
             {
                 if (inputModifierComponent.DisableWalk)
-                    return MovementKind.Run;
+                    return MovementKind.RUN;
 
-                return MovementKind.Walk;
+                return MovementKind.WALK;
             }
 
-            return MovementKind.Jog;
+            return MovementKind.JOG;
         }
     }
 }

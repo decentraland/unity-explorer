@@ -1,3 +1,4 @@
+using ECS;
 using SceneRunner.Scene;
 using SceneRuntime;
 using SceneRuntime.Apis.Modules.CommunicationsControllerApi.SDKMessageBus;
@@ -12,7 +13,13 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications.SDKMessageBus
     {
         public List<CommsPayload> SceneCommsMessages { get; } = new ();
 
-        public SDKMessageBusCommsAPIImplementation(ISceneData sceneData, ICommunicationControllerHub messagePipesHub, IJsOperations jsOperations, ISceneStateProvider sceneStateProvider) : base(sceneData, messagePipesHub, jsOperations, sceneStateProvider)
+        public SDKMessageBusCommsAPIImplementation(
+            IRealmData realmData,
+            ISceneData sceneData,
+            ICommunicationControllerHub messagePipesHub,
+            IJsOperations jsOperations,
+            ISceneStateProvider sceneStateProvider)
+            : base(realmData, sceneData, messagePipesHub, jsOperations, sceneStateProvider)
         {
         }
 

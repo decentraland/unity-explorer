@@ -1,6 +1,7 @@
 ﻿using CrdtEcsBridge.PoolsProviders;
 using DCL.Multiplayer.Connections.Messaging;
 using Decentraland.Kernel.Comms.Rfc4;
+using ECS;
 using SceneRunner.Scene;
 using SceneRuntime;
 using SceneRuntime.Apis.Modules.CommunicationsControllerApi;
@@ -27,24 +28,33 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
         protected readonly IJsOperations jsOperations;
         protected readonly Action<ICommunicationControllerHub.SceneMessage> onMessageReceivedCached;
         protected readonly List<IMemoryOwner<byte>> eventsToProcess = new ();
+        private readonly IRealmData realmData;
         internal IReadOnlyList<IMemoryOwner<byte>> EventsToProcess => eventsToProcess;
 
         public CommunicationsControllerAPIImplementationBase(
+            IRealmData realmData,
             ISceneData sceneData,
             ICommunicationControllerHub messagePipesHub,
             IJsOperations jsOperations,
             ISceneStateProvider sceneStateProvider)
         {
+            this.realmData = realmData;
             this.sceneData = sceneData;
             this.messagePipesHub = messagePipesHub;
             this.jsOperations = jsOperations;
             this.sceneStateProvider = sceneStateProvider;
 
             onMessageReceivedCached = OnMessageReceived;
+
+            // if it's the world subscribe to the messages straight-away
+            if (IgnoreIsCurrentScene())
+                this.messagePipesHub.SetSceneMessageHandler(onMessageReceivedCached);
         }
 
         public void Dispose()
         {
+            messagePipesHub.RemoveSceneMessageHandler(onMessageReceivedCached);
+
             lock (eventsToProcess) { CleanUpReceivedMessages(); }
 
             cancellationTokenSource.SafeCancelAndDispose();
@@ -52,6 +62,8 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
 
         public void OnSceneIsCurrentChanged(bool isCurrent)
         {
+            if (IgnoreIsCurrentScene()) return;
+
             if (isCurrent)
                 messagePipesHub.SetSceneMessageHandler(onMessageReceivedCached);
             else
@@ -60,7 +72,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
 
         public object SendBinary(IReadOnlyList<PoolableByteArray> data)
         {
-            if (!sceneStateProvider.IsCurrent)
+            if (!IgnoreIsCurrentScene() && !sceneStateProvider.IsCurrent)
                 return jsOperations.ConvertToScriptTypedArrays(Array.Empty<IMemoryOwner<byte>>());
 
             foreach (PoolableByteArray poolable in data)
@@ -89,6 +101,14 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
                 return result;
             }
         }
+
+        /// <summary>
+        ///     If it's a world there is a single scene for the whole world, it's controlled by the endpoint
+        ///     so there is no static reliable way to check it if in the future that behavior changes
+        /// </summary>
+        /// <returns></returns>
+        private bool IgnoreIsCurrentScene() =>
+            realmData.ScenesAreFixed;
 
         private void CleanUpReceivedMessages()
         {

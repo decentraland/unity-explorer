@@ -80,13 +80,14 @@ namespace DCL.Character.Plugin
         public UniTask InitializeAsync(NoExposedPluginSettings settings, CancellationToken ct) =>
             UniTask.CompletedTask;
 
-        public Entity CreatePlayerEntity(World world) =>
-            world.Create(
-                new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY),
-                new PlayerComponent(characterObject.Value.CameraFocus),
-                new CharacterTransform(characterObject.Value.Transform),
-                new PlayerMovementNetworkComponent(characterObject.Value.Controller),
-                new InputModifierComponent());
+        public void InitializePlayerEntity(World world, Entity playerEntity)
+        {
+            world.Add(playerEntity, new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY));
+            world.Add(playerEntity, new PlayerComponent(characterObject.Value.CameraFocus));
+            world.Add(playerEntity, new CharacterTransform(characterObject.Value.Transform));
+            world.Add(playerEntity, new PlayerMovementNetworkComponent(characterObject.Value.Controller));
+            world.Add(playerEntity, new InputModifierComponent());
+        }
 
         public class GlobalPlugin : IDCLGlobalPluginWithoutSettings
         {
