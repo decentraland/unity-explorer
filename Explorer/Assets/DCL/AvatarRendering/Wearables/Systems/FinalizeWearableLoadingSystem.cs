@@ -218,8 +218,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
         {
             if (promise.TryForgetWithEntityIfCancelled(entity, World!))
             {
-                wearable.UpdateLoadingStatus(false);
-                wearable.ManifestResult = null;
+                wearable.ResetManifest();
                 return;
             }
 
