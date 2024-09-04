@@ -60,7 +60,7 @@ namespace DCL.Roads.Systems
             {
                 if (!roadAssetPool.Get(roadDescription.RoadModel, out var roadAsset))
                 {
-                    ReportHub.LogWarning(GetReportCategory(),
+                    ReportHub.LogWarning(GetReportData(),
                         $"Road with model for {roadDescription.RoadModel} at {sceneDefinitionComponent.Definition.metadata.scene.DecodedBase.ToString()} does not exist, loading default");
                 }
 
@@ -74,7 +74,7 @@ namespace DCL.Roads.Systems
             }
             else
             {
-                ReportHub.LogWarning(GetReportCategory(),
+                ReportHub.LogWarning(GetReportData(),
                     $"Road with coords for {sceneDefinitionComponent.Definition.metadata.scene.DecodedBase} do not have a description");
             }
             roadInfo.IsDirty = false;

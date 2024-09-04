@@ -96,7 +96,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 if (loadingIntentionPointer.IsNullOrEmpty())
                 {
                     ReportHub.LogError(
-                        GetReportCategory(),
+                        GetReportData(),
                         $"ResolveWearableByPointerSystem: Null pointer found in the list of pointers: index {index}"
                     );
 
@@ -202,12 +202,12 @@ namespace DCL.AvatarRendering.Wearables.Systems
                         if (!isWearableInCatalog)
                         {
                             //A wearable that has a DTO request should already have an empty representation in the catalog at this point
-                            ReportHub.LogError(new ReportData(GetReportCategory()), $"Requested wearable {assetEntity.metadata.id} is not in the catalog");
+                            ReportHub.LogError(GetReportData(), $"Requested wearable {assetEntity.metadata.id} is not in the catalog");
                             continue;
                         }
 
                         if (!component.TryResolveDTO(new StreamableLoadingResult<WearableDTO>(assetEntity)))
-                            ReportHub.LogError(new ReportData(GetReportCategory()), $"Wearable DTO has already been initialized: {assetEntity.metadata.id}");
+                            ReportHub.LogError(GetReportData(), $"Wearable DTO has already been initialized: {assetEntity.metadata.id}");
 
                         failedDTOList.Remove(assetEntity.metadata.id);
                         component.IsLoading = false;
@@ -227,7 +227,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 {
                     //We have some missing pointers that were not completed. We have to consider them as failure
                     var e = new ArgumentNullException($"Wearable DTO is null for for {urn}");
-                    ReportHub.LogError(new ReportData(GetReportCategory()), e);
+                    ReportHub.LogError(GetReportData(), e);
                     if (wearableCache.TryGetWearable(urn, out var component))
                     {
                         //If its not in the catalog, we cannot determine which one has failed
@@ -327,7 +327,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
         {
             if (!defaultWearablesLoaded)
             {
-                ReportHub.LogError(GetReportCategory(), $"Default wearable {wearable.GetHash()} failed to load");
+                ReportHub.LogError(GetReportData(), $"Default wearable {wearable.GetHash()} failed to load");
 
                 StreamableLoadingResult<WearableAssetBase> failedResult = new StreamableLoadingResult<AssetBundleData>(new Exception("Default wearable failed to load"))
                    .ToWearableAsset(wearable);
@@ -352,7 +352,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 }
             }
 
-            ReportHub.Log(GetReportCategory(), $"Request for wearable with hash {wearable.GetHash()} and urn {wearable.GetUrn()} failed, loading default wearable");
+            ReportHub.Log(GetReportData(), $"Request for wearable with hash {wearable.GetHash()} and urn {wearable.GetUrn()} failed, loading default wearable");
 
             if (wearable.IsUnisex() && wearable.HasSameModelsForAllGenders())
             {

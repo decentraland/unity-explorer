@@ -52,8 +52,8 @@ namespace DCL.AvatarRendering.Wearables.Systems
             await UniTask.WaitUntil(isRealmDataReady, cancellationToken: ct);
 
             WearableDTO.LambdaResponse lambdaResponse =
-                await webRequestController.GetAsync(new CommonArguments(BuildURL(intention.UserID, intention.Params), attemptsCount: 1), ct, GetReportCategory())
-                   .CreateFromJson<WearableDTO.LambdaResponse>(WRJsonParser.Unity);
+                await webRequestController.GetAsync(new CommonArguments(BuildURL(intention.UserID, intention.Params), attemptsCount: 1), ct, GetReportData())
+                                          .CreateFromJson<WearableDTO.LambdaResponse>(WRJsonParser.Unity);
 
             // The following logic is not thread-safe!
             // TODO make it thread-safe: cache and CreateWearableThumbnailPromise

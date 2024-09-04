@@ -6,6 +6,7 @@ using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.ThirdParty;
 using DCL.Backpack.BackpackBus;
+using DCL.Diagnostics;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -115,7 +116,7 @@ namespace DCL.Backpack
 
         private async UniTaskVoid TrySetThirdPartyProviderNameAsync(IAvatarAttachment nft, CancellationToken ct)
         {
-            IReadOnlyList<ThirdPartyNftProviderDefinition> tpws = await thirdPartyNftProviderSource.GetAsync(ct);
+            IReadOnlyList<ThirdPartyNftProviderDefinition> tpws = await thirdPartyNftProviderSource.GetAsync(ReportCategory.BACKPACK, ct);
             URN urn = nft.GetUrn();
 
             foreach (ThirdPartyNftProviderDefinition tpw in tpws)

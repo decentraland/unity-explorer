@@ -34,7 +34,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
         protected override async UniTask<StreamableLoadingResult<SceneAssetBundleManifest>> FlowInternalAsync(GetWearableAssetBundleManifestIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
             return new StreamableLoadingResult<SceneAssetBundleManifest>(
-                await LoadWearableAssetBundleManifestUtils.LoadWearableAssetBundleManifestAsync(webRequestController, assetBundleURL, intention.Hash, GetReportCategory(), ct));
+                await LoadWearableAssetBundleManifestUtils.LoadWearableAssetBundleManifestAsync(webRequestController, assetBundleURL, intention.Hash, GetReportData(), ct));
         }
     }
 }

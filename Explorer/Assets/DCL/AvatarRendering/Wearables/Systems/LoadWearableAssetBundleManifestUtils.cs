@@ -1,6 +1,7 @@
 ﻿using System.Threading;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.WebRequests;
 using ECS.StreamableLoading.Common.Components;
@@ -14,7 +15,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
         private static readonly URLBuilder urlBuilder = new ();
 
         public static async UniTask<SceneAssetBundleManifest> LoadWearableAssetBundleManifestAsync(IWebRequestController webRequestController, URLDomain assetBundleURL,
-            string hash, string reportCategory, CancellationToken ct)
+            string hash, ReportData reportCategory, CancellationToken ct)
         {
             urlBuilder.Clear();
 

@@ -116,7 +116,7 @@ namespace ECS.StreamableLoading.AssetBundles
                 string source = intention.CommonArguments.CurrentSource.ToStringNonAlloc();
 
                 // if the type was not specified don't load any assets
-                return await CreateAssetBundleDataAsync(assetBundle, metrics, intention.ExpectedObjectType, mainAsset, loadingMutex, dependencies, GetReportCategory(), version, source, ct);
+                return await CreateAssetBundleDataAsync(assetBundle, metrics, intention.ExpectedObjectType, mainAsset, loadingMutex, dependencies, GetReportData(), version, source, ct);
             }
             catch (Exception e)
             {
@@ -135,7 +135,7 @@ namespace ECS.StreamableLoading.AssetBundles
             AssetBundle assetBundle, AssetBundleMetrics? metrics, Type? expectedObjType, string? mainAsset,
             AssetBundleLoadingMutex loadingMutex,
             AssetBundleData[] dependencies,
-            string reportCategory,
+            ReportData reportCategory,
             string version,
             string source,
             CancellationToken ct)
@@ -152,7 +152,9 @@ namespace ECS.StreamableLoading.AssetBundles
                 source: source));
         }
 
-        private static async UniTask<Object> LoadAllAssetsAsync(AssetBundle assetBundle, Type objectType, string? mainAsset, AssetBundleLoadingMutex loadingMutex, string reportCategory, CancellationToken ct) {
+        private static async UniTask<Object> LoadAllAssetsAsync(AssetBundle assetBundle, Type objectType, string? mainAsset, AssetBundleLoadingMutex loadingMutex, ReportData reportCategory,
+            CancellationToken ct)
+        {
             using AssetBundleLoadingMutex.LoadingRegion _ = await loadingMutex.AcquireAsync(ct);
 
             var asyncOp = !string.IsNullOrEmpty(mainAsset)

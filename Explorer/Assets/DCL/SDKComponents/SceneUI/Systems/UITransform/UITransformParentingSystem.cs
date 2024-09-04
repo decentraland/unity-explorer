@@ -54,7 +54,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
 
                     if (!exists)
                     {
-                        ReportHub.LogError(GetReportCategory(), $"Trying to unparent an ${nameof(UITransformComponent)}'s child but no component has been found on entity {current.EntityId}");
+                        ReportHub.LogError(GetReportData(), $"Trying to unparent an ${nameof(UITransformComponent)}'s child but no component has been found on entity {current.EntityId}");
                         continue;
                     }
 
@@ -90,7 +90,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
 
             if (!World.IsAlive(parentEntity))
             {
-                ReportHub.LogError(GetReportCategory(), $"Trying to parent entity {childEntity} to a dead entity parent");
+                ReportHub.LogError(GetReportData(), $"Trying to parent entity {childEntity} to a dead entity parent");
                 return;
             }
 
@@ -98,7 +98,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
 
             if (!exists)
             {
-                ReportHub.LogError(GetReportCategory(), $"Trying to parent entity {childEntity} to a parent {parentEntity} that do not have ${nameof(UITransformComponent)} component");
+                ReportHub.LogError(GetReportData(), $"Trying to parent entity {childEntity} to a parent {parentEntity} that do not have ${nameof(UITransformComponent)} component");
                 return;
             }
 
@@ -116,7 +116,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
 
             if (!exists)
             {
-                ReportHub.LogError(GetReportCategory(), $"Trying to remove a child from a parent {childComponent.RelationData.parent.Entity} that do not have ${nameof(UITransformComponent)} component");
+                ReportHub.LogError(GetReportData(), $"Trying to remove a child from a parent {childComponent.RelationData.parent.Entity} that do not have ${nameof(UITransformComponent)} component");
                 return;
             }
 

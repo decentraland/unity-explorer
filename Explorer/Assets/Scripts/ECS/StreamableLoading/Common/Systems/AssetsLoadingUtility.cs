@@ -24,14 +24,14 @@ namespace ECS.StreamableLoading.Common.Systems
         public static async UniTask<StreamableLoadingResult<TAsset>?> RepeatLoopAsync<TIntention, TAsset>(this TIntention intention,
             IAcquiredBudget acquiredBudget,
             IPartitionComponent partition,
-            InternalFlowDelegate<TAsset, TIntention> flow, string reportCategory, CancellationToken ct)
+            InternalFlowDelegate<TAsset, TIntention> flow, ReportData reportData, CancellationToken ct)
             where TIntention: struct, ILoadingIntention
         {
             int attemptCount = intention.CommonArguments.Attempts;
 
             while (true)
             {
-                ReportHub.Log(reportCategory, $"Starting loading {intention}\n{partition}, attempts left: {attemptCount}");
+                ReportHub.Log(reportData, $"Starting loading {intention}\n{partition}, attempts left: {attemptCount}");
 
                 try { return await flow(intention, acquiredBudget, partition, ct); }
                 catch (UnityWebRequestException unityWebRequestException)
@@ -41,15 +41,15 @@ namespace ECS.StreamableLoading.Common.Systems
                     // no more sources left
                     if (intention.CommonArguments.PermittedSources == AssetSource.NONE)
                     {
-                        ReportHub.LogError(reportCategory, $"Exception occured on loading {typeof(TAsset)} from {intention.ToString()} with url {intention.CommonArguments.URL}.\n"
-                                                           + "No more sources left.");
+                        ReportHub.LogError(reportData, $"Exception occured on loading {typeof(TAsset)} from {intention.ToString()} with url {intention.CommonArguments.URL}.\n"
+                                                       + "No more sources left.");
 
-                        ReportHub.LogException(unityWebRequestException, reportCategory);
+                        ReportHub.LogException(unityWebRequestException, reportData);
                     }
                     else
                     {
-                        ReportHub.Log(reportCategory, $"Exception occured on loading {typeof(TAsset)} from {intention.ToString()}.\n"
-                                                      + $"Trying sources: {intention.CommonArguments.PermittedSources} attemptCount {attemptCount} url: {intention.CommonArguments.URL}");
+                        ReportHub.Log(reportData, $"Exception occured on loading {typeof(TAsset)} from {intention.ToString()}.\n"
+                                                  + $"Trying sources: {intention.CommonArguments.PermittedSources} attemptCount {attemptCount} url: {intention.CommonArguments.URL}");
                     }
 
                     // Decide if we can repeat or not
@@ -70,15 +70,15 @@ namespace ECS.StreamableLoading.Common.Systems
                 {
                     // General exception
                     // conclude now, we can't do anything
-                    ReportException(reportCategory, e);
+                    ReportException(reportData, e);
                     return new StreamableLoadingResult<TAsset>(e);
                 }
             }
         }
 
-        public static void ReportException(string category, Exception exception)
+        public static void ReportException(ReportData reportData, Exception exception)
         {
-            ReportHub.LogException(exception, new ReportData(category, ReportHint.SessionStatic));
+            ReportHub.LogException(exception, new ReportData(reportData.Category, ReportHint.SessionStatic | reportData.Hint, reportData.SceneShortInfo));
         }
 
         public static StreamableLoadingResult<TAsset> Denullify<TAsset>(this in StreamableLoadingResult<TAsset>? loadingResult)

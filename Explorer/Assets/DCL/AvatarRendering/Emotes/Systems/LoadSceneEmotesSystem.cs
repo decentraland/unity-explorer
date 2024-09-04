@@ -63,7 +63,7 @@ namespace DCL.AvatarRendering.Emotes
             {
                 if (!World.Has<StreamableResult>(entity))
                 {
-                    ReportHub.LogWarning(GetReportCategory(), $"Loading scenes emotes timed out {urn}");
+                    ReportHub.LogWarning(GetReportData(), $"Loading scenes emotes timed out {urn}");
                     World.Add(entity, new StreamableResult(new TimeoutException($"Scene emote timeout {urn}")));
                 }
 

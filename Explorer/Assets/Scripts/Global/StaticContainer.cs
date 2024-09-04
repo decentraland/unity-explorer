@@ -35,6 +35,7 @@ using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.Reporting;
 using Global.AppArgs;
 using SceneRunner.Mapping;
+using Sentry;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -116,6 +117,7 @@ namespace Global
             IAppArgs appArgs,
             DebugViewsCatalog debugViewsCatalog,
             IPluginSettingsContainer settingsContainer,
+            DiagnosticsContainer diagnosticsContainer,
             IWeb3IdentityCache web3IdentityProvider,
             IEthereumApi ethereumApi,
             World globalWorld,
@@ -128,7 +130,6 @@ namespace Global
             var profilingProvider = new Profiler();
 
             var container = new StaticContainer();
-
 
             container.DebugContainerBuilder = DebugUtilitiesContainer.Create(debugViewsCatalog, appArgs.HasDebugFlag()).Builder;
             container.EthereumApi = ethereumApi;
@@ -180,6 +181,12 @@ namespace Global
             var textureResolvePlugin = new TexturesLoadingPlugin(container.WebRequestsContainer.WebRequestController, container.CacheCleaner);
 
             ExtendedObjectPool<Texture2D> videoTexturePool = VideoTextureFactory.CreateVideoTexturesPool();
+
+            diagnosticsContainer.AddSentryScopeConfigurator(scope =>
+            {
+                if (container.ScenesCache.CurrentScene != null)
+                    diagnosticsContainer.Sentry!.AddCurrentSceneToScope(scope, container.ScenesCache.CurrentScene.Info);
+            });
 
             container.ECSWorldPlugins = new IDCLWorldPlugin[]
             {

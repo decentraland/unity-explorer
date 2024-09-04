@@ -42,7 +42,7 @@ namespace DCL.AvatarRendering.Emotes
 
             this.mvcManager.OnViewClosed += OnEmoteWheelClosed;
 
-            GetReportCategory();
+            GetReportData();
 
             ListenToSlotsInput(emotesActions.Get());
         }
@@ -128,7 +128,7 @@ namespace DCL.AvatarRendering.Emotes
                     inputAction.started += OnSlotPerformed;
                     actionNameById[actionName] = i;
                 }
-                catch (Exception e) { ReportHub.LogException(e, new ReportData(GetReportCategory())); }
+                catch (Exception e) { ReportHub.LogException(e, GetReportData()); }
             }
         }
 

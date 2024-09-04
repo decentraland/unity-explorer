@@ -24,7 +24,7 @@ namespace ECS.StreamableLoading.Common.Systems
         protected ReportStreamableLoadingErrorSystem(World world, IReportsHandlingSettings settings) : base(world)
         {
             this.settings = settings;
-            tryReport = new TryReport(GetReportCategory());
+            tryReport = new TryReport(GetReportData());
         }
 
         protected override void Update(float t)
@@ -38,17 +38,17 @@ namespace ECS.StreamableLoading.Common.Systems
 
         private readonly struct TryReport : IForEach<StreamableLoadingResult<TAsset>>
         {
-            private readonly string category;
+            private readonly ReportData reportData;
 
-            public TryReport(string category)
+            public TryReport(ReportData reportData)
             {
-                this.category = category;
+                this.reportData = reportData;
             }
 
             public void Update(ref StreamableLoadingResult<TAsset> streamableLoadingResult)
             {
                 if (!streamableLoadingResult.Succeeded)
-                    AssetsLoadingUtility.ReportException(category, streamableLoadingResult.Exception);
+                    AssetsLoadingUtility.ReportException(reportData, streamableLoadingResult.Exception);
             }
         }
     }

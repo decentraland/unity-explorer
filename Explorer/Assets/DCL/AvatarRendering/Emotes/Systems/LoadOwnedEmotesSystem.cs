@@ -42,7 +42,7 @@ namespace DCL.AvatarRendering.Emotes
         {
             LambdaOwnedEmoteElementList lambdaResponse =
                 await webRequestController.GetAsync(new CommonArguments(intention.CommonArguments.URL, attemptsCount: intention.CommonArguments.Attempts),
-                        ct, GetReportCategory())
+                                               ct, GetReportData())
                    .CreateFromJson<LambdaOwnedEmoteElementList>(WRJsonParser.Unity);
 
             // The following logic is not thread-safe!

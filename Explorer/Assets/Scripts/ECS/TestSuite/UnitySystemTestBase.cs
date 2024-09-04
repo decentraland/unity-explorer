@@ -1,9 +1,11 @@
 ﻿using Arch.Core;
+using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.SDKComponents.SceneUI.Components;
 using ECS.Abstract;
 using ECS.Unity.Transforms.Components;
 using NUnit.Framework;
+using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace ECS.TestSuite
@@ -13,7 +15,19 @@ namespace ECS.TestSuite
         protected TSystem system;
         private World cachedWorld;
 
-        protected World world => cachedWorld ??= World.Create();
+        protected World world
+        {
+            get
+            {
+                if (cachedWorld != null)
+                    return cachedWorld;
+
+                cachedWorld = World.Create();
+                cachedWorld.Create(new SceneShortInfo(Vector2Int.zero, "TEST"));
+
+                return cachedWorld;
+            }
+        }
 
         [TearDown]
         public void DestroyWorld()

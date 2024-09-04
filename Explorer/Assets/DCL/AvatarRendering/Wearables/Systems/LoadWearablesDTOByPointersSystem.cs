@@ -89,7 +89,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
             using PoolExtensions.Scope<List<WearableDTO>> dtoPooledList = DTO_POOL.AutoScope();
             List<WearableDTO> dtoTempBuffer = dtoPooledList.Value;
 
-            await webRequestController.PostAsync(new CommonArguments(url), GenericPostArguments.CreateJson(bodyBuilder.ToString()), ct)
+            await webRequestController.PostAsync(new CommonArguments(url), GenericPostArguments.CreateJson(bodyBuilder.ToString()), ct, GetReportCategory())
                                       .OverwriteFromJsonAsync(dtoTempBuffer, WRJsonParser.Newtonsoft, WRThreadFlags.SwitchToThreadPool);
 
             // List is not concurrent

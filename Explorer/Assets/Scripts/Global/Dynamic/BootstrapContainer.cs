@@ -4,6 +4,7 @@ using DCL.AssetsProvision;
 using DCL.Browser;
 using DCL.Browser.DecentralandUrls;
 using DCL.Diagnostics;
+using DCL.Diagnostics.Sentry;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PluginSystem;
@@ -14,6 +15,7 @@ using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using Global.AppArgs;
 using Segment.Analytics;
+using Sentry;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -25,9 +27,9 @@ namespace Global.Dynamic
     public class BootstrapContainer : DCLGlobalContainer<BootstrapSettings>
     {
         private ProvidedAsset<ReportsHandlingSettings> reportHandlingSettings;
-        private DiagnosticsContainer? diagnosticsContainer;
         private bool enableAnalytics;
 
+        public DiagnosticsContainer DiagnosticsContainer { get; private set; }
         public IDecentralandUrlsSource DecentralandUrlsSource { get; private set; }
         public IWebBrowser WebBrowser { get; private set; }
         public IWeb3AccountFactory Web3AccountFactory { get; private set; }
@@ -45,7 +47,7 @@ namespace Global.Dynamic
         {
             base.Dispose();
 
-            diagnosticsContainer?.Dispose();
+            DiagnosticsContainer?.Dispose();
             reportHandlingSettings.Dispose();
             Web3Authenticator?.Dispose();
             VerifiedEthereumApi?.Dispose();
@@ -81,9 +83,17 @@ namespace Global.Dynamic
                 (container.Bootstrap, container.Analytics) = await CreateBootstrapperAsync(debugSettings, applicationParametersParser, container, container.settings, realmLaunchSettings, world, ct);
                 (container.IdentityCache, container.VerifiedEthereumApi, container.Web3Authenticator) = CreateWeb3Dependencies(sceneLoaderSettings, web3AccountFactory, browser, container, decentralandUrlsSource);
 
-                container.diagnosticsContainer = container.enableAnalytics
+                container.DiagnosticsContainer = container.enableAnalytics
                     ? DiagnosticsContainer.Create(container.ReportHandlingSettings, realmLaunchSettings.IsLocalSceneDevelopmentRealm, (ReportHandler.DebugLog, new CriticalLogsAnalyticsHandler(container.Analytics)))
                     : DiagnosticsContainer.Create(container.ReportHandlingSettings);
+
+                container.DiagnosticsContainer.AddSentryScopeConfigurator(AddIdentityToSentryScope);
+
+                void AddIdentityToSentryScope(Scope scope)
+                {
+                    if (container.IdentityCache.Identity != null)
+                        container.DiagnosticsContainer.Sentry!.AddIdentityToScope(scope, container.IdentityCache.Identity.Address);
+                }
             });
 
             return bootstrapContainer;

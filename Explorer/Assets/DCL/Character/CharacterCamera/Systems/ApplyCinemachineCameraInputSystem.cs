@@ -63,7 +63,7 @@ namespace DCL.CharacterCamera.Systems
                     ApplyFOV(dt, cinemachinePreset, in cameraInput);
                     break;
                 default:
-                    ReportHub.LogError(GetReportCategory(), $"Camera mode is unknown {camera.Mode}");
+                    ReportHub.LogError(GetReportData(), $"Camera mode is unknown {camera.Mode}");
                     break;
             }
 
@@ -93,7 +93,7 @@ namespace DCL.CharacterCamera.Systems
                     cinemachinePreset.ForceFreeCameraLookAt(lookAtIntent);
                     break;
                 default:
-                    ReportHub.LogError(GetReportCategory(), $"Camera mode is unknown {camera.Mode}");
+                    ReportHub.LogError(GetReportData(), $"Camera mode is unknown {camera.Mode}");
                     break;
             }
 

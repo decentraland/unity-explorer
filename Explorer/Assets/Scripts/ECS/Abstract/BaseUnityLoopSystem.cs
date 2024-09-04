@@ -13,6 +13,8 @@ namespace ECS.Abstract
     /// </summary>
     public abstract class BaseUnityLoopSystem : PlayerLoopSystem<World>
     {
+        private static readonly QueryDescription SCENE_INFO_QUERY = new QueryDescription().WithAll<SceneShortInfo>();
+
         private readonly CustomSampler updateSampler;
 
         /// <summary>
@@ -22,10 +24,14 @@ namespace ECS.Abstract
 
         private string? cachedCategory;
 
+        private readonly SceneShortInfo sceneInfo;
+
         protected BaseUnityLoopSystem(World world) : base(world)
         {
             updateSampler = CustomSampler.Create($"{GetType().Name}.Update");
             genericUpdateSampler = CreateGenericSamplerIfRequired();
+
+            sceneInfo = world.Get<SceneShortInfo>(new SingleInstanceEntity(SCENE_INFO_QUERY, world));
         }
 
         private CustomSampler? CreateGenericSamplerIfRequired()
@@ -58,13 +64,14 @@ namespace ECS.Abstract
 
         protected abstract void Update(float t);
 
-        protected internal string GetReportCategory()
-        {
-            // Look for category starting from the class itself and then groups recursively
-            // if not found fall back to "ECS"
+        protected internal ReportData GetReportData() =>
+            new (GetReportCategory(), sceneShortInfo: sceneInfo);
 
-            if (cachedCategory != null)
-                return cachedCategory;
+        // Look for category starting from the class itself and then groups recursively
+        // if not found fall back to "ECS"
+        protected string GetReportCategory()
+        {
+            if (cachedCategory != null) return cachedCategory;
 
             AttributesInfoBase metadata = GetMetadataInternal();
             LogCategoryAttribute? logCategory = null;
@@ -72,7 +79,9 @@ namespace ECS.Abstract
             while (metadata != null && (logCategory = metadata.GetAttribute<LogCategoryAttribute>()) == null)
                 metadata = metadata.GroupMetadata;
 
-            return cachedCategory = logCategory?.Category ?? ReportCategory.ECS;
+            cachedCategory = logCategory?.Category ?? ReportCategory.ECS;
+
+            return cachedCategory;
         }
 
         /// <summary>
@@ -82,6 +91,6 @@ namespace ECS.Abstract
             CreateException(inner, hint, false);
 
         private EcsSystemException CreateException(Exception inner, ReportHint hint, bool unhandled) =>
-            new (this, inner, new ReportData(GetReportCategory(), hint), unhandled);
+            new (this, inner, new ReportData(GetReportCategory(), hint, sceneInfo), unhandled);
     }
 }

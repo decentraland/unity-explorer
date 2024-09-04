@@ -127,7 +127,7 @@ namespace DCL.AvatarRendering.Emotes
 
             using PoolExtensions.Scope<List<EmoteDTO>> dtoPooledList = DTO_POOL.AutoScope();
 
-            await webRequestController.PostAsync(new CommonArguments(url), GenericPostArguments.CreateJson(bodyBuilder.ToString()), ct)
+            await webRequestController.PostAsync(new CommonArguments(url), GenericPostArguments.CreateJson(bodyBuilder.ToString()), ct, GetReportData())
                                       .OverwriteFromJsonAsync(dtoPooledList.Value, WRJsonParser.Newtonsoft, WRThreadFlags.SwitchToThreadPool);
 
             lock (results) { results.AddRange(dtoPooledList.Value); }
@@ -156,7 +156,7 @@ namespace DCL.AvatarRendering.Emotes
                 if (!World.Has<StreamableResult>(entity))
                 {
                     var pointersStrLog = string.Join(",", intention.Pointers);
-                    ReportHub.LogWarning(GetReportCategory(), $"Loading emotes timed out, {pointersStrLog}");
+                    ReportHub.LogWarning(GetReportData(), $"Loading emotes timed out, {pointersStrLog}");
                     World.Add(entity, new StreamableResult(new TimeoutException($"Emote intention timeout {pointersStrLog}")));
                 }
 
@@ -171,7 +171,7 @@ namespace DCL.AvatarRendering.Emotes
                 if (loadingIntentionPointer.IsNullOrEmpty())
                 {
                     ReportHub.LogError(
-                        GetReportCategory(),
+                        GetReportData(),
                         "ResolveWearableByPointerSystem: Null pointer found in the list of pointers"
                     );
 

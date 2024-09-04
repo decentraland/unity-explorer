@@ -53,7 +53,7 @@ namespace ECS.Unity.GLTFContainer.Systems
             if (!sceneData.TryGetHash(sdkComponent.Src, out string hash))
             {
                 var exception = new ArgumentException($"GLTF source {sdkComponent.Src} not found in the content");
-                ReportHub.LogException(exception, GetReportCategory());
+                ReportHub.LogException(exception, GetReportData());
                 component = GltfContainerComponent.CreateFaulty(exception);
                 World.Add(entity, component);
             }
@@ -83,7 +83,7 @@ namespace ECS.Unity.GLTFContainer.Systems
                     if (!sceneData.TryGetHash(sdkComponent.Src, out string hash))
                     {
                         var exception = new ArgumentException($"GLTF source {sdkComponent.Src} not found in the content");
-                        ReportHub.LogException(exception, GetReportCategory());
+                        ReportHub.LogException(exception, GetReportData());
                         component.SetFaulty(exception);
                     }
                     else

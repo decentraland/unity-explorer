@@ -72,7 +72,7 @@ namespace Global.Dynamic
 
         public async UniTask<(StaticContainer?, bool)> LoadStaticContainerAsync(BootstrapContainer bootstrapContainer, PluginSettingsContainer globalPluginSettingsContainer, DebugViewsCatalog debugViewsCatalog, CancellationToken ct) =>
             await StaticContainer.CreateAsync(bootstrapContainer.DecentralandUrlsSource, bootstrapContainer.AssetsProvisioner, bootstrapContainer.ReportHandlingSettings, appArgs, debugViewsCatalog, globalPluginSettingsContainer,
-                bootstrapContainer.IdentityCache, bootstrapContainer.VerifiedEthereumApi, world, ct);
+                bootstrapContainer.DiagnosticsContainer, bootstrapContainer.IdentityCache, bootstrapContainer.VerifiedEthereumApi, world, ct);
 
         public async UniTask<(DynamicWorldContainer?, bool)> LoadDynamicWorldContainerAsync(
             BootstrapContainer bootstrapContainer,

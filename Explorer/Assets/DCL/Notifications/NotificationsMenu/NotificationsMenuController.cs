@@ -1,6 +1,7 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Backpack;
+using DCL.Diagnostics;
 using DCL.Notifications.NotificationEntry;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
@@ -152,7 +153,8 @@ namespace DCL.Notifications.NotificationsMenu
                 new CommonArguments(URLAddress.FromString(notificationData.GetThumbnail())),
                 new GetTextureArguments(false),
                 GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp),
-                ct);
+                ct,
+                ReportCategory.UI);
             Sprite? thumbnailSprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height),
                 VectorUtilities.OneHalf, PIXELS_PER_UNIT, 0, SpriteMeshType.FullRect, Vector4.one, false);
             notificationThumbnailCache.Add(notificationData.Id, thumbnailSprite);
