@@ -433,7 +433,7 @@ namespace Global.Dynamic
 
             var currentSceneInfo = new CurrentSceneInfo();
 
-            container.multiplayerMovementMessageBus = new MultiplayerMovementMessageBus(container.MessagePipesHub, entityParticipantTable, globalWorld);
+            container.multiplayerMovementMessageBus = new MultiplayerMovementMessageBus(container.MessagePipesHub, entityParticipantTable, globalWorld, MultiplayerMovementMessageBus.Scheme.Uncompressed);
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
