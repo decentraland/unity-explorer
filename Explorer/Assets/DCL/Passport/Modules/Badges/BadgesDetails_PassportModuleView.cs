@@ -26,5 +26,8 @@ namespace DCL.Passport.Modules.Badges
 
         [field: SerializeField]
         public GameObject LoadingSpinner { get; private set; }
+
+        [field: SerializeField]
+        public GameObject NoBadgesLabel { get; private set; }
     }
 }

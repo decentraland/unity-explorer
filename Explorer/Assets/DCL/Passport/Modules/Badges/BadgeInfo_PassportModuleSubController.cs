@@ -82,6 +82,9 @@ namespace DCL.Passport.Modules.Badges
             badgeInfoModuleView.MainContainer.SetActive(!isLoading);
         }
 
+        public void SetAsEmpty(bool isEmpty) =>
+            badgeInfoModuleView.gameObject.SetActive(!isEmpty);
+
         public void Clear()
         {
             loadBadge3DImageCts.SafeCancelAndDispose();
