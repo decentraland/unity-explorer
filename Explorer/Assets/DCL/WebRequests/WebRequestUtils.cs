@@ -27,7 +27,7 @@ namespace DCL.WebRequests
         }
 
         public static bool IsIrrecoverableError(this UnityWebRequestException exception, int attemptLeft) =>
-            attemptLeft <= 0 || ((exception.IsAborted() || exception.IsServerError()) && !exception.IsUnableToCompleteSSLConnection());
+            attemptLeft <= 0 || exception.ResponseCode is NOT_FOUND || ((exception.IsAborted() || exception.IsServerError()) && !exception.IsUnableToCompleteSSLConnection());
 
         public static bool IsUnableToCompleteSSLConnection(this UnityWebRequestException exception)
         {
