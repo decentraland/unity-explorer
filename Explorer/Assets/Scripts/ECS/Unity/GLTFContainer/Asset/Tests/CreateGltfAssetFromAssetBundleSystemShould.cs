@@ -123,7 +123,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
             var exception = new ArgumentException();
 
             Entity e = world.Create(new GetGltfContainerAssetIntention(GltfContainerTestResources.RENDERER_WITH_LEGACY_ANIM_NAME, GltfContainerTestResources.RENDERER_WITH_LEGACY_ANIM_HASH, new CancellationTokenSource()),
-                new StreamableLoadingResult<AssetBundleData>(exception));
+                new StreamableLoadingResult<AssetBundleData>(ReportData.UNSPECIFIED, exception));
 
             system.Update(0);
 

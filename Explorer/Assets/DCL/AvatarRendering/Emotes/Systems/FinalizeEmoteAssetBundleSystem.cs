@@ -23,9 +23,7 @@ namespace DCL.AvatarRendering.Emotes
     [UpdateAfter(typeof(LoadSceneEmotesSystem))]
     public partial class FinalizeEmoteAssetBundleSystem : BaseUnityLoopSystem
     {
-        public FinalizeEmoteAssetBundleSystem(World world) : base(world)
-        {
-        }
+        public FinalizeEmoteAssetBundleSystem(World world) : base(world) { }
 
         protected override void Update(float t)
         {
@@ -47,7 +45,7 @@ namespace DCL.AvatarRendering.Emotes
                 return;
             }
 
-            if (promise.SafeTryConsume(World, out StreamableLoadingResult<SceneAssetBundleManifest> result))
+            if (promise.SafeTryConsume(World, GetReportCategory(), out StreamableLoadingResult<SceneAssetBundleManifest> result))
             {
                 emote.ManifestResult = result;
                 emote.IsLoading = false;
@@ -66,7 +64,7 @@ namespace DCL.AvatarRendering.Emotes
                 return;
             }
 
-            if (promise.SafeTryConsume(World, out StreamableLoadingResult<AssetBundleData> result))
+            if (promise.SafeTryConsume(World, GetReportCategory(), out StreamableLoadingResult<AssetBundleData> result))
             {
                 if (result.Succeeded)
                 {
@@ -100,7 +98,7 @@ namespace DCL.AvatarRendering.Emotes
 
             if (promise.IsConsumed) return;
 
-            if (!promise.SafeTryConsume(World, out StreamableLoadingResult<AudioClip> result))
+            if (!promise.SafeTryConsume(World, GetReportCategory(), out StreamableLoadingResult<AudioClip> result))
                 return;
 
             if (result.Succeeded)

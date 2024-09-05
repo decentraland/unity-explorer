@@ -87,8 +87,8 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         {
             if (!ReadyToInstantiateNewAvatar(ref avatarShapeComponent)) return null;
 
-            if (!avatarShapeComponent.WearablePromise.SafeTryConsume(World, out WearablesLoadResult wearablesResult)) return null;
-            if (!avatarShapeComponent.EmotePromise.SafeTryConsume(World, out EmotesLoadResult emotesResult)) return null;
+            if (!avatarShapeComponent.WearablePromise.SafeTryConsume(World, GetReportCategory(), out WearablesLoadResult wearablesResult)) return null;
+            if (!avatarShapeComponent.EmotePromise.SafeTryConsume(World, GetReportCategory(), out EmotesLoadResult emotesResult)) return null;
 
             AvatarBase avatarBase = avatarPoolRegistry.Get();
             avatarBase.gameObject.name = $"Avatar {avatarShapeComponent.ID}";
@@ -138,8 +138,8 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         {
             if (!ReadyToInstantiateNewAvatar(ref avatarShapeComponent)) return;
 
-            if (!avatarShapeComponent.WearablePromise.SafeTryConsume(World, out WearablesLoadResult wearablesResult)) return;
-            if (!avatarShapeComponent.EmotePromise.SafeTryConsume(World, out EmotesLoadResult emotesResult)) return;
+            if (!avatarShapeComponent.WearablePromise.SafeTryConsume(World, GetReportCategory(), out WearablesLoadResult wearablesResult)) return;
+            if (!avatarShapeComponent.EmotePromise.SafeTryConsume(World, GetReportCategory(), out EmotesLoadResult emotesResult)) return;
 
             ReleaseAvatar.Execute(vertOutBuffer, wearableAssetsCache, avatarMaterialPoolHandler, computeShaderSkinningPool, avatarShapeComponent, ref skinningComponent);
 

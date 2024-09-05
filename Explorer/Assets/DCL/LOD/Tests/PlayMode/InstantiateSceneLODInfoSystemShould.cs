@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using Arch.Core;
 using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
+using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.LOD.Components;
 using DCL.LOD.Systems;
@@ -17,7 +17,6 @@ using ECS.StreamableLoading.Common.Components;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
-using SceneRunner.Scene;
 using System.Linq;
 using UnityEngine;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData,
@@ -31,7 +30,7 @@ namespace DCL.LOD.Tests
 
         private static readonly Vector2Int[] DecodedParcels =
         {
-            new (0, 0)
+            new (0, 0),
         };
 
         private SceneLODInfo sceneLODInfo;
@@ -43,12 +42,13 @@ namespace DCL.LOD.Tests
         public void Setup()
         {
             var lodSettings = Substitute.For<ILODSettingsAsset>();
+
             int[] bucketThresholds =
             {
-                2
+                2,
             };
-            lodSettings.LodPartitionBucketThresholds.Returns(bucketThresholds);
 
+            lodSettings.LodPartitionBucketThresholds.Returns(bucketThresholds);
 
             var frameCapBudget = Substitute.For<IPerformanceBudget>();
             frameCapBudget.TrySpendBudget().Returns(true);
@@ -73,11 +73,12 @@ namespace DCL.LOD.Tests
             sceneDefinitionComponent = new SceneDefinitionComponent(sceneEntityDefinition, new IpfsPath());
 
             sceneLODInfo = SceneLODInfo.Create();
-            sceneLODInfo.metadata = new LODCacheInfo(new GameObject().AddComponent<LODGroup>(), 2 );
+            sceneLODInfo.metadata = new LODCacheInfo(new GameObject().AddComponent<LODGroup>(), 2);
 
             var textureArrayContainerFactory = new TextureArrayContainerFactory(new Dictionary<TextureArrayKey, Texture>());
-            system = new InstantiateSceneLODInfoSystem(world,  frameCapBudget, memoryBudget, scenesCache, sceneReadinessReportQueue,
-                textureArrayContainerFactory.CreateSceneLOD(TextureArrayConstants.SCENE_TEX_ARRAY_SHADER, new []
+
+            system = new InstantiateSceneLODInfoSystem(world, frameCapBudget, memoryBudget, scenesCache, sceneReadinessReportQueue,
+                textureArrayContainerFactory.CreateSceneLOD(TextureArrayConstants.SCENE_TEX_ARRAY_SHADER, new[]
                 {
                     new TextureArrayResolutionDescriptor(256, 500, 1)
                 }, TextureFormat.BC7, 20, 1), Substitute.For<IRealmPartitionSettings>());
@@ -124,35 +125,32 @@ namespace DCL.LOD.Tests
             scenesCache.Received().AddNonRealScene(Arg.Is<Vector2Int[]>(arr => arr.SequenceEqual(DecodedParcels)));
         }
 
-
         private Promise GenerateFailedPromise()
         {
             var promise = Promise.Create(world,
                 GetAssetBundleIntention.FromHash(typeof(GameObject), "Cube"),
                 new PartitionComponent());
 
-
             world.Add(promise.Entity,
-                new StreamableLoadingResult<AssetBundleData>(new Exception()));
+                new StreamableLoadingResult<AssetBundleData>(ReportData.UNSPECIFIED, new Exception()));
+
             return promise;
         }
 
         private (AssetBundleData, Promise) GenerateSuccessfullPromise()
         {
             var promise = Promise.Create(world,
-                GetAssetBundleIntention.FromHash(typeof(GameObject),"Cube"),
+                GetAssetBundleIntention.FromHash(typeof(GameObject), "Cube"),
                 new PartitionComponent());
 
             var fakeAssetBundleData = new AssetBundleData(null, null, GameObject.CreatePrimitive(PrimitiveType.Cube),
                 new AssetBundleData[]
-                {
-                });
+                    { });
 
             world.Add(promise.Entity,
                 new StreamableLoadingResult<AssetBundleData>(fakeAssetBundleData));
+
             return (fakeAssetBundleData, promise);
         }
-
     }
-
 }

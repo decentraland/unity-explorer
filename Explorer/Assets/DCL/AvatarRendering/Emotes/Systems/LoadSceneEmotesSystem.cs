@@ -48,7 +48,7 @@ namespace DCL.AvatarRendering.Emotes
             if (intention.CancellationTokenSource.IsCancellationRequested)
             {
                 if (!World.Has<StreamableResult>(entity))
-                    World.Add(entity, new StreamableResult(new OperationCanceledException($"Scene emote request cancelled {intention.EmoteHash}")));
+                    World.Add(entity, new StreamableResult(GetReportCategory(), new OperationCanceledException($"Scene emote request cancelled {intention.EmoteHash}")));
 
                 return;
             }
@@ -64,7 +64,7 @@ namespace DCL.AvatarRendering.Emotes
                 if (!World.Has<StreamableResult>(entity))
                 {
                     ReportHub.LogWarning(GetReportCategory(), $"Loading scenes emotes timed out {urn}");
-                    World.Add(entity, new StreamableResult(new TimeoutException($"Scene emote timeout {urn}")));
+                    World.Add(entity, new StreamableResult(GetReportCategory(), new TimeoutException($"Scene emote timeout {urn}")));
                 }
 
                 return;

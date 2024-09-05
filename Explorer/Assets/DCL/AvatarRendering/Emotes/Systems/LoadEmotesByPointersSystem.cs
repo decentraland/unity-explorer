@@ -142,7 +142,7 @@ namespace DCL.AvatarRendering.Emotes
             if (intention.CancellationTokenSource.IsCancellationRequested)
             {
                 if (!World.Has<StreamableResult>(entity))
-                    World.Add(entity, new StreamableResult(new OperationCanceledException("Pointer request cancelled")));
+                    World.Add(entity, new StreamableResult(GetReportCategory(), new OperationCanceledException("Pointer request cancelled")));
 
                 return;
             }
@@ -156,8 +156,7 @@ namespace DCL.AvatarRendering.Emotes
                 if (!World.Has<StreamableResult>(entity))
                 {
                     var pointersStrLog = string.Join(",", intention.Pointers);
-                    ReportHub.LogWarning(GetReportCategory(), $"Loading emotes timed out, {pointersStrLog}");
-                    World.Add(entity, new StreamableResult(new TimeoutException($"Emote intention timeout {pointersStrLog}")));
+                    World.Add(entity, new StreamableResult(GetReportCategory(), new TimeoutException($"Emote intention timeout {pointersStrLog}")));
                 }
 
                 return;
@@ -259,7 +258,7 @@ namespace DCL.AvatarRendering.Emotes
                 return;
             }
 
-            if (promise.SafeTryConsume(World, out StreamableLoadingResult<EmotesDTOList> promiseResult))
+            if (promise.SafeTryConsume(World, GetReportCategory(), out StreamableLoadingResult<EmotesDTOList> promiseResult))
             {
                 if (!promiseResult.Succeeded)
                 {
