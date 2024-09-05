@@ -47,15 +47,15 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.ApiChunks => $"https://api.decentraland.{ENV}/v1/map.png",
                 DecentralandUrl.PeerAbout => $"https://peer.decentraland.{ENV}/about",
                 DecentralandUrl.DAO => $"https://decentraland.{ENV}/dao/",
-                DecentralandUrl.Notification => $"https://notifications.decentraland.zone/notifications", //TODO (Santi) Replace it by $"https://notifications.decentraland.{ENV}/notifications when Badges back-end is deployed in prod"
-                DecentralandUrl.NotificationRead => $"https://notifications.decentraland.zone/notifications/read", // TODO (Santi) Replace it by $"https://notifications.decentraland.{ENV}/notifications/read when Badges back-end is deployed in prod"
+                DecentralandUrl.Notification => $"https://notifications.decentraland.org/notifications",
+                DecentralandUrl.NotificationRead => $"https://notifications.decentraland.org/notifications/read",
                 DecentralandUrl.FeatureFlags => $"https://feature-flags.decentraland.{ENV}",
                 DecentralandUrl.Market => "https://market.decentraland.org",
                 DecentralandUrl.AssetBundlesCDN => "https://ab-cdn.decentraland.org",
                 DecentralandUrl.ArchipelagoStatus => $"https://archipelago-stats.decentraland.{ENV}/status",
                 DecentralandUrl.GatekeeperStatus => $"https://comms-gatekeeper.decentraland.{ENV}/status",
                 DecentralandUrl.Genesis => $"https://realm-provider-ea.decentraland.{ENV}/main",
-                DecentralandUrl.Badges => $"https://badges.decentraland.zone", //TODO (Santi) Replace it by $"https://badges.decentraland.{ENV}/badges when Badges back-end is deployed in prod"
+                DecentralandUrl.Badges => $"https://badges.decentraland.org",
                 _ => throw new ArgumentOutOfRangeException(nameof(decentralandUrl), decentralandUrl, null!)
             };
     }
