@@ -64,13 +64,14 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
         {
             if (entity != cameraEntity || !sceneStateProvider.IsCurrent) return;
 
+            int virtualCameraCRDTEntity = (int)pbMainCamera.VirtualCameraEntity;
+
             // Cannot check by pbComponent.IsDirty since the VirtualCamera may not yet be on the target CRDTEntity
             // when the pbComponent is dirty and may have to be re-checked on subsequent updates...
-            if (pbMainCamera.VirtualCameraEntity == mainCameraComponent.virtualCameraCRDTEntity &&
-                 (mainCameraComponent.virtualCameraInstance == null || mainCameraComponent.virtualCameraInstance.enabled))
+            if (mainCameraComponent.virtualCameraCRDTEntity == virtualCameraCRDTEntity &&
+                (mainCameraComponent.virtualCameraInstance == null || mainCameraComponent.virtualCameraInstance.enabled))
                 return;
 
-            int virtualCameraCRDTEntity = (int)pbMainCamera.VirtualCameraEntity;
             mainCameraComponent.virtualCameraCRDTEntity = virtualCameraCRDTEntity;
 
             CinemachineFreeLook? previousVirtualCamera = mainCameraComponent.virtualCameraInstance;
