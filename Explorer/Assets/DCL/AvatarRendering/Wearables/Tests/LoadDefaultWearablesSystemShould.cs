@@ -29,12 +29,15 @@ namespace DCL.AvatarRendering.Wearables.Tests
         [SetUp]
         public void Setup()
         {
-            var partialTargetList = new List<WearableDTO>(64);
+            var repoolableList = RepoolableList<WearableDTO>.NewList();
+            var partialTargetList = repoolableList.List;
+            partialTargetList.Capacity = 64;
+
             JsonConvert.PopulateObject(File.ReadAllText(definitionsPath), partialTargetList);
             wearableStorage = new WearableStorage();
             emptyDefaultWearable = new GameObject();
 
-            system = new LoadDefaultWearablesSystem(world, new WearablesDTOList(partialTargetList.AsRepoolableList()),
+            system = new LoadDefaultWearablesSystem(world, new WearablesDTOList(repoolableList),
                 emptyDefaultWearable,
                 wearableStorage);
 

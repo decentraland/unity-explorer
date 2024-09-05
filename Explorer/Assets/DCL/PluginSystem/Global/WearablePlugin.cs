@@ -19,7 +19,6 @@ using ECS.StreamableLoading.Cache;
 using Newtonsoft.Json;
 using SceneRunner.Scene;
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -58,10 +57,13 @@ namespace DCL.AvatarRendering.Wearables
         public async UniTask InitializeAsync(WearableSettings settings, CancellationToken ct)
         {
             ProvidedAsset<TextAsset> defaultWearableDefinition = await assetsProvisioner.ProvideMainAssetAsync(settings.defaultWearablesDefinition, ct: ct);
-            var partialTargetList = new List<WearableDTO>(64);
+
+            var repoolableList = RepoolableList<WearableDTO>.NewList();
+            var partialTargetList = repoolableList.List;
+            partialTargetList.Capacity = 64;
             JsonConvert.PopulateObject(defaultWearableDefinition.Value.text, partialTargetList);
 
-            defaultWearablesDTOs = new WearablesDTOList(partialTargetList.AsRepoolableList());
+            defaultWearablesDTOs = new WearablesDTOList(repoolableList);
 
             var defaultEmptyWearable =
                 await assetsProvisioner.ProvideMainAssetAsync(settings.defaultEmptyWearable, ct: ct);

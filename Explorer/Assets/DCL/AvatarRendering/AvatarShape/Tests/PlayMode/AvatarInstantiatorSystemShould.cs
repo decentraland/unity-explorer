@@ -89,10 +89,15 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
 
             var emotePromise = EmotePromise.Create(world, new GetEmotesByPointersIntention(new List<URN> { "clap" }, BodyShape.MALE), partitionComponent);
 
-            world.Add(emotePromise.Entity, new StreamableLoadingResult<EmotesResolution>(new EmotesResolution(new[]
-            {
-                GetMockEmote("clap", "emote"),
-            }.ToList().AsRepoolableList(), 1)));
+            world.Add(emotePromise.Entity, new StreamableLoadingResult<EmotesResolution>(
+                    new EmotesResolution(
+                        RepoolableList<IEmote>.NewListWithContentOf(
+                            GetMockEmote("clap", "emote")
+                        ),
+                        1
+                    )
+                )
+            );
 
             avatarShapeComponent = new AvatarShapeComponent("TEST_AVATAR", "TEST_ID", BodyShape.MALE, wearablePromise, emotePromise,
                 randomSkinColor, randomHairColor, randomEyesColor);
@@ -220,7 +225,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
                 new PartitionComponent());
 
             world.Add(newWearablePromise.Entity, new StreamableLoadingResult<WearablesResolution>(new WearablesResolution(new List<IWearable> { GetMockWearable("body_shape", WearablesConstants.Categories.BODY_SHAPE) })));
-            world.Add(newEmotePromise.Entity, new StreamableLoadingResult<EmotesResolution>(new EmotesResolution(new[] { GetMockEmote("emote", WearablesConstants.Categories.EYES) }.ToList().AsRepoolableList(), 1)));
+            world.Add(newEmotePromise.Entity, new StreamableLoadingResult<EmotesResolution>(new EmotesResolution(RepoolableList<IEmote>.NewListWithContentOf(GetMockEmote("emote", WearablesConstants.Categories.EYES)), 1)));
 
             world.Get<AvatarShapeComponent>(avatarEntity).IsDirty = true;
             world.Get<AvatarShapeComponent>(avatarEntity).WearablePromise = newWearablePromise;

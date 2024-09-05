@@ -48,7 +48,7 @@ namespace DCL.AvatarRendering.Loading.Components
     public class RepoolableList<T> : IDisposable
     {
         private static readonly ThreadSafeObjectPool<RepoolableList<T>> POOL = new (
-            () => new RepoolableList<T>(),
+            () => new RepoolableList<T>(new List<T>()),
             actionOnGet: l => l.isDisposed = false,
             actionOnRelease: l =>
             {
@@ -77,8 +77,6 @@ namespace DCL.AvatarRendering.Loading.Components
             }
         }
 
-        private RepoolableList() : this(new List<T>()) { }
-
         private RepoolableList(List<T> list)
         {
             this.list = list;
@@ -87,11 +85,15 @@ namespace DCL.AvatarRendering.Loading.Components
         public static RepoolableList<T> NewList() =>
             POOL.Get()!;
 
-        /// <summary>
-        ///     Takes ownership of the list. Don't use the direct reference to the list.
-        /// </summary>
-        public static RepoolableList<T> FromList(List<T> list) =>
-            new (list);
+        public static RepoolableList<T> NewListWithContentOf(params T[] collection) =>
+            NewListWithContentOf(collection as IEnumerable<T>);
+
+        public static RepoolableList<T> NewListWithContentOf(IEnumerable<T> collection)
+        {
+            var repoolableList = NewList();
+            repoolableList.List.AddRange(collection);
+            return repoolableList;
+        }
 
         public static RepoolableList<T> FromElement(T element)
         {
@@ -104,11 +106,5 @@ namespace DCL.AvatarRendering.Loading.Components
         {
             POOL.Release(this);
         }
-    }
-
-    public static class RePoolableListExtensions
-    {
-        public static RepoolableList<T> AsRepoolableList<T>(this List<T> list) =>
-            RepoolableList<T>.FromList(list);
     }
 }
