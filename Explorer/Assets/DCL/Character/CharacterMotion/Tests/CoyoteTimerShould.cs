@@ -135,7 +135,7 @@ namespace DCL.CharacterMotion.Tests
             jumpInputComponent = new JumpInputComponent();
             movementInputComponent = new MovementInputComponent()
             {
-                Kind = MovementKind.Jog
+                Kind = MovementKind.JOG
             };
         }
     }

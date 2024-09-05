@@ -9,6 +9,5 @@ namespace DCL.AvatarRendering.DemoScripts.Components
     {
         public List<AssetPromise<WearablesResponse, GetWearableByParamIntention>> CollectionPromise;
         public int RandomAvatarsToInstantiate;
-        public bool IsSelfReplica = false;
     }
 }

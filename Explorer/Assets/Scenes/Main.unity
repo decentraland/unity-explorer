@@ -537,6 +537,11 @@ MonoBehaviour:
       m_SubObjectName: 
       m_SubObjectType: 
       m_EditorAssetChanged: 0
+    <MultiplayerDebugSettings>k__BackingField:
+      m_AssetGUID: d23ca58b5a012ef46a39310b9a2e4e05
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_EditorAssetChanged: 0
   splashRoot: {fileID: 7722564697705550552}
   splashScreenAnimation: {fileID: 7722564697705550553}
   backgroundMusic: {fileID: 11400000, guid: 26e7ebc818785ad428e1de2791a42768, type: 2}

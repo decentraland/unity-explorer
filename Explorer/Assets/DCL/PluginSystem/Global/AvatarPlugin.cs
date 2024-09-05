@@ -23,6 +23,7 @@ using System.Threading;
 using DCL.AvatarRendering;
 using DCL.AvatarRendering.AvatarShape;
 using DCL.AvatarRendering.AvatarShape.Helpers;
+using DCL.Multiplayer.Profiles.Entities;
 using DCL.AvatarRendering.Loading.Assets;
 using DCL.Multiplayer.Profiles.Tables;
 using UnityEngine;
@@ -52,10 +53,10 @@ namespace DCL.PluginSystem.Global
 
         // late init
         private IComponentPool<AvatarBase> avatarPoolRegistry = null!;
-        private IAvatarMaterialPoolHandler avatarMaterialPoolHandler  = null!;
+        private IAvatarMaterialPoolHandler avatarMaterialPoolHandler = null!;
         private IExtendedObjectPool<ComputeShader> computeShaderPool = null!;
 
-        private NametagsData nametagsData;
+        private readonly NametagsData nametagsData;
 
         private IComponentPool<Transform> transformPoolRegistry = null!;
 
@@ -66,8 +67,9 @@ namespace DCL.PluginSystem.Global
         private ChatBubbleConfigurationSO chatBubbleConfiguration;
 
         private readonly DefaultFaceFeaturesHandler defaultFaceFeaturesHandler;
-        private readonly IEntityParticipantTable entityParticipantTable;
         private readonly TextureArrayContainerFactory textureArrayContainerFactory;
+        private readonly RemoteEntities remoteEntities;
+        private readonly ExposedTransform playerTransform;
         private readonly IWearableStorage wearableStorage;
 
         public AvatarPlugin(
@@ -81,10 +83,12 @@ namespace DCL.PluginSystem.Global
             CacheCleaner cacheCleaner,
             ChatEntryConfigurationSO chatEntryConfiguration,
             DefaultFaceFeaturesHandler defaultFaceFeaturesHandler,
-            IEntityParticipantTable entityParticipantTable,
             NametagsData nametagsData,
             TextureArrayContainerFactory textureArrayContainerFactory,
-            IWearableStorage wearableStorage)
+            IWearableStorage wearableStorage,
+            RemoteEntities remoteEntities,
+            ExposedTransform playerTransform
+        )
         {
             this.assetsProvisioner = assetsProvisioner;
             this.frameTimeCapBudget = frameTimeCapBudget;
@@ -94,10 +98,11 @@ namespace DCL.PluginSystem.Global
             this.cacheCleaner = cacheCleaner;
             this.chatEntryConfiguration = chatEntryConfiguration;
             this.defaultFaceFeaturesHandler = defaultFaceFeaturesHandler;
-            this.entityParticipantTable = entityParticipantTable;
             this.memoryBudget = memoryBudget;
             this.nametagsData = nametagsData;
             this.textureArrayContainerFactory = textureArrayContainerFactory;
+            this.remoteEntities = remoteEntities;
+            this.playerTransform = playerTransform;
             this.wearableStorage = wearableStorage;
             componentPoolsRegistry = poolsRegistry;
 
@@ -134,6 +139,7 @@ namespace DCL.PluginSystem.Global
 
             cacheCleaner.Register(avatarPoolRegistry);
             cacheCleaner.Register(computeShaderPool);
+
             foreach (var extendedObjectPool in avatarMaterialPoolHandler.GetAllMaterialsPools())
                 cacheCleaner.Register(extendedObjectPool.Pool);
 
@@ -153,7 +159,7 @@ namespace DCL.PluginSystem.Global
             NametagPlacementSystem.InjectToWorld(ref builder, nametagViewPool, chatEntryConfiguration, nametagsData, chatBubbleConfiguration);
 
             //Debug scripts
-            InstantiateRandomAvatarsSystem.InjectToWorld(ref builder, debugContainerBuilder, realmData, entityParticipantTable, transformPoolRegistry, avatarRandomizerAsset);
+            InstantiateRandomAvatarsSystem.InjectToWorld(ref builder, debugContainerBuilder, realmData, transformPoolRegistry, avatarRandomizerAsset);
         }
 
         private async UniTask CreateAvatarBasePoolAsync(AvatarShapeSettings settings, CancellationToken ct)

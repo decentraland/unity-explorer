@@ -14,12 +14,6 @@ namespace DCL.Rendering.Menus
     {
         private const string ASSET_BUNDLE_DIRECTORY = "Assets/StreamingAssets/AssetBundles";
 
-        private static readonly string[] TARGET_DIRECTORIES =
-        {
-            "Assets/StreamingAssets/AssetBundles/lods",
-            "Assets/StreamingAssets/AssetBundles/Wearables",
-        };
-
         private static readonly string[] ASSET_NAMES =
         {
             "Scene.shader", "SceneVariants.shadervariants", "SceneVariantsManuallyAdded.shadervariants",
@@ -41,11 +35,6 @@ namespace DCL.Rendering.Menus
                 case "_mac":
                 {
                     bt = BuildTarget.StandaloneOSX;
-                    break;
-                }
-                case "_linux":
-                {
-                    bt = BuildTarget.StandaloneLinux64;
                     break;
                 }
             }
@@ -117,14 +106,6 @@ namespace DCL.Rendering.Menus
 
             // Copy the asset bundle to target directories
             string sourceFilePath = Path.Combine(ASSET_BUNDLE_DIRECTORY, bundleName);
-
-            foreach (string targetDirectory in TARGET_DIRECTORIES)
-            {
-                if (!Directory.Exists(targetDirectory)) { Directory.CreateDirectory(targetDirectory); }
-
-                string targetFilePath = Path.Combine(targetDirectory, bundleName);
-                File.Copy(sourceFilePath, targetFilePath, true);
-            }
 
             // Remove the asset bundle mark
             foreach (AssetImporter assetImporter in importers)

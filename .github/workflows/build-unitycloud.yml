@@ -25,10 +25,10 @@ on:
           - none
           - profile
           - deep
-      cache:
-        description: 'Enable to use workspace caching in cloud runners'
+      clean_build:
+        description: 'Clean Build'
         required: false
-        default: true
+        default: false
         type: boolean
       cache_strategy:
         description: 'Select cache strategy'
@@ -66,6 +66,13 @@ on:
         required: false
         type: boolean
         default: false
+      is_release_build:
+        type: boolean
+        required: false
+        default: false
+      tag_version:
+        type: string
+        required: false
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -79,7 +86,8 @@ jobs:
     if: |
       (github.ref == 'refs/heads/main') ||
       (github.event_name == 'pull_request' && !github.event.pull_request.draft) ||
-      (github.event_name == 'pull_request' && github.event.action == 'labeled' && github.event.label.name == 'force-build')
+      (github.event_name == 'pull_request' && github.event.action == 'labeled' && github.event.label.name == 'force-build') ||
+      (github.event_name == 'workflow_dispatch')
     outputs:
       commit_sha: ${{ steps.get_commit_sha.outputs.commit_sha }}
       options: ${{ steps.get_options.outputs.options }}
@@ -87,7 +95,7 @@ jobs:
       sentry_environment: ${{ steps.get_sentry.outputs.environment }}
       sentry_upload_symbols: ${{ steps.get_sentry.outputs.upload_symbols }}
       sentry_enabled: ${{ steps.get_sentry.outputs.sentry_enabled }}
-      use_cache: ${{ steps.set_defaults.outputs.use_cache }}
+      clean_build: ${{ steps.set_defaults.outputs.clean_build }}
       cache_strategy: ${{ steps.set_defaults.outputs.cache_strategy }}
     steps:
       - name: Checkout code
@@ -122,14 +130,14 @@ jobs:
       - name: Set default values
         id: set_defaults
         run: |
-          if [ "${{ github.event.inputs.cache }}" ]; then
-            use_cache=${{ github.event.inputs.cache }}
-          elif [ "${{ inputs.cache }}" ]; then
-            use_cache=${{ inputs.cache }}
+          if [ "${{ github.event.inputs.clean_build }}" ]; then
+            clean_build=${{ github.event.inputs.clean_build }}
+          elif [ "${{ inputs.clean_build }}" ]; then
+            clean_build=${{ inputs.clean_build }}
           else
-            use_cache='true'
+            clean_build=false
           fi
-          echo "use_cache=${use_cache}" >> $GITHUB_OUTPUT
+          echo "clean_build=${clean_build}" >> $GITHUB_OUTPUT
 
           if [ "${{ github.event.inputs.cache_strategy }}" ]; then
             cache_strategy=${{ github.event.inputs.cache_strategy }}
@@ -201,8 +209,11 @@ jobs:
           BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
           COMMIT_SHA: ${{ needs.prebuild.outputs.commit_sha }}
           BUILD_OPTIONS: ${{ needs.prebuild.outputs.options }}
-          USE_CACHE: ${{ needs.prebuild.outputs.use_cache }}
-          CACHE_STRATEGY: ${{ needs.prebuild.outputs.cache_strategy }} #Possible values: { none, library, workspace, inherit }
+          CLEAN_BUILD: ${{ needs.prebuild.outputs.clean_build }}
+          CACHE_STRATEGY: ${{ needs.prebuild.outputs.cache_strategy }}
+          IS_RELEASE_BUILD: ${{ inputs.is_release_build }}
+          TAG_VERSION: ${{ inputs.tag_version }}
+          #Possible values: { none, library, workspace, inherit }
           # Any ENV variables starting with "PARAM_" will be passed to Unity without the prefix
           # (The "PARAM_" prefix exists to allow any future values config-free)
           # e.g.: PARAM_ALLOW_DEBUG -> In Unity will be available as "ALLOW_DEBUG"
@@ -214,6 +225,7 @@ jobs:
           PARAM_SENTRY_ENABLED: ${{ needs.prebuild.outputs.sentry_enabled }}
           PARAM_SENTRY_UPLOAD_DEBUG_SYMBOLS: ${{ needs.prebuild.outputs.sentry_upload_symbols }}
           PARAM_SEGMENT_WRITE_KEY: ${{ secrets.SEGMENT_WRITE_KEY }}
+
         run: python -u scripts/cloudbuild/build.py
 
       - name: Upload artifact

@@ -41,7 +41,7 @@ namespace DCL.CharacterMotion.Systems
             in CharacterRigidTransform rigidTransform,
             in MovementInputComponent movementInput)
         {
-            if (movementInput.Kind == MovementKind.Run)
+            if (movementInput.Kind == MovementKind.RUN)
             {
                 float speedFactor = rigidTransform.MoveVelocity.Velocity.magnitude / characterControllerSettings.RunSpeed;
                 float targetFov = Mathf.Lerp(0, characterControllerSettings.CameraFOVWhileRunning, speedFactor);

@@ -296,6 +296,8 @@ MonoBehaviour:
       Severity: 0
     - Category: PLAYER_SDK_DATA
       Severity: 4
+    - Category: UNSPECIFIED
+      Severity: 3
   sentryMatrix:
     entries: []
   debounceEnabled: 1
