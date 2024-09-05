@@ -51,7 +51,7 @@ namespace DCL.Notifications.NewNotification
 
         protected override void OnViewInstantiated()
         {
-            thumbnailImageController = new ImageController(viewInstance.NotificationView.NotificationImage, webRequestController);
+            thumbnailImageController = new ImageController(viewInstance!.NotificationView.NotificationImage, webRequestController);
             viewInstance.NotificationView.NotificationClicked += ClickedNotification;
             viewInstance.NotificationView.CloseButton.onClick.AddListener(StopAnimation);
             viewInstance.SystemNotificationView.CloseButton.onClick.AddListener(StopAnimation);

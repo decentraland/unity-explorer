@@ -40,8 +40,9 @@ namespace DCL.NotificationsBusController.NotificationsBus
 
         public void SubscribeToAllNotificationTypesClick(NotificationClickedDelegate listener)
         {
-            foreach (NotificationType notificationType in Enum.GetValues(typeof(NotificationType)))
+            for (var i = 0; i < Enum.GetValues(typeof(NotificationType)).Length; i++)
             {
+                NotificationType notificationType = (NotificationType)i;
                 notificationClickedSubscribers.TryGetValue(notificationType, out NotificationClickedDelegate thisEvent);
                 thisEvent += listener;
                 notificationClickedSubscribers[notificationType] = thisEvent;
@@ -50,8 +51,9 @@ namespace DCL.NotificationsBusController.NotificationsBus
 
         public void SubscribeToAllNotificationTypesReceived(NotificationReceivedDelegate listener)
         {
-            foreach (NotificationType notificationType in Enum.GetValues(typeof(NotificationType)))
+            for (var i = 0; i < Enum.GetValues(typeof(NotificationType)).Length; i++)
             {
+                NotificationType notificationType = (NotificationType)i;
                 notificationReceivedSubscribers.TryGetValue(notificationType, out NotificationReceivedDelegate thisEvent);
                 thisEvent += listener;
                 notificationReceivedSubscribers[notificationType] = thisEvent;

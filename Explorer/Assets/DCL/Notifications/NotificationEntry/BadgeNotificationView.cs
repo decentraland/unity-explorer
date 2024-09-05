@@ -42,13 +42,11 @@ namespace DCL.Notifications.NotificationEntry
         private void Start()
         {
             Background.color = NormalColor;
-
-            MainButton.onClick.RemoveAllListeners();
-            MainButton.onClick.AddListener(OnPointerClick);
+            MainButton.onClick.AddListener(() => NotificationClicked?.Invoke(NotificationType, Notification));
         }
 
-        private void OnPointerClick() =>
-            NotificationClicked?.Invoke(NotificationType, Notification);
+        private void OnDestroy() =>
+            MainButton.onClick.RemoveAllListeners();
 
         public void OnPointerEnter(PointerEventData eventData) =>
             Background.color = HoveredColor;
