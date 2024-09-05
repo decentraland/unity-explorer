@@ -234,8 +234,6 @@ jobs:
           name: Decentraland_${{ matrix.target }}
           path: |
             build
-            !build/**/*_BackUpThisFolder_ButDontShipItWithYourGame
-            !build/**/*_BurstDebugInformation_DoNotShip
           if-no-files-found: error
 
       # Will run always (even if failing)
