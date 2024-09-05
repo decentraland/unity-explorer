@@ -81,6 +81,9 @@ namespace DCL.Notifications.NewNotification
 
         private async UniTaskVoid DisplayNewNotificationAsync()
         {
+            if (viewInstance == null)
+                return;
+
             while (notificationQueue.Count > 0)
             {
                 isDisplaying = true;
@@ -105,7 +108,7 @@ namespace DCL.Notifications.NewNotification
 
         private async UniTask ProcessArrivedNotificationAsync(INotification notification)
         {
-            viewInstance.SystemNotificationView.HeaderText.text = notification.GetHeader();
+            viewInstance!.SystemNotificationView.HeaderText.text = notification.GetHeader();
             viewInstance.SystemNotificationView.NotificationType = notification.Type;
             viewInstance.SystemNotificationView.NotificationTypeImage.sprite = notificationIconTypes.GetNotificationIcon(notification.Type);
 
@@ -114,7 +117,7 @@ namespace DCL.Notifications.NewNotification
 
         private async UniTask ProcessDefaultNotificationAsync(INotification notification)
         {
-            viewInstance.NotificationView.HeaderText.text = notification.GetHeader();
+            viewInstance!.NotificationView.HeaderText.text = notification.GetHeader();
             viewInstance.NotificationView.TitleText.text = notification.GetTitle();
             viewInstance.NotificationView.NotificationType = notification.Type;
             viewInstance.NotificationView.Notification = notification;
@@ -129,10 +132,7 @@ namespace DCL.Notifications.NewNotification
 
         private async UniTask ProcessBadgeNotificationAsync(INotification notification)
         {
-            if (viewInstance == null)
-                return;
-
-            viewInstance.BadgeNotificationView.HeaderText.text = notification.GetHeader();
+            viewInstance!.BadgeNotificationView.HeaderText.text = notification.GetHeader();
             viewInstance.BadgeNotificationView.TitleText.text = notification.GetTitle();
             viewInstance.BadgeNotificationView.NotificationType = notification.Type;
             viewInstance.BadgeNotificationView.Notification = notification;
