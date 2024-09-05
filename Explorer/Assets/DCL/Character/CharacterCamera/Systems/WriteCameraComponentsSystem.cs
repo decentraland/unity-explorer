@@ -26,10 +26,11 @@ namespace DCL.CharacterCamera.Systems
         private readonly IPartitionComponent scenePartition;
         private readonly byte propagationThreshold;
         private readonly IComponentPool<SDKTransform> sdkTransformPool;
+        private readonly IComponentPool<PBMainCamera> mainCameraPool;
         private readonly Entity cameraEntity;
 
         internal WriteCameraComponentsSystem(World world, IECSToCRDTWriter ecsToCrdtWriter, IExposedCameraData exposedCameraData, ISceneData sceneData, IPartitionComponent scenePartition,
-            byte propagationThreshold, IComponentPool<SDKTransform> sdkTransformPool, Entity cameraEntity) : base(world)
+            byte propagationThreshold, IComponentPool<SDKTransform> sdkTransformPool, IComponentPool<PBMainCamera> mainCameraPool, Entity cameraEntity) : base(world)
         {
             this.ecsToCrdtWriter = ecsToCrdtWriter;
             this.exposedCameraData = exposedCameraData;
@@ -37,6 +38,7 @@ namespace DCL.CharacterCamera.Systems
             this.propagationThreshold = propagationThreshold;
             this.sdkTransformPool = sdkTransformPool;
             this.cameraEntity = cameraEntity;
+            this.mainCameraPool = mainCameraPool;
             this.scenePartition = scenePartition;
         }
 
@@ -57,8 +59,11 @@ namespace DCL.CharacterCamera.Systems
             }
 
             // Initialize SDK Main Camera component
-            PBMainCamera pbMainCamera = new PBMainCamera();
-            ecsToCrdtWriter.PutMessage(pbMainCamera, SpecialEntitiesID.CAMERA_ENTITY);
+            PBMainCamera pbMainCamera = mainCameraPool.Get();
+
+            // you can't put the same instance as it will be returned to the pool after writing to the JS
+            ecsToCrdtWriter.PutMessage<PBMainCamera, PBMainCamera>(static (dataToWrite, ecsInstance) => { dataToWrite.VirtualCameraEntity = ecsInstance.VirtualCameraEntity; }, SpecialEntitiesID.CAMERA_ENTITY, pbMainCamera);
+
             World.Add(cameraEntity, pbMainCamera);
 
             PropagateCameraData(false);
