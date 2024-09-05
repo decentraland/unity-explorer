@@ -47,7 +47,6 @@ namespace DCL.CharacterTriggerArea
 
         public void Clear()
         {
-            currentAvatarsInside.Clear();
             enteredAvatarsToBeProcessed.Clear();
             exitedAvatarsToBeProcessed.Clear();
         }
