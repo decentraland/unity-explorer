@@ -1,10 +1,8 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.CharacterCamera;
 using DCL.CharacterTriggerArea.Components;
-using DCL.CharacterTriggerArea.Systems;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.SDKComponents.CameraModeArea.Components;
@@ -14,6 +12,7 @@ using ECS.Groups;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
 using ECS.Unity.Transforms.Components;
+using System.Collections.Generic;
 
 namespace DCL.SDKComponents.CameraModeArea.Systems
 {
@@ -21,7 +20,9 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
     [LogCategory(ReportCategory.CAMERA_MODE_AREA)]
     public partial class CameraModeAreaHandlerSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
-        private static CameraMode cameraModeBeforeLastAreaEnter; // There's only 1 camera at a time
+        // There's only 1 camera at a time
+        private static CameraMode cameraModeBeforeLastAreaEnter;
+        private static readonly HashSet<Entity> activeAreas = new HashSet<Entity>();
 
         private readonly World globalWorld;
         private readonly ObjectProxy<Entity> cameraEntityProxy;
@@ -55,42 +56,52 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
 
         [Query]
         [All(typeof(TransformComponent))]
-        private void UpdateCameraModeArea(ref PBCameraModeArea pbCameraModeArea, ref CharacterTriggerAreaComponent characterTriggerAreaComponent)
+        private void UpdateCameraModeArea(Entity entity, ref PBCameraModeArea pbCameraModeArea, ref CharacterTriggerAreaComponent characterTriggerAreaComponent)
         {
-            if (cameraData.CameraMode == CameraMode.SDKCamera) return;
-
-            if (characterTriggerAreaComponent.EnteredAvatarsToBeProcessed!.Count > 0)
-            {
-                OnEnteredCameraModeArea((CameraMode)pbCameraModeArea.Mode);
-                characterTriggerAreaComponent.TryClearEnteredAvatarsToBeProcessed();
-            }
-            else if (characterTriggerAreaComponent.ExitedAvatarsToBeProcessed!.Count > 0)
-            {
-                OnExitedCameraModeArea();
-                characterTriggerAreaComponent.TryClearExitedAvatarsToBeProcessed();
-            }
-
             if (pbCameraModeArea.IsDirty)
             {
                 characterTriggerAreaComponent.AreaSize = pbCameraModeArea.Area;
                 characterTriggerAreaComponent.IsDirty = true;
             }
+
+            if (cameraData.CameraMode == CameraMode.SDKCamera) return;
+
+            if (characterTriggerAreaComponent.EnteredAvatarsToBeProcessed!.Count > 0)
+            {
+                if (!activeAreas.Contains(entity))
+                {
+                    OnEnteredCameraModeArea((CameraMode)pbCameraModeArea.Mode);
+                    activeAreas.Add(entity);
+                }
+                characterTriggerAreaComponent.TryClearEnteredAvatarsToBeProcessed();
+            }
+            else if (characterTriggerAreaComponent.ExitedAvatarsToBeProcessed!.Count > 0)
+            {
+                if (activeAreas.Contains(entity))
+                {
+                    OnExitedCameraModeArea();
+                    activeAreas.Remove(entity);
+                }
+                characterTriggerAreaComponent.TryClearExitedAvatarsToBeProcessed();
+            }
         }
 
         [Query]
         [All(typeof(DeleteEntityIntention), typeof(PBCameraModeArea), typeof(CameraModeAreaComponent))]
-        private void HandleEntityDestruction()
+        private void HandleEntityDestruction(Entity entity)
         {
             OnExitedCameraModeArea();
+            activeAreas.Remove(entity);
         }
 
         [Query]
         [None(typeof(DeleteEntityIntention), typeof(PBCameraModeArea))]
         [All(typeof(CameraModeAreaComponent))]
-        private void HandleComponentRemoval(Entity e)
+        private void HandleComponentRemoval(Entity entity)
         {
             OnExitedCameraModeArea();
-            World.Remove<CameraModeAreaComponent>(e);
+            activeAreas.Remove(entity);
+            World.Remove<CameraModeAreaComponent>(entity);
         }
 
         internal void OnEnteredCameraModeArea(CameraMode targetCameraMode)
@@ -115,15 +126,16 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
 
         [Query]
         [All(typeof(CameraModeAreaComponent))]
-        private void FinalizeComponents()
+        private void FinalizeComponents(Entity entity)
         {
             OnExitedCameraModeArea();
+            activeAreas.Remove(entity);
+            World.Remove<CameraModeAreaComponent>(entity);
         }
 
         public void FinalizeComponents(in Query query)
         {
             FinalizeComponentsQuery(World);
-            World.Remove<CameraModeAreaComponent>(FinalizeComponents_QueryDescription);
         }
     }
 }
