@@ -11,8 +11,9 @@ namespace DCL.BadgesAPIService
     }
 
     [Serializable]
-    public class BadgeInfo : BadgeData
+    public class BadgeInfo
     {
+        public BadgeData data;
         public bool isLocked;
         public bool isNew;
     }

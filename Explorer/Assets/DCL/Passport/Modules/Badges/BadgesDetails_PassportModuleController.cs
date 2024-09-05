@@ -249,7 +249,7 @@ namespace DCL.Passport.Modules.Badges
             {
                 foreach (var badgeCard in badgeDetailCard.Value)
                 {
-                    if (badgeCard.Model.id == currentDefaultBadgeId)
+                    if (badgeCard.Model.data.id == currentDefaultBadgeId)
                     {
                         badgeCard.SetAsSelected(false);
                         cardToSelect = badgeCard;

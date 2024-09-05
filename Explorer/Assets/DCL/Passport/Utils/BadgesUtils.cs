@@ -43,9 +43,9 @@ namespace DCL.Passport.Utils
         {
             string tierCompletedAt = string.Empty;
 
-            if (badgeInfo.progress.achievedTiers != null)
+            if (badgeInfo.data.progress.achievedTiers != null)
             {
-                foreach (var achievedTier in badgeInfo.progress.achievedTiers)
+                foreach (var achievedTier in badgeInfo.data.progress.achievedTiers)
                 {
                     if (tierId != achievedTier.tierId)
                         continue;

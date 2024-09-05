@@ -79,14 +79,7 @@ namespace DCL.BadgesAPIService
         private static BadgeInfo ResponseToBadgeInfo(BadgeData badge, bool isLocked) =>
             new()
             {
-                id = badge.id,
-                name = badge.name,
-                description = badge.description,
-                category = badge.category,
-                isTier = badge.isTier,
-                completedAt = badge.completedAt,
-                assets = badge.assets,
-                progress = badge.progress,
+                data = badge,
                 isLocked = isLocked,
                 isNew = false,
             };

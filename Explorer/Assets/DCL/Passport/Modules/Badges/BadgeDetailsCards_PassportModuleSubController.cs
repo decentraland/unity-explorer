@@ -58,7 +58,7 @@ namespace DCL.Passport.Modules.Badges
         public void CreateBadgeDetailCard(BadgeInfo badge, bool isOwnProfile)
         {
             if (isOwnProfile)
-                badge.isNew = BadgesUtils.IsBadgeNew(badge.id);
+                badge.isNew = BadgesUtils.IsBadgeNew(badge.data.id);
 
             var badgeDetailCard = badgeDetailCardsPool.Get();
             badgeDetailCard.Setup(badge, isOwnProfile);
@@ -67,7 +67,7 @@ namespace DCL.Passport.Modules.Badges
             // Place badge into the corresponding category container
             foreach (var badgesCategoryContainer in badgesCategoriesController.InstantiatedBadgesCategoryContainers)
             {
-                if (!string.Equals(badgesCategoryContainer.Category, badge.category, StringComparison.CurrentCultureIgnoreCase))
+                if (!string.Equals(badgesCategoryContainer.Category, badge.data.category, StringComparison.CurrentCultureIgnoreCase))
                     continue;
 
                 badgeDetailCard.transform.parent = badgesCategoryContainer.BadgeDetailCardsContainer;
@@ -75,10 +75,10 @@ namespace DCL.Passport.Modules.Badges
                 break;
             }
 
-            if (!InstantiatedBadgeDetailCards.ContainsKey(badge.category.ToLower()))
-                InstantiatedBadgeDetailCards.Add(badge.category.ToLower(), new List<BadgeDetailCard_PassportFieldView>());
+            if (!InstantiatedBadgeDetailCards.ContainsKey(badge.data.category.ToLower()))
+                InstantiatedBadgeDetailCards.Add(badge.data.category.ToLower(), new List<BadgeDetailCard_PassportFieldView>());
 
-            InstantiatedBadgeDetailCards[badge.category.ToLower()].Add(badgeDetailCard);
+            InstantiatedBadgeDetailCards[badge.data.category.ToLower()].Add(badgeDetailCard);
         }
 
         public void SelectBadgeCard(BadgeDetailCard_PassportFieldView badgeDetailCard, bool isOwnProfile)
@@ -95,7 +95,7 @@ namespace DCL.Passport.Modules.Badges
 
             if (!badgeDetailCard.Model.isLocked && isOwnProfile)
             {
-                BadgesUtils.SetBadgeAsRead(badgeDetailCard.Model.id);
+                BadgesUtils.SetBadgeAsRead(badgeDetailCard.Model.data.id);
                 badgeDetailCard.SetAsNew(false);
             }
         }

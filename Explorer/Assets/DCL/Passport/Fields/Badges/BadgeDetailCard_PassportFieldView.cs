@@ -94,39 +94,39 @@ namespace DCL.Passport.Fields.Badges
         public void Setup(BadgeInfo badgeInfo, bool isOwnProfile)
         {
             Model = badgeInfo;
-            bool showProgressBar = isOwnProfile && ((badgeInfo.isTier && string.IsNullOrEmpty(badgeInfo.completedAt)) || (!badgeInfo.isTier && badgeInfo.progress.totalStepsTarget is > 1));
-            BadgeNameText.text = !string.IsNullOrEmpty(badgeInfo.progress.lastCompletedTierName) ? $"{badgeInfo.name} {badgeInfo.progress.lastCompletedTierName}" : badgeInfo.name;
+            bool showProgressBar = isOwnProfile && ((badgeInfo.data.isTier && string.IsNullOrEmpty(badgeInfo.data.completedAt)) || (!badgeInfo.data.isTier && badgeInfo.data.progress.totalStepsTarget is > 1));
+            BadgeNameText.text = !string.IsNullOrEmpty(badgeInfo.data.progress.lastCompletedTierName) ? $"{badgeInfo.data.name} {badgeInfo.data.progress.lastCompletedTierName}" : badgeInfo.data.name;
             BadgeImage.SetColor(badgeInfo.isLocked ? LockedBadgeImageColor : NonLockedBadgeImageColor);
-            string completedAtToLoad = !string.IsNullOrEmpty(badgeInfo.progress.lastCompletedTierAt) ? badgeInfo.progress.lastCompletedTierAt : badgeInfo.completedAt;
+            string completedAtToLoad = !string.IsNullOrEmpty(badgeInfo.data.progress.lastCompletedTierAt) ? badgeInfo.data.progress.lastCompletedTierAt : badgeInfo.data.completedAt;
             BadgeDateText.text = !string.IsNullOrEmpty(completedAtToLoad) ? BadgesUtils.FormatTimestampDate(completedAtToLoad) : "—";
             BadgeDateText.gameObject.SetActive(
                 !showProgressBar &&
-                ((!badgeInfo.isLocked && !string.IsNullOrEmpty(badgeInfo.completedAt)) ||
-                 badgeInfo is { isLocked: true, isTier: false } ||
-                 (!isOwnProfile && !string.IsNullOrEmpty(badgeInfo.progress.lastCompletedTierAt))));
-            TopTierMark.SetActive(isOwnProfile && badgeInfo.isTier && !string.IsNullOrEmpty(badgeInfo.completedAt));
-            NextTierTitle.SetActive(isOwnProfile && badgeInfo.isTier && badgeInfo.progress.stepsDone > 0 && string.IsNullOrEmpty(badgeInfo.completedAt));
+                ((!badgeInfo.isLocked && !string.IsNullOrEmpty(badgeInfo.data.completedAt)) ||
+                 (badgeInfo.isLocked && !badgeInfo.data.isTier) ||
+                 (!isOwnProfile && !string.IsNullOrEmpty(badgeInfo.data.progress.lastCompletedTierAt))));
+            TopTierMark.SetActive(isOwnProfile && badgeInfo.data.isTier && !string.IsNullOrEmpty(badgeInfo.data.completedAt));
+            NextTierTitle.SetActive(isOwnProfile && badgeInfo.data.isTier && badgeInfo.data.progress.stepsDone > 0 && string.IsNullOrEmpty(badgeInfo.data.completedAt));
             ProgressBar.gameObject.SetActive(showProgressBar);
             SetAsNew(badgeInfo.isNew);
 
             if (isOwnProfile)
             {
-                if (badgeInfo.isTier)
+                if (badgeInfo.data.isTier)
                 {
-                    int progressPercentage = badgeInfo.isLocked ? 0 : badgeInfo.progress.stepsDone * 100 / (badgeInfo.progress.nextStepsTarget ?? badgeInfo.progress.totalStepsTarget);
+                    int progressPercentage = badgeInfo.isLocked ? 0 : badgeInfo.data.progress.stepsDone * 100 / (badgeInfo.data.progress.nextStepsTarget ?? badgeInfo.data.progress.totalStepsTarget);
                     ProgressBarFill.sizeDelta = new Vector2((!badgeInfo.isLocked ? progressPercentage : 0) * (ProgressBar.sizeDelta.x / 100), ProgressBarFill.sizeDelta.y);
                 }
                 else
                 {
-                    int simpleBadgeProgressPercentage = badgeInfo.progress.stepsDone * 100 / badgeInfo.progress.totalStepsTarget;
+                    int simpleBadgeProgressPercentage = badgeInfo.data.progress.stepsDone * 100 / badgeInfo.data.progress.totalStepsTarget;
                     ProgressBarFill.sizeDelta = new Vector2(simpleBadgeProgressPercentage * (ProgressBar.sizeDelta.x / 100), ProgressBarFill.sizeDelta.y);
                 }
             }
 
             imageController?.SetImage(DefaultBadgeSprite);
-            string imageToLoad = !string.IsNullOrEmpty(badgeInfo.progress.lastCompletedTierImage) ?
-                badgeInfo.progress.lastCompletedTierImage :
-                badgeInfo.assets != null && badgeInfo.assets.textures2d != null ? badgeInfo.assets.textures2d.normal : "";
+            string imageToLoad = !string.IsNullOrEmpty(badgeInfo.data.progress.lastCompletedTierImage) ?
+                badgeInfo.data.progress.lastCompletedTierImage :
+                badgeInfo.data.assets != null && badgeInfo.data.assets.textures2d != null ? badgeInfo.data.assets.textures2d.normal : "";
 
             if (!string.IsNullOrEmpty(imageToLoad))
                 imageController?.RequestImage(imageToLoad, hideImageWhileLoading: true);

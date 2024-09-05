@@ -19,6 +19,9 @@ namespace DCL.Passport.Modules.Badges
     {
         private const int BADGE_TIER_BUTTON_POOL_DEFAULT_CAPACITY = 6;
         private static readonly int IS_STOPPED_3D_IMAGE_ANIMATION_PARAM = Animator.StringToHash("IsStopped");
+        private static readonly int BASE_COLOR = Shader.PropertyToID("_baseColor");
+        private static readonly int NORMAL = Shader.PropertyToID("_normal");
+        private static readonly int HRM = Shader.PropertyToID("_hrm");
 
         private readonly BadgeInfo_PassportModuleView badgeInfoModuleView;
         private readonly IWebRequestController webRequestController;
@@ -62,13 +65,13 @@ namespace DCL.Passport.Modules.Badges
             this.isOwnProfile = isOwnProfileBadge;
             currentBadgeInfo = badgeInfo;
 
-            if (badgeInfo.isTier)
+            if (badgeInfo.data.isTier)
                 LoadTierButtons();
             else
             {
                 SetupBadgeInfoView(badgeInfo, new List<TierData>());
                 loadBadge3DImageCts = loadBadge3DImageCts.SafeRestart();
-                LoadBadge3DImageAsync(badgeInfo.assets, loadBadge3DImageCts.Token).Forget();
+                LoadBadge3DImageAsync(badgeInfo.data.assets, loadBadge3DImageCts.Token).Forget();
                 SetAsLoading(false);
             }
         }
@@ -104,7 +107,7 @@ namespace DCL.Passport.Modules.Badges
         {
             try
             {
-                List<TierData> tiers = await badgesAPIClient.FetchTiersAsync(badgeInfo.id, ct);
+                List<TierData> tiers = await badgesAPIClient.FetchTiersAsync(badgeInfo.data.id, ct);
 
                 foreach (TierData tier in tiers)
                 {
@@ -141,7 +144,7 @@ namespace DCL.Passport.Modules.Badges
             int? lastCompletedTierIndex = null;
             for (var i = 0; i < tiers.Count; i++)
             {
-                if (badge.progress.stepsDone >= tiers[i].criteria.steps)
+                if (badge.data.progress.stepsDone >= tiers[i].criteria.steps)
                     lastCompletedTierIndex = i;
             }
 
@@ -193,7 +196,7 @@ namespace DCL.Passport.Modules.Badges
         private void SelectBadgeTier(int tierIndex, BadgeInfo badgeInfo)
         {
             var tier = currentTiers[tierIndex];
-            badgeInfoModuleView.BadgeNameText.text = $"{badgeInfo.name} {tier.tierName}";
+            badgeInfoModuleView.BadgeNameText.text = $"{badgeInfo.data.name} {tier.tierName}";
             string tierCompletedAt = badgeInfo.GetTierCompletedDate(tier.tierId);
             badgeInfoModuleView.BadgeDateText.text = !string.IsNullOrEmpty(tierCompletedAt) ? $"Unlocked: {BadgesUtils.FormatTimestampDate(tierCompletedAt)}" : "Locked";
             badgeInfoModuleView.BadgeDescriptionText.text = tier.description;
@@ -204,32 +207,32 @@ namespace DCL.Passport.Modules.Badges
         private void SetupBadgeInfoView(BadgeInfo badgeInfo, List<TierData> tiers)
         {
             currentTiers = tiers;
-            badgeInfoModuleView.TierSection.SetActive(badgeInfo.isTier);
-            badgeInfoModuleView.SimpleBadgeProgressBarContainer.SetActive(isOwnProfile && !badgeInfo.isTier && badgeInfo.progress.totalStepsTarget is > 1);
+            badgeInfoModuleView.TierSection.SetActive(badgeInfo.data.isTier);
+            badgeInfoModuleView.SimpleBadgeProgressBarContainer.SetActive(isOwnProfile && !badgeInfo.data.isTier && badgeInfo.data.progress.totalStepsTarget is > 1);
             badgeInfoModuleView.Badge3DImage.color = badgeInfo.isLocked ? badgeInfoModuleView.Badge3DImageLockedColor : badgeInfoModuleView.Badge3DImageUnlockedColor;
             badgeInfoModuleView.Badge3DAnimator.SetBool(IS_STOPPED_3D_IMAGE_ANIMATION_PARAM, badgeInfo.isLocked);
 
-            if (!badgeInfo.isTier)
+            if (!badgeInfo.data.isTier)
             {
-                badgeInfoModuleView.BadgeNameText.text = badgeInfo.name;
-                badgeInfoModuleView.BadgeDateText.text = !badgeInfo.isLocked ? $"Unlocked: {BadgesUtils.FormatTimestampDate(badgeInfo.completedAt)}" : "Locked";
-                badgeInfoModuleView.BadgeDescriptionText.text = badgeInfo.description;
-                int simpleBadgeProgressPercentage = badgeInfo.progress.stepsDone * 100 / badgeInfo.progress.totalStepsTarget;
+                badgeInfoModuleView.BadgeNameText.text = badgeInfo.data.name;
+                badgeInfoModuleView.BadgeDateText.text = !badgeInfo.isLocked ? $"Unlocked: {BadgesUtils.FormatTimestampDate(badgeInfo.data.completedAt)}" : "Locked";
+                badgeInfoModuleView.BadgeDescriptionText.text = badgeInfo.data.description;
+                int simpleBadgeProgressPercentage = badgeInfo.data.progress.stepsDone * 100 / badgeInfo.data.progress.totalStepsTarget;
                 badgeInfoModuleView.SimpleBadgeProgressBarFill.sizeDelta = new Vector2(simpleBadgeProgressPercentage * (badgeInfoModuleView.SimpleBadgeProgressBar.sizeDelta.x / 100), badgeInfoModuleView.SimpleBadgeProgressBarFill.sizeDelta.y);
-                badgeInfoModuleView.SimpleBadgeProgressValueText.text = $"{badgeInfo.progress.stepsDone}/{badgeInfo.progress.totalStepsTarget}";
+                badgeInfoModuleView.SimpleBadgeProgressValueText.text = $"{badgeInfo.data.progress.stepsDone}/{badgeInfo.data.progress.totalStepsTarget}";
             }
             else
             {
                 int nextTierToCompleteIndex = tiers.Count - 1;
                 for (var i = 0; i < tiers.Count; i++)
                 {
-                    if (badgeInfo.progress.nextStepsTarget == tiers[i].criteria.steps)
+                    if (badgeInfo.data.progress.nextStepsTarget == tiers[i].criteria.steps)
                         nextTierToCompleteIndex = i;
                 }
 
                 var nextTierToComplete = tiers[nextTierToCompleteIndex];
-                badgeInfoModuleView.TopTierMark.SetActive(isOwnProfile && !string.IsNullOrEmpty(badgeInfo.completedAt));
-                badgeInfoModuleView.NextTierContainer.SetActive(isOwnProfile && string.IsNullOrEmpty(badgeInfo.completedAt) && badgeInfo.progress.stepsDone > 0);
+                badgeInfoModuleView.TopTierMark.SetActive(isOwnProfile && !string.IsNullOrEmpty(badgeInfo.data.completedAt));
+                badgeInfoModuleView.NextTierContainer.SetActive(isOwnProfile && string.IsNullOrEmpty(badgeInfo.data.completedAt) && badgeInfo.data.progress.stepsDone > 0);
                 badgeInfoModuleView.NextTierDescriptionText.gameObject.SetActive(isOwnProfile);
                 badgeInfoModuleView.NextTierProgressBarContainer.SetActive(isOwnProfile);
 
@@ -237,9 +240,9 @@ namespace DCL.Passport.Modules.Badges
                 {
                     badgeInfoModuleView.NextTierValueText.text = nextTierToComplete.tierName;
                     badgeInfoModuleView.NextTierDescriptionText.text = nextTierToComplete.description;
-                    int nextTierProgressPercentage = badgeInfo.isLocked ? 0 : badgeInfo.progress.stepsDone * 100 / (badgeInfo.progress.nextStepsTarget ?? badgeInfo.progress.totalStepsTarget);
+                    int nextTierProgressPercentage = badgeInfo.isLocked ? 0 : badgeInfo.data.progress.stepsDone * 100 / (badgeInfo.data.progress.nextStepsTarget ?? badgeInfo.data.progress.totalStepsTarget);
                     badgeInfoModuleView.NextTierProgressBarFill.sizeDelta = new Vector2((!badgeInfo.isLocked ? nextTierProgressPercentage : 0) * (badgeInfoModuleView.NextTierProgressBar.sizeDelta.x / 100), badgeInfoModuleView.NextTierProgressBarFill.sizeDelta.y);
-                    badgeInfoModuleView.NextTierProgressValueText.text = $"{badgeInfo.progress.stepsDone}/{badgeInfo.progress.nextStepsTarget ?? badgeInfo.progress.totalStepsTarget}";
+                    badgeInfoModuleView.NextTierProgressValueText.text = $"{badgeInfo.data.progress.stepsDone}/{badgeInfo.data.progress.nextStepsTarget ?? badgeInfo.data.progress.totalStepsTarget}";
                 }
             }
         }
@@ -284,9 +287,9 @@ namespace DCL.Passport.Modules.Badges
 
         private void Set3DImage(Texture2D baseColor, Texture2D normal, Texture2D hrm)
         {
-            badgeInfoModuleView.Badge3DMaterial.SetTexture("_baseColor", baseColor);
-            badgeInfoModuleView.Badge3DMaterial.SetTexture("_normal", normal);
-            badgeInfoModuleView.Badge3DMaterial.SetTexture("_hrm", hrm);
+            badgeInfoModuleView.Badge3DMaterial.SetTexture(BASE_COLOR, baseColor);
+            badgeInfoModuleView.Badge3DMaterial.SetTexture(NORMAL, normal);
+            badgeInfoModuleView.Badge3DMaterial.SetTexture(HRM, hrm);
         }
     }
 }
