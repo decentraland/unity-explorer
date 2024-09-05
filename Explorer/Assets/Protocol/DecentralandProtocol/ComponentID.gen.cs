@@ -30,8 +30,9 @@ namespace DCL.ECS7
         public const int CAMERA_MODE = 1072;
         public const int AVATAR_ATTACH = 1073;
         public const int POINTER_LOCK = 1074;
-        public const int AVATAR_FREEZE_MOVEMENT = 1077;
-        public const int PLAYER_INPUT_MOVEMENT = 1078;
+        public const int MAIN_CAMERA = 1075;
+        public const int VIRTUAL_CAMERA = 1076;
+        public const int INPUT_MODIFIER = 1078;
         public const int AVATAR_SHAPE = 1080;
         public const int VISIBILITY_COMPONENT = 1081;
         public const int AVATAR_BASE = 1087;
