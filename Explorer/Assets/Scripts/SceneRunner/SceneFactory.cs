@@ -72,7 +72,6 @@ namespace SceneRunner
             IWebRequestController webRequestController,
             IRoomHub roomHub,
             IRealmData? realmData,
-            ICommunicationControllerHub messagePipesHub,
             IPortableExperiencesController portableExperiencesController,
             ICommunicationControllerHub messagePipesHub)
         {
