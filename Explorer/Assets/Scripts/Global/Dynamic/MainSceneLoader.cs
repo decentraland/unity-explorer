@@ -1,4 +1,6 @@
 using Arch.Core;
+using CRDT;
+using CrdtEcsBridge.Components;
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.DebugUtilities;
@@ -164,7 +166,7 @@ namespace Global.Dynamic
                 bootstrap.PreInitializeSetup(cursorRoot, debugUiRoot, splashScreen, destroyCancellationToken);
 
                 bool isLoaded;
-                Entity playerEntity = new Entity();
+                Entity playerEntity = world.Create(new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY));
                 (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugViewsCatalog, playerEntity, ct);
 
                 if (!isLoaded)
