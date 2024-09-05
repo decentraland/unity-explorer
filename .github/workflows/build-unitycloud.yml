@@ -227,7 +227,14 @@ jobs:
           PARAM_SEGMENT_WRITE_KEY: ${{ secrets.SEGMENT_WRITE_KEY }}
 
         run: python -u scripts/cloudbuild/build.py
-
+        
+      - name: List directory contents
+        run: |
+          echo "Contents of the current directory:"
+          ls -R
+          echo "Contents of the 'build' directory:"
+          ls -R build
+          
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
