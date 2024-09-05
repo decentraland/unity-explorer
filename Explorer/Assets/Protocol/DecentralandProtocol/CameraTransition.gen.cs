@@ -162,7 +162,7 @@ namespace DCL.ECSComponents {
     /// <summary>Field number for the "speed" field.</summary>
     public const int SpeedFieldNumber = 4;
     /// <summary>
-    /// meters per second; for example speed 1 -> 1 meter per second
+    /// meters per second; e.g. speed 1 -> 1 meter per second
     /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]

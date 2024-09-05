@@ -38,6 +38,9 @@ namespace DCL.ECSComponents {
 
   }
   #region Messages
+  /// <summary>
+  /// PBMainCamera.virtualCameraEntity defines which VirtualCamera entity is active at the moment. 0 means none.
+  /// </summary>
   public sealed partial class PBMainCamera : pb::IMessage<PBMainCamera>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
@@ -86,7 +89,7 @@ namespace DCL.ECSComponents {
     public const int VirtualCameraEntityFieldNumber = 1;
     private uint virtualCameraEntity_;
     /// <summary>
-    ///  repeated common.CameraTransition transitionOverrides = 2; // enable in the future
+    /// currently active virtual camera (default: 0)
     /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]

@@ -42,6 +42,12 @@ namespace DCL.ECSComponents {
 
   }
   #region Messages
+  /// <summary>
+  /// PBVirtualCamera represents a camera to be used at some point in time during the scene execution
+  /// * The defaultTransition represents the transition TOWARDS this camera.
+  /// * The lookAtEntity defines to which entity the Camera has to look at constantly (independent from 
+  /// the holding entity transform).
+  /// </summary>
   public sealed partial class PBVirtualCamera : pb::IMessage<PBVirtualCamera>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
