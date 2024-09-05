@@ -1,6 +1,7 @@
 ﻿using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Optimization.PerformanceBudgeting;
 using DCL.WebRequests.GenericDelete;
 using System;
 using System.Collections.Generic;
@@ -152,7 +153,7 @@ namespace DCL.WebRequests
                 // Endpoint was unreacheable
                 if (unityWebRequestException.Result == UnityWebRequest.Result.ConnectionError)
                     return false;
-                
+
                 // HEAD request might not be fully supported by the streaming platforms
                 switch (unityWebRequestException.ResponseCode)
                 {
@@ -204,5 +205,8 @@ namespace DCL.WebRequests
 
         public static IWebRequestController WithLog(this IWebRequestController origin) =>
             new LogWebRequestController(origin);
+
+        public static IWebRequestController WithBudget(this IWebRequestController origin, IReleasablePerformanceBudget budget) =>
+            new BudgetedWebRequestController(origin, budget);
     }
 }

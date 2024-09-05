@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
+using DCL.Optimization.PerformanceBudgeting;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics.Metrics;
 using Utility.Multithreading;
@@ -20,7 +21,7 @@ namespace DCL.WebRequests.Analytics
             AnalyticsContainer = analyticsContainer;
         }
 
-        public static WebRequestsContainer Create(IWeb3IdentityCache web3IdentityProvider, IDebugContainerBuilder debugContainerBuilder)
+        public static WebRequestsContainer Create(IWeb3IdentityCache web3IdentityProvider, IDebugContainerBuilder debugContainerBuilder, int concurrentBudget)
         {
             var analyticsContainer = new WebRequestsAnalyticsContainer()
                                     .AddTrackedMetric<ActiveCounter>()
@@ -44,7 +45,8 @@ namespace DCL.WebRequests.Analytics
 
             var webRequestController = new WebRequestController(analyticsContainer, web3IdentityProvider)
                                       .WithLog()
-                                      .WithArtificialDelay(options);
+                                      .WithArtificialDelay(options)
+                                      .WithBudget(new ConcurrentLoadingPerformanceBudget(concurrentBudget));
 
             return new WebRequestsContainer(webRequestController, analyticsContainer);
         }
