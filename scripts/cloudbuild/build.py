@@ -263,6 +263,7 @@ def poll_build(id):
             return False
 
 def download_artifact(id):
+    print(f'[DEBUG] Starting download_artifact function with ID: {id}')
     response = requests.get(f'{URL}/buildtargets/{os.getenv('TARGET')}/builds/{id}', headers=HEADERS)
 
     if response.status_code != 200:
@@ -273,12 +274,15 @@ def download_artifact(id):
     response_json = response.json()
     try:
         artifact_url = response_json['links']['download_primary']['href']
+        print(f'[DEBUG] Artifact download URL: {artifact_url}')
     except KeyError:
         print(f'Failed to locate any build artifacts - Nothing to download')
         return
 
     download_dir = 'build'
     filepath = os.path.join(download_dir, 'artifact.zip')
+    print(f'[DEBUG] Creating directory {download_dir} and setting file path to {filepath}')
+
     os.makedirs(download_dir, exist_ok=True)
 
     print('Started downloading artifacts from Unity Cloud...')
@@ -286,11 +290,31 @@ def download_artifact(id):
     response = requests.get(artifact_url)
     with open(filepath, 'wb') as f:
         f.write(response.content)
+    print(f'[DEBUG] Artifact downloaded and saved to {filepath}')
 
     print('Started extracting artifacts from Unity Cloud...')
 
-    with zipfile.ZipFile(filepath, 'r') as zip_ref:
-        zip_ref.extractall(download_dir)
+    print('[DEBUG] Extracting artifact...')
+    try:
+        with zipfile.ZipFile(filepath, 'r') as zip_ref:
+            # Validate the zip file before extracting
+            if zip_ref.testzip() is not None:
+                raise zipfile.BadZipFile(f"[ERROR] Zip file {filepath} is corrupted.")
+
+            zip_ref.extractall(download_dir)
+        print(f'[DEBUG] Artifact extracted to {download_dir}')
+    except zipfile.BadZipFile as e:
+        print(f'[ERROR] Failed to unzip the artifact at {filepath}: {e}')
+        sys.exit(1)
+    except zipfile.LargeZipFile as e:
+        print(f'[ERROR] Zip file {filepath} requires ZIP64 functionality but it is not enabled: {e}')
+        sys.exit(1)
+    except IOError as e:
+        print(f'[ERROR] I/O error occurred during extraction of {filepath}: {e}')
+        sys.exit(1)
+    except Exception as e:
+        print(f'[ERROR] An unexpected error occurred during the extraction: {e}')
+        sys.exit(1)
 
     os.remove(filepath)
     print('Artifacts ready!')
@@ -434,6 +458,6 @@ if not build_healthy:
 
 # Cleanup (only if build is healthy)
 # We only delete all artifacts, not the build target
-delete_build(id)
+#delete_build(id)
 
-utils.delete_build_info()
+#utils.delete_build_info()
