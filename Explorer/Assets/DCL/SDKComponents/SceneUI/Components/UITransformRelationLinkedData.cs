@@ -1,9 +1,8 @@
 ﻿using Arch.Core;
 using CRDT;
-using DCL.Diagnostics;
 using DCL.Optimization.Pools;
-using JetBrains.Annotations;
 using System.Collections.Generic;
+using UnityEngine.Assertions;
 using UnityEngine.Pool;
 
 namespace DCL.SDKComponents.SceneUI.Components
@@ -16,8 +15,8 @@ namespace DCL.SDKComponents.SceneUI.Components
                 defaultCapacity: PoolConstants.SCENES_COUNT * 100, maxSize: PoolConstants.SCENES_MAX_CAPACITY * 100);
 
             public CRDTEntity EntityId { get; private set; }
-            public Node Next { get; set; }
-            public Node Previous { get; set; }
+            public Node? Next { get; set; }
+            public Node? Previous { get; set; }
 
             private Node()
             {
@@ -41,7 +40,7 @@ namespace DCL.SDKComponents.SceneUI.Components
 
         private const int CHILDREN_DEFAULT_CAPACITY = 10;
 
-        internal Node head;
+        internal Node? head;
         private Dictionary<CRDTEntity, Node> nodes;
         private Dictionary<CRDTEntity, Node> pendingRightOf; // key is the left entity
 
@@ -53,6 +52,9 @@ namespace DCL.SDKComponents.SceneUI.Components
         /// Indicates that resorting is required
         /// </summary>
         internal bool layoutIsDirty;
+
+        internal bool ContainsNode(CRDTEntity entity) =>
+            nodes != null && nodes.ContainsKey(entity);
 
         public void AddChild(EntityReference thisEntity, CRDTEntity childEntity, ref UITransformRelationLinkedData childComponent)
         {
@@ -73,6 +75,8 @@ namespace DCL.SDKComponents.SceneUI.Components
                         leftNode.Next.Previous = newNode;
 
                     leftNode.Next = newNode;
+                    Assert.AreNotEqual(leftNode.Next.EntityId, leftNode.EntityId);
+
                     newNode.Previous = leftNode;
                 }
                 else
@@ -110,6 +114,8 @@ namespace DCL.SDKComponents.SceneUI.Components
                 leftNode.Next = rightNode;
                 rightNode.Previous = leftNode;
 
+                Assert.AreNotEqual(leftNode.Next.EntityId, leftNode.EntityId);
+
                 if (rightNode == head)
                 {
                     // if the current head is the right node then the left-most becomes the new head
@@ -124,12 +130,16 @@ namespace DCL.SDKComponents.SceneUI.Components
 
         public void RemoveChild(CRDTEntity child, ref UITransformRelationLinkedData childData)
         {
-            Node nodeToRemove = nodes[child];
+            // Child could be already removed from the nodes list if its entity was deleted
+            if (!nodes.TryGetValue(child, out Node? nodeToRemove))
+                return;
 
             if (nodeToRemove == head)
             {
                 head = head.Next;
-                head.Previous = null;
+
+                if (head != null)
+                    head.Previous = null;
             }
             else
             {
@@ -162,7 +172,7 @@ namespace DCL.SDKComponents.SceneUI.Components
             // Release all nodes
             while (head != null)
             {
-                Node next = head.Next;
+                Node next = head.Next!;
                 Node.POOL.Release(head);
                 head = next;
             }

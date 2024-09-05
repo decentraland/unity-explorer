@@ -53,7 +53,7 @@ namespace ECS.StreamableLoading.Common
         /// <summary>
         ///     Returns the asset if the loading is finished
         /// </summary>
-        public  bool TryGetResult(World world, out StreamableLoadingResult<TAsset> result)
+        public bool TryGetResult(World world, out StreamableLoadingResult<TAsset> result)
         {
             if (Result.HasValue)
             {
@@ -88,8 +88,7 @@ namespace ECS.StreamableLoading.Common
                     ReportHub.LogError(ReportCategory.STREAMABLE_LOADING,
                         $"{nameof(TryGetResult)} was called before {nameof(TryConsume)} for {LoadingIntention.ToString()}, the flow is inconclusive and should be fixed!");
 
-                    world.Destroy(Entity);
-                    Entity = EntityReference.Null;
+                    DestroyEntity(world);
                     result = Result.Value;
                     return true;
                 }
@@ -102,8 +101,7 @@ namespace ECS.StreamableLoading.Common
             if (world.TryGet(Entity, out result))
             {
                 Result = result;
-                world.Destroy(Entity);
-                Entity = EntityReference.Null;
+                DestroyEntity(world);
                 return true;
             }
 
@@ -117,12 +115,11 @@ namespace ECS.StreamableLoading.Common
         {
             if (Entity == EntityReference.Null || !Entity.IsAlive(world)) return;
 
-            world.Destroy(Entity);
-            Entity = EntityReference.Null;
+            DestroyEntity(world);
         }
 
         /// <summary>
-        ///     Places <see cref="ForgetLoadingIntent" /> and nullifies the reference
+        ///     Cancel Cancellation Token Source and nullifies the reference
         /// </summary>
         /// <param name="world"></param>
         public void ForgetLoading(World world)
@@ -130,6 +127,12 @@ namespace ECS.StreamableLoading.Common
             if (Entity == EntityReference.Null || !Entity.IsAlive(world)) return;
 
             LoadingIntention.CancellationTokenSource.Cancel();
+            DestroyEntity(world);
+        }
+
+        private void DestroyEntity(World world)
+        {
+            world.Destroy(Entity);
             Entity = EntityReference.Null;
         }
 
