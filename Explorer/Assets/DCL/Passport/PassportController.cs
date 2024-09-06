@@ -62,8 +62,7 @@ namespace DCL.Passport
         private PassportErrorsController? passportErrorsController;
         private PassportCharacterPreviewController? characterPreviewController;
         private PassportSection? currentSection;
-        private bool overviewSectionAlreadyLoaded;
-        private bool badgesSectionAlreadyLoaded;
+        private PassportSection? alreadyLoadedSection;
 
         public event Action<string>? PassportOpened;
 
@@ -139,8 +138,7 @@ namespace DCL.Passport
         protected override void OnViewShow()
         {
             currentUserId = inputData.UserId;
-            overviewSectionAlreadyLoaded = false;
-            badgesSectionAlreadyLoaded = false;
+            alreadyLoadedSection = null;
             cursor.Unlock();
 
             if (string.IsNullOrEmpty(inputData.BadgeIdSelected))
@@ -200,8 +198,8 @@ namespace DCL.Passport
             {
                 switch (sectionToLoad)
                 {
-                    case PassportSection.OVERVIEW when overviewSectionAlreadyLoaded:
-                    case PassportSection.BADGES when badgesSectionAlreadyLoaded:
+                    case PassportSection.OVERVIEW when alreadyLoadedSection == PassportSection.OVERVIEW:
+                    case PassportSection.BADGES when alreadyLoadedSection == PassportSection.BADGES:
                         return;
                 }
 
@@ -222,11 +220,7 @@ namespace DCL.Passport
 
                 // Load passport modules
                 SetupPassportModules(profile, sectionToLoad, badgeIdSelected);
-
-                if (sectionToLoad == PassportSection.OVERVIEW)
-                    overviewSectionAlreadyLoaded = true;
-                else
-                    badgesSectionAlreadyLoaded = true;
+                alreadyLoadedSection = sectionToLoad;
             }
             catch (OperationCanceledException) { }
             catch (Exception e)
