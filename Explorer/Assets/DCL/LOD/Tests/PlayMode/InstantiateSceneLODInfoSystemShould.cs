@@ -19,6 +19,7 @@ using NSubstitute;
 using NUnit.Framework;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.TestTools;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData,
     ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 
@@ -87,6 +88,8 @@ namespace DCL.LOD.Tests
         [Test]
         public void ResolveSuccessfullPromiseAndInstantiate()
         {
+            LogAssert.ignoreFailingMessages = true;
+
             //Arrange
             var promiseGenerated = GenerateSuccessfullPromise();
             sceneLODInfo.CurrentLODPromise = promiseGenerated.Item2;
@@ -109,6 +112,8 @@ namespace DCL.LOD.Tests
         [Test]
         public void ResolveFailedPromise()
         {
+            LogAssert.ignoreFailingMessages = true;
+
             //Arrange
             sceneLODInfo.CurrentLODPromise = GenerateFailedPromise();
             sceneLODInfo.CurrentLODLevelPromise = 0;

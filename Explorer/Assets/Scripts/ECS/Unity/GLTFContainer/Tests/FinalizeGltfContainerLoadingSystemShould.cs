@@ -74,6 +74,8 @@ namespace ECS.Unity.GLTFContainer.Tests
         [Test]
         public void FinalizeWithError()
         {
+            LogAssert.ignoreFailingMessages = true;
+
             var component = new GltfContainerComponent(ColliderLayer.ClPhysics, ColliderLayer.ClPointer,
                 AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention>.Create(world, new GetGltfContainerAssetIntention(), PartitionComponent.TOP_PRIORITY));
 

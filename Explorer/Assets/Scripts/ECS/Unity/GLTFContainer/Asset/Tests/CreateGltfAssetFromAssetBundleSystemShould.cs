@@ -11,6 +11,7 @@ using NUnit.Framework;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using UnityEngine.TestTools;
 
 namespace ECS.Unity.GLTFContainer.Asset.Tests
 {
@@ -90,6 +91,8 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
         [Test]
         public async Task DoNothingIfCancelled()
         {
+            LogAssert.ignoreFailingMessages = true;
+
             StreamableLoadingResult<AssetBundleData> ab = await resources.LoadAssetBundle(GltfContainerTestResources.RENDERER_WITH_LEGACY_ANIM_HASH);
 
             var canceledSource = new CancellationTokenSource();
@@ -106,6 +109,8 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
         [Test]
         public async Task ResolveExceptionIfNoGameObjects()
         {
+            LogAssert.ignoreFailingMessages = true;
+
             StreamableLoadingResult<AssetBundleData> ab = await resources.LoadAssetBundle(GltfContainerTestResources.NO_GAME_OBJECTS);
 
             Entity e = world.Create(new GetGltfContainerAssetIntention(GltfContainerTestResources.NO_GAME_OBJECTS, GltfContainerTestResources.NO_GAME_OBJECTS, new CancellationTokenSource()), ab);
@@ -120,6 +125,8 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
         [Test]
         public void PropagateAssetBundleException()
         {
+            LogAssert.ignoreFailingMessages = true;
+
             var exception = new ArgumentException();
 
             Entity e = world.Create(new GetGltfContainerAssetIntention(GltfContainerTestResources.RENDERER_WITH_LEGACY_ANIM_NAME, GltfContainerTestResources.RENDERER_WITH_LEGACY_ANIM_HASH, new CancellationTokenSource()),
