@@ -201,10 +201,11 @@ namespace DCL.Passport.Modules.Badges
             var tier = currentTiers[tierIndex];
             badgeInfoModuleView.BadgeNameText.text = $"{badgeInfo.data.name} {tier.tierName}";
             string tierCompletedAt = badgeInfo.GetTierCompletedDate(tier.tierId);
-            badgeInfoModuleView.BadgeDateText.text = !string.IsNullOrEmpty(tierCompletedAt) ? $"Unlocked: {BadgesUtils.FormatTimestampDate(tierCompletedAt)}" : "Locked";
+            bool tierIsLocked = string.IsNullOrEmpty(tierCompletedAt);
+            badgeInfoModuleView.BadgeDateText.text = !tierIsLocked ? $"Unlocked: {BadgesUtils.FormatTimestampDate(tierCompletedAt)}" : "Locked";
             badgeInfoModuleView.BadgeDescriptionText.text = tier.description;
-            badgeInfoModuleView.Badge3DImage.color = string.IsNullOrEmpty(tierCompletedAt) ? badgeInfoModuleView.Badge3DImageLockedColor : badgeInfoModuleView.Badge3DImageUnlockedColor;
-            badgeInfoModuleView.Badge3DAnimator.SetBool(IS_STOPPED_3D_IMAGE_ANIMATION_PARAM, string.IsNullOrEmpty(tierCompletedAt));
+            badgeInfoModuleView.Badge3DImage.color = tierIsLocked ? badgeInfoModuleView.Badge3DImageLockedColor : badgeInfoModuleView.Badge3DImageUnlockedColor;
+            badgeInfoModuleView.Badge3DAnimator.SetBool(IS_STOPPED_3D_IMAGE_ANIMATION_PARAM, tierIsLocked);
         }
 
         private void SetupBadgeInfoView(BadgeInfo badgeInfo, List<TierData> tiers)
