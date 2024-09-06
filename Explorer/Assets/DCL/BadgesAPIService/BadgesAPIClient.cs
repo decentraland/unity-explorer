@@ -4,13 +4,24 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.WebRequests;
 using System.Collections.Generic;
 using System.Threading;
+using UnityEngine.Pool;
 
 namespace DCL.BadgesAPIService
 {
     public class BadgesAPIClient
     {
+        private const int OVERVIEW_BADGES_POOL_DEFAULT_CAPACITY = 5;
+        private const int DETAILED_BADGES_POOL_DEFAULT_CAPACITY = 100;
+        private const int TIERS_POOL_DEFAULT_CAPACITY = 6;
+
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
+        private readonly IObjectPool<LatestAchievedBadgeData> overviewBadgesPool;
+        private readonly List<LatestAchievedBadgeData> instantiatedOverviewBadges = new ();
+        private readonly IObjectPool<BadgeInfo> detailedBadgesPool;
+        private readonly BadgesInfo instantiatedDetailedBadges;
+        private readonly IObjectPool<TierData> tiersPool;
+        private readonly List<TierData> instantiatedTiers = new ();
 
         private string badgesBaseUrl => decentralandUrlsSource.Url(DecentralandUrl.Badges);
 
@@ -18,6 +29,27 @@ namespace DCL.BadgesAPIService
         {
             this.webRequestController = webRequestController;
             this.decentralandUrlsSource = decentralandUrlsSource;
+
+            overviewBadgesPool = new ObjectPool<LatestAchievedBadgeData>(
+                CreateOverviewBadge,
+                defaultCapacity: OVERVIEW_BADGES_POOL_DEFAULT_CAPACITY,
+                actionOnRelease: OnReleaseOverviewBadge);
+
+            detailedBadgesPool = new ObjectPool<BadgeInfo>(
+                CreateDetailedBadge,
+                defaultCapacity: DETAILED_BADGES_POOL_DEFAULT_CAPACITY,
+                actionOnRelease: OnReleaseDetailedBadge);
+
+            tiersPool = new ObjectPool<TierData>(
+                CreateTier,
+                defaultCapacity: TIERS_POOL_DEFAULT_CAPACITY,
+                actionOnRelease: OnReleaseTier);
+
+            instantiatedDetailedBadges = new BadgesInfo
+            {
+                achieved = new List<BadgeInfo>(),
+                notAchieved = new List<BadgeInfo>(),
+            };
         }
 
         public async UniTask<List<string>> FetchBadgeCategoriesAsync(CancellationToken ct)
@@ -31,57 +63,170 @@ namespace DCL.BadgesAPIService
 
         public async UniTask<List<LatestAchievedBadgeData>> FetchLatestAchievedBadgesAsync(string walletId, CancellationToken ct)
         {
+            ClearOverviewBadges();
+
             var url = $"{badgesBaseUrl}/users/{walletId}/preview";
 
             LatestAchievedBadgesResponse latestAchievedBadgesResponse = await webRequestController.GetAsync(url, ct, reportCategory: ReportCategory.BADGES)
                                                                                                   .CreateFromJson<LatestAchievedBadgesResponse>(WRJsonParser.Newtonsoft);
 
-            return latestAchievedBadgesResponse.data.latestAchievedBadges;
+            if (latestAchievedBadgesResponse.data.latestAchievedBadges != null)
+                instantiatedOverviewBadges.AddRange(latestAchievedBadgesResponse.data.latestAchievedBadges);
+
+            return instantiatedOverviewBadges;
         }
 
         public async UniTask<BadgesInfo> FetchBadgesAsync(string walletId, bool includeNotAchieved, CancellationToken ct)
         {
+            ClearDetailedBadges();
+
             var url = $"{badgesBaseUrl}/users/{walletId}/badges?includeNotAchieved={(includeNotAchieved ? "true" : "false")}";
 
             BadgesResponse badgesResponse = await webRequestController.GetAsync(url, ct, reportCategory: ReportCategory.BADGES)
                                                                       .CreateFromJson<BadgesResponse>(WRJsonParser.Newtonsoft);
 
-            return ResponseToBadgesInfo(badgesResponse);
+            return DetailedBadgesResponseToBadgesInfo(badgesResponse);
         }
 
         public async UniTask<List<TierData>> FetchTiersAsync(string badgeId, CancellationToken ct)
         {
+            ClearTiers();
+
             var url = $"{badgesBaseUrl}/badges/{badgeId}/tiers";
 
             TiersResponse tiersResponse = await webRequestController.GetAsync(url, ct, reportCategory: ReportCategory.BADGES)
                                                                     .CreateFromJson<TiersResponse>(WRJsonParser.Newtonsoft);
 
-            return tiersResponse.data.tiers;
+            if (tiersResponse.data.tiers != null)
+                instantiatedTiers.AddRange(tiersResponse.data.tiers);
+
+            return instantiatedTiers;
         }
 
-        private BadgesInfo ResponseToBadgesInfo(BadgesResponse badgesResponse)
+        private static LatestAchievedBadgeData CreateOverviewBadge() =>
+            new();
+
+        private static void OnReleaseOverviewBadge(LatestAchievedBadgeData overviewBadge)
         {
-            BadgesInfo badgesInfo = new BadgesInfo
-            {
-                achieved = new List<BadgeInfo>(),
-                notAchieved = new List<BadgeInfo>(),
-            };
-
-            foreach (var badge in badgesResponse.data.achieved)
-                badgesInfo.achieved.Add(ResponseToBadgeInfo(badge, false));
-
-            foreach (var badge in badgesResponse.data.notAchieved)
-                badgesInfo.notAchieved.Add(ResponseToBadgeInfo(badge, true));
-
-            return badgesInfo;
+            overviewBadge.id = null;
+            overviewBadge.name = null;
+            overviewBadge.tierName = null;
+            overviewBadge.image = null;
         }
 
-        private static BadgeInfo ResponseToBadgeInfo(BadgeData badge, bool isLocked) =>
+        private void ClearOverviewBadges()
+        {
+            foreach (LatestAchievedBadgeData overviewBadge in instantiatedOverviewBadges)
+                overviewBadgesPool.Release(overviewBadge);
+
+            instantiatedOverviewBadges.Clear();
+        }
+
+        private static BadgeInfo CreateDetailedBadge() =>
             new()
             {
-                data = badge,
-                isLocked = isLocked,
-                isNew = false,
+                data = new BadgeData
+                {
+                    assets = new BadgeAssetsData(),
+                    progress = new BadgeProgressData { achievedTiers = new List<AchievedTierData>() },
+                },
             };
+
+        private static void OnReleaseDetailedBadge(BadgeInfo detailedBadge)
+        {
+            detailedBadge.data.id = null;
+            detailedBadge.data.name = null;
+            detailedBadge.data.description = null;
+            detailedBadge.data.category = null;
+            detailedBadge.data.isTier = false;
+            detailedBadge.data.completedAt = null;
+            detailedBadge.data.assets.textures2d = null;
+            detailedBadge.data.assets.textures3d = null;
+            detailedBadge.data.progress.stepsDone = 0;
+            detailedBadge.data.progress.nextStepsTarget = null;
+            detailedBadge.data.progress.totalStepsTarget = 0;
+            detailedBadge.data.progress.lastCompletedTierAt = null;
+            detailedBadge.data.progress.lastCompletedTierName = null;
+            detailedBadge.data.progress.lastCompletedTierImage = null;
+            detailedBadge.data.progress.achievedTiers.Clear();
+            detailedBadge.isLocked = false;
+            detailedBadge.isNew = false;
+        }
+
+        private void ClearDetailedBadges()
+        {
+            foreach (BadgeInfo achievedBadgeInfo in instantiatedDetailedBadges.achieved)
+                detailedBadgesPool.Release(achievedBadgeInfo);
+
+            foreach (BadgeInfo notAchievedBadgeInfo in instantiatedDetailedBadges.notAchieved)
+                detailedBadgesPool.Release(notAchievedBadgeInfo);
+
+            instantiatedDetailedBadges.achieved.Clear();
+            instantiatedDetailedBadges.notAchieved.Clear();
+        }
+
+        private BadgesInfo DetailedBadgesResponseToBadgesInfo(BadgesResponse badgesResponse)
+        {
+            foreach (var badge in badgesResponse.data.achieved)
+                instantiatedDetailedBadges.achieved.Add(ResponseToBadgeInfo(badge, false));
+
+            foreach (var badge in badgesResponse.data.notAchieved)
+                instantiatedDetailedBadges.notAchieved.Add(ResponseToBadgeInfo(badge, true));
+
+            return instantiatedDetailedBadges;
+        }
+
+        private BadgeInfo ResponseToBadgeInfo(BadgeData badge, bool isLocked)
+        {
+            BadgeInfo achievedBadgeInfo = detailedBadgesPool.Get();
+
+            achievedBadgeInfo.data.id = badge.id;
+            achievedBadgeInfo.data.name = badge.name;
+            achievedBadgeInfo.data.description = badge.description;
+            achievedBadgeInfo.data.category = badge.category;
+            achievedBadgeInfo.data.isTier = badge.isTier;
+            achievedBadgeInfo.data.completedAt = badge.completedAt;
+            achievedBadgeInfo.data.assets.textures2d = badge.assets.textures2d;
+            achievedBadgeInfo.data.assets.textures3d = badge.assets.textures3d;
+            achievedBadgeInfo.data.progress.stepsDone = badge.progress.stepsDone;
+            achievedBadgeInfo.data.progress.nextStepsTarget = badge.progress.nextStepsTarget;
+            achievedBadgeInfo.data.progress.totalStepsTarget = badge.progress.totalStepsTarget;
+            achievedBadgeInfo.data.progress.lastCompletedTierAt = badge.progress.lastCompletedTierAt;
+            achievedBadgeInfo.data.progress.lastCompletedTierName = badge.progress.lastCompletedTierName;
+            achievedBadgeInfo.data.progress.lastCompletedTierImage = badge.progress.lastCompletedTierImage;
+
+            if (badge.progress.achievedTiers != null)
+                achievedBadgeInfo.data.progress.achievedTiers.AddRange(badge.progress.achievedTiers);
+
+            achievedBadgeInfo.isLocked = isLocked;
+            achievedBadgeInfo.isNew = false;
+
+            return achievedBadgeInfo;
+        }
+
+        private static TierData CreateTier() =>
+            new()
+            {
+                assets = new BadgeAssetsData(),
+                criteria = new BadgeTierCriteria(),
+            };
+
+        private static void OnReleaseTier(TierData tier)
+        {
+            tier.tierId = null;
+            tier.tierName = null;
+            tier.description = null;
+            tier.assets.textures2d = null;
+            tier.assets.textures3d = null;
+            tier.criteria.steps = 0;
+        }
+
+        private void ClearTiers()
+        {
+            foreach (TierData tier in instantiatedTiers)
+                tiersPool.Release(tier);
+
+            instantiatedTiers.Clear();
+        }
     }
 }
