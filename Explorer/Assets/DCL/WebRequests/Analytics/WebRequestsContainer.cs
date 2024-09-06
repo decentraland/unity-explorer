@@ -23,40 +23,67 @@ namespace DCL.WebRequests.Analytics
 
         public static WebRequestsContainer Create(IWeb3IdentityCache web3IdentityProvider, IDebugContainerBuilder debugContainerBuilder, int concurrentBudget)
         {
-            var analyticsContainer = new WebRequestsAnalyticsContainer()
-                                    .AddTrackedMetric<ActiveCounter>()
-                                    .AddTrackedMetric<Total>()
-                                    .AddTrackedMetric<TotalFailed>()
-                                    .AddTrackedMetric<BandwidthDown>()
-                                    .AddTrackedMetric<BandwidthUp>();
+            WebRequestsAnalyticsContainer analyticsContainer = new WebRequestsAnalyticsContainer()
+                                                              .AddTrackedMetric<ActiveCounter>()
+                                                              .AddTrackedMetric<Total>()
+                                                              .AddTrackedMetric<TotalFailed>()
+                                                              .AddTrackedMetric<BandwidthDown>()
+                                                              .AddTrackedMetric<BandwidthUp>();
 
             var options = new ElementBindingOptions();
 
-            debugContainerBuilder
-               .TryAddWidget("Web Requests Delay")
-               ?.AddControlWithLabel(
-                    "Use Artificial Delay",
-                    new DebugToggleDef(options.Enable)
-                )
-               .AddControlWithLabel(
-                    "Artificial Delay Seconds",
-                    new DebugFloatFieldDef(options.Delay)
-                );
+            DebugWidgetBuilder? widgetBuilder = debugContainerBuilder
+                                               .TryAddWidget("Web Requests Delay")
+                                              ?.AddControlWithLabel(
+                                                    "Use Artificial Delay",
+                                                    new DebugToggleDef(options.Enable)
+                                                )
+                                               .AddControlWithLabel(
+                                                    "Artificial Delay Seconds",
+                                                    new DebugFloatFieldDef(options.Delay)
+                                                );
 
-            var webRequestController = new WebRequestController(analyticsContainer, web3IdentityProvider)
-                                      .WithLog()
-                                      .WithArtificialDelay(options)
-                                      .WithBudget(new ConcurrentLoadingPerformanceBudget(concurrentBudget));
+            IWebRequestController webRequestController = new WebRequestController(analyticsContainer, web3IdentityProvider)
+                                                        .WithLog()
+                                                        .WithArtificialDelay(options)
+                                                        .WithBudget(new ConcurrentLoadingPerformanceBudget(concurrentBudget));
+
+            CreateStressTestUtility(widgetBuilder);
 
             return new WebRequestsContainer(webRequestController, analyticsContainer);
+
+            void CreateStressTestUtility(DebugWidgetBuilder? debugWidgetBuilder)
+            {
+                if (debugWidgetBuilder != null)
+                {
+                    var stressTestUtility = new WebRequestStressTestUtility(webRequestController);
+
+                    var count = new ElementBinding<int>(50);
+                    var retriesCount = new ElementBinding<int>(3);
+                    var delayBetweenRequests = new ElementBinding<float>(0);
+
+                    debugWidgetBuilder.AddControl(new DebugHintDef("Stress test"), null)
+                                      .AddControlWithLabel("Count:", new DebugIntFieldDef(count))
+                                      .AddControlWithLabel("Retries:", new DebugIntFieldDef(retriesCount))
+                                      .AddControlWithLabel("Delay between requests (s):", new DebugFloatFieldDef(delayBetweenRequests))
+                                      .AddControl(
+                                           new DebugButtonDef("Start Success", () => { stressTestUtility.StartConcurrent(count.Value, retriesCount.Value, false, delayBetweenRequests.Value).Forget(); }),
+                                           new DebugButtonDef("Start Failure", () => { stressTestUtility.StartConcurrent(count.Value, retriesCount.Value, true, delayBetweenRequests.Value).Forget(); }),
+                                           new DebugHintDef("Concurrent"))
+                                      .AddControl(
+                                           new DebugButtonDef("Start Success", () => { stressTestUtility.StartSequential(count.Value, retriesCount.Value, false, delayBetweenRequests.Value).Forget(); }),
+                                           new DebugButtonDef("Start Failure", () => { stressTestUtility.StartSequential(count.Value, retriesCount.Value, true, delayBetweenRequests.Value).Forget(); }),
+                                           new DebugHintDef("Sequential"));
+                }
+            }
         }
 
         public class ElementBindingOptions : ArtificialDelayWebRequestController.IReadOnlyOptions
         {
-            private readonly PersistentSetting<bool> enableSetting;
-            private readonly PersistentSetting<float> delaySetting;
             public readonly IElementBinding<bool> Enable;
             public readonly IElementBinding<float> Delay;
+            private readonly PersistentSetting<bool> enableSetting;
+            private readonly PersistentSetting<float> delaySetting;
 
             public ElementBindingOptions() : this(
                 PersistentSetting.CreateBool("webRequestsArtificialDelayEnable", false),
@@ -67,8 +94,8 @@ namespace DCL.WebRequests.Analytics
             {
                 this.enableSetting = enableSetting;
                 this.delaySetting = delaySetting;
-                this.Enable = new PersistentElementBinding<bool>(enableSetting);
-                this.Delay = new PersistentElementBinding<float>(delaySetting);
+                Enable = new PersistentElementBinding<bool>(enableSetting);
+                Delay = new PersistentElementBinding<float>(delaySetting);
             }
 
             public async UniTask<(float ArtificialDelaySeconds, bool UseDelay)> GetOptionsAsync()
