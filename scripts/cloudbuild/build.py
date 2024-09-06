@@ -12,7 +12,6 @@ import utils
 from zipfile import ZipFile, ZipInfo
 
 class ZipFileWithPermissions(ZipFile):
-""" Custom ZipFile class handling file permissions. """
     def _extract_member(self, member, targetpath, pwd):
         if not isinstance(member, ZipInfo):
             member = self.getinfo(member)
