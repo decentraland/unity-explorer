@@ -3,13 +3,14 @@ import re
 import sys
 import time
 import shutil
-from zipfile import ZipFile, ZipInfo
-
+import zipfile
 import requests
 import datetime
 import argparse
 # Local
 import utils
+
+from zipfile import ZipFile, ZipInfo
 
 class ZipFileWithPermissions(zipfile.ZipFile):
     def _extract_member(self, member, targetpath, pwd):
