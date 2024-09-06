@@ -67,7 +67,7 @@ namespace DCL.Passport.Modules.Badges
             // Place badge into the corresponding category container
             foreach (var badgesCategoryContainer in badgesCategoriesController.InstantiatedBadgesCategoryContainers)
             {
-                if (!string.Equals(badgesCategoryContainer.Category, badge.data.category, StringComparison.CurrentCultureIgnoreCase))
+                if (!string.Equals(badgesCategoryContainer.Category, badge.data.category, StringComparison.OrdinalIgnoreCase))
                     continue;
 
                 badgeDetailCard.transform.parent = badgesCategoryContainer.BadgeDetailCardsContainer;

@@ -80,7 +80,7 @@ namespace DCL.Passport.Modules.Badges
             // Place category container under the corresponding separator
             foreach (var badgesCategorySeparator in InstantiatedBadgesCategorySeparators)
             {
-                if (!string.Equals(badgesCategorySeparator.CategoryText.text, badgeCategory, StringComparison.CurrentCultureIgnoreCase))
+                if (!string.Equals(badgesCategorySeparator.CategoryText.text, badgeCategory, StringComparison.OrdinalIgnoreCase))
                     continue;
 
                 badgesCategoryContainer.transform.SetSiblingIndex(badgesCategorySeparator.transform.GetSiblingIndex() + 1);

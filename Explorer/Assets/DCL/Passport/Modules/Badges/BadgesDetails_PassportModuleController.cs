@@ -182,7 +182,7 @@ namespace DCL.Passport.Modules.Badges
 
                 foreach (var filterButton in badgesCategoriesController.InstantiatedBadgesFilterButtons)
                 {
-                    if (!string.Equals(filterButton.Text.text, badgesCategorySeparator.CategoryText.text, StringComparison.CurrentCultureIgnoreCase))
+                    if (!string.Equals(filterButton.Text.text, badgesCategorySeparator.CategoryText.text, StringComparison.OrdinalIgnoreCase))
                         continue;
 
                     filterButton.gameObject.SetActive(true);
@@ -203,7 +203,7 @@ namespace DCL.Passport.Modules.Badges
             foreach (var badgesCategoryContainer in badgesCategoriesController.InstantiatedBadgesCategoryContainers)
                 badgesCategoryContainer.gameObject.SetActive(category == ALL_FILTER ?
                     badgeDetailsCardsController.InstantiatedBadgeDetailCards.ContainsKey(badgesCategoryContainer.Category.ToLower()) :
-                    badgesCategoryContainer.Category.Equals(category, StringComparison.CurrentCultureIgnoreCase));
+                    badgesCategoryContainer.Category.Equals(category, StringComparison.OrdinalIgnoreCase));
 
             if (string.IsNullOrEmpty(currentDefaultBadgeId))
                 SelectFirstBadge();
@@ -217,7 +217,7 @@ namespace DCL.Passport.Modules.Badges
             BadgeDetailCard_PassportFieldView? cardToSelect = null;
             foreach (string? category in badgeCategories)
             {
-                if (badgesCategoriesController.CurrentFilter != ALL_FILTER && !string.Equals(category, badgesCategoriesController.CurrentFilter, StringComparison.CurrentCultureIgnoreCase))
+                if (badgesCategoriesController.CurrentFilter != ALL_FILTER && !string.Equals(category, badgesCategoriesController.CurrentFilter, StringComparison.OrdinalIgnoreCase))
                     continue;
 
                 if (!badgeDetailsCardsController.InstantiatedBadgeDetailCards.TryGetValue(category.ToLower(), out List<BadgeDetailCard_PassportFieldView> badgeDetailCards))
