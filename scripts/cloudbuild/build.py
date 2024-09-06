@@ -23,10 +23,8 @@ class ZipFileWithPermissions(zipfile.ZipFile):
         attr = member.external_attr >> 16
         if attr != 0:
             os.chmod(targetpath, attr)
-            print(f"Setting permissions for {targetpath}: {attr:o}")
-        else:
-            print(f"No permissions stored for {targetpath}")
         return targetpath
+
 
 # Define whether this is a release workflow based on IS_RELEASE_BUILD
 is_release_workflow = os.getenv('IS_RELEASE_BUILD', 'false').lower() == 'true'
@@ -301,60 +299,37 @@ def download_artifact(id):
     os.makedirs(download_dir, exist_ok=True)
 
     print('Started downloading artifacts from Unity Cloud...')
-
     response = requests.get(artifact_url)
     with open(filepath, 'wb') as f:
         f.write(response.content)
 
     print('Started extracting artifacts from Unity Cloud...')
-
     try:
-        with zipfile.ZipFile(filepath, 'r') as zip_ref:
-            if zip_ref.testzip() is not None:
-                raise zipfile.BadZipFile(f"Zip file {filepath} is corrupted.")
-            
-            for info in zip_ref.infolist():
-                extracted_path = zip_ref.extract(info, download_dir)
-                
-                # Check if this is the specific executable we want to chmod
-                if 'Decentraland.app/Contents/MacOS/Explorer' in extracted_path:
-                    os.chmod(extracted_path, os.stat(extracted_path).st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
-                    print(f"Set executable permissions for {extracted_path}")
-                else:
-                    # For other files, preserve original permissions if available
-                    attrs = info.external_attr >> 16
-                    if attrs != 0:
-                        os.chmod(extracted_path, attrs)
-                        print(f"Set permissions for {extracted_path}: {attrs:o}")
+        with ZipFileWithPermissions(filepath, 'r') as zip_ref:
+            zip_ref.extractall(download_dir)
+
+        # Check if this is a macOS target and verify we have the right permissions set
+        if 'macos' in os.getenv('TARGET', '').lower():
+            explorer_path = os.path.join(download_dir, 'Decentraland.app', 'Contents', 'MacOS', 'Explorer')
+            if os.path.exists(explorer_path):
+                is_executable = os.access(explorer_path, os.X_OK)
+                print(f"Is Explorer executable? {'Yes' if is_executable else 'No'}")
+                print(f"Explorer permissions: {oct(os.stat(explorer_path).st_mode)}")
+            else:
+                print(f"Warning: Explorer executable not found at {explorer_path}")
+        else:
+            print("Not a macOS target, skipping Explorer executable check.")
 
     except zipfile.BadZipFile as e:
         print(f'Failed to unzip the artifact at {filepath}: {e}')
-        sys.exit(1)
-    except zipfile.LargeZipFile as e:
-        print(f'Zip file {filepath} requires ZIP64 functionality but it is not enabled: {e}')
-        sys.exit(1)
-    except IOError as e:
-        print(f'I/O error occurred during extraction of {filepath}: {e}')
         sys.exit(1)
     except Exception as e:
         print(f'An unexpected error occurred during the extraction: {e}')
         sys.exit(1)
 
     os.remove(filepath)
+    print('Artifacts extracted successfully!')
     print('Artifacts ready!')
-
-    # Print permissions of extracted files
-    for root, dirs, files in os.walk(download_dir):
-        for file in files:
-            file_path = os.path.join(root, file)
-            print(f"Permissions for {file_path}: {oct(os.stat(file_path).st_mode)}")
-
-    # Double-check the specific executable
-    explorer_path = os.path.join(download_dir, 'Decentraland.app/Contents/MacOS/Explorer')
-    if os.path.exists(explorer_path):
-        print(f"Final permissions for Explorer executable: {oct(os.stat(explorer_path).st_mode)}")
-    else:
-        print("Warning: Explorer executable not found at expected path")
 
 def download_log(id):
     response = requests.get(f'{URL}/buildtargets/{os.getenv('TARGET')}/builds/{id}/log', headers=HEADERS)
