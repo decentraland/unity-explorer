@@ -44,9 +44,9 @@ namespace Global.Dynamic
             core.PreInitializeSetup(cursorRoot, debugUiRoot, splashScreen, ct);
         }
 
-        public async UniTask<(StaticContainer?, bool)> LoadStaticContainerAsync(BootstrapContainer bootstrapContainer, PluginSettingsContainer globalPluginSettingsContainer, DebugViewsCatalog debugViewsCatalog, CancellationToken ct)
+        public async UniTask<(StaticContainer?, bool)> LoadStaticContainerAsync(BootstrapContainer bootstrapContainer, PluginSettingsContainer globalPluginSettingsContainer, DebugViewsCatalog debugViewsCatalog, Entity playerEntity, CancellationToken ct)
         {
-            (StaticContainer? container, bool isSuccess) result = await core.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugViewsCatalog, ct);
+            (StaticContainer? container, bool isSuccess) result = await core.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugViewsCatalog, playerEntity, ct);
 
             analytics.SetCommonParam(result.container!.RealmData, bootstrapContainer.IdentityCache, result.container.CharacterContainer.Transform);
 
@@ -90,8 +90,8 @@ namespace Global.Dynamic
             return result;
         }
 
-        public Entity CreatePlayerEntity(StaticContainer staticContainer) =>
-            core.CreatePlayerEntity(staticContainer);
+        public void InitializePlayerEntity(StaticContainer staticContainer, Entity playerEntity) =>
+            core.InitializePlayerEntity(staticContainer, playerEntity);
 
         public async UniTask<bool> InitializePluginsAsync(StaticContainer staticContainer, DynamicWorldContainer dynamicWorldContainer, PluginSettingsContainer scenePluginSettingsContainer, PluginSettingsContainer globalPluginSettingsContainer, CancellationToken ct)
         {

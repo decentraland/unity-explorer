@@ -140,6 +140,7 @@ namespace DCL.SDKComponents.AudioSources.Tests.PlayMode
                     web3IdentityCache,
                     ethereumApi,
                     World.Create(),
+                    new Entity(),
                     ct
                 );
 
