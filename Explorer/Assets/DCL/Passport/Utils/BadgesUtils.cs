@@ -57,5 +57,8 @@ namespace DCL.Passport.Utils
 
             return tierCompletedAt;
         }
+
+        public static int GetProgressPercentage(this BadgeInfo badgeInfo) =>
+            badgeInfo.isLocked ? 0 : badgeInfo.data.progress.stepsDone * 100 / (badgeInfo.data.progress.nextStepsTarget ?? badgeInfo.data.progress.totalStepsTarget);
     }
 }

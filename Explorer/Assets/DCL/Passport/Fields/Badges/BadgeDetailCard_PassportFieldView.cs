@@ -113,7 +113,7 @@ namespace DCL.Passport.Fields.Badges
             {
                 if (badgeInfo.data.isTier)
                 {
-                    int progressPercentage = badgeInfo.isLocked ? 0 : badgeInfo.data.progress.stepsDone * 100 / (badgeInfo.data.progress.nextStepsTarget ?? badgeInfo.data.progress.totalStepsTarget);
+                    int progressPercentage = badgeInfo.GetProgressPercentage();
                     ProgressBarFill.sizeDelta = new Vector2((!badgeInfo.isLocked ? progressPercentage : 0) * (ProgressBar.sizeDelta.x / 100), ProgressBarFill.sizeDelta.y);
                 }
                 else

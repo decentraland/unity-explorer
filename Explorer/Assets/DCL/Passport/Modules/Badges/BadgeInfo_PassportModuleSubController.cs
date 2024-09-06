@@ -243,7 +243,7 @@ namespace DCL.Passport.Modules.Badges
                 {
                     badgeInfoModuleView.NextTierValueText.text = nextTierToComplete.tierName;
                     badgeInfoModuleView.NextTierDescriptionText.text = nextTierToComplete.description;
-                    int nextTierProgressPercentage = badgeInfo.isLocked ? 0 : badgeInfo.data.progress.stepsDone * 100 / (badgeInfo.data.progress.nextStepsTarget ?? badgeInfo.data.progress.totalStepsTarget);
+                    int nextTierProgressPercentage = badgeInfo.GetProgressPercentage();
                     badgeInfoModuleView.NextTierProgressBarFill.sizeDelta = new Vector2((!badgeInfo.isLocked ? nextTierProgressPercentage : 0) * (badgeInfoModuleView.NextTierProgressBar.sizeDelta.x / 100), badgeInfoModuleView.NextTierProgressBarFill.sizeDelta.y);
                     badgeInfoModuleView.NextTierProgressValueText.text = $"{badgeInfo.data.progress.stepsDone}/{badgeInfo.data.progress.nextStepsTarget ?? badgeInfo.data.progress.totalStepsTarget}";
                 }
