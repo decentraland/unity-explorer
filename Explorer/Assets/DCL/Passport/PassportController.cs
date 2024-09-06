@@ -225,7 +225,7 @@ namespace DCL.Passport
             catch (OperationCanceledException) { }
             catch (Exception e)
             {
-                const string ERROR_MESSAGE = "There was an error while trying to load the profile. Please try again!";
+                const string ERROR_MESSAGE = "There was an error while opening the Passport. Please try again!";
                 passportErrorsController!.Show(ERROR_MESSAGE);
                 ReportHub.LogError(ReportCategory.PROFILE, $"{ERROR_MESSAGE} ERROR: {e.Message}");
             }
@@ -306,10 +306,20 @@ namespace DCL.Passport
 
         private async UniTaskVoid OpenPassportFromBadgeNotificationAsync(string badgeIdToOpen, CancellationToken ct)
         {
-            ownProfile ??= await selfProfile.ProfileAsync(ct);
+            try
+            {
+                ownProfile ??= await selfProfile.ProfileAsync(ct);
 
-            if (ownProfile != null)
-                mvcManager.ShowAsync(IssueCommand(new Params(ownProfile.UserId, badgeIdToOpen)), ct).Forget();
+                if (ownProfile != null)
+                    mvcManager.ShowAsync(IssueCommand(new Params(ownProfile.UserId, badgeIdToOpen)), ct).Forget();
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception e)
+            {
+                const string ERROR_MESSAGE = "There was an error while opening the Badges section into the Passport. Please try again!";
+                passportErrorsController!.Show(ERROR_MESSAGE);
+                ReportHub.LogError(ReportCategory.PROFILE, $"{ERROR_MESSAGE} ERROR: {e.Message}");
+            }
         }
     }
 }
