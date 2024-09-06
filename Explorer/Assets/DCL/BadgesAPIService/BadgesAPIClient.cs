@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.WebRequests;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine.Pool;
@@ -10,18 +11,15 @@ namespace DCL.BadgesAPIService
 {
     public class BadgesAPIClient
     {
-        private const int OVERVIEW_BADGES_POOL_DEFAULT_CAPACITY = 5;
         private const int DETAILED_BADGES_POOL_DEFAULT_CAPACITY = 100;
-        private const int TIERS_POOL_DEFAULT_CAPACITY = 6;
 
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
-        private readonly IObjectPool<LatestAchievedBadgeData> overviewBadgesPool;
-        private readonly List<LatestAchievedBadgeData> instantiatedOverviewBadges = new ();
+
+        private readonly IObjectPool<List<LatestAchievedBadgeData>> overviewBadgesPool;
+
         private readonly IObjectPool<BadgeInfo> detailedBadgesPool;
         private readonly BadgesInfo instantiatedDetailedBadges;
-        private readonly IObjectPool<TierData> tiersPool;
-        private readonly List<TierData> instantiatedTiers = new ();
 
         private string badgesBaseUrl => decentralandUrlsSource.Url(DecentralandUrl.Badges);
 
@@ -30,20 +28,10 @@ namespace DCL.BadgesAPIService
             this.webRequestController = webRequestController;
             this.decentralandUrlsSource = decentralandUrlsSource;
 
-            overviewBadgesPool = new ObjectPool<LatestAchievedBadgeData>(
-                CreateOverviewBadge,
-                defaultCapacity: OVERVIEW_BADGES_POOL_DEFAULT_CAPACITY,
-                actionOnRelease: OnReleaseOverviewBadge);
-
             detailedBadgesPool = new ObjectPool<BadgeInfo>(
                 CreateDetailedBadge,
                 defaultCapacity: DETAILED_BADGES_POOL_DEFAULT_CAPACITY,
                 actionOnRelease: OnReleaseDetailedBadge);
-
-            tiersPool = new ObjectPool<TierData>(
-                CreateTier,
-                defaultCapacity: TIERS_POOL_DEFAULT_CAPACITY,
-                actionOnRelease: OnReleaseTier);
 
             instantiatedDetailedBadges = new BadgesInfo
             {
@@ -61,19 +49,14 @@ namespace DCL.BadgesAPIService
             return badgesResponse.data.categories;
         }
 
-        public async UniTask<List<LatestAchievedBadgeData>> FetchLatestAchievedBadgesAsync(string walletId, CancellationToken ct)
+        public async UniTask<IReadOnlyList<LatestAchievedBadgeData>> FetchLatestAchievedBadgesAsync(string walletId, CancellationToken ct)
         {
-            ClearOverviewBadges();
-
             var url = $"{badgesBaseUrl}/users/{walletId}/preview";
 
             LatestAchievedBadgesResponse latestAchievedBadgesResponse = await webRequestController.GetAsync(url, ct, reportCategory: ReportCategory.BADGES)
                                                                                                   .CreateFromJson<LatestAchievedBadgesResponse>(WRJsonParser.Newtonsoft);
 
-            if (latestAchievedBadgesResponse.data.latestAchievedBadges != null)
-                instantiatedOverviewBadges.AddRange(latestAchievedBadgesResponse.data.latestAchievedBadges);
-
-            return instantiatedOverviewBadges;
+            return (IReadOnlyList<LatestAchievedBadgeData>)latestAchievedBadgesResponse.data.latestAchievedBadges ?? Array.Empty<LatestAchievedBadgeData>();
         }
 
         public async UniTask<BadgesInfo> FetchBadgesAsync(string walletId, bool includeNotAchieved, CancellationToken ct)
@@ -88,38 +71,14 @@ namespace DCL.BadgesAPIService
             return DetailedBadgesResponseToBadgesInfo(badgesResponse);
         }
 
-        public async UniTask<List<TierData>> FetchTiersAsync(string badgeId, CancellationToken ct)
+        public async UniTask<IReadOnlyList<TierData>> FetchTiersAsync(string badgeId, CancellationToken ct)
         {
-            ClearTiers();
-
             var url = $"{badgesBaseUrl}/badges/{badgeId}/tiers";
 
             TiersResponse tiersResponse = await webRequestController.GetAsync(url, ct, reportCategory: ReportCategory.BADGES)
                                                                     .CreateFromJson<TiersResponse>(WRJsonParser.Newtonsoft);
 
-            if (tiersResponse.data.tiers != null)
-                instantiatedTiers.AddRange(tiersResponse.data.tiers);
-
-            return instantiatedTiers;
-        }
-
-        private static LatestAchievedBadgeData CreateOverviewBadge() =>
-            new();
-
-        private static void OnReleaseOverviewBadge(LatestAchievedBadgeData overviewBadge)
-        {
-            overviewBadge.id = null;
-            overviewBadge.name = null;
-            overviewBadge.tierName = null;
-            overviewBadge.image = null;
-        }
-
-        private void ClearOverviewBadges()
-        {
-            foreach (LatestAchievedBadgeData overviewBadge in instantiatedOverviewBadges)
-                overviewBadgesPool.Release(overviewBadge);
-
-            instantiatedOverviewBadges.Clear();
+            return (IReadOnlyList<TierData>)tiersResponse.data.tiers ?? Array.Empty<TierData>();
         }
 
         private static BadgeInfo CreateDetailedBadge() =>
@@ -202,31 +161,6 @@ namespace DCL.BadgesAPIService
             achievedBadgeInfo.isNew = false;
 
             return achievedBadgeInfo;
-        }
-
-        private static TierData CreateTier() =>
-            new()
-            {
-                assets = new BadgeAssetsData(),
-                criteria = new BadgeTierCriteria(),
-            };
-
-        private static void OnReleaseTier(TierData tier)
-        {
-            tier.tierId = null;
-            tier.tierName = null;
-            tier.description = null;
-            tier.assets.textures2d = null;
-            tier.assets.textures3d = null;
-            tier.criteria.steps = 0;
-        }
-
-        private void ClearTiers()
-        {
-            foreach (TierData tier in instantiatedTiers)
-                tiersPool.Release(tier);
-
-            instantiatedTiers.Clear();
         }
     }
 }

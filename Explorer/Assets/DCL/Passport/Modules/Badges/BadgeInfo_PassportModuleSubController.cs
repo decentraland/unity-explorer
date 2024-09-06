@@ -32,7 +32,7 @@ namespace DCL.Passport.Modules.Badges
 
         private bool isOwnProfile;
         private BadgeInfo currentBadgeInfo;
-        private List<TierData> currentTiers = new ();
+        private IReadOnlyList<TierData> currentTiers = Array.Empty<TierData>();
         private CancellationTokenSource loadBadgeTierButtonsCts;
         private CancellationTokenSource loadBadge3DImageCts;
 
@@ -110,7 +110,7 @@ namespace DCL.Passport.Modules.Badges
         {
             try
             {
-                List<TierData> tiers = await badgesAPIClient.FetchTiersAsync(badgeInfo.data.id, ct);
+                IReadOnlyList<TierData>? tiers = await badgesAPIClient.FetchTiersAsync(badgeInfo.data.id, ct);
 
                 foreach (TierData tier in tiers)
                 {
@@ -142,7 +142,7 @@ namespace DCL.Passport.Modules.Badges
             instantiatedBadgeTierButtons.Add(badgeTierButton);
         }
 
-        private void SelectLastCompletedTierButton(BadgeInfo badge, List<TierData> tiers)
+        private void SelectLastCompletedTierButton(BadgeInfo badge, IReadOnlyList<TierData> tiers)
         {
             int? lastCompletedTierIndex = null;
             for (var i = 0; i < tiers.Count; i++)
@@ -208,7 +208,7 @@ namespace DCL.Passport.Modules.Badges
             badgeInfoModuleView.Badge3DAnimator.SetBool(IS_STOPPED_3D_IMAGE_ANIMATION_PARAM, tierIsLocked);
         }
 
-        private void SetupBadgeInfoView(BadgeInfo badgeInfo, List<TierData> tiers)
+        private void SetupBadgeInfoView(BadgeInfo badgeInfo, IReadOnlyList<TierData> tiers)
         {
             currentTiers = tiers;
             badgeInfoModuleView.TierSection.SetActive(badgeInfo.data.isTier);
@@ -222,7 +222,7 @@ namespace DCL.Passport.Modules.Badges
                 SetupNonTierBadge(badgeInfo);
         }
 
-        private void SetupTierBadge(BadgeInfo badgeInfo, List<TierData> tiers)
+        private void SetupTierBadge(BadgeInfo badgeInfo, IReadOnlyList<TierData> tiers)
         {
             int nextTierToCompleteIndex = tiers.Count - 1;
             for (var i = 0; i < tiers.Count; i++)
