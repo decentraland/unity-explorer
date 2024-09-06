@@ -3,9 +3,11 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.ComputeShader;
+using DCL.AvatarRendering.AvatarShape.Helpers;
 using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.AvatarRendering.AvatarShape.Systems;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
+using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
@@ -23,8 +25,6 @@ using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using DCL.AvatarRendering.AvatarShape.Helpers;
-using DCL.AvatarRendering.Emotes;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Pool;
@@ -32,7 +32,7 @@ using Object = UnityEngine.Object;
 using WearablePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.WearablesResolution, DCL.AvatarRendering.Wearables.Components.Intentions.GetWearablesByPointersIntention>;
 using EmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution, DCL.AvatarRendering.Emotes.GetEmotesByPointersIntention>;
 
-namespace DCL.AvatarRendering.AvatarShape.Tests
+namespace DCL.AvatarRendering.AvatarShape.Tests.PlayMode
 {
     public class AvatarInstantiatorSystemShould : UnitySystemTestBase<AvatarInstantiatorSystem>
     {
@@ -48,8 +48,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
         private Color randomEyesColor;
         private Mesh avatarMesh;
 
-        [SetUp]
-        public async void Setup()
+        private async Task SetupAsync()
         {
             IReleasablePerformanceBudget budget = Substitute.For<IReleasablePerformanceBudget>();
             budget.TrySpendBudget().Returns(true);
@@ -186,7 +185,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
         public async Task InstantiateAvatar()
         {
             // For some reason SetUp is not awaited, probably a Unity's bug
-            await UniTask.WaitUntil(() => system != null && avatarMesh != null);
+            await SetupAsync();
 
             //Arrange
             avatarEntity = world.Create(avatarShapeComponent, PartitionComponent.TOP_PRIORITY, new CharacterTransform());
@@ -237,7 +236,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
         public async Task DestroyInstantiatedAvatar()
         {
             // For some reason SetUp is not awaited, probably a Unity's bug
-            await UniTask.WaitUntil(() => system != null && avatarMesh != null);
+            await SetupAsync();
 
             //Arrange
             Entity entity = world.Create(avatarShapeComponent, PartitionComponent.TOP_PRIORITY, new TransformComponent());
