@@ -1,8 +1,12 @@
+using System;
+
 namespace DCL.Passport
 {
+    [Flags]
     public enum PassportSection
     {
-        OVERVIEW,
-        BADGES,
+        NONE,
+        OVERVIEW = 1,
+        BADGES = 1 << 1,
     }
 }

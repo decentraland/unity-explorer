@@ -31,8 +31,6 @@ namespace DCL.Passport
     {
         private static readonly int BG_SHADER_COLOR_1 = Shader.PropertyToID("_Color1");
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
-
         private readonly ICursor cursor;
         private readonly IProfileRepository profileRepository;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
@@ -60,8 +58,10 @@ namespace DCL.Passport
         private CancellationTokenSource? characterPreviewLoadingCts;
         private PassportErrorsController? passportErrorsController;
         private PassportCharacterPreviewController? characterPreviewController;
-        private PassportSection? currentSection;
-        private PassportSection? alreadyLoadedSection;
+        private PassportSection currentSection;
+        private PassportSection alreadyLoadedSections;
+
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         public event Action<string>? PassportOpened;
 
@@ -137,7 +137,7 @@ namespace DCL.Passport
         protected override void OnViewShow()
         {
             currentUserId = inputData.UserId;
-            alreadyLoadedSection = null;
+            alreadyLoadedSections = PassportSection.NONE;
             cursor.Unlock();
 
             if (string.IsNullOrEmpty(inputData.BadgeIdSelected))
@@ -148,25 +148,26 @@ namespace DCL.Passport
             viewInstance!.ErrorNotification.Hide(true);
             PassportOpened?.Invoke(currentUserId);
 
-            inputBlock.Disable(InputMapComponent.Kind.Shortcuts , InputMapComponent.Kind.Camera , InputMapComponent.Kind.Player);
+            inputBlock.Disable(InputMapComponent.Kind.Shortcuts, InputMapComponent.Kind.Camera, InputMapComponent.Kind.Player);
         }
 
         protected override void OnViewClose()
         {
             passportErrorsController!.Hide(true);
 
-            inputBlock.Enable(InputMapComponent.Kind.Shortcuts , InputMapComponent.Kind.Camera , InputMapComponent.Kind.Player);
+            inputBlock.Enable(InputMapComponent.Kind.Shortcuts, InputMapComponent.Kind.Camera, InputMapComponent.Kind.Player);
 
             characterPreviewController!.OnHide();
 
             characterPreviewLoadingCts.SafeCancelAndDispose();
+
             foreach (IPassportModuleController module in overviewPassportModules)
                 module.Clear();
 
             foreach (IPassportModuleController module in badgesPassportModules)
                 module.Clear();
 
-            currentSection = null;
+            currentSection = PassportSection.NONE;
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
@@ -195,15 +196,11 @@ namespace DCL.Passport
         {
             try
             {
-                switch (sectionToLoad)
-                {
-                    case PassportSection.OVERVIEW when alreadyLoadedSection == PassportSection.OVERVIEW:
-                    case PassportSection.BADGES when alreadyLoadedSection == PassportSection.BADGES:
-                        return;
-                }
+                if (EnumUtils.HasFlag(alreadyLoadedSections, sectionToLoad))
+                    return;
 
                 // Load user profile
-                var profile = await profileRepository.GetAsync(userId, 0, ct);
+                Profile? profile = await profileRepository.GetAsync(userId, 0, ct);
 
                 if (profile == null)
                     return;
@@ -219,7 +216,7 @@ namespace DCL.Passport
 
                 // Load passport modules
                 SetupPassportModules(profile, sectionToLoad, badgeIdSelected);
-                alreadyLoadedSection = sectionToLoad;
+                alreadyLoadedSections |= sectionToLoad;
             }
             catch (OperationCanceledException) { }
             catch (Exception e)
@@ -238,7 +235,7 @@ namespace DCL.Passport
 
         private void SetupPassportModules(Profile profile, PassportSection passportSection, string? badgeIdSelected = null)
         {
-            var passportModulesToSetup = passportSection == PassportSection.OVERVIEW ? overviewPassportModules : badgesPassportModules;
+            List<IPassportModuleController> passportModulesToSetup = passportSection == PassportSection.OVERVIEW ? overviewPassportModules : badgesPassportModules;
 
             foreach (IPassportModuleController module in passportModulesToSetup)
             {
@@ -296,6 +293,7 @@ namespace DCL.Passport
         private void OnBadgeNotificationClicked(object[] parameters)
         {
             string badgeIdToOpen = string.Empty;
+
             if (parameters.Length > 0 && parameters[0] is BadgeGrantedNotification badgeNotification)
                 badgeIdToOpen = badgeNotification.Metadata.Id;
 
