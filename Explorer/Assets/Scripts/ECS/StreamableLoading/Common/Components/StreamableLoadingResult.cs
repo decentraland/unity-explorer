@@ -31,14 +31,6 @@ namespace ECS.StreamableLoading.Common.Components
             exceptionData = (reportData, exception);
         }
 
-        private StreamableLoadingResult(Exception exception) : this()
-        {
-            exceptionData = (ReportData.UNSPECIFIED, exception);
-        }
-
-        public static StreamableLoadingResult<T> ExceptionWithNoLogs(Exception exception) =>
-            new (exception);
-
         public bool IsInitialized => Exception != null || Asset != null || Succeeded;
 
         public override string ToString() =>
