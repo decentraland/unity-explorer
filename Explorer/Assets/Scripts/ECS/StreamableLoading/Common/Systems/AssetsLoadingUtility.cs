@@ -43,6 +43,13 @@ namespace ECS.StreamableLoading.Common.Systems
 
                     if (unityWebRequestException.IsIrrecoverableError(attemptCount))
                     {
+                        // no more sources left
+                        ReportHub.Log(
+                            reportCategory,
+                            $"Exception occured on loading {typeof(TAsset)} from {intention.ToString()}.\n"
+                            + $"Trying sources: {intention.CommonArguments.PermittedSources} attemptCount {attemptCount} url: {intention.CommonArguments.URL}"
+                        );
+
                         if (intention.CommonArguments.PermittedSources == AssetSource.NONE)
 
                             // conclude now
@@ -54,13 +61,6 @@ namespace ECS.StreamableLoading.Common.Systems
                                     unityWebRequestException
                                 )
                             );
-
-                        // no more sources left
-                        ReportHub.Log(
-                            reportCategory,
-                            $"Exception occured on loading {typeof(TAsset)} from {intention.ToString()}.\n"
-                            + $"Trying sources: {intention.CommonArguments.PermittedSources} attemptCount {attemptCount} url: {intention.CommonArguments.URL}"
-                        );
 
                         // Leave other systems to decide on other sources
                         return null;
