@@ -32,10 +32,10 @@ MonoBehaviour:
     - <GroupTitle>k__BackingField: Volume
       <Modules>k__BackingField:
       - rid: 5242998342527483917
-      - rid: 5242998342527483918
-      - rid: 5242998342527483919
-      - rid: 5242998342527483920
       - rid: 5242998342527483921
+      - rid: 5242998342527483920
+      - rid: 5242998342527483919
+      - rid: 5242998342527483918
     - <GroupTitle>k__BackingField: Chat
       <Modules>k__BackingField:
       - rid: 5242998342527483922
@@ -117,7 +117,7 @@ MonoBehaviour:
       data:
         <View>k__BackingField: {fileID: 4706452128062998708, guid: 27c8bedb89b5739458399a3bd3d255ac, type: 3}
         <Config>k__BackingField:
-          <ModuleName>k__BackingField: Avatar SFX
+          <ModuleName>k__BackingField: Avatar & Emotes SFX
           <Description>k__BackingField: 
           <IsEnabled>k__BackingField: 1
           sliderType: 1
@@ -159,7 +159,7 @@ MonoBehaviour:
       data:
         <View>k__BackingField: {fileID: 1404863613082391807, guid: 39458b71e0ed84549b1b280c4fb1f105, type: 3}
         <Config>k__BackingField:
-          <ModuleName>k__BackingField: Chat Sounds
+          <ModuleName>k__BackingField: Sounds
           <Description>k__BackingField: 
           <IsEnabled>k__BackingField: 1
           defaultIsOn: 1
