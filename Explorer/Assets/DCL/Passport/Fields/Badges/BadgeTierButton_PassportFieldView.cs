@@ -57,10 +57,7 @@ namespace DCL.Passport.Fields.Badges
         public void Setup(TierData tierData, string completedAt)
         {
             Model = tierData;
-            TierImage.SetColor(string.IsNullOrEmpty(completedAt) ? LockedBadgeImageColor : NonLockedBadgeImageColor);
-            imageController?.SetImage(DefaultTierSprite);
-            if (tierData.assets is { textures2d: not null } && !string.IsNullOrEmpty(tierData.assets.textures2d.normal))
-                imageController?.RequestImage(tierData.assets.textures2d.normal, hideImageWhileLoading: true);
+            SetupTierImage(tierData, completedAt);
         }
 
         public void OnPointerEnter(PointerEventData eventData) =>
@@ -68,5 +65,13 @@ namespace DCL.Passport.Fields.Badges
 
         public void OnPointerExit(PointerEventData eventData) =>
             BackgroundImage.color = NormalBackgroundColor;
+
+        private void SetupTierImage(TierData tierData, string completedAt)
+        {
+            TierImage.SetColor(string.IsNullOrEmpty(completedAt) ? LockedBadgeImageColor : NonLockedBadgeImageColor);
+            imageController?.SetImage(DefaultTierSprite);
+            if (tierData.assets is { textures2d: not null } && !string.IsNullOrEmpty(tierData.assets.textures2d.normal))
+                imageController?.RequestImage(tierData.assets.textures2d.normal, hideImageWhileLoading: true);
+        }
     }
 }

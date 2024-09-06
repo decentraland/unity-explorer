@@ -39,11 +39,8 @@ namespace DCL.Passport.Fields.Badges
 
         public void Setup(LatestAchievedBadgeData badgeData)
         {
-            BadgeNameText.text = $"{badgeData.name} {(string.IsNullOrEmpty(badgeData.tierName) ? string.Empty : badgeData.tierName)}";
-
-            imageController?.SetImage(DefaultBadgeSprite);
-            if (!string.IsNullOrEmpty(badgeData.image))
-                imageController?.RequestImage(badgeData.image, hideImageWhileLoading: true);
+            SetupBadgeName(badgeData);
+            SetupBadgeImage(badgeData);
         }
 
         public void OnPointerEnter(PointerEventData eventData) =>
@@ -51,6 +48,16 @@ namespace DCL.Passport.Fields.Badges
 
         public void OnPointerExit(PointerEventData eventData) =>
             SetBadgeNameToastActive(false);
+
+        private void SetupBadgeName(LatestAchievedBadgeData badgeData) =>
+            BadgeNameText.text = $"{badgeData.name} {(string.IsNullOrEmpty(badgeData.tierName) ? string.Empty : badgeData.tierName)}";
+
+        private void SetupBadgeImage(LatestAchievedBadgeData badgeData)
+        {
+            imageController?.SetImage(DefaultBadgeSprite);
+            if (!string.IsNullOrEmpty(badgeData.image))
+                imageController?.RequestImage(badgeData.image, hideImageWhileLoading: true);
+        }
 
         private void SetBadgeNameToastActive(bool isActive) =>
             badgeNameTooltip.SetActive(isActive);
