@@ -3,12 +3,26 @@ import re
 import sys
 import time
 import shutil
-import zipfile
 import requests
 import datetime
 import argparse
 # Local
 import utils
+
+from zipfile import ZipFile, ZipInfo
+
+class ZipFileWithPermissions(ZipFile):
+""" Custom ZipFile class handling file permissions. """
+    def _extract_member(self, member, targetpath, pwd):
+        if not isinstance(member, ZipInfo):
+            member = self.getinfo(member)
+
+        targetpath = super()._extract_member(member, targetpath, pwd)
+
+        attr = member.external_attr >> 16
+        if attr != 0:
+            os.chmod(targetpath, attr)
+        return targetpath
 
 # Define whether this is a release workflow based on IS_RELEASE_BUILD
 is_release_workflow = os.getenv('IS_RELEASE_BUILD', 'false').lower() == 'true'
@@ -263,8 +277,7 @@ def poll_build(id):
             return False
 
 def download_artifact(id):
-    print(f'[DEBUG] Starting download_artifact function with ID: {id}')
-    response = requests.get(f'{URL}/buildtargets/{os.getenv('TARGET')}/builds/{id}', headers=HEADERS)
+    response = requests.get(f'{URL}/buildtargets/{os.getenv("TARGET")}/builds/{id}', headers=HEADERS)
 
     if response.status_code != 200:
         print(f'Failed to get build artifacts with ID {id} with status code: {response.status_code}')
@@ -274,14 +287,12 @@ def download_artifact(id):
     response_json = response.json()
     try:
         artifact_url = response_json['links']['download_primary']['href']
-        print(f'[DEBUG] Artifact download URL: {artifact_url}')
     except KeyError:
         print(f'Failed to locate any build artifacts - Nothing to download')
         return
 
     download_dir = 'build'
     filepath = os.path.join(download_dir, 'artifact.zip')
-    print(f'[DEBUG] Creating directory {download_dir} and setting file path to {filepath}')
 
     os.makedirs(download_dir, exist_ok=True)
 
@@ -290,30 +301,25 @@ def download_artifact(id):
     response = requests.get(artifact_url)
     with open(filepath, 'wb') as f:
         f.write(response.content)
-    print(f'[DEBUG] Artifact downloaded and saved to {filepath}')
 
     print('Started extracting artifacts from Unity Cloud...')
 
-    print('[DEBUG] Extracting artifact...')
     try:
-        with zipfile.ZipFile(filepath, 'r') as zip_ref:
-            # Validate the zip file before extracting
+        with ZipFileWithPermissions(filepath, 'r') as zip_ref:
             if zip_ref.testzip() is not None:
-                raise zipfile.BadZipFile(f"[ERROR] Zip file {filepath} is corrupted.")
-
+                raise zipfile.BadZipFile(f"Zip file {filepath} is corrupted.")
             zip_ref.extractall(download_dir)
-        print(f'[DEBUG] Artifact extracted to {download_dir}')
     except zipfile.BadZipFile as e:
-        print(f'[ERROR] Failed to unzip the artifact at {filepath}: {e}')
+        print(f'Failed to unzip the artifact at {filepath}: {e}')
         sys.exit(1)
     except zipfile.LargeZipFile as e:
-        print(f'[ERROR] Zip file {filepath} requires ZIP64 functionality but it is not enabled: {e}')
+        print(f'Zip file {filepath} requires ZIP64 functionality but it is not enabled: {e}')
         sys.exit(1)
     except IOError as e:
-        print(f'[ERROR] I/O error occurred during extraction of {filepath}: {e}')
+        print(f'I/O error occurred during extraction of {filepath}: {e}')
         sys.exit(1)
     except Exception as e:
-        print(f'[ERROR] An unexpected error occurred during the extraction: {e}')
+        print(f'An unexpected error occurred during the extraction: {e}')
         sys.exit(1)
 
     os.remove(filepath)
