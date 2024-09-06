@@ -48,6 +48,7 @@ namespace DCL.Passport
         private readonly BadgesAPIClient badgesAPIClient;
         private readonly IWebRequestController webRequestController;
         private readonly PassportProfileInfoController passportProfileInfoController;
+        private readonly List<IPassportModuleController> commonPassportModules = new ();
         private readonly List<IPassportModuleController> overviewPassportModules = new ();
         private readonly List<IPassportModuleController> badgesPassportModules = new ();
         private readonly IInputBlock inputBlock;
@@ -116,7 +117,7 @@ namespace DCL.Passport
             Assert.IsNotNull(world);
             passportErrorsController = new PassportErrorsController(viewInstance!.ErrorNotification);
             characterPreviewController = new PassportCharacterPreviewController(viewInstance.CharacterPreviewView, characterPreviewFactory, world, characterPreviewEventBus);
-            overviewPassportModules.Add(new UserBasicInfo_PassportModuleController(viewInstance.UserBasicInfoModuleView, chatEntryConfiguration, selfProfile, passportErrorsController));
+            commonPassportModules.Add(new UserBasicInfo_PassportModuleController(viewInstance.UserBasicInfoModuleView, chatEntryConfiguration, selfProfile, passportErrorsController));
             overviewPassportModules.Add(new UserDetailedInfo_PassportModuleController(viewInstance.UserDetailedInfoModuleView, mvcManager, selfProfile, viewInstance.AddLinkModal, passportErrorsController, passportProfileInfoController));
             overviewPassportModules.Add(new EquippedItems_PassportModuleController(viewInstance.EquippedItemsModuleView, world, rarityBackgrounds, rarityColors, categoryIcons, thumbnailProvider, webBrowser, decentralandUrlsSource, passportErrorsController));
             overviewPassportModules.Add(new BadgesOverview_PassportModuleController(viewInstance.BadgesOverviewModuleView, badgesAPIClient, passportErrorsController, webRequestController));
@@ -161,6 +162,9 @@ namespace DCL.Passport
 
             characterPreviewLoadingCts.SafeCancelAndDispose();
 
+            foreach (IPassportModuleController module in commonPassportModules)
+                module.Clear();
+
             foreach (IPassportModuleController module in overviewPassportModules)
                 module.Clear();
 
@@ -184,6 +188,9 @@ namespace DCL.Passport
 
             passportProfileInfoController.OnProfilePublished -= OnProfilePublished;
             passportProfileInfoController.PublishError -= OnPublishError;
+
+            foreach (IPassportModuleController module in commonPassportModules)
+                module.Dispose();
 
             foreach (IPassportModuleController module in overviewPassportModules)
                 module.Dispose();
@@ -235,8 +242,10 @@ namespace DCL.Passport
 
         private void SetupPassportModules(Profile profile, PassportSection passportSection, string? badgeIdSelected = null)
         {
-            List<IPassportModuleController> passportModulesToSetup = passportSection == PassportSection.OVERVIEW ? overviewPassportModules : badgesPassportModules;
+            foreach (IPassportModuleController module in commonPassportModules)
+                module.Setup(profile);
 
+            List<IPassportModuleController> passportModulesToSetup = passportSection == PassportSection.OVERVIEW ? overviewPassportModules : badgesPassportModules;
             foreach (IPassportModuleController module in passportModulesToSetup)
             {
                 if (module is BadgesDetails_PassportModuleController badgesDetailsController && !string.IsNullOrEmpty(badgeIdSelected))
