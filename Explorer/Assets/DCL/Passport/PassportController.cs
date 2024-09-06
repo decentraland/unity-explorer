@@ -145,13 +145,11 @@ namespace DCL.Passport
                 OpenOverviewSection();
             else
                 OpenBadgesSection(inputData.BadgeIdSelected);
-            
+
             inputBlock.Disable(InputMapComponent.Kind.SHORTCUTS , InputMapComponent.Kind.CAMERA , InputMapComponent.Kind.PLAYER);
 
             viewInstance!.ErrorNotification.Hide(true);
             PassportOpened?.Invoke(currentUserId);
-
-            inputBlock.Disable(InputMapComponent.Kind.Shortcuts, InputMapComponent.Kind.Camera, InputMapComponent.Kind.Player);
         }
 
         protected override void OnViewClose()
