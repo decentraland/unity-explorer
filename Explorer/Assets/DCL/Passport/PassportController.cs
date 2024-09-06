@@ -145,6 +145,8 @@ namespace DCL.Passport
                 OpenOverviewSection();
             else
                 OpenBadgesSection(inputData.BadgeIdSelected);
+            
+            inputBlock.Disable(InputMapComponent.Kind.SHORTCUTS , InputMapComponent.Kind.CAMERA , InputMapComponent.Kind.PLAYER);
 
             viewInstance!.ErrorNotification.Hide(true);
             PassportOpened?.Invoke(currentUserId);
@@ -156,7 +158,7 @@ namespace DCL.Passport
         {
             passportErrorsController!.Hide(true);
 
-            inputBlock.Enable(InputMapComponent.Kind.Shortcuts, InputMapComponent.Kind.Camera, InputMapComponent.Kind.Player);
+            inputBlock.Enable(InputMapComponent.Kind.SHORTCUTS , InputMapComponent.Kind.CAMERA , InputMapComponent.Kind.PLAYER);
 
             characterPreviewController!.OnHide();
 
