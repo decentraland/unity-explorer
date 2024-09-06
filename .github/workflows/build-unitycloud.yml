@@ -228,14 +228,15 @@ jobs:
 
         run: python -u scripts/cloudbuild/build.py
 
+      - name: 'Tar artifact to maintain original permissions'
+        if: matrix.target == 'macos'
+        run: tar -cvf build.tar /build
+          
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: Decentraland_${{ matrix.target }}
-          path: |
-            build
-            !build/**/*_BackUpThisFolder_ButDontShipItWithYourGame
-            !build/**/*_BurstDebugInformation_DoNotShip
+          path: build.tar
           if-no-files-found: error
 
       # Will run always (even if failing)
