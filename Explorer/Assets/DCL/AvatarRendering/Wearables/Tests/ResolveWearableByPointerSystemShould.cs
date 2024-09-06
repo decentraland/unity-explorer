@@ -95,7 +95,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
 
             world.Create(assetBundleManifestPromise, mockWearable, BodyShape.MALE);
             EntityReference assetBundleManifestPromiseEntity = assetBundleManifestPromise.Entity;
-            world.Add(assetBundleManifestPromiseEntity, failed ? new StreamableLoadingResult<SceneAssetBundleManifest>(ReportData.UNSPECIFIED, new Exception("FAILED")) : mockedABManifest);
+            world.Add(assetBundleManifestPromiseEntity, failed ? StreamableLoadingResult<SceneAssetBundleManifest>.ExceptionWithNoLogs(new Exception("FAILED")) : mockedABManifest);
             system.Update(0);
         }
 
@@ -110,7 +110,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
 
             world.Create(assetBundlePromise, mockWearable, BodyShape.MALE);
             EntityReference assetBundlePromiseEntity = assetBundlePromise.Entity;
-            world.Add(assetBundlePromiseEntity, failed ? new StreamableLoadingResult<AssetBundleData>(ReportData.UNSPECIFIED, new Exception("FAILED")) : mockedAB);
+            world.Add(assetBundlePromiseEntity, failed ? StreamableLoadingResult<SceneAssetBundleManifest>.ExceptionWithNoLogs(new Exception("FAILED")) : mockedAB);
         }
 
         [Test]
