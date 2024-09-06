@@ -31,7 +31,7 @@ jobs:
             github.rest.actions.createWorkflowDispatch({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              workflow_id: 'unity_cloud_build.yml',
+              workflow_id: 'build-unitycloud.yml',
               ref: '${{ steps.get_branch.outputs.pr_branch }}',
               inputs: {
                 clean_build: 'true'
