@@ -270,12 +270,9 @@ namespace DCL.Passport.Modules.Badges
                 string normalUrl = assets.textures3d.normal;
                 string hrmUrl = assets.textures3d.hrm;
 
-                Texture2D baseColorTexture = await webRequestController.GetTextureAsync(new CommonArguments(URLAddress.FromString(baseColorUrl)), new GetTextureArguments(false), GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp), ct);
-                baseColorTexture.filterMode = FilterMode.Bilinear;
-                Texture2D normalTexture = await webRequestController.GetTextureAsync(new CommonArguments(URLAddress.FromString(normalUrl)), new GetTextureArguments(false), GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp), ct);
-                normalTexture.filterMode = FilterMode.Bilinear;
-                Texture2D hrmTexture = await webRequestController.GetTextureAsync(new CommonArguments(URLAddress.FromString(hrmUrl)), new GetTextureArguments(false), GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp), ct);
-                hrmTexture.filterMode = FilterMode.Bilinear;
+                Texture2D baseColorTexture = await webRequestController.GetTextureAsync(new CommonArguments(URLAddress.FromString(baseColorUrl)), new GetTextureArguments(false), GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp, FilterMode.Bilinear), ct);
+                Texture2D normalTexture = await webRequestController.GetTextureAsync(new CommonArguments(URLAddress.FromString(normalUrl)), new GetTextureArguments(false), GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp, FilterMode.Bilinear), ct);
+                Texture2D hrmTexture = await webRequestController.GetTextureAsync(new CommonArguments(URLAddress.FromString(hrmUrl)), new GetTextureArguments(false), GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp, FilterMode.Bilinear), ct);
 
                 Set3DImage(baseColorTexture, normalTexture, hrmTexture);
                 SetBadgeInfoViewAsLoading(false);
