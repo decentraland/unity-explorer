@@ -212,7 +212,7 @@ namespace DCL.Passport.Modules.Badges
         {
             currentTiers = tiers;
             badgeInfoModuleView.TierSection.SetActive(badgeInfo.data.isTier);
-            badgeInfoModuleView.SimpleBadgeProgressBarContainer.SetActive(isOwnProfile && !badgeInfo.data.isTier && badgeInfo.data.progress.totalStepsTarget is > 1);
+            badgeInfoModuleView.SimpleBadgeProgressBarContainer.SetActive(isOwnProfile && !badgeInfo.data.isTier && badgeInfo.data.progress.totalStepsTarget > 1);
             badgeInfoModuleView.Badge3DImage.color = badgeInfo.isLocked ? badgeInfoModuleView.Badge3DImageLockedColor : badgeInfoModuleView.Badge3DImageUnlockedColor;
             badgeInfoModuleView.Badge3DAnimator.SetBool(IS_STOPPED_3D_IMAGE_ANIMATION_PARAM, badgeInfo.isLocked);
 
