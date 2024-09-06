@@ -14,7 +14,6 @@ using DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
 using DCL.Passport.Modules;
 using DCL.Passport.Modules.Badges;
-using DCL.Passport.Utils;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.WebRequests;

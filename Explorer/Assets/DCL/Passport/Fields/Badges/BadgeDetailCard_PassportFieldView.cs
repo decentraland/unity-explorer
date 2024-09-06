@@ -1,5 +1,4 @@
 using DCL.BadgesAPIService;
-using DCL.Passport.Utils;
 using DCL.UI;
 using DCL.WebRequests;
 using TMPro;
@@ -91,7 +90,7 @@ namespace DCL.Passport.Fields.Badges
         public void SetAsNew(bool isNew) =>
             NewMark.SetActive(isNew);
 
-        public void Setup(BadgeInfo badgeInfo, bool isOwnProfile)
+        public void Setup(in BadgeInfo badgeInfo, bool isOwnProfile)
         {
             Model = badgeInfo;
             SetupBadgeName(badgeInfo);
@@ -108,13 +107,13 @@ namespace DCL.Passport.Fields.Badges
         public void OnPointerExit(PointerEventData eventData) =>
             BackgroundImage.color = NormalBackgroundColor;
 
-        private static bool ShouldShowBadgeProgressBar(BadgeInfo badgeInfo, bool isOwnProfile) =>
+        private static bool ShouldShowBadgeProgressBar(in BadgeInfo badgeInfo, bool isOwnProfile) =>
             isOwnProfile && ((badgeInfo.data.isTier && string.IsNullOrEmpty(badgeInfo.data.completedAt)) || (!badgeInfo.data.isTier && badgeInfo.data.progress.totalStepsTarget is > 1));
 
-        private void SetupBadgeName(BadgeInfo badgeInfo) =>
+        private void SetupBadgeName(in BadgeInfo badgeInfo) =>
             BadgeNameText.text = !string.IsNullOrEmpty(badgeInfo.data.progress.lastCompletedTierName) ? $"{badgeInfo.data.name} {badgeInfo.data.progress.lastCompletedTierName}" : badgeInfo.data.name;
 
-        private void SetupBadgeDate(BadgeInfo badgeInfo, bool isOwnProfile)
+        private void SetupBadgeDate(in BadgeInfo badgeInfo, bool isOwnProfile)
         {
             string completedAtToLoad = !string.IsNullOrEmpty(badgeInfo.data.progress.lastCompletedTierAt) ? badgeInfo.data.progress.lastCompletedTierAt : badgeInfo.data.completedAt;
             BadgeDateText.text = !string.IsNullOrEmpty(completedAtToLoad) ? BadgesUtils.FormatTimestampDate(completedAtToLoad) : "—";
@@ -125,13 +124,13 @@ namespace DCL.Passport.Fields.Badges
                  (!isOwnProfile && !string.IsNullOrEmpty(badgeInfo.data.progress.lastCompletedTierAt))));
         }
 
-        private void SetupBadgeNextTier(BadgeInfo badgeInfo, bool isOwnProfile)
+        private void SetupBadgeNextTier(in BadgeInfo badgeInfo, bool isOwnProfile)
         {
             TopTierMark.SetActive(isOwnProfile && badgeInfo.data.isTier && !string.IsNullOrEmpty(badgeInfo.data.completedAt));
             NextTierTitle.SetActive(isOwnProfile && badgeInfo.data.isTier && badgeInfo.data.progress.stepsDone > 0 && string.IsNullOrEmpty(badgeInfo.data.completedAt));
         }
 
-        private void SetupBadgeProgressBar(BadgeInfo badgeInfo, bool isOwnProfile)
+        private void SetupBadgeProgressBar(in BadgeInfo badgeInfo, bool isOwnProfile)
         {
             bool showProgressBar = ShouldShowBadgeProgressBar(badgeInfo, isOwnProfile);
             ProgressBar.gameObject.SetActive(showProgressBar);
@@ -151,7 +150,7 @@ namespace DCL.Passport.Fields.Badges
             }
         }
 
-        private void SetupBadgeImage(BadgeInfo badgeInfo)
+        private void SetupBadgeImage(in BadgeInfo badgeInfo)
         {
             BadgeImage.SetColor(badgeInfo.isLocked ? LockedBadgeImageColor : NonLockedBadgeImageColor);
             imageController?.SetImage(DefaultBadgeSprite);

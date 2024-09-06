@@ -1,8 +1,8 @@
-using DCL.BadgesAPIService;
 using System;
+using System.Globalization;
 using UnityEngine;
 
-namespace DCL.Passport.Utils
+namespace DCL.BadgesAPIService
 {
     public static class BadgesUtils
     {
@@ -11,7 +11,7 @@ namespace DCL.Passport.Utils
         public static string FormatTimestampDate(string timestampString)
         {
             DateTime date = DateTimeOffset.FromUnixTimeMilliseconds(long.Parse(timestampString)).DateTime;
-            var formattedDate = date.ToString("MMM. yyyy", System.Globalization.CultureInfo.InvariantCulture);
+            var formattedDate = date.ToString("MMM. yyyy", CultureInfo.InvariantCulture);
             return formattedDate;
         }
 
@@ -58,7 +58,7 @@ namespace DCL.Passport.Utils
             return tierCompletedAt;
         }
 
-        public static int GetProgressPercentage(this BadgeInfo badgeInfo) =>
+        public static int GetProgressPercentage(this in BadgeInfo badgeInfo) =>
             badgeInfo.isLocked ? 0 : badgeInfo.data.progress.stepsDone * 100 / (badgeInfo.data.progress.nextStepsTarget ?? badgeInfo.data.progress.totalStepsTarget);
     }
 }

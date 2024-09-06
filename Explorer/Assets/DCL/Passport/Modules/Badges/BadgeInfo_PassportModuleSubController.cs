@@ -3,7 +3,6 @@ using Cysharp.Threading.Tasks;
 using DCL.BadgesAPIService;
 using DCL.Diagnostics;
 using DCL.Passport.Fields.Badges;
-using DCL.Passport.Utils;
 using DCL.WebRequests;
 using System;
 using System.Collections.Generic;
@@ -69,7 +68,7 @@ namespace DCL.Passport.Modules.Badges
                 LoadTierButtons();
             else
             {
-                SetupBadgeInfoView(badgeInfo, new List<TierData>());
+                SetupBadgeInfoView(badgeInfo, Array.Empty<TierData>());
                 loadBadge3DImageCts = loadBadge3DImageCts.SafeRestart();
                 LoadBadge3DImageAsync(badgeInfo.data.assets, loadBadge3DImageCts.Token).Forget();
                 SetAsLoading(false);
@@ -208,7 +207,7 @@ namespace DCL.Passport.Modules.Badges
             badgeInfoModuleView.Badge3DAnimator.SetBool(IS_STOPPED_3D_IMAGE_ANIMATION_PARAM, tierIsLocked);
         }
 
-        private void SetupBadgeInfoView(BadgeInfo badgeInfo, IReadOnlyList<TierData> tiers)
+        private void SetupBadgeInfoView(in BadgeInfo badgeInfo, IReadOnlyList<TierData> tiers)
         {
             currentTiers = tiers;
             badgeInfoModuleView.TierSection.SetActive(badgeInfo.data.isTier);

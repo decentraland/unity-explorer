@@ -1,6 +1,5 @@
 using DCL.BadgesAPIService;
 using DCL.Passport.Fields.Badges;
-using DCL.Passport.Utils;
 using DCL.WebRequests;
 using System;
 using System.Collections.Generic;
@@ -57,9 +56,6 @@ namespace DCL.Passport.Modules.Badges
 
         public void CreateBadgeDetailCard(BadgeInfo badge, bool isOwnProfile)
         {
-            if (isOwnProfile)
-                badge.isNew = BadgesUtils.IsBadgeNew(badge.data.id);
-
             var badgeDetailCard = badgeDetailCardsPool.Get();
             badgeDetailCard.Setup(badge, isOwnProfile);
             badgeDetailCard.Button.onClick.AddListener(() => { SelectBadgeCard(badgeDetailCard, isOwnProfile); });

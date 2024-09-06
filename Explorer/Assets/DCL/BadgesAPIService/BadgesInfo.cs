@@ -10,11 +10,17 @@ namespace DCL.BadgesAPIService
         public List<BadgeInfo> notAchieved;
     }
 
-    [Serializable]
-    public class BadgeInfo
+    public struct BadgeInfo
     {
-        public BadgeData data;
-        public bool isLocked;
-        public bool isNew;
+        public readonly BadgeData data;
+        public readonly bool isLocked;
+        public readonly bool isNew;
+
+        public BadgeInfo(BadgeData data, bool isLocked, bool isNew)
+        {
+            this.data = data;
+            this.isLocked = isLocked;
+            this.isNew = isNew;
+        }
     }
 }
