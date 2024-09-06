@@ -3,17 +3,17 @@ import re
 import sys
 import time
 import shutil
+from zipfile import ZipFile, ZipInfo
+
 import requests
 import datetime
 import argparse
 # Local
 import utils
 
-from zipfile import ZipFile, ZipInfo
-
-class ZipFileWithPermissions(ZipFile):
+class ZipFileWithPermissions(zipfile.ZipFile):
     def _extract_member(self, member, targetpath, pwd):
-        if not isinstance(member, ZipInfo):
+        if not isinstance(member, zipfile.ZipInfo):
             member = self.getinfo(member)
 
         targetpath = super()._extract_member(member, targetpath, pwd)
@@ -21,6 +21,9 @@ class ZipFileWithPermissions(ZipFile):
         attr = member.external_attr >> 16
         if attr != 0:
             os.chmod(targetpath, attr)
+            print(f"Setting permissions for {targetpath}: {attr:o}")
+        else:
+            print(f"No permissions stored for {targetpath}")
         return targetpath
 
 # Define whether this is a release workflow based on IS_RELEASE_BUILD
@@ -304,10 +307,24 @@ def download_artifact(id):
     print('Started extracting artifacts from Unity Cloud...')
 
     try:
-        with ZipFileWithPermissions(filepath, 'r') as zip_ref:
+        with zipfile.ZipFile(filepath, 'r') as zip_ref:
             if zip_ref.testzip() is not None:
                 raise zipfile.BadZipFile(f"Zip file {filepath} is corrupted.")
-            zip_ref.extractall(download_dir)
+            
+            for info in zip_ref.infolist():
+                extracted_path = zip_ref.extract(info, download_dir)
+                
+                # Check if this is the specific executable we want to chmod
+                if 'Decentraland.app/Contents/MacOS/Explorer' in extracted_path:
+                    os.chmod(extracted_path, os.stat(extracted_path).st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+                    print(f"Set executable permissions for {extracted_path}")
+                else:
+                    # For other files, preserve original permissions if available
+                    attrs = info.external_attr >> 16
+                    if attrs != 0:
+                        os.chmod(extracted_path, attrs)
+                        print(f"Set permissions for {extracted_path}: {attrs:o}")
+
     except zipfile.BadZipFile as e:
         print(f'Failed to unzip the artifact at {filepath}: {e}')
         sys.exit(1)
@@ -323,6 +340,19 @@ def download_artifact(id):
 
     os.remove(filepath)
     print('Artifacts ready!')
+
+    # Print permissions of extracted files
+    for root, dirs, files in os.walk(download_dir):
+        for file in files:
+            file_path = os.path.join(root, file)
+            print(f"Permissions for {file_path}: {oct(os.stat(file_path).st_mode)}")
+
+    # Double-check the specific executable
+    explorer_path = os.path.join(download_dir, 'Decentraland.app/Contents/MacOS/Explorer')
+    if os.path.exists(explorer_path):
+        print(f"Final permissions for Explorer executable: {oct(os.stat(explorer_path).st_mode)}")
+    else:
+        print("Warning: Explorer executable not found at expected path")
 
 def download_log(id):
     response = requests.get(f'{URL}/buildtargets/{os.getenv('TARGET')}/builds/{id}/log', headers=HEADERS)
