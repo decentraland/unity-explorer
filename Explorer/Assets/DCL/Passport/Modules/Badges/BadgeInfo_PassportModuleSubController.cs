@@ -216,39 +216,45 @@ namespace DCL.Passport.Modules.Badges
             badgeInfoModuleView.Badge3DImage.color = badgeInfo.isLocked ? badgeInfoModuleView.Badge3DImageLockedColor : badgeInfoModuleView.Badge3DImageUnlockedColor;
             badgeInfoModuleView.Badge3DAnimator.SetBool(IS_STOPPED_3D_IMAGE_ANIMATION_PARAM, badgeInfo.isLocked);
 
-            if (!badgeInfo.data.isTier)
-            {
-                badgeInfoModuleView.BadgeNameText.text = badgeInfo.data.name;
-                badgeInfoModuleView.BadgeDateText.text = !badgeInfo.isLocked ? $"Unlocked: {BadgesUtils.FormatTimestampDate(badgeInfo.data.completedAt)}" : "Locked";
-                badgeInfoModuleView.BadgeDescriptionText.text = badgeInfo.data.description;
-                int simpleBadgeProgressPercentage = badgeInfo.data.progress.stepsDone * 100 / badgeInfo.data.progress.totalStepsTarget;
-                badgeInfoModuleView.SimpleBadgeProgressBarFill.sizeDelta = new Vector2(simpleBadgeProgressPercentage * (badgeInfoModuleView.SimpleBadgeProgressBar.sizeDelta.x / 100), badgeInfoModuleView.SimpleBadgeProgressBarFill.sizeDelta.y);
-                badgeInfoModuleView.SimpleBadgeProgressValueText.text = $"{badgeInfo.data.progress.stepsDone}/{badgeInfo.data.progress.totalStepsTarget}";
-            }
+            if (badgeInfo.data.isTier)
+                SetupTierBadge(badgeInfo, tiers);
             else
+                SetupNonTierBadge(badgeInfo);
+        }
+
+        private void SetupTierBadge(BadgeInfo badgeInfo, List<TierData> tiers)
+        {
+            int nextTierToCompleteIndex = tiers.Count - 1;
+            for (var i = 0; i < tiers.Count; i++)
             {
-                int nextTierToCompleteIndex = tiers.Count - 1;
-                for (var i = 0; i < tiers.Count; i++)
-                {
-                    if (badgeInfo.data.progress.nextStepsTarget == tiers[i].criteria.steps)
-                        nextTierToCompleteIndex = i;
-                }
-
-                var nextTierToComplete = tiers[nextTierToCompleteIndex];
-                badgeInfoModuleView.TopTierMark.SetActive(isOwnProfile && !string.IsNullOrEmpty(badgeInfo.data.completedAt));
-                badgeInfoModuleView.NextTierContainer.SetActive(isOwnProfile && string.IsNullOrEmpty(badgeInfo.data.completedAt) && badgeInfo.data.progress.stepsDone > 0);
-                badgeInfoModuleView.NextTierDescriptionText.gameObject.SetActive(isOwnProfile);
-                badgeInfoModuleView.NextTierProgressBarContainer.SetActive(isOwnProfile);
-
-                if (isOwnProfile)
-                {
-                    badgeInfoModuleView.NextTierValueText.text = nextTierToComplete.tierName;
-                    badgeInfoModuleView.NextTierDescriptionText.text = nextTierToComplete.description;
-                    int nextTierProgressPercentage = badgeInfo.GetProgressPercentage();
-                    badgeInfoModuleView.NextTierProgressBarFill.sizeDelta = new Vector2((!badgeInfo.isLocked ? nextTierProgressPercentage : 0) * (badgeInfoModuleView.NextTierProgressBar.sizeDelta.x / 100), badgeInfoModuleView.NextTierProgressBarFill.sizeDelta.y);
-                    badgeInfoModuleView.NextTierProgressValueText.text = $"{badgeInfo.data.progress.stepsDone}/{badgeInfo.data.progress.nextStepsTarget ?? badgeInfo.data.progress.totalStepsTarget}";
-                }
+                if (badgeInfo.data.progress.nextStepsTarget == tiers[i].criteria.steps)
+                    nextTierToCompleteIndex = i;
             }
+
+            var nextTierToComplete = tiers[nextTierToCompleteIndex];
+            badgeInfoModuleView.TopTierMark.SetActive(isOwnProfile && !string.IsNullOrEmpty(badgeInfo.data.completedAt));
+            badgeInfoModuleView.NextTierContainer.SetActive(isOwnProfile && string.IsNullOrEmpty(badgeInfo.data.completedAt) && badgeInfo.data.progress.stepsDone > 0);
+            badgeInfoModuleView.NextTierDescriptionText.gameObject.SetActive(isOwnProfile);
+            badgeInfoModuleView.NextTierProgressBarContainer.SetActive(isOwnProfile);
+
+            if (isOwnProfile)
+            {
+                badgeInfoModuleView.NextTierValueText.text = nextTierToComplete.tierName;
+                badgeInfoModuleView.NextTierDescriptionText.text = nextTierToComplete.description;
+                int nextTierProgressPercentage = badgeInfo.GetProgressPercentage();
+                badgeInfoModuleView.NextTierProgressBarFill.sizeDelta = new Vector2((!badgeInfo.isLocked ? nextTierProgressPercentage : 0) * (badgeInfoModuleView.NextTierProgressBar.sizeDelta.x / 100), badgeInfoModuleView.NextTierProgressBarFill.sizeDelta.y);
+                badgeInfoModuleView.NextTierProgressValueText.text = $"{badgeInfo.data.progress.stepsDone}/{badgeInfo.data.progress.nextStepsTarget ?? badgeInfo.data.progress.totalStepsTarget}";
+            }
+        }
+
+        private void SetupNonTierBadge(BadgeInfo badgeInfo)
+        {
+            badgeInfoModuleView.BadgeNameText.text = badgeInfo.data.name;
+            badgeInfoModuleView.BadgeDateText.text = !badgeInfo.isLocked ? $"Unlocked: {BadgesUtils.FormatTimestampDate(badgeInfo.data.completedAt)}" : "Locked";
+            badgeInfoModuleView.BadgeDescriptionText.text = badgeInfo.data.description;
+            int simpleBadgeProgressPercentage = badgeInfo.data.progress.stepsDone * 100 / badgeInfo.data.progress.totalStepsTarget;
+            badgeInfoModuleView.SimpleBadgeProgressBarFill.sizeDelta = new Vector2(simpleBadgeProgressPercentage * (badgeInfoModuleView.SimpleBadgeProgressBar.sizeDelta.x / 100), badgeInfoModuleView.SimpleBadgeProgressBarFill.sizeDelta.y);
+            badgeInfoModuleView.SimpleBadgeProgressValueText.text = $"{badgeInfo.data.progress.stepsDone}/{badgeInfo.data.progress.totalStepsTarget}";
         }
 
         private async UniTask LoadBadge3DImageAsync(BadgeAssetsData? assets, CancellationToken ct)
