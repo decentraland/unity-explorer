@@ -232,11 +232,20 @@ jobs:
         if: matrix.target == 'macos'
         run: tar -cvf build.tar /build
           
-      - name: Upload artifact
+      - name: Upload artifact for macOS
+        if: matrix.target == 'macos'
         uses: actions/upload-artifact@v4
         with:
           name: Decentraland_${{ matrix.target }}
-          path: build.tar
+          path: /build.tar
+          if-no-files-found: error
+
+      - name: Upload artifact for Windows
+        if: matrix.target == 'windows64'
+        uses: actions/upload-artifact@v4
+        with:
+          name: Decentraland_${{ matrix.target }}
+          path: /build
           if-no-files-found: error
 
       # Will run always (even if failing)
