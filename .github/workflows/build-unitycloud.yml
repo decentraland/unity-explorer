@@ -237,7 +237,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Decentraland_${{ matrix.target }}
-          path: /build.tar
+          path: build.tar
           if-no-files-found: error
 
       - name: Upload artifact for Windows
@@ -245,7 +245,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Decentraland_${{ matrix.target }}
-          path: /build
+          path: build
           if-no-files-found: error
 
       # Will run always (even if failing)
