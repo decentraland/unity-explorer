@@ -277,7 +277,7 @@ def poll_build(id):
             print(f'Build status is not known!: "{status}"')
             sys.exit(1)
             return False
-
+            
 def download_artifact(id):
     response = requests.get(f'{URL}/buildtargets/{os.getenv("TARGET")}/builds/{id}', headers=HEADERS)
 
@@ -296,14 +296,18 @@ def download_artifact(id):
     download_dir = 'build'
     filepath = os.path.join(download_dir, 'artifact.zip')
 
+    # Print current working directory and target download directory
+    print(f"Current working directory: {os.getcwd()}")
+    print(f"Target download directory: {os.path.join(os.getcwd(), download_dir)}")
+
     os.makedirs(download_dir, exist_ok=True)
 
-    print('Started downloading artifacts from Unity Cloud...')
+    print(f'Started downloading artifacts from Unity Cloud to {download_dir}...')
     response = requests.get(artifact_url)
     with open(filepath, 'wb') as f:
         f.write(response.content)
 
-    print('Started extracting artifacts from Unity Cloud...')
+    print(f'Started extracting artifacts from Unity Cloud to {download_dir}...')
     try:
         with ZipFileWithPermissions(filepath, 'r') as zip_ref:
             zip_ref.extractall(download_dir)
@@ -329,6 +333,12 @@ def download_artifact(id):
 
     os.remove(filepath)
     print('Artifacts ready!')
+
+    # Final check to confirm build folder exists
+    if os.path.exists(download_dir):
+        print(f"Build folder confirmed at: {os.path.join(os.getcwd(), download_dir)}")
+    else:
+        print(f"ERROR: Build folder not found at expected location: {os.path.join(os.getcwd(), download_dir)}")
 
 def download_log(id):
     response = requests.get(f'{URL}/buildtargets/{os.getenv('TARGET')}/builds/{id}/log', headers=HEADERS)
