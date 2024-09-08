@@ -11,18 +11,19 @@ using DCL.Profiles.Self;
 using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.UI;
 using DCL.Utilities;
-using DCL.Web3;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using MVC;
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.Assertions;
 using UnityEngine.Localization.SmartFormat.PersistentVariables;
 using UnityEngine.UI;
 using Utility;
+
+using DCL.Web3;
+using System.Collections.Generic;
+using UnityEngine.Assertions;
 
 namespace DCL.AuthenticationScreenFlow
 {
@@ -115,7 +116,7 @@ namespace DCL.AuthenticationScreenFlow
         {
             base.OnViewInstantiated();
 
-            profileNameLabel = (StringVariable)viewInstance.ProfileNameLabel.StringReference["profileName"];
+            profileNameLabel = (StringVariable)viewInstance!.ProfileNameLabel.StringReference["profileName"];
 
             viewInstance.LoginButton.onClick.AddListener(StartLoginFlowUntilEnd);
             viewInstance.CancelAuthenticationProcess.onClick.AddListener(CancelLoginProcess);
@@ -132,7 +133,7 @@ namespace DCL.AuthenticationScreenFlow
             viewInstance.VersionText.text = "editor-version";
 #endif
 
-            characterPreviewController = new AuthenticationScreenCharacterPreviewController(viewInstance.CharacterPreviewView, characterPreviewFactory, world!, characterPreviewEventBus);
+            characterPreviewController = new AuthenticationScreenCharacterPreviewController(viewInstance.CharacterPreviewView, characterPreviewFactory, world, characterPreviewEventBus);
         }
 
         protected override void OnBeforeViewShow()
@@ -157,7 +158,7 @@ namespace DCL.AuthenticationScreenFlow
 
             CancelLoginProcess();
             CancelVerificationCountdown();
-            viewInstance.FinalizeContainer.SetActive(false);
+            viewInstance!.FinalizeContainer.SetActive(false);
             web3Authenticator.SetVerificationListener(null);
 
             audioMixerVolumesController.UnmuteGroup(AudioMixerExposedParam.World_Volume);
@@ -209,7 +210,7 @@ namespace DCL.AuthenticationScreenFlow
 
         private void ShowRestrictedUserPopup()
         {
-            viewInstance.RestrictedUserContainer.SetActive(true);
+            viewInstance!.RestrictedUserContainer.SetActive(true);
         }
 
         private bool IsUserAllowedToAccessToBeta(IWeb3Identity storedIdentity)
@@ -237,7 +238,7 @@ namespace DCL.AuthenticationScreenFlow
             {
                 try
                 {
-                    viewInstance.ConnectingToServerContainer.SetActive(true);
+                    viewInstance!.ConnectingToServerContainer.SetActive(true);
                     viewInstance.LoginButton.interactable = false;
 
                     web3Authenticator.SetVerificationListener(ShowVerification);
@@ -277,7 +278,7 @@ namespace DCL.AuthenticationScreenFlow
 
         private void ShowVerification(int code, DateTime expiration)
         {
-            viewInstance.VerificationCodeLabel.text = code.ToString();
+            viewInstance!.VerificationCodeLabel.text = code.ToString();
 
             CancelVerificationCountdown();
             verificationCountdownCancellationToken = new CancellationTokenSource();
@@ -320,7 +321,7 @@ namespace DCL.AuthenticationScreenFlow
         {
             async UniTaskVoid AnimateAndAwaitAsync()
             {
-                viewInstance.FinalizeAnimator.SetTrigger(UIAnimationHashes.JUMP_IN);
+                viewInstance!.FinalizeAnimator.SetTrigger(UIAnimationHashes.TO_OTHER);
                 await UniTask.Delay(ANIMATION_DELAY);
                 characterPreviewController?.OnHide();
                 lifeCycleTask?.TrySetResult();
@@ -335,7 +336,7 @@ namespace DCL.AuthenticationScreenFlow
             switch (state)
             {
                 case ViewState.Login:
-                    ResetAnimator(viewInstance.LoginAnimator);
+                    ResetAnimator(viewInstance!.LoginAnimator);
                     viewInstance.PendingAuthentication.SetActive(false);
                     viewInstance.Slides.SetActive(true);
                     viewInstance.LoginContainer.SetActive(true);
@@ -349,7 +350,7 @@ namespace DCL.AuthenticationScreenFlow
                     CurrentState.Value = AuthenticationStatus.Login;
                     break;
                 case ViewState.LoginInProgress:
-                    ResetAnimator(viewInstance.VerificationAnimator);
+                    ResetAnimator(viewInstance!.VerificationAnimator);
                     viewInstance.PendingAuthentication.SetActive(true);
                     viewInstance.Slides.SetActive(true);
                     viewInstance.LoginAnimator.SetTrigger(UIAnimationHashes.OUT);
@@ -362,7 +363,7 @@ namespace DCL.AuthenticationScreenFlow
                     viewInstance.RestrictedUserContainer.SetActive(false);
                     break;
                 case ViewState.Loading:
-                    viewInstance.PendingAuthentication.SetActive(false);
+                    viewInstance!.PendingAuthentication.SetActive(false);
                     viewInstance.LoginContainer.SetActive(false);
                     viewInstance.Slides.SetActive(true);
                     viewInstance.ProgressContainer.SetActive(true);
@@ -373,7 +374,7 @@ namespace DCL.AuthenticationScreenFlow
                     viewInstance.RestrictedUserContainer.SetActive(false);
                     break;
                 case ViewState.Finalize:
-                    ResetAnimator(viewInstance.FinalizeAnimator);
+                    ResetAnimator(viewInstance!.FinalizeAnimator);
                     viewInstance.Slides.SetActive(false);
                     viewInstance.PendingAuthentication.SetActive(false);
                     viewInstance.LoginContainer.SetActive(false);
@@ -405,7 +406,7 @@ namespace DCL.AuthenticationScreenFlow
 
         private void OpenOrCloseVerificationCodeHint()
         {
-            viewInstance.VerificationCodeHintContainer.SetActive(!viewInstance.VerificationCodeHintContainer.activeSelf);
+            viewInstance!.VerificationCodeHintContainer.SetActive(!viewInstance.VerificationCodeHintContainer.activeSelf);
         }
 
         private void OpenDiscord() =>
