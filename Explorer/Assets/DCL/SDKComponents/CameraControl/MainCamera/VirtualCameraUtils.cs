@@ -56,7 +56,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera
                 cameraData.CinemachineBrain!.m_DefaultBlend.m_Style = speedValue <= 0 ? CinemachineBlendDefinition.Style.Cut : CinemachineBlendDefinition.Style.EaseInOut;
 
                 // SPEED = 1 -> 1 meter per second
-                float blendTime = distanceBetweenCameras / speedValue;
+                float blendTime = CalculateDistanceBlendTime(distanceBetweenCameras, speedValue);
                 if (blendTime == 0)
                     cameraData.CinemachineBrain!.m_DefaultBlend.m_Style = CinemachineBlendDefinition.Style.Cut;
                 else
@@ -80,5 +80,8 @@ namespace DCL.SDKComponents.CameraControl.MainCamera
                 virtualCameraComponent.virtualCameraInstance.m_LookAt = null;
             }
         }
+
+        internal static float CalculateDistanceBlendTime(float distanceBetweenCameras, float speedValue) =>
+            distanceBetweenCameras / speedValue;
     }
 }
