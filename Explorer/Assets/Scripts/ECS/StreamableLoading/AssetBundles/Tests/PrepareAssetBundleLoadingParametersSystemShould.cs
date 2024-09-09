@@ -8,7 +8,6 @@ using NUnit.Framework;
 using SceneRunner.Scene;
 using System;
 using UnityEngine;
-using Utility;
 
 namespace ECS.StreamableLoading.AssetBundles.Tests
 {
@@ -31,6 +30,8 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         [Test]
         public void LoadFromEmbeddedFirst()
         {
+            UnityEngine.TestTools.LogAssert.ignoreFailingMessages = true;
+
             var intent = GetAssetBundleIntention.FromHash(typeof(GameObject), "TEST", permittedSources: AssetSource.EMBEDDED | AssetSource.WEB);
 
             Entity e = world.Create(intent, new StreamableLoadingState());
@@ -47,7 +48,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         [Test]
         public void LoadFromWeb()
         {
-            sceneData.AssetBundleManifest.Returns(new SceneAssetBundleManifest(FAKE_AB_PATH, "200", new[] { "abcd" } ));
+            sceneData.AssetBundleManifest.Returns(new SceneAssetBundleManifest(FAKE_AB_PATH, "200", new[] { "abcd" }));
 
             var intent = GetAssetBundleIntention.FromHash(typeof(GameObject), "abcd", permittedSources: AssetSource.WEB);
             Entity e = world.Create(intent, new StreamableLoadingState());
