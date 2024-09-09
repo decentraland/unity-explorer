@@ -67,7 +67,8 @@ namespace Global
                     roomHub,
                     realmData,
                     staticContainer.PortableExperiencesController,
-                new CommunicationControllerHub(messagePipesHub)),
+                    new SceneCommunicationPipe(messagePipesHub)
+                ),
             };
         }
     }

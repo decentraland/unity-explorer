@@ -109,7 +109,7 @@ namespace SceneRunner.Tests
                 new IRoomHub.Fake(),
                 Substitute.For<IRealmData>(),
                 Substitute.For<IPortableExperiencesController>(),
-                Substitute.For<ICommunicationControllerHub>()
+                Substitute.For<ISceneCommunicationPipe>()
             );
         }
 
