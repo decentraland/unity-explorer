@@ -21,7 +21,7 @@ namespace DCL.WebRequests.Analytics
             AnalyticsContainer = analyticsContainer;
         }
 
-        public static WebRequestsContainer Create(IWeb3IdentityCache web3IdentityProvider, IDebugContainerBuilder debugContainerBuilder, int concurrentBudget)
+        public static WebRequestsContainer Create(IWeb3IdentityCache web3IdentityProvider, IDebugContainerBuilder debugContainerBuilder, int totalBudget, int perDomainBudget)
         {
             WebRequestsAnalyticsContainer analyticsContainer = new WebRequestsAnalyticsContainer()
                                                               .AddTrackedMetric<ActiveCounter>()
@@ -46,7 +46,7 @@ namespace DCL.WebRequests.Analytics
             IWebRequestController webRequestController = new WebRequestController(analyticsContainer, web3IdentityProvider)
                                                         .WithLog()
                                                         .WithArtificialDelay(options)
-                                                        .WithBudget(new ConcurrentLoadingPerformanceBudget(concurrentBudget));
+                                                        .WithBudget(totalBudget, perDomainBudget);
 
             CreateStressTestUtility(widgetBuilder);
 

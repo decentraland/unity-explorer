@@ -47,6 +47,9 @@ namespace DCL.PluginSystem.Global
         [field: SerializeField]
         public int WebRequestsBudget { get; private set; } = 50;
 
+        [field: SerializeField]
+        public int WebRequestsPerDomainBudget { get; private set; } = 6;
+
         public Dictionary<MemoryUsageStatus, float> MemoryThresholds { get; private set; } = new ()
         {
             { MemoryUsageStatus.WARNING, 0.8f },
