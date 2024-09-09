@@ -24,7 +24,7 @@ namespace DCL.LOD
         /// <summary>
         /// When a pool is filled and more instances are required, this is the minimum amount to add to the pool.
         /// </summary>
-        private const int POOLS_MIN_NEW_INSTANCES = 20;
+        private const int POOLS_MIN_NEW_INSTANCES = 1;
 
         /// <summary>
         /// When a pool is filled and more instances are required, this is the maximum amount to add to the pool.
