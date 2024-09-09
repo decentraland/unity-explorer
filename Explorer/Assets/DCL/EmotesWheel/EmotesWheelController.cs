@@ -23,6 +23,7 @@ namespace DCL.EmotesWheel
 {
     public class EmotesWheelController : ControllerBase<EmotesWheelView>
     {
+        private const string? EMPTY_IMAGE_TYPE = "empty";
         private readonly ISelfProfile selfProfile;
         private readonly IEmoteStorage emoteStorage;
         private readonly NftTypeIconSO rarityBackgrounds;
@@ -174,7 +175,7 @@ namespace DCL.EmotesWheel
         {
             EmoteWheelSlotView view = viewInstance!.Slots[slot];
 
-            view.BackgroundRarity.sprite = rarityBackgrounds.GetTypeImage("empty");
+            view.BackgroundRarity.sprite = rarityBackgrounds.GetTypeImage(EMPTY_IMAGE_TYPE);
             view.EmptyContainer.SetActive(true);
             view.Thumbnail.gameObject.SetActive(false);
         }
@@ -201,7 +202,7 @@ namespace DCL.EmotesWheel
 
         private void ClearCurrentEmote(int slot)
         {
-            viewInstance!.CurrentEmoteName.text = "";
+            viewInstance!.CurrentEmoteName.text = string.Empty;
         }
 
         private void PlayEmote(int slot)
@@ -232,14 +233,14 @@ namespace DCL.EmotesWheel
 
         private void UnblockUnwantedInputs()
         {
-            inputBlock.Enable(InputMapComponent.Kind.EmoteWheel);
-            inputBlock.Disable(InputMapComponent.Kind.Emotes);
+            inputBlock.Enable(InputMapComponent.Kind.EMOTE_WHEEL);
+            inputBlock.Disable(InputMapComponent.Kind.EMOTES);
         }
 
         private void BlockUnwantedInputs()
         {
-            inputBlock.Disable(InputMapComponent.Kind.EmoteWheel);
-            inputBlock.Enable(InputMapComponent.Kind.Emotes);
+            inputBlock.Disable(InputMapComponent.Kind.EMOTE_WHEEL);
+            inputBlock.Enable(InputMapComponent.Kind.EMOTES);
         }
 
         private void ListenToSlotsInput(InputActionMap inputActionMap)
