@@ -50,7 +50,7 @@ namespace Global
     /// </summary>
     public class StaticContainer : IDCLPlugin<StaticSettings>
     {
-        public readonly ObjectProxy<Entity> PlayerEntityProxy = new ();
+        public Entity PlayerEntity { get; set; }
         public readonly ObjectProxy<DCLInput> InputProxy = new ();
         public readonly ObjectProxy<AvatarBase> MainPlayerAvatarBaseProxy = new ();
         public readonly ObjectProxy<IRoomHub> RoomHubProxy = new ();
@@ -109,8 +109,7 @@ namespace Global
                 );
         }
 
-        public static async UniTask<(StaticContainer? container, bool success)> CreateAsync(
-            IDecentralandUrlsSource decentralandUrlsSource,
+        public static async UniTask<(StaticContainer? container, bool success)> CreateAsync(IDecentralandUrlsSource decentralandUrlsSource,
             IAssetsProvisioner assetsProvisioner,
             IReportsHandlingSettings reportHandlingSettings,
             IAppArgs appArgs,
@@ -120,6 +119,7 @@ namespace Global
             IEthereumApi ethereumApi,
             bool localSceneDevelopment,
             World globalWorld,
+            Entity playerEntity,
             CancellationToken ct)
         {
             ProfilingCounters.CleanAllCounters();
@@ -129,17 +129,16 @@ namespace Global
             var profilingProvider = new Profiler();
 
             var container = new StaticContainer();
-
-
+            container.PlayerEntity = playerEntity;
             container.DebugContainerBuilder = DebugUtilitiesContainer.Create(debugViewsCatalog, appArgs.HasDebugFlag()).Builder;
             container.EthereumApi = ethereumApi;
             container.ScenesCache = new ScenesCache();
             container.SceneReadinessReportQueue = new SceneReadinessReportQueue(container.ScenesCache);
-
             container.InputBlock = new ECSInputBlock(globalWorld);
-
             container.assetsProvisioner = assetsProvisioner;
+
             var exposedPlayerTransform = new ExposedTransform();
+
             container.CharacterContainer = new CharacterContainer(container.assetsProvisioner, exposedGlobalDataContainer.ExposedCameraData, exposedPlayerTransform);
 
             bool result = await InitializeContainersAsync(container, settingsContainer, ct);
@@ -206,6 +205,7 @@ namespace Global
                 new MapPinPlugin(globalWorld),
                 new MultiplayerPlugin(),
                 new RealmInfoPlugin(container.RealmData, container.RoomHubProxy),
+                new InputModifierPlugin(globalWorld, container.PlayerEntity),
 
 #if UNITY_EDITOR
                 new GizmosWorldPlugin(),

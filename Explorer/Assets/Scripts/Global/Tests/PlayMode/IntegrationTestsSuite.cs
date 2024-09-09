@@ -47,6 +47,7 @@ namespace Global.Tests.PlayMode
                 Substitute.For<IEthereumApi>(),
                 false,
                 World.Create(),
+                new Entity(),
                 ct);
 
             if (!success)

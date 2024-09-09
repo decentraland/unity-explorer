@@ -141,6 +141,7 @@ namespace DCL.SDKComponents.AudioSources.Tests.PlayMode
                     ethereumApi,
                     false,
                     World.Create(),
+                    new Entity(),
                     ct
                 );
 
