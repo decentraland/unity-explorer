@@ -216,9 +216,9 @@ namespace Global.Dynamic
                     }
                 }
 
-                if (staticContainer.FeatureFlagsCache.Configuration.IsEnabled("GlobalPortableExperience", "csv-variant"))
+                if (staticContainer.FeatureFlagsCache.Configuration.IsEnabled("alfa-global-portable-experiences", "csv-variant"))
                 {
-                    if (!staticContainer.FeatureFlagsCache.Configuration.TryGetCsvPayload("GlobalPortableExperience", "csv-variant", out List<List<string>>? csv)) return;
+                    if (!staticContainer.FeatureFlagsCache.Configuration.TryGetCsvPayload("alfa-global-portable-experiences", "csv-variant", out List<List<string>>? csv)) return;
 
                     foreach (string value in csv[0])
                     {

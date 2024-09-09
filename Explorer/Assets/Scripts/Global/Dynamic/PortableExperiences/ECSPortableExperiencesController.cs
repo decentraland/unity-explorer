@@ -48,9 +48,9 @@ namespace PortableExperiences.Controller
 
         public async UniTask<IPortableExperiencesController.SpawnResponse> CreatePortableExperienceByEnsAsync(ENS ens, CancellationToken ct, bool isGlobalPortableExperience = false, bool force = false)
         {
-            if (!force && !featureFlagsCache.Configuration.IsEnabled("PortableExperiences")) throw new Exception("Portable Experiences are disabled");
+            if (!force && !featureFlagsCache.Configuration.IsEnabled("alfa-portable-experiences")) throw new Exception("Portable Experiences are disabled");
 
-            if (!force && !featureFlagsCache.Configuration.IsEnabled("GlobalPortableExperiences") && !isGlobalPortableExperience) throw new Exception("Only Global Portable Experiences are allowed");
+            if (!force && !featureFlagsCache.Configuration.IsEnabled("alfa-global-portable-experiences") && !isGlobalPortableExperience) throw new Exception("Only Global Portable Experiences are allowed");
 
             string worldUrl = string.Empty;
 
@@ -92,7 +92,7 @@ namespace PortableExperiences.Controller
 
         public bool CanKillPortableExperience(ENS ens)
         {
-            if (!featureFlagsCache.Configuration.IsEnabled("PortableExperiences")) return false;
+            if (!featureFlagsCache.Configuration.IsEnabled("alfa-portable-experiences")) return false;
 
             ISceneFacade currentSceneFacade = scenesCache.CurrentScene;
             if (currentSceneFacade == null) return false;
