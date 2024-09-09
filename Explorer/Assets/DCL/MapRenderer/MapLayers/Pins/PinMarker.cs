@@ -12,7 +12,7 @@ namespace DCL.MapRenderer.MapLayers.Pins
 {
     internal class PinMarker : IPinMarker
     {
-        private const float MAP_MIN_PIN_SCALE = 22;
+        private const float NAVMAP_PIN_DEFAULT_SCALE = 22;
         private const float MINIMAP_MIN_SIZE_FOR_PIN = 35;
 
         private readonly IMapCullingController cullingController;
@@ -69,6 +69,16 @@ namespace DCL.MapRenderer.MapLayers.Pins
             }
         }
 
+        public void DeselectImmediately(IPinMarker.ScaleType scaleType)
+        {
+            SetIconOutline(false);
+            pulseCancellationTokenSource.SafeCancelAndDispose();
+            selectionCancellationTokenSource.SafeCancelAndDispose();
+            if (poolableBehavior.instance != null)
+                poolableBehavior.instance.selectionScalingParent.localScale = Vector3.one;
+            ResetScale(scaleType);
+        }
+
         public async UniTaskVoid AnimateDeselectionAsync(CancellationToken ct)
         {
             SetIconOutline(false);
@@ -78,7 +88,8 @@ namespace DCL.MapRenderer.MapLayers.Pins
             {
                 selectionCancellationTokenSource = selectionCancellationTokenSource.SafeRestartLinked(ct);
                 await PinMarkerHelper.ScaleToAsync(poolableBehavior.instance.selectionScalingParent, Vector3.one, 0.5f, Ease.OutBack, selectionCancellationTokenSource.Token);
-                ResetPulseAnimation();
+                //We dont reset the ct in this case because it was already restarted and linked to the ct of AnimateDeselectionAsync
+                ResetPulseAnimation(false);
             }
         }
 
@@ -128,20 +139,20 @@ namespace DCL.MapRenderer.MapLayers.Pins
 
         public void SetZoom(float baseScale, float baseZoom, float zoom)
         {
-            currentBaseScale = Math.Max(baseScale, MAP_MIN_PIN_SCALE);
+            currentBaseScale = Math.Max(baseScale, NAVMAP_PIN_DEFAULT_SCALE);
             currentNewScale = Math.Max(zoom / baseZoom * currentBaseScale, currentBaseScale);
             poolableBehavior.instance?.SetScale(currentNewScale);
         }
 
-        public void ResetScale()
+        public void ResetScale(IPinMarker.ScaleType type)
         {
-            currentNewScale = MINIMAP_MIN_SIZE_FOR_PIN;
+            currentNewScale = type == IPinMarker.ScaleType.MINIMAP ? MINIMAP_MIN_SIZE_FOR_PIN : NAVMAP_PIN_DEFAULT_SCALE;
             poolableBehavior.instance?.SetScale(currentNewScale);
         }
 
-        private void ResetPulseAnimation()
+        private void ResetPulseAnimation(bool resetCt = true)
         {
-            pulseCancellationTokenSource = pulseCancellationTokenSource.SafeRestart();
+            if (resetCt) pulseCancellationTokenSource = pulseCancellationTokenSource.SafeRestart();
             if (!IsDestination && poolableBehavior.instance != null) PinMarkerHelper.PulseScaleAsync(poolableBehavior.instance.pulseScalingParent, ct: pulseCancellationTokenSource.Token).Forget();
         }
 

@@ -56,6 +56,7 @@ namespace DCL.Input.Component
         public void BlockInput(Kind kind)
         {
             inputBlockCounters[kind] += 1;
+            ReportHub.Log(ReportCategory.INPUT, $"Block {kind} - {inputBlockCounters[kind]}");
 
             if (inputBlockCounters[kind] == 1) { Active &= ~kind; }
         }
@@ -63,7 +64,7 @@ namespace DCL.Input.Component
         public void UnblockInput(Kind kind)
         {
             inputBlockCounters[kind] -= 1;
-
+            ReportHub.Log(ReportCategory.INPUT, $"Unblock {kind} - {inputBlockCounters[kind]}");
             switch (inputBlockCounters[kind])
             {
                 case 0:
