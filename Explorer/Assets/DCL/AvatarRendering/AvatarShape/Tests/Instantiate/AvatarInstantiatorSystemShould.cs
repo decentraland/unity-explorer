@@ -3,9 +3,12 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.ComputeShader;
-using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
+using DCL.AvatarRendering.AvatarShape.Helpers;
 using DCL.AvatarRendering.AvatarShape.Systems;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
+using DCL.AvatarRendering.Emotes;
+using DCL.AvatarRendering.Loading.Assets;
+using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Character.Components;
@@ -22,11 +25,6 @@ using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using DCL.AvatarRendering.AvatarShape.Helpers;
-using DCL.AvatarRendering.Emotes;
-using DCL.AvatarRendering.Loading.Assets;
-using DCL.AvatarRendering.Loading.Components;
-using System.Linq;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Pool;
@@ -35,14 +33,10 @@ using WearablePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRend
 using EmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution, DCL.AvatarRendering.Emotes.GetEmotesByPointersIntention>;
 using IAvatarAttachment = DCL.AvatarRendering.Loading.Components.IAvatarAttachment;
 
-namespace DCL.AvatarRendering.AvatarShape.Tests
+namespace DCL.AvatarRendering.AvatarShape.Tests.Instantiate
 {
     public class AvatarInstantiatorSystemShould : UnitySystemTestBase<AvatarInstantiatorSystem>
     {
-        private const int TEST_RESOLUTION = 256;
-
-        private static readonly int[] DEFAULT_RESOLUTIONS = { TEST_RESOLUTION };
-
         private Entity avatarEntity;
         private AvatarShapeComponent avatarShapeComponent;
 
@@ -106,18 +100,8 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             IExtendedObjectPool<Material>? materialPool = Substitute.For<IExtendedObjectPool<Material>>();
             materialPool.Get().Returns(new Material(celShadingMaterial), new Material(celShadingMaterial), new Material(celShadingMaterial));
 
-            Texture texture = new Texture2D(TEST_RESOLUTION, TEST_RESOLUTION, TextureArrayConstants.DEFAULT_BASEMAP_TEXTURE_FORMAT, false, false);
-
-            var defaultTextures = new Dictionary<TextureArrayKey, Texture>
-            {
-                [new TextureArrayKey(TextureArrayConstants.MAINTEX_ARR_TEX_SHADER, TEST_RESOLUTION)] = texture,
-                [new TextureArrayKey(TextureArrayConstants.NORMAL_MAP_TEX_ARR, TEST_RESOLUTION)] = texture,
-                [new TextureArrayKey(TextureArrayConstants.EMISSIVE_MAP_TEX_ARR, TEST_RESOLUTION)] = texture,
-            };
-
-            var textureArrayContainerFactory = new TextureArrayContainerFactory(defaultTextures);
-
-            var poolMaterialSetup = new PoolMaterialSetup(materialPool, textureArrayContainerFactory.Create(celShadingMaterial.shader, DEFAULT_RESOLUTIONS));
+            var textureArrayContainer = AvatarInstantiatorAssetsShould.NewTextureArrayContainer(celShadingMaterial.shader);
+            var poolMaterialSetup = new PoolMaterialSetup(materialPool, textureArrayContainer);
 
             IAvatarMaterialPoolHandler? materialPoolHandler = Substitute.For<IAvatarMaterialPoolHandler>();
             materialPoolHandler.GetMaterialPool(Arg.Any<int>()).Returns(poolMaterialSetup);
@@ -180,7 +164,13 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             };
 
             skinnedMeshRenderer.material = fakeABMaterial;
-            mockWearable.GetCategory().Returns(category);
+
+            var dto = new EmoteDTO();
+            dto.metadata = new EmoteDTO.Metadata();
+            dto.metadata.emoteDataADR74 = new EmoteDTO.Metadata.Data();
+            dto.metadata.emoteDataADR74.category = category;
+
+            mockWearable.DTO.Returns(dto);
 
             var rendererInfo = new AttachmentRegularAsset.RendererInfo(skinnedMeshRenderer, fakeABMaterial);
 
