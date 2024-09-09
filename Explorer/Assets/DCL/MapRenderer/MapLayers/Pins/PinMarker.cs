@@ -69,13 +69,14 @@ namespace DCL.MapRenderer.MapLayers.Pins
             }
         }
 
-        public void DeselectImmediately()
+        public void DeselectImmediately(IPinMarker.ScaleType scaleType)
         {
             SetIconOutline(false);
             pulseCancellationTokenSource.SafeCancelAndDispose();
             selectionCancellationTokenSource.SafeCancelAndDispose();
             if (poolableBehavior.instance != null)
                 poolableBehavior.instance.selectionScalingParent.localScale = Vector3.one;
+            ResetScale(scaleType);
         }
 
         public async UniTaskVoid AnimateDeselectionAsync(CancellationToken ct)

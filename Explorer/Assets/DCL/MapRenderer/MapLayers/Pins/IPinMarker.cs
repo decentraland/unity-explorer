@@ -26,7 +26,7 @@ namespace DCL.MapRenderer.MapLayers.Pins
 
         UniTaskVoid AnimateDeselectionAsync(CancellationToken ct);
 
-        public void DeselectImmediately();
+        public void DeselectImmediately(IPinMarker.ScaleType scaleType);
 
         void SetAsDestination(bool isDestination);
 

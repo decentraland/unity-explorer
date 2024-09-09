@@ -175,11 +175,8 @@ namespace DCL.MapRenderer.ConsumerUtils
             hudCamera = null;
             interactivityController = null;
             texture = null;
-            previousClickedMarker?.DeselectImmediately();
-            previousClickedMarker?.ResetScale(IPinMarker.ScaleType.NAVMAP);
-            previousMarker?.DeselectImmediately();
-            previousMarker?.ResetScale(IPinMarker.ScaleType.NAVMAP);
-
+            previousClickedMarker?.DeselectImmediately(IPinMarker.ScaleType.NAVMAP);
+            previousMarker?.DeselectImmediately(IPinMarker.ScaleType.NAVMAP);
 
             previousMarker = null;
             previousClickedMarker = null;

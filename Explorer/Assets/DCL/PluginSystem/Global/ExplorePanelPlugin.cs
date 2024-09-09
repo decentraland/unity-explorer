@@ -230,7 +230,7 @@ namespace DCL.PluginSystem.Global
             public AssetReferenceGameObject ExplorePanelPrefab;
 
             [field: SerializeField]
-            public BackpackSettings? BackpackSettings { get; private set; }
+            public BackpackSettings BackpackSettings { get; private set; }
 
             [field: SerializeField]
             public string[] EmbeddedEmotes { get; private set; }
