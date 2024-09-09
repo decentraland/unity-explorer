@@ -159,7 +159,7 @@ namespace DCL.PluginSystem.Global
             );
 
             //not injected anywhere
-            var _ = new BackpackEmoteBreadCrumbController(emoteView.BreadCrumb, backpackEventBus);
+            _ = new BackpackEmoteBreadCrumbController(emoteView.BreadCrumb, backpackEventBus);
 
             ObjectPool<BackpackEmoteGridItemView>? emoteGridPool = await BackpackEmoteGridController.InitializeAssetsAsync(assetsProvisioner, emoteView.GridView, ct);
 
