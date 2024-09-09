@@ -36,6 +36,7 @@ namespace Global.Dynamic
         bool EnableEmulateNoLivekitConnection { get; }
         bool OverrideConnectionQuality { get; }
         ConnectionQuality ConnectionQuality { get; }
+        bool EnableRemotePortableExperiences { get; }
     }
 
     [Serializable]
@@ -55,7 +56,10 @@ namespace Global.Dynamic
         private bool enableLOD;
         [SerializeField]
         private bool enableEmulateNoLivekitConnection;
-        [SerializeField] internal string[]? portableExperiencesEnsToLoad;
+        [SerializeField] [Tooltip("Enable Portable Experiences obtained from Feature Flags from loading at the start of the game")]
+        private bool enableRemotePortableExperiences;
+        [SerializeField] [Tooltip("Make sure the ENS put here will be loaded as a GlobalPX (format must be something.dcl.eth)")]
+        internal string[]? portableExperiencesEnsToLoad;
         [Space]
         [SerializeField]
         private bool overrideConnectionQuality;
@@ -73,11 +77,13 @@ namespace Global.Dynamic
                 portableExperiencesEnsToLoad = null,
                 enableEmulateNoLivekitConnection = false,
                 overrideConnectionQuality = false,
-                connectionQuality = ConnectionQuality.QualityExcellent
+                connectionQuality = ConnectionQuality.QualityExcellent,
+                enableRemotePortableExperiences = true,
             };
 
         // To avoid configuration issues, force full flow on build (Debug.isDebugBuild is always true in Editor)
         public string[]? PortableExperiencesEnsToLoad => Debug.isDebugBuild ? this.portableExperiencesEnsToLoad : RELEASE_SETTINGS.portableExperiencesEnsToLoad;
+        public bool EnableRemotePortableExperiences => Debug.isDebugBuild ? this.enableRemotePortableExperiences : RELEASE_SETTINGS.enableRemotePortableExperiences;
         public bool ShowSplash => Debug.isDebugBuild ? this.showSplash : RELEASE_SETTINGS.showSplash;
         public bool ShowAuthentication => Debug.isDebugBuild ? this.showAuthentication : RELEASE_SETTINGS.showAuthentication;
         public bool ShowLoading => Debug.isDebugBuild ? this.showLoading : RELEASE_SETTINGS.showLoading;
@@ -213,19 +219,19 @@ namespace Global.Dynamic
                 {
                     foreach (string pxEns in debugSettings.portableExperiencesEnsToLoad)
                     {
-                        staticContainer!.PortableExperiencesController!.CreatePortableExperienceByEnsAsyncWithErrorHandling(new ENS(pxEns), ct, true, true).Forget();
+                        staticContainer!.PortableExperiencesController.CreatePortableExperienceByEnsAsyncWithErrorHandling(new ENS(pxEns), ct, true, true).Forget();
                     }
                 }
 
-                string globalPxFlag = FeatureFlagsConfiguration.GetFlag(FeatureFlags.GLOBAL_PORTABLE_EXPERIENCE);
-
-                if (staticContainer!.FeatureFlagsCache.Configuration.IsEnabled(globalPxFlag, "csv-variant"))
+                if (debugSettings.EnableRemotePortableExperiences)
                 {
-                    if (!staticContainer.FeatureFlagsCache.Configuration.TryGetCsvPayload(globalPxFlag, "csv-variant", out List<List<string>>? csv)) return;
+                    string globalPxFlag = FeatureFlagsConfiguration.GetFlag(FeatureFlags.GLOBAL_PORTABLE_EXPERIENCE);
 
-                    foreach (string value in csv[0])
+                    if (staticContainer!.FeatureFlagsCache.Configuration.IsEnabled(globalPxFlag, "csv-variant"))
                     {
-                        staticContainer.PortableExperiencesController!.CreatePortableExperienceByEnsAsyncWithErrorHandling(new ENS(value), ct, true, false).Forget();
+                        if (!staticContainer.FeatureFlagsCache.Configuration.TryGetCsvPayload(globalPxFlag, "csv-variant", out List<List<string>>? csv)) return;
+
+                        foreach (string value in csv[0]) { staticContainer.PortableExperiencesController!.CreatePortableExperienceByEnsAsyncWithErrorHandling(new ENS(value), ct, true, false).Forget(); }
                     }
                 }
 
