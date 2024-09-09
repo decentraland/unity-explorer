@@ -1,6 +1,5 @@
 using Arch.Core;
 using DCL.Input.Component;
-using DCL.Utilities;
 using ECS.Abstract;
 
 namespace DCL.Input

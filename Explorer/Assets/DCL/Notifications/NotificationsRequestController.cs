@@ -100,7 +100,6 @@ namespace DCL.Notifications
                 commonArguments = new CommonArguments(urlBuilder.Build());
 
                 unixTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
-                lastPolledTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
 
                 List<INotification> notifications =
                     await webRequestController.GetAsync(
@@ -109,6 +108,9 @@ namespace DCL.Notifications
                                                    signInfo: WebRequestSignInfo.NewFromRaw(string.Empty, commonArguments.URL, unixTimestamp, "get"),
                                                    headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, unixTimestamp))
                                               .CreateFromNewtonsoftJsonAsync<List<INotification>>(serializerSettings: SERIALIZER_SETTINGS);
+
+                if (notifications.Count > 0)
+                    lastPolledTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
 
                 await UniTask.WhenAll(notifications.Select(notification =>
                 {

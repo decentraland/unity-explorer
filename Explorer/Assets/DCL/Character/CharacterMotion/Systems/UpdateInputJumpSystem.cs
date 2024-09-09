@@ -5,6 +5,7 @@ using DCL.Character.CharacterMotion.Components;
 using DCL.Character.Components;
 using DCL.Input;
 using DCL.Input.Systems;
+using DCL.SDKComponents.InputModifier.Components;
 using ECS.Abstract;
 using UnityEngine.InputSystem;
 
@@ -33,9 +34,9 @@ namespace DCL.CharacterMotion.Systems
         }
 
         [Query]
-        private void UpdateInput([Data] int tickValue, ref JumpInputComponent inputToUpdate)
+        private void UpdateInput([Data] int tickValue, ref JumpInputComponent inputToUpdate, in InputModifierComponent inputModifierComponent)
         {
-            if (!inputAction.enabled) return;
+            if(inputModifierComponent.DisableJump || !inputAction.enabled) return;
 
             if (inputAction.WasPressedThisFrame())
                 inputToUpdate.Trigger.TickWhenJumpOccurred = tickValue + 1;
