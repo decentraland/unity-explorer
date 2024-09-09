@@ -5,8 +5,30 @@ using System.IO;
 
 namespace DCL.FeatureFlags
 {
+    public enum FeatureFlags
+    {
+        PORTABLE_EXPERIENCE,
+        GLOBAL_PORTABLE_EXPERIENCE,
+        MAP_PINS
+    }
+
     public class FeatureFlagsConfiguration
     {
+        public static string GetFlag(FeatureFlags flags)
+        {
+            switch (flags)
+            {
+                case FeatureFlags.PORTABLE_EXPERIENCE:
+                    return "alfa-portable-experiences";
+                case FeatureFlags.GLOBAL_PORTABLE_EXPERIENCE:
+                    return "alfa-global-portable-experiences";
+                case FeatureFlags.MAP_PINS:
+                    return "alfa-map-pins";
+                default:
+                    return flags.ToString();
+            }
+        }
+
         private readonly FeatureFlagsResultDto result;
 
         public FeatureFlagsConfiguration(FeatureFlagsResultDto result)

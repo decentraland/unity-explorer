@@ -46,11 +46,27 @@ namespace PortableExperiences.Controller
             this.featureFlagsCache = featureFlagsCache;
         }
 
+        public async UniTaskVoid CreatePortableExperienceByEnsAsyncWithErrorHandling(ENS ens, CancellationToken ct, bool isGlobalPortableExperience, bool force)
+        {
+            try {
+                    await CreatePortableExperienceByEnsAsync(ens, ct, isGlobalPortableExperience, force);
+            }
+            catch (Exception e)
+            {
+                ReportHub.LogError(ReportCategory.PORTABLE_EXPERIENCE, e);
+            }
+        }
+
         public async UniTask<IPortableExperiencesController.SpawnResponse> CreatePortableExperienceByEnsAsync(ENS ens, CancellationToken ct, bool isGlobalPortableExperience = false, bool force = false)
         {
-            if (!force && !featureFlagsCache.Configuration.IsEnabled("alfa-portable-experiences")) throw new Exception("Portable Experiences are disabled");
+            if (!force && !featureFlagsCache.Configuration.IsEnabled(FeatureFlagsConfiguration.GetFlag(FeatureFlags.PORTABLE_EXPERIENCE)))
+            {
+                if (!isGlobalPortableExperience)
+                    throw new Exception("Portable Experiences are disabled");
 
-            if (!force && !featureFlagsCache.Configuration.IsEnabled("alfa-global-portable-experiences") && !isGlobalPortableExperience) throw new Exception("Only Global Portable Experiences are allowed");
+                if (!featureFlagsCache.Configuration.IsEnabled(FeatureFlagsConfiguration.GetFlag(FeatureFlags.GLOBAL_PORTABLE_EXPERIENCE)))
+                    throw new Exception("Global Portable Experiences are disabled");
+            }
 
             string worldUrl = string.Empty;
 
@@ -92,7 +108,7 @@ namespace PortableExperiences.Controller
 
         public bool CanKillPortableExperience(ENS ens)
         {
-            if (!featureFlagsCache.Configuration.IsEnabled("alfa-portable-experiences")) return false;
+            if (!featureFlagsCache.Configuration.IsEnabled(FeatureFlagsConfiguration.GetFlag(FeatureFlags.PORTABLE_EXPERIENCE))) return false;
 
             ISceneFacade currentSceneFacade = scenesCache.CurrentScene;
             if (currentSceneFacade == null) return false;

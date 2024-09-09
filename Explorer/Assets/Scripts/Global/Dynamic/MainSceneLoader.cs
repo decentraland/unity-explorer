@@ -6,6 +6,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
+using DCL.FeatureFlags;
 using DCL.Input.Component;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
@@ -212,17 +213,19 @@ namespace Global.Dynamic
                 {
                     foreach (string pxEns in debugSettings.portableExperiencesEnsToLoad)
                     {
-                        staticContainer.PortableExperiencesController!.CreatePortableExperienceByEnsAsync(new ENS(pxEns), ct, true, true).Forget();
+                        staticContainer!.PortableExperiencesController!.CreatePortableExperienceByEnsAsyncWithErrorHandling(new ENS(pxEns), ct, true, true).Forget();
                     }
                 }
 
-                if (staticContainer.FeatureFlagsCache.Configuration.IsEnabled("alfa-global-portable-experiences", "csv-variant"))
+                string globalPxFlag = FeatureFlagsConfiguration.GetFlag(FeatureFlags.GLOBAL_PORTABLE_EXPERIENCE);
+
+                if (staticContainer!.FeatureFlagsCache.Configuration.IsEnabled(globalPxFlag, "csv-variant"))
                 {
-                    if (!staticContainer.FeatureFlagsCache.Configuration.TryGetCsvPayload("alfa-global-portable-experiences", "csv-variant", out List<List<string>>? csv)) return;
+                    if (!staticContainer.FeatureFlagsCache.Configuration.TryGetCsvPayload(globalPxFlag, "csv-variant", out List<List<string>>? csv)) return;
 
                     foreach (string value in csv[0])
                     {
-                        staticContainer.PortableExperiencesController!.CreatePortableExperienceByEnsAsync(new ENS(value), ct, true).Forget();
+                        staticContainer.PortableExperiencesController!.CreatePortableExperienceByEnsAsyncWithErrorHandling(new ENS(value), ct, true, false).Forget();
                     }
                 }
 
