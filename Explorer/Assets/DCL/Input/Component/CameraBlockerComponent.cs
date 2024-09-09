@@ -1,4 +1,4 @@
-namespace DCL.CharacterMotion.Components
+namespace DCL.Input.Systems
 {
     public struct CameraBlockerComponent { }
 }
