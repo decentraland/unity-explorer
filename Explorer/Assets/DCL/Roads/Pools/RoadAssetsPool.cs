@@ -95,18 +95,17 @@ namespace DCL.LOD
                     {
                         roadAssetPool.Release(precachedInstances[i]);
                     }
-
-                    Debug.Log("<color=red>INCREASED POOL (+" + extraInstances + "): " + key + "</color>");
                 }
 
-                string log = "RoadAssetPoolDictionary\nTAKING: " + key + "\n";
+                // Debug: Uncomment this to know the content of the pools
+                //string log = "RoadAssetPoolDictionary\nTAKING: " + key + "\n";
 
-                foreach (KeyValuePair<string,IObjectPool<Transform>> keyValuePair in roadAssetPoolDictionary)
-                {
-                    log += keyValuePair.Key + ": " + (keyValuePair.Value as ObjectPool<Transform>).CountAll + " (" + (keyValuePair.Value as ObjectPool<Transform>).CountActive + ")\n";
-                }
+                //foreach (KeyValuePair<string,IObjectPool<Transform>> keyValuePair in roadAssetPoolDictionary)
+                //{
+                //    log += keyValuePair.Key + ": " + (keyValuePair.Value as ObjectPool<Transform>).CountAll + " (" + (keyValuePair.Value as ObjectPool<Transform>).CountActive + ")\n";
+                //}
 
-                Debug.Log(log);
+                //Debug.Log(log);
 
                 roadAsset = roadAssetPool.Get();
 
@@ -119,8 +118,6 @@ namespace DCL.LOD
 
         public void Release(string key, Transform asset)
         {
-            Debug.Log("<color=yellow>RELEASE: " + key + "</color>");
-
             if (roadAssetPoolDictionary.TryGetValue(key, out IObjectPool<Transform> roadAssetPool))
                 roadAssetPool.Release(asset);
             else
@@ -129,8 +126,6 @@ namespace DCL.LOD
 
         public void Unload(IPerformanceBudget frameTimeBudgetProvider, int maxUnloadAmount)
         {
-            Debug.Log("<color=cyan>UNLOAD!!!!!!!!!!!</color>");
-
             var unloadedAmount = 0;
 
             if (!frameTimeBudgetProvider.TrySpendBudget()) return;

@@ -44,7 +44,6 @@ namespace DCL.Roads.Systems
 
         protected override void Update(float t)
         {
-            //ReleaseRoadQuery(World);
             InstantiateRoadQuery(World);
         }
 
@@ -86,25 +85,5 @@ namespace DCL.Roads.Systems
             //In case this is a road teleport destination, we need to release the loading screen
             LODUtils.ReportSDK6SceneLoaded(sceneDefinitionComponent, sceneReadinessReportQueue, scenesCache);
         }
-
-        // [Query]
-        // [All(typeof(VisualSceneState))]
-        // [None(typeof(DeleteEntityIntention))]
-        // private void ReleaseRoad(Entity entity, ref RoadInfo roadInfo, ref SceneDefinitionComponent sceneDefinitionComponent, ref PartitionComponent partitionComponent)
-        // {
-        //     //if (!roadInfo.IsDirty) return;
-        //
-        //     if (!partitionComponent.IsBehind) return;
-        //
-        //     if (roadInfo.CurrentKey == null) return;
-        //
-        //     roadAssetPool.Release(roadInfo.CurrentKey, roadInfo.CurrentAsset);
-        //
-        //     roadInfo.CurrentKey = null;
-        //     roadInfo.CurrentAsset = null;
-        //
-        //     roadInfo.IsDirty = true;
-        // }
-
     }
 }
