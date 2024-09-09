@@ -21,9 +21,12 @@ using UnityEngine.Localization.SmartFormat.PersistentVariables;
 using UnityEngine.UI;
 using Utility;
 
+using UnityEngine.Assertions;
+
+#if !UNITY_EDITOR
 using DCL.Web3;
 using System.Collections.Generic;
-using UnityEngine.Assertions;
+#endif
 
 namespace DCL.AuthenticationScreenFlow
 {

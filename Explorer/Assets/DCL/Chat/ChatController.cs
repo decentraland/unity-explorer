@@ -2,14 +2,13 @@ using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.CharacterCamera;
-using DCL.CharacterMotion.Components;
 using DCL.Chat.Commands;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
-using DCL.Diagnostics;
 using DCL.Emoji;
 using DCL.Input;
 using DCL.Input.Component;
+using DCL.Input.Systems;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
 using ECS.Abstract;
@@ -31,6 +30,8 @@ namespace DCL.Chat
     {
         private const int MAX_MESSAGE_LENGTH = 250;
         private const string EMOJI_SUGGESTION_PATTERN = @":\w+";
+        private const string EMOJI_TAG = "[emoji]";
+        private const string HASH_CHARACTER = "#";
         private static readonly Regex EMOJI_PATTERN_REGEX = new (EMOJI_SUGGESTION_PATTERN, RegexOptions.Compiled);
 
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
@@ -235,8 +236,8 @@ namespace DCL.Chat
                 return;
 
             int caretPosition = viewInstance.InputField.stringPosition;
-            viewInstance.InputField.text = viewInstance.InputField.text.Insert(caretPosition, "[emoji]");
-            viewInstance.InputField.text = viewInstance.InputField.text.Replace("[emoji]", emoji);
+            viewInstance.InputField.text = viewInstance.InputField.text.Insert(caretPosition, EMOJI_TAG);
+            viewInstance.InputField.text = viewInstance.InputField.text.Replace(EMOJI_TAG, emoji);
             viewInstance.InputField.stringPosition += emoji.Length;
 
             viewInstance.InputField.ActivateInputField();
@@ -260,13 +261,13 @@ namespace DCL.Chat
         private void DisableUnwantedInputs()
         {
             world.AddOrGet(cameraEntity, new CameraBlockerComponent());
-            inputBlock.Disable(InputMapComponent.Kind.Camera , InputMapComponent.Kind.Shortcuts , InputMapComponent.Kind.Player);
+            inputBlock.Disable(InputMapComponent.Kind.CAMERA , InputMapComponent.Kind.SHORTCUTS , InputMapComponent.Kind.PLAYER);
         }
 
         private void EnableUnwantedInputs()
         {
             world.TryRemove<CameraBlockerComponent>(cameraEntity);
-            inputBlock.Enable(InputMapComponent.Kind.Camera , InputMapComponent.Kind.Shortcuts , InputMapComponent.Kind.Player);
+            inputBlock.Enable(InputMapComponent.Kind.CAMERA , InputMapComponent.Kind.SHORTCUTS , InputMapComponent.Kind.PLAYER);
         }
 
         private void OnSubmitAction(InputAction.CallbackContext obj)
@@ -332,8 +333,8 @@ namespace DCL.Chat
         {
             //temporary approach to extract the username without the walledId, will be refactored
             //once we have the proper integration of the profile retrieval
-            Color playerNameColor = chatEntryConfiguration.GetNameColor(itemData.Sender.Contains("#")
-                ? $"{itemData.Sender.Substring(0, itemData.Sender.IndexOf("#", StringComparison.Ordinal))}"
+            Color playerNameColor = chatEntryConfiguration.GetNameColor(itemData.Sender.Contains(HASH_CHARACTER)
+                ? $"{itemData.Sender.Substring(0, itemData.Sender.IndexOf(HASH_CHARACTER, StringComparison.Ordinal))}"
                 : itemData.Sender);
 
             itemScript.playerName.color = playerNameColor;
