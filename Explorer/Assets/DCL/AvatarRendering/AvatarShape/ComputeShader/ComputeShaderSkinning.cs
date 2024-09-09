@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using DCL.AvatarRendering.AvatarShape.Helpers;
 using DCL.Diagnostics;
+using NUnit.Framework;
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
@@ -29,9 +30,11 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             AvatarCustomSkinningComponent.Buffers buffers = SetupComputeShader(meshesData, skinningShader, vertCount, boneCount);
             List<AvatarCustomSkinningComponent.MaterialSetup> materialSetups = SetupMeshRenderer(meshesData, avatarMaterialPool, avatarShapeComponent, facialFeatureTexture);
 
+            Bounds totalBounds =  CalculateLocalBoundsFromMeshes(meshesData);
+
             ListPool<MeshData>.Release(meshesData);
 
-            return new AvatarCustomSkinningComponent(vertCount, buffers, materialSetups, skinningShader);
+            return new AvatarCustomSkinningComponent(vertCount, buffers, materialSetups, skinningShader, totalBounds);
         }
 
         public override void ComputeSkinning(NativeArray<float4x4> bonesResult, int indexInGlobalResultArray, ref AvatarCustomSkinningComponent skinning)
@@ -220,6 +223,43 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 
             for (var i = 0; i < skinningComponent.materials.Count; i++)
                 skinningComponent.materials[i].usedMaterial.SetInteger(ComputeShaderConstants.LAST_AVATAR_VERT_COUNT_ID, region.StartIndex);
+        }
+
+        /// <summary>
+        /// Checks the bounds of a list of meshes and computes the bounding box that contains them all.
+        /// </summary>
+        /// <param name="meshes">A list of meshes.</param>
+        /// <returns>A bounding box that contains all the meshes.</returns>
+        private static Bounds CalculateLocalBoundsFromMeshes(List<MeshData> meshes)
+        {
+            Vector3 maxCorner = new Vector3(float.MinValue, float.MinValue, float.MinValue);
+            Vector3 minCorner = new Vector3(float.MaxValue, float.MaxValue, float.MaxValue);
+
+            for (int i = 0; i < meshes.Count; ++i)
+            {
+                Bounds meshBounds = meshes[i].Mesh.mesh.bounds;
+
+                if (maxCorner.x < meshBounds.max.x)
+                    maxCorner.x = meshBounds.max.x;
+
+                if (maxCorner.y < meshBounds.max.y)
+                    maxCorner.y = meshBounds.max.y;
+
+                if (maxCorner.z < meshBounds.max.z)
+                    maxCorner.z = meshBounds.max.z;
+
+                if (minCorner.x > meshBounds.min.x)
+                    minCorner.x = meshBounds.min.x;
+
+                if (minCorner.y > meshBounds.min.y)
+                    minCorner.y = meshBounds.min.y;
+
+                if (minCorner.z > meshBounds.min.z)
+                    minCorner.z = meshBounds.min.z;
+            }
+
+            Vector3 size = maxCorner - minCorner;
+            return new Bounds(minCorner + size * 0.5f, size);
         }
     }
 }

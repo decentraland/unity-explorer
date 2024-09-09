@@ -42,6 +42,10 @@ namespace DCL.ECSComponents {
 
   }
   #region Messages
+  /// <summary>
+  /// @deprecated
+  /// Used internally for the game orchestrator PX, not exposed in the SDK
+  /// </summary>
   public sealed partial class PBMapPin : pb::IMessage<PBMapPin>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage

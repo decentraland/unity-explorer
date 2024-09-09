@@ -1,5 +1,6 @@
 ﻿using CRDT.Memory;
 using CrdtEcsBridge.PoolsProviders;
+using ECS;
 using SceneRunner.Scene;
 using SceneRuntime;
 using System;
@@ -15,11 +16,13 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
         private readonly ICRDTMemoryAllocator crdtMemoryAllocator;
 
         public CommunicationsControllerAPIImplementation(
+            IRealmData realmData,
             ISceneData sceneData,
             ICommunicationControllerHub messagePipesHub,
             IJsOperations jsOperations,
             ICRDTMemoryAllocator crdtMemoryAllocator,
             ISceneStateProvider sceneStateProvider) : base(
+            realmData,
             sceneData,
             messagePipesHub,
             jsOperations,

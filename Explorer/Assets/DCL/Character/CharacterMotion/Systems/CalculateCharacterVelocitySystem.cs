@@ -9,7 +9,6 @@ using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
-using DCL.Input;
 using DCL.Time.Systems;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;

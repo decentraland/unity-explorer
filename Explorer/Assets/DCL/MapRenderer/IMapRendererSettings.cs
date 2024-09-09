@@ -7,6 +7,7 @@ using DCL.MapRenderer.MapLayers.Pins;
 using DCL.MapRenderer.MapLayers.PlayerMarker;
 using DCL.MapRenderer.MapLayers.PointsOfInterest;
 using DCL.MapRenderer.MapLayers.Users;
+using DCL.MapRenderer.MapLayers.UsersMarker;
 using System;
 using UnityEngine;
 

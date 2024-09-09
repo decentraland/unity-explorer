@@ -11,7 +11,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.SignFlow
     {
         UniTask EnsureConnectedAsync(string adapterUrl, CancellationToken token);
 
-        UniTask<string> MessageForSignAsync(string ethereumAddress, CancellationToken token);
+        UniTask<LightResult<string>> MessageForSignAsync(string ethereumAddress, CancellationToken token);
 
         UniTask<LightResult<string>> WelcomePeerIdAsync(string signedMessageAuthChainJson, CancellationToken token);
 
