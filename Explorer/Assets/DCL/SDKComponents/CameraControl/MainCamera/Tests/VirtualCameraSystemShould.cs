@@ -75,41 +75,6 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
             Assert.AreSame(vCamComponent.virtualCameraInstance, virtualCamera);
         }
 
-        /*[Test]
-        public async Task UpdateVirtualCameraComponentCorrectly()
-        {
-            // Workaround for Unity bug not awaiting async Setup correctly
-            await UniTask.WaitUntil(() => system != null);
-
-            uint lookAtEntity1 = 358;
-            var component = new PBVirtualCamera()
-            {
-                LookAtEntity = lookAtEntity1,
-                IsDirty = true
-            };
-            world.Add(entity, component);
-
-            system.Update(1f);
-            Assert.IsTrue(world.TryGet(entity, out VirtualCameraComponent vCamComponent));
-            Assert.AreEqual(vCamComponent.lookAtCRDTEntity, lookAtEntity1);
-
-            uint lookAtEntity2 = 666;
-            component.LookAtEntity = lookAtEntity2;
-            component.IsDirty = false;
-            world.Set(entity, component);
-
-            system.Update(1f);
-            Assert.IsTrue(world.TryGet(entity, out vCamComponent));
-            Assert.AreNotEqual(vCamComponent.lookAtCRDTEntity, lookAtEntity2);
-
-            component.IsDirty = true;
-            world.Set(entity, component);
-
-            system.Update(1f);
-            Assert.IsTrue(world.TryGet(entity, out vCamComponent));
-            Assert.AreEqual(vCamComponent.lookAtCRDTEntity, lookAtEntity2);
-        }*/
-
         [Test]
         public async Task HandleComponentRemoveCorrectly()
         {
@@ -152,18 +117,6 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
         }
 
         /*[Test]
-        public void UpdateCinemachineCorrectly()
-        {
-
-        }
-
-        [Test]
-        public void UpdateMainCameraTransformValuesCorrectly()
-        {
-
-        }
-
-        [Test]
         public void HandleMinimumLookAtDistanceCorrectly()
         {
 
