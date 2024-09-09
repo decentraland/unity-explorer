@@ -76,6 +76,7 @@ using LiveKit.Internal.FFIClients.Pools.Memory;
 using LiveKit.Proto;
 using MVC;
 using MVC.PopupsController.PopupCloser;
+using PortableExperiences.Controller;
 using SceneRunner.Debugging.Hub;
 using SceneRunner.Scene;
 using System;
@@ -163,6 +164,7 @@ namespace Global.Dynamic
             DynamicWorldDependencies dynamicWorldDependencies,
             DynamicWorldParams dynamicWorldParams,
             AudioClipConfig backgroundMusic,
+            IPortableExperiencesController portableExperiencesController,
             World globalWorld,
             Entity playerEntity,
             CancellationToken ct)
@@ -394,6 +396,7 @@ namespace Global.Dynamic
                 { ShowEntityInfoChatCommand.REGEX, () => new ShowEntityInfoChatCommand(worldInfoHub) },
                 { ClearChatCommand.REGEX, () => new ClearChatCommand(chatHistory) },
                 { ReloadSceneChatCommand.REGEX, () => new ReloadSceneChatCommand(container.reloadSceneController) },
+                { LoadPortableExperienceChatCommand.REGEX, () => new LoadPortableExperienceChatCommand(portableExperiencesController)}
             };
 
             IChatMessagesBus coreChatMessageBus = new MultiplayerChatMessagesBus(container.MessagePipesHub, container.ProfileRepository, new MessageDeduplication<double>())

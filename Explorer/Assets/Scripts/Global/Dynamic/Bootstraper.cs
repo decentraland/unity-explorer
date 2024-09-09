@@ -16,6 +16,7 @@ using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
 using Global.AppArgs;
 using MVC;
+using PortableExperiences.Controller;
 using SceneRunner.Debugging;
 using System;
 using System.Threading;
@@ -121,6 +122,7 @@ namespace Global.Dynamic
                     AppParameters = appArgs,
                 },
                 backgroundMusic,
+                staticContainer.PortableExperiencesController,
                 world,
                 playerEntity,
                 ct);

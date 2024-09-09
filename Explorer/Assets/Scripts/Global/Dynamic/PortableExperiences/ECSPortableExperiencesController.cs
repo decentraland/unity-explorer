@@ -46,14 +46,16 @@ namespace PortableExperiences.Controller
             this.featureFlagsCache = featureFlagsCache;
         }
 
-        public async UniTaskVoid CreatePortableExperienceByEnsAsyncWithErrorHandling(ENS ens, CancellationToken ct, bool isGlobalPortableExperience, bool force)
+        public async UniTask<bool> CreatePortableExperienceByEnsAsyncWithErrorHandling(ENS ens, CancellationToken ct, bool isGlobalPortableExperience, bool force)
         {
             try {
                     await CreatePortableExperienceByEnsAsync(ens, ct, isGlobalPortableExperience, force);
+                    return true;
             }
             catch (Exception e)
             {
                 ReportHub.LogError(ReportCategory.PORTABLE_EXPERIENCE, e);
+                return false;
             }
         }
 
