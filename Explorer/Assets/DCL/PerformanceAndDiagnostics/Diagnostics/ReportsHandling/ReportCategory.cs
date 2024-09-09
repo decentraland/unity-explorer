@@ -258,6 +258,8 @@ namespace DCL.Diagnostics
 
         public const string BACKPACK = nameof(BACKPACK);
 
+        public const string BADGES = nameof(BADGES);
+
         /// <summary>
         ///     Whatever is coming from external pure C# plugins
         /// </summary>
