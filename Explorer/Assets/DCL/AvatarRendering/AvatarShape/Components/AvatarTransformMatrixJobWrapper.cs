@@ -37,10 +37,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 
         public AvatarTransformMatrixJobWrapper()
         {
-            job = new BoneMatrixCalculationJob
-            {
-                BonesMatricesResult = new NativeArray<float4x4>(BONES_PER_AVATAR_LENGTH, Allocator.Persistent)
-            };
+            job = new BoneMatrixCalculationJob(BONES_ARRAY_LENGTH, BONES_PER_AVATAR_LENGTH);
 
             bonesCombined = new TransformAccessArray(BONES_PER_AVATAR_LENGTH);
             for (int i = 0; i < BONES_PER_AVATAR_LENGTH; i++)
@@ -129,11 +126,8 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             updateAvatar = newUpdateAvatar;
             updateAvatarPtr = (bool*)updateAvatar.GetUnsafePtr();
 
-            job = new BoneMatrixCalculationJob
-            {
-                BonesMatricesResult =
-                    new NativeArray<float4x4>(BONES_PER_AVATAR_LENGTH * nextResizeValue, Allocator.Persistent)
-            };
+            job.BonesMatricesResult.Dispose();
+            job = new BoneMatrixCalculationJob(BONES_ARRAY_LENGTH, BONES_PER_AVATAR_LENGTH * nextResizeValue);
 
             currentAvatarAmountSupported = AVATAR_ARRAY_SIZE * nextResizeValue;
             nextResizeValue++;
