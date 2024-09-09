@@ -4,6 +4,7 @@ using DCL.Optimization.PerformanceBudgeting;
 using System;
 using System.Collections.Generic;
 using UnityEngine.Pool;
+using Utility;
 
 namespace DCL.WebRequests
 {
@@ -15,7 +16,7 @@ namespace DCL.WebRequests
         private readonly int perDomainBudget;
 
         private readonly IReleasablePerformanceBudget totalBudget;
-        private readonly Dictionary<string, ConcurrentLoadingPerformanceBudget> perDomainBudgets = new (50, StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<ReadOnlyMemory<char>, ConcurrentLoadingPerformanceBudget> perDomainBudgets = new (50, new StringUtils.StringMemoryIgnoreCaseComparer());
 
         public BudgetedWebRequestController(IWebRequestController origin, int totalBudget, int perDomainBudget)
         {
@@ -31,7 +32,7 @@ namespace DCL.WebRequests
             IAcquiredBudget totalBudgetAcquired;
             IAcquiredBudget? domainBudgetAcquired = null;
             ConcurrentLoadingPerformanceBudget? domainBudget = null;
-            string baseDomain = string.Empty;
+            ReadOnlyMemory<char> baseDomain = ReadOnlyMemory<char>.Empty;
 
             // Try bypass total budget
             while (!totalBudget.TrySpendBudget(out totalBudgetAcquired))
@@ -39,9 +40,9 @@ namespace DCL.WebRequests
 
             try
             {
-                baseDomain = new string(envelope.CommonArguments.URL.GetBaseDomain()); // TODO handle allocations
+                baseDomain = envelope.CommonArguments.URL.GetBaseDomain();
 
-                if (!string.IsNullOrEmpty(baseDomain))
+                if (baseDomain.Length > 0)
                 {
                     lock (perDomainBudgets)
                     {
