@@ -23,6 +23,7 @@ namespace DCL.WebRequests
 
         internal static readonly InitializeRequest<GetTextureArguments, GetTextureWebRequest> GET_TEXTURE = GetTextureWebRequest.Initialize;
         private static readonly InitializeRequest<GetAudioClipArguments, GetAudioClipWebRequest> GET_AUDIO_CLIP = GetAudioClipWebRequest.Initialize;
+        private static readonly InitializeRequest<GetAssetBundleArguments, GetAssetBundleWebRequest> GET_ASSET_BUNDLE = GetAssetBundleWebRequest.Initialize;
 
         public static UniTask<TResult> SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp, TResult>(
             this IWebRequestController controller,
@@ -33,7 +34,8 @@ namespace DCL.WebRequests
             string reportCategory,
             WebRequestHeadersInfo? headersInfo = null,
             WebRequestSignInfo? signInfo = null,
-            ISet<long>? ignoreErrorCodes = null
+            ISet<long>? ignoreErrorCodes = null,
+            bool suppressErrors = false
         )
             where TWebRequestArgs: struct
             where TWebRequest: struct, ITypedWebRequest
@@ -47,7 +49,8 @@ namespace DCL.WebRequests
                     reportCategory,
                     headersInfo ?? WebRequestHeadersInfo.NewEmpty(),
                     signInfo,
-                    ignoreErrorCodes
+                    ignoreErrorCodes,
+                    suppressErrors
                 ), op
             );
 
@@ -199,6 +202,17 @@ namespace DCL.WebRequests
             WebRequestHeadersInfo? headersInfo = null,
             WebRequestSignInfo? signInfo = null) where TOp: struct, IWebRequestOp<GetAudioClipWebRequest, AudioClip> =>
             controller.SendAsync<GetAudioClipWebRequest, GetAudioClipArguments, TOp, AudioClip>(GET_AUDIO_CLIP, commonArguments, args, webRequestOp, ct, reportCategory, headersInfo, signInfo);
+
+        public static UniTask<AssetBundleLoadingResult> GetAssetBundleAsync(
+            this IWebRequestController controller,
+            CommonArguments commonArguments,
+            GetAssetBundleArguments args,
+            CancellationToken ct,
+            string reportCategory = ReportCategory.ASSET_BUNDLES,
+            WebRequestHeadersInfo? headersInfo = null,
+            WebRequestSignInfo? signInfo = null,
+            bool suppressErrors = false) =>
+            controller.SendAsync<GetAssetBundleWebRequest, GetAssetBundleArguments, GetAssetBundleWebRequest.CreateAssetBundleOp, AssetBundleLoadingResult>(GET_ASSET_BUNDLE, commonArguments, args, new GetAssetBundleWebRequest.CreateAssetBundleOp(), ct, reportCategory, headersInfo, signInfo, suppressErrors: suppressErrors);
 
         public static IWebRequestController WithArtificialDelay(this IWebRequestController origin, ArtificialDelayWebRequestController.IReadOnlyOptions options) =>
             new ArtificialDelayWebRequestController(origin, options);

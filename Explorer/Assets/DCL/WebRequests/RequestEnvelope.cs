@@ -15,6 +15,7 @@ namespace DCL.WebRequests
         public readonly string ReportCategory;
         public readonly CommonArguments CommonArguments;
         public readonly CancellationToken Ct;
+        public readonly bool SuppressErrors;
         private readonly InitializeRequest<TWebRequestArgs, TWebRequest> initializeRequest;
         private readonly TWebRequestArgs args;
         private readonly WebRequestHeadersInfo headersInfo;
@@ -30,7 +31,8 @@ namespace DCL.WebRequests
             string reportCategory,
             WebRequestHeadersInfo headersInfo,
             WebRequestSignInfo? signInfo,
-            ISet<long>? responseCodeIgnores = null
+            ISet<long>? responseCodeIgnores = null,
+            bool suppressErrors = false
         )
         {
             this.initializeRequest = initializeRequest;
@@ -40,6 +42,7 @@ namespace DCL.WebRequests
             this.ReportCategory = reportCategory;
             this.headersInfo = headersInfo;
             this.signInfo = signInfo;
+            SuppressErrors = suppressErrors;
             this.responseCodeIgnores = responseCodeIgnores;
         }
 

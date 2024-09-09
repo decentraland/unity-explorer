@@ -1,5 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.WebRequests;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
 using System;
@@ -16,13 +17,13 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
 
         // 1 Collider, 196 Mesh Renderers, 0 Animations
         internal const string SCENE_WITH_COLLIDER_HASH = "bafybeigwxyfyyarzmvqz262vet65xa2ovetct6hcnm27uwge7yxpmhfvoe";
-        
+
         internal const string SCENE_WITH_COLLIDER_NAME = "SCENE_WITH_COLLIDER_NAME";
 
 
         // 1 Mesh Renderer // 1 Animation
         public const string RENDERER_WITH_LEGACY_ANIM_HASH = "bafkreif6qazpaiulr6kcqgukopkw6r26lawpnisdjdoddaqeujd5ytaezy";
-        
+
         public const string RENDERER_WITH_LEGACY_ANIM_NAME = "RENDERER_WITH_LEGACY_NAME";
 
 
