@@ -116,11 +116,11 @@ namespace DCL.Navmap
             if (isSelected)
             {
                 GetAndShowPreviousSearches();
-                inputBlock.Disable(InputMapComponent.Kind.Shortcuts);
+                inputBlock.Disable(InputMapComponent.Kind.SHORTCUTS);
             }
             else
             {
-                inputBlock.Enable(InputMapComponent.Kind.Shortcuts);
+                inputBlock.Enable(InputMapComponent.Kind.SHORTCUTS);
             }
         }
 
