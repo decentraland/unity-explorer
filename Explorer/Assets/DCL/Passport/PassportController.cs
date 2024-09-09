@@ -7,6 +7,7 @@ using DCL.CharacterPreview;
 using DCL.Chat;
 using DCL.Diagnostics;
 using DCL.Input;
+using DCL.Input.Component;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Passport.Modules;
 using DCL.Profiles;
@@ -39,9 +40,9 @@ namespace DCL.Passport
         private readonly ISelfProfile selfProfile;
         private readonly World world;
         private readonly IThumbnailProvider thumbnailProvider;
-        private readonly DCLInput dclInput;
         private readonly IWebBrowser webBrowser;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
+        private readonly IInputBlock inputBlock;
 
         private string? currentUserId;
         private CancellationTokenSource? characterPreviewLoadingCts;
@@ -67,9 +68,9 @@ namespace DCL.Passport
             World world,
             Entity playerEntity,
             IThumbnailProvider thumbnailProvider,
-            DCLInput dclInput,
             IWebBrowser webBrowser,
-            IDecentralandUrlsSource decentralandUrlsSource
+            IDecentralandUrlsSource decentralandUrlsSource,
+            IInputBlock inputBlock
         ) : base(viewFactory)
         {
             this.cursor = cursor;
@@ -84,9 +85,9 @@ namespace DCL.Passport
             this.selfProfile = selfProfile;
             this.world = world;
             this.thumbnailProvider = thumbnailProvider;
-            this.dclInput = dclInput;
             this.webBrowser = webBrowser;
             this.decentralandUrlsSource = decentralandUrlsSource;
+            this.inputBlock = inputBlock;
             passportProfileInfoController = new PassportProfileInfoController(selfProfile, world, playerEntity);
         }
 
@@ -114,10 +115,10 @@ namespace DCL.Passport
             cursor.Unlock();
             characterPreviewLoadingCts = characterPreviewLoadingCts.SafeRestart();
             LoadUserProfileAsync(currentUserId, characterPreviewLoadingCts.Token).Forget();
-            viewInstance.MainScroll.verticalNormalizedPosition = 1;
-            dclInput.Shortcuts.Disable();
-            dclInput.Camera.Disable();
-            dclInput.Player.Disable();
+            viewInstance!.MainScroll.verticalNormalizedPosition = 1;
+
+            inputBlock.Disable(InputMapComponent.Kind.Shortcuts , InputMapComponent.Kind.Camera , InputMapComponent.Kind.Player);
+
             viewInstance.ErrorNotification.Hide(true);
 
             PassportOpened?.Invoke(currentUserId);
@@ -126,9 +127,9 @@ namespace DCL.Passport
         protected override void OnViewClose()
         {
             passportErrorsController!.Hide(true);
-            dclInput.Shortcuts.Enable();
-            dclInput.Camera.Enable();
-            dclInput.Player.Enable();
+
+            inputBlock.Enable(InputMapComponent.Kind.Shortcuts , InputMapComponent.Kind.Camera , InputMapComponent.Kind.Player);
+
             characterPreviewController!.OnHide();
 
             characterPreviewLoadingCts.SafeCancelAndDispose();

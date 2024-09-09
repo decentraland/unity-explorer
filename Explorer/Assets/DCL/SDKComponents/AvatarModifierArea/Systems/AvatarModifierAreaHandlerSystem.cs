@@ -29,9 +29,9 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
         private static readonly QueryDescription AVATAR_BASE_QUERY = new QueryDescription().WithAll<AvatarBase>();
         private readonly World globalWorld;
 
-        public AvatarModifierAreaHandlerSystem(World world, ObjectProxy<World> globalWorldProxy) : base(world)
+        public AvatarModifierAreaHandlerSystem(World world, World globalWorld) : base(world)
         {
-            globalWorld = globalWorldProxy.Object;
+            this.globalWorld = globalWorld;
         }
 
         protected override void Update(float t)

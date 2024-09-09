@@ -6,15 +6,18 @@ using DCL.Minimap;
 using DCL.PlacesAPIService;
 using DCL.UI.MainUI;
 using ECS;
+using ECS.SceneLifeCycle;
+using ECS.SceneLifeCycle.Realm;
 using Global.Dynamic;
 using MVC;
 using System.Threading;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Realm;
+using Utility.Tasks;
 
 namespace DCL.PluginSystem.Global
 {
-    public class MinimapPlugin : DCLGlobalPluginBase<MinimapPlugin.MinimapSettings>
+    public class MinimapPlugin : IDCLGlobalPlugin<MinimapPlugin.MinimapSettings>
     {
         private readonly IMVCManager mvcManager;
         private readonly MapRendererContainer mapRendererContainer;
@@ -25,6 +28,7 @@ namespace DCL.PluginSystem.Global
         private readonly IScenesCache scenesCache;
         private readonly MainUIView mainUIView;
         private readonly IMapPathEventBus mapPathEventBus;
+        private MinimapController minimapController;
 
         public MinimapPlugin(IMVCManager mvcManager, MapRendererContainer mapRendererContainer, IPlacesAPIService placesAPIService,
             IRealmData realmData, IChatMessagesBus chatMessagesBus, IRealmNavigator realmNavigator, IScenesCache scenesCache, MainUIView mainUIView,
@@ -41,23 +45,37 @@ namespace DCL.PluginSystem.Global
             this.mainUIView = mainUIView;
         }
 
-        protected override async UniTask<ContinueInitialization?> InitializeInternalAsync(MinimapSettings settings, CancellationToken ct)
+        public void Dispose()
         {
-            return (ref ArchSystemsWorldBuilder<Arch.Core.World> world, in GlobalPluginArguments _) =>
-            {
-                mvcManager.RegisterController(new MinimapController(
-                    () =>
-                    {
-                        MinimapView? view = mainUIView.MinimapView;
-                        view.gameObject.SetActive(true);
-                        return view;
-                    },
-                    mapRendererContainer.MapRenderer, mvcManager, placesAPIService, TrackPlayerPositionSystem.InjectToWorld(ref world),
-                    realmData, chatMessagesBus, realmNavigator, scenesCache, mapPathEventBus));
-            };
+            minimapController.Dispose();
         }
 
-        protected override void InjectSystems(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
+        {
+            TrackPlayerPositionSystem? trackPlayerPositionSystem = TrackPlayerPositionSystem.InjectToWorld(ref builder);
+            minimapController.HookPlayerPositionTrackingSystem(trackPlayerPositionSystem);
+        }
+
+        public async UniTask InitializeAsync(MinimapSettings settings, CancellationToken ct)
+        {
+            minimapController = new MinimapController(
+                () =>
+                {
+                    MinimapView? view = mainUIView.MinimapView;
+                    view.gameObject.SetActive(true);
+                    return view;
+                },
+                mapRendererContainer.MapRenderer,
+                mvcManager,
+                placesAPIService,
+                realmData,
+                chatMessagesBus,
+                realmNavigator,
+                scenesCache,
+                mapPathEventBus);
+
+            mvcManager.RegisterController(minimapController);
+        }
 
         public class MinimapSettings : IDCLPluginSettings { }
     }

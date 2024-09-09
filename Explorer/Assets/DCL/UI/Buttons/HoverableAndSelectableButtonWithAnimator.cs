@@ -1,5 +1,4 @@
-﻿using System;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.EventSystems;
 
 namespace DCL.UI.Buttons
@@ -12,34 +11,9 @@ namespace DCL.UI.Buttons
 
         private bool selected;
 
-        public new void Awake()
-        {
-            base.Awake();
-            Button.onClick.AddListener(OnButtonPressed);
-        }
-
-        private void OnDestroy()
-        {
-            Button.onClick.RemoveListener(OnButtonPressed);
-        }
-
-
         public void OnDeselect(BaseEventData eventData)
         {
             selected = false;
-            Animator.SetTrigger(UIAnimationHashes.UNHOVER);
-        }
-
-        public new void OnPointerEnter(PointerEventData eventData)
-        {
-            base.OnPointerEnter(eventData);
-            Animator.SetTrigger(UIAnimationHashes.HOVER);
-        }
-
-        public new void OnPointerExit(PointerEventData eventData)
-        {
-            base.OnPointerExit(eventData);
-            if (!selected) Animator.SetTrigger(UIAnimationHashes.UNHOVER);
         }
 
         public void OnSelect(BaseEventData eventData)
@@ -47,10 +21,25 @@ namespace DCL.UI.Buttons
             selected = true;
         }
 
-        private new void OnButtonPressed()
+        public new void OnPointerEnter(PointerEventData eventData)
         {
-            base.OnButtonPressed();
-            selected = true;
+            base.OnPointerEnter(eventData);
+
+            if (!selected)
+            {
+                Animator.ResetTrigger(UIAnimationHashes.UNHOVER);
+                Animator.SetTrigger(UIAnimationHashes.HOVER);
+            }
+        }
+
+        public new void OnPointerExit(PointerEventData eventData)
+        {
+            base.OnPointerExit(eventData);
+            if (!selected)
+            {
+                Animator.ResetTrigger(UIAnimationHashes.HOVER);
+                Animator.SetTrigger(UIAnimationHashes.UNHOVER);
+            }
         }
     }
 }

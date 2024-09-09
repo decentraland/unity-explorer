@@ -33,14 +33,14 @@ namespace DCL.AvatarRendering.Wearables.Systems
     {
         private readonly URLSubdirectory customStreamingSubdirectory;
         private readonly IRealmData realmData;
-        private readonly IWearableCatalog wearableCatalog;
+        private readonly IWearableCache wearableCache;
 
         private SingleInstanceEntity defaultWearablesState;
 
-        public ResolveWearableByPointerSystem(World world, IWearableCatalog wearableCatalog, IRealmData realmData,
+        public ResolveWearableByPointerSystem(World world, IWearableCache wearableCache, IRealmData realmData,
             URLSubdirectory customStreamingSubdirectory) : base(world)
         {
-            this.wearableCatalog = wearableCatalog;
+            this.wearableCache = wearableCache;
             this.realmData = realmData;
             this.customStreamingSubdirectory = customStreamingSubdirectory;
         }
@@ -56,7 +56,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
             // Only DTO loading requires realmData
             if (realmData.Configured)
-                FinalizeWearableDTOQuery(World, defaultWearablesResolved);
+                FinalizeWearableDTOQuery(World);
 
             ResolveWearablePromiseQuery(World, defaultWearablesResolved);
 
@@ -103,9 +103,9 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 URN shortenedPointer = loadingIntentionPointer;
                 loadingIntentionPointer = shortenedPointer.Shorten();
 
-                if (!wearableCatalog.TryGetWearable(loadingIntentionPointer, out IWearable wearable))
+                if (!wearableCache.TryGetWearable(loadingIntentionPointer, out IWearable wearable))
                 {
-                    wearableCatalog.AddEmptyWearable(loadingIntentionPointer);
+                    wearableCache.AddEmptyWearable(loadingIntentionPointer);
                     missingPointers.Add(loadingIntentionPointer);
                     continue;
                 }
@@ -142,17 +142,15 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
                     if (visibleWearable.IsLoading) continue;
                     if (CreateAssetBundlePromiseIfRequired(visibleWearable, wearablesByPointersIntention, partitionComponent)) continue;
+                    if (!visibleWearable.HasEssentialAssetsResolved(wearablesByPointersIntention.BodyShape)) continue;
 
-                    if (visibleWearable.WearableAssetResults[wearablesByPointersIntention.BodyShape].Results.All(static r => r is { Succeeded: true }))
-                    {
-                        successfulResults++;
+                    successfulResults++;
 
-                        // Reference must be added only once when the wearable is resolved
-                        if (BitWiseUtils.TrySetBit(ref wearablesByPointersIntention.ResolvedWearablesIndices, i))
+                    // Reference must be added only once when the wearable is resolved
+                    if (BitWiseUtils.TrySetBit(ref wearablesByPointersIntention.ResolvedWearablesIndices, i))
 
-                            // We need to add a reference here, so it is not lost if the flow interrupts in between (i.e. before creating instances of CachedWearable)
-                            visibleWearable.WearableAssetResults[wearablesByPointersIntention.BodyShape].AddReference();
-                    }
+                        // We need to add a reference here, so it is not lost if the flow interrupts in between (i.e. before creating instances of CachedWearable)
+                        visibleWearable.WearableAssetResults[wearablesByPointersIntention.BodyShape].AddReference();
                 }
             }
 
@@ -166,13 +164,13 @@ namespace DCL.AvatarRendering.Wearables.Systems
         }
 
         [Query]
-        private void FinalizeWearableDTO([Data] bool defaultWearablesResolved, in Entity entity, ref AssetPromise<WearablesDTOList, GetWearableDTOByPointersIntention> promise, ref BodyShape bodyShape)
+        private void FinalizeWearableDTO(in Entity entity, ref AssetPromise<WearablesDTOList, GetWearableDTOByPointersIntention> promise, ref BodyShape bodyShape)
         {
             if (promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested)
             {
                 foreach (string pointerID in promise.LoadingIntention.Pointers)
                 {
-                    wearableCatalog.TryGetWearable(pointerID, out IWearable component);
+                    wearableCache.TryGetWearable(pointerID, out IWearable component);
                     component.IsLoading = false;
                 }
 
@@ -196,7 +194,8 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
                     foreach (WearableDTO assetEntity in promiseResult.Asset.Value)
                     {
-                        bool isWearableInCatalog = wearableCatalog.TryGetWearable(assetEntity.metadata.id, out var component);
+                        bool isWearableInCatalog = wearableCache.TryGetWearable(assetEntity.metadata.id, out var component);
+
                         if (!isWearableInCatalog)
                         {
                             //A wearable that has a DTO request should already have an empty representation in the catalog at this point
@@ -205,8 +204,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                         }
 
                         if (!component.TryResolveDTO(new StreamableLoadingResult<WearableDTO>(assetEntity)))
-                            ReportHub.LogError(new ReportData(GetReportCategory()), $"Wearable DTO is has already been initialized: {assetEntity.metadata.id}");
-
+                            ReportHub.LogError(new ReportData(GetReportCategory()), $"Wearable DTO has already been initialized: {assetEntity.metadata.id}");
 
                         failedDTOList.Remove(assetEntity.metadata.id);
                         component.IsLoading = false;
@@ -227,7 +225,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                     //We have some missing pointers that were not completed. We have to consider them as failure
                     var e = new ArgumentNullException($"Wearable DTO is null for for {urn}");
                     ReportHub.LogError(new ReportData(GetReportCategory()), e);
-                    if (wearableCatalog.TryGetWearable(urn, out var component))
+                    if (wearableCache.TryGetWearable(urn, out var component))
                     {
                         //If its not in the catalog, we cannot determine which one has failed
                         component.ResolvedFailedDTO(new StreamableLoadingResult<WearableDTO>(e));
@@ -296,6 +294,9 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
         private bool CreateAssetBundlePromiseIfRequired(IWearable component, in GetWearablesByPointersIntention intention, IPartitionComponent partitionComponent)
         {
+            // Do not repeat the promise if already failed once. Otherwise it will end up in an endless loading:true state
+            if (component.ManifestResult is { Succeeded: false }) return false;
+
             // Manifest is required for Web loading only
             if (component.ManifestResult == null && EnumUtils.HasFlag(intention.PermittedSources, AssetSource.WEB))
                 return component.CreateAssetBundleManifestPromise(World, intention.BodyShape, intention.CancellationTokenSource, partitionComponent);
@@ -362,7 +363,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
             void CopyDefaultResults(BodyShape bs)
             {
-                IWearable defaultWearable = wearableCatalog.GetDefaultWearable(bs, wearable.GetCategory());
+                IWearable defaultWearable = wearableCache.GetDefaultWearable(bs, wearable.GetCategory());
                 var defaultWearableResults = defaultWearable.WearableAssetResults[bs];
 
                 // the destination array might be not created if DTO itself has failed to load

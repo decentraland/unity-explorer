@@ -23,5 +23,8 @@ namespace ECS.StreamableLoading.Common.Components
         }
 
         public bool IsInitialized => Exception != null || Asset != null || Succeeded;
+
+        public override string ToString() =>
+            IsInitialized ? Succeeded ? Asset!.ToString() : Exception!.ToString() : "Not Initialized";
     }
 }

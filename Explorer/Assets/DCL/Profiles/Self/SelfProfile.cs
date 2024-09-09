@@ -21,40 +21,48 @@ namespace DCL.Profiles.Self
         private readonly IProfileRepository profileRepository;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IEquippedWearables equippedWearables;
-        private readonly IWearableCatalog wearableCatalog;
+        private readonly IWearableCache wearableCache;
         private readonly IEquippedEmotes equippedEmotes;
         private readonly IEmoteCache emoteCache;
         private readonly IReadOnlyList<string> forceRender;
+        private readonly IReadOnlyList<URN>? forcedEmotes;
         private readonly ProfileBuilder profileBuilder = new ();
 
         public SelfProfile(
             IProfileRepository profileRepository,
             IWeb3IdentityCache web3IdentityCache,
             IEquippedWearables equippedWearables,
-            IWearableCatalog wearableCatalog,
+            IWearableCache wearableCache,
             IEmoteCache emoteCache,
             IEquippedEmotes equippedEmotes,
-            IReadOnlyList<string> forceRender
-        )
+            IReadOnlyList<string> forceRender,
+            IReadOnlyList<URN>? forcedEmotes)
         {
             this.profileRepository = profileRepository;
             this.web3IdentityCache = web3IdentityCache;
             this.equippedWearables = equippedWearables;
-            this.wearableCatalog = wearableCatalog;
+            this.wearableCache = wearableCache;
             this.emoteCache = emoteCache;
             this.equippedEmotes = equippedEmotes;
             this.forceRender = forceRender;
+            this.forcedEmotes = forcedEmotes;
         }
 
-        public UniTask<Profile?> ProfileAsync(CancellationToken ct)
+        public async UniTask<Profile?> ProfileAsync(CancellationToken ct)
         {
             if (web3IdentityCache.Identity == null)
                 throw new Web3IdentityMissingException("Web3 Identity is not initialized");
 
-            return profileRepository.GetAsync(
+            Profile? profile = await profileRepository.GetAsync(
                 web3IdentityCache.Identity.Address,
                 ct
             );
+
+            if (profile != null && forcedEmotes != null)
+                for (var slot = 0; slot < forcedEmotes.Count; slot++)
+                    profile.Avatar.emotes[slot] = forcedEmotes[slot];
+
+            return profile;
         }
 
         public async UniTask<Profile?> PublishAsync(CancellationToken ct)
@@ -125,16 +133,13 @@ namespace DCL.Profiles.Self
 
                 URN uniqueUrn = w.GetUrn();
 
-                if (!uniqueUrn.IsExtended())
+                if (wearableCache.TryGetOwnedNftRegistry(uniqueUrn, out IReadOnlyDictionary<URN, NftBlockchainOperationEntry>? registry))
+                    uniqueUrn = registry.First().Value.Urn;
+                else
                 {
-                    if (wearableCatalog.TryGetOwnedNftRegistry(uniqueUrn, out IReadOnlyDictionary<URN, NftBlockchainOperationEntry>? registry))
-                        uniqueUrn = registry.First().Value.Urn;
-                    else
-                    {
-                        foreach (URN profileWearable in profile?.Avatar?.Wearables ?? Array.Empty<URN>())
-                            if (profileWearable.Shorten() == uniqueUrn)
-                                uniqueUrn = profileWearable;
-                    }
+                    foreach (URN profileWearable in profile?.Avatar?.Wearables ?? Array.Empty<URN>())
+                        if (profileWearable.Shorten() == uniqueUrn)
+                            uniqueUrn = profileWearable;
                 }
 
                 uniqueWearables.Add(uniqueUrn);
@@ -151,16 +156,13 @@ namespace DCL.Profiles.Self
 
                 URN uniqueUrn = w.GetUrn();
 
-                if (!uniqueUrn.IsExtended())
+                if (emoteCache.TryGetOwnedNftRegistry(uniqueUrn, out IReadOnlyDictionary<URN, NftBlockchainOperationEntry>? registry))
+                    uniqueUrn = registry.First().Value.Urn;
+                else
                 {
-                    if (emoteCache.TryGetOwnedNftRegistry(uniqueUrn, out IReadOnlyDictionary<URN, NftBlockchainOperationEntry>? registry))
-                        uniqueUrn = registry.First().Value.Urn;
-                    else
-                    {
-                        foreach (URN urn in profile?.Avatar.Emotes ?? Array.Empty<URN>())
-                            if (urn.Shorten() == uniqueUrn)
-                                uniqueUrn = urn;
-                    }
+                    foreach (URN urn in profile?.Avatar.Emotes ?? Array.Empty<URN>())
+                        if (urn.Shorten() == uniqueUrn)
+                            uniqueUrn = urn;
                 }
 
                 uniqueEmotes[i] = uniqueUrn;

@@ -45,8 +45,8 @@ namespace DCL.StylizedSkybox.Scripts.Plugin
 
             skyboxController.Initialize(settings.SkyboxMaterial, directionalLight, skyboxAnimation);
 
-            debugContainerBuilder.AddWidget("Skybox")
-                                 .AddSingleButton("Play", () => skyboxController.Play())
+            debugContainerBuilder.TryAddWidget("Skybox")
+                                 ?.AddSingleButton("Play", () => skyboxController.Play())
                                  .AddSingleButton("Pause", () => skyboxController.Pause())
                                  .AddIntSliderField("Time", timeOfDay, 0, skyboxController.SecondsInDay)
                                  .AddSingleButton("SetTime", () => skyboxController.SetTime(timeOfDay.Value)); //TODO: replace this by a system to update the value

@@ -1,6 +1,7 @@
 ﻿using DCL.DebugUtilities.Views;
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using Utility.UIToolkit;
 
 namespace DCL.DebugUtilities
@@ -14,7 +15,7 @@ namespace DCL.DebugUtilities
             Builder = builder;
         }
 
-        public static DebugUtilitiesContainer Create(DebugViewsCatalog viewsCatalog)
+        public static DebugUtilitiesContainer Create(DebugViewsCatalog viewsCatalog, bool isFullDebug)
         {
             return new DebugUtilitiesContainer(
                 new DebugContainerBuilder(
@@ -35,7 +36,17 @@ namespace DCL.DebugUtilities
                         { typeof(DebugTextFieldDef), new DebugElementBase<DebugTextFieldElement, DebugTextFieldDef>.Factory(viewsCatalog.TextField) },
                         { typeof(DebugToggleDef), new DebugElementBase<DebugToggleElement, DebugToggleDef>.Factory(viewsCatalog.Toggle) },
                         { typeof(DebugDropdownDef), new DebugElementBase<DebugDropdownElement, DebugDropdownDef>.Factory(viewsCatalog.DropdownField) },
-                    }
+                    },
+                    isFullDebug
+                        ? null
+                        : new HashSet<string>
+                        {
+                            IDebugContainerBuilder.Categories.ROOM_INFO,
+                            IDebugContainerBuilder.Categories.ROOM_SCENE,
+                            IDebugContainerBuilder.Categories.ROOM_ISLAND,
+                            IDebugContainerBuilder.Categories.PERFORMANCE,
+                            IDebugContainerBuilder.Categories.MEMORY,
+                        }
                 )
             );
         }

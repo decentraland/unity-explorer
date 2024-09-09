@@ -3,11 +3,11 @@ using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using CrdtEcsBridge.RestrictedActions;
 using DCL.AvatarRendering.AvatarShape.Systems;
-using DCL.AvatarRendering.Emotes;
-using DCL.Character.Plugin;
 using DCL.DebugUtilities;
 using DCL.GlobalPartitioning;
 using DCL.Ipfs;
+using DCL.LOD;
+using DCL.Multiplayer.Emotes;
 using DCL.Multiplayer.SDK.Systems.GlobalWorld;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
@@ -25,15 +25,16 @@ using ECS.Prioritization.Components;
 using ECS.Prioritization.Systems;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Components;
+using ECS.SceneLifeCycle.CurrentScene;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.SceneLifeCycle.Systems;
 using ECS.StreamableLoading.Cache;
 using SceneRunner;
 using SceneRunner.Scene;
+using SceneRuntime;
 using System.Collections.Generic;
 using System.Threading;
-using DCL.LOD;
 using SystemGroups.Visualiser;
 using Utility;
 
@@ -59,25 +60,28 @@ namespace Global.Dynamic
         private readonly StaticContainer staticContainer;
         private readonly IScenesCache scenesCache;
         private readonly ILODCache lodCache;
-        private readonly CharacterContainer characterContainer;
-
+        private readonly IEmotesMessageBus emotesMessageBus;
+        private readonly World world;
+        private readonly CurrentSceneInfo currentSceneInfo;
         private readonly HybridSceneParams hybridSceneParams;
         private readonly ICharacterDataPropagationUtility characterDataPropagationUtility;
 
-        public GlobalWorldFactory( in StaticContainer staticContainer,
+        public GlobalWorldFactory(in StaticContainer staticContainer,
             CameraSamplingData cameraSamplingData, RealmSamplingData realmSamplingData,
             URLDomain assetBundlesURL, IRealmData realmData,
             IReadOnlyList<IDCLGlobalPlugin> globalPlugins, IDebugContainerBuilder debugContainerBuilder,
             IScenesCache scenesCache, HybridSceneParams hybridSceneParams,
             ICharacterDataPropagationUtility characterDataPropagationUtility,
-            ILODCache lodCache)
+            CurrentSceneInfo currentSceneInfo,
+            ILODCache lodCache,
+            IEmotesMessageBus emotesMessageBus,
+            World world)
         {
             partitionedWorldsAggregateFactory = staticContainer.SingletonSharedDependencies.AggregateFactory;
             componentPoolsRegistry = staticContainer.ComponentsContainer.ComponentPoolsRegistry;
             partitionSettings = staticContainer.PartitionSettings;
             webRequestController = staticContainer.WebRequestsContainer.WebRequestController;
             staticSettings = staticContainer.StaticSettings;
-            characterContainer = staticContainer.CharacterContainer;
             realmPartitionSettings = staticContainer.RealmPartitionSettings;
 
             this.cameraSamplingData = cameraSamplingData;
@@ -90,16 +94,17 @@ namespace Global.Dynamic
             this.scenesCache = scenesCache;
             this.hybridSceneParams = hybridSceneParams;
             this.characterDataPropagationUtility = characterDataPropagationUtility;
+            this.currentSceneInfo = currentSceneInfo;
             this.lodCache = lodCache;
+            this.emotesMessageBus = emotesMessageBus;
+            this.world = world;
 
             memoryBudget = staticContainer.SingletonSharedDependencies.MemoryBudget;
             physicsTickProvider = staticContainer.PhysicsTickProvider;
         }
 
-        public (GlobalWorld, Entity) Create(ISceneFactory sceneFactory)
+        public GlobalWorld Create(ISceneFactory sceneFactory, V8ActiveEngines v8ActiveEngines, Entity playerEntity)
         {
-            var world = World.Create();
-
             // not synced by mutex, for compatibility only
 
             ISceneStateProvider globalSceneStateProvider = new SceneStateProvider();
@@ -107,8 +112,6 @@ namespace Global.Dynamic
 
             var builder = new ArchSystemsWorldBuilder<World>(world);
             builder.InjectCustomGroup(new SyncedPreRenderingSystemGroup(null, globalSceneStateProvider));
-
-            Entity playerEntity = characterContainer.CreatePlayerEntity(world);
 
             IReleasablePerformanceBudget sceneBudget = new ConcurrentLoadingPerformanceBudget(staticSettings.ScenesLoadingBudget);
 
@@ -121,7 +124,6 @@ namespace Global.Dynamic
                 loadSceneSystemLogic = new LoadHybridSceneSystemLogic(webRequestController, assetBundlesURL, hybridSceneParams, characterDataPropagationUtility, world, playerEntity);
             else
                 loadSceneSystemLogic = new LoadSceneSystemLogic(webRequestController, assetBundlesURL, characterDataPropagationUtility, world, playerEntity);
-
 
             LoadSceneSystem.InjectToWorld(ref builder,
                 loadSceneSystemLogic,
@@ -161,15 +163,13 @@ namespace Global.Dynamic
 
             OwnAvatarLoaderFromDebugMenuSystem.InjectToWorld(ref builder, playerEntity, debugContainerBuilder, realmData);
 
-            UpdateCurrentSceneSystem.InjectToWorld(ref builder, realmData, scenesCache, playerEntity, staticContainer.SingletonSharedDependencies.SceneAssetLock);
+            UpdateCurrentSceneSystem.InjectToWorld(ref builder, realmData, scenesCache, currentSceneInfo, playerEntity, staticContainer.SingletonSharedDependencies.SceneAssetLock);
 
-            IEmoteProvider emoteProvider = new EcsEmoteProvider(world, realmData);
-
-            var pluginArgs = new GlobalPluginArguments(playerEntity, emoteProvider);
+            var pluginArgs = new GlobalPluginArguments(playerEntity, v8ActiveEngines);
 
             foreach (IDCLGlobalPlugin plugin in globalPlugins)
                 plugin.InjectToWorld(ref builder, pluginArgs);
-            
+
             var finalizeWorldSystems = new IFinalizeWorldSystem[]
             {
                 UnloadSceneSystem.InjectToWorld(ref builder, scenesCache, staticContainer.SingletonSharedDependencies.SceneAssetLock), UnloadSceneLODSystem.InjectToWorld(ref builder, scenesCache, lodCache),
@@ -183,11 +183,9 @@ namespace Global.Dynamic
 
             var globalWorld = new GlobalWorld(world, worldSystems, finalizeWorldSystems, cameraSamplingData, realmSamplingData, destroyCancellationSource);
 
-            staticContainer.GlobalWorldProxy.SetObject(world);
+            sceneFactory.SetGlobalWorldActions(new GlobalWorldActions(globalWorld.EcsWorld, playerEntity, emotesMessageBus));
 
-            sceneFactory.SetGlobalWorldActions(new GlobalWorldActions(globalWorld.EcsWorld, playerEntity));
-
-            return (globalWorld, playerEntity);
+            return globalWorld;
         }
     }
 }

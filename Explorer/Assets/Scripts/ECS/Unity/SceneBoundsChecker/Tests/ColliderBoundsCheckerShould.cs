@@ -27,7 +27,7 @@ namespace ECS.Unity.SceneBoundsChecker.Tests
             system = new CheckColliderBoundsSystem(
                 world,
                 scenePartition,
-                new ParcelMathHelper.SceneGeometry(Vector3.zero, new ParcelMathHelper.SceneCircumscribedPlanes(-50f, 50f, -50f, 50f)),
+                new ParcelMathHelper.SceneGeometry(Vector3.zero, new ParcelMathHelper.SceneCircumscribedPlanes(-50f, 50f, -50f, 50f), 50.0f),
                 physicsTickProvider);
 
             collider = new GameObject(nameof(ColliderBoundsCheckerShould)).AddComponent<BoxCollider>();
@@ -45,13 +45,15 @@ namespace ECS.Unity.SceneBoundsChecker.Tests
         {
             scenePartition.Bucket.Returns((byte)(CheckColliderBoundsSystem.BUCKET_THRESHOLD + 1));
 
-            collider.center = new Vector3(-50, 0, -50);
+            collider.transform.position = new Vector3(-50, 0, -50);
             collider.size = Vector3.one;
 
             var component = new PrimitiveColliderComponent();
             component.AssignCollider(new SDKCollider(collider), typeof(BoxCollider), PBMeshCollider.MeshOneofCase.Box);
             component.SDKCollider.IsActiveByEntity = true;
             collider.enabled = true;
+            //Simulate movement
+            collider.transform.position += Vector3.one * 0.01f;
 
             world.Create(component);
 
@@ -64,7 +66,7 @@ namespace ECS.Unity.SceneBoundsChecker.Tests
         [Test]
         public void DisableColliderOutOfBounds()
         {
-            collider.center = new Vector3(-50, 0, -50);
+            collider.transform.position = new Vector3(-50, 0, -50);
             collider.size = Vector3.one;
 
             var component = new PrimitiveColliderComponent();
@@ -72,6 +74,9 @@ namespace ECS.Unity.SceneBoundsChecker.Tests
 
             component.SDKCollider.IsActiveByEntity = true;
             collider.enabled = true;
+
+            //Simulate movement
+            collider.transform.position += Vector3.one * 0.01f;
 
             world.Create(component);
 
@@ -83,7 +88,7 @@ namespace ECS.Unity.SceneBoundsChecker.Tests
         [Test]
         public void KeepColliderWithinBounds()
         {
-            collider.center = new Vector3(-20, 0, -20);
+            collider.transform.position = new Vector3(-20, 0, -20);
             collider.size = Vector3.one;
 
             var component = new PrimitiveColliderComponent();
@@ -91,6 +96,50 @@ namespace ECS.Unity.SceneBoundsChecker.Tests
 
             component.SDKCollider.IsActiveByEntity = true;
             collider.enabled = true;
+            //Simulate movement
+            collider.transform.position += Vector3.one * 0.01f;
+
+            world.Create(component);
+
+            system.Update(0);
+
+            Assert.IsTrue(collider.enabled);
+        }
+
+        [Test]
+        public void DisableColliderOutOfVerticalBounds()
+        {
+            collider.transform.position = new Vector3(0, 50, 0);
+            collider.size = Vector3.one;
+
+            var component = new PrimitiveColliderComponent();
+            component.AssignCollider(new SDKCollider(collider), typeof(BoxCollider), PBMeshCollider.MeshOneofCase.Box);
+
+            component.SDKCollider.IsActiveByEntity = true;
+            collider.enabled = true;
+            //Simulate movement
+            collider.transform.position += Vector3.one * 0.01f;
+
+            world.Create(component);
+
+            system.Update(0);
+
+            Assert.IsFalse(collider.enabled);
+        }
+
+        [Test]
+        public void KeepColliderWithinVerticalBounds()
+        {
+            collider.transform.position = new Vector3(0, 20, 0);
+            collider.size = Vector3.one;
+
+            var component = new PrimitiveColliderComponent();
+            component.AssignCollider(new SDKCollider(collider), typeof(BoxCollider), PBMeshCollider.MeshOneofCase.Box);
+
+            component.SDKCollider.IsActiveByEntity = true;
+            collider.enabled = true;
+            //Simulate movement
+            collider.transform.position += Vector3.one * 0.01f;
 
             world.Create(component);
 

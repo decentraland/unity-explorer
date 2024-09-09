@@ -1,6 +1,7 @@
 ﻿using DCL.DebugUtilities.Views;
 using System.Collections.Generic;
 using UnityEngine.UIElements;
+using Utility.Types;
 
 namespace DCL.DebugUtilities
 {
@@ -13,10 +14,28 @@ namespace DCL.DebugUtilities
 
         DebugContainer Container { get; }
 
-        DebugWidgetBuilder AddWidget(string name);
+        Result<DebugWidgetBuilder> AddWidget(string name);
 
         IReadOnlyDictionary<string, DebugWidget> Widgets { get; }
 
         void BuildWithFlex(UIDocument debugRootCanvas);
+
+        public static class Categories
+        {
+            public const string ROOM_INFO = "Room: Info";
+            public const string ROOM_ISLAND = "Room: Island";
+            public const string ROOM_SCENE = "Room: Scene";
+            public const string PERFORMANCE = "Performance";
+            public const string MEMORY = "Memory";
+        }
+    }
+
+    public static class DebugContainerBuilderExtensions
+    {
+        public static DebugWidgetBuilder? TryAddWidget(this IDebugContainerBuilder debugContainerBuilder, string name)
+        {
+            var widget = debugContainerBuilder.AddWidget(name);
+            return widget.Success ? widget.Value : null;
+        }
     }
 }

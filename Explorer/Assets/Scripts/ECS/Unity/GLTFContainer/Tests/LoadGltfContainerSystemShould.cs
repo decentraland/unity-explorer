@@ -1,26 +1,23 @@
-﻿using System;
-using Arch.Core;
+﻿using Arch.Core;
+using CRDT;
 using DCL.ECSComponents;
+using DCL.Interaction.Utility;
 using DCL.Optimization.PerformanceBudgeting;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
-using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common;
-using ECS.StreamableLoading.Common.Components;
 using ECS.TestSuite;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using ECS.Unity.GLTFContainer.Asset.Systems;
 using ECS.Unity.GLTFContainer.Asset.Tests;
 using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.GLTFContainer.Systems;
-using ECS.Unity.SceneBoundsChecker;
-using ECS.Unity.Transforms.Components;
 using NSubstitute;
 using NUnit.Framework;
+using SceneRunner.Scene;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using SceneRunner.Scene;
 using UnityEngine.TestTools;
 using Utility;
 
@@ -50,7 +47,7 @@ namespace ECS.Unity.GLTFContainer.Tests
                     x[1] = "";
                     return false;
                 });
-            system = new LoadGltfContainerSystem(world, eventBuffer = new EntityEventBuffer<GltfContainerComponent>(1), sceneData);
+            system = new LoadGltfContainerSystem(world, eventBuffer = new EntityEventBuffer<GltfContainerComponent>(1), sceneData, Substitute.For<IEntityCollidersSceneCache>());
             var budget = Substitute.For<IReleasablePerformanceBudget>();
             budget.TrySpendBudget().Returns(true);
             createGltfAssetFromAssetBundleSystem = new CreateGltfAssetFromAssetBundleSystem(world, budget, budget);
@@ -110,7 +107,7 @@ namespace ECS.Unity.GLTFContainer.Tests
             var e = world.Create(component, new PBGltfContainer
             {
                 Src = GltfContainerTestResources.SCENE_WITH_COLLIDER_HASH
-            }, PartitionComponent.TOP_PRIORITY);
+            }, PartitionComponent.TOP_PRIORITY, new CRDTEntity());
             var transformComponent = AddTransformToEntity(e);
 
             ConfigureGltfContainerColliders.SetupColliders(ref component, result.Asset);
@@ -152,7 +149,7 @@ namespace ECS.Unity.GLTFContainer.Tests
             var e = world.Create(component, new PBGltfContainer
             {
                 Src = GltfContainerTestResources.RENDERER_WITH_LEGACY_ANIM_NAME, IsDirty = true
-            }, PartitionComponent.TOP_PRIORITY);
+            }, PartitionComponent.TOP_PRIORITY, new CRDTEntity());
             AddTransformToEntity(e);
 
             system.Update(0);

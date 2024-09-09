@@ -9,9 +9,9 @@ namespace DCL.Optimization.PerformanceBudgeting
 {
     public enum MemoryUsageStatus
     {
-        Normal,
-        Warning,
-        Full,
+        NORMAL,
+        WARNING,
+        FULL,
     }
 
     public class MemoryBudget : IMemoryUsageProvider, IPerformanceBudget
@@ -22,15 +22,13 @@ namespace DCL.Optimization.PerformanceBudgeting
         private readonly IBudgetProfiler profiler;
         private readonly IReadOnlyDictionary<MemoryUsageStatus, float> memoryThreshold;
 
-        // Debug
-        private readonly bool isReleaseBuild = !Debug.isDebugBuild;
         public MemoryUsageStatus SimulatedMemoryUsage { private get; set; }
 
         internal long actualSystemMemory;
 
         public MemoryBudget(ISystemMemory systemMemory, IBudgetProfiler profiler, IReadOnlyDictionary<MemoryUsageStatus, float> memoryThreshold)
         {
-            SimulatedMemoryUsage = Normal;
+            SimulatedMemoryUsage = NORMAL;
             this.profiler = profiler;
             this.memoryThreshold = memoryThreshold;
             actualSystemMemory = systemMemory.TotalSizeInMB;
@@ -43,56 +41,48 @@ namespace DCL.Optimization.PerformanceBudgeting
 
             return usedMemory switch
                    {
-                       _ when usedMemory > totalSystemMemory * memoryThreshold[Full] => Full,
-                       _ when usedMemory > totalSystemMemory * memoryThreshold[Warning] => Warning,
-                       _ => Normal,
+                       _ when usedMemory > totalSystemMemory * memoryThreshold[FULL] => FULL,
+                       _ when usedMemory > totalSystemMemory * memoryThreshold[WARNING] => WARNING,
+                       _ => NORMAL,
                    };
         }
 
         public (float warning, float full) GetMemoryRanges()
         {
             long totalSizeInMB = GetTotalSystemMemory();
-            return (totalSizeInMB * memoryThreshold[Warning], totalSizeInMB * memoryThreshold[Full]);
+            return (totalSizeInMB * memoryThreshold[WARNING], totalSizeInMB * memoryThreshold[FULL]);
         }
 
         public bool TrySpendBudget() =>
-            GetMemoryUsageStatus() != Full;
+            GetMemoryUsageStatus() != FULL;
 
-        private long GetTotalSystemMemory() =>
-            isReleaseBuild ? actualSystemMemory : GetSimulatedSystemMemory();
-
-        private long GetSimulatedSystemMemory()
+        private long GetTotalSystemMemory()
         {
             return SimulatedMemoryUsage switch
                    {
-                       Full => NO_MEMORY,
-                       Warning => CalculateSystemMemoryForWarningThreshold(),
-                       _ => actualSystemMemory
+                       FULL => NO_MEMORY,
+                       WARNING => CalculateSystemMemoryForWarningThreshold(),
+                       _ => actualSystemMemory,
                    };
 
             // ReSharper disable once PossibleLossOfFraction
             long CalculateSystemMemoryForWarningThreshold() => // 10% higher than Warning threshold for current usedMemory
-                (long)(profiler.TotalUsedMemoryInBytes / BYTES_IN_MEGABYTE / (memoryThreshold[Warning] * 1.1f));
+                (long)(profiler.TotalUsedMemoryInBytes / BYTES_IN_MEGABYTE / (memoryThreshold[WARNING] * 1.1f));
         }
 
         public class Default : IPerformanceBudget
         {
-            public static readonly IReadOnlyDictionary<MemoryUsageStatus, float> MEMORY_THRESHOLD = new Dictionary<MemoryUsageStatus, float>
+            private static readonly IReadOnlyDictionary<MemoryUsageStatus, float> MEMORY_THRESHOLD = new Dictionary<MemoryUsageStatus, float>
             {
-                { Warning, 0.8f },
-                { Full, 0.95f },
+                { WARNING, 0.8f },
+                { FULL, 0.95f },
             };
 
-            private readonly IPerformanceBudget performanceBudget;
-
-            public Default()
-            {
-                performanceBudget = new MemoryBudget(
-                    new StandaloneSystemMemory(),
-                    new Profiler(),
-                    MEMORY_THRESHOLD
-                );
-            }
+            private readonly IPerformanceBudget performanceBudget = new MemoryBudget(
+                new StandaloneSystemMemory(),
+                new Profiler(),
+                MEMORY_THRESHOLD
+            );
 
             public bool TrySpendBudget() =>
                 performanceBudget.TrySpendBudget();

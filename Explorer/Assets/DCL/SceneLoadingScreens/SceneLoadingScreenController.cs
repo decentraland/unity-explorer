@@ -1,6 +1,8 @@
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.Diagnostics;
+using DCL.Input;
+using DCL.Input.Component;
 using DCL.Utilities.Extensions;
 using DG.Tweening;
 using MVC;
@@ -19,6 +21,7 @@ namespace DCL.SceneLoadingScreens
         private readonly ISceneTipsProvider sceneTipsProvider;
         private readonly TimeSpan minimumDisplayDuration;
         private readonly AudioMixerVolumesController audioMixerVolumesController;
+        private readonly IInputBlock inputBlock;
 
         private readonly AudioMixerGroup audioMixerGroupController;
 
@@ -32,11 +35,13 @@ namespace DCL.SceneLoadingScreens
         public SceneLoadingScreenController(ViewFactoryMethod viewFactory,
             ISceneTipsProvider sceneTipsProvider,
             TimeSpan minimumDisplayDuration,
-            AudioMixerVolumesController audioMixerVolumesController) : base(viewFactory)
+            AudioMixerVolumesController audioMixerVolumesController,
+            IInputBlock inputBlock) : base(viewFactory)
         {
             this.sceneTipsProvider = sceneTipsProvider;
             this.minimumDisplayDuration = minimumDisplayDuration;
             this.audioMixerVolumesController = audioMixerVolumesController;
+            this.inputBlock = inputBlock;
         }
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
@@ -77,7 +82,7 @@ namespace DCL.SceneLoadingScreens
             base.OnBeforeViewShow();
 
             tipsFadeCancellationToken = tipsFadeCancellationToken.SafeRestart();
-
+            BlockUnwantedInputs();
             SetLoadProgress(0);
             viewInstance.ClearTips();
         }
@@ -128,6 +133,7 @@ namespace DCL.SceneLoadingScreens
             var contentTask = viewInstance.ContentCanvasGroup.DOFade(0f, 0.5f).ToUniTask(cancellationToken: ct);
             var rootTask = viewInstance.RootCanvasGroup.DOFade(0f, 0.7f).ToUniTask(cancellationToken: ct);
             await UniTask.WhenAll(contentTask, rootTask);
+            UnblockUnwantedInputs();
         }
 
         private async UniTask WaitTimeThresholdAsync(float progressProportion, CancellationToken ct)
@@ -253,5 +259,16 @@ namespace DCL.SceneLoadingScreens
             }
             catch (OperationCanceledException) { }
         }
+
+        private void BlockUnwantedInputs()
+        {
+            inputBlock.Disable(InputMapComponent.Kind.Camera , InputMapComponent.Kind.Shortcuts , InputMapComponent.Kind.Player);
+        }
+
+        private void UnblockUnwantedInputs()
+        {
+            inputBlock.Enable(InputMapComponent.Kind.Camera , InputMapComponent.Kind.Shortcuts , InputMapComponent.Kind.Player);
+        }
+
     }
 }

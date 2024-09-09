@@ -32,13 +32,16 @@ namespace DCL.CharacterMotion.Systems
         )
         {
             // Update the movement blend value, ranges from 0 to 3 (Idle = 0, Walk = 1, Jog = 2, Run = 3)
-            ApplyAnimationMovementBlend.Execute(dt, ref animationComponent, in settings, in rigidTransform, in movementInput, in view);
+            animationComponent.States.MovementBlendValue = AnimationMovementBlendLogic.CalculateBlendValue(dt, animationComponent.States.MovementBlendValue, movementInput.Kind, rigidTransform.MoveVelocity.Velocity.sqrMagnitude, settings);
+            AnimationMovementBlendLogic.SetAnimatorParameters(ref animationComponent, view, rigidTransform.IsGrounded, (int)movementInput.Kind);
 
             // Update slide blend value, ranges from 0 to 1
-            ApplyAnimationSlideBlend.Execute(dt, ref animationComponent, in rigidTransform, in view, in settings);
+            animationComponent.IsSliding = AnimationSlideBlendLogic.IsSliding(in rigidTransform, in settings);
+            animationComponent.States.SlideBlendValue = AnimationSlideBlendLogic.CalculateBlendValue(dt, animationComponent.States.SlideBlendValue, animationComponent.IsSliding, settings);
+            AnimationSlideBlendLogic.SetAnimatorParameters(ref animationComponent, view);
 
             // Apply other states
-            ApplyAnimationState.Execute(ref animationComponent, in settings, in rigidTransform, in view, in stunComponent);
+            AnimationStatesLogic.Execute(ref animationComponent, view, rigidTransform, in stunComponent, settings);
         }
     }
 }

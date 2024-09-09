@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Web3.Accounts.Factory;
 using DCL.Web3.Identities;
 using System.Collections.Generic;
 
@@ -8,7 +9,9 @@ namespace DCL.WebRequests
     {
         static readonly IWebRequestController DEFAULT = new WebRequestController(
             new PlayerPrefsIdentityProvider(
-                new PlayerPrefsIdentityProvider.DecentralandIdentityWithNethereumAccountJsonSerializer()
+                new PlayerPrefsIdentityProvider.DecentralandIdentityWithNethereumAccountJsonSerializer(
+                    new Web3AccountFactory()
+                )
             )
         );
 

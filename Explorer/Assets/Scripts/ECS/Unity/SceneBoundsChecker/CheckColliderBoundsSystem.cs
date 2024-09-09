@@ -30,6 +30,7 @@ namespace ECS.Unity.SceneBoundsChecker
         private readonly IPartitionComponent scenePartition;
         private readonly ParcelMathHelper.SceneGeometry sceneGeometry;
         private readonly IPhysicsTickProvider physicsTickEntity;
+        private Bounds auxiliaryBounds = new Bounds();
 
         /// <summary>
         ///     Throttle scheduling between fixed updates
@@ -69,8 +70,15 @@ namespace ECS.Unity.SceneBoundsChecker
 
             if (!collider || !primitiveCollider.SDKCollider.IsActiveByEntity) return;
 
-            collider.enabled = true; // enable it to calculate
-            primitiveCollider.SDKCollider.ForceActiveBySceneBounds(sceneGeometry.CircumscribedPlanes.Intersects(collider.bounds));
+            if (!primitiveCollider.SDKCollider.HasMoved())
+                return;
+
+            // We use an auxiliary bounds object as Unity physics may take at least an extra frame to
+            // actually update the min-max of the collider bounds, leaving the collider disabled in the end...
+            auxiliaryBounds.center = collider.transform.position;
+            auxiliaryBounds.extents = collider.bounds.extents;
+            primitiveCollider.SDKCollider.ForceActiveBySceneBounds(auxiliaryBounds.max.y <= sceneGeometry.Height
+                                                                   && sceneGeometry.CircumscribedPlanes.Intersects(auxiliaryBounds));
         }
 
         [Query]
@@ -104,15 +112,18 @@ namespace ECS.Unity.SceneBoundsChecker
                     if (!sdkCollider.IsActiveByEntity)
                         continue;
 
-                    // Unity doesn't calculate bounds if the component is disabled
-                    sdkCollider.Collider.enabled = true; // enable it to calculate
+                    if (!sdkCollider.HasMoved())
+                        continue;
 
-                    Bounds colliderBounds = sdkCollider.Collider.bounds;
+                    // We use an auxiliary bounds object as Unity physics may take at least an extra frame to
+                    // actually update the min-max of the collider bounds, leaving the collider disabled in the end...
+                    auxiliaryBounds.center = sdkCollider.Collider.transform.position;
+                    auxiliaryBounds.extents = sdkCollider.Collider.bounds.extents;
 
                     // While the collider remains inactive, the bounds will continue to be zero, causing incorrect calculations.
                     // Therefore, it is necessary to force the collider to be activated at least once
-                    sdkCollider.ForceActiveBySceneBounds(colliderBounds.extents == Vector3.zero
-                                                         || sceneGeometry.CircumscribedPlanes.Intersects(colliderBounds));
+                    sdkCollider.ForceActiveBySceneBounds(auxiliaryBounds.extents == Vector3.zero
+                                                         || (auxiliaryBounds.max.y <= sceneGeometry.Height && sceneGeometry.CircumscribedPlanes.Intersects(auxiliaryBounds)));
 
                     // write the structure back
                     colliders[i] = sdkCollider;

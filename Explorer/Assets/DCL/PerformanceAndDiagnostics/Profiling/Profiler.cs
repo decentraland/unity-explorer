@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Text;
 using Unity.Profiling;
 
 namespace DCL.Profiling
@@ -9,15 +11,18 @@ namespace DCL.Profiling
     /// </summary>
     public class Profiler : IDebugViewProfiler, IAnalyticsReportProfiler
     {
+        private const float NS_TO_MS = 1e-6f; // nanoseconds to milliseconds
         private const int HICCUP_THRESHOLD_IN_NS = 50_000_000; // 50 ms ~ 20 FPS
         private const int FRAME_BUFFER_SIZE = 1_000; // 1000 samples: for 30 FPS it's 33 seconds gameplay, for 60 FPS it's 16.6 seconds
 
-        private readonly long[] samplesArray = new long[FRAME_BUFFER_SIZE];
+        private static readonly ProfilerRecorderSampleComparer PROFILER_SAMPLES_COMPARER = new ();
+        private readonly List<ProfilerRecorderSample> samples = new (FRAME_BUFFER_SIZE);
 
         // Memory footprint of your application as seen by the operating system.
         private ProfilerRecorder systemUsedMemoryRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "System Used Memory");
         private ProfilerRecorder totalUsedMemoryRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "Total Used Memory");
         private ProfilerRecorder gcUsedMemoryRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "GC Used Memory"); // Mono/IL2CPP heap size
+        private ProfilerRecorder gcAllocatedInFrameRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "GC Allocated In Frame");
 
         private ProfilerRecorder mainThreadTimeRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Internal, "Main Thread", FRAME_BUFFER_SIZE);
         private ProfilerRecorder gpuFrameTimeRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Render, "GPU Frame Time", FRAME_BUFFER_SIZE);
@@ -28,12 +33,16 @@ namespace DCL.Profiling
 
         public ulong CurrentFrameTimeValueNs => (ulong)mainThreadTimeRecorder.CurrentValue;
         public long LastFrameTimeValueNs => mainThreadTimeRecorder.LastValue;
+        public float TotalGcAlloc => GetRecorderSamplesSum(gcAllocatedInFrameRecorder);
+
+        private readonly StringBuilder stringBuilder = new ();
 
         public void Dispose()
         {
             systemUsedMemoryRecorder.Dispose();
             totalUsedMemoryRecorder.Dispose();
             gcUsedMemoryRecorder.Dispose();
+            gcAllocatedInFrameRecorder.Dispose();
 
             mainThreadTimeRecorder.Dispose();
             gpuFrameTimeRecorder.Dispose();
@@ -42,12 +51,9 @@ namespace DCL.Profiling
         /// <summary>
         ///     In nanoseconds
         /// </summary>
-        public FrameTimeStats? CalculateMainThreadFrameTimesNs() =>
-            CalculateFrameTimeStats(mainThreadTimeRecorder);
-
-        private static FrameTimeStats? CalculateFrameTimeStats(ProfilerRecorder recorder)
+        public FrameTimeStats? CalculateMainThreadFrameTimesNs()
         {
-            int availableSamples = recorder.Capacity;
+            int availableSamples = mainThreadTimeRecorder.Capacity;
 
             if (availableSamples == 0)
                 return null;
@@ -56,29 +62,47 @@ namespace DCL.Profiling
             long maxFrameTime = long.MinValue;
             long hiccupCount = 0;
 
-            unsafe
+            samples.Clear();
+            mainThreadTimeRecorder.CopyTo(samples);
+
+            for (var i = 0; i < samples.Count; i++)
             {
-                ProfilerRecorderSample* samples = stackalloc ProfilerRecorderSample[availableSamples];
-                recorder.CopyTo(samples, availableSamples);
+                long frameTime = samples[i].Value;
 
-                for (var i = 0; i < availableSamples; ++i)
-                {
-                    long frameTime = samples[i].Value;
-
-                    if (frameTime > HICCUP_THRESHOLD_IN_NS) hiccupCount++;
-                    if (frameTime < minFrameTime) minFrameTime = frameTime;
-                    if (frameTime > maxFrameTime) maxFrameTime = frameTime;
-                }
+                if (frameTime > HICCUP_THRESHOLD_IN_NS) hiccupCount++;
+                if (frameTime < minFrameTime) minFrameTime = frameTime;
+                if (frameTime > maxFrameTime) maxFrameTime = frameTime;
             }
 
             return new FrameTimeStats(minFrameTime, maxFrameTime, hiccupCount);
         }
 
-        public AnalyticsFrameTimeReport? GetMainThreadFramesNs(int[] percentile) =>
-            GetFrameStatsWithPercentiles(mainThreadTimeRecorder, percentile);
+        public (AnalyticsFrameTimeReport? gpuFrameTime, AnalyticsFrameTimeReport? mainThreadFrameTime, string mainThreadSamples) GetFrameTimesNs(int[] percentile)
+        {
+            var gpuReport = GetFrameStatsWithPercentiles(gpuFrameTimeRecorder, percentile);
+            // Main thread should be last to calculate, so Samples reflects mainThread FrameData and not GPU FrameData
+            var mainThreadReport = GetFrameStatsWithPercentiles(mainThreadTimeRecorder, percentile);
 
-        public AnalyticsFrameTimeReport? GetGpuThreadFramesNs(int[] percentile) =>
-            GetFrameStatsWithPercentiles(gpuFrameTimeRecorder, percentile);
+            return (gpuReport,mainThreadReport, GetSamplesArrayAsString());
+
+            string GetSamplesArrayAsString()
+            {
+                stringBuilder.Clear();
+                stringBuilder.Append("[");
+
+                for (var i = 0; i < samples.Count; i++)
+                {
+                    stringBuilder.AppendFormat("{0:0.000}", samples[i].Value * NS_TO_MS);
+
+                    if (i < samples.Count - 1)
+                        stringBuilder.Append(",");
+                }
+
+                stringBuilder.Append("]");
+
+                return stringBuilder.ToString();
+            }
+        }
 
         // Exclusive percentile calculation variant, it rounds to nearest (in contrast to inclusive approach)
         private AnalyticsFrameTimeReport? GetFrameStatsWithPercentiles(ProfilerRecorder recorder, int[] percentile)
@@ -88,7 +112,6 @@ namespace DCL.Profiling
             if (samplesCount == 0)
                 return null;
 
-            Array.Clear(samplesArray, 0, samplesArray.Length);
             long hiccupCount = 0;
             long hiccupTotalTime = 0;
             long hiccupMin = -1;
@@ -96,48 +119,67 @@ namespace DCL.Profiling
 
             long sumTime = 0;
 
-            unsafe
+            samples.Clear();
+            recorder.CopyTo(samples);
+
+            for (var i = 0; i < samples.Count; i++)
             {
-                ProfilerRecorderSample* samples = stackalloc ProfilerRecorderSample[samplesCount];
-                recorder.CopyTo(samples, samplesCount);
+                long frameTime = samples[i].Value;
 
-                for (var i = 0; i < samplesCount; ++i)
+                sumTime += frameTime;
+
+                if (frameTime > HICCUP_THRESHOLD_IN_NS)
                 {
-                    long frameTime = samples[i].Value;
+                    hiccupCount++;
+                    hiccupTotalTime += frameTime;
 
-                    samplesArray[i] = frameTime;
-                    sumTime += frameTime;
+                    if (frameTime > hiccupMax) hiccupMax = frameTime;
 
-                    if (frameTime > HICCUP_THRESHOLD_IN_NS)
-                    {
-                        hiccupCount++;
-                        hiccupTotalTime += frameTime;
-
-                        if (frameTime > hiccupMax) hiccupMax = frameTime;
-
-                        if (hiccupMin == -1) hiccupMin = frameTime;
-                        else if (frameTime < hiccupMin) hiccupMin = frameTime;
-                    }
+                    if (hiccupMin == -1) hiccupMin = frameTime;
+                    else if (frameTime < hiccupMin) hiccupMin = frameTime;
                 }
             }
 
-            Array.Sort(samplesArray);
-
+            samples.Sort(PROFILER_SAMPLES_COMPARER);
             var result = new long[percentile.Length];
 
             for (var i = 0; i < percentile.Length; i++)
             {
                 var index = (int)Math.Ceiling(percentile[i] / 100f * samplesCount);
                 index = Math.Min(index, samplesCount - 1);
-                result[i] = samplesArray[index - 1];
+                result[i] = samples[index - 1].Value;
             }
 
             return
                 new AnalyticsFrameTimeReport(
-                    new FrameTimeStats(samplesArray[0], samplesArray[samplesCount - 1], hiccupCount),
+                    new FrameTimeStats(samples[0].Value, samples[samplesCount - 1].Value, hiccupCount),
                     result, sumTime, samplesCount,
                     hiccupCount != 0 ? new HiccupsReport(hiccupTotalTime, hiccupMin, hiccupMax, hiccupTotalTime / hiccupCount) : new HiccupsReport(0, 0, 0, 0)
                 );
+        }
+
+        private float GetRecorderSamplesSum(ProfilerRecorder recorder)
+        {
+            int samplesCount = recorder.Capacity;
+
+            if (samplesCount == 0)
+                return 0;
+
+            float r = 0;
+
+            samples.Clear();
+            recorder.CopyTo(samples);
+
+            for (var i = 0; i < samples.Count; i++)
+                r += samples[i].Value;
+
+            return r;
+        }
+
+        private class ProfilerRecorderSampleComparer : IComparer<ProfilerRecorderSample>
+        {
+            public int Compare(ProfilerRecorderSample x, ProfilerRecorderSample y) =>
+                x.Value.CompareTo(y.Value);
         }
     }
 }

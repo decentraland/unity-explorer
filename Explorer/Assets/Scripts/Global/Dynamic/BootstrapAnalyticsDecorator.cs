@@ -8,11 +8,11 @@ using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.UserInAppInitializationFlow;
+using DCL.Utilities;
 using DCL.Web3.Identities;
 using SceneRunner.Debugging;
 using Segment.Serialization;
 using System.Threading;
-using UnityEngine;
 using UnityEngine.UIElements;
 using static DCL.PerformanceAndDiagnostics.Analytics.AnalyticsEvents;
 
@@ -34,14 +34,14 @@ namespace Global.Dynamic
             this.analytics = analytics;
         }
 
-        public void PreInitializeSetup(RealmLaunchSettings launchSettings, UIDocument cursorRoot, UIDocument debugUiRoot, ISplashScreen splashScreen, CancellationToken ct)
+        public void PreInitializeSetup(UIDocument cursorRoot, UIDocument debugUiRoot, ISplashScreen splashScreen, CancellationToken ct)
         {
             analytics.Track(General.INITIAL_LOADING, new JsonObject
             {
                 { STAGE_KEY, "0 - started" },
             });
 
-            core.PreInitializeSetup(launchSettings, cursorRoot, debugUiRoot, splashScreen, ct);
+            core.PreInitializeSetup(cursorRoot, debugUiRoot, splashScreen, ct);
         }
 
         public async UniTask<(StaticContainer?, bool)> LoadStaticContainerAsync(BootstrapContainer bootstrapContainer, PluginSettingsContainer globalPluginSettingsContainer, DebugViewsCatalog debugViewsCatalog, CancellationToken ct)
@@ -60,13 +60,14 @@ namespace Global.Dynamic
         }
 
         public async UniTask<(DynamicWorldContainer?, bool)> LoadDynamicWorldContainerAsync(BootstrapContainer bootstrapContainer, StaticContainer staticContainer, PluginSettingsContainer scenePluginSettingsContainer, DynamicSceneLoaderSettings settings, DynamicSettings dynamicSettings,
-            RealmLaunchSettings launchSettings, UIDocument uiToolkitRoot, UIDocument cursorRoot, ISplashScreen splashScreen, AudioClipConfig backgroundMusic,
+            UIDocument uiToolkitRoot, UIDocument cursorRoot, ISplashScreen splashScreen, AudioClipConfig backgroundMusic,
             WorldInfoTool worldInfoTool,
+            Entity playerEntity,
             CancellationToken ct)
         {
             (DynamicWorldContainer? container, bool) result =
                 await core.LoadDynamicWorldContainerAsync(bootstrapContainer, staticContainer, scenePluginSettingsContainer,
-                    settings, dynamicSettings, launchSettings, uiToolkitRoot, cursorRoot, splashScreen, backgroundMusic, worldInfoTool, ct);
+                    settings, dynamicSettings, uiToolkitRoot, cursorRoot, splashScreen, backgroundMusic, worldInfoTool, playerEntity, ct);
 
             analytics.Track(General.INITIAL_LOADING, new JsonObject
             {
@@ -89,6 +90,9 @@ namespace Global.Dynamic
             return result;
         }
 
+        public Entity CreatePlayerEntity(StaticContainer staticContainer) =>
+            core.CreatePlayerEntity(staticContainer);
+
         public async UniTask<bool> InitializePluginsAsync(StaticContainer staticContainer, DynamicWorldContainer dynamicWorldContainer, PluginSettingsContainer scenePluginSettingsContainer, PluginSettingsContainer globalPluginSettingsContainer, CancellationToken ct)
         {
             bool anyFailure = await core.InitializePluginsAsync(staticContainer, dynamicWorldContainer, scenePluginSettingsContainer, globalPluginSettingsContainer, ct);
@@ -102,9 +106,13 @@ namespace Global.Dynamic
             return anyFailure;
         }
 
-        public (GlobalWorld, Entity) CreateGlobalWorldAndPlayer(BootstrapContainer bootstrapContainer, StaticContainer staticContainer, DynamicWorldContainer dynamicWorldContainer, UIDocument debugUiRoot)
+        public GlobalWorld CreateGlobalWorld(BootstrapContainer bootstrapContainer,
+            StaticContainer staticContainer,
+            DynamicWorldContainer dynamicWorldContainer,
+            UIDocument debugUiRoot,
+            Entity playerEntity)
         {
-            (GlobalWorld, Entity) result = core.CreateGlobalWorldAndPlayer(bootstrapContainer, staticContainer, dynamicWorldContainer, debugUiRoot);
+            GlobalWorld result = core.CreateGlobalWorld(bootstrapContainer, staticContainer, dynamicWorldContainer, debugUiRoot, playerEntity);
 
             analytics.Track(General.INITIAL_LOADING, new JsonObject
             {

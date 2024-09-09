@@ -9,14 +9,13 @@ using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.Web3.Identities;
 using SceneRunner.Debugging;
 using System.Threading;
-using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace Global.Dynamic
 {
     public interface IBootstrap
     {
-        void PreInitializeSetup(RealmLaunchSettings launchSettings, UIDocument cursorRoot, UIDocument debugUiRoot, ISplashScreen splashScreen, CancellationToken ct);
+        void PreInitializeSetup(UIDocument cursorRoot, UIDocument debugUiRoot, ISplashScreen splashScreen, CancellationToken ct);
 
         UniTask<(StaticContainer?, bool)> LoadStaticContainerAsync(BootstrapContainer bootstrapContainer, PluginSettingsContainer globalPluginSettingsContainer, DebugViewsCatalog debugViewsCatalog, CancellationToken ct);
 
@@ -26,12 +25,12 @@ namespace Global.Dynamic
             PluginSettingsContainer scenePluginSettingsContainer,
             DynamicSceneLoaderSettings settings,
             DynamicSettings dynamicSettings,
-            RealmLaunchSettings launchSettings,
             UIDocument uiToolkitRoot,
             UIDocument cursorRoot,
             ISplashScreen splashScreen,
             AudioClipConfig backgroundMusic,
             WorldInfoTool worldInfoTool,
+            Entity playerEntity,
             CancellationToken ct
         );
 
@@ -41,8 +40,10 @@ namespace Global.Dynamic
 
         UniTask InitializeFeatureFlagsAsync(IWeb3Identity? identity, IDecentralandUrlsSource decentralandUrlsSource, StaticContainer staticContainer, CancellationToken ct);
 
-        (GlobalWorld, Entity) CreateGlobalWorldAndPlayer(BootstrapContainer bootstrapContainer, StaticContainer staticContainer, DynamicWorldContainer dynamicWorldContainer,
-            UIDocument debugUiRoot);
+        Entity CreatePlayerEntity(StaticContainer staticContainer);
+
+        GlobalWorld CreateGlobalWorld(BootstrapContainer bootstrapContainer, StaticContainer staticContainer, DynamicWorldContainer dynamicWorldContainer,
+            UIDocument debugUiRoot, Entity playerEntity);
 
         UniTask UserInitializationAsync(DynamicWorldContainer dynamicWorldContainer, GlobalWorld globalWorld, Entity playerEntity, ISplashScreen splashScreen, CancellationToken ct);
 

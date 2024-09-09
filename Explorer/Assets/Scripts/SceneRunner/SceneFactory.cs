@@ -49,7 +49,7 @@ namespace SceneRunner
         private readonly ISDKComponentsRegistry sdkComponentsRegistry;
         private readonly ISharedPoolsProvider sharedPoolsProvider;
         private readonly IMVCManager mvcManager;
-        private readonly IRealmData? realmData;
+        private readonly IRealmData realmData;
         private readonly ICommunicationControllerHub messagePipesHub;
 
         private IGlobalWorldActions globalWorldActions = null!;
@@ -69,7 +69,7 @@ namespace SceneRunner
             IDecentralandUrlsSource decentralandUrlsSource,
             IWebRequestController webRequestController,
             IRoomHub roomHub,
-            IRealmData? realmData,
+            IRealmData realmData,
             ICommunicationControllerHub messagePipesHub)
         {
             this.ecsWorldFactory = ecsWorldFactory;
@@ -90,14 +90,14 @@ namespace SceneRunner
             this.messagePipesHub = messagePipesHub;
         }
 
-        public async UniTask<ISceneFacade> CreateSceneFromFileAsync(string jsCodeUrl, IPartitionComponent partitionProvider, CancellationToken ct)
+        public async UniTask<ISceneFacade> CreateSceneFromFileAsync(string jsCodeUrl, IPartitionComponent partitionProvider, CancellationToken ct, string id = "")
         {
             int lastSlash = jsCodeUrl.LastIndexOf("/", StringComparison.Ordinal);
             string mainScenePath = jsCodeUrl[(lastSlash + 1)..];
             var baseUrl = URLDomain.FromString(jsCodeUrl[..(lastSlash + 1)]);
 
             var sceneDefinition = new SceneEntityDefinition(
-                string.Empty,
+                id,
                 new SceneMetadata
                 {
                     main = mainScenePath,
@@ -172,7 +172,7 @@ namespace SceneRunner
 
             if (ENABLE_SDK_OBSERVABLES)
             {
-                var sdkCommsControllerAPI = new SDKMessageBusCommsAPIImplementation(sceneData, messagePipesHub, sceneRuntime, deps.SceneStateProvider);
+                var sdkCommsControllerAPI = new SDKMessageBusCommsAPIImplementation(realmData, sceneData, messagePipesHub, sceneRuntime, deps.SceneStateProvider);
                 sceneRuntime.RegisterSDKMessageBusCommsApi(sdkCommsControllerAPI);
 
                 runtimeDeps = new SceneInstanceDependencies.WithRuntimeJsAndSDKObservablesEngineAPI(deps, sceneRuntime, sharedPoolsProvider, crdtSerializer, mvcManager, globalWorldActions, realmData!, messagePipesHub);

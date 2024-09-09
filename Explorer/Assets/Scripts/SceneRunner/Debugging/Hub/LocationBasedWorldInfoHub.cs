@@ -21,7 +21,7 @@ namespace SceneRunner.Debugging.Hub
 
             if (result is null && sceneName is "CURRENT")
             {
-                Vector2Int parcel = ParcelMathHelper.FloorToParcel(characterObject.Position);
+                Vector2Int parcel = characterObject.Position.ToParcel();
                 return WorldInfo(parcel);
             }
 

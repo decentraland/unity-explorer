@@ -3,6 +3,7 @@ using DCL.Character.CharacterMotion.Components;
 using DCL.CharacterMotion.Components;
 using JetBrains.Annotations;
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using System.Threading;
 using static DCL.Audio.Avatar.AvatarAudioSettings;
@@ -18,6 +19,22 @@ namespace DCL.CharacterMotion.Animation
 
     public class AvatarAnimationEventsHandler : MonoBehaviour
     {
+        private static readonly Dictionary<(MovementKind, AvatarAnimationEventType), AvatarAudioClipType> AUDIO_CLIP_LOOKUP = new Dictionary<(MovementKind, AvatarAnimationEventType), AvatarAudioClipType>
+        {
+            { (MovementKind.RUN, AvatarAnimationEventType.Jump), AvatarAudioClipType.JumpStartRun },
+            { (MovementKind.RUN, AvatarAnimationEventType.Land), AvatarAudioClipType.JumpLandRun },
+            { (MovementKind.RUN, AvatarAnimationEventType.Step), AvatarAudioClipType.StepRun },
+            { (MovementKind.JOG, AvatarAnimationEventType.Jump), AvatarAudioClipType.JumpStartJog },
+            { (MovementKind.JOG, AvatarAnimationEventType.Land), AvatarAudioClipType.JumpLandJog },
+            { (MovementKind.JOG, AvatarAnimationEventType.Step), AvatarAudioClipType.StepJog },
+            { (MovementKind.WALK, AvatarAnimationEventType.Jump), AvatarAudioClipType.JumpStartWalk },
+            { (MovementKind.WALK, AvatarAnimationEventType.Land), AvatarAudioClipType.JumpLandWalk },
+            { (MovementKind.WALK, AvatarAnimationEventType.Step), AvatarAudioClipType.StepWalk },
+            { (MovementKind.IDLE, AvatarAnimationEventType.Jump), AvatarAudioClipType.JumpStartWalk },
+            { (MovementKind.IDLE, AvatarAnimationEventType.Land), AvatarAudioClipType.JumpLandWalk },
+            { (MovementKind.IDLE, AvatarAnimationEventType.Step), AvatarAudioClipType.StepWalk }
+        };
+
         [SerializeField] private AvatarAudioPlaybackController AudioPlaybackController;
         [SerializeField] private AvatarAnimationParticlesController ParticlesController;
         [SerializeField] private Animator AvatarAnimator;
@@ -46,62 +63,79 @@ namespace DCL.CharacterMotion.Animation
         [PublicAPI("Used by Animation Events")]
         public void AnimEvent_Jump()
         {
-            if (TryPlayAnimEventFX(lastJumpTime, jumpIntervalSeconds, centerBottomTransform, AvatarAnimationEventType.Jump))
-                lastJumpTime = currentTime;
+            if (!TryGetAudioClipType(AvatarAnimationEventType.Jump, out var audioClipType)) return;
+            if (!TryPlayAnimEventFX(lastJumpTime, jumpIntervalSeconds, centerBottomTransform, AvatarAnimationEventType.Jump,audioClipType)) return;
+
+            lastJumpTime = currentTime;
         }
 
         [PublicAPI("Used by Animation Events")]
         public void AnimEvent_Land()
         {
-            if (TryPlayAnimEventFX(lastLandTime, landIntervalSeconds, centerBottomTransform, AvatarAnimationEventType.Land))
-                lastLandTime = currentTime;
+            if (!TryGetAudioClipType(AvatarAnimationEventType.Land, out var audioClipType)) return;
+            if (!TryPlayAnimEventFX(lastLandTime, landIntervalSeconds, centerBottomTransform, AvatarAnimationEventType.Land, audioClipType)) return;
+
+            lastLandTime = currentTime;
         }
 
         private void PlayStepSoundForFoot(Transform footTransform)
         {
             if (!AvatarAnimator.GetBool(AnimationHashes.GROUNDED)) return;
 
-            if (TryPlayAnimEventFX(lastFootstepTime, GetIntervalFor(GetMovementState()), footTransform, AvatarAnimationEventType.Step))
-            {
-                lastFootstepTime = currentTime;
-                PlayerStepped?.Invoke();
-            }
+            if (!TryGetAudioClipType(AvatarAnimationEventType.Step, out var audioClipType)) return;
 
+            float interval = GetIntervalFor(audioClipType);
+
+            if (!TryPlayAnimEventFX(lastFootstepTime, interval, footTransform, AvatarAnimationEventType.Step, audioClipType)) return;
+
+            lastFootstepTime = currentTime;
+            PlayerStepped?.Invoke();
             return;
 
-            float GetIntervalFor(MovementKind movement) =>
+            float GetIntervalFor(AvatarAudioClipType movement) =>
                 movement switch
                 {
-                    MovementKind.Walk => walkIntervalSeconds,
-                    MovementKind.Jog => jogIntervalSeconds,
-                    MovementKind.Run => runIntervalSeconds,
-                    MovementKind.None => 0,
-                    _ => throw new ArgumentOutOfRangeException(),
+                    AvatarAudioClipType.StepWalk => walkIntervalSeconds,
+                    AvatarAudioClipType.StepJog => jogIntervalSeconds,
+                    AvatarAudioClipType.StepRun => runIntervalSeconds,
+                    _ => 0,
                 };
         }
 
-        private bool TryPlayAnimEventFX(float lastPlayedTime, float interval, Transform vfxAttach, AvatarAnimationEventType eventType)
+        private bool TryPlayAnimEventFX(float lastPlayedTime, float interval, Transform vfxAttach, AvatarAnimationEventType eventType, AvatarAudioClipType audioClipType)
         {
             currentTime = UnityEngine.Time.time;
             if (currentTime - lastPlayedTime < interval) return false;
-            lastJumpTime = currentTime;
 
-            switch (GetMovementState())
+            PlaySfxWithParticles(audioClipType, vfxAttach, eventType);
+            return true;
+        }
+
+                private void PlayContinuousAudio(AvatarAudioClipType clipType)
+        {
+            AudioPlaybackController.PlayContinuousAudio(clipType);
+        }
+
+        private void PlayAudioForType(AvatarAudioClipType clipType)
+        {
+            AudioPlaybackController.PlayAudioForType(clipType);
+        }
+
+        private bool TryGetAudioClipType(AvatarAnimationEventType eventType, out AvatarAudioClipType audioClipType)
+        {
+            float movementBlend = AvatarAnimator.GetFloat(AnimationHashes.MOVEMENT_BLEND);
+            if (movementBlend > MovementBlendThreshold)
             {
-                case MovementKind.None:
-                case MovementKind.Walk:
-                    PlaySfxWithParticles(AvatarAudioClipType.JumpStartWalk, vfxAttach, eventType);
-                    break;
-                case MovementKind.Jog:
-                    PlaySfxWithParticles(AvatarAudioClipType.JumpStartJog, vfxAttach, eventType);
-                    break;
-                case MovementKind.Run:
-                    PlaySfxWithParticles(AvatarAudioClipType.JumpStartRun, vfxAttach, eventType);
-                    break;
-                default: throw new ArgumentOutOfRangeException();
+                int movementType = AvatarAnimator.GetInteger(AnimationHashes.MOVEMENT_TYPE);
+                var key = ((MovementKind)movementType, eventType);
+                if (AUDIO_CLIP_LOOKUP.TryGetValue(key, out audioClipType))
+                {
+                    return true;
+                }
             }
 
-            return true;
+            audioClipType = AvatarAudioClipType.None;
+            return false;
         }
 
         [PublicAPI("Used by Animation Events")]
@@ -178,35 +212,6 @@ namespace DCL.CharacterMotion.Animation
         public void AnimEvent_Snowflakes()
         {
             //In old renderer we would play some sticker animations here
-        }
-
-        private void PlayContinuousAudio(AvatarAudioClipType clipType)
-        {
-            AudioPlaybackController.PlayContinuousAudio(clipType);
-        }
-
-        private void PlayAudioForType(AvatarAudioClipType clipType)
-        {
-            AudioPlaybackController.PlayAudioForType(clipType);
-        }
-
-        private MovementKind GetMovementState()
-        {
-            int movementType = AvatarAnimator.GetInteger(AnimationHashes.MOVEMENT_TYPE);
-            float movementBlend = AvatarAnimator.GetFloat(AnimationHashes.MOVEMENT_BLEND);
-
-            if (movementBlend > MovementBlendThreshold)
-            {
-                return movementType switch
-                       {
-                           (int)MovementKind.Run => MovementKind.Run,
-                           (int)MovementKind.Jog => MovementKind.Jog,
-                           (int)MovementKind.Walk => MovementKind.Walk,
-                           _ => MovementKind.None,
-                       };
-            }
-
-            return MovementKind.None;
         }
     }
 }

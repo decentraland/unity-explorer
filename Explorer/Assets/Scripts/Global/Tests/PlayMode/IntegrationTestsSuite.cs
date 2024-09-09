@@ -1,41 +1,76 @@
-﻿using Cysharp.Threading.Tasks;
+﻿using Arch.Core;
+using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Browser.DecentralandUrls;
 using DCL.DebugUtilities;
+using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Multiplayer.Connections.Messaging.Hubs;
+using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.PluginSystem;
-using DCL.PluginSystem.Global;
 using DCL.Profiles;
 using DCL.Web3;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
-using Global.Dynamic;
-using Global.Static;
+using ECS;
+using Global.AppArgs;
+using MVC;
+using MVC.PopupsController.PopupCloser;
 using NSubstitute;
+using System;
 using System.Threading;
 using UnityEngine.AddressableAssets;
 
-namespace Global.Tests
+namespace Global.Tests.PlayMode
 {
     public static class IntegrationTestsSuite
     {
         private const string GLOBAL_CONTAINER_ADDRESS = "Integration Tests Global Container";
         private const string WORLD_CONTAINER_ADDRESS = "Integration Tests World Container";
 
-        public static async UniTask<(StaticContainer staticContainer, SceneSharedContainer sceneSharedContainer)> CreateStaticContainer()
+        public static async UniTask<(StaticContainer staticContainer, SceneSharedContainer sceneSharedContainer)> CreateStaticContainer(CancellationToken ct)
         {
             PluginSettingsContainer globalSettingsContainer = await Addressables.LoadAssetAsync<PluginSettingsContainer>(GLOBAL_CONTAINER_ADDRESS);
             PluginSettingsContainer sceneSettingsContainer = await Addressables.LoadAssetAsync<PluginSettingsContainer>(WORLD_CONTAINER_ADDRESS);
+            IAssetsProvisioner assetProvisioner = new AddressablesProvisioner().WithErrorTrace();
+            IDecentralandUrlsSource dclUrls = new DecentralandUrlsSource(DecentralandEnvironment.Org);
 
-            return await StaticSceneLauncher.InstallAsync(
-                new DecentralandUrlsSource(DecentralandEnvironment.Org),
-                new AddressablesProvisioner(),
-                null,
+            IWeb3IdentityCache identityCache = new MemoryWeb3IdentityCache();
+
+            (StaticContainer? staticContainer, bool success) = await StaticContainer.CreateAsync(dclUrls,
+                assetProvisioner,
+                Substitute.For<IReportsHandlingSettings>(),
+                Substitute.For<IAppArgs>(),
                 new DebugViewsCatalog(),
-                globalSettingsContainer, sceneSettingsContainer,
-                Substitute.For<IWeb3IdentityCache>(), Substitute.For<IEthereumApi>(),
-                Substitute.For<IWeb3IdentityCache>(), Substitute.For<IProfileRepository>(), IWebRequestController.DEFAULT,
-                CancellationToken.None);
+                globalSettingsContainer,
+                identityCache,
+                Substitute.For<IEthereumApi>(),
+                false,
+                World.Create(),
+                ct);
+
+            if (!success)
+                throw new Exception("Cannot create the static container");
+
+            await UniTask.WhenAll(staticContainer!.ECSWorldPlugins.Select(gp => sceneSettingsContainer.InitializePluginAsync(gp, ct)));
+
+            var sceneSharedContainer = SceneSharedContainer.Create(
+                in staticContainer,
+                dclUrls,
+                new MVCManager(
+                    new WindowStackManager(),
+                    new CancellationTokenSource(),
+                    Substitute.For<IPopupCloserView>()
+                ),
+                identityCache,
+                new MemoryProfileRepository(new DefaultProfileCache()),
+                Substitute.For<IWebRequestController>(),
+                new IRoomHub.Fake(),
+                new IRealmData.Fake(),
+                new IMessagePipesHub.Fake()
+            );
+
+            return (staticContainer, sceneSharedContainer);
         }
     }
 }
