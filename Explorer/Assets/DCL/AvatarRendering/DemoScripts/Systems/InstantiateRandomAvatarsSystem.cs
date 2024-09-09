@@ -330,10 +330,6 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
                     new CharacterAnimationComponent(),
                     new CharacterEmoteComponent(),
                     new RandomAvatar());
-                // new RemotePlayerMovementComponent(queuePool),
-                // new InterpolationComponent(),
-                //new ExtrapolationComponent()
-                //remoteAvatarCollider,
             }
             else
             {
