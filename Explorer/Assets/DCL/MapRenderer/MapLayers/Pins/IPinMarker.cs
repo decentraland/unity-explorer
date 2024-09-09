@@ -26,6 +26,8 @@ namespace DCL.MapRenderer.MapLayers.Pins
 
         UniTaskVoid AnimateDeselectionAsync(CancellationToken ct);
 
+        public void DeselectImmediately();
+
         void SetAsDestination(bool isDestination);
 
         void SetIconOutline(bool isActive);
@@ -38,10 +40,16 @@ namespace DCL.MapRenderer.MapLayers.Pins
 
         void SetZoom(float baseScale, float baseZoom, float zoom);
 
-        void ResetScale();
+        void ResetScale(ScaleType scaleType);
 
         void Show(Action? onFinish);
 
         void Hide(Action? onFinish);
+
+        public enum ScaleType
+        {
+            MINIMAP,
+            NAVMAP,
+        }
     }
 }

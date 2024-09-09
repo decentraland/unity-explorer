@@ -321,7 +321,8 @@ namespace DCL.AuthenticationScreenFlow
         {
             async UniTaskVoid AnimateAndAwaitAsync()
             {
-                viewInstance!.FinalizeAnimator.SetTrigger(UIAnimationHashes.TO_OTHER);
+                //Disabled animation until proper animation is setup, otherwise we get animation hash errors
+                //viewInstance!.FinalizeAnimator.SetTrigger(UIAnimationHashes.JUMP_IN);
                 await UniTask.Delay(ANIMATION_DELAY);
                 characterPreviewController?.OnHide();
                 lifeCycleTask?.TrySetResult();
