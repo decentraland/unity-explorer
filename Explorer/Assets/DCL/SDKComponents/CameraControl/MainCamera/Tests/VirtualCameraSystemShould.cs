@@ -1,13 +1,19 @@
 using Arch.Core;
 using Cinemachine;
+using CRDT;
 using Cysharp.Threading.Tasks;
+using DCL.ECSComponents;
 using DCL.Optimization.Pools;
+using DCL.SDKComponents.CameraControl.MainCamera.Components;
 using DCL.SDKComponents.CameraControl.MainCamera.Systems;
+using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.TestSuite;
+using ECS.Unity.Transforms.Components;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
+using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
@@ -16,26 +22,20 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
     public class VirtualCameraSystemShould : UnitySystemTestBase<VirtualCameraSystem>
     {
         private Entity entity;
-        // private TransformComponent entityTransformComponent;
         private ISceneStateProvider sceneStateProvider;
         private IComponentPoolsRegistry poolsRegistry;
         private IComponentPool<CinemachineFreeLook> sdkVirtualCameraPool;
-
         private CinemachineFreeLook virtualCamera;
 
         [SetUp]
         public async void Setup()
         {
-            entity = world.Create(PartitionComponent.TOP_PRIORITY);
-            /*entityTransformComponent = AddTransformToEntity(entity);
-            entityTransformComponent.SetTransform(Vector3.one * 30, Quaternion.identity, Vector3.one);
-            world.Set(entity, entityTransformComponent);*/
+            entity = world.Create(PartitionComponent.TOP_PRIORITY, new CRDTEntity(565), new TransformComponent());
 
             // Setup system
             sceneStateProvider = Substitute.For<ISceneStateProvider>();
             sceneStateProvider.IsCurrent.Returns(true);
 
-            // CinemachineFreeLook virtualCameraPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.VirtualCameraPrefab, ct: ct)).Value.GetComponent<CinemachineFreeLook>();
             GameObject virtualCameraPrefabGO = await Addressables.LoadAssetAsync<GameObject>("SDKVirtualCamera");
             virtualCamera = Object.Instantiate(virtualCameraPrefabGO.GetComponent<CinemachineFreeLook>());
             poolsRegistry = new ComponentPoolsRegistry();
@@ -49,31 +49,106 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
         public void Teardown()
         {
             poolsRegistry.Dispose();
-            Object.DestroyImmediate(virtualCamera.gameObject);
+            world.Dispose();
         }
 
         [Test]
-        public void SetupVirtualCameraComponentCorrectly()
+        public async Task SetupVirtualCameraComponentCorrectly()
         {
+            // Workaround for Unity bug not awaiting async Setup correctly
+            await UniTask.WaitUntil(() => system != null);
 
+            uint lookAtEntity = 358;
+            var component = new PBVirtualCamera()
+            {
+                LookAtEntity = lookAtEntity,
+                IsDirty = true
+            };
+
+            world.Add(entity, component);
+
+            system.Update(1f);
+            Assert.AreEqual(sdkVirtualCameraPool.CountInactive, 0);
+
+            Assert.IsTrue(world.TryGet(entity, out VirtualCameraComponent vCamComponent));
+            Assert.AreEqual(vCamComponent.lookAtCRDTEntity, lookAtEntity);
+            Assert.AreSame(vCamComponent.virtualCameraInstance, virtualCamera);
+        }
+
+        /*[Test]
+        public async Task UpdateVirtualCameraComponentCorrectly()
+        {
+            // Workaround for Unity bug not awaiting async Setup correctly
+            await UniTask.WaitUntil(() => system != null);
+
+            uint lookAtEntity1 = 358;
+            var component = new PBVirtualCamera()
+            {
+                LookAtEntity = lookAtEntity1,
+                IsDirty = true
+            };
+            world.Add(entity, component);
+
+            system.Update(1f);
+            Assert.IsTrue(world.TryGet(entity, out VirtualCameraComponent vCamComponent));
+            Assert.AreEqual(vCamComponent.lookAtCRDTEntity, lookAtEntity1);
+
+            uint lookAtEntity2 = 666;
+            component.LookAtEntity = lookAtEntity2;
+            component.IsDirty = false;
+            world.Set(entity, component);
+
+            system.Update(1f);
+            Assert.IsTrue(world.TryGet(entity, out vCamComponent));
+            Assert.AreNotEqual(vCamComponent.lookAtCRDTEntity, lookAtEntity2);
+
+            component.IsDirty = true;
+            world.Set(entity, component);
+
+            system.Update(1f);
+            Assert.IsTrue(world.TryGet(entity, out vCamComponent));
+            Assert.AreEqual(vCamComponent.lookAtCRDTEntity, lookAtEntity2);
+        }*/
+
+        [Test]
+        public async Task HandleComponentRemoveCorrectly()
+        {
+            // Workaround for Unity bug not awaiting async Setup correctly
+            await UniTask.WaitUntil(() => system != null);
+
+            var component = new PBVirtualCamera();
+            world.Add(entity, component);
+
+            system.Update(1f);
+            Assert.IsTrue(world.Has<VirtualCameraComponent>(entity));
+            Assert.AreEqual(sdkVirtualCameraPool.CountInactive, 0);
+            virtualCamera.enabled = true; // emulates being active on the MainCamera component
+
+            world.Remove<PBVirtualCamera>(entity);
+            system.Update(1f);
+            Assert.IsFalse(world.Has<VirtualCameraComponent>(entity));
+            Assert.IsFalse(virtualCamera.enabled);
+            Assert.AreEqual(sdkVirtualCameraPool.CountInactive, 1);
         }
 
         [Test]
-        public void UpdateVirtualCameraCorrectly()
+        public async Task HandleEntityDestructionCorrectly()
         {
+            // Workaround for Unity bug not awaiting async Setup correctly
+            await UniTask.WaitUntil(() => system != null);
 
-        }
+            var component = new PBVirtualCamera();
+            world.Add(entity, component);
 
-        [Test]
-        public void HandleComponentRemoveCorrectly()
-        {
+            system.Update(1f);
+            Assert.IsTrue(world.Has<VirtualCameraComponent>(entity));
+            Assert.AreEqual(sdkVirtualCameraPool.CountInactive, 0);
+            virtualCamera.enabled = true; // emulates being active on the MainCamera component
 
-        }
-
-        [Test]
-        public void HandleEntityDestructionCorrectly()
-        {
-
+            world.Add<DeleteEntityIntention>(entity);
+            system.Update(1f);
+            Assert.IsFalse(virtualCamera.enabled);
+            Assert.AreEqual(sdkVirtualCameraPool.CountInactive, 1);
         }
 
         /*[Test]
