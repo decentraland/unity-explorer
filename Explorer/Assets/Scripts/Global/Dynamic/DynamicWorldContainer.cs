@@ -10,6 +10,7 @@ using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.AvatarRendering.Wearables.ThirdParty;
 using DCL.Backpack.BackpackBus;
+using DCL.BadgesAPIService;
 using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Chat;
@@ -432,6 +433,8 @@ namespace Global.Dynamic
 
             var currentSceneInfo = new CurrentSceneInfo();
 
+            var badgesAPIClient = new BadgesAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
+
             container.multiplayerMovementMessageBus = new MultiplayerMovementMessageBus(container.MessagePipesHub, entityParticipantTable, globalWorld);
 
             var globalPlugins = new List<IDCLGlobalPlugin>
@@ -578,6 +581,8 @@ namespace Global.Dynamic
                     selfProfile,
                     webBrowser,
                     bootstrapContainer.DecentralandUrlsSource,
+                    badgesAPIClient,
+                    notificationsBusController,
                     staticContainer.InputBlock,
                     globalWorld,
                     playerEntity
