@@ -6,6 +6,7 @@ using DCL.CharacterCamera;
 using DCL.ECSComponents;
 using DCL.SDKComponents.CameraControl.MainCamera.Components;
 using DCL.SDKComponents.CameraControl.MainCamera.Systems;
+using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.TestSuite;
 using ECS.Unity.Transforms.Components;
@@ -40,15 +41,17 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
                 PartitionComponent.TOP_PRIORITY,
                 new CRDTEntity(SpecialEntitiesID.CAMERA_ENTITY),
                 new TransformComponent(),
-                new PBMainCamera());
+                new PBMainCamera(),
+                new MainCameraComponent());
             entitiesMap[SpecialEntitiesID.CAMERA_ENTITY] = mainCameraEntity;
 
             // Create 'virtual camera' entities
             sdkCinemachineCam1 = new GameObject("SDKVirtualCamera1").AddComponent<CinemachineFreeLook>();
             sdkCinemachineCam1.enabled = false;
+            sdkCinemachineCam1.transform.position = Vector3.one * 12.5f;
             VirtualCameraComponent vCamComponent = new VirtualCameraComponent(sdkCinemachineCam1, -1);
             CRDTEntity vCamCRDTEntity = new CRDTEntity(222);
-            virtualCameraEntity1 = world.Create(vCamCRDTEntity, vCamComponent,
+            virtualCameraEntity1 = world.Create(vCamCRDTEntity, vCamComponent, new TransformComponent(sdkCinemachineCam1.transform),
                 new PBVirtualCamera()
                 {
                     DefaultTransition = new CameraTransition() { Speed = 30 }
@@ -57,9 +60,10 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
 
             sdkCinemachineCam2 = new GameObject("SDKVirtualCamera1").AddComponent<CinemachineFreeLook>();
             sdkCinemachineCam2.enabled = false;
+            sdkCinemachineCam1.transform.position = Vector3.one * -5.3f;
             vCamComponent = new VirtualCameraComponent(sdkCinemachineCam2, -1);
             vCamCRDTEntity = new CRDTEntity(223);
-            virtualCameraEntity2 = world.Create(vCamCRDTEntity, vCamComponent,
+            virtualCameraEntity2 = world.Create(vCamCRDTEntity, vCamComponent, new TransformComponent(sdkCinemachineCam2.transform),
                 new PBVirtualCamera()
                 {
                     DefaultTransition = new CameraTransition() { Time = 2.5f }
@@ -102,6 +106,8 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
         [Test]
         public void SetupMainCameraComponentCorrectly()
         {
+            world.Remove<MainCameraComponent>(mainCameraEntity);
+
             // Do not set up if not current scene
             sceneStateProvider.IsCurrent.Returns(false);
             SystemUpdate();
@@ -121,9 +127,6 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
         [Test]
         public void UpdateCinemachineCameraCorrectly()
         {
-            var mainCameraComponent = new MainCameraComponent();
-            world.Add(mainCameraEntity, mainCameraComponent);
-
             SystemUpdate();
             Assert.IsNull(world.Get<MainCameraComponent>(mainCameraEntity).virtualCameraInstance);
             Assert.IsFalse(sdkCinemachineCam1.enabled);
@@ -133,7 +136,6 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
             world.Set(mainCameraEntity, pbMainCameraComponent);
 
             SystemUpdate();
-            cinemachineBrain.ManualUpdate();
             Assert.IsNotNull(world.Get<MainCameraComponent>(mainCameraEntity).virtualCameraInstance);
             Assert.AreSame(sdkCinemachineCam1, world.Get<MainCameraComponent>(mainCameraEntity).virtualCameraInstance);
             Assert.AreSame(sdkCinemachineCam1.gameObject, cinemachineBrain.ActiveVirtualCamera.VirtualCameraGameObject);
@@ -147,6 +149,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
             Assert.IsFalse(sdkCinemachineCam1.enabled);
             Assert.IsNull(world.Get<MainCameraComponent>(mainCameraEntity).virtualCameraInstance);
             Assert.AreNotSame(sdkCinemachineCam1.gameObject, cinemachineBrain.ActiveVirtualCamera.VirtualCameraGameObject);
+            Assert.AreSame(defaultCinemachineCam.gameObject, cinemachineBrain.ActiveVirtualCamera.VirtualCameraGameObject);
 
             // Set virtualCameraEntity2 as active vCam
             pbMainCameraComponent.VirtualCameraEntity = (uint)world.Get<CRDTEntity>(virtualCameraEntity2).Id;
@@ -172,59 +175,153 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
         }
 
         [Test]
-        public void UpdateMainCameraTransformCorrectly()
+        public void UpdateGlobalWorldCameraModeCorrectly()
         {
+            SystemUpdate();
+            Assert.AreNotEqual(CameraMode.SDKCamera, globalWorld.Get<CameraComponent>(globalWorldCameraEntity).Mode);
 
+            // Set virtualCameraEntity1 as active vCam
+            var pbMainCameraComponent = new PBMainCamera() { VirtualCameraEntity = (uint)world.Get<CRDTEntity>(virtualCameraEntity1).Id };
+            world.Set(mainCameraEntity, pbMainCameraComponent);
+
+            SystemUpdate();
+            Assert.AreEqual(CameraMode.SDKCamera, globalWorld.Get<CameraComponent>(globalWorldCameraEntity).Mode);
+
+            // Release active vCam in MainCameraComponent
+            pbMainCameraComponent.VirtualCameraEntity = 0;
+            world.Set(mainCameraEntity, pbMainCameraComponent);
+
+            SystemUpdate();
+            Assert.AreNotEqual(CameraMode.SDKCamera, globalWorld.Get<CameraComponent>(globalWorldCameraEntity).Mode);
         }
 
         [Test]
-        public void UpdateOnVirtualCameraLookAtUpdateCorrectly()
+        public void UpdateOnVirtualCameraLookAtChangeCorrectly()
         {
-            /*uint lookAtEntity1 = 358;
-            var component = new PBVirtualCamera()
-            {
-                LookAtEntity = lookAtEntity1,
-                IsDirty = true
-            };
-            world.Add(entity, component);
+            var pbVirtualCamera = new PBVirtualCamera() { DefaultTransition = new CameraTransition() };
+            world.Set(virtualCameraEntity1, pbVirtualCamera);
+            var pbMainCameraComponent = new PBMainCamera() { VirtualCameraEntity = (uint)world.Get<CRDTEntity>(virtualCameraEntity1).Id };
+            world.Set(mainCameraEntity, pbMainCameraComponent);
 
-            system.Update(1f);
-            Assert.IsTrue(world.TryGet(entity, out VirtualCameraComponent vCamComponent));
-            Assert.AreEqual(vCamComponent.lookAtCRDTEntity, lookAtEntity1);
+            SystemUpdate();
+            Assert.AreSame(sdkCinemachineCam1, world.Get<MainCameraComponent>(mainCameraEntity).virtualCameraInstance);
+            Assert.IsNull(sdkCinemachineCam1.GetRig(1).GetCinemachineComponent<CinemachineHardLookAt>());
+            Assert.IsNull(sdkCinemachineCam1.m_LookAt);
+            Assert.IsNotNull(sdkCinemachineCam1.GetRig(1).GetCinemachineComponent<CinemachinePOV>());
 
-            uint lookAtEntity2 = 666;
-            component.LookAtEntity = lookAtEntity2;
-            component.IsDirty = false;
-            world.Set(entity, component);
+            // Assign LookAT
+            uint lookAtCRDTEntity = (uint)world.Get<CRDTEntity>(virtualCameraEntity2).Id;
+            pbVirtualCamera.LookAtEntity = lookAtCRDTEntity;
+            pbVirtualCamera.IsDirty = true;
+            world.Set(virtualCameraEntity1, pbVirtualCamera);
 
-            system.Update(1f);
-            Assert.IsTrue(world.TryGet(entity, out vCamComponent));
-            Assert.AreNotEqual(vCamComponent.lookAtCRDTEntity, lookAtEntity2);
+            SystemUpdate();
+            Assert.AreSame(sdkCinemachineCam1, world.Get<MainCameraComponent>(mainCameraEntity).virtualCameraInstance);
+            Assert.IsNotNull(sdkCinemachineCam1.GetRig(1).GetCinemachineComponent<CinemachineHardLookAt>());
+            Assert.IsNotNull(sdkCinemachineCam1.m_LookAt);
+            Assert.AreSame(world.Get<TransformComponent>(virtualCameraEntity2).Transform, sdkCinemachineCam1.m_LookAt);
 
-            component.IsDirty = true;
-            world.Set(entity, component);
+            // Release LookAT
+            pbVirtualCamera.ClearLookAtEntity();
+            pbVirtualCamera.IsDirty = true;
+            world.Set(virtualCameraEntity1, pbVirtualCamera);
 
-            system.Update(1f);
-            Assert.IsTrue(world.TryGet(entity, out vCamComponent));
-            Assert.AreEqual(vCamComponent.lookAtCRDTEntity, lookAtEntity2);*/
+            SystemUpdate();
+            Assert.AreSame(sdkCinemachineCam1, world.Get<MainCameraComponent>(mainCameraEntity).virtualCameraInstance);
+            Assert.IsNull(sdkCinemachineCam1.GetRig(1).GetCinemachineComponent<CinemachineHardLookAt>());
+            Assert.IsNotNull(sdkCinemachineCam1.GetRig(1).GetCinemachineComponent<CinemachinePOV>());
+            Assert.IsNull(sdkCinemachineCam1.m_LookAt);
         }
 
         [Test]
         public void HandleEnterAndLeaveSceneCorrectly()
         {
+            // Assign vCam while outside scene
+            sceneStateProvider.IsCurrent.Returns(false);
+            var pbMainCameraComponent = new PBMainCamera() { VirtualCameraEntity = (uint)world.Get<CRDTEntity>(virtualCameraEntity1).Id };
+            world.Set(mainCameraEntity, pbMainCameraComponent);
+            SystemUpdate();
+            Assert.IsFalse(sdkCinemachineCam1.enabled);
+            Assert.AreNotSame(sdkCinemachineCam1, world.Get<MainCameraComponent>(mainCameraEntity).virtualCameraInstance);
+            Assert.AreNotSame(sdkCinemachineCam1.gameObject, cinemachineBrain.ActiveVirtualCamera.VirtualCameraGameObject);
+            Assert.AreSame(defaultCinemachineCam.gameObject, cinemachineBrain.ActiveVirtualCamera.VirtualCameraGameObject);
 
+            // "enter scene"
+            sceneStateProvider.IsCurrent.Returns(true);
+            SystemUpdate();
+            Assert.IsTrue(sdkCinemachineCam1.enabled);
+            Assert.AreSame(sdkCinemachineCam1, world.Get<MainCameraComponent>(mainCameraEntity).virtualCameraInstance);
+            Assert.AreSame(sdkCinemachineCam1.gameObject, cinemachineBrain.ActiveVirtualCamera.VirtualCameraGameObject);
+
+            // change vCam while inside scene
+            pbMainCameraComponent.VirtualCameraEntity = (uint)world.Get<CRDTEntity>(virtualCameraEntity2).Id;
+            world.Set(mainCameraEntity, pbMainCameraComponent);
+            SystemUpdate();
+            Assert.IsFalse(sdkCinemachineCam1.enabled);
+            Assert.IsTrue(sdkCinemachineCam2.enabled);
+            Assert.AreSame(sdkCinemachineCam2, world.Get<MainCameraComponent>(mainCameraEntity).virtualCameraInstance);
+            Assert.AreSame(sdkCinemachineCam2.gameObject, cinemachineBrain.ActiveVirtualCamera.VirtualCameraGameObject);
+
+            // "exit scene"
+            sceneStateProvider.IsCurrent.Returns(false);
+            SystemUpdate();
+            Assert.IsFalse(sdkCinemachineCam1.enabled);
+            Assert.IsFalse(sdkCinemachineCam2.enabled);
+            Assert.AreSame(defaultCinemachineCam.gameObject, cinemachineBrain.ActiveVirtualCamera.VirtualCameraGameObject);
+
+            // "re-enter scene"
+            sceneStateProvider.IsCurrent.Returns(true);
+            SystemUpdate();
+            Assert.IsFalse(sdkCinemachineCam1.enabled);
+            Assert.IsTrue(sdkCinemachineCam2.enabled);
+            Assert.AreSame(sdkCinemachineCam2, world.Get<MainCameraComponent>(mainCameraEntity).virtualCameraInstance);
+            Assert.AreSame(sdkCinemachineCam2.gameObject, cinemachineBrain.ActiveVirtualCamera.VirtualCameraGameObject);
         }
 
         [Test]
         public void HandleComponentRemoveCorrectly()
         {
+            // Set virtualCameraEntity1 as active vCam
+            var pbMainCameraComponent = new PBMainCamera() { VirtualCameraEntity = (uint)world.Get<CRDTEntity>(virtualCameraEntity1).Id };
+            world.Set(mainCameraEntity, pbMainCameraComponent);
 
+            SystemUpdate();
+            Assert.IsNotNull(world.Get<MainCameraComponent>(mainCameraEntity).virtualCameraInstance);
+            Assert.AreSame(sdkCinemachineCam1, world.Get<MainCameraComponent>(mainCameraEntity).virtualCameraInstance);
+            Assert.AreSame(sdkCinemachineCam1.gameObject, cinemachineBrain.ActiveVirtualCamera.VirtualCameraGameObject);
+            Assert.IsTrue(sdkCinemachineCam1.enabled);
+            Assert.AreEqual(CameraMode.SDKCamera, globalWorld.Get<CameraComponent>(globalWorldCameraEntity).Mode);
+
+            // Remove PB component
+            world.Remove<PBMainCamera>(mainCameraEntity);
+            SystemUpdate();
+            Assert.IsFalse(sdkCinemachineCam1.enabled);
+            Assert.IsFalse(sdkCinemachineCam2.enabled);
+            Assert.AreSame(defaultCinemachineCam.gameObject, cinemachineBrain.ActiveVirtualCamera.VirtualCameraGameObject);
+            Assert.AreNotEqual(CameraMode.SDKCamera, globalWorld.Get<CameraComponent>(globalWorldCameraEntity).Mode);
         }
 
         [Test]
         public void HandleEntityDestructionCorrectly()
         {
+            // Set virtualCameraEntity1 as active vCam
+            var pbMainCameraComponent = new PBMainCamera() { VirtualCameraEntity = (uint)world.Get<CRDTEntity>(virtualCameraEntity1).Id };
+            world.Set(mainCameraEntity, pbMainCameraComponent);
 
+            SystemUpdate();
+            Assert.IsNotNull(world.Get<MainCameraComponent>(mainCameraEntity).virtualCameraInstance);
+            Assert.AreSame(sdkCinemachineCam1, world.Get<MainCameraComponent>(mainCameraEntity).virtualCameraInstance);
+            Assert.AreSame(sdkCinemachineCam1.gameObject, cinemachineBrain.ActiveVirtualCamera.VirtualCameraGameObject);
+            Assert.IsTrue(sdkCinemachineCam1.enabled);
+            Assert.AreEqual(CameraMode.SDKCamera, globalWorld.Get<CameraComponent>(globalWorldCameraEntity).Mode);
+
+            // Add DeleteEntityIntention component
+            world.Add<DeleteEntityIntention>(mainCameraEntity);
+            SystemUpdate();
+            Assert.IsFalse(sdkCinemachineCam1.enabled);
+            Assert.IsFalse(sdkCinemachineCam2.enabled);
+            Assert.AreSame(defaultCinemachineCam.gameObject, cinemachineBrain.ActiveVirtualCamera.VirtualCameraGameObject);
+            Assert.AreNotEqual(CameraMode.SDKCamera, globalWorld.Get<CameraComponent>(globalWorldCameraEntity).Mode);
         }
 
         private void SystemUpdate()
