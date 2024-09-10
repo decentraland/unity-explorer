@@ -51,6 +51,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
         {
             SetupMainCameraQuery(World);
 
+            HandleActiveVirtualCameraDirtyStateQuery(World);
             HandleVirtualCameraChangeQuery(World);
             DisableVirtualCameraOnSceneLeaveQuery(World);
 
@@ -65,11 +66,6 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
             if (entity != cameraEntity || !sceneStateProvider.IsCurrent) return;
 
             int virtualCameraCRDTEntity = (int)pbMainCamera.VirtualCameraEntity;
-
-            /*Debug.Log($"PRAVS -----------------");
-            Debug.Log($"PRAVS - mainCameraComponent.virtualCameraCRDTEntity: {mainCameraComponent.virtualCameraCRDTEntity}");
-            Debug.Log($"PRAVS - virtualCameraCRDTEntity: {virtualCameraCRDTEntity}");
-            Debug.Log($"PRAVS - mainCameraComponent.virtualCameraInstance?.enabled: {mainCameraComponent.virtualCameraInstance?.enabled}");*/
 
             // Cannot check by pbComponent.IsDirty since the VirtualCamera may not yet be on the target CRDTEntity
             // when the pbComponent is dirty and may have to be re-checked on subsequent updates...
