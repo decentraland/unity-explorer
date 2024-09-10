@@ -168,8 +168,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   player: {fileID: 383022535}
   steps:
-  - url: 
+  - url: https://player.vimeo.com/external/552481870.m3u8?s=c312c8533f97e808fccc92b0510b085c8122a875
     forDuration: 10
+  - url: https://radioislanegra.org/radio/8010/basic.aac
+    forDuration: 15
+  - url: https://player.vimeo.com/external/843206751.m3u8?s=ad9e81b120faa9fa68506ed337e6095ac1de3f78
+    forDuration: 15
 --- !u!1 &179245866
 GameObject:
   m_ObjectHideFlags: 0
