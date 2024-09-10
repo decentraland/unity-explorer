@@ -59,12 +59,10 @@ namespace ECS.SceneLifeCycle.SceneDefinition
         //PX don't care about parcel corners as they work on all the map.
         private static readonly IReadOnlyList<ParcelMathHelper.ParcelCorners> PORTABLE_EXPERIENCES_PARCEL_CORNERS = new List<ParcelMathHelper.ParcelCorners>();
 
-        public static SceneDefinitionComponent CreateFromDefinition(SceneEntityDefinition definition, IpfsPath ipfsPath)
-        {
-            if (definition.metadata.isPortableExperience) { return CreatePortableExperienceSceneDefinitionComponent(definition, ipfsPath);}
-
-            return CreateSceneDefinitionComponent(definition, definition.metadata.scene.DecodedParcels, ipfsPath, isEmpty: false, isSDK7: definition.metadata.runtimeVersion == "7", isPortableExperience: false);
-        }
+        public static SceneDefinitionComponent CreateFromDefinition(SceneEntityDefinition definition, IpfsPath ipfsPath, bool isPortableExperience = false) =>
+            isPortableExperience ?
+                CreatePortableExperienceSceneDefinitionComponent(definition, ipfsPath) :
+                CreateSceneDefinitionComponent(definition, definition.metadata.scene.DecodedParcels, ipfsPath, isEmpty: false, isSDK7: definition.metadata.runtimeVersion == "7", isPortableExperience: false);
 
         private static SceneDefinitionComponent CreatePortableExperienceSceneDefinitionComponent(SceneEntityDefinition definition, IpfsPath ipfsPath) =>
             new (

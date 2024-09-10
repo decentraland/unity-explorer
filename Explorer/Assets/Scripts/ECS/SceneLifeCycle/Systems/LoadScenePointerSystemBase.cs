@@ -14,8 +14,8 @@ namespace ECS.SceneLifeCycle.Systems
     {
         protected LoadScenePointerSystemBase(World world) : base(world) { }
 
-        protected Entity CreateSceneEntity(SceneEntityDefinition definition, IpfsPath ipfsPath) =>
-            World.Create(SceneDefinitionComponentFactory.CreateFromDefinition(definition, ipfsPath));
+        protected Entity CreateSceneEntity(SceneEntityDefinition definition, IpfsPath ipfsPath, bool isPortableExperience = false) =>
+            World.Create(SceneDefinitionComponentFactory.CreateFromDefinition(definition, ipfsPath, isPortableExperience));
 
         /// <summary>
         ///     Creates a scene entity if none of scene parcels were processed yet

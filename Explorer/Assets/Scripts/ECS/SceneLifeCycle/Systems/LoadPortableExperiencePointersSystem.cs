@@ -61,7 +61,7 @@ namespace ECS.SceneLifeCycle.Systems
                 {
                     if (result is {Asset: not null, Succeeded: true })
                     {
-                        var entity = CreateSceneEntity(result.Asset, promise.LoadingIntention.IpfsPath);
+                        var entity = CreateSceneEntity(result.Asset, promise.LoadingIntention.IpfsPath, true);
                         World.Add(entity, portableExperienceComponent);
                     }
                 }
