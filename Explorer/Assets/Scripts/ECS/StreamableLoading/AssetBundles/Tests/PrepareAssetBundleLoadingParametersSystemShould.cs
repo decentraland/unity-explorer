@@ -8,6 +8,7 @@ using NUnit.Framework;
 using SceneRunner.Scene;
 using System;
 using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace ECS.StreamableLoading.AssetBundles.Tests
 {
@@ -30,7 +31,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         [Test]
         public void LoadFromEmbeddedFirst()
         {
-            UnityEngine.TestTools.LogAssert.ignoreFailingMessages = true;
+            LogAssert.ignoreFailingMessages = true;
 
             var intent = GetAssetBundleIntention.FromHash(typeof(GameObject), "TEST", permittedSources: AssetSource.EMBEDDED | AssetSource.WEB);
 
