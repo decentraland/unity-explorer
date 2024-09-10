@@ -19,7 +19,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
 {
     [UpdateInGroup(typeof(SyncedInitializationFixedUpdateThrottledGroup))]
     [UpdateBefore(typeof(MainCameraSystem))]
-    [LogCategory(ReportCategory.SDK_MAIN_CAMERA)]
+    [LogCategory(ReportCategory.SDK_CAMERA)]
     public partial class VirtualCameraSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
         private readonly IComponentPool<CinemachineFreeLook> poolRegistry;

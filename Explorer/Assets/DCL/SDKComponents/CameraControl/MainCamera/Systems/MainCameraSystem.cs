@@ -20,7 +20,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
 {
     [UpdateInGroup(typeof(SyncedInitializationFixedUpdateThrottledGroup))]
     [UpdateBefore(typeof(CameraModeAreaHandlerSystem))]
-    [LogCategory(ReportCategory.SDK_MAIN_CAMERA)]
+    [LogCategory(ReportCategory.SDK_CAMERA)]
     public partial class MainCameraSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
         private static readonly QueryDescription GLOBAL_WORLD_CAMERA_QUERY = new QueryDescription().WithAll<CameraComponent>();

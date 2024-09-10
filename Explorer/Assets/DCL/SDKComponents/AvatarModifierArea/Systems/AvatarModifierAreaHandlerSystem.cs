@@ -21,7 +21,7 @@ using UnityEngine;
 namespace DCL.SDKComponents.AvatarModifierArea.Systems
 {
     [UpdateInGroup(typeof(SyncedInitializationFixedUpdateThrottledGroup))]
-    [LogCategory(ReportCategory.CAMERA_MODE_AREA)]
+    [LogCategory(ReportCategory.CHARACTER_TRIGGER_AREA)]
     public partial class AvatarModifierAreaHandlerSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
         private static readonly QueryDescription AVATAR_BASE_QUERY = new QueryDescription().WithAll<AvatarBase>();

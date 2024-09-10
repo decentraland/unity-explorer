@@ -207,9 +207,9 @@ namespace DCL.Diagnostics
         public const string CHARACTER_TRIGGER_AREA = nameof(CHARACTER_TRIGGER_AREA);
 
         /// <summary>
-        ///     CameraModeArea SDK component
+        ///     SDK Camera related systems
         /// </summary>
-        public const string CAMERA_MODE_AREA = nameof(CAMERA_MODE_AREA);
+        public const string SDK_CAMERA = nameof(SDK_CAMERA);
 
         /// <summary>
         ///     Player-related data propagated to SDK
@@ -230,11 +230,6 @@ namespace DCL.Diagnostics
         ///     Local scene development connection with locally running scene (AKA "Preview Mode")
         /// </summary>
         public const string SDK_LOCAL_SCENE_DEVELOPMENT = nameof(SDK_LOCAL_SCENE_DEVELOPMENT);
-
-        /// <summary>
-        ///     CameraDirector and VirtualCamera SDK components
-        /// </summary>
-        public const string SDK_MAIN_CAMERA = nameof(SDK_MAIN_CAMERA);
 
         /// <summary>
         ///     Roads related systems

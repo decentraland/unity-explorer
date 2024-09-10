@@ -17,7 +17,7 @@ using System.Collections.Generic;
 namespace DCL.SDKComponents.CameraModeArea.Systems
 {
     [UpdateInGroup(typeof(SyncedInitializationFixedUpdateThrottledGroup))]
-    [LogCategory(ReportCategory.CAMERA_MODE_AREA)]
+    [LogCategory(ReportCategory.CHARACTER_TRIGGER_AREA)]
     public partial class CameraModeAreaHandlerSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
         // There's only 1 camera at a time
