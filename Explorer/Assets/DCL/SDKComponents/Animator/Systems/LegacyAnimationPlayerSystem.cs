@@ -38,28 +38,16 @@ namespace DCL.SDKComponents.Animator.Systems
         private void LoadAnimator(in Entity entity, ref PBAnimator pbAnimator, ref GltfContainerComponent gltfContainerComponent)
         {
             // Until the GLTF Container is not fully loaded (and it has at least one animation) we do not create the SDKAnimator
-            if (gltfContainerComponent.State != LoadingState.Finished) return;
-            if (gltfContainerComponent.Promise.Result?.Asset == null) return;
+            if (gltfContainerComponent.IsSuccessfullyFinished() == false) return;
             if (gltfContainerComponent.Promise.Result.Value.Asset.Animations.Count == 0) return;
 
             foreach (Animation animation in gltfContainerComponent.Promise.Result.Value.Asset.Animations)
                 InitializeAnimation(animation);
 
-            List<SDKAnimationState> sdkAnimationStates = ListPool<SDKAnimationState>.Get();
-
-            for (var i = 0; i < pbAnimator.States.Count; i++)
-            {
-                PBAnimationState pbAnimationState = pbAnimator.States[i];
-                var sdkAnimationState = new SDKAnimationState(pbAnimationState);
-                sdkAnimationStates.Add(sdkAnimationState);
-            }
-
-            var sdkAnimatorComponent = new SDKAnimatorComponent(sdkAnimationStates)
-                {
-                    IsDirty = true,
-                };
+            var sdkAnimatorComponent = SDKAnimatorComponent.NewComponentFromPbAnimator(pbAnimator);
 
             World.Add(entity, sdkAnimatorComponent);
+
             // The PBAnimator is only dirtied on SDK side either on Create/CreateOrReplace
             // or when doing changes to it when triggered by events on the scene, so we never set it to true on the client.
             pbAnimator.IsDirty = false;
@@ -69,16 +57,15 @@ namespace DCL.SDKComponents.Animator.Systems
         [All(typeof(LegacyGltfAnimation))]
         private void UpdateAnimationState(ref SDKAnimatorComponent sdkAnimatorComponent, ref GltfContainerComponent gltfContainerComponent)
         {
-            if (!sdkAnimatorComponent.IsDirty) return;
-
-            List<Animation> gltfAnimations = gltfContainerComponent.Promise.Result!.Value.Asset.Animations;
-
-            sdkAnimatorComponent.IsDirty = false;
-
-            for (var i = 0; i < gltfAnimations.Count; i++)
+            if (sdkAnimatorComponent.TryConsumeAndUnDirt(out var states))
             {
-                Animation animation = gltfAnimations[i];
-                SetAnimationState(sdkAnimatorComponent.SDKAnimationStates, animation);
+                IReadOnlyList<Animation> gltfAnimations = gltfContainerComponent.Promise.Result!.Value.Asset.Animations;
+
+                for (var i = 0; i < gltfAnimations.Count; i++)
+                {
+                    Animation animation = gltfAnimations[i];
+                    SetAnimationState(states, animation);
+                }
             }
         }
 
@@ -92,7 +79,7 @@ namespace DCL.SDKComponents.Animator.Systems
             foreach (Animation animation in gltfAnimations)
                 InitializeAnimation(animation);
 
-            ListPool<SDKAnimationState>.Release(sdkAnimatorComponent.SDKAnimationStates);
+            sdkAnimatorComponent.Dispose();
         }
 
         private static void InitializeAnimation(Animation animation)
@@ -116,7 +103,7 @@ namespace DCL.SDKComponents.Animator.Systems
             }
         }
 
-        private static void SetAnimationState(IList<SDKAnimationState> sdkAnimationStates, Animation animation)
+        private static void SetAnimationState(IReadOnlyList<SDKAnimationState> sdkAnimationStates, Animation animation)
         {
             if (sdkAnimationStates.Count == 0)
                 return;

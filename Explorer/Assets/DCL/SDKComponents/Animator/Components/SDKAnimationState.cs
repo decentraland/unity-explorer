@@ -1,5 +1,6 @@
 ﻿using DCL.ECSComponents;
 using DCL.SDKComponents.Tween.Systems;
+using System.Collections.Generic;
 
 namespace DCL.SDKComponents.Animator.Components
 {
@@ -20,6 +21,18 @@ namespace DCL.SDKComponents.Animator.Components
             Speed = pbAnimationState.GetSpeed();
             Loop = pbAnimationState.GetLoop();
             ShouldReset = pbAnimationState.GetShouldReset();
+        }
+    }
+
+    public static class SDKAnimationStateExtensions
+    {
+        public static bool IsAnyPlaying(this IEnumerable<SDKAnimationState> states)
+        {
+            foreach (var state in states)
+                if (state.Playing)
+                    return true;
+
+            return false;
         }
     }
 }

@@ -10,7 +10,6 @@ using ECS.LifeCycle.Components;
 using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.Groups;
 using System.Collections.Generic;
-using UnityEngine.Pool;
 using UAnimator = UnityEngine.Animator;
 
 namespace DCL.SDKComponents.Animator.Systems
@@ -24,10 +23,10 @@ namespace DCL.SDKComponents.Animator.Systems
 
         protected override void Update(float t)
         {
-            LoadAnimatorQuery(World);
-            UpdateAnimationStateQuery(World);
-            HandleComponentRemovalQuery(World);
-            World.Remove<SDKAnimatorComponent>(in HandleComponentRemoval_QueryDescription);
+            LoadAnimatorQuery(World!);
+            UpdateAnimationStateQuery(World!);
+            HandleComponentRemovalQuery(World!);
+            World!.Remove<SDKAnimatorComponent>(in HandleComponentRemoval_QueryDescription);
         }
 
         [Query]
@@ -35,28 +34,16 @@ namespace DCL.SDKComponents.Animator.Systems
         private void LoadAnimator(in Entity entity, ref PBAnimator pbAnimator, ref GltfContainerComponent gltfContainerComponent)
         {
             // Until the GLTF Container is not fully loaded (and it has at least one animation) we do not create the SDKAnimator
-            if (gltfContainerComponent.State != LoadingState.Finished) return;
-            if (gltfContainerComponent.Promise.Result?.Asset == null) return;
+            if (gltfContainerComponent.IsSuccessfullyFinished() == false) return;
             if (gltfContainerComponent.Promise.Result.Value.Asset.Animators.Count == 0) return;
 
             foreach (UAnimator animator in gltfContainerComponent.Promise.Result.Value.Asset.Animators)
                 InitializeAnimator(animator);
 
-            List<SDKAnimationState> sdkAnimationStates = ListPool<SDKAnimationState>.Get();
-
-            for (var i = 0; i < pbAnimator.States.Count; i++)
-            {
-                PBAnimationState pbAnimationState = pbAnimator.States[i];
-                var sdkAnimationState = new SDKAnimationState(pbAnimationState);
-                sdkAnimationStates.Add(sdkAnimationState);
-            }
-
-            var sdkAnimatorComponent = new SDKAnimatorComponent(sdkAnimationStates)
-                {
-                    IsDirty = true,
-                };
+            var sdkAnimatorComponent = SDKAnimatorComponent.NewComponentFromPbAnimator(pbAnimator);
 
             World.Add(entity, sdkAnimatorComponent);
+
             // The PBAnimator is only dirtied on SDK side either on Create/CreateOrReplace
             // or when doing changes to it when triggered by events on the scene, so we never set it to true on the client.
             pbAnimator.IsDirty = false;
@@ -66,26 +53,27 @@ namespace DCL.SDKComponents.Animator.Systems
         [None(typeof(LegacyGltfAnimation))]
         private void UpdateAnimationState(ref SDKAnimatorComponent sdkAnimatorComponent, ref GltfContainerComponent gltfContainerComponent)
         {
-            if (!sdkAnimatorComponent.IsDirty) return;
             if (gltfContainerComponent.State != LoadingState.Finished) return;
 
-            List<UAnimator> animators = gltfContainerComponent.Promise.Result!.Value.Asset.Animators;
-            sdkAnimatorComponent.IsDirty = false;
+            if (sdkAnimatorComponent.TryConsumeAndUnDirt(out var state))
+            {
+                IEnumerable<UAnimator> animators = gltfContainerComponent.Promise.Result!.Value.Asset.Animators;
 
-            foreach (var animator in animators)
-                SetAnimationState(sdkAnimatorComponent.SDKAnimationStates, animator);
+                foreach (var animator in animators)
+                    SetAnimationState(state, animator);
+            }
         }
 
         [Query]
         [None(typeof(PBAnimator), typeof(DeleteEntityIntention), typeof(LegacyGltfAnimation))]
         private void HandleComponentRemoval(ref GltfContainerComponent gltfContainerComponent, ref SDKAnimatorComponent sdkAnimatorComponent)
         {
-            List<UAnimator> gltfAnimations = gltfContainerComponent.Promise.Result!.Value.Asset.Animators;
+            IEnumerable<UAnimator> gltfAnimations = gltfContainerComponent.Promise.Result!.Value.Asset.Animators;
 
             foreach (UAnimator animator in gltfAnimations)
                 InitializeAnimator(animator);
 
-            ListPool<SDKAnimationState>.Release(sdkAnimatorComponent.SDKAnimationStates);
+            sdkAnimatorComponent.Dispose();
         }
 
         private static void InitializeAnimator(UAnimator animator)
@@ -93,15 +81,12 @@ namespace DCL.SDKComponents.Animator.Systems
             animator.enabled = true;
         }
 
-        private void SetAnimationState(ICollection<SDKAnimationState> sdkAnimationStates, UAnimator animator)
+        private void SetAnimationState(IReadOnlyCollection<SDKAnimationState> sdkAnimationStates, UAnimator animator)
         {
             if (sdkAnimationStates.Count == 0)
                 return;
 
-            var isAnyAnimPlaying = false;
-
-            foreach (SDKAnimationState sdkAnimationState in sdkAnimationStates)
-                isAnyAnimPlaying |= sdkAnimationState.Playing;
+            bool isAnyAnimPlaying = sdkAnimationStates.IsAnyPlaying();
 
             if (isAnyAnimPlaying)
                 animator.enabled = true;
@@ -114,6 +99,15 @@ namespace DCL.SDKComponents.Animator.Systems
                 if (layerIndex == -1)
                 {
                     ReportHub.LogWarning(new ReportData(GetReportCategory()), $"Cannot find animator layer for clip {name}");
+                    continue;
+                }
+
+                if (sdkAnimationState.ShouldReset)
+                {
+                    animator.SetBool($"{name}_Enabled", false);
+                    animator.SetBool($"{name}_Loop", false);
+                    animator.ResetTrigger($"{name}_Trigger");
+                    animator.SetLayerWeight(layerIndex, 0f);
                     continue;
                 }
 

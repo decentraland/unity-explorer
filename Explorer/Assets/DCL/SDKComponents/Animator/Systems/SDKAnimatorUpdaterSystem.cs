@@ -8,31 +8,28 @@ using DCL.SDKComponents.Animator.Components;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Unity.Groups;
-using Google.Protobuf.Collections;
-using System.Collections.Generic;
-using UnityEngine.Pool;
 
 namespace DCL.SDKComponents.Animator.Systems
 {
     [UpdateInGroup(typeof(ComponentInstantiationGroup))]
     [LogCategory(ReportCategory.ANIMATOR)]
-    [ThrottlingEnabled]
+    //[ThrottlingEnabled]
     public partial class SDKAnimatorUpdaterSystem : BaseUnityLoopSystem
     {
         public SDKAnimatorUpdaterSystem(World world) : base(world) { }
 
         protected override void Update(float t)
         {
-            UpdateAnimatorQuery(World);
-            HandleEntityDeletionQuery(World);
-            World.Remove<SDKAnimatorComponent>(in HandleEntityDeletion_QueryDescription);
+            UpdateAnimatorQuery(World!);
+            HandleEntityDeletionQuery(World!);
+            World!.Remove<SDKAnimatorComponent>(in HandleEntityDeletion_QueryDescription);
         }
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
         private void HandleEntityDeletion(ref SDKAnimatorComponent sdkAnimatorComponent)
         {
-            ListPool<SDKAnimationState>.Release(sdkAnimatorComponent.SDKAnimationStates);
+            sdkAnimatorComponent.Dispose();
         }
 
         [Query]
@@ -40,15 +37,8 @@ namespace DCL.SDKComponents.Animator.Systems
         {
             if (!pbAnimator.IsDirty) return;
 
-            sdkAnimatorComponent.IsDirty = true;
             pbAnimator.IsDirty = false;
-            List<SDKAnimationState> sdkAnimationStates = sdkAnimatorComponent.SDKAnimationStates;
-            sdkAnimationStates.Clear();
-
-            RepeatedField<PBAnimationState> pbAnimatorStates = pbAnimator.States;
-
-            foreach (PBAnimationState state in pbAnimatorStates)
-                sdkAnimationStates.Add(new SDKAnimationState(state));
+            sdkAnimatorComponent.RechargeStates(pbAnimator.States!);
         }
     }
 }

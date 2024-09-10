@@ -41,5 +41,12 @@ namespace ECS.Unity.GLTFContainer.Components
                 new StreamableLoadingResult<GltfContainerAsset>(exception));
         }
 
+        public readonly bool IsSuccessfullyFinished()
+        {
+            if (State != LoadingState.Finished) return false;
+            if (Promise.Result?.Asset == null) return false;
+
+            return true;
+        }
     }
 }
