@@ -230,7 +230,7 @@ jobs:
 
       - name: 'Tar artifact to maintain original permissions'
         if: matrix.target == 'macos'
-        run: tar -cvf build.tar build
+        run: tar --exclude='build/Decentraland_BackUpThisFolder_ButDontShipItWithYourGame' -cvf build.tar build
           
       - name: Upload artifact for macOS
         if: matrix.target == 'macos'
