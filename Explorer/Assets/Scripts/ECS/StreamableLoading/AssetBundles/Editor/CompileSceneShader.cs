@@ -22,7 +22,7 @@ namespace DCL.Rendering.Menus
         [MenuItem("Decentraland/Shaders/Compile \"Scene\" Shader Variants")]
         public static void ExecuteMenuItem()
         {
-            string sPlatform = PlatformUtils.GetPlatform();
+            string sPlatform = PlatformUtils.GetCurrentPlatform();
             BuildTarget bt = BuildTarget.StandaloneWindows64; // default
 
             switch (sPlatform)
