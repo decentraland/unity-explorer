@@ -67,12 +67,12 @@ namespace DCL.WebRequests.Analytics
                                       .AddControlWithLabel("Retries:", new DebugIntFieldDef(retriesCount))
                                       .AddControlWithLabel("Delay between requests (s):", new DebugFloatFieldDef(delayBetweenRequests))
                                       .AddControl(
-                                           new DebugButtonDef("Start Success", () => { stressTestUtility.StartConcurrent(count.Value, retriesCount.Value, false, delayBetweenRequests.Value).Forget(); }),
-                                           new DebugButtonDef("Start Failure", () => { stressTestUtility.StartConcurrent(count.Value, retriesCount.Value, true, delayBetweenRequests.Value).Forget(); }),
+                                           new DebugButtonDef("Start Success", () => { stressTestUtility.StartConcurrentAsync(count.Value, retriesCount.Value, false, delayBetweenRequests.Value).Forget(); }),
+                                           new DebugButtonDef("Start Failure", () => { stressTestUtility.StartConcurrentAsync(count.Value, retriesCount.Value, true, delayBetweenRequests.Value).Forget(); }),
                                            new DebugHintDef("Concurrent"))
                                       .AddControl(
-                                           new DebugButtonDef("Start Success", () => { stressTestUtility.StartSequential(count.Value, retriesCount.Value, false, delayBetweenRequests.Value).Forget(); }),
-                                           new DebugButtonDef("Start Failure", () => { stressTestUtility.StartSequential(count.Value, retriesCount.Value, true, delayBetweenRequests.Value).Forget(); }),
+                                           new DebugButtonDef("Start Success", () => { stressTestUtility.StartSequentialAsync(count.Value, retriesCount.Value, false, delayBetweenRequests.Value).Forget(); }),
+                                           new DebugButtonDef("Start Failure", () => { stressTestUtility.StartSequentialAsync(count.Value, retriesCount.Value, true, delayBetweenRequests.Value).Forget(); }),
                                            new DebugHintDef("Sequential"));
                 }
             }

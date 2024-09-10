@@ -19,7 +19,7 @@ namespace DCL.WebRequests.Analytics
             this.webRequestController = webRequestController;
         }
 
-        public async UniTask StartConcurrent(int count, int retriesCount, bool failed, float delay)
+        public async UniTask StartConcurrentAsync(int count, int retriesCount, bool failed, float delay)
         {
             bool hasDelay = Mathf.Approximately(delay, 0);
 
@@ -27,7 +27,7 @@ namespace DCL.WebRequests.Analytics
 
             for (var i = 0; i < count; i++)
             {
-                tasks[i] = StartRequest(i, retriesCount, failed);
+                tasks[i] = StartRequestAsync(i, retriesCount, failed);
 
                 if (hasDelay)
                     await UniTask.Delay(TimeSpan.FromSeconds(delay), DelayType.Realtime);
@@ -36,20 +36,20 @@ namespace DCL.WebRequests.Analytics
             await UniTask.WhenAll(tasks);
         }
 
-        public async UniTask StartSequential(int count, int retriesCount, bool failed, float delay)
+        public async UniTask StartSequentialAsync(int count, int retriesCount, bool failed, float delay)
         {
             bool hasDelay = Mathf.Approximately(delay, 0);
 
             for (var i = 0; i < count; i++)
             {
-                await StartRequest(i, retriesCount, failed);
+                await StartRequestAsync(i, retriesCount, failed);
 
                 if (hasDelay)
                     await UniTask.Delay(TimeSpan.FromSeconds(delay), DelayType.Realtime);
             }
         }
 
-        private async UniTask StartRequest(int requestNumber, int retriesCount, bool failed)
+        private async UniTask StartRequestAsync(int requestNumber, int retriesCount, bool failed)
         {
             try
             {
