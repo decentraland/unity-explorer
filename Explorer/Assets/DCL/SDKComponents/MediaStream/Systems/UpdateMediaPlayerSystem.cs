@@ -107,7 +107,7 @@ namespace DCL.SDKComponents.MediaStream
 
             if (component.URL != url && component.URL != localMediaUrl)
             {
-                component.MediaPlayer.CloseCurrentStream();
+                component.MediaPlayer!.CloseCurrentStream();
 
                 UpdateStreamUrl(ref component, url);
 
@@ -119,22 +119,22 @@ namespace DCL.SDKComponents.MediaStream
             }
             else if (component.State != VideoState.VsError)
             {
-                component.MediaPlayer.UpdatePlayback(hasPlaying, isPlaying);
+                component.MediaPlayer!.UpdatePlayback(hasPlaying, isPlaying);
 
                 if (sdkVideoComponent != null)
-                    onPlaybackUpdate?.Invoke(component.MediaPlayer, sdkVideoComponent);
+                    onPlaybackUpdate?.Invoke(component.MediaPlayer!, sdkVideoComponent);
             }
 
             sdkComponent.IsDirty = false;
         }
 
-        private static void ConsumePromise(ref MediaPlayerComponent component, bool autoPlay, PBVideoPlayer sdkVideoComponent = null, Action<MediaPlayer, PBVideoPlayer> onOpened = null)
+        private static void ConsumePromise(ref MediaPlayerComponent component, bool autoPlay, PBVideoPlayer? sdkVideoComponent = null, Action<MediaPlayer, PBVideoPlayer>? onOpened = null)
         {
             if (!component.OpenMediaPromise.IsResolved) return;
 
             if (component.OpenMediaPromise.IsReachableConsume(component.URL))
             {
-                component.MediaPlayer.OpenMedia(MediaPathType.AbsolutePathOrURL, component.URL, autoPlay);
+                component.MediaPlayer!.OpenMedia(MediaPathType.AbsolutePathOrURL, component.URL, autoPlay);
 
                 if (sdkVideoComponent != null)
                     onOpened?.Invoke(component.MediaPlayer, sdkVideoComponent);
@@ -142,13 +142,13 @@ namespace DCL.SDKComponents.MediaStream
             else
             {
                 component.State = VideoState.VsError;
-                component.MediaPlayer.CloseCurrentStream();
+                component.MediaPlayer!.CloseCurrentStream();
             }
         }
 
         private void UpdateStreamUrl(ref MediaPlayerComponent component, string url)
         {
-            component.MediaPlayer.CloseCurrentStream();
+            component.MediaPlayer!.CloseCurrentStream();
 
             if (!url.IsValidUrl() && sceneData.TryGetMediaUrl(url, out URLAddress mediaUrl))
                 url = mediaUrl;
