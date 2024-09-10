@@ -1,5 +1,9 @@
 using Arch.Core;
 using CommunicationData.URLHelpers;
+using DCL.AvatarRendering.AvatarShape.Tests.EditMode;
+using DCL.AvatarRendering.Loading.Assets;
+using DCL.AvatarRendering.Loading.Components;
+using DCL.AvatarRendering.Loading.DTO;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
@@ -10,7 +14,6 @@ using ECS.SceneLifeCycle.Tests;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
 using ECS.TestSuite;
-using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
 using System;
@@ -23,60 +26,67 @@ using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.Streama
 namespace DCL.AvatarRendering.Wearables.Tests
 {
     [TestFixture]
-    public class ResolveWearableByPointerSystemShould : UnitySystemTestBase<ResolveWearableByPointerSystem>
+    public class ResolveWearableByPointerSystemShould : UnitySystemTestBase<FinalizeWearableLoadingSystem>
     {
         [SetUp]
         public void Setup()
         {
             mockedABManifest = new StreamableLoadingResult<SceneAssetBundleManifest>(new SceneAssetBundleManifest(URLDomain.EMPTY, "0", Array.Empty<string>()));
 
-            wearableCache = new WearableCache();
+            wearableStorage = new WearableStorage();
 
-            mockedAB = new StreamableLoadingResult<WearableAssetBase>(new WearableRegularAsset(null, null, null));
+            mockedAB = new StreamableLoadingResult<AttachmentAssetBase>(new AttachmentRegularAsset(null, null, null));
 
-            mockedDefaultAB = new StreamableLoadingResult<WearableAssetBase>(new WearableRegularAsset(null, null, null));
+            mockedDefaultAB = new StreamableLoadingResult<AttachmentAssetBase>(new AttachmentRegularAsset(null, null, null));
 
             IWearable mockDefaultWearable = CreateMockWearable(defaultWearableUrn, false, true);
 
-            wearableCache.wearablesCache.Add(mockDefaultWearable.GetUrn(), mockDefaultWearable);
+            wearableStorage.wearablesCache.Add(mockDefaultWearable.GetUrn(), mockDefaultWearable);
+
             world.Create(new DefaultWearablesComponent
             {
                 ResolvedState = DefaultWearablesComponent.State.Success,
             });
 
-            system = new ResolveWearableByPointerSystem(world, wearableCache, new RealmData(new TestIpfsRealm()), URLSubdirectory.EMPTY);
+            system = new FinalizeWearableLoadingSystem(world, wearableStorage, new RealmData(new TestIpfsRealm()), URLSubdirectory.EMPTY);
         }
 
-        private WearableCache wearableCache;
+        private WearableStorage wearableStorage;
         private readonly string testUrn = "urn:decentraland:off-chain:base-avatars:red_hoodie";
         private readonly string unisexTestUrn = "urn:decentraland:off-chain:base-avatars:red_hoodie_unisex";
         private readonly string defaultWearableUrn = "urn:decentraland:off-chain:base-avatars:green_hoodie";
 
-        private StreamableLoadingResult<WearableAssetBase> mockedDefaultAB;
+        private StreamableLoadingResult<AttachmentAssetBase> mockedDefaultAB;
         private StreamableLoadingResult<SceneAssetBundleManifest> mockedABManifest;
-        private StreamableLoadingResult<WearableAssetBase> mockedAB;
+        private StreamableLoadingResult<AttachmentAssetBase> mockedAB;
 
         private IWearable CreateMockWearable(URN urn, bool isUnisex, bool isDefaultWearable)
         {
-            IWearable wearable = Substitute.For<IWearable>();
-            wearable.GetUrn().Returns(urn);
-            wearable.IsUnisex().Returns(isUnisex);
-            wearable.GetCategory().Returns(WearablesConstants.Categories.UPPER_BODY);
-
             var wearableAssets = new WearableAssets[BodyShape.COUNT];
 
             if (isDefaultWearable)
                 wearableAssets[BodyShape.MALE] = mockedDefaultAB;
 
-            wearable.WearableAssetResults.Returns(wearableAssets);
-            wearable.WearableDTO.Returns(new StreamableLoadingResult<WearableDTO>(new WearableDTO { id = urn }));
-            wearable.TryGetMainFileHash(Arg.Any<BodyShape>(), out Arg.Any<string>()).Returns(x =>
-            {
-                x[1] = "mockedHash";
-                return true;
-            });
-            wearable.GetHash().Returns((string)urn);
-            return wearable;
+            return new FakeWearable(
+                new WearableDTO
+                {
+                    id = urn,
+                    metadata = new WearableDTO.WearableMetadataDto
+                    {
+                        id = urn,
+                        data =
+                        {
+                            representations = isUnisex
+                                ? new[] { AvatarAttachmentDTO.Representation.NewFakeRepresentation(), AvatarAttachmentDTO.Representation.NewFakeRepresentation() }
+                                : new[] { AvatarAttachmentDTO.Representation.NewFakeRepresentation() },
+                            category = WearablesConstants.Categories.UPPER_BODY,
+                        },
+                    }
+                },
+                model: new StreamableLoadingResult<WearableDTO>(new WearableDTO { id = urn }),
+                mainHash: "mockedHash",
+                wearableAssetResults: wearableAssets
+            );
         }
 
         private void MockWearableManifestResult(CancellationTokenSource cts, IWearable mockWearable, bool failed)
@@ -91,7 +101,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
             world.Create(assetBundleManifestPromise, mockWearable, BodyShape.MALE);
             EntityReference assetBundleManifestPromiseEntity = assetBundleManifestPromise.Entity;
             world.Add(assetBundleManifestPromiseEntity, failed ? new StreamableLoadingResult<SceneAssetBundleManifest>(new Exception("FAILED")) : mockedABManifest);
-            system.Update(0);
+            system!.Update(0);
         }
 
         private void MockABResult(CancellationTokenSource cts, IWearable mockWearable, bool failed)
@@ -113,13 +123,13 @@ namespace DCL.AvatarRendering.Wearables.Tests
         {
             //Arrange
             IWearable mockWearable = CreateMockWearable(testUrn, false, false);
-            wearableCache.wearablesCache.Add(mockWearable.GetUrn(), mockWearable);
+            wearableStorage.wearablesCache.Add(mockWearable.GetUrn(), mockWearable);
 
             var getWearablesByPointersIntention = new GetWearablesByPointersIntention(new List<URN>
                 { testUrn }, BodyShape.MALE, Array.Empty<string>());
 
             Promise.Create(world, getWearablesByPointersIntention, PartitionComponent.TOP_PRIORITY);
-            system.Update(0);
+            system!.Update(0);
 
             //Act
             MockWearableManifestResult(getWearablesByPointersIntention.CancellationTokenSource, mockWearable, false);
@@ -127,7 +137,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
 
             //Assert
             mockWearable.WearableAssetResults[BodyShape.MALE] = mockedAB;
-            mockWearable.Received().ManifestResult = mockedABManifest;
+            mockWearable.ManifestResult = mockedABManifest;
         }
 
         [Test]
@@ -135,13 +145,13 @@ namespace DCL.AvatarRendering.Wearables.Tests
         {
             //Arrange
             IWearable mockUnisexWearable = CreateMockWearable(unisexTestUrn, false, true);
-            wearableCache.wearablesCache.Add(mockUnisexWearable.GetUrn(), mockUnisexWearable);
+            wearableStorage.wearablesCache.Add(mockUnisexWearable.GetUrn(), mockUnisexWearable);
 
             var getWearablesByPointersIntention = new GetWearablesByPointersIntention(new List<URN>
                 { unisexTestUrn }, BodyShape.MALE, Array.Empty<string>());
 
             Promise.Create(world, getWearablesByPointersIntention, PartitionComponent.TOP_PRIORITY);
-            system.Update(0);
+            system!.Update(0);
 
             //Act
             MockWearableManifestResult(getWearablesByPointersIntention.CancellationTokenSource, mockUnisexWearable, false);
@@ -150,7 +160,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
             //Assert
             mockUnisexWearable.WearableAssetResults[BodyShape.MALE] = mockedAB;
             mockUnisexWearable.WearableAssetResults[BodyShape.FEMALE] = mockedAB;
-            mockUnisexWearable.Received().ManifestResult = mockedABManifest;
+            mockUnisexWearable.ManifestResult = mockedABManifest;
         }
 
         [Test]
@@ -158,7 +168,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
         {
             //Arrange
             IWearable mockWearable = CreateMockWearable(testUrn, false, false);
-            wearableCache.wearablesCache.Add(mockWearable.GetUrn(), mockWearable);
+            wearableStorage.wearablesCache.Add(mockWearable.GetUrn(), mockWearable);
 
             var getWearablesByPointersIntention = new GetWearablesByPointersIntention(new List<URN>
                 { testUrn }, BodyShape.MALE, Array.Empty<string>());
@@ -166,12 +176,12 @@ namespace DCL.AvatarRendering.Wearables.Tests
             Promise.Create(world, getWearablesByPointersIntention, PartitionComponent.TOP_PRIORITY);
 
             //Act
-            system.Update(0);
+            system!.Update(0);
             MockWearableManifestResult(getWearablesByPointersIntention.CancellationTokenSource, mockWearable, true);
 
             //Assert
             mockWearable.WearableAssetResults[BodyShape.MALE] = mockedDefaultAB;
-            mockWearable.DidNotReceive().ManifestResult = mockedABManifest;
+            mockWearable.ManifestResult = mockedABManifest;
         }
 
         [Test]
@@ -179,13 +189,13 @@ namespace DCL.AvatarRendering.Wearables.Tests
         {
             //Arrange
             IWearable mockWearable = CreateMockWearable(testUrn, false, false);
-            wearableCache.wearablesCache.Add(mockWearable.GetUrn(), mockWearable);
+            wearableStorage.wearablesCache.Add(mockWearable.GetUrn(), mockWearable);
 
             var getWearablesByPointersIntention = new GetWearablesByPointersIntention(new List<URN>
                 { testUrn }, BodyShape.MALE, Array.Empty<string>());
 
             Promise.Create(world, getWearablesByPointersIntention, PartitionComponent.TOP_PRIORITY);
-            system.Update(0);
+            system!.Update(0);
 
             //Act
             MockWearableManifestResult(getWearablesByPointersIntention.CancellationTokenSource, mockWearable, false);
@@ -193,7 +203,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
 
             //Assert
             mockWearable.WearableAssetResults[BodyShape.MALE] = mockedDefaultAB;
-            mockWearable.Received().ManifestResult = mockedABManifest;
+            mockWearable.ManifestResult = mockedABManifest;
         }
 
         [Test]
@@ -201,14 +211,14 @@ namespace DCL.AvatarRendering.Wearables.Tests
         {
             //Arrange
             IWearable mockWearable = CreateMockWearable(testUrn, false, false);
-            wearableCache.wearablesCache.Add(mockWearable.GetUrn(), mockWearable);
+            wearableStorage.wearablesCache.Add(mockWearable.GetUrn(), mockWearable);
 
             var getWearablesByPointersIntention
                 = new GetWearablesByPointersIntention(new List<URN>
                     { testUrn }, BodyShape.MALE, Array.Empty<string>());
 
             var promise = Promise.Create(world, getWearablesByPointersIntention, PartitionComponent.TOP_PRIORITY);
-            system.Update(0);
+            system!.Update(0);
 
             //Act
             Assert.AreEqual(1, world.CountEntities(in new QueryDescription().WithAll<AssetBundleManifestPromise>()));
@@ -228,19 +238,20 @@ namespace DCL.AvatarRendering.Wearables.Tests
         {
             //Arrange
             IWearable mockWearable = CreateMockWearable(testUrn, false, false);
-            wearableCache.wearablesCache.Add(mockWearable.GetUrn(), mockWearable);
+            wearableStorage.AddToInternalCache(mockWearable);
 
             var getWearablesByPointersIntention = new GetWearablesByPointersIntention(new List<URN>
                 { testUrn }, BodyShape.MALE, Array.Empty<string>());
 
             var promise = Promise.Create(world, getWearablesByPointersIntention, PartitionComponent.TOP_PRIORITY);
-            system.Update(0);
+            system!.Update(0);
+            Assert.AreEqual(0, world.CountEntities(in new QueryDescription().WithAll<AssetBundlePromise>()));
 
             //Mock result and start the next promise
             //Act
             MockWearableManifestResult(getWearablesByPointersIntention.CancellationTokenSource, mockWearable, false);
+            Assert.AreEqual(0, world.CountEntities(in new QueryDescription().WithAll<AssetBundlePromise>()));
             system.Update(0);
-            Assert.AreEqual(1, world.CountEntities(in new QueryDescription().WithAll<AssetBundlePromise>()));
             promise.ForgetLoading(world);
             system.Update(0);
 
