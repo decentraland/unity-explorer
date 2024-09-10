@@ -40,7 +40,9 @@ namespace DCL.SDKComponents.CameraControl.MainCamera
 
         public static void ConfigureVirtualCameraTransition(in World world, in Dictionary<CRDTEntity,Entity> entitiesMap, IExposedCameraData cameraData, int virtualCamCRDTEntity, float distanceBetweenCameras)
         {
-            var pbVirtualCamera = world.Get<PBVirtualCamera>(entitiesMap[virtualCamCRDTEntity]);
+            if (!entitiesMap.TryGetValue(virtualCamCRDTEntity, out Entity vCamEntity)) return;
+
+            var pbVirtualCamera = world.Get<PBVirtualCamera>(vCamEntity);
 
             // Using custom blends array doesn't work because there's no direct way of getting the custom blend index,
             // and we would have to hardcode it...

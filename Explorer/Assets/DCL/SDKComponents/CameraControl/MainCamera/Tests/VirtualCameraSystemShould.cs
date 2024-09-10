@@ -115,16 +115,5 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
             Assert.IsFalse(virtualCamera.enabled);
             Assert.AreEqual(sdkVirtualCameraPool.CountInactive, 1);
         }
-
-        /*[Test]
-        public void HandleMinimumLookAtDistanceCorrectly()
-        {
-
-        }*/
-
-        /*
-        - Active VCam updates
-        - Ignoring of LookAt with same VCam Entity or with MainCamera Entity
-        */
     }
 }
