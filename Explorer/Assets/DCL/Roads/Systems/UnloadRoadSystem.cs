@@ -37,6 +37,7 @@ namespace DCL.Roads.Systems
         [All(typeof(DeleteEntityIntention), typeof(VisualSceneState))]
         private void UnloadRoad(ref RoadInfo roadInfo, ref SceneDefinitionComponent sceneDefinitionComponent)
         {
+            // Helpful info: DeleteEntityIntention is added as component in ResolveSceneStateByIncreasingRadiusSystem.StartUnloading
             roadInfo.Dispose(roadAssetPool);
             scenesCache.RemoveNonRealScene(sceneDefinitionComponent.Parcels);
         }
