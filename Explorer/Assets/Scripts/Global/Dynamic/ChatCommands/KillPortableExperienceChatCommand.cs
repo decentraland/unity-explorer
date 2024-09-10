@@ -7,17 +7,9 @@ using System.Threading;
 
 namespace Global.Dynamic.ChatCommands
 {
-    /// <summary>
-    /// <example>
-    /// Commands could be:
-    ///     "/loadpx globalpx"
-    ///     "/loadpx olavra.dcl.eth"
-    ///This will load any world as a Global PX
-    /// </example>
-    /// </summary>
-    public class LoadPortableExperienceChatCommand : IChatCommand
+    public class KillPortableExperienceChatCommand : IChatCommand
     {
-        private const string COMMAND_PX = "loadpx";
+        private const string COMMAND_PX = "killpx";
         private const string ENS_SUFFIX = ".dcl.eth";
 
         public static readonly Regex REGEX = new ($@"^/({COMMAND_PX})\s+((?!-?\d+\s*,\s*-?\d+$).+?)(?:\s+(-?\d+)\s*,\s*(-?\d+))?$", RegexOptions.Compiled);
@@ -26,7 +18,7 @@ namespace Global.Dynamic.ChatCommands
 
         private string? pxName;
 
-        public LoadPortableExperienceChatCommand(IPortableExperiencesController portableExperiencesController)
+        public KillPortableExperienceChatCommand(IPortableExperiencesController portableExperiencesController)
         {
             this.portableExperiencesController = portableExperiencesController;
         }
@@ -36,16 +28,18 @@ namespace Global.Dynamic.ChatCommands
             pxName = match.Groups[2].Value;
 
             if (!pxName.EndsWith(ENS_SUFFIX))
-                    pxName += ENS_SUFFIX;
+                pxName += ENS_SUFFIX;
 
 
-            bool isSuccess = await portableExperiencesController.CreatePortableExperienceByEnsAsyncWithErrorHandling(new ENS(pxName), ct, true, true);
+            var response = portableExperiencesController.UnloadPortableExperienceByEns(new ENS(pxName));
+
+            bool isSuccess = response.status;
 
             if (ct.IsCancellationRequested)
                 return "🔴 Error. The operation was canceled!";
 
-            return isSuccess ? $"🟢 The Portable Experience {pxName} has started loading" :
-                 $"🔴 Error. Could not load {pxName} as a Portable Experience";
+            return isSuccess ? $"🟢 The Portable Experience {pxName} has been Killed" :
+                $"🔴 Error. Could not Kill the Portable Experience {pxName}";
         }
     }
 }
