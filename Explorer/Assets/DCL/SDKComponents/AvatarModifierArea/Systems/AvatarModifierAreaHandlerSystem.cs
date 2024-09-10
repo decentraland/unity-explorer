@@ -60,10 +60,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
             if (pbAvatarModifierArea.IsDirty)
             {
                 pbAvatarModifierArea.IsDirty = false;
-
-                triggerAreaComponent.AreaSize = pbAvatarModifierArea.Area;
-                triggerAreaComponent.IsDirty = true;
-
+                triggerAreaComponent.UpdateAreaSize(pbAvatarModifierArea.Area);
                 modifierAreaComponent.SetExcludedIds(pbAvatarModifierArea.ExcludeIds);
 
                 // Update effect on now excluded/non-excluded avatars
