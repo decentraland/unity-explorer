@@ -14,7 +14,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera
     {
         private const float MINIMUM_LOOK_AT_DISTANCE_SQR = 0.25f * 0.25f;
 
-        public static bool TryGetVirtualCameraComponent(in World world, Dictionary<CRDTEntity,Entity> entitiesMap, CRDTEntity targetCRDTEntity, out VirtualCameraComponent? returnComponent)
+        public static bool TryGetVirtualCameraComponent(in World world, IReadOnlyDictionary<CRDTEntity,Entity> entitiesMap, CRDTEntity targetCRDTEntity, out VirtualCameraComponent? returnComponent)
         {
             returnComponent = null;
             if (!entitiesMap.TryGetValue(targetCRDTEntity, out Entity virtualCameraEntity)
@@ -38,7 +38,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera
             return null;
         }
 
-        public static void ConfigureVirtualCameraTransition(in World world, Dictionary<CRDTEntity,Entity> entitiesMap, IExposedCameraData cameraData, CRDTEntity virtualCamCRDTEntity, float distanceBetweenCameras)
+        public static void ConfigureVirtualCameraTransition(in World world, IReadOnlyDictionary<CRDTEntity,Entity> entitiesMap, IExposedCameraData cameraData, CRDTEntity virtualCamCRDTEntity, float distanceBetweenCameras)
         {
             var pbVirtualCamera = world.Get<PBVirtualCamera>(entitiesMap[virtualCamCRDTEntity]);
 
@@ -64,7 +64,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera
             }
         }
 
-        public static void ConfigureCameraLookAt(in World world, Dictionary<CRDTEntity,Entity> entitiesMap, in VirtualCameraComponent virtualCameraComponent)
+        public static void ConfigureCameraLookAt(in World world, IReadOnlyDictionary<CRDTEntity,Entity> entitiesMap, in VirtualCameraComponent virtualCameraComponent)
         {
             var rig = virtualCameraComponent.virtualCameraInstance.GetRig(1); // Middle (Aiming) Rig
             if (virtualCameraComponent.lookAtCRDTEntity.HasValue &&

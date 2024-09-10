@@ -25,7 +25,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
     {
         private static readonly QueryDescription GLOBAL_WORLD_CAMERA_QUERY = new QueryDescription().WithAll<CameraComponent>();
 
-        private readonly Dictionary<CRDTEntity,Entity> entitiesMap;
+        private readonly IReadOnlyDictionary<CRDTEntity,Entity> entitiesMap;
         private readonly Entity cameraEntity;
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IExposedCameraData cameraData;
@@ -122,7 +122,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
         {
             if (!sceneStateProvider.IsCurrent || entity != cameraEntity) return;
 
-            World.Add(entity, new MainCameraComponent());
+            World.Add(entity, new MainCameraComponent(new CRDTEntity(0)));
         }
 
         [Query]
