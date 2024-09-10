@@ -23,8 +23,6 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
     [LogCategory(ReportCategory.SDK_CAMERA)]
     public partial class MainCameraSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
-        private static readonly QueryDescription GLOBAL_WORLD_CAMERA_QUERY = new QueryDescription().WithAll<CameraComponent>();
-
         private readonly IReadOnlyDictionary<CRDTEntity,Entity> entitiesMap;
         private readonly Entity cameraEntity;
         private readonly ISceneStateProvider sceneStateProvider;
@@ -169,22 +167,20 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
 
         private void UpdateGlobalWorldCameraMode(bool isAnyVirtualCameraActive)
         {
-            globalWorld.Query(in GLOBAL_WORLD_CAMERA_QUERY,
-                (ref CameraComponent cameraComponent) =>
+            var cameraComponent = globalWorld.Get<CameraComponent>(cameraData.CameraEntityProxy.Object);
+            if (isAnyVirtualCameraActive)
+            {
+                if (cameraComponent.Mode != CameraMode.SDKCamera)
                 {
-                    if (isAnyVirtualCameraActive)
-                    {
-                        if (cameraComponent.Mode != CameraMode.SDKCamera)
-                        {
-                            lastNonSDKCameraMode = cameraComponent.Mode;
-                            cameraComponent.Mode = CameraMode.SDKCamera;
-                        }
-                    }
-                    else if (cameraComponent.Mode == CameraMode.SDKCamera)
-                    {
-                        cameraComponent.Mode = lastNonSDKCameraMode;
-                    }
-                });
+                    lastNonSDKCameraMode = cameraComponent.Mode;
+                    cameraComponent.Mode = CameraMode.SDKCamera;
+                }
+            }
+            else if (cameraComponent.Mode == CameraMode.SDKCamera)
+            {
+                cameraComponent.Mode = lastNonSDKCameraMode;
+            }
+            globalWorld.Set(cameraData.CameraEntityProxy.Object, cameraComponent);
         }
 
         private void DisableActiveVirtualCamera(in MainCameraComponent mainCameraComponent)
