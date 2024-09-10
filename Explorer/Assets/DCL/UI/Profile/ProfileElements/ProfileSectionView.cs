@@ -1,11 +1,10 @@
-﻿using DCL.UI;
-using DCL.UI.ProfileElements;
+﻿using MVC;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace DCL.UI.ProfileElements
 {
-    public class ProfileSectionElement : MonoBehaviour
+    public class ProfileSectionView : ViewBase, IView
     {
         [field: SerializeField] public ImageView FaceSnapshotImage { get; private set; } = null!;
         [field: SerializeField] public Image FaceFrame { get; private set; }

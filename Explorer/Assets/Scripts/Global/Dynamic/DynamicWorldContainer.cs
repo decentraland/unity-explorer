@@ -77,6 +77,7 @@ using LiveKit.Proto;
 using MVC;
 using MVC.PopupsController.PopupCloser;
 using SceneRunner.Debugging.Hub;
+using SceneRunner.Scene;
 using System;
 using System.Buffers;
 using System.Collections.Generic;

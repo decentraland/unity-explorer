@@ -50,6 +50,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.Notification => $"https://notifications.decentraland.org/notifications",
                 DecentralandUrl.NotificationRead => $"https://notifications.decentraland.org/notifications/read",
                 DecentralandUrl.FeatureFlags => $"https://feature-flags.decentraland.{ENV}",
+                DecentralandUrl.Help => "https://decentraland.org/help/",
                 DecentralandUrl.Market => "https://market.decentraland.org",
                 DecentralandUrl.AssetBundlesCDN => "https://ab-cdn.decentraland.org",
                 DecentralandUrl.ArchipelagoStatus => $"https://archipelago-stats.decentraland.{ENV}/status",
