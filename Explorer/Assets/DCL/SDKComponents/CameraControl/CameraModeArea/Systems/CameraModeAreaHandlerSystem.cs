@@ -20,8 +20,13 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
     [LogCategory(ReportCategory.CHARACTER_TRIGGER_AREA)]
     public partial class CameraModeAreaHandlerSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
-        // There's only 1 camera at a time
+        // There's only 1 camera at a time, only 1 camera mode area effect at a time
+        // and that area is only activated by the main player ('targetOnlyMainPlayer' property)
+        // that's why we have these fields as static.
         private static CameraMode cameraModeBeforeLastAreaEnter;
+
+        // Main player can enter an area while being already inside another one, but the last one
+        // entered is the one in effect.
         private static readonly HashSet<Entity> activeAreas = new HashSet<Entity>();
 
         private readonly World globalWorld;
@@ -63,7 +68,7 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
 
             if (cameraData.CameraMode == CameraMode.SDKCamera) return;
 
-            if (characterTriggerAreaComponent.EnteredAvatarsToBeProcessed!.Count > 0)
+            if (characterTriggerAreaComponent.EnteredAvatarsToBeProcessed.Count > 0)
             {
                 if (!activeAreas.Contains(entity))
                 {
@@ -72,7 +77,7 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
                 }
                 characterTriggerAreaComponent.TryClearEnteredAvatarsToBeProcessed();
             }
-            else if (characterTriggerAreaComponent.ExitedAvatarsToBeProcessed!.Count > 0)
+            else if (characterTriggerAreaComponent.ExitedAvatarsToBeProcessed.Count > 0)
             {
                 if (activeAreas.Contains(entity))
                 {
