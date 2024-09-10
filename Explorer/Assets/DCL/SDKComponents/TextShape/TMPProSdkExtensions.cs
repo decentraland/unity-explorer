@@ -13,8 +13,8 @@ namespace DCL.SDKComponents.TextShape
         private static readonly int ID_OUTLINE_WIDTH = Shader.PropertyToID("_OutlineWidth");
         private static readonly int ID_UNDERLAY_COLOR = Shader.PropertyToID("_UnderlayColor");
         private static readonly int ID_UNDERLAY_SOFTNESS = Shader.PropertyToID("_UnderlaySoftness");
-        private static readonly int ID_UNDERLAY_OFFSET_Y = Shader.PropertyToID("_UnderlayOffsetY");
-        private static readonly int ID_UNDERLAY_OFFSET_X = Shader.PropertyToID("_UnderlayOffsetX");
+        private const string OUTLINE_ON_KEYWORD = "OUTLINE_ON";
+        private const string UNDERLAY_ON_KEYWORD = "UNDERLAY_ON";
 
          public static void Apply(this TextMeshPro tmpText, PBTextShape textShape, IFontsStorage fontsStorage, MaterialPropertyBlock materialPropertyBlock)
         {
@@ -54,25 +54,27 @@ namespace DCL.SDKComponents.TextShape
             tmpText.maxVisibleLines = textShape.HasLineCount && textShape.LineCount != 0 ? Mathf.Max(textShape.LineCount, 1) : int.MaxValue;
             tmpText.enableWordWrapping = textShape is { HasTextWrapping: true, TextWrapping: true } && !tmpText.enableAutoSizing;
 
-            tmpText.renderer.SetPropertyBlock(
-                materialPropertyBlock.Prepare(textShape));
-        }
+            tmpText.renderer.GetPropertyBlock(materialPropertyBlock);
 
-        private static MaterialPropertyBlock Prepare(this MaterialPropertyBlock materialPropertyBlock, PBTextShape textShape)
-        {
-            materialPropertyBlock.Clear();
+            if (textShape.OutlineWidth > 0f)
+            {
+                tmpText.fontMaterial.EnableKeyword(OUTLINE_ON_KEYWORD);
+                materialPropertyBlock.SetColor(ID_OUTLINE_COLOR, textShape.OutlineColor?.ToUnityColor() ?? Color.white);
+                materialPropertyBlock.SetFloat(ID_OUTLINE_WIDTH, textShape.OutlineWidth);
+            }
+            else if (tmpText.fontMaterial.IsKeywordEnabled(OUTLINE_ON_KEYWORD))
+                tmpText.fontMaterial.DisableKeyword(OUTLINE_ON_KEYWORD);
 
-            // TODO (Vit) : Disable outline when if (textShape.OutlineWidth <= 0)
-            materialPropertyBlock.SetColor(ID_OUTLINE_COLOR, textShape.OutlineColor?.ToUnityColor() ?? Color.white);
-            materialPropertyBlock.SetFloat(ID_OUTLINE_WIDTH, textShape.OutlineWidth);
+            if (textShape.ShadowOffsetX != 0 || textShape.ShadowOffsetY != 0)
+            {
+                tmpText.fontMaterial.EnableKeyword(UNDERLAY_ON_KEYWORD);
+                materialPropertyBlock.SetColor(ID_UNDERLAY_COLOR, textShape.ShadowColor?.ToUnityColor() ?? Color.white);
+                materialPropertyBlock.SetFloat(ID_UNDERLAY_SOFTNESS, textShape.ShadowBlur);
+            }
+            else if (tmpText.fontMaterial.IsKeywordEnabled(UNDERLAY_ON_KEYWORD))
+                tmpText.fontMaterial.DisableKeyword(UNDERLAY_ON_KEYWORD);
 
-            // TODO (Vit ): disable shadow when if (textShape.ShadowOffsetX == 0 || textShape.ShadowOffsetY == 0)
-            materialPropertyBlock.SetColor(ID_UNDERLAY_COLOR, textShape.ShadowColor?.ToUnityColor() ?? Color.white);
-            materialPropertyBlock.SetFloat(ID_UNDERLAY_SOFTNESS, textShape.ShadowBlur);
-            materialPropertyBlock.SetFloat(ID_UNDERLAY_OFFSET_X, textShape.ShadowOffsetX);
-            materialPropertyBlock.SetFloat(ID_UNDERLAY_OFFSET_Y, textShape.ShadowOffsetY);
-
-            return materialPropertyBlock;
+            tmpText.renderer.SetPropertyBlock(materialPropertyBlock);
         }
 
         private static TextAlignmentOptions TextAlignmentOptions(TextAlignMode mode) =>
