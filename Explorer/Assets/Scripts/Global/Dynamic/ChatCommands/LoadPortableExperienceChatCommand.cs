@@ -38,6 +38,7 @@ namespace Global.Dynamic.ChatCommands
             if (!pxName.EndsWith(ENS_SUFFIX))
                     pxName += ENS_SUFFIX;
 
+            await UniTask.SwitchToMainThread(ct);
 
             bool isSuccess = await portableExperiencesController.CreatePortableExperienceByEnsAsyncWithErrorHandling(new ENS(pxName), ct, true, true);
 
