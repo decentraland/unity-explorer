@@ -52,7 +52,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
             virtualCameraInstance.transform.SetParent(transform.Transform);
             virtualCameraInstance.transform.localPosition = Vector3.zero;
             virtualCameraInstance.transform.localRotation = Quaternion.identity;
-            World.Add(entity, new VirtualCameraComponent(virtualCameraInstance, VirtualCameraUtils.GetPBVirtualCameraLookAtCRDTEntity(pbVirtualCamera, crdtEntity.Id)));
+            World.Add(entity, new VirtualCameraComponent(virtualCameraInstance, VirtualCameraUtils.GetPBVirtualCameraLookAtCRDTEntity(pbVirtualCamera, crdtEntity)));
         }
 
         [Query]
