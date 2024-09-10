@@ -16,13 +16,16 @@ namespace DCL.AvatarRendering.AvatarShape.Tests.Instantiate
 
         public static TextureArrayContainer NewTextureArrayContainer(Shader shader)
         {
-            Texture texture = new Texture2D(TEST_RESOLUTION, TEST_RESOLUTION, TextureArrayConstants.DEFAULT_BASEMAP_TEXTURE_FORMAT, false, false);
+            Texture texture_BC7 = new Texture2D(TEST_RESOLUTION, TEST_RESOLUTION,
+                TextureArrayConstants.DEFAULT_BASEMAP_TEXTURE_FORMAT, false, false);
+            Texture texture_BC5 = new Texture2D(TEST_RESOLUTION, TEST_RESOLUTION,
+                TextureArrayConstants.DEFAULT_NORMALMAP_TEXTURE_FORMAT, false, false);
 
             var defaultTextures = new Dictionary<TextureArrayKey, Texture>
             {
-                [new TextureArrayKey(TextureArrayConstants.MAINTEX_ARR_TEX_SHADER, TEST_RESOLUTION)] = texture,
-                [new TextureArrayKey(TextureArrayConstants.NORMAL_MAP_TEX_ARR, TEST_RESOLUTION)] = texture,
-                [new TextureArrayKey(TextureArrayConstants.EMISSIVE_MAP_TEX_ARR, TEST_RESOLUTION)] = texture,
+                [new TextureArrayKey(TextureArrayConstants.MAINTEX_ARR_TEX_SHADER, TEST_RESOLUTION)] = texture_BC7,
+                [new TextureArrayKey(TextureArrayConstants.NORMAL_MAP_TEX_ARR, TEST_RESOLUTION)] = texture_BC5,
+                [new TextureArrayKey(TextureArrayConstants.EMISSIVE_MAP_TEX_ARR, TEST_RESOLUTION)] = texture_BC7
             };
 
             var textureArrayContainerFactory = new TextureArrayContainerFactory(defaultTextures);
