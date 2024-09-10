@@ -34,13 +34,9 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
                 globalWorld,
                 static (globalWorld, entity, context) =>
                 {
-                    Transform entityTransform = globalWorld.Get<AvatarBase>(entity).transform.parent;
-                    if (context.avatarTransform != entityTransform) return false;
-
-                    if (globalWorld.TryGet(entity, out Profile? profile) && context.excludedIds!.Contains(profile!.UserId))
-                        return true;
-
-                    globalWorld.Get<AvatarShapeComponent>(entity).HiddenByModifierArea = context.shouldHide;
+                    if (DoesAvatarHaveSameTransform(globalWorld, entity, context.avatarTransform!) == false) return false;
+                    if (globalWorld.TryGet(entity, out Profile? profile) && context.excludedIds!.Contains(profile!.UserId)) return true;
+                    globalWorld.Get<AvatarShapeComponent>(entity).UpdateHiddenStatus(context.shouldHide);
                     return true;
                 }
             );
@@ -49,13 +45,9 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
                 globalWorld,
                 static (globalWorld, entity, context) =>
                 {
-                    Transform entityTransform = globalWorld.Get<AvatarBase>(entity).transform.parent;
-                    if (context.avatarTransform != entityTransform) return false;
-
-                    if (!globalWorld.TryGet(entity, out Profile? profile))
-                        return true;
-
-                    globalWorld.Get<AvatarShapeComponent>(entity).HiddenByModifierArea = context.excludedIds!.Contains(profile!.UserId) == false;
+                    if (DoesAvatarHaveSameTransform(globalWorld, entity, context.avatarTransform!) == false) return false;
+                    if (globalWorld.TryGet(entity, out Profile? profile) == false) return true;
+                    globalWorld.Get<AvatarShapeComponent>(entity).UpdateHiddenStatus(context.excludedIds!.Contains(profile!.UserId) == false);
                     return true;
                 }
             );
@@ -147,6 +139,9 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
         {
             FinalizeComponentsQuery(World!);
         }
+
+        private static bool DoesAvatarHaveSameTransform(World globalWorld, Entity entity, Transform avatarTransform) =>
+            globalWorld.Get<AvatarBase>(entity).transform.parent == avatarTransform;
 
         private class AvatarFindQuery<TContext>
         {
