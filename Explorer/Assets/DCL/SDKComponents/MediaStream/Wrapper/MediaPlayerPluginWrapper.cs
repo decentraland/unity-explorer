@@ -5,19 +5,16 @@ using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.ResourcesUnloading;
 using DCL.WebRequests;
-using ECS.ComponentsPooling.Systems;
 using ECS.LifeCycle;
 using SceneRunner.Scene;
 using System.Collections.Generic;
 using UnityEngine;
 using RenderHeads.Media.AVProVideo;
-using DCL.ECSComponents;
 
 namespace DCL.SDKComponents.MediaStream.Wrapper
 {
     public class MediaPlayerPluginWrapper
     {
-        private readonly IComponentPoolsRegistry componentPoolsRegistry;
         private readonly IWebRequestController webRequestController;
         private readonly IExtendedObjectPool<Texture2D> videoTexturePool;
         private readonly IPerformanceBudget frameTimeBudget;
@@ -32,7 +29,6 @@ namespace DCL.SDKComponents.MediaStream.Wrapper
             MediaPlayer mediaPlayerPrefab)
         {
 #if AV_PRO_PRESENT && !UNITY_EDITOR_LINUX && !UNITY_STANDALONE_LINUX
-            this.componentPoolsRegistry = componentPoolsRegistry;
             this.webRequestController = webRequestController;
 
             this.videoTexturePool = videoTexturePool;
@@ -47,6 +43,7 @@ namespace DCL.SDKComponents.MediaStream.Wrapper
                     var mediaPlayer = Object.Instantiate(mediaPlayerPrefab);
                     mediaPlayer.PlatformOptionsWindows.audioOutput = Windows.AudioOutput.Unity;
                     mediaPlayer.PlatformOptionsMacOSX.audioMode = MediaPlayer.OptionsApple.AudioMode.Unity;
+
                     //Add other options if we release on other platforms :D
                     return mediaPlayer;
                 },
@@ -72,7 +69,7 @@ namespace DCL.SDKComponents.MediaStream.Wrapper
 
             CreateMediaPlayerSystem.InjectToWorld(ref builder, webRequestController, sceneData, mediaPlayerPool, sceneStateProvider, frameTimeBudget);
             UpdateMediaPlayerSystem.InjectToWorld(ref builder, webRequestController, sceneData, sceneStateProvider, frameTimeBudget);
-            VideoEventsSystem.InjectToWorld(ref builder, ecsToCrdtWriter, sceneStateProvider, componentPoolsRegistry.GetReferenceTypePool<PBVideoEvent>(), frameTimeBudget);
+            VideoEventsSystem.InjectToWorld(ref builder, ecsToCrdtWriter, sceneStateProvider, frameTimeBudget);
 
             finalizeWorldSystems.Add(CleanUpMediaPlayerSystem.InjectToWorld(ref builder, mediaPlayerPool, videoTexturePool));
 #endif

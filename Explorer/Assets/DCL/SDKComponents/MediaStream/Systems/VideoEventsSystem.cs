@@ -23,14 +23,12 @@ namespace DCL.SDKComponents.MediaStream
     {
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
         private readonly ISceneStateProvider sceneStateProvider;
-        private readonly IComponentPool<PBVideoEvent> componentPool;
         private readonly IPerformanceBudget frameTimeBudget;
 
-        private VideoEventsSystem(World world, IECSToCRDTWriter ecsToCrdtWriter, ISceneStateProvider sceneStateProvider, IComponentPool<PBVideoEvent> componentPool, IPerformanceBudget frameTimeBudget) : base(world)
+        private VideoEventsSystem(World world, IECSToCRDTWriter ecsToCrdtWriter, ISceneStateProvider sceneStateProvider, IPerformanceBudget frameTimeBudget) : base(world)
         {
             ecsToCRDTWriter = ecsToCrdtWriter;
             this.sceneStateProvider = sceneStateProvider;
-            this.componentPool = componentPool;
             this.frameTimeBudget = frameTimeBudget;
         }
 
