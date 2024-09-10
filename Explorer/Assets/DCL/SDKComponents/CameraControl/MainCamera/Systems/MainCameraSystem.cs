@@ -66,8 +66,9 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
 
             int virtualCameraCRDTEntity = (int)pbMainCamera.VirtualCameraEntity;
 
-            // Cannot check by pbComponent.IsDirty since the VirtualCamera may not yet be on the target CRDTEntity
-            // when the pbComponent is dirty and may have to be re-checked on subsequent updates...
+            // Cannot rely on pbComponent.IsDirty since the VirtualCamera may not yet be on the target CRDTEntity
+            // when the pbComponent is dirty and may have to be re-checked on subsequent updates. This can happen
+            // if the target entity/component hasn't been loaded/detected from CRDT yet.
             if (mainCameraComponent.virtualCameraCRDTEntity == virtualCameraCRDTEntity &&
                 (mainCameraComponent.virtualCameraInstance == null || mainCameraComponent.virtualCameraInstance.enabled))
                 return;
