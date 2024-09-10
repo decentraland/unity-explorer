@@ -2,7 +2,6 @@
 using Arch.System;
 using Arch.SystemGroups;
 using DCL.AvatarRendering.AvatarShape.Components;
-using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Character.Components;
 using DCL.CharacterCamera;
 using ECS.Abstract;
@@ -97,7 +96,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
         private static void ToggleAvatarShape(ref AvatarShapeComponent avatarShape, bool toggle)
         {
-            foreach (CachedWearable wearable in avatarShape.InstantiatedWearables)
+            foreach (var wearable in avatarShape.InstantiatedWearables)
             foreach (Renderer renderer in wearable.Renderers)
                 renderer.enabled = toggle;
         }

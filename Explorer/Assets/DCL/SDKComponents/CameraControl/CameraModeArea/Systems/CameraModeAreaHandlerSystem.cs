@@ -59,10 +59,7 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
         private void UpdateCameraModeArea(Entity entity, ref PBCameraModeArea pbCameraModeArea, ref CharacterTriggerAreaComponent characterTriggerAreaComponent)
         {
             if (pbCameraModeArea.IsDirty)
-            {
-                characterTriggerAreaComponent.AreaSize = pbCameraModeArea.Area;
-                characterTriggerAreaComponent.IsDirty = true;
-            }
+                characterTriggerAreaComponent.UpdateAreaSize(pbCameraModeArea.Area);
 
             if (cameraData.CameraMode == CameraMode.SDKCamera) return;
 

@@ -180,6 +180,7 @@ namespace DCL.Diagnostics
         /// </summary>
         public const string WEARABLE = nameof(WEARABLE);
         public const string EMOTE = nameof(EMOTE);
+        public const string THUMBNAILS = nameof(THUMBNAILS);
 
         public const string AUTHENTICATION = nameof(AUTHENTICATION);
 
@@ -262,6 +263,8 @@ namespace DCL.Diagnostics
         public const string SETTINGS_MENU = nameof(SETTINGS_MENU);
 
         public const string BACKPACK = nameof(BACKPACK);
+
+        public const string BADGES = nameof(BADGES);
 
         /// <summary>
         ///     Whatever is coming from external pure C# plugins

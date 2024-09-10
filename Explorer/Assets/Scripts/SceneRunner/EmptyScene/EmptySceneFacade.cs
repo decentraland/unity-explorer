@@ -5,6 +5,7 @@ using DCL.Optimization.ThreadSafePool;
 using DCL.PluginSystem.World;
 using SceneRunner.Scene;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Pool;
@@ -25,6 +26,7 @@ namespace SceneRunner.EmptyScene
         public PersistentEntities PersistentEntities => default;
 
         public bool IsEmpty => true;
+        public ISceneData SceneData { get; } = new EmptySceneData(new List<Vector2Int>());
 
         public void Dispose()
         {

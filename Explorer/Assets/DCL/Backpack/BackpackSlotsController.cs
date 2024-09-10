@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape.Helpers;
+using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.Backpack.BackpackBus;
