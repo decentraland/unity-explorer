@@ -1,6 +1,7 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
 using ECS.Prioritization.Components;
+using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
 using GLTFast;
@@ -33,22 +34,20 @@ namespace ECS.StreamableLoading.GLTF
 
         public async Task<IDownload> RequestAsync(Uri uri)
         {
-            // TODO: Replace for WebRequestController ???
+            // TODO: Replace for WebRequestController (Planned in PR #1670)
             using (UnityWebRequest webRequest = new UnityWebRequest(uri))
             {
                 webRequest.downloadHandler = new DownloadHandlerBuffer();
 
-                await webRequest.SendWebRequest().WithCancellation(new CancellationToken());
+                try { await webRequest.SendWebRequest().WithCancellation(new CancellationToken()); }
+                catch { throw new Exception($"Error on GLTF download: {webRequest.downloadHandler.error}"); }
 
-                if (!string.IsNullOrEmpty(webRequest.downloadHandler.error))
-                    throw new Exception($"Error on GLTF download: {webRequest.downloadHandler.error}");
-
-                return new GltfDownloadResult()
+                return new GltfDownloadResult
                 {
                     Data = webRequest.downloadHandler.data,
                     Error = webRequest.downloadHandler.error,
                     Text = webRequest.downloadHandler.text,
-                    Success = webRequest.result == UnityWebRequest.Result.Success
+                    Success = webRequest.result == UnityWebRequest.Result.Success,
                 };
             }
         }
@@ -63,26 +62,18 @@ namespace ECS.StreamableLoading.GLTF
             var texturePromise = Promise.Create(world, new GetTextureIntention
             {
                 CommonArguments = new CommonLoadingArguments(tryGetContentUrlResult, attempts: ATTEMPTS_COUNT),
-                // WrapMode = textureComponentValue.WrapMode,
-                // FilterMode = textureComponentValue.FilterMode,
             }, partitionComponent);
 
             // The textures fetching need to finish before the GLTF loading can continue its flow...
-            StreamableLoadingResult<Texture2D> promiseResult;
-            //TODO: Could this get stuck in an infinite loop if the texturePromise fails?
-            while (!texturePromise.TryGetResult(world, out promiseResult))
-            {
-                await UniTask.Yield();
-            }
+            var promiseResult = await texturePromise.ToUniTaskAsync(world, cancellationToken: new CancellationToken());
 
-            // TODO: Check if we need to avoid this throwing here depending on how it affects the GLTF loading flow...
-            if (!promiseResult.Succeeded)
-                throw new Exception($"Error on GLTF Texture download: {texturePromise.Result?.Exception?.Message}");
+            if (promiseResult.Result is { Succeeded: false })
+                throw new Exception($"Error on GLTF Texture download: {promiseResult.Result.Value.Exception!.Message}");
 
-            return new TextureDownloadResult(promiseResult.Asset)
+            return new TextureDownloadResult(promiseResult.Result?.Asset)
             {
-                Error = promiseResult.Exception?.Message,
-                Success = promiseResult.Succeeded
+                Error = promiseResult.Result?.Exception?.Message,
+                Success = (bool)promiseResult.Result?.Succeeded,
             };
         }
 

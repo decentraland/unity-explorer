@@ -75,7 +75,7 @@ namespace Global.Dynamic
                 WebBrowser = browser,
                 LocalSceneDevelopment = realmLaunchSettings.IsLocalSceneDevelopmentRealm || realmLaunchSettings.GetStartingRealm(decentralandUrlsSource) == IRealmNavigator.LOCALHOST,
                 ApplicationParametersParser = applicationParametersParser,
-                DebugSettings = debugSettings
+                DebugSettings = debugSettings,
             };
 
             await bootstrapContainer.InitializeContainerAsync<BootstrapContainer, BootstrapSettings>(settingsContainer, ct, async container =>

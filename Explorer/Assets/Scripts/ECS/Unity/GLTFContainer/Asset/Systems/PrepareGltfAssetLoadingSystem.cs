@@ -23,7 +23,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
     public partial class PrepareGltfAssetLoadingSystem : BaseUnityLoopSystem
     {
         private readonly IGltfContainerAssetsCache cache;
-        private bool localSceneDevelopment;
+        private readonly bool localSceneDevelopment;
 
         internal PrepareGltfAssetLoadingSystem(World world, IGltfContainerAssetsCache cache, bool localSceneDevelopment) : base(world)
         {
