@@ -49,6 +49,8 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         [Test]
         public void LoadFromWeb()
         {
+            LogAssert.ignoreFailingMessages = true;
+
             sceneData.AssetBundleManifest.Returns(new SceneAssetBundleManifest(FAKE_AB_PATH, "200", new[] { "abcd" }));
 
             var intent = GetAssetBundleIntention.FromHash(typeof(GameObject), "abcd", permittedSources: AssetSource.WEB);
@@ -66,6 +68,8 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         [Test]
         public void FailIfAbsentInManifest()
         {
+            LogAssert.ignoreFailingMessages = true;
+
             sceneData.AssetBundleManifest.Returns(new SceneAssetBundleManifest(FAKE_AB_PATH, null, Array.Empty<string>()));
 
             var intent = GetAssetBundleIntention.FromHash(typeof(GameObject), "abcd", permittedSources: AssetSource.WEB);
