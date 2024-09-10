@@ -26,5 +26,8 @@
 
         public static URLPath FromString(string url) =>
             new (url);
+
+        public bool IsEmpty() =>
+            string.IsNullOrEmpty(Value);
     }
 }

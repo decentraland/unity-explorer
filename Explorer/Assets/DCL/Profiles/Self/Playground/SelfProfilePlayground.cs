@@ -50,8 +50,8 @@ namespace DCL.Profiles.Self.Playground
                 ),
                 web3IdentityCache,
                 new EquippedWearables(),
-                new WearableCache(),
-                new MemoryEmotesCache(),
+                new WearableStorage(),
+                new MemoryEmotesStorage(),
                 new EquippedEmotes(),
                 new List<string>(),
                 null

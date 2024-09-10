@@ -17,10 +17,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
                 },
             };
 
-            Emote emote = new Emote
-            {
-                Model = new StreamableLoadingResult<EmoteDTO>(model),
-            };
+            Emote emote = new Emote(new StreamableLoadingResult<EmoteDTO>(model));
 
             Assert.IsTrue(emote.IsOnChain());
         }
@@ -37,10 +34,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
                 },
             };
 
-            Emote emote = new Emote
-            {
-                Model = new StreamableLoadingResult<EmoteDTO>(model),
-            };
+            Emote emote = new Emote(new StreamableLoadingResult<EmoteDTO>(model));
 
             Assert.IsFalse(emote.IsOnChain());
         }

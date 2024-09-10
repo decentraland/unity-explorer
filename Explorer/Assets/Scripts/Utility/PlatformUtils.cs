@@ -4,17 +4,17 @@ namespace Utility
 {
     public static class PlatformUtils
     {
-        private static string platformSuffix;
+        private static string? platformSuffix;
 
-        public static string GetPlatform()
+        public static string GetCurrentPlatform()
         {
             if (platformSuffix == null)
             {
-                if (Application.platform == RuntimePlatform.WindowsEditor || Application.platform == RuntimePlatform.WindowsPlayer)
+                if (Application.platform is RuntimePlatform.WindowsEditor or RuntimePlatform.WindowsPlayer)
                     platformSuffix = "_windows";
-                else if (Application.platform == RuntimePlatform.OSXEditor || Application.platform == RuntimePlatform.OSXPlayer)
+                else if (Application.platform is RuntimePlatform.OSXEditor or RuntimePlatform.OSXPlayer)
                     platformSuffix = "_mac";
-                else if (Application.platform == RuntimePlatform.LinuxPlayer)
+                else if (Application.platform is RuntimePlatform.LinuxEditor or RuntimePlatform.LinuxPlayer)
                     platformSuffix = "_linux";
                 else
                     platformSuffix = string.Empty; // WebGL requires no platform suffix
