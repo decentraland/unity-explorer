@@ -57,7 +57,7 @@ on:
         type: boolean
       cache_strategy:
         required: true
-        default: 'workspace'
+        default: 'library'
         type: string
       version:
         required: true
@@ -144,7 +144,7 @@ jobs:
           elif [ "${{ inputs.cache_strategy }}" ]; then
             cache_strategy=${{ inputs.cache_strategy }}
           else
-            cache_strategy='workspace'
+            cache_strategy='library'
           fi
           echo "cache_strategy=${cache_strategy}" >> $GITHUB_OUTPUT
 
@@ -228,14 +228,24 @@ jobs:
 
         run: python -u scripts/cloudbuild/build.py
 
-      - name: Upload artifact
+      - name: 'Tar artifact to maintain original permissions'
+        if: matrix.target == 'macos'
+        run: tar -cvf build.tar build
+          
+      - name: Upload artifact for macOS
+        if: matrix.target == 'macos'
         uses: actions/upload-artifact@v4
         with:
           name: Decentraland_${{ matrix.target }}
-          path: |
-            build
-            !build/**/*_BackUpThisFolder_ButDontShipItWithYourGame
-            !build/**/*_BurstDebugInformation_DoNotShip
+          path: build.tar
+          if-no-files-found: error
+
+      - name: Upload artifact for Windows
+        if: matrix.target == 'windows64'
+        uses: actions/upload-artifact@v4
+        with:
+          name: Decentraland_${{ matrix.target }}
+          path: build
           if-no-files-found: error
 
       # Will run always (even if failing)

@@ -5,8 +5,10 @@ namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi.SDKMessageBus
 {
     public interface ISDKMessageBusCommsControllerAPI : ICommunicationsControllerAPI
     {
-        List<CommsPayload> SceneCommsMessages { get; }
+        IReadOnlyList<CommsPayload> SceneCommsMessages { get; }
+
+        void ClearMessages();
+
         void Send(string data);
     }
 }
-

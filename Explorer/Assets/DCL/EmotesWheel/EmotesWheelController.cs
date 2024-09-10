@@ -234,13 +234,13 @@ namespace DCL.EmotesWheel
         private void UnblockUnwantedInputs()
         {
             inputBlock.Enable(InputMapComponent.Kind.EMOTE_WHEEL);
-            inputBlock.Disable(InputMapComponent.Kind.EMOTES);
+            inputBlock.Disable(InputMapComponent.Kind.EMOTES, InputMapComponent.Kind.SHORTCUTS);
         }
 
         private void BlockUnwantedInputs()
         {
             inputBlock.Disable(InputMapComponent.Kind.EMOTE_WHEEL);
-            inputBlock.Enable(InputMapComponent.Kind.EMOTES);
+            inputBlock.Enable(InputMapComponent.Kind.EMOTES, InputMapComponent.Kind.SHORTCUTS);
         }
 
         private void ListenToSlotsInput(InputActionMap inputActionMap)

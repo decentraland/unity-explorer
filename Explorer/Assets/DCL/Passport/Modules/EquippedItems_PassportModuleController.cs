@@ -238,8 +238,8 @@ namespace DCL.Passport.Modules
 
         private static int CalculateMissingEmptyItems(int totalItems)
         {
-            int remainder = totalItems % 6;
-            int missingItems = remainder == 0 ? 0 : 6 - remainder;
+            int remainder = totalItems % GRID_ITEMS_PER_ROW;
+            int missingItems = remainder == 0 ? 0 : GRID_ITEMS_PER_ROW - remainder;
             return missingItems;
         }
 
