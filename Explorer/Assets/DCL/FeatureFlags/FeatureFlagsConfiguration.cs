@@ -9,6 +9,7 @@ namespace DCL.FeatureFlags
     {
         PORTABLE_EXPERIENCE,
         GLOBAL_PORTABLE_EXPERIENCE,
+        PORTABLE_EXPERIENCE_CHAT_COMMANDS,
         MAP_PINS
     }
 
@@ -22,6 +23,8 @@ namespace DCL.FeatureFlags
                     return "alfa-portable-experiences";
                 case FeatureFlags.GLOBAL_PORTABLE_EXPERIENCE:
                     return "alfa-global-portable-experiences";
+                case FeatureFlags.PORTABLE_EXPERIENCE_CHAT_COMMANDS:
+                    return "alfa-portable-experiences-chat-commands";
                 case FeatureFlags.MAP_PINS:
                     return "alfa-map-pins";
                 default:

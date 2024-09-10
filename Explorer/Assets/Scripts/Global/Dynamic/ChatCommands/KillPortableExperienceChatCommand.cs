@@ -28,7 +28,7 @@ namespace Global.Dynamic.ChatCommands
 
         public async UniTask<string> ExecuteAsync(Match match, CancellationToken ct)
         {
-            if (!featureFlagsCache.Configuration.IsEnabled("alfa-portable-experiences-chat-commands")) return "🔴 Error. Portable Experiences Chat Commands are disabled";
+            if (!featureFlagsCache.Configuration.IsEnabled(FeatureFlagsConfiguration.GetFlag(FeatureFlags.PORTABLE_EXPERIENCE_CHAT_COMMANDS))) return "🔴 Error. Portable Experiences Chat Commands are disabled";
 
             pxName = match.Groups[2].Value;
 
