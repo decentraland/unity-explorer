@@ -47,7 +47,7 @@ namespace DCL.SDKComponents.MediaStream
             VideoState newState = GetCurrentVideoState(mediaPlayer.MediaPlayer.Control);
 
             if (mediaPlayer.State == newState) return;
-            mediaPlayer.State = newState;
+            mediaPlayer.UpdateState(newState);
 
             AppendMessage(in sdkEntity, in mediaPlayer);
         }

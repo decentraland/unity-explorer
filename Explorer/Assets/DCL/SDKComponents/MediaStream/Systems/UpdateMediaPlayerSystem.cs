@@ -134,27 +134,23 @@ namespace DCL.SDKComponents.MediaStream
 
             if (component.OpenMediaPromise.IsReachableConsume(component.URL))
             {
-                component.MediaPlayer!.OpenMedia(MediaPathType.AbsolutePathOrURL, component.URL, autoPlay);
+                component.MediaPlayer.OpenMedia(MediaPathType.AbsolutePathOrURL, component.URL, autoPlay);
 
                 if (sdkVideoComponent != null)
                     onOpened?.Invoke(component.MediaPlayer, sdkVideoComponent);
             }
             else
-            {
-                component.State = VideoState.VsError;
-                component.MediaPlayer!.CloseCurrentStream();
-            }
+                component.CloseCurrentStreamWithError();
         }
 
         private void UpdateStreamUrl(ref MediaPlayerComponent component, string url)
         {
-            component.MediaPlayer!.CloseCurrentStream();
+            component.MediaPlayer.CloseCurrentStream();
 
             if (!url.IsValidUrl() && sceneData.TryGetMediaUrl(url, out URLAddress mediaUrl))
                 url = mediaUrl;
 
-            component.URL = url;
-            component.State = url.IsValidUrl() ? VideoState.VsNone : VideoState.VsError;
+            component.UpdateUrlAndState(url);
         }
     }
 }

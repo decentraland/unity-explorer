@@ -86,11 +86,11 @@ namespace DCL.SDKComponents.MediaStream
             var component = new MediaPlayerComponent
             {
                 MediaPlayer = mediaPlayerPool.Get(),
-                URL = url,
-                State = url.IsValidUrl() ? VideoState.VsNone : VideoState.VsError,
                 Cts = new CancellationTokenSource(),
                 OpenMediaPromise = new OpenMediaPromise(),
             };
+
+            component.UpdateUrlAndState(url);
 
 #if UNITY_EDITOR
             component.MediaPlayer!.gameObject.name = $"MediaPlayer_Entity_{entity}";
