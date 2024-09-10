@@ -1,4 +1,5 @@
 using DCL.ECSComponents;
+using DCL.SDKComponents.MediaStream.Components;
 using RenderHeads.Media.AVProVideo;
 using UnityEngine;
 

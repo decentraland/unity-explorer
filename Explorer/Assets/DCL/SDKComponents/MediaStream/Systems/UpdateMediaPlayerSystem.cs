@@ -7,6 +7,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.SDKComponents.MediaStream.Components;
 using DCL.Utilities.Extensions;
 using DCL.WebRequests;
 using ECS.Abstract;
@@ -52,7 +53,7 @@ namespace DCL.SDKComponents.MediaStream
             if (!frameTimeBudget.TrySpendBudget()) return;
 
             if (component.State != VideoState.VsError)
-                component.MediaPlayer.UpdateVolume(sceneStateProvider.IsCurrent, sdkComponent.HasVolume, sdkComponent.Volume);
+                component.MediaPlayer!.UpdateVolume(sceneStateProvider.IsCurrent, sdkComponent.HasVolume, sdkComponent.Volume);
 
             HandleComponentChange(ref component, sdkComponent, sdkComponent.Url, sdkComponent.HasPlaying, sdkComponent.Playing);
             ConsumePromise(ref component, sdkComponent.HasPlaying && sdkComponent.Playing);
@@ -90,8 +91,15 @@ namespace DCL.SDKComponents.MediaStream
                 assignedTexture.Texture.ResizeTexture(to: avText); // will be updated on the next frame/update-loop
         }
 
-        private void HandleComponentChange(ref MediaPlayerComponent component, IDirtyMarker sdkComponent, string url, bool hasPlaying, bool isPlaying,
-            PBVideoPlayer sdkVideoComponent = null, Action<MediaPlayer, PBVideoPlayer> onPlaybackUpdate = null)
+        private void HandleComponentChange(
+            ref MediaPlayerComponent component,
+            IDirtyMarker sdkComponent,
+            string url,
+            bool hasPlaying,
+            bool isPlaying,
+            PBVideoPlayer? sdkVideoComponent = null,
+            Action<MediaPlayer, PBVideoPlayer>? onPlaybackUpdate = null
+        )
         {
             if (!sdkComponent.IsDirty) return;
 

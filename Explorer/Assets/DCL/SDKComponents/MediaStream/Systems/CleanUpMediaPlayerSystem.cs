@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
+using DCL.SDKComponents.MediaStream.Components;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle;

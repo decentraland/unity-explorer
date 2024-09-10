@@ -8,6 +8,7 @@ using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
+using DCL.SDKComponents.MediaStream.Components;
 using DCL.Utilities.Extensions;
 using DCL.WebRequests;
 using ECS.Abstract;
@@ -42,15 +43,15 @@ namespace DCL.SDKComponents.MediaStream
 
         protected override void Update(float t)
         {
-            CreateAudioStreamQuery(World);
-            CreateVideoPlayerQuery(World);
+            CreateAudioStreamQuery(World!);
+            CreateVideoPlayerQuery(World!);
         }
 
         [Query]
         [None(typeof(MediaPlayerComponent))]
         private void CreateAudioStream(in Entity entity, ref PBAudioStream sdkComponent)
         {
-            CreateMediaPlayer(entity, sdkComponent.Url, sdkComponent.HasVolume, sdkComponent.Volume);
+            TryCreateMediaPlayer(entity, sdkComponent.Url!, sdkComponent.HasVolume, sdkComponent.Volume);
         }
 
         [Query]
@@ -58,19 +59,22 @@ namespace DCL.SDKComponents.MediaStream
         [All(typeof(VideoTextureConsumer))]
         private void CreateVideoPlayer(in Entity entity, PBVideoPlayer sdkComponent)
         {
-            CreateMediaPlayer(entity, sdkComponent.Src, sdkComponent.HasVolume, sdkComponent.Volume);
+            TryCreateMediaPlayer(entity, sdkComponent.Src!, sdkComponent.HasVolume, sdkComponent.Volume);
         }
 
-        private void CreateMediaPlayer(Entity entity, string url, bool hasVolume, float volume)
+        private void TryCreateMediaPlayer(Entity entity, string url, bool hasVolume, float volume)
         {
             if (!frameTimeBudget.TrySpendBudget()) return;
 
             MediaPlayerComponent component = CreateMediaPlayerComponent(entity, url, hasVolume, volume);
 
             if (component.State != VideoState.VsError)
-                component.OpenMediaPromise.UrlReachabilityResolveAsync(webRequestController, component.URL, component.Cts.Token).SuppressCancellationThrow().Forget();
+                component.OpenMediaPromise
+                         .UrlReachabilityResolveAsync(webRequestController, component.URL, component.Cts.Token)
+                         .SuppressCancellationThrow()
+                         .Forget();
 
-            World.Add(entity, component);
+            World!.Add(entity, component);
         }
 
         private MediaPlayerComponent CreateMediaPlayerComponent(Entity entity, string url, bool hasVolume, float volume)
@@ -89,7 +93,7 @@ namespace DCL.SDKComponents.MediaStream
             };
 
 #if UNITY_EDITOR
-            component.MediaPlayer.gameObject.name = $"MediaPlayer_Entity_{entity}";
+            component.MediaPlayer!.gameObject.name = $"MediaPlayer_Entity_{entity}";
 #endif
 
             component.MediaPlayer.UpdateVolume(sceneStateProvider.IsCurrent, hasVolume, volume);
