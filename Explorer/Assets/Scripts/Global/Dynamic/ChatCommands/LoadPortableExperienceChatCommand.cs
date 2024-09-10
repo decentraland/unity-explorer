@@ -45,7 +45,7 @@ namespace Global.Dynamic.ChatCommands
 
             await UniTask.SwitchToMainThread(ct);
 
-            bool isSuccess = await portableExperiencesController.CreatePortableExperienceByEnsAsyncWithErrorHandling(new ENS(pxName), ct, true, true);
+            bool isSuccess = await portableExperiencesController.CreatePortableExperienceByEnsWithErrorHandlingAsync(new ENS(pxName), ct, true, true);
 
             if (ct.IsCancellationRequested)
                 return "🔴 Error. The operation was canceled!";

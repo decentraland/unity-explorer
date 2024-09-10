@@ -219,7 +219,7 @@ namespace Global.Dynamic
                 {
                     foreach (string pxEns in debugSettings.portableExperiencesEnsToLoad)
                     {
-                        staticContainer!.PortableExperiencesController.CreatePortableExperienceByEnsAsyncWithErrorHandling(new ENS(pxEns), ct, true, true).Forget();
+                        staticContainer!.PortableExperiencesController.CreatePortableExperienceByEnsWithErrorHandlingAsync(new ENS(pxEns), ct, true, true).Forget();
                     }
                 }
 
@@ -231,7 +231,7 @@ namespace Global.Dynamic
                     {
                         if (!staticContainer.FeatureFlagsCache.Configuration.TryGetCsvPayload(globalPxFlag, "csv-variant", out List<List<string>>? csv)) return;
 
-                        foreach (string value in csv[0]) { staticContainer.PortableExperiencesController!.CreatePortableExperienceByEnsAsyncWithErrorHandling(new ENS(value), ct, true, false).Forget(); }
+                        foreach (string value in csv[0]) { staticContainer.PortableExperiencesController!.CreatePortableExperienceByEnsWithErrorHandlingAsync(new ENS(value), ct, true, false).Forget(); }
                     }
                 }
 
