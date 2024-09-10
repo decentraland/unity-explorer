@@ -1,6 +1,7 @@
 ﻿using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Chat.Commands;
+using DCL.FeatureFlags;
 using PortableExperiences.Controller;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -15,16 +16,20 @@ namespace Global.Dynamic.ChatCommands
         public static readonly Regex REGEX = new ($@"^/({COMMAND_PX})\s+((?!-?\d+\s*,\s*-?\d+$).+?)(?:\s+(-?\d+)\s*,\s*(-?\d+))?$", RegexOptions.Compiled);
 
         private readonly IPortableExperiencesController portableExperiencesController;
+        private readonly FeatureFlagsCache featureFlagsCache;
 
         private string? pxName;
 
-        public KillPortableExperienceChatCommand(IPortableExperiencesController portableExperiencesController)
+        public KillPortableExperienceChatCommand(IPortableExperiencesController portableExperiencesController, FeatureFlagsCache featureFlagsCache)
         {
             this.portableExperiencesController = portableExperiencesController;
+            this.featureFlagsCache = featureFlagsCache;
         }
 
         public async UniTask<string> ExecuteAsync(Match match, CancellationToken ct)
         {
+            if (!featureFlagsCache.Configuration.IsEnabled("alfa-portable-experiences-chat-commands")) return "🔴 Error. Portable Experiences Chat Commands are disabled";
+
             pxName = match.Groups[2].Value;
 
             if (!pxName.EndsWith(ENS_SUFFIX))
