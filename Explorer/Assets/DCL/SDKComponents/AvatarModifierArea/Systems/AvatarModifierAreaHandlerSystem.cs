@@ -7,6 +7,7 @@ using DCL.CharacterTriggerArea.Components;
 using DCL.CharacterTriggerArea.Systems;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
+using DCL.Multiplayer.Connections.Typing;
 using DCL.Profiles;
 using DCL.SDKComponents.AvatarModifierArea.Components;
 using ECS.Abstract;
@@ -25,32 +26,13 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
     public partial class AvatarModifierAreaHandlerSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
         private static readonly QueryDescription AVATAR_BASE_QUERY = new QueryDescription().WithAll<AvatarBase>();
-        private readonly AvatarFindQuery<(Transform avatarTransform, bool shouldHide, HashSet<string> excludedIds)> toggleAvatarHidingQuery;
-        private readonly AvatarFindQuery<(Transform avatarTransform, HashSet<string> excludedIds)> correctAvatarHidingStateQuery;
+        private readonly World globalWorld;
+        private readonly FindAvatarQuery findAvatarQuery;
 
         public AvatarModifierAreaHandlerSystem(World world, World globalWorld) : base(world)
         {
-            toggleAvatarHidingQuery = new AvatarFindQuery<(Transform avatarTransform, bool shouldHide, HashSet<string> excludedIds)>(
-                globalWorld,
-                static (globalWorld, entity, context) =>
-                {
-                    if (DoesAvatarHaveSameTransform(globalWorld, entity, context.avatarTransform!) == false) return false;
-                    if (globalWorld.TryGet(entity, out Profile? profile) && context.excludedIds!.Contains(profile!.UserId)) return true;
-                    globalWorld.Get<AvatarShapeComponent>(entity).UpdateHiddenStatus(context.shouldHide);
-                    return true;
-                }
-            );
-
-            correctAvatarHidingStateQuery = new AvatarFindQuery<(Transform avatarTransform, HashSet<string> excludedIds)>(
-                globalWorld,
-                static (globalWorld, entity, context) =>
-                {
-                    if (DoesAvatarHaveSameTransform(globalWorld, entity, context.avatarTransform!) == false) return false;
-                    if (globalWorld.TryGet(entity, out Profile? profile) == false) return true;
-                    globalWorld.Get<AvatarShapeComponent>(entity).UpdateHiddenStatus(context.excludedIds!.Contains(profile!.UserId) == false);
-                    return true;
-                }
-            );
+            this.globalWorld = globalWorld;
+            findAvatarQuery = new FindAvatarQuery(globalWorld);
         }
 
         protected override void Update(float t)
@@ -117,12 +99,24 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
 
         internal void ToggleAvatarHiding(Transform avatarTransform, bool shouldHide, HashSet<string> excludedIds)
         {
-            toggleAvatarHidingQuery.Execute((avatarTransform, shouldHide, excludedIds));
+            var result = findAvatarQuery.AvatarWithTransform(avatarTransform);
+            if (!result.Success) return;
+
+            var entity = result.Result;
+
+            if (globalWorld.TryGet(entity, out Profile? profile) && excludedIds.Contains(profile!.UserId)) return;
+            globalWorld.Get<AvatarShapeComponent>(entity).UpdateHiddenStatus(shouldHide);
         }
 
         internal void CorrectAvatarHidingState(Transform avatarTransform, HashSet<string> excludedIds)
         {
-            correctAvatarHidingStateQuery.Execute((avatarTransform, excludedIds));
+            var result = findAvatarQuery.AvatarWithTransform(avatarTransform);
+            if (!result.Success) return;
+
+            var entity = result.Result;
+
+            if (globalWorld.TryGet(entity, out Profile? profile))
+                globalWorld.Get<AvatarShapeComponent>(entity).UpdateHiddenStatus(excludedIds.Contains(profile!.UserId) == false);
         }
 
         [Query]
@@ -140,38 +134,35 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
             FinalizeComponentsQuery(World!);
         }
 
-        private static bool DoesAvatarHaveSameTransform(World globalWorld, Entity entity, Transform avatarTransform) =>
-            globalWorld.Get<AvatarBase>(entity).transform.parent == avatarTransform;
-
-        private class AvatarFindQuery<TContext>
+        private class FindAvatarQuery
         {
-            public delegate bool FindAction(World globalWorld, Entity entity, TContext context);
-
             private readonly World globalWorld;
-            private readonly FindAction findAction;
+            private readonly ForEach cachedFindEntity;
 
-            public AvatarFindQuery(World globalWorld, FindAction findAction)
+            private Entity foundedEntityOrNull = Entity.Null;
+            private Transform? requiredTransform;
+
+            public FindAvatarQuery(World globalWorld)
             {
                 this.globalWorld = globalWorld;
-                this.findAction = findAction;
+                cachedFindEntity = this.FindEntity;
             }
 
-            private TContext currentContext = default!;
-            private bool found;
-
-            public void Execute(TContext context)
+            public LightResult<Entity> AvatarWithTransform(Transform avatarTransform)
             {
-                currentContext = context;
-                found = false;
+                foundedEntityOrNull = Entity.Null;
+                requiredTransform = avatarTransform;
+                globalWorld.Query(in AVATAR_BASE_QUERY, cachedFindEntity);
 
-                // There's no way to do a Query/InlineQuery getting both entity and TransformComponent...
-                globalWorld.Query(in AVATAR_BASE_QUERY, Foreach);
+                return foundedEntityOrNull == Entity.Null
+                    ? LightResult<Entity>.FAILURE
+                    : new LightResult<Entity>(foundedEntityOrNull);
             }
 
-            private void Foreach(Entity entity)
+            private void FindEntity(Entity entity)
             {
-                if (found) return;
-                found = findAction(globalWorld, entity, currentContext);
+                if (foundedEntityOrNull != Entity.Null) return;
+                if (globalWorld.Get<AvatarBase>(entity).transform.parent == requiredTransform) foundedEntityOrNull = entity;
             }
         }
     }
