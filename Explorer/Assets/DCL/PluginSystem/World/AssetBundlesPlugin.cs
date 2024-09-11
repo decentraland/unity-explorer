@@ -44,7 +44,6 @@ namespace DCL.PluginSystem.World
         {
             // Asset Bundles
             PrepareAssetBundleLoadingParametersSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, STREAMING_ASSETS_URL);
-            ReportAssetBundleErrorSystem.InjectToWorld(ref builder, reportsHandlingSettings);
 
             // TODO create a runtime ref-counting cache
             LoadAssetBundleSystem.InjectToWorld(ref builder, assetBundleCache, assetBundleLoadingMutex);
@@ -54,7 +53,6 @@ namespace DCL.PluginSystem.World
         {
             // Asset Bundles
             PrepareGlobalAssetBundleLoadingParametersSystem.InjectToWorld(ref builder, STREAMING_ASSETS_URL);
-            ReportGlobalAssetBundleErrorSystem.InjectToWorld(ref builder, reportsHandlingSettings);
 
             // TODO create a runtime ref-counting cache
             LoadGlobalAssetBundleSystem.InjectToWorld(ref builder, assetBundleCache, assetBundleLoadingMutex);
