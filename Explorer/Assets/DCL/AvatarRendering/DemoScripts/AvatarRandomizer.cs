@@ -1,4 +1,5 @@
 ﻿using CommunicationData.URLHelpers;
+using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using System.Collections.Generic;
@@ -9,12 +10,12 @@ namespace DCL.AvatarRendering.DemoScripts
     public class AvatarRandomizer
     {
         public string BodyShape;
-        public Dictionary<string, List<URN>> wearablesDictionary; 
+        public Dictionary<string, List<URN>> wearablesDictionary;
 
         public AvatarRandomizer(string bodyShape)
         {
             BodyShape = bodyShape;
-            wearablesDictionary = new Dictionary<string, List<URN>>(); 
+            wearablesDictionary = new Dictionary<string, List<URN>>();
         }
 
         public URN[] GetRandomAvatarWearables()
@@ -33,7 +34,7 @@ namespace DCL.AvatarRendering.DemoScripts
         {
             if (wearable.GetCategory().Equals(WearablesConstants.Categories.BODY_SHAPE))
                 return;
-            
+
             if (!wearable.IsCompatibleWithBodyShape(BodyShape))
                 return;
 

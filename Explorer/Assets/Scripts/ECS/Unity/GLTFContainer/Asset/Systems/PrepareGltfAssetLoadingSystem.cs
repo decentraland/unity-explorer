@@ -47,7 +47,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
             }
 
             // If not in cache, try load from asset bundle
-            World.Add(entity, GetAssetBundleIntention.Create(typeof(GameObject), $"{intention.Hash}{PlatformUtils.GetPlatform()}", intention.Name));
+            World.Add(entity, GetAssetBundleIntention.Create(typeof(GameObject), $"{intention.Hash}{PlatformUtils.GetCurrentPlatform()}", intention.Name));
         }
     }
 }

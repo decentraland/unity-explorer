@@ -1,4 +1,4 @@
-using System;
+using DCL.AvatarRendering.Loading.Components;
 
 namespace DCL.AvatarRendering.Emotes.Equipped
 {

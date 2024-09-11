@@ -20,6 +20,9 @@ using ECS.StreamableLoading.NFTShapes;
 using ECS.StreamableLoading.Textures;
 using SceneRunner.Scene;
 using UnityEngine;
+using LoadWearableAssetBundleManifestSystem = DCL.AvatarRendering.Wearables.Systems.Load.LoadWearableAssetBundleManifestSystem;
+using LoadWearablesByParamSystem = DCL.AvatarRendering.Wearables.Systems.Load.LoadWearablesByParamSystem;
+using LoadWearablesDTOByPointersSystem = DCL.AvatarRendering.Wearables.Systems.Load.LoadWearablesDTOByPointersSystem;
 
 namespace DCL.GlobalPartitioning
 {

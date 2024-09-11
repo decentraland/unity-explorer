@@ -64,7 +64,7 @@ namespace DCL.LOD.Systems
         {
             sceneLODInfo.CurrentLODPromise.ForgetLoading(World);
 
-            string platformLODKey = $"{sceneDefinitionComponent.Definition.id.ToLower()}_{level.ToString()}{PlatformUtils.GetPlatform()}";
+            string platformLODKey = $"{sceneDefinitionComponent.Definition.id.ToLower()}_{level.ToString()}{PlatformUtils.GetCurrentPlatform()}";
             var manifest = LODUtils.LODManifests(decentralandUrlsSource)[level];
 
             var assetBundleIntention = GetAssetBundleIntention.FromHash(typeof(GameObject),

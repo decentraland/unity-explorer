@@ -1,5 +1,6 @@
 using AssetManagement;
 using CommunicationData.URLHelpers;
+using DCL.AvatarRendering.Loading.Components;
 using DCL.Profiling;
 using ECS.StreamableLoading.Common.Components;
 using System;
@@ -42,7 +43,6 @@ namespace DCL.AvatarRendering.Wearables.Components.Intentions
         public void Dispose()
         {
             POINTERS_POOL.Release(Pointers);
-
             ProfilingCounters.GetWearablesIntentionAmount.Value--;
         }
 

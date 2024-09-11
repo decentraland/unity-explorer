@@ -1,6 +1,7 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Emotes;
+using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
@@ -235,22 +236,26 @@ namespace DCL.Passport.Modules
             }
         }
 
-        private int CalculateMissingEmptyItems(int totalItems)
+        private static int CalculateMissingEmptyItems(int totalItems)
         {
             int remainder = totalItems % GRID_ITEMS_PER_ROW;
             int missingItems = remainder == 0 ? 0 : GRID_ITEMS_PER_ROW - remainder;
             return missingItems;
         }
 
-        private async UniTaskVoid AwaitEquippedItemsPromiseAsync(WearablePromise equippedWearablesPromise, EmotePromise equippedEmotesPromise, CancellationToken ct)
+        private async UniTaskVoid AwaitEquippedItemsPromiseAsync(
+            WearablePromise equippedWearablesPromise,
+            EmotePromise equippedEmotesPromise,
+            CancellationToken ct
+        )
         {
             try
             {
                 var wearablesUniTaskAsync = await equippedWearablesPromise.ToUniTaskAsync(world, cancellationToken: ct);
                 var emotesUniTaskAsync = await equippedEmotesPromise.ToUniTaskAsync(world, cancellationToken: ct);
                 var currentWearables = wearablesUniTaskAsync.Result!.Value.Asset.Wearables;
-                var currentEmotes = emotesUniTaskAsync.Result!.Value.Asset.Emotes;
-                SetGridElements(currentWearables, currentEmotes);
+                using var consumed = emotesUniTaskAsync.Result!.Value.Asset.ConsumeEmotes();
+                SetGridElements(currentWearables, consumed.Value);
             }
             catch (OperationCanceledException) { }
             catch (Exception e)

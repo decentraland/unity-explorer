@@ -1,6 +1,6 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.AvatarRendering.Wearables;
+using DCL.AvatarRendering.Loading.Components;
 using DCL.Web3;
 using System.Collections.Generic;
 using System.Threading;
@@ -21,10 +21,37 @@ namespace DCL.AvatarRendering.Emotes
             }
         }
 
-        UniTask<(IReadOnlyList<IEmote> emotes, int totalAmount)> GetOwnedEmotesAsync(Web3Address userId, CancellationToken ct,
-            int? pageNum = null, int? pageSize = null, URN? collectionId = null,
-            OrderOperation? orderOperation = null, string? name = null);
+        public readonly struct OwnedEmotesRequestOptions
+        {
+            public readonly int? pageNum;
+            public readonly int? pageSize;
+            public readonly URN? collectionId;
+            public readonly OrderOperation? orderOperation;
+            public readonly string? name;
 
-        UniTask<IReadOnlyList<IEmote>> GetEmotesAsync(IReadOnlyCollection<URN> emoteIds, BodyShape bodyShape, CancellationToken ct);
+            public OwnedEmotesRequestOptions(int? pageNum, int? pageSize, URN? collectionId, IEmoteProvider.OrderOperation? orderOperation, string? name)
+            {
+                this.pageNum = pageNum;
+                this.pageSize = pageSize;
+                this.collectionId = collectionId;
+                this.orderOperation = orderOperation;
+                this.name = name;
+            }
+        }
+
+        /// <returns>Total amount</returns>
+        UniTask<int> GetOwnedEmotesAsync(
+            Web3Address userId,
+            CancellationToken ct,
+            OwnedEmotesRequestOptions requestOptions,
+            List<IEmote> output
+        );
+
+        UniTask GetEmotesAsync(
+            IReadOnlyCollection<URN> emoteIds,
+            BodyShape bodyShape,
+            CancellationToken ct,
+            List<IEmote> output
+        );
     }
 }
