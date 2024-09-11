@@ -49,7 +49,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
         {
             SetupMainCameraQuery(World);
 
-            HandleActiveVirtualCameraDirtyStateQuery(World);
+            HandleActiveVirtualCameraLookAtChangeQuery(World);
             HandleVirtualCameraChangeQuery(World);
             DisableVirtualCameraOnSceneLeaveQuery(World);
 
@@ -98,7 +98,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void HandleActiveVirtualCameraDirtyState(CRDTEntity crdtEntity, in PBVirtualCamera pbVirtualCamera, ref VirtualCameraComponent virtualCameraComponent)
+        private void HandleActiveVirtualCameraLookAtChange(CRDTEntity crdtEntity, in PBVirtualCamera pbVirtualCamera, ref VirtualCameraComponent virtualCameraComponent)
         {
             if (!sceneStateProvider.IsCurrent || cameraData.CinemachineBrain!.ActiveVirtualCamera.VirtualCameraGameObject != virtualCameraComponent.virtualCameraInstance.gameObject) return;
 
