@@ -2166,11 +2166,11 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 216954503483567130, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 28
+      value: 32
       objectReference: {fileID: 0}
     - target: {fileID: 216954503483567130, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 28
+      value: 32
       objectReference: {fileID: 0}
     - target: {fileID: 556587912230755051, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
       propertyPath: m_SizeDelta.x
@@ -2194,11 +2194,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1095953891227981704, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 28
+      value: 32
       objectReference: {fileID: 0}
     - target: {fileID: 1095953891227981704, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 28
+      value: 32
       objectReference: {fileID: 0}
     - target: {fileID: 1500693959885502415, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
       propertyPath: m_TargetGraphic
