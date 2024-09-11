@@ -103,9 +103,8 @@ namespace DCL.SDKComponents.Animator.Systems
             foreach (SDKAnimationState sdkAnimationState in sdkAnimationStates)
                 isAnyAnimPlaying |= sdkAnimationState.Playing;
 
-            animator.enabled = isAnyAnimPlaying;
-
-            if (!isAnyAnimPlaying) return;
+            if (isAnyAnimPlaying)
+                animator.enabled = true;
 
             foreach (SDKAnimationState sdkAnimationState in sdkAnimationStates)
             {
@@ -121,10 +120,22 @@ namespace DCL.SDKComponents.Animator.Systems
                 animator.SetBool($"{name}_Enabled", sdkAnimationState.Playing);
                 animator.SetBool($"{name}_Loop", sdkAnimationState.Loop);
 
+                // TODO: it could be an edge case due sdkAnimationState.ShouldReset.. support it if need it
+
                 if (sdkAnimationState.Playing)
                 {
                     animator.SetLayerWeight(layerIndex, sdkAnimationState.Weight);
-                    animator.SetTrigger($"{name}_Trigger");
+
+                    bool isAnimationAlreadyPlaying = animator.GetCurrentAnimatorStateInfo(layerIndex).IsName(name);
+
+                    // This check fixes a border case that happens on sdk-goerli-plaza pirate island (78,7) with opening the chest the first time.
+                    // The AB converter sets the first clip in the animator to play as default, since it is required by the sdk definitions.
+                    // The scene first asks to play another clip (not the default one).
+                    // Eventually the scene finally decides to play the default clip, but it was already playing since it was never modified.
+                    // So the trigger gets enabled and makes the execution play twice (after it finishes), although is set to loop:false
+                    // The fix consists on avoid triggering the animation if it is already playing, to avoid stacking the trigger.
+                    if (!isAnimationAlreadyPlaying)
+                        animator.SetTrigger($"{name}_Trigger");
 
                     // Animators don't support speed by state, just a global speed
                     animator.speed = sdkAnimationState.Speed;
@@ -132,8 +143,6 @@ namespace DCL.SDKComponents.Animator.Systems
                     // The animation state is reset automatically when the state is changed, either stops playing or exit on loop:false,
                     // it is how the animator works
                     // This behaviour could bring unexpected results since it works differently than unity-renderer
-                    // TODO: support reset
-                    // sdkAnimationState.ShouldReset
                 }
                 else
                 {
@@ -141,6 +150,14 @@ namespace DCL.SDKComponents.Animator.Systems
                     // otherwise it overrides the current playing state
                     animator.SetLayerWeight(layerIndex, 0f);
                 }
+            }
+
+            if (!isAnyAnimPlaying && animator.enabled)
+            {
+                // We need to apply the latest state before disabling the animator, otherwise we might get artifacts
+                // Like the turrets in metadynelabs.dcl.eth whose stops in the middle of the explosion animation when resetting the level
+                animator.Update(0);
+                animator.enabled = false;
             }
         }
     }

@@ -22,7 +22,9 @@ namespace DCL.PerformanceAndDiagnostics.Diagnostics.ReportsHandling.Sentry.Edito
         public override void Configure(SentryUnityOptions options, SentryCliOptions cliOptions)
         {
             // Force options to enabled=true to be able to deploy debug symbols during build-time
-            options.Enabled = true;
+            options.Enabled = Environment.GetEnvironmentVariable("SENTRY_ENABLED") == "true";
+            if (!options.Enabled) return; // No need to configure sentry
+
             options.Release = Application.version ?? options.Release;
 
             try { ApplyFromEnvironmentVars(options, cliOptions); }

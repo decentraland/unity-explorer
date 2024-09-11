@@ -13,7 +13,7 @@ namespace DCL.Backpack.BackpackBus
         public event Action<IWearable> SelectWearableEvent;
         public event Action<IWearable> EquipWearableEvent;
         public event Action<IWearable> UnEquipWearableEvent;
-        public event Action<int, IEmote> EquipEmoteEvent;
+        public event Action<int, IEmote, bool> EquipEmoteEvent;
         public event Action<int, IEmote?> UnEquipEmoteEvent;
         public event Action<int> EmoteSlotSelectEvent;
         public event Action<IEmote> SelectEmoteEvent;
@@ -21,9 +21,11 @@ namespace DCL.Backpack.BackpackBus
         public event Action<string> FilterCategoryEvent;
         public event Action<string> SearchEvent;
         public event Action<BackpackSections> ChangedBackpackSectionEvent;
-        public event Action<Color,string>? ChangeColorEvent;
+        public event Action<Color, string>? ChangeColorEvent;
         public event Action UnEquipAllEvent;
         event Action PublishProfileEvent;
+        event Action<AvatarWearableCategoryEnum>? FilterCategoryByEnumEvent;
+        event Action? DeactivateEvent;
 
         public void SendWearableSelect(IWearable equipWearable);
 
@@ -45,12 +47,14 @@ namespace DCL.Backpack.BackpackBus
 
         void SendUnEquipEmote(int slot, IEmote? emote);
 
-        void SendEquipEmote(int slot, IEmote emote);
+        void SendEquipEmote(int slot, IEmote emote, bool isManuallyEquipped);
 
         public void SendEmoteSelect(IEmote emote);
 
         void SendEmoteSlotSelect(int slot);
 
         public void SendChangedBackpackSectionEvent(BackpackSections backpackSections);
+
+        public void SendBackpackDeactivateEvent();
     }
 }

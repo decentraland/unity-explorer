@@ -1,15 +1,18 @@
-﻿using Cysharp.Threading.Tasks;
+﻿using Arch.Core;
+using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AssetsProvision.Provisions;
+using DCL.Browser.DecentralandUrls;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.PluginSystem;
-using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World;
 using DCL.Profiles;
 using DCL.Web3;
+using DCL.Web3.Accounts.Factory;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
@@ -17,6 +20,7 @@ using ECS;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AudioClips;
 using Global;
+using Global.AppArgs;
 using Global.Dynamic;
 using MVC;
 using NSubstitute;
@@ -88,8 +92,9 @@ namespace DCL.SDKComponents.AudioSources.Tests.PlayMode
             try
             {
                 var identityCache = new MemoryWeb3IdentityCache();
+                var web3AccountFactory = new Web3AccountFactory();
 
-                var web3Authenticator = new ProxyWeb3Authenticator(new RandomGeneratedWeb3Authenticator(), identityCache);
+                var web3Authenticator = new ProxyWeb3Authenticator(new RandomGeneratedWeb3Authenticator(web3AccountFactory), identityCache);
                 await web3Authenticator.LoginAsync(ct);
 
                 SceneSharedContainer sceneSharedContainer;
@@ -126,12 +131,16 @@ namespace DCL.SDKComponents.AudioSources.Tests.PlayMode
             // First load the common global plugin
             (StaticContainer? staticContainer, bool isLoaded)
                 = await StaticContainer.CreateAsync(
+                    new DecentralandUrlsSource(DecentralandEnvironment.Org),
                     assetProvisioner,
                     reportHandlingSettings.Value,
+                    new ApplicationParametersParser(),
                     new DebugViewsCatalog(),
                     globalSettingsContainer,
                     web3IdentityCache,
                     ethereumApi,
+                    World.Create(),
+                    new Entity(),
                     ct
                 );
 
@@ -140,9 +149,16 @@ namespace DCL.SDKComponents.AudioSources.Tests.PlayMode
 
             await UniTask.WhenAll(staticContainer.ECSWorldPlugins.Select(gp => sceneSettingsContainer.InitializePluginAsync(gp, ct)));
 
-            var sceneSharedContainer = SceneSharedContainer.Create(in staticContainer,
-                Substitute.For<IMVCManager>(), web3IdentityCache, profileRepository, IWebRequestController.DEFAULT, new IRoomHub.Fake(),
-                Substitute.For<IRealmData>(), new IMessagePipesHub.Fake());
+            var sceneSharedContainer = SceneSharedContainer.Create(
+                in staticContainer,
+                Substitute.For<IDecentralandUrlsSource>(),
+                Substitute.For<IMVCManager>(),
+                web3IdentityCache, profileRepository,
+                IWebRequestController.DEFAULT,
+                new IRoomHub.Fake(),
+                Substitute.For<IRealmData>(),
+                new IMessagePipesHub.Fake()
+            );
 
             return (staticContainer, sceneSharedContainer);
         }

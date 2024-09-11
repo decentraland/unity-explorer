@@ -33,14 +33,21 @@ namespace DCL.CharacterMotion.Systems
 
         private FeetIKSystem(World world, IDebugContainerBuilder debugBuilder) : base(world)
         {
-            debugBuilder.AddWidget("Locomotion: Feet IK")
-                        .AddToggleField("Enabled", evt => { feetIkIsEnabled = evt.newValue; }, true)
-                        .AddFloatField("IK Change Speed", ikWeightChangeSpeed = new ElementBinding<float>(0))
-                        .AddFloatField("IK Position Speed", ikPositionChangeSpeed = new ElementBinding<float>(0))
-                        .AddFloatField("IK Distance", ikDistance = new ElementBinding<float>(0))
-                        .AddFloatField("Spherecast Width", spherecastWidth = new ElementBinding<float>(0))
-                        .AddFloatField("Twist Limit X", twistLimitX = new ElementBinding<float>(0))
-                        .AddFloatField("Twist Limit Y", twistLimitY = new ElementBinding<float>(0));
+            ikWeightChangeSpeed = new ElementBinding<float>(0);
+            ikPositionChangeSpeed = new ElementBinding<float>(0);
+            ikDistance = new ElementBinding<float>(0);
+            spherecastWidth = new ElementBinding<float>(0);
+            twistLimitX = new ElementBinding<float>(0);
+            twistLimitY = new ElementBinding<float>(0);
+
+            debugBuilder.TryAddWidget("Locomotion: Feet IK")
+                       ?.AddToggleField("Enabled", evt => { feetIkIsEnabled = evt.newValue; }, true)
+                        .AddFloatField("IK Change Speed", ikWeightChangeSpeed)
+                        .AddFloatField("IK Position Speed", ikPositionChangeSpeed)
+                        .AddFloatField("IK Distance", ikDistance)
+                        .AddFloatField("Spherecast Width", spherecastWidth)
+                        .AddFloatField("Twist Limit X", twistLimitX)
+                        .AddFloatField("Twist Limit Y", twistLimitY);
         }
 
         public override void Initialize()
@@ -89,6 +96,7 @@ namespace DCL.CharacterMotion.Systems
             // Debug stuff and enable/disable mechanic
             UpdateToggleStatus(ref feetIKComponent, avatarBase);
             if (feetIKComponent.IsDisabled) return;
+
             if (!feetIKComponent.Initialized)
                 InitializeFeetComponent(ref feetIKComponent, avatarBase);
 
@@ -182,6 +190,7 @@ namespace DCL.CharacterMotion.Systems
             if (Physics.SphereCast(rayOrigin, settings.FeetIKSphereSize, rayDirection, out RaycastHit hitInfo, rayDistance, PhysicsLayers.CHARACTER_ONLY_MASK))
             {
                 Vector3 targetPosition = hitInfo.point + positionOffset;
+
                 // lerp towards the target position
                 legIKTarget.position = Vector3.MoveTowards(legIKTarget.position, targetPosition, settings.IKPositionSpeed * dt);
                 var rotationCorrection = Quaternion.FromToRotation(Vector3.up, hitInfo.normal);

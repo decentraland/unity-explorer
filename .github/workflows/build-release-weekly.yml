@@ -2,8 +2,8 @@ name: Build Weekly Release
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: '10 0 * * 3'
+  # schedule:
+  #  - cron: '10 0 * * 3'
   ## For testing only!
   # push:
   #   branches:
@@ -35,6 +35,10 @@ jobs:
     uses: ./.github/workflows/build-unitycloud.yml
     with:
       profile: none
-      cache: false
+      clean_build: true
+      cache_strategy: none
       version: ${{ needs.get-info.outputs.full_version }}
+      sentry_enabled: true
+      is_release_build: true
+      tag_version: ${{ needs.get-info.outputs.tag_version }}
     secrets: inherit

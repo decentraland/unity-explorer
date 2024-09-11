@@ -8,7 +8,6 @@ namespace ECS.Prioritization
     [CreateAssetMenu(menuName = "Create Realm Partition Settings", fileName = "RealmPartitionSettings", order = 0)]
     public class RealmPartitionSettingsAsset : ScriptableObject, IRealmPartitionSettings
     {
-        public Action<int>? OnMaxLoadingDistanceInParcelsChanged;
 
         [SerializeField] private int[] fpsBuckets = { 30, 20, 10, 5, 0 };
         [SerializeField] private int behindFps = 1;
@@ -18,6 +17,8 @@ namespace ECS.Prioritization
         [field: SerializeField]
         public float AggregateAngleTolerance { get; private set; }
 
+        public Action<int>? OnMaxLoadingDistanceInParcelsChanged { get; set; }
+        
         public int MaxLoadingDistanceInParcels
         {
             get => Mathf.Min(maxLoadingDistanceInParcels, ParcelMathJobifiedHelper.RADIUS_HARD_LIMIT);
@@ -60,5 +61,6 @@ namespace ECS.Prioritization
             int bucketFps = fpsBuckets[Mathf.Clamp(partition.Bucket, 0, fpsBuckets.Length - 1)];
             return partition.IsBehind ? Mathf.Min(bucketFps, behindFps) : bucketFps;
         }
+
     }
 }

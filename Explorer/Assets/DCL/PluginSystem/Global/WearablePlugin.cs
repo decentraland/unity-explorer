@@ -3,10 +3,13 @@ using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.AvatarRendering.Loading.Components;
+using DCL.AvatarRendering.Thumbnails.Systems;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.AvatarRendering.Wearables.Systems;
+using DCL.AvatarRendering.Wearables.Systems.Load;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.ResourcesUnloading;
@@ -16,11 +19,9 @@ using ECS.StreamableLoading.Cache;
 using Newtonsoft.Json;
 using SceneRunner.Scene;
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
-using Utility.Multithreading;
 
 namespace DCL.AvatarRendering.Wearables
 {
@@ -35,20 +36,20 @@ namespace DCL.AvatarRendering.Wearables
         private readonly IWebRequestController webRequestController;
 
         private readonly IRealmData realmData;
-        private readonly IWearableCatalog wearableCatalog;
+        private readonly IWearableStorage wearableStorage;
 
         private WearablesDTOList defaultWearablesDTOs;
         private GameObject defaultEmptyWearableAsset;
 
-        public WearablePlugin(IAssetsProvisioner assetsProvisioner, IWebRequestController webRequestController, IRealmData realmData, URLDomain assetBundleURL, CacheCleaner cacheCleaner, IWearableCatalog wearableCatalog)
+        public WearablePlugin(IAssetsProvisioner assetsProvisioner, IWebRequestController webRequestController, IRealmData realmData, URLDomain assetBundleURL, CacheCleaner cacheCleaner, IWearableStorage wearableStorage)
         {
-            this.wearableCatalog = wearableCatalog;
+            this.wearableStorage = wearableStorage;
             this.assetsProvisioner = assetsProvisioner;
             this.webRequestController = webRequestController;
             this.realmData = realmData;
             this.assetBundleURL = assetBundleURL;
 
-            cacheCleaner.Register(this.wearableCatalog);
+            cacheCleaner.Register(this.wearableStorage);
         }
 
         public void Dispose() { }
@@ -56,10 +57,13 @@ namespace DCL.AvatarRendering.Wearables
         public async UniTask InitializeAsync(WearableSettings settings, CancellationToken ct)
         {
             ProvidedAsset<TextAsset> defaultWearableDefinition = await assetsProvisioner.ProvideMainAssetAsync(settings.defaultWearablesDefinition, ct: ct);
-            var partialTargetList = new List<WearableDTO>(64);
+
+            var repoolableList = RepoolableList<WearableDTO>.NewList();
+            var partialTargetList = repoolableList.List;
+            partialTargetList.Capacity = 64;
             JsonConvert.PopulateObject(defaultWearableDefinition.Value.text, partialTargetList);
 
-            defaultWearablesDTOs = new WearablesDTOList(partialTargetList);
+            defaultWearablesDTOs = new WearablesDTOList(repoolableList);
 
             var defaultEmptyWearable =
                 await assetsProvisioner.ProvideMainAssetAsync(settings.defaultEmptyWearable, ct: ct);
@@ -68,12 +72,12 @@ namespace DCL.AvatarRendering.Wearables
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in GlobalPluginArguments arguments)
         {
-            ResolveWearableByPointerSystem.InjectToWorld(ref builder, wearableCatalog, realmData, WEARABLES_EMBEDDED_SUBDIRECTORY);
-            LoadWearablesByParamSystem.InjectToWorld(ref builder, webRequestController, new NoCache<WearablesResponse, GetWearableByParamIntention>(false, false), realmData, EXPLORER_SUBDIRECTORY, WEARABLES_COMPLEMENT_URL, wearableCatalog);
+            FinalizeWearableLoadingSystem.InjectToWorld(ref builder, wearableStorage, realmData, WEARABLES_EMBEDDED_SUBDIRECTORY);
+            LoadWearablesByParamSystem.InjectToWorld(ref builder, webRequestController, new NoCache<WearablesResponse, GetWearableByParamIntention>(false, false), realmData, EXPLORER_SUBDIRECTORY, WEARABLES_COMPLEMENT_URL, wearableStorage);
             LoadWearablesDTOByPointersSystem.InjectToWorld(ref builder, webRequestController, new NoCache<WearablesDTOList, GetWearableDTOByPointersIntention>(false, false));
             LoadWearableAssetBundleManifestSystem.InjectToWorld(ref builder, new NoCache<SceneAssetBundleManifest, GetWearableAssetBundleManifestIntention>(true, true), assetBundleURL, webRequestController);
             LoadDefaultWearablesSystem.InjectToWorld(ref builder, defaultWearablesDTOs, defaultEmptyWearableAsset,
-                wearableCatalog);
+                wearableStorage);
 
             ResolveAvatarAttachmentThumbnailSystem.InjectToWorld(ref builder);
         }

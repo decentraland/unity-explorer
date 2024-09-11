@@ -19,6 +19,25 @@ MonoBehaviour:
     NormalsSensitivity: 1
     ColorSensitivity: 0.5
     OutlineColor: {r: 1, g: 1, b: 1, a: 0.5}
+--- !u!114 &-2448322177020252403
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2784eccf83804956a0e7d5a9e43534af, type: 3}
+  m_Name: SkyboxToCubemapRendererFeature
+  m_EditorClassIdentifier: 
+  m_Active: 1
+  settings:
+    skyBoxShader: {fileID: -6465566751694194690, guid: de77f9af132836c4785b35f15d16e564, type: 3}
+    originalMaterial: {fileID: 2100000, guid: caf6cf56d95066b45bc1ca92d6516b48, type: 2}
+    dimensions: 256
+    executeInEditMode: 0
+    assignAsReflectionProbe: 1
 --- !u!114 &-2287974757364210156
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -58,7 +77,9 @@ MonoBehaviour:
   - {fileID: -2287974757364210156}
   - {fileID: 8512292912536760798}
   - {fileID: -3288772034090369892}
-  m_RendererFeatureMap: 14e63e94147b3fe0de31d4cb4dbd21769cfccd7842ef5bd2
+  - {fileID: -2448322177020252403}
+  - {fileID: 1757973802043764545}
+  m_RendererFeatureMap: 14e63e94147b3fe0de31d4cb4dbd21769cfccd7842ef5bd20d2fffa6f3cf05de41ef42dbdb936518
   m_UseNativeRenderPass: 0
   postProcessData: {fileID: 11400000, guid: 3235692a041298c4f94f71909ca0b8a2, type: 2}
   xrSystemData: {fileID: 11400000, guid: 60e1133243b97e347b653163a8c01b64, type: 2}
@@ -92,11 +113,53 @@ MonoBehaviour:
     failOperation: 0
     zFailOperation: 0
   m_ShadowTransparentReceive: 1
-  m_RenderingMode: 0
+  m_RenderingMode: 2
   m_DepthPrimingMode: 0
   m_CopyDepthMode: 0
   m_AccurateGbufferNormals: 0
   m_IntermediateTextureMode: 1
+--- !u!114 &1757973802043764545
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6b3d386ba5cd94485973aee1479b272e, type: 3}
+  m_Name: RenderNameTags
+  m_EditorClassIdentifier: 
+  m_Active: 1
+  settings:
+    passTag: RenderNameTags
+    Event: 500
+    filterSettings:
+      RenderQueueType: 1
+      LayerMask:
+        serializedVersion: 2
+        m_Bits: 32
+      PassNames: []
+    overrideMaterial: {fileID: 0}
+    overrideMaterialPassIndex: 0
+    overrideShader: {fileID: 0}
+    overrideShaderPassIndex: 0
+    overrideMode: 0
+    overrideDepthState: 0
+    depthCompareFunction: 4
+    enableWrite: 1
+    stencilSettings:
+      overrideStencilState: 0
+      stencilReference: 0
+      stencilCompareFunction: 8
+      passOperation: 0
+      failOperation: 0
+      zFailOperation: 0
+    cameraSettings:
+      overrideCamera: 0
+      restoreCamera: 1
+      offset: {x: 0, y: 0, z: 0, w: 0}
+      cameraFieldOfView: 60
 --- !u!114 &8512292912536760798
 MonoBehaviour:
   m_ObjectHideFlags: 0

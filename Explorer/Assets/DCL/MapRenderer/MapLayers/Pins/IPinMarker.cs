@@ -1,5 +1,7 @@
+using Cysharp.Threading.Tasks;
 using DCL.MapRenderer.Culling;
 using System;
+using System.Threading;
 using UnityEngine;
 
 namespace DCL.MapRenderer.MapLayers.Pins
@@ -7,20 +9,26 @@ namespace DCL.MapRenderer.MapLayers.Pins
     public interface IPinMarker : IMapRendererMarker, IMapPositionProvider, IDisposable
     {
         bool IsVisible { get; }
+        bool IsDestination { get; }
 
         public string Title { get; }
 
         public string Description { get; }
 
         public Vector2Int ParcelPosition { get; }
+        public Sprite CurrentSprite { get; }
 
         void SetPosition(Vector2 position, Vector2Int parcelPosition);
 
         void SetData(string title, string description);
 
-        void AnimateIn();
+        UniTaskVoid AnimateSelectionAsync(CancellationToken ct);
 
-        void AnimateOut();
+        UniTaskVoid AnimateDeselectionAsync(CancellationToken ct);
+
+        public void DeselectImmediately(IPinMarker.ScaleType scaleType);
+
+        void SetAsDestination(bool isDestination);
 
         void SetIconOutline(bool isActive);
 
@@ -32,6 +40,16 @@ namespace DCL.MapRenderer.MapLayers.Pins
 
         void SetZoom(float baseScale, float baseZoom, float zoom);
 
-        void ResetScale(float scale);
+        void ResetScale(ScaleType scaleType);
+
+        void Show(Action? onFinish);
+
+        void Hide(Action? onFinish);
+
+        public enum ScaleType
+        {
+            MINIMAP,
+            NAVMAP,
+        }
     }
 }

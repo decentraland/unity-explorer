@@ -1,11 +1,12 @@
 ﻿#if UNITY_EDITOR || DEVELOPMENT_BUILD
 
+using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Wearables.Components;
 using ECS.StreamableLoading.Common.Components;
 
 namespace DCL.AvatarRendering.Wearables.Helpers
 {
-    public partial class WearableCatalog
+    public partial class WearableStorage
     {
         public int WearableAssetsInCatalog
         {
@@ -17,7 +18,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                     if (wearable.WearableAssetResults != null)
                         foreach (WearableAssets assets in wearable.WearableAssetResults)
                             if (assets.Results != null)
-                                foreach (StreamableLoadingResult<WearableAssetBase>? result in assets.Results)
+                                foreach (StreamableLoadingResult<AttachmentAssetBase>? result in assets.Results)
                                     if (result is { Asset: not null })
                                         sum++;
 

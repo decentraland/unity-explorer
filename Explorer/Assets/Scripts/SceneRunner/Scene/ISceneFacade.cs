@@ -14,6 +14,7 @@ namespace SceneRunner.Scene
         SceneEcsExecutor EcsExecutor { get; }
         PersistentEntities PersistentEntities { get; }
         bool IsEmpty { get; }
+        ISceneData SceneData { get; }
 
         void Initialize();
 
@@ -60,6 +61,7 @@ namespace SceneRunner.Scene
             public SceneEcsExecutor EcsExecutor { get; }
             public PersistentEntities PersistentEntities { get; }
             public bool IsEmpty { get; }
+            public ISceneData SceneData { get; }
 
             public void Initialize() =>
                 throw new NotImplementedException();

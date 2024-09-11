@@ -2,10 +2,9 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Backpack;
-using DCL.Notification;
-using DCL.Notification.NewNotification;
-using DCL.Notification.NotificationsBus;
-using DCL.Web3.Identities;
+using DCL.Notifications;
+using DCL.Notifications.NewNotification;
+using DCL.NotificationsBusController.NotificationsBus;
 using DCL.WebRequests;
 using MVC;
 using System;
@@ -21,20 +20,17 @@ namespace DCL.PluginSystem.Global
         private readonly IMVCManager mvcManager;
         private readonly IWebRequestController webRequestController;
         private readonly INotificationsBusController notificationsBusController;
-        private readonly NotificationsRequestController notificationsRequestController;
 
         public NotificationPlugin(
             IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
             IWebRequestController webRequestController,
-            IWeb3IdentityCache web3IdentityCache,
             INotificationsBusController notificationsBusController)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
             this.webRequestController = webRequestController;
             this.notificationsBusController = notificationsBusController;
-            notificationsRequestController = new NotificationsRequestController(webRequestController, notificationsBusController, web3IdentityCache);
         }
 
         public async UniTask InitializeAsync(NotificationSettings settings, CancellationToken ct)
@@ -55,7 +51,6 @@ namespace DCL.PluginSystem.Global
 
         public void Dispose()
         {
-            notificationsRequestController.Dispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)

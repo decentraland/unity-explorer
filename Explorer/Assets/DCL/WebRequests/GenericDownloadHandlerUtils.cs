@@ -18,6 +18,9 @@ namespace DCL.WebRequests
     /// </summary>
     public static class GenericDownloadHandlerUtils
     {
+        private const string ORIGIN_HEADER_KEY = "Origin";
+        private const string ORIGIN_HEADER_VALUE = "explorer";
+
         public delegate Exception CreateExceptionOnParseFail(Exception exception, string text);
 
         public static Adapter<GenericPostRequest, GenericPostArguments> SignedFetchPostAsync(
@@ -50,8 +53,12 @@ namespace DCL.WebRequests
             WebRequestHeadersInfo? headersInfo = null,
             WebRequestSignInfo? signInfo = null,
             ISet<long>? ignoreErrorCodes = null
-        ) =>
-            new (controller, commonArguments, default(GenericGetArguments), ct, reportCategory, headersInfo, signInfo, ignoreErrorCodes, GET_GENERIC);
+        )
+        {
+            headersInfo ??= new WebRequestHeadersInfo();
+            headersInfo.Value.Add(ORIGIN_HEADER_KEY, ORIGIN_HEADER_VALUE); // Probably in the future we will add this origin header also in the rest of requests
+            return new Adapter<GenericGetRequest, GenericGetArguments>(controller, commonArguments, default(GenericGetArguments), ct, reportCategory, headersInfo, signInfo, ignoreErrorCodes, GET_GENERIC);
+        }
 
         public static Adapter<GenericPostRequest, GenericPostArguments> PostAsync(
             this IWebRequestController controller,
@@ -86,12 +93,11 @@ namespace DCL.WebRequests
         public static Adapter<GenericHeadRequest, GenericHeadArguments> HeadAsync(
             this IWebRequestController controller,
             CommonArguments commonArguments,
-            GenericHeadArguments arguments,
             CancellationToken ct,
             string reportCategory = ReportCategory.GENERIC_WEB_REQUEST,
             WebRequestHeadersInfo? headersInfo = null,
             WebRequestSignInfo? signInfo = null) =>
-            new (controller, commonArguments, arguments, ct, reportCategory, headersInfo, signInfo, null, HEAD_GENERIC);
+            new (controller, commonArguments, default(GenericHeadArguments), ct, reportCategory, headersInfo, signInfo, null, HEAD_GENERIC);
 
         private static async UniTask SwitchToMainThreadAsync(WRThreadFlags flags)
         {
@@ -160,6 +166,9 @@ namespace DCL.WebRequests
             public UniTask<byte[]> GetDataCopyAsync() =>
                 SendAsync<GetDataCopyOp<TRequest>, byte[]>(new GetDataCopyOp<TRequest>());
 
+            public UniTask<int> StatusCodeAsync() =>
+                SendAsync<StatusCodeOp<TRequest>, int>(new StatusCodeOp<TRequest>());
+
             public UniTask<T> OverwriteFromJsonAsync<T>(
                 T targetObject,
                 WRJsonParser jsonParser,
@@ -191,6 +200,12 @@ namespace DCL.WebRequests
         {
             public UniTask<string?> ExecuteAsync(TRequest webRequest, CancellationToken ct) =>
                 UniTask.FromResult(webRequest.UnityWebRequest.downloadHandler.text)!;
+        }
+
+        public struct StatusCodeOp<TRequest> : IWebRequestOp<TRequest, int> where TRequest: struct, ITypedWebRequest, IGenericDownloadHandlerRequest
+        {
+            public UniTask<int> ExecuteAsync(TRequest webRequest, CancellationToken ct) =>
+                UniTask.FromResult((int)webRequest.UnityWebRequest.responseCode);
         }
 
         public struct CreateFromJsonOp<T, TRequest> : IWebRequestOp<TRequest, T> where TRequest: struct, ITypedWebRequest, IGenericDownloadHandlerRequest

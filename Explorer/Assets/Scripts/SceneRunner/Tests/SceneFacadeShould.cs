@@ -12,11 +12,11 @@ using CrdtEcsBridge.ECSToCRDTWriter;
 using CrdtEcsBridge.JsModulesImplementation.Communications;
 using CrdtEcsBridge.OutgoingMessages;
 using CrdtEcsBridge.PoolsProviders;
-using CrdtEcsBridge.RestrictedActions;
 using CrdtEcsBridge.UpdateGate;
 using CrdtEcsBridge.WorldSynchronizer;
 using Cysharp.Threading.Tasks;
 using DCL.Interaction.Utility;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.PluginSystem.World;
 using DCL.PluginSystem.World.Dependencies;
@@ -61,12 +61,17 @@ namespace SceneRunner.Tests
     [TestFixture]
     public class SceneFacadeShould
     {
+        private V8ActiveEngines activeEngines;
+        private V8EngineFactory engineFactory;
+
         [SetUp]
         public void SetUp()
         {
             path = $"file://{Application.dataPath + "/../TestResources/Scenes/Cube/cube.js"}";
+            activeEngines = new V8ActiveEngines();
+            engineFactory = new V8EngineFactory(activeEngines);
 
-            sceneRuntimeFactory = new SceneRuntimeFactory(TestWebRequestController.INSTANCE, new IRealmData.Fake());
+            sceneRuntimeFactory = new SceneRuntimeFactory(TestWebRequestController.INSTANCE, new IRealmData.Fake(), engineFactory, activeEngines);
 
             ecsWorldFactory = Substitute.For<IECSWorldFactory>().EnsureNotNull();
 
@@ -85,10 +90,24 @@ namespace SceneRunner.Tests
             crdtSerializer = Substitute.For<ICRDTSerializer>().EnsureNotNull();
             componentsRegistry = Substitute.For<ISDKComponentsRegistry>().EnsureNotNull();
 
-            sceneFactory = new SceneFactory(ecsWorldFactory, sceneRuntimeFactory, sharedPoolsProvider, crdtSerializer, componentsRegistry,
-                new SceneEntityFactory(), new EntityCollidersGlobalCache(), Substitute.For<IEthereumApi>(), Substitute.For<IMVCManager>(),
-                Substitute.For<IProfileRepository>(), Substitute.For<IWeb3IdentityCache>(), IWebRequestController.DEFAULT,
-                new IRoomHub.Fake(), Substitute.For<IRealmData>(), Substitute.For<ICommunicationControllerHub>());
+            sceneFactory = new SceneFactory(
+                ecsWorldFactory,
+                sceneRuntimeFactory,
+                sharedPoolsProvider,
+                crdtSerializer,
+                componentsRegistry,
+                new SceneEntityFactory(),
+                new EntityCollidersGlobalCache(),
+                Substitute.For<IEthereumApi>(),
+                Substitute.For<IMVCManager>(),
+                Substitute.For<IProfileRepository>(),
+                Substitute.For<IWeb3IdentityCache>(),
+                Substitute.For<IDecentralandUrlsSource>(),
+                IWebRequestController.DEFAULT,
+                new IRoomHub.Fake(),
+                Substitute.For<IRealmData>(),
+                Substitute.For<ISceneCommunicationPipe>()
+            );
         }
 
         [OneTimeTearDown]
@@ -101,6 +120,7 @@ namespace SceneRunner.Tests
             }
 
             sceneFacades.Clear();
+            activeEngines.Clear();
         }
 
         private SceneRuntimeFactory sceneRuntimeFactory = null!;
@@ -199,9 +219,15 @@ namespace SceneRunner.Tests
 
             var list = new ConcurrentBag<int>();
 
-            async UniTask CreateAndLaunch(int fps, int lifeTime)
+            await UniTask.WhenAll(fps.Select((fps, i) => CreateAndLaunch(fps, lifeTimeMs[i], i.ToString())));
+
+            // It is not reliable to count the threads exactly as the agent can have a limited capacity
+            Assert.GreaterOrEqual(list.Distinct().Count(), Mathf.Min(2, fps.Length - 2));
+            return;
+
+            async UniTask CreateAndLaunch(int fps, int lifeTime, string id)
             {
-                var sceneFacade = (SceneFacade)await sceneFactory.CreateSceneFromFileAsync(path, Substitute.For<IPartitionComponent>(), CancellationToken.None);
+                var sceneFacade = (SceneFacade)await sceneFactory.CreateSceneFromFileAsync(path, Substitute.For<IPartitionComponent>(), CancellationToken.None, id);
                 sceneFacades.Add(sceneFacade);
 
                 var cancellationTokenSource = new CancellationTokenSource();
@@ -213,13 +239,8 @@ namespace SceneRunner.Tests
 
                 list.Add(Thread.CurrentThread.ManagedThreadId);
 
-                await Task.Delay(waitTime - lifeTime);
+                await Task.Delay(waitTime - lifeTime, cancellationTokenSource.Token);
             }
-
-            await UniTask.WhenAll(fps.Select((fps, i) => CreateAndLaunch(fps, lifeTimeMs[i])));
-
-            // It is not reliable to count the threads exactly as the agent can have a limited capacity
-            Assert.GreaterOrEqual(list.Distinct().Count(), Mathf.Min(2, fps.Length - 2));
         }
 
         [Test]
@@ -235,6 +256,7 @@ namespace SceneRunner.Tests
             var apis = new List<IJsApiWrapper>();
 
             var runtime = sceneFacade.deps.Runtime;
+
             runtime.When(r => r.Register(Arg.Any<string>(), Arg.Any<IJsApiWrapper>()))
                    .Do(info => apis.Add(info.ArgAt<IJsApiWrapper>(1)));
 
@@ -350,10 +372,11 @@ namespace SceneRunner.Tests
                     new URLAddress(),
                     new SceneEcsExecutor(),
                     Substitute.For<ISceneData>(),
-                    new MutexSync(),
+                    new MultithreadSync(),
                     Substitute.For<ICRDTDeserializer>(),
                     Substitute.For<IECSToCRDTWriter>(),
                     Substitute.For<ISystemGroupsUpdateGate>(),
+                    Substitute.For<ISystemsUpdateGate>(),
                     Substitute.For<IWorldTimeProvider>(),
                     new ECSWorldInstanceSharedDependencies()),
                 Substitute.For<ISceneRuntime>()) { }

@@ -15,6 +15,7 @@ using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World;
 using DCL.PluginSystem.World.Dependencies;
+using DCL.SDKComponents.InputModifier.Components;
 using ECS.LifeCycle;
 using System;
 using System.Collections.Generic;
@@ -79,12 +80,14 @@ namespace DCL.Character.Plugin
         public UniTask InitializeAsync(NoExposedPluginSettings settings, CancellationToken ct) =>
             UniTask.CompletedTask;
 
-        public Entity CreatePlayerEntity(World world) =>
-            world.Create(
-                new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY),
+        public void InitializePlayerEntity(World world, Entity playerEntity)
+        {
+            world.Add(playerEntity,
                 new PlayerComponent(characterObject.Value.CameraFocus),
                 new CharacterTransform(characterObject.Value.Transform),
-                new PlayerMovementNetworkComponent(characterObject.Value.Controller));
+                new PlayerMovementNetworkComponent(characterObject.Value.Controller)
+              , new InputModifierComponent());
+        }
 
         public class GlobalPlugin : IDCLGlobalPluginWithoutSettings
         {

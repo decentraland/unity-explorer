@@ -61,7 +61,7 @@ namespace SceneRunner.ECSWorld
             var builder = new ArchSystemsWorldBuilder<World>(world, systemGroupsUpdateGate, systemGroupsUpdateGate,
                 sharedDependencies.SceneExceptionsHandler);
 
-            var mutex = sharedDependencies.MutexSync;
+            var mutex = sharedDependencies.MultithreadSync;
 
             builder
                .InjectCustomGroup(new SyncedInitializationSystemGroup(mutex, sharedDependencies.SceneStateProvider))

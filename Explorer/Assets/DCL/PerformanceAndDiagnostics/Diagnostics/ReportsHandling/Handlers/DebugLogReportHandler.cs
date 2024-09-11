@@ -21,6 +21,7 @@ namespace DCL.Diagnostics
             // Rooms
             { ReportCategory.ARCHIPELAGO_REQUEST, ColorUtility.ToHtmlStringRGB(new Color(0.982f, 0.996f, 0.182f)) },
             { ReportCategory.LIVEKIT, ColorUtility.ToHtmlStringRGB(new Color(0.982f, 0.996f, 0.282f)) },
+            { ReportCategory.SDK_LOCAL_SCENE_DEVELOPMENT, ColorUtility.ToHtmlStringRGB(new Color(0.982f, 0.996f, 0.282f)) },
 
             // Engine uses whitish tones
             { ReportCategory.ENGINE, ColorUtility.ToHtmlStringRGB(new Color(219f / 255, 214f / 255, 200f / 255)) },
@@ -70,7 +71,8 @@ namespace DCL.Diagnostics
         [HideInCallstack]
         internal override void LogInternal(LogType logType, ReportData category, Object context, object message)
         {
-            unityLogHandler.LogFormat(logType, context, $"{GetReportDataPrefix(in category)}{message}");
+            var escapedMessage = message.ToString().Replace("{", "{{").Replace("}", "}}");
+            unityLogHandler.LogFormat(logType, context, $"{GetReportDataPrefix(in category)}{escapedMessage}");
         }
 
         [HideInCallstack]

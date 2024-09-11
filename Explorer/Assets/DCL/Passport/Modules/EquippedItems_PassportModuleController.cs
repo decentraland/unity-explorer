@@ -1,12 +1,14 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Emotes;
+using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack;
 using DCL.Browser;
 using DCL.Diagnostics;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Passport.Fields;
 using DCL.Profiles;
 using ECS.Prioritization.Components;
@@ -35,16 +37,16 @@ namespace DCL.Passport.Modules
         private readonly NFTColorsSO rarityColors;
         private readonly NftTypeIconSO categoryIcons;
         private readonly IThumbnailProvider thumbnailProvider;
-        private readonly RectTransform scrollContainer;
         private readonly IWebBrowser webBrowser;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly PassportErrorsController passportErrorsController;
 
         private readonly IObjectPool<EquippedItem_PassportFieldView> loadingItemsPool;
-        private readonly List<EquippedItem_PassportFieldView> instantiatedLoadingItems = new();
+        private readonly List<EquippedItem_PassportFieldView> instantiatedLoadingItems = new ();
         private readonly IObjectPool<EquippedItem_PassportFieldView> equippedItemsPool;
-        private readonly List<EquippedItem_PassportFieldView> instantiatedEquippedItems = new();
+        private readonly List<EquippedItem_PassportFieldView> instantiatedEquippedItems = new ();
         private readonly IObjectPool<EquippedItem_PassportFieldView> emptyItemsPool;
-        private readonly List<EquippedItem_PassportFieldView> instantiatedEmptyItems = new();
+        private readonly List<EquippedItem_PassportFieldView> instantiatedEmptyItems = new ();
 
         private Profile currentProfile;
         private CancellationTokenSource getEquippedItemsCts;
@@ -56,8 +58,8 @@ namespace DCL.Passport.Modules
             NFTColorsSO rarityColors,
             NftTypeIconSO categoryIcons,
             IThumbnailProvider thumbnailProvider,
-            RectTransform scrollContainer,
             IWebBrowser webBrowser,
+            IDecentralandUrlsSource decentralandUrlsSource,
             PassportErrorsController passportErrorsController)
         {
             this.view = view;
@@ -66,8 +68,8 @@ namespace DCL.Passport.Modules
             this.rarityColors = rarityColors;
             this.categoryIcons = categoryIcons;
             this.thumbnailProvider = thumbnailProvider;
-            this.scrollContainer = scrollContainer;
             this.webBrowser = webBrowser;
+            this.decentralandUrlsSource = decentralandUrlsSource;
             this.passportErrorsController = passportErrorsController;
 
             loadingItemsPool = new ObjectPool<EquippedItem_PassportFieldView>(
@@ -121,16 +123,14 @@ namespace DCL.Passport.Modules
 
         public void Clear()
         {
+            getEquippedItemsCts.SafeCancelAndDispose();
             ClearLoadingItems();
             ClearEquippedItems();
             ClearEmptyItems();
         }
 
-        public void Dispose()
-        {
-            getEquippedItemsCts.SafeCancelAndDispose();
+        public void Dispose() =>
             Clear();
-        }
 
         private EquippedItem_PassportFieldView InstantiateEquippedItemPrefab()
         {
@@ -196,7 +196,7 @@ namespace DCL.Passport.Modules
                 equippedWearableItem.FlapBackground.color = rarityColor;
                 equippedWearableItem.CategoryImage.sprite = categoryIcons.GetTypeImage(wearable.GetCategory());
                 string marketPlaceLink = GetMarketplaceLink(wearable.GetUrn());
-                equippedWearableItem.BuyButton.interactable = wearable.IsCollectible() && marketPlaceLink != string.Empty;
+                equippedWearableItem.BuyButton.interactable = wearable.IsOnChain() && marketPlaceLink != string.Empty;
                 equippedWearableItem.BuyButton.onClick.AddListener(() => webBrowser.OpenUrl(marketPlaceLink));
                 WaitForThumbnailAsync(wearable, equippedWearableItem, getEquippedItemsCts.Token).Forget();
                 instantiatedEquippedItems.Add(equippedWearableItem);
@@ -219,7 +219,7 @@ namespace DCL.Passport.Modules
                 equippedWearableItem.FlapBackground.color = rarityColor;
                 equippedWearableItem.CategoryImage.sprite = categoryIcons.GetTypeImage("emote");
                 string marketPlaceLink = GetMarketplaceLink(emote.GetUrn());
-                equippedWearableItem.BuyButton.interactable = emote.IsCollectible() && rarityName != "base" && marketPlaceLink != string.Empty;
+                equippedWearableItem.BuyButton.interactable = emote.IsOnChain() && rarityName != "base" && marketPlaceLink != string.Empty;
                 equippedWearableItem.BuyButton.onClick.AddListener(() => webBrowser.OpenUrl(marketPlaceLink));
                 WaitForThumbnailAsync(emote, equippedWearableItem, getEquippedItemsCts.Token).Forget();
                 instantiatedEquippedItems.Add(equippedWearableItem);
@@ -227,6 +227,7 @@ namespace DCL.Passport.Modules
             }
 
             int missingEmptyItems = CalculateMissingEmptyItems(elementsAddedInTheGird);
+
             for (var i = 0; i < missingEmptyItems; i++)
             {
                 var emptyItem = emptyItemsPool.Get();
@@ -235,22 +236,26 @@ namespace DCL.Passport.Modules
             }
         }
 
-        private int CalculateMissingEmptyItems(int totalItems)
+        private static int CalculateMissingEmptyItems(int totalItems)
         {
-            int remainder = totalItems % 6;
-            int missingItems = remainder == 0 ? 0 : 6 - remainder;
+            int remainder = totalItems % GRID_ITEMS_PER_ROW;
+            int missingItems = remainder == 0 ? 0 : GRID_ITEMS_PER_ROW - remainder;
             return missingItems;
         }
 
-        private async UniTaskVoid AwaitEquippedItemsPromiseAsync(WearablePromise equippedWearablesPromise, EmotePromise equippedEmotesPromise, CancellationToken ct)
+        private async UniTaskVoid AwaitEquippedItemsPromiseAsync(
+            WearablePromise equippedWearablesPromise,
+            EmotePromise equippedEmotesPromise,
+            CancellationToken ct
+        )
         {
             try
             {
                 var wearablesUniTaskAsync = await equippedWearablesPromise.ToUniTaskAsync(world, cancellationToken: ct);
                 var emotesUniTaskAsync = await equippedEmotesPromise.ToUniTaskAsync(world, cancellationToken: ct);
                 var currentWearables = wearablesUniTaskAsync.Result!.Value.Asset.Wearables;
-                var currentEmotes = emotesUniTaskAsync.Result!.Value.Asset.Emotes;
-                SetGridElements(currentWearables, currentEmotes);
+                using var consumed = emotesUniTaskAsync.Result!.Value.Asset.ConsumeEmotes();
+                SetGridElements(currentWearables, consumed.Value);
             }
             catch (OperationCanceledException) { }
             catch (Exception e)
@@ -265,7 +270,7 @@ namespace DCL.Passport.Modules
         {
             try
             {
-                Sprite sprite = await thumbnailProvider.GetAsync(itemWearable, ct);
+                Sprite? sprite = await thumbnailProvider.GetAsync(itemWearable, ct);
                 itemView.EquippedItemThumbnail.sprite = sprite;
             }
             catch (OperationCanceledException) { }
@@ -282,7 +287,7 @@ namespace DCL.Passport.Modules
         {
             try
             {
-                Sprite sprite = await thumbnailProvider.GetAsync(itemEmote, ct);
+                Sprite? sprite = await thumbnailProvider.GetAsync(itemEmote, ct);
                 itemView.EquippedItemThumbnail.sprite = sprite;
             }
             catch (OperationCanceledException) { }
@@ -319,9 +324,9 @@ namespace DCL.Passport.Modules
             instantiatedEmptyItems.Clear();
         }
 
-        private static string GetMarketplaceLink(string id)
+        private string GetMarketplaceLink(string id)
         {
-            const string MARKETPLACE = "https://market.decentraland.org/contracts/{0}/items/{1}";
+            var marketplace = $"{decentralandUrlsSource.Url(DecentralandUrl.Market)}/contracts/{{0}}/items/{{1}}";
             ReadOnlySpan<char> idSpan = id.AsSpan();
             int lastColonIndex = idSpan.LastIndexOf(':');
 
@@ -337,8 +342,7 @@ namespace DCL.Passport.Modules
             if (!contract.StartsWith("0x") || !int.TryParse(item, out int _))
                 return "";
 
-            return string.Format(MARKETPLACE, contract, item);
+            return string.Format(marketplace, contract, item);
         }
-
     }
 }

@@ -32,20 +32,22 @@ namespace ECS.Unity.Materials.Systems
         }
 
         [Query]
-        private void Handle(ref MaterialComponent materialComponent)
+        [All(typeof(ShouldInstanceMaterialComponent))]
+        private void Handle(Entity entity, ref MaterialComponent materialComponent)
         {
             if (!materialComponent.Data.IsPbrMaterial)
+                return;
+
+            if (materialComponent.Status is not StreamableLoading.LifeCycle.LoadingInProgress)
                 return;
 
             if (!capFrameBudget.TrySpendBudget() || !memoryBudgetProvider.TrySpendBudget())
                 return;
 
-            // if there are no textures to load we can construct a material right away
-            if (materialComponent.Status == StreamableLoading.LifeCycle.LoadingInProgress)
-                ConstructMaterial(ref materialComponent);
+            ConstructMaterial(entity, ref materialComponent);
         }
 
-        private void ConstructMaterial(ref MaterialComponent materialComponent)
+        private void ConstructMaterial(Entity entity, ref MaterialComponent materialComponent)
         {
             // Check if all promises are finished
             // Promises are finished if: all of their entities are invalid, no promises at all, or the result component exists
@@ -61,17 +63,16 @@ namespace ECS.Unity.Materials.Systems
 
                 SetUpColors(materialComponent.Result, materialComponent.Data.AlbedoColor, materialComponent.Data.EmissiveColor, materialComponent.Data.ReflectivityColor, materialComponent.Data.EmissiveIntensity);
                 SetUpProps(materialComponent.Result, materialComponent.Data.Metallic, materialComponent.Data.Roughness, materialComponent.Data.SpecularIntensity, materialComponent.Data.DirectIntensity);
-                SetUpTransparency(materialComponent.Result, materialComponent.Data.TransparencyMode, materialComponent.Data.AlphaTexture, materialComponent.Data.AlbedoColor, materialComponent.Data.AlphaTest);
+                SetUpTransparency(materialComponent.Result, materialComponent.Data.TransparencyMode, in materialComponent.Data.Textures.AlphaTexture, materialComponent.Data.AlbedoColor, materialComponent.Data.AlphaTest);
 
-                TrySetTexture(materialComponent.Result, ref albedoResult, ShaderUtils.BaseMap, materialComponent.Data.AlbedoTexture);
-                TrySetTexture(materialComponent.Result, ref emissiveResult, ShaderUtils.EmissionMap, materialComponent.Data.EmissiveTexture);
-                TrySetTexture(materialComponent.Result, ref alphaResult, ShaderUtils.AlphaTexture, materialComponent.Data.AlphaTexture);
-                TrySetTexture(materialComponent.Result, ref bumpResult, ShaderUtils.BumpMap, materialComponent.Data.BumpTexture);
+                TrySetTexture(materialComponent.Result, ref albedoResult, ShaderUtils.BaseMap, in materialComponent.Data.Textures.AlbedoTexture);
+                TrySetTexture(materialComponent.Result, ref emissiveResult, ShaderUtils.EmissionMap, in materialComponent.Data.Textures.EmissiveTexture);
+                TrySetTexture(materialComponent.Result, ref alphaResult, ShaderUtils.AlphaTexture, in materialComponent.Data.Textures.AlphaTexture);
+                TrySetTexture(materialComponent.Result, ref bumpResult, ShaderUtils.BumpMap, in materialComponent.Data.Textures.BumpTexture);
 
-                DestroyEntityReference(ref materialComponent.AlbedoTexPromise);
-                DestroyEntityReference(ref materialComponent.EmissiveTexPromise);
-                DestroyEntityReference(ref materialComponent.AlphaTexPromise);
-                DestroyEntityReference(ref materialComponent.BumpTexPromise);
+                DestroyEntityReferencesForPromises(ref materialComponent);
+
+                World!.Remove<ShouldInstanceMaterialComponent>(entity);
 
                 // TODO It is super expensive and allocates 500 KB every call, the changes must be made in the common library
                 // SRPBatchingHelper.OptimizeMaterial(materialComponent.Result);
@@ -97,20 +98,11 @@ namespace ECS.Unity.Materials.Systems
         }
 
         public static void SetUpTransparency(Material material, MaterialTransparencyMode transparencyMode,
-            TextureComponent? alphaTexture, Color albedoColor, float alphaTest)
+            in TextureComponent? alphaTexture, Color albedoColor, float alphaTest)
         {
-            if (transparencyMode == MaterialTransparencyMode.Auto)
-            {
-                if (alphaTexture != null || albedoColor.a < 1f) //AlphaBlend
-                {
-                    transparencyMode = MaterialTransparencyMode.AlphaBlend;
-                }
-                else // Opaque
-                {
-                    transparencyMode = MaterialTransparencyMode.Opaque;
-                }
-            }
+            transparencyMode.ResolveAutoMode(alphaTexture, albedoColor);
 
+            // ReSharper disable once SwitchStatementMissingSomeEnumCasesNoDefault
             switch (transparencyMode)
             {
                 case MaterialTransparencyMode.Opaque:

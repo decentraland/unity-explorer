@@ -1,6 +1,8 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.AuthenticationScreenFlow;
 using DCL.Chat;
 using DCL.ExplorePanel;
+using DCL.Passport;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -12,7 +14,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
     {
         private readonly MVCManager core;
 
-        private readonly Dictionary<Type, IDisposable> registeredAnalytics = new();
+        private readonly Dictionary<Type, IDisposable> registeredAnalytics = new ();
         private readonly Dictionary<Type, Func<IController, IDisposable>> controllerAnalyticsFactory;
 
         public event Action<IController>? OnViewShowed;
@@ -28,9 +30,11 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             {
                 { typeof(ChatController), CreateAnalytics<ChatController>(c => new ChatEventsAnalytics(analytics, c)) },
                 { typeof(ExplorePanelController), CreateAnalytics<ExplorePanelController>(c => new MapEventsAnalytics(analytics, c.NavmapController)) },
+                { typeof(PassportController), CreateAnalytics<PassportController>(c => new OpenPassportAnalytics(analytics, c)) },
+                { typeof(AuthenticationScreenController), CreateAnalytics<AuthenticationScreenController>(c => new AuthenticationScreenAnalytics(analytics, c)) },
             };
 
-            Func<IController, IDisposable> CreateAnalytics<T>(Func<T, IDisposable> factory) where T : IController =>
+            Func<IController, IDisposable> CreateAnalytics<T>(Func<T, IDisposable> factory) where T: IController =>
                 controller => factory((T)controller);
         }
 

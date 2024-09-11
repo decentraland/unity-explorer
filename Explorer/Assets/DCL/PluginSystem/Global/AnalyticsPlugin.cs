@@ -1,44 +1,60 @@
 ﻿using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.Analytics.Systems;
-using DCL.Diagnostics;
+using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiling;
+using DCL.Utilities;
 using ECS;
 using ECS.SceneLifeCycle;
-using System;
+using ECS.SceneLifeCycle.Realm;
 using System.Threading;
-using UnityEngine;
-using UnityEngine.AddressableAssets;
 
 namespace DCL.PluginSystem.Global
 {
     public class AnalyticsPlugin : IDCLGlobalPlugin
     {
-        private readonly IProfilingProvider profilingProvider;
+        private readonly IAnalyticsReportProfiler profiler;
+        private readonly IRealmNavigator realmNavigator;
         private readonly IRealmData realmData;
         private readonly IScenesCache scenesCache;
-
         private readonly IAnalyticsController analytics;
 
-        public AnalyticsPlugin(IAnalyticsController analytics, IProfilingProvider profilingProvider, IRealmData realmData, IScenesCache scenesCache)
+        private readonly WalkedDistanceAnalytics walkedDistanceAnalytics;
+
+        public AnalyticsPlugin(IAnalyticsController analytics, IAnalyticsReportProfiler profiler, IRealmNavigator realmNavigator, IRealmData realmData, IScenesCache scenesCache, ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy)
         {
             this.analytics = analytics;
 
-            this.profilingProvider = profilingProvider;
+            this.profiler = profiler;
+            this.realmNavigator = realmNavigator;
             this.realmData = realmData;
             this.scenesCache = scenesCache;
+
+            walkedDistanceAnalytics = new WalkedDistanceAnalytics(analytics, mainPlayerAvatarBaseProxy);
+            this.realmNavigator.RealmChanged += OnRealmChanged;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
+            walkedDistanceAnalytics.Initialize();
+
             PlayerParcelChangedAnalyticsSystem.InjectToWorld(ref builder, analytics, realmData, scenesCache, arguments.PlayerEntity);
-            WalkedDistanceAnalyticsSystem.InjectToWorld(ref builder, analytics, realmData, arguments.PlayerEntity);
-            PerformanceAnalyticsSystem.InjectToWorld(ref builder, analytics, profilingProvider);
+            PerformanceAnalyticsSystem.InjectToWorld(ref builder, analytics, realmData, profiler, arguments.V8ActiveEngines, scenesCache);
             TimeSpentInWorldAnalyticsSystem.InjectToWorld(ref builder, analytics, realmData);
+            BadgesHeightReachedSystem.InjectToWorld(ref builder, analytics, realmData, arguments.PlayerEntity);
+            AnalyticsEmotesSystem.InjectToWorld(ref builder, analytics, realmData, arguments.PlayerEntity);
         }
 
-        public void Dispose() { }
+        public void Dispose()
+        {
+            walkedDistanceAnalytics.Dispose();
+            this.realmNavigator.RealmChanged -= OnRealmChanged;
+
+        }
+
+        private void OnRealmChanged(bool _) =>
+            analytics.Flush();
 
         public UniTask Initialize(IPluginSettingsContainer container, CancellationToken ct) =>
             UniTask.CompletedTask;

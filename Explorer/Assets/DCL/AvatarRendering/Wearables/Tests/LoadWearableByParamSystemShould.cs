@@ -13,13 +13,14 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 using Utility.Multithreading;
+using LoadWearablesByParamSystem = DCL.AvatarRendering.Wearables.Systems.Load.LoadWearablesByParamSystem;
 
 namespace DCL.AvatarRendering.Wearables.Tests
 {
     [TestFixture]
     public class LoadWearableByParamSystemShould : LoadSystemBaseShould<LoadWearablesByParamSystem, WearablesResponse, GetWearableByParamIntention>
     {
-        private WearableCatalog wearableCatalog;
+        private WearableStorage wearableStorage;
         private readonly string existingURN = "urn:decentraland:off-chain:base-avatars:aviatorstyle";
 
         private string successPath => $"file://{Application.dataPath}/../TestResources/Wearables/SuccessUserParam";
@@ -30,30 +31,30 @@ namespace DCL.AvatarRendering.Wearables.Tests
 
         protected override LoadWearablesByParamSystem CreateSystem()
         {
-            wearableCatalog = new WearableCatalog();
+            wearableStorage = new WearableStorage();
 
             IRealmData realmData = Substitute.For<IRealmData>();
             realmData.Configured.Returns(true);
 
             return new LoadWearablesByParamSystem(world, TestWebRequestController.INSTANCE, cache, realmData,
-                URLSubdirectory.EMPTY, URLSubdirectory.FromString("Wearables"), wearableCatalog);
+                URLSubdirectory.EMPTY, URLSubdirectory.FromString("Wearables"), wearableStorage);
         }
 
         protected override void AssertSuccess(WearablesResponse asset)
         {
             base.AssertSuccess(asset);
 
-            foreach (string wearableCatalogKey in wearableCatalog.wearablesCache.Keys)
+            foreach (string wearableCatalogKey in wearableStorage.wearablesCache.Keys)
                 Debug.Log(wearableCatalogKey);
 
-            Assert.AreEqual(wearableCatalog.wearablesCache.Count, 1);
-            Assert.NotNull(wearableCatalog.wearablesCache[existingURN]);
+            Assert.AreEqual(wearableStorage.wearablesCache.Count, 1);
+            Assert.NotNull(wearableStorage.wearablesCache[existingURN]);
         }
 
         [Test]
         public async Task ConcludeSuccessOnExistingWearable()
         {
-            wearableCatalog.wearablesCache.Add(existingURN, Substitute.For<IWearable>());
+            wearableStorage.wearablesCache.Add(existingURN, Substitute.For<IWearable>());
             await ConcludeSuccess();
         }
 

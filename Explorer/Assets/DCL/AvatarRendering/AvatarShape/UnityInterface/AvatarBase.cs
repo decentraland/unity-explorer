@@ -8,11 +8,13 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 {
     public class AvatarBase : MonoBehaviour, IAvatarView
     {
-        [SerializeField] private Animator avatarAnimator;
         private List<KeyValuePair<AnimationClip, AnimationClip>> animationOverrides;
         private AnimationClip lastEmote;
 
         private AnimatorOverrideController overrideController;
+
+        [field: SerializeField] public Animator AvatarAnimator { get; private set; }
+
         [field: SerializeField] public SkinnedMeshRenderer AvatarSkinnedMeshRenderer { get; private set; }
 
         [field: Header("Feet IK")]
@@ -89,10 +91,10 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 
         private void Awake()
         {
-            if (!avatarAnimator)
+            if (!AvatarAnimator)
                 return;
 
-            overrideController = new AnimatorOverrideController(avatarAnimator.runtimeAnimatorController);
+            overrideController = new AnimatorOverrideController(AvatarAnimator.runtimeAnimatorController);
             animationOverrides = new List<KeyValuePair<AnimationClip, AnimationClip>>();
             overrideController.GetOverrides(animationOverrides);
 
@@ -109,45 +111,45 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 
         public void SetAnimatorFloat(int hash, float value)
         {
-            avatarAnimator.SetFloat(hash, value);
+            AvatarAnimator.SetFloat(hash, value);
         }
 
         public void SetAnimatorInt(int hash, int value)
         {
-            avatarAnimator.SetInteger(hash, value);
+            AvatarAnimator.SetInteger(hash, value);
         }
 
         public void SetAnimatorTrigger(int hash)
         {
-            avatarAnimator.SetTrigger(hash);
+            AvatarAnimator.SetTrigger(hash);
         }
 
         public bool IsAnimatorInTag(int hashTag) =>
-            avatarAnimator.GetCurrentAnimatorStateInfo(0).tagHash == hashTag;
+            AvatarAnimator.GetCurrentAnimatorStateInfo(0).tagHash == hashTag;
 
         public int GetAnimatorCurrentStateTag() =>
-            avatarAnimator.GetCurrentAnimatorStateInfo(0).tagHash;
+            AvatarAnimator.GetCurrentAnimatorStateInfo(0).tagHash;
 
         public void ResetTrigger(int hash)
         {
-            avatarAnimator.ResetTrigger(hash);
+            AvatarAnimator.ResetTrigger(hash);
         }
 
         public bool GetAnimatorBool(int hash) =>
-            avatarAnimator.GetBool(hash);
+            AvatarAnimator.GetBool(hash);
 
         public void SetAnimatorBool(int hash, bool value) =>
-            avatarAnimator.SetBool(hash, value);
+            AvatarAnimator.SetBool(hash, value);
 
         public float GetAnimatorFloat(int hash) =>
-            avatarAnimator.GetFloat(hash);
+            AvatarAnimator.GetFloat(hash);
 
         public void ReplaceEmoteAnimation(AnimationClip animationClip)
         {
             if (lastEmote == animationClip) return;
 
             overrideController["Emote"] = animationClip;
-            avatarAnimator.runtimeAnimatorController = overrideController;
+            AvatarAnimator.runtimeAnimatorController = overrideController;
 
             lastEmote = animationClip;
         }

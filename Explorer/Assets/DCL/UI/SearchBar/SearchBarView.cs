@@ -2,8 +2,6 @@ using DCL.Audio;
 using System;
 using TMPro;
 using UnityEngine;
-using UnityEngine.EventSystems;
-using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 namespace DCL.UI
@@ -15,7 +13,6 @@ namespace DCL.UI
 
         [field: SerializeField]
         public Button clearSearchButton;
-
 
         [field: Header("Audio")]
         [field: SerializeField]

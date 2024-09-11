@@ -1,5 +1,6 @@
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Equipped;
+using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
@@ -13,28 +14,28 @@ namespace DCL.Backpack.BackpackBus
 {
     public class BackpackBusController : IDisposable
     {
-        private readonly IWearableCatalog wearableCatalog;
+        private readonly IWearableStorage wearableStorage;
         private readonly IBackpackEventBus backpackEventBus;
         private readonly IBackpackCommandBus backpackCommandBus;
         private readonly IEquippedEmotes equippedEmotes;
-        private readonly IEmoteCache emoteCache;
+        private readonly IEmoteStorage emoteStorage;
 
         private int currentEmoteSlot = -1;
         private readonly IReadOnlyEquippedWearables equippedWearables;
 
         public BackpackBusController(
-            IWearableCatalog wearableCatalog,
+            IWearableStorage wearableStorage,
             IBackpackEventBus backpackEventBus,
             IBackpackCommandBus backpackCommandBus,
             IReadOnlyEquippedWearables equippedWearables,
             IEquippedEmotes equippedEmotes,
-            IEmoteCache emoteCache)
+            IEmoteStorage emoteStorage)
         {
-            this.wearableCatalog = wearableCatalog;
+            this.wearableStorage = wearableStorage;
             this.backpackEventBus = backpackEventBus;
             this.backpackCommandBus = backpackCommandBus;
             this.equippedEmotes = equippedEmotes;
-            this.emoteCache = emoteCache;
+            this.emoteStorage = emoteStorage;
             this.equippedWearables = equippedWearables;
 
             this.backpackCommandBus.EquipWearableMessageReceived += HandleEquipWearableCommand;
@@ -94,7 +95,7 @@ namespace DCL.Backpack.BackpackBus
 
         private void HandleSelectWearableCommand(BackpackSelectWearableCommand command)
         {
-            if (wearableCatalog.TryGetWearable(command.Id, out IWearable wearable))
+            if (wearableStorage.TryGetElement(command.Id, out IWearable wearable))
                 backpackEventBus.SendWearableSelect(wearable);
         }
 
@@ -106,7 +107,7 @@ namespace DCL.Backpack.BackpackBus
 
         private void HandleEquipWearableCommand(BackpackEquipWearableCommand command)
         {
-            if (!wearableCatalog.TryGetWearable(command.Id, out IWearable wearable))
+            if (!wearableStorage.TryGetElement(command.Id, out IWearable wearable))
             {
                 ReportHub.LogError(new ReportData(ReportCategory.WEARABLE), $"Cannot equip wearable, not found: {command.Id}");
                 return;
@@ -162,7 +163,7 @@ namespace DCL.Backpack.BackpackBus
 
         private void HandleEmoteEquipCommand(BackpackEquipEmoteCommand command)
         {
-            if (!emoteCache.TryGetEmote(command.Id, out IEmote emote))
+            if (!emoteStorage.TryGetElement(command.Id, out IEmote emote))
             {
                 ReportHub.LogError(new ReportData(ReportCategory.EMOTE), $"Cannot equip emote, not found: {command.Id}");
                 return;
@@ -177,12 +178,12 @@ namespace DCL.Backpack.BackpackBus
             }
 
             backpackEventBus.SendUnEquipEmote(slot, equippedEmotes.EmoteInSlot(slot));
-            backpackEventBus.SendEquipEmote(slot, emote);
+            backpackEventBus.SendEquipEmote(slot, emote, command.IsManuallyEquipped);
         }
 
         private void HandleUnEquipWearableCommand(BackpackUnEquipWearableCommand command)
         {
-            if (!wearableCatalog.TryGetWearable(command.Id, out IWearable? wearable))
+            if (!wearableStorage.TryGetElement(command.Id, out IWearable? wearable))
             {
                 ReportHub.LogError(new ReportData(ReportCategory.WEARABLE), $"Cannot un-equip wearable, not found: {command.Id}");
                 return;
@@ -211,7 +212,7 @@ namespace DCL.Backpack.BackpackBus
 
         private void HandleSelectEmoteCommand(BackpackSelectEmoteCommand command)
         {
-            if (emoteCache.TryGetEmote(command.Id, out IEmote emote))
+            if (emoteStorage.TryGetElement(command.Id, out IEmote emote))
                 backpackEventBus.SendEmoteSelect(emote);
         }
 

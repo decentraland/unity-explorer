@@ -1,12 +1,12 @@
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.UI;
+using DCL.UI.ProfileElements;
 using DG.Tweening;
 using MVC;
 using System;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.Audio;
 using UnityEngine.UI;
 
 namespace DCL.ExplorePanel
@@ -31,7 +31,7 @@ namespace DCL.ExplorePanel
         public ProfileWidgetView ProfileWidget { get; private set; } = null!;
 
         [field: SerializeField]
-        public SystemMenuView SystemMenu { get; private set; } = null!;
+        public ProfileMenuView ProfileMenuView { get; private set; } = null!;
 
         [field: Header("Audio")]
         [field: SerializeField]
@@ -41,7 +41,7 @@ namespace DCL.ExplorePanel
         [field: SerializeField]
         public AudioClipConfig? CloseMenu { get; private set; }
 
-        protected override UniTask PlayShowAnimation(CancellationToken ct)
+        protected override UniTask PlayShowAnimationAsync(CancellationToken ct)
         {
             CanvasGroup.alpha = 0;
             UIAudioEventsBus.Instance.SendPlayContinuousAudioEvent(BackgroundMusic);
@@ -49,7 +49,7 @@ namespace DCL.ExplorePanel
             return CanvasGroup.DOFade(1, ANIMATION_SPEED).SetEase(Ease.Linear).ToUniTask(cancellationToken: ct);
         }
 
-        protected override UniTask PlayHideAnimation(CancellationToken ct)
+        protected override UniTask PlayHideAnimationAsync(CancellationToken ct)
         {
             UIAudioEventsBus.Instance.SendStopPlayingContinuousAudioEvent(BackgroundMusic);
             UIAudioEventsBus.Instance.SendPlayAudioEvent(CloseMenu);

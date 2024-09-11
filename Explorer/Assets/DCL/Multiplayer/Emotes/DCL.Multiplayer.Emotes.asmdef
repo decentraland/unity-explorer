@@ -1,0 +1,24 @@
+{
+    "name": "DCL.Multiplayer.Emotes",
+    "rootNamespace": "",
+    "references": [
+    "GUID:8322ea9340a544c59ddc56d4793eac74", 
+    "GUID:f51ebe6a0ceec4240a699833d6309b23",
+    "GUID:702f733b4deb246808c6ce84d93b5c9c",
+    "GUID:3640f3c0b42946b0b8794a1ed8e06ca5",
+    "GUID:f4a0f40a2545482b8929d4c3c642f50a",
+    "GUID:7175400a68914a45acecc9fb068de3b8",
+    "GUID:fa7b3fdbb04d67549916da7bd2af58ab",
+    "GUID:3c7b57a14671040bd8c549056adc04f5",
+    "GUID:78cc93eb55f63084db95d7a9b7cc3c57",
+    "GUID:9e314663ce958b746873cb22d57ede55"],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

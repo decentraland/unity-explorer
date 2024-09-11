@@ -28,7 +28,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
         public void SetUp()
         {
             ISceneData sceneData = Substitute.For<ISceneData>();
-            sceneData.Geometry.Returns(new ParcelMathHelper.SceneGeometry(Vector3.zero, new ParcelMathHelper.SceneCircumscribedPlanes()));
+            sceneData.Geometry.Returns(new ParcelMathHelper.SceneGeometry(Vector3.zero, new ParcelMathHelper.SceneCircumscribedPlanes(), 0.0f));
 
             sceneStateProvider = Substitute.For<ISceneStateProvider>();
             sceneStateProvider.TickNumber.Returns(123u);
@@ -109,8 +109,9 @@ namespace DCL.Interaction.PlayerOriginated.Tests
                 },
             };
 
-            sdkEvents.AppendPointerEventResultsIntent.ValidIndices.Add(1);
-            sdkEvents.AppendPointerEventResultsIntent.ValidIndices.Add(3);
+            sdkEvents.AppendPointerEventResultsIntent.InitializeWithAlloc();
+            sdkEvents.AppendPointerEventResultsIntent.AddValidIndex(1);
+            sdkEvents.AppendPointerEventResultsIntent.AddValidIndex(3);
 
             var sdkEntity = new CRDTEntity(100);
 

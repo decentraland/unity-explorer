@@ -1,7 +1,6 @@
 using CrdtEcsBridge.Components;
 using CrdtEcsBridge.Components.ResetExtensions;
 using CrdtEcsBridge.Components.Transform;
-using DCL.Diagnostics;
 using DCL.ECS7;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
@@ -10,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.Pool;
 using RaycastHit = DCL.ECSComponents.RaycastHit;
 
 namespace Global
@@ -29,6 +29,12 @@ namespace Global
 
             // SDK RaycastHit (used only as an element in the list)
             var raycastHitPool = new ComponentPool.WithDefaultCtor<RaycastHit>(defaultCapacity: 100, onGet: c => c.Reset());
+
+            var byteListPool = new ListObjectPool<byte>();
+
+            var inputEventsDictionaryPool = new ListObjectPool<(InputAction, PointerEventType)>(collectionCheck: PoolConstants.CHECK_COLLECTIONS,
+                listInstanceDefaultCapacity: Enum.GetValues(typeof(InputAction)).Length,
+                defaultCapacity: PoolConstants.SCENES_COUNT * PoolConstants.INTERACTABLE_ENTITIES_PER_SCENE_COUNT);
 
             // Add all SDK components here
             sdkComponentsRegistry
@@ -83,8 +89,24 @@ namespace Global
                .Add(SDKComponentBuilder<PBPointerEvents>.Create(ComponentID.POINTER_EVENTS)
                                                         .WithProtobufSerializer()
                                                         .WithPool(
-                                                             onGet: SDKComponentBuilderExtensions.SetAsDirty,
-                                                             onRelease: pbe => pbe.Reset())
+                                                             onGet: pbe =>
+                                                             {
+                                                                 SDKComponentBuilderExtensions.SetAsDirty(pbe);
+
+                                                                 pbe.AppendPointerEventResultsIntent.Initialize(
+                                                                     byteListPool.Get()!,
+                                                                     inputEventsDictionaryPool.Get()!
+                                                                 );
+                                                             },
+                                                             onRelease: pbe =>
+                                                             {
+                                                                 pbe.Reset();
+
+                                                                 pbe.AppendPointerEventResultsIntent.Release(
+                                                                     byteListPool,
+                                                                     inputEventsDictionaryPool
+                                                                 );
+                                                             })
                                                         .Build())
                .Add(SDKComponentBuilder<PBVideoEvent>.Create(ComponentID.VIDEO_EVENT).AsProtobufResult())
                .Add(SDKComponentBuilder<PBCameraMode>.Create(ComponentID.CAMERA_MODE).AsProtobufResult())
@@ -108,7 +130,8 @@ namespace Global
                .Add(SDKComponentBuilder<PBAvatarEquippedData>.Create(ComponentID.AVATAR_EQUIPPED_DATA).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBAvatarEmoteCommand>.Create(ComponentID.AVATAR_EMOTE_COMMAND).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBRealmInfo>.Create(ComponentID.REALM_INFO).AsProtobufResult())
-               .Add(SDKComponentBuilder<PBMapPin>.Create(ComponentID.MAP_PIN).AsProtobufComponent());
+               .Add(SDKComponentBuilder<PBMapPin>.Create(ComponentID.MAP_PIN).AsProtobufComponent())
+               .Add(SDKComponentBuilder<PBInputModifier>.Create(ComponentID.INPUT_MODIFIER).AsProtobufComponent());
 
             Transform rootContainer = new GameObject("ROOT_POOL_CONTAINER").transform;
 

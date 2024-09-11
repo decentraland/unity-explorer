@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Input;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -37,13 +38,14 @@ namespace DCL.Emoji
             EmojiPanelConfigurationSO emojiPanelConfiguration,
             TextAsset emojiMappingJson,
             EmojiSectionView emojiSectionPrefab,
-            EmojiButton emojiButtonPrefab)
+            EmojiButton emojiButtonPrefab,
+            IInputBlock inputBlock)
         {
             this.view = view;
             this.emojiPanelConfiguration = emojiPanelConfiguration;
             this.emojiSectionPrefab = emojiSectionPrefab;
             this.emojiButtonPrefab = emojiButtonPrefab;
-            emojiSearchController = new EmojiSearchController(view.SearchPanelView, view.EmojiSearchedContent, emojiButtonPrefab);
+            emojiSearchController = new EmojiSearchController(view.SearchPanelView, view.EmojiSearchedContent, emojiButtonPrefab, inputBlock);
             emojiSearchController.OnSearchTextChanged += OnSearchTextChanged;
             emojiSearchController.OnEmojiSelected += emoji => OnEmojiSelected?.Invoke(emoji);
             foreach (var emojiData in JsonConvert.DeserializeObject<Dictionary<string, string>>(emojiMappingJson.text))

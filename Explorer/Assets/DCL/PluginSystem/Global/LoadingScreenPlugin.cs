@@ -1,6 +1,8 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.Audio;
+using DCL.Input;
 using DCL.SceneLoadingScreens;
 using MVC;
 using System;
@@ -13,13 +15,19 @@ namespace DCL.PluginSystem.Global
     {
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IMVCManager mvcManager;
+        private readonly AudioMixerVolumesController audioMixerVolumesController;
+        private readonly IInputBlock inputBlock;
 
         public LoadingScreenPlugin(
             IAssetsProvisioner assetsProvisioner,
-            IMVCManager mvcManager)
+            IMVCManager mvcManager,
+            AudioMixerVolumesController audioMixerVolumesController,
+            IInputBlock inputBlock)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
+            this.audioMixerVolumesController = audioMixerVolumesController;
+            this.inputBlock = inputBlock;
         }
 
         public void Dispose() { }
@@ -41,7 +49,7 @@ namespace DCL.PluginSystem.Global
             await tipsProvider.InitializeAsync(ct);
 
             mvcManager.RegisterController(new SceneLoadingScreenController(authScreenFactory, tipsProvider,
-                TimeSpan.FromSeconds(settings.MinimumScreenDisplayDuration)));
+                TimeSpan.FromSeconds(settings.MinimumScreenDisplayDuration), audioMixerVolumesController, inputBlock));
         }
     }
 }

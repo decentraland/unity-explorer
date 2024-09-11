@@ -1,0 +1,25 @@
+{
+    "name": "UI.ProfileElements",
+    "rootNamespace": "",
+    "references": [
+        "GUID:f51ebe6a0ceec4240a699833d6309b23",
+        "GUID:e169fa6683c924c7e99a85981a91d953",
+        "GUID:766b242fb43af451aaa331f39872177d",
+        "GUID:e56a0d6a94c144c784012e63b6043100",
+        "GUID:6055be8ebefd69e48b49212b09b47b2f",
+        "GUID:45f6fff651a0a514f8edfdaf9cce45af",
+        "GUID:5ab29fa8ae5769b49ab29e390caca7a4",
+        "GUID:4a12c0b1b77ec6b418a8d7bd5c925be3",
+        "GUID:fa7b3fdbb04d67549916da7bd2af58ab",
+        "GUID:ca4e81cdd6a34d1aa54c32ad41fc5b3b"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

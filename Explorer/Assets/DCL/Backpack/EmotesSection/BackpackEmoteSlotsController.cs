@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Emotes;
+using DCL.AvatarRendering.Loading.Components;
 using DCL.Backpack.BackpackBus;
 using System;
 using System.Threading;
@@ -11,7 +12,7 @@ namespace DCL.Backpack.EmotesSection
     {
         private const int MIN_WAIT_TIME = 500;
 
-        private readonly BackpackEventBus backpackEventBus;
+        private readonly IBackpackEventBus backpackEventBus;
         private readonly IBackpackCommandBus backpackCommandBus;
         private readonly NftTypeIconSO rarityBackgrounds;
         private readonly (EmoteSlotContainerView, CancellationTokenSource)[] avatarSlots;
@@ -20,7 +21,7 @@ namespace DCL.Backpack.EmotesSection
 
         public BackpackEmoteSlotsController(
             EmoteSlotContainerView[] avatarSlotViews,
-            BackpackEventBus backpackEventBus,
+            IBackpackEventBus backpackEventBus,
             IBackpackCommandBus backpackCommandBus,
             NftTypeIconSO rarityBackgrounds)
         {
@@ -77,7 +78,7 @@ namespace DCL.Backpack.EmotesSection
             avatarSlotView.BackgroundRarity.enabled = false;
         }
 
-        private void EquipInSlot(int slot, IEmote emote)
+        private void EquipInSlot(int slot, IEmote emote, bool _)
         {
             EmoteSlotContainerView avatarSlotView = avatarSlots[slot].Item1;
             CancellationTokenSource cts = avatarSlots[slot].Item2;

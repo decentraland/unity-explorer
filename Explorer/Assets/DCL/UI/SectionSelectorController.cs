@@ -1,6 +1,4 @@
 using Cysharp.Threading.Tasks;
-using DCL.Character.CharacterMotion.Components;
-using DG.Tweening;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -22,7 +20,7 @@ namespace DCL.UI
         RectTransform GetRectTransform();
     }
 
-    public class SectionSelectorController<T> where T : unmanaged, Enum
+    public class SectionSelectorController<T> where T: unmanaged, Enum
     {
         private readonly Dictionary<T, ISection> sections;
         private T previousSection;
@@ -38,8 +36,8 @@ namespace DCL.UI
             if (selectorToggle.tabAnimator == null)
                 return;
 
-            if(isOn)
-                selectorToggle.tabAnimator.SetTrigger(AnimationHashes.ACTIVE);
+            if (isOn)
+                selectorToggle.tabAnimator.SetTrigger(UIAnimationHashes.ACTIVE);
             else
             {
                 selectorToggle.tabAnimator.Rebind();
@@ -47,17 +45,15 @@ namespace DCL.UI
             }
         }
 
-        public async UniTaskVoid OnTabSelectorToggleValueChangedAsync(bool isOn, TabSelectorView selectorToggle, T section, CancellationToken ct, bool animate = true)
+        public UniTaskVoid OnTabSelectorToggleValueChangedAsync(bool isOn, TabSelectorView selectorToggle, T section, CancellationToken ct, bool animate = true)
         {
             if (!isOn || EnumUtils.Equals(section, previousSection))
-                return;
+                return new UniTaskVoid();
 
             SetAnimationState(true, selectorToggle);
 
             if (animate)
-            {
                 AnimatePanelsAsync(sections[previousSection], sections[section], section, ct);
-            }
             else
             {
                 sections[previousSection].Deactivate();
@@ -67,14 +63,12 @@ namespace DCL.UI
                 SetPanelsPosition(sections[previousSection].GetRectTransform(), sections[section].GetRectTransform());
                 previousSection = section;
             }
+            return new UniTaskVoid();
         }
 
         public void ResetAnimators()
         {
-            foreach (var keyValuePair in sections)
-            {
-                keyValuePair.Value.ResetAnimator();
-            }
+            foreach (KeyValuePair<T, ISection> keyValuePair in sections) { keyValuePair.Value.ResetAnimator(); }
         }
 
         private void SetPanelsPosition(RectTransform panelClosing, RectTransform panelOpening)
@@ -87,8 +81,8 @@ namespace DCL.UI
         {
             panelOpening.Activate();
             panelOpening.ResetAnimator();
-            panelOpening.Animate(AnimationHashes.IN);
-            panelClosing.Animate(AnimationHashes.OUT);
+            panelOpening.Animate(UIAnimationHashes.IN);
+            panelClosing.Animate(UIAnimationHashes.OUT);
             panelClosing.Deactivate();
             previousSection = newSection;
         }

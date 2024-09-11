@@ -1,9 +1,7 @@
 using Arch.Core;
-using CrdtEcsBridge.Physics;
 using DCL.AvatarRendering.Emotes;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
-using DCL.ECSComponents;
 using DCL.Interaction.Utility;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Movement;
@@ -84,7 +82,7 @@ namespace DCL.Multiplayer.Profiles.Entities
             foreach (string wallet in tempRemoveAll) TryRemove(wallet, world);
         }
 
-        private void TryRemove(string walletId, World world)
+        public void TryRemove(string walletId, World world)
         {
             if (entityParticipantTable.Has(walletId) == false)
                 return;
@@ -105,31 +103,21 @@ namespace DCL.Multiplayer.Profiles.Entities
         {
             bool ContainsInRoom(IRoom room)
             {
-                foreach (string? sid in room.Participants.RemoteParticipantSids())
-                {
-                    if (sid != null
-                        && room.Participants.RemoteParticipant(sid) is { } participant
-                        && participant.Identity == wallet
-                       )
-                        return true;
-                }
-
-                return false;
+                return room.Participants.RemoteParticipant(wallet) != null;
             }
 
             return ContainsInRoom(roomHub.IslandRoom()) || ContainsInRoom(roomHub.SceneRoom());
         }
 
-        private void TryCreateOrUpdateRemoteEntity(in RemoteProfile profile, World world)
+        public Entity TryCreateOrUpdateRemoteEntity(in RemoteProfile profile, World world)
         {
             if (entityParticipantTable.Has(profile.WalletId))
-            {
-                UpdateCharacter(profile, world);
-                return;
-            }
+                return UpdateCharacter(profile, world);
 
             Entity entity = CreateCharacter(profile, world);
             entityParticipantTable.Register(profile.WalletId, entity);
+
+            return entity;
         }
 
         private Entity CreateCharacter(RemoteProfile profile, World world)
@@ -167,20 +155,21 @@ namespace DCL.Multiplayer.Profiles.Entities
             return entity;
         }
 
-        private void UpdateCharacter(in RemoteProfile remoteProfile, World world)
+        private Entity UpdateCharacter(in RemoteProfile remoteProfile, World world)
         {
             var entity = entityParticipantTable.Entity(remoteProfile.WalletId);
             var profile = remoteProfile.Profile;
 
             if (world.TryGet(entity, out Profile? existingProfile))
                 if (existingProfile!.Version == profile.Version)
-                    return;
+                    return entity;
 
             world.Set(entity, profile);
             // Force to update the avatar through the profile
             profile.IsDirty = true;
 
             ProfileUtils.CreateProfilePicturePromise(profile, world, PartitionComponent.TOP_PRIORITY);
+            return entity;
         }
     }
 }

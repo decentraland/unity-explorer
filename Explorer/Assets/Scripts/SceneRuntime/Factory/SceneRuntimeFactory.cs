@@ -20,6 +20,8 @@ namespace SceneRuntime.Factory
     public class SceneRuntimeFactory
     {
         private readonly IRealmData realmData;
+        private readonly V8EngineFactory engineFactory;
+        private readonly V8ActiveEngines activeEngines;
 
         public enum InstantiationBehavior
         {
@@ -33,18 +35,15 @@ namespace SceneRuntime.Factory
         private static readonly IReadOnlyCollection<string> JS_MODULE_NAMES = new JsModulesNameList().ToList();
         private readonly IJsSceneLocalSourceCode jsSceneLocalSourceCode = new IJsSceneLocalSourceCode.Default();
 
-        public SceneRuntimeFactory(IWebRequestController webRequestController, IRealmData realmData)
+        public SceneRuntimeFactory(IWebRequestController webRequestController, IRealmData realmData, V8EngineFactory engineFactory, V8ActiveEngines activeEngines, bool cacheJsSources = true)
         {
             this.realmData = realmData;
+            this.engineFactory = engineFactory;
+            this.activeEngines = activeEngines;
             jsSourcesCache = EnabledJsScenesFileCachingOrIgnore();
 
-            webJsSources = new CachedWebJsSources(
-                new WebJsSources(
-                    new JsCodeResolver(webRequestController)
-                ),
-                new MemoryJsSourcesCache()
-            );
-
+            var nonCachedWebJsSources = new WebJsSources(new JsCodeResolver(webRequestController));
+            webJsSources = cacheJsSources ? new CachedWebJsSources(nonCachedWebJsSources, new MemoryJsSourcesCache()) : nonCachedWebJsSources;
         }
 
         /// <summary>
@@ -95,7 +94,7 @@ namespace SceneRuntime.Factory
             // Provide basic Thread Pool synchronization context
             SynchronizationContext.SetSynchronizationContext(new SynchronizationContext());
             string wrappedSource = WrapInModuleCommonJs(jsSceneLocalSourceCode.CodeForScene(sceneShortInfo.BaseParcel) ?? sourceCode);
-            return new SceneRuntimeImpl(wrappedSource, pair, moduleDictionary, instancePoolsProvider, sceneShortInfo);
+            return new SceneRuntimeImpl(wrappedSource, pair, moduleDictionary, sceneShortInfo, engineFactory, activeEngines);
         }
 
         /// <summary>

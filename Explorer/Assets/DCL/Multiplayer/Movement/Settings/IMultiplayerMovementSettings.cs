@@ -8,14 +8,15 @@ namespace DCL.Multiplayer.Movement.Settings
 
         int InboxCount { get; set; }
 
-        // TEST NETWORK
-        bool SelfSending { get; set; }
-        float Latency { get; set; }
-        float LatencyJitter { get; set; }
+        float MoveSendRate{ get; }
+        float StandSendRate{ get; }
+
+        float[] VelocityTiers { get; }
 
         // TELEPORTATION
-        float MinPositionDelta { get; set; }
-        float MinTeleportDistance { get; set; }
+        float MinPositionDelta { get; }
+        float MinRotationDelta { get; }
+        float MinTeleportDistance { get; }
 
         // INTERPOLATION
         RemotePlayerInterpolationSettings InterpolationSettings { get; }

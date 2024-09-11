@@ -1,12 +1,14 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.Audio;
 using DCL.AuthenticationScreenFlow;
 using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.DebugUtilities;
 using DCL.FeatureFlags;
 using DCL.Profiles.Self;
+using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using ECS;
@@ -14,8 +16,6 @@ using MVC;
 using System;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.AddressableAssets;
-using UnityEngine.Audio;
 
 namespace DCL.PluginSystem.Global
 {
@@ -30,9 +30,11 @@ namespace DCL.PluginSystem.Global
         private readonly IRealmData realmData;
         private readonly IWeb3IdentityCache storedIdentityProvider;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
-        private readonly Animator splashScreenAnimator;
-        private readonly CharacterPreviewEventBus characterPreviewEventBus;
+        private readonly ISplashScreen splashScreen;
         private readonly FeatureFlagsCache featureFlagsCache;
+        private readonly CharacterPreviewEventBus characterPreviewEventBus;
+        private readonly Arch.Core.World world;
+        private readonly AudioMixerVolumesController audioMixerVolumesController;
 
         private CancellationTokenSource? cancellationTokenSource;
         private AuthenticationScreenController authenticationScreenController = null!;
@@ -47,9 +49,12 @@ namespace DCL.PluginSystem.Global
             IRealmData realmData,
             IWeb3IdentityCache storedIdentityProvider,
             ICharacterPreviewFactory characterPreviewFactory,
-            Animator splashScreenAnimator,
+            ISplashScreen splashScreen,
+            AudioMixerVolumesController audioMixerVolumesController,
+            FeatureFlagsCache featureFlagsCache,
             CharacterPreviewEventBus characterPreviewEventBus,
-            FeatureFlagsCache featureFlagsCache)
+            Arch.Core.World world
+        )
         {
             this.assetsProvisioner = assetsProvisioner;
             this.web3Authenticator = web3Authenticator;
@@ -60,9 +65,11 @@ namespace DCL.PluginSystem.Global
             this.realmData = realmData;
             this.storedIdentityProvider = storedIdentityProvider;
             this.characterPreviewFactory = characterPreviewFactory;
-            this.splashScreenAnimator = splashScreenAnimator;
-            this.characterPreviewEventBus = characterPreviewEventBus;
+            this.splashScreen = splashScreen;
             this.featureFlagsCache = featureFlagsCache;
+            this.audioMixerVolumesController = audioMixerVolumesController;
+            this.characterPreviewEventBus = characterPreviewEventBus;
+            this.world = world;
         }
 
         public void Dispose() { }
@@ -70,18 +77,16 @@ namespace DCL.PluginSystem.Global
         public async UniTask InitializeAsync(Web3AuthPluginSettings settings, CancellationToken ct)
         {
             AuthenticationScreenView authScreenPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.AuthScreenPrefab, ct: ct)).Value;
-            var generalAudioMixer = await assetsProvisioner.ProvideMainAssetAsync(settings.GeneralAudioMixer, ct);
 
             ControllerBase<AuthenticationScreenView, ControllerNoData>.ViewFactoryMethod authScreenFactory = AuthenticationScreenController.CreateLazily(authScreenPrefab, null);
 
-            authenticationScreenController = new AuthenticationScreenController(authScreenFactory, web3Authenticator, selfProfile, webBrowser, storedIdentityProvider, characterPreviewFactory, splashScreenAnimator, characterPreviewEventBus, featureFlagsCache, generalAudioMixer.Value);
+            authenticationScreenController = new AuthenticationScreenController(authScreenFactory, web3Authenticator, selfProfile, featureFlagsCache, webBrowser, storedIdentityProvider, characterPreviewFactory, splashScreen, characterPreviewEventBus, audioMixerVolumesController, world);
             mvcManager.RegisterController(authenticationScreenController);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
             LoginFromDebugPanelSystem.InjectToWorld(ref builder, debugContainerBuilder, web3Authenticator, mvcManager, realmData);
-            authenticationScreenController.SetWorld(builder.World);
         }
     }
 
@@ -91,9 +96,6 @@ namespace DCL.PluginSystem.Global
         [field: Space]
         [field: SerializeField]
         public AuthScreenObjectRef AuthScreenPrefab { get; private set; }
-
-        [field: SerializeField]
-        public AssetReferenceT<AudioMixer> GeneralAudioMixer { get; private set; }
 
         [Serializable]
         public class AuthScreenObjectRef : ComponentReference<AuthenticationScreenView>

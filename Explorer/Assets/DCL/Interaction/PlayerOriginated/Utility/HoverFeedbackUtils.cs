@@ -29,7 +29,7 @@ namespace DCL.Interaction.PlayerOriginated.Utility
 
                 if (!InteractionInputUtils.IsQualifiedByDistance(raycastResultForSceneEntities, info)) continue;
 
-                InteractionInputUtils.TryAppendHoverInput(ref pbPointerEvents.AppendPointerEventResultsIntent, type, pointerEvent, i);
+                pbPointerEvents.AppendPointerEventResultsIntent.TryAppendHoverInput(type, pointerEvent, i);
             }
         }
 
@@ -69,7 +69,7 @@ namespace DCL.Interaction.PlayerOriginated.Utility
             }
 
             // Add the tooltip
-            hoverFeedbackComponent.Tooltips.Add(new HoverFeedbackComponent.Tooltip(pointerEventEntry.EventInfo.HoverText, pointerEventEntry.EventInfo.Button));
+            hoverFeedbackComponent.Add(new HoverFeedbackComponent.Tooltip(pointerEventEntry.EventInfo.HoverText, pointerEventEntry.EventInfo.Button));
             return true;
         }
     }

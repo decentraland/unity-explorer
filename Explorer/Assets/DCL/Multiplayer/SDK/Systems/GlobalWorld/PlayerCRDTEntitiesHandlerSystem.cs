@@ -1,10 +1,12 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using Arch.SystemGroups.DefaultSystemGroups;
 using CRDT;
 using CrdtEcsBridge.Components;
 using DCL.Character.Components;
 using DCL.Diagnostics;
+using DCL.Multiplayer.Profiles.Systems;
 using DCL.Multiplayer.SDK.Components;
 using DCL.Profiles;
 using ECS.Abstract;
@@ -17,8 +19,8 @@ using Utility;
 namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
 {
     // Currently implemented to track reserved entities only on the CURRENT SCENE
-    [UpdateInGroup(typeof(SyncedPreRenderingSystemGroup))]
-    [UpdateBefore(typeof(CleanUpGroup))]
+    [UpdateInGroup(typeof(PresentationSystemGroup))]
+    [UpdateAfter(typeof(MultiplayerProfilesSystem))]
     [LogCategory(ReportCategory.PLAYER_SDK_DATA)]
     public partial class PlayerCRDTEntitiesHandlerSystem : BaseUnityLoopSystem
     {
@@ -41,6 +43,8 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
             RemoveComponentQuery(World);
 
             AddRemotePlayerCRDTEntityQuery(World);
+
+            AddOwnPlayerCRDTEntityQuery(World);
         }
 
         [Query]
@@ -48,7 +52,7 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
         [None(typeof(PlayerCRDTEntity), typeof(DeleteEntityIntention), typeof(PlayerComponent))]
         private void AddRemotePlayerCRDTEntity(in Entity entity, ref CharacterTransform characterTransform)
         {
-            if (!scenesCache.TryGetByParcel(ParcelMathHelper.FloorToParcel(characterTransform.Transform.position), out ISceneFacade sceneFacade))
+            if (!scenesCache.TryGetByParcel(characterTransform.Transform.ParcelPosition(), out ISceneFacade sceneFacade))
                 return;
 
             if (sceneFacade.IsEmpty || !sceneFacade.SceneStateProvider.IsCurrent)
@@ -70,11 +74,24 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
         }
 
         [Query]
-        [None(typeof(PlayerComponent))]
+        [All(typeof(Profile), typeof(PlayerComponent))]
+        [None(typeof(PlayerCRDTEntity), typeof(DeleteEntityIntention))]
+        private void AddOwnPlayerCRDTEntity(in Entity entity, ref CharacterTransform characterTransform)
+        {
+            if (!scenesCache.TryGetByParcel(characterTransform.Transform.ParcelPosition(), out ISceneFacade sceneFacade))
+                return;
+
+            if (sceneFacade.IsEmpty || !sceneFacade.SceneStateProvider.IsCurrent)
+                return;
+
+            World.Add(entity, new PlayerCRDTEntity(SpecialEntitiesID.PLAYER_ENTITY, sceneFacade, sceneFacade.PersistentEntities.Player, true));
+        }
+
+        [Query]
         private void RemoveComponentOnOutsideCurrentScene(in Entity entity, ref CharacterTransform characterTransform, ref PlayerCRDTEntity playerCRDTEntity)
         {
             // Only target entities outside the current scene
-            if (scenesCache.TryGetByParcel(ParcelMathHelper.FloorToParcel(characterTransform.Transform.position), out ISceneFacade sceneFacade)
+            if (scenesCache.TryGetByParcel(characterTransform.Transform.ParcelPosition(), out ISceneFacade sceneFacade)
                 && !sceneFacade.IsEmpty && sceneFacade.SceneStateProvider.IsCurrent) return;
 
             RemoveComponent(entity, ref playerCRDTEntity);
@@ -82,9 +99,9 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
-        private void RemoveComponentOnPlayerDisconnect(in Entity entity, ref CharacterTransform characterTransform, ref PlayerCRDTEntity playerCRDTEntity)
+        private void RemoveComponentOnPlayerDisconnect(Entity entity, ref CharacterTransform characterTransform, ref PlayerCRDTEntity playerCRDTEntity)
         {
-            if (!scenesCache.TryGetByParcel(ParcelMathHelper.FloorToParcel(characterTransform.Transform.position), out ISceneFacade sceneFacade)
+            if (!scenesCache.TryGetByParcel(characterTransform.Transform.ParcelPosition(), out ISceneFacade sceneFacade)
                 || sceneFacade.IsEmpty || !sceneFacade.SceneStateProvider.IsCurrent)
                 return;
 
@@ -93,15 +110,18 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
 
         [Query]
         [None(typeof(DeleteEntityIntention), typeof(Profile))]
-        private void RemoveComponent(in Entity entity, ref PlayerCRDTEntity playerCRDTEntity)
+        private void RemoveComponent(Entity entity, ref PlayerCRDTEntity playerCRDTEntity)
         {
-            SceneEcsExecutor sceneEcsExecutor = playerCRDTEntity.SceneFacade.EcsExecutor;
+            if (!playerCRDTEntity.SceneEntityIsPersistent)
+            {
+                SceneEcsExecutor sceneEcsExecutor = playerCRDTEntity.SceneFacade.EcsExecutor;
 
-            // Remove from whichever scene it was added. PlayerCRDTEntity is not removed here,
-            // as the scene-level Writer systems need it to know which CRDT Entity to affect
-            sceneEcsExecutor.World.Add<DeleteEntityIntention>(playerCRDTEntity.SceneWorldEntity);
+                // Remove from whichever scene it was added. PlayerCRDTEntity is not removed here,
+                // as the scene-level Writer systems need it to know which CRDT Entity to affect
+                sceneEcsExecutor.World.Add<DeleteEntityIntention>(playerCRDTEntity.SceneWorldEntity);
 
-            FreeReservedEntity(playerCRDTEntity.CRDTEntity.Id);
+                FreeReservedEntity(playerCRDTEntity.CRDTEntity.Id);
+            }
 
             World.Remove<PlayerCRDTEntity>(entity);
         }

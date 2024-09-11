@@ -119,13 +119,13 @@ namespace CrdtEcsBridge.RestrictedActions
             if (!sceneStateProvider.IsCurrent)
                 return false;
 
-            if (!NftUtils.TryParseUrn(urn, out string contractAddress, out string tokenId))
+            if (!NftUtils.TryParseUrn(urn, out string chain, out string contractAddress, out string tokenId))
             {
                 ReportHub.LogError(ReportCategory.RESTRICTED_ACTIONS, $"OpenNftDialog: Urn '{urn}' is not valid");
                 return false;
             }
 
-            OpenNftDialogAsync(contractAddress, tokenId).Forget();
+            OpenNftDialogAsync(chain, contractAddress, tokenId).Forget();
             return true;
         }
 
@@ -145,7 +145,7 @@ namespace CrdtEcsBridge.RestrictedActions
 
         private bool IsPositionValid(Vector3 floorPosition)
         {
-            var parcelToCheck = ParcelMathHelper.FloorToParcel(floorPosition);
+            var parcelToCheck = floorPosition.ToParcel();
 
             foreach (Vector2Int sceneParcel in sceneData.Parcels)
             {
@@ -168,10 +168,10 @@ namespace CrdtEcsBridge.RestrictedActions
             await mvcManager.ShowAsync(ChangeRealmPromptController.IssueCommand(new ChangeRealmPromptController.Params(message, realm)));
         }
 
-        private async UniTask OpenNftDialogAsync(string contractAddress, string tokenId)
+        private async UniTask OpenNftDialogAsync(string chain, string contractAddress, string tokenId)
         {
             await UniTask.SwitchToMainThread();
-            await mvcManager.ShowAsync(NftPromptController.IssueCommand(new NftPromptController.Params(contractAddress, tokenId)));
+            await mvcManager.ShowAsync(NftPromptController.IssueCommand(new NftPromptController.Params(chain, contractAddress, tokenId)));
         }
     }
 }

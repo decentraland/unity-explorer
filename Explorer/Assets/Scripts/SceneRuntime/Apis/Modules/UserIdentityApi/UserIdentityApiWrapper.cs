@@ -7,6 +7,7 @@ using SceneRunner.Scene.ExceptionsHandling;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using UnityEngine;
 using Utility;
 
 namespace SceneRuntime.Apis.Modules.UserIdentityApi
@@ -45,7 +46,12 @@ namespace SceneRuntime.Apis.Modules.UserIdentityApi
                 try
                 {
                     await UniTask.SwitchToMainThread();
-                    IWeb3Identity identity = identityCache.Identity!;
+
+                    IWeb3Identity? identity = identityCache.Identity;
+
+                    if (identity == null)
+                        return new GetUserDataResponse(null);
+
                     Profile? profile = await profileRepository.GetAsync(identity.Address, 0, ct);
 
                     if (profile == null)
@@ -68,7 +74,7 @@ namespace SceneRuntime.Apis.Modules.UserIdentityApi
                 }
             }
 
-            return GetOwnUserDataAsync(lifeCycleCts.Token).ToDisconnectedPromise();
+            return GetOwnUserDataAsync(lifeCycleCts.Token).ContinueWith(JsonUtility.ToJson).ToDisconnectedPromise();
         }
     }
 }

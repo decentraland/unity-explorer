@@ -9,6 +9,13 @@ namespace DCL.Profiles.Self
         UniTask<Profile?> ProfileAsync(CancellationToken ct);
 
         UniTask<Profile?> PublishAsync(CancellationToken ct);
+
+        /// <summary>
+        /// It only updates the basic info of the profile and ignore the rest of the data.
+        /// </summary>
+        /// <param name="ct">Cancellation token.</param>
+        /// <returns>The published profile.</returns>
+        UniTask<Profile?> ForcePublishWithoutModificationsAsync(CancellationToken ct);
     }
 
     public static class SelfProfileExtensions

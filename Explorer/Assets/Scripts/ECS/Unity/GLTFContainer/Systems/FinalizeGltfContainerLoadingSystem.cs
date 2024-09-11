@@ -44,8 +44,8 @@ namespace ECS.Unity.GLTFContainer.Systems
             ref TransformComponent sceneTransform = ref World!.Get<TransformComponent>(sceneRoot);
             ParcelMathHelper.SceneCircumscribedPlanes sceneCircumscribedPlanes = sceneData.Geometry.CircumscribedPlanes;
 
-            FinalizeLoadingQuery(World, in sceneCircumscribedPlanes);
-            FinalizeLoadingNoTransformQuery(World, ref sceneTransform, in sceneCircumscribedPlanes);
+            FinalizeLoadingQuery(World, in sceneCircumscribedPlanes, sceneData.Geometry.Height);
+            FinalizeLoadingNoTransformQuery(World, ref sceneTransform, in sceneCircumscribedPlanes, sceneData.Geometry.Height);
         }
 
         /// <summary>
@@ -55,14 +55,15 @@ namespace ECS.Unity.GLTFContainer.Systems
         [All(typeof(PBGltfContainer))]
         [None(typeof(TransformComponent))]
         private void FinalizeLoadingNoTransform([Data] ref TransformComponent sceneTransform, [Data] in ParcelMathHelper.SceneCircumscribedPlanes sceneCircumscribedPlanes,
-            in Entity entity, ref CRDTEntity sdkEntity, ref GltfContainerComponent component)
+            [Data] float sceneHeight, in Entity entity, ref CRDTEntity sdkEntity, ref GltfContainerComponent component)
         {
-            FinalizeLoading(in sceneCircumscribedPlanes, in entity, ref sdkEntity, ref component, ref sceneTransform);
+            FinalizeLoading(in sceneCircumscribedPlanes, sceneHeight, in entity, ref sdkEntity, ref component, ref sceneTransform);
         }
 
         [Query]
         [All(typeof(PBGltfContainer))]
-        private void FinalizeLoading([Data] in ParcelMathHelper.SceneCircumscribedPlanes sceneCircumscribedPlanes, in Entity entity, ref CRDTEntity sdkEntity, ref GltfContainerComponent component, ref TransformComponent transformComponent)
+        private void FinalizeLoading([Data] in ParcelMathHelper.SceneCircumscribedPlanes sceneCircumscribedPlanes, [Data] float sceneHeight,
+            in Entity entity, ref CRDTEntity sdkEntity, ref GltfContainerComponent component, ref TransformComponent transformComponent)
         {
             if (!capBudget.TrySpendBudget())
                 return;
@@ -78,7 +79,7 @@ namespace ECS.Unity.GLTFContainer.Systems
                 }
 
                 ConfigureGltfContainerColliders.SetupColliders(ref component, result.Asset!);
-                ConfigureSceneMaterial.EnableSceneBounds(in result.Asset!, in sceneCircumscribedPlanes);
+                ConfigureSceneMaterial.EnableSceneBounds(in result.Asset!, in sceneCircumscribedPlanes, sceneHeight);
 
                 entityCollidersSceneCache.Associate(in component, World!.Reference(entity), sdkEntity);
 

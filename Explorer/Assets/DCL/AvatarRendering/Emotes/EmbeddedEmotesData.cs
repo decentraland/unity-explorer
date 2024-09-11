@@ -1,4 +1,6 @@
-using DCL.AvatarRendering.Wearables;
+using DCL.AvatarRendering.Loading.Assets;
+using DCL.AvatarRendering.Loading.Components;
+using DCL.AvatarRendering.Loading.DTO;
 using DCL.AvatarRendering.Wearables.Helpers;
 using ECS.StreamableLoading.Common.Components;
 using System;
@@ -37,8 +39,8 @@ namespace DCL.AvatarRendering.Emotes
 
             foreach (EmbeddedEmote embeddedEmote in emotes)
             {
-                var emote = new Emote();
                 var model = new EmoteDTO();
+                var emote = new Emote(new StreamableLoadingResult<EmoteDTO>(), false);
                 model.id = embeddedEmote.id;
 
                 // No content hashes available
@@ -63,12 +65,11 @@ namespace DCL.AvatarRendering.Emotes
                 model.metadata.emoteDataADR74 = embeddedEmote.entity;
 
                 emote.Model = new StreamableLoadingResult<EmoteDTO>(model);
-                emote.IsLoading = false;
                 emote.ThumbnailAssetResult = new StreamableLoadingResult<Sprite>(embeddedEmote.thumbnail);
 
-                WearableRegularAsset asset = CreateWearableAsset(embeddedEmote.prefab);
+                AttachmentRegularAsset asset = CreateWearableAsset(embeddedEmote.prefab);
                 asset.AddReference();
-                var assetLoadResult = new StreamableLoadingResult<WearableRegularAsset>(asset);
+                var assetLoadResult = new StreamableLoadingResult<AttachmentRegularAsset>(asset);
                 emote.AssetResults[BodyShape.MALE] = assetLoadResult;
                 emote.AssetResults[BodyShape.FEMALE] = assetLoadResult;
 
@@ -86,14 +87,14 @@ namespace DCL.AvatarRendering.Emotes
             return generatedEmotes;
         }
 
-        private static WearableRegularAsset CreateWearableAsset(GameObject glb)
+        private static AttachmentRegularAsset CreateWearableAsset(GameObject glb)
         {
-            var rendererInfos = new List<WearableRegularAsset.RendererInfo>();
+            var rendererInfos = new List<AttachmentRegularAsset.RendererInfo>();
 
             foreach (SkinnedMeshRenderer? renderer in glb.GetComponentsInChildren<SkinnedMeshRenderer>())
-                rendererInfos.Add(new WearableRegularAsset.RendererInfo(renderer, renderer.sharedMaterial));
+                rendererInfos.Add(new AttachmentRegularAsset.RendererInfo(renderer, renderer.sharedMaterial));
 
-            return new WearableRegularAsset(glb, rendererInfos, null);
+            return new AttachmentRegularAsset(glb, rendererInfos, null);
         }
 
 #if UNITY_EDITOR
