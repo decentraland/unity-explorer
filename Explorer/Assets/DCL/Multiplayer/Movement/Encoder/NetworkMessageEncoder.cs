@@ -59,14 +59,14 @@ namespace DCL.Multiplayer.Movement
                 position.z - (parcel.y * ParcelMathHelper.PARCEL_SIZE) // Y is Z in this case
             );
 
-            int xzBits = settings.XZ_BITS;
-            int yBits = settings.Y_BITS;
+            int xzBits = settings.XZ__BITS;
+            int yBits = settings.Y__BITS;
             int compressedX = FloatQuantizer.Compress(relativePosition.x, 0, ParcelMathHelper.PARCEL_SIZE, xzBits);
             int compressedZ = FloatQuantizer.Compress(relativePosition.y, 0, ParcelMathHelper.PARCEL_SIZE, xzBits);
-            int compressedY = FloatQuantizer.Compress(position.y, 0, settings.Y_MAX, yBits);
+            int compressedY = FloatQuantizer.Compress(position.y, 0, settings.Y__MAX, yBits);
 
-            int maxVelocity = settings.MAX_VELOCITY;
-            int velocityBits = settings.VELOCITY_BITS;
+            int maxVelocity = settings.MAX__VELOCITY;
+            int velocityBits = settings.VELOCITY__BITS;
             int compressedVelocityX = FloatQuantizer.Compress(velocity.x, -maxVelocity, maxVelocity, velocityBits);
             int compressedVelocityY = FloatQuantizer.Compress(velocity.y, -maxVelocity, maxVelocity, velocityBits);
             int compressedVelocityZ = FloatQuantizer.Compress(velocity.z, -maxVelocity, maxVelocity, velocityBits);
@@ -126,15 +126,15 @@ namespace DCL.Multiplayer.Movement
             const int PARCEL_BITS = MessageEncodingSettings.PARCEL_BITS;
             const int PARCEL_MASK = (1 << PARCEL_BITS) - 1;
 
-            int xzBits = settings.XZ_BITS;
+            int xzBits = settings.XZ__BITS;
             int xzMask = (1 << xzBits) - 1;
 
-            int yBits = settings.Y_BITS;
-            int yMax = settings.Y_MAX;
+            int yBits = settings.Y__BITS;
+            int yMax = settings.Y__MAX;
             int yMask = (1 << yBits) - 1;
 
-            int maxVelocity = settings.MAX_VELOCITY;
-            int velocityBits = settings.VELOCITY_BITS;
+            int maxVelocity = settings.MAX__VELOCITY;
+            int velocityBits = settings.VELOCITY__BITS;
             int velocityMask = (1 << velocityBits) - 1;
 
             Vector2Int parcel = parcelEncoder.Decode((int)(movementData & PARCEL_MASK));
