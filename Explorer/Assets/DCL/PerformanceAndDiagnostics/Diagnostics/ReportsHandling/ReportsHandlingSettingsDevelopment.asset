@@ -294,6 +294,10 @@ MonoBehaviour:
       Severity: 4
     - Category: UNSPECIFIED
       Severity: 3
+    - Category: ASSET_BUNDLES
+      Severity: 0
+    - Category: ASSET_BUNDLES
+      Severity: 4
   sentryMatrix:
     entries: []
   debounceEnabled: 1
