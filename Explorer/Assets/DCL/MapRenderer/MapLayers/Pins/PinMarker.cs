@@ -23,17 +23,18 @@ namespace DCL.MapRenderer.MapLayers.Pins
         private CancellationTokenSource selectionCancellationTokenSource;
 
         public Vector3 CurrentPosition => poolableBehavior.currentPosition;
-        public Sprite CurrentSprite => poolableBehavior.instance?.mapPinIcon.sprite;
+        public Sprite? CurrentSprite => poolableBehavior.instance?.mapPinIcon.sprite;
 
         public bool IsVisible => poolableBehavior.isVisible;
         public bool IsDestination { get; private set; }
         public string Title { get; private set; }
-        public Texture2D Icon { get; private set; }
+
         public string Description { get; private set; }
         public Vector2Int ParcelPosition { get; private set; }
 
         public Vector2 Pivot => new (0.5f, 0.5f);
         private float currentBaseScale { get; set; }
+        private Texture2D? icon { get; set; }
 
         public PinMarker(IObjectPool<PinMarkerObject> objectsPool, IMapCullingController cullingController)
         {
@@ -115,16 +116,16 @@ namespace DCL.MapRenderer.MapLayers.Pins
             IsDestination = false;
         }
 
-        public void SetTexture(Texture2D texture)
+        public void SetTexture(Texture2D? texture)
         {
-            Icon = texture;
+            icon = texture;
             poolableBehavior.instance?.SetTexture(texture);
         }
 
         public void OnBecameVisible()
         {
             poolableBehavior.OnBecameVisible();
-            if (Icon != null) { poolableBehavior.instance?.SetTexture(Icon); }
+            poolableBehavior.instance?.SetTexture(icon);
             poolableBehavior.instance?.SetAsDestination(IsDestination);
             poolableBehavior.instance?.SetScale(currentNewScale);
             ResetPulseAnimation();

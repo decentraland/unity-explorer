@@ -16,7 +16,7 @@ namespace DCL.MapRenderer.MapLayers.Pins
         public string Description { get; }
 
         public Vector2Int ParcelPosition { get; }
-        public Sprite CurrentSprite { get; }
+        public Sprite? CurrentSprite { get; }
 
         void SetPosition(Vector2 position, Vector2Int parcelPosition);
 
@@ -32,7 +32,7 @@ namespace DCL.MapRenderer.MapLayers.Pins
 
         void SetIconOutline(bool isActive);
 
-        void SetTexture(Texture2D texture);
+        void SetTexture(Texture2D? texture);
 
         void OnBecameVisible();
 

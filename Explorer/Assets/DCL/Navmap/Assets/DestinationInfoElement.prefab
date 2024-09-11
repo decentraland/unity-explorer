@@ -107,10 +107,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   <QuitButton>k__BackingField: {fileID: 4125819755117044877}
-  <pinImage>k__BackingField: {fileID: 7293302873017058572}
-  <pinIcon>k__BackingField: {fileID: 1892149973350214017}
-  <placeIcon>k__BackingField: {fileID: 6166036654044292692}
-  <title>k__BackingField: {fileID: 348836738526587184}
+  <PinImage>k__BackingField: {fileID: 7293302873017058572}
+  <PinIcon>k__BackingField: {fileID: 1892149973350214017}
+  <PlaceIcon>k__BackingField: {fileID: 6166036654044292692}
+  <Title>k__BackingField: {fileID: 348836738526587184}
 --- !u!1 &1892149973350214017
 GameObject:
   m_ObjectHideFlags: 0
@@ -1000,7 +1000,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 0}
+  m_Sprite: {fileID: 21300000, guid: a98b57eed8453f04c8b749ee44056726, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
