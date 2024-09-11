@@ -48,6 +48,52 @@ namespace DCL.Multiplayer.Movement
             return temporalData;
         }
 
+        public NetworkMovementMessage Decompress(CompressedNetworkMovementMessage compressedMessage)
+        {
+            int compressedTemporalData = compressedMessage.temporalData;
+            int tier = (compressedMessage.temporalData >> encodingSettings.TIER_START_BIT) & MessageEncodingSettings.TWO_BITS_MASK;
+
+            (Vector3 position, Vector3 velocity) movementData = DecompressMovementData(compressedMessage.movementData, encodingSettings.GetConfigForTier(tier));
+
+            int rotationMask = (1 << encodingSettings.ROTATION_Y_BITS) - 1;
+            int compressedRotation = (compressedTemporalData >> encodingSettings.ROTATION_START_BIT) & rotationMask;
+            float timestamp = timestampEncoder.Decompress(compressedTemporalData);
+
+            var movementKind = (MovementKind)((compressedTemporalData >> encodingSettings.MOVEMENT_KIND_START_BIT) & MessageEncodingSettings.TWO_BITS_MASK);
+
+            var correctedVelocity = movementData.velocity;
+
+            return new NetworkMovementMessage
+            {
+                velocityTier = (byte)tier,
+
+                // Decompressed movement data
+                position = movementData.position,
+                velocity = correctedVelocity,
+                velocitySqrMagnitude = correctedVelocity.sqrMagnitude,
+                rotationY = FloatQuantizer.Decompress(compressedRotation, 0f, 360f, encodingSettings.ROTATION_Y_BITS),
+
+                // Decompress temporal data
+                timestamp = timestamp,
+                movementKind = movementKind,
+
+                animState = new AnimationStates
+                {
+                    MovementBlendValue = 0f,
+                    SlideBlendValue = 0f,
+
+                    IsGrounded = (compressedTemporalData & (1 << encodingSettings.GROUNDED_BIT)) != 0,
+                    IsJumping = (compressedTemporalData & (1 << encodingSettings.JUMPING_BIT)) != 0,
+                    IsLongJump = (compressedTemporalData & (1 << encodingSettings.LONG_JUMP_BIT)) != 0,
+                    IsFalling = (compressedTemporalData & (1 << encodingSettings.FALLING_BIT)) != 0,
+                    IsLongFall = (compressedTemporalData & (1 << encodingSettings.LONG_FALL_BIT)) != 0,
+                },
+
+                isStunned = (compressedTemporalData & (1 << encodingSettings.STUNNED_BIT)) != 0,
+                isSliding = (compressedTemporalData & (1 << encodingSettings.SLIDING_BIT)) != 0,
+            };
+        }
+
         private long CompressMovementData(Vector3 position, Vector3 velocity, MovementEncodingConfig settings)
         {
             Vector2Int parcel = position.ToParcel();
@@ -72,9 +118,9 @@ namespace DCL.Multiplayer.Movement
             const float SAFE_ZONE = 0.05f;
             if (velocity.sqrMagnitude < SAFE_ZONE) velocity = Vector3.zero;
 
-            int compressedVelocityX = FloatQuantizer.Compress(velocity.x, -maxVelocity, maxVelocity, velocityBits);
-            int compressedVelocityY = FloatQuantizer.Compress(velocity.y, -maxVelocity, maxVelocity, velocityBits);
-            int compressedVelocityZ = FloatQuantizer.Compress(velocity.z, -maxVelocity, maxVelocity, velocityBits);
+            int compressedVelocityX = CompressedVelocity(velocity.x, maxVelocity, velocityBits);
+            int compressedVelocityY = CompressedVelocity(velocity.y, maxVelocity, velocityBits);
+            int compressedVelocityZ = CompressedVelocity(velocity.z, maxVelocity, velocityBits);
 
             return (uint)parcelIndex
                    | ((long)compressedX << MessageEncodingSettings.PARCEL_BITS)
@@ -83,48 +129,6 @@ namespace DCL.Multiplayer.Movement
                    | ((long)compressedVelocityX << (MessageEncodingSettings.PARCEL_BITS + xzBits + xzBits + yBits))
                    | ((long)compressedVelocityY << (MessageEncodingSettings.PARCEL_BITS + xzBits + xzBits + yBits + velocityBits))
                    | ((long)compressedVelocityZ << (MessageEncodingSettings.PARCEL_BITS + xzBits + xzBits + yBits + velocityBits + velocityBits));
-        }
-
-        public NetworkMovementMessage Decompress(CompressedNetworkMovementMessage compressedMessage)
-        {
-            int compressedTemporalData = compressedMessage.temporalData;
-            int tier = (compressedMessage.temporalData >> encodingSettings.TIER_START_BIT) & MessageEncodingSettings.TWO_BITS_MASK;
-
-            (Vector3 position, Vector3 velocity) movementData = DecompressMovementData(compressedMessage.movementData, encodingSettings.GetConfigForTier(tier));
-
-            int rotationMask = (1 << encodingSettings.ROTATION_Y_BITS) - 1;
-            int compressedRotation = (compressedTemporalData >> encodingSettings.ROTATION_START_BIT) & rotationMask;
-            float timestamp = timestampEncoder.Decompress(compressedTemporalData);
-
-            return new NetworkMovementMessage
-            {
-                velocityTier = (byte)tier,
-
-                // Decompressed movement data
-                position = movementData.position,
-                velocity = movementData.velocity,
-                velocitySqrMagnitude = movementData.velocity.sqrMagnitude,
-                rotationY = FloatQuantizer.Decompress(compressedRotation, 0f, 360f, encodingSettings.ROTATION_Y_BITS),
-
-                // Decompress temporal data
-                timestamp = timestamp,
-                movementKind = (MovementKind)((compressedTemporalData >> encodingSettings.MOVEMENT_KIND_START_BIT) & MessageEncodingSettings.TWO_BITS_MASK),
-
-                animState = new AnimationStates
-                {
-                    MovementBlendValue = 0f,
-                    SlideBlendValue = 0f,
-
-                    IsGrounded = (compressedTemporalData & (1 << encodingSettings.GROUNDED_BIT)) != 0,
-                    IsJumping = (compressedTemporalData & (1 << encodingSettings.JUMPING_BIT)) != 0,
-                    IsLongJump = (compressedTemporalData & (1 << encodingSettings.LONG_JUMP_BIT)) != 0,
-                    IsFalling = (compressedTemporalData & (1 << encodingSettings.FALLING_BIT)) != 0,
-                    IsLongFall = (compressedTemporalData & (1 << encodingSettings.LONG_FALL_BIT)) != 0,
-                },
-
-                isStunned = (compressedTemporalData & (1 << encodingSettings.STUNNED_BIT)) != 0,
-                isSliding = (compressedTemporalData & (1 << encodingSettings.SLIDING_BIT)) != 0,
-            };
         }
 
         private (Vector3 position, Vector3 velocity) DecompressMovementData(long movementData, MovementEncodingConfig settings)
@@ -163,11 +167,35 @@ namespace DCL.Multiplayer.Movement
             var extractedVelocityY = (int)((movementData >> (PARCEL_BITS + xzBits + xzBits + yBits + velocityBits)) & velocityMask);
             var extractedVelocityZ = (int)((movementData >> (PARCEL_BITS + xzBits + xzBits + yBits + velocityBits + velocityBits)) & velocityMask);
 
-            float decompressedVelocityX = FloatQuantizer.Decompress(extractedVelocityX, -maxVelocity, maxVelocity, velocityBits);
-            float decompressedVelocityY = FloatQuantizer.Decompress(extractedVelocityY, -maxVelocity, maxVelocity, velocityBits);
-            float decompressedVelocityZ = FloatQuantizer.Decompress(extractedVelocityZ, -maxVelocity, maxVelocity, velocityBits);
+            float decompressedVelocityX = DecompressedVelocity(extractedVelocityX, maxVelocity, velocityBits);
+            float decompressedVelocityY = DecompressedVelocity(extractedVelocityY, maxVelocity, velocityBits);
+            float decompressedVelocityZ = DecompressedVelocity(extractedVelocityZ, maxVelocity, velocityBits);
 
             return (worldPosition, velocity: new Vector3(decompressedVelocityX, decompressedVelocityY, decompressedVelocityZ));
         }
+
+        private static int CompressedVelocity(float velocity, int range, int sizeInBits)
+        {
+            int withoutSignBits = sizeInBits - 1;
+            int compressed = FloatQuantizer.Compress(velocity, -range, range, withoutSignBits);
+            compressed <<= 1;
+            compressed |= NegativeSignFlag(velocity);
+            return compressed;
+        }
+
+        private static float DecompressedVelocity(int compressed, int range, int sizeInBits)
+        {
+            bool negativeSign = (compressed & 1) == 1;
+            int withoutSign = compressed >> 1;
+            int withoutSignBits = sizeInBits - 1;
+            float decompressed = FloatQuantizer.Decompress(withoutSign, -range, range, withoutSignBits);
+            if (negativeSign) decompressed *= -1;
+            return decompressed;
+        }
+
+        private static byte NegativeSignFlag(float value) =>
+            value < 0
+                ? (byte)1
+                : (byte)0;
     }
 }
