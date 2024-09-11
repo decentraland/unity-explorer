@@ -177,7 +177,7 @@ namespace DCL.Multiplayer.Movement
         private static int CompressedVelocity(float velocity, int range, int sizeInBits)
         {
             int withoutSignBits = sizeInBits - 1;
-            int compressed = FloatQuantizer.Compress(velocity, -range, range, withoutSignBits);
+            int compressed = FloatQuantizer.Compress(velocity, 0, range, withoutSignBits);
             compressed <<= 1;
             compressed |= NegativeSignFlag(velocity);
             return compressed;
@@ -188,7 +188,7 @@ namespace DCL.Multiplayer.Movement
             bool negativeSign = (compressed & 1) == 1;
             int withoutSign = compressed >> 1;
             int withoutSignBits = sizeInBits - 1;
-            float decompressed = FloatQuantizer.Decompress(withoutSign, -range, range, withoutSignBits);
+            float decompressed = FloatQuantizer.Decompress(withoutSign, 0, range, withoutSignBits);
             if (negativeSign) decompressed *= -1;
             return decompressed;
         }
