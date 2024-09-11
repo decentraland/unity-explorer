@@ -59,11 +59,11 @@ namespace DCL.PluginSystem.Global
         private readonly IEquippedEmotes equippedEmotes;
         private readonly IWeb3Authenticator web3Authenticator;
         private readonly IWeb3IdentityCache web3IdentityCache;
-        private readonly IWearableCache wearableCache;
+        private readonly IWearableStorage wearableStorage;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
         private readonly IWebBrowser webBrowser;
         private readonly IRealmNavigator realmNavigator;
-        private readonly IEmoteCache emoteCache;
+        private readonly IEmoteStorage emoteStorage;
         private readonly DCLInput dclInput;
         private readonly IWebRequestController webRequestController;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
@@ -95,7 +95,7 @@ namespace DCL.PluginSystem.Global
             IPlacesAPIService placesAPIService,
             IWebRequestController webRequestController,
             IWeb3IdentityCache web3IdentityCache,
-            IWearableCache wearableCache,
+            IWearableStorage wearableStorage,
             ICharacterPreviewFactory characterPreviewFactory,
             IProfileRepository profileRepository,
             IWeb3Authenticator web3Authenticator,
@@ -104,7 +104,7 @@ namespace DCL.PluginSystem.Global
             IEquippedWearables equippedWearables,
             IEquippedEmotes equippedEmotes,
             IWebBrowser webBrowser,
-            IEmoteCache emoteCache,
+            IEmoteStorage emoteStorage,
             IRealmNavigator realmNavigator,
             ICollection<string> forceRender,
             DCLInput dclInput,
@@ -130,7 +130,7 @@ namespace DCL.PluginSystem.Global
             this.placesAPIService = placesAPIService;
             this.webRequestController = webRequestController;
             this.web3IdentityCache = web3IdentityCache;
-            this.wearableCache = wearableCache;
+            this.wearableStorage = wearableStorage;
             this.characterPreviewFactory = characterPreviewFactory;
             this.profileRepository = profileRepository;
             this.web3Authenticator = web3Authenticator;
@@ -145,7 +145,7 @@ namespace DCL.PluginSystem.Global
             this.profileCache = profileCache;
             this.assetBundleURL = assetBundleURL;
             this.notificationsBusController = notificationsBusController;
-            this.emoteCache = emoteCache;
+            this.emoteStorage = emoteStorage;
             this.dclInput = dclInput;
             this.characterPreviewEventBus = characterPreviewEventBus;
             this.mapPathEventBus = mapPathEventBus;
@@ -176,11 +176,11 @@ namespace DCL.PluginSystem.Global
                 assetsProvisioner,
                 web3IdentityCache,
                 characterPreviewFactory,
-                wearableCache,
+                wearableStorage,
                 selfProfile,
                 equippedWearables,
                 equippedEmotes,
-                emoteCache,
+                emoteStorage,
                 settings.EmbeddedEmotesAsURN(),
                 forceRender,
                 realmData,
