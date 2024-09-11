@@ -13,6 +13,8 @@ namespace DCL.SDKComponents.TextShape
         private static readonly int ID_OUTLINE_WIDTH = Shader.PropertyToID("_OutlineWidth");
         private static readonly int ID_UNDERLAY_COLOR = Shader.PropertyToID("_UnderlayColor");
         private static readonly int ID_UNDERLAY_SOFTNESS = Shader.PropertyToID("_UnderlaySoftness");
+        private static readonly int ID_UNDERLAY_OFFSET_Y = Shader.PropertyToID("_UnderlayOffsetY");
+        private static readonly int ID_UNDERLAY_OFFSET_X = Shader.PropertyToID("_UnderlayOffsetX");
         private const string OUTLINE_ON_KEYWORD = "OUTLINE_ON";
         private const string UNDERLAY_ON_KEYWORD = "UNDERLAY_ON";
 
@@ -70,6 +72,8 @@ namespace DCL.SDKComponents.TextShape
                 tmpText.fontMaterial.EnableKeyword(UNDERLAY_ON_KEYWORD);
                 materialPropertyBlock.SetColor(ID_UNDERLAY_COLOR, textShape.ShadowColor?.ToUnityColor() ?? Color.white);
                 materialPropertyBlock.SetFloat(ID_UNDERLAY_SOFTNESS, textShape.ShadowBlur);
+                materialPropertyBlock.SetFloat(ID_UNDERLAY_OFFSET_X, textShape.ShadowOffsetX);
+                materialPropertyBlock.SetFloat(ID_UNDERLAY_OFFSET_Y, textShape.ShadowOffsetY);
             }
             else if (tmpText.fontMaterial.IsKeywordEnabled(UNDERLAY_ON_KEYWORD))
                 tmpText.fontMaterial.DisableKeyword(UNDERLAY_ON_KEYWORD);
