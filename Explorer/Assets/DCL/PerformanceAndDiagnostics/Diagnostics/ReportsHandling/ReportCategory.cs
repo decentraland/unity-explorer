@@ -180,6 +180,7 @@ namespace DCL.Diagnostics
         /// </summary>
         public const string WEARABLE = nameof(WEARABLE);
         public const string EMOTE = nameof(EMOTE);
+        public const string THUMBNAILS = nameof(THUMBNAILS);
 
         public const string AUTHENTICATION = nameof(AUTHENTICATION);
 
@@ -206,9 +207,9 @@ namespace DCL.Diagnostics
         public const string CHARACTER_TRIGGER_AREA = nameof(CHARACTER_TRIGGER_AREA);
 
         /// <summary>
-        ///     CameraModeArea SDK component
+        ///     SDK Camera related systems
         /// </summary>
-        public const string CAMERA_MODE_AREA = nameof(CAMERA_MODE_AREA);
+        public const string SDK_CAMERA = nameof(SDK_CAMERA);
 
         /// <summary>
         ///     Player-related data propagated to SDK
@@ -229,11 +230,6 @@ namespace DCL.Diagnostics
         ///     Local scene development connection with locally running scene (AKA "Preview Mode")
         /// </summary>
         public const string SDK_LOCAL_SCENE_DEVELOPMENT = nameof(SDK_LOCAL_SCENE_DEVELOPMENT);
-
-        /// <summary>
-        ///     CameraDirector and VirtualCamera SDK components
-        /// </summary>
-        public const string SDK_MAIN_CAMERA = nameof(SDK_MAIN_CAMERA);
 
         /// <summary>
         ///     Roads related systems
@@ -262,6 +258,8 @@ namespace DCL.Diagnostics
         public const string SETTINGS_MENU = nameof(SETTINGS_MENU);
 
         public const string BACKPACK = nameof(BACKPACK);
+
+        public const string BADGES = nameof(BADGES);
 
         /// <summary>
         ///     Whatever is coming from external pure C# plugins

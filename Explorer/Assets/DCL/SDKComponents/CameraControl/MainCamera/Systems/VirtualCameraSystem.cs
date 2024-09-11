@@ -19,7 +19,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
 {
     [UpdateInGroup(typeof(SyncedInitializationFixedUpdateThrottledGroup))]
     [UpdateBefore(typeof(MainCameraSystem))]
-    [LogCategory(ReportCategory.SDK_MAIN_CAMERA)]
+    [LogCategory(ReportCategory.SDK_CAMERA)]
     public partial class VirtualCameraSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
         private readonly IComponentPool<CinemachineFreeLook> poolRegistry;
@@ -52,7 +52,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
             virtualCameraInstance.transform.SetParent(transform.Transform);
             virtualCameraInstance.transform.localPosition = Vector3.zero;
             virtualCameraInstance.transform.localRotation = Quaternion.identity;
-            World.Add(entity, new VirtualCameraComponent(virtualCameraInstance, VirtualCameraUtils.GetPBVirtualCameraLookAtCRDTEntity(pbVirtualCamera, crdtEntity.Id)));
+            World.Add(entity, new VirtualCameraComponent(virtualCameraInstance, VirtualCameraUtils.GetPBVirtualCameraLookAtCRDTEntity(pbVirtualCamera, crdtEntity)));
         }
 
         [Query]

@@ -1,4 +1,5 @@
-﻿using DCL.AvatarRendering.Wearables.Helpers;
+﻿using DCL.AvatarRendering.Loading.Assets;
+using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.LOD;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
@@ -21,8 +22,8 @@ namespace DCL.ResourcesUnloading.Tests
 
         // Mocks
         private IReleasablePerformanceBudget releasablePerformanceBudget;
-        private IWearableCache wearableCache;
-        private IWearableAssetsCache wearableAssetsCache;
+        private IWearableStorage wearableStorage;
+        private IAttachmentsAssetsCache attachmentsAssetsCache;
         private IStreamableCache<Texture2D, GetTextureIntention> texturesCache;
         private IStreamableCache<AudioClip, GetAudioClipIntention> audioClipsCache;
         private IGltfContainerAssetsCache gltfContainerAssetsCache;
@@ -41,8 +42,8 @@ namespace DCL.ResourcesUnloading.Tests
 
             materialPool = Substitute.For<IExtendedObjectPool<Material>>();
 
-            wearableCache = Substitute.For<IWearableCache>();
-            wearableAssetsCache = Substitute.For<IWearableAssetsCache>();
+            wearableStorage = Substitute.For<IWearableStorage>();
+            attachmentsAssetsCache = Substitute.For<IAttachmentsAssetsCache>();
 
             texturesCache = Substitute.For<IStreamableCache<Texture2D, GetTextureIntention>>();
             audioClipsCache = Substitute.For<IStreamableCache<AudioClip, GetAudioClipIntention>>();
@@ -55,12 +56,12 @@ namespace DCL.ResourcesUnloading.Tests
 
             cacheCleaner = new CacheCleaner(releasablePerformanceBudget);
 
-            cacheCleaner.Register(wearableCache);
+            cacheCleaner.Register(wearableStorage);
             cacheCleaner.Register(texturesCache);
             cacheCleaner.Register(audioClipsCache);
             cacheCleaner.Register(gltfContainerAssetsCache);
             cacheCleaner.Register(assetBundleCache);
-            cacheCleaner.Register(wearableAssetsCache);
+            cacheCleaner.Register(attachmentsAssetsCache);
             cacheCleaner.Register(materialPool);
             cacheCleaner.Register(profileCache);
             cacheCleaner.Register(lodAssetsPool);
@@ -80,8 +81,8 @@ namespace DCL.ResourcesUnloading.Tests
             // Assert
             texturesCache.Received(callsAmount).Unload(releasablePerformanceBudget, Arg.Any<int>());
             audioClipsCache.Received(callsAmount).Unload(releasablePerformanceBudget, Arg.Any<int>());
-            wearableAssetsCache.Received(callsAmount).Unload(releasablePerformanceBudget, Arg.Any<int>());
-            wearableCache.Received(callsAmount).Unload(Arg.Any<IReleasablePerformanceBudget>());
+            attachmentsAssetsCache.Received(callsAmount).Unload(releasablePerformanceBudget, Arg.Any<int>());
+            wearableStorage.Received(callsAmount).Unload(Arg.Any<IReleasablePerformanceBudget>());
             gltfContainerAssetsCache.Received(callsAmount).Unload(releasablePerformanceBudget, Arg.Any<int>());
             assetBundleCache.Received(callsAmount).Unload(releasablePerformanceBudget, Arg.Any<int>());
             materialPool.Received(callsAmount).ClearThrottled(Arg.Any<int>());

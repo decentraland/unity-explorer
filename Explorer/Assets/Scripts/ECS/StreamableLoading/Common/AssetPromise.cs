@@ -136,6 +136,18 @@ namespace ECS.StreamableLoading.Common
             Entity = EntityReference.Null;
         }
 
+        public bool TryForgetWithEntityIfCancelled(Entity selfEntity, World world)
+        {
+            if (LoadingIntention.CancellationTokenSource.IsCancellationRequested)
+            {
+                ForgetLoading(world);
+                world.Destroy(selfEntity);
+                return true;
+            }
+
+            return false;
+        }
+
         public bool Equals(AssetPromise<TAsset, TLoadingIntention> other) =>
             Entity.Equals(other.Entity) && LoadingIntention.Equals(other.LoadingIntention) && Nullable.Equals(Result, other.Result);
 

@@ -29,11 +29,7 @@ namespace DCL.Emoji
             view.inputField.onValueChanged.AddListener(OnValueChanged);
             view.inputField.onSelect.AddListener(BlockUnwantedInputs);
             view.inputField.onDeselect.AddListener(UnblockUnwantedInputs);
-            view.inputField.onEndEdit.AddListener(UnblockUnwantedInputs);
-            view.Disabled += UnblockUnwantedInputs;
-
             view.clearSearchButton.onClick.AddListener(ClearSearch);
-
             view.clearSearchButton.gameObject.SetActive(false);
 
             searchItemsPool = new ObjectPool<EmojiButton>(
@@ -47,13 +43,9 @@ namespace DCL.Emoji
         public void Dispose()
         {
             ReleaseAllSearchResults();
-
             view.inputField.onValueChanged.RemoveListener(OnValueChanged);
             view.inputField.onSelect.RemoveListener(BlockUnwantedInputs);
             view.inputField.onDeselect.RemoveListener(UnblockUnwantedInputs);
-            view.inputField.onEndEdit.RemoveListener(UnblockUnwantedInputs);
-            view.Disabled -= UnblockUnwantedInputs;
-
             view.clearSearchButton.onClick.RemoveListener(ClearSearch);
         }
 

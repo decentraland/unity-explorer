@@ -1,13 +1,14 @@
 using Cinemachine;
+using CRDT;
 
 namespace DCL.SDKComponents.CameraControl.MainCamera.Components
 {
     public struct MainCameraComponent
     {
         internal CinemachineFreeLook? virtualCameraInstance;
-        internal int virtualCameraCRDTEntity;
+        internal CRDTEntity virtualCameraCRDTEntity;
 
-        public MainCameraComponent(int virtualCamCRDTEntity = 0)
+        public MainCameraComponent(CRDTEntity virtualCamCRDTEntity)
         {
             virtualCameraCRDTEntity = virtualCamCRDTEntity;
             virtualCameraInstance = null;

@@ -20,12 +20,10 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
 {
     [UpdateInGroup(typeof(SyncedInitializationFixedUpdateThrottledGroup))]
     [UpdateBefore(typeof(CameraModeAreaHandlerSystem))]
-    [LogCategory(ReportCategory.SDK_MAIN_CAMERA)]
+    [LogCategory(ReportCategory.SDK_CAMERA)]
     public partial class MainCameraSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
-        private static readonly QueryDescription GLOBAL_WORLD_CAMERA_QUERY = new QueryDescription().WithAll<CameraComponent>();
-
-        private readonly Dictionary<CRDTEntity,Entity> entitiesMap;
+        private readonly IReadOnlyDictionary<CRDTEntity,Entity> entitiesMap;
         private readonly Entity cameraEntity;
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IExposedCameraData cameraData;
@@ -51,7 +49,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
         {
             SetupMainCameraQuery(World);
 
-            HandleActiveVirtualCameraDirtyStateQuery(World);
+            HandleActiveVirtualCameraLookAtChangeQuery(World);
             HandleVirtualCameraChangeQuery(World);
             DisableVirtualCameraOnSceneLeaveQuery(World);
 
@@ -65,11 +63,12 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
         {
             if (entity != cameraEntity || !sceneStateProvider.IsCurrent) return;
 
-            int virtualCameraCRDTEntity = (int)pbMainCamera.VirtualCameraEntity;
+            CRDTEntity virtualCameraCRDTEntity = new CRDTEntity((int)pbMainCamera.VirtualCameraEntity);
 
-            // Cannot check by pbComponent.IsDirty since the VirtualCamera may not yet be on the target CRDTEntity
-            // when the pbComponent is dirty and may have to be re-checked on subsequent updates...
-            if (mainCameraComponent.virtualCameraCRDTEntity == virtualCameraCRDTEntity &&
+            // Cannot rely on pbComponent.IsDirty since the VirtualCamera may not yet be on the target CRDTEntity
+            // when the pbComponent is dirty and may have to be re-checked on subsequent updates. This can happen
+            // if the target entity/component hasn't been loaded/detected from CRDT yet.
+            if (mainCameraComponent.virtualCameraCRDTEntity.Id == virtualCameraCRDTEntity.Id &&
                 (mainCameraComponent.virtualCameraInstance == null || mainCameraComponent.virtualCameraInstance.enabled))
                 return;
 
@@ -77,7 +76,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
 
             CinemachineFreeLook? previousVirtualCamera = mainCameraComponent.virtualCameraInstance;
             bool hasPreviousVirtualCamera = previousVirtualCamera != null && previousVirtualCamera.enabled;
-            if (virtualCameraCRDTEntity > 0)
+            if (virtualCameraCRDTEntity.Id > 0)
             {
                 Vector3 cinemachineCurrentActiveCamPos = cameraData.CinemachineBrain!.ActiveVirtualCamera.VirtualCameraGameObject.transform.position;
                 ApplyVirtualCamera(
@@ -99,12 +98,16 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void HandleActiveVirtualCameraDirtyState(CRDTEntity crdtEntity, in PBVirtualCamera pbVirtualCamera, ref VirtualCameraComponent virtualCameraComponent)
+        private void HandleActiveVirtualCameraLookAtChange(CRDTEntity crdtEntity, in PBVirtualCamera pbVirtualCamera, ref VirtualCameraComponent virtualCameraComponent)
         {
-            if (!pbVirtualCamera.IsDirty || cameraData.CinemachineBrain!.ActiveVirtualCamera.VirtualCameraGameObject != virtualCameraComponent.virtualCameraInstance.gameObject) return;
+            if (!sceneStateProvider.IsCurrent || cameraData.CinemachineBrain!.ActiveVirtualCamera.VirtualCameraGameObject != virtualCameraComponent.virtualCameraInstance.gameObject) return;
 
-            virtualCameraComponent.lookAtCRDTEntity = VirtualCameraUtils.GetPBVirtualCameraLookAtCRDTEntity(pbVirtualCamera, crdtEntity.Id);
-            VirtualCameraUtils.ConfigureCameraLookAt(World, in entitiesMap, virtualCameraComponent);
+            CRDTEntity? pbVirtualCameraLookAtEntity = VirtualCameraUtils.GetPBVirtualCameraLookAtCRDTEntity(pbVirtualCamera, crdtEntity);
+
+            if (pbVirtualCameraLookAtEntity.Equals(virtualCameraComponent.lookAtCRDTEntity)) return;
+
+            virtualCameraComponent.lookAtCRDTEntity = pbVirtualCameraLookAtEntity;
+            VirtualCameraUtils.ConfigureCameraLookAt(World, entitiesMap, virtualCameraComponent);
         }
 
         [Query]
@@ -122,7 +125,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
         {
             if (!sceneStateProvider.IsCurrent || entity != cameraEntity) return;
 
-            World.Add(entity, new MainCameraComponent());
+            World.Add(entity, new MainCameraComponent(new CRDTEntity(0)));
         }
 
         [Query]
@@ -151,16 +154,16 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
             FinalizeMainCameraComponentQuery(World);
         }
 
-        private void ApplyVirtualCamera(ref MainCameraComponent mainCameraComponent, int virtualCamCRDTEntity, Vector3? previousCameraPosition)
+        private void ApplyVirtualCamera(ref MainCameraComponent mainCameraComponent, CRDTEntity virtualCamCRDTEntity, Vector3? previousCameraPosition)
         {
-            if (!VirtualCameraUtils.TryGetVirtualCameraComponent(World, in entitiesMap, virtualCamCRDTEntity, out var virtualCameraComponent)) return;
+            if (!VirtualCameraUtils.TryGetVirtualCameraComponent(World, entitiesMap, virtualCamCRDTEntity, out var virtualCameraComponent)) return;
 
             var virtualCameraInstance = virtualCameraComponent!.Value.virtualCameraInstance;
 
-            VirtualCameraUtils.ConfigureVirtualCameraTransition(World, in entitiesMap, cameraData, virtualCamCRDTEntity,
+            VirtualCameraUtils.ConfigureVirtualCameraTransition(World, entitiesMap, cameraData, virtualCamCRDTEntity,
                 previousCameraPosition.HasValue ? Vector3.Distance(virtualCameraInstance.transform.position, previousCameraPosition.Value) : 0f);
 
-            VirtualCameraUtils.ConfigureCameraLookAt(World, in entitiesMap, virtualCameraComponent.Value);
+            VirtualCameraUtils.ConfigureCameraLookAt(World, entitiesMap, virtualCameraComponent.Value);
 
             mainCameraComponent.virtualCameraCRDTEntity = virtualCamCRDTEntity;
             mainCameraComponent.virtualCameraInstance = virtualCameraInstance;
@@ -169,22 +172,20 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
 
         private void UpdateGlobalWorldCameraMode(bool isAnyVirtualCameraActive)
         {
-            globalWorld.Query(in GLOBAL_WORLD_CAMERA_QUERY,
-                (ref CameraComponent cameraComponent) =>
+            var cameraComponent = globalWorld.Get<CameraComponent>(cameraData.CameraEntityProxy.Object);
+            if (isAnyVirtualCameraActive)
+            {
+                if (cameraComponent.Mode != CameraMode.SDKCamera)
                 {
-                    if (isAnyVirtualCameraActive)
-                    {
-                        if (cameraComponent.Mode != CameraMode.SDKCamera)
-                        {
-                            lastNonSDKCameraMode = cameraComponent.Mode;
-                            cameraComponent.Mode = CameraMode.SDKCamera;
-                        }
-                    }
-                    else if (cameraComponent.Mode == CameraMode.SDKCamera)
-                    {
-                        cameraComponent.Mode = lastNonSDKCameraMode;
-                    }
-                });
+                    lastNonSDKCameraMode = cameraComponent.Mode;
+                    cameraComponent.Mode = CameraMode.SDKCamera;
+                }
+            }
+            else if (cameraComponent.Mode == CameraMode.SDKCamera)
+            {
+                cameraComponent.Mode = lastNonSDKCameraMode;
+            }
+            globalWorld.Set(cameraData.CameraEntityProxy.Object, cameraComponent);
         }
 
         private void DisableActiveVirtualCamera(in MainCameraComponent mainCameraComponent)

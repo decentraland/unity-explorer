@@ -82,8 +82,6 @@ namespace DCL.PluginSystem.World
                 sharedDependencies.SceneStateProvider,
                 cameraData,
                 globalWorld));
-
-            ResetDirtyFlagSystem<PBVirtualCamera>.InjectToWorld(ref builder);
         }
 
         public void Dispose()
