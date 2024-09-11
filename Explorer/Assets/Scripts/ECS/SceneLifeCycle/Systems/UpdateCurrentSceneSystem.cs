@@ -44,7 +44,7 @@ namespace ECS.SceneLifeCycle.Systems
             this.sceneAssetLock = sceneAssetLock;
             ResetProcessedParcel();
 
-            debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.CURRENT_SCENE)
+            debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.CURRENT_SCENE)?
                          .SetVisibilityBinding(debugInfoVisibilityBinding = new DebugWidgetVisibilityBinding(true))
                          .AddCustomMarker("Name:", sceneNameBinding = new ElementBinding<string>(string.Empty))
                          .AddCustomMarker("Parcels:", sceneParcelsBinding = new ElementBinding<string>(string.Empty))
@@ -150,18 +150,19 @@ namespace ECS.SceneLifeCycle.Systems
             }
         }
 
-        private GameObject CreateDebugCube()
+        private static GameObject CreateDebugCube()
         {
             GameObject cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
             cube.name = "DebugSceneBoundsCube";
 
-            Material cubeMaterial = cube.GetComponent<MeshRenderer>().material;
+            Material cubeMaterial = new Material(Shader.Find("DCL/Scene"));
             cubeMaterial.color = new Color(1.0f, 0.0f, 0.0f, 0.8f);
             cubeMaterial.SetFloat("_SrcBlend", (int)BlendMode.One);
             cubeMaterial.SetFloat("_DstBlend", (int)BlendMode.OneMinusSrcAlpha);
             cubeMaterial.SetFloat("_Cull", (int)CullMode.Off);
             cubeMaterial.SetFloat("_Surface", 1.0f); // 1 means transparent
             cubeMaterial.renderQueue = (int)RenderQueue.Transparent;
+            cube.GetComponent<MeshRenderer>().material = cubeMaterial;
 
             GameObject.Destroy(cube.GetComponent<Collider>());
 
@@ -169,7 +170,7 @@ namespace ECS.SceneLifeCycle.Systems
             return cube;
         }
 
-        private void UpdateDebugCube(ParcelMathHelper.SceneGeometry sceneGeometry, GameObject cube)
+        private static void UpdateDebugCube(ParcelMathHelper.SceneGeometry sceneGeometry, GameObject cube)
         {
             // Makes the cube fit the scene bounds
             Vector3 cubeSize = new Vector3(sceneGeometry.CircumscribedPlanes.MaxX - sceneGeometry.CircumscribedPlanes.MinX,
