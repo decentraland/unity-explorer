@@ -60,10 +60,7 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
             else if (characterTriggerAreaComponent.ExitedThisFrame!.Count > 0) { OnExitedCameraModeArea(); }
 
             if (pbCameraModeArea.IsDirty)
-            {
-                characterTriggerAreaComponent.AreaSize = pbCameraModeArea.Area;
-                characterTriggerAreaComponent.IsDirty = true;
-            }
+                characterTriggerAreaComponent.UpdateAreaSize(pbCameraModeArea.Area);
         }
 
         [Query]

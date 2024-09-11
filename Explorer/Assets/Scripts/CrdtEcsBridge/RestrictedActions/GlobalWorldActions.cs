@@ -3,6 +3,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.Emotes;
+using DCL.AvatarRendering.Loading.Components;
 using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
 using DCL.Multiplayer.Emotes;
@@ -63,8 +64,11 @@ namespace CrdtEcsBridge.RestrictedActions
 
             promise = await promise.ToUniTaskAsync(world, cancellationToken: ct);
 
-            URN urn = promise.Result!.Value.Asset.Emotes[0].GetUrn();
-            bool isLooping = promise.Result!.Value.Asset.Emotes[0].IsLooping();
+            using var consumed = promise.Result!.Value.Asset.ConsumeEmotes();
+            var value = consumed.Value[0]!;
+            URN urn = value.GetUrn();
+            bool isLooping = value.IsLooping();
+
             TriggerEmote(urn, isLooping);
         }
 
