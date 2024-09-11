@@ -66,7 +66,7 @@ namespace SceneRunner.Tests
                 IWebRequestController.DEFAULT,
                 new IRoomHub.Fake(),
                 Substitute.For<IRealmData>(),
-                Substitute.For<ICommunicationControllerHub>()
+                Substitute.For<ISceneCommunicationPipe>()
             );
         }
 

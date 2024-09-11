@@ -86,7 +86,7 @@ namespace DCL.Minimap
 
         protected override void OnViewInstantiated()
         {
-            viewInstance.expandMinimapButton.onClick.AddListener(ExpandMinimap);
+            viewInstance!.expandMinimapButton.onClick.AddListener(ExpandMinimap);
             viewInstance.collapseMinimapButton.onClick.AddListener(CollapseMinimap);
             viewInstance.minimapRendererButton.Button.onClick.AddListener(() => mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Navmap))).Forget());
             viewInstance.sideMenuButton.onClick.AddListener(OpenSideMenu);
@@ -105,7 +105,7 @@ namespace DCL.Minimap
 
         private void ExpandMinimap()
         {
-            viewInstance.collapseMinimapButton.gameObject.SetActive(true);
+            viewInstance!.collapseMinimapButton.gameObject.SetActive(true);
             viewInstance.expandMinimapButton.gameObject.SetActive(false);
             viewInstance.minimapRendererButton.gameObject.SetActive(true);
             viewInstance.minimapAnimator.SetTrigger(UIAnimationHashes.EXPAND);

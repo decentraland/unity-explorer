@@ -175,6 +175,11 @@ namespace DCL.MapRenderer.ConsumerUtils
             hudCamera = null;
             interactivityController = null;
             texture = null;
+            previousClickedMarker?.DeselectImmediately(IPinMarker.ScaleType.NAVMAP);
+            previousMarker?.DeselectImmediately(IPinMarker.ScaleType.NAVMAP);
+
+            previousMarker = null;
+            previousClickedMarker = null;
 
             isActive = false;
         }
@@ -191,11 +196,12 @@ namespace DCL.MapRenderer.ConsumerUtils
             {
                 if (highlightEnabled && previousParcel != parcel)
                 {
-                    if (previousMarker != null)
+                    if (previousMarker != null && previousClickedMarker != previousMarker)
                     {
                         previousMarker.AnimateDeselectionAsync(cts.Token).Forget();
-                        previousMarker = null;
                     }
+
+                    previousMarker = null;
 
                     previousParcel = parcel;
 

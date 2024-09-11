@@ -5,6 +5,7 @@ using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
 using DCL.CharacterMotion.Systems;
+using DCL.SDKComponents.InputModifier.Components;
 using DCL.Time;
 using DCL.Time.Systems;
 using ECS.Abstract;
@@ -31,7 +32,11 @@ namespace DCL.CharacterMotion.Tests
             ICharacterControllerSettings controllerSettings = Substitute.For<ICharacterControllerSettings>();
             controllerSettings.LongJumpTime.Returns(1f);
 
-            playerEntity = world.Create(new PlayerComponent(), controllerSettings, new CharacterRigidTransform { IsGrounded = true });
+            playerEntity = world.Create(
+                new PlayerComponent(),
+                controllerSettings,
+                new CharacterRigidTransform { IsGrounded = true },
+                new InputModifierComponent());
 
             updatePhysicsTickSystem = new UpdatePhysicsTickSystem(world, new PhysicsTickProvider());
             updateInputJumpSystem = new UpdateInputJumpSystem(world, dlcInput.Player.Jump);

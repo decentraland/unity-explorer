@@ -10,6 +10,7 @@ using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.AvatarRendering.Wearables.ThirdParty;
 using DCL.Backpack.BackpackBus;
+using DCL.BadgesAPIService;
 using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Chat;
@@ -76,6 +77,7 @@ using LiveKit.Proto;
 using MVC;
 using MVC.PopupsController.PopupCloser;
 using SceneRunner.Debugging.Hub;
+using SceneRunner.Scene;
 using System;
 using System.Buffers;
 using System.Collections.Generic;
@@ -225,7 +227,7 @@ namespace Global.Dynamic
             container.ParcelServiceContainer = parcelServiceContainer;
 
             var nftInfoAPIClient = new OpenSeaAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
-            var wearableCatalog = new WearableCache();
+            var wearableCatalog = new WearableStorage();
             container.wearablesProvider = new ECSWearablesProvider(identityCache, globalWorld);
             var characterPreviewFactory = new CharacterPreviewFactory(staticContainer.ComponentsContainer.ComponentPoolsRegistry);
             IWebBrowser webBrowser = bootstrapContainer.WebBrowser;
@@ -251,7 +253,7 @@ namespace Global.Dynamic
 
             var assetBundlesURL = URLDomain.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.AssetBundlesCDN));
 
-            var emotesCache = new MemoryEmotesCache();
+            var emotesCache = new MemoryEmotesStorage();
             staticContainer.CacheCleaner.Register(emotesCache);
             var equippedWearables = new EquippedWearables();
             var equippedEmotes = new EquippedEmotes();
@@ -433,7 +435,9 @@ namespace Global.Dynamic
 
             var currentSceneInfo = new CurrentSceneInfo();
 
-            container.multiplayerMovementMessageBus = new MultiplayerMovementMessageBus(container.MessagePipesHub, entityParticipantTable, globalWorld);
+            container.multiplayerMovementMessageBus = new MultiplayerMovementMessageBus(container.MessagePipesHub, entityParticipantTable, globalWorld, MultiplayerMovementMessageBus.Scheme.Uncompressed);
+
+            var badgesAPIClient = new BadgesAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
@@ -579,6 +583,8 @@ namespace Global.Dynamic
                     selfProfile,
                     webBrowser,
                     bootstrapContainer.DecentralandUrlsSource,
+                    badgesAPIClient,
+                    notificationsBusController,
                     staticContainer.InputBlock,
                     globalWorld,
                     playerEntity

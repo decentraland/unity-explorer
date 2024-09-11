@@ -15,6 +15,7 @@ namespace SceneRunner.Scene
         PersistentEntities PersistentEntities { get; }
         ISceneData SceneData { get; }
         bool IsEmpty { get; }
+        ISceneData SceneData { get; }
 
         void Initialize();
 

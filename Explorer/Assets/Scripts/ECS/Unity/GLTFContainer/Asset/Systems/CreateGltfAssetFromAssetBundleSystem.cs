@@ -57,7 +57,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
             if (!assetBundleResult.Succeeded)
             {
                 // Just propagate an exception, we can't do anything
-                World.Add(entity, new StreamableLoadingResult<GltfContainerAsset>(CreateException(assetBundleResult.Exception)));
+                World.Add(entity, new StreamableLoadingResult<GltfContainerAsset>(GetReportCategory(), CreateException(assetBundleResult.Exception)));
                 return;
             }
 
@@ -89,6 +89,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
 
             // Collect all Animations as they are used in Animation System (only for legacy support, as all of them will eventually be converted to Animators)
             using PoolExtensions.Scope<List<Animation>> animationScope = GltfContainerAsset.ANIMATIONS_POOL.AutoScope();
+
             {
                 instance.GetComponentsInChildren(true, animationScope.Value);
                 result.Animations.AddRange(animationScope.Value);
@@ -96,6 +97,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
 
             // Collect all Animators as they are used in Animation System
             using PoolExtensions.Scope<List<Animator>> animatorScope = GltfContainerAsset.ANIMATORS_POOL.AutoScope();
+
             {
                 instance.GetComponentsInChildren(true, animatorScope.Value);
                 result.Animators.AddRange(animatorScope.Value);
@@ -116,6 +118,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
                     if (go.GetComponent<Renderer>())
                         AddVisibleMeshCollider(result, go, meshFilter.sharedMesh);
                     else
+
                         // Gather invisible colliders
                         CreateAndAddMeshCollider(result.InvisibleColliders, go, meshFilter.sharedMesh);
                 }
