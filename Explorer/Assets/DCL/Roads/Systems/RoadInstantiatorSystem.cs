@@ -13,6 +13,7 @@ using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
+using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.Reporting;
 using ECS.SceneLifeCycle.SceneDefinition;
 using UnityEngine;
@@ -51,6 +52,7 @@ namespace DCL.Roads.Systems
         [None(typeof(DeleteEntityIntention), typeof(PortableExperienceComponent))]
         private void InstantiateRoad(ref RoadInfo roadInfo, ref SceneDefinitionComponent sceneDefinitionComponent, ref PartitionComponent partitionComponent)
         {
+            // Helpful info: RoadInfos are added in ResolveSceneStateByIncreasingRadiusSystem.CreatePromisesFromOrderedData
             if (!roadInfo.IsDirty) return;
 
             if (partitionComponent.IsBehind) return;
@@ -81,7 +83,7 @@ namespace DCL.Roads.Systems
 
             roadInfo.IsDirty = false;
 
-            
+
             //In case this is a road teleport destination, we need to release the loading screen
             LODUtils.ReportSDK6SceneLoaded(sceneDefinitionComponent, sceneReadinessReportQueue, scenesCache);
         }

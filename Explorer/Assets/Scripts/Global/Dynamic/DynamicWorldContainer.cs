@@ -228,7 +228,7 @@ namespace Global.Dynamic
             container.ParcelServiceContainer = parcelServiceContainer;
 
             var nftInfoAPIClient = new OpenSeaAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
-            var wearableCatalog = new WearableCache();
+            var wearableCatalog = new WearableStorage();
             container.wearablesProvider = new ECSWearablesProvider(identityCache, globalWorld);
             var characterPreviewFactory = new CharacterPreviewFactory(staticContainer.ComponentsContainer.ComponentPoolsRegistry);
             IWebBrowser webBrowser = bootstrapContainer.WebBrowser;
@@ -254,7 +254,7 @@ namespace Global.Dynamic
 
             var assetBundlesURL = URLDomain.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.AssetBundlesCDN));
 
-            var emotesCache = new MemoryEmotesCache();
+            var emotesCache = new MemoryEmotesStorage();
             staticContainer.CacheCleaner.Register(emotesCache);
             var equippedWearables = new EquippedWearables();
             var equippedEmotes = new EquippedEmotes();
@@ -438,9 +438,9 @@ namespace Global.Dynamic
 
             var currentSceneInfo = new CurrentSceneInfo();
 
-            var badgesAPIClient = new BadgesAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
+            container.multiplayerMovementMessageBus = new MultiplayerMovementMessageBus(container.MessagePipesHub, entityParticipantTable, globalWorld, MultiplayerMovementMessageBus.Scheme.Uncompressed);
 
-            container.multiplayerMovementMessageBus = new MultiplayerMovementMessageBus(container.MessagePipesHub, entityParticipantTable, globalWorld);
+            var badgesAPIClient = new BadgesAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {

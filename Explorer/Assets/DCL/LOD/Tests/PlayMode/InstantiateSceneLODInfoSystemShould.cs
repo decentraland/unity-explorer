@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
+using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.LOD.Components;
 using DCL.LOD.Systems;
@@ -18,6 +19,7 @@ using NSubstitute;
 using NUnit.Framework;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.TestTools;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData,
     ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 
@@ -29,7 +31,7 @@ namespace DCL.LOD.Tests
 
         private static readonly Vector2Int[] DECODED_PARCELS =
         {
-            new (0, 0)
+            new (0, 0),
         };
 
         private SceneLODInfo sceneLODInfo;
@@ -40,7 +42,7 @@ namespace DCL.LOD.Tests
         [SetUp]
         public void Setup()
         {
-            ILODSettingsAsset? lodSettings = Substitute.For<ILODSettingsAsset>();
+            var lodSettings = Substitute.For<ILODSettingsAsset>();
 
             int[] bucketThresholds =
             {
@@ -49,7 +51,7 @@ namespace DCL.LOD.Tests
 
             lodSettings.LodPartitionBucketThresholds.Returns(bucketThresholds);
 
-            IPerformanceBudget? frameCapBudget = Substitute.For<IPerformanceBudget>();
+            var frameCapBudget = Substitute.For<IPerformanceBudget>();
             frameCapBudget.TrySpendBudget().Returns(true);
 
             IPerformanceBudget? memoryBudget = Substitute.For<IPerformanceBudget>();
@@ -72,11 +74,12 @@ namespace DCL.LOD.Tests
             sceneDefinitionComponent = SceneDefinitionComponentFactory.CreateFromDefinition(sceneEntityDefinition, new IpfsPath());
 
             sceneLODInfo = SceneLODInfo.Create();
-            sceneLODInfo.metadata = new LODCacheInfo(new GameObject().AddComponent<LODGroup>(), 2 );
+            sceneLODInfo.metadata = new LODCacheInfo(new GameObject().AddComponent<LODGroup>(), 2);
 
             var textureArrayContainerFactory = new TextureArrayContainerFactory(new Dictionary<TextureArrayKey, Texture>());
-            system = new InstantiateSceneLODInfoSystem(world,  frameCapBudget, memoryBudget, scenesCache, sceneReadinessReportQueue,
-                textureArrayContainerFactory.CreateSceneLOD(TextureArrayConstants.SCENE_TEX_ARRAY_SHADER, new []
+
+            system = new InstantiateSceneLODInfoSystem(world, frameCapBudget, memoryBudget, scenesCache, sceneReadinessReportQueue,
+                textureArrayContainerFactory.CreateSceneLOD(TextureArrayConstants.SCENE_TEX_ARRAY_SHADER, new[]
                 {
                     new TextureArrayResolutionDescriptor(256, 500, 1)
                 }, TextureFormat.BC7, 20, 1), Substitute.For<IRealmPartitionSettings>());
@@ -85,6 +88,8 @@ namespace DCL.LOD.Tests
         [Test]
         public void ResolveSuccessfullPromiseAndInstantiate()
         {
+            LogAssert.ignoreFailingMessages = true;
+
             //Arrange
             var promiseGenerated = GenerateSuccessfullPromise();
             sceneLODInfo.CurrentLODPromise = promiseGenerated.Item2;
@@ -107,6 +112,8 @@ namespace DCL.LOD.Tests
         [Test]
         public void ResolveFailedPromise()
         {
+            LogAssert.ignoreFailingMessages = true;
+
             //Arrange
             sceneLODInfo.CurrentLODPromise = GenerateFailedPromise();
             sceneLODInfo.CurrentLODLevelPromise = 0;
@@ -123,23 +130,22 @@ namespace DCL.LOD.Tests
             scenesCache.Received().AddNonRealScene(Arg.Is<Vector2Int[]>(arr => arr.SequenceEqual(DECODED_PARCELS)));
         }
 
-
         private Promise GenerateFailedPromise()
         {
             var promise = Promise.Create(world,
                 GetAssetBundleIntention.FromHash(typeof(GameObject), "Cube"),
                 new PartitionComponent());
 
-
             world.Add(promise.Entity,
-                new StreamableLoadingResult<AssetBundleData>(new Exception()));
+                new StreamableLoadingResult<AssetBundleData>(ReportData.UNSPECIFIED, new Exception()));
+
             return promise;
         }
 
         private (AssetBundleData, Promise) GenerateSuccessfullPromise()
         {
             var promise = Promise.Create(world,
-                GetAssetBundleIntention.FromHash(typeof(GameObject),"Cube"),
+                GetAssetBundleIntention.FromHash(typeof(GameObject), "Cube"),
                 new PartitionComponent());
 
             var fakeAssetBundleData = new AssetBundleData(null, null, GameObject.CreatePrimitive(PrimitiveType.Cube),
@@ -151,6 +157,5 @@ namespace DCL.LOD.Tests
 
             return (fakeAssetBundleData, promise);
         }
-
     }
 }

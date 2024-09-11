@@ -67,7 +67,7 @@ namespace SceneRuntime.Apis.Modules.Players
                 foreach (string identity in identities)
                 {
                     Participant remote = participantsHub.RemoteParticipant(identity)!;
-                    players.Add(new Player(remote));
+                    players!.Add(new Player(remote));
                 }
 
                 playersJson = JsonConvert.SerializeObject(players);
@@ -152,7 +152,7 @@ namespace SceneRuntime.Apis.Modules.Players
             public List<string> wearables;
 
             public AvatarData(Avatar avatar) : this(
-                avatar.BodyShape.Value!,
+                avatar.BodyShape.Value,
                 ColorUtility.ToHtmlStringRGBA(avatar.EyesColor)!,
                 ColorUtility.ToHtmlStringRGBA(avatar.HairColor)!,
                 ColorUtility.ToHtmlStringRGBA(avatar.SkinColor)!,

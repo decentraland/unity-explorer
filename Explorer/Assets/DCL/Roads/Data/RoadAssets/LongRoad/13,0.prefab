@@ -2532,7 +2532,7 @@ GameObject:
   - component: {fileID: 8918454710814458933}
   m_Layer: 0
   m_Name: 13,0
-  m_TagString: Untagged
+  m_TagString: LongRoad
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
