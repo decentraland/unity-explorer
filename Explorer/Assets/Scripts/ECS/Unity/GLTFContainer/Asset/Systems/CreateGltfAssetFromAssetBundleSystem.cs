@@ -140,6 +140,11 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
             return result;
         }
 
+        // If we update AddVisibleMeshCollider and/or CreateAndAddMeshCollider please check and update them in CreateGltfAssetFromRawGltfSystem.cs
+        // As a tech-debt we might want to move these functions elsewhere to avoid repetition, but for now it's acceptable since the other one is only for local development
+
+#region Helper Collider Methods
+
         private static void AddVisibleMeshCollider(GltfContainerAsset result, GameObject go, Mesh mesh)
         {
             result.VisibleColliderMeshes.Add(new VisibleMeshCollider
@@ -184,5 +189,6 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
                        || go.transform.parent.name.Contains(COLLIDER_SUFFIX, IGNORE_CASE);
             }
         }
+#endregion
     }
 }
