@@ -45,13 +45,16 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
         protected void ReportAndFinalizeWithError(URN urn)
         {
             //We have some missing pointers that were not completed. We have to consider them as failure
-            var e = new ArgumentNullException($"Wearable DTO is null for for {urn}");
-            ReportHub.LogError(new ReportData(GetReportCategory()), e);
 
             if (storage.TryGetElement(urn, out var component))
 
                 //If its not in the catalog, we cannot determine which one has failed
-                component.ResolvedFailedDTO(new StreamableLoadingResult<TDTO>(e));
+                component.ResolvedFailedDTO(
+                    new StreamableLoadingResult<TDTO>(
+                        new ReportData(GetReportCategory()),
+                        new ArgumentNullException($"Wearable DTO is null for for {urn}")
+                    )
+                );
         }
     }
 }

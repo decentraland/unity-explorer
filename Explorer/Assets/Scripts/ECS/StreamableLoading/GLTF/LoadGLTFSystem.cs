@@ -1,6 +1,7 @@
 using Arch.Core;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.Optimization.PerformanceBudgeting;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
@@ -64,7 +65,9 @@ namespace ECS.StreamableLoading.GLTF
         protected override async UniTask<StreamableLoadingResult<GLTFData>> FlowInternalAsync(GetGLTFIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
             if (!sceneData.SceneContent.TryGetContentUrl(intention.Name!, out var finalDownloadUrl))
-                return new StreamableLoadingResult<GLTFData>(new Exception("The content to download couldn't be found"));
+                return new StreamableLoadingResult<GLTFData>(
+                    new ReportData(GetReportCategory()),
+                    new Exception("The content to download couldn't be found"));
 
             gltfDownloadProvider.TargetGltfOriginalPath = intention.Name!;
             var gltfImport = new GltfImport(downloadProvider: gltfDownloadProvider, logger: gltfConsoleLogger);
@@ -94,7 +97,9 @@ namespace ECS.StreamableLoading.GLTF
                 return new StreamableLoadingResult<GLTFData>(new GLTFData(gltfImport, rootContainer));
             }
 
-            return new StreamableLoadingResult<GLTFData>(new Exception("The content to download couldn't be found"));
+            return new StreamableLoadingResult<GLTFData>(
+                new ReportData(GetReportCategory()),
+                new Exception("The content to download couldn't be found"));
         }
 
         public async UniTask InstantiateGltfAsync(GltfImport gltfImport, Transform rootContainerTransform)

@@ -51,7 +51,7 @@ namespace DCL.AvatarRendering.Emotes
                 return;
             }
 
-            if (promise.SafeTryConsume(World!, out StreamableLoadingResult<SceneAssetBundleManifest> result))
+            if (promise.SafeTryConsume(World!, GetReportCategory(), out StreamableLoadingResult<SceneAssetBundleManifest> result))
             {
                 emote.UpdateManifest(result);
                 World!.Destroy(entity);
@@ -67,7 +67,7 @@ namespace DCL.AvatarRendering.Emotes
             if (promise.TryForgetWithEntityIfCancelled(entity, World!))
                 return;
 
-            if (promise.SafeTryConsume(World!, out StreamableLoadingResult<EmotesDTOList> promiseResult))
+            if (promise.SafeTryConsume(World!, GetReportCategory(), out StreamableLoadingResult<EmotesDTOList> promiseResult))
             {
                 if (!promiseResult.Succeeded)
                 {
@@ -96,7 +96,7 @@ namespace DCL.AvatarRendering.Emotes
                 return;
             }
 
-            if (promise.SafeTryConsume(World, out StreamableLoadingResult<AssetBundleData> result))
+            if (promise.SafeTryConsume(World, GetReportCategory(), out StreamableLoadingResult<AssetBundleData> result))
             {
                 if (result.Succeeded)
                 {
@@ -126,7 +126,7 @@ namespace DCL.AvatarRendering.Emotes
 
             if (promise.IsConsumed) return;
 
-            if (!promise.SafeTryConsume(World!, out StreamableLoadingResult<AudioClip> result))
+            if (!promise.SafeTryConsume(World!, GetReportCategory(), out StreamableLoadingResult<AudioClip> result))
                 return;
 
             if (result.Succeeded)

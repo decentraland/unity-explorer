@@ -4,8 +4,12 @@ using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.ComputeShader;
 using DCL.AvatarRendering.AvatarShape.Helpers;
+using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
+using DCL.AvatarRendering.AvatarShape.Helpers;
 using DCL.AvatarRendering.AvatarShape.Systems;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
+using DCL.AvatarRendering.Emotes;
+using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Loading.Components;
@@ -45,8 +49,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests.Instantiate
         private Color randomEyesColor;
         private Mesh avatarMesh;
 
-        [SetUp]
-        public async void Setup()
+        private async Task SetupAsync()
         {
             IReleasablePerformanceBudget budget = Substitute.For<IReleasablePerformanceBudget>();
             budget.TrySpendBudget().Returns(true);
@@ -184,7 +187,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests.Instantiate
         public async Task InstantiateAvatar()
         {
             // For some reason SetUp is not awaited, probably a Unity's bug
-            await UniTask.WaitUntil(() => system != null && avatarMesh != null);
+            await SetupAsync();
 
             //Arrange
             avatarEntity = world.Create(avatarShapeComponent, PartitionComponent.TOP_PRIORITY, new CharacterTransform());
@@ -235,7 +238,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests.Instantiate
         public async Task DestroyInstantiatedAvatar()
         {
             // For some reason SetUp is not awaited, probably a Unity's bug
-            await UniTask.WaitUntil(() => system != null && avatarMesh != null);
+            await SetupAsync();
 
             //Arrange
             Entity entity = world.Create(avatarShapeComponent, PartitionComponent.TOP_PRIORITY, new TransformComponent());

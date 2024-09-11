@@ -80,7 +80,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
         {
             if (wearablesByPointersIntention.CancellationTokenSource.IsCancellationRequested)
             {
-                World!.Add(entity, new StreamableResult(new Exception("Pointer request cancelled")));
+                World!.Add(entity, new StreamableResult(GetReportCategory(), new Exception("Pointer request cancelled")));
                 return;
             }
 
@@ -177,7 +177,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
             if (TryFinalizeIfCancelled(entity, promise))
                 return;
 
-            if (promise.SafeTryConsume(World!, out StreamableLoadingResult<WearablesDTOList> promiseResult))
+            if (promise.SafeTryConsume(World!, GetReportCategory(), out StreamableLoadingResult<WearablesDTOList> promiseResult))
             {
                 if (!promiseResult.Succeeded)
                 {
@@ -222,7 +222,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 return;
             }
 
-            if (promise.SafeTryConsume(World, out StreamableLoadingResult<SceneAssetBundleManifest> result))
+            if (promise.SafeTryConsume(World, GetReportCategory(), out StreamableLoadingResult<SceneAssetBundleManifest> result))
             {
                 if (result.Succeeded)
                     wearable.ManifestResult = result;
@@ -252,7 +252,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 return;
             }
 
-            if (promise.SafeTryConsume(World, out StreamableLoadingResult<AssetBundleData> result))
+            if (promise.SafeTryConsume(World, GetReportCategory(), out StreamableLoadingResult<AssetBundleData> result))
             {
                 // every asset in the batch is mandatory => if at least one has already failed set the default wearables
                 if (result.Succeeded && !AnyAssetHasFailed(wearable, bodyShape))
@@ -282,7 +282,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
             if (component.ManifestResult == null && EnumUtils.HasFlag(intention.PermittedSources, AssetSource.WEB))
                 return component.CreateAssetBundleManifestPromise(World, intention.BodyShape, intention.CancellationTokenSource, partitionComponent);
 
-            if (component.TryCreateAssetBundlePromise(in intention, customStreamingSubdirectory, partitionComponent, World))
+            if (component.TryCreateAssetBundlePromise(in intention, customStreamingSubdirectory, partitionComponent, World, GetReportCategory()))
             {
                 component.UpdateLoadingStatus(true);
                 return true;
@@ -305,10 +305,10 @@ namespace DCL.AvatarRendering.Wearables.Systems
         {
             if (!defaultWearablesLoaded)
             {
-                ReportHub.LogError(GetReportCategory(), $"Default wearable {wearable.DTO.GetHash()} failed to load");
-
-                StreamableLoadingResult<AttachmentAssetBase> failedResult = new StreamableLoadingResult<AssetBundleData>(new Exception("Default wearable failed to load"))
-                   .ToWearableAsset(wearable);
+                StreamableLoadingResult<AttachmentAssetBase> failedResult = new StreamableLoadingResult<AssetBundleData>(
+                    GetReportCategory(),
+                    new Exception($"Default wearable {wearable.DTO.GetHash()} failed to load")
+                ).ToWearableAsset(wearable);
 
                 if (wearable.IsUnisex() && wearable.HasSameModelsForAllGenders())
                 {

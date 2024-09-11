@@ -57,7 +57,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
             if (!assetBundleResult.Succeeded)
             {
                 // Just propagate an exception, we can't do anything
-                World.Add(entity, new StreamableLoadingResult<GltfContainerAsset>(CreateException(assetBundleResult.Exception)));
+                World.Add(entity, new StreamableLoadingResult<GltfContainerAsset>(GetReportCategory(), CreateException(assetBundleResult.Exception)));
                 return;
             }
 
@@ -116,6 +116,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
                     if (go.GetComponent<Renderer>())
                         AddVisibleMeshCollider(result, go, meshFilter.sharedMesh);
                     else
+
                         // Gather invisible colliders
                         CreateAndAddMeshCollider(result.InvisibleColliders, go, meshFilter.sharedMesh);
                 }

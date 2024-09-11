@@ -65,6 +65,7 @@ namespace DCL.AvatarRendering.Emotes.Load
         {
             if (intention.TryCancelByRequest<GetSceneEmoteFromRealmIntention, EmotesResolution>(
                     World!,
+                    GetReportCategory(),
                     entity,
                     static i => $"Scene emote request cancelled {i.EmoteHash}"))
                 return;
@@ -76,7 +77,7 @@ namespace DCL.AvatarRendering.Emotes.Load
                 if (!World.Has<StreamableResult>(entity))
                 {
                     ReportHub.LogWarning(GetReportCategory(), $"Loading scenes emotes timed out {urn}");
-                    World.Add(entity, new StreamableResult(new TimeoutException($"Scene emote timeout {urn}")));
+                    World.Add(entity, new StreamableResult(GetReportCategory(), new TimeoutException($"Scene emote timeout {urn}")));
                 }
 
                 return;
@@ -169,6 +170,7 @@ namespace DCL.AvatarRendering.Emotes.Load
         {
             if (intention.TryCancelByRequest<GetEmotesByPointersIntention, EmotesResolution>(
                     World!,
+                    GetReportCategory(),
                     entity,
                     static _ => "Pointer request cancelled"))
                 return;
@@ -288,7 +290,7 @@ namespace DCL.AvatarRendering.Emotes.Load
                 {
                     var pointersStrLog = string.Join(",", intention.Pointers);
                     ReportHub.LogWarning(GetReportCategory(), $"Loading emotes timed out, {pointersStrLog}");
-                    World.Add(entity, new StreamableResult(new TimeoutException($"Emote intention timeout {pointersStrLog}")));
+                    World.Add(entity, new StreamableResult(GetReportCategory(), new TimeoutException($"Emote intention timeout {pointersStrLog}")));
                 }
 
                 return true;

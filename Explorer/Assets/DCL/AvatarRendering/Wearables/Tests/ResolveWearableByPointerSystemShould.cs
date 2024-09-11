@@ -8,6 +8,7 @@ using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.AvatarRendering.Wearables.Systems;
+using DCL.Diagnostics;
 using ECS;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Tests;
@@ -19,6 +20,7 @@ using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using UnityEngine.TestTools;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.Wearable[], DCL.AvatarRendering.Wearables.Components.Intentions.GetWearablesByPointersIntention>;
 using AssetBundleManifestPromise = ECS.StreamableLoading.Common.AssetPromise<SceneRunner.Scene.SceneAssetBundleManifest, DCL.AvatarRendering.Wearables.Components.GetWearableAssetBundleManifestIntention>;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
@@ -100,7 +102,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
 
             world.Create(assetBundleManifestPromise, mockWearable, BodyShape.MALE);
             EntityReference assetBundleManifestPromiseEntity = assetBundleManifestPromise.Entity;
-            world.Add(assetBundleManifestPromiseEntity, failed ? new StreamableLoadingResult<SceneAssetBundleManifest>(new Exception("FAILED")) : mockedABManifest);
+            world.Add(assetBundleManifestPromiseEntity, failed ? new StreamableLoadingResult<SceneAssetBundleManifest>(ReportData.UNSPECIFIED, new Exception("FAILED")) : mockedABManifest);
             system!.Update(0);
         }
 
@@ -115,12 +117,14 @@ namespace DCL.AvatarRendering.Wearables.Tests
 
             world.Create(assetBundlePromise, mockWearable, BodyShape.MALE);
             EntityReference assetBundlePromiseEntity = assetBundlePromise.Entity;
-            world.Add(assetBundlePromiseEntity, failed ? new StreamableLoadingResult<AssetBundleData>(new Exception("FAILED")) : mockedAB);
+            world.Add(assetBundlePromiseEntity, failed ? new StreamableLoadingResult<SceneAssetBundleManifest>(ReportData.UNSPECIFIED, new Exception("FAILED")) : mockedAB);
         }
 
         [Test]
         public void ResolveWearable()
         {
+            LogAssert.ignoreFailingMessages = true;
+
             //Arrange
             IWearable mockWearable = CreateMockWearable(testUrn, false, false);
             wearableStorage.wearablesCache.Add(mockWearable.GetUrn(), mockWearable);
@@ -143,6 +147,8 @@ namespace DCL.AvatarRendering.Wearables.Tests
         [Test]
         public void ResolveUnisexWearable()
         {
+            LogAssert.ignoreFailingMessages = true;
+
             //Arrange
             IWearable mockUnisexWearable = CreateMockWearable(unisexTestUrn, false, true);
             wearableStorage.wearablesCache.Add(mockUnisexWearable.GetUrn(), mockUnisexWearable);
@@ -166,6 +172,8 @@ namespace DCL.AvatarRendering.Wearables.Tests
         [Test]
         public void ResolveDefaultWearableOnManifestFail()
         {
+            LogAssert.ignoreFailingMessages = true;
+
             //Arrange
             IWearable mockWearable = CreateMockWearable(testUrn, false, false);
             wearableStorage.wearablesCache.Add(mockWearable.GetUrn(), mockWearable);
@@ -187,6 +195,8 @@ namespace DCL.AvatarRendering.Wearables.Tests
         [Test]
         public void ResolveDefaultWearableOnABFail()
         {
+            LogAssert.ignoreFailingMessages = true;
+
             //Arrange
             IWearable mockWearable = CreateMockWearable(testUrn, false, false);
             wearableStorage.wearablesCache.Add(mockWearable.GetUrn(), mockWearable);
@@ -209,6 +219,8 @@ namespace DCL.AvatarRendering.Wearables.Tests
         [Test]
         public void CancelIntentionOnManifestStage()
         {
+            LogAssert.ignoreFailingMessages = true;
+
             //Arrange
             IWearable mockWearable = CreateMockWearable(testUrn, false, false);
             wearableStorage.wearablesCache.Add(mockWearable.GetUrn(), mockWearable);
@@ -236,6 +248,8 @@ namespace DCL.AvatarRendering.Wearables.Tests
         [Test]
         public void CancelIntentionOnABStage()
         {
+            LogAssert.ignoreFailingMessages = true;
+
             //Arrange
             IWearable mockWearable = CreateMockWearable(testUrn, false, false);
             wearableStorage.AddToInternalCache(mockWearable);
