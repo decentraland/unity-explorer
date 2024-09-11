@@ -41,6 +41,7 @@ namespace DCL.SceneLoadingScreens.LoadingScreen
                 }
                 catch (Exception e)
                 {
+                    loadReport.SetProgress(1f);
                     result = ILoadingScreen.LoadResult.ExceptionResult(e.Message);
                 }
             }
