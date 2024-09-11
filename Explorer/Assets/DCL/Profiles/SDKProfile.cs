@@ -1,5 +1,5 @@
 ﻿using CommunicationData.URLHelpers;
-using DCL.AvatarRendering.Wearables;
+using DCL.AvatarRendering.Loading.Components;
 using DCL.ECSComponents;
 using System.Collections.Generic;
 using UnityEngine;
