@@ -102,7 +102,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
 
             world.Create(assetBundleManifestPromise, mockWearable, BodyShape.MALE);
             EntityReference assetBundleManifestPromiseEntity = assetBundleManifestPromise.Entity;
-            world.Add(assetBundleManifestPromiseEntity, failed ? new StreamableLoadingResult<SceneAssetBundleManifest>(new Exception("FAILED")) : mockedABManifest);
+            world.Add(assetBundleManifestPromiseEntity, failed ? new StreamableLoadingResult<SceneAssetBundleManifest>(ReportData.UNSPECIFIED, new Exception("FAILED")) : mockedABManifest);
             system!.Update(0);
         }
 

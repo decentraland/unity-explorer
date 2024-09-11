@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using AssetManagement;
 using CommunicationData.URLHelpers;
+using DCL.Diagnostics;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -70,6 +71,7 @@ namespace ECS.StreamableLoading.Common.Components
         public static bool TryCancelByRequest<TIntention, TStreamableResult>(
             this TIntention intention,
             World world,
+            ReportData reportData,
             Entity entity,
             Func<TIntention, string> errorMessage
         ) where TIntention: IAssetIntention
@@ -80,7 +82,7 @@ namespace ECS.StreamableLoading.Common.Components
                     world.Add(
                         entity,
                         new StreamableLoadingResult<TStreamableResult>(
-                            new OperationCanceledException(errorMessage(intention)!)
+                            reportData, new OperationCanceledException(errorMessage(intention)!)
                         )
                     );
 
