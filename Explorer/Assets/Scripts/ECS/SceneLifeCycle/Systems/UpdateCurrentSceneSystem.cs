@@ -5,8 +5,8 @@ using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using ECS.Abstract;
 using ECS.SceneLifeCycle.CurrentScene;
-using SceneRunner.Scene;
 using UnityEngine;
+using UnityEngine.Rendering;
 using Utility;
 
 namespace ECS.SceneLifeCycle.Systems
@@ -26,9 +26,13 @@ namespace ECS.SceneLifeCycle.Systems
 
         private readonly SceneAssetLock sceneAssetLock;
 
+        private IDebugContainerBuilder debugBuilder;
         private ElementBinding<string> sceneNameBinding;
         private ElementBinding<string> sceneParcelsBinding;
         private ElementBinding<string> sceneHeightBinding;
+        private DebugWidgetVisibilityBinding debugInfoVisibilityBinding;
+        private bool showDebugCube;
+        private GameObject sceneBoundsCube;
 
         internal UpdateCurrentSceneSystem(World world, IRealmData realmData, IScenesCache scenesCache, CurrentSceneInfo currentSceneInfo,
                                             Entity playerEntity, SceneAssetLock sceneAssetLock, IDebugContainerBuilder debugBuilder) : base(world)
@@ -41,9 +45,12 @@ namespace ECS.SceneLifeCycle.Systems
             ResetProcessedParcel();
 
             debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.CURRENT_SCENE)
+                         .SetVisibilityBinding(debugInfoVisibilityBinding = new DebugWidgetVisibilityBinding(true))
                          .AddCustomMarker("Name:", sceneNameBinding = new ElementBinding<string>(string.Empty))
                          .AddCustomMarker("Parcels:", sceneParcelsBinding = new ElementBinding<string>(string.Empty))
-                         .AddCustomMarker("Height (m):", sceneHeightBinding = new ElementBinding<string>(string .Empty));
+                         .AddCustomMarker("Height (m):", sceneHeightBinding = new ElementBinding<string>(string .Empty))
+                         .AddToggleField("Show scene bounds:", (state) => { showDebugCube = state.newValue; }, false);
+            this.debugBuilder = debugBuilder;
         }
 
         private void ResetProcessedParcel()
@@ -65,8 +72,15 @@ namespace ECS.SceneLifeCycle.Systems
             UpdateCurrentScene(parcel);
             UpdateCurrentSceneInfo(parcel);
 
-            RefreshSceneDebugInfo();
+            if (debugBuilder.IsVisible && debugInfoVisibilityBinding.IsExpanded)
+                RefreshSceneDebugInfo();
+        }
 
+        public override void Dispose()
+        {
+            base.Dispose();
+
+            GameObject.Destroy(sceneBoundsCube);
         }
 
         private void UpdateSceneReadiness(Vector2Int parcel)
@@ -106,6 +120,8 @@ namespace ECS.SceneLifeCycle.Systems
         {
             if (scenesCache.CurrentScene != null)
             {
+                sceneBoundsCube?.SetActive(showDebugCube);
+
                 if (sceneNameBinding.Value != scenesCache.CurrentScene.Info.Name)
                 {
                     sceneNameBinding.Value = scenesCache.CurrentScene.Info.Name;
@@ -116,6 +132,13 @@ namespace ECS.SceneLifeCycle.Systems
                     }
 
                     sceneHeightBinding.Value = scenesCache.CurrentScene.SceneData.Geometry.Height.ToString();
+
+                    if (sceneBoundsCube == null)
+                    {
+                        sceneBoundsCube = CreateDebugCube();
+                    }
+
+                    UpdateDebugCube(scenesCache.CurrentScene.SceneData.Geometry, sceneBoundsCube);
                 }
             }
             else
@@ -123,7 +146,39 @@ namespace ECS.SceneLifeCycle.Systems
                 sceneNameBinding.Value = "<No data>";
                 sceneParcelsBinding.Value = "<No data>";
                 sceneHeightBinding.Value = "<No data>";
+                sceneBoundsCube?.SetActive(false);
             }
+        }
+
+        private GameObject CreateDebugCube()
+        {
+            GameObject cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            cube.name = "DebugSceneBoundsCube";
+
+            Material cubeMaterial = cube.GetComponent<MeshRenderer>().material;
+            cubeMaterial.color = new Color(1.0f, 0.0f, 0.0f, 0.8f);
+            cubeMaterial.SetFloat("_SrcBlend", (int)BlendMode.One);
+            cubeMaterial.SetFloat("_DstBlend", (int)BlendMode.OneMinusSrcAlpha);
+            cubeMaterial.SetFloat("_Cull", (int)CullMode.Off);
+            cubeMaterial.SetFloat("_Surface", 1.0f); // 1 means transparent
+            cubeMaterial.renderQueue = (int)RenderQueue.Transparent;
+
+            GameObject.Destroy(cube.GetComponent<Collider>());
+
+            cube.SetActive(false);
+            return cube;
+        }
+
+        private void UpdateDebugCube(ParcelMathHelper.SceneGeometry sceneGeometry, GameObject cube)
+        {
+            // Makes the cube fit the scene bounds
+            Vector3 cubeSize = new Vector3(sceneGeometry.CircumscribedPlanes.MaxX - sceneGeometry.CircumscribedPlanes.MinX,
+                                           sceneGeometry.Height,
+                                           sceneGeometry.CircumscribedPlanes.MaxZ - sceneGeometry.CircumscribedPlanes.MinZ);
+            cube.transform.position = new Vector3(sceneGeometry.CircumscribedPlanes.MinX + cubeSize.x * 0.5f,
+                                                  cubeSize.y * 0.5f,
+                                                  sceneGeometry.CircumscribedPlanes.MinZ + cubeSize.z * 0.5f);
+            cube.transform.localScale = cubeSize;
         }
     }
 }
