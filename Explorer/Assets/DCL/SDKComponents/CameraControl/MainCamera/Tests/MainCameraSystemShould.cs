@@ -6,6 +6,7 @@ using DCL.CharacterCamera;
 using DCL.ECSComponents;
 using DCL.SDKComponents.CameraControl.MainCamera.Components;
 using DCL.SDKComponents.CameraControl.MainCamera.Systems;
+using DCL.Utilities;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.TestSuite;
@@ -75,6 +76,8 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
                 new CRDTEntity(SpecialEntitiesID.CAMERA_ENTITY),
                 new CameraComponent { Mode = CameraMode.ThirdPerson }
             );
+            var cameraEntityProxy = new ObjectProxy<Entity>();
+            cameraEntityProxy.SetObject(globalWorldCameraEntity);
 
             sceneStateProvider = Substitute.For<ISceneStateProvider>();
             sceneStateProvider.IsCurrent.Returns(true);
@@ -87,6 +90,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
 
             cameraData = Substitute.For<IExposedCameraData>();
             cameraData.CinemachineBrain.Returns(cinemachineBrain);
+            cameraData.CameraEntityProxy.Returns(cameraEntityProxy);
 
             system = new MainCameraSystem(world, mainCameraEntity, entitiesMap, sceneStateProvider, cameraData, globalWorld);
         }

@@ -68,21 +68,21 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
 
             // Empty LookAt prop
             PBVirtualCamera pbComponent = new PBVirtualCamera();
-            Assert.AreEqual(-1, VirtualCameraUtils.GetPBVirtualCameraLookAtCRDTEntity(pbComponent, virtualCameraCRDTEntity));
+            Assert.IsNull(VirtualCameraUtils.GetPBVirtualCameraLookAtCRDTEntity(pbComponent, virtualCameraCRDTEntity));
 
             // Invalid LookAt values
             pbComponent.LookAtEntity = SpecialEntitiesID.CAMERA_ENTITY;
-            Assert.AreEqual(-1, VirtualCameraUtils.GetPBVirtualCameraLookAtCRDTEntity(pbComponent, virtualCameraCRDTEntity));
+            Assert.IsNull(VirtualCameraUtils.GetPBVirtualCameraLookAtCRDTEntity(pbComponent, virtualCameraCRDTEntity));
 
             pbComponent.LookAtEntity = (uint)virtualCameraCRDTEntity;
-            Assert.AreEqual(-1, VirtualCameraUtils.GetPBVirtualCameraLookAtCRDTEntity(pbComponent, virtualCameraCRDTEntity));
+            Assert.IsNull(VirtualCameraUtils.GetPBVirtualCameraLookAtCRDTEntity(pbComponent, virtualCameraCRDTEntity));
 
             // Valid LookAt values
             pbComponent.LookAtEntity = SpecialEntitiesID.PLAYER_ENTITY;
-            Assert.AreEqual(SpecialEntitiesID.PLAYER_ENTITY, VirtualCameraUtils.GetPBVirtualCameraLookAtCRDTEntity(pbComponent, virtualCameraCRDTEntity));
+            Assert.AreEqual(SpecialEntitiesID.PLAYER_ENTITY, VirtualCameraUtils.GetPBVirtualCameraLookAtCRDTEntity(pbComponent, virtualCameraCRDTEntity)!.Value.Id);
 
             pbComponent.LookAtEntity = 627;
-            Assert.AreEqual(627, VirtualCameraUtils.GetPBVirtualCameraLookAtCRDTEntity(pbComponent, virtualCameraCRDTEntity));
+            Assert.AreEqual(627, VirtualCameraUtils.GetPBVirtualCameraLookAtCRDTEntity(pbComponent, virtualCameraCRDTEntity)!.Value.Id);
         }
 
         [Test]

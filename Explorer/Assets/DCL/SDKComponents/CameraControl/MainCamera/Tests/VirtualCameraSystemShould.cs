@@ -71,7 +71,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
             Assert.AreEqual(sdkVirtualCameraPool.CountInactive, 0);
 
             Assert.IsTrue(world.TryGet(entity, out VirtualCameraComponent vCamComponent));
-            Assert.AreEqual(vCamComponent.lookAtCRDTEntity, lookAtEntity);
+            Assert.AreEqual(vCamComponent.lookAtCRDTEntity!.Value.Id, lookAtEntity);
             Assert.AreSame(vCamComponent.virtualCameraInstance, virtualCamera);
         }
 
