@@ -1216,6 +1216,7 @@ MonoBehaviour:
   <PanelContent>k__BackingField: {fileID: 8006655162828613406}
   <ThumbnailImage>k__BackingField: {fileID: 4234129017711829227}
   <RarityBackground>k__BackingField: {fileID: 8126132983699070167}
+  <RarityMark>k__BackingField: {fileID: 5125327586862803259}
   <CategoryImage>k__BackingField: {fileID: 6886083881855597611}
   <ItemName>k__BackingField: {fileID: 1043690932249880006}
 --- !u!225 &6884335029334525881
