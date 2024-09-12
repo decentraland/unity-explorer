@@ -99,7 +99,7 @@ namespace Global.AppArgs
                     appParameters[REALM_PARAM] = realmParamValue.Remove(realmParamValue.Length - 1);
 
                 // Patch for MacOS removing the ':' from the realm parameter protocol
-                appParameters[REALM_PARAM] = Regex.Replace(realmParamValue, @"(https?)//(.*?)$", @"$1://$2");
+                appParameters[REALM_PARAM] = Regex.Replace(appParameters[REALM_PARAM], @"(https?)//(.*?)$", @"$1://$2");
             }
         }
     }
