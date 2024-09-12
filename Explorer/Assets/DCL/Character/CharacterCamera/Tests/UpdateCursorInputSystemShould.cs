@@ -51,7 +51,7 @@ namespace DCL.CharacterCamera.Tests
             positionControl = mouse.GetChildControl<Vector2Control>("Position");
             Move(positionControl, new Vector2(50, 50), new Vector2(0.5f, 0.5f));
 
-            system = new UpdateCursorInputSystem(world, dlcInput, eventSystem, cursor, crosshairView);
+            system = new UpdateCursorInputSystem(world, dlcInput, eventSystem, cursor, crosshairView, Substitute.For<IExposedCameraData>());
             system.Initialize();
         }
 

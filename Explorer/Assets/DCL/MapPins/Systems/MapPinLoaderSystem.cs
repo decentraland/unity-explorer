@@ -16,7 +16,6 @@ using SceneRunner.Scene;
 using UnityEngine;
 using Entity = Arch.Core.Entity;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.Texture2D, ECS.StreamableLoading.Textures.GetTextureIntention>;
-using Vector2 = Decentraland.Common.Vector2;
 
 namespace DCL.SDKComponents.MapPins.Systems
 {
@@ -36,7 +35,6 @@ namespace DCL.SDKComponents.MapPins.Systems
             this.globalWorld = globalWorld;
             this.partitionComponent = partitionComponent;
         }
-
 
         protected override void Update(float t)
         {

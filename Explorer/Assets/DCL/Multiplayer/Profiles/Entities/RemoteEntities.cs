@@ -30,7 +30,7 @@ namespace DCL.Multiplayer.Profiles.Entities
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
         private readonly List<string> tempRemoveAll = new ();
         private readonly IEntityCollidersGlobalCache collidersGlobalCache;
-        private readonly Dictionary<string, Collider> collidersByWalletId = new ();
+        private readonly Dictionary<string, RemoteAvatarCollider> collidersByWalletId = new ();
         private IComponentPool<RemoteAvatarCollider> remoteAvatarColliderPool = null!;
         private IComponentPool<Transform> transformPool = null!;
 
@@ -89,9 +89,10 @@ namespace DCL.Multiplayer.Profiles.Entities
 
             var entity = entityParticipantTable.Entity(walletId);
 
-            if (collidersByWalletId.TryGetValue(walletId, out Collider collider))
+            if (collidersByWalletId.TryGetValue(walletId, out RemoteAvatarCollider remoteAvatarCollider))
             {
-                collidersGlobalCache.RemoveGlobalEntityAssociation(collider);
+                remoteAvatarColliderPool.Release(remoteAvatarCollider);
+                collidersGlobalCache.RemoveGlobalEntityAssociation(remoteAvatarCollider.Collider);
                 collidersByWalletId.Remove(walletId);
             }
 
@@ -133,7 +134,7 @@ namespace DCL.Multiplayer.Profiles.Entities
             remoteAvatarCollider.transform.SetParent(transform);
             remoteAvatarCollider.transform.rotation = Quaternion.identity;
             remoteAvatarCollider.transform.localScale = Vector3.one;
-            collidersByWalletId.TryAdd(profile.WalletId, remoteAvatarCollider.Collider);
+            collidersByWalletId.TryAdd(profile.WalletId, remoteAvatarCollider);
 
             var transformComp = new CharacterTransform(transform);
 

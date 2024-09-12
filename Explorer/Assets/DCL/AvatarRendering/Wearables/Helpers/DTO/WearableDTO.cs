@@ -1,3 +1,6 @@
+using DCL.AvatarRendering.Loading;
+using DCL.AvatarRendering.Loading.DTO;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 
@@ -7,42 +10,45 @@ namespace DCL.AvatarRendering.Wearables.Helpers
     public class WearableDTO : AvatarAttachmentDTO<WearableDTO.WearableMetadataDto>
     {
         [Serializable]
-        public class WearableMetadataDto : AvatarAttachmentDTO.MetadataBase
+        public class WearableMetadataDto : MetadataBase
         {
-            public DataDto data;
-            public override AvatarAttachmentDTO.DataBase AbstractData => data;
+            public DataDto data = new ();
+            public override DataBase AbstractData => data;
 
             [Serializable]
-            public class DataDto : AvatarAttachmentDTO.DataBase
+            public class DataDto : DataBase
             {
             }
         }
 
         [Serializable]
-        public struct LambdaResponse
+        public struct LambdaResponse : IAttachmentLambdaResponse<LambdaResponseElementDto>
         {
             public List<LambdaResponseElementDto> elements;
             public int totalAmount;
+
+            [JsonIgnore]
+            public IReadOnlyList<LambdaResponseElementDto> Page => elements;
+
+            [JsonIgnore]
+            public int TotalAmount => totalAmount;
         }
 
         [Serializable]
-        public struct LambdaResponseElementDto
+        public class LambdaResponseElementDto : ILambdaResponseElement<WearableDTO>
         {
             public string type;
             public string urn;
             public string name;
             public string category;
             public WearableDTO entity;
-            public LambdaResponseIndividualDataDto[] individualData;
-        }
+            public ElementIndividualDataDto[] individualData;
 
-        [Serializable]
-        public struct LambdaResponseIndividualDataDto
-        {
-            public string id;
-            public string tokenId;
-            public string transferredAt;
-            public string price;
+            [JsonIgnore]
+            public WearableDTO Entity => entity;
+
+            [JsonIgnore]
+            public IReadOnlyList<ElementIndividualDataDto> IndividualData => individualData;
         }
     }
 }

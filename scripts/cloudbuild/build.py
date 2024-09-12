@@ -1,4 +1,5 @@
 import os
+import stat
 import re
 import sys
 import time
@@ -9,6 +10,21 @@ import datetime
 import argparse
 # Local
 import utils
+
+from zipfile import ZipFile, ZipInfo
+
+class ZipFileWithPermissions(zipfile.ZipFile):
+    def _extract_member(self, member, targetpath, pwd):
+        if not isinstance(member, zipfile.ZipInfo):
+            member = self.getinfo(member)
+
+        targetpath = super()._extract_member(member, targetpath, pwd)
+
+        attr = member.external_attr >> 16
+        if attr != 0:
+            os.chmod(targetpath, attr)
+        return targetpath
+
 
 # Define whether this is a release workflow based on IS_RELEASE_BUILD
 is_release_workflow = os.getenv('IS_RELEASE_BUILD', 'false').lower() == 'true'
@@ -261,9 +277,9 @@ def poll_build(id):
             print(f'Build status is not known!: "{status}"')
             sys.exit(1)
             return False
-
+            
 def download_artifact(id):
-    response = requests.get(f'{URL}/buildtargets/{os.getenv('TARGET')}/builds/{id}', headers=HEADERS)
+    response = requests.get(f'{URL}/buildtargets/{os.getenv("TARGET")}/builds/{id}', headers=HEADERS)
 
     if response.status_code != 200:
         print(f'Failed to get build artifacts with ID {id} with status code: {response.status_code}')
@@ -279,21 +295,50 @@ def download_artifact(id):
 
     download_dir = 'build'
     filepath = os.path.join(download_dir, 'artifact.zip')
+
+    # Print current working directory and target download directory
+    print(f"Current working directory: {os.getcwd()}")
+    print(f"Target download directory: {os.path.join(os.getcwd(), download_dir)}")
+
     os.makedirs(download_dir, exist_ok=True)
 
-    print('Started downloading artifacts from Unity Cloud...')
-
+    print(f'Started downloading artifacts from Unity Cloud to {download_dir}...')
     response = requests.get(artifact_url)
     with open(filepath, 'wb') as f:
         f.write(response.content)
 
-    print('Started extracting artifacts from Unity Cloud...')
+    print(f'Started extracting artifacts from Unity Cloud to {download_dir}...')
+    try:
+        with ZipFileWithPermissions(filepath, 'r') as zip_ref:
+            zip_ref.extractall(download_dir)
 
-    with zipfile.ZipFile(filepath, 'r') as zip_ref:
-        zip_ref.extractall(download_dir)
+        # Check if this is a macOS target and verify we have the right permissions set
+        if 'macos' in os.getenv('TARGET', '').lower():
+            explorer_path = os.path.join(download_dir, 'Decentraland.app', 'Contents', 'MacOS', 'Explorer')
+            if os.path.exists(explorer_path):
+                is_executable = os.access(explorer_path, os.X_OK)
+                print(f"Is Explorer executable? {'Yes' if is_executable else 'No'}")
+                print(f"Explorer permissions: {oct(os.stat(explorer_path).st_mode)}")
+            else:
+                print(f"Warning: Explorer executable not found at {explorer_path}")
+        else:
+            print("Not a macOS target, skipping Explorer executable check.")
+
+    except zipfile.BadZipFile as e:
+        print(f'Failed to unzip the artifact at {filepath}: {e}')
+        sys.exit(1)
+    except Exception as e:
+        print(f'An unexpected error occurred during the extraction: {e}')
+        sys.exit(1)
 
     os.remove(filepath)
     print('Artifacts ready!')
+
+    # Final check to confirm build folder exists
+    if os.path.exists(download_dir):
+        print(f"Build folder confirmed at: {os.path.join(os.getcwd(), download_dir)}")
+    else:
+        print(f"ERROR: Build folder not found at expected location: {os.path.join(os.getcwd(), download_dir)}")
 
 def download_log(id):
     response = requests.get(f'{URL}/buildtargets/{os.getenv('TARGET')}/builds/{id}/log', headers=HEADERS)

@@ -26,12 +26,11 @@ namespace DCL.CharacterCamera.Systems
         private readonly IPartitionComponent scenePartition;
         private readonly byte propagationThreshold;
         private readonly IComponentPool<SDKTransform> sdkTransformPool;
+        private readonly IComponentPool<PBMainCamera> mainCameraPool;
         private readonly Entity cameraEntity;
-        
-
 
         internal WriteCameraComponentsSystem(World world, IECSToCRDTWriter ecsToCrdtWriter, IExposedCameraData exposedCameraData, ISceneData sceneData, IPartitionComponent scenePartition,
-            byte propagationThreshold, IComponentPool<SDKTransform> sdkTransformPool, Entity cameraEntity) : base(world)
+            byte propagationThreshold, IComponentPool<SDKTransform> sdkTransformPool, IComponentPool<PBMainCamera> mainCameraPool, Entity cameraEntity) : base(world)
         {
             this.ecsToCrdtWriter = ecsToCrdtWriter;
             this.exposedCameraData = exposedCameraData;
@@ -39,26 +38,34 @@ namespace DCL.CharacterCamera.Systems
             this.propagationThreshold = propagationThreshold;
             this.sdkTransformPool = sdkTransformPool;
             this.cameraEntity = cameraEntity;
+            this.mainCameraPool = mainCameraPool;
             this.scenePartition = scenePartition;
         }
 
         public override void Initialize()
         {
-            // set camera position for a newly created scene
+            // Set camera position for a newly created scene
             var sdkTransform = ExposedTransformUtils.Put(ecsToCrdtWriter, exposedCameraData, SpecialEntitiesID.CAMERA_ENTITY, sceneData.Geometry.BaseParcelPosition, false)
                 .EnsureNotNull();
 
             if (!World.Has<SDKTransform>(cameraEntity))
             {
                 var newComponent = sdkTransformPool.Get();
-                // Copy all fields
                 newComponent.Position = sdkTransform.Position;
                 newComponent.Rotation = sdkTransform.Rotation;
                 newComponent.Scale = sdkTransform.Scale;
 
                 World.Add(cameraEntity, newComponent);
             }
-            
+
+            // Initialize SDK Main Camera component
+            PBMainCamera pbMainCamera = mainCameraPool.Get();
+
+            // you can't put the same instance as it will be returned to the pool after writing to the JS
+            ecsToCrdtWriter.PutMessage<PBMainCamera, PBMainCamera>(static (dataToWrite, ecsInstance) => { dataToWrite.VirtualCameraEntity = ecsInstance.VirtualCameraEntity; }, SpecialEntitiesID.CAMERA_ENTITY, pbMainCamera);
+
+            World.Add(cameraEntity, pbMainCamera);
+
             PropagateCameraData(false);
         }
 

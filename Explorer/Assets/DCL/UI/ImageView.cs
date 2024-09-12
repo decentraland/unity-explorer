@@ -16,5 +16,8 @@ namespace DCL.UI
             Image.sprite = sprite;
             LoadingObject.SetActive(false);
         }
+
+        public void SetColor(Color color) =>
+            Image.color = color;
     }
 }

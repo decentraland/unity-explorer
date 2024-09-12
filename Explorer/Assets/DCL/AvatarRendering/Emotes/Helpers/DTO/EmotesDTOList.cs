@@ -1,14 +1,17 @@
-using System.Collections.Generic;
+using DCL.AvatarRendering.Loading.Components;
 
 namespace DCL.AvatarRendering.Emotes
 {
-    public struct EmotesDTOList
+    public readonly struct EmotesDTOList : IAttachmentsDTOList<EmoteDTO>
     {
-        public readonly IReadOnlyList<EmoteDTO> Value;
+        private readonly RepoolableList<EmoteDTO> value;
 
-        public EmotesDTOList(IReadOnlyList<EmoteDTO> value)
+        public EmotesDTOList(RepoolableList<EmoteDTO> value)
         {
-            Value = value;
+            this.value = value;
         }
+
+        public ConsumedList<EmoteDTO> ConsumeAttachments() =>
+            IAttachmentsDTOList<EmoteDTO>.DefaultConsumeAttachments(value);
     }
 }

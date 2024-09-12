@@ -1,5 +1,6 @@
 using AssetManagement;
-using DCL.AvatarRendering.Wearables;
+using CommunicationData.URLHelpers;
+using DCL.AvatarRendering.Loading.Components;
 using ECS.StreamableLoading;
 using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
@@ -10,6 +11,8 @@ namespace DCL.AvatarRendering.Emotes
 {
     public struct GetSceneEmoteFromRealmIntention : IEquatable<GetSceneEmoteFromRealmIntention>, IAssetIntention
     {
+        private const string SCENE_EMOTE_PREFIX = "urn:decentraland:off-chain:scene-emote";
+
         public CancellationTokenSource CancellationTokenSource { get; }
         public string SceneId { get; }
         public SceneAssetBundleManifest AssetBundleManifest { get; }
@@ -17,17 +20,19 @@ namespace DCL.AvatarRendering.Emotes
         public bool Loop { get; }
         public AssetSource PermittedSources { get; }
         public BodyShape BodyShape { get; }
-        public int Timeout { get; }
         public bool IsAssetBundleProcessed { get; set; }
-        public float ElapsedTime { get; set; }
 
-        public GetSceneEmoteFromRealmIntention(string sceneId,
+        public LoadTimeout Timeout;
+
+        public GetSceneEmoteFromRealmIntention(
+            string sceneId,
             SceneAssetBundleManifest assetBundleManifest,
             string emoteHash,
             bool loop,
             BodyShape bodyShape,
             AssetSource permittedSources = AssetSource.ALL,
-            int timeout = StreamableLoadingDefaults.TIMEOUT) : this()
+            int timeout = StreamableLoadingDefaults.TIMEOUT
+        ) : this()
         {
             SceneId = sceneId;
             AssetBundleManifest = assetBundleManifest;
@@ -36,10 +41,13 @@ namespace DCL.AvatarRendering.Emotes
             CancellationTokenSource = new CancellationTokenSource();
             PermittedSources = permittedSources;
             BodyShape = bodyShape;
-            Timeout = timeout;
+            Timeout = new LoadTimeout(timeout);
         }
 
         public bool Equals(GetSceneEmoteFromRealmIntention other) =>
             EmoteHash == other.EmoteHash && Loop == other.Loop && BodyShape.Equals(other.BodyShape);
+
+        public readonly URN NewSceneEmoteURN() =>
+            $"{SCENE_EMOTE_PREFIX}:{SceneId}-{EmoteHash}-{Loop.ToString().ToLower()}";
     }
 }

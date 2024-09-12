@@ -20,9 +20,7 @@ namespace SceneRuntime
     public class SceneRuntimeImpl : ISceneRuntime, IJsOperations
     {
         internal readonly V8ScriptEngine engine;
-        private readonly IInstancePoolsProvider instancePoolsProvider;
         private readonly SceneShortInfo sceneShortInfo;
-        private readonly V8EngineFactory engineFactory;
         private readonly V8ActiveEngines activeEngines;
 
         private readonly JsApiBunch jsApiBunch;
@@ -38,15 +36,12 @@ namespace SceneRuntime
             string sourceCode,
             (string validateCode, string jsInitCode) initCode,
             IReadOnlyDictionary<string, string> jsModules,
-            IInstancePoolsProvider instancePoolsProvider,
             SceneShortInfo sceneShortInfo,
             V8EngineFactory engineFactory,
             V8ActiveEngines activeEngines
         )
         {
-            this.instancePoolsProvider = instancePoolsProvider;
             this.sceneShortInfo = sceneShortInfo;
-            this.engineFactory = engineFactory;
             this.activeEngines = activeEngines;
             resetableSource = new JSTaskResolverResetable();
 

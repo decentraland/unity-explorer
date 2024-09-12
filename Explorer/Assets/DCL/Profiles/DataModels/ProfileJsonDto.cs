@@ -1,7 +1,7 @@
 #nullable enable
 
 using CommunicationData.URLHelpers;
-using DCL.AvatarRendering.Wearables;
+using DCL.AvatarRendering.Loading.Components;
 using DCL.Optimization.ThreadSafePool;
 using System;
 using System.Collections.Generic;

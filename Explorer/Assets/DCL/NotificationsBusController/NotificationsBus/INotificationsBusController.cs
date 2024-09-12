@@ -8,5 +8,7 @@ namespace DCL.NotificationsBusController.NotificationsBus
         void ClickNotification(NotificationType notificationType, params object[] parameters);
         void SubscribeToNotificationTypeClick(NotificationType desiredType, NotificationsBusController.NotificationClickedDelegate listener);
         void SubscribeToNotificationTypeReceived(NotificationType desiredType, NotificationsBusController.NotificationReceivedDelegate listener);
+        void SubscribeToAllNotificationTypesClick(NotificationsBusController.NotificationClickedDelegate listener);
+        void SubscribeToAllNotificationTypesReceived(NotificationsBusController.NotificationReceivedDelegate listener);
     }
 }

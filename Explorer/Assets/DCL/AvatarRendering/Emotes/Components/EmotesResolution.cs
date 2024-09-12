@@ -1,19 +1,20 @@
-using System.Collections.Generic;
+using DCL.AvatarRendering.Loading.Components;
 
 namespace DCL.AvatarRendering.Emotes
 {
     public readonly struct EmotesResolution
     {
-        /// <summary>
-        ///     Poolable collection of result wearables
-        /// </summary>
-        public IReadOnlyList<IEmote> Emotes { get; }
         public int TotalAmount { get; }
 
-        public EmotesResolution(IReadOnlyList<IEmote> emotes, int totalAmount)
+        private readonly RepoolableList<IEmote> emotes;
+
+        public EmotesResolution(RepoolableList<IEmote> emotes, int totalAmount)
         {
-            Emotes = emotes;
+            this.emotes = emotes;
             TotalAmount = totalAmount;
         }
+
+        public ConsumedList<IEmote> ConsumeEmotes() =>
+            new (emotes);
     }
 }

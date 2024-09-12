@@ -29,11 +29,7 @@ namespace DCL.Emoji
             view.inputField.onValueChanged.AddListener(OnValueChanged);
             view.inputField.onSelect.AddListener(BlockUnwantedInputs);
             view.inputField.onDeselect.AddListener(UnblockUnwantedInputs);
-            view.inputField.onEndEdit.AddListener(UnblockUnwantedInputs);
-            view.Disabled += UnblockUnwantedInputs;
-
             view.clearSearchButton.onClick.AddListener(ClearSearch);
-
             view.clearSearchButton.gameObject.SetActive(false);
 
             searchItemsPool = new ObjectPool<EmojiButton>(
@@ -47,19 +43,15 @@ namespace DCL.Emoji
         public void Dispose()
         {
             ReleaseAllSearchResults();
-
             view.inputField.onValueChanged.RemoveListener(OnValueChanged);
             view.inputField.onSelect.RemoveListener(BlockUnwantedInputs);
             view.inputField.onDeselect.RemoveListener(UnblockUnwantedInputs);
-            view.inputField.onEndEdit.RemoveListener(UnblockUnwantedInputs);
-            view.Disabled -= UnblockUnwantedInputs;
-
             view.clearSearchButton.onClick.RemoveListener(ClearSearch);
         }
 
         private void BlockUnwantedInputs(string _)
         {
-            inputBlock.Disable(InputMapComponent.Kind.Shortcuts , InputMapComponent.Kind.Player);
+            inputBlock.Disable(InputMapComponent.Kind.SHORTCUTS , InputMapComponent.Kind.PLAYER);
         }
 
         private void UnblockUnwantedInputs(string _) =>
@@ -67,7 +59,7 @@ namespace DCL.Emoji
 
         private void UnblockUnwantedInputs()
         {
-            inputBlock.Enable(InputMapComponent.Kind.Shortcuts , InputMapComponent.Kind.Player);
+            inputBlock.Enable(InputMapComponent.Kind.SHORTCUTS , InputMapComponent.Kind.PLAYER);
         }
 
         private EmojiButton CreatePoolElements(Transform parent, EmojiButton emojiButton)

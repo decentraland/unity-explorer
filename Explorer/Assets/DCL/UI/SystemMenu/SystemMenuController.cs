@@ -9,6 +9,7 @@ using DCL.Web3;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using MVC;
+using System;
 using System.Threading;
 using UnityEngine;
 using Utility;
@@ -17,6 +18,8 @@ namespace DCL.UI.SystemMenu
 {
     public class SystemMenuController : ControllerBase<SystemMenuView>
     {
+        public event Action OnClosed;
+
         private readonly IWebBrowser webBrowser;
         private readonly IWeb3Authenticator web3Authenticator;
         private readonly IUserInAppInitializationFlow userInAppInitializationFlow;
@@ -55,33 +58,38 @@ namespace DCL.UI.SystemMenu
         public override void Dispose()
         {
             base.Dispose();
-
             logoutCts.SafeCancelAndDispose();
         }
 
-        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
-            UniTask.WhenAny(viewInstance.LogoutButton.OnClickAsync(ct),
-                viewInstance.ExitAppButton.OnClickAsync(ct),
-                viewInstance.PrivacyPolicyButton.OnClickAsync(ct),
-                viewInstance.TermsOfServiceButton.OnClickAsync(ct),
-                viewInstance.CloseButton.OnClickAsync(ct),
-                viewInstance.PreviewProfileButton.OnClickAsync(ct));
+        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) => UniTask.Never(ct);
 
         protected override void OnViewInstantiated()
         {
             base.OnViewInstantiated();
 
-            viewInstance.LogoutButton.onClick!.AddListener(Logout);
-            viewInstance.ExitAppButton.onClick!.AddListener(ExitApp);
-            viewInstance.PrivacyPolicyButton.onClick!.AddListener(ShowPrivacyPolicy);
-            viewInstance.TermsOfServiceButton.onClick!.AddListener(ShowTermsOfService);
-            viewInstance.PreviewProfileButton.onClick!.AddListener(ShowPassport);
+            viewInstance!.LogoutButton.onClick.AddListener(Logout);
+            viewInstance.ExitAppButton.onClick.AddListener(ExitApp);
+            viewInstance.PrivacyPolicyButton.onClick.AddListener(ShowPrivacyPolicy);
+            viewInstance.TermsOfServiceButton.onClick.AddListener(ShowTermsOfService);
+            viewInstance.PreviewProfileButton.onClick.AddListener(ShowPassport);
+
+            viewInstance!.LogoutButton.onClick.AddListener(CloseView);
+            viewInstance.ExitAppButton.onClick.AddListener(CloseView);
+            viewInstance.PrivacyPolicyButton.onClick.AddListener(CloseView);
+            viewInstance.TermsOfServiceButton.onClick.AddListener(CloseView);
+            viewInstance.PreviewProfileButton.onClick.AddListener(CloseView);
         }
+
+        private void CloseView()
+        {
+            OnClosed?.Invoke();
+        }
+
 
         protected override void OnViewClose()
         {
-            base.OnViewClose();
             logoutCts.SafeCancelAndDispose();
+            base.OnViewClose();
         }
 
         private void ShowTermsOfService() =>

@@ -205,7 +205,7 @@ namespace ECS.Unity.Materials.Systems
         private StreamableLoadingResult<Texture2D>? GetOrAddVideoTextureResult(in TextureComponent textureComponent, Entity materialEntity) =>
             textureComponent.TryAddConsumer(entitiesMap, materialEntity, videoTexturesPool, World, out Texture2D? tex)
                 ? new StreamableLoadingResult<Texture2D>(tex!)
-                : new StreamableLoadingResult<Texture2D>(CreateException(new EcsEntityNotFoundException(textureComponent.VideoPlayerEntity, $"Entity {textureComponent.VideoPlayerEntity} not found!. VideoTexture will not be created.")));
+                : new StreamableLoadingResult<Texture2D>(GetReportCategory(), CreateException(new EcsEntityNotFoundException(textureComponent.VideoPlayerEntity, $"Entity {textureComponent.VideoPlayerEntity} not found!. VideoTexture will not be created.")));
 
         private bool ResolveTexturesEquality(Entity entity, in TextureComponent? oldTextureComponent, in TextureComponent textureComponent)
         {

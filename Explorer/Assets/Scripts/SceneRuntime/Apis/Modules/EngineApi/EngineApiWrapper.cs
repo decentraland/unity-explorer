@@ -70,7 +70,7 @@ namespace SceneRuntime.Apis.Modules.EngineApi
         }
 
         [UsedImplicitly]
-        public virtual ScriptableSDKObservableEventArray SendBatch() => null;
+        public virtual ScriptableSDKObservableEventArray? SendBatch() => null;
 
         public void SetIsDisposing()
         {

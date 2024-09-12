@@ -1,5 +1,4 @@
 using Arch.Core;
-using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
@@ -31,11 +30,11 @@ namespace DCL.PluginSystem.Global
     internal class BackpackSubPlugin : IDisposable
     {
         private readonly IAssetsProvisioner assetsProvisioner;
-        private readonly IWearableCache wearableCache;
+        private readonly IWearableStorage wearableStorage;
         private readonly ISelfProfile selfProfile;
         private readonly IEquippedWearables equippedWearables;
         private readonly IEquippedEmotes equippedEmotes;
-        private readonly IEmoteCache emoteCache;
+        private readonly IEmoteStorage emoteStorage;
         private readonly IReadOnlyCollection<URN> embeddedEmotes;
         private readonly ICollection<string> forceRender;
         private readonly IRealmData realmData;
@@ -63,11 +62,11 @@ namespace DCL.PluginSystem.Global
             IAssetsProvisioner assetsProvisioner,
             IWeb3IdentityCache web3Identity,
             ICharacterPreviewFactory characterPreviewFactory,
-            IWearableCache wearableCache,
+            IWearableStorage wearableStorage,
             ISelfProfile selfProfile,
             IEquippedWearables equippedWearables,
             IEquippedEmotes equippedEmotes,
-            IEmoteCache emoteCache,
+            IEmoteStorage emoteStorage,
             IReadOnlyCollection<URN> embeddedEmotes,
             ICollection<string> forceRender,
             IRealmData realmData,
@@ -86,11 +85,11 @@ namespace DCL.PluginSystem.Global
             this.assetsProvisioner = assetsProvisioner;
             this.web3Identity = web3Identity;
             this.characterPreviewFactory = characterPreviewFactory;
-            this.wearableCache = wearableCache;
+            this.wearableStorage = wearableStorage;
             this.selfProfile = selfProfile;
             this.equippedWearables = equippedWearables;
             this.equippedEmotes = equippedEmotes;
-            this.emoteCache = emoteCache;
+            this.emoteStorage = emoteStorage;
             this.embeddedEmotes = embeddedEmotes;
             this.forceRender = forceRender;
             this.realmData = realmData;
@@ -117,7 +116,7 @@ namespace DCL.PluginSystem.Global
             // Initialize assets that do not require World
             var sortController = new BackpackSortController(view.BackpackSortView);
 
-            busController = new BackpackBusController(wearableCache, backpackEventBus, backpackCommandBus, equippedWearables, equippedEmotes, emoteCache);
+            busController = new BackpackBusController(wearableStorage, backpackEventBus, backpackCommandBus, equippedWearables, equippedEmotes, emoteStorage);
 
             (NFTColorsSO rarityColorMappings, NftTypeIconSO categoryIconsMapping, NftTypeIconSO rarityBackgroundsMapping, NftTypeIconSO rarityInfoPanelBackgroundsMapping) = await UniTask.WhenAll(
                 assetsProvisioner.ProvideMainAssetValueAsync(backpackSettings.RarityColorMappings, ct),
@@ -160,7 +159,7 @@ namespace DCL.PluginSystem.Global
             );
 
             //not injected anywhere
-            var _ = new BackpackEmoteBreadCrumbController(emoteView.BreadCrumb, backpackEventBus);
+            _ = new BackpackEmoteBreadCrumbController(emoteView.BreadCrumb, backpackEventBus);
 
             ObjectPool<BackpackEmoteGridItemView>? emoteGridPool = await BackpackEmoteGridController.InitializeAssetsAsync(assetsProvisioner, emoteView.GridView, ct);
 

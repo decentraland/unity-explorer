@@ -24,8 +24,6 @@ namespace DCL.UI
         [field: SerializeField]
         public AudioClipConfig SelectAudio { get; private set; }
 
-        public event Action Disabled;
-
         private void OnEnable()
         {
             inputField.onValueChanged.AddListener(OnValueChanged);
@@ -39,8 +37,6 @@ namespace DCL.UI
             inputField.onValueChanged.RemoveListener(OnValueChanged);
             clearSearchButton.onClick.RemoveListener(OnClearText);
             inputField.onSubmit.RemoveListener(OnSubmit);
-
-            Disabled?.Invoke();
         }
 
         private void OnSelect(string text)

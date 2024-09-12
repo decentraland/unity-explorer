@@ -31,6 +31,7 @@ namespace DCL.Input.Systems
         private readonly ICrosshairView crosshairCanvas;
         private readonly DCLInput.CameraActions cameraActions;
         private readonly DCLInput.UIActions uiActions;
+        private readonly IExposedCameraData cameraData;
         private bool hasHoverCollider;
         private bool isAtDistance;
         private bool isHoveringAnInteractable;
@@ -41,11 +42,12 @@ namespace DCL.Input.Systems
         private readonly DCLInput.ShortcutsActions shortcuts;
         private readonly InteractionCache interactionCache;
 
-        internal UpdateCursorInputSystem(World world, DCLInput dclInput, IEventSystem eventSystem, ICursor cursor, ICrosshairView crosshairCanvas) : base(world)
+        internal UpdateCursorInputSystem(World world, DCLInput dclInput, IEventSystem eventSystem, ICursor cursor, ICrosshairView crosshairCanvas, IExposedCameraData cameraData) : base(world)
         {
             this.eventSystem = eventSystem;
             this.cursor = cursor;
             this.crosshairCanvas = crosshairCanvas;
+            this.cameraData = cameraData;
             cameraActions = dclInput.Camera;
             uiActions = dclInput.UI;
             shortcuts = dclInput.Shortcuts;
@@ -91,8 +93,6 @@ namespace DCL.Input.Systems
                 cameraComponent.IsDirty = false;
             }
         }
-
-
 
         [Query]
         private void GetSDKInteractionState(in HoverStateComponent hoverStateComponent)
@@ -151,7 +151,7 @@ namespace DCL.Input.Systems
             }
 
             cursor.SetStyle(cursorStyle);
-            crosshairCanvas.SetCursorStyle(cursorStyle);
+            crosshairCanvas.SetCursorStyle(cursorStyle, cameraData.CameraMode == CameraMode.SDKCamera);
         }
 
         // We check if the gameObject is interactable or not, at least once.

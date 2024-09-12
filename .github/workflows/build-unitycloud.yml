@@ -57,7 +57,7 @@ on:
         type: boolean
       cache_strategy:
         required: true
-        default: 'workspace'
+        default: 'library'
         type: string
       version:
         required: true
@@ -144,7 +144,7 @@ jobs:
           elif [ "${{ inputs.cache_strategy }}" ]; then
             cache_strategy=${{ inputs.cache_strategy }}
           else
-            cache_strategy='workspace'
+            cache_strategy='library'
           fi
           echo "cache_strategy=${cache_strategy}" >> $GITHUB_OUTPUT
 
@@ -178,7 +178,7 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     needs: prebuild
-    timeout-minutes: 180
+    timeout-minutes: 360
     strategy:
       fail-fast: false
       matrix:
@@ -228,7 +228,20 @@ jobs:
 
         run: python -u scripts/cloudbuild/build.py
 
-      - name: Upload artifact
+      - name: 'Tar artifact to maintain original permissions'
+        if: matrix.target == 'macos'
+        run: tar --exclude='build/Decentraland_BackUpThisFolder_ButDontShipItWithYourGame' -cvf build.tar build
+          
+      - name: Upload artifact for macOS
+        if: matrix.target == 'macos'
+        uses: actions/upload-artifact@v4
+        with:
+          name: Decentraland_${{ matrix.target }}
+          path: build.tar
+          if-no-files-found: error
+
+      - name: Upload artifact for Windows
+        if: matrix.target == 'windows64'
         uses: actions/upload-artifact@v4
         with:
           name: Decentraland_${{ matrix.target }}
@@ -236,6 +249,15 @@ jobs:
             build
             !build/**/*_BackUpThisFolder_ButDontShipItWithYourGame
             !build/**/*_BurstDebugInformation_DoNotShip
+          if-no-files-found: error
+          
+      - name: Upload debug symbols
+        uses: actions/upload-artifact@v4
+        with:
+          name: Decentraland_${{ matrix.target }}_debug_symbols
+          path: |
+            build/**/*_BackUpThisFolder_ButDontShipItWithYourGame
+            build/**/*_BurstDebugInformation_DoNotShip
           if-no-files-found: error
 
       # Will run always (even if failing)
@@ -251,6 +273,22 @@ jobs:
       - name: Print cloud logs
         if: always()
         run: cat unity_cloud_log.log
+
+      # Will run always (even if failing)
+      - name: Generate Shader Compilation Report
+        if: always()
+        shell: pwsh
+        run: |
+          ./scripts/Generate-ShaderReport.ps1 -InputLog "unity_cloud_log.log" -OutputReport "shader_compilation_report.log"
+
+      # Upload Shader Compilation Report
+      - name: Upload Shader Compilation Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.target }}_shader_compilation_report
+          path: shader_compilation_report.log
+          if-no-files-found: error
 
       # Will run on cancel or timeout only
       - name: Cancel Unity Cloud build

@@ -9,27 +9,29 @@ namespace DCL.CharacterTriggerArea
         [field: SerializeField] public BoxCollider BoxCollider { get; private set; }
 
         private readonly HashSet<Transform> currentAvatarsInside = new ();
-        internal readonly HashSet<Transform> enteredThisFrame = new ();
-        internal readonly HashSet<Transform> exitedThisFrame = new ();
+        internal readonly HashSet<Transform> enteredAvatarsToBeProcessed = new ();
+        internal readonly HashSet<Transform> exitedAvatarsToBeProcessed = new ();
         [NonSerialized] public Transform TargetTransform;
 
-        public IReadOnlyCollection<Transform> EnteredThisFrame => enteredThisFrame;
-        public IReadOnlyCollection<Transform> ExitedThisFrame => exitedThisFrame;
+        public IReadOnlyCollection<Transform> EnteredAvatarsToBeProcessed => enteredAvatarsToBeProcessed;
+        public IReadOnlyCollection<Transform> ExitedAvatarsToBeProcessed => exitedAvatarsToBeProcessed;
         public IReadOnlyCollection<Transform> CurrentAvatarsInside => currentAvatarsInside;
 
         public void OnTriggerEnter(Collider other)
         {
             if (TargetTransform != null && TargetTransform != other.transform) return;
 
-            enteredThisFrame.Add(other.transform);
+            enteredAvatarsToBeProcessed.Add(other.transform);
             currentAvatarsInside.Add(other.transform);
+            exitedAvatarsToBeProcessed.Remove(other.transform);
         }
 
         public void OnTriggerExit(Collider other)
         {
             if (TargetTransform != null && TargetTransform != other.transform) return;
 
-            exitedThisFrame.Add(other.transform);
+            exitedAvatarsToBeProcessed.Add(other.transform);
+            enteredAvatarsToBeProcessed.Remove(other.transform);
             currentAvatarsInside.Remove(other.transform);
         }
 
@@ -38,15 +40,21 @@ namespace DCL.CharacterTriggerArea
             BoxCollider.enabled = false;
 
             foreach (Transform avatarTransform in currentAvatarsInside)
-                exitedThisFrame.Add(avatarTransform);
+                exitedAvatarsToBeProcessed.Add(avatarTransform);
 
             currentAvatarsInside.Clear();
         }
 
         public void Clear()
         {
-            enteredThisFrame.Clear();
-            exitedThisFrame.Clear();
+            enteredAvatarsToBeProcessed.Clear();
+            exitedAvatarsToBeProcessed.Clear();
         }
+
+        public void ClearEnteredAvatarsToBeProcessed() =>
+            enteredAvatarsToBeProcessed.Clear();
+
+        public void ClearExitedAvatarsToBeProcessed() =>
+            exitedAvatarsToBeProcessed.Clear();
     }
 }

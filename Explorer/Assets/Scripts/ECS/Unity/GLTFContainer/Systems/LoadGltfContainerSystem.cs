@@ -12,7 +12,6 @@ using ECS.Unity.GLTFContainer.Asset.Components;
 using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.GLTFContainer.Components.Defaults;
 using System.Threading;
-using DCL.Diagnostics;
 using DCL.Interaction.Utility;
 using SceneRunner.Scene;
 using UnityEngine.Assertions;
@@ -50,22 +49,25 @@ namespace ECS.Unity.GLTFContainer.Systems
         private void StartLoading(in Entity entity, ref PBGltfContainer sdkComponent, ref PartitionComponent partitionComponent)
         {
             GltfContainerComponent component;
+
             if (!sceneData.TryGetHash(sdkComponent.Src, out string hash))
             {
-                var exception = new ArgumentException($"GLTF source {sdkComponent.Src} not found in the content");
-                ReportHub.LogException(exception, GetReportCategory());
-                component = GltfContainerComponent.CreateFaulty(exception);
+                component = GltfContainerComponent.CreateFaulty(
+                    GetReportCategory(),
+                    new ArgumentException($"GLTF source {sdkComponent.Src} not found in the content")
+                );
+
                 World.Add(entity, component);
             }
             else
             {
                 // It's not the best idea to pass Transform directly but we rely on cancellation source to cancel if the entity dies
-                var promise = Promise.Create(World, new GetGltfContainerAssetIntention(sdkComponent.Src, hash ,new CancellationTokenSource()), partitionComponent);
+                var promise = Promise.Create(World, new GetGltfContainerAssetIntention(sdkComponent.Src, hash, new CancellationTokenSource()), partitionComponent);
                 component = new GltfContainerComponent(sdkComponent.GetVisibleMeshesCollisionMask(), sdkComponent.GetInvisibleMeshesCollisionMask(), promise);
                 component.State = LoadingState.Loading;
                 World.Add(entity, component);
-
             }
+
             eventsBuffer.Add(entity, component);
         }
 
@@ -81,17 +83,17 @@ namespace ECS.Unity.GLTFContainer.Systems
                 // The source is changed, should start downloading over again
                 case LoadingState.Unknown:
                     if (!sceneData.TryGetHash(sdkComponent.Src, out string hash))
-                    {
-                        var exception = new ArgumentException($"GLTF source {sdkComponent.Src} not found in the content");
-                        ReportHub.LogException(exception, GetReportCategory());
-                        component.SetFaulty(exception);
-                    }
+                        component.SetFaulty(
+                            GetReportCategory(),
+                            new ArgumentException($"GLTF source {sdkComponent.Src} not found in the content")
+                        );
                     else
                     {
-                        var promise = Promise.Create(World, new GetGltfContainerAssetIntention(sdkComponent.Src,hash, new CancellationTokenSource()), partitionComponent);
+                        var promise = Promise.Create(World, new GetGltfContainerAssetIntention(sdkComponent.Src, hash, new CancellationTokenSource()), partitionComponent);
                         component.Promise = promise;
                         component.State = LoadingState.Loading;
                     }
+
                     eventsBuffer.Add(entity, component);
                     return;
 
@@ -127,6 +129,5 @@ namespace ECS.Unity.GLTFContainer.Systems
                     return;
             }
         }
-
     }
 }

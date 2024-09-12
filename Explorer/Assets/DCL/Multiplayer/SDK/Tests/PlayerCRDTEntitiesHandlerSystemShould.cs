@@ -21,7 +21,7 @@ namespace DCL.Multiplayer.SDK.Tests
     public class PlayerCRDTEntitiesHandlerSystemShould : UnitySystemTestBase<PlayerCRDTEntitiesHandlerSystem>
     {
         private const string FAKE_USER_ID = "Ia4Ia5Cth0ulhu2Ftaghn2";
-        private readonly IEmoteCache emoteCache;
+        private readonly IEmoteStorage emoteStorage;
 
         private Entity entity;
         private Transform fakeCharacterUnityTransform;

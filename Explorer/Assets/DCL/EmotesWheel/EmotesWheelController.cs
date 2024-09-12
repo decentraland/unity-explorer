@@ -2,6 +2,7 @@ using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Emotes;
+using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables;
 using DCL.Backpack;
 using DCL.Diagnostics;
@@ -22,8 +23,9 @@ namespace DCL.EmotesWheel
 {
     public class EmotesWheelController : ControllerBase<EmotesWheelView>
     {
+        private const string? EMPTY_IMAGE_TYPE = "empty";
         private readonly ISelfProfile selfProfile;
-        private readonly IEmoteCache emoteCache;
+        private readonly IEmoteStorage emoteStorage;
         private readonly NftTypeIconSO rarityBackgrounds;
         private readonly World world;
         private readonly Entity playerEntity;
@@ -42,7 +44,7 @@ namespace DCL.EmotesWheel
 
         public EmotesWheelController(ViewFactoryMethod viewFactory,
             ISelfProfile selfProfile,
-            IEmoteCache emoteCache,
+            IEmoteStorage emoteStorage,
             NftTypeIconSO rarityBackgrounds,
             World world,
             Entity playerEntity,
@@ -54,7 +56,7 @@ namespace DCL.EmotesWheel
             : base(viewFactory)
         {
             this.selfProfile = selfProfile;
-            this.emoteCache = emoteCache;
+            this.emoteStorage = emoteStorage;
             this.rarityBackgrounds = rarityBackgrounds;
             this.world = world;
             this.playerEntity = playerEntity;
@@ -155,7 +157,7 @@ namespace DCL.EmotesWheel
 
         private async UniTaskVoid SetUpSlotAsync(int slot, URN emoteUrn, CancellationToken ct)
         {
-            if (!emoteCache.TryGetEmote(emoteUrn, out IEmote emote))
+            if (!emoteStorage.TryGetElement(emoteUrn, out IEmote emote))
             {
                 ReportHub.LogError(new ReportData(), $"Could not setup emote wheel slot {slot} for {emoteUrn}, missing emote in cache");
                 return;
@@ -173,7 +175,7 @@ namespace DCL.EmotesWheel
         {
             EmoteWheelSlotView view = viewInstance!.Slots[slot];
 
-            view.BackgroundRarity.sprite = rarityBackgrounds.GetTypeImage("empty");
+            view.BackgroundRarity.sprite = rarityBackgrounds.GetTypeImage(EMPTY_IMAGE_TYPE);
             view.EmptyContainer.SetActive(true);
             view.Thumbnail.gameObject.SetActive(false);
         }
@@ -192,7 +194,7 @@ namespace DCL.EmotesWheel
 
         private void UpdateCurrentEmote(int slot)
         {
-            if (!emoteCache.TryGetEmote(currentEmotes[slot], out IEmote emote))
+            if (!emoteStorage.TryGetElement(currentEmotes[slot], out IEmote emote))
                 ClearCurrentEmote(slot);
             else
                 viewInstance!.CurrentEmoteName.text = emote.GetName();
@@ -200,7 +202,7 @@ namespace DCL.EmotesWheel
 
         private void ClearCurrentEmote(int slot)
         {
-            viewInstance!.CurrentEmoteName.text = "";
+            viewInstance!.CurrentEmoteName.text = string.Empty;
         }
 
         private void PlayEmote(int slot)
@@ -231,14 +233,14 @@ namespace DCL.EmotesWheel
 
         private void UnblockUnwantedInputs()
         {
-            inputBlock.Enable(InputMapComponent.Kind.EmoteWheel);
-            inputBlock.Disable(InputMapComponent.Kind.Emotes);
+            inputBlock.Enable(InputMapComponent.Kind.EMOTE_WHEEL);
+            inputBlock.Disable(InputMapComponent.Kind.EMOTES, InputMapComponent.Kind.SHORTCUTS);
         }
 
         private void BlockUnwantedInputs()
         {
-            inputBlock.Disable(InputMapComponent.Kind.EmoteWheel);
-            inputBlock.Enable(InputMapComponent.Kind.Emotes);
+            inputBlock.Disable(InputMapComponent.Kind.EMOTE_WHEEL);
+            inputBlock.Enable(InputMapComponent.Kind.EMOTES, InputMapComponent.Kind.SHORTCUTS);
         }
 
         private void ListenToSlotsInput(InputActionMap inputActionMap)

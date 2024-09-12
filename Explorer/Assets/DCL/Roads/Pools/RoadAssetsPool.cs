@@ -1,7 +1,6 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using DCL.Optimization.PerformanceBudgeting;
-using DCL.Optimization.Pools;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
@@ -12,6 +11,27 @@ namespace DCL.LOD
     public class RoadAssetsPool : IRoadAssetPool, IDisposable
     {
         private const string DEFAULT_ROAD_KEY = "OpenRoad_0";
+
+        /// <summary>
+        /// The amount of instances of each type of road asset that will be created from the beginning in the pools.
+        /// </summary>
+        private const int DEFAULT_POOL_CAPACITY = 20;
+
+        /// <summary>
+        /// The amount of instances that will be created from the beginning in the pools for "long roads". Long roads are very heavy assets, in terms of memory, whose pools should be pre-warmed with just a few instances, as less as possible.
+        /// </summary>
+        private const int DEFAULT_LONGROAD_POOL_CAPACITY = 1;
+
+        /// <summary>
+        /// When a pool is filled and more instances are required, this is the minimum amount to add to the pool.
+        /// </summary>
+        private const int POOLS_MIN_NEW_INSTANCES = 1;
+
+        /// <summary>
+        /// When a pool is filled and more instances are required, this is the maximum amount to add to the pool.
+        /// </summary>
+        private const int POOLS_MAX_NEW_INSTANCES = 20;
+
         private readonly Transform roadAssetParent;
 
         private readonly Dictionary<string, IObjectPool<Transform>> roadAssetPoolDictionary;
@@ -21,11 +41,28 @@ namespace DCL.LOD
             roadAssetParent = new GameObject("ROAD_ASSET_POOL").transform;
             roadAssetPoolDictionary = new Dictionary<string, IObjectPool<Transform>>();
 
+
             foreach (GameObject gameObject in roadPrefabs)
             {
+                int poolCapacity = gameObject.CompareTag("LongRoad") ? DEFAULT_LONGROAD_POOL_CAPACITY : DEFAULT_POOL_CAPACITY;
+
                 IObjectPool<Transform> roadAssetPool
                     = new ObjectPool<Transform>(() => Object.Instantiate(gameObject, roadAssetParent).transform,
-                        t => t.gameObject.SetActive(true), t => t.gameObject.SetActive(false), actionOnDestroy: UnityObjectUtils.SafeDestroyGameObject);
+                        t => t.gameObject.SetActive(true), t => t.gameObject.SetActive(false), actionOnDestroy: UnityObjectUtils.SafeDestroyGameObject,
+                        defaultCapacity: poolCapacity);
+
+                // Pool pre-warming
+                Transform[] precachedInstances = new Transform[poolCapacity];
+
+                for (int i = 0; i < poolCapacity; ++i)
+                {
+                    precachedInstances[i] = roadAssetPool.Get();
+                }
+
+                for (int i = 0; i < poolCapacity; ++i)
+                {
+                    roadAssetPool.Release(precachedInstances[i]);
+                }
 
                 roadAssetPoolDictionary.Add(gameObject.name, roadAssetPool);
             }
@@ -43,7 +80,32 @@ namespace DCL.LOD
         {
             if (roadAssetPoolDictionary.TryGetValue(key, out IObjectPool<Transform> roadAssetPool))
             {
+                if (roadAssetPool.CountInactive == 0)
+                {
+                    int extraInstances = Mathf.Clamp((roadAssetPool as ObjectPool<Transform>).CountAll / 2, POOLS_MIN_NEW_INSTANCES, POOLS_MAX_NEW_INSTANCES);
+                    Transform[] precachedInstances = new Transform[extraInstances];
+
+                    for (int i = 0; i < extraInstances; ++i)
+                    {
+                        precachedInstances[i] = roadAssetPool.Get();
+                    }
+
+                    for (int i = 0; i < extraInstances; ++i)
+                    {
+                        roadAssetPool.Release(precachedInstances[i]);
+                    }
+                }
+
+                // Debug: Uncomment this to know the content of the pools
+                //string log = "RoadAssetPoolDictionary\nTAKING: " + key + "\n";
+                //foreach (KeyValuePair<string,IObjectPool<Transform>> keyValuePair in roadAssetPoolDictionary)
+                //{
+                //    log += keyValuePair.Key + ": " + (keyValuePair.Value as ObjectPool<Transform>).CountAll + " (" + (keyValuePair.Value as ObjectPool<Transform>).CountActive + ")\n";
+                //}
+                //Debug.Log(log);
+
                 roadAsset = roadAssetPool.Get();
+
                 return true;
             }
 

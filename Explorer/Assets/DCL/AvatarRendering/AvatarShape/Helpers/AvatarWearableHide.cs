@@ -1,4 +1,5 @@
-﻿using DCL.AvatarRendering.Wearables.Components;
+﻿using DCL.AvatarRendering.Loading.Components;
+using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
 using DCL.Optimization.Pools;
@@ -48,13 +49,12 @@ namespace DCL.AvatarRendering.AvatarShape.Helpers
 
         public static string GetCategoryHider(string bodyShapeId, string hiddenCategory, List<IWearable> equippedWearables)
         {
-            Dictionary<string, IWearable> wearablesByCategory = DictionaryPool<string, IWearable>.Get();
+            using var scope = DictionaryPool<string, IWearable>.Get(out var wearablesByCategory);
 
             for (var i = 0; i < equippedWearables.Count; i++)
                 wearablesByCategory[equippedWearables[i].GetCategory()] = equippedWearables[i];
 
             foreach (string priorityCategory in WearablesConstants.CATEGORIES_PRIORITY)
-            {
                 if (wearablesByCategory.TryGetValue(priorityCategory, out IWearable wearable))
                 {
                     HIDE_CATEGORIES.Clear();
@@ -63,9 +63,6 @@ namespace DCL.AvatarRendering.AvatarShape.Helpers
                     if (HIDE_CATEGORIES.Contains(hiddenCategory))
                         return wearable.GetCategory();
                 }
-            }
-
-            DictionaryPool<string, IWearable>.Release(wearablesByCategory);
 
             return string.Empty;
         }

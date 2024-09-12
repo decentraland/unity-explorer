@@ -1,0 +1,35 @@
+name: Trigger Clean Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch_name:
+        description: 'Branch name to build'
+        required: true
+        type: string
+
+jobs:
+  trigger_clean_build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Unity Cloud Build workflow
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            try {
+              console.log('Attempting to dispatch workflow for branch: ${{ github.event.inputs.branch_name }}');
+              const result = await github.rest.actions.createWorkflowDispatch({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                workflow_id: 'build-unitycloud.yml',
+                ref: '${{ github.event.inputs.branch_name }}',
+                inputs: {
+                  clean_build: 'true'
+                }
+              });
+              console.log('Workflow dispatch result:', result.status);
+            } catch (error) {
+              console.error('Error dispatching workflow:', error.message);
+              core.setFailed(error.message);
+            }

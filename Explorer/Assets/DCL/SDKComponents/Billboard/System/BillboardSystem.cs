@@ -16,6 +16,7 @@ namespace DCL.Billboard.System
     [UpdateAfter(typeof(UpdateTransformSystem))]
     public partial class BillboardSystem : BaseUnityLoopSystem
     {
+        private const float MINIMUM_DISTANCE_TO_ROTATE_SQR = 0.25f * 0.25f;
         private readonly IExposedCameraData exposedCameraData;
 
         public BillboardSystem(World world, IExposedCameraData exposedCameraData) : base(world)
@@ -44,32 +45,30 @@ namespace DCL.Billboard.System
             const uint BILLBOARD_Z = (uint)BillboardMode.BmZ;
             const uint BILLBOARD_XY = BILLBOARD_X | BILLBOARD_Y;
 
-            Vector3 cameraPos = cameraPosition;
-
             var billboardMode = (uint)billboard.GetBillboardMode();
 
             if (billboardMode == BILLBOARD_NONE)
                 return;
 
             Transform billboardT = transform.Transform;
-
             Vector3 billboardForward = billboardT.forward;
             Vector3 billboardPos = billboardT.position;
 
-            Vector3 forward = billboardForward;
+            if ((cameraPosition - billboardPos).sqrMagnitude < MINIMUM_DISTANCE_TO_ROTATE_SQR)
+                return;
 
             // either or both X and Y are set
             if ((billboardMode & BILLBOARD_XY) != 0)
             {
-                forward = billboardPos - cameraPos;
+                billboardForward = billboardPos - cameraPosition;
 
-                if ((billboardMode & BILLBOARD_Y) == 0) forward.x = 0;
-                if ((billboardMode & BILLBOARD_X) == 0) forward.y = 0;
+                if ((billboardMode & BILLBOARD_Y) == 0) billboardForward.x = 0;
+                if ((billboardMode & BILLBOARD_X) == 0) billboardForward.y = 0;
 
-                forward.Normalize();
+                billboardForward.Normalize();
             }
 
-            Quaternion rotation = forward != Vector3.zero ? Quaternion.LookRotation(forward) : Quaternion.identity;
+            Quaternion rotation = billboardForward != Vector3.zero ? Quaternion.LookRotation(billboardForward) : Quaternion.identity;
 
             // apply Z axis rotation
             if ((billboardMode & BILLBOARD_Z) != 0)

@@ -8,6 +8,7 @@ using DCL.PerformanceAndDiagnostics.Analytics;
 using ECS;
 using ECS.Abstract;
 using Segment.Serialization;
+using CharacterEmoteSystem = DCL.AvatarRendering.Emotes.Play.CharacterEmoteSystem;
 
 namespace DCL.Analytics.Systems
 {

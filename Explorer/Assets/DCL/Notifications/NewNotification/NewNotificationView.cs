@@ -17,5 +17,14 @@ namespace DCL.Notifications.NewNotification
 
         [field: SerializeField]
         public CanvasGroup SystemNotificationViewCanvasGroup { get; private set; }
+
+        [field: SerializeField]
+        public BadgeNotificationView BadgeNotificationView { get; private set; }
+
+        [field: SerializeField]
+        public Animator BadgeNotificationAnimator { get; private set; }
+
+        [field: SerializeField]
+        public CanvasGroup BadgeNotificationViewCanvasGroup { get; private set; }
     }
 }

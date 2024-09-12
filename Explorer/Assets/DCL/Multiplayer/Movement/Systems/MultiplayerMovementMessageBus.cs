@@ -16,6 +16,12 @@ namespace DCL.Multiplayer.Movement.Systems
 {
     public class MultiplayerMovementMessageBus : IDisposable
     {
+        public enum Scheme
+        {
+            Uncompressed,
+            Compressed,
+        }
+
         private readonly IMessagePipesHub messagePipesHub;
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly CancellationTokenSource cancellationTokenSource = new ();
@@ -23,13 +29,16 @@ namespace DCL.Multiplayer.Movement.Systems
         private NetworkMessageEncoder messageEncoder;
 
         private readonly World globalWorld;
+        private readonly Scheme scheme;
+
         private bool isDisposed;
 
-        public MultiplayerMovementMessageBus(IMessagePipesHub messagePipesHub, IReadOnlyEntityParticipantTable entityParticipantTable, World globalWorld)
+        public MultiplayerMovementMessageBus(IMessagePipesHub messagePipesHub, IReadOnlyEntityParticipantTable entityParticipantTable, World globalWorld, Scheme scheme)
         {
             this.messagePipesHub = messagePipesHub;
             this.entityParticipantTable = entityParticipantTable;
             this.globalWorld = globalWorld;
+            this.scheme = scheme;
 
             this.messagePipesHub.IslandPipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Movement>(Packet.MessageOneofCase.Movement, OnOldSchemaMessageReceived);
             this.messagePipesHub.ScenePipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Movement>(Packet.MessageOneofCase.Movement, OnOldSchemaMessageReceived);
@@ -124,9 +133,50 @@ namespace DCL.Multiplayer.Movement.Systems
 
         private void WriteAndSend(NetworkMovementMessage message, IMessagePipe messagePipe)
         {
-            MessageWrap<MovementCompressed> messageWrap = messagePipe.NewMessage<MovementCompressed>();
-            WriteToProto(messageEncoder.Compress(message), messageWrap.Payload);
-            messageWrap.SendAndDisposeAsync(cancellationTokenSource.Token).Forget();
+            switch (scheme)
+            {
+                case Scheme.Uncompressed:
+                {
+                    var messageWrap = messagePipe.NewMessage<Decentraland.Kernel.Comms.Rfc4.Movement>();
+                    WriteToProto(message, messageWrap.Payload);
+                    messageWrap.SendAndDisposeAsync(cancellationTokenSource.Token).Forget();
+                }
+
+                    break;
+                case Scheme.Compressed:
+                {
+                    MessageWrap<MovementCompressed> messageWrap = messagePipe.NewMessage<MovementCompressed>();
+                    WriteToProto(messageEncoder.Compress(message), messageWrap.Payload);
+                    messageWrap.SendAndDisposeAsync(cancellationTokenSource.Token).Forget();
+                }
+
+                    break;
+                default: throw new ArgumentOutOfRangeException();
+            }
+        }
+
+        private static void WriteToProto(NetworkMovementMessage message, Decentraland.Kernel.Comms.Rfc4.Movement movement)
+        {
+            movement.Timestamp = message.timestamp;
+
+            movement.PositionX = message.position.x;
+            movement.PositionY = message.position.y;
+            movement.PositionZ = message.position.z;
+
+            movement.VelocityX = message.velocity.x;
+            movement.VelocityY = message.velocity.y;
+            movement.VelocityZ = message.velocity.z;
+
+            movement.MovementBlendValue = message.animState.MovementBlendValue;
+            movement.SlideBlendValue = message.animState.SlideBlendValue;
+
+            movement.IsGrounded = message.animState.IsGrounded;
+            movement.IsJumping = message.animState.IsJumping;
+            movement.IsLongJump = message.animState.IsLongJump;
+            movement.IsFalling = message.animState.IsFalling;
+            movement.IsLongFall = message.animState.IsLongFall;
+
+            movement.IsStunned = message.isStunned;
         }
 
         private static void WriteToProto(CompressedNetworkMovementMessage message, MovementCompressed proto)

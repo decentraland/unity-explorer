@@ -11,39 +11,32 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications.SDKMessageBus
 {
     public class SDKMessageBusCommsAPIImplementation : CommunicationsControllerAPIImplementationBase, ISDKMessageBusCommsControllerAPI
     {
-        public List<CommsPayload> SceneCommsMessages { get; } = new ();
+        private readonly List<CommsPayload> messages = new ();
 
-        public SDKMessageBusCommsAPIImplementation(
-            IRealmData realmData,
-            ISceneData sceneData,
-            ICommunicationControllerHub messagePipesHub,
-            IJsOperations jsOperations,
-            ISceneStateProvider sceneStateProvider)
-            : base(realmData, sceneData, messagePipesHub, jsOperations, sceneStateProvider)
+        public IReadOnlyList<CommsPayload> SceneCommsMessages => messages;
+
+        public SDKMessageBusCommsAPIImplementation(IRealmData realmData, ISceneData sceneData, ISceneCommunicationPipe sceneCommunicationPipe, IJsOperations jsOperations, ISceneStateProvider sceneStateProvider)
+            : base(realmData, sceneData, sceneCommunicationPipe, jsOperations, sceneStateProvider) { }
+
+        public void ClearMessages()
         {
+            messages.Clear();
         }
 
         public void Send(string data)
         {
-            var dataBytes = Encoding.UTF8.GetBytes(data);
-            Span<byte> encodedMessage = stackalloc byte[dataBytes.Length + 1];
-            encodedMessage[0] = (byte)MsgType.String;
-            dataBytes.CopyTo(encodedMessage[1..]);
-
-            messagePipesHub.SendMessage(encodedMessage, sceneData.SceneEntityDefinition.id, cancellationTokenSource.Token);
+            byte[] dataBytes = Encoding.UTF8.GetBytes(data);
+            EncodeAndSendMessage(MsgType.String, dataBytes);
         }
 
-        protected override void OnMessageReceived(ICommunicationControllerHub.SceneMessage receivedMessage)
+        protected override void OnMessageReceived(MsgType messageType, ReadOnlySpan<byte> decodedMessage, string fromWalletId)
         {
-            ReadOnlySpan<byte> decodedMessage = receivedMessage.Data.Span;
-            MsgType msgType = DecodeMessage(ref decodedMessage);
-
-            if (msgType != MsgType.String || decodedMessage.Length == 0)
+            if (messageType != MsgType.String)
                 return;
 
-            SceneCommsMessages.Add(new CommsPayload
+            messages.Add(new CommsPayload
             {
-                sender = receivedMessage.WalletId,
+                sender = fromWalletId,
                 message = Encoding.UTF8.GetString(decodedMessage)
             });
         }

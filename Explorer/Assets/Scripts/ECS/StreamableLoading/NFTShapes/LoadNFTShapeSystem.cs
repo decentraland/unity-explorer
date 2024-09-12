@@ -36,7 +36,7 @@ namespace ECS.StreamableLoading.NFTShapes
             bool isOkSize = await webContentSizes.IsOkSizeAsync(imageUrl, ct);
 
             if (isOkSize == false)
-                return new StreamableLoadingResult<Texture2D>(new Exception("Image size is too big"));
+                return new StreamableLoadingResult<Texture2D>(GetReportCategory(), new Exception("Image size is too big"));
 
             // texture request
             // Attempts should be always 1 as there is a repeat loop in `LoadSystemBase`

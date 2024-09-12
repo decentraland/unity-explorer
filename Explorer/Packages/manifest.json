@@ -4,7 +4,7 @@
     "avprovideo": "git@github.com:decentraland/unity-explorer-packages.git?path=/AVProVideo",
     "com.arch.systemgroups": "https://github.com/mikhail-dcl/Arch.SystemGroups.git?path=/Arch.SystemGroups",
     "com.atteneder.draco": "4.0.2",
-    "com.atteneder.gltfast": "https://github.com/decentraland/unity-gltf.git",
+    "com.atteneder.gltfast": "https://github.com/decentraland/unity-gltf.git#dalkia-patch-1",
     "com.brunomikoski.animationsequencer": "0.5.4",
     "com.cysharp.unitask": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask",
     "com.decentraland.livekit-sdk": "https://github.com/decentraland/client-sdk-unity.git",

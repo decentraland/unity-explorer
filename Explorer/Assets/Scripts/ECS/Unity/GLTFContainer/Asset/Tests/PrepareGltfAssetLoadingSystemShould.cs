@@ -1,6 +1,5 @@
 ﻿using Arch.Core;
 using ECS.StreamableLoading.AssetBundles;
-using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.TestSuite;
 using ECS.Unity.GLTFContainer.Asset.Cache;
@@ -20,7 +19,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
         [SetUp]
         public void SetUp()
         {
-            system = new PrepareGltfAssetLoadingSystem(world, cache = Substitute.For<IGltfContainerAssetsCache>());
+            system = new PrepareGltfAssetLoadingSystem(world, cache = Substitute.For<IGltfContainerAssetsCache>(), false);
         }
 
         private IGltfContainerAssetsCache cache;
@@ -35,13 +34,13 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
 
             Assert.That(world.Has<StreamableLoadingResult<GltfContainerAsset>>(e), Is.False);
             Assert.That(world.TryGet(e, out GetAssetBundleIntention result), Is.True);
-            Assert.That(result.Hash, Is.EqualTo($"TEST_HASH{PlatformUtils.GetPlatform()}"));
+            Assert.That(result.Hash, Is.EqualTo($"TEST_HASH{PlatformUtils.GetCurrentPlatform()}"));
         }
 
         [Test]
         public void LoadFromCache()
         {
-            var asset = GltfContainerAsset.Create(new GameObject("GLTF_ROOT"), null);
+            var asset = GltfContainerAsset.Create(new GameObject("GLTF_ROOT"), assetData: null);
 
             cache.TryGet("TEST_HASH", out Arg.Any<GltfContainerAsset>())
                  .Returns(c =>

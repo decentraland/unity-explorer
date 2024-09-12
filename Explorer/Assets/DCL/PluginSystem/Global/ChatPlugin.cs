@@ -2,7 +2,6 @@ using Arch.Core;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
-using DCL.Audio;
 using DCL.Chat;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;

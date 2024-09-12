@@ -172,6 +172,21 @@ namespace DCL.ECSComponents
         public bool IsDirty { get; set; }
     }
 
+    public partial class PBInputModifier : IDirtyMarker
+    {
+        public bool IsDirty { get; set; }
+    }
+
+    public partial class PBMainCamera : IDirtyMarker
+    {
+        public bool IsDirty { get; set; }
+    }
+
+    public partial class PBVirtualCamera : IDirtyMarker
+    {
+        public bool IsDirty { get; set; }
+    }
+
     public static class DirtyMarkerExtensions
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

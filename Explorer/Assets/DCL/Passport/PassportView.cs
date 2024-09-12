@@ -1,6 +1,7 @@
 using DCL.CharacterPreview;
 using DCL.Passport.Modals;
 using DCL.Passport.Modules;
+using DCL.Passport.Modules.Badges;
 using DCL.UI;
 using MVC;
 using UnityEngine;
@@ -35,6 +36,15 @@ namespace DCL.Passport
         public EquippedItems_PassportModuleView EquippedItemsModuleView { get; private set; }
 
         [field: SerializeField]
+        public BadgesOverview_PassportModuleView BadgesOverviewModuleView { get; private set; }
+
+        [field: SerializeField]
+        public BadgesDetails_PassportModuleView BadgesDetailsModuleView { get; private set; }
+
+        [field: SerializeField]
+        public BadgeInfo_PassportModuleView BadgeInfoModuleView { get; private set; }
+
+        [field: SerializeField]
         public RectTransform MainContainer { get; private set; }
 
         [field: SerializeField]
@@ -42,5 +52,17 @@ namespace DCL.Passport
 
         [field: SerializeField]
         public WarningNotificationView ErrorNotification { get; private set; }
+
+        [field: SerializeField]
+        public ButtonWithSelectableStateView OverviewSectionButton { get; private set; }
+
+        [field: SerializeField]
+        public ButtonWithSelectableStateView BadgesSectionButton { get; private set; }
+
+        [field: SerializeField]
+        public GameObject OverviewSectionPanel { get; private set; }
+
+        [field: SerializeField]
+        public GameObject BadgesSectionPanel { get; private set; }
     }
 }

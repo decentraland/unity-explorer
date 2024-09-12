@@ -37,12 +37,12 @@ namespace DCL.Backpack
 
         private void RestoreInput(string text)
         {
-            inputBlock.Enable(InputMapComponent.Kind.Shortcuts);
+            inputBlock.Enable(InputMapComponent.Kind.SHORTCUTS);
         }
 
         private void DisableShortcutsInput(string text)
         {
-            inputBlock.Disable(InputMapComponent.Kind.Shortcuts);
+            inputBlock.Disable(InputMapComponent.Kind.SHORTCUTS);
         }
 
         private void OnSearchEvent(string searchString)

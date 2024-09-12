@@ -1,4 +1,3 @@
-using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Backpack;
 using DCL.Input;
@@ -25,7 +24,6 @@ namespace DCL.ExplorePanel
         private readonly ProfileWidgetController profileWidgetController;
         private readonly ProfileMenuController profileMenuController;
         private readonly DCLInput dclInput;
-        private readonly INotificationsBusController notificationBusController;
         private readonly IMVCManager mvcManager;
         private readonly IInputBlock inputBlock;
 
@@ -62,10 +60,9 @@ namespace DCL.ExplorePanel
             this.backpackController = backpackController;
             this.profileWidgetController = profileWidgetController;
             this.dclInput = dclInput;
-            this.notificationBusController = notificationBusController;
             this.mvcManager = mvcManager;
             this.profileMenuController = profileMenuController;
-            this.notificationBusController.SubscribeToNotificationTypeClick(NotificationType.REWARD_ASSIGNMENT, OnRewardAssigned);
+            notificationBusController.SubscribeToNotificationTypeClick(NotificationType.REWARD_ASSIGNMENT, OnRewardAssigned);
             this.inputBlock = inputBlock;
         }
 
@@ -100,7 +97,7 @@ namespace DCL.ExplorePanel
             foreach (KeyValuePair<ExploreSections, ISection> keyValuePair in exploreSections)
                 keyValuePair.Value.Deactivate();
 
-            tabsBySections = viewInstance.TabSelectorMappedViews.ToDictionary(map => map.Section, map => map.TabSelectorViews);
+            tabsBySections = viewInstance!.TabSelectorMappedViews.ToDictionary(map => map.Section, map => map.TabSelectorViews);
 
             foreach ((ExploreSections section, TabSelectorView? tabSelector) in tabsBySections)
             {
@@ -238,12 +235,12 @@ namespace DCL.ExplorePanel
 
         private void BlockUnwantedInputs()
         {
-            inputBlock.Disable(InputMapComponent.Kind.Camera , InputMapComponent.Kind.Player);
+            inputBlock.Disable(InputMapComponent.Kind.CAMERA , InputMapComponent.Kind.PLAYER);
         }
 
         private void UnblockUnwantedInputs()
         {
-            inputBlock.Enable(InputMapComponent.Kind.Camera , InputMapComponent.Kind.Player);
+            inputBlock.Enable(InputMapComponent.Kind.CAMERA , InputMapComponent.Kind.PLAYER);
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct)

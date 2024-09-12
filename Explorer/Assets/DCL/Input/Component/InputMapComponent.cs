@@ -12,13 +12,13 @@ namespace DCL.Input.Component
         [Flags]
         public enum Kind
         {
-            None = 0,
-            Player = 1,
-            Camera = 1 << 1,
-            FreeCamera = 1 << 2,
-            EmoteWheel = 1 << 3,
-            Emotes = 1 << 4,
-            Shortcuts = 1 << 5,
+            NONE = 0,
+            PLAYER = 1,
+            CAMERA = 1 << 1,
+            FREE_CAMERA = 1 << 2,
+            EMOTE_WHEEL = 1 << 3,
+            EMOTES = 1 << 4,
+            SHORTCUTS = 1 << 5,
         }
 
         private Kind active;
@@ -56,6 +56,7 @@ namespace DCL.Input.Component
         public void BlockInput(Kind kind)
         {
             inputBlockCounters[kind] += 1;
+            ReportHub.Log(ReportCategory.INPUT, $"Block {kind} - {inputBlockCounters[kind]}");
 
             if (inputBlockCounters[kind] == 1) { Active &= ~kind; }
         }
@@ -63,7 +64,7 @@ namespace DCL.Input.Component
         public void UnblockInput(Kind kind)
         {
             inputBlockCounters[kind] -= 1;
-
+            ReportHub.Log(ReportCategory.INPUT, $"Unblock {kind} - {inputBlockCounters[kind]}");
             switch (inputBlockCounters[kind])
             {
                 case 0:

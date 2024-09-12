@@ -38,29 +38,29 @@ namespace ECS.StreamableLoading.Common.Systems
                 {
                     // we can't access web request here as it is disposed already
 
-                    // no more sources left
-                    if (intention.CommonArguments.PermittedSources == AssetSource.NONE)
-                    {
-                        ReportHub.LogError(reportCategory, $"Exception occured on loading {typeof(TAsset)} from {intention.ToString()} with url {intention.CommonArguments.URL}.\n"
-                                                           + "No more sources left.");
-
-                        ReportHub.LogException(unityWebRequestException, reportCategory);
-                    }
-                    else
-                    {
-                        ReportHub.Log(reportCategory, $"Exception occured on loading {typeof(TAsset)} from {intention.ToString()}.\n"
-                                                      + $"Trying sources: {intention.CommonArguments.PermittedSources} attemptCount {attemptCount} url: {intention.CommonArguments.URL}");
-                    }
-
                     // Decide if we can repeat or not
                     --attemptCount;
 
                     if (unityWebRequestException.IsIrrecoverableError(attemptCount))
                     {
+                        // no more sources left
+                        ReportHub.Log(
+                            reportCategory,
+                            $"Exception occured on loading {typeof(TAsset)} from {intention.ToString()}.\n"
+                            + $"Trying sources: {intention.CommonArguments.PermittedSources} attemptCount {attemptCount} url: {intention.CommonArguments.URL}"
+                        );
+
                         if (intention.CommonArguments.PermittedSources == AssetSource.NONE)
 
                             // conclude now
-                            return new StreamableLoadingResult<TAsset>(unityWebRequestException);
+                            return new StreamableLoadingResult<TAsset>(
+                                reportCategory,
+                                new Exception(
+                                    $"Exception occured on loading {typeof(TAsset)} from {intention.ToString()} with url {intention.CommonArguments.URL}.\n"
+                                    + "No more sources left.",
+                                    unityWebRequestException
+                                )
+                            );
 
                         // Leave other systems to decide on other sources
                         return null;
@@ -70,23 +70,9 @@ namespace ECS.StreamableLoading.Common.Systems
                 {
                     // General exception
                     // conclude now, we can't do anything
-                    ReportException(reportCategory, e);
-                    return new StreamableLoadingResult<TAsset>(e);
+                    return new StreamableLoadingResult<TAsset>(new ReportData(reportCategory, ReportHint.SessionStatic), e);
                 }
             }
-        }
-
-        public static void ReportException(string category, Exception exception)
-        {
-            ReportHub.LogException(exception, new ReportData(category, ReportHint.SessionStatic));
-        }
-
-        public static StreamableLoadingResult<TAsset> Denullify<TAsset>(this in StreamableLoadingResult<TAsset>? loadingResult)
-        {
-            if (loadingResult == null)
-                throw new ArgumentNullException(nameof(loadingResult));
-
-            return loadingResult.Value;
         }
 
         /// <summary>

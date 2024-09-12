@@ -44,7 +44,8 @@ namespace DCL.CharacterPreview
 
         public void SetCameraPosition(CharacterPreviewCameraPreset preset)
         {
-            cameraTarget.localPosition = preset.verticalPosition;
+            if (cameraTarget != null)
+                cameraTarget.localPosition = preset.verticalPosition;
 
             StopCameraTween();
 

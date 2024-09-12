@@ -73,7 +73,7 @@ namespace ECS.StreamableLoading.AssetBundles
             new (expectedAssetType, hash: hash, permittedSources: permittedSources, assetBundleManifest: manifest, customEmbeddedSubDirectory: customEmbeddedSubDirectory);
 
         public static GetAssetBundleIntention FromHash(Type expectedAssetType, string hash, CancellationTokenSource cancellationTokenSource, AssetSource permittedSources = AssetSource.ALL,
-            SceneAssetBundleManifest manifest = null, URLSubdirectory customEmbeddedSubDirectory = default) =>
+            SceneAssetBundleManifest? manifest = null, URLSubdirectory customEmbeddedSubDirectory = default) =>
             new (expectedAssetType, hash: hash, permittedSources: permittedSources, assetBundleManifest: manifest, customEmbeddedSubDirectory: customEmbeddedSubDirectory, cancellationTokenSource: cancellationTokenSource);
 
         public static GetAssetBundleIntention Create(Type? expectedAssetType, string hash, string name,AssetSource permittedSources = AssetSource.ALL, SceneAssetBundleManifest? manifest = null, URLSubdirectory customEmbeddedSubDirectory = default) =>

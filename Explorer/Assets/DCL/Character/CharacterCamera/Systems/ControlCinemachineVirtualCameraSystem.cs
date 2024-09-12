@@ -7,9 +7,9 @@ using DCL.Character.CharacterCamera.Components;
 using DCL.CharacterCamera;
 using DCL.CharacterCamera.Components;
 using DCL.CharacterCamera.Settings;
-using DCL.CharacterMotion.Components;
 using DCL.Input;
 using DCL.Input.Component;
+using DCL.Input.Systems;
 using ECS.Abstract;
 using UnityEngine;
 
@@ -58,9 +58,10 @@ namespace DCL.Character.CharacterCamera.Systems
         [None(typeof(CameraBlockerComponent))]
         private void HandleCameraInput([Data] float dt, in CameraComponent cameraComponent)
         {
+            if (cameraComponent.Mode == CameraMode.SDKCamera) return;
+
             // this blocks the user of changing the current camera, but the SDK still can do it
-            if (!cameraComponent.CameraInputChangeEnabled)
-                return;
+            if (!cameraComponent.CameraInputChangeEnabled) return;
 
             HandleZoomingQuery(World);
             HandleSwitchStateQuery(World);
@@ -71,6 +72,7 @@ namespace DCL.Character.CharacterCamera.Systems
         [Query]
         private void UpdateCameraState(ref CameraComponent cameraComponent, ref ICinemachinePreset cinemachinePreset, ref CinemachineCameraState state)
         {
+            if (cameraComponent.Mode == CameraMode.SDKCamera) return;
             SwitchCamera(cameraComponent.Mode, ref cinemachinePreset, ref cameraComponent, ref state);
         }
 
@@ -128,14 +130,14 @@ namespace DCL.Character.CharacterCamera.Systems
             if (targetCameraMode != CameraMode.Free && currentCameraMode == CameraMode.Free)
             {
                 ref InputMapComponent inputMapComponent = ref inputMap.GetInputMapComponent(World);
-                inputMapComponent.UnblockInput(InputMapComponent.Kind.Player);
-                inputMapComponent.BlockInput(InputMapComponent.Kind.FreeCamera);
+                inputMapComponent.UnblockInput(InputMapComponent.Kind.PLAYER);
+                inputMapComponent.BlockInput(InputMapComponent.Kind.FREE_CAMERA);
             }
             else if (targetCameraMode == CameraMode.Free && currentCameraMode != CameraMode.Free)
             {
                 ref InputMapComponent inputMapComponent = ref inputMap.GetInputMapComponent(World);
-                inputMapComponent.UnblockInput(InputMapComponent.Kind.FreeCamera);
-                inputMapComponent.BlockInput(InputMapComponent.Kind.Player);
+                inputMapComponent.UnblockInput(InputMapComponent.Kind.FREE_CAMERA);
+                inputMapComponent.BlockInput(InputMapComponent.Kind.PLAYER);
             }
 
             switch (camera.Mode)

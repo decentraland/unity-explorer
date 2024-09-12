@@ -23,7 +23,7 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents.Events
 
     public static class SDKObservableComponentIDs
     {
-        public static readonly HashSet<int> Ids = new HashSet<int>()
+        public static readonly HashSet<int> Ids = new ()
         {
             ComponentID.ENGINE_INFO,
             ComponentID.REALM_INFO,
@@ -36,7 +36,8 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents.Events
 
     public static class SDKObservableUtils
     {
-        public static SDKObservableEvent GenerateSDKObservableEvent<T>(string eventId, T eventData) where T: struct =>
+        [Pure]
+        public static SDKObservableEvent NewSDKObservableEventFromData<T>(string eventId, T eventData) where T: struct =>
             new()
             {
                 generic = new SDKObservableEvent.Generic

@@ -41,6 +41,7 @@ namespace DCL.Notifications.Serialization
                     "events_ended" => new EventEndedNotification(),
                     "reward_assignment" => new RewardAssignedNotification(),
                     "reward_in_progress" => new RewardInProgressNotification(),
+                    "badge_granted" => new BadgeGrantedNotification(),
                     _ => null
                 };
 

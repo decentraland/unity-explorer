@@ -1,3 +1,4 @@
+using DCL.Diagnostics;
 using System;
 using DCL.ECSComponents;
 using ECS.StreamableLoading.Common;
@@ -26,20 +27,20 @@ namespace ECS.Unity.GLTFContainer.Components
             State = LoadingState.Unknown;
         }
 
-        public static GltfContainerComponent CreateFaulty(Exception exception)
+        public static GltfContainerComponent CreateFaulty(ReportData reportData, Exception exception)
         {
             GltfContainerComponent component = new GltfContainerComponent();
-            component.SetFaulty(exception);
+            component.SetFaulty(reportData, exception);
             return component;
         }
 
-        public void SetFaulty(Exception exception)
+        public void SetFaulty(ReportData reportData, Exception exception)
         {
             State = LoadingState.FinishedWithError;
+
             Promise = AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention>.CreateFinalized(
                 default,
-                new StreamableLoadingResult<GltfContainerAsset>(exception));
+                new StreamableLoadingResult<GltfContainerAsset>(reportData, exception));
         }
-
     }
 }

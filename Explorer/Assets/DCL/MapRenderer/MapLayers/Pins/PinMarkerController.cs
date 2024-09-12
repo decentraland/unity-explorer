@@ -63,7 +63,7 @@ namespace DCL.MapRenderer.MapLayers.Pins
                 {
                     pair.Value.SetAsDestination(false);
                     break;
-                } 
+                }
             }
         }
 
@@ -147,7 +147,7 @@ namespace DCL.MapRenderer.MapLayers.Pins
         public void ResetToBaseScale()
         {
             foreach (IPinMarker marker in markers.Values)
-                marker.ResetScale();
+                marker.ResetScale(IPinMarker.ScaleType.MINIMAP);
         }
 
         public UniTask Disable(CancellationToken cancellationToken)

@@ -14,6 +14,7 @@ namespace SceneRunner.Scene
         SceneEcsExecutor EcsExecutor { get; }
         PersistentEntities PersistentEntities { get; }
         bool IsEmpty { get; }
+        ISceneData SceneData { get; }
 
         void Initialize();
 

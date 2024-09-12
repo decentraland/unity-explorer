@@ -12,6 +12,7 @@ using DCL.Web3.Abstract;
 using DCL.Web3.Accounts.Factory;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
+using ECS.SceneLifeCycle.Realm;
 using Global.AppArgs;
 using Segment.Analytics;
 using System;
@@ -40,6 +41,7 @@ namespace Global.Dynamic
         public IDebugSettings DebugSettings { get; private set; }
         public IReportsHandlingSettings ReportHandlingSettings => reportHandlingSettings.Value;
         public IAppArgs ApplicationParametersParser { get; private set; }
+        public bool LocalSceneDevelopment { get; private set; }
 
         public override void Dispose()
         {
@@ -71,8 +73,9 @@ namespace Global.Dynamic
                 AssetsProvisioner = new AddressablesProvisioner(),
                 DecentralandUrlsSource = decentralandUrlsSource,
                 WebBrowser = browser,
+                LocalSceneDevelopment = realmLaunchSettings.IsLocalSceneDevelopmentRealm || realmLaunchSettings.GetStartingRealm(decentralandUrlsSource) == IRealmNavigator.LOCALHOST,
                 ApplicationParametersParser = applicationParametersParser,
-                DebugSettings = debugSettings
+                DebugSettings = debugSettings,
             };
 
             await bootstrapContainer.InitializeContainerAsync<BootstrapContainer, BootstrapSettings>(settingsContainer, ct, async container =>

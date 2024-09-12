@@ -20,11 +20,10 @@ namespace DCL.UI.ProfileElements
         private readonly ProfileSectionController profileSectionController;
         private readonly SystemMenuController systemSectionController;
 
-        private CancellationTokenSource profileWidgetCts = new ();
+        private CancellationTokenSource profileMenuCts = new ();
 
         public ProfileMenuController(
             ViewFactoryMethod viewFactory,
-            ProfileSectionElement profileSectionElement,
             IWeb3IdentityCache identityCache,
             IProfileRepository profileRepository,
             IWebRequestController webRequestController,
@@ -38,32 +37,45 @@ namespace DCL.UI.ProfileElements
             ChatEntryConfigurationSO chatEntryConfiguration
         ) : base(viewFactory)
         {
-            profileSectionController = new ProfileSectionController(profileSectionElement, identityCache, profileRepository, webRequestController, chatEntryConfiguration);
-            systemSectionController = new SystemMenuController(() => viewInstance.SystemMenuView, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, identityCache, mvcManager);
+            profileSectionController = new ProfileSectionController(() => viewInstance!.ProfileMenu, identityCache, profileRepository, webRequestController, chatEntryConfiguration);
+            systemSectionController = new SystemMenuController(() => viewInstance!.SystemMenuView, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, identityCache, mvcManager);
+            systemSectionController.OnClosed += OnClose;
         }
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) => UniTask.Never(ct);
+
+        protected override void OnViewInstantiated()
+        {
+            base.OnViewInstantiated();
+            viewInstance!.CloseButton.onClick.AddListener(OnClose);
+        }
 
         protected override void OnBeforeViewShow()
         {
             base.OnBeforeViewShow();
-            profileWidgetCts = profileWidgetCts.SafeRestart();
-            LaunchChildViewsAsync().Forget();
+            profileMenuCts = profileMenuCts.SafeRestart();
+            profileSectionController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Persistent, 0), new ControllerNoData(), profileMenuCts.Token).Forget();
+            systemSectionController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Persistent, 0), new ControllerNoData(), profileMenuCts.Token).Forget();
         }
 
-
-        private async UniTaskVoid LaunchChildViewsAsync()
+        private void OnClose()
         {
-            await profileSectionController.LoadElementsAsync(profileWidgetCts.Token);
-            await systemSectionController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Persistent, 0), new ControllerNoData(), profileWidgetCts.Token);
-            await HideViewAsync(profileWidgetCts.Token);
+            CloseAsync().Forget();
+        }
+
+        private async UniTaskVoid CloseAsync()
+        {
+            await systemSectionController.HideViewAsync(profileMenuCts.Token);
+            await profileSectionController.HideViewAsync(profileMenuCts.Token);
+            await HideViewAsync(profileMenuCts.Token);
         }
 
         public override void Dispose()
         {
             base.Dispose();
+            profileMenuCts.SafeCancelAndDispose();
             profileSectionController.Dispose();
             systemSectionController.Dispose();
         }
