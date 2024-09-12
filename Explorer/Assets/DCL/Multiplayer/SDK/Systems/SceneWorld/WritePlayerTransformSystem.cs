@@ -9,8 +9,8 @@ using DCL.Multiplayer.SDK.Components;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
+using ECS.Unity.Transforms;
 using SceneRunner.Scene;
-using Utility;
 
 namespace DCL.Multiplayer.SDK.Systems.SceneWorld
 {
@@ -37,17 +37,18 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
         [None(typeof(DeleteEntityIntention))]
         private void UpdateSDKTransform(in PlayerSceneCRDTEntity playerCRDTEntity, ref SDKTransform sdkTransform)
         {
+            if (!sdkTransform.IsDirty) return;
+
             // Main player Transform is handled by 'WriteMainPlayerTransformSystem'
             if (playerCRDTEntity.CRDTEntity.Id == SpecialEntitiesID.PLAYER_ENTITY) return;
 
-            // Patch position to be scene-relative
-            sdkTransform.Position = ParcelMathHelper.GetSceneRelativePosition(sdkTransform.Position, sceneData.Geometry.BaseParcelPosition);
-
-            ecsToCRDTWriter.PutMessage<SDKTransform, SDKTransform>(static (pbComponent, transform) =>
-            {
-                pbComponent.Position = transform.Position;
-                pbComponent.Rotation = transform.Rotation;
-            }, playerCRDTEntity.CRDTEntity, sdkTransform);
+            // Patches position to be scene-relative before sending it through CRDT
+            ExposedTransformUtils.Put(
+                ecsToCRDTWriter,
+                sdkTransform,
+                playerCRDTEntity.CRDTEntity,
+                sceneData.Geometry.BaseParcelPosition,
+                false);
         }
 
         [Query]

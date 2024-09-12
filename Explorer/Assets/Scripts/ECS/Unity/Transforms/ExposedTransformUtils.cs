@@ -15,8 +15,8 @@ namespace ECS.Unity.Transforms
 
             return ecsToCrdtWriter.PutMessage<SDKTransform, (IExposedTransform, Vector3)>(static (c, data) =>
             {
-                c.Position = ParcelMathHelper.GetSceneRelativePosition(data.Item1.Position.Value, data.Item2);
-                c.Rotation = data.Item1.Rotation.Value;
+                c.Position.Value = ParcelMathHelper.GetSceneRelativePosition(data.Item1.Position.Value, data.Item2);
+                c.Rotation.Value = data.Item1.Rotation.Value;
             }, entity, (exposedTransform, scenePosition));
         }
     }
