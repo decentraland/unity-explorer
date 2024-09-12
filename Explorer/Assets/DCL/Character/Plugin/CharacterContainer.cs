@@ -9,6 +9,7 @@ using DCL.Character.Components;
 using DCL.CharacterCamera;
 using DCL.CharacterCamera.Systems;
 using DCL.CharacterMotion.Systems;
+using DCL.ECSComponents;
 using DCL.Multiplayer.Movement;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem;
@@ -110,6 +111,7 @@ namespace DCL.Character.Plugin
             private readonly IExposedCameraData exposedCameraData;
             private readonly ExposedTransform exposedTransform;
             private readonly IComponentPool<SDKTransform> sdkTransformPool;
+            private readonly IComponentPool<PBMainCamera> mainCameraPool;
 
             public WorldPlugin(ExposedTransform exposedTransform, IExposedCameraData exposedCameraData,
                 IComponentPoolsRegistry componentPoolsRegistry, byte bucketPropagationLimit)
@@ -118,6 +120,7 @@ namespace DCL.Character.Plugin
                 this.bucketPropagationLimit = bucketPropagationLimit;
                 this.exposedCameraData = exposedCameraData;
                 sdkTransformPool = componentPoolsRegistry.GetReferenceTypePool<SDKTransform>();
+                mainCameraPool = componentPoolsRegistry.GetReferenceTypePool<PBMainCamera>();
             }
 
             public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
@@ -126,7 +129,7 @@ namespace DCL.Character.Plugin
                     exposedTransform, sharedDependencies.ScenePartition, bucketPropagationLimit, sdkTransformPool, persistentEntities.Player);
 
                 WriteCameraComponentsSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, exposedCameraData, sharedDependencies.SceneData,
-                    sharedDependencies.ScenePartition, bucketPropagationLimit, sdkTransformPool, persistentEntities.Camera);
+                    sharedDependencies.ScenePartition, bucketPropagationLimit, sdkTransformPool, mainCameraPool, persistentEntities.Camera);
             }
         }
 

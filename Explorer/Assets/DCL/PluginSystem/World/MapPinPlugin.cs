@@ -1,9 +1,9 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.ECSComponents;
+using DCL.FeatureFlags;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.SDKComponents.MapPins.Systems;
-using DCL.Utilities;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Systems;
 using System.Collections.Generic;
@@ -14,10 +14,12 @@ namespace DCL.PluginSystem.World
     public class MapPinPlugin : IDCLWorldPluginWithoutSettings
     {
         private readonly Arch.Core.World globalWorld;
+        private readonly FeatureFlagsCache featureFlagsCache;
 
-        public MapPinPlugin(Arch.Core.World globalWorld)
+        public MapPinPlugin(Arch.Core.World globalWorld, FeatureFlagsCache featureFlagsCache)
         {
             this.globalWorld = globalWorld;
+            this.featureFlagsCache = featureFlagsCache;
         }
 
         public UniTask Initialize(IPluginSettingsContainer container, CancellationToken ct) =>
@@ -27,7 +29,7 @@ namespace DCL.PluginSystem.World
         {
             ResetDirtyFlagSystem<PBMapPin>.InjectToWorld(ref builder);
 
-            MapPinLoaderSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, globalWorld, sharedDependencies.ScenePartition);
+            MapPinLoaderSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, globalWorld, sharedDependencies.ScenePartition, featureFlagsCache);
         }
     }
 }
