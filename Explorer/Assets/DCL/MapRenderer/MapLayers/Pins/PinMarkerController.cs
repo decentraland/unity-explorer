@@ -8,7 +8,6 @@ using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
 using DCL.MapPins.Components;
 using ECS.LifeCycle.Components;
-using ECS.StreamableLoading.Common.Components;
 using MVC;
 using System.Collections.Generic;
 using System.Threading;
@@ -23,10 +22,11 @@ namespace DCL.MapRenderer.MapLayers.Pins
             IObjectPool<PinMarkerObject> objectsPool,
             IMapCullingController cullingController);
 
+        public readonly Dictionary<Entity, IPinMarker> markers = new ();
+
         private readonly IObjectPool<PinMarkerObject> objectsPool;
         private readonly PinMarkerBuilder builder;
-
-        public readonly Dictionary<Entity, IPinMarker> markers = new ();
+        private readonly IMapPathEventBus mapPathEventBus;
 
         private MapPinBridgeSystem system;
 
@@ -37,11 +37,14 @@ namespace DCL.MapRenderer.MapLayers.Pins
             PinMarkerBuilder builder,
             Transform instantiationParent,
             ICoordsUtils coordsUtils,
-            IMapCullingController cullingController)
+            IMapCullingController cullingController,
+            IMapPathEventBus mapPathEventBus)
             : base(instantiationParent, coordsUtils, cullingController)
         {
             this.objectsPool = objectsPool;
             this.builder = builder;
+            this.mapPathEventBus = mapPathEventBus;
+            this.mapPathEventBus.OnRemovedDestination += OnRemovedDestination;
         }
 
         public void CreateSystems(ref ArchSystemsWorldBuilder<World> builder)
@@ -52,21 +55,31 @@ namespace DCL.MapRenderer.MapLayers.Pins
             system.Activate();
         }
 
+        private void OnRemovedDestination()
+        {
+            foreach (KeyValuePair<Entity, IPinMarker> pair in markers)
+            {
+                if (pair.Value.IsDestination)
+                {
+                    pair.Value.SetAsDestination(false);
+                    break;
+                }
+            }
+        }
+
         [Query]
         private void SetMapPinPlacement(in Entity e, ref MapPinComponent mapPinComponent, ref PBMapPin pbMapPin)
         {
             if (mapPinComponent.IsDirty)
             {
                 IPinMarker marker;
+
                 if (!markers.TryGetValue(e, out IPinMarker pinMarker))
                 {
                     marker = builder(objectsPool, mapCullingController);
                     markers.Add(e, marker);
                 }
-                else
-                {
-                    marker = pinMarker;
-                }
+                else { marker = pinMarker; }
 
                 marker.SetPosition(coordsUtils.CoordsToPositionWithOffset(mapPinComponent.Position), mapPinComponent.Position);
                 marker.SetData(pbMapPin.Title, pbMapPin.Description);
@@ -80,15 +93,14 @@ namespace DCL.MapRenderer.MapLayers.Pins
             if (mapPinComponent.ThumbnailIsDirty)
             {
                 IPinMarker marker;
+
                 if (!markers.TryGetValue(e, out IPinMarker pinMarker))
                 {
                     marker = builder(objectsPool, mapCullingController);
                     markers.Add(e, marker);
                 }
-                else
-                {
-                    marker = pinMarker;
-                }
+                else { marker = pinMarker; }
+
                 marker.SetTexture(mapPinComponent.Thumbnail);
                 mapPinComponent.ThumbnailIsDirty = false;
             }
@@ -134,8 +146,8 @@ namespace DCL.MapRenderer.MapLayers.Pins
 
         public void ResetToBaseScale()
         {
-            foreach (var marker in markers.Values)
-                marker.ResetScale(coordsUtils.ParcelSize);
+            foreach (IPinMarker marker in markers.Values)
+                marker.ResetScale(IPinMarker.ScaleType.MINIMAP);
         }
 
         public UniTask Disable(CancellationToken cancellationToken)

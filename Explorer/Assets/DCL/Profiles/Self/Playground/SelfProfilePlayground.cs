@@ -50,10 +50,11 @@ namespace DCL.Profiles.Self.Playground
                 ),
                 web3IdentityCache,
                 new EquippedWearables(),
-                new WearableCatalog(),
-                new MemoryEmotesCache(),
+                new WearableStorage(),
+                new MemoryEmotesStorage(),
                 new EquippedEmotes(),
-                new List<string>()
+                new List<string>(),
+                null
             );
 
             var profile = await profiles.ProfileAsync(ct);

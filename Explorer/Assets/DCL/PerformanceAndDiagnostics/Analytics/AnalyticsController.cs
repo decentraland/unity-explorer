@@ -1,8 +1,10 @@
-﻿using DCL.Web3.Identities;
+﻿#nullable enable
+using DCL.Web3.Identities;
 using ECS;
 using Segment.Serialization;
 using UnityEngine;
 using Utility;
+using static DCL.PerformanceAndDiagnostics.Analytics.IAnalyticsController;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics
 {
@@ -11,12 +13,12 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         private readonly IAnalyticsService analytics;
         public AnalyticsConfiguration Configuration { get; }
 
-        public AnalyticsController(IAnalyticsService analyticsService, AnalyticsConfiguration configuration)
+        public AnalyticsController(IAnalyticsService analyticsService, AnalyticsConfiguration configuration, LauncherTraits launcherTraits)
         {
             analytics = analyticsService;
             Configuration = configuration;
 
-            analytics.AddPlugin(new StaticCommonTraitsPlugin());
+            analytics.AddPlugin(new StaticCommonTraitsPlugin(launcherTraits));
 
             analytics.Track(AnalyticsEvents.General.SYSTEM_INFO_REPORT, new JsonObject
             {
@@ -34,25 +36,32 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             });
         }
 
-        public void SetCommonParam(IRealmData realmData, IWeb3IdentityCache identityCache, ExposedTransform playerTransform)
+        public void SetCommonParam(IRealmData realmData, IWeb3IdentityCache? identityCache, ExposedTransform playerTransform)
         {
             analytics.AddPlugin(new DynamicCommonTraitsPlugin(realmData, identityCache, playerTransform));
 
-            if(identityCache?.Identity?.Address == null || identityCache?.Identity?.AuthChain == null)
-                return;
-
-            analytics.Identify(identityCache?.Identity?.Address, new JsonObject
-                {
-                    ["dcl_eth_address"] = identityCache?.Identity?.Address.ToString(),
-                    ["auth_chain"] = identityCache?.Identity?.AuthChain.ToString(),
-                }
-            );
+            if (identityCache != null)
+                Identify(identityCache.Identity);
         }
 
-        public void Track(string eventName, JsonObject properties = null)
+        public void Track(string eventName, JsonObject? properties = null)
         {
             if (Configuration.EventIsEnabled(eventName))
                 analytics.Track(eventName, properties);
         }
+
+        public void Identify(IWeb3Identity? identity)
+        {
+            if (identity != null)
+                analytics.Identify(identity.Address, new JsonObject
+                    {
+                        ["dcl_eth_address"] = identity.Address != null ? identity.Address.ToString() : UNDEFINED,
+                        ["auth_chain"] = identity.AuthChain != null ? identity.AuthChain.ToString() : UNDEFINED,
+                    }
+                );
+        }
+
+        public void Flush() =>
+            analytics.Flush();
     }
 }

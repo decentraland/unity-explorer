@@ -1,6 +1,7 @@
 ﻿using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Chat.Commands;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using ECS.SceneLifeCycle.Realm;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
@@ -24,18 +25,9 @@ namespace Global.Dynamic.ChatCommands
         private const string WORLD_SUFFIX = ".dcl.eth";
 
         // Parameters to URL mapping
-        private static readonly Dictionary<string, string> PARAM_URLS = new ()
-        {
-            { "genesis", IRealmNavigator.GENESIS_URL },
-            { "goerli", IRealmNavigator.GOERLI_URL },
-            { "goerli-old", IRealmNavigator.GOERLI_OLD_URL },
-            { "stream", IRealmNavigator.STREAM_WORLD_URL },
-            { "sdk", IRealmNavigator.SDK_TEST_SCENES_URL },
-            { "test", IRealmNavigator.TEST_SCENES_URL },
-        };
+        private readonly Dictionary<string, string> paramUrls;
 
-        public static readonly Regex REGEX = new ($@"^/({COMMAND_WORLD}|{COMMAND_GOTO})\s+((?!-?\d+,-?\d+$).+?)(?:\s+(-?\d+),(-?\d+))?$", RegexOptions.Compiled);
-
+        public static readonly Regex REGEX = new ($@"^/({COMMAND_WORLD}|{COMMAND_GOTO})\s+((?!-?\d+\s*,\s*-?\d+$).+?)(?:\s+(-?\d+)\s*,\s*(-?\d+))?$", RegexOptions.Compiled);
         private readonly URLDomain worldDomain = URLDomain.FromString(IRealmNavigator.WORLDS_DOMAIN);
 
         private readonly Dictionary<string, URLAddress> worldAddressesCaches = new ();
@@ -44,16 +36,26 @@ namespace Global.Dynamic.ChatCommands
         private string? worldName;
         private string? realmUrl;
 
-        public ChangeRealmChatCommand(IRealmNavigator realmNavigator)
+        public ChangeRealmChatCommand(IRealmNavigator realmNavigator, IDecentralandUrlsSource decentralandUrlsSource)
         {
             this.realmNavigator = realmNavigator;
+
+            paramUrls = new Dictionary<string, string>
+            {
+                { "genesis", decentralandUrlsSource.Url(DecentralandUrl.Genesis) },
+                { "goerli", IRealmNavigator.GOERLI_URL },
+                { "goerli-old", IRealmNavigator.GOERLI_OLD_URL },
+                { "stream", IRealmNavigator.STREAM_WORLD_URL },
+                { "sdk", IRealmNavigator.SDK_TEST_SCENES_URL },
+                { "test", IRealmNavigator.TEST_SCENES_URL },
+            };
         }
 
         public async UniTask<string> ExecuteAsync(Match match, CancellationToken ct)
         {
             worldName = match.Groups[2].Value;
 
-            if (!PARAM_URLS.TryGetValue(worldName, out realmUrl))
+            if (!paramUrls.TryGetValue(worldName, out realmUrl))
             {
                 if (!worldName.EndsWith(WORLD_SUFFIX))
                     worldName += WORLD_SUFFIX;
@@ -64,6 +66,7 @@ namespace Global.Dynamic.ChatCommands
             var realm = URLDomain.FromString(realmUrl!);
 
             Vector2Int parcel = default;
+
             if (match.Groups[3].Success && match.Groups[4].Success)
                 parcel = new Vector2Int(int.Parse(match.Groups[3].Value), int.Parse(match.Groups[4].Value));
 

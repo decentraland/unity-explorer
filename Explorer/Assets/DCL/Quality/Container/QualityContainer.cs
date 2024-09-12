@@ -59,12 +59,15 @@ namespace DCL.Quality
 
         public void AddDebugViews(IDebugContainerBuilder debugContainerBuilder)
         {
-            DebugWidgetBuilder widget = debugContainerBuilder.AddWidget("Quality");
+            var widget = debugContainerBuilder.AddWidget("Quality");
+
+            if (widget.Success == false)
+                return;
 
             // Add settings selector
-            AddSettingsSelector(widget);
+            AddSettingsSelector(widget.Value);
 
-            QualityLevelController.AddDebugViews(widget, onDebugViewUpdate);
+            QualityLevelController.AddDebugViews(widget.Value, onDebugViewUpdate);
         }
 
         private void AddSettingsSelector(DebugWidgetBuilder builder)

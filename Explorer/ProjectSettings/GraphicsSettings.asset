@@ -37,9 +37,6 @@ GraphicsSettings:
   - {fileID: 10505, guid: 0000000000000000f000000000000000, type: 0}
   - {fileID: 10620, guid: 0000000000000000f000000000000000, type: 0}
   - {fileID: 10623, guid: 0000000000000000f000000000000000, type: 0}
-  - {fileID: 14002, guid: 0000000000000000f000000000000000, type: 0}
-  - {fileID: 14000, guid: 0000000000000000f000000000000000, type: 0}
-  - {fileID: 14001, guid: 0000000000000000f000000000000000, type: 0}
   - {fileID: 4800000, guid: 4f256ae8bfd72b64a9fc3ad0884d0126, type: 3}
   - {fileID: 4800000, guid: a1b78b8d9e9324b4381332da097df555, type: 3}
   - {fileID: 4800000, guid: 6e9f244bbe8f40e38644cb9c55cf1a67, type: 3}
@@ -70,7 +67,7 @@ GraphicsSettings:
   m_LightsUseLinearIntensity: 1
   m_LightsUseColorTemperature: 1
   m_DefaultRenderingLayerMask: 1
-  m_LogWhenShaderIsCompiled: 0
+  m_LogWhenShaderIsCompiled: 1
   m_SRPDefaultSettings:
     UnityEngine.Rendering.Universal.UniversalRenderPipeline: {fileID: 11400000, guid: 98c3401a6c7f16348886ddfb07d6ced7, type: 2}
   m_LightProbeOutsideHullStrategy: 0

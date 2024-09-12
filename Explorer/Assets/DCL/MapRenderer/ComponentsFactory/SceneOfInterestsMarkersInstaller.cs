@@ -17,7 +17,7 @@ namespace DCL.MapRenderer.ComponentsFactory
         private const int PREWARM_COUNT = 60;
 
         private IAssetsProvisioner assetsProvisioner;
-        private MapRendererSettings mapSettings;
+        private IMapRendererSettings mapSettings;
         private IPlacesAPIService placesAPIService;
 
         public async UniTask InstallAsync(
@@ -27,21 +27,21 @@ namespace DCL.MapRenderer.ComponentsFactory
             ICoordsUtils coordsUtils,
             IMapCullingController cullingController,
             IAssetsProvisioner assetsProv,
-            MapRendererSettings settings,
+            IMapRendererSettings settings,
             IPlacesAPIService placesAPI,
             CancellationToken cancellationToken
         )
         {
-            this.mapSettings = settings;
-            this.assetsProvisioner = assetsProv;
-            this.placesAPIService = placesAPI;
-            var prefab = await GetPrefabAsync(cancellationToken);
+            mapSettings = settings;
+            assetsProvisioner = assetsProv;
+            placesAPIService = placesAPI;
+            SceneOfInterestMarkerObject? prefab = await GetPrefabAsync(cancellationToken);
 
             var objectsPool = new ObjectPool<SceneOfInterestMarkerObject>(
                 () => CreatePoolMethod(configuration, prefab, coordsUtils),
                 defaultCapacity: PREWARM_COUNT,
-                actionOnGet: (obj) => obj.gameObject.SetActive(true),
-                actionOnRelease: (obj) => obj.gameObject.SetActive(false));
+                actionOnGet: obj => obj.gameObject.SetActive(true),
+                actionOnRelease: obj => obj.gameObject.SetActive(false));
 
             var controller = new ScenesOfInterestMarkersController(
                 placesAPIService,
@@ -60,6 +60,7 @@ namespace DCL.MapRenderer.ComponentsFactory
         private static SceneOfInterestMarkerObject CreatePoolMethod(MapRendererConfiguration configuration, SceneOfInterestMarkerObject prefab, ICoordsUtils coordsUtils)
         {
             SceneOfInterestMarkerObject sceneOfInterestMarkerObject = Object.Instantiate(prefab, configuration.ScenesOfInterestMarkersRoot);
+
             for (var i = 0; i < sceneOfInterestMarkerObject.renderers.Length; i++)
                 sceneOfInterestMarkerObject.renderers[i].sortingOrder = MapRendererDrawOrder.SCENES_OF_INTEREST;
 
@@ -72,6 +73,6 @@ namespace DCL.MapRenderer.ComponentsFactory
             new SceneOfInterestMarker(objectsPool, cullingController);
 
         private async UniTask<SceneOfInterestMarkerObject> GetPrefabAsync(CancellationToken cancellationToken) =>
-            (await assetsProvisioner.ProvideMainAssetAsync(mapSettings.SceneOfInterestMarker, cancellationToken)).Value.GetComponent<SceneOfInterestMarkerObject>();
+            (await assetsProvisioner.ProvideMainAssetAsync(mapSettings.SceneOfInterestMarker, cancellationToken)).Value;
     }
 }

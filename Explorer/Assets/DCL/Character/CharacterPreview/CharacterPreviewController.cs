@@ -3,6 +3,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.Emotes;
+using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
@@ -104,7 +105,7 @@ namespace DCL.CharacterPreview
 
         public void PlayEmote(string emoteId)
         {
-            globalWorld.Add(characterPreviewEntity, new CharacterEmoteIntent { EmoteId = emoteId });
+            globalWorld.Add(characterPreviewEntity, new CharacterEmoteIntent { EmoteId = emoteId, TriggerSource = TriggerSource.PREVIEW});
         }
 
         public void StopEmotes()

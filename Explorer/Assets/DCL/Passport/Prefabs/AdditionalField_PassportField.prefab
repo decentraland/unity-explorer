@@ -256,7 +256,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.9098039, g: 0.7254902, b: 1, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 0.69803923}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -347,8 +347,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294949352
-  m_fontColor: {r: 0.9098039, g: 0.7254902, b: 1, a: 1}
+    rgba: 3003121663
+  m_fontColor: {r: 1, g: 1, b: 1, a: 0.69803923}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -539,7 +539,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6741436331689411846, guid: 593328dae0676544bbbac027ee30f9d5, type: 3}
       propertyPath: m_hasFontAssetChanged
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 9097780066956728766, guid: 593328dae0676544bbbac027ee30f9d5, type: 3}
       propertyPath: m_fontColor.a
@@ -755,7 +755,7 @@ PrefabInstance:
     - target: {fileID: 3634989480188834563, guid: a30e7446d5f849649a66f24dfb5b6933, type: 3}
       propertyPath: m_fontAsset
       value: 
-      objectReference: {fileID: 11400000, guid: 35aa85d68d15435418848a03a2db81ec, type: 2}
+      objectReference: {fileID: 11400000, guid: 96ae0a2159a39234f858ea23bdcc74ad, type: 2}
     - target: {fileID: 3634989480188834563, guid: a30e7446d5f849649a66f24dfb5b6933, type: 3}
       propertyPath: m_fontSizeMax
       value: 16
@@ -774,7 +774,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3634989480188834563, guid: a30e7446d5f849649a66f24dfb5b6933, type: 3}
       propertyPath: m_hasFontAssetChanged
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3934912518001919750, guid: a30e7446d5f849649a66f24dfb5b6933, type: 3}
       propertyPath: m_AnchorMax.x
@@ -815,7 +815,7 @@ PrefabInstance:
     - target: {fileID: 5338121310425341266, guid: a30e7446d5f849649a66f24dfb5b6933, type: 3}
       propertyPath: m_fontAsset
       value: 
-      objectReference: {fileID: 11400000, guid: 35aa85d68d15435418848a03a2db81ec, type: 2}
+      objectReference: {fileID: 11400000, guid: 96ae0a2159a39234f858ea23bdcc74ad, type: 2}
     - target: {fileID: 5338121310425341266, guid: a30e7446d5f849649a66f24dfb5b6933, type: 3}
       propertyPath: m_fontSizeMax
       value: 16
@@ -834,7 +834,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5338121310425341266, guid: a30e7446d5f849649a66f24dfb5b6933, type: 3}
       propertyPath: m_hasFontAssetChanged
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5421800564082040363, guid: a30e7446d5f849649a66f24dfb5b6933, type: 3}
       propertyPath: m_Name

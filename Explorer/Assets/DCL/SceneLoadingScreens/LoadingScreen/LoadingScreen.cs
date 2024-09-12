@@ -3,12 +3,13 @@ using DCL.AsyncLoadReporting;
 using MVC;
 using System;
 using System.Threading;
+using UnityEngine;
 
 namespace DCL.SceneLoadingScreens.LoadingScreen
 {
     public class LoadingScreen : ILoadingScreen
     {
-        public static readonly TimeSpan LOADING_SCREEN_TIMEOUT_MINUTES = TimeSpan.FromMinutes(2);
+        private static readonly TimeSpan LOADING_SCREEN_TIMEOUT_MINUTES = TimeSpan.FromMinutes(2);
         private readonly IMVCManager mvcManager;
 
         public LoadingScreen(IMVCManager mvcManager)
@@ -16,20 +17,37 @@ namespace DCL.SceneLoadingScreens.LoadingScreen
             this.mvcManager = mvcManager;
         }
 
-        public async UniTask ShowWhileExecuteTaskAsync(Func<AsyncLoadProcessReport, UniTask> operation, CancellationToken ct)
+        public async UniTask<ILoadingScreen.LoadResult> ShowWhileExecuteTaskAsync(
+            Func<AsyncLoadProcessReport, UniTask> operation, CancellationToken ct)
         {
             ct.ThrowIfCancellationRequested();
 
             var timeout = LOADING_SCREEN_TIMEOUT_MINUTES;
             var loadReport = AsyncLoadProcessReport.Create();
+
             UniTask showLoadingScreenTask = mvcManager.ShowAsync(
                                                            SceneLoadingScreenController.IssueCommand(
                                                                new SceneLoadingScreenController.Params(loadReport, timeout)), ct)
                                                       .AttachExternalCancellation(ct);
 
-            UniTask operationTask = operation(loadReport);
+            var result = ILoadingScreen.LoadResult.TimeoutResult;
 
-            await UniTask.WhenAll(showLoadingScreenTask, operationTask);
+            async UniTask ExecuteOperationAsync()
+            {
+                try
+                {
+                    await operation(loadReport);
+                    result = ILoadingScreen.LoadResult.SuccessResult;
+                }
+                catch (Exception e)
+                {
+                    result = ILoadingScreen.LoadResult.ExceptionResult(e.Message);
+                }
+            }
+
+            await UniTask.WhenAny(showLoadingScreenTask, ExecuteOperationAsync());
+
+            return result;
         }
     }
 }

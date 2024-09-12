@@ -1,3 +1,5 @@
+using Cysharp.Threading.Tasks;
+
 namespace SceneRunner.Scene
 {
     public interface ISceneStateProvider
@@ -14,5 +16,15 @@ namespace SceneRunner.Scene
         ref readonly SceneEngineStartInfo EngineStartInfo { get; }
 
         void SetRunning(SceneEngineStartInfo startInfo);
+    }
+
+    public static class SceneStateProviderExtensions
+    {
+        public static bool IsNotRunningState(this ISceneStateProvider sceneStateProvider) =>
+            sceneStateProvider.State
+                is SceneState.Disposing
+                or SceneState.Disposed
+                or SceneState.JavaScriptError
+                or SceneState.EngineError;
     }
 }

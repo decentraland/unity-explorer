@@ -1,6 +1,6 @@
 using DCL.AvatarRendering.Wearables;
 using DCL.Backpack.BackpackBus;
-using DCL.Character.CharacterMotion.Components;
+using DCL.Input;
 using DCL.UI;
 using System;
 using UnityEngine;
@@ -20,17 +20,17 @@ namespace DCL.Backpack
             AvatarSlotView[] slotViews,
             NftTypeIconSO rarityBackgrounds,
             BackpackCommandBus backpackCommandBus,
-            BackpackEventBus backpackEventBus,
+            IBackpackEventBus backpackEventBus,
             BackpackGridController backpackGridController,
             BackpackInfoPanelController backpackInfoPanelController,
             IThumbnailProvider thumbnailProvider,
-            DCLInput dclInput)
+            IInputBlock inputBlock)
         {
             this.view = view;
             this.backpackCommandBus = backpackCommandBus;
             this.backpackInfoPanelController = backpackInfoPanelController;
             this.backpackGridController = backpackGridController;
-            new BackpackSearchController(view.backpackSearchBar, backpackCommandBus, backpackEventBus, dclInput);
+            new BackpackSearchController(view.backpackSearchBar, backpackCommandBus, backpackEventBus, inputBlock);
             slotsController = new BackpackSlotsController(slotViews, backpackCommandBus, backpackEventBus, rarityBackgrounds, thumbnailProvider);
 
             rectTransform = view.GetComponent<RectTransform>();
@@ -55,7 +55,7 @@ namespace DCL.Backpack
         }
 
         public void Animate(int triggerId) =>
-            view.gameObject.SetActive(triggerId == AnimationHashes.IN);
+            view.gameObject.SetActive(triggerId == UIAnimationHashes.IN);
 
         public void ResetAnimator() { }
 

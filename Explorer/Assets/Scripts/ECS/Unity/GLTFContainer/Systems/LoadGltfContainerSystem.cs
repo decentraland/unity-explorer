@@ -3,6 +3,7 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
+using CRDT;
 using DCL.ECSComponents;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
@@ -11,7 +12,7 @@ using ECS.Unity.GLTFContainer.Asset.Components;
 using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.GLTFContainer.Components.Defaults;
 using System.Threading;
-using DCL.Diagnostics;
+using DCL.Interaction.Utility;
 using SceneRunner.Scene;
 using UnityEngine.Assertions;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.Unity.GLTFContainer.Asset.Components.GltfContainerAsset, ECS.Unity.GLTFContainer.Asset.Components.GetGltfContainerAssetIntention>;
@@ -27,11 +28,14 @@ namespace ECS.Unity.GLTFContainer.Systems
     {
         private readonly EntityEventBuffer<GltfContainerComponent> eventsBuffer;
         private readonly ISceneData sceneData;
+        private readonly IEntityCollidersSceneCache entityCollidersSceneCache;
 
-        internal LoadGltfContainerSystem(World world, EntityEventBuffer<GltfContainerComponent> eventsBuffer, ISceneData sceneData) : base(world)
+        internal LoadGltfContainerSystem(World world, EntityEventBuffer<GltfContainerComponent> eventsBuffer, ISceneData sceneData,
+            IEntityCollidersSceneCache entityCollidersSceneCache) : base(world)
         {
             this.eventsBuffer = eventsBuffer;
             this.sceneData = sceneData;
+            this.entityCollidersSceneCache = entityCollidersSceneCache;
         }
 
         protected override void Update(float t)
@@ -45,28 +49,32 @@ namespace ECS.Unity.GLTFContainer.Systems
         private void StartLoading(in Entity entity, ref PBGltfContainer sdkComponent, ref PartitionComponent partitionComponent)
         {
             GltfContainerComponent component;
+
             if (!sceneData.TryGetHash(sdkComponent.Src, out string hash))
             {
-                var exception = new ArgumentException($"GLTF source {sdkComponent.Src} not found in the content");
-                ReportHub.LogException(exception, GetReportCategory());
-                component = GltfContainerComponent.CreateFaulty(exception);
+                component = GltfContainerComponent.CreateFaulty(
+                    GetReportCategory(),
+                    new ArgumentException($"GLTF source {sdkComponent.Src} not found in the content")
+                );
+
                 World.Add(entity, component);
             }
             else
             {
                 // It's not the best idea to pass Transform directly but we rely on cancellation source to cancel if the entity dies
-                var promise = Promise.Create(World, new GetGltfContainerAssetIntention(sdkComponent.Src, hash ,new CancellationTokenSource()), partitionComponent);
+                var promise = Promise.Create(World, new GetGltfContainerAssetIntention(sdkComponent.Src, hash, new CancellationTokenSource()), partitionComponent);
                 component = new GltfContainerComponent(sdkComponent.GetVisibleMeshesCollisionMask(), sdkComponent.GetInvisibleMeshesCollisionMask(), promise);
                 component.State = LoadingState.Loading;
                 World.Add(entity, component);
-
             }
+
             eventsBuffer.Add(entity, component);
         }
 
         // SDK Component was changed
         [Query]
-        private void ReconfigureGltfContainer(Entity entity, ref GltfContainerComponent component, ref PBGltfContainer sdkComponent, ref PartitionComponent partitionComponent)
+        private void ReconfigureGltfContainer(Entity entity, ref GltfContainerComponent component, ref PBGltfContainer sdkComponent, ref PartitionComponent partitionComponent,
+            ref CRDTEntity sdkEntity)
         {
             if (!sdkComponent.IsDirty) return;
 
@@ -75,17 +83,17 @@ namespace ECS.Unity.GLTFContainer.Systems
                 // The source is changed, should start downloading over again
                 case LoadingState.Unknown:
                     if (!sceneData.TryGetHash(sdkComponent.Src, out string hash))
-                    {
-                        var exception = new ArgumentException($"GLTF source {sdkComponent.Src} not found in the content");
-                        ReportHub.LogException(exception, GetReportCategory());
-                        component.SetFaulty(exception);
-                    }
+                        component.SetFaulty(
+                            GetReportCategory(),
+                            new ArgumentException($"GLTF source {sdkComponent.Src} not found in the content")
+                        );
                     else
                     {
-                        var promise = Promise.Create(World, new GetGltfContainerAssetIntention(sdkComponent.Src,hash, new CancellationTokenSource()), partitionComponent);
+                        var promise = Promise.Create(World, new GetGltfContainerAssetIntention(sdkComponent.Src, hash, new CancellationTokenSource()), partitionComponent);
                         component.Promise = promise;
                         component.State = LoadingState.Loading;
                     }
+
                     eventsBuffer.Add(entity, component);
                     return;
 
@@ -116,9 +124,10 @@ namespace ECS.Unity.GLTFContainer.Systems
                         ConfigureGltfContainerColliders.SetupInvisibleColliders(ref component, result.Asset);
                     }
 
+                    entityCollidersSceneCache.Associate(in component, World.Reference(entity), sdkEntity);
+
                     return;
             }
         }
-        
     }
 }

@@ -1,7 +1,7 @@
 using Arch.Core;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
-using DCL.AvatarRendering.Wearables;
+using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.CharacterTriggerArea.Components;
 using DCL.ECSComponents;
@@ -38,9 +38,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
         public void Setup()
         {
             globalWorld = World.Create();
-            var globalWorldProxy = new ObjectProxy<World>();
-            globalWorldProxy.SetObject(globalWorld);
-            system = new AvatarModifierAreaHandlerSystem(world, globalWorldProxy);
+            system = new AvatarModifierAreaHandlerSystem(world, globalWorld);
 
             fakeTriggerAreaGO = new GameObject("fake character area trigger");
             characterTriggerArea = fakeTriggerAreaGO.AddComponent<CharacterTriggerArea.CharacterTriggerArea>();

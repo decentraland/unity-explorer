@@ -470,8 +470,9 @@ MonoBehaviour:
       - {x: 145, y: 60}
     targetWorld: MetadyneLabs.dcl.eth
     customRealm: https://sdk-team-cdn.decentraland.org/ipfs/goerli-plaza-main-latest
-    remoteSceneID: bafkreihpuayzjkiiluobvq5lxnvhrjnsl24n4xtrtauhu5cf2bk6sthv5q
-    remoteSceneContentServer: 0
+    remoteHibridWorld: MetadyneLabs.dcl.eth
+    remoteHybridSceneContentServer: 1
+    useRemoteAssetsBundles: 1
   debugViewsCatalog:
     <Widget>k__BackingField: {fileID: 9197481963319205126, guid: f3bf08b2b62097d4aa0574f7bafa4a86, type: 3}
     <ControlContainer>k__BackingField: {fileID: 9197481963319205126, guid: 6da3ff28c8a87e0428fa07019c15fa2f, type: 3}
@@ -493,8 +494,11 @@ MonoBehaviour:
     showSplash: 1
     showAuthentication: 1
     showLoading: 1
-    enableLandscape: 1
-    enableLOD: 1
+    enableLandscape: 0
+    enableLOD: 0
+    enableEmulateNoLivekitConnection: 0
+    overrideConnectionQuality: 0
+    connectionQuality: 2
   globalPluginSettingsContainer: {fileID: 11400000, guid: 7575a56449e4af444b9c13267319c95d, type: 2}
   scenePluginSettingsContainer: {fileID: 11400000, guid: 52a2a6abe420a8b4db9dc55df4b42e92, type: 2}
   uiToolkitRoot: {fileID: 1901323878}
@@ -508,52 +512,6 @@ MonoBehaviour:
       m_SubObjectType: 
       m_EditorAssetChanged: 0
     <DirectionalLight>k__BackingField: {fileID: 233166827}
-    <MapRendererSettings>k__BackingField:
-      <MapRendererConfiguration>k__BackingField:
-        m_AssetGUID: b54d9d4189903c2438fa811308f14ceb
-        m_SubObjectName: 
-        m_SubObjectType: 
-        m_EditorAssetChanged: 0
-      <MapCameraObject>k__BackingField:
-        m_AssetGUID: 3efe8a48fc3905f47a0648abd6859394
-        m_SubObjectName: 
-        m_SubObjectType: 
-        m_EditorAssetChanged: 0
-      <AtlasChunk>k__BackingField:
-        m_AssetGUID: f80a8f4fcad2b4246b66c94221314244
-        m_SubObjectName: 
-        m_SubObjectType: 
-        m_EditorAssetChanged: 0
-      <ParcelHighlight>k__BackingField:
-        m_AssetGUID: 7e150ada146ad0749b39e65968780157
-        m_SubObjectName: 
-        m_SubObjectType: 
-        m_EditorAssetChanged: 0
-      <PlayerMarker>k__BackingField:
-        m_AssetGUID: 0ae66608be2735a4f96e0f1aa9b3a75b
-        m_SubObjectName: 
-        m_SubObjectType: 
-        m_EditorAssetChanged: 0
-      <PinMarker>k__BackingField:
-        m_AssetGUID: e7d14406516774d91886b6b4d1a26a58
-        m_SubObjectName: 
-        m_SubObjectType: 
-        m_EditorAssetChanged: 0
-      <SceneOfInterestMarker>k__BackingField:
-        m_AssetGUID: 1f557ed079be146f9aeb090104c115c9
-        m_SubObjectName: 
-        m_SubObjectType: 
-        m_EditorAssetChanged: 0
-      <FavoriteMarker>k__BackingField:
-        m_AssetGUID: 5f2c1af519efc4b82b87b887f93077fc
-        m_SubObjectName: 
-        m_SubObjectType: 
-        m_EditorAssetChanged: 0
-      <UserMarker>k__BackingField:
-        m_AssetGUID: 53b70d09c4a814878a30c68582ad4523
-        m_SubObjectName: 
-        m_SubObjectType: 
-        m_EditorAssetChanged: 0
     <ChatEntryConfiguration>k__BackingField:
       m_AssetGUID: 6afb31861b85441b6ab2b988819bb96a
       m_SubObjectName: 
@@ -566,6 +524,21 @@ MonoBehaviour:
       m_EditorAssetChanged: 0
     <CursorSettings>k__BackingField:
       m_AssetGUID: 7382805fd18299d41925547efbad99f0
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_EditorAssetChanged: 0
+    <MainUIView>k__BackingField:
+      m_AssetGUID: c7887090193b1ec4c994ad22169b86db
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_EditorAssetChanged: 0
+    <GeneralAudioMixer>k__BackingField:
+      m_AssetGUID: e38b0fb061d7ffa47b54d89ecd483bd2
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_EditorAssetChanged: 0
+    <MultiplayerDebugSettings>k__BackingField:
+      m_AssetGUID: d23ca58b5a012ef46a39310b9a2e4e05
       m_SubObjectName: 
       m_SubObjectType: 
       m_EditorAssetChanged: 0

@@ -14,15 +14,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: ef75b96575e6f4f47a635b6fad41f46a, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -1210.1542
+      value: 721.66925
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: ef75b96575e6f4f47a635b6fad41f46a, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0
+      value: 0.5992652
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: ef75b96575e6f4f47a635b6fad41f46a, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -1870.1772
+      value: -1597.9692
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: ef75b96575e6f4f47a635b6fad41f46a, type: 3}
       propertyPath: m_LocalRotation.w
@@ -52,6 +52,22 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -3898294048865169196, guid: ef75b96575e6f4f47a635b6fad41f46a, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: be2688536fdbd4c4b883cceff222ca00, type: 2}
+    - target: {fileID: -3898294048865169196, guid: ef75b96575e6f4f47a635b6fad41f46a, type: 3}
+      propertyPath: m_Materials.Array.data[1]
+      value: 
+      objectReference: {fileID: 2100000, guid: 91e0dafba65a0af41b73e806444da999, type: 2}
+    - target: {fileID: 660055678392721515, guid: ef75b96575e6f4f47a635b6fad41f46a, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: be2688536fdbd4c4b883cceff222ca00, type: 2}
+    - target: {fileID: 660055678392721515, guid: ef75b96575e6f4f47a635b6fad41f46a, type: 3}
+      propertyPath: m_Materials.Array.data[1]
+      value: 
+      objectReference: {fileID: 2100000, guid: 91e0dafba65a0af41b73e806444da999, type: 2}
     - target: {fileID: 919132149155446097, guid: ef75b96575e6f4f47a635b6fad41f46a, type: 3}
       propertyPath: m_Name
       value: Tree02 Variant

@@ -1,5 +1,4 @@
 ﻿using CrdtEcsBridge.PoolsProviders;
-using DCL.Diagnostics;
 using JetBrains.Annotations;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis.Modules.CommunicationsControllerApi.SDKMessageBus;
@@ -23,11 +22,11 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
         [UsedImplicitly]
         public override ScriptableSDKObservableEventArray? SendBatch()
         {
-            if (engineApi.SdkObservableEventSubscriptions.Count == 0
-                || engineApi.SdkObservableEvents.Count == 0)
+            // If there are no subscriptions at all there is nothing to handle
+            if (engineApi.IsAnySubscription() == false)
             {
-                engineApi.SdkObservableEvents.Clear();
-                commsApi.SceneCommsMessages.Clear();
+                engineApi.ClearSDKObservableEvents();
+                commsApi.ClearMessages();
                 return null;
             }
 
@@ -50,33 +49,27 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
 
         private void DetectSceneMessageBusCommsObservableEvent()
         {
-            if (!engineApi.SdkObservableEventSubscriptions.Contains(SDKObservableEventIds.Comms))
+            if (!engineApi.HasSubscription(SDKObservableEventIds.Comms))
                 return;
 
-            foreach (CommsPayload currentPayload in commsApi.SceneCommsMessages)
-                engineApi.SdkObservableEvents.Add(SDKObservableUtils.GenerateSDKObservableEvent(SDKObservableEventIds.Comms, currentPayload));
+            if (commsApi.SceneCommsMessages.Count == 0) return;
 
-            commsApi.SceneCommsMessages.Clear();
+            foreach (CommsPayload currentPayload in commsApi.SceneCommsMessages)
+                engineApi.AddSDKObservableEvent(SDKObservableUtils.NewSDKObservableEventFromData(SDKObservableEventIds.Comms, currentPayload));
+
+            commsApi.ClearMessages();
         }
 
         [UsedImplicitly]
         public void SubscribeToSDKObservableEvent(string eventId)
         {
-            engineApi.SdkObservableEventSubscriptions.Add(eventId);
-
-            if (eventId == SDKObservableEventIds.PlayerClicked)
-                ReportHub.LogWarning(new ReportData(ReportCategory.SDK_OBSERVABLES), "Scene subscribed to unsupported SDK Observable 'PlayerClicked'");
-            else
-                engineApi.EnableSDKObservableMessagesDetection = true;
+            engineApi.TryAddSubscription(eventId);
         }
 
         [UsedImplicitly]
         public void UnsubscribeFromSDKObservableEvent(string eventId)
         {
-            engineApi.SdkObservableEventSubscriptions.Remove(eventId);
-
-            if (engineApi.SdkObservableEventSubscriptions.Count == 0)
-                engineApi.EnableSDKObservableMessagesDetection = false;
+            engineApi.RemoveSubscriptionIfExists(eventId);
         }
     }
 }

@@ -3,16 +3,16 @@ namespace DCL.Optimization.Pools
     public static class PoolConstants
     {
         public const bool CHECK_COLLECTIONS =
-            #if DEBUG_POOLS
+#if DEBUG_POOLS
 true;
-            #else
-false;
-            #endif
+#else
+            false;
+#endif
 
         /// <summary>
         ///     Initial capacity of pools that should exist per scene context
         /// </summary>
-        public const int SCENES_COUNT = 50;
+        public const int SCENES_COUNT = 2000;
 
         /// <summary>
         ///     Initial capacity of pools that should exist for global context
@@ -33,6 +33,11 @@ false;
         ///     Initial capacity of pools connected to the total number of entities per scene
         /// </summary>
         public const int ENTITIES_COUNT_PER_SCENE = 2000;
+
+        /// <summary>
+        ///     Initial capacity of pools connected to pointer events processing per scene
+        /// </summary>
+        public const int INTERACTABLE_ENTITIES_PER_SCENE_COUNT = ENTITIES_COUNT_PER_SCENE / 4;
 
         /// <summary>
         ///     initial capacity of pools and collections that exist per SDK component type

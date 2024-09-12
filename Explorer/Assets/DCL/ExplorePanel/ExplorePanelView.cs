@@ -1,12 +1,12 @@
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.UI;
+using DCL.UI.ProfileElements;
 using DG.Tweening;
 using MVC;
 using System;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.Audio;
 using UnityEngine.UI;
 
 namespace DCL.ExplorePanel
@@ -31,7 +31,7 @@ namespace DCL.ExplorePanel
         public ProfileWidgetView ProfileWidget { get; private set; } = null!;
 
         [field: SerializeField]
-        public SystemMenuView SystemMenu { get; private set; } = null!;
+        public ProfileMenuView ProfileMenuView { get; private set; } = null!;
 
         [field: Header("Audio")]
         [field: SerializeField]

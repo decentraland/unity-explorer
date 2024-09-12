@@ -6,6 +6,7 @@ using CrdtEcsBridge.JsModulesImplementation.Communications;
 using CrdtEcsBridge.PoolsProviders;
 using Cysharp.Threading.Tasks;
 using DCL.Interaction.Utility;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Profiles;
 using DCL.Web3;
@@ -20,6 +21,7 @@ using NUnit.Framework;
 using SceneRunner.ECSWorld;
 using SceneRunner.Scene;
 using SceneRunner.Tests.TestUtils;
+using SceneRuntime;
 using SceneRuntime.Factory;
 using System.Threading;
 using System.Threading.Tasks;
@@ -34,10 +36,12 @@ namespace SceneRunner.Tests
         public void SetUp()
         {
             path = $"file://{Application.dataPath + "/../TestResources/Scenes/Cube/cube.js"}";
+            activeEngines = new V8ActiveEngines();
+            engineFactory = new V8EngineFactory(activeEngines);
 
             ECSWorldFacade ecsWorldFacade = TestSystemsWorld.Create();
 
-            sceneRuntimeFactory = new SceneRuntimeFactory(TestWebRequestController.INSTANCE, new IRealmData.Fake());
+            sceneRuntimeFactory = new SceneRuntimeFactory(TestWebRequestController.INSTANCE, new IRealmData.Fake(), engineFactory, activeEngines);
 
             ecsWorldFactory = Substitute.For<IECSWorldFactory>();
             ecsWorldFactory.CreateWorld(in Arg.Any<ECSWorldFactoryArgs>()).Returns(ecsWorldFacade);
@@ -46,17 +50,35 @@ namespace SceneRunner.Tests
             crdtSerializer = Substitute.For<ICRDTSerializer>();
             componentsRegistry = Substitute.For<ISDKComponentsRegistry>();
 
-            sceneFactory = new SceneFactory(ecsWorldFactory, sceneRuntimeFactory, sharedPoolsProvider, crdtSerializer, componentsRegistry,
-                new SceneEntityFactory(), new EntityCollidersGlobalCache(), Substitute.For<IEthereumApi>(), Substitute.For<IMVCManager>(),
-                Substitute.For<IProfileRepository>(), Substitute.For<IWeb3IdentityCache>(), IWebRequestController.DEFAULT,
-                new IRoomHub.Fake(), Substitute.For<IRealmData>(), Substitute.For<ICommunicationControllerHub>());
+            sceneFactory = new SceneFactory(
+                ecsWorldFactory,
+                sceneRuntimeFactory,
+                sharedPoolsProvider,
+                crdtSerializer,
+                componentsRegistry,
+                new SceneEntityFactory(),
+                new EntityCollidersGlobalCache(),
+                Substitute.For<IEthereumApi>(),
+                Substitute.For<IMVCManager>(),
+                Substitute.For<IProfileRepository>(),
+                Substitute.For<IWeb3IdentityCache>(),
+                Substitute.For<IDecentralandUrlsSource>(),
+                IWebRequestController.DEFAULT,
+                new IRoomHub.Fake(),
+                Substitute.For<IRealmData>(),
+                Substitute.For<ISceneCommunicationPipe>()
+            );
         }
 
         [TearDown]
         public void TearDown()
         {
             sceneFacade?.DisposeAsync().Forget();
+            activeEngines.Clear();
         }
+
+        private V8ActiveEngines activeEngines;
+        private V8EngineFactory engineFactory;
 
         private SceneRuntimeFactory sceneRuntimeFactory;
         private IECSWorldFactory ecsWorldFactory;
@@ -79,7 +101,7 @@ namespace SceneRunner.Tests
 
             Assert.IsNotNull(sceneFacade);
 
-            var deps = sceneFacadeImpl.deps;
+            SceneInstanceDependencies.WithRuntimeAndJsAPIBase deps = sceneFacadeImpl.deps;
 
             Assert.IsNotNull(deps.Runtime);
             Assert.IsNotNull(deps.RuntimeImplementation);

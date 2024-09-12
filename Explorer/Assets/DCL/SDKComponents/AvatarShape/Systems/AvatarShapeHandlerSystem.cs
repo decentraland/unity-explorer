@@ -20,11 +20,11 @@ namespace ECS.Unity.AvatarShape.Systems
     [ThrottlingEnabled]
     public partial class AvatarShapeHandlerSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
-        private readonly ObjectProxy<World> globalWorldProxy;
+        private readonly World globalWorld;
 
-        public AvatarShapeHandlerSystem(World world, ObjectProxy<World> globalWorldProxy) : base(world)
+        public AvatarShapeHandlerSystem(World world, World globalWorld) : base(world)
         {
-            this.globalWorldProxy = globalWorldProxy;
+            this.globalWorld = globalWorld;
         }
 
         protected override void Update(float t)
@@ -40,7 +40,7 @@ namespace ECS.Unity.AvatarShape.Systems
         [None(typeof(SDKAvatarShapeComponent))]
         private void LoadAvatarShape(in Entity entity, ref PBAvatarShape pbAvatarShape, ref PartitionComponent partitionComponent, ref TransformComponent transformComponent)
         {
-            World.Add(entity, new SDKAvatarShapeComponent(globalWorldProxy.Object!.Create(pbAvatarShape, partitionComponent, transformComponent)));
+            World.Add(entity, new SDKAvatarShapeComponent(globalWorld.Create(pbAvatarShape, partitionComponent, transformComponent)));
         }
 
         [Query]
@@ -49,7 +49,7 @@ namespace ECS.Unity.AvatarShape.Systems
             if (!pbAvatarShape.IsDirty)
                 return;
 
-            globalWorldProxy.Object!.Set(sdkAvatarShapeComponent.globalWorldEntity, pbAvatarShape);
+            globalWorld.Set(sdkAvatarShapeComponent.globalWorldEntity, pbAvatarShape);
         }
 
         [Query]
@@ -57,7 +57,7 @@ namespace ECS.Unity.AvatarShape.Systems
         private void HandleComponentRemoval(in Entity entity, ref SDKAvatarShapeComponent sdkAvatarShapeComponent)
         {
             // If the component is removed at scene-world, the global-world representation should disappear entirely
-            globalWorldProxy.Object!.Add(sdkAvatarShapeComponent.globalWorldEntity, new DeleteEntityIntention());
+            globalWorld.Add(sdkAvatarShapeComponent.globalWorldEntity, new DeleteEntityIntention());
 
             World.Remove<SDKAvatarShapeComponent>(entity);
         }
@@ -68,13 +68,13 @@ namespace ECS.Unity.AvatarShape.Systems
         {
             World.Remove<SDKAvatarShapeComponent>(entity);
             World.Remove<PBAvatarShape>(entity);
-            globalWorldProxy.Object!.Add(sdkAvatarShapeComponent.globalWorldEntity, new DeleteEntityIntention());
+            globalWorld.Add(sdkAvatarShapeComponent.globalWorldEntity, new DeleteEntityIntention());
         }
 
         [Query]
         public void FinalizeComponents(ref SDKAvatarShapeComponent sdkAvatarShapeComponent)
         {
-            globalWorldProxy.Object!.Add(sdkAvatarShapeComponent.globalWorldEntity, new DeleteEntityIntention());
+            globalWorld.Add(sdkAvatarShapeComponent.globalWorldEntity, new DeleteEntityIntention());
         }
 
         public void FinalizeComponents(in Query query)

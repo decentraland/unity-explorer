@@ -1,4 +1,5 @@
-﻿using Microsoft.ClearScript;
+﻿using DCL.Diagnostics;
+using Microsoft.ClearScript;
 using Microsoft.ClearScript.V8;
 using NUnit.Framework;
 using UnityEngine;
@@ -7,11 +8,27 @@ namespace SceneRuntime.Tests
 {
     public class V8Tests
     {
+        private V8EngineFactory engineFactory;
+        private V8ActiveEngines activeEngines;
+        private V8ScriptEngine engine;
+
+        [SetUp]
+        public void SetUp()
+        {
+            activeEngines = new V8ActiveEngines();
+             engineFactory = new V8EngineFactory(activeEngines);
+             engine = engineFactory.Create(new SceneShortInfo(new Vector2Int(0, 0), "test"));
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            activeEngines.Clear();
+        }
+
         [Test]
         public void CallInvokeAsFunction()
         {
-            V8ScriptEngine engine = V8EngineFactory.Create();
-
             engine.AddHostType("Debug", typeof(Debug));
 
             engine.Execute("function func() { Debug.Log(\"test func\") }");
@@ -23,8 +40,6 @@ namespace SceneRuntime.Tests
         [Test]
         public void ConvertCSharpByteArrayToUint8Array()
         {
-            V8ScriptEngine engine = V8EngineFactory.Create();
-
             engine.AddHostType("Assert", typeof(Assert));
 
             engine.Execute(@"

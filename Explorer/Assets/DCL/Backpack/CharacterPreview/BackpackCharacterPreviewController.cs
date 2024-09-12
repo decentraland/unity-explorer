@@ -3,6 +3,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Equipped;
+using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
@@ -18,13 +19,13 @@ namespace DCL.Backpack.CharacterPreview
 {
     public class BackpackCharacterPreviewController : CharacterPreviewControllerBase
     {
-        private readonly BackpackEventBus backpackEventBus;
+        private readonly IBackpackEventBus backpackEventBus;
         private readonly IEquippedEmotes equippedEmotes;
         private CancellationTokenSource? emotePreviewCancellationToken;
 
         public BackpackCharacterPreviewController(CharacterPreviewView view,
             ICharacterPreviewFactory previewFactory,
-            BackpackEventBus backpackEventBus,
+            IBackpackEventBus backpackEventBus,
             World world,
             IEquippedEmotes equippedEmotes,
             CharacterPreviewEventBus characterPreviewEventBus)

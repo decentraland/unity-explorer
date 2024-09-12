@@ -18,12 +18,14 @@ namespace DCL.CharacterMotion.Systems
     public partial class CalculateCameraFovSystem : BaseUnityLoopSystem
     {
         private SingleInstanceEntity camera;
+        private float fOriginalLODBias;
 
         internal CalculateCameraFovSystem(World world) : base(world) { }
 
         public override void Initialize()
         {
             camera = World.CacheCamera();
+            fOriginalLODBias = QualitySettings.lodBias;
         }
 
         protected override void Update(float t)
@@ -39,15 +41,16 @@ namespace DCL.CharacterMotion.Systems
             in CharacterRigidTransform rigidTransform,
             in MovementInputComponent movementInput)
         {
-            if (movementInput.Kind == MovementKind.Run)
+            if (movementInput.Kind == MovementKind.RUN)
             {
                 float speedFactor = rigidTransform.MoveVelocity.Velocity.magnitude / characterControllerSettings.RunSpeed;
                 float targetFov = Mathf.Lerp(0, characterControllerSettings.CameraFOVWhileRunning, speedFactor);
-
                 fieldOfViewComponent.AdditiveFov = Mathf.MoveTowards(fieldOfViewComponent.AdditiveFov, targetFov, characterControllerSettings.FOVIncreaseSpeed * dt);
             }
             else
+            {
                 fieldOfViewComponent.AdditiveFov = Mathf.MoveTowards(fieldOfViewComponent.AdditiveFov, 0, characterControllerSettings.FOVDecreaseSpeed * dt);
+            }
         }
     }
 }

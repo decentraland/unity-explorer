@@ -1,4 +1,3 @@
-using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Passport.Modals;
@@ -15,13 +14,11 @@ namespace DCL.Passport.Modules
     {
         private readonly UserDetailedInfo_PassportModuleView view;
         private readonly ISelfProfile selfProfile;
-        private readonly IProfileRepository profileRepository;
-        private readonly World world;
-        private readonly Entity playerEntity;
         private readonly PassportErrorsController passportErrorsController;
         private readonly UserAdditionalFields_PassportSubModuleController additionalFieldsController;
         private readonly UserDescription_PassportSubModuleController descriptionController;
         private readonly UserLinks_PassportSubModuleController linksController;
+        private readonly PassportProfileInfoController passportProfileInfoController;
 
         private Profile currentProfile;
         private CancellationTokenSource checkEditionAvailabilityCts;
@@ -31,22 +28,18 @@ namespace DCL.Passport.Modules
             UserDetailedInfo_PassportModuleView view,
             IMVCManager mvcManager,
             ISelfProfile selfProfile,
-            IProfileRepository profileRepository,
-            World world,
-            Entity playerEntity,
             AddLink_PassportModal addLinkModal,
-            PassportErrorsController passportErrorsController)
+            PassportErrorsController passportErrorsController,
+            PassportProfileInfoController passportProfileInfoController)
         {
             this.view = view;
             this.selfProfile = selfProfile;
-            this.profileRepository = profileRepository;
-            this.world = world;
-            this.playerEntity = playerEntity;
             this.passportErrorsController = passportErrorsController;
+            this.passportProfileInfoController = passportProfileInfoController;
 
             additionalFieldsController = new UserAdditionalFields_PassportSubModuleController(view);
             descriptionController = new UserDescription_PassportSubModuleController(view, additionalFieldsController);
-            linksController = new UserLinks_PassportSubModuleController(view, addLinkModal, mvcManager, profileRepository, world, playerEntity, passportErrorsController);
+            linksController = new UserLinks_PassportSubModuleController(view, addLinkModal, mvcManager, passportProfileInfoController);
 
             view.InfoEditionButton.onClick.AddListener(() => SetInfoSectionAsEditionMode(true));
             view.CancelInfoButton.onClick.AddListener(() => SetInfoSectionAsEditionMode(false));
@@ -56,22 +49,19 @@ namespace DCL.Passport.Modules
         public void Setup(Profile profile)
         {
             currentProfile = profile;
+            Clear();
             additionalFieldsController.Setup(profile);
             descriptionController.Setup(profile);
             linksController.Setup(profile);
-
             SetInfoSectionAsEditionMode(false);
-            additionalFieldsController.LoadAdditionalFields();
-            descriptionController.LoadDescription();
-            linksController.SetLinksSectionAsEditionMode(false);
-            linksController.LoadLinks();
-
             checkEditionAvailabilityCts = checkEditionAvailabilityCts.SafeRestart();
             CheckForEditionAvailabilityAsync(checkEditionAvailabilityCts.Token).Forget();
         }
 
         public void Clear()
         {
+            checkEditionAvailabilityCts.SafeCancelAndDispose();
+            saveInfoCts.SafeCancelAndDispose();
             additionalFieldsController.ClearAllAdditionalInfoFields();
             linksController.ClearAllLinks();
         }
@@ -82,8 +72,6 @@ namespace DCL.Passport.Modules
             view.InfoEditionButton.onClick.RemoveAllListeners();
             view.CancelInfoButton.onClick.RemoveAllListeners();
             view.SaveInfoButton.onClick.RemoveAllListeners();
-            checkEditionAvailabilityCts.SafeCancelAndDispose();
-            saveInfoCts.SafeCancelAndDispose();
             linksController.Dispose();
         }
 
@@ -141,11 +129,7 @@ namespace DCL.Passport.Modules
                 SetInfoSectionAsSavingStatus(true);
                 descriptionController.SaveDataIntoProfile();
                 additionalFieldsController.SaveDataIntoProfile();
-                await UpdateProfileAsync(ct);
-                additionalFieldsController.ClearAllAdditionalInfoFields();
-                additionalFieldsController.LoadAdditionalFields();
-                descriptionController.LoadDescription();
-                SetInfoSectionAsEditionMode(false);
+                await passportProfileInfoController.UpdateProfileAsync(ct);
             }
         }
 
@@ -157,31 +141,6 @@ namespace DCL.Passport.Modules
             descriptionController.SetAsInteractable(!isSaving);
             linksController.SetSaveButtonAsInteractable(!isSaving);
             additionalFieldsController.SetAsInteractable(!isSaving);
-        }
-
-        private async UniTask UpdateProfileAsync(CancellationToken ct)
-        {
-            try
-            {
-                // Update profile data
-                await profileRepository.SetAsync(currentProfile, ct);
-
-                // Update player entity in world
-                currentProfile.IsDirty = true;
-                world.Set(playerEntity, currentProfile);
-            }
-            catch (OperationCanceledException) { }
-            catch (Exception e)
-            {
-                const string ERROR_MESSAGE = "There was an error while trying to update your profile info. Please try again!";
-                passportErrorsController.Show();
-                ReportHub.LogError(ReportCategory.PROFILE, $"{ERROR_MESSAGE} ERROR: {e.Message}");
-            }
-            finally
-            {
-                if (currentProfile != null)
-                    currentProfile = await profileRepository.GetAsync(currentProfile.UserId, 0, ct);
-            }
         }
     }
 }

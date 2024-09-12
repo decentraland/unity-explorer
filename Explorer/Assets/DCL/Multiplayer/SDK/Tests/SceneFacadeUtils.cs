@@ -3,7 +3,6 @@ using DCL.Diagnostics;
 using NSubstitute;
 using SceneRunner.Scene;
 using UnityEngine;
-using Utility.Multithreading;
 
 namespace DCL.Multiplayer.SDK.Tests
 {

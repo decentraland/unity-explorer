@@ -11,7 +11,12 @@ namespace ECS.StreamableLoading.AssetBundles
 {
     public abstract class PrepareAssetBundleLoadingParametersSystemBase : BaseUnityLoopSystem
     {
-        private static readonly string[] COMMON_SHADERS = { "dcl/scene_ignore_windows", "dcl/scene_ignore_mac" };
+        private static readonly string[] COMMON_SHADERS =
+        {
+            "dcl/scene_ignore_windows", "dcl/scene_ignore_mac",
+            "dcl/universal render pipeline/lit_ignore_windows",
+            "dcl/universal render pipeline/lit_ignore_mac",
+        };
 
         private readonly URLDomain streamingAssetURL;
 
@@ -44,7 +49,7 @@ namespace ECS.StreamableLoading.AssetBundles
                 if (assetBundleIntention.Manifest == null)
                 {
                     World.Add(entity, new StreamableLoadingResult<AssetBundleData>
-                        (CreateException(new ArgumentException($"Manifest must be provided to load {assetBundleIntention.Name} from `WEB` source"))));
+                        (GetReportCategory(), CreateException(new ArgumentException($"Manifest must be provided to load {assetBundleIntention.Name} from `WEB` source"))));
 
                     return;
                 }
@@ -53,7 +58,7 @@ namespace ECS.StreamableLoading.AssetBundles
                 {
                     // Add the failure to the entity
                     World.Add(entity, new StreamableLoadingResult<AssetBundleData>
-                        (CreateException(new ArgumentException($"Asset Bundle {assetBundleIntention.Hash} {assetBundleIntention.Name} not found in the manifest"))));
+                        (GetReportCategory(), CreateException(new ArgumentException($"Asset Bundle {assetBundleIntention.Hash} {assetBundleIntention.Name} not found in the manifest"))));
 
                     return;
                 }

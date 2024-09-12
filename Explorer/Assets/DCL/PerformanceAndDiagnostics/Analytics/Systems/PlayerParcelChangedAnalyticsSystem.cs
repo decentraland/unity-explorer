@@ -2,6 +2,7 @@
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.Character.Components;
+using DCL.Diagnostics;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using ECS;
 using ECS.Abstract;
@@ -13,10 +14,10 @@ using Utility;
 
 namespace DCL.Analytics.Systems
 {
+    [LogCategory(ReportCategory.ANALYTICS)]
     [UpdateInGroup(typeof(PostRenderingSystemGroup))]
     public partial class PlayerParcelChangedAnalyticsSystem : BaseUnityLoopSystem
     {
-        private const string UNDEFINED = "UNDEFINED";
         private static readonly Vector2Int MIN_INT2 = new (int.MinValue, int.MinValue);
 
         private readonly IAnalyticsController analytics;
@@ -51,8 +52,7 @@ namespace DCL.Analytics.Systems
                 return;
             }
 
-            Vector3 playerPos = World.Get<CharacterTransform>(playerEntity).Transform.position;
-            Vector2Int newParcel = ParcelMathHelper.FloorToParcel(playerPos);
+            Vector2Int newParcel =  World.Get<CharacterTransform>(playerEntity).Transform.ParcelPosition();
 
             if (newParcel != oldParcel)
             {
@@ -62,8 +62,8 @@ namespace DCL.Analytics.Systems
                 {
                     { "old_parcel", oldParcel == MIN_INT2 ? "(NaN, NaN)" : oldParcel.ToString() },
                     { "new_parcel", newParcel.ToString() },
-                    { "scene_hash", sceneIsDefined ? currentScene.Info.Name : UNDEFINED },
-                    { "is_empty_scene", sceneIsDefined ? currentScene.IsEmpty : UNDEFINED },
+                    { "scene_hash", sceneIsDefined ? currentScene.Info.Name : IAnalyticsController.UNDEFINED },
+                    { "is_empty_scene", sceneIsDefined ? currentScene.IsEmpty : IAnalyticsController.UNDEFINED },
                 });
 
                 oldParcel = newParcel;

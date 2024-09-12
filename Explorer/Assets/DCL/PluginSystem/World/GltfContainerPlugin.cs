@@ -13,7 +13,6 @@ using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.GLTFContainer.Systems;
 using ECS.Unity.Visibility.Systems;
 using System.Collections.Generic;
-using DCL.Optimization.PerformanceBudgeting;
 using ECS.SceneLifeCycle;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.GLTF;
@@ -56,9 +55,6 @@ namespace DCL.PluginSystem.World
 
             LoadGLTFSystem.InjectToWorld(ref builder, new NoCache<GLTFData, GetGLTFIntention>(false, false), sharedDependencies.SceneData, sharedDependencies.ScenePartition);
 
-            // TODO: for debugging only, REMOVE later!
-            localSceneDevelopment = true;
-
             // Asset loading
             PrepareGltfAssetLoadingSystem.InjectToWorld(ref builder, assetsCache, localSceneDevelopment);
 
@@ -67,10 +63,8 @@ namespace DCL.PluginSystem.World
             else
                 CreateGltfAssetFromAssetBundleSystem.InjectToWorld(ref builder, globalDeps.FrameTimeBudget, globalDeps.MemoryBudget);
 
-            ReportGltfErrorsSystem.InjectToWorld(ref builder, globalDeps.ReportsHandlingSettings);
-
             // GLTF Container
-            LoadGltfContainerSystem.InjectToWorld(ref builder, buffer, sharedDependencies.SceneData);
+            LoadGltfContainerSystem.InjectToWorld(ref builder, buffer, sharedDependencies.SceneData, sharedDependencies.EntityCollidersSceneCache);
             FinalizeGltfContainerLoadingSystem.InjectToWorld(ref builder, persistentEntities.SceneRoot, globalDeps.FrameTimeBudget,
                 sharedDependencies.EntityCollidersSceneCache, sharedDependencies.SceneData, buffer);
 

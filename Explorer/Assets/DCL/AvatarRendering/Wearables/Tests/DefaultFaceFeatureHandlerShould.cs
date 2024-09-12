@@ -1,8 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using DCL.AvatarRendering.Loading.Assets;
+using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using ECS.StreamableLoading.Common.Components;
-using Google.Protobuf.WellKnownTypes;
 using NSubstitute;
 using NUnit.Framework;
 using UnityEngine;
@@ -13,7 +13,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
     {
         private IDefaultFaceFeaturesHandler defaultFaceFeaturesHandler;
 
-        private IWearableCatalog wearableCatalog;
+        private IWearableStorage wearableStorage;
 
         private Texture eyesTexture;
         private Texture mouthTexture;
@@ -22,13 +22,13 @@ namespace DCL.AvatarRendering.Wearables.Tests
         [SetUp]
         public void SetUp()
         {
-            wearableCatalog = Substitute.For<IWearableCatalog>();
+            wearableStorage = Substitute.For<IWearableStorage>();
 
             eyesTexture = CreateFacialFeatureWearable(1, WearablesConstants.Categories.EYES);
             mouthTexture = CreateFacialFeatureWearable(2, WearablesConstants.Categories.MOUTH);
             eyebrowsTexture = CreateFacialFeatureWearable(3, WearablesConstants.Categories.EYEBROWS);
 
-            defaultFaceFeaturesHandler = new DefaultFaceFeaturesHandler(wearableCatalog);
+            defaultFaceFeaturesHandler = new DefaultFaceFeaturesHandler(wearableStorage);
         }
 
         private Texture CreateFacialFeatureWearable(int resolution, string category)
@@ -36,14 +36,14 @@ namespace DCL.AvatarRendering.Wearables.Tests
             var mock = Substitute.For<IWearable>();
             var tex = new Texture2D(resolution, resolution);
 
-            var main = new StreamableLoadingResult<WearableAssetBase>(new WearableTextureAsset(tex, null));
-            var mask = new StreamableLoadingResult<WearableAssetBase>((WearableTextureAsset)null); // no mask
+            var main = new StreamableLoadingResult<AttachmentAssetBase>(new AttachmentTextureAsset(tex, null));
+            var mask = new StreamableLoadingResult<AttachmentAssetBase>((AttachmentTextureAsset)null); // no mask
 
             var array = new WearableAssets[BodyShape.COUNT];
 
             for (var i = 0; i < array.Length; i++)
             {
-                var innerArray = new StreamableLoadingResult<WearableAssetBase>?[2];
+                var innerArray = new StreamableLoadingResult<AttachmentAssetBase>?[2];
                 innerArray[WearablePolymorphicBehaviour.MAIN_ASSET_INDEX] = main;
                 innerArray[WearablePolymorphicBehaviour.MASK_ASSET_INDEX] = mask;
 
@@ -52,7 +52,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
 
             mock.WearableAssetResults.Returns(array);
 
-            wearableCatalog.GetDefaultWearable(Arg.Any<BodyShape>(), category).Returns(mock);
+            wearableStorage.GetDefaultWearable(Arg.Any<BodyShape>(), category).Returns(mock);
 
             return tex;
         }

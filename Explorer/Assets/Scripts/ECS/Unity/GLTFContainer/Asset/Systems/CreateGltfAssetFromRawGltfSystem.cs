@@ -9,6 +9,7 @@ using ECS.StreamableLoading;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.GLTF;
 using ECS.Unity.GLTFContainer.Asset.Components;
+using ECS.Unity.SceneBoundsChecker;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -20,6 +21,8 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
     [LogCategory(ReportCategory.GLTF_CONTAINER)]
     public partial class CreateGltfAssetFromRawGltfSystem : BaseUnityLoopSystem
     {
+        private const string COLLIDER_SUFFIX = "_collider";
+        private const StringComparison IGNORE_CASE = StringComparison.CurrentCultureIgnoreCase;
         private readonly IPerformanceBudget instantiationFrameTimeBudget;
         private readonly IPerformanceBudget memoryBudget;
 
@@ -40,6 +43,9 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
             ref GetGltfContainerAssetIntention assetIntention,
             ref StreamableLoadingResult<GLTFData> gltfDataResult)
         {
+            if (!instantiationFrameTimeBudget.TrySpendBudget() || !memoryBudget.TrySpendBudget())
+                return;
+
             if (assetIntention.CancellationTokenSource.IsCancellationRequested || gltfDataResult.Asset == null)
                 return;
 
@@ -48,113 +54,117 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
 
         private static GltfContainerAsset CreateGltfObject(GLTFData gltfData)
         {
-            // TODO: Create container GameObject, containerTransform, instantiate GLTF GameObject and
-            // populate GltfContainerAsset; Check 'CreateGltfAssetFromAssetBundleSystem.CreateGltfObject()'...
-
-            /*var container = new GameObject(gltfData.gltfImportedData.GetSceneName(0));
-
-            // Let the upper layer decide what to do with the root
-            container.SetActive(false);
-            Transform containerTransform = container.transform;*/
-
             var result = GltfContainerAsset.Create(gltfData.containerGameObject, gltfData);
 
-            // GameObject? instance = Object.Instantiate(assetBundleData.GetMainAsset<GameObject>(), containerTransform);
-
-            // TODO: Uncommenting this causes all GLTF to not render at all, need to research why
-            // Collect all renderers, they are needed for Visibility system
-            // using (PoolExtensions.Scope<List<Renderer>> instanceRenderers = GltfContainerAsset.RENDERERS_POOL.AutoScope())
-            // {
-            //     gltfData.containerGameObject.GetComponentsInChildren(true, instanceRenderers.Value);
-            //     result.Renderers.AddRange(instanceRenderers.Value);
-            // }
+            using (PoolExtensions.Scope<List<Renderer>> instanceRenderers = GltfContainerAsset.RENDERERS_POOL.AutoScope())
+            {
+                gltfData.containerGameObject.GetComponentsInChildren(true, instanceRenderers.Value);
+                result.Renderers.AddRange(instanceRenderers.Value);
+            }
 
             // Collect all Animations as they are used in Animation System (only for legacy support, as all of them will eventually be converted to Animators)
-            using PoolExtensions.Scope<List<Animation>> animationScope = GltfContainerAsset.ANIMATIONS_POOL.AutoScope();
+            using (PoolExtensions.Scope<List<Animation>> animationScope = GltfContainerAsset.ANIMATIONS_POOL.AutoScope())
             {
                 gltfData.containerGameObject.GetComponentsInChildren(true, animationScope.Value);
                 result.Animations.AddRange(animationScope.Value);
             }
 
             // Collect all Animators as they are used in Animation System
-            using PoolExtensions.Scope<List<Animator>> animatorScope = GltfContainerAsset.ANIMATORS_POOL.AutoScope();
+            using (PoolExtensions.Scope<List<Animator>> animatorScope = GltfContainerAsset.ANIMATORS_POOL.AutoScope())
             {
                 gltfData.containerGameObject.GetComponentsInChildren(true, animatorScope.Value);
                 result.Animators.AddRange(animatorScope.Value);
             }
 
-            // Collect colliders from mesh filters
-            // Colliders are created/fetched disabled as its layer is controlled by another system
-            /*using (PoolExtensions.Scope<List<MeshFilter>> meshFilterScope = GltfContainerAsset.MESH_FILTERS_POOL.AutoScope())
+            using (PoolExtensions.Scope<List<MeshFilter>> meshFilterScope = GltfContainerAsset.MESH_FILTERS_POOL.AutoScope())
             {
                 List<MeshFilter> list = meshFilterScope.Value;
-                instance.GetComponentsInChildren(true, list);
+                gltfData.containerGameObject.GetComponentsInChildren(true, list);
 
                 foreach (MeshFilter meshFilter in list)
                 {
                     GameObject go = meshFilter.gameObject;
 
-                    // Consider it a visible collider when it has a renderer on it
-                    if (go.GetComponent<Renderer>())
-                        AddVisibleMeshCollider(result, go, meshFilter.sharedMesh);
+                    // This treatment mimics what's being done in the AB converter
+                    if (meshFilter.name.Contains(COLLIDER_SUFFIX, IGNORE_CASE))
+                    {
+                        MeshCollider newCollider = AddMeshCollider(meshFilter, go);
+                        result.InvisibleColliders.Add(new SDKCollider(newCollider));
+                    }
                     else
-                        // Gather invisible colliders
-                        CreateAndAddMeshCollider(result.InvisibleColliders, go, meshFilter.sharedMesh);
+                    {
+                        // Note from Alejandro Alvarez Melucci <alejandro.alvarez@decentraland.org>:
+                        // I'm not sure why on the AssetBundle flow there's this check,
+                        // I introduced it here just in case it's needed. I already reached out to Nico Lorusso to investigate further
+
+                        // Consider it a visible collider when it has a renderer on it
+                        if (go.GetComponent<Renderer>())
+                            AddVisibleMeshCollider(result.VisibleColliderMeshes, go, meshFilter.sharedMesh);
+                        else
+
+                            // Gather invisible colliders
+                            CreateAndAddMeshCollider(result.InvisibleColliders, go);
+                    }
                 }
-            }*/
+            }
 
             // Collect colliders from skinned mesh renderers
-            /*using (PoolExtensions.Scope<List<SkinnedMeshRenderer>> instanceRenderers = GltfContainerAsset.SKINNED_RENDERERS_POOL.AutoScope())
+            using (PoolExtensions.Scope<List<SkinnedMeshRenderer>> instanceRenderers = GltfContainerAsset.SKINNED_RENDERERS_POOL.AutoScope())
             {
-                instance.GetComponentsInChildren(true, instanceRenderers.Value);
+                gltfData.containerGameObject.GetComponentsInChildren(true, instanceRenderers.Value);
 
                 foreach (SkinnedMeshRenderer skinnedMeshRenderer in instanceRenderers.Value)
                 {
                     GameObject go = skinnedMeshRenderer.gameObject;
 
                     // Always considered as visible collider
-                    AddVisibleMeshCollider(result, go, skinnedMeshRenderer.sharedMesh);
+                    AddVisibleMeshCollider(result.VisibleColliderMeshes, go, skinnedMeshRenderer.sharedMesh);
                 }
-            }*/
-
-            ProcessGameObjects(gltfData.containerGameObject);
+            }
 
             return result;
         }
 
-        private static void ProcessGameObjects(GameObject root)
+
+        // If we update AddVisibleMeshCollider and/or CreateAndAddMeshCollider please check and update them in CreateGltfAssetFromAssetBundleSystem.cs
+        // As a tech-debt we might want to move these functions elsewhere to avoid repetition, but for now it's acceptable since this is only for local development
+
+#region Helper Collider Methods
+        private static void AddVisibleMeshCollider(List<GltfContainerAsset.VisibleMeshCollider> result, GameObject go, Mesh mesh)
         {
-            var meshFilters = root.GetComponentsInChildren<MeshFilter>();
-
-            foreach (MeshFilter filter in meshFilters)
+            result.Add(new GltfContainerAsset.VisibleMeshCollider
             {
-                if (filter.name.Contains("_collider", StringComparison.OrdinalIgnoreCase))
-                    ConfigureColliders(filter.transform, filter);
-            }
+                GameObject = go,
+                Mesh = mesh,
+            });
+        }
 
-            var renderers = root.GetComponentsInChildren<Renderer>();
+        private static void CreateAndAddMeshCollider(List<SDKCollider> result, GameObject go)
+        {
+            // Asset Bundle converter creates Colliders during the processing in some cases
+            Collider collider = go.GetComponent<Collider>();
 
-            foreach (Renderer r in renderers)
+            if (collider)
             {
-                if (r.name.Contains("_collider", StringComparison.OrdinalIgnoreCase))
-                    UnityObjectUtils.SafeDestroy(r);
+                // Disable it as its activity controlled by another system based on PBGltfContainer component
+                collider.enabled = false;
+
+                result.Add(new SDKCollider(collider));
             }
         }
 
-        private static void ConfigureColliders(Transform transform, MeshFilter filter)
+        private static MeshCollider AddMeshCollider(MeshFilter meshFilter, GameObject go)
         {
-            if (filter != null)
-            {
-                Physics.BakeMesh(filter.sharedMesh.GetInstanceID(), false);
-                filter.gameObject.AddComponent<MeshCollider>();
-                UnityObjectUtils.SafeDestroy(filter.GetComponent<MeshRenderer>());
-            }
+            Physics.BakeMesh(meshFilter.sharedMesh.GetInstanceID(), false);
+            MeshCollider newCollider = go.AddComponent<MeshCollider>();
+            var renderer = go.GetComponent<MeshRenderer>();
 
-            foreach (Transform child in transform)
-            {
-                var f = child.gameObject.GetComponent<MeshFilter>();
-                ConfigureColliders(child, f);
-            }
+            if (renderer)
+                renderer.enabled = false;
+
+            UnityObjectUtils.SafeDestroy(meshFilter);
+            return newCollider;
         }
+#endregion
     }
 }

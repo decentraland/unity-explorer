@@ -1,6 +1,5 @@
 ﻿using Arch.Core;
 using ECS.StreamableLoading.AssetBundles;
-using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.TestSuite;
 using ECS.Unity.GLTFContainer.Asset.Cache;
@@ -35,7 +34,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
 
             Assert.That(world.Has<StreamableLoadingResult<GltfContainerAsset>>(e), Is.False);
             Assert.That(world.TryGet(e, out GetAssetBundleIntention result), Is.True);
-            Assert.That(result.Hash, Is.EqualTo($"TEST_HASH{PlatformUtils.GetPlatform()}"));
+            Assert.That(result.Hash, Is.EqualTo($"TEST_HASH{PlatformUtils.GetCurrentPlatform()}"));
         }
 
         [Test]

@@ -17,7 +17,6 @@ using System.Threading;
 using AssetManagement;
 using UnityEngine;
 using UnityEngine.Networking;
-using Utility.Multithreading;
 using Object = UnityEngine.Object;
 
 namespace ECS.StreamableLoading.AssetBundles

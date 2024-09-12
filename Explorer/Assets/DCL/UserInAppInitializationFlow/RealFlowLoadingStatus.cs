@@ -9,22 +9,33 @@ namespace DCL.UserInAppInitializationFlow
         public enum Stage : byte
         {
             Init = 0,
-            ProfileLoaded = 1,
-            LandscapeLoaded = 2,
+            AuthenticationScreenShown = 1,
+            LiveKitConnectionEnsured = 2,
+            FeatureFlagInitialized = 3,
+            ProfileLoaded = 4,
+            EnvironmentMiscSet = 5,
+            PlayerAvatarLoaded = 6,
+            LandscapeLoaded = 7,
+            RealmRestarted = 8,
 
             /// <summary>
             ///     Player has teleported to the spawn point of the starting scene
             /// </summary>
-            PlayerTeleported = 3,
-
-            Completed = 4,
+            PlayerTeleported = 9,
+            Completed = 10,
         }
 
         public static readonly Dictionary<Stage, float> PROGRESS = new (EnumUtils.GetEqualityComparer<Stage>())
         {
             [Stage.Init] = 0f,
-            [Stage.ProfileLoaded] = 0.1f,
-            [Stage.LandscapeLoaded] = 0.5f,
+            [Stage.AuthenticationScreenShown] = 0.05f,
+            [Stage.LiveKitConnectionEnsured] = 0.1f,
+            [Stage.FeatureFlagInitialized] = 0.15f,
+            [Stage.ProfileLoaded] = 0.2f,
+            [Stage.EnvironmentMiscSet] = 0.25f,
+            [Stage.PlayerAvatarLoaded] = 0.4f,
+            [Stage.LandscapeLoaded] = 0.7f,
+            [Stage.RealmRestarted] = 0.85f,
             [Stage.PlayerTeleported] = 0.95f,
             [Stage.Completed] = 1f,
         };

@@ -1,20 +1,19 @@
-using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Backpack;
-using DCL.CharacterMotion.Components;
+using DCL.Input;
+using DCL.Input.Component;
 using DCL.Navmap;
-using DCL.Notification;
-using DCL.Notification.NotificationsBus;
+using DCL.NotificationsBusController.NotificationsBus;
+using DCL.NotificationsBusController.NotificationTypes;
 using DCL.Settings;
 using DCL.UI;
+using DCL.UI.ProfileElements;
 using MVC;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using UnityEngine.InputSystem;
 using Utility;
-using Utility.Arch;
 
 namespace DCL.ExplorePanel
 {
@@ -22,20 +21,19 @@ namespace DCL.ExplorePanel
     {
         private readonly SettingsController settingsController;
         private readonly BackpackController backpackController;
-        private readonly Entity playerEntity;
-        private readonly World world;
         private readonly ProfileWidgetController profileWidgetController;
-        private readonly SystemMenuController systemMenuController;
+        private readonly ProfileMenuController profileMenuController;
         private readonly DCLInput dclInput;
-        private readonly INotificationsBusController notificationBusController;
         private readonly IMVCManager mvcManager;
+        private readonly IInputBlock inputBlock;
+
         private Dictionary<ExploreSections, TabSelectorView> tabsBySections;
         private Dictionary<ExploreSections, ISection> exploreSections;
 
         private SectionSelectorController<ExploreSections> sectionSelectorController;
         private CancellationTokenSource animationCts;
         private CancellationTokenSource? profileWidgetCts;
-        private CancellationTokenSource? systemMenuCts;
+        private CancellationTokenSource? profileMenuCts;
         private TabSelectorView previousSelector;
         private ExploreSections lastShownSection;
 
@@ -49,33 +47,30 @@ namespace DCL.ExplorePanel
             NavmapController navmapController,
             SettingsController settingsController,
             BackpackController backpackController,
-            Entity playerEntity,
-            World world,
             ProfileWidgetController profileWidgetController,
-            SystemMenuController systemMenuController,
+            ProfileMenuController profileMenuController,
             DCLInput dclInput,
             INotificationsBusController notificationBusController,
-            IMVCManager mvcManager)
+            IMVCManager mvcManager,
+            IInputBlock inputBlock)
             : base(viewFactory)
         {
-            this.NavmapController = navmapController;
+            NavmapController = navmapController;
             this.settingsController = settingsController;
             this.backpackController = backpackController;
-            this.playerEntity = playerEntity;
-            this.world = world;
             this.profileWidgetController = profileWidgetController;
-            this.systemMenuController = systemMenuController;
             this.dclInput = dclInput;
-            this.notificationBusController = notificationBusController;
             this.mvcManager = mvcManager;
-            this.notificationBusController.SubscribeToNotificationTypeClick(NotificationType.REWARD_ASSIGNMENT, OnRewardAssigned);
+            this.profileMenuController = profileMenuController;
+            notificationBusController.SubscribeToNotificationTypeClick(NotificationType.REWARD_ASSIGNMENT, OnRewardAssigned);
+            this.inputBlock = inputBlock;
         }
 
         private void OnRewardAssigned(object[] parameters)
         {
             mvcManager.ShowAsync(IssueCommand(new ExplorePanelParameter(ExploreSections.Backpack))).Forget();
             lastShownSection = ExploreSections.Backpack;
-            OnBackpackHotkeyPressed(default);
+            OnBackpackHotkeyPressed(default(InputAction.CallbackContext));
         }
 
         public override void Dispose()
@@ -83,7 +78,7 @@ namespace DCL.ExplorePanel
             base.Dispose();
 
             profileWidgetCts.SafeCancelAndDispose();
-            systemMenuCts.SafeCancelAndDispose();
+            profileMenuCts.SafeCancelAndDispose();
         }
 
         protected override void OnViewInstantiated()
@@ -102,26 +97,25 @@ namespace DCL.ExplorePanel
             foreach (KeyValuePair<ExploreSections, ISection> keyValuePair in exploreSections)
                 keyValuePair.Value.Deactivate();
 
-            tabsBySections = viewInstance.TabSelectorMappedViews.ToDictionary(map => map.Section, map => map.TabSelectorViews);
+            tabsBySections = viewInstance!.TabSelectorMappedViews.ToDictionary(map => map.Section, map => map.TabSelectorViews);
 
             foreach ((ExploreSections section, TabSelectorView? tabSelector) in tabsBySections)
             {
                 tabSelector.TabSelectorToggle.onValueChanged.RemoveAllListeners();
+
                 tabSelector.TabSelectorToggle.onValueChanged.AddListener(
-                    isOn =>
-                    {
-                        ToggleSection(isOn, tabSelector, section, true);
-                    }
+                    isOn => { ToggleSection(isOn, tabSelector, section, true); }
                 );
             }
 
-            viewInstance.ProfileWidget.OpenProfileButton.onClick.AddListener(ShowSystemMenu);
+            viewInstance.ProfileWidget.OpenProfileButton.onClick.AddListener(ShowProfileMenu);
         }
 
         protected override void OnViewShow()
         {
             isControlClosing = false;
             sectionSelectorController.ResetAnimators();
+
             foreach ((ExploreSections section, TabSelectorView? tab) in tabsBySections)
             {
                 ToggleSection(section == inputData.Section, tab, section, true);
@@ -132,14 +126,15 @@ namespace DCL.ExplorePanel
                 backpackController.Toggle(inputData.BackpackSection.Value);
 
             profileWidgetCts = profileWidgetCts.SafeRestart();
+
             profileWidgetController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Persistent, 0),
                                         new ControllerNoData(), profileWidgetCts.Token)
                                    .Forget();
 
-            if (systemMenuController.State is ControllerState.ViewFocused or ControllerState.ViewBlurred)
-                systemMenuController.HideViewAsync(CancellationToken.None).Forget();
+            if (profileMenuController.State is ControllerState.ViewFocused or ControllerState.ViewBlurred)
+                profileMenuController.HideViewAsync(CancellationToken.None).Forget();
 
-            BlockUnwantedActions();
+            BlockUnwantedInputs();
             RegisterHotkeys();
         }
 
@@ -156,6 +151,7 @@ namespace DCL.ExplorePanel
             {
                 if (shownSection == lastShownSection)
                     exploreSections[lastShownSection].Activate();
+
                 lastShownSection = shownSection;
             }
         }
@@ -171,6 +167,7 @@ namespace DCL.ExplorePanel
 
         private void OnCloseMainMenu(InputAction.CallbackContext obj)
         {
+            profileMenuController.HideViewAsync(CancellationToken.None).Forget();
             isControlClosing = true;
         }
 
@@ -217,10 +214,13 @@ namespace DCL.ExplorePanel
             foreach (ISection exploreSectionsValue in exploreSections.Values)
                 exploreSectionsValue.Deactivate();
 
-            profileWidgetCts.SafeCancelAndDispose();
-            systemMenuCts.SafeCancelAndDispose();
+            if (profileMenuController.State is ControllerState.ViewFocused or ControllerState.ViewBlurred)
+                profileMenuController.HideViewAsync(CancellationToken.None).Forget();
 
-            UnblockUnwantedActions();
+            profileWidgetCts.SafeCancelAndDispose();
+            profileMenuCts.SafeCancelAndDispose();
+
+            UnblockUnwantedInputs();
             UnRegisterHotkeys();
         }
 
@@ -233,41 +233,39 @@ namespace DCL.ExplorePanel
             dclInput.Shortcuts.Backpack.performed -= OnBackpackHotkeyPressed;
         }
 
-        private void BlockUnwantedActions()
+        private void BlockUnwantedInputs()
         {
-            world.AddOrGet<CameraBlockerComponent>(playerEntity);
-            world.AddOrGet<MovementBlockerComponent>(playerEntity);
-            dclInput.Camera.Disable();
+            inputBlock.Disable(InputMapComponent.Kind.CAMERA , InputMapComponent.Kind.PLAYER);
         }
 
-        private void UnblockUnwantedActions()
+        private void UnblockUnwantedInputs()
         {
-            world.TryRemove<CameraBlockerComponent>(playerEntity);
-            world.TryRemove<MovementBlockerComponent>(playerEntity);
-            dclInput.Camera.Enable();
+            inputBlock.Enable(InputMapComponent.Kind.CAMERA , InputMapComponent.Kind.PLAYER);
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct)
         {
-            return UniTask.WhenAny(viewInstance.CloseButton.OnClickAsync(ct), UniTask.WaitUntil(() => isControlClosing, PlayerLoopTiming.Update, ct), viewInstance.SystemMenu.LogoutButton.OnClickAsync(ct));
+            return UniTask.WhenAny(viewInstance!.CloseButton.OnClickAsync(ct),
+                UniTask.WaitUntil(() => isControlClosing, PlayerLoopTiming.Update, ct),
+                viewInstance.ProfileMenuView.SystemMenuView.LogoutButton.OnClickAsync(ct));
         }
 
-        private void ShowSystemMenu()
+        private void ShowProfileMenu()
         {
-            systemMenuCts = systemMenuCts.SafeRestart();
+            profileMenuCts = profileMenuCts.SafeRestart();
 
-            async UniTaskVoid ShowSystemMenuAsync(CancellationToken ct)
+            async UniTaskVoid ShowProfileMenuAsync(CancellationToken ct)
             {
-                await systemMenuController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Overlay, 0),
+                await profileMenuController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Overlay, 0),
                     new ControllerNoData(), ct);
 
-                await systemMenuController.HideViewAsync(ct);
+                await profileMenuController.HideViewAsync(ct);
             }
 
-            if (systemMenuController.State is ControllerState.ViewFocused or ControllerState.ViewBlurred)
-                systemMenuController.HideViewAsync(systemMenuCts.Token).Forget();
+            if (profileMenuController.State is ControllerState.ViewFocused or ControllerState.ViewBlurred)
+                profileMenuController.HideViewAsync(profileMenuCts.Token).Forget();
             else
-                ShowSystemMenuAsync(systemMenuCts.Token).Forget();
+                ShowProfileMenuAsync(profileMenuCts.Token).Forget();
         }
     }
 

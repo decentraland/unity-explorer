@@ -55,7 +55,6 @@ namespace ECS.Unity.GLTFContainer.Asset.Components
 
         private IAssetData assetData;
 
-
         private GltfContainerAsset(GameObject root, IAssetData assetData, List<SDKCollider> invisibleColliders,
             List<VisibleMeshCollider> visibleColliderMeshes, List<Renderer> renderers, List<Animation> animations,
             List<Animator> animators)
@@ -74,11 +73,8 @@ namespace ECS.Unity.GLTFContainer.Asset.Components
 
         public void Dispose()
         {
-            assetData.Dereference(); // TODO: Assetbundledata has a flow for dereference, gltfdata has an empty implementation, is it acceptable?
-            //assetData = null; // TODO: leaving commented out code for now after questions are answered
-
-            //gltfDataReference?.Dispose(); // TODO: leaving commented out code for now after questions are answered
-            assetData.Dispose(); // TODO: Does it make sense to call dispose on both assetbundledata and gltfdata?
+            assetData.Dereference();
+            assetData.Dispose();
             assetData = null;
 
             COLLIDERS_POOL.Release(InvisibleColliders);

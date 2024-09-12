@@ -2,6 +2,7 @@ using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Emotes;
+using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables;
 using DCL.Backpack;
 using DCL.Diagnostics;
@@ -11,7 +12,6 @@ using DCL.Input.Component;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI;
-using ECS.Abstract;
 using MVC;
 using System.Threading;
 using UnityEngine;
@@ -23,15 +23,17 @@ namespace DCL.EmotesWheel
 {
     public class EmotesWheelController : ControllerBase<EmotesWheelView>
     {
+        private const string? EMPTY_IMAGE_TYPE = "empty";
         private readonly ISelfProfile selfProfile;
-        private readonly IEmoteCache emoteCache;
+        private readonly IEmoteStorage emoteStorage;
         private readonly NftTypeIconSO rarityBackgrounds;
         private readonly World world;
         private readonly Entity playerEntity;
         private readonly IThumbnailProvider thumbnailProvider;
-        private readonly SingleInstanceEntity currentInputMapsEntity;
+        private readonly IInputBlock inputBlock;
         private readonly DCLInput.EmoteWheelActions emoteWheelInput;
         private readonly IMVCManager mvcManager;
+        private readonly ICursor cursor;
         private readonly URN[] currentEmotes = new URN[Avatar.MAX_EQUIPPED_EMOTES];
         private UniTaskCompletionSource? closeViewTask;
         private CancellationTokenSource? fetchProfileCts;
@@ -42,26 +44,28 @@ namespace DCL.EmotesWheel
 
         public EmotesWheelController(ViewFactoryMethod viewFactory,
             ISelfProfile selfProfile,
-            IEmoteCache emoteCache,
+            IEmoteStorage emoteStorage,
             NftTypeIconSO rarityBackgrounds,
             World world,
             Entity playerEntity,
             IThumbnailProvider thumbnailProvider,
-            SingleInstanceEntity currentInputMapsEntity,
+            IInputBlock inputBlock,
             DCLInput dclInput,
-            IMVCManager mvcManager)
+            IMVCManager mvcManager,
+            ICursor cursor)
             : base(viewFactory)
         {
             this.selfProfile = selfProfile;
-            this.emoteCache = emoteCache;
+            this.emoteStorage = emoteStorage;
             this.rarityBackgrounds = rarityBackgrounds;
             this.world = world;
             this.playerEntity = playerEntity;
             this.thumbnailProvider = thumbnailProvider;
-            this.currentInputMapsEntity = currentInputMapsEntity;
+            this.inputBlock = inputBlock;
             this.dclInput = dclInput;
             emoteWheelInput = this.dclInput.EmoteWheel;
             this.mvcManager = mvcManager;
+            this.cursor = cursor;
 
             emoteWheelInput.Customize.performed += OpenBackpack;
             emoteWheelInput.Close.performed += Close;
@@ -82,7 +86,7 @@ namespace DCL.EmotesWheel
 
         protected override void OnViewInstantiated()
         {
-            viewInstance.OnClose += Close;
+            viewInstance!.OnClose += Close;
             viewInstance.EditButton.onClick.AddListener(OpenBackpack);
             viewInstance.CurrentEmoteName.text = "";
 
@@ -98,6 +102,12 @@ namespace DCL.EmotesWheel
 
         protected override void OnBeforeViewShow()
         {
+            UnblockUnwantedInputs();
+            cursor.Unlock();
+            fetchProfileCts = fetchProfileCts.SafeRestart();
+            InitializeEverythingAsync(fetchProfileCts.Token).Forget();
+            return;
+
             async UniTaskVoid InitializeEverythingAsync(CancellationToken ct)
             {
                 Profile? profile = await selfProfile.ProfileAsync(ct);
@@ -110,23 +120,13 @@ namespace DCL.EmotesWheel
 
                 SetUpSlots(profile);
             }
-
-            fetchProfileCts = fetchProfileCts.SafeRestart();
-            InitializeEverythingAsync(fetchProfileCts.Token).Forget();
-        }
-
-        protected override void OnViewShow()
-        {
-            base.OnViewShow();
-
-            EnableInputActions();
         }
 
         protected override void OnViewClose()
         {
             base.OnViewClose();
 
-            DisableInputActions();
+            BlockUnwantedInputs();
 
             fetchProfileCts.SafeCancelAndDispose();
             slotSetUpCts.SafeCancelAndDispose();
@@ -157,13 +157,13 @@ namespace DCL.EmotesWheel
 
         private async UniTaskVoid SetUpSlotAsync(int slot, URN emoteUrn, CancellationToken ct)
         {
-            if (!emoteCache.TryGetEmote(emoteUrn, out IEmote emote))
+            if (!emoteStorage.TryGetElement(emoteUrn, out IEmote emote))
             {
                 ReportHub.LogError(new ReportData(), $"Could not setup emote wheel slot {slot} for {emoteUrn}, missing emote in cache");
                 return;
             }
 
-            EmoteWheelSlotView view = viewInstance.Slots[slot];
+            EmoteWheelSlotView view = viewInstance!.Slots[slot];
 
             view.BackgroundRarity.sprite = rarityBackgrounds.GetTypeImage(emote.GetRarity());
             view.EmptyContainer.SetActive(false);
@@ -173,9 +173,9 @@ namespace DCL.EmotesWheel
 
         private void SetUpEmptySlot(int slot)
         {
-            EmoteWheelSlotView view = viewInstance.Slots[slot];
+            EmoteWheelSlotView view = viewInstance!.Slots[slot];
 
-            view.BackgroundRarity.sprite = rarityBackgrounds.GetTypeImage("empty");
+            view.BackgroundRarity.sprite = rarityBackgrounds.GetTypeImage(EMPTY_IMAGE_TYPE);
             view.EmptyContainer.SetActive(true);
             view.Thumbnail.gameObject.SetActive(false);
         }
@@ -194,15 +194,15 @@ namespace DCL.EmotesWheel
 
         private void UpdateCurrentEmote(int slot)
         {
-            if (!emoteCache.TryGetEmote(currentEmotes[slot], out IEmote emote))
+            if (!emoteStorage.TryGetElement(currentEmotes[slot], out IEmote emote))
                 ClearCurrentEmote(slot);
             else
-                viewInstance.CurrentEmoteName.text = emote.GetName();
+                viewInstance!.CurrentEmoteName.text = emote.GetName();
         }
 
         private void ClearCurrentEmote(int slot)
         {
-            viewInstance.CurrentEmoteName.text = "";
+            viewInstance!.CurrentEmoteName.text = string.Empty;
         }
 
         private void PlayEmote(int slot)
@@ -231,23 +231,16 @@ namespace DCL.EmotesWheel
             Close();
         }
 
-        private void EnableInputActions()
+        private void UnblockUnwantedInputs()
         {
-            ref InputMapComponent inputMapComponent = ref currentInputMapsEntity.GetInputMapComponent(world);
-            inputMapComponent.Active |= InputMapComponent.Kind.EmoteWheel;
-            inputMapComponent.Active &= ~InputMapComponent.Kind.Emotes;
-
-            // We also disable shortcuts because the wheel can be opened and closed with the same key bind
-            // If we leave it enabled, it will close and then re-open instantly
-            inputMapComponent.Active &= ~InputMapComponent.Kind.Shortcuts;
+            inputBlock.Enable(InputMapComponent.Kind.EMOTE_WHEEL);
+            inputBlock.Disable(InputMapComponent.Kind.EMOTES, InputMapComponent.Kind.SHORTCUTS);
         }
 
-        private void DisableInputActions()
+        private void BlockUnwantedInputs()
         {
-            ref InputMapComponent inputMapComponent = ref currentInputMapsEntity.GetInputMapComponent(world);
-            inputMapComponent.Active &= ~InputMapComponent.Kind.EmoteWheel;
-            inputMapComponent.Active |= InputMapComponent.Kind.Emotes;
-            inputMapComponent.Active |= InputMapComponent.Kind.Shortcuts;
+            inputBlock.Disable(InputMapComponent.Kind.EMOTE_WHEEL);
+            inputBlock.Enable(InputMapComponent.Kind.EMOTES, InputMapComponent.Kind.SHORTCUTS);
         }
 
         private void ListenToSlotsInput(InputActionMap inputActionMap)

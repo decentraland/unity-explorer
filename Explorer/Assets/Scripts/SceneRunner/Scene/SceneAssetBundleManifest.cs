@@ -45,7 +45,7 @@ namespace SceneRunner.Scene
             convertedFiles = new HashSet<string>();
         }
 
-        
+
 
         public unsafe Hash128 ComputeHash(string hash)
         {
@@ -59,9 +59,11 @@ namespace SceneRunner.Scene
         public bool Contains(string hash) =>
             ignoreConvertedFiles || convertedFiles.Contains(hash);
 
+        public bool TryGet(string hash, out string convertedFile) => convertedFiles.TryGetValue(hash, out convertedFile);
+
         public URLAddress GetAssetBundleURL(string hash) =>
             assetBundlesBaseUrl.Append(new URLPath($"{version}/{hash}"));
-        
+
         public string GetVersion() =>
             version;
     }

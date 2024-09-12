@@ -9,7 +9,9 @@ using DCL.SDKComponents.SceneUI.Components;
 using DCL.SDKComponents.SceneUI.Defaults;
 using ECS.Abstract;
 using ECS.Groups;
+using ECS.LifeCycle.Components;
 using System.Collections.Generic;
+using UnityEngine.Assertions;
 
 namespace DCL.SDKComponents.SceneUI.Systems.UITransform
 {
@@ -36,6 +38,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
         }
 
         [Query]
+        [None(typeof(DeleteEntityIntention))]
         private void ResolveSiblingsOrder(ref PBUiTransform sdkModel, ref UITransformComponent uiTransformComponent)
         {
             if (!sdkModel.IsDirty)
@@ -58,6 +61,8 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
                     {
                         ref var newRightOfComponent = ref World.Get<UITransformComponent>(newRightOfEntity);
 
+                        Assert.AreEqual(uiTransformComponent.RelationData.parent, newRightOfComponent.RelationData.parent);
+
                         parent.RelationData.ChangeChildRightOf(uiTransformComponent.RelationData.rightOf,
                             newRightOf,
                             ref newRightOfComponent.RelationData);
@@ -68,11 +73,12 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
                     }
                 }
 
-                uiTransformComponent.RelationData.rightOf = sdkModel.GetRightOfEntity();
+                uiTransformComponent.RelationData.rightOf = newRightOf;
             }
         }
 
         [Query]
+        [None(typeof(DeleteEntityIntention))]
         private void ApplySorting(ref UITransformComponent uiTransformComponent)
         {
             uiTransformComponent.SortIfRequired(World, entitiesMap);

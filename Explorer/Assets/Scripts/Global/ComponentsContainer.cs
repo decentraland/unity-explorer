@@ -32,10 +32,9 @@ namespace Global
 
             var byteListPool = new ListObjectPool<byte>();
 
-            var inputEventsDictionaryPool = new ObjectPool<Dictionary<InputAction, PointerEventType>>(
-                () => new Dictionary<InputAction, PointerEventType>(),
-                actionOnRelease: e => e.Clear()
-            );
+            var inputEventsDictionaryPool = new ListObjectPool<(InputAction, PointerEventType)>(collectionCheck: PoolConstants.CHECK_COLLECTIONS,
+                listInstanceDefaultCapacity: Enum.GetValues(typeof(InputAction)).Length,
+                defaultCapacity: PoolConstants.SCENES_COUNT * PoolConstants.INTERACTABLE_ENTITIES_PER_SCENE_COUNT);
 
             // Add all SDK components here
             sdkComponentsRegistry
@@ -131,7 +130,8 @@ namespace Global
                .Add(SDKComponentBuilder<PBAvatarEquippedData>.Create(ComponentID.AVATAR_EQUIPPED_DATA).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBAvatarEmoteCommand>.Create(ComponentID.AVATAR_EMOTE_COMMAND).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBRealmInfo>.Create(ComponentID.REALM_INFO).AsProtobufResult())
-               .Add(SDKComponentBuilder<PBMapPin>.Create(ComponentID.MAP_PIN).AsProtobufComponent());
+               .Add(SDKComponentBuilder<PBMapPin>.Create(ComponentID.MAP_PIN).AsProtobufComponent())
+               .Add(SDKComponentBuilder<PBInputModifier>.Create(ComponentID.INPUT_MODIFIER).AsProtobufComponent());
 
             Transform rootContainer = new GameObject("ROOT_POOL_CONTAINER").transform;
 

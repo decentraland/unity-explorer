@@ -1,4 +1,6 @@
-﻿namespace DCL.Diagnostics
+﻿using UnityEngine;
+
+namespace DCL.Diagnostics
 {
     /// <summary>
     ///     Contains names of report categories, IDs must be constant so they can be specified in the attribute
@@ -178,6 +180,7 @@
         /// </summary>
         public const string WEARABLE = nameof(WEARABLE);
         public const string EMOTE = nameof(EMOTE);
+        public const string THUMBNAILS = nameof(THUMBNAILS);
 
         public const string AUTHENTICATION = nameof(AUTHENTICATION);
 
@@ -254,6 +257,10 @@
 
         public const string SETTINGS_MENU = nameof(SETTINGS_MENU);
 
+        public const string BACKPACK = nameof(BACKPACK);
+
+        public const string BADGES = nameof(BADGES);
+
         /// <summary>
         ///     Whatever is coming from external pure C# plugins
         /// </summary>
@@ -263,6 +270,11 @@
         ///     To show intended debug messages
         /// </summary>
         public const string DEBUG = nameof(DEBUG);
+
+        /// <summary>
+        ///     For startup operations flow
+        /// </summary>
+        public const string STARTUP = nameof(STARTUP);
 
         /// <summary>
         ///     Default category into which falls everything that is reported without info and by default Unity Debug.Log

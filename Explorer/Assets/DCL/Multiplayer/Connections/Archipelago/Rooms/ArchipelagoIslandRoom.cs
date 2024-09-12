@@ -65,8 +65,8 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
             );
         }
 
-        public void Start() =>
-            connectiveRoom.Start();
+        public UniTask<bool> StartAsync() =>
+            connectiveRoom.StartAsync();
 
         public UniTask StopAsync() =>
             UniTask.WhenAll(
@@ -94,12 +94,10 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
             Vector3 position = characterObject.Position;
             await using ExecuteOnThreadPoolScope _ = await ExecuteOnThreadPoolScope.NewScopeWithReturnOnMainThreadAsync();
 
-            try { await signFlow.SendHeartbeatAsync(position, token); }
-            catch (ConnectionClosedException)
-            {
-                //ignore
-                ReportHub.LogWarning(ReportCategory.ARCHIPELAGO_REQUEST, "Cannot send heartbeat, connection is closed");
-            }
+            var result = await signFlow.SendHeartbeatAsync(position, token);
+
+            if (result.Success == false)
+                ReportHub.LogWarning(ReportCategory.ARCHIPELAGO_REQUEST, $"Cannot send heartbeat, connection is closed: {result.ErrorMessage}");
         }
 
         private void OnNewConnectionString(string connectionString, CancellationToken token)
@@ -111,7 +109,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
 
         private async UniTask ConnectToArchipelagoAsync(CancellationToken token)
         {
-            string adapterUrl = currentAdapterAddress.AdapterUrlAsync();
+            string adapterUrl = currentAdapterAddress.AdapterUrl();
             LightResult<string> welcomePeerId = await WelcomePeerIdAsync(adapterUrl, token);
             welcomePeerId.EnsureSuccess("Cannot authorize with current address and signature, peer id is invalid");
         }
@@ -122,8 +120,15 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
             IWeb3Identity identity = web3IdentityCache.EnsuredIdentity();
             await signFlow.EnsureConnectedAsync(adapterUrl, token);
             string ethereumAddress = identity.Address;
-            string messageForSign = await signFlow.MessageForSignAsync(ethereumAddress, token);
-            string signedMessage = identity.Sign(messageForSign).ToJson();
+            var messageForSignResult = await signFlow.MessageForSignAsync(ethereumAddress, token);
+
+            if (messageForSignResult.Success == false)
+            {
+                ReportHub.LogError(ReportCategory.ARCHIPELAGO_REQUEST, $"Cannot obtain a message to sign a welcome peer");
+                return LightResult<string>.FAILURE;
+            }
+
+            string signedMessage = identity.Sign(messageForSignResult.Result).ToJson();
             ReportHub.Log(ReportCategory.ARCHIPELAGO_REQUEST, $"Signed message: {signedMessage}");
             return await signFlow.WelcomePeerIdAsync(signedMessage, token);
         }

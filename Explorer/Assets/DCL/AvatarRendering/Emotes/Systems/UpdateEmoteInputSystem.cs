@@ -9,6 +9,7 @@ using DCL.EmotesWheel;
 using DCL.Input;
 using DCL.Multiplayer.Emotes;
 using DCL.Profiles;
+using DCL.SDKComponents.InputModifier.Components;
 using ECS.Abstract;
 using MVC;
 using System;
@@ -22,6 +23,7 @@ namespace DCL.AvatarRendering.Emotes
     [UpdateInGroup(typeof(InputGroup))]
     public partial class UpdateEmoteInputSystem : BaseUnityLoopSystem
     {
+        private const int AFTER_WHEEL_WAS_CLOSED_FRAMES_DELAY = 30;
         private readonly Dictionary<string, int> actionNameById = new ();
         private readonly IEmotesMessageBus messageBus;
         private readonly IMVCManager mvcManager;
@@ -30,14 +32,17 @@ namespace DCL.AvatarRendering.Emotes
 
         private int triggeredEmote = -1;
         private bool isWheelBlocked;
+        private int framesAfterWheelWasClosed;
 
-        public UpdateEmoteInputSystem(World world, DCLInput dclInput, IEmotesMessageBus messageBus,
+        private UpdateEmoteInputSystem(World world, DCLInput dclInput, IEmotesMessageBus messageBus,
             IMVCManager mvcManager) : base(world)
         {
             shortcuts = dclInput.Shortcuts;
             emotesActions = dclInput.Emotes;
             this.messageBus = messageBus;
             this.mvcManager = mvcManager;
+
+            this.mvcManager.OnViewClosed += OnEmoteWheelClosed;
 
             GetReportCategory();
 
@@ -49,6 +54,8 @@ namespace DCL.AvatarRendering.Emotes
             base.Dispose();
 
             UnregisterSlotsInput(emotesActions.Get());
+
+            this.mvcManager.OnViewClosed -= OnEmoteWheelClosed;
         }
 
         private void OnSlotPerformed(InputAction.CallbackContext obj)
@@ -68,13 +75,20 @@ namespace DCL.AvatarRendering.Emotes
                 triggeredEmote = -1;
             }
 
-            if (shortcuts.EmoteWheel.WasReleasedThisFrame())
+            if (shortcuts.EmoteWheel.WasReleasedThisFrame()
+                // Close and open actions conflicts each other since they are assigned to the same input key
+                // we need to avoid opening it again after it has been recently closed
+                // We also have to consider race conditions, so I see no other way than setting a delay
+                && framesAfterWheelWasClosed == 0)
             {
                 if (!isWheelBlocked)
                     OpenEmoteWheel();
 
                 isWheelBlocked = false;
             }
+
+            if (framesAfterWheelWasClosed > 0)
+                framesAfterWheelWasClosed--;
         }
 
         [Query]
@@ -88,8 +102,10 @@ namespace DCL.AvatarRendering.Emotes
         [Query]
         [All(typeof(PlayerComponent))]
         [None(typeof(CharacterEmoteIntent))]
-        private void TriggerEmote([Data] int emoteIndex, in Entity entity, in Profile profile)
+        private void TriggerEmote([Data] int emoteIndex, in Entity entity, in Profile profile, in InputModifierComponent inputModifier)
         {
+            if(inputModifier.DisableEmote) return;
+
             IReadOnlyList<URN> emotes = profile.Avatar.Emotes;
             if (emoteIndex < 0 || emoteIndex >= emotes.Count) return;
 
@@ -97,11 +113,11 @@ namespace DCL.AvatarRendering.Emotes
 
             if (emoteId.IsNullOrEmpty()) return;
 
-            var newEmoteIntent = new CharacterEmoteIntent { EmoteId = emoteId, Spatial = true };
+            var newEmoteIntent = new CharacterEmoteIntent { EmoteId = emoteId, Spatial = true, TriggerSource = TriggerSource.SELF};
             ref var emoteIntent = ref World.AddOrGet(entity, newEmoteIntent);
             emoteIntent = newEmoteIntent;
 
-            messageBus.Send(emoteId, false, false);
+            messageBus.Send(emoteId, false);
         }
 
         private void ListenToSlotsInput(InputActionMap inputActionMap)
@@ -135,5 +151,11 @@ namespace DCL.AvatarRendering.Emotes
 
         private void OpenEmoteWheel() =>
             mvcManager.ShowAsync(EmotesWheelController.IssueCommand()).Forget();
+
+        private void OnEmoteWheelClosed(IController obj)
+        {
+            if (obj is not EmotesWheelController) return;
+            framesAfterWheelWasClosed = AFTER_WHEEL_WAS_CLOSED_FRAMES_DELAY;
+        }
     }
 }

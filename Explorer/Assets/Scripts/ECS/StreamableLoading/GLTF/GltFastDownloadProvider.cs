@@ -1,30 +1,29 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
-using DCL.WebRequests;
 using ECS.Prioritization.Components;
+using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
 using GLTFast;
 using GLTFast.Loading;
 using SceneRunner.Scene;
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Networking;
-using Object = UnityEngine.Object;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.Texture2D, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
 namespace ECS.StreamableLoading.GLTF
 {
     internal class GltFastDownloadProvider : IDownloadProvider, IDisposable
     {
-        public string targetGltfOriginalPath = string.Empty;
+        public string TargetGltfOriginalPath = string.Empty;
 
         private ISceneData sceneData;
         private World world;
         private IPartitionComponent partitionComponent;
+        private const int ATTEMPTS_COUNT = 6;
 
         public GltFastDownloadProvider(World world, ISceneData sceneData, IPartitionComponent partitionComponent)
         {
@@ -33,77 +32,53 @@ namespace ECS.StreamableLoading.GLTF
             this.partitionComponent = partitionComponent;
         }
 
-        public async Task<IDownload> Request(Uri uri)
+        public async Task<IDownload> RequestAsync(Uri uri)
         {
-            // TODO: Replace for WebRequestController ???
+            // TODO: Replace for WebRequestController (Planned in PR #1670)
             using (UnityWebRequest webRequest = new UnityWebRequest(uri))
             {
                 webRequest.downloadHandler = new DownloadHandlerBuffer();
 
-                await webRequest.SendWebRequest().WithCancellation(new CancellationToken());
+                try { await webRequest.SendWebRequest().WithCancellation(new CancellationToken()); }
+                catch { throw new Exception($"Error on GLTF download: {webRequest.downloadHandler.error}"); }
 
-                if (!string.IsNullOrEmpty(webRequest.downloadHandler.error))
-                    throw new Exception($"Error on GLTF download: {webRequest.downloadHandler.error}");
-
-                return new GltfDownloadResult()
+                return new GltfDownloadResult
                 {
                     Data = webRequest.downloadHandler.data,
                     Error = webRequest.downloadHandler.error,
                     Text = webRequest.downloadHandler.text,
-                    Success = webRequest.result == UnityWebRequest.Result.Success
+                    Success = webRequest.result == UnityWebRequest.Result.Success,
                 };
             }
         }
 
-        public async Task<ITextureDownload> RequestTexture(Uri uri, bool nonReadable, bool forceLinear)
+        public async Task<ITextureDownload> RequestTextureAsync(Uri uri, bool nonReadable, bool forceLinear)
         {
-            Debug.Log($"PRAVS - GltFastDownloadProvider.RequestTexture() - 1 -> \n"
-                      + $"uri.AbsoluteUri: {uri.AbsoluteUri};\n"
-                      + $"uri.Host: {uri.Host};\n"
-                      + $"uri.AbsolutePath: {uri.AbsolutePath};\n"
-                      + $"uri.OriginalString: {uri.OriginalString};\n"
-                      + $"uri.LocalPath: {uri.LocalPath};\n"
-                      + $"uri.Fragment: {uri.Fragment};\n"
-                      + $"uri.Query: {uri.Query};\n"
-                      + $"uri.PathAndQuery: {uri.PathAndQuery}");
-
             string textureFileName = uri.OriginalString.Substring(uri.OriginalString.LastIndexOf('/')+1);
-            string textureOriginalPath = string.Concat(targetGltfOriginalPath.Remove(targetGltfOriginalPath.LastIndexOf('/') + 1), textureFileName);
+            string textureOriginalPath = string.Concat(TargetGltfOriginalPath.Remove(TargetGltfOriginalPath.LastIndexOf('/') + 1), textureFileName);
 
             sceneData.SceneContent.TryGetContentUrl(textureOriginalPath, out var tryGetContentUrlResult);
-            Debug.Log($"PRAVS - GltFastDownloadProvider.RequestTexture() - 2 - texture final url: {tryGetContentUrlResult}");
 
             var texturePromise = Promise.Create(world, new GetTextureIntention
             {
-                CommonArguments = new CommonLoadingArguments(tryGetContentUrlResult, attempts: 6),
-                // WrapMode = textureComponentValue.WrapMode,
-                // FilterMode = textureComponentValue.FilterMode,
+                CommonArguments = new CommonLoadingArguments(tryGetContentUrlResult, attempts: ATTEMPTS_COUNT),
             }, partitionComponent);
 
             // The textures fetching need to finish before the GLTF loading can continue its flow...
-            StreamableLoadingResult<Texture2D> promiseResult;
-            //TODO: Could this get stuck in an infinite loop if the texturePromise fails?
-            while (!texturePromise.TryGetResult(world, out promiseResult))
-            {
-                await UniTask.Yield();
-            }
+            var promiseResult = await texturePromise.ToUniTaskAsync(world, cancellationToken: new CancellationToken());
 
-            // TODO: Check if we need to avoid this throwing here depending on how it affects the GLTF loading flow...
-            if (!promiseResult.Succeeded)
-                throw new Exception($"Error on GLTF Texture download: {texturePromise.Result?.Exception?.Message}");
+            if (promiseResult.Result is { Succeeded: false })
+                throw new Exception($"Error on GLTF Texture download: {promiseResult.Result.Value.Exception!.Message}");
 
-            return new TextureDownloadResult(promiseResult.Asset)
+            return new TextureDownloadResult(promiseResult.Result?.Asset)
             {
-                Error = promiseResult.Exception?.Message,
-                Success = promiseResult.Succeeded
+                Error = promiseResult.Result?.Exception?.Message,
+                Success = (bool)promiseResult.Result?.Succeeded,
             };
         }
 
         public void Dispose()
         {
-            // foreach (IDisposable disposable in disposables) { disposable.Dispose(); }
-            // disposables.Clear();
-            // isDisposed = true;
         }
     }
 

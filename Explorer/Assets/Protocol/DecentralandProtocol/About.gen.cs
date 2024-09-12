@@ -25,50 +25,68 @@ namespace Decentraland.Realm {
       byte[] descriptorData = global::System.Convert.FromBase64String(
           string.Concat(
             "Ch5kZWNlbnRyYWxhbmQvcmVhbG0vYWJvdXQucHJvdG8SEmRlY2VudHJhbGFu",
-            "ZC5yZWFsbSKVDQoNQWJvdXRSZXNwb25zZRIPCgdoZWFsdGh5GAEgASgIEkwK",
-            "DmNvbmZpZ3VyYXRpb25zGAIgASgLMjQuZGVjZW50cmFsYW5kLnJlYWxtLkFi",
-            "b3V0UmVzcG9uc2UuQWJvdXRDb25maWd1cmF0aW9uEj4KB2NvbnRlbnQYAyAB",
-            "KAsyLS5kZWNlbnRyYWxhbmQucmVhbG0uQWJvdXRSZXNwb25zZS5Db250ZW50",
-            "SW5mbxI6CgVjb21tcxgEIAEoCzIrLmRlY2VudHJhbGFuZC5yZWFsbS5BYm91",
-            "dFJlc3BvbnNlLkNvbW1zSW5mbxI+CgdsYW1iZGFzGAUgASgLMi0uZGVjZW50",
-            "cmFsYW5kLnJlYWxtLkFib3V0UmVzcG9uc2UuTGFtYmRhc0luZm8SOwoDYmZm",
-            "GAYgASgLMikuZGVjZW50cmFsYW5kLnJlYWxtLkFib3V0UmVzcG9uc2UuQmZm",
-            "SW5mb0gAiAEBEhcKD2FjY2VwdGluZ191c2VycxgHIAEoCBp7ChRNaW5pbWFw",
-            "Q29uZmlndXJhdGlvbhIPCgdlbmFibGVkGAEgASgIEhcKCmRhdGFfaW1hZ2UY",
-            "AiABKAlIAIgBARIZCgxlc3RhdGVfaW1hZ2UYAyABKAlIAYgBAUINCgtfZGF0",
-            "YV9pbWFnZUIPCg1fZXN0YXRlX2ltYWdlGj0KE1NreWJveENvbmZpZ3VyYXRp",
-            "b24SFwoKZml4ZWRfaG91chgBIAEoAkgAiAEBQg0KC19maXhlZF9ob3VyGvgC",
-            "ChJBYm91dENvbmZpZ3VyYXRpb24SFwoKcmVhbG1fbmFtZRgBIAEoCUgAiAEB",
-            "EhIKCm5ldHdvcmtfaWQYAiABKA0SGQoRZ2xvYmFsX3NjZW5lc191cm4YAyAD",
-            "KAkSEgoKc2NlbmVzX3VybhgEIAMoCRJMCgdtaW5pbWFwGAUgASgLMjYuZGVj",
-            "ZW50cmFsYW5kLnJlYWxtLkFib3V0UmVzcG9uc2UuTWluaW1hcENvbmZpZ3Vy",
-            "YXRpb25IAYgBARJKCgZza3lib3gYBiABKAsyNS5kZWNlbnRyYWxhbmQucmVh",
-            "bG0uQWJvdXRSZXNwb25zZS5Ta3lib3hDb25maWd1cmF0aW9uSAKIAQESJwoa",
-            "Y2l0eV9sb2FkZXJfY29udGVudF9zZXJ2ZXIYByABKAlIA4gBAUINCgtfcmVh",
-            "bG1fbmFtZUIKCghfbWluaW1hcEIJCgdfc2t5Ym94Qh0KG19jaXR5X2xvYWRl",
-            "cl9jb250ZW50X3NlcnZlchp+CgtDb250ZW50SW5mbxIPCgdoZWFsdGh5GAEg",
-            "ASgIEhQKB3ZlcnNpb24YAiABKAlIAIgBARIYCgtjb21taXRfaGFzaBgDIAEo",
-            "CUgBiAEBEhIKCnB1YmxpY191cmwYBCABKAlCCgoIX3ZlcnNpb25CDgoMX2Nv",
-            "bW1pdF9oYXNoGn4KC0xhbWJkYXNJbmZvEg8KB2hlYWx0aHkYASABKAgSFAoH",
-            "dmVyc2lvbhgCIAEoCUgAiAEBEhgKC2NvbW1pdF9oYXNoGAMgASgJSAGIAQES",
-            "EgoKcHVibGljX3VybBgEIAEoCUIKCghfdmVyc2lvbkIOCgxfY29tbWl0X2hh",
-            "c2ga+gEKCUNvbW1zSW5mbxIPCgdoZWFsdGh5GAEgASgIEhQKB3ZlcnNpb24Y",
-            "AiABKAlIAIgBARIYCgtjb21taXRfaGFzaBgDIAEoCUgBiAEBEhcKCnB1Ymxp",
-            "Y191cmwYBCABKAlIAogBARIQCghwcm90b2NvbBgyIAEoCRIYCgt1c2Vyc19j",
-            "b3VudBgzIAEoBUgDiAEBEhoKDWZpeGVkX2FkYXB0ZXIYNCABKAlIBIgBAUIK",
-            "CghfdmVyc2lvbkIOCgxfY29tbWl0X2hhc2hCDQoLX3B1YmxpY191cmxCDgoM",
-            "X3VzZXJzX2NvdW50QhAKDl9maXhlZF9hZGFwdGVyGtYBCgdCZmZJbmZvEg8K",
-            "B2hlYWx0aHkYASABKAgSFAoHdmVyc2lvbhgCIAEoCUgAiAEBEhgKC2NvbW1p",
-            "dF9oYXNoGAMgASgJSAGIAQESEgoKcHVibGljX3VybBgEIAEoCRIXCgp1c2Vy",
-            "X2NvdW50GDMgASgFSAKIAQESHQoQcHJvdG9jb2xfdmVyc2lvbhg0IAEoCUgD",
-            "iAEBQgoKCF92ZXJzaW9uQg4KDF9jb21taXRfaGFzaEINCgtfdXNlcl9jb3Vu",
-            "dEITChFfcHJvdG9jb2xfdmVyc2lvbkIGCgRfYmZmYgZwcm90bzM="));
+            "ZC5yZWFsbRolZGVjZW50cmFsYW5kL2NvbW1vbi9ib3JkZXJfcmVjdC5wcm90",
+            "bxohZGVjZW50cmFsYW5kL2NvbW1vbi92ZWN0b3JzLnByb3RvIoYSCg1BYm91",
+            "dFJlc3BvbnNlEg8KB2hlYWx0aHkYASABKAgSTAoOY29uZmlndXJhdGlvbnMY",
+            "AiABKAsyNC5kZWNlbnRyYWxhbmQucmVhbG0uQWJvdXRSZXNwb25zZS5BYm91",
+            "dENvbmZpZ3VyYXRpb24SPgoHY29udGVudBgDIAEoCzItLmRlY2VudHJhbGFu",
+            "ZC5yZWFsbS5BYm91dFJlc3BvbnNlLkNvbnRlbnRJbmZvEjoKBWNvbW1zGAQg",
+            "ASgLMisuZGVjZW50cmFsYW5kLnJlYWxtLkFib3V0UmVzcG9uc2UuQ29tbXNJ",
+            "bmZvEj4KB2xhbWJkYXMYBSABKAsyLS5kZWNlbnRyYWxhbmQucmVhbG0uQWJv",
+            "dXRSZXNwb25zZS5MYW1iZGFzSW5mbxI7CgNiZmYYBiABKAsyKS5kZWNlbnRy",
+            "YWxhbmQucmVhbG0uQWJvdXRSZXNwb25zZS5CZmZJbmZvSACIAQESFwoPYWNj",
+            "ZXB0aW5nX3VzZXJzGAcgASgIGigKFE1pbmltYXBDb25maWd1cmF0aW9uSgQI",
+            "ARACSgQIAhADSgQIAxAEGscFChBNYXBDb25maWd1cmF0aW9uEhcKD21pbmlt",
+            "YXBfZW5hYmxlZBgBIAEoCBIuCgVzaXplcxgCIAMoCzIfLmRlY2VudHJhbGFu",
+            "ZC5jb21tb24uQm9yZGVyUmVjdBJmCg5zYXRlbGxpdGVfdmlldxgFIAEoCzJJ",
+            "LmRlY2VudHJhbGFuZC5yZWFsbS5BYm91dFJlc3BvbnNlLk1hcENvbmZpZ3Vy",
+            "YXRpb24uSW1hZ2VWaWV3V2l0aFpvb21MZXZlbEgAiAEBElcKC3BhcmNlbF92",
+            "aWV3GAYgASgLMj0uZGVjZW50cmFsYW5kLnJlYWxtLkFib3V0UmVzcG9uc2Uu",
+            "TWFwQ29uZmlndXJhdGlvbi5QYXJjZWxWaWV3SAGIAQESZgoOdGh1bWJuYWls",
+            "X3ZpZXcYByABKAsySS5kZWNlbnRyYWxhbmQucmVhbG0uQWJvdXRSZXNwb25z",
+            "ZS5NYXBDb25maWd1cmF0aW9uLkltYWdlVmlld1dpdGhab29tTGV2ZWxIAogB",
+            "ARrFAQoWSW1hZ2VWaWV3V2l0aFpvb21MZXZlbBIPCgd2ZXJzaW9uGAEgASgJ",
+            "EhUKCGJhc2VfdXJsGAIgASgJSACIAQESFwoKc3VmZml4X3VybBgDIAEoCUgB",
+            "iAEBEjoKD3RvcF9sZWZ0X29mZnNldBgEIAEoCzIcLmRlY2VudHJhbGFuZC5j",
+            "b21tb24uVmVjdG9yMkgCiAEBQgsKCV9iYXNlX3VybEINCgtfc3VmZml4X3Vy",
+            "bEISChBfdG9wX2xlZnRfb2Zmc2V0GkMKClBhcmNlbFZpZXcSDwoHdmVyc2lv",
+            "bhgBIAEoCRIWCglpbWFnZV91cmwYAiABKAlIAIgBAUIMCgpfaW1hZ2VfdXJs",
+            "QhEKD19zYXRlbGxpdGVfdmlld0IOCgxfcGFyY2VsX3ZpZXdCEQoPX3RodW1i",
+            "bmFpbF92aWV3Gj0KE1NreWJveENvbmZpZ3VyYXRpb24SFwoKZml4ZWRfaG91",
+            "chgBIAEoAkgAiAEBQg0KC19maXhlZF9ob3VyGvICChJBYm91dENvbmZpZ3Vy",
+            "YXRpb24SFwoKcmVhbG1fbmFtZRgBIAEoCUgAiAEBEhIKCm5ldHdvcmtfaWQY",
+            "AiABKA0SGQoRZ2xvYmFsX3NjZW5lc191cm4YAyADKAkSEgoKc2NlbmVzX3Vy",
+            "bhgEIAMoCRJKCgZza3lib3gYBiABKAsyNS5kZWNlbnRyYWxhbmQucmVhbG0u",
+            "QWJvdXRSZXNwb25zZS5Ta3lib3hDb25maWd1cmF0aW9uSAGIAQESJwoaY2l0",
+            "eV9sb2FkZXJfY29udGVudF9zZXJ2ZXIYByABKAlIAogBARJECgNtYXAYCCAB",
+            "KAsyMi5kZWNlbnRyYWxhbmQucmVhbG0uQWJvdXRSZXNwb25zZS5NYXBDb25m",
+            "aWd1cmF0aW9uSAOIAQFCDQoLX3JlYWxtX25hbWVCCQoHX3NreWJveEIdChtf",
+            "Y2l0eV9sb2FkZXJfY29udGVudF9zZXJ2ZXJCBgoEX21hcEoECAUQBhp+CgtD",
+            "b250ZW50SW5mbxIPCgdoZWFsdGh5GAEgASgIEhQKB3ZlcnNpb24YAiABKAlI",
+            "AIgBARIYCgtjb21taXRfaGFzaBgDIAEoCUgBiAEBEhIKCnB1YmxpY191cmwY",
+            "BCABKAlCCgoIX3ZlcnNpb25CDgoMX2NvbW1pdF9oYXNoGn4KC0xhbWJkYXNJ",
+            "bmZvEg8KB2hlYWx0aHkYASABKAgSFAoHdmVyc2lvbhgCIAEoCUgAiAEBEhgK",
+            "C2NvbW1pdF9oYXNoGAMgASgJSAGIAQESEgoKcHVibGljX3VybBgEIAEoCUIK",
+            "CghfdmVyc2lvbkIOCgxfY29tbWl0X2hhc2ga+gEKCUNvbW1zSW5mbxIPCgdo",
+            "ZWFsdGh5GAEgASgIEhQKB3ZlcnNpb24YAiABKAlIAIgBARIYCgtjb21taXRf",
+            "aGFzaBgDIAEoCUgBiAEBEhcKCnB1YmxpY191cmwYBCABKAlIAogBARIQCghw",
+            "cm90b2NvbBgyIAEoCRIYCgt1c2Vyc19jb3VudBgzIAEoBUgDiAEBEhoKDWZp",
+            "eGVkX2FkYXB0ZXIYNCABKAlIBIgBAUIKCghfdmVyc2lvbkIOCgxfY29tbWl0",
+            "X2hhc2hCDQoLX3B1YmxpY191cmxCDgoMX3VzZXJzX2NvdW50QhAKDl9maXhl",
+            "ZF9hZGFwdGVyGtYBCgdCZmZJbmZvEg8KB2hlYWx0aHkYASABKAgSFAoHdmVy",
+            "c2lvbhgCIAEoCUgAiAEBEhgKC2NvbW1pdF9oYXNoGAMgASgJSAGIAQESEgoK",
+            "cHVibGljX3VybBgEIAEoCRIXCgp1c2VyX2NvdW50GDMgASgFSAKIAQESHQoQ",
+            "cHJvdG9jb2xfdmVyc2lvbhg0IAEoCUgDiAEBQgoKCF92ZXJzaW9uQg4KDF9j",
+            "b21taXRfaGFzaEINCgtfdXNlcl9jb3VudEITChFfcHJvdG9jb2xfdmVyc2lv",
+            "bkIGCgRfYmZmYgZwcm90bzM="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
-          new pbr::FileDescriptor[] { },
+          new pbr::FileDescriptor[] { global::Decentraland.Common.BorderRectReflection.Descriptor, global::Decentraland.Common.VectorsReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Realm.AboutResponse), global::Decentraland.Realm.AboutResponse.Parser, new[]{ "Healthy", "Configurations", "Content", "Comms", "Lambdas", "Bff", "AcceptingUsers" }, new[]{ "Bff" }, null, null, new pbr::GeneratedClrTypeInfo[] { new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Realm.AboutResponse.Types.MinimapConfiguration), global::Decentraland.Realm.AboutResponse.Types.MinimapConfiguration.Parser, new[]{ "Enabled", "DataImage", "EstateImage" }, new[]{ "DataImage", "EstateImage" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Realm.AboutResponse), global::Decentraland.Realm.AboutResponse.Parser, new[]{ "Healthy", "Configurations", "Content", "Comms", "Lambdas", "Bff", "AcceptingUsers" }, new[]{ "Bff" }, null, null, new pbr::GeneratedClrTypeInfo[] { new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Realm.AboutResponse.Types.MinimapConfiguration), global::Decentraland.Realm.AboutResponse.Types.MinimapConfiguration.Parser, null, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Realm.AboutResponse.Types.MapConfiguration), global::Decentraland.Realm.AboutResponse.Types.MapConfiguration.Parser, new[]{ "MinimapEnabled", "Sizes", "SatelliteView", "ParcelView", "ThumbnailView" }, new[]{ "SatelliteView", "ParcelView", "ThumbnailView" }, null, null, new pbr::GeneratedClrTypeInfo[] { new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Realm.AboutResponse.Types.MapConfiguration.Types.ImageViewWithZoomLevel), global::Decentraland.Realm.AboutResponse.Types.MapConfiguration.Types.ImageViewWithZoomLevel.Parser, new[]{ "Version", "BaseUrl", "SuffixUrl", "TopLeftOffset" }, new[]{ "BaseUrl", "SuffixUrl", "TopLeftOffset" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Realm.AboutResponse.Types.MapConfiguration.Types.ParcelView), global::Decentraland.Realm.AboutResponse.Types.MapConfiguration.Types.ParcelView.Parser, new[]{ "Version", "ImageUrl" }, new[]{ "ImageUrl" }, null, null, null)}),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Realm.AboutResponse.Types.SkyboxConfiguration), global::Decentraland.Realm.AboutResponse.Types.SkyboxConfiguration.Parser, new[]{ "FixedHour" }, new[]{ "FixedHour" }, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Realm.AboutResponse.Types.AboutConfiguration), global::Decentraland.Realm.AboutResponse.Types.AboutConfiguration.Parser, new[]{ "RealmName", "NetworkId", "GlobalScenesUrn", "ScenesUrn", "Minimap", "Skybox", "CityLoaderContentServer" }, new[]{ "RealmName", "Minimap", "Skybox", "CityLoaderContentServer" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Realm.AboutResponse.Types.AboutConfiguration), global::Decentraland.Realm.AboutResponse.Types.AboutConfiguration.Parser, new[]{ "RealmName", "NetworkId", "GlobalScenesUrn", "ScenesUrn", "Skybox", "CityLoaderContentServer", "Map" }, new[]{ "RealmName", "Skybox", "CityLoaderContentServer", "Map" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Realm.AboutResponse.Types.ContentInfo), global::Decentraland.Realm.AboutResponse.Types.ContentInfo.Parser, new[]{ "Healthy", "Version", "CommitHash", "PublicUrl" }, new[]{ "Version", "CommitHash" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Realm.AboutResponse.Types.LambdasInfo), global::Decentraland.Realm.AboutResponse.Types.LambdasInfo.Parser, new[]{ "Healthy", "Version", "CommitHash", "PublicUrl" }, new[]{ "Version", "CommitHash" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Realm.AboutResponse.Types.CommsInfo), global::Decentraland.Realm.AboutResponse.Types.CommsInfo.Parser, new[]{ "Healthy", "Version", "CommitHash", "PublicUrl", "Protocol", "UsersCount", "FixedAdapter" }, new[]{ "Version", "CommitHash", "PublicUrl", "UsersCount", "FixedAdapter" }, null, null, null),
@@ -538,6 +556,10 @@ namespace Decentraland.Realm {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static partial class Types {
+      /// <summary>
+      /// @deprecated This message was never used but it's still here for compatibility reasons
+      /// The reserved keyword is not working for all the toolset we have, so in the meanwhile it keeps commented
+      /// </summary>
       public sealed partial class MinimapConfiguration : pb::IMessage<MinimapConfiguration>
       #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
           , pb::IBufferMessage
@@ -572,9 +594,6 @@ namespace Decentraland.Realm {
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
         public MinimapConfiguration(MinimapConfiguration other) : this() {
-          enabled_ = other.enabled_;
-          dataImage_ = other.dataImage_;
-          estateImage_ = other.estateImage_;
           _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
         }
 
@@ -582,66 +601,6 @@ namespace Decentraland.Realm {
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
         public MinimapConfiguration Clone() {
           return new MinimapConfiguration(this);
-        }
-
-        /// <summary>Field number for the "enabled" field.</summary>
-        public const int EnabledFieldNumber = 1;
-        private bool enabled_;
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-        public bool Enabled {
-          get { return enabled_; }
-          set {
-            enabled_ = value;
-          }
-        }
-
-        /// <summary>Field number for the "data_image" field.</summary>
-        public const int DataImageFieldNumber = 2;
-        private string dataImage_;
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-        public string DataImage {
-          get { return dataImage_ ?? ""; }
-          set {
-            dataImage_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
-          }
-        }
-        /// <summary>Gets whether the "data_image" field is set</summary>
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-        public bool HasDataImage {
-          get { return dataImage_ != null; }
-        }
-        /// <summary>Clears the value of the "data_image" field</summary>
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-        public void ClearDataImage() {
-          dataImage_ = null;
-        }
-
-        /// <summary>Field number for the "estate_image" field.</summary>
-        public const int EstateImageFieldNumber = 3;
-        private string estateImage_;
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-        public string EstateImage {
-          get { return estateImage_ ?? ""; }
-          set {
-            estateImage_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
-          }
-        }
-        /// <summary>Gets whether the "estate_image" field is set</summary>
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-        public bool HasEstateImage {
-          get { return estateImage_ != null; }
-        }
-        /// <summary>Clears the value of the "estate_image" field</summary>
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-        public void ClearEstateImage() {
-          estateImage_ = null;
         }
 
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -659,9 +618,6 @@ namespace Decentraland.Realm {
           if (ReferenceEquals(other, this)) {
             return true;
           }
-          if (Enabled != other.Enabled) return false;
-          if (DataImage != other.DataImage) return false;
-          if (EstateImage != other.EstateImage) return false;
           return Equals(_unknownFields, other._unknownFields);
         }
 
@@ -669,9 +625,6 @@ namespace Decentraland.Realm {
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
         public override int GetHashCode() {
           int hash = 1;
-          if (Enabled != false) hash ^= Enabled.GetHashCode();
-          if (HasDataImage) hash ^= DataImage.GetHashCode();
-          if (HasEstateImage) hash ^= EstateImage.GetHashCode();
           if (_unknownFields != null) {
             hash ^= _unknownFields.GetHashCode();
           }
@@ -690,18 +643,6 @@ namespace Decentraland.Realm {
         #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
           output.WriteRawMessage(this);
         #else
-          if (Enabled != false) {
-            output.WriteRawTag(8);
-            output.WriteBool(Enabled);
-          }
-          if (HasDataImage) {
-            output.WriteRawTag(18);
-            output.WriteString(DataImage);
-          }
-          if (HasEstateImage) {
-            output.WriteRawTag(26);
-            output.WriteString(EstateImage);
-          }
           if (_unknownFields != null) {
             _unknownFields.WriteTo(output);
           }
@@ -712,18 +653,6 @@ namespace Decentraland.Realm {
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
         void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
-          if (Enabled != false) {
-            output.WriteRawTag(8);
-            output.WriteBool(Enabled);
-          }
-          if (HasDataImage) {
-            output.WriteRawTag(18);
-            output.WriteString(DataImage);
-          }
-          if (HasEstateImage) {
-            output.WriteRawTag(26);
-            output.WriteString(EstateImage);
-          }
           if (_unknownFields != null) {
             _unknownFields.WriteTo(ref output);
           }
@@ -734,15 +663,6 @@ namespace Decentraland.Realm {
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
         public int CalculateSize() {
           int size = 0;
-          if (Enabled != false) {
-            size += 1 + 1;
-          }
-          if (HasDataImage) {
-            size += 1 + pb::CodedOutputStream.ComputeStringSize(DataImage);
-          }
-          if (HasEstateImage) {
-            size += 1 + pb::CodedOutputStream.ComputeStringSize(EstateImage);
-          }
           if (_unknownFields != null) {
             size += _unknownFields.CalculateSize();
           }
@@ -755,14 +675,314 @@ namespace Decentraland.Realm {
           if (other == null) {
             return;
           }
-          if (other.Enabled != false) {
-            Enabled = other.Enabled;
+          _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void MergeFrom(pb::CodedInputStream input) {
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          input.ReadRawMessage(this);
+        #else
+          uint tag;
+          while ((tag = input.ReadTag()) != 0) {
+            switch(tag) {
+              default:
+                _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+                break;
+            }
           }
-          if (other.HasDataImage) {
-            DataImage = other.DataImage;
+        #endif
+        }
+
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+          uint tag;
+          while ((tag = input.ReadTag()) != 0) {
+            switch(tag) {
+              default:
+                _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+                break;
+            }
           }
-          if (other.HasEstateImage) {
-            EstateImage = other.EstateImage;
+        }
+        #endif
+
+      }
+
+      public sealed partial class MapConfiguration : pb::IMessage<MapConfiguration>
+      #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          , pb::IBufferMessage
+      #endif
+      {
+        private static readonly pb::MessageParser<MapConfiguration> _parser = new pb::MessageParser<MapConfiguration>(() => new MapConfiguration());
+        private pb::UnknownFieldSet _unknownFields;
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public static pb::MessageParser<MapConfiguration> Parser { get { return _parser; } }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public static pbr::MessageDescriptor Descriptor {
+          get { return global::Decentraland.Realm.AboutResponse.Descriptor.NestedTypes[1]; }
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        pbr::MessageDescriptor pb::IMessage.Descriptor {
+          get { return Descriptor; }
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public MapConfiguration() {
+          OnConstruction();
+        }
+
+        partial void OnConstruction();
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public MapConfiguration(MapConfiguration other) : this() {
+          minimapEnabled_ = other.minimapEnabled_;
+          sizes_ = other.sizes_.Clone();
+          satelliteView_ = other.satelliteView_ != null ? other.satelliteView_.Clone() : null;
+          parcelView_ = other.parcelView_ != null ? other.parcelView_.Clone() : null;
+          thumbnailView_ = other.thumbnailView_ != null ? other.thumbnailView_.Clone() : null;
+          _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public MapConfiguration Clone() {
+          return new MapConfiguration(this);
+        }
+
+        /// <summary>Field number for the "minimap_enabled" field.</summary>
+        public const int MinimapEnabledFieldNumber = 1;
+        private bool minimapEnabled_;
+        /// <summary>
+        /// whether the minimap should be rendered
+        /// </summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public bool MinimapEnabled {
+          get { return minimapEnabled_; }
+          set {
+            minimapEnabled_ = value;
+          }
+        }
+
+        /// <summary>Field number for the "sizes" field.</summary>
+        public const int SizesFieldNumber = 2;
+        private static readonly pb::FieldCodec<global::Decentraland.Common.BorderRect> _repeated_sizes_codec
+            = pb::FieldCodec.ForMessage(18, global::Decentraland.Common.BorderRect.Parser);
+        private readonly pbc::RepeatedField<global::Decentraland.Common.BorderRect> sizes_ = new pbc::RepeatedField<global::Decentraland.Common.BorderRect>();
+        /// <summary>
+        /// the union of all rects here represents the places where that MAY have scenes
+        ///  - all the other parcels are considered as empty, up to the explorer to decide if they're walkable or not
+        ///  - the contained square is determined by points: 
+        ///    - top-left      with  minX, maxY 
+        ///    - bottom-left   with  minX, minY
+        ///    - top-right     with  maxX, maxY 
+        ///    - bottom-right  with  maxX, maxY 
+        ///  Note: the coordinate system used is the Cartesian coordinate system, where the y-axis increases upwards, 
+        ///    not the screen coordinate system, where the origin is at the top-left corner and the y-axis increases downwards.
+        /// </summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public pbc::RepeatedField<global::Decentraland.Common.BorderRect> Sizes {
+          get { return sizes_; }
+        }
+
+        /// <summary>Field number for the "satellite_view" field.</summary>
+        public const int SatelliteViewFieldNumber = 5;
+        private global::Decentraland.Realm.AboutResponse.Types.MapConfiguration.Types.ImageViewWithZoomLevel satelliteView_;
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public global::Decentraland.Realm.AboutResponse.Types.MapConfiguration.Types.ImageViewWithZoomLevel SatelliteView {
+          get { return satelliteView_; }
+          set {
+            satelliteView_ = value;
+          }
+        }
+
+        /// <summary>Field number for the "parcel_view" field.</summary>
+        public const int ParcelViewFieldNumber = 6;
+        private global::Decentraland.Realm.AboutResponse.Types.MapConfiguration.Types.ParcelView parcelView_;
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public global::Decentraland.Realm.AboutResponse.Types.MapConfiguration.Types.ParcelView ParcelView {
+          get { return parcelView_; }
+          set {
+            parcelView_ = value;
+          }
+        }
+
+        /// <summary>Field number for the "thumbnail_view" field.</summary>
+        public const int ThumbnailViewFieldNumber = 7;
+        private global::Decentraland.Realm.AboutResponse.Types.MapConfiguration.Types.ImageViewWithZoomLevel thumbnailView_;
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public global::Decentraland.Realm.AboutResponse.Types.MapConfiguration.Types.ImageViewWithZoomLevel ThumbnailView {
+          get { return thumbnailView_; }
+          set {
+            thumbnailView_ = value;
+          }
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override bool Equals(object other) {
+          return Equals(other as MapConfiguration);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public bool Equals(MapConfiguration other) {
+          if (ReferenceEquals(other, null)) {
+            return false;
+          }
+          if (ReferenceEquals(other, this)) {
+            return true;
+          }
+          if (MinimapEnabled != other.MinimapEnabled) return false;
+          if(!sizes_.Equals(other.sizes_)) return false;
+          if (!object.Equals(SatelliteView, other.SatelliteView)) return false;
+          if (!object.Equals(ParcelView, other.ParcelView)) return false;
+          if (!object.Equals(ThumbnailView, other.ThumbnailView)) return false;
+          return Equals(_unknownFields, other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override int GetHashCode() {
+          int hash = 1;
+          if (MinimapEnabled != false) hash ^= MinimapEnabled.GetHashCode();
+          hash ^= sizes_.GetHashCode();
+          if (satelliteView_ != null) hash ^= SatelliteView.GetHashCode();
+          if (parcelView_ != null) hash ^= ParcelView.GetHashCode();
+          if (thumbnailView_ != null) hash ^= ThumbnailView.GetHashCode();
+          if (_unknownFields != null) {
+            hash ^= _unknownFields.GetHashCode();
+          }
+          return hash;
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override string ToString() {
+          return pb::JsonFormatter.ToDiagnosticString(this);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void WriteTo(pb::CodedOutputStream output) {
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          output.WriteRawMessage(this);
+        #else
+          if (MinimapEnabled != false) {
+            output.WriteRawTag(8);
+            output.WriteBool(MinimapEnabled);
+          }
+          sizes_.WriteTo(output, _repeated_sizes_codec);
+          if (satelliteView_ != null) {
+            output.WriteRawTag(42);
+            output.WriteMessage(SatelliteView);
+          }
+          if (parcelView_ != null) {
+            output.WriteRawTag(50);
+            output.WriteMessage(ParcelView);
+          }
+          if (thumbnailView_ != null) {
+            output.WriteRawTag(58);
+            output.WriteMessage(ThumbnailView);
+          }
+          if (_unknownFields != null) {
+            _unknownFields.WriteTo(output);
+          }
+        #endif
+        }
+
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+          if (MinimapEnabled != false) {
+            output.WriteRawTag(8);
+            output.WriteBool(MinimapEnabled);
+          }
+          sizes_.WriteTo(ref output, _repeated_sizes_codec);
+          if (satelliteView_ != null) {
+            output.WriteRawTag(42);
+            output.WriteMessage(SatelliteView);
+          }
+          if (parcelView_ != null) {
+            output.WriteRawTag(50);
+            output.WriteMessage(ParcelView);
+          }
+          if (thumbnailView_ != null) {
+            output.WriteRawTag(58);
+            output.WriteMessage(ThumbnailView);
+          }
+          if (_unknownFields != null) {
+            _unknownFields.WriteTo(ref output);
+          }
+        }
+        #endif
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public int CalculateSize() {
+          int size = 0;
+          if (MinimapEnabled != false) {
+            size += 1 + 1;
+          }
+          size += sizes_.CalculateSize(_repeated_sizes_codec);
+          if (satelliteView_ != null) {
+            size += 1 + pb::CodedOutputStream.ComputeMessageSize(SatelliteView);
+          }
+          if (parcelView_ != null) {
+            size += 1 + pb::CodedOutputStream.ComputeMessageSize(ParcelView);
+          }
+          if (thumbnailView_ != null) {
+            size += 1 + pb::CodedOutputStream.ComputeMessageSize(ThumbnailView);
+          }
+          if (_unknownFields != null) {
+            size += _unknownFields.CalculateSize();
+          }
+          return size;
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void MergeFrom(MapConfiguration other) {
+          if (other == null) {
+            return;
+          }
+          if (other.MinimapEnabled != false) {
+            MinimapEnabled = other.MinimapEnabled;
+          }
+          sizes_.Add(other.sizes_);
+          if (other.satelliteView_ != null) {
+            if (satelliteView_ == null) {
+              SatelliteView = new global::Decentraland.Realm.AboutResponse.Types.MapConfiguration.Types.ImageViewWithZoomLevel();
+            }
+            SatelliteView.MergeFrom(other.SatelliteView);
+          }
+          if (other.parcelView_ != null) {
+            if (parcelView_ == null) {
+              ParcelView = new global::Decentraland.Realm.AboutResponse.Types.MapConfiguration.Types.ParcelView();
+            }
+            ParcelView.MergeFrom(other.ParcelView);
+          }
+          if (other.thumbnailView_ != null) {
+            if (thumbnailView_ == null) {
+              ThumbnailView = new global::Decentraland.Realm.AboutResponse.Types.MapConfiguration.Types.ImageViewWithZoomLevel();
+            }
+            ThumbnailView.MergeFrom(other.ThumbnailView);
           }
           _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
         }
@@ -780,15 +1000,32 @@ namespace Decentraland.Realm {
                 _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
                 break;
               case 8: {
-                Enabled = input.ReadBool();
+                MinimapEnabled = input.ReadBool();
                 break;
               }
               case 18: {
-                DataImage = input.ReadString();
+                sizes_.AddEntriesFrom(input, _repeated_sizes_codec);
                 break;
               }
-              case 26: {
-                EstateImage = input.ReadString();
+              case 42: {
+                if (satelliteView_ == null) {
+                  SatelliteView = new global::Decentraland.Realm.AboutResponse.Types.MapConfiguration.Types.ImageViewWithZoomLevel();
+                }
+                input.ReadMessage(SatelliteView);
+                break;
+              }
+              case 50: {
+                if (parcelView_ == null) {
+                  ParcelView = new global::Decentraland.Realm.AboutResponse.Types.MapConfiguration.Types.ParcelView();
+                }
+                input.ReadMessage(ParcelView);
+                break;
+              }
+              case 58: {
+                if (thumbnailView_ == null) {
+                  ThumbnailView = new global::Decentraland.Realm.AboutResponse.Types.MapConfiguration.Types.ImageViewWithZoomLevel();
+                }
+                input.ReadMessage(ThumbnailView);
                 break;
               }
             }
@@ -807,21 +1044,644 @@ namespace Decentraland.Realm {
                 _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
                 break;
               case 8: {
-                Enabled = input.ReadBool();
+                MinimapEnabled = input.ReadBool();
                 break;
               }
               case 18: {
-                DataImage = input.ReadString();
+                sizes_.AddEntriesFrom(ref input, _repeated_sizes_codec);
                 break;
               }
-              case 26: {
-                EstateImage = input.ReadString();
+              case 42: {
+                if (satelliteView_ == null) {
+                  SatelliteView = new global::Decentraland.Realm.AboutResponse.Types.MapConfiguration.Types.ImageViewWithZoomLevel();
+                }
+                input.ReadMessage(SatelliteView);
+                break;
+              }
+              case 50: {
+                if (parcelView_ == null) {
+                  ParcelView = new global::Decentraland.Realm.AboutResponse.Types.MapConfiguration.Types.ParcelView();
+                }
+                input.ReadMessage(ParcelView);
+                break;
+              }
+              case 58: {
+                if (thumbnailView_ == null) {
+                  ThumbnailView = new global::Decentraland.Realm.AboutResponse.Types.MapConfiguration.Types.ImageViewWithZoomLevel();
+                }
+                input.ReadMessage(ThumbnailView);
                 break;
               }
             }
           }
         }
         #endif
+
+        #region Nested types
+        /// <summary>Container for nested types declared in the MapConfiguration message type.</summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public static partial class Types {
+          /// <summary>
+          /// ImageViewWithZoomLevel uses a description to render the minimap
+          ///  using different images with different zoom levels.
+          /// When `version='v1'`:
+          /// - The description allows the explorer to form the URL:
+          ///  url(x,y,zoom_level) = `{base_url}/{zoom_level}/{x},{y}{suffix_url}`
+          /// - The given URL is for an image where the pixel `0,0` for the image `0,0` always
+          ///    points to the top-left contained square.
+          /// - The `zoom_level=1` is to a ratio of 3.2 pixel per parcel, this means in a 32x32 pixel square
+          ///    you get 10x10 parcels. 
+          /// - Each increase of zoom level, double the ratio pixel per parcels. 
+          /// </summary>
+          public sealed partial class ImageViewWithZoomLevel : pb::IMessage<ImageViewWithZoomLevel>
+          #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+              , pb::IBufferMessage
+          #endif
+          {
+            private static readonly pb::MessageParser<ImageViewWithZoomLevel> _parser = new pb::MessageParser<ImageViewWithZoomLevel>(() => new ImageViewWithZoomLevel());
+            private pb::UnknownFieldSet _unknownFields;
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+            public static pb::MessageParser<ImageViewWithZoomLevel> Parser { get { return _parser; } }
+
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+            public static pbr::MessageDescriptor Descriptor {
+              get { return global::Decentraland.Realm.AboutResponse.Types.MapConfiguration.Descriptor.NestedTypes[0]; }
+            }
+
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+            pbr::MessageDescriptor pb::IMessage.Descriptor {
+              get { return Descriptor; }
+            }
+
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+            public ImageViewWithZoomLevel() {
+              OnConstruction();
+            }
+
+            partial void OnConstruction();
+
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+            public ImageViewWithZoomLevel(ImageViewWithZoomLevel other) : this() {
+              version_ = other.version_;
+              baseUrl_ = other.baseUrl_;
+              suffixUrl_ = other.suffixUrl_;
+              topLeftOffset_ = other.topLeftOffset_ != null ? other.topLeftOffset_.Clone() : null;
+              _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+            }
+
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+            public ImageViewWithZoomLevel Clone() {
+              return new ImageViewWithZoomLevel(this);
+            }
+
+            /// <summary>Field number for the "version" field.</summary>
+            public const int VersionFieldNumber = 1;
+            private string version_ = "";
+            /// <summary>
+            /// options: ['v1']
+            /// </summary>
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+            public string Version {
+              get { return version_; }
+              set {
+                version_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+              }
+            }
+
+            /// <summary>Field number for the "base_url" field.</summary>
+            public const int BaseUrlFieldNumber = 2;
+            private string baseUrl_;
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+            public string BaseUrl {
+              get { return baseUrl_ ?? ""; }
+              set {
+                baseUrl_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+              }
+            }
+            /// <summary>Gets whether the "base_url" field is set</summary>
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+            public bool HasBaseUrl {
+              get { return baseUrl_ != null; }
+            }
+            /// <summary>Clears the value of the "base_url" field</summary>
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+            public void ClearBaseUrl() {
+              baseUrl_ = null;
+            }
+
+            /// <summary>Field number for the "suffix_url" field.</summary>
+            public const int SuffixUrlFieldNumber = 3;
+            private string suffixUrl_;
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+            public string SuffixUrl {
+              get { return suffixUrl_ ?? ""; }
+              set {
+                suffixUrl_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+              }
+            }
+            /// <summary>Gets whether the "suffix_url" field is set</summary>
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+            public bool HasSuffixUrl {
+              get { return suffixUrl_ != null; }
+            }
+            /// <summary>Clears the value of the "suffix_url" field</summary>
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+            public void ClearSuffixUrl() {
+              suffixUrl_ = null;
+            }
+
+            /// <summary>Field number for the "top_left_offset" field.</summary>
+            public const int TopLeftOffsetFieldNumber = 4;
+            private global::Decentraland.Common.Vector2 topLeftOffset_;
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+            public global::Decentraland.Common.Vector2 TopLeftOffset {
+              get { return topLeftOffset_; }
+              set {
+                topLeftOffset_ = value;
+              }
+            }
+
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+            public override bool Equals(object other) {
+              return Equals(other as ImageViewWithZoomLevel);
+            }
+
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+            public bool Equals(ImageViewWithZoomLevel other) {
+              if (ReferenceEquals(other, null)) {
+                return false;
+              }
+              if (ReferenceEquals(other, this)) {
+                return true;
+              }
+              if (Version != other.Version) return false;
+              if (BaseUrl != other.BaseUrl) return false;
+              if (SuffixUrl != other.SuffixUrl) return false;
+              if (!object.Equals(TopLeftOffset, other.TopLeftOffset)) return false;
+              return Equals(_unknownFields, other._unknownFields);
+            }
+
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+            public override int GetHashCode() {
+              int hash = 1;
+              if (Version.Length != 0) hash ^= Version.GetHashCode();
+              if (HasBaseUrl) hash ^= BaseUrl.GetHashCode();
+              if (HasSuffixUrl) hash ^= SuffixUrl.GetHashCode();
+              if (topLeftOffset_ != null) hash ^= TopLeftOffset.GetHashCode();
+              if (_unknownFields != null) {
+                hash ^= _unknownFields.GetHashCode();
+              }
+              return hash;
+            }
+
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+            public override string ToString() {
+              return pb::JsonFormatter.ToDiagnosticString(this);
+            }
+
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+            public void WriteTo(pb::CodedOutputStream output) {
+            #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+              output.WriteRawMessage(this);
+            #else
+              if (Version.Length != 0) {
+                output.WriteRawTag(10);
+                output.WriteString(Version);
+              }
+              if (HasBaseUrl) {
+                output.WriteRawTag(18);
+                output.WriteString(BaseUrl);
+              }
+              if (HasSuffixUrl) {
+                output.WriteRawTag(26);
+                output.WriteString(SuffixUrl);
+              }
+              if (topLeftOffset_ != null) {
+                output.WriteRawTag(34);
+                output.WriteMessage(TopLeftOffset);
+              }
+              if (_unknownFields != null) {
+                _unknownFields.WriteTo(output);
+              }
+            #endif
+            }
+
+            #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+            void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+              if (Version.Length != 0) {
+                output.WriteRawTag(10);
+                output.WriteString(Version);
+              }
+              if (HasBaseUrl) {
+                output.WriteRawTag(18);
+                output.WriteString(BaseUrl);
+              }
+              if (HasSuffixUrl) {
+                output.WriteRawTag(26);
+                output.WriteString(SuffixUrl);
+              }
+              if (topLeftOffset_ != null) {
+                output.WriteRawTag(34);
+                output.WriteMessage(TopLeftOffset);
+              }
+              if (_unknownFields != null) {
+                _unknownFields.WriteTo(ref output);
+              }
+            }
+            #endif
+
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+            public int CalculateSize() {
+              int size = 0;
+              if (Version.Length != 0) {
+                size += 1 + pb::CodedOutputStream.ComputeStringSize(Version);
+              }
+              if (HasBaseUrl) {
+                size += 1 + pb::CodedOutputStream.ComputeStringSize(BaseUrl);
+              }
+              if (HasSuffixUrl) {
+                size += 1 + pb::CodedOutputStream.ComputeStringSize(SuffixUrl);
+              }
+              if (topLeftOffset_ != null) {
+                size += 1 + pb::CodedOutputStream.ComputeMessageSize(TopLeftOffset);
+              }
+              if (_unknownFields != null) {
+                size += _unknownFields.CalculateSize();
+              }
+              return size;
+            }
+
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+            public void MergeFrom(ImageViewWithZoomLevel other) {
+              if (other == null) {
+                return;
+              }
+              if (other.Version.Length != 0) {
+                Version = other.Version;
+              }
+              if (other.HasBaseUrl) {
+                BaseUrl = other.BaseUrl;
+              }
+              if (other.HasSuffixUrl) {
+                SuffixUrl = other.SuffixUrl;
+              }
+              if (other.topLeftOffset_ != null) {
+                if (topLeftOffset_ == null) {
+                  TopLeftOffset = new global::Decentraland.Common.Vector2();
+                }
+                TopLeftOffset.MergeFrom(other.TopLeftOffset);
+              }
+              _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+            }
+
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+            public void MergeFrom(pb::CodedInputStream input) {
+            #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+              input.ReadRawMessage(this);
+            #else
+              uint tag;
+              while ((tag = input.ReadTag()) != 0) {
+                switch(tag) {
+                  default:
+                    _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+                    break;
+                  case 10: {
+                    Version = input.ReadString();
+                    break;
+                  }
+                  case 18: {
+                    BaseUrl = input.ReadString();
+                    break;
+                  }
+                  case 26: {
+                    SuffixUrl = input.ReadString();
+                    break;
+                  }
+                  case 34: {
+                    if (topLeftOffset_ == null) {
+                      TopLeftOffset = new global::Decentraland.Common.Vector2();
+                    }
+                    input.ReadMessage(TopLeftOffset);
+                    break;
+                  }
+                }
+              }
+            #endif
+            }
+
+            #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+            void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+              uint tag;
+              while ((tag = input.ReadTag()) != 0) {
+                switch(tag) {
+                  default:
+                    _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+                    break;
+                  case 10: {
+                    Version = input.ReadString();
+                    break;
+                  }
+                  case 18: {
+                    BaseUrl = input.ReadString();
+                    break;
+                  }
+                  case 26: {
+                    SuffixUrl = input.ReadString();
+                    break;
+                  }
+                  case 34: {
+                    if (topLeftOffset_ == null) {
+                      TopLeftOffset = new global::Decentraland.Common.Vector2();
+                    }
+                    input.ReadMessage(TopLeftOffset);
+                    break;
+                  }
+                }
+              }
+            }
+            #endif
+
+          }
+
+          /// <summary>
+          /// ParcelView uses a description to render the minimap
+          ///  using a image where each pixel is a parcel and each pixel
+          ///  has the metadata to make a representation (using a shader or image-generation client-side)
+          /// When `version='v1'`:
+          ///  - The pixel `0,0` is the top-left contained square
+          ///  - The image has to be at least of contained square pixels size
+          ///  - The metadata inside each pixel follows the generated with the atlas server https://github.com/decentraland/atlas-server/blob/af371f2a59745a1f50b0b0b2382984288c4ae891/src/adapters/mini-map-renderer.ts#L27
+          /// </summary>
+          public sealed partial class ParcelView : pb::IMessage<ParcelView>
+          #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+              , pb::IBufferMessage
+          #endif
+          {
+            private static readonly pb::MessageParser<ParcelView> _parser = new pb::MessageParser<ParcelView>(() => new ParcelView());
+            private pb::UnknownFieldSet _unknownFields;
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+            public static pb::MessageParser<ParcelView> Parser { get { return _parser; } }
+
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+            public static pbr::MessageDescriptor Descriptor {
+              get { return global::Decentraland.Realm.AboutResponse.Types.MapConfiguration.Descriptor.NestedTypes[1]; }
+            }
+
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+            pbr::MessageDescriptor pb::IMessage.Descriptor {
+              get { return Descriptor; }
+            }
+
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+            public ParcelView() {
+              OnConstruction();
+            }
+
+            partial void OnConstruction();
+
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+            public ParcelView(ParcelView other) : this() {
+              version_ = other.version_;
+              imageUrl_ = other.imageUrl_;
+              _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+            }
+
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+            public ParcelView Clone() {
+              return new ParcelView(this);
+            }
+
+            /// <summary>Field number for the "version" field.</summary>
+            public const int VersionFieldNumber = 1;
+            private string version_ = "";
+            /// <summary>
+            /// options: `v1`
+            /// </summary>
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+            public string Version {
+              get { return version_; }
+              set {
+                version_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+              }
+            }
+
+            /// <summary>Field number for the "image_url" field.</summary>
+            public const int ImageUrlFieldNumber = 2;
+            private string imageUrl_;
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+            public string ImageUrl {
+              get { return imageUrl_ ?? ""; }
+              set {
+                imageUrl_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+              }
+            }
+            /// <summary>Gets whether the "image_url" field is set</summary>
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+            public bool HasImageUrl {
+              get { return imageUrl_ != null; }
+            }
+            /// <summary>Clears the value of the "image_url" field</summary>
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+            public void ClearImageUrl() {
+              imageUrl_ = null;
+            }
+
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+            public override bool Equals(object other) {
+              return Equals(other as ParcelView);
+            }
+
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+            public bool Equals(ParcelView other) {
+              if (ReferenceEquals(other, null)) {
+                return false;
+              }
+              if (ReferenceEquals(other, this)) {
+                return true;
+              }
+              if (Version != other.Version) return false;
+              if (ImageUrl != other.ImageUrl) return false;
+              return Equals(_unknownFields, other._unknownFields);
+            }
+
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+            public override int GetHashCode() {
+              int hash = 1;
+              if (Version.Length != 0) hash ^= Version.GetHashCode();
+              if (HasImageUrl) hash ^= ImageUrl.GetHashCode();
+              if (_unknownFields != null) {
+                hash ^= _unknownFields.GetHashCode();
+              }
+              return hash;
+            }
+
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+            public override string ToString() {
+              return pb::JsonFormatter.ToDiagnosticString(this);
+            }
+
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+            public void WriteTo(pb::CodedOutputStream output) {
+            #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+              output.WriteRawMessage(this);
+            #else
+              if (Version.Length != 0) {
+                output.WriteRawTag(10);
+                output.WriteString(Version);
+              }
+              if (HasImageUrl) {
+                output.WriteRawTag(18);
+                output.WriteString(ImageUrl);
+              }
+              if (_unknownFields != null) {
+                _unknownFields.WriteTo(output);
+              }
+            #endif
+            }
+
+            #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+            void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+              if (Version.Length != 0) {
+                output.WriteRawTag(10);
+                output.WriteString(Version);
+              }
+              if (HasImageUrl) {
+                output.WriteRawTag(18);
+                output.WriteString(ImageUrl);
+              }
+              if (_unknownFields != null) {
+                _unknownFields.WriteTo(ref output);
+              }
+            }
+            #endif
+
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+            public int CalculateSize() {
+              int size = 0;
+              if (Version.Length != 0) {
+                size += 1 + pb::CodedOutputStream.ComputeStringSize(Version);
+              }
+              if (HasImageUrl) {
+                size += 1 + pb::CodedOutputStream.ComputeStringSize(ImageUrl);
+              }
+              if (_unknownFields != null) {
+                size += _unknownFields.CalculateSize();
+              }
+              return size;
+            }
+
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+            public void MergeFrom(ParcelView other) {
+              if (other == null) {
+                return;
+              }
+              if (other.Version.Length != 0) {
+                Version = other.Version;
+              }
+              if (other.HasImageUrl) {
+                ImageUrl = other.ImageUrl;
+              }
+              _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+            }
+
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+            public void MergeFrom(pb::CodedInputStream input) {
+            #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+              input.ReadRawMessage(this);
+            #else
+              uint tag;
+              while ((tag = input.ReadTag()) != 0) {
+                switch(tag) {
+                  default:
+                    _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+                    break;
+                  case 10: {
+                    Version = input.ReadString();
+                    break;
+                  }
+                  case 18: {
+                    ImageUrl = input.ReadString();
+                    break;
+                  }
+                }
+              }
+            #endif
+            }
+
+            #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+            void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+              uint tag;
+              while ((tag = input.ReadTag()) != 0) {
+                switch(tag) {
+                  default:
+                    _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+                    break;
+                  case 10: {
+                    Version = input.ReadString();
+                    break;
+                  }
+                  case 18: {
+                    ImageUrl = input.ReadString();
+                    break;
+                  }
+                }
+              }
+            }
+            #endif
+
+          }
+
+        }
+        #endregion
 
       }
 
@@ -840,7 +1700,7 @@ namespace Decentraland.Realm {
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
         public static pbr::MessageDescriptor Descriptor {
-          get { return global::Decentraland.Realm.AboutResponse.Descriptor.NestedTypes[1]; }
+          get { return global::Decentraland.Realm.AboutResponse.Descriptor.NestedTypes[2]; }
         }
 
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -1046,7 +1906,7 @@ namespace Decentraland.Realm {
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
         public static pbr::MessageDescriptor Descriptor {
-          get { return global::Decentraland.Realm.AboutResponse.Descriptor.NestedTypes[2]; }
+          get { return global::Decentraland.Realm.AboutResponse.Descriptor.NestedTypes[3]; }
         }
 
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -1070,9 +1930,9 @@ namespace Decentraland.Realm {
           networkId_ = other.networkId_;
           globalScenesUrn_ = other.globalScenesUrn_.Clone();
           scenesUrn_ = other.scenesUrn_.Clone();
-          minimap_ = other.minimap_ != null ? other.minimap_.Clone() : null;
           skybox_ = other.skybox_ != null ? other.skybox_.Clone() : null;
           cityLoaderContentServer_ = other.cityLoaderContentServer_;
+          map_ = other.map_ != null ? other.map_.Clone() : null;
           _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
         }
 
@@ -1140,18 +2000,6 @@ namespace Decentraland.Realm {
           get { return scenesUrn_; }
         }
 
-        /// <summary>Field number for the "minimap" field.</summary>
-        public const int MinimapFieldNumber = 5;
-        private global::Decentraland.Realm.AboutResponse.Types.MinimapConfiguration minimap_;
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-        public global::Decentraland.Realm.AboutResponse.Types.MinimapConfiguration Minimap {
-          get { return minimap_; }
-          set {
-            minimap_ = value;
-          }
-        }
-
         /// <summary>Field number for the "skybox" field.</summary>
         public const int SkyboxFieldNumber = 6;
         private global::Decentraland.Realm.AboutResponse.Types.SkyboxConfiguration skybox_;
@@ -1193,6 +2041,18 @@ namespace Decentraland.Realm {
           cityLoaderContentServer_ = null;
         }
 
+        /// <summary>Field number for the "map" field.</summary>
+        public const int MapFieldNumber = 8;
+        private global::Decentraland.Realm.AboutResponse.Types.MapConfiguration map_;
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public global::Decentraland.Realm.AboutResponse.Types.MapConfiguration Map {
+          get { return map_; }
+          set {
+            map_ = value;
+          }
+        }
+
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
         public override bool Equals(object other) {
@@ -1212,9 +2072,9 @@ namespace Decentraland.Realm {
           if (NetworkId != other.NetworkId) return false;
           if(!globalScenesUrn_.Equals(other.globalScenesUrn_)) return false;
           if(!scenesUrn_.Equals(other.scenesUrn_)) return false;
-          if (!object.Equals(Minimap, other.Minimap)) return false;
           if (!object.Equals(Skybox, other.Skybox)) return false;
           if (CityLoaderContentServer != other.CityLoaderContentServer) return false;
+          if (!object.Equals(Map, other.Map)) return false;
           return Equals(_unknownFields, other._unknownFields);
         }
 
@@ -1226,9 +2086,9 @@ namespace Decentraland.Realm {
           if (NetworkId != 0) hash ^= NetworkId.GetHashCode();
           hash ^= globalScenesUrn_.GetHashCode();
           hash ^= scenesUrn_.GetHashCode();
-          if (minimap_ != null) hash ^= Minimap.GetHashCode();
           if (skybox_ != null) hash ^= Skybox.GetHashCode();
           if (HasCityLoaderContentServer) hash ^= CityLoaderContentServer.GetHashCode();
+          if (map_ != null) hash ^= Map.GetHashCode();
           if (_unknownFields != null) {
             hash ^= _unknownFields.GetHashCode();
           }
@@ -1257,10 +2117,6 @@ namespace Decentraland.Realm {
           }
           globalScenesUrn_.WriteTo(output, _repeated_globalScenesUrn_codec);
           scenesUrn_.WriteTo(output, _repeated_scenesUrn_codec);
-          if (minimap_ != null) {
-            output.WriteRawTag(42);
-            output.WriteMessage(Minimap);
-          }
           if (skybox_ != null) {
             output.WriteRawTag(50);
             output.WriteMessage(Skybox);
@@ -1268,6 +2124,10 @@ namespace Decentraland.Realm {
           if (HasCityLoaderContentServer) {
             output.WriteRawTag(58);
             output.WriteString(CityLoaderContentServer);
+          }
+          if (map_ != null) {
+            output.WriteRawTag(66);
+            output.WriteMessage(Map);
           }
           if (_unknownFields != null) {
             _unknownFields.WriteTo(output);
@@ -1289,10 +2149,6 @@ namespace Decentraland.Realm {
           }
           globalScenesUrn_.WriteTo(ref output, _repeated_globalScenesUrn_codec);
           scenesUrn_.WriteTo(ref output, _repeated_scenesUrn_codec);
-          if (minimap_ != null) {
-            output.WriteRawTag(42);
-            output.WriteMessage(Minimap);
-          }
           if (skybox_ != null) {
             output.WriteRawTag(50);
             output.WriteMessage(Skybox);
@@ -1300,6 +2156,10 @@ namespace Decentraland.Realm {
           if (HasCityLoaderContentServer) {
             output.WriteRawTag(58);
             output.WriteString(CityLoaderContentServer);
+          }
+          if (map_ != null) {
+            output.WriteRawTag(66);
+            output.WriteMessage(Map);
           }
           if (_unknownFields != null) {
             _unknownFields.WriteTo(ref output);
@@ -1319,14 +2179,14 @@ namespace Decentraland.Realm {
           }
           size += globalScenesUrn_.CalculateSize(_repeated_globalScenesUrn_codec);
           size += scenesUrn_.CalculateSize(_repeated_scenesUrn_codec);
-          if (minimap_ != null) {
-            size += 1 + pb::CodedOutputStream.ComputeMessageSize(Minimap);
-          }
           if (skybox_ != null) {
             size += 1 + pb::CodedOutputStream.ComputeMessageSize(Skybox);
           }
           if (HasCityLoaderContentServer) {
             size += 1 + pb::CodedOutputStream.ComputeStringSize(CityLoaderContentServer);
+          }
+          if (map_ != null) {
+            size += 1 + pb::CodedOutputStream.ComputeMessageSize(Map);
           }
           if (_unknownFields != null) {
             size += _unknownFields.CalculateSize();
@@ -1348,12 +2208,6 @@ namespace Decentraland.Realm {
           }
           globalScenesUrn_.Add(other.globalScenesUrn_);
           scenesUrn_.Add(other.scenesUrn_);
-          if (other.minimap_ != null) {
-            if (minimap_ == null) {
-              Minimap = new global::Decentraland.Realm.AboutResponse.Types.MinimapConfiguration();
-            }
-            Minimap.MergeFrom(other.Minimap);
-          }
           if (other.skybox_ != null) {
             if (skybox_ == null) {
               Skybox = new global::Decentraland.Realm.AboutResponse.Types.SkyboxConfiguration();
@@ -1362,6 +2216,12 @@ namespace Decentraland.Realm {
           }
           if (other.HasCityLoaderContentServer) {
             CityLoaderContentServer = other.CityLoaderContentServer;
+          }
+          if (other.map_ != null) {
+            if (map_ == null) {
+              Map = new global::Decentraland.Realm.AboutResponse.Types.MapConfiguration();
+            }
+            Map.MergeFrom(other.Map);
           }
           _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
         }
@@ -1394,13 +2254,6 @@ namespace Decentraland.Realm {
                 scenesUrn_.AddEntriesFrom(input, _repeated_scenesUrn_codec);
                 break;
               }
-              case 42: {
-                if (minimap_ == null) {
-                  Minimap = new global::Decentraland.Realm.AboutResponse.Types.MinimapConfiguration();
-                }
-                input.ReadMessage(Minimap);
-                break;
-              }
               case 50: {
                 if (skybox_ == null) {
                   Skybox = new global::Decentraland.Realm.AboutResponse.Types.SkyboxConfiguration();
@@ -1410,6 +2263,13 @@ namespace Decentraland.Realm {
               }
               case 58: {
                 CityLoaderContentServer = input.ReadString();
+                break;
+              }
+              case 66: {
+                if (map_ == null) {
+                  Map = new global::Decentraland.Realm.AboutResponse.Types.MapConfiguration();
+                }
+                input.ReadMessage(Map);
                 break;
               }
             }
@@ -1443,13 +2303,6 @@ namespace Decentraland.Realm {
                 scenesUrn_.AddEntriesFrom(ref input, _repeated_scenesUrn_codec);
                 break;
               }
-              case 42: {
-                if (minimap_ == null) {
-                  Minimap = new global::Decentraland.Realm.AboutResponse.Types.MinimapConfiguration();
-                }
-                input.ReadMessage(Minimap);
-                break;
-              }
               case 50: {
                 if (skybox_ == null) {
                   Skybox = new global::Decentraland.Realm.AboutResponse.Types.SkyboxConfiguration();
@@ -1459,6 +2312,13 @@ namespace Decentraland.Realm {
               }
               case 58: {
                 CityLoaderContentServer = input.ReadString();
+                break;
+              }
+              case 66: {
+                if (map_ == null) {
+                  Map = new global::Decentraland.Realm.AboutResponse.Types.MapConfiguration();
+                }
+                input.ReadMessage(Map);
                 break;
               }
             }
@@ -1482,7 +2342,7 @@ namespace Decentraland.Realm {
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
         public static pbr::MessageDescriptor Descriptor {
-          get { return global::Decentraland.Realm.AboutResponse.Descriptor.NestedTypes[3]; }
+          get { return global::Decentraland.Realm.AboutResponse.Descriptor.NestedTypes[4]; }
         }
 
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -1809,7 +2669,7 @@ namespace Decentraland.Realm {
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
         public static pbr::MessageDescriptor Descriptor {
-          get { return global::Decentraland.Realm.AboutResponse.Descriptor.NestedTypes[4]; }
+          get { return global::Decentraland.Realm.AboutResponse.Descriptor.NestedTypes[5]; }
         }
 
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -2137,7 +2997,7 @@ namespace Decentraland.Realm {
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
         public static pbr::MessageDescriptor Descriptor {
-          get { return global::Decentraland.Realm.AboutResponse.Descriptor.NestedTypes[5]; }
+          get { return global::Decentraland.Realm.AboutResponse.Descriptor.NestedTypes[6]; }
         }
 
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -2617,7 +3477,7 @@ namespace Decentraland.Realm {
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
         public static pbr::MessageDescriptor Descriptor {
-          get { return global::Decentraland.Realm.AboutResponse.Descriptor.NestedTypes[6]; }
+          get { return global::Decentraland.Realm.AboutResponse.Descriptor.NestedTypes[7]; }
         }
 
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]

@@ -7,25 +7,23 @@ namespace ECS.StreamableLoading.GLTF
 {
     public struct GetGLTFIntention: ILoadingIntention, IEquatable<GetGLTFIntention>
     {
-        public string? Hash;
+        public readonly string? Hash;
         public readonly string? Name; // File path
 
-        public CancellationTokenSource CancellationTokenSource { get; }
+        public CancellationTokenSource CancellationTokenSource => CommonArguments.CancellationTokenSource;
         public CommonLoadingArguments CommonArguments { get; set; }
 
         private GetGLTFIntention(
             string? name = null,
             string? hash = null,
-            CancellationTokenSource cancellationTokenSource = null)
+            CancellationTokenSource? cancellationTokenSource = null)
         {
             Name = name;
             Hash = hash;
-            CancellationTokenSource = cancellationTokenSource ?? new CancellationTokenSource();
 
-            // TODO: Review how to setup CommonArguments correctly...
             CommonArguments = new CommonLoadingArguments(
                 URLAddress.EMPTY,
-                cancellationTokenSource: CancellationTokenSource);
+                cancellationTokenSource: cancellationTokenSource);
         }
 
         public static GetGLTFIntention Create(string name, string hash) => new (name: name, hash: hash);

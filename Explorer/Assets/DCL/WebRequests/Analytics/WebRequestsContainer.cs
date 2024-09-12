@@ -32,8 +32,8 @@ namespace DCL.WebRequests.Analytics
             var options = new ElementBindingOptions();
 
             debugContainerBuilder
-               .AddWidget("Web Requests Delay")
-               .AddControlWithLabel(
+               .TryAddWidget("Web Requests Delay")
+               ?.AddControlWithLabel(
                     "Use Artificial Delay",
                     new DebugToggleDef(options.Enable)
                 )

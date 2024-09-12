@@ -1,6 +1,5 @@
 ﻿using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
-using DCL.AssetsProvision;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.World.Dependencies;
@@ -20,7 +19,7 @@ namespace DCL.PluginSystem.World
     public class MaterialsPlugin : IDCLWorldPlugin<MaterialsPlugin.Settings>
     {
         private readonly IPerformanceBudget capFrameTimeBudget;
-        private readonly IAssetsProvisioner assetsProvisioner;
+        private readonly MemoryBudget memoryBudgetProvider;
 
         private readonly IExtendedObjectPool<Texture2D> videoTexturePool;
 
@@ -30,29 +29,25 @@ namespace DCL.PluginSystem.World
         private DestroyMaterial destroyMaterial = null!;
 
         private int loadingAttemptsCount;
-        private readonly MemoryBudget memoryBudgetProvider;
 
-        public MaterialsPlugin(ECSWorldSingletonSharedDependencies sharedDependencies, IAssetsProvisioner assetsProvisioner, IExtendedObjectPool<Texture2D> videoTexturePool)
+        public MaterialsPlugin(ECSWorldSingletonSharedDependencies sharedDependencies, IExtendedObjectPool<Texture2D> videoTexturePool)
         {
             memoryBudgetProvider = sharedDependencies.MemoryBudget;
             capFrameTimeBudget = sharedDependencies.FrameTimeBudget;
-            this.assetsProvisioner = assetsProvisioner;
             this.videoTexturePool = videoTexturePool;
         }
 
         public void Dispose() { }
 
-        public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
+        public UniTask InitializeAsync(Settings settings, CancellationToken ct)
         {
-            ProvidedAsset<Material> basicMatReference = await assetsProvisioner.ProvideMainAssetAsync(settings.basicMaterial, ct: ct);
-            ProvidedAsset<Material> pbrMaterialReference = await assetsProvisioner.ProvideMainAssetAsync(settings.pbrMaterial, ct: ct);
-
-            basicMatPool = new ObjectPool<Material>(() => new Material(basicMatReference.Value), actionOnDestroy: UnityObjectUtils.SafeDestroy, defaultCapacity: settings.PoolInitialCapacity, maxSize: settings.PoolMaxSize);
-            pbrMatPool = new ObjectPool<Material>(() => new Material(pbrMaterialReference.Value), actionOnDestroy: UnityObjectUtils.SafeDestroy, defaultCapacity: settings.PoolInitialCapacity, maxSize: settings.PoolMaxSize);
+            basicMatPool = new ObjectPool<Material>(() => new Material(settings.basicMaterial), actionOnDestroy: UnityObjectUtils.SafeDestroy, defaultCapacity: settings.PoolInitialCapacity, maxSize: settings.PoolMaxSize);
+            pbrMatPool = new ObjectPool<Material>(() => new Material(settings.pbrMaterial), actionOnDestroy: UnityObjectUtils.SafeDestroy, defaultCapacity: settings.PoolInitialCapacity, maxSize: settings.PoolMaxSize);
 
             destroyMaterial = (in MaterialData data, Material material) => { (data.IsPbrMaterial ? pbrMatPool : basicMatPool).Release(material); };
 
             loadingAttemptsCount = settings.LoadingAttemptsCount;
+            return UniTask.CompletedTask;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
@@ -71,11 +66,14 @@ namespace DCL.PluginSystem.World
         [Serializable]
         public class Settings : IDCLPluginSettings
         {
+            /// <summary>
+            /// replaced from Addressables, Being in Addressables caused a problem with strobe-lights because shaders were not being compiled
+            /// </summary>
             [field: SerializeField]
-            public AssetReferenceMaterial basicMaterial;
+            public Material basicMaterial = null!;
 
             [field: SerializeField]
-            public AssetReferenceMaterial pbrMaterial;
+            public Material pbrMaterial = null!;
             [field: Header(nameof(MaterialsPlugin) + "." + nameof(Settings))]
             [field: Space]
             [field: SerializeField]

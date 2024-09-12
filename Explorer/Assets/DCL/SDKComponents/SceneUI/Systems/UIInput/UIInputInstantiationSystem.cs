@@ -5,7 +5,7 @@ using CRDT;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
-using DCL.Input.UnityInputSystem.Blocks;
+using DCL.Input;
 using DCL.Optimization.Pools;
 using DCL.SDKComponents.SceneUI.Components;
 using DCL.SDKComponents.SceneUI.Groups;

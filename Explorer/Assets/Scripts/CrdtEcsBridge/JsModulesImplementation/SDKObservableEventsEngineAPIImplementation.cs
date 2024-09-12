@@ -6,6 +6,7 @@ using CrdtEcsBridge.OutgoingMessages;
 using CrdtEcsBridge.PoolsProviders;
 using CrdtEcsBridge.UpdateGate;
 using CrdtEcsBridge.WorldSynchronizer;
+using DCL.Diagnostics;
 using DCL.ECS7;
 using DCL.ECSComponents;
 using SceneRunner.Scene.ExceptionsHandling;
@@ -19,36 +20,74 @@ namespace CrdtEcsBridge.JsModulesImplementation
     public class SDKObservableEventsEngineAPIImplementation : EngineAPIImplementation, ISDKObservableEventsEngineApi
     {
         private readonly Dictionary<CRDTEntity, string> userIdEntitiesMap = new ();
+        private readonly List<SDKObservableEvent> sdkObservableEvents = new ();
+        private readonly HashSet<string> sdkObservableEventSubscriptions = new ();
+        private bool enableSDKObservableMessagesDetection;
         private bool reportedSceneReady;
 
         public SDKObservableEventsEngineAPIImplementation(ISharedPoolsProvider poolsProvider, IInstancePoolsProvider instancePoolsProvider, ICRDTProtocol crdtProtocol, ICRDTDeserializer crdtDeserializer, ICRDTSerializer crdtSerializer,
-            ICRDTWorldSynchronizer crdtWorldSynchronizer, IOutgoingCRDTMessagesProvider outgoingCrtdMessagesProvider, ISystemGroupsUpdateGate systemGroupsUpdateGate, ISceneExceptionsHandler exceptionsHandler, MutexSync mutexSync) : base(poolsProvider, instancePoolsProvider, crdtProtocol, crdtDeserializer, crdtSerializer, crdtWorldSynchronizer, outgoingCrtdMessagesProvider, systemGroupsUpdateGate, exceptionsHandler, mutexSync) { }
+            ICRDTWorldSynchronizer crdtWorldSynchronizer, IOutgoingCRDTMessagesProvider outgoingCrtdMessagesProvider,
+            ISystemGroupsUpdateGate systemGroupsUpdateGate, ISceneExceptionsHandler exceptionsHandler,
+            MultithreadSync multithreadSync) : base(poolsProvider, instancePoolsProvider, crdtProtocol,
+            crdtDeserializer, crdtSerializer, crdtWorldSynchronizer, outgoingCrtdMessagesProvider,
+            systemGroupsUpdateGate, exceptionsHandler, multithreadSync) { }
 
-        public bool EnableSDKObservableMessagesDetection { get; set; } = false;
-        public List<SDKObservableEvent> SdkObservableEvents { get; } = new ();
-        public HashSet<string> SdkObservableEventSubscriptions { get; } = new ();
-
-        public override void SetIsDisposing()
+        public void TryAddSubscription(string eventId)
         {
-            userIdEntitiesMap.Clear();
-            SdkObservableEvents.Clear();
-            SdkObservableEventSubscriptions.Clear();
+            if (eventId == SDKObservableEventIds.PlayerClicked)
+            {
+                ReportHub.LogWarning(new ReportData(ReportCategory.SDK_OBSERVABLES), "Scene subscribed to unsupported SDK Observable 'PlayerClicked'");
+                return;
+            }
 
-            base.SetIsDisposing();
+            sdkObservableEventSubscriptions.Add(eventId);
+            enableSDKObservableMessagesDetection = true;
+        }
+
+        public void RemoveSubscriptionIfExists(string eventId)
+        {
+            sdkObservableEventSubscriptions.Remove(eventId);
+
+            if (sdkObservableEventSubscriptions.Count == 0)
+                enableSDKObservableMessagesDetection = false;
+        }
+
+        public bool HasSubscription(string eventId) =>
+            sdkObservableEventSubscriptions.Contains(eventId);
+
+        public bool IsAnySubscription() =>
+            sdkObservableEventSubscriptions.Count > 0;
+
+        public void AddSDKObservableEvent(SDKObservableEvent sdkObservableEvent)
+        {
+            sdkObservableEvents.Add(sdkObservableEvent);
+        }
+
+        public void ClearSDKObservableEvents()
+        {
+            sdkObservableEvents.Clear();
         }
 
         public PoolableSDKObservableEventArray? ConsumeSDKObservableEvents()
         {
-            if (SdkObservableEvents.Count == 0) return null;
+            if (sdkObservableEvents.Count == 0) return null;
 
-            PoolableSDKObservableEventArray serializationBufferPoolable = sharedPoolsProvider.GetSerializationSDKObservableEventsPool(SdkObservableEvents.Count);
-            for (var i = 0; i < SdkObservableEvents.Count; i++)
-            {
-                serializationBufferPoolable.Array[i] = SdkObservableEvents[i];
-            }
-            SdkObservableEvents.Clear();
+            PoolableSDKObservableEventArray serializationBufferPoolable = sharedPoolsProvider.GetSerializationSDKObservableEventsPool(sdkObservableEvents.Count);
+
+            for (var i = 0; i < sdkObservableEvents.Count; i++) { serializationBufferPoolable.Array[i] = sdkObservableEvents[i]; }
+
+            sdkObservableEvents.Clear();
 
             return serializationBufferPoolable;
+        }
+
+        public override void SetIsDisposing()
+        {
+            userIdEntitiesMap.Clear();
+            sdkObservableEvents.Clear();
+            sdkObservableEventSubscriptions.Clear();
+
+            base.SetIsDisposing();
         }
 
         protected override void ProcessPendingMessage(OutgoingCRDTMessagesProvider.PendingMessage pendingMessage)
@@ -63,7 +102,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
             // for scenes that may subscribe to observables later in their execution
             DetectPlayerIdentityDataComponent(pendingMessage);
 
-            if (!EnableSDKObservableMessagesDetection) return;
+            if (!enableSDKObservableMessagesDetection) return;
 
             DetectOtherObservableComponents(pendingMessage);
         }
@@ -78,19 +117,19 @@ namespace CrdtEcsBridge.JsModulesImplementation
             {
                 case CRDTMessageType.PUT_COMPONENT:
                     // onEnterScene + playerConnected observables
-                    if (EnableSDKObservableMessagesDetection)
+                    if (enableSDKObservableMessagesDetection)
                     {
-                        bool onEnterSceneSubscribed = SdkObservableEventSubscriptions.Contains(SDKObservableEventIds.EnterScene);
-                        bool onPlayerConnectedSubscribed = SdkObservableEventSubscriptions.Contains(SDKObservableEventIds.PlayerConnected);
+                        bool onEnterSceneSubscribed = sdkObservableEventSubscriptions.Contains(SDKObservableEventIds.EnterScene);
+                        bool onPlayerConnectedSubscribed = sdkObservableEventSubscriptions.Contains(SDKObservableEventIds.PlayerConnected);
 
                         if (onEnterSceneSubscribed)
-                            SdkObservableEvents.Add(SDKObservableUtils.GenerateSDKObservableEvent(SDKObservableEventIds.EnterScene, new UserIdPayload
+                            sdkObservableEvents.Add(SDKObservableUtils.NewSDKObservableEventFromData(SDKObservableEventIds.EnterScene, new UserIdPayload
                             {
                                 userId = playerIdentityData.Address,
                             }));
 
                         if (onPlayerConnectedSubscribed)
-                            SdkObservableEvents.Add(SDKObservableUtils.GenerateSDKObservableEvent(SDKObservableEventIds.PlayerConnected, new UserIdPayload
+                            sdkObservableEvents.Add(SDKObservableUtils.NewSDKObservableEventFromData(SDKObservableEventIds.PlayerConnected, new UserIdPayload
                             {
                                 userId = playerIdentityData.Address,
                             }));
@@ -102,16 +141,16 @@ namespace CrdtEcsBridge.JsModulesImplementation
                     if (userIdEntitiesMap.ContainsKey(pendingMessage.Entity)) // we may get more than 1 DELETE_COMPONENT of the same component
                     {
                         // onLeaveScene + playerDisconnected observables
-                        if (EnableSDKObservableMessagesDetection)
+                        if (enableSDKObservableMessagesDetection)
                         {
-                            if (SdkObservableEventSubscriptions.Contains(SDKObservableEventIds.LeaveScene))
-                                SdkObservableEvents.Add(SDKObservableUtils.GenerateSDKObservableEvent(SDKObservableEventIds.LeaveScene, new UserIdPayload
+                            if (sdkObservableEventSubscriptions.Contains(SDKObservableEventIds.LeaveScene))
+                                sdkObservableEvents.Add(SDKObservableUtils.NewSDKObservableEventFromData(SDKObservableEventIds.LeaveScene, new UserIdPayload
                                 {
                                     userId = userIdEntitiesMap[pendingMessage.Entity],
                                 }));
 
-                            if (SdkObservableEventSubscriptions.Contains(SDKObservableEventIds.PlayerDisconnected))
-                                SdkObservableEvents.Add(SDKObservableUtils.GenerateSDKObservableEvent(SDKObservableEventIds.PlayerDisconnected, new UserIdPayload
+                            if (sdkObservableEventSubscriptions.Contains(SDKObservableEventIds.PlayerDisconnected))
+                                sdkObservableEvents.Add(SDKObservableUtils.NewSDKObservableEventFromData(SDKObservableEventIds.PlayerDisconnected, new UserIdPayload
                                 {
                                     userId = userIdEntitiesMap[pendingMessage.Entity],
                                 }));
@@ -134,19 +173,19 @@ namespace CrdtEcsBridge.JsModulesImplementation
                         case ComponentID.ENGINE_INFO: // onSceneReady observable
                             if (reportedSceneReady) break;
 
-                            if (SdkObservableEventSubscriptions.Contains(SDKObservableEventIds.SceneReady))
+                            if (sdkObservableEventSubscriptions.Contains(SDKObservableEventIds.SceneReady))
                             {
-                                SdkObservableEvents.Add(SDKObservableUtils.GenerateSDKObservableEvent(SDKObservableEventIds.SceneReady, new SceneReadyPayload()));
+                                sdkObservableEvents.Add(SDKObservableUtils.NewSDKObservableEventFromData(SDKObservableEventIds.SceneReady, new SceneReadyPayload()));
                                 reportedSceneReady = true;
                             }
 
                             break;
                         case ComponentID.REALM_INFO: // onRealmChanged observables
-                            if (SdkObservableEventSubscriptions.Contains(SDKObservableEventIds.RealmChanged))
+                            if (sdkObservableEventSubscriptions.Contains(SDKObservableEventIds.RealmChanged))
                             {
                                 var realmInfo = (PBRealmInfo)message.Message;
 
-                                SdkObservableEvents.Add(SDKObservableUtils.GenerateSDKObservableEvent(SDKObservableEventIds.RealmChanged, new RealmChangedPayload
+                                sdkObservableEvents.Add(SDKObservableUtils.NewSDKObservableEventFromData(SDKObservableEventIds.RealmChanged, new RealmChangedPayload
                                 {
                                     domain = realmInfo.BaseUrl,
                                     room = realmInfo.Room,
@@ -158,11 +197,11 @@ namespace CrdtEcsBridge.JsModulesImplementation
                             break;
                         case ComponentID.AVATAR_EQUIPPED_DATA: // profileChanged observable
                         case ComponentID.AVATAR_BASE: // profileChanged observable
-                            if (SdkObservableEventSubscriptions.Contains(SDKObservableEventIds.ProfileChanged))
+                            if (sdkObservableEventSubscriptions.Contains(SDKObservableEventIds.ProfileChanged))
                             {
                                 if (!userIdEntitiesMap.ContainsKey(message.Entity)) break;
 
-                                SdkObservableEvents.Add(SDKObservableUtils.GenerateSDKObservableEvent(SDKObservableEventIds.ProfileChanged, new ProfileChangedPayload
+                                sdkObservableEvents.Add(SDKObservableUtils.NewSDKObservableEventFromData(SDKObservableEventIds.ProfileChanged, new ProfileChangedPayload
                                 {
                                     ethAddress = userIdEntitiesMap[message.Entity],
                                     version = 0,
@@ -177,11 +216,11 @@ namespace CrdtEcsBridge.JsModulesImplementation
                     break;
                 case CRDTMessageType.APPEND_COMPONENT:
                     if (message.Bridge.Id == ComponentID.AVATAR_EMOTE_COMMAND)
-                        if (SdkObservableEventSubscriptions.Contains(SDKObservableEventIds.PlayerExpression))
+                        if (sdkObservableEventSubscriptions.Contains(SDKObservableEventIds.PlayerExpression))
                         {
-                            var avatarEmoteCommand = (PBAvatarEmoteCommand) message.Message;
+                            var avatarEmoteCommand = (PBAvatarEmoteCommand)message.Message;
 
-                            SdkObservableEvents.Add(SDKObservableUtils.GenerateSDKObservableEvent(SDKObservableEventIds.PlayerExpression, new PlayerExpressionPayload
+                            sdkObservableEvents.Add(SDKObservableUtils.NewSDKObservableEventFromData(SDKObservableEventIds.PlayerExpression, new PlayerExpressionPayload
                             {
                                 expressionId = avatarEmoteCommand.EmoteUrn,
                             }));

@@ -6,6 +6,7 @@ using DCL.Ipfs;
 using DCL.Landscape;
 using DCL.MapRenderer;
 using DCL.MapRenderer.MapLayers;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Entities;
 using DCL.ParcelsService;
@@ -22,6 +23,7 @@ using ECS.StreamableLoading.Common;
 using System;
 using System.Linq;
 using System.Threading;
+using DCL.Diagnostics;
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
@@ -33,15 +35,14 @@ namespace Global.Dynamic
 {
     public class RealmNavigator : IRealmNavigator
     {
-        private readonly URLDomain genesisDomain = URLDomain.FromString(IRealmNavigator.GENESIS_URL);
-
         private readonly ILoadingScreen loadingScreen;
         private readonly IMapRenderer mapRenderer;
         private readonly IGlobalRealmController realmController;
         private readonly ITeleportController teleportController;
         private readonly IRoomHub roomHub;
         private readonly IRemoteEntities remoteEntities;
-        private readonly ObjectProxy<World> globalWorldProxy;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
+        private readonly World globalWorld;
         private readonly RoadPlugin roadsPlugin;
         private readonly TerrainGenerator genesisTerrain;
         private readonly WorldTerrainGenerator worldsTerrain;
@@ -51,9 +52,9 @@ namespace Global.Dynamic
         private readonly ObjectProxy<Entity> cameraEntity;
         private readonly CameraSamplingData cameraSamplingData;
 
-        public event Action<bool>? RealmChanged;
-
         public URLDomain? CurrentRealm { get; private set; }
+
+        public event Action<bool>? RealmChanged;
 
         public RealmNavigator(
             ILoadingScreen loadingScreen,
@@ -62,7 +63,8 @@ namespace Global.Dynamic
             ITeleportController teleportController,
             IRoomHub roomHub,
             IRemoteEntities remoteEntities,
-            ObjectProxy<World> globalWorldProxy,
+            IDecentralandUrlsSource decentralandUrlsSource,
+            World globalWorld,
             RoadPlugin roadsPlugin,
             TerrainGenerator genesisTerrain,
             WorldTerrainGenerator worldsTerrain,
@@ -84,15 +86,15 @@ namespace Global.Dynamic
             this.cameraSamplingData = cameraSamplingData;
             this.roomHub = roomHub;
             this.remoteEntities = remoteEntities;
-            this.globalWorldProxy = globalWorldProxy;
+            this.decentralandUrlsSource = decentralandUrlsSource;
+            this.globalWorld = globalWorld;
         }
 
-        public async UniTask<bool> TryChangeRealmAsync(URLDomain realm, CancellationToken ct, Vector2Int parcelToTeleport = default)
+        public async UniTask<bool> TryChangeRealmAsync(URLDomain realm, CancellationToken ct,
+            Vector2Int parcelToTeleport = default)
         {
             if (realm == CurrentRealm || realm == realmController.RealmData.Ipfs.CatalystBaseUrl)
                 return false;
-
-            World world = globalWorldProxy.Object.EnsureNotNull();
 
             ct.ThrowIfCancellationRequested();
 
@@ -101,52 +103,55 @@ namespace Global.Dynamic
 
             ct.ThrowIfCancellationRequested();
 
-            try
+            var loadResult = await loadingScreen.ShowWhileExecuteTaskAsync(async parentLoadReport =>
+                {
+                    ct.ThrowIfCancellationRequested();
+
+                    remoteEntities.ForceRemoveAll(globalWorld);
+                    await roomHub.StopIfNotAsync();
+
+                    // By removing the CameraSamplingData, we stop the ring calculation
+                    globalWorld.Remove<CameraSamplingData>(cameraEntity.Object);
+
+                    await ChangeRealmAsync(realm, ct);
+                    parentLoadReport.SetProgress(RealFlowLoadingStatus.PROGRESS[ProfileLoaded]);
+
+                    var landscapeLoadReport
+                        = parentLoadReport.CreateChildReport(RealFlowLoadingStatus.PROGRESS[LandscapeLoaded]);
+
+                    await LoadTerrainAsync(landscapeLoadReport, ct);
+                    parentLoadReport.SetProgress(RealFlowLoadingStatus.PROGRESS[LandscapeLoaded]);
+
+                    var teleportLoadReport
+                        = parentLoadReport.CreateChildReport(RealFlowLoadingStatus.PROGRESS[PlayerTeleported]);
+
+                    await InitializeTeleportToSpawnPointAsync(teleportLoadReport, ct, parcelToTeleport);
+                    parentLoadReport.SetProgress(RealFlowLoadingStatus.PROGRESS[PlayerTeleported]);
+
+                    await roomHub.StartAsync();
+                    parentLoadReport.SetProgress(RealFlowLoadingStatus.PROGRESS[Completed]);
+                },
+                ct
+            );
+            if (!loadResult.Success)
             {
-                await loadingScreen.ShowWhileExecuteTaskAsync(async parentLoadReport =>
-                    {
-                        ct.ThrowIfCancellationRequested();
+                if (!globalWorld.Has<CameraSamplingData>(cameraEntity.Object))
+                    globalWorld.Add(cameraEntity.Object, cameraSamplingData);
 
-                        remoteEntities.ForceRemoveAll(world);
-                        await roomHub.StopIfNotAsync();
+                ReportHub.LogError(ReportCategory.REALM,
+                    $"Error trying to teleport to a realm {realm}: {loadResult.ErrorMessage}");
 
-                        // By removing the CameraSamplingData, we stop the ring calculation
-                        world.Remove<CameraSamplingData>(cameraEntity.Object);
-
-                        await ChangeRealmAsync(realm, ct);
-                        parentLoadReport.SetProgress(RealFlowLoadingStatus.PROGRESS[ProfileLoaded]);
-
-                        AsyncLoadProcessReport? landscapeLoadReport
-                            = parentLoadReport.CreateChildReport(RealFlowLoadingStatus.PROGRESS[LandscapeLoaded]);
-
-                        await LoadTerrainAsync(landscapeLoadReport, ct);
-                        parentLoadReport.SetProgress(RealFlowLoadingStatus.PROGRESS[LandscapeLoaded]);
-
-                        AsyncLoadProcessReport? teleportLoadReport
-                            = parentLoadReport.CreateChildReport(RealFlowLoadingStatus.PROGRESS[PlayerTeleported]);
-
-                        await InitializeTeleportToSpawnPointAsync(teleportLoadReport, ct, parcelToTeleport);
-                        parentLoadReport.SetProgress(RealFlowLoadingStatus.PROGRESS[PlayerTeleported]);
-
-                        await roomHub.StartAsync();
-                        parentLoadReport.SetProgress(RealFlowLoadingStatus.PROGRESS[Completed]);
-                    },
-                    ct
-                );
+                return false;
             }
-            catch (TimeoutException)
-            {
-                if (!world.Has<CameraSamplingData>(cameraEntity.Object))
-                    world.Add(cameraEntity.Object, cameraSamplingData);
-            }
+
 
             return true;
         }
 
-        public async UniTask InitializeTeleportToSpawnPointAsync(AsyncLoadProcessReport teleportLoadReport, CancellationToken ct, Vector2Int parcelToTeleport)
+        public async UniTask InitializeTeleportToSpawnPointAsync(AsyncLoadProcessReport teleportLoadReport,
+            CancellationToken ct, Vector2Int parcelToTeleport)
         {
-            World world = globalWorldProxy.Object.EnsureNotNull();
-            bool isGenesis = !realmController.RealmData.ScenesAreFixed;
+            var isGenesis = !realmController.RealmData.ScenesAreFixed;
             UniTask waitForSceneReadiness;
 
             if (isGenesis)
@@ -156,66 +161,77 @@ namespace Global.Dynamic
 
             // add camera sampling data to the camera entity to start partitioning
             Assert.IsTrue(cameraEntity.Configured);
-            world.Add(cameraEntity.Object, cameraSamplingData);
+            globalWorld.Add(cameraEntity.Object, cameraSamplingData);
             await waitForSceneReadiness;
         }
 
-        public async UniTask TryInitializeTeleportToParcelAsync(Vector2Int parcel, CancellationToken ct, bool isLocal = false)
+        public async UniTask<bool> TryInitializeTeleportToParcelAsync(Vector2Int parcel, CancellationToken ct,
+            bool isLocal = false)
         {
             ct.ThrowIfCancellationRequested();
 
-            try
-            {
-                bool isGenesis = !realmController.RealmData.ScenesAreFixed;
+            var isGenesis = !realmController.RealmData.ScenesAreFixed;
 
-                if (!isLocal && !isGenesis) { await TryChangeRealmAsync(genesisDomain, ct, parcel); }
+                if (!isLocal && !isGenesis)
+                {
+                    var url = URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Genesis));
+                    await TryChangeRealmAsync(url, ct, parcel);
+                }
                 else
                 {
-                    await loadingScreen.ShowWhileExecuteTaskAsync(async parentLoadReport =>
+                    var loadResult = await loadingScreen.ShowWhileExecuteTaskAsync(async parentLoadReport =>
                     {
                         ct.ThrowIfCancellationRequested();
                         parentLoadReport.SetProgress(RealFlowLoadingStatus.PROGRESS[LandscapeLoaded]);
 
-                        AsyncLoadProcessReport? teleportLoadReport
+                        var teleportLoadReport
                             = parentLoadReport.CreateChildReport(RealFlowLoadingStatus.PROGRESS[PlayerTeleported]);
 
-                        UniTask waitForSceneReadiness = await TeleportToParcelAsync(parcel, teleportLoadReport, ct);
+                        var waitForSceneReadiness = await TeleportToParcelAsync(parcel, teleportLoadReport, ct);
                         await waitForSceneReadiness;
 
                         parentLoadReport.SetProgress(RealFlowLoadingStatus.PROGRESS[Completed]);
                     }, ct);
+                    if (!loadResult.Success)
+                    {
+                        ReportHub.LogError(ReportCategory.SCENE_LOADING,
+                            $"Error trying to teleport to a parcel {parcel}: {loadResult.ErrorMessage}");
+                        return false;
+                    }
                 }
-            }
-            catch (TimeoutException) { }
+
+                return true;
         }
 
         public async UniTask LoadTerrainAsync(AsyncLoadProcessReport landscapeLoadReport, CancellationToken ct)
         {
             if (landscapeEnabled)
             {
-                bool isGenesis = !realmController.RealmData.ScenesAreFixed;
+                var isGenesis = !realmController.RealmData.ScenesAreFixed;
 
                 if (isGenesis)
                 {
-                    //TODO (Juani): The world terrain would be hidden. We need to implement the re-usage when going back
+                    //TODO (Juani): The globalWorld terrain would be hidden. We need to implement the re-usage when going back
                     worldsTerrain.SwitchVisibility(false);
 
                     if (!genesisTerrain.IsTerrainGenerated)
-                        await genesisTerrain.GenerateTerrainAndShowAsync(processReport: landscapeLoadReport, cancellationToken: ct);
+                        await genesisTerrain.GenerateTerrainAndShowAsync(processReport: landscapeLoadReport,
+                            cancellationToken: ct);
                     else
                         await genesisTerrain.ShowAsync(landscapeLoadReport);
                 }
                 else
                 {
                     genesisTerrain.Hide();
-                    await GenerateWorldTerrainAsync((uint)realmController.RealmData.GetHashCode(), landscapeLoadReport, ct);
+                    await GenerateWorldTerrainAsync((uint)realmController.RealmData.GetHashCode(), landscapeLoadReport,
+                        ct);
                 }
             }
         }
 
         public async UniTask SwitchMiscVisibilityAsync()
         {
-            bool isGenesis = !realmController.RealmData.ScenesAreFixed;
+            var isGenesis = !realmController.RealmData.ScenesAreFixed;
 
             RealmChanged?.Invoke(isGenesis);
             mapRenderer.SetSharedLayer(MapLayer.PlayerMarker, isGenesis);
@@ -223,20 +239,27 @@ namespace Global.Dynamic
             roadsPlugin.RoadAssetPool?.SwitchVisibility(isGenesis);
         }
 
-        private async UniTask<UniTask> TeleportToParcelAsync(Vector2Int parcel, AsyncLoadProcessReport processReport, CancellationToken ct)
+        private async UniTask<UniTask> TeleportToParcelAsync(Vector2Int parcel, AsyncLoadProcessReport processReport,
+            CancellationToken ct)
         {
-            WaitForSceneReadiness? waitForSceneReadiness = await teleportController.TeleportToSceneSpawnPointAsync(parcel, processReport, ct);
+            var waitForSceneReadiness =
+                await teleportController.TeleportToSceneSpawnPointAsync(parcel, processReport, ct);
             return waitForSceneReadiness.ToUniTask(ct);
         }
 
-        private async UniTask<UniTask> TeleportToWorldSpawnPointAsync(Vector2Int parcelToTeleport, AsyncLoadProcessReport processReport, CancellationToken ct)
+        private async UniTask<UniTask> TeleportToWorldSpawnPointAsync(Vector2Int parcelToTeleport,
+            AsyncLoadProcessReport processReport, CancellationToken ct)
         {
-            AssetPromise<SceneEntityDefinition, GetSceneDefinition>[] promises = await realmController.WaitForFixedScenePromisesAsync(ct);
+            var promises = await realmController.WaitForFixedScenePromisesAsync(ct);
 
-            if (!promises.Any(p => p.Result!.Value.Asset!.metadata.scene.DecodedParcels.Contains(parcelToTeleport)))
+            if (!promises.Any(p =>
+                    p.Result.HasValue
+                    && (p.Result.Value.Asset?.metadata.scene.DecodedParcels.Contains(parcelToTeleport) ?? false)
+                ))
                 parcelToTeleport = promises[0].Result!.Value.Asset!.metadata.scene.DecodedBase;
 
-            WaitForSceneReadiness? waitForSceneReadiness = await teleportController.TeleportToSceneSpawnPointAsync(parcelToTeleport, processReport, ct);
+            var waitForSceneReadiness =
+                await teleportController.TeleportToSceneSpawnPointAsync(parcelToTeleport, processReport, ct);
             return waitForSceneReadiness.ToUniTask(ct);
         }
 
@@ -248,23 +271,25 @@ namespace Global.Dynamic
             await SwitchMiscVisibilityAsync();
         }
 
-        private async UniTask GenerateWorldTerrainAsync(uint worldSeed, AsyncLoadProcessReport processReport, CancellationToken ct)
+        private async UniTask GenerateWorldTerrainAsync(uint worldSeed, AsyncLoadProcessReport processReport,
+            CancellationToken ct)
         {
             if (!worldsTerrain.IsInitialized)
                 return;
 
-            AssetPromise<SceneEntityDefinition, GetSceneDefinition>[] promises = await realmController.WaitForFixedScenePromisesAsync(ct);
+            var promises = await realmController.WaitForFixedScenePromisesAsync(ct);
 
             var decodedParcelsAmount = 0;
 
-            foreach (AssetPromise<SceneEntityDefinition, GetSceneDefinition> promise in promises)
+            foreach (var promise in promises)
                 decodedParcelsAmount += promise.Result!.Value.Asset!.metadata.scene.DecodedParcels.Count;
 
-            using (var ownedParcels = new NativeParallelHashSet<int2>(decodedParcelsAmount, AllocatorManager.Persistent))
+            using (var ownedParcels =
+                   new NativeParallelHashSet<int2>(decodedParcelsAmount, AllocatorManager.Persistent))
             {
-                foreach (AssetPromise<SceneEntityDefinition, GetSceneDefinition> promise in promises)
+                foreach (var promise in promises)
                 {
-                    foreach (Vector2Int parcel in promise.Result!.Value.Asset!.metadata.scene.DecodedParcels)
+                    foreach (var parcel in promise.Result!.Value.Asset!.metadata.scene.DecodedParcels)
                         ownedParcels.Add(parcel.ToInt2());
                 }
 

@@ -5,7 +5,6 @@ using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.GLTF;
 using ECS.StreamableLoading.NFTShapes;
-using ECS.StreamableLoading.NFTShapes;
 using ECS.StreamableLoading.Textures;
 using UnityEngine;
 

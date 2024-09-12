@@ -1,10 +1,10 @@
 ﻿using System;
-using UnityEngine;
 
 namespace DCL.CharacterMotion.Components
 {
     public struct CharacterAnimationComponent
     {
+        public bool IsSliding;
         public AnimationStates States;
     }
 
@@ -48,6 +48,11 @@ namespace DCL.CharacterMotion.Components
                 hash = (hash * 23) + IsFalling.GetHashCode();
                 return hash;
             }
+        }
+
+        public override string ToString()
+        {
+            return $"{IsGrounded}: j:{IsJumping} lf:{IsLongJump} f:{IsFalling} lf:{IsLongFall} mb:{MovementBlendValue} sb:{SlideBlendValue}";
         }
 
         public static bool operator ==(AnimationStates left, AnimationStates right) =>

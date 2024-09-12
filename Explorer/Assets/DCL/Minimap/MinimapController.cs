@@ -3,7 +3,6 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using Cysharp.Threading.Tasks;
-using DCL.Character.CharacterMotion.Components;
 using DCL.Character.Components;
 using DCL.Chat.MessageBus;
 using DCL.Diagnostics;
@@ -13,17 +12,18 @@ using DCL.MapRenderer.CommonBehavior;
 using DCL.MapRenderer.ConsumerUtils;
 using DCL.MapRenderer.MapCameraController;
 using DCL.MapRenderer.MapLayers;
+using DCL.MapRenderer.MapLayers.Pins;
 using DCL.MapRenderer.MapLayers.PlayerMarker;
 using DCL.PlacesAPIService;
 using DCL.UI;
 using DG.Tweening;
 using ECS;
+using ECS.SceneLifeCycle;
+using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using ECS.SceneLifeCycle;
-using ECS.SceneLifeCycle.Realm;
 using UnityEngine;
 using Utility;
 
@@ -34,19 +34,19 @@ namespace DCL.Minimap
         private const MapLayer RENDER_LAYERS = MapLayer.SatelliteAtlas | MapLayer.ParcelsAtlas | MapLayer.PlayerMarker | MapLayer.ScenesOfInterest | MapLayer.Favorites | MapLayer.HotUsersMarkers | MapLayer.Pins;
         private const float ANIMATION_TIME = 0.2f;
 
-        public readonly BridgeSystemBinding<TrackPlayerPositionSystem> SystemBinding;
         private readonly IMapRenderer mapRenderer;
         private readonly IMVCManager mvcManager;
         private readonly IPlacesAPIService placesAPIService;
         private readonly IRealmData realmData;
         private readonly IChatMessagesBus chatMessagesBus;
+        private readonly IRealmNavigator realmNavigator;
+        private readonly IScenesCache scenesCache;
+        private readonly IMapPathEventBus mapPathEventBus;
         private CancellationTokenSource cts;
 
         private MapRendererTrackPlayerPosition mapRendererTrackPlayerPosition;
-        private IMapCameraController mapCameraController;
+        private IMapCameraController? mapCameraController;
         private Vector2Int previousParcelPosition;
-        private readonly IRealmNavigator realmNavigator;
-        private readonly IScenesCache scenesCache;
 
         public IReadOnlyDictionary<MapLayer, IMapLayerParameter> LayersParameters { get; } = new Dictionary<MapLayer, IMapLayerParameter>
             { { MapLayer.PlayerMarker, new PlayerMarkerParameter { BackgroundIsActive = false } } };
@@ -58,22 +58,25 @@ namespace DCL.Minimap
             IMapRenderer mapRenderer,
             IMVCManager mvcManager,
             IPlacesAPIService placesAPIService,
-            TrackPlayerPositionSystem system,
             IRealmData realmData,
             IChatMessagesBus chatMessagesBus,
             IRealmNavigator realmNavigator,
-            IScenesCache scenesCache
+            IScenesCache scenesCache,
+            IMapPathEventBus mapPathEventBus
         ) : base(viewFactory)
         {
             this.mapRenderer = mapRenderer;
             this.mvcManager = mvcManager;
             this.placesAPIService = placesAPIService;
-            SystemBinding = AddModule(new BridgeSystemBinding<TrackPlayerPositionSystem>(this, QueryPlayerPositionQuery, system));
             this.realmData = realmData;
             this.chatMessagesBus = chatMessagesBus;
             this.realmNavigator = realmNavigator;
             this.scenesCache = scenesCache;
+            this.mapPathEventBus = mapPathEventBus;
         }
+
+        public void HookPlayerPositionTrackingSystem(TrackPlayerPositionSystem system) =>
+            AddModule(new BridgeSystemBinding<TrackPlayerPositionSystem>(this, QueryPlayerPositionQuery, system));
 
         private void OnRealmChanged(bool isGenesis)
         {
@@ -83,7 +86,7 @@ namespace DCL.Minimap
 
         protected override void OnViewInstantiated()
         {
-            viewInstance.expandMinimapButton.onClick.AddListener(ExpandMinimap);
+            viewInstance!.expandMinimapButton.onClick.AddListener(ExpandMinimap);
             viewInstance.collapseMinimapButton.onClick.AddListener(CollapseMinimap);
             viewInstance.minimapRendererButton.Button.onClick.AddListener(() => mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Navmap))).Forget());
             viewInstance.sideMenuButton.onClick.AddListener(OpenSideMenu);
@@ -93,14 +96,19 @@ namespace DCL.Minimap
             new SideMenuController(viewInstance.sideMenuView);
             SetWorldMode(realmData.ScenesAreFixed);
             realmNavigator.RealmChanged += OnRealmChanged;
+            mapPathEventBus.OnShowPinInMinimapEdge += ShowPinInMinimapEdge;
+            mapPathEventBus.OnHidePinInMinimapEdge += HidePinInMinimapEdge;
+            mapPathEventBus.OnRemovedDestination += HidePinInMinimapEdge;
+            mapPathEventBus.OnUpdatePinPositionInMinimapEdge += UpdatePinPositionInMinimapEdge;
+            viewInstance.destinationPinMarker.HidePin();
         }
 
         private void ExpandMinimap()
         {
-            viewInstance.collapseMinimapButton.gameObject.SetActive(true);
+            viewInstance!.collapseMinimapButton.gameObject.SetActive(true);
             viewInstance.expandMinimapButton.gameObject.SetActive(false);
             viewInstance.minimapRendererButton.gameObject.SetActive(true);
-            viewInstance.minimapAnimator.SetTrigger(AnimationHashes.EXPAND);
+            viewInstance.minimapAnimator.SetTrigger(UIAnimationHashes.EXPAND);
         }
 
         private void CollapseMinimap()
@@ -108,7 +116,7 @@ namespace DCL.Minimap
             viewInstance.collapseMinimapButton.gameObject.SetActive(false);
             viewInstance.expandMinimapButton.gameObject.SetActive(true);
             viewInstance.minimapRendererButton.gameObject.SetActive(false);
-            viewInstance.minimapAnimator.SetTrigger(AnimationHashes.COLLAPSE);
+            viewInstance.minimapAnimator.SetTrigger(UIAnimationHashes.COLLAPSE);
         }
 
         private void OpenSideMenu()
@@ -120,6 +128,24 @@ namespace DCL.Minimap
                 viewInstance.SideMenuCanvasGroup.DOFade(1, ANIMATION_TIME).SetEase(Ease.InOutQuad);
             }
         }
+
+        private void ShowPinInMinimapEdge(IPinMarker pinMarker)
+        {
+            if (string.IsNullOrEmpty(pinMarker.Description)) { viewInstance.destinationPinMarker.SetupAsScenePin(); }
+            else { viewInstance.destinationPinMarker.SetupAsMapPin(pinMarker.CurrentSprite); }
+        }
+
+        private void UpdatePinPositionInMinimapEdge(Vector2 newPosition)
+        {
+            viewInstance.destinationPinMarker.RestorePin();
+            viewInstance.destinationPinMarker.SetPosition(newPosition);
+        }
+
+        private void HidePinInMinimapEdge()
+        {
+            viewInstance.destinationPinMarker.HidePin();
+        }
+
 
         [All(typeof(PlayerComponent))]
         [Query]
@@ -152,12 +178,12 @@ namespace DCL.Minimap
 
         protected override void OnBlur()
         {
-            mapCameraController.SuspendRendering();
+            mapCameraController?.SuspendRendering();
         }
 
         protected override void OnFocus()
         {
-            mapCameraController.ResumeRendering();
+            mapCameraController?.ResumeRendering();
 
             mapRenderer.SetSharedLayer(MapLayer.SatelliteAtlas, true);
             mapRenderer.SetSharedLayer(MapLayer.ParcelsAtlas, false);
@@ -165,7 +191,7 @@ namespace DCL.Minimap
 
         private void GetPlaceInfoAsync(Vector3 playerPosition)
         {
-            Vector2Int playerParcelPosition = ParcelMathHelper.WorldToGridPosition(playerPosition);
+            Vector2Int playerParcelPosition = playerPosition.ToParcel();
 
             if (previousParcelPosition == playerParcelPosition)
                 return;
@@ -220,6 +246,8 @@ namespace DCL.Minimap
         {
             cts.SafeCancelAndDispose();
             realmNavigator.RealmChanged -= OnRealmChanged;
+            mapPathEventBus.OnShowPinInMinimapEdge -= ShowPinInMinimapEdge;
+            mapPathEventBus.OnHidePinInMinimapEdge -= HidePinInMinimapEdge;
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>

@@ -540,7 +540,7 @@ Shader "DCL/DCL_Toon"
             #pragma target 4.5
             #pragma vertex vert
             #pragma fragment frag
-            #pragma enable_d3d11_debug_symbols
+            //#pragma enable_d3d11_debug_symbols
 
             #pragma shader_feature_local _DCL_COMPUTE_SKINNING
             #pragma shader_feature_local _DCL_TEXTURE_ARRAYS
@@ -586,7 +586,7 @@ Shader "DCL/DCL_Toon"
             #pragma target 4.5
             #pragma vertex vert_highlight
             #pragma fragment frag_highlight
-            #pragma enable_d3d11_debug_symbols
+            //#pragma enable_d3d11_debug_symbols
 
             #pragma shader_feature_local _DCL_COMPUTE_SKINNING
             #pragma shader_feature_local _DCL_TEXTURE_ARRAYS
@@ -628,7 +628,7 @@ Shader "DCL/DCL_Toon"
             #pragma target 5.0
             #pragma vertex vert
             #pragma fragment frag
-            #pragma enable_d3d11_debug_symbols
+            //#pragma enable_d3d11_debug_symbols
             
             // -------------------------------------
             // Lightweight Pipeline keywords
@@ -703,7 +703,7 @@ Shader "DCL/DCL_Toon"
 
             #pragma vertex ShadowPassVertex
             #pragma fragment ShadowPassFragment
-            #pragma enable_d3d11_debug_symbols
+            //#pragma enable_d3d11_debug_symbols
 
             #include "DCL_ToonInput.hlsl"
             #include "DCL_ToonShadowCasterPass.hlsl"
@@ -724,7 +724,7 @@ Shader "DCL/DCL_Toon"
             
             #pragma vertex DepthOnlyVertex
             #pragma fragment DepthOnlyFragment
-            #pragma enable_d3d11_debug_symbols
+            //#pragma enable_d3d11_debug_symbols
 
             // -------------------------------------
             // Material Keywords
@@ -757,7 +757,7 @@ Shader "DCL/DCL_Toon"
             
             #pragma vertex DepthNormalsVertex
             #pragma fragment DepthNormalsFragment
-            #pragma enable_d3d11_debug_symbols
+            //#pragma enable_d3d11_debug_symbols
 
             // -------------------------------------
             // Material Keywords

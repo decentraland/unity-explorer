@@ -1,0 +1,42 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fdd34dbbd3504f25993a0e0edaed2108, type: 3}
+  m_Name: MessageEncodingSettings
+  m_EditorClassIdentifier: 
+  landscapeData: {fileID: 11400000, guid: 32f2b877400526d4cbf648ba5c5064b4, type: 2}
+  TIMESTAMP_QUANTUM: 0.02
+  TIMESTAMP_BITS: 15
+  ROTATION_Y_BITS: 6
+  tier0:
+    XZ_BITS: 10
+    Y_MAX: 200
+    Y_BITS: 13
+    MAX_VELOCITY: 4
+    VELOCITY_BITS: 4
+  tier1:
+    XZ_BITS: 10
+    Y_MAX: 200
+    Y_BITS: 13
+    MAX_VELOCITY: 4
+    VELOCITY_BITS: 4
+  tier2:
+    XZ_BITS: 8
+    Y_MAX: 200
+    Y_BITS: 13
+    MAX_VELOCITY: 12
+    VELOCITY_BITS: 6
+  tier3:
+    XZ_BITS: 8
+    Y_MAX: 200
+    Y_BITS: 13
+    MAX_VELOCITY: 50
+    VELOCITY_BITS: 6
