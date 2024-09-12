@@ -51,7 +51,7 @@ on:
         required: true
         type: string
         default: 'none'
-      cache:
+      clean_build:
         required: true
         default: true
         type: boolean
