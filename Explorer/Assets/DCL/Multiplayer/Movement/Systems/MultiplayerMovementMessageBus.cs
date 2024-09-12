@@ -71,8 +71,6 @@ namespace DCL.Multiplayer.Movement.Systems
 
         public void Send(NetworkMovementMessage message)
         {
-            ReportHub.Log(ReportData.UNSPECIFIED, $"Sending movement message, original: {message}, decompressed: {messageEncoder.Decompress(messageEncoder.Compress(message))}");
-
             WriteAndSend(message, messagePipesHub.IslandPipe());
             WriteAndSend(message, messagePipesHub.ScenePipe());
         }
