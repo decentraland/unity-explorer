@@ -27,6 +27,7 @@ namespace DCL.MapRenderer.MapLayers.Pins
 
         public bool IsVisible => poolableBehavior.isVisible;
         public bool IsDestination { get; private set; }
+        public bool IsSelected { get; private set; }
         public string Title { get; private set; }
 
         public string Description { get; private set; }
@@ -62,6 +63,7 @@ namespace DCL.MapRenderer.MapLayers.Pins
         {
             SetIconOutline(true);
             pulseCancellationTokenSource = pulseCancellationTokenSource.SafeRestartLinked(ct);
+            IsSelected = true;
 
             if (poolableBehavior.instance != null)
             {
@@ -78,12 +80,14 @@ namespace DCL.MapRenderer.MapLayers.Pins
             if (poolableBehavior.instance != null)
                 poolableBehavior.instance.selectionScalingParent.localScale = Vector3.one;
             ResetScale(scaleType);
+            IsSelected = false;
         }
 
         public async UniTaskVoid AnimateDeselectionAsync(CancellationToken ct)
         {
             SetIconOutline(false);
             pulseCancellationTokenSource = pulseCancellationTokenSource.SafeRestartLinked(ct);
+            IsSelected = false;
 
             if (poolableBehavior.instance != null)
             {
@@ -154,7 +158,7 @@ namespace DCL.MapRenderer.MapLayers.Pins
         private void ResetPulseAnimation(bool resetCt = true)
         {
             if (resetCt) pulseCancellationTokenSource = pulseCancellationTokenSource.SafeRestart();
-            if (!IsDestination && poolableBehavior.instance != null) PinMarkerHelper.PulseScaleAsync(poolableBehavior.instance.pulseScalingParent, ct: pulseCancellationTokenSource.Token).Forget();
+            if (!IsDestination && !IsSelected && poolableBehavior.instance != null) PinMarkerHelper.PulseScaleAsync(poolableBehavior.instance.pulseScalingParent, ct: pulseCancellationTokenSource.Token).Forget();
         }
 
         public void Show(Action? onFinish = null)

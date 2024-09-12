@@ -10,7 +10,7 @@ namespace DCL.MapRenderer.MapLayers.Pins
     {
         bool IsVisible { get; }
         bool IsDestination { get; }
-
+        bool IsSelected { get; }
         public string Title { get; }
 
         public string Description { get; }
