@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Text.RegularExpressions;
@@ -93,9 +92,15 @@ namespace Global.AppArgs
                 appParameters[uriQueryKey] = uriQuery.Get(uriQueryKey);
             }
 
-            // Patch for WinOS sometimes affecting the 'realm' parameter in deep links putting a '/' at the end
-            if (appParameters.TryGetValue(REALM_PARAM, out string? realmParamValue) && realmParamValue.EndsWith('/'))
-                appParameters[REALM_PARAM] = realmParamValue.Remove(realmParamValue.Length - 1);
+            if (appParameters.TryGetValue(REALM_PARAM, out string? realmParamValue))
+            {
+                // Patch for WinOS sometimes affecting the 'realm' parameter in deep links putting a '/' at the end
+                if (realmParamValue.EndsWith('/'))
+                    appParameters[REALM_PARAM] = realmParamValue.Remove(realmParamValue.Length - 1);
+
+                // Patch for MacOS removing the ':' from the realm parameter protocol
+                appParameters[REALM_PARAM] = Regex.Replace(realmParamValue, @"(https?)//(.*?)$", @"$1://$2");
+            }
         }
     }
 }
