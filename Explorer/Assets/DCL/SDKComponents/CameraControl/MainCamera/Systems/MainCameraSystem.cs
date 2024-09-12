@@ -63,12 +63,14 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
         {
             if (entity != cameraEntity || !sceneStateProvider.IsCurrent) return;
 
-            CRDTEntity virtualCameraCRDTEntity = new CRDTEntity((int)pbMainCamera.VirtualCameraEntity);
+            // The 'uint' pbMainCamera.VirtualCameraEntity at 0 represents the empty field
+            CRDTEntity? virtualCameraCRDTEntity = pbMainCamera.VirtualCameraEntity > 0 ? new CRDTEntity((int)pbMainCamera.VirtualCameraEntity) : null;
 
             // Cannot rely on pbComponent.IsDirty since the VirtualCamera may not yet be on the target CRDTEntity
             // when the pbComponent is dirty and may have to be re-checked on subsequent updates. This can happen
             // if the target entity/component hasn't been loaded/detected from CRDT yet.
-            if (mainCameraComponent.virtualCameraCRDTEntity.Id == virtualCameraCRDTEntity.Id &&
+            if (mainCameraComponent.virtualCameraCRDTEntity.HasValue && virtualCameraCRDTEntity.HasValue &&
+                mainCameraComponent.virtualCameraCRDTEntity.Value.Id == virtualCameraCRDTEntity.Value.Id &&
                 (mainCameraComponent.virtualCameraInstance == null || mainCameraComponent.virtualCameraInstance.enabled))
                 return;
 
@@ -76,12 +78,12 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
 
             CinemachineFreeLook? previousVirtualCamera = mainCameraComponent.virtualCameraInstance;
             bool hasPreviousVirtualCamera = previousVirtualCamera != null && previousVirtualCamera.enabled;
-            if (virtualCameraCRDTEntity.Id > 0)
+            if (virtualCameraCRDTEntity.HasValue)
             {
                 Vector3 cinemachineCurrentActiveCamPos = cameraData.CinemachineBrain!.ActiveVirtualCamera.VirtualCameraGameObject.transform.position;
                 ApplyVirtualCamera(
                     ref mainCameraComponent,
-                    virtualCameraCRDTEntity,
+                    virtualCameraCRDTEntity.Value,
                     hasPreviousVirtualCamera ? previousVirtualCamera!.transform.position : cinemachineCurrentActiveCamPos
                 );
             }
@@ -125,7 +127,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
         {
             if (!sceneStateProvider.IsCurrent || entity != cameraEntity) return;
 
-            World.Add(entity, new MainCameraComponent(new CRDTEntity(0)));
+            World.Add(entity, new MainCameraComponent());
         }
 
         [Query]

@@ -5,7 +5,6 @@ using ECS.Abstract;
 using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Linq;
-using UnityEngine;
 using Utility;
 
 namespace ECS.StreamableLoading.AssetBundles
@@ -16,7 +15,7 @@ namespace ECS.StreamableLoading.AssetBundles
         {
             "dcl/scene_ignore_windows", "dcl/scene_ignore_mac",
             "dcl/universal render pipeline/lit_ignore_windows",
-            "dcl/universal render pipeline/lit_ignore_mac"
+            "dcl/universal render pipeline/lit_ignore_mac",
         };
 
         private readonly URLDomain streamingAssetURL;
@@ -50,7 +49,7 @@ namespace ECS.StreamableLoading.AssetBundles
                 if (assetBundleIntention.Manifest == null)
                 {
                     World.Add(entity, new StreamableLoadingResult<AssetBundleData>
-                        (CreateException(new ArgumentException($"Manifest must be provided to load {assetBundleIntention.Name} from `WEB` source"))));
+                        (GetReportCategory(), CreateException(new ArgumentException($"Manifest must be provided to load {assetBundleIntention.Name} from `WEB` source"))));
 
                     return;
                 }
@@ -59,7 +58,7 @@ namespace ECS.StreamableLoading.AssetBundles
                 {
                     // Add the failure to the entity
                     World.Add(entity, new StreamableLoadingResult<AssetBundleData>
-                        (CreateException(new ArgumentException($"Asset Bundle {assetBundleIntention.Hash} {assetBundleIntention.Name} not found in the manifest"))));
+                        (GetReportCategory(), CreateException(new ArgumentException($"Asset Bundle {assetBundleIntention.Hash} {assetBundleIntention.Name} not found in the manifest"))));
 
                     return;
                 }
