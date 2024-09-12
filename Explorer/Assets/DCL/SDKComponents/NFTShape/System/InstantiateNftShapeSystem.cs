@@ -73,6 +73,7 @@ namespace DCL.SDKComponents.NFTShape.System
             changedNftShapes.Add(entity, nftShapeRendererComponent);
             loadingComponent.Promise.ForgetLoading(World);
             World.Remove<NFTLoadingComponent>(entity);
+
         }
 
         private NftShapeRendererComponent NewNftShapeRendererComponent(in TransformComponent transform, in PBNftShape nftShape)

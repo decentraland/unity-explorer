@@ -166,7 +166,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                     // emote failed to load? remove intent
                     if (emote.ManifestResult is { IsInitialized: true, Succeeded: false })
                     {
-                        ReportHub.LogError(GetReportCategory(), $"Cant play emote {emoteId} since it failed loading \n {emote.ManifestResult}");
+                        ReportHub.LogError(GetReportData(), $"Cant play emote {emoteId} since it failed loading \n {emote.ManifestResult}");
                         World.Remove<CharacterEmoteIntent>(entity);
                         return;
                     }
@@ -192,13 +192,13 @@ namespace DCL.AvatarRendering.Emotes.Play
                     AudioClip? audioClip = audioAssetResult?.Asset;
 
                     if (!emotePlayer.Play(mainAsset, audioClip, emote.IsLooping(), emoteIntent.Spatial, in avatarView, ref emoteComponent))
-                        ReportHub.LogWarning(GetReportCategory(), $"Emote {emote.Model.Asset.metadata.name} cant be played, AB version: {emote.ManifestResult?.Asset?.GetVersion()} should be >= 16");
+                        ReportHub.LogWarning(GetReportData(), $"Emote {emote.Model.Asset.metadata.name} cant be played, AB version: {emote.ManifestResult?.Asset?.GetVersion()} should be >= 16");
 
                     emoteComponent.EmoteUrn = emoteId;
                     World.Remove<CharacterEmoteIntent>(entity);
                 }
             }
-            catch (Exception e) { ReportHub.LogException(e, GetReportCategory()); }
+            catch (Exception e) { ReportHub.LogException(e, GetReportData()); }
         }
 
         // Every time the emote is looped we send a new message that should refresh the looping emotes on clients that didn't receive the initial message yet
