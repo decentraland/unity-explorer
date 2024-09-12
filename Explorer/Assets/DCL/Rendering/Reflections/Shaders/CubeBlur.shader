@@ -7,10 +7,10 @@
 
     Properties 
     {
-        _TexelSize ("Texel", Float) = 0.0078125
+        _TexelSize ("Texel", Float) = 0.0156250//0.0078125
         _MipLevel ("Level", Float) = 0.0
         _BlurScale ("Scale", Float) = 1.0
-        _Current_CubeFace ("Current_CubeFace", Float) = 0.0
+        _Current_CubeFace ("Current_CubeFace", Float) = 1.0
     }
 
     SubShader
@@ -21,8 +21,6 @@
 //            "RenderType"="Background"
 //            "PreviewType"="Skybox"
         }
-//        Cull Off
-//        ZWrite Off
         
         Pass
         {
@@ -36,12 +34,8 @@
                 #pragma vertex vert
                 #pragma fragment frag
                 #pragma enable_d3d11_debug_symbols
-
-                CBUFFER_START(UnityPerMaterial)
-                    float _Current_CubeFace;
-                CBUFFER_END
                 
-                //float _Current_CubeFace;
+                float _Current_CubeFace;
                 
                 float3 ComputeCubeDirection(float2 globalTexcoord)
                 {
@@ -445,6 +439,8 @@
 
                 half4 frag(v2f  i) : SV_Target
                 {
+                    return half4(i.direction, 1.0);
+                    return frag_default(i);
                     return frag_loop(i);
                     //return half4(1.0, 0.0, 0.0, 1.0);
                     #if (SHADER_TARGET < 30 || defined(SHADER_API_GLES))
