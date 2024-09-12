@@ -177,7 +177,8 @@ namespace DCL.Multiplayer.Movement
         private static int CompressedVelocity(float velocity, int range, int sizeInBits)
         {
             int withoutSignBits = sizeInBits - 1;
-            int compressed = FloatQuantizer.Compress(velocity, 0, range, withoutSignBits);
+            float absVelocity = Mathf.Abs(velocity);
+            int compressed = FloatQuantizer.Compress(absVelocity, 0, range, withoutSignBits);
             compressed <<= 1;
             compressed |= NegativeSignFlag(velocity);
             return compressed;
