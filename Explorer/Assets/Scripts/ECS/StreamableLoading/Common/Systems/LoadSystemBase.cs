@@ -161,10 +161,7 @@ namespace ECS.StreamableLoading.Common.Systems
             catch (Exception e)
             {
                 // If we don't set an exception it will spin forever
-                result = new StreamableLoadingResult<TAsset>(e);
-
-                if (e is not OperationCanceledException)
-                    ReportException(e);
+                result = new StreamableLoadingResult<TAsset>(GetReportCategory(), e);
             }
             finally { FinalizeLoading(entity, intention, result, source, acquiredBudget); }
         }
@@ -239,14 +236,6 @@ namespace ECS.StreamableLoading.Common.Systems
         ///     All exceptions are handled by the upper functions, just do pure work
         /// </summary>
         protected abstract UniTask<StreamableLoadingResult<TAsset>> FlowInternalAsync(TIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct);
-
-        /// <summary>
-        ///     Can't move it to another system as the update cycle is not synchronized with systems but based on UniTasks
-        /// </summary>
-        private void ReportException(Exception exception)
-        {
-            AssetsLoadingUtility.ReportException(GetReportData(), exception);
-        }
 
         /// <summary>
         ///     Part of the flow that can be reused by multiple intentions

@@ -12,8 +12,8 @@ namespace ECS.TestSuite
 {
     public abstract class UnitySystemTestBase<TSystem> where TSystem: BaseUnityLoopSystem
     {
-        protected TSystem system;
-        private World cachedWorld;
+        protected TSystem? system;
+        private World? cachedWorld;
 
         protected World world
         {

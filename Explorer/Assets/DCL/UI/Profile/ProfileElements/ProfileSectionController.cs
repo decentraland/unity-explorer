@@ -3,60 +3,74 @@ using DCL.Chat;
 using DCL.Profiles;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
-using System;
+using MVC;
 using System.Threading;
-using UnityEngine.UI;
+using Utility;
 
 namespace DCL.UI.ProfileElements
 {
-    public class ProfileSectionController : IDisposable
+    public class ProfileSectionController : ControllerBase<ProfileSectionView>
     {
         private readonly IWeb3IdentityCache identityCache;
         private readonly IProfileRepository profileRepository;
-        private readonly ImageController profileImageController;
-        private readonly UserNameElementController nameElementController;
-        private readonly UserWalletAddressElementController walletAddressElementController;
-        private readonly ProfileSectionElement element;
         private readonly ChatEntryConfigurationSO chatEntryConfiguration;
+        private readonly IWebRequestController webRequestController;
+
+        private ImageController profileImageController;
+        private UserNameElementController nameElementController;
+        private UserWalletAddressElementController walletAddressElementController;
+        private CancellationTokenSource cts;
 
         public ProfileSectionController(
-            ProfileSectionElement element,
+            ViewFactoryMethod viewFactory,
             IWeb3IdentityCache identityCache,
             IProfileRepository profileRepository,
             IWebRequestController webRequestController,
-            ChatEntryConfigurationSO chatEntryConfiguration)
+            ChatEntryConfigurationSO chatEntryConfiguration) : base(viewFactory)
         {
             this.identityCache = identityCache;
             this.profileRepository = profileRepository;
-            this.element = element;
             this.chatEntryConfiguration = chatEntryConfiguration;
-
-            nameElementController = new UserNameElementController(element.UserNameElement, chatEntryConfiguration);
-            walletAddressElementController = new UserWalletAddressElementController(element.UserWalletAddressElement);
-            profileImageController = new ImageController(element.FaceSnapshotImage, webRequestController);
+            this.webRequestController = webRequestController;
         }
 
-        public async UniTask LoadElementsAsync(CancellationToken ct)
+        protected override void OnViewInstantiated()
         {
-            await LoadAsync(ct);
+            base.OnViewInstantiated();
+            nameElementController = new UserNameElementController(viewInstance!.UserNameElement, chatEntryConfiguration);
+            walletAddressElementController = new UserWalletAddressElementController(viewInstance.UserWalletAddressElement);
+            profileImageController = new ImageController(viewInstance.FaceSnapshotImage, webRequestController);
         }
 
-        private async UniTask LoadAsync(CancellationToken ct)
+        protected override void OnBeforeViewShow()
+        {
+            base.OnBeforeViewShow();
+            cts = cts.SafeRestart();
+            SetupAsync(cts.Token).Forget();
+        }
+
+        private async UniTaskVoid SetupAsync(CancellationToken ct)
         {
             Profile? profile = await profileRepository.GetAsync(identityCache.Identity!.Address, 0, ct);
 
+            if (profile == null) return;
+
             nameElementController.Setup(profile);
             walletAddressElementController.Setup(profile);
-            element.FaceFrame.color = chatEntryConfiguration.GetNameColor(profile?.Name);
+            viewInstance!.FaceFrame.color = chatEntryConfiguration.GetNameColor(profile.Name);
 
             profileImageController!.StopLoading();
-            //temporarily disabled the profile image request untill we have the correct
+            //temporarily disabled the profile image request until we have the correct
             //picture deployment
             //await profileImageController!.RequestImageAsync(profile.Avatar.FaceSnapshotUrl, ct);
         }
 
-        public void Dispose()
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
+
+        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) => UniTask.Never(ct);
+        public new void Dispose()
         {
+            cts.SafeCancelAndDispose();
             profileImageController.StopLoading();
             nameElementController.Dispose();
             walletAddressElementController.Dispose();

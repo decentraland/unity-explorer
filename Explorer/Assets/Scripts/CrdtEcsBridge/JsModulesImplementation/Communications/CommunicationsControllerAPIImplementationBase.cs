@@ -1,6 +1,4 @@
 ﻿using CrdtEcsBridge.PoolsProviders;
-using DCL.Multiplayer.Connections.Messaging;
-using Decentraland.Kernel.Comms.Rfc4;
 using ECS;
 using SceneRunner.Scene;
 using SceneRuntime;
@@ -13,34 +11,35 @@ using Utility;
 
 namespace CrdtEcsBridge.JsModulesImplementation.Communications
 {
-    public class CommunicationsControllerAPIImplementationBase : ICommunicationsControllerAPI
+    public abstract class CommunicationsControllerAPIImplementationBase : ICommunicationsControllerAPI
     {
-        internal enum MsgType
+        public enum MsgType
         {
             String = 1, // SDK scenes MessageBus messages
             Uint8Array = 2,
         }
 
-        protected readonly CancellationTokenSource cancellationTokenSource = new ();
-        protected readonly ICommunicationControllerHub messagePipesHub;
-        protected readonly ISceneData sceneData;
-        protected readonly ISceneStateProvider sceneStateProvider;
-        protected readonly IJsOperations jsOperations;
-        protected readonly Action<ICommunicationControllerHub.SceneMessage> onMessageReceivedCached;
         protected readonly List<IMemoryOwner<byte>> eventsToProcess = new ();
+        private readonly CancellationTokenSource cancellationTokenSource = new ();
+        private readonly ISceneCommunicationPipe sceneCommunicationPipe;
         private readonly IRealmData realmData;
+        private readonly ISceneData sceneData;
+        private readonly ISceneStateProvider sceneStateProvider;
+        private readonly IJsOperations jsOperations;
+        private readonly Action<ISceneCommunicationPipe.SceneMessage> onMessageReceivedCached;
+
         internal IReadOnlyList<IMemoryOwner<byte>> EventsToProcess => eventsToProcess;
 
-        public CommunicationsControllerAPIImplementationBase(
+        protected CommunicationsControllerAPIImplementationBase(
             IRealmData realmData,
             ISceneData sceneData,
-            ICommunicationControllerHub messagePipesHub,
+            ISceneCommunicationPipe sceneCommunicationPipe,
             IJsOperations jsOperations,
             ISceneStateProvider sceneStateProvider)
         {
             this.realmData = realmData;
             this.sceneData = sceneData;
-            this.messagePipesHub = messagePipesHub;
+            this.sceneCommunicationPipe = sceneCommunicationPipe;
             this.jsOperations = jsOperations;
             this.sceneStateProvider = sceneStateProvider;
 
@@ -48,12 +47,12 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
 
             // if it's the world subscribe to the messages straight-away
             if (IgnoreIsCurrentScene())
-                this.messagePipesHub.SetSceneMessageHandler(onMessageReceivedCached);
+                this.sceneCommunicationPipe.SetSceneMessageHandler(onMessageReceivedCached);
         }
 
         public void Dispose()
         {
-            messagePipesHub.RemoveSceneMessageHandler(onMessageReceivedCached);
+            sceneCommunicationPipe.RemoveSceneMessageHandler(onMessageReceivedCached);
 
             lock (eventsToProcess) { CleanUpReceivedMessages(); }
 
@@ -65,9 +64,9 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
             if (IgnoreIsCurrentScene()) return;
 
             if (isCurrent)
-                messagePipesHub.SetSceneMessageHandler(onMessageReceivedCached);
+                sceneCommunicationPipe.SetSceneMessageHandler(onMessageReceivedCached);
             else
-                messagePipesHub.RemoveSceneMessageHandler(onMessageReceivedCached);
+                sceneCommunicationPipe.RemoveSceneMessageHandler(onMessageReceivedCached);
         }
 
         public object SendBinary(IReadOnlyList<PoolableByteArray> data)
@@ -76,22 +75,8 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
                 return jsOperations.ConvertToScriptTypedArrays(Array.Empty<IMemoryOwner<byte>>());
 
             foreach (PoolableByteArray poolable in data)
-            {
-                if (poolable.Length == 0)
-                    continue;
-
-                Memory<byte> message = poolable.Memory;
-
-                EncodeAndSend();
-
-                void EncodeAndSend()
-                {
-                    Span<byte> encodedMessage = stackalloc byte[message.Length + 1];
-                    encodedMessage[0] = (byte)MsgType.Uint8Array;
-                    message.Span.CopyTo(encodedMessage[1..]);
-                    SendMessage(encodedMessage);
-                }
-            }
+                if (poolable.Length > 0)
+                    EncodeAndSendMessage(MsgType.Uint8Array, poolable.Memory.Span);
 
             lock (eventsToProcess)
             {
@@ -118,18 +103,32 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
             eventsToProcess.Clear();
         }
 
-        private void SendMessage(ReadOnlySpan<byte> message)
+        protected void EncodeAndSendMessage(MsgType msgType, ReadOnlySpan<byte> message)
         {
-            messagePipesHub.SendMessage(message, sceneData.SceneEntityDefinition.id!, cancellationTokenSource.Token);
+            Span<byte> encodedMessage = stackalloc byte[message.Length + 1];
+            encodedMessage[0] = (byte)msgType;
+            message.CopyTo(encodedMessage[1..]);
+            sceneCommunicationPipe.SendMessage(encodedMessage, sceneData.SceneEntityDefinition.id!, cancellationTokenSource.Token);
         }
 
-        protected virtual void OnMessageReceived(ICommunicationControllerHub.SceneMessage receivedMessage) { }
-
-        internal static MsgType DecodeMessage(ref ReadOnlySpan<byte> value)
+        private static MsgType DecodeMessage(ref ReadOnlySpan<byte> value)
         {
             var msgType = (MsgType)value[0];
             value = value[1..];
             return msgType;
         }
+
+        private void OnMessageReceived(ISceneCommunicationPipe.SceneMessage receivedMessage)
+        {
+            ReadOnlySpan<byte> decodedMessage = receivedMessage.Data.Span;
+            MsgType msgType = DecodeMessage(ref decodedMessage);
+
+            if (decodedMessage.Length == 0)
+                return;
+
+            OnMessageReceived(msgType, decodedMessage, receivedMessage.FromWalletId);
+        }
+
+        protected abstract void OnMessageReceived(MsgType messageType, ReadOnlySpan<byte> decodedMessage, string fromWalletId);
     }
 }

@@ -5,6 +5,7 @@ using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.ComputeShader;
 using DCL.AvatarRendering.AvatarShape.Helpers;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
+using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
 using DCL.Optimization.PerformanceBudgeting;
@@ -30,7 +31,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         private readonly ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy;
         private readonly IComponentPool<AvatarBase> avatarPoolRegistry;
         private readonly IObjectPool<UnityEngine.ComputeShader> computeShaderSkinningPool;
-        private readonly IWearableAssetsCache wearableAssetsCache;
+        private readonly IAttachmentsAssetsCache wearableAssetsCache;
 
         internal AvatarCleanUpSystem(
             World world,
@@ -39,7 +40,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             IAvatarMaterialPoolHandler avatarMaterialPoolHandler,
             IComponentPool<AvatarBase> avatarPoolRegistry,
             IObjectPool<UnityEngine.ComputeShader> computeShaderSkinningPool,
-            IWearableAssetsCache wearableAssetsCache,
+            IAttachmentsAssetsCache wearableAssetsCache,
             ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy) : base(world)
         {
             this.instantiationFrameTimeBudget = instantiationFrameTimeBudget;

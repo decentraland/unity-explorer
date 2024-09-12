@@ -51,7 +51,9 @@ namespace Global.Tests.PlayMode
                 diagnosticsContainer,
                 identityCache,
                 Substitute.For<IEthereumApi>(),
+                false,
                 World.Create(),
+                new Entity(),
                 ct);
 
             if (!success)

@@ -43,22 +43,22 @@ namespace DCL.Input.Systems
 
                     switch (value)
                     {
-                        case InputMapComponent.Kind.Camera:
+                        case InputMapComponent.Kind.CAMERA:
                             SetActionMapEnabled(isActive, dclInput.Camera);
                             break;
-                        case InputMapComponent.Kind.FreeCamera:
+                        case InputMapComponent.Kind.FREE_CAMERA:
                             SetActionMapEnabled(isActive, dclInput.FreeCamera);
                             break;
-                        case InputMapComponent.Kind.Player:
+                        case InputMapComponent.Kind.PLAYER:
                             SetActionMapEnabled(isActive, dclInput.Player);
                             break;
-                        case InputMapComponent.Kind.EmoteWheel:
+                        case InputMapComponent.Kind.EMOTE_WHEEL:
                             SetActionMapEnabled(isActive, dclInput.EmoteWheel);
                             break;
-                        case InputMapComponent.Kind.Emotes:
+                        case InputMapComponent.Kind.EMOTES:
                             SetActionMapEnabled(isActive, dclInput.Emotes);
                             break;
-                        case InputMapComponent.Kind.Shortcuts:
+                        case InputMapComponent.Kind.SHORTCUTS:
                             SetActionMapEnabled(isActive, dclInput.Shortcuts);
                             break;
                     }

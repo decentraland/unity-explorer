@@ -182,7 +182,7 @@ namespace DCL.MapRenderer
 
         public void ResetToBaseScale()
         {
-            internalPinMarker.ResetScale();
+            internalPinMarker.ResetScale(IPinMarker.ScaleType.MINIMAP);
             mapPathRenderer.ResetScale();
         }
     }

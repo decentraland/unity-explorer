@@ -75,7 +75,7 @@ namespace DCL.CharacterCamera.Tests
             cinemachinePreset.DefaultCameraMode.Returns(CameraMode.ThirdPerson);
             cinemachineCameraAudioSettings = Substitute.For<ICinemachineCameraAudioSettings>();
             system = new ControlCinemachineVirtualCameraSystem(world, cinemachineCameraAudioSettings);
-            world.Create(new InputMapComponent(InputMapComponent.Kind.Player | InputMapComponent.Kind.Camera | InputMapComponent.Kind.Shortcuts));
+            world.Create(new InputMapComponent(InputMapComponent.Kind.PLAYER | InputMapComponent.Kind.CAMERA | InputMapComponent.Kind.SHORTCUTS));
 
             inputMap = world.CacheInputMap();
 
@@ -93,7 +93,7 @@ namespace DCL.CharacterCamera.Tests
         [Test]
         public void InitInputMapComponent()
         {
-            Assert.That(inputMap.GetInputMapComponent(world).Active, Is.EqualTo(InputMapComponent.Kind.Player | InputMapComponent.Kind.Camera | InputMapComponent.Kind.Shortcuts));
+            Assert.That(inputMap.GetInputMapComponent(world).Active, Is.EqualTo(InputMapComponent.Kind.PLAYER | InputMapComponent.Kind.CAMERA | InputMapComponent.Kind.SHORTCUTS));
             Assert.That(world.Get<CinemachineCameraState>(entity).CurrentCamera, Is.EqualTo(thirdPersonCameraData.Camera));
         }
 

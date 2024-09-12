@@ -23,7 +23,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
     public class CommunicationControllerAPIImplementationShould
     {
         private CommunicationsControllerAPIImplementation api;
-        private TestCommunicationControllerHub communicationControllerHub;
+        private TestSceneCommunicationPipe sceneCommunicationPipe;
         private IMessagePipe messagePipe;
         private IJsOperations jsOperations;
         private ICRDTMemoryAllocator crdtMemoryAllocator;
@@ -31,7 +31,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
         [SetUp]
         public void SetUp()
         {
-            communicationControllerHub = new TestCommunicationControllerHub();
+            sceneCommunicationPipe = new TestSceneCommunicationPipe();
 
             ISceneData sceneData = Substitute.For<ISceneData>();
             sceneData.SceneEntityDefinition.Returns(new SceneEntityDefinition { id = "TEST_SCENE" });
@@ -43,7 +43,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
             IRealmData realmData = Substitute.For<IRealmData>();
             realmData.ScenesAreFixed.Returns(false);
 
-            api = new CommunicationsControllerAPIImplementation(realmData, sceneData, communicationControllerHub, jsOperations = Substitute.For<IJsOperations>(), crdtMemoryAllocator, sceneStateProvider);
+            api = new CommunicationsControllerAPIImplementation(realmData, sceneData, sceneCommunicationPipe, jsOperations = Substitute.For<IJsOperations>(), crdtMemoryAllocator, sceneStateProvider);
             api.OnSceneIsCurrentChanged(true);
         }
 
@@ -62,7 +62,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
             var expectedCalls = outerArray.Select(o => o.Prepend((byte)CommunicationsControllerAPIImplementationBase.MsgType.Uint8Array).ToArray()).ToList();
 
             // Assert the 2d array is equal
-            CollectionAssert.AreEqual(expectedCalls, communicationControllerHub.sendMessageCalls);
+            CollectionAssert.AreEqual(expectedCalls, sceneCommunicationPipe.sendMessageCalls);
 
             // Assert JSOperations called
             jsOperations.Received().ConvertToScriptTypedArrays(api.EventsToProcess);
@@ -77,7 +77,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
             byte[] data = GetRandomBytes(50).Prepend((byte)CommunicationsControllerAPIImplementationBase.MsgType.Uint8Array).ToArray();
 
             var receivedMessage = new ReceivedMessage<Scene>(new Scene { Data = ByteString.CopyFrom(data), SceneId = SCENE_ID }, new Packet(), WALLET_ID, Substitute.For<IMultiPool>());
-            communicationControllerHub.onSceneMessage.Invoke(ICommunicationControllerHub.SceneMessage.CopyFrom(receivedMessage));
+            sceneCommunicationPipe.onSceneMessage.Invoke(ISceneCommunicationPipe.SceneMessage.CopyFrom(receivedMessage));
 
             byte[] walletBytes = Encoding.UTF8.GetBytes(receivedMessage.FromWalletId);
 
@@ -105,17 +105,17 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
         }
 
         // This class exists because we can't mock ReadOnlySpan (ref structs)
-        private class TestCommunicationControllerHub : ICommunicationControllerHub
+        private class TestSceneCommunicationPipe : ISceneCommunicationPipe
         {
             internal readonly List<byte[]> sendMessageCalls = new ();
-            internal Action<ICommunicationControllerHub.SceneMessage> onSceneMessage;
+            internal Action<ISceneCommunicationPipe.SceneMessage> onSceneMessage;
 
-            public void SetSceneMessageHandler(Action<ICommunicationControllerHub.SceneMessage> onSceneMessage)
+            public void SetSceneMessageHandler(Action<ISceneCommunicationPipe.SceneMessage> onSceneMessage)
             {
                 this.onSceneMessage = onSceneMessage;
             }
 
-            public void RemoveSceneMessageHandler(Action<ICommunicationControllerHub.SceneMessage> onSceneMessage)
+            public void RemoveSceneMessageHandler(Action<ISceneCommunicationPipe.SceneMessage> onSceneMessage)
             {
 
             }
