@@ -3,12 +3,12 @@ using Arch.System;
 using Arch.SystemGroups;
 using CrdtEcsBridge.Components;
 using CrdtEcsBridge.Components.Transform;
-using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Diagnostics;
 using DCL.Multiplayer.SDK.Components;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
+using ECS.Unity.Transforms.Components;
 
 namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
 {
@@ -25,22 +25,17 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void PropagateTransformToScene(ref IAvatarView avatarView, ref PlayerCRDTEntity playerCRDTEntity)
+        private void PropagateTransformToScene(in TransformComponent transformComponent, in PlayerCRDTEntity playerCRDTEntity)
         {
             // Main player Transform is handled by 'WriteMainPlayerTransformSystem'
             if (playerCRDTEntity.CRDTEntity.Id == SpecialEntitiesID.PLAYER_ENTITY) return;
 
-            PropagateComponent(ref avatarView, ref playerCRDTEntity);
-        }
-
-        private static void PropagateComponent(ref IAvatarView avatarBase, ref PlayerCRDTEntity playerCRDTEntity)
-        {
             World sceneEcsWorld = playerCRDTEntity.SceneFacade.EcsExecutor.World;
 
             var sdkTransform = new SDKTransform
             {
-                Position = avatarBase.Position, // updated to scene-relative on the writer system
-                Rotation = avatarBase.Rotation,
+                Position = transformComponent.Transform.position, // updated to scene-relative on the writer system
+                Rotation = transformComponent.Transform.rotation,
             };
 
             if (sceneEcsWorld.Has<SDKTransform>(playerCRDTEntity.SceneWorldEntity))

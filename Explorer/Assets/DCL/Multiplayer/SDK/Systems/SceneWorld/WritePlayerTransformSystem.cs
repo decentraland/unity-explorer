@@ -4,19 +4,18 @@ using Arch.SystemGroups;
 using CrdtEcsBridge.Components;
 using CrdtEcsBridge.Components.Transform;
 using CrdtEcsBridge.ECSToCRDTWriter;
+using DCL.Diagnostics;
 using DCL.Multiplayer.SDK.Components;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
-using ECS.Prioritization.Components;
 using SceneRunner.Scene;
 using Utility;
 
 namespace DCL.Multiplayer.SDK.Systems.SceneWorld
 {
     [UpdateInGroup(typeof(SyncedPreRenderingSystemGroup))]
-    // [UpdateBefore(typeof(CleanUpGroup))]
-    // [LogCategory(ReportCategory.PLAYER_AVATAR_BASE)]
+    [LogCategory(ReportCategory.PLAYER_SDK_DATA)]
     public partial class WritePlayerTransformSystem : BaseUnityLoopSystem
     {
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
@@ -36,7 +35,7 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void UpdateSDKTransform(ref PlayerCRDTEntity playerCRDTEntity, ref SDKTransform sdkTransform)
+        private void UpdateSDKTransform(in PlayerSceneCRDTEntity playerCRDTEntity, ref SDKTransform sdkTransform)
         {
             // Main player Transform is handled by 'WriteMainPlayerTransformSystem'
             if (playerCRDTEntity.CRDTEntity.Id == SpecialEntitiesID.PLAYER_ENTITY) return;
@@ -53,7 +52,7 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
-        private void HandleComponentRemoval(ref PlayerCRDTEntity playerCRDTEntity)
+        private void HandleComponentRemoval(in PlayerSceneCRDTEntity playerCRDTEntity)
         {
             ecsToCRDTWriter.DeleteMessage<SDKTransform>(playerCRDTEntity.CRDTEntity);
         }
