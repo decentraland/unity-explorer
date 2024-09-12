@@ -219,7 +219,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
                 WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE),
                 WearablesConstants.DefaultColors.GetRandomEyesColor(),
                 WearablesConstants.DefaultColors.GetRandomHairColor(),
-                WearablesConstants.DefaultColors.GetRandomSkinColor())), new AvatarShapeComponent { HiddenByModifierArea = false });
+                WearablesConstants.DefaultColors.GetRandomSkinColor())), new AvatarShapeComponent());
 
             var excludedIds = new HashSet<string>();
             excludedIds.Add(FAKE_USER_ID);
