@@ -17,7 +17,6 @@ using System.Threading;
 using AssetManagement;
 using UnityEngine;
 using UnityEngine.Networking;
-using Utility.Multithreading;
 using Object = UnityEngine.Object;
 
 namespace ECS.StreamableLoading.AssetBundles
@@ -52,7 +51,7 @@ namespace ECS.StreamableLoading.AssetBundles
             var customEmbeddedSubdirectory = parentIntent.CommonArguments.CustomEmbeddedSubDirectory;
 
             return await UniTask.WhenAll(assetBundleMetadata.dependencies.Select(hash => WaitForDependencyAsync(manifest, hash, customEmbeddedSubdirectory, partition, ct)));
-    }
+        }
 
         protected override async UniTask<StreamableLoadingResult<AssetBundleData>> FlowInternalAsync(GetAssetBundleIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
