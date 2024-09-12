@@ -11,9 +11,10 @@ namespace DCL.CharacterTriggerArea.Components
     public struct CharacterTriggerAreaComponent : IDirtyMarker
     {
         private static readonly IReadOnlyCollection<Transform> EMPTY_COLLECTION = Array.Empty<Transform>();
-        public Vector3 AreaSize;
         private CharacterTriggerArea? monoBehaviour;
         private readonly bool targetOnlyMainPlayer;
+
+        public Vector3 AreaSize { get; private set; }
 
         public readonly IReadOnlyCollection<Transform> EnteredThisFrame => monoBehaviour != null
             ? monoBehaviour.EnteredThisFrame
@@ -57,6 +58,12 @@ namespace DCL.CharacterTriggerArea.Components
             }
 
             monoBehaviour!.BoxCollider.size = AreaSize;
+        }
+
+        public void UpdateAreaSize(Vector3 size)
+        {
+            AreaSize = size;
+            IsDirty = true;
         }
 
         public readonly void TryUpdateTransform(ref TransformComponent transformComponent)

@@ -180,6 +180,7 @@ namespace DCL.Diagnostics
         /// </summary>
         public const string WEARABLE = nameof(WEARABLE);
         public const string EMOTE = nameof(EMOTE);
+        public const string THUMBNAILS = nameof(THUMBNAILS);
 
         public const string AUTHENTICATION = nameof(AUTHENTICATION);
 

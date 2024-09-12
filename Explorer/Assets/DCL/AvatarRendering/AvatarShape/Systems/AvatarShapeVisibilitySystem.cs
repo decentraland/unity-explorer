@@ -27,7 +27,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         {
             AddPlayerCachedVisibilityComponentQuery(World, camera.GetCameraComponent(World));
             AddOthersCachedVisibilityComponentQuery(World);
-            
+
             UpdatePlayerFirstPersonQuery(World, camera.GetCameraComponent(World));
             UpdateAvatarsVisibilityStateQuery(World);
         }
@@ -96,7 +96,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
         private static void ToggleAvatarShape(ref AvatarShapeComponent avatarShape, bool toggle)
         {
-            foreach (CachedWearable wearable in avatarShape.InstantiatedWearables)
+            foreach (var wearable in avatarShape.InstantiatedWearables)
             foreach (Renderer renderer in wearable.Renderers)
                 renderer.enabled = toggle;
         }
