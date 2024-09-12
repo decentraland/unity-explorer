@@ -12,12 +12,10 @@ namespace ECS.StreamableLoading.Common.Components
 
         public readonly bool Succeeded;
         public readonly T? Asset;
-
         public Exception? Exception => exceptionData?.exception;
-
         public ReportData ReportData => exceptionData?.reportData ?? ReportData.UNSPECIFIED;
 
-        public StreamableLoadingResult(T asset) : this()
+        public StreamableLoadingResult(T? asset) : this()
         {
             Asset = asset;
             Succeeded = true;
