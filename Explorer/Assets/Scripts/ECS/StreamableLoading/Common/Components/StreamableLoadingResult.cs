@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DCL.Diagnostics;
+using System;
 
 namespace ECS.StreamableLoading.Common.Components
 {
@@ -7,19 +8,25 @@ namespace ECS.StreamableLoading.Common.Components
     /// </summary>
     public readonly struct StreamableLoadingResult<T>
     {
-        public readonly Exception? Exception;
+        private readonly (ReportData reportData, Exception exception)? exceptionData;
+
         public readonly bool Succeeded;
         public readonly T? Asset;
+        public Exception? Exception => exceptionData?.exception;
+        public ReportData ReportData => exceptionData?.reportData ?? ReportData.UNSPECIFIED;
 
-        public StreamableLoadingResult(T asset) : this()
+        public StreamableLoadingResult(T? asset) : this()
         {
             Asset = asset;
             Succeeded = true;
         }
 
-        public StreamableLoadingResult(Exception exception) : this()
+        public StreamableLoadingResult(ReportData reportData, Exception exception) : this()
         {
-            Exception = exception;
+            if (exception is not OperationCanceledException)
+                ReportHub.LogException(exception, reportData);
+
+            exceptionData = (reportData, exception);
         }
 
         public bool IsInitialized => Exception != null || Asset != null || Succeeded;
