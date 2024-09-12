@@ -4,7 +4,6 @@ using DCL.ECSComponents;
 using DCL.FeatureFlags;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.SDKComponents.MapPins.Systems;
-using DCL.Utilities;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Systems;
 using System.Collections.Generic;
