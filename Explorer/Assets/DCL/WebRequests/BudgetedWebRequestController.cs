@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Optimization.PerformanceBudgeting;
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
 
@@ -15,7 +16,10 @@ namespace DCL.WebRequests
         private readonly IWebRequestController origin;
         private readonly int perDomainBudget;
 
-        private readonly IReleasablePerformanceBudget totalBudget;
+        private int totalRequestsCompleted;
+        private int openConnections;
+
+        private readonly ConcurrentLoadingPerformanceBudget totalBudget;
         private readonly Dictionary<ReadOnlyMemory<char>, ConcurrentLoadingPerformanceBudget> perDomainBudgets = new (50, new StringUtils.StringMemoryIgnoreCaseComparer());
 
         public BudgetedWebRequestController(IWebRequestController origin, int totalBudget, int perDomainBudget)
@@ -40,6 +44,7 @@ namespace DCL.WebRequests
 
             try
             {
+                /*
                 baseDomain = envelope.CommonArguments.URL.GetBaseDomain();
 
                 if (baseDomain.Length > 0)
@@ -57,13 +62,19 @@ namespace DCL.WebRequests
                     while (!domainBudget.TrySpendBudget(out domainBudgetAcquired))
                         await UniTask.Yield(envelope.Ct);
                 }
-
+                */
+                openConnections++;
                 return await origin.SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp, TResult>(envelope, op);
             }
             finally
             {
                 totalBudgetAcquired.Dispose();
-
+                totalRequestsCompleted++;
+                openConnections--;
+                Debug.Log($"JUANI OPEN CONNECTIONS {openConnections}");
+                Debug.Log(
+                    $"JUANI TOTAL REQUESTS COMPLETED {totalRequestsCompleted} CURRENT BUDGET {totalBudget.CurrentBudget}");
+                /*
                 if (domainBudgetAcquired != null)
                 {
                     domainBudgetAcquired.Dispose();
@@ -77,6 +88,7 @@ namespace DCL.WebRequests
                         }
                     }
                 }
+                */
             }
         }
     }

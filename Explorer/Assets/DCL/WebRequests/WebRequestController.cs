@@ -3,6 +3,7 @@ using DCL.Diagnostics;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
 using System;
+using UnityEngine;
 using UnityEngine.Networking;
 using Utility.Multithreading;
 
@@ -39,7 +40,6 @@ namespace DCL.WebRequests
 
                 // No matter what we must release UnityWebRequest, otherwise it crashes in the destructor
                 using UnityWebRequest wr = request.UnityWebRequest;
-
                 try
                 {
                     await request.WithAnalyticsAsync(analyticsContainer, request.SendRequest(envelope.Ct));
@@ -65,6 +65,24 @@ namespace DCL.WebRequests
                             $"Exception occured on loading {typeof(TWebRequest).Name} from {envelope.CommonArguments.URL} with {envelope}\n"
                             + $"Attempt Left: {attemptsLeft}"
                         );
+
+                    if (exception.Message.Contains("Cannot connect to destination host"))
+                    {
+                        Debug.Log($"JUANI ERROR RESPONSE CODE {exception.ResponseCode}");
+                        Debug.Log($"JUANI ERROR  RESPONSE HEADERS {exception.Result}");
+                        if (exception.ResponseHeaders != null)
+                        {
+                            foreach (var keyValue in exception.ResponseHeaders)
+                            {
+                                Debug.Log($"JUANI ERROR RESPONSE HEADERS {keyValue.Key} {keyValue.Value}");
+                            }
+                        }
+
+                        Debug.Log("JUANI ERROR ACA ESTA LA EXCEPCION, vamos a ponerle un await");
+                        await UniTask.Delay(TimeSpan.FromSeconds(1));
+                    }
+
+
 
                     if (exception.IsIrrecoverableError(attemptsLeft))
                         throw;
