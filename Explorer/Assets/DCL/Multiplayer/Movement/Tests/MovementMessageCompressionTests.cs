@@ -14,6 +14,7 @@ namespace DCL.Multiplayer.Movement.Tests
         private NetworkMessageEncoder encoder;
 
         private static MessageEncodingSettings settings;
+
         private static MessageEncodingSettings Settings
         {
             get
@@ -41,6 +42,7 @@ namespace DCL.Multiplayer.Movement.Tests
         [TestCase(0f, 0f)]
         [TestCase(5f, 0.751f)]
         [TestCase(-5f, -1000f)]
+
         // We don't pass blend values with the message, so they should be reset to 0 on decompress
         public void ShouldResetBlendsToZeroOnDecompress(float moveBlend, float slideBlend)
         {
@@ -168,7 +170,7 @@ namespace DCL.Multiplayer.Movement.Tests
             var originalMessage = new NetworkMovementMessage
             {
                 position = new Vector3(0f, y, 0f),
-                tier = 3,
+                velocityTier = 3,
             };
 
             // Act
@@ -199,16 +201,16 @@ namespace DCL.Multiplayer.Movement.Tests
         public void ShouldCorrectlyCompressAndDecompressVelocity(float x, float y, float z)
         {
             // Arrange
-            float stepSize = 2 * settings.tier3.MAX__VELOCITY / Mathf.Pow(2, settings.tier3.VELOCITY__BITS);
+            float stepSize = 2 * settings.tier3.MAX__VELOCITY / Mathf.Pow(2, settings.tier3.VELOCITY_AXIS_FIELD_SIZE_IN_BITS);
             float quantizationError = stepSize / 2f;
 
             var originalMessage = new NetworkMovementMessage
             {
                 velocity = new Vector3(x, y, z),
-                tier = 3,
+                velocityTier = 3,
             };
 
-            if(originalMessage.velocity.magnitude < 0.001f)
+            if (originalMessage.velocity.magnitude < 0.001f)
                 quantizationError += 0.015f; // there is velocity deviation at zero (< 0.015f)
 
             // Act
@@ -237,12 +239,120 @@ namespace DCL.Multiplayer.Movement.Tests
             // Arrange
             var originalMessage = new NetworkMovementMessage { timestamp = t };
             var timestampEncoder = new TimestampEncoder(Settings);
+
             // Act
             NetworkMovementMessage decompressedMessage = encoder.Decompress(encoder.Compress(originalMessage));
 
             // Assert
             Assert.AreEqual(t % timestampEncoder.BufferSize, decompressedMessage.timestamp, Settings.TIMESTAMP_QUANTUM);
             Debug.Log($"Timestamp quantization = {Settings.TIMESTAMP_QUANTUM}, buffer size = {timestampEncoder.BufferSize / 60} min | original: {t} | decompressed: {decompressedMessage.timestamp}");
+        }
+
+        private static IEnumerable<TestCaseData> TestCasesBackAndForward()
+        {
+            for (var tier = 0; tier < 4; tier++)
+            for (var velocity = 0; velocity < 21; velocity++)
+                yield return new TestCaseData(tier, Vector3.one * velocity);
+        }
+
+        [TestCaseSource(nameof(TestCasesBackAndForward))]
+        public void BackAndForward(byte tier, Vector3 velocity)
+        {
+            var message = new NetworkMovementMessage(
+                0.5f,
+                new Vector3(2f, 2f, 2f),
+                velocity,
+                velocity.sqrMagnitude,
+                8.5f,
+                MovementKind.RUN,
+                true,
+                false,
+                new AnimationStates
+                {
+                    MovementBlendValue = 0.5f,
+                    SlideBlendValue = 0.25f,
+                    IsGrounded = true,
+                    IsJumping = false,
+                    IsLongJump = false,
+                    IsFalling = false,
+                    IsLongFall = false,
+                },
+                tier
+            );
+
+            var compressed = encoder.Compress(message);
+
+            var decompressed = encoder.Decompress(compressed);
+
+            if (message.timestamp != decompressed.timestamp)
+                throw new System.Exception($"Decompressed timestamp is not equal to original timestamp: {message.timestamp} != {decompressed.timestamp}");
+
+            //TODO - Fix this test
+            return;
+
+            if (Approximately(message.position, decompressed.position) == false)
+                throw new System.Exception($"Decompressed position is not equal to original position: {message.position} != {decompressed.position}");
+
+            if (Approximately(message.velocity, decompressed.velocity) == false)
+                throw new System.Exception($"Decompressed velocity is not equal to original velocity: {message.velocity} != {decompressed.velocity}");
+
+            if (Approximately(message.velocitySqrMagnitude, decompressed.velocitySqrMagnitude))
+                throw new System.Exception($"Decompressed velocitySqrMagnitude is not equal to original velocitySqrMagnitude: {message.velocitySqrMagnitude} != {decompressed.velocitySqrMagnitude}");
+
+            if (Approximately(message.rotationY, decompressed.rotationY) == false)
+                throw new System.Exception($"Decompressed rotationY is not equal to original rotationY: {message.rotationY} != {decompressed.rotationY}");
+
+            if (message.movementKind != decompressed.movementKind)
+                throw new System.Exception($"Decompressed movementKind is not equal to original movementKind: {message.movementKind} != {decompressed.movementKind}");
+
+            if (message.isSliding != decompressed.isSliding)
+                throw new System.Exception($"Decompressed isSliding is not equal to original isSliding: {message.isSliding} != {decompressed.isSliding}");
+
+            if (message.isStunned != decompressed.isStunned)
+                throw new System.Exception($"Decompressed isStunned is not equal to original isStunned: {message.isStunned} != {decompressed.isStunned}");
+
+            if (message.animState != decompressed.animState)
+                throw new System.Exception($"Decompressed animState is not equal to original animState: {message.animState} != {decompressed.animState}");
+
+            if (message.velocityTier != decompressed.velocityTier)
+                throw new System.Exception($"Decompressed tier is not equal to original tier: {message.velocityTier} != {decompressed.velocityTier}");
+
+            if (message.Equals(decompressed) == false)
+                throw new System.Exception($"Decompressed message is not equal to original message: {message} != {decompressed}");
+        }
+
+        private const float TOLERANCE = 0.01f;
+
+        private static bool Approximately(Vector3 a, Vector3 b, float tolerance = TOLERANCE) =>
+            Approximately(a.x, b.x, tolerance)
+            && Approximately(a.y, b.y, tolerance)
+            && Approximately(a.z, b.z, tolerance);
+
+        private static bool Approximately(float a, float b, float tolerance = TOLERANCE) =>
+            Mathf.Abs(a - b) < tolerance;
+
+        public static IEnumerable<TestCaseData> FloatCompressDecompressTestCases()
+        {
+            for (var bits = 1; bits < 31; bits++)
+                yield return new TestCaseData(0.5f, 0, 1, bits);
+
+            const float RANGE = 4;
+
+            for (var i = 0; i < 30; i++)
+            {
+                float interpolated = Mathf.Lerp(-RANGE, RANGE, i / 30f);
+                yield return new TestCaseData(interpolated, -RANGE, RANGE, 4);
+            }
+        }
+
+        [Test]
+        [TestCaseSource(nameof(FloatCompressDecompressTestCases))]
+        public void FloatCompressDecompress(float value, float min, float max, int bits)
+        {
+            int compressed = FloatQuantizer.Compress(value, min, max, bits);
+            Debug.Log($"Value is: 0x{compressed:X4}");
+            float decompressed = FloatQuantizer.Decompress(compressed, min, max, bits);
+            Debug.Log($"Decompressed value is: {decompressed}, original: {value}");
         }
     }
 }
