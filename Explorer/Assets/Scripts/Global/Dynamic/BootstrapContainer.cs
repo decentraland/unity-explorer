@@ -42,6 +42,7 @@ namespace Global.Dynamic
         public IReportsHandlingSettings ReportHandlingSettings => reportHandlingSettings.Value;
         public IAppArgs ApplicationParametersParser { get; private set; }
         public bool LocalSceneDevelopment { get; private set; }
+        public bool UseRemoteAssetBundles { get; private set; }
 
         public override void Dispose()
         {
@@ -74,6 +75,7 @@ namespace Global.Dynamic
                 DecentralandUrlsSource = decentralandUrlsSource,
                 WebBrowser = browser,
                 LocalSceneDevelopment = realmLaunchSettings.IsLocalSceneDevelopmentRealm || realmLaunchSettings.GetStartingRealm(decentralandUrlsSource) == IRealmNavigator.LOCALHOST,
+                UseRemoteAssetBundles = realmLaunchSettings.useRemoteAssetsBundles,
                 ApplicationParametersParser = applicationParametersParser,
                 DebugSettings = debugSettings,
             };
