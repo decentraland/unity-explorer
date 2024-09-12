@@ -10,6 +10,7 @@ using DCL.Utilities;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.TestSuite;
+using NSubstitute;
 using NUnit.Framework;
 using Vector3 = Decentraland.Common.Vector3;
 
@@ -34,7 +35,7 @@ namespace DCL.SDKComponents.CameraModeArea.Tests
             var cameraEntityProxy = new ObjectProxy<Entity>();
             cameraEntityProxy.SetObject(cameraEntity);
 
-            system = new CameraModeAreaHandlerSystem(world, globalWorld, cameraEntityProxy);
+            system = new CameraModeAreaHandlerSystem(world, globalWorld, cameraEntityProxy, Substitute.For<IExposedCameraData>());
 
             entity = world.Create(PartitionComponent.TOP_PRIORITY);
             AddTransformToEntity(entity);
