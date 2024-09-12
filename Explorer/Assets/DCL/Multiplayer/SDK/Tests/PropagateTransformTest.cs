@@ -5,6 +5,7 @@ using CRDT;
 using CrdtEcsBridge.Components.Transform;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
+using DCL.Character.Components;
 using DCL.Diagnostics;
 using DCL.Multiplayer.SDK.Components;
 using DCL.Multiplayer.SDK.Systems.GlobalWorld;
@@ -16,6 +17,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using Utility;
 
 namespace DCL.Multiplayer.SDK.Tests
 {
@@ -26,46 +28,50 @@ namespace DCL.Multiplayer.SDK.Tests
         {
             const int CRDT_ID = 100;
 
-            var world = World.Create();
-            var ecsWorld = World.Create();
+            var globalWorld = World.Create();
+            var sceneWorld = World.Create();
 
             var writer = new FakeECSToCRDTWriter();
             var sceneData = new ISceneData.Fake();
 
-            var propagationSystem = new PlayerTransformPropagationSystem(world);
-            var writeSystem = new WritePlayerTransformSystem(ecsWorld, writer, sceneData);
+            var propagationSystem = new PlayerTransformPropagationSystem(globalWorld);
+            var writeSystem = new WritePlayerTransformSystem(sceneWorld, writer, sceneData);
 
-            var sceneWorldEntity = ecsWorld.Create();
+            var sceneWorldEntity = sceneWorld.Create();
 
+            var crdtEntity = new CRDTEntity(CRDT_ID);
             var playerCRDTEntity = new PlayerCRDTEntity(
-                new CRDTEntity(CRDT_ID),
+                crdtEntity,
                 new ISceneFacade.Fake(
                     new SceneShortInfo(Vector2Int.zero, string.Empty),
                     new SceneStateProvider(),
-                    new SceneEcsExecutor(ecsWorld),
+                    new SceneEcsExecutor(sceneWorld),
                     false
                 ),
                 sceneWorldEntity
             );
+            var playerSceneCRDTEntity = new PlayerSceneCRDTEntity(crdtEntity);
 
-            world.Create(
-                new IAvatarView.Fake(Vector3.zero, Quaternion.identity) as IAvatarView,
+            Transform fakeCharaTransform = new GameObject("fake character").transform;
+            var charaTransform = new CharacterTransform(fakeCharaTransform);
+            globalWorld.Create(
+                charaTransform,
                 playerCRDTEntity
             );
-
-            ecsWorld.Add(sceneWorldEntity, playerCRDTEntity);
+            sceneWorld.Add(sceneWorldEntity, playerSceneCRDTEntity);
 
             propagationSystem.Update(0);
             writeSystem.Update(0);
-
 
             Assert.AreEqual(1, writer.Messages.Count);
 
             var message = writer.Messages.First();
 
             Assert.AreEqual(typeof(SDKTransform), message.MessageType);
-            Assert.AreEqual(typeof(SDKTransform), message.Data.GetType());
             Assert.AreEqual(CRDT_ID, message.Entity.Id);
+
+            // Cleanup
+            GameObject.DestroyImmediate(fakeCharaTransform.gameObject);
         }
 
         private class FakeECSToCRDTWriter : IECSToCRDTWriter
