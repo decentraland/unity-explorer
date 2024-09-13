@@ -1,0 +1,23 @@
+{
+    "name": "DCL.AvatarAnimation",
+    "rootNamespace": "",
+    "references": [
+        "GUID:f06555f75b070af458a003d92f9efb00",
+        "GUID:d0ec51c740809fd4680d3ea27279dca7",
+        "GUID:fc4fd35fb877e904d8cedee73b2256f6",
+        "GUID:5eabe9a3d4dd19d42a16208ea5411062",
+        "GUID:8322ea9340a544c59ddc56d4793eac74",
+        "GUID:d832748739a186646b8656bdbd447ad0"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
