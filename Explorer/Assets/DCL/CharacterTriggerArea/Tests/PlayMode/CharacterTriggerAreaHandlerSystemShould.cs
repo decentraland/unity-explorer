@@ -134,7 +134,8 @@ namespace DCL.CharacterTriggerArea.Tests
 
             // update component values
             targetAreaSize /= 3;
-            component.UpdateAreaSize(targetAreaSize);
+            component.AreaSize = targetAreaSize;
+            component.IsDirty = true;
             world.Set(entity, component);
 
             Assert.AreNotEqual(targetAreaSize, characterTriggerArea.BoxCollider.size);

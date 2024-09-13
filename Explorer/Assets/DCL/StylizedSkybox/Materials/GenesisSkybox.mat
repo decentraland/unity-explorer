@@ -154,7 +154,7 @@ Material:
     - _CloudClamp: 0
     - _CloudDensity: 0.52
     - _Cloud_Blending: 1.26
-    - _Cloud_Highlights: 0.5
+    - _Cloud_Highlights: 0.80223155
     - _Cloud_Opacity: 1
     - _CloudsRotationSpeed: 0.01
     - _CubemapFace: 0
@@ -199,15 +199,15 @@ Material:
     - _SrcBlendAlpha: 1
     - _Stars_Brightness: 4.62
     - _SunOpacity: 1
-    - _SunSize: 0.23614952
+    - _SunSize: 0.10065517
     - _Sun_Flare: 0.3
     - _Sun_Flare_Distance: -0.21
     - _Sun_Flare_Intensity: 1
     - _Sun_Flare_Opacity: 1.1
     - _Sun_Flare_Radius: 0.19
     - _Sun_Opacity: 1
-    - _Sun_Radiance: 0.023440018
-    - _Sun_Radiance_Intensity: 0.84629107
+    - _Sun_Radiance: 0.119964086
+    - _Sun_Radiance_Intensity: 0.78409046
     - _Sun_Smooth: -0.19
     - _Surface: 0
     - _Twist: 0.15
@@ -221,21 +221,21 @@ Material:
     m_Colors:
     - LightDirection: {r: 10, g: 15, b: 120, a: 0}
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
-    - _CloudsColor: {r: 0.9923111, g: 0.56987566, b: 0.3625412, a: 1}
+    - _CloudsColor: {r: 0.7212643, g: 0.878485, b: 0.968687, a: 1}
     - _Clouds_Color: {r: 0.9811321, g: 0.9811321, b: 0.9811321, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
-    - _HorizonColor: {r: 0.76184994, g: 0.41871148, b: 0.39080212, a: 1}
+    - _HorizonColor: {r: 0.6824739, g: 0.81312644, b: 0.94514245, a: 1}
     - _Horizon_Line_Color: {r: 0.56981134, g: 0.8824903, b: 1, a: 0}
     - _LightDirection: {r: 0, g: -0.39794862, b: 0.9174077, a: 0}
     - _Moon_Mask_Position: {r: 0.01, g: -0.01, b: 0, a: 0}
-    - _NadirColor: {r: 0.87040997, g: 0.3572464, b: 0.9501851, a: 1}
-    - _RimColor: {r: 1.7151475, g: 0.62282735, b: 0.19296578, a: 1}
+    - _NadirColor: {r: 0.29030105, g: 0.7774085, b: 0.8548639, a: 1}
+    - _RimColor: {r: 0.5239961, g: 0.751218, b: 0.5874166, a: 1}
     - _Rim_Color: {r: 0.9622642, g: 0.9540234, b: 0.539231, a: 0}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
-    - _SunColor: {r: 18.50024, g: 11.370724, b: 7.3077307, a: 1}
+    - _SunColor: {r: 12.878122, g: 23.157005, b: 12.710493, a: 1}
     - _Vector2: {r: 14.34, g: 1.57, b: 0, a: 0}
-    - _ZenitColor: {r: 0.59690243, g: 0.31107134, b: 0.8167783, a: 1}
+    - _ZenitColor: {r: 0.22520459, g: 0.62998194, b: 0.99080414, a: 1}
   m_BuildTextureStacks: []
 --- !u!114 &3268039623660159980
 MonoBehaviour:

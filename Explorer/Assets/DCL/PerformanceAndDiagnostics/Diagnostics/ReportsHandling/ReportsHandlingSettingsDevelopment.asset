@@ -298,6 +298,18 @@ MonoBehaviour:
       Severity: 0
     - Category: ASSET_BUNDLES
       Severity: 4
+    - Category: SDK_LOCAL_SCENE_DEVELOPMENT
+      Severity: 4
+    - Category: SDK_CAMERA
+      Severity: 4
+    - Category: SDK_CAMERA
+      Severity: 0
+    - Category: SDK_LOCAL_SCENE_DEVELOPMENT
+      Severity: 0
+    - Category: THUMBNAILS
+      Severity: 0
+    - Category: THUMBNAILS
+      Severity: 4
   sentryMatrix:
     entries: []
   debounceEnabled: 1
