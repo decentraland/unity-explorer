@@ -215,25 +215,9 @@ namespace Global.Dynamic
 
                 await bootstrap.UserInitializationAsync(dynamicWorldContainer!, globalWorld, playerEntity, splashScreen, ct);
 
-                if (debugSettings.portableExperiencesEnsToLoad != null)
-                {
-                    foreach (string pxEns in debugSettings.portableExperiencesEnsToLoad)
-                    {
-                        staticContainer!.PortableExperiencesController.CreatePortableExperienceByEnsWithErrorHandlingAsync(new ENS(pxEns), ct, true, true).Forget();
-                    }
-                }
+                LoadDebugPortableExperiences(ct);
 
-                if (debugSettings.EnableRemotePortableExperiences)
-                {
-                    string globalPxFlag = FeatureFlagsConfiguration.GetFlag(FeatureFlags.GLOBAL_PORTABLE_EXPERIENCE);
-
-                    if (staticContainer!.FeatureFlagsCache.Configuration.IsEnabled(globalPxFlag, "csv-variant"))
-                    {
-                        if (!staticContainer.FeatureFlagsCache.Configuration.TryGetCsvPayload(globalPxFlag, "csv-variant", out List<List<string>>? csv)) return;
-
-                        foreach (string value in csv[0]) { staticContainer.PortableExperiencesController!.CreatePortableExperienceByEnsWithErrorHandlingAsync(new ENS(value), ct, true, false).Forget(); }
-                    }
-                }
+                LoadRemotePortableExperiences(ct);
 
                 RestoreInputs();
             }
@@ -246,6 +230,32 @@ namespace Global.Dynamic
                 // unhandled exception
                 GameReports.PrintIsDead();
                 throw;
+            }
+        }
+
+        private void LoadRemotePortableExperiences(CancellationToken ct)
+        {
+            if (!debugSettings.EnableRemotePortableExperiences) return;
+
+            string globalPxFlag = FeatureFlagsConfiguration.GetFlag(FeatureFlags.GLOBAL_PORTABLE_EXPERIENCE);
+
+            if (staticContainer!.FeatureFlagsCache.Configuration.IsEnabled(globalPxFlag, "csv-variant"))
+            {
+                if (!staticContainer.FeatureFlagsCache.Configuration.TryGetCsvPayload(globalPxFlag, "csv-variant", out List<List<string>>? csv)) return;
+
+                if (csv?[0] == null) return;
+
+                foreach (string value in csv[0]) { staticContainer.PortableExperiencesController!.CreatePortableExperienceByEnsWithErrorHandlingAsync(new ENS(value), ct, true, false).Forget(); }
+            }
+        }
+
+        private void LoadDebugPortableExperiences(CancellationToken ct)
+        {
+            if (debugSettings.portableExperiencesEnsToLoad == null) return;
+
+            foreach (string pxEns in debugSettings.portableExperiencesEnsToLoad)
+            {
+                staticContainer!.PortableExperiencesController.CreatePortableExperienceByEnsWithErrorHandlingAsync(new ENS(pxEns), ct, true, true).Forget();
             }
         }
 
