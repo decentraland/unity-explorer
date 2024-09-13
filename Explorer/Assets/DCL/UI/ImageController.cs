@@ -1,5 +1,7 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
+using DCL.Diagnostics;
 using DCL.WebRequests;
 using System;
 using Utility;
@@ -44,7 +46,7 @@ namespace DCL.UI
             try
             {
                 view.LoadingObject.SetActive(true);
-                Texture2D texture = await webRequestController.GetTextureAsync(new CommonArguments(URLAddress.FromString(uri)), new GetTextureArguments(false), GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp), ct);
+                Texture2D texture = await webRequestController.GetTextureAsync(new CommonArguments(URLAddress.FromString(uri)), new GetTextureArguments(false), GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp), ct, ReportCategory.UI);
                 texture.filterMode = FilterMode.Bilinear;
                 view.Image.sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), VectorUtilities.OneHalf, PIXELS_PER_UNIT, 0, SpriteMeshType.FullRect, Vector4.one, false);
                 view.LoadingObject.SetActive(false);

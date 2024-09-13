@@ -26,7 +26,7 @@ namespace DCL.NftInfoAPIService
         {
             var url = $"{baseURL}/api/v2/chain/{(string.IsNullOrEmpty(chain) ? DEFAULT_CHAIN : chain)}/contract/{contractAddress}/nfts/{tokenId}";
 
-            OpenSeaNftResponse nftResponse = await webRequestController.GetAsync(url, ct, reportCategory: ReportCategory.NFT_INFO_WEB_REQUEST)
+            OpenSeaNftResponse nftResponse = await webRequestController.GetAsync(url, ct, ReportCategory.NFT_INFO_WEB_REQUEST)
                                                                        .CreateFromJson<OpenSeaNftResponse>(WRJsonParser.Unity, WRThreadFlags.SwitchToThreadPool);
 
             return ResponseToNftInfo(nftResponse.nft);

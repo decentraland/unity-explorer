@@ -85,6 +85,7 @@ namespace ECS.SceneLifeCycle.Systems
 
         private void UpdateSceneReadiness(Vector2Int parcel)
         {
+
             if (!scenesCache.TryGetByParcel(parcel, out var currentScene))
                 return;
 
@@ -107,6 +108,7 @@ namespace ECS.SceneLifeCycle.Systems
                 currentScene.SetIsCurrent(true);
 
             lastParcelProcessed = parcel;
+            scenesCache.SetCurrentScene(currentScene);
         }
 
         private void UpdateCurrentSceneInfo(Vector2Int parcel)

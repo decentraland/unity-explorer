@@ -81,7 +81,7 @@ namespace DCL.LOD.Systems
                 }
                 else
                 {
-                    ReportHub.LogWarning(GetReportCategory(), $"LOD request for {sceneLODInfo.CurrentLODPromise.LoadingIntention.Hash} failed");
+                    ReportHub.LogWarning(GetReportData(), $"LOD request for {sceneLODInfo.CurrentLODPromise.LoadingIntention.Hash} failed");
                     sceneLODInfo.AddFailedLOD();
                 }
 

@@ -35,8 +35,10 @@ using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.Reporting;
 using Global.AppArgs;
 using SceneRunner.Mapping;
+using Sentry;
 using System.Collections.Generic;
 using System.Threading;
+using PortableExperiences.Controller;
 using UnityEngine;
 using Utility;
 using MultiplayerPlugin = DCL.PluginSystem.World.MultiplayerPlugin;
@@ -88,6 +90,7 @@ namespace Global
         public ISceneReadinessReportQueue SceneReadinessReportQueue { get; private set; }
         public FeatureFlagsCache FeatureFlagsCache { get; private set; }
         public IFeatureFlagsProvider FeatureFlagsProvider { get; private set; }
+        public IPortableExperiencesController PortableExperiencesController { get; private set; }
         public IDebugContainerBuilder DebugContainerBuilder { get; private set; }
 
         public void Dispose()
@@ -115,6 +118,7 @@ namespace Global
             IAppArgs appArgs,
             DebugViewsCatalog debugViewsCatalog,
             IPluginSettingsContainer settingsContainer,
+            DiagnosticsContainer diagnosticsContainer,
             IWeb3IdentityCache web3IdentityProvider,
             IEthereumApi ethereumApi,
             bool localSceneDevelopment,
@@ -145,7 +149,7 @@ namespace Global
             bool result = await InitializeContainersAsync(container, settingsContainer, ct);
 
             if (!result)
-                return (null, false)!;
+                return (null, false);
 
             StaticSettings staticSettings = settingsContainer.GetSettings<StaticSettings>();
 
@@ -171,6 +175,7 @@ namespace Global
             container.WebRequestsContainer = WebRequestsContainer.Create(web3IdentityProvider, container.DebugContainerBuilder);
             container.PhysicsTickProvider = new PhysicsTickProvider();
             container.FeatureFlagsCache = new FeatureFlagsCache();
+            container.PortableExperiencesController = new ECSPortableExperiencesController(globalWorld, web3IdentityProvider, container.WebRequestsContainer.WebRequestController, container.ScenesCache, container.FeatureFlagsCache);
             container.FeatureFlagsProvider = new HttpFeatureFlagsProvider(container.WebRequestsContainer.WebRequestController,
                 container.FeatureFlagsCache);
 
@@ -178,6 +183,12 @@ namespace Global
             var textureResolvePlugin = new TexturesLoadingPlugin(container.WebRequestsContainer.WebRequestController, container.CacheCleaner);
 
             ExtendedObjectPool<Texture2D> videoTexturePool = VideoTextureFactory.CreateVideoTexturesPool();
+
+            diagnosticsContainer.AddSentryScopeConfigurator(scope =>
+            {
+                if (container.ScenesCache.CurrentScene != null)
+                    diagnosticsContainer.Sentry!.AddCurrentSceneToScope(scope, container.ScenesCache.CurrentScene.Info);
+            });
 
             container.ECSWorldPlugins = new IDCLWorldPlugin[]
             {
