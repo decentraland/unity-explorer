@@ -48,13 +48,17 @@ namespace PortableExperiences.Controller
 
         public async UniTask<IPortableExperiencesController.SpawnResponse> CreatePortableExperienceByEnsAsync(ENS ens, CancellationToken ct, bool isGlobalPortableExperience = false, bool force = false)
         {
-            if (!force && !featureFlagsCache.Configuration.IsEnabled(FeatureFlagsConfiguration.GetFlag(FeatureFlags.PORTABLE_EXPERIENCE)))
+            if (!force)
             {
-                if (!isGlobalPortableExperience)
-                    throw new Exception("Portable Experiences are disabled");
-
-                if (!featureFlagsCache.Configuration.IsEnabled(FeatureFlagsConfiguration.GetFlag(FeatureFlags.GLOBAL_PORTABLE_EXPERIENCE)))
-                    throw new Exception("Global Portable Experiences are disabled");
+                switch (isGlobalPortableExperience)
+                {
+                    //If it's not a Global PX and common PX are disabled
+                    case false when !featureFlagsCache.Configuration.IsEnabled(FeatureFlagsConfiguration.GetFlag(FeatureFlags.PORTABLE_EXPERIENCE)):
+                        throw new Exception("Portable Experiences are disabled");
+                    //If it IS a Global PX but Global PXs are disabled
+                    case true when !featureFlagsCache.Configuration.IsEnabled(FeatureFlagsConfiguration.GetFlag(FeatureFlags.GLOBAL_PORTABLE_EXPERIENCE)):
+                        throw new Exception("Global Portable Experiences are disabled");
+                }
             }
 
             string worldUrl = string.Empty;
