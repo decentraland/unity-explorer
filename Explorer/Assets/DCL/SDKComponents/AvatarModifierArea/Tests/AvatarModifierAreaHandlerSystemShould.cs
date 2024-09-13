@@ -200,11 +200,13 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
 
             world.Add(fakeAvatarEntity, new AvatarShapeComponent());
 
-            system.ToggleAvatarHiding(fakeAvatarShapeTransform, true, excludedIds);
+            system.Update(0f);
+            // system.ShowAvatar(fakeAvatarShapeTransform, true, excludedIds);
 
             Assert.IsTrue(globalWorld.Get<AvatarShapeComponent>(fakeAvatarEntity).HiddenByModifierArea);
 
-            system.ToggleAvatarHiding(fakeAvatarShapeTransform, false, excludedIds);
+            system.Update(0f);
+            // system.ShowAvatar(fakeAvatarShapeTransform, false, excludedIds);
 
             Assert.IsFalse(globalWorld.Get<AvatarShapeComponent>(fakeAvatarEntity).HiddenByModifierArea);
         }
@@ -224,7 +226,8 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
             var excludedIds = new HashSet<string>();
             excludedIds.Add(FAKE_USER_ID);
 
-            system.ToggleAvatarHiding(fakeAvatarShapeTransform, true, excludedIds);
+            system.Update(0f);
+            // system.ShowAvatar(fakeAvatarShapeTransform, true, excludedIds);
 
             Assert.IsFalse(globalWorld.Get<AvatarShapeComponent>(fakeAvatarEntity).HiddenByModifierArea);
         }
