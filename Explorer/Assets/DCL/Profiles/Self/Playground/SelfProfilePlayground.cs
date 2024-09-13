@@ -54,7 +54,7 @@ namespace DCL.Profiles.Self.Playground
                 new MemoryEmotesStorage(),
                 new EquippedEmotes(),
                 new List<string>(),
-                null
+                null, null
             );
 
             var profile = await profiles.ProfileAsync(ct);

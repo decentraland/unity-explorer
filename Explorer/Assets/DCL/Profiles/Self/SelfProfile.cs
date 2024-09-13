@@ -46,7 +46,7 @@ namespace DCL.Profiles.Self
             this.emoteStorage = emoteStorage;
             this.equippedEmotes = equippedEmotes;
             this.forceRender = forceRender;
-            
+
             if (forcedEmotes != null)
             {
                 this.forcedEmotes.AddRange(forcedEmotes);
