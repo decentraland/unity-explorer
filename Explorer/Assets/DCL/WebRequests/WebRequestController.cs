@@ -3,9 +3,10 @@ using DCL.Diagnostics;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
 using System;
-using UnityEngine;
+using System.Diagnostics;
 using UnityEngine.Networking;
 using Utility.Multithreading;
+using Debug = UnityEngine.Debug;
 
 namespace DCL.WebRequests
 {
@@ -40,6 +41,7 @@ namespace DCL.WebRequests
 
                 // No matter what we must release UnityWebRequest, otherwise it crashes in the destructor
                 using UnityWebRequest wr = request.UnityWebRequest;
+
                 try
                 {
                     await request.WithAnalyticsAsync(analyticsContainer, request.SendRequest(envelope.Ct));
@@ -70,19 +72,16 @@ namespace DCL.WebRequests
                     {
                         Debug.Log($"JUANI ERROR RESPONSE CODE {exception.ResponseCode}");
                         Debug.Log($"JUANI ERROR  RESPONSE HEADERS {exception.Result}");
+
                         if (exception.ResponseHeaders != null)
                         {
-                            foreach (var keyValue in exception.ResponseHeaders)
-                            {
-                                Debug.Log($"JUANI ERROR RESPONSE HEADERS {keyValue.Key} {keyValue.Value}");
-                            }
+                            foreach (var keyValue in exception.ResponseHeaders) { Debug.Log($"JUANI ERROR RESPONSE HEADERS {keyValue.Key} {keyValue.Value}"); }
                         }
 
                         Debug.Log("JUANI ERROR ACA ESTA LA EXCEPCION, vamos a ponerle un await");
+                        DirectCurlRequestAndPrint(envelope.CommonArguments.URL);
                         await UniTask.Delay(TimeSpan.FromSeconds(1));
                     }
-
-
 
                     if (exception.IsIrrecoverableError(attemptsLeft))
                         throw;
@@ -90,6 +89,37 @@ namespace DCL.WebRequests
             }
 
             throw new Exception($"{nameof(WebRequestController)}: Unexpected code path!");
+        }
+
+        private static void DirectCurlRequestAndPrint(string url)
+        {
+            bool isUrl = Uri.TryCreate(url, UriKind.Absolute, out var uriResult)
+                         && (uriResult!.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
+
+            if (isUrl == false)
+            {
+                Debug.Log($"JUANI ERROR CURL string is not url: {url}");
+                return;
+            }
+
+            ProcessStartInfo startInfo = new ProcessStartInfo
+            {
+                FileName = "curl", // Path to the Zsh executable
+                Arguments = url, // Command to execute
+                UseShellExecute = false,
+                RedirectStandardOutput = true, // To capture the output
+                RedirectStandardError = true, // To capture any errors
+            };
+
+            // Create and start the process
+            Process proc = new Process { StartInfo = startInfo };
+            proc.Start();
+            proc.WaitForExit();
+
+            string output = proc.StandardOutput.ReadToEnd();
+            string errors = proc.StandardError.ReadToEnd();
+
+            Debug.Log($"JUANI ERROR CURL output: {output}; error: {errors}");
         }
     }
 }
