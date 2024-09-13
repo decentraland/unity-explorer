@@ -1,5 +1,6 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.WebRequests;
 using ECS;
@@ -97,7 +98,7 @@ namespace DCL.Profiles
             try
             {
                 URLAddress url = Url(id, version);
-                var response = webRequestController.GetAsync(new CommonArguments(url), ct, ignoreErrorCodes: IWebRequestController.IGNORE_NOT_FOUND);
+                GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> response = webRequestController.GetAsync(new CommonArguments(url), ct, ReportCategory.REALM, ignoreErrorCodes: IWebRequestController.IGNORE_NOT_FOUND);
 
                 using GetProfileJsonRootDto? root = await response.CreateFromNewtonsoftJsonAsync<GetProfileJsonRootDto>(
                     createCustomExceptionOnFailure: (exception, text) => new ProfileParseException(id, version, text, exception),
