@@ -27,7 +27,7 @@ namespace DCL.Multiplayer.Connections.RoomHubs
             var result = await UniTask.WhenAll(
                 archipelagoIslandRoom.StartIfNotAsync(),
                 gateKeeperSceneRoom.StartIfNotAsync()
-            );
+            ).Timeout(TimeSpan.FromSeconds(10));
 
             return result is { Item1: true, Item2: true };
         }
