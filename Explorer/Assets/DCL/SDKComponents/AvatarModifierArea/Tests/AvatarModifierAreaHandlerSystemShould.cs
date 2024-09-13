@@ -43,7 +43,6 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
             fakeTriggerAreaGO = new GameObject("fake character area trigger");
             characterTriggerArea = fakeTriggerAreaGO.AddComponent<CharacterTriggerArea.CharacterTriggerArea>();
 
-            fakeAvatarEntity = globalWorld.Create();
             fakeAvatarGO = new GameObject("fake avatar");
             fakeAvatarShapeTransform = fakeAvatarGO.transform;
             fakeAvatarShapeCollider = fakeAvatarGO.AddComponent<BoxCollider>();
@@ -51,12 +50,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
             AvatarBase fakeAvatarBase = fakeAvatarBaseGO.AddComponent<AvatarBase>();
             fakeAvatarBaseGO.transform.SetParent(fakeAvatarShapeTransform);
 
-            globalWorld.Add(fakeAvatarEntity, fakeAvatarBase, new AvatarShapeComponent(),
-                new TransformComponent
-                {
-                    Transform = fakeAvatarShapeTransform,
-                });
-
+            fakeAvatarEntity = globalWorld.Create(fakeAvatarBase, new AvatarShapeComponent(), new TransformComponent { Transform = fakeAvatarShapeTransform });
             triggerAreaEntity = world.Create(PartitionComponent.TOP_PRIORITY);
             AddTransformToEntity(triggerAreaEntity);
         }
@@ -204,13 +198,15 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
         {
             var excludedIds = new HashSet<string>();
 
+            world.Add(fakeAvatarEntity, new AvatarShapeComponent());
+
             system.ToggleAvatarHiding(fakeAvatarShapeTransform, true, excludedIds);
 
-            Assert.IsTrue(globalWorld.Get<AvatarShapeComponent>(triggerAreaEntity).HiddenByModifierArea);
+            Assert.IsTrue(globalWorld.Get<AvatarShapeComponent>(fakeAvatarEntity).HiddenByModifierArea);
 
             system.ToggleAvatarHiding(fakeAvatarShapeTransform, false, excludedIds);
 
-            Assert.IsFalse(globalWorld.Get<AvatarShapeComponent>(triggerAreaEntity).HiddenByModifierArea);
+            Assert.IsFalse(globalWorld.Get<AvatarShapeComponent>(fakeAvatarEntity).HiddenByModifierArea);
         }
 
         [Test]
@@ -223,14 +219,14 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
                 WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE),
                 WearablesConstants.DefaultColors.GetRandomEyesColor(),
                 WearablesConstants.DefaultColors.GetRandomHairColor(),
-                WearablesConstants.DefaultColors.GetRandomSkinColor())));
+                WearablesConstants.DefaultColors.GetRandomSkinColor())), new AvatarShapeComponent());
 
             var excludedIds = new HashSet<string>();
             excludedIds.Add(FAKE_USER_ID);
 
             system.ToggleAvatarHiding(fakeAvatarShapeTransform, true, excludedIds);
 
-            Assert.IsFalse(globalWorld.Get<AvatarShapeComponent>(triggerAreaEntity).HiddenByModifierArea);
+            Assert.IsFalse(globalWorld.Get<AvatarShapeComponent>(fakeAvatarEntity).HiddenByModifierArea);
         }
 
         [Test]

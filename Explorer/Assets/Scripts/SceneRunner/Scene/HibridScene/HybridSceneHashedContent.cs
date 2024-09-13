@@ -11,7 +11,7 @@ using UnityEngine;
 namespace SceneRunner.Scene
 {
     /// Used for localhost scenes that require remote asset bundle content
-    public class HibridSceneHashedContent : ISceneContent
+    public class HybridSceneHashedContent : ISceneContent
     {
         private readonly URLDomain contentBaseUrl;
         private Dictionary<string, string> fileToHash;
@@ -30,7 +30,7 @@ namespace SceneRunner.Scene
             "scene.json", "main.crdt"
         };
 
-        public HibridSceneHashedContent(IWebRequestController webRequestController,
+        public HybridSceneHashedContent(IWebRequestController webRequestController,
             SceneEntityDefinition contentDefinitions, URLDomain contentBaseUrl,
             URLDomain abDomain)
         {
@@ -38,7 +38,7 @@ namespace SceneRunner.Scene
             fileToHash = new Dictionary<string, string>(contentDefinitions.content!.Count, StringComparer.OrdinalIgnoreCase);
             foreach (var contentDefinition in contentDefinitions.content) fileToHash[contentDefinition.file] = contentDefinition.hash;
             resolvedContentURLs = new Dictionary<string, (bool success, URLAddress url)>(fileToHash.Count, StringComparer.OrdinalIgnoreCase);
-            
+
             this.contentBaseUrl = contentBaseUrl;
             this.abDomain = abDomain;
             this.webRequestController = webRequestController;
@@ -79,7 +79,7 @@ namespace SceneRunner.Scene
             return fileToHash.TryGetValue(name, out hash);
         }
 
-        public async UniTask GetRemoteSceneDefinitionAsync(URLDomain remoteContentDomain, string reportCategory)
+        public async UniTask GetRemoteSceneDefinitionAsync(URLDomain remoteContentDomain, ReportData reportCategory)
         {
             var url = remoteContentDomain.Append(URLPath.FromString(remoteSceneID));
 
@@ -108,7 +108,7 @@ namespace SceneRunner.Scene
                    contentDefinitionFile.EndsWith("png", StringComparison.OrdinalIgnoreCase);
         }
 
-        public async UniTask<bool> TryGetRemoteSceneIDAsync(URLDomain contentDomain, HybridSceneContentServer remoteContentServer, Vector2Int coordinate, string world, string reportCategory)
+        public async UniTask<bool> TryGetRemoteSceneIDAsync(URLDomain contentDomain, HybridSceneContentServer remoteContentServer, Vector2Int coordinate, string world, ReportData reportCategory)
         {
             IGetHash getHash;
             switch (remoteContentServer)

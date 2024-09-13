@@ -1,5 +1,6 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.WebRequests;
 using System;
@@ -38,7 +39,7 @@ namespace DCL.Multiplayer.HealthChecks
 
             try
             {
-                int code = await webRequestController.HeadAsync(new CommonArguments(urlAddress, attemptsCount: ATTEMPTS), ct).StatusCodeAsync();
+                int code = await webRequestController.HeadAsync(new CommonArguments(urlAddress, attemptsCount: ATTEMPTS), ct, ReportCategory.LIVEKIT).StatusCodeAsync();
                 bool success = ERROR_CODES.Contains(code) == false;
                 return (success, success ? null : $"Cannot connect to {urlAddress}");
             }
