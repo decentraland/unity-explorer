@@ -69,6 +69,7 @@ def clone_current_target(use_cache):
         body['settings']['scm']['branch'] = branch
         body['settings']['advanced']['unity']['playerExporter']['buildOptions'] = options
         body['settings']['remoteCacheStrategy'] = remoteCacheStrategy
+        body['settings']['buildSchedule']['isEnabled'] = False
 
         print(f"Using cache strategy target: {remoteCacheStrategy}")
 
