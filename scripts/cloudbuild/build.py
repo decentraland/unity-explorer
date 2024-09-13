@@ -61,11 +61,7 @@ def get_target(target):
         print("Response body:", response.text)
         sys.exit(1)
 
-# Some of the code in here won't be used
-# Unity does not allow more than 1 item in queue by target
-# So we *always* create a new target, no matter what
-# by appending the commit's SHA
-def clone_current_target():
+def clone_current_target(use_cache):
     def generate_body(template_target, name, branch, options, remoteCacheStrategy):
         body = get_target(template_target)
 
@@ -73,6 +69,7 @@ def clone_current_target():
         body['settings']['scm']['branch'] = branch
         body['settings']['advanced']['unity']['playerExporter']['buildOptions'] = options
         body['settings']['remoteCacheStrategy'] = remoteCacheStrategy
+        body['settings']['buildSchedule']['isEnabled'] = False
 
         print(f"Using cache strategy target: {remoteCacheStrategy}")
 
@@ -95,9 +92,11 @@ def clone_current_target():
     else:
         new_target_name = base_target_name
 
+    template_target = os.getenv('TARGET')
+
     # Generate request body
     body = generate_body(
-        os.getenv('TARGET'),
+        template_target,
         new_target_name,
         os.getenv('BRANCH_NAME'),
         os.getenv('BUILD_OPTIONS').split(','),
@@ -106,13 +105,19 @@ def clone_current_target():
     existing_target = get_target(new_target_name)
     
     if 'error' in existing_target:
-        # Create new target without cache
+        # Create new target with template cache
+        if use_cache:
+            body['settings']['buildTargetCopyCache'] = template_target
+            print(f"New target - using cache build target: {template_target}")
+        else:
+            print(f"New target - not using cache build target: {template_target}")
         response = requests.post(f'{URL}/buildtargets', headers=HEADERS, json=body)
-        print("No cache build target used for new target")
     else:
-
-        body['settings']['buildTargetCopyCache'] = new_target_name
-        print(f"Using cache build target: {new_target_name}")
+        if use_cache:
+            body['settings']['buildTargetCopyCache'] = new_target_name
+            print(f"Using cache build target: {new_target_name}")
+        else:
+            print(f"Not using cache build target: {new_target_name}")
         response = requests.put(f'{URL}/buildtargets/{new_target_name}', headers=HEADERS, json=body)
 
     print(f"clone_current_target response status: {response.status_code}")
@@ -123,7 +128,11 @@ def clone_current_target():
     elif response.status_code == 500 and 'Build target name already in use for this project!' in response.text:
         print('Target update failed due to a possible race condition. Retrying...')
         time.sleep(2)  # Add a small delay before retrying
-        clone_current_target()  # Retry the whole process
+        clone_current_target(True)  # Retry the whole process
+    elif response.status_code == 400:
+        print('Target update failed due to incompatible cache file. Retrying...')
+        time.sleep(2)  # Add a small delay before retrying
+        clone_current_target(False)  # Retry the whole process
     else:
         print('Target failed to clone/update with status code:', response.status_code)
         print('Response body:', response.text)
@@ -435,7 +444,7 @@ else:
     #
     # If the target already exists, it will check if it has running builds on it
     # If it has running builds, a new target will be created with an added timestamp (Unity can't queue)
-    clone_current_target()
+    clone_current_target(True)
 
     # Set ENVs (Parameters)
     # This must run immediately before starting a build
@@ -477,8 +486,9 @@ if not build_healthy:
     print(f'Build unhealthy - check the downloaded logs or go to https://cloud.unity.com/ and search for target "{os.getenv('TARGET')}" and build ID "{id}"')
     sys.exit(1)
 
-# Cleanup (only if build is healthy)
+# Cleanup (only if build is healthy and not release)
 # We only delete all artifacts, not the build target
-delete_build(id)
+if not is_release_workflow:
+    delete_build(id)
 
 utils.delete_build_info()
