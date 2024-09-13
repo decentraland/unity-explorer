@@ -12,15 +12,15 @@ namespace DCL.CharacterTriggerArea.Components
     {
         private static readonly IReadOnlyCollection<Transform> EMPTY_COLLECTION = Array.Empty<Transform>();
         public Vector3 AreaSize;
-        private CharacterTriggerArea? monoBehaviour;
+        internal CharacterTriggerArea? monoBehaviour;
         private readonly bool targetOnlyMainPlayer;
 
         public readonly IReadOnlyCollection<Transform> EnteredThisFrame => monoBehaviour != null
-            ? monoBehaviour.EnteredThisFrame
+            ? monoBehaviour.EnteredAvatarsToBeProcessed
             : EMPTY_COLLECTION;
 
         public readonly IReadOnlyCollection<Transform> ExitedThisFrame => monoBehaviour != null
-            ? monoBehaviour.ExitedThisFrame
+            ? monoBehaviour.ExitedAvatarsToBeProcessed
             : EMPTY_COLLECTION;
 
         public readonly IReadOnlyCollection<Transform> CurrentAvatarsInside => monoBehaviour != null

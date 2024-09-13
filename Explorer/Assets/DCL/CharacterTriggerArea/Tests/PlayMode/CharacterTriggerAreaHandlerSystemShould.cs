@@ -192,16 +192,16 @@ namespace DCL.CharacterTriggerArea.Tests
             system.Update(0);
             component = world.Get<CharacterTriggerAreaComponent>(entity);
 
-            Assert.AreEqual(0, component.EnteredAvatarsToBeProcessed.Count);
-            Assert.AreEqual(0, component.ExitedAvatarsToBeProcessed.Count);
+            Assert.AreEqual(0, component.EnteredThisFrame.Count);
+            Assert.AreEqual(0, component.ExitedThisFrame.Count);
 
             // Move character inside area
             fakeMainPlayerGO.transform.position = entityTransformComponent.Transform.position;
 
             await WaitForPhysics();
 
-            Assert.AreEqual(1, component.EnteredAvatarsToBeProcessed.Count);
-            Assert.AreEqual(0, component.ExitedAvatarsToBeProcessed.Count);
+            Assert.AreEqual(1, component.EnteredThisFrame.Count);
+            Assert.AreEqual(0, component.ExitedThisFrame.Count);
             component.TryClear();
 
             // Move character outside area
@@ -209,8 +209,8 @@ namespace DCL.CharacterTriggerArea.Tests
 
             await WaitForPhysics();
 
-            Assert.AreEqual(0, component.EnteredAvatarsToBeProcessed.Count);
-            Assert.AreEqual(1, component.ExitedAvatarsToBeProcessed.Count);
+            Assert.AreEqual(0, component.EnteredThisFrame.Count);
+            Assert.AreEqual(1, component.ExitedThisFrame.Count);
         }
 
         [Test]
@@ -228,16 +228,16 @@ namespace DCL.CharacterTriggerArea.Tests
             system.Update(0);
             component = world.Get<CharacterTriggerAreaComponent>(entity);
 
-            Assert.AreEqual(0, component.EnteredAvatarsToBeProcessed.Count);
-            Assert.AreEqual(0, component.ExitedAvatarsToBeProcessed.Count);
+            Assert.AreEqual(0, component.EnteredThisFrame.Count);
+            Assert.AreEqual(0, component.ExitedThisFrame.Count);
 
             // Move character inside area
             fakeMainPlayerGO.transform.position = entityTransformComponent.Transform.position;
 
             await WaitForPhysics();
 
-            Assert.AreEqual(1, component.EnteredAvatarsToBeProcessed.Count);
-            Assert.AreEqual(0, component.ExitedAvatarsToBeProcessed.Count);
+            Assert.AreEqual(1, component.EnteredThisFrame.Count);
+            Assert.AreEqual(0, component.ExitedThisFrame.Count);
             component.TryClear();
 
             // Simulate "getting outside current scene"
@@ -245,8 +245,8 @@ namespace DCL.CharacterTriggerArea.Tests
 
             system.Update(0);
 
-            Assert.AreEqual(0, component.EnteredAvatarsToBeProcessed.Count);
-            Assert.AreEqual(1, component.ExitedAvatarsToBeProcessed.Count);
+            Assert.AreEqual(0, component.EnteredThisFrame.Count);
+            Assert.AreEqual(1, component.ExitedThisFrame.Count);
             Assert.IsFalse(characterTriggerArea.BoxCollider.enabled);
         }
 
@@ -265,15 +265,15 @@ namespace DCL.CharacterTriggerArea.Tests
 
             world.Add(entity, component, pbComponent);
 
-            Assert.AreEqual(0, component.EnteredAvatarsToBeProcessed.Count);
-            Assert.AreEqual(0, component.ExitedAvatarsToBeProcessed.Count);
+            Assert.AreEqual(0, component.EnteredThisFrame.Count);
+            Assert.AreEqual(0, component.ExitedThisFrame.Count);
 
             system.Update(0);
             await WaitForPhysics();
             component = world.Get<CharacterTriggerAreaComponent>(entity);
 
-            Assert.AreEqual(1, component.EnteredAvatarsToBeProcessed.Count);
-            Assert.AreEqual(0, component.ExitedAvatarsToBeProcessed.Count);
+            Assert.AreEqual(1, component.EnteredThisFrame.Count);
+            Assert.AreEqual(0, component.ExitedThisFrame.Count);
         }
 
         [Test]
@@ -295,15 +295,15 @@ namespace DCL.CharacterTriggerArea.Tests
 
             world.Add(entity, component, pbComponent);
 
-            Assert.AreEqual(0, component.EnteredAvatarsToBeProcessed.Count);
-            Assert.AreEqual(0, component.ExitedAvatarsToBeProcessed.Count);
+            Assert.AreEqual(0, component.EnteredThisFrame.Count);
+            Assert.AreEqual(0, component.ExitedThisFrame.Count);
 
             system.Update(0);
             await WaitForPhysics();
             component = world.Get<CharacterTriggerAreaComponent>(entity);
 
-            Assert.AreEqual(0, component.EnteredAvatarsToBeProcessed.Count);
-            Assert.AreEqual(0, component.ExitedAvatarsToBeProcessed.Count);
+            Assert.AreEqual(0, component.EnteredThisFrame.Count);
+            Assert.AreEqual(0, component.ExitedThisFrame.Count);
 
             mainPlayerAvatarBaseProxy.SetObject(fakeMainPlayerAvatarGO.GetComponent<AvatarBase>());
 
@@ -311,8 +311,8 @@ namespace DCL.CharacterTriggerArea.Tests
             await WaitForPhysics();
             component = world.Get<CharacterTriggerAreaComponent>(entity);
 
-            Assert.AreEqual(1, component.EnteredAvatarsToBeProcessed.Count);
-            Assert.AreEqual(0, component.ExitedAvatarsToBeProcessed.Count);
+            Assert.AreEqual(1, component.EnteredThisFrame.Count);
+            Assert.AreEqual(0, component.ExitedThisFrame.Count);
         }
 
         [Test]
@@ -335,8 +335,8 @@ namespace DCL.CharacterTriggerArea.Tests
             system.Update(0);
             component = world.Get<CharacterTriggerAreaComponent>(entity);
 
-            Assert.AreEqual(0, component.EnteredAvatarsToBeProcessed.Count);
-            Assert.AreEqual(0, component.ExitedAvatarsToBeProcessed.Count);
+            Assert.AreEqual(0, component.EnteredThisFrame.Count);
+            Assert.AreEqual(0, component.ExitedThisFrame.Count);
 
             // Move both characters inside area
             fakeMainPlayerGO.transform.position = entityTransformComponent.Transform.position;
@@ -344,8 +344,8 @@ namespace DCL.CharacterTriggerArea.Tests
 
             await WaitForPhysics();
 
-            Assert.AreEqual(onlyMainPlayer ? 1 : 2, component.EnteredAvatarsToBeProcessed.Count);
-            Assert.AreEqual(0, component.ExitedAvatarsToBeProcessed.Count);
+            Assert.AreEqual(onlyMainPlayer ? 1 : 2, component.EnteredThisFrame.Count);
+            Assert.AreEqual(0, component.ExitedThisFrame.Count);
             component.TryClear();
 
             // Move both characters outside area
@@ -354,8 +354,8 @@ namespace DCL.CharacterTriggerArea.Tests
 
             await WaitForPhysics();
 
-            Assert.AreEqual(0, component.EnteredAvatarsToBeProcessed.Count);
-            Assert.AreEqual(onlyMainPlayer ? 1 : 2, component.ExitedAvatarsToBeProcessed.Count);
+            Assert.AreEqual(0, component.EnteredThisFrame.Count);
+            Assert.AreEqual(onlyMainPlayer ? 1 : 2, component.ExitedThisFrame.Count);
 
             // Cleanup
             Object.DestroyImmediate(fakeOtherPlayerGO);

@@ -35,7 +35,7 @@ namespace DCL.SDKComponents.CameraModeArea.Tests
             var cameraEntityProxy = new ObjectProxy<Entity>();
             cameraEntityProxy.SetObject(cameraEntity);
 
-            system = new CameraModeAreaHandlerSystem(world, globalWorld, cameraEntityProxy, Substitute.For<IExposedCameraData>());
+            system = new CameraModeAreaHandlerSystem(world, globalWorld, cameraEntityProxy);
 
             entity = world.Create(PartitionComponent.TOP_PRIORITY);
             AddTransformToEntity(entity);
