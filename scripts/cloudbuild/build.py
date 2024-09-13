@@ -127,11 +127,11 @@ def clone_current_target(use_cache):
     elif response.status_code == 500 and 'Build target name already in use for this project!' in response.text:
         print('Target update failed due to a possible race condition. Retrying...')
         time.sleep(2)  # Add a small delay before retrying
-        clone_current_target(true)  # Retry the whole process
+        clone_current_target(True)  # Retry the whole process
     elif response.status_code == 400 and 'Failed to copy cache from target' in response.text:
         print('Target update failed due to incompatible cache file. Retrying...')
         time.sleep(2)  # Add a small delay before retrying
-        clone_current_target(false)  # Retry the whole process
+        clone_current_target(False)  # Retry the whole process
     else:
         print('Target failed to clone/update with status code:', response.status_code)
         print('Response body:', response.text)
@@ -443,7 +443,7 @@ else:
     #
     # If the target already exists, it will check if it has running builds on it
     # If it has running builds, a new target will be created with an added timestamp (Unity can't queue)
-    clone_current_target(true)
+    clone_current_target(True)
 
     # Set ENVs (Parameters)
     # This must run immediately before starting a build
