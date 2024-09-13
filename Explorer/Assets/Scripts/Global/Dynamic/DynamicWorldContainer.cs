@@ -260,7 +260,7 @@ namespace Global.Dynamic
             var equippedEmotes = new EquippedEmotes();
             var forceRender = new List<string>();
             var selfProfile = new SelfProfile(container.ProfileRepository, identityCache, equippedWearables, wearableCatalog,
-                emotesCache, equippedEmotes, forceRender, ParseSelfForcedEmotes(bootstrapContainer.ApplicationParametersParser));
+                emotesCache, equippedEmotes, forceRender, ParseSelfForcedEmotes(bootstrapContainer.ApplicationParametersParser), ParseDebugForcedEmotes(bootstrapContainer.DebugSettings.EmotesToAddToUserProfile));
 
             IEmoteProvider emoteProvider = new EcsEmoteProvider(globalWorld, staticContainer.RealmData);
 
@@ -632,6 +632,16 @@ namespace Global.Dynamic
             BuildReloadSceneWidget(debugBuilder, container.ChatMessagesBus);
 
             return (container, true);
+        }
+
+        private static URN[]? ParseDebugForcedEmotes(string[]? emotes)
+        {
+            if (emotes != null && emotes.Length > 0)
+            {
+                return emotes.Select(s => new URN(s)).ToArray();
+            }
+
+            return null;
         }
 
         private static URN[]? ParseSelfForcedEmotes(IAppArgs appParams)

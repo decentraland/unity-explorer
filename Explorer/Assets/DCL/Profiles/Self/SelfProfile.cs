@@ -25,7 +25,7 @@ namespace DCL.Profiles.Self
         private readonly IEquippedEmotes equippedEmotes;
         private readonly IEmoteStorage emoteStorage;
         private readonly IReadOnlyList<string> forceRender;
-        private readonly IReadOnlyList<URN>? forcedEmotes;
+        private readonly List<URN> forcedEmotes = new List<URN>();
         private readonly ProfileBuilder profileBuilder = new ();
 
         public SelfProfile(
@@ -36,7 +36,8 @@ namespace DCL.Profiles.Self
             IEmoteStorage emoteStorage,
             IEquippedEmotes equippedEmotes,
             IReadOnlyList<string> forceRender,
-            IReadOnlyList<URN>? forcedEmotes)
+            IReadOnlyList<URN>? forcedEmotes,
+            IReadOnlyList<URN>? debugEmotes)
         {
             this.profileRepository = profileRepository;
             this.web3IdentityCache = web3IdentityCache;
@@ -45,7 +46,15 @@ namespace DCL.Profiles.Self
             this.emoteStorage = emoteStorage;
             this.equippedEmotes = equippedEmotes;
             this.forceRender = forceRender;
-            this.forcedEmotes = forcedEmotes;
+            
+            if (forcedEmotes != null)
+            {
+                this.forcedEmotes.AddRange(forcedEmotes);
+            }
+            if (debugEmotes != null)
+            {
+                this.forcedEmotes.AddRange(debugEmotes);
+            }
         }
 
         public async UniTask<Profile?> ProfileAsync(CancellationToken ct)
