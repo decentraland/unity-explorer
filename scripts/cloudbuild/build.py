@@ -105,19 +105,20 @@ def clone_current_target(use_cache):
     existing_target = get_target(new_target_name)
     
     if 'error' in existing_target:
+        print(f"New target found")
         # Create new target with template cache
         if use_cache:
             body['settings']['buildTargetCopyCache'] = template_target
-            print(f"New target - using cache build target: {template_target}")
+            print(f"Using template cache build target: {template_target}")
         else:
-            print(f"New target - not using cache build target: {template_target}")
+            print(f"Not using cache")
         response = requests.post(f'{URL}/buildtargets', headers=HEADERS, json=body)
     else:
         if use_cache:
             body['settings']['buildTargetCopyCache'] = new_target_name
-            print(f"Using cache build target: {new_target_name}")
+            print(f"Using existing cache build target: {new_target_name}")
         else:
-            print(f"Not using cache build target: {new_target_name}")
+            print(f"Not using cache")
         response = requests.put(f'{URL}/buildtargets/{new_target_name}', headers=HEADERS, json=body)
 
     print(f"clone_current_target response status: {response.status_code}")
