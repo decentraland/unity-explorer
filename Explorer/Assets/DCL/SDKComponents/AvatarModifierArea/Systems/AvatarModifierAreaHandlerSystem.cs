@@ -1,16 +1,14 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.CharacterTriggerArea.Components;
-using DCL.CharacterTriggerArea.Systems;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
+using DCL.Multiplayer.Connections.Typing;
 using DCL.Profiles;
 using DCL.SDKComponents.AvatarModifierArea.Components;
-using DCL.Utilities;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle;
@@ -27,19 +25,35 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
     {
         private static readonly QueryDescription AVATAR_BASE_QUERY = new QueryDescription().WithAll<AvatarBase>();
         private readonly World globalWorld;
+        private readonly FindAvatarQuery findAvatarQuery;
 
         public AvatarModifierAreaHandlerSystem(World world, World globalWorld) : base(world)
         {
             this.globalWorld = globalWorld;
+            findAvatarQuery = new FindAvatarQuery(globalWorld);
         }
 
         protected override void Update(float t)
         {
-            UpdateAvatarModifierAreaQuery(World);
-            SetupAvatarModifierAreaQuery(World);
+            UpdateAvatarModifierAreaQuery(World!);
+            SetupAvatarModifierAreaQuery(World!);
 
-            HandleEntityDestructionQuery(World);
-            HandleComponentRemovalQuery(World);
+            HandleEntityDestructionQuery(World!);
+            HandleComponentRemovalQuery(World!);
+        }
+
+        public void FinalizeComponents(in Query query)
+        {
+            ResetAffectedEntitiesQuery(World!);
+        }
+
+        [Query]
+        private void ResetAffectedEntities(in Entity entity, ref CharacterTriggerAreaComponent triggerAreaComponent, ref AvatarModifierAreaComponent modifierComponent)
+        {
+            foreach (Transform avatarTransform in triggerAreaComponent.CurrentAvatarsInside)
+                ShowAvatar(avatarTransform);
+
+            World!.Remove<AvatarModifierAreaComponent>(entity);
         }
 
         [Query]
@@ -47,9 +61,10 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
         [All(typeof(TransformComponent))]
         private void SetupAvatarModifierArea(in Entity entity, ref PBAvatarModifierArea pbAvatarModifierArea)
         {
-            World.Add(entity,
+            World!.Add(entity,
                 new CharacterTriggerAreaComponent(areaSize: pbAvatarModifierArea.Area, targetOnlyMainPlayer: false),
-                new AvatarModifierAreaComponent(pbAvatarModifierArea.ExcludeIds));
+                new AvatarModifierAreaComponent(pbAvatarModifierArea.ExcludeIds!)
+            );
         }
 
         [Query]
@@ -59,19 +74,23 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
             if (pbAvatarModifierArea.IsDirty)
             {
                 pbAvatarModifierArea.IsDirty = false;
-
-                triggerAreaComponent.AreaSize = pbAvatarModifierArea.Area;
-                triggerAreaComponent.IsDirty = true;
-
-                modifierAreaComponent.SetExcludedIds(pbAvatarModifierArea.ExcludeIds);
+                triggerAreaComponent.UpdateAreaSize(pbAvatarModifierArea.Area);
+                modifierAreaComponent.SetExcludedIds(pbAvatarModifierArea.ExcludeIds!);
 
                 // Update effect on now excluded/non-excluded avatars
-                foreach (Transform avatarTransform in triggerAreaComponent.CurrentAvatarsInside) { CorrectAvatarHidingState(avatarTransform, modifierAreaComponent.ExcludedIds); }
+                foreach (Transform avatarTransform in triggerAreaComponent.CurrentAvatarsInside)
+                    HideAvatar(avatarTransform, modifierAreaComponent.ExcludedIds);
             }
 
-            foreach (Transform avatarTransform in triggerAreaComponent.ExitedThisFrame) { ToggleAvatarHiding(avatarTransform, false, modifierAreaComponent.ExcludedIds); }
+            foreach (Transform avatarTransform in triggerAreaComponent.ExitedAvatarsToBeProcessed)
+                ShowAvatar(avatarTransform);
 
-            foreach (Transform avatarTransform in triggerAreaComponent.EnteredThisFrame) { ToggleAvatarHiding(avatarTransform, true, modifierAreaComponent.ExcludedIds); }
+            triggerAreaComponent.TryClearExitedAvatarsToBeProcessed();
+
+            foreach (Transform avatarTransform in triggerAreaComponent.EnteredAvatarsToBeProcessed)
+                HideAvatar(avatarTransform, modifierAreaComponent.ExcludedIds);
+
+            triggerAreaComponent.TryClearEnteredAvatarsToBeProcessed();
         }
 
         [Query]
@@ -80,9 +99,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
         {
             // Reset state of affected entities
             foreach (Transform avatarTransform in triggerAreaComponent.CurrentAvatarsInside)
-            {
-                ToggleAvatarHiding(avatarTransform, false, modifierComponent.ExcludedIds);
-            }
+                ShowAvatar(avatarTransform);
 
             modifierComponent.Dispose();
         }
@@ -93,71 +110,73 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
         {
             // Reset state of affected entities
             foreach (Transform avatarTransform in triggerAreaComponent.CurrentAvatarsInside)
-            {
-                ToggleAvatarHiding(avatarTransform, false, modifierComponent.ExcludedIds);
-            }
+                ShowAvatar(avatarTransform);
 
             modifierComponent.Dispose();
 
-            World.Remove<AvatarModifierAreaComponent>(e);
+            World!.Remove<AvatarModifierAreaComponent>(e);
         }
 
-        internal void ToggleAvatarHiding(Transform avatarTransform, bool shouldHide, HashSet<string> excludedIds)
+        private void ShowAvatar(Transform avatarTransform)
         {
-            var found = false;
+            var result = findAvatarQuery.AvatarWithTransform(avatarTransform);
+            if (!result.Success) return;
 
-            // There's no way to do a Query/InlineQuery getting both entity and TransformComponent...
-            globalWorld.Query(in AVATAR_BASE_QUERY,
-                entity =>
-                {
-                    if (found) return;
+            var entity = result.Result;
 
-                    Transform entityTransform = globalWorld.Get<AvatarBase>(entity).transform.parent;
-                    if (avatarTransform != entityTransform) return;
+            ref AvatarShapeComponent avatarShape = ref globalWorld.TryGetRef<AvatarShapeComponent>(entity, out bool hasAvatarShape);
+            if (!hasAvatarShape) return;
 
-                    found = true;
-
-                    if (globalWorld.TryGet(entity, out Profile profile) && excludedIds.Contains(profile.UserId))
-                        return;
-
-                    globalWorld.Get<AvatarShapeComponent>(entity).HiddenByModifierArea = shouldHide;
-                });
+            avatarShape.HiddenByModifierArea = false;
         }
 
-        internal void CorrectAvatarHidingState(Transform avatarTransform, HashSet<string> excludedIds)
+        private void HideAvatar(Transform avatarTransform, HashSet<string> excludedIds)
         {
-            var found = false;
+            var result = findAvatarQuery.AvatarWithTransform(avatarTransform);
+            if (!result.Success) return;
 
-            globalWorld.Query(in AVATAR_BASE_QUERY,
-                entity =>
-                {
-                    if (found) return;
+            var entity = result.Result;
 
-                    Transform entityTransform = globalWorld.Get<AvatarBase>(entity).transform.parent;
-                    if (avatarTransform != entityTransform) return;
+            if (!globalWorld.TryGet(entity, out Profile? profile)) return;
 
-                    found = true;
+            ref AvatarShapeComponent avatarShape = ref globalWorld.TryGetRef<AvatarShapeComponent>(entity, out bool hasAvatarShape);
+            if (!hasAvatarShape) return;
 
-                    if (!globalWorld.TryGet(entity, out Profile profile))
-                        return;
-
-                    globalWorld.Get<AvatarShapeComponent>(entity).HiddenByModifierArea = !excludedIds.Contains(profile.UserId);
-                });
+            bool shouldHide = !excludedIds.Contains(profile!.UserId);
+            avatarShape.HiddenByModifierArea = shouldHide;
         }
 
-        [Query]
-        private void FinalizeComponents(in Entity entity, ref CharacterTriggerAreaComponent triggerAreaComponent, ref AvatarModifierAreaComponent modifierComponent)
+        private class FindAvatarQuery
         {
-            // Reset state of affected entities
-            foreach (Transform avatarTransform in triggerAreaComponent.CurrentAvatarsInside)
-                ToggleAvatarHiding(avatarTransform, false, modifierComponent.ExcludedIds);
+            private readonly World globalWorld;
+            private readonly ForEach cachedFindEntity;
 
-            World.Remove<AvatarModifierAreaComponent>(entity);
-        }
+            private Entity foundedEntityOrNull = Entity.Null;
+            private Transform? requiredTransform;
 
-        public void FinalizeComponents(in Query query)
-        {
-            FinalizeComponentsQuery(World);
+            public FindAvatarQuery(World globalWorld)
+            {
+                this.globalWorld = globalWorld;
+                cachedFindEntity = this.FindEntity;
+            }
+
+            public LightResult<Entity> AvatarWithTransform(Transform avatarTransform)
+            {
+                foundedEntityOrNull = Entity.Null;
+                requiredTransform = avatarTransform;
+                globalWorld.Query(in AVATAR_BASE_QUERY, cachedFindEntity);
+
+                return foundedEntityOrNull == Entity.Null
+                    ? LightResult<Entity>.FAILURE
+                    : new LightResult<Entity>(foundedEntityOrNull);
+            }
+
+            private void FindEntity(Entity entity)
+            {
+                if (foundedEntityOrNull != Entity.Null) return;
+                if (globalWorld.Get<AvatarBase>(entity).transform.parent != requiredTransform) return;
+                foundedEntityOrNull = entity;
+            }
         }
     }
 }
