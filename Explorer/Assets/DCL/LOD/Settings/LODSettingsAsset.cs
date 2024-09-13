@@ -18,7 +18,7 @@ namespace DCL.LOD
 
         [field: SerializeField] public TextureArrayResolutionDescriptor[] DefaultTextureArrayResolutionDescriptors { get; set; } =
         {
-            new (256, 500, 100), new (512, 100, 10), new (1024, 100, 10), new (2048, 25, 10), new (4096, 25, 10)
+            new(256, 100, 100), new(512, 50, 10), new(1024, 50, 10), new(2048, 10, 10), new(4096, 10, 10)
         };
 
         public int ArraySizeForMissingResolutions => 50;

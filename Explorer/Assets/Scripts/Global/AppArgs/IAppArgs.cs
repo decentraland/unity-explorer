@@ -16,6 +16,6 @@ namespace Global.AppArgs
     public static class AppArgsExtensions
     {
         public static bool HasDebugFlag(this IAppArgs args) =>
-            args.HasFlag(IAppArgs.DEBUG_FLAG);
+            true;
     }
 }

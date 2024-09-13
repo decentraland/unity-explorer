@@ -23,6 +23,7 @@ using ECS.StreamableLoading.Common;
 using System;
 using System.Linq;
 using System.Threading;
+using DCL.DebugUtilities.UIBindings;
 using DCL.Diagnostics;
 using Unity.Collections;
 using Unity.Mathematics;
@@ -55,6 +56,9 @@ namespace Global.Dynamic
         public URLDomain? CurrentRealm { get; private set; }
 
         public event Action<bool>? RealmChanged;
+
+        public static ElementBinding<ulong> CURRENT_LOADING_SCREEN_STEP = new(0);
+
 
         public RealmNavigator(
             ILoadingScreen loadingScreen,
@@ -107,17 +111,21 @@ namespace Global.Dynamic
                 {
                     ct.ThrowIfCancellationRequested();
 
+                    CURRENT_LOADING_SCREEN_STEP.Value = 0;
                     remoteEntities.ForceRemoveAll(globalWorld);
                     await roomHub.StopIfNotAsync();
 
                     // By removing the CameraSamplingData, we stop the ring calculation
                     globalWorld.Remove<CameraSamplingData>(cameraEntity.Object);
 
+                    CURRENT_LOADING_SCREEN_STEP.Value = 1;
                     await ChangeRealmAsync(realm, ct);
                     parentLoadReport.SetProgress(RealFlowLoadingStatus.PROGRESS[ProfileLoaded]);
 
                     var landscapeLoadReport
                         = parentLoadReport.CreateChildReport(RealFlowLoadingStatus.PROGRESS[LandscapeLoaded]);
+
+                    CURRENT_LOADING_SCREEN_STEP.Value = 2;
 
                     await LoadTerrainAsync(landscapeLoadReport, ct);
                     parentLoadReport.SetProgress(RealFlowLoadingStatus.PROGRESS[LandscapeLoaded]);
@@ -125,11 +133,16 @@ namespace Global.Dynamic
                     var teleportLoadReport
                         = parentLoadReport.CreateChildReport(RealFlowLoadingStatus.PROGRESS[PlayerTeleported]);
 
+                    CURRENT_LOADING_SCREEN_STEP.Value = 3;
                     await InitializeTeleportToSpawnPointAsync(teleportLoadReport, ct, parcelToTeleport);
                     parentLoadReport.SetProgress(RealFlowLoadingStatus.PROGRESS[PlayerTeleported]);
 
+                    CURRENT_LOADING_SCREEN_STEP.Value = 4;
                     await roomHub.StartAsync();
                     parentLoadReport.SetProgress(RealFlowLoadingStatus.PROGRESS[Completed]);
+
+                    CURRENT_LOADING_SCREEN_STEP.Value = 5;
+
                 },
                 ct
             );
@@ -187,10 +200,14 @@ namespace Global.Dynamic
                         var teleportLoadReport
                             = parentLoadReport.CreateChildReport(RealFlowLoadingStatus.PROGRESS[PlayerTeleported]);
 
+                        CURRENT_LOADING_SCREEN_STEP.Value = 0;
                         var waitForSceneReadiness = await TeleportToParcelAsync(parcel, teleportLoadReport, ct);
+                        CURRENT_LOADING_SCREEN_STEP.Value = 1;
                         await waitForSceneReadiness;
 
                         parentLoadReport.SetProgress(RealFlowLoadingStatus.PROGRESS[Completed]);
+                        CURRENT_LOADING_SCREEN_STEP.Value = 3;
+
                     }, ct);
                     if (!loadResult.Success)
                     {

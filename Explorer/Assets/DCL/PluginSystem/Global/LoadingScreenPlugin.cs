@@ -7,6 +7,8 @@ using DCL.SceneLoadingScreens;
 using MVC;
 using System;
 using System.Threading;
+using DCL.DebugUtilities;
+using Global.Dynamic;
 using UnityEngine.Localization.Settings;
 
 namespace DCL.PluginSystem.Global
@@ -17,22 +19,29 @@ namespace DCL.PluginSystem.Global
         private readonly IMVCManager mvcManager;
         private readonly AudioMixerVolumesController audioMixerVolumesController;
         private readonly IInputBlock inputBlock;
+        private readonly IDebugContainerBuilder debugContainerBuilder;
+
 
         public LoadingScreenPlugin(
             IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
             AudioMixerVolumesController audioMixerVolumesController,
-            IInputBlock inputBlock)
+            IInputBlock inputBlock,
+            IDebugContainerBuilder debugContainerBuilder)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
             this.audioMixerVolumesController = audioMixerVolumesController;
             this.inputBlock = inputBlock;
+            this.debugContainerBuilder = debugContainerBuilder;
         }
 
         public void Dispose() { }
 
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder,
+            in GlobalPluginArguments arguments)
+        {
+        }
 
         public async UniTask InitializeAsync(LoadingScreenPluginSettings settings, CancellationToken ct)
         {
@@ -50,6 +59,10 @@ namespace DCL.PluginSystem.Global
 
             mvcManager.RegisterController(new SceneLoadingScreenController(authScreenFactory, tipsProvider,
                 TimeSpan.FromSeconds(settings.MinimumScreenDisplayDuration), audioMixerVolumesController, inputBlock));
+
+            debugContainerBuilder.TryAddWidget("A Loading Screen Step")?
+                .AddMarker("Current Step", RealmNavigator.CURRENT_LOADING_SCREEN_STEP,
+                    DebugLongMarkerDef.Unit.NoFormat);
         }
     }
 }

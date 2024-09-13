@@ -51,9 +51,12 @@ namespace DCL.WebRequests.Analytics
                                                         .WithBudget(totalBudget, perDomainBudget,
                                                             sharedDependenciesMemoryBudget);
 
-            widgetBuilder.AddMarker("Memory budget hold request", BudgetedWebRequestController.REQUESTS_HOLD_BY_BUDGET,
+            debugContainerBuilder.TryAddWidget("A Web Request Deadlock")?
+                .AddMarker("Memory budget hold request", BudgetedWebRequestController.REQUESTS_HOLD_BY_BUDGET,
                     DebugLongMarkerDef.Unit.NoFormat)
                 .AddMarker("Requests cannot connect", WebRequests.WebRequestController.REQUESTS_CANNOT_CONNECT,
+                    DebugLongMarkerDef.Unit.NoFormat)
+                .AddMarker("Total Requests done", BudgetedWebRequestController.TOTAL_REQUESTS_DONE,
                     DebugLongMarkerDef.Unit.NoFormat);
             
             CreateStressTestUtility(widgetBuilder);

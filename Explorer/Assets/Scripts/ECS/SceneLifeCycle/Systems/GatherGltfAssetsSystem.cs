@@ -9,6 +9,7 @@ using ECS.SceneLifeCycle.Reporting;
 using ECS.Unity.GLTFContainer.Components;
 using SceneRunner.Scene;
 using System.Collections.Generic;
+using DCL.Optimization.PerformanceBudgeting;
 using UnityEngine;
 using UnityEngine.Pool;
 
@@ -35,12 +36,17 @@ namespace ECS.SceneLifeCycle.Systems
         private readonly EntityEventBuffer<GltfContainerComponent>.ForEachDelegate forEachEvent;
         private readonly ISceneStateProvider sceneStateProvider;
 
-        internal GatherGltfAssetsSystem(World world, ISceneReadinessReportQueue readinessReportQueue, ISceneData sceneData, EntityEventBuffer<GltfContainerComponent> eventsBuffer, ISceneStateProvider sceneStateProvider) : base(world)
+        private readonly MemoryBudget memoryBudget;
+
+        internal GatherGltfAssetsSystem(World world, ISceneReadinessReportQueue readinessReportQueue,
+            ISceneData sceneData, EntityEventBuffer<GltfContainerComponent> eventsBuffer,
+            ISceneStateProvider sceneStateProvider, MemoryBudget memoryBudget) : base(world)
         {
             this.readinessReportQueue = readinessReportQueue;
             this.sceneData = sceneData;
             this.eventsBuffer = eventsBuffer;
             this.sceneStateProvider = sceneStateProvider;
+            this.memoryBudget = memoryBudget;
 
             forEachEvent = GatherEntities;
         }
@@ -120,6 +126,18 @@ namespace ECS.SceneLifeCycle.Systems
                 if (Time.time - startTime > WaitForSceneReadiness.TIMEOUT.TotalSeconds)
                     concluded = true;
 
+                // We are on warning. Assets may be on deadlock. Show broken state of scene
+                if (memoryBudget.GetMemoryUsageStatus() != MemoryUsageStatus.NORMAL)
+                {
+                    for (var i = 0; i < reports!.Value.Count; i++)
+                    {
+                        var report = reports.Value[i];
+                        report.SetProgress(1);
+                    }
+
+                    concluded = true;
+                }
+                
                 if (concluded)
                 {
                     reports.Value.Dispose();

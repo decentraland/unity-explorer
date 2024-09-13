@@ -19,10 +19,10 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
 
         // Some textures are less probably contained in the original material
         // so we can use a smaller starting array size for them
-        public const int MAIN_TEXTURE_ARRAY_SIZE = 500;
-        public const int NORMAL_TEXTURE_ARRAY_SIZE = 250;
-        public const int EMISSION_TEXTURE_ARRAY_SIZE = 150;
-        public const int FACIAL_FEATURES_TEXTURE_ARRAY_SIZE = 250;
+        public const int MAIN_TEXTURE_ARRAY_SIZE = 100;
+        public const int NORMAL_TEXTURE_ARRAY_SIZE = 100;
+        public const int EMISSION_TEXTURE_ARRAY_SIZE = 100;
+        public const int FACIAL_FEATURES_TEXTURE_ARRAY_SIZE = 100;
 
         public const int MAIN_TEXTURE_RESOLUTION = 512;
         public const int NORMAL_TEXTURE_RESOLUTION = 512;

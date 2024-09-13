@@ -25,6 +25,8 @@ namespace DCL.WebRequests
         private readonly IPerformanceBudget memoryBudget;
 
         public static ElementBinding<ulong> REQUESTS_HOLD_BY_BUDGET = new(0);
+        public static ElementBinding<ulong> TOTAL_REQUESTS_DONE = new(0);
+
 
 
         public BudgetedWebRequestController(IWebRequestController origin, int totalBudget, int perDomainBudget,
@@ -47,10 +49,10 @@ namespace DCL.WebRequests
             ReadOnlyMemory<char> baseDomain = ReadOnlyMemory<char>.Empty;
 
             // Try bypass total budget
-            while (!(memoryBudget.TrySpendBudget() && totalBudget.TrySpendBudget(out totalBudgetAcquired)))
+            while (!totalBudget.TrySpendBudget(out totalBudgetAcquired))
             {
-                if (!memoryBudget.TrySpendBudget())
-                    REQUESTS_HOLD_BY_BUDGET.Value += 1;
+                //if (!memoryBudget.TrySpendBudget())
+                //REQUESTS_HOLD_BY_BUDGET.Value += 1;
                 await UniTask.Yield(envelope.Ct);
             }
 
@@ -82,6 +84,7 @@ namespace DCL.WebRequests
             {
                 totalBudgetAcquired.Dispose();
                 totalRequestsCompleted++;
+                TOTAL_REQUESTS_DONE.Value++;
                 openConnections--;
                 //Debug.Log($"JUANI OPEN CONNECTIONS {openConnections}");
                 //Debug.Log(
