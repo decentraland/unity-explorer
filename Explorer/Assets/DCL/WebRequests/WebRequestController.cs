@@ -70,7 +70,7 @@ namespace DCL.WebRequests
 
                     if (exception.Message.Contains("Cannot connect to destination host"))
                     {
-                        Debug.Log($"JUANI ERROR RESPONSE CODE {exception.ResponseCode}");
+                        Debug.Log($"JUANI ERROR RESPONSE CODE {exception.ResponseCode} for url: {envelope.CommonArguments.URL}");
                         Debug.Log($"JUANI ERROR  RESPONSE HEADERS {exception.Result}");
 
                         if (exception.ResponseHeaders != null)
