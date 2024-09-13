@@ -61,10 +61,6 @@ def get_target(target):
         print("Response body:", response.text)
         sys.exit(1)
 
-# Some of the code in here won't be used
-# Unity does not allow more than 1 item in queue by target
-# So we *always* create a new target, no matter what
-# by appending the commit's SHA
 def clone_current_target():
     def generate_body(template_target, name, branch, options, remoteCacheStrategy):
         body = get_target(template_target)
@@ -95,9 +91,11 @@ def clone_current_target():
     else:
         new_target_name = base_target_name
 
+    template_target = os.getenv('TARGET')
+
     # Generate request body
     body = generate_body(
-        os.getenv('TARGET'),
+        template_target,
         new_target_name,
         os.getenv('BRANCH_NAME'),
         os.getenv('BUILD_OPTIONS').split(','),
