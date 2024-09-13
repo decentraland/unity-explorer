@@ -10,7 +10,8 @@ namespace DCL.FeatureFlags
         PORTABLE_EXPERIENCE,
         GLOBAL_PORTABLE_EXPERIENCE,
         PORTABLE_EXPERIENCE_CHAT_COMMANDS,
-        MAP_PINS
+        MAP_PINS,
+        CUSTOM_MAP_PINS_ICONS
     }
 
     public class FeatureFlagsConfiguration
@@ -27,6 +28,8 @@ namespace DCL.FeatureFlags
                     return "alfa-portable-experiences-chat-commands";
                 case FeatureFlags.MAP_PINS:
                     return "alfa-map-pins";
+                case FeatureFlags.CUSTOM_MAP_PINS_ICONS:
+                    return "alfa-map-pins-custom-icons";
                 default:
                     return flags.ToString();
             }

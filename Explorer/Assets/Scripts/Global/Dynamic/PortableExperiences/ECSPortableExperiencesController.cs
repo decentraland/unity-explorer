@@ -52,7 +52,7 @@ namespace PortableExperiences.Controller
             {
                 switch (isGlobalPortableExperience)
                 {
-                    //If it's not a Global PX and common PX are disabled
+                    //If it's not a Global PX and common PXs are disabled
                     case false when !featureFlagsCache.Configuration.IsEnabled(FeatureFlagsConfiguration.GetFlag(FeatureFlags.PORTABLE_EXPERIENCE)):
                         throw new Exception("Portable Experiences are disabled");
                     //If it IS a Global PX but Global PXs are disabled
