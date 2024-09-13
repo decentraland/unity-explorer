@@ -42,7 +42,7 @@ namespace Global.Dynamic.ChatCommands
 
         public async UniTask<string> ExecuteAsync(Match match, CancellationToken ct)
         {
-            if (!featureFlagsCache.Configuration.IsEnabled(FeatureFlagsConfiguration.GetFlag(FeatureFlags.PORTABLE_EXPERIENCE_CHAT_COMMANDS)))
+            if (!featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.PORTABLE_EXPERIENCE_CHAT_COMMANDS))
                 return "🔴 Error. Portable Experiences Chat Commands are disabled";
 
             //In this case as we are matching the suffix, either if it's present or not we need to append it to the string, so we can avoid the check and just add it always.

@@ -53,10 +53,10 @@ namespace PortableExperiences.Controller
                 switch (isGlobalPortableExperience)
                 {
                     //If it's not a Global PX and common PXs are disabled
-                    case false when !featureFlagsCache.Configuration.IsEnabled(FeatureFlagsConfiguration.GetFlag(FeatureFlags.PORTABLE_EXPERIENCE)):
+                    case false when !featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.PORTABLE_EXPERIENCE):
                         throw new Exception("Portable Experiences are disabled");
                     //If it IS a Global PX but Global PXs are disabled
-                    case true when !featureFlagsCache.Configuration.IsEnabled(FeatureFlagsConfiguration.GetFlag(FeatureFlags.GLOBAL_PORTABLE_EXPERIENCE)):
+                    case true when !featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.GLOBAL_PORTABLE_EXPERIENCE):
                         throw new Exception("Global Portable Experiences are disabled");
                 }
             }
@@ -101,7 +101,7 @@ namespace PortableExperiences.Controller
 
         public bool CanKillPortableExperience(ENS ens)
         {
-            if (!featureFlagsCache.Configuration.IsEnabled(FeatureFlagsConfiguration.GetFlag(FeatureFlags.PORTABLE_EXPERIENCE))) return false;
+            if (!featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.PORTABLE_EXPERIENCE)) return false;
 
             ISceneFacade currentSceneFacade = scenesCache.CurrentScene;
             if (currentSceneFacade == null) return false;

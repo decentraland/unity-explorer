@@ -238,11 +238,9 @@ namespace Global.Dynamic
         {
             if (!debugSettings.EnableRemotePortableExperiences) return;
 
-            string globalPxFlag = FeatureFlagsConfiguration.GetFlag(FeatureFlags.GLOBAL_PORTABLE_EXPERIENCE);
-
-            if (staticContainer!.FeatureFlagsCache.Configuration.IsEnabled(globalPxFlag, "csv-variant"))
+            if (staticContainer!.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.GLOBAL_PORTABLE_EXPERIENCE, FeatureFlagsStrings.CSV_VARIANT))
             {
-                if (!staticContainer.FeatureFlagsCache.Configuration.TryGetCsvPayload(globalPxFlag, "csv-variant", out List<List<string>>? csv)) return;
+                if (!staticContainer.FeatureFlagsCache.Configuration.TryGetCsvPayload(FeatureFlagsStrings.GLOBAL_PORTABLE_EXPERIENCE, "csv-variant", out List<List<string>>? csv)) return;
 
                 if (csv?[0] == null) return;
 
