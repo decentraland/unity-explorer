@@ -71,7 +71,7 @@ namespace ECS.SceneLifeCycle.Systems
                         // FPS is set by another system
                         await scene.StartUpdateLoopAsync(fps, destroyCancellationToken);
                     }
-                    catch (Exception e) { ReportHub.LogException(e, GetReportCategory()); }
+                    catch (Exception e) { ReportHub.LogException(e, GetReportData()); }
                 }
 
                 RunOnThreadPoolAsync().Forget();

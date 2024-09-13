@@ -207,9 +207,9 @@ namespace DCL.Diagnostics
         public const string CHARACTER_TRIGGER_AREA = nameof(CHARACTER_TRIGGER_AREA);
 
         /// <summary>
-        ///     CameraModeArea SDK component
+        ///     SDK Camera related systems
         /// </summary>
-        public const string CAMERA_MODE_AREA = nameof(CAMERA_MODE_AREA);
+        public const string SDK_CAMERA = nameof(SDK_CAMERA);
 
         /// <summary>
         ///     Player-related data propagated to SDK

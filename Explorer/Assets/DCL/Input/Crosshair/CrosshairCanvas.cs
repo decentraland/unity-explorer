@@ -41,13 +41,13 @@ namespace DCL.Input.Crosshair
             SetPosition(new Vector2(50, 50));
         }
 
-        public void SetCursorStyle(CursorStyle style)
+        public void SetCursorStyle(CursorStyle style, bool disableCrosshair = false)
         {
-            if (currentState == style)
+            if (currentState == style && crossHairElement.visible == !disableCrosshair)
                 return;
 
             cursorElement.visible = style == CursorStyle.CameraPan;
-            crossHairElement.visible = style != CursorStyle.CameraPan;
+            crossHairElement.visible = !disableCrosshair && style != CursorStyle.CameraPan;
 
             Sprite sprite = style switch
                             {

@@ -4,6 +4,7 @@ using CommunicationData.URLHelpers;
 using CrdtEcsBridge.RestrictedActions;
 using DCL.AvatarRendering.AvatarShape.Systems;
 using DCL.DebugUtilities;
+using DCL.Diagnostics;
 using DCL.GlobalPartitioning;
 using DCL.Ipfs;
 using DCL.LOD;
@@ -36,6 +37,7 @@ using SceneRuntime;
 using System.Collections.Generic;
 using System.Threading;
 using SystemGroups.Visualiser;
+using UnityEngine;
 using Utility;
 
 namespace Global.Dynamic
@@ -111,6 +113,9 @@ namespace Global.Dynamic
             globalSceneStateProvider.State = SceneState.Running;
 
             var builder = new ArchSystemsWorldBuilder<World>(world);
+
+            AddShortInfo(world);
+
             builder.InjectCustomGroup(new SyncedPreRenderingSystemGroup(null, globalSceneStateProvider));
 
             IReleasablePerformanceBudget sceneBudget = new ConcurrentLoadingPerformanceBudget(staticSettings.ScenesLoadingBudget);
@@ -166,7 +171,7 @@ namespace Global.Dynamic
 
             UnloadPortableExperiencesSystem.InjectToWorld(ref builder);
 
-            UpdateCurrentSceneSystem.InjectToWorld(ref builder, realmData, scenesCache, currentSceneInfo, playerEntity, staticContainer.SingletonSharedDependencies.SceneAssetLock);
+            UpdateCurrentSceneSystem.InjectToWorld(ref builder, realmData, scenesCache, currentSceneInfo, playerEntity, staticContainer.SingletonSharedDependencies.SceneAssetLock, debugContainerBuilder);
 
             var pluginArgs = new GlobalPluginArguments(playerEntity, v8ActiveEngines);
 
@@ -189,6 +194,11 @@ namespace Global.Dynamic
             sceneFactory.SetGlobalWorldActions(new GlobalWorldActions(globalWorld.EcsWorld, playerEntity, emotesMessageBus));
 
             return globalWorld;
+        }
+
+        private static void AddShortInfo(World world)
+        {
+            world.Create(new SceneShortInfo(Vector2Int.zero, "global"));
         }
     }
 }

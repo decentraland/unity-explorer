@@ -37,14 +37,21 @@ namespace Global.Tests.PlayMode
 
             IWeb3IdentityCache identityCache = new MemoryWeb3IdentityCache();
 
+            IReportsHandlingSettings? reportSettings = Substitute.For<IReportsHandlingSettings>();
+            reportSettings.IsEnabled(ReportHandler.DebugLog).Returns(true);
+
+            var diagnosticsContainer = DiagnosticsContainer.Create(reportSettings);
+
             (StaticContainer? staticContainer, bool success) = await StaticContainer.CreateAsync(dclUrls,
                 assetProvisioner,
                 Substitute.For<IReportsHandlingSettings>(),
                 Substitute.For<IAppArgs>(),
                 new DebugViewsCatalog(),
                 globalSettingsContainer,
+                diagnosticsContainer,
                 identityCache,
                 Substitute.For<IEthereumApi>(),
+                false,
                 World.Create(),
                 new Entity(),
                 ct);

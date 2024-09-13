@@ -109,5 +109,21 @@ namespace Global.Tests.EditMode
 
             Assert.AreEqual(world, realmLaunchSettings.targetWorld);
         }
+
+        [Test]
+        [TestCase("127.0.0.1:8000")]
+        [TestCase("localhost:8000")]
+        public void IgnoreMacOSRealmInvalidation(string realm)
+        {
+            RealmLaunchSettings realmLaunchSettings = new RealmLaunchSettings();
+            ApplicationParametersParser applicationParametersParser = new (new[]
+            {
+                $"decentraland://realm=http//{realm}", // MacOS removes the ':' from the realm url param
+            });
+
+            realmLaunchSettings.ApplyConfig(applicationParametersParser);
+
+            Assert.AreEqual($"http://{realm}", realmLaunchSettings.customRealm);
+        }
     }
 }

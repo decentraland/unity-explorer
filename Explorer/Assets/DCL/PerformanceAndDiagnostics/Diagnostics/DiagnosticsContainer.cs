@@ -15,10 +15,17 @@ namespace DCL.Diagnostics
         private ILogHandler defaultLogHandler;
         public ReportHubLogger ReportHubLogger { get; private set; }
 
+        public SentryReportHandler? Sentry { get; private set; }
+
         public void Dispose()
         {
             // Restore Default Unity Logger
             Debug.unityLogger.logHandler = defaultLogHandler;
+        }
+
+        public void AddSentryScopeConfigurator(SentryReportHandler.ConfigureScope configureScope)
+        {
+            Sentry?.AddScopeConfigurator(configureScope);
         }
 
         public static DiagnosticsContainer Create(IReportsHandlingSettings settings, bool enableLocalSceneReporting = false, params (ReportHandler, IReportHandler)[] additionalHandlers)
@@ -32,8 +39,10 @@ namespace DCL.Diagnostics
             if (settings.IsEnabled(ReportHandler.DebugLog))
                 handlers.Add((ReportHandler.DebugLog, new DebugLogReportHandler(Debug.unityLogger.logHandler, settings.GetMatrix(ReportHandler.DebugLog), settings.DebounceEnabled)));
 
+            SentryReportHandler? sentryReportHandler = null;
+
             if (settings.IsEnabled(ReportHandler.Sentry))
-                handlers.Add((ReportHandler.Sentry, new SentryReportHandler(settings.GetMatrix(ReportHandler.Sentry), settings.DebounceEnabled)));
+                handlers.Add((ReportHandler.Sentry, sentryReportHandler = new SentryReportHandler(settings.GetMatrix(ReportHandler.Sentry), settings.DebounceEnabled)));
 
             if (enableLocalSceneReporting)
                 AddLocalSceneReportingHandler(handlers);
@@ -48,7 +57,7 @@ namespace DCL.Diagnostics
             // Enable Hub static accessors
             ReportHub.Initialize(logger, enableLocalSceneReporting);
 
-            return new DiagnosticsContainer { ReportHubLogger = logger, defaultLogHandler = defaultLogHandler };
+            return new DiagnosticsContainer { ReportHubLogger = logger, defaultLogHandler = defaultLogHandler, Sentry = sentryReportHandler };
         }
 
         private static void AddLocalSceneReportingHandler(List<(ReportHandler, IReportHandler)> handlers)
