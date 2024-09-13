@@ -128,7 +128,7 @@ def clone_current_target(use_cache):
         print('Target update failed due to a possible race condition. Retrying...')
         time.sleep(2)  # Add a small delay before retrying
         clone_current_target(True)  # Retry the whole process
-    elif response.status_code == 400 and 'Failed to copy cache from target' in response.text:
+    elif response.status_code == 400:
         print('Target update failed due to incompatible cache file. Retrying...')
         time.sleep(2)  # Add a small delay before retrying
         clone_current_target(False)  # Retry the whole process
