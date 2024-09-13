@@ -1,10 +1,12 @@
 using Arch.Core;
+using CommunicationData.URLHelpers;
 using CRDT;
 using CrdtEcsBridge.Components;
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
+using DCL.FeatureFlags;
 using DCL.Input.Component;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
@@ -13,8 +15,10 @@ using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using Global.AppArgs;
 using LiveKit.Proto;
+using PortableExperiences.Controller;
 using SceneRunner.Debugging;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using UnityEngine;
@@ -24,6 +28,7 @@ namespace Global.Dynamic
 {
     public interface IDebugSettings
     {
+        string[]? PortableExperiencesEnsToLoad { get; }
         bool ShowSplash { get; }
         bool ShowAuthentication { get; }
         bool ShowLoading { get; }
@@ -32,6 +37,7 @@ namespace Global.Dynamic
         bool EnableEmulateNoLivekitConnection { get; }
         bool OverrideConnectionQuality { get; }
         ConnectionQuality ConnectionQuality { get; }
+        bool EnableRemotePortableExperiences { get; }
     }
 
     [Serializable]
@@ -51,6 +57,10 @@ namespace Global.Dynamic
         private bool enableLOD;
         [SerializeField]
         private bool enableEmulateNoLivekitConnection;
+        [SerializeField] [Tooltip("Enable Portable Experiences obtained from Feature Flags from loading at the start of the game")]
+        private bool enableRemotePortableExperiences;
+        [SerializeField] [Tooltip("Make sure the ENS put here will be loaded as a GlobalPX (format must be something.dcl.eth)")]
+        internal string[]? portableExperiencesEnsToLoad;
         [Space]
         [SerializeField]
         private bool overrideConnectionQuality;
@@ -65,12 +75,16 @@ namespace Global.Dynamic
                 showLoading = true,
                 enableLandscape = true,
                 enableLOD = true,
+                portableExperiencesEnsToLoad = null,
                 enableEmulateNoLivekitConnection = false,
                 overrideConnectionQuality = false,
-                connectionQuality = ConnectionQuality.QualityExcellent
+                connectionQuality = ConnectionQuality.QualityExcellent,
+                enableRemotePortableExperiences = true,
             };
 
         // To avoid configuration issues, force full flow on build (Debug.isDebugBuild is always true in Editor)
+        public string[]? PortableExperiencesEnsToLoad => Debug.isDebugBuild ? this.portableExperiencesEnsToLoad : RELEASE_SETTINGS.portableExperiencesEnsToLoad;
+        public bool EnableRemotePortableExperiences => Debug.isDebugBuild ? this.enableRemotePortableExperiences : RELEASE_SETTINGS.enableRemotePortableExperiences;
         public bool ShowSplash => Debug.isDebugBuild ? this.showSplash : RELEASE_SETTINGS.showSplash;
         public bool ShowAuthentication => Debug.isDebugBuild ? this.showAuthentication : RELEASE_SETTINGS.showAuthentication;
         public bool ShowLoading => Debug.isDebugBuild ? this.showLoading : RELEASE_SETTINGS.showLoading;
@@ -199,7 +213,12 @@ namespace Global.Dynamic
                 globalWorld = bootstrap.CreateGlobalWorld(bootstrapContainer, staticContainer!, dynamicWorldContainer!, debugUiRoot, playerEntity);
 
                 await bootstrap.LoadStartingRealmAsync(dynamicWorldContainer!, ct);
+
                 await bootstrap.UserInitializationAsync(dynamicWorldContainer!, globalWorld, playerEntity, splashScreen, ct);
+
+                LoadDebugPortableExperiences(ct);
+
+                LoadRemotePortableExperiences(ct);
 
                 RestoreInputs();
             }
@@ -212,6 +231,34 @@ namespace Global.Dynamic
                 // unhandled exception
                 GameReports.PrintIsDead();
                 throw;
+            }
+        }
+
+        private void LoadRemotePortableExperiences(CancellationToken ct)
+        {
+            if (!debugSettings.EnableRemotePortableExperiences) return;
+
+            if (staticContainer!.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.GLOBAL_PORTABLE_EXPERIENCE, FeatureFlagsStrings.CSV_VARIANT))
+            {
+                if (!staticContainer.FeatureFlagsCache.Configuration.TryGetCsvPayload(FeatureFlagsStrings.GLOBAL_PORTABLE_EXPERIENCE, "csv-variant", out List<List<string>>? csv)) return;
+
+                if (csv?[0] == null) return;
+
+                foreach (string value in csv[0]) { staticContainer.PortableExperiencesController!.
+                                                                   CreatePortableExperienceByEnsAsync(new ENS(value), ct, true, true).
+                                                                   SuppressAnyExceptionWithFallback(new IPortableExperiencesController.SpawnResponse(), ReportCategory.PORTABLE_EXPERIENCE).Forget(); }
+            }
+        }
+
+        private void LoadDebugPortableExperiences(CancellationToken ct)
+        {
+            if (debugSettings.portableExperiencesEnsToLoad == null) return;
+
+            foreach (string pxEns in debugSettings.portableExperiencesEnsToLoad)
+            {
+                staticContainer!.PortableExperiencesController.
+                                 CreatePortableExperienceByEnsAsync(new ENS(pxEns), ct, true, true).
+                                 SuppressAnyExceptionWithFallback(new IPortableExperiencesController.SpawnResponse(), ReportCategory.PORTABLE_EXPERIENCE).Forget();
             }
         }
 

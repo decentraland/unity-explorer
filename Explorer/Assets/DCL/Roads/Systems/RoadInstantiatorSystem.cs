@@ -32,7 +32,8 @@ namespace DCL.Roads.Systems
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
         private readonly IScenesCache scenesCache;
 
-        internal RoadInstantiatorSystem(World world, IPerformanceBudget frameCapBudget, IPerformanceBudget memoryBudget, IReadOnlyDictionary<Vector2Int, RoadDescription> roadDescriptions, IRoadAssetPool roadAssetPool, ISceneReadinessReportQueue sceneReadinessReportQueue, IScenesCache scenesCache) : base(world)
+        internal RoadInstantiatorSystem(World world, IPerformanceBudget frameCapBudget, IPerformanceBudget memoryBudget, IReadOnlyDictionary<Vector2Int, RoadDescription> roadDescriptions, IRoadAssetPool roadAssetPool,
+            ISceneReadinessReportQueue sceneReadinessReportQueue, IScenesCache scenesCache) : base(world)
         {
             this.frameCapBudget = frameCapBudget;
             this.memoryBudget = memoryBudget;
@@ -48,7 +49,7 @@ namespace DCL.Roads.Systems
         }
 
         [Query]
-        [None(typeof(DeleteEntityIntention))]
+        [None(typeof(DeleteEntityIntention), typeof(PortableExperienceComponent))]
         private void InstantiateRoad(ref RoadInfo roadInfo, ref SceneDefinitionComponent sceneDefinitionComponent, ref PartitionComponent partitionComponent)
         {
             // Helpful info: RoadInfos are added in ResolveSceneStateByIncreasingRadiusSystem.CreatePromisesFromOrderedData
@@ -58,9 +59,9 @@ namespace DCL.Roads.Systems
 
             if (!(frameCapBudget.TrySpendBudget() && memoryBudget.TrySpendBudget())) return;
 
-            if (roadDescriptions.TryGetValue(sceneDefinitionComponent.Definition.metadata.scene.DecodedBase, out var roadDescription))
+            if (roadDescriptions.TryGetValue(sceneDefinitionComponent.Definition.metadata.scene.DecodedBase, out RoadDescription roadDescription))
             {
-                if (!roadAssetPool.Get(roadDescription.RoadModel, out var roadAsset))
+                if (!roadAssetPool.Get(roadDescription.RoadModel, out Transform? roadAsset))
                 {
                     ReportHub.LogWarning(GetReportData(),
                         $"Road with model for {roadDescription.RoadModel} at {sceneDefinitionComponent.Definition.metadata.scene.DecodedBase.ToString()} does not exist, loading default");
@@ -79,6 +80,7 @@ namespace DCL.Roads.Systems
                 ReportHub.LogWarning(GetReportData(),
                     $"Road with coords for {sceneDefinitionComponent.Definition.metadata.scene.DecodedBase} do not have a description");
             }
+
             roadInfo.IsDirty = false;
 
 

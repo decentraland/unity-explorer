@@ -96,7 +96,7 @@ namespace Global.Dynamic
 
             URLAddress url = realm.Append(new URLPath("/about"));
 
-            var genericGetRequest = webRequestController.GetAsync(new CommonArguments(url), ct, ReportCategory.REALM);
+            GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> genericGetRequest = webRequestController.GetAsync(new CommonArguments(url), ct, ReportCategory.REALM);
             ServerAbout result = await genericGetRequest.OverwriteFromJsonAsync(serverAbout, WRJsonParser.Unity);
 
             string hostname = ResolveHostname(realm, result);
@@ -154,7 +154,7 @@ namespace Global.Dynamic
 
             if (globalWorld != null)
             {
-                loadedScenes = FindLoadedScenesAndClearSceneCache();
+                loadedScenes = FindLoadedScenesAndClearSceneCache(true);
                 // Destroy everything without awaiting as it's Application Quit
                 globalWorld.SafeDispose(ReportCategory.SCENE_LOADING);
             }
@@ -176,7 +176,8 @@ namespace Global.Dynamic
 
             // release pooled entities
             for (var i = 0; i < globalWorld.FinalizeWorldSystems.Count; i++)
-                globalWorld.FinalizeWorldSystems[i].FinalizeComponents(world.Query(in CLEAR_QUERY));
+                    globalWorld.FinalizeWorldSystems[i].FinalizeComponents(world.Query(in CLEAR_QUERY));
+
 
             // Clear the world from everything connected to the current realm
             world.Destroy(in CLEAR_QUERY);
@@ -212,13 +213,14 @@ namespace Global.Dynamic
             return false;
         }
 
-        private List<ISceneFacade> FindLoadedScenesAndClearSceneCache()
+        private List<ISceneFacade> FindLoadedScenesAndClearSceneCache(bool findPortableExperiences = false)
         {
             allScenes.Clear();
             allScenes.AddRange(scenesCache.Scenes);
+            if (findPortableExperiences) allScenes.AddRange(scenesCache.PortableExperiencesScenes);
 
             // Dispose all scenes
-            scenesCache.Clear();
+            scenesCache.ClearScenes(findPortableExperiences);
 
             return allScenes;
         }
