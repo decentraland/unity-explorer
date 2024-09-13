@@ -21,7 +21,9 @@ namespace DCL.WebRequests.Analytics
             AnalyticsContainer = analyticsContainer;
         }
 
-        public static WebRequestsContainer Create(IWeb3IdentityCache web3IdentityProvider, IDebugContainerBuilder debugContainerBuilder, int totalBudget, int perDomainBudget)
+        public static WebRequestsContainer Create(IWeb3IdentityCache web3IdentityProvider,
+            IDebugContainerBuilder debugContainerBuilder, int totalBudget, int perDomainBudget,
+            MemoryBudget sharedDependenciesMemoryBudget)
         {
             WebRequestsAnalyticsContainer analyticsContainer = new WebRequestsAnalyticsContainer()
                                                               .AddTrackedMetric<ActiveCounter>()
@@ -46,8 +48,14 @@ namespace DCL.WebRequests.Analytics
             IWebRequestController webRequestController = new WebRequestController(analyticsContainer, web3IdentityProvider)
                                                         .WithLog()
                                                         .WithArtificialDelay(options)
-                                                        .WithBudget(totalBudget, perDomainBudget);
+                                                        .WithBudget(totalBudget, perDomainBudget,
+                                                            sharedDependenciesMemoryBudget);
 
+            widgetBuilder.AddMarker("Memory budget hold request", BudgetedWebRequestController.REQUESTS_HOLD_BY_BUDGET,
+                    DebugLongMarkerDef.Unit.NoFormat)
+                .AddMarker("Requests cannot connect", WebRequests.WebRequestController.REQUESTS_CANNOT_CONNECT,
+                    DebugLongMarkerDef.Unit.NoFormat);
+            
             CreateStressTestUtility(widgetBuilder);
 
             return new WebRequestsContainer(webRequestController, analyticsContainer);

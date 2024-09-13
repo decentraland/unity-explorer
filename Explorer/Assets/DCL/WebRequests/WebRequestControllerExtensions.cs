@@ -220,7 +220,10 @@ namespace DCL.WebRequests
         public static IWebRequestController WithLog(this IWebRequestController origin) =>
             new LogWebRequestController(origin);
 
-        public static IWebRequestController WithBudget(this IWebRequestController origin, int totalBudget, int perDomainBudget) =>
-            new BudgetedWebRequestController(origin, totalBudget, perDomainBudget);
+        public static IWebRequestController WithBudget(this IWebRequestController origin, int totalBudget,
+            int perDomainBudget, IPerformanceBudget memoryBudget)
+        {
+            return new BudgetedWebRequestController(origin, totalBudget, perDomainBudget, memoryBudget);
+        }
     }
 }

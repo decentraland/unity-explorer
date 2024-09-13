@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Optimization.PerformanceBudgeting;
 using System;
 using System.Collections.Generic;
+using DCL.DebugUtilities.UIBindings;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
@@ -21,11 +22,18 @@ namespace DCL.WebRequests
 
         private readonly ConcurrentLoadingPerformanceBudget totalBudget;
         private readonly Dictionary<ReadOnlyMemory<char>, ConcurrentLoadingPerformanceBudget> perDomainBudgets = new (50, new StringUtils.StringMemoryIgnoreCaseComparer());
+        private readonly IPerformanceBudget memoryBudget;
 
-        public BudgetedWebRequestController(IWebRequestController origin, int totalBudget, int perDomainBudget)
+        public static ElementBinding<ulong> REQUESTS_HOLD_BY_BUDGET = new(0);
+
+
+        public BudgetedWebRequestController(IWebRequestController origin, int totalBudget, int perDomainBudget,
+            IPerformanceBudget memoryBudget)
         {
             this.origin = origin;
             this.perDomainBudget = perDomainBudget;
+
+            this.memoryBudget = memoryBudget;
 
             this.totalBudget = new ConcurrentLoadingPerformanceBudget(totalBudget);
             budgetPool = new ObjectPool<ConcurrentLoadingPerformanceBudget>(() => new ConcurrentLoadingPerformanceBudget(perDomainBudget), defaultCapacity: 50);
@@ -39,8 +47,12 @@ namespace DCL.WebRequests
             ReadOnlyMemory<char> baseDomain = ReadOnlyMemory<char>.Empty;
 
             // Try bypass total budget
-            while (!totalBudget.TrySpendBudget(out totalBudgetAcquired))
+            while (!(memoryBudget.TrySpendBudget() && totalBudget.TrySpendBudget(out totalBudgetAcquired)))
+            {
+                if (!memoryBudget.TrySpendBudget())
+                    REQUESTS_HOLD_BY_BUDGET.Value += 1;
                 await UniTask.Yield(envelope.Ct);
+            }
 
             try
             {
@@ -71,9 +83,9 @@ namespace DCL.WebRequests
                 totalBudgetAcquired.Dispose();
                 totalRequestsCompleted++;
                 openConnections--;
-                Debug.Log($"JUANI OPEN CONNECTIONS {openConnections}");
-                Debug.Log(
-                    $"JUANI TOTAL REQUESTS COMPLETED {totalRequestsCompleted} CURRENT BUDGET {totalBudget.CurrentBudget}");
+                //Debug.Log($"JUANI OPEN CONNECTIONS {openConnections}");
+                //Debug.Log(
+                //    $"JUANI TOTAL REQUESTS COMPLETED {totalRequestsCompleted} CURRENT BUDGET {totalBudget.CurrentBudget}");
                 /*
                 if (domainBudgetAcquired != null)
                 {

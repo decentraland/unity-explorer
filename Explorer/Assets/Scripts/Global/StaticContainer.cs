@@ -167,7 +167,9 @@ namespace Global
             container.Profiler = profilingProvider;
             container.EntityCollidersGlobalCache = new EntityCollidersGlobalCache();
             container.ExposedGlobalDataContainer = exposedGlobalDataContainer;
-            container.WebRequestsContainer = WebRequestsContainer.Create(web3IdentityProvider, container.DebugContainerBuilder, staticSettings.WebRequestsBudget, staticSettings.WebRequestsPerDomainBudget);
+            container.WebRequestsContainer = WebRequestsContainer.Create(web3IdentityProvider,
+                container.DebugContainerBuilder, staticSettings.WebRequestsBudget,
+                staticSettings.WebRequestsPerDomainBudget, sharedDependencies.MemoryBudget);
             container.PhysicsTickProvider = new PhysicsTickProvider();
 
             container.FeatureFlagsCache = new FeatureFlagsCache();

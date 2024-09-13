@@ -54,7 +54,7 @@ namespace DCL.Optimization.PerformanceBudgeting
         }
 
         public bool TrySpendBudget() =>
-            GetMemoryUsageStatus() != FULL;
+            GetMemoryUsageStatus() != FULL && GetMemoryUsageStatus() != WARNING;
 
         private long GetTotalSystemMemory()
         {

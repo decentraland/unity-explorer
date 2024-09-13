@@ -3,6 +3,7 @@ using DCL.Diagnostics;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
 using System;
+using DCL.DebugUtilities.UIBindings;
 using UnityEngine;
 using UnityEngine.Networking;
 using Utility.Multithreading;
@@ -13,6 +14,10 @@ namespace DCL.WebRequests
     {
         private readonly IWebRequestsAnalyticsContainer analyticsContainer;
         private readonly IWeb3IdentityCache web3IdentityCache;
+
+        public static ElementBinding<ulong> REQUESTS_CANNOT_CONNECT = new(0);
+
+
 
         public WebRequestController(IWeb3IdentityCache web3IdentityCache) : this(IWebRequestsAnalyticsContainer.DEFAULT, web3IdentityCache) { }
 
@@ -68,7 +73,7 @@ namespace DCL.WebRequests
 
                     if (exception.Message.Contains("Cannot connect to destination host"))
                     {
-                        Debug.Log($"JUANI ERROR RESPONSE CODE {exception.ResponseCode}");
+                        /*Debug.Log($"JUANI ERROR RESPONSE CODE {exception.ResponseCode} FOR URL {envelope.CommonArguments.URL}");
                         Debug.Log($"JUANI ERROR  RESPONSE HEADERS {exception.Result}");
                         if (exception.ResponseHeaders != null)
                         {
@@ -78,7 +83,8 @@ namespace DCL.WebRequests
                             }
                         }
 
-                        Debug.Log("JUANI ERROR ACA ESTA LA EXCEPCION, vamos a ponerle un await");
+                        Debug.Log("JUANI ERROR ACA ESTA LA EXCEPCION, vamos a ponerle un await");*/
+                        REQUESTS_CANNOT_CONNECT.Value++;
                         await UniTask.Delay(TimeSpan.FromSeconds(1));
                     }
 
