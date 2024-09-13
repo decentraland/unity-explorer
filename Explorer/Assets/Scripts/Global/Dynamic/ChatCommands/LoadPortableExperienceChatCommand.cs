@@ -1,7 +1,9 @@
 ﻿using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Chat.Commands;
+using DCL.Diagnostics;
 using DCL.FeatureFlags;
+using DCL.Utilities.Extensions;
 using PortableExperiences.Controller;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -48,7 +50,11 @@ namespace Global.Dynamic.ChatCommands
 
             await UniTask.SwitchToMainThread(ct);
 
-            bool isSuccess = await portableExperiencesController.CreatePortableExperienceByEnsWithErrorHandlingAsync(new ENS(pxName), ct, true, true);
+            var result = await portableExperiencesController.
+                               CreatePortableExperienceByEnsAsync(new ENS(pxName), ct, true, true).
+                               SuppressAnyExceptionWithFallback(new IPortableExperiencesController.SpawnResponse(), ReportCategory.PORTABLE_EXPERIENCE);
+
+            bool isSuccess = !string.IsNullOrEmpty(result.ens);
 
             if (ct.IsCancellationRequested)
                 return "🔴 Error. The operation was canceled!";

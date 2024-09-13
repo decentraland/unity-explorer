@@ -46,21 +46,6 @@ namespace PortableExperiences.Controller
             this.featureFlagsCache = featureFlagsCache;
         }
 
-        public async UniTask<bool> CreatePortableExperienceByEnsWithErrorHandlingAsync(ENS ens, CancellationToken ct, bool isGlobalPortableExperience, bool force)
-        {
-            //I added this method to be able to handle errors that normally would be sent to JS to be dealt with, but when we call it from anywhere else (either initialization or chat commands),
-            // we are usually not prepared to handle them.
-            try {
-                    await CreatePortableExperienceByEnsAsync(ens, ct, isGlobalPortableExperience, force);
-                    return true;
-            }
-            catch (Exception e)
-            {
-                ReportHub.LogError(ReportCategory.PORTABLE_EXPERIENCE, e);
-                return false;
-            }
-        }
-
         public async UniTask<IPortableExperiencesController.SpawnResponse> CreatePortableExperienceByEnsAsync(ENS ens, CancellationToken ct, bool isGlobalPortableExperience = false, bool force = false)
         {
             if (!force && !featureFlagsCache.Configuration.IsEnabled(FeatureFlagsConfiguration.GetFlag(FeatureFlags.PORTABLE_EXPERIENCE)))
