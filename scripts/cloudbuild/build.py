@@ -479,7 +479,7 @@ if not build_healthy:
 
 # Cleanup (only if build is healthy and not release)
 # We only delete all artifacts, not the build target
-if not is_release_workflow
+if not is_release_workflow:
     delete_build(id)
 
 utils.delete_build_info()
