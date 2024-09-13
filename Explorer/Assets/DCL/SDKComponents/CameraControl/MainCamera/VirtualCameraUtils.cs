@@ -42,25 +42,40 @@ namespace DCL.SDKComponents.CameraControl.MainCamera
         {
             var pbVirtualCamera = world.Get<PBVirtualCamera>(entitiesMap[virtualCamCRDTEntity]);
 
-            // Using custom blends array doesn't work because there's no direct way of getting the custom blend index,
-            // and we would have to hardcode it...
-            if (pbVirtualCamera.DefaultTransition.TransitionModeCase == CameraTransition.TransitionModeOneofCase.Time)
+            // Using cinemachine custom blends array doesn't work because there's no direct way of getting the custom
+            //  blend index, and we would have to hardcode it...
+            if (pbVirtualCamera.DefaultTransition == null)
             {
-                float timeValue = pbVirtualCamera.DefaultTransition.Time;
-                cameraData.CinemachineBrain!.m_DefaultBlend.m_Time = timeValue;
-                cameraData.CinemachineBrain!.m_DefaultBlend.m_Style = timeValue <= 0 ? CinemachineBlendDefinition.Style.Cut : CinemachineBlendDefinition.Style.EaseInOut;
+                cameraData.CinemachineBrain!.m_DefaultBlend.m_Style = CinemachineBlendDefinition.Style.Cut;
+                return;
             }
-            else
-            {
-                float speedValue = pbVirtualCamera.DefaultTransition.Speed;
-                cameraData.CinemachineBrain!.m_DefaultBlend.m_Style = speedValue <= 0 ? CinemachineBlendDefinition.Style.Cut : CinemachineBlendDefinition.Style.EaseInOut;
 
-                // SPEED = 1 -> 1 meter per second
-                float blendTime = distanceBetweenCameras / speedValue;
-                if (blendTime == 0)
+            switch (pbVirtualCamera.DefaultTransition.TransitionModeCase)
+            {
+                case CameraTransition.TransitionModeOneofCase.Time:
+                    float timeValue = pbVirtualCamera.DefaultTransition.Time;
+                    cameraData.CinemachineBrain!.m_DefaultBlend.m_Time = timeValue;
+                    cameraData.CinemachineBrain!.m_DefaultBlend.m_Style = timeValue <= 0 ? CinemachineBlendDefinition.Style.Cut : CinemachineBlendDefinition.Style.EaseInOut;
+                    break;
+                case CameraTransition.TransitionModeOneofCase.Speed:
+                    float speedValue = pbVirtualCamera.DefaultTransition.Speed;
+                    if (speedValue > 0)
+                    {
+                        cameraData.CinemachineBrain!.m_DefaultBlend.m_Style = CinemachineBlendDefinition.Style.EaseInOut;
+                        float blendTime = distanceBetweenCameras / speedValue; // SPEED = 1 -> 1 meter per second
+                        if (blendTime == 0)
+                            cameraData.CinemachineBrain!.m_DefaultBlend.m_Style = CinemachineBlendDefinition.Style.Cut;
+                        else
+                            cameraData.CinemachineBrain!.m_DefaultBlend.m_Time = blendTime;
+                    }
+                    else
+                    {
+                        cameraData.CinemachineBrain!.m_DefaultBlend.m_Style = CinemachineBlendDefinition.Style.Cut;
+                    }
+                    break;
+                default:
                     cameraData.CinemachineBrain!.m_DefaultBlend.m_Style = CinemachineBlendDefinition.Style.Cut;
-                else
-                    cameraData.CinemachineBrain!.m_DefaultBlend.m_Time = blendTime;
+                    break;
             }
         }
 
