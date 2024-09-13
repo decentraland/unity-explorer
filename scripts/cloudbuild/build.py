@@ -106,11 +106,11 @@ def clone_current_target():
     existing_target = get_target(new_target_name)
     
     if 'error' in existing_target:
-        # Create new target without cache
+        # Create new target with template cache
+        body['settings']['buildTargetCopyCache'] = template_target
+        print(f"New target - using cache build target: {template_target}")
         response = requests.post(f'{URL}/buildtargets', headers=HEADERS, json=body)
-        print("No cache build target used for new target")
     else:
-
         body['settings']['buildTargetCopyCache'] = new_target_name
         print(f"Using cache build target: {new_target_name}")
         response = requests.put(f'{URL}/buildtargets/{new_target_name}', headers=HEADERS, json=body)
@@ -477,8 +477,9 @@ if not build_healthy:
     print(f'Build unhealthy - check the downloaded logs or go to https://cloud.unity.com/ and search for target "{os.getenv('TARGET')}" and build ID "{id}"')
     sys.exit(1)
 
-# Cleanup (only if build is healthy)
+# Cleanup (only if build is healthy and not release)
 # We only delete all artifacts, not the build target
-delete_build(id)
+if not is_release_workflow
+    delete_build(id)
 
 utils.delete_build_info()
