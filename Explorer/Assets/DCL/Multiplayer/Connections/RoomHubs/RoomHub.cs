@@ -1,3 +1,4 @@
+using System;
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.Rooms.Connective;
 using LiveKit.Rooms;
@@ -35,6 +36,6 @@ namespace DCL.Multiplayer.Connections.RoomHubs
             UniTask.WhenAll(
                 archipelagoIslandRoom.StopIfNotAsync(),
                 gateKeeperSceneRoom.StopIfNotAsync()
-            );
+            ).Timeout(TimeSpan.FromSeconds(10));
     }
 }
