@@ -33,7 +33,7 @@ namespace ECS.StreamableLoading.Textures
                 new GetTextureArguments(intention.IsReadable),
                 GetTextureWebRequest.CreateTexture(intention.WrapMode, intention.FilterMode),
                 ct,
-                reportCategory: ReportCategory.TEXTURES);
+                GetReportData());
 
             return new StreamableLoadingResult<Texture2D>(result);
         }
