@@ -1,3 +1,5 @@
+using UnityEngine;
+
 namespace DCL.ResourcesUnloading.UnloadStrategies
 {
     public class StandardUnloadStrategy : IUnloadStrategy
@@ -7,6 +9,8 @@ namespace DCL.ResourcesUnloading.UnloadStrategies
 
         public void TryUnload(ICacheCleaner cacheCleaner)
         {
+            Debug.Log("JUANI RUNNING STANDAARD");
+
             cacheCleaner.UnloadCache();
             cacheCleaner.UpdateProfilingCounters();
         }

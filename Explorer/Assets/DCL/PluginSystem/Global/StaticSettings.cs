@@ -52,6 +52,12 @@ namespace DCL.PluginSystem.Global
             { MemoryUsageStatus.FULL, 0.75f }
         };
 
+        public Dictionary<MemoryUsageStatus, float> MemoryThresholdsEditor { get; private set; } = new()
+        {
+            { MemoryUsageStatus.WARNING, 0.8f },
+            { MemoryUsageStatus.FULL, 0.95f }
+        };
+
         [Serializable]
         public class PartitionSettingsRef : AssetReferenceT<PartitionSettingsAsset>
         {

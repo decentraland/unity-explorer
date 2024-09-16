@@ -1,9 +1,11 @@
-﻿using Arch.SystemGroups;
+﻿using System;
+using Arch.SystemGroups;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.ResourcesUnloading;
 using DCL.ResourcesUnloading.UnloadStrategies;
 using ECS.Abstract;
 using ECS.Groups;
+using UnityEngine;
 
 namespace DCL.PluginSystem.Global
 {
@@ -42,9 +44,7 @@ namespace DCL.PluginSystem.Global
 
                 if (consecutiveFailedFrames >= failureThreshold)
                 {
-                    if (currentUnloadStrategy < unloadStrategies.Length - 1)
-                        currentUnloadStrategy++;
-
+                    currentUnloadStrategy = Math.Clamp(currentUnloadStrategy + 1, 0, unloadStrategies.Length - 1);
                     consecutiveFailedFrames = 0;
                 }
             }

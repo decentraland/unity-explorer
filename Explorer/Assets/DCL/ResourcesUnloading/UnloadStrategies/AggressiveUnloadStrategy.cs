@@ -7,7 +7,7 @@ namespace DCL.ResourcesUnloading.UnloadStrategies
 {
     public class AggressiveUnloadStrategy : IUnloadStrategy
     {
-        private readonly int forceUnloadDuringThisFrames = 100;
+        private readonly int forceUnloadDuringThisFrames = 200;
         public bool isRunning { get; set; }
 
         public void TryUnload(ICacheCleaner cacheCleaner)
@@ -15,23 +15,33 @@ namespace DCL.ResourcesUnloading.UnloadStrategies
             if (isRunning)
                 return;
 
+            isRunning = true;
+            Resources.UnloadUnusedAssets();
             StartAggressiveUnload(cacheCleaner).Forget();
-            cacheCleaner.UnloadCache();
         }
 
         private async UniTaskVoid StartAggressiveUnload(ICacheCleaner cacheCleaner)
         {
-            Resources.UnloadUnusedAssets();
             var currentFrameRunning = 0;
-            while (currentFrameRunning < forceUnloadDuringThisFrames)
+            try
             {
-                cacheCleaner.UnloadCache();
-                cacheCleaner.UpdateProfilingCounters();
-                currentFrameRunning++;
-                await UniTask.Yield();
+                while (currentFrameRunning < forceUnloadDuringThisFrames)
+                {
+                    cacheCleaner.UnloadCache();
+                    cacheCleaner.UpdateProfilingCounters();
+                    currentFrameRunning++;
+                    await UniTask.Yield();
+                }
+            }
+            catch (Exception e)
+            {
+                // ignored
+            }
+            finally
+            {
+                isRunning = false;
             }
 
-            isRunning = false;
         }
 
     }
