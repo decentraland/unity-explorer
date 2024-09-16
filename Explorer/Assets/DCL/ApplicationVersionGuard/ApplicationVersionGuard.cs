@@ -19,8 +19,6 @@ namespace DCL.ApplicationVersionGuard
 {
     public class ApplicationVersionGuard
     {
-
-
         private const string LAUNCHER_EXECUTABLE_NAME = "Decentraland Launcher";
         private const string LAUNCHER_PATH_MAC = "/Applications/" + LAUNCHER_EXECUTABLE_NAME + ".app";
         private const string LAUNCHER_PATH_WIN_MAIN = @"C:\Program Files\Decentraland Launcher\" + LAUNCHER_EXECUTABLE_NAME + ".exe";

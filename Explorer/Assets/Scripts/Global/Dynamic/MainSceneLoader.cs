@@ -209,7 +209,12 @@ namespace Global.Dynamic
 
                 await bootstrap.InitializeFeatureFlagsAsync(bootstrapContainer.IdentityCache!.Identity, bootstrapContainer.DecentralandUrlsSource, staticContainer!, ct);
 
-                if (debugSettings.EnableVersionUpdateGuard && await DoesApplicationRequireVersionUpdateAsync(ct, splashScreen))
+                bool runVersionControl = debugSettings.EnableVersionUpdateGuard;
+
+                if (applicationParametersParser.HasDebugFlag())
+                    runVersionControl = applicationParametersParser.TryGetValue("versionControl", out string? enforceDebugMode) && enforceDebugMode == "true";
+
+                if (runVersionControl && await DoesApplicationRequireVersionUpdateAsync(ct, splashScreen))
                 {
                     // stop bootstrapping;
                     return;
