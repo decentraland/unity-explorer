@@ -18,29 +18,35 @@ namespace ECS.StreamableLoading.GLTF
 {
     internal class GltFastDownloadProvider : IDownloadProvider, IDisposable
     {
-        public string TargetGltfOriginalPath = string.Empty;
 
+        private string targetGltfOriginalPath = string.Empty;
         private ISceneData sceneData;
         private World world;
         private IPartitionComponent partitionComponent;
         private const int ATTEMPTS_COUNT = 6;
 
-        public GltFastDownloadProvider(World world, ISceneData sceneData, IPartitionComponent partitionComponent)
+        public GltFastDownloadProvider(World world, ISceneData sceneData, IPartitionComponent partitionComponent, string targetGltfOriginalPath)
         {
             this.world = world;
             this.sceneData = sceneData;
             this.partitionComponent = partitionComponent;
+            this.targetGltfOriginalPath = targetGltfOriginalPath;
         }
 
         public async Task<IDownload> RequestAsync(Uri uri)
         {
+            // Debug.Log($"PRAVS - RequestAsync() "
+            //           + $"-> ContentBaseUrl: {sceneData.SceneContent.ContentBaseUrl};"
+            //           + $"-> URI: {uri};"
+            //           + $"-> TargetGltfOriginalPath: {targetGltfOriginalPath};");
+
             // TODO: Replace for WebRequestController (Planned in PR #1670)
             using (UnityWebRequest webRequest = new UnityWebRequest(uri))
             {
                 webRequest.downloadHandler = new DownloadHandlerBuffer();
 
                 try { await webRequest.SendWebRequest().WithCancellation(new CancellationToken()); }
-                catch { throw new Exception($"Error on GLTF download: {webRequest.downloadHandler.error}"); }
+                catch { throw new Exception($"Error on GLTF download: {webRequest.downloadHandler.error} - {webRequest.downloadHandler.text}"); }
 
                 return new GltfDownloadResult
                 {
@@ -55,9 +61,19 @@ namespace ECS.StreamableLoading.GLTF
         public async Task<ITextureDownload> RequestTextureAsync(Uri uri, bool nonReadable, bool forceLinear)
         {
             string textureFileName = uri.OriginalString.Substring(uri.OriginalString.LastIndexOf('/')+1);
-            string textureOriginalPath = string.Concat(TargetGltfOriginalPath.Remove(TargetGltfOriginalPath.LastIndexOf('/') + 1), textureFileName);
+            string textureOriginalPath = string.Concat(targetGltfOriginalPath.Remove(targetGltfOriginalPath.LastIndexOf('/') + 1), textureFileName);
+
+            // Debug.Log($"PRAVS - RequestTextureAsync() "
+            //           + $"-> ContentBaseUrl: {sceneData.SceneContent.ContentBaseUrl};"
+            //           + $"-> URI: {uri};"
+            //           + $"-> TargetGltfOriginalPath: {targetGltfOriginalPath}; "
+            //           + $"-> fileName: {textureFileName}; "
+            //           + $"-> originalPath: {textureOriginalPath}; "
+            //           );
 
             sceneData.SceneContent.TryGetContentUrl(textureOriginalPath, out var tryGetContentUrlResult);
+
+            // Debug.Log($"PRAVS - RequestTextureAsync() -> final URL: {tryGetContentUrlResult}");
 
             var texturePromise = Promise.Create(world, new GetTextureIntention
             {

@@ -23,8 +23,8 @@ namespace ECS.StreamableLoading.GLTF
         private static MaterialGenerator gltfMaterialGenerator = new DecentralandMaterialGenerator("DCL/Scene");
 
         private ISceneData sceneData;
-        private GltFastDownloadProvider gltfDownloadProvider;
         private GltFastReportHubLogger gltfConsoleLogger = new GltFastReportHubLogger(); // TODO: Remove ???
+        private IPartitionComponent partitionComponent;
 
         internal LoadGLTFSystem(
             World world,
@@ -33,7 +33,7 @@ namespace ECS.StreamableLoading.GLTF
             IPartitionComponent partitionComponent) : base(world, cache)
         {
             this.sceneData = sceneData;
-            gltfDownloadProvider = new GltFastDownloadProvider(World, sceneData, partitionComponent);
+            this.partitionComponent = partitionComponent;
         }
 
         // Might be used later
@@ -73,7 +73,7 @@ namespace ECS.StreamableLoading.GLTF
                     new ReportData(GetReportCategory()),
                     new Exception("The content to download couldn't be found"));
 
-            gltfDownloadProvider.TargetGltfOriginalPath = intention.Name!;
+            GltFastDownloadProvider gltfDownloadProvider = new GltFastDownloadProvider(World, sceneData, partitionComponent, intention.Name!);
             var gltfImport = new GltfImport(
                 downloadProvider: gltfDownloadProvider,
                 logger: gltfConsoleLogger,
@@ -86,10 +86,15 @@ namespace ECS.StreamableLoading.GLTF
                 GenerateMipMaps = false,
             };
 
+            // Debug.Log($"PRAVS - LoadGLTFSystem.FlowInternalAsync"
+            //           + $"-> GLTF final download url: {finalDownloadUrl}"
+            //           + $"-> GLTF path: {intention.Name!}");
+
             bool success = await gltfImport.Load(finalDownloadUrl, gltFastSettings, ct);
 
             // Release budget now to not hold it until dependencies are resolved to prevent a deadlock
             acquiredBudget.Release();
+            gltfDownloadProvider.Dispose();
 
             if (success)
             {
