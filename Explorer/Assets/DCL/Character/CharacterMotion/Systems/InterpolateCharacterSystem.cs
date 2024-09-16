@@ -54,10 +54,8 @@ namespace DCL.CharacterMotion.Systems
                     default: throw new ArgumentOutOfRangeException();
                 }
             }
-            else
-            {
-                World.Remove<PlayerTeleportIntent>(entity);
-            }
+
+            World.Remove<PlayerTeleportIntent>(entity);
 
             // Teleport the character
             controller.transform.position = teleportIntent.Position;
