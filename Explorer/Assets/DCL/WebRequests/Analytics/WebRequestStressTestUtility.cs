@@ -61,7 +61,7 @@ namespace DCL.WebRequests.Analytics
                         new GetTextureArguments(false),
                         new GetTextureWebRequest.CreateTextureOp(TextureWrapMode.Clamp, FilterMode.Bilinear),
                         CancellationToken.None,
-                        reportCategory: ReportCategory.DEBUG
+                        reportData: ReportCategory.DEBUG
                     );
                 else
 
@@ -69,7 +69,7 @@ namespace DCL.WebRequests.Analytics
                     await webRequestController.GetAsync(
                                                    new CommonArguments(SUCCESS, attemptsCount: retriesCount),
                                                    CancellationToken.None,
-                                                   reportCategory: ReportCategory.DEBUG
+                                                   reportData: ReportCategory.DEBUG
                                                )
                                               .WithNoOpAsync();
 

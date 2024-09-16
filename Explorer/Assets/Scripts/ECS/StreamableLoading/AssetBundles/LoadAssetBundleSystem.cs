@@ -150,9 +150,6 @@ namespace ECS.StreamableLoading.AssetBundles
         private static async UniTask<Object> LoadAllAssetsAsync(AssetBundle assetBundle, Type objectType, string? mainAsset, AssetBundleLoadingMutex loadingMutex, ReportData reportCategory,
             CancellationToken ct)
         {
-        private static async UniTask<Object> LoadAllAssetsAsync(AssetBundle assetBundle, Type objectType, string? mainAsset, AssetBundleLoadingMutex loadingMutex, string reportCategory,
-            CancellationToken ct)
-        {
             using AssetBundleLoadingMutex.LoadingRegion _ = await loadingMutex.AcquireAsync(ct);
 
             AssetBundleRequest? asyncOp = !string.IsNullOrEmpty(mainAsset)
