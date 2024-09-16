@@ -13,19 +13,47 @@ namespace DCL.PluginSystem.Global
         private readonly IMemoryUsageProvider memoryBudgetProvider;
         private readonly ICacheCleaner cacheCleaner;
 
-        private readonly IUnloadStrategy unloadStrategy;
+        private readonly IUnloadStrategy[] unloadStrategyPriority;
+        private int currentUnloadStrategy;
+
+        private int consecutiveFailedFrames;
+        private readonly int failureThreshold = 60;   
 
         internal ReleaseMemorySystem(Arch.Core.World world, ICacheCleaner cacheCleaner, IMemoryUsageProvider memoryBudgetProvider) : base(world)
         {
             this.cacheCleaner = cacheCleaner;
             this.memoryBudgetProvider = memoryBudgetProvider;
-            unloadStrategy = new StandardUnloadStrategy();
+            unloadStrategyPriority = new IUnloadStrategy[]
+            {
+                new StandardUnloadStrategy(),
+                new AggressiveUnloadStrategy()
+            };
+            currentUnloadStrategy = 0;
         }
 
         protected override void Update(float t)
         {
-            unloadStrategy.TryUnload(memoryBudgetProvider, cacheCleaner);
-            cacheCleaner.UpdateProfilingCounters();
+            if (unloadStrategyPriority[currentUnloadStrategy].isRunning)
+                return;
+
+            if (memoryBudgetProvider.GetMemoryUsageStatus() != MemoryUsageStatus.NORMAL)
+            {
+                unloadStrategyPriority[currentUnloadStrategy].TryUnload(cacheCleaner);
+                consecutiveFailedFrames++;
+
+                if (consecutiveFailedFrames >= failureThreshold)
+                {
+                    if (currentUnloadStrategy < unloadStrategyPriority.Length - 1)
+                        currentUnloadStrategy++;
+
+                    consecutiveFailedFrames = 0;
+                }
+            }
+            else
+            {
+                currentUnloadStrategy = 0;
+                consecutiveFailedFrames = 0;
+            }
         }
     }
 }
