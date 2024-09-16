@@ -37,7 +37,7 @@ namespace DCL.ApplicationVersionGuard
             this.webBrowser = webBrowser;
         }
 
-        public async UniTask<(string current, string latest)> GetVersionsAsync(CancellationToken ct)
+        public async UniTask<string> GetLatestVersionAsync(CancellationToken ct)
         {
             FlatFetchResponse response = await webRequestController.GetAsync<FlatFetchResponse<GenericGetRequest>, FlatFetchResponse>(
                 IDecentralandUrlsSource.EXPLORER_LATEST_RELEASE_URL,
@@ -49,7 +49,7 @@ namespace DCL.ApplicationVersionGuard
             GitHubRelease latestRelease = JsonUtility.FromJson<GitHubRelease>(response.body);
             string latestVersion = latestRelease.tag_name.TrimStart('v');
 
-            return (Application.version, latestVersion);
+            return latestVersion;
         }
 
         public async UniTask LaunchOrDownloadLauncherAsync(CancellationToken ct = default)

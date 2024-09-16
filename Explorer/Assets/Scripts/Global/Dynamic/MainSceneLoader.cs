@@ -209,16 +209,8 @@ namespace Global.Dynamic
 
                 await bootstrap.InitializeFeatureFlagsAsync(bootstrapContainer.IdentityCache!.Identity, bootstrapContainer.DecentralandUrlsSource, staticContainer!, ct);
 
-                bool runVersionControl = debugSettings.EnableVersionUpdateGuard;
-
-                if (applicationParametersParser.HasDebugFlag() && !Application.isEditor)
-                    runVersionControl = applicationParametersParser.TryGetValue("versionControl", out string? enforceDebugMode) && enforceDebugMode == "true";
-
-                if (runVersionControl && await DoesApplicationRequireVersionUpdateAsync(ct, splashScreen))
-                {
-                    // stop bootstrapping;
-                    return;
-                }
+                if (await DoesApplicationRequireVersionUpdateAsync(applicationParametersParser, splashScreen, ct))
+                    return; // stop bootstrapping;
 
                 DisableInputs();
 
@@ -280,28 +272,41 @@ namespace Global.Dynamic
             }
         }
 
-        private async UniTask<bool> DoesApplicationRequireVersionUpdateAsync(CancellationToken ct, SplashScreen splashScreen)
+        private async UniTask<bool> DoesApplicationRequireVersionUpdateAsync(ApplicationParametersParser applicationParametersParser, SplashScreen splashScreen, CancellationToken ct)
         {
-            var appVersionGuard = new ApplicationVersionGuard(staticContainer!.WebRequestsContainer.WebRequestController, bootstrapContainer!.WebBrowser);
+            string? currentVersion = Application.version;
 
-            var versions = await appVersionGuard.GetVersionsAsync(ct);
-            if (versions.current.IsOlderThan(versions.latest))
+            bool runVersionControl = debugSettings.EnableVersionUpdateGuard;
+
+            if (applicationParametersParser.HasDebugFlag() && !Application.isEditor)
             {
-                splashScreen.Hide();
+                runVersionControl = applicationParametersParser.TryGetValue("versionControl", out string? enforceDebugMode) && enforceDebugMode == "true";
 
-                var appVerRedirectionScreenPrefab = await bootstrapContainer!.AssetsProvisioner!.ProvideMainAssetAsync(dynamicSettings.AppVerRedirectionScreenPrefab, ct);
-
-                ControllerBase<LauncherRedirectionScreenView, ControllerNoData>.ViewFactoryMethod authScreenFactory =
-                    LauncherRedirectionScreenController.CreateLazily(appVerRedirectionScreenPrefab.Value.GetComponent<LauncherRedirectionScreenView>(), null);
-
-                var launcherRedirectionScreenController = new LauncherRedirectionScreenController(appVersionGuard, authScreenFactory, versions.current, versions.latest);
-                dynamicWorldContainer!.MvcManager.RegisterController(launcherRedirectionScreenController);
-
-                await dynamicWorldContainer!.MvcManager.ShowAsync(LauncherRedirectionScreenController.IssueCommand(), ct);
-                return true;
+                applicationParametersParser.TryGetValue("simulateVersion", out string? version);
+                currentVersion = version;
             }
 
-            return false;
+            if (!runVersionControl)
+                return false;
+
+            var appVersionGuard = new ApplicationVersionGuard(staticContainer!.WebRequestsContainer.WebRequestController, bootstrapContainer!.WebBrowser);
+            string? latestVersion = await appVersionGuard.GetLatestVersionAsync(ct);
+
+            if (!currentVersion.IsOlderThan(latestVersion))
+                return false;
+
+            splashScreen.Hide();
+
+            var appVerRedirectionScreenPrefab = await bootstrapContainer!.AssetsProvisioner!.ProvideMainAssetAsync(dynamicSettings.AppVerRedirectionScreenPrefab, ct);
+
+            ControllerBase<LauncherRedirectionScreenView, ControllerNoData>.ViewFactoryMethod authScreenFactory =
+                LauncherRedirectionScreenController.CreateLazily(appVerRedirectionScreenPrefab.Value.GetComponent<LauncherRedirectionScreenView>(), null);
+
+            var launcherRedirectionScreenController = new LauncherRedirectionScreenController(appVersionGuard, authScreenFactory, currentVersion, latestVersion);
+            dynamicWorldContainer!.MvcManager.RegisterController(launcherRedirectionScreenController);
+
+            await dynamicWorldContainer!.MvcManager.ShowAsync(LauncherRedirectionScreenController.IssueCommand(), ct);
+            return true;
         }
 
         private void DisableInputs()
