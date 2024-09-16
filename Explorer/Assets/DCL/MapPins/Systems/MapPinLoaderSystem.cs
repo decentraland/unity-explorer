@@ -38,7 +38,7 @@ namespace DCL.SDKComponents.MapPins.Systems
             this.sceneData = sceneData;
             this.globalWorld = globalWorld;
             this.partitionComponent = partitionComponent;
-            useCustomMapPinIcons = featureFlagsCache.Configuration.IsEnabled("alfa-map-pins-custom-icons");
+            useCustomMapPinIcons = featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.CUSTOM_MAP_PINS_ICONS);
         }
 
         protected override void Update(float t)

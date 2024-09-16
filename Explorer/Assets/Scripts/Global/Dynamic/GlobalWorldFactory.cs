@@ -139,6 +139,7 @@ namespace Global.Dynamic
 
             LoadStaticPointersSystem.InjectToWorld(ref builder);
             LoadFixedPointersSystem.InjectToWorld(ref builder);
+            LoadPortableExperiencePointersSystem.InjectToWorld(ref builder);
 
             // are replace by increasing radius
             var jobsMathHelper = new ParcelMathJobifiedHelper();
@@ -167,6 +168,8 @@ namespace Global.Dynamic
             UpdateTimeSystem.InjectToWorld(ref builder);
 
             OwnAvatarLoaderFromDebugMenuSystem.InjectToWorld(ref builder, playerEntity, debugContainerBuilder, realmData);
+
+            UnloadPortableExperiencesSystem.InjectToWorld(ref builder);
 
             UpdateCurrentSceneSystem.InjectToWorld(ref builder, realmData, scenesCache, currentSceneInfo, playerEntity, staticContainer.SingletonSharedDependencies.SceneAssetLock, debugContainerBuilder);
 
