@@ -38,13 +38,11 @@ namespace DCL.Multiplayer.SDK.Tests
             IComponentPool<SDKProfile> fakePool = Substitute.For<IComponentPool<SDKProfile>>();
             fakePool.Get().Returns(new SDKProfile());
 
-            system = new PlayerProfileDataPropagationSystem(world, characterDataPropagationUtility = new CharacterDataPropagationUtility(fakePool), playerEntity);
+            system = new PlayerProfileDataPropagationSystem(world, characterDataPropagationUtility = new CharacterDataPropagationUtility(fakePool));
 
-            playerCRDTEntity = new PlayerCRDTEntity(
-                SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM,
-                sceneFacade,
-                sceneWorldEntity
-            );
+            playerCRDTEntity = new PlayerCRDTEntity(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM);
+
+            playerCRDTEntity.AssignToScene(sceneFacade, sceneWorldEntity);
 
             entity = world.Create(playerCRDTEntity);
         }

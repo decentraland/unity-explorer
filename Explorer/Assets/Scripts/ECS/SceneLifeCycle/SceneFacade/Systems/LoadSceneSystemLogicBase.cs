@@ -1,11 +1,9 @@
-﻿using Arch.Core;
-using System;
+﻿using System;
 using System.Threading;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Ipfs;
-using DCL.Multiplayer.SDK.Systems.GlobalWorld;
 using DCL.WebRequests;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
@@ -19,16 +17,10 @@ namespace ECS.SceneLifeCycle.Systems
     {
         protected readonly URLDomain assetBundleURL;
         protected readonly IWebRequestController webRequestController;
-        private readonly ICharacterDataPropagationUtility characterDataPropagationUtility;
-        private readonly World globalWorld;
-        private readonly Entity playerEntity;
 
-        protected LoadSceneSystemLogicBase(IWebRequestController webRequestController, ICharacterDataPropagationUtility characterDataPropagationUtility, URLDomain assetBundleURL, World globalWorld, Entity playerEntity)
+        protected LoadSceneSystemLogicBase(IWebRequestController webRequestController, URLDomain assetBundleURL)
         {
             this.assetBundleURL = assetBundleURL;
-            this.globalWorld = globalWorld;
-            this.playerEntity = playerEntity;
-            this.characterDataPropagationUtility = characterDataPropagationUtility;
             this.webRequestController = webRequestController;
         }
 
@@ -65,9 +57,6 @@ namespace ECS.SceneLifeCycle.Systems
             ISceneFacade? sceneFacade = await sceneFactory.CreateSceneFromSceneDefinition(sceneData, partition, ct);
 
             await UniTask.SwitchToMainThread();
-
-            // ensure PlayerData is available on Initialize
-            characterDataPropagationUtility.PropagateGlobalPlayerToScenePlayer(globalWorld, playerEntity, sceneFacade);
 
             sceneFacade.Initialize();
             return sceneFacade;
