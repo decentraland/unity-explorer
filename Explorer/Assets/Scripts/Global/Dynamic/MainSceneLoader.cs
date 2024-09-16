@@ -211,7 +211,7 @@ namespace Global.Dynamic
 
                 bool runVersionControl = debugSettings.EnableVersionUpdateGuard;
 
-                if (applicationParametersParser.HasDebugFlag())
+                if (applicationParametersParser.HasDebugFlag() && !Application.isEditor)
                     runVersionControl = applicationParametersParser.TryGetValue("versionControl", out string? enforceDebugMode) && enforceDebugMode == "true";
 
                 if (runVersionControl && await DoesApplicationRequireVersionUpdateAsync(ct, splashScreen))
