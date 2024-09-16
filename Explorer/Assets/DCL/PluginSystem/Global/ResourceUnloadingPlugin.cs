@@ -11,7 +11,7 @@ namespace DCL.PluginSystem.Global
         private readonly MemoryBudget memoryBudget;
         private readonly CacheCleaner cacheCleaner;
         private readonly IUnloadStrategy[] unloadStrategies;
-        private const int frameFailThreshold = 60;
+        private const int FRAME_FAIL_THRESHOLD = 60;
 
         public ResourceUnloadingPlugin(MemoryBudget memoryBudget, CacheCleaner cacheCleaner)
         {
@@ -27,7 +27,7 @@ namespace DCL.PluginSystem.Global
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
             ReleaseMemorySystem.InjectToWorld(ref builder, cacheCleaner, memoryBudget, unloadStrategies,
-                frameFailThreshold);
+                FRAME_FAIL_THRESHOLD);
         }
     }
 }

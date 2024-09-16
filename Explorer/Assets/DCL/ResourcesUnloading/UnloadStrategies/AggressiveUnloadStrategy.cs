@@ -1,13 +1,12 @@
 using System;
 using Cysharp.Threading.Tasks;
-using DCL.Optimization.PerformanceBudgeting;
 using UnityEngine;
 
 namespace DCL.ResourcesUnloading.UnloadStrategies
 {
     public class AggressiveUnloadStrategy : IUnloadStrategy
     {
-        private readonly int forceUnloadDuringThisFrames = 200;
+        private const int FORCE_UNLOAD_DURING_THIS_FRAMES = 200;
         public bool isRunning { get; set; }
 
         public void TryUnload(ICacheCleaner cacheCleaner)
@@ -25,7 +24,7 @@ namespace DCL.ResourcesUnloading.UnloadStrategies
             var currentFrameRunning = 0;
             try
             {
-                while (currentFrameRunning < forceUnloadDuringThisFrames)
+                while (currentFrameRunning < FORCE_UNLOAD_DURING_THIS_FRAMES)
                 {
                     cacheCleaner.UnloadCache();
                     cacheCleaner.UpdateProfilingCounters();
