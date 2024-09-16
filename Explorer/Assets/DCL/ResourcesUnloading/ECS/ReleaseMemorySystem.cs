@@ -13,37 +13,36 @@ namespace DCL.PluginSystem.Global
         private readonly IMemoryUsageProvider memoryBudgetProvider;
         private readonly ICacheCleaner cacheCleaner;
 
-        private readonly IUnloadStrategy[] unloadStrategyPriority;
-        private int currentUnloadStrategy;
+        private readonly IUnloadStrategy[] unloadStrategies;
+        internal int currentUnloadStrategy;
 
         private int consecutiveFailedFrames;
-        private readonly int failureThreshold = 60;   
+        private readonly int failureThreshold;
 
-        internal ReleaseMemorySystem(Arch.Core.World world, ICacheCleaner cacheCleaner, IMemoryUsageProvider memoryBudgetProvider) : base(world)
+        internal ReleaseMemorySystem(Arch.Core.World world, ICacheCleaner cacheCleaner,
+            IMemoryUsageProvider memoryBudgetProvider, IUnloadStrategy[] unloadStrategies,
+            int failuresFrameThreshold) : base(world)
         {
             this.cacheCleaner = cacheCleaner;
             this.memoryBudgetProvider = memoryBudgetProvider;
-            unloadStrategyPriority = new IUnloadStrategy[]
-            {
-                new StandardUnloadStrategy(),
-                new AggressiveUnloadStrategy()
-            };
+            this.unloadStrategies = unloadStrategies;
+            failureThreshold = failuresFrameThreshold;
             currentUnloadStrategy = 0;
         }
 
         protected override void Update(float t)
         {
-            if (unloadStrategyPriority[currentUnloadStrategy].isRunning)
+            if (unloadStrategies[currentUnloadStrategy].isRunning)
                 return;
 
             if (memoryBudgetProvider.GetMemoryUsageStatus() != MemoryUsageStatus.NORMAL)
             {
-                unloadStrategyPriority[currentUnloadStrategy].TryUnload(cacheCleaner);
+                unloadStrategies[currentUnloadStrategy].TryUnload(cacheCleaner);
                 consecutiveFailedFrames++;
 
                 if (consecutiveFailedFrames >= failureThreshold)
                 {
-                    if (currentUnloadStrategy < unloadStrategyPriority.Length - 1)
+                    if (currentUnloadStrategy < unloadStrategies.Length - 1)
                         currentUnloadStrategy++;
 
                     consecutiveFailedFrames = 0;
