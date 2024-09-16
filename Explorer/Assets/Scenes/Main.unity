@@ -492,11 +492,11 @@ MonoBehaviour:
     <DropdownField>k__BackingField: {fileID: 9197481963319205126, guid: 63de32c36b8356d42bb93522421d6379, type: 3}
   debugSettings:
     showSplash: 1
-    showAuthentication: 0
+    showAuthentication: 1
     showLoading: 1
     enableLandscape: 0
     enableLOD: 0
-    enableVersionUpdateGuard: 1
+    enableVersionUpdateGuard: 0
     enableEmulateNoLivekitConnection: 0
     enableRemotePortableExperiences: 0
     portableExperiencesEnsToLoad: []
