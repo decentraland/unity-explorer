@@ -25,8 +25,6 @@ namespace DCL.AuthenticationScreenFlow
 
         protected override void OnViewInstantiated()
         {
-            base.OnViewInstantiated();
-
             viewInstance.SetVersions(current, latest);
             viewInstance.CloseButton.onClick.AddListener(Quit);
             viewInstance.CloseWithLauncherButton.onClick.AddListener(HandleVersionUpdate);
@@ -34,7 +32,6 @@ namespace DCL.AuthenticationScreenFlow
 
         public override void Dispose()
         {
-            base.Dispose();
             viewInstance.CloseButton.onClick.RemoveListener(Quit);
             viewInstance.CloseWithLauncherButton.onClick.RemoveListener(HandleVersionUpdate);
         }

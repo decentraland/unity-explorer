@@ -1,6 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Diagnostics;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.WebRequests;
 using SceneRuntime.Apis.Modules.SignedFetch.Messages;
 using System;
@@ -9,7 +10,6 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using UnityEngine;
-using Debug = UnityEngine.Debug;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -19,9 +19,7 @@ namespace DCL.ApplicationVersionGuard
 {
     public class ApplicationVersionGuard
     {
-        private const string EXPLORER_LATEST_RELEASE_URL = "https://api.github.com/repos/decentraland/unity-explorer/releases/latest";
-        private const string LAUNCHER_LATEST_RELEASE_URL = "https://api.github.com/repos/decentraland/launcher/releases/latest";
-        private const string LAUNCHER_DOWNLOAD_URL = "https://github.com/decentraland/launcher/releases/download";
+
 
         private const string LAUNCHER_EXECUTABLE_NAME = "Decentraland Launcher";
         private const string LAUNCHER_PATH_MAC = "/Applications/" + LAUNCHER_EXECUTABLE_NAME + ".app";
@@ -44,10 +42,10 @@ namespace DCL.ApplicationVersionGuard
         public async UniTask<(string current, string latest)> GetVersionsAsync(CancellationToken ct)
         {
             FlatFetchResponse response = await webRequestController.GetAsync<FlatFetchResponse<GenericGetRequest>, FlatFetchResponse>(
-                EXPLORER_LATEST_RELEASE_URL,
+                IDecentralandUrlsSource.EXPLORER_LATEST_RELEASE_URL,
                 new FlatFetchResponse<GenericGetRequest>(),
                 ct,
-                ReportCategory.UNSPECIFIED,
+                ReportCategory.VERSION_CONTROL,
                 new WebRequestHeadersInfo());
 
             GitHubRelease latestRelease = JsonUtility.FromJson<GitHubRelease>(response.body);
@@ -73,7 +71,7 @@ namespace DCL.ApplicationVersionGuard
                 catch (Exception e)
                 {
                     if (e is not OperationCanceledException)
-                        ReportHub.LogException(e, ReportCategory.UNSPECIFIED);
+                        ReportHub.LogException(e, ReportCategory.VERSION_CONTROL);
                 }
                 finally { Quit(); }
             }
@@ -95,24 +93,24 @@ namespace DCL.ApplicationVersionGuard
             if (!string.IsNullOrEmpty(downloadUrl))
                 webBrowser.OpenUrl(downloadUrl);
             else
-                ReportHub.LogError(ReportCategory.UNSPECIFIED, "Failed to get launcher download URL.");
+                ReportHub.LogError(ReportCategory.VERSION_CONTROL, "Failed to get launcher download URL.");
 
             return;
 
             async UniTask<string> GetLauncherDownloadUrlAsync(CancellationToken cancellationToken)
             {
                 FlatFetchResponse response = await webRequestController.GetAsync<FlatFetchResponse<GenericGetRequest>, FlatFetchResponse>(
-                    LAUNCHER_LATEST_RELEASE_URL,
+                    IDecentralandUrlsSource.LAUNCHER_LATEST_RELEASE_URL,
                     new FlatFetchResponse<GenericGetRequest>(),
                     cancellationToken,
-                    ReportCategory.UNSPECIFIED,
+                    ReportCategory.VERSION_CONTROL,
                     new WebRequestHeadersInfo());
 
                 GitHubRelease latestRelease = JsonUtility.FromJson<GitHubRelease>(response.body);
                 string version = latestRelease.tag_name.TrimStart('v');
 
                 string assetName = GetLauncherAssetName();
-                return $"{LAUNCHER_DOWNLOAD_URL}/{version}/{assetName}";
+                return $"{IDecentralandUrlsSource.LAUNCHER_DOWNLOAD_URL}/{version}/{assetName}";
             }
         }
 
@@ -145,7 +143,7 @@ namespace DCL.ApplicationVersionGuard
                     startInfo.Arguments = $"-n \"{launcherPath}\"";
                     return startInfo;
                 default:
-                    ReportHub.LogError(ReportCategory.UNSPECIFIED, "Unsupported platform for launching the application.");
+                    ReportHub.LogError(ReportCategory.VERSION_CONTROL, "Unsupported platform for launching the application.");
                     return startInfo;
             }
         }
@@ -176,7 +174,7 @@ namespace DCL.ApplicationVersionGuard
 
                     break;
                 default:
-                    ReportHub.LogError(ReportCategory.UNSPECIFIED, "Unsupported platform for launching the application.");
+                    ReportHub.LogError(ReportCategory.VERSION_CONTROL, "Unsupported platform for launching the application.");
                     return null;
             }
 

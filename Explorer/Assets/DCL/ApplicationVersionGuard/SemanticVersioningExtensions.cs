@@ -7,14 +7,14 @@ namespace DCL.ApplicationVersionGuard
         public static bool IsOlderThan(this string current, string latest) =>
             current.ToSemanticVersion().IsOlderThan(latest.ToSemanticVersion());
 
-        private static bool IsOlderThan(this (int, int, int) current, (int, int, int) latest)
+        private static bool IsOlderThan(this (int Major, int Minor, int Patch) current, (int Major, int Minor, int Patch) latest)
         {
-            if (current.Item1 < latest.Item1) return true;
-            if (current.Item2 < latest.Item2) return true;
-            return current.Item3 < latest.Item3;
+            if (current.Major < latest.Major) return true;
+            if (current.Minor < latest.Minor) return true;
+            return current.Patch < latest.Patch;
         }
 
-        private static (int, int, int) ToSemanticVersion(this string versionString)
+        private static (int Major, int Minor, int Patch) ToSemanticVersion(this string versionString)
         {
             Match match = Regex.Match(versionString, @"v?(\d+)\.?(\d*)\.?(\d*)");
 
