@@ -2,7 +2,7 @@
 using System;
 using System.Threading;
 
-namespace ECS.StreamableLoading.AssetBundles
+namespace DCL.WebRequests
 {
     /// <summary>
     ///     Guarantees that only one asset bundle is being loaded at a time

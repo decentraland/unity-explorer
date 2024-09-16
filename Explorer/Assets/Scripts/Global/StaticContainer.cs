@@ -172,14 +172,15 @@ namespace Global
             container.Profiler = profilingProvider;
             container.EntityCollidersGlobalCache = new EntityCollidersGlobalCache();
             container.ExposedGlobalDataContainer = exposedGlobalDataContainer;
-            container.WebRequestsContainer = WebRequestsContainer.Create(web3IdentityProvider, container.DebugContainerBuilder);
+            container.WebRequestsContainer = WebRequestsContainer.Create(web3IdentityProvider,
+                container.DebugContainerBuilder, staticSettings.WebRequestsBudget);
             container.PhysicsTickProvider = new PhysicsTickProvider();
             container.FeatureFlagsCache = new FeatureFlagsCache();
             container.PortableExperiencesController = new ECSPortableExperiencesController(globalWorld, web3IdentityProvider, container.WebRequestsContainer.WebRequestController, container.ScenesCache, container.FeatureFlagsCache);
             container.FeatureFlagsProvider = new HttpFeatureFlagsProvider(container.WebRequestsContainer.WebRequestController,
                 container.FeatureFlagsCache);
 
-            var assetBundlePlugin = new AssetBundlesPlugin(reportHandlingSettings, container.CacheCleaner);
+            var assetBundlePlugin = new AssetBundlesPlugin(reportHandlingSettings, container.CacheCleaner, container.WebRequestsContainer.WebRequestController);
             var textureResolvePlugin = new TexturesLoadingPlugin(container.WebRequestsContainer.WebRequestController, container.CacheCleaner);
 
             ExtendedObjectPool<Texture2D> videoTexturePool = VideoTextureFactory.CreateVideoTexturesPool();

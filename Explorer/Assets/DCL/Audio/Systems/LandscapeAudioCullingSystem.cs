@@ -68,7 +68,14 @@ namespace DCL.Audio.Systems
             landscapeJobHandle.Complete();
             oceanJobHandle.Complete();
             landscapeAudioStates.Dispose();
+
+            if (landscapeAudioSourcesPositions.IsCreated)
+                for (var i = 0; i < landscapeAudioSourcesPositions.Length; i++)
+                    landscapeAudioSourcesPositions[i].Dispose();
+
             landscapeAudioSourcesPositions.Dispose();
+
+            oceanAudioStates.Dispose();
         }
 
         protected override void Update(float t)
@@ -147,7 +154,7 @@ namespace DCL.Audio.Systems
             int cellWidth = (int)terrainSize.x / rowsPerChunk;
             int cellLength = (int)terrainSize.z / rowsPerChunk;
 
-            var positions = new NativeList<int2>(Allocator.Persistent);
+            var positions = new NativeList<int2>(rowsPerChunk * rowsPerChunk, Allocator.Persistent);
             var worldCellMin = new int2((int)worldBounds.min.x, (int)worldBounds.min.z);
 
             for (var row = 0; row < rowsPerChunk; row++)
