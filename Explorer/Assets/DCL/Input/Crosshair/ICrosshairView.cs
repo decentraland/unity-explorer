@@ -4,7 +4,7 @@ namespace DCL.Input.Crosshair
 {
     public interface ICrosshairView
     {
-        void SetCursorStyle(CursorStyle style);
+        void SetCursorStyle(CursorStyle style, bool disableCrosshair = false);
 
         void SetDisplayed(bool displayed);
 

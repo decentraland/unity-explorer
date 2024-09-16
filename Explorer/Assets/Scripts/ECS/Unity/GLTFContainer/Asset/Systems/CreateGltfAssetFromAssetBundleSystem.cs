@@ -57,7 +57,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
             if (!assetBundleResult.Succeeded)
             {
                 // Just propagate an exception, we can't do anything
-                World.Add(entity, new StreamableLoadingResult<GltfContainerAsset>(CreateException(assetBundleResult.Exception)));
+                World.Add(entity, new StreamableLoadingResult<GltfContainerAsset>(GetReportCategory(), CreateException(assetBundleResult.Exception)));
                 return;
             }
 
@@ -88,14 +88,14 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
             }
 
             // Collect all Animations as they are used in Animation System (only for legacy support, as all of them will eventually be converted to Animators)
-            using PoolExtensions.Scope<List<Animation>> animationScope = GltfContainerAsset.ANIMATIONS_POOL.AutoScope();
+            using (PoolExtensions.Scope<List<Animation>> animationScope = GltfContainerAsset.ANIMATIONS_POOL.AutoScope())
             {
                 instance.GetComponentsInChildren(true, animationScope.Value);
                 result.Animations.AddRange(animationScope.Value);
             }
 
             // Collect all Animators as they are used in Animation System
-            using PoolExtensions.Scope<List<Animator>> animatorScope = GltfContainerAsset.ANIMATORS_POOL.AutoScope();
+            using (PoolExtensions.Scope<List<Animator>> animatorScope = GltfContainerAsset.ANIMATORS_POOL.AutoScope())
             {
                 instance.GetComponentsInChildren(true, animatorScope.Value);
                 result.Animators.AddRange(animatorScope.Value);
@@ -116,6 +116,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
                     if (go.GetComponent<Renderer>())
                         AddVisibleMeshCollider(result, go, meshFilter.sharedMesh);
                     else
+
                         // Gather invisible colliders
                         CreateAndAddMeshCollider(result.InvisibleColliders, go, meshFilter.sharedMesh);
                 }
@@ -138,6 +139,11 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
 
             return result;
         }
+
+        // If we update AddVisibleMeshCollider and/or CreateAndAddMeshCollider please check and update them in CreateGltfAssetFromRawGltfSystem.cs
+        // As a tech-debt we might want to move these functions elsewhere to avoid repetition, but for now it's acceptable since the other one is only for local development
+
+#region Helper Collider Methods
 
         private static void AddVisibleMeshCollider(GltfContainerAsset result, GameObject go, Mesh mesh)
         {
@@ -183,5 +189,6 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
                        || go.transform.parent.name.Contains(COLLIDER_SUFFIX, IGNORE_CASE);
             }
         }
+#endregion
     }
 }

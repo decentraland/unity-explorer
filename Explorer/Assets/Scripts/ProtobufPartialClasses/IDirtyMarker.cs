@@ -77,11 +77,6 @@ namespace DCL.ECSComponents
         public bool IsDirty { get; set; }
     }
 
-    public partial class PBGltfContainerLoadingState : IDirtyMarker
-    {
-        public bool IsDirty { get; set; }
-    }
-
     public partial class PBRaycast : IDirtyMarker
     {
         public bool IsDirty { get; set; }
@@ -168,6 +163,21 @@ namespace DCL.ECSComponents
     }
 
     public partial class PBRealmInfo : IDirtyMarker
+    {
+        public bool IsDirty { get; set; }
+    }
+
+    public partial class PBInputModifier : IDirtyMarker
+    {
+        public bool IsDirty { get; set; }
+    }
+
+    public partial class PBMainCamera : IDirtyMarker
+    {
+        public bool IsDirty { get; set; }
+    }
+
+    public partial class PBVirtualCamera : IDirtyMarker
     {
         public bool IsDirty { get; set; }
     }

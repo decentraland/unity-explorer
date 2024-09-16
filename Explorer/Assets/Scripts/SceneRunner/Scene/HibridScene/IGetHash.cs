@@ -12,12 +12,12 @@ namespace SceneRunner.Scene
 {
     public interface IGetHash
     {
-        UniTask<(bool, string)> TryGetHashAsync(IWebRequestController webRequestController, URLDomain contentDomain, Vector2Int coordinate, string reportCategory);
+        UniTask<(bool, string)> TryGetHashAsync(IWebRequestController webRequestController, URLDomain contentDomain, Vector2Int coordinate, ReportData reportCategory);
     }
 
     public class GetHashGoerli : IGetHash
     {
-        public async UniTask<(bool, string)> TryGetHashAsync(IWebRequestController webRequestController, URLDomain contentDomain, Vector2Int coordinate, string reportCategory)
+        public async UniTask<(bool, string)> TryGetHashAsync(IWebRequestController webRequestController, URLDomain contentDomain, Vector2Int coordinate, ReportData reportCategory)
         {
             try
             {
@@ -54,7 +54,7 @@ namespace SceneRunner.Scene
             this.world = world;
         }
 
-        public async UniTask<(bool, string)> TryGetHashAsync(IWebRequestController webRequestController, URLDomain contentDomain, Vector2Int coordinate, string reportCategory)
+        public async UniTask<(bool, string)> TryGetHashAsync(IWebRequestController webRequestController, URLDomain contentDomain, Vector2Int coordinate, ReportData reportCategory)
         {
             try
             {
@@ -84,7 +84,7 @@ namespace SceneRunner.Scene
 
     public class GetHashGenesis : IGetHash
     {
-        public async UniTask<(bool, string)> TryGetHashAsync(IWebRequestController webRequestController, URLDomain contentDomain, Vector2Int coordinate, string reportCategory)
+        public async UniTask<(bool, string)> TryGetHashAsync(IWebRequestController webRequestController, URLDomain contentDomain, Vector2Int coordinate, ReportData reportCategory)
         {
             try
             {

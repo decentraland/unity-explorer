@@ -43,7 +43,12 @@ namespace DCL.ApplicationVersionGuard
 
         public async UniTask<(string current, string latest)> GetVersionsAsync(CancellationToken ct)
         {
-            FlatFetchResponse response = await webRequestController.GetAsync<FlatFetchResponse<GenericGetRequest>, FlatFetchResponse>(EXPLORER_LATEST_RELEASE_URL, new FlatFetchResponse<GenericGetRequest>(), ct);
+            FlatFetchResponse response = await webRequestController.GetAsync<FlatFetchResponse<GenericGetRequest>, FlatFetchResponse>(
+                EXPLORER_LATEST_RELEASE_URL,
+                new FlatFetchResponse<GenericGetRequest>(),
+                ct,
+                ReportCategory.UNSPECIFIED,
+                new WebRequestHeadersInfo());
 
             GitHubRelease latestRelease = JsonUtility.FromJson<GitHubRelease>(response.body);
             string latestVersion = latestRelease.tag_name.TrimStart('v');
@@ -94,9 +99,14 @@ namespace DCL.ApplicationVersionGuard
 
             return;
 
-            async UniTask<string> GetLauncherDownloadUrlAsync(CancellationToken ct)
+            async UniTask<string> GetLauncherDownloadUrlAsync(CancellationToken cancellationToken)
             {
-                FlatFetchResponse response = await webRequestController.GetAsync<FlatFetchResponse<GenericGetRequest>, FlatFetchResponse>(LAUNCHER_LATEST_RELEASE_URL, new FlatFetchResponse<GenericGetRequest>(), ct);
+                FlatFetchResponse response = await webRequestController.GetAsync<FlatFetchResponse<GenericGetRequest>, FlatFetchResponse>(
+                    LAUNCHER_LATEST_RELEASE_URL,
+                    new FlatFetchResponse<GenericGetRequest>(),
+                    cancellationToken,
+                    ReportCategory.UNSPECIFIED,
+                    new WebRequestHeadersInfo());
 
                 GitHubRelease latestRelease = JsonUtility.FromJson<GitHubRelease>(response.body);
                 string version = latestRelease.tag_name.TrimStart('v');

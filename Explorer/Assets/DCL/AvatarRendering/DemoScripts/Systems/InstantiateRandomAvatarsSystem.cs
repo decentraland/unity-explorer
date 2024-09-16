@@ -7,6 +7,7 @@ using DCL.AvatarRendering.AvatarShape;
 using DCL.AvatarRendering.AvatarShape.Systems;
 using DCL.AvatarRendering.DemoScripts.Components;
 using DCL.AvatarRendering.Emotes;
+using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
@@ -222,7 +223,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
                 if (baseWearables.Succeeded)
                     GenerateRandomizers(baseWearables, male, female);
                 else
-                    ReportHub.LogError(GetReportCategory(), $"Collection {assetPromise.LoadingIntention.Params[0].Item2} couldn't be loaded!");
+                    ReportHub.LogError(GetReportData(), $"Collection {assetPromise.LoadingIntention.Params[0].Item2} couldn't be loaded!");
             }
 
             GenerateRandomAvatars(randomAvatarRequest.RandomAvatarsToInstantiate, cameraComponent.Camera.transform.position, characterControllerSettings);

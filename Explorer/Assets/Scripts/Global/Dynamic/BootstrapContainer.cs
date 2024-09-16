@@ -4,6 +4,7 @@ using DCL.AssetsProvision;
 using DCL.Browser;
 using DCL.Browser.DecentralandUrls;
 using DCL.Diagnostics;
+using DCL.Diagnostics.Sentry;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PluginSystem;
@@ -12,8 +13,10 @@ using DCL.Web3.Abstract;
 using DCL.Web3.Accounts.Factory;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
+using ECS.SceneLifeCycle.Realm;
 using Global.AppArgs;
 using Segment.Analytics;
+using Sentry;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -25,9 +28,9 @@ namespace Global.Dynamic
     public class BootstrapContainer : DCLGlobalContainer<BootstrapSettings>
     {
         private ProvidedAsset<ReportsHandlingSettings> reportHandlingSettings;
-        private DiagnosticsContainer? diagnosticsContainer;
         private bool enableAnalytics;
 
+        public DiagnosticsContainer DiagnosticsContainer { get; private set; }
         public IDecentralandUrlsSource DecentralandUrlsSource { get; private set; }
         public IWebBrowser WebBrowser { get; private set; }
         public IWeb3AccountFactory Web3AccountFactory { get; private set; }
@@ -40,12 +43,14 @@ namespace Global.Dynamic
         public IDebugSettings DebugSettings { get; private set; }
         public IReportsHandlingSettings ReportHandlingSettings => reportHandlingSettings.Value;
         public IAppArgs ApplicationParametersParser { get; private set; }
+        public bool LocalSceneDevelopment { get; private set; }
+        public bool UseRemoteAssetBundles { get; private set; }
 
         public override void Dispose()
         {
             base.Dispose();
 
-            diagnosticsContainer?.Dispose();
+            DiagnosticsContainer?.Dispose();
             reportHandlingSettings.Dispose();
             Web3Authenticator?.Dispose();
             VerifiedEthereumApi?.Dispose();
@@ -71,8 +76,10 @@ namespace Global.Dynamic
                 AssetsProvisioner = new AddressablesProvisioner(),
                 DecentralandUrlsSource = decentralandUrlsSource,
                 WebBrowser = browser,
+                LocalSceneDevelopment = realmLaunchSettings.IsLocalSceneDevelopmentRealm || realmLaunchSettings.GetStartingRealm(decentralandUrlsSource) == IRealmNavigator.LOCALHOST,
+                UseRemoteAssetBundles = realmLaunchSettings.useRemoteAssetsBundles,
                 ApplicationParametersParser = applicationParametersParser,
-                DebugSettings = debugSettings
+                DebugSettings = debugSettings,
             };
 
             await bootstrapContainer.InitializeContainerAsync<BootstrapContainer, BootstrapSettings>(settingsContainer, ct, async container =>
@@ -81,9 +88,17 @@ namespace Global.Dynamic
                 (container.Bootstrap, container.Analytics) = await CreateBootstrapperAsync(debugSettings, applicationParametersParser, container, container.settings, realmLaunchSettings, world, ct);
                 (container.IdentityCache, container.VerifiedEthereumApi, container.Web3Authenticator) = CreateWeb3Dependencies(sceneLoaderSettings, web3AccountFactory, browser, container, decentralandUrlsSource);
 
-                container.diagnosticsContainer = container.enableAnalytics
+                container.DiagnosticsContainer = container.enableAnalytics
                     ? DiagnosticsContainer.Create(container.ReportHandlingSettings, realmLaunchSettings.IsLocalSceneDevelopmentRealm, (ReportHandler.DebugLog, new CriticalLogsAnalyticsHandler(container.Analytics)))
                     : DiagnosticsContainer.Create(container.ReportHandlingSettings);
+
+                container.DiagnosticsContainer.AddSentryScopeConfigurator(AddIdentityToSentryScope);
+
+                void AddIdentityToSentryScope(Scope scope)
+                {
+                    if (container.IdentityCache.Identity != null)
+                        container.DiagnosticsContainer.Sentry!.AddIdentityToScope(scope, container.IdentityCache.Identity.Address);
+                }
             });
 
             return bootstrapContainer;

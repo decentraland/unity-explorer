@@ -1,12 +1,11 @@
 ﻿using CRDT.Memory;
 using CrdtEcsBridge.PoolsProviders;
+using ECS;
 using SceneRunner.Scene;
 using SceneRuntime;
 using System;
 using System.Buffers;
-using System.Collections.Generic;
 using System.Text;
-using Utility;
 
 namespace CrdtEcsBridge.JsModulesImplementation.Communications
 {
@@ -15,11 +14,13 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
         private readonly ICRDTMemoryAllocator crdtMemoryAllocator;
 
         public CommunicationsControllerAPIImplementation(
+            IRealmData realmData,
             ISceneData sceneData,
-            ICommunicationControllerHub messagePipesHub,
+            ISceneCommunicationPipe messagePipesHub,
             IJsOperations jsOperations,
             ICRDTMemoryAllocator crdtMemoryAllocator,
             ISceneStateProvider sceneStateProvider) : base(
+            realmData,
             sceneData,
             messagePipesHub,
             jsOperations,
@@ -28,18 +29,15 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
             this.crdtMemoryAllocator = crdtMemoryAllocator;
         }
 
-        protected override void OnMessageReceived(ICommunicationControllerHub.SceneMessage receivedMessage)
+        protected override void OnMessageReceived(MsgType messageType, ReadOnlySpan<byte> decodedMessage, string fromWalletId)
         {
-            ReadOnlySpan<byte> decodedMessage = receivedMessage.Data.Span;
-            MsgType msgType = DecodeMessage(ref decodedMessage);
-
-            if (msgType != MsgType.Uint8Array || decodedMessage.Length == 0)
+            if (messageType != MsgType.Uint8Array)
                 return;
 
             // Wallet Id
-            int walletBytesCount = Encoding.UTF8.GetByteCount(receivedMessage.WalletId);
+            int walletBytesCount = Encoding.UTF8.GetByteCount(fromWalletId);
             Span<byte> senderBytes = stackalloc byte[walletBytesCount];
-            Encoding.UTF8.GetBytes(receivedMessage.WalletId, senderBytes);
+            Encoding.UTF8.GetBytes(fromWalletId, senderBytes);
 
             int messageLength = senderBytes.Length + decodedMessage.Length + 1;
 

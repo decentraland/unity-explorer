@@ -1,10 +1,14 @@
 using Arch.Core;
+using CommunicationData.URLHelpers;
+using CRDT;
+using CrdtEcsBridge.Components;
 using Cysharp.Threading.Tasks;
 using DCL.ApplicationVersionGuard;
 using DCL.Audio;
 using DCL.AuthenticationScreenFlow;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
+using DCL.FeatureFlags;
 using DCL.Input.Component;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
@@ -13,9 +17,11 @@ using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using Global.AppArgs;
 using LiveKit.Proto;
+using PortableExperiences.Controller;
 using MVC;
 using SceneRunner.Debugging;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using UnityEngine;
@@ -25,6 +31,8 @@ namespace Global.Dynamic
 {
     public interface IDebugSettings
     {
+        string[]? PortableExperiencesEnsToLoad { get; }
+        bool ShowSplash { get; }
         bool ShowAuthentication { get; }
         bool ShowLoading { get; }
         bool EnableLandscape { get; }
@@ -33,6 +41,7 @@ namespace Global.Dynamic
         bool EnableEmulateNoLivekitConnection { get; }
         bool OverrideConnectionQuality { get; }
         ConnectionQuality ConnectionQuality { get; }
+        bool EnableRemotePortableExperiences { get; }
     }
 
     [Serializable]
@@ -40,17 +49,28 @@ namespace Global.Dynamic
     {
         private static readonly DebugSettings RELEASE_SETTINGS = Release();
 
-        [SerializeField] private bool showSplash;
-        [SerializeField] private bool showAuthentication;
-        [SerializeField] private bool showLoading;
-        [SerializeField] private bool enableLandscape;
-        [SerializeField] private bool enableLOD;
+        [SerializeField]
+        private bool showSplash;
+        [SerializeField]
+        private bool showAuthentication;
+        [SerializeField]
+        private bool showLoading;
+        [SerializeField]
+        private bool enableLandscape;
+        [SerializeField]
+        private bool enableLOD;
         [SerializeField] private bool enableVersionUpdateGuard;
-        [SerializeField] private bool enableEmulateNoLivekitConnection;
-
+        [SerializeField]
+        private bool enableEmulateNoLivekitConnection;
+        [SerializeField] [Tooltip("Enable Portable Experiences obtained from Feature Flags from loading at the start of the game")]
+        private bool enableRemotePortableExperiences;
+        [SerializeField] [Tooltip("Make sure the ENS put here will be loaded as a GlobalPX (format must be something.dcl.eth)")]
+        internal string[]? portableExperiencesEnsToLoad;
         [Space]
-        [SerializeField] private bool overrideConnectionQuality;
-        [SerializeField] private ConnectionQuality connectionQuality;
+        [SerializeField]
+        private bool overrideConnectionQuality;
+        [SerializeField]
+        private ConnectionQuality connectionQuality;
 
         public static DebugSettings Release() =>
             new ()
@@ -61,12 +81,16 @@ namespace Global.Dynamic
                 enableLandscape = true,
                 enableLOD = true,
                 enableVersionUpdateGuard = true,
+                portableExperiencesEnsToLoad = null,
                 enableEmulateNoLivekitConnection = false,
                 overrideConnectionQuality = false,
-                connectionQuality = ConnectionQuality.QualityExcellent
+                connectionQuality = ConnectionQuality.QualityExcellent,
+                enableRemotePortableExperiences = true,
             };
 
         // To avoid configuration issues, force full flow on build (Debug.isDebugBuild is always true in Editor)
+        public string[]? PortableExperiencesEnsToLoad => Debug.isDebugBuild ? this.portableExperiencesEnsToLoad : RELEASE_SETTINGS.portableExperiencesEnsToLoad;
+        public bool EnableRemotePortableExperiences => Debug.isDebugBuild ? this.enableRemotePortableExperiences : RELEASE_SETTINGS.enableRemotePortableExperiences;
         public bool ShowSplash => Debug.isDebugBuild ? this.showSplash : RELEASE_SETTINGS.showSplash;
         public bool ShowAuthentication => Debug.isDebugBuild ? this.showAuthentication : RELEASE_SETTINGS.showAuthentication;
         public bool ShowLoading => Debug.isDebugBuild ? this.showLoading : RELEASE_SETTINGS.showLoading;
@@ -163,7 +187,8 @@ namespace Global.Dynamic
                 bootstrap.PreInitializeSetup(cursorRoot, debugUiRoot, splashScreen, destroyCancellationToken);
 
                 bool isLoaded;
-                (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugViewsCatalog, ct);
+                Entity playerEntity = world.Create(new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY));
+                (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugViewsCatalog, playerEntity, ct);
 
                 if (!isLoaded)
                 {
@@ -171,7 +196,7 @@ namespace Global.Dynamic
                     return;
                 }
 
-                Entity playerEntity = bootstrap.CreatePlayerEntity(staticContainer!);
+                bootstrap.InitializePlayerEntity(staticContainer!, playerEntity);
 
                 (dynamicWorldContainer, isLoaded) = await bootstrap.LoadDynamicWorldContainerAsync(bootstrapContainer, staticContainer!, scenePluginSettingsContainer, settings,
                     dynamicSettings, uiToolkitRoot, cursorRoot, splashScreen, backgroundMusic, worldInfoTool.EnsureNotNull(), playerEntity, destroyCancellationToken);
@@ -200,10 +225,13 @@ namespace Global.Dynamic
 
                 globalWorld = bootstrap.CreateGlobalWorld(bootstrapContainer, staticContainer!, dynamicWorldContainer!, debugUiRoot, playerEntity);
 
-                staticContainer!.PlayerEntityProxy.SetObject(playerEntity);
-
                 await bootstrap.LoadStartingRealmAsync(dynamicWorldContainer!, ct);
+
                 await bootstrap.UserInitializationAsync(dynamicWorldContainer!, globalWorld, playerEntity, splashScreen, ct);
+
+                LoadDebugPortableExperiences(ct);
+
+                LoadRemotePortableExperiences(ct);
 
                 RestoreInputs();
             }
@@ -216,6 +244,34 @@ namespace Global.Dynamic
                 // unhandled exception
                 GameReports.PrintIsDead();
                 throw;
+            }
+        }
+
+        private void LoadRemotePortableExperiences(CancellationToken ct)
+        {
+            if (!debugSettings.EnableRemotePortableExperiences) return;
+
+            if (staticContainer!.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.GLOBAL_PORTABLE_EXPERIENCE, FeatureFlagsStrings.CSV_VARIANT))
+            {
+                if (!staticContainer.FeatureFlagsCache.Configuration.TryGetCsvPayload(FeatureFlagsStrings.GLOBAL_PORTABLE_EXPERIENCE, "csv-variant", out List<List<string>>? csv)) return;
+
+                if (csv?[0] == null) return;
+
+                foreach (string value in csv[0]) { staticContainer.PortableExperiencesController!.
+                                                                   CreatePortableExperienceByEnsAsync(new ENS(value), ct, true, true).
+                                                                   SuppressAnyExceptionWithFallback(new IPortableExperiencesController.SpawnResponse(), ReportCategory.PORTABLE_EXPERIENCE).Forget(); }
+            }
+        }
+
+        private void LoadDebugPortableExperiences(CancellationToken ct)
+        {
+            if (debugSettings.portableExperiencesEnsToLoad == null) return;
+
+            foreach (string pxEns in debugSettings.portableExperiencesEnsToLoad)
+            {
+                staticContainer!.PortableExperiencesController.
+                                 CreatePortableExperienceByEnsAsync(new ENS(pxEns), ct, true, true).
+                                 SuppressAnyExceptionWithFallback(new IPortableExperiencesController.SpawnResponse(), ReportCategory.PORTABLE_EXPERIENCE).Forget();
             }
         }
 
@@ -259,7 +315,7 @@ namespace Global.Dynamic
         {
             // We enable Inputs through the inputBlock so the block counters can be properly updated and the component Active flags are up-to-date as well
             // We restore all inputs except EmoteWheel and FreeCamera as they should be disabled by default
-            staticContainer!.InputBlock.Enable(InputMapComponent.Kind.Shortcuts, InputMapComponent.Kind.Player, InputMapComponent.Kind.Emotes, InputMapComponent.Kind.Camera);
+            staticContainer!.InputBlock.Enable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.PLAYER, InputMapComponent.Kind.EMOTES, InputMapComponent.Kind.CAMERA);
         }
 
         [ContextMenu(nameof(ValidateSettingsAsync))]
