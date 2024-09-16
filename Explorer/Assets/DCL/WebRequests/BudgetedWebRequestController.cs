@@ -1,16 +1,10 @@
-﻿using CommunicationData.URLHelpers;
-using Cysharp.Threading.Tasks;
+﻿using Cysharp.Threading.Tasks;
 using DCL.Optimization.PerformanceBudgeting;
-using System;
-using System.Collections.Generic;
-using UnityEngine.Pool;
-using Utility;
 
 namespace DCL.WebRequests
 {
     public class BudgetedWebRequestController : IWebRequestController
     {
-        private readonly ObjectPool<ConcurrentLoadingPerformanceBudget> budgetPool;
         private readonly IWebRequestController origin;
         private readonly IReleasablePerformanceBudget totalBudget;
 

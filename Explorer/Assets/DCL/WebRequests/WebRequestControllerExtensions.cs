@@ -6,6 +6,7 @@ using DCL.WebRequests.GenericDelete;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using DCL.DebugUtilities.UIBindings;
 using UnityEngine;
 using UnityEngine.Networking;
 using Utility.Times;
@@ -222,9 +223,17 @@ namespace DCL.WebRequests
         public static IWebRequestController WithLog(this IWebRequestController origin) =>
             new LogWebRequestController(origin);
 
+        public static IWebRequestController WithDebugMetrics(this IWebRequestController origin,
+            ElementBinding<ulong> requestCannotConnectDebugMetric, ElementBinding<ulong> requestCompleteDebugMetric)
+        {
+            return new DebugMetricsWebRequestController(origin, requestCannotConnectDebugMetric,
+                requestCompleteDebugMetric);
+        }
+
         public static IWebRequestController WithBudget(this IWebRequestController origin, int totalBudget)
         {
             return new BudgetedWebRequestController(origin, totalBudget);
         }
+
     }
 }
