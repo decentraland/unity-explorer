@@ -2,6 +2,7 @@
 using Arch.Core;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.Emotes;
+using DCL.Profiles;
 using Global.Dynamic;
 using UnityEngine;
 using UnityEngine.Playables;
@@ -27,9 +28,6 @@ namespace DCL.AvatarAnimation
             if(cachedEntity != Entity.Null && GlobalWorld.ECSWorldInstance.TryGetRef<CharacterEmoteComponent>(cachedEntity, out bool emoteExists).CurrentEmoteReference != null)
                 return;
 
- //           if(avatar.IsAnimatorInTag(AnimationHashes.EMOTE) || avatar.IsAnimatorInTag(AnimationHashes.EMOTE_LOOP))
- //               return;
-
             // If the asset was changed in the editor, update the cached data
             if (avatar != cachedAvatar)
             {
@@ -37,14 +35,19 @@ namespace DCL.AvatarAnimation
                 cachedEntity = FindEntityFromAvatarBase(cachedAvatar);
             }
 
-            // It adds the emote intent (which will be consumed and removed by the CharacterEmoteSystem) if it was not already added
+            // If there is not any emote pending to be loaded / played
             if (cachedEntity != Entity.Null && !GlobalWorld.ECSWorldInstance.Has<CharacterEmoteIntent>(cachedEntity))
             {
+                // The emote is added to the profile so it will be automatically be downloaded if necessary
+                Profile profile = GlobalWorld.ECSWorldInstance.Get<Profile>(cachedEntity);
+                profile.Avatar.AddEmote(URN);
+                profile.IsDirty = true;
+
+                // It adds the emote intent (which will be consumed and removed by the CharacterEmoteSystem) if it was not already added
+                CharacterEmoteIntent emoteIntent = new (){ EmoteId =  URN, TriggerSource = TriggerSource.SELF, Spatial = true};
+                GlobalWorld.ECSWorldInstance.Add(cachedEntity, emoteIntent);
+
                 Debug.Log("<color=yellow>EMOTE ADDED [" + URN + "] to entity {" + cachedEntity + "} with AvatarBase {"  + cachedAvatar.name +  "}</color>");
-                GlobalWorld.ECSWorldInstance.Add<CharacterEmoteIntent>(cachedEntity);
-                ref CharacterEmoteIntent emoteIntent = ref GlobalWorld.ECSWorldInstance.TryGetRef<CharacterEmoteIntent>(cachedEntity, out bool exists);
-                emoteIntent.EmoteId = URN;
-                emoteIntent.TriggerSource = TriggerSource.SELF;
             }
         }
 
@@ -71,13 +74,6 @@ namespace DCL.AvatarAnimation
             foreach (ref var chunk in allAvatars)
             {
                 AvatarBase[] avatars = chunk.GetArray<AvatarBase>();
-                /*AvatarBase av = chunk.GetFirst<AvatarBase>();
-
-                if (av == avatar)
-                    {
-                        foundEntity = chunk.Entity(0);
-                        break;
-                    }*/
 
                 foreach (int entityIndex in chunk)
                     if (entityIndex > -1 && avatars[entityIndex] == avatar)

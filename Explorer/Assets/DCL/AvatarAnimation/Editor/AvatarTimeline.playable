@@ -242,7 +242,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d728b657d060442591192714f3daee4e, type: 3}
   m_Name: TriggerEmotePlayableAsset
   m_EditorClassIdentifier: 
-  URN: confettipopper
+  URN: urn:decentraland:matic:collections-v2:0x0ae365f8acc27f2c95fc7d60cf49a74f3af21573:3:315936875005671560093754083051011296956685286201647333762932933038
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -277,4 +277,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d728b657d060442591192714f3daee4e, type: 3}
   m_Name: TriggerEmotePlayableAsset(Clone)(Clone)
   m_EditorClassIdentifier: 
-  URN: handsair
+  URN: urn:decentraland:matic:collections-v2:0x77a00c121f25d2bdaa8494448ee98d67a0b40497:1
