@@ -2,12 +2,14 @@ using Arch.Core;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.GLTFast.Wrappers;
 using DCL.Optimization.PerformanceBudgeting;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
 using GLTFast;
+using GLTFast.Materials;
 using SceneRunner.Scene;
 using System;
 using System.Threading;
@@ -18,6 +20,8 @@ namespace ECS.StreamableLoading.GLTF
     [UpdateInGroup(typeof(StreamableLoadingGroup))]
     public partial class LoadGLTFSystem: LoadSystemBase<GLTFData, GetGLTFIntention>
     {
+        private static MaterialGenerator gltfMaterialGenerator = new DecentralandMaterialGenerator("DCL/Scene");
+
         private ISceneData sceneData;
         private GltFastDownloadProvider gltfDownloadProvider;
         private GltFastReportHubLogger gltfConsoleLogger = new GltFastReportHubLogger(); // TODO: Remove ???
@@ -70,7 +74,10 @@ namespace ECS.StreamableLoading.GLTF
                     new Exception("The content to download couldn't be found"));
 
             gltfDownloadProvider.TargetGltfOriginalPath = intention.Name!;
-            var gltfImport = new GltfImport(downloadProvider: gltfDownloadProvider, logger: gltfConsoleLogger);
+            var gltfImport = new GltfImport(
+                downloadProvider: gltfDownloadProvider,
+                logger: gltfConsoleLogger,
+                materialGenerator: gltfMaterialGenerator);
 
             var gltFastSettings = new ImportSettings
             {
