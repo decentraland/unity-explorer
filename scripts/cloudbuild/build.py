@@ -112,14 +112,24 @@ def clone_current_target(use_cache):
             print(f"Using template cache build target: {template_target}")
         else:
             print(f"Not using cache")
-        response = requests.post(f'{URL}/buildtargets', headers=HEADERS, json=body)
+        try:
+            response = requests.post(f'{URL}/buildtargets', headers=HEADERS, json=body)
+        except ConnectionError as e:
+            print(f'ConnectionError while trying to post new target: {e}. Retrying...')
+            time.sleep(2)  # Add a small delay before retrying
+            clone_current_target(use_cache)  # Retry the whole process
     else:
         if use_cache:
             body['settings']['buildTargetCopyCache'] = new_target_name
             print(f"Using existing cache build target: {new_target_name}")
         else:
             print(f"Not using cache")
-        response = requests.put(f'{URL}/buildtargets/{new_target_name}', headers=HEADERS, json=body)
+        try:
+            response = requests.put(f'{URL}/buildtargets/{new_target_name}', headers=HEADERS, json=body)
+        except ConnectionError as e:
+            print(f'ConnectionError while trying to post exisiting target: {e}. Retrying...')
+            time.sleep(2)  # Add a small delay before retrying
+            clone_current_target(use_cache)  # Retry the whole process
 
     print(f"clone_current_target response status: {response.status_code}")
     if response.status_code == 200 or response.status_code == 201:
@@ -445,7 +455,10 @@ else:
     #
     # If the target already exists, it will check if it has running builds on it
     # If it has running builds, a new target will be created with an added timestamp (Unity can't queue)
-    clone_current_target(True)
+    try:
+        clone_current_target(True)
+    except Exception as e:
+        print(f"Operation failed: {e}")
 
     # Set ENVs (Parameters)
     # This must run immediately before starting a build
