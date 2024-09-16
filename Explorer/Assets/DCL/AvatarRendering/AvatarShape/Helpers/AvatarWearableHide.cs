@@ -70,12 +70,12 @@ namespace DCL.AvatarRendering.AvatarShape.Helpers
         public static void ComposeHiddenCategoriesOrdered(string bodyShapeId, HashSet<string> forceRender, List<IWearable> wearables, HashSet<string> combinedHidingList)
         {
             combinedHidingList.Clear();
-            Dictionary<string, IWearable> wearablesByCategory = DictionaryPool<string, IWearable>.Get();
+            using var _ = DictionaryPool<string, IWearable>.Get(out var wearablesByCategory);
 
             for (var i = 0; i < wearables.Count; i++)
                 wearablesByCategory[wearables[i].GetCategory()] = wearables[i];
 
-            HashSet<string> hidingList = HashSetPool<string>.Get();
+            using var __ = HashSetPool<string>.Get(out var hidingList);
 
             foreach (string priorityCategory in WearablesConstants.CATEGORIES_PRIORITY)
             {
@@ -93,9 +93,6 @@ namespace DCL.AvatarRendering.AvatarShape.Helpers
 
             if (forceRender != null)
                 foreach (string category in forceRender) { combinedHidingList.Remove(category); }
-
-            DictionaryPool<string, IWearable>.Release(wearablesByCategory);
-            HashSetPool<string>.Release(hidingList);
         }
 
         public static void HideBodyShape(GameObject bodyShape, HashSet<string> hidingList, HashSet<string> usedCategories)

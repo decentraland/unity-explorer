@@ -23,7 +23,7 @@ namespace DCL.Input.Utils
                 localCoord.y = Screen.height - pointerPosition.y;
                 localCoord = RuntimePanelUtils.ScreenToPanel(panelEventHandler.panel, localCoord);
 
-                List<VisualElement>? visualElements = ListPool<VisualElement>.Get();
+                using var _ = ListPool<VisualElement>.Get(out var visualElements);
                 panelEventHandler.panel.PickAll(localCoord, visualElements);
                 var canBeInteracted = false;
 
@@ -37,7 +37,6 @@ namespace DCL.Input.Utils
                         break;
                 }
 
-                ListPool<VisualElement>.Release(visualElements);
                 return canBeInteracted;
             }
 

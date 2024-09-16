@@ -156,7 +156,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             GetEmotesByPointersIntention emoteIntention = avatarShapeComponent.EmotePromise.LoadingIntention;
 
             HashSet<string> wearablesToHide = wearablesResult.Succeeded ? wearablesResult.Asset.HiddenCategories : EMPTY_STRING_HASH_SET;
-            HashSet<string> usedCategories = HashSetPool<string>.Get();
+            using var _ = HashSetPool<string>.Get(out var usedCategories);
 
             GameObject? bodyShape = null;
 
@@ -192,7 +192,6 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             }
 
             AvatarWearableHide.HideBodyShape(bodyShape, wearablesToHide, usedCategories);
-            HashSetPool<string>.Release(usedCategories);
 
             AvatarCustomSkinningComponent skinningComponent = skinningStrategy.Initialize(avatarShapeComponent.InstantiatedWearables,
                 computeShaderSkinningPool.Get(), avatarMaterialPoolHandler, avatarShapeComponent, facialFeatureTexture);

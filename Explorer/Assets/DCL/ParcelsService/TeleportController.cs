@@ -173,7 +173,7 @@ namespace DCL.ParcelsService
 
         private SpawnPoint PickSpawnPoint(IReadOnlyList<SpawnPoint> spawnPoints, Vector3 targetWorldPosition, Vector3 parcelBaseWorldPosition)
         {
-            List<SpawnPoint> defaults = ListPool<SpawnPoint>.Get();
+            using var _ = ListPool<SpawnPoint>.Get(out var defaults);
             defaults.AddRange(spawnPoints.Where(sp => sp.@default));
 
             IReadOnlyList<SpawnPoint> elegibleSpawnPoints = defaults.Count > 0 ? defaults : spawnPoints;
@@ -198,9 +198,6 @@ namespace DCL.ParcelsService
             }
 
             SpawnPoint spawnPoint = elegibleSpawnPoints[closestIndex];
-
-            ListPool<SpawnPoint>.Release(defaults);
-
             return spawnPoint;
         }
 

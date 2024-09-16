@@ -22,7 +22,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             UnityEngine.ComputeShader skinningShader, IAvatarMaterialPoolHandler avatarMaterialPool, AvatarShapeComponent avatarShapeComponent,
             in FacialFeaturesTextures facialFeatureTexture)
         {
-            List<MeshData> meshesData = ListPool<MeshData>.Get();
+            using var scope = ListPool<MeshData>.Get(out var meshesData);
 
             CreateMeshData(meshesData, gameObjects);
 
@@ -32,8 +32,6 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             List<AvatarCustomSkinningComponent.MaterialSetup> materialSetups = SetupMeshRenderer(meshesData, avatarMaterialPool, avatarShapeComponent, facialFeatureTexture);
 
             Bounds totalBounds =  CalculateLocalBoundsFromMeshes(meshesData);
-
-            ListPool<MeshData>.Release(meshesData);
 
             return new AvatarCustomSkinningComponent(vertCount, buffers, materialSetups, skinningShader, totalBounds);
         }

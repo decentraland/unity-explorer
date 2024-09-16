@@ -1,5 +1,4 @@
 ﻿using Arch.Core;
-using Arch.System;
 using Arch.SystemGroups;
 using DCL.AsyncLoadReporting;
 using DCL.ECSComponents;
@@ -79,7 +78,7 @@ namespace ECS.SceneLifeCycle.Systems
 
                 concluded = true;
 
-                List<EntityReference> toDelete = ListPool<EntityReference>.Get();
+                using var _ = ListPool<EntityReference>.Get(out var toDelete);
 
                 // iterate over entities
 
@@ -114,7 +113,6 @@ namespace ECS.SceneLifeCycle.Systems
                 }
 
                 entitiesUnderObservation.ExceptWith(toDelete);
-                ListPool<EntityReference>.Release(toDelete);
 
                 // If is still not concluded apply certain timeout to be in sync with `WaitForSceneReadiness`
                 if (Time.time - startTime > WaitForSceneReadiness.TIMEOUT.TotalSeconds)

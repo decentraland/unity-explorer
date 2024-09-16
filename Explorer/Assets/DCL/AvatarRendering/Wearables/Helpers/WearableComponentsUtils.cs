@@ -64,7 +64,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
         public static void ExtractVisibleWearables(string bodyShapeId, IReadOnlyList<IWearable> wearables, int wearableCount, ref HideWearablesResolution hideWearablesResolution)
         {
-            Dictionary<string, IWearable> wearablesByCategory = DictionaryPool<string, IWearable>.Get()!;
+            using var _ = DictionaryPool<string, IWearable>.Get(out var wearablesByCategory)!;
             List<IWearable> visibleWearables = WEARABLES_POOL.Get()!;
 
             for (var i = 0; i < wearableCount; i++) { wearablesByCategory[wearables[i]!.GetCategory()] = wearables[i]; }
@@ -99,7 +99,6 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             hideWearablesResolution.HiddenCategories = combinedHidingList;
 
             CATEGORIES_POOL.Release(hidingList);
-            DictionaryPool<string, IWearable>.Release(wearablesByCategory);
         }
 
 

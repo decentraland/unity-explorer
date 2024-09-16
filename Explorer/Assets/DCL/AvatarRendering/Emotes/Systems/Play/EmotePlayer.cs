@@ -103,7 +103,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             EmoteReferences references = mainGameObject.AddComponent<EmoteReferences>()!;
             IReadOnlyList<Renderer> renderers = mainGameObject.GetComponentsInChildren<Renderer>()!;
             RuntimeAnimatorController runtimeAnimator = animator.runtimeAnimatorController!;
-            List<AnimationClip> uniqueClips = ListPool<AnimationClip>.Get()!;
+            using var _ = ListPool<AnimationClip>.Get(out var uniqueClips)!;
 
             ExtractClips(runtimeAnimator, uniqueClips,
                 out AnimationClip? avatarClip, out AnimationClip? propClip, out int propClipHash);
@@ -138,8 +138,6 @@ namespace DCL.AvatarRendering.Emotes.Play
             }
 
             references.Initialize(avatarClip, propClip, animator, propClipHash);
-
-            ListPool<AnimationClip>.Release(uniqueClips);
 
             // some of our legacy emotes have unity events that we are not handling, so we disable that system to avoid further errors
             animator.fireEvents = false;

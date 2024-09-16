@@ -7,7 +7,6 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.CharacterPreview;
 using DCL.Diagnostics;
 using System;
-using System.Collections.Generic;
 using UnityEngine.Pool;
 
 namespace DCL.Backpack.BackpackBus
@@ -143,7 +142,7 @@ namespace DCL.Backpack.BackpackBus
 
         private void UnEquipIncompatibleWearables(IWearable bodyShape)
         {
-            List<IWearable> incompatibleWearables = ListPool<IWearable>.Get();
+            using var _ = ListPool<IWearable>.Get(out var incompatibleWearables);
 
             foreach ((string? _, IWearable? wearable) in equippedWearables.Items())
             {
@@ -157,8 +156,6 @@ namespace DCL.Backpack.BackpackBus
 
             foreach (IWearable wearable in incompatibleWearables)
                 backpackEventBus.SendUnEquipWearable(wearable);
-
-            ListPool<IWearable>.Release(incompatibleWearables);
         }
 
         private void HandleEmoteEquipCommand(BackpackEquipEmoteCommand command)
