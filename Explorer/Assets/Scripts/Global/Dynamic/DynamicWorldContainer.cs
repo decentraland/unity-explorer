@@ -138,7 +138,6 @@ namespace Global.Dynamic
 
         public override void Dispose()
         {
-            MvcManager.Dispose();
             ChatMessagesBus.Dispose();
             ProfileBroadcast.Dispose();
             MessagePipesHub.Dispose();
