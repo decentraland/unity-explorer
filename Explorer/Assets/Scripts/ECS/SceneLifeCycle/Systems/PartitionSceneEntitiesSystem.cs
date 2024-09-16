@@ -10,7 +10,6 @@ using ECS.SceneLifeCycle.SceneDefinition;
 using Unity.Collections;
 using Unity.Jobs;
 using UnityEngine;
-using Utility;
 using static ECS.Prioritization.ScenesPartitioningUtils;
 using static Utility.ParcelMathHelper;
 
@@ -112,6 +111,18 @@ namespace ECS.SceneLifeCycle.Systems
                 return;
             }
 
+            if (definition.IsPortableExperience)
+            {
+                PartitionComponent partitionComponent = partitionComponentPool.Get();
+                partitionComponent.OutOfRange = false;
+                partitionComponent.Bucket = 0;
+                partitionComponent.IsBehind = false;
+                partitionComponent.RawSqrDistance = 1;
+                partitionComponent.IsDirty = true;
+                World.Add(entity, partitionComponent);
+                return;
+            }
+
             if (definition.InternalJobIndex < 0)
             {
                 ScheduleSceneDefinition(ref definition);
@@ -137,9 +148,9 @@ namespace ECS.SceneLifeCycle.Systems
 
         protected void AddCorners(ref SceneDefinitionComponent definition)
         {
-            var corners = new NativeArray<ParcelCorners>(definition.ParcelsCorners.Length, Allocator.Persistent);
+            var corners = new NativeArray<ParcelCorners>(definition.ParcelsCorners.Count, Allocator.Persistent);
 
-            for (var i = 0; i < definition.ParcelsCorners.Length; i++)
+            for (var i = 0; i < definition.ParcelsCorners.Count; i++)
                 corners[i] = definition.ParcelsCorners[i];
 
             partitionDataContainer.AddCorners(new ParcelCornersData(in corners));
@@ -147,6 +158,7 @@ namespace ECS.SceneLifeCycle.Systems
         }
 
         [Query]
+        [None(typeof(PortableExperienceComponent))]
         private void PartitionExistingEntity(ref SceneDefinitionComponent definition, ref PartitionComponent partitionComponent)
         {
             if (definition.InternalJobIndex < 0) return;

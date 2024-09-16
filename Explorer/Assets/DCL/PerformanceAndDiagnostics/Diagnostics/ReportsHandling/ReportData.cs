@@ -24,5 +24,8 @@ namespace DCL.Diagnostics
 
         public static implicit operator ReportData(string category) =>
             new (category);
+
+        public ReportData WithSessionStatic() =>
+            new (Category, ReportHint.SessionStatic | Hint, SceneShortInfo, SceneTickNumber);
     }
 }

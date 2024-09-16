@@ -51,7 +51,7 @@ on:
         required: true
         type: string
         default: 'none'
-      cache:
+      clean_build:
         required: true
         default: true
         type: boolean
@@ -230,7 +230,7 @@ jobs:
 
       - name: 'Tar artifact to maintain original permissions'
         if: matrix.target == 'macos'
-        run: tar -cvf build.tar build
+        run: tar --exclude='build/Decentraland_BackUpThisFolder_ButDontShipItWithYourGame' -cvf build.tar build
           
       - name: Upload artifact for macOS
         if: matrix.target == 'macos'
@@ -245,7 +245,19 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Decentraland_${{ matrix.target }}
-          path: build
+          path: |
+            build
+            !build/**/*_BackUpThisFolder_ButDontShipItWithYourGame
+            !build/**/*_BurstDebugInformation_DoNotShip
+          if-no-files-found: error
+          
+      - name: Upload debug symbols
+        uses: actions/upload-artifact@v4
+        with:
+          name: Decentraland_${{ matrix.target }}_debug_symbols
+          path: |
+            build/**/*_BackUpThisFolder_ButDontShipItWithYourGame
+            build/**/*_BurstDebugInformation_DoNotShip
           if-no-files-found: error
 
       # Will run always (even if failing)
@@ -261,6 +273,22 @@ jobs:
       - name: Print cloud logs
         if: always()
         run: cat unity_cloud_log.log
+
+      # Will run always (even if failing)
+      - name: Generate Shader Compilation Report
+        if: always()
+        shell: pwsh
+        run: |
+          ./scripts/Generate-ShaderReport.ps1 -InputLog "unity_cloud_log.log" -OutputReport "shader_compilation_report.log"
+
+      # Upload Shader Compilation Report
+      - name: Upload Shader Compilation Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.target }}_shader_compilation_report
+          path: shader_compilation_report.log
+          if-no-files-found: error
 
       # Will run on cancel or timeout only
       - name: Cancel Unity Cloud build

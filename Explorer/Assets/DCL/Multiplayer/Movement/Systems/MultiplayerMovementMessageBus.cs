@@ -1,6 +1,5 @@
 ﻿using Arch.Core;
 using Cysharp.Threading.Tasks;
-using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Messaging;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
@@ -10,7 +9,6 @@ using DCL.Multiplayer.Profiles.Tables;
 using Decentraland.Kernel.Comms.Rfc4;
 using System;
 using System.Threading;
-using UnityEngine;
 
 namespace DCL.Multiplayer.Movement.Systems
 {
@@ -20,9 +18,10 @@ namespace DCL.Multiplayer.Movement.Systems
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly CancellationTokenSource cancellationTokenSource = new ();
 
-        private NetworkMessageEncoder messageEncoder;
+        private NetworkMessageEncoder messageEncoder = null!;
 
         private readonly World globalWorld;
+
         private bool isDisposed;
 
         public MultiplayerMovementMessageBus(IMessagePipesHub messagePipesHub, IReadOnlyEntityParticipantTable entityParticipantTable, World globalWorld)
@@ -30,9 +29,6 @@ namespace DCL.Multiplayer.Movement.Systems
             this.messagePipesHub = messagePipesHub;
             this.entityParticipantTable = entityParticipantTable;
             this.globalWorld = globalWorld;
-
-            this.messagePipesHub.IslandPipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Movement>(Packet.MessageOneofCase.Movement, OnOldSchemaMessageReceived);
-            this.messagePipesHub.ScenePipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Movement>(Packet.MessageOneofCase.Movement, OnOldSchemaMessageReceived);
 
             this.messagePipesHub.IslandPipe().Subscribe<MovementCompressed>(Packet.MessageOneofCase.MovementCompressed, OnMessageReceived);
             this.messagePipesHub.ScenePipe().Subscribe<MovementCompressed>(Packet.MessageOneofCase.MovementCompressed, OnMessageReceived);
@@ -48,24 +44,6 @@ namespace DCL.Multiplayer.Movement.Systems
             isDisposed = true;
             cancellationTokenSource.Cancel();
             cancellationTokenSource.Dispose();
-        }
-
-        private void OnOldSchemaMessageReceived(ReceivedMessage<Decentraland.Kernel.Comms.Rfc4.Movement> receivedMessage)
-        {
-            if (isDisposed)
-            {
-                ReportHub.LogError(ReportCategory.MULTIPLAYER, "Receiving a message while disposed is bad");
-                return;
-            }
-
-            using (receivedMessage)
-            {
-                if (cancellationTokenSource.Token.IsCancellationRequested)
-                    return;
-
-                NetworkMovementMessage message = MovementMessage(receivedMessage.Payload);
-                Inbox(message, receivedMessage.FromWalletId);
-            }
         }
 
         private void OnMessageReceived(ReceivedMessage<MovementCompressed> receivedMessage)
@@ -95,31 +73,6 @@ namespace DCL.Multiplayer.Movement.Systems
         {
             WriteAndSend(message, messagePipesHub.IslandPipe());
             WriteAndSend(message, messagePipesHub.ScenePipe());
-        }
-
-        private static NetworkMovementMessage MovementMessage(Decentraland.Kernel.Comms.Rfc4.Movement proto)
-        {
-            var vel = new Vector3(proto.VelocityX, proto.VelocityY, proto.VelocityZ);
-
-            return new NetworkMovementMessage
-            {
-                timestamp = proto.Timestamp,
-                position = new Vector3(proto.PositionX, proto.PositionY, proto.PositionZ),
-                velocity = vel,
-                velocitySqrMagnitude = vel.sqrMagnitude,
-
-                animState = new AnimationStates
-                {
-                    MovementBlendValue = proto.MovementBlendValue,
-                    SlideBlendValue = proto.SlideBlendValue,
-                    IsGrounded = proto.IsGrounded,
-                    IsJumping = proto.IsJumping,
-                    IsLongJump = proto.IsLongJump,
-                    IsFalling = proto.IsFalling,
-                    IsLongFall = proto.IsLongFall,
-                },
-                isStunned = proto.IsStunned,
-            };
         }
 
         private void WriteAndSend(NetworkMovementMessage message, IMessagePipe messagePipe)
