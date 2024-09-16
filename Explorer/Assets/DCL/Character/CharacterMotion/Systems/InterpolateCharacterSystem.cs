@@ -10,6 +10,7 @@ using DCL.CharacterMotion.Platforms;
 using DCL.CharacterMotion.Settings;
 using DCL.Diagnostics;
 using ECS.Abstract;
+using System;
 using UnityEngine;
 using Utility;
 
@@ -40,16 +41,30 @@ namespace DCL.CharacterMotion.Systems
         [Query]
         private void TeleportPlayer(in Entity entity, in CharacterController controller, ref CharacterPlatformComponent platformComponent, in PlayerTeleportIntent teleportIntent)
         {
-            if (teleportIntent.LoadReport == null || teleportIntent.LoadReport.CompletionSource.UnsafeGetStatus() != UniTaskStatus.Pending)
+            if (teleportIntent.LoadReport != null)
+            {
+                switch (teleportIntent.LoadReport.CompletionSource.UnsafeGetStatus())
+                {
+                    case UniTaskStatus.Pending: return;
+                    case UniTaskStatus.Succeeded: break;
+                    case UniTaskStatus.Faulted:
+                    case UniTaskStatus.Canceled:
+                        World.Remove<PlayerTeleportIntent>(entity);
+                        return;
+                    default: throw new ArgumentOutOfRangeException();
+                }
+            }
+            else
+            {
                 World.Remove<PlayerTeleportIntent>(entity);
-
-            playerHasJustTeleported = true;
+            }
 
             // Teleport the character
             controller.transform.position = teleportIntent.Position;
-
             // Reset the current platform so we dont bounce back if we are touching the world plane
             platformComponent.CurrentPlatform = null;
+
+            playerHasJustTeleported = true;
         }
 
         [Query]
