@@ -1,4 +1,6 @@
-﻿namespace CommunicationData.URLHelpers
+﻿using System;
+
+namespace CommunicationData.URLHelpers
 {
     /// <summary>
     ///     Contains shortcuts to manipulate with URLs
@@ -10,5 +12,6 @@
 
         public static URLDomain Append(in this URLDomain address, in URLSubdirectory subdirectory) =>
             URLBuilder.Combine(address, subdirectory);
+
     }
 }
