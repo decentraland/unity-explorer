@@ -18,12 +18,13 @@ namespace DCL.Multiplayer.Movement.Systems
 
         private readonly Entity playerEntity;
         private readonly RemoteEntities? remoteEntities;
-        private readonly ExposedTransform playerTransform;
+        private readonly IExposedTransform playerTransform;
         private readonly MultiplayerDebugSettings settings;
 
         private Entity? selfReplicaEntity;
 
-        public MultiplayerMovementDebug(World world, Entity playerEntity, IDebugContainerBuilder debugBuilder, RemoteEntities remoteEntities, ExposedTransform playerTransform, MultiplayerDebugSettings settings)
+        public MultiplayerMovementDebug(World world, Entity playerEntity, IDebugContainerBuilder debugBuilder, RemoteEntities remoteEntities, IExposedTransform playerTransform,
+            MultiplayerDebugSettings settings)
         {
             this.playerEntity = playerEntity;
             this.remoteEntities = remoteEntities;

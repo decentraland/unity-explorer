@@ -37,13 +37,13 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
             sceneData.SceneEntityDefinition.Returns(new SceneEntityDefinition { id = "TEST_SCENE" });
 
             crdtMemoryAllocator = CRDTOriginalMemorySlicer.Create();
-            var sceneStateProvider = Substitute.For<ISceneStateProvider>();
+            ISceneStateProvider sceneStateProvider = Substitute.For<ISceneStateProvider>();
             sceneStateProvider.IsCurrent.Returns(true);
 
             IRealmData realmData = Substitute.For<IRealmData>();
             realmData.ScenesAreFixed.Returns(false);
 
-            api = new CommunicationsControllerAPIImplementation(realmData, sceneData, sceneCommunicationPipe, jsOperations = Substitute.For<IJsOperations>(), crdtMemoryAllocator, sceneStateProvider);
+            api = new CommunicationsControllerAPIImplementation(sceneData, sceneCommunicationPipe, jsOperations = Substitute.For<IJsOperations>(), crdtMemoryAllocator);
             api.OnSceneIsCurrentChanged(true);
         }
 
@@ -59,7 +59,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
 
             api.SendBinary(outerArray);
 
-            var expectedCalls = outerArray.Select(o => o.Prepend((byte)CommunicationsControllerAPIImplementationBase.MsgType.Uint8Array).ToArray()).ToList();
+            var expectedCalls = outerArray.Select(o => o.Prepend((byte)ISceneCommunicationPipe.MsgType.Uint8Array).ToArray()).ToList();
 
             // Assert the 2d array is equal
             CollectionAssert.AreEqual(expectedCalls, sceneCommunicationPipe.sendMessageCalls);
@@ -74,7 +74,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
             const string WALLET_ID = "0x71C7656EC7ab88b098defB751B7401B5f6d8976F";
             const string SCENE_ID = "TEST_SCENE";
 
-            byte[] data = GetRandomBytes(50).Prepend((byte)CommunicationsControllerAPIImplementationBase.MsgType.Uint8Array).ToArray();
+            byte[] data = GetRandomBytes(50).Prepend((byte)ISceneCommunicationPipe.MsgType.Uint8Array).ToArray();
 
             var receivedMessage = new ReceivedMessage<Scene>(new Scene { Data = ByteString.CopyFrom(data), SceneId = SCENE_ID }, new Packet(), WALLET_ID, Substitute.For<IMultiPool>());
             sceneCommunicationPipe.onSceneMessage.Invoke(ISceneCommunicationPipe.SceneMessage.CopyFrom(receivedMessage));
@@ -110,15 +110,9 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
             internal readonly List<byte[]> sendMessageCalls = new ();
             internal Action<ISceneCommunicationPipe.SceneMessage> onSceneMessage;
 
-            public void SetSceneMessageHandler(Action<ISceneCommunicationPipe.SceneMessage> onSceneMessage)
-            {
-                this.onSceneMessage = onSceneMessage;
-            }
+            public void AddSceneMessageHandler(string sceneId, ISceneCommunicationPipe.MsgType msgType, ISceneCommunicationPipe.SceneMessageHandler onSceneMessage) { }
 
-            public void RemoveSceneMessageHandler(Action<ISceneCommunicationPipe.SceneMessage> onSceneMessage)
-            {
-
-            }
+            public void RemoveSceneMessageHandler(string sceneId, ISceneCommunicationPipe.MsgType msgType, ISceneCommunicationPipe.SceneMessageHandler onSceneMessage) { }
 
             public void SendMessage(ReadOnlySpan<byte> message, string sceneId, CancellationToken ct)
             {

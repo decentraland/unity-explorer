@@ -73,7 +73,7 @@ namespace Global.Tests.PlayMode
                 identityCache,
                 new MemoryProfileRepository(new DefaultProfileCache()),
                 Substitute.For<IWebRequestController>(),
-                new IRoomHub.Fake(),
+                NullRoomHub.INSTANCE,
                 new IRealmData.Fake(),
                 new IMessagePipesHub.Fake()
             );

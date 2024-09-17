@@ -132,7 +132,7 @@ namespace DCL.Multiplayer.SDK.Tests
             fakeCharacterUnityTransform.position = Vector3.one * 100;
             system.Update(0);
 
-            Assert.IsTrue(world.TryGet<PlayerCRDTEntity>(entity, out PlayerCRDTEntity newState));
+            Assert.IsTrue(world.TryGet(entity, out PlayerCRDTEntity newState));
             Assert.IsFalse(newState.AssignedToScene);
             Assert.IsTrue(playerCRDTEntity.SceneFacade.EcsExecutor.World.Has<PlayerSceneCRDTEntity>(playerCRDTEntity.SceneWorldEntity));
             Assert.That(playerCRDTEntity.SceneFacade.EcsExecutor.World.Has<DeleteEntityIntention>(playerCRDTEntity.SceneWorldEntity), Is.True);

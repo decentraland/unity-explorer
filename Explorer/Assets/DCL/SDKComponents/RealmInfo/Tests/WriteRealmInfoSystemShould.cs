@@ -5,7 +5,9 @@ using CrdtEcsBridge.Components;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.ECSComponents;
 using DCL.Ipfs;
+using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.Multiplayer.Connections.Rooms.Connective;
 using DCL.Utilities;
 using ECS;
 using ECS.TestSuite;
@@ -13,6 +15,7 @@ using LiveKit.Rooms;
 using LiveKit.Rooms.Info;
 using NSubstitute;
 using NUnit.Framework;
+using SceneRunner.Scene;
 using System;
 
 namespace DCL.SDKComponents.RealmInfo.Tests
@@ -46,10 +49,18 @@ namespace DCL.SDKComponents.RealmInfo.Tests
             islandRoom.Info.Returns(roomInfo);
             roomHub.IslandRoom().Returns(islandRoom);
 
+            ISceneData? sceneData = Substitute.For<ISceneData>();
+
+            IGateKeeperSceneRoom? gateKeeperSceneRoom = Substitute.For<IGateKeeperSceneRoom>();
+            gateKeeperSceneRoom.ConnectedScene.Returns(sceneData);
+            gateKeeperSceneRoom.CurrentState().Returns(IConnectiveRoom.State.Running);
+
+            roomHub.SceneRoom().Returns(gateKeeperSceneRoom);
+
             ObjectProxy<IRoomHub> roomHubProxy = new ObjectProxy<IRoomHub>();
             roomHubProxy.SetObject(roomHub);
 
-            system = new WriteRealmInfoSystem(world, ecsToCRDTWriter, realmData, roomHubProxy);
+            system = new WriteRealmInfoSystem(world, ecsToCRDTWriter, realmData, roomHubProxy, sceneData);
         }
 
         [TearDown]
@@ -63,16 +74,31 @@ namespace DCL.SDKComponents.RealmInfo.Tests
         {
             system.Update(0);
 
+            AssertPutMessageReceived();
+        }
+
+        private void AssertPutMessageReceived()
+        {
             ecsToCRDTWriter.Received(1)
                            .PutMessage(
-                                Arg.Any<Action<PBRealmInfo, (IRealmData realmData, IRoomHub roomHub)>>(),
+                                Arg.Any<Action<PBRealmInfo, (IRealmData realmData, WriteRealmInfoSystem.CommsRoomInfo roomInfo)>>(),
                                 SpecialEntitiesID.SCENE_ROOT_ENTITY,
-                                Arg.Is<(IRealmData realmData, IRoomHub roomHub)>(data =>
+                                Arg.Is<(IRealmData realmData, WriteRealmInfoSystem.CommsRoomInfo roomInfo)>(data =>
                                     data.realmData.RealmName == realmData.RealmName
                                     && data.realmData.CommsAdapter == realmData.CommsAdapter
                                     && data.realmData.NetworkId == realmData.NetworkId
                                     && data.realmData.Ipfs.CatalystBaseUrl == realmData.Ipfs.CatalystBaseUrl
-                                    && data.roomHub.IslandRoom().Info.Sid == roomHub.IslandRoom().Info.Sid));
+                                    && data.roomInfo.IslandSid == roomHub.IslandRoom().Info.Sid
+                                    && data.roomInfo.IsConnectedSceneRoom));
+        }
+
+        private void AssertPutMessageDidNotReceive()
+        {
+            ecsToCRDTWriter.DidNotReceiveWithAnyArgs()
+                           .PutMessage(
+                                Arg.Any<Action<PBRealmInfo, (IRealmData realmData, WriteRealmInfoSystem.CommsRoomInfo roomInfo)>>(),
+                                Arg.Any<CRDTEntity>(),
+                                Arg.Any<(IRealmData realmData, WriteRealmInfoSystem.CommsRoomInfo roomInfo)>());
         }
 
         [Test]
@@ -80,46 +106,42 @@ namespace DCL.SDKComponents.RealmInfo.Tests
         {
             system.Update(0);
 
-            ecsToCRDTWriter.Received(1)
-                           .PutMessage(
-                                Arg.Any<Action<PBRealmInfo, (IRealmData realmData, IRoomHub roomHub)>>(),
-                                SpecialEntitiesID.SCENE_ROOT_ENTITY,
-                                Arg.Is<(IRealmData realmData, IRoomHub roomHub)>(data =>
-                                    data.realmData.RealmName == realmData.RealmName
-                                    && data.realmData.CommsAdapter == realmData.CommsAdapter
-                                    && data.realmData.NetworkId == realmData.NetworkId
-                                    && data.realmData.Ipfs.CatalystBaseUrl == realmData.Ipfs.CatalystBaseUrl
-                                    && data.roomHub.IslandRoom().Info.Sid == roomHub.IslandRoom().Info.Sid));
+            AssertPutMessageReceived();
+
             ecsToCRDTWriter.ClearReceivedCalls();
 
             realmData.RealmName.Returns("Decentraland");
             realmData.CommsAdapter.Returns("adapterland");
             realmData.NetworkId.Returns(238);
             realmData.Ipfs.CatalystBaseUrl.Returns(URLDomain.FromString("https://shub/niggurath/content/"));
-            roomHub.IslandRoom().Info.Sid.Returns("dcLr32egsSID");
 
             realmData.IsDirty.Returns(false);
             system.Update(0);
 
-            ecsToCRDTWriter.DidNotReceiveWithAnyArgs()
-                           .PutMessage(
-                                Arg.Any<Action<PBRealmInfo, (IRealmData realmData, IRoomHub roomHub)>>(),
-                                Arg.Any<CRDTEntity>(),
-                                Arg.Any<(IRealmData realmData, IRoomHub roomHub)>());
+            AssertPutMessageDidNotReceive();
 
             realmData.IsDirty.Returns(true);
             system.Update(0);
 
-            ecsToCRDTWriter.Received(1)
-                           .PutMessage(
-                                Arg.Any<Action<PBRealmInfo, (IRealmData realmData, IRoomHub roomHub)>>(),
-                                SpecialEntitiesID.SCENE_ROOT_ENTITY,
-                                Arg.Is<(IRealmData realmData, IRoomHub roomHub)>(data =>
-                                    data.realmData.RealmName == realmData.RealmName
-                                    && data.realmData.CommsAdapter == realmData.CommsAdapter
-                                    && data.realmData.NetworkId == realmData.NetworkId
-                                    && data.realmData.Ipfs.CatalystBaseUrl == realmData.Ipfs.CatalystBaseUrl
-                                    && data.roomHub.IslandRoom().Info.Sid == roomHub.IslandRoom().Info.Sid));
+            AssertPutMessageReceived();
+        }
+
+        [Test]
+        public void WriteRealmInfoWhenCommsRoomInfoChanged()
+        {
+            system.Update(0);
+
+            AssertPutMessageReceived();
+
+            ecsToCRDTWriter.ClearReceivedCalls();
+
+            roomHub.IslandRoom().Info.Sid.Returns("dcLr32egsSID");
+
+            realmData.IsDirty.Returns(false);
+
+            system.Update(0);
+
+            AssertPutMessageReceived();
         }
 
         [Test]
@@ -128,16 +150,7 @@ namespace DCL.SDKComponents.RealmInfo.Tests
             realmData.IsDirty.Returns(false);
             system.Initialize();
 
-            ecsToCRDTWriter.Received(1)
-                           .PutMessage(
-                                Arg.Any<Action<PBRealmInfo, (IRealmData realmData, IRoomHub roomHub)>>(),
-                                SpecialEntitiesID.SCENE_ROOT_ENTITY,
-                                Arg.Is<(IRealmData realmData, IRoomHub roomHub)>(data =>
-                                    data.realmData.RealmName == realmData.RealmName
-                                    && data.realmData.CommsAdapter == realmData.CommsAdapter
-                                    && data.realmData.NetworkId == realmData.NetworkId
-                                    && data.realmData.Ipfs.CatalystBaseUrl == realmData.Ipfs.CatalystBaseUrl
-                                    && data.roomHub.IslandRoom().Info.Sid == roomHub.IslandRoom().Info.Sid));
+            AssertPutMessageReceived();
         }
     }
 }

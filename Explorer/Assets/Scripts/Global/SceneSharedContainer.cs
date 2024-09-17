@@ -10,6 +10,7 @@ using DCL.Profiles;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
+using Global.Dynamic;
 using SceneRunner;
 using SceneRunner.ECSWorld;
 using SceneRuntime;
@@ -28,13 +29,9 @@ namespace Global
 
         public static SceneSharedContainer Create(in StaticContainer staticContainer,
             IDecentralandUrlsSource decentralandUrlsSource,
-            IMVCManager mvcManager,
             IWeb3IdentityCache web3IdentityCache,
-            IProfileRepository profileRepository,
             IWebRequestController webRequestController,
-            IRoomHub roomHub,
-            IRealmData? realmData,
-            IMessagePipesHub messagePipesHub,
+            DynamicWorldContainer dynamicWorldContainer,
             bool cacheJsSources = true)
         {
             ECSWorldSingletonSharedDependencies sharedDependencies = staticContainer.SingletonSharedDependencies;
@@ -46,6 +43,12 @@ namespace Global
                 staticContainer.ECSWorldPlugins);
 
             var v8ActiveEngines = new V8ActiveEngines();
+
+            IRealmData? realmData = dynamicWorldContainer.RealmController.RealmData;
+            IProfileRepository profileRepository = dynamicWorldContainer.ProfileRepository;
+            IRoomHub roomHub = dynamicWorldContainer.RoomHub;
+            IMVCManager mvcManager = dynamicWorldContainer.MvcManager;
+            IMessagePipesHub messagePipesHub = dynamicWorldContainer.MessagePipesHub;
 
             return new SceneSharedContainer
             {
@@ -67,7 +70,7 @@ namespace Global
                     roomHub,
                     realmData,
                     staticContainer.PortableExperiencesController,
-                    new SceneCommunicationPipe(messagePipesHub)
+                    new SceneCommunicationPipe(messagePipesHub, dynamicWorldContainer.SceneRoomMetaDataSource, roomHub.SceneRoom())
                 ),
             };
         }
