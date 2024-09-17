@@ -19,6 +19,7 @@ reviewGroups:
   qa:
     - Ludmilafantaniella
     - anicalbano
+    - dafgreco
 
 filterLabels:
   exclude:
