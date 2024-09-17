@@ -35,10 +35,20 @@ namespace ECS.StreamableLoading.GLTF
 
         public async Task<IDownload> RequestAsync(Uri uri)
         {
+            // TODO: Investigate why some random textures are fetched using 'RequestAsync()' instead of 'RequestTextureAsync()'.
+            // That's why we need the scene data url for those files here...
+            string fileName = uri.OriginalString.Substring(uri.OriginalString.LastIndexOf('/')+1);
+            string originalFilePath = string.Concat(targetGltfOriginalPath.Remove(targetGltfOriginalPath.LastIndexOf('/') + 1), fileName);
+            if (sceneData.SceneContent.TryGetContentUrl(originalFilePath, out var tryGetContentUrlResult))
+                uri = new Uri(tryGetContentUrlResult);
+
             // Debug.Log($"PRAVS - RequestAsync() "
-            //           + $"-> ContentBaseUrl: {sceneData.SceneContent.ContentBaseUrl};"
-            //           + $"-> URI: {uri};"
-            //           + $"-> TargetGltfOriginalPath: {targetGltfOriginalPath};");
+            //           + $"\n-> URI: {uri};"
+            //           + $"\n-> TargetGltfOriginalPath: {targetGltfOriginalPath}; "
+            //           + $"\n-> fileName: {fileName}; "
+            //           + $"\n-> originalPath: {originalFilePath}; "
+            //           + $"\n-> final URL: {tryGetContentUrlResult}"
+            // );
 
             // TODO: Replace for WebRequestController (Planned in PR #1670)
             using (UnityWebRequest webRequest = new UnityWebRequest(uri))
@@ -46,7 +56,7 @@ namespace ECS.StreamableLoading.GLTF
                 webRequest.downloadHandler = new DownloadHandlerBuffer();
 
                 try { await webRequest.SendWebRequest().WithCancellation(new CancellationToken()); }
-                catch { throw new Exception($"Error on GLTF download: {webRequest.downloadHandler.error} - {webRequest.downloadHandler.text}"); }
+                catch { throw new Exception($"Error on GLTF download ({targetGltfOriginalPath} - {uri}): {webRequest.downloadHandler.error} - {webRequest.downloadHandler.text}"); }
 
                 return new GltfDownloadResult
                 {
@@ -63,17 +73,16 @@ namespace ECS.StreamableLoading.GLTF
             string textureFileName = uri.OriginalString.Substring(uri.OriginalString.LastIndexOf('/')+1);
             string textureOriginalPath = string.Concat(targetGltfOriginalPath.Remove(targetGltfOriginalPath.LastIndexOf('/') + 1), textureFileName);
 
-            // Debug.Log($"PRAVS - RequestTextureAsync() "
-            //           + $"-> ContentBaseUrl: {sceneData.SceneContent.ContentBaseUrl};"
-            //           + $"-> URI: {uri};"
-            //           + $"-> TargetGltfOriginalPath: {targetGltfOriginalPath}; "
-            //           + $"-> fileName: {textureFileName}; "
-            //           + $"-> originalPath: {textureOriginalPath}; "
-            //           );
-
             sceneData.SceneContent.TryGetContentUrl(textureOriginalPath, out var tryGetContentUrlResult);
 
-            // Debug.Log($"PRAVS - RequestTextureAsync() -> final URL: {tryGetContentUrlResult}");
+            // Debug.Log($"PRAVS - RequestTextureAsync() "
+            //           // + $"-> ContentBaseUrl: {sceneData.SceneContent.ContentBaseUrl};"
+            //           + $"\n-> URI: {uri};"
+            //           + $"\n-> TargetGltfOriginalPath: {targetGltfOriginalPath}; "
+            //           + $"\n-> fileName: {textureFileName}; "
+            //           + $"\n-> originalPath: {textureOriginalPath}; "
+            //           + $"\n-> final URL: {tryGetContentUrlResult}"
+            // );
 
             var texturePromise = Promise.Create(world, new GetTextureIntention
             {
