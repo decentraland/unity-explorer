@@ -18,7 +18,6 @@ namespace ECS.StreamableLoading.GLTF
 {
     internal class GltFastDownloadProvider : IDownloadProvider, IDisposable
     {
-
         private string targetGltfOriginalPath = string.Empty;
         private ISceneData sceneData;
         private World world;
@@ -41,14 +40,6 @@ namespace ECS.StreamableLoading.GLTF
             string originalFilePath = string.Concat(targetGltfOriginalPath.Remove(targetGltfOriginalPath.LastIndexOf('/') + 1), fileName);
             if (sceneData.SceneContent.TryGetContentUrl(originalFilePath, out var tryGetContentUrlResult))
                 uri = new Uri(tryGetContentUrlResult);
-
-            // Debug.Log($"PRAVS - RequestAsync() "
-            //           + $"\n-> URI: {uri};"
-            //           + $"\n-> TargetGltfOriginalPath: {targetGltfOriginalPath}; "
-            //           + $"\n-> fileName: {fileName}; "
-            //           + $"\n-> originalPath: {originalFilePath}; "
-            //           + $"\n-> final URL: {tryGetContentUrlResult}"
-            // );
 
             // TODO: Replace for WebRequestController (Planned in PR #1670)
             using (UnityWebRequest webRequest = new UnityWebRequest(uri))
@@ -74,15 +65,6 @@ namespace ECS.StreamableLoading.GLTF
             string textureOriginalPath = string.Concat(targetGltfOriginalPath.Remove(targetGltfOriginalPath.LastIndexOf('/') + 1), textureFileName);
 
             sceneData.SceneContent.TryGetContentUrl(textureOriginalPath, out var tryGetContentUrlResult);
-
-            // Debug.Log($"PRAVS - RequestTextureAsync() "
-            //           // + $"-> ContentBaseUrl: {sceneData.SceneContent.ContentBaseUrl};"
-            //           + $"\n-> URI: {uri};"
-            //           + $"\n-> TargetGltfOriginalPath: {targetGltfOriginalPath}; "
-            //           + $"\n-> fileName: {textureFileName}; "
-            //           + $"\n-> originalPath: {textureOriginalPath}; "
-            //           + $"\n-> final URL: {tryGetContentUrlResult}"
-            // );
 
             var texturePromise = Promise.Create(world, new GetTextureIntention
             {
