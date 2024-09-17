@@ -15,6 +15,7 @@ using SceneRunner.Scene;
 using System;
 using System.Threading;
 using AssetManagement;
+using DCL.WebRequests;
 using UnityEngine;
 using UnityEngine.Networking;
 using Object = UnityEngine.Object;
@@ -30,15 +31,17 @@ namespace ECS.StreamableLoading.AssetBundles
         private static readonly ThreadSafeObjectPool<AssetBundleMetadata> METADATA_POOL
             = new (() => new AssetBundleMetadata(),
                 actionOnRelease: metadata => metadata.Clear()
-                , maxSize: 100);
+              , maxSize: 100);
 
         private readonly AssetBundleLoadingMutex loadingMutex;
+        private readonly IWebRequestController webRequestController;
 
         internal LoadAssetBundleSystem(World world,
             IStreamableCache<AssetBundleData, GetAssetBundleIntention> cache,
-            AssetBundleLoadingMutex loadingMutex) : base(world, cache)
+            IWebRequestController webRequestController, AssetBundleLoadingMutex loadingMutex) : base(world, cache)
         {
             this.loadingMutex = loadingMutex;
+            this.webRequestController = webRequestController;
         }
 
         private async UniTask<AssetBundleData[]> LoadDependenciesAsync(GetAssetBundleIntention parentIntent, IPartitionComponent partition, AssetBundleMetadata assetBundleMetadata, CancellationToken ct)
@@ -47,33 +50,26 @@ namespace ECS.StreamableLoading.AssetBundles
             // Switch to main thread to create dependency promises
             await UniTask.SwitchToMainThread();
 
-            var manifest = parentIntent.Manifest;
-            var customEmbeddedSubdirectory = parentIntent.CommonArguments.CustomEmbeddedSubDirectory;
+            SceneAssetBundleManifest? manifest = parentIntent.Manifest;
+            URLSubdirectory customEmbeddedSubdirectory = parentIntent.CommonArguments.CustomEmbeddedSubDirectory;
 
             return await UniTask.WhenAll(assetBundleMetadata.dependencies.Select(hash => WaitForDependencyAsync(manifest, hash, customEmbeddedSubdirectory, partition, ct)));
         }
 
         protected override async UniTask<StreamableLoadingResult<AssetBundleData>> FlowInternalAsync(GetAssetBundleIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
-            AssetBundle assetBundle;
+            AssetBundleLoadingResult assetBundleResult = await webRequestController
+               .GetAssetBundleAsync(intention.CommonArguments, new GetAssetBundleArguments(loadingMutex, intention.cacheHash), ct, GetReportCategory(),
+                    suppressErrors: true); // Suppress errors because here we have our own error handling
 
-            using (UnityWebRequest webRequest = intention.cacheHash.HasValue
-                       ? UnityWebRequestAssetBundle.GetAssetBundle(intention.CommonArguments.URL, intention.cacheHash.Value)
-                       : UnityWebRequestAssetBundle.GetAssetBundle(intention.CommonArguments.URL))
-            {
-                ((DownloadHandlerAssetBundle)webRequest.downloadHandler).autoLoadAssetBundle = false;
-                await webRequest.SendWebRequest().WithCancellation(ct);
+            AssetBundle? assetBundle = assetBundleResult.AssetBundle;
 
-                using (AssetBundleLoadingMutex.LoadingRegion _ = await loadingMutex.AcquireAsync(ct))
-                    assetBundle = DownloadHandlerAssetBundle.GetContent(webRequest);
+            // Release budget now to not hold it until dependencies are resolved to prevent a deadlock
+            acquiredBudget.Release();
 
-                // Release budget now to not hold it until dependencies are resolved to prevent a deadlock
-                acquiredBudget.Release();
-
-                // if GetContent prints an error, null will be thrown
-                if (assetBundle == null)
-                    throw new NullReferenceException($"{intention.Hash} Asset Bundle is null: {webRequest.downloadHandler.error}");
-            }
+            // if GetContent prints an error, null will be thrown
+            if (assetBundle == null)
+                throw new NullReferenceException($"{intention.Hash} Asset Bundle is null: {assetBundleResult.DataProcessingError}");
 
             try
             {
@@ -95,11 +91,12 @@ namespace ECS.StreamableLoading.AssetBundles
 
                 AssetBundleMetrics? metrics = !string.IsNullOrEmpty(metricsJSON) ? JsonUtility.FromJson<AssetBundleMetrics>(metricsJSON) : null;
                 AssetBundleData[] dependencies;
-                string mainAsset = "";
+                var mainAsset = "";
 
                 if (!string.IsNullOrEmpty(metadataJSON))
                 {
                     using PoolExtensions.Scope<AssetBundleMetadata> reusableMetadata = METADATA_POOL.AutoScope();
+
                     // Parse metadata
                     JsonUtility.FromJsonOverwrite(metadataJSON, reusableMetadata.Value);
                     mainAsset = reusableMetadata.Value.mainAsset;
@@ -107,7 +104,6 @@ namespace ECS.StreamableLoading.AssetBundles
                 }
                 else
                     dependencies = Array.Empty<AssetBundleData>();
-
 
                 ct.ThrowIfCancellationRequested();
 
@@ -123,6 +119,7 @@ namespace ECS.StreamableLoading.AssetBundles
                 // Otherwise, it gets stuck in Unity's memory but not cached in our cache
                 // Can only be done in main thread
                 await UniTask.SwitchToMainThread();
+
                 if (assetBundle)
                     assetBundle.Unload(true);
 
@@ -143,8 +140,7 @@ namespace ECS.StreamableLoading.AssetBundles
             if (expectedObjType == null)
                 return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(assetBundle, metrics, dependencies));
 
-            var asset = await LoadAllAssetsAsync(assetBundle, expectedObjType, mainAsset, loadingMutex, reportCategory, ct);
-
+            Object? asset = await LoadAllAssetsAsync(assetBundle, expectedObjType, mainAsset, loadingMutex, reportCategory, ct);
 
             return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(assetBundle, metrics, asset, expectedObjType, dependencies,
                 version: version,
@@ -156,12 +152,13 @@ namespace ECS.StreamableLoading.AssetBundles
         {
             using AssetBundleLoadingMutex.LoadingRegion _ = await loadingMutex.AcquireAsync(ct);
 
-            var asyncOp = !string.IsNullOrEmpty(mainAsset)
+            AssetBundleRequest? asyncOp = !string.IsNullOrEmpty(mainAsset)
                 ? assetBundle.LoadAssetAsync(mainAsset)
                 : assetBundle.LoadAllAssetsAsync(objectType);
+
             await asyncOp.WithCancellation(ct);
 
-            var assets = asyncOp.allAssets;
+            Object[]? assets = asyncOp.allAssets;
 
             switch (assets.Length)
             {
@@ -202,6 +199,5 @@ namespace ECS.StreamableLoading.AssetBundles
                 throw new OperationCanceledException($"Dependency {hash} resolution cancelled");
             }
         }
-
     }
 }
