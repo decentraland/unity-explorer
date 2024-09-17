@@ -68,7 +68,7 @@ namespace DCL.SDKComponents.MediaStream
             MediaPlayerComponent component = CreateMediaPlayerComponent(entity, url, hasVolume, volume);
 
             if (component.State != VideoState.VsError)
-                component.OpenMediaPromise.UrlReachabilityResolveAsync(webRequestController, component.URL, component.Cts.Token).SuppressCancellationThrow().Forget();
+                component.OpenMediaPromise.UrlReachabilityResolveAsync(webRequestController, component.URL, GetReportData(), component.Cts.Token).SuppressCancellationThrow().Forget();
 
             World.Add(entity, component);
         }

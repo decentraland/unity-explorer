@@ -179,7 +179,7 @@ namespace ECS.StreamableLoading.Common.Systems
 
             if (!exists)
             {
-                ReportHub.LogError(GetReportCategory(), $"Leak detected on loading {intention.ToString()} from {source}");
+                ReportHub.LogError(GetReportData(), $"Leak detected on loading {intention.ToString()} from {source}");
 
                 // it could be already disposed of, but it's safe to call it again
                 acquiredBudget?.Dispose();
@@ -210,7 +210,7 @@ namespace ECS.StreamableLoading.Common.Systems
             {
                 IncreaseRefCount(in intention, result.Value.Asset!);
 
-                ReportHub.Log(GetReportCategory(), $"{intention}'s successfully loaded from {source}");
+                ReportHub.Log(GetReportData(), $"{intention}'s successfully loaded from {source}");
             }
         }
 
@@ -307,7 +307,7 @@ namespace ECS.StreamableLoading.Common.Systems
 
         private async UniTask<StreamableLoadingResult<TAsset>?> RepeatLoopAsync(TIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
-            StreamableLoadingResult<TAsset>? result = await intention.RepeatLoopAsync(acquiredBudget, partition, cachedInternalFlowDelegate, GetReportCategory(), ct);
+            StreamableLoadingResult<TAsset>? result = await intention.RepeatLoopAsync(acquiredBudget, partition, cachedInternalFlowDelegate, GetReportData(), ct);
             return result is { Succeeded: false } ? SetIrrecoverableFailure(intention, result.Value) : result;
         }
 

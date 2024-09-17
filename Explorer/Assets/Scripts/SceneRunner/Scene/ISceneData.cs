@@ -59,6 +59,8 @@ namespace SceneRunner.Scene
 
         bool IsSdk7();
 
+        bool IsPortableExperience();
+
         class Fake : ISceneData
         {
             public bool SceneLoadingConcluded
@@ -108,6 +110,9 @@ namespace SceneRunner.Scene
 
             public bool IsSdk7() =>
                 true;
+
+            public bool IsPortableExperience() =>
+                false;
         }
     }
 }

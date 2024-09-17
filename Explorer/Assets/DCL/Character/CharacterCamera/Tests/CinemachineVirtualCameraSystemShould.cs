@@ -77,6 +77,8 @@ namespace DCL.CharacterCamera.Tests
             system = new ControlCinemachineVirtualCameraSystem(world, cinemachineCameraAudioSettings);
             world.Create(new InputMapComponent(InputMapComponent.Kind.PLAYER | InputMapComponent.Kind.CAMERA | InputMapComponent.Kind.SHORTCUTS));
 
+            inputMap = world.CacheInputMap();
+
             entity = world.Create(cinemachinePreset, new CameraComponent(camera), new CinemachineCameraState(), new CameraInput(), new CursorComponent());
 
             system.Initialize();

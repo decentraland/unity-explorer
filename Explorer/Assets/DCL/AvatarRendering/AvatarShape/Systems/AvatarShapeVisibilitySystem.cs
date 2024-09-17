@@ -2,7 +2,6 @@
 using Arch.System;
 using Arch.SystemGroups;
 using DCL.AvatarRendering.AvatarShape.Components;
-using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Character.Components;
 using DCL.CharacterCamera;
 using ECS.Abstract;
@@ -14,6 +13,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
     [UpdateInGroup(typeof(CameraGroup))]
     public partial class AvatarShapeVisibilitySystem : BaseUnityLoopSystem
     {
+        private const float AVATAR_MINIMUM_CAMERA_DISTANCE_SQR = 1;
         private SingleInstanceEntity camera;
 
         public AvatarShapeVisibilitySystem(World world) : base(world) { }
@@ -28,16 +28,16 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             AddPlayerCachedVisibilityComponentQuery(World, camera.GetCameraComponent(World));
             AddOthersCachedVisibilityComponentQuery(World);
 
-            UpdatePlayerFirstPersonQuery(World, camera.GetCameraComponent(World));
+            UpdateVisibilityOnCameraDistanceQuery(World, camera.GetCameraComponent(World));
             UpdateAvatarsVisibilityStateQuery(World);
         }
 
         [Query]
         [All(typeof(AvatarShapeComponent), typeof(PlayerComponent))]
         [None(typeof(AvatarCachedVisibilityComponent))]
-        private void AddPlayerCachedVisibilityComponent([Data] in CameraComponent camera, in Entity entity, ref AvatarShapeComponent avatarShape)
+        private void AddPlayerCachedVisibilityComponent([Data] in CameraComponent cameraComponent, in Entity entity, ref AvatarShapeComponent avatarShape)
         {
-            bool shouldBeHidden = avatarShape.HiddenByModifierArea || camera.Mode == CameraMode.FirstPerson;
+            bool shouldBeHidden = avatarShape.HiddenByModifierArea || cameraComponent.Mode == CameraMode.FirstPerson;
             var cachedVisibility = InitializeCachedComponent(shouldBeHidden, ref avatarShape);
             World.Add(entity, cachedVisibility);
         }
@@ -53,10 +53,10 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         }
 
         [Query]
-        [All(typeof(PlayerComponent))]
-        private void UpdatePlayerFirstPerson([Data] in CameraComponent camera, ref AvatarShapeComponent avatarShape, ref AvatarCachedVisibilityComponent avatarCachedVisibility)
+        private void UpdateVisibilityOnCameraDistance([Data] in CameraComponent cameraComponent, ref AvatarShapeComponent avatarShape, ref AvatarCachedVisibilityComponent avatarCachedVisibility, in PlayerComponent playerComponent)
         {
-            bool shouldBeHidden = avatarShape.HiddenByModifierArea || camera.Mode == CameraMode.FirstPerson;
+            Vector3 cameraToPlayer = playerComponent.CameraFocus.position - cameraComponent.Camera.transform.position;
+            bool shouldBeHidden = avatarShape.HiddenByModifierArea || cameraToPlayer.sqrMagnitude < AVATAR_MINIMUM_CAMERA_DISTANCE_SQR;
             UpdateVisibilityState(ref avatarShape, ref avatarCachedVisibility, shouldBeHidden);
         }
 

@@ -10,6 +10,8 @@ namespace DCL.WebRequests
 {
     public static class WebRequestUtils
     {
+        public static string CANNOT_CONNECT_ERROR = "Cannot connect to destination host";
+        
         public const int BAD_REQUEST = 400;
         public const int NOT_FOUND = 404;
 
@@ -47,6 +49,12 @@ namespace DCL.WebRequests
 
         public static bool IsAborted(this UnityWebRequestException exception) =>
             exception is { Result: UnityWebRequest.Result.ConnectionError or UnityWebRequest.Result.ProtocolError, Error: "Request aborted" or "User Aborted" };
+
+        public static string GetResponseContentType(this UnityWebRequest unityWebRequest) =>
+            unityWebRequest.GetResponseHeader("Content-Type");
+
+        public static string GetResponseContentEncoding(this UnityWebRequest unityWebRequest) =>
+            unityWebRequest.GetResponseHeader("Content-Encoding");
 
         /// <summary>
         /// Does nothing with the web request
