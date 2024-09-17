@@ -3,7 +3,9 @@ using CommunicationData.URLHelpers;
 using CRDT;
 using CrdtEcsBridge.Components;
 using Cysharp.Threading.Tasks;
+using DCL.ApplicationVersionGuard;
 using DCL.Audio;
+using DCL.AuthenticationScreenFlow;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
@@ -16,6 +18,7 @@ using DCL.Utilities.Extensions;
 using Global.AppArgs;
 using LiveKit.Proto;
 using PortableExperiences.Controller;
+using MVC;
 using SceneRunner.Debugging;
 using System;
 using System.Collections.Generic;
@@ -34,6 +37,7 @@ namespace Global.Dynamic
         bool ShowLoading { get; }
         bool EnableLandscape { get; }
         bool EnableLOD { get; }
+        bool EnableVersionUpdateGuard { get; }
         bool EnableEmulateNoLivekitConnection { get; }
         bool OverrideConnectionQuality { get; }
         ConnectionQuality ConnectionQuality { get; }
@@ -55,6 +59,7 @@ namespace Global.Dynamic
         private bool enableLandscape;
         [SerializeField]
         private bool enableLOD;
+        [SerializeField] private bool enableVersionUpdateGuard;
         [SerializeField]
         private bool enableEmulateNoLivekitConnection;
         [SerializeField] [Tooltip("Enable Portable Experiences obtained from Feature Flags from loading at the start of the game")]
@@ -75,6 +80,7 @@ namespace Global.Dynamic
                 showLoading = true,
                 enableLandscape = true,
                 enableLOD = true,
+                enableVersionUpdateGuard = true,
                 portableExperiencesEnsToLoad = null,
                 enableEmulateNoLivekitConnection = false,
                 overrideConnectionQuality = false,
@@ -90,6 +96,7 @@ namespace Global.Dynamic
         public bool ShowLoading => Debug.isDebugBuild ? this.showLoading : RELEASE_SETTINGS.showLoading;
         public bool EnableLandscape => Debug.isDebugBuild ? this.enableLandscape : RELEASE_SETTINGS.enableLandscape;
         public bool EnableLOD => Debug.isDebugBuild ? this.enableLOD : RELEASE_SETTINGS.enableLOD;
+        public bool EnableVersionUpdateGuard => Debug.isDebugBuild ? this.enableVersionUpdateGuard : RELEASE_SETTINGS.enableVersionUpdateGuard;
         public bool EnableEmulateNoLivekitConnection => Debug.isDebugBuild ? this.enableEmulateNoLivekitConnection : RELEASE_SETTINGS.enableEmulateNoLivekitConnection;
         public bool OverrideConnectionQuality => Debug.isDebugBuild ? this.overrideConnectionQuality : RELEASE_SETTINGS.overrideConnectionQuality;
         public ConnectionQuality ConnectionQuality => Debug.isDebugBuild ? this.connectionQuality : RELEASE_SETTINGS.connectionQuality;
@@ -202,6 +209,9 @@ namespace Global.Dynamic
 
                 await bootstrap.InitializeFeatureFlagsAsync(bootstrapContainer.IdentityCache!.Identity, bootstrapContainer.DecentralandUrlsSource, staticContainer!, ct);
 
+                if (await DoesApplicationRequireVersionUpdateAsync(applicationParametersParser, splashScreen, ct))
+                    return; // stop bootstrapping;
+
                 DisableInputs();
 
                 if (await bootstrap.InitializePluginsAsync(staticContainer!, dynamicWorldContainer!, scenePluginSettingsContainer, globalPluginSettingsContainer, ct))
@@ -260,6 +270,39 @@ namespace Global.Dynamic
                                  CreatePortableExperienceByEnsAsync(new ENS(pxEns), ct, true, true).
                                  SuppressAnyExceptionWithFallback(new IPortableExperiencesController.SpawnResponse(), ReportCategory.PORTABLE_EXPERIENCE).Forget();
             }
+        }
+
+        private async UniTask<bool> DoesApplicationRequireVersionUpdateAsync(ApplicationParametersParser applicationParametersParser, SplashScreen splashScreen, CancellationToken ct)
+        {
+            applicationParametersParser.TryGetValue(ApplicationVersionGuard.SIMULATE_VERSION_CLI_ARG, out string? version);
+            string? currentVersion = version ?? Application.version;
+
+            bool runVersionControl = debugSettings.EnableVersionUpdateGuard;
+
+            if (applicationParametersParser.HasDebugFlag() && !Application.isEditor)
+                runVersionControl = applicationParametersParser.TryGetValue(ApplicationVersionGuard.ENABLE_VERSION_CONTROL_CLI_ARG, out string? enforceDebugMode) && enforceDebugMode == "true";
+
+            if (!runVersionControl)
+                return false;
+
+            var appVersionGuard = new ApplicationVersionGuard(staticContainer!.WebRequestsContainer.WebRequestController, bootstrapContainer!.WebBrowser);
+            string? latestVersion = await appVersionGuard.GetLatestVersionAsync(ct);
+
+            if (!currentVersion.IsOlderThan(latestVersion))
+                return false;
+
+            splashScreen.Hide();
+
+            var appVerRedirectionScreenPrefab = await bootstrapContainer!.AssetsProvisioner!.ProvideMainAssetAsync(dynamicSettings.AppVerRedirectionScreenPrefab, ct);
+
+            ControllerBase<LauncherRedirectionScreenView, ControllerNoData>.ViewFactoryMethod authScreenFactory =
+                LauncherRedirectionScreenController.CreateLazily(appVerRedirectionScreenPrefab.Value.GetComponent<LauncherRedirectionScreenView>(), null);
+
+            var launcherRedirectionScreenController = new LauncherRedirectionScreenController(appVersionGuard, authScreenFactory, currentVersion, latestVersion);
+            dynamicWorldContainer!.MvcManager.RegisterController(launcherRedirectionScreenController);
+
+            await dynamicWorldContainer!.MvcManager.ShowAsync(LauncherRedirectionScreenController.IssueCommand(), ct);
+            return true;
         }
 
         private void DisableInputs()
