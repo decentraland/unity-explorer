@@ -274,17 +274,13 @@ namespace Global.Dynamic
 
         private async UniTask<bool> DoesApplicationRequireVersionUpdateAsync(ApplicationParametersParser applicationParametersParser, SplashScreen splashScreen, CancellationToken ct)
         {
-            string? currentVersion = Application.version;
+            applicationParametersParser.TryGetValue(ApplicationVersionGuard.SIMULATE_VERSION_CLI_ARG, out string? version);
+            string? currentVersion = version ?? Application.version;
 
             bool runVersionControl = debugSettings.EnableVersionUpdateGuard;
 
             if (applicationParametersParser.HasDebugFlag() && !Application.isEditor)
-            {
-                runVersionControl = applicationParametersParser.TryGetValue("versionControl", out string? enforceDebugMode) && enforceDebugMode == "true";
-
-                applicationParametersParser.TryGetValue("simulateVersion", out string? version);
-                currentVersion = version;
-            }
+                runVersionControl = applicationParametersParser.TryGetValue(ApplicationVersionGuard.ENABLE_VERSION_CONTROL_CLI_ARG, out string? enforceDebugMode) && enforceDebugMode == "true";
 
             if (!runVersionControl)
                 return false;

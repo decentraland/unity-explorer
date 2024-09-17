@@ -19,6 +19,9 @@ namespace DCL.ApplicationVersionGuard
 {
     public class ApplicationVersionGuard
     {
+        public const string ENABLE_VERSION_CONTROL_CLI_ARG = "versionControl";
+        public const string SIMULATE_VERSION_CLI_ARG = "simulateVersion";
+
         private const string LAUNCHER_EXECUTABLE_NAME = "Decentraland Launcher";
         private const string LAUNCHER_PATH_MAC = "/Applications/" + LAUNCHER_EXECUTABLE_NAME + ".app";
         private const string LAUNCHER_PATH_WIN_MAIN = @"C:\Program Files\Decentraland Launcher\" + LAUNCHER_EXECUTABLE_NAME + ".exe";
@@ -64,14 +67,27 @@ namespace DCL.ApplicationVersionGuard
             else
             {
                 ProcessStartInfo startInfo = PrepareLauncherStartInfo(launcherPath);
+                startInfo.UseShellExecute = true; // Ensure the process runs independently
 
-                try { Process.Start(startInfo); }
+                await UniTask.Delay(1000, cancellationToken: ct);
+
+                try
+                {
+                    Process process = Process.Start(startInfo);
+
+                    if (process == null)
+                        ReportHub.Log("Failed to start launcher process.", ReportCategory.VERSION_CONTROL);
+                }
                 catch (Exception e)
                 {
                     if (e is not OperationCanceledException)
                         ReportHub.LogException(e, ReportCategory.VERSION_CONTROL);
                 }
-                finally { Quit(); }
+                finally
+                {
+                    await UniTask.Delay(2000, cancellationToken: ct);
+                    Quit();
+                }
             }
         }
 
