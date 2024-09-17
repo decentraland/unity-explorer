@@ -1,10 +1,12 @@
 ﻿using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Optimization.PerformanceBudgeting;
 using DCL.WebRequests.GenericDelete;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using DCL.DebugUtilities.UIBindings;
 using UnityEngine;
 using UnityEngine.Networking;
 using Utility.Times;
@@ -22,6 +24,7 @@ namespace DCL.WebRequests
 
         internal static readonly InitializeRequest<GetTextureArguments, GetTextureWebRequest> GET_TEXTURE = GetTextureWebRequest.Initialize;
         private static readonly InitializeRequest<GetAudioClipArguments, GetAudioClipWebRequest> GET_AUDIO_CLIP = GetAudioClipWebRequest.Initialize;
+        private static readonly InitializeRequest<GetAssetBundleArguments, GetAssetBundleWebRequest> GET_ASSET_BUNDLE = GetAssetBundleWebRequest.Initialize;
 
         public static UniTask<TResult> SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp, TResult>(
             this IWebRequestController controller,
@@ -32,7 +35,8 @@ namespace DCL.WebRequests
             ReportData reportData,
             WebRequestHeadersInfo? headersInfo = null,
             WebRequestSignInfo? signInfo = null,
-            ISet<long>? ignoreErrorCodes = null
+            ISet<long>? ignoreErrorCodes = null,
+            bool suppressErrors = false
         )
             where TWebRequestArgs: struct
             where TWebRequest: struct, ITypedWebRequest
@@ -46,7 +50,8 @@ namespace DCL.WebRequests
                     reportData,
                     headersInfo ?? WebRequestHeadersInfo.NewEmpty(),
                     signInfo,
-                    ignoreErrorCodes
+                    ignoreErrorCodes,
+                    suppressErrors
                 ), op
             );
 
@@ -201,10 +206,34 @@ namespace DCL.WebRequests
             WebRequestSignInfo? signInfo = null) where TOp: struct, IWebRequestOp<GetAudioClipWebRequest, AudioClip> =>
             controller.SendAsync<GetAudioClipWebRequest, GetAudioClipArguments, TOp, AudioClip>(GET_AUDIO_CLIP, commonArguments, args, webRequestOp, ct, reportData, headersInfo, signInfo);
 
+        public static UniTask<AssetBundleLoadingResult> GetAssetBundleAsync(
+            this IWebRequestController controller,
+            CommonArguments commonArguments,
+            GetAssetBundleArguments args,
+            CancellationToken ct,
+            string reportCategory = ReportCategory.ASSET_BUNDLES,
+            WebRequestHeadersInfo? headersInfo = null,
+            WebRequestSignInfo? signInfo = null,
+            bool suppressErrors = false) =>
+            controller.SendAsync<GetAssetBundleWebRequest, GetAssetBundleArguments, GetAssetBundleWebRequest.CreateAssetBundleOp, AssetBundleLoadingResult>(GET_ASSET_BUNDLE, commonArguments, args, new GetAssetBundleWebRequest.CreateAssetBundleOp(), ct, reportCategory, headersInfo, signInfo, suppressErrors: suppressErrors);
+
         public static IWebRequestController WithArtificialDelay(this IWebRequestController origin, ArtificialDelayWebRequestController.IReadOnlyOptions options) =>
             new ArtificialDelayWebRequestController(origin, options);
 
         public static IWebRequestController WithLog(this IWebRequestController origin) =>
             new LogWebRequestController(origin);
+
+        public static IWebRequestController WithDebugMetrics(this IWebRequestController origin,
+            ElementBinding<ulong> requestCannotConnectDebugMetric, ElementBinding<ulong> requestCompleteDebugMetric)
+        {
+            return new DebugMetricsWebRequestController(origin, requestCannotConnectDebugMetric,
+                requestCompleteDebugMetric);
+        }
+
+        public static IWebRequestController WithBudget(this IWebRequestController origin, int totalBudget)
+        {
+            return new BudgetedWebRequestController(origin, totalBudget);
+        }
+
     }
 }
