@@ -6,6 +6,6 @@ namespace DCL.ResourcesUnloading.UnloadStrategies
     {
         void TryUnload(ICacheCleaner cacheCleaner);
 
-        bool isRunning { get; }
+        bool IsRunning { get; }
     }
 }

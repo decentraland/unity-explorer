@@ -4,11 +4,12 @@ namespace DCL.ResourcesUnloading.UnloadStrategies
 {
     public class StandardUnloadStrategy : IUnloadStrategy
     {
-        public bool isRunning => false;
+        public bool IsRunning => false;
 
 
         public void TryUnload(ICacheCleaner cacheCleaner)
         {
+            Debug.Log("JUANI RUNNING THE STANDARD");
             cacheCleaner.UnloadCache();
             cacheCleaner.UpdateProfilingCounters();
         }

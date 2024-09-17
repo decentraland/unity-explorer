@@ -10,9 +10,7 @@ namespace DCL.PluginSystem.Global
     public class ResourceUnloadingPlugin : IDCLGlobalPluginWithoutSettings
     {
         private readonly MemoryBudget memoryBudget;
-        private readonly CacheCleaner cacheCleaner;
-        private readonly IUnloadStrategy[] unloadStrategies;
-        private readonly IRealmPartitionSettings realmPartitionSettings;
+        private readonly UnloadStrategyHandler unloadStrategyHandler;
         private const int FRAME_FAIL_THRESHOLD = 60;
 
 
@@ -20,19 +18,13 @@ namespace DCL.PluginSystem.Global
             IRealmPartitionSettings realmPartitionSettings)
         {
             this.memoryBudget = memoryBudget;
-            this.cacheCleaner = cacheCleaner;
-            this.realmPartitionSettings = realmPartitionSettings;
-            unloadStrategies = new IUnloadStrategy[]
-            {
-                new StandardUnloadStrategy(),
-                new AggressiveUnloadStrategy(realmPartitionSettings)
-            };
+            unloadStrategyHandler =
+                new UnloadStrategyHandler(realmPartitionSettings, FRAME_FAIL_THRESHOLD, cacheCleaner);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            ReleaseMemorySystem.InjectToWorld(ref builder, cacheCleaner, memoryBudget, unloadStrategies,
-                FRAME_FAIL_THRESHOLD);
+            ReleaseMemorySystem.InjectToWorld(ref builder, memoryBudget, unloadStrategyHandler);
         }
     }
 }

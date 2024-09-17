@@ -7,10 +7,10 @@ namespace DCL.ResourcesUnloading.UnloadStrategies
 {
     public class AggressiveUnloadStrategy : IUnloadStrategy
     {
-        public bool isRunning { get; set; }
+        public bool IsRunning { get; set; }
 
         private readonly IRealmPartitionSettings realmPartitionSettings;
-        private const int FORCE_UNLOAD_DURING_THIS_FRAMES = 200;
+        private const int FORCE_UNLOADING_FRAMES_AMOUNT = 200;
 
         public AggressiveUnloadStrategy(IRealmPartitionSettings realmPartitionSettings)
         {
@@ -19,13 +19,13 @@ namespace DCL.ResourcesUnloading.UnloadStrategies
 
         public void TryUnload(ICacheCleaner cacheCleaner)
         {
-            if (isRunning)
-                return;
+            Debug.Log("JUANI RUNNING THE AGGRESIVE");
+            IsRunning = true;
             
-            isRunning = true;
             //Forces MaxLoadingDistanceInParcels to the minimum value
             //TODO (Juani): A message warning that the distance has been silently modified
             realmPartitionSettings.MaxLoadingDistanceInParcels = realmPartitionSettings.MinLoadingDistanceInParcels;
+            
             StartAggressiveUnload(cacheCleaner).Forget();
         }
 
@@ -34,7 +34,7 @@ namespace DCL.ResourcesUnloading.UnloadStrategies
             var currentFrameRunning = 0;
             try
             {
-                while (currentFrameRunning < FORCE_UNLOAD_DURING_THIS_FRAMES)
+                while (currentFrameRunning < FORCE_UNLOADING_FRAMES_AMOUNT)
                 {
                     cacheCleaner.UnloadCache();
                     cacheCleaner.UpdateProfilingCounters();
@@ -44,11 +44,17 @@ namespace DCL.ResourcesUnloading.UnloadStrategies
             }
             catch (Exception e)
             {
-                // ignored
+                // On any exception, lets keep running the unloading process until the end
+                Debug.Log("JUANI RUNNING THE AGGRESIVE UNLOADING: " + e.Message);
+                while (currentFrameRunning < FORCE_UNLOADING_FRAMES_AMOUNT)
+                {
+                    currentFrameRunning++;
+                    await UniTask.Yield();
+                }
             }
             finally
             {
-                isRunning = false;
+                IsRunning = false;
                 //Finally, we unload assets that are unreferenced and not referenced
                 Resources.UnloadUnusedAssets();
             }
