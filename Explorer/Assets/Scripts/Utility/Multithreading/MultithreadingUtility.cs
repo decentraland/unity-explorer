@@ -15,7 +15,7 @@ namespace Utility.Multithreading
     public static class MultithreadingUtility
     {
         private static bool isPaused;
-        private static bool isInPlayMode;
+        private static bool isInPlayMode = !Application.isEditor;
 
         private static FrameCounter frameCounter;
 
