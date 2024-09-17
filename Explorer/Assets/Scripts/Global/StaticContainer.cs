@@ -230,7 +230,8 @@ namespace Global
             container.SharedPlugins = new IDCLGlobalPlugin[]
             {
                 assetBundlePlugin,
-                new ResourceUnloadingPlugin(sharedDependencies.MemoryBudget, container.CacheCleaner),
+                new ResourceUnloadingPlugin(sharedDependencies.MemoryBudget, container.CacheCleaner,
+                    container.RealmPartitionSettings),
                 textureResolvePlugin,
             };
 

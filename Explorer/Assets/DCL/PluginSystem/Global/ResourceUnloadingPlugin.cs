@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.ResourcesUnloading;
 using DCL.ResourcesUnloading.UnloadStrategies;
+using ECS.Prioritization;
 
 namespace DCL.PluginSystem.Global
 {
@@ -11,16 +12,20 @@ namespace DCL.PluginSystem.Global
         private readonly MemoryBudget memoryBudget;
         private readonly CacheCleaner cacheCleaner;
         private readonly IUnloadStrategy[] unloadStrategies;
+        private readonly IRealmPartitionSettings realmPartitionSettings;
         private const int FRAME_FAIL_THRESHOLD = 60;
 
-        public ResourceUnloadingPlugin(MemoryBudget memoryBudget, CacheCleaner cacheCleaner)
+
+        public ResourceUnloadingPlugin(MemoryBudget memoryBudget, CacheCleaner cacheCleaner,
+            IRealmPartitionSettings realmPartitionSettings)
         {
             this.memoryBudget = memoryBudget;
             this.cacheCleaner = cacheCleaner;
+            this.realmPartitionSettings = realmPartitionSettings;
             unloadStrategies = new IUnloadStrategy[]
             {
                 new StandardUnloadStrategy(),
-                new AggressiveUnloadStrategy()
+                new AggressiveUnloadStrategy(realmPartitionSettings)
             };
         }
 
