@@ -15,17 +15,14 @@ namespace Utility.Multithreading
 
         private readonly object queueLock = new();
         private readonly Queue<ManualResetEventSlim> queue = new();
+        private readonly Atomic<bool> acquired = new ();
         private bool IsDisposing;
 
-        public bool Acquired { get; private set; }
+        public bool Acquired => acquired.Value();
 
         static MultithreadSync()
         {
             SAMPLER = CustomSampler.Create("MultithreadSync.Wait");
-        }
-
-        public MultithreadSync()
-        {
         }
 
         public void Acquire()
@@ -42,7 +39,7 @@ namespace Utility.Multithreading
             if (shouldWait)
                 if (!waiter.Wait(TimeSpan.FromSeconds(10))) // There is already one thread doing work. Wait for the signal
                     throw new TimeoutException($"{nameof(MultithreadSync)} timeout");
-            Acquired = true;
+            acquired.Set(true);
         }
 
         public void Release()
@@ -56,7 +53,7 @@ namespace Utility.Multithreading
                 // If the queue is empty, then our logic is wrong
                 var finishedWaiter = queue.Dequeue();
                 MANUAL_RESET_EVENT_SLIM_POOL.Release(finishedWaiter);
-                Acquired = false;
+                acquired.Set(false);
 
                 if (queue.Count > 0)
                     queue.Peek().Set(); // Signal the next waiter in line
@@ -68,7 +65,7 @@ namespace Utility.Multithreading
             IsDisposing = true;
             lock (queueLock)
             {
-                Acquired = false;
+                acquired.Set(false);
                 foreach (var manualResetEventSlim in queue)
                     MANUAL_RESET_EVENT_SLIM_POOL.Release(manualResetEventSlim);
                 queue.Clear();
