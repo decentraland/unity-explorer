@@ -21,7 +21,11 @@ namespace Utility.Multithreading
 
         static MultithreadSync()
         {
-            SAMPLER = CustomSampler.Create("MutexSync.Wait");
+            SAMPLER = CustomSampler.Create("MultithreadSync.Wait");
+        }
+
+        public MultithreadSync()
+        {
         }
 
         public void Acquire()
@@ -36,7 +40,7 @@ namespace Utility.Multithreading
             }
 
             if (shouldWait)
-                if (!waiter.Wait(TimeSpan.FromSeconds(3))) // There is already one thread doing work. Wait for the signal
+                if (!waiter.Wait(TimeSpan.FromSeconds(10))) // There is already one thread doing work. Wait for the signal
                     throw new TimeoutException($"{nameof(MultithreadSync)} timeout");
             Acquired = true;
         }
