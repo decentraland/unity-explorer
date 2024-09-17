@@ -260,7 +260,7 @@ namespace Global.Dynamic
             var equippedEmotes = new EquippedEmotes();
             var forceRender = new List<string>();
             var selfProfile = new SelfProfile(container.ProfileRepository, identityCache, equippedWearables, wearableCatalog,
-                emotesCache, equippedEmotes, forceRender, ParseSelfForcedEmotes(bootstrapContainer.ApplicationParametersParser), ParseDebugForcedEmotes(bootstrapContainer.DebugSettings.EmotesToAddToUserProfile));
+                emotesCache, equippedEmotes, forceRender, ParseForcedEmotes(bootstrapContainer.ApplicationParametersParser, bootstrapContainer.DebugSettings.EmotesToAddToUserProfile));
 
             IEmoteProvider emoteProvider = new EcsEmoteProvider(globalWorld, staticContainer.RealmData);
 
@@ -634,25 +634,21 @@ namespace Global.Dynamic
             return (container, true);
         }
 
-        private static URN[]? ParseDebugForcedEmotes(string[]? emotes)
+        private static IReadOnlyList<URN>? ParseForcedEmotes(IAppArgs appParams, IReadOnlyList<string>? debugEmotes)
         {
-            if (emotes != null && emotes.Length > 0)
+            var parsedEmotes = new List<URN>();
+
+            if (debugEmotes?.Count > 0)
             {
-                return emotes.Select(s => new URN(s)).ToArray();
+                parsedEmotes.AddRange(debugEmotes.Select(emote => new URN(emote)));
             }
 
-            return null;
-        }
+            if (appParams.TryGetValue("self-force-emotes", out var csv) && !string.IsNullOrEmpty(csv))
+            {
+                parsedEmotes.AddRange(csv.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(emote => new URN(emote)));
+            }
 
-        private static URN[]? ParseSelfForcedEmotes(IAppArgs appParams)
-        {
-            if (!appParams.TryGetValue("self-force-emotes", out string? csv))
-                return null;
-
-            if (string.IsNullOrEmpty(csv)) return null;
-
-            string[] emotes = csv.Split(',');
-            return emotes.Select(s => new URN(s)).ToArray();
+            return parsedEmotes.Count > 0 ? parsedEmotes : null;
         }
     }
 }
