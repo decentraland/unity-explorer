@@ -39,53 +39,5 @@ namespace SceneRunner.Scene
         bool Contains(Vector2Int parcel);
 
         bool IsSceneReady();
-
-        class Fake : ISceneFacade
-        {
-            public Fake(SceneShortInfo info, ISceneStateProvider sceneStateProvider, SceneEcsExecutor ecsExecutor, bool isEmpty)
-            {
-                Info = info;
-                SceneStateProvider = sceneStateProvider;
-                EcsExecutor = ecsExecutor;
-                IsEmpty = isEmpty;
-            }
-
-            public UniTask DisposeAsync() =>
-                throw new NotImplementedException();
-
-            public void Dispose() =>
-                throw new NotImplementedException();
-
-            public SceneShortInfo Info { get; }
-            public ISceneStateProvider SceneStateProvider { get; }
-            public SceneEcsExecutor EcsExecutor { get; }
-            public PersistentEntities PersistentEntities { get; }
-            public bool IsEmpty { get; }
-            public ISceneData SceneData { get; }
-
-            public void Initialize() =>
-                throw new NotImplementedException();
-
-            public UniTask StartUpdateLoopAsync(int targetFPS, CancellationToken ct) =>
-                throw new NotImplementedException();
-
-            public void SetTargetFPS(int fps) =>
-                throw new NotImplementedException();
-
-            public void SetIsCurrent(bool isCurrent) =>
-                throw new NotImplementedException();
-
-            UniTask ISceneFacade.StartScene() =>
-                throw new NotImplementedException();
-
-            UniTask ISceneFacade.Tick(float dt) =>
-                throw new NotImplementedException();
-
-            public bool Contains(Vector2Int parcel) =>
-                throw new NotImplementedException();
-
-            public bool IsSceneReady() =>
-                throw new NotImplementedException();
-        }
     }
 }
