@@ -25,7 +25,6 @@ namespace DCL.ResourcesUnloading.UnloadStrategies
             isRunning = true;
             //Forces MaxLoadingDistanceInParcels to the minimum value
             //TODO (Juani): A message warning that the distance has been silently modified
-            Debug.Log("JUANI RUNNING AGGRESIVE");
             realmPartitionSettings.MaxLoadingDistanceInParcels = realmPartitionSettings.MinLoadingDistanceInParcels;
             StartAggressiveUnload(cacheCleaner).Forget();
         }
