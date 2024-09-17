@@ -86,10 +86,6 @@ namespace ECS.StreamableLoading.GLTF
                 GenerateMipMaps = false,
             };
 
-            // Debug.Log($"PRAVS - LoadGLTFSystem.FlowInternalAsync"
-            //           + $"-> GLTF final download url: {finalDownloadUrl}"
-            //           + $"-> GLTF path: {intention.Name!}");
-
             bool success = await gltfImport.Load(finalDownloadUrl, gltFastSettings, ct);
 
             // Release budget now to not hold it until dependencies are resolved to prevent a deadlock

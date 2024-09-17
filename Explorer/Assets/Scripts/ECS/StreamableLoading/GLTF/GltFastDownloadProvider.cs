@@ -34,10 +34,8 @@ namespace ECS.StreamableLoading.GLTF
 
         public async Task<IDownload> RequestAsync(Uri uri)
         {
-            // TODO: Investigate why some random textures are fetched using 'RequestAsync()' instead of 'RequestTextureAsync()'.
-            // That's why we need the scene data url for those files here...
-            string fileName = uri.OriginalString.Substring(uri.OriginalString.LastIndexOf('/')+1);
-            string originalFilePath = string.Concat(targetGltfOriginalPath.Remove(targetGltfOriginalPath.LastIndexOf('/') + 1), fileName);
+            // Even if the file is not found in the scene mappings, it can still be a valid uri, e.g. the already hashed GLTF file.
+            string originalFilePath = string.Concat(GetGltfDirectoryPath(), GetFileNameFromUri(uri));
             if (sceneData.SceneContent.TryGetContentUrl(originalFilePath, out var tryGetContentUrlResult))
                 uri = new Uri(tryGetContentUrlResult);
 
@@ -61,9 +59,7 @@ namespace ECS.StreamableLoading.GLTF
 
         public async Task<ITextureDownload> RequestTextureAsync(Uri uri, bool nonReadable, bool forceLinear)
         {
-            string textureFileName = uri.OriginalString.Substring(uri.OriginalString.LastIndexOf('/')+1);
-            string textureOriginalPath = string.Concat(targetGltfOriginalPath.Remove(targetGltfOriginalPath.LastIndexOf('/') + 1), textureFileName);
-
+            string textureOriginalPath = string.Concat(GetGltfDirectoryPath(), GetFileNameFromUri(uri));
             sceneData.SceneContent.TryGetContentUrl(textureOriginalPath, out var tryGetContentUrlResult);
 
             var texturePromise = Promise.Create(world, new GetTextureIntention
@@ -87,6 +83,9 @@ namespace ECS.StreamableLoading.GLTF
         public void Dispose()
         {
         }
+
+        private string GetFileNameFromUri(Uri uri) => uri.OriginalString.Substring(uri.OriginalString.LastIndexOf('/')+1);
+        private string GetGltfDirectoryPath() => targetGltfOriginalPath.Remove(targetGltfOriginalPath.LastIndexOf('/') + 1);
     }
 
     public struct GltfDownloadResult : IDownload
