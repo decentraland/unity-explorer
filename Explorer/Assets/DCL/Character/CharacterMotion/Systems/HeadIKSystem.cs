@@ -14,6 +14,9 @@ using DCL.Diagnostics;
 using ECS.Abstract;
 using System.Runtime.CompilerServices;
 using UnityEngine;
+#if UNITY_EDITOR
+using DCL.AvatarRendering.DemoScripts.Components;
+#endif
 
 namespace DCL.CharacterMotion.Systems
 {
@@ -75,6 +78,10 @@ namespace DCL.CharacterMotion.Systems
         }
 
         [Query]
+#if UNITY_EDITOR
+        // This prevents all random avatars from moving the head when the player's camera is moved
+        [None(typeof(RandomAvatar))]
+#endif
         private void UpdateIK(
             [Data] float dt,
             [Data] in CameraComponent cameraComponent,

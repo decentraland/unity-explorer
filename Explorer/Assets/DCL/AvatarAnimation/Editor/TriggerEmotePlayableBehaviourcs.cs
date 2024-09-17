@@ -4,11 +4,13 @@ using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.Emotes;
 using DCL.Profiles;
 using Global.Dynamic;
-using UnityEngine;
 using UnityEngine.Playables;
 
 namespace DCL.AvatarAnimation
 {
+    /// <summary>
+    /// A playable / clip for the Unity timeline that takes a URN (either local or remote) and tells an avatar to play it.
+    /// </summary>
     public class TriggerEmotePlayableBehaviour : PlayableBehaviour
     {
         public string URN;
@@ -46,8 +48,6 @@ namespace DCL.AvatarAnimation
                 // It adds the emote intent (which will be consumed and removed by the CharacterEmoteSystem) if it was not already added
                 CharacterEmoteIntent emoteIntent = new (){ EmoteId =  URN, TriggerSource = TriggerSource.SELF, Spatial = true};
                 GlobalWorld.ECSWorldInstance.Add(cachedEntity, emoteIntent);
-
-                Debug.Log("<color=yellow>EMOTE ADDED [" + URN + "] to entity {" + cachedEntity + "} with AvatarBase {"  + cachedAvatar.name +  "}</color>");
             }
         }
 
@@ -62,7 +62,6 @@ namespace DCL.AvatarAnimation
             if(emote.CurrentEmoteReference == null)
                 return;
 
-            Debug.Log("<color=red>EMOTE STOPPED [" + URN + "] in entity {" + cachedEntity + "} with AvatarBase {"  + cachedAvatar.name +  "}</color>");
             emote.StopEmote = true;
         }
 

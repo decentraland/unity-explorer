@@ -1,5 +1,5 @@
 {
-    "name": "DCL.AvatarAnimation",
+    "name": "DCL.AvatarAnimation.Editor",
     "rootNamespace": "",
     "references": [
         "GUID:f06555f75b070af458a003d92f9efb00",
@@ -10,7 +10,8 @@
         "GUID:d832748739a186646b8656bdbd447ad0",
         "GUID:543b8f091a5947a3880b7f2bca2358bd",
         "GUID:9e314663ce958b746873cb22d57ede55",
-        "GUID:e56a0d6a94c144c784012e63b6043100"
+        "GUID:e56a0d6a94c144c784012e63b6043100",
+        "GUID:c80c82a8f4e04453b85fbab973d6774a"
     ],
     "includePlatforms": [
         "Editor"

@@ -12,6 +12,9 @@ using DCL.DebugUtilities.UIBindings;
 using DCL.Time.Systems;
 using ECS.Abstract;
 using UnityEngine;
+#if UNITY_EDITOR
+using DCL.AvatarRendering.DemoScripts.Components;
+#endif
 
 namespace DCL.CharacterMotion.Systems
 {
@@ -105,6 +108,7 @@ namespace DCL.CharacterMotion.Systems
 
         [Query]
         private void ResolveVelocity(
+            Entity entity,
             [Data] float dt,
             [Data] int physicsTick,
             [Data] in CameraComponent cameraComponent,
@@ -115,7 +119,20 @@ namespace DCL.CharacterMotion.Systems
             in MovementInputComponent movementInput)
         {
             // Apply velocity based on input
-            ApplyCharacterMovementVelocity.Execute(settings, ref rigidTransform, in cameraComponent, in movementInput, dt);
+#if UNITY_EDITOR
+            if (World.Has<RandomAvatar>(entity))
+            {
+                // Random avatars are not affected by the player's camera
+                ApplyCharacterMovementVelocity.Execute(settings, ref rigidTransform, characterController.transform.forward, characterController.transform.right, in movementInput, dt);
+            }
+            else
+            {
+#endif
+                ApplyCharacterMovementVelocity.Execute(settings, ref rigidTransform, cameraComponent.Camera.transform.forward, cameraComponent.Camera.transform.right, in movementInput, dt);
+
+#if UNITY_EDITOR
+            }
+#endif
 
             // Apply velocity based on edge slip
             ApplyEdgeSlip.Execute(dt, settings, ref rigidTransform, characterController);
