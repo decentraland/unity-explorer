@@ -91,7 +91,7 @@ namespace Global.Dynamic
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.globalWorld = globalWorld;
 
-            var livekitTimeout = TimeSpan.FromSeconds(10);
+            var livekitTimeout = TimeSpan.FromSeconds(0.01f);
 
             realmChangeOperations = new ITeleportOperation[]
             {
@@ -106,7 +106,7 @@ namespace Global.Dynamic
 
             teleportInSameRealmOperation = new MoveToParcelInSameRealmTeleportOperation(this);
         }
-
+        
         public async UniTask<Result> TryChangeRealmAsync(URLDomain realm, CancellationToken ct,
             Vector2Int parcelToTeleport = default)
         {
@@ -135,7 +135,8 @@ namespace Global.Dynamic
         }
 
 
-        private Func<AsyncLoadProcessReport, UniTask> DoChangeRealmAsync(URLDomain realm, Vector2Int parcelToTeleport,
+        private Func<AsyncLoadProcessReport, UniTask<Result>> DoChangeRealmAsync(URLDomain realm,
+            Vector2Int parcelToTeleport,
             CancellationToken ct)
         {
             return async parentLoadReport =>
@@ -149,18 +150,23 @@ namespace Global.Dynamic
                 };
                 foreach (var realmChangeOperation in realmChangeOperations)
                 {
-                    var currentOperationResult = Result.SuccessResult();
                     try
                     {
-                        currentOperationResult = await realmChangeOperation.ExecuteAsync(teleportParams, ct);
+                        var currentOperationResult = await realmChangeOperation.ExecuteAsync(teleportParams, ct);
                         if (!currentOperationResult.Success)
-                            throw new Exception(currentOperationResult.ErrorMessage);
+                        {
+                            parentLoadReport.SetProgress(1);
+                            return currentOperationResult;
+                        }
                     }
                     catch (Exception e)
                     {
-                        throw new Exception($"Unhandled exception while changing realm {e}");
+                        parentLoadReport.SetProgress(1);
+                        return Result.ErrorResult($"Unhandled exception while changing realm {e}");
                     }
                 }
+
+                return Result.SuccessResult();
             };
         }
 
@@ -194,7 +200,18 @@ namespace Global.Dynamic
                 return await TryChangeRealmAsync(url, ct, parcel);
             }
 
-            var loadResult = await loadingScreen.ShowWhileExecuteTaskAsync(async parentLoadReport =>
+            var loadResult = await loadingScreen.ShowWhileExecuteTaskAsync(TryTeleportAsync(parcel, ct), ct);
+            if (!loadResult.Success)
+            {
+                ReportHub.LogError(ReportCategory.SCENE_LOADING,
+                    $"Error trying to teleport to a parcel {parcel}: {loadResult.ErrorMessage}");
+            }
+            return loadResult;
+        }
+
+        private Func<AsyncLoadProcessReport, UniTask<Result>> TryTeleportAsync(Vector2Int parcel, CancellationToken ct)
+        {
+            return async parentLoadReport =>
             {
                 ct.ThrowIfCancellationRequested();
                 parentLoadReport.SetProgress(RealFlowLoadingStatus.PROGRESS[LandscapeLoaded]);
@@ -207,22 +224,19 @@ namespace Global.Dynamic
                 {
                     var currentOperationResult = await teleportInSameRealmOperation.ExecuteAsync(teleportParams, ct);
                     if (!currentOperationResult.Success)
-                        throw new Exception(currentOperationResult.ErrorMessage);
+                    {
+                        parentLoadReport.SetProgress(1);
+                        return currentOperationResult;
+                    }
                 }
                 catch (Exception e)
                 {
-                    throw new Exception($"Unhandled exception while teleporting in same realm {e}");
+                    parentLoadReport.SetProgress(1);
+                    return Result.ErrorResult($"Unhandled exception while teleporting in same realm {e}");
                 }
-            }, ct);
 
-            if (!loadResult.Success)
-            {
-                ReportHub.LogError(ReportCategory.SCENE_LOADING,
-                    $"Error trying to teleport to a parcel {parcel}: {loadResult.ErrorMessage}");
-            }
-
-            return loadResult;
-
+                return Result.SuccessResult();
+            };
         }
 
         public async UniTask LoadTerrainAsync(AsyncLoadProcessReport landscapeLoadReport, CancellationToken ct)

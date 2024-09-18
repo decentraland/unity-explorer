@@ -19,7 +19,7 @@ namespace DCL.SceneLoadingScreens.LoadingScreen
         }
 
         public async UniTask<Result> ShowWhileExecuteTaskAsync(
-            Func<AsyncLoadProcessReport, UniTask> operation, CancellationToken ct)
+            Func<AsyncLoadProcessReport, UniTask<Result>> operation, CancellationToken ct)
         {
             ct.ThrowIfCancellationRequested();
 
@@ -33,18 +33,10 @@ namespace DCL.SceneLoadingScreens.LoadingScreen
 
             var result = Result.ErrorResult("Load Timeout!");
 
-            async UniTask ExecuteOperationAsync()
+            async UniTask<Result> ExecuteOperationAsync()
             {
-                try
-                {
-                    await operation(loadReport);
-                    result = Result.SuccessResult();
-                }
-                catch (Exception e)
-                {
-                    loadReport.SetProgress(1f);
-                    result = Result.ErrorResult(e.Message);
-                }
+                result = await operation(loadReport);
+                return result;
             }
 
             await UniTask.WhenAny(showLoadingScreenTask, ExecuteOperationAsync());

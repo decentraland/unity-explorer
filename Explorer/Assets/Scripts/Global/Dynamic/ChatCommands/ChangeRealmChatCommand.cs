@@ -76,8 +76,9 @@ namespace Global.Dynamic.ChatCommands
             if (ct.IsCancellationRequested)
                 return "🔴 Error. The operation was canceled!";
 
-
-            return (result.Success ? $"🟢 Welcome to the {worldName} world!" : result!.ErrorMessage)!;
+            return result.Success
+                ? $"🟢 Welcome to the {worldName} world!"
+                : $"🔴 Teleport was not fully successfull to {worldName} world"!;
         }
 
         private string GetWorldAddress(string worldPath)

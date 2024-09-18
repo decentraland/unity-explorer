@@ -48,10 +48,9 @@ namespace Global.Dynamic.ChatCommands
             if (ct.IsCancellationRequested)
                 return "🔴 Error. The operation was canceled!";
 
-
             return teleportResult.Success
                 ? $"🟢 You teleported to {x},{y} in Genesis City"
-                : "\ud83d\udd34 Teleport failed, please try again later!";
+                : "🔴 Teleport failed. Try again later!";
         }
     }
 }
