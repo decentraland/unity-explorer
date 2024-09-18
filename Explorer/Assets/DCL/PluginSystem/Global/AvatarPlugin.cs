@@ -1,7 +1,6 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
-using DCL.AvatarAnimation;
 using DCL.AvatarRendering.AvatarShape.ComputeShader;
 using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.AvatarRendering.AvatarShape.Systems;
@@ -33,6 +32,9 @@ using UnityEngine.Pool;
 using Utility;
 using Object = UnityEngine.Object;
 using StartAvatarMatricesCalculationSystem = DCL.AvatarRendering.AvatarShape.Systems.StartAvatarMatricesCalculationSystem;
+#if UNITY_EDITOR
+using DCL.AvatarAnimation;
+#endif
 
 namespace DCL.PluginSystem.Global
 {
