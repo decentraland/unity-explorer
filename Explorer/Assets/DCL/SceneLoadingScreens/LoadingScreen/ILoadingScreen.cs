@@ -3,35 +3,31 @@ using DCL.AsyncLoadReporting;
 using System;
 using System.Threading;
 using UnityEngine.Serialization;
+using Utility.Types;
 
 namespace DCL.SceneLoadingScreens.LoadingScreen
 {
     public interface ILoadingScreen
     {
-        struct LoadResult
-        {
-            public string ErrorMessage;
-            public bool Success;
-
-            public static LoadResult SuccessResult => new() { Success = true };
-            public static LoadResult TimeoutResult => ExceptionResult("Load timeout!");
-
-            public static LoadResult ExceptionResult(string errorMessage)
-            {
-                return new LoadResult() { Success = false, ErrorMessage = errorMessage };
-            }
-        }
-
-        UniTask<LoadResult> ShowWhileExecuteTaskAsync(Func<AsyncLoadProcessReport, UniTask> operation,
+        UniTask<Result> ShowWhileExecuteTaskAsync(Func<AsyncLoadProcessReport, UniTask> operation,
             CancellationToken ct);
 
         class EmptyLoadingScreen : ILoadingScreen
         {
-            public async UniTask<LoadResult> ShowWhileExecuteTaskAsync(Func<AsyncLoadProcessReport, UniTask> operation,
+            public async UniTask<Result> ShowWhileExecuteTaskAsync(Func<AsyncLoadProcessReport, UniTask> operation,
                 CancellationToken ct)
             {
-                await operation(AsyncLoadProcessReport.Create());
-                return LoadResult.SuccessResult;
+                var loadReport = AsyncLoadProcessReport.Create();
+                try
+                {
+                    await operation(loadReport);
+                    return Result.SuccessResult();
+                }
+                catch (Exception e)
+                {
+                    loadReport.SetProgress(1f);
+                    return Result.ErrorResult(e.Message);
+                }
             }
         }
     }

@@ -4,6 +4,7 @@ using DCL.AsyncLoadReporting;
 using System;
 using System.Threading;
 using UnityEngine;
+using Utility.Types;
 
 namespace ECS.SceneLifeCycle.Realm
 {
@@ -21,9 +22,11 @@ namespace ECS.SceneLifeCycle.Realm
 
         URLDomain? CurrentRealm { get; }
 
-        UniTask<bool> TryChangeRealmAsync(URLDomain realm, CancellationToken ct, Vector2Int parcelToTeleport = default);
+        UniTask<Result> TryChangeRealmAsync(URLDomain realm, CancellationToken ct,
+            Vector2Int parcelToTeleport = default);
 
-        UniTask<bool> TryInitializeTeleportToParcelAsync(Vector2Int parcel, CancellationToken ct, bool isLocal = false);
+        UniTask<Result> TryInitializeTeleportToParcelAsync(Vector2Int parcel, CancellationToken ct,
+            bool isLocal = false);
 
         UniTask InitializeTeleportToSpawnPointAsync(AsyncLoadProcessReport teleportLoadReport, CancellationToken ct, Vector2Int parcelToTeleport = default);
 
@@ -31,7 +34,14 @@ namespace ECS.SceneLifeCycle.Realm
 
         UniTask SwitchMiscVisibilityAsync();
 
+        UniTask ChangeRealmAsync(URLDomain realm, CancellationToken ct);
+
+        UniTask<UniTask> TeleportToParcelAsync(Vector2Int parcel, AsyncLoadProcessReport processReport,
+            CancellationToken ct);
+        
         // True if changed to GenesisCity, False - when changed to any other realm
         event Action<bool> RealmChanged;
+        
+        
     }
 }

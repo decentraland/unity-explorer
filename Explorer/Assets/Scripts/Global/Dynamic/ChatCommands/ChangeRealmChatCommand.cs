@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading;
 using UnityEngine;
+using Utility.Types;
 using static DCL.Chat.Commands.IChatCommand;
 
 namespace Global.Dynamic.ChatCommands
@@ -70,13 +71,13 @@ namespace Global.Dynamic.ChatCommands
             if (match.Groups[3].Success && match.Groups[4].Success)
                 parcel = new Vector2Int(int.Parse(match.Groups[3].Value), int.Parse(match.Groups[4].Value));
 
-            bool isSuccess = await realmNavigator.TryChangeRealmAsync(realm, ct, parcel);
+            var result = await realmNavigator.TryChangeRealmAsync(realm, ct, parcel);
 
             if (ct.IsCancellationRequested)
                 return "🔴 Error. The operation was canceled!";
 
-            return isSuccess ? $"🟢 Welcome to the {worldName} world!" :
-                realm == realmNavigator.CurrentRealm ? $"🟡 You are already in {worldName}!" : $"🔴 Error. The world {worldName} doesn't exist or not reachable!";
+
+            return (result.Success ? $"🟢 Welcome to the {worldName} world!" : result!.ErrorMessage)!;
         }
 
         private string GetWorldAddress(string worldPath)

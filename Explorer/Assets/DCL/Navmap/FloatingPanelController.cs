@@ -193,7 +193,7 @@ namespace DCL.Navmap
             view.removeMapPinDestinationButton.gameObject.SetActive(parcelIsDestination);
             view.removeDestinationButton.gameObject.SetActive(parcelIsDestination);
         }
-
+        
         private void JumpIn(Vector2Int parcel)
         {
             OnJumpIn?.Invoke(parcel);
