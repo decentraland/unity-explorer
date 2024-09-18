@@ -43,7 +43,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
         private void Prepare(in Entity entity, ref GetGltfContainerAssetIntention intention)
         {
             // Try load from cache
-            if (cache.TryGet(intention.Hash, out GltfContainerAsset? asset))
+            if (!localSceneDevelopment && cache.TryGet(intention.Hash, out GltfContainerAsset? asset))
             {
                 // construct the result immediately
                 World.Add(entity, new StreamableLoadingResult<GltfContainerAsset>(asset));
