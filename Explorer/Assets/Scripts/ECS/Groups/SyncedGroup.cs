@@ -1,6 +1,5 @@
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
-using JetBrains.Annotations;
 using SceneRunner.Scene;
 using Utility.Multithreading;
 
@@ -49,10 +48,10 @@ namespace ECS.Groups
     /// </summary>
     public abstract class SyncedGroup : CustomGroupBase<float>
     {
-        [CanBeNull] private readonly MultithreadSync multithreadSync;
+        private readonly MultithreadSync? multithreadSync;
         private readonly ISceneStateProvider sceneStateProvider;
 
-        protected SyncedGroup([CanBeNull] MultithreadSync multithreadSync, ISceneStateProvider sceneStateProvider)
+        protected SyncedGroup(MultithreadSync? multithreadSync, ISceneStateProvider sceneStateProvider)
         {
             this.multithreadSync = multithreadSync;
             this.sceneStateProvider = sceneStateProvider;
