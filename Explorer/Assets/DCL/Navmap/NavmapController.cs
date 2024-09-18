@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
+using DCL.Chat.MessageBus;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Utility;
@@ -74,7 +75,8 @@ namespace DCL.Navmap
             IMapPathEventBus mapPathEventBus,
             World world,
             Entity playerEntity,
-            IInputBlock inputBlock)
+            IInputBlock inputBlock,
+            IChatMessagesBus chatMessagesBus)
         {
             this.navmapView = navmapView;
             this.mapRenderer = mapRenderer;
@@ -86,7 +88,8 @@ namespace DCL.Navmap
             zoomController = new NavmapZoomController(navmapView.zoomView, dclInput);
             filterController = new NavmapFilterController(this.navmapView.filterView, mapRenderer, webBrowser);
             searchBarController = new NavmapSearchBarController(navmapView.SearchBarView, navmapView.SearchBarResultPanel, navmapView.HistoryRecordPanelView, placesAPIService, navmapView.floatingPanelView, webRequestController, inputBlock);
-            FloatingPanelController = new FloatingPanelController(navmapView.floatingPanelView, placesAPIService, webRequestController, realmNavigator, mapPathEventBus);
+            FloatingPanelController = new FloatingPanelController(navmapView.floatingPanelView, placesAPIService,
+                webRequestController, realmNavigator, mapPathEventBus, chatMessagesBus);
             FloatingPanelController.OnJumpIn += _ => searchBarController.ResetSearch();
             FloatingPanelController.OnSetAsDestination += SetDestination;
             this.navmapView.DestinationInfoElement.QuitButton.onClick.AddListener(OnRemoveDestinationButtonClicked);

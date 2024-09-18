@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Threading;
+using DCL.Chat.MessageBus;
 using UnityEngine;
 
 namespace DCL.Navmap
@@ -36,18 +37,21 @@ namespace DCL.Navmap
 
         public event Action<Vector2Int> OnJumpIn;
         public event Action<PlacesData.PlaceInfo?> OnSetAsDestination;
+        private readonly IChatMessagesBus chatMessagesBus;
+
 
         public FloatingPanelController(
             FloatingPanelView view,
             IPlacesAPIService placesAPIService,
             IWebRequestController webRequestController,
             IRealmNavigator realmNavigator,
-            IMapPathEventBus mapPathEventBus)
+            IMapPathEventBus mapPathEventBus, IChatMessagesBus chatMessagesBus)
         {
             this.view = view;
             this.placesAPIService = placesAPIService;
             this.realmNavigator = realmNavigator;
             this.mapPathEventBus = mapPathEventBus;
+            this.chatMessagesBus = chatMessagesBus;
 
             view.closeButton.onClick.AddListener(HidePanel);
             view.mapPinCloseButton.onClick.AddListener(HidePanel);
@@ -200,7 +204,7 @@ namespace DCL.Navmap
 
             if (destination == parcel) { mapPathEventBus.ArrivedToDestination(); }
 
-            realmNavigator.TryInitializeTeleportToParcelAsync(parcel, cts.Token).Forget();
+            chatMessagesBus.Send($"/goto {parcel.x},{parcel.y}");
         }
 
         private void SetEmptyParcelInfo(Vector2Int parcel)

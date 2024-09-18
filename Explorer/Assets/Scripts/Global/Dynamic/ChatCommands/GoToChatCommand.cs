@@ -1,11 +1,11 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Chat.Commands;
 using ECS.SceneLifeCycle.Realm;
-using System;
 using System.Text.RegularExpressions;
 using System.Threading;
 using UnityEngine;
 using Utility;
+using Utility.Types;
 using Random = UnityEngine.Random;
 using static DCL.Chat.Commands.IChatCommand;
 
@@ -42,14 +42,14 @@ namespace Global.Dynamic.ChatCommands
                 y = Random.Range(GenesisCityData.MIN_PARCEL.y, GenesisCityData.MAX_SQUARE_CITY_PARCEL.y);
             }
 
-            var success = await realmNavigator.TryInitializeTeleportToParcelAsync(new Vector2Int(x, y), ct, isLocal);
+            var teleportResult =
+                await realmNavigator.TryInitializeTeleportToParcelAsync(new Vector2Int(x, y), ct, isLocal);
 
             if (ct.IsCancellationRequested)
-            {
                 return "🔴 Error. The operation was canceled!";
-            }
 
-            return success
+
+            return teleportResult.Success
                 ? $"🟢 You teleported to {x},{y} in Genesis City"
                 : "\ud83d\udd34 Teleport failed, please try again later!";
         }
