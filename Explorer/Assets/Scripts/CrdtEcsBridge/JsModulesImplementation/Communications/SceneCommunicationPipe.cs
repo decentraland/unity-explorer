@@ -1,5 +1,4 @@
-﻿using DCL.Multiplayer.Connections.GateKeeper.Meta;
-using DCL.Multiplayer.Connections.GateKeeper.Rooms;
+﻿using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.Messaging;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.Messaging.Pipe;
@@ -21,13 +20,11 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
     {
         private readonly Dictionary<SubscriberKey, ISceneCommunicationPipe.SceneMessageHandler> sceneMessageHandlers = new ();
 
-        private readonly ISceneRoomMetaDataSource sceneRoomMetaDataSource;
         private readonly IGateKeeperSceneRoom sceneRoom;
         private readonly IMessagePipe messagePipe;
 
-        public SceneCommunicationPipe(IMessagePipesHub messagePipesHub, ISceneRoomMetaDataSource sceneRoomMetaDataSource, IGateKeeperSceneRoom sceneRoom)
+        public SceneCommunicationPipe(IMessagePipesHub messagePipesHub, IGateKeeperSceneRoom sceneRoom)
         {
-            this.sceneRoomMetaDataSource = sceneRoomMetaDataSource;
             this.sceneRoom = sceneRoom;
             messagePipe = messagePipesHub.ScenePipe();
             messagePipe.Subscribe<Scene>(Packet.MessageOneofCase.Scene, InvokeSubscriber);
@@ -43,7 +40,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
                 if (decodedMessage.Length == 0)
                     return;
 
-                if (IsCommunicationRestricted(message.Payload.SceneId)) return;
+                if (!sceneRoom.IsSceneConnected(message.Payload.SceneId)) return;
 
                 SubscriberKey key = new (message.Payload.SceneId, msgType);
 
@@ -51,13 +48,6 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
                     handler(new ISceneCommunicationPipe.DecodedMessage(decodedMessage, message.FromWalletId));
             }
         }
-
-        /// <summary>
-        ///     If Communication is isolated messages can be received from the current scene only
-        /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool IsCommunicationRestricted(string sceneId) =>
-            sceneRoomMetaDataSource.ScenesCommunicationIsIsolated && sceneId != sceneRoom.ConnectedScene?.SceneEntityDefinition.id;
 
         private static ISceneCommunicationPipe.MsgType DecodeMessage(ref ReadOnlySpan<byte> value)
         {
@@ -80,7 +70,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
 
         public void SendMessage(ReadOnlySpan<byte> message, string sceneId, CancellationToken ct)
         {
-            if (IsCommunicationRestricted(sceneId)) return;
+            if (!sceneRoom.IsSceneConnected(sceneId)) return;
 
             MessageWrap<Scene> sceneMessage = messagePipe.NewMessage<Scene>();
             sceneMessage.Payload.Data = ByteString.CopyFrom(message);

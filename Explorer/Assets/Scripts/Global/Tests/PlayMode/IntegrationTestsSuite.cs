@@ -5,7 +5,6 @@ using DCL.Browser.DecentralandUrls;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
-using DCL.Multiplayer.Connections.GateKeeper.Meta;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.PluginSystem;
@@ -76,8 +75,7 @@ namespace Global.Tests.PlayMode
                     new CancellationTokenSource(),
                     Substitute.For<IPopupCloserView>()
                 ),
-                new IMessagePipesHub.Fake(),
-                Substitute.For<ISceneRoomMetaDataSource>()
+                new IMessagePipesHub.Fake()
             );
 
             return (staticContainer, sceneSharedContainer);
