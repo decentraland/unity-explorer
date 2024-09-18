@@ -62,7 +62,20 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
         }
 
         [Test]
-        public void FetchTargetLookAtCRDTEntityCorrectly()
+        public void GetTargetLookAtCRDTEntityCorrectlyForValidTargets()
+        {
+            int virtualCameraCRDTEntity = 189;
+            PBVirtualCamera pbComponent = new PBVirtualCamera();
+
+            pbComponent.LookAtEntity = SpecialEntitiesID.PLAYER_ENTITY;
+            Assert.AreEqual(SpecialEntitiesID.PLAYER_ENTITY, VirtualCameraUtils.GetPBVirtualCameraLookAtCRDTEntity(pbComponent, virtualCameraCRDTEntity)!.Value.Id);
+
+            pbComponent.LookAtEntity = 627;
+            Assert.AreEqual(627, VirtualCameraUtils.GetPBVirtualCameraLookAtCRDTEntity(pbComponent, virtualCameraCRDTEntity)!.Value.Id);
+        }
+
+        [Test]
+        public void GetTargetLookAtCRDTEntityCorrectlyForInvalidTargets()
         {
             int virtualCameraCRDTEntity = 189;
 
@@ -76,17 +89,10 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
 
             pbComponent.LookAtEntity = (uint)virtualCameraCRDTEntity;
             Assert.IsNull(VirtualCameraUtils.GetPBVirtualCameraLookAtCRDTEntity(pbComponent, virtualCameraCRDTEntity));
-
-            // Valid LookAt values
-            pbComponent.LookAtEntity = SpecialEntitiesID.PLAYER_ENTITY;
-            Assert.AreEqual(SpecialEntitiesID.PLAYER_ENTITY, VirtualCameraUtils.GetPBVirtualCameraLookAtCRDTEntity(pbComponent, virtualCameraCRDTEntity)!.Value.Id);
-
-            pbComponent.LookAtEntity = 627;
-            Assert.AreEqual(627, VirtualCameraUtils.GetPBVirtualCameraLookAtCRDTEntity(pbComponent, virtualCameraCRDTEntity)!.Value.Id);
         }
 
         [Test]
-        public void ConfigureCameraTransitionCorrectly()
+        public void ConfigureCameraTimeTransitionCorrectly()
         {
             // Setup
             CinemachineBrain cinemachineBrain = new GameObject("CinemachineBrain").AddComponent<CinemachineBrain>();
@@ -131,8 +137,24 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
                 68);
             Assert.AreEqual(CinemachineBlendDefinition.Style.Cut, cinemachineBrain.m_DefaultBlend.m_Style);
 
+            // Cleanup
+            GameObject.DestroyImmediate(cinemachineBrain.gameObject);
+        }
+
+        [Test]
+        public void ConfigureCameraSpeedTransitionCorrectly()
+        {
+            // Setup
+            CinemachineBrain cinemachineBrain = new GameObject("CinemachineBrain").AddComponent<CinemachineBrain>();
+            IExposedCameraData exposedCameraData = Substitute.For<IExposedCameraData>();
+            exposedCameraData.CinemachineBrain.Returns(cinemachineBrain);
+            int virtualCamCRDTEntity = world.Get<CRDTEntity>(entity1).Id;
+
             // Speed = 0 transition
-            pbComponent.DefaultTransition = new CameraTransition() { Speed = 0 };
+            PBVirtualCamera pbComponent = new PBVirtualCamera()
+            {
+                DefaultTransition = new CameraTransition() { Speed = 0 }
+            };
             world.Add(entity1, pbComponent);
             VirtualCameraUtils.ConfigureVirtualCameraTransition(
                 world,
