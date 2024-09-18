@@ -1,6 +1,7 @@
 ﻿using DCL.Optimization.PerformanceBudgeting;
 using DCL.PluginSystem.Global;
 using DCL.ResourcesUnloading.UnloadStrategies;
+using ECS.Prioritization;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
@@ -9,7 +10,7 @@ namespace DCL.ResourcesUnloading.Tests
 {
     public class ReleaseMemorySystemShould : UnitySystemTestBase<ReleaseMemorySystem>
     {
-        /*
+        
         private ReleaseMemorySystem releaseMemorySystem;
 
         // Subs
@@ -21,6 +22,8 @@ namespace DCL.ResourcesUnloading.Tests
 
         private IUnloadStrategy standardStrategy;
         private IUnloadStrategy aggresiveStrategy;
+
+        private UnloadStrategyHandler unloadStrategyHandler;
 
         [SetUp]
         public void SetUp()
@@ -36,8 +39,12 @@ namespace DCL.ResourcesUnloading.Tests
 
             frameFailThreshold = 2;
 
-            releaseMemorySystem = new ReleaseMemorySystem(world, cacheCleaner, memoryBudgetProvider, unloadStrategies,
-                frameFailThreshold);
+            var partitionSettings = Substitute.For<IRealmPartitionSettings>();
+
+            unloadStrategyHandler = new UnloadStrategyHandler(partitionSettings, frameFailThreshold, cacheCleaner);
+            unloadStrategyHandler.unloadStrategies = unloadStrategies;
+
+            releaseMemorySystem = new ReleaseMemorySystem(world, memoryBudgetProvider, unloadStrategyHandler);
         }
 
         [TestCase(MemoryUsageStatus.NORMAL, 0)]
@@ -62,19 +69,18 @@ namespace DCL.ResourcesUnloading.Tests
             memoryBudgetProvider.GetMemoryUsageStatus().Returns(MemoryUsageStatus.WARNING);
 
             // Act
-            for (var i = 0; i < frameFailThreshold; i++)
+            for (var i = 0; i < frameFailThreshold + 1; i++)
                 releaseMemorySystem.Update(0);
 
             // Assert
-            Assert.AreEqual(releaseMemorySystem.currentUnloadStrategy, 1);
+            Assert.AreEqual(unloadStrategyHandler.currentUnloadStrategy, 1);
 
             // Act
-            releaseMemorySystem.Update(0);
             memoryBudgetProvider.GetMemoryUsageStatus().Returns(MemoryUsageStatus.NORMAL);
             releaseMemorySystem.Update(0);
 
             // Assert
-            Assert.AreEqual(releaseMemorySystem.currentUnloadStrategy, 0);
+            Assert.AreEqual(unloadStrategyHandler.currentUnloadStrategy, 0);
 
             standardStrategy.Received(frameFailThreshold).TryUnload(cacheCleaner);
             aggresiveStrategy.Received(1).TryUnload(cacheCleaner);
@@ -100,7 +106,7 @@ namespace DCL.ResourcesUnloading.Tests
             standardStrategy.Received(frameFailThreshold).TryUnload(cacheCleaner);
             aggresiveStrategy.Received(1).TryUnload(cacheCleaner);
         }
-    */
+    
     }
     
 }

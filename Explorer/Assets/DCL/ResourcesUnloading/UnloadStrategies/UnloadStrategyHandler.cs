@@ -5,7 +5,7 @@ namespace DCL.ResourcesUnloading.UnloadStrategies
 {
     public class UnloadStrategyHandler
     {
-        private readonly IUnloadStrategy[] unloadStrategies;
+        internal IUnloadStrategy[] unloadStrategies;
         internal int currentUnloadStrategy;
         private readonly ICacheCleaner cacheCleaner;
 
