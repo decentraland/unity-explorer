@@ -7,9 +7,11 @@ namespace DCL.ResourcesUnloading.UnloadStrategies
     {
         private readonly IUnloadStrategy[] unloadStrategies;
         internal int currentUnloadStrategy;
+        private readonly ICacheCleaner cacheCleaner;
+
+        //Determines how many frames we need to fail to increase the aggressiveness tier
         private int consecutiveFailedFrames;
         private readonly int failuresFrameThreshold;
-        private readonly ICacheCleaner cacheCleaner;
 
 
         public UnloadStrategyHandler(IRealmPartitionSettings realmPartitionSettings, int failuresFrameThreshold,
