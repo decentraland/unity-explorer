@@ -79,6 +79,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
         public async Task HandleComponentRemoveCorrectly()
         {
             // Workaround for Unity bug not awaiting async Setup correctly
+            await UniTask.Yield();
             await UniTask.WaitUntil(() => system != null);
 
             var component = new PBVirtualCamera();
@@ -100,6 +101,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
         public async Task HandleEntityDestructionCorrectly()
         {
             // Workaround for Unity bug not awaiting async Setup correctly
+            await UniTask.Yield();
             await UniTask.WaitUntil(() => system != null);
 
             var component = new PBVirtualCamera();
