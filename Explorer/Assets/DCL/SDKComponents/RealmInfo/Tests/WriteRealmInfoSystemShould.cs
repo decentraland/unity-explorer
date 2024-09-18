@@ -50,9 +50,10 @@ namespace DCL.SDKComponents.RealmInfo.Tests
             roomHub.IslandRoom().Returns(islandRoom);
 
             ISceneData? sceneData = Substitute.For<ISceneData>();
+            sceneData.SceneEntityDefinition.Returns(new SceneEntityDefinition());
 
             IGateKeeperSceneRoom? gateKeeperSceneRoom = Substitute.For<IGateKeeperSceneRoom>();
-            gateKeeperSceneRoom.ConnectedScene.Returns(sceneData);
+            gateKeeperSceneRoom.IsSceneConnected(Arg.Any<string>()).Returns(true);
             gateKeeperSceneRoom.CurrentState().Returns(IConnectiveRoom.State.Running);
 
             roomHub.SceneRoom().Returns(gateKeeperSceneRoom);
