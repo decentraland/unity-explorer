@@ -130,6 +130,7 @@ namespace DCL.PluginSystem.Global
             PlayerProfileDataPropagationSystem.InjectToWorld(ref builder, characterDataPropagationUtility, globalPluginArguments.PlayerEntity);
             ResetDirtyFlagSystem<AvatarEmoteCommandComponent>.InjectToWorld(ref builder);
             AvatarEmoteCommandPropagationSystem.InjectToWorld(ref builder, emoteStorage);
+            PlayerTransformPropagationSystem.InjectToWorld(ref builder);
 #endif
         }
 

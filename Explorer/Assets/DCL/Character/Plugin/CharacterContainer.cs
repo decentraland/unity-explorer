@@ -125,7 +125,7 @@ namespace DCL.Character.Plugin
 
             public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
             {
-                WritePlayerTransformSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, sharedDependencies.SceneData,
+                WriteMainPlayerTransformSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, sharedDependencies.SceneData,
                     exposedTransform, sharedDependencies.ScenePartition, bucketPropagationLimit, sdkTransformPool, persistentEntities.Player);
 
                 WriteCameraComponentsSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, exposedCameraData, sharedDependencies.SceneData,
