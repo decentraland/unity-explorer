@@ -114,8 +114,6 @@ namespace DCL.Profiling.ECS
 
         protected override void Update(float t)
         {
-            return;
-
             if (!realmData.Configured) return;
 
             if (memoryVisibilityBinding.IsExpanded)
