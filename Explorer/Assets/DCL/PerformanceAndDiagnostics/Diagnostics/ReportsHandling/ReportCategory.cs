@@ -287,5 +287,7 @@ namespace DCL.Diagnostics
         ///     Used for multithreading sync messages
         /// </summary>
         public const string SYNC = nameof(SYNC);
+
+        public const string VERSION_CONTROL= nameof(VERSION_CONTROL);
     }
 }
