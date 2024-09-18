@@ -46,8 +46,10 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
         }
 
         [TearDown]
-        public void Teardown()
+        public async Task Teardown()
         {
+            await UniTask.Yield();
+            sdkVirtualCameraPool.Dispose();
             poolsRegistry.Dispose();
             world.Dispose();
         }
@@ -68,10 +70,10 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
             world.Add(entity, component);
 
             system.Update(1f);
-            Assert.AreEqual(sdkVirtualCameraPool.CountInactive, 0);
+            Assert.AreEqual(0, sdkVirtualCameraPool.CountInactive);
 
             Assert.IsTrue(world.TryGet(entity, out VirtualCameraComponent vCamComponent));
-            Assert.AreEqual(vCamComponent.lookAtCRDTEntity!.Value.Id, lookAtEntity);
+            Assert.AreEqual(lookAtEntity, vCamComponent.lookAtCRDTEntity!.Value.Id);
             Assert.AreSame(vCamComponent.virtualCameraInstance, virtualCamera);
         }
 
