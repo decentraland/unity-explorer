@@ -19,6 +19,7 @@ namespace DCL.ResourcesUnloading.UnloadStrategies
 
         public void TryUnload(ICacheCleaner cacheCleaner)
         {
+            Debug.Log("JUANI RUNNING THE AGGRESIVE");
             IsRunning = true;
             
             //Forces MaxLoadingDistanceInParcels to the minimum value
@@ -44,6 +45,7 @@ namespace DCL.ResourcesUnloading.UnloadStrategies
             catch (Exception e)
             {
                 // On any exception, lets keep running the unloading process until the end
+                Debug.Log("JUANI RUNNING THE AGGRESIVE UNLOADING: " + e.Message);
                 while (currentFrameRunning < FORCE_UNLOADING_FRAMES_AMOUNT)
                 {
                     currentFrameRunning++;
@@ -53,9 +55,7 @@ namespace DCL.ResourcesUnloading.UnloadStrategies
             finally
             {
                 IsRunning = false;
-                //Finally, we unload assets that are unreferenced by no one
-                //Its a safe-check for any asset we may have missed in the cache
-                //Careful, because it will produce a hiccupe
+                //Finally, we unload assets that are unreferenced and not referenced
                 Resources.UnloadUnusedAssets();
             }
         }
