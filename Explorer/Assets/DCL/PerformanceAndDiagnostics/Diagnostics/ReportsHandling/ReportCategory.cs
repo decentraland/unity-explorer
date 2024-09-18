@@ -283,5 +283,9 @@ namespace DCL.Diagnostics
 
         public const string PORTABLE_EXPERIENCE= nameof(PORTABLE_EXPERIENCE);
 
+        /// <summary>
+        ///     Used for multithreading sync messages
+        /// </summary>
+        public const string SYNC = nameof(SYNC);
     }
 }

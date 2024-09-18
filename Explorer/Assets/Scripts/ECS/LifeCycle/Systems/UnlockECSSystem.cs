@@ -14,18 +14,17 @@ namespace ECS.LifeCycle.Systems
     [UpdateAfter(typeof(SyncedPreRenderingSystemGroup))] // After all other systems
     public partial class UnlockECSSystem : BaseUnityLoopSystem
     {
-        private readonly MultithreadSync multithreadSync;
+        private readonly MultithreadSync.BoxedScope boxedScope;
+        private bool skippedFirstFrame;
 
-        internal UnlockECSSystem(World world, MultithreadSync multithreadSync) : base(world)
+        internal UnlockECSSystem(World world, MultithreadSync.BoxedScope boxedScope) : base(world)
         {
-            this.multithreadSync = multithreadSync;
+            this.boxedScope = boxedScope;
         }
 
         protected override void Update(float t)
         {
-            // We could skip the first frame of LockECSSystem
-            if (multithreadSync.Acquired)
-                multithreadSync.Release();
+            boxedScope.ReleaseIfAcquired();
         }
     }
 }

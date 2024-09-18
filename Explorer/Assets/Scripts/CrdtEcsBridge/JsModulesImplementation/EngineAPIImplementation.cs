@@ -245,7 +245,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
         {
             try
             {
-                using var mutex = multithreadSync.GetScope();
+                using var mutex = multithreadSync.GetScope(nameof(EngineAPIImplementation));
 
                 applyBufferSampler.Begin();
 

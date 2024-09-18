@@ -21,6 +21,7 @@ using ECS.Unity.EngineInfo;
 using ECS.Unity.Systems;
 using System.Collections.Generic;
 using SystemGroups.Visualiser;
+using Utility.Multithreading;
 
 namespace SceneRunner.ECSWorld
 {
@@ -86,9 +87,11 @@ namespace SceneRunner.ECSWorld
             finalizeWorldSystems.Add(ReleaseReferenceComponentsSystem.InjectToWorld(ref builder, componentPoolsRegistry));
             finalizeWorldSystems.Add(ReleaseRemovedComponentsSystem.InjectToWorld(ref builder));
 
+            var scope = new MultithreadSync.BoxedScope(mutex);
+
             // These system will prevent changes from the JS scenes to squeeze in between different stages of the PlayerLoop at the same frame
-            LockECSSystem.InjectToWorld(ref builder, mutex);
-            UnlockECSSystem.InjectToWorld(ref builder, mutex);
+            LockECSSystem.InjectToWorld(ref builder, scope);
+            UnlockECSSystem.InjectToWorld(ref builder, scope);
 
             SystemGroupWorld systemsWorld = builder.Finish(singletonDependencies.AggregateFactory, scenePartition).EnsureNotNull();
 
