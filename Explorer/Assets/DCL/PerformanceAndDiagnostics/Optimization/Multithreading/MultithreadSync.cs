@@ -28,7 +28,9 @@ namespace Utility.Multithreading
 
         private void Acquire(string source)
         {
+#if SYNC_DEBUG
             ReportHub.Log(ReportCategory.SYNC, $"MultithreadSync Acquire start for: {source}");
+#endif
 
             if (isDisposing.Value())
                 throw new ObjectDisposedException(nameof(MultithreadSync));
@@ -44,12 +46,16 @@ namespace Utility.Multithreading
                 throw new TimeoutException($"{nameof(MultithreadSync)} timeout, cannot acquire for: {source}");
 
             acquired.Set(true);
+#if SYNC_DEBUG
             ReportHub.Log(ReportCategory.SYNC, $"MultithreadSync Acquire finished for: {source}");
+#endif
         }
 
         private void Release(string source)
         {
-            ReportHub.Log(ReportCategory.SYNC,$"MultithreadSync Release start for: {source}");
+#if SYNC_DEBUG
+            ReportHub.Log(ReportCategory.SYNC, $"MultithreadSync Release start for: {source}");
+#endif
 
             if (isDisposing.Value())
                 return;
@@ -65,10 +71,14 @@ namespace Utility.Multithreading
                 if (queue.TryPeek(out var next))
                     next!.Set(); // Signal the next waiter in line
 
+#if SYNC_DEBUG
                 ReportHub.Log(ReportCategory.SYNC,$"MultithreadSync Release finished for: {source}");
+#endif
             }
+#if SYNC_DEBUG
             else
                 ReportHub.LogError(ReportCategory.SYNC,$"MultithreadSync Release finished CANNOT: {source}");
+#endif
         }
 
         public void Dispose()
