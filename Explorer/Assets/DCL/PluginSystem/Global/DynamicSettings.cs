@@ -1,3 +1,4 @@
+using DCL.AuthenticationScreenFlow;
 using DCL.Chat;
 using DCL.Input;
 using DCL.Multiplayer.Movement.Settings;
@@ -21,5 +22,6 @@ namespace DCL.PluginSystem.Global
         [field: SerializeField] public AssetReferenceT<AudioMixer> GeneralAudioMixer { get; private set; }
         [field: SerializeField] public AssetReferenceT<MultiplayerDebugSettings> MultiplayerDebugSettings { get; private set; }
 
+        [field: SerializeField] public AssetReferenceGameObject AppVerRedirectionScreenPrefab { get; private set; }
     }
 }
