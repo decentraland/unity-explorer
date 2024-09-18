@@ -79,13 +79,12 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
         public async Task HandleComponentRemoveCorrectly()
         {
             // Workaround for Unity bug not awaiting async Setup correctly
-            await UniTask.Yield();
             await UniTask.WaitUntil(() => system != null);
 
             var component = new PBVirtualCamera();
             world.Add(entity, component);
 
-            system.Update(1f);
+            system!.Update(1f);
             Assert.IsTrue(world.Has<VirtualCameraComponent>(entity));
             Assert.AreEqual(sdkVirtualCameraPool.CountInactive, 0);
             virtualCamera.enabled = true; // emulates being active on the MainCamera component
@@ -101,13 +100,12 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
         public async Task HandleEntityDestructionCorrectly()
         {
             // Workaround for Unity bug not awaiting async Setup correctly
-            await UniTask.Yield();
             await UniTask.WaitUntil(() => system != null);
 
             var component = new PBVirtualCamera();
             world.Add(entity, component);
 
-            system.Update(1f);
+            system!.Update(1f);
             Assert.IsTrue(world.Has<VirtualCameraComponent>(entity));
             Assert.AreEqual(sdkVirtualCameraPool.CountInactive, 0);
             virtualCamera.enabled = true; // emulates being active on the MainCamera component
