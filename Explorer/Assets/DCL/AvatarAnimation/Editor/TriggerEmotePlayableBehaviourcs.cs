@@ -56,12 +56,17 @@ namespace DCL.AvatarAnimation
             if(cachedAvatar == null || cachedEntity == Entity.Null)
                 return;
 
+            // Cancels loading any pending emote
+            if (GlobalWorld.ECSWorldInstance.Has<CharacterEmoteIntent>(cachedEntity))
+                GlobalWorld.ECSWorldInstance.Remove<CharacterEmoteIntent>(cachedEntity);
+
             ref CharacterEmoteComponent emote = ref GlobalWorld.ECSWorldInstance.TryGetRef<CharacterEmoteComponent>(cachedEntity, out bool exists);
 
             // Only stop what is playing
             if(emote.CurrentEmoteReference == null)
                 return;
 
+            // Tells the CharacterEmoteSystem to stop the emote
             emote.StopEmote = true;
         }
 

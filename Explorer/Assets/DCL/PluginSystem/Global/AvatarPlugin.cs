@@ -1,6 +1,7 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.AvatarAnimation;
 using DCL.AvatarRendering.AvatarShape.ComputeShader;
 using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.AvatarRendering.AvatarShape.Systems;
@@ -160,6 +161,9 @@ namespace DCL.PluginSystem.Global
 
             //Debug scripts
             InstantiateRandomAvatarsSystem.InjectToWorld(ref builder, debugContainerBuilder, realmData, transformPoolRegistry, avatarRandomizerAsset);
+#if UNITY_EDITOR
+            PlayableDirectorUpdatingSystem.InjectToWorld(ref builder);
+#endif
         }
 
         private async UniTask CreateAvatarBasePoolAsync(AvatarShapeSettings settings, CancellationToken ct)
