@@ -48,6 +48,7 @@ namespace DCL.UserInAppInitializationFlow
             IRealmNavigator realmNavigator,
             ILoadingScreen loadingScreen,
             IFeatureFlagsProvider featureFlagsProvider,
+            FeatureFlagsCache featureFlagsCache,
             IWeb3IdentityCache web3IdentityCache,
             IRealmController realmController,
             IAppArgs appParameters
@@ -64,6 +65,7 @@ namespace DCL.UserInAppInitializationFlow
             var switchRealmMiscVisibilityStartupOperation = new SwitchRealmMiscVisibilityStartupOperation(loadingStatus, realmNavigator);
             loadPlayerAvatarStartupOperation = new LoadPlayerAvatarStartupOperation(loadingStatus, selfProfile, mainPlayerAvatarBaseProxy);
             var loadLandscapeStartupOperation = new LoadLandscapeStartupOperation(loadingStatus, realmNavigator);
+            var checkOnboardingStartupOperation = new CheckOnboardingStartupOperation(loadingStatus, realmController, selfProfile, featureFlagsCache);
             restartRealmStartupOperation = new RestartRealmStartupOperation(loadingStatus, realmController);
             var teleportStartupOperation = new TeleportStartupOperation(loadingStatus, realmNavigator, startParcel);
 
@@ -75,6 +77,7 @@ namespace DCL.UserInAppInitializationFlow
                 switchRealmMiscVisibilityStartupOperation,
                 loadPlayerAvatarStartupOperation,
                 loadLandscapeStartupOperation,
+                checkOnboardingStartupOperation,
                 restartRealmStartupOperation,
                 teleportStartupOperation
             ).WithHandleExceptions();
