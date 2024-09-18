@@ -108,21 +108,41 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
         }
 
         [Test]
-        public void SetupMainCameraComponentCorrectly()
+        public void SetupCameraComponentCorrectly()
         {
             world.Remove<MainCameraComponent>(mainCameraEntity);
+            sceneStateProvider.IsCurrent.Returns(true);
+            SystemUpdate();
+            Assert.IsTrue(world.Has<MainCameraComponent>(mainCameraEntity));
+        }
 
-            // Do not set up if not current scene
+        [Test]
+        public void NotSetupComponentWhenNotInCurrentScene()
+        {
+            world.Remove<MainCameraComponent>(mainCameraEntity);
+            sceneStateProvider.IsCurrent.Returns(false);
+            SystemUpdate();
+            Assert.IsFalse(world.Has<MainCameraComponent>(mainCameraEntity));
+        }
+
+        [Test]
+        public void SetupComponentWhenEnteringScene()
+        {
+            world.Remove<MainCameraComponent>(mainCameraEntity);
             sceneStateProvider.IsCurrent.Returns(false);
             SystemUpdate();
             Assert.IsFalse(world.Has<MainCameraComponent>(mainCameraEntity));
 
-            // Set up if current scene
+            // "Enter scene"
             sceneStateProvider.IsCurrent.Returns(true);
             SystemUpdate();
             Assert.IsTrue(world.Has<MainCameraComponent>(mainCameraEntity));
+        }
 
-            // Do not set up an entity that's not the main camera entity
+        [Test]
+        public void NotSetupComponentIfNotCameraReservedEntity()
+        {
+            world.Remove<MainCameraComponent>(mainCameraEntity);
             var nonCameraEntity = world.Create(new PBMainCamera());
             SystemUpdate();
             Assert.IsFalse(world.Has<MainCameraComponent>(nonCameraEntity));
