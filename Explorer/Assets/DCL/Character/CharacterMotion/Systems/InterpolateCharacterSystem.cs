@@ -27,10 +27,10 @@ namespace DCL.CharacterMotion.Systems
     [UpdateBefore(typeof(CameraGroup))]
     public partial class InterpolateCharacterSystem : BaseUnityLoopSystem
     {
-        private const float ALMOST_ZERO = 0.00001f;
-        private int playerJustTeleportedCountDown;
         private const int COUNTDOWN_FRAMES = 5;
+        private const float ALMOST_ZERO = 0.00001f;
 
+        private int playerJustTeleportedCountDown;
 
         private InterpolateCharacterSystem(World world) : base(world) { }
 
