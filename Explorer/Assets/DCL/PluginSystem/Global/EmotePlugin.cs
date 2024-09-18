@@ -129,7 +129,7 @@ namespace DCL.PluginSystem.Global
         {
             EmbeddedEmotesData embeddedEmotesData = (await assetsProvisioner.ProvideMainAssetAsync(settings.EmbeddedEmotes, ct)).Value;
 
-            // TODO: convert into an async operation so we dont increment the loading times at app's startup
+            // TODO: convert into an async operation so we don't increment the loading times at app's startup
             IEnumerable<IEmote> embeddedEmotes = embeddedEmotesData.GenerateEmotes();
 
             audioSourceReference = (await assetsProvisioner.ProvideMainAssetAsync(settings.EmoteAudioSource, ct)).Value.GetComponent<AudioSource>();

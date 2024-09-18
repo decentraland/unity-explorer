@@ -47,16 +47,17 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.ApiChunks => $"https://api.decentraland.{ENV}/v1/map.png",
                 DecentralandUrl.PeerAbout => $"https://peer.decentraland.{ENV}/about",
                 DecentralandUrl.DAO => $"https://decentraland.{ENV}/dao/",
-                DecentralandUrl.Notification => $"https://notifications.decentraland.org/notifications",
-                DecentralandUrl.NotificationRead => $"https://notifications.decentraland.org/notifications/read",
+                DecentralandUrl.Notification => $"https://notifications.decentraland.{ENV}/notifications",
+                DecentralandUrl.NotificationRead => $"https://notifications.decentraland.{ENV}/notifications/read",
                 DecentralandUrl.FeatureFlags => $"https://feature-flags.decentraland.{ENV}",
-                DecentralandUrl.Help => "https://decentraland.org/help/",
-                DecentralandUrl.Market => "https://market.decentraland.org",
+                DecentralandUrl.Help => $"https://decentraland.{ENV}/help/",
+                DecentralandUrl.Market => $"https://market.decentraland.{ENV}",
+                // All ABs are in org
                 DecentralandUrl.AssetBundlesCDN => "https://ab-cdn.decentraland.org",
                 DecentralandUrl.ArchipelagoStatus => $"https://archipelago-stats.decentraland.{ENV}/status",
                 DecentralandUrl.GatekeeperStatus => $"https://comms-gatekeeper.decentraland.{ENV}/status",
                 DecentralandUrl.Genesis => $"https://realm-provider-ea.decentraland.{ENV}/main",
-                DecentralandUrl.Badges => $"https://badges.decentraland.org",
+                DecentralandUrl.Badges => $"https://badges.decentraland.{ENV}",
                 _ => throw new ArgumentOutOfRangeException(nameof(decentralandUrl), decentralandUrl, null!)
             };
     }

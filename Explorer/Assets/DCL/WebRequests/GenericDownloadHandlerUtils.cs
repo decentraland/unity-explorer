@@ -166,6 +166,16 @@ namespace DCL.WebRequests
             public UniTask<byte[]> GetDataCopyAsync() =>
                 SendAsync<GetDataCopyOp<TRequest>, byte[]>(new GetDataCopyOp<TRequest>());
 
+            public UniTask<string> GetResponseHeaderAsync(string headerName) =>
+                SendAsync<GetResponseHeaderOp<TRequest>, string>(new GetResponseHeaderOp<TRequest>(headerName));
+
+            /// <summary>
+            ///     Exposes the download handler to the caller so it's the caller responsibility to dispose it later
+            /// </summary>
+            /// <returns></returns>
+            public UniTask<DownloadHandler> ExposeDownloadHandlerAsync() =>
+                SendAsync<ExposeDownloadHandler<TRequest>, DownloadHandler>(new ExposeDownloadHandler<TRequest>());
+
             public UniTask<int> StatusCodeAsync() =>
                 SendAsync<StatusCodeOp<TRequest>, int>(new StatusCodeOp<TRequest>());
 
@@ -315,6 +325,28 @@ namespace DCL.WebRequests
         {
             public UniTask<byte[]?> ExecuteAsync(TRequest webRequest, CancellationToken ct) =>
                 UniTask.FromResult(webRequest.UnityWebRequest.downloadHandler.data)!;
+        }
+
+        public struct GetResponseHeaderOp<TRequest> : IWebRequestOp<TRequest, string> where TRequest: struct, ITypedWebRequest, IGenericDownloadHandlerRequest
+        {
+            private readonly string headerName;
+
+            public GetResponseHeaderOp(string headerName)
+            {
+                this.headerName = headerName;
+            }
+
+            public UniTask<string?> ExecuteAsync(TRequest webRequest, CancellationToken ct) =>
+                UniTask.FromResult(webRequest.UnityWebRequest.GetResponseHeader(headerName))!;
+        }
+
+        public struct ExposeDownloadHandler<TRequest> : IWebRequestOp<TRequest, DownloadHandler> where TRequest: struct, ITypedWebRequest, IGenericDownloadHandlerRequest
+        {
+            public UniTask<DownloadHandler?> ExecuteAsync(TRequest webRequest, CancellationToken ct)
+            {
+                webRequest.UnityWebRequest.disposeDownloadHandlerOnDispose = false;
+                return UniTask.FromResult(webRequest.UnityWebRequest.downloadHandler)!;
+            }
         }
     }
 }

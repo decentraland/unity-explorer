@@ -17,33 +17,28 @@ MonoBehaviour:
     m_SerializedData: []
   m_GUID: 9d34671c4a9995044aa4b38f0c1c3570
   m_SerializeEntries:
-  - m_GUID: 8fd0fd0188702304689c461c6aacc7c5
-    m_Address: HoverCanvas
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 7dc631660587a41589ba55c08ff7fa73
-    m_Address: ExplorePanel
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: ad0eada9babef44e5bb3f06b080eef83
-    m_Address: Navmap
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: f2ef3a867ab2840cb9bc73b4762922fd
-    m_Address: Minimap
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 028bf9eb42404424bbd1df5cd802720e
     m_Address: FullSearchResult
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: e0f5a4ab5d8f74640ae94adb6824bd45
-    m_Address: ScenesUIRootCanvas
+  - m_GUID: 1c359f0bee710da4fa6342a37ca26ae8
+    m_Address: LogoDCL154x154SpriteAtlas.spriteatlas
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2044c17e0fa1b3f4d9d2d3a25cfa77de
+    m_Address: MapRendererSettings
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 25307fc8924cf8747a2b0fd87a729aca
+    m_Address: M_LoadingSpinnerBackground.mat
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2668240d360264034b2ee70e645aab92
+    m_Address: Assets/DCL/UI/ColorPicker/HairColors.asset
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -52,18 +47,93 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 809b68e5ce75da1429e55ffcc44fa23b
-    m_Address: ExternalUrlPrompt
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 37b740e9dd5ba324c91cd05632ea002c
     m_Address: TeleportPrompt
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 506fef2fcce22b54ba4571ced3af5dc6
+    m_Address: LoadingAtlast.spriteatlasv2
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5af318126b38647fea34ff22fba4ef17
+    m_Address: Assets/DCL/UI/ColorPicker/BodyShapeColors.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 67c43eeeaf9c34744807086742498bf8
+    m_Address: BackpackAtlas.spriteatlasv2
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 6b1f7cd8901871f42a19a8244244839e
     m_Address: ChangeRealmPrompt
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6dfe28bda416549a9b6598e822044ba1
+    m_Address: CommonTexturesAtlas.spriteatlasv2
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 73b47c88148e7a14f9ea5e351d2d792d
+    m_Address: Assets/DCL/MapRenderer/Textures/MapRenderer.spriteatlasv2
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7dc631660587a41589ba55c08ff7fa73
+    m_Address: ExplorePanel
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 809b68e5ce75da1429e55ffcc44fa23b
+    m_Address: ExternalUrlPrompt
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8fd0fd0188702304689c461c6aacc7c5
+    m_Address: HoverCanvas
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a00387527d7ddda41b9eb524b4a8662c
+    m_Address: Assets/DCL/UI/ColorPicker/EyesColors.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ad0eada9babef44e5bb3f06b080eef83
+    m_Address: Navmap
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: bdd6d1e45d38dbc44b593240a7768188
+    m_Address: EmoteIconPressedSpriteAtlas.spriteatlasv2
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: bf1104b23d6ed8f4ab84e9a0da93e10d
+    m_Address: Passport
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c522d0b7573224f59a5c1fde68c734e3
+    m_Address: PersistentEmoteWheelOpener.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c77c82b7631304e47a8c0ba64982cebb
+    m_Address: M_ChargeBarV2.mat
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c7887090193b1ec4c994ad22169b86db
+    m_Address: MainUIContainer
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d2b6974d311b52d418b15738f4ef38dc
+    m_Address: Authentication.spriteatlas
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -77,28 +147,8 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 5af318126b38647fea34ff22fba4ef17
-    m_Address: Assets/DCL/UI/ColorPicker/BodyShapeColors.asset
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: a00387527d7ddda41b9eb524b4a8662c
-    m_Address: Assets/DCL/UI/ColorPicker/EyesColors.asset
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 2668240d360264034b2ee70e645aab92
-    m_Address: Assets/DCL/UI/ColorPicker/HairColors.asset
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: bf1104b23d6ed8f4ab84e9a0da93e10d
-    m_Address: Passport
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: c7887090193b1ec4c994ad22169b86db
-    m_Address: MainUIContainer
+  - m_GUID: e0f5a4ab5d8f74640ae94adb6824bd45
+    m_Address: ScenesUIRootCanvas
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -107,58 +157,13 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 2044c17e0fa1b3f4d9d2d3a25cfa77de
-    m_Address: MapRendererSettings
+  - m_GUID: f2df2b2c3721c5840b06c8fe73d5d665
+    m_Address: VersionUpdateScreen
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: d2b6974d311b52d418b15738f4ef38dc
-    m_Address: Authentication.spriteatlas
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 1c359f0bee710da4fa6342a37ca26ae8
-    m_Address: LogoDCL154x154SpriteAtlas.spriteatlas
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: bdd6d1e45d38dbc44b593240a7768188
-    m_Address: EmoteIconPressedSpriteAtlas.spriteatlasv2
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 25307fc8924cf8747a2b0fd87a729aca
-    m_Address: M_LoadingSpinnerBackground.mat
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: c77c82b7631304e47a8c0ba64982cebb
-    m_Address: M_ChargeBarV2.mat
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 67c43eeeaf9c34744807086742498bf8
-    m_Address: BackpackAtlas.spriteatlasv2
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 73b47c88148e7a14f9ea5e351d2d792d
-    m_Address: Assets/DCL/MapRenderer/Textures/MapRenderer.spriteatlasv2
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 506fef2fcce22b54ba4571ced3af5dc6
-    m_Address: LoadingAtlast.spriteatlasv2
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 6dfe28bda416549a9b6598e822044ba1
-    m_Address: CommonTexturesAtlas.spriteatlasv2
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: c522d0b7573224f59a5c1fde68c734e3
-    m_Address: PersistentEmoteWheelOpener.prefab
+  - m_GUID: f2ef3a867ab2840cb9bc73b4762922fd
+    m_Address: Minimap
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

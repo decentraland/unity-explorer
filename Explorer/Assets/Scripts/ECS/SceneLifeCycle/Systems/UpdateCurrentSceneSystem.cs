@@ -26,11 +26,11 @@ namespace ECS.SceneLifeCycle.Systems
 
         private readonly SceneAssetLock sceneAssetLock;
 
-        private IDebugContainerBuilder debugBuilder;
-        private ElementBinding<string> sceneNameBinding;
-        private ElementBinding<string> sceneParcelsBinding;
-        private ElementBinding<string> sceneHeightBinding;
-        private DebugWidgetVisibilityBinding debugInfoVisibilityBinding;
+        private readonly IDebugContainerBuilder debugBuilder;
+        private readonly ElementBinding<string> sceneNameBinding;
+        private readonly ElementBinding<string> sceneParcelsBinding;
+        private readonly ElementBinding<string> sceneHeightBinding;
+        private readonly DebugWidgetVisibilityBinding debugInfoVisibilityBinding;
         private bool showDebugCube;
         private GameObject sceneBoundsCube;
 
@@ -44,12 +44,17 @@ namespace ECS.SceneLifeCycle.Systems
             this.sceneAssetLock = sceneAssetLock;
             ResetProcessedParcel();
 
+            debugInfoVisibilityBinding = new DebugWidgetVisibilityBinding(true);
+            sceneNameBinding = new ElementBinding<string>(string.Empty);
+            sceneParcelsBinding = new ElementBinding<string>(string.Empty);
+            sceneHeightBinding = new ElementBinding<string>(string.Empty);
+
             debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.CURRENT_SCENE)?
-                         .SetVisibilityBinding(debugInfoVisibilityBinding = new DebugWidgetVisibilityBinding(true))
-                         .AddCustomMarker("Name:", sceneNameBinding = new ElementBinding<string>(string.Empty))
-                         .AddCustomMarker("Parcels:", sceneParcelsBinding = new ElementBinding<string>(string.Empty))
-                         .AddCustomMarker("Height (m):", sceneHeightBinding = new ElementBinding<string>(string .Empty))
-                         .AddToggleField("Show scene bounds:", (state) => { showDebugCube = state.newValue; }, false);
+                         .SetVisibilityBinding(debugInfoVisibilityBinding)
+                         .AddCustomMarker("Name:", sceneNameBinding)
+                         .AddCustomMarker("Parcels:", sceneParcelsBinding)
+                         .AddCustomMarker("Height (m):", sceneHeightBinding)
+                         .AddToggleField("Show scene bounds:", state => { showDebugCube = state.newValue; }, false);
             this.debugBuilder = debugBuilder;
         }
 
@@ -72,7 +77,7 @@ namespace ECS.SceneLifeCycle.Systems
             UpdateCurrentScene(parcel);
             UpdateCurrentSceneInfo(parcel);
 
-            if (debugBuilder.IsVisible && debugInfoVisibilityBinding.IsExpanded)
+            if (debugBuilder.IsVisible && debugInfoVisibilityBinding.IsConnectedAndExpanded)
                 RefreshSceneDebugInfo();
         }
 
@@ -85,6 +90,7 @@ namespace ECS.SceneLifeCycle.Systems
 
         private void UpdateSceneReadiness(Vector2Int parcel)
         {
+
             if (!scenesCache.TryGetByParcel(parcel, out var currentScene))
                 return;
 
@@ -107,6 +113,7 @@ namespace ECS.SceneLifeCycle.Systems
                 currentScene.SetIsCurrent(true);
 
             lastParcelProcessed = parcel;
+            scenesCache.SetCurrentScene(currentScene);
         }
 
         private void UpdateCurrentSceneInfo(Vector2Int parcel)

@@ -280,5 +280,9 @@ namespace DCL.Diagnostics
         ///     Default category into which falls everything that is reported without info and by default Unity Debug.Log
         /// </summary>
         public const string UNSPECIFIED = nameof(UNSPECIFIED);
+
+        public const string PORTABLE_EXPERIENCE= nameof(PORTABLE_EXPERIENCE);
+
+        public const string VERSION_CONTROL= nameof(VERSION_CONTROL);
     }
 }
