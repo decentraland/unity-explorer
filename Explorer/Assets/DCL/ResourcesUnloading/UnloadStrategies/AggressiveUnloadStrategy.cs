@@ -25,10 +25,10 @@ namespace DCL.ResourcesUnloading.UnloadStrategies
             //TODO (Juani): A message warning that the distance has been silently modified
             realmPartitionSettings.MaxLoadingDistanceInParcels = realmPartitionSettings.MinLoadingDistanceInParcels;
             
-            StartAggressiveUnload(cacheCleaner).Forget();
+            StartAggressiveUnloadAsync(cacheCleaner).Forget();
         }
 
-        private async UniTaskVoid StartAggressiveUnload(ICacheCleaner cacheCleaner)
+        private async UniTaskVoid StartAggressiveUnloadAsync(ICacheCleaner cacheCleaner)
         {
             var currentFrameRunning = 0;
             try
