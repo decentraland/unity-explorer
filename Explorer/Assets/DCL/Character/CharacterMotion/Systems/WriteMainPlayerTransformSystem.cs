@@ -19,7 +19,7 @@ namespace DCL.CharacterMotion.Systems
     ///     Executes on the scene level to propagate the shared transform data to the SDK Scene
     /// </summary>
     [UpdateInGroup(typeof(SyncedInitializationSystemGroup))]
-    public partial class WritePlayerTransformSystem : BaseUnityLoopSystem
+    public partial class WriteMainPlayerTransformSystem : BaseUnityLoopSystem
     {
         private readonly IECSToCRDTWriter ecsToCrdtWriter;
         private readonly ISceneData sceneData;
@@ -29,7 +29,7 @@ namespace DCL.CharacterMotion.Systems
         private IComponentPool<SDKTransform> sdkTransformPool;
         private readonly Entity playerEntity;
 
-        internal WritePlayerTransformSystem(World world, IECSToCRDTWriter ecsToCrdtWriter, ISceneData sceneData, IExposedTransform exposedTransform, IPartitionComponent scenePartition,
+        internal WriteMainPlayerTransformSystem(World world, IECSToCRDTWriter ecsToCrdtWriter, ISceneData sceneData, IExposedTransform exposedTransform, IPartitionComponent scenePartition,
             byte bucketThreshold, IComponentPool<SDKTransform> sdkTransformPool, Entity playerEntity) : base(world)
         {
             this.ecsToCrdtWriter = ecsToCrdtWriter;
