@@ -37,14 +37,13 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
         {
             using (message)
             {
-                var sceneMessage = ISceneCommunicationPipe.SceneMessage.CopyFrom(in message);
-                ReadOnlySpan<byte> decodedMessage = sceneMessage.Data.Span;
+                ReadOnlySpan<byte> decodedMessage = message.Payload.Data.Span;
                 ISceneCommunicationPipe.MsgType msgType = DecodeMessage(ref decodedMessage);
 
                 if (decodedMessage.Length == 0)
                     return;
 
-                if (IsCommunicationRestricted(sceneMessage.SceneId)) return;
+                if (IsCommunicationRestricted(message.Payload.SceneId)) return;
 
                 SubscriberKey key = new (message.Payload.SceneId, msgType);
 

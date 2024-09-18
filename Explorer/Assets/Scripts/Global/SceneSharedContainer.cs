@@ -2,6 +2,7 @@ using CRDT.Serializer;
 using CrdtEcsBridge.JsModulesImplementation.Communications;
 using CrdtEcsBridge.PoolsProviders;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Multiplayer.Connections.GateKeeper.Meta;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.PluginSystem.World.Dependencies;
@@ -31,7 +32,12 @@ namespace Global
             IDecentralandUrlsSource decentralandUrlsSource,
             IWeb3IdentityCache web3IdentityCache,
             IWebRequestController webRequestController,
-            DynamicWorldContainer dynamicWorldContainer,
+            IRealmData realmData,
+            IProfileRepository profileRepository,
+            IRoomHub roomHub,
+            IMVCManager mvcManager,
+            IMessagePipesHub messagePipesHub,
+            ISceneRoomMetaDataSource metaDataSource,
             bool cacheJsSources = true)
         {
             ECSWorldSingletonSharedDependencies sharedDependencies = staticContainer.SingletonSharedDependencies;
@@ -43,12 +49,6 @@ namespace Global
                 staticContainer.ECSWorldPlugins);
 
             var v8ActiveEngines = new V8ActiveEngines();
-
-            IRealmData? realmData = dynamicWorldContainer.RealmController.RealmData;
-            IProfileRepository profileRepository = dynamicWorldContainer.ProfileRepository;
-            IRoomHub roomHub = dynamicWorldContainer.RoomHub;
-            IMVCManager mvcManager = dynamicWorldContainer.MvcManager;
-            IMessagePipesHub messagePipesHub = dynamicWorldContainer.MessagePipesHub;
 
             return new SceneSharedContainer
             {
@@ -70,7 +70,7 @@ namespace Global
                     roomHub,
                     realmData,
                     staticContainer.PortableExperiencesController,
-                    new SceneCommunicationPipe(messagePipesHub, dynamicWorldContainer.SceneRoomMetaDataSource, roomHub.SceneRoom())
+                    new SceneCommunicationPipe(messagePipesHub, metaDataSource, roomHub.SceneRoom())
                 ),
             };
         }

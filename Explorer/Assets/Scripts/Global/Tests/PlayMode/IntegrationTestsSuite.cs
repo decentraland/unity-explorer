@@ -5,6 +5,7 @@ using DCL.Browser.DecentralandUrls;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Multiplayer.Connections.GateKeeper.Meta;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.PluginSystem;
@@ -65,17 +66,18 @@ namespace Global.Tests.PlayMode
             var sceneSharedContainer = SceneSharedContainer.Create(
                 in staticContainer,
                 dclUrls,
+                identityCache,
+                Substitute.For<IWebRequestController>(),
+                new IRealmData.Fake(),
+                new MemoryProfileRepository(new DefaultProfileCache()),
+                NullRoomHub.INSTANCE,
                 new MVCManager(
                     new WindowStackManager(),
                     new CancellationTokenSource(),
                     Substitute.For<IPopupCloserView>()
                 ),
-                identityCache,
-                new MemoryProfileRepository(new DefaultProfileCache()),
-                Substitute.For<IWebRequestController>(),
-                NullRoomHub.INSTANCE,
-                new IRealmData.Fake(),
-                new IMessagePipesHub.Fake()
+                new IMessagePipesHub.Fake(),
+                Substitute.For<ISceneRoomMetaDataSource>()
             );
 
             return (staticContainer, sceneSharedContainer);

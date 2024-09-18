@@ -21,23 +21,6 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
 
         void SendMessage(ReadOnlySpan<byte> message, string sceneId, CancellationToken ct);
 
-        readonly struct SceneMessage
-        {
-            public readonly ReadOnlyMemory<byte> Data;
-            public readonly string SceneId;
-            public readonly string FromWalletId;
-
-            private SceneMessage(in ReceivedMessage<Scene> message)
-            {
-                Data = message.Payload.Data.Memory;
-                SceneId = message.Payload.SceneId;
-                FromWalletId = message.FromWalletId;
-            }
-
-            public static SceneMessage CopyFrom(in ReceivedMessage<Scene> message) =>
-                new (message);
-        }
-
         readonly ref struct DecodedMessage
         {
             /// <summary>

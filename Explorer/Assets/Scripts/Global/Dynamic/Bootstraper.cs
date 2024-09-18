@@ -166,7 +166,12 @@ namespace Global.Dynamic
                 bootstrapContainer.DecentralandUrlsSource,
                 bootstrapContainer.IdentityCache,
                 staticContainer.WebRequestsContainer.WebRequestController,
-                dynamicWorldContainer,
+                dynamicWorldContainer.RealmController.RealmData,
+                dynamicWorldContainer.ProfileRepository,
+                dynamicWorldContainer.RoomHub,
+                dynamicWorldContainer.MvcManager,
+                dynamicWorldContainer.MessagePipesHub,
+                dynamicWorldContainer.SceneRoomMetaDataSource,
                 !realmLaunchSettings.IsLocalSceneDevelopmentRealm
             );
 
