@@ -28,7 +28,9 @@ namespace DCL.CharacterMotion.Systems
     public partial class InterpolateCharacterSystem : BaseUnityLoopSystem
     {
         private const float ALMOST_ZERO = 0.00001f;
-        private bool playerHasJustTeleported;
+        private int playerJustTeleportedCountDown;
+        private const int COUNTDOWN_FRAMES = 5;
+
 
         private InterpolateCharacterSystem(World world) : base(world) { }
 
@@ -62,8 +64,9 @@ namespace DCL.CharacterMotion.Systems
             // Reset the current platform so we dont bounce back if we are touching the world plane
             platformComponent.CurrentPlatform = null;
 
-            playerHasJustTeleported = true;
+            playerJustTeleportedCountDown = COUNTDOWN_FRAMES;
         }
+
 
         [Query]
         [None(typeof(PlayerTeleportIntent))]
@@ -77,11 +80,11 @@ namespace DCL.CharacterMotion.Systems
             in JumpInputComponent jump,
             in MovementInputComponent movementInput)
         {
-            if (playerHasJustTeleported)
+            if (playerJustTeleportedCountDown > 0)
             {
-                // We need to skip the first frame after a teleport to avoid getting conflicts with the interpolation.
+                // We need to skip the first few frames after a teleport to avoid getting conflicts with the interpolation.
                 // This sometimes provoked the teleport to be ignored and the character to be stuck in the previous position.
-                playerHasJustTeleported = false;
+                playerJustTeleportedCountDown--;
                 return;
             }
 
