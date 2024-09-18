@@ -23,7 +23,7 @@ namespace ECS.LifeCycle.Systems
 
         protected override void Update(float t)
         {
-            boxedScope.Acquire("LoopSystem");
+            boxedScope.Acquire("LoopSystem", sceneInfo);
         }
     }
 }

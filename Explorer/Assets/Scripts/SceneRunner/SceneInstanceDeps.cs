@@ -256,7 +256,7 @@ namespace SceneRunner
             (SceneInstanceDependencies syncDeps, SceneRuntimeImpl sceneRuntime, ISharedPoolsProvider sharedPoolsProvider, ICRDTSerializer crdtSerializer, IMVCManager mvcManager,
                 IGlobalWorldActions globalWorldActions, IRealmData realmData, ISceneCommunicationPipe messagePipesHub,
                 IWebRequestController webRequestController,
-                IPortableExperiencesController portableExperiencesController)
+                ISceneData sceneData)
                 : base(new EngineAPIImplementation(
                         sharedPoolsProvider,
                         syncDeps.PoolsProvider,
@@ -267,7 +267,8 @@ namespace SceneRunner
                         syncDeps.OutgoingCRDTMessagesProvider,
                         syncDeps.systemGroupThrottler,
                         syncDeps.ExceptionsHandler,
-                        syncDeps.ecsMultithreadSync),
+                        syncDeps.ecsMultithreadSync,
+                        sceneData.SceneShortInfo),
                     syncDeps, sceneRuntime, sceneRuntime, mvcManager, globalWorldActions, realmData, messagePipesHub, webRequestController) { }
         }
 
@@ -276,8 +277,7 @@ namespace SceneRunner
             public WithRuntimeJsAndSDKObservablesEngineAPI
             (SceneInstanceDependencies syncDeps, SceneRuntimeImpl sceneRuntime, ISharedPoolsProvider sharedPoolsProvider, ICRDTSerializer crdtSerializer, IMVCManager mvcManager,
                 IGlobalWorldActions globalWorldActions, IRealmData realmData, ISceneCommunicationPipe messagePipesHub,
-                IWebRequestController webRequestController,
-                IPortableExperiencesController portableExperiencesController)
+                IWebRequestController webRequestController, ISceneData sceneData)
                 : base(new SDKObservableEventsEngineAPIImplementation(
                         sharedPoolsProvider,
                         syncDeps.PoolsProvider,
@@ -288,7 +288,8 @@ namespace SceneRunner
                         syncDeps.OutgoingCRDTMessagesProvider,
                         syncDeps.systemGroupThrottler,
                         syncDeps.ExceptionsHandler,
-                        syncDeps.ecsMultithreadSync),
+                        syncDeps.ecsMultithreadSync,
+                        sceneData.SceneShortInfo),
                     syncDeps, sceneRuntime, sceneRuntime, mvcManager, globalWorldActions, realmData, messagePipesHub, webRequestController) { }
         }
     }

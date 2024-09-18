@@ -181,7 +181,7 @@ namespace SceneRunner
 
                 runtimeDeps = new SceneInstanceDependencies.WithRuntimeJsAndSDKObservablesEngineAPI(deps, sceneRuntime,
                     sharedPoolsProvider, crdtSerializer, mvcManager, globalWorldActions, realmData!, messagePipesHub,
-                    webRequestController, portableExperiencesController);
+                    webRequestController, sceneData);
 
                 sceneRuntime.RegisterAll(
                     (ISDKObservableEventsEngineApi)runtimeDeps.EngineAPI,
@@ -209,7 +209,7 @@ namespace SceneRunner
             {
                 runtimeDeps = new SceneInstanceDependencies.WithRuntimeAndJsAPI(deps, sceneRuntime, sharedPoolsProvider,
                     crdtSerializer, mvcManager, globalWorldActions, realmData!, messagePipesHub, webRequestController,
-                    portableExperiencesController);
+                    sceneData);
 
                 sceneRuntime.RegisterAll(
                     runtimeDeps.EngineAPI,

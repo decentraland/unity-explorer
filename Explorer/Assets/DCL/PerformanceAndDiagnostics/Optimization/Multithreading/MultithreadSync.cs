@@ -26,10 +26,11 @@ namespace Utility.Multithreading
             SAMPLER = CustomSampler.Create("MultithreadSync.Wait")!;
         }
 
-        private void Acquire(string source)
+        private void Acquire(string source, SceneShortInfo sceneShortInfo)
         {
 #if SYNC_DEBUG
-            ReportHub.Log(ReportCategory.SYNC, $"MultithreadSync Acquire start for: {source}");
+            var reportData = new ReportData(ReportCategory.SYNC, sceneShortInfo: sceneShortInfo);
+            ReportHub.Log(reportData, $"MultithreadSync Acquire start for: {source}");
 #endif
 
             if (isDisposing.Value())
@@ -47,14 +48,15 @@ namespace Utility.Multithreading
 
             acquired.Set(true);
 #if SYNC_DEBUG
-            ReportHub.Log(ReportCategory.SYNC, $"MultithreadSync Acquire finished for: {source}");
+            ReportHub.Log(reportData, $"MultithreadSync Acquire finished for: {source}");
 #endif
         }
 
-        private void Release(string source)
+        private void Release(string source, SceneShortInfo sceneShortInfo)
         {
 #if SYNC_DEBUG
-            ReportHub.Log(ReportCategory.SYNC, $"MultithreadSync Release start for: {source}");
+            var reportData = new ReportData(ReportCategory.SYNC, sceneShortInfo: sceneShortInfo);
+            ReportHub.Log(reportData, $"MultithreadSync Release start for: {source}");
 #endif
 
             if (isDisposing.Value())
@@ -72,12 +74,12 @@ namespace Utility.Multithreading
                     next!.Set(); // Signal the next waiter in line
 
 #if SYNC_DEBUG
-                ReportHub.Log(ReportCategory.SYNC,$"MultithreadSync Release finished for: {source}");
+                ReportHub.Log(reportData, $"MultithreadSync Release finished for: {source}");
 #endif
             }
 #if SYNC_DEBUG
             else
-                ReportHub.LogError(ReportCategory.SYNC,$"MultithreadSync Release finished CANNOT: {source}");
+                ReportHub.LogError(reportData, $"MultithreadSync Release finished CANNOT: {source}");
 #endif
         }
 
@@ -92,10 +94,10 @@ namespace Utility.Multithreading
             queue.Clear();
         }
 
-        public Scope GetScope(string source)
+        public Scope GetScope(string source, SceneShortInfo sceneShortInfo)
         {
             SAMPLER.Begin();
-            var scope = new Scope(this, source);
+            var scope = new Scope(this, source, sceneShortInfo);
             SAMPLER.End();
             return scope;
         }
@@ -104,13 +106,15 @@ namespace Utility.Multithreading
         {
             private readonly MultithreadSync multithreadSync;
             private readonly string source;
+            private readonly SceneShortInfo sceneShortInfo;
             private readonly DateTime start;
 
-            public Scope(MultithreadSync multithreadSync, string source)
+            public Scope(MultithreadSync multithreadSync, string source, SceneShortInfo sceneShortInfo)
             {
                 this.multithreadSync = multithreadSync;
                 this.source = source;
-                multithreadSync.Acquire(source);
+                this.sceneShortInfo = sceneShortInfo;
+                multithreadSync.Acquire(source, this.sceneShortInfo);
                 start = DateTime.Now;
             }
 
@@ -119,7 +123,7 @@ namespace Utility.Multithreading
                 if (DateTime.Now - start > MAX_LIMIT)
                     throw new TimeoutException($"{nameof(MultithreadSync)} source {source} took too much time! cannot release for: {source}");
 
-                multithreadSync.Release(source);
+                multithreadSync.Release(source, sceneShortInfo);
             }
         }
 
@@ -134,9 +138,9 @@ namespace Utility.Multithreading
                 scope = null;
             }
 
-            public void Acquire(string source)
+            public void Acquire(string source, SceneShortInfo sceneShortInfo)
             {
-                scope = multithreadSync.GetScope(source);
+                scope = multithreadSync.GetScope(source, sceneShortInfo);
             }
 
             public void ReleaseIfAcquired()
