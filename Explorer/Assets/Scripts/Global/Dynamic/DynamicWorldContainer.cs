@@ -78,7 +78,6 @@ using MVC;
 using MVC.PopupsController.PopupCloser;
 using PortableExperiences.Controller;
 using SceneRunner.Debugging.Hub;
-using SceneRunner.Scene;
 using System;
 using System.Buffers;
 using System.Collections.Generic;
@@ -97,6 +96,8 @@ namespace Global.Dynamic
 {
     public class DynamicWorldContainer : DCLWorldContainer<DynamicWorldSettings>
     {
+        private const string PARAMS_FORCED_EMOTES_FLAG = "self-force-emotes";
+
         private ECSReloadScene? reloadSceneController;
         private LocalSceneDevelopmentController? localSceneDevelopmentController;
         private ECSWearablesProvider? wearablesProvider;
@@ -259,8 +260,13 @@ namespace Global.Dynamic
             var equippedWearables = new EquippedWearables();
             var equippedEmotes = new EquippedEmotes();
             var forceRender = new List<string>();
+
+            List<URN> selfEmotes = new List<URN>();
+            ParseParamsForcedEmotes(bootstrapContainer.ApplicationParametersParser, ref selfEmotes);
+            ParseDebugForcedEmotes(bootstrapContainer.DebugSettings.EmotesToAddToUserProfile, ref selfEmotes);
+
             var selfProfile = new SelfProfile(container.ProfileRepository, identityCache, equippedWearables, wearableCatalog,
-                emotesCache, equippedEmotes, forceRender, ParseForcedEmotes(bootstrapContainer.ApplicationParametersParser, bootstrapContainer.DebugSettings.EmotesToAddToUserProfile));
+                emotesCache, equippedEmotes, forceRender, selfEmotes);
 
             IEmoteProvider emoteProvider = new EcsEmoteProvider(globalWorld, staticContainer.RealmData);
 
@@ -634,21 +640,16 @@ namespace Global.Dynamic
             return (container, true);
         }
 
-        private static IReadOnlyList<URN>? ParseForcedEmotes(IAppArgs appParams, IReadOnlyList<string>? debugEmotes)
+        private static void ParseDebugForcedEmotes(IReadOnlyList<string>? debugEmotes, ref List<URN> parsedEmotes)
         {
-            var parsedEmotes = new List<URN>();
-
             if (debugEmotes?.Count > 0)
-            {
                 parsedEmotes.AddRange(debugEmotes.Select(emote => new URN(emote)));
-            }
+        }
 
-            if (appParams.TryGetValue("self-force-emotes", out var csv) && !string.IsNullOrEmpty(csv))
-            {
+        private static void ParseParamsForcedEmotes(IAppArgs appParams, ref List<URN> parsedEmotes)
+        {
+            if (appParams.TryGetValue(PARAMS_FORCED_EMOTES_FLAG, out string? csv) && !string.IsNullOrEmpty(csv))
                 parsedEmotes.AddRange(csv.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(emote => new URN(emote)));
-            }
-
-            return parsedEmotes.Count > 0 ? parsedEmotes : null;
         }
     }
 }
