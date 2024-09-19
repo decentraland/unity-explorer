@@ -284,5 +284,7 @@ namespace DCL.Diagnostics
         public const string PORTABLE_EXPERIENCE= nameof(PORTABLE_EXPERIENCE);
 
         public const string VERSION_CONTROL= nameof(VERSION_CONTROL);
+
+        public const string ONBOARDING = nameof(ONBOARDING);
     }
 }

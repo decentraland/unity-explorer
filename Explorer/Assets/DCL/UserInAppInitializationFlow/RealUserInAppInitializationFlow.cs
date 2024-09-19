@@ -65,7 +65,7 @@ namespace DCL.UserInAppInitializationFlow
             var switchRealmMiscVisibilityStartupOperation = new SwitchRealmMiscVisibilityStartupOperation(loadingStatus, realmNavigator);
             loadPlayerAvatarStartupOperation = new LoadPlayerAvatarStartupOperation(loadingStatus, selfProfile, mainPlayerAvatarBaseProxy);
             var loadLandscapeStartupOperation = new LoadLandscapeStartupOperation(loadingStatus, realmNavigator);
-            var checkOnboardingStartupOperation = new CheckOnboardingStartupOperation(loadingStatus, realmController, selfProfile, featureFlagsCache);
+            var checkOnboardingStartupOperation = new CheckOnboardingStartupOperation(loadingStatus, realmController, selfProfile, featureFlagsCache, decentralandUrlsSource);
             restartRealmStartupOperation = new RestartRealmStartupOperation(loadingStatus, realmController);
             var teleportStartupOperation = new TeleportStartupOperation(loadingStatus, realmNavigator, startParcel);
 
