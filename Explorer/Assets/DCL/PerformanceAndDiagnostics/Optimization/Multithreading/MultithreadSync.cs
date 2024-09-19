@@ -33,7 +33,7 @@ namespace Utility.Multithreading
                 if (circularBuffer.Count >= logsToKeep)
                     circularBuffer.RemoveFirst();
 
-                circularBuffer.AddLast(new Entry(eventLog, DateTime.Now - creationTime, source));
+                circularBuffer.AddLast(new Entry(eventLog, DateTime.Now - creationTime, source, Thread.CurrentThread.ManagedThreadId));
             }
         }
 
@@ -53,12 +53,14 @@ namespace Utility.Multithreading
             public readonly string EventLog;
             public readonly TimeSpan TimeSinceCreation;
             public readonly string Source;
+            public readonly int ThreadId;
 
-            public Entry(string eventLog, TimeSpan timeSinceCreation, string source)
+            public Entry(string eventLog, TimeSpan timeSinceCreation, string source, int threadId)
             {
                 EventLog = eventLog;
                 TimeSinceCreation = timeSinceCreation;
                 Source = source;
+                ThreadId = threadId;
             }
         }
     }
@@ -116,9 +118,10 @@ namespace Utility.Multithreading
         private readonly ConcurrentQueue<Owner> queue = new ();
         private readonly Atomic<bool> acquired = new ();
         private readonly Atomic<bool> isDisposing = new ();
+        private long acquireCount;
 
         private readonly SyncLogsBuffer syncLogsBuffer;
-        private readonly Atomic<(string? name, DateTime startedAt)> currentScope = new ((null, DateTime.MinValue));
+        private readonly Atomic<(string? name, DateTime startedAt, long accuiredIndex)> currentScope = new ((null, DateTime.MinValue, 0));
 
         private readonly CustomSampler perSceneSampler;
 
@@ -144,6 +147,8 @@ namespace Utility.Multithreading
 #if SYNC_DEBUG
             syncLogsBuffer.Report("MultithreadSync Acquire start for:", source);
 #endif
+            Interlocked.Increment(ref acquireCount);
+            long currentId = Interlocked.Read(ref acquireCount);
 
             if (isDisposing.Value())
                 throw new ObjectDisposedException(nameof(MultithreadSync));
@@ -160,14 +165,14 @@ namespace Utility.Multithreading
                 var difference = time - current.startedAt;
                 syncLogsBuffer.Print();
 
-                throw new TimeoutException($"{nameof(MultithreadSync)} timeout, cannot acquire for: {source}, main context \"{current.name}\" takes too long: {difference.TotalSeconds}");
+                throw new TimeoutException($"{nameof(MultithreadSync)} timeout, cannot acquire for: {source}, main context \"{current.name}\" id \"{current.accuiredIndex}\" takes too long: {difference.TotalSeconds}");
             }
 
             acquired.Set(true);
 #if SYNC_DEBUG
             syncLogsBuffer.Report("MultithreadSync Acquire finished for:", source);
 #endif
-            currentScope.Set((source, DateTime.Now));
+            currentScope.Set((source, DateTime.Now, currentId));
         }
 
         private void Release(Owner owner)
@@ -205,7 +210,7 @@ namespace Utility.Multithreading
             else
                 syncLogsBuffer.Report("MultithreadSync Release finished CANNOT", source);
 #endif
-            currentScope.Set((null, DateTime.MinValue));
+            currentScope.Set((null, DateTime.MinValue, 0));
         }
 
         public void Dispose()
