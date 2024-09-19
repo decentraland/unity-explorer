@@ -29,16 +29,15 @@ namespace DCL.Multiplayer.Movement.Systems
         private NetworkMessageEncoder messageEncoder;
 
         private readonly World globalWorld;
-        private readonly Scheme scheme;
 
         private bool isDisposed;
+        private IMultiplayerMovementSettings settingsValue;
 
-        public MultiplayerMovementMessageBus(IMessagePipesHub messagePipesHub, IReadOnlyEntityParticipantTable entityParticipantTable, World globalWorld, Scheme scheme)
+        public MultiplayerMovementMessageBus(IMessagePipesHub messagePipesHub, IReadOnlyEntityParticipantTable entityParticipantTable, World globalWorld)
         {
             this.messagePipesHub = messagePipesHub;
             this.entityParticipantTable = entityParticipantTable;
             this.globalWorld = globalWorld;
-            this.scheme = scheme;
 
             this.messagePipesHub.IslandPipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Movement>(Packet.MessageOneofCase.Movement, OnOldSchemaMessageReceived);
             this.messagePipesHub.ScenePipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Movement>(Packet.MessageOneofCase.Movement, OnOldSchemaMessageReceived);
@@ -47,8 +46,9 @@ namespace DCL.Multiplayer.Movement.Systems
             this.messagePipesHub.ScenePipe().Subscribe<MovementCompressed>(Packet.MessageOneofCase.MovementCompressed, OnMessageReceived);
         }
 
-        public void InitializeEncoder(MessageEncodingSettings messageEncodingSettings)
+        public void InitializeEncoder(MessageEncodingSettings messageEncodingSettings, IMultiplayerMovementSettings settingsValue)
         {
+            this.settingsValue = settingsValue;
             messageEncoder = new NetworkMessageEncoder(messageEncodingSettings);
         }
 
@@ -133,7 +133,9 @@ namespace DCL.Multiplayer.Movement.Systems
 
         private void WriteAndSend(NetworkMovementMessage message, IMessagePipe messagePipe)
         {
-            switch (scheme)
+            var schema = settingsValue.UseCompression ? Scheme.Compressed : Scheme.Uncompressed;
+
+            switch (schema)
             {
                 case Scheme.Uncompressed:
                 {

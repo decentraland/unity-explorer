@@ -199,13 +199,13 @@ namespace Global.Dynamic
 
                 bootstrap.InitializePlayerEntity(staticContainer!, playerEntity);
 
-                var schema = MultiplayerMovementMessageBus.Scheme.Compressed;
+                var useCompression = true;
                 if (applicationParametersParser.TryGetValue("compression", out string? compression) && compression == "false")
-                    schema = MultiplayerMovementMessageBus.Scheme.Uncompressed;
+                    useCompression = false;
 
                 (dynamicWorldContainer, isLoaded) = await bootstrap.LoadDynamicWorldContainerAsync(bootstrapContainer, staticContainer!, scenePluginSettingsContainer, settings,
                     dynamicSettings, uiToolkitRoot, cursorRoot, splashScreen, backgroundMusic, worldInfoTool.EnsureNotNull(), playerEntity,
-                    schema,
+                    useCompression,
                     destroyCancellationToken);
 
                 if (!isLoaded)

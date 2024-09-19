@@ -64,12 +64,12 @@ namespace Global.Dynamic
             UIDocument uiToolkitRoot, UIDocument cursorRoot, ISplashScreen splashScreen, AudioClipConfig backgroundMusic,
             WorldInfoTool worldInfoTool,
             Entity playerEntity,
-            MultiplayerMovementMessageBus.Scheme scheme,
+            bool useCompression,
             CancellationToken ct)
         {
             (DynamicWorldContainer? container, bool) result =
                 await core.LoadDynamicWorldContainerAsync(bootstrapContainer, staticContainer, scenePluginSettingsContainer,
-                    settings, dynamicSettings, uiToolkitRoot, cursorRoot, splashScreen, backgroundMusic, worldInfoTool, playerEntity, scheme, ct);
+                    settings, dynamicSettings, uiToolkitRoot, cursorRoot, splashScreen, backgroundMusic, worldInfoTool, playerEntity, useCompression, ct);
 
             analytics.Track(General.INITIAL_LOADING, new JsonObject
             {

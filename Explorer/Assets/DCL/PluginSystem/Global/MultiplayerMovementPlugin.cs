@@ -21,6 +21,7 @@ namespace DCL.PluginSystem.Global
         private readonly RemoteEntities remoteEntities;
         private readonly ExposedTransform playerTransform;
         private readonly ProvidedAsset<MultiplayerDebugSettings> debugSettings;
+        private readonly bool useCompression;
 
         private ProvidedAsset<MultiplayerMovementSettings> settings;
 
@@ -29,7 +30,7 @@ namespace DCL.PluginSystem.Global
 
         public MultiplayerMovementPlugin(IAssetsProvisioner assetsProvisioner, MultiplayerMovementMessageBus messageBus, IDebugContainerBuilder debugBuilder
           , RemoteEntities remoteEntities, ExposedTransform playerTransform,
-            ProvidedAsset<MultiplayerDebugSettings> debugSettings)
+            ProvidedAsset<MultiplayerDebugSettings> debugSettings, bool useCompression)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.messageBus = messageBus;
@@ -37,6 +38,7 @@ namespace DCL.PluginSystem.Global
             this.remoteEntities = remoteEntities;
             this.playerTransform = playerTransform;
             this.debugSettings = debugSettings;
+            this.useCompression = useCompression;
         }
 
         public void Dispose()
@@ -49,7 +51,8 @@ namespace DCL.PluginSystem.Global
         public async UniTask InitializeAsync(MultiplayerCommunicationSettings settings, CancellationToken ct)
         {
             this.settings = await assetsProvisioner.ProvideMainAssetAsync(settings.spatialStateSettings, ct);
-            messageBus.InitializeEncoder(this.settings.Value.EncodingSettings);
+            this.settings.Value.UseCompression = useCompression;
+            messageBus.InitializeEncoder(this.settings.Value.EncodingSettings, this.settings.Value);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)

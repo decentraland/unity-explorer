@@ -36,6 +36,7 @@ namespace DCL.Multiplayer.Movement.Systems
             debugBuilder.TryAddWidget("Multiplayer Movement")
                        ?.AddSingleButton("Instantiate Self-Replica", () => InstantiateSelfReplica(world))
                         .AddSingleButton("Remove Self-Replica", () => RemoveSelfReplica(world))
+                        .AddToggleField("Use Compression", evt => this.mainSettings.UseCompression = evt.newValue, this.mainSettings.UseCompression)
                         .AddToggleField("Use Linear", evt => SelectInterpolationType(evt.newValue), useLinear)
                         .AddToggleField("Use speed-up", evt => this.mainSettings.InterpolationSettings.UseSpeedUp = evt.newValue, this.mainSettings.InterpolationSettings.UseSpeedUp);
         }

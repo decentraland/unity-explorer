@@ -88,7 +88,7 @@ namespace Global.Dynamic
             AudioClipConfig backgroundMusic,
             WorldInfoTool worldInfoTool,
             Entity playerEntity,
-            MultiplayerMovementMessageBus.Scheme scheme,
+            bool useCompression,
             CancellationToken ct
         )
         {
@@ -127,7 +127,7 @@ namespace Global.Dynamic
                 staticContainer.PortableExperiencesController,
                 world,
                 playerEntity,
-                scheme,
+                useCompression,
                 ct);
         }
 
