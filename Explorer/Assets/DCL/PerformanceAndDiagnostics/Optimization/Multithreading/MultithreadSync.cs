@@ -4,13 +4,14 @@ using System.Threading;
 using DCL.Optimization.ThreadSafePool;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using Unity.Profiling;
 using UnityEngine.Profiling;
 
 namespace Utility.Multithreading
 {
     public class SyncLogsBuffer
     {
-        private readonly SceneShortInfo sceneShortInfo;
+        public readonly SceneShortInfo sceneShortInfo;
         private readonly int logsToKeep;
         private readonly DateTime creationTime;
 
@@ -66,13 +67,36 @@ namespace Utility.Multithreading
 
     public class MultithreadSync : IDisposable
     {
-        private static readonly CustomSampler SAMPLER;
+        public class OwnerMismatchException : Exception
+        {
+            private readonly Owner releasingOwner;
+            private readonly Owner firstInQueueOwner;
+
+            public OwnerMismatchException(Owner releasingOwner, Owner firstInQueueOwner)
+            {
+                this.releasingOwner = releasingOwner;
+                this.firstInQueueOwner = firstInQueueOwner;
+            }
+
+            public override string Message => $"Releasing owner {releasingOwner.Name} != Queue owner {firstInQueueOwner.Name}";
+        }
+
+        public class Owner
+        {
+            public readonly ManualResetEventSlim EventSlim = new (false);
+            public readonly string Name;
+
+            public Owner(string name)
+            {
+                Name = name;
+            }
+        }
+
+        private static readonly ProfilerMarker COMMON_SAMPLER;
+
         private static readonly TimeSpan MAX_LIMIT = TimeSpan.FromSeconds(10);
 
-        private static readonly ThreadSafeObjectPool<ManualResetEventSlim> MANUAL_RESET_EVENT_SLIM_POOL =
-            new (() => new ManualResetEventSlim(false));
-
-        private readonly ConcurrentQueue<ManualResetEventSlim> queue = new ();
+        private readonly ConcurrentQueue<Owner> queue = new ();
         private readonly Atomic<bool> acquired = new ();
         private readonly Atomic<bool> isDisposing = new ();
         private long acquireCount;
@@ -80,20 +104,25 @@ namespace Utility.Multithreading
         private readonly SyncLogsBuffer syncLogsBuffer;
         private readonly Atomic<(string? name, DateTime startedAt, long accuiredIndex)> currentScope = new ((null, DateTime.MinValue, 0));
 
+        private readonly CustomSampler perSceneSampler;
+
         public bool Acquired => acquired.Value();
 
         static MultithreadSync()
         {
-            SAMPLER = CustomSampler.Create("MultithreadSync.Wait")!;
+            COMMON_SAMPLER = new ProfilerMarker("MultithreadSync.Wait");
         }
 
         public MultithreadSync(SceneShortInfo sceneInfo)
         {
             syncLogsBuffer = new SyncLogsBuffer(sceneInfo, 20);
+            perSceneSampler = CustomSampler.Create("MultithreadSync.Wait " + sceneInfo.BaseParcel);
         }
 
-        private void Acquire(string source)
+        private void Acquire(Owner owner)
         {
+            string source = owner.Name;
+
 #if SYNC_DEBUG
             syncLogsBuffer.Report("MultithreadSync Acquire start for:", source);
 #endif
@@ -103,10 +132,10 @@ namespace Utility.Multithreading
             if (isDisposing.Value())
                 throw new ObjectDisposedException(nameof(MultithreadSync));
 
-            var waiter = MANUAL_RESET_EVENT_SLIM_POOL.Get();
+            ManualResetEventSlim waiter = owner.EventSlim;
             bool shouldWait = queue.Count > 0;
 
-            queue.Enqueue(waiter);
+            queue.Enqueue(owner);
 
             // There is already one thread doing work. Wait for the signal
             if (shouldWait && !waiter.Wait(MAX_LIMIT))
@@ -126,8 +155,10 @@ namespace Utility.Multithreading
             currentScope.Set((source, DateTime.Now, currentId));
         }
 
-        private void Release(string source)
+        private void Release(Owner owner)
         {
+            string source = owner.Name;
+
 #if SYNC_DEBUG
             syncLogsBuffer.Report("MultithreadSync Release start for:", source);
 #endif
@@ -135,16 +166,21 @@ namespace Utility.Multithreading
             if (isDisposing.Value())
                 return;
 
-            // The one releasing should be the one at the top of the queue
             // If the queue is empty, then our logic is wrong
             if (queue.TryDequeue(out var finishedWaiter))
             {
-                finishedWaiter!.Reset();
-                MANUAL_RESET_EVENT_SLIM_POOL.Release(finishedWaiter);
+                // The one releasing should be the one at the top of the queue
+                if (owner != finishedWaiter)
+                {
+                    syncLogsBuffer.Print();
+                    throw new OwnerMismatchException(owner, finishedWaiter);
+                }
+
+                finishedWaiter.EventSlim.Reset();
                 acquired.Set(false);
 
                 if (queue.TryPeek(out var next))
-                    next!.Set(); // Signal the next waiter in line
+                    next.EventSlim.Set(); // Signal the next waiter in line
 
 #if SYNC_DEBUG
                 syncLogsBuffer.Report("MultithreadSync Release finished for:", source);
@@ -162,27 +198,35 @@ namespace Utility.Multithreading
             isDisposing.Set(true);
             acquired.Set(false);
 
-            foreach (var manualResetEventSlim in queue)
-                MANUAL_RESET_EVENT_SLIM_POOL.Release(manualResetEventSlim);
+            foreach (Owner? ow in queue)
+                ow.EventSlim.Reset();
 
             queue.Clear();
         }
 
-        public Scope GetScope(string source)
+        public Scope GetScope(Owner source)
         {
-            SAMPLER.Begin();
-            var scope = new Scope(this, source);
-            SAMPLER.End();
+            COMMON_SAMPLER.Begin(source.Name);
+            perSceneSampler.Begin();
+
+            Scope scope;
+
+            try { scope = new Scope(this, source); }
+            finally
+            {
+                perSceneSampler.End();
+                COMMON_SAMPLER.End();
+            }
             return scope;
         }
 
         public readonly struct Scope : IDisposable
         {
             private readonly MultithreadSync multithreadSync;
-            private readonly string source;
+            private readonly Owner source;
             private readonly DateTime start;
 
-            public Scope(MultithreadSync multithreadSync, string source)
+            public Scope(MultithreadSync multithreadSync, Owner source)
             {
                 this.multithreadSync = multithreadSync;
                 this.source = source;
@@ -212,7 +256,7 @@ namespace Utility.Multithreading
                 isScoped = false;
             }
 
-            public void Acquire(string source)
+            public void Acquire(Owner source)
             {
                 scope = multithreadSync.GetScope(source);
                 isScoped = true;
