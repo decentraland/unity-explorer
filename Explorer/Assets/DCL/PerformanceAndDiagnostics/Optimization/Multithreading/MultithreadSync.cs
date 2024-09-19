@@ -75,6 +75,7 @@ namespace Utility.Multithreading
         private readonly Atomic<bool> isDisposing = new ();
 
         private readonly SyncLogsBuffer syncLogsBuffer;
+        private readonly Atomic<(string? name, DateTime startedAt)> currentScope = new ((null, DateTime.MinValue));
 
         public bool Acquired => acquired.Value();
 
@@ -105,15 +106,19 @@ namespace Utility.Multithreading
             // There is already one thread doing work. Wait for the signal
             if (shouldWait && !waiter.Wait(MAX_LIMIT))
             {
+                var time = DateTime.Now;
+                var current = currentScope.Value();
+                var difference = time - current.startedAt;
                 syncLogsBuffer.Print();
 
-                throw new TimeoutException($"{nameof(MultithreadSync)} timeout, cannot acquire for: {source}");
+                throw new TimeoutException($"{nameof(MultithreadSync)} timeout, cannot acquire for: {source}, main context \"{current.name}\" takes too long: {difference.TotalSeconds}");
             }
 
             acquired.Set(true);
 #if SYNC_DEBUG
             syncLogsBuffer.Report("MultithreadSync Acquire finished for:", source);
 #endif
+            currentScope.Set((source, DateTime.Now));
         }
 
         private void Release(string source)
@@ -144,6 +149,7 @@ namespace Utility.Multithreading
             else
                 syncLogsBuffer.Report("MultithreadSync Release finished CANNOT", source);
 #endif
+            currentScope.Set((null, DateTime.MinValue));
         }
 
         public void Dispose()
