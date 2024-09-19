@@ -11,6 +11,7 @@ using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.UserInAppInitializationFlow;
 using DCL.Utilities;
 using DCL.Web3.Identities;
+using Global.AppArgs;
 using SceneRunner.Debugging;
 using Segment.Serialization;
 using System.Threading;
@@ -64,12 +65,12 @@ namespace Global.Dynamic
             UIDocument uiToolkitRoot, UIDocument cursorRoot, ISplashScreen splashScreen, AudioClipConfig backgroundMusic,
             WorldInfoTool worldInfoTool,
             Entity playerEntity,
-            bool useCompression,
+            IAppArgs appArgs,
             CancellationToken ct)
         {
             (DynamicWorldContainer? container, bool) result =
                 await core.LoadDynamicWorldContainerAsync(bootstrapContainer, staticContainer, scenePluginSettingsContainer,
-                    settings, dynamicSettings, uiToolkitRoot, cursorRoot, splashScreen, backgroundMusic, worldInfoTool, playerEntity, useCompression, ct);
+                    settings, dynamicSettings, uiToolkitRoot, cursorRoot, splashScreen, backgroundMusic, worldInfoTool, playerEntity, appArgs, ct);
 
             analytics.Track(General.INITIAL_LOADING, new JsonObject
             {

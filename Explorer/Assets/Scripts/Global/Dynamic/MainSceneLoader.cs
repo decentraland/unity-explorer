@@ -199,13 +199,9 @@ namespace Global.Dynamic
 
                 bootstrap.InitializePlayerEntity(staticContainer!, playerEntity);
 
-                var useCompression = true;
-                if (applicationParametersParser.TryGetValue("compression", out string? compression) && compression == "false")
-                    useCompression = false;
-
                 (dynamicWorldContainer, isLoaded) = await bootstrap.LoadDynamicWorldContainerAsync(bootstrapContainer, staticContainer!, scenePluginSettingsContainer, settings,
                     dynamicSettings, uiToolkitRoot, cursorRoot, splashScreen, backgroundMusic, worldInfoTool.EnsureNotNull(), playerEntity,
-                    useCompression,
+                    applicationParametersParser,
                     destroyCancellationToken);
 
                 if (!isLoaded)

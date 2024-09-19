@@ -6,6 +6,7 @@ using DCL.DebugUtilities;
 using DCL.Multiplayer.Movement.Settings;
 using DCL.Multiplayer.Movement.Systems;
 using DCL.Multiplayer.Profiles.Entities;
+using Global.AppArgs;
 using System.Threading;
 using Utility;
 using PlayerMovementNetSendSystem = DCL.Multiplayer.Movement.Systems.PlayerMovementNetSendSystem;
@@ -15,6 +16,7 @@ namespace DCL.PluginSystem.Global
 {
     public class MultiplayerMovementPlugin : IDCLGlobalPlugin<MultiplayerCommunicationSettings>
     {
+        private const string COMPRESSION_ARG_FLAG = "compression";
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly MultiplayerMovementMessageBus messageBus;
         private readonly IDebugContainerBuilder debugBuilder;
@@ -30,7 +32,7 @@ namespace DCL.PluginSystem.Global
 
         public MultiplayerMovementPlugin(IAssetsProvisioner assetsProvisioner, MultiplayerMovementMessageBus messageBus, IDebugContainerBuilder debugBuilder
           , RemoteEntities remoteEntities, ExposedTransform playerTransform,
-            ProvidedAsset<MultiplayerDebugSettings> debugSettings, bool useCompression)
+            ProvidedAsset<MultiplayerDebugSettings> debugSettings, IAppArgs appArgs)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.messageBus = messageBus;
@@ -38,7 +40,7 @@ namespace DCL.PluginSystem.Global
             this.remoteEntities = remoteEntities;
             this.playerTransform = playerTransform;
             this.debugSettings = debugSettings;
-            this.useCompression = useCompression;
+            this.useCompression = appArgs.TryGetValue(COMPRESSION_ARG_FLAG, out string? compression) && compression == "true";
         }
 
         public void Dispose()

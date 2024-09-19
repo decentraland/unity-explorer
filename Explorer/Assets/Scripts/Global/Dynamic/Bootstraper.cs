@@ -76,8 +76,7 @@ namespace Global.Dynamic
             await StaticContainer.CreateAsync(bootstrapContainer.DecentralandUrlsSource, bootstrapContainer.AssetsProvisioner, bootstrapContainer.ReportHandlingSettings, appArgs, debugViewsCatalog, globalPluginSettingsContainer,
                 bootstrapContainer.DiagnosticsContainer, bootstrapContainer.IdentityCache, bootstrapContainer.VerifiedEthereumApi, bootstrapContainer.LocalSceneDevelopment, bootstrapContainer.UseRemoteAssetBundles, world, playerEntity, ct);
 
-        public async UniTask<(DynamicWorldContainer?, bool)> LoadDynamicWorldContainerAsync(
-            BootstrapContainer bootstrapContainer,
+        public async UniTask<(DynamicWorldContainer?, bool)> LoadDynamicWorldContainerAsync(BootstrapContainer bootstrapContainer,
             StaticContainer staticContainer,
             PluginSettingsContainer scenePluginSettingsContainer,
             DynamicSceneLoaderSettings settings,
@@ -88,9 +87,8 @@ namespace Global.Dynamic
             AudioClipConfig backgroundMusic,
             WorldInfoTool worldInfoTool,
             Entity playerEntity,
-            bool useCompression,
-            CancellationToken ct
-        )
+            IAppArgs appArgs,
+            CancellationToken ct)
         {
             dynamicWorldDependencies = new DynamicWorldDependencies
             (
@@ -127,7 +125,7 @@ namespace Global.Dynamic
                 staticContainer.PortableExperiencesController,
                 world,
                 playerEntity,
-                useCompression,
+                appArgs,
                 ct);
         }
 
