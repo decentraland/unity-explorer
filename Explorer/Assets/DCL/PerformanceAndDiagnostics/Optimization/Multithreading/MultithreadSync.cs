@@ -130,23 +130,29 @@ namespace Utility.Multithreading
         public class BoxedScope
         {
             private readonly MultithreadSync multithreadSync;
-            private Scope? scope;
+            private Scope scope;
+            private bool isScoped;
 
             public BoxedScope(MultithreadSync multithreadSync)
             {
                 this.multithreadSync = multithreadSync;
-                scope = null;
+                scope = default;
+                isScoped = false;
             }
 
             public void Acquire(string source, SceneShortInfo sceneShortInfo)
             {
                 scope = multithreadSync.GetScope(source, sceneShortInfo);
+                isScoped = true;
             }
 
             public void ReleaseIfAcquired()
             {
-                scope?.Dispose();
-                scope = null;
+                if (isScoped)
+                {
+                    scope.Dispose();
+                    isScoped = false;
+                }
             }
         }
     }
