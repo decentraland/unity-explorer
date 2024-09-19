@@ -4,13 +4,14 @@ using System.Threading;
 using DCL.Optimization.ThreadSafePool;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using Unity.Profiling;
 using UnityEngine.Profiling;
 
 namespace Utility.Multithreading
 {
     public class SyncLogsBuffer
     {
-        private readonly SceneShortInfo sceneShortInfo;
+        public readonly SceneShortInfo sceneShortInfo;
         private readonly int logsToKeep;
         private readonly DateTime creationTime;
 
@@ -89,7 +90,8 @@ namespace Utility.Multithreading
             }
         }
 
-        private static readonly CustomSampler SAMPLER;
+        private static readonly ProfilerMarker COMMON_SAMPLER;
+
         private static readonly TimeSpan MAX_LIMIT = TimeSpan.FromSeconds(10);
 
         private readonly ConcurrentQueue<Owner> queue = new ();
@@ -99,16 +101,19 @@ namespace Utility.Multithreading
         private readonly SyncLogsBuffer syncLogsBuffer;
         private readonly Atomic<(string? name, DateTime startedAt)> currentScope = new ((null, DateTime.MinValue));
 
+        private readonly CustomSampler perSceneSampler;
+
         public bool Acquired => acquired.Value();
 
         static MultithreadSync()
         {
-            SAMPLER = CustomSampler.Create("MultithreadSync.Wait")!;
+            COMMON_SAMPLER = new ProfilerMarker("MultithreadSync.Wait");
         }
 
         public MultithreadSync(SceneShortInfo sceneInfo)
         {
             syncLogsBuffer = new SyncLogsBuffer(sceneInfo, 20);
+            perSceneSampler = CustomSampler.Create("MultithreadSync.Wait " + sceneInfo.BaseParcel);
         }
 
         private void Acquire(Owner owner)
@@ -196,9 +201,17 @@ namespace Utility.Multithreading
 
         public Scope GetScope(Owner source)
         {
-            SAMPLER.Begin();
-            var scope = new Scope(this, source);
-            SAMPLER.End();
+            COMMON_SAMPLER.Begin(source.Name);
+            perSceneSampler.Begin();
+
+            Scope scope;
+
+            try { scope = new Scope(this, source); }
+            finally
+            {
+                perSceneSampler.End();
+                COMMON_SAMPLER.End();
+            }
             return scope;
         }
 
