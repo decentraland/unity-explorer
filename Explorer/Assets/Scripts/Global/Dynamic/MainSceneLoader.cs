@@ -32,6 +32,7 @@ namespace Global.Dynamic
     public interface IDebugSettings
     {
         string[]? PortableExperiencesEnsToLoad { get; }
+        string[]? EmotesToAddToUserProfile { get; }
         bool ShowSplash { get; }
         bool ShowAuthentication { get; }
         bool ShowLoading { get; }
@@ -66,6 +67,8 @@ namespace Global.Dynamic
         private bool enableRemotePortableExperiences;
         [SerializeField] [Tooltip("Make sure the ENS put here will be loaded as a GlobalPX (format must be something.dcl.eth)")]
         internal string[]? portableExperiencesEnsToLoad;
+        [SerializeField]
+        internal string[]? emotesToAddToUserProfile;
         [Space]
         [SerializeField]
         private bool overrideConnectionQuality;
@@ -86,9 +89,11 @@ namespace Global.Dynamic
                 overrideConnectionQuality = false,
                 connectionQuality = ConnectionQuality.QualityExcellent,
                 enableRemotePortableExperiences = true,
+                emotesToAddToUserProfile = null,
             };
 
         // To avoid configuration issues, force full flow on build (Debug.isDebugBuild is always true in Editor)
+        public string[]? EmotesToAddToUserProfile => Debug.isDebugBuild ? this.emotesToAddToUserProfile : RELEASE_SETTINGS.emotesToAddToUserProfile;
         public string[]? PortableExperiencesEnsToLoad => Debug.isDebugBuild ? this.portableExperiencesEnsToLoad : RELEASE_SETTINGS.portableExperiencesEnsToLoad;
         public bool EnableRemotePortableExperiences => Debug.isDebugBuild ? this.enableRemotePortableExperiences : RELEASE_SETTINGS.enableRemotePortableExperiences;
         public bool ShowSplash => Debug.isDebugBuild ? this.showSplash : RELEASE_SETTINGS.showSplash;
