@@ -2,7 +2,6 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AsyncLoadReporting;
-using DCL.Ipfs;
 using DCL.Landscape;
 using DCL.MapRenderer;
 using DCL.MapRenderer.MapLayers;
@@ -14,17 +13,13 @@ using DCL.Roads.Systems;
 using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.UserInAppInitializationFlow;
 using DCL.Utilities;
-using DCL.Utilities.Extensions;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Realm;
 using ECS.SceneLifeCycle.Reporting;
-using ECS.SceneLifeCycle.SceneDefinition;
-using ECS.StreamableLoading.Common;
 using System;
 using System.Linq;
 using System.Threading;
 using DCL.Diagnostics;
-using DCL.UserInAppInitializationFlow.StartupOperations;
 using Global.Dynamic.TeleportOperations;
 using Unity.Collections;
 using Unity.Mathematics;
@@ -91,7 +86,7 @@ namespace Global.Dynamic
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.globalWorld = globalWorld;
 
-            var livekitTimeout = TimeSpan.FromSeconds(0.01f);
+            var livekitTimeout = TimeSpan.FromSeconds(10f);
 
             realmChangeOperations = new ITeleportOperation[]
             {
@@ -130,7 +125,8 @@ namespace Global.Dynamic
             ct.ThrowIfCancellationRequested();
             var loadResult
                 = await loadingScreen.ShowWhileExecuteTaskAsync(DoChangeRealmAsync(realm, parcelToTeleport, ct), ct);
-            
+
+            if (!loadResult.Success)
             {
                 if (!globalWorld.Has<CameraSamplingData>(cameraEntity.Object))
                     globalWorld.Add(cameraEntity.Object, cameraSamplingData);
