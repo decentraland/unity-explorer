@@ -114,6 +114,8 @@ namespace DCL.Multiplayer.Movement.Systems
             {
                 timestamp = proto.Timestamp,
                 position = new Vector3(proto.PositionX, proto.PositionY, proto.PositionZ),
+                rotationY = proto.RotationY,
+
                 velocity = vel,
                 velocitySqrMagnitude = vel.sqrMagnitude,
 
@@ -179,6 +181,8 @@ namespace DCL.Multiplayer.Movement.Systems
             movement.IsLongFall = message.animState.IsLongFall;
 
             movement.IsStunned = message.isStunned;
+
+            movement.RotationY = message.rotationY;
         }
 
         private static void WriteToProto(CompressedNetworkMovementMessage message, MovementCompressed proto)
