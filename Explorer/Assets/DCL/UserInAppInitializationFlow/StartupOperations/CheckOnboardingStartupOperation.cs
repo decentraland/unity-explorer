@@ -1,3 +1,4 @@
+using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AsyncLoadReporting;
@@ -72,6 +73,31 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
                     ReportHub.LogError(ReportCategory.ONBOARDING, $"Error trying to set '{realm}' realm for onboarding. Redirecting to Genesis City.");
                     await realmController.SetRealmAsync(URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Genesis)), ct);
                 }
+            }
+        }
+
+        public async UniTask MarkOnboardingAsDoneAsync(World world, Entity playerEntity, CancellationToken ct)
+        {
+            if (ownProfile == null || ownProfile.TutorialStep > 0)
+                return;
+
+            try
+            {
+                // Update profile data
+                ownProfile.TutorialStep = 256;
+                var profile = await selfProfile.ForcePublishWithoutModificationsAsync(ct);
+
+                if (profile != null)
+                {
+                    // Update player entity in world
+                    profile.IsDirty = true;
+                    world.Set(playerEntity, profile);
+                }
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception e)
+            {
+                ReportHub.LogError(ReportCategory.ONBOARDING, $"There was an error while trying to update TutorialStep into your profile. ERROR: {e.Message}");
             }
         }
     }

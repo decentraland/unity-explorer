@@ -28,8 +28,10 @@ namespace DCL.UserInAppInitializationFlow
         private readonly IMVCManager mvcManager;
         private readonly AudioClipConfig backgroundMusic;
         private readonly ILoadingScreen loadingScreen;
+        private readonly ISelfProfile selfProfile;
 
         private readonly LoadPlayerAvatarStartupOperation loadPlayerAvatarStartupOperation;
+        private readonly CheckOnboardingStartupOperation checkOnboardingStartupOperation;
         private readonly RestartRealmStartupOperation restartRealmStartupOperation;
 
         private readonly IStartupOperation startupOperation;
@@ -58,6 +60,7 @@ namespace DCL.UserInAppInitializationFlow
             this.mvcManager = mvcManager;
             this.backgroundMusic = backgroundMusic;
             this.loadingScreen = loadingScreen;
+            this.selfProfile = selfProfile;
 
             var ensureLivekitConnectionStartupOperation = new EnsureLivekitConnectionStartupOperation(loadingStatus, livekitHealthCheck);
             var initializeFeatureFlagsStartupOperation = new InitializeFeatureFlagsStartupOperation(loadingStatus, featureFlagsProvider, web3IdentityCache, decentralandUrlsSource, appParameters);
@@ -65,7 +68,7 @@ namespace DCL.UserInAppInitializationFlow
             var switchRealmMiscVisibilityStartupOperation = new SwitchRealmMiscVisibilityStartupOperation(loadingStatus, realmNavigator);
             loadPlayerAvatarStartupOperation = new LoadPlayerAvatarStartupOperation(loadingStatus, selfProfile, mainPlayerAvatarBaseProxy);
             var loadLandscapeStartupOperation = new LoadLandscapeStartupOperation(loadingStatus, realmNavigator);
-            var checkOnboardingStartupOperation = new CheckOnboardingStartupOperation(loadingStatus, realmController, selfProfile, featureFlagsCache, decentralandUrlsSource);
+            checkOnboardingStartupOperation = new CheckOnboardingStartupOperation(loadingStatus, realmController, selfProfile, featureFlagsCache, decentralandUrlsSource);
             restartRealmStartupOperation = new RestartRealmStartupOperation(loadingStatus, realmController);
             var teleportStartupOperation = new TeleportStartupOperation(loadingStatus, realmNavigator, startParcel);
 
@@ -121,6 +124,8 @@ namespace DCL.UserInAppInitializationFlow
                 //TODO notification popup on failure
             }
             while (result.Success == false && showAuthentication);
+
+            await checkOnboardingStartupOperation.MarkOnboardingAsDoneAsync(world, playerEntity, ct);
         }
 
         private static void ApplyErrorIfLoadingScreenError(ref Result result, ILoadingScreen.LoadResult showResult)
