@@ -88,6 +88,25 @@ namespace Utility.Multithreading
             {
                 Name = name;
             }
+
+            public bool Wait(TimeSpan timeout, CancellationToken ct, out bool wasCancelled)
+            {
+                try
+                {
+                    wasCancelled = false;
+                    return EventSlim.Wait(timeout, ct);
+                }
+                catch (OperationCanceledException)
+                {
+                    wasCancelled = true;
+                    return false;
+                }
+            }
+
+            public void Dispose()
+            {
+                EventSlim.Dispose();
+            }
         }
 
         private static readonly ProfilerMarker COMMON_SAMPLER;
@@ -102,6 +121,8 @@ namespace Utility.Multithreading
         private readonly Atomic<(string? name, DateTime startedAt)> currentScope = new ((null, DateTime.MinValue));
 
         private readonly CustomSampler perSceneSampler;
+
+        private readonly CancellationTokenSource cts = new ();
 
         public bool Acquired => acquired.Value();
 
@@ -127,13 +148,12 @@ namespace Utility.Multithreading
             if (isDisposing.Value())
                 throw new ObjectDisposedException(nameof(MultithreadSync));
 
-            ManualResetEventSlim waiter = owner.EventSlim;
             bool shouldWait = queue.Count > 0;
 
             queue.Enqueue(owner);
 
             // There is already one thread doing work. Wait for the signal
-            if (shouldWait && !waiter.Wait(MAX_LIMIT))
+            if (shouldWait && !owner.Wait(MAX_LIMIT, cts.Token, out bool wasCancelled) && !wasCancelled)
             {
                 var time = DateTime.Now;
                 var current = currentScope.Value();
@@ -193,8 +213,13 @@ namespace Utility.Multithreading
             isDisposing.Set(true);
             acquired.Set(false);
 
-            foreach (Owner? ow in queue)
-                ow.EventSlim.Reset();
+            cts.SafeCancelAndDispose();
+
+            // Dispose owners currently in use
+            // Don't accept any new ones
+
+            foreach (Owner owner in queue)
+                owner.Dispose();
 
             queue.Clear();
         }

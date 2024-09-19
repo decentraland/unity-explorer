@@ -250,6 +250,8 @@ namespace CrdtEcsBridge.JsModulesImplementation
             {
                 using MultithreadSync.Scope mutex = multithreadSync.GetScope(syncOwner);
 
+                if (isDisposing) return;
+
                 applyBufferSampler.Begin();
 
                 // Apply changes to the ECS World on the main thread
