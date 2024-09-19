@@ -126,7 +126,7 @@ namespace ECS.SceneLifeCycle.Systems
                     concluded = true;
 
                 // Memory is full. Assets may be on deadlock. Show broken state of scene
-                if (memoryBudget.GetMemoryUsageStatus() != MemoryUsageStatus.FULL)
+                if (memoryBudget.GetMemoryUsageStatus() == MemoryUsageStatus.FULL)
                 {
                     for (var i = 0; i < reports!.Value.Count; i++)
                     {
