@@ -79,7 +79,7 @@ namespace DCL.ResourcesUnloading.Tests
             attachmentsAssetsCache.Dispose();
             wearableStorage.Unload(releasablePerformanceBudget);
             lodAssets.Unload(releasablePerformanceBudget, 3);
-            roadAssets.Unload(releasablePerformanceBudget, 3);
+            roadAssets.Unload();
         }
 
         [Performance]

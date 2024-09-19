@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using DCL.Optimization.PerformanceBudgeting;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
@@ -70,10 +69,7 @@ namespace DCL.LOD
 
         public void Dispose()
         {
-            foreach (KeyValuePair<string, IObjectPool<Transform>> keyValuePair in roadAssetPoolDictionary)
-                keyValuePair.Value.Clear();
-
-            UnityObjectUtils.SafeDestroy(roadAssetParent);
+            Unload();
         }
 
         public bool Get(string key, out Transform roadAsset)
@@ -121,21 +117,10 @@ namespace DCL.LOD
                 roadAssetPoolDictionary[DEFAULT_ROAD_KEY].Release(asset);
         }
 
-        public void Unload(IPerformanceBudget frameTimeBudgetProvider, int maxUnloadAmount)
+        public void Unload()
         {
-            var unloadedAmount = 0;
-
-            if (!frameTimeBudgetProvider.TrySpendBudget()) return;
-
             foreach (KeyValuePair<string, IObjectPool<Transform>> keyValuePair in roadAssetPoolDictionary)
-            {
-                unloadedAmount += keyValuePair.Value.CountInactive;
                 keyValuePair.Value.Clear();
-
-                // Check if the budget is still available or the max unload amount is reached after each operation
-                if (!frameTimeBudgetProvider.TrySpendBudget() || unloadedAmount >= maxUnloadAmount)
-                    break;
-            }
         }
 
         public void SwitchVisibility(bool isVisible)

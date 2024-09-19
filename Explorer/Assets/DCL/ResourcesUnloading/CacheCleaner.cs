@@ -69,7 +69,7 @@ namespace DCL.ResourcesUnloading
             profileCache?.Unload(fpsCapBudget, PROFILE_UNLOAD_CHUNK);
             profileIntentionCache?.Unload(fpsCapBudget, PROFILE_UNLOAD_CHUNK);
             lodCache.Unload(fpsCapBudget, GLTF_UNLOAD_CHUNK);
-            roadCache.Unload(fpsCapBudget, GLTF_UNLOAD_CHUNK);
+            roadCache.Unload();
 
             ClearAvatarsRelatedPools();
         }
@@ -79,6 +79,11 @@ namespace DCL.ResourcesUnloading
             foreach (IThrottledClearable pool in avatarPools)
                 if (fpsCapBudget.TrySpendBudget())
                     pool.ClearThrottled(POOLS_UNLOAD_CHUNK);
+        }
+
+        public void UnloadRoadCacheOnly()
+        {
+            roadCache.Unload();
         }
 
         public void Register(ILODCache lodAssetsPool)
