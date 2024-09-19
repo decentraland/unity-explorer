@@ -74,7 +74,7 @@ namespace Global.Dynamic.ChatCommands
             if (!realmNavigator.CheckIsNewRealm(realm))
                 return $"🟡 You are already in {worldName}!";
 
-            if (!await realmNavigator.CheckRealmIsReacheable(realm, ct))
+            if (!await realmNavigator.CheckRealmIsReacheableAsync(realm, ct))
                 return $"🔴 Error. The world {worldName} doesn't exist or not reachable!";
             
             var result = await realmNavigator.TryChangeRealmAsync(realm, ct, parcel);

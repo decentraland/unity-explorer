@@ -110,7 +110,7 @@ namespace Global.Dynamic
             return true;
         }
 
-        public async UniTask<bool> CheckRealmIsReacheable(URLDomain realm, CancellationToken ct)
+        public async UniTask<bool> CheckRealmIsReacheableAsync(URLDomain realm, CancellationToken ct)
         {
             ct.ThrowIfCancellationRequested();
             if (!await realmController.IsReachableAsync(realm, ct))

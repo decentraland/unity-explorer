@@ -25,7 +25,7 @@ namespace ECS.SceneLifeCycle.Realm
 
         bool CheckIsNewRealm(URLDomain realm);
 
-        UniTask<bool> CheckRealmIsReacheable(URLDomain realm, CancellationToken ct);
+        UniTask<bool> CheckRealmIsReacheableAsync(URLDomain realm, CancellationToken ct);
 
         UniTask<Result> TryInitializeTeleportToParcelAsync(Vector2Int parcel, CancellationToken ct,
             bool isLocal = false);
