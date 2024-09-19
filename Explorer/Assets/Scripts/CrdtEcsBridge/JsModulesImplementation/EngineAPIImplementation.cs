@@ -38,7 +38,6 @@ namespace CrdtEcsBridge.JsModulesImplementation
         private readonly CustomSampler outgoingMessagesSampler;
         private readonly ISystemGroupsUpdateGate systemGroupsUpdateGate;
         private readonly CustomSampler worldSyncBufferSampler;
-        private readonly SceneShortInfo sceneShortInfo;
         private bool isDisposing;
 
         private readonly Action<OutgoingCRDTMessagesProvider.PendingMessage> processPendingMessage;
@@ -55,8 +54,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
             IOutgoingCRDTMessagesProvider outgoingCrtdMessagesProvider,
             ISystemGroupsUpdateGate systemGroupsUpdateGate,
             ISceneExceptionsHandler exceptionsHandler,
-            MultithreadSync multithreadSync,
-            SceneShortInfo sceneShortInfo)
+            MultithreadSync multithreadSync)
         {
             sharedPoolsProvider = poolsProvider;
             this.instancePoolsProvider = instancePoolsProvider;
@@ -66,7 +64,6 @@ namespace CrdtEcsBridge.JsModulesImplementation
             this.crdtWorldSynchronizer = crdtWorldSynchronizer;
             this.outgoingCrtdMessagesProvider = outgoingCrtdMessagesProvider;
             this.multithreadSync = multithreadSync;
-            this.sceneShortInfo = sceneShortInfo;
             this.systemGroupsUpdateGate = systemGroupsUpdateGate;
             this.exceptionsHandler = exceptionsHandler;
 
@@ -248,7 +245,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
         {
             try
             {
-                using MultithreadSync.Scope mutex = multithreadSync.GetScope(nameof(EngineAPIImplementation), sceneShortInfo);
+                using MultithreadSync.Scope mutex = multithreadSync.GetScope(nameof(EngineAPIImplementation));
 
                 applyBufferSampler.Begin();
 

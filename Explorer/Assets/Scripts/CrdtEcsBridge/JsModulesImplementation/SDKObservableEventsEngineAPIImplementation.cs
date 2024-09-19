@@ -28,9 +28,9 @@ namespace CrdtEcsBridge.JsModulesImplementation
         public SDKObservableEventsEngineAPIImplementation(ISharedPoolsProvider poolsProvider, IInstancePoolsProvider instancePoolsProvider, ICRDTProtocol crdtProtocol, ICRDTDeserializer crdtDeserializer, ICRDTSerializer crdtSerializer,
             ICRDTWorldSynchronizer crdtWorldSynchronizer, IOutgoingCRDTMessagesProvider outgoingCrtdMessagesProvider,
             ISystemGroupsUpdateGate systemGroupsUpdateGate, ISceneExceptionsHandler exceptionsHandler,
-            MultithreadSync multithreadSync, SceneShortInfo sceneShortInfo) : base(poolsProvider, instancePoolsProvider, crdtProtocol,
+            MultithreadSync multithreadSync) : base(poolsProvider, instancePoolsProvider, crdtProtocol,
             crdtDeserializer, crdtSerializer, crdtWorldSynchronizer, outgoingCrtdMessagesProvider,
-            systemGroupsUpdateGate, exceptionsHandler, multithreadSync, sceneShortInfo) { }
+            systemGroupsUpdateGate, exceptionsHandler, multithreadSync) { }
 
         public void TryAddSubscription(string eventId)
         {

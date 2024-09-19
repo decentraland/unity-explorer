@@ -3,10 +3,65 @@ using System;
 using System.Threading;
 using DCL.Optimization.ThreadSafePool;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using UnityEngine.Profiling;
 
 namespace Utility.Multithreading
 {
+    public class SyncLogsBuffer
+    {
+        private readonly SceneShortInfo sceneShortInfo;
+        private readonly int logsToKeep;
+        private readonly DateTime creationTime;
+
+        private readonly LinkedList<Entry> circularBuffer;
+
+        public SyncLogsBuffer(SceneShortInfo sceneShortInfo, int logsToKeep)
+        {
+            this.sceneShortInfo = sceneShortInfo;
+            this.logsToKeep = logsToKeep;
+            creationTime = DateTime.Now;
+
+            circularBuffer = new LinkedList<Entry>();
+        }
+
+        public void Report(string eventLog, string source)
+        {
+            lock (circularBuffer)
+            {
+                if (circularBuffer.Count >= logsToKeep)
+                    circularBuffer.RemoveFirst();
+
+                circularBuffer.AddLast(new Entry(eventLog, DateTime.Now - creationTime, source));
+            }
+        }
+
+        public void Print()
+        {
+            lock (circularBuffer)
+            {
+                var reportData = new ReportData(ReportCategory.SYNC, sceneShortInfo: sceneShortInfo);
+
+                foreach (Entry entry in circularBuffer)
+                    ReportHub.Log(reportData, $"T: {entry.TimeSinceCreation.TotalSeconds}, {entry.EventLog} {entry.Source}");
+            }
+        }
+
+        private struct Entry
+        {
+            public readonly string EventLog;
+            public readonly TimeSpan TimeSinceCreation;
+            public readonly string Source;
+
+            public Entry(string eventLog, TimeSpan timeSinceCreation, string source)
+            {
+                EventLog = eventLog;
+                TimeSinceCreation = timeSinceCreation;
+                Source = source;
+            }
+        }
+    }
+
     public class MultithreadSync : IDisposable
     {
         private static readonly CustomSampler SAMPLER;
@@ -19,6 +74,8 @@ namespace Utility.Multithreading
         private readonly Atomic<bool> acquired = new ();
         private readonly Atomic<bool> isDisposing = new ();
 
+        private readonly SyncLogsBuffer syncLogsBuffer;
+
         public bool Acquired => acquired.Value();
 
         static MultithreadSync()
@@ -26,11 +83,15 @@ namespace Utility.Multithreading
             SAMPLER = CustomSampler.Create("MultithreadSync.Wait")!;
         }
 
-        private void Acquire(string source, SceneShortInfo sceneShortInfo)
+        public MultithreadSync(SceneShortInfo sceneInfo)
+        {
+            syncLogsBuffer = new SyncLogsBuffer(sceneInfo, 20);
+        }
+
+        private void Acquire(string source)
         {
 #if SYNC_DEBUG
-            var reportData = new ReportData(ReportCategory.SYNC, sceneShortInfo: sceneShortInfo);
-            ReportHub.Log(reportData, $"MultithreadSync Acquire start for: {source}");
+            syncLogsBuffer.Report("MultithreadSync Acquire start for:", source);
 #endif
 
             if (isDisposing.Value())
@@ -41,22 +102,24 @@ namespace Utility.Multithreading
 
             queue.Enqueue(waiter);
 
+            // There is already one thread doing work. Wait for the signal
             if (shouldWait && !waiter.Wait(MAX_LIMIT))
+            {
+                syncLogsBuffer.Print();
 
-                // There is already one thread doing work. Wait for the signal
                 throw new TimeoutException($"{nameof(MultithreadSync)} timeout, cannot acquire for: {source}");
+            }
 
             acquired.Set(true);
 #if SYNC_DEBUG
-            ReportHub.Log(reportData, $"MultithreadSync Acquire finished for: {source}");
+            syncLogsBuffer.Report("MultithreadSync Acquire finished for:", source);
 #endif
         }
 
-        private void Release(string source, SceneShortInfo sceneShortInfo)
+        private void Release(string source)
         {
 #if SYNC_DEBUG
-            var reportData = new ReportData(ReportCategory.SYNC, sceneShortInfo: sceneShortInfo);
-            ReportHub.Log(reportData, $"MultithreadSync Release start for: {source}");
+            syncLogsBuffer.Report("MultithreadSync Release start for:", source);
 #endif
 
             if (isDisposing.Value())
@@ -74,12 +137,12 @@ namespace Utility.Multithreading
                     next!.Set(); // Signal the next waiter in line
 
 #if SYNC_DEBUG
-                ReportHub.Log(reportData, $"MultithreadSync Release finished for: {source}");
+                syncLogsBuffer.Report("MultithreadSync Release finished for:", source);
 #endif
             }
 #if SYNC_DEBUG
             else
-                ReportHub.LogError(reportData, $"MultithreadSync Release finished CANNOT: {source}");
+                syncLogsBuffer.Report("MultithreadSync Release finished CANNOT", source);
 #endif
         }
 
@@ -94,10 +157,10 @@ namespace Utility.Multithreading
             queue.Clear();
         }
 
-        public Scope GetScope(string source, SceneShortInfo sceneShortInfo)
+        public Scope GetScope(string source)
         {
             SAMPLER.Begin();
-            var scope = new Scope(this, source, sceneShortInfo);
+            var scope = new Scope(this, source);
             SAMPLER.End();
             return scope;
         }
@@ -106,24 +169,22 @@ namespace Utility.Multithreading
         {
             private readonly MultithreadSync multithreadSync;
             private readonly string source;
-            private readonly SceneShortInfo sceneShortInfo;
             private readonly DateTime start;
 
-            public Scope(MultithreadSync multithreadSync, string source, SceneShortInfo sceneShortInfo)
+            public Scope(MultithreadSync multithreadSync, string source)
             {
                 this.multithreadSync = multithreadSync;
                 this.source = source;
-                this.sceneShortInfo = sceneShortInfo;
-                multithreadSync.Acquire(source, this.sceneShortInfo);
+                multithreadSync.Acquire(source);
                 start = DateTime.Now;
             }
 
             public void Dispose()
             {
+                multithreadSync.Release(source);
+
                 if (DateTime.Now - start > MAX_LIMIT)
                     throw new TimeoutException($"{nameof(MultithreadSync)} source {source} took too much time! cannot release for: {source}");
-
-                multithreadSync.Release(source, sceneShortInfo);
             }
         }
 
@@ -140,9 +201,9 @@ namespace Utility.Multithreading
                 isScoped = false;
             }
 
-            public void Acquire(string source, SceneShortInfo sceneShortInfo)
+            public void Acquire(string source)
             {
-                scope = multithreadSync.GetScope(source, sceneShortInfo);
+                scope = multithreadSync.GetScope(source);
                 isScoped = true;
             }
 

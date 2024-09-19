@@ -129,7 +129,7 @@ namespace SceneRunner
             IWebRequestController webRequestController)
         {
             this.sceneData = sceneData;
-            ecsMultithreadSync = new MultithreadSync();
+            ecsMultithreadSync = new MultithreadSync(sceneData.SceneShortInfo);
             CRDTProtocol = new CRDTProtocol();
             worldTimeProvider = new WorldTimeProvider(decentralandUrlsSource, webRequestController);
             SceneStateProvider = new SceneStateProvider();
@@ -267,8 +267,7 @@ namespace SceneRunner
                         syncDeps.OutgoingCRDTMessagesProvider,
                         syncDeps.systemGroupThrottler,
                         syncDeps.ExceptionsHandler,
-                        syncDeps.ecsMultithreadSync,
-                        sceneData.SceneShortInfo),
+                        syncDeps.ecsMultithreadSync),
                     syncDeps, sceneRuntime, sceneRuntime, mvcManager, globalWorldActions, realmData, messagePipesHub, webRequestController) { }
         }
 
@@ -288,8 +287,7 @@ namespace SceneRunner
                         syncDeps.OutgoingCRDTMessagesProvider,
                         syncDeps.systemGroupThrottler,
                         syncDeps.ExceptionsHandler,
-                        syncDeps.ecsMultithreadSync,
-                        sceneData.SceneShortInfo),
+                        syncDeps.ecsMultithreadSync),
                     syncDeps, sceneRuntime, sceneRuntime, mvcManager, globalWorldActions, realmData, messagePipesHub, webRequestController) { }
         }
     }
