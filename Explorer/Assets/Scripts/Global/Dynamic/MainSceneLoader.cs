@@ -10,6 +10,7 @@ using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.Input.Component;
+using DCL.Multiplayer.Movement.Systems;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.SceneLoadingScreens.SplashScreen;
@@ -198,8 +199,14 @@ namespace Global.Dynamic
 
                 bootstrap.InitializePlayerEntity(staticContainer!, playerEntity);
 
+                var schema = MultiplayerMovementMessageBus.Scheme.Compressed;
+                if (applicationParametersParser.TryGetValue("compression", out string? compression) && compression == "false")
+                    schema = MultiplayerMovementMessageBus.Scheme.Uncompressed;
+
                 (dynamicWorldContainer, isLoaded) = await bootstrap.LoadDynamicWorldContainerAsync(bootstrapContainer, staticContainer!, scenePluginSettingsContainer, settings,
-                    dynamicSettings, uiToolkitRoot, cursorRoot, splashScreen, backgroundMusic, worldInfoTool.EnsureNotNull(), playerEntity, destroyCancellationToken);
+                    dynamicSettings, uiToolkitRoot, cursorRoot, splashScreen, backgroundMusic, worldInfoTool.EnsureNotNull(), playerEntity,
+                    schema,
+                    destroyCancellationToken);
 
                 if (!isLoaded)
                 {

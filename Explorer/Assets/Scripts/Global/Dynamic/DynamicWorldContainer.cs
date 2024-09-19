@@ -166,6 +166,7 @@ namespace Global.Dynamic
             IPortableExperiencesController portableExperiencesController,
             World globalWorld,
             Entity playerEntity,
+            MultiplayerMovementMessageBus.Scheme scheme,
             CancellationToken ct)
         {
             var container = new DynamicWorldContainer();
@@ -437,7 +438,7 @@ namespace Global.Dynamic
 
             var currentSceneInfo = new CurrentSceneInfo();
 
-            container.multiplayerMovementMessageBus = new MultiplayerMovementMessageBus(container.MessagePipesHub, entityParticipantTable, globalWorld);
+            container.multiplayerMovementMessageBus = new MultiplayerMovementMessageBus(container.MessagePipesHub, entityParticipantTable, globalWorld, scheme);
 
             var badgesAPIClient = new BadgesAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
 

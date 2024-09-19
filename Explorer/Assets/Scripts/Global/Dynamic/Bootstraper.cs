@@ -6,6 +6,7 @@ using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Multiplayer.Movement.Systems;
 using DCL.Notifications.NewNotification;
 using DCL.PerformanceAndDiagnostics.DotNetLogging;
 using DCL.PluginSystem;
@@ -87,6 +88,7 @@ namespace Global.Dynamic
             AudioClipConfig backgroundMusic,
             WorldInfoTool worldInfoTool,
             Entity playerEntity,
+            MultiplayerMovementMessageBus.Scheme scheme,
             CancellationToken ct
         )
         {
@@ -125,6 +127,7 @@ namespace Global.Dynamic
                 staticContainer.PortableExperiencesController,
                 world,
                 playerEntity,
+                scheme,
                 ct);
         }
 
