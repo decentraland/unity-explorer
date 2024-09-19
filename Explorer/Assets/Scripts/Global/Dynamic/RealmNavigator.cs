@@ -52,8 +52,8 @@ namespace Global.Dynamic
 
         private readonly ObjectProxy<Entity> cameraEntity;
         private readonly CameraSamplingData cameraSamplingData;
-        
-        public URLDomain? CurrentRealm { get; private set; }
+
+        private URLDomain? CurrentRealm;
 
         public event Action<bool>? RealmChanged;
 
@@ -106,24 +106,31 @@ namespace Global.Dynamic
 
             teleportInSameRealmOperation = new MoveToParcelInSameRealmTeleportOperation(this);
         }
+
+        public bool CheckIsNewRealm(URLDomain realm)
+        {
+            if (realm == CurrentRealm || realm == realmController.RealmData.Ipfs.CatalystBaseUrl)
+                return false;
+
+            return true;
+        }
+
+        public async UniTask<bool> CheckRealmIsReacheable(URLDomain realm, CancellationToken ct)
+        {
+            ct.ThrowIfCancellationRequested();
+            if (!await realmController.IsReachableAsync(realm, ct))
+                return false;
+
+            return true;
+        }
         
         public async UniTask<Result> TryChangeRealmAsync(URLDomain realm, CancellationToken ct,
             Vector2Int parcelToTeleport = default)
         {
-            if (realm == CurrentRealm || realm == realmController.RealmData.Ipfs.CatalystBaseUrl)
-                return Result.ErrorResult($"🟡 You are already in {realm}!");
-
             ct.ThrowIfCancellationRequested();
-
-            if (!await realmController.IsReachableAsync(realm, ct))
-                return Result.ErrorResult($"🔴 Error. The world {realm} doesn't exist or not reachable!"); 
-
-            ct.ThrowIfCancellationRequested();
-
             var loadResult
                 = await loadingScreen.ShowWhileExecuteTaskAsync(DoChangeRealmAsync(realm, parcelToTeleport, ct), ct);
             
-            if (!loadResult.Success)
             {
                 if (!globalWorld.Has<CameraSamplingData>(cameraEntity.Object))
                     globalWorld.Add(cameraEntity.Object, cameraSamplingData);
@@ -133,6 +140,8 @@ namespace Global.Dynamic
 
             return loadResult;
         }
+
+
 
 
         private Func<AsyncLoadProcessReport, UniTask<Result>> DoChangeRealmAsync(URLDomain realm,

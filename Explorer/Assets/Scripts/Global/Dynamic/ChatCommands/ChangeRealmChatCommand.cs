@@ -71,6 +71,12 @@ namespace Global.Dynamic.ChatCommands
             if (match.Groups[3].Success && match.Groups[4].Success)
                 parcel = new Vector2Int(int.Parse(match.Groups[3].Value), int.Parse(match.Groups[4].Value));
 
+            if (!realmNavigator.CheckIsNewRealm(realm))
+                return $"🟡 You are already in {realm}!";
+
+            if (!await realmNavigator.CheckRealmIsReacheable(realm, ct))
+                return $"🔴 Error. The world {realm} doesn't exist or not reachable!";
+            
             var result = await realmNavigator.TryChangeRealmAsync(realm, ct, parcel);
 
             if (ct.IsCancellationRequested)
