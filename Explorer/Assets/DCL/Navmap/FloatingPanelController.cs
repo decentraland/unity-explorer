@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Threading;
+using DCL.Chat.Commands;
 using DCL.Chat.MessageBus;
 using UnityEngine;
 
@@ -204,7 +205,7 @@ namespace DCL.Navmap
 
             if (destination == parcel) { mapPathEventBus.ArrivedToDestination(); }
 
-            chatMessagesBus.Send($"/goto {parcel.x},{parcel.y}");
+            chatMessagesBus.Send($"/{ChatCommandsUtils.COMMAND_GOTO} {parcel.x},{parcel.y}");
         }
 
         private void SetEmptyParcelInfo(Vector2Int parcel)
