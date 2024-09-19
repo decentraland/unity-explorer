@@ -38,9 +38,11 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
 
             GameObject virtualCameraPrefabGO = await Addressables.LoadAssetAsync<GameObject>("SDKVirtualCamera");
             virtualCamera = Object.Instantiate(virtualCameraPrefabGO.GetComponent<CinemachineFreeLook>());
-            poolsRegistry = new ComponentPoolsRegistry();
-            poolsRegistry.AddGameObjectPool(() => virtualCamera, onGet: virtualCam => virtualCam.enabled = false, onRelease: virtualCam => virtualCam.enabled = false);
-            sdkVirtualCameraPool = poolsRegistry.GetReferenceTypePool<CinemachineFreeLook>();
+
+            poolsRegistry = Substitute.For<IComponentPoolsRegistry>();
+            sdkVirtualCameraPool = Substitute.For<IComponentPool<CinemachineFreeLook>>();
+            poolsRegistry.GetReferenceTypePool<CinemachineFreeLook>().Returns(sdkVirtualCameraPool);
+            sdkVirtualCameraPool.Get().Returns(virtualCamera);
 
             system = new VirtualCameraSystem(world, sdkVirtualCameraPool, sceneStateProvider);
         }
@@ -69,17 +71,17 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
 
             world.Add(entity, component);
 
-            system.Update(1f);
-            Assert.AreEqual(0, sdkVirtualCameraPool.CountInactive);
+            Assert.IsFalse(world.TryGet(entity, out VirtualCameraComponent vCamComponent));
+            system!.Update(1f);
+            Assert.IsTrue(world.TryGet(entity, out vCamComponent));
 
-            Assert.IsTrue(world.TryGet(entity, out VirtualCameraComponent vCamComponent));
+            sdkVirtualCameraPool.Received().Get();
+
             Assert.AreEqual(lookAtEntity, vCamComponent.lookAtCRDTEntity!.Value.Id);
             Assert.AreSame(vCamComponent.virtualCameraInstance, virtualCamera);
         }
 
-        /*
-         TODO: Temporarily commenting this test as it never finishes running on CI (runs fine locally)...
-         [Test]
+        [Test]
         public async Task HandleComponentRemoveCorrectly()
         {
             // Workaround for Unity bug not awaiting async Setup correctly
@@ -89,16 +91,16 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
             world.Add(entity, component);
 
             system!.Update(1f);
-            Assert.IsTrue(world.Has<VirtualCameraComponent>(entity));
-            Assert.AreEqual(sdkVirtualCameraPool.CountInactive, 0);
+            Assert.IsTrue(world.TryGet(entity, out VirtualCameraComponent vCamComponent));
+            sdkVirtualCameraPool.Received().Get();
             virtualCamera.enabled = true; // emulates being active on the MainCamera component
 
             world.Remove<PBVirtualCamera>(entity);
             system.Update(1f);
             Assert.IsFalse(world.Has<VirtualCameraComponent>(entity));
-            Assert.IsFalse(virtualCamera.enabled);
-            Assert.AreEqual(sdkVirtualCameraPool.CountInactive, 1);
-        }*/
+            Assert.IsFalse(vCamComponent.virtualCameraInstance.enabled);
+            sdkVirtualCameraPool.Received().Release(Arg.Any<CinemachineFreeLook>());
+        }
 
         [Test]
         public async Task HandleEntityDestructionCorrectly()
@@ -110,14 +112,14 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
             world.Add(entity, component);
 
             system!.Update(1f);
-            Assert.IsTrue(world.Has<VirtualCameraComponent>(entity));
-            Assert.AreEqual(sdkVirtualCameraPool.CountInactive, 0);
+            Assert.IsTrue(world.TryGet(entity, out VirtualCameraComponent vCamComponent));
+            sdkVirtualCameraPool.Received().Get();
             virtualCamera.enabled = true; // emulates being active on the MainCamera component
 
             world.Add<DeleteEntityIntention>(entity);
             system.Update(1f);
-            Assert.IsFalse(virtualCamera.enabled);
-            Assert.AreEqual(sdkVirtualCameraPool.CountInactive, 1);
+            Assert.IsFalse(vCamComponent.virtualCameraInstance.enabled);
+            sdkVirtualCameraPool.Received().Release(Arg.Any<CinemachineFreeLook>());
         }
     }
 }
