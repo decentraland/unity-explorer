@@ -19,7 +19,6 @@ using UnityEngine;
 namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
 {
     [UpdateInGroup(typeof(SyncedInitializationFixedUpdateThrottledGroup))]
-    [UpdateBefore(typeof(CameraModeAreaHandlerSystem))]
     [LogCategory(ReportCategory.SDK_CAMERA)]
     public partial class MainCameraSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
