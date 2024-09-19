@@ -207,9 +207,9 @@ namespace DCL.Diagnostics
         public const string CHARACTER_TRIGGER_AREA = nameof(CHARACTER_TRIGGER_AREA);
 
         /// <summary>
-        ///     CameraModeArea SDK component
+        ///     SDK Camera related systems
         /// </summary>
-        public const string CAMERA_MODE_AREA = nameof(CAMERA_MODE_AREA);
+        public const string SDK_CAMERA = nameof(SDK_CAMERA);
 
         /// <summary>
         ///     Player-related data propagated to SDK
@@ -280,5 +280,9 @@ namespace DCL.Diagnostics
         ///     Default category into which falls everything that is reported without info and by default Unity Debug.Log
         /// </summary>
         public const string UNSPECIFIED = nameof(UNSPECIFIED);
+
+        public const string PORTABLE_EXPERIENCE= nameof(PORTABLE_EXPERIENCE);
+
+        public const string VERSION_CONTROL= nameof(VERSION_CONTROL);
     }
 }

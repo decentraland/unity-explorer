@@ -1,3 +1,4 @@
+using Arch.Core;
 using DCL.Browser.DecentralandUrls;
 using DCL.Ipfs;
 using DCL.LOD.Components;
@@ -18,24 +19,25 @@ namespace DCL.LOD.Tests
 {
     public class UpdateSceneLODInfoSystemShould : UnitySystemTestBase<UpdateSceneLODInfoSystem>
     {
+        private const string fakeHash = "FAKE_HASH";
         private SceneLODInfo sceneLODInfo;
         private PartitionComponent partitionComponent;
         private SceneDefinitionComponent sceneDefinitionComponent;
 
-        private const string fakeHash = "FAKE_HASH";
-
         [SetUp]
         public void Setup()
         {
-            var lodSettings = Substitute.For<ILODSettingsAsset>();
+            ILODSettingsAsset? lodSettings = Substitute.For<ILODSettingsAsset>();
+
             int[] bucketThresholds =
             {
-                2
+                2,
             };
+
             lodSettings.LodPartitionBucketThresholds.Returns(bucketThresholds);
 
-            var scenesCache = Substitute.For<IScenesCache>();
-            var sceneReadinessReportQueue = Substitute.For<ISceneReadinessReportQueue>();
+            IScenesCache? scenesCache = Substitute.For<IScenesCache>();
+            ISceneReadinessReportQueue? sceneReadinessReportQueue = Substitute.For<ISceneReadinessReportQueue>();
 
             partitionComponent = new PartitionComponent();
 
@@ -47,21 +49,21 @@ namespace DCL.LOD.Tests
                     {
                         DecodedBase = new Vector2Int(0, 0), DecodedParcels = new Vector2Int[]
                         {
-                            new (0, 0), new (0, 1), new (1, 0), new (2, 0), new (2, 1), new (3, 0), new (3, 1)
-                        }
-                    }
-                }
+                            new (0, 0), new (0, 1), new (1, 0), new (2, 0), new (2, 1), new (3, 0), new (3, 1),
+                        },
+                    },
+                },
             };
 
-            sceneDefinitionComponent = new SceneDefinitionComponent(sceneEntityDefinition, new IpfsPath());
+            sceneDefinitionComponent = SceneDefinitionComponentFactory.CreateFromDefinition(sceneEntityDefinition, new IpfsPath());
 
             sceneLODInfo = SceneLODInfo.Create();
             sceneLODInfo.metadata = new LODCacheInfo(new GameObject().AddComponent<LODGroup>(), 2);
             system = new UpdateSceneLODInfoSystem(world, lodSettings, scenesCache, sceneReadinessReportQueue, new DecentralandUrlsSource(DecentralandEnvironment.Org));
         }
 
-
         [Test]
+
         //Note: Test modified due to LOD level always defaulting to 3 while we rebuild all of them
         [TestCase(0, 0)]
         [TestCase(1, 0)]
@@ -74,7 +76,7 @@ namespace DCL.LOD.Tests
             //Arrange
             partitionComponent.IsDirty = true;
             partitionComponent.Bucket = bucket;
-            var entity = world.Create(sceneLODInfo, partitionComponent, sceneDefinitionComponent);
+            Entity entity = world.Create(sceneLODInfo, partitionComponent, sceneDefinitionComponent);
 
             //Act
             system.Update(0);

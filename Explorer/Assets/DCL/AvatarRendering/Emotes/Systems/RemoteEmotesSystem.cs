@@ -48,7 +48,7 @@ namespace DCL.AvatarRendering.Emotes
                     }
 
                     ref CharacterEmoteIntent intention = ref World!.AddOrGet<CharacterEmoteIntent>(entity);
-                    intention.UpdateId(intention.EmoteId);
+                    intention.UpdateRemoteId(remoteEmoteIntention.EmoteId);
                 }
             }
 

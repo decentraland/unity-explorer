@@ -18,6 +18,7 @@ using ECS.TestSuite;
 using MVC;
 using NSubstitute;
 using NUnit.Framework;
+using PortableExperiences.Controller;
 using SceneRunner.ECSWorld;
 using SceneRunner.Scene;
 using SceneRunner.Tests.TestUtils;
@@ -66,6 +67,7 @@ namespace SceneRunner.Tests
                 IWebRequestController.DEFAULT,
                 new IRoomHub.Fake(),
                 Substitute.For<IRealmData>(),
+                Substitute.For<IPortableExperiencesController>(),
                 Substitute.For<ISceneCommunicationPipe>()
             );
         }
