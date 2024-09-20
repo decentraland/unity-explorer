@@ -22,7 +22,7 @@ namespace Global.Dynamic.TeleportOperations
         {
             // Releases all the road assets, returning them to the pool and then destroys all the road assets
             globalWorld.Query(new QueryDescription().WithAll<RoadInfo>(), (entity) => globalWorld.Get<RoadInfo>(entity).Dispose(roadPlugin.RoadAssetPool));
-            roadPlugin.RoadAssetPool.Unload();
+            roadPlugin.RoadAssetPool.UnloadImmediate();
 
             return UniTask.FromResult(Result.SuccessResult());
         }

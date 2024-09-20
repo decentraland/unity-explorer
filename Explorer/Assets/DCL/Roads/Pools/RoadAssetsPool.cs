@@ -59,7 +59,7 @@ namespace DCL.LOD
 
         public void Dispose()
         {
-            Unload();
+            UnloadImmediate();
         }
 
         /// <summary>
@@ -122,7 +122,7 @@ namespace DCL.LOD
         /// <summary>
         /// Destroys all road asset instances in all pools. Instances must be released before they can be destroyed using this method.
         /// </summary>
-        public void Unload()
+        public void UnloadImmediate()
         {
             foreach (KeyValuePair<string, IObjectPool<Transform>> keyValuePair in roadAssetPoolDictionary)
                 keyValuePair.Value.Clear();

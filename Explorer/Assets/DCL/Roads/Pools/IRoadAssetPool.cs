@@ -9,7 +9,7 @@ namespace DCL.LOD
 
         void Release(string key, Transform asset);
 
-        void Unload();
+        void UnloadImmediate();
 
         void Unload(IPerformanceBudget frameTimeBudgetProvider, int maxUnloadAmount);
 
