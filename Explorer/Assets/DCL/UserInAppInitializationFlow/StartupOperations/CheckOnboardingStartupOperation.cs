@@ -8,6 +8,7 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using ECS.SceneLifeCycle.Realm;
+using Global.AppArgs;
 using System;
 using System.Threading;
 using Utility.Types;
@@ -17,12 +18,16 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
     public class CheckOnboardingStartupOperation : IStartupOperation
     {
         private const int TUTORIAL_STEP_DONE_MARK = 256;
+        private const string APP_PARAMETER_REALM = "realm";
+        private const string APP_PARAMETER_LOCAL_SCENE = "local-scene";
+        private const string APP_PARAMETER_POSITION = "position";
 
         private readonly RealFlowLoadingStatus loadingStatus;
         private readonly IRealmController realmController;
         private readonly ISelfProfile selfProfile;
         private readonly FeatureFlagsCache featureFlagsCache;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
+        private readonly IAppArgs appParameters;
 
         private Profile? ownProfile;
         private bool isProfilePendingToBeUpdated;
@@ -32,13 +37,15 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
             IRealmController realmController,
             ISelfProfile selfProfile,
             FeatureFlagsCache featureFlagsCache,
-            IDecentralandUrlsSource decentralandUrlsSource)
+            IDecentralandUrlsSource decentralandUrlsSource,
+            IAppArgs appParameters)
         {
             this.loadingStatus = loadingStatus;
             this.realmController = realmController;
             this.selfProfile = selfProfile;
             this.featureFlagsCache = featureFlagsCache;
             this.decentralandUrlsSource = decentralandUrlsSource;
+            this.appParameters = appParameters;
         }
 
         public async UniTask<Result> ExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
@@ -51,6 +58,10 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
 
         private async UniTask CheckOnboardingAsync(CancellationToken ct)
         {
+            // It the app is open from any external way, we will ignore the onboarding flow
+            if (appParameters.HasFlag(APP_PARAMETER_REALM) || appParameters.HasFlag(APP_PARAMETER_POSITION) || appParameters.HasFlag(APP_PARAMETER_LOCAL_SCENE))
+                return;
+
             isProfilePendingToBeUpdated = false;
             ownProfile = await selfProfile.ProfileAsync(ct);
 
