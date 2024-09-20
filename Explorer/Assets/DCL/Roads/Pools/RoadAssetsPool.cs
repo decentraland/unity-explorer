@@ -1,3 +1,4 @@
+using DCL.Optimization.PerformanceBudgeting;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -125,6 +126,24 @@ namespace DCL.LOD
         {
             foreach (KeyValuePair<string, IObjectPool<Transform>> keyValuePair in roadAssetPoolDictionary)
                 keyValuePair.Value.Clear();
+        }
+
+        // Called by the CacheCleaner
+        public void Unload(IPerformanceBudget frameTimeBudgetProvider, int maxUnloadAmount)
+        {
+            var unloadedAmount = 0;
+
+            if (!frameTimeBudgetProvider.TrySpendBudget()) return;
+
+            foreach (KeyValuePair<string, IObjectPool<Transform>> keyValuePair in roadAssetPoolDictionary)
+            {
+                unloadedAmount += keyValuePair.Value.CountInactive;
+                keyValuePair.Value.Clear();
+
+                // Check if the budget is still available or the max unload amount is reached after each operation
+                if (!frameTimeBudgetProvider.TrySpendBudget() || unloadedAmount >= maxUnloadAmount)
+                    break;
+            }
         }
 
         /// <summary>

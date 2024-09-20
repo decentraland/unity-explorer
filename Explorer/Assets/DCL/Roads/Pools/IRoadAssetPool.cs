@@ -11,6 +11,8 @@ namespace DCL.LOD
 
         void Unload();
 
+        void Unload(IPerformanceBudget frameTimeBudgetProvider, int maxUnloadAmount);
+
         void SwitchVisibility(bool isVisible);
     }
 }
