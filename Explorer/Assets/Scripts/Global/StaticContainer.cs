@@ -160,7 +160,8 @@ namespace Global
                 new PartitionedWorldsAggregate.Factory(),
                 new ConcurrentLoadingPerformanceBudget(staticSettings.AssetsLoadingBudget),
                 new FrameTimeCapBudget(staticSettings.FrameTimeCap, profilingProvider),
-                new MemoryBudget(new StandaloneSystemMemory(), profilingProvider, staticSettings.MemoryThresholds),
+                new MemoryBudget(new StandaloneSystemMemory(), profilingProvider,
+                    Application.isEditor ? staticSettings.MemoryThresholdsEditor : staticSettings.MemoryThresholds),
                 new SceneAssetLock(),
                 new SceneMapping()
             );
@@ -229,7 +230,8 @@ namespace Global
             container.SharedPlugins = new IDCLGlobalPlugin[]
             {
                 assetBundlePlugin,
-                new ResourceUnloadingPlugin(sharedDependencies.MemoryBudget, container.CacheCleaner),
+                new ResourceUnloadingPlugin(sharedDependencies.MemoryBudget, container.CacheCleaner,
+                    container.RealmPartitionSettings),
                 textureResolvePlugin,
             };
 
