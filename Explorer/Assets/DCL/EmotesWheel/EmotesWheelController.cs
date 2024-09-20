@@ -70,8 +70,6 @@ namespace DCL.EmotesWheel
             emoteWheelInput.Customize.performed += OpenBackpack;
             emoteWheelInput.Close.performed += Close;
             dclInput.UI.Close.performed += Close;
-
-            ListenToSlotsInput(this.dclInput.EmoteWheel);
         }
 
         public override void Dispose()
@@ -122,14 +120,17 @@ namespace DCL.EmotesWheel
             }
         }
 
+        protected override void OnViewShow() =>
+            ListenToSlotsInput(this.dclInput.EmoteWheel);
+
         protected override void OnViewClose()
         {
-            base.OnViewClose();
-
             BlockUnwantedInputs();
 
             fetchProfileCts.SafeCancelAndDispose();
             slotSetUpCts.SafeCancelAndDispose();
+
+            UnregisterSlotsInput(emoteWheelInput);
         }
 
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
