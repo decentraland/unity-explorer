@@ -89,12 +89,12 @@ namespace DCL.LOD
                 }
 
                 // Debug: Uncomment this to know the content of the pools
-                string log = "RoadAssetPoolDictionary\nTAKING: " + key + "\n";
-                foreach (KeyValuePair<string,IObjectPool<Transform>> keyValuePair in roadAssetPoolDictionary)
-                {
-                    log += keyValuePair.Key + ": " + (keyValuePair.Value as ObjectPool<Transform>).CountAll + " (" + (keyValuePair.Value as ObjectPool<Transform>).CountActive + ")\n";
-                }
-                Debug.Log(log);
+                //string log = "RoadAssetPoolDictionary\nTAKING: " + key + "\n";
+                //foreach (KeyValuePair<string,IObjectPool<Transform>> keyValuePair in roadAssetPoolDictionary)
+                //{
+                //    log += keyValuePair.Key + ": " + (keyValuePair.Value as ObjectPool<Transform>).CountAll + " (" + (keyValuePair.Value as ObjectPool<Transform>).CountActive + ")\n";
+                //}
+                //Debug.Log(log);
 
                 roadAsset = roadAssetPool.Get();
 
