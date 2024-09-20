@@ -77,6 +77,19 @@ namespace DCL.Billboard.Tests
         }
 
         [Test]
+        public void EnforceMinimumDistance()
+        {
+            (Transform transform, BillboardSystem system) = Construct(BillboardMode.BmAll, Vector3.one * 0.1f);
+
+            var expected = transform.rotation.eulerAngles;
+            system.Update(0);
+            var actual = transform.rotation.eulerAngles;
+            Assert.AreEqual(expected.x, actual.x);
+            Assert.AreEqual(expected.y, actual.y);
+            Assert.AreEqual(expected.z, actual.z);
+        }
+
+        [Test]
         [Performance]
         [TestCase(200)]
         [TestCase(500)]
@@ -98,14 +111,14 @@ namespace DCL.Billboard.Tests
                .Run();
         }
 
-        private static (Transform transform, BillboardSystem system) Construct(BillboardMode mode)
+        private static (Transform transform, BillboardSystem system) Construct(BillboardMode mode, Vector3? cameraPos = null)
         {
             var world = World.Create();
 
             var system = new BillboardSystem(
                 world,
                 new IExposedCameraData.Fake(
-                    Vector3.one,
+                    cameraPos ?? Vector3.one,
                     Quaternion.Euler(Vector3.one),
                     CameraType.CtFirstPerson,
                     false
@@ -113,6 +126,7 @@ namespace DCL.Billboard.Tests
             );
 
             var transform = new GameObject().transform;
+            transform.position = Vector3.zero;
 
             world.Create(
                 new PBBillboard { BillboardMode = mode },

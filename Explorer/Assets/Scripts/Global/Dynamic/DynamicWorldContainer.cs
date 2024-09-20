@@ -145,20 +145,6 @@ namespace Global.Dynamic
             localSceneDevelopmentController?.Dispose();
         }
 
-        private static void BuildTeleportWidget(IRealmNavigator realmNavigator, IDebugContainerBuilder debugContainerBuilder, List<string> realms)
-        {
-            debugContainerBuilder.TryAddWidget("Realm")
-                                ?.AddControl(new DebugDropdownDef(realms, new ElementBinding<string>(string.Empty,
-                                      evt => { realmNavigator.TryChangeRealmAsync(URLDomain.FromString(evt.newValue), CancellationToken.None).Forget(); }), string.Empty), null)
-                                 .AddStringFieldWithConfirmation("https://peer.decentraland.org", "Change", realm => { realmNavigator.TryChangeRealmAsync(URLDomain.FromString(realm), CancellationToken.None).Forget(); });
-        }
-
-        private static void BuildReloadSceneWidget(IDebugContainerBuilder debugBuilder, IChatMessagesBus chatMessagesBus)
-        {
-            debugBuilder.TryAddWidget("Scene Reload")
-                       ?.AddSingleButton("Reload Scene", () => chatMessagesBus.Send("/reload"));
-        }
-
         public static async UniTask<(DynamicWorldContainer? container, bool success)> CreateAsync(
             BootstrapContainer bootstrapContainer,
             DynamicWorldDependencies dynamicWorldDependencies,
@@ -550,14 +536,18 @@ namespace Global.Dynamic
                     staticContainer.InputBlock,
                     emoteProvider,
                     globalWorld,
-                    playerEntity
+                    playerEntity,
+                    container.ChatMessagesBus
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
                 new Web3AuthenticationPlugin(assetsProvisioner, dynamicWorldDependencies.Web3Authenticator, debugBuilder, container.MvcManager, selfProfile, webBrowser, staticContainer.RealmData, identityCache, characterPreviewFactory, dynamicWorldDependencies.SplashScreen, audioMixerVolumesController, staticContainer.FeatureFlagsCache, characterPreviewEventBus, globalWorld),
                 new StylizedSkyboxPlugin(assetsProvisioner, dynamicSettings.DirectionalLight, debugBuilder),
                 new LoadingScreenPlugin(assetsProvisioner, container.MvcManager, audioMixerVolumesController, staticContainer.InputBlock),
-                new ExternalUrlPromptPlugin(assetsProvisioner, webBrowser, container.MvcManager, dclCursor), new TeleportPromptPlugin(assetsProvisioner, realmNavigator, container.MvcManager, staticContainer.WebRequestsContainer.WebRequestController, placesAPIService, dclCursor),
+                new ExternalUrlPromptPlugin(assetsProvisioner, webBrowser, container.MvcManager, dclCursor),
+                new TeleportPromptPlugin(assetsProvisioner, container.MvcManager,
+                    staticContainer.WebRequestsContainer.WebRequestController, placesAPIService, dclCursor,
+                    container.ChatMessagesBus),
                 new ChangeRealmPromptPlugin(
                     assetsProvisioner,
                     container.MvcManager,
@@ -633,10 +623,6 @@ namespace Global.Dynamic
             container.GlobalPlugins = globalPlugins;
 
             staticContainer.RoomHubProxy.SetObject(container.RoomHub);
-
-            BuildTeleportWidget(realmNavigator, debugBuilder, dynamicWorldParams.Realms);
-            BuildReloadSceneWidget(debugBuilder, container.ChatMessagesBus);
-
             return (container, true);
         }
 
