@@ -92,6 +92,53 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
         }
 
         [Test]
+        public void ConfigureCameraDefaultTransitionCorrectly()
+        {
+            // Setup
+            CinemachineBrain cinemachineBrain = new GameObject("CinemachineBrain").AddComponent<CinemachineBrain>();
+            IExposedCameraData exposedCameraData = Substitute.For<IExposedCameraData>();
+            exposedCameraData.CinemachineBrain.Returns(cinemachineBrain);
+            int virtualCamCRDTEntity = world.Get<CRDTEntity>(entity1).Id;
+
+            // Virtual Camera without any 'Default Transition'
+            PBVirtualCamera pbComponent = new PBVirtualCamera();
+            world.Add(entity1, pbComponent);
+            VirtualCameraUtils.ConfigureVirtualCameraTransition(
+                world,
+                entitiesMap,
+                exposedCameraData,
+                virtualCamCRDTEntity,
+                20);
+            Assert.AreEqual(CinemachineBlendDefinition.Style.Cut, cinemachineBrain.m_DefaultBlend.m_Style);
+
+            // Time = 2.78 transition
+            pbComponent.DefaultTransition = new CameraTransition() { Time = 2.78f };
+            world.Set(entity1, pbComponent);
+            VirtualCameraUtils.ConfigureVirtualCameraTransition(
+                world,
+                entitiesMap,
+                exposedCameraData,
+                virtualCamCRDTEntity,
+                20);
+            Assert.AreEqual(CinemachineBlendDefinition.Style.EaseInOut, cinemachineBrain.m_DefaultBlend.m_Style);
+            Assert.AreEqual(pbComponent.DefaultTransition.Time, cinemachineBrain.m_DefaultBlend.m_Time);
+
+            // Remove 'Default Transition' from VirtualCamera
+            pbComponent.DefaultTransition.ClearTransitionMode();
+            world.Set(entity1, pbComponent);
+            VirtualCameraUtils.ConfigureVirtualCameraTransition(
+                world,
+                entitiesMap,
+                exposedCameraData,
+                virtualCamCRDTEntity,
+                68);
+            Assert.AreEqual(CinemachineBlendDefinition.Style.Cut, cinemachineBrain.m_DefaultBlend.m_Style);
+
+            // Cleanup
+            GameObject.DestroyImmediate(cinemachineBrain.gameObject);
+        }
+
+        [Test]
         public void ConfigureCameraTimeTransitionCorrectly()
         {
             // Setup
