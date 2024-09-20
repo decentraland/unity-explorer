@@ -340,8 +340,7 @@ namespace Global.Dynamic
                 satelliteView,
                 dynamicWorldParams.EnableLandscape,
                 staticContainer.ExposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy,
-                exposedGlobalDataContainer.CameraSamplingData,
-                staticContainer.CacheCleaner
+                exposedGlobalDataContainer.CameraSamplingData
             );
 
             IHealthCheck livekitHealthCheck = bootstrapContainer.DebugSettings.EnableEmulateNoLivekitConnection

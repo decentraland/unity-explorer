@@ -24,7 +24,6 @@ using System;
 using System.Linq;
 using System.Threading;
 using DCL.Diagnostics;
-using DCL.ResourcesUnloading;
 using DCL.Roads.Components;
 using Unity.Collections;
 using Unity.Mathematics;
@@ -50,7 +49,6 @@ namespace Global.Dynamic
         private readonly WorldTerrainGenerator worldsTerrain;
         private readonly SatelliteFloor satelliteFloor;
         private readonly bool landscapeEnabled;
-        private readonly ICacheCleaner cacheCleaner;
 
         private readonly ObjectProxy<Entity> cameraEntity;
         private readonly CameraSamplingData cameraSamplingData;
@@ -74,8 +72,7 @@ namespace Global.Dynamic
             SatelliteFloor satelliteFloor,
             bool landscapeEnabled,
             ObjectProxy<Entity> cameraEntity,
-            CameraSamplingData cameraSamplingData,
-            ICacheCleaner cacheCleaner)
+            CameraSamplingData cameraSamplingData)
         {
             this.loadingScreen = loadingScreen;
             this.mapRenderer = mapRenderer;
@@ -92,7 +89,6 @@ namespace Global.Dynamic
             this.remoteEntities = remoteEntities;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.globalWorld = globalWorld;
-            this.cacheCleaner = cacheCleaner;
         }
 
         public async UniTask<bool> TryChangeRealmAsync(URLDomain realm, CancellationToken ct,
@@ -120,7 +116,7 @@ namespace Global.Dynamic
 
                     // Releases all the road infos, which returns all road assets to the pool and then destroys all the road assets
                     globalWorld.Query(new QueryDescription().WithAll<RoadInfo>(), (entity) => globalWorld.Get<RoadInfo>(entity).Dispose(roadsPlugin.RoadAssetPool));
-                    cacheCleaner.UnloadRoadCacheOnly();
+                    roadsPlugin.RoadAssetPool.Unload();
 
                     await ChangeRealmAsync(realm, ct);
                     parentLoadReport.SetProgress(RealFlowLoadingStatus.PROGRESS[ProfileLoaded]);
@@ -133,6 +129,10 @@ namespace Global.Dynamic
 
                     var teleportLoadReport
                         = parentLoadReport.CreateChildReport(RealFlowLoadingStatus.PROGRESS[PlayerTeleported]);
+
+                    // When Genesis is loaded, road asset pools must pre-allocate some instances to reduce allocations while playing
+                    if(!realmController.RealmData.ScenesAreFixed) // Is Genesis
+                        roadsPlugin.RoadAssetPool.Prewarm();
 
                     await InitializeTeleportToSpawnPointAsync(teleportLoadReport, ct, parcelToTeleport);
                     parentLoadReport.SetProgress(RealFlowLoadingStatus.PROGRESS[PlayerTeleported]);

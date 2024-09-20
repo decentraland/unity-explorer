@@ -40,7 +40,6 @@ namespace DCL.LOD
             roadAssetParent = new GameObject("ROAD_ASSET_POOL").transform;
             roadAssetPoolDictionary = new Dictionary<string, IObjectPool<Transform>>();
 
-
             foreach (GameObject gameObject in roadPrefabs)
             {
                 int poolCapacity = gameObject.CompareTag("LongRoad") ? DEFAULT_LONGROAD_POOL_CAPACITY : DEFAULT_POOL_CAPACITY;
@@ -50,21 +49,11 @@ namespace DCL.LOD
                         t => t.gameObject.SetActive(true), t => t.gameObject.SetActive(false), actionOnDestroy: UnityObjectUtils.SafeDestroyGameObject,
                         defaultCapacity: poolCapacity);
 
-                // Pool pre-warming
-                Transform[] precachedInstances = new Transform[poolCapacity];
-
-                for (int i = 0; i < poolCapacity; ++i)
-                {
-                    precachedInstances[i] = roadAssetPool.Get();
-                }
-
-                for (int i = 0; i < poolCapacity; ++i)
-                {
-                    roadAssetPool.Release(precachedInstances[i]);
-                }
-
                 roadAssetPoolDictionary.Add(gameObject.name, roadAssetPool);
             }
+
+            // Pool pre-warming
+            Prewarm();
         }
 
         public void Dispose()
@@ -72,6 +61,13 @@ namespace DCL.LOD
             Unload();
         }
 
+        /// <summary>
+        /// Obtains an instance from a road asset pool.
+        /// If the pool is full before calling this method, it will grow instantiating more road assets by an amount that depends on the number of elements in the pool.
+        /// </summary>
+        /// <param name="key">The name of the pool from which to obtain the instance. It matches the name of the prefab used in the pool.</param>
+        /// <param name="roadAsset">The obtained instance.</param>
+        /// <returns>True if the pool exists; False otherwise.</returns>
         public bool Get(string key, out Transform roadAsset)
         {
             if (roadAssetPoolDictionary.TryGetValue(key, out IObjectPool<Transform> roadAssetPool))
@@ -93,12 +89,12 @@ namespace DCL.LOD
                 }
 
                 // Debug: Uncomment this to know the content of the pools
-                //string log = "RoadAssetPoolDictionary\nTAKING: " + key + "\n";
-                //foreach (KeyValuePair<string,IObjectPool<Transform>> keyValuePair in roadAssetPoolDictionary)
-                //{
-                //    log += keyValuePair.Key + ": " + (keyValuePair.Value as ObjectPool<Transform>).CountAll + " (" + (keyValuePair.Value as ObjectPool<Transform>).CountActive + ")\n";
-                //}
-                //Debug.Log(log);
+                string log = "RoadAssetPoolDictionary\nTAKING: " + key + "\n";
+                foreach (KeyValuePair<string,IObjectPool<Transform>> keyValuePair in roadAssetPoolDictionary)
+                {
+                    log += keyValuePair.Key + ": " + (keyValuePair.Value as ObjectPool<Transform>).CountAll + " (" + (keyValuePair.Value as ObjectPool<Transform>).CountActive + ")\n";
+                }
+                Debug.Log(log);
 
                 roadAsset = roadAssetPool.Get();
 
@@ -109,6 +105,11 @@ namespace DCL.LOD
             return false;
         }
 
+        /// <summary>
+        /// Returns an instance to its original pool so it can be reused later. It does not free any memory.
+        /// </summary>
+        /// <param name="key">The name of the prefab of the road asset, which identifies the pool.</param>
+        /// <param name="asset">The instance of the prefab of the road asset to be put back into the pool.</param>
         public void Release(string key, Transform asset)
         {
             if (roadAssetPoolDictionary.TryGetValue(key, out IObjectPool<Transform> roadAssetPool))
@@ -117,15 +118,52 @@ namespace DCL.LOD
                 roadAssetPoolDictionary[DEFAULT_ROAD_KEY].Release(asset);
         }
 
+        /// <summary>
+        /// Destroys all road asset instances in all pools. Instances must be released before they can be destroyed using this method.
+        /// </summary>
         public void Unload()
         {
             foreach (KeyValuePair<string, IObjectPool<Transform>> keyValuePair in roadAssetPoolDictionary)
                 keyValuePair.Value.Clear();
         }
 
+        /// <summary>
+        /// Activates / deactivates all road assets.
+        /// </summary>
+        /// <param name="isVisible">Whether to activate or not all road assets.</param>
         public void SwitchVisibility(bool isVisible)
         {
             roadAssetParent.gameObject.SetActive(isVisible);
+        }
+
+        /// <summary>
+        /// Creates an initial number of instances in the pool of each road asset type. There are special road assets tagged with 'LongRoad', which
+        /// are much heavy than normal assets and only need a few of instances.
+        /// </summary>
+        public void Prewarm()
+        {
+            foreach (var entry in roadAssetPoolDictionary)
+            {
+                IObjectPool<Transform> roadAssetPool = entry.Value;
+
+                // We can't access the prefab used for instantiating pool elements so we have to get a first instance and get the data from there
+                Transform precachedInstance = roadAssetPool.Get();
+
+                int poolCapacity = precachedInstance.gameObject.CompareTag("LongRoad") ? DEFAULT_LONGROAD_POOL_CAPACITY : DEFAULT_POOL_CAPACITY;
+
+                Transform[] precachedInstances = new Transform[poolCapacity];
+                precachedInstances[0] = precachedInstance;
+
+                for (int i = 1; i < poolCapacity; ++i) // Note it starts at 1, we already have a first instance
+                {
+                    precachedInstances[i] = roadAssetPool.Get();
+                }
+
+                for (int i = 0; i < poolCapacity; ++i)
+                {
+                    roadAssetPool.Release(precachedInstances[i]);
+                }
+            }
         }
     }
 }

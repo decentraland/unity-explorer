@@ -81,11 +81,6 @@ namespace DCL.ResourcesUnloading
                     pool.ClearThrottled(POOLS_UNLOAD_CHUNK);
         }
 
-        public void UnloadRoadCacheOnly()
-        {
-            roadCache.Unload();
-        }
-
         public void Register(ILODCache lodAssetsPool)
         {
             lodCache = lodAssetsPool;
