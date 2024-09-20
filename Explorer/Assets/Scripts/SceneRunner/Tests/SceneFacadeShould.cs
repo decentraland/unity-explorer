@@ -376,7 +376,7 @@ namespace SceneRunner.Tests
                     new URLAddress(),
                     new SceneEcsExecutor(),
                     Substitute.For<ISceneData>(),
-                    new MultithreadSync(new SceneShortInfo()),
+                    new MultiThreadSync(new SceneShortInfo()),
                     Substitute.For<ICRDTDeserializer>(),
                     Substitute.For<IECSToCRDTWriter>(),
                     Substitute.For<ISystemGroupsUpdateGate>(),

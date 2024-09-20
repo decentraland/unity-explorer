@@ -1,69 +1,29 @@
 using DCL.Diagnostics;
 using System;
 using System.Threading;
-using DCL.Optimization.ThreadSafePool;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using Unity.Profiling;
 using UnityEngine.Profiling;
 
 namespace Utility.Multithreading
 {
-    public class SyncLogsBuffer
+    public class MultiThreadSync : IDisposable
     {
-        public readonly SceneShortInfo sceneShortInfo;
-        private readonly int logsToKeep;
-        private readonly DateTime creationTime;
-
-        private readonly LinkedList<Entry> circularBuffer;
-
-        public SyncLogsBuffer(SceneShortInfo sceneShortInfo, int logsToKeep)
+        internal readonly struct AcquisitionInfo
         {
-            this.sceneShortInfo = sceneShortInfo;
-            this.logsToKeep = logsToKeep;
-            creationTime = DateTime.Now;
+            public readonly Owner Owner;
+            public readonly DateTime AcquiredAt;
 
-            circularBuffer = new LinkedList<Entry>();
-        }
-
-        public void Report(string eventLog, string source)
-        {
-            if (circularBuffer.Count >= logsToKeep)
-                circularBuffer.RemoveFirst();
-
-            circularBuffer.AddLast(new Entry(eventLog, DateTime.Now - creationTime, source, Thread.CurrentThread.ManagedThreadId));
-        }
-
-        public void Print()
-        {
-            var reportData = new ReportData(ReportCategory.SYNC, sceneShortInfo: sceneShortInfo);
-
-            foreach (Entry entry in circularBuffer)
-                ReportHub.Log(reportData, $"T: {entry.TimeSinceCreation.TotalSeconds}, {entry.EventLog} {entry.Source}");
-        }
-
-        private struct Entry
-        {
-            public readonly string EventLog;
-            public readonly TimeSpan TimeSinceCreation;
-            public readonly string Source;
-            public readonly int ThreadId;
-
-            public Entry(string eventLog, TimeSpan timeSinceCreation, string source, int threadId)
+            public AcquisitionInfo(Owner owner, DateTime acquiredAt)
             {
-                EventLog = eventLog;
-                TimeSinceCreation = timeSinceCreation;
-                Source = source;
-                ThreadId = threadId;
+                Owner = owner;
+                AcquiredAt = acquiredAt;
             }
         }
-    }
 
-    public class MultithreadSync : IDisposable
-    {
         private static readonly ProfilerMarker COMMON_SAMPLER;
 
-        private static readonly TimeSpan MAX_LIMIT = TimeSpan.FromSeconds(10);
+        private static readonly TimeSpan TIMEOUT = TimeSpan.FromSeconds(10);
 
         private readonly object monitor = new ();
 
@@ -75,25 +35,15 @@ namespace Utility.Multithreading
 
         private readonly CancellationTokenSource cts = new ();
 
-        private bool acquired;
+        private AcquisitionInfo? currentAcquisitionInfo;
         private bool isDisposing;
-        private (string? name, DateTime startedAt, long accuiredIndex) currentScope = new (null, DateTime.MinValue, 0);
-        private long acquireCount;
 
-        public bool Acquired
-        {
-            get
-            {
-                lock (monitor) { return acquired; }
-            }
-        }
-
-        static MultithreadSync()
+        static MultiThreadSync()
         {
             COMMON_SAMPLER = new ProfilerMarker("MultithreadSync.Wait");
         }
 
-        public MultithreadSync(SceneShortInfo sceneInfo)
+        public MultiThreadSync(SceneShortInfo sceneInfo)
         {
             syncLogsBuffer = new SyncLogsBuffer(sceneInfo, 20);
             perSceneSampler = CustomSampler.Create("MultithreadSync.Wait " + sceneInfo.BaseParcel);
@@ -104,7 +54,6 @@ namespace Utility.Multithreading
             lock (monitor)
             {
                 isDisposing = true;
-                acquired = false;
 
                 cts.SafeCancelAndDispose();
 
@@ -120,7 +69,6 @@ namespace Utility.Multithreading
 
         private void Acquire(Owner owner)
         {
-            long currentId;
             bool shouldWait;
 
             lock (monitor)
@@ -128,11 +76,9 @@ namespace Utility.Multithreading
 #if SYNC_DEBUG
                 syncLogsBuffer.Report("MultithreadSync Acquire start for:", owner.Name);
 #endif
-                acquireCount++;
-                currentId = acquireCount;
 
                 if (isDisposing)
-                    throw new ObjectDisposedException(nameof(MultithreadSync));
+                    throw new ObjectDisposedException(nameof(MultiThreadSync));
 
                 shouldWait = queue.Count > 0;
                 queue.Enqueue(owner);
@@ -141,25 +87,27 @@ namespace Utility.Multithreading
             // There is already one thread doing work. Wait for the signal
             if (shouldWait)
             {
-                if (!owner.Wait(MAX_LIMIT, cts.Token, out bool wasCancelled) && !wasCancelled)
+                if (!owner.Wait(TIMEOUT, cts.Token, out bool wasCancelled) && !wasCancelled)
                 {
-                    DateTime time = DateTime.Now;
-                    (string? name, DateTime startedAt, long accuiredIndex) current = currentScope;
-                    TimeSpan difference = time - current.startedAt;
+                    lock (monitor)
+                    {
+                        DateTime time = DateTime.Now;
+                        AcquisitionInfo current = currentAcquisitionInfo!.Value;
+                        TimeSpan difference = time - current.AcquiredAt;
 
-                    lock (monitor) { syncLogsBuffer.Print(); }
-
-                    throw new TimeoutException($"{nameof(MultithreadSync)} timeout, cannot acquire for: {owner.Name}, main context \"{current.name}\" id \"{current.accuiredIndex}\" takes too long: {difference.TotalSeconds}");
+                        syncLogsBuffer.Print();
+                        throw new TimeoutException($"{nameof(MultiThreadSync)} timeout, cannot acquire for: {owner.Name}, current owner: \"{current.Owner!.Name}\" takes too long: {difference.TotalSeconds}");
+                    }
                 }
             }
 
             lock (monitor)
             {
-                acquired = true;
+                currentAcquisitionInfo = new AcquisitionInfo(owner, DateTime.Now);
+
 #if SYNC_DEBUG
                 syncLogsBuffer.Report("MultithreadSync Acquire finished for:", owner.Name);
 #endif
-                currentScope = (owner.Name, DateTime.Now, currentId);
             }
         }
 
@@ -186,11 +134,10 @@ namespace Utility.Multithreading
                         throw new OwnerMismatchException(owner, finishedWaiter);
                     }
 
-                    finishedWaiter.EventSlim.Reset();
-                    acquired = false;
+                    finishedWaiter.Reset();
 
                     if (queue.TryPeek(out Owner? next))
-                        next.EventSlim.Set(); // Signal the next waiter in line
+                        next.Set(); // Signal the next waiter in line
 
 #if SYNC_DEBUG
                     syncLogsBuffer.Report("MultithreadSync Release finished for:", source);
@@ -200,7 +147,8 @@ namespace Utility.Multithreading
                 else
                     syncLogsBuffer.Report("MultithreadSync Release finished CANNOT", source);
 #endif
-                currentScope = (null, DateTime.MinValue, 0);
+
+                currentAcquisitionInfo = null;
             }
         }
 
@@ -237,7 +185,7 @@ namespace Utility.Multithreading
 
         public class Owner
         {
-            public readonly ManualResetEventSlim EventSlim = new (false);
+            private readonly ManualResetEventSlim eventSlim = new (false);
             public readonly string Name;
 
             public Owner(string name)
@@ -250,7 +198,7 @@ namespace Utility.Multithreading
                 try
                 {
                     wasCancelled = false;
-                    return EventSlim.Wait(timeout, ct);
+                    return eventSlim.Wait(timeout, ct);
                 }
                 catch (OperationCanceledException)
                 {
@@ -259,51 +207,61 @@ namespace Utility.Multithreading
                 }
             }
 
+            public void Set()
+            {
+                eventSlim.Set();
+            }
+
+            public void Reset()
+            {
+                eventSlim.Reset();
+            }
+
             public void Dispose()
             {
-                EventSlim.Dispose();
+                eventSlim.Dispose();
             }
         }
 
         public readonly struct Scope : IDisposable
         {
-            private readonly MultithreadSync multithreadSync;
+            private readonly MultiThreadSync multiThreadSync;
             private readonly Owner source;
             private readonly DateTime start;
 
-            public Scope(MultithreadSync multithreadSync, Owner source)
+            public Scope(MultiThreadSync multiThreadSync, Owner source)
             {
-                this.multithreadSync = multithreadSync;
+                this.multiThreadSync = multiThreadSync;
                 this.source = source;
-                multithreadSync.Acquire(source);
+                multiThreadSync.Acquire(source);
                 start = DateTime.Now;
             }
 
             public void Dispose()
             {
-                multithreadSync.Release(source);
+                multiThreadSync.Release(source);
 
-                if (DateTime.Now - start > MAX_LIMIT)
-                    throw new TimeoutException($"{nameof(MultithreadSync)} source {source.Name} took too much time! cannot release for: {source.Name}");
+                if (DateTime.Now - start > TIMEOUT)
+                    throw new TimeoutException($"{nameof(MultiThreadSync)} source {source.Name} took too much time! cannot release for: {source.Name}");
             }
         }
 
         public class BoxedScope
         {
-            private readonly MultithreadSync multithreadSync;
+            private readonly MultiThreadSync multiThreadSync;
             private Scope scope;
             private bool isScoped;
 
-            public BoxedScope(MultithreadSync multithreadSync)
+            public BoxedScope(MultiThreadSync multiThreadSync)
             {
-                this.multithreadSync = multithreadSync;
+                this.multiThreadSync = multiThreadSync;
                 scope = default(Scope);
                 isScoped = false;
             }
 
             public void Acquire(Owner source)
             {
-                scope = multithreadSync.GetScope(source);
+                scope = multiThreadSync.GetScope(source);
                 isScoped = true;
             }
 

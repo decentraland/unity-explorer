@@ -144,7 +144,7 @@ namespace SceneRunner.Scene.ExceptionsHandling
                 }
 
                 // All tolerance is used
-                if (exception is TimeoutException || (validRangeEndIndex == registeredExceptions.Length - 1 && validRangeStartIndex == 0))
+                if (validRangeEndIndex == registeredExceptions.Length - 1 && validRangeStartIndex == 0)
                 {
                     // log an aggregated exception
                     ReportHub.LogException(new SceneExecutionException(registeredExceptions.Select(e => e!.Value.Exception).Append(exception), new ReportData(ReportCategory.ECS, sceneShortInfo: sceneShortInfo)));

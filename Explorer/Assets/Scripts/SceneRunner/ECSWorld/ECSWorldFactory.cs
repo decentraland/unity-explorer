@@ -62,13 +62,11 @@ namespace SceneRunner.ECSWorld
             var builder = new ArchSystemsWorldBuilder<World>(world, systemGroupsUpdateGate, systemGroupsUpdateGate,
                 sharedDependencies.SceneExceptionsHandler);
 
-            var mutex = sharedDependencies.MultithreadSync;
-
             builder
-               .InjectCustomGroup(new SyncedInitializationSystemGroup(mutex, sharedDependencies.SceneStateProvider))
-               .InjectCustomGroup(new SyncedSimulationSystemGroup(mutex, sharedDependencies.SceneStateProvider))
-               .InjectCustomGroup(new SyncedPresentationSystemGroup(mutex, sharedDependencies.SceneStateProvider))
-               .InjectCustomGroup(new SyncedPreRenderingSystemGroup(mutex, sharedDependencies.SceneStateProvider));
+               .InjectCustomGroup(new SyncedInitializationSystemGroup(sharedDependencies.SceneStateProvider))
+               .InjectCustomGroup(new SyncedSimulationSystemGroup(sharedDependencies.SceneStateProvider))
+               .InjectCustomGroup(new SyncedPresentationSystemGroup(sharedDependencies.SceneStateProvider))
+               .InjectCustomGroup(new SyncedPreRenderingSystemGroup(sharedDependencies.SceneStateProvider));
 
             var finalizeWorldSystems = new List<IFinalizeWorldSystem>(32);
             var isCurrentListeners = new List<ISceneIsCurrentListener>(32);
@@ -87,8 +85,8 @@ namespace SceneRunner.ECSWorld
             finalizeWorldSystems.Add(ReleaseReferenceComponentsSystem.InjectToWorld(ref builder, componentPoolsRegistry));
             finalizeWorldSystems.Add(ReleaseRemovedComponentsSystem.InjectToWorld(ref builder));
 
-            var scope = new MultithreadSync.BoxedScope(mutex);
-            var mutexOwner = new MultithreadSync.Owner("ECSLoopSystem");
+            var scope = new MultiThreadSync.BoxedScope(sharedDependencies.MultiThreadSync);
+            var mutexOwner = new MultiThreadSync.Owner("ECSLoopSystem");
 
             // These system will prevent changes from the JS scenes to squeeze in between different stages of the PlayerLoop at the same frame
             LockECSSystem.InjectToWorld(ref builder, scope, mutexOwner);

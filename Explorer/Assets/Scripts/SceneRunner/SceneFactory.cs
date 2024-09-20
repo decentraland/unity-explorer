@@ -176,7 +176,7 @@ namespace SceneRunner
 
             SceneInstanceDependencies.WithRuntimeAndJsAPIBase runtimeDeps;
 
-            var engineAPIMutexOwner = new MultithreadSync.Owner(nameof(EngineAPIImplementation));
+            var engineAPIMutexOwner = new MultiThreadSync.Owner(nameof(EngineAPIImplementation));
 
             if (ENABLE_SDK_OBSERVABLES)
             {
