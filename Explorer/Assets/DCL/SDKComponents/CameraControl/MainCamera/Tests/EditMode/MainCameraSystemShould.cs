@@ -166,7 +166,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
             Assert.IsTrue(sdkCinemachineCam1.enabled);
 
             // Release active vCam in MainCameraComponent
-            pbMainCameraComponent.VirtualCameraEntity = 0;
+            pbMainCameraComponent.ClearVirtualCameraEntity();
             world.Set(mainCameraEntity, pbMainCameraComponent);
 
             SystemUpdate();
@@ -212,7 +212,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
             Assert.AreEqual(CameraMode.SDKCamera, globalWorld.Get<CameraComponent>(globalWorldCameraEntity).Mode);
 
             // Release active vCam in MainCameraComponent
-            pbMainCameraComponent.VirtualCameraEntity = 0;
+            pbMainCameraComponent.ClearVirtualCameraEntity();
             world.Set(mainCameraEntity, pbMainCameraComponent);
 
             SystemUpdate();
