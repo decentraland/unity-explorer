@@ -16,6 +16,8 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
 {
     public class CheckOnboardingStartupOperation : IStartupOperation
     {
+        private const int TUTORIAL_STEP_DONE_MARK = 256;
+
         private readonly RealFlowLoadingStatus loadingStatus;
         private readonly IRealmController realmController;
         private readonly ISelfProfile selfProfile;
@@ -23,6 +25,7 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
 
         private Profile? ownProfile;
+        private bool isProfilePendingToBeUpdated;
 
         public CheckOnboardingStartupOperation(
             RealFlowLoadingStatus loadingStatus,
@@ -48,6 +51,7 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
 
         private async UniTask CheckOnboardingAsync(CancellationToken ct)
         {
+            isProfilePendingToBeUpdated = false;
             ownProfile = await selfProfile.ProfileAsync(ct);
 
             // If the user has already completed the tutorial, we don't need to check the onboarding realm
@@ -66,6 +70,7 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
                 try
                 {
                     await realmController.SetRealmAsync(URLDomain.FromString($"{IRealmNavigator.WORLDS_DOMAIN}/{realm}"), ct);
+                    isProfilePendingToBeUpdated = true;
                 }
                 catch (Exception)
                 {
@@ -78,13 +83,13 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
 
         public async UniTask MarkOnboardingAsDoneAsync(World world, Entity playerEntity, CancellationToken ct)
         {
-            if (ownProfile == null || ownProfile.TutorialStep > 0)
+            if (!isProfilePendingToBeUpdated || ownProfile == null || ownProfile.TutorialStep > 0)
                 return;
 
             try
             {
                 // Update profile data
-                ownProfile.TutorialStep = 256;
+                ownProfile.TutorialStep = TUTORIAL_STEP_DONE_MARK;
                 var profile = await selfProfile.ForcePublishWithoutModificationsAsync(ct);
 
                 if (profile != null)
@@ -93,6 +98,8 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
                     profile.IsDirty = true;
                     world.Set(playerEntity, profile);
                 }
+
+                isProfilePendingToBeUpdated = false;
             }
             catch (OperationCanceledException) { }
             catch (Exception e)
