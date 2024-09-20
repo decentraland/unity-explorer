@@ -48,8 +48,14 @@ namespace DCL.PluginSystem.Global
 
         public Dictionary<MemoryUsageStatus, float> MemoryThresholds { get; private set; } = new ()
         {
+            { MemoryUsageStatus.WARNING, 0.65f },
+            { MemoryUsageStatus.FULL, 0.75f }
+        };
+
+        public Dictionary<MemoryUsageStatus, float> MemoryThresholdsEditor { get; private set; } = new()
+        {
             { MemoryUsageStatus.WARNING, 0.8f },
-            { MemoryUsageStatus.FULL, 0.95f },
+            { MemoryUsageStatus.FULL, 0.95f }
         };
 
         [Serializable]
