@@ -27,12 +27,17 @@ namespace Utility.Multithreading
         public void Acquire()
         {
             var waiter = MANUAL_RESET_EVENT_SLIM_POOL.Get();
+            bool shouldWait;
 
             lock (queueLock)
+            {
+                shouldWait = queue.Count > 0;
                 queue.Enqueue(waiter);
+            }
 
-            if (queue.Count > 1)
-                waiter.Wait(); // There is already one thread doing work. Wait for the signal 
+            if (shouldWait)
+                if (!waiter.Wait(TimeSpan.FromSeconds(3))) // There is already one thread doing work. Wait for the signal
+                    throw new TimeoutException($"{nameof(MultithreadSync)} timeout");
             Acquired = true;
         }
 
@@ -40,7 +45,7 @@ namespace Utility.Multithreading
         {
             if (IsDisposing)
                 return;
-            
+
             lock (queueLock)
             {
                 // The one releasing should be the one at the top of the queue

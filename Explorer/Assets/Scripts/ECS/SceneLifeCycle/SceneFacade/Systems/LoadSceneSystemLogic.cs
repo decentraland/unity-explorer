@@ -1,6 +1,7 @@
 using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.Multiplayer.SDK.Systems.GlobalWorld;
 using DCL.WebRequests;
@@ -17,7 +18,7 @@ namespace ECS.SceneLifeCycle.Systems
         protected override string GetAssetBundleSceneId(string ipfsPathEntityId) =>
             ipfsPathEntityId;
 
-        protected override async UniTask<ISceneContent> GetSceneHashedContentAsync(SceneEntityDefinition definition, URLDomain contentBaseUrl, string reportCategory) =>
+        protected override async UniTask<ISceneContent> GetSceneHashedContentAsync(SceneEntityDefinition definition, URLDomain contentBaseUrl, ReportData reportCategory) =>
             new SceneHashedContent(definition.content!, contentBaseUrl);
     }
 }

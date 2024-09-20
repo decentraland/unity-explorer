@@ -1,6 +1,6 @@
 ﻿using DCL.Optimization.Pools;
 using DCL.Profiling;
-using ECS.StreamableLoading.AssetBundles;
+using ECS.StreamableLoading;
 using ECS.Unity.SceneBoundsChecker;
 using System;
 using System.Collections.Generic;
@@ -53,13 +53,13 @@ namespace ECS.Unity.GLTFContainer.Asset.Components
         /// </summary>
         public List<SDKCollider>? DecodedVisibleSDKColliders;
 
-        private AssetBundleData assetBundleReference;
+        private IAssetData assetData;
 
-        private GltfContainerAsset(GameObject root, AssetBundleData assetBundleReference, List<SDKCollider> invisibleColliders,
+        private GltfContainerAsset(GameObject root, IAssetData assetData, List<SDKCollider> invisibleColliders,
             List<VisibleMeshCollider> visibleColliderMeshes, List<Renderer> renderers, List<Animation> animations,
             List<Animator> animators)
         {
-            this.assetBundleReference = assetBundleReference;
+            this.assetData = assetData;
 
             Root = root;
             InvisibleColliders = invisibleColliders;
@@ -73,8 +73,8 @@ namespace ECS.Unity.GLTFContainer.Asset.Components
 
         public void Dispose()
         {
-            assetBundleReference.Dereference();
-            assetBundleReference = null;
+            assetData.Dereference();
+            assetData = null;
 
             COLLIDERS_POOL.Release(InvisibleColliders);
             VISIBLE_MESH_COLLIDERS_POOL.Release(VisibleColliderMeshes);
@@ -90,7 +90,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Components
             ProfilingCounters.GltfContainerAssetsAmount.Value--;
         }
 
-        public static GltfContainerAsset Create(GameObject root, AssetBundleData assetBundleReference) =>
-            new (root, assetBundleReference, COLLIDERS_POOL.Get(), VISIBLE_MESH_COLLIDERS_POOL.Get(), RENDERERS_POOL.Get(), ANIMATIONS_POOL.Get(), ANIMATORS_POOL.Get());
+        public static GltfContainerAsset Create(GameObject root, IAssetData assetData) =>
+            new (root, assetData, COLLIDERS_POOL.Get(), VISIBLE_MESH_COLLIDERS_POOL.Get(), RENDERERS_POOL.Get(), ANIMATIONS_POOL.Get(), ANIMATORS_POOL.Get());
     }
 }

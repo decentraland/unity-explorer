@@ -64,7 +64,7 @@ namespace DCL.Profiles
                 else
                     World.Add(entity, result.Asset);
             }
-            else ReportHub.LogException(result.Exception, GetReportCategory());
+            else ReportHub.LogException(result.Exception, GetReportData());
 
             World.Remove<AssetPromise<Profile, GetProfileIntention>>(entity);
         }

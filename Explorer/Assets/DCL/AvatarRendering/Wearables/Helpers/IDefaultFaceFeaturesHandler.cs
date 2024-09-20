@@ -1,4 +1,6 @@
-﻿namespace DCL.AvatarRendering.Wearables.Helpers
+﻿using DCL.AvatarRendering.Loading.Components;
+
+namespace DCL.AvatarRendering.Wearables.Helpers
 {
     public interface IDefaultFaceFeaturesHandler
     {

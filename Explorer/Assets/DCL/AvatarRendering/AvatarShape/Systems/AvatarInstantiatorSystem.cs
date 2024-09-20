@@ -7,7 +7,8 @@ using DCL.AvatarRendering.AvatarShape.Helpers;
 using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.Emotes;
-using DCL.AvatarRendering.Wearables;
+using DCL.AvatarRendering.Loading.Assets;
+using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
@@ -42,11 +43,11 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         private readonly CustomSkinning skinningStrategy;
         private readonly TextureArrayContainer textureArrays;
         private readonly FixedComputeBufferHandler vertOutBuffer;
-        private readonly IWearableAssetsCache wearableAssetsCache;
+        private readonly IAttachmentsAssetsCache wearableAssetsCache;
         private readonly IPerformanceBudget memoryBudget;
         private readonly ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy;
         private readonly IDefaultFaceFeaturesHandler defaultFaceFeaturesHandler;
-        private readonly IWearableCache wearableCache;
+        private readonly IWearableStorage wearableStorage;
         private readonly IWearable?[] fallbackBodyShape = new IWearable[1];
 
         private readonly AvatarTransformMatrixJobWrapper avatarTransformMatrixBatchJob;
@@ -54,9 +55,9 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
         public AvatarInstantiatorSystem(World world, IPerformanceBudget instantiationFrameTimeBudget, IPerformanceBudget memoryBudget,
             IComponentPool<AvatarBase> avatarPoolRegistry, IAvatarMaterialPoolHandler avatarMaterialPoolHandler, IObjectPool<UnityEngine.ComputeShader> computeShaderPool,
-            IWearableAssetsCache wearableAssetsCache, CustomSkinning skinningStrategy, FixedComputeBufferHandler vertOutBuffer,
+            IAttachmentsAssetsCache wearableAssetsCache, CustomSkinning skinningStrategy, FixedComputeBufferHandler vertOutBuffer,
             ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy, IDefaultFaceFeaturesHandler defaultFaceFeaturesHandler,
-            IWearableCache wearableCache, AvatarTransformMatrixJobWrapper avatarTransformMatrixBatchJob) : base(world)
+            IWearableStorage wearableStorage, AvatarTransformMatrixJobWrapper avatarTransformMatrixBatchJob) : base(world)
         {
             this.instantiationFrameTimeBudget = instantiationFrameTimeBudget;
             this.avatarPoolRegistry = avatarPoolRegistry;
@@ -69,7 +70,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             computeShaderSkinningPool = computeShaderPool;
             this.mainPlayerAvatarBaseProxy = mainPlayerAvatarBaseProxy;
             this.defaultFaceFeaturesHandler = defaultFaceFeaturesHandler;
-            this.wearableCache = wearableCache;
+            this.wearableStorage = wearableStorage;
             this.avatarTransformMatrixBatchJob = avatarTransformMatrixBatchJob;
         }
 
@@ -91,8 +92,8 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         {
             if (!ReadyToInstantiateNewAvatar(ref avatarShapeComponent)) return null;
 
-            if (!avatarShapeComponent.WearablePromise.SafeTryConsume(World, out WearablesLoadResult wearablesResult)) return null;
-            if (!avatarShapeComponent.EmotePromise.SafeTryConsume(World, out EmotesLoadResult emotesResult)) return null;
+            if (!avatarShapeComponent.WearablePromise.SafeTryConsume(World, GetReportCategory(), out WearablesLoadResult wearablesResult)) return null;
+            if (!avatarShapeComponent.EmotePromise.SafeTryConsume(World, GetReportCategory(), out EmotesLoadResult emotesResult)) return null;
 
             AvatarBase avatarBase = avatarPoolRegistry.Get();
             avatarBase.gameObject.name = $"Avatar {avatarShapeComponent.ID}";
@@ -144,8 +145,8 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         {
             if (!ReadyToInstantiateNewAvatar(ref avatarShapeComponent)) return;
 
-            if (!avatarShapeComponent.WearablePromise.SafeTryConsume(World, out WearablesLoadResult wearablesResult)) return;
-            if (!avatarShapeComponent.EmotePromise.SafeTryConsume(World, out EmotesLoadResult emotesResult)) return;
+            if (!avatarShapeComponent.WearablePromise.SafeTryConsume(World, GetReportCategory(), out WearablesLoadResult wearablesResult)) return;
+            if (!avatarShapeComponent.EmotePromise.SafeTryConsume(World, GetReportCategory(), out EmotesLoadResult emotesResult)) return;
 
             ReleaseAvatar.Execute(vertOutBuffer, wearableAssetsCache, avatarMaterialPoolHandler,
                 computeShaderSkinningPool, avatarShapeComponent, ref skinningComponent,
@@ -178,7 +179,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                 if (fallbackBodyShape[0] == null)
 
                     // Could be a very rare case on which the body shape is not available. This case will make the flow fail
-                    if (wearableCache.TryGetWearable(BodyShape.MALE, out IWearable maleBody))
+                    if (wearableStorage.TryGetElement(BodyShape.MALE, out IWearable maleBody))
                         fallbackBodyShape[0] = maleBody;
 
                 visibleWearables = fallbackBodyShape!;
@@ -192,7 +193,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             {
                 IWearable resultWearable = visibleWearables[i];
 
-                var instance = resultWearable.AppendToAvatar(wearableAssetsCache, usedCategories, ref facialFeatureTexture, ref avatarShapeComponent, attachPoint, GetReportCategory());
+                GameObject instance = resultWearable.AppendToAvatar(wearableAssetsCache, usedCategories, ref facialFeatureTexture, ref avatarShapeComponent, attachPoint);
 
                 if (resultWearable.Type == WearableType.BodyShape)
                     bodyShape = instance;

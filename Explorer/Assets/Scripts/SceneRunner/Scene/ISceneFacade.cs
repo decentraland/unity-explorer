@@ -13,8 +13,8 @@ namespace SceneRunner.Scene
         ISceneStateProvider SceneStateProvider { get; }
         SceneEcsExecutor EcsExecutor { get; }
         PersistentEntities PersistentEntities { get; }
-        bool IsEmpty { get; }
         ISceneData SceneData { get; }
+        bool IsEmpty { get; }
 
         void Initialize();
 
@@ -37,6 +37,7 @@ namespace SceneRunner.Scene
         internal UniTask Tick(float dt);
 
         bool Contains(Vector2Int parcel);
+
         bool IsSceneReady();
     }
 }

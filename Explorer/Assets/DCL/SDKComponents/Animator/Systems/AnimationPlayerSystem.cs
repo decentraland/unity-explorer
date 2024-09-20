@@ -113,7 +113,7 @@ namespace DCL.SDKComponents.Animator.Systems
 
                 if (layerIndex == -1)
                 {
-                    ReportHub.LogWarning(new ReportData(GetReportCategory()), $"Cannot find animator layer for clip {name}");
+                    ReportHub.LogWarning(GetReportData(), $"Cannot find animator layer for clip {name}");
                     continue;
                 }
 
