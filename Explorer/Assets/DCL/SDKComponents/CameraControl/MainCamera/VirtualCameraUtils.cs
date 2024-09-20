@@ -40,7 +40,9 @@ namespace DCL.SDKComponents.CameraControl.MainCamera
 
         public static void ConfigureVirtualCameraTransition(in World world, IReadOnlyDictionary<CRDTEntity,Entity> entitiesMap, IExposedCameraData cameraData, CRDTEntity virtualCamCRDTEntity, float distanceBetweenCameras)
         {
-            var pbVirtualCamera = world.Get<PBVirtualCamera>(entitiesMap[virtualCamCRDTEntity]);
+            if (!entitiesMap.TryGetValue(virtualCamCRDTEntity, out Entity vCamEntity)) return;
+
+            var pbVirtualCamera = world.Get<PBVirtualCamera>(vCamEntity);
 
             // Using cinemachine custom blends array doesn't work because there's no direct way of getting the custom
             //  blend index, and we would have to hardcode it...
@@ -62,7 +64,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera
                     if (speedValue > 0)
                     {
                         cameraData.CinemachineBrain!.m_DefaultBlend.m_Style = CinemachineBlendDefinition.Style.EaseInOut;
-                        float blendTime = distanceBetweenCameras / speedValue; // SPEED = 1 -> 1 meter per second
+                        float blendTime = CalculateDistanceBlendTime(distanceBetweenCameras, speedValue); // SPEED = 1 -> 1 meter per second
                         if (blendTime == 0)
                             cameraData.CinemachineBrain!.m_DefaultBlend.m_Style = CinemachineBlendDefinition.Style.Cut;
                         else
@@ -96,5 +98,8 @@ namespace DCL.SDKComponents.CameraControl.MainCamera
                 virtualCameraComponent.virtualCameraInstance.m_LookAt = null;
             }
         }
+
+        internal static float CalculateDistanceBlendTime(float distanceBetweenCameras, float speedValue) =>
+            distanceBetweenCameras / speedValue;
     }
 }

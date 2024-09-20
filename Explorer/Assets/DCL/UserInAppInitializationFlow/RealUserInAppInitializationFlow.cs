@@ -120,7 +120,7 @@ namespace DCL.UserInAppInitializationFlow
             while (result.Success == false && showAuthentication);
         }
 
-        private static void ApplyErrorIfLoadingScreenError(ref Result result, ILoadingScreen.LoadResult showResult)
+        private static void ApplyErrorIfLoadingScreenError(ref Result result, Result showResult)
         {
             if (!showResult.Success)
                 result = Result.ErrorResult(showResult.ErrorMessage);
