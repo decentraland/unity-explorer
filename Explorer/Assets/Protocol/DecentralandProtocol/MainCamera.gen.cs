@@ -25,13 +25,14 @@ namespace DCL.ECSComponents {
       byte[] descriptorData = global::System.Convert.FromBase64String(
           string.Concat(
             "Ci1kZWNlbnRyYWxhbmQvc2RrL2NvbXBvbmVudHMvbWFpbl9jYW1lcmEucHJv",
-            "dG8SG2RlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50cyItCgxQQk1haW5DYW1l",
-            "cmESHQoVdmlydHVhbF9jYW1lcmFfZW50aXR5GAEgASgNQhSqAhFEQ0wuRUNT",
-            "Q29tcG9uZW50c2IGcHJvdG8z"));
+            "dG8SG2RlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50cyJMCgxQQk1haW5DYW1l",
+            "cmESIgoVdmlydHVhbF9jYW1lcmFfZW50aXR5GAEgASgNSACIAQFCGAoWX3Zp",
+            "cnR1YWxfY2FtZXJhX2VudGl0eUIUqgIRRENMLkVDU0NvbXBvbmVudHNiBnBy",
+            "b3RvMw=="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBMainCamera), global::DCL.ECSComponents.PBMainCamera.Parser, new[]{ "VirtualCameraEntity" }, null, null, null, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBMainCamera), global::DCL.ECSComponents.PBMainCamera.Parser, new[]{ "VirtualCameraEntity" }, new[]{ "VirtualCameraEntity" }, null, null, null)
           }));
     }
     #endregion
@@ -39,7 +40,8 @@ namespace DCL.ECSComponents {
   }
   #region Messages
   /// <summary>
-  /// PBMainCamera.virtualCameraEntity defines which VirtualCamera entity is active at the moment. 0 means none.
+  /// PBMainCamera.virtualCameraEntity defines which VirtualCamera entity is active at the moment.
+  /// This component may hold 'repeated common.CameraTransition' transitionOverrides in the future
   /// </summary>
   public sealed partial class PBMainCamera : pb::IMessage<PBMainCamera>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
@@ -48,6 +50,7 @@ namespace DCL.ECSComponents {
   {
     private static readonly pb::MessageParser<PBMainCamera> _parser = new pb::MessageParser<PBMainCamera>(() => new PBMainCamera());
     private pb::UnknownFieldSet _unknownFields;
+    private int _hasBits0;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pb::MessageParser<PBMainCamera> Parser { get { return _parser; } }
@@ -75,6 +78,7 @@ namespace DCL.ECSComponents {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public PBMainCamera(PBMainCamera other) : this() {
+      _hasBits0 = other._hasBits0;
       virtualCameraEntity_ = other.virtualCameraEntity_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
@@ -89,15 +93,28 @@ namespace DCL.ECSComponents {
     public const int VirtualCameraEntityFieldNumber = 1;
     private uint virtualCameraEntity_;
     /// <summary>
-    /// currently active virtual camera (default: 0)
+    /// current active virtual camera
     /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public uint VirtualCameraEntity {
-      get { return virtualCameraEntity_; }
+      get { if ((_hasBits0 & 1) != 0) { return virtualCameraEntity_; } else { return 0; } }
       set {
+        _hasBits0 |= 1;
         virtualCameraEntity_ = value;
       }
+    }
+    /// <summary>Gets whether the "virtual_camera_entity" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasVirtualCameraEntity {
+      get { return (_hasBits0 & 1) != 0; }
+    }
+    /// <summary>Clears the value of the "virtual_camera_entity" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearVirtualCameraEntity() {
+      _hasBits0 &= ~1;
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -123,7 +140,7 @@ namespace DCL.ECSComponents {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override int GetHashCode() {
       int hash = 1;
-      if (VirtualCameraEntity != 0) hash ^= VirtualCameraEntity.GetHashCode();
+      if (HasVirtualCameraEntity) hash ^= VirtualCameraEntity.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -142,7 +159,7 @@ namespace DCL.ECSComponents {
     #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       output.WriteRawMessage(this);
     #else
-      if (VirtualCameraEntity != 0) {
+      if (HasVirtualCameraEntity) {
         output.WriteRawTag(8);
         output.WriteUInt32(VirtualCameraEntity);
       }
@@ -156,7 +173,7 @@ namespace DCL.ECSComponents {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
-      if (VirtualCameraEntity != 0) {
+      if (HasVirtualCameraEntity) {
         output.WriteRawTag(8);
         output.WriteUInt32(VirtualCameraEntity);
       }
@@ -170,7 +187,7 @@ namespace DCL.ECSComponents {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public int CalculateSize() {
       int size = 0;
-      if (VirtualCameraEntity != 0) {
+      if (HasVirtualCameraEntity) {
         size += 1 + pb::CodedOutputStream.ComputeUInt32Size(VirtualCameraEntity);
       }
       if (_unknownFields != null) {
@@ -185,7 +202,7 @@ namespace DCL.ECSComponents {
       if (other == null) {
         return;
       }
-      if (other.VirtualCameraEntity != 0) {
+      if (other.HasVirtualCameraEntity) {
         VirtualCameraEntity = other.VirtualCameraEntity;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
