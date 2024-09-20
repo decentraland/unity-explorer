@@ -106,7 +106,6 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                 computeShaderSkinningPool, avatarShapeComponent, ref skinningComponent,
                 ref avatarTransformMatrixComponent, avatarTransformMatrixBatchJob);
 
-            avatarTransformMatrixComponent.Dispose();
             avatarPoolRegistry.Release(avatarBase);
         }
     }
