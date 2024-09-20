@@ -27,7 +27,6 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIText
 
         protected override void Update(float t)
         {
-            HandleEntityDestructionQuery(World);
             HandleUITextRemovalQuery(World);
             World.Remove<UITextComponent>(in HandleUITextRemoval_QueryDescription);
         }
@@ -35,11 +34,6 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIText
         [Query]
         [None(typeof(PBUiText), typeof(DeleteEntityIntention))]
         private void HandleUITextRemoval(ref UITextComponent uiTextComponent) =>
-            RemoveLabel(uiTextComponent);
-
-        [Query]
-        [All(typeof(DeleteEntityIntention))]
-        private void HandleEntityDestruction(ref UITextComponent uiTextComponent) =>
             RemoveLabel(uiTextComponent);
 
         private void RemoveLabel(UITextComponent uiTextComponent)
