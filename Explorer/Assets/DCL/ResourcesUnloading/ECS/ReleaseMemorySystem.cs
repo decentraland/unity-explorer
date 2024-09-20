@@ -1,8 +1,11 @@
-﻿using Arch.SystemGroups;
+﻿using System;
+using Arch.SystemGroups;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.ResourcesUnloading;
+using DCL.ResourcesUnloading.UnloadStrategies;
 using ECS.Abstract;
 using ECS.Groups;
+using UnityEngine;
 
 namespace DCL.PluginSystem.Global
 {
@@ -10,20 +13,21 @@ namespace DCL.PluginSystem.Global
     public partial class ReleaseMemorySystem : BaseUnityLoopSystem
     {
         private readonly IMemoryUsageProvider memoryBudgetProvider;
-        private readonly ICacheCleaner cacheCleaner;
+        private readonly UnloadStrategyHandler unloadStrategyHandler;
 
-        internal ReleaseMemorySystem(Arch.Core.World world, ICacheCleaner cacheCleaner, IMemoryUsageProvider memoryBudgetProvider) : base(world)
+        internal ReleaseMemorySystem(Arch.Core.World world, IMemoryUsageProvider memoryBudgetProvider,
+            UnloadStrategyHandler unloadStrategyHandler) : base(world)
         {
-            this.cacheCleaner = cacheCleaner;
             this.memoryBudgetProvider = memoryBudgetProvider;
+            this.unloadStrategyHandler = unloadStrategyHandler;
         }
 
         protected override void Update(float t)
         {
             if (memoryBudgetProvider.GetMemoryUsageStatus() != MemoryUsageStatus.NORMAL)
-                cacheCleaner.UnloadCache();
-
-            cacheCleaner.UpdateProfilingCounters();
+                unloadStrategyHandler.TryUnload();
+            else
+                unloadStrategyHandler.ResetToNormal();
         }
     }
 }
