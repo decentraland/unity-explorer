@@ -153,6 +153,7 @@ namespace Global.Dynamic
             IPortableExperiencesController portableExperiencesController,
             World globalWorld,
             Entity playerEntity,
+            IAppArgs appArgs,
             CancellationToken ct)
         {
             var container = new DynamicWorldContainer();
@@ -557,7 +558,7 @@ namespace Global.Dynamic
                 staticContainer.CharacterContainer.CreateGlobalPlugin(),
                 staticContainer.QualityContainer.CreatePlugin(),
                 landscapePlugin,
-                new MultiplayerMovementPlugin(assetsProvisioner, container.multiplayerMovementMessageBus, debugBuilder, remoteEntities, staticContainer.CharacterContainer.Transform, multiplayerDebugSettings),
+                new MultiplayerMovementPlugin(assetsProvisioner, container.multiplayerMovementMessageBus, debugBuilder, remoteEntities, staticContainer.CharacterContainer.Transform, multiplayerDebugSettings, appArgs),
                 container.LODContainer.LODPlugin,
                 container.LODContainer.RoadPlugin,
                 new AudioPlaybackPlugin(genesisTerrain, assetsProvisioner, dynamicWorldParams.EnableLandscape),
