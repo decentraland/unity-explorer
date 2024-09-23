@@ -40,9 +40,9 @@ namespace DCL.Multiplayer.Movement.Systems
         // NetworkMovementMessage pastMessage;
         // NetworkMovementMessage nextMessage;
 
-        // bool interpolationIsEnabled;
-        // float time;
-        // float duration;
+        private readonly ElementBinding<string> isEnabled;
+        private readonly ElementBinding<string> time;
+        private readonly ElementBinding<string> duration;
         // NetworkMovementMessage start;
         // NetworkMovementMessage end;
 
@@ -66,9 +66,14 @@ namespace DCL.Multiplayer.Movement.Systems
                    .AddToggleField("Use Linear", evt => SelectInterpolationType(evt.newValue), useLinear)
                    .AddToggleField("Use speed-up", evt => this.mainSettings.InterpolationSettings.UseSpeedUp = evt.newValue, this.mainSettings.InterpolationSettings.UseSpeedUp)
                    .AddCustomMarker("Entity Id", entityId = new ElementBinding<string>(string.Empty))
+                   .AddCustomMarker("MOVEMENT", new ElementBinding<string>(string.Empty))
                    .AddCustomMarker("Inbox Count", inboxCount = new ElementBinding<string>(string.Empty))
                    .AddCustomMarker("Was Teleported", wasTeleported = new ElementBinding<string>(string.Empty))
-                   .AddCustomMarker("Was Passed This Frame", wasPassedThisFrame = new ElementBinding<string>(string.Empty));
+                   .AddCustomMarker("Was Passed This Frame", wasPassedThisFrame = new ElementBinding<string>(string.Empty))
+                   .AddCustomMarker("INTERPOLATION", new ElementBinding<string>(string.Empty))
+                   .AddCustomMarker("Is Enabled", isEnabled = new ElementBinding<string>(string.Empty))
+                   .AddCustomMarker("Time", time = new ElementBinding<string>(string.Empty))
+                   .AddCustomMarker("Duration", duration = new ElementBinding<string>(string.Empty));
         }
 
         public void Dispose()
@@ -89,6 +94,13 @@ namespace DCL.Multiplayer.Movement.Systems
                     inboxCount.Value = remotePlayerMovementComponent.Queue.Count.ToString();
                     wasTeleported.Value = remotePlayerMovementComponent.WasTeleported.ToString();
                     wasPassedThisFrame.Value = remotePlayerMovementComponent.WasPassedThisFrame.ToString();
+                }
+
+                if (World.TryGet(entity, out InterpolationComponent interpolation))
+                {
+                    isEnabled.Value = interpolation.Enabled.ToString();
+                    time.Value = interpolation.Time.ToString();
+                    duration.Value = interpolation.TotalDuration.ToString();
                 }
             }
         }
