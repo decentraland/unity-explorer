@@ -1,4 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
+using System;
 using System.Diagnostics;
 using System.Threading;
 using UnityEngine;
@@ -14,6 +15,7 @@ namespace Utility.Multithreading
     public static class MultithreadingUtility
     {
         private static bool isPaused;
+        private static bool isInPlayMode = !Application.isEditor;
 
         private static FrameCounter frameCounter;
 
@@ -40,7 +42,7 @@ namespace Utility.Multithreading
             if (PlayerLoopHelper.IsMainThread)
                 return;
 
-            while (Volatile.Read(ref isPaused))
+            while (Volatile.Read(ref isPaused) && Volatile.Read(ref isInPlayMode))
                 Thread.Sleep(10);
         }
 
@@ -70,6 +72,12 @@ namespace Utility.Multithreading
         static MultithreadingUtility()
         {
             EditorApplication.pauseStateChanged += OnPauseStateChanged;
+            EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
+        }
+
+        private static void OnPlayModeStateChanged(PlayModeStateChange state)
+        {
+            isInPlayMode = state == PlayModeStateChange.EnteredPlayMode;
         }
 
         private static void OnPauseStateChanged(PauseState state)
