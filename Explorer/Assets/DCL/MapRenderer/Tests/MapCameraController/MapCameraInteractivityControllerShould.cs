@@ -49,7 +49,7 @@ namespace DCL.MapRenderer.Tests.MapCameraController
         [Test]
         [TestCase(MapLayer.PlayerMarker | MapLayer.ParcelHoverHighlight)]
         [TestCase(MapLayer.ParcelHoverHighlight)]
-        [TestCase(MapLayer.ParcelHoverHighlight | MapLayer.ParcelsAtlas)]
+        [TestCase(MapLayer.ParcelHoverHighlight)]
         public void InitializedInActiveState(MapLayer layer)
         {
             controller.Initialize(layer);
@@ -59,8 +59,6 @@ namespace DCL.MapRenderer.Tests.MapCameraController
 
         [Test]
         [TestCase(MapLayer.PlayerMarker)]
-        [TestCase(MapLayer.ParcelsAtlas)]
-        [TestCase(MapLayer.ParcelsAtlas)]
         public void InitializeInInActiveState(MapLayer layer)
         {
             controller.Initialize(layer);
