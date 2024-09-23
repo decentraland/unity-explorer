@@ -42,9 +42,6 @@ namespace DCL.Navmap
         public PixelPerfectMapRendererTextureProvider SatellitePixelPerfectMapRendererTextureProvider { get; private set; }
 
         [field: SerializeField]
-        public MapRenderImage StreetViewRenderImage { get; private set; }
-
-        [field: SerializeField]
         public MapCameraDragBehavior.MapCameraDragBehaviorData MapCameraDragBehaviorData { get; private set; }
 
         [field: SerializeField]
