@@ -69,7 +69,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
             MetaData meta = await metaDataSource.MetaDataAsync(token);
 
             // Connect or disconnect, at the same time check if metadata has potentially changed
-            await UniTask.WhenAll(WaitForMetadataDirty(token), ProcessMetaDataAsync(token));
+            await UniTask.WhenAll(WaitForMetadataDirtyAsync(token), ProcessMetaDataAsync(token));
 
             async UniTask ProcessMetaDataAsync(CancellationToken token)
             {
@@ -93,7 +93,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
         ///     Either room has disconnected or metadata has changed
         /// </summary>
         /// <param name="token"></param>
-        private async UniTask WaitForMetadataDirty(CancellationToken token)
+        private async UniTask WaitForMetadataDirtyAsync(CancellationToken token)
         {
             await UniTask.WhenAny(UniTask.WaitUntil(roomIsNotRunning, cancellationToken: token), metaDataSource.WaitForMetaDataIsDirtyAsync(token));
         }

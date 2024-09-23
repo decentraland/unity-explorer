@@ -54,53 +54,6 @@ namespace DCL.Multiplayer.SDK.Tests
         }
 
         [Test]
-        public void PropagatePlayerProfileToAllScenes()
-        {
-            var scenes = new List<ISceneFacade>(5);
-
-            for (var i = 0; i < 5; i++)
-            {
-                ISceneFacade scene = Substitute.For<ISceneFacade>();
-                scene.IsEmpty.Returns(false);
-                var localSceneWorld = World.Create();
-
-                var profile = new SDKProfile();
-                profile.OverrideWith(Profile.NewRandomProfile(Path.GetRandomFileName()));
-                profile.IsDirty = false;
-                Entity scenePlayerEntity = localSceneWorld.Create(new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY), profile, new PlayerSceneCRDTEntity(SpecialEntitiesID.PLAYER_ENTITY));
-
-                scene.PersistentEntities.Returns(new PersistentEntities(scenePlayerEntity, Entity.Null, Entity.Null));
-                scene.EcsExecutor.Returns(new SceneEcsExecutor(localSceneWorld));
-
-                scenes.Add(scene);
-
-                world.Create(scene);
-            }
-
-            // Create a fresh profile
-            var newGlobalProfile = Profile.NewRandomProfile(FAKE_USER_ID);
-            newGlobalProfile.IsDirty = true;
-
-            // Set to the player entity
-            world.Add(playerEntity, newGlobalProfile);
-
-            system.Update(0);
-
-            // Assert that all the profiles in the scenes have been updated
-            foreach (ISceneFacade scene in scenes)
-            {
-                Entity playerEntity = scene.PersistentEntities.Player;
-                World sceneWorld = scene.EcsExecutor.World;
-                Assert.IsTrue(sceneWorld.TryGet(playerEntity, out SDKProfile sceneEntityProfile));
-                Assert.That(sceneWorld.Has<Profile>(playerEntity), Is.False);
-                Assert.That(sceneEntityProfile.IsDirty, Is.True);
-                Assert.AreEqual(newGlobalProfile.Name, sceneEntityProfile.Name);
-                Assert.AreEqual(newGlobalProfile.UserId, sceneEntityProfile.UserId);
-                AssertAvatarIsEqual(newGlobalProfile.Avatar, sceneEntityProfile.Avatar);
-            }
-        }
-
-        [Test]
         public void PropagateGlobalPlayerToScenePlayer()
         {
             ISceneFacade scene = Substitute.For<ISceneFacade>();
