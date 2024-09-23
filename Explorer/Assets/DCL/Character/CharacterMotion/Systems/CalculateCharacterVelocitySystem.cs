@@ -11,6 +11,7 @@ using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.Time.Systems;
 using ECS.Abstract;
+using ECS.LifeCycle.Components;
 using UnityEngine;
 #if UNITY_EDITOR
 using DCL.AvatarRendering.DemoScripts.Components;
@@ -107,6 +108,7 @@ namespace DCL.CharacterMotion.Systems
         }
 
         [Query]
+        [None(typeof(DeleteEntityIntention))]
         private void ResolveVelocity(
             Entity entity,
             [Data] float dt,

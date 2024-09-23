@@ -26,21 +26,23 @@ namespace DCL.ECSComponents {
           string.Concat(
             "CjpkZWNlbnRyYWxhbmQvc2RrL2NvbXBvbmVudHMvY29tbW9uL2NhbWVyYV90",
             "cmFuc2l0aW9uLnByb3RvEiJkZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVudHMu",
-            "Y29tbW9uIpYBChBDYW1lcmFUcmFuc2l0aW9uEhgKC2Zyb21fZW50aXR5GAEg",
-            "ASgNSAGIAQESFgoJdG9fZW50aXR5GAIgASgNSAKIAQESDgoEdGltZRgDIAEo",
-            "AkgAEg8KBXNwZWVkGAQgASgCSABCEQoPdHJhbnNpdGlvbl9tb2RlQg4KDF9m",
-            "cm9tX2VudGl0eUIMCgpfdG9fZW50aXR5QhSqAhFEQ0wuRUNTQ29tcG9uZW50",
-            "c2IGcHJvdG8z"));
+            "Y29tbW9uIkYKEENhbWVyYVRyYW5zaXRpb24SDgoEdGltZRgBIAEoAkgAEg8K",
+            "BXNwZWVkGAIgASgCSABCEQoPdHJhbnNpdGlvbl9tb2RlQhSqAhFEQ0wuRUNT",
+            "Q29tcG9uZW50c2IGcHJvdG8z"));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.CameraTransition), global::DCL.ECSComponents.CameraTransition.Parser, new[]{ "FromEntity", "ToEntity", "Time", "Speed" }, new[]{ "TransitionMode", "FromEntity", "ToEntity" }, null, null, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.CameraTransition), global::DCL.ECSComponents.CameraTransition.Parser, new[]{ "Time", "Speed" }, new[]{ "TransitionMode" }, null, null, null)
           }));
     }
     #endregion
 
   }
   #region Messages
+  /// <summary>
+  /// Defines the transition used towards the camera that contains the CameraTransition.
+  /// This structure may be updated in the future to specify from/to entities and to have easing functions.
+  /// </summary>
   public sealed partial class CameraTransition : pb::IMessage<CameraTransition>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
@@ -48,7 +50,6 @@ namespace DCL.ECSComponents {
   {
     private static readonly pb::MessageParser<CameraTransition> _parser = new pb::MessageParser<CameraTransition>(() => new CameraTransition());
     private pb::UnknownFieldSet _unknownFields;
-    private int _hasBits0;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pb::MessageParser<CameraTransition> Parser { get { return _parser; } }
@@ -76,9 +77,6 @@ namespace DCL.ECSComponents {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public CameraTransition(CameraTransition other) : this() {
-      _hasBits0 = other._hasBits0;
-      fromEntity_ = other.fromEntity_;
-      toEntity_ = other.toEntity_;
       switch (other.TransitionModeCase) {
         case TransitionModeOneofCase.Time:
           Time = other.Time;
@@ -97,58 +95,8 @@ namespace DCL.ECSComponents {
       return new CameraTransition(this);
     }
 
-    /// <summary>Field number for the "from_entity" field.</summary>
-    public const int FromEntityFieldNumber = 1;
-    private uint fromEntity_;
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public uint FromEntity {
-      get { if ((_hasBits0 & 1) != 0) { return fromEntity_; } else { return 0; } }
-      set {
-        _hasBits0 |= 1;
-        fromEntity_ = value;
-      }
-    }
-    /// <summary>Gets whether the "from_entity" field is set</summary>
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public bool HasFromEntity {
-      get { return (_hasBits0 & 1) != 0; }
-    }
-    /// <summary>Clears the value of the "from_entity" field</summary>
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void ClearFromEntity() {
-      _hasBits0 &= ~1;
-    }
-
-    /// <summary>Field number for the "to_entity" field.</summary>
-    public const int ToEntityFieldNumber = 2;
-    private uint toEntity_;
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public uint ToEntity {
-      get { if ((_hasBits0 & 2) != 0) { return toEntity_; } else { return 0; } }
-      set {
-        _hasBits0 |= 2;
-        toEntity_ = value;
-      }
-    }
-    /// <summary>Gets whether the "to_entity" field is set</summary>
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public bool HasToEntity {
-      get { return (_hasBits0 & 2) != 0; }
-    }
-    /// <summary>Clears the value of the "to_entity" field</summary>
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void ClearToEntity() {
-      _hasBits0 &= ~2;
-    }
-
     /// <summary>Field number for the "time" field.</summary>
-    public const int TimeFieldNumber = 3;
+    public const int TimeFieldNumber = 1;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public float Time {
@@ -160,7 +108,7 @@ namespace DCL.ECSComponents {
     }
 
     /// <summary>Field number for the "speed" field.</summary>
-    public const int SpeedFieldNumber = 4;
+    public const int SpeedFieldNumber = 2;
     /// <summary>
     /// meters per second; e.g. speed 1 -> 1 meter per second
     /// </summary>
@@ -178,8 +126,8 @@ namespace DCL.ECSComponents {
     /// <summary>Enum of possible cases for the "transition_mode" oneof.</summary>
     public enum TransitionModeOneofCase {
       None = 0,
-      Time = 3,
-      Speed = 4,
+      Time = 1,
+      Speed = 2,
     }
     private TransitionModeOneofCase transitionModeCase_ = TransitionModeOneofCase.None;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -210,8 +158,6 @@ namespace DCL.ECSComponents {
       if (ReferenceEquals(other, this)) {
         return true;
       }
-      if (FromEntity != other.FromEntity) return false;
-      if (ToEntity != other.ToEntity) return false;
       if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(Time, other.Time)) return false;
       if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(Speed, other.Speed)) return false;
       if (TransitionModeCase != other.TransitionModeCase) return false;
@@ -222,8 +168,6 @@ namespace DCL.ECSComponents {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override int GetHashCode() {
       int hash = 1;
-      if (HasFromEntity) hash ^= FromEntity.GetHashCode();
-      if (HasToEntity) hash ^= ToEntity.GetHashCode();
       if (transitionModeCase_ == TransitionModeOneofCase.Time) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(Time);
       if (transitionModeCase_ == TransitionModeOneofCase.Speed) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(Speed);
       hash ^= (int) transitionModeCase_;
@@ -245,20 +189,12 @@ namespace DCL.ECSComponents {
     #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       output.WriteRawMessage(this);
     #else
-      if (HasFromEntity) {
-        output.WriteRawTag(8);
-        output.WriteUInt32(FromEntity);
-      }
-      if (HasToEntity) {
-        output.WriteRawTag(16);
-        output.WriteUInt32(ToEntity);
-      }
       if (transitionModeCase_ == TransitionModeOneofCase.Time) {
-        output.WriteRawTag(29);
+        output.WriteRawTag(13);
         output.WriteFloat(Time);
       }
       if (transitionModeCase_ == TransitionModeOneofCase.Speed) {
-        output.WriteRawTag(37);
+        output.WriteRawTag(21);
         output.WriteFloat(Speed);
       }
       if (_unknownFields != null) {
@@ -271,20 +207,12 @@ namespace DCL.ECSComponents {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
-      if (HasFromEntity) {
-        output.WriteRawTag(8);
-        output.WriteUInt32(FromEntity);
-      }
-      if (HasToEntity) {
-        output.WriteRawTag(16);
-        output.WriteUInt32(ToEntity);
-      }
       if (transitionModeCase_ == TransitionModeOneofCase.Time) {
-        output.WriteRawTag(29);
+        output.WriteRawTag(13);
         output.WriteFloat(Time);
       }
       if (transitionModeCase_ == TransitionModeOneofCase.Speed) {
-        output.WriteRawTag(37);
+        output.WriteRawTag(21);
         output.WriteFloat(Speed);
       }
       if (_unknownFields != null) {
@@ -297,12 +225,6 @@ namespace DCL.ECSComponents {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public int CalculateSize() {
       int size = 0;
-      if (HasFromEntity) {
-        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(FromEntity);
-      }
-      if (HasToEntity) {
-        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(ToEntity);
-      }
       if (transitionModeCase_ == TransitionModeOneofCase.Time) {
         size += 1 + 4;
       }
@@ -320,12 +242,6 @@ namespace DCL.ECSComponents {
     public void MergeFrom(CameraTransition other) {
       if (other == null) {
         return;
-      }
-      if (other.HasFromEntity) {
-        FromEntity = other.FromEntity;
-      }
-      if (other.HasToEntity) {
-        ToEntity = other.ToEntity;
       }
       switch (other.TransitionModeCase) {
         case TransitionModeOneofCase.Time:
@@ -351,19 +267,11 @@ namespace DCL.ECSComponents {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
             break;
-          case 8: {
-            FromEntity = input.ReadUInt32();
-            break;
-          }
-          case 16: {
-            ToEntity = input.ReadUInt32();
-            break;
-          }
-          case 29: {
+          case 13: {
             Time = input.ReadFloat();
             break;
           }
-          case 37: {
+          case 21: {
             Speed = input.ReadFloat();
             break;
           }
@@ -382,19 +290,11 @@ namespace DCL.ECSComponents {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
-          case 8: {
-            FromEntity = input.ReadUInt32();
-            break;
-          }
-          case 16: {
-            ToEntity = input.ReadUInt32();
-            break;
-          }
-          case 29: {
+          case 13: {
             Time = input.ReadFloat();
             break;
           }
-          case 37: {
+          case 21: {
             Speed = input.ReadFloat();
             break;
           }

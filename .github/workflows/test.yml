@@ -28,7 +28,7 @@ jobs:
     steps:
 
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: recursive
 
@@ -36,7 +36,7 @@ jobs:
         run: git lfs ls-files -l | cut -d' ' -f1 | sort > .lfs-assets-id
 
       - name: Restore LFS cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         id: lfs-cache
         with:
           path: .git/lfs
@@ -49,13 +49,13 @@ jobs:
           git reset --hard
 
       - name: Restore Library cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: Explorer/Library
           key: Library-Explorer-Windows
           
       - name: Setup SSH Agent
-        uses: webfactory/ssh-agent@v0.8.0
+        uses: webfactory/ssh-agent@v0.9.0
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
       
@@ -111,7 +111,7 @@ jobs:
             ${{ steps.testRunner.outputs.artifactsPath }}/editmode-results.xml
 
       - name: Report test results
-        uses: kuruk-mm/test-reporting@0.2
+        uses: decentraland/test-reporting@v0.3
         if: always()
         with:
           name: Report test results
@@ -119,7 +119,7 @@ jobs:
           reporter: jest-junit
 
       # Upload artifact
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: Test results (play mode & edit mode)

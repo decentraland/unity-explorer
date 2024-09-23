@@ -19,30 +19,42 @@ namespace DCL.Multiplayer.Movement.Systems
         private readonly Entity playerEntity;
         private readonly RemoteEntities? remoteEntities;
         private readonly ExposedTransform playerTransform;
-        private readonly MultiplayerDebugSettings settings;
+        private readonly MultiplayerDebugSettings debugSettings;
+        private readonly IMultiplayerMovementSettings mainSettings;
 
         private Entity? selfReplicaEntity;
+        private bool useLinear;
 
-        public MultiplayerMovementDebug(World world, Entity playerEntity, IDebugContainerBuilder debugBuilder, RemoteEntities remoteEntities, ExposedTransform playerTransform, MultiplayerDebugSettings settings)
+        public MultiplayerMovementDebug(World world, Entity playerEntity, IDebugContainerBuilder debugBuilder, RemoteEntities remoteEntities, ExposedTransform playerTransform, MultiplayerDebugSettings debugSettings,  IMultiplayerMovementSettings mainSettings)
         {
             this.playerEntity = playerEntity;
             this.remoteEntities = remoteEntities;
             this.playerTransform = playerTransform;
-            this.settings = settings;
+            this.debugSettings = debugSettings;
+            this.mainSettings = mainSettings;
 
             debugBuilder.TryAddWidget("Multiplayer Movement")
                        ?.AddSingleButton("Instantiate Self-Replica", () => InstantiateSelfReplica(world))
-                        .AddSingleButton("Remove Self-Replica", () => RemoveSelfReplica(world));
+                        .AddSingleButton("Remove Self-Replica", () => RemoveSelfReplica(world))
+                        .AddToggleField("Use Compression", evt => this.mainSettings.UseCompression = evt.newValue, this.mainSettings.UseCompression)
+                        .AddToggleField("Use Linear", evt => SelectInterpolationType(evt.newValue), useLinear)
+                        .AddToggleField("Use speed-up", evt => this.mainSettings.InterpolationSettings.UseSpeedUp = evt.newValue, this.mainSettings.InterpolationSettings.UseSpeedUp);
+        }
+
+        private void SelectInterpolationType(bool useLinear)
+        {
+            mainSettings.InterpolationSettings.InterpolationType = useLinear ? InterpolationType.Linear : InterpolationType.Hermite;
+            mainSettings.InterpolationSettings.BlendType = useLinear ? InterpolationType.Linear : InterpolationType.Hermite;
         }
 
         public void Dispose()
         {
-            settings.SelfSending = false;
+            debugSettings.SelfSending = false;
         }
 
         private void InstantiateSelfReplica(World world)
         {
-            settings.SelfSending = true;
+            debugSettings.SelfSending = true;
 
             if (selfReplicaEntity != null)
                 RemoveSelfReplica(world);
@@ -75,7 +87,7 @@ namespace DCL.Multiplayer.Movement.Systems
 
         private void RemoveSelfReplica(World world)
         {
-            settings.SelfSending = false;
+            debugSettings.SelfSending = false;
 
             if (remoteEntities == null) return;
             remoteEntities.TryRemove(RemotePlayerMovementComponent.TEST_ID, world);
