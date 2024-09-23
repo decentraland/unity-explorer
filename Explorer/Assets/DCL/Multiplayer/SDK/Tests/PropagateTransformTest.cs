@@ -40,11 +40,10 @@ namespace DCL.Multiplayer.SDK.Tests
 
             var sceneWorldEntity = sceneWorld.Create();
             var crdtEntity = new CRDTEntity(CRDT_ID);
-            var playerCRDTEntity = new PlayerCRDTEntity(
-                crdtEntity,
-                sceneFacade,
-                sceneWorldEntity
-            );
+            var playerCRDTEntity = new PlayerCRDTEntity(crdtEntity);
+
+            playerCRDTEntity.AssignToScene(sceneFacade, sceneWorldEntity);
+
             var playerSceneCRDTEntity = new PlayerSceneCRDTEntity(crdtEntity);
 
             Transform fakeCharaTransform = new GameObject("fake character").transform;
