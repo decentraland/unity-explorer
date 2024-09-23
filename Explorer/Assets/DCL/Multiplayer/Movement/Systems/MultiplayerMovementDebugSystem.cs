@@ -51,11 +51,11 @@ namespace DCL.Multiplayer.Movement.Systems
         private readonly ElementBinding<string> duration;
         private readonly NetworkMessageBindings intStart = new ();
         private readonly NetworkMessageBindings intEnd = new ();
+        private readonly DebugWidgetVisibilityBinding widgetVisibility;
 
         private Entity? selfReplicaEntity;
         private bool useLinear;
         private string debugProfileId;
-        private readonly DebugWidgetVisibilityBinding widgetVisibility;
 
         internal MultiplayerMovementDebugSystem(World world, Entity playerEntity, IDebugContainerBuilder debugBuilder, RemoteEntities remoteEntities,
             ExposedTransform playerTransform, MultiplayerDebugSettings debugSettings, IMultiplayerMovementSettings mainSettings,
@@ -93,6 +93,15 @@ namespace DCL.Multiplayer.Movement.Systems
             AddNetworkMessageMarkers(intStart, "INTERPOLATION START");
             AddNetworkMessageMarkers(intEnd, "INTERPOLATION END");
             AddNetworkMessageMarkers(nextMessage, "NEXT MESSAGE");
+
+            void AddNetworkMessageMarkers(NetworkMessageBindings messageBinding, string label)
+            {
+                widget?.AddCustomMarker(label, new ElementBinding<string>(string.Empty))
+                       .AddCustomMarker("Timestamp", messageBinding.Timestamp)
+                       .AddCustomMarker("Position", messageBinding.Position)
+                       .AddCustomMarker("Velocity", messageBinding.Velocity)
+                       .AddCustomMarker("Movement Kind", messageBinding.MovementKind);
+            }
         }
 
         ~MultiplayerMovementDebugSystem()
@@ -103,57 +112,48 @@ namespace DCL.Multiplayer.Movement.Systems
         protected override void Update(float t)
         {
             if (!widgetVisibility.IsConnectedAndExpanded) return;
+            if (!entityParticipantTable.Has(debugProfileId)) return;
 
-            if (entityParticipantTable.Has(debugProfileId))
+            Entity entity = entityParticipantTable.Entity(debugProfileId);
+
+            entityId.Value = entity.Id.ToString();
+
+            if (World.TryGet(entity, out RemotePlayerMovementComponent remotePlayerMovementComponent))
             {
-                Entity entity = entityParticipantTable.Entity(debugProfileId);
+                inboxCount.Value = remotePlayerMovementComponent.Queue.Count.ToString();
+                wasTeleported.Value = remotePlayerMovementComponent.WasTeleported.ToString();
+                wasPassedThisFrame.Value = remotePlayerMovementComponent.WasPassedThisFrame.ToString();
 
-                entityId.Value = entity.Id.ToString();
+                UpdateNetworkMessageMarkers(pastMessage, remotePlayerMovementComponent.PastMessage);
 
-                if (World.TryGet(entity, out RemotePlayerMovementComponent remotePlayerMovementComponent))
-                {
-                    inboxCount.Value = remotePlayerMovementComponent.Queue.Count.ToString();
-                    wasTeleported.Value = remotePlayerMovementComponent.WasTeleported.ToString();
-                    wasPassedThisFrame.Value = remotePlayerMovementComponent.WasPassedThisFrame.ToString();
+                if (remotePlayerMovementComponent.Queue.Count > 0)
+                    UpdateNetworkMessageMarkers(nextMessage, remotePlayerMovementComponent.Queue.First);
+            }
 
-                    UpdateNetworkMessageMarkers(pastMessage, remotePlayerMovementComponent.PastMessage);
+            if (World.TryGet(entity, out InterpolationComponent interpolation))
+            {
+                isEnabled.Value = interpolation.Enabled.ToString();
+                time.Value = interpolation.Time.ToString();
+                duration.Value = interpolation.TotalDuration.ToString();
 
-                    if (remotePlayerMovementComponent.Queue.Count > 0)
-                        UpdateNetworkMessageMarkers(nextMessage, remotePlayerMovementComponent.Queue.First);
-                }
+                UpdateNetworkMessageMarkers(intStart, interpolation.Start);
+                UpdateNetworkMessageMarkers(intEnd, interpolation.End);
+            }
 
-                if (World.TryGet(entity, out InterpolationComponent interpolation))
-                {
-                    isEnabled.Value = interpolation.Enabled.ToString();
-                    time.Value = interpolation.Time.ToString();
-                    duration.Value = interpolation.TotalDuration.ToString();
+            return;
 
-                    UpdateNetworkMessageMarkers(intStart, interpolation.Start);
-                    UpdateNetworkMessageMarkers(intEnd, interpolation.End);
-                }
+            static void UpdateNetworkMessageMarkers(NetworkMessageBindings bindings, NetworkMovementMessage networkMessage)
+            {
+                bindings.Timestamp.Value = networkMessage.timestamp.ToString();
+                bindings.Position.Value = networkMessage.position.ToString();
+                bindings.Velocity.Value = networkMessage.velocity.ToString();
+                bindings.MovementKind.Value = networkMessage.movementKind.ToString();
             }
         }
 
         private void DebugProfile(string profileId)
         {
             debugProfileId = profileId;
-        }
-
-        private void AddNetworkMessageMarkers(NetworkMessageBindings messageBinding, string label)
-        {
-            widget?.AddCustomMarker(label, new ElementBinding<string>(string.Empty))
-                   .AddCustomMarker("Timestamp", messageBinding.Timestamp)
-                   .AddCustomMarker("Position", messageBinding.Position)
-                   .AddCustomMarker("Velocity", messageBinding.Velocity)
-                   .AddCustomMarker("Movement Kind", messageBinding.MovementKind);
-        }
-
-        private static void UpdateNetworkMessageMarkers(NetworkMessageBindings bindings, NetworkMovementMessage networkMessage)
-        {
-            bindings.Timestamp.Value = networkMessage.timestamp.ToString();
-            bindings.Position.Value = networkMessage.position.ToString();
-            bindings.Velocity.Value = networkMessage.velocity.ToString();
-            bindings.MovementKind.Value = networkMessage.movementKind.ToString();
         }
 
         private void SelectInterpolationType(bool useLinear)
