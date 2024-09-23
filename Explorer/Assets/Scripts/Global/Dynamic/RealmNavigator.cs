@@ -20,6 +20,7 @@ using System;
 using System.Linq;
 using System.Threading;
 using DCL.Diagnostics;
+using DCL.Roads.Components;
 using Global.Dynamic.TeleportOperations;
 using Unity.Collections;
 using Unity.Mathematics;
@@ -93,8 +94,10 @@ namespace Global.Dynamic
                 new RemoveRemoteEntitiesTeleportOperation(remoteEntities, globalWorld),
                 new StopRoomAsyncTeleportOperation(roomHub, livekitTimeout),
                 new RemoveCameraSamplingDataTeleportOperation(globalWorld, cameraEntity),
+                new DestroyAllRoadAssetsTeleportOperation(globalWorld, roadsPlugin),
                 new ChangeRealmTeleportOperation(this),
                 new LoadLandscapeTeleportOperation(this),
+                new PrewarmRoadAssetPoolsTeleportOperation(realmController, roadsPlugin),
                 new MoveToParcelInNewRealmTeleportOperation(this),
                 new RestartRoomAsyncTeleportOperation(roomHub, livekitTimeout)
             };
@@ -118,7 +121,7 @@ namespace Global.Dynamic
 
             return true;
         }
-        
+
         public async UniTask<Result> TryChangeRealmAsync(URLDomain realm, CancellationToken ct,
             Vector2Int parcelToTeleport = default)
         {
@@ -137,9 +140,6 @@ namespace Global.Dynamic
             return loadResult;
         }
 
-
-
-
         private Func<AsyncLoadProcessReport, UniTask<Result>> DoChangeRealmAsync(URLDomain realm,
             Vector2Int parcelToTeleport,
             CancellationToken ct)
@@ -147,6 +147,7 @@ namespace Global.Dynamic
             return async parentLoadReport =>
             {
                 ct.ThrowIfCancellationRequested();
+
                 var teleportParams = new TeleportParams
                 {
                     CurrentDestinationParcel = parcelToTeleport,
