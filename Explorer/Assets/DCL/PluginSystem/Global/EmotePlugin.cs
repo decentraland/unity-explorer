@@ -135,7 +135,7 @@ namespace DCL.PluginSystem.Global
             audioSourceReference = (await assetsProvisioner.ProvideMainAssetAsync(settings.EmoteAudioSource, ct)).Value.GetComponent<AudioSource>();
 
             foreach (IEmote embeddedEmote in embeddedEmotes)
-                emoteStorage.AddEmbeded(embeddedEmote.GetUrn(), embeddedEmote);
+                emoteStorage.Set(embeddedEmote.GetUrn(), embeddedEmote);
 
             var persistentEmoteWheelOpenerController = new PersistentEmoteWheelOpenerController(() => mainUIView.SidebarView.PersistentEmoteWheelOpener, mvcManager);
 

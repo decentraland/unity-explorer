@@ -47,15 +47,6 @@ namespace DCL.Profiles
             BodySnapshotUrl = URLAddress.EMPTY;
         }
 
-        public bool IsEmotesWheelEmpty()
-        {
-            foreach (URN urn in Emotes)
-                if (!urn.IsNullOrEmpty())
-                    return false;
-
-            return true;
-        }
-
         public bool IsSameAvatar(Avatar? other)
         {
             if (other == null)
@@ -72,19 +63,19 @@ namespace DCL.Profiles
 
         public void Clear()
         {
-            wearables.Clear();
-            forceRender.Clear();
+            this.wearables.Clear();
+            this.forceRender.Clear();
 
-            for (var i = 0; i < emotes.Length; i++)
-                emotes[i] = "";
+            for (var i = 0; i < this.emotes.Length; i++)
+                this.emotes[i] = "";
 
-            BodyShape = default(BodyShape);
-            EyesColor = default(Color);
-            HairColor = default(Color);
-            SkinColor = default(Color);
-            SkinColor = default(Color);
-            BodySnapshotUrl = default(URLAddress);
-            FaceSnapshotUrl = default(URLAddress);
+            this.BodyShape = default(BodyShape);
+            this.EyesColor = default(Color);
+            this.HairColor = default(Color);
+            this.SkinColor = default(Color);
+            this.SkinColor = default(Color);
+            this.BodySnapshotUrl = default(URLAddress);
+            this.FaceSnapshotUrl = default(URLAddress);
         }
     }
 }
