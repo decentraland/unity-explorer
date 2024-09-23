@@ -277,7 +277,7 @@ jobs:
       - name: Extract and display errors
         run: |
           echo "=== Extracted Errors for ${{ matrix.target }} ==="
-          grep -i "error" unity_cloud_log.log | sed 's/^/\x1b[31m/' | sed 's/$/\x1b[0m/' || echo "No errors found in ${{ matrix.target }} log."
+          grep -iE "error c|fatal" unity_cloud_log.log | sed 's/^/\x1b[31m/' | sed 's/$/\x1b[0m/' || echo "No 'error c' or 'fatal' errors found in ${{ matrix.target }} log."
 
       # Will run always (even if failing)
       - name: Generate Shader Compilation Report
