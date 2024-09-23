@@ -54,6 +54,8 @@ namespace DCL.Multiplayer.Movement.Systems
 
         private Entity? selfReplicaEntity;
         private bool useLinear;
+        private string debugProfileId;
+        private readonly DebugWidgetVisibilityBinding widgetVisibility;
 
         internal MultiplayerMovementDebugSystem(World world, Entity playerEntity, IDebugContainerBuilder debugBuilder, RemoteEntities remoteEntities,
             ExposedTransform playerTransform, MultiplayerDebugSettings debugSettings, IMultiplayerMovementSettings mainSettings,
@@ -66,10 +68,12 @@ namespace DCL.Multiplayer.Movement.Systems
             this.mainSettings = mainSettings;
             this.entityParticipantTable = entityParticipantTable;
 
-            widget = debugBuilder.TryAddWidget("Multiplayer Movement");
+            widget = debugBuilder.TryAddWidget("Multiplayer Movement")
+                                ?.SetVisibilityBinding(widgetVisibility = new DebugWidgetVisibilityBinding(true));
 
             widget?.AddSingleButton("Instantiate Self-Replica", () => InstantiateSelfReplica(world))
                    .AddSingleButton("Remove Self-Replica", () => RemoveSelfReplica(world))
+                   .AddStringFieldWithConfirmation("SelfReplica", "Debug profile", DebugProfile)
                    .AddToggleField("Use Compression", evt => this.mainSettings.UseCompression = evt.newValue, this.mainSettings.UseCompression)
                    .AddToggleField("Use Linear", evt => SelectInterpolationType(evt.newValue), useLinear)
                    .AddToggleField("Use speed-up", evt => this.mainSettings.InterpolationSettings.UseSpeedUp = evt.newValue, this.mainSettings.InterpolationSettings.UseSpeedUp)
@@ -96,20 +100,13 @@ namespace DCL.Multiplayer.Movement.Systems
             debugSettings.SelfSending = false;
         }
 
-        private void AddNetworkMessageMarkers(NetworkMessageBindings messageBinding, string label)
-        {
-            widget?.AddCustomMarker(label, new ElementBinding<string>(string.Empty))
-                   .AddCustomMarker("Timestamp", messageBinding.Timestamp)
-                   .AddCustomMarker("Position", messageBinding.Position)
-                   .AddCustomMarker("Velocity", messageBinding.Velocity)
-                   .AddCustomMarker("Movement Kind", messageBinding.MovementKind);
-        }
-
         protected override void Update(float t)
         {
-            if (entityParticipantTable.Has(RemotePlayerMovementComponent.TEST_ID))
+            if (!widgetVisibility.IsConnectedAndExpanded) return;
+
+            if (entityParticipantTable.Has(debugProfileId))
             {
-                Entity entity = entityParticipantTable.Entity(RemotePlayerMovementComponent.TEST_ID);
+                Entity entity = entityParticipantTable.Entity(debugProfileId);
 
                 entityId.Value = entity.Id.ToString();
 
@@ -135,6 +132,20 @@ namespace DCL.Multiplayer.Movement.Systems
                     UpdateNetworkMessageMarkers(intEnd, interpolation.End);
                 }
             }
+        }
+
+        private void DebugProfile(string profileId)
+        {
+            debugProfileId = profileId;
+        }
+
+        private void AddNetworkMessageMarkers(NetworkMessageBindings messageBinding, string label)
+        {
+            widget?.AddCustomMarker(label, new ElementBinding<string>(string.Empty))
+                   .AddCustomMarker("Timestamp", messageBinding.Timestamp)
+                   .AddCustomMarker("Position", messageBinding.Position)
+                   .AddCustomMarker("Velocity", messageBinding.Velocity)
+                   .AddCustomMarker("Movement Kind", messageBinding.MovementKind);
         }
 
         private static void UpdateNetworkMessageMarkers(NetworkMessageBindings bindings, NetworkMovementMessage networkMessage)
