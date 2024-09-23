@@ -10,5 +10,7 @@
         public static readonly string USER_ALLOW_LIST = "user-allow-list";
         public static readonly string CSV_VARIANT = "csv-variant";
         public static readonly string WALLETS_VARIANT = "wallet";
+        public static readonly string ONBOARDING = "onboarding";
+        public static readonly string ONBOARDING_ENABLED_VARIANT = "enabled";
     }
 }

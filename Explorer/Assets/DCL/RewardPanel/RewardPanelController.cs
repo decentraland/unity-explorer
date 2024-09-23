@@ -44,6 +44,7 @@ namespace DCL.RewardPanel
             imageController.RequestImage(inputData.ImageUrl);
             viewInstance.ItemName.text = inputData.WearableName;
             viewInstance.RaysImage.color = nftRarityColors.GetColor(inputData.Rarity);
+            viewInstance.RarityMark.color = nftRarityColors.GetColor(inputData.Rarity);
             viewInstance.RarityBackground.sprite = nftRarityBackgrounds.GetTypeImage(inputData.Rarity);
             viewInstance.CategoryImage.sprite = nftCategoryIcons.GetTypeImage(inputData.Category);
         }

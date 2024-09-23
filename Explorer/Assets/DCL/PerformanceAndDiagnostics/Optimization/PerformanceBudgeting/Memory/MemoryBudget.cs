@@ -36,7 +36,7 @@ namespace DCL.Optimization.PerformanceBudgeting
 
         public MemoryUsageStatus GetMemoryUsageStatus()
         {
-            long usedMemory = profiler.TotalUsedMemoryInBytes / BYTES_IN_MEGABYTE;
+            var usedMemory = profiler.SystemUsedMemoryInBytes / BYTES_IN_MEGABYTE;
             long totalSystemMemory = GetTotalSystemMemory();
 
             return usedMemory switch
@@ -67,15 +67,15 @@ namespace DCL.Optimization.PerformanceBudgeting
 
             // ReSharper disable once PossibleLossOfFraction
             long CalculateSystemMemoryForWarningThreshold() => // 10% higher than Warning threshold for current usedMemory
-                (long)(profiler.TotalUsedMemoryInBytes / BYTES_IN_MEGABYTE / (memoryThreshold[WARNING] * 1.1f));
+                (long)(profiler.SystemUsedMemoryInBytes / BYTES_IN_MEGABYTE / (memoryThreshold[WARNING] * 1.1f));
         }
 
         public class Default : IPerformanceBudget
         {
             private static readonly IReadOnlyDictionary<MemoryUsageStatus, float> MEMORY_THRESHOLD = new Dictionary<MemoryUsageStatus, float>
             {
-                { WARNING, 0.8f },
-                { FULL, 0.95f },
+                { WARNING, 0.65f },
+                { FULL, 0.75f }
             };
 
             private readonly IPerformanceBudget performanceBudget = new MemoryBudget(
