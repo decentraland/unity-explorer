@@ -53,10 +53,10 @@ namespace DCL.Landscape.Utils
         public int heightX;
         public int heightY;
 
-        public Dictionary<int2, float[]> alphaMaps = new ();
-        public int alphaX;
-        public int alphaY;
-        public int alphaZ;
+        private Dictionary<int2, float[]> alphaMaps = new();
+        private int alphaX;
+        private int alphaY;
+        private int alphaZ;
 
         public Dictionary<int2, TreeInstanceDTO[]> trees = new ();
 
@@ -121,6 +121,24 @@ namespace DCL.Landscape.Utils
 
         public bool IsValid() =>
             isValid;
+
+        public void Dispose()
+        {
+            Debug.Log("JUANI CALLING THE DISPOSE");
+            Debug.Log($"JUANI ALPHA MAPS LENGTH {alphaMaps.Count}");
+
+            GC.WaitForPendingFinalizers();
+            Resources.UnloadUnusedAssets();
+        }
+
+        public void SaveAlphaMap(int offsetX, int offsetZ, (float[] array, int x, int y, int z) valueTuple)
+        {
+            alphaMaps.Add(new int2(offsetX, offsetZ), valueTuple.array);
+            Debug.Log($"JUANI SIZE OF THE ARRAY {valueTuple.array.Count()}");
+            alphaX = valueTuple.x;
+            alphaY = valueTuple.y;
+            alphaZ = valueTuple.z;
+        }
     }
 
     public class TerrainGeneratorLocalCache
@@ -148,6 +166,15 @@ namespace DCL.Landscape.Utils
         public void Save()
         {
             localCache.SaveToFile(seed, chunkSize, version, parcelChecksum);
+            localCache.Dispose();
+            return;
+            localCache.heights.Clear();
+            localCache.detail.Clear();
+            localCache.trees.Clear();
+            localCache.holes.Clear();
+            localCache = TerrainLocalCache.NewEmpty();
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
         }
 
         public bool IsValid() =>
@@ -157,7 +184,8 @@ namespace DCL.Landscape.Utils
             UnFlatten(localCache.heights[new int2(offsetX, offsetZ)], localCache.heightX, localCache.heightY);
 
         public float[,,] GetAlphaMaps(int offsetX, int offsetZ) =>
-            UnFlatten(localCache.alphaMaps[new int2(offsetX, offsetZ)], localCache.alphaX, localCache.alphaY, localCache.alphaZ);
+            new float[0, 0, 0];
+        //UnFlatten(localCache.alphaMaps[new int2(offsetX, offsetZ)], localCache.alphaX, localCache.alphaY, localCache.alphaZ);
 
         public TreeInstance[] GetTrees(int offsetX, int offsetZ)
         {
@@ -193,10 +221,7 @@ namespace DCL.Landscape.Utils
         public void SaveAlphaMaps(int offsetX, int offsetZ, float[,,] alphaMaps)
         {
             (float[] array, int x, int y, int z) valueTuple = Flatten(alphaMaps);
-            localCache.alphaMaps.Add(new int2(offsetX, offsetZ), valueTuple.array);
-            localCache.alphaX = valueTuple.x;
-            localCache.alphaY = valueTuple.y;
-            localCache.alphaZ = valueTuple.z;
+            localCache.SaveAlphaMap(offsetX, offsetZ, valueTuple);
         }
 
         public void SaveTreeInstances(int offsetX, int offsetZ, TreeInstance[] instances)

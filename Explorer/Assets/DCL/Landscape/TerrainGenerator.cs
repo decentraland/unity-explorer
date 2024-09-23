@@ -10,11 +10,13 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Threading;
+using DCL.Profiling;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.Profiling;
 using Utility;
 using JobHandle = Unity.Jobs.JobHandle;
 
@@ -71,9 +73,13 @@ namespace DCL.Landscape
         public bool IsTerrainGenerated { get; private set; }
         public bool IsTerrainShown { get; private set; }
 
+        private readonly IMemoryProfiler profilingProvider;
 
-        public TerrainGenerator(bool measureTime = false, bool forceCacheRegen = false)
+
+        public TerrainGenerator(IMemoryProfiler profilingProvider, bool measureTime = false,
+            bool forceCacheRegen = false)
         {
+            this.profilingProvider = profilingProvider;
             this.forceCacheRegen = forceCacheRegen;
 
             noiseGenCache = new NoiseGeneratorCache();
@@ -159,6 +165,8 @@ namespace DCL.Landscape
             var worldModel = new WorldModel(ownedParcels);
             var terrainModel = new TerrainModel(parcelSize, worldModel, terrainGenData.borderPadding);
 
+            float startMemory = profilingProvider.SystemUsedMemoryInBytes / (1024 * 1024);
+            
             try
             {
                 using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"Terrain generation was done in {t / 1000f:F2} seconds")))
@@ -221,6 +229,7 @@ namespace DCL.Landscape
             catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, reportData); }
             finally
             {
+                float beforeCleaning = profilingProvider.SystemUsedMemoryInBytes / (1024 * 1024);
                 FreeMemory();
 
                 if (!localCache.IsValid())
@@ -231,7 +240,15 @@ namespace DCL.Landscape
 
                 emptyParcels.Dispose();
                 ownedParcels.Dispose();
+
+                float afterCleaning = profilingProvider.SystemUsedMemoryInBytes / (1024 * 1024);
+                Debug.Log($"JUANI CLEANING BUILD PROCESS {afterCleaning - beforeCleaning}");
             }
+
+            float endMemory = profilingProvider.SystemUsedMemoryInBytes / (1024 * 1024);
+
+            Debug.Log($"JUANI WHOLE BUILD PROCESS {endMemory - startMemory}");
+
         }
 
         // waiting a frame to create the color map renderer created a new bug where some stones do not render properly, this should fix it
@@ -313,13 +330,25 @@ namespace DCL.Landscape
 
                 chunkModel.TerrainData = factory.CreateTerrainData(terrainModel.ChunkSizeInUnits, maxHeightIndex);
 
-                var tasks = new List<UniTask>
-                {
-                    chunkDataGenerator.SetHeightsAsync(chunkModel.MinParcel, maxHeightIndex, parcelSize, chunkModel.TerrainData, worldSeed, cancellationToken),
-                    chunkDataGenerator.SetTexturesAsync(chunkModel.MinParcel.x * parcelSize, chunkModel.MinParcel.y * parcelSize, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData, worldSeed, cancellationToken),
-                    !hideDetails ? chunkDataGenerator.SetDetailsAsync(chunkModel.MinParcel.x * parcelSize, chunkModel.MinParcel.y * parcelSize, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData, worldSeed, cancellationToken, true, chunkModel.MinParcel, chunkModel.OccupiedParcels) : UniTask.CompletedTask,
-                    !hideTrees ? chunkDataGenerator.SetTreesAsync(chunkModel.MinParcel, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData, worldSeed, cancellationToken) : UniTask.CompletedTask,
-                };
+                var dictionaryTasks = new Dictionary<string, UniTask>();
+                dictionaryTasks.Add("SetHeights",
+                    chunkDataGenerator.SetHeightsAsync(chunkModel.MinParcel, maxHeightIndex, parcelSize,
+                        chunkModel.TerrainData, worldSeed, cancellationToken));
+                dictionaryTasks.Add("SetTextures",
+                    chunkDataGenerator.SetTexturesAsync(chunkModel.MinParcel.x * parcelSize,
+                        chunkModel.MinParcel.y * parcelSize, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData,
+                        worldSeed, cancellationToken));
+                dictionaryTasks.Add("SetDetails",
+                    !hideDetails
+                        ? chunkDataGenerator.SetDetailsAsync(chunkModel.MinParcel.x * parcelSize,
+                            chunkModel.MinParcel.y * parcelSize, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData,
+                            worldSeed, cancellationToken, true, chunkModel.MinParcel, chunkModel.OccupiedParcels)
+                        : UniTask.CompletedTask);
+                dictionaryTasks.Add("SetTrees",
+                    !hideTrees
+                        ? chunkDataGenerator.SetTreesAsync(chunkModel.MinParcel, terrainModel.ChunkSizeInUnits,
+                            chunkModel.TerrainData, worldSeed, cancellationToken)
+                        : UniTask.CompletedTask);
 
                 if (withHoles)
                 {
@@ -344,8 +373,14 @@ namespace DCL.Landscape
                     }
                 }
 
-                await UniTask.WhenAll(tasks).AttachExternalCancellation(cancellationToken);
-
+                foreach (var dictionaryTasksKey in dictionaryTasks.Keys)
+                {
+                    float startMemory = profilingProvider.SystemUsedMemoryInBytes / (1024 * 1024);
+                    await dictionaryTasks[dictionaryTasksKey].AttachExternalCancellation(cancellationToken);
+                    float endMemory = profilingProvider.SystemUsedMemoryInBytes / (1024 * 1024);
+                    Debug.Log($"JUANI MEMORY DIFFERENCE FOR STEP {dictionaryTasksKey} {endMemory - startMemory}");
+                }
+                
                 processedTerrainDataCount++;
                 if (processReport != null) processReport.SetProgress(PROGRESS_COUNTER_EMPTY_PARCEL_DATA + processedTerrainDataCount / terrainDataCount * PROGRESS_COUNTER_TERRAIN_DATA);
             }
