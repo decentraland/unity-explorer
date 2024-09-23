@@ -149,7 +149,7 @@ namespace DCL.AvatarRendering.Emotes.Play
         [Query]
         [None(typeof(DeleteEntityIntention))]
         private void ConsumeEmoteIntent(Entity entity, ref CharacterEmoteComponent emoteComponent, in CharacterEmoteIntent emoteIntent,
-            in IAvatarView avatarView, in AvatarShapeComponent avatarShapeComponent, in CharacterAnimationComponent animationComponent)
+            in IAvatarView avatarView, in AvatarShapeComponent avatarShapeComponent)
         {
             URN emoteId = emoteIntent.EmoteId;
 
@@ -159,10 +159,8 @@ namespace DCL.AvatarRendering.Emotes.Play
                 // we wait until the avatar finishes moving to trigger the emote,
                 // avoid the case where: you stop moving, trigger the emote, the emote gets triggered and next frame it gets cancelled because inertia keeps moving the avatar
                 //We also avoid triggering the emote while the character is jumping or landing, as the landing animation breaks the emote flow if they have props
-                if (!animationComponent.States.IsGrounded ||
-                    animationComponent.States.MovementBlendValue > 0.05f ||
-                    avatarView.IsAnimatorInTag(AnimationHashes.JUMPING_TAG) ||
-                    avatarView.GetAnimatorFloat(AnimationHashes.MOVEMENT_BLEND) > 0.05f)
+                if (avatarView.IsAnimatorInTag(AnimationHashes.JUMPING_TAG) ||
+                    avatarView.GetAnimatorFloat(AnimationHashes.MOVEMENT_BLEND) > 0.1f)
                     return;
 
                 if (emoteStorage.TryGetElement(emoteId.Shorten(), out IEmote emote))
