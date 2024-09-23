@@ -19,7 +19,6 @@ using UnityEngine;
 namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
 {
     [UpdateInGroup(typeof(SyncedInitializationFixedUpdateThrottledGroup))]
-    [UpdateBefore(typeof(CameraModeAreaHandlerSystem))]
     [LogCategory(ReportCategory.SDK_CAMERA)]
     public partial class MainCameraSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
@@ -63,8 +62,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
         {
             if (entity != cameraEntity || !sceneStateProvider.IsCurrent) return;
 
-            // The 'uint' pbMainCamera.VirtualCameraEntity at 0 represents the empty field
-            CRDTEntity? virtualCameraCRDTEntity = pbMainCamera.VirtualCameraEntity > 0 ? new CRDTEntity((int)pbMainCamera.VirtualCameraEntity) : null;
+            CRDTEntity? virtualCameraCRDTEntity = pbMainCamera.HasVirtualCameraEntity ? new CRDTEntity((int)pbMainCamera.VirtualCameraEntity) : null;
 
             // Cannot rely on pbComponent.IsDirty since the VirtualCamera may not yet be on the target CRDTEntity
             // when the pbComponent is dirty and may have to be re-checked on subsequent updates. This can happen

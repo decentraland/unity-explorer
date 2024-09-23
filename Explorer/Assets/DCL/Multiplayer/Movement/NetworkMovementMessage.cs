@@ -22,21 +22,6 @@ namespace DCL.Multiplayer.Movement
 
         public byte velocityTier;
 
-        public NetworkMovementMessage(float timestamp, Vector3 position, Vector3 velocity, float velocitySqrMagnitude, float rotationY,
-            MovementKind movementKind, bool isSliding, bool isStunned, AnimationStates animState, byte velocityTier)
-        {
-            this.timestamp = timestamp;
-            this.position = position;
-            this.velocity = velocity;
-            this.velocitySqrMagnitude = velocitySqrMagnitude;
-            this.rotationY = rotationY;
-            this.movementKind = movementKind;
-            this.isSliding = isSliding;
-            this.isStunned = isStunned;
-            this.animState = animState;
-            this.velocityTier = velocityTier;
-        }
-
         public override string ToString() =>
             JsonUtility.ToJson(this)!;
 
