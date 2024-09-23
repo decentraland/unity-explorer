@@ -2,6 +2,7 @@
 using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapLayers.Atlas;
+using DCL.MapRenderer.MapLayers.SatelliteAtlas;
 using NSubstitute;
 using NUnit.Framework;
 using System.Collections;
@@ -21,8 +22,8 @@ namespace DCL.MapRenderer.Tests
         private const int CHUNK_SIZE = 1000;
         private const int FRAME_DELAY = 5;
 
-        private ParcelChunkAtlasController atlasController;
-        private ParcelChunkAtlasController.ChunkBuilder builder;
+        private SatelliteChunkAtlasController atlasController;
+        private SatelliteChunkAtlasController.ChunkBuilder builder;
         private int iterationsNumber;
 
         [SetUp]
@@ -33,9 +34,9 @@ namespace DCL.MapRenderer.Tests
             coordUtils.WorldMinCoords.Returns(new Vector2Int(-150, -150));
             coordUtils.WorldMaxCoords.Returns(new Vector2Int(175, 175));
 
-            builder = Substitute.For<ParcelChunkAtlasController.ChunkBuilder>();
+            builder = Substitute.For<SatelliteChunkAtlasController.ChunkBuilder>();
 
-            atlasController = new ParcelChunkAtlasController(null, CHUNK_SIZE, coordUtils, Substitute.For<IMapCullingController>(), builder);
+            atlasController = new SatelliteChunkAtlasController(null, CHUNK_SIZE, 40, coordUtils, Substitute.For<IMapCullingController>(), builder);
 
             var parcelsInsideChunk = CHUNK_SIZE / PARCEL_SIZE;
 
