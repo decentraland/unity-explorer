@@ -25,7 +25,7 @@ namespace ECS.Abstract
 
         private string? cachedCategory;
 
-        private readonly SceneShortInfo sceneInfo;
+        protected readonly SceneShortInfo sceneInfo;
 
         protected BaseUnityLoopSystem(World world) : base(world)
         {

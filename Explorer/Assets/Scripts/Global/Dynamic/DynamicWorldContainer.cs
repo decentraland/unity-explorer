@@ -364,6 +364,7 @@ namespace Global.Dynamic
                 realmNavigator,
                 loadingScreen,
                 staticContainer.FeatureFlagsProvider,
+                staticContainer.FeatureFlagsCache,
                 identityCache,
                 container.RealmController,
                 dynamicWorldParams.AppParameters
