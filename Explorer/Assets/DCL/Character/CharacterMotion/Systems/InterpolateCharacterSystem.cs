@@ -9,7 +9,9 @@ using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Platforms;
 using DCL.CharacterMotion.Settings;
 using DCL.Diagnostics;
+using Decentraland.SocialServiceV2;
 using ECS.Abstract;
+using ECS.LifeCycle.Components;
 using UnityEngine;
 using Utility;
 
@@ -53,7 +55,7 @@ namespace DCL.CharacterMotion.Systems
         }
 
         [Query]
-        [None(typeof(PlayerTeleportIntent))]
+        [None(typeof(PlayerTeleportIntent), typeof(DeleteEntityIntention))]
         private void Interpolate(
             [Data] float dt,
             in ICharacterControllerSettings settings,

@@ -38,11 +38,13 @@ using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using ECS.Unity.Transforms.Components;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
 using Utility.PriorityQueue;
 using Avatar = DCL.Profiles.Avatar;
+using Object = UnityEngine.Object;
 using ParamPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Helpers.WearablesResponse, DCL.AvatarRendering.Wearables.Components.Intentions.GetWearableByParamIntention>;
 using Random = UnityEngine.Random;
 using RaycastHit = UnityEngine.RaycastHit;
@@ -56,7 +58,8 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
     {
         private const int MAX_AVATAR_NUMBER = 1000;
 
-        private static readonly QueryDescription AVATARS_QUERY = new QueryDescription().WithAll<Profile, RandomAvatar>().WithNone<PlayerComponent>();
+        private static readonly QueryDescription AVATARS_QUERY = new QueryDescription()
+            .WithAll<Profile, RandomAvatar, CharacterTransform>().WithNone<PlayerComponent>();
 
         private readonly IRealmData realmData;
         private readonly IComponentPool<Transform> transformPool;
@@ -75,6 +78,8 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
         private int lastIndexInstantiated;
         private readonly AvatarRandomizerAsset avatarRandomizerAsset;
 
+        private bool networkAvatar;
+
         internal InstantiateRandomAvatarsSystem(
             World world,
             IDebugContainerBuilder debugBuilder,
@@ -86,9 +91,11 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
             this.realmData = realmData;
             transformPool = componentPools;
             this.avatarRandomizerAsset = avatarRandomizerAsset;
+            networkAvatar = true;
 
             debugBuilder.TryAddWidget("Avatar Debug")
                        ?.SetVisibilityBinding(debugVisibilityBinding = new DebugWidgetVisibilityBinding(false))
+                        .AddToggleField("Network avatar", evt => networkAvatar = evt.newValue, true)
                         .AddIntFieldWithConfirmation(30, "Instantiate", AddRandomAvatar)
                         .AddControl(new DebugConstLabelDef("Total Avatars"), new DebugLongMarkerDef(totalAvatarsInstantiated = new ElementBinding<ulong>(0), DebugLongMarkerDef.Unit.NoFormat))
                         .AddSingleButton("Destroy All Avatars", DestroyAllAvatars)
@@ -146,9 +153,11 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
 
         private void DestroyRandomAmountOfAvatars()
         {
+            
             World.Query(in AVATARS_QUERY,
-                entity =>
+                (Entity entity, ref CharacterTransform transformComponent) =>  
                 {
+                    Object.Destroy(transformComponent.Transform.gameObject.GetComponent<CharacterController>());
                     if (Random.Range(0, 3) == 0)
                     {
                         World.Add(entity, new DeleteEntityIntention());
@@ -159,8 +168,13 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
 
         private void DestroyAllAvatars()
         {
-            // Input events are processed before Update
-            World.Add(in AVATARS_QUERY, new DeleteEntityIntention());
+            World.Query(in AVATARS_QUERY,
+                (Entity entity, ref CharacterTransform transformComponent) =>
+                {
+                    Object.Destroy(transformComponent.Transform.gameObject.GetComponent<CharacterController>());
+                    World.Add(entity, new DeleteEntityIntention());
+                });
+            
             totalAvatarsInstantiated.Value = 0;
         }
 
@@ -289,41 +303,51 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
             else { transformComp.Transform.position = new Vector3(startXPosition + (avatarIndex * 2), 3, startZPosition); }
 
             transformComp.Transform.name = $"RANDOM_AVATAR_{avatarIndex}";
-
-            CharacterController characterController = transformComp.Transform.TryGetComponent<CharacterController>(out var component)
-                ? component
-                : transformComp.Transform.gameObject.AddComponent<CharacterController>();
-            characterController.radius = 0.4f;
-            characterController.height = 2;
-            characterController.center = Vector3.up;
-            characterController.slopeLimit = 50f;
-            characterController.gameObject.layer = PhysicsLayers.CHARACTER_LAYER;
-
+            
             HashSet<URN> wearablesURN = new HashSet<URN>();
             foreach (string wearable in wearables)
                 wearablesURN.Add(new URN(wearable));
 
-            var avatarShape = Profile.Create(
+            var profile = Profile.Create(
                 StringUtils.GenerateRandomString(5),
                 StringUtils.GenerateRandomString(5),
                 new Avatar(BodyShape.FromStringSafe(bodyShape), wearablesURN, WearablesConstants.DefaultColors.GetRandomEyesColor(), WearablesConstants.DefaultColors.GetRandomHairColor(), WearablesConstants.DefaultColors.GetRandomSkinColor()));
 
-            World.Create(avatarShape,
-                transformComp,
-                characterController,
-                new CharacterRigidTransform(),
-                new CharacterAnimationComponent(),
-                new CharacterEmoteComponent(),
-                new CharacterPlatformComponent(),
-                new StunComponent(),
-                new FeetIKComponent(),
-                new HandsIKComponent(),
-                new HeadIKComponent(),
-                new JumpInputComponent(),
-                new MovementInputComponent(),
-                characterControllerSettings,
-                new RandomAvatar()
-            );
+
+            if (networkAvatar)
+            {
+                World.Create(profile,
+                    transformComp,
+                    new CharacterAnimationComponent(),
+                    new CharacterEmoteComponent(),
+                    new RandomAvatar());
+            }
+            else
+            {
+                var characterController = transformComp.Transform.gameObject.AddComponent<CharacterController>();
+                characterController.radius = 0.4f;
+                characterController.height = 2;
+                characterController.center = Vector3.up;
+                characterController.slopeLimit = 50f;
+                characterController.gameObject.layer = PhysicsLayers.CHARACTER_LAYER;
+
+                World.Create(profile,
+                    transformComp,
+                    characterController,
+                    new CharacterRigidTransform(),
+                    new CharacterAnimationComponent(),
+                    new CharacterEmoteComponent(),
+                    new CharacterPlatformComponent(),
+                    new StunComponent(),
+                    new FeetIKComponent(),
+                    new HandsIKComponent(),
+                    new HeadIKComponent(),
+                    new JumpInputComponent(),
+                    new MovementInputComponent(),
+                    characterControllerSettings,
+                    new RandomAvatar()
+                );
+            }
         }
 
         private static Vector3 StartRandomPosition(float spawnArea, float startXPosition, float startZPosition)
