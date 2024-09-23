@@ -7,6 +7,7 @@ using DCL.CharacterMotion.Platforms;
 using DCL.CharacterMotion.Settings;
 using DCL.Diagnostics;
 using ECS.Abstract;
+using ECS.LifeCycle.Components;
 using UnityEngine;
 
 namespace DCL.CharacterMotion.Systems
@@ -26,7 +27,7 @@ namespace DCL.CharacterMotion.Systems
         }
 
         [Query]
-        [None(typeof(PlayerTeleportIntent))]
+        [None(typeof(PlayerTeleportIntent), typeof(DeleteEntityIntention))]
         private void ResolvePlatformMovement(
             in ICharacterControllerSettings settings,
             ref CharacterPlatformComponent platformComponent,

@@ -116,7 +116,7 @@ namespace Global.Dynamic
 
             AddShortInfo(world);
 
-            builder.InjectCustomGroup(new SyncedPreRenderingSystemGroup(null, globalSceneStateProvider));
+            builder.InjectCustomGroup(new SyncedPreRenderingSystemGroup(globalSceneStateProvider));
 
             IReleasablePerformanceBudget sceneBudget = new ConcurrentLoadingPerformanceBudget(staticSettings.ScenesLoadingBudget);
 
