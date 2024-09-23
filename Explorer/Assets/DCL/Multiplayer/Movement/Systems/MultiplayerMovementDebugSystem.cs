@@ -15,6 +15,14 @@ using Utility;
 
 namespace DCL.Multiplayer.Movement.Systems
 {
+    internal class NetworkMessageBindings
+    {
+        public readonly ElementBinding<string> Timestamp = new (string.Empty);
+        public readonly ElementBinding<string> Position = new (string.Empty);
+        public readonly ElementBinding<string> Velocity = new (string.Empty);
+        public readonly ElementBinding<string> MovementKind = new (string.Empty);
+    }
+
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     public partial class MultiplayerMovementDebugSystem : BaseUnityLoopSystem
     {
@@ -29,22 +37,23 @@ namespace DCL.Multiplayer.Movement.Systems
         private readonly IMultiplayerMovementSettings mainSettings;
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
 
-        private Entity? selfReplicaEntity;
-        private bool useLinear;
-
         private readonly ElementBinding<string> entityId;
 
         private readonly ElementBinding<string> inboxCount;
         private readonly ElementBinding<string> wasTeleported;
         private readonly ElementBinding<string> wasPassedThisFrame;
-        // NetworkMovementMessage pastMessage;
-        // NetworkMovementMessage nextMessage;
+
+        private readonly NetworkMessageBindings pastMessage = new ();
+        private readonly NetworkMessageBindings nextMessage = new ();
 
         private readonly ElementBinding<string> isEnabled;
         private readonly ElementBinding<string> time;
         private readonly ElementBinding<string> duration;
-        // NetworkMovementMessage start;
-        // NetworkMovementMessage end;
+        private readonly NetworkMessageBindings intStart = new ();
+        private readonly NetworkMessageBindings intEnd = new ();
+
+        private Entity? selfReplicaEntity;
+        private bool useLinear;
 
         internal MultiplayerMovementDebugSystem(World world, Entity playerEntity, IDebugContainerBuilder debugBuilder, RemoteEntities remoteEntities,
             ExposedTransform playerTransform, MultiplayerDebugSettings debugSettings, IMultiplayerMovementSettings mainSettings,
@@ -61,24 +70,39 @@ namespace DCL.Multiplayer.Movement.Systems
 
             widget?.AddSingleButton("Instantiate Self-Replica", () => InstantiateSelfReplica(world))
                    .AddSingleButton("Remove Self-Replica", () => RemoveSelfReplica(world))
-                   .AddSingleButton("Debug Profile", () => DebugProfile(world))
                    .AddToggleField("Use Compression", evt => this.mainSettings.UseCompression = evt.newValue, this.mainSettings.UseCompression)
                    .AddToggleField("Use Linear", evt => SelectInterpolationType(evt.newValue), useLinear)
                    .AddToggleField("Use speed-up", evt => this.mainSettings.InterpolationSettings.UseSpeedUp = evt.newValue, this.mainSettings.InterpolationSettings.UseSpeedUp)
-                   .AddCustomMarker("Entity Id", entityId = new ElementBinding<string>(string.Empty))
-                   .AddCustomMarker("MOVEMENT", new ElementBinding<string>(string.Empty))
+                   .AddCustomMarker("Entity Id", entityId = new ElementBinding<string>(string.Empty));
+
+            widget?.AddCustomMarker("MOVEMENT", new ElementBinding<string>(string.Empty))
                    .AddCustomMarker("Inbox Count", inboxCount = new ElementBinding<string>(string.Empty))
                    .AddCustomMarker("Was Teleported", wasTeleported = new ElementBinding<string>(string.Empty))
-                   .AddCustomMarker("Was Passed This Frame", wasPassedThisFrame = new ElementBinding<string>(string.Empty))
-                   .AddCustomMarker("INTERPOLATION", new ElementBinding<string>(string.Empty))
+                   .AddCustomMarker("Was Passed This Frame", wasPassedThisFrame = new ElementBinding<string>(string.Empty));
+
+            widget?.AddCustomMarker("INTERPOLATION", new ElementBinding<string>(string.Empty))
                    .AddCustomMarker("Is Enabled", isEnabled = new ElementBinding<string>(string.Empty))
                    .AddCustomMarker("Time", time = new ElementBinding<string>(string.Empty))
                    .AddCustomMarker("Duration", duration = new ElementBinding<string>(string.Empty));
+
+            AddNetworkMessageMarkers(pastMessage, "PAST MESSAGE");
+            AddNetworkMessageMarkers(intStart, "INTERPOLATION START");
+            AddNetworkMessageMarkers(intEnd, "INTERPOLATION END");
+            AddNetworkMessageMarkers(nextMessage, "NEXT MESSAGE");
         }
 
-        public void Dispose()
+        ~MultiplayerMovementDebugSystem()
         {
             debugSettings.SelfSending = false;
+        }
+
+        private void AddNetworkMessageMarkers(NetworkMessageBindings messageBinding, string label)
+        {
+            widget?.AddCustomMarker(label, new ElementBinding<string>(string.Empty))
+                   .AddCustomMarker("Timestamp", messageBinding.Timestamp)
+                   .AddCustomMarker("Position", messageBinding.Position)
+                   .AddCustomMarker("Velocity", messageBinding.Velocity)
+                   .AddCustomMarker("Movement Kind", messageBinding.MovementKind);
         }
 
         protected override void Update(float t)
@@ -94,6 +118,11 @@ namespace DCL.Multiplayer.Movement.Systems
                     inboxCount.Value = remotePlayerMovementComponent.Queue.Count.ToString();
                     wasTeleported.Value = remotePlayerMovementComponent.WasTeleported.ToString();
                     wasPassedThisFrame.Value = remotePlayerMovementComponent.WasPassedThisFrame.ToString();
+
+                    UpdateNetworkMessageMarkers(pastMessage, remotePlayerMovementComponent.PastMessage);
+
+                    if (remotePlayerMovementComponent.Queue.Count > 0)
+                        UpdateNetworkMessageMarkers(nextMessage, remotePlayerMovementComponent.Queue.First);
                 }
 
                 if (World.TryGet(entity, out InterpolationComponent interpolation))
@@ -101,33 +130,19 @@ namespace DCL.Multiplayer.Movement.Systems
                     isEnabled.Value = interpolation.Enabled.ToString();
                     time.Value = interpolation.Time.ToString();
                     duration.Value = interpolation.TotalDuration.ToString();
+
+                    UpdateNetworkMessageMarkers(intStart, interpolation.Start);
+                    UpdateNetworkMessageMarkers(intEnd, interpolation.End);
                 }
             }
         }
 
-        private void DebugProfile(World world)
+        private static void UpdateNetworkMessageMarkers(NetworkMessageBindings bindings, NetworkMovementMessage networkMessage)
         {
-            // Entity entity = entityParticipantTable.Entity(RemotePlayerMovementComponent.TEST_ID);
-            // world.TryGet(entity, out remotePlayerMovementComponent);
-
-            // if (world.TryGet(entity, out RemotePlayerMovementComponent remotePlayerMovementComponent))
-            // {
-            //     // pastMessage = remotePlayerMovementComponent.PastMessage;
-            //     // nextMessage = remotePlayerMovementComponent.Queue.First;
-            // }
-
-            //
-            // if (world.TryGet(entity, out InterpolationComponent interpolationComponent))
-            // {
-            //     interpolationIsEnabled = interpolationComponent.Enabled;
-            //     start = interpolationComponent.Start;
-            //     end = interpolationComponent.End;
-            //     time = interpolationComponent.Time;
-            //     duration = interpolationComponent.TotalDuration;
-            //
-            //     pastMessage = remotePlayerMovementComponent.PastMessage;
-            //     nextMessage = remotePlayerMovementComponent.Queue.First;
-            // }
+            bindings.Timestamp.Value = networkMessage.timestamp.ToString();
+            bindings.Position.Value = networkMessage.position.ToString();
+            bindings.Velocity.Value = networkMessage.velocity.ToString();
+            bindings.MovementKind.Value = networkMessage.movementKind.ToString();
         }
 
         private void SelectInterpolationType(bool useLinear)
