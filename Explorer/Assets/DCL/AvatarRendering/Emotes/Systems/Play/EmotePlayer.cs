@@ -141,6 +141,9 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             ListPool<AnimationClip>.Release(uniqueClips);
 
+            // some of our legacy emotes have unity events that we are not handling, so we disable that system to avoid further errors
+            animator.fireEvents = false;
+
             return references;
         }
 

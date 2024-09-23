@@ -158,14 +158,11 @@ namespace DCL.AvatarRendering.Emotes.Play
             {
                 // we wait until the avatar finishes moving to trigger the emote,
                 // avoid the case where: you stop moving, trigger the emote, the emote gets triggered and next frame it gets cancelled because inertia keeps moving the avatar
-
-                if (avatarView.IsAnimatorInTag(AnimationHashes.JUMP_STATE))
-                    return;
-
-                if (avatarView.GetAnimatorFloat(AnimationHashes.MOVEMENT_BLEND) > 0.05f)
-                    return;
-
-                if (!animationComponent.States.IsGrounded || animationComponent.States.MovementBlendValue > 0.05f)
+                //We also avoid triggering the emote while the character is jumping or landing, as the landing animation breaks the emote flow if they have props
+                if (!animationComponent.States.IsGrounded ||
+                    animationComponent.States.MovementBlendValue > 0.05f ||
+                    avatarView.IsAnimatorInTag(AnimationHashes.JUMPING_TAG) ||
+                    avatarView.GetAnimatorFloat(AnimationHashes.MOVEMENT_BLEND) > 0.05f)
                     return;
 
                 if (emoteStorage.TryGetElement(emoteId.Shorten(), out IEmote emote))
