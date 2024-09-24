@@ -5,6 +5,7 @@ using DCL.Diagnostics;
 using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.ResourcesUnloading;
+using DCL.WebRequests;
 using ECS.LifeCycle;
 using ECS.StreamableLoading.AssetBundles;
 using System;
@@ -30,10 +31,12 @@ namespace DCL.PluginSystem.World
 
         private readonly AssetBundleCache assetBundleCache;
         private readonly AssetBundleLoadingMutex assetBundleLoadingMutex;
+        private readonly IWebRequestController webRequestController;
 
-        public AssetBundlesPlugin(IReportsHandlingSettings reportsHandlingSettings, CacheCleaner cacheCleaner)
+        public AssetBundlesPlugin(IReportsHandlingSettings reportsHandlingSettings, CacheCleaner cacheCleaner, IWebRequestController webRequestController)
         {
             this.reportsHandlingSettings = reportsHandlingSettings;
+            this.webRequestController = webRequestController;
             assetBundleCache = new AssetBundleCache();
             assetBundleLoadingMutex = new AssetBundleLoadingMutex();
 
@@ -44,20 +47,18 @@ namespace DCL.PluginSystem.World
         {
             // Asset Bundles
             PrepareAssetBundleLoadingParametersSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, STREAMING_ASSETS_URL);
-            ReportAssetBundleErrorSystem.InjectToWorld(ref builder, reportsHandlingSettings);
 
             // TODO create a runtime ref-counting cache
-            LoadAssetBundleSystem.InjectToWorld(ref builder, assetBundleCache, assetBundleLoadingMutex);
+            LoadAssetBundleSystem.InjectToWorld(ref builder, assetBundleCache, webRequestController, assetBundleLoadingMutex);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
             // Asset Bundles
             PrepareGlobalAssetBundleLoadingParametersSystem.InjectToWorld(ref builder, STREAMING_ASSETS_URL);
-            ReportGlobalAssetBundleErrorSystem.InjectToWorld(ref builder, reportsHandlingSettings);
 
             // TODO create a runtime ref-counting cache
-            LoadGlobalAssetBundleSystem.InjectToWorld(ref builder, assetBundleCache, assetBundleLoadingMutex);
+            LoadGlobalAssetBundleSystem.InjectToWorld(ref builder, assetBundleCache, webRequestController, assetBundleLoadingMutex);
         }
 
 #region Interface Ambiguity

@@ -6,12 +6,12 @@ using System.Threading;
 
 namespace DCL.AvatarRendering.Emotes
 {
-    public struct GetEmotesByPointersFromRealmIntention : IEquatable<GetEmotesByPointersFromRealmIntention>, ILoadingIntention
+    public struct GetEmotesByPointersFromRealmIntention : IEquatable<GetEmotesByPointersFromRealmIntention>, IPointersLoadingIntention
     {
-        public CancellationTokenSource CancellationTokenSource => CommonArguments.CancellationTokenSource;
+        public readonly CancellationTokenSource CancellationTokenSource => CommonArguments.CancellationTokenSource;
         public CommonLoadingArguments CommonArguments { get; set; }
 
-        public readonly IReadOnlyList<URN> Pointers;
+        public IReadOnlyList<URN> Pointers { get; }
 
         public GetEmotesByPointersFromRealmIntention(IReadOnlyList<URN> pointers, CommonLoadingArguments commonArguments)
         {

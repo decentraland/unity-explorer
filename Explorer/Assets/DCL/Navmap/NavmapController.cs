@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
+using DCL.Chat.MessageBus;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Utility;
@@ -32,7 +33,7 @@ namespace DCL.Navmap
         private const string EMPTY_PARCEL_NAME = "Empty parcel";
         private const string WORLDS_WARNING_MESSAGE = "This is the Genesis City map. If you jump into any of this places you will leave the world you are currently visiting.";
         private const MapLayer ACTIVE_MAP_LAYERS =
-            MapLayer.SatelliteAtlas | MapLayer.ParcelsAtlas | MapLayer.PlayerMarker | MapLayer.ParcelHoverHighlight | MapLayer.ScenesOfInterest | MapLayer.Favorites | MapLayer.HotUsersMarkers | MapLayer.Pins;
+            MapLayer.SatelliteAtlas | MapLayer.PlayerMarker | MapLayer.ParcelHoverHighlight | MapLayer.ScenesOfInterest | MapLayer.Favorites | MapLayer.HotUsersMarkers | MapLayer.Pins;
 
         private readonly NavmapView navmapView;
         private readonly IMapRenderer mapRenderer;
@@ -41,7 +42,6 @@ namespace DCL.Navmap
         private readonly NavmapSearchBarController searchBarController;
         private readonly RectTransform rectTransform;
         private readonly SatelliteController satelliteController;
-        private readonly StreetViewController streetViewController;
         private readonly IRealmData realmData;
         private readonly IMapPathEventBus mapPathEventBus;
         private readonly SectionSelectorController<NavmapSections> sectionSelectorController;
@@ -74,7 +74,8 @@ namespace DCL.Navmap
             IMapPathEventBus mapPathEventBus,
             World world,
             Entity playerEntity,
-            IInputBlock inputBlock)
+            IInputBlock inputBlock,
+            IChatMessagesBus chatMessagesBus)
         {
             this.navmapView = navmapView;
             this.mapRenderer = mapRenderer;
@@ -86,20 +87,19 @@ namespace DCL.Navmap
             zoomController = new NavmapZoomController(navmapView.zoomView, dclInput);
             filterController = new NavmapFilterController(this.navmapView.filterView, mapRenderer, webBrowser);
             searchBarController = new NavmapSearchBarController(navmapView.SearchBarView, navmapView.SearchBarResultPanel, navmapView.HistoryRecordPanelView, placesAPIService, navmapView.floatingPanelView, webRequestController, inputBlock);
-            FloatingPanelController = new FloatingPanelController(navmapView.floatingPanelView, placesAPIService, webRequestController, realmNavigator, mapPathEventBus);
+            FloatingPanelController = new FloatingPanelController(navmapView.floatingPanelView, placesAPIService,
+                webRequestController, realmNavigator, mapPathEventBus, chatMessagesBus);
             FloatingPanelController.OnJumpIn += _ => searchBarController.ResetSearch();
             FloatingPanelController.OnSetAsDestination += SetDestination;
             this.navmapView.DestinationInfoElement.QuitButton.onClick.AddListener(OnRemoveDestinationButtonClicked);
             searchBarController.OnResultClicked += OnResultClicked;
             searchBarController.OnSearchTextChanged += FloatingPanelController.HidePanel;
             satelliteController = new SatelliteController(navmapView.GetComponentInChildren<SatelliteView>(), this.navmapView.MapCameraDragBehaviorData, mapRenderer, webBrowser);
-            streetViewController = new StreetViewController(navmapView.GetComponentInChildren<StreetViewView>(), this.navmapView.MapCameraDragBehaviorData, mapRenderer);
             mapPathEventBus.OnRemovedDestination += RemoveDestination;
 
             mapSections = new Dictionary<NavmapSections, ISection>
             {
                 { NavmapSections.Satellite, satelliteController },
-                { NavmapSections.StreetView, streetViewController },
             };
 
             sectionSelectorController = new SectionSelectorController<NavmapSections>(mapSections, NavmapSections.Satellite);
@@ -115,14 +115,10 @@ namespace DCL.Navmap
             }
 
             this.navmapView.SatelliteRenderImage.ParcelClicked += OnParcelClicked;
-            this.navmapView.StreetViewRenderImage.ParcelClicked += OnParcelClicked;
-            this.navmapView.StreetViewRenderImage.HoveredParcel += OnParcelHovered;
-            this.navmapView.StreetViewRenderImage.HoveredMapPin += OnMapPinHovered;
             this.navmapView.SatelliteRenderImage.HoveredMapPin += OnMapPinHovered;
             this.navmapView.SatelliteRenderImage.HoveredParcel += OnParcelHovered;
 
             this.navmapView.SatelliteRenderImage.EmbedMapCameraDragBehavior(this.navmapView.MapCameraDragBehaviorData);
-            this.navmapView.StreetViewRenderImage.EmbedMapCameraDragBehavior(this.navmapView.MapCameraDragBehaviorData);
             lastParcelHovered = Vector2.zero;
 
             navmapView.DestinationInfoElement.gameObject.SetActive(false);
@@ -137,9 +133,6 @@ namespace DCL.Navmap
         public void Dispose()
         {
             navmapView.SatelliteRenderImage.ParcelClicked -= OnParcelClicked;
-            navmapView.StreetViewRenderImage.ParcelClicked -= OnParcelClicked;
-            navmapView.StreetViewRenderImage.HoveredParcel -= OnParcelHovered;
-            navmapView.StreetViewRenderImage.HoveredMapPin += OnMapPinHovered;
             navmapView.SatelliteRenderImage.HoveredParcel -= OnParcelHovered;
             navmapView.SatelliteRenderImage.HoveredMapPin -= OnMapPinHovered;
             animationCts?.Dispose();
@@ -208,8 +201,9 @@ namespace DCL.Navmap
 
         private void OnResultClicked(string coordinates)
         {
-            VectorUtilities.TryParseVector2Int(coordinates, out Vector2Int result);
-            FloatingPanelController.HandlePanelVisibility(result, null, true);
+            if (VectorUtilities.TryParseVector2Int(coordinates, out Vector2Int result))
+                //This will trigger a "parcel clicked" event with the data from the parcel
+                this.navmapView.SatelliteRenderImage.OnSearchResultParcelSelected(result);
         }
 
         private void OnParcelClicked(MapRenderImage.ParcelClickData clickedParcel)
@@ -234,7 +228,6 @@ namespace DCL.Navmap
                 ));
 
             satelliteController.InjectCameraController(cameraController);
-            streetViewController.InjectCameraController(cameraController);
             navmapLocationController.InjectCameraController(cameraController);
             mapSections[NavmapSections.Satellite].Activate();
             zoomController.Activate(cameraController);

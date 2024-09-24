@@ -1,13 +1,15 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Animations.Rigging;
+using Random = UnityEngine.Random;
 
 namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 {
     public class AvatarBase : MonoBehaviour, IAvatarView
     {
+        public int RandomID;
+        
         private List<KeyValuePair<AnimationClip, AnimationClip>> animationOverrides;
         private AnimationClip lastEmote;
 
@@ -93,6 +95,8 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         {
             if (!AvatarAnimator)
                 return;
+
+            RandomID = Random.Range(0, 1000);
 
             overrideController = new AnimatorOverrideController(AvatarAnimator.runtimeAnimatorController);
             animationOverrides = new List<KeyValuePair<AnimationClip, AnimationClip>>();

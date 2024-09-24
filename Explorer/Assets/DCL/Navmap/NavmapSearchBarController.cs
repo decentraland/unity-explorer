@@ -23,7 +23,6 @@ namespace DCL.Navmap
 
         private readonly SearchBarView view;
         private readonly IPlacesAPIService placesAPIService;
-        private readonly FloatingPanelView floatingPanelView;
         private readonly HistoryRecordPanelView historyRecordPanelView;
         private readonly SearchResultPanelController searchResultPanelController;
         private readonly IInputBlock inputBlock;
@@ -46,7 +45,6 @@ namespace DCL.Navmap
             this.view = view;
             this.historyRecordPanelView = historyRecordPanelView;
             this.placesAPIService = placesAPIService;
-            this.floatingPanelView = floatingPanelView;
             this.inputBlock = inputBlock;
 
             searchResultPanelController = new SearchResultPanelController(searchResultPanelView, webRequestController);
@@ -116,11 +114,11 @@ namespace DCL.Navmap
             if (isSelected)
             {
                 GetAndShowPreviousSearches();
-                inputBlock.Disable(InputMapComponent.Kind.Shortcuts);
+                inputBlock.Disable(InputMapComponent.Kind.SHORTCUTS);
             }
             else
             {
-                inputBlock.Enable(InputMapComponent.Kind.Shortcuts);
+                inputBlock.Enable(InputMapComponent.Kind.SHORTCUTS);
             }
         }
 

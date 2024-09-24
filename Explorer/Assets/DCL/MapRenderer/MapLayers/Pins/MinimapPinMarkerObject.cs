@@ -18,12 +18,13 @@ namespace DCL.MapRenderer.MapLayers.Pins
             scenePinBackground.SetActive(true);
         }
 
-        public void SetupAsMapPin(Sprite sprite)
+        public void SetupAsMapPin(Sprite? sprite)
         {
             isMapPin = true;
             mapPinBackground.SetActive(true);
             scenePinBackground.SetActive(false);
-            mapPinIcon.sprite = sprite;
+            if (sprite != null)
+                mapPinIcon.sprite = sprite;
         }
 
         public void HidePin()

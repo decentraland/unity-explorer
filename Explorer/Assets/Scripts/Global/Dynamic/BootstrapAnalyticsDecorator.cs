@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.DebugUtilities;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Multiplayer.Movement.Systems;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
@@ -10,6 +11,7 @@ using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.UserInAppInitializationFlow;
 using DCL.Utilities;
 using DCL.Web3.Identities;
+using Global.AppArgs;
 using SceneRunner.Debugging;
 using Segment.Serialization;
 using System.Threading;
@@ -44,9 +46,9 @@ namespace Global.Dynamic
             core.PreInitializeSetup(cursorRoot, debugUiRoot, splashScreen, ct);
         }
 
-        public async UniTask<(StaticContainer?, bool)> LoadStaticContainerAsync(BootstrapContainer bootstrapContainer, PluginSettingsContainer globalPluginSettingsContainer, DebugViewsCatalog debugViewsCatalog, CancellationToken ct)
+        public async UniTask<(StaticContainer?, bool)> LoadStaticContainerAsync(BootstrapContainer bootstrapContainer, PluginSettingsContainer globalPluginSettingsContainer, DebugViewsCatalog debugViewsCatalog, Entity playerEntity, CancellationToken ct)
         {
-            (StaticContainer? container, bool isSuccess) result = await core.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugViewsCatalog, ct);
+            (StaticContainer? container, bool isSuccess) result = await core.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugViewsCatalog, playerEntity, ct);
 
             analytics.SetCommonParam(result.container!.RealmData, bootstrapContainer.IdentityCache, result.container.CharacterContainer.Transform);
 
@@ -63,11 +65,12 @@ namespace Global.Dynamic
             UIDocument uiToolkitRoot, UIDocument cursorRoot, ISplashScreen splashScreen, AudioClipConfig backgroundMusic,
             WorldInfoTool worldInfoTool,
             Entity playerEntity,
+            IAppArgs appArgs,
             CancellationToken ct)
         {
             (DynamicWorldContainer? container, bool) result =
                 await core.LoadDynamicWorldContainerAsync(bootstrapContainer, staticContainer, scenePluginSettingsContainer,
-                    settings, dynamicSettings, uiToolkitRoot, cursorRoot, splashScreen, backgroundMusic, worldInfoTool, playerEntity, ct);
+                    settings, dynamicSettings, uiToolkitRoot, cursorRoot, splashScreen, backgroundMusic, worldInfoTool, playerEntity, appArgs, ct);
 
             analytics.Track(General.INITIAL_LOADING, new JsonObject
             {
@@ -90,8 +93,8 @@ namespace Global.Dynamic
             return result;
         }
 
-        public Entity CreatePlayerEntity(StaticContainer staticContainer) =>
-            core.CreatePlayerEntity(staticContainer);
+        public void InitializePlayerEntity(StaticContainer staticContainer, Entity playerEntity) =>
+            core.InitializePlayerEntity(staticContainer, playerEntity);
 
         public async UniTask<bool> InitializePluginsAsync(StaticContainer staticContainer, DynamicWorldContainer dynamicWorldContainer, PluginSettingsContainer scenePluginSettingsContainer, PluginSettingsContainer globalPluginSettingsContainer, CancellationToken ct)
         {

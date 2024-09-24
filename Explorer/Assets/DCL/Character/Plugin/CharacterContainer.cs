@@ -9,12 +9,14 @@ using DCL.Character.Components;
 using DCL.CharacterCamera;
 using DCL.CharacterCamera.Systems;
 using DCL.CharacterMotion.Systems;
+using DCL.ECSComponents;
 using DCL.Multiplayer.Movement;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World;
 using DCL.PluginSystem.World.Dependencies;
+using DCL.SDKComponents.InputModifier.Components;
 using ECS.LifeCycle;
 using System;
 using System.Collections.Generic;
@@ -79,12 +81,14 @@ namespace DCL.Character.Plugin
         public UniTask InitializeAsync(NoExposedPluginSettings settings, CancellationToken ct) =>
             UniTask.CompletedTask;
 
-        public Entity CreatePlayerEntity(World world) =>
-            world.Create(
-                new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY),
+        public void InitializePlayerEntity(World world, Entity playerEntity)
+        {
+            world.Add(playerEntity,
                 new PlayerComponent(characterObject.Value.CameraFocus),
                 new CharacterTransform(characterObject.Value.Transform),
-                new PlayerMovementNetworkComponent(characterObject.Value.Controller));
+                new PlayerMovementNetworkComponent(characterObject.Value.Controller)
+              , new InputModifierComponent());
+        }
 
         public class GlobalPlugin : IDCLGlobalPluginWithoutSettings
         {
@@ -107,6 +111,7 @@ namespace DCL.Character.Plugin
             private readonly IExposedCameraData exposedCameraData;
             private readonly ExposedTransform exposedTransform;
             private readonly IComponentPool<SDKTransform> sdkTransformPool;
+            private readonly IComponentPool<PBMainCamera> mainCameraPool;
 
             public WorldPlugin(ExposedTransform exposedTransform, IExposedCameraData exposedCameraData,
                 IComponentPoolsRegistry componentPoolsRegistry, byte bucketPropagationLimit)
@@ -115,15 +120,16 @@ namespace DCL.Character.Plugin
                 this.bucketPropagationLimit = bucketPropagationLimit;
                 this.exposedCameraData = exposedCameraData;
                 sdkTransformPool = componentPoolsRegistry.GetReferenceTypePool<SDKTransform>();
+                mainCameraPool = componentPoolsRegistry.GetReferenceTypePool<PBMainCamera>();
             }
 
             public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
             {
-                WritePlayerTransformSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, sharedDependencies.SceneData,
+                WriteMainPlayerTransformSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, sharedDependencies.SceneData,
                     exposedTransform, sharedDependencies.ScenePartition, bucketPropagationLimit, sdkTransformPool, persistentEntities.Player);
 
                 WriteCameraComponentsSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, exposedCameraData, sharedDependencies.SceneData,
-                    sharedDependencies.ScenePartition, bucketPropagationLimit, sdkTransformPool, persistentEntities.Camera);
+                    sharedDependencies.ScenePartition, bucketPropagationLimit, sdkTransformPool, mainCameraPool, persistentEntities.Camera);
             }
         }
 

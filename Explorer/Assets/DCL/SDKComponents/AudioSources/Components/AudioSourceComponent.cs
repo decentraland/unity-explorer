@@ -36,6 +36,18 @@ namespace DCL.SDKComponents.AudioSources
             AudioSourceAssigned = true;
         }
 
+        /// <summary>
+        /// Sets the mute property of the Unity's AudioSource, if it was loaded.
+        /// </summary>
+        /// <param name="mute">The value to replace AudioSource's.</param>
+        public void Mute(bool mute)
+        {
+            if (AudioSource != null)
+            {
+                AudioSource.mute = mute;
+            }
+        }
+
         public void Dispose()
         {
             if (AudioSource != null)

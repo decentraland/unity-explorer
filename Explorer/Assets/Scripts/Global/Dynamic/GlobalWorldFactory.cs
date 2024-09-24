@@ -4,9 +4,11 @@ using CommunicationData.URLHelpers;
 using CrdtEcsBridge.RestrictedActions;
 using DCL.AvatarRendering.AvatarShape.Systems;
 using DCL.DebugUtilities;
+using DCL.Diagnostics;
 using DCL.GlobalPartitioning;
 using DCL.Ipfs;
 using DCL.LOD;
+using DCL.Multiplayer.Emotes;
 using DCL.Multiplayer.SDK.Systems.GlobalWorld;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
@@ -35,6 +37,7 @@ using SceneRuntime;
 using System.Collections.Generic;
 using System.Threading;
 using SystemGroups.Visualiser;
+using UnityEngine;
 using Utility;
 
 namespace Global.Dynamic
@@ -59,6 +62,7 @@ namespace Global.Dynamic
         private readonly StaticContainer staticContainer;
         private readonly IScenesCache scenesCache;
         private readonly ILODCache lodCache;
+        private readonly IEmotesMessageBus emotesMessageBus;
         private readonly World world;
         private readonly CurrentSceneInfo currentSceneInfo;
         private readonly HybridSceneParams hybridSceneParams;
@@ -72,6 +76,7 @@ namespace Global.Dynamic
             ICharacterDataPropagationUtility characterDataPropagationUtility,
             CurrentSceneInfo currentSceneInfo,
             ILODCache lodCache,
+            IEmotesMessageBus emotesMessageBus,
             World world)
         {
             partitionedWorldsAggregateFactory = staticContainer.SingletonSharedDependencies.AggregateFactory;
@@ -93,6 +98,7 @@ namespace Global.Dynamic
             this.characterDataPropagationUtility = characterDataPropagationUtility;
             this.currentSceneInfo = currentSceneInfo;
             this.lodCache = lodCache;
+            this.emotesMessageBus = emotesMessageBus;
             this.world = world;
 
             memoryBudget = staticContainer.SingletonSharedDependencies.MemoryBudget;
@@ -107,7 +113,10 @@ namespace Global.Dynamic
             globalSceneStateProvider.State = SceneState.Running;
 
             var builder = new ArchSystemsWorldBuilder<World>(world);
-            builder.InjectCustomGroup(new SyncedPreRenderingSystemGroup(null, globalSceneStateProvider));
+
+            AddShortInfo(world);
+
+            builder.InjectCustomGroup(new SyncedPreRenderingSystemGroup(globalSceneStateProvider));
 
             IReleasablePerformanceBudget sceneBudget = new ConcurrentLoadingPerformanceBudget(staticSettings.ScenesLoadingBudget);
 
@@ -130,6 +139,7 @@ namespace Global.Dynamic
 
             LoadStaticPointersSystem.InjectToWorld(ref builder);
             LoadFixedPointersSystem.InjectToWorld(ref builder);
+            LoadPortableExperiencePointersSystem.InjectToWorld(ref builder);
 
             // are replace by increasing radius
             var jobsMathHelper = new ParcelMathJobifiedHelper();
@@ -159,7 +169,9 @@ namespace Global.Dynamic
 
             OwnAvatarLoaderFromDebugMenuSystem.InjectToWorld(ref builder, playerEntity, debugContainerBuilder, realmData);
 
-            UpdateCurrentSceneSystem.InjectToWorld(ref builder, realmData, scenesCache, currentSceneInfo, playerEntity, staticContainer.SingletonSharedDependencies.SceneAssetLock);
+            UnloadPortableExperiencesSystem.InjectToWorld(ref builder);
+
+            UpdateCurrentSceneSystem.InjectToWorld(ref builder, realmData, scenesCache, currentSceneInfo, playerEntity, staticContainer.SingletonSharedDependencies.SceneAssetLock, debugContainerBuilder);
 
             var pluginArgs = new GlobalPluginArguments(playerEntity, v8ActiveEngines);
 
@@ -179,9 +191,14 @@ namespace Global.Dynamic
 
             var globalWorld = new GlobalWorld(world, worldSystems, finalizeWorldSystems, cameraSamplingData, realmSamplingData, destroyCancellationSource);
 
-            sceneFactory.SetGlobalWorldActions(new GlobalWorldActions(globalWorld.EcsWorld, playerEntity));
+            sceneFactory.SetGlobalWorldActions(new GlobalWorldActions(globalWorld.EcsWorld, playerEntity, emotesMessageBus));
 
             return globalWorld;
+        }
+
+        private static void AddShortInfo(World world)
+        {
+            world.Create(new SceneShortInfo(Vector2Int.zero, "global"));
         }
     }
 }

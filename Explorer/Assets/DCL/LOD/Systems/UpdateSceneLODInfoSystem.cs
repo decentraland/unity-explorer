@@ -5,6 +5,8 @@ using AssetManagement;
 using DCL.Diagnostics;
 using DCL.LOD.Components;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Optimization.PerformanceBudgeting;
+using DCL.PluginSystem.Global;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
@@ -46,7 +48,7 @@ namespace DCL.LOD.Systems
         }
 
         [Query]
-        [None(typeof(DeleteEntityIntention))]
+        [None(typeof(DeleteEntityIntention), typeof(PortableExperienceComponent))]
         private void UpdateLODLevel(ref SceneLODInfo sceneLODInfo, ref PartitionComponent partitionComponent, SceneDefinitionComponent sceneDefinitionComponent)
         {
             if (!partitionComponent.IsBehind) // Only want to load scene in our direction of travel
@@ -64,7 +66,7 @@ namespace DCL.LOD.Systems
         {
             sceneLODInfo.CurrentLODPromise.ForgetLoading(World);
 
-            string platformLODKey = $"{sceneDefinitionComponent.Definition.id.ToLower()}_{level.ToString()}{PlatformUtils.GetPlatform()}";
+            string platformLODKey = $"{sceneDefinitionComponent.Definition.id.ToLower()}_{level.ToString()}{PlatformUtils.GetCurrentPlatform()}";
             var manifest = LODUtils.LODManifests(decentralandUrlsSource)[level];
 
             var assetBundleIntention = GetAssetBundleIntention.FromHash(typeof(GameObject),
@@ -89,7 +91,7 @@ namespace DCL.LOD.Systems
                     sceneLODCandidate = (byte)(i + 1);
             }
 
-            //LOD0 load distance may be very far away from its show distance depending on the object size. 
+            //LOD0 load distance may be very far away from its show distance depending on the object size.
             //So, we force it if it has not been loaded and we passed the show distance threshold
             if (sceneLODInfo.metadata.LODChangeRelativeDistance >= partitionComponent.Bucket * ParcelMathHelper.PARCEL_SIZE
                 && sceneLODCandidate == 1 && !sceneLODInfo.HasLOD(0))

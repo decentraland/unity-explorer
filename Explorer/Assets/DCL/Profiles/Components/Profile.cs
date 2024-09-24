@@ -1,4 +1,4 @@
-using DCL.AvatarRendering.Wearables;
+using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.ECSComponents;
 using DCL.Optimization.ThreadSafePool;
@@ -64,7 +64,7 @@ namespace DCL.Profiles
 
         public bool HasConnectedWeb3 { get; internal set; }
         public string? Description { get; set; }
-        public int TutorialStep { get; internal set; }
+        public int TutorialStep { get; set; }
         public string? Email { get; internal set; }
         public string? Country { get; set; }
         public string? EmploymentStatus { get; set; }
@@ -141,7 +141,7 @@ namespace DCL.Profiles
 
         public static Profile NewRandomProfile(string? userId) =>
             new (
-                userId ?? IProfileRepository.GUEST_RANDOM_ID,
+                userId: userId ?? IProfileRepository.GUEST_RANDOM_ID,
                 IProfileRepository.PLAYER_RANDOM_ID,
                 new Avatar(
                     BodyShape.MALE,
@@ -150,6 +150,13 @@ namespace DCL.Profiles
                     WearablesConstants.DefaultColors.GetRandomHairColor(),
                     WearablesConstants.DefaultColors.GetRandomSkinColor()
                 )
+            );
+
+        public static Profile NewProfileWithAvatar(string? userId, Avatar avatar) =>
+            new (
+                userId: userId ?? IProfileRepository.GUEST_RANDOM_ID,
+                IProfileRepository.PLAYER_RANDOM_ID,
+                avatar
             );
 
         public void Dispose() =>

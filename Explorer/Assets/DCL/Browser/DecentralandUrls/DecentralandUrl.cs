@@ -13,8 +13,6 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         PrivacyPolicy,
         TermsOfUse,
 
-        ApiChunks,
-
         ApiPlaces,
         POI,
         ContentModerationReport,
@@ -33,10 +31,14 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         Notification,
         NotificationRead,
 
+        Help,
+
         FeatureFlags,
 
         Market,
 
         AssetBundlesCDN,
+
+        Badges,
     }
 }

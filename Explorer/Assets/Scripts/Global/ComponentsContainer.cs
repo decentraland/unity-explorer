@@ -114,7 +114,7 @@ namespace Global
                .Add(SDKComponentBuilder<PBBillboard>.Create(ComponentID.BILLBOARD).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBEngineInfo>.Create(ComponentID.ENGINE_INFO).AsProtobufResult())
                .Add(SDKComponentBuilder<PBVisibilityComponent>.Create(ComponentID.VISIBILITY_COMPONENT).AsProtobufComponent())
-               .Add(SDKComponentBuilder<PBGltfContainerLoadingState>.Create(ComponentID.GLTF_CONTAINER_LOADING_STATE).AsProtobufComponent())
+               .Add(SDKComponentBuilder<PBGltfContainerLoadingState>.Create(ComponentID.GLTF_CONTAINER_LOADING_STATE).AsProtobufResult())
                .Add(SDKComponentBuilder<PBAvatarShape>.Create(ComponentID.AVATAR_SHAPE).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBAudioSource>.Create(ComponentID.AUDIO_SOURCE).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBAudioStream>.Create(ComponentID.AUDIO_STREAM).AsProtobufComponent())
@@ -130,7 +130,10 @@ namespace Global
                .Add(SDKComponentBuilder<PBAvatarEquippedData>.Create(ComponentID.AVATAR_EQUIPPED_DATA).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBAvatarEmoteCommand>.Create(ComponentID.AVATAR_EMOTE_COMMAND).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBRealmInfo>.Create(ComponentID.REALM_INFO).AsProtobufResult())
-               .Add(SDKComponentBuilder<PBMapPin>.Create(ComponentID.MAP_PIN).AsProtobufComponent());
+               .Add(SDKComponentBuilder<PBMapPin>.Create(ComponentID.MAP_PIN).AsProtobufComponent())
+               .Add(SDKComponentBuilder<PBInputModifier>.Create(ComponentID.INPUT_MODIFIER).AsProtobufComponent())
+               .Add(SDKComponentBuilder<PBMainCamera>.Create(ComponentID.MAIN_CAMERA).AsProtobufComponent())
+               .Add(SDKComponentBuilder<PBVirtualCamera>.Create(ComponentID.VIRTUAL_CAMERA).AsProtobufComponent());
 
             Transform rootContainer = new GameObject("ROOT_POOL_CONTAINER").transform;
 

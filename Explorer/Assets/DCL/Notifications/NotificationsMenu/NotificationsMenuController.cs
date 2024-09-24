@@ -1,6 +1,7 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Backpack;
+using DCL.Diagnostics;
 using DCL.Notifications.NotificationEntry;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
@@ -55,6 +56,7 @@ namespace DCL.Notifications.NotificationsMenu
             this.view.LoopList.InitListView(0, OnGetItemByIndex);
             this.view.CloseButton.onClick.AddListener(ClosePanel);
             InitialNotificationRequestAsync(lifeCycleCts.Token).Forget();
+            notificationsBusController.SubscribeToAllNotificationTypesReceived(OnNotificationReceived);
         }
 
         public void Dispose()
@@ -119,7 +121,7 @@ namespace DCL.Notifications.NotificationsMenu
             notificationView.HeaderText.text = notificationData.GetHeader();
             notificationView.TitleText.text = notificationData.GetTitle();
             notificationView.NotificationType = notificationData.Type;
-            notificationView.NotificationId = notificationData.Id;
+            notificationView.Notification = notificationData;
             notificationView.CloseButton.gameObject.SetActive(false);
             notificationView.UnreadImage.SetActive(!notificationData.Read);
             notificationView.TimeText.text = TimestampUtilities.GetRelativeTime(notificationData.Timestamp);
@@ -140,9 +142,9 @@ namespace DCL.Notifications.NotificationsMenu
             }
         }
 
-        private void ClickedNotification(NotificationType notificationType, string notificationId)
+        private void ClickedNotification(NotificationType notificationType, INotification notification)
         {
-            notificationsBusController.ClickNotification(notificationType);
+            notificationsBusController.ClickNotification(notificationType, notification);
         }
 
         private async UniTask LoadNotificationThumbnailAsync(NotificationView notificationView, INotification notificationData,
@@ -152,11 +154,19 @@ namespace DCL.Notifications.NotificationsMenu
                 new CommonArguments(URLAddress.FromString(notificationData.GetThumbnail())),
                 new GetTextureArguments(false),
                 GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp),
-                ct);
+                ct,
+                ReportCategory.UI);
             Sprite? thumbnailSprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height),
                 VectorUtilities.OneHalf, PIXELS_PER_UNIT, 0, SpriteMeshType.FullRect, Vector4.one, false);
             notificationThumbnailCache.Add(notificationData.Id, thumbnailSprite);
             notificationView.NotificationImage.SetImage(thumbnailSprite);
+        }
+
+        private void OnNotificationReceived(INotification notification)
+        {
+            notifications.Insert(0, notification);
+            view.LoopList.SetListItemCount(notifications.Count, false);
+            view.LoopList.RefreshAllShownItem();
         }
     }
 }

@@ -12,7 +12,7 @@ namespace DCL.MapRenderer.MapLayers.Pins
 {
     internal class PinMarker : IPinMarker
     {
-        private const float MAP_MIN_PIN_SCALE = 22;
+        private const float NAVMAP_PIN_DEFAULT_SCALE = 22;
         private const float MINIMAP_MIN_SIZE_FOR_PIN = 35;
 
         private readonly IMapCullingController cullingController;
@@ -23,17 +23,19 @@ namespace DCL.MapRenderer.MapLayers.Pins
         private CancellationTokenSource selectionCancellationTokenSource;
 
         public Vector3 CurrentPosition => poolableBehavior.currentPosition;
-        public Sprite CurrentSprite => poolableBehavior.instance?.mapPinIcon.sprite;
+        public Sprite? CurrentSprite => poolableBehavior.instance?.mapPinIcon.sprite;
 
         public bool IsVisible => poolableBehavior.isVisible;
         public bool IsDestination { get; private set; }
+        public bool IsSelected { get; private set; }
         public string Title { get; private set; }
-        public Texture2D Icon { get; private set; }
+
         public string Description { get; private set; }
         public Vector2Int ParcelPosition { get; private set; }
 
         public Vector2 Pivot => new (0.5f, 0.5f);
         private float currentBaseScale { get; set; }
+        private Texture2D? icon { get; set; }
 
         public PinMarker(IObjectPool<PinMarkerObject> objectsPool, IMapCullingController cullingController)
         {
@@ -57,25 +59,42 @@ namespace DCL.MapRenderer.MapLayers.Pins
             poolableBehavior.SetCurrentPosition(position);
         }
 
-        public async UniTaskVoid AnimateSelectionAsync()
+        public async UniTaskVoid AnimateSelectionAsync(CancellationToken ct)
         {
             SetIconOutline(true);
+            pulseCancellationTokenSource = pulseCancellationTokenSource.SafeRestartLinked(ct);
+            IsSelected = true;
 
             if (poolableBehavior.instance != null)
             {
-                selectionCancellationTokenSource = selectionCancellationTokenSource.SafeRestart();
+                selectionCancellationTokenSource = selectionCancellationTokenSource.SafeRestartLinked(ct);
                 await PinMarkerHelper.ScaleToAsync(poolableBehavior.instance.selectionScalingParent, new Vector2 (1.5f, 1.5f), 0.5f, Ease.OutBack, selectionCancellationTokenSource.Token);
             }
         }
 
-        public async UniTaskVoid AnimateDeselectionAsync()
+        public void DeselectImmediately(IPinMarker.ScaleType scaleType)
         {
             SetIconOutline(false);
+            pulseCancellationTokenSource.SafeCancelAndDispose();
+            selectionCancellationTokenSource.SafeCancelAndDispose();
+            if (poolableBehavior.instance != null)
+                poolableBehavior.instance.selectionScalingParent.localScale = Vector3.one;
+            ResetScale(scaleType);
+            IsSelected = false;
+        }
+
+        public async UniTaskVoid AnimateDeselectionAsync(CancellationToken ct)
+        {
+            SetIconOutline(false);
+            pulseCancellationTokenSource = pulseCancellationTokenSource.SafeRestartLinked(ct);
+            IsSelected = false;
 
             if (poolableBehavior.instance != null)
             {
-                selectionCancellationTokenSource = selectionCancellationTokenSource.SafeRestart();
+                selectionCancellationTokenSource = selectionCancellationTokenSource.SafeRestartLinked(ct);
                 await PinMarkerHelper.ScaleToAsync(poolableBehavior.instance.selectionScalingParent, Vector3.one, 0.5f, Ease.OutBack, selectionCancellationTokenSource.Token);
+                //We dont reset the ct in this case because it was already restarted and linked to the ct of AnimateDeselectionAsync
+                ResetPulseAnimation(false);
             }
         }
 
@@ -101,16 +120,16 @@ namespace DCL.MapRenderer.MapLayers.Pins
             IsDestination = false;
         }
 
-        public void SetTexture(Texture2D texture)
+        public void SetTexture(Texture2D? texture)
         {
-            Icon = texture;
+            icon = texture;
             poolableBehavior.instance?.SetTexture(texture);
         }
 
         public void OnBecameVisible()
         {
             poolableBehavior.OnBecameVisible();
-            if (Icon != null) { poolableBehavior.instance?.SetTexture(Icon); }
+            poolableBehavior.instance?.SetTexture(icon);
             poolableBehavior.instance?.SetAsDestination(IsDestination);
             poolableBehavior.instance?.SetScale(currentNewScale);
             ResetPulseAnimation();
@@ -125,21 +144,21 @@ namespace DCL.MapRenderer.MapLayers.Pins
 
         public void SetZoom(float baseScale, float baseZoom, float zoom)
         {
-            currentBaseScale = Math.Max(baseScale, MAP_MIN_PIN_SCALE);
+            currentBaseScale = Math.Max(baseScale, NAVMAP_PIN_DEFAULT_SCALE);
             currentNewScale = Math.Max(zoom / baseZoom * currentBaseScale, currentBaseScale);
             poolableBehavior.instance?.SetScale(currentNewScale);
         }
 
-        public void ResetScale()
+        public void ResetScale(IPinMarker.ScaleType type)
         {
-            currentNewScale = MINIMAP_MIN_SIZE_FOR_PIN;
+            currentNewScale = type == IPinMarker.ScaleType.MINIMAP ? MINIMAP_MIN_SIZE_FOR_PIN : NAVMAP_PIN_DEFAULT_SCALE;
             poolableBehavior.instance?.SetScale(currentNewScale);
         }
 
-        private void ResetPulseAnimation()
+        private void ResetPulseAnimation(bool resetCt = true)
         {
-            pulseCancellationTokenSource = pulseCancellationTokenSource.SafeRestart();
-            if (!IsDestination && poolableBehavior.instance != null) PinMarkerHelper.PulseScaleAsync(poolableBehavior.instance.pulseScalingParent, ct: pulseCancellationTokenSource.Token).Forget();
+            if (resetCt) pulseCancellationTokenSource = pulseCancellationTokenSource.SafeRestart();
+            if (!IsDestination && !IsSelected && poolableBehavior.instance != null) PinMarkerHelper.PulseScaleAsync(poolableBehavior.instance.pulseScalingParent, ct: pulseCancellationTokenSource.Token).Forget();
         }
 
         public void Show(Action? onFinish = null)

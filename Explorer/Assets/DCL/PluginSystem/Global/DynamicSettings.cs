@@ -1,6 +1,7 @@
+using DCL.AuthenticationScreenFlow;
 using DCL.Chat;
 using DCL.Input;
-using DCL.MapRenderer;
+using DCL.Multiplayer.Movement.Settings;
 using DCL.Nametags;
 using System;
 using UnityEngine;
@@ -19,5 +20,8 @@ namespace DCL.PluginSystem.Global
         [field: SerializeField] public AssetReferenceT<CursorSettings> CursorSettings { get; private set; }
         [field: SerializeField] public AssetReferenceGameObject MainUIView { get; private set; }
         [field: SerializeField] public AssetReferenceT<AudioMixer> GeneralAudioMixer { get; private set; }
+        [field: SerializeField] public AssetReferenceT<MultiplayerDebugSettings> MultiplayerDebugSettings { get; private set; }
+
+        [field: SerializeField] public AssetReferenceGameObject AppVerRedirectionScreenPrefab { get; private set; }
     }
 }

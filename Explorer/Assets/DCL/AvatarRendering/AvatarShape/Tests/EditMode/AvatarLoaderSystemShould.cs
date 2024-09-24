@@ -1,7 +1,8 @@
-﻿using CommunicationData.URLHelpers;
+﻿using Arch.Core;
+using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.Systems;
-using DCL.AvatarRendering.Wearables;
+using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.ECSComponents;
 using DCL.Ipfs;
@@ -108,7 +109,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             system.Update(0);
 
             ref AvatarShapeComponent avatarShapeComponent = ref world.Get<AvatarShapeComponent>(entity);
-            int originalPromiseVersion = avatarShapeComponent.WearablePromise.Entity.Entity.Id;
+            EntityReference originalPromise = avatarShapeComponent.WearablePromise.Entity;
 
             pbAvatarShape.BodyShape = BODY_SHAPE_FEMALE;
             pbAvatarShape.IsDirty = true;
@@ -117,7 +118,8 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
 
             //Assert
             //Should be different ids, because the promise was cancelled and a new one was created
-            Assert.AreNotEqual(avatarShapeComponent.WearablePromise.Entity.Entity.Id, originalPromiseVersion);
+            Assert.That(world.IsAlive(originalPromise), Is.False);
+            Assert.AreNotEqual(avatarShapeComponent.WearablePromise.Entity, originalPromise);
         }
     }
 }

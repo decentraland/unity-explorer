@@ -40,8 +40,8 @@ namespace SceneRunner.Scene
             IReadOnlyList<Vector2Int> parcels,
             StaticSceneMessages staticSceneMessages)
         {
-            this.SceneContent = sceneContent;
-            this.SceneEntityDefinition = sceneDefinition;
+            SceneContent = sceneContent;
+            SceneEntityDefinition = sceneDefinition;
             AssetBundleManifest = assetBundleManifest;
             StaticSceneMessages = staticSceneMessages;
             Parcels = parcels;
@@ -108,6 +108,9 @@ namespace SceneRunner.Scene
 
             return false;
         }
+
+        public bool IsPortableExperience() =>
+            SceneEntityDefinition.metadata.isPortableExperience;
 
         public bool IsSdk7() =>
             SceneEntityDefinition.metadata.runtimeVersion == "7";

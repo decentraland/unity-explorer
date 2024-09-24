@@ -40,7 +40,7 @@ namespace DCL.PluginSystem.Global
         private readonly IArchipelagoIslandRoom archipelagoIslandRoom;
         private readonly ICharacterObject characterObject;
         private readonly IDebugContainerBuilder debugContainerBuilder;
-        private readonly IEmoteCache emoteCache;
+        private readonly IEmoteStorage emoteStorage;
         private readonly IEntityParticipantTable entityParticipantTable;
         private readonly IGateKeeperSceneRoom gateKeeperSceneRoom;
         private readonly IMessagePipesHub messagePipesHub;
@@ -72,7 +72,7 @@ namespace DCL.PluginSystem.Global
             IRealmData realmData,
             IRemoteEntities remoteEntities,
             IScenesCache scenesCache,
-            IEmoteCache emoteCache,
+            IEmoteStorage emoteStorage,
             ICharacterDataPropagationUtility characterDataPropagationUtility)
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -91,7 +91,7 @@ namespace DCL.PluginSystem.Global
             this.remoteEntities = remoteEntities;
             this.realmData = realmData;
             this.scenesCache = scenesCache;
-            this.emoteCache = emoteCache;
+            this.emoteStorage = emoteStorage;
             this.characterDataPropagationUtility = characterDataPropagationUtility;
         }
 
@@ -129,7 +129,8 @@ namespace DCL.PluginSystem.Global
             PlayerCRDTEntitiesHandlerSystem.InjectToWorld(ref builder, scenesCache);
             PlayerProfileDataPropagationSystem.InjectToWorld(ref builder, characterDataPropagationUtility, globalPluginArguments.PlayerEntity);
             ResetDirtyFlagSystem<AvatarEmoteCommandComponent>.InjectToWorld(ref builder);
-            AvatarEmoteCommandPropagationSystem.InjectToWorld(ref builder, emoteCache);
+            AvatarEmoteCommandPropagationSystem.InjectToWorld(ref builder, emoteStorage);
+            PlayerTransformPropagationSystem.InjectToWorld(ref builder);
 #endif
         }
 

@@ -14,6 +14,8 @@ namespace ECS.Prioritization
         [SerializeField] private float aggregatePositionTolerance = 0.5f;
         [SerializeField] private int maxLoadingDistanceInParcels;
 
+        [field: SerializeField] public int MinLoadingDistanceInParcels { get; private set; }
+
         [field: SerializeField]
         public float AggregateAngleTolerance { get; private set; }
 
@@ -21,11 +23,13 @@ namespace ECS.Prioritization
         
         public int MaxLoadingDistanceInParcels
         {
-            get => Mathf.Min(maxLoadingDistanceInParcels, ParcelMathJobifiedHelper.RADIUS_HARD_LIMIT);
+            get => Math.Min(MinLoadingDistanceInParcels,
+                Math.Min(maxLoadingDistanceInParcels, ParcelMathJobifiedHelper.RADIUS_HARD_LIMIT));
 
             set
             {
-                value = Mathf.Min(value, ParcelMathJobifiedHelper.RADIUS_HARD_LIMIT);
+                value = Math.Clamp(value, MinLoadingDistanceInParcels,
+                    Math.Min(value, ParcelMathJobifiedHelper.RADIUS_HARD_LIMIT));
 
                 if (maxLoadingDistanceInParcels == value)
                     return;

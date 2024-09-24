@@ -45,6 +45,7 @@ namespace DCL.CharacterCamera.Systems
                     dvc.m_YAxis.m_InputAxisValue = cameraInput.Delta.y;
                     break;
                 case CameraMode.ThirdPerson:
+                case CameraMode.SDKCamera:
                     CinemachineFreeLook tpc = cinemachinePreset.ThirdPersonCameraData.Camera;
                     tpc.m_XAxis.m_InputAxisValue = cameraInput.Delta.x;
                     tpc.m_YAxis.m_InputAxisValue = cameraInput.Delta.y;
@@ -63,7 +64,7 @@ namespace DCL.CharacterCamera.Systems
                     ApplyFOV(dt, cinemachinePreset, in cameraInput);
                     break;
                 default:
-                    ReportHub.LogError(GetReportCategory(), $"Camera mode is unknown {camera.Mode}");
+                    ReportHub.LogError(GetReportData(), $"Camera mode is unknown {camera.Mode}");
                     break;
             }
 
@@ -93,7 +94,7 @@ namespace DCL.CharacterCamera.Systems
                     cinemachinePreset.ForceFreeCameraLookAt(lookAtIntent);
                     break;
                 default:
-                    ReportHub.LogError(GetReportCategory(), $"Camera mode is unknown {camera.Mode}");
+                    ReportHub.LogError(GetReportData(), $"Camera mode is unknown {camera.Mode}");
                     break;
             }
 

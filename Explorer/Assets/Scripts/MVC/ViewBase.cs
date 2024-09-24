@@ -6,8 +6,6 @@ using UnityEngine.UI;
 
 namespace MVC
 {
-    //TODO: DAVIDE?! Maybe we can extract some basic logic from ViewBase into a more generic class (UIElementBase??) and only keep in ViewBase the view specific things,
-    //so we can create proper class hierarchies for View/Controller based UIs and just Elements (without controllers)?
     public abstract class ViewBase : MonoBehaviour
     {
         public event Action? OnViewHidden;
@@ -28,15 +26,15 @@ namespace MVC
         public virtual async UniTask ShowAsync(CancellationToken ct)
         {
             gameObject.SetActive(true);
-            if (raycaster) raycaster.enabled = false; // Enable raycasts while the animation is playing
+            if (raycaster != null) raycaster.enabled = false; // Disable raycasts while the show animation is playing
             await PlayShowAnimationAsync(ct);
-            if (raycaster) raycaster.enabled = true;
+            if (raycaster != null) raycaster.enabled = true;
             OnViewShown?.Invoke();
         }
 
         public virtual async UniTask HideAsync(CancellationToken ct, bool isInstant = false)
         {
-            if (raycaster) raycaster.enabled = false;
+            if (raycaster != null) raycaster.enabled = false;
 
             if (!isInstant)
                 await PlayHideAnimationAsync(ct);

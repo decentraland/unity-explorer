@@ -8,7 +8,6 @@ using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
 using DCL.MapPins.Components;
 using ECS.LifeCycle.Components;
-using ECS.StreamableLoading.Common.Components;
 using MVC;
 using System.Collections.Generic;
 using System.Threading;
@@ -58,7 +57,14 @@ namespace DCL.MapRenderer.MapLayers.Pins
 
         private void OnRemovedDestination()
         {
-            foreach (KeyValuePair<Entity, IPinMarker> pair in markers) { pair.Value.SetAsDestination(false); }
+            foreach (KeyValuePair<Entity, IPinMarker> pair in markers)
+            {
+                if (pair.Value.IsDestination)
+                {
+                    pair.Value.SetAsDestination(false);
+                    break;
+                }
+            }
         }
 
         [Query]
@@ -141,7 +147,7 @@ namespace DCL.MapRenderer.MapLayers.Pins
         public void ResetToBaseScale()
         {
             foreach (IPinMarker marker in markers.Values)
-                marker.ResetScale();
+                marker.ResetScale(IPinMarker.ScaleType.MINIMAP);
         }
 
         public UniTask Disable(CancellationToken cancellationToken)
