@@ -1,6 +1,7 @@
 ﻿using CommunicationData.URLHelpers;
 using CRDT.Serializer;
 using CrdtEcsBridge.Components;
+using CrdtEcsBridge.JsModulesImplementation;
 using CrdtEcsBridge.JsModulesImplementation.Communications;
 using CrdtEcsBridge.JsModulesImplementation.Communications.SDKMessageBus;
 using CrdtEcsBridge.PoolsProviders;
@@ -29,6 +30,7 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.Networking;
 using Utility;
+using Utility.Multithreading;
 
 namespace SceneRunner
 {
@@ -174,14 +176,16 @@ namespace SceneRunner
 
             SceneInstanceDependencies.WithRuntimeAndJsAPIBase runtimeDeps;
 
+            var engineAPIMutexOwner = new MultiThreadSync.Owner(nameof(EngineAPIImplementation));
+
             if (ENABLE_SDK_OBSERVABLES)
             {
-                var sdkCommsControllerAPI = new SDKMessageBusCommsAPIImplementation(realmData, sceneData, messagePipesHub, sceneRuntime, deps.SceneStateProvider);
+                var sdkCommsControllerAPI = new SDKMessageBusCommsAPIImplementation(sceneData, messagePipesHub, sceneRuntime);
                 sceneRuntime.RegisterSDKMessageBusCommsApi(sdkCommsControllerAPI);
 
                 runtimeDeps = new SceneInstanceDependencies.WithRuntimeJsAndSDKObservablesEngineAPI(deps, sceneRuntime,
                     sharedPoolsProvider, crdtSerializer, mvcManager, globalWorldActions, realmData!, messagePipesHub,
-                    webRequestController, portableExperiencesController);
+                    webRequestController, engineAPIMutexOwner);
 
                 sceneRuntime.RegisterAll(
                     (ISDKObservableEventsEngineApi)runtimeDeps.EngineAPI,
@@ -209,7 +213,7 @@ namespace SceneRunner
             {
                 runtimeDeps = new SceneInstanceDependencies.WithRuntimeAndJsAPI(deps, sceneRuntime, sharedPoolsProvider,
                     crdtSerializer, mvcManager, globalWorldActions, realmData!, messagePipesHub, webRequestController,
-                    portableExperiencesController);
+                    engineAPIMutexOwner);
 
                 sceneRuntime.RegisterAll(
                     runtimeDeps.EngineAPI,

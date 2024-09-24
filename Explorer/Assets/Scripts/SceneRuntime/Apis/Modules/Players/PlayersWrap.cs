@@ -45,7 +45,7 @@ namespace SceneRuntime.Apis.Modules.Players
 
         [UsedImplicitly]
         public object PlayersInScene() =>
-            new PlayerListResponse(roomHub.SceneRoom().Participants);
+            new PlayerListResponse(roomHub.SceneRoom().Room().Participants);
 
         public void Dispose()
         {

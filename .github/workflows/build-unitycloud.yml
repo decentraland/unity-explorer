@@ -274,6 +274,11 @@ jobs:
         if: always()
         run: cat unity_cloud_log.log
 
+      - name: Extract and display errors
+        run: |
+          echo "=== Extracted Errors for ${{ matrix.target }} ==="
+          grep -iE "error c|fatal" unity_cloud_log.log | sed 's/^/\x1b[31m/' | sed 's/$/\x1b[0m/' || echo "No 'error c' or 'fatal' errors found in ${{ matrix.target }} log."
+
       # Will run always (even if failing)
       - name: Generate Shader Compilation Report
         if: always()
