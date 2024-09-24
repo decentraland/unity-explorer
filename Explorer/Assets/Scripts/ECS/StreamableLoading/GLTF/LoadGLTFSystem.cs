@@ -86,7 +86,7 @@ namespace ECS.StreamableLoading.GLTF
                 GenerateMipMaps = false,
             };
 
-            bool success = await gltfImport.Load(finalDownloadUrl, gltFastSettings, ct);
+            bool success = await gltfImport.Load(intention.Name, gltFastSettings, ct);
 
             // Release budget now to not hold it until dependencies are resolved to prevent a deadlock
             acquiredBudget.Release();

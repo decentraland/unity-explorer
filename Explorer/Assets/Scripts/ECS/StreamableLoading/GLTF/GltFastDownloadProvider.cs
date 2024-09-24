@@ -37,10 +37,12 @@ namespace ECS.StreamableLoading.GLTF
 
         public async Task<IDownload> RequestAsync(Uri uri)
         {
-            // Even if the file is not found in the scene mappings, it can still be a valid uri, e.g. the already hashed GLTF file.
             string originalFilePath = string.Concat(targetGltfDirectoryPath, GetFileNameFromUri(uri));
-            if (sceneData.SceneContent.TryGetContentUrl(originalFilePath, out var tryGetContentUrlResult))
-                uri = new Uri(tryGetContentUrlResult);
+
+            if (!sceneData.SceneContent.TryGetContentUrl(originalFilePath, out var tryGetContentUrlResult))
+                throw new Exception($"Error on GLTF download ({targetGltfOriginalPath} - {uri}): NOT FOUND");
+
+            uri = new Uri(tryGetContentUrlResult);
 
             // TODO: Replace for WebRequestController (Planned in PR #1670)
             using (UnityWebRequest webRequest = new UnityWebRequest(uri))
