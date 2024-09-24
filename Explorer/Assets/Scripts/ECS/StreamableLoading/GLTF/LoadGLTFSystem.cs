@@ -23,17 +23,11 @@ namespace ECS.StreamableLoading.GLTF
         private static MaterialGenerator gltfMaterialGenerator = new DecentralandMaterialGenerator("DCL/Scene");
 
         private ISceneData sceneData;
-        private GltFastReportHubLogger gltfConsoleLogger = new GltFastReportHubLogger(); // TODO: Remove ???
-        private IPartitionComponent partitionComponent;
+        private GltFastReportHubLogger gltfConsoleLogger = new GltFastReportHubLogger();
 
-        internal LoadGLTFSystem(
-            World world,
-            IStreamableCache<GLTFData, GetGLTFIntention> cache,
-            ISceneData sceneData,
-            IPartitionComponent partitionComponent) : base(world, cache)
+        internal LoadGLTFSystem(World world, IStreamableCache<GLTFData, GetGLTFIntention> cache, ISceneData sceneData) : base(world, cache)
         {
             this.sceneData = sceneData;
-            this.partitionComponent = partitionComponent;
         }
 
         // Might be used later
@@ -73,7 +67,7 @@ namespace ECS.StreamableLoading.GLTF
                     new ReportData(GetReportCategory()),
                     new Exception("The content to download couldn't be found"));
 
-            GltFastDownloadProvider gltfDownloadProvider = new GltFastDownloadProvider(World, sceneData, partitionComponent, intention.Name!);
+            GltFastDownloadProvider gltfDownloadProvider = new GltFastDownloadProvider(World, sceneData, partition, intention.Name!);
             var gltfImport = new GltfImport(
                 downloadProvider: gltfDownloadProvider,
                 logger: gltfConsoleLogger,
