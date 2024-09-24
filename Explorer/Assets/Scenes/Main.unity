@@ -500,6 +500,7 @@ MonoBehaviour:
     enableEmulateNoLivekitConnection: 0
     enableRemotePortableExperiences: 0
     portableExperiencesEnsToLoad: []
+    emotesToAddToUserProfile: []
     overrideConnectionQuality: 0
     connectionQuality: 2
   globalPluginSettingsContainer: {fileID: 11400000, guid: 7575a56449e4af444b9c13267319c95d, type: 2}
@@ -552,6 +553,7 @@ MonoBehaviour:
       m_EditorAssetChanged: 0
   splashRoot: {fileID: 7722564697705550552}
   splashScreenAnimation: {fileID: 7722564697705550553}
+  logoAnimation: {fileID: 214014219}
   backgroundMusic: {fileID: 11400000, guid: 26e7ebc818785ad428e1de2791a42768, type: 2}
   worldInfoTool: {fileID: 1929393545}
 --- !u!1 &946305962
