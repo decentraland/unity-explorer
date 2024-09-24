@@ -53,7 +53,7 @@ namespace DCL.Multiplayer.Movement.Systems
         private readonly ElementBinding<string> duration;
         private readonly NetworkMessageBindings intStart = new ();
         private readonly NetworkMessageBindings intEnd = new ();
-        private readonly DebugWidgetVisibilityBinding widgetVisibility;
+        private readonly DebugWidgetVisibilityBinding widgetVisibility = new (false);
 
         private Entity? selfReplicaEntity;
         private bool useLinear;
@@ -72,7 +72,7 @@ namespace DCL.Multiplayer.Movement.Systems
             this.entityParticipantTable = entityParticipantTable;
 
             widget = debugBuilder.TryAddWidget("Multiplayer Movement")
-                                ?.SetVisibilityBinding(widgetVisibility = new DebugWidgetVisibilityBinding(true));
+                                ?.SetVisibilityBinding(widgetVisibility);
 
             widget?.AddSingleButton("Instantiate Self-Replica", () => InstantiateSelfReplica(world))
                    .AddSingleButton("Remove Self-Replica", () => RemoveSelfReplica(world))
@@ -140,8 +140,11 @@ namespace DCL.Multiplayer.Movement.Systems
                 time.Value = interpolation.Time.ToString();
                 duration.Value = interpolation.TotalDuration.ToString();
 
-                UpdateNetworkMessageMarkers(intStart, interpolation.Start);
-                UpdateNetworkMessageMarkers(intEnd, interpolation.End);
+                if (interpolation.Enabled)
+                {
+                    UpdateNetworkMessageMarkers(intStart, interpolation.Start);
+                    UpdateNetworkMessageMarkers(intEnd, interpolation.End);
+                }
             }
 
             return;
