@@ -35,7 +35,7 @@ namespace DCL.Multiplayer.Movement.Systems
         private readonly ExposedTransform playerTransform;
         private readonly MultiplayerDebugSettings debugSettings;
         private readonly IMultiplayerMovementSettings mainSettings;
-        private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
+        private readonly IReadOnlyEntityParticipantTable? entityParticipantTable;
 
         private readonly ElementBinding<string> entityId;
 
@@ -112,13 +112,13 @@ namespace DCL.Multiplayer.Movement.Systems
         protected override void Update(float t)
         {
             if (!widgetVisibility.IsConnectedAndExpanded) return;
-            if (!entityParticipantTable.Has(debugProfileId)) return;
+            if (entityParticipantTable != null && !entityParticipantTable.Has(debugProfileId)) return;
 
             Entity entity = entityParticipantTable.Entity(debugProfileId);
 
             entityId.Value = entity.Id.ToString();
 
-            if (World.TryGet(entity, out RemotePlayerMovementComponent remotePlayerMovementComponent))
+            if (World.TryGet(entity, out RemotePlayerMovementComponent remotePlayerMovementComponent) && remotePlayerMovementComponent.Queue != null)
             {
                 inboxCount.Value = remotePlayerMovementComponent.Queue.Count.ToString();
                 wasTeleported.Value = remotePlayerMovementComponent.WasTeleported.ToString();
