@@ -93,19 +93,19 @@ namespace Global.Dynamic
                 emotesToAddToUserProfile = null,
             };
 
-        // To avoid configuration issues, force full flow on build (Debug.isDebugBuild is always true in Editor)
-        public string[]? EmotesToAddToUserProfile => Debug.isDebugBuild ? this.emotesToAddToUserProfile : RELEASE_SETTINGS.emotesToAddToUserProfile;
-        public string[]? PortableExperiencesEnsToLoad => Debug.isDebugBuild ? this.portableExperiencesEnsToLoad : RELEASE_SETTINGS.portableExperiencesEnsToLoad;
-        public bool EnableRemotePortableExperiences => Debug.isDebugBuild ? this.enableRemotePortableExperiences : RELEASE_SETTINGS.enableRemotePortableExperiences;
-        public bool ShowSplash => Debug.isDebugBuild ? this.showSplash : RELEASE_SETTINGS.showSplash;
-        public bool ShowAuthentication => Debug.isDebugBuild ? this.showAuthentication : RELEASE_SETTINGS.showAuthentication;
-        public bool ShowLoading => Debug.isDebugBuild ? this.showLoading : RELEASE_SETTINGS.showLoading;
-        public bool EnableLandscape => Debug.isDebugBuild ? this.enableLandscape : RELEASE_SETTINGS.enableLandscape;
-        public bool EnableLOD => Debug.isDebugBuild ? this.enableLOD : RELEASE_SETTINGS.enableLOD;
-        public bool EnableVersionUpdateGuard => Debug.isDebugBuild ? this.enableVersionUpdateGuard : RELEASE_SETTINGS.enableVersionUpdateGuard;
-        public bool EnableEmulateNoLivekitConnection => Debug.isDebugBuild ? this.enableEmulateNoLivekitConnection : RELEASE_SETTINGS.enableEmulateNoLivekitConnection;
-        public bool OverrideConnectionQuality => Debug.isDebugBuild ? this.overrideConnectionQuality : RELEASE_SETTINGS.overrideConnectionQuality;
-        public ConnectionQuality ConnectionQuality => Debug.isDebugBuild ? this.connectionQuality : RELEASE_SETTINGS.connectionQuality;
+        // To avoid configuration issues, force full flow on build (Application.isEditor is always true in Editor, but in profile builds (i.e. when set to Development) we will have the expected relesae flow too.
+        public string[]? EmotesToAddToUserProfile => Application.isEditor ? this.emotesToAddToUserProfile : RELEASE_SETTINGS.emotesToAddToUserProfile;
+        public string[]? PortableExperiencesEnsToLoad => Application.isEditor ? this.portableExperiencesEnsToLoad : RELEASE_SETTINGS.portableExperiencesEnsToLoad;
+        public bool EnableRemotePortableExperiences => Application.isEditor ? this.enableRemotePortableExperiences : RELEASE_SETTINGS.enableRemotePortableExperiences;
+        public bool ShowSplash => Application.isEditor ? this.showSplash : RELEASE_SETTINGS.showSplash;
+        public bool ShowAuthentication => Application.isEditor ? this.showAuthentication : RELEASE_SETTINGS.showAuthentication;
+        public bool ShowLoading => Application.isEditor ? this.showLoading : RELEASE_SETTINGS.showLoading;
+        public bool EnableLandscape => Application.isEditor ? this.enableLandscape : RELEASE_SETTINGS.enableLandscape;
+        public bool EnableLOD => Application.isEditor ? this.enableLOD : RELEASE_SETTINGS.enableLOD;
+        public bool EnableVersionUpdateGuard => Application.isEditor ? this.enableVersionUpdateGuard : RELEASE_SETTINGS.enableVersionUpdateGuard;
+        public bool EnableEmulateNoLivekitConnection => Application.isEditor? this.enableEmulateNoLivekitConnection : RELEASE_SETTINGS.enableEmulateNoLivekitConnection;
+        public bool OverrideConnectionQuality => Application.isEditor ? this.overrideConnectionQuality : RELEASE_SETTINGS.overrideConnectionQuality;
+        public ConnectionQuality ConnectionQuality => Application.isEditor ? this.connectionQuality : RELEASE_SETTINGS.connectionQuality;
     }
 
     public class MainSceneLoader : MonoBehaviour
