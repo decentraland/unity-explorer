@@ -47,6 +47,8 @@ namespace DCL.Landscape.Utils
         private bool isValid;
         private string checksum;
         private const string FILE_NAME = "/terrain_cache";
+        private const string DICTIONARY_PATH = "/terrain_cache_dictionaries/";
+
 
         public const string ALPHA_MAPS = "alphaMaps";
         public const string HEIGHTS = "heights";
@@ -76,11 +78,16 @@ namespace DCL.Landscape.Utils
 
         public void SaveMetadataToFile(int seed, int chunkSize, int version, string parcelChecksum)
         {
-            string path = GetPath(seed, chunkSize, version);
+            var path = GetFilePath(seed, chunkSize, version);
             checksum = parcelChecksum;
 
             if (File.Exists(path))
+            {
                 File.Delete(path);
+                var dictionaryPath = GetDictionaryDirectory();
+                if (Directory.Exists(dictionaryPath))
+                    Directory.Delete(GetDictionaryDirectory(), true);
+            }
             
             using FileStream fileStream = File.Create(path);
             FORMATTER.Serialize(fileStream, this);
@@ -89,7 +96,7 @@ namespace DCL.Landscape.Utils
 
         public void SaveArrayToFile<T>(string name, string offsetX, string offsetZ, T[] arrayToSave) where T : struct
         {
-            var pathForDictionary = GetPathForDictionary(name, offsetX, offsetZ);
+            var pathForDictionary = GetDictionaryFilePath(name, offsetX, offsetZ);
             using var fileStreamForHeights = File.Create(pathForDictionary);
             FORMATTER.Serialize(fileStreamForHeights, arrayToSave);
         }
@@ -97,7 +104,7 @@ namespace DCL.Landscape.Utils
         public void SaveArrayToFile<T>(string name, string offsetX, string offsetZ, string layer, T[] arrayToSave)
             where T : struct
         {
-            var pathForDictionary = GetPathForDictionary(name, offsetX, offsetZ, layer);
+            var pathForDictionary = GetDictionaryFilePath(name, offsetX, offsetZ, layer);
             using var fileStreamForHeights = File.Create(pathForDictionary);
             FORMATTER.Serialize(fileStreamForHeights, arrayToSave);
         }
@@ -105,36 +112,43 @@ namespace DCL.Landscape.Utils
         public async UniTask<T[]> RetrieveArrayFromFile<T>(string name, string offsetX, string offsetZ)
         {
             await using var fileStream =
-                new FileStream(GetPathForDictionary(name, offsetX, offsetZ), FileMode.Open);
+                new FileStream(GetDictionaryFilePath(name, offsetX, offsetZ), FileMode.Open);
             return await UniTask.RunOnThreadPool(() => (T[])FORMATTER.Deserialize(fileStream));
         }
 
         public async UniTask<T[]> RetrieveArrayFromFile<T>(string name, string offsetX, string offsetZ, string layer)
         {
             await using var fileStream =
-                new FileStream(GetPathForDictionary(name, offsetX, offsetZ, layer), FileMode.Open);
+                new FileStream(GetDictionaryFilePath(name, offsetX, offsetZ, layer), FileMode.Open);
             return await UniTask.RunOnThreadPool(() => (T[])FORMATTER.Deserialize(fileStream));
         }
 
         public async UniTask<bool[]> RetrieveBoolArrayFromFile(string name, string offsetX, string offsetZ)
         {
             await using var fileStream =
-                new FileStream(GetPathForDictionary(name, offsetX, offsetZ), FileMode.Open);
+                new FileStream(GetDictionaryFilePath(name, offsetX, offsetZ), FileMode.Open);
             return await UniTask.RunOnThreadPool(() => (bool[])FORMATTER.Deserialize(fileStream));
         }
 
-        private static string GetPathForDictionary(string name, string x, string y)
+        private static string GetDictionaryFilePath(string name, string x, string y)
         {
-            return Application.persistentDataPath + FILE_NAME + $"_{name}_{x}_{y}.data";
+            return GetDictionaryDirectory() + $"{name}_{x}_{y}.data";
         }
 
-        private static string GetPathForDictionary(string name, string x, string y, string layer)
+        private static string GetDictionaryFilePath(string name, string x, string y, string layer)
         {
-            return Application.persistentDataPath + FILE_NAME + $"_{name}_{x}_{y}_{layer}.data";
+            return GetDictionaryDirectory() + $"{name}_{x}_{y}_{layer}.data";
         }
 
-        private static string GetPath(int seed, int chunkSize, int version) =>
-            Application.persistentDataPath + FILE_NAME + $"_{seed}_{chunkSize}_v{version}.data";
+        private static string GetFilePath(int seed, int chunkSize, int version)
+        {
+            return Application.persistentDataPath + FILE_NAME + $"_{seed}_{chunkSize}_v{version}.data";
+        }
+
+        private static string GetDictionaryDirectory()
+        {
+            return Application.persistentDataPath + DICTIONARY_PATH;
+        }
 
         public static TerrainLocalCache NewEmpty() =>
             new()
@@ -149,10 +163,15 @@ namespace DCL.Landscape.Utils
                 checksum = parcelChecksum,
             };
 
-            string path = GetPath(seed, chunkSize, version);
+            var path = GetFilePath(seed, chunkSize, version);
 
             if (force && File.Exists(path))
+            {
                 File.Delete(path);
+                var dictionaryPath = GetDictionaryDirectory();
+                if (Directory.Exists(dictionaryPath))
+                    Directory.Delete(GetDictionaryDirectory(), true);
+            }
 
             if (!File.Exists(path))
                 return emptyCache;
