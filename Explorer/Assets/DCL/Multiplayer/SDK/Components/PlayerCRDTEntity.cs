@@ -11,19 +11,33 @@ namespace DCL.Multiplayer.SDK.Components
     /// </summary>
     public struct PlayerCRDTEntity : IDirtyMarker
     {
-        public readonly CRDTEntity CRDTEntity;
-        public readonly ISceneFacade SceneFacade;
-        public readonly Entity SceneWorldEntity;
-        public readonly bool SceneEntityIsPersistent;
+        public CRDTEntity CRDTEntity { get; }
 
-        public PlayerCRDTEntity(CRDTEntity crdtEntity, ISceneFacade sceneFacade, Entity sceneWorldEntity, bool sceneEntityIsPersistent = false)
+        public ISceneFacade? SceneFacade { get; private set; }
+
+        public Entity SceneWorldEntity { get; private set; }
+
+        public PlayerCRDTEntity(CRDTEntity crdtEntity) : this()
         {
             CRDTEntity = crdtEntity;
+            SceneWorldEntity = Entity.Null;
+        }
+
+        public void AssignToScene(ISceneFacade sceneFacade, Entity sceneWorldEntity)
+        {
             SceneFacade = sceneFacade;
             SceneWorldEntity = sceneWorldEntity;
-            SceneEntityIsPersistent = sceneEntityIsPersistent;
             IsDirty = true;
         }
+
+        public void RemoveFromScene()
+        {
+            SceneFacade = null;
+            SceneWorldEntity = Entity.Null;
+            IsDirty = true;
+        }
+
+        public bool AssignedToScene => SceneFacade != null;
 
         public bool IsDirty { get; set; }
     }

@@ -20,6 +20,10 @@ namespace DCL.Notifications.NotificationsMenu
     public class NotificationsMenuController : IDisposable
     {
         private const int PIXELS_PER_UNIT = 50;
+        private static readonly List<NotificationType> NOTIFICATION_TYPES_TO_IGNORE = new()
+            {
+                NotificationType.INTERNAL_ARRIVED_TO_DESTINATION
+            };
 
         private readonly NotificationsMenuView view;
         private readonly NotificationsRequestController notificationsRequestController;
@@ -164,6 +168,9 @@ namespace DCL.Notifications.NotificationsMenu
 
         private void OnNotificationReceived(INotification notification)
         {
+            if(NOTIFICATION_TYPES_TO_IGNORE.Contains(notification.Type))
+                return;
+
             notifications.Insert(0, notification);
             view.LoopList.SetListItemCount(notifications.Count, false);
             view.LoopList.RefreshAllShownItem();

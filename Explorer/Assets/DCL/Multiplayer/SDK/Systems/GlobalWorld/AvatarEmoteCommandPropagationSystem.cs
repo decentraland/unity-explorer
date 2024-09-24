@@ -31,8 +31,10 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void UpdateEmoteCommandDataComponent(PlayerCRDTEntity playerCRDTEntity, CharacterEmoteIntent emoteIntent)
+        private void UpdateEmoteCommandDataComponent(in PlayerCRDTEntity playerCRDTEntity, CharacterEmoteIntent emoteIntent)
         {
+            if (!playerCRDTEntity.AssignedToScene) return;
+
             if (!emoteStorage.TryGetElement(emoteIntent.EmoteId.Shorten(), out IEmote emote)) return;
 
             SceneEcsExecutor sceneEcsExecutor = playerCRDTEntity.SceneFacade.EcsExecutor;
