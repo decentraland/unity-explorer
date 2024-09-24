@@ -28,7 +28,7 @@ namespace DCL.Landscape
         private const float ROOT_VERTICAL_SHIFT = -0.01f; // fix for not clipping with scene (potential) floor
 
         // increment this number if we want to force the users to generate a new terrain cache
-        private const int CACHE_VERSION = 6;
+        private const int CACHE_VERSION = 7;
 
         private const float PROGRESS_COUNTER_EMPTY_PARCEL_DATA = 0.1f;
         private const float PROGRESS_COUNTER_TERRAIN_DATA = 0.3f;
@@ -38,6 +38,7 @@ namespace DCL.Landscape
         private readonly NoiseGeneratorCache noiseGenCache;
         private readonly ReportData reportData;
         private readonly TimeProfiler timeProfiler;
+        private readonly IMemoryProfiler profilingProvider;
         private readonly bool forceCacheRegen;
         private readonly List<Terrain> terrains;
 
@@ -72,8 +73,6 @@ namespace DCL.Landscape
 
         public bool IsTerrainGenerated { get; private set; }
         public bool IsTerrainShown { get; private set; }
-
-        private readonly IMemoryProfiler profilingProvider;
 
 
         public TerrainGenerator(IMemoryProfiler profilingProvider, bool measureTime = false,
@@ -242,13 +241,13 @@ namespace DCL.Landscape
                 ownedParcels.Dispose();
 
                 float afterCleaning = profilingProvider.SystemUsedMemoryInBytes / (1024 * 1024);
-                Debug.Log($"JUANI CLEANING BUILD PROCESS {afterCleaning - beforeCleaning}");
+                ReportHub.Log(ReportCategory.LANDSCAPE,
+                    $"The landscape cleaning process cleaned {afterCleaning - beforeCleaning}MB of memory");
             }
 
             float endMemory = profilingProvider.SystemUsedMemoryInBytes / (1024 * 1024);
-
-            Debug.Log($"JUANI WHOLE BUILD PROCESS {endMemory - startMemory}");
-
+            ReportHub.Log(ReportCategory.LANDSCAPE,
+                $"The landscape generation took {endMemory - startMemory}MB of memory");
         }
 
         // waiting a frame to create the color map renderer created a new bug where some stones do not render properly, this should fix it
@@ -330,25 +329,23 @@ namespace DCL.Landscape
 
                 chunkModel.TerrainData = factory.CreateTerrainData(terrainModel.ChunkSizeInUnits, maxHeightIndex);
 
-                var dictionaryTasks = new Dictionary<string, UniTask>();
-                dictionaryTasks.Add("SetHeights",
+                var tasks = new List<UniTask>
+                {
                     chunkDataGenerator.SetHeightsAsync(chunkModel.MinParcel, maxHeightIndex, parcelSize,
-                        chunkModel.TerrainData, worldSeed, cancellationToken));
-                dictionaryTasks.Add("SetTextures",
+                        chunkModel.TerrainData, worldSeed, cancellationToken),
                     chunkDataGenerator.SetTexturesAsync(chunkModel.MinParcel.x * parcelSize,
                         chunkModel.MinParcel.y * parcelSize, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData,
-                        worldSeed, cancellationToken));
-                dictionaryTasks.Add("SetDetails",
+                        worldSeed, cancellationToken),
                     !hideDetails
                         ? chunkDataGenerator.SetDetailsAsync(chunkModel.MinParcel.x * parcelSize,
                             chunkModel.MinParcel.y * parcelSize, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData,
                             worldSeed, cancellationToken, true, chunkModel.MinParcel, chunkModel.OccupiedParcels)
-                        : UniTask.CompletedTask);
-                dictionaryTasks.Add("SetTrees",
+                        : UniTask.CompletedTask,
                     !hideTrees
                         ? chunkDataGenerator.SetTreesAsync(chunkModel.MinParcel, terrainModel.ChunkSizeInUnits,
                             chunkModel.TerrainData, worldSeed, cancellationToken)
-                        : UniTask.CompletedTask);
+                        : UniTask.CompletedTask
+                };
 
                 if (withHoles)
                 {
@@ -374,14 +371,8 @@ namespace DCL.Landscape
                     }
                 }
 
-                foreach (var dictionaryTasksKey in dictionaryTasks.Keys)
-                {
-                    float startMemory = profilingProvider.SystemUsedMemoryInBytes / (1024 * 1024);
-                    await dictionaryTasks[dictionaryTasksKey].AttachExternalCancellation(cancellationToken);
-                    float endMemory = profilingProvider.SystemUsedMemoryInBytes / (1024 * 1024);
-                    Debug.Log($"JUANI MEMORY DIFFERENCE FOR STEP {dictionaryTasksKey} {endMemory - startMemory}");
-                }
-                
+                await UniTask.WhenAll(tasks).AttachExternalCancellation(cancellationToken);
+
                 processedTerrainDataCount++;
                 if (processReport != null) processReport.SetProgress(PROGRESS_COUNTER_EMPTY_PARCEL_DATA + processedTerrainDataCount / terrainDataCount * PROGRESS_COUNTER_TERRAIN_DATA);
             }
