@@ -129,6 +129,7 @@ namespace Global.Dynamic
         [SerializeField] private DynamicSettings dynamicSettings = null!;
         [SerializeField] private GameObject splashRoot = null!;
         [SerializeField] private Animator splashScreenAnimation = null!;
+        [SerializeField] private Animator logoAnimation = null!;
         [SerializeField] private AudioClipConfig backgroundMusic = null!;
         [SerializeField] private WorldInfoTool worldInfoTool = null!;
 
@@ -189,7 +190,6 @@ namespace Global.Dynamic
             try
             {
                 var splashScreen = new SplashScreen(splashScreenAnimation, splashRoot, debugSettings.ShowSplash);
-
                 bootstrap.PreInitializeSetup(cursorRoot, debugUiRoot, splashScreen, destroyCancellationToken);
 
                 bool isLoaded;
@@ -233,6 +233,11 @@ namespace Global.Dynamic
                 await bootstrap.LoadStartingRealmAsync(dynamicWorldContainer!, ct);
 
                 await bootstrap.UserInitializationAsync(dynamicWorldContainer!, globalWorld, playerEntity, splashScreen, ct);
+
+                //This is done in order to release the memory usage of the splash screen logo animation sprites
+                //The logo is used only at first launch, so we can safely release it after the game is loaded
+                logoAnimation.StopPlayback();
+                logoAnimation.runtimeAnimatorController = null;
 
                 LoadDebugPortableExperiences(ct);
 
