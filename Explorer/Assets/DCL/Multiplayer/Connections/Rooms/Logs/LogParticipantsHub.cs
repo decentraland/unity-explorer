@@ -9,7 +9,6 @@ namespace DCL.Multiplayer.Connections.Rooms.Logs
     {
         private const string PREFIX = "LogParticipantsHub:";
         private readonly IParticipantsHub origin;
-        private readonly string logPrefix;
 
         public event ParticipantDelegate? UpdatesFromParticipant;
 
@@ -23,7 +22,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Logs
         {
             ReportHub
                .WithReport(ReportCategory.LIVEKIT)
-               .Log($"{logPrefix} - {PREFIX} updates from participant {participant} - {update}");
+               .Log($"{PREFIX} updates from participant {participant} - {update}");
             UpdatesFromParticipant?.Invoke(participant, update);
         }
 
