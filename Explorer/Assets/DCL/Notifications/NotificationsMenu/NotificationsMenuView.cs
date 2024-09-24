@@ -1,5 +1,6 @@
 using MVC;
 using SuperScrollView;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -12,5 +13,11 @@ namespace DCL.Notifications.NotificationsMenu
 
         [field: SerializeField]
         public Button CloseButton { get; private set; } = null!;
+
+        [field: SerializeField]
+        public TMP_Text unreadNotificationCounterText { get; private set; } = null!;
+
+        [field: SerializeField]
+        public GameObject notificationIndicator { get; private set; }
     }
 }

@@ -34,6 +34,7 @@ namespace DCL.Notifications.NotificationsMenu
 
         private CancellationTokenSource? notificationThumbnailCts;
         private CancellationTokenSource? notificationPanelCts = new CancellationTokenSource();
+        private int unreadNotifications;
 
         public NotificationsMenuController(
             NotificationsMenuView view,
@@ -95,6 +96,18 @@ namespace DCL.Notifications.NotificationsMenu
                 notifications.Add(requestNotification);
 
             view.LoopList.SetListItemCount(notifications.Count, false);
+
+            foreach (var notification in requestNotifications)
+                if (notification.Read == false)
+                    unreadNotifications++;
+
+            UpdateUnreadNotificationRender();
+        }
+
+        private void UpdateUnreadNotificationRender()
+        {
+            view.unreadNotificationCounterText.text = unreadNotifications.ToString();
+            view.notificationIndicator.SetActive(unreadNotifications > 0);
         }
 
         private LoopListViewItem2 OnGetItemByIndex(LoopListView2 loopListView, int index)
@@ -102,6 +115,12 @@ namespace DCL.Notifications.NotificationsMenu
             LoopListViewItem2 listItem = loopListView.NewListViewItem(loopListView.ItemPrefabDataList[0].mItemPrefab.name);
             NotificationView notificationView = listItem!.GetComponent<NotificationView>();
             INotification notificationData = notifications[index];
+
+            if (notificationData.Read == false)
+            {
+                unreadNotifications--;
+                UpdateUnreadNotificationRender();
+            }
 
             SetItemData(notificationView, notificationData);
 
