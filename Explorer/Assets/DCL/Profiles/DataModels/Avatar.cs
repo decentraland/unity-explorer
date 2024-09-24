@@ -92,9 +92,12 @@ namespace DCL.Profiles
             for (; i < emotes.Length; ++i)
             {
                 if (emotes[i].IsNullOrEmpty())
+                {
                     emotes[i] = emoteURN;
+                    break;
+                }
                 else if (emotes[i] == emoteURN)
-                    return;
+                    break;
             }
 
             if (i == emotes.Length)

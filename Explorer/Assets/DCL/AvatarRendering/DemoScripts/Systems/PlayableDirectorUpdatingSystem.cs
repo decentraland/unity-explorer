@@ -34,16 +34,23 @@ namespace DCL.AvatarAnimation
 
             if (playableDirector != null)
             {
-                if (playableDirector.state == PlayState.Playing)
+                if (playableDirector.timeUpdateMode == DirectorUpdateMode.Manual)
                 {
-                    playableDirector.time += t;
-                    playableDirector.Evaluate();
-
-                    if (playableDirector.time > playableDirector.duration)
+                    if (playableDirector.state == PlayState.Playing)
                     {
-                        playableDirector.time = 0.0f;
-                        playableDirector.Stop();
+                        playableDirector.time += t;
+                        playableDirector.Evaluate();
+
+                        if (playableDirector.time > playableDirector.duration)
+                        {
+                            playableDirector.time = 0.0f;
+                            playableDirector.Stop();
+                        }
                     }
+                }
+                else
+                {
+                    Debug.LogError("The update mode of the PlayableDirector (component that plays a timeline) must be Manual for the system to animate the avatar properly.");
                 }
             }
         }
