@@ -1,4 +1,3 @@
-using ECS;
 using SceneRunner.Scene;
 using SceneRuntime;
 using SceneRuntime.Apis.Modules.CommunicationsControllerApi.SDKMessageBus;
@@ -15,8 +14,8 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications.SDKMessageBus
 
         public IReadOnlyList<CommsPayload> SceneCommsMessages => messages;
 
-        public SDKMessageBusCommsAPIImplementation(IRealmData realmData, ISceneData sceneData, ISceneCommunicationPipe sceneCommunicationPipe, IJsOperations jsOperations, ISceneStateProvider sceneStateProvider)
-            : base(realmData, sceneData, sceneCommunicationPipe, jsOperations, sceneStateProvider) { }
+        public SDKMessageBusCommsAPIImplementation(ISceneData sceneData, ISceneCommunicationPipe sceneCommunicationPipe, IJsOperations jsOperations)
+            : base(sceneData, sceneCommunicationPipe, jsOperations, ISceneCommunicationPipe.MsgType.String) { }
 
         public void ClearMessages()
         {
@@ -26,18 +25,15 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications.SDKMessageBus
         public void Send(string data)
         {
             byte[] dataBytes = Encoding.UTF8.GetBytes(data);
-            EncodeAndSendMessage(MsgType.String, dataBytes);
+            EncodeAndSendMessage(ISceneCommunicationPipe.MsgType.String, dataBytes);
         }
 
-        protected override void OnMessageReceived(MsgType messageType, ReadOnlySpan<byte> decodedMessage, string fromWalletId)
+        protected override void OnMessageReceived(ISceneCommunicationPipe.DecodedMessage message)
         {
-            if (messageType != MsgType.String)
-                return;
-
             messages.Add(new CommsPayload
             {
-                sender = fromWalletId,
-                message = Encoding.UTF8.GetString(decodedMessage)
+                sender = message.FromWalletId,
+                message = Encoding.UTF8.GetString(message.Data),
             });
         }
     }
