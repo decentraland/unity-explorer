@@ -7,6 +7,7 @@ using DCL.Multiplayer.Movement.Settings;
 using DCL.Multiplayer.Movement.Systems;
 using DCL.Multiplayer.Profiles.Entities;
 using DCL.Multiplayer.Profiles.Tables;
+using ECS;
 using Global.AppArgs;
 using System.Threading;
 using Utility;
@@ -26,6 +27,7 @@ namespace DCL.PluginSystem.Global
         private readonly ProvidedAsset<MultiplayerDebugSettings> debugSettings;
         private readonly bool useCompression;
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
+        private readonly IRealmData realmData;
 
         private ProvidedAsset<MultiplayerMovementSettings> settings;
 
@@ -34,7 +36,7 @@ namespace DCL.PluginSystem.Global
 
         public MultiplayerMovementPlugin(IAssetsProvisioner assetsProvisioner, MultiplayerMovementMessageBus messageBus, IDebugContainerBuilder debugBuilder
           , RemoteEntities remoteEntities, ExposedTransform playerTransform, ProvidedAsset<MultiplayerDebugSettings> debugSettings, IAppArgs appArgs,
-            IReadOnlyEntityParticipantTable entityParticipantTable)
+            IReadOnlyEntityParticipantTable entityParticipantTable, IRealmData realmData)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.messageBus = messageBus;
@@ -43,6 +45,7 @@ namespace DCL.PluginSystem.Global
             this.playerTransform = playerTransform;
             this.debugSettings = debugSettings;
             this.entityParticipantTable = entityParticipantTable;
+            this.realmData = realmData;
             this.useCompression = appArgs.TryGetValue(COMPRESSION_ARG_FLAG, out string? compression) && compression == "true";
         }
 
@@ -65,7 +68,7 @@ namespace DCL.PluginSystem.Global
             RemotePlayersMovementSystem.InjectToWorld(ref builder, settings.Value, settings.Value.CharacterControllerSettings);
             RemotePlayerAnimationSystem.InjectToWorld(ref builder, settings.Value.ExtrapolationSettings);
             CleanUpRemoteMotionSystem.InjectToWorld(ref builder);
-            MultiplayerMovementDebugSystem.InjectToWorld(ref builder, arguments.PlayerEntity, debugBuilder, remoteEntities, playerTransform, debugSettings.Value, settings.Value, entityParticipantTable);
+            MultiplayerMovementDebugSystem.InjectToWorld(ref builder, arguments.PlayerEntity, realmData, debugBuilder, remoteEntities, playerTransform, debugSettings.Value, settings.Value, entityParticipantTable);
         }
     }
 }

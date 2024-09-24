@@ -9,6 +9,7 @@ using DCL.Multiplayer.Profiles.Entities;
 using DCL.Multiplayer.Profiles.RemoteProfiles;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Profiles;
+using ECS;
 using ECS.Abstract;
 using UnityEngine;
 using Utility;
@@ -30,12 +31,13 @@ namespace DCL.Multiplayer.Movement.Systems
         private const float TRAIL_WIDTH = 0.07f;
 
         private readonly Entity playerEntity;
+        private readonly IRealmData realmData;
         private readonly DebugWidgetBuilder? widget;
         private readonly RemoteEntities? remoteEntities;
         private readonly ExposedTransform playerTransform;
         private readonly MultiplayerDebugSettings debugSettings;
         private readonly IMultiplayerMovementSettings mainSettings;
-        private readonly IReadOnlyEntityParticipantTable? entityParticipantTable;
+        private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
 
         private readonly ElementBinding<string> entityId;
 
@@ -57,11 +59,12 @@ namespace DCL.Multiplayer.Movement.Systems
         private bool useLinear;
         private string debugProfileId;
 
-        internal MultiplayerMovementDebugSystem(World world, Entity playerEntity, IDebugContainerBuilder debugBuilder, RemoteEntities remoteEntities,
+        internal MultiplayerMovementDebugSystem(World world, Entity playerEntity, IRealmData realmData, IDebugContainerBuilder debugBuilder, RemoteEntities remoteEntities,
             ExposedTransform playerTransform, MultiplayerDebugSettings debugSettings, IMultiplayerMovementSettings mainSettings,
             IReadOnlyEntityParticipantTable entityParticipantTable) : base(world)
         {
             this.playerEntity = playerEntity;
+            this.realmData = realmData;
             this.remoteEntities = remoteEntities;
             this.playerTransform = playerTransform;
             this.debugSettings = debugSettings;
@@ -111,8 +114,9 @@ namespace DCL.Multiplayer.Movement.Systems
 
         protected override void Update(float t)
         {
+            if (!realmData.Configured) return;
             if (!widgetVisibility.IsConnectedAndExpanded) return;
-            if (entityParticipantTable != null && !entityParticipantTable.Has(debugProfileId)) return;
+            if (!entityParticipantTable.Has(debugProfileId)) return;
 
             Entity entity = entityParticipantTable.Entity(debugProfileId);
 
