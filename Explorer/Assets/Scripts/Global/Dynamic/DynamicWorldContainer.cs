@@ -129,6 +129,8 @@ namespace Global.Dynamic
 
         public IMessagePipesHub MessagePipesHub { get; private set; } = null!;
 
+        public ISceneRoomMetaDataSource SceneRoomMetaDataSource { get; private set; } = null!;
+
         public IProfileBroadcast ProfileBroadcast { get; private set; } = null!;
 
         public IRoomHub RoomHub { get; private set; } = null!;
@@ -256,8 +258,10 @@ namespace Global.Dynamic
 
             IEmoteProvider emoteProvider = new EcsEmoteProvider(globalWorld, staticContainer.RealmData);
 
-            var metaDataSource = new LogMetaDataSource(new MetaDataSource(staticContainer.RealmData, staticContainer.CharacterContainer.CharacterObject, placesAPIService));
-            var gateKeeperSceneRoom = new GateKeeperSceneRoom(staticContainer.WebRequestsContainer.WebRequestController, metaDataSource, bootstrapContainer.DecentralandUrlsSource);
+            container.SceneRoomMetaDataSource = new SceneRoomMetaDataSource(staticContainer.RealmData, staticContainer.CharacterContainer.Transform, placesAPIService, dynamicWorldParams.IsolateScenesCommunication);
+
+            var metaDataSource = new SceneRoomLogMetaDataSource(container.SceneRoomMetaDataSource);
+            var gateKeeperSceneRoom = new GateKeeperSceneRoom(staticContainer.WebRequestsContainer.WebRequestController, metaDataSource, bootstrapContainer.DecentralandUrlsSource, staticContainer.ScenesCache);
 
             var currentAdapterAddress = ICurrentAdapterAddress.NewDefault(staticContainer.RealmData);
 
@@ -614,7 +618,6 @@ namespace Global.Dynamic
                 debugBuilder,
                 staticContainer.ScenesCache,
                 dynamicWorldParams.HybridSceneParams,
-                container.CharacterDataPropagationUtility,
                 currentSceneInfo,
                 container.LODContainer.LodCache,
                 multiplayerEmotesMessageBus,

@@ -65,16 +65,16 @@ namespace Global.Tests.PlayMode
             var sceneSharedContainer = SceneSharedContainer.Create(
                 in staticContainer,
                 dclUrls,
+                identityCache,
+                Substitute.For<IWebRequestController>(),
+                new IRealmData.Fake(),
+                new MemoryProfileRepository(new DefaultProfileCache()),
+                NullRoomHub.INSTANCE,
                 new MVCManager(
                     new WindowStackManager(),
                     new CancellationTokenSource(),
                     Substitute.For<IPopupCloserView>()
                 ),
-                identityCache,
-                new MemoryProfileRepository(new DefaultProfileCache()),
-                Substitute.For<IWebRequestController>(),
-                new IRoomHub.Fake(),
-                new IRealmData.Fake(),
                 new IMessagePipesHub.Fake()
             );
 

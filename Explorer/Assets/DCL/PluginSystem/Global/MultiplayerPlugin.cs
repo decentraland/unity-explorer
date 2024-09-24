@@ -127,7 +127,7 @@ namespace DCL.PluginSystem.Global
 
             ResetDirtyFlagSystem<PlayerCRDTEntity>.InjectToWorld(ref builder);
             PlayerCRDTEntitiesHandlerSystem.InjectToWorld(ref builder, scenesCache);
-            PlayerProfileDataPropagationSystem.InjectToWorld(ref builder, characterDataPropagationUtility, globalPluginArguments.PlayerEntity);
+            PlayerProfileDataPropagationSystem.InjectToWorld(ref builder, characterDataPropagationUtility);
             ResetDirtyFlagSystem<AvatarEmoteCommandComponent>.InjectToWorld(ref builder);
             AvatarEmoteCommandPropagationSystem.InjectToWorld(ref builder, emoteStorage);
             PlayerTransformPropagationSystem.InjectToWorld(ref builder);
