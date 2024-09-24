@@ -15,6 +15,7 @@ using CrdtEcsBridge.PoolsProviders;
 using CrdtEcsBridge.UpdateGate;
 using CrdtEcsBridge.WorldSynchronizer;
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.Interaction.Utility;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.RoomHubs;
@@ -375,7 +376,7 @@ namespace SceneRunner.Tests
                     new URLAddress(),
                     new SceneEcsExecutor(),
                     Substitute.For<ISceneData>(),
-                    new MultithreadSync(),
+                    new MultiThreadSync(new SceneShortInfo()),
                     Substitute.For<ICRDTDeserializer>(),
                     Substitute.For<IECSToCRDTWriter>(),
                     Substitute.For<ISystemGroupsUpdateGate>(),

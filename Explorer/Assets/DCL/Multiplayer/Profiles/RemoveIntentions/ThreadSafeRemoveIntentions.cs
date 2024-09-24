@@ -1,10 +1,10 @@
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Bunches;
+using DCL.Optimization.Multithreading;
 using DCL.Utilities.Extensions;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
 using System.Collections.Generic;
-using Utility.Multithreading;
 
 namespace DCL.Multiplayer.Profiles.RemoveIntentions
 {
@@ -12,7 +12,7 @@ namespace DCL.Multiplayer.Profiles.RemoveIntentions
     {
         private readonly IRoomHub roomHub;
         private readonly HashSet<RemoveIntention> list = new ();
-        private readonly MultithreadSync multithreadSync = new();
+        private readonly MutexSync multithreadSync = new();
 
         public ThreadSafeRemoveIntentions(IRoomHub roomHub)
         {

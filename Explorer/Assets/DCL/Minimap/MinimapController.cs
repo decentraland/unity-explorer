@@ -31,7 +31,7 @@ namespace DCL.Minimap
 {
     public partial class MinimapController : ControllerBase<MinimapView>, IMapActivityOwner
     {
-        private const MapLayer RENDER_LAYERS = MapLayer.SatelliteAtlas | MapLayer.ParcelsAtlas | MapLayer.PlayerMarker | MapLayer.ScenesOfInterest | MapLayer.Favorites | MapLayer.HotUsersMarkers | MapLayer.Pins | MapLayer.Path;
+        private const MapLayer RENDER_LAYERS = MapLayer.SatelliteAtlas | MapLayer.PlayerMarker | MapLayer.ScenesOfInterest | MapLayer.Favorites | MapLayer.HotUsersMarkers | MapLayer.Pins | MapLayer.Path;
         private const float ANIMATION_TIME = 0.2f;
 
         private readonly IMapRenderer mapRenderer;
@@ -186,7 +186,6 @@ namespace DCL.Minimap
             mapCameraController?.ResumeRendering();
 
             mapRenderer.SetSharedLayer(MapLayer.SatelliteAtlas, true);
-            mapRenderer.SetSharedLayer(MapLayer.ParcelsAtlas, false);
         }
 
         private void GetPlaceInfoAsync(Vector3 playerPosition)

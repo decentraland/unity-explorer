@@ -11,6 +11,7 @@ using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.Time.Systems;
 using ECS.Abstract;
+using ECS.LifeCycle.Components;
 using UnityEngine;
 
 namespace DCL.CharacterMotion.Systems
@@ -104,6 +105,7 @@ namespace DCL.CharacterMotion.Systems
         }
 
         [Query]
+        [None(typeof(DeleteEntityIntention))]
         private void ResolveVelocity(
             [Data] float dt,
             [Data] int physicsTick,
