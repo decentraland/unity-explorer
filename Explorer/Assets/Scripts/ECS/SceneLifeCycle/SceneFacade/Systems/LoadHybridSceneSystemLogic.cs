@@ -1,9 +1,7 @@
-﻿using Arch.Core;
-using CommunicationData.URLHelpers;
+﻿using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Ipfs;
-using DCL.Multiplayer.SDK.Systems.GlobalWorld;
 using DCL.WebRequests;
 using Global.Dynamic;
 using SceneRunner.Scene;
@@ -23,9 +21,7 @@ namespace ECS.SceneLifeCycle.Systems
         private HybridSceneHashedContent? hybridSceneHashedContent;
         private string? remoteSceneID;
 
-        public LoadHybridSceneSystemLogic(IWebRequestController webRequestController, URLDomain assetBundleURL, HybridSceneParams hybridSceneParams,
-            ICharacterDataPropagationUtility characterDataPropagationUtility, World globalWorld, Entity playerEntity) :
-            base(webRequestController, characterDataPropagationUtility, assetBundleURL, globalWorld, playerEntity)
+        public LoadHybridSceneSystemLogic(IWebRequestController webRequestController, URLDomain assetBundleURL, HybridSceneParams hybridSceneParams) : base(webRequestController, assetBundleURL)
         {
             world = hybridSceneParams.World;
             hybridSceneContentServer = hybridSceneParams.HybridSceneContentServer;

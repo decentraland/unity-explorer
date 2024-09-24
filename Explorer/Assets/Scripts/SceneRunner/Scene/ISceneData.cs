@@ -9,12 +9,12 @@ namespace SceneRunner.Scene
 {
     public interface ISceneData
     {
-        public bool SceneLoadingConcluded { get; set; }
+        bool SceneLoadingConcluded { get; set; }
         SceneShortInfo SceneShortInfo { get; }
 
         IReadOnlyList<Vector2Int> Parcels { get; }
-        public ISceneContent SceneContent { get;}
-        public SceneEntityDefinition SceneEntityDefinition { get; }
+        ISceneContent SceneContent { get; }
+        SceneEntityDefinition SceneEntityDefinition { get; }
 
         /// <summary>
         ///     Position of the base parcel in the world
