@@ -89,7 +89,12 @@ namespace ECS.StreamableLoading.GLTF
         {
         }
 
-        private string GetFileNameFromUri(Uri uri) => uri.OriginalString.Substring(uri.OriginalString.LastIndexOf('/')+1);
+        private string GetFileNameFromUri(Uri uri)
+        {
+            // On windows the URI may come with some invalid '\' in parts of the path
+            string patchedUri = uri.OriginalString.Replace('\\', '/');
+            return patchedUri.Substring(patchedUri.LastIndexOf('/') + 1);
+        }
     }
 
     public struct GltfDownloadResult : IDownload
