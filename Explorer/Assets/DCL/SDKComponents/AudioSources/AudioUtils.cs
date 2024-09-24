@@ -25,7 +25,7 @@ namespace DCL.SDKComponents.AudioSources
             if (component.AudioSource.isPlaying)
                 component.AudioSource.Stop();
 
-            cache.Dereference(component.ClipPromise.LoadingIntention, component.AudioSource.clip!);
+            cache.Dereference(component.ClipPromise.LoadingIntention);
         }
 
         public static bool TryCreateAudioClipPromise(World world, ISceneData sceneData, string pbAudioClipUrl, PartitionComponent partitionComponent, out Promise? assetPromise)

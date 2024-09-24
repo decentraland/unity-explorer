@@ -1,56 +1,23 @@
-﻿using DCL.Diagnostics;
-using DCL.Profiling;
-using System;
+﻿using DCL.Profiling;
+using Unity.Profiling;
 using UnityEngine;
 using Utility;
-using Utility.Multithreading;
 
 namespace ECS.StreamableLoading.AudioClips
 {
-    public class AudioClipData : IDisposable
+    public class AudioClipData : StreamableRefCountData<AudioClip>
     {
-        private int referencesCount;
+        public AudioClip AudioClip => Asset;
 
-        public AudioClip AudioClip { get; }
-        public long LastUsedFrame { get; private set; }
+        protected override ref ProfilerCounterValue<int> totalCount => ref ProfilingCounters.AudioClipsAmount;
 
-        public AudioClipData(AudioClip audioClip)
+        protected override ref ProfilerCounterValue<int> referencedCount => ref ProfilingCounters.AudioClipsReferenced;
+
+        protected override void DestroyObject()
         {
-            AudioClip = audioClip;
-            LastUsedFrame = MultithreadingUtility.FrameCount;
+            UnityObjectUtils.SafeDestroy(Asset);
         }
 
-        public void Dispose()
-        {
-            UnityObjectUtils.SafeDestroy(AudioClip);
-            ProfilingCounters.AudioClipsAmount.Value--;
-        }
-
-        public void AddReference()
-        {
-            if (referencesCount == 0)
-                ProfilingCounters.AudioClipsReferenced.Value++;
-
-            referencesCount++;
-
-            LastUsedFrame = MultithreadingUtility.FrameCount;
-        }
-
-        public void RemoveReference()
-        {
-            referencesCount--;
-
-            if (referencesCount < 0)
-            {
-                ReportHub.LogException(new Exception("Reference count of AudioClip should never be negative!"), ReportCategory.SDK_AUDIO_SOURCES);
-            }
-
-            LastUsedFrame = MultithreadingUtility.FrameCount;
-
-            if (referencesCount == 0) ProfilingCounters.AudioClipsReferenced.Value--;
-        }
-
-        public bool CanBeDisposed() =>
-            referencesCount <= 0;
+        public AudioClipData(AudioClip audioClip) : base(audioClip) { }
     }
 }

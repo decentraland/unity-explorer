@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Shaders;
 using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.Textures;
 using ECS.Unity.Materials.Components;
 using UnityEngine;
 using UnityEngine.Pool;
@@ -47,7 +48,7 @@ namespace ECS.Unity.Materials.Systems
             // Check if all promises are finished
             // Promises are finished if: all of their entities are invalid, no promises at all, or the result component exists
 
-            if (TryGetTextureResult(ref materialComponent.AlbedoTexPromise, out StreamableLoadingResult<Texture2D> albedoResult))
+            if (TryGetTextureResult(ref materialComponent.AlbedoTexPromise, out StreamableLoadingResult<Texture2DData> albedoResult))
             {
                 materialComponent.Status = StreamableLoading.LifeCycle.LoadingFinished;
 

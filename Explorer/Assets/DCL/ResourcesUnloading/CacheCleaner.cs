@@ -32,18 +32,18 @@ namespace DCL.ResourcesUnloading
         private readonly IPerformanceBudget fpsCapBudget;
         private readonly List<IThrottledClearable> avatarPools;
 
-        private IStreamableCache<AssetBundleData, GetAssetBundleIntention> assetBundleCache;
-        private IGltfContainerAssetsCache gltfContainerAssetsCache;
-        private IStreamableCache<Texture2D, GetTextureIntention> texturesCache;
-        private ILODCache lodCache;
-        private IStreamableCache<AudioClip, GetAudioClipIntention> audioClipsCache;
-        private IStreamableCache<Texture2D, GetNFTShapeIntention> nftShapeCache = new IStreamableCache<Texture2D, GetNFTShapeIntention>.Fake();
+        private IStreamableCache<AssetBundleData, GetAssetBundleIntention>? assetBundleCache;
+        private IGltfContainerAssetsCache? gltfContainerAssetsCache;
+        private IStreamableCache<Texture2DData, GetTextureIntention>? texturesCache;
+        private ILODCache? lodCache;
+        private IStreamableCache<AudioClipData, GetAudioClipIntention>? audioClipsCache;
+        private IStreamableCache<Texture2DData, GetNFTShapeIntention>? nftShapeCache;
 
-        private IAttachmentsAssetsCache wearableAssetsCache;
-        private IWearableStorage wearableStorage;
+        private IAttachmentsAssetsCache? wearableAssetsCache;
+        private IWearableStorage? wearableStorage;
         private IProfileCache? profileCache;
         private IStreamableCache<Profile, GetProfileIntention>? profileIntentionCache;
-        private IRoadAssetPool roadCache;
+        private IRoadAssetPool? roadCache;
 
         private IEmoteStorage? emoteCache;
 
@@ -58,18 +58,18 @@ namespace DCL.ResourcesUnloading
         {
             if (!fpsCapBudget.TrySpendBudget()) return;
 
-            nftShapeCache.Unload(fpsCapBudget, NFT_SHAPE_UNLOAD_CHUNK);
-            texturesCache.Unload(fpsCapBudget, TEXTURE_UNLOAD_CHUNK);
-            audioClipsCache.Unload(fpsCapBudget, AUDIO_CLIP_UNLOAD_CHUNK);
-            wearableAssetsCache.Unload(fpsCapBudget, WEARABLES_UNLOAD_CHUNK);
-            wearableStorage.Unload(fpsCapBudget);
-            emoteCache?.Unload(fpsCapBudget);
-            gltfContainerAssetsCache.Unload(fpsCapBudget, GLTF_UNLOAD_CHUNK);
-            assetBundleCache.Unload(fpsCapBudget, AB_UNLOAD_CHUNK);
-            profileCache?.Unload(fpsCapBudget, PROFILE_UNLOAD_CHUNK);
-            profileIntentionCache?.Unload(fpsCapBudget, PROFILE_UNLOAD_CHUNK);
-            lodCache.Unload(fpsCapBudget, GLTF_UNLOAD_CHUNK);
-            roadCache.Unload(fpsCapBudget, GLTF_UNLOAD_CHUNK);
+            nftShapeCache!.Unload(fpsCapBudget, NFT_SHAPE_UNLOAD_CHUNK);
+            texturesCache!.Unload(fpsCapBudget, TEXTURE_UNLOAD_CHUNK);
+            audioClipsCache!.Unload(fpsCapBudget, AUDIO_CLIP_UNLOAD_CHUNK);
+            wearableAssetsCache!.Unload(fpsCapBudget, WEARABLES_UNLOAD_CHUNK);
+            wearableStorage!.Unload(fpsCapBudget);
+            emoteCache!.Unload(fpsCapBudget);
+            gltfContainerAssetsCache!.Unload(fpsCapBudget, GLTF_UNLOAD_CHUNK);
+            assetBundleCache!.Unload(fpsCapBudget, AB_UNLOAD_CHUNK);
+            profileCache!.Unload(fpsCapBudget, PROFILE_UNLOAD_CHUNK);
+            profileIntentionCache!.Unload(fpsCapBudget, PROFILE_UNLOAD_CHUNK);
+            lodCache!.Unload(fpsCapBudget, GLTF_UNLOAD_CHUNK);
+            roadCache!.Unload(fpsCapBudget, GLTF_UNLOAD_CHUNK);
 
             ClearAvatarsRelatedPools();
         }
@@ -98,13 +98,13 @@ namespace DCL.ResourcesUnloading
         public void Register(IAttachmentsAssetsCache wearableAssetsCache) =>
             this.wearableAssetsCache = wearableAssetsCache;
 
-        public void Register(IStreamableCache<Texture2D, GetTextureIntention> texturesCache) =>
+        public void Register(IStreamableCache<Texture2DData, GetTextureIntention> texturesCache) =>
             this.texturesCache = texturesCache;
 
-        public void Register(IStreamableCache<Texture2D, GetNFTShapeIntention> nftShapeCache) =>
+        public void Register(IStreamableCache<Texture2DData, GetNFTShapeIntention> nftShapeCache) =>
             this.nftShapeCache = nftShapeCache;
 
-        public void Register(IStreamableCache<AudioClip, GetAudioClipIntention> audioClipsCache) =>
+        public void Register(IStreamableCache<AudioClipData, GetAudioClipIntention> audioClipsCache) =>
             this.audioClipsCache = audioClipsCache;
 
         public void Register(IWearableStorage storage) =>

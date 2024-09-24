@@ -13,7 +13,6 @@ using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
 using System;
 using System.Threading;
-using Utility.Multithreading;
 
 namespace DCL.Profiles
 {

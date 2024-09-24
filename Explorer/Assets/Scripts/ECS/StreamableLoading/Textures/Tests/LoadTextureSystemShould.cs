@@ -3,6 +3,7 @@ using DCL.WebRequests;
 using DCL.WebRequests.Analytics;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Tests;
+using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
 using UnityEngine;
@@ -11,7 +12,7 @@ using Utility.Multithreading;
 namespace ECS.StreamableLoading.Textures.Tests
 {
     [TestFixture]
-    public class LoadTextureSystemShould : LoadSystemBaseShould<LoadTextureSystem, Texture2D, GetTextureIntention>
+    public class LoadTextureSystemShould : LoadSystemBaseShould<LoadTextureSystem, Texture2DData, GetTextureIntention>
     {
         private string successPath => $"file://{Application.dataPath + "/../TestResources/Images/alphaTexture.png"}";
         private string failPath => $"file://{Application.dataPath + "/../TestResources/Images/non_existing.png"}";
@@ -32,10 +33,12 @@ namespace ECS.StreamableLoading.Textures.Tests
             new () { CommonArguments = new CommonLoadingArguments(wrongTypePath) };
 
         protected override LoadTextureSystem CreateSystem() =>
-            new (world, cache, TestSuite.TestWebRequestController.INSTANCE);
+            new (world, cache, TestWebRequestController.INSTANCE);
 
-        protected override void AssertSuccess(Texture2D asset)
+        protected override void AssertSuccess(Texture2DData data)
         {
+            Texture2D asset = data.Asset;
+
             Assert.AreEqual(TextureWrapMode.MirrorOnce, asset.wrapMode);
             Assert.AreEqual(FilterMode.Trilinear, asset.filterMode);
         }

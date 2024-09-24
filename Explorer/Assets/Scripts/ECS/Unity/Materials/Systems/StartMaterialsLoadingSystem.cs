@@ -20,7 +20,7 @@ using SceneRunner.Scene;
 using System.Collections.Generic;
 using UnityEngine;
 using Entity = Arch.Core.Entity;
-using Promise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.Texture2D, ECS.StreamableLoading.Textures.GetTextureIntention>;
+using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.Texture2DData, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
 namespace ECS.Unity.Materials.Systems
 {
@@ -174,7 +174,7 @@ namespace ECS.Unity.Materials.Systems
             if (textureComponent == null)
             {
                 // If component is being reused forget the previous promise
-                ReleaseMaterial.TryAddAbortIntention(World, ref promise);
+                ReleaseMaterial.ReleaseIntention(World, ref promise, true);
                 return false;
             }
 
@@ -186,7 +186,7 @@ namespace ECS.Unity.Materials.Systems
                 return false;
 
             // If component is being reused forget the previous promise
-            ReleaseMaterial.TryAddAbortIntention(World, ref promise);
+            ReleaseMaterial.ReleaseIntention(World, ref promise, true);
 
             var intention = new GetTextureIntention
             {
@@ -202,10 +202,10 @@ namespace ECS.Unity.Materials.Systems
             return true;
         }
 
-        private StreamableLoadingResult<Texture2D>? GetOrAddVideoTextureResult(in TextureComponent textureComponent, Entity materialEntity) =>
+        private StreamableLoadingResult<Texture2DData>? GetOrAddVideoTextureResult(in TextureComponent textureComponent, Entity materialEntity) =>
             textureComponent.TryAddConsumer(entitiesMap, materialEntity, videoTexturesPool, World, out Texture2D? tex)
-                ? new StreamableLoadingResult<Texture2D>(tex!)
-                : new StreamableLoadingResult<Texture2D>(GetReportCategory(), CreateException(new EcsEntityNotFoundException(textureComponent.VideoPlayerEntity, $"Entity {textureComponent.VideoPlayerEntity} not found!. VideoTexture will not be created.")));
+                ? new StreamableLoadingResult<Texture2DData>(new Texture2DData(tex!)) // video textures are not cached but we have to match `texture2DData`
+                : new StreamableLoadingResult<Texture2DData>(GetReportCategory(), CreateException(new EcsEntityNotFoundException(textureComponent.VideoPlayerEntity, $"Entity {textureComponent.VideoPlayerEntity} not found!. VideoTexture will not be created.")));
 
         private bool ResolveTexturesEquality(Entity entity, in TextureComponent? oldTextureComponent, in TextureComponent textureComponent)
         {

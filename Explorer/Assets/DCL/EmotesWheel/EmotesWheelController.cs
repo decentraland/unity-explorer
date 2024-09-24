@@ -186,7 +186,7 @@ namespace DCL.EmotesWheel
             view.Thumbnail.gameObject.SetActive(false);
             view.LoadingSpinner.SetActive(true);
 
-            Sprite? sprite = await thumbnailProvider.GetAsync(emote, ct);
+            Sprite sprite = await thumbnailProvider.GetAsync(emote, ct);
 
             view.Thumbnail.sprite = sprite;
             view.Thumbnail.gameObject.SetActive(true);

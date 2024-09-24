@@ -2,11 +2,15 @@ using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.NFTShapes.URNs;
 using System;
 using System.Threading;
+using UnityEngine;
 
 namespace ECS.StreamableLoading.NFTShapes
 {
     public struct GetNFTShapeIntention : ILoadingIntention, IEquatable<GetNFTShapeIntention>
     {
+        public static readonly TextureWrapMode WRAP_MODE = TextureWrapMode.Clamp;
+        public static readonly FilterMode FILTER_MODE = FilterMode.Bilinear;
+
         public readonly string URN;
 
         public CommonLoadingArguments CommonArguments { get; set; }

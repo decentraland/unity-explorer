@@ -16,7 +16,7 @@ using ECS.Unity.Textures.Components.Extensions;
 using SceneRunner.Scene;
 using UnityEngine;
 using Entity = Arch.Core.Entity;
-using Promise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.Texture2D, ECS.StreamableLoading.Textures.GetTextureIntention>;
+using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.Texture2DData, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
 namespace DCL.SDKComponents.MapPins.Systems
 {
@@ -81,17 +81,16 @@ namespace DCL.SDKComponents.MapPins.Systems
             if (!mapPinHolderComponent.HasTexturePromise)
                 return;
 
-            var mapPinComponent = (MapPinComponent)globalWorld.Get(mapPinHolderComponent.GlobalWorldEntity, typeof(MapPinComponent))!;
+            ref MapPinComponent mapPinComponent = ref globalWorld.Get<MapPinComponent>(mapPinHolderComponent.GlobalWorldEntity);
 
             if (mapPinComponent.TexturePromise is not null && !mapPinComponent.TexturePromise.Value.IsConsumed)
             {
-                if (mapPinComponent.TexturePromise.Value.TryConsume(World, out StreamableLoadingResult<Texture2D> texture))
+                if (mapPinComponent.TexturePromise.Value.TryConsume(World, out StreamableLoadingResult<Texture2DData> texture))
                 {
                     mapPinComponent.ThumbnailIsDirty = true;
                     mapPinComponent.Thumbnail = texture.Asset;
                     mapPinComponent.TexturePromise = null;
                     mapPinHolderComponent.HasTexturePromise = false;
-                    globalWorld.Set(mapPinHolderComponent.GlobalWorldEntity, mapPinComponent);
                 }
             }
         }
@@ -102,7 +101,7 @@ namespace DCL.SDKComponents.MapPins.Systems
             if (!pbMapPin.IsDirty)
                 return;
 
-            var mapPinComponent = (MapPinComponent)globalWorld.Get(mapPinHolderComponent.GlobalWorldEntity, typeof(MapPinComponent))!;
+            MapPinComponent mapPinComponent = globalWorld.Get<MapPinComponent>(mapPinHolderComponent.GlobalWorldEntity);
 
             xRounded = Mathf.RoundToInt(pbMapPin.Position.X);
             yRounded = Mathf.RoundToInt(pbMapPin.Position.Y);
@@ -127,6 +126,9 @@ namespace DCL.SDKComponents.MapPins.Systems
         [None(typeof(PBMapPin), typeof(DeleteEntityIntention))]
         private void HandleComponentRemoval(in Entity entity, ref MapPinHolderComponent mapPinHolderComponent)
         {
+            ref MapPinComponent mapPinComponent = ref globalWorld.Get<MapPinComponent>(mapPinHolderComponent.GlobalWorldEntity);
+            DereferenceTexture(ref mapPinComponent.TexturePromise);
+
             globalWorld.Add(mapPinHolderComponent.GlobalWorldEntity, new DeleteEntityIntention());
             World.Remove<MapPinHolderComponent>(entity);
         }
@@ -135,8 +137,20 @@ namespace DCL.SDKComponents.MapPins.Systems
         [All(typeof(DeleteEntityIntention))]
         private void HandleEntityDestruction(in Entity entity, ref MapPinHolderComponent mapPinHolderComponent)
         {
+            ref MapPinComponent mapPinComponent = ref globalWorld.Get<MapPinComponent>(mapPinHolderComponent.GlobalWorldEntity);
+            DereferenceTexture(ref mapPinComponent.TexturePromise);
+
             globalWorld.Add(mapPinHolderComponent.GlobalWorldEntity, new DeleteEntityIntention());
             World.Remove<MapPinHolderComponent, PBMapPin>(entity);
+        }
+
+        private void DereferenceTexture(ref Promise? promise)
+        {
+            if (promise == null)
+                return;
+
+            Promise promiseValue = promise.Value;
+            promiseValue.TryDereference(World);
         }
 
         private bool TryCreateGetTexturePromise(in TextureComponent? textureComponent, ref Promise? promise)
@@ -148,6 +162,8 @@ namespace DCL.SDKComponents.MapPins.Systems
 
             if (TextureComponentUtils.Equals(ref textureComponentValue, ref promise))
                 return false;
+
+            DereferenceTexture(ref promise);
 
             promise = Promise.Create(World, new GetTextureIntention
             {

@@ -3,6 +3,7 @@ using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Loading.DTO;
 using DCL.AvatarRendering.Wearables.Helpers;
 using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.Textures;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -65,7 +66,7 @@ namespace DCL.AvatarRendering.Emotes
                 model.metadata.emoteDataADR74 = embeddedEmote.entity;
 
                 emote.Model = new StreamableLoadingResult<EmoteDTO>(model);
-                emote.ThumbnailAssetResult = new StreamableLoadingResult<Sprite>(embeddedEmote.thumbnail);
+                emote.ThumbnailAssetResult = embeddedEmote.thumbnail.ToUnownedSpriteData();
 
                 AttachmentRegularAsset asset = CreateWearableAsset(embeddedEmote.prefab);
                 asset.AddReference();

@@ -21,7 +21,7 @@ using ECS.Unity.Textures.Components.Extensions;
 using SceneRunner.Scene;
 using System;
 using UnityEngine;
-using Promise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.Texture2D, ECS.StreamableLoading.Textures.GetTextureIntention>;
+using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.Texture2DData, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
 namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
 {
@@ -110,7 +110,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
 
             var texturePromise = uiBackgroundComponent.TexturePromise.Value;
 
-            if (texturePromise.TryConsume(World, out StreamableLoadingResult<Texture2D> promiseResult))
+            if (texturePromise.TryConsume(World, out StreamableLoadingResult<Texture2DData> promiseResult))
             {
                 // Backgrounds with texture
                 if (promiseResult.Succeeded)

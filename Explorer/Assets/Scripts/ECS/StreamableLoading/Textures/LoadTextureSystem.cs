@@ -10,22 +10,21 @@ using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
 using System.Threading;
 using UnityEngine;
-using Utility.Multithreading;
 
 namespace ECS.StreamableLoading.Textures
 {
     [UpdateInGroup(typeof(StreamableLoadingGroup))]
     [LogCategory(ReportCategory.TEXTURES)]
-    public partial class LoadTextureSystem : LoadSystemBase<Texture2D, GetTextureIntention>
+    public partial class LoadTextureSystem : LoadSystemBase<Texture2DData, GetTextureIntention>
     {
         private readonly IWebRequestController webRequestController;
 
-        internal LoadTextureSystem(World world, IStreamableCache<Texture2D, GetTextureIntention> cache, IWebRequestController webRequestController) : base(world, cache)
+        internal LoadTextureSystem(World world, IStreamableCache<Texture2DData, GetTextureIntention> cache, IWebRequestController webRequestController) : base(world, cache)
         {
             this.webRequestController = webRequestController;
         }
 
-        protected override async UniTask<StreamableLoadingResult<Texture2D>> FlowInternalAsync(GetTextureIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
+        protected override async UniTask<StreamableLoadingResult<Texture2DData>> FlowInternalAsync(GetTextureIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
             // Attempts should be always 1 as there is a repeat loop in `LoadSystemBase`
             var result = await webRequestController.GetTextureAsync(
@@ -35,7 +34,7 @@ namespace ECS.StreamableLoading.Textures
                 ct,
                 GetReportData());
 
-            return new StreamableLoadingResult<Texture2D>(result);
+            return new StreamableLoadingResult<Texture2DData>(new Texture2DData(result));
         }
     }
 }

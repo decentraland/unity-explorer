@@ -161,7 +161,7 @@ namespace DCL.ResourcesUnloading.Tests
             var audioClip = AudioClip.Create(hashID, 1, 1, 2000, false);
             audioClipsCache.Add(audioClipIntention, audioClip);
             audioClipsCache.AddReference(in audioClipIntention, audioClip);
-            audioClipsCache.Dereference(audioClipIntention, audioClip);
+            audioClipsCache.Dereference(audioClipIntention);
 
             var assetBundleData = new AssetBundleData(null, null, new GameObject(), typeof(GameObject), Array.Empty<AssetBundleData>());
             assetBundleCache.Add(new GetAssetBundleIntention { Hash = hashID }, assetBundleData);
