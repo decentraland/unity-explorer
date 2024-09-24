@@ -47,24 +47,18 @@ namespace DCL.Landscape.Utils
         private bool isValid;
         private string checksum;
         private const string FILE_NAME = "/terrain_cache";
-        private static readonly BinaryFormatter FORMATTER = new ();
+        public static readonly BinaryFormatter FORMATTER = new();
 
-        public Dictionary<int2, float[]> heights = new ();
         public int heightX;
         public int heightY;
 
-        private Dictionary<int2, float[]> alphaMaps = new();
-        private int alphaX;
-        private int alphaY;
-        private int alphaZ;
+        public int alphaX;
+        public int alphaY;
+        public int alphaZ;
 
-        public Dictionary<int2, TreeInstanceDTO[]> trees = new ();
-
-        public Dictionary<int3, int[]> detail = new ();
         public int detailX;
         public int detailY;
 
-        public Dictionary<int2, bool[]> holes = new ();
         public int holesX;
         public int holesY;
 
@@ -79,9 +73,20 @@ namespace DCL.Landscape.Utils
 
             if (File.Exists(path))
                 File.Delete(path);
-
+            
             using FileStream fileStream = File.Create(path);
             FORMATTER.Serialize(fileStream, this);
+
+        }
+
+        public static string GetPathForDictionary(string name, string x, string y)
+        {
+            return Application.persistentDataPath + FILE_NAME + $"_{name}_{x}_{y}.data";
+        }
+
+        public static string GetPathForDictionary(string name, string x, string y, string layer)
+        {
+            return Application.persistentDataPath + FILE_NAME + $"_{name}_{x}_{y}_{layer}.data";
         }
 
         private static string GetPath(int seed, int chunkSize, int version) =>
@@ -122,23 +127,6 @@ namespace DCL.Landscape.Utils
         public bool IsValid() =>
             isValid;
 
-        public void Dispose()
-        {
-            Debug.Log("JUANI CALLING THE DISPOSE");
-            Debug.Log($"JUANI ALPHA MAPS LENGTH {alphaMaps.Count}");
-
-            GC.WaitForPendingFinalizers();
-            Resources.UnloadUnusedAssets();
-        }
-
-        public void SaveAlphaMap(int offsetX, int offsetZ, (float[] array, int x, int y, int z) valueTuple)
-        {
-            alphaMaps.Add(new int2(offsetX, offsetZ), valueTuple.array);
-            Debug.Log($"JUANI SIZE OF THE ARRAY {valueTuple.array.Count()}");
-            alphaX = valueTuple.x;
-            alphaY = valueTuple.y;
-            alphaZ = valueTuple.z;
-        }
     }
 
     public class TerrainGeneratorLocalCache
@@ -166,54 +154,106 @@ namespace DCL.Landscape.Utils
         public void Save()
         {
             localCache.SaveToFile(seed, chunkSize, version, parcelChecksum);
-            localCache.Dispose();
-            return;
-            localCache.heights.Clear();
-            localCache.detail.Clear();
-            localCache.trees.Clear();
-            localCache.holes.Clear();
-            localCache = TerrainLocalCache.NewEmpty();
-            GC.Collect();
-            GC.WaitForPendingFinalizers();
         }
 
         public bool IsValid() =>
             localCache.IsValid();
 
-        public float[,] GetHeights(int offsetX, int offsetZ) =>
-            UnFlatten(localCache.heights[new int2(offsetX, offsetZ)], localCache.heightX, localCache.heightY);
-
-        public float[,,] GetAlphaMaps(int offsetX, int offsetZ) =>
-            new float[0, 0, 0];
-        //UnFlatten(localCache.alphaMaps[new int2(offsetX, offsetZ)], localCache.alphaX, localCache.alphaY, localCache.alphaZ);
-
-        public TreeInstance[] GetTrees(int offsetX, int offsetZ)
+        public async UniTask<float[,]> GetHeights(int offsetX, int offsetZ)
         {
-            TreeInstance[] treeInstances = localCache.trees[new int2(offsetX, offsetZ)].Select(TreeInstanceDTO.ToOriginal).ToArray();
+            await using var fileStream =
+                new FileStream(
+                    TerrainLocalCache.GetPathForDictionary("heights", offsetX.ToString(), offsetZ.ToString()),
+                    FileMode.Open);
+            var heights =
+                await UniTask.RunOnThreadPool(() => (float[])TerrainLocalCache.FORMATTER.Deserialize(fileStream));
+            var unflattend = UnFlatten(heights, localCache.heightX, localCache.heightY);
+            return unflattend;
+        }
+
+        public async UniTask<float[,,]> GetAlphaMaps(int offsetX, int offsetZ)
+        {
+            await using var fileStream =
+                new FileStream(
+                    TerrainLocalCache.GetPathForDictionary("alphaMaps", offsetX.ToString(), offsetZ.ToString()),
+                    FileMode.Open);
+            var alphaMaps =
+                await UniTask.RunOnThreadPool(() => (float[])TerrainLocalCache.FORMATTER.Deserialize(fileStream));
+            var unflattend = UnFlatten(alphaMaps, localCache.alphaX, localCache.alphaY, localCache.alphaZ);
+            return unflattend;
+        }
+
+
+        public async UniTask<TreeInstance[]> GetTrees(int offsetX, int offsetZ)
+        {
+            await using var fileStream =
+                new FileStream(TerrainLocalCache.GetPathForDictionary("trees", offsetX.ToString(), offsetZ.ToString()),
+                    FileMode.Open);
+            var treesDTO = await UniTask.RunOnThreadPool(() =>
+                (TreeInstanceDTO[])TerrainLocalCache.FORMATTER.Deserialize(fileStream));
+
+            var treeInstances = treesDTO.Select(TreeInstanceDTO.ToOriginal).ToArray();
             return treeInstances;
         }
 
-        public int[,] GetDetailLayer(int offsetX, int offsetZ, int layer) =>
-            UnFlatten(localCache.detail[new int3(offsetX, offsetZ, layer)], localCache.detailX, localCache.detailY);
-
-        public bool[,] GetHoles(int offsetX, int offsetZ)
+        public async UniTask<int[,]> GetDetailLayer(int offsetX, int offsetZ, int layer)
         {
-            try { return UnFlatten(localCache.holes[new int2(offsetX, offsetZ)], localCache.holesX, localCache.holesY); }
-            catch (KeyNotFoundException e) { throw new Exception("Cannot get holes from cache. Try to regenerate cache at InfiniteTerrain.scene", e); }
+            await using var fileStream =
+                new FileStream(
+                    TerrainLocalCache.GetPathForDictionary("detailLayer", offsetX.ToString(), offsetZ.ToString(),
+                        layer.ToString()), FileMode.Open);
+            var detailLayer =
+                await UniTask.RunOnThreadPool(() => (int[])TerrainLocalCache.FORMATTER.Deserialize(fileStream));
+            var unflattend = UnFlatten(detailLayer, localCache.detailX, localCache.detailY);
+            return unflattend;
+        }
+
+        public async UniTask<bool[,]> GetHoles(int offsetX, int offsetZ)
+        {
+            try
+            {
+                await using var fileStream =
+                    new FileStream(
+                        TerrainLocalCache.GetPathForDictionary("holes", offsetX.ToString(), offsetZ.ToString()),
+                        FileMode.Open);
+                var detailLayer =
+                    await UniTask.RunOnThreadPool(() => (bool[])TerrainLocalCache.FORMATTER.Deserialize(fileStream));
+                var unflattend = UnFlatten(detailLayer, localCache.detailX, localCache.detailY);
+                return unflattend;
+            }
+            catch (Exception e)
+            {
+                throw new Exception("Cannot get holes from cache. Try to regenerate cache at InfiniteTerrain.scene", e);
+            }
         }
 
         public void SaveHoles(int offsetX, int offsetZ, bool[,] valuePairValue)
         {
             (bool[] array, int row, int col) valueTuple = Flatten(valuePairValue);
-            localCache.holes.Add(new int2(offsetX, offsetZ), valueTuple.array);
+            SaveToDisc("holes", offsetX.ToString(), offsetZ.ToString(), valueTuple.array);
             localCache.holesX = valueTuple.row;
             localCache.holesY = valueTuple.col;
+        }
+
+        private void SaveToDisc<T>(string name, string offsetX, string offsetZ, T[] arrayToSave) where T : struct
+        {
+            var pathForDictionary = TerrainLocalCache.GetPathForDictionary(name, offsetX, offsetZ);
+            using var fileStreamForHeights = File.Create(pathForDictionary);
+            TerrainLocalCache.FORMATTER.Serialize(fileStreamForHeights, arrayToSave);
+        }
+
+        private void SaveToDisc<T>(string name, string offsetX, string offsetZ, string layer, T[] arrayToSave)
+            where T : struct
+        {
+            var pathForDictionary = TerrainLocalCache.GetPathForDictionary(name, offsetX, offsetZ, layer);
+            using var fileStreamForHeights = File.Create(pathForDictionary);
+            TerrainLocalCache.FORMATTER.Serialize(fileStreamForHeights, arrayToSave);
         }
 
         public void SaveHeights(int offsetX, int offsetZ, float[,] heightArray)
         {
             (float[] array, int row, int col) valueTuple = Flatten(heightArray);
-            localCache.heights.Add(new int2(offsetX, offsetZ), valueTuple.array);
+            SaveToDisc("heights", offsetX.ToString(), offsetZ.ToString(), valueTuple.array);
             localCache.heightX = valueTuple.row;
             localCache.heightY = valueTuple.col;
         }
@@ -221,18 +261,22 @@ namespace DCL.Landscape.Utils
         public void SaveAlphaMaps(int offsetX, int offsetZ, float[,,] alphaMaps)
         {
             (float[] array, int x, int y, int z) valueTuple = Flatten(alphaMaps);
-            localCache.SaveAlphaMap(offsetX, offsetZ, valueTuple);
+            SaveToDisc("alphaMaps", offsetX.ToString(), offsetZ.ToString(), valueTuple.array);
+            localCache.alphaX = valueTuple.x;
+            localCache.alphaY = valueTuple.y;
+            localCache.alphaZ = valueTuple.z;
         }
 
         public void SaveTreeInstances(int offsetX, int offsetZ, TreeInstance[] instances)
         {
-            localCache.trees.Add(new int2(offsetX, offsetZ), instances.Select(TreeInstanceDTO.Copy).ToArray());
+            SaveToDisc("trees", offsetX.ToString(), offsetZ.ToString(),
+                instances.Select(TreeInstanceDTO.Copy).ToArray());
         }
 
         public void SaveDetailLayer(int offsetX, int offsetZ, int layer, int[,] detailLayer)
         {
             (int[] array, int row, int col) valueTuple = Flatten(detailLayer);
-            localCache.detail.Add(new int3(offsetX, offsetZ, layer), valueTuple.array);
+            SaveToDisc("detailLayer", offsetX.ToString(), offsetZ.ToString(), layer.ToString(), valueTuple.array);
             localCache.detailX = valueTuple.row;
             localCache.detailY = valueTuple.col;
         }
