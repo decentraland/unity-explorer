@@ -61,7 +61,6 @@ namespace DCL.MapRenderer
                 }
 
                 layers[MapLayer.SatelliteAtlas].SharedActive = true;
-                layers[MapLayer.ParcelsAtlas].SharedActive = false;
             }
             catch (OperationCanceledException)
             {

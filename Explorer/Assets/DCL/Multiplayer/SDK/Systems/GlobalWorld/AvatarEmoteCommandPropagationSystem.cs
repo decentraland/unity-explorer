@@ -33,6 +33,8 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
         [None(typeof(DeleteEntityIntention))]
         private void UpdateEmoteCommandDataComponent(PlayerCRDTEntity playerCRDTEntity, CharacterEmoteIntent emoteIntent)
         {
+            if (!emoteStorage.TryGetElement(emoteIntent.EmoteId.Shorten(), out IEmote emote)) return;
+
             SceneEcsExecutor sceneEcsExecutor = playerCRDTEntity.SceneFacade.EcsExecutor;
             World sceneWorld = sceneEcsExecutor.World;
 
@@ -41,17 +43,14 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
             if (!componentFound)
                 emoteCommandComponent = new AvatarEmoteCommandComponent();
 
-            if (emoteStorage.TryGetElement(emoteIntent.EmoteId.Shorten(), out IEmote emote))
-            {
-                emoteCommandComponent.IsDirty = true;
-                emoteCommandComponent.PlayingEmote = emoteIntent.EmoteId;
-                emoteCommandComponent.LoopingEmote = emote.IsLooping();
+            emoteCommandComponent.IsDirty = true;
+            emoteCommandComponent.PlayingEmote = emoteIntent.EmoteId;
+            emoteCommandComponent.LoopingEmote = emote.IsLooping();
 
-                if (componentFound)
-                    sceneWorld.Set(playerCRDTEntity.SceneWorldEntity, emoteCommandComponent);
-                else
-                    sceneWorld.Add(playerCRDTEntity.SceneWorldEntity, emoteCommandComponent);
-            }
+            if (componentFound)
+                sceneWorld.Set(playerCRDTEntity.SceneWorldEntity, emoteCommandComponent);
+            else
+                sceneWorld.Add(playerCRDTEntity.SceneWorldEntity, emoteCommandComponent);
         }
     }
 }
