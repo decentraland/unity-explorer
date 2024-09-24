@@ -150,12 +150,6 @@ namespace DCL.Landscape.Utils
             return Application.persistentDataPath + DICTIONARY_PATH;
         }
 
-        public static TerrainLocalCache NewEmpty() =>
-            new()
-            {
-                isValid = false
-            };
-
         public static async UniTask<TerrainLocalCache> LoadAsync(int seed, int chunkSize, int version, string parcelChecksum, bool force)
         {
             var emptyCache = new TerrainLocalCache
@@ -164,17 +158,25 @@ namespace DCL.Landscape.Utils
             };
 
             var path = GetFilePath(seed, chunkSize, version);
+            var dictionaryPath = GetDictionaryDirectory();
 
             if (force && File.Exists(path))
             {
                 File.Delete(path);
-                var dictionaryPath = GetDictionaryDirectory();
                 if (Directory.Exists(dictionaryPath))
                     Directory.Delete(GetDictionaryDirectory(), true);
             }
 
             if (!File.Exists(path))
+            {
+                //If the file does not exist, but the dictionary path does, theres a possible corrupt state. 
+                //We gotta clear it
+                if (Directory.Exists(dictionaryPath))
+                    Directory.Delete(dictionaryPath, true);
+                Directory.CreateDirectory(dictionaryPath);
+                
                 return emptyCache;
+            }
 
             await using var fileStream = new FileStream(path, FileMode.Open);
 
@@ -194,7 +196,7 @@ namespace DCL.Landscape.Utils
 
     public class TerrainGeneratorLocalCache
     {
-        private TerrainLocalCache localCache = TerrainLocalCache.NewEmpty();
+        private TerrainLocalCache localCache;
         private readonly int seed;
         private readonly int chunkSize;
         private readonly int version;

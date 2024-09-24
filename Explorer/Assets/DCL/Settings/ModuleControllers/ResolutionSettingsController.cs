@@ -67,6 +67,7 @@ namespace DCL.Settings.ModuleControllers
 
         private void SetResolutionSettings(int index)
         {
+            return;
             Resolution selectedResolution = possibleResolutions[index];
             Screen.SetResolution(selectedResolution.width, selectedResolution.height, Screen.fullScreenMode, selectedResolution.refreshRateRatio);
             settingsDataStore.SetDropdownValue(RESOLUTION_DATA_STORE_KEY, index, save: true);
