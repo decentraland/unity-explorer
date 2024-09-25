@@ -45,6 +45,12 @@ namespace Plugins.RustSegment.SegmentServerWrap
         private void Callback(ulong operationId, NativeMethods.Response response)
         {
             ReportHub.Log(ReportCategory.ANALYTICS, $"Segment Operation {operationId} finished with: {response}");
+
+            if (response is not NativeMethods.Response.Success)
+                ReportHub.LogError(
+                    ReportCategory.ANALYTICS,
+                    $"Segment operation {operationId} failed with: {response}"
+                );
         }
     }
 }
