@@ -12,9 +12,8 @@ namespace DCL.Multiplayer.Connections.Archipelago.AdapterAddress
         public static IAdapterAddresses NewDefault()
         {
             return new LogAdapterAddresses(
-                new RefinedAdapterAddresses(),
-                ReportHub.WithReport(ReportCategory.ARCHIPELAGO_REQUEST).Log
-            );
+                new RefinedAdapterAddresses()
+                );
         }
     }
 }
