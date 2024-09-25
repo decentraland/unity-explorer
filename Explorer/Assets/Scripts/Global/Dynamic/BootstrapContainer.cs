@@ -4,7 +4,6 @@ using DCL.AssetsProvision;
 using DCL.Browser;
 using DCL.Browser.DecentralandUrls;
 using DCL.Diagnostics;
-using DCL.Diagnostics.Sentry;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PluginSystem;
@@ -15,6 +14,7 @@ using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using ECS.SceneLifeCycle.Realm;
 using Global.AppArgs;
+using Plugins.RustSegment.SegmentServerWrap;
 using Segment.Analytics;
 using Sentry;
 using System;
@@ -159,7 +159,7 @@ namespace Global.Dynamic
         private static IAnalyticsService CreateSegmentAnalyticsOrFallbackToDebug(AnalyticsConfiguration analyticsConfig)
         {
             if (analyticsConfig.TryGetSegmentConfiguration(out Configuration segmentConfiguration))
-                return new SegmentAnalyticsService(segmentConfiguration);
+                return new RustSegmentAnalyticsService(segmentConfiguration.WriteKey!);
 
             // Fall back to debug if segment is not configured
             ReportHub.LogWarning(ReportCategory.ANALYTICS, $"Segment configuration not found. Falling back to {nameof(DebugAnalyticsService)}.");
