@@ -14,6 +14,7 @@ namespace DCL.Analytics.Systems
     public partial class BadgesHeightReachedSystem : BaseUnityLoopSystem
     {
         private const float HEIGHT = 500;
+        private const float THRESHOLD = 0.01f; // 1 cm
 
         private readonly IRealmData realmData;
         private readonly Entity playerEntity;
@@ -23,6 +24,11 @@ namespace DCL.Analytics.Systems
 
         // TODO (Vit): This is a temporary solution until we get badges implementation inside the project
         private bool badgeHeightReached;
+
+        private float previousPositionY;
+        private bool isTeleporting;
+
+        private float totalElevationGain;
 
         public BadgesHeightReachedSystem(World world, IAnalyticsController analytics, IRealmData realmData, in Entity playerEntity) : base(world)
         {
@@ -40,9 +46,29 @@ namespace DCL.Analytics.Systems
             if (playerStates.IsFalling || playerStates.IsJumping || !playerStates.IsGrounded)
                 return;
 
+            if (World.TryGet(playerEntity, out PlayerTeleportIntent _))
+            {
+                isTeleporting = true;
+                return;
+            }
+
             Vector3 currentPosition = World.Get<CharacterTransform>(playerEntity).Transform.position;
 
-            if (currentPosition.y > HEIGHT)
+            if (isTeleporting)
+            {
+                isTeleporting = false;
+                previousPositionY = currentPosition.y;
+                return;
+            }
+
+            float diff = currentPosition.y - previousPositionY;
+            previousPositionY = currentPosition.y;
+
+            // filtering out small changes
+            if (diff < THRESHOLD) return;
+
+            totalElevationGain += diff;
+            if (totalElevationGain > HEIGHT)
             {
                 badgeHeightReached = true;
                 analytics.Track(AnalyticsEvents.Badges.HEIGHT_REACHED);
