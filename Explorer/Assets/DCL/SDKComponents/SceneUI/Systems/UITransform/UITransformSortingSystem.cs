@@ -64,11 +64,10 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
                         if (newRightOfComponent.RelationData.parent != EntityReference.Null)
                         {
                             Assert.AreEqual(uiTransformComponent.RelationData.parent, newRightOfComponent.RelationData.parent);
-
-                            parent.RelationData.ChangeChildRightOf(uiTransformComponent.RelationData.rightOf,
-                                newRightOf,
-                                ref newRightOfComponent.RelationData);
+                            parent.RelationData.ChangeChildRightOf(uiTransformComponent.RelationData.rightOf, newRightOf, ref newRightOfComponent.RelationData);
                         }
+                        else if (!newRightOfComponent.IsRoot)
+                            ReportHub.LogError(ReportCategory.SCENE_UI, $"Can't Resolve sibling order for entity: {uiTransformComponent.RelationData.parent.Entity.ToString()} - as its new RightOfEntity: {newRightOfEntity.ToString()} - has no parent, but it is NOT a ROOT either");
                     }
                     else
                     {
