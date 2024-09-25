@@ -61,11 +61,14 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
                     {
                         ref var newRightOfComponent = ref World.Get<UITransformComponent>(newRightOfEntity);
 
-                        Assert.AreEqual(uiTransformComponent.RelationData.parent, newRightOfComponent.RelationData.parent);
+                        if (newRightOfComponent.RelationData.parent != EntityReference.Null)
+                        {
+                            Assert.AreEqual(uiTransformComponent.RelationData.parent, newRightOfComponent.RelationData.parent);
 
-                        parent.RelationData.ChangeChildRightOf(uiTransformComponent.RelationData.rightOf,
-                            newRightOf,
-                            ref newRightOfComponent.RelationData);
+                            parent.RelationData.ChangeChildRightOf(uiTransformComponent.RelationData.rightOf,
+                                newRightOf,
+                                ref newRightOfComponent.RelationData);
+                        }
                     }
                     else
                     {
