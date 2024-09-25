@@ -13,9 +13,9 @@ namespace ECS.StreamableLoading.Cache
         private static readonly Comparison<(TLoadingIntention intention, TAssetData asset)> COMPARE_BY_LAST_USED_FRAME_REVERSED =
             (d1, d2) => d2.asset.LastUsedFrame.CompareTo(d1.asset.LastUsedFrame);
 
-        protected readonly Dictionary<TLoadingIntention, TAssetData> cache;
+        internal readonly Dictionary<TLoadingIntention, TAssetData> cache;
 
-        private readonly List<(TLoadingIntention intention, TAssetData asset)> listedCache = new ();
+        internal readonly List<(TLoadingIntention intention, TAssetData asset)> listedCache = new ();
 
         private bool disposed;
 
@@ -37,12 +37,14 @@ namespace ECS.StreamableLoading.Cache
             if (disposed) return;
 
             foreach (TAssetData? assetData in cache.Values)
-                assetData.Dispose();
+                assetData.Dispose(true);
 
             IrrecoverableFailures.Clear();
             OngoingRequests.Clear();
             cache.Clear();
+            listedCache.Clear();
 
+            inCacheCount.Value = 0;
             disposed = true;
         }
 
@@ -73,6 +75,7 @@ namespace ECS.StreamableLoading.Cache
 
                 asset.Dispose();
                 cache.Remove(key);
+                listedCache.RemoveAt(i);
 
                 maxUnloadAmount--;
             }

@@ -84,7 +84,7 @@ namespace ECS.Unity.Materials.Tests
         private void CreateAndFinalizeTexturePromise(ref AssetPromise<Texture2DData, GetTextureIntention>? promise)
         {
             promise = AssetPromise<Texture2DData, GetTextureIntention>.Create(world, new GetTextureIntention(), PartitionComponent.TOP_PRIORITY);
-            world.Add(promise.Value.Entity, new StreamableLoadingResult<Texture2DData>(Texture2D.grayTexture));
+            world.Add(promise.Value.Entity, new StreamableLoadingResult<Texture2DData>(new Texture2DData(Texture2D.grayTexture)));
         }
 
         internal static MaterialComponent CreateMaterialComponent() =>

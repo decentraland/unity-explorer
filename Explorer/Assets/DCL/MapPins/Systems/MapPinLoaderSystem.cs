@@ -8,6 +8,7 @@ using DCL.SDKComponents.Utils;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
+using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
 using ECS.Unity.Groups;
@@ -165,13 +166,7 @@ namespace DCL.SDKComponents.MapPins.Systems
 
             DereferenceTexture(ref promise);
 
-            promise = Promise.Create(World, new GetTextureIntention
-            {
-                CommonArguments = new CommonLoadingArguments(textureComponentValue.Src, attempts: ATTEMPTS_COUNT),
-                WrapMode = textureComponentValue.WrapMode,
-                FilterMode = textureComponentValue.FilterMode,
-            }, partitionComponent);
-
+            promise = Promise.Create(World, new GetTextureIntention(textureComponentValue.Src, textureComponentValue.WrapMode, textureComponentValue.FilterMode, attemptsCount: ATTEMPTS_COUNT), partitionComponent);
             return true;
         }
 

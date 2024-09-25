@@ -1,5 +1,7 @@
 using Arch.Core;
 using Arch.SystemGroups;
+using Arch.SystemGroups.Metadata;
+using CRDT;
 using Cysharp.Threading.Tasks;
 using DCL.WebRequests;
 using DCL.Diagnostics;
@@ -8,8 +10,9 @@ using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
+using ECS.Unity.Textures.Utils;
+using System;
 using System.Threading;
-using UnityEngine;
 
 namespace ECS.StreamableLoading.Textures
 {
@@ -26,6 +29,8 @@ namespace ECS.StreamableLoading.Textures
 
         protected override async UniTask<StreamableLoadingResult<Texture2DData>> FlowInternalAsync(GetTextureIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
+            if (intention.IsVideoTexture) throw new NotSupportedException($"{nameof(LoadTextureSystem)} does not support video textures. They should be handled by {nameof(VideoTextureUtils)}");
+
             // Attempts should be always 1 as there is a repeat loop in `LoadSystemBase`
             var result = await webRequestController.GetTextureAsync(
                 intention.CommonArguments,

@@ -1,7 +1,9 @@
 ﻿using Arch.Core;
+using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Textures;
 using ECS.Unity.Materials.Components;
 using ECS.Unity.PrimitiveRenderer.Components;
+using ECS.Unity.Textures.Components;
 using UnityEngine;
 using Utility.Primitives;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.Texture2DData, ECS.StreamableLoading.Textures.GetTextureIntention>;

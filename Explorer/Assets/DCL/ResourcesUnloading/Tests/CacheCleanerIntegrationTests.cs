@@ -1,4 +1,5 @@
 ﻿using CommunicationData.URLHelpers;
+using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
@@ -15,6 +16,8 @@ using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using DCL.LOD;
+using DCL.Profiles;
+using ECS.StreamableLoading.NFTShapes;
 using Unity.PerformanceTesting;
 using UnityEngine;
 using static Utility.Tests.TestsCategories;
@@ -35,7 +38,10 @@ namespace DCL.ResourcesUnloading.Tests
         private GltfContainerAssetsCache gltfContainerAssetsCache;
         private LODCache lodAssets;
         private RoadAssetsPool roadAssets;
-
+        private NftShapeCache nftShapeCache;
+        private IEmoteStorage emoteStorage;
+        private IProfileCache profileCache;
+        private ProfileIntentionCache profileIntentionCache;
 
         private AssetBundleCache assetBundleCache;
 
@@ -54,7 +60,10 @@ namespace DCL.ResourcesUnloading.Tests
             wearableStorage = new WearableStorage();
             lodAssets = new LODCache(new GameObjectPool<LODGroup>(new GameObject().transform));
             roadAssets = new RoadAssetsPool(new List<GameObject>());
-
+            nftShapeCache = new NftShapeCache();
+            emoteStorage = new MemoryEmotesStorage();
+            profileCache = new DefaultProfileCache();
+            profileIntentionCache = new ProfileIntentionCache();
 
             cacheCleaner = new CacheCleaner(releasablePerformanceBudget);
             cacheCleaner.Register(texturesCache);
@@ -65,6 +74,10 @@ namespace DCL.ResourcesUnloading.Tests
             cacheCleaner.Register(wearableStorage);
             cacheCleaner.Register(lodAssets);
             cacheCleaner.Register(roadAssets);
+            cacheCleaner.Register(nftShapeCache);
+            cacheCleaner.Register(emoteStorage);
+            cacheCleaner.Register(profileCache);
+            cacheCleaner.Register(profileIntentionCache);
         }
 
         [TearDown]
@@ -129,7 +142,7 @@ namespace DCL.ResourcesUnloading.Tests
 
             // Assert
             Assert.That(wearableAsset.ReferenceCount, Is.EqualTo(0));
-            Assert.That(assetBundleData.referencesCount, Is.EqualTo(0));
+            Assert.That(assetBundleData.referenceCount, Is.EqualTo(0));
         }
 
         [Category(INTEGRATION)]
@@ -155,13 +168,13 @@ namespace DCL.ResourcesUnloading.Tests
         private void FillCachesWithElements(string hashID)
         {
             var textureIntention = new GetTextureIntention { CommonArguments = new CommonLoadingArguments { URL = URLAddress.FromString(hashID) } };
-            texturesCache.Add(textureIntention, new Texture2D(1, 1));
+            texturesCache.Add(textureIntention, new Texture2DData(new Texture2D(1, 1)));
 
             var audioClipIntention = new GetAudioClipIntention { CommonArguments = new CommonLoadingArguments { URL = URLAddress.FromString(hashID) } };
-            var audioClip = AudioClip.Create(hashID, 1, 1, 2000, false);
+            var audioClip = new AudioClipData(AudioClip.Create(hashID, 1, 1, 2000, false));
             audioClipsCache.Add(audioClipIntention, audioClip);
             audioClipsCache.AddReference(in audioClipIntention, audioClip);
-            audioClipsCache.Dereference(audioClipIntention);
+            audioClip.Dereference();
 
             var assetBundleData = new AssetBundleData(null, null, new GameObject(), typeof(GameObject), Array.Empty<AssetBundleData>());
             assetBundleCache.Add(new GetAssetBundleIntention { Hash = hashID }, assetBundleData);

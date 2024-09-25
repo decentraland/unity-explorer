@@ -41,9 +41,12 @@ namespace ECS.StreamableLoading
             Asset = asset;
         }
 
-        public void Dispose()
+        /// <summary>
+        ///     Dispose is forced when the whole cache is being disposed of
+        /// </summary>
+        public void Dispose(bool force)
         {
-            if (!CanBeDisposed()) return;
+            if (!force && !CanBeDisposed()) return;
 
             DestroyObject();
 
@@ -51,6 +54,11 @@ namespace ECS.StreamableLoading
                 referencedCount.Value--;
 
             totalCount.Value--;
+        }
+
+        public void Dispose()
+        {
+            Dispose(false);
         }
 
         protected abstract void DestroyObject();

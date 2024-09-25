@@ -1,4 +1,5 @@
-﻿using DCL.Profiling;
+﻿using DCL.Diagnostics;
+using DCL.Profiling;
 using Unity.Profiling;
 using UnityEngine;
 using Utility;
@@ -18,6 +19,6 @@ namespace ECS.StreamableLoading.AudioClips
             UnityObjectUtils.SafeDestroy(Asset);
         }
 
-        public AudioClipData(AudioClip audioClip) : base(audioClip) { }
+        public AudioClipData(AudioClip audioClip) : base(audioClip, ReportCategory.AUDIO) { }
     }
 }

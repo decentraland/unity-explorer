@@ -1,6 +1,4 @@
-﻿#nullable enable
-
-using Arch.Core;
+﻿using Arch.Core;
 using CommunicationData.URLHelpers;
 using DCL.Diagnostics;
 using ECS.Prioritization.Components;
@@ -10,13 +8,13 @@ using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
 using System;
 using UnityEngine;
-using Promise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.AudioClip, ECS.StreamableLoading.AudioClips.GetAudioClipIntention>;
+using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AudioClips.AudioClipData, ECS.StreamableLoading.AudioClips.GetAudioClipIntention>;
 
 namespace DCL.SDKComponents.AudioSources
 {
     public static class AudioUtils
     {
-        public static void CleanUp(this ref AudioSourceComponent component, World world, IStreamableCache<AudioClip, GetAudioClipIntention> cache)
+        public static void CleanUp(this ref AudioSourceComponent component, World world)
         {
             component.ClipPromise.ForgetLoading(world);
 
@@ -25,7 +23,7 @@ namespace DCL.SDKComponents.AudioSources
             if (component.AudioSource.isPlaying)
                 component.AudioSource.Stop();
 
-            cache.Dereference(component.ClipPromise.LoadingIntention);
+            component.ClipPromise.TryDereference(world);
         }
 
         public static bool TryCreateAudioClipPromise(World world, ISceneData sceneData, string pbAudioClipUrl, PartitionComponent partitionComponent, out Promise? assetPromise)

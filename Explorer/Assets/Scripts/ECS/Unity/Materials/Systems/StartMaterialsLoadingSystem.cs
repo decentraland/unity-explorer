@@ -2,6 +2,7 @@
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
+using CommunicationData.URLHelpers;
 using CRDT;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
@@ -75,7 +76,7 @@ namespace ECS.Unity.Materials.Systems
             materialComponent.Data = materialData;
             materialComponent.Status = StreamableLoading.LifeCycle.LoadingInProgress;
 
-            World.Set(entity, StartNewMaterialLoad(entity, materialComponent, in prevTextureData, partitionComponent));
+            World.Set(entity, StartNewMaterialLoad(materialComponent, in prevTextureData, partitionComponent));
             World.AddOrGet(entity, new ShouldInstanceMaterialComponent());
         }
 
@@ -89,10 +90,9 @@ namespace ECS.Unity.Materials.Systems
             }
         }
 
-        private MaterialComponent StartNewMaterialLoad(Entity entity,
-            MaterialComponent materialComponent, in MaterialData.TexturesData prevTexturesData, PartitionComponent partitionComponent)
+        private MaterialComponent StartNewMaterialLoad(MaterialComponent materialComponent, in MaterialData.TexturesData prevTexturesData, PartitionComponent partitionComponent)
         {
-            CreateGetTexturePromises(entity, ref materialComponent, prevTexturesData, partitionComponent);
+            CreateGetTexturePromises(ref materialComponent, prevTexturesData, partitionComponent);
             return materialComponent;
         }
 
@@ -105,7 +105,7 @@ namespace ECS.Unity.Materials.Systems
                 return;
 
             var materialComponent = new MaterialComponent(CreateMaterialData(in material));
-            CreateGetTexturePromises(entity, ref materialComponent, null, partitionComponent);
+            CreateGetTexturePromises(ref materialComponent, null, partitionComponent);
             materialComponent.Status = StreamableLoading.LifeCycle.LoadingInProgress;
 
             World.Add(entity, materialComponent);
@@ -148,26 +148,24 @@ namespace ECS.Unity.Materials.Systems
                 pbMaterial.GetEmissiveIntensity(),
                 pbMaterial.GetDirectIntensity());
 
-        private void CreateGetTexturePromises(Entity entity,
-            ref MaterialComponent materialComponent,
+        private void CreateGetTexturePromises(ref MaterialComponent materialComponent,
             in MaterialData.TexturesData? oldTexturesData,
             PartitionComponent partitionComponent)
         {
-            TryCreateGetTexturePromise(entity, in materialComponent.Data.Textures.AlbedoTexture, oldTexturesData?.AlbedoTexture, ref materialComponent.AlbedoTexPromise, partitionComponent);
+            TryCreateGetTexturePromise(in materialComponent.Data.Textures.AlbedoTexture, oldTexturesData?.AlbedoTexture, ref materialComponent.AlbedoTexPromise, partitionComponent);
 
             if (materialComponent.Data.IsPbrMaterial)
             {
-                TryCreateGetTexturePromise(entity, in materialComponent.Data.Textures.AlphaTexture, oldTexturesData?.AlphaTexture, ref materialComponent.AlphaTexPromise, partitionComponent);
-                TryCreateGetTexturePromise(entity, in materialComponent.Data.Textures.EmissiveTexture, oldTexturesData?.EmissiveTexture, ref materialComponent.EmissiveTexPromise, partitionComponent);
-                TryCreateGetTexturePromise(entity, in materialComponent.Data.Textures.BumpTexture, oldTexturesData?.BumpTexture, ref materialComponent.BumpTexPromise, partitionComponent);
+                TryCreateGetTexturePromise(in materialComponent.Data.Textures.AlphaTexture, oldTexturesData?.AlphaTexture, ref materialComponent.AlphaTexPromise, partitionComponent);
+                TryCreateGetTexturePromise(in materialComponent.Data.Textures.EmissiveTexture, oldTexturesData?.EmissiveTexture, ref materialComponent.EmissiveTexPromise, partitionComponent);
+                TryCreateGetTexturePromise(in materialComponent.Data.Textures.BumpTexture, oldTexturesData?.BumpTexture, ref materialComponent.BumpTexPromise, partitionComponent);
             }
         }
 
         private static MaterialData CreateBasicMaterialData(in PBMaterial pbMaterial, in TextureComponent? albedoTexture) =>
             MaterialData.CreateBasicMaterial(albedoTexture, pbMaterial.GetAlphaTest(), pbMaterial.GetDiffuseColor(), pbMaterial.GetCastShadows());
 
-        private bool TryCreateGetTexturePromise(Entity entity,
-            in TextureComponent? textureComponent,
+        private bool TryCreateGetTexturePromise(in TextureComponent? textureComponent,
             in TextureComponent? oldTextureComponent,
             ref Promise? promise, PartitionComponent partitionComponent)
         {
@@ -182,42 +180,33 @@ namespace ECS.Unity.Materials.Systems
 
             // If data inside promise has not changed just reuse the same promise
             // as creating and waiting for a new one can be expensive
-            if (ResolveTexturesEquality(entity, in oldTextureComponent, in textureComponentValue))
+            if (TextureComponentsAreEqual(in oldTextureComponent, in textureComponentValue))
                 return false;
 
             // If component is being reused forget the previous promise
             ReleaseMaterial.ReleaseIntention(World, ref promise, true);
 
-            var intention = new GetTextureIntention
+            // TODO this code must be unified to be able to load video textures in a common way
+            if (textureComponentValue.IsVideoTexture)
             {
-                CommonArguments = new CommonLoadingArguments(textureComponentValue.Src, attempts: attemptsCount),
-                WrapMode = textureComponentValue.WrapMode,
-                FilterMode = textureComponentValue.FilterMode,
-            };
+                var intention = new GetTextureIntention(textureComponentValue.VideoPlayerEntity);
 
-            promise = textureComponent.Value.IsVideoTexture
-                ? Promise.CreateFinalized(intention, GetOrAddVideoTextureResult(textureComponentValue, entity))
-                : Promise.Create(World!, intention, partitionComponent);
+                promise = Promise.CreateFinalized(intention,
+                    textureComponentValue.TryAddConsumer(entitiesMap, videoTexturesPool, World, out Texture2DData? tex)
+                        ? new StreamableLoadingResult<Texture2DData>(tex!)
+                        : new StreamableLoadingResult<Texture2DData>(GetReportCategory(), CreateException(new EcsEntityNotFoundException(textureComponentValue.VideoPlayerEntity, $"Entity {textureComponentValue.VideoPlayerEntity} not found!. VideoTexture will not be created."))));
+            }
+            else
+                promise = Promise.Create(World!, new GetTextureIntention(textureComponentValue.Src, textureComponentValue.WrapMode, textureComponentValue.FilterMode, attemptsCount: attemptsCount), partitionComponent);
 
             return true;
         }
 
-        private StreamableLoadingResult<Texture2DData>? GetOrAddVideoTextureResult(in TextureComponent textureComponent, Entity materialEntity) =>
-            textureComponent.TryAddConsumer(entitiesMap, materialEntity, videoTexturesPool, World, out Texture2D? tex)
-                ? new StreamableLoadingResult<Texture2DData>(new Texture2DData(tex!)) // video textures are not cached but we have to match `texture2DData`
-                : new StreamableLoadingResult<Texture2DData>(GetReportCategory(), CreateException(new EcsEntityNotFoundException(textureComponent.VideoPlayerEntity, $"Entity {textureComponent.VideoPlayerEntity} not found!. VideoTexture will not be created.")));
-
-        private bool ResolveTexturesEquality(Entity entity, in TextureComponent? oldTextureComponent, in TextureComponent textureComponent)
+        private static bool TextureComponentsAreEqual(in TextureComponent? oldTextureComponent, in TextureComponent textureComponent)
         {
             if (oldTextureComponent == null) return false; // nothing to do
 
-            // if video textures are different we must remove the entity from the consumers
-
             TextureComponent oldTextureValue = oldTextureComponent.Value;
-
-            if (oldTextureValue.VideoPlayerEntity != textureComponent.VideoPlayerEntity)
-                VideoTextureUtils.RemoveConsumer(oldTextureValue.VideoPlayerEntity, entity, entitiesMap, World);
-
             return textureComponent.Equals(oldTextureValue);
         }
     }

@@ -2,8 +2,7 @@
 
 namespace DCL.Profiling
 {
-    public static class
-        ProfilingCounters
+    public static class ProfilingCounters
     {
         private static readonly ProfilerCategory MEMORY = ProfilerCategory.Memory;
 

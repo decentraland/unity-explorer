@@ -42,7 +42,7 @@ namespace DCL.ResourcesUnloading
         private IAttachmentsAssetsCache? wearableAssetsCache;
         private IWearableStorage? wearableStorage;
         private IProfileCache? profileCache;
-        private IStreamableCache<Profile, GetProfileIntention>? profileIntentionCache;
+        private IStreamableCache<ProfileData, GetProfileIntention>? profileIntentionCache;
         private IRoadAssetPool? roadCache;
 
         private IEmoteStorage? emoteCache;
@@ -116,7 +116,7 @@ namespace DCL.ResourcesUnloading
         public void Register(IProfileCache profileCache) =>
             this.profileCache = profileCache;
 
-        public void Register(IStreamableCache<Profile, GetProfileIntention> profileIntentionCache) =>
+        public void Register(IStreamableCache<ProfileData, GetProfileIntention> profileIntentionCache) =>
             this.profileIntentionCache = profileIntentionCache;
 
         public void Register(IEmoteStorage emoteStorage) =>

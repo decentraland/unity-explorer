@@ -9,12 +9,7 @@ namespace ECS.StreamableLoading.Textures
 {
     public static class TexturesExtensions
     {
-        public static void TryDereference(this ref AssetPromise<Texture2DData, GetTextureIntention> texPromise, World world)
-        {
-            // texture should be released only if the result was created before
-            if (texPromise.TryGetResult(world, out StreamableLoadingResult<Texture2DData> data) && data.Succeeded)
-                data.Asset!.Dereference();
-        }
+
 
         public static void TryDereference(this StreamableLoadingResult<SpriteData>.WithFallback? spriteResult)
         {

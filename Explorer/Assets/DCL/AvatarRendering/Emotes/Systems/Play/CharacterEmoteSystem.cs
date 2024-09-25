@@ -20,6 +20,7 @@ using DCL.Profiles;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
+using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Runtime.CompilerServices;
@@ -188,7 +189,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                         return;
                     }
 
-                    StreamableLoadingResult<AudioClip>? audioAssetResult = emote.AudioAssetResults[bodyShape];
+                    StreamableLoadingResult<AudioClipData>? audioAssetResult = emote.AudioAssetResults[bodyShape];
                     AudioClip? audioClip = audioAssetResult?.Asset;
 
                     if (!emotePlayer.Play(mainAsset, audioClip, emote.IsLooping(), emoteIntent.Spatial, in avatarView, ref emoteComponent))

@@ -80,6 +80,8 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
                     if (!TryUnloadAllWearableAssets(wearable)) continue;
 
+                    DisposeThumbnail(wearable);
+
                     wearablesCache.Remove(urn);
                     cacheKeysDictionary.Remove(urn);
                     listedCacheKeys.Remove(node);
@@ -132,8 +134,6 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             var countNullOrEmpty = 0;
             var assetsCount = 0;
 
-            DisposeThumbnail(wearable);
-
             for (var i = 0; i < wearable.WearableAssetResults.Length; i++)
             {
                 ref WearableAssets assets = ref wearable.WearableAssetResults[i];
@@ -153,6 +153,8 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
                     if (wearableAsset is { ReferenceCount: 0 })
                     {
+                        // TODO it's not clear why countNullOrEmpty is not incremented
+
                         wearableAsset.Dispose();
                         assets.Results[j] = null;
                     }

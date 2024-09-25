@@ -28,7 +28,7 @@ namespace DCL.PluginSystem.Global
         private ProvidedAsset<MultiplayerMovementSettings> settings;
 
         private Entity? selfReplicaEntity;
-        private MultiplayerMovementDebug multiplayerMovementDebug;
+        private MultiplayerMovementDebug? multiplayerMovementDebug;
 
         public MultiplayerMovementPlugin(IAssetsProvisioner assetsProvisioner, MultiplayerMovementMessageBus messageBus, IDebugContainerBuilder debugBuilder
           , RemoteEntities remoteEntities, ExposedTransform playerTransform,
@@ -45,7 +45,7 @@ namespace DCL.PluginSystem.Global
 
         public void Dispose()
         {
-            multiplayerMovementDebug.Dispose();
+            multiplayerMovementDebug?.Dispose();
             messageBus.Dispose();
             settings.Dispose();
         }
