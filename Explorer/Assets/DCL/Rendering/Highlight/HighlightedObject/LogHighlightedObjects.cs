@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using DCL.Diagnostics;
 
 namespace DCL.Rendering.Highlight.HighlightedObject
 {
@@ -8,25 +9,27 @@ namespace DCL.Rendering.Highlight.HighlightedObject
     {
         private readonly HashSet<Renderer> highlighted = new ();
         private readonly IHighlightedObjects origin;
-        private readonly Action<string> log;
 
-        public LogHighlightedObjects(IHighlightedObjects origin, Action<string> log)
+        public LogHighlightedObjects(IHighlightedObjects origin)
         {
             this.origin = origin;
-            this.log = log;
         }
 
         public void Highlight(Renderer renderer, Color color, float thickness)
         {
             highlighted.Add(renderer);
-            log($"Highlighting {renderer.name}, currently {highlighted.Count} highlighted objects");
+            ReportHub
+               .WithReport(ReportCategory.LIVEKIT)
+               .Log($"Highlighting {renderer.name}, currently {highlighted.Count} highlighted objects");
             origin.Highlight(renderer, color, thickness);
         }
 
         public void Disparage(Renderer renderer)
         {
             highlighted.Remove(renderer);
-            log($"Disparage {renderer.name}, currently {highlighted.Count} highlighted objects");
+            ReportHub
+               .WithReport(ReportCategory.LIVEKIT)
+               .Log($"Disparage {renderer.name}, currently {highlighted.Count} highlighted objects");
             origin.Disparage(renderer);
         }
 

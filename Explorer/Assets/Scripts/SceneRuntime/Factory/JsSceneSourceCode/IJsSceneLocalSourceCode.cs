@@ -21,8 +21,7 @@ namespace SceneRuntime.Factory.JsSceneSourceCode
             {
                 origin = Application.isEditor
                     ? new LogJsSceneLocalSourceCode(
-                        new StreamingAssetsJsSceneLocalSourceCode(),
-                        ReportHub.WithReport(ReportCategory.SCENE_FACTORY).Log
+                        new StreamingAssetsJsSceneLocalSourceCode()
                     )
                     : new Null();
             }
