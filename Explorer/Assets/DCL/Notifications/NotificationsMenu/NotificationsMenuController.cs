@@ -66,6 +66,8 @@ namespace DCL.Notifications.NotificationsMenu
             notificationThumbnailCts.SafeCancelAndDispose();
             notificationPanelCts.SafeCancelAndDispose();
             lifeCycleCts.SafeCancelAndDispose();
+            this.view.OnViewShown -= OnViewShown;
+            this.view.CloseButton.onClick.RemoveListener(ClosePanel);
         }
 
         private void ClosePanel()
@@ -125,7 +127,7 @@ namespace DCL.Notifications.NotificationsMenu
 
         private void UpdateUnreadNotificationRender()
         {
-            view.unreadNotificationCounterText.text = unreadNotifications.ToString();
+            view.unreadNotificationCounterText.SetText("{0}", unreadNotifications);
             view.notificationIndicator.SetActive(unreadNotifications > 0);
         }
 
