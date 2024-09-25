@@ -11,6 +11,7 @@
             public const string INITIAL_LOADING = "initial_loading";
             public const string PERFORMANCE_REPORT = "performance_report";
             public const string ERROR = "error";
+            public const string TEST_RUST = nameof(TEST_RUST);
         }
 
         public static class World

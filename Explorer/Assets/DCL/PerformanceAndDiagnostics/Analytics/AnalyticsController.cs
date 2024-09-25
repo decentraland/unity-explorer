@@ -20,6 +20,9 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
             analytics.AddPlugin(new StaticCommonTraitsPlugin(launcherTraits));
 
+            analytics.Track(AnalyticsEvents.General.TEST_RUST, new JsonObject());
+            analytics.Flush();
+
             analytics.Track(AnalyticsEvents.General.SYSTEM_INFO_REPORT, new JsonObject
             {
                 ["device_model"] = SystemInfo.deviceModel, // "XPS 17 9720 (Dell Inc.)"
