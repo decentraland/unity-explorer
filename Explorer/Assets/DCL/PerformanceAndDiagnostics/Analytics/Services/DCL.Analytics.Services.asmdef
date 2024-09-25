@@ -1,5 +1,5 @@
 {
-    "name": "DCL.Analytics",
+    "name": "DCL.Analytics.Services",
     "rootNamespace": "",
     "references": [
         "GUID:e0eedfa2deb9406daf86fd8368728e39",
@@ -24,8 +24,7 @@
         "GUID:ca4e81cdd6a34d1aa54c32ad41fc5b3b",
         "GUID:28964ef7dc9441b6b8671b61a8106690",
         "GUID:3640f3c0b42946b0b8794a1ed8e06ca5",
-        "GUID:543b8f091a5947a3880b7f2bca2358bd",
-        "GUID:e11871a9242c44ec98ed3459ff7781d9"
+        "GUID:543b8f091a5947a3880b7f2bca2358bd"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

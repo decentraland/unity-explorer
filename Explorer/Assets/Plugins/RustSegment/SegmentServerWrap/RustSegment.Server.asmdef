@@ -1,0 +1,16 @@
+{
+    "name": "RustSegment.Server",
+    "rootNamespace": "",
+    "references": [
+    "GUID:e11871a9242c44ec98ed3459ff7781d9",
+    "GUID:3640f3c0b42946b0b8794a1ed8e06ca5"],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": ["Nethereum.Signer.dll"],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

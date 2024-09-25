@@ -1,4 +1,5 @@
 use core::str;
+use std::ffi::{c_char, CStr};
 use time::OffsetDateTime;
 
 use segment::message::{Identify, Track, User};
@@ -10,18 +11,11 @@ use crate::{server::SegmentServer, FfiCallbackFn, OperationHandleId, Response, S
 /// The foreign language must only provide valid pointers
 #[no_mangle]
 pub unsafe extern "C" fn segment_server_initialize(
-    segment_write_key: *const u8,
-    segment_write_key_len: usize,
+    segment_write_key: *const c_char,
     callback_fn: FfiCallbackFn,
 ) -> bool {
-    let write_key = as_utf8_array(segment_write_key, segment_write_key_len);
-
-    let key_string = match str::from_utf8(write_key) {
-        Ok(result) => result,
-        Err(_) => return false,
-    };
-
-    SEGMENT_SERVER.initialize(key_string, callback_fn);
+    let write_key = as_str(segment_write_key);
+    SEGMENT_SERVER.initialize(write_key, callback_fn);
     true
 }
 
@@ -30,37 +24,27 @@ pub unsafe extern "C" fn segment_server_initialize(
 /// The foreign language must only provide valid pointers
 #[no_mangle]
 pub unsafe extern "C" fn segment_server_identify(
-    used_id: *const u8,
-    user_id_len: usize,
-    traits_json: *const u8,
-    traits_json_len: usize,
-    context_json: *const u8,
-    context_json_len: usize,
+    used_id: *const c_char,
+    traits_json: *const c_char,
+    context_json: *const c_char,
 ) -> OperationHandleId {
     let id = SEGMENT_SERVER.next_id();
 
-    let user = as_utf8_array(used_id, user_id_len);
-    let traits = as_utf8_array(traits_json, traits_json_len);
-    let context_json = as_utf8_array(context_json, context_json_len);
+    let user = as_str(used_id);
+    let traits = as_str(traits_json);
+    let context_json = as_str(context_json);
 
     let operation = async move {
         let arc = SEGMENT_SERVER.context.clone();
         let mut guard = arc.lock().await;
         let context = (*guard).as_mut().unwrap();
 
-        let str_user_id = match str::from_utf8(user) {
-            Ok(result) => result,
-            Err(_) => {
-                context.call_callback(id, Response::ErrorUtf8Decode);
-                return;
-            }
-        };
         let msg = Identify {
             user: User::UserId {
-                user_id: str_user_id.to_string(),
+                user_id: user.to_string(),
             },
-            traits: serde_json::from_slice(traits).unwrap(),
-            context: serde_json::from_slice(context_json).unwrap(),
+            traits: serde_json::from_str(traits).unwrap(),
+            context: serde_json::from_str(context_json).unwrap(),
             timestamp: Some(OffsetDateTime::now_utc()),
             ..Default::default()
         };
@@ -79,50 +63,30 @@ pub unsafe extern "C" fn segment_server_identify(
 /// The foreign language must only provide valid pointers
 #[no_mangle]
 pub unsafe extern "C" fn segment_server_track(
-    used_id: *const u8,
-    user_id_len: usize,
-    event_name: *const u8,
-    event_name_len: usize,
-    properties_json: *const u8,
-    properties_json_len: usize,
-    context_json: *const u8,
-    context_json_len: usize,
+    used_id: *const c_char,
+    event_name: *const c_char,
+    properties_json: *const c_char,
+    context_json: *const c_char,
 ) -> OperationHandleId {
     let id = SEGMENT_SERVER.next_id();
 
-    let user = as_utf8_array(used_id, user_id_len);
-    let event_name = as_utf8_array(event_name, event_name_len);
-    let properties_json = as_utf8_array(properties_json, properties_json_len);
-    let context_json = as_utf8_array(context_json, context_json_len);
+    let user = as_str(used_id);
+    let event_name = as_str(event_name);
+    let properties_json = as_str(properties_json);
+    let context_json = as_str(context_json);
 
     let operation = async move {
         let arc = SEGMENT_SERVER.context.clone();
         let mut guard = arc.lock().await;
         let context = (*guard).as_mut().unwrap();
 
-        let str_user_id = match str::from_utf8(user) {
-            Ok(result) => result,
-            Err(_) => {
-                context.call_callback(id, Response::ErrorUtf8Decode);
-                return;
-            }
-        };
-
-        let str_event_name = match str::from_utf8(event_name) {
-            Ok(result) => result,
-            Err(_) => {
-                context.call_callback(id, Response::ErrorUtf8Decode);
-                return;
-            }
-        };
-
         let msg = Track {
             user: User::UserId {
-                user_id: str_user_id.to_string(),
+                user_id: user.to_string(),
             },
-            event: str_event_name.to_string(),
-            properties: serde_json::from_slice(properties_json).unwrap(),
-            context: serde_json::from_slice(context_json).unwrap(),
+            event: event_name.to_string(),
+            properties: serde_json::from_str(properties_json).unwrap(),
+            context: serde_json::from_str(context_json).unwrap(),
             timestamp: Some(OffsetDateTime::now_utc()),
             ..Default::default()
         };
@@ -154,8 +118,9 @@ pub unsafe extern "C" fn segment_server_flush() -> OperationHandleId {
     SEGMENT_SERVER.dispatch_operation(id, operation)
 }
 
-fn as_utf8_array<'a>(content: *const u8, len: usize) -> &'a [u8] {
-    return unsafe { std::slice::from_raw_parts(content, len) };
+fn as_str<'a>(chars: *const c_char) -> &'a str {
+    let c_str = unsafe { CStr::from_ptr(chars) };
+    c_str.to_str().unwrap()
 }
 
 fn as_response_code(result: Result<(), segment::Error>) -> Response {
