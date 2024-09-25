@@ -4,6 +4,7 @@ using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
 using DCL.PerformanceAndDiagnostics.Analytics;
+using DCL.Web3.Identities;
 using ECS;
 using ECS.Abstract;
 using UnityEngine;
@@ -18,6 +19,7 @@ namespace DCL.Analytics.Systems
 
         private readonly IRealmData realmData;
         private readonly Entity playerEntity;
+        private readonly IWeb3IdentityCache identityCache;
         private readonly IAnalyticsController analytics;
 
         private CharacterRigidTransform? rigidTransform;
@@ -29,16 +31,27 @@ namespace DCL.Analytics.Systems
         private bool isTeleporting;
 
         private float totalElevationGain;
+        private IWeb3Identity? currentIdentity;
 
-        public BadgesHeightReachedSystem(World world, IAnalyticsController analytics, IRealmData realmData, in Entity playerEntity) : base(world)
+        public BadgesHeightReachedSystem(World world, IAnalyticsController analytics, IRealmData realmData, in Entity playerEntity, IWeb3IdentityCache identityCache) : base(world)
         {
             this.analytics = analytics;
             this.realmData = realmData;
             this.playerEntity = playerEntity;
+            this.identityCache = identityCache;
+
+            currentIdentity = identityCache.Identity;
         }
 
         protected override void Update(float t)
         {
+            if (!currentIdentity.Address.Equals(identityCache.Identity.Address))
+            {
+                currentIdentity = identityCache.Identity;
+                badgeHeightReached = false;
+                totalElevationGain = 0;
+            }
+
             if (badgeHeightReached || !realmData.Configured) return;
 
             AnimationStates playerStates = World.Get<CharacterAnimationComponent>(playerEntity).States;
@@ -73,6 +86,8 @@ namespace DCL.Analytics.Systems
                 badgeHeightReached = true;
                 analytics.Track(AnalyticsEvents.Badges.HEIGHT_REACHED);
             }
+
+            Debug.Log($"VVV [{currentIdentity.Address}] : {totalElevationGain} {badgeHeightReached}");
         }
     }
 }
