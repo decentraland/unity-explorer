@@ -53,7 +53,7 @@ namespace DCL.Multiplayer.Movement.Systems
         private readonly ElementBinding<string> duration;
         private readonly NetworkMessageBindings intStart = new ();
         private readonly NetworkMessageBindings intEnd = new ();
-        private readonly DebugWidgetVisibilityBinding widgetVisibility = new (false);
+        private readonly DebugWidgetVisibilityBinding widgetVisibility = new (true);
 
         private Entity? selfReplicaEntity;
         private bool useLinear;
