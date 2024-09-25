@@ -356,7 +356,7 @@ namespace DCL.Landscape
                             using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"- [Cache] DigHoles from Cache {t}ms")))
                             {
                                 chunkModel.TerrainData.SetHoles(0, 0,
-                                    await localCache.GetHoles(chunkModel.MinParcel.x, chunkModel.MinParcel.y));
+                                    await localCache.GetHolesAsync(chunkModel.MinParcel.x, chunkModel.MinParcel.y));
                                 await UniTask.Yield(cancellationToken);
                             }
                         }
@@ -391,7 +391,7 @@ namespace DCL.Landscape
                 {
                     foreach ((int2 key, TerrainData value) in terrainDatas)
                     {
-                        var holes = await localCache.GetHoles(key.x, key.y);
+                        var holes = await localCache.GetHolesAsync(key.x, key.y);
                         value.SetHoles(0, 0, holes);
                         await UniTask.Yield(cancellationToken);
                     }

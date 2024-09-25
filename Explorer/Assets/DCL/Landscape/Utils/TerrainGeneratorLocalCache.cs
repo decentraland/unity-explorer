@@ -109,25 +109,19 @@ namespace DCL.Landscape.Utils
             FORMATTER.Serialize(fileStreamForHeights, arrayToSave);
         }
 
-        public async UniTask<T[]> RetrieveArrayFromFile<T>(string name, string offsetX, string offsetZ)
+        public async UniTask<T[]> RetrieveArrayFromFileAsync<T>(string name, string offsetX, string offsetZ)
         {
             await using var fileStream =
                 new FileStream(GetDictionaryFilePath(name, offsetX, offsetZ), FileMode.Open);
             return await UniTask.RunOnThreadPool(() => (T[])FORMATTER.Deserialize(fileStream));
         }
 
-        public async UniTask<T[]> RetrieveArrayFromFile<T>(string name, string offsetX, string offsetZ, string layer)
+        public async UniTask<T[]> RetrieveArrayFromFileAsync<T>(string name, string offsetX, string offsetZ,
+            string layer)
         {
             await using var fileStream =
                 new FileStream(GetDictionaryFilePath(name, offsetX, offsetZ, layer), FileMode.Open);
             return await UniTask.RunOnThreadPool(() => (T[])FORMATTER.Deserialize(fileStream));
-        }
-
-        public async UniTask<bool[]> RetrieveBoolArrayFromFile(string name, string offsetX, string offsetZ)
-        {
-            await using var fileStream =
-                new FileStream(GetDictionaryFilePath(name, offsetX, offsetZ), FileMode.Open);
-            return await UniTask.RunOnThreadPool(() => (bool[])FORMATTER.Deserialize(fileStream));
         }
 
         private static string GetDictionaryFilePath(string name, string x, string y)
@@ -224,44 +218,45 @@ namespace DCL.Landscape.Utils
         public bool IsValid() =>
             localCache.IsValid();
 
-        public async UniTask<float[,]> GetHeights(int offsetX, int offsetZ)
+        public async UniTask<float[,]> GetHeightsAsync(int offsetX, int offsetZ)
         {
-            var heightMaps = await localCache.RetrieveArrayFromFile<float>(TerrainLocalCache.HEIGHTS,
+            var heightMaps = await localCache.RetrieveArrayFromFileAsync<float>(TerrainLocalCache.HEIGHTS,
                 offsetX.ToString(),
                 offsetZ.ToString());
             return UnFlatten(heightMaps, localCache.heightX, localCache.heightY);
         }
 
-        public async UniTask<float[,,]> GetAlphaMaps(int offsetX, int offsetZ)
+        public async UniTask<float[,,]> GetAlphaMapsAsync(int offsetX, int offsetZ)
         {
-            var alphaMaps = await localCache.RetrieveArrayFromFile<float>(TerrainLocalCache.ALPHA_MAPS,
+            var alphaMaps = await localCache.RetrieveArrayFromFileAsync<float>(TerrainLocalCache.ALPHA_MAPS,
                 offsetX.ToString(),
                 offsetZ.ToString());
             return UnFlatten(alphaMaps, localCache.alphaX, localCache.alphaY, localCache.alphaZ);
         }
 
 
-        public async UniTask<TreeInstance[]> GetTrees(int offsetX, int offsetZ)
+        public async UniTask<TreeInstance[]> GetTreesAsync(int offsetX, int offsetZ)
         {
             var treesDTO =
-                await localCache.RetrieveArrayFromFile<TreeInstanceDTO>(TerrainLocalCache.TREES, offsetX.ToString(),
+                await localCache.RetrieveArrayFromFileAsync<TreeInstanceDTO>(TerrainLocalCache.TREES,
+                    offsetX.ToString(),
                     offsetZ.ToString());
             return treesDTO.Select(TreeInstanceDTO.ToOriginal).ToArray();
         }
 
-        public async UniTask<int[,]> GetDetailLayer(int offsetX, int offsetZ, int layer)
+        public async UniTask<int[,]> GetDetailLayerAsync(int offsetX, int offsetZ, int layer)
         {
-            var detailLayer = await localCache.RetrieveArrayFromFile<int>(TerrainLocalCache.DETAIL_LAYER,
+            var detailLayer = await localCache.RetrieveArrayFromFileAsync<int>(TerrainLocalCache.DETAIL_LAYER,
                 offsetX.ToString(), offsetZ.ToString(), layer.ToString());
             return UnFlatten(detailLayer, localCache.detailX, localCache.detailY);
         }
 
-        public async UniTask<bool[,]> GetHoles(int offsetX, int offsetZ)
+        public async UniTask<bool[,]> GetHolesAsync(int offsetX, int offsetZ)
         {
             try
             {
                 var holesLayer =
-                    await localCache.RetrieveArrayFromFile<bool>("holes", offsetX.ToString(), offsetZ.ToString());
+                    await localCache.RetrieveArrayFromFileAsync<bool>("holes", offsetX.ToString(), offsetZ.ToString());
                 return UnFlatten(holesLayer, localCache.holesX, localCache.holesY);
             }
             catch (Exception e)

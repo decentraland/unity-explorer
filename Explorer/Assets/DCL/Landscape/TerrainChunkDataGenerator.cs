@@ -66,7 +66,7 @@ namespace DCL.Landscape
             {
                 using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"- [Cache] SetHeightsAsync from Cache {t}ms")))
                 {
-                    var heightArray = await localCache.GetHeights(parcelMinX, parcelMinZ);
+                    var heightArray = await localCache.GetHeightsAsync(parcelMinX, parcelMinZ);
                     terrainData.SetHeights(0, 0, heightArray);
                 }
             }
@@ -124,7 +124,7 @@ namespace DCL.Landscape
             {
                 using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"- [Cache] SetTexturesAsync {t}ms")))
                 {
-                    var alpha = await localCache.GetAlphaMaps(offsetX, offsetZ);
+                    var alpha = await localCache.GetAlphaMapsAsync(offsetX, offsetZ);
                     terrainData.SetAlphamaps(0, 0, alpha);
                 }
             }
@@ -171,7 +171,7 @@ namespace DCL.Landscape
             {
                 using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"- [Cache] SetTreesAsync from Cache {t}ms")))
                 {
-                    var array = await localCache.GetTrees(chunkMinParcel.x, chunkMinParcel.y);
+                    var array = await localCache.GetTreesAsync(chunkMinParcel.x, chunkMinParcel.y);
                     terrainData.SetTreeInstances(array, true);
                 }
             }
@@ -282,7 +282,7 @@ namespace DCL.Landscape
                 using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"- [Cache] SetDetails from Cache {t}ms")))
                     for (var i = 0; i < terrainGenData.detailAssets.Length; i++)
                     {
-                        var detailLayer = await localCache.GetDetailLayer(offsetX, offsetZ, i);
+                        var detailLayer = await localCache.GetDetailLayerAsync(offsetX, offsetZ, i);
                         terrainData.SetDetailLayer(0, 0, i, detailLayer);
                     }
             }
