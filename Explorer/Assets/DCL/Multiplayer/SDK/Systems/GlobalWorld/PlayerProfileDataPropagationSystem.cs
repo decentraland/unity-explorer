@@ -2,14 +2,11 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
-using DCL.Character.Components;
 using DCL.Diagnostics;
 using DCL.Multiplayer.SDK.Components;
 using DCL.Profiles;
 using ECS.Abstract;
-using ECS.Groups;
 using ECS.LifeCycle.Components;
-using SceneRunner.Scene;
 
 namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
 {
