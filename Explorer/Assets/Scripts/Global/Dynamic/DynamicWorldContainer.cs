@@ -459,7 +459,8 @@ namespace Global.Dynamic
                     remoteEntities,
                     staticContainer.ScenesCache,
                     emotesCache,
-                    container.CharacterDataPropagationUtility
+                    container.CharacterDataPropagationUtility,
+                    staticContainer.ComponentsContainer.ComponentPoolsRegistry
                 ),
                 new WorldInfoPlugin(worldInfoHub, debugBuilder, chatHistory),
                 new CharacterMotionPlugin(assetsProvisioner, staticContainer.CharacterContainer.CharacterObject, debugBuilder, staticContainer.ComponentsContainer.ComponentPoolsRegistry),
