@@ -31,7 +31,7 @@ namespace DCL.Profiling.ECS
 
         private readonly PerformanceBottleneckDetector bottleneckDetector = new ();
 
-        private DebugWidgetVisibilityBinding visibilityBinding;
+        private DebugWidgetVisibilityBinding performanceVisibilityBinding;
         private DebugWidgetVisibilityBinding memoryVisibilityBinding;
 
         private ElementBinding<string> hiccups;
@@ -81,7 +81,7 @@ namespace DCL.Profiling.ECS
                 var version = new ElementBinding<string>(Application.version);
 
                 debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.PERFORMANCE)
-                           ?.SetVisibilityBinding(visibilityBinding = new DebugWidgetVisibilityBinding(true))
+                           ?.SetVisibilityBinding(performanceVisibilityBinding = new DebugWidgetVisibilityBinding(true))
                             .AddCustomMarker("Version:", version)
                             .AddCustomMarker("Frame rate:", fps = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("Min FPS last 1k frames:", minfps = new ElementBinding<string>(string.Empty))
@@ -119,9 +119,14 @@ namespace DCL.Profiling.ECS
             if (!realmData.Configured) return;
 
             if (memoryVisibilityBinding.IsExpanded)
+            {
                 UpdateMemoryView(profiler);
 
-            if (visibilityBinding.IsExpanded)
+                if(sceneMetricsEnabled)
+                    UpdateSceneMetrics();
+            }
+
+            if (performanceVisibilityBinding.IsExpanded)
             {
                 SetFPS(fps, profiler.LastFrameTimeValueNs);
 
@@ -131,8 +136,7 @@ namespace DCL.Profiling.ECS
                     UpdateFrameStatisticsView(profiler);
                 }
                 
-                if(sceneMetricsEnabled)
-                    UpdateSceneMetrics();
+
 
                 if (frameTimingsEnabled && bottleneckDetector.IsFrameTimingSupported && bottleneckDetector.TryCapture())
                     UpdateFrameTimings();
