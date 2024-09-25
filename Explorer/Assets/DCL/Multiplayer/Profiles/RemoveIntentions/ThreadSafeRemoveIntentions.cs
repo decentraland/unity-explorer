@@ -19,10 +19,10 @@ namespace DCL.Multiplayer.Profiles.RemoveIntentions
             this.roomHub = roomHub;
 
             this.roomHub.IslandRoom().Participants.UpdatesFromParticipant += ParticipantsOnUpdatesFromParticipant;
-            this.roomHub.SceneRoom().Room().Participants.UpdatesFromParticipant += ParticipantsOnUpdatesFromParticipant;
+            this.roomHub.SceneRoom().Participants.UpdatesFromParticipant += ParticipantsOnUpdatesFromParticipant;
 
             this.roomHub.IslandRoom().ConnectionUpdated += OnConnectionUpdated;
-            this.roomHub.SceneRoom().Room().ConnectionUpdated += OnConnectionUpdated;
+            this.roomHub.SceneRoom().ConnectionUpdated += OnConnectionUpdated;
         }
 
         private void OnConnectionUpdated(IRoom room, ConnectionUpdate connectionupdate)
@@ -43,10 +43,10 @@ namespace DCL.Multiplayer.Profiles.RemoveIntentions
         ~ThreadSafeRemoveIntentions()
         {
             roomHub.IslandRoom().Participants.UpdatesFromParticipant -= ParticipantsOnUpdatesFromParticipant;
-            roomHub.SceneRoom().Room().Participants.UpdatesFromParticipant -= ParticipantsOnUpdatesFromParticipant;
+            roomHub.SceneRoom().Participants.UpdatesFromParticipant -= ParticipantsOnUpdatesFromParticipant;
 
             roomHub.IslandRoom().ConnectionUpdated -= OnConnectionUpdated;
-            roomHub.SceneRoom().Room().ConnectionUpdated -= OnConnectionUpdated;
+            roomHub.SceneRoom().ConnectionUpdated -= OnConnectionUpdated;
         }
 
         private void ParticipantsOnUpdatesFromParticipant(Participant participant, UpdateFromParticipant update)

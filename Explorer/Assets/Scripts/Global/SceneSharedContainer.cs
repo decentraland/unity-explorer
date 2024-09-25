@@ -10,7 +10,6 @@ using DCL.Profiles;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
-using Global.Dynamic;
 using SceneRunner;
 using SceneRunner.ECSWorld;
 using SceneRuntime;
@@ -29,12 +28,12 @@ namespace Global
 
         public static SceneSharedContainer Create(in StaticContainer staticContainer,
             IDecentralandUrlsSource decentralandUrlsSource,
-            IWeb3IdentityCache web3IdentityCache,
-            IWebRequestController webRequestController,
-            IRealmData realmData,
-            IProfileRepository profileRepository,
-            IRoomHub roomHub,
             IMVCManager mvcManager,
+            IWeb3IdentityCache web3IdentityCache,
+            IProfileRepository profileRepository,
+            IWebRequestController webRequestController,
+            IRoomHub roomHub,
+            IRealmData? realmData,
             IMessagePipesHub messagePipesHub,
             bool cacheJsSources = true)
         {
@@ -68,7 +67,7 @@ namespace Global
                     roomHub,
                     realmData,
                     staticContainer.PortableExperiencesController,
-                    new SceneCommunicationPipe(messagePipesHub, roomHub.SceneRoom())
+                    new SceneCommunicationPipe(messagePipesHub)
                 ),
             };
         }

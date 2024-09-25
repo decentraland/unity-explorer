@@ -1,5 +1,6 @@
 ﻿using CRDT.Memory;
 using CrdtEcsBridge.PoolsProviders;
+using ECS;
 using SceneRunner.Scene;
 using SceneRuntime;
 using System;
@@ -12,31 +13,40 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
     {
         private readonly ICRDTMemoryAllocator crdtMemoryAllocator;
 
-        public CommunicationsControllerAPIImplementation(ISceneData sceneData,
+        public CommunicationsControllerAPIImplementation(
+            IRealmData realmData,
+            ISceneData sceneData,
             ISceneCommunicationPipe messagePipesHub,
             IJsOperations jsOperations,
-            ICRDTMemoryAllocator crdtMemoryAllocator) : base(sceneData,
+            ICRDTMemoryAllocator crdtMemoryAllocator,
+            ISceneStateProvider sceneStateProvider) : base(
+            realmData,
+            sceneData,
             messagePipesHub,
-            jsOperations, ISceneCommunicationPipe.MsgType.Uint8Array)
+            jsOperations,
+            sceneStateProvider)
         {
             this.crdtMemoryAllocator = crdtMemoryAllocator;
         }
 
-        protected override void OnMessageReceived(ISceneCommunicationPipe.DecodedMessage message)
+        protected override void OnMessageReceived(MsgType messageType, ReadOnlySpan<byte> decodedMessage, string fromWalletId)
         {
-            // Wallet Id
-            int walletBytesCount = Encoding.UTF8.GetByteCount(message.FromWalletId);
-            Span<byte> senderBytes = stackalloc byte[walletBytesCount];
-            Encoding.UTF8.GetBytes(message.FromWalletId, senderBytes);
+            if (messageType != MsgType.Uint8Array)
+                return;
 
-            int messageLength = senderBytes.Length + message.Data.Length + 1;
+            // Wallet Id
+            int walletBytesCount = Encoding.UTF8.GetByteCount(fromWalletId);
+            Span<byte> senderBytes = stackalloc byte[walletBytesCount];
+            Encoding.UTF8.GetBytes(fromWalletId, senderBytes);
+
+            int messageLength = senderBytes.Length + decodedMessage.Length + 1;
 
             IMemoryOwner<byte>? serializedMessageOwner = crdtMemoryAllocator.GetMemoryBuffer(messageLength);
             Span<byte> serializedMessage = serializedMessageOwner.Memory.Span;
 
             serializedMessage[0] = (byte)senderBytes.Length;
             senderBytes.CopyTo(serializedMessage[1..]);
-            message.Data.CopyTo(serializedMessage.Slice(senderBytes.Length + 1));
+            decodedMessage.CopyTo(serializedMessage.Slice(senderBytes.Length + 1));
 
             lock (eventsToProcess) { eventsToProcess.Add(serializedMessageOwner); }
         }

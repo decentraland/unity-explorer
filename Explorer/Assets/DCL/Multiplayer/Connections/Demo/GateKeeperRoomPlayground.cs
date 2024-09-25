@@ -12,10 +12,8 @@ using DCL.Web3.Accounts.Factory;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
-using ECS.SceneLifeCycle;
 using LiveKit.Internal.FFIClients;
 using UnityEngine;
-using Utility;
 
 namespace DCL.Multiplayer.Connections.Demo
 {
@@ -36,16 +34,15 @@ namespace DCL.Multiplayer.Connections.Demo
             var urlsSource = new DecentralandUrlsSource(DecentralandEnvironment.Zone);
 
             IWeb3IdentityCache? identityCache = await ArchipelagoFakeIdentityCache.NewAsync(urlsSource, new Web3AccountFactory());
-            var character = new ExposedTransform();
+            var character = new ICharacterObject.Fake(Vector3.zero);
             var webRequests = new LogWebRequestController(new WebRequestController(identityCache));
             var places = new PlacesAPIService.PlacesAPIService(new PlacesAPIClient(webRequests, urlsSource));
             var realmData = new IRealmData.Fake();
 
             new GateKeeperSceneRoom(
                 webRequests,
-                new SceneRoomLogMetaDataSource(new SceneRoomMetaDataSource(realmData, character, places, false)),
-                urlsSource,
-                new ScenesCache()
+                new LogMetaDataSource(new MetaDataSource(realmData, character, places)),
+                urlsSource
             ).StartAsync();
         }
     }

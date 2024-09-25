@@ -4,9 +4,7 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.GateKeeper.Meta;
 using DCL.Multiplayer.Connections.Rooms.Connective;
 using DCL.WebRequests;
-using ECS.SceneLifeCycle;
 using LiveKit.Rooms;
-using SceneRunner.Scene;
 using System;
 using System.Threading;
 
@@ -15,42 +13,27 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
     public class GateKeeperSceneRoom : IGateKeeperSceneRoom
     {
         private readonly IWebRequestController webRequests;
-        private readonly ISceneRoomMetaDataSource metaDataSource;
+        private readonly IMetaDataSource metaDataSource;
         private readonly IConnectiveRoom connectiveRoom;
         private readonly string sceneHandleUrl;
-        private readonly Func<bool> roomIsNotRunning;
-
-        private readonly IScenesCache scenesCache;
-
-        /// <summary>
-        ///     The scene the current LiveKit room corresponds to
-        /// </summary>
-        private ISceneFacade? connectedScene;
-
-        private MetaData previousMetaData;
+        private MetaData? previousMetaData;
 
         public GateKeeperSceneRoom(
             IWebRequestController webRequests,
-            ISceneRoomMetaDataSource metaDataSource,
-            IDecentralandUrlsSource decentralandUrlsSource,
-            IScenesCache scenesCache)
+            IMetaDataSource metaDataSource,
+            IDecentralandUrlsSource decentralandUrlsSource
+        )
         {
             this.webRequests = webRequests;
             this.metaDataSource = metaDataSource;
-            this.scenesCache = scenesCache;
-            sceneHandleUrl = decentralandUrlsSource.Url(DecentralandUrl.GateKeeperSceneAdapter);
+            this.sceneHandleUrl = decentralandUrlsSource.Url(DecentralandUrl.GateKeeperSceneAdapter);
 
             connectiveRoom = new ConnectiveRoom(
                 static _ => UniTask.CompletedTask,
                 RunConnectCycleStepAsync,
                 nameof(GateKeeperSceneRoom)
             );
-
-            roomIsNotRunning = () => connectiveRoom.CurrentState() is not IConnectiveRoom.State.Running;
         }
-
-        public bool IsSceneConnected(string? sceneId) =>
-            !metaDataSource.ScenesCommunicationIsIsolated || sceneId == connectedScene?.SceneData.SceneEntityDefinition.id;
 
         public UniTask<bool> StartAsync() =>
             connectiveRoom.StartAsync();
@@ -68,34 +51,19 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
         {
             MetaData meta = await metaDataSource.MetaDataAsync(token);
 
-            // Connect or disconnect, at the same time check if metadata has potentially changed
-            await UniTask.WhenAll(WaitForMetadataDirtyAsync(token), ProcessMetaDataAsync(token));
-
-            async UniTask ProcessMetaDataAsync(CancellationToken token)
+            if (meta.sceneId == null)
             {
-                if (meta.sceneId == null)
-                {
-                    connectedScene = null;
-                    await disconnectCurrentRoomAsyncDelegate(token);
-                }
-                else if (!meta.Equals(previousMetaData))
-                {
-                    string connectionString = await ConnectionStringAsync(meta, token);
-                    await connectToRoomAsyncDelegate(connectionString, token);
-                    scenesCache.TryGetByParcel(meta.Parcel, out connectedScene);
-                }
-
-                previousMetaData = meta;
+                await disconnectCurrentRoomAsyncDelegate(token);
+                return;
             }
-        }
 
-        /// <summary>
-        ///     Either room has disconnected or metadata has changed
-        /// </summary>
-        /// <param name="token"></param>
-        private async UniTask WaitForMetadataDirtyAsync(CancellationToken token)
-        {
-            await UniTask.WhenAny(UniTask.WaitUntil(roomIsNotRunning, cancellationToken: token), metaDataSource.WaitForMetaDataIsDirtyAsync(token));
+            if (connectiveRoom.CurrentState() is not IConnectiveRoom.State.Running || meta.Equals(previousMetaData) == false)
+            {
+                string connectionString = await ConnectionStringAsync(meta, token);
+                await connectToRoomAsyncDelegate(connectionString, token);
+            }
+
+            previousMetaData = meta;
         }
 
         private async UniTask<string> ConnectionStringAsync(MetaData meta, CancellationToken token)

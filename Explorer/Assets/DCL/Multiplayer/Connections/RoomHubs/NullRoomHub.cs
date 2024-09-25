@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.Rooms;
 using LiveKit.Rooms;
 
@@ -11,8 +10,7 @@ namespace DCL.Multiplayer.Connections.RoomHubs
 
         public IRoom IslandRoom() => NullRoom.INSTANCE;
 
-        public IGateKeeperSceneRoom SceneRoom() =>
-            new IGateKeeperSceneRoom.Fake();
+        public IRoom SceneRoom() => NullRoom.INSTANCE;
 
         public UniTask<bool> StartAsync() => UniTask.FromResult(true);
 

@@ -11,11 +11,11 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         private const string NOT_CONFIGURED = "NOT CONFIGURED";
 
         private readonly IRealmData realmData;
-        private readonly IExposedTransform playerTransform;
+        private readonly ExposedTransform playerTransform;
         private readonly IWeb3IdentityCache? identityCache;
         public override PluginType Type => PluginType.Enrichment;
 
-        public DynamicCommonTraitsPlugin(IRealmData realmData, IWeb3IdentityCache? identityCache, IExposedTransform playerTransform)
+        public DynamicCommonTraitsPlugin(IRealmData realmData, IWeb3IdentityCache? identityCache, ExposedTransform playerTransform)
         {
             this.realmData = realmData;
             this.identityCache = identityCache;

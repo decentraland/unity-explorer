@@ -28,7 +28,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Status
         public void Update()
         {
             (bool useOverride, ConnectionQuality quality) = overrideQuality.Value;
-            connectionQualityScene.UpdateValue(useOverride ? quality : roomHub.SceneRoom().Room().Participants.LocalParticipant().ConnectionQuality);
+            connectionQualityScene.UpdateValue(useOverride ? quality : roomHub.SceneRoom().Participants.LocalParticipant().ConnectionQuality);
             connectionQualityIsland.UpdateValue(useOverride ? quality : roomHub.IslandRoom().Participants.LocalParticipant().ConnectionQuality);
         }
     }

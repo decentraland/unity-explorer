@@ -13,6 +13,11 @@ namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi.SDKMessageBus
             this.api = api;
         }
 
+        public void OnSceneIsCurrentChanged(bool isCurrent)
+        {
+            api.OnSceneIsCurrentChanged(isCurrent);
+        }
+
         [UsedImplicitly]
         public void Send(string data)
         {

@@ -30,6 +30,11 @@ namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
             lastInput.Clear();
         }
 
+        public override void OnSceneIsCurrentChanged(bool isCurrent)
+        {
+            api.OnSceneIsCurrentChanged(isCurrent);
+        }
+
         [UsedImplicitly]
         public object SendBinary(IList<object> dataList)
         {

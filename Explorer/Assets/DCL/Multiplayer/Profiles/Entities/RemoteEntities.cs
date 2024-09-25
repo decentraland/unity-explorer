@@ -107,7 +107,7 @@ namespace DCL.Multiplayer.Profiles.Entities
                 return room.Participants.RemoteParticipant(wallet) != null;
             }
 
-            return ContainsInRoom(roomHub.IslandRoom()) || ContainsInRoom(roomHub.SceneRoom().Room());
+            return ContainsInRoom(roomHub.IslandRoom()) || ContainsInRoom(roomHub.SceneRoom());
         }
 
         public Entity TryCreateOrUpdateRemoteEntity(in RemoteProfile profile, World world)

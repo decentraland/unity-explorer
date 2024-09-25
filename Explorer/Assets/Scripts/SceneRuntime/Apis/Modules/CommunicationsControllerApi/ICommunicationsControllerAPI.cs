@@ -7,5 +7,7 @@ namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
     public interface ICommunicationsControllerAPI : IDisposable
     {
         object SendBinary(IReadOnlyList<PoolableByteArray> data);
+
+        void OnSceneIsCurrentChanged(bool isCurrent);
     }
 }

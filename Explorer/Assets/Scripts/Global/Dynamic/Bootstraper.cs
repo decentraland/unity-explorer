@@ -114,7 +114,6 @@ namespace Global.Dynamic
                     StaticLoadPositions = realmLaunchSettings.GetPredefinedParcels(),
                     Realms = settings.Realms,
                     StartParcel = startingParcel,
-                    IsolateScenesCommunication = realmLaunchSettings.isolateSceneCommunication,
                     EnableLandscape = debugSettings.EnableLandscape && !realmLaunchSettings.IsLocalSceneDevelopmentRealm,
                     EnableLOD = debugSettings.EnableLOD && !realmLaunchSettings.IsLocalSceneDevelopmentRealm,
                     EnableAnalytics = EnableAnalytics,
@@ -165,12 +164,12 @@ namespace Global.Dynamic
             SceneSharedContainer sceneSharedContainer = SceneSharedContainer.Create(
                 in staticContainer,
                 bootstrapContainer.DecentralandUrlsSource,
-                bootstrapContainer.IdentityCache,
-                staticContainer.WebRequestsContainer.WebRequestController,
-                dynamicWorldContainer.RealmController.RealmData,
-                dynamicWorldContainer.ProfileRepository,
-                dynamicWorldContainer.RoomHub,
                 dynamicWorldContainer.MvcManager,
+                bootstrapContainer.IdentityCache,
+                dynamicWorldContainer.ProfileRepository,
+                staticContainer.WebRequestsContainer.WebRequestController,
+                dynamicWorldContainer.RoomHub,
+                dynamicWorldContainer.RealmController.RealmData,
                 dynamicWorldContainer.MessagePipesHub,
                 !realmLaunchSettings.IsLocalSceneDevelopmentRealm
             );
