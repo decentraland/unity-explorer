@@ -44,7 +44,7 @@ impl Default for Server {
 }
 
 impl Server {
-    pub fn initialize(&self, writer_key: &str, callback_fn: FfiCallbackFn) -> bool {
+    pub fn initialize(&self, writer_key: String, callback_fn: FfiCallbackFn) -> bool {
         let state_lock = self.state.lock();
         if state_lock.is_err() {
             return false;
@@ -106,10 +106,10 @@ impl SegmentServer {
         self.next_id.fetch_add(1, Ordering::Relaxed)
     }
 
-    fn new(writer_key: &str, callback_fn: FfiCallbackFn) -> Self {
+    fn new(writer_key: String, callback_fn: FfiCallbackFn) -> Self {
         let client = HttpClient::default();
         let batcher = Batcher::new(None);
-        let auto_batcher = AutoBatcher::new(client, batcher, writer_key.to_string());
+        let auto_batcher = AutoBatcher::new(client, batcher, writer_key);
 
         let context = Context {
             batcher: auto_batcher,

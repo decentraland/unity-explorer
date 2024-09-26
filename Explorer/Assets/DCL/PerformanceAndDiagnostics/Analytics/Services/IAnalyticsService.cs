@@ -10,6 +10,9 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
     {
         void Identify(string userId, JsonObject? traits = null);
 
+        /// <summary>
+        ///     To track an event you have to call identify first
+        /// </summary>
         void Track(string eventName, JsonObject? properties = null);
 
         void AddPlugin(EventPlugin plugin);

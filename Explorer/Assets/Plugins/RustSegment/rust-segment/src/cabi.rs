@@ -1,8 +1,5 @@
 use core::str;
-use std::{
-    ffi::{c_char, CStr},
-    sync::Arc,
-};
+use std::ffi::{c_char, CStr};
 
 use crate::{server::SegmentServer, FfiCallbackFn, OperationHandleId, SEGMENT_SERVER};
 
@@ -14,7 +11,7 @@ pub unsafe extern "C" fn segment_server_initialize(
     segment_write_key: *const c_char,
     callback_fn: FfiCallbackFn,
 ) -> bool {
-    let write_key = as_str(segment_write_key);
+    let write_key = as_str(segment_write_key).to_string();
     SEGMENT_SERVER.initialize(write_key, callback_fn)
 }
 

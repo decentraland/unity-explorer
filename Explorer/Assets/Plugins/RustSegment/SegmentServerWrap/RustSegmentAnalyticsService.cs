@@ -53,42 +53,48 @@ namespace Plugins.RustSegment.SegmentServerWrap
 
         public void Identify(string userId, JsonObject? traits = null)
         {
-            cachedUserId = userId;
+            lock (afterClean)
+            {
+                cachedUserId = userId;
 
-            var list = ListPool<MarshaledString>.Get()!;
+                var list = ListPool<MarshaledString>.Get()!;
 
-            var mUserId = new MarshaledString(userId);
-            var mTraits = new MarshaledString(traits?.ToString() ?? EMPTY_JSON);
-            var mContext = new MarshaledString(contextSource.ContextJson());
+                var mUserId = new MarshaledString(userId);
+                var mTraits = new MarshaledString(traits?.ToString() ?? EMPTY_JSON);
+                var mContext = new MarshaledString(contextSource.ContextJson());
 
-            ulong operationId = NativeMethods.SegmentServerIdentify(mUserId.Ptr, mTraits.Ptr, mContext.Ptr);
-            AlertIfInvalid(operationId);
+                ulong operationId = NativeMethods.SegmentServerIdentify(mUserId.Ptr, mTraits.Ptr, mContext.Ptr);
+                AlertIfInvalid(operationId);
 
-            list.Add(mUserId);
-            list.Add(mTraits);
-            list.Add(mContext);
+                list.Add(mUserId);
+                list.Add(mTraits);
+                list.Add(mContext);
 
-            lock (afterClean) { afterClean.Add(operationId, (Operation.Identify, list)); }
+                afterClean.Add(operationId, (Operation.Identify, list));
+            }
         }
 
         public void Track(string eventName, JsonObject? properties = null)
         {
-            var list = ListPool<MarshaledString>.Get()!;
+            lock (afterClean)
+            {
+                var list = ListPool<MarshaledString>.Get()!;
 
-            var mUserId = new MarshaledString(cachedUserId);
-            var mEventName = new MarshaledString(eventName);
-            var mProperties = new MarshaledString(properties?.ToString() ?? EMPTY_JSON);
-            var mContext = new MarshaledString(contextSource.ContextJson());
+                var mUserId = new MarshaledString(cachedUserId);
+                var mEventName = new MarshaledString(eventName);
+                var mProperties = new MarshaledString(properties?.ToString() ?? EMPTY_JSON);
+                var mContext = new MarshaledString(contextSource.ContextJson());
 
-            ulong operationId = NativeMethods.SegmentServerTrack(mUserId.Ptr, mEventName.Ptr, mProperties.Ptr, mContext.Ptr);
-            AlertIfInvalid(operationId);
+                ulong operationId = NativeMethods.SegmentServerTrack(mUserId.Ptr, mEventName.Ptr, mProperties.Ptr, mContext.Ptr);
+                AlertIfInvalid(operationId);
 
-            list.Add(mUserId);
-            list.Add(mEventName);
-            list.Add(mProperties);
-            list.Add(mContext);
+                list.Add(mUserId);
+                list.Add(mEventName);
+                list.Add(mProperties);
+                list.Add(mContext);
 
-            lock (afterClean) { afterClean.Add(operationId, (Operation.Track, list)); }
+                afterClean.Add(operationId, (Operation.Track, list));
+            }
         }
 
         public void AddPlugin(EventPlugin plugin)
@@ -98,10 +104,12 @@ namespace Plugins.RustSegment.SegmentServerWrap
 
         public void Flush()
         {
-            ulong operationId = NativeMethods.SegmentServerFlush();
-            AlertIfInvalid(operationId);
-
-            lock (afterClean) { afterClean.Add(operationId, (Operation.Flush, ListPool<MarshaledString>.Get()!)); }
+            lock (afterClean)
+            {
+                ulong operationId = NativeMethods.SegmentServerFlush();
+                AlertIfInvalid(operationId);
+                afterClean.Add(operationId, (Operation.Flush, ListPool<MarshaledString>.Get()!));
+            }
         }
 
         private static void Callback(ulong operationId, NativeMethods.Response response)

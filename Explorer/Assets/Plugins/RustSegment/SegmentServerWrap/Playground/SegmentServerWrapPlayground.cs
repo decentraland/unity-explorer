@@ -31,6 +31,27 @@ namespace Plugins.RustSegment.SegmentServerWrap.Playground
             );
         }
 
+        [ContextMenu(nameof(Track))]
+        public void Track()
+        {
+            var curly = new JsonObject
+            {
+                { "works", "yes" },
+            };
+
+            var bracket = new JsonObject
+            {
+                ["works"] = "yes"
+            };
+
+            service.Track(
+                "TEST_SHARP",
+                curly
+            );
+
+            Debug.Log($"Curly {curly}, Bracket {bracket}");
+        }
+
         [ContextMenu(nameof(Flush))]
         public void Flush()
         {

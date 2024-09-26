@@ -36,7 +36,7 @@ mod tests {
     fn test_integration() {
         let write_key = std::env::var("SEGMENT_WRITE_KEY").unwrap();
 
-        SEGMENT_SERVER.initialize(write_key.as_str(), test_callback);
+        SEGMENT_SERVER.initialize(write_key, test_callback);
         SEGMENT_SERVER.try_execute(&|segment, id| {
             let operation =
                 SegmentServer::enqueue_track(segment, id, "id", "rust_check", "{}", "{}");
