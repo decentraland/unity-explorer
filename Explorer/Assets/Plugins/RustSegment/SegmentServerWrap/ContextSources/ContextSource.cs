@@ -29,10 +29,8 @@ namespace Plugins.RustSegment.SegmentServerWrap.ContextSources
 
         private static TrackEvent NewTrackEvent()
         {
-            // Get the Type object corresponding to TrackEvent
             Type trackEventType = typeof(TrackEvent);
 
-            // Get the constructor info for the internal constructor
             ConstructorInfo constructor = trackEventType.GetConstructor(
                 BindingFlags.Instance | BindingFlags.NonPublic,
                 null,
@@ -42,10 +40,8 @@ namespace Plugins.RustSegment.SegmentServerWrap.ContextSources
             if (constructor == null)
                 throw new Exception("Constructor not found.");
 
-            // Invoke the constructor with parameters
             object trackEventInstance = constructor.Invoke(new object[] { "eventName", new JsonObject() }).EnsureNotNull();
 
-            // Assuming you want to do something with the created instance
             var track = (TrackEvent)trackEventInstance;
             track.Context = new JsonObject();
 
