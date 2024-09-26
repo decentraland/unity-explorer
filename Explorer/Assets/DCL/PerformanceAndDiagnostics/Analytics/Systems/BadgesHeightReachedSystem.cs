@@ -65,13 +65,11 @@ namespace DCL.Analytics.Systems
                 badgeHeightReached = true;
                 analytics.Track(AnalyticsEvents.Badges.HEIGHT_REACHED);
             }
-
-            Debug.Log($"VVV [{currentIdentity.Address}] : {totalElevationGain} {badgeHeightReached}");
         }
 
         private void AccumulateGain(float diff)
         {
-            // filtering out small changes
+            // filtering out small and large changes
             if (diff is > MIN_THRESHOLD and < MAX_THRESHOLD)
                 totalElevationGain += diff;
         }
