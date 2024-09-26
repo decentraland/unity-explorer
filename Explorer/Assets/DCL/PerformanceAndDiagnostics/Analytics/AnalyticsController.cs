@@ -39,7 +39,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             });
         }
 
-        public void SetCommonParam(IRealmData realmData, IWeb3IdentityCache? identityCache, ExposedTransform playerTransform)
+        public void SetCommonParam(IRealmData realmData, IWeb3IdentityCache? identityCache, IExposedTransform playerTransform)
         {
             analytics.AddPlugin(new DynamicCommonTraitsPlugin(realmData, identityCache, playerTransform));
 

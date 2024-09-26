@@ -18,29 +18,39 @@ namespace ECS.StreamableLoading.GLTF
 {
     internal class GltFastDownloadProvider : IDownloadProvider, IDisposable
     {
-        public string TargetGltfOriginalPath = string.Empty;
+        private const int ATTEMPTS_COUNT = 6;
 
+        private string targetGltfOriginalPath;
+        private string targetGltfDirectoryPath;
         private ISceneData sceneData;
         private World world;
         private IPartitionComponent partitionComponent;
-        private const int ATTEMPTS_COUNT = 6;
 
-        public GltFastDownloadProvider(World world, ISceneData sceneData, IPartitionComponent partitionComponent)
+        public GltFastDownloadProvider(World world, ISceneData sceneData, IPartitionComponent partitionComponent, string targetGltfOriginalPath)
         {
             this.world = world;
             this.sceneData = sceneData;
             this.partitionComponent = partitionComponent;
+            this.targetGltfOriginalPath = targetGltfOriginalPath;
+            targetGltfDirectoryPath = targetGltfOriginalPath.Remove(targetGltfOriginalPath.LastIndexOf('/') + 1);
         }
 
         public async Task<IDownload> RequestAsync(Uri uri)
         {
+            string originalFilePath = string.Concat(targetGltfDirectoryPath, GetFileNameFromUri(uri));
+
+            if (!sceneData.SceneContent.TryGetContentUrl(originalFilePath, out var tryGetContentUrlResult))
+                throw new Exception($"Error on GLTF download ({targetGltfOriginalPath} - {uri}): NOT FOUND");
+
+            uri = new Uri(tryGetContentUrlResult);
+
             // TODO: Replace for WebRequestController (Planned in PR #1670)
             using (UnityWebRequest webRequest = new UnityWebRequest(uri))
             {
                 webRequest.downloadHandler = new DownloadHandlerBuffer();
 
                 try { await webRequest.SendWebRequest().WithCancellation(new CancellationToken()); }
-                catch { throw new Exception($"Error on GLTF download: {webRequest.downloadHandler.error}"); }
+                catch { throw new Exception($"Error on GLTF download ({targetGltfOriginalPath} - {uri}): {webRequest.downloadHandler.error} - {webRequest.downloadHandler.text}"); }
 
                 return new GltfDownloadResult
                 {
@@ -54,9 +64,7 @@ namespace ECS.StreamableLoading.GLTF
 
         public async Task<ITextureDownload> RequestTextureAsync(Uri uri, bool nonReadable, bool forceLinear)
         {
-            string textureFileName = uri.OriginalString.Substring(uri.OriginalString.LastIndexOf('/')+1);
-            string textureOriginalPath = string.Concat(TargetGltfOriginalPath.Remove(TargetGltfOriginalPath.LastIndexOf('/') + 1), textureFileName);
-
+            string textureOriginalPath = string.Concat(targetGltfDirectoryPath, GetFileNameFromUri(uri));
             sceneData.SceneContent.TryGetContentUrl(textureOriginalPath, out var tryGetContentUrlResult);
 
             var texturePromise = Promise.Create(world, new GetTextureIntention
@@ -79,6 +87,13 @@ namespace ECS.StreamableLoading.GLTF
 
         public void Dispose()
         {
+        }
+
+        private string GetFileNameFromUri(Uri uri)
+        {
+            // On windows the URI may come with some invalid '\' in parts of the path
+            string patchedUri = uri.OriginalString.Replace('\\', '/');
+            return patchedUri.Substring(patchedUri.LastIndexOf('/') + 1);
         }
     }
 

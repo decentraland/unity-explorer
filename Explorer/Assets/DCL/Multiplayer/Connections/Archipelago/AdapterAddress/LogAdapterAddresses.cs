@@ -1,25 +1,28 @@
 using Cysharp.Threading.Tasks;
 using System;
 using System.Threading;
+using DCL.Diagnostics;
 
 namespace DCL.Multiplayer.Connections.Archipelago.AdapterAddress
 {
     public class LogAdapterAddresses : IAdapterAddresses
     {
         private readonly IAdapterAddresses origin;
-        private readonly Action<string> log;
 
-        public LogAdapterAddresses(IAdapterAddresses origin, Action<string> log)
+        public LogAdapterAddresses(IAdapterAddresses origin)
         {
             this.origin = origin;
-            this.log = log;
         }
 
         public string AdapterUrlAsync(string unrefinedComms)
         {
-            log($"Original comms adapter is: {unrefinedComms}");
+            ReportHub
+               .WithReport(ReportCategory.LIVEKIT)
+               .Log($"Original comms adapter is: {unrefinedComms}");
             unrefinedComms = origin.AdapterUrlAsync(unrefinedComms);
-            log($"Modified comms adapter is: {unrefinedComms}");
+            ReportHub
+               .WithReport(ReportCategory.LIVEKIT)
+               .Log($"Modified comms adapter is: {unrefinedComms}");
             return unrefinedComms;
         }
     }
