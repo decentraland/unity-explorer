@@ -30,6 +30,8 @@ mod tests {
     use server::SegmentServer;
 
     use super::*;
+
+    #[warn(unused_imports)]
     use std::{println as info, println as warn};
 
     #[test]

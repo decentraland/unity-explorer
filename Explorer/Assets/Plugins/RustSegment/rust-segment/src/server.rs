@@ -81,7 +81,7 @@ impl Server {
 
     pub fn try_execute(
         &self,
-        func: &dyn Fn(Arc<SegmentServer>, OperationHandleId) -> (),
+        func: &dyn Fn(Arc<SegmentServer>, OperationHandleId),
     ) -> OperationHandleId {
         let state_lock = self.state.lock();
         if state_lock.is_err() {
@@ -183,14 +183,14 @@ impl SegmentServer {
     }
 
     fn result_as_response_code(result: Result<(), segment::Error>) -> Response {
-        return match result {
+        match result {
             Ok(_) => Response::Success,
             Err(error) => match error {
                 segment::Error::MessageTooLarge => Response::ErrorMessageTooLarge,
                 segment::Error::DeserializeError(_) => Response::ErrorDeserialize,
                 segment::Error::NetworkError(_) => Response::ErrorNetwork,
             },
-        };
+        }
     }
 }
 
