@@ -66,7 +66,7 @@ namespace SceneRunner
         internal readonly IWorldTimeProvider worldTimeProvider;
         private readonly ISceneData sceneData;
 
-        private readonly MultithreadSync ecsMultithreadSync;
+        private readonly MultiThreadSync ecsMultiThreadSync;
         private readonly ICRDTDeserializer crdtDeserializer;
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
         private readonly ECSWorldInstanceSharedDependencies ecsWorldSharedDependencies;
@@ -89,7 +89,7 @@ namespace SceneRunner
             URLAddress sceneCodeUrl,
             SceneEcsExecutor ecsExecutor,
             ISceneData sceneData,
-            MultithreadSync ecsMultithreadSync,
+            MultiThreadSync ecsMultiThreadSync,
             ICRDTDeserializer crdtDeserializer,
             IECSToCRDTWriter ecsToCRDTWriter,
             ISystemGroupsUpdateGate systemGroupThrottler,
@@ -109,7 +109,7 @@ namespace SceneRunner
             SceneCodeUrl = sceneCodeUrl;
             EcsExecutor = ecsExecutor;
             this.sceneData = sceneData;
-            this.ecsMultithreadSync = ecsMultithreadSync;
+            this.ecsMultiThreadSync = ecsMultiThreadSync;
             this.crdtDeserializer = crdtDeserializer;
             this.ecsToCRDTWriter = ecsToCRDTWriter;
             this.systemGroupThrottler = systemGroupThrottler;
@@ -129,7 +129,7 @@ namespace SceneRunner
             IWebRequestController webRequestController)
         {
             this.sceneData = sceneData;
-            ecsMultithreadSync = new MultithreadSync();
+            ecsMultiThreadSync = new MultiThreadSync(sceneData.SceneShortInfo);
             CRDTProtocol = new CRDTProtocol();
             worldTimeProvider = new WorldTimeProvider(decentralandUrlsSource, webRequestController);
             SceneStateProvider = new SceneStateProvider();
@@ -146,7 +146,7 @@ namespace SceneRunner
 
             /* Pass dependencies here if they are needed by the systems */
             ecsWorldSharedDependencies = new ECSWorldInstanceSharedDependencies(sceneData, partitionProvider, ecsToCRDTWriter, entitiesMap,
-                ExceptionsHandler, EntityCollidersCache, SceneStateProvider, entityEventsBuilder, ecsMultithreadSync,
+                ExceptionsHandler, EntityCollidersCache, SceneStateProvider, entityEventsBuilder, ecsMultiThreadSync,
                 worldTimeProvider, systemGroupThrottler, systemsUpdateGate);
 
             ECSWorldFacade = ecsWorldFactory.CreateWorld(new ECSWorldFactoryArgs(ecsWorldSharedDependencies, systemGroupThrottler, sceneData));
@@ -175,7 +175,7 @@ namespace SceneRunner
             systemsUpdateGate.Dispose();
             EntityCollidersCache.Dispose();
             worldTimeProvider.Dispose();
-            ecsMultithreadSync.Dispose();
+            ecsMultiThreadSync.Dispose();
             ExceptionsHandler.Dispose();
         }
 
@@ -237,7 +237,7 @@ namespace SceneRunner
                     new SceneApiImplementation(syncDeps.sceneData),
                     new ClientWebSocketApiImplementation(syncDeps.PoolsProvider, jsOperations),
                     new LogSimpleFetchApi(new SimpleFetchApiImplementation(syncDeps.sceneData.SceneShortInfo)),
-                    new CommunicationsControllerAPIImplementation(realmData, syncDeps.sceneData, messagePipesHub, jsOperations, syncDeps.CRDTMemoryAllocator, syncDeps.ecsWorldSharedDependencies.SceneStateProvider),
+                    new CommunicationsControllerAPIImplementation(syncDeps.sceneData, messagePipesHub, jsOperations, syncDeps.CRDTMemoryAllocator),
                     syncDeps,
                     sceneRuntime) { }
 
@@ -256,7 +256,7 @@ namespace SceneRunner
             (SceneInstanceDependencies syncDeps, SceneRuntimeImpl sceneRuntime, ISharedPoolsProvider sharedPoolsProvider, ICRDTSerializer crdtSerializer, IMVCManager mvcManager,
                 IGlobalWorldActions globalWorldActions, IRealmData realmData, ISceneCommunicationPipe messagePipesHub,
                 IWebRequestController webRequestController,
-                IPortableExperiencesController portableExperiencesController)
+                MultiThreadSync.Owner syncOwner)
                 : base(new EngineAPIImplementation(
                         sharedPoolsProvider,
                         syncDeps.PoolsProvider,
@@ -267,7 +267,8 @@ namespace SceneRunner
                         syncDeps.OutgoingCRDTMessagesProvider,
                         syncDeps.systemGroupThrottler,
                         syncDeps.ExceptionsHandler,
-                        syncDeps.ecsMultithreadSync),
+                        syncDeps.ecsMultiThreadSync,
+                        syncOwner),
                     syncDeps, sceneRuntime, sceneRuntime, mvcManager, globalWorldActions, realmData, messagePipesHub, webRequestController) { }
         }
 
@@ -276,8 +277,7 @@ namespace SceneRunner
             public WithRuntimeJsAndSDKObservablesEngineAPI
             (SceneInstanceDependencies syncDeps, SceneRuntimeImpl sceneRuntime, ISharedPoolsProvider sharedPoolsProvider, ICRDTSerializer crdtSerializer, IMVCManager mvcManager,
                 IGlobalWorldActions globalWorldActions, IRealmData realmData, ISceneCommunicationPipe messagePipesHub,
-                IWebRequestController webRequestController,
-                IPortableExperiencesController portableExperiencesController)
+                IWebRequestController webRequestController, MultiThreadSync.Owner syncOwner)
                 : base(new SDKObservableEventsEngineAPIImplementation(
                         sharedPoolsProvider,
                         syncDeps.PoolsProvider,
@@ -288,7 +288,8 @@ namespace SceneRunner
                         syncDeps.OutgoingCRDTMessagesProvider,
                         syncDeps.systemGroupThrottler,
                         syncDeps.ExceptionsHandler,
-                        syncDeps.ecsMultithreadSync),
+                        syncDeps.ecsMultiThreadSync,
+                        syncOwner),
                     syncDeps, sceneRuntime, sceneRuntime, mvcManager, globalWorldActions, realmData, messagePipesHub, webRequestController) { }
         }
     }

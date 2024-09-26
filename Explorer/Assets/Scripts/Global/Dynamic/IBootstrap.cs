@@ -3,10 +3,12 @@ using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.DebugUtilities;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Multiplayer.Movement.Systems;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.Web3.Identities;
+using Global.AppArgs;
 using SceneRunner.Debugging;
 using System.Threading;
 using UnityEngine.UIElements;
@@ -19,20 +21,12 @@ namespace Global.Dynamic
 
         UniTask<(StaticContainer?, bool)> LoadStaticContainerAsync(BootstrapContainer bootstrapContainer, PluginSettingsContainer globalPluginSettingsContainer, DebugViewsCatalog debugViewsCatalog, Entity playerEntity, CancellationToken ct);
 
-        UniTask<(DynamicWorldContainer?, bool)> LoadDynamicWorldContainerAsync(
-            BootstrapContainer bootstrapContainer,
-            StaticContainer staticContainer,
-            PluginSettingsContainer scenePluginSettingsContainer,
-            DynamicSceneLoaderSettings settings,
-            DynamicSettings dynamicSettings,
-            UIDocument uiToolkitRoot,
-            UIDocument cursorRoot,
-            ISplashScreen splashScreen,
-            AudioClipConfig backgroundMusic,
+        UniTask<(DynamicWorldContainer?, bool)> LoadDynamicWorldContainerAsync(BootstrapContainer bootstrapContainer, StaticContainer staticContainer, PluginSettingsContainer scenePluginSettingsContainer, DynamicSceneLoaderSettings settings, DynamicSettings dynamicSettings,
+            UIDocument uiToolkitRoot, UIDocument cursorRoot, ISplashScreen splashScreen, AudioClipConfig backgroundMusic,
             WorldInfoTool worldInfoTool,
             Entity playerEntity,
-            CancellationToken ct
-        );
+            IAppArgs appArgs,
+            CancellationToken ct);
 
         UniTask<bool> InitializePluginsAsync(StaticContainer staticContainer, DynamicWorldContainer dynamicWorldContainer,
             PluginSettingsContainer scenePluginSettingsContainer, PluginSettingsContainer globalPluginSettingsContainer,

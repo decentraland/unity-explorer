@@ -78,7 +78,6 @@ using MVC;
 using MVC.PopupsController.PopupCloser;
 using PortableExperiences.Controller;
 using SceneRunner.Debugging.Hub;
-using SceneRunner.Scene;
 using System;
 using System.Buffers;
 using System.Collections.Generic;
@@ -97,6 +96,8 @@ namespace Global.Dynamic
 {
     public class DynamicWorldContainer : DCLWorldContainer<DynamicWorldSettings>
     {
+        private const string PARAMS_FORCED_EMOTES_FLAG = "self-force-emotes";
+
         private ECSReloadScene? reloadSceneController;
         private LocalSceneDevelopmentController? localSceneDevelopmentController;
         private ECSWearablesProvider? wearablesProvider;
@@ -128,6 +129,8 @@ namespace Global.Dynamic
 
         public IMessagePipesHub MessagePipesHub { get; private set; } = null!;
 
+        public ISceneRoomMetaDataSource SceneRoomMetaDataSource { get; private set; } = null!;
+
         public IProfileBroadcast ProfileBroadcast { get; private set; } = null!;
 
         public IRoomHub RoomHub { get; private set; } = null!;
@@ -144,20 +147,6 @@ namespace Global.Dynamic
             localSceneDevelopmentController?.Dispose();
         }
 
-        private static void BuildTeleportWidget(IRealmNavigator realmNavigator, IDebugContainerBuilder debugContainerBuilder, List<string> realms)
-        {
-            debugContainerBuilder.TryAddWidget("Realm")
-                                ?.AddControl(new DebugDropdownDef(realms, new ElementBinding<string>(string.Empty,
-                                      evt => { realmNavigator.TryChangeRealmAsync(URLDomain.FromString(evt.newValue), CancellationToken.None).Forget(); }), string.Empty), null)
-                                 .AddStringFieldWithConfirmation("https://peer.decentraland.org", "Change", realm => { realmNavigator.TryChangeRealmAsync(URLDomain.FromString(realm), CancellationToken.None).Forget(); });
-        }
-
-        private static void BuildReloadSceneWidget(IDebugContainerBuilder debugBuilder, IChatMessagesBus chatMessagesBus)
-        {
-            debugBuilder.TryAddWidget("Scene Reload")
-                       ?.AddSingleButton("Reload Scene", () => chatMessagesBus.Send("/reload"));
-        }
-
         public static async UniTask<(DynamicWorldContainer? container, bool success)> CreateAsync(
             BootstrapContainer bootstrapContainer,
             DynamicWorldDependencies dynamicWorldDependencies,
@@ -166,6 +155,7 @@ namespace Global.Dynamic
             IPortableExperiencesController portableExperiencesController,
             World globalWorld,
             Entity playerEntity,
+            IAppArgs appArgs,
             CancellationToken ct)
         {
             var container = new DynamicWorldContainer();
@@ -240,7 +230,7 @@ namespace Global.Dynamic
                 new RealmProfileRepository(staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, profileCache)
             );
 
-            var genesisTerrain = new TerrainGenerator();
+            var genesisTerrain = new TerrainGenerator(staticContainer.Profiler);
             var worldsTerrain = new WorldTerrainGenerator();
             var satelliteView = new SatelliteFloor();
             var landscapePlugin = new LandscapePlugin(satelliteView, genesisTerrain, worldsTerrain, assetsProvisioner, debugBuilder, container.MapRendererContainer.TextureContainer, staticContainer.WebRequestsContainer.WebRequestController, dynamicWorldParams.EnableLandscape);
@@ -258,13 +248,20 @@ namespace Global.Dynamic
             var equippedWearables = new EquippedWearables();
             var equippedEmotes = new EquippedEmotes();
             var forceRender = new List<string>();
+
+            List<URN> selfEmotes = new List<URN>();
+            ParseParamsForcedEmotes(bootstrapContainer.ApplicationParametersParser, ref selfEmotes);
+            ParseDebugForcedEmotes(bootstrapContainer.DebugSettings.EmotesToAddToUserProfile, ref selfEmotes);
+
             var selfProfile = new SelfProfile(container.ProfileRepository, identityCache, equippedWearables, wearableCatalog,
-                emotesCache, equippedEmotes, forceRender, ParseSelfForcedEmotes(bootstrapContainer.ApplicationParametersParser));
+                emotesCache, equippedEmotes, forceRender, selfEmotes);
 
             IEmoteProvider emoteProvider = new EcsEmoteProvider(globalWorld, staticContainer.RealmData);
 
-            var metaDataSource = new LogMetaDataSource(new MetaDataSource(staticContainer.RealmData, staticContainer.CharacterContainer.CharacterObject, placesAPIService));
-            var gateKeeperSceneRoom = new GateKeeperSceneRoom(staticContainer.WebRequestsContainer.WebRequestController, metaDataSource, bootstrapContainer.DecentralandUrlsSource);
+            container.SceneRoomMetaDataSource = new SceneRoomMetaDataSource(staticContainer.RealmData, staticContainer.CharacterContainer.Transform, placesAPIService, dynamicWorldParams.IsolateScenesCommunication);
+
+            var metaDataSource = new SceneRoomLogMetaDataSource(container.SceneRoomMetaDataSource);
+            var gateKeeperSceneRoom = new GateKeeperSceneRoom(staticContainer.WebRequestsContainer.WebRequestController, metaDataSource, bootstrapContainer.DecentralandUrlsSource, staticContainer.ScenesCache);
 
             var currentAdapterAddress = ICurrentAdapterAddress.NewDefault(staticContainer.RealmData);
 
@@ -371,6 +368,7 @@ namespace Global.Dynamic
                 realmNavigator,
                 loadingScreen,
                 staticContainer.FeatureFlagsProvider,
+                staticContainer.FeatureFlagsCache,
                 identityCache,
                 container.RealmController,
                 dynamicWorldParams.AppParameters
@@ -461,7 +459,8 @@ namespace Global.Dynamic
                     remoteEntities,
                     staticContainer.ScenesCache,
                     emotesCache,
-                    container.CharacterDataPropagationUtility
+                    container.CharacterDataPropagationUtility,
+                    staticContainer.ComponentsContainer.ComponentPoolsRegistry
                 ),
                 new WorldInfoPlugin(worldInfoHub, debugBuilder, chatHistory),
                 new CharacterMotionPlugin(assetsProvisioner, staticContainer.CharacterContainer.CharacterObject, debugBuilder, staticContainer.ComponentsContainer.ComponentPoolsRegistry),
@@ -543,14 +542,18 @@ namespace Global.Dynamic
                     staticContainer.InputBlock,
                     emoteProvider,
                     globalWorld,
-                    playerEntity
+                    playerEntity,
+                    container.ChatMessagesBus
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
                 new Web3AuthenticationPlugin(assetsProvisioner, dynamicWorldDependencies.Web3Authenticator, debugBuilder, container.MvcManager, selfProfile, webBrowser, staticContainer.RealmData, identityCache, characterPreviewFactory, dynamicWorldDependencies.SplashScreen, audioMixerVolumesController, staticContainer.FeatureFlagsCache, characterPreviewEventBus, globalWorld),
                 new StylizedSkyboxPlugin(assetsProvisioner, dynamicSettings.DirectionalLight, debugBuilder),
                 new LoadingScreenPlugin(assetsProvisioner, container.MvcManager, audioMixerVolumesController, staticContainer.InputBlock),
-                new ExternalUrlPromptPlugin(assetsProvisioner, webBrowser, container.MvcManager, dclCursor), new TeleportPromptPlugin(assetsProvisioner, realmNavigator, container.MvcManager, staticContainer.WebRequestsContainer.WebRequestController, placesAPIService, dclCursor),
+                new ExternalUrlPromptPlugin(assetsProvisioner, webBrowser, container.MvcManager, dclCursor),
+                new TeleportPromptPlugin(assetsProvisioner, container.MvcManager,
+                    staticContainer.WebRequestsContainer.WebRequestController, placesAPIService, dclCursor,
+                    container.ChatMessagesBus),
                 new ChangeRealmPromptPlugin(
                     assetsProvisioner,
                     container.MvcManager,
@@ -560,7 +563,7 @@ namespace Global.Dynamic
                 staticContainer.CharacterContainer.CreateGlobalPlugin(),
                 staticContainer.QualityContainer.CreatePlugin(),
                 landscapePlugin,
-                new MultiplayerMovementPlugin(assetsProvisioner, container.multiplayerMovementMessageBus, debugBuilder, remoteEntities, staticContainer.CharacterContainer.Transform, multiplayerDebugSettings),
+                new MultiplayerMovementPlugin(assetsProvisioner, container.multiplayerMovementMessageBus, debugBuilder, remoteEntities, staticContainer.CharacterContainer.Transform, multiplayerDebugSettings, appArgs, entityParticipantTable, staticContainer.RealmData),
                 container.LODContainer.LODPlugin,
                 container.LODContainer.RoadPlugin,
                 new AudioPlaybackPlugin(genesisTerrain, assetsProvisioner, dynamicWorldParams.EnableLandscape),
@@ -616,7 +619,6 @@ namespace Global.Dynamic
                 debugBuilder,
                 staticContainer.ScenesCache,
                 dynamicWorldParams.HybridSceneParams,
-                container.CharacterDataPropagationUtility,
                 currentSceneInfo,
                 container.LODContainer.LodCache,
                 multiplayerEmotesMessageBus,
@@ -626,22 +628,19 @@ namespace Global.Dynamic
             container.GlobalPlugins = globalPlugins;
 
             staticContainer.RoomHubProxy.SetObject(container.RoomHub);
-
-            BuildTeleportWidget(realmNavigator, debugBuilder, dynamicWorldParams.Realms);
-            BuildReloadSceneWidget(debugBuilder, container.ChatMessagesBus);
-
             return (container, true);
         }
 
-        private static URN[]? ParseSelfForcedEmotes(IAppArgs appParams)
+        private static void ParseDebugForcedEmotes(IReadOnlyList<string>? debugEmotes, ref List<URN> parsedEmotes)
         {
-            if (!appParams.TryGetValue("self-force-emotes", out string? csv))
-                return null;
+            if (debugEmotes?.Count > 0)
+                parsedEmotes.AddRange(debugEmotes.Select(emote => new URN(emote)));
+        }
 
-            if (string.IsNullOrEmpty(csv)) return null;
-
-            string[] emotes = csv.Split(',');
-            return emotes.Select(s => new URN(s)).ToArray();
+        private static void ParseParamsForcedEmotes(IAppArgs appParams, ref List<URN> parsedEmotes)
+        {
+            if (appParams.TryGetValue(PARAMS_FORCED_EMOTES_FLAG, out string? csv) && !string.IsNullOrEmpty(csv))
+                parsedEmotes.AddRange(csv.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(emote => new URN(emote)));
         }
     }
 }

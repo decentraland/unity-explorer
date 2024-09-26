@@ -6,6 +6,7 @@ using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Multiplayer.Movement.Systems;
 using DCL.Notifications.NewNotification;
 using DCL.PerformanceAndDiagnostics.DotNetLogging;
 using DCL.PluginSystem;
@@ -75,8 +76,7 @@ namespace Global.Dynamic
             await StaticContainer.CreateAsync(bootstrapContainer.DecentralandUrlsSource, bootstrapContainer.AssetsProvisioner, bootstrapContainer.ReportHandlingSettings, appArgs, debugViewsCatalog, globalPluginSettingsContainer,
                 bootstrapContainer.DiagnosticsContainer, bootstrapContainer.IdentityCache, bootstrapContainer.VerifiedEthereumApi, bootstrapContainer.LocalSceneDevelopment, bootstrapContainer.UseRemoteAssetBundles, world, playerEntity, ct);
 
-        public async UniTask<(DynamicWorldContainer?, bool)> LoadDynamicWorldContainerAsync(
-            BootstrapContainer bootstrapContainer,
+        public async UniTask<(DynamicWorldContainer?, bool)> LoadDynamicWorldContainerAsync(BootstrapContainer bootstrapContainer,
             StaticContainer staticContainer,
             PluginSettingsContainer scenePluginSettingsContainer,
             DynamicSceneLoaderSettings settings,
@@ -87,8 +87,8 @@ namespace Global.Dynamic
             AudioClipConfig backgroundMusic,
             WorldInfoTool worldInfoTool,
             Entity playerEntity,
-            CancellationToken ct
-        )
+            IAppArgs appArgs,
+            CancellationToken ct)
         {
             dynamicWorldDependencies = new DynamicWorldDependencies
             (
@@ -114,6 +114,7 @@ namespace Global.Dynamic
                     StaticLoadPositions = realmLaunchSettings.GetPredefinedParcels(),
                     Realms = settings.Realms,
                     StartParcel = startingParcel,
+                    IsolateScenesCommunication = realmLaunchSettings.isolateSceneCommunication,
                     EnableLandscape = debugSettings.EnableLandscape && !realmLaunchSettings.IsLocalSceneDevelopmentRealm,
                     EnableLOD = debugSettings.EnableLOD && !realmLaunchSettings.IsLocalSceneDevelopmentRealm,
                     EnableAnalytics = EnableAnalytics,
@@ -125,6 +126,7 @@ namespace Global.Dynamic
                 staticContainer.PortableExperiencesController,
                 world,
                 playerEntity,
+                appArgs,
                 ct);
         }
 
@@ -163,12 +165,12 @@ namespace Global.Dynamic
             SceneSharedContainer sceneSharedContainer = SceneSharedContainer.Create(
                 in staticContainer,
                 bootstrapContainer.DecentralandUrlsSource,
-                dynamicWorldContainer.MvcManager,
                 bootstrapContainer.IdentityCache,
-                dynamicWorldContainer.ProfileRepository,
                 staticContainer.WebRequestsContainer.WebRequestController,
-                dynamicWorldContainer.RoomHub,
                 dynamicWorldContainer.RealmController.RealmData,
+                dynamicWorldContainer.ProfileRepository,
+                dynamicWorldContainer.RoomHub,
+                dynamicWorldContainer.MvcManager,
                 dynamicWorldContainer.MessagePipesHub,
                 !realmLaunchSettings.IsLocalSceneDevelopmentRealm
             );

@@ -109,11 +109,11 @@ namespace DCL.Character.Plugin
         {
             private readonly byte bucketPropagationLimit;
             private readonly IExposedCameraData exposedCameraData;
-            private readonly ExposedTransform exposedTransform;
+            private readonly IExposedTransform exposedTransform;
             private readonly IComponentPool<SDKTransform> sdkTransformPool;
             private readonly IComponentPool<PBMainCamera> mainCameraPool;
 
-            public WorldPlugin(ExposedTransform exposedTransform, IExposedCameraData exposedCameraData,
+            public WorldPlugin(IExposedTransform exposedTransform, IExposedCameraData exposedCameraData,
                 IComponentPoolsRegistry componentPoolsRegistry, byte bucketPropagationLimit)
             {
                 this.exposedTransform = exposedTransform;
@@ -125,7 +125,7 @@ namespace DCL.Character.Plugin
 
             public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
             {
-                WritePlayerTransformSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, sharedDependencies.SceneData,
+                WriteMainPlayerTransformSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, sharedDependencies.SceneData,
                     exposedTransform, sharedDependencies.ScenePartition, bucketPropagationLimit, sdkTransformPool, persistentEntities.Player);
 
                 WriteCameraComponentsSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, exposedCameraData, sharedDependencies.SceneData,

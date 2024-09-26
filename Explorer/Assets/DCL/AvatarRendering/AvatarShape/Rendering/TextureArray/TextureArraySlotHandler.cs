@@ -18,7 +18,6 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
             this.resolution = resolution;
             this.textureFormat = textureFormat;
 
-            //Initial capacity for (100 * minArraySize) textures
             arrays = new List<Texture2DArray>(initialCapacity);
             arrays.Add(CreateTexture2DArray());
             freeSlots = new Stack<TextureArraySlot>();
