@@ -6,17 +6,22 @@ using JetBrains.Annotations;
 using System;
 using System.Runtime.InteropServices;
 using UnityEngine;
+using Utility;
 
 namespace CrdtEcsBridge.Components.Transform
 {
     /// <summary>
     ///     Special type (not Proto) to serialize/deserialize faster according to the ADR
     /// </summary>
-    public class SDKTransform : IDirtyMarker, IMessage
+    public class SDKTransform : IDirtyMarker, IMessage, IExposedTransform
     {
+        public CanBeDirty<Vector3> Position = new (Vector3.zero);
+        public CanBeDirty<Quaternion> Rotation = new (Quaternion.identity);
+
+        CanBeDirty<Vector3> IExposedTransform.Position => Position;
+        CanBeDirty<Quaternion> IExposedTransform.Rotation => Rotation;
+
         public CRDTEntity ParentId = 0;
-        public Vector3 Position = Vector3.zero;
-        public Quaternion Rotation = Quaternion.identity;
         public Vector3 Scale = Vector3.one;
         public bool IsDirty { get; set; }
 
@@ -38,8 +43,8 @@ namespace CrdtEcsBridge.Components.Transform
         public void Clear()
         {
             ParentId = 0;
-            Position = Vector3.zero;
-            Rotation = Quaternion.identity;
+            Position.Value = Vector3.zero;
+            Rotation.Value = Quaternion.identity;
             Scale = Vector3.one;
             IsDirty = false;
         }

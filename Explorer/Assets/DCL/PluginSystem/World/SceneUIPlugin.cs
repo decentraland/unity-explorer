@@ -77,7 +77,7 @@ namespace DCL.PluginSystem.World
             UITextInstantiationSystem.InjectToWorld(ref builder, componentPoolsRegistry);
             UITextReleaseSystem.InjectToWorld(ref builder, componentPoolsRegistry);
             UIBackgroundInstantiationSystem.InjectToWorld(ref builder, componentPoolsRegistry, sharedDependencies.SceneData, frameTimeBudgetProvider, memoryBudgetProvider);
-            UIBackgroundReleaseSystem.InjectToWorld(ref builder, componentPoolsRegistry);
+            finalizeWorldSystems.Add(UIBackgroundReleaseSystem.InjectToWorld(ref builder, componentPoolsRegistry));
             UIInputInstantiationSystem.InjectToWorld(ref builder, componentPoolsRegistry, sharedDependencies.EcsToCRDTWriter, inputBlock);
             UIInputReleaseSystem.InjectToWorld(ref builder, componentPoolsRegistry);
             UIDropdownInstantiationSystem.InjectToWorld(ref builder, componentPoolsRegistry, sharedDependencies.EcsToCRDTWriter);
@@ -87,7 +87,6 @@ namespace DCL.PluginSystem.World
             UIFixPbPointerEventsSystem.InjectToWorld(ref builder);
 
             finalizeWorldSystems.Add(ReleasePoolableComponentSystem<Label, UITextComponent>.InjectToWorld(ref builder, componentPoolsRegistry));
-            finalizeWorldSystems.Add(ReleasePoolableComponentSystem<DCLImage, UIBackgroundComponent>.InjectToWorld(ref builder, componentPoolsRegistry));
         }
 
         public void Dispose() { }

@@ -23,7 +23,12 @@ namespace ECS.Prioritization
         /// <summary>
         ///     The hard distance limit after which scenes and scenes definitions do not load
         /// </summary>
-        int MaxLoadingDistanceInParcels { get; }
+        int MaxLoadingDistanceInParcels { get; set; }
+
+        /// <summary>
+        ///     The bottom limit for scene loading
+        /// </summary>
+        int MinLoadingDistanceInParcels { get; }
 
         /// <summary>
         ///     Tolerance that is added to <see cref="MaxLoadingDistanceInParcels" /> to determine the distance at which scenes start unloading.

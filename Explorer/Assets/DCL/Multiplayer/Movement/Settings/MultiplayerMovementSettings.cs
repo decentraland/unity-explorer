@@ -8,6 +8,7 @@ namespace DCL.Multiplayer.Movement.Settings
     {
         [field: SerializeField] public CharacterControllerSettings CharacterControllerSettings { get; set; }
         [field: SerializeField] public int InboxCount { get; set; }
+        [field: SerializeField] public bool UseCompression { get; set; }
 
         [field: SerializeField] public MessageEncodingSettings EncodingSettings { get; set; }
 

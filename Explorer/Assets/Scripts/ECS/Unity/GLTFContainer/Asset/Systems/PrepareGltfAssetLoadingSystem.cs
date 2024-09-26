@@ -24,11 +24,13 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
     {
         private readonly IGltfContainerAssetsCache cache;
         private readonly bool localSceneDevelopment;
+        private readonly bool useRemoteAssetBundles;
 
-        internal PrepareGltfAssetLoadingSystem(World world, IGltfContainerAssetsCache cache, bool localSceneDevelopment) : base(world)
+        internal PrepareGltfAssetLoadingSystem(World world, IGltfContainerAssetsCache cache, bool localSceneDevelopment, bool useRemoteAssetBundles) : base(world)
         {
             this.cache = cache;
             this.localSceneDevelopment = localSceneDevelopment;
+            this.useRemoteAssetBundles = useRemoteAssetBundles;
         }
 
         protected override void Update(float t)
@@ -41,14 +43,14 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
         private void Prepare(in Entity entity, ref GetGltfContainerAssetIntention intention)
         {
             // Try load from cache
-            if (cache.TryGet(intention.Hash, out GltfContainerAsset? asset))
+            if (!localSceneDevelopment && cache.TryGet(intention.Hash, out GltfContainerAsset? asset))
             {
                 // construct the result immediately
                 World.Add(entity, new StreamableLoadingResult<GltfContainerAsset>(asset));
                 return;
             }
 
-            if (localSceneDevelopment)
+            if (localSceneDevelopment && !useRemoteAssetBundles)
                 World.Add(entity, GetGLTFIntention.Create(intention.Name, intention.Hash));
             else
                 // If not in cache, try load from asset bundle

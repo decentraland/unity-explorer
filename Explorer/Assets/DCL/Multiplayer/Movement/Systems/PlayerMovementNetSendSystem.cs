@@ -136,8 +136,8 @@ namespace DCL.Multiplayer.Movement.Systems
                     IsLongFall = animation.States.IsLongFall,
 
                     // We don't send blend values explicitly. It is calculated from MovementKind and IsSliding fields
-                    SlideBlendValue = 0f,
-                    MovementBlendValue = 0f,
+                    SlideBlendValue = animation.States.SlideBlendValue,
+                    MovementBlendValue = animation.States.MovementBlendValue,
                 },
 
                 movementKind = movement.Kind,

@@ -6,6 +6,9 @@ using DCL.DebugUtilities;
 using DCL.Multiplayer.Movement.Settings;
 using DCL.Multiplayer.Movement.Systems;
 using DCL.Multiplayer.Profiles.Entities;
+using DCL.Multiplayer.Profiles.Tables;
+using ECS;
+using Global.AppArgs;
 using System.Threading;
 using Utility;
 using PlayerMovementNetSendSystem = DCL.Multiplayer.Movement.Systems.PlayerMovementNetSendSystem;
@@ -15,21 +18,25 @@ namespace DCL.PluginSystem.Global
 {
     public class MultiplayerMovementPlugin : IDCLGlobalPlugin<MultiplayerCommunicationSettings>
     {
+        private const string COMPRESSION_ARG_FLAG = "compression";
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly MultiplayerMovementMessageBus messageBus;
         private readonly IDebugContainerBuilder debugBuilder;
         private readonly RemoteEntities remoteEntities;
         private readonly ExposedTransform playerTransform;
         private readonly ProvidedAsset<MultiplayerDebugSettings> debugSettings;
+        private readonly bool useCompression;
+        private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
+        private readonly IRealmData realmData;
 
         private ProvidedAsset<MultiplayerMovementSettings> settings;
 
         private Entity? selfReplicaEntity;
-        private MultiplayerMovementDebug multiplayerMovementDebug;
+        private MultiplayerMovementDebugSystem multiplayerMovementDebugSystem;
 
         public MultiplayerMovementPlugin(IAssetsProvisioner assetsProvisioner, MultiplayerMovementMessageBus messageBus, IDebugContainerBuilder debugBuilder
-          , RemoteEntities remoteEntities, ExposedTransform playerTransform,
-            ProvidedAsset<MultiplayerDebugSettings> debugSettings)
+          , RemoteEntities remoteEntities, ExposedTransform playerTransform, ProvidedAsset<MultiplayerDebugSettings> debugSettings, IAppArgs appArgs,
+            IReadOnlyEntityParticipantTable entityParticipantTable, IRealmData realmData)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.messageBus = messageBus;
@@ -37,11 +44,13 @@ namespace DCL.PluginSystem.Global
             this.remoteEntities = remoteEntities;
             this.playerTransform = playerTransform;
             this.debugSettings = debugSettings;
+            this.entityParticipantTable = entityParticipantTable;
+            this.realmData = realmData;
+            this.useCompression = appArgs.TryGetValue(COMPRESSION_ARG_FLAG, out string? compression) && compression == "true";
         }
 
         public void Dispose()
         {
-            multiplayerMovementDebug.Dispose();
             messageBus.Dispose();
             settings.Dispose();
         }
@@ -49,7 +58,8 @@ namespace DCL.PluginSystem.Global
         public async UniTask InitializeAsync(MultiplayerCommunicationSettings settings, CancellationToken ct)
         {
             this.settings = await assetsProvisioner.ProvideMainAssetAsync(settings.spatialStateSettings, ct);
-            messageBus.InitializeEncoder(this.settings.Value.EncodingSettings);
+            this.settings.Value.UseCompression = useCompression;
+            messageBus.InitializeEncoder(this.settings.Value.EncodingSettings, this.settings.Value);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
@@ -58,8 +68,7 @@ namespace DCL.PluginSystem.Global
             RemotePlayersMovementSystem.InjectToWorld(ref builder, settings.Value, settings.Value.CharacterControllerSettings);
             RemotePlayerAnimationSystem.InjectToWorld(ref builder, settings.Value.ExtrapolationSettings);
             CleanUpRemoteMotionSystem.InjectToWorld(ref builder);
-
-            multiplayerMovementDebug = new MultiplayerMovementDebug(builder.World, arguments.PlayerEntity, debugBuilder, remoteEntities, playerTransform, debugSettings.Value);
+            MultiplayerMovementDebugSystem.InjectToWorld(ref builder, arguments.PlayerEntity, realmData, debugBuilder, remoteEntities, playerTransform, debugSettings.Value, settings.Value, entityParticipantTable);
         }
     }
 }

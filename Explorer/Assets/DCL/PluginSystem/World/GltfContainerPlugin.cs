@@ -30,14 +30,16 @@ namespace DCL.PluginSystem.World
         private readonly ECSWorldSingletonSharedDependencies globalDeps;
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
         private readonly SceneAssetLock sceneAssetLock;
-        private bool localSceneDevelopment;
+        private readonly bool localSceneDevelopment;
+        private readonly bool useRemoteAssetBundles;
 
-        public GltfContainerPlugin(ECSWorldSingletonSharedDependencies globalDeps, CacheCleaner cacheCleaner, ISceneReadinessReportQueue sceneReadinessReportQueue, SceneAssetLock sceneAssetLock, bool localSceneDevelopment)
+        public GltfContainerPlugin(ECSWorldSingletonSharedDependencies globalDeps, CacheCleaner cacheCleaner, ISceneReadinessReportQueue sceneReadinessReportQueue, SceneAssetLock sceneAssetLock, bool localSceneDevelopment, bool useRemoteAssetBundles)
         {
             this.globalDeps = globalDeps;
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
             this.sceneAssetLock = sceneAssetLock;
             this.localSceneDevelopment = localSceneDevelopment;
+            this.useRemoteAssetBundles = useRemoteAssetBundles;
             assetsCache = new GltfContainerAssetsCache();
 
             cacheCleaner.Register(assetsCache);
@@ -53,12 +55,12 @@ namespace DCL.PluginSystem.World
         {
             var buffer = sharedDependencies.EntityEventsBuilder.Rent<GltfContainerComponent>();
 
-            LoadGLTFSystem.InjectToWorld(ref builder, new NoCache<GLTFData, GetGLTFIntention>(false, false), sharedDependencies.SceneData, sharedDependencies.ScenePartition);
+            LoadGLTFSystem.InjectToWorld(ref builder, new NoCache<GLTFData, GetGLTFIntention>(false, false), sharedDependencies.SceneData);
 
             // Asset loading
-            PrepareGltfAssetLoadingSystem.InjectToWorld(ref builder, assetsCache, localSceneDevelopment);
+            PrepareGltfAssetLoadingSystem.InjectToWorld(ref builder, assetsCache, localSceneDevelopment, useRemoteAssetBundles);
 
-            if (localSceneDevelopment)
+            if (localSceneDevelopment && !useRemoteAssetBundles)
                 CreateGltfAssetFromRawGltfSystem.InjectToWorld(ref builder, globalDeps.FrameTimeBudget, globalDeps.MemoryBudget);
             else
                 CreateGltfAssetFromAssetBundleSystem.InjectToWorld(ref builder, globalDeps.FrameTimeBudget, globalDeps.MemoryBudget);
@@ -72,7 +74,8 @@ namespace DCL.PluginSystem.World
             WriteGltfContainerLoadingStateSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, buffer);
             GltfContainerVisibilitySystem.InjectToWorld(ref builder, buffer);
 
-            GatherGltfAssetsSystem.InjectToWorld(ref builder, sceneReadinessReportQueue, sharedDependencies.SceneData, buffer, sharedDependencies.SceneStateProvider);
+            GatherGltfAssetsSystem.InjectToWorld(ref builder, sceneReadinessReportQueue, sharedDependencies.SceneData,
+                buffer, sharedDependencies.SceneStateProvider, globalDeps.MemoryBudget);
 
             ResetDirtyFlagSystem<PBGltfContainer>.InjectToWorld(ref builder);
 

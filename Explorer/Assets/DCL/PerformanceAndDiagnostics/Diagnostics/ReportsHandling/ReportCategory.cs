@@ -280,5 +280,16 @@ namespace DCL.Diagnostics
         ///     Default category into which falls everything that is reported without info and by default Unity Debug.Log
         /// </summary>
         public const string UNSPECIFIED = nameof(UNSPECIFIED);
+
+        public const string PORTABLE_EXPERIENCE= nameof(PORTABLE_EXPERIENCE);
+
+        /// <summary>
+        ///     Used for multithreading sync messages
+        /// </summary>
+        public const string SYNC = nameof(SYNC);
+
+        public const string VERSION_CONTROL= nameof(VERSION_CONTROL);
+
+        public const string ONBOARDING = nameof(ONBOARDING);
     }
 }
