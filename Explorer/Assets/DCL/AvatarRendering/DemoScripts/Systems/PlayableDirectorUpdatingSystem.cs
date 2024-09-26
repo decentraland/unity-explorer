@@ -3,6 +3,7 @@
 using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using DCL.Diagnostics;
 using ECS.Abstract;
 using UnityEngine;
 using UnityEngine.Playables;
@@ -50,7 +51,7 @@ namespace DCL.AvatarAnimation
                 }
                 else
                 {
-                    Debug.LogError("The update mode of the PlayableDirector (component that plays a timeline) must be Manual for the system to animate the avatar properly.");
+                    ReportHub.LogError(ReportCategory.DEBUG,"The update mode of the PlayableDirector (component that plays a timeline) must be Manual for the system to animate the avatar properly.");
                 }
             }
         }

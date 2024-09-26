@@ -1,4 +1,4 @@
-﻿using DCL.CharacterCamera;
+﻿
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
 using DCL.CharacterMotion.Utils;
@@ -11,15 +11,16 @@ namespace DCL.CharacterMotion
     {
         public static void Execute(ICharacterControllerSettings settings,
             ref CharacterRigidTransform rigidTransform,
-            Vector3 cameraForward,
-            Vector3 cameraRight,
+            Transform cameraTransform,
             in MovementInputComponent input,
             float dt)
         {
+            Vector3 cameraForward = cameraTransform.forward;
             cameraForward.y = 0;
 
             // Normalize the forward to avoid slower forward speeds when looking up/down
             cameraForward.Normalize();
+            Vector3 cameraRight = cameraTransform.right;
             cameraRight.y = 0;
 
             float speedLimit = SpeedLimit.Get(settings, input.Kind);

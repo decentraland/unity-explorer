@@ -1,9 +1,7 @@
 ﻿
-using DCL.CharacterMotion.Components;
 using System.ComponentModel;
 using UnityEngine;
 using UnityEngine.Playables;
-using UnityEngine.Serialization;
 using UnityEngine.Timeline;
 
 namespace DCL.AvatarAnimation

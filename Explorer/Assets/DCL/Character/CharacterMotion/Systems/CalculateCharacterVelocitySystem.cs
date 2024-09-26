@@ -13,9 +13,7 @@ using DCL.Time.Systems;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using UnityEngine;
-#if UNITY_EDITOR
 using DCL.AvatarRendering.DemoScripts.Components;
-#endif
 
 namespace DCL.CharacterMotion.Systems
 {
@@ -105,11 +103,28 @@ namespace DCL.CharacterMotion.Systems
             settings.StopTimeSec = stopTime.Value;
 
             ResolveVelocityQuery(World, t, fixedTick.GetPhysicsTickComponent(World).Tick, in camera.GetCameraComponent(World));
+            ResolveRandomAvatarVelocityQuery(World, t, fixedTick.GetPhysicsTickComponent(World).Tick, in camera.GetCameraComponent(World));
         }
 
         [Query]
-        [None(typeof(DeleteEntityIntention))]
+        [None(typeof(DeleteEntityIntention), typeof(RandomAvatar))]
         private void ResolveVelocity(
+            [Data] float dt,
+            [Data] int physicsTick,
+            [Data] in CameraComponent cameraComponent,
+            ref ICharacterControllerSettings settings,
+            ref CharacterRigidTransform rigidTransform,
+            ref CharacterController characterController,
+            ref JumpInputComponent jump,
+            in MovementInputComponent movementInput)
+        {
+            ResolveAvatarVelocity(dt, physicsTick, in cameraComponent, ref settings, ref rigidTransform, ref characterController, ref jump, in movementInput, cameraComponent.Camera.transform);
+        }
+
+        [Query]
+        [All(typeof(RandomAvatar))]
+        [None(typeof(DeleteEntityIntention))]
+        private void ResolveRandomAvatarVelocity(
             Entity entity,
             [Data] float dt,
             [Data] int physicsTick,
@@ -120,21 +135,23 @@ namespace DCL.CharacterMotion.Systems
             ref JumpInputComponent jump,
             in MovementInputComponent movementInput)
         {
-            // Apply velocity based on input
-#if UNITY_EDITOR
-            if (World.Has<RandomAvatar>(entity))
-            {
-                // Random avatars are not affected by the player's camera
-                ApplyCharacterMovementVelocity.Execute(settings, ref rigidTransform, characterController.transform.forward, characterController.transform.right, in movementInput, dt);
-            }
-            else
-            {
-#endif
-                ApplyCharacterMovementVelocity.Execute(settings, ref rigidTransform, cameraComponent.Camera.transform.forward, cameraComponent.Camera.transform.right, in movementInput, dt);
+            // Random avatars are not affected by the player's camera
+            ResolveAvatarVelocity(dt, physicsTick, in cameraComponent, ref settings, ref rigidTransform, ref characterController, ref jump, in movementInput, characterController.transform);
+        }
 
-#if UNITY_EDITOR
-            }
-#endif
+        private void ResolveAvatarVelocity(
+            [Data] float dt,
+            [Data] int physicsTick,
+            [Data] in CameraComponent cameraComponent,
+            ref ICharacterControllerSettings settings,
+            ref CharacterRigidTransform rigidTransform,
+            ref CharacterController characterController,
+            ref JumpInputComponent jump,
+            in MovementInputComponent movementInput,
+            Transform viewerTransform)
+        {
+            // Apply velocity based on input
+            ApplyCharacterMovementVelocity.Execute(settings, ref rigidTransform, viewerTransform, in movementInput, dt);
 
             // Apply velocity based on edge slip
             ApplyEdgeSlip.Execute(dt, settings, ref rigidTransform, characterController);

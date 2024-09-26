@@ -13,32 +13,21 @@ namespace DCL.AvatarAnimation
     /// <summary>
     /// A playable / clip for the Unity timeline that sets the position and rotation of an avatar.
     /// </summary>
-    public class TeleportAvatarPlayableBehaviour : PlayableBehaviour
+    public class TeleportAvatarPlayableBehaviour : BaseAvatarPlayableBehaviour
     {
         public Transform ReferenceTransform;
 
-        private Entity cachedEntity = Entity.Null;
-        private AvatarBase cachedAvatar;
         private CharacterController cachedCharacterController;
 
         public override void ProcessFrame(Playable playable, FrameData info, object playerData)
         {
-            // Gets the asset associated to the track
-            AvatarBase avatar = (AvatarBase)playerData;
+            base.ProcessFrame(playable, info, playerData);
 
             if (ReferenceTransform == null)
             {
-                string avatarName = avatar != null ? avatar.name : "<Not assigned>";
+                string avatarName = playerData != null ? ((AvatarBase)playerData).name : "<Not assigned>";
                 Debug.LogError("'Teleport avatar' clip requires a reference to a Transform (track with avatar: '" + avatarName + "'). Please select the clip and set the transform.");
                 return;
-            }
-
-            // If the asset was changed in the editor, update the cached data
-            if (avatar != cachedAvatar)
-            {
-                cachedAvatar = avatar;
-                cachedEntity = FindEntityFromAvatarBase(cachedAvatar);
-                cachedCharacterController = cachedAvatar.GetComponentInParent<CharacterController>();
             }
 
             if (cachedEntity != Entity.Null && cachedCharacterController != null)
@@ -55,27 +44,9 @@ namespace DCL.AvatarAnimation
             }
         }
 
-        private static Entity FindEntityFromAvatarBase(AvatarBase avatar)
+        protected override void OnAvatarChanged(Entity newEntity, AvatarBase newAvatar)
         {
-            Entity foundEntity = Entity.Null;
-            Query allAvatars = GlobalWorld.ECSWorldInstance.Query(new QueryDescription().WithAll<AvatarBase>());
-
-            foreach (ref var chunk in allAvatars)
-            {
-                AvatarBase[] avatars = chunk.GetArray<AvatarBase>();
-
-                foreach (int entityIndex in chunk)
-                    if (entityIndex > -1 && avatars[entityIndex] == avatar)
-                    {
-                        foundEntity = chunk.Entity(entityIndex);
-                        break;
-                    }
-
-                if (foundEntity != Entity.Null)
-                    break;
-            }
-
-            return foundEntity;
+            cachedCharacterController = newAvatar?.GetComponentInParent<CharacterController>();
         }
     }
 }
