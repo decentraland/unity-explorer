@@ -66,7 +66,7 @@ pub unsafe extern "C" fn segment_server_track(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn segment_server_flush() -> OperationHandleId {
+pub extern "C" fn segment_server_flush() -> OperationHandleId {
     SEGMENT_SERVER.try_execute(&|segment, id| {
         let segment = segment.clone();
         let operation = SegmentServer::flush(segment, id);
@@ -75,7 +75,7 @@ pub unsafe extern "C" fn segment_server_flush() -> OperationHandleId {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn segment_server_dispose() -> bool {
+pub extern "C" fn segment_server_dispose() -> bool {
     SEGMENT_SERVER.dispose()
 }
 
