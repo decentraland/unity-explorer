@@ -57,7 +57,11 @@ namespace Global.Dynamic.ChatCommands
         {
             worldName = match.Groups[2].Value;
 
-            if (!paramUrls.TryGetValue(worldName, out realmUrl))
+            if (worldName.StartsWith("https"))
+            {
+                realmUrl = worldName;
+            }
+            else if (!paramUrls.TryGetValue(worldName, out realmUrl))
             {
                 if (!worldName.EndsWith(WORLD_SUFFIX))
                     worldName += WORLD_SUFFIX;
