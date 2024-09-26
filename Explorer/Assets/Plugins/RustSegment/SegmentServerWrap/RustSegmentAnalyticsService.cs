@@ -18,9 +18,13 @@ namespace Plugins.RustSegment.SegmentServerWrap
         private volatile string cachedUserId = string.Empty;
         private readonly Dictionary<ulong, List<MarshaledString>> afterClean = new ();
         private readonly IContextSource contextSource = new ContextSource();
+        private static volatile RustSegmentAnalyticsService? current;
 
         public RustSegmentAnalyticsService(string writerKey)
         {
+            if (current != null)
+                throw new Exception("Rust Segment previous instance is not disposed");
+
             using var mWriterKey = new MarshaledString(writerKey);
             bool result = NativeMethods.SegmentServerInitialize(mWriterKey.Ptr, Callback);
 
@@ -28,10 +32,12 @@ namespace Plugins.RustSegment.SegmentServerWrap
                 throw new Exception("Rust Segment initialization failed");
 
             ReportHub.Log(ReportData.UNSPECIFIED, "Rust Segment initialized");
+            current = this;
         }
 
         ~RustSegmentAnalyticsService()
         {
+            current = null;
             bool result = NativeMethods.SegmentServerDispose();
 
             if (result == false)
@@ -91,7 +97,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
             lock (afterClean) { afterClean.Add(operationId, ListPool<MarshaledString>.Get()!); }
         }
 
-        private void Callback(ulong operationId, NativeMethods.Response response)
+        private static void Callback(ulong operationId, NativeMethods.Response response)
         {
             ReportHub.Log(ReportCategory.ANALYTICS, $"Segment Operation {operationId} finished with: {response}");
 
@@ -101,7 +107,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
                     $"Segment operation {operationId} failed with: {response}"
                 );
 
-            CleanMemory(operationId);
+            current?.CleanMemory(operationId);
         }
 
         private void CleanMemory(ulong operationId)
