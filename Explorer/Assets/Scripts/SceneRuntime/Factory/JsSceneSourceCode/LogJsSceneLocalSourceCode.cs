@@ -1,23 +1,24 @@
 using System;
 using UnityEngine;
+using DCL.Diagnostics;
 
 namespace SceneRuntime.Factory.JsSceneSourceCode
 {
     public class LogJsSceneLocalSourceCode : IJsSceneLocalSourceCode
     {
         private readonly IJsSceneLocalSourceCode origin;
-        private readonly Action<string> log;
 
-        public LogJsSceneLocalSourceCode(IJsSceneLocalSourceCode origin, Action<string> log)
+        public LogJsSceneLocalSourceCode(IJsSceneLocalSourceCode origin)
         {
             this.origin = origin;
-            this.log = log;
         }
 
         public string? CodeForScene(Vector2Int coordinates)
         {
             string? result = origin.CodeForScene(coordinates);
-            log($"Code for scene {coordinates} is {(result != null ? "found" : "not found")}");
+            ReportHub
+               .WithReport(ReportCategory.SCENE_LOADING)
+               .Log($"Code for scene {coordinates} is {(result != null ? "found" : "not found")}");
             return result;
         }
     }
