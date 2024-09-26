@@ -9,7 +9,6 @@ using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Platforms;
 using DCL.CharacterMotion.Settings;
 using DCL.Diagnostics;
-using Decentraland.SocialServiceV2;
 using ECS.Abstract;
 using System;
 using ECS.LifeCycle.Components;
