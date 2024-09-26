@@ -1,10 +1,10 @@
 using DCL.Diagnostics;
 using DCL.PerformanceAndDiagnostics.Analytics;
+using Plugins.RustSegment.SegmentServerWrap.ContextSources;
 using Segment.Analytics;
 using Segment.Serialization;
 using System;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
 using UnityEngine.Pool;
 
 namespace Plugins.RustSegment.SegmentServerWrap
@@ -17,6 +17,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
         private const string EMPTY_JSON = "{}";
         private string cachedUserId = string.Empty;
         private readonly Dictionary<ulong, List<MarshaledString>> afterClean = new ();
+        private readonly IContextSource contextSource = new ContextSource();
 
         public RustSegmentAnalyticsService(string writerKey)
         {
@@ -35,7 +36,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
 
             var mUserId = new MarshaledString(userId);
             var mTraits = new MarshaledString(traits?.ToString() ?? EMPTY_JSON);
-            var mContext = new MarshaledString(EMPTY_JSON);
+            var mContext = new MarshaledString(contextSource.ContextJson());
 
             ulong operationId = NativeMethods.SegmentServerIdentify(mUserId.Ptr, mTraits.Ptr, mContext.Ptr);
 
@@ -53,7 +54,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
             var mUserId = new MarshaledString(cachedUserId);
             var mEventName = new MarshaledString(eventName);
             var mProperties = new MarshaledString(properties?.ToString() ?? EMPTY_JSON);
-            var mContext = new MarshaledString(EMPTY_JSON);
+            var mContext = new MarshaledString(contextSource.ContextJson());
 
             ulong operationId = NativeMethods.SegmentServerTrack(mUserId.Ptr, mEventName.Ptr, mProperties.Ptr, mContext.Ptr);
 
@@ -67,9 +68,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
 
         public void AddPlugin(Plugin plugin)
         {
-            //TODO context
-            return;
-            throw new NotImplementedException();
+            contextSource.Register(plugin);
         }
 
         public void Flush()
@@ -101,19 +100,6 @@ namespace Plugins.RustSegment.SegmentServerWrap
                 afterClean.Remove(operationId);
                 ListPool<MarshaledString>.Release(list);
             }
-        }
-
-        private readonly struct MarshaledString : IDisposable
-        {
-            public readonly IntPtr Ptr;
-
-            public MarshaledString(string str)
-            {
-                Ptr = Marshal.StringToHGlobalAnsi(str);
-            }
-
-            public void Dispose() =>
-                Marshal.FreeHGlobal(Ptr);
         }
     }
 }
