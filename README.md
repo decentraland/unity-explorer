@@ -14,7 +14,7 @@ To update the protocol to the last version of the protocol, you can execute the 
 cd scripts
 npm install @dcl/protocol@next
 npm run build-protocol
-```
+```asd
 
 ## SDK7 Integration Progress
 
