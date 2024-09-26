@@ -107,7 +107,7 @@ namespace SceneRunner.Tests
                 Substitute.For<IWeb3IdentityCache>(),
                 Substitute.For<IDecentralandUrlsSource>(),
                 IWebRequestController.DEFAULT,
-                new IRoomHub.Fake(),
+                NullRoomHub.INSTANCE, 
                 Substitute.For<IRealmData>(),
                 Substitute.For<IPortableExperiencesController>(),
                 Substitute.For<ISceneCommunicationPipe>()

@@ -20,6 +20,8 @@ namespace DCL.AvatarRendering.Emotes
 
         private readonly object lockObject = new ();
 
+        public List<URN> EmbededURNs { get; } = new ();
+
         public bool TryGetElement(URN urn, out IEmote element)
         {
             lock (lockObject)
@@ -36,6 +38,16 @@ namespace DCL.AvatarRendering.Emotes
         public void Set(URN urn, IEmote element)
         {
             lock (lockObject) { emotes[urn] = element; }
+        }
+
+
+        public void AddEmbeded(URN urn, IEmote emote)
+        {
+            lock (lockObject)
+            {
+                EmbededURNs.Add(urn);
+                emotes[urn] = emote;
+            }
         }
 
         public IEmote GetOrAddByDTO(EmoteDTO emoteDto, bool qualifiedForUnloading = true)

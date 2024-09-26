@@ -8,7 +8,6 @@ using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Loading.Components;
-using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Character.CharacterMotion.Components;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
@@ -84,7 +83,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             emoteComponent.CurrentAnimationTag = avatarView.GetAnimatorCurrentStateTag();
         }
 
-        // emotes that do not loop need to trigger some kind of cancellation so we can take care of the emote props and sounds
+        // emotes that do not loop need to trigger some kind of cancellation, so we can take care of the emote props and sounds
         [Query]
         [None(typeof(CharacterEmoteIntent))]
         private void CancelEmotes(ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView)
@@ -118,7 +117,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                 StopEmote(ref emoteComponent, avatarView);
         }
 
-        // when moving or jumping we detect the emote cancellation and we take care of getting rid of the emote props and sounds
+        // when moving or jumping we detect the emote cancellation, and we take care of getting rid of the emote props and sounds
         [Query]
         [None(typeof(CharacterEmoteIntent))]
         private void CancelEmotesByMovement(ref CharacterEmoteComponent emoteComponent, in CharacterRigidTransform rigidTransform, in IAvatarView avatarView)
@@ -150,16 +149,19 @@ namespace DCL.AvatarRendering.Emotes.Play
         // if you want to trigger an emote, this query takes care of consuming the CharacterEmoteIntent to trigger an emote
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void ConsumeEmoteIntent(Entity entity, ref CharacterEmoteComponent emoteComponent, in CharacterEmoteIntent emoteIntent, in IAvatarView avatarView, in AvatarShapeComponent avatarShapeComponent)
+        private void ConsumeEmoteIntent(Entity entity, ref CharacterEmoteComponent emoteComponent, in CharacterEmoteIntent emoteIntent,
+            in IAvatarView avatarView, in AvatarShapeComponent avatarShapeComponent)
         {
             URN emoteId = emoteIntent.EmoteId;
 
-            // its very important to catch any exception here to avoid not consuming the emote intent, so we dont infinitely create props
+            // it's very important to catch any exception here to avoid not consuming the emote intent, so we don't infinitely create props
             try
             {
                 // we wait until the avatar finishes moving to trigger the emote,
                 // avoid the case where: you stop moving, trigger the emote, the emote gets triggered and next frame it gets cancelled because inertia keeps moving the avatar
-                if (avatarView.GetAnimatorFloat(AnimationHashes.MOVEMENT_BLEND) > 0.1f)
+                //We also avoid triggering the emote while the character is jumping or landing, as the landing animation breaks the emote flow if they have props
+                if (avatarView.IsAnimatorInTag(AnimationHashes.JUMPING_TAG) ||
+                    avatarView.GetAnimatorFloat(AnimationHashes.MOVEMENT_BLEND) > 0.1f)
                     return;
 
                 if (emoteStorage.TryGetElement(emoteId.Shorten(), out IEmote emote))
@@ -175,7 +177,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                     BodyShape bodyShape = avatarShapeComponent.BodyShape;
                     StreamableLoadingResult<AttachmentRegularAsset>? streamableAsset = emote.AssetResults[bodyShape];
 
-                    // the emote is still loading? dont remove the intent yet, wait for it
+                    // the emote is still loading? don't remove the intent yet, wait for it
                     if (streamableAsset == null)
                         return;
 

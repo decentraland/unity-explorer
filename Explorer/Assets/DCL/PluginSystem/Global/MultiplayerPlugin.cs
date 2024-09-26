@@ -1,4 +1,5 @@
 using Arch.SystemGroups;
+using CrdtEcsBridge.Components.Transform;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.Emotes;
@@ -21,6 +22,7 @@ using DCL.Multiplayer.Profiles.Systems;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Multiplayer.SDK.Components;
 using DCL.Multiplayer.SDK.Systems.GlobalWorld;
+using DCL.Optimization.Pools;
 using DCL.Profiles;
 using DCL.UserInAppInitializationFlow;
 using ECS;
@@ -54,6 +56,7 @@ namespace DCL.PluginSystem.Global
         private readonly RoomsStatus roomsStatus;
         private readonly IScenesCache scenesCache;
         private readonly ICharacterDataPropagationUtility characterDataPropagationUtility;
+        private readonly IComponentPoolsRegistry poolsRegistry;
 
         public MultiplayerPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -73,7 +76,8 @@ namespace DCL.PluginSystem.Global
             IRemoteEntities remoteEntities,
             IScenesCache scenesCache,
             IEmoteStorage emoteStorage,
-            ICharacterDataPropagationUtility characterDataPropagationUtility)
+            ICharacterDataPropagationUtility characterDataPropagationUtility,
+            IComponentPoolsRegistry poolsRegistry)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.archipelagoIslandRoom = archipelagoIslandRoom;
@@ -93,6 +97,7 @@ namespace DCL.PluginSystem.Global
             this.scenesCache = scenesCache;
             this.emoteStorage = emoteStorage;
             this.characterDataPropagationUtility = characterDataPropagationUtility;
+            this.poolsRegistry = poolsRegistry;
         }
 
         public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
@@ -127,10 +132,10 @@ namespace DCL.PluginSystem.Global
 
             ResetDirtyFlagSystem<PlayerCRDTEntity>.InjectToWorld(ref builder);
             PlayerCRDTEntitiesHandlerSystem.InjectToWorld(ref builder, scenesCache);
-            PlayerProfileDataPropagationSystem.InjectToWorld(ref builder, characterDataPropagationUtility, globalPluginArguments.PlayerEntity);
+            PlayerProfileDataPropagationSystem.InjectToWorld(ref builder, characterDataPropagationUtility);
             ResetDirtyFlagSystem<AvatarEmoteCommandComponent>.InjectToWorld(ref builder);
             AvatarEmoteCommandPropagationSystem.InjectToWorld(ref builder, emoteStorage);
-            PlayerTransformPropagationSystem.InjectToWorld(ref builder);
+            PlayerTransformPropagationSystem.InjectToWorld(ref builder, poolsRegistry.GetReferenceTypePool<SDKTransform>());
 #endif
         }
 
