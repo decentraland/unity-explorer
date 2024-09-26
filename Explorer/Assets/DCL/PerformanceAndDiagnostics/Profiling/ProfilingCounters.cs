@@ -59,6 +59,9 @@ namespace DCL.Profiling
         public static ProfilerCounterValue<int> TexturesReferenced =
             new (MEMORY, "Textures Referenced", ProfilerMarkerDataUnit.Count);
 
+        public static ProfilerCounterValue<int> NFTsInCache =
+            new (MEMORY, "NFTs In Cache", ProfilerMarkerDataUnit.Count);
+
         // AudioClips cache
         public static ProfilerCounterValue<int> AudioClipsAmount =
             new (MEMORY, "AudioClips", ProfilerMarkerDataUnit.Count);

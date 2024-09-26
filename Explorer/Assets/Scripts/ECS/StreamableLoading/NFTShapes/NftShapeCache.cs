@@ -8,8 +8,7 @@ namespace ECS.StreamableLoading.NFTShapes
 {
     public class NftShapeCache : RefCountStreamableCacheBase<Texture2DData, Texture2D, GetNFTShapeIntention>, IStreamableCache<Texture2DData, GetNFTShapeIntention>
     {
-        // TODO overrides TexturesInCache counter!
-        protected override ref ProfilerCounterValue<int> inCacheCount => ref ProfilingCounters.TexturesInCache;
+        protected override ref ProfilerCounterValue<int> inCacheCount => ref ProfilingCounters.NFTsInCache;
 
         public override bool Equals(GetNFTShapeIntention x, GetNFTShapeIntention y) =>
             x.Equals(y);

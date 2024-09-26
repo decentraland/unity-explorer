@@ -139,6 +139,7 @@ namespace DCL.PluginSystem.World
 
             ResetDirtyFlagSystem<PBNftShape>.InjectToWorld(ref builder);
 
+            finalizeWorldSystems.Add(CleanUpNftShapeSystem.InjectToWorld(ref builder));
             finalizeWorldSystems.RegisterReleasePoolableComponentSystem<INftShapeRenderer, NftShapeRendererComponent>(ref builder, componentPoolsRegistry);
         }
 
