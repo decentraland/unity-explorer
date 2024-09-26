@@ -31,7 +31,7 @@ pub struct Server {
 
 impl Default for Server {
     fn default() -> Self {
-        let runtime = tokio::runtime::Builder::new_multi_thread()
+        let runtime = tokio::runtime::Builder::new_current_thread()
             .enable_all()
             .build()
             .unwrap();
