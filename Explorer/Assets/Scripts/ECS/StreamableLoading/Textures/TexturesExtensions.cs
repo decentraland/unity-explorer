@@ -9,8 +9,6 @@ namespace ECS.StreamableLoading.Textures
 {
     public static class TexturesExtensions
     {
-
-
         public static void TryDereference(this StreamableLoadingResult<SpriteData>.WithFallback? spriteResult)
         {
             spriteResult?.Asset.RemoveReference();

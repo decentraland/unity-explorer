@@ -137,6 +137,7 @@ namespace DCL.Profiles
             this.Name = "";
             this.TutorialStep = default(int);
             this.HasConnectedWeb3 = default(bool);
+            ProfilePicture = null;
             this.IsDirty = false;
         }
 
