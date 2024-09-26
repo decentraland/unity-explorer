@@ -2,6 +2,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Analytics.Systems;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
+using DCL.DebugUtilities;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiling;
 using DCL.Utilities;
@@ -21,11 +22,12 @@ namespace DCL.PluginSystem.Global
         private readonly IScenesCache scenesCache;
         private readonly IWeb3IdentityCache identityCache;
         private readonly IAnalyticsController analytics;
+        private readonly IDebugContainerBuilder debugContainerBuilder;
 
         private readonly WalkedDistanceAnalytics walkedDistanceAnalytics;
 
         public AnalyticsPlugin(IAnalyticsController analytics, IAnalyticsReportProfiler profiler, IRealmNavigator realmNavigator, IRealmData realmData, IScenesCache scenesCache,
-            ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy, IWeb3IdentityCache identityCache)
+            ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy, IWeb3IdentityCache identityCache, IDebugContainerBuilder debugContainerBuilder)
         {
             this.analytics = analytics;
 
@@ -34,6 +36,7 @@ namespace DCL.PluginSystem.Global
             this.realmData = realmData;
             this.scenesCache = scenesCache;
             this.identityCache = identityCache;
+            this.debugContainerBuilder = debugContainerBuilder;
 
             walkedDistanceAnalytics = new WalkedDistanceAnalytics(analytics, mainPlayerAvatarBaseProxy);
             this.realmNavigator.RealmChanged += OnRealmChanged;
@@ -46,7 +49,7 @@ namespace DCL.PluginSystem.Global
             PlayerParcelChangedAnalyticsSystem.InjectToWorld(ref builder, analytics, realmData, scenesCache, arguments.PlayerEntity);
             PerformanceAnalyticsSystem.InjectToWorld(ref builder, analytics, realmData, profiler, arguments.V8ActiveEngines, scenesCache);
             TimeSpentInWorldAnalyticsSystem.InjectToWorld(ref builder, analytics, realmData);
-            BadgesHeightReachedSystem.InjectToWorld(ref builder, analytics, realmData, arguments.PlayerEntity, identityCache);
+            BadgesHeightReachedSystem.InjectToWorld(ref builder, analytics, realmData, arguments.PlayerEntity, identityCache, debugContainerBuilder);
             AnalyticsEmotesSystem.InjectToWorld(ref builder, analytics, realmData, arguments.PlayerEntity);
         }
 

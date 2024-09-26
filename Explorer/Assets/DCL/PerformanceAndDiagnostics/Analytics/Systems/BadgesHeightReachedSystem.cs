@@ -3,6 +3,8 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
+using DCL.DebugUtilities;
+using DCL.DebugUtilities.UIBindings;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Web3.Identities;
 using ECS;
@@ -22,6 +24,7 @@ namespace DCL.Analytics.Systems
         private readonly Entity playerEntity;
         private readonly IWeb3IdentityCache identityCache;
         private readonly IAnalyticsController analytics;
+        private readonly ElementBinding<string> totalElevationGainBinding;
 
         private CharacterRigidTransform? rigidTransform;
 
@@ -34,7 +37,13 @@ namespace DCL.Analytics.Systems
         private float totalElevationGain;
         private IWeb3Identity? currentIdentity;
 
-        public BadgesHeightReachedSystem(World world, IAnalyticsController analytics, IRealmData realmData, in Entity playerEntity, IWeb3IdentityCache identityCache) : base(world)
+        public BadgesHeightReachedSystem(
+            World world,
+            IAnalyticsController analytics,
+            IRealmData realmData,
+            in Entity playerEntity,
+            IWeb3IdentityCache identityCache,
+            IDebugContainerBuilder debugContainerBuilder) : base(world)
         {
             this.analytics = analytics;
             this.realmData = realmData;
@@ -42,6 +51,11 @@ namespace DCL.Analytics.Systems
             this.identityCache = identityCache;
 
             currentIdentity = identityCache.Identity;
+
+            totalElevationGainBinding = new ElementBinding<string>(string.Empty);
+            debugContainerBuilder
+               .TryAddWidget("Badges Tracking")?
+               .AddCustomMarker("Vertical Voyager: ", totalElevationGainBinding);
         }
 
         protected override void Update(float t)
@@ -65,6 +79,8 @@ namespace DCL.Analytics.Systems
                 badgeHeightReached = true;
                 analytics.Track(AnalyticsEvents.Badges.HEIGHT_REACHED);
             }
+
+            UpdateDebugInfo();
         }
 
         private void AccumulateGain(float diff)
@@ -112,5 +128,8 @@ namespace DCL.Analytics.Systems
                 totalElevationGain = 0;
             }
         }
+
+        private void UpdateDebugInfo() =>
+            totalElevationGainBinding.Value = $"<color={(badgeHeightReached ? "green" : "red")}>{totalElevationGain} meters</color>";
     }
 }
