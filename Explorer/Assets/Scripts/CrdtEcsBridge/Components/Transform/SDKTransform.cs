@@ -15,8 +15,9 @@ namespace CrdtEcsBridge.Components.Transform
     /// </summary>
     public class SDKTransform : IDirtyMarker, IMessage, IExposedTransform
     {
-        public CanBeDirty<Vector3> Position = new CanBeDirty<Vector3>(Vector3.zero);
-        public CanBeDirty<Quaternion> Rotation = new CanBeDirty<Quaternion>(Quaternion.identity);
+        public CanBeDirty<Vector3> Position = new (Vector3.zero);
+        public CanBeDirty<Quaternion> Rotation = new (Quaternion.identity);
+
         CanBeDirty<Vector3> IExposedTransform.Position => Position;
         CanBeDirty<Quaternion> IExposedTransform.Rotation => Rotation;
 

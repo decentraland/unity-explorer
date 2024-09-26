@@ -275,6 +275,7 @@ jobs:
         run: cat unity_cloud_log.log
 
       - name: Extract and display errors
+        if: always()
         run: |
           echo "=== Extracted Errors for ${{ matrix.target }} ==="
           grep -iE "error c|fatal" unity_cloud_log.log | sed 's/^/\x1b[31m/' | sed 's/$/\x1b[0m/' || echo "No 'error c' or 'fatal' errors found in ${{ matrix.target }} log."
