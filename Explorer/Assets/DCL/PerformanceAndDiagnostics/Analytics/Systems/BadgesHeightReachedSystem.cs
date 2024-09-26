@@ -15,7 +15,8 @@ namespace DCL.Analytics.Systems
     public partial class BadgesHeightReachedSystem : BaseUnityLoopSystem
     {
         private const float HEIGHT = 500;
-        private const float THRESHOLD = 0.01f; // 1 cm
+        private const float MIN_THRESHOLD = 0.01f; // 1 [cm]. Prevents accumulation of very small changes
+        private const float MAX_THRESHOLD = 10; // m. Prevents exploits by teleporting (via beam for example)
 
         private readonly IRealmData realmData;
         private readonly Entity playerEntity;
@@ -55,8 +56,9 @@ namespace DCL.Analytics.Systems
             if (badgeHeightReached || !realmData.Configured) return;
 
             AnimationStates playerStates = World.Get<CharacterAnimationComponent>(playerEntity).States;
+            bool isMovingPlatform = World.Get<CharacterPlatformComponent>(playerEntity).IsMovingPlatform;
 
-            if (playerStates.IsFalling || playerStates.IsJumping || !playerStates.IsGrounded)
+            if (playerStates.IsFalling || playerStates.IsJumping || !playerStates.IsGrounded || isMovingPlatform)
                 return;
 
             if (World.TryGet(playerEntity, out PlayerTeleportIntent _))
@@ -78,7 +80,7 @@ namespace DCL.Analytics.Systems
             previousPositionY = currentPosition.y;
 
             // filtering out small changes
-            if (diff < THRESHOLD) return;
+            if (diff is < MIN_THRESHOLD or > MAX_THRESHOLD) return;
 
             totalElevationGain += diff;
             if (totalElevationGain > HEIGHT)
