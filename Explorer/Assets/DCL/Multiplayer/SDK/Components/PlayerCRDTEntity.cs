@@ -37,6 +37,10 @@ namespace DCL.Multiplayer.SDK.Components
             IsDirty = true;
         }
 
+        /// <summary>
+        ///     CRDT Entity is not assigned to the scene when the player or remote entity is outside any scene
+        ///     (is on the road, empty parcels or in LOD)
+        /// </summary>
         public bool AssignedToScene => SceneFacade != null;
 
         public bool IsDirty { get; set; }

@@ -15,19 +15,19 @@ namespace DCL.SDKComponents.SceneUI.Components
 
         public VisualElement Transform
         {
-            get => isRoot ? rootTransform : reusableTransform;
-            internal set { if (isRoot) rootTransform = value; else reusableTransform = value;}
+            get => IsRoot ? rootTransform : reusableTransform;
+            internal set { if (IsRoot) rootTransform = value; else reusableTransform = value;}
         }
 
         public bool IsHidden;
         public PointerEventType? PointerEventTriggered;
+        public bool IsRoot { get; private set; }
 
         public UITransformRelationLinkedData RelationData;
 
         internal EventCallback<PointerDownEvent> currentOnPointerDownCallback;
         internal EventCallback<PointerUpEvent> currentOnPointerUpCallback;
 
-        private bool isRoot;
 
         private VisualElement rootTransform;
         private VisualElement reusableTransform;
@@ -40,7 +40,7 @@ namespace DCL.SDKComponents.SceneUI.Components
 
             RelationData.parent = EntityReference.Null;
             RelationData.rightOf = 0;
-            isRoot = true;
+            IsRoot = true;
         }
 
         public void InitializeAsChild(string componentName, CRDTEntity entity, CRDTEntity rightOf)
@@ -48,7 +48,7 @@ namespace DCL.SDKComponents.SceneUI.Components
             reusableTransform ??= new VisualElement();
             Transform.name = UiElementUtils.BuildElementName(componentName, entity);
             IsHidden = false;
-            isRoot = false;
+            IsRoot = false;
             PointerEventTriggered = null;
 
             RelationData.parent = EntityReference.Null;
@@ -92,7 +92,7 @@ namespace DCL.SDKComponents.SceneUI.Components
             RelationData.Dispose();
 
             // If it's not a root its transform can be reused
-            if (isRoot) return;
+            if (IsRoot) return;
 
             this.UnregisterPointerCallbacks();
             reusableTransform.tabIndex = 0;
