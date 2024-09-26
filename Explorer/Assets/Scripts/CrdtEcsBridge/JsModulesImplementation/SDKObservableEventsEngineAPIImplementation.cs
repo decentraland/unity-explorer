@@ -13,6 +13,7 @@ using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents;
 using SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents.Events;
 using System.Collections.Generic;
+using DCL.Optimization.Multithreading;
 using Utility.Multithreading;
 
 namespace CrdtEcsBridge.JsModulesImplementation
@@ -28,7 +29,8 @@ namespace CrdtEcsBridge.JsModulesImplementation
         public SDKObservableEventsEngineAPIImplementation(ISharedPoolsProvider poolsProvider, IInstancePoolsProvider instancePoolsProvider, ICRDTProtocol crdtProtocol, ICRDTDeserializer crdtDeserializer, ICRDTSerializer crdtSerializer,
             ICRDTWorldSynchronizer crdtWorldSynchronizer, IOutgoingCRDTMessagesProvider outgoingCrtdMessagesProvider,
             ISystemGroupsUpdateGate systemGroupsUpdateGate, ISceneExceptionsHandler exceptionsHandler,
-            MultiThreadSync multiThreadSync, MultiThreadSync.Owner syncOwner) : base(poolsProvider, instancePoolsProvider, crdtProtocol,
+            MutexSync multiThreadSync, MultiThreadSync.Owner syncOwner) : base(poolsProvider, instancePoolsProvider,
+            crdtProtocol,
             crdtDeserializer, crdtSerializer, crdtWorldSynchronizer, outgoingCrtdMessagesProvider,
             systemGroupsUpdateGate, exceptionsHandler, multiThreadSync, syncOwner) { }
 

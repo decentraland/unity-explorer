@@ -9,6 +9,7 @@ using ECS.Prioritization.Components;
 using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
 using System.Collections.Generic;
+using DCL.Optimization.Multithreading;
 using Utility.Multithreading;
 
 namespace DCL.PluginSystem.World.Dependencies
@@ -23,7 +24,7 @@ namespace DCL.PluginSystem.World.Dependencies
         public readonly IEntityCollidersSceneCache EntityCollidersSceneCache;
         public readonly ISceneStateProvider SceneStateProvider;
         public readonly EntityEventsBuilder EntityEventsBuilder;
-        public readonly MultiThreadSync MultiThreadSync;
+        public readonly MutexSync MultiThreadSync;
         public readonly ISystemGroupsUpdateGate EcsGroupThrottler;
         public readonly ISystemsUpdateGate EcsSystemsGate;
 
@@ -37,7 +38,7 @@ namespace DCL.PluginSystem.World.Dependencies
             ISceneExceptionsHandler sceneExceptionsHandler,
             IEntityCollidersSceneCache entityCollidersSceneCache,
             ISceneStateProvider sceneStateProvider, EntityEventsBuilder entityEventsBuilder,
-            MultiThreadSync multiThreadSync, IWorldTimeProvider worldTimeProvider,
+            MutexSync multiThreadSync, IWorldTimeProvider worldTimeProvider,
             ISystemGroupsUpdateGate ecsGroupThrottler, ISystemsUpdateGate ecsSystemsGate)
         {
             SceneData = sceneData;

@@ -39,6 +39,7 @@ using SceneRuntime.Apis.Modules.Runtime;
 using SceneRuntime.Apis.Modules.SceneApi;
 using System;
 using System.Collections.Generic;
+using DCL.Optimization.Multithreading;
 using Utility.Multithreading;
 
 namespace SceneRunner
@@ -66,7 +67,7 @@ namespace SceneRunner
         internal readonly IWorldTimeProvider worldTimeProvider;
         private readonly ISceneData sceneData;
 
-        private readonly MultiThreadSync ecsMultiThreadSync;
+        private readonly MutexSync ecsMultiThreadSync;
         private readonly ICRDTDeserializer crdtDeserializer;
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
         private readonly ECSWorldInstanceSharedDependencies ecsWorldSharedDependencies;
@@ -89,7 +90,7 @@ namespace SceneRunner
             URLAddress sceneCodeUrl,
             SceneEcsExecutor ecsExecutor,
             ISceneData sceneData,
-            MultiThreadSync ecsMultiThreadSync,
+            MutexSync ecsMultiThreadSync,
             ICRDTDeserializer crdtDeserializer,
             IECSToCRDTWriter ecsToCRDTWriter,
             ISystemGroupsUpdateGate systemGroupThrottler,
@@ -129,7 +130,7 @@ namespace SceneRunner
             IWebRequestController webRequestController)
         {
             this.sceneData = sceneData;
-            ecsMultiThreadSync = new MultiThreadSync(sceneData.SceneShortInfo);
+            ecsMultiThreadSync = new MutexSync();
             CRDTProtocol = new CRDTProtocol();
             worldTimeProvider = new WorldTimeProvider(decentralandUrlsSource, webRequestController);
             SceneStateProvider = new SceneStateProvider();

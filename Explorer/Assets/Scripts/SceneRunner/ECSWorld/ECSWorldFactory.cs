@@ -85,12 +85,12 @@ namespace SceneRunner.ECSWorld
             finalizeWorldSystems.Add(ReleaseReferenceComponentsSystem.InjectToWorld(ref builder, componentPoolsRegistry));
             finalizeWorldSystems.Add(ReleaseRemovedComponentsSystem.InjectToWorld(ref builder));
 
-            var scope = new MultiThreadSync.BoxedScope(sharedDependencies.MultiThreadSync);
+            //var scope = new MultiThreadSync.BoxedScope(sharedDependencies.MultiThreadSync);
             var mutexOwner = new MultiThreadSync.Owner("ECSLoopSystem");
 
             // These system will prevent changes from the JS scenes to squeeze in between different stages of the PlayerLoop at the same frame
-            LockECSSystem.InjectToWorld(ref builder, scope, mutexOwner);
-            UnlockECSSystem.InjectToWorld(ref builder, scope);
+            LockECSSystem.InjectToWorld(ref builder, sharedDependencies.MultiThreadSync, mutexOwner);
+            UnlockECSSystem.InjectToWorld(ref builder, sharedDependencies.MultiThreadSync);
 
             SystemGroupWorld systemsWorld = builder.Finish(singletonDependencies.AggregateFactory, scenePartition).EnsureNotNull();
 

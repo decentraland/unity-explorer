@@ -12,6 +12,7 @@ using SceneRuntime.Apis.Modules.EngineApi;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using DCL.Optimization.Multithreading;
 using UnityEngine.Profiling;
 using Utility.Multithreading;
 
@@ -33,7 +34,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
         private readonly CustomSampler deserializeBatchSampler;
         private readonly ISceneExceptionsHandler exceptionsHandler;
         private readonly IInstancePoolsProvider instancePoolsProvider;
-        private readonly MultiThreadSync multiThreadSync;
+        private readonly MutexSync multiThreadSync;
         private readonly MultiThreadSync.Owner syncOwner;
         private readonly IOutgoingCRDTMessagesProvider outgoingCrtdMessagesProvider;
         private readonly CustomSampler outgoingMessagesSampler;
@@ -55,7 +56,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
             IOutgoingCRDTMessagesProvider outgoingCrtdMessagesProvider,
             ISystemGroupsUpdateGate systemGroupsUpdateGate,
             ISceneExceptionsHandler exceptionsHandler,
-            MultiThreadSync multiThreadSync,
+            MutexSync multiThreadSync,
             MultiThreadSync.Owner syncOwner)
         {
             sharedPoolsProvider = poolsProvider;
@@ -248,7 +249,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
         {
             try
             {
-                using MultiThreadSync.Scope mutex = multiThreadSync.GetScope(syncOwner);
+                using var mutex = multiThreadSync.GetScope();
 
                 if (isDisposing) return;
 

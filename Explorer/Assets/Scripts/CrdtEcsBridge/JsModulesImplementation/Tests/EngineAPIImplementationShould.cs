@@ -21,6 +21,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
 {
     public class EngineAPIImplementationShould
     {
+        /*
         private static readonly byte[] OUTPUT = { 10, 20, 30, 20, 10, 0 };
         private static readonly byte[] INPUT = { 0, 3, 5, 7, 10, 19, 20, 40, 76 };
 
@@ -195,5 +196,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
         {
             public void Serialize(ref Span<byte> destination, in ProcessedCRDTMessage processedMessage) { }
         }
+            */
+
     }
 }

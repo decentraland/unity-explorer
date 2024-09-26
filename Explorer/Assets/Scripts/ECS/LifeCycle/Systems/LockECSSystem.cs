@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using DCL.Optimization.Multithreading;
 using ECS.Abstract;
 using ECS.Groups;
 using Utility.Multithreading;
@@ -14,10 +15,10 @@ namespace ECS.LifeCycle.Systems
     [UpdateBefore(typeof(SyncedInitializationSystemGroup))] // Before any other scene system
     public partial class LockECSSystem : BaseUnityLoopSystem
     {
-        private readonly MultiThreadSync.BoxedScope boxedScope;
+        private readonly MutexSync boxedScope;
         private readonly MultiThreadSync.Owner owner;
 
-        internal LockECSSystem(World world, MultiThreadSync.BoxedScope boxedScope, MultiThreadSync.Owner owner) : base(world)
+        internal LockECSSystem(World world, MutexSync boxedScope, MultiThreadSync.Owner owner) : base(world)
         {
             this.boxedScope = boxedScope;
             this.owner = owner;
@@ -25,7 +26,8 @@ namespace ECS.LifeCycle.Systems
 
         protected override void Update(float t)
         {
-            boxedScope.Acquire(owner);
+            boxedScope.GetScope();
+            //boxedScope.Acquire(owner);
         }
     }
 }
