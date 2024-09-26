@@ -10,11 +10,8 @@ using ECS.StreamableLoading.Textures;
 using GLTFast.Loading;
 using SceneRunner.Scene;
 using System;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Unity.Collections;
-using UnityEngine.Networking;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.Texture2D, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
 namespace ECS.StreamableLoading.GLTF
