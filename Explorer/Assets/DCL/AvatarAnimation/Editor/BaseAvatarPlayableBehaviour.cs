@@ -42,6 +42,8 @@ namespace DCL.AvatarAnimation
             {
                 cachedAvatar = avatar;
                 cachedEntity = FindEntityFromAvatarBase(cachedAvatar);
+
+                OnAvatarChanged(cachedEntity, cachedAvatar);
             }
         }
 
