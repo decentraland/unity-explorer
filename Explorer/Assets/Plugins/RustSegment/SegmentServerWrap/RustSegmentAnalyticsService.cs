@@ -14,9 +14,16 @@ namespace Plugins.RustSegment.SegmentServerWrap
     /// </summary>
     public class RustSegmentAnalyticsService : IAnalyticsService
     {
+        private enum Operation
+        {
+            Identify,
+            Track,
+            Flush,
+        }
+
         private const string EMPTY_JSON = "{}";
         private volatile string cachedUserId = string.Empty;
-        private readonly Dictionary<ulong, List<MarshaledString>> afterClean = new ();
+        private readonly Dictionary<ulong, (Operation, List<MarshaledString>)> afterClean = new ();
         private readonly IContextSource contextSource = new ContextSource();
         private static volatile RustSegmentAnalyticsService? current;
 
@@ -61,7 +68,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
             list.Add(mTraits);
             list.Add(mContext);
 
-            lock (afterClean) { afterClean.Add(operationId, list); }
+            lock (afterClean) { afterClean.Add(operationId, (Operation.Identify, list)); }
         }
 
         public void Track(string eventName, JsonObject? properties = null)
@@ -81,7 +88,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
             list.Add(mProperties);
             list.Add(mContext);
 
-            lock (afterClean) { afterClean.Add(operationId, list); }
+            lock (afterClean) { afterClean.Add(operationId, (Operation.Track, list)); }
         }
 
         public void AddPlugin(EventPlugin plugin)
@@ -94,31 +101,35 @@ namespace Plugins.RustSegment.SegmentServerWrap
             ulong operationId = NativeMethods.SegmentServerFlush();
             AlertIfInvalid(operationId);
 
-            lock (afterClean) { afterClean.Add(operationId, ListPool<MarshaledString>.Get()!); }
+            lock (afterClean) { afterClean.Add(operationId, (Operation.Flush, ListPool<MarshaledString>.Get()!)); }
         }
 
         private static void Callback(ulong operationId, NativeMethods.Response response)
         {
-            ReportHub.Log(ReportCategory.ANALYTICS, $"Segment Operation {operationId} finished with: {response}");
+            if (current == null) return;
 
-            if (response is not NativeMethods.Response.Success)
-                ReportHub.LogError(
-                    ReportCategory.ANALYTICS,
-                    $"Segment operation {operationId} failed with: {response}"
-                );
+            lock (current.afterClean)
+            {
+                var type = current.afterClean[operationId].Item1;
 
-            current?.CleanMemory(operationId);
+                ReportHub.Log(ReportCategory.ANALYTICS, $"Segment Operation {operationId} {type} finished with: {response}");
+
+                if (response is not NativeMethods.Response.Success)
+                    ReportHub.LogError(
+                        ReportCategory.ANALYTICS,
+                        $"Segment operation {operationId} {type} failed with: {response}"
+                    );
+
+                current.CleanMemory(operationId);
+            }
         }
 
         private void CleanMemory(ulong operationId)
         {
-            lock (afterClean)
-            {
-                var list = afterClean[operationId]!;
-                foreach (var item in list) item.Dispose();
-                afterClean.Remove(operationId);
-                ListPool<MarshaledString>.Release(list);
-            }
+            var list = afterClean[operationId]!;
+            foreach (var item in list.Item2) item.Dispose();
+            afterClean.Remove(operationId);
+            ListPool<MarshaledString>.Release(list.Item2);
         }
 
         private void AlertIfInvalid(ulong operationId)
