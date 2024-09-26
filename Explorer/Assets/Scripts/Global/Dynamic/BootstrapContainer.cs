@@ -15,6 +15,7 @@ using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using ECS.SceneLifeCycle.Realm;
 using Global.AppArgs;
+using Global.Dynamic.DebugSettings;
 using Segment.Analytics;
 using Sentry;
 using System;
@@ -58,7 +59,7 @@ namespace Global.Dynamic
         }
 
         public static async UniTask<BootstrapContainer> CreateAsync(
-            DebugSettings debugSettings,
+            DebugSettings.DebugSettings debugSettings,
             DynamicSceneLoaderSettings sceneLoaderSettings,
             IPluginSettingsContainer settingsContainer,
             RealmLaunchSettings realmLaunchSettings,

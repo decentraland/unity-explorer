@@ -371,7 +371,9 @@ namespace Global.Dynamic
                 staticContainer.FeatureFlagsCache,
                 identityCache,
                 container.RealmController,
-                dynamicWorldParams.AppParameters
+                dynamicWorldParams.AppParameters,
+                bootstrapContainer.DebugSettings,
+                staticContainer.PortableExperiencesController
             );
 
             var worldInfoHub = new LocationBasedWorldInfoHub(
