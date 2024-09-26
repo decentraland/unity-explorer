@@ -15,7 +15,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
     public class RustSegmentAnalyticsService : IAnalyticsService
     {
         private const string EMPTY_JSON = "{}";
-        private string cachedUserId = string.Empty;
+        private volatile string cachedUserId = string.Empty;
         private readonly Dictionary<ulong, List<MarshaledString>> afterClean = new ();
         private readonly IContextSource contextSource = new ContextSource();
 
