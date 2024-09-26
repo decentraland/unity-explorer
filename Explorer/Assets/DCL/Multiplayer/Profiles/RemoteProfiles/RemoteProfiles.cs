@@ -13,6 +13,7 @@ namespace DCL.Multiplayer.Profiles.RemoteProfiles
         private readonly IProfileRepository profileRepository;
         private readonly List<RemoteProfile> remoteProfiles = new ();
         private readonly HashSet<string> pendingProfiles = new ();
+        private readonly HashSet<RemoteAnnouncement> uniqueAnnouncements = new ();
 
         public RemoteProfiles(IProfileRepository profileRepository)
         {
@@ -23,7 +24,15 @@ namespace DCL.Multiplayer.Profiles.RemoteProfiles
         {
             //TODO consider which option for performance would be better, just everything, to download or by chuncks, question about concurrency for web requests
             foreach (RemoteAnnouncement remoteAnnouncement in list)
+            {
+                // Avoid downloading the same profile multiple times
+                if (!uniqueAnnouncements.Add(remoteAnnouncement))
+                    return;
+
                 TryDownloadAsync(remoteAnnouncement).Forget();
+            }
+
+            uniqueAnnouncements.Clear();
         }
 
         public bool NewBunchAvailable() =>
