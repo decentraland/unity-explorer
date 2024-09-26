@@ -31,7 +31,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             ReportHub.Log(ReportCategory.ANALYTICS, message.ToString());
         }
 
-        public void AddPlugin(Plugin plugin) { }
+        public void AddPlugin(EventPlugin plugin) { }
 
         public void Flush()
         {

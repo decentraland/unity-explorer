@@ -30,7 +30,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         public void Track(string eventName, JsonObject? properties = null) =>
             analytics.Track(eventName, properties!);
 
-        public void AddPlugin(Plugin plugin) =>
+        public void AddPlugin(EventPlugin plugin) =>
             analytics.Add(plugin);
 
         public void Flush() =>

@@ -6,6 +6,6 @@ namespace Plugins.RustSegment.SegmentServerWrap.ContextSources
     {
         string ContextJson();
 
-        void Register(Plugin plugin);
+        void Register(EventPlugin plugin);
     }
 }

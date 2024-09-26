@@ -22,13 +22,9 @@ namespace Plugins.RustSegment.SegmentServerWrap.ContextSources
             }
         }
 
-        public void Register(Plugin plugin)
+        public void Register(EventPlugin plugin)
         {
-            lock (this)
-            {
-                if (plugin is EventPlugin eventPlugin)
-                    plugins.Add(eventPlugin);
-            }
+            lock (this) { plugins.Add(plugin); }
         }
 
         private static TrackEvent NewTrackEvent()

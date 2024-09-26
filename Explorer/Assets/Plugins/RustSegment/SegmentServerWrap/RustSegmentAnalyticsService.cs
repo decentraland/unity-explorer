@@ -66,7 +66,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
             lock (afterClean) { afterClean.Add(operationId, list); }
         }
 
-        public void AddPlugin(Plugin plugin)
+        public void AddPlugin(EventPlugin plugin)
         {
             contextSource.Register(plugin);
         }
