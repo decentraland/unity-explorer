@@ -15,12 +15,21 @@ pub struct Context {
 }
 
 pub struct SegmentServer {
-    pub async_runtime: tokio::runtime::Runtime,
-    context: Arc<Mutex<Option<Context>>>,
+    context: Arc<Mutex<Context>>,
     next_id: AtomicU64,
 }
 
-impl Default for SegmentServer {
+pub enum ServerState {
+    Ready(Arc<SegmentServer>),
+    Disposed,
+}
+
+pub struct Server {
+    state: std::sync::Mutex<ServerState>,
+    pub async_runtime: tokio::runtime::Runtime,
+}
+
+impl Default for Server {
     fn default() -> Self {
         let runtime = tokio::runtime::Builder::new_multi_thread()
             .enable_all()
@@ -29,8 +38,65 @@ impl Default for SegmentServer {
 
         Self {
             async_runtime: runtime,
-            next_id: AtomicU64::new(1), //0 is invalid
-            context: Default::default(),
+            state: std::sync::Mutex::new(ServerState::Disposed),
+        }
+    }
+}
+
+impl Server {
+    pub fn initialize(&self, writer_key: &str, callback_fn: FfiCallbackFn) -> bool {
+        let state_lock = self.state.lock();
+        if state_lock.is_err() {
+            return false;
+        }
+
+        let mut state = state_lock.unwrap();
+
+        match *state {
+            ServerState::Ready(_) => false,
+            ServerState::Disposed => {
+                let server = SegmentServer::new(writer_key, callback_fn);
+                *state = ServerState::Ready(Arc::new(server));
+                true
+            }
+        }
+    }
+
+    pub fn dispose(&self) -> bool {
+        let state_lock = self.state.lock();
+        if state_lock.is_err() {
+            return false;
+        }
+
+        let mut state = state_lock.unwrap();
+
+        match *state {
+            ServerState::Disposed => false,
+            ServerState::Ready(_) => {
+                *state = ServerState::Disposed;
+                true
+            }
+        }
+    }
+
+    pub fn try_execute(
+        &self,
+        func: &dyn Fn(Arc<SegmentServer>, OperationHandleId) -> (),
+    ) -> OperationHandleId {
+        let state_lock = self.state.lock();
+        if state_lock.is_err() {
+            return 0;
+        }
+
+        let state = state_lock.unwrap();
+
+        match &*state {
+            ServerState::Disposed => 0,
+            ServerState::Ready(server) => {
+                let id = server.next_id();
+                func(server.clone(), id);
+                id
+            }
         }
     }
 }
@@ -40,28 +106,26 @@ impl SegmentServer {
         self.next_id.fetch_add(1, Ordering::Relaxed)
     }
 
-    pub fn initialize(&'static self, writer_key: &str, callback_fn: FfiCallbackFn) {
+    fn new(writer_key: &str, callback_fn: FfiCallbackFn) -> Self {
         let client = HttpClient::default();
         let batcher = Batcher::new(None);
         let auto_batcher = AutoBatcher::new(client, batcher, writer_key.to_string());
-        let runtime = &self.async_runtime;
 
-        let operation = async move {
-            let mut guard = self.context.lock().await;
-            let context = Context {
-                batcher: auto_batcher,
-                callback_fn: Box::new(move |id, response| unsafe {
-                    callback_fn(id, response);
-                }),
-            };
-            *guard = Some(context);
+        let context = Context {
+            batcher: auto_batcher,
+            callback_fn: Box::new(move |id, response| unsafe {
+                callback_fn(id, response);
+            }),
         };
 
-        runtime.block_on(operation);
+        Self {
+            next_id: AtomicU64::new(1), //0 is invalid,
+            context: Arc::new(Mutex::new(context)),
+        }
     }
 
     pub async fn enqueue_track(
-        &self,
+        instance: Arc<Self>,
         id: OperationHandleId,
         used_id: &str,
         event_name: &str,
@@ -69,24 +133,23 @@ impl SegmentServer {
         context_json: &str,
     ) {
         let msg = operations::new_track(used_id, event_name, properties_json, context_json);
-        self.enqueue_if_ok(id, msg).await;
+        instance.enqueue_if_ok(id, msg).await;
     }
 
     pub async fn enqueue_identify(
-        &self,
+        instance: Arc<Self>,
         id: OperationHandleId,
         used_id: &str,
         traits_json: &str,
         context_json: &str,
     ) {
         let msg = operations::new_identify(used_id, traits_json, context_json);
-        self.enqueue_if_ok(id, msg).await;
+        instance.enqueue_if_ok(id, msg).await;
     }
 
     pub async fn enqueue(&self, id: OperationHandleId, msg: impl Into<BatchMessage>) {
         let arc = self.context.clone();
-        let mut guard = arc.lock().await;
-        let context = (*guard).as_mut().unwrap();
+        let mut context = arc.lock().await;
 
         let result = context.batcher.push(msg).await;
 
@@ -94,10 +157,9 @@ impl SegmentServer {
         context.call_callback(id, response_code);
     }
 
-    pub async fn flush(&self, id: OperationHandleId) {
-        let arc = self.context.clone();
-        let mut guard = arc.lock().await;
-        let context = (*guard).as_mut().unwrap();
+    pub async fn flush(instance: Arc<Self>, id: OperationHandleId) {
+        let arc = instance.context.clone();
+        let mut context = arc.lock().await;
 
         let result = context.batcher.flush().await;
 
@@ -116,8 +178,7 @@ impl SegmentServer {
 
     async fn call_callback(&self, id: OperationHandleId, code: Response) {
         let arc = self.context.clone();
-        let guard = arc.lock().await;
-        let context = (*guard).as_ref().unwrap();
+        let context = arc.lock().await;
         context.call_callback(id, code);
     }
 

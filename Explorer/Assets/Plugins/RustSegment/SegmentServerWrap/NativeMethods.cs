@@ -45,5 +45,8 @@ namespace Plugins.RustSegment.SegmentServerWrap
 
         [DllImport(LIBRARY_NAME, CallingConvention = CALLING_CONVENTION, CharSet = CHAR_SET, EntryPoint = "segment_server_flush")]
         internal extern static ulong SegmentServerFlush();
+
+        [DllImport(LIBRARY_NAME, CallingConvention = CALLING_CONVENTION, CharSet = CHAR_SET, EntryPoint = "segment_server_dispose")]
+        internal extern static bool SegmentServerDispose();
     }
 }

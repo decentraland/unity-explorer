@@ -26,6 +26,16 @@ namespace Plugins.RustSegment.SegmentServerWrap
 
             if (result == false)
                 throw new Exception("Rust Segment initialization failed");
+
+            ReportHub.Log(ReportData.UNSPECIFIED, "Rust Segment initialized");
+        }
+
+        ~RustSegmentAnalyticsService()
+        {
+            bool result = NativeMethods.SegmentServerDispose();
+
+            if (result == false)
+                throw new Exception("Rust Segment dispose failed");
         }
 
         public void Identify(string userId, JsonObject? traits = null)
@@ -39,6 +49,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
             var mContext = new MarshaledString(contextSource.ContextJson());
 
             ulong operationId = NativeMethods.SegmentServerIdentify(mUserId.Ptr, mTraits.Ptr, mContext.Ptr);
+            AlertIfInvalid(operationId);
 
             list.Add(mUserId);
             list.Add(mTraits);
@@ -57,6 +68,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
             var mContext = new MarshaledString(contextSource.ContextJson());
 
             ulong operationId = NativeMethods.SegmentServerTrack(mUserId.Ptr, mEventName.Ptr, mProperties.Ptr, mContext.Ptr);
+            AlertIfInvalid(operationId);
 
             list.Add(mUserId);
             list.Add(mEventName);
@@ -74,6 +86,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
         public void Flush()
         {
             ulong operationId = NativeMethods.SegmentServerFlush();
+            AlertIfInvalid(operationId);
 
             lock (afterClean) { afterClean.Add(operationId, ListPool<MarshaledString>.Get()!); }
         }
@@ -100,6 +113,15 @@ namespace Plugins.RustSegment.SegmentServerWrap
                 afterClean.Remove(operationId);
                 ListPool<MarshaledString>.Release(list);
             }
+        }
+
+        private void AlertIfInvalid(ulong operationId)
+        {
+            if (operationId == 0)
+                ReportHub.LogError(
+                    ReportCategory.ANALYTICS,
+                    $"Segment invalid async operation is called"
+                );
         }
     }
 }

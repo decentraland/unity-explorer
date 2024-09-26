@@ -1,7 +1,10 @@
 use core::str;
-use std::ffi::{c_char, CStr};
+use std::{
+    ffi::{c_char, CStr},
+    sync::Arc,
+};
 
-use crate::{FfiCallbackFn, OperationHandleId, SEGMENT_SERVER};
+use crate::{server::SegmentServer, FfiCallbackFn, OperationHandleId, SEGMENT_SERVER};
 
 /// # Safety
 ///
@@ -12,8 +15,7 @@ pub unsafe extern "C" fn segment_server_initialize(
     callback_fn: FfiCallbackFn,
 ) -> bool {
     let write_key = as_str(segment_write_key);
-    SEGMENT_SERVER.initialize(write_key, callback_fn);
-    true
+    SEGMENT_SERVER.initialize(write_key, callback_fn)
 }
 
 /// # Safety
@@ -25,15 +27,16 @@ pub unsafe extern "C" fn segment_server_identify(
     traits_json: *const c_char,
     context_json: *const c_char,
 ) -> OperationHandleId {
-    let id = SEGMENT_SERVER.next_id();
+    SEGMENT_SERVER.try_execute(&|segment, id| {
+        let segment = segment.clone();
+        let used_id = as_str(used_id);
+        let traits_json = as_str(traits_json);
+        let context_json = as_str(context_json);
 
-    let used_id = as_str(used_id);
-    let traits_json = as_str(traits_json);
-    let context_json = as_str(context_json);
-
-    let operation = SEGMENT_SERVER.enqueue_identify(id, used_id, traits_json, context_json);
-    SEGMENT_SERVER.async_runtime.spawn(operation);
-    id
+        let operation =
+            SegmentServer::enqueue_identify(segment, id, used_id, traits_json, context_json);
+        SEGMENT_SERVER.async_runtime.spawn(operation);
+    })
 }
 
 /// # Safety
@@ -46,25 +49,37 @@ pub unsafe extern "C" fn segment_server_track(
     properties_json: *const c_char,
     context_json: *const c_char,
 ) -> OperationHandleId {
-    let id = SEGMENT_SERVER.next_id();
+    SEGMENT_SERVER.try_execute(&|segment, id| {
+        let segment = segment.clone();
+        let used_id = as_str(used_id);
+        let event_name = as_str(event_name);
+        let properties_json = as_str(properties_json);
+        let context_json = as_str(context_json);
 
-    let used_id = as_str(used_id);
-    let event_name = as_str(event_name);
-    let properties_json = as_str(properties_json);
-    let context_json = as_str(context_json);
-
-    let operation =
-        SEGMENT_SERVER.enqueue_track(id, used_id, event_name, properties_json, context_json);
-    SEGMENT_SERVER.async_runtime.spawn(operation);
-    id
+        let operation = SegmentServer::enqueue_track(
+            segment,
+            id,
+            used_id,
+            event_name,
+            properties_json,
+            context_json,
+        );
+        SEGMENT_SERVER.async_runtime.spawn(operation);
+    })
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn segment_server_flush() -> OperationHandleId {
-    let id = SEGMENT_SERVER.next_id();
-    let operation = SEGMENT_SERVER.flush(id);
-    SEGMENT_SERVER.async_runtime.spawn(operation);
-    id
+    SEGMENT_SERVER.try_execute(&|segment, id| {
+        let segment = segment.clone();
+        let operation = SegmentServer::flush(segment, id);
+        SEGMENT_SERVER.async_runtime.spawn(operation);
+    })
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn segment_server_dispose() -> bool {
+    SEGMENT_SERVER.dispose()
 }
 
 fn as_str<'a>(chars: *const c_char) -> &'a str {
