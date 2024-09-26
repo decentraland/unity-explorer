@@ -46,43 +46,20 @@ namespace DCL.Analytics.Systems
 
         protected override void Update(float t)
         {
-            if (!currentIdentity.Address.Equals(identityCache.Identity.Address))
-            {
-                currentIdentity = identityCache.Identity;
-                badgeHeightReached = false;
-                totalElevationGain = 0;
-            }
+            HandleIdentityChange();
 
             if (badgeHeightReached || !realmData.Configured) return;
-
-            AnimationStates playerStates = World.Get<CharacterAnimationComponent>(playerEntity).States;
-            bool isMovingPlatform = World.Get<CharacterPlatformComponent>(playerEntity).IsMovingPlatform;
-
-            if (playerStates.IsFalling || playerStates.IsJumping || !playerStates.IsGrounded || isMovingPlatform)
-                return;
-
-            if (World.TryGet(playerEntity, out PlayerTeleportIntent _))
-            {
-                isTeleporting = true;
-                return;
-            }
+            if (IsNotMovingByFoot()) return;
 
             Vector3 currentPosition = World.Get<CharacterTransform>(playerEntity).Transform.position;
 
-            if (isTeleporting)
-            {
-                isTeleporting = false;
-                previousPositionY = currentPosition.y;
-                return;
-            }
+            if (DidJustTeleport(currentPosition)) return;
 
             float diff = currentPosition.y - previousPositionY;
             previousPositionY = currentPosition.y;
 
-            // filtering out small changes
-            if (diff is < MIN_THRESHOLD or > MAX_THRESHOLD) return;
+            AccumulateGain(diff);
 
-            totalElevationGain += diff;
             if (totalElevationGain > HEIGHT)
             {
                 badgeHeightReached = true;
@@ -90,6 +67,52 @@ namespace DCL.Analytics.Systems
             }
 
             Debug.Log($"VVV [{currentIdentity.Address}] : {totalElevationGain} {badgeHeightReached}");
+        }
+
+        private void AccumulateGain(float diff)
+        {
+            // filtering out small changes
+            if (diff is > MIN_THRESHOLD and < MAX_THRESHOLD)
+                totalElevationGain += diff;
+        }
+
+        private bool DidJustTeleport(Vector3 currentPosition)
+        {
+            if (isTeleporting)
+            {
+                isTeleporting = false;
+                previousPositionY = currentPosition.y;
+                return true;
+            }
+
+            return false;
+        }
+
+        private bool IsNotMovingByFoot()
+        {
+            AnimationStates playerStates = World.Get<CharacterAnimationComponent>(playerEntity).States;
+            bool isMovingPlatform = World.Get<CharacterPlatformComponent>(playerEntity).IsMovingPlatform;
+
+            if (playerStates.IsFalling || playerStates.IsJumping || !playerStates.IsGrounded || isMovingPlatform)
+                return true;
+
+            if (World.TryGet(playerEntity, out PlayerTeleportIntent _))
+            {
+                isTeleporting = true;
+                return true;
+            }
+
+            return false;
+        }
+
+        private void HandleIdentityChange()
+        {
+            if (!currentIdentity.Address.Equals(identityCache.Identity.Address))
+            {
+                currentIdentity = identityCache.Identity;
+                badgeHeightReached = false;
+                totalElevationGain = 0;
+            }
         }
     }
 }
