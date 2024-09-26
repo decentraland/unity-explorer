@@ -19,7 +19,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
             ErrorUtf8Decode = 5,
         }
 
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        [UnmanagedFunctionPointer(CALLING_CONVENTION)]
         internal delegate void SegmentFfiCallback(ulong operationId, Response responseCode);
 
         [DllImport(LIBRARY_NAME, CallingConvention = CALLING_CONVENTION, CharSet = CHAR_SET, EntryPoint = "segment_server_initialize")]
