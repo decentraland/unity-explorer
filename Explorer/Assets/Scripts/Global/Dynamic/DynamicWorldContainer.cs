@@ -605,7 +605,9 @@ namespace Global.Dynamic
                         realmNavigator,
                         staticContainer.RealmData,
                         staticContainer.ScenesCache,
-                        staticContainer.MainPlayerAvatarBaseProxy
+                        staticContainer.MainPlayerAvatarBaseProxy,
+                        identityCache,
+                        debugBuilder
                     )
                 );
 
