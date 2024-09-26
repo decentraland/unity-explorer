@@ -6,6 +6,7 @@ using DCL.Browser.DecentralandUrls;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PerformanceAndDiagnostics.Analytics;
+using DCL.PerformanceAndDiagnostics.Analytics.Services;
 using DCL.PluginSystem;
 using DCL.Web3;
 using DCL.Web3.Abstract;

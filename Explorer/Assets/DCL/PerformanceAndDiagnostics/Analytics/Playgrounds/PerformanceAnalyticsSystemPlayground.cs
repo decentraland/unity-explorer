@@ -1,5 +1,6 @@
 using Arch.Core;
 using DCL.Analytics.Systems;
+using DCL.PerformanceAndDiagnostics.Analytics.Services;
 using DCL.Profiling;
 using DCL.Utilities.Extensions;
 using ECS;
