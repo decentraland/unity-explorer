@@ -16,9 +16,9 @@ namespace Plugins.RustSegment.SegmentServerWrap.ContextSources
         {
             lock (this)
             {
-                trackEvent.Context?.Clear();
+                trackEvent.Context!.Clear();
                 foreach (var plugin in plugins) plugin.Track(trackEvent);
-                return trackEvent.Context?.ToString() ?? "{}";
+                return trackEvent.Context!.ToString() ?? "{}";
             }
         }
 
@@ -46,7 +46,10 @@ namespace Plugins.RustSegment.SegmentServerWrap.ContextSources
             object trackEventInstance = constructor.Invoke(new object[] { "eventName", new JsonObject() }).EnsureNotNull();
 
             // Assuming you want to do something with the created instance
-            return (TrackEvent)trackEventInstance;
+            var track = (TrackEvent)trackEventInstance;
+            track.Context = new JsonObject();
+
+            return track;
         }
     }
 }
