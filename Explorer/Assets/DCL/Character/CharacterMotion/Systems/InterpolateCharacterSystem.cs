@@ -9,8 +9,8 @@ using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Platforms;
 using DCL.CharacterMotion.Settings;
 using DCL.Diagnostics;
-using Decentraland.SocialServiceV2;
 using ECS.Abstract;
+using System;
 using ECS.LifeCycle.Components;
 using UnityEngine;
 using Utility;
@@ -28,8 +28,10 @@ namespace DCL.CharacterMotion.Systems
     [UpdateBefore(typeof(CameraGroup))]
     public partial class InterpolateCharacterSystem : BaseUnityLoopSystem
     {
+        private const int COUNTDOWN_FRAMES = 20;
         private const float ALMOST_ZERO = 0.00001f;
-        private bool playerHasJustTeleported;
+
+        private int playerJustTeleportedCountDown;
 
         private InterpolateCharacterSystem(World world) : base(world) { }
 
@@ -42,17 +44,30 @@ namespace DCL.CharacterMotion.Systems
         [Query]
         private void TeleportPlayer(in Entity entity, in CharacterController controller, ref CharacterPlatformComponent platformComponent, in PlayerTeleportIntent teleportIntent)
         {
-            if (teleportIntent.LoadReport == null || teleportIntent.LoadReport.CompletionSource.UnsafeGetStatus() != UniTaskStatus.Pending)
-                World.Remove<PlayerTeleportIntent>(entity);
+            if (teleportIntent.LoadReport != null)
+            {
+                switch (teleportIntent.LoadReport.CompletionSource.UnsafeGetStatus())
+                {
+                    case UniTaskStatus.Pending: return;
+                    case UniTaskStatus.Succeeded: break;
+                    case UniTaskStatus.Faulted:
+                    case UniTaskStatus.Canceled:
+                        World.Remove<PlayerTeleportIntent>(entity);
+                        return;
+                    default: throw new ArgumentOutOfRangeException();
+                }
+            }
 
-            playerHasJustTeleported = true;
+            World.Remove<PlayerTeleportIntent>(entity);
 
             // Teleport the character
             controller.transform.position = teleportIntent.Position;
-
             // Reset the current platform so we dont bounce back if we are touching the world plane
             platformComponent.CurrentPlatform = null;
+
+            playerJustTeleportedCountDown = COUNTDOWN_FRAMES;
         }
+
 
         [Query]
         [None(typeof(PlayerTeleportIntent), typeof(DeleteEntityIntention))]
@@ -66,11 +81,11 @@ namespace DCL.CharacterMotion.Systems
             in JumpInputComponent jump,
             in MovementInputComponent movementInput)
         {
-            if (playerHasJustTeleported)
+            if (playerJustTeleportedCountDown > 0)
             {
-                // We need to skip the first frame after a teleport to avoid getting conflicts with the interpolation.
+                // We need to skip the first few frames after a teleport to avoid getting conflicts with the interpolation.
                 // This sometimes provoked the teleport to be ignored and the character to be stuck in the previous position.
-                playerHasJustTeleported = false;
+                playerJustTeleportedCountDown--;
                 return;
             }
 
