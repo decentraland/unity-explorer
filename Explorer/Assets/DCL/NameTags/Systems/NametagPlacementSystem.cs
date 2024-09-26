@@ -13,6 +13,7 @@ using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using System.Runtime.CompilerServices;
+using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using UnityEngine;
 using UnityEngine.Pool;
 #if UNITY_EDITOR
@@ -63,6 +64,7 @@ namespace DCL.Nametags
                 return;
             }
 
+            EnableTagQuery(World);
             RemoveTagQuery(World);
 
             CameraComponent camera = playerCamera.GetCameraComponent(World);
@@ -90,6 +92,16 @@ namespace DCL.Nametags
             UpdateTagPosition(nametagView, camera.Camera, characterTransform.Position);
 
             World.Add(e, nametagView);
+        }
+
+        [Query]
+        [All(typeof(AvatarBase), typeof(NametagView))]
+        private void EnableTag(in NametagView nametagView)
+        {
+            if (nametagView.isActiveAndEnabled)
+                return;
+
+            nametagView.gameObject.SetActive(true);
         }
 
         [Query]

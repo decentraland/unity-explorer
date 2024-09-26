@@ -7,8 +7,6 @@ using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading;
 using UnityEngine;
-using Utility.Types;
-using static DCL.Chat.Commands.IChatCommand;
 
 namespace Global.Dynamic.ChatCommands
 {
@@ -59,7 +57,11 @@ namespace Global.Dynamic.ChatCommands
         {
             worldName = match.Groups[2].Value;
 
-            if (!paramUrls.TryGetValue(worldName, out realmUrl))
+            if (worldName.StartsWith("https"))
+            {
+                realmUrl = worldName;
+            }
+            else if (!paramUrls.TryGetValue(worldName, out realmUrl))
             {
                 if (!worldName.EndsWith(WORLD_SUFFIX))
                     worldName += WORLD_SUFFIX;
@@ -79,7 +81,7 @@ namespace Global.Dynamic.ChatCommands
 
             if (!await realmNavigator.CheckRealmIsReacheableAsync(realm, ct))
                 return $"🔴 Error. The world {worldName} doesn't exist or not reachable!";
-            
+
             var result = await realmNavigator.TryChangeRealmAsync(realm, ct, parcel);
 
             if (ct.IsCancellationRequested)
