@@ -2,6 +2,7 @@ using Arch.SystemGroups;
 using DCL.ECSComponents;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.ResourcesUnloading;
+using DCL.WebRequests;
 using ECS.Abstract;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Systems;
@@ -32,14 +33,16 @@ namespace DCL.PluginSystem.World
         private readonly SceneAssetLock sceneAssetLock;
         private readonly bool localSceneDevelopment;
         private readonly bool useRemoteAssetBundles;
+        private readonly IWebRequestController webRequestController;
 
-        public GltfContainerPlugin(ECSWorldSingletonSharedDependencies globalDeps, CacheCleaner cacheCleaner, ISceneReadinessReportQueue sceneReadinessReportQueue, SceneAssetLock sceneAssetLock, bool localSceneDevelopment, bool useRemoteAssetBundles)
+        public GltfContainerPlugin(ECSWorldSingletonSharedDependencies globalDeps, CacheCleaner cacheCleaner, ISceneReadinessReportQueue sceneReadinessReportQueue, SceneAssetLock sceneAssetLock, bool localSceneDevelopment, bool useRemoteAssetBundles, WebRequests.IWebRequestController webRequestController)
         {
             this.globalDeps = globalDeps;
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
             this.sceneAssetLock = sceneAssetLock;
             this.localSceneDevelopment = localSceneDevelopment;
             this.useRemoteAssetBundles = useRemoteAssetBundles;
+            this.webRequestController = webRequestController;
             assetsCache = new GltfContainerAssetsCache();
 
             cacheCleaner.Register(assetsCache);
@@ -55,7 +58,7 @@ namespace DCL.PluginSystem.World
         {
             var buffer = sharedDependencies.EntityEventsBuilder.Rent<GltfContainerComponent>();
 
-            LoadGLTFSystem.InjectToWorld(ref builder, new NoCache<GLTFData, GetGLTFIntention>(false, false), sharedDependencies.SceneData);
+            LoadGLTFSystem.InjectToWorld(ref builder, new NoCache<GLTFData, GetGLTFIntention>(false, false), sharedDependencies.SceneData, webRequestController);
 
             // Asset loading
             PrepareGltfAssetLoadingSystem.InjectToWorld(ref builder, assetsCache, localSceneDevelopment, useRemoteAssetBundles);

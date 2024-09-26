@@ -1,16 +1,19 @@
 using Arch.Core;
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
+using DCL.WebRequests;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
-using GLTFast;
 using GLTFast.Loading;
 using SceneRunner.Scene;
 using System;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using UnityEngine;
+using Unity.Collections;
 using UnityEngine.Networking;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.Texture2D, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
@@ -25,15 +28,21 @@ namespace ECS.StreamableLoading.GLTF
         private ISceneData sceneData;
         private World world;
         private IPartitionComponent partitionComponent;
+        private readonly IWebRequestController webRequestController;
+        private ReportData reportData;
 
-        public GltFastDownloadProvider(World world, ISceneData sceneData, IPartitionComponent partitionComponent, string targetGltfOriginalPath)
+        public GltFastDownloadProvider(World world, ISceneData sceneData, IPartitionComponent partitionComponent, string targetGltfOriginalPath, ReportData reportData, IWebRequestController webRequestController)
         {
             this.world = world;
             this.sceneData = sceneData;
             this.partitionComponent = partitionComponent;
             this.targetGltfOriginalPath = targetGltfOriginalPath;
+            this.reportData = reportData;
+            this.webRequestController = webRequestController;
             targetGltfDirectoryPath = targetGltfOriginalPath.Remove(targetGltfOriginalPath.LastIndexOf('/') + 1);
         }
+
+        private static string GetUrl(Uri uri) => (uri.IsAbsoluteUri ? uri.AbsoluteUri : uri.ToString()) ?? string.Empty;
 
         public async Task<IDownload> RequestAsync(Uri uri)
         {
@@ -43,23 +52,33 @@ namespace ECS.StreamableLoading.GLTF
                 throw new Exception($"Error on GLTF download ({targetGltfOriginalPath} - {uri}): NOT FOUND");
 
             uri = new Uri(tryGetContentUrlResult);
+            var commonArguments = new CommonArguments(URLAddress.FromString(GetUrl(uri)));
 
-            // TODO: Replace for WebRequestController (Planned in PR #1670)
-            using (UnityWebRequest webRequest = new UnityWebRequest(uri))
+            byte[] data = Array.Empty<byte>();
+            string error = string.Empty;
+            string text = string.Empty;
+            bool success = true;
+
+            try
             {
-                webRequest.downloadHandler = new DownloadHandlerBuffer();
-
-                try { await webRequest.SendWebRequest().WithCancellation(new CancellationToken()); }
-                catch { throw new Exception($"Error on GLTF download ({targetGltfOriginalPath} - {uri}): {webRequest.downloadHandler.error} - {webRequest.downloadHandler.text}"); }
-
-                return new GltfDownloadResult
-                {
-                    Data = webRequest.downloadHandler.data,
-                    Error = webRequest.downloadHandler.error,
-                    Text = webRequest.downloadHandler.text,
-                    Success = webRequest.result == UnityWebRequest.Result.Success,
-                };
+                var downloadHandler = await webRequestController.GetAsync(commonArguments, new CancellationToken(), reportData).ExposeDownloadHandlerAsync();
+                data = downloadHandler.data;
+                if(!GltfValidator.IsGltfBinaryFormat(downloadHandler.nativeData))
+                    text = downloadHandler.text;
             }
+            catch (UnityWebRequestException e)
+            {
+                error = e.Error;
+                success = false;
+            }
+
+            return new GltfDownloadResult
+            {
+                Data = data,
+                Text = text,
+                Error = error,
+                Success = success,
+            };
         }
 
         public async Task<ITextureDownload> RequestTextureAsync(Uri uri, bool nonReadable, bool forceLinear)
@@ -94,64 +113,6 @@ namespace ECS.StreamableLoading.GLTF
             // On windows the URI may come with some invalid '\' in parts of the path
             string patchedUri = uri.OriginalString.Replace('\\', '/');
             return patchedUri.Substring(patchedUri.LastIndexOf('/') + 1);
-        }
-    }
-
-    public struct GltfDownloadResult : IDownload
-    {
-        private const uint GLB_SIGNATURE = 0x46546c67;
-
-        public bool Success { get; set; }
-        public string Error { get; set; }
-        public byte[] Data { get; set; }
-        public string Text { get; set; }
-        public bool? IsBinary
-        {
-            get {
-                if (Data == null) return false;
-                var gltfBinarySignature = BitConverter.ToUInt32(Data, 0);
-                return gltfBinarySignature == GLB_SIGNATURE;
-            }
-        }
-
-        public void Dispose()
-        {
-            Data = null!;
-        }
-    }
-
-    public struct TextureDownloadResult : ITextureDownload
-    {
-        public bool Success { get; set; }
-        public string? Error { get; set; }
-        public byte[] Data => Array.Empty<byte>();
-        public string Text => string.Empty;
-        public bool? IsBinary => true;
-        public readonly IDisposableTexture Texture;
-
-        public TextureDownloadResult(Texture2D? texture)
-        {
-            Texture = new DisposableTexture() { Texture = texture };
-            Error = null!;
-            Success = false;
-        }
-
-        public IDisposableTexture GetTexture(bool forceSampleLinear) =>
-            Texture;
-
-        public void Dispose() => Texture.Dispose();
-    }
-
-    public struct DisposableTexture : IDisposableTexture
-    {
-        public Texture2D? Texture { get; set; }
-
-        public void Dispose()
-        {
-            // TODO: if we enable texture destruction on disposal, the external-fetched textures get destroyed before
-            // the GLTF finishes loading... investigate why...
-            // if (Texture != null)
-            //     Object.Destroy(Texture);
         }
     }
 }
