@@ -1,3 +1,4 @@
+using System;
 using System.Runtime.InteropServices;
 
 namespace Plugins.RustSegment.SegmentServerWrap
@@ -5,6 +6,8 @@ namespace Plugins.RustSegment.SegmentServerWrap
     public static class NativeMethods
     {
         private const string LIBRARY_NAME = "segment-server";
+        private const CharSet CHAR_SET = CharSet.Ansi;
+        private const CallingConvention CALLING_CONVENTION = CallingConvention.Cdecl;
 
         internal enum Response : byte
         {
@@ -19,28 +22,28 @@ namespace Plugins.RustSegment.SegmentServerWrap
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         internal delegate void SegmentFfiCallback(ulong operationId, Response responseCode);
 
-        [DllImport(LIBRARY_NAME, CallingConvention = CallingConvention.Cdecl, EntryPoint = "segment_server_initialize")]
+        [DllImport(LIBRARY_NAME, CallingConvention = CALLING_CONVENTION, CharSet = CHAR_SET, EntryPoint = "segment_server_initialize")]
         internal extern static bool SegmentServerInitialize(
-            string segmentWriteKey,
+            IntPtr segmentWriteKey,
             SegmentFfiCallback callback
         );
 
-        [DllImport(LIBRARY_NAME, CallingConvention = CallingConvention.Cdecl, EntryPoint = "segment_server_identify")]
+        [DllImport(LIBRARY_NAME, CallingConvention = CALLING_CONVENTION, CharSet = CHAR_SET, EntryPoint = "segment_server_identify")]
         internal extern static ulong SegmentServerIdentify(
-            string usedId,
-            string traitsJson,
-            string contextJson
+            IntPtr usedId,
+            IntPtr traitsJson,
+            IntPtr contextJson
         );
 
-        [DllImport(LIBRARY_NAME, CallingConvention = CallingConvention.Cdecl, EntryPoint = "segment_server_track")]
+        [DllImport(LIBRARY_NAME, CallingConvention = CALLING_CONVENTION, CharSet = CHAR_SET, EntryPoint = "segment_server_track")]
         internal extern static ulong SegmentServerTrack(
-            string usedId,
-            string eventName,
-            string propertiesJson,
-            string contextJson
+            IntPtr usedId,
+            IntPtr eventName,
+            IntPtr propertiesJson,
+            IntPtr contextJson
         );
 
-        [DllImport(LIBRARY_NAME, CallingConvention = CallingConvention.Cdecl, EntryPoint = "segment_server_flush")]
+        [DllImport(LIBRARY_NAME, CallingConvention = CALLING_CONVENTION, CharSet = CHAR_SET, EntryPoint = "segment_server_flush")]
         internal extern static ulong SegmentServerFlush();
     }
 }
