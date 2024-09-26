@@ -130,6 +130,6 @@ namespace DCL.Analytics.Systems
         }
 
         private void UpdateDebugInfo() =>
-            totalElevationGainBinding.Value = $"<color={(badgeHeightReached ? "green" : "red")}>{totalElevationGain} meters</color>";
+            totalElevationGainBinding.Value = $"<color={(badgeHeightReached ? "green" : "white")}>{totalElevationGain} m</color>";
     }
 }
