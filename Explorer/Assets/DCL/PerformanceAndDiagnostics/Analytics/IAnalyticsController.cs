@@ -16,7 +16,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         AnalyticsConfiguration Configuration { get; }
 
-        void SetCommonParam(IRealmData realmData, IWeb3IdentityCache? identityCache, ExposedTransform playerTransform);
+        void SetCommonParam(IRealmData realmData, IWeb3IdentityCache? identityCache, IExposedTransform playerTransform);
 
         void Track(string eventName, JsonObject? properties = null);
 
@@ -36,7 +36,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
             public AnalyticsConfiguration Configuration => ScriptableObject.CreateInstance<AnalyticsConfiguration>();
 
-            public void SetCommonParam(IRealmData _, IWeb3IdentityCache __, ExposedTransform ___) { }
+            public void SetCommonParam(IRealmData _, IWeb3IdentityCache? __, IExposedTransform ___) { }
 
             public void Track(string _, JsonObject? __ = null) { }
 

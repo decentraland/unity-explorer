@@ -100,6 +100,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
                                 request.url,
                                 new FlatFetchResponse<GenericPostRequest>(),
                                 signatureMetadata,
+                                GetReportData(),
                                 cancellationTokenSource.Token);
 
                             break;
@@ -112,7 +113,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
                                 headersInfo:
                                 headers,
                                 signInfo: signInfo,
-                                reportCategory: ReportCategory.SCENE_FETCH_REQUEST);
+                                reportCategory: GetReportData());
 
                             break;
                         case "get":
@@ -122,7 +123,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
                                 cancellationTokenSource.Token,
                                 headersInfo: headers,
                                 signInfo: signInfo,
-                                reportCategory: ReportCategory.SCENE_FETCH_REQUEST);
+                                reportData: GetReportData());
 
                             break;
                         case "put":
@@ -133,7 +134,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
                                 cancellationTokenSource.Token,
                                 headersInfo: headers,
                                 signInfo: signInfo,
-                                reportCategory: ReportCategory.SCENE_FETCH_REQUEST);
+                                reportCategory: GetReportData());
 
                             break;
                         default: throw new Exception($"Method {method} is not supported for signed fetch");
@@ -151,6 +152,9 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
 
             return ExecuteRequestAsync().ToDisconnectedPromise();
         }
+
+        private ReportData GetReportData() =>
+            new (ReportCategory.SCENE_FETCH_REQUEST, sceneShortInfo: sceneData.SceneShortInfo);
 
         public void Dispose()
         {

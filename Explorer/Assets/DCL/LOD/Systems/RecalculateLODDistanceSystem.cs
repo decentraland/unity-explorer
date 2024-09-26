@@ -7,6 +7,7 @@ using DCL.LOD.Components;
 using ECS.Abstract;
 using ECS.Prioritization;
 using ECS.SceneLifeCycle;
+using ECS.SceneLifeCycle.SceneDefinition;
 using UnityEngine;
 
 namespace DCL.LOD.Systems
@@ -42,14 +43,14 @@ namespace DCL.LOD.Systems
         }
 
         [Query]
-        public void RecalculateSceneLODDistance(ref SceneLODInfo sceneLODInfo)
+        public void RecalculateSceneLODDistance(ref SceneLODInfo sceneLODInfo, in SceneDefinitionComponent sceneDefinition)
         {
             // Not yet initialized
             if (string.IsNullOrEmpty(sceneLODInfo.id))
                 return;
 
             if (SceneLODInfoUtils.LODCount(sceneLODInfo.metadata.SuccessfullLODs) > 0)
-                sceneLODInfo.RecalculateLODDistances(defaultFOV, defaultLodBias, realmPartitionSettingsAsset.MaxLoadingDistanceInParcels);
+                sceneLODInfo.RecalculateLODDistances(defaultFOV, defaultLodBias, realmPartitionSettingsAsset.MaxLoadingDistanceInParcels, sceneDefinition.Parcels.Count);
         }
 
 

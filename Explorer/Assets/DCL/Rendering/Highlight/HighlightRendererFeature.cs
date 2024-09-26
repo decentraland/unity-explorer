@@ -39,8 +39,7 @@ namespace DCL.Rendering.Highlight
         private static readonly Dictionary<Renderer, HighlightSettings> m_HighLightRenderers = new ();
 
         public static readonly IHighlightedObjects HighlightedObjects = new LogHighlightedObjects(
-            new HighlightedObjects(m_HighLightRenderers),
-            ReportHub.WithReport(ReportCategory.HIGHLIGHTS).Log
+            new HighlightedObjects(m_HighLightRenderers)
         );
 
         // Input P;ass Data

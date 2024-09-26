@@ -16,13 +16,14 @@ namespace DCL.UserInAppInitializationFlow
             EnvironmentMiscSet = 5,
             PlayerAvatarLoaded = 6,
             LandscapeLoaded = 7,
-            RealmRestarted = 8,
+            OnboardingChecked = 8,
+            RealmRestarted = 9,
 
             /// <summary>
             ///     Player has teleported to the spawn point of the starting scene
             /// </summary>
-            PlayerTeleported = 9,
-            Completed = 10,
+            PlayerTeleported = 10,
+            Completed = 11,
         }
 
         public static readonly Dictionary<Stage, float> PROGRESS = new (EnumUtils.GetEqualityComparer<Stage>())
@@ -35,6 +36,7 @@ namespace DCL.UserInAppInitializationFlow
             [Stage.EnvironmentMiscSet] = 0.25f,
             [Stage.PlayerAvatarLoaded] = 0.4f,
             [Stage.LandscapeLoaded] = 0.7f,
+            [Stage.OnboardingChecked] = 0.80f,
             [Stage.RealmRestarted] = 0.85f,
             [Stage.PlayerTeleported] = 0.95f,
             [Stage.Completed] = 1f,

@@ -20,7 +20,6 @@ namespace DCL.Multiplayer.Connections.Rooms
         private const string PREFIX = "LogRoom:";
 
         private readonly IRoom origin;
-        private readonly Action<string> log;
 
         public IActiveSpeakers ActiveSpeakers { get; }
         public IParticipantsHub Participants { get; }
@@ -43,17 +42,14 @@ namespace DCL.Multiplayer.Connections.Rooms
 
         public LogRoom() : this(new Room()) { }
 
-        public LogRoom(IRoom origin) : this(origin, ReportHub.WithReport(ReportCategory.LIVEKIT).Log) { }
-
-        public LogRoom(IRoom origin, Action<string> log)
+        public LogRoom(IRoom origin)
         {
             this.origin = origin;
-            this.log = log;
 
-            ActiveSpeakers = new LogActiveSpeakers(origin.ActiveSpeakers, log);
-            Participants = new LogParticipantsHub(origin.Participants, log);
-            DataPipe = new LogDataPipe(origin.DataPipe, log);
-            Info = new LogRoomInfo(origin.Info, log);
+            ActiveSpeakers = new LogActiveSpeakers(origin.ActiveSpeakers);
+            Participants = new LogParticipantsHub(origin.Participants);
+            DataPipe = new LogDataPipe(origin.DataPipe);
+            Info = new LogRoomInfo(origin.Info);
 
             this.origin.LocalTrackPublished += OriginOnLocalTrackPublished;
             this.origin.LocalTrackUnpublished += OriginOnLocalTrackUnpublished;
@@ -71,110 +67,137 @@ namespace DCL.Multiplayer.Connections.Rooms
 
         private void OriginOnRoomMetadataChanged(string metadata)
         {
-            log($"{PREFIX} room metadata changed {metadata}");
+            ReportHub
+                .WithReport(ReportCategory.LIVEKIT)
+                .Log($"{PREFIX} room metadata changed {metadata}");
             RoomMetadataChanged?.Invoke(metadata);
         }
 
         private void OriginOnConnectionUpdated(IRoom room, ConnectionUpdate connectionupdate)
         {
-            log($"{PREFIX} connection updated {connectionupdate}");
+            ReportHub
+                .WithReport(ReportCategory.LIVEKIT)
+                .Log($"{PREFIX} connection updated {connectionupdate}");
             ConnectionUpdated?.Invoke(room, connectionupdate);
         }
 
         private void OriginOnConnectionStateChanged(ConnectionState connectionstate)
         {
-            log($"{PREFIX} connection state changed {connectionstate}");
+            ReportHub
+                .WithReport(ReportCategory.LIVEKIT)
+                .Log($"{PREFIX} connection state changed {connectionstate}");
             ConnectionStateChanged?.Invoke(connectionstate);
         }
 
         private void OriginOnConnectionQualityChanged(ConnectionQuality quality, Participant participant)
         {
-            log($"{PREFIX} connection quality changed {quality} by {participant.Sid} {participant.Name}");
+            ReportHub
+                .WithReport(ReportCategory.LIVEKIT)
+                .Log($"{PREFIX} connection quality changed {quality} by {participant.Sid} {participant.Name}");
             ConnectionQualityChanged?.Invoke(quality, participant);
         }
 
         private void OriginOnTrackUnmuted(TrackPublication publication, Participant participant)
         {
-            log($"{PREFIX} track unmuted {publication.Sid} {publication.Kind} by {participant.Sid} {participant.Name}");
+            ReportHub
+                .WithReport(ReportCategory.LIVEKIT)
+                .Log($"{PREFIX} track unmuted {publication.Sid} {publication.Kind} by {participant.Sid} {participant.Name}");
             TrackUnmuted?.Invoke(publication, participant);
         }
 
         private void OriginOnTrackMuted(TrackPublication publication, Participant participant)
         {
-            log($"{PREFIX} track muted {publication.Sid} {publication.Kind} by {participant.Sid} {participant.Name}");
+            ReportHub
+                .WithReport(ReportCategory.LIVEKIT)
+                .Log($"{PREFIX} track muted {publication.Sid} {publication.Kind} by {participant.Sid} {participant.Name}");
             TrackMuted?.Invoke(publication, participant);
         }
 
         private void OriginOnTrackUnsubscribed(ITrack track, TrackPublication publication, Participant participant)
         {
-            log($"{PREFIX} track unsubscribed {publication.Sid} {publication.Kind} by {participant.Sid} {participant.Name}");
+            ReportHub
+                .WithReport(ReportCategory.LIVEKIT)
+                .Log($"{PREFIX} track unsubscribed {publication.Sid} {publication.Kind} by {participant.Sid} {participant.Name}");
             TrackUnsubscribed?.Invoke(track, publication, participant);
         }
 
         private void OriginOnTrackSubscribed(ITrack track, TrackPublication publication, Participant participant)
         {
-            log($"{PREFIX} track subscribed {publication.Sid} {publication.Kind} by {participant.Sid} {participant.Name}");
+            ReportHub
+                .WithReport(ReportCategory.LIVEKIT)
+                .Log($"{PREFIX} track subscribed {publication.Sid} {publication.Kind} by {participant.Sid} {participant.Name}");
             TrackSubscribed?.Invoke(track, publication, participant);
         }
 
         private void OriginOnLocalTrackPublished(TrackPublication publication, Participant participant)
         {
-            log($"{PREFIX} local track published {publication.Sid} {publication.Kind} by {participant.Sid} {participant.Name}");
+            ReportHub
+                .WithReport(ReportCategory.LIVEKIT)
+                .Log($"{PREFIX} local track published {publication.Sid} {publication.Kind} by {participant.Sid} {participant.Name}");
             LocalTrackPublished?.Invoke(publication, participant);
         }
 
         private void OriginOnTrackUnpublished(TrackPublication publication, Participant participant)
         {
-            log($"{PREFIX} track unpublished {publication.Sid} {publication.Kind} by {participant.Sid} {participant.Name}");
+            ReportHub
+                .WithReport(ReportCategory.LIVEKIT)
+                .Log($"{PREFIX} track unpublished {publication.Sid} {publication.Kind} by {participant.Sid} {participant.Name}");
             TrackUnpublished?.Invoke(publication, participant);
         }
 
         private void OriginOnLocalTrackUnpublished(TrackPublication publication, Participant participant)
         {
-            log($"{PREFIX} local track unpublished {publication.Sid} {publication.Kind} by {participant.Sid} {participant.Name}");
+            ReportHub
+                .WithReport(ReportCategory.LIVEKIT)
+                .Log($"{PREFIX} local track unpublished {publication.Sid} {publication.Kind} by {participant.Sid} {participant.Name}");
             LocalTrackUnpublished?.Invoke(publication, participant);
         }
 
         private void OriginOnTrackPublished(TrackPublication publication, Participant participant)
         {
-            log($"{PREFIX} track published {publication.Sid} {publication.Kind} by {participant.Sid} {participant.Name}");
+            ReportHub
+                .WithReport(ReportCategory.LIVEKIT)
+                .Log($"{PREFIX} track published {publication.Sid} {publication.Kind} by {participant.Sid} {participant.Name}");
             TrackPublished?.Invoke(publication, participant);
         }
 
         public void UpdateLocalMetadata(string metadata)
         {
-            log($"{PREFIX} update local metadata: '{metadata}'");
+            ReportHub
+                .WithReport(ReportCategory.LIVEKIT)
+                .Log($"{PREFIX} update local metadata: '{metadata}'");
             origin.UpdateLocalMetadata(metadata);
         }
 
         public void SetLocalName(string name)
         {
-            log($"{PREFIX} set local name: '{name}'");
+            ReportHub
+                .WithReport(ReportCategory.LIVEKIT)
+                .Log($"{PREFIX} set local name: '{name}'");
             origin.SetLocalName(name);
         }
 
         public async Task<bool> ConnectAsync(string url, string authToken, CancellationToken cancelToken, bool autoSubscribe)
         {
-            log($"{PREFIX} connect start {url} with token {authToken}");
+            ReportHub
+                .WithReport(ReportCategory.LIVEKIT)
+                .Log($"{PREFIX} connect start {url} with token {authToken}");
             bool result = await origin.ConnectAsync(url, authToken, cancelToken, autoSubscribe);
-            log($"{PREFIX} connect start {url} with token {authToken} with result {result}");
+            ReportHub
+                .WithReport(ReportCategory.LIVEKIT)
+                .Log($"{PREFIX} connect start {url} with token {authToken} with result {result}");
             return result;
         }
 
         public async Task DisconnectAsync(CancellationToken token)
         {
-            log($"{PREFIX} disconnect start");
+            ReportHub
+                .WithReport(ReportCategory.LIVEKIT)
+                .Log($"{PREFIX} disconnect start");
             await origin.DisconnectAsync(token);
-            log($"{PREFIX} disconnect end");
+            ReportHub
+                .WithReport(ReportCategory.LIVEKIT)
+                .Log($"{PREFIX} disconnect end");
         }
-    }
-
-    public static class LogRoomExtensions
-    {
-        public static IRoom WithLog(this IRoom room) =>
-            new LogRoom(room);
-
-        public static IRoom WithLog(this IRoom room, Action<string> log) =>
-            new LogRoom(room, log);
     }
 }

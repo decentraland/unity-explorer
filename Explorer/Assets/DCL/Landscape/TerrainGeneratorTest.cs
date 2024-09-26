@@ -5,6 +5,7 @@ using DCL.Landscape.Settings;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using DCL.Profiling;
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
@@ -73,7 +74,8 @@ namespace DCL.Landscape
             }
             else
             {
-                gen = new TerrainGenerator(true, clearCache);
+                IMemoryProfiler memoryProfiler = new Profiler();
+                gen = new TerrainGenerator(memoryProfiler, true, clearCache);
                 gen.Initialize(genData, ref emptyParcels, ref ownedParcels, "");
                 await gen.GenerateTerrainAndShowAsync(worldSeed, digHoles, hideTrees, hideDetails);
             }

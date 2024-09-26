@@ -219,8 +219,8 @@ namespace DCL.AuthenticationScreenFlow
 #if UNITY_EDITOR
             return true;
 #else
-            if (!featureFlagsCache.Configuration.IsEnabled("user-allow-list", "wallets")) return true;
-            if (!featureFlagsCache.Configuration.TryGetCsvPayload("user-allow-list", "wallets", out List<List<string>>? allowedUsersCsv))
+            if (!featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.USER_ALLOW_LIST, FeatureFlagsStrings.WALLETS_VARIANT)) return true;
+            if (!featureFlagsCache.Configuration.TryGetCsvPayload(FeatureFlagsStrings.USER_ALLOW_LIST, FeatureFlagsStrings.WALLETS_VARIANT, out List<List<string>>? allowedUsersCsv))
                 return true;
 
             bool isUserAllowed = allowedUsersCsv![0]
@@ -230,8 +230,12 @@ namespace DCL.AuthenticationScreenFlow
 #endif
         }
 
-        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
-            (lifeCycleTask ??= new UniTaskCompletionSource()).Task.AttachExternalCancellation(ct);
+        protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
+        {
+            lifeCycleTask?.TrySetCanceled(ct);
+            lifeCycleTask = new UniTaskCompletionSource();
+            await lifeCycleTask.Task;
+        }
 
         private void StartLoginFlowUntilEnd()
         {

@@ -37,7 +37,7 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
                     webRequestController,
                     assetBundleURL,
                     intention.Hash,
-                    GetReportCategory(),
+                    GetReportData(),
                     ct
                 )
             );

@@ -53,7 +53,7 @@ namespace ECS.Unity.GLTFContainer.Systems
             if (!sceneData.TryGetHash(sdkComponent.Src, out string hash))
             {
                 component = GltfContainerComponent.CreateFaulty(
-                    GetReportCategory(),
+                    GetReportData(),
                     new ArgumentException($"GLTF source {sdkComponent.Src} not found in the content")
                 );
 
@@ -84,7 +84,7 @@ namespace ECS.Unity.GLTFContainer.Systems
                 case LoadingState.Unknown:
                     if (!sceneData.TryGetHash(sdkComponent.Src, out string hash))
                         component.SetFaulty(
-                            GetReportCategory(),
+                            GetReportData(),
                             new ArgumentException($"GLTF source {sdkComponent.Src} not found in the content")
                         );
                     else

@@ -89,7 +89,6 @@ namespace DCL.MapRenderer.ComponentsFactory
             );
 
             await UniTask.WhenAll(
-                CreateAtlasAsync(layers, configuration, coordsUtils, cullingController, cancellationToken),
                 CreateSatelliteAtlasAsync(layers, configuration, coordsUtils, cullingController, cancellationToken),
                 playerMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, mapSettings, assetsProvisioner, mapPathEventBus, cancellationToken),
                 sceneOfInterestMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, assetsProvisioner, mapSettings, placesAPIService, cancellationToken),
@@ -127,38 +126,6 @@ namespace DCL.MapRenderer.ComponentsFactory
 
                 var chunk = new SatelliteChunkController(atlasChunkPrefab, webRequestController, textureContainer, chunkLocalPosition, chunkId, parent, MapRendererDrawOrder.SATELLITE_ATLAS);
                 await chunk.LoadImageAsync(chunkId, PARCELS_INSIDE_CHUNK * coordsUtils.ParcelSize, ct);
-
-                return chunk;
-            }
-        }
-
-        private UniTask CreateAtlasAsync(Dictionary<MapLayer, IMapLayerController> layers, MapRendererConfiguration configuration, ICoordsUtils coordsUtils, IMapCullingController cullingController, CancellationToken cancellationToken)
-        {
-            var chunkAtlas = new ParcelChunkAtlasController(configuration.AtlasRoot, IMapRendererSettings.ATLAS_CHUNK_SIZE, coordsUtils, cullingController, chunkBuilder: CreateChunkAsync);
-
-            // initialize Atlas but don't block the flow (to accelerate loading time)
-            chunkAtlas.InitializeAsync(cancellationToken).SuppressCancellationThrow().Forget();
-
-            layers.Add(MapLayer.ParcelsAtlas, chunkAtlas);
-            return UniTask.CompletedTask;
-
-            async UniTask<IChunkController> CreateChunkAsync(Vector3 chunkLocalPosition, Vector2Int coordsCenter, Transform parent, CancellationToken ct)
-            {
-                SpriteRenderer atlasChunkPrefab = await GetAtlasChunkPrefabAsync(parent, ct);
-
-                var chunk = new ParcelChunkController(
-                    webRequestController,
-                    decentralandUrlsSource,
-                    atlasChunkPrefab,
-                    chunkLocalPosition,
-                    coordsCenter,
-                    parent
-                );
-
-                chunk.SetDrawOrder(MapRendererDrawOrder.ATLAS);
-
-                // If it takes more than CHUNKS_MAX_WAIT_TIME to load the chunk, it will be finished asynchronously
-                await chunk.LoadImageAsync(IMapRendererSettings.ATLAS_CHUNK_SIZE, IMapRendererSettings.PARCEL_SIZE, coordsCenter, ct);
 
                 return chunk;
             }

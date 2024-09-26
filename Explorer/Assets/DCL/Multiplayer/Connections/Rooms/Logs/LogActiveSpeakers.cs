@@ -11,32 +11,32 @@ namespace DCL.Multiplayer.Connections.Rooms.Logs
         private const string PREFIX = "LogActiveSpeakers:";
 
         private readonly IActiveSpeakers origin;
-        private readonly Action<string> log;
 
         public int Count
         {
             get
             {
                 int count = origin.Count;
-                log($"{PREFIX} count {count}");
+                ReportHub
+                   .WithReport(ReportCategory.LIVEKIT)
+                   .Log($"{PREFIX} count {count}");
                 return count;
             }
         }
 
         public event Action? Updated;
 
-        public LogActiveSpeakers(IActiveSpeakers origin) : this(origin, ReportHub.WithReport(ReportCategory.LIVEKIT).Log) { }
-
-        public LogActiveSpeakers(IActiveSpeakers origin, Action<string> log)
+        public LogActiveSpeakers(IActiveSpeakers origin)
         {
             this.origin = origin;
-            this.log = log;
             origin.Updated += OriginOnUpdated;
         }
 
         private void OriginOnUpdated()
         {
-            log($"{PREFIX} updated");
+            ReportHub
+               .WithReport(ReportCategory.LIVEKIT)
+               .Log($"{PREFIX} updated");
             Updated?.Invoke();
         }
 
@@ -46,7 +46,9 @@ namespace DCL.Multiplayer.Connections.Rooms.Logs
 
             foreach (string? speaker in origin)
             {
-                log($"{PREFIX} speaker:{count++} - {speaker}");
+                ReportHub
+                   .WithReport(ReportCategory.LIVEKIT)
+                   .Log($"{PREFIX} speaker:{count++} - {speaker}");
                 yield return speaker;
             }
         }

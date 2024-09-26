@@ -7,6 +7,7 @@ using ECS.Unity.Transforms.Systems;
 using NSubstitute;
 using NUnit.Framework;
 using UnityEngine;
+using Utility;
 
 namespace ECS.Unity.Transforms.Tests
 {
@@ -19,7 +20,7 @@ namespace ECS.Unity.Transforms.Tests
             sdkTransform = new SDKTransform
             {
                 IsDirty = true,
-                Position = TEST_VECTOR,
+                Position = new CanBeDirty<Vector3>(TEST_VECTOR),
             };
 
             testTransformComponent = new TransformComponent(new GameObject().transform);

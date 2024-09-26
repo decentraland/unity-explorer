@@ -22,6 +22,7 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using DCL.AvatarRendering;
 using DCL.AvatarRendering.AvatarShape;
+using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.Helpers;
 using DCL.Multiplayer.Profiles.Entities;
 using DCL.AvatarRendering.Loading.Assets;
@@ -31,7 +32,6 @@ using UnityEngine.AddressableAssets;
 using UnityEngine.Pool;
 using Utility;
 using Object = UnityEngine.Object;
-using StartAvatarMatricesCalculationSystem = DCL.AvatarRendering.AvatarShape.Systems.StartAvatarMatricesCalculationSystem;
 
 namespace DCL.PluginSystem.Global
 {
@@ -72,6 +72,8 @@ namespace DCL.PluginSystem.Global
         private readonly ExposedTransform playerTransform;
         private readonly IWearableStorage wearableStorage;
 
+        private readonly AvatarTransformMatrixJobWrapper avatarTransformMatrixJobWrapper;
+
         public AvatarPlugin(
             IComponentPoolsRegistry poolsRegistry,
             IAssetsProvisioner assetsProvisioner,
@@ -105,6 +107,7 @@ namespace DCL.PluginSystem.Global
             this.playerTransform = playerTransform;
             this.wearableStorage = wearableStorage;
             componentPoolsRegistry = poolsRegistry;
+            avatarTransformMatrixJobWrapper = new AvatarTransformMatrixJobWrapper();
 
             cacheCleaner.Register(attachmentsAssetsCache);
         }
@@ -112,6 +115,7 @@ namespace DCL.PluginSystem.Global
         public void Dispose()
         {
             attachmentsAssetsCache.Dispose();
+            avatarTransformMatrixJobWrapper.Dispose();
         }
 
         public async UniTask InitializeAsync(AvatarShapeSettings settings, CancellationToken ct)
@@ -143,18 +147,22 @@ namespace DCL.PluginSystem.Global
             foreach (var extendedObjectPool in avatarMaterialPoolHandler.GetAllMaterialsPools())
                 cacheCleaner.Register(extendedObjectPool.Pool);
 
+            
             AvatarInstantiatorSystem.InjectToWorld(ref builder, frameTimeCapBudget, memoryBudget, avatarPoolRegistry, avatarMaterialPoolHandler,
                 computeShaderPool, attachmentsAssetsCache, skinningStrategy, vertOutBuffer, mainPlayerAvatarBaseProxy, defaultFaceFeaturesHandler,
-                wearableStorage);
+                wearableStorage,  avatarTransformMatrixJobWrapper);
 
             MakeVertsOutBufferDefragmentationSystem.InjectToWorld(ref builder, vertOutBuffer, skinningStrategy);
 
-            StartAvatarMatricesCalculationSystem.InjectToWorld(ref builder);
-            FinishAvatarMatricesCalculationSystem.InjectToWorld(ref builder, skinningStrategy);
+
+            StartAvatarMatricesCalculationSystem.InjectToWorld(ref builder, avatarTransformMatrixJobWrapper);
+            FinishAvatarMatricesCalculationSystem.InjectToWorld(ref builder, skinningStrategy,
+                avatarTransformMatrixJobWrapper);
 
             AvatarShapeVisibilitySystem.InjectToWorld(ref builder);
-            AvatarCleanUpSystem.InjectToWorld(ref builder, frameTimeCapBudget, vertOutBuffer, avatarMaterialPoolHandler, avatarPoolRegistry, computeShaderPool, attachmentsAssetsCache, mainPlayerAvatarBaseProxy);
-            TrackTransformMatrixSystem.InjectToWorld(ref builder);
+            AvatarCleanUpSystem.InjectToWorld(ref builder, frameTimeCapBudget, vertOutBuffer, avatarMaterialPoolHandler,
+                avatarPoolRegistry, computeShaderPool, attachmentsAssetsCache, mainPlayerAvatarBaseProxy,
+                avatarTransformMatrixJobWrapper);
 
             NametagPlacementSystem.InjectToWorld(ref builder, nametagViewPool, chatEntryConfiguration, nametagsData, chatBubbleConfiguration);
 

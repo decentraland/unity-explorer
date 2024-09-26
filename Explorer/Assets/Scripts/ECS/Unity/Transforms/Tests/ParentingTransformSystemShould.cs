@@ -49,7 +49,7 @@ namespace ECS.Unity.Transforms.Tests
                 { childCRDTEntity, childEntity },
             };
 
-            system = new ParentingTransformSystem(world, crdtToEntityDict, world.Reference(rootEntity), new SceneShortInfo(Vector2Int.zero, "TEST"));
+            system = new ParentingTransformSystem(world, crdtToEntityDict, world.Reference(rootEntity));
         }
 
         private SDKTransform parentSDKTransform;

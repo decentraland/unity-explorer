@@ -33,6 +33,8 @@ namespace DCL.Quality
                 return (T)feature;
 
             var asset = (UniversalRenderPipelineAsset)GraphicsSettings.currentRenderPipeline;
+            if (!asset) return null;
+
             ScriptableRenderer pipeline = asset.scriptableRenderer!;
 
             var features = (List<ScriptableRendererFeature>)RENDERER_FEATURES_PROPERTY.GetValue(pipeline)!;

@@ -19,7 +19,7 @@ namespace DCL.Roads.Components
 
         public void Dispose(IRoadAssetPool roadAssetPool)
         {
-            if (!string.IsNullOrEmpty(CurrentKey))
+            if (!string.IsNullOrEmpty(CurrentKey) && CurrentAsset != null)
                 roadAssetPool.Release(CurrentKey, CurrentAsset);
         }
     }

@@ -2,6 +2,7 @@
 using CrdtEcsBridge.Components.Transform;
 using ECS.Unity.Transforms.Components;
 using UnityEngine;
+using Utility;
 
 namespace ECS.TestSuite
 {
@@ -21,7 +22,7 @@ namespace ECS.TestSuite
 
             var transformComponent = new TransformComponent(t);
 
-            world.Add(entity, transformComponent, new SDKTransform { IsDirty = isDirty, Position = Vector3.zero, Rotation = Quaternion.identity, Scale = Vector3.one });
+            world.Add(entity, transformComponent, new SDKTransform { IsDirty = isDirty, Position = new CanBeDirty<Vector3>(Vector3.zero), Rotation = new CanBeDirty<Quaternion>(Quaternion.identity), Scale = Vector3.one });
             return transformComponent;
         }
     }

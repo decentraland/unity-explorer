@@ -28,6 +28,13 @@ namespace CrdtEcsBridge.JsModulesImplementation
             INVALID,
         }
 
+        private readonly SceneShortInfo sceneShortInfo;
+
+        public SimpleFetchApiImplementation(SceneShortInfo sceneShortInfo)
+        {
+            this.sceneShortInfo = sceneShortInfo;
+        }
+
         public void Dispose() { }
 
         public async UniTask<ISimpleFetchApi.Response> FetchAsync(
@@ -48,7 +55,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
                 throw new ArgumentException("Invalid request method.");
 
             var commonArguments = new CommonArguments(URLAddress.FromString(url), timeout: timeout);
-            var webRequestHeaders = HeadersFromJsObject(headers);
+            WebRequestHeadersInfo webRequestHeaders = HeadersFromJsObject(headers);
 
             try
             {
@@ -57,23 +64,23 @@ namespace CrdtEcsBridge.JsModulesImplementation
                 switch (parsedRequestMethod)
                 {
                     case RequestMethod.GET:
-                        return await webController.GetAsync<GenerateResponseOp<GenericGetRequest>, ISimpleFetchApi.Response>(commonArguments, new GenerateResponseOp<GenericGetRequest>(), ct, ReportCategory.SCENE_FETCH_REQUEST, webRequestHeaders);
+                        return await webController.GetAsync<GenerateResponseOp<GenericGetRequest>, ISimpleFetchApi.Response>(commonArguments, new GenerateResponseOp<GenericGetRequest>(), ct, GetReportData(), webRequestHeaders);
                     case RequestMethod.POST:
                         string postContentType = webRequestHeaders.HeaderContentType();
                         var postArguments = GenericPostArguments.Create(body, postContentType);
-                        return await webController.PostAsync<GenerateResponseOp<GenericPostRequest>, ISimpleFetchApi.Response>(commonArguments, new GenerateResponseOp<GenericPostRequest>(), postArguments, ct, ReportCategory.SCENE_FETCH_REQUEST, webRequestHeaders);
+                        return await webController.PostAsync<GenerateResponseOp<GenericPostRequest>, ISimpleFetchApi.Response>(commonArguments, new GenerateResponseOp<GenericPostRequest>(), postArguments, ct, GetReportData(), webRequestHeaders);
                     case RequestMethod.PUT:
                         string putContentType = webRequestHeaders.HeaderContentType();
                         var putArguments = GenericPutArguments.Create(body, putContentType);
-                        return await webController.PutAsync<GenerateResponseOp<GenericPutRequest>, ISimpleFetchApi.Response>(commonArguments, new GenerateResponseOp<GenericPutRequest>(), putArguments, ct, ReportCategory.SCENE_FETCH_REQUEST, webRequestHeaders);
+                        return await webController.PutAsync<GenerateResponseOp<GenericPutRequest>, ISimpleFetchApi.Response>(commonArguments, new GenerateResponseOp<GenericPutRequest>(), putArguments, ct, GetReportData(), webRequestHeaders);
                     case RequestMethod.DELETE:
                         string deleteContentType = webRequestHeaders.HeaderContentType();
                         var deleteArguments = GenericDeleteArguments.Create(body, deleteContentType);
-                        return await webController.DeleteAsync<GenerateResponseOp<GenericDeleteRequest>, ISimpleFetchApi.Response>(commonArguments, new GenerateResponseOp<GenericDeleteRequest>(), deleteArguments, ct, ReportCategory.SCENE_FETCH_REQUEST, webRequestHeaders);
+                        return await webController.DeleteAsync<GenerateResponseOp<GenericDeleteRequest>, ISimpleFetchApi.Response>(commonArguments, new GenerateResponseOp<GenericDeleteRequest>(), deleteArguments, ct, GetReportData(), webRequestHeaders);
                     case RequestMethod.PATCH:
                         string patchContentType = webRequestHeaders.HeaderContentType();
                         var patchArguments = GenericPatchArguments.Create(body, patchContentType);
-                        return await webController.PatchAsync<GenerateResponseOp<GenericPatchRequest>, ISimpleFetchApi.Response>(commonArguments, new GenerateResponseOp<GenericPatchRequest>(), patchArguments, ct, ReportCategory.SCENE_FETCH_REQUEST, webRequestHeaders);
+                        return await webController.PatchAsync<GenerateResponseOp<GenericPatchRequest>, ISimpleFetchApi.Response>(commonArguments, new GenerateResponseOp<GenericPatchRequest>(), patchArguments, ct, GetReportData(), webRequestHeaders);
                     case RequestMethod.HEAD: throw new NotImplementedException();
                     case RequestMethod.INVALID:
                     default: throw new ArgumentOutOfRangeException();
@@ -92,35 +99,8 @@ namespace CrdtEcsBridge.JsModulesImplementation
             }
         }
 
-        private struct GenerateResponseOp<TGenericRequest> : IWebRequestOp<TGenericRequest, ISimpleFetchApi.Response>
-            where TGenericRequest : struct, GenericDownloadHandlerUtils.IGenericDownloadHandlerRequest, ITypedWebRequest
-        {
-            public async UniTask<ISimpleFetchApi.Response> ExecuteAsync(TGenericRequest request, CancellationToken ct)
-            {
-                UnityWebRequest unityWebRequest = request.UnityWebRequest;
-                string responseData = unityWebRequest.downloadHandler?.text ?? string.Empty;
-                var responseHeadersDictionary = unityWebRequest.GetResponseHeaders();
-                bool requestOk = unityWebRequest.result == UnityWebRequest.Result.Success;
-                bool requestRedirected = unityWebRequest.result is UnityWebRequest.Result.ProtocolError or UnityWebRequest.Result.ConnectionError;
-                var requestStatus = (int)unityWebRequest.responseCode;
-                var requestStatusText = unityWebRequest.responseCode.ToString();
-                string requestUrl = unityWebRequest.url.EnsureNotNull();
-
-                ISimpleFetchApi.Response result = new ISimpleFetchApi.Response
-                {
-                    Headers = responseHeadersDictionary,
-                    Ok = requestOk,
-                    Redirected = requestRedirected,
-                    Status = requestStatus,
-                    StatusText = requestStatusText,
-                    URL = requestUrl,
-                    Data = responseData,
-                    Type = "basic", //Handle Response Types properly  type ResponseType = 'basic' | 'cors' | 'default' | 'error' | 'opaque' | 'opaqueredirect'
-                };
-
-                return result;
-            }
-        }
+        private ReportData GetReportData() =>
+            new (ReportCategory.SCENE_FETCH_REQUEST, sceneShortInfo: sceneShortInfo);
 
         private static WebRequestHeadersInfo HeadersFromJsObject(object headers)
         {
@@ -142,5 +122,35 @@ namespace CrdtEcsBridge.JsModulesImplementation
 
         private static RequestMethod ParseRequestMethod(string request) =>
             Enum.TryParse(request, true, out RequestMethod method) ? method : RequestMethod.INVALID;
+
+        private struct GenerateResponseOp<TGenericRequest> : IWebRequestOp<TGenericRequest, ISimpleFetchApi.Response>
+            where TGenericRequest: struct, GenericDownloadHandlerUtils.IGenericDownloadHandlerRequest, ITypedWebRequest
+        {
+            public async UniTask<ISimpleFetchApi.Response> ExecuteAsync(TGenericRequest request, CancellationToken ct)
+            {
+                UnityWebRequest unityWebRequest = request.UnityWebRequest;
+                string responseData = unityWebRequest.downloadHandler?.text ?? string.Empty;
+                Dictionary<string, string>? responseHeadersDictionary = unityWebRequest.GetResponseHeaders();
+                bool requestOk = unityWebRequest.result == UnityWebRequest.Result.Success;
+                bool requestRedirected = unityWebRequest.result is UnityWebRequest.Result.ProtocolError or UnityWebRequest.Result.ConnectionError;
+                var requestStatus = (int)unityWebRequest.responseCode;
+                var requestStatusText = unityWebRequest.responseCode.ToString();
+                string requestUrl = unityWebRequest.url.EnsureNotNull();
+
+                var result = new ISimpleFetchApi.Response
+                {
+                    Headers = responseHeadersDictionary,
+                    Ok = requestOk,
+                    Redirected = requestRedirected,
+                    Status = requestStatus,
+                    StatusText = requestStatusText,
+                    URL = requestUrl,
+                    Data = responseData,
+                    Type = "basic", //Handle Response Types properly  type ResponseType = 'basic' | 'cors' | 'default' | 'error' | 'opaque' | 'opaqueredirect'
+                };
+
+                return result;
+            }
+        }
     }
 }

@@ -12,9 +12,10 @@ namespace DCL.WebRequests
 {
     public readonly struct RequestEnvelope<TWebRequest, TWebRequestArgs> : IDisposable where TWebRequest: struct, ITypedWebRequest where TWebRequestArgs: struct
     {
-        public readonly string ReportCategory;
+        public readonly ReportData ReportData;
         public readonly CommonArguments CommonArguments;
         public readonly CancellationToken Ct;
+        public readonly bool SuppressErrors;
         private readonly InitializeRequest<TWebRequestArgs, TWebRequest> initializeRequest;
         private readonly TWebRequestArgs args;
         private readonly WebRequestHeadersInfo headersInfo;
@@ -27,19 +28,21 @@ namespace DCL.WebRequests
             InitializeRequest<TWebRequestArgs, TWebRequest> initializeRequest,
             CommonArguments commonArguments, TWebRequestArgs args,
             CancellationToken ct,
-            string reportCategory,
+            ReportData reportData,
             WebRequestHeadersInfo headersInfo,
             WebRequestSignInfo? signInfo,
-            ISet<long>? responseCodeIgnores = null
+            ISet<long>? responseCodeIgnores = null,
+            bool suppressErrors = false
         )
         {
             this.initializeRequest = initializeRequest;
             this.CommonArguments = commonArguments;
             this.args = args;
             this.Ct = ct;
-            this.ReportCategory = reportCategory;
+            ReportData = reportData;
             this.headersInfo = headersInfo;
             this.signInfo = signInfo;
+            SuppressErrors = suppressErrors;
             this.responseCodeIgnores = responseCodeIgnores;
         }
 
@@ -50,7 +53,7 @@ namespace DCL.WebRequests
             + $"\nCommonArguments: {CommonArguments}"
             + $"\nArgs: {args}"
             + $"\nCancellation Token cancelled: {Ct.IsCancellationRequested}"
-            + $"\nReportCategory: {ReportCategory}"
+            + $"\nReportCategory: {ReportData}"
             + $"\nHeaders: {headersInfo.ToString()}"
             + $"\nSignInfo: {signInfo?.ToString() ?? NONE}";
 
@@ -134,7 +137,7 @@ namespace DCL.WebRequests
                 i++;
             }
 #if DEBUG
-            ReportHub.Log(Diagnostics.ReportCategory.GENERIC_WEB_REQUEST, sb);
+            ReportHub.Log(ReportCategory.GENERIC_WEB_REQUEST, sb);
 #endif
         }
     }

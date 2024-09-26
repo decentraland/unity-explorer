@@ -33,7 +33,8 @@ namespace CrdtEcsBridge.JsModulesImplementation
         private readonly CustomSampler deserializeBatchSampler;
         private readonly ISceneExceptionsHandler exceptionsHandler;
         private readonly IInstancePoolsProvider instancePoolsProvider;
-        private readonly MultithreadSync multithreadSync;
+        private readonly MultiThreadSync multiThreadSync;
+        private readonly MultiThreadSync.Owner syncOwner;
         private readonly IOutgoingCRDTMessagesProvider outgoingCrtdMessagesProvider;
         private readonly CustomSampler outgoingMessagesSampler;
         private readonly ISystemGroupsUpdateGate systemGroupsUpdateGate;
@@ -54,7 +55,8 @@ namespace CrdtEcsBridge.JsModulesImplementation
             IOutgoingCRDTMessagesProvider outgoingCrtdMessagesProvider,
             ISystemGroupsUpdateGate systemGroupsUpdateGate,
             ISceneExceptionsHandler exceptionsHandler,
-            MultithreadSync multithreadSync)
+            MultiThreadSync multiThreadSync,
+            MultiThreadSync.Owner syncOwner)
         {
             sharedPoolsProvider = poolsProvider;
             this.instancePoolsProvider = instancePoolsProvider;
@@ -63,7 +65,8 @@ namespace CrdtEcsBridge.JsModulesImplementation
             this.crdtSerializer = crdtSerializer;
             this.crdtWorldSynchronizer = crdtWorldSynchronizer;
             this.outgoingCrtdMessagesProvider = outgoingCrtdMessagesProvider;
-            this.multithreadSync = multithreadSync;
+            this.multiThreadSync = multiThreadSync;
+            this.syncOwner = syncOwner;
             this.systemGroupsUpdateGate = systemGroupsUpdateGate;
             this.exceptionsHandler = exceptionsHandler;
 
@@ -245,7 +248,9 @@ namespace CrdtEcsBridge.JsModulesImplementation
         {
             try
             {
-                using var mutex = multithreadSync.GetScope();
+                using MultiThreadSync.Scope mutex = multiThreadSync.GetScope(syncOwner);
+
+                if (isDisposing) return;
 
                 applyBufferSampler.Begin();
 

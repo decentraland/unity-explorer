@@ -1,4 +1,5 @@
-﻿using ECS.StreamableLoading.Common.Components;
+﻿using DCL.WebRequests;
+using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Tests;
 using NUnit.Framework;
 using UnityEngine;
@@ -33,6 +34,6 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
             new (new CommonLoadingArguments(wrongTypePath));
 
         protected override LoadAssetBundleSystem CreateSystem() =>
-            new (world, cache, new AssetBundleLoadingMutex());
+            new (world, cache, IWebRequestController.DEFAULT, new AssetBundleLoadingMutex());
     }
 }

@@ -58,5 +58,10 @@ true;
         ///     The base number of wearables on a single avatar
         /// </summary>
         public const int WEARABLES_PER_AVATAR_COUNT = 15;
+
+        /// <summary>
+        ///     The initial expected number of PX
+        /// </summary>
+        public const int PORTABLE_EXPERIENCES_INITIAL_COUNT = 1;
     }
 }

@@ -6,9 +6,14 @@ namespace DCL.Chat.Commands
 {
     public interface IChatCommand
     {
-        // Constants that shared between several ChatCommands
-        const string COMMAND_GOTO = "goto";
+
 
         UniTask<string> ExecuteAsync(Match match, CancellationToken ct);
+    }
+
+    public static class ChatCommandsUtils
+    {
+        // Constants that shared between several ChatCommands
+        public static string COMMAND_GOTO = "goto";
     }
 }

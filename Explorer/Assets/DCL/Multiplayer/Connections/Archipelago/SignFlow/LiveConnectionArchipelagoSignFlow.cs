@@ -149,7 +149,9 @@ namespace DCL.Multiplayer.Connections.Archipelago.SignFlow
 
                     if (result.Success == false)
                     {
-                        ReportHub.LogError(ReportCategory.LIVEKIT, $"Cannot listen for connection string: {result.Error?.Message}");
+                        if (token.IsCancellationRequested == false)
+                            ReportHub.LogError(ReportCategory.LIVEKIT, $"Cannot listen for connection string: {result.Error?.Message}");
+
                         continue;
                     }
 

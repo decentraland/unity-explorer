@@ -102,7 +102,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 if (loadingIntentionPointer.IsNullOrEmpty())
                 {
                     ReportHub.LogError(
-                        GetReportCategory(),
+                        GetReportData(),
                         $"ResolveWearableByPointerSystem: Null pointer found in the list of pointers: index {index}"
                     );
 
@@ -197,7 +197,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                                 continue;
 
                             if (component!.TryResolveDTO(new StreamableLoadingResult<WearableDTO>(assetEntity)) == false)
-                                ReportHub.LogError(new ReportData(GetReportCategory()), $"Wearable DTO has already been initialized: {assetEntity.Metadata.id}");
+                                ReportHub.LogError(GetReportData(), $"Wearable DTO has already been initialized: {assetEntity.Metadata.id}");
 
                             failedDTOList.Remove(assetEntity.Metadata.id);
                             component.UpdateLoadingStatus(false);
@@ -306,7 +306,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
             if (!defaultWearablesLoaded)
             {
                 StreamableLoadingResult<AttachmentAssetBase> failedResult = new StreamableLoadingResult<AssetBundleData>(
-                    GetReportCategory(),
+                    GetReportData(),
                     new Exception($"Default wearable {wearable.DTO.GetHash()} failed to load")
                 ).ToWearableAsset(wearable);
 
@@ -330,7 +330,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 }
             }
 
-            ReportHub.Log(GetReportCategory(), $"Request for wearable with hash {wearable.DTO.GetHash()} and urn {wearable.GetUrn()} failed, loading default wearable");
+            ReportHub.Log(GetReportData(), $"Request for wearable with hash {wearable.DTO.GetHash()} and urn {wearable.GetUrn()} failed, loading default wearable");
 
             if (wearable.IsUnisex() && wearable.HasSameModelsForAllGenders())
             {

@@ -64,7 +64,7 @@ namespace DCL.Profiles
 
         public bool HasConnectedWeb3 { get; internal set; }
         public string? Description { get; set; }
-        public int TutorialStep { get; internal set; }
+        public int TutorialStep { get; set; }
         public string? Email { get; internal set; }
         public string? Country { get; set; }
         public string? EmploymentStatus { get; set; }

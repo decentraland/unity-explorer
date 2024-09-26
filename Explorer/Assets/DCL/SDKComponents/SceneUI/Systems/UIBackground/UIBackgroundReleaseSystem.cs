@@ -9,14 +9,16 @@ using DCL.SDKComponents.SceneUI.Classes;
 using DCL.SDKComponents.SceneUI.Components;
 using ECS.Abstract;
 using ECS.Groups;
+using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
+using System;
 
 namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
 {
     [UpdateInGroup(typeof(CleanUpGroup))]
     [LogCategory(ReportCategory.SCENE_UI)]
     [ThrottlingEnabled]
-    public partial class UIBackgroundReleaseSystem : BaseUnityLoopSystem
+    public partial class UIBackgroundReleaseSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
         private readonly IComponentPool componentPool;
 
@@ -56,6 +58,15 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
                 componentPool?.Release(uiBackgroundComponent.Image);
                 uiBackgroundComponent.Dispose();
             }
+        }
+
+        [Query]
+        private void Release(ref UIBackgroundComponent uiBackgroundComponent) =>
+            RemoveDCLImage(ref uiBackgroundComponent);
+
+        public void FinalizeComponents(in Query query)
+        {
+            ReleaseQuery(World);
         }
     }
 }

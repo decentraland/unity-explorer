@@ -6,6 +6,7 @@ namespace DCL.Profiling
     {
         long TotalUsedMemoryInBytes { get; }
         ulong CurrentFrameTimeValueNs { get; }
+        long SystemUsedMemoryInBytes { get; }
     }
 
     public readonly struct FrameTimeStats

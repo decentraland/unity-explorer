@@ -111,6 +111,19 @@ namespace Global.Editor
             return position;
         }
 
+        private static Rect DrawIsolateSceneCommunication(Rect position, SerializedProperty parent, InitialRealm initialRealm)
+        {
+            if (initialRealm is InitialRealm.World or InitialRealm.Goerli or InitialRealm.StreamingWorld or InitialRealm.TestScenes)
+            {
+                SerializedProperty property = parent.FindPropertyRelative(nameof(RealmLaunchSettings.isolateSceneCommunication));
+
+                EditorGUI.PropertyField(position, property);
+                position.y += singleLineHeight;
+            }
+
+            return position;
+        }
+
         private static Rect DrawLocalhost(Rect position, SerializedProperty parent, InitialRealm initialRealm)
         {
             if (initialRealm == InitialRealm.Localhost)
@@ -223,6 +236,7 @@ namespace Global.Editor
             position = DrawTargetWorld(position, property, initialRealmValue);
             position = DrawCustomRealm(position, property, initialRealmValue);
             position = DrawLocalhost(position, property, initialRealmValue);
+            position = DrawIsolateSceneCommunication(position, property, initialRealmValue);
             position = DrawPredefinedScenes(position, property);
             position = DrawOverridenScenes(position);
 

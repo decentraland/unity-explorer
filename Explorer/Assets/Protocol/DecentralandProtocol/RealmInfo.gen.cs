@@ -25,15 +25,17 @@ namespace DCL.ECSComponents {
       byte[] descriptorData = global::System.Convert.FromBase64String(
           string.Concat(
             "CixkZWNlbnRyYWxhbmQvc2RrL2NvbXBvbmVudHMvcmVhbG1faW5mby5wcm90",
-            "bxIbZGVjZW50cmFsYW5kLnNkay5jb21wb25lbnRzIo4BCgtQQlJlYWxtSW5m",
+            "bxIbZGVjZW50cmFsYW5kLnNkay5jb21wb25lbnRzItABCgtQQlJlYWxtSW5m",
             "bxIQCghiYXNlX3VybBgBIAEoCRISCgpyZWFsbV9uYW1lGAIgASgJEhIKCm5l",
             "dHdvcmtfaWQYAyABKAUSFQoNY29tbXNfYWRhcHRlchgEIAEoCRISCgppc19w",
-            "cmV2aWV3GAUgASgIEhEKBHJvb20YBiABKAlIAIgBAUIHCgVfcm9vbUIUqgIR",
-            "RENMLkVDU0NvbXBvbmVudHNiBnByb3RvMw=="));
+            "cmV2aWV3GAUgASgIEhEKBHJvb20YBiABKAlIAIgBARIkChdpc19jb25uZWN0",
+            "ZWRfc2NlbmVfcm9vbRgHIAEoCEgBiAEBQgcKBV9yb29tQhoKGF9pc19jb25u",
+            "ZWN0ZWRfc2NlbmVfcm9vbUIUqgIRRENMLkVDU0NvbXBvbmVudHNiBnByb3Rv",
+            "Mw=="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBRealmInfo), global::DCL.ECSComponents.PBRealmInfo.Parser, new[]{ "BaseUrl", "RealmName", "NetworkId", "CommsAdapter", "IsPreview", "Room" }, new[]{ "Room" }, null, null, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBRealmInfo), global::DCL.ECSComponents.PBRealmInfo.Parser, new[]{ "BaseUrl", "RealmName", "NetworkId", "CommsAdapter", "IsPreview", "Room", "IsConnectedSceneRoom" }, new[]{ "Room", "IsConnectedSceneRoom" }, null, null, null)
           }));
     }
     #endregion
@@ -47,6 +49,7 @@ namespace DCL.ECSComponents {
   {
     private static readonly pb::MessageParser<PBRealmInfo> _parser = new pb::MessageParser<PBRealmInfo>(() => new PBRealmInfo());
     private pb::UnknownFieldSet _unknownFields;
+    private int _hasBits0;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pb::MessageParser<PBRealmInfo> Parser { get { return _parser; } }
@@ -74,12 +77,14 @@ namespace DCL.ECSComponents {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public PBRealmInfo(PBRealmInfo other) : this() {
+      _hasBits0 = other._hasBits0;
       baseUrl_ = other.baseUrl_;
       realmName_ = other.realmName_;
       networkId_ = other.networkId_;
       commsAdapter_ = other.commsAdapter_;
       isPreview_ = other.isPreview_;
       room_ = other.room_;
+      isConnectedSceneRoom_ = other.isConnectedSceneRoom_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -173,6 +178,31 @@ namespace DCL.ECSComponents {
       room_ = null;
     }
 
+    /// <summary>Field number for the "is_connected_scene_room" field.</summary>
+    public const int IsConnectedSceneRoomFieldNumber = 7;
+    private bool isConnectedSceneRoom_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool IsConnectedSceneRoom {
+      get { if ((_hasBits0 & 1) != 0) { return isConnectedSceneRoom_; } else { return false; } }
+      set {
+        _hasBits0 |= 1;
+        isConnectedSceneRoom_ = value;
+      }
+    }
+    /// <summary>Gets whether the "is_connected_scene_room" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasIsConnectedSceneRoom {
+      get { return (_hasBits0 & 1) != 0; }
+    }
+    /// <summary>Clears the value of the "is_connected_scene_room" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearIsConnectedSceneRoom() {
+      _hasBits0 &= ~1;
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -194,6 +224,7 @@ namespace DCL.ECSComponents {
       if (CommsAdapter != other.CommsAdapter) return false;
       if (IsPreview != other.IsPreview) return false;
       if (Room != other.Room) return false;
+      if (IsConnectedSceneRoom != other.IsConnectedSceneRoom) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -207,6 +238,7 @@ namespace DCL.ECSComponents {
       if (CommsAdapter.Length != 0) hash ^= CommsAdapter.GetHashCode();
       if (IsPreview != false) hash ^= IsPreview.GetHashCode();
       if (HasRoom) hash ^= Room.GetHashCode();
+      if (HasIsConnectedSceneRoom) hash ^= IsConnectedSceneRoom.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -249,6 +281,10 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(50);
         output.WriteString(Room);
       }
+      if (HasIsConnectedSceneRoom) {
+        output.WriteRawTag(56);
+        output.WriteBool(IsConnectedSceneRoom);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -283,6 +319,10 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(50);
         output.WriteString(Room);
       }
+      if (HasIsConnectedSceneRoom) {
+        output.WriteRawTag(56);
+        output.WriteBool(IsConnectedSceneRoom);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -310,6 +350,9 @@ namespace DCL.ECSComponents {
       }
       if (HasRoom) {
         size += 1 + pb::CodedOutputStream.ComputeStringSize(Room);
+      }
+      if (HasIsConnectedSceneRoom) {
+        size += 1 + 1;
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -340,6 +383,9 @@ namespace DCL.ECSComponents {
       }
       if (other.HasRoom) {
         Room = other.Room;
+      }
+      if (other.HasIsConnectedSceneRoom) {
+        IsConnectedSceneRoom = other.IsConnectedSceneRoom;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -380,6 +426,10 @@ namespace DCL.ECSComponents {
             Room = input.ReadString();
             break;
           }
+          case 56: {
+            IsConnectedSceneRoom = input.ReadBool();
+            break;
+          }
         }
       }
     #endif
@@ -417,6 +467,10 @@ namespace DCL.ECSComponents {
           }
           case 50: {
             Room = input.ReadString();
+            break;
+          }
+          case 56: {
+            IsConnectedSceneRoom = input.ReadBool();
             break;
           }
         }

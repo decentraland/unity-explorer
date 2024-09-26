@@ -18,7 +18,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             UnityEngine.ComputeShader skinningShader, IAvatarMaterialPoolHandler avatarMaterial,
             AvatarShapeComponent avatarShapeComponent, in FacialFeaturesTextures facialFeatureTexture);
 
-        public abstract void ComputeSkinning(NativeArray<float4x4> bonesResult, ref AvatarCustomSkinningComponent skinning);
+        public abstract void ComputeSkinning(NativeArray<float4x4> bonesResult, int indexInGlobalResultArray, ref AvatarCustomSkinningComponent skinning);
 
         private protected abstract AvatarCustomSkinningComponent.MaterialSetup SetupMaterial(Renderer meshRenderer, Material originalMaterial, int lastWearableVertCount, IAvatarMaterialPoolHandler celShadingMaterial,
             AvatarShapeComponent shapeComponent, in FacialFeaturesTextures facialFeaturesTextures);

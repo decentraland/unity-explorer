@@ -22,12 +22,10 @@ namespace ECS.Unity.Transforms.Systems
     {
         private readonly Entity sceneRoot;
         private readonly IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap;
-        private readonly SceneShortInfo sceneShortInfo;
 
-        public ParentingTransformSystem(World world, IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap, Entity sceneRoot, SceneShortInfo sceneShortInfo) : base(world)
+        public ParentingTransformSystem(World world, IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap, Entity sceneRoot) : base(world)
         {
             this.sceneRoot = sceneRoot;
-            this.sceneShortInfo = sceneShortInfo;
             this.entitiesMap = entitiesMap;
         }
 
@@ -46,7 +44,7 @@ namespace ECS.Unity.Transforms.Systems
 
             if (exists && parentTransform.Children.Remove(World.Reference(entity)) == false)
                 ReportHub.LogError(
-                    GetReportCategory(),
+                    GetReportData(),
                     $"Entity {entity} is not a child of its parent {transformComponentToBeDeleted.Parent}"
                 );
         }
@@ -101,7 +99,7 @@ namespace ECS.Unity.Transforms.Systems
 
             if (!World.IsAlive(parentEntity))
             {
-                ReportHub.LogError(new ReportData(GetReportCategory(), sceneShortInfo: sceneShortInfo), $"Trying to parent entity {childEntityReference.Entity} ({childCRDTEntity}) to a dead entity parent");
+                ReportHub.LogError(GetReportData(), $"Trying to parent entity {childEntityReference.Entity} ({childCRDTEntity}) to a dead entity parent");
                 return;
             }
 
@@ -109,7 +107,7 @@ namespace ECS.Unity.Transforms.Systems
 
             if (!success)
             {
-                ReportHub.LogError(new ReportData(GetReportCategory(), sceneShortInfo: sceneShortInfo), $"Trying to parent entity {childEntityReference.Entity} ({childCRDTEntity}) to parent {parentEntity} ({parentId}) that doesn't have a TransformComponent");
+                ReportHub.LogError(GetReportData(), $"Trying to parent entity {childEntityReference.Entity} ({childCRDTEntity}) to parent {parentEntity} ({parentId}) that doesn't have a TransformComponent");
                 return;
             }
 

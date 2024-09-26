@@ -2,12 +2,14 @@ using Arch.Core;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.GLTFast.Wrappers;
 using DCL.Optimization.PerformanceBudgeting;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
 using GLTFast;
+using GLTFast.Materials;
 using SceneRunner.Scene;
 using System;
 using System.Threading;
@@ -18,18 +20,14 @@ namespace ECS.StreamableLoading.GLTF
     [UpdateInGroup(typeof(StreamableLoadingGroup))]
     public partial class LoadGLTFSystem: LoadSystemBase<GLTFData, GetGLTFIntention>
     {
-        private ISceneData sceneData;
-        private GltFastDownloadProvider gltfDownloadProvider;
-        private GltFastReportHubLogger gltfConsoleLogger = new GltFastReportHubLogger(); // TODO: Remove ???
+        private static MaterialGenerator gltfMaterialGenerator = new DecentralandMaterialGenerator("DCL/Scene");
 
-        internal LoadGLTFSystem(
-            World world,
-            IStreamableCache<GLTFData, GetGLTFIntention> cache,
-            ISceneData sceneData,
-            IPartitionComponent partitionComponent) : base(world, cache)
+        private ISceneData sceneData;
+        private GltFastReportHubLogger gltfConsoleLogger = new GltFastReportHubLogger();
+
+        internal LoadGLTFSystem(World world, IStreamableCache<GLTFData, GetGLTFIntention> cache, ISceneData sceneData) : base(world, cache)
         {
             this.sceneData = sceneData;
-            gltfDownloadProvider = new GltFastDownloadProvider(World, sceneData, partitionComponent);
         }
 
         // Might be used later
@@ -69,8 +67,11 @@ namespace ECS.StreamableLoading.GLTF
                     new ReportData(GetReportCategory()),
                     new Exception("The content to download couldn't be found"));
 
-            gltfDownloadProvider.TargetGltfOriginalPath = intention.Name!;
-            var gltfImport = new GltfImport(downloadProvider: gltfDownloadProvider, logger: gltfConsoleLogger);
+            GltFastDownloadProvider gltfDownloadProvider = new GltFastDownloadProvider(World, sceneData, partition, intention.Name!);
+            var gltfImport = new GltfImport(
+                downloadProvider: gltfDownloadProvider,
+                logger: gltfConsoleLogger,
+                materialGenerator: gltfMaterialGenerator);
 
             var gltFastSettings = new ImportSettings
             {
@@ -79,10 +80,11 @@ namespace ECS.StreamableLoading.GLTF
                 GenerateMipMaps = false,
             };
 
-            bool success = await gltfImport.Load(finalDownloadUrl, gltFastSettings, ct);
+            bool success = await gltfImport.Load(intention.Name, gltFastSettings, ct);
 
             // Release budget now to not hold it until dependencies are resolved to prevent a deadlock
             acquiredBudget.Release();
+            gltfDownloadProvider.Dispose();
 
             if (success)
             {

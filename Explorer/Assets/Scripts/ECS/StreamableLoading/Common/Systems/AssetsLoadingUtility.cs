@@ -24,14 +24,14 @@ namespace ECS.StreamableLoading.Common.Systems
         public static async UniTask<StreamableLoadingResult<TAsset>?> RepeatLoopAsync<TIntention, TAsset>(this TIntention intention,
             IAcquiredBudget acquiredBudget,
             IPartitionComponent partition,
-            InternalFlowDelegate<TAsset, TIntention> flow, string reportCategory, CancellationToken ct)
+            InternalFlowDelegate<TAsset, TIntention> flow, ReportData reportData, CancellationToken ct)
             where TIntention: struct, ILoadingIntention
         {
             int attemptCount = intention.CommonArguments.Attempts;
 
             while (true)
             {
-                ReportHub.Log(reportCategory, $"Starting loading {intention}\n{partition}, attempts left: {attemptCount}");
+                ReportHub.Log(reportData, $"Starting loading {intention}\n{partition}, attempts left: {attemptCount}");
 
                 try { return await flow(intention, acquiredBudget, partition, ct); }
                 catch (UnityWebRequestException unityWebRequestException)
@@ -45,7 +45,7 @@ namespace ECS.StreamableLoading.Common.Systems
                     {
                         // no more sources left
                         ReportHub.Log(
-                            reportCategory,
+                            reportData,
                             $"Exception occured on loading {typeof(TAsset)} from {intention.ToString()}.\n"
                             + $"Trying sources: {intention.CommonArguments.PermittedSources} attemptCount {attemptCount} url: {intention.CommonArguments.URL}"
                         );
@@ -54,7 +54,7 @@ namespace ECS.StreamableLoading.Common.Systems
 
                             // conclude now
                             return new StreamableLoadingResult<TAsset>(
-                                reportCategory,
+                                reportData,
                                 new Exception(
                                     $"Exception occured on loading {typeof(TAsset)} from {intention.ToString()} with url {intention.CommonArguments.URL}.\n"
                                     + "No more sources left.",
@@ -70,7 +70,7 @@ namespace ECS.StreamableLoading.Common.Systems
                 {
                     // General exception
                     // conclude now, we can't do anything
-                    return new StreamableLoadingResult<TAsset>(new ReportData(reportCategory, ReportHint.SessionStatic), e);
+                    return new StreamableLoadingResult<TAsset>(reportData.WithSessionStatic(), e);
                 }
             }
         }

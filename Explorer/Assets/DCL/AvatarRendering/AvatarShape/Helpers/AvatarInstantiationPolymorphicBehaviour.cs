@@ -17,8 +17,7 @@ namespace DCL.AvatarRendering.AvatarShape.Helpers
             ISet<string> usedCategories,
             ref FacialFeaturesTextures facialFeaturesTextures,
             ref AvatarShapeComponent avatarShapeComponent,
-            Transform parent
-        )
+            Transform parent)
         {
             var originalAssets = resultWearable.WearableAssetResults[avatarShapeComponent.BodyShape].Results;
             var mainAsset = originalAssets[WearablePolymorphicBehaviour.MAIN_ASSET_INDEX]!.Value.Asset!;

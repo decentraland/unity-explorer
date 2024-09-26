@@ -11,10 +11,14 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
         public string realmName;
         public string? sceneId;
 
-        public MetaData(string realmName, string? sceneId)
+        [NonSerialized]
+        public readonly Vector2Int Parcel;
+
+        public MetaData(string realmName, string? sceneId, Vector2Int parcel)
         {
             this.realmName = realmName;
             this.sceneId = sceneId;
+            Parcel = parcel;
         }
 
         public string ToJson() =>

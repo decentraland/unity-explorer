@@ -11,6 +11,7 @@ using ECS.SceneLifeCycle.Systems;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using System.Collections.Generic;
+using Unity.Collections;
 using Unity.Mathematics;
 using Utility;
 
@@ -75,7 +76,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             // Take up to <ScenesDefinitionsRequestBatchSize> closest pointers that were not processed yet
             List<int2> input = volatileScenePointers.InputReusableList;
 
-            ref var flatArray = ref parcelMathJobifiedHelper.LastSplit;
+            ref NativeArray<ParcelMathJobifiedHelper.ParcelInfo> flatArray = ref parcelMathJobifiedHelper.LastSplit;
             int i;
 
             splitIsPending = false;
@@ -111,6 +112,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
             // Find the bucket
             byte bucketIndex = 0;
+
             for (; bucketIndex < partitionSettings.SqrDistanceBuckets.Count; bucketIndex++)
             {
                 if (median < partitionSettings.SqrDistanceBuckets[bucketIndex])
@@ -118,6 +120,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             }
 
             volatileScenePointers.ActivePartitionComponent.Bucket = bucketIndex;
+
             volatileScenePointers.ActivePromise
                 = AssetPromise<SceneDefinitions, GetSceneDefinitionList>.Create(World,
                     new GetSceneDefinitionList(volatileScenePointers.RetrievedReusableList, input,
@@ -154,7 +157,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                 {
                     int2 parcel = requestedList[i];
                     if (!processedScenePointers.Value.Add(parcel)) continue;
-                    World.Create(new SceneDefinitionComponent(parcel.ToVector2Int()));
+                    World.Create(SceneDefinitionComponentFactory.CreateEmpty(parcel.ToVector2Int()));
                 }
             }
             else

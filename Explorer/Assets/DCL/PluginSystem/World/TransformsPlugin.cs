@@ -46,7 +46,7 @@ namespace DCL.PluginSystem.World
 
             UpdateTransformSystem.InjectToWorld(ref builder, sharedDependencies.EcsGroupThrottler, sharedDependencies.EcsSystemsGate);
             InstantiateTransformSystem.InjectToWorld(ref builder, componentPoolsRegistry);
-            ParentingTransformSystem.InjectToWorld(ref builder, sharedDependencies.EntitiesMap, persistentEntities.SceneRoot, sharedDependencies.SceneData.SceneShortInfo);
+            ParentingTransformSystem.InjectToWorld(ref builder, sharedDependencies.EntitiesMap, persistentEntities.SceneRoot);
             AssertDisconnectedTransformsSystem.InjectToWorld(ref builder);
             SyncGlobalTransformSystem.InjectToWorld(ref builder, in persistentEntities.Camera, in persistentEntities.Player, exposedPlayerTransform, exposedCameraData);
 

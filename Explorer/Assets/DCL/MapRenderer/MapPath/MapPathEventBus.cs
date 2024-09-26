@@ -8,14 +8,14 @@ namespace DCL.MapRenderer
     public class MapPathEventBus : IMapPathEventBus
     {
         public event Action<IPinMarker> OnShowPinInMinimapEdge;
-        public event Action<Vector2Int, IPinMarker> OnSetDestination;
+        public event Action<Vector2Int, IPinMarker?> OnSetDestination;
         public event Action OnRemovedDestination;
         public event Action OnHidePinInMinimapEdge;
         public event Action<Vector2> OnUpdatedPlayerPosition;
         public event Action OnArrivedToDestination;
         public event Action<Vector2> OnUpdatePinPositionInMinimapEdge;
 
-        public void SetDestination(Vector2Int parcel, IPinMarker pinMarker)
+        public void SetDestination(Vector2Int parcel, IPinMarker? pinMarker)
         {
             OnSetDestination?.Invoke(parcel, pinMarker);
         }
@@ -57,13 +57,13 @@ namespace DCL.MapRenderer
     {
         public event Action<IPinMarker> OnShowPinInMinimapEdge;
         public event Action<Vector2> OnUpdatePinPositionInMinimapEdge;
-        public event Action<Vector2Int, IPinMarker> OnSetDestination;
+        public event Action<Vector2Int, IPinMarker?> OnSetDestination;
         public event Action OnRemovedDestination;
         public event Action OnHidePinInMinimapEdge;
         public event Action OnArrivedToDestination;
         public event Action<Vector2> OnUpdatedPlayerPosition;
 
-        void SetDestination(Vector2Int parcel, IPinMarker pinMarker);
+        void SetDestination(Vector2Int parcel, IPinMarker? pinMarker);
 
         void RemoveDestination();
 

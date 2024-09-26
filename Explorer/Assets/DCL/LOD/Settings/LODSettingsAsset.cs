@@ -18,17 +18,19 @@ namespace DCL.LOD
 
         [field: SerializeField] public TextureArrayResolutionDescriptor[] DefaultTextureArrayResolutionDescriptors { get; set; } =
         {
-            new (256, 500, 100), new (512, 100, 10), new (1024, 100, 10), new (2048, 25, 10), new (4096, 25, 10)
+            new(512, 100, 5), new(1024, 50, 1)
         };
 
-        public int ArraySizeForMissingResolutions => 50;
-        public int CapacityForMissingResolutions => 1;
+        [field: SerializeField] public int ArraySizeForMissingResolutions { get; set; } = 10;
+        [field: SerializeField] public int CapacityForMissingResolutions { get; set; } = 1;
 
         public bool IsColorDebugging { get; set; }
         [field: SerializeField] public Color[] LODDebugColors { get; set; } = { Color.green, Color.yellow, Color.red };
         [field: SerializeField] public DebugCube DebugCube { get; set; }
         [field: SerializeField] public bool EnableLODStreaming { get; set; }
-        [field: SerializeField] public float AsyncIntegrationTimeMS { get; set; } = 33;
+
+        //TODO (Juani): Commented until re-implemented
+        //public float AsyncIntegrationTimeMS { get; set; } = 33;
     }
 
 

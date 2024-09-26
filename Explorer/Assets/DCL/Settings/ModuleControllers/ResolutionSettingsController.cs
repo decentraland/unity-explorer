@@ -60,8 +60,25 @@ namespace DCL.Settings.ModuleControllers
                 if (possibleResolutions.Contains(resolution))
                     continue;
 
+                AddResolution(resolution);
+            }
+
+            //Adds a fallback resolution if no other resolution is available
+            if (possibleResolutions.Count == 0)
+            {
+                var resolution = new Resolution
+                {
+                    width = 1920,
+                    height = 1080
+                };
+                AddResolution(resolution);
+            }
+
+            void AddResolution(Resolution resolution)
+            {
                 possibleResolutions.Add(resolution);
-                view.DropdownView.Dropdown.options.Add(new TMP_Dropdown.OptionData { text = ResolutionUtils.FormatResolutionDropdownOption(resolution) });
+                view.DropdownView.Dropdown.options.Add(new TMP_Dropdown.OptionData
+                    { text = ResolutionUtils.FormatResolutionDropdownOption(resolution) });
             }
         }
 

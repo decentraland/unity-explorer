@@ -2,6 +2,7 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using DCL.ECSComponents;
+using DCL.FeatureFlags;
 using DCL.MapPins.Components;
 using DCL.SDKComponents.Utils;
 using ECS.Abstract;
@@ -22,18 +23,22 @@ namespace DCL.SDKComponents.MapPins.Systems
     [UpdateInGroup(typeof(ComponentInstantiationGroup))]
     public partial class MapPinLoaderSystem : BaseUnityLoopSystem
     {
+        private const int ATTEMPTS_COUNT = 6;
+
         private readonly World globalWorld;
         private readonly IPartitionComponent partitionComponent;
-        private const int ATTEMPTS_COUNT = 6;
         private readonly ISceneData sceneData;
+        private readonly bool useCustomMapPinIcons;
+
         private int xRounded;
         private int yRounded;
 
-        public MapPinLoaderSystem(World world, ISceneData sceneData, World globalWorld, IPartitionComponent partitionComponent) : base(world)
+        public MapPinLoaderSystem(World world, ISceneData sceneData, World globalWorld, IPartitionComponent partitionComponent, FeatureFlagsCache featureFlagsCache) : base(world)
         {
             this.sceneData = sceneData;
             this.globalWorld = globalWorld;
             this.partitionComponent = partitionComponent;
+            useCustomMapPinIcons = featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.CUSTOM_MAP_PINS_ICONS);
         }
 
         protected override void Update(float t)
@@ -42,7 +47,7 @@ namespace DCL.SDKComponents.MapPins.Systems
             UpdateMapPinQuery(World);
             HandleComponentRemovalQuery(World);
             HandleEntityDestructionQuery(World);
-            ResolvePromiseQuery(World);
+            if (useCustomMapPinIcons) { ResolvePromiseQuery(World); }
         }
 
         [Query]
@@ -55,8 +60,14 @@ namespace DCL.SDKComponents.MapPins.Systems
                 Position = new Vector2Int((int) pbMapPin.Position.X, (int) pbMapPin.Position.Y)
             };
             pbMapPin.IsDirty = false;
-            TextureComponent? mapPinTexture = pbMapPin.Texture.CreateTextureComponent(sceneData);
-            bool hasTexturePromise = TryCreateGetTexturePromise(in mapPinTexture, ref mapPinComponent.TexturePromise);
+
+            bool hasTexturePromise = useCustomMapPinIcons;
+
+            if (useCustomMapPinIcons)
+            {
+                TextureComponent? mapPinTexture = pbMapPin.Texture.CreateTextureComponent(sceneData);
+                hasTexturePromise = TryCreateGetTexturePromise(in mapPinTexture, ref mapPinComponent.TexturePromise);
+            }
 
             World.Add(entity, new MapPinHolderComponent(globalWorld.Create(pbMapPin, mapPinComponent), hasTexturePromise));
         }
@@ -101,9 +112,11 @@ namespace DCL.SDKComponents.MapPins.Systems
 
             mapPinComponent.IsDirty = true;
 
-            TextureComponent? mapPinTexture = pbMapPin.Texture.CreateTextureComponent(sceneData);
-
-            mapPinHolderComponent.HasTexturePromise = TryCreateGetTexturePromise(in mapPinTexture, ref mapPinComponent.TexturePromise);
+            if (useCustomMapPinIcons)
+            {
+                TextureComponent? mapPinTexture = pbMapPin.Texture.CreateTextureComponent(sceneData);
+                mapPinHolderComponent.HasTexturePromise = TryCreateGetTexturePromise(in mapPinTexture, ref mapPinComponent.TexturePromise);
+            }
 
             pbMapPin.IsDirty = false;
 

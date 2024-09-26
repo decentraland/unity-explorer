@@ -8,14 +8,15 @@ namespace DCL.Multiplayer.Connections.Rooms.Logs
     public class LogRoomInfo : IRoomInfo
     {
         private readonly IRoomInfo origin;
-        private readonly Action<string> log;
 
         public ConnectionState ConnectionState
         {
             get
             {
                 ConnectionState connectionState = origin.ConnectionState;
-                log($"LogRoomInfo: ConnectionState: {connectionState}");
+                ReportHub
+                   .WithReport(ReportCategory.LIVEKIT)
+                   .Log($"LogRoomInfo: ConnectionState: {connectionState}");
                 return connectionState;
             }
         }
@@ -25,7 +26,9 @@ namespace DCL.Multiplayer.Connections.Rooms.Logs
             get
             {
                 string sid = origin.Sid;
-                log($"LogRoomInfo: Sid: {sid}");
+                ReportHub
+                   .WithReport(ReportCategory.LIVEKIT)
+                   .Log($"LogRoomInfo: Sid: {sid}");
                 return sid;
             }
         }
@@ -35,7 +38,9 @@ namespace DCL.Multiplayer.Connections.Rooms.Logs
             get
             {
                 string name = origin.Name;
-                log($"LogRoomInfo: Name: {name}");
+                ReportHub
+                   .WithReport(ReportCategory.LIVEKIT)
+                   .Log($"LogRoomInfo: Name: {name}");
                 return name;
             }
         }
@@ -45,17 +50,16 @@ namespace DCL.Multiplayer.Connections.Rooms.Logs
             get
             {
                 string metadata = origin.Metadata;
-                log($"LogRoomInfo: Metadata: {metadata}");
+                ReportHub
+                   .WithReport(ReportCategory.LIVEKIT)
+                   .Log($"LogRoomInfo: Metadata: {metadata}");
                 return metadata;
             }
         }
 
-        public LogRoomInfo(IRoomInfo origin) : this(origin, ReportHub.WithReport(ReportCategory.LIVEKIT).Log) { }
-
-        public LogRoomInfo(IRoomInfo origin, Action<string> log)
+        public LogRoomInfo(IRoomInfo origin)
         {
             this.origin = origin;
-            this.log = log;
         }
     }
 }

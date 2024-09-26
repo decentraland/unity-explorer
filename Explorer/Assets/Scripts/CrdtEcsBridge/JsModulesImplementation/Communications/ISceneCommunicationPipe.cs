@@ -7,27 +7,33 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
 {
     public interface ISceneCommunicationPipe
     {
-        void SetSceneMessageHandler(Action<SceneMessage> onSceneMessage);
+        public enum MsgType
+        {
+            String = 1, // SDK scenes MessageBus messages
+            Uint8Array = 2,
+        }
 
-        void RemoveSceneMessageHandler(Action<SceneMessage> onSceneMessage);
+        public delegate void SceneMessageHandler(DecodedMessage message);
+
+        void AddSceneMessageHandler(string sceneId, MsgType msgType, SceneMessageHandler onSceneMessage);
+
+        void RemoveSceneMessageHandler(string sceneId, MsgType msgType, SceneMessageHandler onSceneMessage);
 
         void SendMessage(ReadOnlySpan<byte> message, string sceneId, CancellationToken ct);
 
-        readonly struct SceneMessage
+        readonly ref struct DecodedMessage
         {
-            public readonly ReadOnlyMemory<byte> Data;
-            public readonly string SceneId;
+            /// <summary>
+            ///     Data without message type
+            /// </summary>
+            public readonly ReadOnlySpan<byte> Data;
             public readonly string FromWalletId;
 
-            private SceneMessage(in ReceivedMessage<Scene> message)
+            public DecodedMessage(ReadOnlySpan<byte> data, string fromWalletId)
             {
-                Data = message.Payload.Data.Memory;
-                SceneId = message.Payload.SceneId;
-                FromWalletId = message.FromWalletId;
+                Data = data;
+                FromWalletId = fromWalletId;
             }
-
-            public static SceneMessage CopyFrom(in ReceivedMessage<Scene> message) =>
-                new (message);
         }
     }
 }

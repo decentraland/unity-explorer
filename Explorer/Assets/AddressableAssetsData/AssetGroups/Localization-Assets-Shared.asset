@@ -15,38 +15,10 @@ MonoBehaviour:
   m_GroupName: Localization-Assets-Shared
   m_Data:
     m_SerializedData: []
-  m_GUID: 366ef9b88f129408eb085f8d68837442
+  m_GUID: 80c5408a9e3decb49b340a35cfc41289
   m_SerializeEntries:
-  - m_GUID: fa6d78a0e08f14179b202ccca9720bb9
-    m_Address: Assets/Locales/Localization Tables/UI Text Localization Table Shared
-      Data.asset
-    m_ReadOnly: 1
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: bbb9e422feb9740a5808dae45db55361
     m_Address: Assets/Scripts/Localization/Test/Tests Localization Table Shared Data.asset
-    m_ReadOnly: 1
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 48b7b423583d84e3d9f2dbeaa25c3aa1
-    m_Address: Assets/Locales/Localization Tables/Authentication Shared Data.asset
-    m_ReadOnly: 1
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: d8a2184e2c38d488f929003b0f0505af
-    m_Address: Assets/Locales/Localization Tables/SceneLoadingDefaultTips Shared
-      Data.asset
-    m_ReadOnly: 1
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 743a5a3b15e404426ab7c23cffec5d68
-    m_Address: Assets/Locales/Localization Tables/SceneLoadingScreen Shared Data.asset
-    m_ReadOnly: 1
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 8202382ae456247869a9b5cc2c01ff12
-    m_Address: Assets/Locales/Localization Tables/SceneLoadingDefaultImages Shared
-      Data.asset
     m_ReadOnly: 1
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

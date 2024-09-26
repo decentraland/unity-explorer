@@ -95,6 +95,10 @@ namespace Global.Tests.PlayMode
             // It will switch to the background thread and assign SynchronizationContext
             sceneFacade = await sceneSharedContainer!.SceneFactory.CreateSceneFromStreamableDirectoryAsync(PATH, Substitute.For<IPartitionComponent>(), CancellationToken.None);
 
+            await UniTask.SwitchToMainThread();
+            sceneFacade.Initialize();
+            await UniTask.SwitchToThreadPool();
+
             // It will call `IEngineAPI.GetState()`
             await sceneFacade.StartScene();
 

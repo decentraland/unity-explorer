@@ -4,6 +4,8 @@ namespace DCL.Multiplayer.Movement.Settings
 {
     public interface IMultiplayerMovementSettings
     {
+        bool UseCompression { get; set; }
+
         List<SendRuleBase> SendRules { get; set; }
 
         int InboxCount { get; set; }

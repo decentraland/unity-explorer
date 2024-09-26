@@ -1,10 +1,12 @@
 ﻿using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Optimization.PerformanceBudgeting;
 using DCL.WebRequests.GenericDelete;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using DCL.DebugUtilities.UIBindings;
 using UnityEngine;
 using UnityEngine.Networking;
 using Utility.Times;
@@ -22,6 +24,7 @@ namespace DCL.WebRequests
 
         internal static readonly InitializeRequest<GetTextureArguments, GetTextureWebRequest> GET_TEXTURE = GetTextureWebRequest.Initialize;
         private static readonly InitializeRequest<GetAudioClipArguments, GetAudioClipWebRequest> GET_AUDIO_CLIP = GetAudioClipWebRequest.Initialize;
+        private static readonly InitializeRequest<GetAssetBundleArguments, GetAssetBundleWebRequest> GET_ASSET_BUNDLE = GetAssetBundleWebRequest.Initialize;
 
         public static UniTask<TResult> SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp, TResult>(
             this IWebRequestController controller,
@@ -29,10 +32,11 @@ namespace DCL.WebRequests
             CommonArguments commonArguments, TWebRequestArgs args,
             TWebRequestOp op,
             CancellationToken ct,
-            string reportCategory,
+            ReportData reportData,
             WebRequestHeadersInfo? headersInfo = null,
             WebRequestSignInfo? signInfo = null,
-            ISet<long>? ignoreErrorCodes = null
+            ISet<long>? ignoreErrorCodes = null,
+            bool suppressErrors = false
         )
             where TWebRequestArgs: struct
             where TWebRequest: struct, ITypedWebRequest
@@ -43,10 +47,11 @@ namespace DCL.WebRequests
                     commonArguments,
                     args,
                     ct,
-                    reportCategory,
+                    reportData,
                     headersInfo ?? WebRequestHeadersInfo.NewEmpty(),
                     signInfo,
-                    ignoreErrorCodes
+                    ignoreErrorCodes,
+                    suppressErrors
                 ), op
             );
 
@@ -55,6 +60,7 @@ namespace DCL.WebRequests
             CommonArguments commonArguments,
             TOp webRequestOp,
             string signatureMetadata,
+            ReportData reportData,
             CancellationToken ct
         )
             where TOp: struct, IWebRequestOp<GenericPostRequest, TResult>
@@ -66,6 +72,7 @@ namespace DCL.WebRequests
                 webRequestOp,
                 GenericPostArguments.Empty,
                 ct,
+                reportData,
                 signInfo: WebRequestSignInfo.NewFromRaw(signatureMetadata, commonArguments.URL, unixTimestamp, "post"),
                 headersInfo: new WebRequestHeadersInfo().WithSign(signatureMetadata, unixTimestamp)
             );
@@ -79,12 +86,12 @@ namespace DCL.WebRequests
             CommonArguments commonArguments,
             TOp webRequestOp,
             CancellationToken ct,
-            string reportCategory = ReportCategory.GENERIC_WEB_REQUEST,
+            ReportData reportData,
             WebRequestHeadersInfo? headersInfo = null,
             WebRequestSignInfo? signInfo = null,
             ISet<long>? ignoreErrorCodes = null
         ) where TOp: struct, IWebRequestOp<GenericGetRequest, TResult> =>
-            controller.SendAsync<GenericGetRequest, GenericGetArguments, TOp, TResult>(GET_GENERIC, commonArguments, default(GenericGetArguments), webRequestOp, ct, reportCategory, headersInfo, signInfo, ignoreErrorCodes);
+            controller.SendAsync<GenericGetRequest, GenericGetArguments, TOp, TResult>(GET_GENERIC, commonArguments, default(GenericGetArguments), webRequestOp, ct, reportData, headersInfo, signInfo, ignoreErrorCodes);
 
         public static UniTask<TResult> PostAsync<TOp, TResult>(
             this IWebRequestController controller,
@@ -92,7 +99,7 @@ namespace DCL.WebRequests
             TOp webRequestOp,
             GenericPostArguments arguments,
             CancellationToken ct,
-            string reportCategory = ReportCategory.GENERIC_WEB_REQUEST,
+            ReportData reportCategory,
             WebRequestHeadersInfo? headersInfo = null,
             WebRequestSignInfo? signInfo = null) where TOp: struct, IWebRequestOp<GenericPostRequest, TResult> =>
             controller.SendAsync<GenericPostRequest, GenericPostArguments, TOp, TResult>(POST_GENERIC, commonArguments, arguments, webRequestOp, ct, reportCategory, headersInfo, signInfo);
@@ -103,7 +110,7 @@ namespace DCL.WebRequests
             TOp webRequestOp,
             GenericPutArguments arguments,
             CancellationToken ct,
-            string reportCategory = ReportCategory.GENERIC_WEB_REQUEST,
+            ReportData reportCategory,
             WebRequestHeadersInfo? headersInfo = null,
             WebRequestSignInfo? signInfo = null) where TOp: struct, IWebRequestOp<GenericPutRequest, TResult> =>
             controller.SendAsync<GenericPutRequest, GenericPutArguments, TOp, TResult>(PUT_GENERIC, commonArguments, arguments, webRequestOp, ct, reportCategory, headersInfo, signInfo);
@@ -114,7 +121,7 @@ namespace DCL.WebRequests
             TOp webRequestOp,
             GenericDeleteArguments arguments,
             CancellationToken ct,
-            string reportCategory = ReportCategory.GENERIC_WEB_REQUEST,
+            ReportData reportCategory,
             WebRequestHeadersInfo? headersInfo = null,
             WebRequestSignInfo? signInfo = null
         ) where TOp: struct, IWebRequestOp<GenericDeleteRequest, TResult> =>
@@ -126,7 +133,7 @@ namespace DCL.WebRequests
             TOp webRequestOp,
             GenericPatchArguments arguments,
             CancellationToken ct,
-            string reportCategory = ReportCategory.GENERIC_WEB_REQUEST,
+            ReportData reportCategory,
             WebRequestHeadersInfo? headersInfo = null,
             WebRequestSignInfo? signInfo = null) where TOp: struct, IWebRequestOp<GenericPatchRequest, TResult> =>
             controller.SendAsync<GenericPatchRequest, GenericPatchArguments, TOp, TResult>(PATCH_GENERIC, commonArguments, arguments, webRequestOp, ct, reportCategory, headersInfo, signInfo);
@@ -137,22 +144,22 @@ namespace DCL.WebRequests
             TOp webRequestOp,
             GenericHeadArguments arguments,
             CancellationToken ct,
-            string reportCategory = ReportCategory.GENERIC_WEB_REQUEST,
+            ReportData reportCategory,
             WebRequestHeadersInfo? headersInfo = null,
             WebRequestSignInfo? signInfo = null) where TOp: struct, IWebRequestOp<GenericHeadRequest, TResult> =>
             controller.SendAsync<GenericHeadRequest, GenericHeadArguments, TOp, TResult>(HEAD_GENERIC, commonArguments, arguments, webRequestOp, ct, reportCategory, headersInfo, signInfo);
 
-        public static async UniTask<bool> IsReachableAsync(this IWebRequestController controller, URLAddress url, CancellationToken ct)
+        public static async UniTask<bool> IsReachableAsync(this IWebRequestController controller, ReportData reportData, URLAddress url, CancellationToken ct)
         {
             await UniTask.SwitchToMainThread();
 
-            try { await HeadAsync<WebRequestUtils.NoOp<GenericHeadRequest>, WebRequestUtils.NoResult>(controller, new CommonArguments(url), new WebRequestUtils.NoOp<GenericHeadRequest>(), default(GenericHeadArguments), ct); }
+            try { await HeadAsync<WebRequestUtils.NoOp<GenericHeadRequest>, WebRequestUtils.NoResult>(controller, new CommonArguments(url), new WebRequestUtils.NoOp<GenericHeadRequest>(), default(GenericHeadArguments), ct, reportData); }
             catch (UnityWebRequestException unityWebRequestException)
             {
                 // Endpoint was unreacheable
                 if (unityWebRequestException.Result == UnityWebRequest.Result.ConnectionError)
                     return false;
-                
+
                 // HEAD request might not be fully supported by the streaming platforms
                 switch (unityWebRequestException.ResponseCode)
                 {
@@ -179,11 +186,11 @@ namespace DCL.WebRequests
             GetTextureArguments args,
             TOp webRequestOp,
             CancellationToken ct,
-            string reportCategory = ReportCategory.GENERIC_WEB_REQUEST,
+            ReportData reportData,
             WebRequestHeadersInfo? headersInfo = null,
             WebRequestSignInfo? signInfo = null
         ) where TOp: struct, IWebRequestOp<GetTextureWebRequest, Texture2D> =>
-            controller.SendAsync<GetTextureWebRequest, GetTextureArguments, TOp, Texture2D>(GET_TEXTURE, commonArguments, args, webRequestOp, ct, reportCategory, headersInfo, signInfo);
+            controller.SendAsync<GetTextureWebRequest, GetTextureArguments, TOp, Texture2D>(GET_TEXTURE, commonArguments, args, webRequestOp, ct, reportData, headersInfo, signInfo);
 
         /// <summary>
         ///     Make a request that is optimized for audio clip
@@ -194,15 +201,39 @@ namespace DCL.WebRequests
             GetAudioClipArguments args,
             TOp webRequestOp,
             CancellationToken ct,
-            string reportCategory = ReportCategory.AUDIO_CLIP_WEB_REQUEST,
+            ReportData reportData,
             WebRequestHeadersInfo? headersInfo = null,
             WebRequestSignInfo? signInfo = null) where TOp: struct, IWebRequestOp<GetAudioClipWebRequest, AudioClip> =>
-            controller.SendAsync<GetAudioClipWebRequest, GetAudioClipArguments, TOp, AudioClip>(GET_AUDIO_CLIP, commonArguments, args, webRequestOp, ct, reportCategory, headersInfo, signInfo);
+            controller.SendAsync<GetAudioClipWebRequest, GetAudioClipArguments, TOp, AudioClip>(GET_AUDIO_CLIP, commonArguments, args, webRequestOp, ct, reportData, headersInfo, signInfo);
+
+        public static UniTask<AssetBundleLoadingResult> GetAssetBundleAsync(
+            this IWebRequestController controller,
+            CommonArguments commonArguments,
+            GetAssetBundleArguments args,
+            CancellationToken ct,
+            string reportCategory = ReportCategory.ASSET_BUNDLES,
+            WebRequestHeadersInfo? headersInfo = null,
+            WebRequestSignInfo? signInfo = null,
+            bool suppressErrors = false) =>
+            controller.SendAsync<GetAssetBundleWebRequest, GetAssetBundleArguments, GetAssetBundleWebRequest.CreateAssetBundleOp, AssetBundleLoadingResult>(GET_ASSET_BUNDLE, commonArguments, args, new GetAssetBundleWebRequest.CreateAssetBundleOp(), ct, reportCategory, headersInfo, signInfo, suppressErrors: suppressErrors);
 
         public static IWebRequestController WithArtificialDelay(this IWebRequestController origin, ArtificialDelayWebRequestController.IReadOnlyOptions options) =>
             new ArtificialDelayWebRequestController(origin, options);
 
         public static IWebRequestController WithLog(this IWebRequestController origin) =>
             new LogWebRequestController(origin);
+
+        public static IWebRequestController WithDebugMetrics(this IWebRequestController origin,
+            ElementBinding<ulong> requestCannotConnectDebugMetric, ElementBinding<ulong> requestCompleteDebugMetric)
+        {
+            return new DebugMetricsWebRequestController(origin, requestCannotConnectDebugMetric,
+                requestCompleteDebugMetric);
+        }
+
+        public static IWebRequestController WithBudget(this IWebRequestController origin, int totalBudget)
+        {
+            return new BudgetedWebRequestController(origin, totalBudget);
+        }
+
     }
 }

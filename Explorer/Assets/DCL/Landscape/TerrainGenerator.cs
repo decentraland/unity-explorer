@@ -10,11 +10,13 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Threading;
+using DCL.Profiling;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.Profiling;
 using Utility;
 using JobHandle = Unity.Jobs.JobHandle;
 
@@ -26,7 +28,7 @@ namespace DCL.Landscape
         private const float ROOT_VERTICAL_SHIFT = -0.01f; // fix for not clipping with scene (potential) floor
 
         // increment this number if we want to force the users to generate a new terrain cache
-        private const int CACHE_VERSION = 6;
+        private const int CACHE_VERSION = 7;
 
         private const float PROGRESS_COUNTER_EMPTY_PARCEL_DATA = 0.1f;
         private const float PROGRESS_COUNTER_TERRAIN_DATA = 0.3f;
@@ -36,6 +38,7 @@ namespace DCL.Landscape
         private readonly NoiseGeneratorCache noiseGenCache;
         private readonly ReportData reportData;
         private readonly TimeProfiler timeProfiler;
+        private readonly IMemoryProfiler profilingProvider;
         private readonly bool forceCacheRegen;
         private readonly List<Terrain> terrains;
 
@@ -72,8 +75,10 @@ namespace DCL.Landscape
         public bool IsTerrainShown { get; private set; }
 
 
-        public TerrainGenerator(bool measureTime = false, bool forceCacheRegen = false)
+        public TerrainGenerator(IMemoryProfiler profilingProvider, bool measureTime = false,
+            bool forceCacheRegen = false)
         {
+            this.profilingProvider = profilingProvider;
             this.forceCacheRegen = forceCacheRegen;
 
             noiseGenCache = new NoiseGeneratorCache();
@@ -159,6 +164,8 @@ namespace DCL.Landscape
             var worldModel = new WorldModel(ownedParcels);
             var terrainModel = new TerrainModel(parcelSize, worldModel, terrainGenData.borderPadding);
 
+            float startMemory = profilingProvider.SystemUsedMemoryInBytes / (1024 * 1024);
+            
             try
             {
                 using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"Terrain generation was done in {t / 1000f:F2} seconds")))
@@ -221,6 +228,7 @@ namespace DCL.Landscape
             catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, reportData); }
             finally
             {
+                float beforeCleaning = profilingProvider.SystemUsedMemoryInBytes / (1024 * 1024);
                 FreeMemory();
 
                 if (!localCache.IsValid())
@@ -231,7 +239,15 @@ namespace DCL.Landscape
 
                 emptyParcels.Dispose();
                 ownedParcels.Dispose();
+
+                float afterCleaning = profilingProvider.SystemUsedMemoryInBytes / (1024 * 1024);
+                ReportHub.Log(ReportCategory.LANDSCAPE,
+                    $"The landscape cleaning process cleaned {afterCleaning - beforeCleaning}MB of memory");
             }
+
+            float endMemory = profilingProvider.SystemUsedMemoryInBytes / (1024 * 1024);
+            ReportHub.Log(ReportCategory.LANDSCAPE,
+                $"The landscape generation took {endMemory - startMemory}MB of memory");
         }
 
         // waiting a frame to create the color map renderer created a new bug where some stones do not render properly, this should fix it
@@ -315,10 +331,20 @@ namespace DCL.Landscape
 
                 var tasks = new List<UniTask>
                 {
-                    chunkDataGenerator.SetHeightsAsync(chunkModel.MinParcel, maxHeightIndex, parcelSize, chunkModel.TerrainData, worldSeed, cancellationToken),
-                    chunkDataGenerator.SetTexturesAsync(chunkModel.MinParcel.x * parcelSize, chunkModel.MinParcel.y * parcelSize, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData, worldSeed, cancellationToken),
-                    !hideDetails ? chunkDataGenerator.SetDetailsAsync(chunkModel.MinParcel.x * parcelSize, chunkModel.MinParcel.y * parcelSize, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData, worldSeed, cancellationToken, true, chunkModel.MinParcel, chunkModel.OccupiedParcels) : UniTask.CompletedTask,
-                    !hideTrees ? chunkDataGenerator.SetTreesAsync(chunkModel.MinParcel, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData, worldSeed, cancellationToken) : UniTask.CompletedTask,
+                    chunkDataGenerator.SetHeightsAsync(chunkModel.MinParcel, maxHeightIndex, parcelSize,
+                        chunkModel.TerrainData, worldSeed, cancellationToken),
+                    chunkDataGenerator.SetTexturesAsync(chunkModel.MinParcel.x * parcelSize,
+                        chunkModel.MinParcel.y * parcelSize, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData,
+                        worldSeed, cancellationToken),
+                    !hideDetails
+                        ? chunkDataGenerator.SetDetailsAsync(chunkModel.MinParcel.x * parcelSize,
+                            chunkModel.MinParcel.y * parcelSize, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData,
+                            worldSeed, cancellationToken, true, chunkModel.MinParcel, chunkModel.OccupiedParcels)
+                        : UniTask.CompletedTask,
+                    !hideTrees
+                        ? chunkDataGenerator.SetTreesAsync(chunkModel.MinParcel, terrainModel.ChunkSizeInUnits,
+                            chunkModel.TerrainData, worldSeed, cancellationToken)
+                        : UniTask.CompletedTask
                 };
 
                 if (withHoles)
@@ -329,7 +355,8 @@ namespace DCL.Landscape
                         {
                             using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"- [Cache] DigHoles from Cache {t}ms")))
                             {
-                                chunkModel.TerrainData.SetHoles(0, 0, localCache.GetHoles(chunkModel.MinParcel.x, chunkModel.MinParcel.y));
+                                chunkModel.TerrainData.SetHoles(0, 0,
+                                    await localCache.GetHolesAsync(chunkModel.MinParcel.x, chunkModel.MinParcel.y));
                                 await UniTask.Yield(cancellationToken);
                             }
                         }
@@ -364,7 +391,7 @@ namespace DCL.Landscape
                 {
                     foreach ((int2 key, TerrainData value) in terrainDatas)
                     {
-                        bool[,] holes = localCache.GetHoles(key.x, key.y);
+                        var holes = await localCache.GetHolesAsync(key.x, key.y);
                         value.SetHoles(0, 0, holes);
                         await UniTask.Yield(cancellationToken);
                     }

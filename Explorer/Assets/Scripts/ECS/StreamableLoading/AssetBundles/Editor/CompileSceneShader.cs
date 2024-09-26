@@ -16,7 +16,7 @@ namespace DCL.Rendering.Menus
 
         private static readonly string[] ASSET_NAMES =
         {
-            "Scene.shader", "SceneVariants.shadervariants", "SceneVariantsManuallyAdded.shadervariants",
+            "Scene.shader", "SceneVariants.shadervariants",
         };
 
         [MenuItem("Decentraland/Shaders/Compile \"Scene\" Shader Variants")]

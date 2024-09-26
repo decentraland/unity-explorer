@@ -37,6 +37,9 @@ namespace DCL.RewardPanel
         public Image RarityBackground { get; private set; }
 
         [field: SerializeField]
+        public Image RarityMark { get; private set; }
+
+        [field: SerializeField]
         public Image CategoryImage { get; private set; }
 
         [field: SerializeField]

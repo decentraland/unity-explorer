@@ -8,6 +8,7 @@ using DCL.TeleportPrompt;
 using DCL.WebRequests;
 using MVC;
 using System.Threading;
+using DCL.Chat.MessageBus;
 using ECS.SceneLifeCycle.Realm;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -17,27 +18,26 @@ namespace DCL.PluginSystem.Global
     public class TeleportPromptPlugin : IDCLGlobalPlugin<TeleportPromptPlugin.TeleportPromptSettings>
     {
         private readonly IAssetsProvisioner assetsProvisioner;
-        private readonly IRealmNavigator realmNavigator;
         private readonly IMVCManager mvcManager;
         private readonly IWebRequestController webRequestController;
         private readonly IPlacesAPIService placesAPIService;
         private readonly ICursor cursor;
         private TeleportPromptController teleportPromptController;
+        private readonly IChatMessagesBus chatMessagesBus;
 
         public TeleportPromptPlugin(
             IAssetsProvisioner assetsProvisioner,
-            IRealmNavigator realmNavigator,
             IMVCManager mvcManager,
             IWebRequestController webRequestController,
             IPlacesAPIService placesAPIService,
-            ICursor cursor)
+            ICursor cursor, IChatMessagesBus chatMessagesBus)
         {
             this.assetsProvisioner = assetsProvisioner;
-            this.realmNavigator = realmNavigator;
             this.mvcManager = mvcManager;
             this.webRequestController = webRequestController;
             this.placesAPIService = placesAPIService;
             this.cursor = cursor;
+            this.chatMessagesBus = chatMessagesBus;
         }
 
         public async UniTask InitializeAsync(TeleportPromptSettings promptSettings, CancellationToken ct)
@@ -46,10 +46,9 @@ namespace DCL.PluginSystem.Global
                 TeleportPromptController.CreateLazily(
                     (await assetsProvisioner.ProvideMainAssetAsync(promptSettings.TeleportPromptPrefab, ct: ct)).Value.GetComponent<TeleportPromptView>(), null),
                 cursor,
-                realmNavigator,
-                mvcManager,
                 webRequestController,
-                placesAPIService);
+                placesAPIService,
+                chatMessagesBus);
 
             mvcManager.RegisterController(teleportPromptController);
         }

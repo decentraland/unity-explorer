@@ -67,7 +67,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
             Texture2D texture = (await webRequestController.GetTextureAsync(new CommonArguments(URLAddress.FromString(url)),
                 new GetTextureArguments(false), GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp, FilterMode.Trilinear)
                                                                     .SuppressExceptionsWithFallback(Texture2D.whiteTexture, reportContext: ReportCategory.UI),
-                linkedCts.Token))!;
+                linkedCts.Token, ReportCategory.UI))!;
 
             textureContainer.AddChunk(chunkId, texture);
 

@@ -10,7 +10,6 @@ using DCL.Multiplayer.Profiles.Systems;
 using DCL.Multiplayer.SDK.Components;
 using DCL.Profiles;
 using ECS.Abstract;
-using ECS.Groups;
 using ECS.LifeCycle.Components;
 using ECS.SceneLifeCycle;
 using SceneRunner.Scene;
@@ -36,94 +35,94 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
 
         protected override void Update(float t)
         {
-            RemoveComponentOnOutsideCurrentSceneQuery(World);
-
             RemoveComponentOnPlayerDisconnectQuery(World);
 
             RemoveComponentQuery(World);
 
-            AddRemotePlayerCRDTEntityQuery(World);
+            ModifyPlayerSceneQuery(World);
 
-            AddOwnPlayerCRDTEntityQuery(World);
+            AddPlayerCRDTEntityQuery(World);
         }
 
         [Query]
         [All(typeof(Profile))]
-        [None(typeof(PlayerCRDTEntity), typeof(DeleteEntityIntention), typeof(PlayerComponent))]
-        private void AddRemotePlayerCRDTEntity(in Entity entity, ref CharacterTransform characterTransform)
+        [None(typeof(PlayerCRDTEntity), typeof(DeleteEntityIntention))]
+        private void AddPlayerCRDTEntity(Entity entity, in CharacterTransform characterTransform)
         {
-            if (!scenesCache.TryGetByParcel(characterTransform.Transform.ParcelPosition(), out ISceneFacade sceneFacade))
-                return;
+            // Reserve entity straight-away, numeration will be preserved across all scenes
+            int crdtEntityId = World.Has<PlayerComponent>(entity) ? SpecialEntitiesID.PLAYER_ENTITY : ReserveNextFreeEntity();
 
-            if (sceneFacade.IsEmpty || !sceneFacade.SceneStateProvider.IsCurrent)
-                return;
-
-            int crdtEntityId = ReserveNextFreeEntity();
-
-            // All reserved entities for that scene are taken
+            // All reserved entities are taken
             if (crdtEntityId == -1) return;
 
-            SceneEcsExecutor sceneEcsExecutor = sceneFacade.EcsExecutor;
+            var playerCRDTEntity = new PlayerCRDTEntity(crdtEntityId);
 
-            Entity sceneWorldEntity = sceneEcsExecutor.World.Create();
-            var crdtEntity = new CRDTEntity(crdtEntityId);
+            ResolvePlayerCRDTScene(characterTransform, ref playerCRDTEntity, playerCRDTEntity.CRDTEntity);
 
-            sceneEcsExecutor.World.Add(sceneWorldEntity, new PlayerSceneCRDTEntity(crdtEntity));
-
-            World.Add(entity, new PlayerCRDTEntity(crdtEntity, sceneFacade, sceneWorldEntity));
+            World.Add(entity, playerCRDTEntity);
         }
 
         [Query]
-        [All(typeof(Profile), typeof(PlayerComponent))]
-        [None(typeof(PlayerCRDTEntity), typeof(DeleteEntityIntention))]
-        private void AddOwnPlayerCRDTEntity(in Entity entity, ref CharacterTransform characterTransform)
+        [None(typeof(DeleteEntityIntention))]
+        private void ModifyPlayerScene(in CharacterTransform characterTransform, ref PlayerCRDTEntity playerCRDTEntity)
         {
-            if (!scenesCache.TryGetByParcel(characterTransform.Transform.ParcelPosition(), out ISceneFacade sceneFacade))
-                return;
-
-            if (sceneFacade.IsEmpty || !sceneFacade.SceneStateProvider.IsCurrent)
-                return;
-
-            World.Add(entity, new PlayerCRDTEntity(SpecialEntitiesID.PLAYER_ENTITY, sceneFacade, sceneFacade.PersistentEntities.Player, true));
+            ResolvePlayerCRDTScene(characterTransform, ref playerCRDTEntity, playerCRDTEntity.CRDTEntity);
         }
 
-        [Query]
-        private void RemoveComponentOnOutsideCurrentScene(in Entity entity, ref CharacterTransform characterTransform, ref PlayerCRDTEntity playerCRDTEntity)
+        private void ResolvePlayerCRDTScene(in CharacterTransform characterTransform, ref PlayerCRDTEntity globalPlayerCRDTEntity, CRDTEntity reservedEntityId)
         {
-            // Only target entities outside the current scene
-            if (scenesCache.TryGetByParcel(characterTransform.Transform.ParcelPosition(), out ISceneFacade sceneFacade)
-                && !sceneFacade.IsEmpty && sceneFacade.SceneStateProvider.IsCurrent) return;
+            bool newSceneIsValid = scenesCache.TryGetByParcel(characterTransform.Transform.ParcelPosition(), out ISceneFacade currentScene)
+                                   && !currentScene.IsEmpty;
 
-            RemoveComponent(entity, ref playerCRDTEntity);
+            if (globalPlayerCRDTEntity.SceneFacade != currentScene)
+            {
+                // if previous scene is valid remove
+                RemoveComponent(globalPlayerCRDTEntity.SceneWorldEntity, ref globalPlayerCRDTEntity, false);
+
+                if (newSceneIsValid)
+                {
+                    SceneEcsExecutor sceneEcsExecutor = currentScene.EcsExecutor;
+
+                    Entity sceneWorldEntity = sceneEcsExecutor.World.Create();
+                    sceneEcsExecutor.World.Add(sceneWorldEntity, new PlayerSceneCRDTEntity(reservedEntityId));
+
+                    globalPlayerCRDTEntity.AssignToScene(currentScene, sceneWorldEntity);
+                }
+                else { globalPlayerCRDTEntity.RemoveFromScene(); }
+            }
         }
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
-        private void RemoveComponentOnPlayerDisconnect(Entity entity, ref CharacterTransform characterTransform, ref PlayerCRDTEntity playerCRDTEntity)
+        [None(typeof(PlayerComponent))] // Host can't disconnect
+        private void RemoveComponentOnPlayerDisconnect(Entity entity, ref PlayerCRDTEntity playerCRDTEntity)
         {
-            if (!scenesCache.TryGetByParcel(characterTransform.Transform.ParcelPosition(), out ISceneFacade sceneFacade)
-                || sceneFacade.IsEmpty || !sceneFacade.SceneStateProvider.IsCurrent)
-                return;
-
-            RemoveComponent(entity, ref playerCRDTEntity);
+            RemoveComponent(entity, ref playerCRDTEntity, true);
         }
 
         [Query]
         [None(typeof(DeleteEntityIntention), typeof(Profile))]
         private void RemoveComponent(Entity entity, ref PlayerCRDTEntity playerCRDTEntity)
         {
-            if (!playerCRDTEntity.SceneEntityIsPersistent)
+            RemoveComponent(entity, ref playerCRDTEntity, true);
+        }
+
+        private void RemoveComponent(Entity entity, ref PlayerCRDTEntity playerCRDTEntity, bool noLongerExists)
+        {
+            if (playerCRDTEntity.AssignedToScene)
             {
-                SceneEcsExecutor sceneEcsExecutor = playerCRDTEntity.SceneFacade.EcsExecutor;
+                SceneEcsExecutor sceneEcsExecutor = playerCRDTEntity.SceneFacade!.EcsExecutor;
 
                 // Remove from whichever scene it was added. PlayerCRDTEntity is not removed here,
                 // as the scene-level Writer systems need it to know which CRDT Entity to affect
                 sceneEcsExecutor.World.Add<DeleteEntityIntention>(playerCRDTEntity.SceneWorldEntity);
 
-                FreeReservedEntity(playerCRDTEntity.CRDTEntity.Id);
+                if (noLongerExists)
+                    FreeReservedEntity(playerCRDTEntity.CRDTEntity.Id);
             }
 
-            World.Remove<PlayerCRDTEntity>(entity);
+            if (noLongerExists)
+                World.Remove<PlayerCRDTEntity>(entity);
         }
 
         private int ReserveNextFreeEntity()

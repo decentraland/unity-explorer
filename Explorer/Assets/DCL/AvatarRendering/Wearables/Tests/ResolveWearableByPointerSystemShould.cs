@@ -51,6 +51,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
             });
 
             system = new FinalizeWearableLoadingSystem(world, wearableStorage, new RealmData(new TestIpfsRealm()), URLSubdirectory.EMPTY);
+            system.Initialize();
         }
 
         private WearableStorage wearableStorage;

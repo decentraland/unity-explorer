@@ -4,6 +4,7 @@ using MVC;
 using System;
 using System.Threading;
 using UnityEngine;
+using Utility.Types;
 
 namespace DCL.SceneLoadingScreens.LoadingScreen
 {
@@ -17,8 +18,8 @@ namespace DCL.SceneLoadingScreens.LoadingScreen
             this.mvcManager = mvcManager;
         }
 
-        public async UniTask<ILoadingScreen.LoadResult> ShowWhileExecuteTaskAsync(
-            Func<AsyncLoadProcessReport, UniTask> operation, CancellationToken ct)
+        public async UniTask<Result> ShowWhileExecuteTaskAsync(
+            Func<AsyncLoadProcessReport, UniTask<Result>> operation, CancellationToken ct)
         {
             ct.ThrowIfCancellationRequested();
 
@@ -30,19 +31,12 @@ namespace DCL.SceneLoadingScreens.LoadingScreen
                                                                new SceneLoadingScreenController.Params(loadReport, timeout)), ct)
                                                       .AttachExternalCancellation(ct);
 
-            var result = ILoadingScreen.LoadResult.TimeoutResult;
+            var result = Result.ErrorResult("Load Timeout!");
 
-            async UniTask ExecuteOperationAsync()
+            async UniTask<Result> ExecuteOperationAsync()
             {
-                try
-                {
-                    await operation(loadReport);
-                    result = ILoadingScreen.LoadResult.SuccessResult;
-                }
-                catch (Exception e)
-                {
-                    result = ILoadingScreen.LoadResult.ExceptionResult(e.Message);
-                }
+                result = await operation(loadReport);
+                return result;
             }
 
             await UniTask.WhenAny(showLoadingScreenTask, ExecuteOperationAsync());

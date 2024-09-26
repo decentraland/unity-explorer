@@ -44,6 +44,7 @@ namespace DCL.SDKComponents.PlayerInputMovement.Systems
         private void ApplyModifiers(in PBInputModifier pbInputModifier)
         {
             if (!sceneStateProvider.IsCurrent) return;
+            if(pbInputModifier.ModeCase == PBInputModifier.ModeOneofCase.None) return;
 
             ref var inputModifier = ref globalWorld.Get<InputModifierComponent>(playerEntity);
             PBInputModifier.Types.StandardInput? pb = pbInputModifier.Standard;

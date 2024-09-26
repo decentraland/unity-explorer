@@ -85,7 +85,7 @@ namespace DCL.Interaction.Raycast.Systems
         protected override void Update(float t)
         {
             if (!sceneStateProvider.IsCurrent) return;
-            
+
             BudgetAndExecute(sceneData.Geometry.BaseParcelPosition);
         }
 
@@ -164,7 +164,7 @@ namespace DCL.Interaction.Raycast.Systems
         {
             if (!sdkComponent.TryCreateRay(World, entitiesMap, scenePos, in transformComponent, out Ray ray))
             {
-                ReportHub.LogWarning(GetReportCategory(), "Raycast error: Raycast data is malformed.");
+                ReportHub.LogWarning(GetReportData(), "Raycast error: Raycast data is malformed.");
                 return;
             }
 
@@ -288,7 +288,7 @@ namespace DCL.Interaction.Raycast.Systems
                 ClearRaycastIntentsQuery(World);
         }
 
-     
+
 
         [Query]
         [None(typeof(DeleteEntityIntention))]

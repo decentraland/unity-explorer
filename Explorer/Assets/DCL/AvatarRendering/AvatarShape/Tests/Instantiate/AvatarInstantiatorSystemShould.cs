@@ -121,7 +121,8 @@ namespace DCL.AvatarRendering.AvatarShape.Tests.Instantiate
 
             system = new AvatarInstantiatorSystem(world, budget, budget, avatarPoolRegistry, materialPoolHandler, computeShaderPool,
                 Substitute.For<IAttachmentsAssetsCache>(), new ComputeShaderSkinning(), new FixedComputeBufferHandler(10000, 4, 4),
-                new ObjectProxy<AvatarBase>(), defaultFaceFeaturesHandler, new WearableStorage());
+                new ObjectProxy<AvatarBase>(), defaultFaceFeaturesHandler, new WearableStorage(),
+                new AvatarTransformMatrixJobWrapper());
         }
 
         private IEmote GetMockEmote(string materialName, string category)

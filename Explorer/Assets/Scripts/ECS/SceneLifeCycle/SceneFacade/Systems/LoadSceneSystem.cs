@@ -38,7 +38,7 @@ namespace ECS.SceneLifeCycle.Systems
         protected override async UniTask<StreamableLoadingResult<ISceneFacade>> FlowInternalAsync(GetSceneFacadeIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct) =>
             intention.DefinitionComponent.IsEmpty
                 ? new StreamableLoadingResult<ISceneFacade>(loadEmptySceneSystemLogic.Flow(intention))
-                : new StreamableLoadingResult<ISceneFacade>(await loadSceneSystemLogic.FlowAsync(sceneFactory, intention, GetReportCategory(), partition, ct));
+                : new StreamableLoadingResult<ISceneFacade>(await loadSceneSystemLogic.FlowAsync(sceneFactory, intention, GetReportData(), partition, ct));
 
         protected override void DisposeAbandonedResult(ISceneFacade asset)
         {

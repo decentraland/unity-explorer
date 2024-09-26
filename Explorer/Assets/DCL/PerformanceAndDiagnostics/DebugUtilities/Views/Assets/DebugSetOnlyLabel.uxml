@@ -1,6 +1,6 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements">
     <DCL.DebugUtilities.Views.DebugSetOnlyLabelElement>
         <ui:Label tabindex="-1" text="1500 MB" display-tooltip-when-elided="true" class="debug-text--normal"
-                  style="text-overflow: ellipsis; white-space: nowrap; visibility: visible; overflow: hidden;"/>
+                  style="text-overflow: ellipsis; white-space: nowrap; overflow: hidden;"/>
     </DCL.DebugUtilities.Views.DebugSetOnlyLabelElement>
 </ui:UXML>

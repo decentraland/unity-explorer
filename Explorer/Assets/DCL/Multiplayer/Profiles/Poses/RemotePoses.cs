@@ -14,18 +14,12 @@ namespace DCL.Multiplayer.Profiles.Poses
     {
         private readonly IRoomHub roomHub;
         private readonly ConcurrentDictionary<string, Vector2Int> poses = new ();
-        private readonly Action<string> log;
 
         public int Count => poses.Count;
 
-        public RemotePoses(IRoomHub roomHub) : this(roomHub, ReportHub.WithReport(ReportCategory.MULTIPLAYER_MOVEMENT).Log)
-        {
-        }
-
-        public RemotePoses(IRoomHub roomHub, Action<string> log)
+        public RemotePoses(IRoomHub roomHub)
         {
             this.roomHub = roomHub;
-            this.log = log;
 
             roomHub.IslandRoom().Participants.UpdatesFromParticipant += ParticipantsOnUpdatesFromParticipant;
         }
@@ -47,7 +41,9 @@ namespace DCL.Multiplayer.Profiles.Poses
             {
                 var message = JsonUtility.FromJson<Message>(participant.Metadata);
                 var pose = poses[participant.Identity] = new Vector2Int(message.x, message.y);
-                log($"RemotePoses: pose of {participant.Identity} is {pose}");
+                ReportHub
+                    .WithReport(ReportCategory.MULTIPLAYER_MOVEMENT)
+                    .Log($"RemotePoses: pose of {participant.Identity} is {pose}");
             }
         }
 
@@ -66,7 +62,9 @@ namespace DCL.Multiplayer.Profiles.Poses
         {
             await UniTask.SwitchToThreadPool();
             roomHub.IslandRoom().UpdateLocalMetadata(new Message(pose).ToJson());
-            log($"RemotePoses: pose of self {pose} is sent");
+            ReportHub
+                .WithReport(ReportCategory.MULTIPLAYER_MOVEMENT)
+                .Log($"RemotePoses: pose of self {pose} is sent");
         }
 
         //TODO later transfer to Proto

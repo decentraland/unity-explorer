@@ -42,11 +42,9 @@ namespace DCL.Multiplayer.SDK.Tests
 
             system = new AvatarEmoteCommandPropagationSystem(world, emoteStorage);
 
-            playerCRDTEntity = new PlayerCRDTEntity(
-                SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM,
-                sceneFacade,
-                sceneWorldEntity
-            );
+            playerCRDTEntity = new PlayerCRDTEntity(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM);
+
+            playerCRDTEntity.AssignToScene(sceneFacade, sceneWorldEntity);
 
             entity = world.Create(playerCRDTEntity);
         }
@@ -122,6 +120,7 @@ namespace DCL.Multiplayer.SDK.Tests
         private class FakeEmoteStorage : IEmoteStorage
         {
             internal readonly Dictionary<URN, IEmote> emotes = new ();
+            public List<URN> EmbededURNs { get; }
 
             public bool TryGetElement(URN urn, out IEmote element)
             {
@@ -149,6 +148,11 @@ namespace DCL.Multiplayer.SDK.Tests
 
             public bool TryGetOwnedNftRegistry(URN nftUrn, out IReadOnlyDictionary<URN, NftBlockchainOperationEntry> registry) =>
                 throw new NotImplementedException();
+
+            public void AddEmbeded(URN urn, IEmote emote)
+            {
+                throw new NotImplementedException();
+            }
         }
     }
 }

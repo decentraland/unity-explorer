@@ -37,14 +37,21 @@ namespace Global.Tests.PlayMode
 
             IWeb3IdentityCache identityCache = new MemoryWeb3IdentityCache();
 
+            IReportsHandlingSettings? reportSettings = Substitute.For<IReportsHandlingSettings>();
+            reportSettings.IsEnabled(ReportHandler.DebugLog).Returns(true);
+
+            var diagnosticsContainer = DiagnosticsContainer.Create(reportSettings);
+
             (StaticContainer? staticContainer, bool success) = await StaticContainer.CreateAsync(dclUrls,
                 assetProvisioner,
                 Substitute.For<IReportsHandlingSettings>(),
                 Substitute.For<IAppArgs>(),
                 new DebugViewsCatalog(),
                 globalSettingsContainer,
+                diagnosticsContainer,
                 identityCache,
                 Substitute.For<IEthereumApi>(),
+                false,
                 false,
                 World.Create(),
                 new Entity(),
@@ -58,16 +65,16 @@ namespace Global.Tests.PlayMode
             var sceneSharedContainer = SceneSharedContainer.Create(
                 in staticContainer,
                 dclUrls,
+                identityCache,
+                Substitute.For<IWebRequestController>(),
+                new IRealmData.Fake(),
+                new MemoryProfileRepository(new DefaultProfileCache()),
+                NullRoomHub.INSTANCE,
                 new MVCManager(
                     new WindowStackManager(),
                     new CancellationTokenSource(),
                     Substitute.For<IPopupCloserView>()
                 ),
-                identityCache,
-                new MemoryProfileRepository(new DefaultProfileCache()),
-                Substitute.For<IWebRequestController>(),
-                new IRoomHub.Fake(),
-                new IRealmData.Fake(),
                 new IMessagePipesHub.Fake()
             );
 

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace DCL.Utilities
 {
@@ -15,11 +16,9 @@ namespace DCL.Utilities
 
             set
             {
-                if (!Equals(latestValue, value))
-                {
-                    latestValue = value;
-                    OnUpdate?.Invoke(latestValue);
-                }
+                if (EqualityComparer<T>.Default.Equals(latestValue, value)) return;
+                latestValue = value;
+                OnUpdate?.Invoke(latestValue);
             }
         }
 

@@ -28,7 +28,7 @@ namespace DCL.AvatarRendering.Thumbnails.Utils
         private static readonly IExtendedObjectPool<URLBuilder> URL_BUILDER_POOL = new ExtendedObjectPool<URLBuilder>(() => new URLBuilder(), defaultCapacity: 2);
 
         public static async UniTask<SceneAssetBundleManifest> LoadAssetBundleManifestAsync(IWebRequestController webRequestController, URLDomain assetBundleURL,
-            string hash, string reportCategory, CancellationToken ct)
+            string hash, ReportData reportCategory, CancellationToken ct)
         {
             using var scope = URL_BUILDER_POOL.Get(out var urlBuilder);
             urlBuilder!.Clear();

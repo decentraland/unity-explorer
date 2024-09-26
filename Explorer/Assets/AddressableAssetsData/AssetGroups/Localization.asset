@@ -1,0 +1,95 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
+  m_Name: Localization
+  m_EditorClassIdentifier: 
+  m_GroupName: Localization
+  m_Data:
+    m_SerializedData: []
+  m_GUID: 543e19206f1dca4489f416b84c0af393
+  m_SerializeEntries:
+  - m_GUID: 28c5c605e27f54e06828acc8bd7f9569
+    m_Address: SceneLoadingDefaultImages_en
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Locale-en
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 48b7b423583d84e3d9f2dbeaa25c3aa1
+    m_Address: Assets/Locales/Localization Tables/Authentication Shared Data.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 743a5a3b15e404426ab7c23cffec5d68
+    m_Address: Assets/Locales/Localization Tables/SceneLoadingScreen Shared Data.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8202382ae456247869a9b5cc2c01ff12
+    m_Address: Assets/Locales/Localization Tables/SceneLoadingDefaultImages Shared
+      Data.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8812e0161b0a243b88f588a34592df12
+    m_Address: SceneLoadingScreen_en
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Locale-en
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8d2e0d384b99940ddb01ab23ce4de748
+    m_Address: Authentication_en
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Locale-en
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b6e9645ea90c9494a9ae8aba0ba9f004
+    m_Address: Tests Localization Table_en
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Locale-en
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b983fc3744bd749df80bbb972f615bc9
+    m_Address: UI Text Localization Table_en
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Locale-en
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: cf1ca0ee4ff5745e2b011b478729f66d
+    m_Address: English (en)
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Locale
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d8a2184e2c38d488f929003b0f0505af
+    m_Address: Assets/Locales/Localization Tables/SceneLoadingDefaultTips Shared
+      Data.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: fa6d78a0e08f14179b202ccca9720bb9
+    m_Address: Assets/Locales/Localization Tables/UI Text Localization Table Shared
+      Data.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: fabe3f0151ab4457784d0dd1cf522f32
+    m_Address: SceneLoadingDefaultTips_en
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Locale-en
+    FlaggedDuringContentUpdateRestriction: 0
+  m_ReadOnly: 0
+  m_Settings: {fileID: 11400000, guid: fc8a9d2b539788c47a5b305639fa8b34, type: 2}
+  m_SchemaSet:
+    m_Schemas:
+    - {fileID: 11400000, guid: 8194b996ad50b604fabf9b7ef1465f42, type: 2}
+    - {fileID: 11400000, guid: 870b339369d95b94b9f60658ca00e0f9, type: 2}

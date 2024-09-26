@@ -13,6 +13,14 @@ namespace DCL.Optimization.PerformanceBudgeting
             currentBudget = initialBudget;
         }
 
+        public int CurrentBudget
+        {
+            get
+            {
+                lock (this) { return currentBudget; }
+            }
+        }
+
         public bool TrySpendBudget()
         {
             lock (this)

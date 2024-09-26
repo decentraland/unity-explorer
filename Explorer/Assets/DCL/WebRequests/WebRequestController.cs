@@ -57,12 +57,21 @@ namespace DCL.WebRequests
 
                     attemptsLeft--;
 
-                    // Print verbose
-                    ReportHub.LogError(
-                        envelope.ReportCategory,
-                        $"Exception occured on loading {typeof(TWebRequest).Name} from {envelope.CommonArguments.URL} with {envelope}\n"
-                        + $"Attempt Left: {attemptsLeft}"
-                    );
+                    if (!envelope.SuppressErrors)
+
+                        // Print verbose
+                        ReportHub.LogError(
+                            envelope.ReportData,
+                            $"Exception occured on loading {typeof(TWebRequest).Name} from {envelope.CommonArguments.URL} with {envelope}\n"
+                            + $"Attempt Left: {attemptsLeft}"
+                        );
+
+                    if (exception.Message.Contains(WebRequestUtils.CANNOT_CONNECT_ERROR))
+                    {
+                        // TODO: (JUANI) From time to time we can get several curl errors that need a small delay to recover
+                        // This can be removed if we solve the issue with Unity
+                        await UniTask.Delay(TimeSpan.FromSeconds(0.5f));
+                    }
 
                     if (exception.IsIrrecoverableError(attemptsLeft))
                         throw;

@@ -1,10 +1,10 @@
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Bunches;
+using DCL.Optimization.Multithreading;
 using DCL.Utilities.Extensions;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
 using System.Collections.Generic;
-using Utility.Multithreading;
 
 namespace DCL.Multiplayer.Profiles.RemoveIntentions
 {
@@ -12,17 +12,17 @@ namespace DCL.Multiplayer.Profiles.RemoveIntentions
     {
         private readonly IRoomHub roomHub;
         private readonly HashSet<RemoveIntention> list = new ();
-        private readonly MultithreadSync multithreadSync = new();
+        private readonly MutexSync multithreadSync = new();
 
         public ThreadSafeRemoveIntentions(IRoomHub roomHub)
         {
             this.roomHub = roomHub;
 
             this.roomHub.IslandRoom().Participants.UpdatesFromParticipant += ParticipantsOnUpdatesFromParticipant;
-            this.roomHub.SceneRoom().Participants.UpdatesFromParticipant += ParticipantsOnUpdatesFromParticipant;
+            this.roomHub.SceneRoom().Room().Participants.UpdatesFromParticipant += ParticipantsOnUpdatesFromParticipant;
 
             this.roomHub.IslandRoom().ConnectionUpdated += OnConnectionUpdated;
-            this.roomHub.SceneRoom().ConnectionUpdated += OnConnectionUpdated;
+            this.roomHub.SceneRoom().Room().ConnectionUpdated += OnConnectionUpdated;
         }
 
         private void OnConnectionUpdated(IRoom room, ConnectionUpdate connectionupdate)
@@ -43,10 +43,10 @@ namespace DCL.Multiplayer.Profiles.RemoveIntentions
         ~ThreadSafeRemoveIntentions()
         {
             roomHub.IslandRoom().Participants.UpdatesFromParticipant -= ParticipantsOnUpdatesFromParticipant;
-            roomHub.SceneRoom().Participants.UpdatesFromParticipant -= ParticipantsOnUpdatesFromParticipant;
+            roomHub.SceneRoom().Room().Participants.UpdatesFromParticipant -= ParticipantsOnUpdatesFromParticipant;
 
             roomHub.IslandRoom().ConnectionUpdated -= OnConnectionUpdated;
-            roomHub.SceneRoom().ConnectionUpdated -= OnConnectionUpdated;
+            roomHub.SceneRoom().Room().ConnectionUpdated -= OnConnectionUpdated;
         }
 
         private void ParticipantsOnUpdatesFromParticipant(Participant participant, UpdateFromParticipant update)

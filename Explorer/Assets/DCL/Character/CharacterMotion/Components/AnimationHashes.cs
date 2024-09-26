@@ -20,5 +20,7 @@ namespace DCL.Character.CharacterMotion.Components
         public static readonly int LONG_FALL = Animator.StringToHash("IsLongFall");
         public static readonly int STUNNED = Animator.StringToHash("IsStunned");
         public static readonly int SLIDE_BLEND = Animator.StringToHash("SlideBlend");
+        public static readonly int JUMPING_TAG = Animator.StringToHash("Jumping");
+
     }
 }

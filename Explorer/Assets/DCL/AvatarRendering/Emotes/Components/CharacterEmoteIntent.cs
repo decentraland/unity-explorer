@@ -16,7 +16,7 @@ namespace DCL.AvatarRendering.Emotes
         public bool Spatial;
         public TriggerSource TriggerSource;
 
-        public void UpdateId(URN emoteId)
+        public void UpdateRemoteId(URN emoteId)
         {
             this.EmoteId = emoteId;
             this.Spatial = true;

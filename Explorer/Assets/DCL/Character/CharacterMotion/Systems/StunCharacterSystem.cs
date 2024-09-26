@@ -6,6 +6,7 @@ using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
 using DCL.Diagnostics;
 using ECS.Abstract;
+using ECS.LifeCycle.Components;
 using UnityEngine;
 
 namespace DCL.CharacterMotion.Systems
@@ -30,6 +31,7 @@ namespace DCL.CharacterMotion.Systems
         }
 
         [Query]
+        [None(typeof(DeleteEntityIntention))]
         private void CheckStunStatus(
             [Data] float currentTime,
             ref CharacterRigidTransform rigidTransform,

@@ -39,6 +39,7 @@ using MVC;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using DCL.Chat.MessageBus;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Audio;
@@ -84,10 +85,13 @@ namespace DCL.PluginSystem.Global
         private readonly INotificationsBusController notificationsBusController;
         private readonly ChatEntryConfigurationSO chatEntryConfiguration;
         private readonly IInputBlock inputBlock;
-
+        private readonly IChatMessagesBus chatMessagesBus;
+        
         private NavmapController? navmapController;
         private SettingsController? settingsController;
         private BackpackSubPlugin? backpackSubPlugin;
+        
+        
 
         public ExplorePanelPlugin(IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
@@ -122,7 +126,8 @@ namespace DCL.PluginSystem.Global
             IInputBlock inputBlock,
             IEmoteProvider emoteProvider,
             Arch.Core.World world,
-            Entity playerEntity)
+            Entity playerEntity,
+            IChatMessagesBus chatMessagesBus)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -158,6 +163,7 @@ namespace DCL.PluginSystem.Global
             this.emoteProvider = emoteProvider;
             this.world = world;
             this.playerEntity = playerEntity;
+            this.chatMessagesBus = chatMessagesBus;
         }
 
         public void Dispose()
@@ -208,7 +214,9 @@ namespace DCL.PluginSystem.Global
             ProvidedAsset<QualitySettingsAsset> qualitySettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.QualitySettingsAsset, ct);
             settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>(), settingsMenuConfiguration.Value, generalAudioMixer.Value, realmPartitionSettings.Value, landscapeData.Value, qualitySettingsAsset.Value);
 
-            navmapController = new NavmapController(navmapView: explorePanelView.GetComponentInChildren<NavmapView>(), mapRendererContainer.MapRenderer, placesAPIService, webRequestController, webBrowser, dclInput, realmNavigator, realmData, mapPathEventBus, world, playerEntity, inputBlock);
+            navmapController = new NavmapController(navmapView: explorePanelView.GetComponentInChildren<NavmapView>(),
+                mapRendererContainer.MapRenderer, placesAPIService, webRequestController, webBrowser, dclInput,
+                realmNavigator, realmData, mapPathEventBus, world, playerEntity, inputBlock, chatMessagesBus);
 
             await navmapController.InitializeAssetsAsync(assetsProvisioner, ct);
             await backpackSubPlugin.InitializeAsync(settings.BackpackSettings, explorePanelView.GetComponentInChildren<BackpackView>(), ct);

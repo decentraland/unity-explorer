@@ -22,7 +22,7 @@ namespace DCL.Multiplayer.Movement
             }
             else
             {
-                remainedDeltaTime = intComp.Time - intComp.TotalDuration;
+                remainedDeltaTime = intComp.TotalDuration - intComp.Time;
                 intComp.Time = intComp.TotalDuration;
 
                 lookDirection = intComp.End.velocitySqrMagnitude > MIN_DIRECTION_SQR_MAGNITUDE ? intComp.End.velocity : intComp.End.position - transComp.Transform.position;

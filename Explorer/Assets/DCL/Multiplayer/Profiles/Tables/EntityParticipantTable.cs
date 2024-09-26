@@ -25,7 +25,7 @@ namespace DCL.Multiplayer.Profiles.Tables
             entityToWalletId[entity].EnsureNotNull();
 
         public bool Has(string walletId) =>
-            walletIdToEntity.ContainsKey(walletId);
+            !string.IsNullOrEmpty(walletId) && walletIdToEntity.ContainsKey(walletId);
 
         public IReadOnlyCollection<string> Wallets() =>
             walletIdToEntity.Keys;

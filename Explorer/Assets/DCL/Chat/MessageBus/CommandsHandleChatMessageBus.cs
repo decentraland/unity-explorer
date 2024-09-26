@@ -34,24 +34,26 @@ namespace DCL.Chat.MessageBus
 
         public void Send(string message)
         {
+            //If the message doesn't start as a command (with "/"), we just forward it to the chat
+            if (!chatCommandsHandler.StartsLikeCommand(message))
+            {
+                origin.Send(message);
+                return;
+            }
+
             if (chatCommandsHandler.TryGetChatCommand(message, ref commandTuple))
             {
                 ExecuteChatCommandAsync(commandTuple.command, commandTuple.param).Forget();
                 return;
             }
 
-            if (chatCommandsHandler.StartsLikeCommand(message))
-            {
-                SendFromSystem($"🔴 Command not found: '{message}'");
-                return;
-            }
-
-            origin.Send(message);
+            SendFromSystem($"🔴 Command not found: '{message}'");
         }
 
         private async UniTask ExecuteChatCommandAsync(IChatCommand command, Match param)
         {
             commandCts = commandCts.SafeRestart();
+
             string? response = await command.ExecuteAsync(param, commandCts.Token);
 
             if (!string.IsNullOrEmpty(response))

@@ -11,15 +11,15 @@ namespace DCL.PluginSystem.World.Dependencies
         public readonly Dictionary<CRDTEntity, Entity> FakeEntitiesMap;
         public readonly Entity SceneRoot;
         public readonly ISceneData SceneData;
-        public readonly MultithreadSync Multithread;
+        public readonly MultiThreadSync MultiThread;
 
         public EmptyScenesWorldSharedDependencies(Dictionary<CRDTEntity, Entity> fakeEntitiesMap, Entity sceneRoot,
-            ISceneData sceneData, MultithreadSync multithreadSync)
+            ISceneData sceneData, MultiThreadSync multiThreadSync)
         {
             FakeEntitiesMap = fakeEntitiesMap;
             SceneRoot = sceneRoot;
             SceneData = sceneData;
-            Multithread = multithreadSync;
+            MultiThread = multiThreadSync;
         }
     }
 }

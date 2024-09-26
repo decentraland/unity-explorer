@@ -24,7 +24,7 @@ namespace ECS.StreamableLoading.Common
         public EntityReference Entity { get; private set; }
 
         /// <summary>
-        ///     Loading intention will persist so it can be used to dereference unused assets
+        ///     Loading intention will persist, so it can be used to dereference unused assets
         /// </summary>
         public TLoadingIntention LoadingIntention { get; private set; }
 

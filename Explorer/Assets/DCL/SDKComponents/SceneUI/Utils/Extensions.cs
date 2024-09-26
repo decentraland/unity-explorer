@@ -4,7 +4,6 @@ using DCL.Input.Component;
 using DCL.SDKComponents.SceneUI.Classes;
 using DCL.SDKComponents.SceneUI.Components;
 using Google.Protobuf.Collections;
-using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.UIElements;
 

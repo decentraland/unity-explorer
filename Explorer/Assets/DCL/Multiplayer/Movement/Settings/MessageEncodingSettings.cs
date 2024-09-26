@@ -54,14 +54,25 @@ namespace DCL.Multiplayer.Movement.Settings
     [Serializable]
     public class MovementEncodingConfig
     {
-        public int XZ_BITS = 9;
+        [SerializeField]
+        private byte XZ_BITS = 9;
 
         [Space]
-        public int Y_MAX = 500;
-        public int Y_BITS = 13;
+        [SerializeField] private int Y_MAX = 500;
+        [SerializeField] private byte Y_BITS = 13;
 
         [Space]
-        public int MAX_VELOCITY = 40;
-        public int VELOCITY_BITS = 1;
+        [SerializeField] private int MAX_VELOCITY = 40;
+        [SerializeField] private byte VELOCITY_BITS = 1;
+
+        public byte XZ__BITS => XZ_BITS;
+
+        public int Y__MAX => Y_MAX;
+
+        public byte Y__BITS => Y_BITS;
+
+        public int MAX__VELOCITY => MAX_VELOCITY;
+
+        public byte VELOCITY_AXIS_FIELD_SIZE_IN_BITS => VELOCITY_BITS;
     }
 }

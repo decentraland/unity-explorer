@@ -1,5 +1,6 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Notifications.Serialization;
 using DCL.NotificationsBusController.NotificationsBus;
@@ -75,6 +76,7 @@ namespace DCL.Notifications
                 await webRequestController.GetAsync(
                                                commonArguments,
                                                ct,
+                                               ReportCategory.UI,
                                                signInfo: WebRequestSignInfo.NewFromRaw(string.Empty, commonArguments.URL, unixTimestamp, "get"),
                                                headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, unixTimestamp))
                                           .CreateFromNewtonsoftJsonAsync<List<INotification>>(serializerSettings: SERIALIZER_SETTINGS);
@@ -105,6 +107,7 @@ namespace DCL.Notifications
                     await webRequestController.GetAsync(
                                                    commonArguments,
                                                    ct,
+                                                   ReportCategory.UI,
                                                    signInfo: WebRequestSignInfo.NewFromRaw(string.Empty, commonArguments.URL, unixTimestamp, "get"),
                                                    headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, unixTimestamp))
                                               .CreateFromNewtonsoftJsonAsync<List<INotification>>(serializerSettings: SERIALIZER_SETTINGS);
@@ -135,8 +138,9 @@ namespace DCL.Notifications
 
             await webRequestController.PutAsync(
                                            commonArgumentsForSetRead,
-                                           WebRequests.GenericPutArguments.CreateJson(bodyBuilder.ToString()),
+                                           GenericPutArguments.CreateJson(bodyBuilder.ToString()),
                                            ct,
+                                           ReportCategory.UI,
                                            signInfo: WebRequestSignInfo.NewFromRaw(string.Empty, commonArgumentsForSetRead.URL, unixTimestamp, "put"),
                                            headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, unixTimestamp))
                                       .WithNoOpAsync();

@@ -43,7 +43,7 @@ namespace ECS.SceneLifeCycle.Tests
             // Create 4
             for (var i = 0; i < 4; i++)
             {
-                world.Create(new SceneDefinitionComponent(
+                world.Create(SceneDefinitionComponentFactory.CreateFromDefinition(
                     new SceneEntityDefinition
                     {
                         metadata = new SceneMetadata
@@ -54,7 +54,7 @@ namespace ECS.SceneLifeCycle.Tests
                     },
                     new IpfsPath()), new PartitionComponent
                 {
-                    Bucket = (byte)i, RawSqrDistance = ParcelMathHelper.SQR_PARCEL_SIZE * i
+                    Bucket = (byte)i, RawSqrDistance = ParcelMathHelper.SQR_PARCEL_SIZE * i,
                 }, new VisualSceneState());
             }
 
@@ -86,7 +86,7 @@ namespace ECS.SceneLifeCycle.Tests
 
             for (byte i = 2; i <= 4; i++)
             {
-                world.Create(new SceneDefinitionComponent(
+                world.Create(SceneDefinitionComponentFactory.CreateFromDefinition(
                     new SceneEntityDefinition
                     {
                         metadata = new SceneMetadata
@@ -99,7 +99,7 @@ namespace ECS.SceneLifeCycle.Tests
                     },
                     new IpfsPath()), new PartitionComponent
                 {
-                    Bucket = i, RawSqrDistance = ParcelMathHelper.PARCEL_SIZE * i * ParcelMathHelper.PARCEL_SIZE * i - 1f, OutOfRange = i < 4
+                    Bucket = i, RawSqrDistance = (ParcelMathHelper.PARCEL_SIZE * i * ParcelMathHelper.PARCEL_SIZE * i) - 1f, OutOfRange = i < 4,
                 }, Substitute.For<ISceneFacade>());
             }
 

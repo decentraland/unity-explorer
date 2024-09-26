@@ -27,9 +27,9 @@ namespace DCL.SDKComponents.Tween.Components
 
         public override void SetResult(ref SDKTransform sdkTransform)
         {
-            sdkTransform.Position = currentValue;
+            sdkTransform.Position.Value = currentValue;
 
-            sdkTransform.Rotation = startRotation;
+            sdkTransform.Rotation.Value = startRotation;
             sdkTransform.Scale = startScale;
         }
     }
@@ -54,8 +54,8 @@ namespace DCL.SDKComponents.Tween.Components
         {
             sdkTransform.Scale = currentValue;
 
-            sdkTransform.Position = startPosition;
-            sdkTransform.Rotation = startRotation;
+            sdkTransform.Position.Value = startPosition;
+            sdkTransform.Rotation.Value = startRotation;
         }
     }
 
@@ -79,9 +79,9 @@ namespace DCL.SDKComponents.Tween.Components
 
         public override void SetResult(ref SDKTransform sdkTransform)
         {
-            sdkTransform.Rotation = currentValue;
+            sdkTransform.Rotation.Value = currentValue;
 
-            sdkTransform.Position = startPosition;
+            sdkTransform.Position.Value = startPosition;
             sdkTransform.Scale = startScale;
         }
     }

@@ -2,6 +2,7 @@
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.WebRequests;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
@@ -19,6 +20,8 @@ namespace DCL.Time
         private const float STARTING_CYCLE_HOUR = 0.01f;
 
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
+        private readonly IWebRequestController webRequestController;
+
         private DateTime cachedServerTime;
         private DateTime cachedSystemTime;
         private float cachedTimeInSeconds;
@@ -26,9 +29,10 @@ namespace DCL.Time
 
         private string TIME_SERVER_URL => decentralandUrlsSource.Url(DecentralandUrl.PeerAbout);
 
-        public WorldTimeProvider(IDecentralandUrlsSource decentralandUrlsSource)
+        public WorldTimeProvider(IDecentralandUrlsSource decentralandUrlsSource, IWebRequestController webRequestController)
         {
             this.decentralandUrlsSource = decentralandUrlsSource;
+            this.webRequestController = webRequestController;
         }
 
         public async UniTask<float> GetWorldTimeAsync(CancellationToken ct)
@@ -71,8 +75,10 @@ namespace DCL.Time
 
         private async UniTask<StreamableLoadingResult<string>> GetTimeFromServerAsync(SubIntention intention, IAcquiredBudget budget, IPartitionComponent partition, CancellationToken ct)
         {
-            using UnityWebRequest wr = await UnityWebRequest.Get(TIME_SERVER_URL).SendWebRequest().WithCancellation(ct);
-            return new StreamableLoadingResult<string>(wr.GetResponseHeader("date"));
+            string date = await webRequestController.GetAsync(TIME_SERVER_URL, ct, ReportCategory.JAVASCRIPT)
+                                                    .GetResponseHeaderAsync("date");
+
+            return new StreamableLoadingResult<string>(date);
         }
 
         private DateTime ObtainDateTimeFromServerTime(string serverDate)

@@ -23,7 +23,7 @@ namespace DCL.PluginSystem.World.Dependencies
         public readonly IEntityCollidersSceneCache EntityCollidersSceneCache;
         public readonly ISceneStateProvider SceneStateProvider;
         public readonly EntityEventsBuilder EntityEventsBuilder;
-        public readonly MultithreadSync MultithreadSync;
+        public readonly MultiThreadSync MultiThreadSync;
         public readonly ISystemGroupsUpdateGate EcsGroupThrottler;
         public readonly ISystemsUpdateGate EcsSystemsGate;
 
@@ -37,13 +37,13 @@ namespace DCL.PluginSystem.World.Dependencies
             ISceneExceptionsHandler sceneExceptionsHandler,
             IEntityCollidersSceneCache entityCollidersSceneCache,
             ISceneStateProvider sceneStateProvider, EntityEventsBuilder entityEventsBuilder,
-            MultithreadSync multithreadSync, IWorldTimeProvider worldTimeProvider,
+            MultiThreadSync multiThreadSync, IWorldTimeProvider worldTimeProvider,
             ISystemGroupsUpdateGate ecsGroupThrottler, ISystemsUpdateGate ecsSystemsGate)
         {
             SceneData = sceneData;
             EcsToCRDTWriter = ecsToCRDTWriter;
             EntitiesMap = entitiesMap;
-            MultithreadSync = multithreadSync;
+            MultiThreadSync = multiThreadSync;
             ScenePartition = scenePartition;
             SceneStateProvider = sceneStateProvider;
             SceneExceptionsHandler = sceneExceptionsHandler;

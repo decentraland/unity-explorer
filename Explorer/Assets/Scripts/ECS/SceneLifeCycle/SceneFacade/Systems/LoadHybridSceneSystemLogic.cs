@@ -1,8 +1,7 @@
-﻿using Arch.Core;
-using CommunicationData.URLHelpers;
+﻿using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.Ipfs;
-using DCL.Multiplayer.SDK.Systems.GlobalWorld;
 using DCL.WebRequests;
 using Global.Dynamic;
 using SceneRunner.Scene;
@@ -19,12 +18,10 @@ namespace ECS.SceneLifeCycle.Systems
         private readonly URLDomain hybridSceneContentServerDomain;
         private readonly Vector2Int startParcel;
         private readonly string world;
-        private HibridSceneHashedContent? hybridSceneHashedContent;
+        private HybridSceneHashedContent? hybridSceneHashedContent;
         private string? remoteSceneID;
 
-        public LoadHybridSceneSystemLogic(IWebRequestController webRequestController, URLDomain assetBundleURL, HybridSceneParams hybridSceneParams,
-            ICharacterDataPropagationUtility characterDataPropagationUtility, World globalWorld, Entity playerEntity) :
-            base(webRequestController, characterDataPropagationUtility, assetBundleURL, globalWorld, playerEntity)
+        public LoadHybridSceneSystemLogic(IWebRequestController webRequestController, URLDomain assetBundleURL, HybridSceneParams hybridSceneParams) : base(webRequestController, assetBundleURL)
         {
             world = hybridSceneParams.World;
             hybridSceneContentServer = hybridSceneParams.HybridSceneContentServer;
@@ -47,9 +44,9 @@ namespace ECS.SceneLifeCycle.Systems
         protected override string GetAssetBundleSceneId(string _) =>
             hybridSceneHashedContent!.remoteSceneID;
 
-        protected override async UniTask<ISceneContent> GetSceneHashedContentAsync(SceneEntityDefinition definition, URLDomain contentBaseUrl, string reportCategory)
+        protected override async UniTask<ISceneContent> GetSceneHashedContentAsync(SceneEntityDefinition definition, URLDomain contentBaseUrl, ReportData reportCategory)
         {
-            hybridSceneHashedContent = new HibridSceneHashedContent(webRequestController, definition, contentBaseUrl, assetBundleURL);
+            hybridSceneHashedContent = new HybridSceneHashedContent(webRequestController, definition, contentBaseUrl, assetBundleURL);
 
             if (await hybridSceneHashedContent.TryGetRemoteSceneIDAsync(hybridSceneContentServerDomain, hybridSceneContentServer, startParcel, world, reportCategory)) { await hybridSceneHashedContent.GetRemoteSceneDefinitionAsync(hybridSceneContentServerDomain, reportCategory); }
 

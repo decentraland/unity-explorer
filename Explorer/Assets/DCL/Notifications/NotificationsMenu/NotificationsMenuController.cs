@@ -1,6 +1,7 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Backpack;
+using DCL.Diagnostics;
 using DCL.Notifications.NotificationEntry;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
@@ -19,6 +20,10 @@ namespace DCL.Notifications.NotificationsMenu
     public class NotificationsMenuController : IDisposable
     {
         private const int PIXELS_PER_UNIT = 50;
+        private static readonly List<NotificationType> NOTIFICATION_TYPES_TO_IGNORE = new()
+            {
+                NotificationType.INTERNAL_ARRIVED_TO_DESTINATION
+            };
 
         private readonly NotificationsMenuView view;
         private readonly NotificationsRequestController notificationsRequestController;
@@ -153,7 +158,8 @@ namespace DCL.Notifications.NotificationsMenu
                 new CommonArguments(URLAddress.FromString(notificationData.GetThumbnail())),
                 new GetTextureArguments(false),
                 GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp),
-                ct);
+                ct,
+                ReportCategory.UI);
             Sprite? thumbnailSprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height),
                 VectorUtilities.OneHalf, PIXELS_PER_UNIT, 0, SpriteMeshType.FullRect, Vector4.one, false);
             notificationThumbnailCache.Add(notificationData.Id, thumbnailSprite);
@@ -162,6 +168,9 @@ namespace DCL.Notifications.NotificationsMenu
 
         private void OnNotificationReceived(INotification notification)
         {
+            if(NOTIFICATION_TYPES_TO_IGNORE.Contains(notification.Type))
+                return;
+
             notifications.Insert(0, notification);
             view.LoopList.SetListItemCount(notifications.Count, false);
             view.LoopList.RefreshAllShownItem();

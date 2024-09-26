@@ -13,22 +13,16 @@ MonoBehaviour:
   m_Name: LODSettings
   m_EditorClassIdentifier: 
   <LodPartitionBucketThresholds>k__BackingField: 05000000
+  <SDK7LodThreshold>k__BackingField: 2
   <DefaultTextureArrayResolutionDescriptors>k__BackingField:
-  - Resolution: 256
-    ArraySize: 500
-    InitialArrayCapacity: 100
   - Resolution: 512
     ArraySize: 100
-    InitialArrayCapacity: 10
+    InitialArrayCapacity: 5
   - Resolution: 1024
     ArraySize: 100
     InitialArrayCapacity: 10
-  - Resolution: 2048
-    ArraySize: 25
-    InitialArrayCapacity: 10
-  - Resolution: 4096
-    ArraySize: 25
-    InitialArrayCapacity: 10
+  <ArraySizeForMissingResolutions>k__BackingField: 10
+  <CapacityForMissingResolutions>k__BackingField: 1
   <LODDebugColors>k__BackingField:
   - {r: 0, g: 1, b: 0, a: 1}
   - {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
@@ -36,4 +30,3 @@ MonoBehaviour:
   - {r: 0, g: 0, b: 0, a: 1}
   <DebugCube>k__BackingField: {fileID: 8255452435763093729, guid: c9870b17ce36346458f07a63c096a16a, type: 3}
   <EnableLODStreaming>k__BackingField: 1
-  <AsyncIntegrationTimeMS>k__BackingField: 33

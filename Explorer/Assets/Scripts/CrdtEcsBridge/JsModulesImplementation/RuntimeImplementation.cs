@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Time;
+using DCL.WebRequests;
 using ECS;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
@@ -29,13 +30,15 @@ namespace CrdtEcsBridge.JsModulesImplementation
         private readonly ISceneData sceneData;
         private readonly IWorldTimeProvider timeProvider;
         private readonly IRealmData realmData;
+        private readonly IWebRequestController webRequestController;
 
-        public RuntimeImplementation(IJsOperations jsOperations, ISceneData sceneData, IWorldTimeProvider timeProvider, IRealmData realmData)
+        public RuntimeImplementation(IJsOperations jsOperations, ISceneData sceneData, IWorldTimeProvider timeProvider, IRealmData realmData, IWebRequestController webRequestController)
         {
             this.jsOperations = jsOperations;
             this.sceneData = sceneData;
             this.timeProvider = timeProvider;
             this.realmData = realmData;
+            this.webRequestController = webRequestController;
         }
 
         public void Dispose() { }
@@ -49,8 +52,8 @@ namespace CrdtEcsBridge.JsModulesImplementation
 
             async UniTask<StreamableLoadingResult<ITypedArray<byte>>> CreateFileRequestAsync(SubIntention intention, IAcquiredBudget budget, IPartitionComponent partition, CancellationToken ct)
             {
-                using UnityWebRequest wr = await UnityWebRequest.Get(intention.CommonArguments.URL).SendWebRequest().WithCancellation(ct);
-                NativeArray<byte>.ReadOnly nativeBytes = wr.downloadHandler.nativeData;
+                using DownloadHandler? downloadHandler = await webRequestController.GetAsync(intention.CommonArguments.URL, ct, ReportCategory.JAVASCRIPT).ExposeDownloadHandlerAsync();
+                NativeArray<byte>.ReadOnly nativeBytes = downloadHandler.nativeData;
 
                 await UniTask.SwitchToThreadPool();
 
@@ -63,7 +66,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
             }
 
             var intent = new SubIntention(new CommonLoadingArguments(url));
-            ITypedArray<byte> content = (await intent.RepeatLoopAsync(NoAcquiredBudget.INSTANCE, PartitionComponent.TOP_PRIORITY, CreateFileRequestAsync, ReportCategory.ENGINE, ct)).UnwrapAndRethrow();
+            ITypedArray<byte> content = (await intent.RepeatLoopAsync(NoAcquiredBudget.INSTANCE, PartitionComponent.TOP_PRIORITY, CreateFileRequestAsync, ReportCategory.JAVASCRIPT, ct)).UnwrapAndRethrow();
 
             return new IRuntime.ReadFileResponse
             {

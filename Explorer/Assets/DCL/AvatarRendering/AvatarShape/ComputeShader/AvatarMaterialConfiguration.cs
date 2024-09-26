@@ -146,7 +146,8 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             else if (name.Contains(ComputeShaderConstants.HAIR_MATERIAL_NAME, StringComparison.OrdinalIgnoreCase))
                 avatarMaterial.SetColor(BASE_COLOR, avatarShapeComponent.HairColor);
 
-            avatarMaterial.SetInt(CULL_MODE, (int)originalMaterial.GetFloat(CULL));
+            //Force back-face culling for all avatar materials
+            avatarMaterial.SetInt(CULL_MODE, 2);
         }
     }
 }

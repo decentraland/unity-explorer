@@ -6,7 +6,8 @@
         "UnityEditor.TestRunner",
         "Diagnostics",
         "ECS",
-        "Arch.SystemGroups"
+        "Arch.SystemGroups",
+        "DCL.Optimization"
     ],
     "includePlatforms": [
         "Editor"

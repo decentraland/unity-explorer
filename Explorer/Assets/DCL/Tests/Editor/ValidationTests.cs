@@ -1,6 +1,4 @@
-﻿#nullable enable
-
-using Cysharp.Threading.Tasks;
+﻿using Cysharp.Threading.Tasks;
 using DCL.Utilities.Extensions;
 using Global.Dynamic;
 using Microsoft.CodeAnalysis;
@@ -35,7 +33,7 @@ namespace DCL.Tests.Editor
         {
             "node_modules",
             "dist",
-            "sign-server"
+            "sign-server",
         };
 
         [Test]
@@ -44,13 +42,18 @@ namespace DCL.Tests.Editor
             // Arrange
             string[] allDirectories = Directory.GetDirectories(Application.dataPath!, "*", SearchOption.AllDirectories);
             string excludedDirectory = Path.Combine(Application.dataPath, "AddressableAssetsData");
-            allDirectories = allDirectories.Where(directory => !directory.StartsWith(excludedDirectory, StringComparison.OrdinalIgnoreCase)).ToArray();
+
+            allDirectories = allDirectories.Where(directory =>
+                                                !directory.StartsWith(excludedDirectory, StringComparison.OrdinalIgnoreCase)
+                                                && !directory.Contains("_SceneContext", StringComparison.OrdinalIgnoreCase))
+                                           .ToArray();
 
             // Act
             var emptyDirectories = allDirectories
                                   .Where(IsDirectoryEmpty)
                                   .Where(p => PathInIgnore(p) == false)
                                   .ToList();
+
             string errorMessage = "Found empty directories:\n" + string.Join("\n", emptyDirectories);
 
             // Assert
@@ -130,7 +133,7 @@ namespace DCL.Tests.Editor
         {
             const string MAIN_SCENE = "Assets/Scenes/Main.unity";
             EditorSceneManager.OpenScene(MAIN_SCENE);
-            var boot = Object.FindObjectOfType<MainSceneLoader>().EnsureNotNull("Boot not found!")!;
+            MainSceneLoader boot = Object.FindObjectOfType<MainSceneLoader>().EnsureNotNull("Boot not found!")!;
             yield return boot.ValidateSettingsAsync().ToCoroutine();
         }
 

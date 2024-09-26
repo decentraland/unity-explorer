@@ -7,13 +7,13 @@ using DCL.Multiplayer.Connections.Messaging.Pipe;
 using DCL.Multiplayer.Movement;
 using DCL.Multiplayer.Movement.Settings;
 using DCL.Multiplayer.Profiles.Bunches;
+using DCL.Optimization.Multithreading;
 using DCL.Optimization.Pools;
 using Decentraland.Kernel.Comms.Rfc4;
 using LiveKit.Proto;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using Utility.Multithreading;
 
 namespace DCL.Multiplayer.Emotes
 {
@@ -29,7 +29,7 @@ namespace DCL.Multiplayer.Emotes
         private EmoteSendIdProvider sendIdProvider;
 
         private readonly HashSet<RemoteEmoteIntention> emoteIntentions = new (PoolConstants.AVATARS_COUNT);
-        private readonly MultithreadSync sync = new();
+        private readonly MutexSync sync = new();
 
         public MultiplayerEmotesMessageBus(IMessagePipesHub messagePipesHub, ProvidedAsset<MultiplayerDebugSettings> settings)
         {

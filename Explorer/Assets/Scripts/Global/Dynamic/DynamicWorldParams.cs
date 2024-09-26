@@ -65,6 +65,7 @@ namespace Global.Dynamic
         public IReadOnlyList<int2> StaticLoadPositions { get; init; }
         public List<string> Realms { get; init; }
         public Vector2Int StartParcel { get; init; }
+        public bool IsolateScenesCommunication { get; init; }
         public bool EnableLandscape { get; init; }
         public bool EnableLOD { get; init; }
         public bool EnableAnalytics { get; init; }

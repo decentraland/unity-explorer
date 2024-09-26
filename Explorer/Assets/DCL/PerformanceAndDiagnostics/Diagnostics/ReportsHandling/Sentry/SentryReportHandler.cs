@@ -1,6 +1,9 @@
+using DCL.Optimization.Pools;
+using DCL.Optimization.ThreadSafePool;
 using Sentry;
 using Sentry.Unity;
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -8,9 +11,17 @@ namespace DCL.Diagnostics.Sentry
 {
     public class SentryReportHandler : ReportHandlerBase
     {
+        public delegate void ConfigureScope(Scope scope);
+
+        private readonly List<ConfigureScope> scopeConfigurators = new (10);
+
+        private readonly PerReportScope.Pool scopesPool;
+
         public SentryReportHandler(ICategorySeverityMatrix matrix, bool debounceEnabled)
             : base(matrix, debounceEnabled)
         {
+            scopesPool = new PerReportScope.Pool(scopeConfigurators);
+
             // To prevent unwanted logs, manual initialization is required.
             // We need to delay the replacement of Debug.unityLogger.logHandler instance
             // to ensure that Unity's default logger is initially injected in our custom loggers.
@@ -30,15 +41,33 @@ namespace DCL.Diagnostics.Sentry
             SentrySdk.Init(options);
         }
 
+        public void AddIdentityToScope(Scope scope, string wallet)
+        {
+            scope.SetTag("wallet", wallet);
+        }
+
+        public void AddCurrentSceneToScope(Scope scope, SceneShortInfo sceneInfo)
+        {
+            scope.SetTag("current_scene.base_parcel", sceneInfo.BaseParcel.ToString());
+            scope.SetTag("current_scene.name", sceneInfo.Name);
+        }
+
+        public void AddScopeConfigurator(ConfigureScope configureScope)
+        {
+            scopeConfigurators.Add(configureScope);
+        }
+
         internal override void LogInternal(LogType logType, ReportData category, Object context, object message)
         {
-            SentrySdk.CaptureMessage(message.ToString(), scope => AddReportData(scope, in category), ToSentryLevel(in logType));
+            using PoolExtensions.Scope<PerReportScope> reportScope = scopesPool.Scope(category);
+            SentrySdk.CaptureMessage(message.ToString(), reportScope.Value.ExecuteCached, ToSentryLevel(in logType));
         }
 
         internal override void LogFormatInternal(LogType logType, ReportData category, Object context, object message, params object[] args)
         {
+            using PoolExtensions.Scope<PerReportScope> reportScope = scopesPool.Scope(category);
             var format = string.Format(message.ToString(), args);
-            SentrySdk.CaptureMessage(format, scope => AddReportData(scope, in category), ToSentryLevel(in logType));
+            SentrySdk.CaptureMessage(format, reportScope.Value.ExecuteCached, ToSentryLevel(in logType));
         }
 
         internal override void LogExceptionInternal<T>(T ecsSystemException)
@@ -48,23 +77,8 @@ namespace DCL.Diagnostics.Sentry
 
         internal override void LogExceptionInternal(Exception exception, ReportData reportData, Object context)
         {
-            SentrySdk.CaptureException(exception, scope => AddReportData(scope, in reportData));
-        }
-
-        private void AddReportData(Scope scope, in ReportData data)
-        {
-            AddCategoryTag(scope, in data);
-            AddSceneInfo(scope, in data);
-        }
-
-        private void AddCategoryTag(Scope scope, in ReportData data) =>
-            scope.SetTag("category", data.Category);
-
-        private void AddSceneInfo(Scope scope, in ReportData data)
-        {
-            if (data.SceneShortInfo.BaseParcel == Vector2Int.zero) return;
-            scope.SetTag("scene.base_parcel", data.SceneShortInfo.BaseParcel.ToString());
-            scope.SetTag("scene.name", data.SceneShortInfo.Name);
+            using PoolExtensions.Scope<PerReportScope> reportScope = scopesPool.Scope(reportData);
+            SentrySdk.CaptureException(exception, reportScope.Value.ExecuteCached);
         }
 
         private bool IsValidConfiguration(SentryUnityOptions options) =>
@@ -84,6 +98,59 @@ namespace DCL.Diagnostics.Sentry
                     return SentryLevel.Info;
                 case LogType.Warning:
                     return SentryLevel.Warning;
+            }
+        }
+
+        private class PerReportScope
+        {
+            internal class Pool : ThreadSafeObjectPool<PerReportScope>
+            {
+                public Pool(IReadOnlyList<ConfigureScope> scopeConfigurators) : base(
+                    () => new PerReportScope(scopeConfigurators), defaultCapacity: 3, collectionCheck: PoolConstants.CHECK_COLLECTIONS) { }
+
+                public PoolExtensions.Scope<PerReportScope> Scope(ReportData reportData)
+                {
+                    PoolExtensions.Scope<PerReportScope> scope = this.AutoScope();
+                    scope.Value.reportData = reportData;
+                    return scope;
+                }
+            }
+
+            private readonly IReadOnlyList<ConfigureScope> scopeConfigurators;
+
+            public readonly Action<Scope> ExecuteCached;
+
+            internal ReportData reportData { private get; set; }
+
+            private PerReportScope(IReadOnlyList<ConfigureScope> scopeConfigurators)
+            {
+                this.scopeConfigurators = scopeConfigurators;
+
+                ExecuteCached = Execute;
+            }
+
+            private void Execute(Scope scope)
+            {
+                // Add global scope
+
+                for (var i = 0; i < scopeConfigurators.Count; i++)
+                    scopeConfigurators[i](scope);
+
+                // Add local scope
+
+                AddCategoryTag(scope, reportData);
+                AddSceneInfo(scope, reportData);
+            }
+
+            private static void AddCategoryTag(Scope scope, ReportData data) =>
+                scope.SetTag("category", data.Category);
+
+            private static void AddSceneInfo(Scope scope, ReportData data)
+            {
+                if (data.SceneShortInfo.BaseParcel != Vector2Int.zero) ;
+                scope.SetTag("scene.base_parcel", data.SceneShortInfo.BaseParcel.ToString());
+
+                scope.SetTag("scene.name", data.SceneShortInfo.Name);
             }
         }
     }

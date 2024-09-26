@@ -106,7 +106,7 @@ namespace DCL.SDKComponents.MediaStream
                 if (component.State != VideoState.VsError)
                 {
                     component.Cts = component.Cts.SafeRestart();
-                    component.OpenMediaPromise.UrlReachabilityResolveAsync(webRequestController, component.URL, component.Cts.Token).Forget();
+                    component.OpenMediaPromise.UrlReachabilityResolveAsync(webRequestController, component.URL, GetReportData(), component.Cts.Token).Forget();
                 }
             }
             else if (component.State != VideoState.VsError)

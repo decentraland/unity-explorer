@@ -36,7 +36,7 @@ namespace DCL.Optimization.PerformanceBudgeting.Tests
         {
             // Arrange
             memoryBudget.actualSystemMemory = systemMemoryInMB;
-            profiler.TotalUsedMemoryInBytes.Returns(usedMemoryInMB * BYTES_IN_MEGABYTE);
+            profiler.SystemUsedMemoryInBytes.Returns(usedMemoryInMB * BYTES_IN_MEGABYTE);
 
             // Act-Assert
             Assert.That(memoryBudget.GetMemoryUsageStatus(), Is.EqualTo(expectedUsage));
@@ -47,7 +47,7 @@ namespace DCL.Optimization.PerformanceBudgeting.Tests
         public void CanSpendBudgetOnlyWhenMemoryIsNotFull(long systemMemoryInMB, long usedMemoryInMB, bool canSpendBudget)
         {
             // Arrange
-            profiler.TotalUsedMemoryInBytes.Returns(usedMemoryInMB * BYTES_IN_MEGABYTE);
+            profiler.SystemUsedMemoryInBytes.Returns(usedMemoryInMB * BYTES_IN_MEGABYTE);
             memoryBudget.actualSystemMemory = systemMemoryInMB;
 
             // Act-Assert

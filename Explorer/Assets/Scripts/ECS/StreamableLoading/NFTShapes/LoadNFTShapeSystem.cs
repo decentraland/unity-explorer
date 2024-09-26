@@ -45,7 +45,7 @@ namespace ECS.StreamableLoading.NFTShapes
                 new GetTextureArguments(false),
                 new GetTextureWebRequest.CreateTextureOp(TextureWrapMode.Clamp, FilterMode.Bilinear),
                 ct,
-                reportCategory: GetReportCategory()
+                GetReportData()
             );
 
             return new StreamableLoadingResult<Texture2D>(result);
@@ -53,7 +53,7 @@ namespace ECS.StreamableLoading.NFTShapes
 
         private async UniTask<string> ImageUrlAsync(CommonArguments commonArguments, CancellationToken ct)
         {
-            var infoRequest = webRequestController.GetAsync(commonArguments, ct, GetReportCategory());
+            GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> infoRequest = webRequestController.GetAsync(commonArguments, ct, GetReportData());
             var nft = await infoRequest.CreateFromJson<NftInfoDto>(WRJsonParser.Unity, WRThreadFlags.SwitchBackToMainThread);
             return nft.ImageUrl();
         }

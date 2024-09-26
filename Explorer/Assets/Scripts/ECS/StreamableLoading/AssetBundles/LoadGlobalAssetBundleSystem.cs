@@ -2,6 +2,7 @@
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.Diagnostics;
+using DCL.WebRequests;
 using ECS.StreamableLoading.Cache;
 using Utility.Multithreading;
 
@@ -14,6 +15,6 @@ namespace ECS.StreamableLoading.AssetBundles
     [LogCategory(ReportCategory.ASSET_BUNDLES)]
     public partial class LoadGlobalAssetBundleSystem : LoadAssetBundleSystem
     {
-        internal LoadGlobalAssetBundleSystem(World world, IStreamableCache<AssetBundleData, GetAssetBundleIntention> cache, AssetBundleLoadingMutex loadingMutex) : base(world, cache, loadingMutex) { }
+        internal LoadGlobalAssetBundleSystem(World world, IStreamableCache<AssetBundleData, GetAssetBundleIntention> cache, IWebRequestController webRequestController, AssetBundleLoadingMutex loadingMutex) : base(world, cache, webRequestController, loadingMutex) { }
     }
 }

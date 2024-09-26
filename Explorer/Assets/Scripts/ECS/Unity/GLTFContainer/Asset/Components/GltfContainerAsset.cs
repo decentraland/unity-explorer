@@ -74,7 +74,6 @@ namespace ECS.Unity.GLTFContainer.Asset.Components
         public void Dispose()
         {
             assetData.Dereference();
-            assetData.Dispose();
             assetData = null;
 
             COLLIDERS_POOL.Release(InvisibleColliders);

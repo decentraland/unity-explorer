@@ -82,6 +82,6 @@ namespace ECS
                 throw new InvalidOperationException("RealmData has not been configured");
         }
 
-        public bool IsDirty { get; internal set; } = true;
+        public bool IsDirty { get; set; } = true;
     }
 }

@@ -27,15 +27,15 @@ namespace DCL.ECSComponents {
             "CjBkZWNlbnRyYWxhbmQvc2RrL2NvbXBvbmVudHMvdmlydHVhbF9jYW1lcmEu",
             "cHJvdG8SG2RlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50cxo6ZGVjZW50cmFs",
             "YW5kL3Nkay9jb21wb25lbnRzL2NvbW1vbi9jYW1lcmFfdHJhbnNpdGlvbi5w",
-            "cm90byKTAQoPUEJWaXJ0dWFsQ2FtZXJhElAKEmRlZmF1bHRfdHJhbnNpdGlv",
+            "cm90byKvAQoPUEJWaXJ0dWFsQ2FtZXJhElUKEmRlZmF1bHRfdHJhbnNpdGlv",
             "bhgBIAEoCzI0LmRlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50cy5jb21tb24u",
-            "Q2FtZXJhVHJhbnNpdGlvbhIbCg5sb29rX2F0X2VudGl0eRgCIAEoDUgAiAEB",
-            "QhEKD19sb29rX2F0X2VudGl0eUIUqgIRRENMLkVDU0NvbXBvbmVudHNiBnBy",
-            "b3RvMw=="));
+            "Q2FtZXJhVHJhbnNpdGlvbkgAiAEBEhsKDmxvb2tfYXRfZW50aXR5GAIgASgN",
+            "SAGIAQFCFQoTX2RlZmF1bHRfdHJhbnNpdGlvbkIRCg9fbG9va19hdF9lbnRp",
+            "dHlCFKoCEURDTC5FQ1NDb21wb25lbnRzYgZwcm90bzM="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::DCL.ECSComponents.CameraTransitionReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBVirtualCamera), global::DCL.ECSComponents.PBVirtualCamera.Parser, new[]{ "DefaultTransition", "LookAtEntity" }, new[]{ "LookAtEntity" }, null, null, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBVirtualCamera), global::DCL.ECSComponents.PBVirtualCamera.Parser, new[]{ "DefaultTransition", "LookAtEntity" }, new[]{ "DefaultTransition", "LookAtEntity" }, null, null, null)
           }));
     }
     #endregion
@@ -44,7 +44,8 @@ namespace DCL.ECSComponents {
   #region Messages
   /// <summary>
   /// PBVirtualCamera represents a camera to be used at some point in time during the scene execution
-  /// * The defaultTransition represents the transition TOWARDS this camera.
+  /// * The defaultTransition represents the transition TOWARDS this camera. If there is none, it's treated as
+  /// an 'instant' transition (like using speed/time = 0)
   /// * The lookAtEntity defines to which entity the Camera has to look at constantly (independent from 
   /// the holding entity transform).
   /// </summary>
