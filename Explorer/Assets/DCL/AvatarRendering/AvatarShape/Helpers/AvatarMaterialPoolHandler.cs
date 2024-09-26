@@ -35,8 +35,9 @@ namespace DCL.AvatarRendering.AvatarShape
                     },
                     actionOnRelease: mat =>
                     {
-                        // reset material so it does not contain any old properties
-                        mat.CopyPropertiesFromMaterial(material);
+                        if (material != null)
+                            // reset material so it does not contain any old properties
+                            mat.CopyPropertiesFromMaterial(material);
                     },
                     actionOnDestroy: UnityObjectUtils.SafeDestroy,
                     defaultCapacity: defaultMaterialCapacity);

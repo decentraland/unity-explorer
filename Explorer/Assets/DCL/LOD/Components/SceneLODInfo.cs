@@ -14,14 +14,14 @@ namespace DCL.LOD.Components
     {
         //This is a sync method, so we can use a shared list
         private static readonly List<Renderer> TEMP_RENDERERS = new (3);
-        
+
         public string id;
         public LODCacheInfo metadata;
 
         public AssetPromise<AssetBundleData, GetAssetBundleIntention> CurrentLODPromise;
         public byte CurrentLODLevelPromise;
 
-        
+
         public void Dispose(World world)
         {
             CurrentLODPromise.ForgetLoading(world);
@@ -35,10 +35,10 @@ namespace DCL.LOD.Components
             };
         }
 
-        public void RecalculateLODDistances(float defaultFOV, float defaultLodBias, int loadingDistance)
+        public void RecalculateLODDistances(float defaultFOV, float defaultLodBias, int loadingDistance, int sceneParcels)
         {
             var lods = metadata.LodGroup.GetLODs();
-            SetupLODRelativeHeights(lods, defaultFOV, defaultLodBias, loadingDistance);
+            SetupLODRelativeHeights(lods, defaultFOV, defaultLodBias, loadingDistance, sceneParcels);
             metadata.LodGroup.SetLODs(lods);
         }
 
@@ -48,7 +48,7 @@ namespace DCL.LOD.Components
             CurrentLODLevelPromise = byte.MaxValue;
         }
 
-        public void AddSuccessLOD(GameObject instantiatedLOD, LODAsset lodAsset, float defaultFOV, float defaultLodBias, int loadingDistance)
+        public void AddSuccessLOD(GameObject instantiatedLOD, LODAsset lodAsset, float defaultFOV, float defaultLodBias, int loadingDistance, int sceneParcels)
         {
             metadata.SuccessfullLODs = SceneLODInfoUtils.SetLODResult(metadata.SuccessfullLODs, CurrentLODLevelPromise);
             metadata.LODAssets[CurrentLODLevelPromise] = lodAsset;
@@ -60,18 +60,18 @@ namespace DCL.LOD.Components
             {
                 var lods = metadata.LodGroup.GetLODs();
                 SetupRenderers(lods, TEMP_RENDERERS, CurrentLODLevelPromise);
-                SetupLODRelativeHeights(lods, defaultFOV, defaultLodBias, loadingDistance);
+                SetupLODRelativeHeights(lods, defaultFOV, defaultLodBias, loadingDistance, sceneParcels);
                 metadata.LodGroup.SetLODs(lods);
             }
 
             CurrentLODLevelPromise = byte.MaxValue;
         }
 
-        private void SetupLODRelativeHeights(UnityEngine.LOD[] lods, float defaultFOV, float defaultLodBias, int loadingDistance)
+        private void SetupLODRelativeHeights(UnityEngine.LOD[] lods, float defaultFOV, float defaultLodBias, int loadingDistance, int sceneParcels)
         {
             int loadedLODAmount = SceneLODInfoUtils.LODCount(metadata.SuccessfullLODs);
             CalculateCullRelativeHeight(defaultFOV, defaultLodBias, loadingDistance);
-            
+
             if (loadedLODAmount == 1)
             {
                 if (SceneLODInfoUtils.HasLODResult(metadata.SuccessfullLODs, 0))
@@ -89,8 +89,11 @@ namespace DCL.LOD.Components
             }
             else if (loadedLODAmount == 2)
             {
-                //If both LODs are loaded, we set the cull percentage for LOD1 and then assign the mid point between cull and 100% for LOD0
-                lods[0].screenRelativeTransitionHeight = (1 - metadata.CullRelativeHeightPercentage) / 2 + metadata.CullRelativeHeightPercentage;
+                // If both LODs are loaded, we set the cull percentage for LOD1 and then assign the mid point between cull and 100% for LOD0
+                // In the case of the "small" scenes, LOD1 will have even less presence, LOD0 will be visible at larger distances
+                const float SMALL_SCENE_PARCEL_COUNT = 10.0f; // This is an arbitrary value that will be tweaked depending on performance
+                float sceneSizeFactor = Mathf.Lerp(0.25f, 0.5f, (sceneParcels - 1) / SMALL_SCENE_PARCEL_COUNT);
+                lods[0].screenRelativeTransitionHeight = (1 - metadata.CullRelativeHeightPercentage) * sceneSizeFactor + metadata.CullRelativeHeightPercentage;
                 lods[1].screenRelativeTransitionHeight = metadata.CullRelativeHeightPercentage;
             }
         }
