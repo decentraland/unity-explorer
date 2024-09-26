@@ -57,7 +57,7 @@ impl SegmentServer {
             *guard = Some(context);
         };
 
-        runtime.spawn(operation);
+        runtime.block_on(operation);
     }
 
     pub async fn enqueue_track(
