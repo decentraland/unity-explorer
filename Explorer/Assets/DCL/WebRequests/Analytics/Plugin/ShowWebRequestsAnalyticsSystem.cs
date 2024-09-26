@@ -42,7 +42,7 @@ namespace DCL.WebRequests.Analytics
                 foreach (var metric in metrics)
                 {
                     bindings.Add(metric.Key.Name, new ElementBinding<ulong>(0));
-                    var requestMetricUnit = metric.Value().GetUnit();
+                    DebugLongMarkerDef.Unit requestMetricUnit = metric.Value().GetUnit();
                     widget?.AddMarker(requestType.Name + "-" + metric.Key.Name, bindings[metric.Key.Name], requestMetricUnit);
                 }
 
