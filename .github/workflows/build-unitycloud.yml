@@ -31,7 +31,7 @@ on:
       cache_strategy:
         description: 'Select cache strategy'
         required: true
-        default: 'workspace'
+        default: 'library'
         type: choice
         options:
           - none
@@ -146,7 +146,7 @@ jobs:
             clean_build=${{ github.event.inputs.clean_build }}
           elif [ "${{ inputs.clean_build }}" ]; then
             clean_build=${{ inputs.clean_build }}
-          elif [ "${{ github.event.label.name == 'clean-build' }}" ]; then
+          elif [ "${{ github.event.label.name }}" == "clean-build" ]; then
             clean_build=true
           else
             clean_build=false
