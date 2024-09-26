@@ -1,10 +1,7 @@
 use core::str;
 use std::ffi::{c_char, CStr};
-use time::OffsetDateTime;
 
-use segment::message::{Identify, Track, User};
-
-use crate::{server::SegmentServer, FfiCallbackFn, OperationHandleId, Response, SEGMENT_SERVER};
+use crate::{FfiCallbackFn, OperationHandleId, SEGMENT_SERVER};
 
 /// # Safety
 ///
@@ -30,32 +27,13 @@ pub unsafe extern "C" fn segment_server_identify(
 ) -> OperationHandleId {
     let id = SEGMENT_SERVER.next_id();
 
-    let user = as_str(used_id);
-    let traits = as_str(traits_json);
+    let used_id = as_str(used_id);
+    let traits_json = as_str(traits_json);
     let context_json = as_str(context_json);
 
-    let operation = async move {
-        let arc = SEGMENT_SERVER.context.clone();
-        let mut guard = arc.lock().await;
-        let context = (*guard).as_mut().unwrap();
-
-        let msg = Identify {
-            user: User::UserId {
-                user_id: user.to_string(),
-            },
-            traits: serde_json::from_str(traits).unwrap(),
-            context: serde_json::from_str(context_json).unwrap(),
-            timestamp: Some(OffsetDateTime::now_utc()),
-            ..Default::default()
-        };
-
-        let result = context.batcher.push(msg).await;
-
-        let response_code = as_response_code(result);
-        context.call_callback(id, response_code);
-    };
-
-    SEGMENT_SERVER.dispatch_operation(id, operation)
+    let operation = SEGMENT_SERVER.enqueue_identify(id, used_id, traits_json, context_json);
+    SEGMENT_SERVER.async_runtime.spawn(operation);
+    id
 }
 
 /// # Safety
@@ -70,66 +48,26 @@ pub unsafe extern "C" fn segment_server_track(
 ) -> OperationHandleId {
     let id = SEGMENT_SERVER.next_id();
 
-    let user = as_str(used_id);
+    let used_id = as_str(used_id);
     let event_name = as_str(event_name);
     let properties_json = as_str(properties_json);
     let context_json = as_str(context_json);
 
-    let operation = async move {
-        let arc = SEGMENT_SERVER.context.clone();
-        let mut guard = arc.lock().await;
-        let context = (*guard).as_mut().unwrap();
-
-        let msg = Track {
-            user: User::UserId {
-                user_id: user.to_string(),
-            },
-            event: event_name.to_string(),
-            properties: serde_json::from_str(properties_json).unwrap(),
-            context: serde_json::from_str(context_json).unwrap(),
-            timestamp: Some(OffsetDateTime::now_utc()),
-            ..Default::default()
-        };
-
-        let result = context.batcher.push(msg).await;
-
-        let response_code = as_response_code(result);
-        context.call_callback(id, response_code);
-    };
-
-    SEGMENT_SERVER.dispatch_operation(id, operation)
+    let operation =
+        SEGMENT_SERVER.enqueue_track(id, used_id, event_name, properties_json, context_json);
+    SEGMENT_SERVER.async_runtime.spawn(operation);
+    id
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn segment_server_flush() -> OperationHandleId {
     let id = SEGMENT_SERVER.next_id();
-
-    let operation = async move {
-        let arc = SEGMENT_SERVER.context.clone();
-        let mut guard = arc.lock().await;
-        let context = (*guard).as_mut().unwrap();
-
-        let result = context.batcher.flush().await;
-
-        let response_code = as_response_code(result);
-        context.call_callback(id, response_code);
-    };
-
-    SEGMENT_SERVER.dispatch_operation(id, operation)
+    let operation = SEGMENT_SERVER.flush(id);
+    SEGMENT_SERVER.async_runtime.spawn(operation);
+    id
 }
 
 fn as_str<'a>(chars: *const c_char) -> &'a str {
     let c_str = unsafe { CStr::from_ptr(chars) };
     c_str.to_str().unwrap()
-}
-
-fn as_response_code(result: Result<(), segment::Error>) -> Response {
-    return match result {
-        Ok(_) => Response::Success,
-        Err(error) => match error {
-            segment::Error::MessageTooLarge => Response::ErrorMessageTooLarge,
-            segment::Error::DeserializeError(_) => Response::ErrorDeserialize,
-            segment::Error::NetworkError(_) => Response::ErrorNetwork,
-        },
-    };
 }

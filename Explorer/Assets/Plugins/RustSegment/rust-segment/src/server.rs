@@ -1,17 +1,13 @@
 use core::str;
-use std::{
-    clone,
-    future::Future,
-    sync::{
-        atomic::{AtomicU64, Ordering},
-        Arc,
-    },
+use std::sync::{
+    atomic::{AtomicU64, Ordering},
+    Arc,
 };
 
-use segment::{AutoBatcher, Batcher, HttpClient};
+use segment::{message::BatchMessage, AutoBatcher, Batcher, HttpClient};
 use tokio::sync::Mutex;
 
-use crate::{FfiCallbackFn, OperationHandleId, Response};
+use crate::{operations, FfiCallbackFn, OperationHandleId, Response};
 
 pub struct Context {
     pub batcher: AutoBatcher,
@@ -19,9 +15,8 @@ pub struct Context {
 }
 
 pub struct SegmentServer {
-    pub context: Arc<Mutex<Option<Context>>>,
-
-    async_runtime: tokio::runtime::Runtime,
+    pub async_runtime: tokio::runtime::Runtime,
+    context: Arc<Mutex<Option<Context>>>,
     next_id: AtomicU64,
 }
 
@@ -65,13 +60,76 @@ impl SegmentServer {
         runtime.spawn(operation);
     }
 
-    pub fn dispatch_operation(
+    pub async fn enqueue_track(
         &self,
         id: OperationHandleId,
-        operation: impl Future<Output = ()> + Send + 'static,
-    ) -> OperationHandleId {
-        self.async_runtime.spawn(operation);
-        id
+        used_id: &str,
+        event_name: &str,
+        properties_json: &str,
+        context_json: &str,
+    ) {
+        let msg = operations::new_track(used_id, event_name, properties_json, context_json);
+        self.enqueue_if_ok(id, msg).await;
+    }
+
+    pub async fn enqueue_identify(
+        &self,
+        id: OperationHandleId,
+        used_id: &str,
+        traits_json: &str,
+        context_json: &str,
+    ) {
+        let msg = operations::new_identify(used_id, traits_json, context_json);
+        self.enqueue_if_ok(id, msg).await;
+    }
+
+    pub async fn enqueue(&self, id: OperationHandleId, msg: impl Into<BatchMessage>) {
+        let arc = self.context.clone();
+        let mut guard = arc.lock().await;
+        let context = (*guard).as_mut().unwrap();
+
+        let result = context.batcher.push(msg).await;
+
+        let response_code = Self::result_as_response_code(result);
+        context.call_callback(id, response_code);
+    }
+
+    pub async fn flush(&self, id: OperationHandleId) {
+        let arc = self.context.clone();
+        let mut guard = arc.lock().await;
+        let context = (*guard).as_mut().unwrap();
+
+        let result = context.batcher.flush().await;
+
+        let response_code = Self::result_as_response_code(result);
+        context.call_callback(id, response_code);
+    }
+
+    async fn enqueue_if_ok(&self, id: OperationHandleId, msg: Option<impl Into<BatchMessage>>) {
+        match msg {
+            Some(m) => self.enqueue(id, m).await,
+            None => {
+                self.call_callback(id, Response::ErrorDeserialize).await;
+            }
+        }
+    }
+
+    async fn call_callback(&self, id: OperationHandleId, code: Response) {
+        let arc = self.context.clone();
+        let guard = arc.lock().await;
+        let context = (*guard).as_ref().unwrap();
+        context.call_callback(id, code);
+    }
+
+    fn result_as_response_code(result: Result<(), segment::Error>) -> Response {
+        return match result {
+            Ok(_) => Response::Success,
+            Err(error) => match error {
+                segment::Error::MessageTooLarge => Response::ErrorMessageTooLarge,
+                segment::Error::DeserializeError(_) => Response::ErrorDeserialize,
+                segment::Error::NetworkError(_) => Response::ErrorNetwork,
+            },
+        };
     }
 }
 
