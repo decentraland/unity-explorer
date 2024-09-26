@@ -102,6 +102,9 @@ namespace DCL.AvatarRendering.Thumbnails.Utils
             if (attachment.ThumbnailAssetResult != null)
                 return;
 
+            // it's a signal that the promise is already created, similar to `WearableAssets`
+            attachment.ThumbnailAssetResult = new StreamableLoadingResult<SpriteData>.WithFallback();
+
             URLPath thumbnailPath = attachment.GetThumbnail();
 
             if (thumbnailPath.IsEmpty())

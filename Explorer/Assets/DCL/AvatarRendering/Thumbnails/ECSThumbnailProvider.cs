@@ -43,9 +43,6 @@ namespace DCL.AvatarRendering.Wearables
             // if the promise was created before, we should not override its cancellation
             if (!promiseAlreadyCreated)
             {
-                // it's a signal that the promise is already created, similar to `WearableAssets`
-                avatarAttachment.ThumbnailAssetResult = new StreamableLoadingResult<SpriteData>.WithFallback();
-
                 await LoadThumbnailsUtils.CreateWearableThumbnailABPromiseAsync(
                     requestController,
                     assetBundleURL,

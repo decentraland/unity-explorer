@@ -15,15 +15,21 @@ namespace ECS.StreamableLoading.Common.Components
         {
             public readonly T Asset;
 
+            /// <summary>
+            ///     Initialized won't be set if default constructor was called
+            /// </summary>
+            private readonly bool initialized;
+
             public WithFallback(T asset)
             {
                 Asset = asset;
+                initialized = true;
             }
 
             /// <summary>
             ///     Can be uninitialized if structure was created with default constructor
             /// </summary>
-            public bool IsInitialized => Asset != null;
+            public bool IsInitialized => initialized;
 
             public static implicit operator StreamableLoadingResult<T>(WithFallback withFallback) =>
                 withFallback.IsInitialized ? new StreamableLoadingResult<T>(withFallback.Asset) : new StreamableLoadingResult<T>();
