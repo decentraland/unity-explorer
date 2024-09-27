@@ -16,6 +16,8 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         private AnimatorOverrideController overrideController;
 
         [field: SerializeField] public Animator AvatarAnimator { get; private set; }
+        [field: SerializeField] public RigBuilder RigBuilder { get; private set; }
+
 
         [field: SerializeField] public SkinnedMeshRenderer AvatarSkinnedMeshRenderer { get; private set; }
 

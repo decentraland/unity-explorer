@@ -1,6 +1,5 @@
 using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Loading.Components;
-using DCL.AvatarRendering.Wearables.Helpers;
 using ECS.StreamableLoading.Common.Components;
 using UnityEngine;
 
@@ -12,5 +11,7 @@ namespace DCL.AvatarRendering.Emotes
         StreamableLoadingResult<AttachmentRegularAsset>?[] AssetResults { get; }
 
         bool IsLooping();
+
+        bool HasSameClipForAllGenders();
     }
 }
