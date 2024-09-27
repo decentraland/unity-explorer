@@ -23,20 +23,20 @@ namespace Plugins.RustSegment.SegmentServerWrap
         internal delegate void SegmentFfiCallback(ulong operationId, Response responseCode);
 
         [DllImport(LIBRARY_NAME, CallingConvention = CALLING_CONVENTION, CharSet = CHAR_SET, EntryPoint = "segment_server_initialize")]
-        internal extern static bool SegmentServerInitialize(
+        internal static extern bool SegmentServerInitialize(
             IntPtr segmentWriteKey,
             SegmentFfiCallback callback
         );
 
         [DllImport(LIBRARY_NAME, CallingConvention = CALLING_CONVENTION, CharSet = CHAR_SET, EntryPoint = "segment_server_identify")]
-        internal extern static ulong SegmentServerIdentify(
+        internal static extern ulong SegmentServerIdentify(
             IntPtr usedId,
             IntPtr traitsJson,
             IntPtr contextJson
         );
 
         [DllImport(LIBRARY_NAME, CallingConvention = CALLING_CONVENTION, CharSet = CHAR_SET, EntryPoint = "segment_server_track")]
-        internal extern static ulong SegmentServerTrack(
+        internal static extern ulong SegmentServerTrack(
             IntPtr usedId,
             IntPtr eventName,
             IntPtr propertiesJson,
@@ -44,9 +44,9 @@ namespace Plugins.RustSegment.SegmentServerWrap
         );
 
         [DllImport(LIBRARY_NAME, CallingConvention = CALLING_CONVENTION, CharSet = CHAR_SET, EntryPoint = "segment_server_flush")]
-        internal extern static ulong SegmentServerFlush();
+        internal static extern ulong SegmentServerFlush();
 
         [DllImport(LIBRARY_NAME, CallingConvention = CALLING_CONVENTION, CharSet = CHAR_SET, EntryPoint = "segment_server_dispose")]
-        internal extern static bool SegmentServerDispose();
+        internal static extern bool SegmentServerDispose();
     }
 }
