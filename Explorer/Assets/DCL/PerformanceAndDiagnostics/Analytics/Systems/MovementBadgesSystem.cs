@@ -14,7 +14,7 @@ using UnityEngine;
 namespace DCL.Analytics.Systems
 {
     [UpdateInGroup(typeof(PostRenderingSystemGroup))]
-    public partial class MoveMetricsSystem : BaseUnityLoopSystem
+    public partial class MovementBadgesSystem : BaseUnityLoopSystem
     {
         private const float HEIGHT = 500;
         private const float MIN_THRESHOLD = 0.01f; // 1 [cm]. Prevents accumulation of very small changes
@@ -39,7 +39,7 @@ namespace DCL.Analytics.Systems
         private float totalElevationGain;
         private IWeb3Identity? currentIdentity;
 
-        public MoveMetricsSystem(
+        public MovementBadgesSystem(
             World world,
             IAnalyticsController analytics,
             IRealmData realmData,

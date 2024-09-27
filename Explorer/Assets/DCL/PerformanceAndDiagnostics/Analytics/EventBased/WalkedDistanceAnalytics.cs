@@ -12,7 +12,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 {
     public class WalkedDistanceAnalytics : IDisposable
     {
-        private const float SEND_INTERVAL = 15;
+        private const float SEND_INTERVAL = 30;
+        private const long SEND_AT_STEPS = 100;
 
         private readonly IAnalyticsController analytics;
         private readonly ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy;
@@ -64,7 +65,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         {
             countdown -= deltaTime;
 
-            if (countdown <= 0 || StepCount > 100)
+            if (countdown <= 0 || StepCount > SEND_AT_STEPS)
             {
                 SendAnalytics();
                 Reset();
