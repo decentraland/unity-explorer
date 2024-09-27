@@ -11,7 +11,7 @@ namespace DCL.CharacterTriggerArea.Components
     public struct CharacterTriggerAreaComponent : IDirtyMarker
     {
         private static readonly IReadOnlyCollection<Transform> EMPTY_COLLECTION = Array.Empty<Transform>();
-        private CharacterTriggerArea? monoBehaviour;
+        internal CharacterTriggerArea? monoBehaviour;
         private readonly bool targetOnlyMainPlayer;
         public Vector3 AreaSize { get; private set; }
 
@@ -35,11 +35,6 @@ namespace DCL.CharacterTriggerArea.Components
             this.monoBehaviour = monoBehaviour;
 
             IsDirty = true;
-        }
-
-        public void ForceAssignArea(CharacterTriggerArea characterTriggerArea)
-        {
-            monoBehaviour = characterTriggerArea;
         }
 
         public void TryAssignArea(IComponentPool<CharacterTriggerArea> pool, Transform mainPlayerTransform)
