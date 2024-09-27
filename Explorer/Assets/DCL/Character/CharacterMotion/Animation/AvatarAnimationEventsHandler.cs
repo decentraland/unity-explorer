@@ -19,7 +19,7 @@ namespace DCL.CharacterMotion.Animation
 
     public class AvatarAnimationEventsHandler : MonoBehaviour
     {
-        private static readonly Dictionary<(MovementKind, AvatarAnimationEventType), AvatarAudioClipType> AUDIO_CLIP_LOOKUP = new Dictionary<(MovementKind, AvatarAnimationEventType), AvatarAudioClipType>
+        private static readonly Dictionary<(MovementKind, AvatarAnimationEventType), AvatarAudioClipType> AUDIO_CLIP_LOOKUP = new()
         {
             { (MovementKind.RUN, AvatarAnimationEventType.Jump), AvatarAudioClipType.JumpStartRun },
             { (MovementKind.RUN, AvatarAnimationEventType.Land), AvatarAudioClipType.JumpLandRun },

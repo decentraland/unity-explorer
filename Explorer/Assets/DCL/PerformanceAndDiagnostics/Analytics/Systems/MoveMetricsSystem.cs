@@ -14,7 +14,7 @@ using UnityEngine;
 namespace DCL.Analytics.Systems
 {
     [UpdateInGroup(typeof(PostRenderingSystemGroup))]
-    public partial class BadgesHeightReachedSystem : BaseUnityLoopSystem
+    public partial class MoveMetricsSystem : BaseUnityLoopSystem
     {
         private const float HEIGHT = 500;
         private const float MIN_THRESHOLD = 0.01f; // 1 [cm]. Prevents accumulation of very small changes
@@ -23,8 +23,10 @@ namespace DCL.Analytics.Systems
         private readonly IRealmData realmData;
         private readonly Entity playerEntity;
         private readonly IWeb3IdentityCache identityCache;
+        private readonly WalkedDistanceAnalytics walkedDistanceAnalytics;
         private readonly IAnalyticsController analytics;
-        private readonly ElementBinding<string> totalElevationGainBinding;
+        private readonly ElementBinding<string> totalElevationGainBinding = new (string.Empty);
+        private readonly ElementBinding<string> stepsCountBinding = new (string.Empty);
 
         private CharacterRigidTransform? rigidTransform;
 
@@ -37,31 +39,53 @@ namespace DCL.Analytics.Systems
         private float totalElevationGain;
         private IWeb3Identity? currentIdentity;
 
-        public BadgesHeightReachedSystem(
+        public MoveMetricsSystem(
             World world,
             IAnalyticsController analytics,
             IRealmData realmData,
             in Entity playerEntity,
             IWeb3IdentityCache identityCache,
-            IDebugContainerBuilder debugContainerBuilder) : base(world)
+            IDebugContainerBuilder debugContainerBuilder,
+            WalkedDistanceAnalytics walkedDistanceAnalytics) : base(world)
         {
             this.analytics = analytics;
             this.realmData = realmData;
             this.playerEntity = playerEntity;
             this.identityCache = identityCache;
+            this.walkedDistanceAnalytics = walkedDistanceAnalytics;
 
             currentIdentity = identityCache.Identity;
 
-            totalElevationGainBinding = new ElementBinding<string>(string.Empty);
             debugContainerBuilder
                .TryAddWidget("Badges Tracking")?
-               .AddCustomMarker("Vertical Voyager: ", totalElevationGainBinding);
+               .AddCustomMarker("Vertical Voyager: ", totalElevationGainBinding)
+               .AddCustomMarker("Steps Count: ", stepsCountBinding);
         }
 
         protected override void Update(float t)
         {
             HandleIdentityChange();
 
+            walkedDistanceAnalytics.Update();
+            UpdateHeightAnalytics();
+
+            UpdateDebugInfo();
+        }
+
+        private void HandleIdentityChange()
+        {
+            if (!currentIdentity.Address.Equals(identityCache.Identity.Address))
+            {
+                currentIdentity = identityCache.Identity;
+                badgeHeightReached = false;
+                totalElevationGain = 0;
+
+                walkedDistanceAnalytics.Reset();
+            }
+        }
+
+        private void UpdateHeightAnalytics()
+        {
             if (badgeHeightReached || !realmData.Configured) return;
             if (IsNotMovingByFoot()) return;
 
@@ -79,8 +103,6 @@ namespace DCL.Analytics.Systems
                 badgeHeightReached = true;
                 analytics.Track(AnalyticsEvents.Badges.HEIGHT_REACHED);
             }
-
-            UpdateDebugInfo();
         }
 
         private void AccumulateGain(float diff)
@@ -119,17 +141,10 @@ namespace DCL.Analytics.Systems
             return false;
         }
 
-        private void HandleIdentityChange()
+        private void UpdateDebugInfo()
         {
-            if (!currentIdentity.Address.Equals(identityCache.Identity.Address))
-            {
-                currentIdentity = identityCache.Identity;
-                badgeHeightReached = false;
-                totalElevationGain = 0;
-            }
-        }
-
-        private void UpdateDebugInfo() =>
             totalElevationGainBinding.Value = $"<color={(badgeHeightReached ? "green" : "white")}>{totalElevationGain} m</color>";
+            stepsCountBinding.Value = walkedDistanceAnalytics.StepCount.ToString();
+        }
     }
 }
