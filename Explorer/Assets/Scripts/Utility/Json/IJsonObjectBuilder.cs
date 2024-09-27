@@ -5,14 +5,15 @@ namespace Utility.Json
 {
     public interface IJsonObjectBuilder
     {
-        void Clear();
-
         void Set(string key, string value);
 
         void Set(string key, float value);
 
         void Set(string key, int value);
 
+        /// <summary>
+        ///     Builds Json Object and clears internal keys. This operation is not idempotent
+        /// </summary>
         JsonObject Build();
 
         void Release(JsonObject jsonObject);
