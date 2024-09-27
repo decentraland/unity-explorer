@@ -60,10 +60,7 @@ namespace Utility.Json
         public void Release(JsonObject jsonObject)
         {
             jsonObjectPool.Release(jsonObject);
-        }
 
-        public void DisposeCacheIfNeeded()
-        {
             if (stringValuesCache.Count > STRING_CACHE_SIZE)
                 stringValuesCache.Clear();
         }

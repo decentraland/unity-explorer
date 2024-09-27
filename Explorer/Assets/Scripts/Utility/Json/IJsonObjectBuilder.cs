@@ -15,7 +15,5 @@ namespace Utility.Json
         JsonObject Build();
 
         void Release(JsonObject jsonObject);
-
-        void DisposeCacheIfNeeded();
     }
 }

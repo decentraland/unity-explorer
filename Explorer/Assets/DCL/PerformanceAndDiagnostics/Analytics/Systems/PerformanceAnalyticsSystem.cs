@@ -140,8 +140,6 @@ namespace DCL.Analytics.Systems
             var json = jsonObjectBuilder.Build();
             analytics.Track(General.PERFORMANCE_REPORT, json);
             jsonObjectBuilder.Release(json);
-
-            jsonObjectBuilder.DisposeCacheIfNeeded();
         }
     }
 }
