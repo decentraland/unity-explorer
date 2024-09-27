@@ -45,6 +45,9 @@ namespace DCL.CharacterMotion
                 rigidTransform.MoveVelocity.XVelocity = Mathf.MoveTowards(rigidTransform.MoveVelocity.XVelocity, xAxis, currentAcceleration * dt);
             }
             else
+                // Currently the de-acceleration is set to 0, deprecating this damping
+                // We need it since scenes like avatar-swap in goerli 75,-7 changes the animation depending on the position change of the character
+                // Any minimal movement in the position will be reflected, producing undesired results
                 rigidTransform.MoveVelocity.XVelocity = Mathf.SmoothDamp(rigidTransform.MoveVelocity.XVelocity, xAxis, ref rigidTransform.MoveVelocity.XDamp, settings.StopTimeSec);
 
             if (Mathf.Abs(input.Axes.y) > 0)
@@ -53,6 +56,9 @@ namespace DCL.CharacterMotion
                 rigidTransform.MoveVelocity.ZVelocity = Mathf.MoveTowards(rigidTransform.MoveVelocity.ZVelocity, yAxis, currentAcceleration * dt);
             }
             else
+                // Currently the de-acceleration is set to 0, deprecating this damping
+                // We need it since scenes like avatar-swap in goerli 75,-7 changes the animation depending on the position change of the character
+                // Any minimal movement in the position will be reflected, producing undesired results
                 rigidTransform.MoveVelocity.ZVelocity = Mathf.SmoothDamp(rigidTransform.MoveVelocity.ZVelocity, yAxis, ref rigidTransform.MoveVelocity.ZDamp, settings.StopTimeSec);
 
             Vector3 targetForward = (cameraForward * rigidTransform.MoveVelocity.ZVelocity) + (cameraRight * rigidTransform.MoveVelocity.XVelocity);
