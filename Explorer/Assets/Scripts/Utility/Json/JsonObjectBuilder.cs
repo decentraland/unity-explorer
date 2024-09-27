@@ -19,7 +19,7 @@ namespace Utility.Json
 
         private readonly Dictionary<string, JsonElement> stringValuesCache = new ();
 
-        public void Clear()
+        private void Clear()
         {
             stringValues.Clear();
             floatValues.Clear();
@@ -41,6 +41,9 @@ namespace Utility.Json
             intValues[key] = value;
         }
 
+        /// <summary>
+        /// <inheritdoc cref="IJsonObjectBuilder.Build"/>
+        /// </summary>
         public JsonObject Build()
         {
             var json = jsonObjectPool.Get()!;
@@ -54,16 +57,15 @@ namespace Utility.Json
             foreach ((string key, int value) in intValues)
                 json[key] = value;
 
+            Clear();
+
             return json;
         }
 
         public void Release(JsonObject jsonObject)
         {
             jsonObjectPool.Release(jsonObject);
-        }
 
-        public void DisposeCacheIfNeeded()
-        {
             if (stringValuesCache.Count > STRING_CACHE_SIZE)
                 stringValuesCache.Clear();
         }

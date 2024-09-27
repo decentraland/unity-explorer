@@ -137,11 +137,8 @@ namespace DCL.Analytics.Systems
                 jsonObjectBuilder.Set("gpu_frame_time_percentile_95", gpuFrameTimeReport.Value.Percentiles[7] * NS_TO_MS);
             }
 
-            var json = jsonObjectBuilder.Build();
-            analytics.Track(General.PERFORMANCE_REPORT, json);
-            jsonObjectBuilder.Release(json);
-
-            jsonObjectBuilder.DisposeCacheIfNeeded();
+            using var pooled = jsonObjectBuilder.BuildPooled();
+            analytics.Track(General.PERFORMANCE_REPORT, pooled.Json);
         }
     }
 }
