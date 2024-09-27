@@ -1,3 +1,4 @@
+using DCL.Diagnostics;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using Segment.Serialization;
 using System;
@@ -49,7 +50,7 @@ namespace Plugins.RustSegment.SegmentServerWrap.Playground
                 curly
             );
 
-            Debug.Log($"Curly {curly}, Bracket {bracket}");
+            ReportHub.Log(ReportData.UNSPECIFIED, $"Curly {curly}, Bracket {bracket}");
         }
 
         [ContextMenu(nameof(Flush))]
