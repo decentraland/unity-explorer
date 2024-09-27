@@ -80,18 +80,8 @@ namespace DCL.Landscape.Utils
         {
             var path = GetFilePath(seed, chunkSize, version);
             checksum = parcelChecksum;
-
-            if (File.Exists(path))
-            {
-                File.Delete(path);
-                var dictionaryPath = GetDictionaryDirectory();
-                if (Directory.Exists(dictionaryPath))
-                    Directory.Delete(GetDictionaryDirectory(), true);
-            }
-            
             using FileStream fileStream = File.Create(path);
             FORMATTER.Serialize(fileStream, this);
-
         }
 
         public void SaveArrayToFile<T>(string name, string offsetX, string offsetZ, T[] arrayToSave) where T : struct
@@ -155,20 +145,13 @@ namespace DCL.Landscape.Utils
             var dictionaryPath = GetDictionaryDirectory();
 
             if (force && File.Exists(path))
-            {
                 File.Delete(path);
-                if (Directory.Exists(dictionaryPath))
-                    Directory.Delete(GetDictionaryDirectory(), true);
-            }
 
             if (!File.Exists(path))
             {
                 //If the file does not exist, but the dictionary path does, theres a possible corrupt state. 
                 //We gotta clear it
-                if (Directory.Exists(dictionaryPath))
-                    Directory.Delete(dictionaryPath, true);
-                Directory.CreateDirectory(dictionaryPath);
-                
+                ClearDictionaryPath();
                 return emptyCache;
             }
 
@@ -177,10 +160,21 @@ namespace DCL.Landscape.Utils
             TerrainLocalCache? localCache = await UniTask.RunOnThreadPool(() => (TerrainLocalCache)FORMATTER.Deserialize(fileStream));
 
             if (localCache.checksum != parcelChecksum)
+            {
+                File.Delete(path);
+                ClearDictionaryPath();
                 return emptyCache;
+            }
 
             localCache.isValid = true;
             return localCache;
+
+            void ClearDictionaryPath()
+            {
+                if (Directory.Exists(dictionaryPath))
+                    Directory.Delete(GetDictionaryDirectory(), true);
+                Directory.CreateDirectory(dictionaryPath);
+            }
         }
 
         public bool IsValid() =>
