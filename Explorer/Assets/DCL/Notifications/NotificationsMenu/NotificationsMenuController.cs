@@ -7,6 +7,8 @@ using DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
 using DCL.SidebarBus;
 using DCL.Utilities;
+using DCL.Web3;
+using DCL.Web3.Identities;
 using DCL.WebRequests;
 using SuperScrollView;
 using System;
@@ -35,10 +37,13 @@ namespace DCL.Notifications.NotificationsMenu
         private readonly Dictionary<string, Sprite> notificationThumbnailCache = new ();
         private readonly List<INotification> notifications = new ();
         private readonly CancellationTokenSource lifeCycleCts = new ();
+        private readonly IWeb3IdentityCache web3IdentityCache;
 
         private CancellationTokenSource? notificationThumbnailCts;
         private CancellationTokenSource? notificationPanelCts = new CancellationTokenSource();
         private int unreadNotifications;
+        private bool panelWasOpenedOnce = false;
+        private ReactiveProperty<Web3Address?> web3Identity;
 
         public NotificationsMenuController(
             NotificationsMenuView view,
@@ -47,7 +52,8 @@ namespace DCL.Notifications.NotificationsMenu
             NotificationIconTypes notificationIconTypes,
             IWebRequestController webRequestController,
             ISidebarBus sidebarBus,
-            NftTypeIconSO rarityBackgroundMapping)
+            NftTypeIconSO rarityBackgroundMapping,
+            IWeb3IdentityCache web3IdentityCache)
         {
             notificationThumbnailCts = new CancellationTokenSource();
 
@@ -58,10 +64,13 @@ namespace DCL.Notifications.NotificationsMenu
             this.webRequestController = webRequestController;
             this.sidebarBus = sidebarBus;
             this.rarityBackgroundMapping = rarityBackgroundMapping;
+            this.web3IdentityCache = web3IdentityCache;
             this.view.OnViewShown += OnViewShown;
             this.view.LoopList.InitListView(0, OnGetItemByIndex);
             this.view.CloseButton.onClick.AddListener(ClosePanel);
-            InitialNotificationRequestAsync(lifeCycleCts.Token).Forget();
+            web3Identity = new ReactiveProperty<Web3Address?>(web3IdentityCache.Identity?.Address);
+            web3Identity.OnUpdate += OnWeb3IdentityChanged;
+            CheckIdentityChangeAsync(lifeCycleCts.Token).Forget();
             notificationsBusController.SubscribeToAllNotificationTypesReceived(OnNotificationReceived);
         }
 
@@ -97,6 +106,7 @@ namespace DCL.Notifications.NotificationsMenu
 
         private void OnViewShown()
         {
+            panelWasOpenedOnce = true;
             if (unreadNotifications > 0)
             {
                 view.LoopList.DoActionForEachShownItem((item2, param) =>
@@ -113,8 +123,30 @@ namespace DCL.Notifications.NotificationsMenu
             }
         }
 
-        private async UniTaskVoid InitialNotificationRequestAsync(CancellationToken ct)
+        private void OnWeb3IdentityChanged(Web3Address? address)
         {
+            if (address == null) return;
+            InitialNotificationRequestAsync(lifeCycleCts.Token).Forget();
+        }
+
+        private async UniTaskVoid CheckIdentityChangeAsync(CancellationToken token)
+        {
+            if (web3Identity.Value != null)
+                await InitialNotificationRequestAsync(token);
+
+            while (token.IsCancellationRequested == false && panelWasOpenedOnce == false)
+            {
+                web3Identity.UpdateValue(web3IdentityCache.Identity?.Address);
+                await UniTask.Delay(5000, cancellationToken: token);
+            }
+        }
+
+        private async UniTask InitialNotificationRequestAsync(CancellationToken ct)
+        {
+            unreadNotifications = 0;
+            notifications.Clear();
+            view.LoopList.SetListItemCount(notifications.Count, false);
+
             List<INotification> requestNotifications = await notificationsRequestController.GetMostRecentNotificationsAsync(ct);
 
             foreach (INotification requestNotification in requestNotifications)
