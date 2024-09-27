@@ -54,7 +54,7 @@ namespace DCL.Analytics.Systems
             this.identityCache = identityCache;
             this.walkedDistanceAnalytics = walkedDistanceAnalytics;
 
-            currentIdentity = identityCache.Identity;
+            currentIdentity = identityCache?.Identity;
 
             debugContainerBuilder
                .TryAddWidget("Badges Tracking")?
@@ -64,9 +64,12 @@ namespace DCL.Analytics.Systems
 
         protected override void Update(float t)
         {
+            if(identityCache?.Identity == null)
+                return;
+
             HandleIdentityChange();
 
-            walkedDistanceAnalytics.Update();
+            walkedDistanceAnalytics.Update(t);
             UpdateHeightAnalytics();
 
             UpdateDebugInfo();
@@ -74,7 +77,7 @@ namespace DCL.Analytics.Systems
 
         private void HandleIdentityChange()
         {
-            if (!currentIdentity.Address.Equals(identityCache.Identity.Address))
+            if (!currentIdentity!.Address.Equals(identityCache.Identity.Address))
             {
                 currentIdentity = identityCache.Identity;
                 badgeHeightReached = false;

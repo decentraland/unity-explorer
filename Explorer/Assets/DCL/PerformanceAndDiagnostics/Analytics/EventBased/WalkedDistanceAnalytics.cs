@@ -60,21 +60,15 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             Dispose();
         }
 
-        public void Update()
+        public void Update(float deltaTime)
         {
-            countdown -= Time.deltaTime;
+            countdown -= deltaTime;
 
             if (countdown <= 0 || StepCount > 100)
             {
                 SendAnalytics();
                 Reset();
             }
-        }
-
-        public void Reset()
-        {
-            StepCount = 0;
-            countdown = SEND_INTERVAL;
         }
 
         private void SendAnalytics()
@@ -85,6 +79,12 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             {
                 { "step_count", StepCount },
             });
+        }
+
+        public void Reset()
+        {
+            StepCount = 0;
+            countdown = SEND_INTERVAL;
         }
 
         private async UniTask SubscribeToPlayerStepAsync(CancellationToken ct)
