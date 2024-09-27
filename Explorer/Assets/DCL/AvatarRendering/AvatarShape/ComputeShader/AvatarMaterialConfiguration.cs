@@ -71,6 +71,16 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             avatarMaterial.SetColor(BASE_COLOR, baseColor);
             avatarMaterial.renderQueue = (int)RenderQueue.Geometry;
 
+            if (originalMaterial.IsKeywordEnabled("_EMISSION"))
+            {
+                var emissionColor = originalMaterial.GetColor("_EmissionColor");
+                avatarMaterial.SetColor("_Emissive_Color", emissionColor);
+            }
+            else
+            {
+                avatarMaterial.SetColor("_Emissive_Color", Color.black);
+            }
+
             if (originalMaterial.IsKeywordEnabled("_ALPHATEST_ON") || originalMaterial.GetFloat(ALPHA_CLIP) > 0)
                 ConfigureAlphaTest(originalMaterial, avatarMaterial, baseColor);
             else if (originalMaterial.IsKeywordEnabled("_SURFACE_TYPE_TRANSPARENT") || originalMaterial.GetFloat(SURFACE) > 0)

@@ -38,6 +38,7 @@ namespace DCL.Notifications.NotificationsMenu
 
         private CancellationTokenSource? notificationThumbnailCts;
         private CancellationTokenSource? notificationPanelCts = new CancellationTokenSource();
+        private int unreadNotifications;
 
         public NotificationsMenuController(
             NotificationsMenuView view,
@@ -57,6 +58,7 @@ namespace DCL.Notifications.NotificationsMenu
             this.webRequestController = webRequestController;
             this.sidebarBus = sidebarBus;
             this.rarityBackgroundMapping = rarityBackgroundMapping;
+            this.view.OnViewShown += OnViewShown;
             this.view.LoopList.InitListView(0, OnGetItemByIndex);
             this.view.CloseButton.onClick.AddListener(ClosePanel);
             InitialNotificationRequestAsync(lifeCycleCts.Token).Forget();
@@ -68,6 +70,8 @@ namespace DCL.Notifications.NotificationsMenu
             notificationThumbnailCts.SafeCancelAndDispose();
             notificationPanelCts.SafeCancelAndDispose();
             lifeCycleCts.SafeCancelAndDispose();
+            this.view.OnViewShown -= OnViewShown;
+            this.view.CloseButton.onClick.RemoveListener(ClosePanel);
         }
 
         private void ClosePanel()
@@ -91,6 +95,24 @@ namespace DCL.Notifications.NotificationsMenu
             }
         }
 
+        private void OnViewShown()
+        {
+            if (unreadNotifications > 0)
+            {
+                view.LoopList.DoActionForEachShownItem((item2, param) =>
+                {
+                    NotificationView notificationView = item2!.GetComponent<NotificationView>();
+                    INotification notificationData = notificationView.Notification;
+
+                    ManageNotificationReadStatus(notificationData, true);
+
+                    notificationView.UnreadImage.SetActive(false);
+                }, null);
+
+                UpdateUnreadNotificationRender();
+            }
+        }
+
         private async UniTaskVoid InitialNotificationRequestAsync(CancellationToken ct)
         {
             List<INotification> requestNotifications = await notificationsRequestController.GetMostRecentNotificationsAsync(ct);
@@ -99,6 +121,28 @@ namespace DCL.Notifications.NotificationsMenu
                 notifications.Add(requestNotification);
 
             view.LoopList.SetListItemCount(notifications.Count, false);
+
+            foreach (var notification in requestNotifications)
+                if (notification.Read == false)
+                    unreadNotifications++;
+
+            UpdateUnreadNotificationRender();
+        }
+
+        private void UpdateUnreadNotificationRender()
+        {
+            view.unreadNotificationCounterText.SetText("{0}", unreadNotifications);
+            view.notificationIndicator.SetActive(unreadNotifications > 0);
+        }
+
+        private void ManageNotificationReadStatus(INotification notificationData, bool isViewOpen)
+        {
+            if (notificationData.Read == false && isViewOpen)
+            {
+                unreadNotifications--;
+                notificationsRequestController.SetNotificationAsReadAsync(notificationData.Id, lifeCycleCts.Token).Forget();
+                notificationData.Read = true;
+            }
         }
 
         private LoopListViewItem2 OnGetItemByIndex(LoopListView2 loopListView, int index)
@@ -107,14 +151,15 @@ namespace DCL.Notifications.NotificationsMenu
             NotificationView notificationView = listItem!.GetComponent<NotificationView>();
             INotification notificationData = notifications[index];
 
+            ManageNotificationReadStatus(notificationData, view.gameObject.activeSelf);
+            UpdateUnreadNotificationRender();
+
             SetItemData(notificationView, notificationData);
 
             if (notificationThumbnailCache.TryGetValue(notificationData.Id, out Sprite thumbnailSprite))
                 notificationView.NotificationImage.SetImage(thumbnailSprite);
             else
-            {
                 LoadNotificationThumbnailAsync(notificationView, notificationData, notificationThumbnailCts.Token).Forget();
-            }
 
             return listItem;
         }
@@ -130,9 +175,9 @@ namespace DCL.Notifications.NotificationsMenu
             notificationView.UnreadImage.SetActive(!notificationData.Read);
             notificationView.TimeText.text = TimestampUtilities.GetRelativeTime(notificationData.Timestamp);
             notificationView.NotificationTypeImage.sprite = notificationIconTypes.GetNotificationIcon(notificationData.Type);
-            notificationsRequestController.SetNotificationAsReadAsync(notificationData.Id, lifeCycleCts.Token).Forget();
+
             ProcessCustomMetadata(notificationData, notificationView);
-            notificationData.Read = true;
+
             notificationView.NotificationClicked += ClickedNotification;
         }
 
