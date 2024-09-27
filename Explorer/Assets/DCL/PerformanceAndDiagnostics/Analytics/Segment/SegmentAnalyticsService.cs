@@ -9,7 +9,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
     {
         private readonly Segment.Analytics.Analytics analytics;
 
-        [Obsolete("Use RustSegmentAnalyticsService instead", true)]
+        [Obsolete("Use RustSegmentAnalyticsService instead")]
         public SegmentAnalyticsService(Configuration segmentConfiguration)
         {
             analytics = new Segment.Analytics.Analytics(segmentConfiguration);
