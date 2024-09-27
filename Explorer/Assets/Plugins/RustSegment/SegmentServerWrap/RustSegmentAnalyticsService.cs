@@ -29,6 +29,9 @@ namespace Plugins.RustSegment.SegmentServerWrap
 
         public RustSegmentAnalyticsService(string writerKey)
         {
+            if (string.IsNullOrWhiteSpace(writerKey))
+                throw new ArgumentNullException(nameof(writerKey), "Invalid key is null or empty");
+
             if (current != null)
                 throw new Exception("Rust Segment previous instance is not disposed");
 
