@@ -141,39 +141,47 @@ namespace DCL.Landscape.Utils
                 checksum = parcelChecksum,
             };
 
-            var path = GetFilePath(seed, chunkSize, version);
+            string? filePath = GetFilePath(seed, chunkSize, version);
             var dictionaryPath = GetDictionaryDirectory();
 
-            if (force && File.Exists(path))
-                File.Delete(path);
+            CheckCorruptStates();
 
-            if (!File.Exists(path))
+            if (force && File.Exists(filePath))
+                ClearCache();
+
+            if (!File.Exists(filePath))
             {
-                //If the file does not exist, but the dictionary path does, theres a possible corrupt state. 
-                //We gotta clear it
-                ClearDictionaryPath();
+                Directory.CreateDirectory(dictionaryPath);
                 return emptyCache;
             }
 
-            await using var fileStream = new FileStream(path, FileMode.Open);
+            await using var fileStream = new FileStream(filePath, FileMode.Open);
 
             TerrainLocalCache? localCache = await UniTask.RunOnThreadPool(() => (TerrainLocalCache)FORMATTER.Deserialize(fileStream));
 
             if (localCache.checksum != parcelChecksum)
             {
-                File.Delete(path);
-                ClearDictionaryPath();
+                ClearCache();
+                Directory.CreateDirectory(dictionaryPath);
                 return emptyCache;
             }
 
             localCache.isValid = true;
             return localCache;
 
-            void ClearDictionaryPath()
+            void CheckCorruptStates()
             {
-                if (Directory.Exists(dictionaryPath))
-                    Directory.Delete(GetDictionaryDirectory(), true);
-                Directory.CreateDirectory(dictionaryPath);
+                if (File.Exists(filePath) && !Directory.Exists(dictionaryPath))
+                    File.Delete(filePath);
+
+                if (!File.Exists(filePath) && Directory.Exists(dictionaryPath))
+                    Directory.Delete(dictionaryPath, true);
+            }
+
+            void ClearCache()
+            {
+                File.Delete(filePath);
+                Directory.Delete(dictionaryPath, true);
             }
         }
 
