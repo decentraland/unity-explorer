@@ -50,7 +50,7 @@ namespace DCL.Analytics.Systems
             this.playerEntity = playerEntity;
             this.identityCache = identityCache;
 
-            currentIdentity = identityCache.Identity;
+            currentIdentity = identityCache?.Identity;
 
             totalElevationGainBinding = new ElementBinding<string>(string.Empty);
             debugContainerBuilder
@@ -60,6 +60,8 @@ namespace DCL.Analytics.Systems
 
         protected override void Update(float t)
         {
+            if(identityCache?.Identity == null) return;
+
             HandleIdentityChange();
 
             if (badgeHeightReached || !realmData.Configured) return;
