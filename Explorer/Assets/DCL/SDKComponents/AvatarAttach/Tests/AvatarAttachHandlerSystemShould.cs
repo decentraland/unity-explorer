@@ -255,7 +255,7 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
                 var position = anchorPoint.Value().position;
 
                 if (anchorPoint.Key == AvatarAnchorPointType.AaptPosition)
-                    position += Vector3.up * AvatarAttachHandlerSystem.OLD_CLIENT_PIVOT_CORRECTION;
+                    position += Vector3.up * AvatarAttachUtils.OLD_CLIENT_PIVOT_CORRECTION;
 
                 Assert.IsTrue(ApproximatelyEqual(position, entityTransformComponent.Transform.position),
                     $"Position should match {anchorPoint.Key} after update");
@@ -303,7 +303,7 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
         }
 
         private Vector3 GetExpectedRootPosition() =>
-            playerAvatarBase.transform.position + (Vector3.up * AvatarAttachHandlerSystem.OLD_CLIENT_PIVOT_CORRECTION);
+            playerAvatarBase.transform.position + (Vector3.up * AvatarAttachUtils.OLD_CLIENT_PIVOT_CORRECTION);
 
         [Test]
         public async Task StopUpdatingTransformOnComponentRemoval()
