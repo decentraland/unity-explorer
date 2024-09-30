@@ -58,8 +58,8 @@ namespace DCL.Analytics.Systems
 
             debugContainerBuilder
                .TryAddWidget("Badges Tracking")?
-               .AddCustomMarker("Vertical Voyager: ", totalElevationGainBinding)
-               .AddCustomMarker("Steps Count: ", stepsCountBinding);
+               .AddCustomMarker("[Vertical Voyager] elevation gain: ", totalElevationGainBinding)
+               .AddCustomMarker("[Walkabout Wanderer] steps count: ", stepsCountBinding);
         }
 
         protected override void Update(float t)
