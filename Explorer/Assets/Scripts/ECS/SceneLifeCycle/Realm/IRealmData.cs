@@ -1,6 +1,7 @@
 ﻿using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Ipfs;
+using System.Collections.Generic;
 
 namespace ECS
 {
@@ -15,6 +16,11 @@ namespace ECS
         ///     Indicates that the realm contains a fixed number of scenes
         /// </summary>
         bool ScenesAreFixed { get; }
+
+        /// <summary>
+        ///     Occupied parcels regardless of scene promises
+        /// </summary>
+        IReadOnlyList<string>? OccupiedParcels { get; }
 
         /// <summary>
         ///     Name of the realm
@@ -35,6 +41,7 @@ namespace ECS
         {
             public IIpfsRealm Ipfs { get; }
             public bool ScenesAreFixed { get; }
+            public IReadOnlyList<string>? OccupiedParcels { get; }
             public string RealmName { get; }
             public int NetworkId { get; }
             public string CommsAdapter { get; }

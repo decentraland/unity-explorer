@@ -115,7 +115,7 @@ namespace Global.Dynamic
                     Realms = settings.Realms,
                     StartParcel = startingParcel,
                     IsolateScenesCommunication = realmLaunchSettings.isolateSceneCommunication,
-                    EnableLandscape = debugSettings.EnableLandscape && !realmLaunchSettings.IsLocalSceneDevelopmentRealm,
+                    EnableLandscape = debugSettings.EnableLandscape,
                     EnableLOD = debugSettings.EnableLOD && !realmLaunchSettings.IsLocalSceneDevelopmentRealm,
                     EnableAnalytics = EnableAnalytics,
                     HybridSceneParams = realmLaunchSettings.CreateHybridSceneParams(startingParcel),

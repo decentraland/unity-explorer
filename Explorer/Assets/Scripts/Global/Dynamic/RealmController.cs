@@ -107,13 +107,23 @@ namespace Global.Dynamic
                 result.configurations.networkId,
                 result.comms?.adapter ?? result.comms?.fixedAdapter ?? "offline", //"offline property like in previous implementation"
                 result.comms?.protocol ?? "v3",
-                hostname
+                hostname,
+                result.configurations.occupiedParcels
             );
 
-            // Add the realm component
+            // Add components
             var realmComp = new RealmComponent(realmData);
+            var processedScenePointers = ProcessedScenePointers.Create();
 
-            realmEntity = world.Create(realmComp, ProcessedScenePointers.Create());
+            /*if (realmData.OccupiedParcels is { Count: > 0 })
+            {
+                foreach (string parcel in realmData.OccupiedParcels)
+                {
+                    processedScenePointers.Value.Add(IpfsHelper.DecodePointer(parcel).ToInt2());
+                }
+            }*/
+
+            realmEntity = world.Create(realmComp, processedScenePointers);
 
             if (!ComplimentWithStaticPointers(world, realmEntity) && !realmComp.ScenesAreFixed)
                 ComplimentWithVolatilePointers(world, realmEntity);

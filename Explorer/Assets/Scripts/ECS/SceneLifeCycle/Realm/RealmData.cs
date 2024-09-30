@@ -1,5 +1,6 @@
 ﻿using DCL.Ipfs;
 using System;
+using System.Collections.Generic;
 
 namespace ECS
 {
@@ -12,6 +13,7 @@ namespace ECS
 
         private IIpfsRealm ipfs = InvalidIpfsRealm.Instance;
         private bool scenesAreFixed;
+        private IReadOnlyList<string>? occupiedParcels;
 
         public string RealmName { get; private set; }
         public int NetworkId{ get; private set; }
@@ -38,6 +40,15 @@ namespace ECS
             }
         }
 
+        public IReadOnlyList<string>? OccupiedParcels
+        {
+            get
+            {
+                Validate();
+                return occupiedParcels;
+            }
+        }
+
         /// <summary>
         /// Create an empty data to configure later
         /// </summary>
@@ -51,14 +62,15 @@ namespace ECS
 
         public RealmData(IIpfsRealm ipfsRealm)
         {
-            Reconfigure(ipfsRealm, string.Empty, DEFAULT_NETWORK_ID, string.Empty, string.Empty, string.Empty);
+            Reconfigure(ipfsRealm, string.Empty, DEFAULT_NETWORK_ID, string.Empty, string.Empty, string.Empty, null);
         }
 
-        public void Reconfigure(IIpfsRealm ipfsRealm, string realmName, int networkId, string commsAdapter, string protocol, string hostname)
+        public void Reconfigure(IIpfsRealm ipfsRealm, string realmName, int networkId, string commsAdapter, string protocol, string hostname, IReadOnlyList<string>? realmOccupiedParcels = null)
         {
             IsDirty = true;
             Configured = true;
             RealmName = realmName;
+            occupiedParcels = realmOccupiedParcels;
             scenesAreFixed = ipfsRealm.SceneUrns is { Count: > 0 };
             ipfs = ipfsRealm;
             CommsAdapter = commsAdapter;
