@@ -44,7 +44,7 @@ namespace DCL.Notifications.NotificationsMenu
         private CancellationTokenSource? notificationPanelCts = new CancellationTokenSource();
         private int unreadNotifications;
         private bool panelWasOpenedOnce = false;
-        private ReactiveProperty<Web3Address?> web3Identity;
+        private Web3Address? previousWeb3Identity;
 
         public NotificationsMenuController(
             NotificationsMenuView view,
@@ -69,8 +69,7 @@ namespace DCL.Notifications.NotificationsMenu
             this.view.OnViewShown += OnViewShown;
             this.view.LoopList.InitListView(0, OnGetItemByIndex);
             this.view.CloseButton.onClick.AddListener(ClosePanel);
-            this.web3Identity = new ReactiveProperty<Web3Address?>(web3IdentityCache.Identity?.Address);
-            this.web3Identity.OnUpdate += OnWeb3IdentityChanged;
+            this.previousWeb3Identity = web3IdentityCache.Identity?.Address;
             CheckIdentityChangeAsync(lifeCycleCts.Token).Forget();
             notificationsBusController.SubscribeToAllNotificationTypesReceived(OnNotificationReceived);
         }
@@ -124,21 +123,20 @@ namespace DCL.Notifications.NotificationsMenu
             }
         }
 
-        private void OnWeb3IdentityChanged(Web3Address? address)
-        {
-            if (address == null) return;
-            InitialNotificationRequestAsync(lifeCycleCts.Token).Forget();
-        }
-
         private async UniTaskVoid CheckIdentityChangeAsync(CancellationToken token)
         {
-            if (web3Identity.Value != null)
+            if (previousWeb3Identity != null)
                 await InitialNotificationRequestAsync(token);
 
             while (token.IsCancellationRequested == false && panelWasOpenedOnce == false)
             {
-                web3Identity.UpdateValue(web3IdentityCache.Identity?.Address);
-                await UniTask.Delay(IDENTITY_CHANGE_POLLING_INTERVAL, cancellationToken: token);
+                if (previousWeb3Identity != web3IdentityCache.Identity?.Address)
+                {
+                    previousWeb3Identity = web3IdentityCache.Identity?.Address;
+                    await InitialNotificationRequestAsync(lifeCycleCts.Token);
+                }
+                else
+                    await UniTask.Delay(IDENTITY_CHANGE_POLLING_INTERVAL, cancellationToken: token);
             }
         }
 
