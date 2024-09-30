@@ -64,8 +64,7 @@ namespace DCL.Analytics.Systems
 
         protected override void Update(float t)
         {
-            if(identityCache?.Identity == null)
-                return;
+            if(identityCache?.Identity == null) return;
 
             HandleIdentityChange();
 
