@@ -22,6 +22,7 @@ namespace DCL.Notifications.NotificationsMenu
     public class NotificationsMenuController : IDisposable
     {
         private const int PIXELS_PER_UNIT = 50;
+        private const int IDENTITY_CHANGE_POLLING_INTERVAL = 5000;
         private static readonly List<NotificationType> NOTIFICATION_TYPES_TO_IGNORE = new()
             {
                 NotificationType.INTERNAL_ARRIVED_TO_DESTINATION
@@ -68,8 +69,8 @@ namespace DCL.Notifications.NotificationsMenu
             this.view.OnViewShown += OnViewShown;
             this.view.LoopList.InitListView(0, OnGetItemByIndex);
             this.view.CloseButton.onClick.AddListener(ClosePanel);
-            web3Identity = new ReactiveProperty<Web3Address?>(web3IdentityCache.Identity?.Address);
-            web3Identity.OnUpdate += OnWeb3IdentityChanged;
+            this.web3Identity = new ReactiveProperty<Web3Address?>(web3IdentityCache.Identity?.Address);
+            this.web3Identity.OnUpdate += OnWeb3IdentityChanged;
             CheckIdentityChangeAsync(lifeCycleCts.Token).Forget();
             notificationsBusController.SubscribeToAllNotificationTypesReceived(OnNotificationReceived);
         }
@@ -137,7 +138,7 @@ namespace DCL.Notifications.NotificationsMenu
             while (token.IsCancellationRequested == false && panelWasOpenedOnce == false)
             {
                 web3Identity.UpdateValue(web3IdentityCache.Identity?.Address);
-                await UniTask.Delay(5000, cancellationToken: token);
+                await UniTask.Delay(IDENTITY_CHANGE_POLLING_INTERVAL, cancellationToken: token);
             }
         }
 
