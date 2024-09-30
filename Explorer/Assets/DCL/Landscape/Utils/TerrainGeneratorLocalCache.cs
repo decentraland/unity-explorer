@@ -155,9 +155,11 @@ namespace DCL.Landscape.Utils
                 return emptyCache;
             }
 
-            await using var fileStream = new FileStream(filePath, FileMode.Open);
-
-            TerrainLocalCache? localCache = await UniTask.RunOnThreadPool(() => (TerrainLocalCache)FORMATTER.Deserialize(fileStream));
+            TerrainLocalCache? localCache;
+            using (var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
+            {
+                localCache = await UniTask.RunOnThreadPool(() => (TerrainLocalCache)FORMATTER.Deserialize(fileStream));
+            }
 
             if (localCache.checksum != parcelChecksum)
             {
