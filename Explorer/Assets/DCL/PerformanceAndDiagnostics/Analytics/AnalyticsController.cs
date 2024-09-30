@@ -18,10 +18,6 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             analytics = analyticsService;
             Configuration = configuration;
 
-            analytics.Identify("test_user");
-            analytics.Track("test_csharp", new JsonObject());
-            analytics.Flush();
-
             analytics.AddPlugin(new StaticCommonTraitsPlugin(launcherTraits));
 
             analytics.Track(AnalyticsEvents.General.SYSTEM_INFO_REPORT, new JsonObject
