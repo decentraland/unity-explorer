@@ -1,4 +1,3 @@
-using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Loading.DTO;
 using DCL.AvatarRendering.Wearables.Helpers;
@@ -11,7 +10,6 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.Assertions;
 
-//Removed all references to EmoteData in WearableItem
 namespace DCL.AvatarRendering.Wearables.Components
 {
     public enum WearableType : byte
@@ -163,7 +161,7 @@ namespace DCL.AvatarRendering.Wearables.Components
 
         public bool HasSameModelsForAllGenders()
         {
-            Loading.Components.IAvatarAttachment attachment = this;
+            IAvatarAttachment attachment = this;
 
             attachment.TryGetMainFileHash(BodyShape.MALE, out string? maleHash);
             attachment.TryGetMainFileHash(BodyShape.FEMALE, out string? femaleHash);
