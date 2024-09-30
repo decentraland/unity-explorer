@@ -1,5 +1,4 @@
-﻿#nullable enable
-using DCL.Web3.Identities;
+﻿using DCL.Web3.Identities;
 using ECS;
 using Segment.Serialization;
 using UnityEngine;
@@ -19,6 +18,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             Configuration = configuration;
 
             analytics.AddPlugin(new StaticCommonTraitsPlugin(launcherTraits));
+            analytics.Identify(SystemInfo.deviceUniqueIdentifier);
 
             analytics.Track(AnalyticsEvents.General.SYSTEM_INFO_REPORT, new JsonObject
             {

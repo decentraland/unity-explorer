@@ -12,6 +12,12 @@ namespace Plugins.RustSegment.SegmentServerWrap.Playground
 
         private void Start()
         {
+            Initialize();
+        }
+
+        [ContextMenu(nameof(Initialize))]
+        private void Initialize()
+        {
             string key = Environment.GetEnvironmentVariable("SEGMENT_WRITE_KEY")!;
 
             if (string.IsNullOrWhiteSpace(key))
