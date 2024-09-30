@@ -16,6 +16,7 @@ using DCL.UI.MainUI;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
 using Global.AppArgs;
+using Global.Dynamic.DebugSettings;
 using MVC;
 using PortableExperiences.Controller;
 using SceneRunner.Debugging;

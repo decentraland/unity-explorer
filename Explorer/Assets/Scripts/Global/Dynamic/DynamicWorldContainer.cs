@@ -371,7 +371,9 @@ namespace Global.Dynamic
                 staticContainer.FeatureFlagsCache,
                 identityCache,
                 container.RealmController,
-                dynamicWorldParams.AppParameters
+                dynamicWorldParams.AppParameters,
+                bootstrapContainer.DebugSettings,
+                staticContainer.PortableExperiencesController
             );
 
             var worldInfoHub = new LocationBasedWorldInfoHub(
@@ -605,7 +607,9 @@ namespace Global.Dynamic
                         realmNavigator,
                         staticContainer.RealmData,
                         staticContainer.ScenesCache,
-                        staticContainer.MainPlayerAvatarBaseProxy
+                        staticContainer.MainPlayerAvatarBaseProxy,
+                        identityCache,
+                        debugBuilder
                     )
                 );
 

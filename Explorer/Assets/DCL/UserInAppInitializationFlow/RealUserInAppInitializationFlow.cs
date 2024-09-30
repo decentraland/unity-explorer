@@ -17,6 +17,8 @@ using DCL.UserInAppInitializationFlow.StartupOperations.Struct;
 using DCL.Web3.Identities;
 using ECS.SceneLifeCycle.Realm;
 using Global.AppArgs;
+using Global.Dynamic.DebugSettings;
+using PortableExperiences.Controller;
 using UnityEngine;
 using Utility.Types;
 
@@ -53,7 +55,9 @@ namespace DCL.UserInAppInitializationFlow
             FeatureFlagsCache featureFlagsCache,
             IWeb3IdentityCache web3IdentityCache,
             IRealmController realmController,
-            IAppArgs appParameters
+            IAppArgs appParameters,
+            IDebugSettings debugSettings,
+            IPortableExperiencesController portableExperiencesController
         )
         {
             this.loadingStatus = loadingStatus;
@@ -71,6 +75,7 @@ namespace DCL.UserInAppInitializationFlow
             checkOnboardingStartupOperation = new CheckOnboardingStartupOperation(loadingStatus, realmController, selfProfile, featureFlagsCache, decentralandUrlsSource, appParameters);
             restartRealmStartupOperation = new RestartRealmStartupOperation(loadingStatus, realmController);
             var teleportStartupOperation = new TeleportStartupOperation(loadingStatus, realmNavigator, startParcel);
+            var loadGlobalPxOperation = new LoadGlobalPortableExperiencesStartupOperation(loadingStatus, selfProfile, featureFlagsCache, debugSettings, portableExperiencesController);
 
             startupOperation = new SequentialStartupOperation(
                 loadingStatus,
@@ -82,7 +87,8 @@ namespace DCL.UserInAppInitializationFlow
                 loadLandscapeStartupOperation,
                 checkOnboardingStartupOperation,
                 restartRealmStartupOperation,
-                teleportStartupOperation
+                teleportStartupOperation,
+                loadGlobalPxOperation
             ).WithHandleExceptions();
         }
 
@@ -112,7 +118,15 @@ namespace DCL.UserInAppInitializationFlow
 
                 var loadingResult = await LoadingScreen(showLoading)
                    .ShowWhileExecuteTaskAsync(
-                        async parentLoadReport => result = await startupOperation.ExecuteAsync(parentLoadReport, ct),
+                        async parentLoadReport =>
+                        {
+                            result = await startupOperation.ExecuteAsync(parentLoadReport, ct);
+
+                            if (result.Success)
+                                parentLoadReport.SetProgress(loadingStatus.SetStage(RealFlowLoadingStatus.Stage.Completed));
+
+                            return result;
+                        },
                         ct
                     );
 

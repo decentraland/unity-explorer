@@ -503,7 +503,7 @@
       "dependencies": {
         "com.unity.render-pipelines.universal": "10.3.2"
       },
-      "hash": "1b6ff73eccc95157197fed7d3609ad063b212709"
+      "hash": "5726daa968873a05722b051a4637f55806feb5fd"
     },
     "superscrollview": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/SuperScrollView",
