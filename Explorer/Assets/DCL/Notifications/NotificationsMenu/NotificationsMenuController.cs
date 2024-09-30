@@ -130,7 +130,7 @@ namespace DCL.Notifications.NotificationsMenu
 
             while (token.IsCancellationRequested == false && panelWasOpenedOnce == false)
             {
-                if (previousWeb3Identity != web3IdentityCache.Identity?.Address)
+                if (previousWeb3Identity != web3IdentityCache.Identity?.Address && web3IdentityCache.Identity?.Address != null)
                 {
                     previousWeb3Identity = web3IdentityCache.Identity?.Address;
                     await InitialNotificationRequestAsync(lifeCycleCts.Token);
