@@ -156,7 +156,7 @@ namespace DCL.Landscape.Utils
             }
 
             TerrainLocalCache? localCache;
-            using (var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
+            await using (var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
             {
                 localCache = await UniTask.RunOnThreadPool(() => (TerrainLocalCache)FORMATTER.Deserialize(fileStream));
             }
