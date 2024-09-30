@@ -118,7 +118,15 @@ namespace DCL.UserInAppInitializationFlow
 
                 var loadingResult = await LoadingScreen(showLoading)
                    .ShowWhileExecuteTaskAsync(
-                        async parentLoadReport => result = await startupOperation.ExecuteAsync(parentLoadReport, ct),
+                        async parentLoadReport =>
+                        {
+                            result = await startupOperation.ExecuteAsync(parentLoadReport, ct);
+
+                            if (result.Success)
+                                parentLoadReport.SetProgress(loadingStatus.SetStage(RealFlowLoadingStatus.Stage.Completed));
+
+                            return result;
+                        },
                         ct
                     );
 

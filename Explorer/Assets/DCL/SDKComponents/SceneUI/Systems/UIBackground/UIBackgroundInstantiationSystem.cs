@@ -110,6 +110,8 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
 
             var texturePromise = uiBackgroundComponent.TexturePromise.Value;
 
+            // We hide the image until the texture is loaded in order to avoid to show a white image in the meanwhile
+            uiBackgroundComponent.Image.IsHidden = true;
             if (texturePromise.TryConsume(World, out StreamableLoadingResult<Texture2D> promiseResult))
             {
                 // Backgrounds with texture
@@ -119,6 +121,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
                     ReportHub.LogError(ReportCategory.SCENE_UI, "Error consuming texture promise");
 
                 uiBackgroundComponent.Status = LifeCycle.LoadingFinished;
+                uiBackgroundComponent.Image.IsHidden = false;
 
                 // Write value back as it's nullable (and can't be accessed by ref)
                 uiBackgroundComponent.TexturePromise = texturePromise;
