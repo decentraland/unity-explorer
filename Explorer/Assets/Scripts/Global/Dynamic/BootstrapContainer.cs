@@ -123,7 +123,7 @@ namespace Global.Dynamic
 
             if (container.enableAnalytics)
             {
-                IAnalyticsService service = CreateAnalyticsService(analyticsConfig);
+                IAnalyticsService service = CreateAnalyticsService(analyticsConfig, ct);
 
                 appArgs.TryGetValue("launcher_anonymous_id", out string? launcherAnonymousId);
                 appArgs.TryGetValue("session_id", out string? sessionId);
@@ -142,25 +142,27 @@ namespace Global.Dynamic
             return (coreBootstrap, IAnalyticsController.Null);
         }
 
-        private static IAnalyticsService CreateAnalyticsService(AnalyticsConfiguration analyticsConfig)
+        private static IAnalyticsService CreateAnalyticsService(AnalyticsConfiguration analyticsConfig, CancellationToken token)
         {
             // Force segment in release
             if (!Debug.isDebugBuild)
-                return CreateSegmentAnalyticsOrFallbackToDebug(analyticsConfig);
+                return CreateSegmentAnalyticsOrFallbackToDebug(analyticsConfig, token);
 
             return analyticsConfig.Mode switch
                    {
-                       AnalyticsMode.SEGMENT => CreateSegmentAnalyticsOrFallbackToDebug(analyticsConfig),
+                       AnalyticsMode.SEGMENT => CreateSegmentAnalyticsOrFallbackToDebug(analyticsConfig, token),
                        AnalyticsMode.DEBUG_LOG => new DebugAnalyticsService(),
                        AnalyticsMode.DISABLED => throw new InvalidOperationException("Trying to create analytics when it is disabled"),
                        _ => throw new ArgumentOutOfRangeException(),
                    };
         }
 
-        private static IAnalyticsService CreateSegmentAnalyticsOrFallbackToDebug(AnalyticsConfiguration analyticsConfig)
+        private static IAnalyticsService CreateSegmentAnalyticsOrFallbackToDebug(AnalyticsConfiguration analyticsConfig, CancellationToken token)
         {
             if (analyticsConfig.TryGetSegmentConfiguration(out Configuration segmentConfiguration))
-                return new RustSegmentAnalyticsService(segmentConfiguration.WriteKey!);
+                return new RustSegmentAnalyticsService(segmentConfiguration.WriteKey!)
+                      .WithCountFlush(analyticsConfig.FlushSize)
+                      .WithTimeFlush(TimeSpan.FromSeconds(analyticsConfig.FlushInterval), token);
 
             // Fall back to debug if segment is not configured
             ReportHub.LogWarning(ReportCategory.ANALYTICS, $"Segment configuration not found. Falling back to {nameof(DebugAnalyticsService)}.");

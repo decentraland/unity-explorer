@@ -1,5 +1,8 @@
-﻿using Segment.Analytics;
+﻿using DCL.PerformanceAndDiagnostics.Analytics.Services;
+using Segment.Analytics;
 using Segment.Serialization;
+using System;
+using System.Threading;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics
 {
@@ -18,5 +21,14 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         void AddPlugin(EventPlugin plugin);
 
         void Flush();
+    }
+
+    public static class AnalyticsServiceExtensions
+    {
+        public static TimeFlushAnalyticsServiceDecorator WithTimeFlush(this IAnalyticsService service, TimeSpan flushTime, CancellationToken token) =>
+            new (service, flushTime, token);
+
+        public static CountFlushAnalyticsServiceDecorator WithCountFlush(this IAnalyticsService service, int flushCount) =>
+            new (service, flushCount);
     }
 }
