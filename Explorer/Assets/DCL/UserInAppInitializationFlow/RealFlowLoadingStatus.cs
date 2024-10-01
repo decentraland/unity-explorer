@@ -23,7 +23,7 @@ namespace DCL.UserInAppInitializationFlow
             ///     Player has teleported to the spawn point of the starting scene
             /// </summary>
             PlayerTeleported = 10,
-            LoadGlobalPXs = 11,
+            GlobalPXsLoaded = 11,
             Completed = 12,
         }
 
@@ -40,7 +40,7 @@ namespace DCL.UserInAppInitializationFlow
             [Stage.OnboardingChecked] = 0.80f,
             [Stage.RealmRestarted] = 0.85f,
             [Stage.PlayerTeleported] = 0.95f,
-            [Stage.LoadGlobalPXs] = 0.99f,
+            [Stage.GlobalPXsLoaded] = 0.99f,
             [Stage.Completed] = 1f,
         };
 

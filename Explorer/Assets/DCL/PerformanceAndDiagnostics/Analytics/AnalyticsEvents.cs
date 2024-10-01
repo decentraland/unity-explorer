@@ -2,9 +2,6 @@
 {
     public static class AnalyticsEvents
     {
-        // TODO (Vit): Remains
-        // - Equip item
-
         public static class General
         {
             public const string SYSTEM_INFO_REPORT = "system_info_report";

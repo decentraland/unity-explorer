@@ -46,7 +46,7 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
         {
             await CheckGlobalPxLoadingConditionsAsync(ct);
 
-            report.SetProgress(loadingStatus.SetStage(RealFlowLoadingStatus.Stage.LoadGlobalPXs));
+            report.SetProgress(loadingStatus.SetStage(RealFlowLoadingStatus.Stage.GlobalPXsLoaded));
             return Result.SuccessResult();
         }
 
