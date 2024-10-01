@@ -1,5 +1,6 @@
 using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Loading.Components;
+using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Common.Components;
 
 namespace DCL.AvatarRendering.Emotes
