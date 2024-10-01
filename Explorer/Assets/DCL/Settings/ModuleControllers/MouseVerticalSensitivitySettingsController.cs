@@ -1,4 +1,5 @@
 ﻿using DCL.Settings.ModuleViews;
+using DCL.Settings.Settings;
 
 namespace DCL.Settings.ModuleControllers
 {
@@ -7,10 +8,12 @@ namespace DCL.Settings.ModuleControllers
         private const string VERTICAL_MOUSE_SENSITIVITY_DATA_STORE_KEY = "Settings_VerticalMouseSensitivity";
 
         private readonly SettingsSliderModuleView view;
+        private readonly ControlsSettingsAsset controlsSettingsAsset;
 
-        public MouseVerticalSensitivitySettingsController(SettingsSliderModuleView view)
+        public MouseVerticalSensitivitySettingsController(SettingsSliderModuleView view, ControlsSettingsAsset controlsSettingsAsset)
         {
             this.view = view;
+            this.controlsSettingsAsset = controlsSettingsAsset;
 
             if (settingsDataStore.HasKey(VERTICAL_MOUSE_SENSITIVITY_DATA_STORE_KEY))
                 view.SliderView.Slider.value = settingsDataStore.GetSliderValue(VERTICAL_MOUSE_SENSITIVITY_DATA_STORE_KEY);
@@ -21,7 +24,7 @@ namespace DCL.Settings.ModuleControllers
 
         private void SetVerticalMouseSensitivity(float sensitivity)
         {
-            //TODO: actual sensitivity set
+            controlsSettingsAsset.VerticalMouseSensitivity = sensitivity;
             settingsDataStore.SetSliderValue(VERTICAL_MOUSE_SENSITIVITY_DATA_STORE_KEY, sensitivity, save: true);
         }
 
