@@ -26,7 +26,7 @@ namespace Decentraland.Realm {
           string.Concat(
             "Ch5kZWNlbnRyYWxhbmQvcmVhbG0vYWJvdXQucHJvdG8SEmRlY2VudHJhbGFu",
             "ZC5yZWFsbRolZGVjZW50cmFsYW5kL2NvbW1vbi9ib3JkZXJfcmVjdC5wcm90",
-            "bxohZGVjZW50cmFsYW5kL2NvbW1vbi92ZWN0b3JzLnByb3RvIqASCg1BYm91",
+            "bxohZGVjZW50cmFsYW5kL2NvbW1vbi92ZWN0b3JzLnByb3RvIoYSCg1BYm91",
             "dFJlc3BvbnNlEg8KB2hlYWx0aHkYASABKAgSTAoOY29uZmlndXJhdGlvbnMY",
             "AiABKAsyNC5kZWNlbnRyYWxhbmQucmVhbG0uQWJvdXRSZXNwb25zZS5BYm91",
             "dENvbmZpZ3VyYXRpb24SPgoHY29udGVudBgDIAEoCzItLmRlY2VudHJhbGFu",
@@ -53,32 +53,32 @@ namespace Decentraland.Realm {
             "bhgBIAEoCRIWCglpbWFnZV91cmwYAiABKAlIAIgBAUIMCgpfaW1hZ2VfdXJs",
             "QhEKD19zYXRlbGxpdGVfdmlld0IOCgxfcGFyY2VsX3ZpZXdCEQoPX3RodW1i",
             "bmFpbF92aWV3Gj0KE1NreWJveENvbmZpZ3VyYXRpb24SFwoKZml4ZWRfaG91",
-            "chgBIAEoAkgAiAEBQg0KC19maXhlZF9ob3VyGowDChJBYm91dENvbmZpZ3Vy",
+            "chgBIAEoAkgAiAEBQg0KC19maXhlZF9ob3VyGvICChJBYm91dENvbmZpZ3Vy",
             "YXRpb24SFwoKcmVhbG1fbmFtZRgBIAEoCUgAiAEBEhIKCm5ldHdvcmtfaWQY",
             "AiABKA0SGQoRZ2xvYmFsX3NjZW5lc191cm4YAyADKAkSEgoKc2NlbmVzX3Vy",
             "bhgEIAMoCRJKCgZza3lib3gYBiABKAsyNS5kZWNlbnRyYWxhbmQucmVhbG0u",
             "QWJvdXRSZXNwb25zZS5Ta3lib3hDb25maWd1cmF0aW9uSAGIAQESJwoaY2l0",
             "eV9sb2FkZXJfY29udGVudF9zZXJ2ZXIYByABKAlIAogBARJECgNtYXAYCCAB",
             "KAsyMi5kZWNlbnRyYWxhbmQucmVhbG0uQWJvdXRSZXNwb25zZS5NYXBDb25m",
-            "aWd1cmF0aW9uSAOIAQESGAoQb2NjdXBpZWRfcGFyY2VscxgJIAMoCUINCgtf",
-            "cmVhbG1fbmFtZUIJCgdfc2t5Ym94Qh0KG19jaXR5X2xvYWRlcl9jb250ZW50",
-            "X3NlcnZlckIGCgRfbWFwSgQIBRAGGn4KC0NvbnRlbnRJbmZvEg8KB2hlYWx0",
-            "aHkYASABKAgSFAoHdmVyc2lvbhgCIAEoCUgAiAEBEhgKC2NvbW1pdF9oYXNo",
-            "GAMgASgJSAGIAQESEgoKcHVibGljX3VybBgEIAEoCUIKCghfdmVyc2lvbkIO",
-            "CgxfY29tbWl0X2hhc2gafgoLTGFtYmRhc0luZm8SDwoHaGVhbHRoeRgBIAEo",
-            "CBIUCgd2ZXJzaW9uGAIgASgJSACIAQESGAoLY29tbWl0X2hhc2gYAyABKAlI",
-            "AYgBARISCgpwdWJsaWNfdXJsGAQgASgJQgoKCF92ZXJzaW9uQg4KDF9jb21t",
-            "aXRfaGFzaBr6AQoJQ29tbXNJbmZvEg8KB2hlYWx0aHkYASABKAgSFAoHdmVy",
-            "c2lvbhgCIAEoCUgAiAEBEhgKC2NvbW1pdF9oYXNoGAMgASgJSAGIAQESFwoK",
-            "cHVibGljX3VybBgEIAEoCUgCiAEBEhAKCHByb3RvY29sGDIgASgJEhgKC3Vz",
-            "ZXJzX2NvdW50GDMgASgFSAOIAQESGgoNZml4ZWRfYWRhcHRlchg0IAEoCUgE",
-            "iAEBQgoKCF92ZXJzaW9uQg4KDF9jb21taXRfaGFzaEINCgtfcHVibGljX3Vy",
-            "bEIOCgxfdXNlcnNfY291bnRCEAoOX2ZpeGVkX2FkYXB0ZXIa1gEKB0JmZklu",
-            "Zm8SDwoHaGVhbHRoeRgBIAEoCBIUCgd2ZXJzaW9uGAIgASgJSACIAQESGAoL",
-            "Y29tbWl0X2hhc2gYAyABKAlIAYgBARISCgpwdWJsaWNfdXJsGAQgASgJEhcK",
-            "CnVzZXJfY291bnQYMyABKAVIAogBARIdChBwcm90b2NvbF92ZXJzaW9uGDQg",
-            "ASgJSAOIAQFCCgoIX3ZlcnNpb25CDgoMX2NvbW1pdF9oYXNoQg0KC191c2Vy",
-            "X2NvdW50QhMKEV9wcm90b2NvbF92ZXJzaW9uQgYKBF9iZmZiBnByb3RvMw=="));
+            "aWd1cmF0aW9uSAOIAQFCDQoLX3JlYWxtX25hbWVCCQoHX3NreWJveEIdChtf",
+            "Y2l0eV9sb2FkZXJfY29udGVudF9zZXJ2ZXJCBgoEX21hcEoECAUQBhp+CgtD",
+            "b250ZW50SW5mbxIPCgdoZWFsdGh5GAEgASgIEhQKB3ZlcnNpb24YAiABKAlI",
+            "AIgBARIYCgtjb21taXRfaGFzaBgDIAEoCUgBiAEBEhIKCnB1YmxpY191cmwY",
+            "BCABKAlCCgoIX3ZlcnNpb25CDgoMX2NvbW1pdF9oYXNoGn4KC0xhbWJkYXNJ",
+            "bmZvEg8KB2hlYWx0aHkYASABKAgSFAoHdmVyc2lvbhgCIAEoCUgAiAEBEhgK",
+            "C2NvbW1pdF9oYXNoGAMgASgJSAGIAQESEgoKcHVibGljX3VybBgEIAEoCUIK",
+            "CghfdmVyc2lvbkIOCgxfY29tbWl0X2hhc2ga+gEKCUNvbW1zSW5mbxIPCgdo",
+            "ZWFsdGh5GAEgASgIEhQKB3ZlcnNpb24YAiABKAlIAIgBARIYCgtjb21taXRf",
+            "aGFzaBgDIAEoCUgBiAEBEhcKCnB1YmxpY191cmwYBCABKAlIAogBARIQCghw",
+            "cm90b2NvbBgyIAEoCRIYCgt1c2Vyc19jb3VudBgzIAEoBUgDiAEBEhoKDWZp",
+            "eGVkX2FkYXB0ZXIYNCABKAlIBIgBAUIKCghfdmVyc2lvbkIOCgxfY29tbWl0",
+            "X2hhc2hCDQoLX3B1YmxpY191cmxCDgoMX3VzZXJzX2NvdW50QhAKDl9maXhl",
+            "ZF9hZGFwdGVyGtYBCgdCZmZJbmZvEg8KB2hlYWx0aHkYASABKAgSFAoHdmVy",
+            "c2lvbhgCIAEoCUgAiAEBEhgKC2NvbW1pdF9oYXNoGAMgASgJSAGIAQESEgoK",
+            "cHVibGljX3VybBgEIAEoCRIXCgp1c2VyX2NvdW50GDMgASgFSAKIAQESHQoQ",
+            "cHJvdG9jb2xfdmVyc2lvbhg0IAEoCUgDiAEBQgoKCF92ZXJzaW9uQg4KDF9j",
+            "b21taXRfaGFzaEINCgtfdXNlcl9jb3VudEITChFfcHJvdG9jb2xfdmVyc2lv",
+            "bkIGCgRfYmZmYgZwcm90bzM="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::Decentraland.Common.BorderRectReflection.Descriptor, global::Decentraland.Common.VectorsReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
@@ -86,7 +86,7 @@ namespace Decentraland.Realm {
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Realm.AboutResponse.Types.MapConfiguration), global::Decentraland.Realm.AboutResponse.Types.MapConfiguration.Parser, new[]{ "MinimapEnabled", "Sizes", "SatelliteView", "ParcelView", "ThumbnailView" }, new[]{ "SatelliteView", "ParcelView", "ThumbnailView" }, null, null, new pbr::GeneratedClrTypeInfo[] { new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Realm.AboutResponse.Types.MapConfiguration.Types.ImageViewWithZoomLevel), global::Decentraland.Realm.AboutResponse.Types.MapConfiguration.Types.ImageViewWithZoomLevel.Parser, new[]{ "Version", "BaseUrl", "SuffixUrl", "TopLeftOffset" }, new[]{ "BaseUrl", "SuffixUrl", "TopLeftOffset" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Realm.AboutResponse.Types.MapConfiguration.Types.ParcelView), global::Decentraland.Realm.AboutResponse.Types.MapConfiguration.Types.ParcelView.Parser, new[]{ "Version", "ImageUrl" }, new[]{ "ImageUrl" }, null, null, null)}),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Realm.AboutResponse.Types.SkyboxConfiguration), global::Decentraland.Realm.AboutResponse.Types.SkyboxConfiguration.Parser, new[]{ "FixedHour" }, new[]{ "FixedHour" }, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Realm.AboutResponse.Types.AboutConfiguration), global::Decentraland.Realm.AboutResponse.Types.AboutConfiguration.Parser, new[]{ "RealmName", "NetworkId", "GlobalScenesUrn", "ScenesUrn", "Skybox", "CityLoaderContentServer", "Map", "OccupiedParcels" }, new[]{ "RealmName", "Skybox", "CityLoaderContentServer", "Map" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Realm.AboutResponse.Types.AboutConfiguration), global::Decentraland.Realm.AboutResponse.Types.AboutConfiguration.Parser, new[]{ "RealmName", "NetworkId", "GlobalScenesUrn", "ScenesUrn", "Skybox", "CityLoaderContentServer", "Map" }, new[]{ "RealmName", "Skybox", "CityLoaderContentServer", "Map" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Realm.AboutResponse.Types.ContentInfo), global::Decentraland.Realm.AboutResponse.Types.ContentInfo.Parser, new[]{ "Healthy", "Version", "CommitHash", "PublicUrl" }, new[]{ "Version", "CommitHash" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Realm.AboutResponse.Types.LambdasInfo), global::Decentraland.Realm.AboutResponse.Types.LambdasInfo.Parser, new[]{ "Healthy", "Version", "CommitHash", "PublicUrl" }, new[]{ "Version", "CommitHash" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Realm.AboutResponse.Types.CommsInfo), global::Decentraland.Realm.AboutResponse.Types.CommsInfo.Parser, new[]{ "Healthy", "Version", "CommitHash", "PublicUrl", "Protocol", "UsersCount", "FixedAdapter" }, new[]{ "Version", "CommitHash", "PublicUrl", "UsersCount", "FixedAdapter" }, null, null, null),
@@ -1933,7 +1933,6 @@ namespace Decentraland.Realm {
           skybox_ = other.skybox_ != null ? other.skybox_.Clone() : null;
           cityLoaderContentServer_ = other.cityLoaderContentServer_;
           map_ = other.map_ != null ? other.map_.Clone() : null;
-          occupiedParcels_ = other.occupiedParcels_.Clone();
           _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
         }
 
@@ -2054,21 +2053,6 @@ namespace Decentraland.Realm {
           }
         }
 
-        /// <summary>Field number for the "occupied_parcels" field.</summary>
-        public const int OccupiedParcelsFieldNumber = 9;
-        private static readonly pb::FieldCodec<string> _repeated_occupiedParcels_codec
-            = pb::FieldCodec.ForString(74);
-        private readonly pbc::RepeatedField<string> occupiedParcels_ = new pbc::RepeatedField<string>();
-        /// <summary>
-        /// Populated for local workspaces so that the Explorer can know which parcels are occupied before 
-        /// loading the local scenes 
-        /// </summary>
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-        public pbc::RepeatedField<string> OccupiedParcels {
-          get { return occupiedParcels_; }
-        }
-
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
         public override bool Equals(object other) {
@@ -2091,7 +2075,6 @@ namespace Decentraland.Realm {
           if (!object.Equals(Skybox, other.Skybox)) return false;
           if (CityLoaderContentServer != other.CityLoaderContentServer) return false;
           if (!object.Equals(Map, other.Map)) return false;
-          if(!occupiedParcels_.Equals(other.occupiedParcels_)) return false;
           return Equals(_unknownFields, other._unknownFields);
         }
 
@@ -2106,7 +2089,6 @@ namespace Decentraland.Realm {
           if (skybox_ != null) hash ^= Skybox.GetHashCode();
           if (HasCityLoaderContentServer) hash ^= CityLoaderContentServer.GetHashCode();
           if (map_ != null) hash ^= Map.GetHashCode();
-          hash ^= occupiedParcels_.GetHashCode();
           if (_unknownFields != null) {
             hash ^= _unknownFields.GetHashCode();
           }
@@ -2147,7 +2129,6 @@ namespace Decentraland.Realm {
             output.WriteRawTag(66);
             output.WriteMessage(Map);
           }
-          occupiedParcels_.WriteTo(output, _repeated_occupiedParcels_codec);
           if (_unknownFields != null) {
             _unknownFields.WriteTo(output);
           }
@@ -2180,7 +2161,6 @@ namespace Decentraland.Realm {
             output.WriteRawTag(66);
             output.WriteMessage(Map);
           }
-          occupiedParcels_.WriteTo(ref output, _repeated_occupiedParcels_codec);
           if (_unknownFields != null) {
             _unknownFields.WriteTo(ref output);
           }
@@ -2208,7 +2188,6 @@ namespace Decentraland.Realm {
           if (map_ != null) {
             size += 1 + pb::CodedOutputStream.ComputeMessageSize(Map);
           }
-          size += occupiedParcels_.CalculateSize(_repeated_occupiedParcels_codec);
           if (_unknownFields != null) {
             size += _unknownFields.CalculateSize();
           }
@@ -2244,7 +2223,6 @@ namespace Decentraland.Realm {
             }
             Map.MergeFrom(other.Map);
           }
-          occupiedParcels_.Add(other.occupiedParcels_);
           _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
         }
 
@@ -2294,10 +2272,6 @@ namespace Decentraland.Realm {
                 input.ReadMessage(Map);
                 break;
               }
-              case 74: {
-                occupiedParcels_.AddEntriesFrom(input, _repeated_occupiedParcels_codec);
-                break;
-              }
             }
           }
         #endif
@@ -2345,10 +2319,6 @@ namespace Decentraland.Realm {
                   Map = new global::Decentraland.Realm.AboutResponse.Types.MapConfiguration();
                 }
                 input.ReadMessage(Map);
-                break;
-              }
-              case 74: {
-                occupiedParcels_.AddEntriesFrom(ref input, _repeated_occupiedParcels_codec);
                 break;
               }
             }

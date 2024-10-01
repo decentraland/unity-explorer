@@ -112,11 +112,10 @@ namespace Global.Dynamic
                 result.configurations.localSceneParcels
             );
 
-            // Add components
+            // Add the realm component
             var realmComp = new RealmComponent(realmData);
-            var processedScenePointers = ProcessedScenePointers.Create();
 
-            realmEntity = world.Create(realmComp, processedScenePointers);
+            realmEntity = world.Create(realmComp, ProcessedScenePointers.Create());
 
             if (!ComplimentWithStaticPointers(world, realmEntity) && !realmComp.ScenesAreFixed)
                 ComplimentWithVolatilePointers(world, realmEntity);

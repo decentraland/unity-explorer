@@ -179,10 +179,10 @@ namespace Global.Dynamic
         public async UniTask InitializeTeleportToSpawnPointAsync(AsyncLoadProcessReport teleportLoadReport,
             CancellationToken ct, Vector2Int parcelToTeleport)
         {
-            var useSceneSpawnPoint = !realmController.RealmData.ScenesAreFixed;
+            var isGenesis = !realmController.RealmData.ScenesAreFixed;
             UniTask waitForSceneReadiness;
 
-            if (useSceneSpawnPoint)
+            if (isGenesis)
                 waitForSceneReadiness = await TeleportToParcelAsync(parcelToTeleport, teleportLoadReport, ct);
             else
                 waitForSceneReadiness = await TeleportToWorldSpawnPointAsync(parcelToTeleport, teleportLoadReport, ct);
@@ -249,7 +249,7 @@ namespace Global.Dynamic
         {
             if (landscapeEnabled)
             {
-                bool isGenesis = !realmController.RealmData.ScenesAreFixed;
+                var isGenesis = !realmController.RealmData.ScenesAreFixed;
                 if (isGenesis)
                 {
                     //TODO (Juani): The globalWorld terrain would be hidden. We need to implement the re-usage when going back
