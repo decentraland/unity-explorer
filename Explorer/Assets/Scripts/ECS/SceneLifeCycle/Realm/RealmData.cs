@@ -1,6 +1,8 @@
 ﻿using DCL.Ipfs;
 using System;
 using System.Collections.Generic;
+using Unity.Mathematics;
+using Utility;
 
 namespace ECS
 {
@@ -13,7 +15,7 @@ namespace ECS
 
         private IIpfsRealm ipfs = InvalidIpfsRealm.Instance;
         private bool scenesAreFixed;
-        private IReadOnlyList<string>? occupiedParcels;
+        private List<int2>? localSceneParcels;
 
         public string RealmName { get; private set; }
         public int NetworkId{ get; private set; }
@@ -40,12 +42,12 @@ namespace ECS
             }
         }
 
-        public IReadOnlyList<string>? OccupiedParcels
+        public IReadOnlyList<int2>? LocalSceneParcels
         {
             get
             {
                 Validate();
-                return occupiedParcels;
+                return localSceneParcels;
             }
         }
 
@@ -65,18 +67,26 @@ namespace ECS
             Reconfigure(ipfsRealm, string.Empty, DEFAULT_NETWORK_ID, string.Empty, string.Empty, string.Empty, null);
         }
 
-        public void Reconfigure(IIpfsRealm ipfsRealm, string realmName, int networkId, string commsAdapter, string protocol, string hostname, IReadOnlyList<string>? realmOccupiedParcels = null)
+        public void Reconfigure(IIpfsRealm ipfsRealm, string realmName, int networkId, string commsAdapter, string protocol, string hostname, IReadOnlyList<string>? localRealmSceneParcels = null)
         {
             IsDirty = true;
             Configured = true;
             RealmName = realmName;
-            occupiedParcels = realmOccupiedParcels;
-            scenesAreFixed = ipfsRealm.SceneUrns is { Count: > 0 };
             ipfs = ipfsRealm;
             CommsAdapter = commsAdapter;
             Protocol = protocol;
             NetworkId = networkId;
             Hostname = hostname;
+            scenesAreFixed = ipfsRealm.SceneUrns is { Count: > 0 };
+            if (localRealmSceneParcels is { Count: > 0 })
+            {
+                scenesAreFixed = true;
+                localSceneParcels = new List<int2>();
+                foreach (string parcel in localRealmSceneParcels)
+                {
+                    localSceneParcels.Add(IpfsHelper.DecodePointer(parcel).ToInt2());
+                }
+            }
         }
 
         /// <summary>

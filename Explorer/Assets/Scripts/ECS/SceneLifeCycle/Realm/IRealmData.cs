@@ -2,6 +2,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Ipfs;
 using System.Collections.Generic;
+using Unity.Mathematics;
 
 namespace ECS
 {
@@ -18,9 +19,9 @@ namespace ECS
         bool ScenesAreFixed { get; }
 
         /// <summary>
-        ///     Occupied parcels regardless of scene promises
+        ///     Occupied parcels in the local scene environment (during local scene development)
         /// </summary>
-        IReadOnlyList<string>? OccupiedParcels { get; }
+        IReadOnlyList<int2>? LocalSceneParcels { get; }
 
         /// <summary>
         ///     Name of the realm
@@ -41,7 +42,7 @@ namespace ECS
         {
             public IIpfsRealm Ipfs { get; }
             public bool ScenesAreFixed { get; }
-            public IReadOnlyList<string>? OccupiedParcels { get; }
+            public IReadOnlyList<int2>? LocalSceneParcels { get; }
             public string RealmName { get; }
             public int NetworkId { get; }
             public string CommsAdapter { get; }

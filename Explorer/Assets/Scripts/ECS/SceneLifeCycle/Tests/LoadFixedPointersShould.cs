@@ -47,13 +47,13 @@ namespace ECS.SceneLifeCycle.Tests
 
             Assert.That(world.TryGet(e, out FixedScenePointers fixedPointers), Is.True);
 
-            Assert.That(fixedPointers.Promises.Length, Is.EqualTo(URNs.Length));
-            Assert.That(fixedPointers.Promises.Any(p => p.LoadingIntention.IpfsPath.EntityId == "bafkreibjkvobh26w7quie46edcwgpngs2lctfgvq26twinfh4aepeehno4"), Is.True);
-            Assert.That(fixedPointers.Promises.Any(p => p.LoadingIntention.IpfsPath.EntityId == "bafkreihh3b5zjpb252blfa6b2n5lpr63pl5tdwhcxjidxx6vpytjjhbxou"), Is.True);
-            Assert.That(fixedPointers.Promises.Any(p => p.LoadingIntention.IpfsPath.EntityId == "bafkreidnrsziglqgwwdsvtyrdfltiobpymk3png56xieemixlprqbw5gru"), Is.True);
-            Assert.That(fixedPointers.Promises.Any(p => p.LoadingIntention.IpfsPath.EntityId == "bafkreibk3kvp2mtujcfciothfbft6hf3kaveenzlef7xlwvqcr5udtk3be"), Is.True);
-            Assert.That(fixedPointers.Promises.Any(p => p.LoadingIntention.IpfsPath.EntityId == "bafkreidvur64pwmywtjobkfdr6xl6chgh2tdgbutclkyb4hcvwtk2lizii"), Is.True);
-            Assert.That(fixedPointers.Promises.Any(p => p.LoadingIntention.IpfsPath.EntityId == "bafkreiff5m4wv2pm6n4muiyy7p6yrohsqqnaggwhvcb2lzbbwiogpgkl2i"), Is.True);
+            Assert.That(fixedPointers.URNScenePromises.Length, Is.EqualTo(URNs.Length));
+            Assert.That(fixedPointers.URNScenePromises.Any(p => p.LoadingIntention.IpfsPath.EntityId == "bafkreibjkvobh26w7quie46edcwgpngs2lctfgvq26twinfh4aepeehno4"), Is.True);
+            Assert.That(fixedPointers.URNScenePromises.Any(p => p.LoadingIntention.IpfsPath.EntityId == "bafkreihh3b5zjpb252blfa6b2n5lpr63pl5tdwhcxjidxx6vpytjjhbxou"), Is.True);
+            Assert.That(fixedPointers.URNScenePromises.Any(p => p.LoadingIntention.IpfsPath.EntityId == "bafkreidnrsziglqgwwdsvtyrdfltiobpymk3png56xieemixlprqbw5gru"), Is.True);
+            Assert.That(fixedPointers.URNScenePromises.Any(p => p.LoadingIntention.IpfsPath.EntityId == "bafkreibk3kvp2mtujcfciothfbft6hf3kaveenzlef7xlwvqcr5udtk3be"), Is.True);
+            Assert.That(fixedPointers.URNScenePromises.Any(p => p.LoadingIntention.IpfsPath.EntityId == "bafkreidvur64pwmywtjobkfdr6xl6chgh2tdgbutclkyb4hcvwtk2lizii"), Is.True);
+            Assert.That(fixedPointers.URNScenePromises.Any(p => p.LoadingIntention.IpfsPath.EntityId == "bafkreiff5m4wv2pm6n4muiyy7p6yrohsqqnaggwhvcb2lzbbwiogpgkl2i"), Is.True);
         }
 
         [Test]

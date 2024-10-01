@@ -21,6 +21,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using Unity.Mathematics;
+using SceneEntityDefinition = DCL.Ipfs.SceneEntityDefinition;
 
 namespace Global.Dynamic
 {
@@ -108,20 +109,12 @@ namespace Global.Dynamic
                 result.comms?.adapter ?? result.comms?.fixedAdapter ?? "offline", //"offline property like in previous implementation"
                 result.comms?.protocol ?? "v3",
                 hostname,
-                result.configurations.occupiedParcels
+                result.configurations.localSceneParcels
             );
 
             // Add components
             var realmComp = new RealmComponent(realmData);
             var processedScenePointers = ProcessedScenePointers.Create();
-
-            /*if (realmData.OccupiedParcels is { Count: > 0 })
-            {
-                foreach (string parcel in realmData.OccupiedParcels)
-                {
-                    processedScenePointers.Value.Add(IpfsHelper.DecodePointer(parcel).ToInt2());
-                }
-            }*/
 
             realmEntity = world.Create(realmComp, processedScenePointers);
 
@@ -148,14 +141,34 @@ namespace Global.Dynamic
         public async UniTask<bool> IsReachableAsync(URLDomain realm, CancellationToken ct) =>
             await webRequestController.IsReachableAsync(ReportCategory.REALM, realm.Append(new URLPath("/about")), ct);
 
-        public async UniTask<AssetPromise<SceneEntityDefinition, GetSceneDefinition>[]> WaitForFixedScenePromisesAsync(CancellationToken ct)
+        public async UniTask<IReadOnlyList<SceneEntityDefinition>> WaitForFixedSceneEntityDefinitionsAsync(CancellationToken ct)
         {
             FixedScenePointers fixedScenePointers = default;
 
             await UniTask.WaitUntil(() => GlobalWorld.EcsWorld.TryGet(realmEntity, out fixedScenePointers)
                                           && fixedScenePointers.AllPromisesResolved, cancellationToken: ct);
 
-            return fixedScenePointers.Promises!;
+            List<SceneEntityDefinition> returnList = new List<SceneEntityDefinition>();
+
+            if (fixedScenePointers.URNScenePromises is { Length: > 0 })
+            {
+                for (var i = 0; i < fixedScenePointers.URNScenePromises.Length; i++)
+                {
+                    AssetPromise<SceneEntityDefinition, GetSceneDefinition> promise = fixedScenePointers.URNScenePromises[i];
+                    if (promise.Result.HasValue)
+                        returnList.Add(promise.Result.Value.Asset);
+                }
+            }
+
+            if (fixedScenePointers.PointerScenesPromise.HasValue)
+            {
+                foreach (SceneEntityDefinition sceneEntityDefinition in fixedScenePointers.PointerScenesPromise.Value.LoadingIntention.TargetCollection)
+                {
+                    returnList.Add(sceneEntityDefinition);
+                }
+            }
+
+            return returnList;
         }
 
         public void DisposeGlobalWorld()

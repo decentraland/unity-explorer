@@ -55,7 +55,7 @@ namespace DCL.ParcelsService
             resolved = fixedScenePointers.AllPromisesResolved;
 
             if (resolved)
-                result = fixedScenePointers.Promises;
+                result = fixedScenePointers.URNScenePromises;
         }
     }
 }

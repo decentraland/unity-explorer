@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using CommunicationData.URLHelpers;
 using DCL.Ipfs;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
@@ -8,7 +9,6 @@ using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
-using Ipfs;
 using System.Collections.Generic;
 using UnityEngine;
 using Utility;
@@ -38,8 +38,7 @@ namespace ECS.SceneLifeCycle.Systems
                 return;
 
             // tolerate allocations as it's once per realm only
-            var promises = new AssetPromise<SceneEntityDefinition, GetSceneDefinition>[realmComponent.Ipfs.SceneUrns.Count];
-
+            var urnScenePromises = new AssetPromise<SceneEntityDefinition, GetSceneDefinition>[realmComponent.Ipfs.SceneUrns.Count];
             for (var i = 0; i < realmComponent.Ipfs.SceneUrns.Count; i++)
             {
                 string urn = realmComponent.Ipfs.SceneUrns[i];
@@ -49,10 +48,18 @@ namespace ECS.SceneLifeCycle.Systems
                 var promise = AssetPromise<SceneEntityDefinition, GetSceneDefinition>
                    .Create(World, new GetSceneDefinition(new CommonLoadingArguments(ipfsPath.GetUrl(realmComponent.Ipfs.ContentBaseUrl)), ipfsPath), PartitionComponent.TOP_PRIORITY);
 
-                promises[i] = promise;
+                urnScenePromises[i] = promise;
             }
 
-            World.Add(entity, new FixedScenePointers(promises));
+            AssetPromise<SceneDefinitions, GetSceneDefinitionList>? pointerScenesPromise = null;
+            if (realmComponent.RealmData.LocalSceneParcels is { Count: > 0 })
+            {
+                pointerScenesPromise = AssetPromise<SceneDefinitions, GetSceneDefinitionList>.Create(World,
+                    new GetSceneDefinitionList(new List<SceneEntityDefinition>(), realmComponent.RealmData.LocalSceneParcels,
+                        new CommonLoadingArguments(realmComponent.RealmData.Ipfs.EntitiesActiveEndpoint)), PartitionComponent.TOP_PRIORITY);
+            }
+
+            World.Add(entity, new FixedScenePointers(urnScenePromises, pointerScenesPromise));
         }
 
         [Query]
@@ -62,25 +69,52 @@ namespace ECS.SceneLifeCycle.Systems
 
             fixedScenePointers.AllPromisesResolved = true;
 
-            for (var i = 0; i < fixedScenePointers.Promises.Length; i++)
+            if (fixedScenePointers.URNScenePromises is { Length: > 0 })
             {
-                ref AssetPromise<SceneEntityDefinition, GetSceneDefinition> promise = ref fixedScenePointers.Promises[i];
-                if (promise.IsConsumed) continue;
+                for (var i = 0; i < fixedScenePointers.URNScenePromises.Length; i++)
+                {
+                    ref AssetPromise<SceneEntityDefinition, GetSceneDefinition> promise = ref fixedScenePointers.URNScenePromises[i];
+                    if (promise.IsConsumed) continue;
 
-                if (promise.TryConsume(World, out StreamableLoadingResult<SceneEntityDefinition> result))
+                    if (promise.TryConsume(World, out StreamableLoadingResult<SceneEntityDefinition> result))
+                    {
+                        if (result.Succeeded)
+                        {
+                            CreateSceneEntity(result.Asset, promise.LoadingIntention.IpfsPath);
+                            IReadOnlyList<Vector2Int> parcels = result.Asset.metadata.scene.DecodedParcels;
+
+                            for (var j = 0; j < parcels.Count; j++)
+                                processedScenePointers.Value.Add(parcels[j].ToInt2());
+                        }
+                    }
+                    else
+                    {
+                        // at least one unresolved promises
+                        fixedScenePointers.AllPromisesResolved = false;
+                    }
+                }
+            }
+
+            if (fixedScenePointers.PointerScenesPromise is { IsConsumed: false })
+            {
+                if (fixedScenePointers.PointerScenesPromise.Value.TryConsume(World, out StreamableLoadingResult<SceneDefinitions> result))
                 {
                     if (result.Succeeded)
                     {
-                        CreateSceneEntity(result.Asset, promise.LoadingIntention.IpfsPath);
-                        IReadOnlyList<Vector2Int> parcels = result.Asset.metadata.scene.DecodedParcels;
+                        for (var i = 0; i < result.Asset.Value.Count; i++)
+                        {
+                            SceneEntityDefinition definition = result.Asset.Value[i];
+                            var path = new IpfsPath(definition.id, URLDomain.EMPTY);
+                            CreateSceneEntity(definition, path);
 
-                        for (var j = 0; j < parcels.Count; j++)
-                            processedScenePointers.Value.Add(parcels[j].ToInt2());
+                            IReadOnlyList<Vector2Int> parcels = definition.metadata.scene.DecodedParcels;
+                            for (var j = 0; j < parcels.Count; j++)
+                                processedScenePointers.Value.Add(parcels[j].ToInt2());
+                        }
                     }
                 }
                 else
                 {
-                    // at least one unresolved promises
                     fixedScenePointers.AllPromisesResolved = false;
                 }
             }

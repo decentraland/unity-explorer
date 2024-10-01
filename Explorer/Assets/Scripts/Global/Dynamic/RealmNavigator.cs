@@ -21,8 +21,6 @@ using System.Linq;
 using System.Threading;
 using DCL.Diagnostics;
 using DCL.Ipfs;
-using DCL.Roads.Components;
-using ECS;
 using Global.Dynamic.TeleportOperations;
 using Unity.Collections;
 using Unity.Mathematics;
@@ -251,7 +249,8 @@ namespace Global.Dynamic
         {
             if (landscapeEnabled)
             {
-                if (IsGenesisCityRealm(realmController.RealmData))
+                bool isGenesis = !realmController.RealmData.ScenesAreFixed;
+                if (isGenesis)
                 {
                     //TODO (Juani): The globalWorld terrain would be hidden. We need to implement the re-usage when going back
                     worldsTerrain.SwitchVisibility(false);
@@ -273,7 +272,7 @@ namespace Global.Dynamic
 
         public async UniTask SwitchMiscVisibilityAsync()
         {
-            var isGenesis = IsGenesisCityRealm(realmController.RealmData);
+            var isGenesis = !realmController.RealmData.ScenesAreFixed;
 
             RealmChanged?.Invoke(isGenesis);
             mapRenderer.SetSharedLayer(MapLayer.PlayerMarker, isGenesis);
@@ -292,14 +291,15 @@ namespace Global.Dynamic
         private async UniTask<UniTask> TeleportToWorldSpawnPointAsync(Vector2Int parcelToTeleport,
             AsyncLoadProcessReport processReport, CancellationToken ct)
         {
-            var promises = await realmController.WaitForFixedScenePromisesAsync(ct);
+            var sceneEntityDefinitions = await realmController.WaitForFixedSceneEntityDefinitionsAsync(ct);
+            foreach (SceneEntityDefinition sceneEntityDefinition in sceneEntityDefinitions)
+            {
+                if (!sceneEntityDefinition.metadata.scene.DecodedParcels.Contains(parcelToTeleport))
+                    continue;
 
-            // if (promises.Length > 0 && !promises.Any(p =>
-            if (!promises.Any(p =>
-                    p.Result.HasValue
-                    && (p.Result.Value.Asset?.metadata.scene.DecodedParcels.Contains(parcelToTeleport) ?? false)
-                ))
-                parcelToTeleport = promises[0].Result!.Value.Asset!.metadata.scene.DecodedBase;
+                parcelToTeleport = sceneEntityDefinition.metadata.scene.DecodedBase;
+                break;
+            }
 
             var waitForSceneReadiness =
                 await teleportController.TeleportToSceneSpawnPointAsync(parcelToTeleport, processReport, ct);
@@ -323,36 +323,22 @@ namespace Global.Dynamic
 
             if (realmController.RealmData.ScenesAreFixed)
             {
-                var promises = await realmController.WaitForFixedScenePromisesAsync(ct);
-                foreach (var promise in promises)
-                    decodedParcelsAmount += promise.Result!.Value.Asset!.metadata.scene.DecodedParcels.Count;
+                var sceneEntityDefinitions = await realmController.WaitForFixedSceneEntityDefinitionsAsync(ct);
+                foreach (var sceneEntityDefinition in sceneEntityDefinitions)
+                    decodedParcelsAmount += sceneEntityDefinition.metadata.scene.DecodedParcels.Count;
 
                 using (var ownedParcels =
                        new NativeParallelHashSet<int2>(decodedParcelsAmount, AllocatorManager.Persistent))
                 {
-                    foreach (var promise in promises)
+                    foreach (var sceneEntityDefinition in sceneEntityDefinitions)
                     {
-                        foreach (var parcel in promise.Result!.Value.Asset!.metadata.scene.DecodedParcels)
+                        foreach (var parcel in sceneEntityDefinition.metadata.scene.DecodedParcels)
                             ownedParcels.Add(parcel.ToInt2());
                     }
 
                     await worldsTerrain.GenerateTerrainAsync(ownedParcels, worldSeed, processReport, cancellationToken: ct);
                 }
             }
-            else // Local Scene Development: Occupied Parcels
-            {
-                decodedParcelsAmount = realmController.RealmData.OccupiedParcels!.Count;
-                using (var ownedParcels =
-                       new NativeParallelHashSet<int2>(decodedParcelsAmount, AllocatorManager.Persistent))
-                {
-                    foreach (string parcel in realmController.RealmData.OccupiedParcels!)
-                        ownedParcels.Add(IpfsHelper.DecodePointer(parcel).ToInt2());
-                    await worldsTerrain.GenerateTerrainAsync(ownedParcels, worldSeed, processReport, cancellationToken: ct);
-                }
-            }
         }
-
-        private bool IsGenesisCityRealm(IRealmData realmData) =>
-            realmData is { ScenesAreFixed: false, OccupiedParcels: null };
     }
 }
