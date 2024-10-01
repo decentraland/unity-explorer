@@ -63,7 +63,7 @@ namespace DCL.Input.Systems
             shortcuts.MainMenu.performed += OnShortcutUnlock;
         }
 
-        public override void Dispose()
+        protected override void OnDispose()
         {
             shortcuts.Backpack.performed -= OnShortcutUnlock;
             shortcuts.Map.performed -= OnShortcutUnlock;

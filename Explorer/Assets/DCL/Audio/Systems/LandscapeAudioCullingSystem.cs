@@ -62,9 +62,8 @@ namespace DCL.Audio.Systems
             landscapeJobHandle = default(JobHandle);
         }
 
-        public override void Dispose()
+        protected override void OnDispose()
         {
-            base.Dispose();
             landscapeJobHandle.Complete();
             oceanJobHandle.Complete();
             landscapeAudioStates.Dispose();

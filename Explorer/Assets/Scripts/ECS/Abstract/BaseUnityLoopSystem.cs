@@ -4,7 +4,6 @@ using Arch.SystemGroups.Metadata;
 using DCL.Diagnostics;
 using System;
 using System.Linq;
-using UnityEngine;
 using UnityEngine.Profiling;
 
 namespace ECS.Abstract
@@ -26,6 +25,8 @@ namespace ECS.Abstract
         private string? cachedCategory;
 
         protected readonly SceneShortInfo sceneInfo;
+
+        private bool isDisposed;
 
         protected BaseUnityLoopSystem(World world) : base(world)
         {
@@ -57,7 +58,6 @@ namespace ECS.Abstract
                 genericUpdateSampler?.End();
 
                 updateSampler.End();
-
             }
             catch (Exception e)
             {
@@ -65,6 +65,24 @@ namespace ECS.Abstract
                 throw CreateException(e, ReportHint.None, true);
             }
         }
+
+        public sealed override void Dispose()
+        {
+            if (isDisposed)
+            {
+                ReportHub.LogError(ReportCategory.ENGINE, $"Attempt to dispose already disposed system: {this.GetType().Name}");
+                return;
+            }
+
+            isDisposed = true;
+            OnDispose();
+            base.Dispose();
+        }
+
+        /// <summary>
+        ///     Safe dispose method that will not be called twice
+        /// </summary>
+        protected virtual void OnDispose() { }
 
         protected abstract void Update(float t);
 

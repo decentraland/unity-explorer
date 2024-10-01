@@ -62,7 +62,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             DestroyAvatarQuery(World);
         }
 
-        public override void Dispose()
+        protected override void OnDispose()
         {
             DestroyAvatarOnDisposeQuery(World);
         }
@@ -90,7 +90,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                 deleteEntityIntention.DeferDeletion = true;
                 return;
             }
-            
+
             InternalDestroyAvatar(ref avatarShapeComponent, ref skinningComponent, ref avatarTransformMatrixComponent, avatarBase);
             deleteEntityIntention.DeferDeletion = false;
         }

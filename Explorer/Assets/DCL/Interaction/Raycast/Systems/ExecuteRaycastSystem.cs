@@ -76,7 +76,7 @@ namespace DCL.Interaction.Raycast.Systems
             orderedRaycastData = ListPool<RaycastData>.Get();
         }
 
-        public override void Dispose()
+        protected override void OnDispose()
         {
             ListPool<RaycastData>.Release(orderedRaycastData);
             raycastComponentPool.Release(EMPTY_RAYCAST_RESULT);

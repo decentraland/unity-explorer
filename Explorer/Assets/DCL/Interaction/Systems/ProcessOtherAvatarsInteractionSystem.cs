@@ -47,10 +47,9 @@ namespace DCL.Interaction.Systems
             ProcessRaycastResultQuery(World);
         }
 
-        public override void Dispose()
+        protected override void OnDispose()
         {
             dclInput.Player.Pointer!.performed -= OpenPassport;
-            base.Dispose();
         }
 
         [Query]

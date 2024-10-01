@@ -60,7 +60,7 @@ namespace ECS.SceneLifeCycle.Systems
 
         }
 
-        public override void Dispose()
+        protected override void OnDispose()
         {
             partitionJobHandle.Complete();
             partitionDataContainer.Dispose();

@@ -21,7 +21,6 @@ namespace DCL.Analytics.Systems
         private string currentRealmName;
 
         private float timeSpentInWorld;
-        private bool isDisposed;
 
         public TimeSpentInWorldAnalyticsSystem(World world, IAnalyticsController analytics, IRealmData realmData) : base(world)
         {
@@ -42,15 +41,10 @@ namespace DCL.Analytics.Systems
             Dispose();
         }
 
-        public override void Dispose()
+        protected override void OnDispose()
         {
-            if (isDisposed) return;
-            isDisposed = true;
-
             GC.SuppressFinalize(this);
             SendAnalytics();
-
-            base.Dispose();
         }
 
         protected override void Update(float t)

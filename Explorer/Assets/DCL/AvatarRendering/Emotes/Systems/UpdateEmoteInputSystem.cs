@@ -49,10 +49,8 @@ namespace DCL.AvatarRendering.Emotes
             ListenToSlotsInput(emotesActions.Get());
         }
 
-        public override void Dispose()
+        protected override void OnDispose()
         {
-            base.Dispose();
-
             UnregisterSlotsInput(emotesActions.Get());
 
             this.mvcManager.OnViewClosed -= OnEmoteWheelClosed;
