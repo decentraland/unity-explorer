@@ -9,7 +9,9 @@ using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.Groups;
+using System;
 using System.Collections.Generic;
+using UnityEngine;
 using UnityEngine.Pool;
 using UAnimator = UnityEngine.Animator;
 
@@ -39,28 +41,44 @@ namespace DCL.SDKComponents.Animator.Systems
             if (gltfContainerComponent.Promise.Result?.Asset == null) return;
             if (gltfContainerComponent.Promise.Result.Value.Asset.Animators.Count == 0) return;
 
+            var stateHashes = new Dictionary<string, AnimatorParamHashes.StateParamHashes>();
+
             foreach (UAnimator animator in gltfContainerComponent.Promise.Result.Value.Asset.Animators)
+            {
                 InitializeAnimator(animator);
 
+                // TODO: use pool
+                // var clips = new List<AnimatorClipInfo>();
+                // This doesnt work due to GetCurrentAnimatorClipInfo only retrieves the executing clips, so we miss most of them
+                // for (var layer = 0; layer < animator.layerCount; layer++)
+                // {
+                //     animator.GetCurrentAnimatorClipInfo(layer, clips);
+                //
+                //     foreach (AnimatorClipInfo clip in clips)
+                //         stateHashes[clip.clip.name] = CreateParamHashes(layer, layer);
+                // }
+
+                // This doesnt work due to the clips array is not sorted like the layers are
+                // AnimationClip[] clips = animator.runtimeAnimatorController.animationClips;
+                //
+                // for (var i = 0; i < clips.Length; i++)
+                // {
+                //     AnimationClip clip = clips[i];
+                //     stateHashes[clip.name] = CreateParamHashes(i + 1, i);
+                // }
+            }
+
             List<SDKAnimationState> sdkAnimationStates = ListPool<SDKAnimationState>.Get();
-            var stateHashes = new Dictionary<string, AnimatorParamHashes.StateParamHashes>();
-            var animatorParams = new AnimatorParamHashes(stateHashes);
+            AnimatorParamHashes animatorParams = new (stateHashes);
 
             for (var i = 0; i < pbAnimator.States.Count; i++)
             {
-                PBAnimationState pbAnimationState = pbAnimator.States[i];
+                PBAnimationState? pbAnimationState = pbAnimator.States[i];
                 var sdkAnimationState = new SDKAnimationState(pbAnimationState);
                 sdkAnimationStates.Add(sdkAnimationState);
 
-                stateHashes[pbAnimationState.Clip] = new AnimatorParamHashes.StateParamHashes
-                {
-                    // The order of the clip determines all the hashes
-                    // We have to add one since the base layer is zero
-                    LayerIndex = i + 1,
-                    EnabledParamHash = UAnimator.StringToHash($"State_{i}_Enabled"),
-                    LoopParamHash = UAnimator.StringToHash($"State_{i}_Loop"),
-                    TriggerParamHash = UAnimator.StringToHash($"State_{i}_Trigger"),
-                };
+                // Add one considering base layer
+                stateHashes[pbAnimationState.Clip] = CreateParamHashes(i + 1, i);
             }
 
             var sdkAnimatorComponent = new SDKAnimatorComponent(sdkAnimationStates)
@@ -175,5 +193,14 @@ namespace DCL.SDKComponents.Animator.Systems
                 animator.enabled = false;
             }
         }
+
+        private static AnimatorParamHashes.StateParamHashes CreateParamHashes(int layer, int state) =>
+            new()
+            {
+                LayerIndex = layer,
+                EnabledParamHash = UAnimator.StringToHash($"State_{state}_Enabled"),
+                LoopParamHash = UAnimator.StringToHash($"State_{state}_Loop"),
+                TriggerParamHash = UAnimator.StringToHash($"State_{state}_Trigger"),
+            };
     }
 }
