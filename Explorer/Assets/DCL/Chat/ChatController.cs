@@ -460,7 +460,7 @@ namespace DCL.Chat
                 world.AddOrGet(entity, new ChatBubbleComponent(chatMessage.Message, chatMessage.Sender, chatMessage.WalletAddress));
                 UIAudioEventsBus.Instance.SendPlayAudioEvent(viewInstance!.ChatReceiveMessageAudio);
             }
-            else if (chatMessage.SystemMessage == false)
+            else if (chatMessage is {SystemMessage: false, SentByOwnUser: true })
                 world.AddOrGet(
                     playerEntity,
                     new ChatBubbleComponent(

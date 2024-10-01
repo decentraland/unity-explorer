@@ -82,6 +82,8 @@ namespace DCL.CharacterMotion.Animation
         {
             if (!AvatarAnimator.GetBool(AnimationHashes.GROUNDED)) return;
 
+            if (!CheckMovementBlendThreshold()) return;
+
             if (!TryGetAudioClipType(AvatarAnimationEventType.Step, out var audioClipType)) return;
 
             float interval = GetIntervalFor(audioClipType);
@@ -121,21 +123,17 @@ namespace DCL.CharacterMotion.Animation
             AudioPlaybackController.PlayAudioForType(clipType);
         }
 
-        private bool TryGetAudioClipType(AvatarAnimationEventType eventType, out AvatarAudioClipType audioClipType)
+        private bool CheckMovementBlendThreshold()
         {
             float movementBlend = AvatarAnimator.GetFloat(AnimationHashes.MOVEMENT_BLEND);
-            if (movementBlend > MovementBlendThreshold)
-            {
-                int movementType = AvatarAnimator.GetInteger(AnimationHashes.MOVEMENT_TYPE);
-                var key = ((MovementKind)movementType, eventType);
-                if (AUDIO_CLIP_LOOKUP.TryGetValue(key, out audioClipType))
-                {
-                    return true;
-                }
-            }
+            return movementBlend > MovementBlendThreshold;
+        }
 
-            audioClipType = AvatarAudioClipType.None;
-            return false;
+        private bool TryGetAudioClipType(AvatarAnimationEventType eventType, out AvatarAudioClipType audioClipType)
+        {
+            int movementType = AvatarAnimator.GetInteger(AnimationHashes.MOVEMENT_TYPE);
+            var key = ((MovementKind)movementType, eventType);
+            return AUDIO_CLIP_LOOKUP.TryGetValue(key, out audioClipType);
         }
 
         [PublicAPI("Used by Animation Events")]
