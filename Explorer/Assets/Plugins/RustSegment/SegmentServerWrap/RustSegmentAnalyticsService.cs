@@ -1,3 +1,4 @@
+using AOT;
 using DCL.Diagnostics;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using Plugins.RustSegment.SegmentServerWrap.ContextSources;
@@ -115,6 +116,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
             }
         }
 
+        [MonoPInvokeCallback(typeof(NativeMethods.SegmentFfiCallback))]
         private static void Callback(ulong operationId, NativeMethods.Response response)
         {
             if (current == null) return;
