@@ -104,10 +104,8 @@ namespace DCL.AvatarRendering.Emotes
                 {
                     var asset = new StreamableLoadingResult<AttachmentRegularAsset>(result.ToRegularAsset());
 
-                    if (emote.IsUnisex())
+                    if (emote.IsUnisex() && emote.HasSameClipForAllGenders())
                     {
-                        // TODO: can an emote have different files for each gender?
-                        // if that the case, we should not set the same asset result for both body shapes
                         emote.AssetResults[BodyShape.MALE] = asset;
                         emote.AssetResults[BodyShape.FEMALE] = asset;
                     }

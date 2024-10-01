@@ -11,7 +11,6 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.Assertions;
 
-//Removed all references to EmoteData in WearableItem
 namespace DCL.AvatarRendering.Wearables.Components
 {
     public enum WearableType : byte

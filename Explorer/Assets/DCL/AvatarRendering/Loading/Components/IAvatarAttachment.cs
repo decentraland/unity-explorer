@@ -106,13 +106,13 @@ namespace DCL.AvatarRendering.Loading.Components
 
         public static bool TryGetMainFileHash(this IAvatarAttachment avatarAttachment, BodyShape bodyShape, out string? hash)
         {
-            AvatarAttachmentDTO wearableDTO = avatarAttachment.DTO;
+            AvatarAttachmentDTO dto = avatarAttachment.DTO;
 
             // The length of arrays is small, so O(N) complexity is fine
             // Avoid iterator allocations with "for" loop
-            for (var i = 0; i < wearableDTO.Metadata.AbstractData.representations.Length; i++)
+            for (var i = 0; i < dto.Metadata.AbstractData.representations.Length; i++)
             {
-                var representation = wearableDTO.Metadata.AbstractData.representations[i];
+                var representation = dto.Metadata.AbstractData.representations[i];
 
                 if (representation.bodyShapes.Contains(bodyShape))
                     return avatarAttachment.TryGetContentHashByKey(representation.mainFile, out hash);

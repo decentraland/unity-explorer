@@ -26,7 +26,6 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
                 = report.CreateChildReport(RealFlowLoadingStatus.PROGRESS[RealFlowLoadingStatus.Stage.PlayerTeleported]);
 
             await realmNavigator.InitializeTeleportToSpawnPointAsync(teleportLoadReport, ct, startParcel);
-            report.SetProgress(loadingStatus.SetStage(RealFlowLoadingStatus.Stage.Completed));
             return Result.SuccessResult();
         }
     }

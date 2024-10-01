@@ -7,6 +7,7 @@ using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
 using SceneRunner.Scene;
+using System;
 using UnityEngine;
 
 namespace DCL.AvatarRendering.Emotes
@@ -46,5 +47,15 @@ namespace DCL.AvatarRendering.Emotes
 
         public bool IsLooping() =>
             Model.Asset.metadata.emoteDataADR74.loop;
+
+        public bool HasSameClipForAllGenders()
+        {
+            IAvatarAttachment attachment = this;
+
+            attachment.TryGetMainFileHash(BodyShape.MALE, out string? maleHash);
+            attachment.TryGetMainFileHash(BodyShape.FEMALE, out string? femaleHash);
+
+            return maleHash == femaleHash;
+        }
     }
 }
