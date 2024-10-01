@@ -1,7 +1,7 @@
 namespace DCL.Optimization.PerformanceBudgeting
 {
-    public interface ISystemMemory
+    public interface ISystemMemoryCap
     {
-        int TotalSizeInMB { get; }
+        int MemoryCapInMB { get; }
     }
 }

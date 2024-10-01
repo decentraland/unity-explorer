@@ -19,24 +19,24 @@ namespace DCL.Optimization.PerformanceBudgeting
         private const long BYTES_IN_MEGABYTE = 1024 * 1024;
         private const long NO_MEMORY = 0;
 
+        private readonly ISystemMemoryCap systemMemoryCap;
         private readonly IBudgetProfiler profiler;
         private readonly IReadOnlyDictionary<MemoryUsageStatus, float> memoryThreshold;
 
         public MemoryUsageStatus SimulatedMemoryUsage { private get; set; }
 
-        internal long actualSystemMemory;
-
-        public MemoryBudget(ISystemMemory systemMemory, IBudgetProfiler profiler, IReadOnlyDictionary<MemoryUsageStatus, float> memoryThreshold)
+        public MemoryBudget(ISystemMemoryCap systemMemoryCap, IBudgetProfiler profiler, IReadOnlyDictionary<MemoryUsageStatus, float> memoryThreshold)
         {
             SimulatedMemoryUsage = NORMAL;
+
+            this.systemMemoryCap = systemMemoryCap;
             this.profiler = profiler;
             this.memoryThreshold = memoryThreshold;
-            actualSystemMemory = systemMemory.TotalSizeInMB;
         }
 
         public MemoryUsageStatus GetMemoryUsageStatus()
         {
-            var usedMemory = profiler.SystemUsedMemoryInBytes / BYTES_IN_MEGABYTE;
+            long usedMemory = profiler.SystemUsedMemoryInBytes / BYTES_IN_MEGABYTE;
             long totalSystemMemory = GetTotalSystemMemory();
 
             return usedMemory switch
@@ -62,7 +62,7 @@ namespace DCL.Optimization.PerformanceBudgeting
                    {
                        FULL => NO_MEMORY,
                        WARNING => CalculateSystemMemoryForWarningThreshold(),
-                       _ => actualSystemMemory,
+                       _ => Mathf.Min(systemMemoryCap.MemoryCapInMB,  SystemInfo.systemMemorySize),
                    };
 
             // ReSharper disable once PossibleLossOfFraction
@@ -79,7 +79,7 @@ namespace DCL.Optimization.PerformanceBudgeting
             };
 
             private readonly IPerformanceBudget performanceBudget = new MemoryBudget(
-                new StandaloneSystemMemory(),
+                new StandaloneTotalSystemMemoryCap(),
                 new Profiler(),
                 MEMORY_THRESHOLD
             );

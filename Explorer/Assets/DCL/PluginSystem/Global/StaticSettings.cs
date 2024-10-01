@@ -12,7 +12,7 @@ using UnityEngine.Profiling;
 namespace DCL.PluginSystem.Global
 {
     [Serializable]
-    public class StaticSettings : IDCLPluginSettings
+    public class StaticSettings : IDCLPluginSettings, ISystemMemoryCap
     {
         [field: Header(nameof(StaticSettings))] [field: Space]
         [field: SerializeField]
@@ -37,6 +37,14 @@ namespace DCL.PluginSystem.Global
             }
         }
 
+        [field: SerializeField] public int MemoryCapInMB { get; private set; } = 16 * 1024; // 16 GB
+
+        public Dictionary<MemoryUsageStatus, float> MemoryThresholds { get; private set; } = new ()
+        {
+            { MemoryUsageStatus.WARNING, 0.65f },
+            { MemoryUsageStatus.FULL, 0.75f }
+        };
+
         [field: Space]
         [field: SerializeField]
         public int ScenesLoadingBudget { get; private set; } = 100;
@@ -46,17 +54,7 @@ namespace DCL.PluginSystem.Global
 
         [field: SerializeField] public int WebRequestsBudget { get; private set; } = 20;
 
-        public Dictionary<MemoryUsageStatus, float> MemoryThresholds { get; private set; } = new ()
-        {
-            { MemoryUsageStatus.WARNING, 0.65f },
-            { MemoryUsageStatus.FULL, 0.75f }
-        };
 
-        public Dictionary<MemoryUsageStatus, float> MemoryThresholdsEditor { get; private set; } = new()
-        {
-            { MemoryUsageStatus.WARNING, 0.8f },
-            { MemoryUsageStatus.FULL, 0.95f }
-        };
 
         [Serializable]
         public class PartitionSettingsRef : AssetReferenceT<PartitionSettingsAsset>
