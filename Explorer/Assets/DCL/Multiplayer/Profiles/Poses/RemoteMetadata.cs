@@ -47,9 +47,14 @@ namespace DCL.Multiplayer.Profiles.Poses
         {
             if (update is UpdateFromParticipant.MetadataChanged or UpdateFromParticipant.Connected)
             {
-                if (participant.Metadata == null) return;
+                if (string.IsNullOrEmpty(participant.Metadata))
+                    return;
 
-                IslandMetadata message = JsonUtility.FromJson<IslandMetadata>(participant.Metadata);
+                IslandMetadata message;
+
+                try { message = JsonUtility.FromJson<IslandMetadata>(participant.Metadata); }
+                catch (Exception) { return; }
+
                 ParticipantsOnUpdatesFromParticipant(participant, new IRemoteMetadata.ParticipantMetadata(new Vector2Int(message.x, message.y), URLDomain.FromString(message.lambdasEndpoint)));
             }
         }
@@ -67,14 +72,18 @@ namespace DCL.Multiplayer.Profiles.Poses
         {
             if (update is UpdateFromParticipant.MetadataChanged or UpdateFromParticipant.Connected)
             {
-                if (participant.Metadata == null)
+                if (string.IsNullOrEmpty(participant.Metadata))
                     return;
 
                 IGateKeeperSceneRoom sceneRoom = roomHub.SceneRoom();
                 SceneShortInfo? sceneInfo = sceneRoom.ConnectedScene;
                 if (sceneInfo == null) return;
 
-                SceneRoomMetadata message = JsonUtility.FromJson<SceneRoomMetadata>(participant.Metadata);
+                SceneRoomMetadata message;
+
+                try { message = JsonUtility.FromJson<SceneRoomMetadata>(participant.Metadata); }
+                catch (Exception) { return; }
+
                 ParticipantsOnUpdatesFromParticipant(participant, new IRemoteMetadata.ParticipantMetadata(sceneInfo.Value.BaseParcel, URLDomain.FromString(message.lambdasEndpoint)));
             }
         }
