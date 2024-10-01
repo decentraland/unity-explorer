@@ -50,7 +50,7 @@ namespace DCL.PluginSystem.Global
             PlayerParcelChangedAnalyticsSystem.InjectToWorld(ref builder, analytics, realmData, scenesCache, arguments.PlayerEntity);
             PerformanceAnalyticsSystem.InjectToWorld(ref builder, analytics, realmData, profiler, arguments.V8ActiveEngines, scenesCache, new JsonObjectBuilder());
             TimeSpentInWorldAnalyticsSystem.InjectToWorld(ref builder, analytics, realmData);
-            BadgesHeightReachedSystem.InjectToWorld(ref builder, analytics, realmData, arguments.PlayerEntity, identityCache, debugContainerBuilder);
+            MovementBadgesSystem.InjectToWorld(ref builder, analytics, realmData, arguments.PlayerEntity, identityCache, debugContainerBuilder, walkedDistanceAnalytics);
             AnalyticsEmotesSystem.InjectToWorld(ref builder, analytics, realmData, arguments.PlayerEntity);
         }
 

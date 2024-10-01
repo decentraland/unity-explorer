@@ -18,6 +18,8 @@ MonoBehaviour:
     audioClip: {fileID: 0}
     thumbnail: {fileID: 21300000, guid: ff531623182fec8479d734ac8df22d8f, type: 3}
     prefab: {fileID: 8771091787928289351, guid: 902282f4070ec7b469e73bcbdcc0c3dd, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
     entity:
       representations: []
       category: 
@@ -31,6 +33,8 @@ MonoBehaviour:
     audioClip: {fileID: 0}
     thumbnail: {fileID: 21300000, guid: 7938434e632b598489b8b03e6effa995, type: 3}
     prefab: {fileID: 8018143466885850673, guid: 465491e0be2fa411dab6fd5716fe1a54, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
     entity:
       representations: []
       category: 
@@ -44,6 +48,8 @@ MonoBehaviour:
     audioClip: {fileID: 0}
     thumbnail: {fileID: 21300000, guid: ff531623182fec8479d734ac8df22d8f, type: 3}
     prefab: {fileID: 8771091787928289351, guid: c4ac165a6ecb9194ba6417ac99aa1d0f, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
     entity:
       representations: []
       category: 
@@ -57,6 +63,8 @@ MonoBehaviour:
     audioClip: {fileID: 0}
     thumbnail: {fileID: 21300000, guid: e6a1e80b5ad78344ab7aa751eb27c30d, type: 3}
     prefab: {fileID: 8018143466885850673, guid: 555e042d4b9b14ac0a4d086bdb749500, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
     entity:
       representations: []
       category: 
@@ -70,6 +78,8 @@ MonoBehaviour:
     audioClip: {fileID: 0}
     thumbnail: {fileID: 21300000, guid: fb2a51422f4f0f84ca589e9716428e06, type: 3}
     prefab: {fileID: 8018143466885850673, guid: 37c280bbf7a8f43c5bd4eb8918058365, type: 3}
+    male: {fileID: 8018143466885850673, guid: 37c280bbf7a8f43c5bd4eb8918058365, type: 3}
+    female: {fileID: 8018143466885850673, guid: 8bb64a2e609e8492fae00ad00adb5b16, type: 3}
     entity:
       representations: []
       category: 
@@ -83,6 +93,8 @@ MonoBehaviour:
     audioClip: {fileID: 0}
     thumbnail: {fileID: 21300000, guid: 5dc96a095ce3483459044bf3e74ccb59, type: 3}
     prefab: {fileID: 8018143466885850673, guid: c62cead1fc46347a9bb0193ed3259ba2, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
     entity:
       representations: []
       category: 
@@ -96,6 +108,8 @@ MonoBehaviour:
     audioClip: {fileID: 0}
     thumbnail: {fileID: 21300000, guid: 4ee2739d276aba843bd732c5a4a40dad, type: 3}
     prefab: {fileID: 8018143466885850673, guid: 869cd89681c12421da3da0478168e421, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
     entity:
       representations: []
       category: 
@@ -109,6 +123,8 @@ MonoBehaviour:
     audioClip: {fileID: 0}
     thumbnail: {fileID: 21300000, guid: 2b2f4028cd39d984e80dabe0732fdd87, type: 3}
     prefab: {fileID: 8018143466885850673, guid: 7693f9dc71d4e4a58816014d4ece5b06, type: 3}
+    male: {fileID: 8018143466885850673, guid: 7693f9dc71d4e4a58816014d4ece5b06, type: 3}
+    female: {fileID: 8018143466885850673, guid: 3836ede53a59e4965917561b6e227f0c, type: 3}
     entity:
       representations: []
       category: 
@@ -122,6 +138,8 @@ MonoBehaviour:
     audioClip: {fileID: 0}
     thumbnail: {fileID: 21300000, guid: 90d19c500d961c44f8941c69dcdae46a, type: 3}
     prefab: {fileID: 8018143466885850673, guid: f38d7869f314e4cb4a908407fed6dbd3, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
     entity:
       representations: []
       category: 
@@ -135,6 +153,8 @@ MonoBehaviour:
     audioClip: {fileID: 0}
     thumbnail: {fileID: 21300000, guid: 5d9d324d9b1257f4cbeed858807c2c06, type: 3}
     prefab: {fileID: 8771091787928289351, guid: 1367a4cc5c746844995474c692ce506f, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
     entity:
       representations: []
       category: 
@@ -148,6 +168,8 @@ MonoBehaviour:
     audioClip: {fileID: 0}
     thumbnail: {fileID: 21300000, guid: db09a3000c06f1e46a56c971875a6aa1, type: 3}
     prefab: {fileID: 8018143466885850673, guid: eb3fb75fdcb3b4748863cad3e2fbc570, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
     entity:
       representations: []
       category: 
@@ -161,6 +183,8 @@ MonoBehaviour:
     audioClip: {fileID: 0}
     thumbnail: {fileID: 21300000, guid: 08fb89e42a3f7d44e9b2a391aa41aff6, type: 3}
     prefab: {fileID: 8771091787928289351, guid: 77a28322abe8e2d48889b4bb91fea3c1, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
     entity:
       representations: []
       category: 
@@ -174,6 +198,8 @@ MonoBehaviour:
     audioClip: {fileID: 0}
     thumbnail: {fileID: 21300000, guid: 8845b5e9671db49409bf747319c8f5c7, type: 3}
     prefab: {fileID: 8771091787928289351, guid: 28c3224df1c472940947608d6984ab5b, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
     entity:
       representations: []
       category: 
@@ -187,6 +213,8 @@ MonoBehaviour:
     audioClip: {fileID: 0}
     thumbnail: {fileID: 21300000, guid: e2b6332b93b06ab488a93d40b83c69fe, type: 3}
     prefab: {fileID: 8771091787928289351, guid: 73aef91399409734da49e67af4552191, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
     entity:
       representations: []
       category: 
@@ -200,6 +228,8 @@ MonoBehaviour:
     audioClip: {fileID: 0}
     thumbnail: {fileID: 21300000, guid: ff8a6278dd9d9334da10fa959cdb26dc, type: 3}
     prefab: {fileID: 8018143466885850673, guid: 4c2f52d666b4140cfb9fabb951379dcd, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
     entity:
       representations: []
       category: 
@@ -213,6 +243,8 @@ MonoBehaviour:
     audioClip: {fileID: 0}
     thumbnail: {fileID: 21300000, guid: 736224c3cee06814dbf03a9bc3396382, type: 3}
     prefab: {fileID: 8018143466885850673, guid: f47550258031f44b69d3c23a32aadbac, type: 3}
+    male: {fileID: 8018143466885850673, guid: f47550258031f44b69d3c23a32aadbac, type: 3}
+    female: {fileID: 8018143466885850673, guid: cba09626bb9734de784415e4ae55325b, type: 3}
     entity:
       representations: []
       category: 
@@ -226,6 +258,8 @@ MonoBehaviour:
     audioClip: {fileID: 0}
     thumbnail: {fileID: 21300000, guid: f992e8febb67b5d47a24e9f16d5cc190, type: 3}
     prefab: {fileID: 8018143466885850673, guid: 9cd9034953b9e43d38a38f3cde21226f, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
     entity:
       representations: []
       category: 
@@ -239,6 +273,8 @@ MonoBehaviour:
     audioClip: {fileID: 0}
     thumbnail: {fileID: 21300000, guid: 9622f862db0a54f49a26e220aac90cbe, type: 3}
     prefab: {fileID: 8771091787928289351, guid: 8689dd2ff74a71649a0c3d9229b5c68b, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
     entity:
       representations: []
       category: 
@@ -252,6 +288,8 @@ MonoBehaviour:
     audioClip: {fileID: 0}
     thumbnail: {fileID: 21300000, guid: 84771a68677a08b43a7247d73aa5a6d8, type: 3}
     prefab: {fileID: 8018143466885850673, guid: cbb63c683b55046749f6cb47138ca9bc, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
     entity:
       representations: []
       category: 
@@ -265,6 +303,8 @@ MonoBehaviour:
     audioClip: {fileID: 0}
     thumbnail: {fileID: 21300000, guid: 832a50a328da0294f809c85f37abca0e, type: 3}
     prefab: {fileID: 8018143466885850673, guid: ab5239f8d474a41838f111c6cf9a26f6, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
     entity:
       representations: []
       category: 
@@ -278,6 +318,8 @@ MonoBehaviour:
     audioClip: {fileID: 0}
     thumbnail: {fileID: 0}
     prefab: {fileID: 8018143466885850673, guid: 58f49f496e83e4327a36e0b77fccfdee, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
     entity:
       representations: []
       category: 
@@ -291,6 +333,8 @@ MonoBehaviour:
     audioClip: {fileID: 0}
     thumbnail: {fileID: 21300000, guid: 5ff44e022ab99054bb0a1f79b2077c4f, type: 3}
     prefab: {fileID: 8018143466885850673, guid: c1d9a11790afd475fbf6ad94eb29306c, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
     entity:
       representations: []
       category: 
@@ -304,6 +348,8 @@ MonoBehaviour:
     audioClip: {fileID: 0}
     thumbnail: {fileID: 21300000, guid: 5ff44e022ab99054bb0a1f79b2077c4f, type: 3}
     prefab: {fileID: 8018143466885850673, guid: d667e461497064fcb8e5caf9125cc9d8, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
     entity:
       representations: []
       category: 
@@ -317,6 +363,8 @@ MonoBehaviour:
     audioClip: {fileID: 8300000, guid: 5caae9f69edac88479351686704e0c94, type: 3}
     thumbnail: {fileID: 21300000, guid: 52e4def7262db19429d325d7cb5f1a7a, type: 3}
     prefab: {fileID: 3460472286760622397, guid: c7a4733cc5ffc1249ada6f436f6dd167, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
     entity:
       representations: []
       category: 

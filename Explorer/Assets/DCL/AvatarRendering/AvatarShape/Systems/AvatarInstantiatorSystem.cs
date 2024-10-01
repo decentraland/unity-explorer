@@ -133,7 +133,10 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             var avatarBase = InstantiateNewAvatar(entity, ref avatarShapeComponent, ref transformComponent);
 
             if (avatarBase != null)
+            {
+                avatarBase.RigBuilder.enabled = true;
                 mainPlayerAvatarBaseProxy.SetObject(avatarBase);
+            }
         }
 
         [Query]
