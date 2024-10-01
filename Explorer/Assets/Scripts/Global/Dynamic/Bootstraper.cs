@@ -173,6 +173,7 @@ namespace Global.Dynamic
                 dynamicWorldContainer.RoomHub,
                 dynamicWorldContainer.MvcManager,
                 dynamicWorldContainer.MessagePipesHub,
+                dynamicWorldContainer.RemoteMetadata,
                 !realmLaunchSettings.IsLocalSceneDevelopmentRealm
             );
 

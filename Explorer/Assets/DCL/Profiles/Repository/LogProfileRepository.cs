@@ -1,3 +1,4 @@
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using System;
@@ -25,7 +26,7 @@ namespace DCL.Profiles
                .Log($"ProfileRepository: set finished for profile: {profile}");
         }
 
-        public async UniTask<Profile?> GetAsync(string id, int version, CancellationToken ct)
+        public async UniTask<Profile?> GetAsync(string id, int version, URLDomain? fromCatalyst, CancellationToken ct)
         {
             ReportHub
                .WithReport(ReportCategory.PROFILE)

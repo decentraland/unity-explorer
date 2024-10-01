@@ -1,6 +1,8 @@
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Profiles.Bunches;
+using DCL.Multiplayer.Profiles.Poses;
 using DCL.Multiplayer.Profiles.RemoteAnnouncements;
 using DCL.Optimization.Pools;
 using DCL.Profiles;
@@ -30,10 +32,12 @@ namespace DCL.Multiplayer.Profiles.RemoteProfiles
         private readonly IProfileRepository profileRepository;
         private readonly List<RemoteProfile> remoteProfiles = new ();
         private readonly Dictionary<string, PendingRequest> pendingProfiles = new (PoolConstants.AVATARS_COUNT);
+        private readonly IRemoteMetadata remoteMetadata;
 
-        public RemoteProfiles(IProfileRepository profileRepository)
+        public RemoteProfiles(IProfileRepository profileRepository, IRemoteMetadata remoteMetadata)
         {
             this.profileRepository = profileRepository;
+            this.remoteMetadata = remoteMetadata;
         }
 
         public void Download(IReadOnlyCollection<RemoteAnnouncement> list)
@@ -50,6 +54,8 @@ namespace DCL.Multiplayer.Profiles.RemoteProfiles
 
         private async UniTaskVoid TryDownloadAsync(RemoteAnnouncement remoteAnnouncement)
         {
+            URLDomain? lambdasEndpoint = remoteMetadata.GetLambdaDomainOrNull(remoteAnnouncement.WalletId);
+
             DateTime startedAt = DateTime.Now;
 
             if (pendingProfiles.TryGetValue(remoteAnnouncement.WalletId, out PendingRequest pendingRequest))
@@ -74,7 +80,7 @@ namespace DCL.Multiplayer.Profiles.RemoteProfiles
 
             try
             {
-                Profile? profile = await profileRepository.GetAsync(remoteAnnouncement.WalletId, remoteAnnouncement.Version, cts.Token);
+                Profile? profile = await profileRepository.GetAsync(remoteAnnouncement.WalletId, remoteAnnouncement.Version, lambdasEndpoint, cts.Token);
 
                 if (profile is null)
                 {

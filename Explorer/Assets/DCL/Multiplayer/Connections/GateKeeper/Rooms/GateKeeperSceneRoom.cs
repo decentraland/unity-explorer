@@ -49,6 +49,8 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
             roomIsNotRunning = () => connectiveRoom.CurrentState() is not IConnectiveRoom.State.Running;
         }
 
+        public SceneShortInfo? ConnectedScene => connectedScene?.SceneData.SceneShortInfo;
+
         public bool IsSceneConnected(string? sceneId) =>
             !metaDataSource.ScenesCommunicationIsIsolated || sceneId == connectedScene?.SceneData.SceneEntityDefinition.id;
 
