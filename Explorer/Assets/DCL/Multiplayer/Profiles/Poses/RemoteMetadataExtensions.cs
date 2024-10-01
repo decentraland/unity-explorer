@@ -6,8 +6,8 @@ namespace DCL.Multiplayer.Profiles.Poses
 {
     public static class RemoteMetadataExtensions
     {
-        public static void BroadcastSelfPose(this IRemoteMetadata remoteMetadata, ICharacterObject characterObject) =>
-            remoteMetadata.BroadcastSelfPose(characterObject.Position.ToParcel());
+        public static void BroadcastSelfParcel(this IRemoteMetadata remoteMetadata, ICharacterObject characterObject) =>
+            remoteMetadata.BroadcastSelfParcel(characterObject.Position.ToParcel());
 
         /// <summary>
         ///     Without metadata we don't know in which catalyst profile was updated

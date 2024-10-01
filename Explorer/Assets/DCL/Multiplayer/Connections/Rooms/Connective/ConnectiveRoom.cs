@@ -149,6 +149,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
             var credentials = new ConnectionStringCredentials(connectionString);
 
             bool connectResult = await newRoom.ConnectAsync(credentials, token);
+
             attemptToConnectState.Set(connectResult ? AttemptToConnectState.Success : AttemptToConnectState.Error);
 
             if (connectResult == false)

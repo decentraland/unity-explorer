@@ -19,6 +19,8 @@ namespace DCL.Multiplayer.Profiles.Poses
         private readonly ConcurrentDictionary<string, IRemoteMetadata.ParticipantMetadata> metadata = new ();
         private readonly IRealmData realmData;
 
+        private string sceneRoomSId;
+
         public RemoteMetadata(IRoomHub roomHub, IRealmData realmData)
         {
             this.roomHub = roomHub;
@@ -26,14 +28,17 @@ namespace DCL.Multiplayer.Profiles.Poses
 
             roomHub.IslandRoom().Participants.UpdatesFromParticipant += OnUpdatesFromParticipantInIsland;
             roomHub.SceneRoom().Room().Participants.UpdatesFromParticipant += OnUpdatesFromParticipantInSceneRoom;
-            roomHub.SceneRoom().Room().ConnectionUpdated += OnConnectedToSceneRoom;
+
+            // OnConnected will be called while the room is not assigned, so the callback is missed
+            //roomHub.SceneRoom().Room().ConnectionUpdated += OnConnectedToSceneRoom;
         }
 
         ~RemoteMetadata()
         {
             roomHub.IslandRoom().Participants.UpdatesFromParticipant -= OnUpdatesFromParticipantInIsland;
             roomHub.SceneRoom().Room().Participants.UpdatesFromParticipant -= OnUpdatesFromParticipantInSceneRoom;
-            roomHub.SceneRoom().Room().ConnectionUpdated -= OnConnectedToSceneRoom;
+
+            //roomHub.SceneRoom().Room().ConnectionUpdated -= OnConnectedToSceneRoom;
         }
 
         public IReadOnlyDictionary<string, IRemoteMetadata.ParticipantMetadata> Metadata => metadata;
@@ -47,14 +52,14 @@ namespace DCL.Multiplayer.Profiles.Poses
             }
         }
 
-        private void OnConnectedToSceneRoom(IRoom room, ConnectionUpdate connectionUpdate)
-        {
-            if (connectionUpdate is ConnectionUpdate.Connected or ConnectionUpdate.Reconnected)
-            {
-                // Set metadata once
-                SendAsync(new SceneRoomMetadata(realmData.Ipfs.LambdasBaseUrl.Value)).Forget();
-            }
-        }
+        // private void OnConnectedToSceneRoom(IRoom room, ConnectionUpdate connectionUpdate)
+        // {
+        //     if (connectionUpdate is ConnectionUpdate.Connected or ConnectionUpdate.Reconnected)
+        //     {
+        //         // Set metadata once
+        //         SendAsync(new SceneRoomMetadata(realmData.Ipfs.LambdasBaseUrl.Value)).Forget();
+        //     }
+        // }
 
         private void OnUpdatesFromParticipantInSceneRoom(Participant participant, UpdateFromParticipant update)
         {
@@ -75,10 +80,27 @@ namespace DCL.Multiplayer.Profiles.Poses
             ReportHub.Log(ReportCategory.MULTIPLAYER_MOVEMENT, $"{nameof(RemoteMetadata)}: metadata of {participant.Identity} is {participantMetadata}");
         }
 
-        public void BroadcastSelfPose(Vector2Int pose)
+        public void BroadcastSelfParcel(Vector2Int pose)
         {
+            if (!realmData.Configured)
+                return;
+
             // Broadcasting self position makes sense only for the island
             SendAsync(new IslandMetadata(pose.x, pose.y, realmData.Ipfs.LambdasBaseUrl.Value)).Forget();
+        }
+
+        public void BroadcastSelfMetadata()
+        {
+            if (!realmData.Configured)
+                return;
+
+            string currentRoomSid = roomHub.SceneRoom().Room().Info.Sid;
+
+            if (sceneRoomSId != currentRoomSid)
+            {
+                SendAsync(new SceneRoomMetadata(realmData.Ipfs.LambdasBaseUrl.Value)).Forget();
+                sceneRoomSId = currentRoomSid;
+            }
         }
 
         private async UniTaskVoid SendAsync(IslandMetadata islandMetadata)

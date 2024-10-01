@@ -1,5 +1,3 @@
-using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -10,20 +8,25 @@ namespace DCL.Multiplayer.Profiles.Poses
         private readonly IRemoteMetadata origin;
         private Vector2Int? previous;
 
+        public IReadOnlyDictionary<string, IRemoteMetadata.ParticipantMetadata> Metadata => origin.Metadata;
+
         public DebounceRemoteMetadata(IRemoteMetadata origin)
         {
             this.origin = origin;
         }
 
-        public IReadOnlyDictionary<string, IRemoteMetadata.ParticipantMetadata> Metadata => origin.Metadata;
-
-        public void BroadcastSelfPose(Vector2Int pose)
+        public void BroadcastSelfParcel(Vector2Int pose)
         {
             if (previous == pose)
                 return;
 
-            origin.BroadcastSelfPose(pose);
+            origin.BroadcastSelfParcel(pose);
             previous = pose;
+        }
+
+        public void BroadcastSelfMetadata()
+        {
+            origin.BroadcastSelfMetadata();
         }
     }
 }
