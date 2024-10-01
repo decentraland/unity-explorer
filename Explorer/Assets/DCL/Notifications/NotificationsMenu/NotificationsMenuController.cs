@@ -43,7 +43,6 @@ namespace DCL.Notifications.NotificationsMenu
         private CancellationTokenSource? notificationThumbnailCts;
         private CancellationTokenSource? notificationPanelCts = new CancellationTokenSource();
         private int unreadNotifications;
-        private bool panelWasOpenedOnce = false;
         private Web3Address? previousWeb3Identity;
 
         public NotificationsMenuController(
@@ -106,7 +105,6 @@ namespace DCL.Notifications.NotificationsMenu
 
         private void OnViewShown()
         {
-            panelWasOpenedOnce = true;
             if (unreadNotifications > 0)
             {
                 view.LoopList.DoActionForEachShownItem((item2, param) =>
@@ -128,7 +126,7 @@ namespace DCL.Notifications.NotificationsMenu
             if (previousWeb3Identity != null)
                 await InitialNotificationRequestAsync(token);
 
-            while (token.IsCancellationRequested == false && panelWasOpenedOnce == false)
+            while (token.IsCancellationRequested == false)
             {
                 if (previousWeb3Identity != web3IdentityCache.Identity?.Address && web3IdentityCache.Identity?.Address != null)
                 {
