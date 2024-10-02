@@ -1,5 +1,6 @@
 using DCL.Diagnostics;
 using DCL.Landscape.Settings;
+using DCL.Optimization.PerformanceBudgeting;
 using DCL.Quality;
 using DCL.Settings.Configuration;
 using DCL.Settings.ModuleControllers;
@@ -21,6 +22,7 @@ namespace DCL.Settings
         private readonly RealmPartitionSettingsAsset realmPartitionSettingsAsset;
         private readonly LandscapeData landscapeData;
         private readonly QualitySettingsAsset qualitySettingsAsset;
+        private readonly ISystemMemoryCap memoryCap;
         private readonly RectTransform rectTransform;
         private readonly List<SettingsFeatureController> controllers = new ();
 
@@ -30,7 +32,8 @@ namespace DCL.Settings
             AudioMixer generalAudioMixer,
             RealmPartitionSettingsAsset realmPartitionSettingsAsset,
             LandscapeData landscapeData,
-            QualitySettingsAsset qualitySettingsAsset)
+            QualitySettingsAsset qualitySettingsAsset,
+            ISystemMemoryCap memoryCap)
         {
             this.view = view;
             this.settingsMenuConfiguration = settingsMenuConfiguration;
@@ -38,6 +41,7 @@ namespace DCL.Settings
             this.realmPartitionSettingsAsset = realmPartitionSettingsAsset;
             this.landscapeData = landscapeData;
             this.qualitySettingsAsset = qualitySettingsAsset;
+            this.memoryCap = memoryCap;
 
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
 
@@ -100,7 +104,7 @@ namespace DCL.Settings
                 generalGroupView.GroupTitle.text = group.GroupTitle;
 
                 foreach (SettingsModuleBindingBase module in group.Modules)
-                    controllers.Add(module?.CreateModule(generalGroupView.ModulesContainer, realmPartitionSettingsAsset, landscapeData, generalAudioMixer, qualitySettingsAsset));
+                    controllers.Add(module?.CreateModule(generalGroupView.ModulesContainer, realmPartitionSettingsAsset, landscapeData, generalAudioMixer, qualitySettingsAsset, memoryCap));
             }
         }
 

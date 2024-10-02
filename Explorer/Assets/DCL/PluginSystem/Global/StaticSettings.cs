@@ -37,7 +37,29 @@ namespace DCL.PluginSystem.Global
             }
         }
 
-        [field: SerializeField] public int MemoryCapInMB { get; private set; } = 16 * 1024; // 16 GB
+        [SerializeField] [Tooltip("In GB")] public int memoryCap = 16;
+
+        private long memoryCapInMB;
+
+        public long MemoryCapInMB
+        {
+            get
+            {
+                if (memoryCapInMB == 0)
+                    MemoryCap = memoryCap;
+
+                return memoryCapInMB;
+            }
+        }
+
+        public int MemoryCap
+        {
+            set
+            {
+                memoryCap = value;
+                memoryCapInMB = memoryCap * 1024L;
+            }
+        }
 
         public Dictionary<MemoryUsageStatus, float> MemoryThresholds { get; private set; } = new ()
         {
@@ -46,15 +68,9 @@ namespace DCL.PluginSystem.Global
         };
 
         [field: Space]
-        [field: SerializeField]
-        public int ScenesLoadingBudget { get; private set; } = 100;
-
-        [field: SerializeField]
-        public int AssetsLoadingBudget { get; private set; } = 50;
-
+        [field: SerializeField] public int ScenesLoadingBudget { get; private set; } = 100;
+        [field: SerializeField] public int AssetsLoadingBudget { get; private set; } = 50;
         [field: SerializeField] public int WebRequestsBudget { get; private set; } = 20;
-
-
 
         [Serializable]
         public class PartitionSettingsRef : AssetReferenceT<PartitionSettingsAsset>

@@ -1,4 +1,5 @@
 ﻿using DCL.Landscape.Settings;
+using DCL.Optimization.PerformanceBudgeting;
 using DCL.Quality;
 using DCL.Settings.ModuleControllers;
 using DCL.Settings.ModuleViews;
@@ -20,7 +21,8 @@ namespace DCL.Settings.Configuration
             RealmPartitionSettingsAsset realmPartitionSettingsAsset,
             LandscapeData landscapeData,
             AudioMixer generalAudioMixer,
-            QualitySettingsAsset qualitySettingsAsset);
+            QualitySettingsAsset qualitySettingsAsset,
+            ISystemMemoryCap systemMemoryCap);
     }
 
     [Serializable]

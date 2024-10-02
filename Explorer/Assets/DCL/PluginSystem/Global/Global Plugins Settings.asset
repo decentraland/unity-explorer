@@ -599,6 +599,7 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         frameTimeCap: 33
         frameTimeCapDeepProfiler: 300
+        memoryCap: 16
         <ScenesLoadingBudget>k__BackingField: 100
         <AssetsLoadingBudget>k__BackingField: 50
         <WebRequestsBudget>k__BackingField: 20

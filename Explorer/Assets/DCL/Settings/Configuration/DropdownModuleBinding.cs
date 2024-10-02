@@ -1,4 +1,5 @@
 ﻿using DCL.Landscape.Settings;
+using DCL.Optimization.PerformanceBudgeting;
 using DCL.Quality;
 using DCL.Settings.ModuleControllers;
 using DCL.Settings.ModuleViews;
@@ -29,7 +30,8 @@ namespace DCL.Settings.Configuration
             RealmPartitionSettingsAsset realmPartitionSettingsAsset,
             LandscapeData landscapeData,
             AudioMixer generalAudioMixer,
-            QualitySettingsAsset qualitySettingsAsset)
+            QualitySettingsAsset qualitySettingsAsset,
+            ISystemMemoryCap systemMemoryCap)
         {
             var viewInstance = UnityEngine.Object.Instantiate(View, parent);
             viewInstance.Configure(Config);
@@ -42,7 +44,7 @@ namespace DCL.Settings.Configuration
                        DropdownFeatures.RESOLUTION_FEATURE => new ResolutionSettingsController(viewInstance),
                        DropdownFeatures.WINDOW_MODE_FEATURE => new WindowModeSettingsController(viewInstance),
                        DropdownFeatures.FPS_LIMIT_FEATURE => new FpsLimitSettingsController(viewInstance),
-                       DropdownFeatures.MEMORY_LIMIT_FEATURE => new MemoryLimitSettingController(viewInstance),
+                       DropdownFeatures.MEMORY_LIMIT_FEATURE => new MemoryLimitSettingController(viewInstance, systemMemoryCap),
                        _ => throw new ArgumentOutOfRangeException(nameof(viewInstance))
                    };
         }

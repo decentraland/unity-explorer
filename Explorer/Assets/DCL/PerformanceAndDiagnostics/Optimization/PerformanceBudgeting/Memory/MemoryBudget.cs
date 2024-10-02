@@ -1,6 +1,4 @@
-﻿#nullable enable
-
-using DCL.Profiling;
+﻿using DCL.Profiling;
 using System.Collections.Generic;
 using UnityEngine;
 using static DCL.Optimization.PerformanceBudgeting.MemoryUsageStatus;
@@ -62,7 +60,7 @@ namespace DCL.Optimization.PerformanceBudgeting
                    {
                        FULL => NO_MEMORY,
                        WARNING => CalculateSystemMemoryForWarningThreshold(),
-                       _ => Mathf.Min(systemMemoryCap.MemoryCapInMB,  SystemInfo.systemMemorySize),
+                       _ => systemMemoryCap.MemoryCapInMB,
                    };
 
             // ReSharper disable once PossibleLossOfFraction
@@ -79,13 +77,19 @@ namespace DCL.Optimization.PerformanceBudgeting
             };
 
             private readonly IPerformanceBudget performanceBudget = new MemoryBudget(
-                new StandaloneTotalSystemMemoryCap(),
+                new SystemMemoryCapMock(),
                 new Profiler(),
                 MEMORY_THRESHOLD
             );
 
             public bool TrySpendBudget() =>
                 performanceBudget.TrySpendBudget();
+
+            private class SystemMemoryCapMock : ISystemMemoryCap
+            {
+                public long MemoryCapInMB { get; private set; } = 16 * 1024L;
+                public int MemoryCap { set => MemoryCapInMB = value * 1024L; }
+            }
         }
     }
 }
