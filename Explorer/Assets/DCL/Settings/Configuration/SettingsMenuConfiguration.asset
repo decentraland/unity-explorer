@@ -23,6 +23,7 @@ MonoBehaviour:
       - rid: 5242998500334764034
       - rid: 5242998503086751746
       - rid: 5242998503086751747
+      - rid: 4916151837425664002
     - <GroupTitle>k__BackingField: Environment
       <Modules>k__BackingField:
       - rid: 5242998342527483909
@@ -76,6 +77,16 @@ MonoBehaviour:
           wholeNumbers: 0
           defaultValue: 1
         <Feature>k__BackingField: 3
+    - rid: 4916151837425664002
+      type: {class: ToggleModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
+      data:
+        <View>k__BackingField: {fileID: 1404863613082391807, guid: 39458b71e0ed84549b1b280c4fb1f105, type: 3}
+        <Config>k__BackingField:
+          <ModuleName>k__BackingField: Enable VSync
+          <Description>k__BackingField: 
+          <IsEnabled>k__BackingField: 1
+          defaultIsOn: 0
+        <Feature>k__BackingField: 1
     - rid: 5242998342527483906
       type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:

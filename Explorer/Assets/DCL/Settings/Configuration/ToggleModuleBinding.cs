@@ -16,6 +16,7 @@ namespace DCL.Settings.Configuration
         public enum ToggleFeatures
         {
             CHAT_SOUNDS_FEATURE,
+            GRAPHICS_VSYNC_TOGGLE_FEATURE,
             // add other features...
         }
 
@@ -34,6 +35,8 @@ namespace DCL.Settings.Configuration
             {
                 case ToggleFeatures.CHAT_SOUNDS_FEATURE:
                     return new ChatSoundsSettingsController(viewInstance, generalAudioMixer);
+                case ToggleFeatures.GRAPHICS_VSYNC_TOGGLE_FEATURE:
+                    return new GraphicsVSyncController(viewInstance);
                 // add other cases...
             }
 
