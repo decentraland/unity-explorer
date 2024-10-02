@@ -30,7 +30,7 @@ namespace DCL.Settings.ModuleControllers
 
         public override void Dispose()
         {
-            view.SliderView.Slider.onValueChanged.RemoveListener(SetHorizontalMouseSensitivity);
+            view.SliderView.Slider.onValueChanged.RemoveAllListeners();
         }
     }
 }
