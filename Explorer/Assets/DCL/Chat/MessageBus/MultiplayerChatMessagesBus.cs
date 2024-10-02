@@ -40,7 +40,7 @@ namespace DCL.Chat.MessageBus
                 if (messageDeduplication.TryPass(receivedMessage.FromWalletId, receivedMessage.Payload.Timestamp) == false)
                     return;
 
-                var profile = await profileRepository.GetAsync(receivedMessage.FromWalletId, 0, cancellationTokenSource.Token);
+                Profile? profile = await profileRepository.GetAsync(receivedMessage.FromWalletId, cancellationTokenSource.Token);
 
                 MessageAdded?.Invoke(
                     new ChatMessage(
