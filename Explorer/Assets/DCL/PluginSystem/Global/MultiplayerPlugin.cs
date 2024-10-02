@@ -51,7 +51,7 @@ namespace DCL.PluginSystem.Global
         private readonly IReadOnlyRealFlowLoadingStatus realFlowLoadingStatus;
         private readonly IRealmData realmData;
         private readonly IRemoteEntities remoteEntities;
-        private readonly IRemotePoses remotePoses;
+        private readonly IRemoteMetadata remoteMetadata;
         private readonly IRoomHub roomHub;
         private readonly RoomsStatus roomsStatus;
         private readonly IScenesCache scenesCache;
@@ -70,7 +70,7 @@ namespace DCL.PluginSystem.Global
             IReadOnlyRealFlowLoadingStatus realFlowLoadingStatus,
             IEntityParticipantTable entityParticipantTable,
             IMessagePipesHub messagePipesHub,
-            IRemotePoses remotePoses,
+            IRemoteMetadata remoteMetadata,
             ICharacterObject characterObject,
             IRealmData realmData,
             IRemoteEntities remoteEntities,
@@ -90,7 +90,7 @@ namespace DCL.PluginSystem.Global
             this.realFlowLoadingStatus = realFlowLoadingStatus;
             this.entityParticipantTable = entityParticipantTable;
             this.messagePipesHub = messagePipesHub;
-            this.remotePoses = remotePoses;
+            this.remoteMetadata = remoteMetadata;
             this.characterObject = characterObject;
             this.remoteEntities = remoteEntities;
             this.realmData = realmData;
@@ -113,7 +113,7 @@ namespace DCL.PluginSystem.Global
 #if !NO_LIVEKIT_MODE
             IFFIClient.Default.EnsureInitialize();
 
-            DebugRoomsSystem.InjectToWorld(ref builder, roomsStatus, archipelagoIslandRoom, gateKeeperSceneRoom, entityParticipantTable, remotePoses, debugContainerBuilder);
+            DebugRoomsSystem.InjectToWorld(ref builder, roomsStatus, archipelagoIslandRoom, gateKeeperSceneRoom, entityParticipantTable, remoteMetadata, debugContainerBuilder);
             ConnectionRoomsSystem.InjectToWorld(ref builder, archipelagoIslandRoom, gateKeeperSceneRoom, realFlowLoadingStatus);
 
             MultiplayerProfilesSystem.InjectToWorld(ref builder,
@@ -121,10 +121,10 @@ namespace DCL.PluginSystem.Global
                 new LogRemoveIntentions(
                     new ThreadSafeRemoveIntentions(roomHub)
                 ),
-                new RemoteProfiles(profileRepository),
+                new RemoteProfiles(profileRepository, remoteMetadata),
                 profileBroadcast,
                 remoteEntities,
-                remotePoses,
+                remoteMetadata,
                 characterObject,
                 realFlowLoadingStatus,
                 realmData
