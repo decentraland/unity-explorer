@@ -18,7 +18,6 @@ using DCL.Chat.Commands;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.DebugUtilities;
-using DCL.DebugUtilities.UIBindings;
 using DCL.Input;
 using DCL.Landscape;
 using DCL.LOD.Systems;
