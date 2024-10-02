@@ -11,6 +11,7 @@ using DCL.Interaction.Utility;
 using DCL.Ipfs;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.Multiplayer.Profiles.Poses;
 using DCL.Profiles;
 using DCL.Web3;
 using DCL.Web3.Identities;
@@ -55,6 +56,7 @@ namespace SceneRunner
         private readonly IRealmData? realmData;
         private readonly IPortableExperiencesController portableExperiencesController;
         private readonly ISceneCommunicationPipe messagePipesHub;
+        private readonly IRemoteMetadata remoteMetadata;
 
         private IGlobalWorldActions globalWorldActions = null!;
 
@@ -75,7 +77,8 @@ namespace SceneRunner
             IRoomHub roomHub,
             IRealmData? realmData,
             IPortableExperiencesController portableExperiencesController,
-            ISceneCommunicationPipe messagePipesHub)
+            ISceneCommunicationPipe messagePipesHub,
+            IRemoteMetadata remoteMetadata)
         {
             this.ecsWorldFactory = ecsWorldFactory;
             this.sceneRuntimeFactory = sceneRuntimeFactory;
@@ -93,6 +96,7 @@ namespace SceneRunner
             this.roomHub = roomHub;
             this.realmData = realmData;
             this.messagePipesHub = messagePipesHub;
+            this.remoteMetadata = remoteMetadata;
             this.portableExperiencesController = portableExperiencesController;
         }
 
@@ -206,7 +210,8 @@ namespace SceneRunner
                     runtimeDeps.SimpleFetchApi,
                     sceneData,
                     realmData!,
-                    portableExperiencesController
+                    portableExperiencesController,
+                    remoteMetadata
                 );
             }
             else
@@ -233,7 +238,8 @@ namespace SceneRunner
                     runtimeDeps.SimpleFetchApi,
                     sceneData,
                     realmData!,
-                    portableExperiencesController
+                    portableExperiencesController,
+                    remoteMetadata
                 );
             }
 

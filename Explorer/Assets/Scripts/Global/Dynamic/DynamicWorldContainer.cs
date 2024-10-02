@@ -18,7 +18,6 @@ using DCL.Chat.Commands;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.DebugUtilities;
-using DCL.DebugUtilities.UIBindings;
 using DCL.Input;
 using DCL.Landscape;
 using DCL.LOD.Systems;
@@ -128,6 +127,8 @@ namespace Global.Dynamic
         public IChatMessagesBus ChatMessagesBus { get; private set; } = null!;
 
         public IMessagePipesHub MessagePipesHub { get; private set; } = null!;
+
+        public IRemoteMetadata RemoteMetadata { get; private set; } = null!;
 
         public ISceneRoomMetaDataSource SceneRoomMetaDataSource { get; private set; } = null!;
 
@@ -428,7 +429,7 @@ namespace Global.Dynamic
 
             var multiplayerEmotesMessageBus = new MultiplayerEmotesMessageBus(container.MessagePipesHub, multiplayerDebugSettings);
 
-            var remotePoses = new DebounceRemotePoses(new RemotePoses(container.RoomHub));
+            container.RemoteMetadata = new DebounceRemoteMetadata(new RemoteMetadata(container.RoomHub, staticContainer.RealmData));
 
             var characterPreviewEventBus = new CharacterPreviewEventBus();
             var sidebarBus = new SidebarBus();
@@ -455,7 +456,7 @@ namespace Global.Dynamic
                     container.RealFlowLoadingStatus,
                     entityParticipantTable,
                     container.MessagePipesHub,
-                    remotePoses,
+                    container.RemoteMetadata,
                     staticContainer.CharacterContainer.CharacterObject,
                     staticContainer.RealmData,
                     remoteEntities,
@@ -566,7 +567,17 @@ namespace Global.Dynamic
                 staticContainer.CharacterContainer.CreateGlobalPlugin(),
                 staticContainer.QualityContainer.CreatePlugin(),
                 landscapePlugin,
-                new MultiplayerMovementPlugin(assetsProvisioner, container.multiplayerMovementMessageBus, debugBuilder, remoteEntities, staticContainer.CharacterContainer.Transform, multiplayerDebugSettings, appArgs, entityParticipantTable, staticContainer.RealmData),
+                new MultiplayerMovementPlugin(
+                    assetsProvisioner,
+                    container.multiplayerMovementMessageBus,
+                    debugBuilder,
+                    remoteEntities,
+                    staticContainer.CharacterContainer.Transform,
+                    multiplayerDebugSettings,
+                    appArgs,
+                    entityParticipantTable,
+                    staticContainer.RealmData,
+                    container.RemoteMetadata),
                 container.LODContainer.LODPlugin,
                 container.LODContainer.RoadPlugin,
                 new AudioPlaybackPlugin(genesisTerrain, assetsProvisioner, dynamicWorldParams.EnableLandscape),
@@ -594,6 +605,7 @@ namespace Global.Dynamic
                     badgesAPIClient,
                     notificationsBusController,
                     staticContainer.InputBlock,
+                    container.RemoteMetadata,
                     globalWorld,
                     playerEntity
                 ),

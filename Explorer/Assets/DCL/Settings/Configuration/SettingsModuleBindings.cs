@@ -3,6 +3,7 @@ using DCL.Optimization.PerformanceBudgeting;
 using DCL.Quality;
 using DCL.Settings.ModuleControllers;
 using DCL.Settings.ModuleViews;
+using DCL.Settings.Settings;
 using ECS.Prioritization;
 using System;
 using UnityEngine;
@@ -22,6 +23,7 @@ namespace DCL.Settings.Configuration
             LandscapeData landscapeData,
             AudioMixer generalAudioMixer,
             QualitySettingsAsset qualitySettingsAsset,
+            ControlsSettingsAsset controlsSettingsAsset,
             ISystemMemoryCap systemMemoryCap);
     }
 

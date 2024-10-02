@@ -41,6 +41,7 @@ using System.Linq;
 using System.Threading;
 using DCL.Chat.MessageBus;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.Settings.Settings;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Audio;
@@ -87,11 +88,14 @@ namespace DCL.PluginSystem.Global
         private readonly ChatEntryConfigurationSO chatEntryConfiguration;
         private readonly IInputBlock inputBlock;
         private readonly IChatMessagesBus chatMessagesBus;
+
         private readonly ISystemMemoryCap systemMemoryCap;
 
         private NavmapController? navmapController;
         private SettingsController? settingsController;
         private BackpackSubPlugin? backpackSubPlugin;
+
+
 
         public ExplorePanelPlugin(IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
@@ -214,10 +218,8 @@ namespace DCL.PluginSystem.Global
 
             ProvidedAsset<LandscapeData> landscapeData = await assetsProvisioner.ProvideMainAssetAsync(settings.LandscapeData, ct);
             ProvidedAsset<QualitySettingsAsset> qualitySettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.QualitySettingsAsset, ct);
-            settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>(), settingsMenuConfiguration.Value, generalAudioMixer.Value, realmPartitionSettings.Value, landscapeData.Value, qualitySettingsAsset.Value, systemMemoryCap);
-
-
-
+            ProvidedAsset<ControlsSettingsAsset> controlsSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.ControlsSettingsAsset, ct);
+            settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>(), settingsMenuConfiguration.Value, generalAudioMixer.Value, realmPartitionSettings.Value, landscapeData.Value, qualitySettingsAsset.Value, controlsSettingsAsset.Value, systemMemoryCap);
 
             navmapController = new NavmapController(navmapView: explorePanelView.GetComponentInChildren<NavmapView>(),
                 mapRendererContainer.MapRenderer, placesAPIService, webRequestController, webBrowser, dclInput,
@@ -262,6 +264,9 @@ namespace DCL.PluginSystem.Global
 
             [field: SerializeField]
             public AssetReferenceT<QualitySettingsAsset> QualitySettingsAsset { get; private set; }
+
+            [field: SerializeField]
+            public AssetReferenceT<ControlsSettingsAsset> ControlsSettingsAsset { get; private set; }
 
             public IReadOnlyCollection<URN> EmbeddedEmotesAsURN() =>
                 EmbeddedEmotes.Select(s => new URN(s)).ToArray();

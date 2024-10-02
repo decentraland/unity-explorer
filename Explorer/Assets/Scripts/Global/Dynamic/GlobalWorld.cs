@@ -18,6 +18,14 @@ namespace Global.Dynamic
         public readonly World EcsWorld;
         public readonly IReadOnlyList<IFinalizeWorldSystem> FinalizeWorldSystems;
 
+#if UNITY_EDITOR
+        public static World ECSWorldInstance
+        {
+            get;
+            private set;
+        }
+#endif
+
         private readonly CancellationTokenSource destroyCancellationSource;
 
         private readonly CameraSamplingData cameraSamplingData;
@@ -35,6 +43,10 @@ namespace Global.Dynamic
             this.destroyCancellationSource = destroyCancellationSource;
             FinalizeWorldSystems = finalizeWorldSystems;
             worldSystems = systemGroupWorld;
+
+#if UNITY_EDITOR
+            ECSWorldInstance = EcsWorld;
+#endif
         }
 
         public void Dispose()
