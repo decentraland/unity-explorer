@@ -86,5 +86,33 @@ namespace DCL.Profiles
             BodySnapshotUrl = default(URLAddress);
             FaceSnapshotUrl = default(URLAddress);
         }
+
+#if UNITY_EDITOR
+
+        /// <summary>
+        /// Fills one of the emote slots of the avatar's profile with an emote URN, if it is not already in the list. If all slots are already filled, the last one will be replaced with the provided URN.
+        /// This method is used by editor tools or for debugging, it must never be used in production.
+        /// </summary>
+        /// <param name="emoteURN">The URN of the emote to add.</param>
+        public void AddEmote(URN emoteURN)
+        {
+            int i = 0;
+
+            for (; i < emotes.Length; ++i)
+            {
+                if (emotes[i].IsNullOrEmpty())
+                {
+                    emotes[i] = emoteURN;
+                    break;
+                }
+                else if (emotes[i] == emoteURN)
+                    break;
+            }
+
+            if (i == emotes.Length)
+                emotes[0] = emoteURN;
+        }
+
+#endif
     }
 }

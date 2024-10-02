@@ -1,4 +1,4 @@
-﻿using DCL.CharacterCamera;
+﻿
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
 using DCL.CharacterMotion.Utils;
@@ -11,12 +11,10 @@ namespace DCL.CharacterMotion
     {
         public static void Execute(ICharacterControllerSettings settings,
             ref CharacterRigidTransform rigidTransform,
-            in CameraComponent camera,
+            Transform cameraTransform,
             in MovementInputComponent input,
             float dt)
         {
-            Transform cameraTransform = camera.Camera.transform;
-
             Vector3 cameraForward = cameraTransform.forward;
             cameraForward.y = 0;
 
