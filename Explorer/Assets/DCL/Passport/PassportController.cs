@@ -10,6 +10,7 @@ using DCL.Diagnostics;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Multiplayer.Profiles.Poses;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
 using DCL.Passport.Modules;
@@ -52,6 +53,7 @@ namespace DCL.Passport
         private readonly List<IPassportModuleController> overviewPassportModules = new ();
         private readonly List<IPassportModuleController> badgesPassportModules = new ();
         private readonly IInputBlock inputBlock;
+        private readonly IRemoteMetadata remoteMetadata;
 
         private Profile? ownProfile;
         private string currentUserId;
@@ -86,8 +88,8 @@ namespace DCL.Passport
             BadgesAPIClient badgesAPIClient,
             IWebRequestController webRequestController,
             IInputBlock inputBlock,
-            INotificationsBusController notificationBusController
-        ) : base(viewFactory)
+            INotificationsBusController notificationBusController,
+            IRemoteMetadata remoteMetadata) : base(viewFactory)
         {
             this.cursor = cursor;
             this.profileRepository = profileRepository;
@@ -106,6 +108,7 @@ namespace DCL.Passport
             this.badgesAPIClient = badgesAPIClient;
             this.webRequestController = webRequestController;
             this.inputBlock = inputBlock;
+            this.remoteMetadata = remoteMetadata;
 
             passportProfileInfoController = new PassportProfileInfoController(selfProfile, world, playerEntity);
             notificationBusController.SubscribeToNotificationTypeReceived(NotificationType.BADGE_GRANTED, OnBadgeNotificationReceived);
@@ -207,7 +210,7 @@ namespace DCL.Passport
                     return;
 
                 // Load user profile
-                Profile? profile = await profileRepository.GetAsync(userId, 0, ct);
+                Profile? profile = await profileRepository.GetAsync(userId, 0, remoteMetadata.GetLambdaDomainOrNull(userId), ct);
 
                 if (profile == null)
                     return;

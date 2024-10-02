@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Rooms;
 using DCL.Multiplayer.Connections.Rooms.Connective;
 using LiveKit.Rooms;
@@ -16,6 +17,8 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
         /// <returns></returns>
         bool IsSceneConnected(string? sceneId);
 
+        public SceneShortInfo? ConnectedScene { get; }
+
         class Fake : IGateKeeperSceneRoom
         {
             public UniTask<bool> StartAsync() =>
@@ -32,6 +35,8 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
 
             public bool IsSceneConnected(string sceneId) =>
                 false;
+
+            public SceneShortInfo? ConnectedScene => new SceneShortInfo();
         }
     }
 }
