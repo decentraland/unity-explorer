@@ -42,7 +42,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
             if (result == false)
                 throw new Exception("Rust Segment initialization failed");
 
-            ReportHub.Log(ReportData.UNSPECIFIED, "Rust Segment initialized");
+            ReportHub.Log(ReportData.ANALYTICS, "Rust Segment initialized");
             current = this;
         }
 
@@ -82,6 +82,11 @@ namespace Plugins.RustSegment.SegmentServerWrap
         {
             lock (afterClean)
             {
+
+#if UNITY_EDITOR || DEBUG
+                ReportIfIdentityWasNotCalled();
+#endif
+
                 var list = ListPool<MarshaledString>.Get()!;
 
                 var mUserId = new MarshaledString(cachedUserId);
@@ -152,6 +157,15 @@ namespace Plugins.RustSegment.SegmentServerWrap
                     ReportCategory.ANALYTICS,
                     $"Segment invalid async operation is called"
                 );
+        }
+
+        private void ReportIfIdentityWasNotCalled()
+        {
+            if (string.IsNullOrWhiteSpace(cachedUserId))
+                ReportHub.LogError(
+                    ReportCategory.ANALYTICS,
+                    $"Segment to track an event, you must call Identify first"
+                )
         }
     }
 }
