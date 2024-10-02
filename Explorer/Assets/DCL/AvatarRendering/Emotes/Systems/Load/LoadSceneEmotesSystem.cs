@@ -57,6 +57,7 @@ namespace DCL.AvatarRendering.Emotes.Load
             GetEmotesByPointersQuery(World, t);
         }
 
+        // TODO: this query should not be in this system. This system should only process scene emotes, but this query is processing emotes of avatars
         [Query]
         [None(typeof(StreamableResult))]
         private void GetEmotesFromRealm([Data] float dt, in Entity entity,
