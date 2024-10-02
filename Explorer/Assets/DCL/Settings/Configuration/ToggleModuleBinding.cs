@@ -2,6 +2,7 @@
 using DCL.Quality;
 using DCL.Settings.ModuleControllers;
 using DCL.Settings.ModuleViews;
+using DCL.Settings.Settings;
 using ECS.Prioritization;
 using System;
 using UnityEngine;
@@ -23,7 +24,8 @@ namespace DCL.Settings.Configuration
             RealmPartitionSettingsAsset realmPartitionSettingsAsset,
             LandscapeData landscapeData,
             AudioMixer generalAudioMixer,
-            QualitySettingsAsset qualitySettingsAsset)
+            QualitySettingsAsset qualitySettingsAsset,
+            ControlsSettingsAsset controlsSettingsAsset)
         {
             var viewInstance = UnityEngine.Object.Instantiate(View, parent);
             viewInstance.Configure(Config);

@@ -6,7 +6,6 @@ using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.DecentralandUrls;
-using DCL.Multiplayer.Movement.Systems;
 using DCL.Notifications.NewNotification;
 using DCL.PerformanceAndDiagnostics.DotNetLogging;
 using DCL.PluginSystem;
@@ -18,7 +17,6 @@ using DCL.Web3.Identities;
 using Global.AppArgs;
 using Global.Dynamic.DebugSettings;
 using MVC;
-using PortableExperiences.Controller;
 using SceneRunner.Debugging;
 using System;
 using System.Threading;
@@ -173,6 +171,7 @@ namespace Global.Dynamic
                 dynamicWorldContainer.RoomHub,
                 dynamicWorldContainer.MvcManager,
                 dynamicWorldContainer.MessagePipesHub,
+                dynamicWorldContainer.RemoteMetadata,
                 !realmLaunchSettings.IsLocalSceneDevelopmentRealm
             );
 
