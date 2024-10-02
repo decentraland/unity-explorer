@@ -5,6 +5,7 @@ using DCL.Profiling;
 using DCL.Utilities.Extensions;
 using ECS;
 using ECS.SceneLifeCycle;
+using Global.AppArgs;
 using SceneRuntime;
 using Segment.Serialization;
 using UnityEngine;
@@ -23,6 +24,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.Playgrounds
                 World.Create(),
                 new AnalyticsController(
                     new DebugAnalyticsService(),
+                    new ApplicationParametersParser(),
                     analyticsConfiguration.EnsureNotNull(),
                     new LauncherTraits()
                 ),
