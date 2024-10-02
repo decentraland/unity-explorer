@@ -1,21 +1,5 @@
 {
     "m_Dictionary": {
-        "m_DictionaryValues": [
-            {
-                "type": "System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089",
-                "key": "IncludeAssemblies",
-                "value": "{\"m_Value\":\"AppArgs,ApplicationVersionGuard,Assembly-CSharp,Assembly-CSharp-Editor,AssetBundles.Editor,AssetsProvision,AuthenticationScreenFlow,AvatarRendering.Loading,AvatarShape,Backpack,BadgesAPIService,Billboard,Browser,ChangeRealmPrompt,Character,CharacterMotion,Chat,CommandBufferSynchronizer.Tests,CommunicationData,ComponentsPooling.Tests,CRDT,CRDT.ECS.Bridge,CRDT.ECS.Bridge.Tests,CRDTTests,DCL.Analytics,DCL.AsyncLoadReporting,DCL.Audio,DCL.Audio.Avatar,DCL.AudioStream.PluginWrapper,DCL.CacheCleaner,DCL.CharacterMotion.Components,DCL.CharacterPreview,DCL.CharacterTriggerArea,DCL.DotNetLogging,DCL.EditMode.Tests,DCL.Editor,DCL.EmotesWheel,DCL.FeatureFlags,DCL.Gizmos,DCL.Input,DCL.Interaction,DCL.Ipfs,DCL.Landscape,DCL.Landscape.Editor,DCL.LOD,DCL.Multiplayer,DCL.Multiplayer.Connections,DCL.Multiplayer.Emotes,DCL.Multiplayer.Health,DCL.Multiplayer.Movement,DCL.Multiplayer.Profiles,DCL.Optimization,DCL.ParcelsService,DCL.PlayMode.Tests,DCL.Plugins,DCL.Profiles,DCL.Quality,DCL.Roads,DCL.SceneLoadingScreens,DCL.SDKComponents,DCL.SkyBox,DCL.Time,DCL.UserInAppInitializationFlow,DCL.Utilities,DCL.VideoPlayer.PluginWrapper,DCL.WebRequests,DCL.WorldTime,DebugUtilities,Decentraland.Protocol.GeneratedCode,DemoScripts,DemoWorlds,DOTween.Modules,ECS,ECS.TestSuite,ECS.Unity,ECS.Unity.Tests,EmojiPanel,Engine.Tests,ExplorePanel,ExternalUrlPrompt,GLTFastWrappers,Highlight,JsModulesImplementation,LambdasService,LandScapeBatch_ImportSettings,LifeCyle.Tests,LocalSceneTerminal,MainUi,MapPins,MapRenderer,MapRendererConsumerUtils,MapRendererV2Tests,Minimap,MVC,Navmap,NftInfoAPIService,NftPrompt,NFTShape,Notification,NotificationsBus,Passport,PlacesAPIService,PortableExperiencesController,PrimitiveRendering.Tests,Primitives.Tests,Profiling,Realm,ReportsHanding.Settings.Editor,ReportsHandling.Tests,RestrictedActions.Tests,RestrictedActionsImplementation,RewardPanel,RustEthereum.SignServer,RustEthereum.SignServer.Tests,Scene.Tests,SceneLifeCycle,SceneRunner.Scene,SceneRuntime,ScenesDebug,SceneUI,SDKComponentCommandBufferSyncronizer,SDKObservableEvents,Settings,ShaderUtils,ShaderUtils.Editor,SidebarBus,SocketIOClient,SocketIOClient.Newtonsoft.Json,SOConfigurations,StreamableLoading.Tests,StylizedSkybox,TeleportPrompt,TextShape,Thumbnails,Timeline.Samples.Annotation,Timeline.Samples.Annotation.Editor,Timeline.Samples.Text,Timeline.Samples.Text.Editor,Timeline.Samples.TimeDilation,Timeline.Samples.Tween,Timeline.Samples.Tween.Editor,Timeline.Samples.Utilities,Timeline.Samples.Utilities.Editor,Timeline.Samples.Video,Timeline.Samples.Video.Editor,UI,UI.ConnectionStatusPanel,UI.ErrorPopup,UI.ProfileElements,UI.ProfileMenu,UI.Sidebar,UI.SystemMenu,UI.ViewShowHideAnimations,Utility,Utility.Editor,Utility.Tests,Wearables,Web3,Web3.Abstract,Web3.Nethereum,WorldSynchronizer,WorldSynchronizer.Tests\"}"
-            },
-            {
-                "type": "System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089",
-                "key": "Path",
-                "value": "{\"m_Value\":\"{ProjectPath}\"}"
-            },
-            {
-                "type": "System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089",
-                "key": "HistoryPath",
-                "value": "{\"m_Value\":\"{ProjectPath}\"}"
-            }
-        ]
+        "m_DictionaryValues": []
     }
 }
