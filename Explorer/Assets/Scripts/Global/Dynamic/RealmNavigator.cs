@@ -129,6 +129,8 @@ namespace Global.Dynamic
             Vector2Int parcelToTeleport = default)
         {
             ct.ThrowIfCancellationRequested();
+
+            currentRealm = realmController.RealmData.Ipfs.CatalystBaseUrl;
             var loadResult
                 = await loadingScreen.ShowWhileExecuteTaskAsync(DoChangeRealmAsync(realm, parcelToTeleport, ct), ct);
 
@@ -138,11 +140,6 @@ namespace Global.Dynamic
                     globalWorld.Add(cameraEntity.Object, cameraSamplingData);
                 ReportHub.LogError(ReportCategory.REALM,
                     $"Error trying to teleport to a realm {realm}: {loadResult.ErrorMessage}");
-            }
-            else
-            {
-                currentParcel = parcelToTeleport;
-                currentRealm = realm;
             }
 
             return loadResult;
@@ -171,7 +168,6 @@ namespace Global.Dynamic
                         try
                         {
                             var currentOperationResult = await realmChangeOperation.ExecuteAsync(teleportParams, ct);
-                                throw new Exception("Test exception");
                             if (!currentOperationResult.Success)
                             {
                                 success = false;
@@ -216,7 +212,7 @@ namespace Global.Dynamic
                     }
                 }
 
-                return Result.SuccessResult();
+                return Result.ErrorResult("Change realm failed, returned to previous realm");
             };
         }
 
