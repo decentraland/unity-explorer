@@ -7,7 +7,7 @@ namespace DCL.Profiles
     /// <summary>
     ///     TODO unify with <see cref="DefaultProfileCache" />
     /// </summary>
-    public class ProfileIntentionCache : RefCountStreamableCacheBase<ProfileData, Profile, GetProfileIntention>, IStreamableCache<ProfileData, GetProfileIntention>
+    public class ProfileIntentionCache : RefCountStreamableCacheBase<ProfileData, Profile, GetProfileIntention>
     {
         protected override ref ProfilerCounterValue<int> inCacheCount => ref ProfilingCounters.ProfilesInCache;
 

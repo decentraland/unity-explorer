@@ -8,8 +8,6 @@ namespace ECS.StreamableLoading.AudioClips
 {
     public class AudioClipData : StreamableRefCountData<AudioClip>
     {
-        public AudioClip AudioClip => Asset;
-
         protected override ref ProfilerCounterValue<int> totalCount => ref ProfilingCounters.AudioClipsAmount;
 
         protected override ref ProfilerCounterValue<int> referencedCount => ref ProfilingCounters.AudioClipsReferenced;

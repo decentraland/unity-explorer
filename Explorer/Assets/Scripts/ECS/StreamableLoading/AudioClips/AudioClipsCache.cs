@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace ECS.StreamableLoading.AudioClips
 {
-    public class AudioClipsCache : RefCountStreamableCacheBase<AudioClipData, AudioClip, GetAudioClipIntention>, IStreamableCache<AudioClipData, GetAudioClipIntention>
+    public class AudioClipsCache : RefCountStreamableCacheBase<AudioClipData, AudioClip, GetAudioClipIntention>
     {
         protected override ref ProfilerCounterValue<int> inCacheCount => ref ProfilingCounters.AudioClipsInCache;
 

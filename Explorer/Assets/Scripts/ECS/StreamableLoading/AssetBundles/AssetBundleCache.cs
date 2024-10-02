@@ -9,7 +9,7 @@ namespace ECS.StreamableLoading.AssetBundles
     /// <summary>
     ///     An eternal runtime cache to prevent parallel loading of the same bundle
     /// </summary>
-    public class AssetBundleCache : RefCountStreamableCacheBase<AssetBundleData, AssetBundle, GetAssetBundleIntention>, IStreamableCache<AssetBundleData, GetAssetBundleIntention>
+    public class AssetBundleCache : RefCountStreamableCacheBase<AssetBundleData, AssetBundle, GetAssetBundleIntention>
     {
         protected override ref ProfilerCounterValue<int> inCacheCount => ref ProfilingCounters.AssetBundlesInCache;
 
@@ -17,6 +17,6 @@ namespace ECS.StreamableLoading.AssetBundles
             StringComparer.OrdinalIgnoreCase.Equals(x.Hash, y.Hash);
 
         public override int GetHashCode(GetAssetBundleIntention obj) =>
-            StringComparer.OrdinalIgnoreCase.GetHashCode(obj.Hash);
+            StringComparer.OrdinalIgnoreCase.GetHashCode(obj.Hash!); // at this point hash can't be null
     }
 }
