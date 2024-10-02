@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using System;
 using System.Net.Http;
 using Utility.Types;
 
@@ -17,11 +18,18 @@ namespace DCL.WebRequests.SafetyNets
 
         public async UniTask<Result> ExecuteAsync(HttpMethod method, string url)
         {
-            var result = await client.SendAsync(new HttpRequestMessage(method, url))!;
+            try
+            {
+                var result = await client.SendAsync(new HttpRequestMessage(method, url))!;
 
-            return result.IsSuccessStatusCode
-                ? Result.SuccessResult()
-                : Result.ErrorResult(result.ReasonPhrase ?? $"Unknown error: {result.StatusCode}");
+                return result.IsSuccessStatusCode
+                    ? Result.SuccessResult()
+                    : Result.ErrorResult(result.ReasonPhrase ?? $"Unknown error: {result.StatusCode}");
+            }
+            catch (Exception e)
+            {
+                return Result.ErrorResult($"Exception thrown: {e.Message}");
+            }
         }
     }
 }

@@ -14,7 +14,10 @@ namespace DCL.WebRequests
     {
         private readonly IWebRequestsAnalyticsContainer analyticsContainer;
         private readonly IWeb3IdentityCache web3IdentityCache;
-        private readonly ISafetyNet safetyNet = new SharpSafetyNet();
+        private readonly ISafetyNet safetyNet = new SequenceSafetyNet(
+            new SharpSafetyNet(),
+            new CurlSafetyNet()
+        );
         private volatile int count = 0;
 
         public WebRequestController(IWeb3IdentityCache web3IdentityCache) : this(IWebRequestsAnalyticsContainer.DEFAULT, web3IdentityCache) { }
@@ -82,6 +85,8 @@ namespace DCL.WebRequests
                             ReportHub.Log(ReportData.UNSPECIFIED, "SafetyNet executed successfully");
                         else
                             ReportHub.LogError(ReportData.UNSPECIFIED, $"SafetyNet failed to execute: {result.ErrorMessage}");
+
+                        throw new Exception($"{nameof(WebRequestController)}: {WebRequestUtils.CANNOT_CONNECT_ERROR}!");
 
                         // TODO: (JUANI) From time to time we can get several curl errors that need a small delay to recover
                         // This can be removed if we solve the issue with Unity
