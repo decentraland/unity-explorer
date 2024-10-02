@@ -34,6 +34,8 @@ namespace Global.Dynamic
 {
     public class RealmNavigator : IRealmNavigator
     {
+        private const int MAX_REALM_CHANGE_RETRIES = 3;
+
         private readonly ILoadingScreen loadingScreen;
         private readonly IMapRenderer mapRenderer;
         private readonly IGlobalRealmController realmController;
@@ -49,7 +51,8 @@ namespace Global.Dynamic
         private readonly ObjectProxy<Entity> cameraEntity;
         private readonly CameraSamplingData cameraSamplingData;
 
-        private URLDomain? CurrentRealm;
+        private URLDomain currentRealm;
+        private Vector2Int currentParcel;
 
         public event Action<bool>? RealmChanged;
 
@@ -107,7 +110,7 @@ namespace Global.Dynamic
 
         public bool CheckIsNewRealm(URLDomain realm)
         {
-            if (realm == CurrentRealm || realm == realmController.RealmData.Ipfs.CatalystBaseUrl)
+            if (realm == currentRealm || realm == realmController.RealmData.Ipfs.CatalystBaseUrl)
                 return false;
 
             return true;
@@ -136,6 +139,11 @@ namespace Global.Dynamic
                 ReportHub.LogError(ReportCategory.REALM,
                     $"Error trying to teleport to a realm {realm}: {loadResult.ErrorMessage}");
             }
+            else
+            {
+                currentParcel = parcelToTeleport;
+                currentRealm = realm;
+            }
 
             return loadResult;
         }
@@ -154,6 +162,42 @@ namespace Global.Dynamic
                     CurrentDestinationRealm = realm,
                     ParentReport = parentLoadReport
                 };
+
+                for (int attempt = 0; attempt < MAX_REALM_CHANGE_RETRIES; attempt++)
+                {
+                    bool success = true;
+                    foreach (var realmChangeOperation in realmChangeOperations)
+                    {
+                        try
+                        {
+                            var currentOperationResult = await realmChangeOperation.ExecuteAsync(teleportParams, ct);
+                                throw new Exception("Test exception");
+                            if (!currentOperationResult.Success)
+                            {
+                                success = false;
+                                ReportHub.LogError(ReportCategory.REALM, $"Operation failed on realm change attempt {attempt + 1}: {currentOperationResult.ErrorMessage}");
+                                break;
+                            }
+                        }
+                        catch (Exception e)
+                        {
+                            success = false;
+                            ReportHub.LogError(ReportCategory.REALM, $"Unhandled exception on realm change attempt {attempt + 1}: {e}");
+                            break;
+                        }
+                    }
+
+                    if (success)
+                    {
+                        return Result.SuccessResult();
+                    }
+                }
+
+                // All retries failed, try with the previous realm and parcel
+                ReportHub.LogWarning(ReportCategory.REALM, "All attempts failed. Trying with previous realm and parcel.");
+                teleportParams.CurrentDestinationRealm = currentRealm;
+                teleportParams.CurrentDestinationParcel = currentParcel;
+
                 foreach (var realmChangeOperation in realmChangeOperations)
                 {
                     try
@@ -308,7 +352,7 @@ namespace Global.Dynamic
         public async UniTask ChangeRealmAsync(URLDomain realm, CancellationToken ct)
         {
             await realmController.SetRealmAsync(realm, ct);
-            CurrentRealm = realm;
+            currentRealm = realm;
             await SwitchMiscVisibilityAsync();
         }
 
