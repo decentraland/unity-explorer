@@ -133,6 +133,7 @@ namespace DCL.UI.SystemMenu
                     // The realm fetches the scene entity definitions again and creates the components in ecs
                     // so the SceneFacade can be later attached into the entity
                     true,
+                    true,
                     world, playerEntity, ct);
             }
 

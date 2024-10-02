@@ -207,6 +207,7 @@ namespace Global.Dynamic
                 debugSettings.ShowAuthentication,
                 debugSettings.ShowLoading,
                 false,
+                false,
                 globalWorld.EcsWorld,
                 playerEntity,
                 ct

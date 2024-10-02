@@ -10,6 +10,7 @@ namespace DCL.UserInAppInitializationFlow
             bool showAuthentication,
             bool showLoading,
             bool reloadRealm,
+            bool fromLogout,
             World world,
             Entity playerEntity,
             CancellationToken ct);

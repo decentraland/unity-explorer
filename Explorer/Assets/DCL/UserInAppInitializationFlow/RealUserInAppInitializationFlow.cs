@@ -29,6 +29,7 @@ namespace DCL.UserInAppInitializationFlow
         private readonly RealFlowLoadingStatus loadingStatus;
         private readonly IMVCManager mvcManager;
         private readonly AudioClipConfig backgroundMusic;
+        private readonly IRealmNavigator realmNavigator;
         private readonly ILoadingScreen loadingScreen;
         private readonly ISelfProfile selfProfile;
 
@@ -63,6 +64,7 @@ namespace DCL.UserInAppInitializationFlow
             this.loadingStatus = loadingStatus;
             this.mvcManager = mvcManager;
             this.backgroundMusic = backgroundMusic;
+            this.realmNavigator = realmNavigator;
             this.loadingScreen = loadingScreen;
             this.selfProfile = selfProfile;
 
@@ -95,6 +97,7 @@ namespace DCL.UserInAppInitializationFlow
         public async UniTask ExecuteAsync(bool showAuthentication,
             bool showLoading,
             bool reloadRealm,
+            bool fromLogout,
             World world,
             Entity playerEntity,
             CancellationToken ct)
@@ -116,21 +119,30 @@ namespace DCL.UserInAppInitializationFlow
                     await ShowAuthenticationScreenAsync(ct);
                 }
 
-                var loadingResult = await LoadingScreen(showLoading)
-                   .ShowWhileExecuteTaskAsync(
-                        async parentLoadReport =>
-                        {
-                            result = await startupOperation.ExecuteAsync(parentLoadReport, ct);
+                if (fromLogout)
+                {
+                    // If we are coming from a logout, we teleport the user to Genesis Plaza
+                    var teleportResult = await realmNavigator.TryInitializeTeleportToParcelAsync(Vector2Int.zero, CancellationToken.None);
+                    result = teleportResult.Success ? teleportResult : Result.ErrorResult(teleportResult.ErrorMessage);
+                }
+                else
+                {
+                    var loadingResult = await LoadingScreen(showLoading)
+                       .ShowWhileExecuteTaskAsync(
+                            async parentLoadReport =>
+                            {
+                                result = await startupOperation.ExecuteAsync(parentLoadReport, ct);
 
-                            if (result.Success)
-                                parentLoadReport.SetProgress(loadingStatus.SetStage(RealFlowLoadingStatus.Stage.Completed));
+                                if (result.Success)
+                                    parentLoadReport.SetProgress(loadingStatus.SetStage(RealFlowLoadingStatus.Stage.Completed));
 
-                            return result;
-                        },
-                        ct
-                    );
+                                return result;
+                            },
+                            ct
+                        );
 
-                ApplyErrorIfLoadingScreenError(ref result, loadingResult);
+                    ApplyErrorIfLoadingScreenError(ref result, loadingResult);
+                }
 
                 if (result.Success == false)
                     ReportHub.LogError(ReportCategory.DEBUG, result.ErrorMessage!);
