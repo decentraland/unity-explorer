@@ -135,7 +135,7 @@ namespace Global.Dynamic
                     SessionId = sessionId!,
                 };
 
-                var analyticsController = new AnalyticsController(service, analyticsConfig, launcherTraits);
+                var analyticsController = new AnalyticsController(service, appArgs, analyticsConfig, launcherTraits);
 
                 return (new BootstrapAnalyticsDecorator(coreBootstrap, analyticsController), analyticsController);
             }

@@ -42,7 +42,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
             if (result == false)
                 throw new Exception("Rust Segment initialization failed");
 
-            ReportHub.Log(ReportData.ANALYTICS, "Rust Segment initialized");
+            ReportHub.Log(ReportCategory.ANALYTICS, "Rust Segment initialized");
             current = this;
         }
 
@@ -165,7 +165,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
                 ReportHub.LogError(
                     ReportCategory.ANALYTICS,
                     $"Segment to track an event, you must call Identify first"
-                )
+                );
         }
     }
 }

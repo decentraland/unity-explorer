@@ -1,4 +1,5 @@
-﻿using Segment.Analytics;
+﻿using Global.AppArgs;
+using Segment.Analytics;
 using Segment.Serialization;
 using System;
 using UnityEngine;
@@ -9,18 +10,21 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
     {
         private readonly JsonElement sessionId;
         private readonly JsonElement launcherAnonymousId;
+        private readonly JsonElement runtime;
 
         private readonly JsonElement dclRendererType = SystemInfo.deviceType.ToString(); // Desktop, Console, Handeheld (Mobile), Unknown
         private readonly JsonElement rendererVersion = Application.version;
-        private readonly JsonElement runtime = Application.isEditor? "editor" : Debug.isDebugBuild ? "debug" : "release";
         private readonly JsonElement os = SystemInfo.operatingSystem;
 
         public override PluginType Type => PluginType.Enrichment;
 
-        public StaticCommonTraitsPlugin(LauncherTraits launcherTraits)
+        public StaticCommonTraitsPlugin(IAppArgs appArgs, LauncherTraits launcherTraits)
         {
             this.sessionId = !string.IsNullOrEmpty(launcherTraits.SessionId) ? launcherTraits.SessionId : SystemInfo.deviceUniqueIdentifier + DateTime.Now.ToString("yyyyMMddHHmmssfff");
             this.launcherAnonymousId = launcherTraits.LauncherAnonymousId;
+
+            runtime = Application.isEditor ? "editor" :
+                Debug.isDebugBuild || appArgs.HasDebugFlag() ? "debug" : "release";
         }
 
         public override TrackEvent Track(TrackEvent trackEvent)
