@@ -3,7 +3,6 @@ using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.DebugUtilities;
 using DCL.Multiplayer.Connections.DecentralandUrls;
-using DCL.Multiplayer.Movement.Systems;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;

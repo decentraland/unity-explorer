@@ -47,5 +47,11 @@ namespace DCL.Backpack
 
         [field: SerializeField]
         public TMP_Text Description { get; private set; }
+
+        private void OnDisable()
+        {
+            EmptyPanel.SetActive(true);
+            FullPanel.SetActive(false);
+        }
     }
 }
