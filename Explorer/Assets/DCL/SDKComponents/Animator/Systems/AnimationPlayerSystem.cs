@@ -47,25 +47,13 @@ namespace DCL.SDKComponents.Animator.Systems
             {
                 InitializeAnimator(animator);
 
-                // TODO: use pool
-                // var clips = new List<AnimatorClipInfo>();
-                // This doesnt work due to GetCurrentAnimatorClipInfo only retrieves the executing clips, so we miss most of them
-                // for (var layer = 0; layer < animator.layerCount; layer++)
-                // {
-                //     animator.GetCurrentAnimatorClipInfo(layer, clips);
-                //
-                //     foreach (AnimatorClipInfo clip in clips)
-                //         stateHashes[clip.clip.name] = CreateParamHashes(layer, layer);
-                // }
+                AnimationClip[] clips = animator.runtimeAnimatorController.animationClips;
 
-                // This doesnt work due to the clips array is not sorted like the layers are
-                // AnimationClip[] clips = animator.runtimeAnimatorController.animationClips;
-                //
-                // for (var i = 0; i < clips.Length; i++)
-                // {
-                //     AnimationClip clip = clips[i];
-                //     stateHashes[clip.name] = CreateParamHashes(i + 1, i);
-                // }
+                for (var i = 0; i < clips.Length; i++)
+                {
+                    AnimationClip clip = clips[i];
+                    stateHashes[clip.name] = CreateParamHashes(i + 1, i);
+                }
             }
 
             List<SDKAnimationState> sdkAnimationStates = ListPool<SDKAnimationState>.Get();
@@ -76,9 +64,6 @@ namespace DCL.SDKComponents.Animator.Systems
                 PBAnimationState? pbAnimationState = pbAnimator.States[i];
                 var sdkAnimationState = new SDKAnimationState(pbAnimationState);
                 sdkAnimationStates.Add(sdkAnimationState);
-
-                // Add one considering base layer
-                stateHashes[pbAnimationState.Clip] = CreateParamHashes(i + 1, i);
             }
 
             var sdkAnimatorComponent = new SDKAnimatorComponent(sdkAnimationStates)
