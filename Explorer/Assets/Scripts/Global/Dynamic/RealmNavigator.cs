@@ -209,26 +209,28 @@ namespace Global.Dynamic
 
             if (!isLocal && !isGenesis)
             {
+                if(genesisTerrain.IsTerrainGenerated && !genesisTerrain.Contains(parcel))
+                    return Result.ErrorResult($"Parcel {parcel} is outside of the bounds.");
+
                 var url = URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Genesis));
                 return await TryChangeRealmAsync(url, ct, parcel);
             }
 
-            // if(worldsTerrain.IsInitialized && genesisTerrain.IsTerrainGenerated)
-            // {
-            //     if (isLocal)
-            //         switch (isGenesis)
-            //         {
-            //             case false when !worldsTerrain.Contains(parcel):
-            //                 return Result.ErrorResult($"Parcel {parcel} is outside of the bounds.");
-            //             case true when !genesisTerrain.Contains(parcel):
-            //                 return Result.ErrorResult($"Parcel {parcel} is outside of the bounds.");
-            //         }
-            //     else
-            //     {
-            //         if (!genesisTerrain.Contains(parcel))
-            //             return Result.ErrorResult($"Parcel {parcel} is outside of the bounds.");
-            //     }
-            // }
+            {
+                if (isLocal)
+                    switch (isGenesis)
+                    {
+                        case false when worldsTerrain.IsInitialized && !worldsTerrain.Contains(parcel):
+                            return Result.ErrorResult($"Parcel {parcel} is outside of the bounds.");
+                        case true when genesisTerrain.IsTerrainGenerated && !genesisTerrain.Contains(parcel):
+                            return Result.ErrorResult($"Parcel {parcel} is outside of the bounds.");
+                    }
+                else
+                {
+                    if (genesisTerrain.IsTerrainGenerated && !genesisTerrain.Contains(parcel))
+                        return Result.ErrorResult($"Parcel {parcel} is outside of the bounds.");
+                }
+            }
 
             Result loadResult = await loadingScreen.ShowWhileExecuteTaskAsync(TryTeleportAsync(parcel, ct), ct);
 
