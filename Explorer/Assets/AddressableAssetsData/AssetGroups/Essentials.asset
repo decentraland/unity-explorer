@@ -67,6 +67,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 26489687fb2f3419886df8e49f34b006
+    m_Address: Assets/DCL/Settings/Settings/ControlsSettings.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 2a58c49334237a24781cae8b1e3fa351
     m_Address: EmbeddedEmotes
     m_ReadOnly: 0
