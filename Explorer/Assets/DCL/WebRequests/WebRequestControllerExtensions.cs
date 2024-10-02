@@ -224,16 +224,11 @@ namespace DCL.WebRequests
             new LogWebRequestController(origin);
 
         public static IWebRequestController WithDebugMetrics(this IWebRequestController origin,
-            ElementBinding<ulong> requestCannotConnectDebugMetric, ElementBinding<ulong> requestCompleteDebugMetric)
-        {
-            return new DebugMetricsWebRequestController(origin, requestCannotConnectDebugMetric,
+            ElementBinding<ulong> requestCannotConnectDebugMetric, ElementBinding<ulong> requestCompleteDebugMetric) =>
+            new DebugMetricsWebRequestController(origin, requestCannotConnectDebugMetric,
                 requestCompleteDebugMetric);
-        }
 
-        public static IWebRequestController WithBudget(this IWebRequestController origin, int totalBudget)
-        {
-            return new BudgetedWebRequestController(origin, totalBudget);
-        }
-
+        public static IWebRequestController WithBudget(this IWebRequestController origin, int totalBudget) =>
+            new BudgetedWebRequestController(origin, totalBudget);
     }
 }

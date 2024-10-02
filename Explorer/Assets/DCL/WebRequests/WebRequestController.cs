@@ -2,7 +2,9 @@
 using DCL.Diagnostics;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
+using DCL.WebRequests.SafetyNets;
 using System;
+using System.Threading;
 using UnityEngine.Networking;
 using Utility.Multithreading;
 
@@ -12,6 +14,8 @@ namespace DCL.WebRequests
     {
         private readonly IWebRequestsAnalyticsContainer analyticsContainer;
         private readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly ISafetyNet safetyNet = new SharpSafetyNet();
+        private volatile int count = 0;
 
         public WebRequestController(IWeb3IdentityCache web3IdentityCache) : this(IWebRequestsAnalyticsContainer.DEFAULT, web3IdentityCache) { }
 
@@ -42,6 +46,9 @@ namespace DCL.WebRequests
 
                 try
                 {
+                    int current = Interlocked.Increment(ref count);
+                    ReportHub.Log(ReportData.UNSPECIFIED, $"SafetyNet, start request: {current}");
+
                     await request.WithAnalyticsAsync(analyticsContainer, request.SendRequest(envelope.Ct));
 
                     // if no exception is thrown Request is successful and the continuation op can be executed
@@ -66,8 +73,16 @@ namespace DCL.WebRequests
                             + $"Attempt Left: {attemptsLeft}"
                         );
 
-                    if (exception.Message.Contains(WebRequestUtils.CANNOT_CONNECT_ERROR))
+                    if ((exception.Message ?? string.Empty).Contains(WebRequestUtils.CANNOT_CONNECT_ERROR))
                     {
+                        ReportHub.Log(ReportData.UNSPECIFIED, "SafetyNet execute start");
+                        var result = await safetyNet.ExecuteWithStringAsync(request.UnityWebRequest.method, envelope.CommonArguments.URL);
+
+                        if (result.Success)
+                            ReportHub.Log(ReportData.UNSPECIFIED, "SafetyNet executed successfully");
+                        else
+                            ReportHub.LogError(ReportData.UNSPECIFIED, $"SafetyNet failed to execute: {result.ErrorMessage}");
+
                         // TODO: (JUANI) From time to time we can get several curl errors that need a small delay to recover
                         // This can be removed if we solve the issue with Unity
                         await UniTask.Delay(TimeSpan.FromSeconds(0.5f));
