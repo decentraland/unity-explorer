@@ -39,8 +39,8 @@ namespace DCL.WebRequests.Analytics
             var webRequestController = new WebRequestController(analyticsContainer, web3IdentityProvider)
                 .WithDebugMetrics(cannotConnectToHostExceptionDebugMetric, requestCompleteDebugMetric)
                 .WithLog()
-                .WithArtificialDelay(options)
-                .WithBudget(totalBudget);
+                .WithArtificialDelay(options);
+                //.WithBudget(totalBudget); //TODO
 
             CreateStressTestUtility();
             CreateWebRequestDelayUtility();
