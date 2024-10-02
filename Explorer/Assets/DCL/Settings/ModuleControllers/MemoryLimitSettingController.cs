@@ -18,15 +18,9 @@ namespace DCL.Settings.ModuleControllers
             this.view = view;
             this.systemMemoryCap = systemMemoryCap;
 
-            // if (settingsDataStore.HasKey(MEMORY_CAP_DATA_STORE_KEY))
-            // {
-            //     view.DropdownView.Dropdown.value = settingsDataStore.GetDropdownValue(MEMORY_CAP_DATA_STORE_KEY);
-            // }
-            // else
-            {
-                int dropdownIndex = GetIndexFromMemoryCap(systemMemoryCap.MemoryCapInMB);
-                view.DropdownView.Dropdown.value = dropdownIndex;
-            }
+            view.DropdownView.Dropdown.value = settingsDataStore.HasKey(MEMORY_CAP_DATA_STORE_KEY)
+                ? settingsDataStore.GetDropdownValue(MEMORY_CAP_DATA_STORE_KEY)
+                : GetIndexFromMemoryCap(systemMemoryCap.MemoryCapInMB);
 
             view.DropdownView.Dropdown.onValueChanged.AddListener(SetMemoryLimitSettings);
 
