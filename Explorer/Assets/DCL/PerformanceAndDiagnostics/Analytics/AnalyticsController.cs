@@ -18,7 +18,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             Configuration = configuration;
 
             analytics.AddPlugin(new StaticCommonTraitsPlugin(launcherTraits));
-            analytics.Identify(SystemInfo.deviceUniqueIdentifier);
+            analytics.Identify(SystemInfo.deviceUniqueIdentifier!);
+            analytics.Flush();
 
             analytics.Track(AnalyticsEvents.General.SYSTEM_INFO_REPORT, new JsonObject
             {
