@@ -27,7 +27,7 @@ namespace DCL.Multiplayer.Connections.Systems
             IArchipelagoIslandRoom archipelagoIslandRoom,
             IGateKeeperSceneRoom gateKeeperSceneRoom,
             IReadOnlyEntityParticipantTable entityParticipantTable,
-            IRemotePoses remotePoses,
+            IRemoteMetadata remoteMetadata,
             IDebugContainerBuilder debugBuilder
         ) : base(world)
         {
@@ -67,7 +67,7 @@ namespace DCL.Multiplayer.Connections.Systems
             );
 
             var remotePosesRoomDisplay = new RemotePosesRoomDisplay(
-                remotePoses,
+                remoteMetadata,
                 infoWidget
             );
 

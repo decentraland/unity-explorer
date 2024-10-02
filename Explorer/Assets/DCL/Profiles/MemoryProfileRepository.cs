@@ -1,3 +1,4 @@
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using System.Threading;
 
@@ -15,7 +16,7 @@ namespace DCL.Profiles
         public async UniTask SetAsync(Profile profile, CancellationToken ct) =>
             profileCache.Set(profile.UserId, profile);
 
-        public async UniTask<Profile?> GetAsync(string id, int version, CancellationToken ct) =>
+        public async UniTask<Profile?> GetAsync(string id, int version, URLDomain? fromCatalyst, CancellationToken ct) =>
             profileCache.Get(id);
     }
 }
