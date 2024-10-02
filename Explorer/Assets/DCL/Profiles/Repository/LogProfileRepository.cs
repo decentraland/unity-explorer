@@ -30,11 +30,12 @@ namespace DCL.Profiles
         {
             ReportHub
                .WithReport(ReportCategory.PROFILE)
-               .Log($"ProfileRepository: get requested for id: {id}, version: {version}");
-            var result = await origin.GetAsync(id, version, ct);
+               .Log($"ProfileRepository: get requested for id: {id}, version: {version}, from catalyst: {fromCatalyst}");
+
+            Profile? result = await origin.GetAsync(id, version, fromCatalyst, ct);
             ReportHub
                .WithReport(ReportCategory.PROFILE)
-               .Log($"ProfileRepository: get finished for id: {id}, version: {version}, profile: {result}{(result == null ? "null" : string.Empty)}");
+               .Log($"ProfileRepository: get finished for id: {id}, version: {version}, from catalyst: {fromCatalyst}, profile: {result}{(result == null ? "null" : string.Empty)}");
             return result;
         }
     }
