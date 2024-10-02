@@ -206,7 +206,7 @@ namespace DCL.AvatarRendering.Emotes.Load
             // Keep only successful emotes in the result list
             resolvedEmotesTmp.List.RemoveAll(emote => !successfulPointers.Contains(emote.GetUrn()));
 
-            World.Add(entity, new StreamableResult(new EmotesResolution(resolvedEmotesTmp, successfulPointers.Count)));
+            World.Add(entity, new StreamableResult(new EmotesResolution(resolvedEmotesTmp, resolvedEmotesTmp.List.Count)));
         }
 
         private static StreamableResult NewEmotesResult(RepoolableList<IEmote> resolvedEmotesTmp, int pointersCount) =>
