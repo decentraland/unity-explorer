@@ -3,6 +3,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.Character.Components;
+using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Movement.Settings;
@@ -186,13 +187,13 @@ namespace DCL.Multiplayer.Movement.Systems
             RemotePlayerInterpolationSettings? intSettings = settings.InterpolationSettings;
 
             bool useLinear = remotePlayerMovement.PastMessage.velocitySqrMagnitude < ZERO_VELOCITY_SQR_THRESHOLD || remote.velocitySqrMagnitude < ZERO_VELOCITY_SQR_THRESHOLD ||
-                             remotePlayerMovement.PastMessage.animState.IsGrounded != remote.animState.IsGrounded || remotePlayerMovement.PastMessage.animState.IsJumping != remote.animState.IsJumping;
+                             remotePlayerMovement.PastMessage.animState.IsGrounded != remote.animState.IsGrounded || remotePlayerMovement.PastMessage.animState.IsJumping != remote.animState.IsJumping
+                             || remotePlayerMovement.PastMessage.movementKind == MovementKind.IDLE || remote.movementKind == MovementKind.IDLE;
 
             // Interpolate linearly to/from zero velocities to avoid position overshooting
             InterpolationType spline = intSettings.UseBlend ? intSettings.BlendType :
                 useLinear ? InterpolationType.Linear :
                 intSettings.InterpolationType;
-
 
             intComp.Restart(remotePlayerMovement.PastMessage, remote, spline, characterControllerSettings);
 
