@@ -47,7 +47,7 @@ MonoBehaviour:
   SecondsInDay: 86400
   PlayOnStart: 1
   StopRefresh: 0
-  Speed: 3000
+  Speed: 30
   NaturalTime: 43200
   NormalizedTime: 0.5
   skyboxMaterial: {fileID: 2100000, guid: caf6cf56d95066b45bc1ca92d6516b48, type: 2}
@@ -663,4 +663,4 @@ MonoBehaviour:
     m_NumColorKeys: 7
     m_NumAlphaKeys: 2
   textUI: {fileID: 0}
-  editMode: 1
+  editMode: 0
