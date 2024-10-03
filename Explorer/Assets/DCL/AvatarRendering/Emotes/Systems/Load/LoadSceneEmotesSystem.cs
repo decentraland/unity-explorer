@@ -24,7 +24,7 @@ using Utility;
 using StreamableResult = ECS.StreamableLoading.Common.Components.StreamableLoadingResult<DCL.AvatarRendering.Emotes.EmotesResolution>;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 using EmotesFromRealmPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesDTOList, DCL.AvatarRendering.Emotes.GetEmotesByPointersFromRealmIntention>;
-using AudioPromise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.AudioClip, ECS.StreamableLoading.AudioClips.GetAudioClipIntention>;
+using AudioPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AudioClips.AudioClipData, ECS.StreamableLoading.AudioClips.GetAudioClipIntention>;
 
 namespace DCL.AvatarRendering.Emotes.Load
 {
@@ -57,6 +57,7 @@ namespace DCL.AvatarRendering.Emotes.Load
             GetEmotesByPointersQuery(World, t);
         }
 
+        // TODO: this query should not be in this system. This system should only process scene emotes, but this query is processing emotes of avatars
         [Query]
         [None(typeof(StreamableResult))]
         private void GetEmotesFromRealm([Data] float dt, in Entity entity,
@@ -175,30 +176,52 @@ namespace DCL.AvatarRendering.Emotes.Load
                     static _ => "Pointer request cancelled"))
                 return;
 
-            if (TryCancelByTimeout(entity, ref intention, dt)) return;
-
-            using var _ = ListPool<URN>.Get(out var missingPointersTmp)!;
+            using var _ = ListPool<URN>.Get(out var pointersToRequest)!;
             var resolvedEmotesTmp = RepoolableList<IEmote>.NewList();
 
-            HandlePointers(in intention, missingPointersTmp!, resolvedEmotesTmp);
-            if (TryCancelByMissingPointers(missingPointersTmp!, partitionComponent, intention.BodyShape)) return;
-            HandleResolvedEmotes(in intention, partitionComponent, resolvedEmotesTmp.List, out bool success);
-            if (success) World!.Add(entity, NewEmotesResult(resolvedEmotesTmp, intention.Pointers.Count));
+            ExtractMissingPointersAndResolvedEmotes(in intention, pointersToRequest!, resolvedEmotesTmp);
+
+            if (intention.Timeout.IsTimeout(dt))
+            {
+                var pointersStrLog = string.Join(",", intention.Pointers);
+                ReportHub.LogWarning(GetReportCategory(), $"Loading emotes timed out, {pointersStrLog}");
+
+                ResolveIntentionWithSuccessfulEmotes(entity, intention, resolvedEmotesTmp);
+
+                return;
+            }
+
+            if (RequestMissingPointers(pointersToRequest!, partitionComponent, intention.BodyShape)) return;
+
+            bool success = GetAssetBundlesUntilAllAreResolved(in intention, partitionComponent, resolvedEmotesTmp.List);
+
+            if (success)
+                World!.Add(entity, NewEmotesResult(resolvedEmotesTmp, intention.Pointers.Count));
+        }
+
+        private void ResolveIntentionWithSuccessfulEmotes(Entity entity,
+            GetEmotesByPointersIntention intention,
+            RepoolableList<IEmote> resolvedEmotesTmp)
+        {
+            HashSet<URN> successfulPointers = intention.SuccessfulPointers;
+            // Keep only successful emotes in the result list
+            resolvedEmotesTmp.List.RemoveAll(emote => !successfulPointers.Contains(emote.GetUrn()));
+
+            World.Add(entity, new StreamableResult(new EmotesResolution(resolvedEmotesTmp, resolvedEmotesTmp.List.Count)));
         }
 
         private static StreamableResult NewEmotesResult(RepoolableList<IEmote> resolvedEmotesTmp, int pointersCount) =>
             new (new EmotesResolution(resolvedEmotesTmp, pointersCount));
 
-        private void HandleResolvedEmotes(
+        private bool GetAssetBundlesUntilAllAreResolved(
             in GetEmotesByPointersIntention intention,
             IPartitionComponent partitionComponent,
-            IEnumerable<IEmote> resolvedEmotes,
-            out bool success
+            IEnumerable<IEmote> emotes
         )
         {
             var emotesWithResponse = 0;
 
-            foreach (IEmote emote in resolvedEmotes)
+            foreach (IEmote emote in emotes)
             {
                 if (emote.ManifestResult is { Exception: not null })
                     emotesWithResponse++;
@@ -224,32 +247,30 @@ namespace DCL.AvatarRendering.Emotes.Load
                     }
             }
 
-            success = emotesWithResponse == intention.Pointers.Count;
+            return emotesWithResponse == intention.Pointers.Count;
         }
 
-        private bool TryCancelByMissingPointers(ICollection<URN> missingPointersTmp, IPartitionComponent partitionComponent, BodyShape forBodyShape)
+        private bool RequestMissingPointers(ICollection<URN> missingPointers, IPartitionComponent partitionComponent, BodyShape forBodyShape)
         {
-            if (missingPointersTmp.Count > 0)
-            {
-                var promise = EmotesFromRealmPromise.Create(
-                    World!,
-                    new GetEmotesByPointersFromRealmIntention(missingPointersTmp.ToList(),
-                        new CommonLoadingArguments(realmData.Ipfs.EntitiesActiveEndpoint)
-                    ),
-                    partitionComponent
-                );
+            if (missingPointers.Count <= 0) return false;
 
-                World!.Create(promise, forBodyShape, partitionComponent);
-                return true;
-            }
+            var promise = EmotesFromRealmPromise.Create(
+                World!,
+                new GetEmotesByPointersFromRealmIntention(missingPointers.ToList(),
+                    new CommonLoadingArguments(realmData.Ipfs.EntitiesActiveEndpoint)
+                ),
+                partitionComponent
+            );
 
-            return false;
+            World!.Create(promise, forBodyShape, partitionComponent);
+
+            return true;
         }
 
-        private void HandlePointers(
+        private void ExtractMissingPointersAndResolvedEmotes(
             in GetEmotesByPointersIntention intention,
-            ICollection<URN> mutMissingPointersTmp,
-            RepoolableList<IEmote> mutResolvedEmotesTmp
+            ICollection<URN> missingPointers,
+            RepoolableList<IEmote> resolvedEmotes
         )
         {
             foreach (URN loadingIntentionPointer in intention.Pointers)
@@ -268,35 +289,18 @@ namespace DCL.AvatarRendering.Emotes.Load
 
                 if (!emoteStorage.TryGetElement(shortenedPointer, out IEmote emote))
                 {
-                    if (!intention.ProcessedPointers.Contains(loadingIntentionPointer))
+                    if (!intention.RequestedPointers.Contains(loadingIntentionPointer))
                     {
-                        mutMissingPointersTmp.Add(shortenedPointer);
-                        intention.ProcessedPointers.Add(loadingIntentionPointer);
+                        missingPointers.Add(shortenedPointer);
+                        intention.RequestedPointers.Add(loadingIntentionPointer);
                     }
 
                     continue;
                 }
 
                 if (emote.Model.Succeeded)
-                    mutResolvedEmotesTmp.List.Add(emote);
+                    resolvedEmotes.List.Add(emote);
             }
-        }
-
-        private bool TryCancelByTimeout(Entity entity, ref GetEmotesByPointersIntention intention, float dt)
-        {
-            if (intention.Timeout.IsTimeout(dt))
-            {
-                if (World!.Has<StreamableResult>(entity) == false)
-                {
-                    var pointersStrLog = string.Join(",", intention.Pointers);
-                    ReportHub.LogWarning(GetReportCategory(), $"Loading emotes timed out, {pointersStrLog}");
-                    World.Add(entity, new StreamableResult(GetReportCategory(), new TimeoutException($"Emote intention timeout {pointersStrLog}")));
-                }
-
-                return true;
-            }
-
-            return false;
         }
 
         private bool CreateAssetBundlePromiseIfRequired(IEmote component, in GetEmotesByPointersIntention intention, IPartitionComponent partitionComponent)
