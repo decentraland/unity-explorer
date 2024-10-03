@@ -137,6 +137,9 @@ namespace DCL.EmotesWheel
         {
             closeViewTask?.TrySetCanceled(ct);
             closeViewTask = new UniTaskCompletionSource();
+
+            UnblockShortcutToEmoteSlotsSetup();
+
             await closeViewTask.Task;
         }
 
@@ -234,8 +237,13 @@ namespace DCL.EmotesWheel
 
         private void UnblockUnwantedInputs()
         {
-            inputBlock.Enable(InputMapComponent.Kind.EMOTE_WHEEL);
             inputBlock.Disable(InputMapComponent.Kind.EMOTES, InputMapComponent.Kind.SHORTCUTS);
+        }
+
+        // Note: This must be called once the menu has loaded and is ready to be closed
+        private void UnblockShortcutToEmoteSlotsSetup()
+        {
+            inputBlock.Enable(InputMapComponent.Kind.EMOTE_WHEEL);
         }
 
         private void BlockUnwantedInputs()
