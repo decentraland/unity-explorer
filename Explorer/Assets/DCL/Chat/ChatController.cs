@@ -457,23 +457,22 @@ namespace DCL.Chat
             if (chatMessage.SentByOwnUser == false && entityParticipantTable.Has(chatMessage.WalletAddress))
             {
                 Entity entity = entityParticipantTable.Entity(chatMessage.WalletAddress);
-                world.AddOrGet(entity, new ChatBubbleComponent(chatMessage.Message, chatMessage.Sender, chatMessage.WalletAddress));
+                GenerateChatBubbleComponent(entity, chatMessage);
                 UIAudioEventsBus.Instance.SendPlayAudioEvent(viewInstance!.ChatReceiveMessageAudio);
             }
-            else if (chatMessage.SystemMessage == false)
-                world.AddOrGet(
-                    playerEntity,
-                    new ChatBubbleComponent(
-                        chatMessage.Message,
-                        chatMessage.Sender,
-                        chatMessage.WalletAddress
-                    )
-                );
+            else if (chatMessage is {SystemMessage: false, SentByOwnUser: true })
+                GenerateChatBubbleComponent(playerEntity, chatMessage);
 
             viewInstance!.ResetChatEntriesFadeout();
 
             viewInstance.LoopList.SetListItemCount(chatHistory.Messages.Count, false);
             viewInstance.LoopList.MovePanelToItemIndex(0, 0);
+        }
+
+        private void GenerateChatBubbleComponent(Entity e, ChatMessage chatMessage)
+        {
+            if(nametagsData is {showChatBubbles: true, showNameTags: true })
+                world.AddOrGet(e, new ChatBubbleComponent(chatMessage.Message, chatMessage.Sender, chatMessage.WalletAddress));
         }
 
         private void ChatHistoryOnOnCleared()

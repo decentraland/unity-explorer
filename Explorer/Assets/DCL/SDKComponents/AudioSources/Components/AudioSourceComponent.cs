@@ -1,9 +1,7 @@
-﻿#nullable enable
-
-using System;
+﻿using System;
 using UnityEngine;
 using UnityEngine.Audio;
-using Promise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.AudioClip, ECS.StreamableLoading.AudioClips.GetAudioClipIntention>;
+using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AudioClips.AudioClipData, ECS.StreamableLoading.AudioClips.GetAudioClipIntention>;
 
 namespace DCL.SDKComponents.AudioSources
 {
