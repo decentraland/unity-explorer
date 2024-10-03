@@ -87,10 +87,8 @@ namespace DCL.SDKComponents.Animator.Tests
 
 
 
-        [TearDown]
-        public override void TearDown()
+        protected override void OnTearDown()
         {
-            base.TearDown();
             createGltfAssetFromAssetBundleSystem.Dispose();
             finalizeGltfContainerLoadingSystem.Dispose();
             resources.UnloadBundle();

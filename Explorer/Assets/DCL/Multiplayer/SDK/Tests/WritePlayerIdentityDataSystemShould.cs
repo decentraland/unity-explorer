@@ -38,8 +38,7 @@ namespace DCL.Multiplayer.SDK.Tests
             entity = world.Create(playerCRDTEntity);
         }
 
-        [TearDown]
-        public override void TearDown()
+        protected override void OnTearDown()
         {
             world.Dispose();
         }

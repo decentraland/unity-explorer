@@ -64,8 +64,7 @@ namespace DCL.SDKComponents.RealmInfo.Tests
             system = new WriteRealmInfoSystem(world, ecsToCRDTWriter, realmData, roomHubProxy, sceneData);
         }
 
-        [TearDown]
-        public override void TearDown()
+        protected override void OnTearDown()
         {
             world.Dispose();
         }

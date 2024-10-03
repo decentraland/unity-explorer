@@ -44,8 +44,7 @@ namespace DCL.Multiplayer.SDK.Tests
             };
         }
 
-        [TearDown]
-        public override void TearDown()
+        protected override void OnTearDown()
         {
             world.Dispose();
         }

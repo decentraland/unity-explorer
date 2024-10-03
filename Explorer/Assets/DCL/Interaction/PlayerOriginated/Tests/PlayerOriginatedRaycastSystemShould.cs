@@ -45,8 +45,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
             input.Set(mouse.position, new Vector2(camera.pixelWidth / 2f, camera.pixelHeight / 2f));
         }
 
-        [TearDown]
-        public override void TearDown()
+        protected override void OnTearDown()
         {
             input.TearDown();
             UnityObjectUtils.SafeDestroyGameObject(camera);

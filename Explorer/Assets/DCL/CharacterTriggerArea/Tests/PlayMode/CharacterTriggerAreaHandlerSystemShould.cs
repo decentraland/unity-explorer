@@ -69,8 +69,7 @@ namespace DCL.CharacterTriggerArea.Tests
             UnityEngine.Physics.simulationMode = SimulationMode.Script;
         }
 
-        [TearDown]
-        public override void TearDown()
+        protected override void OnTearDown()
         {
             poolsRegistry.Dispose();
             Object.DestroyImmediate(entityTransformComponent.Transform.gameObject);

@@ -32,15 +32,20 @@ namespace ECS.TestSuite
         }
 
         [TearDown]
-        public virtual void TearDown()
+        public void TearDown()
         {
             if (disposed)
                 return;
 
             disposed = true;
+            OnTearDown();
             system?.Dispose();
             cachedWorld?.Dispose();
             cachedWorld = null;
+        }
+
+        protected virtual void OnTearDown()
+        {
         }
 
         protected TransformComponent AddTransformToEntity(in Entity entity, bool isDirty = false, World world = null) =>
