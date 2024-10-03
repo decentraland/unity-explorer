@@ -45,10 +45,10 @@ namespace DCL.Optimization.PerformanceBudgeting
                    };
         }
 
-        public (float warning, float full) GetMemoryRanges()
+        public (int warning, int full) GetMemoryRanges()
         {
             long totalSizeInMB = GetTotalSystemMemory();
-            return (totalSizeInMB * memoryThreshold[WARNING], totalSizeInMB * memoryThreshold[FULL]);
+            return ((int) (totalSizeInMB * memoryThreshold[WARNING]), (int)(totalSizeInMB * memoryThreshold[FULL]));
         }
 
         public bool TrySpendBudget() =>

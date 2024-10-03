@@ -220,7 +220,7 @@ namespace DCL.Profiling.ECS
                                _ => "red",
                            };
 
-            elementBinding.Value = $"<color={color}>{value})</color>";
+            elementBinding.Value = $"<color={color}>{value}</color>";
         }
 
         private static void SetFPS(ElementBinding<string> elementBinding, long value)
