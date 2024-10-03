@@ -54,7 +54,7 @@ namespace DCL.Chat.MessageBus
                 return;
             }
 
-            var profile = await profileRepository.GetAsync(identity.Address, 0, CancellationToken.None);
+            Profile? profile = await profileRepository.GetAsync(identity.Address, CancellationToken.None);
 
             MessageAdded?.Invoke(
                 new ChatMessage(
