@@ -13,18 +13,17 @@ using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
 using System;
 using System.Threading;
-using Utility.Multithreading;
 
 namespace DCL.Profiles
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [LogCategory(ReportCategory.PROFILE)]
-    public partial class LoadProfileSystem : LoadSystemBase<Profile, GetProfileIntention>
+    public partial class LoadProfileSystem : LoadSystemBase<ProfileData, GetProfileIntention>
     {
         private readonly IProfileRepository profileRepository;
 
         public LoadProfileSystem(World world,
-            IStreamableCache<Profile, GetProfileIntention> cache,
+            IStreamableCache<ProfileData, GetProfileIntention> cache,
             IProfileRepository profileRepository)
             : base(world, cache)
         {
@@ -38,7 +37,7 @@ namespace DCL.Profiles
             ResolveProfilePromiseQuery(World);
         }
 
-        protected override async UniTask<StreamableLoadingResult<Profile>> FlowInternalAsync(GetProfileIntention intention,
+        protected override async UniTask<StreamableLoadingResult<ProfileData>> FlowInternalAsync(GetProfileIntention intention,
             IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
             Profile? profile = await profileRepository.GetAsync(intention.ProfileId, intention.Version, ct);
@@ -47,7 +46,7 @@ namespace DCL.Profiles
                 throw new Exception($"Profile not found {intention.ProfileId}");
 
             ProfileUtils.CreateProfilePicturePromise(profile, World, partition);
-            return new StreamableLoadingResult<Profile>(profile);
+            return new StreamableLoadingResult<ProfileData>(new ProfileData(profile));
         }
 
         [Query]

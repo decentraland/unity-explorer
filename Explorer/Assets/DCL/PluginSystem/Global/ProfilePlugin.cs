@@ -14,10 +14,10 @@ namespace DCL.PluginSystem.Global
         private readonly IProfileRepository profileRepository;
         private readonly IProfileCache profileCache;
         private readonly CacheCleaner cacheCleaner;
-        private readonly IStreamableCache<Profile, GetProfileIntention> profileIntentionCache;
+        private readonly IStreamableCache<ProfileData, GetProfileIntention> profileIntentionCache;
 
         public ProfilePlugin(IProfileRepository profileRepository, IProfileCache profileCache, CacheCleaner cacheCleaner,
-            IStreamableCache<Profile, GetProfileIntention> profileIntentionCache)
+            IStreamableCache<ProfileData, GetProfileIntention> profileIntentionCache)
         {
             this.profileRepository = profileRepository;
             this.profileCache = profileCache;

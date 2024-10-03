@@ -270,7 +270,7 @@ namespace DCL.Passport.Modules
         {
             try
             {
-                Sprite? sprite = await thumbnailProvider.GetAsync(itemWearable, ct);
+                Sprite sprite = await thumbnailProvider.GetAsync(itemWearable, ct);
                 itemView.EquippedItemThumbnail.sprite = sprite;
             }
             catch (OperationCanceledException) { }
@@ -287,7 +287,7 @@ namespace DCL.Passport.Modules
         {
             try
             {
-                Sprite? sprite = await thumbnailProvider.GetAsync(itemEmote, ct);
+                Sprite sprite = await thumbnailProvider.GetAsync(itemEmote, ct);
                 itemView.EquippedItemThumbnail.sprite = sprite;
             }
             catch (OperationCanceledException) { }

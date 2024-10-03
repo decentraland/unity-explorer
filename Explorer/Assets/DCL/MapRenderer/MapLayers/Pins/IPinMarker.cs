@@ -8,6 +8,12 @@ namespace DCL.MapRenderer.MapLayers.Pins
 {
     public interface IPinMarker : IMapRendererMarker, IMapPositionProvider, IDisposable
     {
+        public enum ScaleType
+        {
+            MINIMAP,
+            NAVMAP,
+        }
+
         bool IsVisible { get; }
         bool IsDestination { get; }
         bool IsSelected { get; }
@@ -26,7 +32,7 @@ namespace DCL.MapRenderer.MapLayers.Pins
 
         UniTaskVoid AnimateDeselectionAsync(CancellationToken ct);
 
-        public void DeselectImmediately(IPinMarker.ScaleType scaleType);
+        public void DeselectImmediately(ScaleType scaleType);
 
         void SetAsDestination(bool isDestination);
 
@@ -45,11 +51,5 @@ namespace DCL.MapRenderer.MapLayers.Pins
         void Show(Action? onFinish);
 
         void Hide(Action? onFinish);
-
-        public enum ScaleType
-        {
-            MINIMAP,
-            NAVMAP,
-        }
     }
 }
