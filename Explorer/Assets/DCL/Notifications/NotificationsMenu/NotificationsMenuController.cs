@@ -7,6 +7,8 @@ using DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
 using DCL.SidebarBus;
 using DCL.Utilities;
+using DCL.Web3;
+using DCL.Web3.Identities;
 using DCL.WebRequests;
 using SuperScrollView;
 using System;
@@ -20,6 +22,7 @@ namespace DCL.Notifications.NotificationsMenu
     public class NotificationsMenuController : IDisposable
     {
         private const int PIXELS_PER_UNIT = 50;
+        private const int IDENTITY_CHANGE_POLLING_INTERVAL = 5000;
         private static readonly List<NotificationType> NOTIFICATION_TYPES_TO_IGNORE = new()
             {
                 NotificationType.INTERNAL_ARRIVED_TO_DESTINATION
@@ -35,10 +38,12 @@ namespace DCL.Notifications.NotificationsMenu
         private readonly Dictionary<string, Sprite> notificationThumbnailCache = new ();
         private readonly List<INotification> notifications = new ();
         private readonly CancellationTokenSource lifeCycleCts = new ();
+        private readonly IWeb3IdentityCache web3IdentityCache;
 
         private CancellationTokenSource? notificationThumbnailCts;
         private CancellationTokenSource? notificationPanelCts = new CancellationTokenSource();
         private int unreadNotifications;
+        private Web3Address? previousWeb3Identity;
 
         public NotificationsMenuController(
             NotificationsMenuView view,
@@ -47,7 +52,8 @@ namespace DCL.Notifications.NotificationsMenu
             NotificationIconTypes notificationIconTypes,
             IWebRequestController webRequestController,
             ISidebarBus sidebarBus,
-            NftTypeIconSO rarityBackgroundMapping)
+            NftTypeIconSO rarityBackgroundMapping,
+            IWeb3IdentityCache web3IdentityCache)
         {
             notificationThumbnailCts = new CancellationTokenSource();
 
@@ -58,10 +64,12 @@ namespace DCL.Notifications.NotificationsMenu
             this.webRequestController = webRequestController;
             this.sidebarBus = sidebarBus;
             this.rarityBackgroundMapping = rarityBackgroundMapping;
+            this.web3IdentityCache = web3IdentityCache;
             this.view.OnViewShown += OnViewShown;
             this.view.LoopList.InitListView(0, OnGetItemByIndex);
             this.view.CloseButton.onClick.AddListener(ClosePanel);
-            InitialNotificationRequestAsync(lifeCycleCts.Token).Forget();
+            this.previousWeb3Identity = web3IdentityCache.Identity?.Address;
+            CheckIdentityChangeAsync(lifeCycleCts.Token).Forget();
             notificationsBusController.SubscribeToAllNotificationTypesReceived(OnNotificationReceived);
         }
 
@@ -113,8 +121,29 @@ namespace DCL.Notifications.NotificationsMenu
             }
         }
 
-        private async UniTaskVoid InitialNotificationRequestAsync(CancellationToken ct)
+        private async UniTaskVoid CheckIdentityChangeAsync(CancellationToken token)
         {
+            if (previousWeb3Identity != null)
+                await InitialNotificationRequestAsync(token);
+
+            while (token.IsCancellationRequested == false)
+            {
+                if (previousWeb3Identity != web3IdentityCache.Identity?.Address && web3IdentityCache.Identity?.Address != null)
+                {
+                    previousWeb3Identity = web3IdentityCache.Identity?.Address;
+                    await InitialNotificationRequestAsync(lifeCycleCts.Token);
+                }
+                else
+                    await UniTask.Delay(IDENTITY_CHANGE_POLLING_INTERVAL, cancellationToken: token);
+            }
+        }
+
+        private async UniTask InitialNotificationRequestAsync(CancellationToken ct)
+        {
+            unreadNotifications = 0;
+            notifications.Clear();
+            view.LoopList.SetListItemCount(notifications.Count, false);
+
             List<INotification> requestNotifications = await notificationsRequestController.GetMostRecentNotificationsAsync(ct);
 
             foreach (INotification requestNotification in requestNotifications)
