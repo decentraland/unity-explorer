@@ -1,4 +1,5 @@
-﻿using UnityEngine.Device;
+﻿using System;
+using SystemInfo = UnityEngine.Device.SystemInfo;
 
 namespace DCL.Optimization.PerformanceBudgeting
 {
@@ -34,7 +35,7 @@ namespace DCL.Optimization.PerformanceBudgeting
 
         public int MemoryCap
         {
-            set => memoryCapInMB = value * 1024L;
+            set => memoryCapInMB = Math.Min(value * 1024L, SystemInfo.systemMemorySize);
         }
     }
 }
