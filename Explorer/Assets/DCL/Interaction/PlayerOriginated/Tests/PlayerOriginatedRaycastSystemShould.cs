@@ -46,7 +46,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
         }
 
         [TearDown]
-        public void TearDown()
+        public override void TearDown()
         {
             input.TearDown();
             UnityObjectUtils.SafeDestroyGameObject(camera);

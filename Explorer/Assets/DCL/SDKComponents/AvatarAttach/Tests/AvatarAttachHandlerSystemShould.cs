@@ -58,7 +58,7 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
         }
 
         [TearDown]
-        public void Teardown()
+        public override void TearDown()
         {
             Object.DestroyImmediate(playerAvatarBase.gameObject);
             Object.DestroyImmediate(entityTransformComponent.Transform.gameObject);

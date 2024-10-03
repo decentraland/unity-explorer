@@ -15,6 +15,8 @@ namespace ECS.TestSuite
         protected TSystem? system;
         private World? cachedWorld;
 
+        private bool disposed;
+
         protected World world
         {
             get
@@ -30,8 +32,12 @@ namespace ECS.TestSuite
         }
 
         [TearDown]
-        public void DestroyWorld()
+        public virtual void TearDown()
         {
+            if (disposed)
+                return;
+
+            disposed = true;
             system?.Dispose();
             cachedWorld?.Dispose();
             cachedWorld = null;

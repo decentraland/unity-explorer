@@ -50,7 +50,7 @@ namespace DCL.Multiplayer.SDK.Tests
         }
 
         [TearDown]
-        public void TearDown()
+        public override void TearDown()
         {
             sceneWorld.Dispose();
             world.Dispose();

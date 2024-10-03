@@ -57,7 +57,7 @@ namespace DCL.Multiplayer.SDK.Tests
         }
 
         [TearDown]
-        public void TearDown()
+        public override void TearDown()
         {
             Object.DestroyImmediate(fakeCharacterUnityTransform.gameObject);
             Object.DestroyImmediate(fakeMainCharacterUnityTransform.gameObject);

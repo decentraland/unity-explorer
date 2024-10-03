@@ -55,7 +55,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
         }
 
         [TearDown]
-        public void TearDown()
+        public override void TearDown()
         {
             Object.DestroyImmediate(fakeAvatarGO);
             Object.DestroyImmediate(fakeAvatarBaseGO);

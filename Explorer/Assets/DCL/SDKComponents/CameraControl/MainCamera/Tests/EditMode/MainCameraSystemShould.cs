@@ -96,7 +96,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
         }
 
         [TearDown]
-        public void Teardown()
+        public override void TearDown()
         {
             entitiesMap.Clear();
             world.Dispose();

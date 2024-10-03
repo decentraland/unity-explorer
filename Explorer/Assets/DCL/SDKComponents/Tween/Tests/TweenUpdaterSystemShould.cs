@@ -16,11 +16,9 @@ namespace DCL.SDKComponents.Tween.Tests
     [TestFixture]
     public class TweenUpdaterSystemShould : UnitySystemTestBase<TweenUpdaterSystem>
     {
-
         private Entity entity;
         private PBTween pbTween;
         private TweenerPool tweneerPool;
-
 
         private const float DEFAULT_CURRENT_TIME_0 = 0f;
         private const float DEFAULT_CURRENT_TIME_1 = 1f;
@@ -32,9 +30,10 @@ namespace DCL.SDKComponents.Tween.Tests
             system = new TweenUpdaterSystem(world, Substitute.For<IECSToCRDTWriter>(), tweneerPool, null);
             var crdtEntity = new CRDTEntity(1);
 
-            var startVector = new Vector3() { X = 0, Y = 0, Z = 0};
+            var startVector = new Vector3() { X = 0, Y = 0, Z = 0 };
             var endVector = new Vector3() { X = 10, Y = 0, Z = 0 };
             var move = new Move() { End = endVector, Start = startVector };
+
             pbTween = new PBTween()
             {
                 CurrentTime = DEFAULT_CURRENT_TIME_0,
@@ -52,31 +51,22 @@ namespace DCL.SDKComponents.Tween.Tests
             system.Update(0);
         }
 
-        [TearDown]
-        public void TearDown()
-        {
-            system?.Dispose();
-        }
-
-
         [Test]
         public void ChangingPBTweenCurrentTimeUpdatesTheTweenStateStatus()
         {
             world.Query(new QueryDescription().WithAll<SDKTweenComponent>(), (ref SDKTweenComponent comp) =>
-                Assert.IsTrue(comp.TweenStateStatus == TweenStateStatus.TsActive ));
+                Assert.IsTrue(comp.TweenStateStatus == TweenStateStatus.TsActive));
 
             pbTween.CurrentTime = DEFAULT_CURRENT_TIME_1;
             pbTween.IsDirty = true;
             system.Update(0);
+
             //We need a second update, to move the state from playing to complete.
             system.Update(0);
-
 
             world.Query(new QueryDescription().WithAll<SDKTweenComponent>(), (ref SDKTweenComponent comp) =>
                 Assert.IsTrue(comp.TweenStateStatus == TweenStateStatus.TsCompleted));
         }
-
-
 
         [Test]
         public void ChangingPBTweenPlayingValueUpdatesTheTweenStateStatus()
@@ -100,8 +90,5 @@ namespace DCL.SDKComponents.Tween.Tests
             world.Query(new QueryDescription().WithAll<SDKTweenComponent>(), (ref SDKTweenComponent comp) =>
                 Assert.IsTrue(comp.TweenStateStatus == TweenStateStatus.TsActive));
         }
-
-
     }
-
 }
