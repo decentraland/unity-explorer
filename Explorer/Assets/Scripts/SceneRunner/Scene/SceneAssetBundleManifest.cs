@@ -7,6 +7,10 @@ namespace SceneRunner.Scene
 {
     public class SceneAssetBundleManifest
     {
+        //From v26 onwards, the asset bundle path contains the sceneID in the hash
+        //This was done to solve cache issues
+        public const int ASSET_BUNDLE_VERSION_REQUIRES_HASH = 26;
+        
         public static readonly SceneAssetBundleManifest NULL = new ();
 
         private readonly URLDomain assetBundlesBaseUrl;
@@ -64,8 +68,7 @@ namespace SceneRunner.Scene
 
         public URLAddress GetAssetBundleURL(string hash)
         {
-            //From v26 onwards, the asset bundle path contains the sceneID in the hash
-            if (versionInt >= 26)
+            if (versionInt >= ASSET_BUNDLE_VERSION_REQUIRES_HASH)
                 return assetBundlesBaseUrl.Append(new URLPath($"{version}/{sceneID}/{hash}"));
             
             return assetBundlesBaseUrl.Append(new URLPath($"{version}/{hash}"));

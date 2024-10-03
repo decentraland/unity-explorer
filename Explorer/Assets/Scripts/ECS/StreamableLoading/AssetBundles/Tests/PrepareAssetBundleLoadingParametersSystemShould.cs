@@ -50,8 +50,9 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         public void LoadFromWebWithOldPath()
         {
             LogAssert.ignoreFailingMessages = true;
+            string version = "v" + (SceneAssetBundleManifest.ASSET_BUNDLE_VERSION_REQUIRES_HASH - 1);
 
-            sceneData.AssetBundleManifest.Returns(new SceneAssetBundleManifest(FAKE_AB_PATH, "v25", new[] { "abcd" }, "hash"));
+            sceneData.AssetBundleManifest.Returns(new SceneAssetBundleManifest(FAKE_AB_PATH, version, new[] { "abcd" }, "hash"));
 
             var intent = GetAssetBundleIntention.FromHash(typeof(GameObject), "abcd", permittedSources: AssetSource.WEB);
             Entity e = world.Create(intent, new StreamableLoadingState());
@@ -61,7 +62,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
 
             Assert.That(intent.CommonArguments.Attempts, Is.EqualTo(StreamableLoadingDefaults.ATTEMPTS_COUNT));
             Assert.That(intent.CommonArguments.CurrentSource, Is.EqualTo(AssetSource.WEB));
-            Assert.That(intent.CommonArguments.URL, Is.EqualTo("http://www.fakepath.com/v25/abcd"));
+            Assert.That(intent.CommonArguments.URL, Is.EqualTo($"http://www.fakepath.com/{version}/abcd"));
             Assert.That(intent.cacheHash, Is.Not.Null);
         }
         
@@ -69,8 +70,8 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         public void LoadFromWebWithNewPath()
         {
             LogAssert.ignoreFailingMessages = true;
-
-            sceneData.AssetBundleManifest.Returns(new SceneAssetBundleManifest(FAKE_AB_PATH, "v26", new[] { "abcd" }, "hash"));
+            string version = "v" + SceneAssetBundleManifest.ASSET_BUNDLE_VERSION_REQUIRES_HASH;
+            sceneData.AssetBundleManifest.Returns(new SceneAssetBundleManifest(FAKE_AB_PATH, version, new[] { "abcd" }, "hash"));
 
             var intent = GetAssetBundleIntention.FromHash(typeof(GameObject), "abcd", permittedSources: AssetSource.WEB);
             Entity e = world.Create(intent, new StreamableLoadingState());
@@ -80,7 +81,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
 
             Assert.That(intent.CommonArguments.Attempts, Is.EqualTo(StreamableLoadingDefaults.ATTEMPTS_COUNT));
             Assert.That(intent.CommonArguments.CurrentSource, Is.EqualTo(AssetSource.WEB));
-            Assert.That(intent.CommonArguments.URL, Is.EqualTo("http://www.fakepath.com/v26/hash/abcd"));
+            Assert.That(intent.CommonArguments.URL, Is.EqualTo($"http://www.fakepath.com/{version}/hash/abcd"));
             Assert.That(intent.cacheHash, Is.Not.Null);
         }
 
@@ -89,7 +90,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         {
             LogAssert.ignoreFailingMessages = true;
 
-            sceneData.AssetBundleManifest.Returns(new SceneAssetBundleManifest(FAKE_AB_PATH, "v25", Array.Empty<string>(), "hash"));
+            sceneData.AssetBundleManifest.Returns(new SceneAssetBundleManifest(FAKE_AB_PATH, "v" + (SceneAssetBundleManifest.ASSET_BUNDLE_VERSION_REQUIRES_HASH - 1), Array.Empty<string>(), "hash"));
 
             var intent = GetAssetBundleIntention.FromHash(typeof(GameObject), "abcd", permittedSources: AssetSource.WEB);
             Entity e = world.Create(intent, new StreamableLoadingState());
@@ -107,7 +108,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         {
             LogAssert.ignoreFailingMessages = true;
 
-            sceneData.AssetBundleManifest.Returns(new SceneAssetBundleManifest(FAKE_AB_PATH, "v26", Array.Empty<string>(), "hash"));
+            sceneData.AssetBundleManifest.Returns(new SceneAssetBundleManifest(FAKE_AB_PATH, "v" + (SceneAssetBundleManifest.ASSET_BUNDLE_VERSION_REQUIRES_HASH), Array.Empty<string>(), "hash"));
 
             var intent = GetAssetBundleIntention.FromHash(typeof(GameObject), "abcd", permittedSources: AssetSource.WEB);
             Entity e = world.Create(intent, new StreamableLoadingState());
