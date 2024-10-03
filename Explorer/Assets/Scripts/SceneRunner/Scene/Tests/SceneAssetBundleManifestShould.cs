@@ -17,7 +17,7 @@ namespace SceneRunner.Scene.Tests
 
                 const string EXPECTED = "v125QmfNvE3nKmahA5emnBnXN2LzydpYncHVz4xy4piw84Er1D";
 
-                var manifest = new SceneAssetBundleManifest(URLDomain.FromString(CONTENT_URL), "v125", Array.Empty<string>());
+                var manifest = new SceneAssetBundleManifest(URLDomain.FromString(CONTENT_URL), "v125", Array.Empty<string>(), "hash");
 
                 fixed (char* p = EXPECTED) { Assert.AreEqual(Hash128.Compute(p, (ulong)(EXPECTED.Length * sizeof(char))), manifest.ComputeHash(HASH)); }
             }
