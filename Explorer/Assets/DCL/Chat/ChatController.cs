@@ -102,15 +102,18 @@ namespace DCL.Chat
             this.eventSystem = eventSystem;
             this.inputBlock = inputBlock;
 
-            chatMessagesBus.MessageAdded += OnMessageAdded;
-            chatHistory.OnMessageAdded += CreateChatEntry;
-            chatHistory.OnCleared += ChatHistoryOnOnCleared;
             device = InputSystem.GetDevice<Mouse>();
         }
 
         protected override void OnViewInstantiated()
         {
             cameraEntity = world.CacheCamera();
+            
+            //We start processing messages once the view is ready
+            chatMessagesBus.MessageAdded += OnMessageAdded;
+            chatHistory.OnMessageAdded += CreateChatEntry;
+            chatHistory.OnCleared += ChatHistoryOnOnCleared;
+            
             viewInstance!.OnChatViewPointerEnter += OnChatViewPointerEnter;
             viewInstance.OnChatViewPointerExit += OnChatViewPointerExit;
             viewInstance.CharacterCounter.SetMaximumLength(viewInstance.InputField.characterLimit);
