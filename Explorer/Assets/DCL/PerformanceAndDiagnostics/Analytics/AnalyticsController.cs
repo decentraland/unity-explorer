@@ -1,6 +1,6 @@
-﻿#nullable enable
-using DCL.Web3.Identities;
+﻿using DCL.Web3.Identities;
 using ECS;
+using Global.AppArgs;
 using Segment.Serialization;
 using UnityEngine;
 using Utility;
@@ -13,12 +13,14 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         private readonly IAnalyticsService analytics;
         public AnalyticsConfiguration Configuration { get; }
 
-        public AnalyticsController(IAnalyticsService analyticsService, AnalyticsConfiguration configuration, LauncherTraits launcherTraits)
+        public AnalyticsController(IAnalyticsService analyticsService, IAppArgs appArgs, AnalyticsConfiguration configuration, LauncherTraits launcherTraits)
         {
             analytics = analyticsService;
             Configuration = configuration;
 
-            analytics.AddPlugin(new StaticCommonTraitsPlugin(launcherTraits));
+            analytics.AddPlugin(new StaticCommonTraitsPlugin(appArgs, launcherTraits));
+            analytics.Identify(SystemInfo.deviceUniqueIdentifier!);
+            analytics.Flush();
 
             analytics.Track(AnalyticsEvents.General.SYSTEM_INFO_REPORT, new JsonObject
             {

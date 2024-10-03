@@ -58,8 +58,8 @@ namespace DCL.SDKComponents.AudioSources.Tests
             Assert.That(audioSourceComponent.AudioSource, Is.Null);
 
             // Assert promise
-            Assert.That(audioSourceComponent.ClipPromise, Is.Not.EqualTo(AssetPromise<AudioClip, GetAudioClipIntention>.NULL));
-            AssetPromise<AudioClip, GetAudioClipIntention> promiseValue = audioSourceComponent.ClipPromise;
+            Assert.That(audioSourceComponent.ClipPromise, Is.Not.EqualTo(AssetPromise<AudioClipData, GetAudioClipIntention>.NULL));
+            AssetPromise<AudioClipData, GetAudioClipIntention> promiseValue = audioSourceComponent.ClipPromise;
             Assert.That(world.TryGet(promiseValue.Entity, out GetAudioClipIntention intention), Is.True);
             Assert.That(intention.CommonArguments.URL, Is.EqualTo(pbAudioSource.AudioClipUrl));
             Assert.That(intention.AudioType, Is.EqualTo(pbAudioSource.AudioClipUrl.ToAudioType()));

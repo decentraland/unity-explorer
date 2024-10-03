@@ -84,10 +84,10 @@ namespace DCL.SDKComponents.MediaStream
             if (avText == null) return;
 
             // Handle texture update
-            if (assignedTexture.Texture.HasEqualResolution(to: avText))
+            if (assignedTexture.Texture.Asset.HasEqualResolution(to: avText))
                 Graphics.CopyTexture(avText, assignedTexture.Texture);
             else
-                assignedTexture.Texture.ResizeTexture(to: avText); // will be updated on the next frame/update-loop
+                assignedTexture.Texture.Asset.ResizeTexture(to: avText); // will be updated on the next frame/update-loop
         }
 
         private void HandleComponentChange(ref MediaPlayerComponent component, IDirtyMarker sdkComponent, string url, bool hasPlaying, bool isPlaying,
