@@ -547,7 +547,7 @@ namespace Global.Dynamic
                     globalWorld,
                     playerEntity,
                     container.ChatMessagesBus,
-                    staticContainer.StaticSettings
+                    staticContainer.MemoryCap
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),

@@ -12,7 +12,7 @@ using UnityEngine.Profiling;
 namespace DCL.PluginSystem.Global
 {
     [Serializable]
-    public class StaticSettings : IDCLPluginSettings, ISystemMemoryCap
+    public class StaticSettings : IDCLPluginSettings
     {
         [field: Header(nameof(StaticSettings))] [field: Space]
         [field: SerializeField]
@@ -34,30 +34,6 @@ namespace DCL.PluginSystem.Global
             {
                 bool isDeepProfiling = Profiler.enabled && Profiler.enableBinaryLog;
                 return isDeepProfiling ? frameTimeCapDeepProfiler : frameTimeCap;
-            }
-        }
-
-        [SerializeField] [Tooltip("In GB")] public int memoryCap = 16;
-
-        private long memoryCapInMB;
-
-        public long MemoryCapInMB
-        {
-            get
-            {
-                if (memoryCapInMB == 0)
-                    MemoryCap = memoryCap;
-
-                return memoryCapInMB;
-            }
-        }
-
-        public int MemoryCap
-        {
-            set
-            {
-                memoryCap = value;
-                memoryCapInMB = memoryCap * 1024L;
             }
         }
 

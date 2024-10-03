@@ -7,6 +7,7 @@ using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Notifications.NewNotification;
+using DCL.Optimization.PerformanceBudgeting;
 using DCL.PerformanceAndDiagnostics.DotNetLogging;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
@@ -14,6 +15,7 @@ using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.UI.MainUI;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
+using ECS.Abstract;
 using Global.AppArgs;
 using Global.Dynamic.DebugSettings;
 using MVC;
@@ -71,9 +73,9 @@ namespace Global.Dynamic
             DotNetLoggingPlugin.Initialize();
         }
 
-        public async UniTask<(StaticContainer?, bool)> LoadStaticContainerAsync(BootstrapContainer bootstrapContainer, PluginSettingsContainer globalPluginSettingsContainer, DebugViewsCatalog debugViewsCatalog, Entity playerEntity, CancellationToken ct) =>
+        public async UniTask<(StaticContainer?, bool)> LoadStaticContainerAsync(BootstrapContainer bootstrapContainer, PluginSettingsContainer globalPluginSettingsContainer, DebugViewsCatalog debugViewsCatalog, Entity playerEntity, ISystemMemoryCap memoryCap, CancellationToken ct) =>
             await StaticContainer.CreateAsync(bootstrapContainer.DecentralandUrlsSource, bootstrapContainer.AssetsProvisioner, bootstrapContainer.ReportHandlingSettings, appArgs, debugViewsCatalog, globalPluginSettingsContainer,
-                bootstrapContainer.DiagnosticsContainer, bootstrapContainer.IdentityCache, bootstrapContainer.VerifiedEthereumApi, bootstrapContainer.LocalSceneDevelopment, bootstrapContainer.UseRemoteAssetBundles, world, playerEntity, ct);
+                bootstrapContainer.DiagnosticsContainer, bootstrapContainer.IdentityCache, bootstrapContainer.VerifiedEthereumApi, bootstrapContainer.LocalSceneDevelopment, bootstrapContainer.UseRemoteAssetBundles, world, playerEntity, memoryCap, ct);
 
         public async UniTask<(DynamicWorldContainer?, bool)> LoadDynamicWorldContainerAsync(BootstrapContainer bootstrapContainer,
             StaticContainer staticContainer,

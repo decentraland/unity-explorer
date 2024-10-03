@@ -89,6 +89,7 @@ namespace DCL.Optimization.PerformanceBudgeting
             {
                 public long MemoryCapInMB { get; private set; } = 16 * 1024L;
                 public int MemoryCap { set => MemoryCapInMB = value * 1024L; }
+                public MemoryCapMode Mode { get; set; }
             }
         }
     }
