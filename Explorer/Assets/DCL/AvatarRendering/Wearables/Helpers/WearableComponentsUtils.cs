@@ -1,34 +1,12 @@
-﻿using Arch.Core;
-using CommunicationData.URLHelpers;
+﻿using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.Optimization.Pools;
-using ECS;
-using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
-using ECS.StreamableLoading.Textures;
-using System;
 using System.Collections.Generic;
-using System.Threading;
-using AssetManagement;
-using Cysharp.Threading.Tasks;
-using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Loading.Components;
-using DCL.AvatarRendering.Loading.DTO;
-using DCL.AvatarRendering.Thumbnails.Utils;
-using DCL.AvatarRendering.Wearables.Systems;
-using DCL.AvatarRendering.Wearables.Systems.Load;
-using DCL.Diagnostics;
-using DCL.WebRequests;
-using ECS.StreamableLoading.AssetBundles;
-using SceneRunner.Scene;
-using UnityEngine;
 using UnityEngine.Pool;
-using Utility;
-using Promise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.Texture2D, ECS.StreamableLoading.Textures.GetTextureIntention>;
-using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
-
 namespace DCL.AvatarRendering.Wearables.Helpers
 {
     public static class WearableComponentsUtils

@@ -16,5 +16,16 @@ namespace Utility
             Rect.MinMaxRect(62, 151, 162, MAX_PARCEL.y),
             Rect.MinMaxRect(151, 59, MAX_PARCEL.x, 150),
         };
+
+        public static bool IsInsideBounds(float x, float y)
+        {
+            Vector2 pos = new Vector2(x, y);
+
+            foreach (Rect rect in INTERACTABLE_WORLD_BOUNDS)
+                if (rect.Contains(pos))
+                    return true;
+
+            return false;
+        }
     }
 }

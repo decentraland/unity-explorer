@@ -32,6 +32,10 @@ using UnityEngine.AddressableAssets;
 using UnityEngine.Pool;
 using Utility;
 using Object = UnityEngine.Object;
+using StartAvatarMatricesCalculationSystem = DCL.AvatarRendering.AvatarShape.Systems.StartAvatarMatricesCalculationSystem;
+#if UNITY_EDITOR
+using DCL.AvatarAnimation;
+#endif
 
 namespace DCL.PluginSystem.Global
 {
@@ -147,7 +151,7 @@ namespace DCL.PluginSystem.Global
             foreach (var extendedObjectPool in avatarMaterialPoolHandler.GetAllMaterialsPools())
                 cacheCleaner.Register(extendedObjectPool.Pool);
 
-            
+
             AvatarInstantiatorSystem.InjectToWorld(ref builder, frameTimeCapBudget, memoryBudget, avatarPoolRegistry, avatarMaterialPoolHandler,
                 computeShaderPool, attachmentsAssetsCache, skinningStrategy, vertOutBuffer, mainPlayerAvatarBaseProxy, defaultFaceFeaturesHandler,
                 wearableStorage,  avatarTransformMatrixJobWrapper);
@@ -168,6 +172,9 @@ namespace DCL.PluginSystem.Global
 
             //Debug scripts
             InstantiateRandomAvatarsSystem.InjectToWorld(ref builder, debugContainerBuilder, realmData, transformPoolRegistry, avatarRandomizerAsset);
+#if UNITY_EDITOR
+            PlayableDirectorUpdatingSystem.InjectToWorld(ref builder);
+#endif
         }
 
         private async UniTask CreateAvatarBasePoolAsync(AvatarShapeSettings settings, CancellationToken ct)

@@ -2,7 +2,9 @@ using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Loading.DTO;
 using DCL.AvatarRendering.Wearables.Helpers;
+using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.Textures;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -68,7 +70,7 @@ namespace DCL.AvatarRendering.Emotes
                 model.metadata.emoteDataADR74 = embeddedEmote.entity;
 
                 emote.Model = new StreamableLoadingResult<EmoteDTO>(model);
-                emote.ThumbnailAssetResult = new StreamableLoadingResult<Sprite>(embeddedEmote.thumbnail);
+                emote.ThumbnailAssetResult = embeddedEmote.thumbnail.ToUnownedSpriteData();
 
                 if (embeddedEmote.male != null)
                 {
@@ -102,8 +104,8 @@ namespace DCL.AvatarRendering.Emotes
 
                 if (embeddedEmote.audioClip != null)
                 {
-                    emote.AudioAssetResults[BodyShape.MALE] = new StreamableLoadingResult<AudioClip>(embeddedEmote.audioClip);
-                    emote.AudioAssetResults[BodyShape.FEMALE] = new StreamableLoadingResult<AudioClip>(embeddedEmote.audioClip);
+                    emote.AudioAssetResults[BodyShape.MALE] = new StreamableLoadingResult<AudioClipData>(new AudioClipData(embeddedEmote.audioClip));
+                    emote.AudioAssetResults[BodyShape.FEMALE] = new StreamableLoadingResult<AudioClipData>(new AudioClipData(embeddedEmote.audioClip));
                 }
 
                 emote.ManifestResult = null;

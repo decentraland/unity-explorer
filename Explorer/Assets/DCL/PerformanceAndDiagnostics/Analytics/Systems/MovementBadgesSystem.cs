@@ -76,7 +76,7 @@ namespace DCL.Analytics.Systems
 
         private void HandleIdentityChange()
         {
-            if (!currentIdentity!.Address.Equals(identityCache.Identity.Address))
+            if (currentIdentity == null || !currentIdentity.Address.Equals(identityCache.Identity.Address))
             {
                 currentIdentity = identityCache.Identity;
                 badgeHeightReached = false;

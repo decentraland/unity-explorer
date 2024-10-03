@@ -4,6 +4,7 @@ using CrdtEcsBridge.PoolsProviders;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.Multiplayer.Profiles.Poses;
 using DCL.PluginSystem.World.Dependencies;
 using MVC;
 using DCL.Profiles;
@@ -36,6 +37,7 @@ namespace Global
             IRoomHub roomHub,
             IMVCManager mvcManager,
             IMessagePipesHub messagePipesHub,
+            IRemoteMetadata remoteMetadata,
             bool cacheJsSources = true)
         {
             ECSWorldSingletonSharedDependencies sharedDependencies = staticContainer.SingletonSharedDependencies;
@@ -68,8 +70,7 @@ namespace Global
                     roomHub,
                     realmData,
                     staticContainer.PortableExperiencesController,
-                    new SceneCommunicationPipe(messagePipesHub, roomHub.SceneRoom())
-                ),
+                    new SceneCommunicationPipe(messagePipesHub, roomHub.SceneRoom()), remoteMetadata),
             };
         }
     }
