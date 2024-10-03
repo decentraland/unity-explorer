@@ -48,6 +48,10 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         [field: SerializeField]
         public AnalyticsMode Mode { get; private set; } = AnalyticsMode.SEGMENT;
 
+        public int FlushSize => flushSize;
+
+        public int FlushInterval => flushInterval;
+
         public bool TryGetSegmentConfiguration(out Configuration configuration)
         {
             if (segmentConfiguration != null)

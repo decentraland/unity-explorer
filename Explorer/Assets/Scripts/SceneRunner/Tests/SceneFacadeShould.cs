@@ -19,6 +19,7 @@ using DCL.Diagnostics;
 using DCL.Interaction.Utility;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.Multiplayer.Profiles.Poses;
 using DCL.PluginSystem.World;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.Profiles;
@@ -107,11 +108,11 @@ namespace SceneRunner.Tests
                 Substitute.For<IWeb3IdentityCache>(),
                 Substitute.For<IDecentralandUrlsSource>(),
                 IWebRequestController.DEFAULT,
-                NullRoomHub.INSTANCE, 
+                NullRoomHub.INSTANCE,
                 Substitute.For<IRealmData>(),
                 Substitute.For<IPortableExperiencesController>(),
-                Substitute.For<ISceneCommunicationPipe>()
-            );
+                Substitute.For<ISceneCommunicationPipe>(),
+                Substitute.For<IRemoteMetadata>());
         }
 
         [OneTimeTearDown]

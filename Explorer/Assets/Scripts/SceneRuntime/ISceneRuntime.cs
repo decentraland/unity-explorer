@@ -2,6 +2,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.Multiplayer.Profiles.Poses;
 using DCL.Profiles;
 using DCL.Web3;
 using DCL.Web3.Identities;
@@ -66,11 +67,12 @@ namespace SceneRuntime
             ISimpleFetchApi simpleFetchApi,
             ISceneData sceneData,
             IRealmData realmData,
-            IPortableExperiencesController portableExperiencesController
+            IPortableExperiencesController portableExperiencesController,
+            IRemoteMetadata remoteMetadata
         )
         {
             sceneRuntime.RegisterEngineAPI(engineApi, instancePoolsProvider, exceptionsHandler);
-            sceneRuntime.RegisterPlayers(roomHub, profileRepository);
+            sceneRuntime.RegisterPlayers(roomHub, profileRepository, remoteMetadata);
             sceneRuntime.RegisterSceneApi(sceneApi);
             sceneRuntime.RegisterSignedFetch(webRequestController, decentralandUrlsSource, sceneData, realmData);
             sceneRuntime.RegisterRestrictedActionsApi(restrictedActionsAPI);
@@ -103,11 +105,12 @@ namespace SceneRuntime
             ISimpleFetchApi simpleFetchApi,
             ISceneData sceneData,
             IRealmData realmData,
-            IPortableExperiencesController portableExperiencesController
+            IPortableExperiencesController portableExperiencesController,
+            IRemoteMetadata remoteMetadata
         )
         {
             sceneRuntime.RegisterEngineAPI(engineApi, commsApiImplementation, instancePoolsProvider, exceptionsHandler);
-            sceneRuntime.RegisterPlayers(roomHub, profileRepository);
+            sceneRuntime.RegisterPlayers(roomHub, profileRepository, remoteMetadata);
             sceneRuntime.RegisterSceneApi(sceneApi);
             sceneRuntime.RegisterSignedFetch(webRequestController, decentralandUrlsSource, sceneData, realmData);
             sceneRuntime.RegisterRestrictedActionsApi(restrictedActionsAPI);
@@ -135,9 +138,9 @@ namespace SceneRuntime
             sceneRuntime.RegisterEngineAPIWrapper(newWrapper);
         }
 
-        private static void RegisterPlayers(this ISceneRuntime sceneRuntime, IRoomHub roomHub, IProfileRepository profileRepository)
+        private static void RegisterPlayers(this ISceneRuntime sceneRuntime, IRoomHub roomHub, IProfileRepository profileRepository, IRemoteMetadata remoteMetadata)
         {
-            sceneRuntime.Register("UnityPlayers", new PlayersWrap(roomHub, profileRepository));
+            sceneRuntime.Register("UnityPlayers", new PlayersWrap(roomHub, profileRepository, remoteMetadata));
         }
 
         private static void RegisterSceneApi(this ISceneRuntime sceneRuntime, ISceneApi api)
