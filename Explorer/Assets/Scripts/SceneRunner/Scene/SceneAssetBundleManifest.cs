@@ -1,9 +1,7 @@
 ﻿using CommunicationData.URLHelpers;
 using System;
 using System.Collections.Generic;
-using System.Text;
 using UnityEngine;
-using UnityEngine.Pool;
 
 namespace SceneRunner.Scene
 {
@@ -13,18 +11,21 @@ namespace SceneRunner.Scene
 
         private readonly URLDomain assetBundlesBaseUrl;
         private readonly string version;
+        private readonly int versionInt;
         private readonly HashSet<string> convertedFiles;
-
+        private readonly string sceneID;
 
         private readonly bool ignoreConvertedFiles;
 
         public IReadOnlyCollection<string> ConvertedFiles => convertedFiles;
 
-        public SceneAssetBundleManifest(URLDomain assetBundlesBaseUrl, string version, IReadOnlyList<string> files)
+        public SceneAssetBundleManifest(URLDomain assetBundlesBaseUrl, string version, IReadOnlyList<string> files, string sceneID)
         {
             this.assetBundlesBaseUrl = assetBundlesBaseUrl;
             this.version = version;
+            versionInt = int.Parse(version.AsSpan().Slice(1));
             convertedFiles = new HashSet<string>(files, StringComparer.OrdinalIgnoreCase);
+            this.sceneID = sceneID;
             ignoreConvertedFiles = false;
         }
 
@@ -61,8 +62,14 @@ namespace SceneRunner.Scene
 
         public bool TryGet(string hash, out string convertedFile) => convertedFiles.TryGetValue(hash, out convertedFile);
 
-        public URLAddress GetAssetBundleURL(string hash) =>
-            assetBundlesBaseUrl.Append(new URLPath($"{version}/{hash}"));
+        public URLAddress GetAssetBundleURL(string hash)
+        {
+            //From v26 onwards, the asset bundle path contains the sceneID in the hash
+            if (versionInt >= 26)
+                return assetBundlesBaseUrl.Append(new URLPath($"{version}/{sceneID}/{hash}"));
+            
+            return assetBundlesBaseUrl.Append(new URLPath($"{version}/{hash}"));
+        }
 
         public string GetVersion() =>
             version;

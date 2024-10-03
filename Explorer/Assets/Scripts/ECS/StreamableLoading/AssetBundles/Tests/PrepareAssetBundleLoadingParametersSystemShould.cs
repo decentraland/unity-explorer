@@ -26,7 +26,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         private ISceneData sceneData;
         private URLDomain path;
 
-        private static readonly URLDomain FAKE_AB_PATH = URLDomain.FromString("http://www.fakepath.com/v1/");
+        private static readonly URLDomain FAKE_AB_PATH = URLDomain.FromString("http://www.fakepath.com/");
 
         [Test]
         public void LoadFromEmbeddedFirst()
@@ -47,11 +47,11 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         }
 
         [Test]
-        public void LoadFromWeb()
+        public void LoadFromWebWithOldPath()
         {
             LogAssert.ignoreFailingMessages = true;
 
-            sceneData.AssetBundleManifest.Returns(new SceneAssetBundleManifest(FAKE_AB_PATH, "200", new[] { "abcd" }));
+            sceneData.AssetBundleManifest.Returns(new SceneAssetBundleManifest(FAKE_AB_PATH, "v25", new[] { "abcd" }, "hash"));
 
             var intent = GetAssetBundleIntention.FromHash(typeof(GameObject), "abcd", permittedSources: AssetSource.WEB);
             Entity e = world.Create(intent, new StreamableLoadingState());
@@ -61,16 +61,53 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
 
             Assert.That(intent.CommonArguments.Attempts, Is.EqualTo(StreamableLoadingDefaults.ATTEMPTS_COUNT));
             Assert.That(intent.CommonArguments.CurrentSource, Is.EqualTo(AssetSource.WEB));
-            Assert.That(intent.CommonArguments.URL, Is.EqualTo("http://www.fakepath.com/v1/200/abcd"));
+            Assert.That(intent.CommonArguments.URL, Is.EqualTo("http://www.fakepath.com/v25/abcd"));
+            Assert.That(intent.cacheHash, Is.Not.Null);
+        }
+        
+        [Test]
+        public void LoadFromWebWithNewPath()
+        {
+            LogAssert.ignoreFailingMessages = true;
+
+            sceneData.AssetBundleManifest.Returns(new SceneAssetBundleManifest(FAKE_AB_PATH, "v26", new[] { "abcd" }, "hash"));
+
+            var intent = GetAssetBundleIntention.FromHash(typeof(GameObject), "abcd", permittedSources: AssetSource.WEB);
+            Entity e = world.Create(intent, new StreamableLoadingState());
+            system.Update(0);
+
+            intent = world.Get<GetAssetBundleIntention>(e);
+
+            Assert.That(intent.CommonArguments.Attempts, Is.EqualTo(StreamableLoadingDefaults.ATTEMPTS_COUNT));
+            Assert.That(intent.CommonArguments.CurrentSource, Is.EqualTo(AssetSource.WEB));
+            Assert.That(intent.CommonArguments.URL, Is.EqualTo("http://www.fakepath.com/v26/hash/abcd"));
             Assert.That(intent.cacheHash, Is.Not.Null);
         }
 
         [Test]
-        public void FailIfAbsentInManifest()
+        public void FailIfAbsentInManifestOldHash()
         {
             LogAssert.ignoreFailingMessages = true;
 
-            sceneData.AssetBundleManifest.Returns(new SceneAssetBundleManifest(FAKE_AB_PATH, null, Array.Empty<string>()));
+            sceneData.AssetBundleManifest.Returns(new SceneAssetBundleManifest(FAKE_AB_PATH, "v25", Array.Empty<string>(), "hash"));
+
+            var intent = GetAssetBundleIntention.FromHash(typeof(GameObject), "abcd", permittedSources: AssetSource.WEB);
+            Entity e = world.Create(intent, new StreamableLoadingState());
+
+            system.Update(0);
+
+            Assert.That(world.TryGet(e, out StreamableLoadingResult<AssetBundleData> result), Is.True);
+            Assert.That(result.Succeeded, Is.False);
+            Assert.That(result.Asset, Is.Null);
+            Assert.That(result.Exception, Is.TypeOf<ArgumentException>().Or.InnerException.TypeOf<ArgumentException>());
+        }
+        
+        [Test]
+        public void FailIfAbsentInManifestNewHash()
+        {
+            LogAssert.ignoreFailingMessages = true;
+
+            sceneData.AssetBundleManifest.Returns(new SceneAssetBundleManifest(FAKE_AB_PATH, "v26", Array.Empty<string>(), "hash"));
 
             var intent = GetAssetBundleIntention.FromHash(typeof(GameObject), "abcd", permittedSources: AssetSource.WEB);
             Entity e = world.Create(intent, new StreamableLoadingState());
