@@ -58,7 +58,7 @@ MonoBehaviour:
     m_Value: 0
   contrast:
     m_OverrideState: 1
-    m_Value: 0
+    m_Value: 10
   colorFilter:
     m_OverrideState: 0
     m_Value: {r: 1, g: 1, b: 1, a: 1}
@@ -279,10 +279,12 @@ MonoBehaviour:
   - {fileID: 2784079933934147183, guid: 8fcac0d7d22effc45a7f7b4f87116a61, type: 2}
   - {fileID: 3276125648839237000, guid: 8fcac0d7d22effc45a7f7b4f87116a61, type: 2}
   - {fileID: 2152243025009476847, guid: 8fcac0d7d22effc45a7f7b4f87116a61, type: 2}
+  - {fileID: 1798844783772877419, guid: 8fcac0d7d22effc45a7f7b4f87116a61, type: 2}
   - {fileID: -2287974757364210156, guid: fef5685522a9f2e4181cc4c31f10f100, type: 2}
   - {fileID: 8512292912536760798, guid: fef5685522a9f2e4181cc4c31f10f100, type: 2}
   - {fileID: -3288772034090369892, guid: fef5685522a9f2e4181cc4c31f10f100, type: 2}
   - {fileID: -2448322177020252403, guid: fef5685522a9f2e4181cc4c31f10f100, type: 2}
+  - {fileID: 1757973802043764545, guid: fef5685522a9f2e4181cc4c31f10f100, type: 2}
   updateInEditor: 1
 --- !u!114 &627882838885633079
 MonoBehaviour:
