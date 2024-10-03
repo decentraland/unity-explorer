@@ -23,24 +23,20 @@ MonoBehaviour:
     m_Key: IMAGE-1
     m_Metadata:
       m_Items: []
-  - m_Id: 85537579008
+  - m_Id: 94622441472
     m_Key: IMAGE-2
     m_Metadata:
       m_Items: []
-  - m_Id: 94622441472
+  - m_Id: 104160288768
     m_Key: IMAGE-3
     m_Metadata:
       m_Items: []
-  - m_Id: 104160288768
+  - m_Id: 114549579776
     m_Key: IMAGE-4
     m_Metadata:
       m_Items: []
-  - m_Id: 114549579776
-    m_Key: IMAGE-5
-    m_Metadata:
-      m_Items: []
   - m_Id: 125765148672
-    m_Key: IMAGE-6
+    m_Key: IMAGE-5
     m_Metadata:
       m_Items: []
   m_Metadata:
@@ -71,7 +67,6 @@ MonoBehaviour:
           - es
         - m_KeyId: 85537579008
           m_TableCodes:
-          - en
           - it
           - es
         - m_KeyId: 94622441472
