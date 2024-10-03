@@ -22,7 +22,7 @@ using JobHandle = Unity.Jobs.JobHandle;
 
 namespace DCL.Landscape
 {
-    public class TerrainGenerator : IDisposable
+    public class TerrainGenerator : IDisposable, IContainParcel
     {
         private const string TERRAIN_OBJECT_NAME = "Generated Terrain";
         private const float ROOT_VERTICAL_SHIFT = -0.01f; // fix for not clipping with scene (potential) floor
@@ -106,8 +106,13 @@ namespace DCL.Landscape
             isInitialized = true;
         }
 
-        public bool Contains(Vector2Int parcel) =>
-            terrainModel.IsInsideBounds(parcel);
+        public bool Contains(Vector2Int parcel)
+        {
+            if (IsTerrainGenerated)
+                return terrainModel.IsInsideBounds(parcel);
+
+            return true;
+        }
 
         public void Dispose()
         {

@@ -17,7 +17,7 @@ using Utility;
 
 namespace DCL.Landscape
 {
-    public class WorldTerrainGenerator : IDisposable
+    public class WorldTerrainGenerator : IDisposable, IContainParcel
     {
         private const string TERRAIN_OBJECT_NAME = "World Generated Terrain";
         private const float ROOT_VERTICAL_SHIFT = -0.001f; // fix for not clipping with scene (potential) floor
@@ -57,8 +57,13 @@ namespace DCL.Landscape
                 UnityObjectUtils.SafeDestroy(rootGo);
         }
 
-        public bool Contains(Vector2Int parcel) =>
-            terrainModel.IsInsideBounds(parcel);
+        public bool Contains(Vector2Int parcel)
+        {
+            if (IsInitialized)
+                return terrainModel.IsInsideBounds(parcel);
+
+            return false;
+        }
 
         public void Initialize(TerrainGenerationData terrainGenData)
         {

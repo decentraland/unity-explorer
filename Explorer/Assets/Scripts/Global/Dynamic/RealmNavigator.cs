@@ -28,6 +28,7 @@ using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Assertions;
+using UnityEngine.Networking;
 using Utility;
 using Utility.Types;
 using static DCL.UserInAppInitializationFlow.RealFlowLoadingStatus.Stage;
@@ -200,6 +201,15 @@ namespace Global.Dynamic
             await waitForSceneReadiness;
         }
 
+        private Result IsParcelInsideTerrain(Vector2Int parcel, bool isLocal, bool isGenesis)
+        {
+            IContainParcel terrain = isLocal && !isGenesis ? worldsTerrain : genesisTerrain;
+
+            return !terrain.Contains(parcel)
+                ? Result.ErrorResult($"Parcel {parcel} is outside of the bounds.")
+                : Result.SuccessResult();
+        }
+
         public async UniTask<Result> TryInitializeTeleportToParcelAsync(Vector2Int parcel, CancellationToken ct,
             bool isLocal = false)
         {
@@ -207,29 +217,14 @@ namespace Global.Dynamic
 
             bool isGenesis = !realmController.RealmData.ScenesAreFixed;
 
+            Result parcelCheckResult = IsParcelInsideTerrain(parcel, isLocal, isGenesis);
+            if (!parcelCheckResult.Success)
+                return parcelCheckResult;
+
             if (!isLocal && !isGenesis)
             {
-                if(genesisTerrain.IsTerrainGenerated && !genesisTerrain.Contains(parcel))
-                    return Result.ErrorResult($"Parcel {parcel} is outside of the bounds.");
-
                 var url = URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Genesis));
                 return await TryChangeRealmAsync(url, ct, parcel);
-            }
-
-            {
-                if (isLocal)
-                    switch (isGenesis)
-                    {
-                        case false when worldsTerrain.IsInitialized && !worldsTerrain.Contains(parcel):
-                            return Result.ErrorResult($"Parcel {parcel} is outside of the bounds.");
-                        case true when genesisTerrain.IsTerrainGenerated && !genesisTerrain.Contains(parcel):
-                            return Result.ErrorResult($"Parcel {parcel} is outside of the bounds.");
-                    }
-                else
-                {
-                    if (genesisTerrain.IsTerrainGenerated && !genesisTerrain.Contains(parcel))
-                        return Result.ErrorResult($"Parcel {parcel} is outside of the bounds.");
-                }
             }
 
             Result loadResult = await loadingScreen.ShowWhileExecuteTaskAsync(TryTeleportAsync(parcel, ct), ct);
