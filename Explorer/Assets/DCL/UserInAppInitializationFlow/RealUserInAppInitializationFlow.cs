@@ -94,32 +94,26 @@ namespace DCL.UserInAppInitializationFlow
             ).WithHandleExceptions();
         }
 
-        public async UniTask ExecuteAsync(bool showAuthentication,
-            bool showLoading,
-            bool reloadRealm,
-            bool fromLogout,
-            World world,
-            Entity playerEntity,
-            CancellationToken ct)
+        public async UniTask ExecuteAsync(UserInAppInitializationFlowParameters parameters, CancellationToken ct)
         {
             loadingStatus.SetStage(RealFlowLoadingStatus.Stage.Init);
 
             Result result = default;
 
-            loadPlayerAvatarStartupOperation.AssignWorld(world, playerEntity);
-            restartRealmStartupOperation.EnableReload(reloadRealm);
+            loadPlayerAvatarStartupOperation.AssignWorld(parameters.World, parameters.PlayerEntity);
+            restartRealmStartupOperation.EnableReload(parameters.ReloadRealm);
 
             using var playAudioScope = UIAudioEventsBus.Instance.NewPlayAudioScope(backgroundMusic);
 
             do
             {
-                if (showAuthentication)
+                if (parameters.ShowAuthentication)
                 {
                     loadingStatus.SetStage(RealFlowLoadingStatus.Stage.AuthenticationScreenShown);
                     await ShowAuthenticationScreenAsync(ct);
                 }
 
-                if (fromLogout)
+                if (parameters.FromLogout)
                 {
                     // If we are coming from a logout, we teleport the user to Genesis Plaza
                     var teleportResult = await realmNavigator.TryInitializeTeleportToParcelAsync(Vector2Int.zero, CancellationToken.None);
@@ -127,7 +121,7 @@ namespace DCL.UserInAppInitializationFlow
                 }
                 else
                 {
-                    var loadingResult = await LoadingScreen(showLoading)
+                    var loadingResult = await LoadingScreen(parameters.ShowLoading)
                        .ShowWhileExecuteTaskAsync(
                             async parentLoadReport =>
                             {
@@ -149,9 +143,9 @@ namespace DCL.UserInAppInitializationFlow
 
                 //TODO notification popup on failure
             }
-            while (result.Success == false && showAuthentication);
+            while (result.Success == false && parameters.ShowAuthentication);
 
-            await checkOnboardingStartupOperation.MarkOnboardingAsDoneAsync(world, playerEntity, ct);
+            await checkOnboardingStartupOperation.MarkOnboardingAsDoneAsync(parameters.World, parameters.PlayerEntity, ct);
         }
 
         private static void ApplyErrorIfLoadingScreenError(ref Result result, Result showResult)

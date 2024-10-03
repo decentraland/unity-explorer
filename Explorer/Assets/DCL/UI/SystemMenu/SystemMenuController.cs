@@ -127,14 +127,18 @@ namespace DCL.UI.SystemMenu
 
                 profileCache.Remove(address);
 
-                await userInAppInitializationFlow.ExecuteAsync(true, true,
-
-                    // We have to reload the realm so the scenes are recreated when coming back to the world
-                    // The realm fetches the scene entity definitions again and creates the components in ecs
-                    // so the SceneFacade can be later attached into the entity
-                    true,
-                    true,
-                    world, playerEntity, ct);
+                await userInAppInitializationFlow.ExecuteAsync(
+                    new UserInAppInitializationFlowParameters(
+                        true,
+                        true,
+                        // We have to reload the realm so the scenes are recreated when coming back to the world
+                        // The realm fetches the scene entity definitions again and creates the components in ecs
+                        // so the SceneFacade can be later attached into the entity
+                        true,
+                        true,
+                        world,
+                        playerEntity),
+                    ct);
             }
 
             logoutCts = logoutCts.SafeRestart();

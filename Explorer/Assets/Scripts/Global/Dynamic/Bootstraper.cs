@@ -12,6 +12,7 @@ using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.UI.MainUI;
+using DCL.UserInAppInitializationFlow;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
 using Global.AppArgs;
@@ -204,12 +205,13 @@ namespace Global.Dynamic
             splashScreen.Show();
 
             await dynamicWorldContainer.UserInAppInAppInitializationFlow.ExecuteAsync(
-                debugSettings.ShowAuthentication,
-                debugSettings.ShowLoading,
-                false,
-                false,
-                globalWorld.EcsWorld,
-                playerEntity,
+                new UserInAppInitializationFlowParameters(
+                    debugSettings.ShowAuthentication,
+                    debugSettings.ShowLoading,
+                    false,
+                    false,
+                    globalWorld.EcsWorld,
+                    playerEntity),
                 ct
             );
 
