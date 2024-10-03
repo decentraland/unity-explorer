@@ -179,6 +179,8 @@ namespace DCL.Nametags
         //TODO: jobify this to improve the performance
         private async UniTask AnimateInAsync(string messageContent, CancellationToken ct)
         {
+            ct.ThrowIfCancellationRequested();
+
             SetHeightAndTextStyle(messageContent);
             isAnimatingIn = true;
             MessageContent.gameObject.SetActive(true);
@@ -247,6 +249,8 @@ namespace DCL.Nametags
 
         private async UniTask AnimateOutAsync(CancellationToken ct)
         {
+            ct.ThrowIfCancellationRequested();
+
             BubblePeak.gameObject.SetActive(false);
             backgroundFinalSize.y = Username.preferredHeight + (chatBubbleConfiguration?.nametagMarginOffsetHeight ?? 0.15f);
 
