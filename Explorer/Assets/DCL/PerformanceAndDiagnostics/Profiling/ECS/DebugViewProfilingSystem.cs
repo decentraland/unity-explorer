@@ -99,7 +99,7 @@ namespace DCL.Profiling.ECS
                            ?.SetVisibilityBinding(memoryVisibilityBinding = new DebugWidgetVisibilityBinding(true))
                             .AddSingleButton("Resources.UnloadUnusedAssets", () => Resources.UnloadUnusedAssets())
                             .AddSingleButton("GC.Collect", GC.Collect)
-                            .AddCustomMarker("Total Used Memory [MB]:", usedMemory = new ElementBinding<string>(string.Empty))
+                            .AddCustomMarker("System Used Memory [MB]:", usedMemory = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("Gc Used Memory [MB]:", gcUsedMemory = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("Memory Budget Thresholds [MB]:", memoryCheckpoints = new ElementBinding<string>(string.Empty))
                             .AddSingleButton("Memory NORMAL", () => this.memoryBudget.SimulatedMemoryUsage = MemoryUsageStatus.NORMAL)
@@ -135,7 +135,7 @@ namespace DCL.Profiling.ECS
                     framesSinceMetricsUpdate = 0;
                     UpdateFrameStatisticsView(profiler);
                 }
-                
+
 
 
                 if (frameTimingsEnabled && bottleneckDetector.IsFrameTimingSupported && bottleneckDetector.TryCapture())
@@ -220,7 +220,7 @@ namespace DCL.Profiling.ECS
                                _ => "red",
                            };
 
-            elementBinding.Value = $"<color={color}>{value})</color>";
+            elementBinding.Value = $"<color={color}>{value}</color>";
         }
 
         private static void SetFPS(ElementBinding<string> elementBinding, long value)
