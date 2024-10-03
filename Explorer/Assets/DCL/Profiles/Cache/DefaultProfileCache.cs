@@ -41,9 +41,7 @@ namespace DCL.Profiles
 
         private void UpdateProfilingCounter()
         {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
             ProfilingCounters.ProfilesInCache.Value = profiles.Count;
-#endif
         }
     }
 }

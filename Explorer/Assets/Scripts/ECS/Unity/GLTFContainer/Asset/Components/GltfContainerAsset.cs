@@ -53,9 +53,9 @@ namespace ECS.Unity.GLTFContainer.Asset.Components
         /// </summary>
         public List<SDKCollider>? DecodedVisibleSDKColliders;
 
-        private IAssetData assetData;
+        private IStreamableRefCountData assetData;
 
-        private GltfContainerAsset(GameObject root, IAssetData assetData, List<SDKCollider> invisibleColliders,
+        private GltfContainerAsset(GameObject root, IStreamableRefCountData assetData, List<SDKCollider> invisibleColliders,
             List<VisibleMeshCollider> visibleColliderMeshes, List<Renderer> renderers, List<Animation> animations,
             List<Animator> animators)
         {
@@ -90,7 +90,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Components
             ProfilingCounters.GltfContainerAssetsAmount.Value--;
         }
 
-        public static GltfContainerAsset Create(GameObject root, IAssetData assetData) =>
+        public static GltfContainerAsset Create(GameObject root, IStreamableRefCountData assetData) =>
             new (root, assetData, COLLIDERS_POOL.Get(), VISIBLE_MESH_COLLIDERS_POOL.Get(), RENDERERS_POOL.Get(), ANIMATIONS_POOL.Get(), ANIMATORS_POOL.Get());
     }
 }

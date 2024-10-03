@@ -11,7 +11,10 @@ using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
-using System;
+using ECS.StreamableLoading.Cache;
+using ECS.StreamableLoading.Common;
+using ECS.StreamableLoading.Textures;
+using UnityEngine;
 
 namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
 {
@@ -49,13 +52,15 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
         {
             if (uiBackgroundComponent.TexturePromise != null)
             {
-                uiBackgroundComponent.TexturePromise.Value.ForgetLoading(World);
+                AssetPromise<Texture2DData, GetTextureIntention> texturePromiseValue = uiBackgroundComponent.TexturePromise.Value;
+                texturePromiseValue.ForgetLoading(World);
+                texturePromiseValue.TryDereference(World);
                 uiBackgroundComponent.TexturePromise = null;
             }
 
             if (!uiBackgroundComponent.IsDisposed)
             {
-                componentPool?.Release(uiBackgroundComponent.Image);
+                componentPool.Release(uiBackgroundComponent.Image);
                 uiBackgroundComponent.Dispose();
             }
         }

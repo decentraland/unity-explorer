@@ -89,7 +89,7 @@ namespace Global.Dynamic.ChatCommands
 
             return result.Success
                 ? $"🟢 Welcome to the {worldName} world!"
-                : $"🔴 Teleport was not fully successfull to {worldName} world"!;
+                : $"🔴 Teleport was not fully successful to {worldName} world"!;
         }
 
         private string GetWorldAddress(string worldPath)
