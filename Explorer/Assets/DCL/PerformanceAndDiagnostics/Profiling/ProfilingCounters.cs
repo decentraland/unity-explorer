@@ -2,8 +2,7 @@
 
 namespace DCL.Profiling
 {
-    public static class
-        ProfilingCounters
+    public static class ProfilingCounters
     {
         private static readonly ProfilerCategory MEMORY = ProfilerCategory.Memory;
 
@@ -57,6 +56,12 @@ namespace DCL.Profiling
         public static ProfilerCounterValue<int> TexturesInCache =
             new (MEMORY, "Textures In Cache", ProfilerMarkerDataUnit.Count);
 
+        public static ProfilerCounterValue<int> TexturesReferenced =
+            new (MEMORY, "Textures Referenced", ProfilerMarkerDataUnit.Count);
+
+        public static ProfilerCounterValue<int> NFTsInCache =
+            new (MEMORY, "NFTs In Cache", ProfilerMarkerDataUnit.Count);
+
         // AudioClips cache
         public static ProfilerCounterValue<int> AudioClipsAmount =
             new (MEMORY, "AudioClips", ProfilerMarkerDataUnit.Count);
@@ -70,8 +75,11 @@ namespace DCL.Profiling
         public static ProfilerCounterValue<int> ProfilesInCache =
             new (MEMORY, "Profiles In Cache", ProfilerMarkerDataUnit.Count);
 
-        public static ProfilerCounterValue<int> ProfilesInPool =
-            new (MEMORY, "Profiles In Pool", ProfilerMarkerDataUnit.Count);
+        public static ProfilerCounterValue<int> ProfilesAmount =
+            new (MEMORY, "Profiles", ProfilerMarkerDataUnit.Count);
+
+        public static ProfilerCounterValue<int> ProfilesReferenced =
+            new (MEMORY, "Profiles Referenced", ProfilerMarkerDataUnit.Count);
 
         public static void CleanAllCounters()
         {
