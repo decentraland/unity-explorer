@@ -205,15 +205,15 @@ namespace Global.Dynamic
             splashScreen.Show();
 
             await dynamicWorldContainer.UserInAppInAppInitializationFlow.ExecuteAsync(
-                new UserInAppInitializationFlowParameters(
-                    debugSettings.ShowAuthentication,
-                    debugSettings.ShowLoading,
-                    false,
-                    false,
-                    globalWorld.EcsWorld,
-                    playerEntity),
-                ct
-            );
+                new UserInAppInitializationFlowParameters
+                {
+                    ShowAuthentication = debugSettings.ShowAuthentication,
+                    ShowLoading = debugSettings.ShowLoading,
+                    ReloadRealm = false,
+                    FromLogout = false,
+                    World = globalWorld.EcsWorld,
+                    PlayerEntity = playerEntity,
+               }, ct);
 
             OpenDefaultUI(dynamicWorldContainer.MvcManager, ct);
             splashScreen.Hide();
