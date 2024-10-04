@@ -72,7 +72,7 @@ namespace ECS.SceneLifeCycle
 
             if (localSceneDevelopment)
             {
-                await ReloadCurrentSceneFromScratch(currentScene);
+                await ReloadCurrentSceneFromScratchAsync(currentScene);
             }
             else
             {
@@ -81,7 +81,7 @@ namespace ECS.SceneLifeCycle
             }
         }
 
-        private async UniTask ReloadCurrentSceneFromScratch(ISceneFacade currentScene)
+        private async UniTask ReloadCurrentSceneFromScratchAsync(ISceneFacade currentScene)
         {
             var baseParcel = currentScene.Info.BaseParcel;
             world.Query(in new QueryDescription().WithAll<RealmComponent>(),
