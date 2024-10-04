@@ -258,6 +258,7 @@ namespace DCL.Multiplayer.Movement.Systems
 
             float speed= SpeedLimit.Get(characterControllerSettings, movementKind);
             intComp.TotalDuration = Vector3.Distance(intComp.Start.position, intComp.End.position) / speed;
+            intComp.UseMessageRotation = false;
         }
     }
 }
