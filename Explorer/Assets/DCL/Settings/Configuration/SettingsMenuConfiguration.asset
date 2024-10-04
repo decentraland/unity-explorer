@@ -83,7 +83,7 @@ MonoBehaviour:
       data:
         <View>k__BackingField: {fileID: 1404863613082391807, guid: 39458b71e0ed84549b1b280c4fb1f105, type: 3}
         <Config>k__BackingField:
-          <ModuleName>k__BackingField: Enable VSync
+          <ModuleName>k__BackingField: V-Sync
           <Description>k__BackingField: 
           <IsEnabled>k__BackingField: 1
           defaultIsOn: 0
