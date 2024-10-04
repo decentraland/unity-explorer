@@ -3,6 +3,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.Character.Components;
+using DCL.CharacterMotion.Animation;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
 using DCL.CharacterMotion.Utils;
@@ -197,7 +198,7 @@ namespace DCL.Multiplayer.Movement.Systems
                 intSettings.InterpolationType;
 
             intComp.Restart(remotePlayerMovement.PastMessage, remote, spline, characterControllerSettings);
-            AccelerateVerySlowTransition(ref intComp, settings.AccelerationTimeThreshold);
+            AccelerateVerySlowTransition(ref intComp);
 
             if (intSettings.UseBlend && isBlend)
                 SlowDownBlend(ref intComp, intSettings.MaxBlendSpeed);
@@ -243,22 +244,26 @@ namespace DCL.Multiplayer.Movement.Systems
             }
         }
 
-        private void AccelerateVerySlowTransition(ref InterpolationComponent intComp, float accelerationTimeThreshold)
+        private void AccelerateVerySlowTransition(ref InterpolationComponent intComp)
         {
-            if (intComp.TotalDuration < accelerationTimeThreshold) return;
+            if (intComp.TotalDuration < settings.AccelerationTimeThreshold) return;
+            float distance = Vector3.Distance(intComp.Start.position, intComp.End.position);
 
-            var distance = Vector3.Distance(intComp.Start.position, intComp.End.position);
+            MovementKind movementKind = MovementKind.RUN;
+            if (distance < settings.MoveKindByDistance[MovementKind.WALK])
+                movementKind = MovementKind.WALK;
+            else if (distance < settings.MoveKindByDistance[MovementKind.JOG])
+                movementKind = MovementKind.JOG;
 
-            MovementKind movementKind = distance switch
-                                        {
-                                            < 1 => MovementKind.WALK,
-                                            < 2 => MovementKind.JOG,
-                                            _ => MovementKind.RUN,
-                                        };
+            float speed = SpeedLimit.Get(characterControllerSettings, movementKind);
 
-            float speed= SpeedLimit.Get(characterControllerSettings, movementKind);
             intComp.TotalDuration = Vector3.Distance(intComp.Start.position, intComp.End.position) / speed;
             intComp.UseMessageRotation = false;
+
+            intComp.Start.movementKind = movementKind;
+            intComp.Start.animState.MovementBlendValue = (int)movementKind;
+            intComp.End.animState.MovementBlendValue = AnimationMovementBlendLogic.CalculateBlendValue( intComp.TotalDuration,  intComp.Start.animState.MovementBlendValue,
+                intComp.End.movementKind, intComp.End.velocitySqrMagnitude, characterControllerSettings);
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using DCL.CharacterMotion.Settings;
+﻿using DCL.CharacterMotion.Components;
+using DCL.CharacterMotion.Settings;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -38,5 +39,11 @@ namespace DCL.Multiplayer.Movement.Settings
         [field: SerializeField] public bool UseExtrapolation { get; set; } = true;
         [field: SerializeField] public RemotePlayerExtrapolationSettings ExtrapolationSettings { get; set; }
         [field: SerializeField] public float AccelerationTimeThreshold { get; private set; }
+        [field: SerializeField] public float IdleSlowDownSpeed { get; private set; }
+        public Dictionary<MovementKind, float> MoveKindByDistance => new()
+        {
+            { MovementKind.WALK, 1f },
+            { MovementKind.JOG, 2f },
+        };
     }
 }
