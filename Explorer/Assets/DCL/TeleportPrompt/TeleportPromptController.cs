@@ -1,4 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.Chat.Commands;
 using DCL.Diagnostics;
 using DCL.Input;
 using DCL.PlacesAPIService;
@@ -53,7 +54,8 @@ namespace DCL.TeleportPrompt
             {
                 if (result != TeleportPromptResultType.Approved)
                     return;
-                chatMessagesBus.Send($"/goto {inputData.Coords.x},{inputData.Coords.y}");
+
+                chatMessagesBus.Send($"/{ChatCommandsUtils.COMMAND_GOTO} {inputData.Coords.x},{inputData.Coords.y}");
             });
         }
 

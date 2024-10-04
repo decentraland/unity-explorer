@@ -34,8 +34,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
             analytics.Track(AnalyticsEvents.UI.MESSAGE_SENT, new JsonObject
             {
+                { "is_command", ChatCommandsHandler.StartsLikeCommand(message) },
                 // { "emoji_count", emoji_count },
-                // { "is_command", command_name },
                 // { "message", message },
                 // { "channel_mame", "nearby"}, // temporally hardcoded
                 // { "receiver_id", string.Empty} // temporal mock

@@ -35,7 +35,7 @@ namespace DCL.Chat.MessageBus
         public void Send(string message)
         {
             //If the message doesn't start as a command (with "/"), we just forward it to the chat
-            if (!chatCommandsHandler.StartsLikeCommand(message))
+            if (!ChatCommandsHandler.StartsLikeCommand(message))
             {
                 origin.Send(message);
                 return;
