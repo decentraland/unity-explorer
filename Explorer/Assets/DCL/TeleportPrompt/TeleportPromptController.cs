@@ -16,6 +16,7 @@ namespace DCL.TeleportPrompt
 {
     public partial class TeleportPromptController : ControllerBase<TeleportPromptView, TeleportPromptController.Params>
     {
+        private const string ORIGIN = "teleport promt";
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         private readonly ICursor cursor;
@@ -55,7 +56,7 @@ namespace DCL.TeleportPrompt
                 if (result != TeleportPromptResultType.Approved)
                     return;
 
-                chatMessagesBus.Send($"/{ChatCommandsUtils.COMMAND_GOTO} {inputData.Coords.x},{inputData.Coords.y}");
+                chatMessagesBus.Send($"/{ChatCommandsUtils.COMMAND_GOTO} {inputData.Coords.x},{inputData.Coords.y}", ORIGIN);
             });
         }
 

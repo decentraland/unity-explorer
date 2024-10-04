@@ -56,7 +56,7 @@ namespace DCL.Chat.MessageBus
 
         public event Action<ChatMessage>? MessageAdded;
 
-        public void Send(string message)
+        public void Send(string message, string origin)
         {
             if (cancellationTokenSource.IsCancellationRequested)
                 throw new Exception("ChatMessagesBus is disposed");

@@ -18,6 +18,7 @@ namespace DCL.Navmap
 {
     public class FloatingPanelController : IDisposable
     {
+        private const string ORIGIN = "jump in";
         private static readonly Vector2Int DEFAULT_DESTINATION_PARCEL = new (-9999, 9999);
 
         private readonly FloatingPanelView view;
@@ -198,14 +199,14 @@ namespace DCL.Navmap
             view.removeMapPinDestinationButton.gameObject.SetActive(parcelIsDestination);
             view.removeDestinationButton.gameObject.SetActive(parcelIsDestination);
         }
-        
+
         private void JumpIn(Vector2Int parcel)
         {
             OnJumpIn?.Invoke(parcel);
 
             if (destination == parcel) { mapPathEventBus.ArrivedToDestination(); }
 
-            chatMessagesBus.Send($"/{ChatCommandsUtils.COMMAND_GOTO} {parcel.x},{parcel.y}");
+            chatMessagesBus.Send($"/{ChatCommandsUtils.COMMAND_GOTO} {parcel.x},{parcel.y}", ORIGIN);
         }
 
         private void SetEmptyParcelInfo(Vector2Int parcel)
