@@ -1,4 +1,5 @@
 ﻿using DCL.Landscape.Settings;
+using DCL.Optimization.PerformanceBudgeting;
 using DCL.Quality;
 using DCL.Settings.ModuleControllers;
 using DCL.Settings.ModuleViews;
@@ -21,6 +22,7 @@ namespace DCL.Settings.Configuration
             RESOLUTION_FEATURE,
             WINDOW_MODE_FEATURE,
             FPS_LIMIT_FEATURE,
+            MEMORY_LIMIT_FEATURE,
             // add other features...
         }
 
@@ -30,7 +32,8 @@ namespace DCL.Settings.Configuration
             LandscapeData landscapeData,
             AudioMixer generalAudioMixer,
             QualitySettingsAsset qualitySettingsAsset,
-            ControlsSettingsAsset controlsSettingsAsset)
+            ControlsSettingsAsset controlsSettingsAsset,
+            ISystemMemoryCap systemMemoryCap)
         {
             var viewInstance = UnityEngine.Object.Instantiate(View, parent);
             viewInstance.Configure(Config);
@@ -55,6 +58,9 @@ namespace DCL.Settings.Configuration
                     break;
                 case DropdownFeatures.FPS_LIMIT_FEATURE:
                     controller = new FpsLimitSettingsController(viewInstance);
+                    break;
+                case DropdownFeatures.MEMORY_LIMIT_FEATURE:
+                    controller = new MemoryLimitSettingController(viewInstance, systemMemoryCap);
                     break;
                 // add other cases...
                 default: throw new ArgumentOutOfRangeException(nameof(viewInstance));

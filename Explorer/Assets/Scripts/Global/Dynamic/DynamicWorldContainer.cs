@@ -546,7 +546,8 @@ namespace Global.Dynamic
                     emoteProvider,
                     globalWorld,
                     playerEntity,
-                    container.ChatMessagesBus
+                    container.ChatMessagesBus,
+                    staticContainer.MemoryCap
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
