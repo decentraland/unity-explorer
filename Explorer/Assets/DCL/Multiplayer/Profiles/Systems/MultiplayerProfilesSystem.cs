@@ -31,7 +31,7 @@ namespace DCL.Multiplayer.Profiles.Systems
         private readonly IRemoteProfiles remoteProfiles;
         private readonly IProfileBroadcast profileBroadcast;
         private readonly IRemoteEntities remoteEntities;
-        private readonly IRemotePoses remotePoses;
+        private readonly IRemoteMetadata remoteMetadata;
         private readonly ICharacterObject characterObject;
         private readonly IReadOnlyRealFlowLoadingStatus realFlowLoadingStatus;
         private readonly IRealmData realmData;
@@ -43,7 +43,7 @@ namespace DCL.Multiplayer.Profiles.Systems
             IRemoteProfiles remoteProfiles,
             IProfileBroadcast profileBroadcast,
             IRemoteEntities remoteEntities,
-            IRemotePoses remotePoses,
+            IRemoteMetadata remoteMetadata,
             ICharacterObject characterObject,
             IReadOnlyRealFlowLoadingStatus realFlowLoadingStatus,
             IRealmData realmData
@@ -54,7 +54,7 @@ namespace DCL.Multiplayer.Profiles.Systems
             this.remoteProfiles = remoteProfiles;
             this.profileBroadcast = profileBroadcast;
             this.remoteEntities = remoteEntities;
-            this.remotePoses = remotePoses;
+            this.remoteMetadata = remoteMetadata;
             this.characterObject = characterObject;
             this.realFlowLoadingStatus = realFlowLoadingStatus;
             this.realmData = realmData;
@@ -69,11 +69,12 @@ namespace DCL.Multiplayer.Profiles.Systems
             if (!realmData.Configured)
                 return;
 
+            remoteMetadata.BroadcastSelfMetadata();
+            remoteMetadata.BroadcastSelfParcel(characterObject);
             remoteProfiles.Download(remoteAnnouncements);
             remoteEntities.TryCreate(remoteProfiles, World!);
             remoteEntities.Remove(removeIntentions, World!);
             profileBroadcast.NotifyRemotes();
-            remotePoses.BroadcastSelfPose(characterObject);
         }
     }
 }

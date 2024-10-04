@@ -1,9 +1,9 @@
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Loading.DTO;
 using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.Textures;
 using SceneRunner.Scene;
 using System.Linq;
-using UnityEngine;
 
 namespace DCL.AvatarRendering.Loading.Components
 {
@@ -18,7 +18,10 @@ namespace DCL.AvatarRendering.Loading.Components
         /// </summary>
         StreamableLoadingResult<SceneAssetBundleManifest>? ManifestResult { get; set; }
 
-        StreamableLoadingResult<Sprite>? ThumbnailAssetResult { get; set; }
+        /// <summary>
+        ///     If null - promise has never been created, otherwise it could contain the result or be un-initialized
+        /// </summary>
+        StreamableLoadingResult<SpriteData>.WithFallback? ThumbnailAssetResult { get; set; }
 
         AvatarAttachmentDTO DTO { get; }
 
@@ -26,7 +29,7 @@ namespace DCL.AvatarRendering.Loading.Components
             $"AvatarAttachment({DTO.GetHash()} | {this.GetUrn()})";
     }
 
-    public partial interface IAvatarAttachment<TModelDTO> : IAvatarAttachment
+    public interface IAvatarAttachment<TModelDTO> : IAvatarAttachment
     {
         StreamableLoadingResult<TModelDTO> Model { get; set; }
 

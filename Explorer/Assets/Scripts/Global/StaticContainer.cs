@@ -35,7 +35,6 @@ using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.Reporting;
 using Global.AppArgs;
 using SceneRunner.Mapping;
-using Sentry;
 using System.Collections.Generic;
 using System.Threading;
 using PortableExperiences.Controller;
@@ -71,6 +70,8 @@ namespace Global
         public ExposedGlobalDataContainer ExposedGlobalDataContainer { get; private set; }
         public WebRequestsContainer WebRequestsContainer { get; private set; }
         public IReadOnlyList<IDCLWorldPlugin> ECSWorldPlugins { get; private set; }
+
+        public ISystemMemoryCap MemoryCap { get; private set; }
 
         /// <summary>
         ///     Some plugins may implement both interfaces
@@ -125,6 +126,7 @@ namespace Global
             bool useRemoteAssetBundles,
             World globalWorld,
             Entity playerEntity,
+            ISystemMemoryCap memoryCap,
             CancellationToken ct)
         {
             ProfilingCounters.CleanAllCounters();
@@ -141,6 +143,7 @@ namespace Global
             container.SceneReadinessReportQueue = new SceneReadinessReportQueue(container.ScenesCache);
             container.InputBlock = new ECSInputBlock(globalWorld);
             container.assetsProvisioner = assetsProvisioner;
+            container.MemoryCap = memoryCap;
 
             var exposedPlayerTransform = new ExposedTransform();
 
@@ -160,8 +163,7 @@ namespace Global
                 new PartitionedWorldsAggregate.Factory(),
                 new ConcurrentLoadingPerformanceBudget(staticSettings.AssetsLoadingBudget),
                 new FrameTimeCapBudget(staticSettings.FrameTimeCap, profilingProvider),
-                new MemoryBudget(new StandaloneSystemMemory(), profilingProvider,
-                    Application.isEditor ? staticSettings.MemoryThresholdsEditor : staticSettings.MemoryThresholds),
+                new MemoryBudget(memoryCap, profilingProvider, staticSettings.MemoryThresholds),
                 new SceneAssetLock(),
                 new SceneMapping()
             );

@@ -10,6 +10,6 @@ namespace DCL.Multiplayer.Profiles.RemoveIntentions
         }
 
         public override string ToString() =>
-            $"(RemoveIntention: {{ WalletId: {WalletId} }})";
+            $"(RemoveIntention: (WalletId: {WalletId} ))";
     }
 }

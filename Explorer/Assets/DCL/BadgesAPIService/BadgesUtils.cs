@@ -59,6 +59,6 @@ namespace DCL.BadgesAPIService
         }
 
         public static int GetProgressPercentage(this in BadgeInfo badgeInfo) =>
-            badgeInfo.isLocked ? 0 : badgeInfo.data.progress.stepsDone * 100 / (badgeInfo.data.progress.nextStepsTarget ?? badgeInfo.data.progress.totalStepsTarget);
+            badgeInfo.data.progress.stepsDone * 100 / (badgeInfo.data.progress.nextStepsTarget ?? badgeInfo.data.progress.totalStepsTarget);
     }
 }
