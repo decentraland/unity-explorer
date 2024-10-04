@@ -23,7 +23,6 @@ namespace DCL.Navmap
 
         private readonly FloatingPanelView view;
         private readonly IPlacesAPIService placesAPIService;
-        private readonly IRealmNavigator realmNavigator;
         private readonly Dictionary<string, GameObject> categoriesDictionary;
 
         private readonly ImageController placeImageController;
@@ -46,12 +45,10 @@ namespace DCL.Navmap
             FloatingPanelView view,
             IPlacesAPIService placesAPIService,
             IWebRequestController webRequestController,
-            IRealmNavigator realmNavigator,
             IMapPathEventBus mapPathEventBus, IChatMessagesBus chatMessagesBus)
         {
             this.view = view;
             this.placesAPIService = placesAPIService;
-            this.realmNavigator = realmNavigator;
             this.mapPathEventBus = mapPathEventBus;
             this.chatMessagesBus = chatMessagesBus;
 

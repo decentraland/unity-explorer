@@ -16,7 +16,7 @@ namespace DCL.TeleportPrompt
 {
     public partial class TeleportPromptController : ControllerBase<TeleportPromptView, TeleportPromptController.Params>
     {
-        private const string ORIGIN = "teleport promt";
+        private const string ORIGIN = "teleport prompt";
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         private readonly ICursor cursor;
