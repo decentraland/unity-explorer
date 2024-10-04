@@ -15,6 +15,17 @@ namespace DCL.Nametags
         private const float DISTANCE_THRESHOLD = 0.1f;
         private const float DEFAULT_HEIGHT = 0.3f;
         private const float MESSAGE_CONTENT_FONT_SIZE = 1.3f;
+        private const float DEFAULT_MARGIN_OFFSET_HEIGHT = 0.15f;
+        private const float DEFAULT_MARGIN_OFFSET_WIDTH = 0.2f;
+        private const int DEFAULT_OPACITY_MAX_DISTANCE = 20;
+        private const int DEFAULT_ADDITIONAL_MS_PER_CHARACTER = 20;
+        private const float DEFAULT_BUBBLE_MARGIN_OFFSET_WIDTH = 0.4f;
+        private const float DEFAULT_BUBBLE_MARGIN_OFFSET_HEIGHT = 0.6f;
+        private const float DEFAULT_BUBBLE_ANIMATION_IN_DURATION = 0.5f;
+        private const float DEFAULT_BUBBLE_ANIMATION_OUT_DURATION = 0.35f;
+        private const int DEFAULT_BUBBLE_IDLE_TIME_MS = 5000;
+        private const float DEFAULT_SINGLE_EMOJI_EXTRA_HEIGHT = 0.1f;
+        private const float DEFAULT_SINGLE_EMOJI_SIZE = 3.5f;
 
         [field: SerializeField]
         public TMP_Text Username { get; private set; }
@@ -89,8 +100,8 @@ namespace DCL.Nametags
             Username.rectTransform.sizeDelta = new Vector2(Username.preferredWidth, DEFAULT_HEIGHT);
             MessageContent.color = startingTextColor;
 
-            float nametagMarginOffsetHeight = chatBubbleConfiguration?.nametagMarginOffsetHeight ?? 0.15f;
-            float nametagMarginOffsetWidth = chatBubbleConfiguration?.nametagMarginOffsetWidth ?? 0.2f;
+            float nametagMarginOffsetHeight = chatBubbleConfiguration?.nametagMarginOffsetHeight ?? DEFAULT_MARGIN_OFFSET_HEIGHT;
+            float nametagMarginOffsetWidth = chatBubbleConfiguration?.nametagMarginOffsetWidth ?? DEFAULT_MARGIN_OFFSET_WIDTH;
 
             if (hasClaimedName)
             {
@@ -113,7 +124,7 @@ namespace DCL.Nametags
             if (Math.Abs(distance - previousDistance) < DISTANCE_THRESHOLD)
                 return;
 
-            float fullOpacityMaxDistance = chatBubbleConfiguration?.fullOpacityMaxDistance ?? 20;
+            float fullOpacityMaxDistance = chatBubbleConfiguration?.fullOpacityMaxDistance ?? DEFAULT_OPACITY_MAX_DISTANCE;
 
             previousDistance = distance;
             usernameTextColor = Username.color;
@@ -160,7 +171,7 @@ namespace DCL.Nametags
                 isAnimatingIn = false;
                 isWaiting = true;
 
-                await UniTask.Delay((chatBubbleConfiguration?.bubbleIdleTime ?? 5000) + AdditionalMessageVisibilityTimeMs(chatMessage), cancellationToken: ct);
+                await UniTask.Delay((chatBubbleConfiguration?.bubbleIdleTime ?? DEFAULT_BUBBLE_IDLE_TIME_MS) + AdditionalMessageVisibilityTimeMs(chatMessage), cancellationToken: ct);
 
                 isWaiting = false;
 
@@ -174,7 +185,7 @@ namespace DCL.Nametags
         }
 
         private int AdditionalMessageVisibilityTimeMs(string chatMessage) =>
-            chatMessage.Length * (chatBubbleConfiguration?.additionalMsPerCharacter ?? 20);
+            chatMessage.Length * (chatBubbleConfiguration?.additionalMsPerCharacter ?? DEFAULT_ADDITIONAL_MS_PER_CHARACTER);
 
         //TODO: jobify this to improve the performance
         private async UniTask AnimateInAsync(string messageContent, CancellationToken ct)
@@ -204,9 +215,9 @@ namespace DCL.Nametags
             textContentInitialPosition.y = -preferredSize.y;
             MessageContentRectTransform.anchoredPosition = textContentInitialPosition;
 
-            float bubbleMarginOffsetWidth = chatBubbleConfiguration?.bubbleMarginOffsetWidth ?? 0.4f;
-            float bubbleMarginOffsetHeight = chatBubbleConfiguration?.bubbleMarginOffsetHeight ?? 0.6f;
-            float animationInDuration = chatBubbleConfiguration?.animationInDuration ?? 0.5f;
+            float bubbleMarginOffsetWidth = chatBubbleConfiguration?.bubbleMarginOffsetWidth ?? DEFAULT_BUBBLE_MARGIN_OFFSET_WIDTH;
+            float bubbleMarginOffsetHeight = chatBubbleConfiguration?.bubbleMarginOffsetHeight ?? DEFAULT_BUBBLE_MARGIN_OFFSET_HEIGHT;
+            float animationInDuration = chatBubbleConfiguration?.animationInDuration ?? DEFAULT_BUBBLE_ANIMATION_IN_DURATION;
 
             preferredSize.x = MessageContentRectTransform.sizeDelta.x + bubbleMarginOffsetWidth;
             preferredSize.y += bubbleMarginOffsetHeight;
@@ -235,8 +246,8 @@ namespace DCL.Nametags
         {
             if (messageContent.Contains("\\U") && messageContent.Length == EMOJI_LENGTH)
             {
-                additionalHeight = chatBubbleConfiguration?.singleEmojiExtraHeight ?? 0.1f;
-                MessageContent.fontSize = chatBubbleConfiguration?.singleEmojiSize ?? 3.5f;
+                additionalHeight = chatBubbleConfiguration?.singleEmojiExtraHeight ?? DEFAULT_SINGLE_EMOJI_EXTRA_HEIGHT;
+                MessageContent.fontSize = chatBubbleConfiguration?.singleEmojiSize ?? DEFAULT_SINGLE_EMOJI_SIZE;
                 MessageContent.alignment = TextAlignmentOptions.Center;
             }
             else
@@ -252,10 +263,10 @@ namespace DCL.Nametags
             ct.ThrowIfCancellationRequested();
 
             BubblePeak.gameObject.SetActive(false);
-            backgroundFinalSize.y = Username.preferredHeight + (chatBubbleConfiguration?.nametagMarginOffsetHeight ?? 0.15f);
+            backgroundFinalSize.y = Username.preferredHeight + (chatBubbleConfiguration?.nametagMarginOffsetHeight ?? DEFAULT_MARGIN_OFFSET_HEIGHT);
 
-            float nametagMarginOffsetWidth = chatBubbleConfiguration?.nametagMarginOffsetWidth ?? 0.2f;
-            float animationOutDuration = chatBubbleConfiguration?.animationOutDuration ?? 0.35f;
+            float nametagMarginOffsetWidth = chatBubbleConfiguration?.nametagMarginOffsetWidth ?? DEFAULT_MARGIN_OFFSET_WIDTH;
+            float animationOutDuration = chatBubbleConfiguration?.animationOutDuration ?? DEFAULT_BUBBLE_ANIMATION_OUT_DURATION;
 
             if (isClaimedName)
             {
@@ -278,7 +289,7 @@ namespace DCL.Nametags
 
         private float CalculatePreferredWidth(string messageContent)
         {
-            float nametagMarginOffsetWidth = chatBubbleConfiguration?.nametagMarginOffsetWidth ?? 0.2f;
+            float nametagMarginOffsetWidth = chatBubbleConfiguration?.nametagMarginOffsetWidth ?? DEFAULT_MARGIN_OFFSET_WIDTH;
 
             if (Username.preferredWidth + nametagMarginOffsetWidth + (isClaimedName ? VerifiedIcon.sizeDelta.x : 0) > MessageContent.preferredWidth)
                 return Username.preferredWidth + nametagMarginOffsetWidth + (isClaimedName ? VerifiedIcon.sizeDelta.x : 0);
