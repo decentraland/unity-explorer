@@ -21,11 +21,13 @@ namespace ECS.SceneLifeCycle.Systems
     {
         private readonly IScenesCache scenesCache;
         private readonly SceneAssetLock sceneAssetLock;
+        private readonly bool localSceneDevelopment;
 
-        internal UnloadSceneSystem(World world, IScenesCache scenesCache, SceneAssetLock sceneAssetLock) : base(world)
+        internal UnloadSceneSystem(World world, IScenesCache scenesCache, SceneAssetLock sceneAssetLock, bool localSceneDevelopment) : base(world)
         {
             this.scenesCache = scenesCache;
             this.sceneAssetLock = sceneAssetLock;
+            this.localSceneDevelopment = localSceneDevelopment;
         }
 
         protected override void Update(float t)
@@ -44,9 +46,6 @@ namespace ECS.SceneLifeCycle.Systems
         [All(typeof(DeleteEntityIntention)), None(typeof(PortableExperienceComponent))]
         private void UnloadLoadedScene(in Entity entity, ref SceneDefinitionComponent definitionComponent, ref ISceneFacade sceneFacade)
         {
-            // TODO: inject...
-            bool localSceneDevelopment = true;
-
             // Keep definition so it won't be downloaded again = Cache in ECS itself
             sceneFacade.DisposeSceneFacadeAndRemoveFromCache(scenesCache, definitionComponent.Parcels, sceneAssetLock);
 
