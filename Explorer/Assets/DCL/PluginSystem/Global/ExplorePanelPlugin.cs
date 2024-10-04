@@ -40,6 +40,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using DCL.Chat.MessageBus;
+using DCL.Optimization.PerformanceBudgeting;
 using DCL.Settings.Settings;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -88,6 +89,8 @@ namespace DCL.PluginSystem.Global
         private readonly IInputBlock inputBlock;
         private readonly IChatMessagesBus chatMessagesBus;
 
+        private readonly ISystemMemoryCap systemMemoryCap;
+
         private NavmapController? navmapController;
         private SettingsController? settingsController;
         private BackpackSubPlugin? backpackSubPlugin;
@@ -128,7 +131,8 @@ namespace DCL.PluginSystem.Global
             IEmoteProvider emoteProvider,
             Arch.Core.World world,
             Entity playerEntity,
-            IChatMessagesBus chatMessagesBus)
+            IChatMessagesBus chatMessagesBus,
+            ISystemMemoryCap systemMemoryCap)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -165,6 +169,7 @@ namespace DCL.PluginSystem.Global
             this.world = world;
             this.playerEntity = playerEntity;
             this.chatMessagesBus = chatMessagesBus;
+            this.systemMemoryCap = systemMemoryCap;
         }
 
         public void Dispose()
@@ -214,7 +219,7 @@ namespace DCL.PluginSystem.Global
             ProvidedAsset<LandscapeData> landscapeData = await assetsProvisioner.ProvideMainAssetAsync(settings.LandscapeData, ct);
             ProvidedAsset<QualitySettingsAsset> qualitySettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.QualitySettingsAsset, ct);
             ProvidedAsset<ControlsSettingsAsset> controlsSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.ControlsSettingsAsset, ct);
-            settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>(), settingsMenuConfiguration.Value, generalAudioMixer.Value, realmPartitionSettings.Value, landscapeData.Value, qualitySettingsAsset.Value, controlsSettingsAsset.Value);
+            settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>(), settingsMenuConfiguration.Value, generalAudioMixer.Value, realmPartitionSettings.Value, landscapeData.Value, qualitySettingsAsset.Value, controlsSettingsAsset.Value, systemMemoryCap);
 
             navmapController = new NavmapController(navmapView: explorePanelView.GetComponentInChildren<NavmapView>(),
                 mapRendererContainer.MapRenderer, placesAPIService, webRequestController, webBrowser, dclInput,

@@ -28,14 +28,16 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         private void ReEmit(ChatMessage obj) =>
             MessageAdded?.Invoke(obj);
 
-        public void Send(string message)
+        public void Send(string message, string origin)
         {
-            core.Send(message);
+            core.Send(message, origin);
 
             analytics.Track(AnalyticsEvents.UI.MESSAGE_SENT, new JsonObject
             {
+                { "is_command", ChatCommandsHandler.StartsLikeCommand(message) },
+                { "origin", origin },
+
                 // { "emoji_count", emoji_count },
-                // { "is_command", command_name },
                 // { "message", message },
                 // { "channel_mame", "nearby"}, // temporally hardcoded
                 // { "receiver_id", string.Empty} // temporal mock
