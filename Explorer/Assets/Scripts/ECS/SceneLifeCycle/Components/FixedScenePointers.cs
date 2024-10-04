@@ -9,18 +9,18 @@ namespace ECS.SceneLifeCycle.Components
     /// </summary>
     public struct FixedScenePointers
     {
-        public readonly AssetPromise<SceneEntityDefinition, GetSceneDefinition>[]? URNScenePromises;
-        public readonly AssetPromise<SceneDefinitions, GetSceneDefinitionList>? PointerScenesPromise;
+        public readonly AssetPromise<SceneEntityDefinition, GetSceneDefinition>[] URNScenePromises;
+        public AssetPromise<SceneDefinitions, GetSceneDefinitionList> PointerScenesPromise { get; private set; }
 
         // Quick path to avoid an iteration
         public bool AllPromisesResolved;
 
         public int EmptyParcelsLastProcessedIndex;
 
-        public FixedScenePointers(AssetPromise<SceneEntityDefinition, GetSceneDefinition>[]? urnScenePromises = null, AssetPromise<SceneDefinitions, GetSceneDefinitionList>? pointerScenesScenesPromise = null)
+        public FixedScenePointers(AssetPromise<SceneEntityDefinition, GetSceneDefinition>[] urnScenePromises, AssetPromise<SceneDefinitions, GetSceneDefinitionList> pointerScenesPromise = default)
         {
             URNScenePromises = urnScenePromises;
-            PointerScenesPromise = pointerScenesScenesPromise;
+            PointerScenesPromise = pointerScenesPromise;
             AllPromisesResolved = false;
             EmptyParcelsLastProcessedIndex = 0;
         }

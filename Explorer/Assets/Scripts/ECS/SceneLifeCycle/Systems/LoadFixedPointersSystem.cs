@@ -51,7 +51,7 @@ namespace ECS.SceneLifeCycle.Systems
                 urnScenePromises[i] = promise;
             }
 
-            AssetPromise<SceneDefinitions, GetSceneDefinitionList>? pointerScenesPromise = null;
+            AssetPromise<SceneDefinitions, GetSceneDefinitionList> pointerScenesPromise = default;
             if (realmComponent.RealmData.LocalSceneParcels is { Count: > 0 })
             {
                 pointerScenesPromise = AssetPromise<SceneDefinitions, GetSceneDefinitionList>.Create(World,
@@ -95,9 +95,9 @@ namespace ECS.SceneLifeCycle.Systems
                 }
             }
 
-            if (fixedScenePointers.PointerScenesPromise is { IsConsumed: false })
+            if (fixedScenePointers.PointerScenesPromise is {IsConsumed: false, LoadingIntention: { Pointers: { Count: > 0 } } })
             {
-                if (fixedScenePointers.PointerScenesPromise.Value.TryConsume(World, out StreamableLoadingResult<SceneDefinitions> result))
+                if (fixedScenePointers.PointerScenesPromise.TryConsume(World, out StreamableLoadingResult<SceneDefinitions> result))
                 {
                     if (result.Succeeded)
                     {

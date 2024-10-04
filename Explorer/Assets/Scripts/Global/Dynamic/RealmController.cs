@@ -159,9 +159,9 @@ namespace Global.Dynamic
                 }
             }
 
-            if (fixedScenePointers.PointerScenesPromise.HasValue)
+            if (fixedScenePointers.PointerScenesPromise.LoadingIntention.TargetCollection != null)
             {
-                foreach (SceneEntityDefinition sceneEntityDefinition in fixedScenePointers.PointerScenesPromise.Value.LoadingIntention.TargetCollection)
+                foreach (SceneEntityDefinition sceneEntityDefinition in fixedScenePointers.PointerScenesPromise.LoadingIntention.TargetCollection)
                 {
                     returnList.Add(sceneEntityDefinition);
                 }
