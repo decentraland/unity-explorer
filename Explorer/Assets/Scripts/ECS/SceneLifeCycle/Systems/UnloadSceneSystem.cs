@@ -46,9 +46,9 @@ namespace ECS.SceneLifeCycle.Systems
         [All(typeof(DeleteEntityIntention)), None(typeof(PortableExperienceComponent))]
         private void UnloadLoadedScene(in Entity entity, ref SceneDefinitionComponent definitionComponent, ref ISceneFacade sceneFacade)
         {
-            // Keep definition so it won't be downloaded again = Cache in ECS itself
             sceneFacade.DisposeSceneFacadeAndRemoveFromCache(scenesCache, definitionComponent.Parcels, sceneAssetLock);
 
+            // Keep definition so it won't be downloaded again = Cache in ECS itself
             if (!localSceneDevelopment)
                 World.Remove<ISceneFacade, VisualSceneState, DeleteEntityIntention>(entity);
         }
