@@ -6,20 +6,12 @@ using ECS.Prioritization.Components;
 using System.Threading;
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Loading.Components;
-using DCL.AvatarRendering.Loading.DTO;
 using DCL.AvatarRendering.Thumbnails.Utils;
-using DCL.Diagnostics;
 using DCL.WebRequests;
-using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
-using SceneRunner.Scene;
-using System;
 using UnityEngine;
-using Utility;
-using ThumbnailPromise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.Texture2D, ECS.StreamableLoading.Textures.GetTextureIntention>;
 using IAvatarAttachment = DCL.AvatarRendering.Loading.Components.IAvatarAttachment;
-using Promise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.Texture2D, ECS.StreamableLoading.Textures.GetTextureIntention>;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 
 namespace DCL.AvatarRendering.Wearables
@@ -40,19 +32,12 @@ namespace DCL.AvatarRendering.Wearables
             this.requestController = requestController;
         }
 
-        public async UniTask<Sprite?> GetAsync(IAvatarAttachment avatarAttachment, CancellationToken ct)
+        public async UniTask<Sprite> GetAsync(IAvatarAttachment avatarAttachment, CancellationToken ct)
         {
-            if (avatarAttachment.ThumbnailAssetResult != null)
+            if (avatarAttachment.ThumbnailAssetResult is { IsInitialized: true })
                 return avatarAttachment.ThumbnailAssetResult.Value.Asset;
 
-            bool promiseAlreadyCreated = false;
-
-            world.Query(in new QueryDescription().WithAll<IAvatarAttachment, AssetBundlePromise, IPartitionComponent>(),
-                (ref IAvatarAttachment attachment, ref AssetBundlePromise promise) =>
-                {
-                    if (attachment.GetThumbnail().Equals(avatarAttachment.GetThumbnail()))
-                        promiseAlreadyCreated = true;
-                });
+            bool promiseAlreadyCreated = avatarAttachment.ThumbnailAssetResult != null;
 
             // Create a new promise bound to the current cancellation token
             // if the promise was created before, we should not override its cancellation
@@ -70,9 +55,7 @@ namespace DCL.AvatarRendering.Wearables
 
             // We dont create an async task from the promise since it needs to be consumed at the proper system, not here
             // The promise's result will eventually get replicated into the avatar attachment
-            await UniTask.WaitWhile(() => avatarAttachment.ThumbnailAssetResult == null, cancellationToken: ct);
-
-            return avatarAttachment.ThumbnailAssetResult!.Value.Asset;
+            return await avatarAttachment.WaitForThumbnailAsync(0, ct);
         }
     }
 }

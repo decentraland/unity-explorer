@@ -39,12 +39,7 @@ namespace ECS.StreamableLoading.Tests
 
         private Promise NewPromise(World world)
         {
-            var intention = new GetTextureIntention
-            {
-                CommonArguments = new CommonLoadingArguments(successPath),
-                FilterMode = FilterMode.Bilinear,
-                IsReadable = true,
-            };
+            var intention = new GetTextureIntention(successPath, TextureWrapMode.Repeat, FilterMode.Bilinear, true);
 
             var partition = PartitionComponent.TOP_PRIORITY;
             return Promise.Create(world, intention, partition);

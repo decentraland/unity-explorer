@@ -38,9 +38,9 @@ namespace DCL.Chat.MessageBus
             MessageAdded?.Invoke(obj);
         }
 
-        public void Send(string message)
+        public void Send(string message, string origin)
         {
-            origin.Send(message);
+            this.origin.Send(message, origin);
             SendSelfAsync(message).Forget();
         }
 

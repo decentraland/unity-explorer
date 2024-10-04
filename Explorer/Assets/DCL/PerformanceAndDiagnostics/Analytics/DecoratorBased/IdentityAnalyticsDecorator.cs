@@ -2,7 +2,6 @@
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using System.Threading;
-using UnityEngine;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics
 {

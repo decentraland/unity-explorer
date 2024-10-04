@@ -8,6 +8,7 @@ using DCL.AuthenticationScreenFlow;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.Input.Component;
+using DCL.Optimization.PerformanceBudgeting;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.SceneLoadingScreens.SplashScreen;
@@ -89,6 +90,7 @@ namespace Global.Dynamic
         private async UniTask InitializeFlowAsync(CancellationToken ct)
         {
             var applicationParametersParser = new ApplicationParametersParser(Environment.GetCommandLineArgs());
+            ISystemMemoryCap memoryCap = new SystemMemoryCap(MemoryCapMode.MAX_SYSTEM_MEMORY); // we use max memory on the loading screen
 
             settings.ApplyConfig(applicationParametersParser);
             launchSettings.ApplyConfig(applicationParametersParser);
@@ -110,7 +112,7 @@ namespace Global.Dynamic
 
                 bool isLoaded;
                 Entity playerEntity = world.Create(new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY));
-                (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugViewsCatalog, playerEntity, ct);
+                (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugViewsCatalog, playerEntity, memoryCap, ct);
 
                 if (!isLoaded)
                 {
@@ -154,6 +156,8 @@ namespace Global.Dynamic
                 //The logo is used only at first launch, so we can safely release it after the game is loaded
                 logoAnimation.StopPlayback();
                 logoAnimation.runtimeAnimatorController = null;
+
+                memoryCap.Mode = MemoryCapMode.FROM_SETTINGS;
                 RestoreInputs();
             }
             catch (OperationCanceledException)

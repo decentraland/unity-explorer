@@ -1,6 +1,5 @@
 ﻿using DCL.Landscape.Settings;
 using DCL.Settings.ModuleViews;
-using System;
 
 namespace DCL.Settings.ModuleControllers
 {

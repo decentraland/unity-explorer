@@ -1,7 +1,6 @@
 ﻿using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
-using DCL.AsyncLoadReporting;
 using DCL.DebugUtilities;
 using DCL.Landscape;
 using DCL.Landscape.Config;

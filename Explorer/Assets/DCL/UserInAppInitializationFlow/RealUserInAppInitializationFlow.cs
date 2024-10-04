@@ -29,6 +29,7 @@ namespace DCL.UserInAppInitializationFlow
         private readonly RealFlowLoadingStatus loadingStatus;
         private readonly IMVCManager mvcManager;
         private readonly AudioClipConfig backgroundMusic;
+        private readonly IRealmNavigator realmNavigator;
         private readonly ILoadingScreen loadingScreen;
         private readonly ISelfProfile selfProfile;
 
@@ -63,6 +64,7 @@ namespace DCL.UserInAppInitializationFlow
             this.loadingStatus = loadingStatus;
             this.mvcManager = mvcManager;
             this.backgroundMusic = backgroundMusic;
+            this.realmNavigator = realmNavigator;
             this.loadingScreen = loadingScreen;
             this.selfProfile = selfProfile;
 
@@ -92,54 +94,58 @@ namespace DCL.UserInAppInitializationFlow
             ).WithHandleExceptions();
         }
 
-        public async UniTask ExecuteAsync(bool showAuthentication,
-            bool showLoading,
-            bool reloadRealm,
-            World world,
-            Entity playerEntity,
-            CancellationToken ct)
+        public async UniTask ExecuteAsync(UserInAppInitializationFlowParameters parameters, CancellationToken ct)
         {
             loadingStatus.SetStage(RealFlowLoadingStatus.Stage.Init);
 
             Result result = default;
 
-            loadPlayerAvatarStartupOperation.AssignWorld(world, playerEntity);
-            restartRealmStartupOperation.EnableReload(reloadRealm);
+            loadPlayerAvatarStartupOperation.AssignWorld(parameters.World, parameters.PlayerEntity);
+            restartRealmStartupOperation.EnableReload(parameters.ReloadRealm);
 
             using var playAudioScope = UIAudioEventsBus.Instance.NewPlayAudioScope(backgroundMusic);
 
             do
             {
-                if (showAuthentication)
+                if (parameters.ShowAuthentication)
                 {
                     loadingStatus.SetStage(RealFlowLoadingStatus.Stage.AuthenticationScreenShown);
                     await ShowAuthenticationScreenAsync(ct);
                 }
 
-                var loadingResult = await LoadingScreen(showLoading)
-                   .ShowWhileExecuteTaskAsync(
-                        async parentLoadReport =>
-                        {
-                            result = await startupOperation.ExecuteAsync(parentLoadReport, ct);
+                if (parameters.FromLogout)
+                {
+                    // If we are coming from a logout, we teleport the user to Genesis Plaza
+                    var teleportResult = await realmNavigator.TryInitializeTeleportToParcelAsync(Vector2Int.zero, CancellationToken.None);
+                    result = teleportResult.Success ? teleportResult : Result.ErrorResult(teleportResult.ErrorMessage);
+                }
+                else
+                {
+                    var loadingResult = await LoadingScreen(parameters.ShowLoading)
+                       .ShowWhileExecuteTaskAsync(
+                            async parentLoadReport =>
+                            {
+                                result = await startupOperation.ExecuteAsync(parentLoadReport, ct);
 
-                            if (result.Success)
-                                parentLoadReport.SetProgress(loadingStatus.SetStage(RealFlowLoadingStatus.Stage.Completed));
+                                if (result.Success)
+                                    parentLoadReport.SetProgress(loadingStatus.SetStage(RealFlowLoadingStatus.Stage.Completed));
 
-                            return result;
-                        },
-                        ct
-                    );
+                                return result;
+                            },
+                            ct
+                        );
 
-                ApplyErrorIfLoadingScreenError(ref result, loadingResult);
+                    ApplyErrorIfLoadingScreenError(ref result, loadingResult);
+                }
 
                 if (result.Success == false)
                     ReportHub.LogError(ReportCategory.DEBUG, result.ErrorMessage!);
 
                 //TODO notification popup on failure
             }
-            while (result.Success == false && showAuthentication);
+            while (result.Success == false && parameters.ShowAuthentication);
 
-            await checkOnboardingStartupOperation.MarkOnboardingAsDoneAsync(world, playerEntity, ct);
+            await checkOnboardingStartupOperation.MarkOnboardingAsDoneAsync(parameters.World, parameters.PlayerEntity, ct);
         }
 
         private static void ApplyErrorIfLoadingScreenError(ref Result result, Result showResult)
