@@ -10,6 +10,7 @@ using MVC;
 using System.Threading;
 using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.HealthChecks;
 using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.UserInAppInitializationFlow.StartupOperations;
@@ -19,6 +20,7 @@ using ECS.SceneLifeCycle.Realm;
 using Global.AppArgs;
 using Global.Dynamic.DebugSettings;
 using PortableExperiences.Controller;
+using System;
 using UnityEngine;
 using Utility.Types;
 
@@ -31,7 +33,7 @@ namespace DCL.UserInAppInitializationFlow
         private readonly AudioClipConfig backgroundMusic;
         private readonly IRealmNavigator realmNavigator;
         private readonly ILoadingScreen loadingScreen;
-        private readonly ISelfProfile selfProfile;
+        private readonly IRoomHub roomHub;
 
         private readonly LoadPlayerAvatarStartupOperation loadPlayerAvatarStartupOperation;
         private readonly CheckOnboardingStartupOperation checkOnboardingStartupOperation;
@@ -58,7 +60,8 @@ namespace DCL.UserInAppInitializationFlow
             IRealmController realmController,
             IAppArgs appParameters,
             IDebugSettings debugSettings,
-            IPortableExperiencesController portableExperiencesController
+            IPortableExperiencesController portableExperiencesController,
+            IRoomHub roomHub
         )
         {
             this.loadingStatus = loadingStatus;
@@ -66,7 +69,7 @@ namespace DCL.UserInAppInitializationFlow
             this.backgroundMusic = backgroundMusic;
             this.realmNavigator = realmNavigator;
             this.loadingScreen = loadingScreen;
-            this.selfProfile = selfProfile;
+            this.roomHub = roomHub;
 
             var ensureLivekitConnectionStartupOperation = new EnsureLivekitConnectionStartupOperation(loadingStatus, livekitHealthCheck);
             var initializeFeatureFlagsStartupOperation = new InitializeFeatureFlagsStartupOperation(loadingStatus, featureFlagsProvider, web3IdentityCache, decentralandUrlsSource, appParameters);
@@ -107,6 +110,10 @@ namespace DCL.UserInAppInitializationFlow
 
             do
             {
+                if (parameters.FromLogout)
+                    // Disconnect current livekit connection on logout so the avatar is removed from other peers
+                    await roomHub.StopIfNotAsync().Timeout(TimeSpan.FromSeconds(10));
+
                 if (parameters.ShowAuthentication)
                 {
                     loadingStatus.SetStage(RealFlowLoadingStatus.Stage.AuthenticationScreenShown);
