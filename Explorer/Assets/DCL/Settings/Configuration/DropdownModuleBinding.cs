@@ -38,33 +38,18 @@ namespace DCL.Settings.Configuration
             var viewInstance = UnityEngine.Object.Instantiate(View, parent);
             viewInstance.Configure(Config);
 
-            SettingsFeatureController controller;
-            switch (Feature)
-            {
-                case DropdownFeatures.GRAPHICS_QUALITY_FEATURE:
-                    controller = new GraphicsQualitySettingsController(viewInstance, realmPartitionSettingsAsset, landscapeData, qualitySettingsAsset);
-                    break;
-                case DropdownFeatures.CAMERA_LOCK_FEATURE:
-                    controller = new CameraLockSettingsController(viewInstance);
-                    break;
-                case DropdownFeatures.CAMERA_SHOULDER_FEATURE:
-                    controller = new CameraShoulderSettingsController(viewInstance);
-                    break;
-                case DropdownFeatures.RESOLUTION_FEATURE:
-                    controller = new ResolutionSettingsController(viewInstance);
-                    break;
-                case DropdownFeatures.WINDOW_MODE_FEATURE:
-                    controller = new WindowModeSettingsController(viewInstance);
-                    break;
-                case DropdownFeatures.FPS_LIMIT_FEATURE:
-                    controller = new FpsLimitSettingsController(viewInstance);
-                    break;
-                case DropdownFeatures.MEMORY_LIMIT_FEATURE:
-                    controller = new MemoryLimitSettingController(viewInstance, systemMemoryCap);
-                    break;
-                // add other cases...
-                default: throw new ArgumentOutOfRangeException(nameof(viewInstance));
-            }
+            SettingsFeatureController controller = Feature switch
+                                                   {
+                                                       DropdownFeatures.GRAPHICS_QUALITY_FEATURE => new GraphicsQualitySettingsController(viewInstance, realmPartitionSettingsAsset, landscapeData, qualitySettingsAsset),
+                                                       DropdownFeatures.CAMERA_LOCK_FEATURE => new CameraLockSettingsController(viewInstance),
+                                                       DropdownFeatures.CAMERA_SHOULDER_FEATURE => new CameraShoulderSettingsController(viewInstance),
+                                                       DropdownFeatures.RESOLUTION_FEATURE => new ResolutionSettingsController(viewInstance),
+                                                       DropdownFeatures.WINDOW_MODE_FEATURE => new WindowModeSettingsController(viewInstance),
+                                                       DropdownFeatures.FPS_LIMIT_FEATURE => new FpsLimitSettingsController(viewInstance),
+                                                       DropdownFeatures.MEMORY_LIMIT_FEATURE => new MemoryLimitSettingController(viewInstance, systemMemoryCap),
+                                                       // add other cases...
+                                                       _ => throw new ArgumentOutOfRangeException(nameof(viewInstance))
+                                                   };
 
             controller.SetView(viewInstance);
             return controller;

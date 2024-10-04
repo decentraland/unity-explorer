@@ -40,39 +40,20 @@ namespace DCL.Settings.Configuration
             var viewInstance = UnityEngine.Object.Instantiate(View, parent);
             viewInstance.Configure(Config);
 
-            SettingsFeatureController controller;
-            switch (Feature)
-            {
-                case SliderFeatures.SCENE_DISTANCE_FEATURE:
-                    controller = new SceneDistanceSettingsController(viewInstance, realmPartitionSettingsAsset);
-                    break;
-                case SliderFeatures.ENVIRONMENT_DISTANCE_FEATURE:
-                    controller = new EnvironmentDistanceSettingsController(viewInstance, landscapeData);
-                    break;
-                case SliderFeatures.MOUSE_VERTICAL_SENSITIVITY_FEATURE:
-                    controller = new MouseVerticalSensitivitySettingsController(viewInstance, controlsSettingsAsset);
-                    break;
-                case SliderFeatures.MOUSE_HORIZONTAL_SENSITIVITY_FEATURE:
-                    controller = new MouseHorizontalSensitivitySettingsController(viewInstance, controlsSettingsAsset);
-                    break;
-                case SliderFeatures.MASTER_VOLUME_FEATURE:
-                    controller = new MasterVolumeSettingsController(viewInstance, generalAudioMixer);
-                    break;
-                case SliderFeatures.WORLD_SOUNDS_VOLUME_FEATURE:
-                    controller = new WorldSoundsVolumeSettingsController(viewInstance, generalAudioMixer);
-                    break;
-                case SliderFeatures.MUSIC_VOLUME_FEATURE:
-                    controller = new MusicVolumeSettingsController(viewInstance, generalAudioMixer);
-                    break;
-                case SliderFeatures.UI_SOUNDS_VOLUME_FEATURE:
-                    controller = new UISoundsVolumeSettingsController(viewInstance, generalAudioMixer);
-                    break;
-                case SliderFeatures.AVATAR_SOUNDS_VOLUME_FEATURE:
-                    controller = new AvatarSoundsVolumeSettingsController(viewInstance, generalAudioMixer);
-                    break;
-                // add other cases...
-                default: throw new ArgumentOutOfRangeException(nameof(viewInstance));
-            }
+            SettingsFeatureController controller = Feature switch
+                                                   {
+                                                       SliderFeatures.SCENE_DISTANCE_FEATURE => new SceneDistanceSettingsController(viewInstance, realmPartitionSettingsAsset),
+                                                       SliderFeatures.ENVIRONMENT_DISTANCE_FEATURE => new EnvironmentDistanceSettingsController(viewInstance, landscapeData),
+                                                       SliderFeatures.MOUSE_VERTICAL_SENSITIVITY_FEATURE => new MouseVerticalSensitivitySettingsController(viewInstance, controlsSettingsAsset),
+                                                       SliderFeatures.MOUSE_HORIZONTAL_SENSITIVITY_FEATURE => new MouseHorizontalSensitivitySettingsController(viewInstance, controlsSettingsAsset),
+                                                       SliderFeatures.MASTER_VOLUME_FEATURE => new MasterVolumeSettingsController(viewInstance, generalAudioMixer),
+                                                       SliderFeatures.WORLD_SOUNDS_VOLUME_FEATURE => new WorldSoundsVolumeSettingsController(viewInstance, generalAudioMixer),
+                                                       SliderFeatures.MUSIC_VOLUME_FEATURE => new MusicVolumeSettingsController(viewInstance, generalAudioMixer),
+                                                       SliderFeatures.UI_SOUNDS_VOLUME_FEATURE => new UISoundsVolumeSettingsController(viewInstance, generalAudioMixer),
+                                                       SliderFeatures.AVATAR_SOUNDS_VOLUME_FEATURE => new AvatarSoundsVolumeSettingsController(viewInstance, generalAudioMixer),
+                                                       // add other cases...
+                                                       _ => throw new ArgumentOutOfRangeException(nameof(viewInstance))
+                                                   };
 
             controller.SetView(viewInstance);
             return controller;

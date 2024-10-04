@@ -33,18 +33,13 @@ namespace DCL.Settings.Configuration
             var viewInstance = UnityEngine.Object.Instantiate(View, parent);
             viewInstance.Configure(Config);
 
-            SettingsFeatureController controller;
-            switch (Feature)
-            {
-                case ToggleFeatures.CHAT_SOUNDS_FEATURE:
-                    controller = new ChatSoundsSettingsController(viewInstance, generalAudioMixer);
-                    break;
-                case ToggleFeatures.GRAPHICS_VSYNC_TOGGLE_FEATURE:
-                    controller = new GraphicsVSyncController(viewInstance);
-                    break;
-                // add other cases...
-                default: throw new ArgumentOutOfRangeException(nameof(viewInstance));
-            }
+            SettingsFeatureController controller = Feature switch
+                                                   {
+                                                       ToggleFeatures.CHAT_SOUNDS_FEATURE => new ChatSoundsSettingsController(viewInstance, generalAudioMixer),
+                                                       ToggleFeatures.GRAPHICS_VSYNC_TOGGLE_FEATURE => new GraphicsVSyncController(viewInstance),
+                                                       // add other cases...
+                                                       _ => throw new ArgumentOutOfRangeException(nameof(viewInstance))
+                                                   };
 
             controller.SetView(viewInstance);
             return controller;
