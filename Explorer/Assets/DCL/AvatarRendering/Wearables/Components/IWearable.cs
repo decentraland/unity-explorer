@@ -1,11 +1,8 @@
 ﻿using DCL.AvatarRendering.Loading.Components;
-using DCL.AvatarRendering.Loading.DTO;
 using DCL.AvatarRendering.Wearables.Helpers;
 using ECS.StreamableLoading.Common.Components;
-using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
-using UnityEngine;
 
 namespace DCL.AvatarRendering.Wearables.Components
 {

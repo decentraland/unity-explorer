@@ -8,6 +8,7 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Poses;
+using DCL.Optimization.PerformanceBudgeting;
 using DCL.PluginSystem;
 using DCL.Profiles;
 using DCL.Web3;
@@ -56,6 +57,7 @@ namespace Global.Tests.PlayMode
                 false,
                 World.Create(),
                 new Entity(),
+                new SystemMemoryCap(MemoryCapMode.MAX_SYSTEM_MEMORY),
                 ct);
 
             if (!success)

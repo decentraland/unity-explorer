@@ -20,12 +20,15 @@ using System;
 using System.Linq;
 using System.Threading;
 using DCL.Diagnostics;
-using DCL.Roads.Components;
+using DCL.Ipfs;
+using ECS.SceneLifeCycle.SceneDefinition;
+using ECS.StreamableLoading.Common;
 using Global.Dynamic.TeleportOperations;
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Assertions;
+using UnityEngine.Networking;
 using Utility;
 using Utility.Types;
 using static DCL.UserInAppInitializationFlow.RealFlowLoadingStatus.Stage;
@@ -54,10 +57,10 @@ namespace Global.Dynamic
         private URLDomain currentRealm;
         private Vector2Int currentParcel;
 
-        public event Action<bool>? RealmChanged;
-
         private readonly ITeleportOperation[] realmChangeOperations;
         private readonly ITeleportOperation teleportInSameRealmOperation;
+
+        public event Action<bool>? RealmChanged;
 
         public RealmNavigator(
             ILoadingScreen loadingScreen,
@@ -102,7 +105,7 @@ namespace Global.Dynamic
                 new LoadLandscapeTeleportOperation(this),
                 new PrewarmRoadAssetPoolsTeleportOperation(realmController, roadsPlugin),
                 new MoveToParcelInNewRealmTeleportOperation(this),
-                new RestartRoomAsyncTeleportOperation(roomHub, livekitTimeout)
+                new RestartRoomAsyncTeleportOperation(roomHub, livekitTimeout),
             };
 
             teleportInSameRealmOperation = new MoveToParcelInSameRealmTeleportOperation(this);
@@ -119,6 +122,7 @@ namespace Global.Dynamic
         public async UniTask<bool> CheckRealmIsReacheableAsync(URLDomain realm, CancellationToken ct)
         {
             ct.ThrowIfCancellationRequested();
+
             if (!await realmController.IsReachableAsync(realm, ct))
                 return false;
 
@@ -138,6 +142,7 @@ namespace Global.Dynamic
             {
                 if (!globalWorld.Has<CameraSamplingData>(cameraEntity.Object))
                     globalWorld.Add(cameraEntity.Object, cameraSamplingData);
+
                 ReportHub.LogError(ReportCategory.REALM,
                     $"Error trying to teleport to a realm {realm}: {loadResult.ErrorMessage}");
             }
@@ -157,7 +162,7 @@ namespace Global.Dynamic
                 {
                     CurrentDestinationParcel = parcelToTeleport,
                     CurrentDestinationRealm = realm,
-                    ParentReport = parentLoadReport
+                    ParentReport = parentLoadReport,
                 };
 
                 for (int attempt = 0; attempt < MAX_REALM_CHANGE_RETRIES; attempt++)
@@ -194,11 +199,12 @@ namespace Global.Dynamic
                 teleportParams.CurrentDestinationRealm = currentRealm;
                 teleportParams.CurrentDestinationParcel = currentParcel;
 
-                foreach (var realmChangeOperation in realmChangeOperations)
+                foreach (ITeleportOperation realmChangeOperation in realmChangeOperations)
                 {
                     try
                     {
-                        var currentOperationResult = await realmChangeOperation.ExecuteAsync(teleportParams, ct);
+                        Result currentOperationResult = await realmChangeOperation.ExecuteAsync(teleportParams, ct);
+
                         if (!currentOperationResult.Success)
                         {
                             parentLoadReport.SetProgress(1);
@@ -219,7 +225,7 @@ namespace Global.Dynamic
         public async UniTask InitializeTeleportToSpawnPointAsync(AsyncLoadProcessReport teleportLoadReport,
             CancellationToken ct, Vector2Int parcelToTeleport)
         {
-            var isGenesis = !realmController.RealmData.ScenesAreFixed;
+            bool isGenesis = !realmController.RealmData.ScenesAreFixed;
             UniTask waitForSceneReadiness;
 
             if (isGenesis)
@@ -233,12 +239,25 @@ namespace Global.Dynamic
             await waitForSceneReadiness;
         }
 
+        private Result IsParcelInsideTerrain(Vector2Int parcel, bool isLocal, bool isGenesis)
+        {
+            IContainParcel terrain = isLocal && !isGenesis ? worldsTerrain : genesisTerrain;
+
+            return !terrain.Contains(parcel)
+                ? Result.ErrorResult($"Parcel {parcel} is outside of the bounds.")
+                : Result.SuccessResult();
+        }
+
         public async UniTask<Result> TryInitializeTeleportToParcelAsync(Vector2Int parcel, CancellationToken ct,
             bool isLocal = false)
         {
             ct.ThrowIfCancellationRequested();
 
-            var isGenesis = !realmController.RealmData.ScenesAreFixed;
+            bool isGenesis = !realmController.RealmData.ScenesAreFixed;
+
+            Result parcelCheckResult = IsParcelInsideTerrain(parcel, isLocal, isGenesis);
+            if (!parcelCheckResult.Success)
+                return parcelCheckResult;
 
             if (!isLocal && !isGenesis)
             {
@@ -246,12 +265,14 @@ namespace Global.Dynamic
                 return await TryChangeRealmAsync(url, ct, parcel);
             }
 
-            var loadResult = await loadingScreen.ShowWhileExecuteTaskAsync(TryTeleportAsync(parcel, ct), ct);
+            Result loadResult = await loadingScreen.ShowWhileExecuteTaskAsync(TryTeleportAsync(parcel, ct), ct);
+
             if (!loadResult.Success)
             {
                 ReportHub.LogError(ReportCategory.SCENE_LOADING,
                     $"Error trying to teleport to a parcel {parcel}: {loadResult.ErrorMessage}");
             }
+
             return loadResult;
         }
 
@@ -261,14 +282,17 @@ namespace Global.Dynamic
             {
                 ct.ThrowIfCancellationRequested();
                 parentLoadReport.SetProgress(RealFlowLoadingStatus.PROGRESS[LandscapeLoaded]);
+
                 var teleportParams = new TeleportParams
                 {
                     ParentReport = parentLoadReport,
-                    CurrentDestinationParcel = parcel
+                    CurrentDestinationParcel = parcel,
                 };
+
                 try
                 {
-                    var currentOperationResult = await teleportInSameRealmOperation.ExecuteAsync(teleportParams, ct);
+                    Result currentOperationResult = await teleportInSameRealmOperation.ExecuteAsync(teleportParams, ct);
+
                     if (!currentOperationResult.Success)
                     {
                         parentLoadReport.SetProgress(1);
@@ -289,7 +313,7 @@ namespace Global.Dynamic
         {
             if (landscapeEnabled)
             {
-                var isGenesis = !realmController.RealmData.ScenesAreFixed;
+                bool isGenesis = !realmController.RealmData.ScenesAreFixed;
 
                 if (isGenesis)
                 {
@@ -305,6 +329,7 @@ namespace Global.Dynamic
                 else
                 {
                     genesisTerrain.Hide();
+
                     await GenerateWorldTerrainAsync((uint)realmController.RealmData.GetHashCode(), landscapeLoadReport,
                         ct);
                 }
@@ -313,7 +338,7 @@ namespace Global.Dynamic
 
         public async UniTask SwitchMiscVisibilityAsync()
         {
-            var isGenesis = !realmController.RealmData.ScenesAreFixed;
+            bool isGenesis = !realmController.RealmData.ScenesAreFixed;
 
             RealmChanged?.Invoke(isGenesis);
             mapRenderer.SetSharedLayer(MapLayer.PlayerMarker, isGenesis);
@@ -324,15 +349,16 @@ namespace Global.Dynamic
         public async UniTask<UniTask> TeleportToParcelAsync(Vector2Int parcel, AsyncLoadProcessReport processReport,
             CancellationToken ct)
         {
-            var waitForSceneReadiness =
+            WaitForSceneReadiness? waitForSceneReadiness =
                 await teleportController.TeleportToSceneSpawnPointAsync(parcel, processReport, ct);
+
             return waitForSceneReadiness.ToUniTask(ct);
         }
 
         private async UniTask<UniTask> TeleportToWorldSpawnPointAsync(Vector2Int parcelToTeleport,
             AsyncLoadProcessReport processReport, CancellationToken ct)
         {
-            var promises = await realmController.WaitForFixedScenePromisesAsync(ct);
+            AssetPromise<SceneEntityDefinition, GetSceneDefinition>[]? promises = await realmController.WaitForFixedScenePromisesAsync(ct);
 
             if (!promises.Any(p =>
                     p.Result.HasValue
@@ -340,8 +366,9 @@ namespace Global.Dynamic
                 ))
                 parcelToTeleport = promises[0].Result!.Value.Asset!.metadata.scene.DecodedBase;
 
-            var waitForSceneReadiness =
+            WaitForSceneReadiness? waitForSceneReadiness =
                 await teleportController.TeleportToSceneSpawnPointAsync(parcelToTeleport, processReport, ct);
+
             return waitForSceneReadiness.ToUniTask(ct);
         }
 
@@ -358,19 +385,19 @@ namespace Global.Dynamic
             if (!worldsTerrain.IsInitialized)
                 return;
 
-            var promises = await realmController.WaitForFixedScenePromisesAsync(ct);
+            AssetPromise<SceneEntityDefinition, GetSceneDefinition>[]? promises = await realmController.WaitForFixedScenePromisesAsync(ct);
 
             var decodedParcelsAmount = 0;
 
-            foreach (var promise in promises)
+            foreach (AssetPromise<SceneEntityDefinition, GetSceneDefinition> promise in promises)
                 decodedParcelsAmount += promise.Result!.Value.Asset!.metadata.scene.DecodedParcels.Count;
 
             using (var ownedParcels =
                    new NativeParallelHashSet<int2>(decodedParcelsAmount, AllocatorManager.Persistent))
             {
-                foreach (var promise in promises)
+                foreach (AssetPromise<SceneEntityDefinition, GetSceneDefinition> promise in promises)
                 {
-                    foreach (var parcel in promise.Result!.Value.Asset!.metadata.scene.DecodedParcels)
+                    foreach (Vector2Int parcel in promise.Result!.Value.Asset!.metadata.scene.DecodedParcels)
                         ownedParcels.Add(parcel.ToInt2());
                 }
 
