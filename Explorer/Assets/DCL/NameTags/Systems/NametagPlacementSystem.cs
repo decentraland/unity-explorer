@@ -95,10 +95,10 @@ namespace DCL.Nametags
         }
 
         [Query]
-        [All(typeof(AvatarBase), typeof(NametagView))]
-        private void EnableTag(in NametagView nametagView)
+        [All(typeof(AvatarBase), typeof(NametagView), typeof(AvatarCustomSkinningComponent))]
+        private void EnableTag(NametagView nametagView, AvatarBase avatar)
         {
-            if (nametagView.isActiveAndEnabled)
+            if (nametagView.isActiveAndEnabled || avatar.AvatarSkinnedMeshRenderer == null)
                 return;
 
             nametagView.gameObject.SetActive(true);
