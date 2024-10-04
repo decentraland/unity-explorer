@@ -37,5 +37,6 @@ namespace DCL.Multiplayer.Movement.Settings
         [field: Header("EXTRAPOLATION")]
         [field: SerializeField] public bool UseExtrapolation { get; set; } = true;
         [field: SerializeField] public RemotePlayerExtrapolationSettings ExtrapolationSettings { get; set; }
+        [field: SerializeField] public float AccelerationTimeThreshold { get; private set; }
     }
 }

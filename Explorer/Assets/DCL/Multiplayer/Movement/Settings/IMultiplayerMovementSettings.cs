@@ -26,5 +26,6 @@ namespace DCL.Multiplayer.Movement.Settings
         // EXTRAPOLATION
         bool UseExtrapolation { get; }
         RemotePlayerExtrapolationSettings ExtrapolationSettings { get; }
+        float AccelerationTimeThreshold { get; }
     }
 }

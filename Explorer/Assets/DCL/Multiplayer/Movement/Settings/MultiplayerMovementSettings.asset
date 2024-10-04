@@ -14,8 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <CharacterControllerSettings>k__BackingField: {fileID: 11400000, guid: df2e68b45160aee4eaaf2475e21525e4, type: 2}
   <InboxCount>k__BackingField: 0
+  <UseCompression>k__BackingField: 0
   <EncodingSettings>k__BackingField: {fileID: 11400000, guid: 90d495bdfa8cf4d4ba2c7477da7e25f0, type: 2}
-  <DebugSettings>k__BackingField: {fileID: 11400000, guid: d23ca58b5a012ef46a39310b9a2e4e05, type: 2}
   <MoveSendRate>k__BackingField: 0.1
   <StandSendRate>k__BackingField: 1
   <VelocityTiers>k__BackingField:
@@ -29,3 +29,4 @@ MonoBehaviour:
   <InterpolationSettings>k__BackingField: {fileID: 11400000, guid: bc6d8c8af4871f14082de8f9d29040c6, type: 2}
   <UseExtrapolation>k__BackingField: 0
   <ExtrapolationSettings>k__BackingField: {fileID: 11400000, guid: 1c9e6c7c419eba54eafe152d131a4305, type: 2}
+  <AccelerationTimeThreshold>k__BackingField: 1

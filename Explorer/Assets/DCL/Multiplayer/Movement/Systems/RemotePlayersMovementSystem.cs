@@ -5,6 +5,7 @@ using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
+using DCL.CharacterMotion.Utils;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Movement.Settings;
 using ECS.Abstract;
@@ -196,6 +197,7 @@ namespace DCL.Multiplayer.Movement.Systems
                 intSettings.InterpolationType;
 
             intComp.Restart(remotePlayerMovement.PastMessage, remote, spline, characterControllerSettings);
+            AccelerateVerySlowTransition(ref intComp, settings.AccelerationTimeThreshold);
 
             if (intSettings.UseBlend && isBlend)
                 SlowDownBlend(ref intComp, intSettings.MaxBlendSpeed);
@@ -239,6 +241,23 @@ namespace DCL.Multiplayer.Movement.Systems
                 float correctionTime = inboxMessages * UnityEngine.Time.smoothDeltaTime;
                 intComp.TotalDuration = Mathf.Max(intComp.TotalDuration - correctionTime, intComp.TotalDuration / settings.InterpolationSettings.MaxSpeedUpTimeDivider);
             }
+        }
+
+        private void AccelerateVerySlowTransition(ref InterpolationComponent intComp, float accelerationTimeThreshold)
+        {
+            if (intComp.TotalDuration < accelerationTimeThreshold) return;
+
+            var distance = Vector3.Distance(intComp.Start.position, intComp.End.position);
+
+            MovementKind movementKind = distance switch
+                                        {
+                                            < 1 => MovementKind.WALK,
+                                            < 2 => MovementKind.JOG,
+                                            _ => MovementKind.RUN,
+                                        };
+
+            float speed= SpeedLimit.Get(characterControllerSettings, movementKind);
+            intComp.TotalDuration = Vector3.Distance(intComp.Start.position, intComp.End.position) / speed;
         }
     }
 }
