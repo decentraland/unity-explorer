@@ -18,18 +18,20 @@ namespace SceneRunner.Scene
         private readonly int versionInt;
         private readonly HashSet<string> convertedFiles;
         private readonly string sceneID;
+        private readonly string date;
 
         private readonly bool ignoreConvertedFiles;
 
         public IReadOnlyCollection<string> ConvertedFiles => convertedFiles;
 
-        public SceneAssetBundleManifest(URLDomain assetBundlesBaseUrl, string version, IReadOnlyList<string> files, string sceneID)
+        public SceneAssetBundleManifest(URLDomain assetBundlesBaseUrl, string version, IReadOnlyList<string> files, string sceneID, string buildDate)
         {
             this.assetBundlesBaseUrl = assetBundlesBaseUrl;
             this.version = version;
             versionInt = int.Parse(version.AsSpan().Slice(1));
             convertedFiles = new HashSet<string>(files, StringComparer.OrdinalIgnoreCase);
             this.sceneID = sceneID;
+            this.date = buildDate;
             ignoreConvertedFiles = false;
         }
 
@@ -54,9 +56,9 @@ namespace SceneRunner.Scene
 
         public unsafe Hash128 ComputeHash(string hash)
         {
-            Span<char> hashBuilder = stackalloc char[version.Length + hash.Length];
-            version.AsSpan().CopyTo(hashBuilder);
-            hash.AsSpan().CopyTo(hashBuilder[version.Length..]);
+            Span<char> hashBuilder = stackalloc char[date.Length + hash.Length];
+            date.AsSpan().CopyTo(hashBuilder);
+            hash.AsSpan().CopyTo(hashBuilder[date.Length..]);
 
             fixed (char* ptr = hashBuilder) { return Hash128.Compute(ptr, (uint)(sizeof(char) * hashBuilder.Length)); }
         }
