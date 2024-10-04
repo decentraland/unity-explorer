@@ -3,6 +3,7 @@ using DCL.AvatarRendering.Loading.DTO;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.Textures;
 using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
@@ -23,7 +24,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests.EditMode
         }
 
         public StreamableLoadingResult<SceneAssetBundleManifest>? ManifestResult { get; set; }
-        public StreamableLoadingResult<Sprite>? ThumbnailAssetResult { get; set; }
+        public StreamableLoadingResult<SpriteData>.WithFallback? ThumbnailAssetResult { get; set; }
         public AvatarAttachmentDTO DTO { get; }
         public StreamableLoadingResult<WearableDTO> Model { get; set; }
 

@@ -1,4 +1,8 @@
-﻿using ECS.StreamableLoading.Common.Components;
+﻿using Arch.Core;
+using CommunicationData.URLHelpers;
+using CRDT;
+using ECS.StreamableLoading.Common.Components;
+using ECS.Unity.Textures.Components;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -9,22 +13,49 @@ namespace ECS.StreamableLoading.Textures
     {
         public CommonLoadingArguments CommonArguments { get; set; }
 
-        public bool IsReadable;
-        public TextureWrapMode WrapMode;
-        public FilterMode FilterMode;
+        public readonly bool IsReadable;
+        public readonly TextureWrapMode WrapMode;
+        public readonly FilterMode FilterMode;
+        public readonly bool IsVideoTexture;
+        public readonly CRDTEntity VideoPlayerEntity;
 
         public CancellationTokenSource CancellationTokenSource => CommonArguments.CancellationTokenSource;
 
+        public GetTextureIntention(string url, TextureWrapMode wrapMode, FilterMode filterMode, bool isReadable = false, int attemptsCount = StreamableLoadingDefaults.ATTEMPTS_COUNT)
+        {
+            CommonArguments = new CommonLoadingArguments(url, attempts: attemptsCount);
+            WrapMode = wrapMode;
+            FilterMode = filterMode;
+            IsReadable = isReadable;
+            IsVideoTexture = false;
+            VideoPlayerEntity = -1;
+        }
+
+        public GetTextureIntention(CRDTEntity videoPlayerEntity)
+        {
+            CommonArguments = new CommonLoadingArguments(string.Empty);
+            WrapMode = TextureWrapMode.Clamp;
+            FilterMode = FilterMode.Bilinear;
+            IsReadable = false;
+            IsVideoTexture = true;
+            VideoPlayerEntity = videoPlayerEntity;
+        }
+
         public bool Equals(GetTextureIntention other) =>
-            IsReadable == other.IsReadable && WrapMode == other.WrapMode && FilterMode == other.FilterMode && this.AreUrlEquals(other);
+            this.AreUrlEquals(other) &&
+            IsReadable == other.IsReadable &&
+            WrapMode == other.WrapMode &&
+            FilterMode == other.FilterMode &&
+            IsVideoTexture == other.IsVideoTexture &&
+            VideoPlayerEntity.Equals(other.VideoPlayerEntity);
 
         public override bool Equals(object obj) =>
             obj is GetTextureIntention other && Equals(other);
 
         public override int GetHashCode() =>
-            HashCode.Combine(IsReadable, (int)WrapMode, (int)FilterMode, CommonArguments.URL);
+            HashCode.Combine(IsReadable, (int)WrapMode, (int)FilterMode, CommonArguments.URL, IsVideoTexture, VideoPlayerEntity);
 
         public override string ToString() =>
-            $"Get Texture: {CommonArguments.URL}";
+            $"Get Texture: {(IsVideoTexture ? $"Video {VideoPlayerEntity}" : CommonArguments.URL)}";
     }
 }

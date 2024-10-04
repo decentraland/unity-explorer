@@ -22,7 +22,7 @@ using JobHandle = Unity.Jobs.JobHandle;
 
 namespace DCL.Landscape
 {
-    public class TerrainGenerator : IDisposable
+    public class TerrainGenerator : IDisposable, IContainParcel
     {
         private const string TERRAIN_OBJECT_NAME = "Generated Terrain";
         private const float ROOT_VERTICAL_SHIFT = -0.01f; // fix for not clipping with scene (potential) floor
@@ -74,6 +74,7 @@ namespace DCL.Landscape
         public bool IsTerrainGenerated { get; private set; }
         public bool IsTerrainShown { get; private set; }
 
+        private TerrainModel terrainModel;
 
         public TerrainGenerator(IMemoryProfiler profilingProvider, bool measureTime = false,
             bool forceCacheRegen = false)
@@ -103,6 +104,14 @@ namespace DCL.Landscape
             boundariesGenerator = new TerrainBoundariesGenerator(factory, parcelSize);
 
             isInitialized = true;
+        }
+
+        public bool Contains(Vector2Int parcel)
+        {
+            if (IsTerrainGenerated)
+                return terrainModel.IsInsideBounds(parcel);
+
+            return true;
         }
 
         public void Dispose()
@@ -162,10 +171,10 @@ namespace DCL.Landscape
             this.withHoles = withHoles;
 
             var worldModel = new WorldModel(ownedParcels);
-            var terrainModel = new TerrainModel(parcelSize, worldModel, terrainGenData.borderPadding);
+            terrainModel = new TerrainModel(parcelSize, worldModel, terrainGenData.borderPadding);
 
             float startMemory = profilingProvider.SystemUsedMemoryInBytes / (1024 * 1024);
-            
+
             try
             {
                 using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"Terrain generation was done in {t / 1000f:F2} seconds")))
@@ -191,7 +200,7 @@ namespace DCL.Landscape
                         await SetupEmptyParcelDataAsync(terrainModel, cancellationToken);
                     }
 
-                    if (processReport != null) processReport.SetProgress(PROGRESS_COUNTER_EMPTY_PARCEL_DATA);
+                    processReport?.SetProgress(PROGRESS_COUNTER_EMPTY_PARCEL_DATA);
 
                     terrainDataCount = Mathf.Pow(Mathf.CeilToInt(terrainGenData.terrainSize / (float)terrainGenData.chunkSize), 2);
                     processedTerrainDataCount = 0;
@@ -208,7 +217,7 @@ namespace DCL.Landscape
                         await UniTask.Yield(cancellationToken);
                     }
 
-                    if (processReport != null) processReport.SetProgress(PROGRESS_COUNTER_DIG_HOLES);
+                    processReport?.SetProgress(PROGRESS_COUNTER_DIG_HOLES);
 
                     using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"[{t:F2}ms] Chunks")))
                         await SpawnTerrainObjectsAsync(terrainModel, processReport, cancellationToken);
@@ -246,8 +255,7 @@ namespace DCL.Landscape
             }
 
             float endMemory = profilingProvider.SystemUsedMemoryInBytes / (1024 * 1024);
-            ReportHub.Log(ReportCategory.LANDSCAPE,
-                $"The landscape generation took {endMemory - startMemory}MB of memory");
+            ReportHub.Log(ReportCategory.LANDSCAPE, $"The landscape generation took {endMemory - startMemory}MB of memory");
         }
 
         // waiting a frame to create the color map renderer created a new bug where some stones do not render properly, this should fix it

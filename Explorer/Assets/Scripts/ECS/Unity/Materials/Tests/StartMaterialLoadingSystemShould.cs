@@ -219,7 +219,7 @@ namespace ECS.Unity.Materials.Tests
             c.Status = StreamableLoading.LifeCycle.LoadingInProgress;
 
             // Add entity reference
-            var texPromise = AssetPromise<Texture2D, GetTextureIntention>.Create(world, new GetTextureIntention { CommonArguments = new CommonLoadingArguments("URL") }, PartitionComponent.TOP_PRIORITY);
+            var texPromise = AssetPromise<Texture2DData, GetTextureIntention>.Create(world, new GetTextureIntention { CommonArguments = new CommonLoadingArguments("URL") }, PartitionComponent.TOP_PRIORITY);
             c.AlphaTexPromise = texPromise;
 
             // Second run -> release promise
@@ -233,10 +233,10 @@ namespace ECS.Unity.Materials.Tests
             Assert.IsFalse(materialComponent.AlphaTexPromise.HasValue);
         }
 
-        private void AssertTexturePromise(in AssetPromise<Texture2D, GetTextureIntention>? promise, string src)
+        private void AssertTexturePromise(in AssetPromise<Texture2DData, GetTextureIntention>? promise, string src)
         {
             Assert.That(promise.HasValue, Is.True);
-            AssetPromise<Texture2D, GetTextureIntention> promiseValue = promise.Value;
+            AssetPromise<Texture2DData, GetTextureIntention> promiseValue = promise.Value;
 
             Assert.That(world.TryGet(promiseValue.Entity, out GetTextureIntention intention), Is.True);
             Assert.That(intention.CommonArguments.URL, Is.EqualTo(src));

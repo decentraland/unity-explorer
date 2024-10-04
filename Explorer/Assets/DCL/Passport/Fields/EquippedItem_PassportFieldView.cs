@@ -101,10 +101,11 @@ namespace DCL.Passport.Fields
         {
             cts?.SafeCancelAndDispose();
             cts = new CancellationTokenSource();
-            HoverBackgroundTransform.localScale = Vector3.one;
+            var hoverBackgroundScale = new Vector3(1, BuyButton.gameObject.activeSelf ? 1 : 0.85f, 1);
+            HoverBackgroundTransform.localScale = hoverBackgroundScale;
             HoverBackgroundTransform.gameObject.SetActive(true);
             ContainerTransform.DOScale(hoveredScale, ANIMATION_TIME).SetEase(Ease.Flash).ToUniTask(cancellationToken: cts.Token);
-            HoverBackgroundTransform.DOScale(Vector3.one, ANIMATION_TIME).SetEase(Ease.Flash).ToUniTask(cancellationToken: cts.Token);
+            HoverBackgroundTransform.DOScale(hoverBackgroundScale, ANIMATION_TIME).SetEase(Ease.Flash).ToUniTask(cancellationToken: cts.Token);
         }
 
         private void AnimateExit()
