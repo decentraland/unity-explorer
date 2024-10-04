@@ -32,6 +32,7 @@ namespace DCL.Chat
         private const string EMOJI_SUGGESTION_PATTERN = @":\w+";
         private const string EMOJI_TAG = "[emoji]";
         private const string HASH_CHARACTER = "#";
+        private const string ORIGIN = "chat";
         private static readonly Regex EMOJI_PATTERN_REGEX = new (EMOJI_SUGGESTION_PATTERN, RegexOptions.Compiled);
 
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
@@ -309,7 +310,7 @@ namespace DCL.Chat
             viewInstance.InputField.text = string.Empty;
             viewInstance.InputField.ActivateInputField();
 
-            chatMessagesBus.Send(messageToSend);
+            chatMessagesBus.Send(messageToSend, ORIGIN);
         }
 
         private LoopListViewItem2? OnGetItemByIndex(LoopListView2 listView, int index)
