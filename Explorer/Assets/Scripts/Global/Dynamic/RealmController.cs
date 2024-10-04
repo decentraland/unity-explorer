@@ -147,21 +147,24 @@ namespace Global.Dynamic
             await UniTask.WaitUntil(() => GlobalWorld.EcsWorld.TryGet(realmEntity, out fixedScenePointers)
                                           && fixedScenePointers.AllPromisesResolved, cancellationToken: ct);
 
-            List<SceneEntityDefinition> returnList = new List<SceneEntityDefinition>();
+            int urnScenePromisesCount = fixedScenePointers.URNScenePromises is { Length: > 0 } ? fixedScenePointers.URNScenePromises!.Length : 0;
+            int nonUrnScenePointersCount = fixedScenePointers.PointerScenesPromise.LoadingIntention.TargetCollection != null ? fixedScenePointers.PointerScenesPromise.LoadingIntention.TargetCollection!.Count : 0;
 
-            if (fixedScenePointers.URNScenePromises is { Length: > 0 })
+            List<SceneEntityDefinition> returnList = new List<SceneEntityDefinition>(urnScenePromisesCount + nonUrnScenePointersCount);
+
+            if (urnScenePromisesCount > 0)
             {
-                for (var i = 0; i < fixedScenePointers.URNScenePromises.Length; i++)
+                for (var i = 0; i < fixedScenePointers.URNScenePromises!.Length; i++)
                 {
                     AssetPromise<SceneEntityDefinition, GetSceneDefinition> promise = fixedScenePointers.URNScenePromises[i];
                     if (promise.Result.HasValue)
-                        returnList.Add(promise.Result.Value.Asset);
+                        returnList.Add(promise.Result.Value.Asset!);
                 }
             }
 
-            if (fixedScenePointers.PointerScenesPromise.LoadingIntention.TargetCollection != null)
+            if (nonUrnScenePointersCount > 0)
             {
-                foreach (SceneEntityDefinition sceneEntityDefinition in fixedScenePointers.PointerScenesPromise.LoadingIntention.TargetCollection)
+                foreach (SceneEntityDefinition sceneEntityDefinition in fixedScenePointers.PointerScenesPromise.LoadingIntention.TargetCollection!)
                 {
                     returnList.Add(sceneEntityDefinition);
                 }
