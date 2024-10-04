@@ -1,4 +1,5 @@
 ﻿using DCL.Landscape.Settings;
+using DCL.Optimization.PerformanceBudgeting;
 using DCL.Quality;
 using DCL.Settings.ModuleControllers;
 using DCL.Settings.ModuleViews;
@@ -33,7 +34,8 @@ namespace DCL.Settings.Configuration
             LandscapeData landscapeData,
             AudioMixer generalAudioMixer,
             QualitySettingsAsset qualitySettingsAsset,
-            ControlsSettingsAsset controlsSettingsAsset)
+            ControlsSettingsAsset controlsSettingsAsset,
+            ISystemMemoryCap systemMemoryCap)
         {
             var viewInstance = UnityEngine.Object.Instantiate(View, parent);
             viewInstance.Configure(Config);
