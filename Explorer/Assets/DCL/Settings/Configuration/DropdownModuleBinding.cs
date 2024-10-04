@@ -35,24 +35,33 @@ namespace DCL.Settings.Configuration
             var viewInstance = UnityEngine.Object.Instantiate(View, parent);
             viewInstance.Configure(Config);
 
+            SettingsFeatureController controller;
             switch (Feature)
             {
                 case DropdownFeatures.GRAPHICS_QUALITY_FEATURE:
-                    return new GraphicsQualitySettingsController(viewInstance, realmPartitionSettingsAsset, landscapeData, qualitySettingsAsset);
+                    controller = new GraphicsQualitySettingsController(viewInstance, realmPartitionSettingsAsset, landscapeData, qualitySettingsAsset);
+                    break;
                 case DropdownFeatures.CAMERA_LOCK_FEATURE:
-                    return new CameraLockSettingsController(viewInstance);
+                    controller = new CameraLockSettingsController(viewInstance);
+                    break;
                 case DropdownFeatures.CAMERA_SHOULDER_FEATURE:
-                    return new CameraShoulderSettingsController(viewInstance);
+                    controller = new CameraShoulderSettingsController(viewInstance);
+                    break;
                 case DropdownFeatures.RESOLUTION_FEATURE:
-                    return new ResolutionSettingsController(viewInstance);
+                    controller = new ResolutionSettingsController(viewInstance);
+                    break;
                 case DropdownFeatures.WINDOW_MODE_FEATURE:
-                    return new WindowModeSettingsController(viewInstance);
+                    controller = new WindowModeSettingsController(viewInstance);
+                    break;
                 case DropdownFeatures.FPS_LIMIT_FEATURE:
-                    return new FpsLimitSettingsController(viewInstance);
+                    controller = new FpsLimitSettingsController(viewInstance);
+                    break;
                 // add other cases...
+                default: throw new ArgumentOutOfRangeException(nameof(viewInstance));
             }
 
-            throw new ArgumentOutOfRangeException(nameof(viewInstance));
+            controller.SetView(viewInstance);
+            return controller;
         }
     }
 }

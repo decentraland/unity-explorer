@@ -38,30 +38,42 @@ namespace DCL.Settings.Configuration
             var viewInstance = UnityEngine.Object.Instantiate(View, parent);
             viewInstance.Configure(Config);
 
+            SettingsFeatureController controller;
             switch (Feature)
             {
                 case SliderFeatures.SCENE_DISTANCE_FEATURE:
-                    return new SceneDistanceSettingsController(viewInstance, realmPartitionSettingsAsset);
+                    controller = new SceneDistanceSettingsController(viewInstance, realmPartitionSettingsAsset);
+                    break;
                 case SliderFeatures.ENVIRONMENT_DISTANCE_FEATURE:
-                    return new EnvironmentDistanceSettingsController(viewInstance, landscapeData);
+                    controller = new EnvironmentDistanceSettingsController(viewInstance, landscapeData);
+                    break;
                 case SliderFeatures.MOUSE_VERTICAL_SENSITIVITY_FEATURE:
-                    return new MouseVerticalSensitivitySettingsController(viewInstance, controlsSettingsAsset);
+                    controller = new MouseVerticalSensitivitySettingsController(viewInstance, controlsSettingsAsset);
+                    break;
                 case SliderFeatures.MOUSE_HORIZONTAL_SENSITIVITY_FEATURE:
-                    return new MouseHorizontalSensitivitySettingsController(viewInstance, controlsSettingsAsset);
+                    controller = new MouseHorizontalSensitivitySettingsController(viewInstance, controlsSettingsAsset);
+                    break;
                 case SliderFeatures.MASTER_VOLUME_FEATURE:
-                    return new MasterVolumeSettingsController(viewInstance, generalAudioMixer);
+                    controller = new MasterVolumeSettingsController(viewInstance, generalAudioMixer);
+                    break;
                 case SliderFeatures.WORLD_SOUNDS_VOLUME_FEATURE:
-                    return new WorldSoundsVolumeSettingsController(viewInstance, generalAudioMixer);
+                    controller = new WorldSoundsVolumeSettingsController(viewInstance, generalAudioMixer);
+                    break;
                 case SliderFeatures.MUSIC_VOLUME_FEATURE:
-                    return new MusicVolumeSettingsController(viewInstance, generalAudioMixer);
+                    controller = new MusicVolumeSettingsController(viewInstance, generalAudioMixer);
+                    break;
                 case SliderFeatures.UI_SOUNDS_VOLUME_FEATURE:
-                    return new UISoundsVolumeSettingsController(viewInstance, generalAudioMixer);
+                    controller = new UISoundsVolumeSettingsController(viewInstance, generalAudioMixer);
+                    break;
                 case SliderFeatures.AVATAR_SOUNDS_VOLUME_FEATURE:
-                    return new AvatarSoundsVolumeSettingsController(viewInstance, generalAudioMixer);
+                    controller = new AvatarSoundsVolumeSettingsController(viewInstance, generalAudioMixer);
+                    break;
                 // add other cases...
+                default: throw new ArgumentOutOfRangeException(nameof(viewInstance));
             }
 
-            throw new ArgumentOutOfRangeException(nameof(viewInstance));
+            controller.SetView(viewInstance);
+            return controller;
         }
     }
 }

@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace DCL.Settings.ModuleViews
 {
-    public abstract class SettingsModuleView<TConfig> : MonoBehaviour where TConfig: SettingsModuleViewConfiguration
+    public abstract class SettingsModuleView<TConfig> : MonoBehaviour, ISettingsModuleView where TConfig: SettingsModuleViewConfiguration
     {
         [field: SerializeField] public TMP_Text ModuleTitle { get; private set; }
         [field: SerializeField] public TMP_Text DescriptionText { get; private set; }
@@ -27,5 +27,9 @@ namespace DCL.Settings.ModuleViews
         [field: SerializeField] public string ModuleName { get; private set; }
         [field: SerializeField] public string Description { get; private set; }
         [field: SerializeField] public bool IsEnabled { get; private set; } = true;
+    }
+
+    public interface ISettingsModuleView
+    {
     }
 }
