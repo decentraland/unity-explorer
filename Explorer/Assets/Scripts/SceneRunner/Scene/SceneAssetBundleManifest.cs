@@ -7,31 +7,29 @@ namespace SceneRunner.Scene
 {
     public class SceneAssetBundleManifest
     {
-        //From v25 onwards, the asset bundle path contains the sceneID in the hash
-        //This was done to solve cache issues
-        public const int ASSET_BUNDLE_VERSION_REQUIRES_HASH = 25;
-        
         public static readonly SceneAssetBundleManifest NULL = new ();
 
         private readonly URLDomain assetBundlesBaseUrl;
         private readonly string version;
-        private readonly int versionInt;
         private readonly HashSet<string> convertedFiles;
         private readonly string sceneID;
-        private readonly string date;
-
+        private readonly string buildDate;
         private readonly bool ignoreConvertedFiles;
+        
+        //From v25 onwards, the asset bundle path contains the sceneID in the hash
+        //This was done to solve cache issues
+        public const int ASSET_BUNDLE_VERSION_REQUIRES_HASH = 25;
+        private bool hasSceneIDInPath;
 
-        public IReadOnlyCollection<string> ConvertedFiles => convertedFiles;
 
         public SceneAssetBundleManifest(URLDomain assetBundlesBaseUrl, string version, IReadOnlyList<string> files, string sceneID, string buildDate)
         {
             this.assetBundlesBaseUrl = assetBundlesBaseUrl;
             this.version = version;
-            versionInt = int.Parse(version.AsSpan().Slice(1));
+            hasSceneIDInPath = int.Parse(version.AsSpan().Slice(1)) >= 25;
             convertedFiles = new HashSet<string>(files, StringComparer.OrdinalIgnoreCase);
             this.sceneID = sceneID;
-            this.date = buildDate;
+            this.buildDate = buildDate;
             ignoreConvertedFiles = false;
         }
 
@@ -41,6 +39,7 @@ namespace SceneRunner.Scene
             convertedFiles = new HashSet<string>();
             ignoreConvertedFiles = true;
             version = "";
+            buildDate = "";
         }
 
         /// <summary>
@@ -53,12 +52,11 @@ namespace SceneRunner.Scene
         }
 
 
-
         public unsafe Hash128 ComputeHash(string hash)
         {
-            Span<char> hashBuilder = stackalloc char[date.Length + hash.Length];
-            date.AsSpan().CopyTo(hashBuilder);
-            hash.AsSpan().CopyTo(hashBuilder[date.Length..]);
+            Span<char> hashBuilder = stackalloc char[buildDate.Length + hash.Length];
+            buildDate.AsSpan().CopyTo(hashBuilder);
+            hash.AsSpan().CopyTo(hashBuilder[buildDate.Length..]);
 
             fixed (char* ptr = hashBuilder) { return Hash128.Compute(ptr, (uint)(sizeof(char) * hashBuilder.Length)); }
         }
@@ -70,7 +68,7 @@ namespace SceneRunner.Scene
 
         public URLAddress GetAssetBundleURL(string hash)
         {
-            if (versionInt >= ASSET_BUNDLE_VERSION_REQUIRES_HASH)
+            if (hasSceneIDInPath)
                 return assetBundlesBaseUrl.Append(new URLPath($"{version}/{sceneID}/{hash}"));
             
             return assetBundlesBaseUrl.Append(new URLPath($"{version}/{hash}"));
