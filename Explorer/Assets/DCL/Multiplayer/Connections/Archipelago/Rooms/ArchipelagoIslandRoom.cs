@@ -14,7 +14,6 @@ using LiveKit.Rooms;
 using System;
 using System.Buffers;
 using System.Net.WebSockets;
-using System.Text.RegularExpressions;
 using System.Threading;
 using UnityEngine;
 using Utility.Multithreading;
