@@ -13,6 +13,8 @@ using ECS.StreamableLoading.Common.Systems;
 using ECS.Unity.Textures.Utils;
 using System;
 using System.Threading;
+using UnityEngine;
+using UnityEngine.Experimental.Rendering;
 
 namespace ECS.StreamableLoading.Textures
 {
@@ -30,6 +32,11 @@ namespace ECS.StreamableLoading.Textures
         protected override async UniTask<StreamableLoadingResult<Texture2DData>> FlowInternalAsync(GetTextureIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
             if (intention.IsVideoTexture) throw new NotSupportedException($"{nameof(LoadTextureSystem)} does not support video textures. They should be handled by {nameof(VideoTextureUtils)}");
+
+            //TODO remove
+             // var texture= new Texture2D(10, 10, GraphicsFormat.R8_SInt, 10, TextureCreationFlags.Crunch);
+             // Texture2D.CreateExternalTexture()
+             // texture.LoadRawTextureData();
 
             // Attempts should be always 1 as there is a repeat loop in `LoadSystemBase`
             var result = await webRequestController.GetTextureAsync(
