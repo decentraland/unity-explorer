@@ -1,5 +1,6 @@
+using System;
+using System.Threading;
 using Cysharp.Threading.Tasks;
-using DCL.AsyncLoadReporting;
 using DCL.Audio;
 using DCL.AuthenticationScreenFlow;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
@@ -19,8 +20,6 @@ using Global.AppArgs;
 using Global.Dynamic.DebugSettings;
 using MVC;
 using PortableExperiences.Controller;
-using System;
-using System.Threading;
 using UnityEngine;
 using Utility.Types;
 
@@ -28,22 +27,19 @@ namespace DCL.UserInAppInitializationFlow
 {
     public class RealUserInAppInitializationFlow : IUserInAppInitializationFlow
     {
+        private static readonly ILoadingScreen.EmptyLoadingScreen EMPTY_LOADING_SCREEN = new ();
+        
         private readonly RealFlowLoadingStatus loadingStatus;
         private readonly IMVCManager mvcManager;
         private readonly AudioClipConfig backgroundMusic;
         private readonly IRealmNavigator realmNavigator;
         private readonly ILoadingScreen loadingScreen;
         private readonly IRoomHub roomHub;
-
         private readonly LoadPlayerAvatarStartupOperation loadPlayerAvatarStartupOperation;
         private readonly CheckOnboardingStartupOperation checkOnboardingStartupOperation;
         private readonly RestartRealmStartupOperation restartRealmStartupOperation;
-
         private readonly IStartupOperation startupOperation;
-
-        private static readonly ILoadingScreen.EmptyLoadingScreen EMPTY_LOADING_SCREEN = new ();
-        private EnsureLivekitConnectionStartupOperation ensureLivekitConnectionStartupOperation;
-
+        
         public RealUserInAppInitializationFlow(
             RealFlowLoadingStatus loadingStatus,
             IHealthCheck livekitHealthCheck,
@@ -72,7 +68,7 @@ namespace DCL.UserInAppInitializationFlow
             this.loadingScreen = loadingScreen;
             this.roomHub = roomHub;
 
-            ensureLivekitConnectionStartupOperation = new EnsureLivekitConnectionStartupOperation(loadingStatus, livekitHealthCheck);
+            var ensureLivekitConnectionStartupOperation = new EnsureLivekitConnectionStartupOperation(loadingStatus, livekitHealthCheck);
             var initializeFeatureFlagsStartupOperation = new InitializeFeatureFlagsStartupOperation(loadingStatus, featureFlagsProvider, web3IdentityCache, decentralandUrlsSource, appParameters);
             var preloadProfileStartupOperation = new PreloadProfileStartupOperation(loadingStatus, selfProfile);
             var switchRealmMiscVisibilityStartupOperation = new SwitchRealmMiscVisibilityStartupOperation(loadingStatus, realmNavigator);
@@ -124,7 +120,7 @@ namespace DCL.UserInAppInitializationFlow
                 if (parameters.FromLogout)
                 {
                     // Restart livekit connection
-                    await ensureLivekitConnectionStartupOperation.ExecuteAsync(AsyncLoadProcessReport.Create(), ct);
+                    await roomHub.StartAsync().Timeout(TimeSpan.FromSeconds(10));
                     // If we are coming from a logout, we teleport the user to Genesis Plaza
                     var teleportResult = await realmNavigator.TryInitializeTeleportToParcelAsync(Vector2Int.zero, ct);
                     result = teleportResult.Success ? teleportResult : Result.ErrorResult(teleportResult.ErrorMessage);
