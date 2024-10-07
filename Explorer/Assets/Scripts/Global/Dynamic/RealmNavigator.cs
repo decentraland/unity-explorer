@@ -24,12 +24,10 @@ using DCL.Ipfs;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
 using Global.Dynamic.TeleportOperations;
-using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Assertions;
-using UnityEngine.Networking;
 using Utility;
 using Utility.Types;
 using static DCL.UserInAppInitializationFlow.RealFlowLoadingStatus.Stage;
@@ -53,7 +51,6 @@ namespace Global.Dynamic
         private readonly bool landscapeEnabled;
         private readonly ObjectProxy<Entity> cameraEntity;
         private readonly CameraSamplingData cameraSamplingData;
-        private readonly IReadOnlyList<int2> staticLoadPositions;
         private bool isLocalSceneDevelopment;
 
         private URLDomain currentRealm;
@@ -80,7 +77,6 @@ namespace Global.Dynamic
             bool landscapeEnabled,
             ObjectProxy<Entity> cameraEntity,
             CameraSamplingData cameraSamplingData,
-            IReadOnlyList<int2> staticLoadPositions,
             bool isLocalSceneDevelopment)
         {
             this.loadingScreen = loadingScreen;
@@ -95,7 +91,6 @@ namespace Global.Dynamic
             this.cameraEntity = cameraEntity;
             this.cameraSamplingData = cameraSamplingData;
             this.decentralandUrlsSource = decentralandUrlsSource;
-            this.staticLoadPositions = staticLoadPositions;
             this.isLocalSceneDevelopment = isLocalSceneDevelopment;
             this.globalWorld = globalWorld;
 
@@ -387,7 +382,9 @@ namespace Global.Dynamic
             if (!worldsTerrain.IsInitialized)
                 return;
 
-            var parcelsAmount = staticLoadPositions.Count;
+            var parcelsAmount = 0;
+
+            // Fixed scenes (World)
             AssetPromise<SceneEntityDefinition, GetSceneDefinition>[]? promises = null;
             if (realmController.RealmData.ScenesAreFixed)
             {
@@ -396,6 +393,11 @@ namespace Global.Dynamic
                 foreach (AssetPromise<SceneEntityDefinition, GetSceneDefinition> promise in promises)
                     parcelsAmount += promise.Result!.Value.Asset!.metadata.scene.DecodedParcels.Count;
             }
+
+            // Local scenes
+            var staticScenesEntityDefinitions = await realmController.WaitForStaticScenesEntityDefinitionsAsync(ct);
+            if (staticScenesEntityDefinitions.HasValue)
+                parcelsAmount += staticScenesEntityDefinitions.Value.Value.Count;
 
             using (var ownedParcels =
                    new NativeParallelHashSet<int2>(parcelsAmount, AllocatorManager.Persistent))
@@ -408,9 +410,16 @@ namespace Global.Dynamic
                             ownedParcels.Add(parcel.ToInt2());
                     }
                 }
-                foreach (int2 parcelPosition in staticLoadPositions)
+
+                if (staticScenesEntityDefinitions.HasValue)
                 {
-                        ownedParcels.Add(parcelPosition);
+                    foreach (var staticScene in staticScenesEntityDefinitions.Value.Value)
+                    {
+                        foreach (Vector2Int parcel in staticScene.metadata.scene.DecodedParcels)
+                        {
+                            ownedParcels.Add(parcel.ToInt2());
+                        }
+                    }
                 }
                 await worldsTerrain.GenerateTerrainAsync(ownedParcels, worldSeed, processReport, cancellationToken: ct);
             }

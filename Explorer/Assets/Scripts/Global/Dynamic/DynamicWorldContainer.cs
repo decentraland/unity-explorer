@@ -339,7 +339,6 @@ namespace Global.Dynamic
                 dynamicWorldParams.EnableLandscape,
                 staticContainer.ExposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy,
                 exposedGlobalDataContainer.CameraSamplingData,
-                dynamicWorldParams.StaticLoadPositions,
                 localSceneDevelopment
             );
 
