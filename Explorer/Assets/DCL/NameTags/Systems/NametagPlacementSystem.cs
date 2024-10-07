@@ -133,7 +133,8 @@ namespace DCL.Nametags
 
         [Query]
         [All(typeof(ChatBubbleComponent))]
-        private void RemoveUnusedChatBubbleComponents(Entity e, in ChatBubbleComponent chatBubbleComponent)
+        //This query is used to remove the ChatBubbleComponent from the entity if the chat bubble has not been displayed
+        private void RemoveUnusedChatBubbleComponents(Entity e)
         {
             World.Remove<ChatBubbleComponent>(e);
         }
