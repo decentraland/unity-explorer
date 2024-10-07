@@ -34,25 +34,41 @@ namespace ECS.SceneLifeCycle
         public async UniTask<bool> TryReloadSceneAsync(CancellationToken ct)
         {
             var parcel =  world.Get<CharacterTransform>(playerEntity).Transform.ParcelPosition();
-
             if (!scenesCache.TryGetByParcel(parcel, out var sceneInCache)) return false;
 
-            var foundEntity = Entity.Null;
-
-            world.Query(in new QueryDescription().WithAll<ISceneFacade, SceneDefinitionComponent>(),
-                (Entity entity, ref ISceneFacade sceneFacade) =>
-                {
-                    if (sceneFacade.Equals(sceneInCache))
-                    {
-                        foundEntity = entity;
-                    }
-                });
-
+            var foundEntity = FindSceneEntity(sceneInCache);
             if (foundEntity == Entity.Null) return false;
 
             await DisposeAndRestartAsync(foundEntity, sceneInCache, ct);
 
             return true;
+        }
+
+        public async UniTask<bool> TryReloadSceneAsync(CancellationToken ct, string sceneId)
+        {
+            if (!scenesCache.TryGetBySceneId(sceneId, out var sceneInCache)) return false;
+
+            var foundEntity = FindSceneEntity(sceneInCache!);
+            if (foundEntity == Entity.Null) return false;
+
+            await DisposeAndRestartAsync(foundEntity, sceneInCache!, ct);
+
+            return true;
+        }
+
+        private Entity FindSceneEntity(ISceneFacade targetScene)
+        {
+            var sceneEntity = Entity.Null;
+            world.Query(in new QueryDescription().WithAll<ISceneFacade, SceneDefinitionComponent>(),
+                (Entity entity, ref ISceneFacade sceneFacade) =>
+                {
+                    if (sceneFacade.Equals(targetScene))
+                    {
+                        sceneEntity = entity;
+                    }
+                });
+
+            return sceneEntity;
         }
 
         private async UniTask DisposeAndRestartAsync(Entity entity, ISceneFacade currentScene, CancellationToken ct)
