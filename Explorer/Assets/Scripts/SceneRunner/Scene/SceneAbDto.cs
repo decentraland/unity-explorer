@@ -18,9 +18,13 @@ namespace SceneRunner.Scene
         internal string[] files;
         [SerializeField]
         private int exitCode;
+        [SerializeField]
+        private string date;
 
         public string Version => version;
         public IReadOnlyList<string> Files => files ?? Array.Empty<string>();
+        
+        public string Date => date;
 
         public bool ValidateVersion()
         {
