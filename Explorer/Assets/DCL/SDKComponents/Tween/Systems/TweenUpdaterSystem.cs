@@ -131,21 +131,20 @@ namespace DCL.SDKComponents.Tween.Systems
         }
 
         [Query]
-        private void UpdateTweenSequence(ref SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform, in PBTween pbTween, in TransformComponent transformComponent, CRDTEntity sdkEntity)
+        private void UpdateTweenSequence(ref SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform, in PBTween pbTween, CRDTEntity sdkEntity)
         {
             if (sdkTweenComponent.IsDirty)
-                SetupTween(ref sdkTweenComponent, ref sdkTransform, in pbTween, in transformComponent, sdkEntity);
+                SetupTween(ref sdkTweenComponent, ref sdkTransform, in pbTween, sdkEntity);
             else
                 UpdateTweenState(ref sdkTweenComponent, ref sdkTransform, sdkEntity);
         }
 
-        private void SetupTween(ref SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform, in PBTween pbTween, in TransformComponent transformComponent, CRDTEntity sdkEntity)
+        private void SetupTween(ref SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform, in PBTween pbTween, CRDTEntity sdkEntity)
         {
             bool isPlaying = !pbTween.HasPlaying || pbTween.Playing;
-            Transform entityTransform = transformComponent.Transform;
             float durationInSeconds = pbTween.Duration / MILLISECONDS_CONVERSION_INT;
 
-            SetupTweener(ref sdkTweenComponent, ref sdkTransform, in pbTween, sdkEntity, entityTransform, durationInSeconds, isPlaying);
+            SetupTweener(ref sdkTweenComponent, ref sdkTransform, in pbTween, sdkEntity, durationInSeconds, isPlaying);
 
             if (isPlaying)
             {
@@ -187,7 +186,7 @@ namespace DCL.SDKComponents.Tween.Systems
             TweenSDKComponentHelper.WriteTweenResultInCRDT(ecsToCRDTWriter, sdkEntity, (sdkTweenComponent.CustomTweener, sdkTransform.ParentId));
         }
 
-        private void SetupTweener(ref SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform, in PBTween tweenModel, CRDTEntity entity, Transform entityTransform,
+        private void SetupTweener(ref SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform, in PBTween tweenModel, CRDTEntity entity,
             float durationInSeconds, bool isPlaying)
         {
             //NOTE: Left this per legacy reasons, Im not sure if this can happen in new renderer
@@ -203,7 +202,7 @@ namespace DCL.SDKComponents.Tween.Systems
 
             Ease ease = EASING_FUNCTIONS_MAP.GetValueOrDefault(tweenModel.EasingFunction, Linear);
 
-            sdkTweenComponent.CustomTweener = tweenerPool.GetTweener(tweenModel, sdkTransform, entityTransform, durationInSeconds);
+            sdkTweenComponent.CustomTweener = tweenerPool.GetTweener(tweenModel, sdkTransform, durationInSeconds);
             sdkTweenComponent.CustomTweener.DoTween(ease, tweenModel.CurrentTime * durationInSeconds, isPlaying);
         }
 

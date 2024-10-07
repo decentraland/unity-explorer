@@ -122,7 +122,8 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
             string ethereumAddress = identity.Address;
             var messageForSignResult = await signFlow.MessageForSignAsync(ethereumAddress, token);
 
-            if (messageForSignResult.Success == false)
+            if (messageForSignResult.Success == false ||
+                !HandshakePayloadIsValid(messageForSignResult.Result))
             {
                 ReportHub.LogError(ReportCategory.ARCHIPELAGO_REQUEST, $"Cannot obtain a message to sign a welcome peer");
                 return LightResult<string>.FAILURE;
@@ -131,6 +132,15 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
             string signedMessage = identity.Sign(messageForSignResult.Result).ToJson();
             ReportHub.Log(ReportCategory.ARCHIPELAGO_REQUEST, $"Signed message: {signedMessage}");
             return await signFlow.WelcomePeerIdAsync(signedMessage, token);
+        }
+
+        private bool HandshakePayloadIsValid(string payload)
+        {
+            if (!payload.StartsWith("dcl-"))
+                return false;
+
+            ReadOnlySpan<char> span = payload.AsSpan(4);
+            return span.IndexOf(':') == -1;
         }
     }
 }

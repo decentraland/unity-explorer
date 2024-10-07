@@ -5,7 +5,7 @@ using System.Text.RegularExpressions;
 
 namespace DCL.Chat
 {
-    internal class ChatCommandsHandler
+    public class ChatCommandsHandler
     {
         private const string CHAT_COMMAND_CHAR = "/";
 
@@ -36,7 +36,7 @@ namespace DCL.Chat
             return false;
         }
 
-        public bool StartsLikeCommand(string message) =>
+        public static bool StartsLikeCommand(string message) =>
             message
                .AsSpan()
                .Trim()
