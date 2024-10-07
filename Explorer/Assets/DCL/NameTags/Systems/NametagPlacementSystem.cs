@@ -14,6 +14,7 @@ using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using System.Runtime.CompilerServices;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
+using DCL.Optimization.Pools;
 using UnityEngine;
 using UnityEngine.Pool;
 #if UNITY_EDITOR
@@ -29,7 +30,7 @@ namespace DCL.Nametags
     {
         private const float NAMETAG_SCALE_MULTIPLIER = 0.15f;
 
-        private readonly IObjectPool<NametagView> nametagViewPool;
+        private readonly IComponentPool<NametagView> nameTagViewPool;
         private readonly ChatEntryConfigurationSO chatEntryConfiguration;
         private readonly NametagsData nametagsData;
         private readonly ChatBubbleConfigurationSO chatBubbleConfigurationSo;
@@ -39,13 +40,13 @@ namespace DCL.Nametags
 
         public NametagPlacementSystem(
             World world,
-            IObjectPool<NametagView> nametagViewPool,
+            IComponentPool<NametagView> nameTagViewPool,
             ChatEntryConfigurationSO chatEntryConfiguration,
             NametagsData nametagsData,
             ChatBubbleConfigurationSO chatBubbleConfigurationSo
         ) : base(world)
         {
-            this.nametagViewPool = nametagViewPool;
+            this.nameTagViewPool = nameTagViewPool;
             this.chatEntryConfiguration = chatEntryConfiguration;
             this.nametagsData = nametagsData;
             this.chatBubbleConfigurationSo = chatBubbleConfigurationSo;
@@ -81,7 +82,7 @@ namespace DCL.Nametags
         {
             if (partitionComponent.IsBehind || IsOutOfRenderRange(camera, characterTransform) || (camera.Mode == CameraMode.FirstPerson && World.Has<PlayerComponent>(e))) return;
 
-            NametagView nametagView = nametagViewPool.Get();
+            NametagView nametagView = nameTagViewPool.Get();
             nametagView.Id = avatarShape.ID;
             nametagView.Username.color = chatEntryConfiguration.GetNameColor(avatarShape.Name);
             nametagView.InjectConfiguration(chatBubbleConfigurationSo);
@@ -133,14 +134,14 @@ namespace DCL.Nametags
         private void RemoveTag(NametagView nametagView, in DeleteEntityIntention deleteEntityIntention)
         {
             if (deleteEntityIntention.DeferDeletion == false)
-                nametagViewPool.Release(nametagView);
+                nameTagViewPool.Release(nametagView);
         }
 
         [Query]
         [All(typeof(NametagView))]
         private void RemoveAllTags(Entity e, NametagView nametagView)
         {
-            nametagViewPool.Release(nametagView);
+            nameTagViewPool.Release(nametagView);
             World.Remove<NametagView>(e);
         }
 
@@ -150,7 +151,7 @@ namespace DCL.Nametags
         {
             if (partitionComponent.IsBehind || IsOutOfRenderRange(camera, characterTransform) || (camera.Mode == CameraMode.FirstPerson && World.Has<PlayerComponent>(e)))
             {
-                nametagViewPool.Release(nametagView);
+                nameTagViewPool.Release(nametagView);
                 World.Remove<NametagView>(e);
                 return;
             }

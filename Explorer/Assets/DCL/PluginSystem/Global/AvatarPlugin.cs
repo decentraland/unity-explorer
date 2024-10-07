@@ -29,6 +29,7 @@ using DCL.AvatarRendering.Loading.Assets;
 using DCL.Multiplayer.Profiles.Tables;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using UnityEngine.Animations;
 using UnityEngine.Pool;
 using Utility;
 using Object = UnityEngine.Object;
@@ -64,7 +65,7 @@ namespace DCL.PluginSystem.Global
 
         private IComponentPool<Transform> transformPoolRegistry = null!;
 
-        private IObjectPool<NametagView> nametagViewPool = null!;
+        private IComponentPool<NametagView> nameTagViewPool = null!;
         private TextureArrayContainer textureArrayContainer;
 
         private AvatarRandomizerAsset avatarRandomizerAsset;
@@ -127,7 +128,7 @@ namespace DCL.PluginSystem.Global
             chatBubbleConfiguration = (await assetsProvisioner.ProvideMainAssetAsync(settings.ChatBubbleConfiguration, ct)).Value;
 
             await CreateAvatarBasePoolAsync(settings, ct);
-            await CreateNametagPoolAsync(settings, ct);
+            await CreateNameTagPoolAsync(settings, ct);
             await CreateMaterialPoolPrewarmedAsync(settings, ct);
             await CreateComputeShaderPoolPrewarmedAsync(settings, ct);
 
@@ -168,7 +169,7 @@ namespace DCL.PluginSystem.Global
                 avatarPoolRegistry, computeShaderPool, attachmentsAssetsCache, mainPlayerAvatarBaseProxy,
                 avatarTransformMatrixJobWrapper);
 
-            NametagPlacementSystem.InjectToWorld(ref builder, nametagViewPool, chatEntryConfiguration, nametagsData, chatBubbleConfiguration);
+            NametagPlacementSystem.InjectToWorld(ref builder, nameTagViewPool, chatEntryConfiguration, nametagsData, chatBubbleConfiguration);
 
             //Debug scripts
             InstantiateRandomAvatarsSystem.InjectToWorld(ref builder, debugContainerBuilder, realmData, transformPoolRegistry, avatarRandomizerAsset);
@@ -185,19 +186,17 @@ namespace DCL.PluginSystem.Global
             avatarPoolRegistry = componentPoolsRegistry.GetReferenceTypePool<AvatarBase>().EnsureNotNull("ReferenceTypePool of type AvatarBase not found in the registry");
         }
 
-        private async UniTask CreateNametagPoolAsync(AvatarShapeSettings settings, CancellationToken ct)
+        private async UniTask CreateNameTagPoolAsync(AvatarShapeSettings settings, CancellationToken ct)
         {
-            NametagView nametagPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.NametagView, ct: ct)).Value.GetComponent<NametagView>();
+            NametagView nametagPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.NameTagView, ct: ct)).Value.GetComponent<NametagView>();
 
-            nametagViewPool = new ObjectPool<NametagView>(
-                () =>
+            nameTagViewPool = componentPoolsRegistry.AddGameObjectPool(() =>
                 {
-                    var nametagView = Object.Instantiate(nametagPrefab, Vector3.zero, Quaternion.identity, null);
+                    var nametagView = Object.Instantiate(nametagPrefab, Vector3.zero, Quaternion.identity);
                     nametagView.gameObject.SetActive(false);
                     return nametagView;
                 },
-                actionOnRelease: (nametagView) => nametagView.gameObject.SetActive(false),
-                actionOnDestroy: UnityObjectUtils.SafeDestroy);
+                onRelease: (nametagView) => nametagView.gameObject.SetActive(false));
         }
 
         private async UniTask CreateMaterialPoolPrewarmedAsync(AvatarShapeSettings settings, CancellationToken ct)
@@ -255,7 +254,7 @@ namespace DCL.PluginSystem.Global
 
             public AssetReferenceGameObject AvatarBase => avatarBase.EnsureNotNull();
 
-            public AssetReferenceGameObject NametagView => nametagView.EnsureNotNull();
+            public AssetReferenceGameObject NameTagView => nametagView.EnsureNotNull();
 
             public AssetReferenceComputeShader ComputeShader => computeShader.EnsureNotNull();
 
