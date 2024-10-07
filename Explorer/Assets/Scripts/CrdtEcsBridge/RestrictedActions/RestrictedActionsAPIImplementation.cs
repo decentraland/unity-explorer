@@ -93,16 +93,34 @@ namespace CrdtEcsBridge.RestrictedActions
             if (!sceneData.SceneContent.TryGetHash(src, out string hash))
                 return false;
 
-            if (sceneData.AssetBundleManifest == SceneAssetBundleManifest.NULL)
+            if (sceneData.AssetBundleManifest == SceneAssetBundleManifest.NULL && !globalWorldActions.LocalSceneDevelopment)
                 return false;
 
             try
             {
                 await UniTask.SwitchToMainThread();
 
-                await globalWorldActions.TriggerSceneEmoteAsync(
-                    sceneData.SceneEntityDefinition.id ?? sceneData.SceneEntityDefinition.metadata.scene.DecodedBase.ToString(),
-                    sceneData.AssetBundleManifest, hash, loop, ct);
+                if (globalWorldActions.LocalSceneDevelopment)
+                {
+
+
+                    // if (!sceneData.SceneContent.TryGetContentUrl(src, out var tryGetContentUrlResult))
+                    //     throw new Exception($"Error on GLTF download ({targetGltfOriginalPath} - {uri}): NOT FOUND");
+                    //
+                    // uri = new Uri(tryGetContentUrlResult);
+                    //string originalFilePath = string.Concat(src, GetFileNameFromUri(uri));
+                    string originalFilePath = src;
+                    sceneData.SceneContent.TryGetContentUrl(originalFilePath, out var tryGetContentUrlResult);
+                    var uri = new Uri(tryGetContentUrlResult);
+
+                    await globalWorldActions.TriggerLocalSceneEmoteAsync(sceneData.SceneEntityDefinition.id?? sceneData.SceneEntityDefinition.metadata.scene.DecodedBase.ToString(),tryGetContentUrlResult,hash, loop, ct);
+                }
+                else
+                {
+                    await globalWorldActions.TriggerSceneEmoteAsync(
+                        sceneData.SceneEntityDefinition.id ?? sceneData.SceneEntityDefinition.metadata.scene.DecodedBase.ToString(),
+                        sceneData.AssetBundleManifest, hash, loop, ct);
+                }
             }
             catch (OperationCanceledException) { return false; }
             catch (Exception e)
@@ -112,6 +130,13 @@ namespace CrdtEcsBridge.RestrictedActions
             }
 
             return true;
+        }
+
+        private string GetFileNameFromUri(Uri uri)
+        {
+            // On windows the URI may come with some invalid '\' in parts of the path
+            string patchedUri = uri.OriginalString.Replace('\\', '/');
+            return patchedUri.Substring(patchedUri.LastIndexOf('/') + 1);
         }
 
         public bool TryOpenNftDialog(string urn)

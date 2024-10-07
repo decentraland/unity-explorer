@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using AssetManagement;
 using CommunicationData.URLHelpers;
+using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Loading.DTO;
 using DCL.AvatarRendering.Wearables.Helpers;
@@ -55,7 +56,76 @@ namespace DCL.AvatarRendering.Emotes.Load
         {
             GetEmotesFromRealmQuery(World, t);
             GetEmotesByPointersQuery(World, t);
+            GetEmotesFromRealmLSDQuery(World, t);
         }
+
+        [Query]
+        [None(typeof(StreamableResult))]
+        private void GetEmotesFromRealmLSD([Data] float dt, in Entity entity,
+            ref GetSceneEmoteFromLocalDevelopmentSceneIntention intention)
+        {
+            URN urn = intention.NewSceneEmoteURN();
+
+            if (intention.Timeout.IsTimeout(dt))
+            {
+                if (!World.Has<StreamableResult>(entity))
+                {
+                    ReportHub.LogWarning(GetReportCategory(), $"Loading scenes emotes timed out {urn}");
+                    World.Add(entity, new StreamableResult(GetReportCategory(), new TimeoutException($"Scene emote timeout {urn}")));
+                }
+
+                return;
+            }
+
+            if (!emoteStorage.TryGetElement(urn, out IEmote emote))
+            {
+                var dto = new EmoteDTO
+                {
+                    id = urn,
+                    metadata = new EmoteDTO.Metadata
+                    {
+                        id = urn,
+                        emoteDataADR74 = new EmoteDTO.Metadata.Data
+                        {
+                            loop = intention.Loop,
+                            category = "emote",
+                            hides = Array.Empty<string>(),
+                            replaces = Array.Empty<string>(),
+                            tags = Array.Empty<string>(),
+                            removesDefaultHiding = Array.Empty<string>(),
+                            representations = new AvatarAttachmentDTO.Representation[]
+                            {
+                                new ()
+                                {
+                                    contents = Array.Empty<string>(),
+                                    bodyShapes = new[]
+                                    {
+                                        BodyShape.MALE.Value,
+                                        BodyShape.FEMALE.Value,
+                                    },
+                                    overrideHides = Array.Empty<string>(),
+                                    overrideReplaces = Array.Empty<string>(),
+                                    mainFile = string.Empty,
+                                },
+                            },
+                        },
+                    },
+                };
+
+                emote = emoteStorage.GetOrAddByDTO(dto);
+            }
+
+            List<AttachmentRegularAsset.RendererInfo> rendererInfos = AttachmentRegularAsset.RENDERER_INFO_POOL.Get();
+
+            emote.AssetResults[intention.BodyShape] =
+                new StreamableLoadingResult<AttachmentRegularAsset>(
+                    new AttachmentRegularAsset(intention.gltfRoot, rendererInfos,null));
+
+            emote.AssetResults[intention.BodyShape]?.Asset!.AddReference();
+
+            World.Add(entity, new StreamableResult(new EmotesResolution(RepoolableList<IEmote>.FromElement(emote), 1)));
+        }
+
 
         [Query]
         [None(typeof(StreamableResult))]
@@ -111,7 +181,7 @@ namespace DCL.AvatarRendering.Emotes.Load
                                     },
                                     overrideHides = Array.Empty<string>(),
                                     overrideReplaces = Array.Empty<string>(),
-                                    mainFile = "",
+                                    mainFile = string.Empty,
                                 },
                             },
                         },

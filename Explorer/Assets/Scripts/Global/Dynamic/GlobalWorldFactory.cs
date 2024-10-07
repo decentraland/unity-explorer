@@ -187,7 +187,7 @@ namespace Global.Dynamic
 
             var globalWorld = new GlobalWorld(world, worldSystems, finalizeWorldSystems, cameraSamplingData, realmSamplingData, destroyCancellationSource);
 
-            sceneFactory.SetGlobalWorldActions(new GlobalWorldActions(globalWorld.EcsWorld, playerEntity, emotesMessageBus));
+            sceneFactory.SetGlobalWorldActions(new GlobalWorldActions(globalWorld.EcsWorld, playerEntity, emotesMessageBus, staticContainer.LocalSceneDevelopment));
 
             return globalWorld;
         }

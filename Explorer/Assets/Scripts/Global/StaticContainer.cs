@@ -58,6 +58,7 @@ namespace Global
         public readonly ObjectProxy<IRoomHub> RoomHubProxy = new ();
         public readonly RealmData RealmData = new ();
         public readonly PartitionDataContainer PartitionDataContainer = new ();
+        public bool LocalSceneDevelopment { get; private set; }
 
         private ProvidedInstance<CharacterObject> characterObject;
         private ProvidedAsset<PartitionSettingsAsset> partitionSettings;
@@ -134,6 +135,7 @@ namespace Global
             var profilingProvider = new Profiler();
 
             var container = new StaticContainer();
+            container.LocalSceneDevelopment = localSceneDevelopment;
             container.PlayerEntity = playerEntity;
             container.DebugContainerBuilder = DebugUtilitiesContainer.Create(debugViewsCatalog, appArgs.HasDebugFlag()).Builder;
             container.EthereumApi = ethereumApi;
