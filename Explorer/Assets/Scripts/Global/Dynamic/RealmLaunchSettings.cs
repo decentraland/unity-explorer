@@ -48,9 +48,15 @@ namespace Global.Dynamic
                                                     // so we can easily start local development from the editor without application args
                                                     || initialRealm == InitialRealm.Localhost;
 
-        public IReadOnlyList<int2> GetPredefinedParcels() => predefinedScenes.enabled
-            ? predefinedScenes.parcels.Select(p => new int2(p.x, p.y)).ToList()
-            : Array.Empty<int2>();
+        public IReadOnlyList<int2> GetPredefinedParcels()
+        {
+            if (IsLocalSceneDevelopmentRealm)
+                return new List<int2>(){new int2(TargetScene.x, TargetScene.y)};
+
+            return predefinedScenes.enabled
+                ? predefinedScenes.parcels.Select(p => new int2(p.x, p.y)).ToList()
+                : Array.Empty<int2>();
+        }
 
         public HybridSceneParams CreateHybridSceneParams(Vector2Int startParcel)
         {

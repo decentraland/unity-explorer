@@ -72,54 +72,16 @@ namespace ECS.SceneLifeCycle
 
             if (localSceneDevelopment)
             {
-                await ReloadCurrentSceneFromScratchAsync(currentScene);
+                world.Query(in new QueryDescription().WithAll<RealmComponent>(),
+                    (ref StaticScenePointers staticScenePointers) =>
+                    {
+                        staticScenePointers.Promise = null;
+                    });
             }
             else
             {
                 // Forcing a fake IsDirty to force a reload of the scene at ResolveVisualSceneStateSystem.AddSceneVisualStateQuery()
                 world.Get<PartitionComponent>(entity).IsDirty = true;
-            }
-        }
-
-        private async UniTask ReloadCurrentSceneFromScratchAsync(ISceneFacade currentScene)
-        {
-            var baseParcel = currentScene.Info.BaseParcel;
-            world.Query(in new QueryDescription().WithAll<RealmComponent>(),
-                (ref ProcessedScenePointers processedPointers,
-                    ref VolatileScenePointers volatileScenePointers,
-                    ref RealmComponent realmComponent) =>
-                {
-                    // Remove pointers so that LoadScenePointerSystemBase.TryCreateSceneEntity() processes the new scene instance correctly
-                    foreach (Vector2Int parcel in currentScene.SceneData.Parcels)
-                    {
-                        processedPointers.Value.Remove(parcel.ToInt2());
-                    }
-
-                    // Add promise for loading the scene from scratch again at LoadPointersByIncreasingRadiusSystem
-                    var inputList = new List<int2>();
-                    inputList.Add(baseParcel.ToInt2());
-                    volatileScenePointers.ActivePromise
-                        = AssetPromise<SceneDefinitions, GetSceneDefinitionList>.Create(world,
-                            new GetSceneDefinitionList(volatileScenePointers.RetrievedReusableList, inputList,
-                                new CommonLoadingArguments(realmComponent.Ipfs.EntitiesActiveEndpoint)),
-                            volatileScenePointers.ActivePartitionComponent);
-                });
-
-            // Wait until the new scene entity is configured to mark its PartitionComponent as dirty for
-            // ResolveVisualSceneStateSystem.AddSceneVisualStateQuery() to reload it...
-            bool waiting = true;
-            while (waiting)
-            {
-                await UniTask.Yield();
-                world.Query(in new QueryDescription().WithAll<SceneDefinitionComponent, PartitionComponent>().WithNone<DeleteEntityIntention>(),
-                    (ref SceneDefinitionComponent sceneDefinitionComponent, ref PartitionComponent partitionComponent) =>
-                    {
-                        if (!sceneDefinitionComponent.IsEmpty && sceneDefinitionComponent.Definition.metadata.scene.DecodedBase == baseParcel)
-                        {
-                            waiting = false;
-                            partitionComponent.IsDirty = true;
-                        }
-                    });
             }
         }
     }
