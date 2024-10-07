@@ -1,26 +1,26 @@
-using Arch.Core;
 using Cysharp.Threading.Tasks;
+using DCL.AsyncLoadReporting;
 using DCL.Audio;
 using DCL.AuthenticationScreenFlow;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Diagnostics;
-using DCL.Profiles.Self;
-using DCL.Utilities;
-using MVC;
-using System.Threading;
 using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.HealthChecks;
+using DCL.Profiles.Self;
 using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.UserInAppInitializationFlow.StartupOperations;
 using DCL.UserInAppInitializationFlow.StartupOperations.Struct;
+using DCL.Utilities;
 using DCL.Web3.Identities;
 using ECS.SceneLifeCycle.Realm;
 using Global.AppArgs;
 using Global.Dynamic.DebugSettings;
+using MVC;
 using PortableExperiences.Controller;
 using System;
+using System.Threading;
 using UnityEngine;
 using Utility.Types;
 
@@ -42,6 +42,7 @@ namespace DCL.UserInAppInitializationFlow
         private readonly IStartupOperation startupOperation;
 
         private static readonly ILoadingScreen.EmptyLoadingScreen EMPTY_LOADING_SCREEN = new ();
+        private EnsureLivekitConnectionStartupOperation ensureLivekitConnectionStartupOperation;
 
         public RealUserInAppInitializationFlow(
             RealFlowLoadingStatus loadingStatus,
@@ -71,7 +72,7 @@ namespace DCL.UserInAppInitializationFlow
             this.loadingScreen = loadingScreen;
             this.roomHub = roomHub;
 
-            var ensureLivekitConnectionStartupOperation = new EnsureLivekitConnectionStartupOperation(loadingStatus, livekitHealthCheck);
+            ensureLivekitConnectionStartupOperation = new EnsureLivekitConnectionStartupOperation(loadingStatus, livekitHealthCheck);
             var initializeFeatureFlagsStartupOperation = new InitializeFeatureFlagsStartupOperation(loadingStatus, featureFlagsProvider, web3IdentityCache, decentralandUrlsSource, appParameters);
             var preloadProfileStartupOperation = new PreloadProfileStartupOperation(loadingStatus, selfProfile);
             var switchRealmMiscVisibilityStartupOperation = new SwitchRealmMiscVisibilityStartupOperation(loadingStatus, realmNavigator);
@@ -122,8 +123,10 @@ namespace DCL.UserInAppInitializationFlow
 
                 if (parameters.FromLogout)
                 {
+                    // Restart livekit connection
+                    await ensureLivekitConnectionStartupOperation.ExecuteAsync(AsyncLoadProcessReport.Create(), ct);
                     // If we are coming from a logout, we teleport the user to Genesis Plaza
-                    var teleportResult = await realmNavigator.TryInitializeTeleportToParcelAsync(Vector2Int.zero, CancellationToken.None);
+                    var teleportResult = await realmNavigator.TryInitializeTeleportToParcelAsync(Vector2Int.zero, ct);
                     result = teleportResult.Success ? teleportResult : Result.ErrorResult(teleportResult.ErrorMessage);
                 }
                 else
