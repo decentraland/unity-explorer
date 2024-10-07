@@ -327,9 +327,57 @@ namespace Global.Dynamic
                 {
                     genesisTerrain.Hide();
 
-                    await GenerateWorldTerrainAsync((uint)realmController.RealmData.GetHashCode(), landscapeLoadReport,
-                        ct);
+                    if (isLocalSceneDevelopment)
+                        await GenerateStaticScenesTerrainAsync(landscapeLoadReport, ct);
+                    else // World Fixed Scenes
+                        await GenerateFixedScenesTerrainAsync(landscapeLoadReport, ct);
                 }
+            }
+        }
+
+        private async UniTask GenerateStaticScenesTerrainAsync(AsyncLoadProcessReport landscapeLoadReport, CancellationToken ct)
+        {
+            if (!worldsTerrain.IsInitialized)
+                return;
+
+            var staticScenesEntityDefinitions = await realmController.WaitForStaticScenesEntityDefinitionsAsync(ct);
+            if (!staticScenesEntityDefinitions.HasValue) return;
+
+            int parcelsAmount = staticScenesEntityDefinitions.Value.Value.Count;
+            using (var parcels = new NativeParallelHashSet<int2>(parcelsAmount, AllocatorManager.Persistent))
+            {
+                foreach (var staticScene in staticScenesEntityDefinitions.Value.Value)
+                {
+                    foreach (Vector2Int parcel in staticScene.metadata.scene.DecodedParcels)
+                    {
+                        parcels.Add(parcel.ToInt2());
+                    }
+                }
+
+                await worldsTerrain.GenerateTerrainAsync(parcels, (uint)realmController.RealmData.GetHashCode(), landscapeLoadReport, cancellationToken: ct);
+            }
+        }
+
+        private async UniTask GenerateFixedScenesTerrainAsync(AsyncLoadProcessReport landscapeLoadReport, CancellationToken ct)
+        {
+            if (!worldsTerrain.IsInitialized)
+                return;
+
+            AssetPromise<SceneEntityDefinition, GetSceneDefinition>[]? promises = await realmController.WaitForFixedScenePromisesAsync(ct);
+
+            var parcelsAmount = 0;
+            foreach (AssetPromise<SceneEntityDefinition, GetSceneDefinition> promise in promises)
+                parcelsAmount += promise.Result!.Value.Asset!.metadata.scene.DecodedParcels.Count;
+
+            using (var parcels = new NativeParallelHashSet<int2>(parcelsAmount, AllocatorManager.Persistent))
+            {
+                foreach (AssetPromise<SceneEntityDefinition, GetSceneDefinition> promise in promises)
+                {
+                    foreach (Vector2Int parcel in promise.Result!.Value.Asset!.metadata.scene.DecodedParcels)
+                        parcels.Add(parcel.ToInt2());
+                }
+
+                await worldsTerrain.GenerateTerrainAsync(parcels, (uint)realmController.RealmData.GetHashCode(), landscapeLoadReport, cancellationToken: ct);
             }
         }
 
@@ -374,55 +422,6 @@ namespace Global.Dynamic
             await realmController.SetRealmAsync(realm, ct);
             currentRealm = realm;
             await SwitchMiscVisibilityAsync();
-        }
-
-        private async UniTask GenerateWorldTerrainAsync(uint worldSeed, AsyncLoadProcessReport processReport,
-            CancellationToken ct)
-        {
-            if (!worldsTerrain.IsInitialized)
-                return;
-
-            var parcelsAmount = 0;
-
-            // Fixed scenes (World)
-            AssetPromise<SceneEntityDefinition, GetSceneDefinition>[]? promises = null;
-            if (realmController.RealmData.ScenesAreFixed)
-            {
-                promises = await realmController.WaitForFixedScenePromisesAsync(ct);
-
-                foreach (AssetPromise<SceneEntityDefinition, GetSceneDefinition> promise in promises)
-                    parcelsAmount += promise.Result!.Value.Asset!.metadata.scene.DecodedParcels.Count;
-            }
-
-            // Local scenes
-            var staticScenesEntityDefinitions = await realmController.WaitForStaticScenesEntityDefinitionsAsync(ct);
-            if (staticScenesEntityDefinitions.HasValue)
-                parcelsAmount += staticScenesEntityDefinitions.Value.Value.Count;
-
-            using (var ownedParcels =
-                   new NativeParallelHashSet<int2>(parcelsAmount, AllocatorManager.Persistent))
-            {
-                if (promises != null)
-                {
-                    foreach (AssetPromise<SceneEntityDefinition, GetSceneDefinition> promise in promises)
-                    {
-                        foreach (Vector2Int parcel in promise.Result!.Value.Asset!.metadata.scene.DecodedParcels)
-                            ownedParcels.Add(parcel.ToInt2());
-                    }
-                }
-
-                if (staticScenesEntityDefinitions.HasValue)
-                {
-                    foreach (var staticScene in staticScenesEntityDefinitions.Value.Value)
-                    {
-                        foreach (Vector2Int parcel in staticScene.metadata.scene.DecodedParcels)
-                        {
-                            ownedParcels.Add(parcel.ToInt2());
-                        }
-                    }
-                }
-                await worldsTerrain.GenerateTerrainAsync(ownedParcels, worldSeed, processReport, cancellationToken: ct);
-            }
         }
 
         private bool IsGenesisRealm() =>
