@@ -5,6 +5,12 @@
 
 #include "gzguts.h"
 
+#ifdef _WIN32
+    #include <io.h>
+#else
+    #include <unistd.h>
+#endif
+
 /* Local functions */
 local int gz_load OF((gz_statep, unsigned char *, unsigned, unsigned *));
 local int gz_avail OF((gz_statep));
