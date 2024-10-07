@@ -31,6 +31,7 @@ namespace DCL.Multiplayer.Profiles.Entities
         private readonly List<string> tempRemoveAll = new ();
         private readonly IEntityCollidersGlobalCache collidersGlobalCache;
         private readonly Dictionary<string, RemoteAvatarCollider> collidersByWalletId = new ();
+        private Transform RemoteEntitiesParent;
         private IComponentPool<RemoteAvatarCollider> remoteAvatarColliderPool = null!;
         private IComponentPool<Transform> transformPool = null!;
 
@@ -50,7 +51,8 @@ namespace DCL.Multiplayer.Profiles.Entities
 
         public void Initialize(RemoteAvatarCollider remoteAvatarCollider)
         {
-            remoteAvatarColliderPool = componentPoolsRegistry.AddGameObjectPool(() => Object.Instantiate(remoteAvatarCollider, Vector3.zero, Quaternion.identity));
+            RemoteEntitiesParent = new GameObject("RemoteEntitiesPool").transform;
+            remoteAvatarColliderPool = componentPoolsRegistry.AddGameObjectPool(() => Object.Instantiate(remoteAvatarCollider));
             transformPool = componentPoolsRegistry
                            .GetReferenceTypePool<Transform>()
                            .EnsureNotNull("ReferenceTypePool of type Transform not found in the registry");
@@ -125,7 +127,7 @@ namespace DCL.Multiplayer.Profiles.Entities
         {
             var transform = transformPool.Get()!;
             transform.name = $"REMOTE_ENTITY_{profile.WalletId}";
-            transform.transform.SetParent(null);
+            transform.transform.SetParent(RemoteEntitiesParent);
             transform.transform.rotation = Quaternion.identity;
             transform.transform.localScale = Vector3.one;
 
