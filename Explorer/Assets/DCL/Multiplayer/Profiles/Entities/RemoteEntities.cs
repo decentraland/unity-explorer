@@ -51,7 +51,7 @@ namespace DCL.Multiplayer.Profiles.Entities
 
         public void Initialize(RemoteAvatarCollider remoteAvatarCollider)
         {
-            RemoteEntitiesParent = new GameObject("RemoteEntitiesPool").transform;
+            RemoteEntitiesParent = new GameObject("REMOTE_ENTITIES").transform;
             remoteAvatarColliderPool = componentPoolsRegistry.AddGameObjectPool(() => Object.Instantiate(remoteAvatarCollider));
             transformPool = componentPoolsRegistry
                            .GetReferenceTypePool<Transform>()
