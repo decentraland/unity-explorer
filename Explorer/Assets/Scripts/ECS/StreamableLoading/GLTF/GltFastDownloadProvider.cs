@@ -12,7 +12,9 @@ using SceneRunner.Scene;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Promise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.Texture2D, ECS.StreamableLoading.Textures.GetTextureIntention>;
+using UnityEngine;
+using UnityEngine.Networking;
+using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.Texture2DData, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
 namespace ECS.StreamableLoading.GLTF
 {
