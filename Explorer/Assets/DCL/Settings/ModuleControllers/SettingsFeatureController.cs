@@ -8,7 +8,7 @@ namespace DCL.Settings.ModuleControllers
     {
         protected readonly SettingsDataStore settingsDataStore = new ();
 
-        protected ISettingsModuleView controllerView;
+        internal ISettingsModuleView controllerView { get; private set; }
 
         public void SetView(ISettingsModuleView view) => controllerView = view;
 
