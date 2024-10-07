@@ -1,4 +1,5 @@
 ﻿using DCL.Landscape.Settings;
+using DCL.Optimization.PerformanceBudgeting;
 using DCL.Quality;
 using DCL.Settings.ModuleControllers;
 using DCL.Settings.ModuleViews;
@@ -21,6 +22,7 @@ namespace DCL.Settings.Configuration
             RESOLUTION_FEATURE,
             WINDOW_MODE_FEATURE,
             FPS_LIMIT_FEATURE,
+            MEMORY_LIMIT_FEATURE,
             // add other features...
         }
 
@@ -30,29 +32,23 @@ namespace DCL.Settings.Configuration
             LandscapeData landscapeData,
             AudioMixer generalAudioMixer,
             QualitySettingsAsset qualitySettingsAsset,
-            ControlsSettingsAsset controlsSettingsAsset)
+            ControlsSettingsAsset controlsSettingsAsset,
+            ISystemMemoryCap systemMemoryCap)
         {
             var viewInstance = UnityEngine.Object.Instantiate(View, parent);
             viewInstance.Configure(Config);
 
-            switch (Feature)
-            {
-                case DropdownFeatures.GRAPHICS_QUALITY_FEATURE:
-                    return new GraphicsQualitySettingsController(viewInstance, realmPartitionSettingsAsset, landscapeData, qualitySettingsAsset);
-                case DropdownFeatures.CAMERA_LOCK_FEATURE:
-                    return new CameraLockSettingsController(viewInstance);
-                case DropdownFeatures.CAMERA_SHOULDER_FEATURE:
-                    return new CameraShoulderSettingsController(viewInstance);
-                case DropdownFeatures.RESOLUTION_FEATURE:
-                    return new ResolutionSettingsController(viewInstance);
-                case DropdownFeatures.WINDOW_MODE_FEATURE:
-                    return new WindowModeSettingsController(viewInstance);
-                case DropdownFeatures.FPS_LIMIT_FEATURE:
-                    return new FpsLimitSettingsController(viewInstance);
-                // add other cases...
-            }
-
-            throw new ArgumentOutOfRangeException(nameof(viewInstance));
+            return Feature switch
+                   {
+                       DropdownFeatures.GRAPHICS_QUALITY_FEATURE => new GraphicsQualitySettingsController(viewInstance, realmPartitionSettingsAsset, landscapeData, qualitySettingsAsset),
+                       DropdownFeatures.CAMERA_LOCK_FEATURE => new CameraLockSettingsController(viewInstance),
+                       DropdownFeatures.CAMERA_SHOULDER_FEATURE => new CameraShoulderSettingsController(viewInstance),
+                       DropdownFeatures.RESOLUTION_FEATURE => new ResolutionSettingsController(viewInstance),
+                       DropdownFeatures.WINDOW_MODE_FEATURE => new WindowModeSettingsController(viewInstance),
+                       DropdownFeatures.FPS_LIMIT_FEATURE => new FpsLimitSettingsController(viewInstance),
+                       DropdownFeatures.MEMORY_LIMIT_FEATURE => new MemoryLimitSettingController(viewInstance, systemMemoryCap),
+                       _ => throw new ArgumentOutOfRangeException(nameof(viewInstance))
+                   };
         }
     }
 }

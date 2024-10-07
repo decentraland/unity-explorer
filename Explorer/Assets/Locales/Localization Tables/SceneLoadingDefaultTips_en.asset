@@ -39,18 +39,8 @@ MonoBehaviour:
       and pay platform fees."
     m_Metadata:
       m_Items: []
-  - m_Id: 1078349173612544
-    m_Localized: Creator Hub
-    m_Metadata:
-      m_Items: []
-  - m_Id: 1078419382067200
-    m_Localized: 'Create scenes, artworks, challenges and more, using the simple
-      Builder: an easy drag and drop tool. For more experienced creators, the SDK
-      provides the tools to fill the world with social games and applications.'
-    m_Metadata:
-      m_Items: []
   - m_Id: 1078455436304384
-    m_Localized: Decentraland Editor
+    m_Localized: Creator Hub
     m_Metadata:
       m_Items: []
   - m_Id: 1078488571305984

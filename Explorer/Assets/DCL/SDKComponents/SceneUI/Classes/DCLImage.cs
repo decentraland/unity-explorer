@@ -10,7 +10,7 @@ namespace DCL.SDKComponents.SceneUI.Classes
 
         private VisualElement canvas;
         private DCLImageScaleMode scaleMode;
-        private Texture2D texture2D;
+        private Texture2D? texture2D;
         private Vector4 slices;
         private Color color;
         private DCLUVs uvs;
