@@ -1,50 +1,28 @@
 using DCL.Diagnostics;
 using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
-using System.Threading;
 
 namespace CommunicationData.URLHelpers
 {
-    public readonly struct URN : IEquatable<URN>
+    public readonly struct URN
     {
         private const int SHORTEN_URN_PARTS = 6;
         private const int THIRD_PARTY_V2_SHORTEN_URN_PARTS = 7;
         private const string THIRD_PARTY_PART_ID = "collections-thirdparty";
 
+        private readonly string lowercaseUrn;
         private readonly string originalUrn;
-        private readonly object lowercaseUrnCache;
 
         public URN(string urn)
         {
             this.originalUrn = urn;
-            this.lowercaseUrnCache = null;
+            this.lowercaseUrn = this.originalUrn.ToLower();
         }
 
         public URN(int urn)
         {
             this.originalUrn = urn.ToString();
-            this.lowercaseUrnCache = null;
-        }
-
-        private string lowercaseUrn
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get
-            {
-                if (lowercaseUrnCache is string cached)
-                    return cached;
-
-                return InitializeLowercaseUrn();
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        private string InitializeLowercaseUrn()
-        {
-            string lowercased = originalUrn.ToLower();
-            Interlocked.CompareExchange(ref Unsafe.AsRef(in lowercaseUrnCache), lowercased, null);
-            return lowercased;
+            this.lowercaseUrn = this.originalUrn.ToLower();
         }
 
         public bool IsNullOrEmpty() =>
@@ -59,13 +37,10 @@ namespace CommunicationData.URLHelpers
             Equals(other.lowercaseUrn);
 
         public bool Equals(string other) =>
-            string.Equals(this.originalUrn, other, StringComparison.Ordinal);
+            string.Equals(lowercaseUrn, other);
 
         public override bool Equals(object obj) =>
             obj is URN other && Equals(other);
-
-        public static bool operator ==(URN left, URN right) => left.Equals(right);
-        public static bool operator !=(URN left, URN right) => !(left == right);
 
         public override string ToString() =>
             originalUrn;
