@@ -50,11 +50,10 @@ namespace Global.Dynamic
 
         public IReadOnlyList<int2> GetPredefinedParcels()
         {
-            if (IsLocalSceneDevelopmentRealm)
-                return new List<int2>(){new int2(TargetScene.x, TargetScene.y)};
+            if (predefinedScenes.enabled)
+                return predefinedScenes.parcels.Select(p => new int2(p.x, p.y)).ToList();
 
-            return predefinedScenes.enabled
-                ? predefinedScenes.parcels.Select(p => new int2(p.x, p.y)).ToList()
+            return IsLocalSceneDevelopmentRealm ? new List<int2>(){new int2(TargetScene.x, TargetScene.y)}
                 : Array.Empty<int2>();
         }
 
