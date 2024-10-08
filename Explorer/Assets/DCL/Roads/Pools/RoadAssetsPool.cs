@@ -1,4 +1,6 @@
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.Optimization.Pools;
+using JetBrains.Annotations;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -36,9 +38,9 @@ namespace DCL.LOD
 
         private readonly Dictionary<string, IObjectPool<Transform>> roadAssetPoolDictionary;
 
-        public RoadAssetsPool(IReadOnlyList<GameObject> roadPrefabs)
+        public RoadAssetsPool(IReadOnlyList<GameObject> roadPrefabs, [CanBeNull] IComponentPoolsRegistry componentPoolsRegistry = null)
         {
-            var poolRoot = GameObject.Find("ROOT_POOL_CONTAINER")!.transform;
+            var poolRoot = componentPoolsRegistry?.RootContainerTransform();
             roadAssetParent = new GameObject("POOL_CONTAINER_ROAD_ASSETS").transform;
             roadAssetParent.parent = poolRoot;
 

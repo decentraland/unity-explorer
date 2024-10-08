@@ -26,6 +26,8 @@ namespace DCL.Optimization.Pools
 
         IComponentPool<T> AddGameObjectPool<T>(Func<T> creationHandler = null, Action<T> onRelease = null, int maxSize = 1024, Action<T> onGet = null) where T: Component;
 
+        Transform RootContainerTransform();
+
         void AddComponentPool<T>(IComponentPool<T> componentPool) where T: class;
     }
 

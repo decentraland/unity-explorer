@@ -188,15 +188,18 @@ namespace DCL.PluginSystem.Global
         private async UniTask CreateNametagPoolAsync(AvatarShapeSettings settings, CancellationToken ct)
         {
             NametagView nametagPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.NametagView, ct: ct)).Value.GetComponent<NametagView>();
+            var poolRoot = componentPoolsRegistry.RootContainerTransform();
+            var poolParent = new GameObject("POOL_CONTAINER_NAMETAGS").transform;
+            poolParent.parent = poolRoot;
 
             nametagViewPool = new ObjectPool<NametagView>(
                 () =>
                 {
-                    var nametagView = Object.Instantiate(nametagPrefab, Vector3.zero, Quaternion.identity, null);
-                    nametagView.gameObject.SetActive(false);
-                    return nametagView;
+                    var nameTagView = Object.Instantiate(nametagPrefab, Vector3.zero, Quaternion.identity, poolParent);
+                    nameTagView.gameObject.SetActive(false);
+                    return nameTagView;
                 },
-                actionOnRelease: (nametagView) => nametagView.gameObject.SetActive(false),
+                actionOnRelease: (nameTagView) => nameTagView.gameObject.SetActive(false),
                 actionOnDestroy: UnityObjectUtils.SafeDestroy);
         }
 

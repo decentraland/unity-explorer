@@ -21,6 +21,8 @@ namespace DCL.Optimization.Pools
             this.rootContainer = rootContainer;
         }
 
+        public Transform RootContainerTransform() => rootContainer;
+
         public void Dispose()
         {
             lock (pools)

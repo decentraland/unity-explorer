@@ -1,4 +1,5 @@
 using DCL.ECSComponents;
+using DCL.Optimization.Pools;
 using DCL.SDKComponents.NFTShape.Frames.FramePrefabs;
 using System.Collections.Generic;
 using UnityEngine;
@@ -15,10 +16,10 @@ namespace DCL.SDKComponents.NFTShape.Frames.Pool
         private readonly Dictionary<NftFrameType, IObjectPool<AbstractFrame>> pools = new ();
         private readonly Dictionary<AbstractFrame, NftFrameType> types = new ();
 
-        public FramesPool(IReadOnlyFramePrefabs framePrefabs)
+        public FramesPool(IReadOnlyFramePrefabs framePrefabs, IComponentPoolsRegistry? componentPoolsRegistry = null)
         {
             this.framePrefabs = framePrefabs;
-            var poolRoot = GameObject.Find("ROOT_POOL_CONTAINER")!.transform;
+            var poolRoot = componentPoolsRegistry?.RootContainerTransform();
             framePoolParent = new GameObject("POOL_CONTAINER_NFT_FRAMES").transform;
             framePoolParent.parent = poolRoot;
         }
