@@ -9,6 +9,7 @@ using DCL.SDKComponents.TextShape.Fonts;
 using DCL.SDKComponents.TextShape.System;
 using ECS.Abstract;
 using ECS.Unity.Transforms.Components;
+using SceneRunner.Scene;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -19,9 +20,9 @@ namespace DCL.SDKComponents.TextShape.Demo
     {
         private readonly IDemoWorld origin;
 
-        public TextShapeDemoWorld(World world, IFontsStorage fontsStorage, params (PBTextShape textShape, PBVisibilityComponent visibility, PBBillboard billboard)[] list) : this(world, fontsStorage, list.AsReadOnly()) { }
+        public TextShapeDemoWorld(World world, IFontsStorage fontsStorage, ISceneData sceneData, params (PBTextShape textShape, PBVisibilityComponent visibility, PBBillboard billboard)[] list) : this(world, fontsStorage, sceneData, list.AsReadOnly()) { }
 
-        public TextShapeDemoWorld(World world, IFontsStorage fontsStorage, IReadOnlyList<(PBTextShape textShape, PBVisibilityComponent visibility, PBBillboard billboard)> list)
+        public TextShapeDemoWorld(World world, IFontsStorage fontsStorage, ISceneData sceneData, IReadOnlyList<(PBTextShape textShape, PBVisibilityComponent visibility, PBBillboard billboard)> list)
         {
             var pool = new GameObjectPool<TextMeshPro>(null, () => new GameObject().AddComponent<TextMeshPro>());
 
@@ -36,7 +37,7 @@ namespace DCL.SDKComponents.TextShape.Demo
                 },
                 w => new InstantiateTextShapeSystem(w, pool, fontsStorage, new MaterialPropertyBlock(), new NullPerformanceBudget(), buffer),
                 w => new UpdateTextShapeSystem(w, fontsStorage, new MaterialPropertyBlock(), buffer),
-                w => new VisibilityTextShapeSystem(w, buffer));
+                w => new VisibilityTextShapeSystem(w, buffer, sceneData));
         }
 
         private static TransformComponent NewTransform() =>

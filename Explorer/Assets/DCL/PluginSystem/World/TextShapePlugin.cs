@@ -10,6 +10,7 @@ using DCL.SDKComponents.TextShape.Fonts.Settings;
 using DCL.SDKComponents.TextShape.System;
 using ECS.Abstract;
 using ECS.LifeCycle;
+using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -60,7 +61,7 @@ namespace DCL.PluginSystem.World
 
             InstantiateTextShapeSystem.InjectToWorld(ref builder, textMeshProPool, fontsStorage, materialPropertyBlock, instantiationFrameTimeBudgetProvider, buffer);
             UpdateTextShapeSystem.InjectToWorld(ref builder, fontsStorage, materialPropertyBlock, buffer);
-            VisibilityTextShapeSystem.InjectToWorld(ref builder, buffer);
+            VisibilityTextShapeSystem.InjectToWorld(ref builder, buffer, sharedDependencies.SceneData);
 
             finalizeWorldSystems.RegisterReleasePoolableComponentSystem<TextMeshPro, TextShapeComponent>(ref builder, componentPoolsRegistry);
         }
