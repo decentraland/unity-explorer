@@ -19,7 +19,7 @@ namespace DCL.SDKComponents.NFTShape.Frames.Pool
         {
             this.framePrefabs = framePrefabs;
             var poolRoot = GameObject.Find("ROOT_POOL_CONTAINER")!.transform;
-            framePoolParent = new GameObject("NFT_FRAMES_POOL").transform;
+            framePoolParent = new GameObject("POOL_CONTAINER_NFT_FRAMES").transform;
             framePoolParent.parent = poolRoot;
         }
 
