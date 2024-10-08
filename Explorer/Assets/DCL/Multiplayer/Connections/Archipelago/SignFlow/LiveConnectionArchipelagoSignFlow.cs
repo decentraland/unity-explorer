@@ -82,8 +82,12 @@ namespace DCL.Multiplayer.Connections.Archipelago.SignFlow
 
                 var linkedToken = CancellationTokenSource.CreateLinkedTokenSource(new CancellationTokenSource().Token, token);
 
+                var buffer = new byte[1024];
+                MemoryWrap memoryWrap = new MemoryWrap(buffer, clientPacket.value.CalculateSize(), null);
+                clientPacket.value.WriteTo(memoryWrap);
+
                 (bool hasResultLeft, EnumResult<MemoryWrap, IArchipelagoLiveConnection.ResponseError> result) result = await UniTask.WhenAny(
-                    connection.SendAndReceiveAsync(clientPacket.value, memoryPool, linkedToken.Token),
+                    connection.SendAndReceiveAsync(memoryWrap, linkedToken.Token),
                     connection.WaitDisconnectAsync(linkedToken.Token)
                 );
 
