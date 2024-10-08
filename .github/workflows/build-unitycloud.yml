@@ -12,6 +12,8 @@ on:
   push:
     branches:
       - dev
+    branches-ignore:
+      - main
   workflow_dispatch:
     inputs:
       profile:
