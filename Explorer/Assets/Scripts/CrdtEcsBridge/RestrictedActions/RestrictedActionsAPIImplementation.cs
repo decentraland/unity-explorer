@@ -102,18 +102,7 @@ namespace CrdtEcsBridge.RestrictedActions
 
                 if (globalWorldActions.LocalSceneDevelopment)
                 {
-
-
-                    // if (!sceneData.SceneContent.TryGetContentUrl(src, out var tryGetContentUrlResult))
-                    //     throw new Exception($"Error on GLTF download ({targetGltfOriginalPath} - {uri}): NOT FOUND");
-                    //
-                    // uri = new Uri(tryGetContentUrlResult);
-                    //string originalFilePath = string.Concat(src, GetFileNameFromUri(uri));
-                    string originalFilePath = src;
-                    sceneData.SceneContent.TryGetContentUrl(originalFilePath, out var tryGetContentUrlResult);
-                    var uri = new Uri(tryGetContentUrlResult);
-
-                    await globalWorldActions.TriggerLocalSceneEmoteAsync(sceneData.SceneEntityDefinition.id?? sceneData.SceneEntityDefinition.metadata.scene.DecodedBase.ToString(),tryGetContentUrlResult,hash, loop, ct);
+                    await globalWorldActions.TriggerLocalSceneEmoteAsync(sceneData,src,hash, loop, ct);
                 }
                 else
                 {

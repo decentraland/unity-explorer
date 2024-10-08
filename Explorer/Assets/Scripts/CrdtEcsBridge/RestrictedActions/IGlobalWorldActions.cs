@@ -16,6 +16,6 @@ namespace CrdtEcsBridge.RestrictedActions
 
         bool LocalSceneDevelopment { get; }
 
-        Task TriggerLocalSceneEmoteAsync(string sceneId, string name, string hash, bool loop, CancellationToken ct);
+        UniTask TriggerLocalSceneEmoteAsync(ISceneData sceneData, string name, string hash, bool loop, CancellationToken ct);
     }
 }

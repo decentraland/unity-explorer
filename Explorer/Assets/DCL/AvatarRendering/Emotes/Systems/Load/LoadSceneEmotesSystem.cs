@@ -15,6 +15,7 @@ using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.GLTF;
 using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
@@ -26,6 +27,7 @@ using StreamableResult = ECS.StreamableLoading.Common.Components.StreamableLoadi
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 using EmotesFromRealmPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesDTOList, DCL.AvatarRendering.Emotes.GetEmotesByPointersFromRealmIntention>;
 using AudioPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AudioClips.AudioClipData, ECS.StreamableLoading.AudioClips.GetAudioClipIntention>;
+using GltfPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.GLTF.GLTFData, ECS.StreamableLoading.GLTF.GetGLTFIntention>;
 
 namespace DCL.AvatarRendering.Emotes.Load
 {
@@ -63,7 +65,8 @@ namespace DCL.AvatarRendering.Emotes.Load
         [Query]
         [None(typeof(StreamableResult))]
         private void GetEmotesFromRealmLSD([Data] float dt, in Entity entity,
-            ref GetSceneEmoteFromLocalDevelopmentSceneIntention intention)
+            ref GetSceneEmoteFromLocalDevelopmentSceneIntention intention,
+            ref IPartitionComponent partitionComponent)
         {
             URN urn = intention.NewSceneEmoteURN();
 
@@ -116,17 +119,33 @@ namespace DCL.AvatarRendering.Emotes.Load
                 emote = emoteStorage.GetOrAddByDTO(dto);
             }
 
-            List<AttachmentRegularAsset.RendererInfo> rendererInfos = AttachmentRegularAsset.RENDERER_INFO_POOL.Get();
+            if (CreateGltfPromiseIfRequired(emote, in intention, partitionComponent)) return;
 
-            emote.AssetResults[intention.BodyShape] =
-                new StreamableLoadingResult<AttachmentRegularAsset>(
-                    new AttachmentRegularAsset(intention.gltfRoot, rendererInfos,null));
+            //List<AttachmentRegularAsset.RendererInfo> rendererInfos = AttachmentRegularAsset.RENDERER_INFO_POOL.Get();
+            //
+            // emote.AssetResults[intention.BodyShape] =
+            //     new StreamableLoadingResult<AttachmentRegularAsset>(
+            //         new AttachmentRegularAsset(intention.gltfRoot, rendererInfos,null));
 
-            emote.AssetResults[intention.BodyShape]?.Asset!.AddReference();
+            //emote.AssetResults[intention.BodyShape]?.Asset!.AddReference();
 
-            World.Add(entity, new StreamableResult(new EmotesResolution(RepoolableList<IEmote>.FromElement(emote), 1)));
+            //World.Add(entity, new StreamableResult(new EmotesResolution(RepoolableList<IEmote>.FromElement(emote), 1)));
         }
 
+        private bool CreateGltfPromiseIfRequired(IEmote emote, in GetSceneEmoteFromLocalDevelopmentSceneIntention intention, IPartitionComponent partitionComponent)
+        {
+            if (emote.AssetResults[intention.BodyShape] != null) return false;
+
+            // The resolution of the GltfPromise will be finalized by ??
+            var promise = GltfPromise.Create(World,
+                GetGLTFIntention.Create(intention.SceneData, intention.EmotePath, intention.EmoteHash),
+                partitionComponent);
+
+            emote.UpdateLoadingStatus(true);
+            World.Create(promise, emote, intention.BodyShape);
+
+            return true;
+        }
 
         [Query]
         [None(typeof(StreamableResult))]

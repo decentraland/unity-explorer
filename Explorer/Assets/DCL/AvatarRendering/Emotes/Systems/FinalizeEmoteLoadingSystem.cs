@@ -14,10 +14,12 @@ using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.GLTF;
 using SceneRunner.Scene;
 using UnityEngine;
 using AssetBundleManifestPromise = ECS.StreamableLoading.Common.AssetPromise<SceneRunner.Scene.SceneAssetBundleManifest, DCL.AvatarRendering.Wearables.Components.GetWearableAssetBundleManifestIntention>;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
+using GltfPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.GLTF.GLTFData, ECS.StreamableLoading.GLTF.GetGLTFIntention>;
 using AudioPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AudioClips.AudioClipData, ECS.StreamableLoading.AudioClips.GetAudioClipIntention>;
 using EmotesFromRealmPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesDTOList,
     DCL.AvatarRendering.Emotes.GetEmotesByPointersFromRealmIntention>;
@@ -38,6 +40,7 @@ namespace DCL.AvatarRendering.Emotes
             FinalizeAssetBundleManifestLoadingQuery(World);
             FinalizeAssetBundleLoadingQuery(World);
             FinalizeAudioClipPromiseQuery(World);
+            FinalizeGltfLoadingQuery(World);
         }
 
         [Query]
@@ -85,6 +88,38 @@ namespace DCL.AvatarRendering.Emotes
                             component.ApplyAndMarkAsLoaded(assetEntity);
                         }
 
+                World!.Destroy(entity);
+            }
+        }
+
+        [Query]
+        private void FinalizeGltfLoading(
+            Entity entity,
+            ref GltfPromise promise,
+            ref IEmote emote, ref BodyShape bodyShape)
+        {
+            if (promise.TryForgetWithEntityIfCancelled(entity, World!))
+            {
+                ResetEmoteResultOnCancellation(emote, bodyShape);
+                return;
+            }
+
+            if (promise.SafeTryConsume(World, GetReportCategory(), out StreamableLoadingResult<GLTFData> result))
+            {
+                if (result.Succeeded)
+                {
+                    var asset = new StreamableLoadingResult<AttachmentRegularAsset>(result.ToRegularAsset());
+
+                    if (emote.IsUnisex() && emote.HasSameClipForAllGenders())
+                    {
+                        emote.AssetResults[BodyShape.MALE] = asset;
+                        emote.AssetResults[BodyShape.FEMALE] = asset;
+                    }
+                    else
+                        emote.AssetResults[bodyShape] = asset;
+                }
+
+                emote.UpdateLoadingStatus(false);
                 World!.Destroy(entity);
             }
         }

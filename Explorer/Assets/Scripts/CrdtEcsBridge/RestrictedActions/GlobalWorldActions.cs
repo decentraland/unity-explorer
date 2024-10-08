@@ -24,7 +24,7 @@ using SceneEmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRe
     DCL.AvatarRendering.Emotes.GetSceneEmoteFromRealmIntention>;
 using LocalSceneEmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
     DCL.AvatarRendering.Emotes.GetSceneEmoteFromLocalDevelopmentSceneIntention>;
-using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.Unity.GLTFContainer.Asset.Components.GltfContainerAsset, ECS.Unity.GLTFContainer.Asset.Components.GetGltfContainerAssetIntention>;
+
 namespace CrdtEcsBridge.RestrictedActions
 {
     public class GlobalWorldActions : IGlobalWorldActions
@@ -83,83 +83,20 @@ namespace CrdtEcsBridge.RestrictedActions
             TriggerEmote(urn, isLooping);
         }
 
-        public async Task TriggerLocalSceneEmoteAsync(string sceneId, string emotePath, string emoteHash, bool loop, CancellationToken ct)
+        public async UniTask TriggerLocalSceneEmoteAsync(ISceneData sceneData, string emotePath, string emoteHash, bool loop, CancellationToken ct)
         {
             if (!world.TryGet(playerEntity, out AvatarShapeComponent avatarShape))
                 throw new Exception("Cannot resolve body shape of current player because its missing AvatarShapeComponent");
 
-            var gltfPromise = Promise.Create(world, new GetGltfContainerAssetIntention(emotePath, emoteHash, new CancellationTokenSource()), PartitionComponent.TOP_PRIORITY);
-            var component = new GltfContainerComponent(ColliderLayer.ClNone, ColliderLayer.ClNone, gltfPromise);
-            component.State = LoadingState.Loading;
-            var entity = world.Create(component);
-
-            //var res = await gltfPromise.ToUniTaskAsync(world,cancellationToken:ct);
-
-            //var gltfRoot = res.Result.Value.Asset.Root;
-
-            while (!component.Promise.IsConsumed)
-            {
-                await Task.CompletedTask;
-            }
-
-            var gltfRoot = component.Promise.Result.Value.Asset.Root;
             var promise = LocalSceneEmotePromise.Create(world,
-                new GetSceneEmoteFromLocalDevelopmentSceneIntention(sceneId, emoteHash,gltfRoot, avatarShape.BodyShape, loop),
+                new GetSceneEmoteFromLocalDevelopmentSceneIntention(sceneData, emotePath, emoteHash,
+                    avatarShape.BodyShape, loop),
                 PartitionComponent.TOP_PRIORITY);
 
             promise = await promise.ToUniTaskAsync(world, cancellationToken: ct);
 
             var asd = 2;
 
-            //var gltfIntention = GetGLTFIntention.Create(emotePath, emoteHash);
-            //world.Create(GetGLTFIntention.Create(emotePath, emoteHash));
-
-            // var promise = Promise.Create(world, new GetGltfContainerAssetIntention(emotePath, emoteHash, new CancellationTokenSource()), PartitionComponent.TOP_PRIORITY);
-            // var component = new GltfContainerComponent(ColliderLayer.ClNone, ColliderLayer.ClNone, promise);
-            // component.State = LoadingState.Loading;
-            // var entity = world.Create(component);
-
-            // var test = await promise.ToUniTaskAsync(world, cancellationToken: ct);
-            // while (!promise.IsConsumed)
-            // {
-            //     await Task.CompletedTask;
-            // }
-
-
-
-            //world.Add(entity, component);
-
-
-
-
-
-
-
-            // if (!world.TryGet(playerEntity, out AvatarShapeComponent avatarShape))
-            //     throw new Exception("Cannot resolve body shape of current player because its missing AvatarShapeComponent");
-
-
-            //world.Add(playerEntity, GetGLTFIntention.Create(emotePath, emoteHash));
-
-
-
-            // var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-            // //
-            // var promise = LocalSceneEmotePromise.Create(world,
-            //     new GetGltfContainerAssetIntention(emotePath,emoteHash, cts),
-            //     //new GetLocalSceneEmoteIntention(emoteHash, loop, avatarShape.BodyShape),
-            //     PartitionComponent.TOP_PRIORITY);
-            //
-            // promise = await promise.ToUniTaskAsync(world, cancellationToken: ct);
-
-            // using var consumed = promise.Result!.Value.Asset.ConsumeEmotes();
-            // var value = consumed.Value[0]!;
-            // URN urn = value.GetUrn();
-            // bool isLooping = value.IsLooping();
-            //
-            // TriggerEmote(urn, isLooping);
-
-            //var a = hash;
             // TriggerEmote(new URN(emotePath), loop);
         }
 

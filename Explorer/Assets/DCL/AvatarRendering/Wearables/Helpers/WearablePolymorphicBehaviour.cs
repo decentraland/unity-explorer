@@ -12,6 +12,7 @@ using DCL.Optimization.Pools;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.GLTF;
 using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
@@ -265,6 +266,21 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                 rendererInfos.Add(new AttachmentRegularAsset.RendererInfo(skinnedMeshRenderer, skinnedMeshRenderer.sharedMaterial));
 
             return new AttachmentRegularAsset(go, rendererInfos, result.Asset);
+        }
+
+        public static AttachmentRegularAsset ToRegularAsset(this StreamableLoadingResult<GLTFData> result)
+        {
+            GameObject go = result.Asset!.containerGameObject;
+
+            // collect all renderers
+            List<AttachmentRegularAsset.RendererInfo> rendererInfos = AttachmentRegularAsset.RENDERER_INFO_POOL.Get();
+
+            using PoolExtensions.Scope<List<SkinnedMeshRenderer>> pooledList = go.GetComponentsInChildrenIntoPooledList<SkinnedMeshRenderer>();
+
+            foreach (SkinnedMeshRenderer skinnedMeshRenderer in pooledList.Value)
+                rendererInfos.Add(new AttachmentRegularAsset.RendererInfo(skinnedMeshRenderer, skinnedMeshRenderer.sharedMaterial));
+
+            return new AttachmentRegularAsset(go, rendererInfos, null);
         }
 
         public static void AssignWearableAsset(this IWearable wearable, AttachmentRegularAsset attachmentRegularAsset, BodyShape bodyShape)

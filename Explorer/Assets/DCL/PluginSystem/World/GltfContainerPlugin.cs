@@ -1,5 +1,6 @@
 using Arch.SystemGroups;
 using DCL.ECSComponents;
+using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.ResourcesUnloading;
 using ECS.Abstract;
@@ -19,7 +20,7 @@ using ECS.StreamableLoading.GLTF;
 
 namespace DCL.PluginSystem.World
 {
-    public class GltfContainerPlugin : IDCLWorldPluginWithoutSettings
+    public class GltfContainerPlugin : IDCLWorldPluginWithoutSettings//, IDCLGlobalPluginWithoutSettings
     {
         static GltfContainerPlugin()
         {
@@ -55,10 +56,10 @@ namespace DCL.PluginSystem.World
         {
             var buffer = sharedDependencies.EntityEventsBuilder.Rent<GltfContainerComponent>();
 
-            LoadGLTFSystem.InjectToWorld(ref builder, new NoCache<GLTFData, GetGLTFIntention>(false, false), sharedDependencies.SceneData);
+            //LoadGLTFSystem.InjectToWorld(ref builder, new NoCache<GLTFData, GetGLTFIntention>(false, false));
 
             // Asset loading
-            PrepareGltfAssetLoadingSystem.InjectToWorld(ref builder, assetsCache, localSceneDevelopment, useRemoteAssetBundles);
+            PrepareGltfAssetLoadingSystem.InjectToWorld(ref builder, assetsCache, localSceneDevelopment, useRemoteAssetBundles, sharedDependencies.SceneData);
 
             if (localSceneDevelopment && !useRemoteAssetBundles)
                 CreateGltfAssetFromRawGltfSystem.InjectToWorld(ref builder, globalDeps.FrameTimeBudget, globalDeps.MemoryBudget);
