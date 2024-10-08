@@ -1,6 +1,8 @@
 using DCL.Diagnostics;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace CommunicationData.URLHelpers
 {
@@ -9,6 +11,10 @@ namespace CommunicationData.URLHelpers
         private const int SHORTEN_URN_PARTS = 6;
         private const int THIRD_PARTY_V2_SHORTEN_URN_PARTS = 7;
         private const string THIRD_PARTY_PART_ID = "collections-thirdparty";
+
+        private const uint CACHE_MAX_SIZE = 1024;
+        private const int CACHE_CLEAR_AMOUNT = 64;
+        private static readonly ConcurrentDictionary<URN, URN> SHORTENED_URNS_CACHE = new ();
 
         private readonly string originalUrn;
 
@@ -127,13 +133,32 @@ namespace CommunicationData.URLHelpers
                     if (index == -1) break;
                 }
 
-                return index != -1 ? originalUrn[..index] : originalUrn;
+                return index != -1 ? GetShortenedUrn(index) : this;
             }
 
             // TokenId is always placed in the last part for regular nfts
             index = originalUrn.LastIndexOf(':');
 
-            return index != -1 ? originalUrn[..index] : this;
+            return index != -1 ? GetShortenedUrn(index) : this;
+        }
+
+        private URN GetShortenedUrn(int index)
+        {
+            if (SHORTENED_URNS_CACHE.TryGetValue(this, out URN shortenedUrn))
+                return shortenedUrn;
+
+            shortenedUrn = originalUrn[..index];
+
+            if (SHORTENED_URNS_CACHE.Count >= CACHE_MAX_SIZE)
+            {
+                var keysToRemove = SHORTENED_URNS_CACHE.Keys.Take(CACHE_CLEAR_AMOUNT).ToArray();
+                foreach (var key in keysToRemove)
+                    SHORTENED_URNS_CACHE.TryRemove(key, out _);
+            }
+
+            SHORTENED_URNS_CACHE.TryAdd(this, shortenedUrn);
+
+            return shortenedUrn;
         }
 
         public static implicit operator URN(int urn) =>

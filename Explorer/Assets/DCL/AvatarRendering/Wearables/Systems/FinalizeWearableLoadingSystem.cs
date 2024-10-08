@@ -108,8 +108,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                     continue;
                 }
 
-                URN shortenedPointer = loadingIntentionPointer;
-                loadingIntentionPointer = shortenedPointer.Shorten();
+                loadingIntentionPointer = loadingIntentionPointer.Shorten();
 
                 if (!wearableStorage.TryGetElement(loadingIntentionPointer, out IWearable wearable))
                 {
