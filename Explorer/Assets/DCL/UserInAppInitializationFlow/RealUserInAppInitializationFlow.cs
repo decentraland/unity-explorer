@@ -124,6 +124,7 @@ namespace DCL.UserInAppInitializationFlow
                     // If we are coming from a logout, we teleport the user to Genesis Plaza
                     var teleportResult = await realmNavigator.TryInitializeTeleportToParcelAsync(Vector2Int.zero, ct);
                     result = teleportResult.Success ? teleportResult : Result.ErrorResult(teleportResult.ErrorMessage);
+                    // We need to flag the process as completed, otherwise the multiplayer systems will not run
                     loadingStatus.SetStage(RealFlowLoadingStatus.Stage.Completed);
                 }
                 else

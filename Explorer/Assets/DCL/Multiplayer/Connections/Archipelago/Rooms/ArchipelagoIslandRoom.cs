@@ -32,6 +32,8 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
 
         public ArchipelagoIslandRoom(ICharacterObject characterObject, IWeb3IdentityCache web3IdentityCache, IMultiPool multiPool, ICurrentAdapterAddress currentAdapterAddress) : this(
             web3IdentityCache,
+            // We cannot use ArrayPool<byte>.Shared since some operations might not be thread safe (like the handshake)
+            // producing unexpected errors when sending the data through the websocket
             new LiveConnectionArchipelagoSignFlow(
                 new WebSocketArchipelagoLiveConnection(
                     () => new ClientWebSocket(),
