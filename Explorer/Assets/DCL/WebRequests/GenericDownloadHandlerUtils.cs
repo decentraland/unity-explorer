@@ -18,9 +18,6 @@ namespace DCL.WebRequests
     /// </summary>
     public static class GenericDownloadHandlerUtils
     {
-        private const string ORIGIN_HEADER_KEY = "Origin";
-        private const string ORIGIN_HEADER_VALUE = "explorer";
-
         public delegate Exception CreateExceptionOnParseFail(Exception exception, string text);
 
         public static Adapter<GenericPostRequest, GenericPostArguments> SignedFetchPostAsync(
@@ -45,20 +42,9 @@ namespace DCL.WebRequests
             );
         }
 
-        public static Adapter<GenericGetRequest, GenericGetArguments> GetAsync(
-            this IWebRequestController controller,
-            CommonArguments commonArguments,
-            CancellationToken ct,
-            ReportData reportData,
-            WebRequestHeadersInfo? headersInfo = null,
-            WebRequestSignInfo? signInfo = null,
-            ISet<long>? ignoreErrorCodes = null
-        )
-        {
-            headersInfo ??= new WebRequestHeadersInfo();
-            headersInfo.Value.Add(ORIGIN_HEADER_KEY, ORIGIN_HEADER_VALUE); // Probably in the future we will add this origin header also in the rest of requests
-            return new Adapter<GenericGetRequest, GenericGetArguments>(controller, commonArguments, default(GenericGetArguments), ct, reportData, headersInfo, signInfo, ignoreErrorCodes, GET_GENERIC);
-        }
+        public static Adapter<GenericGetRequest, GenericGetArguments> GetAsync(this IWebRequestController controller, CommonArguments commonArguments, CancellationToken ct, ReportData reportData, WebRequestHeadersInfo? headersInfo = null,
+            WebRequestSignInfo? signInfo = null, ISet<long>? ignoreErrorCodes = null) =>
+            new (controller, commonArguments, default(GenericGetArguments), ct, reportData, headersInfo, signInfo, ignoreErrorCodes, GET_GENERIC);
 
         public static Adapter<GenericPostRequest, GenericPostArguments> PostAsync(
             this IWebRequestController controller,
