@@ -5,7 +5,6 @@ using DCL.Multiplayer.Connections.Archipelago.AdapterAddress.Current;
 using DCL.Multiplayer.Connections.Archipelago.LiveConnections;
 using DCL.Multiplayer.Connections.Archipelago.SignFlow;
 using DCL.Multiplayer.Connections.Rooms.Connective;
-using DCL.Multiplayer.Connections.Typing;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
 using LiveKit.Internal.FFIClients.Pools;
@@ -17,6 +16,7 @@ using System.Net.WebSockets;
 using System.Threading;
 using UnityEngine;
 using Utility.Multithreading;
+using Utility.Types;
 
 namespace DCL.Multiplayer.Connections.Archipelago.Rooms
 {
@@ -83,7 +83,20 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
 
         private async UniTask PrewarmAsync(CancellationToken token)
         {
-            await ConnectToArchipelagoAsync(token);
+            const int ATTEMPTS = 3;
+            Result result = Result.ErrorResult("Cannot connect to Archipelago");
+
+            for (var i = 0; i < ATTEMPTS; i++)
+            {
+                result = await ConnectToArchipelagoAsync(token);
+
+                if (result.Success)
+                    break;
+            }
+
+            if (result.Success == false)
+                throw new InvalidOperationException(result.ErrorMessage!);
+
             signFlow.StartListeningForConnectionStringAsync(newString => OnNewConnectionString(newString, token), token);
         }
 
@@ -107,14 +120,22 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
             connectToRoomAsyncDelegate!(connectionString, token).Forget();
         }
 
-        private async UniTask ConnectToArchipelagoAsync(CancellationToken token)
+        private async UniTask<Result> ConnectToArchipelagoAsync(CancellationToken token)
         {
             string adapterUrl = currentAdapterAddress.AdapterUrl();
-            LightResult<string> welcomePeerId = await WelcomePeerIdAsync(adapterUrl, token);
-            welcomePeerId.EnsureSuccess("Cannot authorize with current address and signature, peer id is invalid");
+            Result<string> welcomePeerId = await WelcomePeerIdAsync(adapterUrl, token);
+
+            if (welcomePeerId.Success == false)
+            {
+                var message = $"Cannot connect to archipelago, WelcomePeerId is invalid: {welcomePeerId.ErrorMessage}";
+                ReportHub.LogError(ReportCategory.ARCHIPELAGO_REQUEST, message);
+                return Result.ErrorResult(message);
+            }
+
+            return Result.SuccessResult();
         }
 
-        private async UniTask<LightResult<string>> WelcomePeerIdAsync(string adapterUrl, CancellationToken token)
+        private async UniTask<Result<string>> WelcomePeerIdAsync(string adapterUrl, CancellationToken token)
         {
             await using ExecuteOnThreadPoolScope _ = await ExecuteOnThreadPoolScope.NewScopeWithReturnOnMainThreadAsync();
             IWeb3Identity identity = web3IdentityCache.EnsuredIdentity();
@@ -123,13 +144,10 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
             var messageForSignResult = await signFlow.MessageForSignAsync(ethereumAddress, token);
 
             if (messageForSignResult.Success == false ||
-                !HandshakePayloadIsValid(messageForSignResult.Result))
-            {
-                ReportHub.LogError(ReportCategory.ARCHIPELAGO_REQUEST, $"Cannot obtain a message to sign a welcome peer");
-                return LightResult<string>.FAILURE;
-            }
+                !HandshakePayloadIsValid(messageForSignResult.Value))
+                return Result<string>.ErrorResult($"Cannot obtain a message to sign a welcome peer: {messageForSignResult.ErrorMessage}");
 
-            string signedMessage = identity.Sign(messageForSignResult.Result).ToJson();
+            string signedMessage = identity.Sign(messageForSignResult.Value).ToJson();
             ReportHub.Log(ReportCategory.ARCHIPELAGO_REQUEST, $"Signed message: {signedMessage}");
             return await signFlow.WelcomePeerIdAsync(signedMessage, token);
         }

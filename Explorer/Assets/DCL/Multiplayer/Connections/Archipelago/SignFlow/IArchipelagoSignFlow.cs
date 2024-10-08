@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using DCL.Multiplayer.Connections.Typing;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -11,9 +10,9 @@ namespace DCL.Multiplayer.Connections.Archipelago.SignFlow
     {
         UniTask EnsureConnectedAsync(string adapterUrl, CancellationToken token);
 
-        UniTask<LightResult<string>> MessageForSignAsync(string ethereumAddress, CancellationToken token);
+        UniTask<Result<string>> MessageForSignAsync(string ethereumAddress, CancellationToken token);
 
-        UniTask<LightResult<string>> WelcomePeerIdAsync(string signedMessageAuthChainJson, CancellationToken token);
+        UniTask<Result<string>> WelcomePeerIdAsync(string signedMessageAuthChainJson, CancellationToken token);
 
         UniTask<Result> SendHeartbeatAsync(Vector3 playerPosition, CancellationToken token);
 

@@ -49,7 +49,14 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
         /// </summary>
         public static async UniTask<EnumResult<MemoryWrap, IArchipelagoLiveConnection.ResponseError>> SendAndReceiveAsync(this IArchipelagoLiveConnection archipelagoLiveConnection, MemoryWrap data, CancellationToken token)
         {
-            await archipelagoLiveConnection.SendAsync(data, token);
+            var result = await archipelagoLiveConnection.SendAsync(data, token);
+
+            if (result.Success == false)
+            {
+                var error=result.Error!.Value;
+                return EnumResult<MemoryWrap, IArchipelagoLiveConnection.ResponseError>.ErrorResult(error.State, error.Message ?? string.Empty);
+            }
+
             return await archipelagoLiveConnection.ReceiveAsync(token);
         }
 
