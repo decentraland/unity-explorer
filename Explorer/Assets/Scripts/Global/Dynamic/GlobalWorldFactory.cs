@@ -65,6 +65,7 @@ namespace Global.Dynamic
         private readonly World world;
         private readonly CurrentSceneInfo currentSceneInfo;
         private readonly HybridSceneParams hybridSceneParams;
+        private readonly bool localSceneDevelopment;
 
         public GlobalWorldFactory(in StaticContainer staticContainer,
             CameraSamplingData cameraSamplingData, RealmSamplingData realmSamplingData,
@@ -74,7 +75,8 @@ namespace Global.Dynamic
             CurrentSceneInfo currentSceneInfo,
             ILODCache lodCache,
             IEmotesMessageBus emotesMessageBus,
-            World world)
+            World world,
+            bool localSceneDevelopment)
         {
             partitionedWorldsAggregateFactory = staticContainer.SingletonSharedDependencies.AggregateFactory;
             componentPoolsRegistry = staticContainer.ComponentsContainer.ComponentPoolsRegistry;
@@ -95,6 +97,7 @@ namespace Global.Dynamic
             this.currentSceneInfo = currentSceneInfo;
             this.lodCache = lodCache;
             this.emotesMessageBus = emotesMessageBus;
+            this.localSceneDevelopment = localSceneDevelopment;
             this.world = world;
 
             memoryBudget = staticContainer.SingletonSharedDependencies.MemoryBudget;
@@ -176,7 +179,7 @@ namespace Global.Dynamic
 
             var finalizeWorldSystems = new IFinalizeWorldSystem[]
             {
-                UnloadSceneSystem.InjectToWorld(ref builder, scenesCache, staticContainer.SingletonSharedDependencies.SceneAssetLock), UnloadSceneLODSystem.InjectToWorld(ref builder, scenesCache, lodCache),
+                UnloadSceneSystem.InjectToWorld(ref builder, scenesCache, staticContainer.SingletonSharedDependencies.SceneAssetLock, localSceneDevelopment), UnloadSceneLODSystem.InjectToWorld(ref builder, scenesCache, lodCache),
                 new ReleaseRealmPooledComponentSystem(componentPoolsRegistry),
             };
 
