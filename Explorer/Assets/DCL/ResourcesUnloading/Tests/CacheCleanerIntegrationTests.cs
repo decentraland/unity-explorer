@@ -17,6 +17,7 @@ using System;
 using System.Collections.Generic;
 using DCL.LOD;
 using DCL.Profiles;
+using DCL.Profiling;
 using ECS.StreamableLoading.NFTShapes;
 using Unity.PerformanceTesting;
 using UnityEngine;
@@ -95,7 +96,7 @@ namespace DCL.ResourcesUnloading.Tests
             roadAssets.Unload(releasablePerformanceBudget, 3);
         }
 
-        [Performance]
+        [Test, Performance]
         [TestCase(1)]
         [TestCase(10)]
         [TestCase(100)]
@@ -117,6 +118,28 @@ namespace DCL.ResourcesUnloading.Tests
                    .MeasurementCount(20)
                    .GC()
                    .Run();
+        }
+
+        [Test, Performance]
+        [TestCase(1)]
+        [TestCase(10)]
+        [TestCase(100)]
+        public void CacheCleaningAllocations(int cachedElementsAmount)
+        {
+            // Arrange
+            releasablePerformanceBudget.TrySpendBudget().Returns(true);
+
+            for (var i = 0; i < cachedElementsAmount; i++)
+                FillCachesWithElements(hashID: $"test{i}");
+
+            SampleGroup totalAllocatedMemory = new SampleGroup("TotalAllocatedMemory", SampleUnit.Kilobyte, increaseIsBetter: false);
+
+            // Act
+            long memoryBefore = UnityEngine.Profiling.Profiler.GetTotalAllocatedMemoryLong();
+            cacheCleaner.UnloadCache();
+            long memoryAfter = UnityEngine.Profiling.Profiler.GetTotalAllocatedMemoryLong();
+
+            Measure.Custom(totalAllocatedMemory, (memoryAfter - memoryBefore) / 1024f);
         }
 
         [Category(INTEGRATION)]

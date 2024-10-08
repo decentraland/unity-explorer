@@ -17,26 +17,19 @@ namespace CommunicationData.URLHelpers
             this.originalUrn = urn;
         }
 
-        public URN(int urn)
-        {
-            this.originalUrn = urn.ToString();
-        }
-
         public bool IsNullOrEmpty() =>
             string.IsNullOrEmpty(originalUrn);
 
         public bool IsValid() =>
             !IsNullOrEmpty() && originalUrn.StartsWith("urn");
 
-        public bool Equals(int other) => Equals(other.ToString());
-
         public bool Equals(URN other) =>
             Equals(other.originalUrn);
 
-        public bool Equals(string other) =>
+        private bool Equals(string other) =>
             string.Equals(originalUrn, other, StringComparison.OrdinalIgnoreCase);
 
-        public override bool Equals(object obj) =>
+        public override bool Equals(object? obj) =>
             obj is URN other && Equals(other);
 
         public override string ToString() =>
@@ -86,7 +79,7 @@ namespace CommunicationData.URLHelpers
             }
 
             index--;
-            ReadOnlySpan<char> ercType = CutBeforeColon(ref index, out success);
+            CutBeforeColon(ref index, out success);
 
             if (success == false)
             {

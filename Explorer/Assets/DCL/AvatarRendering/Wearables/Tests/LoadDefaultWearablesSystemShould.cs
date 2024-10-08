@@ -10,7 +10,6 @@ using ECS.StreamableLoading.Common.Components;
 using ECS.TestSuite;
 using Newtonsoft.Json;
 using NUnit.Framework;
-using System.Collections.Generic;
 using System.IO;
 using DCL.Optimization.PerformanceBudgeting;
 using NSubstitute;
