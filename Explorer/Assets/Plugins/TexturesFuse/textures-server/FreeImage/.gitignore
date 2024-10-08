@@ -1,7 +1,11 @@
+*.o-arch
 *.o-x86_64
 *.o-arm64
+*.o-i386
+*.o-x86_64
 *.a-x86_64
 *.a-arm64
+*.a-i386
 *.a
 Dist/*
 *.meta
