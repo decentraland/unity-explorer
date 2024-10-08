@@ -35,9 +35,9 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
             new LiveConnectionArchipelagoSignFlow(
                 new WebSocketArchipelagoLiveConnection(
                     () => new ClientWebSocket(),
-                    new ArrayMemoryPool(ArrayPool<byte>.Shared!)
+                    new ArrayMemoryPool(ArrayPool<byte>.Create())
                 ).WithLog(),
-                new ArrayMemoryPool(ArrayPool<byte>.Shared!),
+                new ArrayMemoryPool(ArrayPool<byte>.Create()),
                 multiPool
             ).WithLog(),
             characterObject,
