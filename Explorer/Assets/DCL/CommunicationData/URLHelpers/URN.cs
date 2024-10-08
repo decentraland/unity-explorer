@@ -10,19 +10,16 @@ namespace CommunicationData.URLHelpers
         private const int THIRD_PARTY_V2_SHORTEN_URN_PARTS = 7;
         private const string THIRD_PARTY_PART_ID = "collections-thirdparty";
 
-        private readonly string lowercaseUrn;
         private readonly string originalUrn;
 
         public URN(string urn)
         {
             this.originalUrn = urn;
-            this.lowercaseUrn = this.originalUrn.ToLower();
         }
 
         public URN(int urn)
         {
             this.originalUrn = urn.ToString();
-            this.lowercaseUrn = this.originalUrn.ToLower();
         }
 
         public bool IsNullOrEmpty() =>
@@ -34,10 +31,10 @@ namespace CommunicationData.URLHelpers
         public bool Equals(int other) => Equals(other.ToString());
 
         public bool Equals(URN other) =>
-            Equals(other.lowercaseUrn);
+            Equals(other.originalUrn);
 
         public bool Equals(string other) =>
-            string.Equals(lowercaseUrn, other);
+            string.Equals(originalUrn, other, StringComparison.OrdinalIgnoreCase);
 
         public override bool Equals(object obj) =>
             obj is URN other && Equals(other);
