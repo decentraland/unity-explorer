@@ -56,7 +56,9 @@ namespace ECS.SceneLifeCycle.LocalSceneDevelopment
 
                     // Switch to the main thread because `TryReloadSceneAsync` requires that
                     await UniTask.SwitchToMainThread(cancellationToken: ct);
-                    await reloadScene.TryReloadSceneAsync(ct);
+                    await reloadScene.TryReloadSceneAsync(ct,
+                        wsSceneMessage.MessageCase == WsSceneMessage.MessageOneofCase.UpdateScene ?
+                            wsSceneMessage.UpdateScene.SceneId : wsSceneMessage.UpdateModel.SceneId);
                 }
                 else if (receiveResult.MessageType == WebSocketMessageType.Close)
                 {

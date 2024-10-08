@@ -12,10 +12,12 @@ using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
+using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
+using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
@@ -146,6 +148,22 @@ namespace Global.Dynamic
                                           && fixedScenePointers.AllPromisesResolved, cancellationToken: ct);
 
             return fixedScenePointers.Promises!;
+        }
+
+        public async UniTask<SceneDefinitions?> WaitForStaticScenesEntityDefinitionsAsync(CancellationToken ct)
+        {
+            if (staticLoadPositions.Count == 0) return null;
+
+            var promise = AssetPromise<SceneDefinitions, GetSceneDefinitionList>.Create(GlobalWorld.EcsWorld,
+                new GetSceneDefinitionList(new List<SceneEntityDefinition>(staticLoadPositions.Count), staticLoadPositions,
+                    new CommonLoadingArguments(RealmData.Ipfs.EntitiesActiveEndpoint)), PartitionComponent.TOP_PRIORITY);
+
+            promise = await promise.ToUniTaskAsync(GlobalWorld.EcsWorld, cancellationToken: ct);
+
+            if (promise.TryGetResult(GlobalWorld.EcsWorld, out var result) && result.Succeeded)
+                return result.Asset;
+
+            return null;
         }
 
         public void DisposeGlobalWorld()
