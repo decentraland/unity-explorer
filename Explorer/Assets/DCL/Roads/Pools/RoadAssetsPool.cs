@@ -1,6 +1,6 @@
+#nullable enable
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
-using JetBrains.Annotations;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -34,11 +34,11 @@ namespace DCL.LOD
         /// </summary>
         private const int POOLS_MAX_NEW_INSTANCES = 20;
 
-        [CanBeNull] private readonly Transform roadAssetParent = null;
+        private readonly Transform? roadAssetParent = null;
 
         private readonly Dictionary<string, IObjectPool<Transform>> roadAssetPoolDictionary;
 
-        public RoadAssetsPool(IReadOnlyList<GameObject> roadPrefabs, [CanBeNull] IComponentPoolsRegistry componentPoolsRegistry = null)
+        public RoadAssetsPool(IReadOnlyList<GameObject> roadPrefabs, IComponentPoolsRegistry? componentPoolsRegistry = null)
         {
 
 #if UNITY_EDITOR
