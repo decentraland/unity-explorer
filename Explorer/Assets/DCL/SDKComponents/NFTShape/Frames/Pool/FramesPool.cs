@@ -50,8 +50,9 @@ namespace DCL.SDKComponents.NFTShape.Frames.Pool
                     g => g.gameObject.SetActive(true),
                     g =>
                     {
-                        // ReSharper disable once AssignNullToNotNullAttribute
+#if UNITY_EDITOR
                         g.transform.SetParent(framePoolParent);
+#endif
                         g.gameObject.SetActive(false);
                     },
                     g => UnityObjectUtils.SafeDestroyGameObject(g.transform)

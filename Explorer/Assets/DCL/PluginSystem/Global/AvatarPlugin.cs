@@ -63,6 +63,7 @@ namespace DCL.PluginSystem.Global
         private readonly NametagsData nametagsData;
 
         private IComponentPool<Transform> transformPoolRegistry = null!;
+        private Transform? poolParent = null;
 
         private IObjectPool<NametagView> nametagViewPool = null!;
         private TextureArrayContainer textureArrayContainer;
@@ -120,6 +121,7 @@ namespace DCL.PluginSystem.Global
         {
             attachmentsAssetsCache.Dispose();
             avatarTransformMatrixJobWrapper.Dispose();
+            UnityObjectUtils.SafeDestroyGameObject(poolParent);
         }
 
         public async UniTask InitializeAsync(AvatarShapeSettings settings, CancellationToken ct)
@@ -188,9 +190,12 @@ namespace DCL.PluginSystem.Global
         private async UniTask CreateNametagPoolAsync(AvatarShapeSettings settings, CancellationToken ct)
         {
             NametagView nametagPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.NametagView, ct: ct)).Value.GetComponent<NametagView>();
+
+#if UNITY_EDITOR
             var poolRoot = componentPoolsRegistry.RootContainerTransform();
-            var poolParent = new GameObject("POOL_CONTAINER_NameTags").transform;
+            poolParent = new GameObject("POOL_CONTAINER_NameTags").transform;
             poolParent.parent = poolRoot;
+#endif
 
             nametagViewPool = new ObjectPool<NametagView>(
                 () =>
