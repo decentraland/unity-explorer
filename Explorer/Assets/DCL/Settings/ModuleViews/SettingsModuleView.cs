@@ -18,6 +18,8 @@ namespace DCL.Settings.ModuleViews
             Configure((TConfig) configuration);
         }
 
+        public abstract void SetInteractable(bool interactable);
+
         protected abstract void Configure(TConfig configuration);
     }
 
@@ -31,5 +33,6 @@ namespace DCL.Settings.ModuleViews
 
     public interface ISettingsModuleView
     {
+        public void SetInteractable(bool interactable);
     }
 }

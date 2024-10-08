@@ -10,23 +10,11 @@ namespace DCL.Settings.ModuleControllers
 
         internal ISettingsModuleView controllerView { get; private set; }
 
-        public void SetView(ISettingsModuleView view) => controllerView = view;
+        public void SetView(ISettingsModuleView view) =>
+            controllerView = view;
 
-        public void SetViewInteractable(bool interactable)
-        {
-            switch (controllerView)
-            {
-                case SettingsToggleModuleView toggle:
-                    toggle.ToggleView.Toggle.interactable = interactable;
-                    break;
-                case SettingsDropdownModuleView dropdown:
-                    dropdown.DropdownView.Dropdown.interactable = interactable;
-                    break;
-                case SettingsSliderModuleView slider:
-                    slider.SliderView.Slider.interactable = interactable;
-                    break;
-            }
-        }
+        public void SetViewInteractable(bool interactable) =>
+            controllerView?.SetInteractable(interactable);
 
         public virtual void OnAllControllersInstantiated(List<SettingsFeatureController> controllers){}
 
