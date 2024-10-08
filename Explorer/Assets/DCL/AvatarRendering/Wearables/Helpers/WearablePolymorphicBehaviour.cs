@@ -287,8 +287,8 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                 return mainFileAsset is { Succeeded: true };
             }
 
-            foreach (var r in results)
-                if (r is not { Succeeded: true })
+            for (var i = 0; i < results.Length; i++)
+                if (results[i] is not { Succeeded: true })
                     return false;
 
             return true;
