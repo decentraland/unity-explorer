@@ -3,6 +3,7 @@ using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Archipelago.LiveConnections;
 using DCL.Multiplayer.Connections.Messaging;
 using DCL.Multiplayer.Connections.Pools;
+using DCL.Multiplayer.Connections.Typing;
 using Decentraland.Common;
 using Decentraland.Kernel.Comms.V3;
 using LiveKit.client_sdk_unity.Runtime.Scripts.Internal.FFIClients;
@@ -45,11 +46,8 @@ namespace DCL.Multiplayer.Connections.Archipelago.SignFlow
             catch (Exception e) { ReportHub.LogException(new Exception($"Cannot ensure connection {adapterUrl}", e), ReportCategory.LIVEKIT); }
         }
 
-        public async UniTask<Result<string>> MessageForSignAsync(string ethereumAddress, CancellationToken token)
+        public async UniTask<LightResult<string>> MessageForSignAsync(string ethereumAddress, CancellationToken token)
         {
-            if (connection.IsConnected == false)
-                return Result<string>.ErrorResult("Archipelago is disconnected");
-
             using SmartWrap<ChallengeRequestMessage> challenge = multiPool.TempResource<ChallengeRequestMessage>();
             challenge.value.Address = ethereumAddress;
             using SmartWrap<ClientPacket> clientPacket = multiPool.TempResource<ClientPacket>();
@@ -58,19 +56,19 @@ namespace DCL.Multiplayer.Connections.Archipelago.SignFlow
             var result = await connection.SendAndReceiveAsync(clientPacket.value, memoryPool, token);
 
             if (result.Success == false)
-                return Result<string>.ErrorResult($"Cannot message for sign for address {ethereumAddress}: {result.Error?.Message}");
+            {
+                ReportHub.LogError(ReportCategory.LIVEKIT, $"Cannot message for sign for address {ethereumAddress}: {result.Error?.Message}");
+                return LightResult<string>.FAILURE;
+            }
 
             using MemoryWrap response = result.Value;
             using var serverPacket = new SmartWrap<ServerPacket>(response.AsMessageServerPacket(), multiPool);
             using var challengeResponse = new SmartWrap<ChallengeResponseMessage>(serverPacket.value.ChallengeResponse!, multiPool);
-            return Result<string>.SuccessResult(challengeResponse.value.ChallengeToSign!);
+            return challengeResponse.value.ChallengeToSign!.AsSuccess();
         }
 
-        public async UniTask<Result<string>> WelcomePeerIdAsync(string signedMessageAuthChainJson, CancellationToken token)
+        public async UniTask<LightResult<string>> WelcomePeerIdAsync(string signedMessageAuthChainJson, CancellationToken token)
         {
-            if (connection.IsConnected == false)
-                return Result<string>.ErrorResult("Archipelago is disconnected");
-
             try
             {
                 using SmartWrap<SignedChallengeMessage> signedMessage = multiPool.TempResource<SignedChallengeMessage>();
@@ -92,22 +90,19 @@ namespace DCL.Multiplayer.Connections.Archipelago.SignFlow
                 if (result.hasResultLeft)
                 {
                     if (result.result.Success == false)
-                        return Result<string>.ErrorResult($"Error on Send and Receive: {result.result.Error?.State}");
+                        return LightResult<string>.FAILURE;
 
                     using MemoryWrap response = result.result.Value;
                     using var serverPacket = new SmartWrap<ServerPacket>(response.AsMessageServerPacket(), multiPool);
                     using var welcomeMessage = new SmartWrap<WelcomeMessage>(serverPacket.value.Welcome!, multiPool);
-                    return Result<string>.SuccessResult(welcomeMessage.value.PeerId!);
+                    return welcomeMessage.value.PeerId.AsSuccess();
                 }
 
-                return Result<string>.ErrorResult("Connection is closed before receiving the welcome message");
+                return LightResult<string>.FAILURE;
             }
-            catch (Exception e)
-            {
-                var message = $"Cannot welcome peer id for signed message {signedMessageAuthChainJson}";
-                ReportHub.LogException(new Exception(message, e), ReportCategory.LIVEKIT);
-                return Result<string>.ErrorResult(message);
-            }
+            catch (Exception e) { ReportHub.LogException(new Exception($"Cannot welcome peer id for signed message {signedMessageAuthChainJson}", e), ReportCategory.LIVEKIT); }
+
+            return LightResult<string>.FAILURE;
         }
 
         public async UniTask<Result> SendHeartbeatAsync(Vector3 playerPosition, CancellationToken token)

@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Multiplayer.Connections.Typing;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -31,7 +32,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.SignFlow
             log($"{PREFIX} Connect finish for {adapterUrl}");
         }
 
-        public async UniTask<Result<string>> MessageForSignAsync(string ethereumAddress, CancellationToken token)
+        public async UniTask<LightResult<string>> MessageForSignAsync(string ethereumAddress, CancellationToken token)
         {
             log($"{PREFIX} MessageForSignAsync start for address {ethereumAddress}");
             var result = await origin.MessageForSignAsync(ethereumAddress, token);
@@ -39,10 +40,10 @@ namespace DCL.Multiplayer.Connections.Archipelago.SignFlow
             return result;
         }
 
-        public async UniTask<Result<string>> WelcomePeerIdAsync(string signedMessageAuthChainJson, CancellationToken token)
+        public async UniTask<LightResult<string>> WelcomePeerIdAsync(string signedMessageAuthChainJson, CancellationToken token)
         {
             log($"{PREFIX} WelcomePeerIdAsync start for json {signedMessageAuthChainJson}");
-            Result<string> result = await origin.WelcomePeerIdAsync(signedMessageAuthChainJson, token);
+            LightResult<string> result = await origin.WelcomePeerIdAsync(signedMessageAuthChainJson, token);
             log($"{PREFIX} WelcomePeerIdAsync finish for json {result} with result {result}");
             return result;
         }
