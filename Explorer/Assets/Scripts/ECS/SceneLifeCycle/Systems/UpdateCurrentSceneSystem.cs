@@ -81,10 +81,8 @@ namespace ECS.SceneLifeCycle.Systems
                 RefreshSceneDebugInfo();
         }
 
-        public override void Dispose()
+        protected override void OnDispose()
         {
-            base.Dispose();
-
             GameObject.Destroy(sceneBoundsCube);
         }
 

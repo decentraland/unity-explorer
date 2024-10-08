@@ -56,7 +56,7 @@ namespace ECS.SceneLifeCycle.Systems
             startTime = Time.time;
         }
 
-        public override void Dispose()
+        protected override void OnDispose()
         {
             HashSetPool<EntityReference>.Release(entitiesUnderObservation);
             entitiesUnderObservation = null;
