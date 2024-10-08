@@ -189,7 +189,7 @@ namespace DCL.PluginSystem.Global
         {
             NametagView nametagPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.NametagView, ct: ct)).Value.GetComponent<NametagView>();
             var poolRoot = componentPoolsRegistry.RootContainerTransform();
-            var poolParent = new GameObject("POOL_CONTAINER_NAMETAGS").transform;
+            var poolParent = new GameObject("POOL_CONTAINER_NameTags").transform;
             poolParent.parent = poolRoot;
 
             nametagViewPool = new ObjectPool<NametagView>(

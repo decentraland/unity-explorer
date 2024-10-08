@@ -39,7 +39,9 @@ namespace DCL.SDKComponents.MediaStream.Wrapper
             this.frameTimeBudget = frameTimeBudget;
             cacheCleaner.Register(videoTexturePool);
 
-            var parentContainer = new GameObject("MediaPlayerContainer");
+            var poolRoot = componentPoolsRegistry.RootContainerTransform();
+            var parentContainer = new GameObject("POOL_CONTAINER_MediaPlayer").transform;
+            parentContainer.parent = poolRoot;
 
             mediaPlayerPool = componentPoolsRegistry.AddGameObjectPool(
                 creationHandler: () =>
@@ -52,7 +54,7 @@ namespace DCL.SDKComponents.MediaStream.Wrapper
                 },
                 onGet: mediaPlayer =>
                 {
-                    mediaPlayer.transform.SetParent(parentContainer.transform);
+                    mediaPlayer.transform.SetParent(parentContainer);
                     mediaPlayer.AutoOpen = false;
                     mediaPlayer.enabled = true;
                 },

@@ -41,7 +41,7 @@ namespace DCL.LOD
         public RoadAssetsPool(IReadOnlyList<GameObject> roadPrefabs, [CanBeNull] IComponentPoolsRegistry componentPoolsRegistry = null)
         {
             var poolRoot = componentPoolsRegistry?.RootContainerTransform();
-            roadAssetParent = new GameObject("POOL_CONTAINER_ROAD_ASSETS").transform;
+            roadAssetParent = new GameObject("POOL_CONTAINER_Road_Assets").transform;
             roadAssetParent.parent = poolRoot;
 
             roadAssetPoolDictionary = new Dictionary<string, IObjectPool<Transform>>();
