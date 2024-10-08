@@ -29,5 +29,5 @@ MonoBehaviour:
   <InterpolationSettings>k__BackingField: {fileID: 11400000, guid: bc6d8c8af4871f14082de8f9d29040c6, type: 2}
   <UseExtrapolation>k__BackingField: 0
   <ExtrapolationSettings>k__BackingField: {fileID: 11400000, guid: 1c9e6c7c419eba54eafe152d131a4305, type: 2}
-  <AccelerationTimeThreshold>k__BackingField: 1
+  <AccelerationTimeThreshold>k__BackingField: 0.5
   <IdleSlowDownSpeed>k__BackingField: 3
