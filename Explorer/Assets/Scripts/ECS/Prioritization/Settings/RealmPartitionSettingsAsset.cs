@@ -20,7 +20,7 @@ namespace ECS.Prioritization
         public float AggregateAngleTolerance { get; private set; }
 
         public Action<int>? OnMaxLoadingDistanceInParcelsChanged { get; set; }
-        
+
         public int MaxLoadingDistanceInParcels
         {
             get => Math.Min(MinLoadingDistanceInParcels,
@@ -41,6 +41,9 @@ namespace ECS.Prioritization
 
         [field: SerializeField] [field: Min(1)]
         public int UnloadingDistanceToleranceInParcels { get; private set; } = 1;
+
+        [field: SerializeField]
+        public float TimeUntilUnloadingInMilliseconds { get; private set; } = 5000;
 
         [field: SerializeField]
         public int ScenesRequestBatchSize { get; private set; }

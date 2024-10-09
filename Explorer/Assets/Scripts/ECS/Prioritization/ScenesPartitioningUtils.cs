@@ -20,6 +20,7 @@ namespace ECS.Prioritization
             public bool IsBehind;
             public bool OutOfRange;
             public float RawSqrDistance;
+            public float TimeOutOfRange;
         }
 
         public static bool TryUpdateCameraTransformOnChanged(PartitionDiscreteDataBase partitionDiscreteData, in CameraComponent cameraComponent,
@@ -65,6 +66,8 @@ namespace ECS.Prioritization
             public float3 CameraPosition;
             public float3 CameraForward;
             public float UnloadingSqrDistance;
+            public float UnloadingTime;
+            public float DeltaTime;
             [ReadOnly] public NativeArray<int> SqrDistanceBuckets;
             [ReadOnly] public UnsafeList<ParcelCornersData> ParcelCorners;
             private NativeArray<PartitionData> partitions;
@@ -77,6 +80,8 @@ namespace ECS.Prioritization
                 CameraForward = default;
                 SqrDistanceBuckets = default(NativeArray<int>);
                 UnloadingSqrDistance = default;
+                UnloadingTime = default;
+                DeltaTime = default;
             }
 
             public void Execute(int index)
@@ -133,7 +138,24 @@ namespace ECS.Prioritization
                 // the same scene is counted as InFront
                 // If the bucket exceeds the maximum bucket array, we need to mark partition as dirty since we are out of range
                 partition.IsDirty = partition.Bucket != bucket || partition.IsBehind != isBehind || bucketIndex == SqrDistanceBuckets.Length || partition.RawSqrDistance == -1;
-                partition.OutOfRange = minSqrMagnitude > UnloadingSqrDistance;
+
+                bool outOfRange = minSqrMagnitude > UnloadingSqrDistance;
+
+                if (!outOfRange)
+                {
+                    partition.TimeOutOfRange = 0;
+                    partition.OutOfRange = false;
+                }
+                else if (partition.TimeOutOfRange < UnloadingTime)
+                {
+                    partition.TimeOutOfRange += DeltaTime;
+                }
+                else
+                {
+                    partition.OutOfRange = true;
+                }
+
+                //partition.OutOfRange = minSqrMagnitude > UnloadingSqrDistance;
 
                 if (partition.IsDirty)
                     partition.RawSqrDistance = minSqrMagnitude;

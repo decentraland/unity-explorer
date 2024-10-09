@@ -38,6 +38,12 @@ namespace ECS.Prioritization
         int UnloadingDistanceToleranceInParcels { get; }
 
         /// <summary>
+        /// Time tolerance added before unloading an out of range scene. This adds a little of time rubber-band so moving the camera won't cause scenes to load/unload suddenly.
+        /// Scenes will be considered out of range only after this Time has passed after it started to be out of range.
+        /// </summary>
+        float TimeUntilUnloadingInMilliseconds { get; }
+
+        /// <summary>
         ///     The number of closest scenes that can be requested at a time
         /// </summary>
         int ScenesRequestBatchSize { get; }

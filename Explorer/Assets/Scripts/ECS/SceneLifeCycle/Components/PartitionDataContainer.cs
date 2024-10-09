@@ -5,6 +5,7 @@ using ECS.Prioritization.Components;
 using Unity.Jobs;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
+using UnityEngine;
 
 namespace ECS.SceneLifeCycle.Components
 {
@@ -56,7 +57,7 @@ namespace ECS.SceneLifeCycle.Components
         {
             partitions.Dispose();
             parcelCorners.Dispose();
-            
+
             CurrentPartitionIndex = 0;
 
             // Hard limit of the real scenes that can exist
@@ -69,12 +70,14 @@ namespace ECS.SceneLifeCycle.Components
             };
         }
 
-        public JobHandle ScheduleJob(IReadOnlyCameraSamplingData readOnlyCameraSamplingData, float unloadSqrDistance)
+        public JobHandle ScheduleJob(IReadOnlyCameraSamplingData readOnlyCameraSamplingData, float unloadSqrDistance, float deltaTime, float unloadTime)
         {
             partitionJob.CameraForward = readOnlyCameraSamplingData.Forward;
             partitionJob.CameraPosition = readOnlyCameraSamplingData.Position;
             partitionJob.ParcelCorners = parcelCorners;
             partitionJob.UnloadingSqrDistance = unloadSqrDistance;
+            partitionJob.UnloadingTime = unloadTime;
+            partitionJob.DeltaTime = deltaTime;
             return partitionJob.Schedule(CurrentPartitionIndex, 8);
         }
 
