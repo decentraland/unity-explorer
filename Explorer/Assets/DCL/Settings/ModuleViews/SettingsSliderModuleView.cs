@@ -39,6 +39,9 @@ namespace DCL.Settings.ModuleViews
             OnSliderValueChanged(SliderView.Slider.value);
         }
 
+        public override void SetInteractable(bool interactable) =>
+            SliderView.Slider.interactable = interactable;
+
         protected override void Configure(Config configuration)
         {
             SliderView.DecreaseButton.gameObject.SetActive(configuration.IsEnabled);
