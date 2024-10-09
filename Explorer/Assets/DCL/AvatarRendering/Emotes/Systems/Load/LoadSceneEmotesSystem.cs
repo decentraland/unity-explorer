@@ -4,7 +4,6 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using AssetManagement;
 using CommunicationData.URLHelpers;
-using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Loading.DTO;
 using DCL.AvatarRendering.Wearables.Helpers;
@@ -58,13 +57,13 @@ namespace DCL.AvatarRendering.Emotes.Load
         {
             GetEmotesFromRealmQuery(World, t);
             GetEmotesByPointersQuery(World, t);
-            GetEmotesFromRealmLSDQuery(World, t);
+            GetEmotesFromLocalSceneQuery(World, t);
         }
 
         // TODO: this query should not be in this system. This system should only process scene emotes, but this query is processing emotes of avatars
         [Query]
         [None(typeof(StreamableResult))]
-        private void GetEmotesFromRealmLSD([Data] float dt, in Entity entity,
+        private void GetEmotesFromLocalScene([Data] float dt, in Entity entity,
             ref GetSceneEmoteFromLocalDevelopmentSceneIntention intention,
             ref IPartitionComponent partitionComponent)
         {
@@ -123,16 +122,16 @@ namespace DCL.AvatarRendering.Emotes.Load
 
             if (CreateGltfPromiseIfRequired(emote, in intention, partitionComponent)) return;
 
-            //List<AttachmentRegularAsset.RendererInfo> rendererInfos = AttachmentRegularAsset.RENDERER_INFO_POOL.Get();
-            //
-            // emote.AssetResults[intention.BodyShape] =
-            //     new StreamableLoadingResult<AttachmentRegularAsset>(
-            //         new AttachmentRegularAsset(intention.gltfRoot, rendererInfos,null));
-
             if (emote.AssetResults[intention.BodyShape] is { Succeeded: true })
             {
                 // We need to add a reference here, so it is not lost if the flow interrupts in between (i.e. before creating instances of CachedWearable)
                 emote.AssetResults[intention.BodyShape]?.Asset!.AddReference();
+            }
+            else
+            {
+                // TODO check if we really need to do this
+                World.Add(entity, new StreamableResult(GetReportCategory(), new Exception($"Scene emote failed to load {urn}")));
+                return;
             }
 
             World.Add(entity, new StreamableResult(new EmotesResolution(RepoolableList<IEmote>.FromElement(emote), 1)));
@@ -144,7 +143,7 @@ namespace DCL.AvatarRendering.Emotes.Load
 
             // The resolution of the GltfPromise will be finalized by ??
             var promise = GltfPromise.Create(World,
-                GetGLTFIntention.Create(intention.SceneData, intention.EmotePath, intention.EmoteHash),
+                GetGLTFIntention.Create(intention.SceneData, intention.EmotePath, intention.EmoteHash, isSceneEmote:true),
                 partitionComponent);
 
             emote.UpdateLoadingStatus(true);

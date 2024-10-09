@@ -11,14 +11,12 @@ using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
 using GLTFast;
 using GLTFast.Materials;
-using SceneRunner.Scene;
 using System;
 using System.Threading;
 using UnityEngine;
 
 namespace ECS.StreamableLoading.GLTF
 {
-    //[UpdateInGroup(typeof(StreamableLoadingGroup))]
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     public partial class LoadGLTFSystem: LoadSystemBase<GLTFData, GetGLTFIntention>
     {
@@ -42,11 +40,18 @@ namespace ECS.StreamableLoading.GLTF
                 logger: gltfConsoleLogger,
                 materialGenerator: gltfMaterialGenerator);
 
+            var animationMethod = AnimationMethod.Legacy;
+
+            if (intention.IsSceneEmote)
+                animationMethod = AnimationMethod.Mecanim;
+
+
             var gltFastSettings = new ImportSettings
             {
                 NodeNameMethod = NameImportMethod.OriginalUnique,
                 AnisotropicFilterLevel = 0,
                 GenerateMipMaps = false,
+                AnimationMethod = animationMethod,
             };
 
             bool success = await gltfImport.Load(intention.Name, gltFastSettings, ct);
