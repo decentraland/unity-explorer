@@ -20,7 +20,7 @@ namespace ECS.Prioritization
             public bool IsBehind;
             public bool OutOfRange;
             public float RawSqrDistance;
-            public float TimeOutOfRange;
+            public float TimeOutOfBucket;
         }
 
         public static bool TryUpdateCameraTransformOnChanged(PartitionDiscreteDataBase partitionDiscreteData, in CameraComponent cameraComponent,
@@ -138,9 +138,9 @@ namespace ECS.Prioritization
                 //This allows for some leniency so scenes are not unloaded immediately as soon as they are in the right bucket.
                 //But ONLY when going from a lower bucket to the LODBucket. In any other case the scenes will be re-bucketed immediately.
                 if (partition.Bucket == newBucketIndex)
-                    partition.TimeOutOfRange = 0;
-                else if (newBucketIndex == LODBucket && newBucketIndex > partition.Bucket && partition.TimeOutOfRange < UnloadingTime)
-                    partition.TimeOutOfRange += DeltaTime;
+                    partition.TimeOutOfBucket = 0;
+                else if (newBucketIndex == LODBucket && newBucketIndex > partition.Bucket && partition.TimeOutOfBucket < UnloadingTime)
+                    partition.TimeOutOfBucket += DeltaTime;
                 else
                     partition.Bucket = newBucketIndex;
 
