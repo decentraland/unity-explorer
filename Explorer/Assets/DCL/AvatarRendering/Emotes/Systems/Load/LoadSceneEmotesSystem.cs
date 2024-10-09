@@ -119,6 +119,8 @@ namespace DCL.AvatarRendering.Emotes.Load
                 emote = emoteStorage.GetOrAddByDTO(dto);
             }
 
+            if (emote.IsLoading) return;
+
             if (CreateGltfPromiseIfRequired(emote, in intention, partitionComponent)) return;
 
             //List<AttachmentRegularAsset.RendererInfo> rendererInfos = AttachmentRegularAsset.RENDERER_INFO_POOL.Get();
@@ -127,9 +129,13 @@ namespace DCL.AvatarRendering.Emotes.Load
             //     new StreamableLoadingResult<AttachmentRegularAsset>(
             //         new AttachmentRegularAsset(intention.gltfRoot, rendererInfos,null));
 
-            //emote.AssetResults[intention.BodyShape]?.Asset!.AddReference();
+            if (emote.AssetResults[intention.BodyShape] is { Succeeded: true })
+            {
+                // We need to add a reference here, so it is not lost if the flow interrupts in between (i.e. before creating instances of CachedWearable)
+                emote.AssetResults[intention.BodyShape]?.Asset!.AddReference();
+            }
 
-            //World.Add(entity, new StreamableResult(new EmotesResolution(RepoolableList<IEmote>.FromElement(emote), 1)));
+            World.Add(entity, new StreamableResult(new EmotesResolution(RepoolableList<IEmote>.FromElement(emote), 1)));
         }
 
         private bool CreateGltfPromiseIfRequired(IEmote emote, in GetSceneEmoteFromLocalDevelopmentSceneIntention intention, IPartitionComponent partitionComponent)

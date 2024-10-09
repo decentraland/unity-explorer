@@ -6,18 +6,13 @@ using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
-using DCL.ECSComponents;
 using DCL.Multiplayer.Emotes;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
-using ECS.StreamableLoading.GLTF;
-using ECS.Unity.GLTFContainer.Asset.Components;
-using ECS.Unity.GLTFContainer.Components;
 using SceneRunner.Scene;
 using System;
 using System.Threading;
-using System.Threading.Tasks;
 using UnityEngine;
 using Utility.Arch;
 using SceneEmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
@@ -94,10 +89,11 @@ namespace CrdtEcsBridge.RestrictedActions
                 PartitionComponent.TOP_PRIORITY);
 
             promise = await promise.ToUniTaskAsync(world, cancellationToken: ct);
+            var consumed = promise.Result!.Value.Asset.ConsumeEmotes();
+            var value = consumed.Value[0]!;
+            URN urn = value.GetUrn();
 
-            var asd = 2;
-
-            // TriggerEmote(new URN(emotePath), loop);
+            TriggerEmote(urn, loop);
         }
 
         public void TriggerEmote(URN urn, bool isLooping)
