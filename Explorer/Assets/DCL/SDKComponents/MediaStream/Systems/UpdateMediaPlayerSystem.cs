@@ -186,7 +186,9 @@ namespace DCL.SDKComponents.MediaStream
         {
             base.Dispose();
 
+#if UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX
             worldVolumeMacBus.OnWorldVolumeChanged -= OnWorldVolumeChanged;
+#endif
         }
     }
 }
