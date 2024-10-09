@@ -1,5 +1,6 @@
 ﻿using Arch.Core;
 using DCL.Ipfs;
+using DCL.LOD;
 using DCL.Optimization.Pools;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
@@ -17,12 +18,15 @@ namespace ECS.SceneLifeCycle.Tests
     public class PartitionSceneEntitiesSystemShould : UnitySystemTestBase<PartitionSceneEntitiesSystem>
     {
         private IPartitionSettings partitionSettings;
+        private ILODSettingsAsset lodSettings;
         private IReadOnlyCameraSamplingData samplingData;
         private IComponentPool<PartitionComponent> componentPool;
 
         [SetUp]
         public void SetUp()
         {
+            lodSettings = Substitute.For<ILODSettingsAsset>();
+            lodSettings.SDK7LodThreshold.Returns(2);
             partitionSettings = Substitute.For<IPartitionSettings>();
             partitionSettings.AngleTolerance.Returns(0);
             partitionSettings.PositionSqrTolerance.Returns(0);
@@ -34,7 +38,7 @@ namespace ECS.SceneLifeCycle.Tests
             componentPool.Get().Returns(_ => new PartitionComponent());
             IRealmPartitionSettings realmPartitionSettings = Substitute.For<IRealmPartitionSettings>();
 
-            system = new PartitionSceneEntitiesSystem(world, componentPool, partitionSettings, samplingData, new PartitionDataContainer(), realmPartitionSettings);
+            system = new PartitionSceneEntitiesSystem(world, componentPool, partitionSettings, samplingData, new PartitionDataContainer(), realmPartitionSettings, lodSettings);
             system.partitionDataContainer.Restart();
         }
 

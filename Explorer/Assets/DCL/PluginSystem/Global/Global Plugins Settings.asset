@@ -602,9 +602,13 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+        <LODSettings>k__BackingField:
+          m_AssetGUID: 0703f7736b8c9b244953ae7c6ff9a037
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
         frameTimeCap: 33
         frameTimeCapDeepProfiler: 300
-        memoryCap: 16
         <ScenesLoadingBudget>k__BackingField: 100
         <AssetsLoadingBudget>k__BackingField: 50
         <WebRequestsBudget>k__BackingField: 20

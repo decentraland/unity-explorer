@@ -66,6 +66,7 @@ namespace ECS.Prioritization
             public float3 CameraPosition;
             public float3 CameraForward;
             public float UnloadingSqrDistance;
+            public int LODBucket;
             public float UnloadingTime;
             public float DeltaTime;
             [ReadOnly] public NativeArray<int> SqrDistanceBuckets;
@@ -82,6 +83,7 @@ namespace ECS.Prioritization
                 UnloadingSqrDistance = default;
                 UnloadingTime = default;
                 DeltaTime = default;
+                LODBucket = default;
             }
 
             public void Execute(int index)
@@ -123,39 +125,33 @@ namespace ECS.Prioritization
                 }
 
                 // Find the bucket
-                byte bucketIndex;
+                byte newBucketIndex;
 
-                for (bucketIndex = 0; bucketIndex < SqrDistanceBuckets.Length; bucketIndex++)
+                for (newBucketIndex = 0; newBucketIndex < SqrDistanceBuckets.Length; newBucketIndex++)
                 {
-                    if (minSqrMagnitude < SqrDistanceBuckets[bucketIndex])
+                    if (minSqrMagnitude < SqrDistanceBuckets[newBucketIndex])
                         break;
                 }
 
-                partition.Bucket = bucketIndex;
+
+                //We only change bucket from a lower bucket up to LODBucket after an UnloadingTime has passed.
+                //This allows for some leniency so scenes are not unloaded immediately as soon as they are in the right bucket.
+                //But ONLY when going from a lower bucket to the LODBucket. In any other case the scenes will be re-bucketed immediately.
+                if (partition.Bucket == newBucketIndex)
+                    partition.TimeOutOfRange = 0;
+                else if (newBucketIndex == LODBucket && newBucketIndex > partition.Bucket && partition.TimeOutOfRange < UnloadingTime)
+                    partition.TimeOutOfRange += DeltaTime;
+                else
+                    partition.Bucket = newBucketIndex;
+
 
                 // Is behind is a dot product
                 // mind that taking cosines is not cheap
                 // the same scene is counted as InFront
                 // If the bucket exceeds the maximum bucket array, we need to mark partition as dirty since we are out of range
-                partition.IsDirty = partition.Bucket != bucket || partition.IsBehind != isBehind || bucketIndex == SqrDistanceBuckets.Length || partition.RawSqrDistance == -1;
+                partition.IsDirty = partition.Bucket != bucket || partition.IsBehind != isBehind || newBucketIndex == SqrDistanceBuckets.Length || partition.RawSqrDistance == -1;
 
-                bool outOfRange = minSqrMagnitude > UnloadingSqrDistance;
-
-                if (!outOfRange)
-                {
-                    partition.TimeOutOfRange = 0;
-                    partition.OutOfRange = false;
-                }
-                else if (partition.TimeOutOfRange < UnloadingTime)
-                {
-                    partition.TimeOutOfRange += DeltaTime;
-                }
-                else
-                {
-                    partition.OutOfRange = true;
-                }
-
-                //partition.OutOfRange = minSqrMagnitude > UnloadingSqrDistance;
+                partition.OutOfRange = minSqrMagnitude > UnloadingSqrDistance;
 
                 if (partition.IsDirty)
                     partition.RawSqrDistance = minSqrMagnitude;

@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-using DCL.AssetsProvision;
-using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
+﻿using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using UnityEngine;
 
 namespace DCL.LOD

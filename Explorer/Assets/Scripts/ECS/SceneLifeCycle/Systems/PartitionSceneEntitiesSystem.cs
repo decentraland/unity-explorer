@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using DCL.LOD;
 using DCL.Optimization.Pools;
 using ECS.Abstract;
 using ECS.Prioritization;
@@ -33,6 +34,8 @@ namespace ECS.SceneLifeCycle.Systems
         private readonly IComponentPool<PartitionComponent> partitionComponentPool;
         private readonly IReadOnlyCameraSamplingData readOnlyCameraSamplingData;
         private readonly IRealmPartitionSettings realmPartitionSettings;
+        private readonly ILODSettingsAsset lodSettingsAsset;
+
 
         private readonly byte emptyScenePartition;
 
@@ -46,12 +49,14 @@ namespace ECS.SceneLifeCycle.Systems
             IPartitionSettings partitionSettings,
             IReadOnlyCameraSamplingData readOnlyCameraSamplingData,
             PartitionDataContainer partitionDataContainer,
-            IRealmPartitionSettings realmPartitionSettings) : base(world)
+            IRealmPartitionSettings realmPartitionSettings,
+            ILODSettingsAsset lodSettingsAsset) : base(world)
         {
             this.partitionComponentPool = partitionComponentPool;
             this.readOnlyCameraSamplingData = readOnlyCameraSamplingData;
             this.partitionDataContainer = partitionDataContainer;
             this.realmPartitionSettings = realmPartitionSettings;
+            this.lodSettingsAsset = lodSettingsAsset;
 
 
             partitionDataContainer.Initialize(DEPLOYED_SCENES_LIMIT, partitionSettings.SqrDistanceBuckets, partitionSettings);
@@ -92,7 +97,7 @@ namespace ECS.SceneLifeCycle.Systems
                 float unloadingDistance = (Mathf.Max(1, realmPartitionSettings.UnloadingDistanceToleranceInParcels) + realmPartitionSettings.MaxLoadingDistanceInParcels)
                                           * PARCEL_SIZE;
                 float unloadingSqrDistance = unloadingDistance * unloadingDistance;
-                partitionJobHandle = partitionDataContainer.ScheduleJob(readOnlyCameraSamplingData, unloadingSqrDistance, t, realmPartitionSettings.TimeUntilUnloadingInMilliseconds);
+                partitionJobHandle = partitionDataContainer.ScheduleJob(readOnlyCameraSamplingData, unloadingSqrDistance, t, realmPartitionSettings.TimeUntilUnloadingInMilliseconds, lodSettingsAsset.SDK7LodThreshold);
                 isRunningJob = true;
             }
         }

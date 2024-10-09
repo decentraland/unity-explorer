@@ -11,6 +11,7 @@ using DCL.FeatureFlags;
 using DCL.Gizmos.Plugin;
 using DCL.Input;
 using DCL.Interaction.Utility;
+using DCL.LOD;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Optimization.PerformanceBudgeting;
@@ -61,6 +62,7 @@ namespace Global
         private ProvidedInstance<CharacterObject> characterObject;
         private ProvidedAsset<PartitionSettingsAsset> partitionSettings;
         private ProvidedAsset<RealmPartitionSettingsAsset> realmPartitionSettings;
+        private ProvidedAsset<LODSettingsAsset> lodSettings;
 
         private IAssetsProvisioner assetsProvisioner;
 
@@ -83,6 +85,7 @@ namespace Global
         public IEntityCollidersGlobalCache EntityCollidersGlobalCache { get; private set; }
         public IPartitionSettings PartitionSettings => partitionSettings.Value;
         public IRealmPartitionSettings RealmPartitionSettings => realmPartitionSettings.Value;
+        public ILODSettingsAsset LODSettings => lodSettings.Value;
         public StaticSettings StaticSettings { get; private set; }
         public CacheCleaner CacheCleaner { get; private set; }
         public IEthereumApi EthereumApi { get; private set; }
@@ -106,10 +109,11 @@ namespace Global
         {
             StaticSettings = settings;
 
-            (partitionSettings, realmPartitionSettings) =
+            (partitionSettings, realmPartitionSettings, lodSettings) =
                 await UniTask.WhenAll(
                     assetsProvisioner.ProvideMainAssetAsync(settings.PartitionSettings, ct, nameof(PartitionSettings)),
-                    assetsProvisioner.ProvideMainAssetAsync(settings.RealmPartitionSettings, ct, nameof(RealmPartitionSettings))
+                    assetsProvisioner.ProvideMainAssetAsync(settings.RealmPartitionSettings, ct, nameof(RealmPartitionSettings)),
+                    assetsProvisioner.ProvideMainAssetAsync(settings.LODSettings, ct, nameof(RealmPartitionSettings))
                 );
         }
 

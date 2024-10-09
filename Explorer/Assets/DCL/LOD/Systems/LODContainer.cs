@@ -9,13 +9,11 @@ using DCL.Roads.Settings;
 using DCL.Roads.Systems;
 using ECS;
 using Global;
-using Global.Dynamic;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using DCL.Optimization.Pools;
-using DCL.ResourcesUnloading;
 using UnityEngine;
 
 namespace DCL.LOD.Systems
@@ -30,16 +28,12 @@ namespace DCL.LOD.Systems
         {
             [field: SerializeField]
             public StaticSettings.RoadDataRef RoadData { get; set; }
-
-            [field: SerializeField]
-            public StaticSettings.LODSettingsRef LODSettingAsset { get; set; }
         }
 
         private readonly IAssetsProvisioner assetsProvisioner;
 
         private ProvidedAsset<RoadSettingsAsset> roadSettingsAsset;
         private List<GameObject> roadAssetsPrefabList;
-        private ProvidedAsset<LODSettingsAsset> lodSettingsAsset;
 
         public LODPlugin LODPlugin { get; private set; } = null!;
 
@@ -88,12 +82,12 @@ namespace DCL.LOD.Systems
 
                 c.LodCache = new LODCache(lodGroupPool);
                 staticContainer.CacheCleaner.Register(c.LodCache);
-                
+
                 c.LODPlugin = new LODPlugin(realmData,
                     staticContainer.SingletonSharedDependencies.MemoryBudget,
                     staticContainer.SingletonSharedDependencies.FrameTimeBudget,
                     staticContainer.ScenesCache, debugBuilder, staticContainer.SceneReadinessReportQueue,
-                    visualSceneStateResolver, textureArrayContainerFactory, c.lodSettingsAsset.Value, staticContainer.SingletonSharedDependencies.SceneAssetLock,
+                    visualSceneStateResolver, textureArrayContainerFactory, staticContainer.LODSettings, staticContainer.SingletonSharedDependencies.SceneAssetLock,
                     staticContainer.RealmPartitionSettings, c.LodCache,lodGroupPool, decentralandUrlsSource,new GameObject("LOD_CACHE").transform, lodEnabled, LOD_LEVELS);
 
                 return UniTask.CompletedTask;
@@ -103,13 +97,11 @@ namespace DCL.LOD.Systems
         public override void Dispose()
         {
             roadSettingsAsset.Dispose();
-            lodSettingsAsset.Dispose();
         }
 
         protected override async UniTask InitializeInternalAsync(LODContainerSettings lodContainerSettings, CancellationToken ct)
         {
             roadSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(lodContainerSettings.RoadData, ct: ct);
-            lodSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(lodContainerSettings.LODSettingAsset, ct: ct);
             roadAssetsPrefabList = new List<GameObject>();
             foreach (var t in roadSettingsAsset.Value.RoadAssetsReference)
                 roadAssetsPrefabList.Add((await assetsProvisioner.ProvideMainAssetAsync(t, ct: ct)).Value);
