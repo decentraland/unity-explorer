@@ -1,6 +1,6 @@
 #run from /Build dir
 
 clear
-cmake ..
+cmake .. -DCMAKE_BUILD_TYPE=Release
 make clean
 make -j10;

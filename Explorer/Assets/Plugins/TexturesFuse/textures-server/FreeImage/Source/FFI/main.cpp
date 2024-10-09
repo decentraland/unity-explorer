@@ -4,11 +4,59 @@
 #include <fstream>
 #include <iostream>
 
+#ifdef FFI_TEXTURESFUSE
+
+#if defined(_WIN32) || defined(_WIN64)
+#ifdef BUILD_DLL
+#define FFI_API __declspec(dllexport)
+#else
+#define FFI_API __declspec(dllimport)
+#endif
+#else
+#define FFI_API
+#endif
+
+extern "C"
+{
+    typedef intptr_t FfiHandle;
+
+    const FfiHandle INVALID_HANDLE = 0;
+
+    FFI_API bool texturesfuse_initialize()
+    {
+        FreeImage_Initialise();
+        return true;
+    }
+
+    FFI_API bool texturesfuse_dispose()
+    {
+        FreeImage_DeInitialise();
+        return true;
+    }
+
+    FFI_API void texturesfuse_release(FfiHandle handle)
+    {
+        // TODO
+    }
+
+    FFI_API FfiHandle texturesfuse_processed_image_from_memory(
+        const char *bytes,
+        int length,
+        char **outputBytes,
+        int *outputLength)
+    {
+        // TODO
+        return INVALID_HANDLE;
+    }
+}
+
+#else
+
 std::streamsize sizeOf(std::ifstream *stream)
 {
-    stream->seekg(0, std::ios::end);            
-    std::streamsize fileSize = stream->tellg(); 
-    stream->seekg(0, std::ios::beg);            
+    stream->seekg(0, std::ios::end);
+    std::streamsize fileSize = stream->tellg();
+    stream->seekg(0, std::ios::beg);
     return fileSize;
 }
 
@@ -91,3 +139,5 @@ int main()
 
     FreeImage_DeInitialise();
 }
+
+#endif

@@ -20,6 +20,7 @@ set(CMAKE_OSX_ARCHITECTURES "x86_64;arm64")
 #add default headers
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isysroot ${CMAKE_OSX_SYSROOT} -mmacosx-version-min=${MACOSX_DEPLOYMENT_TARGET}")
 
+add_definitions(-DFFI_TEXTURESFUSE)
 
 message("Flags are: ${CMAKE_CXX_FLAGS}")
 
@@ -362,7 +363,6 @@ set(SOURCES
     # Plugins Start (also update list in Plugin.cpp)
 
     # ../FreeImage/PluginBMP.cpp
-    # ../FreeImage/PluginBMP.cpp
     # ../FreeImage/PluginCUT.cpp
     # ../FreeImage/PluginDDS.cpp
     # ../FreeImage/PluginEXR.cpp
@@ -437,4 +437,6 @@ include_directories(
     ${OPEN_EXR_INCLUDE}
 )
 
-add_executable(texturesfuse ${SOURCES})
+#add_executable(texturesfuse ${SOURCES})
+
+add_library(texturesfuse SHARED ${SOURCES})

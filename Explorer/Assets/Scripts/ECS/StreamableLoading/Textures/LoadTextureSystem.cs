@@ -44,7 +44,8 @@ namespace ECS.StreamableLoading.Textures
                 new GetTextureArguments(intention.IsReadable),
                 GetTextureWebRequest.CreateTexture(intention.WrapMode, intention.FilterMode),
                 ct,
-                GetReportData());
+                GetReportData()
+            );
 
             return new StreamableLoadingResult<Texture2DData>(new Texture2DData(result));
         }
