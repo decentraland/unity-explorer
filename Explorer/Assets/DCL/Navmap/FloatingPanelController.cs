@@ -5,7 +5,6 @@ using DCL.MapRenderer.MapLayers.Pins;
 using DCL.PlacesAPIService;
 using DCL.UI;
 using DCL.WebRequests;
-using ECS.SceneLifeCycle.Realm;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -201,7 +200,8 @@ namespace DCL.Navmap
         {
             OnJumpIn?.Invoke(parcel);
 
-            if (destination == parcel) { mapPathEventBus.ArrivedToDestination(); }
+            if (destination == parcel)
+                mapPathEventBus.ArrivedToDestination();
 
             chatMessagesBus.Send($"/{ChatCommandsUtils.COMMAND_GOTO} {parcel.x},{parcel.y}", ORIGIN);
         }
