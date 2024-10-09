@@ -33,6 +33,7 @@ namespace DCL.Profiling.ECS
 
         private DebugWidgetVisibilityBinding performanceVisibilityBinding;
         private DebugWidgetVisibilityBinding memoryVisibilityBinding;
+        private DebugWidgetVisibilityBinding screenVisibilityBinding;
 
         private ElementBinding<string> hiccups;
         private ElementBinding<string> fps;
@@ -63,6 +64,7 @@ namespace DCL.Profiling.ECS
         private ElementBinding<string> displayWindowWidth;
         private ElementBinding<string> screenHeight;
         private ElementBinding<string> screenWidth;
+        private ElementBinding<string> screenDpi;
 
         private int framesSinceMetricsUpdate;
 
@@ -118,19 +120,25 @@ namespace DCL.Profiling.ECS
                             .AddCustomMarker("Js Engines Count:", jsEnginesCount = new ElementBinding<string>(string.Empty));
 
                 debugBuilder.TryAddWidget("Screen")
-                           ?.AddCustomMarker("Display window height:", displayWindowHeight = new ElementBinding<string>(string.Empty))
+                           ?.SetVisibilityBinding(screenVisibilityBinding = new DebugWidgetVisibilityBinding(true))
+                            .AddCustomMarker("Display window height:", displayWindowHeight = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("Display window width:", displayWindowWidth = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("Screen height:", screenHeight = new ElementBinding<string>(string.Empty))
-                            .AddCustomMarker("Screen width:", screenWidth = new ElementBinding<string>(string.Empty));
+                            .AddCustomMarker("Screen width:", screenWidth = new ElementBinding<string>(string.Empty))
+                            .AddCustomMarker("Screen DPI:", screenDpi = new ElementBinding<string>(string.Empty));
             }
         }
 
         protected override void Update(float t)
         {
-            displayWindowHeight.Value = Screen.mainWindowDisplayInfo.height.ToString();
-            displayWindowWidth.Value = Screen.mainWindowDisplayInfo.width.ToString();
-            screenHeight.Value = Screen.height.ToString();
-            screenWidth.Value = Screen.width.ToString();
+            if (screenVisibilityBinding.IsExpanded)
+            {
+                displayWindowHeight.Value = Screen.mainWindowDisplayInfo.height.ToString();
+                displayWindowWidth.Value = Screen.mainWindowDisplayInfo.width.ToString();
+                screenHeight.Value = Screen.height.ToString();
+                screenWidth.Value = Screen.width.ToString();
+                screenDpi.Value = Screen.dpi.ToString();
+            }
 
             if (!realmData.Configured) return;
 
