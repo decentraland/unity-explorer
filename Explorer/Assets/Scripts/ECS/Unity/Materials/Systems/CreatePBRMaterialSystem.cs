@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Shaders;
 using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.Textures;
 using ECS.Unity.Materials.Components;
 using ECS.Unity.Textures.Components;
 using UnityEngine;
@@ -52,10 +53,10 @@ namespace ECS.Unity.Materials.Systems
             // Check if all promises are finished
             // Promises are finished if: all of their entities are invalid, no promises at all, or the result component exists
 
-            if (TryGetTextureResult(ref materialComponent.AlbedoTexPromise, out StreamableLoadingResult<Texture2D> albedoResult)
-                && TryGetTextureResult(ref materialComponent.EmissiveTexPromise, out StreamableLoadingResult<Texture2D> emissiveResult)
-                && TryGetTextureResult(ref materialComponent.AlphaTexPromise, out StreamableLoadingResult<Texture2D> alphaResult)
-                && TryGetTextureResult(ref materialComponent.BumpTexPromise, out StreamableLoadingResult<Texture2D> bumpResult))
+            if (TryGetTextureResult(ref materialComponent.AlbedoTexPromise, out StreamableLoadingResult<Texture2DData> albedoResult)
+                && TryGetTextureResult(ref materialComponent.EmissiveTexPromise, out StreamableLoadingResult<Texture2DData> emissiveResult)
+                && TryGetTextureResult(ref materialComponent.AlphaTexPromise, out StreamableLoadingResult<Texture2DData> alphaResult)
+                && TryGetTextureResult(ref materialComponent.BumpTexPromise, out StreamableLoadingResult<Texture2DData> bumpResult))
             {
                 materialComponent.Status = StreamableLoading.LifeCycle.LoadingFinished;
 

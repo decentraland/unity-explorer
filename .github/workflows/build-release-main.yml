@@ -1,13 +1,12 @@
-name: Build Weekly Release
+name: Unity Cloud Build Release
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
   # schedule:
   #  - cron: '10 0 * * 3'
-  ## For testing only!
-  # push:
-  #   branches:
-  #     - feat/unity-cloud-build
 
 jobs:
   get-info:

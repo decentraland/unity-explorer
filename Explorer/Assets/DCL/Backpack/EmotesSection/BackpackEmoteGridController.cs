@@ -314,7 +314,7 @@ namespace DCL.Backpack.EmotesSection
         {
             ct.ThrowIfCancellationRequested();
 
-            Sprite? sprite = await thumbnailProvider.GetAsync(emote, ct);
+            Sprite sprite = await thumbnailProvider.GetAsync(emote, ct);
 
             itemView.WearableThumbnail.sprite = sprite;
             itemView.LoadingView.FinishLoadingAnimation(itemView.FullBackpackItem);

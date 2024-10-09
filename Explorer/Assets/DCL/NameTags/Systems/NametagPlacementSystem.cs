@@ -73,6 +73,7 @@ namespace DCL.Nametags
             AddTagQuery(World, camera);
             ProcessChatBubbleComponentsQuery(World);
             UpdateOwnTagQuery(World, camera);
+            RemoveUnusedChatBubbleComponentsQuery(World);
         }
 
         [Query]
@@ -126,6 +127,15 @@ namespace DCL.Nametags
             if (nametagsData.showChatBubbles)
                 nametagView.SetChatMessage(chatBubbleComponent.ChatMessage);
 
+            World.Remove<ChatBubbleComponent>(e);
+        }
+
+
+        [Query]
+        [All(typeof(ChatBubbleComponent))]
+        //This query is used to remove the ChatBubbleComponent from the entity if the chat bubble has not been displayed
+        private void RemoveUnusedChatBubbleComponents(Entity e)
+        {
             World.Remove<ChatBubbleComponent>(e);
         }
 

@@ -21,7 +21,7 @@ using ECS.Unity.Textures.Components.Extensions;
 using SceneRunner.Scene;
 using System;
 using UnityEngine;
-using Promise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.Texture2D, ECS.StreamableLoading.Textures.GetTextureIntention>;
+using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.Texture2DData, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
 namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
 {
@@ -112,7 +112,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
 
             // We hide the image until the texture is loaded in order to avoid to show a white image in the meanwhile
             uiBackgroundComponent.Image.IsHidden = true;
-            if (texturePromise.TryConsume(World, out StreamableLoadingResult<Texture2D> promiseResult))
+            if (texturePromise.TryConsume(World, out StreamableLoadingResult<Texture2DData> promiseResult))
             {
                 // Backgrounds with texture
                 if (promiseResult.Succeeded)
@@ -147,12 +147,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
             // If component is being reused forget the previous promise
             TryAddAbortIntention(World, ref promise);
 
-            promise = Promise.Create(World, new GetTextureIntention
-            {
-                CommonArguments = new CommonLoadingArguments(textureComponentValue.Src, attempts: ATTEMPTS_COUNT),
-                WrapMode = textureComponentValue.WrapMode,
-                FilterMode = textureComponentValue.FilterMode,
-            }, partitionComponent);
+            promise = Promise.Create(World, new GetTextureIntention(textureComponentValue.Src, textureComponentValue.WrapMode, textureComponentValue.FilterMode, attemptsCount: ATTEMPTS_COUNT), partitionComponent);
         }
 
         private static void TryAddAbortIntention(World world, ref Promise? promise)

@@ -3,7 +3,9 @@ using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Loading.DTO;
 using DCL.AvatarRendering.Wearables.Helpers;
+using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.Textures;
 using SceneRunner.Scene;
 using System;
 using UnityEngine;
@@ -14,9 +16,9 @@ namespace DCL.AvatarRendering.Emotes
     {
         public StreamableLoadingResult<SceneAssetBundleManifest>? ManifestResult { get; set; }
         public StreamableLoadingResult<AttachmentRegularAsset>?[] AssetResults { get; } = new StreamableLoadingResult<AttachmentRegularAsset>?[BodyShape.COUNT];
-        public StreamableLoadingResult<Sprite>? ThumbnailAssetResult { get; set; }
+        public StreamableLoadingResult<SpriteData>.WithFallback? ThumbnailAssetResult { get; set; }
         public StreamableLoadingResult<EmoteDTO> Model { get; set; }
-        public StreamableLoadingResult<AudioClip>?[] AudioAssetResults { get; set; } = new StreamableLoadingResult<AudioClip>?[BodyShape.COUNT];
+        public StreamableLoadingResult<AudioClipData>?[] AudioAssetResults { get; } = new StreamableLoadingResult<AudioClipData>?[BodyShape.COUNT];
 
         public bool IsLoading { get; private set; }
 

@@ -2,7 +2,7 @@ name: Create Page Weekly Release
 
 on:
   workflow_run:
-    workflows: ["Build Weekly Release"]
+    workflows: ["Unity Cloud Build Release"]
     types:
       - completed
 

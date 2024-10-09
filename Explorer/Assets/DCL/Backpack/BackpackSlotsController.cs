@@ -51,7 +51,11 @@ namespace DCL.Backpack
                 avatarSlotView.OnSlotButtonPressed += OnSlotButtonPressed;
                 avatarSlotView.OverrideHide.onClick.AddListener(() => RemoveForceRender(avatarSlotView.Category));
                 avatarSlotView.NoOverride.onClick.AddListener(() => AddForceRender(avatarSlotView.Category));
-                avatarSlotView.UnequipButton.onClick.AddListener(() => backpackCommandBus.SendCommand(new BackpackUnEquipWearableCommand(avatarSlotView.SlotWearableUrn)));
+                avatarSlotView.UnequipButton.onClick.AddListener(() =>
+                {
+                    RemoveForceRender(avatarSlotView.Category);
+                    backpackCommandBus.SendCommand(new BackpackUnEquipWearableCommand(avatarSlotView.SlotWearableUrn));
+                });
             }
         }
 
@@ -170,7 +174,7 @@ namespace DCL.Backpack
         {
             avatarSlotView.LoadingView.StartLoadingAnimation(avatarSlotView.NftContainer);
 
-            Sprite? thumbnail = await thumbnailProvider.GetAsync(equippedWearable, ct);
+            Sprite thumbnail = await thumbnailProvider.GetAsync(equippedWearable, ct);
 
             avatarSlots[equippedWearable.GetCategory()].Item1.SlotWearableThumbnail.sprite = thumbnail;
             avatarSlots[equippedWearable.GetCategory()].Item1.SlotWearableThumbnail.gameObject.SetActive(true);

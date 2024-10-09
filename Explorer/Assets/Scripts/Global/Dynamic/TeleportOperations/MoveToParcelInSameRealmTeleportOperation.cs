@@ -18,7 +18,6 @@ namespace Global.Dynamic.TeleportOperations
             this.realmNavigator = realmNavigator;
         }
 
-
         public async UniTask<Result> ExecuteAsync(TeleportParams teleportParams, CancellationToken ct)
         {
             try

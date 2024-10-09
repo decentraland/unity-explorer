@@ -24,8 +24,16 @@ namespace DCL.AvatarRendering.Thumbnails.Utils
 {
     public static class LoadThumbnailsUtils
     {
-        internal static readonly Sprite DEFAULT_THUMBNAIL = Sprite.Create(Texture2D.grayTexture!, new Rect(0, 0, 1, 1), new Vector2())!;
+        internal static readonly SpriteData DEFAULT_THUMBNAIL = new (new Texture2DData(Texture2D.grayTexture), Sprite.Create(Texture2D.grayTexture!, new Rect(0, 0, 1, 1), new Vector2()));
         private static readonly IExtendedObjectPool<URLBuilder> URL_BUILDER_POOL = new ExtendedObjectPool<URLBuilder>(() => new URLBuilder(), defaultCapacity: 2);
+
+        public static async UniTask<Sprite> WaitForThumbnailAsync(this IAvatarAttachment avatarAttachment, int checkInterval, CancellationToken ct)
+        {
+            do await UniTask.Delay(checkInterval, cancellationToken: ct);
+            while (avatarAttachment.ThumbnailAssetResult is not { IsInitialized: true });
+
+            return avatarAttachment.ThumbnailAssetResult.Value.Asset;
+        }
 
         public static async UniTask<SceneAssetBundleManifest> LoadAssetBundleManifestAsync(IWebRequestController webRequestController, URLDomain assetBundleURL,
             string hash, ReportData reportCategory, CancellationToken ct)
@@ -40,7 +48,7 @@ namespace DCL.AvatarRendering.Thumbnails.Utils
             var sceneAbDto = await webRequestController.GetAsync(new CommonArguments(urlBuilder.Build(), attemptsCount: 1), ct, reportCategory)
                                                        .CreateFromJson<SceneAbDto>(WRJsonParser.Unity, WRThreadFlags.SwitchBackToMainThread);
 
-            return new SceneAssetBundleManifest(assetBundleURL, sceneAbDto.Version, sceneAbDto.Files);
+            return new SceneAssetBundleManifest(assetBundleURL, sceneAbDto.Version, sceneAbDto.Files, hash, sceneAbDto.Date);
         }
 
         private static async UniTask<bool> TryResolveAssetBundleManifestAsync(IWebRequestController requestController, URLDomain assetBundleURL, IAvatarAttachment attachment, CancellationTokenSource? cancellationTokenSource)
@@ -94,11 +102,14 @@ namespace DCL.AvatarRendering.Thumbnails.Utils
             if (attachment.ThumbnailAssetResult != null)
                 return;
 
+            // it's a signal that the promise is already created, similar to `WearableAssets`
+            attachment.ThumbnailAssetResult = new StreamableLoadingResult<SpriteData>.WithFallback();
+
             URLPath thumbnailPath = attachment.GetThumbnail();
 
             if (thumbnailPath.IsEmpty())
             {
-                attachment.ThumbnailAssetResult = new StreamableLoadingResult<Sprite>(DEFAULT_THUMBNAIL);
+                attachment.ThumbnailAssetResult = new StreamableLoadingResult<SpriteData>.WithFallback(DEFAULT_THUMBNAIL);
                 return;
             }
 
