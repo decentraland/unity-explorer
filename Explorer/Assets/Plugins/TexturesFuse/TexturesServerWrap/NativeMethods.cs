@@ -39,7 +39,9 @@ namespace Plugins.TexturesFuse.TexturesServerWrap
         [DllImport(LIBRARY_NAME, CallingConvention = CallingConvention.Cdecl, EntryPoint = PREFIX + "processed_image_from_memory")]
         internal extern static unsafe ImageResult TexturesFuseProcessedImageFromMemory(
             byte* bytes,
-            uint length,
+            int bytesLength,
+            int maxSideLength,
+
             out byte* outputBytes,
             out uint width,
             out uint height,

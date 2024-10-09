@@ -6,8 +6,12 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
 {
     public class TexturesUnzip : ITexturesUnzip
     {
-        public TexturesUnzip()
+        private readonly ITexturesUnzip.IOptions options;
+
+        public TexturesUnzip(ITexturesUnzip.IOptions options)
         {
+            this.options = options;
+
             bool result = NativeMethods.TexturesFuseInitialize();
 
             if (result == false)
@@ -28,7 +32,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
             return new OwnedTexture2D(texture, handle);
         }
 
-        private static Texture2D NewImage(ReadOnlySpan<byte> bytes, out IntPtr handle)
+        private Texture2D NewImage(ReadOnlySpan<byte> bytes, out IntPtr handle)
         {
             unsafe
             {
@@ -36,7 +40,8 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
                 {
                     var result = NativeMethods.TexturesFuseProcessedImageFromMemory(
                         ptr,
-                        (uint)bytes.Length,
+                        bytes.Length,
+                        options.MaxSide,
                         out byte* output,
                         out uint width,
                         out uint height,

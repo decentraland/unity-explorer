@@ -167,7 +167,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   meshRenderer: {fileID: 1853004497}
-  baseScale: 8
+  options:
+    maxSide: 512
+    baseScale: 8
   path: Assets/Plugins/TexturesFuse/textures-server/FreeImage/Source/FFI/image.jpg
 --- !u!1 &1203531619
 GameObject:

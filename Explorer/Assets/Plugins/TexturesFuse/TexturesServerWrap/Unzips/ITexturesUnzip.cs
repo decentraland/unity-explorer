@@ -6,6 +6,11 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
     public interface ITexturesUnzip
     {
         OwnedTexture2D TextureFromBytes(ReadOnlySpan<byte> bytes);
+
+        interface IOptions
+        {
+            int MaxSide { get; }
+        }
     }
 
     public readonly struct OwnedTexture2D : IDisposable

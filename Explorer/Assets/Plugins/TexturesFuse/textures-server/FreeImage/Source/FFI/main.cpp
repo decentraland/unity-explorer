@@ -25,7 +25,9 @@ void __cdecl texturesfuse_release(FfiHandle handle)
 
 ImageResult __cdecl texturesfuse_processed_image_from_memory(
     BYTE *bytes,
-    int length,
+    int bytesLength,
+    int maxSideLength,
+
     BYTE **outputBytes,
     unsigned int *width,
     unsigned int *height,
@@ -33,7 +35,7 @@ ImageResult __cdecl texturesfuse_processed_image_from_memory(
     int *colorType,
     FfiHandle *releaseHandle)
 {
-    FIMEMORY *memory = FreeImage_OpenMemory(bytes, static_cast<DWORD>(length));
+    FIMEMORY *memory = FreeImage_OpenMemory(bytes, static_cast<DWORD>(bytesLength));
     if (!memory)
     {
         return ErrorOpenMemoryStream;
@@ -54,6 +56,23 @@ ImageResult __cdecl texturesfuse_processed_image_from_memory(
         return ErrorCannotLoadImage;
     }
 
+    unsigned imageWidth = FreeImage_GetWidth(image);
+    unsigned imageHeight = FreeImage_GetHeight(image);
+
+    if (imageWidth > maxSideLength || imageHeight > maxSideLength)
+    {
+        FIBITMAP *rescaled = FreeImage_MakeThumbnail(image, maxSideLength, false);
+        if (!rescaled)
+        {
+            // TODO move close upper
+            FreeImage_CloseMemory(memory);
+            FreeImage_Unload(image);
+            return ErrorCannotDownscale;
+        }
+        FreeImage_Unload(image);
+        image = rescaled;
+    }
+
     // int jpegQuality = 1; // 0 = worst quality, 100 = best quality
 
     // FreeImage uses BGR format, it needs to be converted to RGB for Unity
@@ -67,8 +86,8 @@ ImageResult __cdecl texturesfuse_processed_image_from_memory(
 
     FREE_IMAGE_COLOR_TYPE imageColorType = FreeImage_GetColorType(image);
 
-    *width = FreeImage_GetWidth(image),
-    *height = FreeImage_GetHeight(image),
+    *width = FreeImage_GetWidth(image);
+    *height = FreeImage_GetHeight(image);
     *bitsPerPixel = FreeImage_GetBPP(image);
     *colorType = imageColorType;
     *releaseHandle = 1; // TODO

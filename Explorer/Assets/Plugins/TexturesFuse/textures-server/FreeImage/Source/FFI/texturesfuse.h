@@ -25,7 +25,8 @@ extern "C"
         ErrorOpenMemoryStream = 2,
         ErrorUnknownImageFormat = 3,
         ErrorCannotLoadImage = 4,
-        ErrorCannotGetBits = 5
+        ErrorCannotGetBits = 5,
+        ErrorCannotDownscale = 5
     };
 
     FFI_API bool texturesfuse_initialize();
@@ -36,7 +37,9 @@ extern "C"
 
     FFI_API ImageResult texturesfuse_processed_image_from_memory(
         BYTE *bytes,
-        int length,
+        int bytesLength,
+        int maxSideLength,
+
         BYTE **outputBytes,
         unsigned int *width,
         unsigned int *height,
