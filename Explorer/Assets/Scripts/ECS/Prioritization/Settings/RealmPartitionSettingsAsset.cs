@@ -43,7 +43,7 @@ namespace ECS.Prioritization
         public int UnloadingDistanceToleranceInParcels { get; private set; } = 1;
 
         [field: SerializeField]
-        public float TimeUntilUnloadingInMilliseconds { get; private set; } = 5000;
+        public float TimeUntilUnloadingInSeconds { get; private set; } = 5;
 
         [field: SerializeField]
         public int ScenesRequestBatchSize { get; private set; }

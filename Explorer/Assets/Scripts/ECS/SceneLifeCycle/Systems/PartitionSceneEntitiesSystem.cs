@@ -97,7 +97,7 @@ namespace ECS.SceneLifeCycle.Systems
                 float unloadingDistance = (Mathf.Max(1, realmPartitionSettings.UnloadingDistanceToleranceInParcels) + realmPartitionSettings.MaxLoadingDistanceInParcels)
                                           * PARCEL_SIZE;
                 float unloadingSqrDistance = unloadingDistance * unloadingDistance;
-                partitionJobHandle = partitionDataContainer.ScheduleJob(readOnlyCameraSamplingData, unloadingSqrDistance, t, realmPartitionSettings.TimeUntilUnloadingInMilliseconds, lodSettingsAsset.SDK7LodThreshold);
+                partitionJobHandle = partitionDataContainer.ScheduleJob(readOnlyCameraSamplingData, unloadingSqrDistance, t, realmPartitionSettings.TimeUntilUnloadingInSeconds, lodSettingsAsset.SDK7LodThreshold);
                 isRunningJob = true;
             }
         }
