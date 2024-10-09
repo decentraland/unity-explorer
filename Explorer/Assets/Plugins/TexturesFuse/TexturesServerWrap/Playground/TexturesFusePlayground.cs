@@ -13,16 +13,34 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground
         [Header("Config")]
         [SerializeField] private Options options = new ();
         [SerializeField] private string path = "Assets/Plugins/TexturesFuse/textures-server/FreeImage/Source/FFI/image.jpg";
+        [SerializeField] private bool stressMode;
+
+        private ITexturesUnzip unzip = null!;
+        private byte[] buffer = Array.Empty<byte>();
 
         [ContextMenu(nameof(Start))]
         private void Start()
         {
             meshRenderer.EnsureNotNull();
 
-            var unzip = new TexturesUnzip(options);
-            byte[] bytes = File.ReadAllBytes(path);
-            var result = unzip.TextureFromBytes(bytes);
+            unzip = new TexturesUnzip(options);
+            buffer = File.ReadAllBytes(path);
 
+            var result = unzip.TextureFromBytes(buffer);
+            Apply(result);
+        }
+
+        private void Update()
+        {
+            if (stressMode)
+            {
+                var result = unzip.TextureFromBytes(buffer);
+                Apply(result);
+            }
+        }
+
+        private void Apply(OwnedTexture2D result)
+        {
             var material = meshRenderer.material!;
             material.mainTexture = result.Texture;
             meshRenderer.material = material;
