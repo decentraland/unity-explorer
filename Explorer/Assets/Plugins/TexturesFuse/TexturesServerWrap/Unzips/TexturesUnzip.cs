@@ -1,6 +1,6 @@
+using DCL.Diagnostics;
 using System;
 using UnityEngine;
-using UnityEngine.Experimental.Rendering;
 
 namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
 {
@@ -34,27 +34,57 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
             {
                 fixed (byte* ptr = bytes)
                 {
-                    handle = NativeMethods.TexturesFuseProcessedImageFromMemory(
+                    var result = NativeMethods.TexturesFuseProcessedImageFromMemory(
                         ptr,
-                        bytes.Length,
+                        (uint)bytes.Length,
                         out byte* output,
-                        out int outputLength
+                        out uint width,
+                        out uint height,
+                        out uint bitsPerPixel,
+                        out NativeMethods.FreeImageColorType colorType,
+                        out handle
                     );
+
+                    if (result is not NativeMethods.ImageResult.Success)
+                    {
+                        ReportHub.LogError(ReportCategory.TEXTURES, $"TexturesFuseProcessedImageFromMemory error during decoding: {result}");
+                        return Texture2D.whiteTexture; //TODO result type
+                    }
+
+                    var format = FormatFromBpp(colorType, bitsPerPixel);
+
+                    if (format.HasValue == false)
+                    {
+                        ReportHub.LogError(ReportCategory.TEXTURES, "Unsupported format on decoding image from");
+                        return Texture2D.whiteTexture; //TODO result type
+                    }
 
                     if (handle == IntPtr.Zero)
                         throw new Exception("TexturesFuseProcessedImageFromMemory failed");
 
                     //TODO obtain size and formats
-                    var texture = new Texture2D(10, 10, GraphicsFormat.R8_SInt, 10, TextureCreationFlags.Crunch);
-
-                    // Texture2D.CreateExternalTexture()
-                    texture.LoadRawTextureData(new IntPtr(output), outputLength);
-
+                    var texture = new Texture2D((int)width, (int)height, format.Value, false);
+                    uint length = width * height * (bitsPerPixel / 8);
+                    texture.LoadRawTextureData(new IntPtr(output), (int)length);
                     texture.Apply();
 
                     return texture;
                 }
             }
+        }
+
+        private static TextureFormat? FormatFromBpp(NativeMethods.FreeImageColorType colorType, uint bpp)
+        {
+            if (colorType == NativeMethods.FreeImageColorType.RGB)
+            {
+                switch (bpp)
+                {
+                    case 24:
+                        return TextureFormat.RGB24;
+                }
+            }
+
+            return null;
         }
     }
 }

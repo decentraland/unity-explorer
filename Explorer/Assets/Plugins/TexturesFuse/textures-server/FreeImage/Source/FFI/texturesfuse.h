@@ -18,15 +18,29 @@ extern "C"
 
     const FfiHandle INVALID_HANDLE = 0;
 
+    enum ImageResult : int
+    {
+        ErrorUnknown = 0,
+        Success = 1,
+        ErrorOpenMemoryStream = 2,
+        ErrorUnknownImageFormat = 3,
+        ErrorCannotLoadImage = 4,
+        ErrorCannotGetBits = 5
+    };
+
     FFI_API bool texturesfuse_initialize();
 
     FFI_API bool texturesfuse_dispose();
 
     FFI_API void texturesfuse_release(FfiHandle handle);
 
-    FFI_API FfiHandle texturesfuse_processed_image_from_memory(
-        const char *bytes,
+    FFI_API ImageResult texturesfuse_processed_image_from_memory(
+        BYTE *bytes,
         int length,
-        char **outputBytes,
-        int *outputLength);
+        BYTE **outputBytes,
+        unsigned int *width,
+        unsigned int *height,
+        unsigned int *bitsPerPixel,
+        int *colorType,
+        FfiHandle *releaseHandle);
 }

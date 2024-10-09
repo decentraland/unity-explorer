@@ -1,2 +1,4 @@
 Build/*.*
 Build/Makefile
+Build/CMakeFiles
+Build/CMakeFiles/*

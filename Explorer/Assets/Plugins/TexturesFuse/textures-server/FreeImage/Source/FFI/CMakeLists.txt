@@ -8,6 +8,7 @@ project(TexturesFuse VERSION 1.0)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_CXX_EXTENSIONS OFF)
+set(LIBRARY_OUTPUT_DIRECTORY "../../../../TexturesServerWrap/Libraries")
 
 # Set additional C++ compiler options
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Os -fexceptions -fvisibility=default -Wno-ctor-dtor-privacy -DNO_LCMS -D__ANSI__ -stdlib=libc++ -Wc++11-narrowing")
@@ -22,10 +23,12 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isysroot ${CMAKE_OSX_SYSROOT} -mmacosx-
 
 add_definitions(-DFFI_TEXTURESFUSE)
 
+# Enable RGB space instead BGR
+add_definitions(-DFREEIMAGE_COLORORDER=1)
+
+
 message("Flags are: ${CMAKE_CXX_FLAGS}")
 
-#Jpeg
-#file(GLOB_RECURSE JPEG_SOURCES "../LibJPEG/*.cpp" "../LibJPEG/*.c" "../LibJPEG/*.asm")
 set(JPEG_SOURCES
     ../LibJPEG/jaricom.c
     ../LibJPEG/jcapimin.c
@@ -438,6 +441,7 @@ include_directories(
     ${OPEN_EXR_INCLUDE}
 )
 
-#add_executable(texturesfuse ${SOURCES})
+# add_definitions(-DTEST_TEXTURESFUSE)
+# add_executable(texturesfuse ${SOURCES})
 
 add_library(texturesfuse SHARED ${SOURCES})

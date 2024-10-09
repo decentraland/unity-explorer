@@ -4,6 +4,8 @@
 #include <fstream>
 #include <iostream>
 
+#ifndef TEST_TEXTURESFUSE
+
 bool __cdecl texturesfuse_initialize()
 {
     FreeImage_Initialise();
@@ -21,17 +23,65 @@ void __cdecl texturesfuse_release(FfiHandle handle)
     // TODO
 }
 
-FfiHandle __cdecl texturesfuse_processed_image_from_memory(
-    const char *bytes,
+ImageResult __cdecl texturesfuse_processed_image_from_memory(
+    BYTE *bytes,
     int length,
-    char **outputBytes,
-    int *outputLength)
+    BYTE **outputBytes,
+    unsigned int *width,
+    unsigned int *height,
+    unsigned int *bitsPerPixel,
+    int *colorType,
+    FfiHandle *releaseHandle)
 {
-    // TODO
-    return INVALID_HANDLE;
+    FIMEMORY *memory = FreeImage_OpenMemory(bytes, static_cast<DWORD>(length));
+    if (!memory)
+    {
+        return ErrorOpenMemoryStream;
+    }
+
+    FREE_IMAGE_FORMAT format = FreeImage_GetFileTypeFromMemory(memory);
+    if (format == FIF_UNKNOWN)
+    {
+        FreeImage_CloseMemory(memory);
+        return ErrorUnknownImageFormat;
+    }
+
+    // Load the image from the memory stream
+    FIBITMAP *image = FreeImage_LoadFromMemory(format, memory);
+    if (!image)
+    {
+        FreeImage_CloseMemory(memory);
+        return ErrorCannotLoadImage;
+    }
+
+    // int jpegQuality = 1; // 0 = worst quality, 100 = best quality
+
+    // FreeImage uses BGR format, it needs to be converted to RGB for Unity
+    BYTE *bits = FreeImage_GetBits(image);
+    if (!bits)
+    {
+        FreeImage_CloseMemory(memory);
+        FreeImage_Unload(image);
+        return ErrorCannotGetBits;
+    }
+
+    FREE_IMAGE_COLOR_TYPE imageColorType = FreeImage_GetColorType(image);
+
+    *width = FreeImage_GetWidth(image),
+    *height = FreeImage_GetHeight(image),
+    *bitsPerPixel = FreeImage_GetBPP(image);
+    *colorType = imageColorType;
+    *releaseHandle = 1; // TODO
+    *outputBytes = bits;
+
+    // TODO release FIBITMAP and FIMEMORY
+    // FreeImage_CloseMemory(memory);
+    // FreeImage_Unload(image);
+
+    return Success;
 }
 
-#ifdef TEST_TEXTURESFUSE
+#else
 
 std::streamsize sizeOf(std::ifstream *stream)
 {
@@ -107,6 +157,14 @@ int main()
         std::cerr << "Error: Could not load image from memory!" << std::endl;
         return 1;
     }
+
+    unsigned bpp = FreeImage_GetBPP(image);
+
+    std::cout << "Bits per pixel: " << bpp << '\n';
+
+    auto colorType = FreeImage_GetColorType(image);
+
+    std::cout << "Color type is: " << colorType << '\n';
 
     int jpegQuality = 1; // 0 = worst quality, 100 = best quality
     if (FreeImage_Save(format, image, "../output.jpg", jpegQuality))
