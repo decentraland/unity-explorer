@@ -55,7 +55,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
 
                     if (format.HasValue == false)
                     {
-                        ReportHub.LogError(ReportCategory.TEXTURES, "Unsupported format on decoding image from");
+                        ReportHub.LogError(ReportCategory.TEXTURES, $"Unsupported format on decoding image from: color type {colorType}, bpp {bitsPerPixel}");
                         return Texture2D.whiteTexture; //TODO result type
                     }
 
