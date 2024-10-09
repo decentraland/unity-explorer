@@ -41,6 +41,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         {
             if (identity != null)
             {
+                analytics.Flush();
                 analytics.Identify(identity.Address, new JsonObject
                     {
                         ["dcl_eth_address"] = identity.Address != null ? identity.Address.ToString() : UNDEFINED,
