@@ -31,6 +31,7 @@ namespace DCL.SDKComponents.MediaStream
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IPerformanceBudget frameTimeBudget;
         private readonly WorldVolumeMacBus worldVolumeMacBus;
+        private float volume = 1f;
 
         public UpdateMediaPlayerSystem(
             World world,
@@ -45,12 +46,13 @@ namespace DCL.SDKComponents.MediaStream
             this.sceneStateProvider = sceneStateProvider;
             this.frameTimeBudget = frameTimeBudget;
             this.worldVolumeMacBus = worldVolumeMacBus;
+
             this.worldVolumeMacBus.OnWorldVolumeChanged += OnWorldVolumeChanged;
         }
 
         private void OnWorldVolumeChanged(float obj)
         {
-            Debug.Log("World volume changed to: " + obj);
+            volume = obj;
         }
 
         protected override void Update(float t)
@@ -67,7 +69,10 @@ namespace DCL.SDKComponents.MediaStream
             if (!frameTimeBudget.TrySpendBudget()) return;
 
             if (component.State != VideoState.VsError)
-                component.MediaPlayer.UpdateVolume(sceneStateProvider.IsCurrent, sdkComponent.HasVolume, sdkComponent.Volume);
+            {
+                float actualVolume = sdkComponent.Volume * volume;
+                component.MediaPlayer.UpdateVolume(sceneStateProvider.IsCurrent, sdkComponent.HasVolume, actualVolume);
+            }
 
             HandleComponentChange(ref component, sdkComponent, sdkComponent.Url, sdkComponent.HasPlaying, sdkComponent.Playing);
             ConsumePromise(ref component, sdkComponent.HasPlaying && sdkComponent.Playing);
@@ -79,7 +84,10 @@ namespace DCL.SDKComponents.MediaStream
             if (!frameTimeBudget.TrySpendBudget()) return;
 
             if (component.State != VideoState.VsError)
-                component.MediaPlayer.UpdateVolume(sceneStateProvider.IsCurrent, sdkComponent.HasVolume, sdkComponent.Volume);
+            {
+                float actualVolume = sdkComponent.Volume * volume;
+                component.MediaPlayer.UpdateVolume(sceneStateProvider.IsCurrent, sdkComponent.HasVolume, actualVolume);
+            }
 
             HandleComponentChange(ref component, sdkComponent, sdkComponent.Src, sdkComponent.HasPlaying, sdkComponent.Playing, sdkComponent, static (mediaPlayer, sdk) => mediaPlayer.UpdatePlaybackProperties(sdk));
             ConsumePromise(ref component, sdkComponent.HasPlaying && sdkComponent.Playing, sdkComponent, static (mediaPlayer, sdk) => mediaPlayer.SetPlaybackProperties(sdk));

@@ -30,7 +30,7 @@ namespace DCL.Settings.ModuleControllers
         {
             generalAudioMixer.SetFloat(WORLD_VOLUME_EXPOSED_PARAM,  AudioUtils.PercentageVolumeToDecibel(volumePercentage));
             settingsDataStore.SetSliderValue(WORLD_VOLUME_DATA_STORE_KEY, volumePercentage, save: true);
-            worldVolumeMacBus.SetWorldVolume(volumePercentage);
+            worldVolumeMacBus.SetWorldVolume(volumePercentage / 100);
         }
 
         public override void Dispose()
