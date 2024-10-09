@@ -10,7 +10,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Set additional C++ compiler options
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Os -fexceptions -fvisibility=hidden -Wno-ctor-dtor-privacy -DNO_LCMS -D__ANSI__ -stdlib=libc++ -Wc++11-narrowing")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Os -fexceptions -fvisibility=default -Wno-ctor-dtor-privacy -DNO_LCMS -D__ANSI__ -stdlib=libc++ -Wc++11-narrowing")
 
 #Mac Only
 #xcrun --show-sdk-path
@@ -429,6 +429,7 @@ set(SOURCES
 )
 
 include_directories(
+    /
     ../ 
     ${JPEG_INCLUDE} 
     ${TIFF_INCLUDE} 

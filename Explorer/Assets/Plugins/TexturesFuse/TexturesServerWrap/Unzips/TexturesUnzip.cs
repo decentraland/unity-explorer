@@ -1,4 +1,3 @@
-using Plugins.RustEthereum.SignServerWrap;
 using System;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;

@@ -1,56 +1,37 @@
 #include "FreeImage.h"
+#include "texturesfuse.h"
 #include <string>
-
 #include <fstream>
 #include <iostream>
 
-#ifdef FFI_TEXTURESFUSE
-
-#if defined(_WIN32) || defined(_WIN64)
-#ifdef BUILD_DLL
-#define FFI_API __declspec(dllexport)
-#else
-#define FFI_API __declspec(dllimport)
-#endif
-#else
-#define FFI_API
-#endif
-
-extern "C"
+bool __cdecl texturesfuse_initialize()
 {
-    typedef intptr_t FfiHandle;
-
-    const FfiHandle INVALID_HANDLE = 0;
-
-    FFI_API bool texturesfuse_initialize()
-    {
-        FreeImage_Initialise();
-        return true;
-    }
-
-    FFI_API bool texturesfuse_dispose()
-    {
-        FreeImage_DeInitialise();
-        return true;
-    }
-
-    FFI_API void texturesfuse_release(FfiHandle handle)
-    {
-        // TODO
-    }
-
-    FFI_API FfiHandle texturesfuse_processed_image_from_memory(
-        const char *bytes,
-        int length,
-        char **outputBytes,
-        int *outputLength)
-    {
-        // TODO
-        return INVALID_HANDLE;
-    }
+    FreeImage_Initialise();
+    return true;
 }
 
-#else
+bool __cdecl texturesfuse_dispose()
+{
+    FreeImage_DeInitialise();
+    return true;
+}
+
+void __cdecl texturesfuse_release(FfiHandle handle)
+{
+    // TODO
+}
+
+FfiHandle __cdecl texturesfuse_processed_image_from_memory(
+    const char *bytes,
+    int length,
+    char **outputBytes,
+    int *outputLength)
+{
+    // TODO
+    return INVALID_HANDLE;
+}
+
+#ifdef TEST_TEXTURESFUSE
 
 std::streamsize sizeOf(std::ifstream *stream)
 {
