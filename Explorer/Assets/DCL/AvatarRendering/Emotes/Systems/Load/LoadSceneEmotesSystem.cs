@@ -143,7 +143,7 @@ namespace DCL.AvatarRendering.Emotes.Load
 
             // The resolution of the GltfPromise will be finalized by ??
             var promise = GltfPromise.Create(World,
-                GetGLTFIntention.Create(intention.SceneData, intention.EmotePath, intention.EmoteHash, isSceneEmote:true),
+                GetGLTFIntention.Create(intention.SceneData, intention.EmotePath, intention.EmoteHash, true),
                 partitionComponent);
 
             emote.UpdateLoadingStatus(true);

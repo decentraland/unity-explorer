@@ -40,11 +40,7 @@ namespace ECS.StreamableLoading.GLTF
                 logger: gltfConsoleLogger,
                 materialGenerator: gltfMaterialGenerator);
 
-            var animationMethod = AnimationMethod.Legacy;
-
-            if (intention.IsSceneEmote)
-                animationMethod = AnimationMethod.Mecanim;
-
+            AnimationMethod animationMethod = intention.MecanimAnimationClips ? AnimationMethod.Mecanim : AnimationMethod.Legacy;
 
             var gltFastSettings = new ImportSettings
             {

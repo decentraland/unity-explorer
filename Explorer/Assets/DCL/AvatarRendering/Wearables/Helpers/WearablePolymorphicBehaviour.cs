@@ -280,7 +280,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             foreach (SkinnedMeshRenderer skinnedMeshRenderer in pooledList.Value)
                 rendererInfos.Add(new AttachmentRegularAsset.RendererInfo(skinnedMeshRenderer, skinnedMeshRenderer.sharedMaterial));
 
-            return new AttachmentRegularAsset(go, rendererInfos, null);
+            return new AttachmentRegularAsset(go, rendererInfos, null, result.Asset!.gltfImportedData.GetAnimationClips());
         }
 
         public static void AssignWearableAsset(this IWearable wearable, AttachmentRegularAsset attachmentRegularAsset, BodyShape bodyShape)

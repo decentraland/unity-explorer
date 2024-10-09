@@ -54,7 +54,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
             }
 
             if (localSceneDevelopment && !useRemoteAssetBundles)
-                World.Add(entity, GetGLTFIntention.Create(sceneData, intention.Name, intention.Hash));
+                World.Add(entity, GetGLTFIntention.Create(sceneData, intention.Name, intention.Hash, false));
             else
                 // If not in cache, try load from asset bundle
                 World.Add(entity, GetAssetBundleIntention.Create(typeof(GameObject), $"{intention.Hash}{PlatformUtils.GetCurrentPlatform()}", intention.Name));
