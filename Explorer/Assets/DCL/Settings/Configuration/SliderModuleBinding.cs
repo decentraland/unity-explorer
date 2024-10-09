@@ -35,7 +35,8 @@ namespace DCL.Settings.Configuration
             AudioMixer generalAudioMixer,
             QualitySettingsAsset qualitySettingsAsset,
             ControlsSettingsAsset controlsSettingsAsset,
-            ISystemMemoryCap systemMemoryCap)
+            ISystemMemoryCap systemMemoryCap,
+            WorldVolumeMacBus worldVolumeMacBus = null)
         {
             var viewInstance = UnityEngine.Object.Instantiate(View, parent);
             viewInstance.Configure(Config);
@@ -53,7 +54,7 @@ namespace DCL.Settings.Configuration
                 case SliderFeatures.MASTER_VOLUME_FEATURE:
                     return new MasterVolumeSettingsController(viewInstance, generalAudioMixer);
                 case SliderFeatures.WORLD_SOUNDS_VOLUME_FEATURE:
-                    return new WorldSoundsVolumeSettingsController(viewInstance, generalAudioMixer);
+                    return new WorldSoundsVolumeSettingsController(viewInstance, generalAudioMixer, worldVolumeMacBus);
                 case SliderFeatures.MUSIC_VOLUME_FEATURE:
                     return new MusicVolumeSettingsController(viewInstance, generalAudioMixer);
                 case SliderFeatures.UI_SOUNDS_VOLUME_FEATURE:

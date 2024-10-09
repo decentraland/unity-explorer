@@ -7,6 +7,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.Settings;
 using DCL.Utilities.Extensions;
 using DCL.WebRequests;
 using ECS.Abstract;
@@ -29,13 +30,27 @@ namespace DCL.SDKComponents.MediaStream
         private readonly ISceneData sceneData;
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IPerformanceBudget frameTimeBudget;
+        private readonly WorldVolumeMacBus worldVolumeMacBus;
 
-        public UpdateMediaPlayerSystem(World world, IWebRequestController webRequestController, ISceneData sceneData, ISceneStateProvider sceneStateProvider, IPerformanceBudget frameTimeBudget) : base(world)
+        public UpdateMediaPlayerSystem(
+            World world,
+            IWebRequestController webRequestController,
+            ISceneData sceneData,
+            ISceneStateProvider sceneStateProvider,
+            IPerformanceBudget frameTimeBudget,
+            WorldVolumeMacBus worldVolumeMacBus) : base(world)
         {
             this.webRequestController = webRequestController;
             this.sceneData = sceneData;
             this.sceneStateProvider = sceneStateProvider;
             this.frameTimeBudget = frameTimeBudget;
+            this.worldVolumeMacBus = worldVolumeMacBus;
+            this.worldVolumeMacBus.OnWorldVolumeChanged += OnWorldVolumeChanged;
+        }
+
+        private void OnWorldVolumeChanged(float obj)
+        {
+            Debug.Log("World volume changed to: " + obj);
         }
 
         protected override void Update(float t)
