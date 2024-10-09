@@ -53,28 +53,27 @@ all: dist
 
 # ONLY STATIC AND 64 BIT // START ---
 
-dist: FreeImage
-	cp *.a Dist
-	cp Source/FreeImage.h Dist
+# dist: FreeImage
+# 	cp *.a Dist
+# 	cp Source/FreeImage.h Dist
 
-FreeImage: $(STATICLIB)
+# FreeImage: $(STATICLIB)
 
-$(STATICLIB): $(STATICLIB)-x86_64
-	cp -p $(STATICLIB)-x86_64 $(STATICLIB)
+# $(STATICLIB): $(STATICLIB)-x86_64
+# 	cp -p $(STATICLIB)-x86_64 $(STATICLIB)
 
 # --- END
 
 # STATIC AND DYNAMIC 32 and 64 BIT // START ---
 
-#dist: FreeImage
-#	cp *.a Dist
-#	cp *.dylib Dist
-#	cp Source/FreeImage.h Dist
+dist: FreeImage
+	cp *.a Dist
+	cp Source/FreeImage.h Dist
 
-# FreeImage: $(STATICLIB) $(SHAREDLIB )
+FreeImage: $(STATICLIB) $(SHAREDLIB )
 
-#$(STATICLIB): $(STATICLIB)-i386 $(STATICLIB)-x86_64
-#	$(LIPO) -create $(STATICLIB)-i386 $(STATICLIB)-x86_64 -output $(STATICLIB)
+$(STATICLIB): $(STATICLIB)-i386 $(STATICLIB)-x86_64
+	$(LIPO) -create $(STATICLIB)-i386 $(STATICLIB)-x86_64 -output $(STATICLIB)
 
 # --- END
 
