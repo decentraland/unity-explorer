@@ -59,6 +59,11 @@ namespace DCL.Profiling.ECS
 
         private ElementBinding<string> memoryCheckpoints;
 
+        private ElementBinding<string> displayWindowHeight;
+        private ElementBinding<string> displayWindowWidth;
+        private ElementBinding<string> screenHeight;
+        private ElementBinding<string> screenWidth;
+
         private int framesSinceMetricsUpdate;
 
         private bool frameTimingsEnabled;
@@ -111,11 +116,22 @@ namespace DCL.Profiling.ECS
                             .AddCustomMarker("Js-Heap Total Exec [MB]:", jsHeapTotalExecutable = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("Js Heap Limit per engine [MB]:", jsHeapLimit = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("Js Engines Count:", jsEnginesCount = new ElementBinding<string>(string.Empty));
+
+                debugBuilder.TryAddWidget("Screen")
+                           ?.AddCustomMarker("Display window height:", displayWindowHeight = new ElementBinding<string>(string.Empty))
+                            .AddCustomMarker("Display window width:", displayWindowWidth = new ElementBinding<string>(string.Empty))
+                            .AddCustomMarker("Screen height:", screenHeight = new ElementBinding<string>(string.Empty))
+                            .AddCustomMarker("Screen width:", screenWidth = new ElementBinding<string>(string.Empty));
             }
         }
 
         protected override void Update(float t)
         {
+            displayWindowHeight.Value = Screen.mainWindowDisplayInfo.height.ToString();
+            displayWindowWidth.Value = Screen.mainWindowDisplayInfo.width.ToString();
+            screenHeight.Value = Screen.height.ToString();
+            screenWidth.Value = Screen.width.ToString();
+
             if (!realmData.Configured) return;
 
             if (memoryVisibilityBinding.IsExpanded)
