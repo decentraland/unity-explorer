@@ -100,6 +100,9 @@ namespace DCL.Settings
             GenerateSettingsSection(settingsMenuConfiguration.SoundSectionConfig, view.SoundSectionContainer);
             GenerateSettingsSection(settingsMenuConfiguration.ControlsSectionConfig, view.ControlsSectionContainer);
 
+            foreach (var controller in controllers)
+                controller.OnAllControllersInstantiated(controllers);
+
             SetInitialSectionsVisibility();
         }
 
