@@ -26,6 +26,8 @@ namespace DCL.SDKComponents.MediaStream
     [ThrottlingEnabled]
     public partial class UpdateMediaPlayerSystem : BaseUnityLoopSystem
     {
+        private const string WORLD_VOLUME_DATA_STORE_KEY = "Settings_WorldVolume";
+
         private readonly IWebRequestController webRequestController;
         private readonly ISceneData sceneData;
         private readonly ISceneStateProvider sceneStateProvider;
@@ -47,7 +49,15 @@ namespace DCL.SDKComponents.MediaStream
             this.frameTimeBudget = frameTimeBudget;
             this.worldVolumeMacBus = worldVolumeMacBus;
 
+            //This following part is a workaround applied for the MacOS platform, the reason
+            //is related to the video and audio streams, the MacOS environment does not support
+            //the volume control for the video and audio streams, as it doesn’t allow to route audio
+            //from HLS through to Unity. This is a limitation of Apple’s AVFoundation framework
+#if UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX
             this.worldVolumeMacBus.OnWorldVolumeChanged += OnWorldVolumeChanged;
+            if (PlayerPrefs.HasKey(WORLD_VOLUME_DATA_STORE_KEY))
+                volume = PlayerPrefs.GetFloat(WORLD_VOLUME_DATA_STORE_KEY) / 100;
+#endif
         }
 
         private void OnWorldVolumeChanged(float obj)
@@ -170,6 +180,13 @@ namespace DCL.SDKComponents.MediaStream
 
             component.URL = url;
             component.State = url.IsValidUrl() ? VideoState.VsNone : VideoState.VsError;
+        }
+
+        public override void Dispose()
+        {
+            base.Dispose();
+
+            worldVolumeMacBus.OnWorldVolumeChanged -= OnWorldVolumeChanged;
         }
     }
 }
