@@ -74,7 +74,7 @@ namespace DCL.LOD.Systems
                 c.RoadPlugin = new RoadPlugin(staticContainer.CacheCleaner,
                     staticContainer.SingletonSharedDependencies.FrameTimeBudget,
                     staticContainer.SingletonSharedDependencies.MemoryBudget, c.roadAssetsPrefabList, roadDataDictionary,
-                    staticContainer.ScenesCache, staticContainer.SceneReadinessReportQueue);
+                    staticContainer.ScenesCache, staticContainer.SceneReadinessReportQueue, staticContainer.ComponentsContainer.ComponentPoolsRegistry);
 
                 IComponentPool<LODGroup> lodGroupPool = staticContainer.ComponentsContainer.ComponentPoolsRegistry.AddGameObjectPool(LODGroupPoolUtils.CreateLODGroup, onRelease: LODGroupPoolUtils.ReleaseLODGroup);
                 LODGroupPoolUtils.DEFAULT_LOD_AMOUT = LOD_LEVELS;

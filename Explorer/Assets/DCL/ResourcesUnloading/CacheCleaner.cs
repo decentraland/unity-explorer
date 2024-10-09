@@ -30,7 +30,7 @@ namespace DCL.ResourcesUnloading
         private const int PROFILE_UNLOAD_CHUNK = 10;
 
         private readonly IPerformanceBudget fpsCapBudget;
-        private readonly List<IThrottledClearable> avatarPools;
+        private readonly List<IThrottledClearable> extendedObjectPools;
 
         private IStreamableCache<AssetBundleData, GetAssetBundleIntention>? assetBundleCache;
         private IGltfContainerAssetsCache? gltfContainerAssetsCache;
@@ -51,7 +51,7 @@ namespace DCL.ResourcesUnloading
         {
             this.fpsCapBudget = fpsCapBudget;
 
-            avatarPools = new List<IThrottledClearable> { AvatarCustomSkinningComponent.USED_SLOTS_POOL };
+            extendedObjectPools = new List<IThrottledClearable> { AvatarCustomSkinningComponent.USED_SLOTS_POOL };
         }
 
         public void UnloadCache()
@@ -71,12 +71,12 @@ namespace DCL.ResourcesUnloading
             lodCache!.Unload(fpsCapBudget, GLTF_UNLOAD_CHUNK);
             roadCache!.Unload(fpsCapBudget, GLTF_UNLOAD_CHUNK);
 
-            ClearAvatarsRelatedPools();
+            ClearExtendedObjectPools();
         }
 
-        private void ClearAvatarsRelatedPools()
+        private void ClearExtendedObjectPools()
         {
-            foreach (IThrottledClearable pool in avatarPools)
+            foreach (IThrottledClearable pool in extendedObjectPools)
                 if (fpsCapBudget.TrySpendBudget())
                     pool.ClearThrottled(POOLS_UNLOAD_CHUNK);
         }
@@ -111,7 +111,7 @@ namespace DCL.ResourcesUnloading
             wearableStorage = storage;
 
         public void Register<T>(IExtendedObjectPool<T> extendedObjectPool) where T: class =>
-            avatarPools.Add(extendedObjectPool);
+            extendedObjectPools.Add(extendedObjectPool);
 
         public void Register(IProfileCache profileCache) =>
             this.profileCache = profileCache;

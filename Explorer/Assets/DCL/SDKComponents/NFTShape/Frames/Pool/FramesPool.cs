@@ -1,4 +1,5 @@
 using DCL.ECSComponents;
+using DCL.Optimization.Pools;
 using DCL.SDKComponents.NFTShape.Frames.FramePrefabs;
 using System.Collections.Generic;
 using UnityEngine;
@@ -9,13 +10,18 @@ namespace DCL.SDKComponents.NFTShape.Frames.Pool
 {
     public class FramesPool : IFramesPool
     {
+        private readonly Transform framePoolParent;
+
         private readonly IReadOnlyFramePrefabs framePrefabs;
         private readonly Dictionary<NftFrameType, IObjectPool<AbstractFrame>> pools = new ();
         private readonly Dictionary<AbstractFrame, NftFrameType> types = new ();
 
-        public FramesPool(IReadOnlyFramePrefabs framePrefabs)
+        public FramesPool(IReadOnlyFramePrefabs framePrefabs, IComponentPoolsRegistry? componentPoolsRegistry = null)
         {
             this.framePrefabs = framePrefabs;
+            var poolRoot = componentPoolsRegistry?.RootContainerTransform();
+            framePoolParent = new GameObject("POOL_CONTAINER_NFT_FRAMES").transform;
+            framePoolParent.parent = poolRoot;
         }
 
         public bool IsInitialized => framePrefabs.IsInitialized;
@@ -44,8 +50,9 @@ namespace DCL.SDKComponents.NFTShape.Frames.Pool
                     g => g.gameObject.SetActive(true),
                     g =>
                     {
-                        // ReSharper disable once AssignNullToNotNullAttribute
-                        g.transform.SetParent(null);
+#if UNITY_EDITOR
+                        g.transform.SetParent(framePoolParent);
+#endif
                         g.gameObject.SetActive(false);
                     },
                     g => UnityObjectUtils.SafeDestroyGameObject(g.transform)
