@@ -137,17 +137,23 @@ namespace ECS.Prioritization
                 //We only change bucket from a lower bucket up to LODBucket after an UnloadingTime has passed.
                 //This allows for some leniency so scenes are not unloaded immediately as soon as they are in the right bucket.
                 //But ONLY when going from a lower bucket to the LODBucket. In any other case the scenes will be re-bucketed immediately.
+                //Keep in mind that the time will only change if the player is moving the camera, otherwise we don't recalculate bucketing
                 if (partition.Bucket == newBucketIndex)
+                {
                     partition.TimeOutOfBucket = 0;
-                else if (newBucketIndex == LODBucket && newBucketIndex > partition.Bucket && partition.TimeOutOfBucket < UnloadingTime)
+                }
+                else if (newBucketIndex == (byte) LODBucket && newBucketIndex > partition.Bucket && partition.TimeOutOfBucket < UnloadingTime)
                 {
                     partition.TimeOutOfBucket += DeltaTime;
                     //With this we make sure the partition is re-bucketed to the highest possible bucket before it becomes a LOD
                     //i.e. if it was 0 and needs to go to 2, we switch it to 1 until the time out of bucket passes.
-                    partition.Bucket = newBucketIndex--;
+                    partition.Bucket = (byte) (newBucketIndex - 1);
                 }
                 else
+                {
                     partition.Bucket = newBucketIndex;
+                    partition.TimeOutOfBucket = 0;
+                }
 
 
                 // Is behind is a dot product
