@@ -5,13 +5,26 @@ using UnityEngine.Pool;
 
 namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
 {
+    /// <summary>
+    ///     Provides decoded and compressed textures from raw memory.
+    ///     Its implementations don't guarantee thread safety.
+    /// </summary>
     public interface ITexturesUnzip
     {
         OwnedTexture2D TextureFromBytes(ReadOnlySpan<byte> bytes);
 
         interface IOptions
         {
+            Mode Mode { get; }
+
             int MaxSide { get; }
+        }
+
+        [Serializable]
+        public enum Mode
+        {
+            RGB,
+            ASTC,
         }
     }
 
@@ -20,6 +33,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
         private static readonly ObjectPool<OwnedTexture2D> POOL = new (() => new OwnedTexture2D());
 
         private Texture2D texture;
+        private IntPtr context;
         private IntPtr handle;
         private bool disposed;
 
@@ -29,7 +43,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
             {
                 if (disposed)
                 {
-                    ReportHub.LogError(ReportCategory.TEXTURES, "Attempt to access to disposed texture");
+                    ReportHub.LogError(ReportCategory.TEXTURES, "Attempt to access to released texture");
                     return Texture2D.grayTexture!;
                 }
 
@@ -41,12 +55,13 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
         private OwnedTexture2D() { }
 #pragma warning restore CS8618
 
-        public static OwnedTexture2D NewTexture(Texture2D texture, IntPtr handle)
+        public static OwnedTexture2D NewTexture(Texture2D texture, IntPtr context, IntPtr handle)
         {
             lock (POOL)
             {
                 var output = POOL.Get()!;
                 output.texture = texture;
+                output.context = context;
                 output.handle = handle;
                 output.disposed = false;
                 return output;
@@ -58,12 +73,21 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
             lock (POOL)
             {
                 var handle = ownedTexture.handle;
+                var context = ownedTexture.context;
+
+                if (context == IntPtr.Zero || handle == IntPtr.Zero)
+                {
+                    ReportHub.LogError(ReportCategory.TEXTURES, "Attempt to release already released texture");
+                    return;
+                }
+
                 //TODO destroy unity texture object
                 ownedTexture.texture = null!;
+                ownedTexture.context = IntPtr.Zero;
                 ownedTexture.handle = IntPtr.Zero;
                 ownedTexture.disposed = true;
                 POOL.Release(ownedTexture);
-                NativeMethods.TexturesFuseRelease(handle);
+                NativeMethods.TexturesFuseRelease(context, handle);
             }
         }
 

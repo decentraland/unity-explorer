@@ -57,6 +57,9 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground
         {
             [SerializeField] private int maxSide = 1024;
             [SerializeField] private float baseScale = 8;
+            [SerializeField] private ITexturesUnzip.Mode mode = ITexturesUnzip.Mode.RGB;
+
+            public ITexturesUnzip.Mode Mode => mode;
 
             public int MaxSide => maxSide;
 

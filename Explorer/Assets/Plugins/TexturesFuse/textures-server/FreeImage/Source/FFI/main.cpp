@@ -1,33 +1,67 @@
 #include "bitmaps.h"
-#include "astcenc.h"
 #include <string>
 #include <fstream>
 #include <iostream>
 
 #ifndef TEST_TEXTURESFUSE
 
-bool __cdecl texturesfuse_initialize()
+ImageResult __cdecl texturesfuse_initialize(context **contextOutput)
 {
-    astcenc_config config;
-    astcenc_error status = astcenc_config_init(ASTCENC_PRF_LDR, 0, 0, 0, 100, 0, &config);
+    if (!contextOutput)
+    {
+        return ErrorInvalidPointer;
+    }
+
+    context *context = new struct context();
+
+    astcenc_error status = astcenc_config_init(ASTCENC_PRF_LDR, 0, 0, 0, 100, 0, &(context->config));
+    if (status != ASTCENC_SUCCESS)
+    {
+        delete context;
+        return ErrorASCTOnInit;
+    }
 
     FreeImage_Initialise();
-    return true;
+
+    *contextOutput = context;
+    return Success;
 }
 
-bool __cdecl texturesfuse_dispose()
+ImageResult __cdecl texturesfuse_dispose(context *context)
 {
+    if (context->disposed)
+    {
+        return ErrorDisposeAlreadyDisposed;
+    }
+    if ((context->handles).empty() == false)
+    {
+        return ErrorDisposeNotAllTexturesReleased;
+    }
+    context->disposed = true;
+    // TODO dispose handles
+
     FreeImage_DeInitialise();
-    return true;
+    return Success;
 }
 
-void __cdecl texturesfuse_release(FfiHandle handle)
+ImageResult __cdecl texturesfuse_release(context *context, FfiHandle handle)
 {
-    // TODO
-    // astcenc_config_init();
+    auto handles = context->handles;
+
+    if (handles.find(handle) == handles.end())
+    {
+        return ErrorReleaseNoHandleFound;
+    }
+
+    handles.erase(handle);
+    auto bytePtr = reinterpret_cast<BYTE *>(handle);
+    delete[] bytePtr;
+
+    return Success;
 }
 
 ImageResult __cdecl texturesfuse_processed_image_from_memory(
+    context *context,
     BYTE *bytes,
     int bytesLength,
     int maxSideLength,
@@ -68,6 +102,51 @@ ImageResult __cdecl texturesfuse_processed_image_from_memory(
     *colorType = imageColorType;
     *releaseHandle = 1; // TODO
     *outputBytes = bits;
+
+    // TODO release FIBITMAP
+    // FreeImage_Unload(image);
+
+    return Success;
+}
+
+ImageResult __cdecl texturesfuse_astc_image_from_memory(
+    context *context,
+    BYTE *bytes,
+    int bytesLength,
+    int maxSideLength,
+
+    BYTE **outputBytes,
+    int *outputLength,
+    unsigned int *width,
+    unsigned int *height,
+    FfiHandle *releaseHandle)
+{
+    FIBITMAP *image;
+    auto result = BitmapFromMemory(bytes, static_cast<DWORD>(bytesLength), &image);
+
+    if (result != Success)
+    {
+        return result;
+    }
+
+    result = ClampedImage(image, maxSideLength, &image);
+    if (result != Success)
+    {
+        return result;
+    }
+
+    BYTE *bits = FreeImage_GetBits(image);
+    if (!bits)
+    {
+        FreeImage_Unload(image);
+        return ErrorCannotGetBits;
+    }
+
+    *width = FreeImage_GetWidth(image);
+    *height = FreeImage_GetHeight(image);
+    *releaseHandle = 1; // TODO
+    *outputBytes = bits;
+    *outputLength = 0; // TODO
 
     // TODO release FIBITMAP
     // FreeImage_Unload(image);

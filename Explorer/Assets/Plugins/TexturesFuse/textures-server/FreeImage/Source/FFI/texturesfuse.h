@@ -1,4 +1,6 @@
+#include "astcenc.h"
 #include <stdint.h>
+#include <unordered_set>
 
 #if defined(_WIN32) || defined(_WIN64)
 #ifdef BUILD_DLL
@@ -27,16 +29,35 @@ extern "C"
         ErrorCannotLoadImage = 4,
         ErrorCannotGetBits = 5,
         ErrorCannotDownscale = 6,
-        ErrorInvalidPointer = 7,
+
+        ErrorInvalidPointer = 10,
+        ErrorASCTOnInit = 11,
+
+        ErrorDisposeAlreadyDisposed = 20,
+        ErrorDisposeNotAllTexturesReleased = 21,
+
+        ErrorReleaseNoHandleFound = 30,
     };
 
-    FFI_API bool texturesfuse_initialize();
+    /**
+     * Context provides synchronization. Library is stateless and all multithreading/threadsafety should be resolved on client's side.
+     * Context shouldn't be mutated by client's side by design.
+     */
+    struct context
+    {
+        std::unordered_set<FfiHandle> handles;
+        astcenc_config config;
+        bool disposed;
+    };
 
-    FFI_API bool texturesfuse_dispose();
+    FFI_API ImageResult texturesfuse_initialize(context **contextOutput);
 
-    FFI_API void texturesfuse_release(FfiHandle handle);
+    FFI_API ImageResult texturesfuse_dispose(context *context);
+
+    FFI_API ImageResult texturesfuse_release(context *context, FfiHandle handle);
 
     FFI_API ImageResult texturesfuse_processed_image_from_memory(
+        context *context,
         BYTE *bytes,
         int bytesLength,
         int maxSideLength,
@@ -46,5 +67,17 @@ extern "C"
         unsigned int *height,
         unsigned int *bitsPerPixel,
         int *colorType,
+        FfiHandle *releaseHandle);
+
+    FFI_API ImageResult texturesfuse_astc_image_from_memory(
+        context *context,
+        BYTE *bytes,
+        int bytesLength,
+        int maxSideLength,
+
+        BYTE **outputBytes,
+        int *outputLength,
+        unsigned int *width,
+        unsigned int *height,
         FfiHandle *releaseHandle);
 }

@@ -1,5 +1,4 @@
 using DCL.Utilities.Extensions;
-using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System;
 using System.IO;
 using UnityEngine;
@@ -47,12 +46,9 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground.ASTCTexturesCompata
         }
 
         [Serializable]
-        private class Options : ITexturesUnzip.IOptions
+        private class Options
         {
-            [SerializeField] private int maxSide = 1024;
             [SerializeField] private float baseScale = 8;
-
-            public int MaxSide => maxSide;
 
             public float BaseScale => baseScale;
         }
