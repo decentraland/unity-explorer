@@ -1,4 +1,5 @@
 #include "bitmaps.h"
+#include "astcenc.h"
 #include <string>
 #include <fstream>
 #include <iostream>
@@ -7,6 +8,9 @@
 
 bool __cdecl texturesfuse_initialize()
 {
+    astcenc_config config;
+    astcenc_error status = astcenc_config_init(ASTCENC_PRF_LDR, 0, 0, 0, 100, 0, &config);
+
     FreeImage_Initialise();
     return true;
 }
@@ -20,6 +24,7 @@ bool __cdecl texturesfuse_dispose()
 void __cdecl texturesfuse_release(FfiHandle handle)
 {
     // TODO
+    // astcenc_config_init();
 }
 
 ImageResult __cdecl texturesfuse_processed_image_from_memory(

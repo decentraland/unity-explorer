@@ -28,6 +28,9 @@ add_definitions(-DFREEIMAGE_COLORORDER=1)
 
 
 # Add ASTC encoder
+add_definitions(-DASTCENC_SHAREDLIB)
+add_definitions(-DASTCENC_UNIVERSAL_BUILD)
+add_definitions(-DASTCENC_DYNAMIC_LIBRARY)
 add_subdirectory(
     ../../../astc-encoder
     ${CMAKE_BINARY_DIR}/astc-encoder-build
@@ -442,6 +445,8 @@ set(SOURCES
 include_directories(
     /
     ../ 
+    Include/
+
     ${JPEG_INCLUDE} 
     ${TIFF_INCLUDE} 
     ${ZLIB_INCLUDE} 
@@ -455,4 +460,18 @@ include_directories(
 add_library(texturesfuse SHARED ${SOURCES})
 
 # Link the external library
-target_link_libraries(texturesfuse PRIVATE ${CMAKE_BINARY_DIR}/astc-encoder-build)
+# target_link_libraries(texturesfuse PRIVATE ${CMAKE_BINARY_DIR}/astc-encoder-build/textures-server/Externals/astcenc-shared)
+# target_link_libraries(texturesfuse PRIVATE astcenc-shared)
+
+# target_link_libraries(texturesfuse PRIVATE /Users/nickkhalow/Projects/unity-explorer/Explorer/Assets/Plugins/TexturesFuse/textures-server/FreeImage/Source/FFI/Build/astc-encoder-build/Source)
+
+# target_link_libraries(texturesfuse PRIVATE ${ASTCENC_TARGET}-shared)
+target_link_libraries(texturesfuse PRIVATE /Users/nickkhalow/Projects/unity-explorer/Explorer/Assets/Plugins/TexturesFuse/textures-server/FreeImage/Source/FFI/Build/astc-encoder-build/Source/libastcenc-shared.dylib)
+
+# target_link_directories(texturesfuse PUBLIC ${CMAKE_BINARY_DIR}/astc-encoder-build)
+# target_link_libraries(
+#     texturesfuse 
+#     #./Build/astc-encoder-build/Source/libastcenc-static.a
+#     # /Users/nickkhalow/Projects/unity-explorer/Explorer/Assets/Plugins/TexturesFuse/textures-server/FreeImage/Source/FFI/Build/astc-encoder-build/Source/libastcenc-static.a
+#     ) #astcenc-static
+# TODO automize buid lipo libastcenc-avx2-static.a libastcenc-neon-static.a -create -output libastcenc-static.a
