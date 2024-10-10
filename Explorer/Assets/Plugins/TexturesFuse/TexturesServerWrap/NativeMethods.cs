@@ -38,13 +38,13 @@ namespace Plugins.TexturesFuse.TexturesServerWrap
         }
 
         [DllImport(LIBRARY_NAME, CallingConvention = CallingConvention.Cdecl, EntryPoint = PREFIX + "initialize")]
-        internal extern static bool TexturesFuseInitialize(out IntPtr context);
+        internal extern static ImageResult TexturesFuseInitialize(out IntPtr context);
 
         [DllImport(LIBRARY_NAME, CallingConvention = CallingConvention.Cdecl, EntryPoint = PREFIX + "dispose")]
-        internal extern static bool TexturesFuseDispose(IntPtr context);
+        internal extern static ImageResult TexturesFuseDispose(IntPtr context);
 
         [DllImport(LIBRARY_NAME, CallingConvention = CallingConvention.Cdecl, EntryPoint = PREFIX + "release")]
-        internal extern static bool TexturesFuseRelease(IntPtr context, IntPtr handle);
+        internal extern static ImageResult TexturesFuseRelease(IntPtr context, IntPtr handle);
 
         [DllImport(LIBRARY_NAME, CallingConvention = CallingConvention.Cdecl, EntryPoint = PREFIX + "processed_image_from_memory")]
         internal extern static unsafe ImageResult TexturesFuseProcessedImageFromMemory(

@@ -16,18 +16,18 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
         {
             this.options = options;
 
-            bool result = NativeMethods.TexturesFuseInitialize(out context);
+            var result = NativeMethods.TexturesFuseInitialize(out context);
 
-            if (result == false)
-                throw new Exception("TexturesFuseInitialize failed");
+            if (result is not NativeMethods.ImageResult.Success)
+                throw new Exception($"TexturesFuseInitialize failed: {result}");
         }
 
         ~TexturesUnzip()
         {
-            bool result = NativeMethods.TexturesFuseDispose(context);
+            var result = NativeMethods.TexturesFuseDispose(context);
 
-            if (result == false)
-                throw new Exception("TexturesFuseDispose failed");
+            if (result is not NativeMethods.ImageResult.Success)
+                throw new Exception($"TexturesFuseDispose failed: {result}");
         }
 
         public OwnedTexture2D TextureFromBytes(ReadOnlySpan<byte> bytes)
