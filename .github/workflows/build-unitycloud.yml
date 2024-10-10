@@ -254,7 +254,17 @@ jobs:
             !build/**/*_BackUpThisFolder_ButDontShipItWithYourGame
             !build/**/*_BurstDebugInformation_DoNotShip
           if-no-files-found: error
-          
+
+      - name: Upload artifact to S3
+        uses: shallwefootball/s3-upload-action@master
+        id: upload-artifact-s3
+        with:
+          aws_key_id: ${{ secrets.SDK_TEAM_AWS_ID }}
+          aws_secret_access_key: ${{ secrets.SDK_TEAM_AWS_SECRET }}
+          aws_bucket: ${{ secrets.SDK_TEAM_S3_BUCKET }}
+          source_dir: 'Decentraland_${{ matrix.target }}.zip'
+          destination_dir: ${{ inputs.tag_version != '' && format('releases/{0}', inputs.tag_version) || format('branch/{0}', github.head_ref || github.ref_name) }}
+
       - name: Upload debug symbols
         uses: actions/upload-artifact@v4
         with:
