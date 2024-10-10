@@ -149,7 +149,7 @@ namespace DCL.WebRequests
             WebRequestSignInfo? signInfo = null) where TOp: struct, IWebRequestOp<GenericHeadRequest, TResult> =>
             controller.SendAsync<GenericHeadRequest, GenericHeadArguments, TOp, TResult>(HEAD_GENERIC, commonArguments, arguments, webRequestOp, ct, reportCategory, headersInfo, signInfo);
 
-        public static async UniTask<bool> IsReachableAsync(this IWebRequestController controller, ReportData reportData, URLAddress url, CancellationToken ct)
+        public static async UniTask<bool> IsHeadReachableAsync(this IWebRequestController controller, ReportData reportData, URLAddress url, CancellationToken ct)
         {
             await UniTask.SwitchToMainThread();
 
@@ -188,6 +188,20 @@ namespace DCL.WebRequests
 
             return true;
         }
+
+        public static async UniTask<bool> IsGetReachableAsync(this IWebRequestController controller, ReportData reportData, URLAddress url, CancellationToken ct)
+        {
+            await UniTask.SwitchToMainThread();
+
+            try { await GetAsync<WebRequestUtils.NoOp<GenericGetRequest>, WebRequestUtils.NoResult>(controller, new CommonArguments(url), new WebRequestUtils.NoOp<GenericGetRequest>(), ct, reportData); }
+            catch (UnityWebRequestException)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
 
         /// <summary>
         ///     Make a request that is optimized for texture creation
