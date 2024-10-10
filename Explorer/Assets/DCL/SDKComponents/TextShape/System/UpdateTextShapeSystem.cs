@@ -10,7 +10,6 @@ using ECS.Unity.Groups;
 using SceneRunner.Scene;
 using UnityEngine;
 using Utility;
-using Utility.Editor;
 
 namespace DCL.SDKComponents.TextShape.System
 {
@@ -87,10 +86,6 @@ namespace DCL.SDKComponents.TextShape.System
             }
 
             Bounds textWorldBounds = textShapeComponent.TextMeshPro.renderer.bounds; // Note: Using Renderer because the bounds of the TMP does not return what we need
-
-#if UNITY_EDITOR
-            textWorldBounds.DrawInEditor(Color.green);
-#endif
 
             // When the TMP is disabled, the size of its bounds equals zero, so we need to use the latest valid size it had instead
             if (!textShapeComponent.TextMeshPro.enabled)
