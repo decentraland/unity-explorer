@@ -17,6 +17,8 @@ using UnityEngine;
 using Utility.Arch;
 using SceneEmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
     DCL.AvatarRendering.Emotes.GetSceneEmoteFromRealmIntention>;
+using LocalSceneEmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
+    DCL.AvatarRendering.Emotes.GetSceneEmoteFromLocalDevelopmentSceneIntention>;
 
 namespace CrdtEcsBridge.RestrictedActions
 {
@@ -25,12 +27,16 @@ namespace CrdtEcsBridge.RestrictedActions
         private readonly World world;
         private readonly Entity playerEntity;
         private readonly IEmotesMessageBus messageBus;
+        private readonly bool localSceneDevelopment;
 
-        public GlobalWorldActions(World world, Entity playerEntity, IEmotesMessageBus messageBus)
+        public bool LocalSceneDevelopment => localSceneDevelopment;
+
+        public GlobalWorldActions(World world, Entity playerEntity, IEmotesMessageBus messageBus, bool localSceneDevelopment)
         {
             this.world = world;
             this.playerEntity = playerEntity;
             this.messageBus = messageBus;
+            this.localSceneDevelopment = localSceneDevelopment;
         }
 
         public void MoveAndRotatePlayer(Vector3 newPlayerPosition, Vector3? newCameraTarget)
@@ -70,6 +76,24 @@ namespace CrdtEcsBridge.RestrictedActions
             bool isLooping = value.IsLooping();
 
             TriggerEmote(urn, isLooping);
+        }
+
+        public async UniTask TriggerLocalSceneEmoteAsync(ISceneData sceneData, string emotePath, string emoteHash, bool loop, CancellationToken ct)
+        {
+            if (!world.TryGet(playerEntity, out AvatarShapeComponent avatarShape))
+                throw new Exception("Cannot resolve body shape of current player because its missing AvatarShapeComponent");
+
+            var promise = LocalSceneEmotePromise.Create(world,
+                new GetSceneEmoteFromLocalDevelopmentSceneIntention(sceneData, emotePath, emoteHash,
+                    avatarShape.BodyShape, loop),
+                PartitionComponent.TOP_PRIORITY);
+
+            promise = await promise.ToUniTaskAsync(world, cancellationToken: ct);
+            var consumed = promise.Result!.Value.Asset.ConsumeEmotes();
+            var value = consumed.Value[0]!;
+            URN urn = value.GetUrn();
+
+            TriggerEmote(urn, loop);
         }
 
         public void TriggerEmote(URN urn, bool isLooping)
