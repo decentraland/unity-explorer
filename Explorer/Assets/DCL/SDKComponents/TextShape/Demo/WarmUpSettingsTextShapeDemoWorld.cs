@@ -5,6 +5,8 @@ using DCL.DemoWorlds;
 using DCL.ECSComponents;
 using DCL.SDKComponents.TextShape.Component;
 using DCL.SDKComponents.TextShape.Fonts;
+using SceneRunner.EmptyScene;
+using SceneRunner.Scene;
 using System;
 using UnityEngine;
 
@@ -21,7 +23,7 @@ namespace DCL.SDKComponents.TextShape.Demo
         private readonly PBVisibilityComponent visibility;
         private readonly PBBillboard billboard;
 
-        public WarmUpSettingsTextShapeDemoWorld(TextShapeProperties textShapeProperties, BillboardProperties billboardProperties, Func<bool> visible, IFontsStorage fontsStorage) : this(new PBTextShape(), new PBVisibilityComponent(), new PBBillboard(), textShapeProperties, billboardProperties, visible, fontsStorage) { }
+        public WarmUpSettingsTextShapeDemoWorld(TextShapeProperties textShapeProperties, BillboardProperties billboardProperties, Func<bool> visible, IFontsStorage fontsStorage) : this(new PBTextShape(), new PBVisibilityComponent(), new PBBillboard(), textShapeProperties, billboardProperties, visible, fontsStorage, new SceneStateProvider(), new EmptySceneData(Array.Empty<Vector2Int>())) { }
 
         public WarmUpSettingsTextShapeDemoWorld(
             PBTextShape textShape,
@@ -30,7 +32,9 @@ namespace DCL.SDKComponents.TextShape.Demo
             TextShapeProperties textShapeProperties,
             BillboardProperties billboardProperties,
             Func<bool> visible,
-            IFontsStorage fontsStorage
+            IFontsStorage fontsStorage,
+            ISceneStateProvider sceneStateProvider,
+            ISceneData sceneData
         )
         {
             this.textShape = textShape;
@@ -52,6 +56,7 @@ namespace DCL.SDKComponents.TextShape.Demo
                 new TextShapeDemoWorld(
                     world,
                     fontsStorage,
+                    sceneData,
                     (textShape, visibility, billboard)
                 )
             );

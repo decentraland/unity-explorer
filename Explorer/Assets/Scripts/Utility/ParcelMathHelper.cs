@@ -137,8 +137,14 @@ namespace Utility
         public static Vector2Int ToParcel(this CanBeDirty<Vector3> position) =>
             position.Value.ToParcel();
 
+        /// <summary>
+        /// Checks whether a bounding box is fully contained into the XZ boundaries of the scene.
+        /// </summary>
+        /// <param name="boundingPlanes">The planes that define the boundaries of the scene.</param>
+        /// <param name="bounds">The bounding box to check.</param>
+        /// <returns>True if the box is contained; False otherwise.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool Intersects(this in SceneCircumscribedPlanes boundingPlanes, Bounds bounds)
+        public static bool Contains(this in SceneCircumscribedPlanes boundingPlanes, Bounds bounds)
         {
             Vector3 min = bounds.min;
             Vector3 max = bounds.max;
@@ -154,7 +160,7 @@ namespace Utility
         /// <param name="point">The point to check.</param>
         /// <returns>True if the point intersects the rectangle; False otherwise.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool Intersects(this in SceneCircumscribedPlanes boundingPlanes, Vector3 point) =>
+        public static bool Contains(this in SceneCircumscribedPlanes boundingPlanes, Vector3 point) =>
             boundingPlanes.MinX < point.x && boundingPlanes.MaxX > point.x
                                           && boundingPlanes.MinZ < point.z && boundingPlanes.MaxZ > point.z;
 
