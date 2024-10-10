@@ -1,6 +1,4 @@
-#nullable enable
 using DCL.Optimization.PerformanceBudgeting;
-using DCL.Optimization.Pools;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -34,18 +32,13 @@ namespace DCL.LOD
         /// </summary>
         private const int POOLS_MAX_NEW_INSTANCES = 20;
 
-        private readonly Transform? roadAssetParent = null;
+        private readonly Transform roadAssetParent;
 
         private readonly Dictionary<string, IObjectPool<Transform>> roadAssetPoolDictionary;
 
-        public RoadAssetsPool(IReadOnlyList<GameObject> roadPrefabs, IComponentPoolsRegistry? componentPoolsRegistry = null)
+        public RoadAssetsPool(IReadOnlyList<GameObject> roadPrefabs)
         {
-
-#if UNITY_EDITOR
-            var poolRoot = componentPoolsRegistry?.RootContainerTransform();
-            roadAssetParent = new GameObject("POOL_CONTAINER_Road_Assets").transform;
-            roadAssetParent.parent = poolRoot;
-#endif
+            roadAssetParent = new GameObject("ROAD_ASSET_POOL").transform;
             roadAssetPoolDictionary = new Dictionary<string, IObjectPool<Transform>>();
 
             foreach (GameObject gameObject in roadPrefabs)
@@ -67,7 +60,6 @@ namespace DCL.LOD
         public void Dispose()
         {
             UnloadImmediate();
-            UnityObjectUtils.SafeDestroyGameObject(roadAssetParent);
         }
 
         /// <summary>
