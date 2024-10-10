@@ -20,7 +20,7 @@ namespace CommunicationData.URLHelpers
 
         public URN(string urn)
         {
-            this.originalUrn = urn;
+            originalUrn = urn;
         }
 
         public bool IsNullOrEmpty() =>
@@ -43,7 +43,8 @@ namespace CommunicationData.URLHelpers
 
         public URLAddress ToUrlOrEmpty(URLAddress baseUrl)
         {
-            string currentUrn = this.originalUrn;
+            string currentUrn = originalUrn;
+
             ReadOnlySpan<char> CutBeforeColon(ref int endIndex, out bool success)
             {
                 int atBeginning = endIndex;
@@ -119,7 +120,6 @@ namespace CommunicationData.URLHelpers
             if (CountParts() <= SHORTEN_URN_PARTS) return this;
 
             int index;
-
             if (IsThirdPartyCollection())
             {
                 index = -1;
@@ -132,12 +132,9 @@ namespace CommunicationData.URLHelpers
                     index = originalUrn.IndexOf(':', index + 1);
                     if (index == -1) break;
                 }
-
-                return index != -1 ? GetShortenedUrn(index) : this;
             }
-
-            // TokenId is always placed in the last part for regular nfts
-            index = originalUrn.LastIndexOf(':');
+            else
+                index = originalUrn.LastIndexOf(':'); // TokenId is always placed in the last part for regular nfts
 
             return index != -1 ? GetShortenedUrn(index) : this;
         }
@@ -151,8 +148,9 @@ namespace CommunicationData.URLHelpers
 
             if (SHORTENED_URNS_CACHE.Count >= CACHE_MAX_SIZE)
             {
-                var keysToRemove = SHORTENED_URNS_CACHE.Keys.Take(CACHE_CLEAR_AMOUNT).ToArray();
-                foreach (var key in keysToRemove)
+                URN[] keysToRemove = SHORTENED_URNS_CACHE.Keys.Take(CACHE_CLEAR_AMOUNT).ToArray();
+
+                foreach (URN key in keysToRemove)
                     SHORTENED_URNS_CACHE.TryRemove(key, out _);
             }
 
@@ -175,7 +173,7 @@ namespace CommunicationData.URLHelpers
 
         private int CountParts()
         {
-            int count = 1;
+            var count = 1;
             int index = originalUrn.IndexOf(':');
 
             while (index != -1)
