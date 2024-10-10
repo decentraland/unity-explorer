@@ -57,8 +57,13 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
         public UniTask<bool> StartAsync() =>
             connectiveRoom.StartAsync();
 
-        public UniTask StopAsync() =>
-            connectiveRoom.StopAsync();
+        public async UniTask StopAsync()
+        {
+            await connectiveRoom.StopAsync();
+            // We need to reset the metadata, so we can later re-connect to the scene on RunConnectCycleStepAsync.ProcessMetaDataAsync
+            // Otherwise flows like the logout->login will not work due to metadata not changing
+            previousMetaData = default;
+        }
 
         public IConnectiveRoom.State CurrentState() =>
             connectiveRoom.CurrentState();

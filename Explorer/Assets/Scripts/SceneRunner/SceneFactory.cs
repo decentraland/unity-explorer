@@ -125,7 +125,7 @@ namespace SceneRunner
         {
             const string SCENE_JSON_FILE_NAME = "scene.json";
 
-            var fullPath = URLDomain.FromString($"file://{Application.streamingAssetsPath}/Scenes/{directoryName}/");
+            var fullPath = URLDomain.FromString($"file://{Application.dataPath}/Scenes/TestJsScenes/{directoryName}/");
 
             string rawSceneJsonPath = fullPath.Value + SCENE_JSON_FILE_NAME;
 
