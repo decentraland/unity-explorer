@@ -113,7 +113,7 @@ namespace Global
                 await UniTask.WhenAll(
                     assetsProvisioner.ProvideMainAssetAsync(settings.PartitionSettings, ct, nameof(PartitionSettings)),
                     assetsProvisioner.ProvideMainAssetAsync(settings.RealmPartitionSettings, ct, nameof(RealmPartitionSettings)),
-                    assetsProvisioner.ProvideMainAssetAsync(settings.LODSettings, ct, nameof(RealmPartitionSettings))
+                    assetsProvisioner.ProvideMainAssetAsync(settings.LODSettings, ct, nameof(LODSettings))
                 );
         }
 
