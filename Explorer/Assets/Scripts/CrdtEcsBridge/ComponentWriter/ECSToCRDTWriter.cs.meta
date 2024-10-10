@@ -1,9 +1,5 @@
 fileFormatVersion: 2
-<<<<<<<< HEAD:Explorer/Assets/Scripts/CrdtEcsBridge/ComponentWriter/ECSToCRDTWriter.cs.meta
 guid: 1a89291eee4ebeb4da2e50489b55393d
-========
-guid: 9e93473362715714e8a2fa156cebeaee
->>>>>>>> f7f039a (First version of flying cubes):Explorer/Assets/Scripts/ProtobufPartialClasses/PBMeshRenderer.cs.meta
 MonoImporter:
   externalObjects: {}
   serializedVersion: 2
