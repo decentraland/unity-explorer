@@ -19,11 +19,15 @@ using DCL.Profiles;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
+using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Common.Components;
 using System;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using UnityEngine;
+using EmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
+    DCL.AvatarRendering.Emotes.GetEmotesByPointersIntention>;
 
 namespace DCL.AvatarRendering.Emotes.Play
 {
@@ -41,6 +45,7 @@ namespace DCL.AvatarRendering.Emotes.Play
         private readonly IEmoteStorage emoteStorage;
         private readonly EmotePlayer emotePlayer;
         private readonly IEmotesMessageBus messageBus;
+        private readonly URN[] loadEmoteBuffer = new URN[1];
 
         public CharacterEmoteSystem(World world, IEmoteStorage emoteStorage, IEmotesMessageBus messageBus, AudioSource audioSource, IDebugContainerBuilder debugContainerBuilder) : base(world)
         {
@@ -150,7 +155,7 @@ namespace DCL.AvatarRendering.Emotes.Play
         [Query]
         [None(typeof(DeleteEntityIntention))]
         private void ConsumeEmoteIntent(Entity entity, ref CharacterEmoteComponent emoteComponent, in CharacterEmoteIntent emoteIntent,
-            in IAvatarView avatarView, in AvatarShapeComponent avatarShapeComponent)
+            in IAvatarView avatarView, ref AvatarShapeComponent avatarShapeComponent)
         {
             URN emoteId = emoteIntent.EmoteId;
 
@@ -200,6 +205,18 @@ namespace DCL.AvatarRendering.Emotes.Play
                     emoteComponent.EmoteUrn = emoteId;
                     World.Remove<CharacterEmoteIntent>(entity);
                 }
+                else
+                {
+                    EmotePromise? emotePromise = avatarShapeComponent.EmotePromise;
+
+                    bool isLoadingThisEmote = emotePromise?.LoadingIntention.Pointers.Contains(emoteId) ?? false;
+                    if (isLoadingThisEmote) return;
+
+                    // avatarShapeComponent.EmotePromise?.ForgetLoading(World);
+
+                    emotePromise = CreateEmotePromise(emoteId, avatarShapeComponent.BodyShape);
+                    avatarShapeComponent.EmotePromise = emotePromise;
+                }
             }
             catch (Exception e) { ReportHub.LogException(e, GetReportData()); }
         }
@@ -225,6 +242,14 @@ namespace DCL.AvatarRendering.Emotes.Play
         {
             if (!deleteEntityIntention.DeferDeletion)
                 messageBus.OnPlayerRemoved(profile.UserId);
+        }
+
+        private EmotePromise CreateEmotePromise(URN urn, BodyShape bodyShape)
+        {
+            loadEmoteBuffer[0] = urn;
+
+            return EmotePromise.Create(World, EmoteComponentsUtils.CreateGetEmotesByPointersIntention(bodyShape, loadEmoteBuffer),
+                PartitionComponent.TOP_PRIORITY);
         }
     }
 }
