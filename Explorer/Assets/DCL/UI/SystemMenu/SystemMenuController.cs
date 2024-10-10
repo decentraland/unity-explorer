@@ -85,13 +85,6 @@ namespace DCL.UI.SystemMenu
             OnClosed?.Invoke();
         }
 
-
-        protected override void OnViewClose()
-        {
-            logoutCts.SafeCancelAndDispose();
-            base.OnViewClose();
-        }
-
         private void ShowTermsOfService() =>
             webBrowser.OpenUrl(DecentralandUrl.TermsOfUse);
 

@@ -376,7 +376,8 @@ namespace Global.Dynamic
                 container.RealmController,
                 dynamicWorldParams.AppParameters,
                 bootstrapContainer.DebugSettings,
-                staticContainer.PortableExperiencesController
+                staticContainer.PortableExperiencesController,
+                container.RoomHub
             );
 
             var worldInfoHub = new LocationBasedWorldInfoHub(
