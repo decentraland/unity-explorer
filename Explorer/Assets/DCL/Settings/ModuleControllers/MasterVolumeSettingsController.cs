@@ -11,11 +11,13 @@ namespace DCL.Settings.ModuleControllers
 
         private readonly SettingsSliderModuleView view;
         private readonly AudioMixer generalAudioMixer;
+        private readonly WorldVolumeMacBus worldVolumeMacBus;
 
-        public MasterVolumeSettingsController(SettingsSliderModuleView view, AudioMixer generalAudioMixer)
+        public MasterVolumeSettingsController(SettingsSliderModuleView view, AudioMixer generalAudioMixer, WorldVolumeMacBus worldVolumeMacBus)
         {
             this.view = view;
             this.generalAudioMixer = generalAudioMixer;
+            this.worldVolumeMacBus = worldVolumeMacBus;
 
             if (settingsDataStore.HasKey(MASTER_VOLUME_DATA_STORE_KEY))
                 view.SliderView.Slider.value = settingsDataStore.GetSliderValue(MASTER_VOLUME_DATA_STORE_KEY);
@@ -28,6 +30,10 @@ namespace DCL.Settings.ModuleControllers
         {
             generalAudioMixer.SetFloat(MASTER_VOLUME_EXPOSED_PARAM,  AudioUtils.PercentageVolumeToDecibel(volumePercentage));
             settingsDataStore.SetSliderValue(MASTER_VOLUME_DATA_STORE_KEY, volumePercentage, save: true);
+
+#if UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX
+            worldVolumeMacBus.SetMasterVolume(volumePercentage / 100);
+#endif
         }
 
         public override void Dispose()

@@ -11,6 +11,7 @@ using DCL.Multiplayer.Profiles.Poses;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.PluginSystem;
 using DCL.Profiles;
+using DCL.Settings;
 using DCL.Web3;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
@@ -58,6 +59,7 @@ namespace Global.Tests.PlayMode
                 World.Create(),
                 new Entity(),
                 new SystemMemoryCap(MemoryCapMode.MAX_SYSTEM_MEMORY),
+                new WorldVolumeMacBus(),
                 ct);
 
             if (!success)

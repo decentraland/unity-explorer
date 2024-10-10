@@ -24,7 +24,8 @@ namespace DCL.Settings.Configuration
             AudioMixer generalAudioMixer,
             QualitySettingsAsset qualitySettingsAsset,
             ControlsSettingsAsset controlsSettingsAsset,
-            ISystemMemoryCap systemMemoryCap);
+            ISystemMemoryCap systemMemoryCap,
+            WorldVolumeMacBus worldVolumeMacBus = null);
     }
 
     [Serializable]
