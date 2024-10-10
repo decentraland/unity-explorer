@@ -36,8 +36,8 @@ namespace DCL.SDKComponents.TextShape.Demo
                         w.Create(textShape, visibility, billboard, NewTransform());
                 },
                 w => new InstantiateTextShapeSystem(w, pool, fontsStorage, new MaterialPropertyBlock(), new NullPerformanceBudget(), buffer),
-                w => new UpdateTextShapeSystem(w, fontsStorage, new MaterialPropertyBlock(), buffer),
-                w => new VisibilityTextShapeSystem(w, buffer, sceneData));
+                w => new UpdateTextShapeSystem(w, fontsStorage, new MaterialPropertyBlock(), buffer, sceneData),
+                w => new VisibilityTextShapeSystem(w, buffer));
         }
 
         private static TransformComponent NewTransform() =>

@@ -60,8 +60,8 @@ namespace DCL.PluginSystem.World
             var buffer = sharedDependencies.EntityEventsBuilder.Rent<TextShapeComponent>();
 
             InstantiateTextShapeSystem.InjectToWorld(ref builder, textMeshProPool, fontsStorage, materialPropertyBlock, instantiationFrameTimeBudgetProvider, buffer);
-            UpdateTextShapeSystem.InjectToWorld(ref builder, fontsStorage, materialPropertyBlock, buffer);
-            VisibilityTextShapeSystem.InjectToWorld(ref builder, buffer, sharedDependencies.SceneData);
+            UpdateTextShapeSystem.InjectToWorld(ref builder, fontsStorage, materialPropertyBlock, buffer, sharedDependencies.SceneData);
+            VisibilityTextShapeSystem.InjectToWorld(ref builder, buffer);
 
             finalizeWorldSystems.RegisterReleasePoolableComponentSystem<TextMeshPro, TextShapeComponent>(ref builder, componentPoolsRegistry);
         }

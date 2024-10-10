@@ -7,9 +7,6 @@ using ECS.Abstract;
 using ECS.Groups;
 using ECS.Unity.Groups;
 using ECS.Unity.Visibility.Systems;
-using SceneRunner.Scene;
-using UnityEngine;
-using Utility;
 
 namespace DCL.SDKComponents.TextShape.System
 {
@@ -18,19 +15,12 @@ namespace DCL.SDKComponents.TextShape.System
     [LogCategory(ReportCategory.PRIMITIVE_MESHES)]
     public partial class VisibilityTextShapeSystem : VisibilitySystemBase<TextShapeComponent>
     {
-        private World world;
-        private ParcelMathHelper.SceneGeometry sceneGeometry;
-
-        public VisibilityTextShapeSystem(World world, EntityEventBuffer<TextShapeComponent> changedTextMeshes, ISceneData sceneData) : base(world, changedTextMeshes)
-        {
-            this.world = world;
-            this.sceneGeometry = sceneData.Geometry;
-        }
+        public VisibilityTextShapeSystem(World world, EntityEventBuffer<TextShapeComponent> changedTextMeshes) : base(world, changedTextMeshes) { }
 
         protected override void Update(float t)
         {
             base.Update(t);
-            UpdateVisibilityDependingOnSceneQuery(world);
+            UpdateVisibilityDependingOnSceneBoundariesQuery(World);
         }
 
         protected override void UpdateVisibilityInternal(in TextShapeComponent component, bool visible)
@@ -39,21 +29,14 @@ namespace DCL.SDKComponents.TextShape.System
         }
 
         /// <summary>
-        /// Enables or disables all TextMeshPro labels depending on whether they belong to the current scene or not.
+        /// Enables or disables all TextMeshPro labels depending on whether they are fully inside their scenes or not.
         /// </summary>
         /// <param name="textShape">The text shape whose TextMeshPro will be modified.</param>
         [Query]
         [All(typeof(TextShapeComponent))]
-        private void UpdateVisibilityDependingOnScene(ref TextShapeComponent textShape)
+        private void UpdateVisibilityDependingOnSceneBoundaries(ref TextShapeComponent textShape)
         {
-            Vector3 textPosition = textShape.TextMeshPro.transform.position;
-            bool textVisibility = textPosition.y <= sceneGeometry.Height &&
-                                  sceneGeometry.CircumscribedPlanes.Intersects(textPosition);
-
-            if (textShape.TextMeshPro.gameObject.activeInHierarchy != textVisibility)
-            {
-                textShape.TextMeshPro.gameObject.SetActive(textVisibility);
-            }
+            textShape.TextMeshPro.enabled = textShape.IsContainedInScene;
         }
     }
 }
