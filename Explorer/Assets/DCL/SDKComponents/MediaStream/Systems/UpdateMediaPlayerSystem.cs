@@ -26,14 +26,13 @@ namespace DCL.SDKComponents.MediaStream
     [ThrottlingEnabled]
     public partial class UpdateMediaPlayerSystem : BaseUnityLoopSystem
     {
-        private const string WORLD_VOLUME_DATA_STORE_KEY = "Settings_WorldVolume";
-
         private readonly IWebRequestController webRequestController;
         private readonly ISceneData sceneData;
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IPerformanceBudget frameTimeBudget;
         private readonly WorldVolumeMacBus worldVolumeMacBus;
-        private float volume = 1f;
+        private float worldVolumePercentage = 1f;
+        private float masterVolumePercentage = 1f;
 
         public UpdateMediaPlayerSystem(
             World world,
@@ -53,16 +52,23 @@ namespace DCL.SDKComponents.MediaStream
             //is related to the video and audio streams, the MacOS environment does not support
             //the volume control for the video and audio streams, as it doesn’t allow to route audio
             //from HLS through to Unity. This is a limitation of Apple’s AVFoundation framework
+            //Similar issue reported here https://github.com/RenderHeads/UnityPlugin-AVProVideo/issues/1086
 #if UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX
             this.worldVolumeMacBus.OnWorldVolumeChanged += OnWorldVolumeChanged;
-            if (PlayerPrefs.HasKey(WORLD_VOLUME_DATA_STORE_KEY))
-                volume = PlayerPrefs.GetFloat(WORLD_VOLUME_DATA_STORE_KEY) / 100;
+            this.worldVolumeMacBus.OnMasterVolumeChanged += OnMasterVolumeChanged;
+            masterVolumePercentage = worldVolumeMacBus.GetMasterVolume();
+            worldVolumePercentage = worldVolumeMacBus.GetWorldVolume();
 #endif
         }
 
-        private void OnWorldVolumeChanged(float obj)
+        private void OnWorldVolumeChanged(float volume)
         {
-            volume = obj;
+            worldVolumePercentage = volume;
+        }
+
+        private void OnMasterVolumeChanged(float volume)
+        {
+            masterVolumePercentage = volume;
         }
 
         protected override void Update(float t)
@@ -80,7 +86,7 @@ namespace DCL.SDKComponents.MediaStream
 
             if (component.State != VideoState.VsError)
             {
-                float actualVolume = sdkComponent.Volume * volume;
+                float actualVolume = sdkComponent.Volume * worldVolumePercentage * masterVolumePercentage;
                 component.MediaPlayer.UpdateVolume(sceneStateProvider.IsCurrent, sdkComponent.HasVolume, actualVolume);
             }
 
@@ -95,7 +101,7 @@ namespace DCL.SDKComponents.MediaStream
 
             if (component.State != VideoState.VsError)
             {
-                float actualVolume = sdkComponent.Volume * volume;
+                float actualVolume = sdkComponent.Volume * worldVolumePercentage * masterVolumePercentage;
                 component.MediaPlayer.UpdateVolume(sceneStateProvider.IsCurrent, sdkComponent.HasVolume, actualVolume);
             }
 
@@ -188,6 +194,7 @@ namespace DCL.SDKComponents.MediaStream
 
 #if UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX
             worldVolumeMacBus.OnWorldVolumeChanged -= OnWorldVolumeChanged;
+            worldVolumeMacBus.OnMasterVolumeChanged -= OnMasterVolumeChanged;
 #endif
         }
     }
