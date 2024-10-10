@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Pool;
+using UnityEngine.UI;
 using Object = UnityEngine.Object;
 
 namespace DCL.UI
@@ -38,6 +39,7 @@ namespace DCL.UI
                 actionOnRelease:(toggle) => toggle.gameObject.SetActive(false));
 
             view.SliderHue.Slider.onValueChanged.AddListener(_ => SetColor());
+            view.SliderHue.Slider.onValueChanged.AddListener(_ => SetSaturationColor());
             view.SliderHue.IncreaseButton.onClick.AddListener(() => ChangeProperty(view.SliderHue, INCREMENT_AMOUNT));
             view.SliderHue.DecreaseButton.onClick.AddListener(() => ChangeProperty(view.SliderHue, -INCREMENT_AMOUNT));
 
@@ -50,6 +52,17 @@ namespace DCL.UI
             view.SliderValue.DecreaseButton.onClick.AddListener(() => ChangeProperty(view.SliderValue, -INCREMENT_AMOUNT));
 
             view.ToggleButton.onClick.AddListener(() => TogglePanel());
+        }
+
+        private void SetSaturationColor()
+        {
+            Color newColor = Color.HSVToRGB(view.SliderHue.Slider.value, 1, 1);
+            ColorBlock block = view.SliderSaturation.Slider.colors;
+            block.normalColor = newColor;
+            block.highlightedColor = newColor;
+            block.pressedColor = newColor;
+            block.selectedColor = newColor;
+            view.SliderSaturation.Slider.colors = block;
         }
 
         public void SetCurrentColor(Color newColor, string category)
@@ -148,6 +161,7 @@ namespace DCL.UI
             view.SliderHue.Slider.SetValueWithoutNotify(h);
             view.SliderSaturation.Slider.SetValueWithoutNotify(s);
             view.SliderValue.Slider.SetValueWithoutNotify(v);
+            SetSaturationColor();
         }
 
         private void ClickedOnPreset(Color presetColor, string category)
