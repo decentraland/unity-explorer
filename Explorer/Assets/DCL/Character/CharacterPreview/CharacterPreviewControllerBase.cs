@@ -161,7 +161,11 @@ namespace DCL.CharacterPreview
             }
         }
 
-        public void OnShow()
+        /// <summary>
+        /// Shows the character preview.
+        /// </summary>
+        /// <param name="triggerOnShowBusEvent">True for keeping the rest of preview controllers informed about this showing.</param>
+        public void OnShow(bool triggerOnShowBusEvent = true)
         {
             if (initialized)
             {
@@ -171,10 +175,16 @@ namespace DCL.CharacterPreview
             else if (previewAvatarModel.Initialized) { Initialize(); }
 
             previewController?.SetPreviewPlatformActive(isPreviewPlatformActive);
-            characterPreviewEventBus.OnAnyCharacterPreviewShow(this);
+
+            if (triggerOnShowBusEvent)
+                characterPreviewEventBus.OnAnyCharacterPreviewShow(this);
         }
 
-        public void OnHide()
+        /// <summary>
+        /// Hides the character preview.
+        /// </summary>
+        /// <param name="triggerOnHideBusEvent">True for keeping the rest of preview controllers informed about this hiding.</param>
+        public void OnHide(bool triggerOnHideBusEvent = true)
         {
             if (initialized)
             {
@@ -184,7 +194,8 @@ namespace DCL.CharacterPreview
                 initialized = false;
             }
 
-            characterPreviewEventBus.OnAnyCharacterPreviewHide(this);
+            if (triggerOnHideBusEvent)
+                characterPreviewEventBus.OnAnyCharacterPreviewHide(this);
         }
 
         // If another character preview is shown, we deactivate the current one in order to avoid rendering issues.
