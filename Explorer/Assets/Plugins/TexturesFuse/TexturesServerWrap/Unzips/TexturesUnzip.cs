@@ -67,7 +67,6 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
                     if (handle == IntPtr.Zero)
                         throw new Exception("TexturesFuseProcessedImageFromMemory failed");
 
-                    //TODO obtain size and formats
                     var texture = new Texture2D((int)width, (int)height, format.Value, false);
                     uint length = width * height * (bitsPerPixel / 8);
                     texture.LoadRawTextureData(new IntPtr(output), (int)length);
