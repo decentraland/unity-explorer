@@ -1,12 +1,31 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 
 namespace Plugins.TexturesFuse.TexturesServerWrap
 {
+    [SuppressMessage("ReSharper", "EnumUnderlyingTypeIsInt")]
     public static class NativeMethods
     {
         private const string LIBRARY_NAME = "libtexturesfuse";
         private const string PREFIX = "texturesfuse_";
+
+        [SuppressMessage("ReSharper", "InconsistentNaming")]
+        [SuppressMessage("ReSharper", "ArrangeTypeMemberModifiers")]
+        [Serializable]
+        [StructLayout(LayoutKind.Sequential)]
+        public struct InitOptions
+        {
+#pragma region ASTC_options
+
+            public int ASTCProfile;
+            public uint blockX;
+            public uint blockY;
+            public uint blockZ;
+            public float quality;
+            public uint flags;
+#pragma endregion ASTC_options
+        }
 
         internal enum ImageResult : int
         {
@@ -19,7 +38,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap
             ErrorCannotDownscale = 6,
 
             ErrorInvalidPointer = 10,
-            ErrorASCTOnInit = 11,
+            ErrorASTCOnInit = 11,
 
             ErrorDisposeAlreadyDisposed = 20,
             ErrorDisposeNotAllTexturesReleased = 21,
@@ -38,7 +57,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap
         }
 
         [DllImport(LIBRARY_NAME, CallingConvention = CallingConvention.Cdecl, EntryPoint = PREFIX + "initialize")]
-        internal extern static ImageResult TexturesFuseInitialize(out IntPtr context);
+        internal extern static ImageResult TexturesFuseInitialize(InitOptions initOptions, out IntPtr context);
 
         [DllImport(LIBRARY_NAME, CallingConvention = CallingConvention.Cdecl, EntryPoint = PREFIX + "dispose")]
         internal extern static ImageResult TexturesFuseDispose(IntPtr context);

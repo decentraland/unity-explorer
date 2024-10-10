@@ -170,7 +170,16 @@ MonoBehaviour:
   options:
     maxSide: 512
     baseScale: 8
+    mode: 0
+    initOptions:
+      ASTCProfile: 1
+      blockX: 6
+      blockY: 6
+      blockZ: 1
+      quality: 10
+      flags: 1
   path: Assets/Plugins/TexturesFuse/textures-server/FreeImage/Source/FFI/image.jpg
+  stressMode: 0
 --- !u!1 &1203531619
 GameObject:
   m_ObjectHideFlags: 0

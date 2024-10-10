@@ -5,7 +5,7 @@
 
 #ifndef TEST_TEXTURESFUSE
 
-ImageResult __cdecl texturesfuse_initialize(context **contextOutput)
+ImageResult __cdecl texturesfuse_initialize(InitOptions initOptions, context **contextOutput)
 {
     if (!contextOutput)
     {
@@ -13,8 +13,17 @@ ImageResult __cdecl texturesfuse_initialize(context **contextOutput)
     }
 
     context *context = new struct context();
+    astcenc_config config;
+    astcenc_error status = astcenc_config_init(
+        static_cast<astcenc_profile>(initOptions.ASTCProfile),
+        initOptions.blockX,
+        initOptions.blockY,
+        initOptions.blockZ,
+        initOptions.quality,
+        initOptions.flags,
+        &config);
+    context->config = config;
 
-    astcenc_error status = astcenc_config_init(ASTCENC_PRF_LDR, 0, 0, 0, 100, 0, &(context->config));
     if (status != ASTCENC_SUCCESS)
     {
         delete context;

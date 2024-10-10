@@ -20,8 +20,21 @@ extern "C"
 
     const FfiHandle INVALID_HANDLE = 0;
 
-    enum ImageResult : int
+    struct InitOptions
     {
+#pragma region ASTC_options
+
+        int ASTCProfile;
+        unsigned int blockX;
+        unsigned int blockY;
+        unsigned int blockZ;
+        float quality;
+        unsigned int flags;
+
+#pragma endregion ASTC_options
+    };
+
+    enum ImageResult : int {
         ErrorUnknown = 0,
         Success = 1,
         ErrorOpenMemoryStream = 2,
@@ -31,7 +44,7 @@ extern "C"
         ErrorCannotDownscale = 6,
 
         ErrorInvalidPointer = 10,
-        ErrorASCTOnInit = 11,
+        ErrorASTCOnInit = 11,
 
         ErrorDisposeAlreadyDisposed = 20,
         ErrorDisposeNotAllTexturesReleased = 21,
@@ -50,7 +63,7 @@ extern "C"
         bool disposed;
     };
 
-    FFI_API ImageResult texturesfuse_initialize(context **contextOutput);
+    FFI_API ImageResult texturesfuse_initialize(InitOptions initOptions, context **contextOutput);
 
     FFI_API ImageResult texturesfuse_dispose(context *context);
 

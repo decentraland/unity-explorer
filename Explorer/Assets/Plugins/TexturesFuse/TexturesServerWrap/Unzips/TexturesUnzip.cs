@@ -12,11 +12,11 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
         private readonly ITexturesUnzip.IOptions options;
         private readonly IntPtr context;
 
-        public TexturesUnzip(ITexturesUnzip.IOptions options)
+        public TexturesUnzip(NativeMethods.InitOptions initOptions, ITexturesUnzip.IOptions options)
         {
             this.options = options;
 
-            var result = NativeMethods.TexturesFuseInitialize(out context);
+            var result = NativeMethods.TexturesFuseInitialize(initOptions, out context);
 
             if (result is not NativeMethods.ImageResult.Success)
                 throw new Exception($"TexturesFuseInitialize failed: {result}");

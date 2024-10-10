@@ -23,7 +23,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground
         {
             meshRenderer.EnsureNotNull();
 
-            unzip = new TexturesUnzip(options);
+            unzip = new TexturesUnzip(options.InitOptions, options);
             buffer = File.ReadAllBytes(path);
 
             var result = unzip.TextureFromBytes(buffer);
@@ -58,12 +58,15 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground
             [SerializeField] private int maxSide = 1024;
             [SerializeField] private float baseScale = 8;
             [SerializeField] private ITexturesUnzip.Mode mode = ITexturesUnzip.Mode.RGB;
+            [SerializeField] private NativeMethods.InitOptions initOptions;
 
             public ITexturesUnzip.Mode Mode => mode;
 
             public int MaxSide => maxSide;
 
             public float BaseScale => baseScale;
+
+            public NativeMethods.InitOptions InitOptions => initOptions;
         }
     }
 }
