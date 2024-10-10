@@ -140,7 +140,12 @@ namespace ECS.Prioritization
                 if (partition.Bucket == newBucketIndex)
                     partition.TimeOutOfBucket = 0;
                 else if (newBucketIndex == LODBucket && newBucketIndex > partition.Bucket && partition.TimeOutOfBucket < UnloadingTime)
+                {
                     partition.TimeOutOfBucket += DeltaTime;
+                    //With this we make sure the partition is re-bucketed to the highest possible bucket before it becomes a LOD
+                    //i.e. if it was 0 and needs to go to 2, we switch it to 1 until the time out of bucket passes.
+                    partition.Bucket = newBucketIndex--;
+                }
                 else
                     partition.Bucket = newBucketIndex;
 
