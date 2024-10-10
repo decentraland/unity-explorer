@@ -29,7 +29,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
             {
                 if (disposed)
                 {
-                    ReportHub.LogError(ReportCategory.TEXTURES, "Attempt to access disposed texture");
+                    ReportHub.LogError(ReportCategory.TEXTURES, "Attempt to access to disposed texture");
                     return Texture2D.grayTexture!;
                 }
 
@@ -58,6 +58,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
             lock (POOL)
             {
                 var handle = ownedTexture.handle;
+                //TODO destroy unity texture object
                 ownedTexture.texture = null!;
                 ownedTexture.handle = IntPtr.Zero;
                 ownedTexture.disposed = true;
