@@ -62,6 +62,7 @@ namespace DCL.AvatarRendering.Emotes.Load
             base.Update(t);
 
             GetEmotesByPointersQuery(World, t);
+            DisposeFinishedIntentsQuery(World);
         }
 
         [Query]
@@ -98,6 +99,15 @@ namespace DCL.AvatarRendering.Emotes.Load
 
             if (success)
                 World!.Add(entity, NewEmotesResult(resolvedEmotesTmp, intention.Pointers.Count));
+        }
+
+        [Query]
+        [All(typeof(StreamableResult))]
+        private void DisposeFinishedIntents(in Entity entity, ref GetEmotesByPointersIntention intention)
+        {
+            intention.Dispose();
+            // Destroyal will only be possible if no other system requires this intention later
+            World.Destroy(entity);
         }
 
         private void ResolveIntentionWithSuccessfulEmotes(Entity entity,

@@ -4,12 +4,8 @@ using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.ComputeShader;
 using DCL.AvatarRendering.AvatarShape.Helpers;
-using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
-using DCL.AvatarRendering.AvatarShape.Helpers;
 using DCL.AvatarRendering.AvatarShape.Systems;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
-using DCL.AvatarRendering.Emotes;
-using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Loading.Components;
@@ -84,19 +80,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests.Instantiate
                 GetMockWearable("hair", WearablesConstants.Categories.HAIR),
             })));
 
-            var emotePromise = EmotePromise.Create(world, new GetEmotesByPointersIntention(new List<URN> { "clap" }, BodyShape.MALE), partitionComponent);
-
-            world.Add(emotePromise.Entity, new StreamableLoadingResult<EmotesResolution>(
-                    new EmotesResolution(
-                        RepoolableList<IEmote>.NewListWithContentOf(
-                            GetMockEmote("clap", "emote")
-                        ),
-                        1
-                    )
-                )
-            );
-
-            avatarShapeComponent = new AvatarShapeComponent("TEST_AVATAR", "TEST_ID", BodyShape.MALE, wearablePromise, emotePromise,
+            avatarShapeComponent = new AvatarShapeComponent("TEST_AVATAR", "TEST_ID", BodyShape.MALE, wearablePromise,
                 randomSkinColor, randomHairColor, randomEyesColor);
 
             Material? celShadingMaterial = await Addressables.LoadAssetAsync<Material>("Avatar_Toon_TestAsset");

@@ -93,7 +93,6 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             if (!ReadyToInstantiateNewAvatar(ref avatarShapeComponent)) return null;
 
             if (!avatarShapeComponent.WearablePromise.SafeTryConsume(World, GetReportCategory(), out WearablesLoadResult wearablesResult)) return null;
-            if (!avatarShapeComponent.EmotePromise.SafeTryConsume(World, GetReportCategory(), out EmotesLoadResult emotesResult)) return null;
 
             AvatarBase avatarBase = avatarPoolRegistry.Get();
             avatarBase.gameObject.name = $"Avatar {avatarShapeComponent.ID}";
@@ -130,6 +129,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         [None(typeof(AvatarBase), typeof(AvatarTransformMatrixComponent), typeof(AvatarCustomSkinningComponent))]
         private void InstantiateMainPlayerAvatar(in Entity entity, ref AvatarShapeComponent avatarShapeComponent, ref CharacterTransform transformComponent)
         {
+            // TODO: require emotes for main player (??)
             var avatarBase = InstantiateNewAvatar(entity, ref avatarShapeComponent, ref transformComponent);
 
             if (avatarBase != null)
@@ -149,7 +149,6 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             if (!ReadyToInstantiateNewAvatar(ref avatarShapeComponent)) return;
 
             if (!avatarShapeComponent.WearablePromise.SafeTryConsume(World, GetReportCategory(), out WearablesLoadResult wearablesResult)) return;
-            if (!avatarShapeComponent.EmotePromise.SafeTryConsume(World, GetReportCategory(), out EmotesLoadResult emotesResult)) return;
 
             ReleaseAvatar.Execute(vertOutBuffer, wearableAssetsCache, avatarMaterialPoolHandler,
                 computeShaderSkinningPool, avatarShapeComponent, ref skinningComponent,
@@ -164,7 +163,6 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             AvatarBase avatarBase)
         {
             GetWearablesByPointersIntention wearableIntention = avatarShapeComponent.WearablePromise.LoadingIntention;
-            GetEmotesByPointersIntention emoteIntention = avatarShapeComponent.EmotePromise.LoadingIntention;
 
             HashSet<string> wearablesToHide = wearablesResult.Succeeded ? wearablesResult.Asset.HiddenCategories : EMPTY_STRING_HASH_SET;
             HashSet<string> usedCategories = HashSetPool<string>.Get();
@@ -212,7 +210,6 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             avatarBase.gameObject.SetActive(true);
 
             wearableIntention.Dispose();
-            emoteIntention.Dispose();
 
             if (wearablesResult.Succeeded)
                 wearablesResult.Asset.Dispose();
