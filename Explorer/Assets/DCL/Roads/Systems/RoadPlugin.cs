@@ -5,7 +5,6 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.LOD;
 using DCL.Optimization.PerformanceBudgeting;
-using DCL.Optimization.Pools;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.ResourcesUnloading;
@@ -25,7 +24,6 @@ namespace DCL.Roads.Systems
         private readonly IReadOnlyList<GameObject> roadPrefabs;
         private readonly IScenesCache scenesCache;
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
-        private readonly IComponentPoolsRegistry componentPoolsRegistry;
 
         private readonly IReadOnlyDictionary<Vector2Int, RoadDescription> roadDataDictionary;
 
@@ -33,8 +31,7 @@ namespace DCL.Roads.Systems
 
         public RoadPlugin(CacheCleaner cacheCleaner,
             IPerformanceBudget frameCapBudget, IPerformanceBudget memoryBudget,
-            IReadOnlyList<GameObject> roadPrefabs, IReadOnlyDictionary<Vector2Int, RoadDescription> roadDataDictionary,
-            IScenesCache scenesCache, ISceneReadinessReportQueue sceneReadinessReportQueue, IComponentPoolsRegistry componentPoolsRegistry)
+            IReadOnlyList<GameObject> roadPrefabs, IReadOnlyDictionary<Vector2Int, RoadDescription> roadDataDictionary, IScenesCache scenesCache, ISceneReadinessReportQueue sceneReadinessReportQueue)
         {
             this.cacheCleaner = cacheCleaner;
             this.frameCapBudget = frameCapBudget;
@@ -43,12 +40,11 @@ namespace DCL.Roads.Systems
             this.roadDataDictionary = roadDataDictionary;
             this.scenesCache = scenesCache;
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
-            this.componentPoolsRegistry = componentPoolsRegistry;
         }
 
         public UniTask Initialize(IPluginSettingsContainer container, CancellationToken ct)
         {
-            RoadAssetPool = new RoadAssetsPool(roadPrefabs, componentPoolsRegistry);
+            RoadAssetPool = new RoadAssetsPool(roadPrefabs);
             cacheCleaner.Register(RoadAssetPool);
             return UniTask.CompletedTask;
         }
