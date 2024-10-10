@@ -29,7 +29,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
         public OwnedTexture2D TextureFromBytes(ReadOnlySpan<byte> bytes)
         {
             var texture = NewImage(bytes, out IntPtr handle);
-            return new OwnedTexture2D(texture, handle);
+            return OwnedTexture2D.NewTexture(texture, handle);
         }
 
         private Texture2D NewImage(ReadOnlySpan<byte> bytes, out IntPtr handle)

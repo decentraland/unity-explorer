@@ -42,20 +42,10 @@ ImageResult __cdecl texturesfuse_processed_image_from_memory(
         return result;
     }
 
-    unsigned imageWidth = FreeImage_GetWidth(image);
-    unsigned imageHeight = FreeImage_GetHeight(image);
-
-    if (imageWidth > maxSideLength || imageHeight > maxSideLength)
+    result = ClampedImage(image, maxSideLength, &image);
+    if (result != Success)
     {
-        FIBITMAP *rescaled = FreeImage_MakeThumbnail(image, maxSideLength, false);
-        if (!rescaled)
-        {
-            // TODO move close upper
-            FreeImage_Unload(image);
-            return ErrorCannotDownscale;
-        }
-        FreeImage_Unload(image);
-        image = rescaled;
+        return result;
     }
 
     BYTE *bits = FreeImage_GetBits(image);

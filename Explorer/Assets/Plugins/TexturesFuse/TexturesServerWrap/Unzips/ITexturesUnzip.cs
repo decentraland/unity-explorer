@@ -1,5 +1,7 @@
+using DCL.Diagnostics;
 using System;
 using UnityEngine;
+using UnityEngine.Pool;
 
 namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
 {
@@ -13,20 +15,60 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
         }
     }
 
-    public readonly struct OwnedTexture2D : IDisposable
+    public class OwnedTexture2D : IDisposable
     {
-        public readonly Texture2D Texture;
-        private readonly IntPtr handle;
+        private static readonly ObjectPool<OwnedTexture2D> POOL = new (() => new OwnedTexture2D());
 
-        public OwnedTexture2D(Texture2D texture, IntPtr handle)
+        private Texture2D texture;
+        private IntPtr handle;
+        private bool disposed;
+
+        public Texture2D Texture
         {
-            this.Texture = texture;
-            this.handle = handle;
+            get
+            {
+                if (disposed)
+                {
+                    ReportHub.LogError(ReportCategory.TEXTURES, "Attempt to access disposed texture");
+                    return Texture2D.grayTexture!;
+                }
+
+                return texture;
+            }
+        }
+
+#pragma warning disable CS8618
+        private OwnedTexture2D() { }
+#pragma warning restore CS8618
+
+        public static OwnedTexture2D NewTexture(Texture2D texture, IntPtr handle)
+        {
+            lock (POOL)
+            {
+                var output = POOL.Get()!;
+                output.texture = texture;
+                output.handle = handle;
+                output.disposed = false;
+                return output;
+            }
+        }
+
+        private static void Release(OwnedTexture2D ownedTexture)
+        {
+            lock (POOL)
+            {
+                var handle = ownedTexture.handle;
+                ownedTexture.texture = null!;
+                ownedTexture.handle = IntPtr.Zero;
+                ownedTexture.disposed = true;
+                POOL.Release(ownedTexture);
+                NativeMethods.TexturesFuseRelease(handle);
+            }
         }
 
         public void Dispose()
         {
-            NativeMethods.TexturesFuseRelease(handle);
+            Release(this);
         }
     }
 }

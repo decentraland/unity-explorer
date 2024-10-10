@@ -26,7 +26,8 @@ extern "C"
         ErrorUnknownImageFormat = 3,
         ErrorCannotLoadImage = 4,
         ErrorCannotGetBits = 5,
-        ErrorCannotDownscale = 5
+        ErrorCannotDownscale = 6,
+        ErrorInvalidPointer = 7,
     };
 
     FFI_API bool texturesfuse_initialize();
