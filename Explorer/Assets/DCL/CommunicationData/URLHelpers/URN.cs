@@ -17,10 +17,17 @@ namespace CommunicationData.URLHelpers
         private static readonly ConcurrentDictionary<URN, URN> SHORTENED_URNS_CACHE = new ();
 
         private readonly string originalUrn;
+        private readonly Memory<char> lowercaseMemory;
 
         public URN(string urn)
         {
             originalUrn = urn;
+
+            var lowercaseChars = new char[originalUrn.Length];
+            for (var i = 0; i < originalUrn.Length; i++)
+                lowercaseChars[i] = char.ToLowerInvariant(originalUrn[i]);
+
+            lowercaseMemory = new Memory<char>(lowercaseChars);
         }
 
         public bool IsNullOrEmpty() =>
@@ -30,10 +37,7 @@ namespace CommunicationData.URLHelpers
             !IsNullOrEmpty() && originalUrn.StartsWith("urn");
 
         public bool Equals(URN other) =>
-            Equals(other.originalUrn);
-
-        private bool Equals(string other) =>
-            string.Equals(originalUrn, other, StringComparison.OrdinalIgnoreCase);
+            lowercaseMemory.Span.SequenceEqual(other.lowercaseMemory.Span);
 
         public override bool Equals(object? obj) =>
             obj is URN other && Equals(other);
