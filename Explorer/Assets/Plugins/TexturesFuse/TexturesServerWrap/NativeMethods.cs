@@ -5,7 +5,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap
 {
     public static class NativeMethods
     {
-        private const string LIBRARY_NAME = "texturesfuse";
+        private const string LIBRARY_NAME = "libtexturesfuse";
         private const string PREFIX = "texturesfuse_";
 
         internal enum ImageResult : int

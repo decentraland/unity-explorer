@@ -461,4 +461,5 @@ add_library(texturesfuse SHARED ${SOURCES})
 
 
 # Link the external library
+# TODO support for Win/linux
 target_link_libraries(texturesfuse PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/astc-encoder-build/Source/libastcenc-shared.dylib)
