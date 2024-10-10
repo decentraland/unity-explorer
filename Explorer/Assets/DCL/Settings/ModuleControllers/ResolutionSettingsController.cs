@@ -1,6 +1,7 @@
 ﻿using DCL.Settings.ModuleViews;
 using DCL.Settings.Utils;
 using System.Collections.Generic;
+using System.Linq;
 using TMPro;
 using UnityEngine;
 
@@ -57,7 +58,8 @@ namespace DCL.Settings.ModuleControllers
                     continue;
 
                 // Exclude possible duplicates
-                if (possibleResolutions.Contains(resolution))
+                // Equals is not defined in Resolution class. LINQ used only in constructor to mimic a custom Equals
+                if (possibleResolutions.Any(res => res.height == resolution.height && res.width == resolution.width && res.refreshRateRatio.Equals(resolution.refreshRateRatio)))
                     continue;
 
                 AddResolution(resolution);
