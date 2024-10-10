@@ -23,7 +23,7 @@ namespace DCL.SDKComponents.MediaStream.Wrapper
         private readonly IExtendedObjectPool<Texture2D> videoTexturePool;
         private readonly IPerformanceBudget frameTimeBudget;
         private readonly WorldVolumeMacBus worldVolumeMacBus;
-        private readonly GameObjectPool<MediaPlayer> mediaPlayerPool;
+        private readonly IComponentPool<MediaPlayer> mediaPlayerPool;
 
         public MediaPlayerPluginWrapper(
             IComponentPoolsRegistry componentPoolsRegistry,
@@ -43,10 +43,12 @@ namespace DCL.SDKComponents.MediaStream.Wrapper
             this.worldVolumeMacBus = worldVolumeMacBus;
             cacheCleaner.Register(videoTexturePool);
 
+            var parentContainer = new GameObject("MediaPlayerContainer");
+
             mediaPlayerPool = componentPoolsRegistry.AddGameObjectPool(
                 creationHandler: () =>
                 {
-                    var mediaPlayer = Object.Instantiate(mediaPlayerPrefab, mediaPlayerPool!.PoolContainerTransform);
+                    var mediaPlayer = Object.Instantiate(mediaPlayerPrefab);
                     mediaPlayer.PlatformOptionsWindows.audioOutput = Windows.AudioOutput.Unity;
                     mediaPlayer.PlatformOptionsMacOSX.audioMode = MediaPlayer.OptionsApple.AudioMode.Unity;
                     //Add other options if we release on other platforms :D
@@ -54,6 +56,7 @@ namespace DCL.SDKComponents.MediaStream.Wrapper
                 },
                 onGet: mediaPlayer =>
                 {
+                    mediaPlayer.transform.SetParent(parentContainer.transform);
                     mediaPlayer.AutoOpen = false;
                     mediaPlayer.enabled = true;
                 },

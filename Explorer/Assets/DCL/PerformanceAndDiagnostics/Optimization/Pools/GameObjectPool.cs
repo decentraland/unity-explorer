@@ -13,22 +13,19 @@ namespace DCL.Optimization.Pools
 
         private readonly IExtendedObjectPool<T> gameObjectPool;
         private readonly Transform parentContainer;
+        private readonly Transform rootContainer;
 
-        private readonly Action<T>? onRelease;
-        private readonly Action<T>? onGet;
+        private readonly Action<T> onRelease;
+        private readonly Action<T> onGet;
 
         public int CountInactive => gameObjectPool.CountInactive;
 
-        public Transform PoolContainerTransform => parentContainer;
-
-        public GameObjectPool(Transform rootContainer, Func<T>? creationHandler = null, Action<T>? onRelease = null, int maxSize = 2048, Action<T>? onGet = null)
+        public GameObjectPool(Transform rootContainer, Func<T> creationHandler = null, Action<T> onRelease = null, int maxSize = 2048, Action<T> onGet = null)
         {
             parentContainer = new GameObject($"POOL_CONTAINER_{typeof(T).Name}").transform;
-#if UNITY_EDITOR
             parentContainer.SetParent(rootContainer);
-#endif
-            if (onRelease != null) this.onRelease += onRelease;
-            if (onGet != null) this.onGet += onGet;
+            this.onRelease += onRelease;
+            this.onGet += onGet;
             gameObjectPool = new ExtendedObjectPool<T>(creationHandler ?? HandleCreation, actionOnGet: HandleGet, actionOnRelease: HandleRelease, actionOnDestroy: UnityObjectUtils.SafeDestroyGameObject, defaultCapacity: maxSize / 4, maxSize: maxSize);
         }
 
@@ -90,10 +87,7 @@ namespace DCL.Optimization.Pools
             GameObject gameObject;
             (gameObject = component.gameObject).SetActive(false);
             gameObject.name = DEFAULT_COMPONENT_NAME;
-
-#if UNITY_EDITOR
             component.gameObject.transform.SetParent(parentContainer, false);
-#endif
         }
     }
 }
