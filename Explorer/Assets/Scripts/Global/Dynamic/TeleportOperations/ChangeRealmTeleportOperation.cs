@@ -4,7 +4,7 @@ using Cysharp.Threading.Tasks;
 using DCL.UserInAppInitializationFlow;
 using ECS.SceneLifeCycle.Realm;
 using Utility.Types;
-using static DCL.UserInAppInitializationFlow.RealFlowLoadingStatus.Stage;
+using static DCL.UserInAppInitializationFlow.LoadingStatus.Stage;
 
 
 namespace Global.Dynamic.TeleportOperations
@@ -23,7 +23,7 @@ namespace Global.Dynamic.TeleportOperations
             try
             {
                 await realmNavigator.ChangeRealmAsync(teleportParams.CurrentDestinationRealm, ct);
-                teleportParams.ParentReport.SetProgress(RealFlowLoadingStatus.PROGRESS[ProfileLoaded]);
+                teleportParams.ParentReport.SetProgress(teleportParams.RealFlowLoadingStatus.SetCompletedStage(ProfileLoaded));
                 return Result.SuccessResult();
             }
             catch (Exception e)

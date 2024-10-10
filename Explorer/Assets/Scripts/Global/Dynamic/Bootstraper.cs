@@ -129,6 +129,7 @@ namespace Global.Dynamic
                 world,
                 playerEntity,
                 appArgs,
+                staticContainer.LoadingStatus,
                 ct);
         }
 

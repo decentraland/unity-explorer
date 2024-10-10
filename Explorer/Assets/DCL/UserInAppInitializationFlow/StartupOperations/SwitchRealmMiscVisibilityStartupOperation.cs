@@ -8,10 +8,10 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
 {
     public class SwitchRealmMiscVisibilityStartupOperation : IStartupOperation
     {
-        private readonly RealFlowLoadingStatus loadingStatus;
+        private readonly ILoadingStatus loadingStatus;
         private readonly IRealmNavigator realmNavigator;
 
-        public SwitchRealmMiscVisibilityStartupOperation(RealFlowLoadingStatus loadingStatus, IRealmNavigator realmNavigator)
+        public SwitchRealmMiscVisibilityStartupOperation(ILoadingStatus loadingStatus, IRealmNavigator realmNavigator)
         {
             this.loadingStatus = loadingStatus;
             this.realmNavigator = realmNavigator;
@@ -20,7 +20,7 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
         public async UniTask<Result> ExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
         {
             await realmNavigator.SwitchMiscVisibilityAsync();
-            report.SetProgress(loadingStatus.SetStage(RealFlowLoadingStatus.Stage.EnvironmentMiscSet));
+            report.SetProgress(loadingStatus.SetCompletedStage(LoadingStatus.Stage.EnvironmentMiscSet));
             return Result.SuccessResult();
         }
     }

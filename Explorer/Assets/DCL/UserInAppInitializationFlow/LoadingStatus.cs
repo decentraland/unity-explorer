@@ -1,11 +1,17 @@
 ﻿using DCL.Utilities;
 using System.Collections.Generic;
+using DCL.DebugUtilities.UIBindings;
 using Utility;
 
 namespace DCL.UserInAppInitializationFlow
 {
-    public class RealFlowLoadingStatus : IReadOnlyRealFlowLoadingStatus
+    public class LoadingStatus : ILoadingStatus
     {
+        public ReactiveProperty<Stage> CurrentCompletedStage { get; } = new (Stage.Init);
+        public ElementBinding<string> CurrentCompletedStageBinding { get;  } = new (string.Empty);
+        public ElementBinding<string> CurrentAssetsToLoad { get; } = new (string.Empty);
+        public ElementBinding<string> CurrentAssetsLoaded { get; } = new (string.Empty);
+
         public enum Stage : byte
         {
             Init = 0,
@@ -44,12 +50,18 @@ namespace DCL.UserInAppInitializationFlow
             [Stage.Completed] = 1f,
         };
 
-        public ReactiveProperty<Stage> CurrentStage { get; } = new (Stage.Init);
 
-        public float SetStage(Stage stage)
+        public float SetCompletedStage(Stage stage)
         {
-            CurrentStage.Value = stage;
+            CurrentCompletedStageBinding.Value = stage.ToString();
+            CurrentCompletedStage.Value = stage;
             return PROGRESS[stage];
+        }
+
+        public void UpdateAssetsLoaded(int assetsLoaded, int assetsToLoad)
+        {
+            CurrentAssetsToLoad.Value = assetsToLoad.ToString();
+            CurrentAssetsLoaded.Value = assetsLoaded.ToString();
         }
     }
 }

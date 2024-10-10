@@ -8,10 +8,10 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
 {
     public class EnsureLivekitConnectionStartupOperation : IStartupOperation
     {
-        private readonly RealFlowLoadingStatus loadingStatus;
+        private readonly ILoadingStatus loadingStatus;
         private readonly IHealthCheck healthCheck;
 
-        public EnsureLivekitConnectionStartupOperation(RealFlowLoadingStatus loadingStatus, IHealthCheck healthCheck)
+        public EnsureLivekitConnectionStartupOperation(ILoadingStatus loadingStatus, IHealthCheck healthCheck)
         {
             this.loadingStatus = loadingStatus;
             this.healthCheck = healthCheck;
@@ -22,7 +22,7 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
             (bool success, string? errorMessage) result = await healthCheck.IsRemoteAvailableAsync(ct);
 
             if (result.success)
-                report.SetProgress(loadingStatus.SetStage(RealFlowLoadingStatus.Stage.LiveKitConnectionEnsured));
+                report.SetProgress(loadingStatus.SetCompletedStage(LoadingStatus.Stage.LiveKitConnectionEnsured));
 
             return result.success
                 ? Result.SuccessResult()

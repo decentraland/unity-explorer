@@ -13,13 +13,13 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
 {
     public class InitializeFeatureFlagsStartupOperation : IStartupOperation
     {
-        private readonly RealFlowLoadingStatus loadingStatus;
+        private readonly ILoadingStatus loadingStatus;
         private readonly IFeatureFlagsProvider featureFlagsProvider;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IAppArgs appParameters;
 
-        public InitializeFeatureFlagsStartupOperation(RealFlowLoadingStatus loadingStatus, IFeatureFlagsProvider featureFlagsProvider, IWeb3IdentityCache web3IdentityCache, IDecentralandUrlsSource decentralandUrlsSource, IAppArgs appParameters)
+        public InitializeFeatureFlagsStartupOperation(ILoadingStatus loadingStatus, IFeatureFlagsProvider featureFlagsProvider, IWeb3IdentityCache web3IdentityCache, IDecentralandUrlsSource decentralandUrlsSource, IAppArgs appParameters)
         {
             this.loadingStatus = loadingStatus;
             this.featureFlagsProvider = featureFlagsProvider;
@@ -34,7 +34,7 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
             try { await featureFlagsProvider.InitializeAsync(decentralandUrlsSource, web3IdentityCache.Identity?.Address, appParameters, ct); }
             catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, new ReportData(ReportCategory.FEATURE_FLAGS)); }
 
-            report.SetProgress(loadingStatus.SetStage(RealFlowLoadingStatus.Stage.FeatureFlagInitialized));
+            report.SetProgress(loadingStatus.SetCompletedStage(LoadingStatus.Stage.FeatureFlagInitialized));
 
             return Result.SuccessResult();
         }

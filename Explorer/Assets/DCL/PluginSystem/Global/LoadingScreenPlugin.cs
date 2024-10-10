@@ -7,6 +7,9 @@ using DCL.SceneLoadingScreens;
 using MVC;
 using System;
 using System.Threading;
+using DCL.DebugUtilities;
+using DCL.DebugUtilities.UIBindings;
+using DCL.UserInAppInitializationFlow;
 using UnityEngine.Localization.Settings;
 
 namespace DCL.PluginSystem.Global
@@ -17,17 +20,24 @@ namespace DCL.PluginSystem.Global
         private readonly IMVCManager mvcManager;
         private readonly AudioMixerVolumesController audioMixerVolumesController;
         private readonly IInputBlock inputBlock;
+        private readonly IDebugContainerBuilder debugContainerBuilder;
+        private readonly ILoadingStatus loadingStatus;
+
 
         public LoadingScreenPlugin(
             IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
             AudioMixerVolumesController audioMixerVolumesController,
-            IInputBlock inputBlock)
+            IInputBlock inputBlock,
+            IDebugContainerBuilder debugContainerBuilder,
+            ILoadingStatus loadingStatus)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
             this.audioMixerVolumesController = audioMixerVolumesController;
             this.inputBlock = inputBlock;
+            this.debugContainerBuilder = debugContainerBuilder;
+            this.loadingStatus = loadingStatus;
         }
 
         public void Dispose() { }
@@ -47,9 +57,15 @@ namespace DCL.PluginSystem.Global
                 TimeSpan.FromSeconds(settings.TipDisplayDuration));
 
             await tipsProvider.InitializeAsync(ct);
-
+            
             mvcManager.RegisterController(new SceneLoadingScreenController(authScreenFactory, tipsProvider,
                 TimeSpan.FromSeconds(settings.MinimumScreenDisplayDuration), audioMixerVolumesController, inputBlock));
+
+            debugContainerBuilder
+                .TryAddWidget("Loading Screen")?
+                .AddCustomMarker("Last Completed Stage", loadingStatus.CurrentCompletedStageBinding)
+                .AddCustomMarker("Assets loaded", loadingStatus.CurrentAssetsLoaded)
+                .AddCustomMarker("Assets to load", loadingStatus.CurrentAssetsToLoad);
         }
     }
 }

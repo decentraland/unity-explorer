@@ -8,10 +8,10 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
 {
     public class LoadLandscapeStartupOperation : IStartupOperation
     {
-        private readonly RealFlowLoadingStatus loadingStatus;
+        private readonly ILoadingStatus loadingStatus;
         private readonly IRealmNavigator realmNavigator;
 
-        public LoadLandscapeStartupOperation(RealFlowLoadingStatus loadingStatus, IRealmNavigator realmNavigator)
+        public LoadLandscapeStartupOperation(ILoadingStatus loadingStatus, IRealmNavigator realmNavigator)
         {
             this.loadingStatus = loadingStatus;
             this.realmNavigator = realmNavigator;
@@ -20,10 +20,10 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
         public async UniTask<Result> ExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
         {
             AsyncLoadProcessReport landscapeLoadReport
-                = report.CreateChildReport(RealFlowLoadingStatus.PROGRESS[RealFlowLoadingStatus.Stage.LandscapeLoaded]);
+                = report.CreateChildReport(LoadingStatus.PROGRESS[LoadingStatus.Stage.LandscapeLoaded]);
 
             await realmNavigator.LoadTerrainAsync(landscapeLoadReport, ct);
-            report.SetProgress(loadingStatus.SetStage(RealFlowLoadingStatus.Stage.LandscapeLoaded));
+            report.SetProgress(loadingStatus.SetCompletedStage(LoadingStatus.Stage.LandscapeLoaded));
             return Result.SuccessResult();
         }
     }

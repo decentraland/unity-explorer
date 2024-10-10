@@ -14,7 +14,7 @@ namespace DCL.Multiplayer.Connections.Systems
     {
         private readonly IArchipelagoIslandRoom archipelagoIslandRoom;
         private readonly IGateKeeperSceneRoom gateKeeperSceneRoom;
-        private readonly IReadOnlyRealFlowLoadingStatus loadingStatus;
+        private readonly ILoadingStatus loadingStatus;
 
         private bool alreadyStarted;
 
@@ -22,7 +22,7 @@ namespace DCL.Multiplayer.Connections.Systems
             World world,
             IArchipelagoIslandRoom archipelagoIslandRoom,
             IGateKeeperSceneRoom gateKeeperSceneRoom,
-            IReadOnlyRealFlowLoadingStatus loadingStatus) : base(world)
+            ILoadingStatus loadingStatus) : base(world)
         {
             this.archipelagoIslandRoom = archipelagoIslandRoom;
             this.gateKeeperSceneRoom = gateKeeperSceneRoom;
@@ -32,7 +32,7 @@ namespace DCL.Multiplayer.Connections.Systems
         protected override void Update(float t)
         {
             // Don't connect to the rooms until the loading process has finished
-            if (loadingStatus.CurrentStage.Value != RealFlowLoadingStatus.Stage.Completed || alreadyStarted) return;
+            if (loadingStatus.CurrentCompletedStage.Value != LoadingStatus.Stage.Completed || alreadyStarted) return;
 
             archipelagoIslandRoom.StartIfNotAsync();
             gateKeeperSceneRoom.StartIfNotAsync();

@@ -134,11 +134,12 @@ namespace Global.Dynamic
 
         public IProfileBroadcast ProfileBroadcast { get; private set; } = null!;
 
+        public ILoadingStatus LoadingStatus { get;  private set; } = null!;
+
         public IRoomHub RoomHub { get; private set; } = null!;
 
-        public RealFlowLoadingStatus RealFlowLoadingStatus { get; private set; } = null!;
-
         private MultiplayerMovementMessageBus? multiplayerMovementMessageBus;
+        
 
         public override void Dispose()
         {
@@ -157,6 +158,7 @@ namespace Global.Dynamic
             World globalWorld,
             Entity playerEntity,
             IAppArgs appArgs,
+            ILoadingStatus loadingStatus,
             CancellationToken ct)
         {
             var container = new DynamicWorldContainer();
@@ -165,6 +167,8 @@ namespace Global.Dynamic
             IWeb3IdentityCache identityCache = dynamicWorldDependencies.Web3IdentityCache;
             IAssetsProvisioner assetsProvisioner = dynamicWorldDependencies.AssetsProvisioner;
             IDebugContainerBuilder debugBuilder = dynamicWorldDependencies.DebugContainerBuilder;
+
+            container.LoadingStatus = loadingStatus;
 
             // If we have many undesired delays when using the third-party providers, it might be useful to cache it at app's bootstrap
             // So far, the chance of using it is quite low, so it's preferable to do it lazy avoiding extra requests & memory allocations
@@ -240,7 +244,6 @@ namespace Global.Dynamic
                 new DCLMultiPool();
 
             var memoryPool = new ArrayMemoryPool(ArrayPool<byte>.Shared!);
-            container.RealFlowLoadingStatus = new RealFlowLoadingStatus();
 
             var assetBundlesURL = URLDomain.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.AssetBundlesCDN));
 
@@ -338,7 +341,8 @@ namespace Global.Dynamic
                 satelliteView,
                 dynamicWorldParams.EnableLandscape,
                 staticContainer.ExposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy,
-                exposedGlobalDataContainer.CameraSamplingData
+                exposedGlobalDataContainer.CameraSamplingData,
+                loadingStatus
             );
 
             IHealthCheck livekitHealthCheck = bootstrapContainer.DebugSettings.EnableEmulateNoLivekitConnection
@@ -358,7 +362,7 @@ namespace Global.Dynamic
             livekitHealthCheck.WithRetries();
 
             container.UserInAppInAppInitializationFlow = new RealUserInAppInitializationFlow(
-                container.RealFlowLoadingStatus,
+                loadingStatus,
                 livekitHealthCheck,
                 bootstrapContainer.DecentralandUrlsSource,
                 container.MvcManager,
@@ -453,7 +457,7 @@ namespace Global.Dynamic
                     container.ProfileRepository,
                     container.ProfileBroadcast,
                     debugBuilder,
-                    container.RealFlowLoadingStatus,
+                    loadingStatus,
                     entityParticipantTable,
                     container.MessagePipesHub,
                     container.RemoteMetadata,
@@ -552,8 +556,7 @@ namespace Global.Dynamic
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
                 new Web3AuthenticationPlugin(assetsProvisioner, dynamicWorldDependencies.Web3Authenticator, debugBuilder, container.MvcManager, selfProfile, webBrowser, staticContainer.RealmData, identityCache, characterPreviewFactory, dynamicWorldDependencies.SplashScreen, audioMixerVolumesController, staticContainer.FeatureFlagsCache, characterPreviewEventBus, globalWorld),
-                new StylizedSkyboxPlugin(assetsProvisioner, dynamicSettings.DirectionalLight, debugBuilder),
-                new LoadingScreenPlugin(assetsProvisioner, container.MvcManager, audioMixerVolumesController, staticContainer.InputBlock),
+                new StylizedSkyboxPlugin(assetsProvisioner, dynamicSettings.DirectionalLight, debugBuilder), new LoadingScreenPlugin(assetsProvisioner, container.MvcManager, audioMixerVolumesController, staticContainer.InputBlock, debugBuilder, container.LoadingStatus),
                 new ExternalUrlPromptPlugin(assetsProvisioner, webBrowser, container.MvcManager, dclCursor),
                 new TeleportPromptPlugin(assetsProvisioner, container.MvcManager,
                     staticContainer.WebRequestsContainer.WebRequestController, placesAPIService, dclCursor,

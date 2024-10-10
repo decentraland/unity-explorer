@@ -10,6 +10,7 @@ using ECS.Unity.GLTFContainer.Components;
 using SceneRunner.Scene;
 using System.Collections.Generic;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.UserInAppInitializationFlow;
 using UnityEngine;
 using UnityEngine.Pool;
 
@@ -36,16 +37,19 @@ namespace ECS.SceneLifeCycle.Systems
         private readonly EntityEventBuffer<GltfContainerComponent>.ForEachDelegate forEachEvent;
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly MemoryBudget memoryBudget;
+        private readonly ILoadingStatus loadingStatus;
 
         internal GatherGltfAssetsSystem(World world, ISceneReadinessReportQueue readinessReportQueue,
             ISceneData sceneData, EntityEventBuffer<GltfContainerComponent> eventsBuffer,
-            ISceneStateProvider sceneStateProvider, MemoryBudget memoryBudget) : base(world)
+            ISceneStateProvider sceneStateProvider, MemoryBudget memoryBudget,
+            ILoadingStatus loadingStatus) : base(world)
         {
             this.readinessReportQueue = readinessReportQueue;
             this.sceneData = sceneData;
             this.eventsBuffer = eventsBuffer;
             this.sceneStateProvider = sceneStateProvider;
             this.memoryBudget = memoryBudget;
+            this.loadingStatus = loadingStatus;
 
             forEachEvent = GatherEntities;
         }
@@ -111,6 +115,7 @@ namespace ECS.SceneLifeCycle.Systems
 
                 assetsResolved += toDelete.Count;
                 float progress = totalAssetsToResolve != 0 ? assetsResolved / (float)totalAssetsToResolve : 1;
+                loadingStatus.UpdateAssetsLoaded(assetsResolved, totalAssetsToResolve);
 
                 for (var i = 0; i < reports!.Value.Count; i++)
                 {

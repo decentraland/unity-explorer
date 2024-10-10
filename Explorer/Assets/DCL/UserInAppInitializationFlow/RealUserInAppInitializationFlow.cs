@@ -26,7 +26,7 @@ namespace DCL.UserInAppInitializationFlow
 {
     public class RealUserInAppInitializationFlow : IUserInAppInitializationFlow
     {
-        private readonly RealFlowLoadingStatus loadingStatus;
+        private readonly ILoadingStatus loadingStatus;
         private readonly IMVCManager mvcManager;
         private readonly AudioClipConfig backgroundMusic;
         private readonly IRealmNavigator realmNavigator;
@@ -42,7 +42,7 @@ namespace DCL.UserInAppInitializationFlow
         private static readonly ILoadingScreen.EmptyLoadingScreen EMPTY_LOADING_SCREEN = new ();
 
         public RealUserInAppInitializationFlow(
-            RealFlowLoadingStatus loadingStatus,
+            ILoadingStatus loadingStatus,
             IHealthCheck livekitHealthCheck,
             IDecentralandUrlsSource decentralandUrlsSource,
             IMVCManager mvcManager,
@@ -96,7 +96,7 @@ namespace DCL.UserInAppInitializationFlow
 
         public async UniTask ExecuteAsync(UserInAppInitializationFlowParameters parameters, CancellationToken ct)
         {
-            loadingStatus.SetStage(RealFlowLoadingStatus.Stage.Init);
+            loadingStatus.SetCompletedStage(LoadingStatus.Stage.Init);
 
             Result result = default;
 
@@ -109,7 +109,7 @@ namespace DCL.UserInAppInitializationFlow
             {
                 if (parameters.ShowAuthentication)
                 {
-                    loadingStatus.SetStage(RealFlowLoadingStatus.Stage.AuthenticationScreenShown);
+                    loadingStatus.SetCompletedStage(LoadingStatus.Stage.AuthenticationScreenShown);
                     await ShowAuthenticationScreenAsync(ct);
                 }
 
@@ -128,7 +128,7 @@ namespace DCL.UserInAppInitializationFlow
                                 result = await startupOperation.ExecuteAsync(parentLoadReport, ct);
 
                                 if (result.Success)
-                                    parentLoadReport.SetProgress(loadingStatus.SetStage(RealFlowLoadingStatus.Stage.Completed));
+                                    parentLoadReport.SetProgress(loadingStatus.SetCompletedStage(LoadingStatus.Stage.Completed));
 
                                 return result;
                             },

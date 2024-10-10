@@ -31,7 +31,7 @@ using UnityEngine.Assertions;
 using UnityEngine.Networking;
 using Utility;
 using Utility.Types;
-using static DCL.UserInAppInitializationFlow.RealFlowLoadingStatus.Stage;
+using static DCL.UserInAppInitializationFlow.LoadingStatus.Stage;
 
 namespace Global.Dynamic
 {
@@ -58,7 +58,8 @@ namespace Global.Dynamic
         private Vector2Int currentParcel;
 
         private readonly ITeleportOperation[] realmChangeOperations;
-        private readonly ITeleportOperation teleportInSameRealmOperation;
+        private readonly ITeleportOperation[] teleportInSameRealmOperation;
+        private readonly ILoadingStatus realFlowLoadingStatus;
 
         public event Action<bool>? RealmChanged;
 
@@ -77,7 +78,8 @@ namespace Global.Dynamic
             SatelliteFloor satelliteFloor,
             bool landscapeEnabled,
             ObjectProxy<Entity> cameraEntity,
-            CameraSamplingData cameraSamplingData)
+            CameraSamplingData cameraSamplingData,
+            ILoadingStatus realFlowLoadingStatus)
         {
             this.loadingScreen = loadingScreen;
             this.mapRenderer = mapRenderer;
@@ -92,11 +94,13 @@ namespace Global.Dynamic
             this.cameraSamplingData = cameraSamplingData;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.globalWorld = globalWorld;
+            this.realFlowLoadingStatus = realFlowLoadingStatus;
 
             var livekitTimeout = TimeSpan.FromSeconds(10f);
 
             realmChangeOperations = new ITeleportOperation[]
             {
+                new RestartLoadingStatus(),
                 new RemoveRemoteEntitiesTeleportOperation(remoteEntities, globalWorld),
                 new StopRoomAsyncTeleportOperation(roomHub, livekitTimeout),
                 new RemoveCameraSamplingDataTeleportOperation(globalWorld, cameraEntity),
@@ -108,7 +112,11 @@ namespace Global.Dynamic
                 new RestartRoomAsyncTeleportOperation(roomHub, livekitTimeout),
             };
 
-            teleportInSameRealmOperation = new MoveToParcelInSameRealmTeleportOperation(this);
+            teleportInSameRealmOperation = new ITeleportOperation[]
+            {
+                new RestartLoadingStatus(), new MoveToParcelInSameRealmTeleportOperation(this)
+            };
+
         }
 
         public bool CheckIsNewRealm(URLDomain realm)
@@ -162,7 +170,7 @@ namespace Global.Dynamic
                 {
                     CurrentDestinationParcel = parcelToTeleport,
                     CurrentDestinationRealm = realm,
-                    ParentReport = parentLoadReport,
+                    ParentReport = parentLoadReport, RealFlowLoadingStatus = realFlowLoadingStatus
                 };
 
                 for (int attempt = 0; attempt < MAX_REALM_CHANGE_RETRIES; attempt++)
@@ -264,7 +272,7 @@ namespace Global.Dynamic
                 var url = URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Genesis));
                 return await TryChangeRealmAsync(url, ct, parcel);
             }
-
+            
             Result loadResult = await loadingScreen.ShowWhileExecuteTaskAsync(TryTeleportAsync(parcel, ct), ct);
 
             if (!loadResult.Success)
@@ -281,30 +289,30 @@ namespace Global.Dynamic
             return async parentLoadReport =>
             {
                 ct.ThrowIfCancellationRequested();
-                parentLoadReport.SetProgress(RealFlowLoadingStatus.PROGRESS[LandscapeLoaded]);
+                parentLoadReport.SetProgress(LoadingStatus.PROGRESS[LandscapeLoaded]);
 
                 var teleportParams = new TeleportParams
                 {
                     ParentReport = parentLoadReport,
-                    CurrentDestinationParcel = parcel,
+                    CurrentDestinationParcel = parcel, RealFlowLoadingStatus = realFlowLoadingStatus
                 };
-
-                try
+                foreach (var realmChangeOperation in teleportInSameRealmOperation)
                 {
-                    Result currentOperationResult = await teleportInSameRealmOperation.ExecuteAsync(teleportParams, ct);
-
-                    if (!currentOperationResult.Success)
+                    try
+                    {
+                        var currentOperationResult = await realmChangeOperation.ExecuteAsync(teleportParams, ct);
+                        if (!currentOperationResult.Success)
+                        {
+                            parentLoadReport.SetProgress(1);
+                            return currentOperationResult;
+                        }
+                    }
+                    catch (Exception e)
                     {
                         parentLoadReport.SetProgress(1);
-                        return currentOperationResult;
+                        return Result.ErrorResult($"Unhandled exception while teleporting in same realm {e}");
                     }
                 }
-                catch (Exception e)
-                {
-                    parentLoadReport.SetProgress(1);
-                    return Result.ErrorResult($"Unhandled exception while teleporting in same realm {e}");
-                }
-
                 return Result.SuccessResult();
             };
         }
