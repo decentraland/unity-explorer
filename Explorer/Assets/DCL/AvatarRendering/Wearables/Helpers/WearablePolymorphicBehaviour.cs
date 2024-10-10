@@ -1,7 +1,6 @@
 using Arch.Core;
 using AssetManagement;
 using CommunicationData.URLHelpers;
-using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Loading.DTO;
@@ -288,7 +287,11 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                 return mainFileAsset is { Succeeded: true };
             }
 
-            return results.All(static r => r is { Succeeded: true });
+            for (var i = 0; i < results.Length; i++)
+                if (results[i] is not { Succeeded: true })
+                    return false;
+
+            return true;
         }
     }
 }

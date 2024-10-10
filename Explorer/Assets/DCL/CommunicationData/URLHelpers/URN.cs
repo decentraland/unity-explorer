@@ -1,6 +1,8 @@
 using DCL.Diagnostics;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace CommunicationData.URLHelpers
 {
@@ -10,19 +12,22 @@ namespace CommunicationData.URLHelpers
         private const int THIRD_PARTY_V2_SHORTEN_URN_PARTS = 7;
         private const string THIRD_PARTY_PART_ID = "collections-thirdparty";
 
-        private readonly string lowercaseUrn;
+        private const uint CACHE_MAX_SIZE = 1024;
+        private const int CACHE_CLEAR_AMOUNT = 64;
+        private static readonly ConcurrentDictionary<URN, URN> SHORTENED_URNS_CACHE = new ();
+
         private readonly string originalUrn;
+        private readonly Memory<char> lowercaseMemory;
 
         public URN(string urn)
         {
-            this.originalUrn = urn;
-            this.lowercaseUrn = this.originalUrn.ToLower();
-        }
+            originalUrn = urn;
 
-        public URN(int urn)
-        {
-            this.originalUrn = urn.ToString();
-            this.lowercaseUrn = this.originalUrn.ToLower();
+            var lowercaseChars = new char[originalUrn.Length];
+            for (var i = 0; i < originalUrn.Length; i++)
+                lowercaseChars[i] = char.ToLowerInvariant(originalUrn[i]);
+
+            lowercaseMemory = new Memory<char>(lowercaseChars);
         }
 
         public bool IsNullOrEmpty() =>
@@ -31,15 +36,10 @@ namespace CommunicationData.URLHelpers
         public bool IsValid() =>
             !IsNullOrEmpty() && originalUrn.StartsWith("urn");
 
-        public bool Equals(int other) => Equals(other.ToString());
-
         public bool Equals(URN other) =>
-            Equals(other.lowercaseUrn);
+            lowercaseMemory.Span.SequenceEqual(other.lowercaseMemory.Span);
 
-        public bool Equals(string other) =>
-            string.Equals(lowercaseUrn, other);
-
-        public override bool Equals(object obj) =>
+        public override bool Equals(object? obj) =>
             obj is URN other && Equals(other);
 
         public override string ToString() =>
@@ -47,7 +47,8 @@ namespace CommunicationData.URLHelpers
 
         public URLAddress ToUrlOrEmpty(URLAddress baseUrl)
         {
-            string currentUrn = this.originalUrn;
+            string currentUrn = originalUrn;
+
             ReadOnlySpan<char> CutBeforeColon(ref int endIndex, out bool success)
             {
                 int atBeginning = endIndex;
@@ -89,7 +90,7 @@ namespace CommunicationData.URLHelpers
             }
 
             index--;
-            ReadOnlySpan<char> ercType = CutBeforeColon(ref index, out success);
+            CutBeforeColon(ref index, out success);
 
             if (success == false)
             {
@@ -123,7 +124,6 @@ namespace CommunicationData.URLHelpers
             if (CountParts() <= SHORTEN_URN_PARTS) return this;
 
             int index;
-
             if (IsThirdPartyCollection())
             {
                 index = -1;
@@ -136,14 +136,31 @@ namespace CommunicationData.URLHelpers
                     index = originalUrn.IndexOf(':', index + 1);
                     if (index == -1) break;
                 }
+            }
+            else
+                index = originalUrn.LastIndexOf(':'); // TokenId is always placed in the last part for regular nfts
 
-                return index != -1 ? originalUrn[..index] : originalUrn;
+            return index != -1 ? GetShortenedUrn(index) : this;
+        }
+
+        private URN GetShortenedUrn(int index)
+        {
+            if (SHORTENED_URNS_CACHE.TryGetValue(this, out URN shortenedUrn))
+                return shortenedUrn;
+
+            shortenedUrn = originalUrn[..index];
+
+            if (SHORTENED_URNS_CACHE.Count >= CACHE_MAX_SIZE)
+            {
+                URN[] keysToRemove = SHORTENED_URNS_CACHE.Keys.Take(CACHE_CLEAR_AMOUNT).ToArray();
+
+                foreach (URN key in keysToRemove)
+                    SHORTENED_URNS_CACHE.TryRemove(key, out _);
             }
 
-            // TokenId is always placed in the last part for regular nfts
-            index = originalUrn.LastIndexOf(':');
+            SHORTENED_URNS_CACHE.TryAdd(this, shortenedUrn);
 
-            return index != -1 ? originalUrn[..index] : this;
+            return shortenedUrn;
         }
 
         public static implicit operator URN(int urn) =>
@@ -160,7 +177,7 @@ namespace CommunicationData.URLHelpers
 
         private int CountParts()
         {
-            int count = 1;
+            var count = 1;
             int index = originalUrn.IndexOf(':');
 
             while (index != -1)
