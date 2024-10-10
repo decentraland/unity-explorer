@@ -320,6 +320,7 @@ set(OPEN_EXR_INCLUDE
 # end OpenEXR
 
 set(SOURCES
+    bitmaps.cpp
     main.cpp
 
     ../FreeImage/BitmapAccess.cpp

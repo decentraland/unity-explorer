@@ -1,5 +1,4 @@
-#include "FreeImage.h"
-#include "texturesfuse.h"
+#include "bitmaps.h"
 #include <string>
 #include <fstream>
 #include <iostream>
@@ -35,25 +34,12 @@ ImageResult __cdecl texturesfuse_processed_image_from_memory(
     int *colorType,
     FfiHandle *releaseHandle)
 {
-    FIMEMORY *memory = FreeImage_OpenMemory(bytes, static_cast<DWORD>(bytesLength));
-    if (!memory)
-    {
-        return ErrorOpenMemoryStream;
-    }
+    FIBITMAP *image;
+    auto result = BitmapFromMemory(bytes, static_cast<DWORD>(bytesLength), &image);
 
-    FREE_IMAGE_FORMAT format = FreeImage_GetFileTypeFromMemory(memory);
-    if (format == FIF_UNKNOWN)
+    if (result != Success)
     {
-        FreeImage_CloseMemory(memory);
-        return ErrorUnknownImageFormat;
-    }
-
-    // Load the image from the memory stream
-    FIBITMAP *image = FreeImage_LoadFromMemory(format, memory);
-    if (!image)
-    {
-        FreeImage_CloseMemory(memory);
-        return ErrorCannotLoadImage;
+        return result;
     }
 
     unsigned imageWidth = FreeImage_GetWidth(image);
@@ -65,7 +51,6 @@ ImageResult __cdecl texturesfuse_processed_image_from_memory(
         if (!rescaled)
         {
             // TODO move close upper
-            FreeImage_CloseMemory(memory);
             FreeImage_Unload(image);
             return ErrorCannotDownscale;
         }
@@ -73,13 +58,9 @@ ImageResult __cdecl texturesfuse_processed_image_from_memory(
         image = rescaled;
     }
 
-    // int jpegQuality = 1; // 0 = worst quality, 100 = best quality
-
-    // FreeImage uses BGR format, it needs to be converted to RGB for Unity
     BYTE *bits = FreeImage_GetBits(image);
     if (!bits)
     {
-        FreeImage_CloseMemory(memory);
         FreeImage_Unload(image);
         return ErrorCannotGetBits;
     }
@@ -93,8 +74,7 @@ ImageResult __cdecl texturesfuse_processed_image_from_memory(
     *releaseHandle = 1; // TODO
     *outputBytes = bits;
 
-    // TODO release FIBITMAP and FIMEMORY
-    // FreeImage_CloseMemory(memory);
+    // TODO release FIBITMAP
     // FreeImage_Unload(image);
 
     return Success;
