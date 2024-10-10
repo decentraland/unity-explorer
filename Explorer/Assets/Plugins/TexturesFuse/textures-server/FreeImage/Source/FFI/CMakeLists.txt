@@ -27,6 +27,13 @@ add_definitions(-DFFI_TEXTURESFUSE)
 add_definitions(-DFREEIMAGE_COLORORDER=1)
 
 
+# Add ASTC encoder
+add_subdirectory(
+    ../../../astc-encoder
+    ${CMAKE_BINARY_DIR}/astc-encoder-build
+)
+
+
 message("Flags are: ${CMAKE_CXX_FLAGS}")
 
 set(JPEG_SOURCES
@@ -446,3 +453,6 @@ include_directories(
 # add_executable(texturesfuse ${SOURCES})
 
 add_library(texturesfuse SHARED ${SOURCES})
+
+# Link the external library
+target_link_libraries(texturesfuse PRIVATE ${CMAKE_BINARY_DIR}/astc-encoder-build)
