@@ -165,10 +165,22 @@ namespace DCL.WebRequests
                 {
                     // It means there is no such end-point at all
                     case WebRequestUtils.BAD_REQUEST:
-                    case WebRequestUtils.NOT_FOUND:
                         return false;
-                }
+                    case WebRequestUtils.NOT_FOUND:
+                    {
+                        try
+                        {
+                            await GetAsync<WebRequestUtils.NoOp<GenericGetRequest>, WebRequestUtils.NoResult>(controller, new CommonArguments(url), new WebRequestUtils.NoOp<GenericGetRequest>(),
+                                ct, reportData);
+                        }
+                        catch (Exception)
+                        {
+                            return false;
+                        }
 
+                        return true;
+                    }
+                }
                 // Assume everything else means that there is such an endpoint for Non-HEAD ops
                 return true;
             }
