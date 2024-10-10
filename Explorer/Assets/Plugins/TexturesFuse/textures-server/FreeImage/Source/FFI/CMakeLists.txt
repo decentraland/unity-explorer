@@ -11,7 +11,18 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(LIBRARY_OUTPUT_DIRECTORY "../../../../TexturesServerWrap/Libraries")
 
 # Set additional C++ compiler options
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Os -fexceptions -fvisibility=default -Wno-ctor-dtor-privacy -DNO_LCMS -D__ANSI__ -stdlib=libc++ -Wc++11-narrowing")
+if(MSVC)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Os /EHsc /DNDULOCL /DNO_LCMS /D__ANSI__")
+else()
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Os -fexceptions -fvisibility=default -Wno-ctor-dtor-privacy -DNO_LCMS -D__ANSI__ -stdlib=libc++ -Wc++11-narrowing")
+endif()
+
+if(MSVC)
+  add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+  add_definitions(-DOPJ_STATIC)
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /ignore:4217")
+  set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} /ignore:4217")
+endif()
 
 #Mac Only
 #xcrun --show-sdk-path
@@ -25,13 +36,6 @@ add_definitions(-DFFI_TEXTURESFUSE)
 
 # Enable RGB space instead BGR
 add_definitions(-DFREEIMAGE_COLORORDER=1)
-
-
-# Add ASTC encoder
-add_subdirectory(
-    ../../../astc-encoder
-    ${CMAKE_BINARY_DIR}/astc-encoder-build
-)
 
 
 message("Flags are: ${CMAKE_CXX_FLAGS}")
@@ -369,7 +373,7 @@ set(SOURCES
     ../FreeImage/tmoReinhard05.cpp
 
     ../FreeImage/Plugin.cpp
-    ../FreeImage/PluginG3.cpp
+    #../FreeImage/PluginG3.cpp
 
     # Plugins Start (also update list in Plugin.cpp)
 
@@ -453,6 +457,3 @@ include_directories(
 # add_executable(texturesfuse ${SOURCES})
 
 add_library(texturesfuse SHARED ${SOURCES})
-
-# Link the external library
-target_link_libraries(texturesfuse PRIVATE ${CMAKE_BINARY_DIR}/astc-encoder-build)
