@@ -2,3 +2,4 @@ Build/*.*
 Build/Makefile
 Build/CMakeFiles
 Build/CMakeFiles/*
+Build/astc-encoder-build
