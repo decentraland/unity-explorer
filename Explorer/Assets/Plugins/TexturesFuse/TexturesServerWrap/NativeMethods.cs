@@ -34,17 +34,26 @@ namespace Plugins.TexturesFuse.TexturesServerWrap
 
             public InitOptions NewWithMode(Mode mode)
             {
+                const int MinimalSupportedBlock = 4;
+
                 var output = this;
                 var sizeResult = mode.ASTCChunkSize();
 
                 if (sizeResult.Success == false)
+                {
                     ReportHub.LogWarning(
                         ReportCategory.TEXTURES,
                         $"Error during ASTC chunk initialization {sizeResult.ErrorMessage}"
                     );
 
-                output.blockX = sizeResult.Value;
-                output.blockY = sizeResult.Value;
+                    output.blockX = MinimalSupportedBlock;
+                    output.blockY = MinimalSupportedBlock;
+                }
+                else
+                {
+                    output.blockX = sizeResult.Value;
+                    output.blockY = sizeResult.Value;
+                }
 
                 return output;
             }

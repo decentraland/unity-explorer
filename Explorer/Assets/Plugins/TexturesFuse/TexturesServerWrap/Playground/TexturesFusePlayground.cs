@@ -1,4 +1,5 @@
 using DCL.Utilities.Extensions;
+using Plugins.TexturesFuse.TexturesServerWrap.Playground.Displays;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System;
 using System.IO;
@@ -8,8 +9,8 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground
 {
     public class TexturesFusePlayground : MonoBehaviour
     {
-        [SerializeField] private MeshRenderer meshRenderer = null!;
-
+        [Header("Dependencies")]
+        [SerializeField] private AbstractDebugDisplay display = null!;
         [Header("Config")]
         [SerializeField] private Options options = new ();
         [SerializeField] private string path = "Assets/Plugins/TexturesFuse/textures-server/FreeImage/Source/FFI/image.jpg";
@@ -24,35 +25,22 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground
         [ContextMenu(nameof(Start))]
         private void Start()
         {
-            meshRenderer.EnsureNotNull();
-
+            display.EnsureNotNull();
             unzip = new TexturesUnzip(options.InitOptions, options);
             buffer = File.ReadAllBytes(path);
 
             var result = FetchedAndOverrideTexture();
-            Apply(result);
+            display.Display(result.Texture);
         }
 
         private void Update()
         {
-            if (stressMode)
+            if (stressMode || transform.position.y > 1)
             {
+                transform.position = Vector3.zero;
                 var result = FetchedAndOverrideTexture();
-                Apply(result);
+                display.Display(result.Texture);
             }
-        }
-
-        private void Apply(OwnedTexture2D result)
-        {
-            var material = meshRenderer.material!;
-            material.mainTexture = result.Texture;
-            meshRenderer.material = material;
-
-            meshRenderer.transform.localScale = new Vector3(
-                options.BaseScale * ((float)result.Texture.width / result.Texture.height),
-                options.BaseScale,
-                options.BaseScale
-            );
         }
 
         private OwnedTexture2D FetchedAndOverrideTexture()
@@ -72,7 +60,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground
         private class Options : ITexturesUnzip.IOptions
         {
             [SerializeField] private int maxSide = 1024;
-            [SerializeField] private float baseScale = 8;
+
             [SerializeField] private Mode mode = Mode.RGB;
             [SerializeField] private NativeMethods.InitOptions initOptions;
             [SerializeField] private NativeMethods.Swizzle swizzle;
@@ -82,8 +70,6 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground
             public NativeMethods.Swizzle Swizzle => swizzle;
 
             public int MaxSide => maxSide;
-
-            public float BaseScale => baseScale;
 
             public NativeMethods.InitOptions InitOptions => initOptions;
         }
