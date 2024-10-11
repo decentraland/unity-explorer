@@ -19,6 +19,7 @@ extern "C"
     typedef intptr_t FfiHandle;
 
     const FfiHandle INVALID_HANDLE = 0;
+    const unsigned int THREADS_PER_CONTEXT = 1;
 
     struct InitOptions
     {
@@ -42,9 +43,12 @@ extern "C"
         ErrorCannotLoadImage = 4,
         ErrorCannotGetBits = 5,
         ErrorCannotDownscale = 6,
+        ErrorCannotConvertTo32Bits = 7,
 
         ErrorInvalidPointer = 10,
         ErrorASTCOnInit = 11,
+        ErrorASTCOnAlloc = 12,
+        ErrorASTCOnCompress = 13,
 
         ErrorDisposeAlreadyDisposed = 20,
         ErrorDisposeNotAllTexturesReleased = 21,
@@ -60,6 +64,7 @@ extern "C"
     {
         std::unordered_set<FfiHandle> handles;
         astcenc_config config;
+        astcenc_context* astcContext;
         bool disposed;
     };
 

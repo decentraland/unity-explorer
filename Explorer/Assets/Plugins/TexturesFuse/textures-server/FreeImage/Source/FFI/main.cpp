@@ -3,6 +3,23 @@
 #include <fstream>
 #include <iostream>
 
+// Function to calculate the compressed data size for an ASTC image
+size_t dataLenForASTC(
+    unsigned int width, unsigned int height, unsigned int depth,
+    unsigned int block_width, unsigned int block_height, unsigned int block_depth)
+{
+    // Calculate the number of blocks required in each dimension
+    size_t blocks_x = std::ceil(static_cast<float>(width) / block_width);
+    size_t blocks_y = std::ceil(static_cast<float>(height) / block_height);
+    size_t blocks_z = std::ceil(static_cast<float>(depth) / block_depth);
+
+    // Calculate the total number of blocks
+    size_t total_blocks = blocks_x * blocks_y * blocks_z;
+
+    // Each block generates 16 bytes of compressed data
+    return total_blocks * 16;
+}
+
 #ifndef TEST_TEXTURESFUSE
 
 ImageResult __cdecl texturesfuse_initialize(InitOptions initOptions, context **contextOutput)
@@ -22,13 +39,23 @@ ImageResult __cdecl texturesfuse_initialize(InitOptions initOptions, context **c
         initOptions.quality,
         initOptions.flags,
         &config);
-    context->config = config;
 
     if (status != ASTCENC_SUCCESS)
     {
         delete context;
-        return ErrorASCTOnInit;
+        return ErrorASTCOnInit;
     }
+
+    astcenc_context *astcContext;
+    status = astcenc_context_alloc(&config, THREADS_PER_CONTEXT, &astcContext);
+    if (status != ASTCENC_SUCCESS)
+    {
+        delete context;
+        return ErrorASTCOnAlloc;
+    }
+
+    context->config = config;
+    context->astcContext = astcContext;
 
     FreeImage_Initialise();
 
@@ -48,6 +75,7 @@ ImageResult __cdecl texturesfuse_dispose(context *context)
     }
     context->disposed = true;
     // TODO dispose handles
+    // TODO ASTC context dispose
 
     FreeImage_DeInitialise();
     return Success;
@@ -144,6 +172,14 @@ ImageResult __cdecl texturesfuse_astc_image_from_memory(
         return result;
     }
 
+    auto tempImage = FreeImage_ConvertTo32Bits(image);
+    FreeImage_Unload(image);
+    if (!tempImage)
+    {
+        return ErrorCannotConvertTo32Bits;
+    }
+    image = tempImage;
+
     BYTE *bits = FreeImage_GetBits(image);
     if (!bits)
     {
@@ -154,11 +190,51 @@ ImageResult __cdecl texturesfuse_astc_image_from_memory(
     *width = FreeImage_GetWidth(image);
     *height = FreeImage_GetHeight(image);
     *releaseHandle = 1; // TODO
-    *outputBytes = bits;
-    *outputLength = 0; // TODO
 
     // TODO release FIBITMAP
     // FreeImage_Unload(image);
+
+    // Create an astcenc_image structure
+    astcenc_image astcImage;
+    astcImage.dim_x = *width;
+    astcImage.dim_y = *height;
+    astcImage.dim_z = 1;                    // For 2D images, z-dimension is 1
+    astcImage.data_type = ASTCENC_TYPE_F32; // Raw image data is stored as 32-bit floats
+    astcImage.data = new void *[1];         // Only one 2D image layer //TODO fix leak
+    astcImage.data[0] = bits;               // Point to the raw image data
+
+    auto config = context->config;
+    auto astcContext = context->astcContext;
+
+    size_t astcBytesLength = dataLenForASTC(
+        astcImage.dim_x,
+        astcImage.dim_y,
+        1, // depth for 2D is 1
+        config.block_x,
+        config.block_y,
+        1 // compression blocks amount for 2D is 1
+    );
+
+    // len shouldn't be too long
+    *outputLength = static_cast<int>(astcBytesLength);
+
+    *outputBytes = new BYTE[*outputLength];
+
+    astcenc_error astcError = astcenc_compress_image(
+        astcContext,
+        &astcImage,
+        nullptr,
+        *outputBytes,
+        astcBytesLength,
+        0 // since THREADS_PER_CONTEXT is 1
+    );
+
+    FreeImage_Unload(image);
+
+    if (astcError != ASTCENC_SUCCESS){
+        //TODO release outputBytes
+        return ErrorASTCOnCompress;
+    }
 
     return Success;
 }
