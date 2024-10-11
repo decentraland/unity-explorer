@@ -1,6 +1,8 @@
 # run from /Build dir 
 # MAC ONLY for windows use a different script
 
+set -e  # Exit immediately if any command exits with a non-zero status
+
 # Build
 
 clear

@@ -267,7 +267,7 @@ MonoBehaviour:
       g: 1
       b: 2
       a: 3
-  path: Assets/Plugins/TexturesFuse/textures-server/FreeImage/Source/FFI/image.jpg
+  path: Assets/Plugins/TexturesFuse/textures-server/FreeImage/Source/FFI/TestImages/bali.tif
   stressMode: 0
   debugOutputFromNative: 1
   outputPath: Assets/Plugins/TexturesFuse/TexturesServerWrap/Playground/ASTCTexturesCompatability/test_output.astc
