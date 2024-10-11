@@ -44,7 +44,8 @@ namespace DCL.Navmap
             FloatingPanelView view,
             IPlacesAPIService placesAPIService,
             IWebRequestController webRequestController,
-            IMapPathEventBus mapPathEventBus, IChatMessagesBus chatMessagesBus)
+            IMapPathEventBus mapPathEventBus, IChatMessagesBus chatMessagesBus,
+            NavmapZoomController zoomController)
         {
             this.view = view;
             this.placesAPIService = placesAPIService;
@@ -65,6 +66,9 @@ namespace DCL.Navmap
             ResetCategories();
             InitButtons();
             this.mapPathEventBus.OnRemovedDestination += RemoveDestination;
+
+            view.onPointerEnterAction += () => zoomController.SetBlockZoom(true);
+            view.onPointerExitAction += () => zoomController.SetBlockZoom(false);
         }
 
         public void Dispose()

@@ -2,6 +2,7 @@ using DCL.Audio;
 using DCL.UI;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.UI;
 
 namespace DCL.Navmap
@@ -99,5 +100,14 @@ namespace DCL.Navmap
         [field: Header("Audio")]
         [field: SerializeField]
         public AudioClipConfig OnShowAudio { get; private set; }
+
+        internal UnityAction? onPointerEnterAction;
+        internal UnityAction? onPointerExitAction;
+
+        public void OnPointerEnter() =>
+            onPointerEnterAction?.Invoke();
+
+        public void OnPointerExit() =>
+            onPointerExitAction?.Invoke();
     }
 }

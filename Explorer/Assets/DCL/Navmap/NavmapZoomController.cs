@@ -29,6 +29,7 @@ namespace DCL.Navmap
         private int currentZoomLevel;
 
         private IMapCameraController cameraController;
+        private bool blockZoom;
 
         public NavmapZoomController(NavmapZoomView view, DCLInput dclInput)
         {
@@ -54,6 +55,9 @@ namespace DCL.Navmap
         {
             cts.SafeCancelAndDispose();
         }
+
+        public void SetBlockZoom(bool value) =>
+            blockZoom = value;
 
         private void CurveClamp01()
         {
@@ -145,7 +149,7 @@ namespace DCL.Navmap
 
         private void Zoom(bool zoomIn)
         {
-            if (!active || isScaling)
+            if (!active || isScaling || blockZoom)
                 return;
 
             EventSystem.current.SetSelectedGameObject(null);
