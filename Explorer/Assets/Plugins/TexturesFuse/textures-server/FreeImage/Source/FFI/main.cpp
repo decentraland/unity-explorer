@@ -202,13 +202,19 @@ ImageResult __cdecl texturesfuse_astc_image_from_memory(
         return result;
     }
 
-    auto tempImage = FreeImage_ConvertToRGBAF(image);
-    FreeImage_Unload(image);
-    if (!tempImage)
+    result = WithAlphaImage(image, &image);
+    if (result != Success)
     {
-        return ErrorCannotConvertTo32Bits;
+        return result;
     }
-    image = tempImage;
+    
+    astcenc_type astcType;
+    result = ASTCDataTypeFromImageWithAlpha(image, &astcType);
+    if (result != Success)
+    {
+        FreeImage_Unload(image);
+        return result;
+    }
 
     BYTE *bits = FreeImage_GetBits(image);
     if (!bits)
@@ -229,7 +235,7 @@ ImageResult __cdecl texturesfuse_astc_image_from_memory(
     astcImage.dim_x = *width;
     astcImage.dim_y = *height;
     astcImage.dim_z = 1; // depth for 2D is 1
-    astcImage.data_type = ASTCENC_TYPE_F32; 
+    astcImage.data_type = astcType; 
     astcImage.data = new void *[1];         // Only one 2D image layer //TODO fix leak
     astcImage.data[0] = bits;               // Point to the raw image data
 

@@ -255,13 +255,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   display: {fileID: 1454420715}
   options:
-    maxSide: 2048
-    mode: 6
+    maxSide: 1024
+    mode: 3
     initOptions:
       ASTCProfile: 0
       blockZ: 1
-      quality: 100
-      flags: 1
+      quality: 60
+      flags: 0
     swizzle:
       r: 0
       g: 1

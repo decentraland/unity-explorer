@@ -134,6 +134,15 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
                 }
             }
 
+            if (colorType == NativeMethods.FreeImageColorType.Rgbalpha)
+            {
+                switch (bpp)
+                {
+                    case 128:
+                        return TextureFormat.RGBAFloat;
+                }
+            }
+
             return null;
         }
     }

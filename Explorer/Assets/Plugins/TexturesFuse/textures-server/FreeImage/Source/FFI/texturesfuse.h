@@ -45,7 +45,10 @@ extern "C"
         ErrorCannotLoadImage = 4,
         ErrorCannotGetBits = 5,
         ErrorCannotDownscale = 6,
-        ErrorCannotConvertTo32Bits = 7,
+        ErrorConvertImageToAlphaUnsupportedInputFormat = 7,
+        ErrorOnConvertImageToAlpha = 8,
+        ErrorWrongAlphaImage = 9,
+
 
         ErrorInvalidPointer = 10,
         ErrorASTCOnInit = 11,
