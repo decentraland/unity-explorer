@@ -340,6 +340,34 @@ set(OPEN_EXR_INCLUDE
 
 # end OpenEXR
 
+# PNG
+
+add_definitions(-DPNG_ARM_NEON_OPT=0)
+
+set(PNG_SOURCES
+    ../LibPNG/png.c
+    ../LibPNG/pngerror.c
+    ../LibPNG/pngget.c
+    ../LibPNG/pngmem.c
+    ../LibPNG/pngpread.c
+    ../LibPNG/pngread.c
+    ../LibPNG/pngrio.c
+    ../LibPNG/pngrtran.c
+    ../LibPNG/pngrutil.c
+    ../LibPNG/pngset.c
+    ../LibPNG/pngtrans.c
+    ../LibPNG/pngwio.c
+    ../LibPNG/pngwrite.c
+    ../LibPNG/pngwtran.c
+    ../LibPNG/pngwutil.c
+)
+
+set(PNG_INCLUDE
+    ../LibPNG/
+)
+
+# end PNG
+
 set(SOURCES
     bitmaps.cpp
     main.cpp
@@ -387,12 +415,12 @@ set(SOURCES
 
     # Plugins Start (also update list in Plugin.cpp)
 
-    # ../FreeImage/PluginBMP.cpp
+    # ../FreeImage/PluginBMP.cpp TODO
     # ../FreeImage/PluginCUT.cpp
     # ../FreeImage/PluginDDS.cpp
     # ../FreeImage/PluginEXR.cpp
     # ../FreeImage/PluginG3.cpp
-    # ../FreeImage/PluginGIF.cpp
+    # ../FreeImage/PluginGIF.cpp TODO
     # ../FreeImage/PluginHDR.cpp
     # ../FreeImage/PluginICO.cpp
     # ../FreeImage/PluginIFF.cpp
@@ -407,7 +435,7 @@ set(SOURCES
     # ../FreeImage/PluginPCX.cpp
     # ../FreeImage/PluginPFM.cpp
     # ../FreeImage/PluginPICT.cpp
-    # ../FreeImage/PluginPNG.cpp
+    ../FreeImage/PluginPNG.cpp
     # ../FreeImage/PluginPNM.cpp
     # ../FreeImage/PluginPSD.cpp
     # ../FreeImage/PluginRAS.cpp
@@ -445,7 +473,7 @@ set(SOURCES
     ../Metadata/XTIFF.cpp
 
 
-
+    ${PNG_SOURCES}
     ${JPEG_SOURCES}
     ${TIFF_SOURCES}
     ${ZLIB_SOURCES}
@@ -458,6 +486,7 @@ include_directories(
     ../ 
     Include/
 
+    ${PNG_INCLUDE} 
     ${JPEG_INCLUDE} 
     ${TIFF_INCLUDE} 
     ${ZLIB_INCLUDE} 
