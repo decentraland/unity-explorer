@@ -3,6 +3,37 @@
 #include <fstream>
 #include <iostream>
 
+ImageResult ErrorFromASTC(astcenc_error error)
+{
+    switch (error)
+    {
+    case ASTCENC_ERR_OUT_OF_MEM:
+        return ErrorASTC_OUT_OF_MEM;
+    case ASTCENC_ERR_BAD_CPU_FLOAT:
+        return ErrorASTC_BAD_CPU_FLOAT;
+    case ASTCENC_ERR_BAD_PARAM:
+        return ErrorASTC_BAD_PARAM;
+    case ASTCENC_ERR_BAD_BLOCK_SIZE:
+        return ErrorASTC_BAD_BLOCK_SIZE;
+    case ASTCENC_ERR_BAD_PROFILE:
+        return ErrorASTC_BAD_PROFILE;
+    case ASTCENC_ERR_BAD_QUALITY:
+        return ErrorASTC_BAD_QUALITY;
+    case ASTCENC_ERR_BAD_SWIZZLE:
+        return ErrorASTC_BAD_SWIZZLE;
+    case ASTCENC_ERR_BAD_FLAGS:
+        return ErrorASTC_BAD_FLAGS;
+    case ASTCENC_ERR_BAD_CONTEXT:
+        return ErrorASTC_BAD_CONTEXT;
+    case ASTCENC_ERR_NOT_IMPLEMENTED:
+        return ErrorASTC_NOT_IMPLEMENTED;
+    case ASTCENC_ERR_BAD_DECODE_MODE:
+        return ErrorASTC_BAD_DECODE_MODE;
+    default:
+        return ErrorUnknown;
+    }
+}
+
 // Function to calculate the compressed data size for an ASTC image
 size_t dataLenForASTC(
     unsigned int width, unsigned int height, unsigned int depth,
@@ -233,7 +264,7 @@ ImageResult __cdecl texturesfuse_astc_image_from_memory(
     if (astcError != ASTCENC_SUCCESS)
     {
         // TODO release outputBytes
-        return ErrorASTCOnCompress;
+        return ErrorFromASTC(astcError);
     }
 
     return Success;

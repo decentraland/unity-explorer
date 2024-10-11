@@ -29,6 +29,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap
 
         internal enum ImageResult : int
         {
+            ErrorNotImplemented = -1,
             ErrorUnknown = 0,
             Success = 1,
             ErrorOpenMemoryStream = 2,
@@ -36,14 +37,29 @@ namespace Plugins.TexturesFuse.TexturesServerWrap
             ErrorCannotLoadImage = 4,
             ErrorCannotGetBits = 5,
             ErrorCannotDownscale = 6,
+            ErrorCannotConvertTo32Bits = 7,
 
             ErrorInvalidPointer = 10,
             ErrorASTCOnInit = 11,
+            ErrorASTCOnAlloc = 12,
+            ErrorASTCOnCompress = 13,
 
             ErrorDisposeAlreadyDisposed = 20,
             ErrorDisposeNotAllTexturesReleased = 21,
 
             ErrorReleaseNoHandleFound = 30,
+
+            ErrorASTC_OUT_OF_MEM = 40,
+            ErrorASTC_BAD_CPU_FLOAT = 41,
+            ErrorASTC_BAD_PARAM = 42,
+            ErrorASTC_BAD_BLOCK_SIZE = 43,
+            ErrorASTC_BAD_PROFILE = 44,
+            ErrorASTC_BAD_QUALITY = 45,
+            ErrorASTC_BAD_SWIZZLE = 46,
+            ErrorASTC_BAD_FLAGS = 47,
+            ErrorASTC_BAD_CONTEXT = 48,
+            ErrorASTC_NOT_IMPLEMENTED = 49,
+            ErrorASTC_BAD_DECODE_MODE = 50,
         }
 
         internal enum FreeImageColorType : int

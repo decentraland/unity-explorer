@@ -35,7 +35,8 @@ extern "C"
 #pragma endregion ASTC_options
     };
 
-    enum ImageResult : int {
+    enum ImageResult : int
+    {
         ErrorNotImplemented = -1,
         ErrorUnknown = 0,
         Success = 1,
@@ -55,6 +56,18 @@ extern "C"
         ErrorDisposeNotAllTexturesReleased = 21,
 
         ErrorReleaseNoHandleFound = 30,
+
+        ErrorASTC_OUT_OF_MEM = 40,
+        ErrorASTC_BAD_CPU_FLOAT = 41,
+        ErrorASTC_BAD_PARAM = 42,
+        ErrorASTC_BAD_BLOCK_SIZE = 43,
+        ErrorASTC_BAD_PROFILE = 44,
+        ErrorASTC_BAD_QUALITY = 45,
+        ErrorASTC_BAD_SWIZZLE = 46,
+        ErrorASTC_BAD_FLAGS = 47,
+        ErrorASTC_BAD_CONTEXT = 48,
+        ErrorASTC_NOT_IMPLEMENTED = 49,
+        ErrorASTC_BAD_DECODE_MODE = 50,
     };
 
     /**
@@ -65,7 +78,7 @@ extern "C"
     {
         std::unordered_set<FfiHandle> handles;
         astcenc_config config;
-        astcenc_context* astcContext;
+        astcenc_context *astcContext;
         bool disposed;
     };
 

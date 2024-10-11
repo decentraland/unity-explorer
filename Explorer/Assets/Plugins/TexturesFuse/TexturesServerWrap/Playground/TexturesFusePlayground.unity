@@ -172,7 +172,7 @@ MonoBehaviour:
     baseScale: 8
     mode: 1
     initOptions:
-      ASTCProfile: 1
+      ASTCProfile: 0
       blockX: 6
       blockY: 6
       blockZ: 1
