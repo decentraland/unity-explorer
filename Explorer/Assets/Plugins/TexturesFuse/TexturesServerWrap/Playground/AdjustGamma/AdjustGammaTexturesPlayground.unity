@@ -277,9 +277,9 @@ MonoBehaviour:
     options:
       maxSide: 1024
       adjustments:
-        brightness: -15
-        contrast: 50
-        gamma: 1
+        brightness: 0
+        contrast: 0
+        gamma: 0
       mode: 3
       initOptions:
         ASTCProfile: 0
