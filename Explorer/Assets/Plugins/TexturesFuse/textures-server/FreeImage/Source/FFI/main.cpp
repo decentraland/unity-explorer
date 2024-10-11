@@ -228,8 +228,8 @@ ImageResult __cdecl texturesfuse_astc_image_from_memory(
     astcenc_image astcImage;
     astcImage.dim_x = *width;
     astcImage.dim_y = *height;
-    astcImage.dim_z = 1;                    // For 2D images, z-dimension is 1
-    astcImage.data_type = ASTCENC_TYPE_F32; // Raw image data is stored as 32-bit floats
+    astcImage.dim_z = 1; // depth for 2D is 1
+    astcImage.data_type = ASTCENC_TYPE_U8; 
     astcImage.data = new void *[1];         // Only one 2D image layer //TODO fix leak
     astcImage.data[0] = bits;               // Point to the raw image data
 
@@ -239,7 +239,7 @@ ImageResult __cdecl texturesfuse_astc_image_from_memory(
     size_t astcBytesLength = dataLenForASTC(
         astcImage.dim_x,
         astcImage.dim_y,
-        1, // depth for 2D is 1
+        astcImage.dim_z, 
         config.block_x,
         config.block_y,
         1 // compression blocks amount for 2D is 1
