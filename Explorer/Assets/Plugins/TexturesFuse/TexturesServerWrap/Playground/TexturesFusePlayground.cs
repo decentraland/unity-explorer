@@ -14,9 +14,12 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground
         [SerializeField] private Options options = new ();
         [SerializeField] private string path = "Assets/Plugins/TexturesFuse/textures-server/FreeImage/Source/FFI/image.jpg";
         [SerializeField] private bool stressMode;
+        [Space]
+        [SerializeField] private string outputPath = "Assets/Plugins/TexturesFuse/TexturesServerWrap/Playground/ASTCTexturesCompatability/test_output.astc";
 
         private ITexturesUnzip unzip = null!;
         private byte[] buffer = Array.Empty<byte>();
+        private OwnedTexture2D? texture;
 
         [ContextMenu(nameof(Start))]
         private void Start()
@@ -26,7 +29,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground
             unzip = new TexturesUnzip(options.InitOptions, options);
             buffer = File.ReadAllBytes(path);
 
-            var result = unzip.TextureFromBytes(buffer);
+            var result = FetchedAndOverrideTexture();
             Apply(result);
         }
 
@@ -34,7 +37,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground
         {
             if (stressMode)
             {
-                var result = unzip.TextureFromBytes(buffer);
+                var result = FetchedAndOverrideTexture();
                 Apply(result);
             }
         }
@@ -50,6 +53,19 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground
                 options.BaseScale,
                 options.BaseScale
             );
+        }
+
+        private OwnedTexture2D FetchedAndOverrideTexture()
+        {
+            texture?.Dispose();
+            texture = unzip.TextureFromBytes(buffer);
+            return texture;
+        }
+
+        [ContextMenu(nameof(SaveToFile))]
+        public void SaveToFile()
+        {
+            File.WriteAllBytes(outputPath, texture!.Texture.GetRawTextureData()!);
         }
 
         [Serializable]

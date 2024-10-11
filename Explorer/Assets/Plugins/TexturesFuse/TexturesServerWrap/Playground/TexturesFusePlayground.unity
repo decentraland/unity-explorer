@@ -168,9 +168,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   meshRenderer: {fileID: 1853004497}
   options:
-    maxSide: 512
+    maxSide: 2048
     baseScale: 8
-    mode: 1
+    mode: 3
     initOptions:
       ASTCProfile: 0
       blockZ: 1
