@@ -16,6 +16,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
         {
             this.options = options;
 
+            initOptions = initOptions.NewWithMode(options.Mode);
             var result = NativeMethods.TexturesFuseInitialize(initOptions, out context);
 
             if (result is not NativeMethods.ImageResult.Success)
@@ -42,78 +43,82 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
             {
                 fixed (byte* ptr = bytes)
                 {
+                    var mode = options.Mode;
+
                     //TODO remove this switch to avoid additional dispatching overhead in prod
-                    switch (options.Mode)
+                    if (mode.IsASTC())
                     {
-                        case ITexturesUnzip.Mode.RGB:
-                            var result = NativeMethods.TexturesFuseProcessedImageFromMemory(
-                                context,
-                                ptr,
-                                bytes.Length,
-                                options.MaxSide,
-                                out byte* output,
-                                out uint width,
-                                out uint height,
-                                out uint bitsPerPixel,
-                                out NativeMethods.FreeImageColorType colorType,
-                                out handle
-                            );
+                        var result = NativeMethods.TexturesFuseASTCImageFromMemory(
+                            context,
+                            options.Swizzle,
+                            ptr,
+                            bytes.Length,
+                            options.MaxSide,
+                            out byte* output,
+                            out int outputLength,
+                            out uint width,
+                            out uint height,
+                            out handle
+                        );
 
-                            if (result is not NativeMethods.ImageResult.Success)
-                            {
-                                ReportHub.LogError(ReportCategory.TEXTURES, $"TexturesFuseProcessedImageFromMemory error during decoding: {result}");
-                                return Texture2D.whiteTexture; //TODO result type
-                            }
+                        if (result is not NativeMethods.ImageResult.Success)
+                        {
+                            ReportHub.LogError(ReportCategory.TEXTURES, $"TexturesFuseASTCImageFromMemory error during decoding: {result}");
+                            return Texture2D.whiteTexture; //TODO result type
+                        }
 
-                            var format = FormatFromBpp(colorType, bitsPerPixel);
+                        if (handle == IntPtr.Zero)
+                            throw new Exception("TexturesFuseProcessedImageFromMemory failed");
 
-                            if (format.HasValue == false)
-                            {
-                                ReportHub.LogError(ReportCategory.TEXTURES, $"Unsupported format on decoding image from: color type {colorType}, bpp {bitsPerPixel}");
-                                return Texture2D.whiteTexture; //TODO result type
-                            }
+                        //TODO mipChain and mipmaps
+                        var texture = new Texture2D((int)width, (int)height, mode.AsASTCTextureFormatOrFatalError(), false, true);
+                        texture.LoadRawTextureData(new IntPtr(output), outputLength);
+                        texture.Apply();
 
-                            if (handle == IntPtr.Zero)
-                                throw new Exception("TexturesFuseProcessedImageFromMemory failed");
-
-                            var texture = new Texture2D((int)width, (int)height, format.Value, false);
-                            uint length = width * height * (bitsPerPixel / 8);
-                            texture.LoadRawTextureData(new IntPtr(output), (int)length);
-                            texture.Apply();
-
-                            return texture;
-                        case ITexturesUnzip.Mode.ASTC:
-                            result = NativeMethods.TexturesFuseASTCImageFromMemory(
-                                context,
-                                ptr,
-                                bytes.Length,
-                                options.MaxSide,
-                                out output,
-                                out int outputLength,
-                                out width,
-                                out height,
-                                out handle
-                            );
-
-                            if (result is not NativeMethods.ImageResult.Success)
-                            {
-                                ReportHub.LogError(ReportCategory.TEXTURES, $"TexturesFuseASTCImageFromMemory error during decoding: {result}");
-                                return Texture2D.whiteTexture; //TODO result type
-                            }
-
-                            if (handle == IntPtr.Zero)
-                                throw new Exception("TexturesFuseProcessedImageFromMemory failed");
-
-                            //TODO block size
-                            //TODO mipChain and mipmaps
-                            texture = new Texture2D((int)width, (int)height, TextureFormat.ASTC_4x4, false);
-                            texture.LoadRawTextureData(new IntPtr(output), outputLength);
-                            texture.Apply();
-
-                            return texture;
-
-                        default: throw new ArgumentOutOfRangeException();
+                        return texture;
                     }
+
+                    if (options.Mode is Mode.RGB)
+                    {
+                        var result = NativeMethods.TexturesFuseProcessedImageFromMemory(
+                            context,
+                            ptr,
+                            bytes.Length,
+                            options.MaxSide,
+                            out byte* output,
+                            out uint width,
+                            out uint height,
+                            out uint bitsPerPixel,
+                            out NativeMethods.FreeImageColorType colorType,
+                            out handle
+                        );
+
+                        if (result is not NativeMethods.ImageResult.Success)
+                        {
+                            ReportHub.LogError(ReportCategory.TEXTURES, $"TexturesFuseProcessedImageFromMemory error during decoding: {result}");
+                            return Texture2D.whiteTexture; //TODO result type
+                        }
+
+                        var format = FormatFromBpp(colorType, bitsPerPixel);
+
+                        if (format.HasValue == false)
+                        {
+                            ReportHub.LogError(ReportCategory.TEXTURES, $"Unsupported format on decoding image from: color type {colorType}, bpp {bitsPerPixel}");
+                            return Texture2D.whiteTexture; //TODO result type
+                        }
+
+                        if (handle == IntPtr.Zero)
+                            throw new Exception("TexturesFuseProcessedImageFromMemory failed");
+
+                        var texture = new Texture2D((int)width, (int)height, format.Value, false);
+                        uint length = width * height * (bitsPerPixel / 8);
+                        texture.LoadRawTextureData(new IntPtr(output), (int)length);
+                        texture.Apply();
+
+                        return texture;
+                    }
+
+                    throw new ArgumentOutOfRangeException();
                 }
             }
         }

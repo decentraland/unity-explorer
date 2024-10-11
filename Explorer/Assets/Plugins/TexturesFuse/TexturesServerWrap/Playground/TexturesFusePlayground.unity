@@ -173,11 +173,14 @@ MonoBehaviour:
     mode: 1
     initOptions:
       ASTCProfile: 0
-      blockX: 6
-      blockY: 6
       blockZ: 1
       quality: 10
       flags: 1
+    swizzle:
+      r: 0
+      g: 1
+      b: 2
+      a: 3
   path: Assets/Plugins/TexturesFuse/textures-server/FreeImage/Source/FFI/image.jpg
   stressMode: 0
 --- !u!1 &1203531619

@@ -103,6 +103,7 @@ extern "C"
 
     FFI_API ImageResult texturesfuse_astc_image_from_memory(
         context *context,
+        astcenc_swizzle swizzle,
         BYTE *bytes,
         int bytesLength,
         int maxSideLength,

@@ -1,6 +1,9 @@
+using DCL.Diagnostics;
+using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
+using UnityEngine;
 
 namespace Plugins.TexturesFuse.TexturesServerWrap
 {
@@ -19,12 +22,44 @@ namespace Plugins.TexturesFuse.TexturesServerWrap
 #pragma region ASTC_options
 
             public int ASTCProfile;
-            public uint blockX;
-            public uint blockY;
+
+            private uint blockX;
+            private uint blockY;
+
+            [Header("X and Y should be installed via unity texture format")]
             public uint blockZ;
             public float quality;
             public uint flags;
 #pragma endregion ASTC_options
+
+            public InitOptions NewWithMode(Mode mode)
+            {
+                var output = this;
+                var sizeResult = mode.ASTCChunkSize();
+
+                if (sizeResult.Success == false)
+                    ReportHub.LogWarning(
+                        ReportCategory.TEXTURES,
+                        $"Error during ASTC chunk initialization {sizeResult.ErrorMessage}"
+                    );
+
+                output.blockX = sizeResult.Value;
+                output.blockY = sizeResult.Value;
+
+                return output;
+            }
+        }
+
+        [SuppressMessage("ReSharper", "InconsistentNaming")]
+        [SuppressMessage("ReSharper", "ArrangeTypeMemberModifiers")]
+        [Serializable]
+        [StructLayout(LayoutKind.Sequential)]
+        public struct Swizzle
+        {
+            public int r;
+            public int g;
+            public int b;
+            public int a;
         }
 
         internal enum ImageResult : int
@@ -98,6 +133,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap
         [DllImport(LIBRARY_NAME, CallingConvention = CallingConvention.Cdecl, EntryPoint = PREFIX + "astc_image_from_memory")]
         internal extern static unsafe ImageResult TexturesFuseASTCImageFromMemory(
             IntPtr context,
+            Swizzle swizzle,
             byte* bytes,
             int bytesLength,
             int maxSideLength,

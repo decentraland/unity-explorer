@@ -177,6 +177,7 @@ ImageResult __cdecl texturesfuse_processed_image_from_memory(
 
 ImageResult __cdecl texturesfuse_astc_image_from_memory(
     context *context,
+    astcenc_swizzle swizzle,
     BYTE *bytes,
     int bytesLength,
     int maxSideLength,
@@ -234,7 +235,6 @@ ImageResult __cdecl texturesfuse_astc_image_from_memory(
 
     auto config = context->config;
     auto astcContext = context->astcContext;
-    astcenc_swizzle swz;
 
     size_t astcBytesLength = dataLenForASTC(
         astcImage.dim_x,
@@ -253,7 +253,7 @@ ImageResult __cdecl texturesfuse_astc_image_from_memory(
     astcenc_error astcError = astcenc_compress_image(
         astcContext,
         &astcImage,
-        &swz,
+        &swizzle,
         *outputBytes,
         astcBytesLength,
         0 // since THREADS_PER_CONTEXT is 1

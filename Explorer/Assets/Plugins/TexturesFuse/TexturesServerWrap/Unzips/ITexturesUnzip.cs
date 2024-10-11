@@ -17,14 +17,9 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
         {
             Mode Mode { get; }
 
-            int MaxSide { get; }
-        }
+            NativeMethods.Swizzle Swizzle { get; }
 
-        [Serializable]
-        public enum Mode
-        {
-            RGB,
-            ASTC,
+            int MaxSide { get; }
         }
     }
 
