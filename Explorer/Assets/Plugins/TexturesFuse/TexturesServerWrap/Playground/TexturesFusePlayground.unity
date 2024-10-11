@@ -170,7 +170,7 @@ MonoBehaviour:
   options:
     maxSide: 512
     baseScale: 8
-    mode: 0
+    mode: 1
     initOptions:
       ASTCProfile: 1
       blockX: 6

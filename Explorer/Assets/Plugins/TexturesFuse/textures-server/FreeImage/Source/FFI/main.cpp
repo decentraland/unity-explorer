@@ -20,8 +20,6 @@ size_t dataLenForASTC(
     return total_blocks * 16;
 }
 
-#ifndef TEST_TEXTURESFUSE
-
 ImageResult __cdecl texturesfuse_initialize(InitOptions initOptions, context **contextOutput)
 {
     if (!contextOutput)
@@ -205,6 +203,7 @@ ImageResult __cdecl texturesfuse_astc_image_from_memory(
 
     auto config = context->config;
     auto astcContext = context->astcContext;
+    astcenc_swizzle swz;
 
     size_t astcBytesLength = dataLenForASTC(
         astcImage.dim_x,
@@ -223,7 +222,7 @@ ImageResult __cdecl texturesfuse_astc_image_from_memory(
     astcenc_error astcError = astcenc_compress_image(
         astcContext,
         &astcImage,
-        nullptr,
+        &swz,
         *outputBytes,
         astcBytesLength,
         0 // since THREADS_PER_CONTEXT is 1
@@ -231,15 +230,16 @@ ImageResult __cdecl texturesfuse_astc_image_from_memory(
 
     FreeImage_Unload(image);
 
-    if (astcError != ASTCENC_SUCCESS){
-        //TODO release outputBytes
+    if (astcError != ASTCENC_SUCCESS)
+    {
+        // TODO release outputBytes
         return ErrorASTCOnCompress;
     }
 
     return Success;
 }
 
-#else
+#ifdef TEST_TEXTURESFUSE // revert to ifdef
 
 std::streamsize sizeOf(std::ifstream *stream)
 {
@@ -285,56 +285,49 @@ bytesFromFile(std::string path)
 
 int main()
 {
-    FreeImage_Initialise();
+    InitOptions options;
+    options.ASTCProfile = ASTCENC_PRF_LDR_SRGB;
+    options.blockX = 6;
+    options.blockY = 6;
+    options.blockZ = 1;
+    options.quality = 10;
+    options.flags = 1;
 
     std::string imagePath = "../image.jpg";
     std::string outputPath = "../output.jpg";
+    int maxSideLength = 512;
+
+    context *context;
+    auto imageResult = texturesfuse_initialize(options, &context);
+    if (imageResult != Success)
+    {
+        std::cout << "Context init result: " << imageResult << '\n';
+        return 0;
+    }
 
     BytesResult result = bytesFromFile(imagePath);
 
-    FIMEMORY *memory = FreeImage_OpenMemory(result.data, static_cast<DWORD>(result.size));
-    if (!memory)
-    {
-        std::cerr << "Error: Could not create FreeImage memory stream!" << std::endl;
-        return 1;
-    }
+    BYTE *output;
+    int outputLength;
+    unsigned int width;
+    unsigned int height;
+    FfiHandle handle;
 
-    FREE_IMAGE_FORMAT format = FreeImage_GetFileTypeFromMemory(memory);
-    if (format == FIF_UNKNOWN)
-    {
-        std::cerr << "Error: Unknown image format!" << std::endl;
-        return 1;
-    }
+    imageResult = texturesfuse_astc_image_from_memory(
+        context,
+        result.data,
+        static_cast<int>(result.size),
+        maxSideLength,
 
-    std::cout << "format is " << format << '\n';
+        &output,
+        &outputLength,
+        &width,
+        &height,
+        &handle);
 
-    // Load the image from the memory stream
-    FIBITMAP *image = FreeImage_LoadFromMemory(format, memory);
-    if (!image)
-    {
-        std::cerr << "Error: Could not load image from memory!" << std::endl;
-        return 1;
-    }
+    std::cout << "Image result: " << imageResult << '\n';
 
-    unsigned bpp = FreeImage_GetBPP(image);
-
-    std::cout << "Bits per pixel: " << bpp << '\n';
-
-    auto colorType = FreeImage_GetColorType(image);
-
-    std::cout << "Color type is: " << colorType << '\n';
-
-    int jpegQuality = 1; // 0 = worst quality, 100 = best quality
-    if (FreeImage_Save(format, image, "../output.jpg", jpegQuality))
-    {
-        std::cout << "Image successfully saved and compressed" << std::endl;
-    }
-    else
-    {
-        std::cerr << "Error: Could not save the compressed image!" << std::endl;
-    }
-
-    FreeImage_DeInitialise();
+    texturesfuse_dispose(context);
 }
 
 #endif

@@ -40,3 +40,5 @@ rm -rf ./cmake_install.cmake
 rm -rf ./CMakeCache.txt
 rm -rf ./compile_commands.json
 rm -rf ./Makefile
+rm -rf ./Makefile
+rm -rf ./texturesfuse
