@@ -137,6 +137,9 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
                 {
                     case 24:
                         return TextureFormat.RGB24;
+                    // Why it's considered as RGB and not as RGBA?
+                    case 32:
+                        return TextureFormat.RGBA32;
                 }
             }
 
@@ -144,6 +147,8 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
             {
                 switch (bpp)
                 {
+                    case 32:
+                        return TextureFormat.RGBA32;
                     case 128:
                         return TextureFormat.RGBAFloat;
                 }

@@ -156,6 +156,13 @@ ImageResult __cdecl texturesfuse_processed_image_from_memory(
         return result;
     }
 
+    //TODO test only, remove 
+    result = WithAlphaImage(image, &image);
+    if (result != Success)
+    {
+        return result;
+    }
+
     BYTE *bits = FreeImage_GetBits(image);
     if (!bits)
     {
@@ -171,6 +178,8 @@ ImageResult __cdecl texturesfuse_processed_image_from_memory(
     *colorType = imageColorType;
     *releaseHandle = 1; // TODO
     *outputBytes = bits;
+
+    LogImageInfo(image, "Prepared image without ASTC: ");
 
     // TODO release FIBITMAP
     // FreeImage_Unload(image);
@@ -218,6 +227,8 @@ ImageResult __cdecl texturesfuse_astc_image_from_memory(
         FreeImage_Unload(image);
         return result;
     }
+
+    LogImageInfo(image, "image to process with ASTC: ");
 
     BYTE *bits = FreeImage_GetBits(image);
     if (!bits)

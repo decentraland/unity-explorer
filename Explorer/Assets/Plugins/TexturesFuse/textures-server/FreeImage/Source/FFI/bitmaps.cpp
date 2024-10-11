@@ -26,7 +26,7 @@ ImageResult BitmapFromMemory(BYTE *bytes, DWORD bytesLength, FIBITMAP **output)
         return ErrorCannotLoadImage;
     }
 
-    LogImageInfo(image);
+    LogImageInfo(image, "From memory: ");
     *output = image;
     FreeImage_CloseMemory(memory);
     return Success;
@@ -206,20 +206,34 @@ const char *NameFromColorType(FREE_IMAGE_COLOR_TYPE colorType)
     }
 }
 
-void LogImageInfo(FIBITMAP *bitmap)
+const char *ProfileNameFromBitmap(FIBITMAP *bitmap)
 {
-    int width = static_cast<int>(FreeImage_GetWidth(bitmap));
-    int height = static_cast<int>(FreeImage_GetHeight(bitmap));
-    int bpp = static_cast<int>(FreeImage_GetBPP(bitmap));
+    FIICCPROFILE *profile = FreeImage_GetICCProfile(bitmap);
+    if (profile && profile->data && profile->size > 0)
+    {
+        //TODO maybe no null terminator
+        return (const char *)profile->data;
+    }
+    return "Unknown Profile";
+}
+
+void LogImageInfo(FIBITMAP *bitmap, const char *prefix)
+{
+    const int width = static_cast<int>(FreeImage_GetWidth(bitmap));
+    const int height = static_cast<int>(FreeImage_GetHeight(bitmap));
+    const int bpp = static_cast<int>(FreeImage_GetBPP(bitmap));
     const char *imageType = NameFromImageType(FreeImage_GetImageType(bitmap));
     const char *colorType = NameFromColorType(FreeImage_GetColorType(bitmap));
+    const char *profileName = "";//ProfileNameFromBitmap(bitmap);
 
     FreeImage_OutputMessageProc(
         FIF_UNKNOWN,
-        "Image info: width %i, height %i, bpp %i, image type %s, color type %s",
+        "%sImage info: width %i, height %i, bpp %i, image type %s, color type %s, profile type %s",
+        prefix,
         width,
         height,
         bpp,
         imageType,
-        colorType);
+        colorType,
+        profileName);
 }
