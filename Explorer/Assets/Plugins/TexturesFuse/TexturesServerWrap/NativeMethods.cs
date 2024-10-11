@@ -116,6 +116,17 @@ namespace Plugins.TexturesFuse.TexturesServerWrap
             ErrorASTC_BAD_DECODE_MODE = 50,
         }
 
+        [SuppressMessage("ReSharper", "InconsistentNaming")]
+        [SuppressMessage("ReSharper", "ArrangeTypeMemberModifiers")]
+        [Serializable]
+        [StructLayout(LayoutKind.Sequential)]
+        public struct Adjustments
+        {
+            public double brightness;
+            public double contrast;
+            public double gamma;
+        }
+
         internal enum FreeImageColorType : int
         {
             Miniswhite = 0, //! min value is white
@@ -156,6 +167,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap
             byte* bytes,
             int bytesLength,
             int maxSideLength,
+            Adjustments adjustments,
             out byte* outputBytes,
             out int outputLength,
             out uint width,

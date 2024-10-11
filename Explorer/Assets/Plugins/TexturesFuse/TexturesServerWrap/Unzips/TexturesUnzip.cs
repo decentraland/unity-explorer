@@ -60,6 +60,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
                             ptr,
                             bytes.Length,
                             options.MaxSide,
+                            options.Adjustments,
                             out byte* output,
                             out int outputLength,
                             out uint width,
@@ -137,6 +138,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
                 {
                     case 24:
                         return TextureFormat.RGB24;
+
                     // Why it's considered as RGB and not as RGBA?
                     case 32:
                         return TextureFormat.RGBA32;

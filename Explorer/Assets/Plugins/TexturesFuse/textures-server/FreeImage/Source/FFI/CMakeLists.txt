@@ -554,7 +554,7 @@ set(SOURCES
     # ../FreeImage/PluginDDS.cpp
     # ../FreeImage/PluginEXR.cpp
     # ../FreeImage/PluginG3.cpp
-    # ../FreeImage/PluginGIF.cpp TODO
+    ../FreeImage/PluginGIF.cpp
     # ../FreeImage/PluginHDR.cpp
     # ../FreeImage/PluginICO.cpp
     # ../FreeImage/PluginIFF.cpp

@@ -58,10 +58,11 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground
         }
 
         [Serializable]
-        private class Options : ITexturesUnzip.IOptions
+        public class Options : ITexturesUnzip.IOptions
         {
             [SerializeField] private int maxSide = 1024;
 
+            [SerializeField] private NativeMethods.Adjustments adjustments;
             [SerializeField] private Mode mode = Mode.RGB;
             [SerializeField] private NativeMethods.InitOptions initOptions;
             [SerializeField] private NativeMethods.Swizzle swizzle;
@@ -71,6 +72,8 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground
             public NativeMethods.Swizzle Swizzle => swizzle;
 
             public int MaxSide => maxSide;
+
+            public NativeMethods.Adjustments Adjustments => adjustments;
 
             public NativeMethods.InitOptions InitOptions => initOptions;
         }

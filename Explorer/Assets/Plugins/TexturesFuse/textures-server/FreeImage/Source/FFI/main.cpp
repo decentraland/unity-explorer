@@ -193,6 +193,7 @@ ImageResult __cdecl texturesfuse_astc_image_from_memory(
     BYTE *bytes,
     int bytesLength,
     int maxSideLength,
+    Adjustments adjustments,
 
     BYTE **outputBytes,
     int *outputLength,
@@ -218,6 +219,18 @@ ImageResult __cdecl texturesfuse_astc_image_from_memory(
     if (result != Success)
     {
         return result;
+    }
+
+    BOOL adjustResult = FreeImage_AdjustColors(
+        image,
+        adjustments.brightness,
+        adjustments.contrast,
+        adjustments.gamma,
+        FALSE);
+
+    if (!adjustResult)
+    {
+        FreeImage_OutputMessageProc(FIF_UNKNOWN, "Cannot apply adjustments");
     }
     
     astcenc_type astcType;

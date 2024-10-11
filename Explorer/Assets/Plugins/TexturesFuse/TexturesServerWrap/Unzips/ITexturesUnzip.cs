@@ -20,6 +20,8 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
             NativeMethods.Swizzle Swizzle { get; }
 
             int MaxSide { get; }
+
+            NativeMethods.Adjustments Adjustments { get; }
         }
     }
 

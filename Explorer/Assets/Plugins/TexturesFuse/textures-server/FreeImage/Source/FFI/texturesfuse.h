@@ -76,6 +76,13 @@ extern "C"
         ErrorASTC_BAD_DECODE_MODE = 50,
     };
 
+    struct Adjustments
+    {
+        double brightness;
+        double contrast;
+        double gamma;
+    };
+
     /**
      * Context provides synchronization. Library is stateless and all multithreading/threadsafety should be resolved on client's side.
      * Context shouldn't be mutated by client's side by design.
@@ -113,6 +120,7 @@ extern "C"
         BYTE *bytes,
         int bytesLength,
         int maxSideLength,
+        Adjustments adjustments,
 
         BYTE **outputBytes,
         int *outputLength,
