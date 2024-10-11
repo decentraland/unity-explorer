@@ -36,6 +36,7 @@ extern "C"
     };
 
     enum ImageResult : int {
+        ErrorNotImplemented = -1,
         ErrorUnknown = 0,
         Success = 1,
         ErrorOpenMemoryStream = 2,
