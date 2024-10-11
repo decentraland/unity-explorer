@@ -78,7 +78,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
                             throw new Exception("TexturesFuseProcessedImageFromMemory failed");
 
                         //TODO mipChain and mipmaps
-                        var texture = new Texture2D((int)width, (int)height, mode.AsASTCTextureFormatOrFatalError(), false, true);
+                        var texture = new Texture2D((int)width, (int)height, mode.AsASTCTextureFormatOrFatalError(), false, false);
                         texture.LoadRawTextureData(new IntPtr(output), outputLength);
                         texture.Apply();
 
