@@ -23,3 +23,5 @@ ImageResult WithAlphaImage(FIBITMAP *bitmap, FIBITMAP **output);
  * @return result of the operation
  */
 ImageResult ASTCDataTypeFromImageWithAlpha(FIBITMAP *bitmap, astcenc_type *output);
+
+void LogImageInfo(FIBITMAP *bitmap);

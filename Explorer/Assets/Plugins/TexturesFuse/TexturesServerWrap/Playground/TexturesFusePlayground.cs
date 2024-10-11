@@ -15,6 +15,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground
         [SerializeField] private Options options = new ();
         [SerializeField] private string path = "Assets/Plugins/TexturesFuse/textures-server/FreeImage/Source/FFI/image.jpg";
         [SerializeField] private bool stressMode;
+        [SerializeField] private bool debugOutputFromNative;
         [Space]
         [SerializeField] private string outputPath = "Assets/Plugins/TexturesFuse/TexturesServerWrap/Playground/ASTCTexturesCompatability/test_output.astc";
 
@@ -26,7 +27,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground
         private void Start()
         {
             display.EnsureNotNull();
-            unzip = new TexturesUnzip(options.InitOptions, options);
+            unzip = new TexturesUnzip(options.InitOptions, options, debugOutputFromNative);
             buffer = File.ReadAllBytes(path);
 
             var result = FetchedAndOverrideTexture();

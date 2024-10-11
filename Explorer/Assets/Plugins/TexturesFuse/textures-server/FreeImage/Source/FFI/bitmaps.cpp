@@ -1,6 +1,7 @@
 // #include "FreeImage.h"
 // #include "texturesfuse.h"
 #include "bitmaps.h"
+#include <string>
 
 ImageResult BitmapFromMemory(BYTE *bytes, DWORD bytesLength, FIBITMAP **output)
 {
@@ -25,6 +26,7 @@ ImageResult BitmapFromMemory(BYTE *bytes, DWORD bytesLength, FIBITMAP **output)
         return ErrorCannotLoadImage;
     }
 
+    LogImageInfo(image);
     *output = image;
     FreeImage_CloseMemory(memory);
     return Success;
@@ -132,6 +134,7 @@ ImageResult ASTCDataTypeFromImageWithAlpha(FIBITMAP *bitmap, astcenc_type *outpu
 {
     unsigned int bpp = FreeImage_GetBPP(bitmap);
     unsigned int perChannel = bpp / 4; // 4 is because 4 channels are considered
+    FreeImage_OutputMessageProc(FIF_UNKNOWN, "Image bpp per channel with alpha is %i", perChannel);
     switch (perChannel)
     {
     case 8:
@@ -146,4 +149,77 @@ ImageResult ASTCDataTypeFromImageWithAlpha(FIBITMAP *bitmap, astcenc_type *outpu
     default:
         return ErrorWrongAlphaImage;
     }
+}
+
+const char *NameFromImageType(FREE_IMAGE_TYPE imageType)
+{
+    switch (imageType)
+    {
+    case FIT_BITMAP:
+        return "FIT_BITMAP";
+    case FIT_UINT16:
+        return "FIT_UINT16";
+    case FIT_INT16:
+        return "FIT_INT16";
+    case FIT_UINT32:
+        return "FIT_UINT32";
+    case FIT_INT32:
+        return "FIT_INT32";
+    case FIT_FLOAT:
+        return "FIT_FLOAT";
+    case FIT_DOUBLE:
+        return "FIT_DOUBLE";
+    case FIT_COMPLEX:
+        return "FIT_COMPLEX";
+    case FIT_RGB16:
+        return "FIT_RGB16";
+    case FIT_RGBA16:
+        return "FIT_RGBA16";
+    case FIT_RGBF:
+        return "FIT_RGBF";
+    case FIT_RGBAF:
+        return "FIT_RGBAF";
+    case FIT_UNKNOWN:
+    default:
+        return "FIT_UNKNOWN";
+    }
+}
+
+const char *NameFromColorType(FREE_IMAGE_COLOR_TYPE colorType)
+{
+    switch (colorType)
+    {
+    case FIC_MINISWHITE:
+        return "FIC_MINISWHITE";
+    case FIC_MINISBLACK:
+        return "FIC_MINISBLACK";
+    case FIC_RGB:
+        return "FIC_RGB";
+    case FIC_PALETTE:
+        return "FIC_PALETTE";
+    case FIC_RGBALPHA:
+        return "FIC_RGBALPHA";
+    case FIC_CMYK:
+        return "FIC_CMYK";
+    default:
+        return "UNKNOWN_COLOR";
+    }
+}
+
+void LogImageInfo(FIBITMAP *bitmap)
+{
+    int width = static_cast<int>(FreeImage_GetWidth(bitmap));
+    int height = static_cast<int>(FreeImage_GetHeight(bitmap));
+    int bpp = static_cast<int>(FreeImage_GetBPP(bitmap));
+    const char *imageType = NameFromImageType(FreeImage_GetImageType(bitmap));
+    const char *colorType = NameFromColorType(FreeImage_GetColorType(bitmap));
+
+    FreeImage_OutputMessageProc(
+        FIF_UNKNOWN,
+        "Image info: width %i, height %i, bpp %i, image type %s, color type %s",
+        width,
+        height,
+        bpp,
+        imageType,
+        colorType);
 }

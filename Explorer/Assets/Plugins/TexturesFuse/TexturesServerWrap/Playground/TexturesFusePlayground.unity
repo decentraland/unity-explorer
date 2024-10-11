@@ -269,6 +269,7 @@ MonoBehaviour:
       a: 3
   path: Assets/Plugins/TexturesFuse/textures-server/FreeImage/Source/FFI/image.jpg
   stressMode: 0
+  debugOutputFromNative: 1
   outputPath: Assets/Plugins/TexturesFuse/TexturesServerWrap/Playground/ASTCTexturesCompatability/test_output.astc
 --- !u!1 &1203531619
 GameObject:

@@ -87,6 +87,9 @@ ImageResult __cdecl texturesfuse_initialize(InitOptions initOptions, context **c
     context->astcContext = astcContext;
 
     FreeImage_Initialise();
+    FreeImage_SetOutputMessage(initOptions.debugLogFunc);
+
+    FreeImage_OutputMessageProc(FIF_UNKNOWN, "TexturesFuse successfully initialized!");
 
     *contextOutput = context;
     return Success;

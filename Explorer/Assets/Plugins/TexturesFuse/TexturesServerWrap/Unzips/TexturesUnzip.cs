@@ -12,15 +12,21 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
         private readonly ITexturesUnzip.IOptions options;
         private readonly IntPtr context;
 
-        public TexturesUnzip(NativeMethods.InitOptions initOptions, ITexturesUnzip.IOptions options)
+        public TexturesUnzip(NativeMethods.InitOptions initOptions, ITexturesUnzip.IOptions options, bool debug)
         {
             this.options = options;
 
             initOptions = initOptions.NewWithMode(options.Mode);
+            initOptions.outputMessage = debug ? OutputMessage : null;
             var result = NativeMethods.TexturesFuseInitialize(initOptions, out context);
 
             if (result is not NativeMethods.ImageResult.Success)
                 throw new Exception($"TexturesFuseInitialize failed: {result}");
+        }
+
+        private static void OutputMessage(int format, string message)
+        {
+            ReportHub.Log(ReportCategory.TEXTURES, $"TexturesFuse: {message}");
         }
 
         ~TexturesUnzip()

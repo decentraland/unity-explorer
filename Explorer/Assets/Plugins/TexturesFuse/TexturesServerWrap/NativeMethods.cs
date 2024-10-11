@@ -13,6 +13,9 @@ namespace Plugins.TexturesFuse.TexturesServerWrap
         private const string LIBRARY_NAME = "libtexturesfuse";
         private const string PREFIX = "texturesfuse_";
 
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate void OutputMessageDelegate(int format, string message);
+
         [SuppressMessage("ReSharper", "InconsistentNaming")]
         [SuppressMessage("ReSharper", "ArrangeTypeMemberModifiers")]
         [Serializable]
@@ -31,6 +34,11 @@ namespace Plugins.TexturesFuse.TexturesServerWrap
             public float quality;
             public uint flags;
 #pragma endregion ASTC_options
+
+            /// <summary>
+            ///     Could be null
+            /// </summary>
+            public OutputMessageDelegate? outputMessage;
 
             public InitOptions NewWithMode(Mode mode)
             {

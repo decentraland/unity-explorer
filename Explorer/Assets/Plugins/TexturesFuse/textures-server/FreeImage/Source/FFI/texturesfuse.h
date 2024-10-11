@@ -33,6 +33,9 @@ extern "C"
         unsigned int flags;
 
 #pragma endregion ASTC_options
+        
+        // @brief can be NULL
+        FreeImage_OutputMessageFunction debugLogFunc;
     };
 
     enum ImageResult : int
