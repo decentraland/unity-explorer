@@ -62,6 +62,9 @@ namespace ECS.StreamableLoading.GLTF
 
         protected override async UniTask<StreamableLoadingResult<GLTFData>> FlowInternalAsync(GetGLTFIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
+            // Release budget now to not hold it until dependencies are resolved to prevent a deadlock
+            acquiredBudget.Release();
+
             if (!sceneData.SceneContent.TryGetContentUrl(intention.Name!, out var finalDownloadUrl))
                 return new StreamableLoadingResult<GLTFData>(
                     new ReportData(GetReportCategory()),
@@ -81,9 +84,6 @@ namespace ECS.StreamableLoading.GLTF
             };
 
             bool success = await gltfImport.Load(intention.Name, gltFastSettings, ct);
-
-            // Release budget now to not hold it until dependencies are resolved to prevent a deadlock
-            acquiredBudget.Release();
             gltfDownloadProvider.Dispose();
 
             if (success)
