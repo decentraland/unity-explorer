@@ -100,16 +100,7 @@ namespace CrdtEcsBridge.RestrictedActions
             {
                 await UniTask.SwitchToMainThread();
 
-                if (globalWorldActions.LocalSceneDevelopment)
-                {
-                    await globalWorldActions.TriggerLocalSceneEmoteAsync(sceneData,src,hash, loop, ct);
-                }
-                else
-                {
-                    await globalWorldActions.TriggerSceneEmoteAsync(
-                        sceneData.SceneEntityDefinition.id ?? sceneData.SceneEntityDefinition.metadata.scene.DecodedBase.ToString(),
-                        sceneData.AssetBundleManifest, hash, loop, ct);
-                }
+                await globalWorldActions.TriggerSceneEmoteAsync(sceneData,src,hash, loop, ct);
             }
             catch (OperationCanceledException) { return false; }
             catch (Exception e)

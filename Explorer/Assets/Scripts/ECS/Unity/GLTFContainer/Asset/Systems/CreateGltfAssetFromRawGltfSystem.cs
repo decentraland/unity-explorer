@@ -54,32 +54,32 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
 
         private static GltfContainerAsset CreateGltfObject(GLTFData gltfData)
         {
-            var result = GltfContainerAsset.Create(gltfData.containerGameObject, gltfData);
+            var result = GltfContainerAsset.Create(gltfData.MainAsset, gltfData);
 
             using (PoolExtensions.Scope<List<Renderer>> instanceRenderers = GltfContainerAsset.RENDERERS_POOL.AutoScope())
             {
-                gltfData.containerGameObject.GetComponentsInChildren(true, instanceRenderers.Value);
+                gltfData.MainAsset.GetComponentsInChildren(true, instanceRenderers.Value);
                 result.Renderers.AddRange(instanceRenderers.Value);
             }
 
             // Collect all Animations as they are used in Animation System (only for legacy support, as all of them will eventually be converted to Animators)
             using (PoolExtensions.Scope<List<Animation>> animationScope = GltfContainerAsset.ANIMATIONS_POOL.AutoScope())
             {
-                gltfData.containerGameObject.GetComponentsInChildren(true, animationScope.Value);
+                gltfData.MainAsset.GetComponentsInChildren(true, animationScope.Value);
                 result.Animations.AddRange(animationScope.Value);
             }
 
             // Collect all Animators as they are used in Animation System
             using (PoolExtensions.Scope<List<Animator>> animatorScope = GltfContainerAsset.ANIMATORS_POOL.AutoScope())
             {
-                gltfData.containerGameObject.GetComponentsInChildren(true, animatorScope.Value);
+                gltfData.MainAsset.GetComponentsInChildren(true, animatorScope.Value);
                 result.Animators.AddRange(animatorScope.Value);
             }
 
             using (PoolExtensions.Scope<List<MeshFilter>> meshFilterScope = GltfContainerAsset.MESH_FILTERS_POOL.AutoScope())
             {
                 List<MeshFilter> list = meshFilterScope.Value;
-                gltfData.containerGameObject.GetComponentsInChildren(true, list);
+                gltfData.MainAsset.GetComponentsInChildren(true, list);
 
                 foreach (MeshFilter meshFilter in list)
                 {
@@ -101,7 +101,6 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
                         if (go.GetComponent<Renderer>())
                             AddVisibleMeshCollider(result.VisibleColliderMeshes, go, meshFilter.sharedMesh);
                         else
-
                             // Gather invisible colliders
                             CreateAndAddMeshCollider(result.InvisibleColliders, go);
                     }
@@ -111,7 +110,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
             // Collect colliders from skinned mesh renderers
             using (PoolExtensions.Scope<List<SkinnedMeshRenderer>> instanceRenderers = GltfContainerAsset.SKINNED_RENDERERS_POOL.AutoScope())
             {
-                gltfData.containerGameObject.GetComponentsInChildren(true, instanceRenderers.Value);
+                gltfData.MainAsset.GetComponentsInChildren(true, instanceRenderers.Value);
 
                 foreach (SkinnedMeshRenderer skinnedMeshRenderer in instanceRenderers.Value)
                 {

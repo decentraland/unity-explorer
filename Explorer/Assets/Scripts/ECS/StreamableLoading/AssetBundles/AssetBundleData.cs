@@ -11,7 +11,7 @@ namespace ECS.StreamableLoading.AssetBundles
     /// <summary>
     ///     A wrapper over <see cref="AssetBundle" /> to provide additional data
     /// </summary>
-    public class AssetBundleData : StreamableRefCountData<AssetBundle>
+    public class AssetBundleData : StreamableRefCountData<AssetBundle>, IAssetData
     {
         private readonly Object? mainAsset;
         private readonly Type? assetType;
@@ -76,7 +76,9 @@ namespace ECS.StreamableLoading.AssetBundles
             return (T)mainAsset!;
         }
 
-        public string GetInstanceName() =>
-            $"AB:{AssetBundle.name}_{version}_{source}";
+        public string GetInstanceName() => $"AB:{AssetBundle.name}_{version}_{source}";
+
+        public GameObject MainAsset => GetMainAsset<GameObject>();
+        public AssetBundleData BundleData => this;
     }
 }

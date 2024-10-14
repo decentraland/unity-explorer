@@ -8,12 +8,12 @@ using System.Threading;
 
 namespace DCL.AvatarRendering.Emotes
 {
-    public struct GetSceneEmoteFromLocalDevelopmentSceneIntention: IEquatable<GetSceneEmoteFromLocalDevelopmentSceneIntention>, IAssetIntention
+    public struct GetSceneEmoteFromLocalDevelopmentSceneIntention : IEquatable<GetSceneEmoteFromLocalDevelopmentSceneIntention>, IAssetIntention
     {
         private const string SCENE_EMOTE_PREFIX = "urn:decentraland:off-chain:scene-emote";
 
         public ISceneData SceneData { get; }
-        public string EmotePath{ get; }
+        public string EmotePath { get; }
         public string EmoteHash { get; }
         public bool Loop { get; }
         public BodyShape BodyShape { get; }
@@ -23,7 +23,9 @@ namespace DCL.AvatarRendering.Emotes
             ISceneData sceneData,
             string emotePath,
             string emoteHash,
-            BodyShape bodyShape, bool loop,int timeout = StreamableLoadingDefaults.TIMEOUT)
+            BodyShape bodyShape,
+            bool loop,
+            int timeout = StreamableLoadingDefaults.TIMEOUT)
         {
             EmotePath = emotePath;
             SceneData = sceneData;

@@ -3,20 +3,22 @@ using UnityEngine;
 
 namespace ECS.StreamableLoading.GLTF
 {
-    public class GLTFData : IStreamableRefCountData
+    public class GLTFData : IAssetData, IStreamableRefCountData
     {
-        public readonly GltfImport gltfImportedData;
-        public readonly GameObject containerGameObject;
+        private readonly GltfImport gltfImportData;
 
-        public GLTFData(GltfImport gltfImportedData, GameObject containerGameObject)
+        public GLTFData(GltfImport gltfImportData, GameObject containerGameObject)
         {
-            this.gltfImportedData = gltfImportedData;
-            this.containerGameObject = containerGameObject;
+            this.gltfImportData = gltfImportData;
+            this.MainAsset = containerGameObject;
         }
 
         public void Dispose()
         {
-            gltfImportedData.Dispose();
+            gltfImportData.Dispose();
         }
+
+        public GameObject MainAsset { get; }
+        public AnimationClip[]? AnimationClips => gltfImportData.GetAnimationClips();
     }
 }

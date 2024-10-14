@@ -59,7 +59,7 @@ namespace CrdtEcsBridge.RestrictedActions
             world.AddOrSet(camera, new CameraLookAtIntent(newCameraTarget.Value, newPlayerPosition));
         }
 
-        public async UniTask TriggerSceneEmoteAsync(string sceneId, SceneAssetBundleManifest abManifest, string emoteHash, bool loop, CancellationToken ct)
+        private async UniTask TriggerSceneEmoteFromAssetBundleAsync(string sceneId, SceneAssetBundleManifest abManifest, string emoteHash, bool loop, CancellationToken ct)
         {
             if (!world.TryGet(playerEntity, out AvatarShapeComponent avatarShape))
                 throw new Exception("Cannot resolve body shape of current player because its missing AvatarShapeComponent");
@@ -78,7 +78,7 @@ namespace CrdtEcsBridge.RestrictedActions
             TriggerEmote(urn, isLooping);
         }
 
-        public async UniTask TriggerLocalSceneEmoteAsync(ISceneData sceneData, string emotePath, string emoteHash, bool loop, CancellationToken ct)
+        private async UniTask TriggerSceneEmoteFromLocalSceneAsync(ISceneData sceneData, string emotePath, string emoteHash, bool loop, CancellationToken ct)
         {
             if (!world.TryGet(playerEntity, out AvatarShapeComponent avatarShape))
                 throw new Exception("Cannot resolve body shape of current player because its missing AvatarShapeComponent");
@@ -94,6 +94,16 @@ namespace CrdtEcsBridge.RestrictedActions
             URN urn = value.GetUrn();
 
             TriggerEmote(urn, loop);
+        }
+
+        public async UniTask TriggerSceneEmoteAsync(ISceneData sceneData, string src, string hash, bool loop, CancellationToken ct)
+        {
+            if (localSceneDevelopment)
+                await TriggerSceneEmoteFromLocalSceneAsync(sceneData,src,hash, loop, ct);
+            else
+                await TriggerSceneEmoteFromAssetBundleAsync(
+                    sceneData.SceneEntityDefinition.id ?? sceneData.SceneEntityDefinition.metadata.scene.DecodedBase.ToString(),
+                    sceneData.AssetBundleManifest, hash, loop, ct);
         }
 
         public void TriggerEmote(URN urn, bool isLooping)
