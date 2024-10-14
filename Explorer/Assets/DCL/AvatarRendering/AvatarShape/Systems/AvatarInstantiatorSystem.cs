@@ -129,7 +129,6 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         [None(typeof(AvatarBase), typeof(AvatarTransformMatrixComponent), typeof(AvatarCustomSkinningComponent))]
         private void InstantiateMainPlayerAvatar(in Entity entity, ref AvatarShapeComponent avatarShapeComponent, ref CharacterTransform transformComponent)
         {
-            // TODO: require emotes for main player (??)
             var avatarBase = InstantiateNewAvatar(entity, ref avatarShapeComponent, ref transformComponent);
 
             if (avatarBase != null)
