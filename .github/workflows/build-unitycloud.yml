@@ -237,7 +237,7 @@ jobs:
         run: tar --exclude='build/Decentraland_BackUpThisFolder_ButDontShipItWithYourGame' -cvf build.tar build
           
       - name: Upload artifact for macOS
-        id: upload-artifact
+        id: upload-macos-artifact
         if: matrix.target == 'macos'
         uses: actions/upload-artifact@v4
         with:
@@ -246,7 +246,7 @@ jobs:
           if-no-files-found: error
 
       - name: Upload artifact for Windows
-        id: upload-artifact
+        id: upload-windows-artifact
         if: matrix.target == 'windows64'
         uses: actions/upload-artifact@v4
         with:
@@ -260,7 +260,6 @@ jobs:
       - name: Upload artifact to S3
         uses: shallwefootball/s3-upload-action@master
         id: upload-artifact-s3
-        needs: upload-artifact
         with:
           aws_key_id: ${{ secrets.EXPLORER_TEAM_AWS_ID }}
           aws_secret_access_key: ${{ secrets.EXPLORER_TEAM_AWS_SECRET }}
