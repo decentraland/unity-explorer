@@ -4,6 +4,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.GLTFast.Wrappers;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.WebRequests;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
@@ -23,51 +24,25 @@ namespace ECS.StreamableLoading.GLTF
         private static MaterialGenerator gltfMaterialGenerator = new DecentralandMaterialGenerator("DCL/Scene");
 
         private ISceneData sceneData;
+        private readonly IWebRequestController webRequestController;
         private GltFastReportHubLogger gltfConsoleLogger = new GltFastReportHubLogger();
 
-        internal LoadGLTFSystem(World world, IStreamableCache<GLTFData, GetGLTFIntention> cache, ISceneData sceneData) : base(world, cache)
+        internal LoadGLTFSystem(World world, IStreamableCache<GLTFData, GetGLTFIntention> cache, ISceneData sceneData, IWebRequestController webRequestController) : base(world, cache)
         {
             this.sceneData = sceneData;
+            this.webRequestController = webRequestController;
         }
-
-        // Might be used later
-        // private AnimationMethod GetAnimationMethod()
-        // {
-        //     string sPlatform = PlatformUtils.GetPlatform();
-        //     BuildTarget bt = BuildTarget.StandaloneWindows64; // default
-        //
-        //     switch (sPlatform)
-        //     {
-        //         case "_windows":
-        //         {
-        //             bt = BuildTarget.StandaloneWindows64;
-        //             break;
-        //         }
-        //         case "_mac":
-        //         {
-        //             bt = BuildTarget.StandaloneOSX;
-        //             break;
-        //         }
-        //         case "_linux":
-        //         {
-        //             bt = BuildTarget.StandaloneLinux64;
-        //             break;
-        //         }
-        //     }
-        //
-        //     return bt is BuildTarget.StandaloneWindows64 or BuildTarget.StandaloneOSX
-        //         ? AnimationMethod.Mecanim
-        //         : AnimationMethod.Legacy;
-        // }
 
         protected override async UniTask<StreamableLoadingResult<GLTFData>> FlowInternalAsync(GetGLTFIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
-            if (!sceneData.SceneContent.TryGetContentUrl(intention.Name!, out var finalDownloadUrl))
+            var reportData = new ReportData(GetReportCategory());
+
+            if (!sceneData.SceneContent.TryGetContentUrl(intention.Name!, out _))
                 return new StreamableLoadingResult<GLTFData>(
-                    new ReportData(GetReportCategory()),
+                    reportData,
                     new Exception("The content to download couldn't be found"));
 
-            GltFastDownloadProvider gltfDownloadProvider = new GltFastDownloadProvider(World, sceneData, partition, intention.Name!);
+            GltFastDownloadProvider gltfDownloadProvider = new GltFastDownloadProvider(World, sceneData, partition, intention.Name!, reportData, webRequestController);
             var gltfImport = new GltfImport(
                 downloadProvider: gltfDownloadProvider,
                 logger: gltfConsoleLogger,
@@ -100,7 +75,7 @@ namespace ECS.StreamableLoading.GLTF
             }
 
             return new StreamableLoadingResult<GLTFData>(
-                new ReportData(GetReportCategory()),
+                reportData,
                 new Exception("The content to download couldn't be found"));
         }
 
