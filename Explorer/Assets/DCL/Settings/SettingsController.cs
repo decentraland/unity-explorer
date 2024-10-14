@@ -24,6 +24,7 @@ namespace DCL.Settings
         private readonly LandscapeData landscapeData;
         private readonly QualitySettingsAsset qualitySettingsAsset;
         private readonly ISystemMemoryCap memoryCap;
+        private readonly WorldVolumeMacBus worldVolumeMacBus;
         private readonly ControlsSettingsAsset controlsSettingsAsset;
         private readonly RectTransform rectTransform;
         private readonly List<SettingsFeatureController> controllers = new ();
@@ -36,7 +37,8 @@ namespace DCL.Settings
             LandscapeData landscapeData,
             QualitySettingsAsset qualitySettingsAsset,
             ControlsSettingsAsset controlsSettingsAsset,
-            ISystemMemoryCap memoryCap)
+            ISystemMemoryCap memoryCap,
+            WorldVolumeMacBus worldVolumeMacBus = null)
         {
             this.view = view;
             this.settingsMenuConfiguration = settingsMenuConfiguration;
@@ -45,6 +47,7 @@ namespace DCL.Settings
             this.landscapeData = landscapeData;
             this.qualitySettingsAsset = qualitySettingsAsset;
             this.memoryCap = memoryCap;
+            this.worldVolumeMacBus = worldVolumeMacBus;
             this.controlsSettingsAsset = controlsSettingsAsset;
 
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
@@ -97,6 +100,9 @@ namespace DCL.Settings
             GenerateSettingsSection(settingsMenuConfiguration.SoundSectionConfig, view.SoundSectionContainer);
             GenerateSettingsSection(settingsMenuConfiguration.ControlsSectionConfig, view.ControlsSectionContainer);
 
+            foreach (var controller in controllers)
+                controller.OnAllControllersInstantiated(controllers);
+
             SetInitialSectionsVisibility();
         }
 
@@ -108,7 +114,7 @@ namespace DCL.Settings
                 generalGroupView.GroupTitle.text = group.GroupTitle;
 
                 foreach (SettingsModuleBindingBase module in group.Modules)
-                    controllers.Add(module?.CreateModule(generalGroupView.ModulesContainer, realmPartitionSettingsAsset, landscapeData, generalAudioMixer, qualitySettingsAsset, controlsSettingsAsset, memoryCap));
+                    controllers.Add(module?.CreateModule(generalGroupView.ModulesContainer, realmPartitionSettingsAsset, landscapeData, generalAudioMixer, qualitySettingsAsset, controlsSettingsAsset, memoryCap, worldVolumeMacBus));
             }
         }
 
