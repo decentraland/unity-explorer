@@ -257,6 +257,11 @@ jobs:
             !build/**/*_BurstDebugInformation_DoNotShip
           if-no-files-found: error
 
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: Decentraland_${{ matrix.target }}
+
       - name: Upload artifact to S3
         uses: shallwefootball/s3-upload-action@master
         id: upload-artifact-s3
@@ -264,8 +269,8 @@ jobs:
           aws_key_id: ${{ secrets.EXPLORER_TEAM_AWS_ID }}
           aws_secret_access_key: ${{ secrets.EXPLORER_TEAM_AWS_SECRET }}
           aws_bucket: ${{ secrets.EXPLORER_TEAM_S3_BUCKET }}
-          source_dir: 'Decentraland_${{ matrix.target }}.zip'
-          destination_dir: ${{ inputs.tag_version != '' && format('@dcl/unity-explorer/releases/{0}', inputs.tag_version) || format('@dcl/unity-explorer/branch/{0}', github.head_ref || github.ref_name) }}
+          source_dir: Decentraland_${{ matrix.target }}
+          destination_dir: ${{ inputs.tag_version != '' && format('@dcl/unity-explorer/releases/{0}/Decentraland_{1}.zip', inputs.tag_version, matrix.target) || format('@dcl/unity-explorer/branch/{0}/Decentraland_{1}.zip', github.head_ref || github.ref_name, matrix.target) }}
 
       - name: Upload debug symbols
         uses: actions/upload-artifact@v4
