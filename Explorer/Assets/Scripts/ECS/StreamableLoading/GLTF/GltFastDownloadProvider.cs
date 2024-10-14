@@ -1,5 +1,6 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
+using DCL.Optimization.PerformanceBudgeting;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
@@ -25,22 +26,30 @@ namespace ECS.StreamableLoading.GLTF
         private ISceneData sceneData;
         private World world;
         private IPartitionComponent partitionComponent;
+        private readonly IAcquiredBudget acquiredBudget;
 
-        public GltFastDownloadProvider(World world, ISceneData sceneData, IPartitionComponent partitionComponent, string targetGltfOriginalPath)
+        public GltFastDownloadProvider(World world, ISceneData sceneData, IPartitionComponent partitionComponent, string targetGltfOriginalPath, IAcquiredBudget acquiredBudget)
         {
             this.world = world;
             this.sceneData = sceneData;
             this.partitionComponent = partitionComponent;
             this.targetGltfOriginalPath = targetGltfOriginalPath;
+            this.acquiredBudget = acquiredBudget;
             targetGltfDirectoryPath = targetGltfOriginalPath.Remove(targetGltfOriginalPath.LastIndexOf('/') + 1);
         }
 
+        // RequestAsync is used for fetching the GLTF file itself + some external textures. Whenever this
+        // method's request of the base GLTF is finished, the propagated budget for assets loading must be released.
         public async Task<IDownload> RequestAsync(Uri uri)
         {
+            bool isBaseGltfFetch = uri.OriginalString.Equals(targetGltfOriginalPath);
             string originalFilePath = string.Concat(targetGltfDirectoryPath, GetFileNameFromUri(uri));
 
             if (!sceneData.SceneContent.TryGetContentUrl(originalFilePath, out var tryGetContentUrlResult))
+            {
+                if (isBaseGltfFetch) acquiredBudget.Release();
                 throw new Exception($"Error on GLTF download ({targetGltfOriginalPath} - {uri}): NOT FOUND");
+            }
 
             uri = new Uri(tryGetContentUrlResult);
 
@@ -49,9 +58,17 @@ namespace ECS.StreamableLoading.GLTF
             {
                 webRequest.downloadHandler = new DownloadHandlerBuffer();
 
-                try { await webRequest.SendWebRequest().WithCancellation(new CancellationToken()); }
-                catch { throw new Exception($"Error on GLTF download ({targetGltfOriginalPath} - {uri}): {webRequest.downloadHandler.error} - {webRequest.downloadHandler.text}"); }
+                try
+                {
+                    await webRequest.SendWebRequest().WithCancellation(new CancellationToken());
+                }
+                catch
+                {
+                    if (isBaseGltfFetch) acquiredBudget.Release();
+                    throw new Exception($"Error on GLTF download ({targetGltfOriginalPath} - {uri}): {webRequest.downloadHandler.error} - {webRequest.downloadHandler.text}");
+                }
 
+                if (isBaseGltfFetch) acquiredBudget.Release();
                 return new GltfDownloadResult
                 {
                     Data = webRequest.downloadHandler.data,
@@ -87,6 +104,7 @@ namespace ECS.StreamableLoading.GLTF
 
         public void Dispose()
         {
+            acquiredBudget.Release();
         }
 
         private string GetFileNameFromUri(Uri uri)
