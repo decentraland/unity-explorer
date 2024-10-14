@@ -14,8 +14,6 @@ using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using DCL.WebRequests.ArgsFactory;
-using DCL.WebRequests.WebContentSizes;
-using DCL.WebRequests.WebContentSizes.Sizes;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.DeferredLoading;
@@ -53,12 +51,6 @@ namespace DCL.SDKComponents.NFTShape.Demo
                     new NftShapeCache(),
                     new WebRequestController(
                         new MemoryWeb3IdentityCache()
-                    ),
-                    new IWebContentSizes.Default(
-                        new MaxSize
-                        {
-                            maxSizeInBytes = 300 * 1024 * 1024
-                        }
                     ),
                     new GetTextureArgsFactory(ITexturesUnzip.NewDebug())
                 ).InitializeAndReturnSelf(),

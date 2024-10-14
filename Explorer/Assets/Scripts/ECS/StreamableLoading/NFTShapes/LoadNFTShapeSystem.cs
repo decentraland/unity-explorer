@@ -6,7 +6,6 @@ using DCL.Diagnostics;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.WebRequests;
 using DCL.WebRequests.ArgsFactory;
-using DCL.WebRequests.WebContentSizes;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
@@ -23,24 +22,17 @@ namespace ECS.StreamableLoading.NFTShapes
     public partial class LoadNFTShapeSystem : LoadSystemBase<Texture2DData, GetNFTShapeIntention>
     {
         private readonly IWebRequestController webRequestController;
-        private readonly IWebContentSizes webContentSizes;
         private readonly IGetTextureArgsFactory getTextureArgsFactory;
 
-        public LoadNFTShapeSystem(World world, IStreamableCache<Texture2DData, GetNFTShapeIntention> cache, IWebRequestController webRequestController, IWebContentSizes webContentSizes, IGetTextureArgsFactory getTextureArgsFactory) : base(world, cache)
+        public LoadNFTShapeSystem(World world, IStreamableCache<Texture2DData, GetNFTShapeIntention> cache, IWebRequestController webRequestController, IGetTextureArgsFactory getTextureArgsFactory) : base(world, cache)
         {
             this.webRequestController = webRequestController;
-            this.webContentSizes = webContentSizes;
             this.getTextureArgsFactory = getTextureArgsFactory;
         }
 
         protected override async UniTask<StreamableLoadingResult<Texture2DData>> FlowInternalAsync(GetNFTShapeIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
             string imageUrl = await ImageUrlAsync(intention.CommonArguments, ct);
-            bool isOkSize = await webContentSizes.IsOkSizeAsync(imageUrl, ct);
-
-            //TODO remove this check due the new compression is implemented
-            if (isOkSize == false)
-                return new StreamableLoadingResult<Texture2DData>(GetReportCategory(), new Exception("Image size is too big"));
 
             // texture request
             // Attempts should be always 1 as there is a repeat loop in `LoadSystemBase`

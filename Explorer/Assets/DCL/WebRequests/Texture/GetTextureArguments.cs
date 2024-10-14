@@ -6,8 +6,6 @@ namespace DCL.WebRequests
 {
     public readonly struct GetTextureArguments
     {
-        //TODO remove IsReadable
-        public readonly bool IsReadable;
         public readonly ITexturesUnzip TexturesUnzip;
 
         public GetTextureArguments(bool isReadable, ITexturesUnzip texturesUnzip)
@@ -18,7 +16,6 @@ namespace DCL.WebRequests
                 throw new InvalidOperationException();
             }
 
-            IsReadable = isReadable;
             TexturesUnzip = texturesUnzip;
         }
     }
