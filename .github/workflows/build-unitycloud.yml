@@ -266,11 +266,11 @@ jobs:
         uses: shallwefootball/s3-upload-action@master
         id: upload-artifact-s3
         with:
-          aws_key_id: ${{ secrets.EXPLORER_TEAM_AWS_ID }}
-          aws_secret_access_key: ${{ secrets.EXPLORER_TEAM_AWS_SECRET }}
+          aws_key_id: ${{ secrets.EXPLORER_TEAM_AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.EXPLORER_TEAM_AWS_SECRET_ACCESS_KEY }}
           aws_bucket: ${{ secrets.EXPLORER_TEAM_S3_BUCKET }}
           source_dir: Decentraland_${{ matrix.target }}
-          destination_dir: ${{ inputs.tag_version != '' && format('@dcl/unity-explorer/releases/{0}/Decentraland_{1}.zip', inputs.tag_version, matrix.target) || format('@dcl/unity-explorer/branch/{0}/Decentraland_{1}.zip', github.head_ref || github.ref_name, matrix.target) }}
+          destination_dir: ${{ inputs.tag_version != '' && format('@dcl/{0}/releases/{1}/Decentraland_{2}.zip', github.event.repository.name, inputs.tag_version, matrix.target) || format('@dcl/{0}/branch/{1}/Decentraland_{2}.zip', github.event.repository.name, github.head_ref || github.ref_name, matrix.target) }}
 
       - name: Upload debug symbols
         uses: actions/upload-artifact@v4
