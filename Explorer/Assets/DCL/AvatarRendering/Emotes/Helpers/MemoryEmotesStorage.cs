@@ -12,9 +12,11 @@ namespace DCL.AvatarRendering.Emotes
     public class MemoryEmotesStorage : IEmoteStorage
     {
         private readonly LinkedList<(URN key, long lastUsedFrame)> listedCacheKeys = new ();
-        private readonly Dictionary<URN, LinkedListNode<(URN key, long lastUsedFrame)>> cacheKeysDictionary = new ();
-        private readonly Dictionary<URN, IEmote> emotes = new ();
-        private readonly Dictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>> ownedNftsRegistry = new ();
+        private readonly Dictionary<URN, LinkedListNode<(URN key, long lastUsedFrame)>> cacheKeysDictionary = new (new Dictionary<URN, LinkedListNode<(URN key, long lastUsedFrame)>>(),
+            URNCachedEqualityComparer.Default);
+        private readonly Dictionary<URN, IEmote> emotes = new (new Dictionary<URN, IEmote>(), URNCachedEqualityComparer.Default);
+        private readonly Dictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>> ownedNftsRegistry = new (new Dictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>>(),
+            URNCachedEqualityComparer.Default);
 
         private readonly object lockObject = new ();
 
@@ -92,7 +94,8 @@ namespace DCL.AvatarRendering.Emotes
             {
                 if (!ownedNftsRegistry.TryGetValue(nftUrn, out Dictionary<URN, NftBlockchainOperationEntry> ownedWearableRegistry))
                 {
-                    ownedWearableRegistry = new Dictionary<URN, NftBlockchainOperationEntry>();
+                    ownedWearableRegistry = new Dictionary<URN, NftBlockchainOperationEntry>(new Dictionary<URN, NftBlockchainOperationEntry>(),
+                        URNCachedEqualityComparer.Default);
 
                     ownedNftsRegistry[nftUrn] = ownedWearableRegistry;
                 }

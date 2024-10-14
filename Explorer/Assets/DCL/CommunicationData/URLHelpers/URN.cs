@@ -1,5 +1,6 @@
 using DCL.Diagnostics;
 using System;
+using System.Collections.Generic;
 
 namespace CommunicationData.URLHelpers
 {
@@ -72,7 +73,8 @@ namespace CommunicationData.URLHelpers
             !IsNullOrEmpty() && originalUrn.StartsWith("urn");
 
         public bool Equals(URN other) =>
-            lowercaseMemory.Span.SequenceEqual(other.lowercaseMemory.Span);
+            this.cachedHashCode == other.cachedHashCode && // "fail fast" check
+            lowercaseMemory.Span.SequenceEqual(other.lowercaseMemory.Span); // actual check, to avoid hashes false positives
 
         public override bool Equals(object? obj) =>
             obj is URN other && Equals(other);
@@ -233,5 +235,16 @@ namespace CommunicationData.URLHelpers
 
             return count;
         }
+    }
+
+    public class URNCachedEqualityComparer : IEqualityComparer<URN>
+    {
+        public static URNCachedEqualityComparer Default { get; } = new ();
+
+        public bool Equals(URN x, URN y) =>
+            x.Equals(y);
+
+        public int GetHashCode(URN obj) =>
+            obj.GetHashCode();
     }
 }
