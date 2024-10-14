@@ -11,17 +11,42 @@ namespace CommunicationData.URLHelpers
 
         private readonly string originalUrn;
         private readonly Memory<char> lowercaseMemory;
+        private readonly int cachedHashCode;
 
         public URN(string urn)
         {
             originalUrn = urn;
-
-            var lowercaseChars = new char[originalUrn.Length];
-            for (var i = 0; i < originalUrn.Length; i++)
-                lowercaseChars[i] = char.ToLowerInvariant(originalUrn[i]);
-
-            lowercaseMemory = new Memory<char>(lowercaseChars);
+            lowercaseMemory = ComputeLowercaseMemory(originalUrn, originalUrn.Length);
+            this.cachedHashCode = originalUrn != null ? ComputeHashCode(this.lowercaseMemory.Span) : 0;
         }
+
+        private URN(URN urn, int shortenIndex)
+        {
+            this.originalUrn = urn.originalUrn;
+            this.lowercaseMemory = urn.lowercaseMemory[..shortenIndex];
+            this.cachedHashCode = originalUrn != null ? ComputeHashCode(this.lowercaseMemory.Span) : 0;
+        }
+
+        private static Memory<char> ComputeLowercaseMemory(string input, int length)
+        {
+            var lowercaseChars = new char[length];
+            for (var i = 0; i < length; i++)
+                lowercaseChars[i] = char.ToLowerInvariant(input[i]);
+            return new Memory<char>(lowercaseChars);
+        }
+
+        private static int ComputeHashCode(ReadOnlySpan<char> span)
+        {
+            var hash = 17;
+
+            for (var i = 0; i < span.Length; i++)
+                hash = (hash * 31) + span[i];
+
+            return hash;
+        }
+
+        public override int GetHashCode() =>
+            cachedHashCode;
 
         public bool IsNullOrEmpty() =>
             string.IsNullOrEmpty(originalUrn);
@@ -35,8 +60,24 @@ namespace CommunicationData.URLHelpers
         public override bool Equals(object? obj) =>
             obj is URN other && Equals(other);
 
-        public override string ToString() =>
-            originalUrn;
+        public override string ToString() => originalUrn.Length == lowercaseMemory.Length ?
+            originalUrn : originalUrn[..lowercaseMemory.Length];
+
+        public static implicit operator URN(int urn) =>
+            urn.ToString();
+
+        public static implicit operator string(URN urn) => urn.originalUrn.Length == urn.lowercaseMemory.Length ?
+            urn.originalUrn : urn.originalUrn[..urn.lowercaseMemory.Length];
+
+        public static implicit operator URN(string urn) =>
+            new (urn);
+
+        public static bool operator ==(URN left, URN right) => left.Equals(right);
+
+        public static bool operator !=(URN left, URN right) => !(left == right);
+
+        public bool IsThirdPartyCollection() =>
+            !string.IsNullOrEmpty(originalUrn) && originalUrn.Contains(THIRD_PARTY_PART_ID);
 
         public URLAddress ToUrlOrEmpty(URLAddress baseUrl)
         {
@@ -57,48 +98,24 @@ namespace CommunicationData.URLHelpers
                 return new ReadOnlySpan<char>();
             }
 
-            void LogError()
-            {
-                ReportHub.LogError(ReportCategory.NFT_SHAPE_WEB_REQUEST, $"Error parsing urn: {currentUrn}");
-            }
+            void LogError() { ReportHub.LogError(ReportCategory.NFT_SHAPE_WEB_REQUEST, $"Error parsing urn: {currentUrn}"); }
 
             int index = currentUrn.Length - 1;
-            bool success;
 
-            ReadOnlySpan<char> id = CutBeforeColon(ref index, out success);
-
-            if (success == false)
-            {
-                LogError();
-                return URLAddress.EMPTY;
-            }
+            ReadOnlySpan<char> id = CutBeforeColon(ref index, out bool success);
+            if (success == false) { LogError(); return URLAddress.EMPTY; }
 
             index--;
             ReadOnlySpan<char> address = CutBeforeColon(ref index, out success);
-
-            if (success == false)
-            {
-                LogError();
-                return URLAddress.EMPTY;
-            }
+            if (success == false) { LogError(); return URLAddress.EMPTY; }
 
             index--;
             CutBeforeColon(ref index, out success);
-
-            if (success == false)
-            {
-                LogError();
-                return URLAddress.EMPTY;
-            }
+            if (success == false) { LogError(); return URLAddress.EMPTY; }
 
             index--;
             ReadOnlySpan<char> chain = CutBeforeColon(ref index, out success);
-
-            if (success == false)
-            {
-                LogError();
-                return URLAddress.EMPTY;
-            }
+            if (success == false) { LogError(); return URLAddress.EMPTY; }
 
             return URLAddress.FromString(
                 baseUrl.Value
@@ -108,14 +125,17 @@ namespace CommunicationData.URLHelpers
             );
         }
 
-        public override int GetHashCode() =>
-            originalUrn != null ? StringComparer.OrdinalIgnoreCase.GetHashCode(originalUrn) : 0;
-
         public URN Shorten()
         {
             if (string.IsNullOrEmpty(originalUrn)) return this;
             if (CountParts() <= SHORTEN_URN_PARTS) return this;
 
+            int shortenIndex = CalculateShortenIndex();
+            return shortenIndex == -1 ? this : new URN(this, shortenIndex);
+        }
+
+        private int CalculateShortenIndex()
+        {
             int index;
             if (IsThirdPartyCollection())
             {
@@ -133,23 +153,8 @@ namespace CommunicationData.URLHelpers
             else
                 index = originalUrn.LastIndexOf(':'); // TokenId is always placed in the last part for regular nfts
 
-            return index != -1 ? GetShortenedUrn(index) : this;
+            return index;
         }
-
-        private URN GetShortenedUrn(int index) =>
-            originalUrn[..index];
-
-        public static implicit operator URN(int urn) =>
-            urn.ToString();
-
-        public static implicit operator string(URN urn) =>
-            urn.originalUrn;
-
-        public static implicit operator URN(string urn) =>
-            new (urn);
-
-        public bool IsThirdPartyCollection() =>
-            !string.IsNullOrEmpty(originalUrn) && originalUrn.Contains(THIRD_PARTY_PART_ID);
 
         private int CountParts()
         {
