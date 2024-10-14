@@ -29,6 +29,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground
             display.EnsureNotNull();
             unzip = new TexturesUnzip(options.InitOptions, options, debugOutputFromNative);
             buffer = File.ReadAllBytes(path);
+            print($"Original size: {buffer.Length} bytes");
 
             var result = FetchedAndOverrideTexture();
             display.Display(result.Texture);
@@ -48,6 +49,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground
         {
             texture?.Dispose();
             texture = unzip.TextureFromBytes(buffer);
+            print($"Compressed size: {texture.Texture.GetRawTextureData()!.Length} bytes");
             return texture;
         }
 

@@ -246,8 +246,7 @@ ImageResult __cdecl texturesfuse_astc_image_from_memory(
     *width = FreeImage_GetWidth(image);
     *height = FreeImage_GetHeight(image);
 
-    // TODO release FIBITMAP
-    // FreeImage_Unload(image);
+    void** dataBuffer = new void *[1];
 
     // Create an astcenc_image structure
     astcenc_image astcImage;
@@ -255,7 +254,7 @@ ImageResult __cdecl texturesfuse_astc_image_from_memory(
     astcImage.dim_y = *height;
     astcImage.dim_z = 1; // depth for 2D is 1
     astcImage.data_type = astcType;
-    astcImage.data = new void *[1]; // Only one 2D image layer //TODO fix leak
+    astcImage.data = dataBuffer; // Only one 2D image layer
     astcImage.data[0] = bits;       // Point to the raw image data
 
     auto config = context->config;
@@ -284,6 +283,7 @@ ImageResult __cdecl texturesfuse_astc_image_from_memory(
         0 // since THREADS_PER_CONTEXT is 1
     );
 
+    delete[] dataBuffer;
     FreeImage_Unload(image);
 
     if (astcError != ASTCENC_SUCCESS)

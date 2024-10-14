@@ -256,18 +256,23 @@ MonoBehaviour:
   display: {fileID: 1454420715}
   options:
     maxSide: 1024
-    mode: 3
+    adjustments:
+      use: 0
+      brightness: 0
+      contrast: 0
+      gamma: 0
+    mode: 6
     initOptions:
       ASTCProfile: 0
       blockZ: 1
-      quality: 60
+      quality: 0
       flags: 0
     swizzle:
       r: 0
       g: 1
       b: 2
       a: 3
-  path: Assets/Plugins/TexturesFuse/textures-server/FreeImage/Source/FFI/TestImages/example.gif
+  path: Assets/Plugins/TexturesFuse/textures-server/FreeImage/Source/FFI/image.jpg
   stressMode: 0
   debugOutputFromNative: 1
   outputPath: Assets/Plugins/TexturesFuse/TexturesServerWrap/Playground/ASTCTexturesCompatability/test_output.astc
