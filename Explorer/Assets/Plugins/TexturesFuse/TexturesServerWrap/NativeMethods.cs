@@ -122,6 +122,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap
         [StructLayout(LayoutKind.Sequential)]
         public struct Adjustments
         {
+            public bool use;
             public double brightness;
             public double contrast;
             public double gamma;

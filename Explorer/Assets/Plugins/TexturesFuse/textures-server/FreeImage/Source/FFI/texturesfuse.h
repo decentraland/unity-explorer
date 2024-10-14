@@ -1,4 +1,5 @@
 #include "astcenc.h"
+#include "handles.h"
 #include <stdint.h>
 #include <unordered_set>
 
@@ -16,8 +17,6 @@
 
 extern "C"
 {
-    typedef intptr_t FfiHandle;
-
     const FfiHandle INVALID_HANDLE = 0;
     const unsigned int THREADS_PER_CONTEXT = 1;
 
@@ -78,6 +77,7 @@ extern "C"
 
     struct Adjustments
     {
+        bool use;
         double brightness;
         double contrast;
         double gamma;
@@ -89,7 +89,7 @@ extern "C"
      */
     struct context
     {
-        std::unordered_set<FfiHandle> handles;
+        MemoryHandles handles;
         astcenc_config config;
         astcenc_context *astcContext;
         bool disposed;

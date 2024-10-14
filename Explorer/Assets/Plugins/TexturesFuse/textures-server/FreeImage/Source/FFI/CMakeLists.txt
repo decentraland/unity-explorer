@@ -505,6 +505,7 @@ set(PNG_INCLUDE
 set(SOURCES
     bitmaps.cpp
     main.cpp
+    MemoryHandles/handles.cpp
 
     ../FreeImage/BitmapAccess.cpp
     ../FreeImage/CacheFile.cpp
@@ -619,6 +620,7 @@ include_directories(
     /
     ../ 
     Include/
+    MemoryHandles/
 
     ${WEBP_INCLUDE}
     ${PNG_INCLUDE} 

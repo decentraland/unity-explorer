@@ -115,18 +115,8 @@ ImageResult __cdecl texturesfuse_dispose(context *context)
 
 ImageResult __cdecl texturesfuse_release(context *context, FfiHandle handle)
 {
-    auto handles = context->handles;
-
-    if (handles.find(handle) == handles.end())
-    {
-        return ErrorReleaseNoHandleFound;
-    }
-
-    handles.erase(handle);
-    auto bytePtr = reinterpret_cast<BYTE *>(handle);
-    delete[] bytePtr;
-
-    return Success;
+    bool result = context->handles.tryReleaseHandle(handle);
+    return result ? Success : ErrorReleaseNoHandleFound;
 }
 
 ImageResult __cdecl texturesfuse_processed_image_from_memory(
@@ -156,7 +146,7 @@ ImageResult __cdecl texturesfuse_processed_image_from_memory(
         return result;
     }
 
-    //TODO test only, remove 
+    // TODO test only, remove
     result = WithAlphaImage(image, &image);
     if (result != Success)
     {
@@ -221,18 +211,21 @@ ImageResult __cdecl texturesfuse_astc_image_from_memory(
         return result;
     }
 
-    BOOL adjustResult = FreeImage_AdjustColors(
-        image,
-        adjustments.brightness,
-        adjustments.contrast,
-        adjustments.gamma,
-        FALSE);
-
-    if (!adjustResult)
+    if (adjustments.use)
     {
-        FreeImage_OutputMessageProc(FIF_UNKNOWN, "Cannot apply adjustments");
+        BOOL adjustResult = FreeImage_AdjustColors(
+            image,
+            adjustments.brightness,
+            adjustments.contrast,
+            adjustments.gamma,
+            FALSE);
+
+        if (!adjustResult)
+        {
+            FreeImage_OutputMessageProc(FIF_UNKNOWN, "Cannot apply adjustments");
+        }
     }
-    
+
     astcenc_type astcType;
     result = ASTCDataTypeFromImageWithAlpha(image, &astcType);
     if (result != Success)
@@ -252,7 +245,6 @@ ImageResult __cdecl texturesfuse_astc_image_from_memory(
 
     *width = FreeImage_GetWidth(image);
     *height = FreeImage_GetHeight(image);
-    *releaseHandle = 1; // TODO
 
     // TODO release FIBITMAP
     // FreeImage_Unload(image);
@@ -262,9 +254,9 @@ ImageResult __cdecl texturesfuse_astc_image_from_memory(
     astcImage.dim_x = *width;
     astcImage.dim_y = *height;
     astcImage.dim_z = 1; // depth for 2D is 1
-    astcImage.data_type = astcType; 
-    astcImage.data = new void *[1];         // Only one 2D image layer //TODO fix leak
-    astcImage.data[0] = bits;               // Point to the raw image data
+    astcImage.data_type = astcType;
+    astcImage.data = new void *[1]; // Only one 2D image layer //TODO fix leak
+    astcImage.data[0] = bits;       // Point to the raw image data
 
     auto config = context->config;
     auto astcContext = context->astcContext;
@@ -272,7 +264,7 @@ ImageResult __cdecl texturesfuse_astc_image_from_memory(
     size_t astcBytesLength = dataLenForASTC(
         astcImage.dim_x,
         astcImage.dim_y,
-        astcImage.dim_z, 
+        astcImage.dim_z,
         config.block_x,
         config.block_y,
         1 // compression blocks amount for 2D is 1
@@ -296,9 +288,10 @@ ImageResult __cdecl texturesfuse_astc_image_from_memory(
 
     if (astcError != ASTCENC_SUCCESS)
     {
-        // TODO release outputBytes
+        delete[] *outputBytes;
         return ErrorFromASTC(astcError);
     }
+    *releaseHandle = context->handles.registerHandle(*outputBytes);
 
     return Success;
 }
