@@ -10,6 +10,7 @@ using DCL.Utilities;
 using DCL.Web3;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
+using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using SuperScrollView;
 using System;
 using System.Collections.Generic;
@@ -228,12 +229,14 @@ namespace DCL.Notifications.NotificationsMenu
         private async UniTask LoadNotificationThumbnailAsync(NotificationView notificationView, INotification notificationData,
             CancellationToken ct)
         {
-            Texture2D texture = await webRequestController.GetTextureAsync(
+            OwnedTexture2D ownedTexture = await webRequestController.GetTextureAsync(
                 new CommonArguments(URLAddress.FromString(notificationData.GetThumbnail())),
                 new GetTextureArguments(false),
                 GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp),
                 ct,
                 ReportCategory.UI);
+
+            Texture2D texture = ownedTexture.Texture;
             Sprite? thumbnailSprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height),
                 VectorUtilities.OneHalf, PIXELS_PER_UNIT, 0, SpriteMeshType.FullRect, Vector4.one, false);
             notificationThumbnailCache.Add(notificationData.Id, thumbnailSprite);

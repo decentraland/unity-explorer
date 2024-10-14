@@ -32,11 +32,11 @@ namespace DCL.WebRequests
 
         internal static GetTextureWebRequest Initialize(in CommonArguments commonArguments, GetTextureArguments textureArguments)
         {
-            UnityWebRequest wr = UnityWebRequestTexture.GetTexture(commonArguments.URL, !textureArguments.IsReadable);
+            UnityWebRequest wr = UnityWebRequest.Get(commonArguments.URL);//UnityWebRequestTexture.GetTexture(commonArguments.URL, !textureArguments.IsReadable);
             return new GetTextureWebRequest(wr, commonArguments.URL);
         }
 
-        public readonly struct CreateTextureOp : IWebRequestOp<GetTextureWebRequest, Texture2D>
+        public readonly struct CreateTextureOp : IWebRequestOp<GetTextureWebRequest, OwnedTexture2D>
         {
             private readonly TextureWrapMode wrapMode;
             private readonly FilterMode filterMode;
@@ -48,11 +48,16 @@ namespace DCL.WebRequests
                 this.filterMode = filterMode;
             }
 
-            public async UniTask<Texture2D?> ExecuteAsync(GetTextureWebRequest webRequest, CancellationToken ct)
+            public async UniTask<OwnedTexture2D?> ExecuteAsync(GetTextureWebRequest webRequest, CancellationToken ct)
             {
                 byte[] data = webRequest.UnityWebRequest.downloadHandler?.data ?? Array.Empty<byte>();
-                OwnedTexture2D ownedTexture = await UNZIP.TextureFromBytesAsync(data);
+                OwnedTexture2D? ownedTexture = await UNZIP.TextureFromBytesAsync(data);
+
+                if (ownedTexture == null)
+                    return null;
+
                 var texture = ownedTexture.Texture;
+
                 //TODO disposing of ownedTexture
 
                 // var texture = DownloadHandlerTexture.GetContent(webRequest.UnityWebRequest);
@@ -60,7 +65,7 @@ namespace DCL.WebRequests
                 texture.filterMode = filterMode;
                 texture.SetDebugName(webRequest.url);
                 ProfilingCounters.TexturesAmount.Value++;
-                return texture;
+                return ownedTexture;
             }
         }
     }

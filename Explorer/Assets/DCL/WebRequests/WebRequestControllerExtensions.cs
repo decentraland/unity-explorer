@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using DCL.DebugUtilities.UIBindings;
+using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using UnityEngine;
 using UnityEngine.Networking;
 using Utility.Times;
@@ -180,7 +181,7 @@ namespace DCL.WebRequests
         /// <summary>
         ///     Make a request that is optimized for texture creation
         /// </summary>
-        public static UniTask<Texture2D> GetTextureAsync<TOp>(
+        public static UniTask<OwnedTexture2D> GetTextureAsync<TOp>(
             this IWebRequestController controller,
             CommonArguments commonArguments,
             GetTextureArguments args,
@@ -189,8 +190,8 @@ namespace DCL.WebRequests
             ReportData reportData,
             WebRequestHeadersInfo? headersInfo = null,
             WebRequestSignInfo? signInfo = null
-        ) where TOp: struct, IWebRequestOp<GetTextureWebRequest, Texture2D> =>
-            controller.SendAsync<GetTextureWebRequest, GetTextureArguments, TOp, Texture2D>(GET_TEXTURE, commonArguments, args, webRequestOp, ct, reportData, headersInfo, signInfo);
+        ) where TOp: struct, IWebRequestOp<GetTextureWebRequest, OwnedTexture2D> =>
+            controller.SendAsync<GetTextureWebRequest, GetTextureArguments, TOp, OwnedTexture2D>(GET_TEXTURE, commonArguments, args, webRequestOp, ct, reportData, headersInfo, signInfo);
 
         /// <summary>
         ///     Make a request that is optimized for audio clip

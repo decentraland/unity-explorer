@@ -4,6 +4,7 @@ using DCL.Diagnostics;
 using DCL.MapRenderer.ComponentsFactory;
 using DCL.WebRequests;
 using DG.Tweening;
+using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System.Threading;
 using UnityEngine;
 using Utility;
@@ -64,10 +65,17 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
             atlasChunk.MainSpriteRenderer.color = INITIAL_COLOR;
             var url = $"{CHUNKS_API}{chunkId.x}%2C{chunkId.y}.jpg";
 
-            Texture2D texture = (await webRequestController.GetTextureAsync(new CommonArguments(URLAddress.FromString(url)),
-                new GetTextureArguments(false), GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp, FilterMode.Trilinear)
-                                                                    .SuppressExceptionsWithFallback(Texture2D.whiteTexture, reportContext: ReportCategory.UI),
-                linkedCts.Token, ReportCategory.UI))!;
+            //TODO Potential lick due CacheCleaner behaviour is unclean
+            OwnedTexture2D ownedTexture = (
+                await webRequestController.GetTextureAsync(
+                    new CommonArguments(URLAddress.FromString(url)),
+                    new GetTextureArguments(false),
+                    GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp, FilterMode.Trilinear)
+                                        .SuppressExceptionsWithFallback(OwnedTexture2D.NewEmptyTexture(), reportContext: ReportCategory.UI),
+                    linkedCts.Token, ReportCategory.UI
+                )
+            )!;
+            Texture2D texture = ownedTexture.Texture;
 
             textureContainer.AddChunk(chunkId, texture);
 

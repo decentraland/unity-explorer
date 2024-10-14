@@ -38,7 +38,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
                 throw new Exception($"TexturesFuseDispose failed: {result}");
         }
 
-        public async UniTask<OwnedTexture2D> TextureFromBytesAsync(ReadOnlyMemory<byte> bytes)
+        public async UniTask<OwnedTexture2D?> TextureFromBytesAsync(ReadOnlyMemory<byte> bytes)
         {
             await UniTask.SwitchToThreadPool();
             ProcessImage(bytes, out var handle, out var pointer, out int outputLength, out NativeMethods.ImageResult result, out uint width, out uint height, out TextureFormat format);
@@ -47,7 +47,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
             if (result is not NativeMethods.ImageResult.Success)
             {
                 ReportHub.LogError(ReportCategory.TEXTURES, $"TexturesFuseASTCImageFromMemory error during decoding: {result}");
-                return OwnedTexture2D.NewEmptyTexture();
+                return null;
             }
 
             if (handle == IntPtr.Zero)

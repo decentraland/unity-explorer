@@ -12,7 +12,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
     /// </summary>
     public interface ITexturesUnzip
     {
-        UniTask<OwnedTexture2D> TextureFromBytesAsync(ReadOnlyMemory<byte> bytes);
+        UniTask<OwnedTexture2D?> TextureFromBytesAsync(ReadOnlyMemory<byte> bytes);
 
         interface IOptions
         {
