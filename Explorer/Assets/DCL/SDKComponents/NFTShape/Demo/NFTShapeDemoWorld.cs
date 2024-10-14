@@ -13,6 +13,7 @@ using DCL.SDKComponents.NFTShape.System;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
+using DCL.WebRequests.ArgsFactory;
 using DCL.WebRequests.WebContentSizes;
 using DCL.WebRequests.WebContentSizes.Sizes;
 using ECS.Abstract;
@@ -21,6 +22,7 @@ using ECS.StreamableLoading.DeferredLoading;
 using ECS.StreamableLoading.NFTShapes;
 using ECS.StreamableLoading.NFTShapes.URNs;
 using ECS.Unity.Transforms.Components;
+using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -57,7 +59,8 @@ namespace DCL.SDKComponents.NFTShape.Demo
                         {
                             maxSizeInBytes = 300 * 1024 * 1024
                         }
-                    )
+                    ),
+                    new GetTextureArgsFactory(ITexturesUnzip.NewDebug())
                 ).InitializeAndReturnSelf(),
                 w => new LoadCycleNftShapeSystem(w, new BasedURNSource(new DecentralandUrlsSource(DecentralandEnvironment.Org))),
                 w => new InstantiateNftShapeSystem(w, new PoolNFTShapeRendererFactory(new ComponentPoolsRegistry(), framesPool), new FrameTimeCapBudget.Default(), framePrefabs, buffer),

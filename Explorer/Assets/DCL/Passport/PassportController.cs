@@ -18,6 +18,7 @@ using DCL.Passport.Modules.Badges;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.WebRequests;
+using DCL.WebRequests.ArgsFactory;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -48,6 +49,7 @@ namespace DCL.Passport
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly BadgesAPIClient badgesAPIClient;
         private readonly IWebRequestController webRequestController;
+        private readonly IGetTextureArgsFactory getTextureArgsFactory;
         private readonly PassportProfileInfoController passportProfileInfoController;
         private readonly List<IPassportModuleController> commonPassportModules = new ();
         private readonly List<IPassportModuleController> overviewPassportModules = new ();
@@ -87,6 +89,7 @@ namespace DCL.Passport
             IDecentralandUrlsSource decentralandUrlsSource,
             BadgesAPIClient badgesAPIClient,
             IWebRequestController webRequestController,
+            IGetTextureArgsFactory getTextureArgsFactory,
             IInputBlock inputBlock,
             INotificationsBusController notificationBusController,
             IRemoteMetadata remoteMetadata) : base(viewFactory)
@@ -107,6 +110,7 @@ namespace DCL.Passport
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.badgesAPIClient = badgesAPIClient;
             this.webRequestController = webRequestController;
+            this.getTextureArgsFactory = getTextureArgsFactory;
             this.inputBlock = inputBlock;
             this.remoteMetadata = remoteMetadata;
 
@@ -123,8 +127,8 @@ namespace DCL.Passport
             commonPassportModules.Add(new UserBasicInfo_PassportModuleController(viewInstance.UserBasicInfoModuleView, chatEntryConfiguration, selfProfile, passportErrorsController));
             overviewPassportModules.Add(new UserDetailedInfo_PassportModuleController(viewInstance.UserDetailedInfoModuleView, mvcManager, selfProfile, viewInstance.AddLinkModal, passportErrorsController, passportProfileInfoController));
             overviewPassportModules.Add(new EquippedItems_PassportModuleController(viewInstance.EquippedItemsModuleView, world, rarityBackgrounds, rarityColors, categoryIcons, thumbnailProvider, webBrowser, decentralandUrlsSource, passportErrorsController));
-            overviewPassportModules.Add(new BadgesOverview_PassportModuleController(viewInstance.BadgesOverviewModuleView, badgesAPIClient, passportErrorsController, webRequestController));
-            badgesPassportModules.Add(new BadgesDetails_PassportModuleController(viewInstance.BadgesDetailsModuleView, viewInstance.BadgeInfoModuleView, badgesAPIClient, passportErrorsController, webRequestController, selfProfile));
+            overviewPassportModules.Add(new BadgesOverview_PassportModuleController(viewInstance.BadgesOverviewModuleView, badgesAPIClient, passportErrorsController, webRequestController, getTextureArgsFactory));
+            badgesPassportModules.Add(new BadgesDetails_PassportModuleController(viewInstance.BadgesDetailsModuleView, viewInstance.BadgeInfoModuleView, badgesAPIClient, passportErrorsController, webRequestController, getTextureArgsFactory, selfProfile));
 
             passportProfileInfoController.PublishError += OnPublishError;
             passportProfileInfoController.OnProfilePublished += OnProfilePublished;
@@ -149,7 +153,7 @@ namespace DCL.Passport
             else
                 OpenBadgesSection(inputData.BadgeIdSelected);
 
-            inputBlock.Disable(InputMapComponent.Kind.SHORTCUTS , InputMapComponent.Kind.CAMERA , InputMapComponent.Kind.PLAYER);
+            inputBlock.Disable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.CAMERA, InputMapComponent.Kind.PLAYER);
 
             viewInstance!.ErrorNotification.Hide(true);
             PassportOpened?.Invoke(currentUserId);
@@ -159,7 +163,7 @@ namespace DCL.Passport
         {
             passportErrorsController!.Hide(true);
 
-            inputBlock.Enable(InputMapComponent.Kind.SHORTCUTS , InputMapComponent.Kind.CAMERA , InputMapComponent.Kind.PLAYER);
+            inputBlock.Enable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.CAMERA, InputMapComponent.Kind.PLAYER);
 
             characterPreviewController!.OnHide();
 
@@ -249,6 +253,7 @@ namespace DCL.Passport
                 module.Setup(profile);
 
             List<IPassportModuleController> passportModulesToSetup = passportSection == PassportSection.OVERVIEW ? overviewPassportModules : badgesPassportModules;
+
             foreach (IPassportModuleController module in passportModulesToSetup)
             {
                 if (module is BadgesDetails_PassportModuleController badgesDetailsController && !string.IsNullOrEmpty(badgeIdSelected))

@@ -6,6 +6,7 @@ using DCL.Input;
 using DCL.NftInfoAPIService;
 using DCL.NftPrompt;
 using DCL.WebRequests;
+using DCL.WebRequests.ArgsFactory;
 using MVC;
 using System;
 using System.Threading;
@@ -20,6 +21,7 @@ namespace DCL.PluginSystem.Global
         private readonly IMVCManager mvcManager;
         private readonly INftMarketAPIClient nftInfoAPIClient;
         private readonly IWebRequestController webRequestController;
+        private readonly IGetTextureArgsFactory getTextureArgsFactory;
         private readonly ICursor cursor;
         private NftPromptController nftPromptController;
 
@@ -29,6 +31,7 @@ namespace DCL.PluginSystem.Global
             IMVCManager mvcManager,
             INftMarketAPIClient nftInfoAPIClient,
             IWebRequestController webRequestController,
+            IGetTextureArgsFactory getTextureArgsFactory,
             ICursor cursor)
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -36,6 +39,7 @@ namespace DCL.PluginSystem.Global
             this.mvcManager = mvcManager;
             this.nftInfoAPIClient = nftInfoAPIClient;
             this.webRequestController = webRequestController;
+            this.getTextureArgsFactory = getTextureArgsFactory;
             this.cursor = cursor;
         }
 
@@ -47,7 +51,9 @@ namespace DCL.PluginSystem.Global
                 webBrowser,
                 cursor,
                 nftInfoAPIClient,
-                webRequestController);
+                webRequestController,
+                getTextureArgsFactory
+            );
 
             mvcManager.RegisterController(nftPromptController);
         }

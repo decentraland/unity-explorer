@@ -28,7 +28,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground
         {
             display.EnsureNotNull();
             unzip = new TexturesUnzip(options.InitOptions, options, debugOutputFromNative);
-            buffer = File.ReadAllBytes(path);
+            buffer = await File.ReadAllBytesAsync(path, destroyCancellationToken)!;
             print($"Original size: {buffer.Length} bytes");
 
             var result = await FetchedAndOverrideTexture();
@@ -38,7 +38,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground
         private async UniTask<OwnedTexture2D> FetchedAndOverrideTexture()
         {
             texture?.Dispose();
-            texture = await unzip.TextureFromBytesAsync(buffer);
+            texture = (await unzip.TextureFromBytesAsync(buffer, destroyCancellationToken)).Unwrap();
             print($"Compressed size: {texture.Texture.GetRawTextureData()!.Length} bytes");
             return texture;
         }

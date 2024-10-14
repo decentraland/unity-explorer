@@ -3,6 +3,7 @@ using Plugins.TexturesFuse.TexturesServerWrap.Playground.Displays;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System;
 using System.IO;
+using System.Threading;
 using UnityEngine;
 
 namespace Plugins.TexturesFuse.TexturesServerWrap.Playground
@@ -25,8 +26,8 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground
         private void Start()
         {
             buffer = File.ReadAllBytes(path);
-            left.Apply(buffer, debugOutputFromNative).Forget();
-            right.Apply(buffer, debugOutputFromNative).Forget();
+            left.Apply(buffer, debugOutputFromNative, destroyCancellationToken).Forget();
+            right.Apply(buffer, debugOutputFromNative, destroyCancellationToken).Forget();
         }
 
         [ContextMenu(nameof(SaveToFile))]
@@ -42,11 +43,11 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground
             [SerializeField] private TexturesFusePlayground.Options options = new ();
             private ITexturesUnzip unzip = null!;
 
-            public async UniTaskVoid Apply(byte[] imageData, bool debugOutputFromNative)
+            public async UniTaskVoid Apply(byte[] imageData, bool debugOutputFromNative, CancellationToken token)
             {
                 unzip = new TexturesUnzip(options.InitOptions, options, debugOutputFromNative);
-                var result = await unzip.TextureFromBytesAsync(imageData);
-                display.Display(result.Texture);
+                var result = await unzip.TextureFromBytesAsync(imageData, token);
+                display.Display(result.Unwrap().Texture);
             }
         }
     }

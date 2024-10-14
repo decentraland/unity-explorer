@@ -1,8 +1,10 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using System;
+using System.Threading;
 using UnityEngine;
 using UnityEngine.Pool;
+using Utility.Types;
 
 namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
 {
@@ -10,9 +12,9 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
     ///     Provides decoded and compressed textures from raw memory.
     ///     Its implementations don't guarantee thread safety.
     /// </summary>
-    public interface ITexturesUnzip
+    public interface ITexturesUnzip : IDisposable
     {
-        UniTask<OwnedTexture2D?> TextureFromBytesAsync(ReadOnlyMemory<byte> bytes);
+        UniTask<EnumResult<OwnedTexture2D, NativeMethods.ImageResult>> TextureFromBytesAsync(ReadOnlyMemory<byte> bytes, CancellationToken token);
 
         interface IOptions
         {
@@ -45,8 +47,20 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
         {
             var init = NativeMethods.InitOptions.NewDefault();
             var options = new IOptions.Const(Mode.ASTC_6x6, NativeMethods.Swizzle.NewDefault(), 1024, NativeMethods.Adjustments.NewEmpty());
-            return new TexturesUnzip(init, options, true);
+
+            return new TexturesUnzip(init, options, true)
+                  .WithLog()
+                  .WithSemaphore();
         }
+    }
+
+    public static class TexturesUnzipExtensions
+    {
+        public static SemaphoreTexturesUnzip WithSemaphore(this ITexturesUnzip texturesUnzip) =>
+            new (texturesUnzip);
+
+        public static LogTexturesUnzip WithLog(this ITexturesUnzip texturesUnzip) =>
+            new (texturesUnzip);
     }
 
     public class OwnedTexture2D : IDisposable

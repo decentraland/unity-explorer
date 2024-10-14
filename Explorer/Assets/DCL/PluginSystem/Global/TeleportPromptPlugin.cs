@@ -9,6 +9,7 @@ using DCL.WebRequests;
 using MVC;
 using System.Threading;
 using DCL.Chat.MessageBus;
+using DCL.WebRequests.ArgsFactory;
 using ECS.SceneLifeCycle.Realm;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -20,6 +21,7 @@ namespace DCL.PluginSystem.Global
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IMVCManager mvcManager;
         private readonly IWebRequestController webRequestController;
+        private readonly IGetTextureArgsFactory getTextureArgsFactory;
         private readonly IPlacesAPIService placesAPIService;
         private readonly ICursor cursor;
         private TeleportPromptController teleportPromptController;
@@ -29,12 +31,14 @@ namespace DCL.PluginSystem.Global
             IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
             IWebRequestController webRequestController,
+            IGetTextureArgsFactory getTextureArgsFactory,
             IPlacesAPIService placesAPIService,
             ICursor cursor, IChatMessagesBus chatMessagesBus)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
             this.webRequestController = webRequestController;
+            this.getTextureArgsFactory = getTextureArgsFactory;
             this.placesAPIService = placesAPIService;
             this.cursor = cursor;
             this.chatMessagesBus = chatMessagesBus;
@@ -47,6 +51,7 @@ namespace DCL.PluginSystem.Global
                     (await assetsProvisioner.ProvideMainAssetAsync(promptSettings.TeleportPromptPrefab, ct: ct)).Value.GetComponent<TeleportPromptView>(), null),
                 cursor,
                 webRequestController,
+                getTextureArgsFactory,
                 placesAPIService,
                 chatMessagesBus);
 

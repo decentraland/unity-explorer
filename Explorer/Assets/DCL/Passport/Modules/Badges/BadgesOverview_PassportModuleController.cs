@@ -4,6 +4,7 @@ using DCL.Diagnostics;
 using DCL.Passport.Fields.Badges;
 using DCL.Profiles;
 using DCL.WebRequests;
+using DCL.WebRequests.ArgsFactory;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -30,7 +31,9 @@ namespace DCL.Passport.Modules.Badges
             BadgesOverview_PassportModuleView view,
             BadgesAPIClient badgesAPIClient,
             PassportErrorsController passportErrorsController,
-            IWebRequestController webRequestController)
+            IWebRequestController webRequestController,
+            IGetTextureArgsFactory getTextureArgsFactory
+        )
         {
             this.view = view;
             this.badgesAPIClient = badgesAPIClient;
@@ -41,7 +44,7 @@ namespace DCL.Passport.Modules.Badges
                 defaultCapacity: BADGES_OVERVIEW_MAX_COUNT,
                 actionOnGet: badgeOverviewItemView =>
                 {
-                    badgeOverviewItemView.ConfigureImageController(webRequestController);
+                    badgeOverviewItemView.ConfigureImageController(webRequestController, getTextureArgsFactory);
                     badgeOverviewItemView.gameObject.SetActive(true);
                     badgeOverviewItemView.gameObject.transform.SetAsLastSibling();
                 },
@@ -92,6 +95,7 @@ namespace DCL.Passport.Modules.Badges
             try
             {
                 var badges = await badgesAPIClient.FetchLatestAchievedBadgesAsync(walletId, ct);
+
                 foreach (var badgeInfo in badges)
                 {
                     var badgeOverviewItem = badgesOverviewItemsPool.Get();

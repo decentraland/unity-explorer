@@ -12,6 +12,7 @@ using System.Globalization;
 using System.Threading;
 using DCL.Chat.Commands;
 using DCL.Chat.MessageBus;
+using DCL.WebRequests.ArgsFactory;
 using UnityEngine;
 
 namespace DCL.Navmap
@@ -23,6 +24,7 @@ namespace DCL.Navmap
 
         private readonly FloatingPanelView view;
         private readonly IPlacesAPIService placesAPIService;
+        private readonly IGetTextureArgsFactory getTextureArgsFactory;
         private readonly Dictionary<string, GameObject> categoriesDictionary;
 
         private readonly ImageController placeImageController;
@@ -40,15 +42,18 @@ namespace DCL.Navmap
         public event Action<PlacesData.PlaceInfo?> OnSetAsDestination;
         private readonly IChatMessagesBus chatMessagesBus;
 
-
         public FloatingPanelController(
             FloatingPanelView view,
             IPlacesAPIService placesAPIService,
             IWebRequestController webRequestController,
-            IMapPathEventBus mapPathEventBus, IChatMessagesBus chatMessagesBus)
+            IGetTextureArgsFactory getTextureArgsFactory,
+            IMapPathEventBus mapPathEventBus,
+            IChatMessagesBus chatMessagesBus
+        )
         {
             this.view = view;
             this.placesAPIService = placesAPIService;
+            this.getTextureArgsFactory = getTextureArgsFactory;
             this.mapPathEventBus = mapPathEventBus;
             this.chatMessagesBus = chatMessagesBus;
 
@@ -56,8 +61,8 @@ namespace DCL.Navmap
             view.mapPinCloseButton.onClick.AddListener(HidePanel);
             view.CanvasGroup.interactable = false;
             view.CanvasGroup.blocksRaycasts = false;
-            placeImageController = new ImageController(view.placeImage, webRequestController);
-            mapPinPlaceImageController = new ImageController(view.MapPinPlaceImage, webRequestController);
+            placeImageController = new ImageController(view.placeImage, webRequestController, getTextureArgsFactory);
+            mapPinPlaceImageController = new ImageController(view.MapPinPlaceImage, webRequestController, getTextureArgsFactory);
             categoriesDictionary = new Dictionary<string, GameObject>();
 
             for (var i = 0; i < view.categories.Length; i++)

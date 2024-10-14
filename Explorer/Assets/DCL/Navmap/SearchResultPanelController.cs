@@ -4,6 +4,7 @@ using DCL.Character.CharacterMotion.Components;
 using DCL.PlacesAPIService;
 using DCL.UI;
 using DCL.WebRequests;
+using DCL.WebRequests.ArgsFactory;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -17,14 +18,16 @@ namespace DCL.Navmap
     {
         private readonly SearchResultPanelView view;
         private readonly IWebRequestController webRequestController;
+        private readonly IGetTextureArgsFactory getTextureArgsFactory;
         private readonly List<FullSearchResultsView> usedPoolElements;
         private ObjectPool<FullSearchResultsView> resultsPool;
         public event Action<string> OnResultClicked;
 
-        public SearchResultPanelController(SearchResultPanelView view, IWebRequestController webRequestController)
+        public SearchResultPanelController(SearchResultPanelView view, IWebRequestController webRequestController, IGetTextureArgsFactory getTextureArgsFactory)
         {
             this.view = view;
             this.webRequestController = webRequestController;
+            this.getTextureArgsFactory = getTextureArgsFactory;
             usedPoolElements = new List<FullSearchResultsView>();
         }
 
@@ -43,7 +46,7 @@ namespace DCL.Navmap
         private FullSearchResultsView CreatePoolElements(FullSearchResultsView asset)
         {
             FullSearchResultsView fullSearchResultsView = Object.Instantiate(asset, view.searchResultsContainer);
-            fullSearchResultsView.ConfigurePlaceImageController(webRequestController);
+            fullSearchResultsView.ConfigurePlaceImageController(webRequestController, getTextureArgsFactory);
             return fullSearchResultsView;
         }
 

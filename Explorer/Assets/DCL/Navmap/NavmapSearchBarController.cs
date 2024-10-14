@@ -5,6 +5,7 @@ using DCL.Input.Component;
 using DCL.PlacesAPIService;
 using DCL.UI;
 using DCL.WebRequests;
+using DCL.WebRequests.ArgsFactory;
 using System;
 using System.Linq;
 using System.Threading;
@@ -40,14 +41,16 @@ namespace DCL.Navmap
             IPlacesAPIService placesAPIService,
             FloatingPanelView floatingPanelView,
             IWebRequestController webRequestController,
-            IInputBlock inputBlock)
+            IGetTextureArgsFactory getTextureArgsFactory,
+            IInputBlock inputBlock
+        )
         {
             this.view = view;
             this.historyRecordPanelView = historyRecordPanelView;
             this.placesAPIService = placesAPIService;
             this.inputBlock = inputBlock;
 
-            searchResultPanelController = new SearchResultPanelController(searchResultPanelView, webRequestController);
+            searchResultPanelController = new SearchResultPanelController(searchResultPanelView, webRequestController, getTextureArgsFactory);
             searchResultPanelController.OnResultClicked += ClickedResult;
 
             historyRecordPanelView.OnClickedHistoryRecord += ClickedHistoryResult;
@@ -92,6 +95,7 @@ namespace DCL.Navmap
                 historyRecordPanelView.gameObject.SetActive(true);
                 return;
             }
+
             historyRecordPanelView.gameObject.SetActive(false);
 
             // Suppress cancellation but let other exceptions be printed
@@ -116,10 +120,7 @@ namespace DCL.Navmap
                 GetAndShowPreviousSearches();
                 inputBlock.Disable(InputMapComponent.Kind.SHORTCUTS);
             }
-            else
-            {
-                inputBlock.Enable(InputMapComponent.Kind.SHORTCUTS);
-            }
+            else { inputBlock.Enable(InputMapComponent.Kind.SHORTCUTS); }
         }
 
         private async UniTask SearchAndShowAsync(string searchText)

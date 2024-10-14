@@ -1,7 +1,9 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using System;
+using System.Threading;
 using UnityEngine;
+using Utility.Types;
 
 namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
 {
@@ -12,6 +14,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
     {
         private readonly ITexturesUnzip.IOptions options;
         private readonly IntPtr context;
+        private bool disposed;
 
         public TexturesUnzip(NativeMethods.InitOptions initOptions, ITexturesUnzip.IOptions options, bool debug)
         {
@@ -30,24 +33,47 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
             ReportHub.Log(ReportCategory.TEXTURES, $"TexturesFuse: {message}");
         }
 
-        ~TexturesUnzip()
+        private void ReleaseUnmanagedResources()
         {
             var result = NativeMethods.TexturesFuseDispose(context);
 
             if (result is not NativeMethods.ImageResult.Success)
-                throw new Exception($"TexturesFuseDispose failed: {result}");
+                ReportHub.LogError(ReportCategory.TEXTURES, $"TexturesFuseDispose failed: {result}");
         }
 
-        public async UniTask<OwnedTexture2D?> TextureFromBytesAsync(ReadOnlyMemory<byte> bytes)
+        ~TexturesUnzip()
         {
+            Dispose();
+        }
+
+        public void Dispose()
+        {
+            if (disposed)
+                return;
+
+            disposed = true;
+            ReleaseUnmanagedResources();
+            GC.SuppressFinalize(this);
+        }
+
+        public async UniTask<EnumResult<OwnedTexture2D, NativeMethods.ImageResult>> TextureFromBytesAsync(ReadOnlyMemory<byte> bytes, CancellationToken token)
+        {
+            token.ThrowIfCancellationRequested();
             await UniTask.SwitchToThreadPool();
+            token.ThrowIfCancellationRequested();
             ProcessImage(bytes, out var handle, out var pointer, out int outputLength, out NativeMethods.ImageResult result, out uint width, out uint height, out TextureFormat format);
             await UniTask.SwitchToMainThread();
+
+            if (result is NativeMethods.ImageResult.Success && token.IsCancellationRequested)
+            {
+                NativeMethods.TexturesFuseRelease(context, handle);
+                token.ThrowIfCancellationRequested();
+            }
 
             if (result is not NativeMethods.ImageResult.Success)
             {
                 ReportHub.LogError(ReportCategory.TEXTURES, $"TexturesFuseASTCImageFromMemory error during decoding: {result}");
-                return null;
+                return EnumResult<OwnedTexture2D, NativeMethods.ImageResult>.ErrorResult(result, string.Empty);
             }
 
             if (handle == IntPtr.Zero)
@@ -58,7 +84,10 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
             var texture = new Texture2D((int)width, (int)height, format, false, false, true);
             texture.LoadRawTextureData(pointer, outputLength);
             texture.Apply();
-            return OwnedTexture2D.NewTexture(texture, context, handle);
+
+            return EnumResult<OwnedTexture2D, NativeMethods.ImageResult>.SuccessResult(
+                OwnedTexture2D.NewTexture(texture, context, handle)
+            );
         }
 
         internal unsafe NativeMethods.ImageResult LoadASTCImage(

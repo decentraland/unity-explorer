@@ -42,6 +42,7 @@ using System.Threading;
 using DCL.Chat.MessageBus;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Settings.Settings;
+using DCL.WebRequests.ArgsFactory;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Audio;
@@ -69,6 +70,7 @@ namespace DCL.PluginSystem.Global
         private readonly IEmoteStorage emoteStorage;
         private readonly DCLInput dclInput;
         private readonly IWebRequestController webRequestController;
+        private readonly IGetTextureArgsFactory getTextureArgsFactory;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
         private readonly IBackpackEventBus backpackEventBus;
         private readonly IThirdPartyNftProviderSource thirdPartyNftProviderSource;
@@ -95,13 +97,13 @@ namespace DCL.PluginSystem.Global
         private SettingsController? settingsController;
         private BackpackSubPlugin? backpackSubPlugin;
 
-
-
-        public ExplorePanelPlugin(IAssetsProvisioner assetsProvisioner,
+        public ExplorePanelPlugin(
+            IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
             MapRendererContainer mapRendererContainer,
             IPlacesAPIService placesAPIService,
             IWebRequestController webRequestController,
+            IGetTextureArgsFactory getTextureArgsFactory,
             IWeb3IdentityCache web3IdentityCache,
             IWearableStorage wearableStorage,
             ICharacterPreviewFactory characterPreviewFactory,
@@ -139,6 +141,7 @@ namespace DCL.PluginSystem.Global
             this.mapRendererContainer = mapRendererContainer;
             this.placesAPIService = placesAPIService;
             this.webRequestController = webRequestController;
+            this.getTextureArgsFactory = getTextureArgsFactory;
             this.web3IdentityCache = web3IdentityCache;
             this.wearableStorage = wearableStorage;
             this.characterPreviewFactory = characterPreviewFactory;
@@ -222,7 +225,7 @@ namespace DCL.PluginSystem.Global
             settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>(), settingsMenuConfiguration.Value, generalAudioMixer.Value, realmPartitionSettings.Value, landscapeData.Value, qualitySettingsAsset.Value, controlsSettingsAsset.Value, systemMemoryCap);
 
             navmapController = new NavmapController(navmapView: explorePanelView.GetComponentInChildren<NavmapView>(),
-                mapRendererContainer.MapRenderer, placesAPIService, webRequestController, webBrowser, dclInput,
+                mapRendererContainer.MapRenderer, placesAPIService, webRequestController, getTextureArgsFactory, webBrowser, dclInput,
                 realmNavigator, realmData, mapPathEventBus, world, playerEntity, inputBlock, chatMessagesBus);
 
             await navmapController.InitializeAssetsAsync(assetsProvisioner, ct);
@@ -230,8 +233,8 @@ namespace DCL.PluginSystem.Global
 
             mvcManager.RegisterController(new
                 ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackSubPlugin.backpackController!,
-                    new ProfileWidgetController(() => explorePanelView.ProfileWidget, web3IdentityCache, profileRepository, webRequestController),
-                    new ProfileMenuController(() => explorePanelView.ProfileMenuView, web3IdentityCache, profileRepository, webRequestController, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager, chatEntryConfiguration),
+                    new ProfileWidgetController(() => explorePanelView.ProfileWidget, web3IdentityCache, profileRepository, webRequestController, getTextureArgsFactory),
+                    new ProfileMenuController(() => explorePanelView.ProfileMenuView, web3IdentityCache, profileRepository, webRequestController, getTextureArgsFactory, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager, chatEntryConfiguration),
                     dclInput, notificationsBusController, mvcManager, inputBlock));
 
             inputHandler = new ExplorePanelInputHandler(dclInput, mvcManager);

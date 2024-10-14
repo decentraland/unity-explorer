@@ -13,6 +13,7 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.PlacesAPIService;
 using DCL.WebRequests;
+using DCL.WebRequests.ArgsFactory;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -27,6 +28,7 @@ namespace DCL.MapRenderer.ComponentsFactory
         private readonly IAssetsProvisioner assetsProvisioner;
 
         private readonly IWebRequestController webRequestController;
+        private readonly IGetTextureArgsFactory getTextureArgsFactory;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly MapRendererTextureContainer textureContainer;
         private readonly IPlacesAPIService placesAPIService;
@@ -44,6 +46,7 @@ namespace DCL.MapRenderer.ComponentsFactory
             IAssetsProvisioner assetsProvisioner,
             IMapRendererSettings settings,
             IWebRequestController webRequestController,
+            IGetTextureArgsFactory getTextureArgsFactory,
             IDecentralandUrlsSource decentralandUrlsSource,
             MapRendererTextureContainer textureContainer,
             IPlacesAPIService placesAPIService,
@@ -53,6 +56,7 @@ namespace DCL.MapRenderer.ComponentsFactory
             this.assetsProvisioner = assetsProvisioner;
             mapSettings = settings;
             this.webRequestController = webRequestController;
+            this.getTextureArgsFactory = getTextureArgsFactory;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.textureContainer = textureContainer;
             this.placesAPIService = placesAPIService;
@@ -124,7 +128,7 @@ namespace DCL.MapRenderer.ComponentsFactory
             {
                 SpriteRenderer atlasChunkPrefab = await GetAtlasChunkPrefabAsync(parent, ct);
 
-                var chunk = new SatelliteChunkController(atlasChunkPrefab, webRequestController, textureContainer, chunkLocalPosition, chunkId, parent, MapRendererDrawOrder.SATELLITE_ATLAS);
+                var chunk = new SatelliteChunkController(atlasChunkPrefab, webRequestController, getTextureArgsFactory, textureContainer, chunkLocalPosition, chunkId, parent, MapRendererDrawOrder.SATELLITE_ATLAS);
                 await chunk.LoadImageAsync(chunkId, PARCELS_INSIDE_CHUNK * coordsUtils.ParcelSize, ct);
 
                 return chunk;

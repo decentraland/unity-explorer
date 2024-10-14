@@ -1,13 +1,10 @@
-﻿using DCL.Web3.Identities;
-using DCL.WebRequests;
-using DCL.WebRequests.Analytics;
+﻿using DCL.WebRequests.ArgsFactory;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Tests;
 using ECS.TestSuite;
-using NSubstitute;
 using NUnit.Framework;
+using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using UnityEngine;
-using Utility.Multithreading;
 
 namespace ECS.StreamableLoading.Textures.Tests
 {
@@ -28,7 +25,7 @@ namespace ECS.StreamableLoading.Textures.Tests
             new () { CommonArguments = new CommonLoadingArguments(wrongTypePath) };
 
         protected override LoadTextureSystem CreateSystem() =>
-            new (world, cache, TestWebRequestController.INSTANCE);
+            new (world, cache, TestWebRequestController.INSTANCE, new GetTextureArgsFactory(ITexturesUnzip.NewDebug()));
 
         protected override void AssertSuccess(Texture2DData data)
         {

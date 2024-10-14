@@ -99,7 +99,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap
                 };
         }
 
-        internal enum ImageResult : int
+        public enum ImageResult : int
         {
             ErrorNotImplemented = -1,
             ErrorUnknown = 0,

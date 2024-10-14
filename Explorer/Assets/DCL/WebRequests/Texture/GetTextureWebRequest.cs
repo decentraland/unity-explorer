@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.Profiling;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System;
@@ -14,11 +15,13 @@ namespace DCL.WebRequests
     /// </summary>
     public readonly struct GetTextureWebRequest : ITypedWebRequest
     {
+        private readonly ITexturesUnzip texturesUnzip;
         private readonly string url;
 
-        private GetTextureWebRequest(UnityWebRequest unityWebRequest, string url)
+        private GetTextureWebRequest(UnityWebRequest unityWebRequest, ITexturesUnzip texturesUnzip, string url)
         {
             this.url = url;
+            this.texturesUnzip = texturesUnzip;
             UnityWebRequest = unityWebRequest;
         }
 
@@ -32,15 +35,14 @@ namespace DCL.WebRequests
 
         internal static GetTextureWebRequest Initialize(in CommonArguments commonArguments, GetTextureArguments textureArguments)
         {
-            UnityWebRequest wr = UnityWebRequest.Get(commonArguments.URL);//UnityWebRequestTexture.GetTexture(commonArguments.URL, !textureArguments.IsReadable);
-            return new GetTextureWebRequest(wr, commonArguments.URL);
+            UnityWebRequest wr = UnityWebRequest.Get(commonArguments.URL)!;
+            return new GetTextureWebRequest(wr, textureArguments.TexturesUnzip, commonArguments.URL);
         }
 
         public readonly struct CreateTextureOp : IWebRequestOp<GetTextureWebRequest, OwnedTexture2D>
         {
             private readonly TextureWrapMode wrapMode;
             private readonly FilterMode filterMode;
-            private static readonly ITexturesUnzip UNZIP = ITexturesUnzip.NewDebug();
 
             public CreateTextureOp(TextureWrapMode wrapMode, FilterMode filterMode)
             {
@@ -50,22 +52,30 @@ namespace DCL.WebRequests
 
             public async UniTask<OwnedTexture2D?> ExecuteAsync(GetTextureWebRequest webRequest, CancellationToken ct)
             {
-                byte[] data = webRequest.UnityWebRequest.downloadHandler?.data ?? Array.Empty<byte>();
-                OwnedTexture2D? ownedTexture = await UNZIP.TextureFromBytesAsync(data);
+                try
+                {
+                    byte[] data = webRequest.UnityWebRequest.downloadHandler?.data ?? Array.Empty<byte>();
+                    var result = await webRequest.texturesUnzip.TextureFromBytesAsync(data, ct).Timeout(TimeSpan.FromSeconds(15));
 
-                if (ownedTexture == null)
+                    if (result.Success == false)
+                    {
+                        ReportHub.LogError(ReportCategory.TEXTURES, $"CreateTextureOp: Error loading texture url: {webRequest.url} - {result}");
+                        return null;
+                    }
+
+                    var texture = result.Value.Texture;
+
+                    texture.wrapMode = wrapMode;
+                    texture.filterMode = filterMode;
+                    texture.SetDebugName(webRequest.url);
+                    ProfilingCounters.TexturesAmount.Value++;
+                    return result.Value;
+                }
+                catch (Exception e)
+                {
+                    ReportHub.LogException(new Exception($"Error during loading texture from url: {webRequest.url}", e), ReportCategory.TEXTURES);
                     return null;
-
-                var texture = ownedTexture.Texture;
-
-                //TODO disposing of ownedTexture
-
-                // var texture = DownloadHandlerTexture.GetContent(webRequest.UnityWebRequest);
-                texture.wrapMode = wrapMode;
-                texture.filterMode = filterMode;
-                texture.SetDebugName(webRequest.url);
-                ProfilingCounters.TexturesAmount.Value++;
-                return ownedTexture;
+                }
             }
         }
     }

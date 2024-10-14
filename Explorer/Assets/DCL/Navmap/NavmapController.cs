@@ -22,6 +22,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using DCL.Chat.MessageBus;
+using DCL.WebRequests.ArgsFactory;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Utility;
@@ -67,6 +68,7 @@ namespace DCL.Navmap
             IMapRenderer mapRenderer,
             IPlacesAPIService placesAPIService,
             IWebRequestController webRequestController,
+            IGetTextureArgsFactory getTextureArgsFactory,
             IWebBrowser webBrowser,
             DCLInput dclInput,
             IRealmNavigator realmNavigator,
@@ -86,9 +88,27 @@ namespace DCL.Navmap
 
             zoomController = new NavmapZoomController(navmapView.zoomView, dclInput);
             filterController = new NavmapFilterController(this.navmapView.filterView, mapRenderer, webBrowser);
-            searchBarController = new NavmapSearchBarController(navmapView.SearchBarView, navmapView.SearchBarResultPanel, navmapView.HistoryRecordPanelView, placesAPIService, navmapView.floatingPanelView, webRequestController, inputBlock);
-            FloatingPanelController = new FloatingPanelController(navmapView.floatingPanelView, placesAPIService,
-                webRequestController, mapPathEventBus, chatMessagesBus);
+
+            searchBarController = new NavmapSearchBarController(
+                navmapView.SearchBarView,
+                navmapView.SearchBarResultPanel,
+                navmapView.HistoryRecordPanelView,
+                placesAPIService,
+                navmapView.floatingPanelView,
+                webRequestController,
+                getTextureArgsFactory,
+                inputBlock
+            );
+
+            FloatingPanelController = new FloatingPanelController(
+                navmapView.floatingPanelView,
+                placesAPIService,
+                webRequestController,
+                getTextureArgsFactory,
+                mapPathEventBus,
+                chatMessagesBus
+            );
+
             FloatingPanelController.OnJumpIn += _ => searchBarController.ResetSearch();
             FloatingPanelController.OnSetAsDestination += SetDestination;
             this.navmapView.DestinationInfoElement.QuitButton.onClick.AddListener(OnRemoveDestinationButtonClicked);
@@ -202,6 +222,7 @@ namespace DCL.Navmap
         private void OnResultClicked(string coordinates)
         {
             if (VectorUtilities.TryParseVector2Int(coordinates, out Vector2Int result))
+
                 //This will trigger a "parcel clicked" event with the data from the parcel
                 this.navmapView.SatelliteRenderImage.OnSearchResultParcelSelected(result);
         }

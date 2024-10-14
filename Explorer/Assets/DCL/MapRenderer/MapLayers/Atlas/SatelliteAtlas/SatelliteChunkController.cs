@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.MapRenderer.ComponentsFactory;
 using DCL.WebRequests;
+using DCL.WebRequests.ArgsFactory;
 using DG.Tweening;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System.Threading;
@@ -19,17 +20,25 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
         private readonly MapRendererTextureContainer textureContainer;
 
         private readonly IWebRequestController webRequestController;
+        private readonly IGetTextureArgsFactory getTextureArgsFactory;
         private readonly AtlasChunk atlasChunk;
 
-        private CancellationTokenSource internalCts;
-        private CancellationTokenSource linkedCts;
+        private CancellationTokenSource? internalCts;
+        private CancellationTokenSource? linkedCts;
         private int webRequestAttempts;
 
-        public SatelliteChunkController(SpriteRenderer prefab, IWebRequestController webRequestController, MapRendererTextureContainer textureContainer, Vector3 chunkLocalPosition, Vector2Int coordsCenter,
+        public SatelliteChunkController(
+            SpriteRenderer prefab,
+            IWebRequestController webRequestController,
+            IGetTextureArgsFactory getTextureArgsFactory,
+            MapRendererTextureContainer textureContainer,
+            Vector3 chunkLocalPosition,
+            Vector2Int coordsCenter,
             Transform parent,
             int drawOrder)
         {
             this.webRequestController = webRequestController;
+            this.getTextureArgsFactory = getTextureArgsFactory;
             this.textureContainer = textureContainer;
             internalCts = new CancellationTokenSource();
 
@@ -69,7 +78,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
             OwnedTexture2D ownedTexture = (
                 await webRequestController.GetTextureAsync(
                     new CommonArguments(URLAddress.FromString(url)),
-                    new GetTextureArguments(false),
+                    getTextureArgsFactory.NewArguments(false),
                     GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp, FilterMode.Trilinear)
                                         .SuppressExceptionsWithFallback(OwnedTexture2D.NewEmptyTexture(), reportContext: ReportCategory.UI),
                     linkedCts.Token, ReportCategory.UI

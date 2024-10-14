@@ -4,35 +4,37 @@ using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.ResourcesUnloading;
 using DCL.WebRequests;
+using DCL.WebRequests.ArgsFactory;
 using ECS.LifeCycle;
 using ECS.StreamableLoading.Textures;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using Utility.Multithreading;
 
 namespace DCL.PluginSystem.World
 {
     public class TexturesLoadingPlugin : IDCLWorldPluginWithoutSettings, IDCLGlobalPluginWithoutSettings
     {
         private readonly IWebRequestController webRequestController;
+        private readonly IGetTextureArgsFactory getTextureArgsFactory;
 
         private readonly TexturesCache texturesCache = new ();
 
-        public TexturesLoadingPlugin(IWebRequestController webRequestController, CacheCleaner cacheCleaner)
+        public TexturesLoadingPlugin(IWebRequestController webRequestController, IGetTextureArgsFactory getTextureArgsFactory, CacheCleaner cacheCleaner)
         {
             this.webRequestController = webRequestController;
+            this.getTextureArgsFactory = getTextureArgsFactory;
             cacheCleaner.Register(texturesCache);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
-            LoadTextureSystem.InjectToWorld(ref builder, texturesCache, webRequestController);
+            LoadTextureSystem.InjectToWorld(ref builder, texturesCache, webRequestController, getTextureArgsFactory);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            LoadGlobalTextureSystem.InjectToWorld(ref builder, texturesCache, webRequestController);
+            LoadGlobalTextureSystem.InjectToWorld(ref builder, texturesCache, webRequestController, getTextureArgsFactory);
         }
 
 #region Interface Ambiguity
@@ -42,9 +44,7 @@ namespace DCL.PluginSystem.World
         UniTask IDCLPlugin<NoExposedPluginSettings>.InitializeAsync(NoExposedPluginSettings settings, CancellationToken ct) =>
             UniTask.CompletedTask;
 
-        void IDisposable.Dispose()
-        {
-        }
+        void IDisposable.Dispose() { }
 #endregion
     }
 }
