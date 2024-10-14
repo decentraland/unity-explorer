@@ -1,12 +1,7 @@
 fileFormatVersion: 2
-<<<<<<<< HEAD:Explorer/Assets/Scripts/Global/Dynamic/PortableExperiences.meta
 guid: 7605cbd0627ba4943930770ffb0a700a
 folderAsset: yes
 DefaultImporter:
-========
-guid: 5879ce12a2ad11c429794b78710df165
-AssemblyDefinitionReferenceImporter:
->>>>>>>> main:Explorer/Assets/DCL/SDKComponents/InputModifier/Systems/DCL.InputModifier.Systems.asmref.meta
   externalObjects: {}
   userData: 
   assetBundleName: 
