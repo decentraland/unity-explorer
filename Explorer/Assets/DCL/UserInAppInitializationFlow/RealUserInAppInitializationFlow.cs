@@ -1,23 +1,24 @@
-using Arch.Core;
+using System;
+using System.Threading;
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.AuthenticationScreenFlow;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Diagnostics;
-using DCL.Profiles.Self;
-using DCL.Utilities;
-using MVC;
-using System.Threading;
 using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.HealthChecks;
+using DCL.Profiles.Self;
 using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.UserInAppInitializationFlow.StartupOperations;
 using DCL.UserInAppInitializationFlow.StartupOperations.Struct;
+using DCL.Utilities;
 using DCL.Web3.Identities;
 using ECS.SceneLifeCycle.Realm;
 using Global.AppArgs;
 using Global.Dynamic.DebugSettings;
+using MVC;
 using PortableExperiences.Controller;
 using UnityEngine;
 using Utility.Types;
@@ -26,21 +27,19 @@ namespace DCL.UserInAppInitializationFlow
 {
     public class RealUserInAppInitializationFlow : IUserInAppInitializationFlow
     {
+        private static readonly ILoadingScreen.EmptyLoadingScreen EMPTY_LOADING_SCREEN = new ();
+        
         private readonly ILoadingStatus loadingStatus;
         private readonly IMVCManager mvcManager;
         private readonly AudioClipConfig backgroundMusic;
         private readonly IRealmNavigator realmNavigator;
         private readonly ILoadingScreen loadingScreen;
-        private readonly ISelfProfile selfProfile;
-
+        private readonly IRoomHub roomHub;
         private readonly LoadPlayerAvatarStartupOperation loadPlayerAvatarStartupOperation;
         private readonly CheckOnboardingStartupOperation checkOnboardingStartupOperation;
         private readonly RestartRealmStartupOperation restartRealmStartupOperation;
-
         private readonly IStartupOperation startupOperation;
-
-        private static readonly ILoadingScreen.EmptyLoadingScreen EMPTY_LOADING_SCREEN = new ();
-
+        
         public RealUserInAppInitializationFlow(
             ILoadingStatus loadingStatus,
             IHealthCheck livekitHealthCheck,
@@ -58,7 +57,8 @@ namespace DCL.UserInAppInitializationFlow
             IRealmController realmController,
             IAppArgs appParameters,
             IDebugSettings debugSettings,
-            IPortableExperiencesController portableExperiencesController
+            IPortableExperiencesController portableExperiencesController,
+            IRoomHub roomHub
         )
         {
             this.loadingStatus = loadingStatus;
@@ -66,7 +66,7 @@ namespace DCL.UserInAppInitializationFlow
             this.backgroundMusic = backgroundMusic;
             this.realmNavigator = realmNavigator;
             this.loadingScreen = loadingScreen;
-            this.selfProfile = selfProfile;
+            this.roomHub = roomHub;
 
             var ensureLivekitConnectionStartupOperation = new EnsureLivekitConnectionStartupOperation(loadingStatus, livekitHealthCheck);
             var initializeFeatureFlagsStartupOperation = new InitializeFeatureFlagsStartupOperation(loadingStatus, featureFlagsProvider, web3IdentityCache, decentralandUrlsSource, appParameters);
@@ -108,6 +108,10 @@ namespace DCL.UserInAppInitializationFlow
 
             do
             {
+                if (parameters.FromLogout)
+                    // Disconnect current livekit connection on logout so the avatar is removed from other peers
+                    await roomHub.StopIfNotAsync().Timeout(TimeSpan.FromSeconds(10));
+
                 if (parameters.ShowAuthentication)
                 {
                     loadingStatus.SetCompletedStage(LoadingStatus.CompletedStage.AuthenticationScreenShown);
@@ -117,8 +121,12 @@ namespace DCL.UserInAppInitializationFlow
                 if (parameters.FromLogout)
                 {
                     // If we are coming from a logout, we teleport the user to Genesis Plaza
-                    var teleportResult = await realmNavigator.TryInitializeTeleportToParcelAsync(Vector2Int.zero, CancellationToken.None);
+                    var teleportResult = await realmNavigator.TryInitializeTeleportToParcelAsync(Vector2Int.zero, ct);
+                    // Restart livekit connection
+                    await roomHub.StartAsync().Timeout(TimeSpan.FromSeconds(10));
                     result = teleportResult.Success ? teleportResult : Result.ErrorResult(teleportResult.ErrorMessage);
+                    // We need to flag the process as completed, otherwise the multiplayer systems will not run
+                    loadingStatus.SetStage(RealFlowLoadingStatus.Stage.Completed);
                 }
                 else
                 {

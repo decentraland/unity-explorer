@@ -289,8 +289,8 @@ namespace Global.Dynamic
                 staticContainer.PartitionDataContainer,
                 staticContainer.SingletonSharedDependencies.SceneAssetLock);
 
-            container.reloadSceneController = new ECSReloadScene(staticContainer.ScenesCache, globalWorld, playerEntity);
             bool localSceneDevelopment = !string.IsNullOrEmpty(dynamicWorldParams.LocalSceneDevelopmentRealm);
+            container.reloadSceneController = new ECSReloadScene(staticContainer.ScenesCache, globalWorld, playerEntity, localSceneDevelopment);
 
             if (localSceneDevelopment)
                 container.localSceneDevelopmentController = new LocalSceneDevelopmentController(container.reloadSceneController, dynamicWorldParams.LocalSceneDevelopmentRealm);
@@ -342,8 +342,8 @@ namespace Global.Dynamic
                 dynamicWorldParams.EnableLandscape,
                 staticContainer.ExposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy,
                 exposedGlobalDataContainer.CameraSamplingData,
-                loadingStatus
-            );
+                localSceneDevelopment,
+                loadingStatus);
 
             IHealthCheck livekitHealthCheck = bootstrapContainer.DebugSettings.EnableEmulateNoLivekitConnection
                 ? new IHealthCheck.AlwaysFails("Livekit connection is in debug, always fail mode")
@@ -378,7 +378,8 @@ namespace Global.Dynamic
                 container.RealmController,
                 dynamicWorldParams.AppParameters,
                 bootstrapContainer.DebugSettings,
-                staticContainer.PortableExperiencesController
+                staticContainer.PortableExperiencesController,
+                container.RoomHub
             );
 
             var worldInfoHub = new LocationBasedWorldInfoHub(
@@ -580,7 +581,8 @@ namespace Global.Dynamic
                     appArgs,
                     entityParticipantTable,
                     staticContainer.RealmData,
-                    container.RemoteMetadata),
+                    container.RemoteMetadata,
+                    staticContainer.FeatureFlagsCache),
                 container.LODContainer.LODPlugin,
                 container.LODContainer.RoadPlugin,
                 new AudioPlaybackPlugin(genesisTerrain, assetsProvisioner, dynamicWorldParams.EnableLandscape),
@@ -642,7 +644,8 @@ namespace Global.Dynamic
                 currentSceneInfo,
                 container.LODContainer.LodCache,
                 multiplayerEmotesMessageBus,
-                globalWorld
+                globalWorld,
+                localSceneDevelopment
             );
 
             container.GlobalPlugins = globalPlugins;
