@@ -17,6 +17,8 @@ namespace DCL.PluginSystem.Global
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
         private readonly CacheCleaner cacheCleaner;
 
+        private IComponentPool<CharacterPreviewAvatarContainer> characterPreviewPoolRegistry;
+
         public CharacterPreviewPlugin(
             IComponentPoolsRegistry poolsRegistry,
             IAssetsProvisioner assetsProvisioner,
@@ -33,14 +35,16 @@ namespace DCL.PluginSystem.Global
 
         public async UniTask InitializeAsync(CharacterPreviewSettings settings, CancellationToken ct)
         {
-            await CreateCharacterPreviewPoolsAsync(settings, ct);
+            await CreateCharacterPreviewPoolAsync(settings, ct);
+            cacheCleaner.Register(characterPreviewPoolRegistry);
         }
 
-        private async UniTask CreateCharacterPreviewPoolsAsync(CharacterPreviewSettings settings, CancellationToken ct)
+        private async UniTask CreateCharacterPreviewPoolAsync(CharacterPreviewSettings settings, CancellationToken ct)
         {
             CharacterPreviewAvatarContainer characterPreviewAvatarContainer = (await assetsProvisioner.ProvideMainAssetAsync(settings.CharacterPreviewContainerReference, ct: ct)).Value;
-            var gameObjectPool = componentPoolsRegistry.AddGameObjectPool(() => Object.Instantiate(characterPreviewAvatarContainer));
-            cacheCleaner.Register(gameObjectPool);
+            var parentContainer = new GameObject("CharacterPreviewContainerPool");
+            componentPoolsRegistry.AddGameObjectPool(() => Object.Instantiate(characterPreviewAvatarContainer), null, 1024, container => container.transform.SetParent(parentContainer.transform));
+            characterPreviewPoolRegistry = componentPoolsRegistry.GetReferenceTypePool<CharacterPreviewAvatarContainer>();
         }
 
         public class CharacterPreviewSettings : IDCLPluginSettings

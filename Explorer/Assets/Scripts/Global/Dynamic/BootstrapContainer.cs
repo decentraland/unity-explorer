@@ -8,6 +8,7 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PerformanceAndDiagnostics.Analytics.Services;
 using DCL.PluginSystem;
+using DCL.Settings;
 using DCL.Web3;
 using DCL.Web3.Abstract;
 using DCL.Web3.Accounts.Factory;
@@ -43,6 +44,7 @@ namespace Global.Dynamic
         public IWeb3VerifiedAuthenticator? Web3Authenticator { get; private set; }
         public IAnalyticsController? Analytics { get; private set; }
         public IDebugSettings DebugSettings { get; private set; }
+        public WorldVolumeMacBus WorldVolumeMacBus { get; private set; }
         public IReportsHandlingSettings ReportHandlingSettings => reportHandlingSettings.Value;
         public IAppArgs ApplicationParametersParser { get; private set; }
         public bool LocalSceneDevelopment { get; private set; }
@@ -82,6 +84,7 @@ namespace Global.Dynamic
                 UseRemoteAssetBundles = realmLaunchSettings.useRemoteAssetsBundles,
                 ApplicationParametersParser = applicationParametersParser,
                 DebugSettings = debugSettings,
+                WorldVolumeMacBus = new WorldVolumeMacBus(),
             };
 
             await bootstrapContainer.InitializeContainerAsync<BootstrapContainer, BootstrapSettings>(settingsContainer, ct, async container =>

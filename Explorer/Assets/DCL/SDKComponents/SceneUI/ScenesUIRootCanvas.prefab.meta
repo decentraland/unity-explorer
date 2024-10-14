@@ -1,11 +1,6 @@
 fileFormatVersion: 2
-<<<<<<<< HEAD:Explorer/Assets/Scripts/ECS/Unity/SceneUI/ScenesUIRootCanvas.prefab.meta
 guid: e0f5a4ab5d8f74640ae94adb6824bd45
 PrefabImporter:
-========
-guid: 642801d2974ab4d07b5d73006e6421df
-DefaultImporter:
->>>>>>>> main:Explorer/Assets/DCL/SDKComponents/TextShape/Demo/TextShapePlayground.unity.meta
   externalObjects: {}
   userData: 
   assetBundleName: 
