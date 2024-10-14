@@ -11,11 +11,13 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
     {
         private readonly ITexturesUnzip origin;
         private readonly Stopwatch stopwatch;
+        private readonly string prefix;
         private ulong index;
 
-        public LogTexturesUnzip(ITexturesUnzip origin)
+        public LogTexturesUnzip(ITexturesUnzip origin, string prefix)
         {
             this.origin = origin;
+            this.prefix = prefix;
             stopwatch = new Stopwatch();
         }
 
@@ -28,10 +30,10 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
         {
             ulong i = index++;
             stopwatch.Restart();
-            ReportHub.Log(ReportCategory.TEXTURES, $"TexturesUnzip: start decompress {i}");
+            ReportHub.Log(ReportCategory.TEXTURES, $"TexturesUnzip - {prefix}: start decompress {i}");
             var result = await origin.TextureFromBytesAsync(bytes, token);
             stopwatch.Stop();
-            ReportHub.Log(ReportCategory.TEXTURES, $"TexturesUnzip: end decompress {i} with time spent: {stopwatch.ElapsedMilliseconds} ms");
+            ReportHub.Log(ReportCategory.TEXTURES, $"TexturesUnzip - {prefix}: end decompress {i} with time spent: {stopwatch.ElapsedMilliseconds} ms");
             return result;
         }
     }

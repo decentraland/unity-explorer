@@ -47,10 +47,17 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
         {
             var init = NativeMethods.InitOptions.NewDefault();
             var options = new IOptions.Const(Mode.ASTC_6x6, NativeMethods.Swizzle.NewDefault(), 1024, NativeMethods.Adjustments.NewEmpty());
+            var index = 0;
 
-            return new TexturesUnzip(init, options, true)
-                  .WithLog()
-                  .WithSemaphore();
+            return new PooledTexturesUnzip(
+                () => new TexturesUnzip(init, options, true)
+                   .WithLog((++index).ToString())
+
+                // .WithSemaphore() -
+                // is not required since PooledTexturesUnzip has synchronization for the access and prevents double calling of TextureFromBytesAsync
+               ,
+                3
+            );
         }
     }
 
@@ -59,8 +66,8 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
         public static SemaphoreTexturesUnzip WithSemaphore(this ITexturesUnzip texturesUnzip) =>
             new (texturesUnzip);
 
-        public static LogTexturesUnzip WithLog(this ITexturesUnzip texturesUnzip) =>
-            new (texturesUnzip);
+        public static LogTexturesUnzip WithLog(this ITexturesUnzip texturesUnzip, string prefix) =>
+            new (texturesUnzip, prefix);
     }
 
     public class OwnedTexture2D : IDisposable
