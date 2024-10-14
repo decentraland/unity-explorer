@@ -204,12 +204,17 @@ namespace DCL.AvatarRendering.Emotes.Play
 
                     emoteComponent.EmoteUrn = emoteId;
                     World.Remove<CharacterEmoteIntent>(entity);
+
+                    // Clean any pending pools since
+                    if (avatarShapeComponent.EmotePromise is { IsConsumed: true })
+                        avatarShapeComponent.EmotePromise?.LoadingIntention.Dispose();
                 }
                 else
                 {
                     EmotePromise? emotePromise = avatarShapeComponent.EmotePromise;
 
-                    bool isLoadingThisEmote = emotePromise?.LoadingIntention.Pointers.Contains(emoteId) ?? false;
+                    bool isLoadingThisEmote = emotePromise is { IsConsumed: false }
+                                              && (emotePromise?.LoadingIntention.Pointers.Contains(emoteId) ?? false);
                     if (isLoadingThisEmote) return;
 
                     // avatarShapeComponent.EmotePromise?.ForgetLoading(World);
