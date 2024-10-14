@@ -205,7 +205,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                     emoteComponent.EmoteUrn = emoteId;
                     World.Remove<CharacterEmoteIntent>(entity);
 
-                    // TODO: memory leak here. We create a new entity for the promise but it is never destroyed
+                    // TODO: memory leak here. We create a new entity for the intention but it is never destroyed
                     // We should make a major refactor on how these "attached" promises are finalized by making a standard on how promises and intents are handled across the project
                     if (avatarShapeComponent.EmotePromise is { IsConsumed: true })
                         avatarShapeComponent.EmotePromise?.LoadingIntention.Dispose();
