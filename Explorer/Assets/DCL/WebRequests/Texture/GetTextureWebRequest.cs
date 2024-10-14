@@ -1,5 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Profiling;
+using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
+using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -38,6 +40,7 @@ namespace DCL.WebRequests
         {
             private readonly TextureWrapMode wrapMode;
             private readonly FilterMode filterMode;
+            private static readonly ITexturesUnzip UNZIP = ITexturesUnzip.NewDebug();
 
             public CreateTextureOp(TextureWrapMode wrapMode, FilterMode filterMode)
             {
@@ -45,15 +48,19 @@ namespace DCL.WebRequests
                 this.filterMode = filterMode;
             }
 
-
-            public UniTask<Texture2D?> ExecuteAsync(GetTextureWebRequest webRequest, CancellationToken ct)
+            public async UniTask<Texture2D?> ExecuteAsync(GetTextureWebRequest webRequest, CancellationToken ct)
             {
-                var texture = DownloadHandlerTexture.GetContent(webRequest.UnityWebRequest);
+                byte[] data = webRequest.UnityWebRequest.downloadHandler?.data ?? Array.Empty<byte>();
+                OwnedTexture2D ownedTexture = await UNZIP.TextureFromBytesAsync(data);
+                var texture = ownedTexture.Texture;
+                //TODO disposing of ownedTexture
+
+                // var texture = DownloadHandlerTexture.GetContent(webRequest.UnityWebRequest);
                 texture.wrapMode = wrapMode;
                 texture.filterMode = filterMode;
                 texture.SetDebugName(webRequest.url);
                 ProfilingCounters.TexturesAmount.Value++;
-                return UniTask.FromResult(texture)!;
+                return texture;
             }
         }
     }

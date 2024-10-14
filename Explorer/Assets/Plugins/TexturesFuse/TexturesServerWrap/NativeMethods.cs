@@ -65,6 +65,17 @@ namespace Plugins.TexturesFuse.TexturesServerWrap
 
                 return output;
             }
+
+            public static InitOptions NewDefault() =>
+                new()
+                {
+                    ASTCProfile = 0,
+                    blockX = 4,
+                    blockY = 4,
+                    blockZ = 1,
+                    quality = 60f,
+                    flags = 0,
+                };
         }
 
         [SuppressMessage("ReSharper", "InconsistentNaming")]
@@ -77,6 +88,15 @@ namespace Plugins.TexturesFuse.TexturesServerWrap
             public int g;
             public int b;
             public int a;
+
+            public static Swizzle NewDefault() =>
+                new()
+                {
+                    r = 0,
+                    g = 1,
+                    b = 2,
+                    a = 3,
+                };
         }
 
         internal enum ImageResult : int
@@ -126,6 +146,15 @@ namespace Plugins.TexturesFuse.TexturesServerWrap
             public double brightness;
             public double contrast;
             public double gamma;
+
+            public static Adjustments NewEmpty() =>
+                new()
+                {
+                    use = false,
+                    brightness = 0,
+                    contrast = 0,
+                    gamma = 0,
+                };
         }
 
         internal enum FreeImageColorType : int

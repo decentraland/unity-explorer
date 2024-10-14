@@ -23,6 +23,29 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
             int MaxSide { get; }
 
             NativeMethods.Adjustments Adjustments { get; }
+
+            class Const : IOptions
+            {
+                public Const(Mode mode, NativeMethods.Swizzle swizzle, int maxSide, NativeMethods.Adjustments adjustments)
+                {
+                    Mode = mode;
+                    Swizzle = swizzle;
+                    MaxSide = maxSide;
+                    Adjustments = adjustments;
+                }
+
+                public Mode Mode { get; }
+                public NativeMethods.Swizzle Swizzle { get; }
+                public int MaxSide { get; }
+                public NativeMethods.Adjustments Adjustments { get; }
+            }
+        }
+
+        public static ITexturesUnzip NewDebug()
+        {
+            var init = NativeMethods.InitOptions.NewDefault();
+            var options = new IOptions.Const(Mode.ASTC_6x6, NativeMethods.Swizzle.NewDefault(), 1024, NativeMethods.Adjustments.NewEmpty());
+            return new TexturesUnzip(init, options, true);
         }
     }
 
