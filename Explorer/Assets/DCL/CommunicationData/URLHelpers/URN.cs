@@ -3,7 +3,7 @@ using System;
 
 namespace CommunicationData.URLHelpers
 {
-    public readonly struct URN
+    public struct URN
     {
         private const int SHORTEN_URN_PARTS = 6;
         private const int THIRD_PARTY_V2_SHORTEN_URN_PARTS = 7;
@@ -13,25 +13,42 @@ namespace CommunicationData.URLHelpers
         private readonly Memory<char> lowercaseMemory;
         private readonly int cachedHashCode;
 
+        private int cachedShortenIndex;
+        private string cachedAsString;
+        private URLAddress cachedUrlAddress;
+        private bool hasCachedUrlAddress;
+
         public URN(string urn)
         {
             originalUrn = urn;
             lowercaseMemory = ComputeLowercaseMemory(originalUrn, originalUrn.Length);
-            this.cachedHashCode = originalUrn != null ? ComputeHashCode(this.lowercaseMemory.Span) : 0;
+            cachedHashCode = originalUrn != null ? ComputeHashCode(lowercaseMemory.Span) : 0;
+
+            cachedShortenIndex = -2;
+            cachedAsString = string.Empty;
+            cachedUrlAddress = URLAddress.EMPTY;
+            hasCachedUrlAddress = false;
         }
 
         private URN(URN urn, int shortenIndex)
         {
-            this.originalUrn = urn.originalUrn;
-            this.lowercaseMemory = urn.lowercaseMemory[..shortenIndex];
-            this.cachedHashCode = originalUrn != null ? ComputeHashCode(this.lowercaseMemory.Span) : 0;
+            originalUrn = urn.originalUrn;
+            lowercaseMemory = urn.lowercaseMemory[..shortenIndex];
+            cachedHashCode = originalUrn != null ? ComputeHashCode(lowercaseMemory.Span) : 0;
+
+            cachedShortenIndex = -2;
+            cachedAsString = string.Empty;
+            cachedUrlAddress = URLAddress.EMPTY;
+            hasCachedUrlAddress = false;
         }
 
         private static Memory<char> ComputeLowercaseMemory(string input, int length)
         {
             var lowercaseChars = new char[length];
+
             for (var i = 0; i < length; i++)
                 lowercaseChars[i] = char.ToLowerInvariant(input[i]);
+
             return new Memory<char>(lowercaseChars);
         }
 
@@ -49,7 +66,7 @@ namespace CommunicationData.URLHelpers
             cachedHashCode;
 
         public bool IsNullOrEmpty() =>
-            string.IsNullOrEmpty(originalUrn);
+            lowercaseMemory.Length == 0;
 
         public bool IsValid() =>
             !IsNullOrEmpty() && originalUrn.StartsWith("urn");
@@ -60,27 +77,40 @@ namespace CommunicationData.URLHelpers
         public override bool Equals(object? obj) =>
             obj is URN other && Equals(other);
 
-        public override string ToString() => originalUrn.Length == lowercaseMemory.Length ?
-            originalUrn : originalUrn[..lowercaseMemory.Length];
+        public override string ToString() =>
+            this;
 
         public static implicit operator URN(int urn) =>
             urn.ToString();
 
-        public static implicit operator string(URN urn) => urn.originalUrn.Length == urn.lowercaseMemory.Length ?
-            urn.originalUrn : urn.originalUrn[..urn.lowercaseMemory.Length];
+        public static implicit operator string(URN urn)
+        {
+            if (urn.originalUrn.Length == urn.lowercaseMemory.Length)
+                return urn.originalUrn;
+
+            if (string.IsNullOrEmpty(urn.cachedAsString))
+                urn.cachedAsString = urn.originalUrn[..urn.lowercaseMemory.Length];
+
+            return urn.originalUrn[..urn.lowercaseMemory.Length];
+        }
 
         public static implicit operator URN(string urn) =>
             new (urn);
 
-        public static bool operator ==(URN left, URN right) => left.Equals(right);
+        public static bool operator ==(URN left, URN right) =>
+            left.Equals(right);
 
-        public static bool operator !=(URN left, URN right) => !(left == right);
+        public static bool operator !=(URN left, URN right) =>
+            !(left == right);
 
         public bool IsThirdPartyCollection() =>
-            !string.IsNullOrEmpty(originalUrn) && originalUrn.Contains(THIRD_PARTY_PART_ID);
+            !IsNullOrEmpty() && originalUrn.Contains(THIRD_PARTY_PART_ID);
 
         public URLAddress ToUrlOrEmpty(URLAddress baseUrl)
         {
+            if (hasCachedUrlAddress)
+                return cachedUrlAddress;
+
             string currentUrn = originalUrn;
 
             ReadOnlySpan<char> CutBeforeColon(ref int endIndex, out bool success)
@@ -98,45 +128,79 @@ namespace CommunicationData.URLHelpers
                 return new ReadOnlySpan<char>();
             }
 
-            void LogError() { ReportHub.LogError(ReportCategory.NFT_SHAPE_WEB_REQUEST, $"Error parsing urn: {currentUrn}"); }
+            void LogError()
+            {
+                ReportHub.LogError(ReportCategory.NFT_SHAPE_WEB_REQUEST, $"Error parsing urn: {currentUrn}");
+            }
+
+            hasCachedUrlAddress = true;
 
             int index = currentUrn.Length - 1;
 
             ReadOnlySpan<char> id = CutBeforeColon(ref index, out bool success);
-            if (success == false) { LogError(); return URLAddress.EMPTY; }
+
+            if (success == false)
+            {
+                LogError();
+                return URLAddress.EMPTY;
+            }
 
             index--;
             ReadOnlySpan<char> address = CutBeforeColon(ref index, out success);
-            if (success == false) { LogError(); return URLAddress.EMPTY; }
+
+            if (success == false)
+            {
+                LogError();
+                return URLAddress.EMPTY;
+            }
 
             index--;
             CutBeforeColon(ref index, out success);
-            if (success == false) { LogError(); return URLAddress.EMPTY; }
+
+            if (success == false)
+            {
+                LogError();
+                return URLAddress.EMPTY;
+            }
 
             index--;
             ReadOnlySpan<char> chain = CutBeforeColon(ref index, out success);
-            if (success == false) { LogError(); return URLAddress.EMPTY; }
 
-            return URLAddress.FromString(
+            if (success == false)
+            {
+                LogError();
+                return URLAddress.EMPTY;
+            }
+
+            cachedUrlAddress = URLAddress.FromString(
                 baseUrl.Value
                        .Replace("{chain}", new string(chain))
                        .Replace("{address}", new string(address)) //may be optimized further, or create custom ReplaceMethod that works with spans
                        .Replace("{id}", new string(id))
             );
+
+            return cachedUrlAddress;
         }
 
         public URN Shorten()
         {
-            if (string.IsNullOrEmpty(originalUrn)) return this;
-            if (CountParts() <= SHORTEN_URN_PARTS) return this;
+            if (cachedShortenIndex != -2)
+                return cachedShortenIndex == -1 ? this : new URN(this, cachedShortenIndex);
 
-            int shortenIndex = CalculateShortenIndex();
-            return shortenIndex == -1 ? this : new URN(this, shortenIndex);
+            if (IsNullOrEmpty() || CountParts() <= SHORTEN_URN_PARTS)
+            {
+                cachedShortenIndex = -1;
+                return this;
+            }
+
+            cachedShortenIndex = CalculateShortenIndex();
+            return cachedShortenIndex == -1 ? this : new URN(this, cachedShortenIndex);
         }
 
         private int CalculateShortenIndex()
         {
             int index;
+
             if (IsThirdPartyCollection())
             {
                 index = -1;
