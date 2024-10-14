@@ -9,7 +9,7 @@ using Object = UnityEngine.Object;
 
 namespace DCL.UI
 {
-    public class ColorPickerController
+    public class ColorPickerController : IDisposable
     {
         private const float INCREMENT_AMOUNT = 0.1f;
         public event Action<Color, string> OnColorChanged;
@@ -51,7 +51,24 @@ namespace DCL.UI
             view.SliderValue.IncreaseButton.onClick.AddListener(() => ChangeProperty(view.SliderValue, INCREMENT_AMOUNT));
             view.SliderValue.DecreaseButton.onClick.AddListener(() => ChangeProperty(view.SliderValue, -INCREMENT_AMOUNT));
 
-            view.ToggleButton.onClick.AddListener(() => TogglePanel());
+            view.ToggleButton.onClick.AddListener(TogglePanel);
+        }
+
+        public void Dispose()
+        {
+            view.SliderHue.Slider.onValueChanged.RemoveAllListeners();
+            view.SliderHue.IncreaseButton.onClick.RemoveAllListeners();
+            view.SliderHue.DecreaseButton.onClick.RemoveAllListeners();
+
+            view.SliderSaturation.Slider.onValueChanged.RemoveAllListeners();
+            view.SliderSaturation.IncreaseButton.onClick.RemoveAllListeners();
+            view.SliderSaturation.DecreaseButton.onClick.RemoveAllListeners();
+
+            view.SliderValue.Slider.onValueChanged.RemoveAllListeners();
+            view.SliderValue.IncreaseButton.onClick.RemoveAllListeners();
+            view.SliderValue.DecreaseButton.onClick.RemoveAllListeners();
+
+            view.ToggleButton.onClick.RemoveAllListeners();
         }
 
         private void SetSaturationColor()
