@@ -1,3 +1,4 @@
+using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using System;
 using UnityEngine;
@@ -11,7 +12,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
     /// </summary>
     public interface ITexturesUnzip
     {
-        OwnedTexture2D TextureFromBytes(ReadOnlySpan<byte> bytes);
+        UniTask<OwnedTexture2D> TextureFromBytesAsync(ReadOnlyMemory<byte> bytes);
 
         interface IOptions
         {
@@ -65,6 +66,9 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
             }
         }
 
+        public static OwnedTexture2D NewEmptyTexture() =>
+            NewTexture(Texture2D.whiteTexture, new IntPtr(-1), new IntPtr(-1));
+
         private static void Release(OwnedTexture2D ownedTexture)
         {
             lock (POOL)
@@ -84,7 +88,9 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
                 ownedTexture.handle = IntPtr.Zero;
                 ownedTexture.disposed = true;
                 POOL.Release(ownedTexture);
-                NativeMethods.TexturesFuseRelease(context, handle);
+
+                if (context != new IntPtr(-1) && handle != new IntPtr(-1))
+                    NativeMethods.TexturesFuseRelease(context, handle);
             }
         }
 

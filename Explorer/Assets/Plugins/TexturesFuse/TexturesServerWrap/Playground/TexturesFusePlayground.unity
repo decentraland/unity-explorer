@@ -255,17 +255,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   display: {fileID: 1454420715}
   options:
-    maxSide: 1024
+    maxSide: 512
     adjustments:
       use: 0
       brightness: 0
       contrast: 0
       gamma: 0
-    mode: 6
+    mode: 3
     initOptions:
       ASTCProfile: 0
       blockZ: 1
-      quality: 0
+      quality: 60
       flags: 0
     swizzle:
       r: 0
@@ -273,7 +273,6 @@ MonoBehaviour:
       b: 2
       a: 3
   path: Assets/Plugins/TexturesFuse/textures-server/FreeImage/Source/FFI/image.jpg
-  stressMode: 0
   debugOutputFromNative: 1
   outputPath: Assets/Plugins/TexturesFuse/TexturesServerWrap/Playground/ASTCTexturesCompatability/test_output.astc
 --- !u!1 &1203531619

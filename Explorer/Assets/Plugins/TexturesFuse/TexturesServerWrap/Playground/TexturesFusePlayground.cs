@@ -1,3 +1,4 @@
+using Cysharp.Threading.Tasks;
 using DCL.Utilities.Extensions;
 using Plugins.TexturesFuse.TexturesServerWrap.Playground.Displays;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
@@ -14,7 +15,6 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground
         [Header("Config")]
         [SerializeField] private Options options = new ();
         [SerializeField] private string path = "Assets/Plugins/TexturesFuse/textures-server/FreeImage/Source/FFI/image.jpg";
-        [SerializeField] private bool stressMode;
         [SerializeField] private bool debugOutputFromNative;
         [Space]
         [SerializeField] private string outputPath = "Assets/Plugins/TexturesFuse/TexturesServerWrap/Playground/ASTCTexturesCompatability/test_output.astc";
@@ -24,31 +24,21 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground
         private OwnedTexture2D? texture;
 
         [ContextMenu(nameof(Start))]
-        private void Start()
+        private async void Start()
         {
             display.EnsureNotNull();
             unzip = new TexturesUnzip(options.InitOptions, options, debugOutputFromNative);
             buffer = File.ReadAllBytes(path);
             print($"Original size: {buffer.Length} bytes");
 
-            var result = FetchedAndOverrideTexture();
+            var result = await FetchedAndOverrideTexture();
             display.Display(result.Texture);
         }
 
-        private void Update()
-        {
-            if (stressMode || transform.position.y > 1)
-            {
-                transform.position = Vector3.zero;
-                var result = FetchedAndOverrideTexture();
-                display.Display(result.Texture);
-            }
-        }
-
-        private OwnedTexture2D FetchedAndOverrideTexture()
+        private async UniTask<OwnedTexture2D> FetchedAndOverrideTexture()
         {
             texture?.Dispose();
-            texture = unzip.TextureFromBytes(buffer);
+            texture = await unzip.TextureFromBytesAsync(buffer);
             print($"Compressed size: {texture.Texture.GetRawTextureData()!.Length} bytes");
             return texture;
         }

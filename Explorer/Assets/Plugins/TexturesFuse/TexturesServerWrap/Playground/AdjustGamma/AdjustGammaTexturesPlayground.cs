@@ -1,3 +1,4 @@
+using Cysharp.Threading.Tasks;
 using Plugins.TexturesFuse.TexturesServerWrap.Playground.Displays;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System;
@@ -24,8 +25,8 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground
         private void Start()
         {
             buffer = File.ReadAllBytes(path);
-            left.Apply(buffer, debugOutputFromNative);
-            right.Apply(buffer, debugOutputFromNative);
+            left.Apply(buffer, debugOutputFromNative).Forget();
+            right.Apply(buffer, debugOutputFromNative).Forget();
         }
 
         [ContextMenu(nameof(SaveToFile))]
@@ -41,10 +42,10 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground
             [SerializeField] private TexturesFusePlayground.Options options = new ();
             private ITexturesUnzip unzip = null!;
 
-            public void Apply(byte[] imageData, bool debugOutputFromNative)
+            public async UniTaskVoid Apply(byte[] imageData, bool debugOutputFromNative)
             {
                 unzip = new TexturesUnzip(options.InitOptions, options, debugOutputFromNative);
-                var result = unzip.TextureFromBytes(imageData);
+                var result = await unzip.TextureFromBytesAsync(imageData);
                 display.Display(result.Texture);
             }
         }

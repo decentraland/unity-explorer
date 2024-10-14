@@ -34,7 +34,7 @@ namespace DCL.WebRequests
             return new GetTextureWebRequest(wr, commonArguments.URL);
         }
 
-        public struct CreateTextureOp : IWebRequestOp<GetTextureWebRequest, Texture2D>
+        public readonly struct CreateTextureOp : IWebRequestOp<GetTextureWebRequest, Texture2D>
         {
             private readonly TextureWrapMode wrapMode;
             private readonly FilterMode filterMode;
