@@ -229,7 +229,7 @@ namespace DCL.Notifications.NotificationsMenu
         {
             OwnedTexture2D ownedTexture = await webRequestController.GetTextureAsync(
                 new CommonArguments(URLAddress.FromString(notificationData.GetThumbnail())),
-                getTextureArgsFactory.NewArguments(false),
+                getTextureArgsFactory.NewArguments(),
                 GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp),
                 ct,
                 ReportCategory.UI);

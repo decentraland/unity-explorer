@@ -78,7 +78,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
             OwnedTexture2D ownedTexture = (
                 await webRequestController.GetTextureAsync(
                     new CommonArguments(URLAddress.FromString(url)),
-                    getTextureArgsFactory.NewArguments(false),
+                    getTextureArgsFactory.NewArguments(),
                     GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp, FilterMode.Trilinear)
                                         .SuppressExceptionsWithFallback(OwnedTexture2D.NewEmptyTexture(), reportContext: ReportCategory.UI),
                     linkedCts.Token, ReportCategory.UI

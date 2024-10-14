@@ -296,7 +296,7 @@ namespace DCL.Passport.Modules.Badges
         private async UniTask<Texture2D> RemoteTextureAsync(string url, CancellationToken ct) =>
             (await webRequestController.GetTextureAsync(
                 new CommonArguments(URLAddress.FromString(url)),
-                getTextureArgsFactory.NewArguments(false),
+                getTextureArgsFactory.NewArguments(),
                 GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp, FilterMode.Bilinear),
                 ct,
                 ReportCategory.BADGES)

@@ -61,7 +61,7 @@ namespace DCL.WebRequests.Analytics
                     // texture
                     await webRequestController.GetTextureAsync(
                         new CommonArguments(FAIL, attemptsCount: retriesCount),
-                        getTextureArgsFactory.NewArguments(false),
+                        getTextureArgsFactory.NewArguments(),
                         new GetTextureWebRequest.CreateTextureOp(TextureWrapMode.Clamp, FilterMode.Bilinear),
                         CancellationToken.None,
                         reportData: ReportCategory.DEBUG

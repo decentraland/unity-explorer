@@ -38,7 +38,7 @@ namespace ECS.StreamableLoading.NFTShapes
             // Attempts should be always 1 as there is a repeat loop in `LoadSystemBase`
             var result = await webRequestController.GetTextureAsync(
                 new CommonLoadingArguments(URLAddress.FromString(imageUrl), attempts: 1),
-                getTextureArgsFactory.NewArguments(false),
+                getTextureArgsFactory.NewArguments(),
                 new GetTextureWebRequest.CreateTextureOp(GetNFTShapeIntention.WRAP_MODE, GetNFTShapeIntention.FILTER_MODE),
                 ct,
                 GetReportData()

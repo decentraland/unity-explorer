@@ -53,7 +53,7 @@ namespace DCL.UI
                 //TODO potential memory leak, due no CacheCleaner
                 OwnedTexture2D ownedTexture = await webRequestController.GetTextureAsync(
                     new CommonArguments(URLAddress.FromString(uri)),
-                    getTextureArgsFactory.NewArguments(false),
+                    getTextureArgsFactory.NewArguments(),
                     GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp),
                     ct,
                     ReportCategory.UI
