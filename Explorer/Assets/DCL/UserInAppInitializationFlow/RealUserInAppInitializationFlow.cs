@@ -126,7 +126,7 @@ namespace DCL.UserInAppInitializationFlow
                     await roomHub.StartAsync().Timeout(TimeSpan.FromSeconds(10));
                     result = teleportResult.Success ? teleportResult : Result.ErrorResult(teleportResult.ErrorMessage);
                     // We need to flag the process as completed, otherwise the multiplayer systems will not run
-                    loadingStatus.SetStage(RealFlowLoadingStatus.Stage.Completed);
+                    loadingStatus.SetCompletedStage(LoadingStatus.CompletedStage.Completed);
                 }
                 else
                 {
