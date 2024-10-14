@@ -93,7 +93,7 @@ namespace CommunicationData.URLHelpers
             if (string.IsNullOrEmpty(urn.cachedAsString))
                 urn.cachedAsString = urn.originalUrn[..urn.lowercaseMemory.Length];
 
-            return urn.originalUrn[..urn.lowercaseMemory.Length];
+            return urn.cachedAsString;
         }
 
         public static implicit operator URN(string urn) =>
