@@ -56,6 +56,7 @@ using DCL.PluginSystem.Global;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.SceneLoadingScreens.LoadingScreen;
+using DCL.Settings;
 using DCL.SidebarBus;
 using DCL.UI.MainUI;
 using DCL.StylizedSkybox.Scripts.Plugin;
@@ -552,7 +553,8 @@ namespace Global.Dynamic
                     globalWorld,
                     playerEntity,
                     container.ChatMessagesBus,
-                    staticContainer.MemoryCap
+                    staticContainer.MemoryCap,
+                    bootstrapContainer.WorldVolumeMacBus
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
