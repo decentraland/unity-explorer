@@ -34,7 +34,6 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
         protected override void Update(float t)
         {
-            CreateMainPlayerAvatarShapeFromSDKComponentQuery(World);
             CreateAvatarShapeFromSDKComponentQuery(World);
             UpdateMainPlayerAvatarFromSDKComponentQuery(World);
             UpdateAvatarFromSDKComponentQuery(World);
@@ -56,26 +55,6 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                 pbAvatarShape.GetSkinColor().ToUnityColor(),
                 pbAvatarShape.GetHairColor().ToUnityColor(),
                 pbAvatarShape.GetEyeColor().ToUnityColor()));
-        }
-
-        [Query]
-        [All(typeof(PlayerComponent))]
-        [None(typeof(AvatarShapeComponent), typeof(Profile))]
-        private void CreateMainPlayerAvatarShapeFromSDKComponent(in Entity entity, ref PBAvatarShape pbAvatarShape, ref PartitionComponent partition)
-        {
-            pbAvatarShape.IsDirty = false;
-
-            WearablePromise wearablePromise = CreateWearablePromise(pbAvatarShape, partition);
-
-            var avatarShapeComponent = new AvatarShapeComponent(pbAvatarShape.Name, pbAvatarShape.Id, pbAvatarShape, wearablePromise,
-                pbAvatarShape.GetSkinColor().ToUnityColor(),
-                pbAvatarShape.GetHairColor().ToUnityColor(),
-                pbAvatarShape.GetEyeColor().ToUnityColor());
-
-            // No lazy load for main player. Get all emotes, so it can play them accordingly without undesired delays
-            avatarShapeComponent.EmotePromise = CreateEmotePromise(pbAvatarShape, partition);
-
-            World.Add(entity, avatarShapeComponent);
         }
 
         [Query]
