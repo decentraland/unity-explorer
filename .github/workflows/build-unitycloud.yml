@@ -237,6 +237,7 @@ jobs:
         run: tar --exclude='build/Decentraland_BackUpThisFolder_ButDontShipItWithYourGame' -cvf build.tar build
           
       - name: Upload artifact for macOS
+        id: upload-artifact
         if: matrix.target == 'macos'
         uses: actions/upload-artifact@v4
         with:
@@ -245,6 +246,7 @@ jobs:
           if-no-files-found: error
 
       - name: Upload artifact for Windows
+        id: upload-artifact
         if: matrix.target == 'windows64'
         uses: actions/upload-artifact@v4
         with:
@@ -258,12 +260,13 @@ jobs:
       - name: Upload artifact to S3
         uses: shallwefootball/s3-upload-action@master
         id: upload-artifact-s3
+        needs: upload-artifact
         with:
-          aws_key_id: ${{ secrets.SDK_TEAM_AWS_ID }}
-          aws_secret_access_key: ${{ secrets.SDK_TEAM_AWS_SECRET }}
-          aws_bucket: ${{ secrets.SDK_TEAM_S3_BUCKET }}
+          aws_key_id: ${{ secrets.EXPLORER_TEAM_AWS_ID }}
+          aws_secret_access_key: ${{ secrets.EXPLORER_TEAM_AWS_SECRET }}
+          aws_bucket: ${{ secrets.EXPLORER_TEAM_S3_BUCKET }}
           source_dir: 'Decentraland_${{ matrix.target }}.zip'
-          destination_dir: ${{ inputs.tag_version != '' && format('releases/{0}', inputs.tag_version) || format('branch/{0}', github.head_ref || github.ref_name) }}
+          destination_dir: ${{ inputs.tag_version != '' && format('@dcl/unity-explorer/releases/{0}', inputs.tag_version) || format('@dcl/unity-explorer/branch/{0}', github.head_ref || github.ref_name) }}
 
       - name: Upload debug symbols
         uses: actions/upload-artifact@v4
