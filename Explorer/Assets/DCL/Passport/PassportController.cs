@@ -278,6 +278,7 @@ namespace DCL.Passport
             LoadPassportSectionAsync(currentUserId, PassportSection.OVERVIEW, characterPreviewLoadingCts.Token).Forget();
             currentSection = PassportSection.OVERVIEW;
             viewInstance.BadgeInfoModuleView.gameObject.SetActive(false);
+            characterPreviewController?.OnShow();
         }
 
         private void OpenBadgesSection(string? badgeIdSelected = null)
@@ -297,6 +298,7 @@ namespace DCL.Passport
             LoadPassportSectionAsync(currentUserId, PassportSection.BADGES, characterPreviewLoadingCts.Token, badgeIdSelected).Forget();
             currentSection = PassportSection.BADGES;
             viewInstance.BadgeInfoModuleView.gameObject.SetActive(true);
+            characterPreviewController?.OnHide(triggerOnHideBusEvent: false);
         }
 
         private void OnBadgeNotificationReceived(INotification notification) =>

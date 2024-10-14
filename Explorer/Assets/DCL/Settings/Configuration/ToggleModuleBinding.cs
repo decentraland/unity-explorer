@@ -28,7 +28,8 @@ namespace DCL.Settings.Configuration
             AudioMixer generalAudioMixer,
             QualitySettingsAsset qualitySettingsAsset,
             ControlsSettingsAsset controlsSettingsAsset,
-            ISystemMemoryCap systemMemoryCap)
+            ISystemMemoryCap systemMemoryCap,
+            WorldVolumeMacBus worldVolumeMacBus = null)
         {
             var viewInstance = UnityEngine.Object.Instantiate(View, parent);
             viewInstance.Configure(Config);
