@@ -35,7 +35,6 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         protected override void Update(float t)
         {
             CreateAvatarShapeFromSDKComponentQuery(World);
-            UpdateMainPlayerAvatarFromSDKComponentQuery(World);
             UpdateAvatarFromSDKComponentQuery(World);
             CreateMainPlayerAvatarShapeFromProfileQuery(World);
             CreateAvatarShapeFromProfileQuery(World);
@@ -44,7 +43,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         }
 
         [Query]
-        [None(typeof(PlayerComponent), typeof(AvatarShapeComponent), typeof(Profile))]
+        [None(typeof(AvatarShapeComponent), typeof(Profile))]
         private void CreateAvatarShapeFromSDKComponent(in Entity entity, ref PBAvatarShape pbAvatarShape, ref PartitionComponent partition)
         {
             pbAvatarShape.IsDirty = false;
@@ -101,23 +100,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         }
 
         [Query]
-        [All(typeof(PlayerComponent))]
-        [None(typeof(Profile), typeof(DeleteEntityIntention))]
-        private void UpdateMainPlayerAvatarFromSDKComponent(ref PBAvatarShape pbAvatarShape, ref AvatarShapeComponent avatarShapeComponent, ref PartitionComponent partition)
-        {
-            if (!pbAvatarShape.IsDirty) return;
-
-            UpdateAvatarFromSDKComponent(ref pbAvatarShape, ref avatarShapeComponent, ref partition);
-
-            if (avatarShapeComponent.EmotePromise is { IsConsumed: false })
-                avatarShapeComponent.EmotePromise.Value.ForgetLoading(World);
-
-            // No lazy load for main player. Get all emotes, so it can play them accordingly without undesired delays
-            avatarShapeComponent.EmotePromise = CreateEmotePromise(pbAvatarShape, partition);
-        }
-
-        [Query]
-        [None(typeof(PBAvatarShape), typeof(DeleteEntityIntention))]
+        [None(typeof(PlayerComponent), typeof(PBAvatarShape), typeof(DeleteEntityIntention))]
         private void UpdateAvatarFromProfile(ref Profile profile, ref AvatarShapeComponent avatarShapeComponent, ref PartitionComponent partition)
         {
             if (!profile.IsDirty)
