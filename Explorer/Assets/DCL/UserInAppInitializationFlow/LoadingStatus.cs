@@ -7,12 +7,13 @@ namespace DCL.UserInAppInitializationFlow
 {
     public class LoadingStatus : ILoadingStatus
     {
-        public ReactiveProperty<Stage> CurrentCompletedStage { get; } = new (Stage.Init);
-        public ElementBinding<string> CurrentCompletedStageBinding { get;  } = new (string.Empty);
+        public ReactiveProperty<CompletedStage> CurrentCompletedStage { get; } = new (CompletedStage.Init);
+        public ElementBinding<string> CurrentStageBinding { get;  } = new (string.Empty);
         public ElementBinding<string> CurrentAssetsToLoad { get; } = new (string.Empty);
         public ElementBinding<string> CurrentAssetsLoaded { get; } = new (string.Empty);
 
-        public enum Stage : byte
+
+        public enum CompletedStage : byte
         {
             Init = 0,
             AuthenticationScreenShown = 1,
@@ -33,27 +34,41 @@ namespace DCL.UserInAppInitializationFlow
             Completed = 12,
         }
 
-        public static readonly Dictionary<Stage, float> PROGRESS = new (EnumUtils.GetEqualityComparer<Stage>())
+        public static readonly Dictionary<CompletedStage, float> PROGRESS = new (EnumUtils.GetEqualityComparer<CompletedStage>())
         {
-            [Stage.Init] = 0f,
-            [Stage.AuthenticationScreenShown] = 0.05f,
-            [Stage.LiveKitConnectionEnsured] = 0.1f,
-            [Stage.FeatureFlagInitialized] = 0.15f,
-            [Stage.ProfileLoaded] = 0.2f,
-            [Stage.EnvironmentMiscSet] = 0.25f,
-            [Stage.PlayerAvatarLoaded] = 0.4f,
-            [Stage.LandscapeLoaded] = 0.7f,
-            [Stage.OnboardingChecked] = 0.80f,
-            [Stage.RealmRestarted] = 0.85f,
-            [Stage.PlayerTeleported] = 0.95f,
-            [Stage.GlobalPXsLoaded] = 0.99f,
-            [Stage.Completed] = 1f,
+            [CompletedStage.Init] = 0f, [CompletedStage.AuthenticationScreenShown] = 0.05f, [CompletedStage.LiveKitConnectionEnsured] = 0.1f, [CompletedStage.FeatureFlagInitialized] = 0.15f,
+            [CompletedStage.ProfileLoaded] = 0.2f, [CompletedStage.EnvironmentMiscSet] = 0.25f, [CompletedStage.PlayerAvatarLoaded] = 0.4f, [CompletedStage.LandscapeLoaded] = 0.7f,
+            [CompletedStage.OnboardingChecked] = 0.80f, [CompletedStage.RealmRestarted] = 0.85f, [CompletedStage.PlayerTeleported] = 0.95f, [CompletedStage.GlobalPXsLoaded] = 0.99f,
+            [CompletedStage.Completed] = 1f
         };
 
 
-        public float SetCompletedStage(Stage stage)
+        public enum CurrentStage : byte
         {
-            CurrentCompletedStageBinding.Value = stage.ToString();
+            Init,
+            LivekitStopping,
+            RealmChanging,
+            LandscapeLoading,
+            SceneLoading,
+            LivekitRestarting,
+            ProfileLoading,
+            OnboardingChecking,
+            EnsuringLiveKitConnection,
+            FeatureFlagInitializing,
+            GlobalPXsLoading,
+            PlayerAvatarLoading,
+            EnvironmentMiscSetting,
+            Done
+        }
+
+
+        public void SetCurrentStage(CurrentStage stage)
+        {
+            CurrentStageBinding.Value = stage.ToString();
+        }
+
+        public float SetCompletedStage(CompletedStage stage)
+        {
             CurrentCompletedStage.Value = stage;
             return PROGRESS[stage];
         }

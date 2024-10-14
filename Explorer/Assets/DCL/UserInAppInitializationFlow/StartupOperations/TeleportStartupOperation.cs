@@ -23,8 +23,9 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
         public async UniTask<Result> ExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
         {
             AsyncLoadProcessReport teleportLoadReport
-                = report.CreateChildReport(LoadingStatus.PROGRESS[LoadingStatus.Stage.PlayerTeleported]);
+                = report.CreateChildReport(LoadingStatus.PROGRESS[LoadingStatus.CompletedStage.PlayerTeleported]);
 
+            loadingStatus.SetCurrentStage(LoadingStatus.CurrentStage.SceneLoading);
             await realmNavigator.InitializeTeleportToSpawnPointAsync(teleportLoadReport, ct, startParcel);
             return Result.SuccessResult();
         }

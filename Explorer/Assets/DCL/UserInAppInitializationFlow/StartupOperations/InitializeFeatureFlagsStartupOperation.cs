@@ -30,12 +30,12 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
 
         public async UniTask<Result> ExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
         {
+            loadingStatus.SetCurrentStage(LoadingStatus.CurrentStage.FeatureFlagInitializing);
             // Re-initialize feature flags since the user might have changed thus the data to be resolved
             try { await featureFlagsProvider.InitializeAsync(decentralandUrlsSource, web3IdentityCache.Identity?.Address, appParameters, ct); }
             catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, new ReportData(ReportCategory.FEATURE_FLAGS)); }
 
-            report.SetProgress(loadingStatus.SetCompletedStage(LoadingStatus.Stage.FeatureFlagInitialized));
-
+            report.SetProgress(loadingStatus.SetCompletedStage(LoadingStatus.CompletedStage.FeatureFlagInitialized));
             return Result.SuccessResult();
         }
     }

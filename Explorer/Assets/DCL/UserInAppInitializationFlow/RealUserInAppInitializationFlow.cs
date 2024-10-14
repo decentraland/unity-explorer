@@ -96,7 +96,8 @@ namespace DCL.UserInAppInitializationFlow
 
         public async UniTask ExecuteAsync(UserInAppInitializationFlowParameters parameters, CancellationToken ct)
         {
-            loadingStatus.SetCompletedStage(LoadingStatus.Stage.Init);
+            loadingStatus.SetCurrentStage(LoadingStatus.CurrentStage.Init);
+            loadingStatus.SetCompletedStage(LoadingStatus.CompletedStage.Init);
 
             Result result = default;
 
@@ -109,7 +110,7 @@ namespace DCL.UserInAppInitializationFlow
             {
                 if (parameters.ShowAuthentication)
                 {
-                    loadingStatus.SetCompletedStage(LoadingStatus.Stage.AuthenticationScreenShown);
+                    loadingStatus.SetCompletedStage(LoadingStatus.CompletedStage.AuthenticationScreenShown);
                     await ShowAuthenticationScreenAsync(ct);
                 }
 
@@ -128,7 +129,7 @@ namespace DCL.UserInAppInitializationFlow
                                 result = await startupOperation.ExecuteAsync(parentLoadReport, ct);
 
                                 if (result.Success)
-                                    parentLoadReport.SetProgress(loadingStatus.SetCompletedStage(LoadingStatus.Stage.Completed));
+                                    parentLoadReport.SetProgress(loadingStatus.SetCompletedStage(LoadingStatus.CompletedStage.Completed));
 
                                 return result;
                             },
@@ -146,6 +147,7 @@ namespace DCL.UserInAppInitializationFlow
             while (result.Success == false && parameters.ShowAuthentication);
 
             await checkOnboardingStartupOperation.MarkOnboardingAsDoneAsync(parameters.World, parameters.PlayerEntity, ct);
+            loadingStatus.SetCurrentStage(LoadingStatus.CurrentStage.Done);
         }
 
         private static void ApplyErrorIfLoadingScreenError(ref Result result, Result showResult)

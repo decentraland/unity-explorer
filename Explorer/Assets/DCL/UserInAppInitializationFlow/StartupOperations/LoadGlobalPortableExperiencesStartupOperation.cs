@@ -44,9 +44,9 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
 
         public async UniTask<Result> ExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
         {
+            loadingStatus.SetCurrentStage(LoadingStatus.CurrentStage.GlobalPXsLoading);
             await CheckGlobalPxLoadingConditionsAsync(ct);
-
-            report.SetProgress(loadingStatus.SetCompletedStage(LoadingStatus.Stage.GlobalPXsLoaded));
+            report.SetProgress(loadingStatus.SetCompletedStage(LoadingStatus.CompletedStage.GlobalPXsLoaded));
             return Result.SuccessResult();
         }
 

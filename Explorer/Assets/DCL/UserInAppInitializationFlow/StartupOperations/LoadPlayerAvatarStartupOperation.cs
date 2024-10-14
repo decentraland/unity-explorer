@@ -36,6 +36,7 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
 
         public async UniTask<Result> ExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
         {
+            loadingStatus.SetCurrentStage(LoadingStatus.CurrentStage.PlayerAvatarLoading);
             var profile = await selfProfile.ProfileOrPublishIfNotAsync(ct);
 
             // Add the profile into the player entity so it will create the avatar in world
@@ -49,7 +50,7 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
             // if the avatar is already downloaded by the authentication screen it will be resolved immediately
             await UniTask.WaitWhile(() => !mainPlayerAvatarBaseProxy.Configured && world.IsAlive(playerEntity), PlayerLoopTiming.LastPostLateUpdate, ct);
 
-            report.SetProgress(loadingStatus.SetCompletedStage(LoadingStatus.Stage.PlayerAvatarLoaded));
+            report.SetProgress(loadingStatus.SetCompletedStage(LoadingStatus.CompletedStage.PlayerAvatarLoaded));
             return Result.SuccessResult();
         }
     }

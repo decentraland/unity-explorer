@@ -20,10 +20,10 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
         public async UniTask<Result> ExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
         {
             AsyncLoadProcessReport landscapeLoadReport
-                = report.CreateChildReport(LoadingStatus.PROGRESS[LoadingStatus.Stage.LandscapeLoaded]);
-
+                = report.CreateChildReport(LoadingStatus.PROGRESS[LoadingStatus.CompletedStage.LandscapeLoaded]);
+            loadingStatus.SetCurrentStage(LoadingStatus.CurrentStage.LandscapeLoading);
             await realmNavigator.LoadTerrainAsync(landscapeLoadReport, ct);
-            report.SetProgress(loadingStatus.SetCompletedStage(LoadingStatus.Stage.LandscapeLoaded));
+            report.SetProgress(loadingStatus.SetCompletedStage(LoadingStatus.CompletedStage.LandscapeLoaded));
             return Result.SuccessResult();
         }
     }

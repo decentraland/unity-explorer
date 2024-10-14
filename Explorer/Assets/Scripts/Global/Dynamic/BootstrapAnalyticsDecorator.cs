@@ -146,7 +146,7 @@ namespace Global.Dynamic
             });
         }
 
-        private void OnLoadingStageChanged(LoadingStatus.Stage stage)
+        private void OnLoadingStageChanged(LoadingStatus.CompletedStage stage)
         {
             analytics.Track(General.INITIAL_LOADING, new JsonObject
             {

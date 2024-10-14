@@ -31,7 +31,7 @@ using UnityEngine.Assertions;
 using UnityEngine.Networking;
 using Utility;
 using Utility.Types;
-using static DCL.UserInAppInitializationFlow.LoadingStatus.Stage;
+using static DCL.UserInAppInitializationFlow.LoadingStatus.CompletedStage;
 
 namespace Global.Dynamic
 {
@@ -59,7 +59,7 @@ namespace Global.Dynamic
 
         private readonly ITeleportOperation[] realmChangeOperations;
         private readonly ITeleportOperation[] teleportInSameRealmOperation;
-        private readonly ILoadingStatus realFlowLoadingStatus;
+        private readonly ILoadingStatus loadingStatus;
 
         public event Action<bool>? RealmChanged;
 
@@ -79,7 +79,7 @@ namespace Global.Dynamic
             bool landscapeEnabled,
             ObjectProxy<Entity> cameraEntity,
             CameraSamplingData cameraSamplingData,
-            ILoadingStatus realFlowLoadingStatus)
+            ILoadingStatus loadingStatus)
         {
             this.loadingScreen = loadingScreen;
             this.mapRenderer = mapRenderer;
@@ -94,7 +94,7 @@ namespace Global.Dynamic
             this.cameraSamplingData = cameraSamplingData;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.globalWorld = globalWorld;
-            this.realFlowLoadingStatus = realFlowLoadingStatus;
+            this.loadingStatus = loadingStatus;
 
             var livekitTimeout = TimeSpan.FromSeconds(10f);
 
@@ -109,12 +109,12 @@ namespace Global.Dynamic
                 new LoadLandscapeTeleportOperation(this),
                 new PrewarmRoadAssetPoolsTeleportOperation(realmController, roadsPlugin),
                 new MoveToParcelInNewRealmTeleportOperation(this),
-                new RestartRoomAsyncTeleportOperation(roomHub, livekitTimeout),
+                new RestartRoomAsyncTeleportOperation(roomHub, livekitTimeout), new CompleteLoadingStatus()
             };
 
             teleportInSameRealmOperation = new ITeleportOperation[]
             {
-                new RestartLoadingStatus(), new MoveToParcelInSameRealmTeleportOperation(this)
+                new RestartLoadingStatus(), new MoveToParcelInSameRealmTeleportOperation(this), new CompleteLoadingStatus()
             };
 
         }
@@ -169,8 +169,7 @@ namespace Global.Dynamic
                 var teleportParams = new TeleportParams
                 {
                     CurrentDestinationParcel = parcelToTeleport,
-                    CurrentDestinationRealm = realm,
-                    ParentReport = parentLoadReport, RealFlowLoadingStatus = realFlowLoadingStatus
+                    CurrentDestinationRealm = realm, ParentReport = parentLoadReport, LoadingStatus = loadingStatus
                 };
 
                 for (int attempt = 0; attempt < MAX_REALM_CHANGE_RETRIES; attempt++)
@@ -293,8 +292,7 @@ namespace Global.Dynamic
 
                 var teleportParams = new TeleportParams
                 {
-                    ParentReport = parentLoadReport,
-                    CurrentDestinationParcel = parcel, RealFlowLoadingStatus = realFlowLoadingStatus
+                    ParentReport = parentLoadReport, CurrentDestinationParcel = parcel, LoadingStatus = loadingStatus
                 };
                 foreach (var realmChangeOperation in teleportInSameRealmOperation)
                 {
