@@ -22,7 +22,6 @@ using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.CompilerServices;
 using Utility;
 using AssetBundleManifestPromise = ECS.StreamableLoading.Common.AssetPromise<SceneRunner.Scene.SceneAssetBundleManifest, DCL.AvatarRendering.Wearables.Components.GetWearableAssetBundleManifestIntention>;
@@ -266,8 +265,18 @@ namespace DCL.AvatarRendering.Wearables.Systems
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static bool AllAssetsAreLoaded(IWearable wearable, BodyShape bodyShape) =>
-            wearable.WearableAssetResults[bodyShape].Results.All(static r => r is { IsInitialized: true });
+        private static bool AllAssetsAreLoaded(IWearable wearable, BodyShape bodyShape)
+        {
+            for (var i = 0; i < wearable.WearableAssetResults[bodyShape].Results.Length; i++)
+            {
+                StreamableLoadingResult<AttachmentAssetBase>? r = wearable.WearableAssetResults[bodyShape].Results[i];
+
+                if (r is not { IsInitialized: true })
+                    return false;
+            }
+
+            return true;
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool AnyAssetHasFailed(IWearable wearable, BodyShape bodyShape) =>
