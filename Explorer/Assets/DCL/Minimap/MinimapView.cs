@@ -47,6 +47,9 @@ namespace DCL.Minimap
         internal RectTransform sdk6Label { get; private set; }
 
         [field: SerializeField]
+        internal RectTransform sceneRestrictionsIcon { get; private set; }
+
+        [field: SerializeField]
         internal RectTransform minimapContainer { get; private set; }
 
         [field: SerializeField]
