@@ -2,10 +2,12 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using DCL.Diagnostics;
+using DCL.ECSComponents;
 using DCL.SDKComponents.TextShape.Component;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.Unity.Groups;
+using ECS.Unity.Visibility;
 using ECS.Unity.Visibility.Systems;
 
 namespace DCL.SDKComponents.TextShape.System
@@ -20,21 +22,36 @@ namespace DCL.SDKComponents.TextShape.System
         protected override void Update(float t)
         {
             base.Update(t);
-            UpdateVisibilityDependingOnSceneBoundariesQuery(World);
+            UpdateVisibilityDependingOnSceneBoundariesOnlyQuery(World);
+            UpdateVisibilityDependingOnSceneBoundariesAndVisibilityComponentQuery(World);
         }
 
         protected override void UpdateVisibilityInternal(in TextShapeComponent component, bool visible)
         {
-            component.TextMeshPro.enabled = visible;
+            component.TextMeshPro.enabled = visible && component.IsContainedInScene;
         }
 
         /// <summary>
-        /// Enables or disables all TextMeshPro labels depending on whether they are fully inside their scenes or not.
+        /// Enables or disables all TextMeshPro labels with Visibility component, depending on whether they are fully inside their scenes or not,
+        /// and whether the Visibility component was originally visible or not.
+        /// </summary>
+        /// <param name="textShape">The text shape whose TextMeshPro will be modified.</param>
+        /// <param name="visibilityComponent">The component that stores whether the text should be visible or not.</param>
+        [Query]
+        [All(typeof(TextShapeComponent), typeof(PBVisibilityComponent))]
+        private void UpdateVisibilityDependingOnSceneBoundariesAndVisibilityComponent(ref TextShapeComponent textShape, PBVisibilityComponent visibilityComponent)
+        {
+            textShape.TextMeshPro.enabled = visibilityComponent.GetVisible() && textShape.IsContainedInScene;
+        }
+
+        /// <summary>
+        /// Enables or disables all TextMeshPro labels without Visibility component, depending on whether they are fully inside their scenes or not.
         /// </summary>
         /// <param name="textShape">The text shape whose TextMeshPro will be modified.</param>
         [Query]
         [All(typeof(TextShapeComponent))]
-        private void UpdateVisibilityDependingOnSceneBoundaries(ref TextShapeComponent textShape)
+        [None(typeof(PBVisibilityComponent))]
+        private void UpdateVisibilityDependingOnSceneBoundariesOnly(ref TextShapeComponent textShape)
         {
             textShape.TextMeshPro.enabled = textShape.IsContainedInScene;
         }
