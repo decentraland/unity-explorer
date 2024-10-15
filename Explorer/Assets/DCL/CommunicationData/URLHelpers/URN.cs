@@ -41,9 +41,13 @@ namespace CommunicationData.URLHelpers
         public bool IsValid() =>
             !IsNullOrEmpty() && originalUrn.StartsWith("urn");
 
-        public bool Equals(URN other) =>
-            hash == other.hash && // "fail fast" check
-            lowercaseUrn == other.lowercaseUrn; // check to avoid false positives from hash collisions
+        public bool Equals(URN other)
+        {
+            if (hash != other.hash) return false;
+            if (ReferenceEquals(this.lowercaseUrn, other.lowercaseUrn)) return true;
+
+            return lowercaseUrn == other.lowercaseUrn;
+        }
 
         public override bool Equals(object obj) =>
             obj is URN other && Equals(other);
