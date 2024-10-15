@@ -41,7 +41,8 @@ namespace ECS.StreamableLoading.GLTF
                 logger: gltfConsoleLogger,
                 materialGenerator: gltfMaterialGenerator);
 
-            AnimationMethod animationMethod = intention.MecanimAnimationClips ? AnimationMethod.Mecanim : AnimationMethod.Legacy;
+            //AnimationMethod animationMethod = intention.MecanimAnimationClips ? AnimationMethod.Mecanim : AnimationMethod.Legacy;
+            AnimationMethod animationMethod =AnimationMethod.Mecanim;
 
             var gltFastSettings = new ImportSettings
             {
@@ -53,6 +54,11 @@ namespace ECS.StreamableLoading.GLTF
 
             bool success = await gltfImport.Load(intention.Name, gltFastSettings, ct);
             gltfDownloadProvider.Dispose();
+
+            // foreach (AnimationClip clip in gltfImport.GetAnimationClips())
+            // {
+            //     clip.legacy = !intention.MecanimAnimationClips;
+            // }
 
             if (success)
             {
