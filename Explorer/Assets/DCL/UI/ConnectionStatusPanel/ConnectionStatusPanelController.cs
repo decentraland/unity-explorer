@@ -59,6 +59,9 @@ namespace DCL.UI.ConnectionStatusPanel
             Bind(roomsStatus.ConnectionQualityIsland, viewInstance.GlobalRoom);
         }
 
+        public void SetVisibility(bool isVisible) =>
+            viewInstance?.gameObject.SetActive(isVisible);
+
         private void SceneStatusOnUpdate(ICurrentSceneInfo.Status? obj)
         {
             const float DELAY = 5f;

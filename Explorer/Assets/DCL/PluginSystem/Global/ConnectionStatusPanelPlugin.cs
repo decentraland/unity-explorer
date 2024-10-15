@@ -22,6 +22,7 @@ namespace DCL.PluginSystem.Global
         private readonly ECSReloadScene ecsReloadScene;
         private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
+        private ConnectionStatusPanelController connectionStatusPanelController;
 
         public ConnectionStatusPanelPlugin(
             IUserInAppInitializationFlow userInAppInitializationFlow,
@@ -48,24 +49,26 @@ namespace DCL.PluginSystem.Global
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
 
+        public void SetVisibility(bool visibility) =>
+            connectionStatusPanelController?.SetVisibility(visibility);
+
         public async UniTask InitializeAsync(ConnectionStatusPanelSettings settings, CancellationToken ct)
         {
-            mvcManager.RegisterController(
-                new ConnectionStatusPanelController(() =>
-                    {
-                        var view = mainUIView.ConnectionStatusPanelView;
-                        view!.gameObject.SetActive(true);
-                        return view;
-                    },
-                    userInAppInitializationFlow,
-                    mvcManager,
-                    currentSceneInfo,
-                    ecsReloadScene,
-                    roomsStatus,
-                    world,
-                    playerEntity
-                )
+            connectionStatusPanelController = new ConnectionStatusPanelController(() =>
+                {
+                    var view = mainUIView.ConnectionStatusPanelView;
+                    view!.gameObject.SetActive(true);
+                    return view;
+                },
+                userInAppInitializationFlow,
+                mvcManager,
+                currentSceneInfo,
+                ecsReloadScene,
+                roomsStatus,
+                world,
+                playerEntity
             );
+            mvcManager.RegisterController(connectionStatusPanelController);
         }
 
         public class ConnectionStatusPanelSettings : IDCLPluginSettings { }
