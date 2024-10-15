@@ -23,8 +23,7 @@ namespace ECS.Prioritization
         
         public int MaxLoadingDistanceInParcels
         {
-            get => Math.Min(MinLoadingDistanceInParcels,
-                Math.Min(maxLoadingDistanceInParcels, ParcelMathJobifiedHelper.RADIUS_HARD_LIMIT));
+            get => maxLoadingDistanceInParcels;
 
             set
             {
