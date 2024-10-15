@@ -237,7 +237,7 @@ namespace DCL.Notifications.NotificationsMenu
             Sprite? thumbnailSprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height),
                 VectorUtilities.OneHalf, PIXELS_PER_UNIT, 0, SpriteMeshType.FullRect, Vector4.one, false);
             //Try add has been added in case it happens that BE returns duplicated notifications id
-            //In that case we will just use the same thumbnail for each notification with the same if
+            //In that case we will just use the same thumbnail for each notification with the same id
             notificationThumbnailCache.TryAdd(notificationData.Id, thumbnailSprite);
             notificationView.NotificationImage.SetImage(thumbnailSprite);
         }
