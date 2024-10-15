@@ -20,6 +20,7 @@ using AssetBundleManifestPromise = ECS.StreamableLoading.Common.AssetPromise<Sce
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 using GltfPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.GLTF.GLTFData, ECS.StreamableLoading.GLTF.GetGLTFIntention>;
 using AudioPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AudioClips.AudioClipData, ECS.StreamableLoading.AudioClips.GetAudioClipIntention>;
+using EmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution, DCL.AvatarRendering.Emotes.GetEmotesByPointersIntention>;
 using EmotesFromRealmPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesDTOList, DCL.AvatarRendering.Emotes.GetEmotesByPointersFromRealmIntention>;
 
 namespace DCL.AvatarRendering.Emotes
@@ -39,6 +40,7 @@ namespace DCL.AvatarRendering.Emotes
             FinalizeAssetBundleLoadingQuery(World);
             FinalizeGltfLoadingQuery(World);
             FinalizeAudioClipPromiseQuery(World);
+            ConsumeAndDisposeFinishedEmotePromiseQuery(World);
         }
 
         [Query]
@@ -165,6 +167,17 @@ namespace DCL.AvatarRendering.Emotes
                 emote.AudioAssetResults[bodyShape] = result;
 
             World!.Destroy(entity);
+        }
+
+        [Query]
+        private void ConsumeAndDisposeFinishedEmotePromise(in Entity entity, ref EmotePromise promise)
+        {
+            // The result is added into the emote storage at FinalizeEmoteDTO already, no need to do anything else
+            if (!promise.SafeTryConsume(World, GetReportData(), out StreamableLoadingResult<EmotesResolution> result)) return;
+
+            promise.LoadingIntention.Dispose();
+
+            World.Destroy(entity);
         }
 
         private static void ResetEmoteResultOnCancellation(IEmote emote, BodyShape bodyShape)
