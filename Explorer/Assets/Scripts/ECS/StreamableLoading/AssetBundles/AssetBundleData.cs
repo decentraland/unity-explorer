@@ -22,8 +22,10 @@ namespace ECS.StreamableLoading.AssetBundles
 
         public readonly AssetBundleMetrics? Metrics;
 
-        private readonly string version;
-        private readonly string source;
+        private readonly string description;
+
+
+        public bool unloaded;
 
         public AssetBundleData(AssetBundle assetBundle, AssetBundleMetrics? metrics, Object mainAsset, Type assetType, AssetBundleData[] dependencies, string version = "", string source = "")
             : base(assetBundle, ReportCategory.ASSET_BUNDLES)
@@ -33,8 +35,18 @@ namespace ECS.StreamableLoading.AssetBundles
             this.mainAsset = mainAsset;
             Dependencies = dependencies;
             this.assetType = assetType;
-            this.version = version;
-            this.source = source;
+
+            if (mainAsset != null)
+            {
+                description = $"AB:{AssetBundle.name}_{version}_{source}";
+                ForceUnload();
+
+                foreach (AssetBundleData child in Dependencies)
+                {
+                    if(!child.unloaded && !child.Asset.name.Contains("ignore"))
+                        child.ForceUnload();
+                }
+            }
         }
 
         public AssetBundleData(AssetBundle assetBundle, AssetBundleMetrics? metrics, AssetBundleData[] dependencies) : base(assetBundle, ReportCategory.ASSET_BUNDLES)
@@ -63,6 +75,9 @@ namespace ECS.StreamableLoading.AssetBundles
             //When DestroyObject is invoked, it will do nothing.
             //When cache in cleaned, the AssetBundleData will be removed from the list. Its there doing nothing
             //Also, this allows dependencies (the shader) to stay in the cache since we dont dereference it
+            if (unloaded)
+                return;
+            unloaded = true;
             AssetBundle.UnloadAsync(false);
         }
         
@@ -83,11 +98,10 @@ namespace ECS.StreamableLoading.AssetBundles
 
             if (assetType != typeof(T))
                 throw new ArgumentException("Asset type mismatch: " + typeof(T) + " != " + assetType);
-
             return (T)mainAsset!;
         }
 
-        public string GetInstanceName() =>
-            $"AB:{AssetBundle.name}_{version}_{source}";
+        public string GetInstanceName() => description;
+            
     }
 }
