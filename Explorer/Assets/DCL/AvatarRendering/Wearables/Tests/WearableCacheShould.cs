@@ -1,5 +1,6 @@
 ﻿using DCL.AvatarRendering.Loading.Assets;
-using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.Optimization.Pools;
+using NSubstitute;
 using NUnit.Framework;
 using System.Collections.Generic;
 using UnityEngine;
@@ -9,11 +10,13 @@ namespace DCL.AvatarRendering.Wearables.Tests
     public class WearableCacheShould
     {
         private AttachmentsAssetsCache cache;
+        private IComponentPoolsRegistry poolsRegistry;
 
         [SetUp]
         public void SetUp()
         {
-            cache = new AttachmentsAssetsCache(100);
+            poolsRegistry = Substitute.For<IComponentPoolsRegistry>();
+            cache = new AttachmentsAssetsCache(100, poolsRegistry);
         }
 
         [TearDown]
