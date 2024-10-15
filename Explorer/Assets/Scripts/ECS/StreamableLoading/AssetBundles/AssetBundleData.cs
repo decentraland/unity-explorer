@@ -16,7 +16,7 @@ namespace ECS.StreamableLoading.AssetBundles
         private readonly Object? mainAsset;
         private readonly Type? assetType;
 
-        public AssetBundle AssetBundle => Asset;
+        internal AssetBundle AssetBundle => Asset;
 
         public readonly AssetBundleData[] Dependencies;
 
@@ -55,6 +55,17 @@ namespace ECS.StreamableLoading.AssetBundles
 
         protected override ref ProfilerCounterValue<int> referencedCount => ref ProfilingCounters.ABReferencedAmount;
 
+        
+        public void ForceUnload()
+        {
+            //We immediately unload the asset bundle, as we don't need it anymore.
+            //Very hacky, because the asset will remain in cache as AssetBundle == null
+            //When DestroyObject is invoked, it will do nothing.
+            //When cache in cleaned, the AssetBundleData will be removed from the list. Its there doing nothing
+            //Also, this allows dependencies (the shader) to stay in the cache since we dont dereference it
+            AssetBundle.UnloadAsync(false);
+        }
+        
         protected override void DestroyObject()
         {
             if (AssetBundle != null)

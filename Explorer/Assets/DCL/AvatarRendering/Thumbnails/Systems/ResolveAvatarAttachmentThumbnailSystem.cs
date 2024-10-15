@@ -37,7 +37,7 @@ namespace DCL.AvatarRendering.Thumbnails.Systems
             if (promise.TryConsume(World, out var result))
             {
                 wearable.ThumbnailAssetResult = result.ToFullRectSpriteData(LoadThumbnailsUtils.DEFAULT_THUMBNAIL);
-
+                result.Asset!.ForceUnload();
                 World.Destroy(entity);
             }
         }
