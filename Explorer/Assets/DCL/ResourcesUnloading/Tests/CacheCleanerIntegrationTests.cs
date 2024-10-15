@@ -42,6 +42,7 @@ namespace DCL.ResourcesUnloading.Tests
         private IEmoteStorage emoteStorage;
         private IProfileCache profileCache;
         private ProfileIntentionCache profileIntentionCache;
+        private IComponentPoolsRegistry poolsRegistry;
 
         private AssetBundleCache assetBundleCache;
 
@@ -51,12 +52,13 @@ namespace DCL.ResourcesUnloading.Tests
         public void SetUp()
         {
             releasablePerformanceBudget = Substitute.For<IReleasablePerformanceBudget>();
+            poolsRegistry = Substitute.For<IComponentPoolsRegistry>();
 
             texturesCache = new TexturesCache();
             audioClipsCache = new AudioClipsCache();
             assetBundleCache = new AssetBundleCache();
-            gltfContainerAssetsCache = new GltfContainerAssetsCache();
-            attachmentsAssetsCache = new AttachmentsAssetsCache(100);
+            gltfContainerAssetsCache = new GltfContainerAssetsCache(poolsRegistry);
+            attachmentsAssetsCache = new AttachmentsAssetsCache(100, poolsRegistry);
             wearableStorage = new WearableStorage();
             lodAssets = new LODCache(new GameObjectPool<LODGroup>(new GameObject().transform));
             roadAssets = new RoadAssetsPool(new List<GameObject>());
