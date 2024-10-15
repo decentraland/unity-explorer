@@ -236,7 +236,7 @@ namespace DCL.Notifications.NotificationsMenu
                 ReportCategory.UI);
             Sprite? thumbnailSprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height),
                 VectorUtilities.OneHalf, PIXELS_PER_UNIT, 0, SpriteMeshType.FullRect, Vector4.one, false);
-            notificationThumbnailCache.Add(notificationData.Id, thumbnailSprite);
+            notificationThumbnailCache.TryAdd(notificationData.Id, thumbnailSprite);
             notificationView.NotificationImage.SetImage(thumbnailSprite);
         }
 
