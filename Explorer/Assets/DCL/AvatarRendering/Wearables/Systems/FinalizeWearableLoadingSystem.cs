@@ -268,12 +268,8 @@ namespace DCL.AvatarRendering.Wearables.Systems
         private static bool AllAssetsAreLoaded(IWearable wearable, BodyShape bodyShape)
         {
             for (var i = 0; i < wearable.WearableAssetResults[bodyShape].Results.Length; i++)
-            {
-                StreamableLoadingResult<AttachmentAssetBase>? r = wearable.WearableAssetResults[bodyShape].Results[i];
-
-                if (r is not { IsInitialized: true })
+                if (wearable.WearableAssetResults[bodyShape].Results[i] is not { IsInitialized: true })
                     return false;
-            }
 
             return true;
         }
