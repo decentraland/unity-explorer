@@ -42,7 +42,7 @@ namespace ECS.StreamableLoading.GLTF
                 materialGenerator: gltfMaterialGenerator);
 
             //AnimationMethod animationMethod = intention.MecanimAnimationClips ? AnimationMethod.Mecanim : AnimationMethod.Legacy;
-            AnimationMethod animationMethod =AnimationMethod.Mecanim;
+            AnimationMethod animationMethod =AnimationMethod.Legacy;
 
             var gltFastSettings = new ImportSettings
             {
