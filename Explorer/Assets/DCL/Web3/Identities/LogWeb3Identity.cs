@@ -10,14 +10,10 @@ namespace DCL.Web3.Identities
     public class LogWeb3Identity : IWeb3Identity
     {
         private readonly IWeb3Identity origin;
-        private readonly Action<string> log;
 
-        public LogWeb3Identity(IWeb3Identity origin) : this(origin, ReportHub.WithReport(ReportCategory.PROFILE).Log) { }
-
-        public LogWeb3Identity(IWeb3Identity origin, Action<string> log)
+        public LogWeb3Identity(IWeb3Identity origin)
         {
             this.origin = origin;
-            this.log = log;
         }
 
         public void Dispose()
@@ -29,7 +25,9 @@ namespace DCL.Web3.Identities
         {
             get
             {
-                log($"Web3Identity Address requested: {origin.Address}");
+                ReportHub
+                    .WithReport(ReportCategory.PROFILE)
+                    .Log($"Web3Identity Address requested: {origin.Address}");
                 return origin.Address;
             }
         }
@@ -38,18 +36,22 @@ namespace DCL.Web3.Identities
         {
             get
             {
-                log($"Web3Identity Expiration requested: {origin.Expiration}");
+                ReportHub
+                    .WithReport(ReportCategory.PROFILE)
+                    .Log($"Web3Identity Expiration requested: {origin.Expiration}");
                 return origin.Expiration;
             }
         }
 
-        public IWeb3Account EphemeralAccount => new LogWeb3Account(origin.EphemeralAccount, log);
+        public IWeb3Account EphemeralAccount => new LogWeb3Account(origin.EphemeralAccount);
 
         public bool IsExpired
         {
             get
             {
-                log($"Web3Identity IsExpired requested: {origin.IsExpired}");
+                ReportHub
+                    .WithReport(ReportCategory.PROFILE)
+                    .Log($"Web3Identity IsExpired requested: {origin.IsExpired}");
                 return origin.IsExpired;
             }
         }
@@ -58,16 +60,22 @@ namespace DCL.Web3.Identities
         {
             get
             {
-                log($"Web3Identity AuthChain requested: {origin.AuthChain}");
+                ReportHub
+                    .WithReport(ReportCategory.PROFILE)
+                    .Log($"Web3Identity AuthChain requested: {origin.AuthChain}");
                 return origin.AuthChain;
             }
         }
 
         public AuthChain Sign(string entityId)
         {
-            log($"Web3Identity Sign requested: entity {entityId}");
+            ReportHub
+                .WithReport(ReportCategory.PROFILE)
+                .Log($"Web3Identity Sign requested: entity {entityId}");
             var result = origin.Sign(entityId);
-            log($"Web3Identity Sign result: {result} for entity {entityId}");
+            ReportHub
+                .WithReport(ReportCategory.PROFILE)
+                .Log($"Web3Identity Sign result: {result} for entity {entityId}");
             return result;
         }
     }

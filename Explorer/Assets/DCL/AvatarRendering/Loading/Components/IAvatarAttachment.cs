@@ -1,9 +1,9 @@
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Loading.DTO;
 using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.Textures;
 using SceneRunner.Scene;
 using System.Linq;
-using UnityEngine;
 
 namespace DCL.AvatarRendering.Loading.Components
 {
@@ -18,7 +18,10 @@ namespace DCL.AvatarRendering.Loading.Components
         /// </summary>
         StreamableLoadingResult<SceneAssetBundleManifest>? ManifestResult { get; set; }
 
-        StreamableLoadingResult<Sprite>? ThumbnailAssetResult { get; set; }
+        /// <summary>
+        ///     If null - promise has never been created, otherwise it could contain the result or be un-initialized
+        /// </summary>
+        StreamableLoadingResult<SpriteData>.WithFallback? ThumbnailAssetResult { get; set; }
 
         AvatarAttachmentDTO DTO { get; }
 
@@ -26,7 +29,7 @@ namespace DCL.AvatarRendering.Loading.Components
             $"AvatarAttachment({DTO.GetHash()} | {this.GetUrn()})";
     }
 
-    public partial interface IAvatarAttachment<TModelDTO> : IAvatarAttachment
+    public interface IAvatarAttachment<TModelDTO> : IAvatarAttachment
     {
         StreamableLoadingResult<TModelDTO> Model { get; set; }
 
@@ -103,13 +106,13 @@ namespace DCL.AvatarRendering.Loading.Components
 
         public static bool TryGetMainFileHash(this IAvatarAttachment avatarAttachment, BodyShape bodyShape, out string? hash)
         {
-            AvatarAttachmentDTO wearableDTO = avatarAttachment.DTO;
+            AvatarAttachmentDTO dto = avatarAttachment.DTO;
 
             // The length of arrays is small, so O(N) complexity is fine
             // Avoid iterator allocations with "for" loop
-            for (var i = 0; i < wearableDTO.Metadata.AbstractData.representations.Length; i++)
+            for (var i = 0; i < dto.Metadata.AbstractData.representations.Length; i++)
             {
-                var representation = wearableDTO.Metadata.AbstractData.representations[i];
+                var representation = dto.Metadata.AbstractData.representations[i];
 
                 if (representation.bodyShapes.Contains(bodyShape))
                     return avatarAttachment.TryGetContentHashByKey(representation.mainFile, out hash);

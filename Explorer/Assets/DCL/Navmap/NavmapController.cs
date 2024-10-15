@@ -88,7 +88,7 @@ namespace DCL.Navmap
             filterController = new NavmapFilterController(this.navmapView.filterView, mapRenderer, webBrowser);
             searchBarController = new NavmapSearchBarController(navmapView.SearchBarView, navmapView.SearchBarResultPanel, navmapView.HistoryRecordPanelView, placesAPIService, navmapView.floatingPanelView, webRequestController, inputBlock);
             FloatingPanelController = new FloatingPanelController(navmapView.floatingPanelView, placesAPIService,
-                webRequestController, realmNavigator, mapPathEventBus, chatMessagesBus);
+                webRequestController, mapPathEventBus, chatMessagesBus, zoomController);
             FloatingPanelController.OnJumpIn += _ => searchBarController.ResetSearch();
             FloatingPanelController.OnSetAsDestination += SetDestination;
             this.navmapView.DestinationInfoElement.QuitButton.onClick.AddListener(OnRemoveDestinationButtonClicked);

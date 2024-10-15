@@ -5,7 +5,6 @@ using DCL.MapRenderer.MapLayers.Pins;
 using DCL.PlacesAPIService;
 using DCL.UI;
 using DCL.WebRequests;
-using ECS.SceneLifeCycle.Realm;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -18,11 +17,11 @@ namespace DCL.Navmap
 {
     public class FloatingPanelController : IDisposable
     {
+        private const string ORIGIN = "jump in";
         private static readonly Vector2Int DEFAULT_DESTINATION_PARCEL = new (-9999, 9999);
 
         private readonly FloatingPanelView view;
         private readonly IPlacesAPIService placesAPIService;
-        private readonly IRealmNavigator realmNavigator;
         private readonly Dictionary<string, GameObject> categoriesDictionary;
 
         private readonly ImageController placeImageController;
@@ -36,6 +35,8 @@ namespace DCL.Navmap
         private Vector2Int destination = DEFAULT_DESTINATION_PARCEL;
         private PlacesData.PlaceInfo currentParcelPlaceInfo;
 
+        private NavmapZoomController zoomController;
+
         public event Action<Vector2Int> OnJumpIn;
         public event Action<PlacesData.PlaceInfo?> OnSetAsDestination;
         private readonly IChatMessagesBus chatMessagesBus;
@@ -45,14 +46,14 @@ namespace DCL.Navmap
             FloatingPanelView view,
             IPlacesAPIService placesAPIService,
             IWebRequestController webRequestController,
-            IRealmNavigator realmNavigator,
-            IMapPathEventBus mapPathEventBus, IChatMessagesBus chatMessagesBus)
+            IMapPathEventBus mapPathEventBus, IChatMessagesBus chatMessagesBus,
+            NavmapZoomController zoomController)
         {
             this.view = view;
             this.placesAPIService = placesAPIService;
-            this.realmNavigator = realmNavigator;
             this.mapPathEventBus = mapPathEventBus;
             this.chatMessagesBus = chatMessagesBus;
+            this.zoomController = zoomController;
 
             view.closeButton.onClick.AddListener(HidePanel);
             view.mapPinCloseButton.onClick.AddListener(HidePanel);
@@ -68,13 +69,25 @@ namespace DCL.Navmap
             ResetCategories();
             InitButtons();
             this.mapPathEventBus.OnRemovedDestination += RemoveDestination;
+
+            view.onPointerEnterAction += NavmapBlockZoom;
+            view.onPointerExitAction += NavmapUnblockZoom;
         }
+
+        private void NavmapBlockZoom() =>
+            zoomController.SetBlockZoom(true);
+
+        private void NavmapUnblockZoom() =>
+            zoomController.SetBlockZoom(false);
 
         public void Dispose()
         {
             likeButtonController.OnButtonClicked -= OnLike;
             dislikeButtonController.OnButtonClicked -= OnDislike;
             favoriteButtonController.OnButtonClicked -= OnFavorite;
+
+            view.onPointerEnterAction -= NavmapBlockZoom;
+            view.onPointerExitAction -= NavmapUnblockZoom;
         }
 
         private void InitButtons()
@@ -198,14 +211,15 @@ namespace DCL.Navmap
             view.removeMapPinDestinationButton.gameObject.SetActive(parcelIsDestination);
             view.removeDestinationButton.gameObject.SetActive(parcelIsDestination);
         }
-        
+
         private void JumpIn(Vector2Int parcel)
         {
             OnJumpIn?.Invoke(parcel);
 
-            if (destination == parcel) { mapPathEventBus.ArrivedToDestination(); }
+            if (destination == parcel)
+                mapPathEventBus.ArrivedToDestination();
 
-            chatMessagesBus.Send($"/{ChatCommandsUtils.COMMAND_GOTO} {parcel.x},{parcel.y}");
+            chatMessagesBus.Send($"/{ChatCommandsUtils.COMMAND_GOTO} {parcel.x},{parcel.y}", ORIGIN);
         }
 
         private void SetEmptyParcelInfo(Vector2Int parcel)

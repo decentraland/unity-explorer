@@ -109,11 +109,11 @@ namespace DCL.Character.Plugin
         {
             private readonly byte bucketPropagationLimit;
             private readonly IExposedCameraData exposedCameraData;
-            private readonly ExposedTransform exposedTransform;
+            private readonly IExposedTransform exposedTransform;
             private readonly IComponentPool<SDKTransform> sdkTransformPool;
             private readonly IComponentPool<PBMainCamera> mainCameraPool;
 
-            public WorldPlugin(ExposedTransform exposedTransform, IExposedCameraData exposedCameraData,
+            public WorldPlugin(IExposedTransform exposedTransform, IExposedCameraData exposedCameraData,
                 IComponentPoolsRegistry componentPoolsRegistry, byte bucketPropagationLimit)
             {
                 this.exposedTransform = exposedTransform;

@@ -1,5 +1,4 @@
 using Arch.Core;
-using CommunicationData.URLHelpers;
 using CRDT;
 using CrdtEcsBridge.Components;
 using Cysharp.Threading.Tasks;
@@ -8,21 +7,17 @@ using DCL.Audio;
 using DCL.AuthenticationScreenFlow;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
-using DCL.FeatureFlags;
 using DCL.Input.Component;
-using DCL.Multiplayer.Movement.Systems;
+using DCL.Optimization.PerformanceBudgeting;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using Global.AppArgs;
-using LiveKit.Proto;
-using PortableExperiences.Controller;
 using MVC;
 using SceneRunner.Debugging;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using UnityEngine;
@@ -30,84 +25,6 @@ using UnityEngine.UIElements;
 
 namespace Global.Dynamic
 {
-    public interface IDebugSettings
-    {
-        string[]? PortableExperiencesEnsToLoad { get; }
-        string[]? EmotesToAddToUserProfile { get; }
-        bool ShowSplash { get; }
-        bool ShowAuthentication { get; }
-        bool ShowLoading { get; }
-        bool EnableLandscape { get; }
-        bool EnableLOD { get; }
-        bool EnableVersionUpdateGuard { get; }
-        bool EnableEmulateNoLivekitConnection { get; }
-        bool OverrideConnectionQuality { get; }
-        ConnectionQuality ConnectionQuality { get; }
-        bool EnableRemotePortableExperiences { get; }
-    }
-
-    [Serializable]
-    public class DebugSettings : IDebugSettings
-    {
-        private static readonly DebugSettings RELEASE_SETTINGS = Release();
-
-        [SerializeField]
-        private bool showSplash;
-        [SerializeField]
-        private bool showAuthentication;
-        [SerializeField]
-        private bool showLoading;
-        [SerializeField]
-        private bool enableLandscape;
-        [SerializeField]
-        private bool enableLOD;
-        [SerializeField] private bool enableVersionUpdateGuard;
-        [SerializeField]
-        private bool enableEmulateNoLivekitConnection;
-        [SerializeField] [Tooltip("Enable Portable Experiences obtained from Feature Flags from loading at the start of the game")]
-        private bool enableRemotePortableExperiences;
-        [SerializeField] [Tooltip("Make sure the ENS put here will be loaded as a GlobalPX (format must be something.dcl.eth)")]
-        internal string[]? portableExperiencesEnsToLoad;
-        [SerializeField]
-        internal string[]? emotesToAddToUserProfile;
-        [Space]
-        [SerializeField]
-        private bool overrideConnectionQuality;
-        [SerializeField]
-        private ConnectionQuality connectionQuality;
-
-        public static DebugSettings Release() =>
-            new ()
-            {
-                showSplash = true,
-                showAuthentication = true,
-                showLoading = true,
-                enableLandscape = true,
-                enableLOD = true,
-                enableVersionUpdateGuard = true,
-                portableExperiencesEnsToLoad = null,
-                enableEmulateNoLivekitConnection = false,
-                overrideConnectionQuality = false,
-                connectionQuality = ConnectionQuality.QualityExcellent,
-                enableRemotePortableExperiences = true,
-                emotesToAddToUserProfile = null,
-            };
-
-        // To avoid configuration issues, force full flow on build (Debug.isDebugBuild is always true in Editor)
-        public string[]? EmotesToAddToUserProfile => Debug.isDebugBuild ? this.emotesToAddToUserProfile : RELEASE_SETTINGS.emotesToAddToUserProfile;
-        public string[]? PortableExperiencesEnsToLoad => Debug.isDebugBuild ? this.portableExperiencesEnsToLoad : RELEASE_SETTINGS.portableExperiencesEnsToLoad;
-        public bool EnableRemotePortableExperiences => Debug.isDebugBuild ? this.enableRemotePortableExperiences : RELEASE_SETTINGS.enableRemotePortableExperiences;
-        public bool ShowSplash => Debug.isDebugBuild ? this.showSplash : RELEASE_SETTINGS.showSplash;
-        public bool ShowAuthentication => Debug.isDebugBuild ? this.showAuthentication : RELEASE_SETTINGS.showAuthentication;
-        public bool ShowLoading => Debug.isDebugBuild ? this.showLoading : RELEASE_SETTINGS.showLoading;
-        public bool EnableLandscape => Debug.isDebugBuild ? this.enableLandscape : RELEASE_SETTINGS.enableLandscape;
-        public bool EnableLOD => Debug.isDebugBuild ? this.enableLOD : RELEASE_SETTINGS.enableLOD;
-        public bool EnableVersionUpdateGuard => Debug.isDebugBuild ? this.enableVersionUpdateGuard : RELEASE_SETTINGS.enableVersionUpdateGuard;
-        public bool EnableEmulateNoLivekitConnection => Debug.isDebugBuild ? this.enableEmulateNoLivekitConnection : RELEASE_SETTINGS.enableEmulateNoLivekitConnection;
-        public bool OverrideConnectionQuality => Debug.isDebugBuild ? this.overrideConnectionQuality : RELEASE_SETTINGS.overrideConnectionQuality;
-        public ConnectionQuality ConnectionQuality => Debug.isDebugBuild ? this.connectionQuality : RELEASE_SETTINGS.connectionQuality;
-    }
-
     public class MainSceneLoader : MonoBehaviour
     {
         [Header("Startup Config")] [SerializeField]
@@ -117,7 +34,7 @@ namespace Global.Dynamic
         [SerializeField] private DebugViewsCatalog debugViewsCatalog = new ();
 
         [Space]
-        [SerializeField] private DebugSettings debugSettings = new ();
+        [SerializeField] private DebugSettings.DebugSettings debugSettings = new ();
 
         [Header("References")]
         [SerializeField] private PluginSettingsContainer globalPluginSettingsContainer = null!;
@@ -129,6 +46,7 @@ namespace Global.Dynamic
         [SerializeField] private DynamicSettings dynamicSettings = null!;
         [SerializeField] private GameObject splashRoot = null!;
         [SerializeField] private Animator splashScreenAnimation = null!;
+        [SerializeField] private Animator logoAnimation = null!;
         [SerializeField] private AudioClipConfig backgroundMusic = null!;
         [SerializeField] private WorldInfoTool worldInfoTool = null!;
 
@@ -172,6 +90,7 @@ namespace Global.Dynamic
         private async UniTask InitializeFlowAsync(CancellationToken ct)
         {
             var applicationParametersParser = new ApplicationParametersParser(Environment.GetCommandLineArgs());
+            ISystemMemoryCap memoryCap = new SystemMemoryCap(MemoryCapMode.MAX_SYSTEM_MEMORY); // we use max memory on the loading screen
 
             settings.ApplyConfig(applicationParametersParser);
             launchSettings.ApplyConfig(applicationParametersParser);
@@ -189,12 +108,11 @@ namespace Global.Dynamic
             try
             {
                 var splashScreen = new SplashScreen(splashScreenAnimation, splashRoot, debugSettings.ShowSplash);
-
                 bootstrap.PreInitializeSetup(cursorRoot, debugUiRoot, splashScreen, destroyCancellationToken);
 
                 bool isLoaded;
                 Entity playerEntity = world.Create(new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY));
-                (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugViewsCatalog, playerEntity, ct);
+                (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugViewsCatalog, playerEntity, memoryCap, ct);
 
                 if (!isLoaded)
                 {
@@ -234,10 +152,12 @@ namespace Global.Dynamic
 
                 await bootstrap.UserInitializationAsync(dynamicWorldContainer!, globalWorld, playerEntity, splashScreen, ct);
 
-                LoadDebugPortableExperiences(ct);
+                //This is done in order to release the memory usage of the splash screen logo animation sprites
+                //The logo is used only at first launch, so we can safely release it after the game is loaded
+                logoAnimation.StopPlayback();
+                logoAnimation.runtimeAnimatorController = null;
 
-                LoadRemotePortableExperiences(ct);
-
+                memoryCap.Mode = MemoryCapMode.FROM_SETTINGS;
                 RestoreInputs();
             }
             catch (OperationCanceledException)
@@ -249,34 +169,6 @@ namespace Global.Dynamic
                 // unhandled exception
                 GameReports.PrintIsDead();
                 throw;
-            }
-        }
-
-        private void LoadRemotePortableExperiences(CancellationToken ct)
-        {
-            if (!debugSettings.EnableRemotePortableExperiences) return;
-
-            if (staticContainer!.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.GLOBAL_PORTABLE_EXPERIENCE, FeatureFlagsStrings.CSV_VARIANT))
-            {
-                if (!staticContainer.FeatureFlagsCache.Configuration.TryGetCsvPayload(FeatureFlagsStrings.GLOBAL_PORTABLE_EXPERIENCE, "csv-variant", out List<List<string>>? csv)) return;
-
-                if (csv?[0] == null) return;
-
-                foreach (string value in csv[0]) { staticContainer.PortableExperiencesController!.
-                                                                   CreatePortableExperienceByEnsAsync(new ENS(value), ct, true, true).
-                                                                   SuppressAnyExceptionWithFallback(new IPortableExperiencesController.SpawnResponse(), ReportCategory.PORTABLE_EXPERIENCE).Forget(); }
-            }
-        }
-
-        private void LoadDebugPortableExperiences(CancellationToken ct)
-        {
-            if (debugSettings.portableExperiencesEnsToLoad == null) return;
-
-            foreach (string pxEns in debugSettings.portableExperiencesEnsToLoad)
-            {
-                staticContainer!.PortableExperiencesController.
-                                 CreatePortableExperienceByEnsAsync(new ENS(pxEns), ct, true, true).
-                                 SuppressAnyExceptionWithFallback(new IPortableExperiencesController.SpawnResponse(), ReportCategory.PORTABLE_EXPERIENCE).Forget();
             }
         }
 

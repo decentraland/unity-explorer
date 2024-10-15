@@ -14,7 +14,9 @@ namespace DCL.Multiplayer.Movement
 
             intComp.Time += deltaTime;
 
-            if (intComp.Time < intComp.TotalDuration)
+            bool isInstant = intComp.Time >= intComp.TotalDuration;
+
+            if (!isInstant)
             {
                 transComp.Transform.position = DoTransition(intComp.Start, intComp.End, intComp.Time, intComp.TotalDuration, intComp.SplineType);
                 Vector3 nextStep = DoTransition(intComp.Start, intComp.End, Mathf.Max(intComp.Time + lookAtTimeDelta, intComp.TotalDuration), intComp.TotalDuration, intComp.SplineType);
@@ -22,7 +24,7 @@ namespace DCL.Multiplayer.Movement
             }
             else
             {
-                remainedDeltaTime = intComp.Time - intComp.TotalDuration;
+                remainedDeltaTime = intComp.TotalDuration - intComp.Time;
                 intComp.Time = intComp.TotalDuration;
 
                 lookDirection = intComp.End.velocitySqrMagnitude > MIN_DIRECTION_SQR_MAGNITUDE ? intComp.End.velocity : intComp.End.position - transComp.Transform.position;
@@ -30,20 +32,30 @@ namespace DCL.Multiplayer.Movement
                 transComp.Transform.position = intComp.End.position;
             }
 
-            // Flattened to have ground plane direction only (XZ)
-            lookDirection.y = 0;
-
-            if (lookDirection != Vector3.zero)
-                LookAt(deltaTime, ref transComp, lookDirection, rotationSpeed, intComp.End.rotationY);
+            LookAt(deltaTime, ref transComp, lookDirection, rotationSpeed, intComp.End.rotationY, isInstant, intComp.UseMessageRotation);
 
             return remainedDeltaTime;
         }
 
-        private static void LookAt(float dt, ref CharacterTransform transComp, Vector3 direction, float rotationSpeed, float yRotation)
+        private static void LookAt(float dt, ref CharacterTransform transComp, Vector3 lookDirection, float rotationSpeed, float yRotation,
+            bool instant, bool useMessageRotation)
         {
-            var lookRotation = Quaternion.LookRotation(direction, Vector3.up);
-            lookRotation.eulerAngles = new Vector3(lookRotation.eulerAngles.x, yRotation, lookRotation.eulerAngles.z);
-            transComp.Transform.rotation = Quaternion.RotateTowards(transComp.Transform.rotation, lookRotation, rotationSpeed * dt);
+            Quaternion lookRotation;
+
+            if (lookDirection != Vector3.zero)
+            {
+                lookDirection.y = 0; // Flattened to have ground plane direction only (XZ)
+                lookRotation = Quaternion.LookRotation(lookDirection, Vector3.up);
+            }
+            else
+                lookRotation = transComp.Transform.rotation;
+
+            if (useMessageRotation)
+                lookRotation.eulerAngles = new Vector3(lookRotation.eulerAngles.x, yRotation, lookRotation.eulerAngles.z);
+
+            transComp.Transform.rotation = instant
+                ? Quaternion.Euler(lookRotation.eulerAngles)
+                : Quaternion.RotateTowards(transComp.Transform.rotation, lookRotation, rotationSpeed * dt);
         }
 
         private static Vector3 DoTransition(NetworkMovementMessage start, NetworkMovementMessage end, float time, float totalDuration, InterpolationType blendType)

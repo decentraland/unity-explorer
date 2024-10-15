@@ -34,6 +34,9 @@ namespace Global.Dynamic
         [SerializeField] internal string remoteHibridWorld = "MetadyneLabs.dcl.eth";
         [SerializeField] internal HybridSceneContentServer remoteHybridSceneContentServer = HybridSceneContentServer.Goerli;
         [SerializeField] internal bool useRemoteAssetsBundles = true;
+        [SerializeField] [Tooltip("In Worlds there is one LiveKit room for all scenes so it's possible to communicate changes outside of the scene. "
+                                  + "In Genesis City there are individual LiveKit rooms and only one connection at a time is maintained. "
+                                  + "Toggle this flag to equalize this behavior")] internal bool isolateSceneCommunication;
 
         [SerializeField] private string[] portableExperiencesEnsToLoadAtGameStart;
 
@@ -45,9 +48,14 @@ namespace Global.Dynamic
                                                     // so we can easily start local development from the editor without application args
                                                     || initialRealm == InitialRealm.Localhost;
 
-        public IReadOnlyList<int2> GetPredefinedParcels() => predefinedScenes.enabled
-            ? predefinedScenes.parcels.Select(p => new int2(p.x, p.y)).ToList()
-            : Array.Empty<int2>();
+        public IReadOnlyList<int2> GetPredefinedParcels()
+        {
+            if (predefinedScenes.enabled)
+                return predefinedScenes.parcels.Select(p => new int2(p.x, p.y)).ToList();
+
+            return IsLocalSceneDevelopmentRealm ? new List<int2>(){new int2(TargetScene.x, TargetScene.y)}
+                : Array.Empty<int2>();
+        }
 
         public HybridSceneParams CreateHybridSceneParams(Vector2Int startParcel)
         {

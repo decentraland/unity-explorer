@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.Multiplayer.Profiles.Poses;
 using DCL.Profiles;
 using JetBrains.Annotations;
 using LiveKit.Rooms.Participants;
@@ -20,11 +21,13 @@ namespace SceneRuntime.Apis.Modules.Players
         private readonly IRoomHub roomHub;
         private readonly IProfileRepository profileRepository;
         private readonly CancellationTokenSource cancellationTokenSource = new ();
+        private readonly IRemoteMetadata remoteMetadata;
 
-        public PlayersWrap(IRoomHub roomHub, IProfileRepository profileRepository)
+        public PlayersWrap(IRoomHub roomHub, IProfileRepository profileRepository, IRemoteMetadata remoteMetadata)
         {
             this.roomHub = roomHub;
             this.profileRepository = profileRepository;
+            this.remoteMetadata = remoteMetadata;
         }
 
         [UsedImplicitly]
@@ -32,7 +35,7 @@ namespace SceneRuntime.Apis.Modules.Players
         {
             async UniTask<PlayersGetUserDataResponse> ExecuteAsync()
             {
-                var profile = await profileRepository.GetAsync(walletId, 0, cancellationTokenSource.Token);
+                Profile? profile = await profileRepository.GetAsync(walletId, 0, remoteMetadata.GetLambdaDomainOrNull(walletId), cancellationTokenSource.Token);
                 return new PlayersGetUserDataResponse(profile, walletId);
             }
 
@@ -45,7 +48,7 @@ namespace SceneRuntime.Apis.Modules.Players
 
         [UsedImplicitly]
         public object PlayersInScene() =>
-            new PlayerListResponse(roomHub.SceneRoom().Participants);
+            new PlayerListResponse(roomHub.SceneRoom().Room().Participants);
 
         public void Dispose()
         {

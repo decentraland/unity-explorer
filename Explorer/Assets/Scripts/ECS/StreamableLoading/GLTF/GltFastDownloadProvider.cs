@@ -1,5 +1,6 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
+using DCL.Optimization.PerformanceBudgeting;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
@@ -12,35 +13,54 @@ using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Networking;
-using Promise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.Texture2D, ECS.StreamableLoading.Textures.GetTextureIntention>;
+using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.Texture2DData, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
 namespace ECS.StreamableLoading.GLTF
 {
     internal class GltFastDownloadProvider : IDownloadProvider, IDisposable
     {
-        public string TargetGltfOriginalPath = string.Empty;
+        private const int ATTEMPTS_COUNT = 6;
 
+        private string targetGltfOriginalPath;
+        private string targetGltfDirectoryPath;
         private ISceneData sceneData;
         private World world;
         private IPartitionComponent partitionComponent;
-        private const int ATTEMPTS_COUNT = 6;
+        private readonly IAcquiredBudget acquiredBudget;
 
-        public GltFastDownloadProvider(World world, ISceneData sceneData, IPartitionComponent partitionComponent)
+        public GltFastDownloadProvider(World world, ISceneData sceneData, IPartitionComponent partitionComponent, string targetGltfOriginalPath, IAcquiredBudget acquiredBudget)
         {
             this.world = world;
             this.sceneData = sceneData;
             this.partitionComponent = partitionComponent;
+            this.targetGltfOriginalPath = targetGltfOriginalPath;
+            this.acquiredBudget = acquiredBudget;
+            targetGltfDirectoryPath = targetGltfOriginalPath.Remove(targetGltfOriginalPath.LastIndexOf('/') + 1);
         }
 
+        // RequestAsync is used for fetching the GLTF file itself + some external textures. Whenever this
+        // method's request of the base GLTF is finished, the propagated budget for assets loading must be released.
         public async Task<IDownload> RequestAsync(Uri uri)
         {
+            bool isBaseGltfFetch = uri.OriginalString.Equals(targetGltfOriginalPath);
+            string originalFilePath = string.Concat(targetGltfDirectoryPath, GetFileNameFromUri(uri));
+
+            if (!sceneData.SceneContent.TryGetContentUrl(originalFilePath, out var tryGetContentUrlResult))
+            {
+                if (isBaseGltfFetch) acquiredBudget.Release();
+                throw new Exception($"Error on GLTF download ({targetGltfOriginalPath} - {uri}): NOT FOUND");
+            }
+
+            uri = new Uri(tryGetContentUrlResult);
+
             // TODO: Replace for WebRequestController (Planned in PR #1670)
             using (UnityWebRequest webRequest = new UnityWebRequest(uri))
             {
                 webRequest.downloadHandler = new DownloadHandlerBuffer();
 
                 try { await webRequest.SendWebRequest().WithCancellation(new CancellationToken()); }
-                catch { throw new Exception($"Error on GLTF download: {webRequest.downloadHandler.error}"); }
+                catch { throw new Exception($"Error on GLTF download ({targetGltfOriginalPath} - {uri}): {webRequest.downloadHandler.error} - {webRequest.downloadHandler.text}"); }
+                finally { if (isBaseGltfFetch) acquiredBudget.Release(); }
 
                 return new GltfDownloadResult
                 {
@@ -54,9 +74,7 @@ namespace ECS.StreamableLoading.GLTF
 
         public async Task<ITextureDownload> RequestTextureAsync(Uri uri, bool nonReadable, bool forceLinear)
         {
-            string textureFileName = uri.OriginalString.Substring(uri.OriginalString.LastIndexOf('/')+1);
-            string textureOriginalPath = string.Concat(TargetGltfOriginalPath.Remove(TargetGltfOriginalPath.LastIndexOf('/') + 1), textureFileName);
-
+            string textureOriginalPath = string.Concat(targetGltfDirectoryPath, GetFileNameFromUri(uri));
             sceneData.SceneContent.TryGetContentUrl(textureOriginalPath, out var tryGetContentUrlResult);
 
             var texturePromise = Promise.Create(world, new GetTextureIntention
@@ -79,6 +97,14 @@ namespace ECS.StreamableLoading.GLTF
 
         public void Dispose()
         {
+            acquiredBudget.Release();
+        }
+
+        private string GetFileNameFromUri(Uri uri)
+        {
+            // On windows the URI may come with some invalid '\' in parts of the path
+            string patchedUri = uri.OriginalString.Replace('\\', '/');
+            return patchedUri.Substring(patchedUri.LastIndexOf('/') + 1);
         }
     }
 

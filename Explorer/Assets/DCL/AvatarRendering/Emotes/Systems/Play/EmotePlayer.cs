@@ -42,7 +42,12 @@ namespace DCL.AvatarRendering.Emotes.Play
                 Stop(emoteInUse);
 
             if (!pools.ContainsKey(mainAsset))
-                pools.Add(mainAsset, new GameObjectPool<EmoteReferences>(poolRoot, () => CreateNewEmoteReference(mainAsset), onRelease: releaseEmoteReferences));
+            {
+                if (IsValid(mainAsset))
+                    pools.Add(mainAsset, new GameObjectPool<EmoteReferences>(poolRoot, () => CreateNewEmoteReference(mainAsset), onRelease: releaseEmoteReferences));
+                else
+                    return false;
+            }
 
             EmoteReferences? emoteReferences = pools[mainAsset]!.Get();
             if (!emoteReferences) return false;
@@ -95,6 +100,9 @@ namespace DCL.AvatarRendering.Emotes.Play
             return true;
         }
 
+        private static bool IsValid(GameObject mainAsset) =>
+            mainAsset.GetComponent<Animator>();
+
         private static EmoteReferences CreateNewEmoteReference(GameObject mainAsset)
         {
             GameObject mainGameObject = Object.Instantiate(mainAsset)!;
@@ -143,6 +151,7 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             // some of our legacy emotes have unity events that we are not handling, so we disable that system to avoid further errors
             animator.fireEvents = false;
+
             return references;
         }
 

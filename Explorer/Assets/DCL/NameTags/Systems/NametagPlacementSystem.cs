@@ -13,6 +13,7 @@ using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using System.Runtime.CompilerServices;
+using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using UnityEngine;
 using UnityEngine.Pool;
 #if UNITY_EDITOR
@@ -63,6 +64,7 @@ namespace DCL.Nametags
                 return;
             }
 
+            EnableTagQuery(World);
             RemoveTagQuery(World);
 
             CameraComponent camera = playerCamera.GetCameraComponent(World);
@@ -71,6 +73,7 @@ namespace DCL.Nametags
             AddTagQuery(World, camera);
             ProcessChatBubbleComponentsQuery(World);
             UpdateOwnTagQuery(World, camera);
+            RemoveUnusedChatBubbleComponentsQuery(World);
         }
 
         [Query]
@@ -90,6 +93,16 @@ namespace DCL.Nametags
             UpdateTagPosition(nametagView, camera.Camera, characterTransform.Position);
 
             World.Add(e, nametagView);
+        }
+
+        [Query]
+        [All(typeof(AvatarBase), typeof(NametagView))]
+        private void EnableTag(in NametagView nametagView)
+        {
+            if (nametagView.isActiveAndEnabled)
+                return;
+
+            nametagView.gameObject.SetActive(true);
         }
 
         [Query]
@@ -114,6 +127,15 @@ namespace DCL.Nametags
             if (nametagsData.showChatBubbles)
                 nametagView.SetChatMessage(chatBubbleComponent.ChatMessage);
 
+            World.Remove<ChatBubbleComponent>(e);
+        }
+
+
+        [Query]
+        [All(typeof(ChatBubbleComponent))]
+        //This query is used to remove the ChatBubbleComponent from the entity if the chat bubble has not been displayed
+        private void RemoveUnusedChatBubbleComponents(Entity e)
+        {
             World.Remove<ChatBubbleComponent>(e);
         }
 

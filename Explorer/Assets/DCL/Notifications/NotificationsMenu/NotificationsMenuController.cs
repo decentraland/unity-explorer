@@ -7,6 +7,8 @@ using DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
 using DCL.SidebarBus;
 using DCL.Utilities;
+using DCL.Web3;
+using DCL.Web3.Identities;
 using DCL.WebRequests;
 using SuperScrollView;
 using System;
@@ -20,6 +22,11 @@ namespace DCL.Notifications.NotificationsMenu
     public class NotificationsMenuController : IDisposable
     {
         private const int PIXELS_PER_UNIT = 50;
+        private const int IDENTITY_CHANGE_POLLING_INTERVAL = 5000;
+        private static readonly List<NotificationType> NOTIFICATION_TYPES_TO_IGNORE = new()
+            {
+                NotificationType.INTERNAL_ARRIVED_TO_DESTINATION
+            };
 
         private readonly NotificationsMenuView view;
         private readonly NotificationsRequestController notificationsRequestController;
@@ -31,9 +38,12 @@ namespace DCL.Notifications.NotificationsMenu
         private readonly Dictionary<string, Sprite> notificationThumbnailCache = new ();
         private readonly List<INotification> notifications = new ();
         private readonly CancellationTokenSource lifeCycleCts = new ();
+        private readonly IWeb3IdentityCache web3IdentityCache;
 
         private CancellationTokenSource? notificationThumbnailCts;
         private CancellationTokenSource? notificationPanelCts = new CancellationTokenSource();
+        private int unreadNotifications;
+        private Web3Address? previousWeb3Identity;
 
         public NotificationsMenuController(
             NotificationsMenuView view,
@@ -42,7 +52,8 @@ namespace DCL.Notifications.NotificationsMenu
             NotificationIconTypes notificationIconTypes,
             IWebRequestController webRequestController,
             ISidebarBus sidebarBus,
-            NftTypeIconSO rarityBackgroundMapping)
+            NftTypeIconSO rarityBackgroundMapping,
+            IWeb3IdentityCache web3IdentityCache)
         {
             notificationThumbnailCts = new CancellationTokenSource();
 
@@ -53,9 +64,12 @@ namespace DCL.Notifications.NotificationsMenu
             this.webRequestController = webRequestController;
             this.sidebarBus = sidebarBus;
             this.rarityBackgroundMapping = rarityBackgroundMapping;
+            this.web3IdentityCache = web3IdentityCache;
+            this.view.OnViewShown += OnViewShown;
             this.view.LoopList.InitListView(0, OnGetItemByIndex);
             this.view.CloseButton.onClick.AddListener(ClosePanel);
-            InitialNotificationRequestAsync(lifeCycleCts.Token).Forget();
+            this.previousWeb3Identity = web3IdentityCache.Identity?.Address;
+            CheckIdentityChangeAsync(lifeCycleCts.Token).Forget();
             notificationsBusController.SubscribeToAllNotificationTypesReceived(OnNotificationReceived);
         }
 
@@ -64,6 +78,8 @@ namespace DCL.Notifications.NotificationsMenu
             notificationThumbnailCts.SafeCancelAndDispose();
             notificationPanelCts.SafeCancelAndDispose();
             lifeCycleCts.SafeCancelAndDispose();
+            this.view.OnViewShown -= OnViewShown;
+            this.view.CloseButton.onClick.RemoveListener(ClosePanel);
         }
 
         private void ClosePanel()
@@ -87,14 +103,75 @@ namespace DCL.Notifications.NotificationsMenu
             }
         }
 
-        private async UniTaskVoid InitialNotificationRequestAsync(CancellationToken ct)
+        private void OnViewShown()
         {
+            if (unreadNotifications > 0)
+            {
+                view.LoopList.DoActionForEachShownItem((item2, param) =>
+                {
+                    NotificationView notificationView = item2!.GetComponent<NotificationView>();
+                    INotification notificationData = notificationView.Notification;
+
+                    ManageNotificationReadStatus(notificationData, true);
+
+                    notificationView.UnreadImage.SetActive(false);
+                }, null);
+
+                UpdateUnreadNotificationRender();
+            }
+        }
+
+        private async UniTaskVoid CheckIdentityChangeAsync(CancellationToken token)
+        {
+            if (previousWeb3Identity != null)
+                await InitialNotificationRequestAsync(token);
+
+            while (token.IsCancellationRequested == false)
+            {
+                if (previousWeb3Identity != web3IdentityCache.Identity?.Address && web3IdentityCache.Identity?.Address != null)
+                {
+                    previousWeb3Identity = web3IdentityCache.Identity?.Address;
+                    await InitialNotificationRequestAsync(lifeCycleCts.Token);
+                }
+                else
+                    await UniTask.Delay(IDENTITY_CHANGE_POLLING_INTERVAL, cancellationToken: token);
+            }
+        }
+
+        private async UniTask InitialNotificationRequestAsync(CancellationToken ct)
+        {
+            unreadNotifications = 0;
+            notifications.Clear();
+            view.LoopList.SetListItemCount(notifications.Count, false);
+
             List<INotification> requestNotifications = await notificationsRequestController.GetMostRecentNotificationsAsync(ct);
 
             foreach (INotification requestNotification in requestNotifications)
                 notifications.Add(requestNotification);
 
             view.LoopList.SetListItemCount(notifications.Count, false);
+
+            foreach (var notification in requestNotifications)
+                if (notification.Read == false)
+                    unreadNotifications++;
+
+            UpdateUnreadNotificationRender();
+        }
+
+        private void UpdateUnreadNotificationRender()
+        {
+            view.unreadNotificationCounterText.SetText("{0}", unreadNotifications);
+            view.notificationIndicator.SetActive(unreadNotifications > 0);
+        }
+
+        private void ManageNotificationReadStatus(INotification notificationData, bool isViewOpen)
+        {
+            if (notificationData.Read == false && isViewOpen)
+            {
+                unreadNotifications--;
+                notificationsRequestController.SetNotificationAsReadAsync(notificationData.Id, lifeCycleCts.Token).Forget();
+                notificationData.Read = true;
+            }
         }
 
         private LoopListViewItem2 OnGetItemByIndex(LoopListView2 loopListView, int index)
@@ -103,14 +180,15 @@ namespace DCL.Notifications.NotificationsMenu
             NotificationView notificationView = listItem!.GetComponent<NotificationView>();
             INotification notificationData = notifications[index];
 
+            ManageNotificationReadStatus(notificationData, view.gameObject.activeSelf);
+            UpdateUnreadNotificationRender();
+
             SetItemData(notificationView, notificationData);
 
             if (notificationThumbnailCache.TryGetValue(notificationData.Id, out Sprite thumbnailSprite))
                 notificationView.NotificationImage.SetImage(thumbnailSprite);
             else
-            {
                 LoadNotificationThumbnailAsync(notificationView, notificationData, notificationThumbnailCts.Token).Forget();
-            }
 
             return listItem;
         }
@@ -126,9 +204,9 @@ namespace DCL.Notifications.NotificationsMenu
             notificationView.UnreadImage.SetActive(!notificationData.Read);
             notificationView.TimeText.text = TimestampUtilities.GetRelativeTime(notificationData.Timestamp);
             notificationView.NotificationTypeImage.sprite = notificationIconTypes.GetNotificationIcon(notificationData.Type);
-            notificationsRequestController.SetNotificationAsReadAsync(notificationData.Id, lifeCycleCts.Token).Forget();
+
             ProcessCustomMetadata(notificationData, notificationView);
-            notificationData.Read = true;
+
             notificationView.NotificationClicked += ClickedNotification;
         }
 
@@ -158,12 +236,17 @@ namespace DCL.Notifications.NotificationsMenu
                 ReportCategory.UI);
             Sprite? thumbnailSprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height),
                 VectorUtilities.OneHalf, PIXELS_PER_UNIT, 0, SpriteMeshType.FullRect, Vector4.one, false);
-            notificationThumbnailCache.Add(notificationData.Id, thumbnailSprite);
+            //Try add has been added in case it happens that BE returns duplicated notifications id
+            //In that case we will just use the same thumbnail for each notification with the same id
+            notificationThumbnailCache.TryAdd(notificationData.Id, thumbnailSprite);
             notificationView.NotificationImage.SetImage(thumbnailSprite);
         }
 
         private void OnNotificationReceived(INotification notification)
         {
+            if(NOTIFICATION_TYPES_TO_IGNORE.Contains(notification.Type))
+                return;
+
             notifications.Insert(0, notification);
             view.LoopList.SetListItemCount(notifications.Count, false);
             view.LoopList.RefreshAllShownItem();

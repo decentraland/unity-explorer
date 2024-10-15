@@ -9,7 +9,7 @@ on:
       - ready_for_review
       - labeled
   merge_group: {}
-  push: { branches: [main] }
+  push: { branches: [dev] }
 
 env:
   UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
@@ -111,7 +111,7 @@ jobs:
             ${{ steps.testRunner.outputs.artifactsPath }}/editmode-results.xml
 
       - name: Report test results
-        uses: kuruk-mm/test-reporting@0.2
+        uses: decentraland/test-reporting@v0.3
         if: always()
         with:
           name: Report test results

@@ -38,9 +38,9 @@ namespace DCL.Chat.MessageBus
             MessageAdded?.Invoke(obj);
         }
 
-        public void Send(string message)
+        public void Send(string message, string origin)
         {
-            origin.Send(message);
+            this.origin.Send(message, origin);
             SendSelfAsync(message).Forget();
         }
 
@@ -54,7 +54,7 @@ namespace DCL.Chat.MessageBus
                 return;
             }
 
-            var profile = await profileRepository.GetAsync(identity.Address, 0, CancellationToken.None);
+            Profile? profile = await profileRepository.GetAsync(identity.Address, CancellationToken.None);
 
             MessageAdded?.Invoke(
                 new ChatMessage(

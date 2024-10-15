@@ -32,12 +32,14 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
 
         public ArchipelagoIslandRoom(ICharacterObject characterObject, IWeb3IdentityCache web3IdentityCache, IMultiPool multiPool, ICurrentAdapterAddress currentAdapterAddress) : this(
             web3IdentityCache,
+            // We cannot use ArrayPool<byte>.Shared since some operations might not be thread safe (like the handshake)
+            // producing unexpected errors when sending the data through the websocket
             new LiveConnectionArchipelagoSignFlow(
                 new WebSocketArchipelagoLiveConnection(
                     () => new ClientWebSocket(),
-                    new ArrayMemoryPool(ArrayPool<byte>.Shared!)
+                    new ArrayMemoryPool(ArrayPool<byte>.Create())
                 ).WithLog(),
-                new ArrayMemoryPool(ArrayPool<byte>.Shared!),
+                new ArrayMemoryPool(ArrayPool<byte>.Create()),
                 multiPool
             ).WithLog(),
             characterObject,
@@ -122,7 +124,8 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
             string ethereumAddress = identity.Address;
             var messageForSignResult = await signFlow.MessageForSignAsync(ethereumAddress, token);
 
-            if (messageForSignResult.Success == false)
+            if (messageForSignResult.Success == false ||
+                !HandshakePayloadIsValid(messageForSignResult.Result))
             {
                 ReportHub.LogError(ReportCategory.ARCHIPELAGO_REQUEST, $"Cannot obtain a message to sign a welcome peer");
                 return LightResult<string>.FAILURE;
@@ -131,6 +134,15 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
             string signedMessage = identity.Sign(messageForSignResult.Result).ToJson();
             ReportHub.Log(ReportCategory.ARCHIPELAGO_REQUEST, $"Signed message: {signedMessage}");
             return await signFlow.WelcomePeerIdAsync(signedMessage, token);
+        }
+
+        private bool HandshakePayloadIsValid(string payload)
+        {
+            if (!payload.StartsWith("dcl-"))
+                return false;
+
+            ReadOnlySpan<char> span = payload.AsSpan(4);
+            return span.IndexOf(':') == -1;
         }
     }
 }

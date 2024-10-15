@@ -17,7 +17,7 @@ namespace DCL.AvatarRendering.Emotes
         public IReadOnlyCollection<URN> Pointers => pointers;
 
         // TODO why so many allocations?
-        public HashSet<URN> ProcessedPointers { get; }
+        public HashSet<URN> RequestedPointers { get; }
         public HashSet<URN> SuccessfulPointers { get; }
         public AssetSource PermittedSources { get; }
         public BodyShape BodyShape { get; }
@@ -33,7 +33,7 @@ namespace DCL.AvatarRendering.Emotes
         {
             this.pointers = pointers;
             CancellationTokenSource = new CancellationTokenSource();
-            ProcessedPointers = POINTERS_HASHSET_POOL.Get();
+            RequestedPointers = POINTERS_HASHSET_POOL.Get();
             SuccessfulPointers = POINTERS_HASHSET_POOL.Get();
             PermittedSources = permittedSources;
             BodyShape = bodyShape;
@@ -52,7 +52,7 @@ namespace DCL.AvatarRendering.Emotes
         public void Dispose()
         {
             POINTERS_POOL.Release(pointers);
-            POINTERS_HASHSET_POOL.Release(ProcessedPointers);
+            POINTERS_HASHSET_POOL.Release(RequestedPointers);
             POINTERS_HASHSET_POOL.Release(SuccessfulPointers);
         }
     }

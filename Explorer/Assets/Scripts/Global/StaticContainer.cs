@@ -23,6 +23,7 @@ using DCL.Profiling;
 using DCL.Quality;
 using DCL.ResourcesUnloading;
 using DCL.SDKComponents.VideoPlayer;
+using DCL.Settings;
 using DCL.Time;
 using DCL.Utilities;
 using DCL.Web3;
@@ -35,7 +36,6 @@ using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.Reporting;
 using Global.AppArgs;
 using SceneRunner.Mapping;
-using Sentry;
 using System.Collections.Generic;
 using System.Threading;
 using PortableExperiences.Controller;
@@ -71,6 +71,8 @@ namespace Global
         public ExposedGlobalDataContainer ExposedGlobalDataContainer { get; private set; }
         public WebRequestsContainer WebRequestsContainer { get; private set; }
         public IReadOnlyList<IDCLWorldPlugin> ECSWorldPlugins { get; private set; }
+
+        public ISystemMemoryCap MemoryCap { get; private set; }
 
         /// <summary>
         ///     Some plugins may implement both interfaces
@@ -125,6 +127,8 @@ namespace Global
             bool useRemoteAssetBundles,
             World globalWorld,
             Entity playerEntity,
+            ISystemMemoryCap memoryCap,
+            WorldVolumeMacBus worldVolumeMacBus,
             CancellationToken ct)
         {
             ProfilingCounters.CleanAllCounters();
@@ -141,6 +145,7 @@ namespace Global
             container.SceneReadinessReportQueue = new SceneReadinessReportQueue(container.ScenesCache);
             container.InputBlock = new ECSInputBlock(globalWorld);
             container.assetsProvisioner = assetsProvisioner;
+            container.MemoryCap = memoryCap;
 
             var exposedPlayerTransform = new ExposedTransform();
 
@@ -160,8 +165,7 @@ namespace Global
                 new PartitionedWorldsAggregate.Factory(),
                 new ConcurrentLoadingPerformanceBudget(staticSettings.AssetsLoadingBudget),
                 new FrameTimeCapBudget(staticSettings.FrameTimeCap, profilingProvider),
-                new MemoryBudget(new StandaloneSystemMemory(), profilingProvider,
-                    Application.isEditor ? staticSettings.MemoryThresholdsEditor : staticSettings.MemoryThresholds),
+                new MemoryBudget(memoryCap, profilingProvider, staticSettings.MemoryThresholds),
                 new SceneAssetLock(),
                 new SceneMapping()
             );
@@ -213,7 +217,7 @@ namespace Global
                 container.CharacterContainer.CreateWorldPlugin(componentsContainer.ComponentPoolsRegistry),
                 new AnimatorPlugin(),
                 new TweenPlugin(),
-                new MediaPlayerPlugin(sharedDependencies, videoTexturePool, sharedDependencies.FrameTimeBudget, container.assetsProvisioner, container.WebRequestsContainer.WebRequestController, container.CacheCleaner),
+                new MediaPlayerPlugin(sharedDependencies, videoTexturePool, sharedDependencies.FrameTimeBudget, container.assetsProvisioner, container.WebRequestsContainer.WebRequestController, container.CacheCleaner, worldVolumeMacBus),
                 new CharacterTriggerAreaPlugin(globalWorld, container.MainPlayerAvatarBaseProxy, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, container.CharacterContainer.CharacterObject, componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner, container.CacheCleaner, exposedGlobalDataContainer.ExposedCameraData),
                 new InteractionsAudioPlugin(container.assetsProvisioner),
                 new MapPinPlugin(globalWorld, container.FeatureFlagsCache),

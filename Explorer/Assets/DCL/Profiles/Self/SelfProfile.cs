@@ -58,9 +58,15 @@ namespace DCL.Profiles.Self
                 ct
             );
 
-            if (profile != null && forcedEmotes != null)
-                for (var slot = 0; slot < forcedEmotes.Count; slot++)
+            if (profile == null) return null;
+
+            if (forcedEmotes != null)
+                for (var slot = 0; slot < forcedEmotes.Count && slot < profile.Avatar.Emotes.Count; slot++)
                     profile.Avatar.emotes[slot] = forcedEmotes[slot];
+
+            if (profile.Avatar.IsEmotesWheelEmpty())
+                for (var slot = 0; slot < emoteStorage.EmbededURNs.Count && slot < profile.Avatar.Emotes.Count; slot++)
+                    profile.Avatar.emotes[slot] = emoteStorage.EmbededURNs[slot];
 
             return profile;
         }
@@ -75,7 +81,7 @@ namespace DCL.Profiles.Self
             if (profile == null)
                 throw new Exception("Self profile not found");
 
-            using var _ = HashSetPool<URN>.Get(out HashSet<URN> uniqueWearables);
+            using PooledObject<HashSet<URN>> _ = HashSetPool<URN>.Get(out HashSet<URN> uniqueWearables);
 
             uniqueWearables = uniqueWearables.EnsureNotNull();
             ConvertEquippedWearablesIntoUniqueUrns(profile, uniqueWearables);
@@ -85,14 +91,14 @@ namespace DCL.Profiles.Self
 
             var bodyShape = BodyShape.FromStringSafe(equippedWearables.Wearable(WearablesConstants.Categories.BODY_SHAPE)!.GetUrn());
 
-            var newProfile = profileBuilder.From(profile)
-                                           .WithBodyShape(bodyShape)
-                                           .WithWearables(uniqueWearables)
-                                           .WithColors(equippedWearables.GetColors())
-                                           .WithEmotes(uniqueEmotes)
-                                           .WithForceRender(forceRender)
-                                           .WithVersion(profile!.Version + 1)
-                                           .Build();
+            Profile newProfile = profileBuilder.From(profile)
+                                               .WithBodyShape(bodyShape)
+                                               .WithWearables(uniqueWearables)
+                                               .WithColors(equippedWearables.GetColors())
+                                               .WithEmotes(uniqueEmotes)
+                                               .WithForceRender(forceRender)
+                                               .WithVersion(profile!.Version + 1)
+                                               .Build();
 
             newProfile.UserId = web3IdentityCache.Identity.Address;
 

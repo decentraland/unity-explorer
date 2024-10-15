@@ -8,6 +8,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Interaction.Utility;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.Multiplayer.Profiles.Poses;
 using DCL.Profiles;
 using DCL.Web3;
 using DCL.Web3.Identities;
@@ -65,11 +66,11 @@ namespace SceneRunner.Tests
                 Substitute.For<IWeb3IdentityCache>(),
                 Substitute.For<IDecentralandUrlsSource>(),
                 IWebRequestController.DEFAULT,
-                new IRoomHub.Fake(),
+                NullRoomHub.INSTANCE,
                 Substitute.For<IRealmData>(),
                 Substitute.For<IPortableExperiencesController>(),
-                Substitute.For<ISceneCommunicationPipe>()
-            );
+                Substitute.For<ISceneCommunicationPipe>(),
+                Substitute.For<IRemoteMetadata>());
         }
 
         [TearDown]

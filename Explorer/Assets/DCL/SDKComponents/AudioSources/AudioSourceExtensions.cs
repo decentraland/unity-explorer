@@ -29,8 +29,8 @@ namespace DCL.SDKComponents.AudioSources
 
             audioSource.Stop();
 
-            if (pbAudioSource.Playing)
-                audioSource.PlayOneShot(audioSource.clip!);
+            if (pbAudioSource.HasPlaying && pbAudioSource.Playing)
+                audioSource.Play();
         }
 
         public static float GetVolume(this PBAudioSource pbAudioSource) =>

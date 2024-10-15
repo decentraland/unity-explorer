@@ -18,7 +18,6 @@ using DCL.Chat.Commands;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.DebugUtilities;
-using DCL.DebugUtilities.UIBindings;
 using DCL.Input;
 using DCL.Landscape;
 using DCL.LOD.Systems;
@@ -57,6 +56,7 @@ using DCL.PluginSystem.Global;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.SceneLoadingScreens.LoadingScreen;
+using DCL.Settings;
 using DCL.SidebarBus;
 using DCL.UI.MainUI;
 using DCL.StylizedSkybox.Scripts.Plugin;
@@ -128,6 +128,10 @@ namespace Global.Dynamic
         public IChatMessagesBus ChatMessagesBus { get; private set; } = null!;
 
         public IMessagePipesHub MessagePipesHub { get; private set; } = null!;
+
+        public IRemoteMetadata RemoteMetadata { get; private set; } = null!;
+
+        public ISceneRoomMetaDataSource SceneRoomMetaDataSource { get; private set; } = null!;
 
         public IProfileBroadcast ProfileBroadcast { get; private set; } = null!;
 
@@ -228,7 +232,7 @@ namespace Global.Dynamic
                 new RealmProfileRepository(staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, profileCache)
             );
 
-            var genesisTerrain = new TerrainGenerator();
+            var genesisTerrain = new TerrainGenerator(staticContainer.Profiler);
             var worldsTerrain = new WorldTerrainGenerator();
             var satelliteView = new SatelliteFloor();
             var landscapePlugin = new LandscapePlugin(satelliteView, genesisTerrain, worldsTerrain, assetsProvisioner, debugBuilder, container.MapRendererContainer.TextureContainer, staticContainer.WebRequestsContainer.WebRequestController, dynamicWorldParams.EnableLandscape);
@@ -256,8 +260,10 @@ namespace Global.Dynamic
 
             IEmoteProvider emoteProvider = new EcsEmoteProvider(globalWorld, staticContainer.RealmData);
 
-            var metaDataSource = new LogMetaDataSource(new MetaDataSource(staticContainer.RealmData, staticContainer.CharacterContainer.CharacterObject, placesAPIService));
-            var gateKeeperSceneRoom = new GateKeeperSceneRoom(staticContainer.WebRequestsContainer.WebRequestController, metaDataSource, bootstrapContainer.DecentralandUrlsSource);
+            container.SceneRoomMetaDataSource = new SceneRoomMetaDataSource(staticContainer.RealmData, staticContainer.CharacterContainer.Transform, placesAPIService, dynamicWorldParams.IsolateScenesCommunication);
+
+            var metaDataSource = new SceneRoomLogMetaDataSource(container.SceneRoomMetaDataSource);
+            var gateKeeperSceneRoom = new GateKeeperSceneRoom(staticContainer.WebRequestsContainer.WebRequestController, metaDataSource, bootstrapContainer.DecentralandUrlsSource, staticContainer.ScenesCache);
 
             var currentAdapterAddress = ICurrentAdapterAddress.NewDefault(staticContainer.RealmData);
 
@@ -281,8 +287,8 @@ namespace Global.Dynamic
                 staticContainer.PartitionDataContainer,
                 staticContainer.SingletonSharedDependencies.SceneAssetLock);
 
-            container.reloadSceneController = new ECSReloadScene(staticContainer.ScenesCache, globalWorld, playerEntity);
             bool localSceneDevelopment = !string.IsNullOrEmpty(dynamicWorldParams.LocalSceneDevelopmentRealm);
+            container.reloadSceneController = new ECSReloadScene(staticContainer.ScenesCache, globalWorld, playerEntity, localSceneDevelopment);
 
             if (localSceneDevelopment)
                 container.localSceneDevelopmentController = new LocalSceneDevelopmentController(container.reloadSceneController, dynamicWorldParams.LocalSceneDevelopmentRealm);
@@ -333,7 +339,8 @@ namespace Global.Dynamic
                 satelliteView,
                 dynamicWorldParams.EnableLandscape,
                 staticContainer.ExposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy,
-                exposedGlobalDataContainer.CameraSamplingData
+                exposedGlobalDataContainer.CameraSamplingData,
+                localSceneDevelopment
             );
 
             IHealthCheck livekitHealthCheck = bootstrapContainer.DebugSettings.EnableEmulateNoLivekitConnection
@@ -367,7 +374,10 @@ namespace Global.Dynamic
                 staticContainer.FeatureFlagsCache,
                 identityCache,
                 container.RealmController,
-                dynamicWorldParams.AppParameters
+                dynamicWorldParams.AppParameters,
+                bootstrapContainer.DebugSettings,
+                staticContainer.PortableExperiencesController,
+                container.RoomHub
             );
 
             var worldInfoHub = new LocationBasedWorldInfoHub(
@@ -422,7 +432,7 @@ namespace Global.Dynamic
 
             var multiplayerEmotesMessageBus = new MultiplayerEmotesMessageBus(container.MessagePipesHub, multiplayerDebugSettings);
 
-            var remotePoses = new DebounceRemotePoses(new RemotePoses(container.RoomHub));
+            container.RemoteMetadata = new DebounceRemoteMetadata(new RemoteMetadata(container.RoomHub, staticContainer.RealmData));
 
             var characterPreviewEventBus = new CharacterPreviewEventBus();
             var sidebarBus = new SidebarBus();
@@ -449,13 +459,14 @@ namespace Global.Dynamic
                     container.RealFlowLoadingStatus,
                     entityParticipantTable,
                     container.MessagePipesHub,
-                    remotePoses,
+                    container.RemoteMetadata,
                     staticContainer.CharacterContainer.CharacterObject,
                     staticContainer.RealmData,
                     remoteEntities,
                     staticContainer.ScenesCache,
                     emotesCache,
-                    container.CharacterDataPropagationUtility
+                    container.CharacterDataPropagationUtility,
+                    staticContainer.ComponentsContainer.ComponentPoolsRegistry
                 ),
                 new WorldInfoPlugin(worldInfoHub, debugBuilder, chatHistory),
                 new CharacterMotionPlugin(assetsProvisioner, staticContainer.CharacterContainer.CharacterObject, debugBuilder, staticContainer.ComponentsContainer.ComponentPoolsRegistry),
@@ -538,7 +549,9 @@ namespace Global.Dynamic
                     emoteProvider,
                     globalWorld,
                     playerEntity,
-                    container.ChatMessagesBus
+                    container.ChatMessagesBus,
+                    staticContainer.MemoryCap,
+                    bootstrapContainer.WorldVolumeMacBus
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
@@ -558,7 +571,18 @@ namespace Global.Dynamic
                 staticContainer.CharacterContainer.CreateGlobalPlugin(),
                 staticContainer.QualityContainer.CreatePlugin(),
                 landscapePlugin,
-                new MultiplayerMovementPlugin(assetsProvisioner, container.multiplayerMovementMessageBus, debugBuilder, remoteEntities, staticContainer.CharacterContainer.Transform, multiplayerDebugSettings, appArgs),
+                new MultiplayerMovementPlugin(
+                    assetsProvisioner,
+                    container.multiplayerMovementMessageBus,
+                    debugBuilder,
+                    remoteEntities,
+                    staticContainer.CharacterContainer.Transform,
+                    multiplayerDebugSettings,
+                    appArgs,
+                    entityParticipantTable,
+                    staticContainer.RealmData,
+                    container.RemoteMetadata,
+                    staticContainer.FeatureFlagsCache),
                 container.LODContainer.LODPlugin,
                 container.LODContainer.RoadPlugin,
                 new AudioPlaybackPlugin(genesisTerrain, assetsProvisioner, dynamicWorldParams.EnableLandscape),
@@ -586,6 +610,7 @@ namespace Global.Dynamic
                     badgesAPIClient,
                     notificationsBusController,
                     staticContainer.InputBlock,
+                    container.RemoteMetadata,
                     globalWorld,
                     playerEntity
                 ),
@@ -600,7 +625,9 @@ namespace Global.Dynamic
                         realmNavigator,
                         staticContainer.RealmData,
                         staticContainer.ScenesCache,
-                        staticContainer.MainPlayerAvatarBaseProxy
+                        staticContainer.MainPlayerAvatarBaseProxy,
+                        identityCache,
+                        debugBuilder
                     )
                 );
 
@@ -614,11 +641,11 @@ namespace Global.Dynamic
                 debugBuilder,
                 staticContainer.ScenesCache,
                 dynamicWorldParams.HybridSceneParams,
-                container.CharacterDataPropagationUtility,
                 currentSceneInfo,
                 container.LODContainer.LodCache,
                 multiplayerEmotesMessageBus,
-                globalWorld
+                globalWorld,
+                localSceneDevelopment
             );
 
             container.GlobalPlugins = globalPlugins;

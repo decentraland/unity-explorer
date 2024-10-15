@@ -150,13 +150,15 @@ namespace DCL.Diagnostics
             }
 
             [HideInCallstack]
+            [Conditional("UNITY_EDITOR")] [Conditional("VERBOSE_LOGS")] // don't remove conditionals, otherwise strings will be allocated in production builds
             public void Log(object message, ReportHandler reportToHandlers = ReportHandler.All)
             {
                 ReportHub.Log(reportData, message, reportToHandlers);
             }
 
             [HideInCallstack]
-            public void Log(string message)
+            [Conditional("UNITY_EDITOR")] [Conditional("VERBOSE_LOGS")] // don't remove conditionals, otherwise strings will be allocated in production builds
+            public void Log(object message)
             {
                 ReportHub.Log(reportData, message);
             }

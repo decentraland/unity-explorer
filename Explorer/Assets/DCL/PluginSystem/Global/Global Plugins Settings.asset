@@ -228,6 +228,11 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+        <ControlsSettingsAsset>k__BackingField:
+          m_AssetGUID: 26489687fb2f3419886df8e49f34b006
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
     - rid: 1841402216112979969
       type: {class: CharacterContainer/Settings, ns: DCL.Character.Plugin, asm: DCL.Plugins}
       data:
@@ -599,6 +604,7 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         frameTimeCap: 33
         frameTimeCapDeepProfiler: 300
+        memoryCap: 16
         <ScenesLoadingBudget>k__BackingField: 100
         <AssetsLoadingBudget>k__BackingField: 50
         <WebRequestsBudget>k__BackingField: 20
@@ -612,6 +618,11 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         <cinemachineCameraAudioSettingsReference>k__BackingField:
           m_AssetGUID: 86a5a8acd91f6994788c37e301d06c56
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <controlsSettingsAsset>k__BackingField:
+          m_AssetGUID: 26489687fb2f3419886df8e49f34b006
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0

@@ -17,7 +17,7 @@ using Utility;
 
 namespace DCL.Landscape
 {
-    public class WorldTerrainGenerator : IDisposable
+    public class WorldTerrainGenerator : IDisposable, IContainParcel
     {
         private const string TERRAIN_OBJECT_NAME = "World Generated Terrain";
         private const float ROOT_VERTICAL_SHIFT = -0.001f; // fix for not clipping with scene (potential) floor
@@ -42,6 +42,8 @@ namespace DCL.Landscape
         private NoiseGeneratorCache noiseGenCache;
         public bool IsInitialized { get; private set; }
 
+        private TerrainModel terrainModel;
+
         public WorldTerrainGenerator(bool measureTime = false)
         {
             timeProfiler = new TimeProfiler(measureTime);
@@ -53,6 +55,14 @@ namespace DCL.Landscape
 
             if (rootGo != null)
                 UnityObjectUtils.SafeDestroy(rootGo);
+        }
+
+        public bool Contains(Vector2Int parcel)
+        {
+            if (IsInitialized)
+                return terrainModel.IsInsideBounds(parcel);
+
+            return false;
         }
 
         public void Initialize(TerrainGenerationData terrainGenData)
@@ -82,7 +92,7 @@ namespace DCL.Landscape
 
             this.ownedParcels = ownedParcels;
             var worldModel = new WorldModel(ownedParcels);
-            var terrainModel = new TerrainModel(parcelSize, worldModel, terrainGenData.borderPadding + Mathf.RoundToInt(0.1f * (worldModel.SizeInParcels.x + worldModel.SizeInParcels.y) / 2f));
+            terrainModel = new TerrainModel(parcelSize, worldModel, terrainGenData.borderPadding + Mathf.RoundToInt(0.1f * (worldModel.SizeInParcels.x + worldModel.SizeInParcels.y) / 2f));
 
             rootGo = factory.InstantiateSingletonTerrainRoot(TERRAIN_OBJECT_NAME);
             rootGo.position = new Vector3(0, ROOT_VERTICAL_SHIFT, 0);

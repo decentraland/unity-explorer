@@ -6,6 +6,7 @@ using DCL.Character.Components;
 using DCL.Multiplayer.SDK.Components;
 using DCL.Multiplayer.SDK.Systems.GlobalWorld;
 using DCL.Multiplayer.SDK.Systems.SceneWorld;
+using DCL.Optimization.Pools;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
@@ -31,7 +32,10 @@ namespace DCL.Multiplayer.SDK.Tests
             var sceneGeometry = new ParcelMathHelper.SceneGeometry(sceneBasePos, new ParcelMathHelper.SceneCircumscribedPlanes(), 20);
             sceneData.Geometry.Returns(sceneGeometry);
 
-            var propagationSystem = new PlayerTransformPropagationSystem(globalWorld);
+            IComponentPool<SDKTransform>? pool = Substitute.For<IComponentPool<SDKTransform>>();
+            pool.Get().Returns(new SDKTransform());
+
+            var propagationSystem = new PlayerTransformPropagationSystem(globalWorld, pool);
             var writeSystem = new WritePlayerTransformSystem(sceneWorld, writer, sceneData);
 
             var sceneFacade = Substitute.For<ISceneFacade>();
@@ -40,11 +44,10 @@ namespace DCL.Multiplayer.SDK.Tests
 
             var sceneWorldEntity = sceneWorld.Create();
             var crdtEntity = new CRDTEntity(CRDT_ID);
-            var playerCRDTEntity = new PlayerCRDTEntity(
-                crdtEntity,
-                sceneFacade,
-                sceneWorldEntity
-            );
+            var playerCRDTEntity = new PlayerCRDTEntity(crdtEntity);
+
+            playerCRDTEntity.AssignToScene(sceneFacade, sceneWorldEntity);
+
             var playerSceneCRDTEntity = new PlayerSceneCRDTEntity(crdtEntity);
 
             Transform fakeCharaTransform = new GameObject("fake character").transform;

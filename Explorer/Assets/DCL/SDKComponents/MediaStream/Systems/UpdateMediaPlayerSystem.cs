@@ -7,6 +7,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.Settings;
 using DCL.Utilities.Extensions;
 using DCL.WebRequests;
 using ECS.Abstract;
@@ -29,13 +30,45 @@ namespace DCL.SDKComponents.MediaStream
         private readonly ISceneData sceneData;
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IPerformanceBudget frameTimeBudget;
+        private readonly WorldVolumeMacBus worldVolumeMacBus;
+        private float worldVolumePercentage = 1f;
+        private float masterVolumePercentage = 1f;
 
-        public UpdateMediaPlayerSystem(World world, IWebRequestController webRequestController, ISceneData sceneData, ISceneStateProvider sceneStateProvider, IPerformanceBudget frameTimeBudget) : base(world)
+        public UpdateMediaPlayerSystem(
+            World world,
+            IWebRequestController webRequestController,
+            ISceneData sceneData,
+            ISceneStateProvider sceneStateProvider,
+            IPerformanceBudget frameTimeBudget,
+            WorldVolumeMacBus worldVolumeMacBus) : base(world)
         {
             this.webRequestController = webRequestController;
             this.sceneData = sceneData;
             this.sceneStateProvider = sceneStateProvider;
             this.frameTimeBudget = frameTimeBudget;
+            this.worldVolumeMacBus = worldVolumeMacBus;
+
+            //This following part is a workaround applied for the MacOS platform, the reason
+            //is related to the video and audio streams, the MacOS environment does not support
+            //the volume control for the video and audio streams, as it doesn’t allow to route audio
+            //from HLS through to Unity. This is a limitation of Apple’s AVFoundation framework
+            //Similar issue reported here https://github.com/RenderHeads/UnityPlugin-AVProVideo/issues/1086
+#if UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX
+            this.worldVolumeMacBus.OnWorldVolumeChanged += OnWorldVolumeChanged;
+            this.worldVolumeMacBus.OnMasterVolumeChanged += OnMasterVolumeChanged;
+            masterVolumePercentage = worldVolumeMacBus.GetMasterVolume();
+            worldVolumePercentage = worldVolumeMacBus.GetWorldVolume();
+#endif
+        }
+
+        private void OnWorldVolumeChanged(float volume)
+        {
+            worldVolumePercentage = volume;
+        }
+
+        private void OnMasterVolumeChanged(float volume)
+        {
+            masterVolumePercentage = volume;
         }
 
         protected override void Update(float t)
@@ -52,7 +85,10 @@ namespace DCL.SDKComponents.MediaStream
             if (!frameTimeBudget.TrySpendBudget()) return;
 
             if (component.State != VideoState.VsError)
-                component.MediaPlayer.UpdateVolume(sceneStateProvider.IsCurrent, sdkComponent.HasVolume, sdkComponent.Volume);
+            {
+                float actualVolume = sdkComponent.Volume * worldVolumePercentage * masterVolumePercentage;
+                component.MediaPlayer.UpdateVolume(sceneStateProvider.IsCurrent, sdkComponent.HasVolume, actualVolume);
+            }
 
             HandleComponentChange(ref component, sdkComponent, sdkComponent.Url, sdkComponent.HasPlaying, sdkComponent.Playing);
             ConsumePromise(ref component, sdkComponent.HasPlaying && sdkComponent.Playing);
@@ -64,7 +100,10 @@ namespace DCL.SDKComponents.MediaStream
             if (!frameTimeBudget.TrySpendBudget()) return;
 
             if (component.State != VideoState.VsError)
-                component.MediaPlayer.UpdateVolume(sceneStateProvider.IsCurrent, sdkComponent.HasVolume, sdkComponent.Volume);
+            {
+                float actualVolume = sdkComponent.Volume * worldVolumePercentage * masterVolumePercentage;
+                component.MediaPlayer.UpdateVolume(sceneStateProvider.IsCurrent, sdkComponent.HasVolume, actualVolume);
+            }
 
             HandleComponentChange(ref component, sdkComponent, sdkComponent.Src, sdkComponent.HasPlaying, sdkComponent.Playing, sdkComponent, static (mediaPlayer, sdk) => mediaPlayer.UpdatePlaybackProperties(sdk));
             ConsumePromise(ref component, sdkComponent.HasPlaying && sdkComponent.Playing, sdkComponent, static (mediaPlayer, sdk) => mediaPlayer.SetPlaybackProperties(sdk));
@@ -84,10 +123,10 @@ namespace DCL.SDKComponents.MediaStream
             if (avText == null) return;
 
             // Handle texture update
-            if (assignedTexture.Texture.HasEqualResolution(to: avText))
+            if (assignedTexture.Texture.Asset.HasEqualResolution(to: avText))
                 Graphics.CopyTexture(avText, assignedTexture.Texture);
             else
-                assignedTexture.Texture.ResizeTexture(to: avText); // will be updated on the next frame/update-loop
+                assignedTexture.Texture.Asset.ResizeTexture(to: avText); // will be updated on the next frame/update-loop
         }
 
         private void HandleComponentChange(ref MediaPlayerComponent component, IDirtyMarker sdkComponent, string url, bool hasPlaying, bool isPlaying,
@@ -147,6 +186,16 @@ namespace DCL.SDKComponents.MediaStream
 
             component.URL = url;
             component.State = url.IsValidUrl() ? VideoState.VsNone : VideoState.VsError;
+        }
+
+        public override void Dispose()
+        {
+            base.Dispose();
+
+#if UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX
+            worldVolumeMacBus.OnWorldVolumeChanged -= OnWorldVolumeChanged;
+            worldVolumeMacBus.OnMasterVolumeChanged -= OnMasterVolumeChanged;
+#endif
         }
     }
 }

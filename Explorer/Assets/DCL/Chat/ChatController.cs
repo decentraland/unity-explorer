@@ -32,6 +32,7 @@ namespace DCL.Chat
         private const string EMOJI_SUGGESTION_PATTERN = @":\w+";
         private const string EMOJI_TAG = "[emoji]";
         private const string HASH_CHARACTER = "#";
+        private const string ORIGIN = "chat";
         private static readonly Regex EMOJI_PATTERN_REGEX = new (EMOJI_SUGGESTION_PATTERN, RegexOptions.Compiled);
 
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
@@ -102,15 +103,18 @@ namespace DCL.Chat
             this.eventSystem = eventSystem;
             this.inputBlock = inputBlock;
 
-            chatMessagesBus.MessageAdded += OnMessageAdded;
-            chatHistory.OnMessageAdded += CreateChatEntry;
-            chatHistory.OnCleared += ChatHistoryOnOnCleared;
             device = InputSystem.GetDevice<Mouse>();
         }
 
         protected override void OnViewInstantiated()
         {
             cameraEntity = world.CacheCamera();
+            
+            //We start processing messages once the view is ready
+            chatMessagesBus.MessageAdded += OnMessageAdded;
+            chatHistory.OnMessageAdded += CreateChatEntry;
+            chatHistory.OnCleared += ChatHistoryOnOnCleared;
+            
             viewInstance!.OnChatViewPointerEnter += OnChatViewPointerEnter;
             viewInstance.OnChatViewPointerExit += OnChatViewPointerExit;
             viewInstance.CharacterCounter.SetMaximumLength(viewInstance.InputField.characterLimit);
@@ -306,7 +310,7 @@ namespace DCL.Chat
             viewInstance.InputField.text = string.Empty;
             viewInstance.InputField.ActivateInputField();
 
-            chatMessagesBus.Send(messageToSend);
+            chatMessagesBus.Send(messageToSend, ORIGIN);
         }
 
         private LoopListViewItem2? OnGetItemByIndex(LoopListView2 listView, int index)
@@ -457,23 +461,22 @@ namespace DCL.Chat
             if (chatMessage.SentByOwnUser == false && entityParticipantTable.Has(chatMessage.WalletAddress))
             {
                 Entity entity = entityParticipantTable.Entity(chatMessage.WalletAddress);
-                world.AddOrGet(entity, new ChatBubbleComponent(chatMessage.Message, chatMessage.Sender, chatMessage.WalletAddress));
+                GenerateChatBubbleComponent(entity, chatMessage);
                 UIAudioEventsBus.Instance.SendPlayAudioEvent(viewInstance!.ChatReceiveMessageAudio);
             }
-            else if (chatMessage.SystemMessage == false)
-                world.AddOrGet(
-                    playerEntity,
-                    new ChatBubbleComponent(
-                        chatMessage.Message,
-                        chatMessage.Sender,
-                        chatMessage.WalletAddress
-                    )
-                );
+            else if (chatMessage is {SystemMessage: false, SentByOwnUser: true })
+                GenerateChatBubbleComponent(playerEntity, chatMessage);
 
             viewInstance!.ResetChatEntriesFadeout();
 
             viewInstance.LoopList.SetListItemCount(chatHistory.Messages.Count, false);
             viewInstance.LoopList.MovePanelToItemIndex(0, 0);
+        }
+
+        private void GenerateChatBubbleComponent(Entity e, ChatMessage chatMessage)
+        {
+            if(nametagsData is {showChatBubbles: true, showNameTags: true })
+                world.AddOrGet(e, new ChatBubbleComponent(chatMessage.Message, chatMessage.Sender, chatMessage.WalletAddress));
         }
 
         private void ChatHistoryOnOnCleared()

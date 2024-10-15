@@ -7,8 +7,11 @@ using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.Multiplayer.Profiles.Poses;
+using DCL.Optimization.PerformanceBudgeting;
 using DCL.PluginSystem;
 using DCL.Profiles;
+using DCL.Settings;
 using DCL.Web3;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
@@ -55,6 +58,8 @@ namespace Global.Tests.PlayMode
                 false,
                 World.Create(),
                 new Entity(),
+                new SystemMemoryCap(MemoryCapMode.MAX_SYSTEM_MEMORY),
+                new WorldVolumeMacBus(),
                 ct);
 
             if (!success)
@@ -65,17 +70,18 @@ namespace Global.Tests.PlayMode
             var sceneSharedContainer = SceneSharedContainer.Create(
                 in staticContainer,
                 dclUrls,
+                identityCache,
+                Substitute.For<IWebRequestController>(),
+                new IRealmData.Fake(),
+                new MemoryProfileRepository(new DefaultProfileCache()),
+                NullRoomHub.INSTANCE,
                 new MVCManager(
                     new WindowStackManager(),
                     new CancellationTokenSource(),
                     Substitute.For<IPopupCloserView>()
                 ),
-                identityCache,
-                new MemoryProfileRepository(new DefaultProfileCache()),
-                Substitute.For<IWebRequestController>(),
-                new IRoomHub.Fake(),
-                new IRealmData.Fake(),
-                new IMessagePipesHub.Fake()
+                new IMessagePipesHub.Fake(),
+                Substitute.For<IRemoteMetadata>()
             );
 
             return (staticContainer, sceneSharedContainer);
