@@ -40,17 +40,12 @@ namespace ECS.StreamableLoading.AssetBundles
             {
                 description = $"AB:{AssetBundle.name}_{version}_{source}";
                 ForceUnload();
-
-                foreach (AssetBundleData child in Dependencies)
-                {
-                    if(!child.unloaded && !child.Asset.name.Contains("ignore"))
-                        child.ForceUnload();
-                }
             }
         }
 
         public AssetBundleData(AssetBundle assetBundle, AssetBundleMetrics? metrics, AssetBundleData[] dependencies) : base(assetBundle, ReportCategory.ASSET_BUNDLES)
         {
+            //Dependencies cant be unloaded, since we dont know who will need them =(
             Metrics = metrics;
 
             this.mainAsset = null;
