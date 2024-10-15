@@ -58,17 +58,10 @@ namespace ECS.StreamableLoading.GLTF
             {
                 webRequest.downloadHandler = new DownloadHandlerBuffer();
 
-                try
-                {
-                    await webRequest.SendWebRequest().WithCancellation(new CancellationToken());
-                }
-                catch
-                {
-                    if (isBaseGltfFetch) acquiredBudget.Release();
-                    throw new Exception($"Error on GLTF download ({targetGltfOriginalPath} - {uri}): {webRequest.downloadHandler.error} - {webRequest.downloadHandler.text}");
-                }
+                try { await webRequest.SendWebRequest().WithCancellation(new CancellationToken()); }
+                catch { throw new Exception($"Error on GLTF download ({targetGltfOriginalPath} - {uri}): {webRequest.downloadHandler.error} - {webRequest.downloadHandler.text}"); }
+                finally { if (isBaseGltfFetch) acquiredBudget.Release(); }
 
-                if (isBaseGltfFetch) acquiredBudget.Release();
                 return new GltfDownloadResult
                 {
                     Data = webRequest.downloadHandler.data,
