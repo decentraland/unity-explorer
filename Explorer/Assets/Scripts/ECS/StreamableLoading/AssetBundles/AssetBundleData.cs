@@ -68,7 +68,7 @@ namespace ECS.StreamableLoading.AssetBundles
         protected override ref ProfilerCounterValue<int> referencedCount => ref ProfilingCounters.ABReferencedAmount;
 
         
-        public void ForceUnload()
+        private void ForceUnload()
         {
             //We immediately unload the asset bundle, as we don't need it anymore.
             //Very hacky, because the asset will remain in cache as AssetBundle == null
