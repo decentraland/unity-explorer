@@ -53,7 +53,7 @@ namespace DCL.PluginSystem.Global
         private readonly IPerformanceBudget memoryBudget;
         private readonly IRealmData realmData;
 
-        private readonly AttachmentsAssetsCache attachmentsAssetsCache = new (100);
+        private readonly AttachmentsAssetsCache attachmentsAssetsCache;
 
         // late init
         private IComponentPool<AvatarBase> avatarPoolRegistry = null!;
@@ -113,6 +113,7 @@ namespace DCL.PluginSystem.Global
             this.wearableStorage = wearableStorage;
             componentPoolsRegistry = poolsRegistry;
             avatarTransformMatrixJobWrapper = new AvatarTransformMatrixJobWrapper();
+            attachmentsAssetsCache = new AttachmentsAssetsCache(100, poolsRegistry);
 
             cacheCleaner.Register(attachmentsAssetsCache);
         }
