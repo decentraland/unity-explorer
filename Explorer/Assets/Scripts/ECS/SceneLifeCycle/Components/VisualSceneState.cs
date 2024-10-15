@@ -8,6 +8,7 @@ namespace ECS.SceneLifeCycle.Components
     {
         public VisualSceneStateEnum CurrentVisualSceneState;
         public bool IsDirty;
+        public float TimeToChange;
     }
 
     public enum VisualSceneStateEnum
@@ -17,5 +18,5 @@ namespace ECS.SceneLifeCycle.Components
         SHOWING_LOD,
         ROAD
     }
-    
+
 }
