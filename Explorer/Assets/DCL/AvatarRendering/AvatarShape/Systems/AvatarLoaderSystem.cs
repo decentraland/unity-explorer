@@ -73,7 +73,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
             var avatarShapeComponent = new AvatarShapeComponent(profile.Name, profile.UserId, profile.Avatar.BodyShape, wearablePromise, profile.Avatar.SkinColor, profile.Avatar.HairColor, profile.Avatar.EyesColor);
             // No lazy load for main player. Get all emotes, so it can play them accordingly without undesired delays
-            avatarShapeComponent.EmotePromise = CreateEmotePromise(profile, partition);
+            LoadAllEmotes(profile, partition);
 
             World.Add(entity, avatarShapeComponent);
         }
@@ -123,17 +123,14 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         [Query]
         [All(typeof(PlayerComponent))]
         [None(typeof(PBAvatarShape), typeof(DeleteEntityIntention))]
-        private void UpdateMainPlayerAvatarFromProfile(ref Profile profile, ref AvatarShapeComponent avatarShapeComponent, ref PartitionComponent partition)
+        private void UpdateMainPlayerAvatarFromProfile(in Entity entity, ref Profile profile, ref AvatarShapeComponent avatarShapeComponent, ref PartitionComponent partition)
         {
             UpdateAvatarFromProfile(ref profile, ref avatarShapeComponent, ref partition);
 
             if (!profile.IsDirty) return;
 
-            if (avatarShapeComponent.EmotePromise is { IsConsumed: false })
-                avatarShapeComponent.EmotePromise.Value.ForgetLoading(World);
-
             // No lazy load for main player. Get all emotes, so it can play them accordingly without undesired delays
-            avatarShapeComponent.EmotePromise = CreateEmotePromise(profile, partition);
+            LoadAllEmotes(profile, partition);
         }
 
         private WearablePromise CreateWearablePromise(PBAvatarShape pbAvatarShape, PartitionComponent partition) =>
@@ -148,8 +145,10 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                 WearableComponentsUtils.CreateGetWearablesByPointersIntention(profile.Avatar.BodyShape, profile.Avatar.Wearables, profile.Avatar.ForceRender),
                 partition);
 
-        private EmotePromise CreateEmotePromise(PBAvatarShape pbAvatarShape, PartitionComponent partition) =>
-            EmotePromise.Create(World, EmoteComponentsUtils.CreateGetEmotesByPointersIntention(pbAvatarShape, pbAvatarShape.Emotes), partition);
+        private void LoadAllEmotes(Profile profile, PartitionComponent partition)
+        {
+            World.Create(CreateEmotePromise(profile, partition));
+        }
 
         private EmotePromise CreateEmotePromise(Profile profile, PartitionComponent partition) =>
             EmotePromise.Create(World, EmoteComponentsUtils.CreateGetEmotesByPointersIntention(profile.Avatar.BodyShape, profile.Avatar.Emotes), partition);

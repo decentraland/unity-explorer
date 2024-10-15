@@ -209,7 +209,6 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             avatarBase.gameObject.SetActive(true);
 
             wearableIntention.Dispose();
-            avatarShapeComponent.EmotePromise?.LoadingIntention.Dispose();
 
             if (wearablesResult.Succeeded)
                 wearablesResult.Asset.Dispose();

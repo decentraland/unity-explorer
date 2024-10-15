@@ -3,7 +3,6 @@ using DCL.AvatarRendering.Loading.Components;
 using System.Collections.Generic;
 using UnityEngine;
 using WearablePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.WearablesResolution, DCL.AvatarRendering.Wearables.Components.Intentions.GetWearablesByPointersIntention>;
-using EmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution, DCL.AvatarRendering.Emotes.GetEmotesByPointersIntention>;
 
 namespace DCL.AvatarRendering.AvatarShape.Components
 {
@@ -19,7 +18,6 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         public BodyShape BodyShape;
 
         public WearablePromise WearablePromise;
-        public EmotePromise? EmotePromise;
 
         public string ID;
         public string Name;
@@ -40,7 +38,6 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             EyesColor = eyesColor;
             IsVisible = true;
             HiddenByModifierArea = false;
-            EmotePromise = null;
         }
 
         public AvatarShapeComponent(string name, string id) : this()

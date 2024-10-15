@@ -198,16 +198,10 @@ namespace DCL.AvatarRendering.AvatarShape.Tests.Instantiate
                 WearableComponentsUtils.CreateGetWearablesByPointersIntention(BodyShape.MALE, new List<string>(), Array.Empty<string>()),
                 new PartitionComponent());
 
-            var newEmotePromise = EmotePromise.Create(world,
-                EmoteComponentsUtils.CreateGetEmotesByPointersIntention(BodyShape.MALE, new List<URN>()),
-                new PartitionComponent());
-
             world.Add(newWearablePromise.Entity, new StreamableLoadingResult<WearablesResolution>(new WearablesResolution(new List<IWearable> { GetMockWearable("body_shape", WearablesConstants.Categories.BODY_SHAPE) })));
-            world.Add(newEmotePromise.Entity, new StreamableLoadingResult<EmotesResolution>(new EmotesResolution(RepoolableList<IEmote>.NewListWithContentOf(GetMockEmote("emote", WearablesConstants.Categories.EYES)), 1)));
 
             world.Get<AvatarShapeComponent>(avatarEntity).IsDirty = true;
             world.Get<AvatarShapeComponent>(avatarEntity).WearablePromise = newWearablePromise;
-            world.Get<AvatarShapeComponent>(avatarEntity).EmotePromise = newEmotePromise;
 
             system.Update(0);
 

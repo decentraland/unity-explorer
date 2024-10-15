@@ -204,25 +204,10 @@ namespace DCL.AvatarRendering.Emotes.Play
 
                     emoteComponent.EmoteUrn = emoteId;
                     World.Remove<CharacterEmoteIntent>(entity);
-
-                    if (avatarShapeComponent.EmotePromise is { IsConsumed: true })
-                        avatarShapeComponent.EmotePromise?.LoadingIntention.Dispose();
                 }
                 else
-                {
-                    EmotePromise? emotePromise = avatarShapeComponent.EmotePromise;
-
-                    bool isLoadingThisEmote = emotePromise is { IsConsumed: false }
-                                              && (emotePromise?.LoadingIntention.Pointers.Contains(emoteId) ?? false);
-                    if (isLoadingThisEmote) return;
-
-                    // avatarShapeComponent.EmotePromise?.ForgetLoading(World);
-
-                    // TODO: memory leak here. We create a new entity for the intention but it is never destroyed
-                    // We should make a major refactor on how these "attached" promises are finalized by making a standard on how promises and intents are handled across the project
-                    emotePromise = CreateEmotePromise(emoteId, avatarShapeComponent.BodyShape);
-                    avatarShapeComponent.EmotePromise = emotePromise;
-                }
+                    // Request the emote when not it cache. It will eventually endup in the emoteStorage so it can be played by this query
+                    LoadEmote(emoteId, avatarShapeComponent.BodyShape);
             }
             catch (Exception e) { ReportHub.LogException(e, GetReportData()); }
         }
@@ -248,6 +233,21 @@ namespace DCL.AvatarRendering.Emotes.Play
         {
             if (!deleteEntityIntention.DeferDeletion)
                 messageBus.OnPlayerRemoved(profile.UserId);
+        }
+
+        private void LoadEmote(URN emoteId, BodyShape bodyShape)
+        {
+            var isLoadingThisEmote = false;
+
+            World.Query(in new QueryDescription().WithAll<EmotePromise>(), (Entity entity, ref EmotePromise promise) =>
+            {
+                if (!promise.IsConsumed && promise.LoadingIntention.Pointers.Contains(emoteId))
+                    isLoadingThisEmote = true;
+            });
+
+            if (isLoadingThisEmote) return;
+
+            World.Create(CreateEmotePromise(emoteId, bodyShape));
         }
 
         private EmotePromise CreateEmotePromise(URN urn, BodyShape bodyShape)
