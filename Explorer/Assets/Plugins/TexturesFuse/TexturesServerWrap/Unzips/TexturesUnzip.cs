@@ -1,3 +1,4 @@
+using AOT;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using System;
@@ -28,6 +29,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
                 throw new Exception($"TexturesFuseInitialize failed: {result}");
         }
 
+        [MonoPInvokeCallback(typeof(NativeMethods.OutputMessageDelegate))]
         private static void OutputMessage(int format, string message)
         {
             ReportHub.Log(ReportCategory.TEXTURES, $"TexturesFuse: {message}");
