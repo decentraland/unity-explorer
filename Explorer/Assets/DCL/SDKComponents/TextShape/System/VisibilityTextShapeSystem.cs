@@ -38,7 +38,6 @@ namespace DCL.SDKComponents.TextShape.System
         /// <param name="textShape">The text shape whose TextMeshPro will be modified.</param>
         /// <param name="visibilityComponent">The component that stores whether the text should be visible or not.</param>
         [Query]
-        [All(typeof(TextShapeComponent), typeof(PBVisibilityComponent))]
         private void UpdateVisibilityDependingOnSceneBoundariesAndVisibilityComponent(ref TextShapeComponent textShape, PBVisibilityComponent visibilityComponent)
         {
             textShape.TextMeshPro.enabled = visibilityComponent.GetVisible() && textShape.IsContainedInScene;
@@ -49,7 +48,6 @@ namespace DCL.SDKComponents.TextShape.System
         /// </summary>
         /// <param name="textShape">The text shape whose TextMeshPro will be modified.</param>
         [Query]
-        [All(typeof(TextShapeComponent))]
         [None(typeof(PBVisibilityComponent))]
         private void UpdateVisibilityDependingOnSceneBoundariesOnly(ref TextShapeComponent textShape)
         {
