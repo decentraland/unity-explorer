@@ -16,9 +16,23 @@ namespace CommunicationData.URLHelpers
 
         public URN(string urn)
         {
-            this.originalUrn = urn;
-            this.lowercaseUrn = this.originalUrn.ToLower();
-            this.hash = originalUrn != null ? lowercaseUrn.GetHashCode() : 0;
+            originalUrn = urn;
+            lowercaseUrn = originalUrn.ToLower();
+            hash = originalUrn != null ? lowercaseUrn.GetHashCode() : 0;
+        }
+
+        private URN(URN urn, int shortenIndex)
+        {
+            bool hasSameLength = shortenIndex == urn.originalUrn.Length;
+
+            originalUrn = hasSameLength ? urn.originalUrn : urn.originalUrn[..shortenIndex];
+            lowercaseUrn = hasSameLength ? urn.lowercaseUrn : urn.lowercaseUrn[..shortenIndex];
+
+            hash = hasSameLength
+                ? urn.hash
+                : originalUrn != null
+                    ? lowercaseUrn.GetHashCode()
+                    : 0;
         }
 
         public bool IsNullOrEmpty() =>
@@ -28,8 +42,8 @@ namespace CommunicationData.URLHelpers
             !IsNullOrEmpty() && originalUrn.StartsWith("urn");
 
         public bool Equals(URN other) =>
-            this.hash == other.hash && // "fail fast" check
-            this.lowercaseUrn == other.lowercaseUrn; // check to avoid false positives from hash collisions
+            hash == other.hash && // "fail fast" check
+            lowercaseUrn == other.lowercaseUrn; // check to avoid false positives from hash collisions
 
         public override bool Equals(object obj) =>
             obj is URN other && Equals(other);
@@ -39,7 +53,8 @@ namespace CommunicationData.URLHelpers
 
         public URLAddress ToUrlOrEmpty(URLAddress baseUrl)
         {
-            string currentUrn = this.originalUrn;
+            string currentUrn = originalUrn;
+
             ReadOnlySpan<char> CutBeforeColon(ref int endIndex, out bool success)
             {
                 int atBeginning = endIndex;
@@ -114,6 +129,13 @@ namespace CommunicationData.URLHelpers
             if (string.IsNullOrEmpty(originalUrn)) return this;
             if (CountParts() <= SHORTEN_URN_PARTS) return this;
 
+            int shortenIndex = GetShortenIndex();
+
+            return shortenIndex != -1 ? new URN(this, shortenIndex) : this;
+        }
+
+        private int GetShortenIndex()
+        {
             int index;
 
             if (IsThirdPartyCollection())
@@ -129,13 +151,13 @@ namespace CommunicationData.URLHelpers
                     if (index == -1) break;
                 }
 
-                return index != -1 ? originalUrn[..index] : originalUrn;
+                return index;
             }
 
             // TokenId is always placed in the last part for regular nfts
             index = originalUrn.LastIndexOf(':');
 
-            return index != -1 ? originalUrn[..index] : this;
+            return index;
         }
 
         public static implicit operator URN(int urn) =>
@@ -152,7 +174,7 @@ namespace CommunicationData.URLHelpers
 
         private int CountParts()
         {
-            int count = 1;
+            var count = 1;
             int index = originalUrn.IndexOf(':');
 
             while (index != -1)
