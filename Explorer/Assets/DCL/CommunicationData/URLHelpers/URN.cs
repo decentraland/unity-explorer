@@ -12,17 +12,13 @@ namespace CommunicationData.URLHelpers
 
         private readonly string lowercaseUrn;
         private readonly string originalUrn;
+        private readonly int hash;
 
         public URN(string urn)
         {
             this.originalUrn = urn;
             this.lowercaseUrn = this.originalUrn.ToLower();
-        }
-
-        public URN(int urn)
-        {
-            this.originalUrn = urn.ToString();
-            this.lowercaseUrn = this.originalUrn.ToLower();
+            this.hash = originalUrn != null ? lowercaseUrn.GetHashCode() : 0;
         }
 
         public bool IsNullOrEmpty() =>
@@ -31,13 +27,9 @@ namespace CommunicationData.URLHelpers
         public bool IsValid() =>
             !IsNullOrEmpty() && originalUrn.StartsWith("urn");
 
-        public bool Equals(int other) => Equals(other.ToString());
-
         public bool Equals(URN other) =>
-            Equals(other.lowercaseUrn);
-
-        public bool Equals(string other) =>
-            string.Equals(lowercaseUrn, other);
+            this.hash == other.hash && // "fail fast" check
+            this.lowercaseUrn == other.lowercaseUrn; // check to avoid false positives from hash collisions
 
         public override bool Equals(object obj) =>
             obj is URN other && Equals(other);
@@ -115,7 +107,7 @@ namespace CommunicationData.URLHelpers
         }
 
         public override int GetHashCode() =>
-            originalUrn != null ? StringComparer.OrdinalIgnoreCase.GetHashCode(originalUrn) : 0;
+            hash;
 
         public URN Shorten()
         {
