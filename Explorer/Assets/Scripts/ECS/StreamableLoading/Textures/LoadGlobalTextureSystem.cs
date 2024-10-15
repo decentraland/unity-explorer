@@ -18,5 +18,12 @@ namespace ECS.StreamableLoading.Textures
         internal LoadGlobalTextureSystem(World world, IStreamableCache<Texture2DData, GetTextureIntention> cache, IWebRequestController webRequestController, IGetTextureArgsFactory getTextureArgsFactory) : base(
             world, cache, webRequestController, getTextureArgsFactory
         ) { }
+
+        public override void Dispose()
+        {
+            base.Dispose();
+            //TODO move to the corresponding dispose point
+            getTextureArgsFactory.Dispose();
+        }
     }
 }

@@ -20,7 +20,7 @@ namespace ECS.StreamableLoading.Textures
     public partial class LoadTextureSystem : LoadSystemBase<Texture2DData, GetTextureIntention>
     {
         private readonly IWebRequestController webRequestController;
-        private readonly IGetTextureArgsFactory getTextureArgsFactory;
+        protected readonly IGetTextureArgsFactory getTextureArgsFactory;
 
         internal LoadTextureSystem(World world, IStreamableCache<Texture2DData, GetTextureIntention> cache, IWebRequestController webRequestController, IGetTextureArgsFactory getTextureArgsFactory) : base(world, cache)
         {
@@ -48,14 +48,6 @@ namespace ECS.StreamableLoading.Textures
                 );
 
             return new StreamableLoadingResult<Texture2DData>(new Texture2DData(result));
-        }
-
-        public override void Dispose()
-        {
-            base.Dispose();
-
-            //TODO move to the corresponding dispose point
-            getTextureArgsFactory.Dispose();
         }
     }
 }
