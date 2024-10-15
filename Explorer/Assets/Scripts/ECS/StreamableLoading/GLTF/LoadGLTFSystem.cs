@@ -34,7 +34,8 @@ namespace ECS.StreamableLoading.GLTF
                     new ReportData(GetReportCategory()),
                     new Exception("The content to download couldn't be found"));
 
-            GltFastDownloadProvider gltfDownloadProvider = new GltFastDownloadProvider(World, intention.SceneData, partition, intention.Name!);
+            // Acquired budget is released inside GLTFastDownloadedProvider once the GLTF has been fetched
+            GltFastDownloadProvider gltfDownloadProvider = new GltFastDownloadProvider(World, intention.SceneData, partition, intention.Name!, acquiredBudget);
             var gltfImport = new GltfImport(
                 downloadProvider: gltfDownloadProvider,
                 logger: gltfConsoleLogger,
@@ -51,9 +52,6 @@ namespace ECS.StreamableLoading.GLTF
             };
 
             bool success = await gltfImport.Load(intention.Name, gltFastSettings, ct);
-
-            // Release budget now to not hold it until dependencies are resolved to prevent a deadlock
-            acquiredBudget.Release();
             gltfDownloadProvider.Dispose();
 
             if (success)
