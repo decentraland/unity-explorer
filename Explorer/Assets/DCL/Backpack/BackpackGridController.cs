@@ -21,7 +21,7 @@ using Object = UnityEngine.Object;
 
 namespace DCL.Backpack
 {
-    public class BackpackGridController
+    public class BackpackGridController : IDisposable
     {
         private const int CURRENT_PAGE_SIZE = 16;
 
@@ -48,6 +48,8 @@ namespace DCL.Backpack
         private BackpackGridSort currentSort = new (NftOrderByOperation.Date, false);
         private IWearable? currentBodyShape;
         private IReadOnlyList<IWearable>? currentPageWearables;
+
+        private BackpackBreadCrumbController breadcrumbController;
 
         public BackpackGridController(
             BackpackGridView view,
@@ -82,9 +84,17 @@ namespace DCL.Backpack
 
             usedPoolItems = new Dictionary<URN, BackpackItemView>();
             pageSelectorController.OnSetPage += (int page) => RequestPage(page, false);
-            new BackpackBreadCrumbController(view.BreadCrumbView, eventBus, commandBus, categoryIcons, colorToggle, hairColors, eyesColors, bodyshapeColors);
+            breadcrumbController = new BackpackBreadCrumbController(view.BreadCrumbView, eventBus, commandBus, categoryIcons, colorToggle, hairColors, eyesColors, bodyshapeColors);
             eventBus.EquipWearableEvent += OnEquip;
             eventBus.UnEquipWearableEvent += OnUnequip;
+        }
+
+        public void Dispose()
+        {
+            breadcrumbController.Dispose();
+
+            eventBus.EquipWearableEvent -= OnEquip;
+            eventBus.UnEquipWearableEvent -= OnUnequip;
         }
 
         public void Activate()
