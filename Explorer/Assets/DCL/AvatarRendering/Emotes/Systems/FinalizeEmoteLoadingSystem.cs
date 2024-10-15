@@ -10,17 +10,17 @@ using DCL.AvatarRendering.Loading.Systems.Abstract;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
 using DCL.Optimization.Pools;
-using ECS.StreamableLoading.AssetBundles;
+using ECS.StreamableLoading;
 using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
-using UnityEngine;
+using System;
 using AssetBundleManifestPromise = ECS.StreamableLoading.Common.AssetPromise<SceneRunner.Scene.SceneAssetBundleManifest, DCL.AvatarRendering.Wearables.Components.GetWearableAssetBundleManifestIntention>;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
+using GltfPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.GLTF.GLTFData, ECS.StreamableLoading.GLTF.GetGLTFIntention>;
 using AudioPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AudioClips.AudioClipData, ECS.StreamableLoading.AudioClips.GetAudioClipIntention>;
-using EmotesFromRealmPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesDTOList,
-    DCL.AvatarRendering.Emotes.GetEmotesByPointersFromRealmIntention>;
+using EmotesFromRealmPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesDTOList, DCL.AvatarRendering.Emotes.GetEmotesByPointersFromRealmIntention>;
 
 namespace DCL.AvatarRendering.Emotes
 {
@@ -37,6 +37,7 @@ namespace DCL.AvatarRendering.Emotes
             FinalizeEmoteDTOQuery(World!);
             FinalizeAssetBundleManifestLoadingQuery(World);
             FinalizeAssetBundleLoadingQuery(World);
+            FinalizeGltfLoadingQuery(World);
             FinalizeAudioClipPromiseQuery(World);
         }
 
@@ -44,8 +45,7 @@ namespace DCL.AvatarRendering.Emotes
         private void FinalizeAssetBundleManifestLoading(
             Entity entity,
             ref AssetBundleManifestPromise promise,
-            ref IEmote emote
-        )
+            ref IEmote emote)
         {
             if (promise.TryForgetWithEntityIfCancelled(entity, World!))
             {
@@ -63,8 +63,7 @@ namespace DCL.AvatarRendering.Emotes
         [Query]
         private void FinalizeEmoteDTO(
             Entity entity,
-            ref EmotesFromRealmPromise promise
-        )
+            ref EmotesFromRealmPromise promise)
         {
             if (promise.TryForgetWithEntityIfCancelled(entity, World!))
                 return;
@@ -78,19 +77,47 @@ namespace DCL.AvatarRendering.Emotes
                             component.UpdateLoadingStatus(false);
                 }
                 else
-                    using (var list = promiseResult.Asset.ConsumeAttachments())
-                        foreach (EmoteDTO assetEntity in list.Value)
-                        {
-                            IEmote component = storage.GetOrAddByDTO(assetEntity);
-                            component.ApplyAndMarkAsLoaded(assetEntity);
-                        }
+                {
+                    using var list = promiseResult.Asset.ConsumeAttachments();
+
+                    foreach (EmoteDTO assetEntity in list.Value)
+                    {
+                        IEmote component = storage.GetOrAddByDTO(assetEntity);
+                        component.ApplyAndMarkAsLoaded(assetEntity);
+                    }
+                }
 
                 World!.Destroy(entity);
             }
         }
 
         [Query]
-        private void FinalizeAssetBundleLoading(Entity entity, ref AssetBundlePromise promise, ref IEmote emote, ref BodyShape bodyShape)
+        private void FinalizeGltfLoading(
+            Entity entity,
+            ref GltfPromise promise,
+            ref IEmote emote,
+            ref BodyShape bodyShape)
+        {
+            FinalizeAssetLoading(promise, entity, ref emote, bodyShape);
+        }
+
+        [Query]
+        private void FinalizeAssetBundleLoading(
+            Entity entity,
+            ref AssetBundlePromise promise,
+            ref IEmote emote,
+            in BodyShape bodyShape)
+        {
+            FinalizeAssetLoading(promise, entity, ref emote, bodyShape);
+        }
+
+        private void FinalizeAssetLoading<TData, TIntention>(
+            AssetPromise<TData, TIntention> promise,
+            Entity entity,
+            ref IEmote emote,
+            BodyShape bodyShape)
+            where TData: IAssetData, IStreamableRefCountData
+            where TIntention: IAssetIntention, IEquatable<TIntention>
         {
             if (promise.TryForgetWithEntityIfCancelled(entity, World!))
             {
@@ -98,11 +125,12 @@ namespace DCL.AvatarRendering.Emotes
                 return;
             }
 
-            if (promise.SafeTryConsume(World, GetReportCategory(), out StreamableLoadingResult<AssetBundleData> result))
+            if (promise.SafeTryConsume(World, GetReportCategory(), out StreamableLoadingResult<TData> result))
             {
                 if (result.Succeeded)
                 {
-                    var asset = new StreamableLoadingResult<AttachmentRegularAsset>(result.ToRegularAsset());
+                    AttachmentRegularAsset regularAsset = result.ToRegularAsset();
+                    var asset = new StreamableLoadingResult<AttachmentRegularAsset>(regularAsset);
 
                     if (emote.IsUnisex() && emote.HasSameClipForAllGenders())
                     {
@@ -119,7 +147,11 @@ namespace DCL.AvatarRendering.Emotes
         }
 
         [Query]
-        private void FinalizeAudioClipPromise(Entity entity, ref IEmote emote, ref AudioPromise promise, BodyShape bodyShape)
+        private void FinalizeAudioClipPromise(
+            Entity entity,
+            ref IEmote emote,
+            ref AudioPromise promise,
+            BodyShape bodyShape)
         {
             if (promise.TryForgetWithEntityIfCancelled(entity, World!))
                 return;

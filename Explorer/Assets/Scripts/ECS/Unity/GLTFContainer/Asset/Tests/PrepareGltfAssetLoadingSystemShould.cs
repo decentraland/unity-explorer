@@ -7,6 +7,7 @@ using ECS.Unity.GLTFContainer.Asset.Components;
 using ECS.Unity.GLTFContainer.Asset.Systems;
 using NSubstitute;
 using NUnit.Framework;
+using SceneRunner.Scene;
 using System.Threading;
 using UnityEngine;
 using Utility;
@@ -19,7 +20,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
         [SetUp]
         public void SetUp()
         {
-            system = new PrepareGltfAssetLoadingSystem(world, cache = Substitute.For<IGltfContainerAssetsCache>(), false, false);
+            system = new PrepareGltfAssetLoadingSystem(world, cache = Substitute.For<IGltfContainerAssetsCache>(), false, false, Substitute.For<ISceneData>());
         }
 
         private IGltfContainerAssetsCache cache;

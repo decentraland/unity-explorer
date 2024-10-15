@@ -1,7 +1,6 @@
 using Arch.Core;
 using AssetManagement;
 using CommunicationData.URLHelpers;
-using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Loading.DTO;
@@ -10,6 +9,7 @@ using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.Diagnostics;
 using DCL.Optimization.Pools;
 using ECS.Prioritization.Components;
+using ECS.StreamableLoading;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
@@ -107,7 +107,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         }
 
         /// <summary>
-        ///     Facial feature can consists of the main texture and the mask
+        ///     Facial feature can consist of the main texture and the mask
         /// </summary>
         private static bool TryCreateFacialFeaturePromises(
             SceneAssetBundleManifest sceneAssetBundleManifest,
@@ -248,23 +248,24 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                 case WearableType.FacialFeature:
                     return new StreamableLoadingResult<AttachmentAssetBase>(new AttachmentTextureAsset(result.Asset!.GetMainAsset<Texture>(), result.Asset));
                 default:
-                    return new StreamableLoadingResult<AttachmentAssetBase>(ToRegularAsset(result));
+                    return new StreamableLoadingResult<AttachmentAssetBase>(result.ToRegularAsset());
             }
         }
 
-        public static AttachmentRegularAsset ToRegularAsset(this StreamableLoadingResult<AssetBundleData> result)
+        public static AttachmentRegularAsset ToRegularAsset<T>(this StreamableLoadingResult<T> result) where T :IStreamableRefCountData, IAssetData
         {
-            GameObject go = result.Asset!.GetMainAsset<GameObject>();
-
             // collect all renderers
             List<AttachmentRegularAsset.RendererInfo> rendererInfos = AttachmentRegularAsset.RENDERER_INFO_POOL.Get();
+            GameObject go = result.Asset!.MainAsset;
+            AssetBundleData? assetBundleData = result.Asset!.BundleData;
+            AnimationClip[]? animationClips = result.Asset!.AnimationClips;
 
             using PoolExtensions.Scope<List<SkinnedMeshRenderer>> pooledList = go.GetComponentsInChildrenIntoPooledList<SkinnedMeshRenderer>();
 
             foreach (SkinnedMeshRenderer skinnedMeshRenderer in pooledList.Value)
                 rendererInfos.Add(new AttachmentRegularAsset.RendererInfo(skinnedMeshRenderer, skinnedMeshRenderer.sharedMaterial));
 
-            return new AttachmentRegularAsset(go, rendererInfos, result.Asset);
+            return new AttachmentRegularAsset(go, rendererInfos, assetBundleData, animationClips);
         }
 
         public static void AssignWearableAsset(this IWearable wearable, AttachmentRegularAsset attachmentRegularAsset, BodyShape bodyShape)

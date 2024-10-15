@@ -31,14 +31,18 @@ namespace DCL.AvatarRendering.Loading.Assets
         public static readonly ListObjectPool<RendererInfo> RENDERER_INFO_POOL = new (listInstanceDefaultCapacity: 3, defaultCapacity: 500);
 
         private readonly List<RendererInfo> rendererInfos;
+        private readonly IReadOnlyList<AnimationClip>? animationClips;
         public readonly GameObject MainAsset;
 
         public IReadOnlyList<RendererInfo> RendererInfos => rendererInfos;
+        public IReadOnlyList<AnimationClip>? AnimationClips => animationClips;
 
-        public AttachmentRegularAsset(GameObject mainAsset, List<RendererInfo> rendererInfos, AssetBundleData? assetBundleData) : base(assetBundleData)
+        public AttachmentRegularAsset(GameObject mainAsset, List<RendererInfo> rendererInfos, AssetBundleData? assetBundleData, IReadOnlyList<AnimationClip>? animationClips = null)
+            : base(assetBundleData)
         {
             MainAsset = mainAsset;
             this.rendererInfos = rendererInfos;
+            this.animationClips = animationClips;
 
             if (mainAsset == null)
                 ProfilingCounters.EmptyWearablesAssetsAmount.Value++;

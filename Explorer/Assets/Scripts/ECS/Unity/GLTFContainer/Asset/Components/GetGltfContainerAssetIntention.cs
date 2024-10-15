@@ -8,7 +8,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Components
     ///     Intermediate intent agnostic to the loading source.
     ///     <para>It enables support for loading GLTF Container from Asset Bundles or GLTFast</para>
     /// </summary>
-    public readonly struct GetGltfContainerAssetIntention : IAssetIntention, IEquatable<GetGltfContainerAssetIntention>
+    public readonly struct GetGltfContainerAssetIntention : IEquatable<GetGltfContainerAssetIntention>, IAssetIntention
     {
         public readonly string Name;
         public readonly string Hash;
@@ -23,20 +23,13 @@ namespace ECS.Unity.GLTFContainer.Asset.Components
 
         public CancellationTokenSource CancellationTokenSource { get; }
 
+        public bool Equals(GetGltfContainerAssetIntention other) =>
+            Name == other.Name && Hash == other.Hash;
 
-        public bool Equals(GetGltfContainerAssetIntention other)
-        {
-            return Name == other.Name && Hash == other.Hash;
-        }
+        public override bool Equals(object? obj) =>
+            obj is GetGltfContainerAssetIntention other && Equals(other);
 
-        public override bool Equals(object? obj)
-        {
-            return obj is GetGltfContainerAssetIntention other && Equals(other);
-        }
-
-        public override int GetHashCode()
-        {
-            return HashCode.Combine(Name, Hash);
-        }
+        public override int GetHashCode() =>
+            HashCode.Combine(Name, Hash);
     }
 }
