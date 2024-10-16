@@ -76,5 +76,12 @@ namespace SceneRunner.Scene
 
         public string GetVersion() =>
             version;
+
+        //Used for the OngoingRequests cache. We need to avoid version and sceneID in this URL to able to reuse assets.
+        //The first loaded hash will be the one used for all the other requests
+        public URLAddress GetCacheableURL(string hash)
+        {
+            return assetBundlesBaseUrl.Append(new URLPath(hash));
+        }
     }
 }
