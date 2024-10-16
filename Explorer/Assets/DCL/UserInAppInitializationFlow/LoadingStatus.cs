@@ -17,9 +17,24 @@ namespace DCL.UserInAppInitializationFlow
 
         private static readonly Dictionary<LoadingStage, float> PROGRESS = new (EnumUtils.GetEqualityComparer<LoadingStage>())
         {
-            [LoadingStage.Init] = 0f, [LoadingStage.AuthenticationScreenShowing] = 0.05f, [LoadingStage.LiveKitConnectionEnsuring] = 0.1f, [LoadingStage.FeatureFlagInitializing] = 0.15f,
-            [LoadingStage.ProfileLoading] = 0.2f, [LoadingStage.EnvironmentMiscSetting] = 0.25f, [LoadingStage.PlayerAvatarLoading] = 0.4f, [LoadingStage.LandscapeLoading] = 0.7f,
-            [LoadingStage.OnboardingChecking] = 0.80f, [LoadingStage.RealmRestarting] = 0.85f, [LoadingStage.PlayerTeleporting] = 0.95f, [LoadingStage.GlobalPXsLoading] = 0.99f,
+            [LoadingStage.Init] = 0f, 
+            [LoadingStage.AuthenticationScreenShowing] = 0.05f, 
+            //Used in initialization Flow
+            [LoadingStage.LiveKitConnectionEnsuring] = 0.1f,
+            //Used in Teleport Flow
+            [LoadingStage.LivekitStopping] = 0.1f, 
+            [LoadingStage.FeatureFlagInitializing] = 0.15f,
+            [LoadingStage.ProfileLoading] = 0.2f, 
+            [LoadingStage.EnvironmentMiscSetting] = 0.25f, 
+            [LoadingStage.PlayerAvatarLoading] = 0.4f,
+            [LoadingStage.LandscapeLoading] = 0.7f,
+            [LoadingStage.OnboardingChecking] = 0.80f,
+            [LoadingStage.RealmRestarting] = 0.85f, 
+            [LoadingStage.PlayerTeleporting] = 0.95f, 
+            //Used in initialization Flow
+            [LoadingStage.GlobalPXsLoading] = 0.99f,
+            //Used in Teleport Flow
+            [LoadingStage.LivekitRestarting] = 0.99f, 
             [LoadingStage.Completed] = 1f
         };
 
@@ -38,7 +53,6 @@ namespace DCL.UserInAppInitializationFlow
             RealmRestarting,
             LivekitStopping,
             PlayerTeleporting,
-            SceneLoading,
             LivekitRestarting,
             GlobalPXsLoading,
             Completed

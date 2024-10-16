@@ -23,8 +23,10 @@ namespace Global.Dynamic.TeleportOperations
         {
             try
             {
-                teleportParams.LoadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.LivekitStopping);
+                float finalizationProgress =
+                    teleportParams.LoadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.LivekitStopping);
                 await roomHub.StopIfNotAsync().Timeout(livekitTimeout);
+                teleportParams.ParentReport.SetProgress(finalizationProgress);
                 return Result.SuccessResult();
             }
             catch (Exception e)
