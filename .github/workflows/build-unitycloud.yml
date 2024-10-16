@@ -271,7 +271,7 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.EXPLORER_TEAM_AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.EXPLORER_TEAM_AWS_SECRET_ACCESS_KEY }}
           EXPLORER_TEAM_S3_BUCKET: ${{ secrets.EXPLORER_TEAM_S3_BUCKET }}
-          DESTINATION_PATH: ${{ inputs.tag_version && format('@dcl/{0}/releases/{1}/test_{2}.zip', 'npx-repo-name', inputs.tag_version, matrix.target) || format('@dcl/{0}/branch/{1}/test_{2}.zip', 'npx-repo-name', github.head_ref || github.ref_name, matrix.target) }}
+          DESTINATION_PATH: ${{ inputs.tag_version && format('@dcl/{0}/releases/{1}/Decentraland_{2}.zip', github.event.repository.name, inputs.tag_version, matrix.target) || format('@dcl/{0}/branch/{1}/Decentraland_{2}.zip', github.event.repository.name, github.head_ref || github.ref_name, matrix.target) }}
         run: |
           npx @dcl/cdn-uploader@next \
             --bucket $EXPLORER_TEAM_S3_BUCKET \
