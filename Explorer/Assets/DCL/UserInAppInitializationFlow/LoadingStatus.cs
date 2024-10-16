@@ -24,11 +24,17 @@ namespace DCL.UserInAppInitializationFlow
             //Used in Teleport Flow
             [LoadingStage.LivekitStopping] = 0.1f, 
             [LoadingStage.FeatureFlagInitializing] = 0.15f,
+            
+            //Used in Teleport Flow
+            [LoadingStage.RealmChanging] = 0.25f,
+            
             [LoadingStage.ProfileLoading] = 0.2f, 
             [LoadingStage.EnvironmentMiscSetting] = 0.25f, 
             [LoadingStage.PlayerAvatarLoading] = 0.4f,
             [LoadingStage.LandscapeLoading] = 0.7f,
             [LoadingStage.OnboardingChecking] = 0.80f,
+            
+            //Used in initialization Flow
             [LoadingStage.RealmRestarting] = 0.85f, 
             [LoadingStage.PlayerTeleporting] = 0.95f, 
             //Used in initialization Flow
@@ -51,6 +57,8 @@ namespace DCL.UserInAppInitializationFlow
             LandscapeLoading,
             OnboardingChecking,
             RealmRestarting,
+            RealmChanging,
+
             LivekitStopping,
             PlayerTeleporting,
             LivekitRestarting,

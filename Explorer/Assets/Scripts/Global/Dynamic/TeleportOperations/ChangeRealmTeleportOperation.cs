@@ -22,7 +22,7 @@ namespace Global.Dynamic.TeleportOperations
             try
             {
                 float finalizationProgress =
-                    teleportParams.LoadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.RealmRestarting);
+                    teleportParams.LoadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.RealmChanging);
                 await realmNavigator.ChangeRealmAsync(teleportParams.CurrentDestinationRealm, ct);
                 teleportParams.ParentReport.SetProgress(finalizationProgress);
                 return Result.SuccessResult();
