@@ -3,7 +3,9 @@ using DCL.Optimization.PerformanceBudgeting;
 using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Collections.Generic;
+using ECS.StreamableLoading.AssetBundles;
 using Unity.Profiling;
+using UnityEngine;
 
 namespace ECS.StreamableLoading.Cache
 {
@@ -61,6 +63,14 @@ namespace ECS.StreamableLoading.Cache
 
         public void AddReference(in TLoadingIntention _, TAssetData asset)
         {
+            if (asset is AssetBundleData data)
+            {
+                if (data.Asset != null && data.Asset.name.Contains(
+                        "bafkreifhsax5ph6m4wzow6cfm7dupdehsni7a3itnmi3cscywxftwujiay"))
+                {
+                    Debug.Log("For the debug");
+                }
+            }
             asset.AddReference();
         }
 

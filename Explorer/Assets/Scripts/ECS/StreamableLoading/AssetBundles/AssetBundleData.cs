@@ -78,13 +78,11 @@ namespace ECS.StreamableLoading.AssetBundles
         
         protected override void DestroyObject()
         {
-            if (AssetBundle != null)
-            {
-                foreach (AssetBundleData child in Dependencies)
-                    child.Dereference();
+            foreach (AssetBundleData child in Dependencies)
+                child.Dereference();
 
+            if (!unloaded)
                 AssetBundle.UnloadAsync(unloadAllLoadedObjects: true);
-            }
         }
 
         public T GetMainAsset<T>() where T : Object
