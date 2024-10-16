@@ -1,5 +1,10 @@
 ﻿namespace DCL.PerformanceAndDiagnostics.Analytics
 {
+    /// <summary>
+    ///     IMPORTANT!!
+    ///     After doing any change to the events here, we need to hit the "Refresh Events" button on the AnalyticsConfiguration Scriptable Object so the new events are recognized!!
+    ///     IMPORTANT!!
+    /// </summary>
     public static class AnalyticsEvents
     {
         public static class General

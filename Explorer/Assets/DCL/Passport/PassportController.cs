@@ -63,6 +63,7 @@ namespace DCL.Passport
         private readonly IRemoteMetadata remoteMetadata;
 
         private Profile? ownProfile;
+        private bool isOwnProfile;
         private string currentUserId;
         private CancellationTokenSource? openPassportFromBadgeNotificationCts;
         private CancellationTokenSource? characterPreviewLoadingCts;
@@ -154,6 +155,7 @@ namespace DCL.Passport
         protected override void OnViewShow()
         {
             currentUserId = inputData.UserId;
+            isOwnProfile = inputData.IsOwnProfile;
             alreadyLoadedSections = PassportSection.NONE;
             cursor.Unlock();
 
@@ -165,8 +167,8 @@ namespace DCL.Passport
             inputBlock.Disable(InputMapComponent.Kind.SHORTCUTS , InputMapComponent.Kind.CAMERA , InputMapComponent.Kind.PLAYER);
 
             viewInstance!.ErrorNotification.Hide(true);
-            bool isOwnPassport = ownProfile?.UserId == currentUserId;
-            PassportOpened?.Invoke(currentUserId, isOwnPassport);
+
+            PassportOpened?.Invoke(currentUserId, isOwnProfile);
         }
 
         protected override void OnViewClose()
@@ -341,7 +343,7 @@ namespace DCL.Passport
                 if (ownProfile != null)
                 {
                     BadgesSectionOpened?.Invoke(ownProfile.UserId, true, OpenBadgeSectionOrigin.Notification.ToString());
-                    mvcManager.ShowAsync(IssueCommand(new Params(ownProfile.UserId, badgeIdToOpen)), ct).Forget();
+                    mvcManager.ShowAsync(IssueCommand(new Params(ownProfile.UserId, badgeIdToOpen, isOwnProfile: true)), ct).Forget();
                 }
             }
             catch (OperationCanceledException) { }
