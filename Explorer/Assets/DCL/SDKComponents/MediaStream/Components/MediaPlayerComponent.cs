@@ -17,6 +17,7 @@ namespace DCL.SDKComponents.MediaStream
 
         public string URL;
         public VideoState State;
+        public double previousTime;
 
         public CancellationTokenSource Cts;
         public OpenMediaPromise OpenMediaPromise;

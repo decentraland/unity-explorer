@@ -12,7 +12,6 @@ using ECS.Abstract;
 using ECS.Groups;
 using RenderHeads.Media.AVProVideo;
 using SceneRunner.Scene;
-using System;
 
 namespace DCL.SDKComponents.MediaStream
 {
@@ -45,9 +44,10 @@ namespace DCL.SDKComponents.MediaStream
         {
             if (!frameTimeBudget.TrySpendBudget()) return;
 
-            VideoState newState = GetCurrentVideoState(mediaPlayer.MediaPlayer.Control);
+            VideoState newState = GetCurrentVideoState(mediaPlayer.MediaPlayer.Control, mediaPlayer.previousTime);
 
             if (mediaPlayer.State == newState) return;
+            mediaPlayer.previousTime = mediaPlayer.MediaPlayer.Control.GetCurrentTime();
             mediaPlayer.State = newState;
 
             AppendMessage(in sdkEntity, in mediaPlayer);
@@ -70,11 +70,24 @@ namespace DCL.SDKComponents.MediaStream
             );
         }
 
-        private static VideoState GetCurrentVideoState(IMediaControl mediaPlayerControl)
+        private static VideoState GetCurrentVideoState(IMediaControl mediaPlayerControl, double previousTime)
         {
-            if (mediaPlayerControl.IsPlaying()) return VideoState.VsPlaying;
-            if (mediaPlayerControl.IsPaused()) return VideoState.VsPaused;
+            if (mediaPlayerControl.IsPlaying())
+            {
+                // Debug.Log($"PRAVS - GetCurrentVideoState() - PLAYING..."
+                //           + $"\n+ last error: {mediaPlayerControl.GetLastError()}"
+                //           + $"\n+ current time: {mediaPlayerControl.GetCurrentTime()}"
+                //           + $"\n+ current time frames: {mediaPlayerControl.GetCurrentTimeFrames()}"
+                //           + $"");
+
+                if (mediaPlayerControl.GetCurrentTime().Equals(previousTime))
+                    return VideoState.VsBuffering;
+
+                return VideoState.VsPlaying;
+            }
+
             if (mediaPlayerControl.IsFinished()) return VideoState.VsNone;
+            if (mediaPlayerControl.IsPaused()) return VideoState.VsPaused;
             if (mediaPlayerControl.IsBuffering()) return VideoState.VsBuffering;
             if (mediaPlayerControl.IsSeeking()) return VideoState.VsSeeking;
 
