@@ -25,7 +25,14 @@
         {
             public const string MESSAGE_SENT = "chat_message_sent";
             public const string BUBBLE_SWITCHED = "chat_bubble_switched";
+        }
+
+        public static class Profile
+        {
+            public const string OWN_PROFILE_OPENED = "profile_opened";
             public const string PASSPORT_OPENED = "passport_opened";
+            public const string BADGES_TAB_OPENED = "badges_tab_opened";
+            public const string BADGE_UI_CLICK = "badge_ui_click";
         }
 
         public static class Map
