@@ -22,9 +22,6 @@ namespace ECS.SceneLifeCycle.Systems
     [LogCategory(ReportCategory.LOD)]
     public partial class UpdateVisualSceneStateSystem : BaseUnityLoopSystem
     {
-        private const float TIME_TO_CHANGE_FROM_SCENE = 5;
-        private const float TIME_TO_CHANGE_FROM_LOD = 2;
-
         /// <summary>
         ///     Represents one of the methods in UpdateVisualSceneStateSystem, they should be converted to static ones to avoid closures
         /// </summary>
@@ -124,7 +121,7 @@ namespace ECS.SceneLifeCycle.Systems
         {
             if (visualSceneState.TimeToChange == 0 && visualSceneState.CurrentVisualSceneState != VisualSceneStateEnum.SHOWING_LOD) return;
 
-            if (visualSceneState.TimeToChange < TIME_TO_CHANGE_FROM_SCENE)
+            if (visualSceneState.TimeToChange < lodSettingsAsset.TimeToChangeToLod)
             {
                 visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.SHOWING_SCENE;
                 visualSceneState.TimeToChange += deltaTime;
@@ -164,12 +161,13 @@ namespace ECS.SceneLifeCycle.Systems
         {
             if (visualSceneState.TimeToChange == 0 && visualSceneState.CurrentVisualSceneState != VisualSceneStateEnum.SHOWING_LOD) return;
 
-            if (visualSceneState.TimeToChange < TIME_TO_CHANGE_FROM_SCENE)
+            if (visualSceneState.TimeToChange < lodSettingsAsset.TimeToChangeToLod)
             {
                 visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.SHOWING_SCENE;
                 visualSceneState.TimeToChange += deltaTime;
                 return;
             }
+            
             visualSceneState.TimeToChange = 0;
             visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.SHOWING_LOD;
 
