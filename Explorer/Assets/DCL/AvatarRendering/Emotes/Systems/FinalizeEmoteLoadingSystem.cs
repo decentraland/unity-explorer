@@ -15,12 +15,13 @@ using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
-using UnityEngine;
 using AssetBundleManifestPromise = ECS.StreamableLoading.Common.AssetPromise<SceneRunner.Scene.SceneAssetBundleManifest, DCL.AvatarRendering.Wearables.Components.GetWearableAssetBundleManifestIntention>;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 using AudioPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AudioClips.AudioClipData, ECS.StreamableLoading.AudioClips.GetAudioClipIntention>;
 using EmotesFromRealmPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesDTOList,
     DCL.AvatarRendering.Emotes.GetEmotesByPointersFromRealmIntention>;
+using EmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
+    DCL.AvatarRendering.Emotes.GetEmotesByPointersIntention>;
 
 namespace DCL.AvatarRendering.Emotes
 {
@@ -38,6 +39,7 @@ namespace DCL.AvatarRendering.Emotes
             FinalizeAssetBundleManifestLoadingQuery(World);
             FinalizeAssetBundleLoadingQuery(World);
             FinalizeAudioClipPromiseQuery(World);
+            ConsumeAndDisposeFinishedEmotePromiseQuery(World);
         }
 
         [Query]
@@ -133,6 +135,17 @@ namespace DCL.AvatarRendering.Emotes
                 emote.AudioAssetResults[bodyShape] = result;
 
             World!.Destroy(entity);
+        }
+
+        [Query]
+        private void ConsumeAndDisposeFinishedEmotePromise(in Entity entity, ref EmotePromise promise)
+        {
+            // The result is added into the emote storage at FinalizeEmoteDTO already, no need to do anything else
+            if (!promise.SafeTryConsume(World, GetReportData(), out StreamableLoadingResult<EmotesResolution> result)) return;
+
+            promise.LoadingIntention.Dispose();
+
+            World.Destroy(entity);
         }
 
         private static void ResetEmoteResultOnCancellation(IEmote emote, BodyShape bodyShape)
