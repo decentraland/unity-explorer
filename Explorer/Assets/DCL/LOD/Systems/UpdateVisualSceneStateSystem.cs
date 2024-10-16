@@ -112,18 +112,18 @@ namespace ECS.SceneLifeCycle.Systems
                     // we call it directly so we avoid an extra query
                     if (visualSceneStateComponent.IsDirty)
                         continuationMethod(entity, deltaTime, ref visualSceneStateComponent, ref sceneDefinitionComponent, ref partitionComponent, ref customComponent);
-
+                    else
+                        visualSceneStateComponent.TimeToChange = 0;
                 }
             }
         }
 
         private void SwapScenePromiseToLOD(Entity entity, float deltaTime, ref VisualSceneState visualSceneState, ref SceneDefinitionComponent sceneDefinitionComponent, ref PartitionComponent partitionComponent, ref AssetPromise<ISceneFacade, GetSceneFacadeIntention> switchcomponent)
         {
-            if (visualSceneState.TimeToChange == 0 && visualSceneState.CurrentVisualSceneState != VisualSceneStateEnum.SHOWING_LOD) return;
+            if (visualSceneState.CandidateVisualSceneState != VisualSceneStateEnum.SHOWING_LOD) return;
 
             if (visualSceneState.TimeToChange < lodSettingsAsset.TimeToChangeToLod)
             {
-                visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.SHOWING_SCENE;
                 visualSceneState.TimeToChange += deltaTime;
                 return;
             }
@@ -143,11 +143,12 @@ namespace ECS.SceneLifeCycle.Systems
 
         private void SwapLODToScenePromise(Entity entity, float deltaTime, ref VisualSceneState visualSceneState, ref SceneDefinitionComponent sceneDefinitionComponent, ref PartitionComponent partitionComponent, ref SceneLODInfo switchComponent)
         {
-            if (visualSceneState.CurrentVisualSceneState != VisualSceneStateEnum.SHOWING_SCENE) return;
+            if (visualSceneState.CandidateVisualSceneState != VisualSceneStateEnum.SHOWING_SCENE) return;
 
             switchComponent.DisposeSceneLODAndRemoveFromCache(scenesCache, sceneDefinitionComponent.Parcels, lodCache, World);
             visualSceneState.IsDirty = false;
             visualSceneState.TimeToChange = 0;
+            visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.SHOWING_SCENE;
 
             //Show Scene
             World.Add(entity, AssetPromise<ISceneFacade, GetSceneFacadeIntention>.Create(World,
@@ -159,15 +160,14 @@ namespace ECS.SceneLifeCycle.Systems
 
         private void SwapSceneFacadeToLOD(Entity entity, float deltaTime, ref VisualSceneState visualSceneState, ref SceneDefinitionComponent sceneDefinitionComponent, ref PartitionComponent partitionComponent, ref ISceneFacade switchComponent)
         {
-            if (visualSceneState.TimeToChange == 0 && visualSceneState.CurrentVisualSceneState != VisualSceneStateEnum.SHOWING_LOD) return;
+            if (visualSceneState.CandidateVisualSceneState != VisualSceneStateEnum.SHOWING_LOD) return;
 
             if (visualSceneState.TimeToChange < lodSettingsAsset.TimeToChangeToLod)
             {
-                visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.SHOWING_SCENE;
                 visualSceneState.TimeToChange += deltaTime;
                 return;
             }
-            
+
             visualSceneState.TimeToChange = 0;
             visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.SHOWING_LOD;
 
