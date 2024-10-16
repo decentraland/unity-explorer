@@ -52,8 +52,13 @@ namespace DCL.Passport.Modules.Badges
             badgeInfoController = new BadgeInfo_PassportModuleSubController(badgeInfoModuleView, webRequestController, badgesAPIClient, passportErrorsController);
             badgeDetailsCardsController = new BadgeDetailsCards_PassportModuleSubController(view, webRequestController, badgesCategoriesController, badgeInfoController);
 
-            badgeDetailsCardsController.OnBadgeSelected += (id) => OnBadgeSelected?.Invoke(id);
+            badgeDetailsCardsController.OnBadgeSelected += BadgeSelected;
             badgesCategoriesController.OnBadgesFilterButtonClicked += OnBadgesCategoryButtonClicked;
+        }
+
+        private void BadgeSelected(string badgeId)
+        {
+            OnBadgeSelected?.Invoke(badgeId);
         }
 
         public void SetBadgeByDefault(string badgeId) =>

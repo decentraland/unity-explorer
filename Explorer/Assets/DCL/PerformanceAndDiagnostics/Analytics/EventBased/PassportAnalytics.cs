@@ -38,24 +38,17 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         {
             analytics.Track(AnalyticsEvents.Profile.BADGES_TAB_OPENED, new JsonObject
             {
-                { "receiver_id", userId }, {"own_passport", isOwnPassport}, {"origin", origin}
+                { "receiver_id", userId }, {"own_passport", isOwnPassport}, {"origin", origin},
             });
         }
 
         private void OnPassportOpened(string userId, bool isOwnPassport)
         {
-            if (isOwnPassport)
-            {
-                analytics.Track(AnalyticsEvents.Profile.OWN_PROFILE_OPENED, new JsonObject
-                {
-                    { "receiver_id", userId },
-                });
-                return;
-            }
+            string eventName = isOwnPassport ? AnalyticsEvents.Profile.OWN_PROFILE_OPENED : AnalyticsEvents.Profile.PASSPORT_OPENED;
 
-            analytics.Track(AnalyticsEvents.Profile.PASSPORT_OPENED, new JsonObject
+            analytics.Track(eventName, new JsonObject
             {
-                { "receiver_id", userId }
+                { "receiver_id", userId },
             });
         }
     }
