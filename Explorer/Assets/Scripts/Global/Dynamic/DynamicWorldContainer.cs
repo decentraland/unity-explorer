@@ -392,7 +392,7 @@ namespace Global.Dynamic
             var chatHistory = new ChatHistory();
 
             var currentSceneInfo = new CurrentSceneInfo();
-            ConnectionStatusPanelPlugin connectionStatusPanelPlugin = new ConnectionStatusPanelPlugin(container.UserInAppInAppInitializationFlow, container.MvcManager, mainUIView, roomsStatus, currentSceneInfo, container.reloadSceneController, globalWorld, playerEntity);
+            ConnectionStatusPanelPlugin connectionStatusPanelPlugin = new ConnectionStatusPanelPlugin(container.UserInAppInAppInitializationFlow, container.MvcManager, mainUIView, roomsStatus, currentSceneInfo, container.reloadSceneController, globalWorld, playerEntity, debugBuilder);
 
             var chatCommandsFactory = new Dictionary<Regex, Func<IChatCommand>>
             {

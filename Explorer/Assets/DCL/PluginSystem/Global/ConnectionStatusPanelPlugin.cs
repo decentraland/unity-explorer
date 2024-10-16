@@ -1,6 +1,7 @@
 using Arch.Core;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
+using DCL.DebugUtilities;
 using DCL.Multiplayer.Connections.Rooms.Status;
 using DCL.UI.ConnectionStatusPanel;
 using DCL.UI.MainUI;
@@ -23,6 +24,7 @@ namespace DCL.PluginSystem.Global
         private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
         private ConnectionStatusPanelController connectionStatusPanelController;
+        private readonly IDebugContainerBuilder debugBuilder;
 
         public ConnectionStatusPanelPlugin(
             IUserInAppInitializationFlow userInAppInitializationFlow,
@@ -32,7 +34,8 @@ namespace DCL.PluginSystem.Global
             ICurrentSceneInfo currentSceneInfo,
             ECSReloadScene ecsReloadScene,
             Arch.Core.World world,
-            Entity playerEntity
+            Entity playerEntity,
+            IDebugContainerBuilder debugBuilder
         )
         {
             this.userInAppInitializationFlow = userInAppInitializationFlow;
@@ -43,6 +46,7 @@ namespace DCL.PluginSystem.Global
             this.ecsReloadScene = ecsReloadScene;
             this.world = world;
             this.playerEntity = playerEntity;
+            this.debugBuilder = debugBuilder;
         }
 
         public void Dispose() { }
@@ -66,7 +70,8 @@ namespace DCL.PluginSystem.Global
                 ecsReloadScene,
                 roomsStatus,
                 world,
-                playerEntity
+                playerEntity,
+                debugBuilder
             );
             mvcManager.RegisterController(connectionStatusPanelController);
         }
