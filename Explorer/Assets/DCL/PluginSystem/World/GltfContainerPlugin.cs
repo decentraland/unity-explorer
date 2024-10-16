@@ -1,5 +1,6 @@
 using Arch.SystemGroups;
 using DCL.ECSComponents;
+using DCL.Optimization.Pools;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.ResourcesUnloading;
 using ECS.Abstract;
@@ -35,7 +36,7 @@ namespace DCL.PluginSystem.World
         private readonly bool useRemoteAssetBundles;
         private readonly ILoadingStatus loadingStatus;
 
-        public GltfContainerPlugin(ECSWorldSingletonSharedDependencies globalDeps, CacheCleaner cacheCleaner, ISceneReadinessReportQueue sceneReadinessReportQueue, SceneAssetLock sceneAssetLock, bool localSceneDevelopment, bool useRemoteAssetBundles, ILoadingStatus loadingStatus)
+        public GltfContainerPlugin(ECSWorldSingletonSharedDependencies globalDeps, CacheCleaner cacheCleaner, ISceneReadinessReportQueue sceneReadinessReportQueue, SceneAssetLock sceneAssetLock, IComponentPoolsRegistry poolsRegistry, bool localSceneDevelopment, bool useRemoteAssetBundles, ILoadingStatus loadingStatus)
         {
             this.globalDeps = globalDeps;
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
@@ -43,7 +44,7 @@ namespace DCL.PluginSystem.World
             this.localSceneDevelopment = localSceneDevelopment;
             this.useRemoteAssetBundles = useRemoteAssetBundles;
             this.loadingStatus = loadingStatus;
-            assetsCache = new GltfContainerAssetsCache();
+            assetsCache = new GltfContainerAssetsCache(poolsRegistry);
 
             cacheCleaner.Register(assetsCache);
         }
