@@ -54,8 +54,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
             AddTransformToEntity(triggerAreaEntity);
         }
 
-        [TearDown]
-        public void TearDown()
+        protected override void OnTearDown()
         {
             Object.DestroyImmediate(fakeAvatarGO);
             Object.DestroyImmediate(fakeAvatarBaseGO);

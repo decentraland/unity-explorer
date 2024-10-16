@@ -19,7 +19,7 @@ namespace DCL.SDKComponents.Tween.Tests
     [TestFixture]
     public class TweenLoaderSystemShould : UnitySystemTestBase<TweenLoaderSystem>
     {
-        
+
         private Entity entity;
         private PBTween pbTween;
 
@@ -47,13 +47,6 @@ namespace DCL.SDKComponents.Tween.Tests
             world.Add(entity, pbTween);
         }
 
-        [TearDown]
-        public void TearDown()
-        {
-            system?.Dispose();
-        }
-
-
         [Test]
         public void AddTweenComponentWithCorrectModelToEntityWithPBTween()
         {
@@ -63,8 +56,5 @@ namespace DCL.SDKComponents.Tween.Tests
 
             Assert.AreEqual(1, world.CountEntities(new QueryDescription().WithAll<SDKTweenComponent>()));
         }
-     
-          
     }
-  
 }
