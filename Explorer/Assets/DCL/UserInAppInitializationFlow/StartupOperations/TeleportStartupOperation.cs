@@ -22,11 +22,10 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
 
         public async UniTask<Result> ExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
         {
-            AsyncLoadProcessReport teleportLoadReport
-                = report.CreateChildReport(LoadingStatus.PROGRESS[LoadingStatus.CompletedStage.PlayerTeleported]);
-
-            loadingStatus.SetCurrentStage(LoadingStatus.CurrentStage.SceneLoading);
+            float finalizationProgress = loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.PlayerTeleporting);
+            AsyncLoadProcessReport teleportLoadReport = report.CreateChildReport(finalizationProgress);
             await realmNavigator.InitializeTeleportToSpawnPointAsync(teleportLoadReport, ct, startParcel);
+            report.SetProgress(finalizationProgress);
             return Result.SuccessResult();
         }
     }

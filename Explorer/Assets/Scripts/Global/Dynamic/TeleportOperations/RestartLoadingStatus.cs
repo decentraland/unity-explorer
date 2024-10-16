@@ -9,7 +9,7 @@ namespace Global.Dynamic.TeleportOperations
     {
         public UniTask<Result> ExecuteAsync(TeleportParams teleportParams, CancellationToken ct)
         {
-            teleportParams.LoadingStatus.SetCurrentStage(LoadingStatus.CurrentStage.Init);
+            teleportParams.ParentReport.SetProgress(teleportParams.LoadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Init));
             teleportParams.LoadingStatus.UpdateAssetsLoaded(0, 0);
             return UniTask.FromResult(Result.SuccessResult());
         }

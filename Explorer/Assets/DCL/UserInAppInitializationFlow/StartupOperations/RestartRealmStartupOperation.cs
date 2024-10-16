@@ -25,11 +25,10 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
 
         public async UniTask<Result> ExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
         {
-            loadingStatus.SetCurrentStage(LoadingStatus.CurrentStage.RealmChanging);
+            float finalizationProgress = loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.RealmRestarting);
             if (reloadRealm)
                 await realmController.RestartRealmAsync(ct);
-
-            report.SetProgress(loadingStatus.SetCompletedStage(LoadingStatus.CompletedStage.RealmRestarted));
+            report.SetProgress(finalizationProgress);
             return Result.SuccessResult();
         }
     }

@@ -19,11 +19,11 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
 
         public async UniTask<Result> ExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
         {
-            loadingStatus.SetCurrentStage(LoadingStatus.CurrentStage.EnsuringLiveKitConnection);
+            float finalizationProgress = loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.LiveKitConnectionEnsuring);
             (bool success, string? errorMessage) result = await healthCheck.IsRemoteAvailableAsync(ct);
 
             if (result.success)
-                report.SetProgress(loadingStatus.SetCompletedStage(LoadingStatus.CompletedStage.LiveKitConnectionEnsured));
+                report.SetProgress(finalizationProgress);
 
             return result.success
                 ? Result.SuccessResult()

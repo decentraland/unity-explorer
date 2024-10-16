@@ -137,8 +137,9 @@ namespace Global.Dynamic
 
         public async UniTask UserInitializationAsync(DynamicWorldContainer dynamicWorldContainer, GlobalWorld globalWorld, Entity playerEntity, ISplashScreen splashScreen, CancellationToken ct)
         {
-            using (dynamicWorldContainer.LoadingStatus.CurrentCompletedStage.Subscribe(OnLoadingStageChanged))
-                await core.UserInitializationAsync(dynamicWorldContainer, globalWorld, playerEntity, splashScreen, ct);
+            dynamicWorldContainer.LoadingStatus.ReportAnalytics(OnLoadingStageChanged);
+                
+            await core.UserInitializationAsync(dynamicWorldContainer, globalWorld, playerEntity, splashScreen, ct);
 
             analytics.Track(General.INITIAL_LOADING, new JsonObject
             {
@@ -146,7 +147,7 @@ namespace Global.Dynamic
             });
         }
 
-        private void OnLoadingStageChanged(LoadingStatus.CompletedStage stage)
+        private void OnLoadingStageChanged(LoadingStatus.LoadingStage stage)
         {
             analytics.Track(General.INITIAL_LOADING, new JsonObject
             {

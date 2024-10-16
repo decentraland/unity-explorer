@@ -23,7 +23,7 @@ namespace Global.Dynamic.TeleportOperations
         {
             try
             {
-                teleportParams.LoadingStatus.SetCurrentStage(LoadingStatus.CurrentStage.LivekitStopping);
+                teleportParams.LoadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.LivekitStopping);
                 await roomHub.StopIfNotAsync().Timeout(livekitTimeout);
                 return Result.SuccessResult();
             }

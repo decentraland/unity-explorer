@@ -19,9 +19,9 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
 
         public async UniTask<Result> ExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
         {
-            loadingStatus.SetCurrentStage(LoadingStatus.CurrentStage.EnvironmentMiscSetting);
+            float finalizationProgress = loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.EnvironmentMiscSetting);
             await realmNavigator.SwitchMiscVisibilityAsync();
-            report.SetProgress(loadingStatus.SetCompletedStage(LoadingStatus.CompletedStage.EnvironmentMiscSet));
+            report.SetProgress(finalizationProgress);
             return Result.SuccessResult();
         }
     }

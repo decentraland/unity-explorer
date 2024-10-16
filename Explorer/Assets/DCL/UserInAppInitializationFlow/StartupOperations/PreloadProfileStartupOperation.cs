@@ -19,9 +19,9 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
 
         public async UniTask<Result> ExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
         {
-            loadingStatus.SetCurrentStage(LoadingStatus.CurrentStage.ProfileLoading);
+            float finalizationProgress = loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.ProfileLoading);
             await selfProfile.ProfileOrPublishIfNotAsync(ct);
-            report.SetProgress(loadingStatus.SetCompletedStage(LoadingStatus.CompletedStage.ProfileLoaded));
+            report.SetProgress(finalizationProgress);
             return Result.SuccessResult();
         }
     }

@@ -25,7 +25,7 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations.Struct
 
                 if (result.Success == false)
                 {
-                    report.SetProgress(loadingStatus.SetCompletedStage(LoadingStatus.CompletedStage.Completed));
+                    report.SetProgress(loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Completed));
                     report.SetProgress(1);
                     return result;
                 }

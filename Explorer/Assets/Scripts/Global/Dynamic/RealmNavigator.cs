@@ -30,7 +30,6 @@ using UnityEngine;
 using UnityEngine.Assertions;
 using Utility;
 using Utility.Types;
-using static DCL.UserInAppInitializationFlow.LoadingStatus.CompletedStage;
 
 namespace Global.Dynamic
 {
@@ -287,8 +286,6 @@ namespace Global.Dynamic
             return async parentLoadReport =>
             {
                 ct.ThrowIfCancellationRequested();
-                parentLoadReport.SetProgress(LoadingStatus.PROGRESS[LandscapeLoaded]);
-
                 var teleportParams = new TeleportParams
                 {
                     ParentReport = parentLoadReport, CurrentDestinationParcel = parcel, LoadingStatus = loadingStatus

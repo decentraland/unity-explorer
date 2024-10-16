@@ -50,9 +50,9 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
 
         public async UniTask<Result> ExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
         {
-            loadingStatus.SetCurrentStage(LoadingStatus.CurrentStage.OnboardingChecking);
+            float finalizationProgress = loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.OnboardingChecking);
             await CheckOnboardingAsync(ct);
-            report.SetProgress(loadingStatus.SetCompletedStage(LoadingStatus.CompletedStage.OnboardingChecked));
+            report.SetProgress(finalizationProgress);
             return Result.SuccessResult();
         }
 

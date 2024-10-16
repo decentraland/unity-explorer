@@ -32,7 +32,7 @@ namespace DCL.Multiplayer.Connections.Systems
         protected override void Update(float t)
         {
             // Don't connect to the rooms until the loading process has finished
-            if (loadingStatus.CurrentCompletedStage.Value != LoadingStatus.CompletedStage.Completed || alreadyStarted) return;
+            if (loadingStatus.CurrentStage.Value != LoadingStatus.LoadingStage.Completed || alreadyStarted) return;
 
             archipelagoIslandRoom.StartIfNotAsync();
             gateKeeperSceneRoom.StartIfNotAsync();

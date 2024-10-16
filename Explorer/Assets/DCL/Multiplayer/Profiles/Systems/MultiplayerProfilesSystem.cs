@@ -62,7 +62,7 @@ namespace DCL.Multiplayer.Profiles.Systems
 
         protected override void Update(float t)
         {
-            if (realFlowLoadingStatus.CurrentCompletedStage.Value is not LoadingStatus.CompletedStage.Completed)
+            if (realFlowLoadingStatus.CurrentStage.Value is not LoadingStatus.LoadingStage.Completed)
                 return;
 
             // On realm switch it may be not configured yet

@@ -1,4 +1,5 @@
-﻿using DCL.Utilities;
+﻿using System;
+using DCL.Utilities;
 using System.Collections.Generic;
 using DCL.DebugUtilities.UIBindings;
 using Utility;
@@ -7,76 +8,65 @@ namespace DCL.UserInAppInitializationFlow
 {
     public class LoadingStatus : ILoadingStatus
     {
-        public ReactiveProperty<CompletedStage> CurrentCompletedStage { get; } = new (CompletedStage.Init);
-        public ElementBinding<string> CurrentStageBinding { get;  } = new (string.Empty);
-        public ElementBinding<string> CurrentAssetsToLoad { get; } = new (string.Empty);
-        public ElementBinding<string> CurrentAssetsLoaded { get; } = new (string.Empty);
+        public ReactiveProperty<LoadingStage> CurrentStage { get; } = new (LoadingStage.Init);
+        public ElementBinding<string> CurrentStageBinding { get; }= new (string.Empty);
+        public ElementBinding<string> CurrentAssetsStateBinding { get; } = new (string.Empty);
 
+        private Action<LoadingStage> analyticsCallback;
+        
 
-        public enum CompletedStage : byte
+        private static readonly Dictionary<LoadingStage, float> PROGRESS = new (EnumUtils.GetEqualityComparer<LoadingStage>())
         {
-            Init = 0,
-            AuthenticationScreenShown = 1,
-            LiveKitConnectionEnsured = 2,
-            FeatureFlagInitialized = 3,
-            ProfileLoaded = 4,
-            EnvironmentMiscSet = 5,
-            PlayerAvatarLoaded = 6,
-            LandscapeLoaded = 7,
-            OnboardingChecked = 8,
-            RealmRestarted = 9,
-
-            /// <summary>
-            ///     Player has teleported to the spawn point of the starting scene
-            /// </summary>
-            PlayerTeleported = 10,
-            GlobalPXsLoaded = 11,
-            Completed = 12,
-        }
-
-        public static readonly Dictionary<CompletedStage, float> PROGRESS = new (EnumUtils.GetEqualityComparer<CompletedStage>())
-        {
-            [CompletedStage.Init] = 0f, [CompletedStage.AuthenticationScreenShown] = 0.05f, [CompletedStage.LiveKitConnectionEnsured] = 0.1f, [CompletedStage.FeatureFlagInitialized] = 0.15f,
-            [CompletedStage.ProfileLoaded] = 0.2f, [CompletedStage.EnvironmentMiscSet] = 0.25f, [CompletedStage.PlayerAvatarLoaded] = 0.4f, [CompletedStage.LandscapeLoaded] = 0.7f,
-            [CompletedStage.OnboardingChecked] = 0.80f, [CompletedStage.RealmRestarted] = 0.85f, [CompletedStage.PlayerTeleported] = 0.95f, [CompletedStage.GlobalPXsLoaded] = 0.99f,
-            [CompletedStage.Completed] = 1f
+            [LoadingStage.Init] = 0f, [LoadingStage.AuthenticationScreenShowing] = 0.05f, [LoadingStage.LiveKitConnectionEnsuring] = 0.1f, [LoadingStage.FeatureFlagInitializing] = 0.15f,
+            [LoadingStage.ProfileLoading] = 0.2f, [LoadingStage.EnvironmentMiscSetting] = 0.25f, [LoadingStage.PlayerAvatarLoading] = 0.4f, [LoadingStage.LandscapeLoading] = 0.7f,
+            [LoadingStage.OnboardingChecking] = 0.80f, [LoadingStage.RealmRestarting] = 0.85f, [LoadingStage.PlayerTeleporting] = 0.95f, [LoadingStage.GlobalPXsLoading] = 0.99f,
+            [LoadingStage.Completed] = 1f
         };
 
 
-        public enum CurrentStage : byte
+        public enum LoadingStage : byte
         {
             Init,
-            LivekitStopping,
-            RealmChanging,
+            AuthenticationScreenShowing,
+            LiveKitConnectionEnsuring,
+            FeatureFlagInitializing,
+            ProfileLoading,
+            EnvironmentMiscSetting,
+            PlayerAvatarLoading,
             LandscapeLoading,
+            OnboardingChecking,
+            RealmRestarting,
+            LivekitStopping,
+            PlayerTeleporting,
             SceneLoading,
             LivekitRestarting,
-            ProfileLoading,
-            OnboardingChecking,
-            EnsuringLiveKitConnection,
-            FeatureFlagInitializing,
             GlobalPXsLoading,
-            PlayerAvatarLoading,
-            EnvironmentMiscSetting,
-            Done
+            Completed
         }
 
 
-        public void SetCurrentStage(CurrentStage stage)
+        public float SetCurrentStage(LoadingStage stage)
         {
+            //After the first loading screen flow, we dont want to report analytics anymore
+            if (stage == LoadingStage.Completed)
+                CurrentStage.Unsubscribe(analyticsCallback);
+            
+            CurrentStage.Value = stage;
             CurrentStageBinding.Value = stage.ToString();
+            return PROGRESS[stage];
         }
 
-        public float SetCompletedStage(CompletedStage stage)
+        public void ReportAnalytics(Action<LoadingStage> analyticsReport)
         {
-            CurrentCompletedStage.Value = stage;
-            return PROGRESS[stage];
+            analyticsCallback = analyticsReport;
+            CurrentStage.Subscribe(analyticsReport);
         }
 
         public void UpdateAssetsLoaded(int assetsLoaded, int assetsToLoad)
         {
-            CurrentAssetsToLoad.Value = assetsToLoad.ToString();
-            CurrentAssetsLoaded.Value = assetsLoaded.ToString();
+            CurrentAssetsStateBinding.Value = $"{assetsLoaded.ToString()}/{assetsToLoad.ToString()}";
         }
+
+      
     }
 }

@@ -69,7 +69,7 @@ namespace DCL.Multiplayer.Connections.Demo
                 ICurrentAdapterAddress.NewDefault(new IRealmData.Fake())
             );
             var realFlowLoadingStatus = new LoadingStatus();
-            realFlowLoadingStatus.SetCompletedStage(LoadingStatus.CompletedStage.Completed);
+            realFlowLoadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Completed);
             system = new ConnectionRoomsSystem(world, archipelagoIslandRoom, new IGateKeeperSceneRoom.Fake(), realFlowLoadingStatus);
 
             while (this)

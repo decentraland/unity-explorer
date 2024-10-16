@@ -96,8 +96,7 @@ namespace DCL.UserInAppInitializationFlow
 
         public async UniTask ExecuteAsync(UserInAppInitializationFlowParameters parameters, CancellationToken ct)
         {
-            loadingStatus.SetCurrentStage(LoadingStatus.CurrentStage.Init);
-            loadingStatus.SetCompletedStage(LoadingStatus.CompletedStage.Init);
+            loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Init);
 
             Result result = default;
 
@@ -114,7 +113,7 @@ namespace DCL.UserInAppInitializationFlow
 
                 if (parameters.ShowAuthentication)
                 {
-                    loadingStatus.SetCompletedStage(LoadingStatus.CompletedStage.AuthenticationScreenShown);
+                    loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.AuthenticationScreenShowing);
                     await ShowAuthenticationScreenAsync(ct);
                 }
 
@@ -126,7 +125,7 @@ namespace DCL.UserInAppInitializationFlow
                     await roomHub.StartAsync().Timeout(TimeSpan.FromSeconds(10));
                     result = teleportResult.Success ? teleportResult : Result.ErrorResult(teleportResult.ErrorMessage);
                     // We need to flag the process as completed, otherwise the multiplayer systems will not run
-                    loadingStatus.SetCompletedStage(LoadingStatus.CompletedStage.Completed);
+                    loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Completed);
                 }
                 else
                 {
@@ -137,7 +136,7 @@ namespace DCL.UserInAppInitializationFlow
                                 result = await startupOperation.ExecuteAsync(parentLoadReport, ct);
 
                                 if (result.Success)
-                                    parentLoadReport.SetProgress(loadingStatus.SetCompletedStage(LoadingStatus.CompletedStage.Completed));
+                                    parentLoadReport.SetProgress(loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Completed));
 
                                 return result;
                             },
@@ -155,7 +154,7 @@ namespace DCL.UserInAppInitializationFlow
             while (result.Success == false && parameters.ShowAuthentication);
 
             await checkOnboardingStartupOperation.MarkOnboardingAsDoneAsync(parameters.World, parameters.PlayerEntity, ct);
-            loadingStatus.SetCurrentStage(LoadingStatus.CurrentStage.Done);
+            loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Completed);
         }
 
         private static void ApplyErrorIfLoadingScreenError(ref Result result, Result showResult)

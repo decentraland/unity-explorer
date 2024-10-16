@@ -64,8 +64,7 @@ namespace DCL.PluginSystem.Global
             debugContainerBuilder
                 .TryAddWidget("Loading Screen")?
                 .AddCustomMarker("Current Stage", loadingStatus.CurrentStageBinding)
-                .AddCustomMarker("Assets loaded", loadingStatus.CurrentAssetsLoaded)
-                .AddCustomMarker("Assets to load", loadingStatus.CurrentAssetsToLoad);
+                .AddCustomMarker("Assets to load", loadingStatus.CurrentAssetsStateBinding);
         }
     }
 }
