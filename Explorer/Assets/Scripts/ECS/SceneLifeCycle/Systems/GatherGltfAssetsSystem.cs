@@ -115,7 +115,6 @@ namespace ECS.SceneLifeCycle.Systems
 
                 assetsResolved += toDelete.Count;
                 float progress = totalAssetsToResolve != 0 ? assetsResolved / (float)totalAssetsToResolve : 1;
-                loadingStatus.UpdateAssetsLoaded(assetsResolved, totalAssetsToResolve);
 
                 for (var i = 0; i < reports!.Value.Count; i++)
                 {
@@ -147,7 +146,7 @@ namespace ECS.SceneLifeCycle.Systems
                     reports.Value.Dispose();
                     reports = null;
                 }
-
+                loadingStatus.UpdateAssetsLoaded(assetsResolved, totalAssetsToResolve);
                 sceneData.SceneLoadingConcluded = concluded;
             }
         }
