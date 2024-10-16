@@ -34,18 +34,17 @@ namespace DCL.LOD
         /// </summary>
         private const int POOLS_MAX_NEW_INSTANCES = 20;
 
-        private readonly Transform? roadAssetParent = null;
+        private readonly Transform roadAssetParent;
 
         private readonly Dictionary<string, IObjectPool<Transform>> roadAssetPoolDictionary;
 
         public RoadAssetsPool(IReadOnlyList<GameObject> roadPrefabs, IComponentPoolsRegistry? componentPoolsRegistry = null)
         {
 
-#if UNITY_EDITOR
             var poolRoot = componentPoolsRegistry?.RootContainerTransform();
             roadAssetParent = new GameObject("POOL_CONTAINER_Road_Assets").transform;
             roadAssetParent.parent = poolRoot;
-#endif
+
             roadAssetPoolDictionary = new Dictionary<string, IObjectPool<Transform>>();
 
             foreach (GameObject gameObject in roadPrefabs)

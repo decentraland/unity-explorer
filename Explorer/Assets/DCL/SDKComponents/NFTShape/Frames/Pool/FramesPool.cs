@@ -11,7 +11,6 @@ namespace DCL.SDKComponents.NFTShape.Frames.Pool
     public class FramesPool : IFramesPool
     {
         private readonly Transform framePoolParent;
-
         private readonly IReadOnlyFramePrefabs framePrefabs;
         private readonly Dictionary<NftFrameType, IObjectPool<AbstractFrame>> pools = new ();
         private readonly Dictionary<AbstractFrame, NftFrameType> types = new ();
@@ -19,9 +18,11 @@ namespace DCL.SDKComponents.NFTShape.Frames.Pool
         public FramesPool(IReadOnlyFramePrefabs framePrefabs, IComponentPoolsRegistry? componentPoolsRegistry = null)
         {
             this.framePrefabs = framePrefabs;
+#if UNITY_EDITOR
             var poolRoot = componentPoolsRegistry?.RootContainerTransform();
             framePoolParent = new GameObject("POOL_CONTAINER_NFT_FRAMES").transform;
             framePoolParent.parent = poolRoot;
+#endif
         }
 
         public bool IsInitialized => framePrefabs.IsInitialized;

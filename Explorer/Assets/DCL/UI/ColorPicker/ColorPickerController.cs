@@ -4,11 +4,12 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Pool;
+using UnityEngine.UI;
 using Object = UnityEngine.Object;
 
 namespace DCL.UI
 {
-    public class ColorPickerController
+    public class ColorPickerController : IDisposable
     {
         private const float INCREMENT_AMOUNT = 0.1f;
         public event Action<Color, string> OnColorChanged;
@@ -38,6 +39,7 @@ namespace DCL.UI
                 actionOnRelease:(toggle) => toggle.gameObject.SetActive(false));
 
             view.SliderHue.Slider.onValueChanged.AddListener(_ => SetColor());
+            view.SliderHue.Slider.onValueChanged.AddListener(_ => SetSaturationColor());
             view.SliderHue.IncreaseButton.onClick.AddListener(() => ChangeProperty(view.SliderHue, INCREMENT_AMOUNT));
             view.SliderHue.DecreaseButton.onClick.AddListener(() => ChangeProperty(view.SliderHue, -INCREMENT_AMOUNT));
 
@@ -49,7 +51,35 @@ namespace DCL.UI
             view.SliderValue.IncreaseButton.onClick.AddListener(() => ChangeProperty(view.SliderValue, INCREMENT_AMOUNT));
             view.SliderValue.DecreaseButton.onClick.AddListener(() => ChangeProperty(view.SliderValue, -INCREMENT_AMOUNT));
 
-            view.ToggleButton.onClick.AddListener(() => TogglePanel());
+            view.ToggleButton.onClick.AddListener(TogglePanel);
+        }
+
+        public void Dispose()
+        {
+            view.SliderHue.Slider.onValueChanged.RemoveAllListeners();
+            view.SliderHue.IncreaseButton.onClick.RemoveAllListeners();
+            view.SliderHue.DecreaseButton.onClick.RemoveAllListeners();
+
+            view.SliderSaturation.Slider.onValueChanged.RemoveAllListeners();
+            view.SliderSaturation.IncreaseButton.onClick.RemoveAllListeners();
+            view.SliderSaturation.DecreaseButton.onClick.RemoveAllListeners();
+
+            view.SliderValue.Slider.onValueChanged.RemoveAllListeners();
+            view.SliderValue.IncreaseButton.onClick.RemoveAllListeners();
+            view.SliderValue.DecreaseButton.onClick.RemoveAllListeners();
+
+            view.ToggleButton.onClick.RemoveAllListeners();
+        }
+
+        private void SetSaturationColor()
+        {
+            Color newColor = Color.HSVToRGB(view.SliderHue.Slider.value, 1, 1);
+            ColorBlock block = view.SliderSaturation.Slider.colors;
+            block.normalColor = newColor;
+            block.highlightedColor = newColor;
+            block.pressedColor = newColor;
+            block.selectedColor = newColor;
+            view.SliderSaturation.Slider.colors = block;
         }
 
         public void SetCurrentColor(Color newColor, string category)
@@ -148,6 +178,7 @@ namespace DCL.UI
             view.SliderHue.Slider.SetValueWithoutNotify(h);
             view.SliderSaturation.Slider.SetValueWithoutNotify(s);
             view.SliderValue.Slider.SetValueWithoutNotify(v);
+            SetSaturationColor();
         }
 
         private void ClickedOnPreset(Color presetColor, string category)
