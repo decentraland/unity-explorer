@@ -121,6 +121,28 @@ namespace DCL.ResourcesUnloading.Tests
                    .Run();
         }
 
+        [Test, Performance]
+        [TestCase(1)]
+        [TestCase(10)]
+        [TestCase(100)]
+        public void CacheCleaningAllocations(int cachedElementsAmount)
+        {
+            // Arrange
+            releasablePerformanceBudget.TrySpendBudget().Returns(true);
+
+            for (var i = 0; i < cachedElementsAmount; i++)
+                FillCachesWithElements(hashID: $"test{i}");
+
+            SampleGroup totalAllocatedMemory = new SampleGroup("TotalAllocatedMemory", SampleUnit.Kilobyte, increaseIsBetter: false);
+
+            // Act
+            long memoryBefore = UnityEngine.Profiling.Profiler.GetTotalAllocatedMemoryLong();
+            cacheCleaner.UnloadCache();
+            long memoryAfter = UnityEngine.Profiling.Profiler.GetTotalAllocatedMemoryLong();
+
+            Measure.Custom(totalAllocatedMemory, (memoryAfter - memoryBefore) / 1024f);
+        }
+
         [Category(INTEGRATION)]
         [Test]
         public void DisposingShouldProperlyDereferenceDependencyChain()

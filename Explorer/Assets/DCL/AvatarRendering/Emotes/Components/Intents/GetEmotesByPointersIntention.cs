@@ -12,6 +12,9 @@ namespace DCL.AvatarRendering.Emotes
 {
     public struct GetEmotesByPointersIntention : IAssetIntention, IDisposable, IEquatable<GetEmotesByPointersIntention>
     {
+        private readonly List<URN> pointers;
+        private bool isDisposed;
+
         public CancellationTokenSource CancellationTokenSource { get; }
 
         public IReadOnlyCollection<URN> Pointers => pointers;
@@ -23,8 +26,6 @@ namespace DCL.AvatarRendering.Emotes
         public BodyShape BodyShape { get; }
 
         public LoadTimeout Timeout;
-
-        private readonly List<URN> pointers;
 
         public GetEmotesByPointersIntention(List<URN> pointers,
             BodyShape bodyShape,
@@ -51,9 +52,11 @@ namespace DCL.AvatarRendering.Emotes
 
         public void Dispose()
         {
+            if (isDisposed) return;
             POINTERS_POOL.Release(pointers);
             POINTERS_HASHSET_POOL.Release(RequestedPointers);
             POINTERS_HASHSET_POOL.Release(SuccessfulPointers);
+            isDisposed = true;
         }
     }
 }
