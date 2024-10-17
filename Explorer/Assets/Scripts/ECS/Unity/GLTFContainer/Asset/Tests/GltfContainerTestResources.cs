@@ -48,7 +48,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
 
         public void UnloadBundle()
         {
-            assetBundleData.Asset.Dispose();
+            assetBundleData.Asset?.Dispose();
         }
     }
 }
