@@ -58,7 +58,7 @@ namespace SceneRunner.Scene
                 if (filesToGetFromLocalHost.Contains(contentPath) || IsTexture(contentPath))
                 {
                     result = contentBaseUrl.Append(URLPath.FromString(hash));
-                    resolvedContentURLs[contentPath] = (true, result); // TODO: REVERT
+                    resolvedContentURLs[contentPath] = (true, result);
                     return true;
                 }
 

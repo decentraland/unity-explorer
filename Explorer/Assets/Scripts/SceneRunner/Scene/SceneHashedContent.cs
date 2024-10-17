@@ -22,25 +22,25 @@ namespace SceneRunner.Scene
             this.contentBaseUrl = contentBaseUrl;
         }
 
-        public bool TryGetContentUrl(string contentPath, out URLAddress resultURL)
+        public bool TryGetContentUrl(string contentPath, out URLAddress result)
         {
             if (resolvedContentURLs.TryGetValue(contentPath, out (bool success, URLAddress url) cachedResult))
             {
-                resultURL = cachedResult.url;
+                result = cachedResult.url;
                 return cachedResult.success;
             }
 
             if (fileToHash.TryGetValue(contentPath, out string hash))
             {
-                resultURL = contentBaseUrl.Append(URLPath.FromString(hash));
-                resolvedContentURLs[contentPath] = (true, resultURL); // TODO: REVERT THIS
+                result = contentBaseUrl.Append(URLPath.FromString(hash));
+                resolvedContentURLs[contentPath] = (true, result);
                 return true;
             }
 
             ReportHub.LogWarning(ReportCategory.SCENE_LOADING, $"{nameof(SceneHashedContent)}: {contentPath} not found in {nameof(fileToHash)}");
 
-            resultURL = URLAddress.EMPTY;
-            resolvedContentURLs[contentPath] = (false, resultURL);
+            result = URLAddress.EMPTY;
+            resolvedContentURLs[contentPath] = (false, result);
             return false;
         }
 
