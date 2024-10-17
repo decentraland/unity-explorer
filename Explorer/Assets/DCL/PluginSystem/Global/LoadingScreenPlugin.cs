@@ -10,6 +10,7 @@ using System.Threading;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.UserInAppInitializationFlow;
+using DCL.Utilities;
 using UnityEngine.Localization.Settings;
 
 namespace DCL.PluginSystem.Global
@@ -22,6 +23,10 @@ namespace DCL.PluginSystem.Global
         private readonly IInputBlock inputBlock;
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly ILoadingStatus loadingStatus;
+
+        
+        private ElementBinding<string> currentStageBinding = new ElementBinding<string>(string.Empty);
+        private ElementBinding<string> assetStateBinding = new ElementBinding<string>(string.Empty);
 
 
         public LoadingScreenPlugin(
@@ -61,10 +66,16 @@ namespace DCL.PluginSystem.Global
             mvcManager.RegisterController(new SceneLoadingScreenController(authScreenFactory, tipsProvider,
                 TimeSpan.FromSeconds(settings.MinimumScreenDisplayDuration), audioMixerVolumesController, inputBlock));
 
+            loadingStatus.CurrentStage.Subscribe(stage => currentStageBinding.Value = stage.ToString());
+            loadingStatus.AssetState.Subscribe(assetState => assetStateBinding.Value = assetState);
+            
+            currentStageBinding.Value= loadingStatus.CurrentStage.Value.ToString();
+            assetStateBinding.Value = loadingStatus.AssetState.Value;
+            
             debugContainerBuilder
                 .TryAddWidget("Loading Screen")?
-                .AddCustomMarker("Current Stage", loadingStatus.CurrentStageBinding)
-                .AddCustomMarker("Assets to load", loadingStatus.CurrentAssetsStateBinding);
+                .AddCustomMarker("Current Stage", currentStageBinding)
+                .AddCustomMarker("Assets to load", assetStateBinding);
         }
     }
 }
