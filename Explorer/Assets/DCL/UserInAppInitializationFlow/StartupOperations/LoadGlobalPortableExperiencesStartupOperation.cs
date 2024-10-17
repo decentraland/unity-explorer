@@ -22,14 +22,14 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
 {
     public class LoadGlobalPortableExperiencesStartupOperation : IStartupOperation
     {
-        private readonly RealFlowLoadingStatus loadingStatus;
+        private readonly ILoadingStatus loadingStatus;
         private readonly ISelfProfile selfProfile;
         private readonly FeatureFlagsCache featureFlagsCache;
         private readonly IDebugSettings debugSettings;
         private readonly IPortableExperiencesController portableExperiencesController;
 
         public LoadGlobalPortableExperiencesStartupOperation(
-            RealFlowLoadingStatus loadingStatus,
+            ILoadingStatus loadingStatus,
             ISelfProfile selfProfile,
             FeatureFlagsCache featureFlagsCache,
             IDebugSettings debugSettings,
@@ -44,9 +44,9 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
 
         public async UniTask<Result> ExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
         {
+            float finalizationProgress = loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.GlobalPXsLoading);
             await CheckGlobalPxLoadingConditionsAsync(ct);
-
-            report.SetProgress(loadingStatus.SetStage(RealFlowLoadingStatus.Stage.GlobalPXsLoaded));
+            report.SetProgress(finalizationProgress);
             return Result.SuccessResult();
         }
 
