@@ -24,7 +24,7 @@ namespace ECS.Unity.Materials.Tests
         public void FinishLoadingIfPresentInCache()
         {
             var materialComponent = new MaterialComponent(MaterialData.CreateBasicMaterial(
-                new TextureComponent("test-texture", TextureWrapMode.Mirror, FilterMode.Bilinear),
+                new TextureComponent("test-texture", "file-hash", TextureWrapMode.Mirror, FilterMode.Bilinear),
                 0.5f,
                 Color.red,
                 true));
@@ -54,7 +54,7 @@ namespace ECS.Unity.Materials.Tests
         public void DoNothingIfLoadingStarted([Values(StreamableLoading.LifeCycle.LoadingInProgress, StreamableLoading.LifeCycle.LoadingFinished, StreamableLoading.LifeCycle.Applied)] StreamableLoading.LifeCycle status)
         {
             var materialComponent = new MaterialComponent(MaterialData.CreateBasicMaterial(
-                new TextureComponent("test-texture", TextureWrapMode.Mirror, FilterMode.Bilinear),
+                new TextureComponent("test-texture", "file-hash", TextureWrapMode.Mirror, FilterMode.Bilinear),
                 0.5f,
                 Color.red,
                 true));
@@ -84,10 +84,10 @@ namespace ECS.Unity.Materials.Tests
         public void NotFinishLoadingIfNotPresentInCache()
         {
             var materialComponent = new MaterialComponent(MaterialData.CreatePBRMaterial(
-                new TextureComponent("1", TextureWrapMode.Mirror, FilterMode.Bilinear),
-                new TextureComponent("2", TextureWrapMode.MirrorOnce, FilterMode.Trilinear),
-                new TextureComponent("3", TextureWrapMode.Repeat, FilterMode.Point),
-                new TextureComponent("4", TextureWrapMode.Clamp, FilterMode.Point),
+                new TextureComponent("1", "file-hash", TextureWrapMode.Mirror, FilterMode.Bilinear),
+                new TextureComponent("2", "file-hash", TextureWrapMode.MirrorOnce, FilterMode.Trilinear),
+                new TextureComponent("3", "file-hash", TextureWrapMode.Repeat, FilterMode.Point),
+                new TextureComponent("4", "file-hash", TextureWrapMode.Clamp, FilterMode.Point),
                 0.5f,
                 true,
                 Color.red,
