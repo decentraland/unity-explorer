@@ -12,6 +12,6 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
 
         UniTask<MetaData> MetaDataAsync(CancellationToken token);
 
-        UniTask WaitForMetaDataIsDirtyAsync(CancellationToken token);
+        bool MetadataIsDirty { get; }
     }
 }

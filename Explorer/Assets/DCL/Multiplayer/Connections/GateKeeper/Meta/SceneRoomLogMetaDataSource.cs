@@ -27,11 +27,6 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
             return result;
         }
 
-        public async UniTask WaitForMetaDataIsDirtyAsync(CancellationToken token)
-        {
-            ReportHub.WithReport(ReportCategory.LIVEKIT).Log($"{PREFIX} WaitForMetaDataIsDirtyAsync start");
-            await origin.WaitForMetaDataIsDirtyAsync(token);
-            ReportHub.WithReport(ReportCategory.LIVEKIT).Log($"{PREFIX} WaitForMetaDataIsDirtyAsync finish");
-        }
+        public bool MetadataIsDirty => origin.MetadataIsDirty;
     }
 }

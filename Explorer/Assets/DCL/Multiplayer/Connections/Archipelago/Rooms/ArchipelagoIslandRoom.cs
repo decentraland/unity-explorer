@@ -99,7 +99,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
             var result = await signFlow.SendHeartbeatAsync(position, token);
 
             if (result.Success == false)
-                ReportHub.LogWarning(ReportCategory.ARCHIPELAGO_REQUEST, $"Cannot send heartbeat, connection is closed: {result.ErrorMessage}");
+                ReportHub.LogWarning(ReportCategory.COMMS_SCENE_HANDLER, $"Cannot send heartbeat, connection is closed: {result.ErrorMessage}");
         }
 
         private void OnNewConnectionString(string connectionString, CancellationToken token)
@@ -127,12 +127,12 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
             if (messageForSignResult.Success == false ||
                 !HandshakePayloadIsValid(messageForSignResult.Result))
             {
-                ReportHub.LogError(ReportCategory.ARCHIPELAGO_REQUEST, $"Cannot obtain a message to sign a welcome peer");
+                ReportHub.LogError(ReportCategory.COMMS_SCENE_HANDLER, "Cannot obtain a message to sign a welcome peer");
                 return LightResult<string>.FAILURE;
             }
 
             string signedMessage = identity.Sign(messageForSignResult.Result).ToJson();
-            ReportHub.Log(ReportCategory.ARCHIPELAGO_REQUEST, $"Signed message: {signedMessage}");
+            ReportHub.Log(ReportCategory.COMMS_SCENE_HANDLER, $"Signed message: {signedMessage}");
             return await signFlow.WelcomePeerIdAsync(signedMessage, token);
         }
 

@@ -24,6 +24,9 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
         public string ToJson() =>
             JsonUtility.ToJson(this)!;
 
+        public override string ToString() =>
+            $"Realm: {realmName}, Scene: {sceneId}, Parcel: {Parcel}";
+
         public bool Equals(MetaData other) =>
             realmName == other.realmName && sceneId == other.sceneId;
 
