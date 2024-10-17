@@ -16,7 +16,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.SignFlow
 
         public LogArchipelagoSignFlow(IArchipelagoSignFlow origin) : this(
             origin,
-            m => ReportHub.Log(ReportCategory.ARCHIPELAGO_REQUEST, m)
+            m => ReportHub.Log(ReportCategory.COMMS_SCENE_HANDLER, m)
         ) { }
 
         public LogArchipelagoSignFlow(IArchipelagoSignFlow origin, Action<string> log)

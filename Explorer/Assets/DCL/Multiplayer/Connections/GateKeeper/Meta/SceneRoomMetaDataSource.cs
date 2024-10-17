@@ -14,9 +14,6 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
         private readonly IExposedTransform characterTransform;
         private readonly IPlacesAPIService placesAPIService;
 
-        private readonly Func<bool> waitForGenesisCity;
-        private readonly Func<bool> waitForPlayerPositionChange;
-
         private readonly bool forceSceneIsolation;
 
         public SceneRoomMetaDataSource(IRealmData realmData, IExposedTransform characterTransform, IPlacesAPIService placesAPIService, bool forceSceneIsolation)
@@ -25,9 +22,6 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
             this.characterTransform = characterTransform;
             this.placesAPIService = placesAPIService;
             this.forceSceneIsolation = forceSceneIsolation;
-
-            waitForGenesisCity = () => !realmData.ScenesAreFixed;
-            waitForPlayerPositionChange = () => this.characterTransform.Position.IsDirty;
         }
 
         public bool ScenesCommunicationIsIsolated => forceSceneIsolation || !realmData.ScenesAreFixed;
@@ -42,16 +36,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
             return new MetaData(realmData.RealmName, tuple.id, tuple.parcel);
         }
 
-        public UniTask WaitForMetaDataIsDirtyAsync(CancellationToken token)
-        {
-            if (realmData.ScenesAreFixed)
-
-                // Wait for realm change
-                return UniTask.WaitUntil(waitForGenesisCity, cancellationToken: token);
-
-            // Wait for player position change (ideally for parcel change)
-            return UniTask.WaitUntil(waitForPlayerPositionChange, cancellationToken: token);
-        }
+        public bool MetadataIsDirty => !realmData.ScenesAreFixed && characterTransform.Position.IsDirty;
 
         private async UniTask<(string? id, Vector2Int parcel)> ParcelIdAsync(CancellationToken token)
         {
