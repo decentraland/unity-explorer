@@ -13,23 +13,9 @@ namespace SceneRunner.Scene
     /// Used for localhost scenes that require remote asset bundle content
     public class HybridSceneHashedContent : ISceneContent
     {
-        private struct ContentAccessResult
-        {
-            public bool Success;
-            public URLAddress URL;
-            public string FileHash;
-
-            public ContentAccessResult(bool success, URLAddress url, string fileHash)
-            {
-                Success = success;
-                URL = url;
-                FileHash = fileHash;
-            }
-        }
-
         private readonly URLDomain contentBaseUrl;
         private Dictionary<string, string> fileToHash;
-        private readonly Dictionary<string, ContentAccessResult> resolvedContentURLs;
+        private readonly Dictionary<string, (bool success, URLAddress url)> resolvedContentURLs;
 
         public URLDomain ContentBaseUrl => contentBaseUrl;
         public string remoteSceneID;
@@ -51,7 +37,7 @@ namespace SceneRunner.Scene
             filesToGetFromLocalHost.Add(contentDefinitions.metadata.main);
             fileToHash = new Dictionary<string, string>(contentDefinitions.content!.Count, StringComparer.OrdinalIgnoreCase);
             foreach (var contentDefinition in contentDefinitions.content) fileToHash[contentDefinition.file] = contentDefinition.hash;
-            resolvedContentURLs = new Dictionary<string, ContentAccessResult>(fileToHash.Count, StringComparer.OrdinalIgnoreCase);
+            resolvedContentURLs = new Dictionary<string, (bool success, URLAddress url)>(fileToHash.Count, StringComparer.OrdinalIgnoreCase);
 
             this.contentBaseUrl = contentBaseUrl;
             this.abDomain = abDomain;
@@ -62,8 +48,8 @@ namespace SceneRunner.Scene
         {
             if (resolvedContentURLs.TryGetValue(contentPath, out var cachedResult))
             {
-                result = cachedResult.URL;
-                return cachedResult.Success;
+                result = cachedResult.url;
+                return cachedResult.success;
             }
 
             if (fileToHash.TryGetValue(contentPath, out string hash))
@@ -72,31 +58,20 @@ namespace SceneRunner.Scene
                 if (filesToGetFromLocalHost.Contains(contentPath) || IsTexture(contentPath))
                 {
                     result = contentBaseUrl.Append(URLPath.FromString(hash));
-                    resolvedContentURLs[contentPath] = new ContentAccessResult(true, result, null); // TODO: REVERT
+                    resolvedContentURLs[contentPath] = (true, result); // TODO: REVERT
                     return true;
                 }
 
                 result = abDomain.Append(URLPath.FromString(hash));
-                resolvedContentURLs[contentPath] = new ContentAccessResult(true, result, null);
+                resolvedContentURLs[contentPath] = (true, result);
                 return true;
             }
 
             ReportHub.LogWarning(ReportCategory.SCENE_LOADING, $"{nameof(SceneHashedContent)}: {contentPath} not found in {nameof(fileToHash)}");
 
             result = URLAddress.EMPTY;
-            resolvedContentURLs[contentPath] = new ContentAccessResult(false, result, null);
+            resolvedContentURLs[contentPath] = (false, result);
             return false;
-        }
-
-        public bool TryGetContentFileHash(string contentPath, out string fileHash)
-        {
-            if (resolvedContentURLs.TryGetValue(contentPath, out var cachedResult))
-            {
-                fileHash = cachedResult.FileHash;
-                return cachedResult.Success;
-            }
-
-            return fileToHash.TryGetValue(contentPath, out fileHash);
         }
 
         public bool TryGetHash(string name, out string hash)
