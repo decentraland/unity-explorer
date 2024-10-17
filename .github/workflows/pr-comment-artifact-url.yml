@@ -90,9 +90,9 @@ jobs:
         env:
           JOB_PATH: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ env.PREVIOUS_JOB_ID }}"
           WINDOWS_ARTIFACT_URL: "${{ github.server_url }}/${{ github.repository }}/suites/${{ env.SUITE_ID }}/artifacts/${{ env.WINDOWS_ARTIFACT_ID }}"
-          WINDOWS_ARTIFACT_S3_URL: "${{ format('https://{0}.s3.amazonaws.com/{1}/Decentraland_windows64.zip', secrets.EXPLORER_TEAM_S3_BUCKET, env.ARTIFACT_S3_DESTINATION_PATH) }}"
+          WINDOWS_ARTIFACT_S3_URL: "${{ format('https://explorer-artifacts.decentraland.org/{0}/Decentraland_windows64.zip', env.ARTIFACT_S3_DESTINATION_PATH) }}"
           MAC_ARTIFACT_URL: "${{ github.server_url }}/${{ github.repository }}/suites/${{ env.SUITE_ID }}/artifacts/${{ env.MAC_ARTIFACT_ID }}"
-          MAC_ARTIFACT_S3_URL: "${{ format('https://{0}.s3.amazonaws.com/{1}/Decentraland_macos.zip', secrets.EXPLORER_TEAM_S3_BUCKET, env.ARTIFACT_S3_DESTINATION_PATH) }}"
+          MAC_ARTIFACT_S3_URL: "${{ format('https://explorer-artifacts.decentraland.org/{0}/Decentraland_macos.zip', env.ARTIFACT_S3_DESTINATION_PATH) }}"
           HEAD_SHA: "${{ env.HEAD_SHA }}"
         uses: peter-evans/create-or-update-comment@v3
         with:
