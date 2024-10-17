@@ -8,23 +8,38 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 {
     public class StaticCommonTraitsPlugin : EventPlugin
     {
+        private const string DCL_EDITOR = "dcl-editor";
+
         private readonly JsonElement sessionId;
         private readonly JsonElement launcherAnonymousId;
-        private readonly JsonElement runtime;
 
         private readonly JsonElement dclRendererType = SystemInfo.deviceType.ToString(); // Desktop, Console, Handeheld (Mobile), Unknown
         private readonly JsonElement rendererVersion = Application.version;
         private readonly JsonElement os = SystemInfo.operatingSystem;
+        private readonly JsonElement runtime;
 
         public override PluginType Type => PluginType.Enrichment;
 
         public StaticCommonTraitsPlugin(IAppArgs appArgs, LauncherTraits launcherTraits)
         {
-            this.sessionId = !string.IsNullOrEmpty(launcherTraits.SessionId) ? launcherTraits.SessionId : SystemInfo.deviceUniqueIdentifier + DateTime.Now.ToString("yyyyMMddHHmmssfff");
-            this.launcherAnonymousId = launcherTraits.LauncherAnonymousId;
+            sessionId = !string.IsNullOrEmpty(launcherTraits.SessionId) ? launcherTraits.SessionId : SystemInfo.deviceUniqueIdentifier + DateTime.Now.ToString("yyyyMMddHHmmssfff");
+            launcherAnonymousId = launcherTraits.LauncherAnonymousId;
 
-            runtime = Application.isEditor ? "editor" :
-                Debug.isDebugBuild || appArgs.HasDebugFlag() ? "debug" : "release";
+            runtime = ChooseRuntime(appArgs);
+        }
+
+        private static string ChooseRuntime(IAppArgs appArgs)
+        {
+            if (Application.isEditor)
+                return "unity-editor";
+
+            if (appArgs.HasFlag(DCL_EDITOR))
+                return DCL_EDITOR;
+
+            if (Debug.isDebugBuild || appArgs.HasDebugFlag())
+                return "debug";
+
+            return "release";
         }
 
         public override TrackEvent Track(TrackEvent trackEvent)
