@@ -36,7 +36,7 @@ namespace ECS.StreamableLoading.AssetBundles
             Dependencies = dependencies;
             this.assetType = assetType;
             
-            description = $"AB:{AssetBundle.name}_{version}_{source}";
+            description = $"AB:{AssetBundle?.name}_{version}_{source}";
             UnloadAB();
 
         }
@@ -70,7 +70,7 @@ namespace ECS.StreamableLoading.AssetBundles
             if (unloaded)
                 return;
             unloaded = true;
-            AssetBundle.UnloadAsync(false);
+            AssetBundle?.UnloadAsync(false);
         }
         
         protected override void DestroyObject()
