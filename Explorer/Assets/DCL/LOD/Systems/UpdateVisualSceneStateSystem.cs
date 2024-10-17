@@ -112,8 +112,6 @@ namespace ECS.SceneLifeCycle.Systems
                     // we call it directly so we avoid an extra query
                     if (visualSceneStateComponent.IsDirty)
                         continuationMethod(entity, deltaTime, ref visualSceneStateComponent, ref sceneDefinitionComponent, ref partitionComponent, ref customComponent);
-                    else
-                        visualSceneStateComponent.TimeToChange = 0;
                 }
             }
         }

@@ -37,6 +37,7 @@ namespace DCL.LOD
                 if (visualSceneState.CandidateVisualSceneState != visualSceneState.CurrentVisualSceneState)
                 {
                     visualSceneState.IsDirty = true;
+                    visualSceneState.TimeToChange = 0;
                 }
             }
         }
