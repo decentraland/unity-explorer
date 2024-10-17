@@ -16,7 +16,6 @@ using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
-using UnityEngine.Profiling;
 using Utility;
 using JobHandle = Unity.Jobs.JobHandle;
 
@@ -125,7 +124,7 @@ namespace DCL.Landscape
         public int GetChunkSize() =>
             terrainGenData.chunkSize;
 
-        public async UniTask ShowAsync(AsyncLoadProcessReport postRealmLoadReport)
+        public async UniTask ShowAsync(IAsyncLoadProcessReport postRealmLoadReport)
         {
             if (!isInitialized) return;
 
@@ -142,7 +141,7 @@ namespace DCL.Landscape
             await ReEnableTerrainAsync(postRealmLoadReport);
             IsTerrainShown = true;
 
-            postRealmLoadReport.SetProgress(1f);
+            postRealmLoadReport.SetProgress(1f, "Terrain finished");
         }
 
         public void Hide()
@@ -161,7 +160,7 @@ namespace DCL.Landscape
             bool withHoles = true,
             bool hideTrees = false,
             bool hideDetails = false,
-            AsyncLoadProcessReport processReport = null,
+            IAsyncLoadProcessReport? processReport = null,
             CancellationToken cancellationToken = default)
         {
             if (!isInitialized) return;
@@ -200,7 +199,7 @@ namespace DCL.Landscape
                         await SetupEmptyParcelDataAsync(terrainModel, cancellationToken);
                     }
 
-                    processReport?.SetProgress(PROGRESS_COUNTER_EMPTY_PARCEL_DATA);
+                    processReport?.SetProgress(PROGRESS_COUNTER_EMPTY_PARCEL_DATA, "Counting empty parcels");
 
                     terrainDataCount = Mathf.Pow(Mathf.CeilToInt(terrainGenData.terrainSize / (float)terrainGenData.chunkSize), 2);
                     processedTerrainDataCount = 0;
@@ -217,7 +216,7 @@ namespace DCL.Landscape
                         await UniTask.Yield(cancellationToken);
                     }
 
-                    processReport?.SetProgress(PROGRESS_COUNTER_DIG_HOLES);
+                    processReport?.SetProgress(PROGRESS_COUNTER_DIG_HOLES, "Digging holes");
 
                     using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"[{t:F2}ms] Chunks")))
                         await SpawnTerrainObjectsAsync(terrainModel, processReport, cancellationToken);
@@ -226,7 +225,7 @@ namespace DCL.Landscape
 
                     await ReEnableTerrainAsync(processReport);
 
-                    if (processReport != null) processReport.SetProgress(1f);
+                    if (processReport != null) processReport.SetProgress(1f, "Terrain generated");
                 }
             }
             catch (OperationCanceledException)
@@ -259,7 +258,7 @@ namespace DCL.Landscape
         }
 
         // waiting a frame to create the color map renderer created a new bug where some stones do not render properly, this should fix it
-        private async UniTask ReEnableTerrainAsync(AsyncLoadProcessReport processReport, int batch = 1)
+        private async UniTask ReEnableTerrainAsync(IAsyncLoadProcessReport processReport, int batch = 1)
         {
             foreach (Terrain terrain in terrains)
                 terrain.enabled = false;
@@ -274,7 +273,7 @@ namespace DCL.Landscape
                 for (int j = i; j < Math.Min(i + batch, terrains.Count); j++)
                 {
                     terrains[j].enabled = true;
-                    if (processReport != null) processReport.SetProgress(PROGRESS_COUNTER_DIG_HOLES + PROGRESS_SPAWN_TERRAIN + j / terrainDataCount * PROGRESS_SPAWN_RE_ENABLE_TERRAIN);
+                    if (processReport != null) processReport.SetProgress(PROGRESS_COUNTER_DIG_HOLES + PROGRESS_SPAWN_TERRAIN + j / terrainDataCount * PROGRESS_SPAWN_RE_ENABLE_TERRAIN, "Re-enabling terrain");
                 }
 
                 i += batch;
@@ -314,7 +313,7 @@ namespace DCL.Landscape
             }
         }
 
-        private async UniTask SpawnTerrainObjectsAsync(TerrainModel terrainModel, AsyncLoadProcessReport processReport, CancellationToken cancellationToken)
+        private async UniTask SpawnTerrainObjectsAsync(TerrainModel terrainModel, IAsyncLoadProcessReport processReport, CancellationToken cancellationToken)
         {
             foreach (ChunkModel chunkModel in terrainModel.ChunkModels)
             {
@@ -325,11 +324,11 @@ namespace DCL.Landscape
 
                 await UniTask.Yield();
                 spawnedTerrainDataCount++;
-                if (processReport != null) processReport.SetProgress(PROGRESS_COUNTER_DIG_HOLES + spawnedTerrainDataCount / terrainDataCount * PROGRESS_SPAWN_TERRAIN);
+                if (processReport != null) processReport.SetProgress(PROGRESS_COUNTER_DIG_HOLES + spawnedTerrainDataCount / terrainDataCount * PROGRESS_SPAWN_TERRAIN, "Spawning terrain");
             }
         }
 
-        private async UniTask GenerateTerrainDataAsync(ChunkModel chunkModel, TerrainModel terrainModel, uint worldSeed, CancellationToken cancellationToken, AsyncLoadProcessReport processReport)
+        private async UniTask GenerateTerrainDataAsync(ChunkModel chunkModel, TerrainModel terrainModel, uint worldSeed, CancellationToken cancellationToken, IAsyncLoadProcessReport processReport)
         {
             using (timeProfiler.Measure(t => ReportHub.Log(LogType.Log, reportData, $"[{t}ms] Terrain Data ({processedTerrainDataCount}/{terrainDataCount})")))
             {
@@ -382,7 +381,7 @@ namespace DCL.Landscape
                 await UniTask.WhenAll(tasks).AttachExternalCancellation(cancellationToken);
 
                 processedTerrainDataCount++;
-                if (processReport != null) processReport.SetProgress(PROGRESS_COUNTER_EMPTY_PARCEL_DATA + processedTerrainDataCount / terrainDataCount * PROGRESS_COUNTER_TERRAIN_DATA);
+                if (processReport != null) processReport.SetProgress(PROGRESS_COUNTER_EMPTY_PARCEL_DATA + processedTerrainDataCount / terrainDataCount * PROGRESS_COUNTER_TERRAIN_DATA, "Generating terrain");
             }
         }
 

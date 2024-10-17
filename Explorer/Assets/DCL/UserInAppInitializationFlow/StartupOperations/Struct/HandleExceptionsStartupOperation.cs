@@ -15,7 +15,7 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations.Struct
             this.origin = origin;
         }
 
-        public async UniTask<Result> ExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
+        public async UniTask<Result> ExecuteAsync(IAsyncLoadProcessReport report, CancellationToken ct)
         {
             try { return await origin.ExecuteAsync(report, ct); }
             catch (Exception e) { return Result.ErrorResult(e.Message ?? $"Unknown error during the starting process: {e.GetType()!.Name}"); }

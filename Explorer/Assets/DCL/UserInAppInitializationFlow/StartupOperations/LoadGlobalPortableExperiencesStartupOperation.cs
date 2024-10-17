@@ -42,11 +42,11 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
             this.portableExperiencesController = portableExperiencesController;
         }
 
-        public async UniTask<Result> ExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
+        public async UniTask<Result> ExecuteAsync(IAsyncLoadProcessReport report, CancellationToken ct)
         {
             await CheckGlobalPxLoadingConditionsAsync(ct);
 
-            report.SetProgress(loadingStatus.SetStage(RealFlowLoadingStatus.Stage.GlobalPXsLoaded));
+            report.SetProgress(loadingStatus.SetStage(RealFlowLoadingStatus.Stage.GlobalPXsLoaded), "Global portable experience loaded");
             return Result.SuccessResult();
         }
 

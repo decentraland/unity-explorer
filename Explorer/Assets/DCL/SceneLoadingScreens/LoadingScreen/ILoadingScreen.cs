@@ -2,20 +2,19 @@ using Cysharp.Threading.Tasks;
 using DCL.AsyncLoadReporting;
 using System;
 using System.Threading;
-using UnityEngine.Serialization;
 using Utility.Types;
 
 namespace DCL.SceneLoadingScreens.LoadingScreen
 {
     public interface ILoadingScreen
     {
-        UniTask<Result> ShowWhileExecuteTaskAsync(Func<AsyncLoadProcessReport, UniTask<Result>> operation,
+        UniTask<Result> ShowWhileExecuteTaskAsync(Func<IAsyncLoadProcessReport, UniTask<Result>> operation,
             CancellationToken ct);
 
         class EmptyLoadingScreen : ILoadingScreen
         {
             public async UniTask<Result> ShowWhileExecuteTaskAsync(
-                Func<AsyncLoadProcessReport, UniTask<Result>> operation,
+                Func<IAsyncLoadProcessReport, UniTask<Result>> operation,
                 CancellationToken ct)
             {
                 var loadReport = AsyncLoadProcessReport.Create();
@@ -26,8 +25,8 @@ namespace DCL.SceneLoadingScreens.LoadingScreen
                 }
                 catch (Exception e)
                 {
-                    loadReport.SetProgress(1f);
-                    return Result.ErrorResult(e.Message);
+                    loadReport.SetProgress(1f, $"Error: {e.Message}");
+                    return Result.ErrorResult(e.Message ?? "Unknown error");
                 }
             }
         }

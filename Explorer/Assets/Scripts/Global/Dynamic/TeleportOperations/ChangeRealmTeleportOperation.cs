@@ -23,7 +23,7 @@ namespace Global.Dynamic.TeleportOperations
             try
             {
                 await realmNavigator.ChangeRealmAsync(teleportParams.CurrentDestinationRealm, ct);
-                teleportParams.ParentReport.SetProgress(RealFlowLoadingStatus.PROGRESS[ProfileLoaded]);
+                teleportParams.ParentReport.SetProgress(RealFlowLoadingStatus.PROGRESS[ProfileLoaded], "Realm changed");
                 return Result.SuccessResult();
             }
             catch (Exception e)

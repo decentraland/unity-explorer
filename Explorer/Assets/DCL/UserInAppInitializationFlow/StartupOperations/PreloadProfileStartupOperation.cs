@@ -17,10 +17,10 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
             this.selfProfile = selfProfile;
         }
 
-        public async UniTask<Result> ExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
+        public async UniTask<Result> ExecuteAsync(IAsyncLoadProcessReport report, CancellationToken ct)
         {
             await selfProfile.ProfileOrPublishIfNotAsync(ct);
-            report.SetProgress(loadingStatus.SetStage(RealFlowLoadingStatus.Stage.ProfileLoaded));
+            report.SetProgress(loadingStatus.SetStage(RealFlowLoadingStatus.Stage.ProfileLoaded), "Profile loaded");
             return Result.SuccessResult();
         }
     }

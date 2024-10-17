@@ -8,8 +8,8 @@ namespace DCL.ParcelsService
 {
     public interface ITeleportController
     {
-        UniTask<WaitForSceneReadiness?> TeleportToSceneSpawnPointAsync(Vector2Int parcel, AsyncLoadProcessReport loadReport, CancellationToken ct);
+        UniTask<WaitForSceneReadiness?> TeleportToSceneSpawnPointAsync(Vector2Int parcel, IAsyncLoadProcessReport loadReport, CancellationToken ct);
 
-        UniTask TeleportToParcelAsync(Vector2Int parcel, AsyncLoadProcessReport loadReport, CancellationToken ct);
+        UniTask TeleportToParcelAsync(Vector2Int parcel, IAsyncLoadProcessReport loadReport, CancellationToken ct);
     }
 }

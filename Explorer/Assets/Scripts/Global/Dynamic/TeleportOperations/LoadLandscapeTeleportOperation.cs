@@ -27,7 +27,7 @@ namespace Global.Dynamic.TeleportOperations
                     = teleportParams.ParentReport.CreateChildReport(RealFlowLoadingStatus.PROGRESS[LandscapeLoaded]);
 
                 await realmNavigator.LoadTerrainAsync(landscapeLoadReport, ct);
-                teleportParams.ParentReport.SetProgress(RealFlowLoadingStatus.PROGRESS[LandscapeLoaded]);
+                teleportParams.ParentReport.SetProgress(RealFlowLoadingStatus.PROGRESS[LandscapeLoaded], "Landscape loaded");
                 return Result.SuccessResult();
             }
             catch (Exception e)

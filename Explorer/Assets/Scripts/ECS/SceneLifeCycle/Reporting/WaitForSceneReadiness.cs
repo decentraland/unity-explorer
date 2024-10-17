@@ -17,12 +17,12 @@ namespace ECS.SceneLifeCycle.Reporting
         public static readonly TimeSpan TIMEOUT = TimeSpan.FromSeconds(60);
 
         private readonly Vector2Int parcel;
-        private readonly AsyncLoadProcessReport loadProcessReport;
+        private readonly IAsyncLoadProcessReport loadProcessReport;
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
 
         private bool executed;
 
-        public WaitForSceneReadiness(Vector2Int parcel, AsyncLoadProcessReport loadProcessReport, ISceneReadinessReportQueue sceneReadinessReportQueue)
+        public WaitForSceneReadiness(Vector2Int parcel, IAsyncLoadProcessReport loadProcessReport, ISceneReadinessReportQueue sceneReadinessReportQueue)
         {
             this.parcel = parcel;
             this.loadProcessReport = loadProcessReport;

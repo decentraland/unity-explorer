@@ -7,7 +7,7 @@ namespace ECS.SceneLifeCycle.Reporting
 {
     public class SceneReadinessReportQueue : ISceneReadinessReportQueue
     {
-        private static readonly ListObjectPool<AsyncLoadProcessReport> REPORT_POOL = new (listInstanceDefaultCapacity: 1, maxSize: 10);
+        private static readonly ListObjectPool<IAsyncLoadProcessReport> REPORT_POOL = new (listInstanceDefaultCapacity: 1, maxSize: 10);
 
         private readonly Dictionary<Vector2Int, PooledLoadReportList> queue = new (1);
 
@@ -18,13 +18,13 @@ namespace ECS.SceneLifeCycle.Reporting
             this.scenesCache = scenesCache;
         }
 
-        public void Enqueue(Vector2Int parcel, AsyncLoadProcessReport report)
+        public void Enqueue(Vector2Int parcel, IAsyncLoadProcessReport report)
         {
             // Shortcut
             if (scenesCache.Contains(parcel))
             {
                 // conclude immediately
-                report.SetProgress(1f);
+                report.SetProgress(1f, "Scene already loaded");
             }
 
             if (!queue.TryGetValue(parcel, out PooledLoadReportList queuedReport))
@@ -42,14 +42,12 @@ namespace ECS.SceneLifeCycle.Reporting
             }
 
             for (var i = 0; i < parcels.Count; i++)
-            {
                 if (queue.TryGetValue(parcels[i], out PooledLoadReportList list))
                 {
                     report = list;
                     queue.Remove(parcels[i]);
                     return true;
                 }
-            }
 
             report = null;
             return false;

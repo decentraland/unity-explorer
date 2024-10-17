@@ -17,12 +17,12 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
             this.healthCheck = healthCheck;
         }
 
-        public async UniTask<Result> ExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
+        public async UniTask<Result> ExecuteAsync(IAsyncLoadProcessReport report, CancellationToken ct)
         {
             (bool success, string? errorMessage) result = await healthCheck.IsRemoteAvailableAsync(ct);
 
             if (result.success)
-                report.SetProgress(loadingStatus.SetStage(RealFlowLoadingStatus.Stage.LiveKitConnectionEnsured));
+                report.SetProgress(loadingStatus.SetStage(RealFlowLoadingStatus.Stage.LiveKitConnectionEnsured), "LiveKit connection ensured");
 
             return result.success
                 ? Result.SuccessResult()

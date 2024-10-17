@@ -114,8 +114,8 @@ namespace ECS.SceneLifeCycle.Systems
 
                 for (var i = 0; i < reports!.Value.Count; i++)
                 {
-                    AsyncLoadProcessReport report = reports.Value[i];
-                    report.SetProgress(progress);
+                    IAsyncLoadProcessReport report = reports.Value[i];
+                    report.SetProgress(progress, "Loading assets");
                 }
 
                 entitiesUnderObservation.ExceptWith(toDelete);
@@ -131,7 +131,7 @@ namespace ECS.SceneLifeCycle.Systems
                     for (var i = 0; i < reports!.Value.Count; i++)
                     {
                         var report = reports.Value[i];
-                        report.SetProgress(1);
+                        report.SetProgress(1, "Memory is full");
                     }
 
                     concluded = true;

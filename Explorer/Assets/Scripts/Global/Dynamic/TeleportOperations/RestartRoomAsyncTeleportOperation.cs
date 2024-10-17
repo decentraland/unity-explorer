@@ -24,7 +24,7 @@ namespace Global.Dynamic.TeleportOperations
             try
             {
                 await roomHub.StartAsync().Timeout(livekitTimeout);
-                teleportParams.ParentReport.SetProgress(RealFlowLoadingStatus.PROGRESS[Completed]);
+                teleportParams.ParentReport.SetProgress(RealFlowLoadingStatus.PROGRESS[Completed], "Room restarted");
                 return Result.SuccessResult();
             }
             catch (Exception e)

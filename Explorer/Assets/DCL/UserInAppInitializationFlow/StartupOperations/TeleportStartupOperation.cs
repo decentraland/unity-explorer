@@ -20,9 +20,9 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
             this.startParcel = startParcel;
         }
 
-        public async UniTask<Result> ExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
+        public async UniTask<Result> ExecuteAsync(IAsyncLoadProcessReport report, CancellationToken ct)
         {
-            AsyncLoadProcessReport teleportLoadReport
+            var teleportLoadReport
                 = report.CreateChildReport(RealFlowLoadingStatus.PROGRESS[RealFlowLoadingStatus.Stage.PlayerTeleported]);
 
             await realmNavigator.InitializeTeleportToSpawnPointAsync(teleportLoadReport, ct, startParcel);

@@ -61,7 +61,7 @@ namespace DCL.ParcelsService
         }
 
 
-        public async UniTask<WaitForSceneReadiness?> TeleportToSceneSpawnPointAsync(Vector2Int parcel, AsyncLoadProcessReport loadReport, CancellationToken ct)
+        public async UniTask<WaitForSceneReadiness?> TeleportToSceneSpawnPointAsync(Vector2Int parcel, IAsyncLoadProcessReport loadReport, CancellationToken ct)
         {
             // if current scene is still loading it will block the teleport until its assets are resolved or timed out
             sceneAssetLock.Reset();
@@ -69,7 +69,7 @@ namespace DCL.ParcelsService
             if (retrieveScene == null)
             {
                 TeleportCharacter(new PlayerTeleportIntent(ParcelMathHelper.GetPositionByParcelPosition(parcel, true), parcel, loadReport));
-                loadReport.SetProgress(1f);
+                loadReport.SetProgress(1f, "Scene not found");
                 return null;
             }
 
@@ -114,7 +114,7 @@ namespace DCL.ParcelsService
             if (sceneDef == null)
             {
                 // Instant completion for empty parcels
-                loadReport.SetProgress(1f);
+                loadReport.SetProgress(1f, "Scene not found");
 
                 return null;
             }
@@ -158,12 +158,12 @@ namespace DCL.ParcelsService
         }
 
         // TODO: this method should be removed, implies possible mantainance efforts and its only for debugging purposes
-        public async UniTask TeleportToParcelAsync(Vector2Int parcel, AsyncLoadProcessReport loadReport, CancellationToken ct)
+        public async UniTask TeleportToParcelAsync(Vector2Int parcel, IAsyncLoadProcessReport loadReport, CancellationToken ct)
         {
             if (retrieveScene == null)
             {
                 TeleportCharacter(new PlayerTeleportIntent(ParcelMathHelper.GetPositionByParcelPosition(parcel, true), parcel, loadReport));
-                loadReport.SetProgress(1f);
+                loadReport.SetProgress(1f, "Scene not found");
                 return;
             }
 
@@ -185,7 +185,7 @@ namespace DCL.ParcelsService
             if (sceneDef == null)
             {
                 // Instant completion for empty parcels
-                loadReport.SetProgress(1f);
+                loadReport.SetProgress(1f, "Scene not found");
                 return;
             }
 

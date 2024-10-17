@@ -5,7 +5,7 @@ namespace DCL.AsyncLoadReporting
     /// <summary>
     ///     Via this class the system that runs in the scene world can notify about its [visual] readiness to the upper layer
     /// </summary>
-    public class AsyncLoadProcessReport
+    public class AsyncLoadProcessReport : IAsyncLoadProcessReport
     {
         private readonly AsyncLoadProcessReport? parent;
 
@@ -13,8 +13,12 @@ namespace DCL.AsyncLoadReporting
         private readonly float until;
 
         private readonly IAsyncReactiveProperty<float> progressCounter;
+        private string description = string.Empty;
 
         public UniTaskCompletionSource CompletionSource { get; }
+
+        public string Description => description;
+
         public IReadOnlyAsyncReactiveProperty<float> ProgressCounter => progressCounter;
 
         private AsyncLoadProcessReport(UniTaskCompletionSource completionSource,
@@ -35,18 +39,19 @@ namespace DCL.AsyncLoadReporting
             this.until = until;
         }
 
-        public void SetProgress(float progress)
+        public void SetProgress(float progress, string stepDescription)
         {
+            description = stepDescription;
             progressCounter.Value = progress;
 
-            parent?.SetProgress(offset + (progressCounter.Value * (until - offset)));
+            parent?.SetProgress(offset + (progressCounter.Value * (until - offset)), stepDescription);
 
             if (progressCounter.Value >= 1f)
                 CompletionSource.TrySetResult();
         }
 
-        public AsyncLoadProcessReport CreateChildReport(float until) =>
-            new (this, ProgressCounter.Value, until);
+        public IAsyncLoadProcessReport CreateChildReport(float until) =>
+            new AsyncLoadProcessReport(this, ProgressCounter.Value, until);
 
         public static AsyncLoadProcessReport Create() =>
             new (new UniTaskCompletionSource(), new AsyncReactiveProperty<float>(0f));

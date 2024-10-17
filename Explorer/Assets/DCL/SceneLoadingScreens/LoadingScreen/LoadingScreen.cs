@@ -3,7 +3,6 @@ using DCL.AsyncLoadReporting;
 using MVC;
 using System;
 using System.Threading;
-using UnityEngine;
 using Utility.Types;
 
 namespace DCL.SceneLoadingScreens.LoadingScreen
@@ -19,29 +18,39 @@ namespace DCL.SceneLoadingScreens.LoadingScreen
         }
 
         public async UniTask<Result> ShowWhileExecuteTaskAsync(
-            Func<AsyncLoadProcessReport, UniTask<Result>> operation, CancellationToken ct)
+            Func<IAsyncLoadProcessReport, UniTask<Result>> operation,
+            CancellationToken ct
+        )
         {
-            ct.ThrowIfCancellationRequested();
-
-            var timeout = LOADING_SCREEN_TIMEOUT_MINUTES;
-            var loadReport = AsyncLoadProcessReport.Create();
-
-            UniTask showLoadingScreenTask = mvcManager.ShowAsync(
-                                                           SceneLoadingScreenController.IssueCommand(
-                                                               new SceneLoadingScreenController.Params(loadReport, timeout)), ct)
-                                                      .AttachExternalCancellation(ct);
-
-            var result = Result.ErrorResult("Load Timeout!");
-
-            async UniTask<Result> ExecuteOperationAsync()
-            {
-                result = await operation(loadReport);
+            if (Result.ErrorResultIfCancelled(ct, out var result))
                 return result;
+
+            IAsyncLoadProcessReport loadReport = AsyncLoadProcessReport.Create();
+
+            result = Result.ErrorResult("Unknown");
+
+            async UniTask ExecuteScreenAsync()
+            {
+                await mvcManager.ShowAsync(SceneLoadingScreenController.IssueCommand(NewParams(loadReport)), ct)
+                                .AttachExternalCancellation(ct);
+
+                result = Result.ErrorResult("Load Timeout! Executing on an operation - {}");
             }
 
-            await UniTask.WhenAny(showLoadingScreenTask, ExecuteOperationAsync());
+            async UniTask ExecuteOperationAsync()
+            {
+                result = await operation(loadReport);
+            }
+
+            await UniTask.WhenAny(ExecuteScreenAsync(), ExecuteOperationAsync());
 
             return result;
         }
+
+        private static SceneLoadingScreenController.Params NewParams(IAsyncLoadProcessReport loadReport) =>
+            new (
+                loadReport,
+                LOADING_SCREEN_TIMEOUT_MINUTES
+            );
     }
 }

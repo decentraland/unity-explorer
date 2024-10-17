@@ -1,3 +1,5 @@
+using System.Threading;
+
 namespace Utility.Types
 {
     public readonly struct Result
@@ -16,6 +18,17 @@ namespace Utility.Types
 
         public static Result ErrorResult(string errorMessage) =>
             new (false, errorMessage);
+
+        public static bool ErrorResultIfCancelled(CancellationToken token, out Result errorResult)
+        {
+            if (token.IsCancellationRequested)
+            {
+                errorResult = ErrorResult("Operation cancelled");
+                return true;
+            }
+            errorResult = SuccessResult();
+            return false;
+        }
     }
 
     public readonly struct Result<T>

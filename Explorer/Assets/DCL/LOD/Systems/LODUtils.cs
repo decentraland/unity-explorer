@@ -88,7 +88,7 @@ namespace DCL.LOD.Systems
                 for (var i = 0; i < reports!.Value.Count; i++)
                 {
                     var report = reports.Value[i];
-                    report.SetProgress(1f);
+                    report.SetProgress(1f, "Scene loaded");
                 }
             }
         }

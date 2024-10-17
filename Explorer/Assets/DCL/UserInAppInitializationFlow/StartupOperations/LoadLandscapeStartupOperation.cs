@@ -17,13 +17,13 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
             this.realmNavigator = realmNavigator;
         }
 
-        public async UniTask<Result> ExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
+        public async UniTask<Result> ExecuteAsync(IAsyncLoadProcessReport report, CancellationToken ct)
         {
-            AsyncLoadProcessReport landscapeLoadReport
+            IAsyncLoadProcessReport landscapeLoadReport
                 = report.CreateChildReport(RealFlowLoadingStatus.PROGRESS[RealFlowLoadingStatus.Stage.LandscapeLoaded]);
 
             await realmNavigator.LoadTerrainAsync(landscapeLoadReport, ct);
-            report.SetProgress(loadingStatus.SetStage(RealFlowLoadingStatus.Stage.LandscapeLoaded));
+            report.SetProgress(loadingStatus.SetStage(RealFlowLoadingStatus.Stage.LandscapeLoaded), "Landscape loaded");
             return Result.SuccessResult();
         }
     }

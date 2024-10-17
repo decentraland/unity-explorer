@@ -17,7 +17,7 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations.Struct
             this.operations = operations;
         }
 
-        public async UniTask<Result> ExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
+        public async UniTask<Result> ExecuteAsync(IAsyncLoadProcessReport report, CancellationToken ct)
         {
             foreach (IStartupOperation startupOperation in operations)
             {
@@ -25,8 +25,8 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations.Struct
 
                 if (result.Success == false)
                 {
-                    report.SetProgress(loadingStatus.SetStage(RealFlowLoadingStatus.Stage.Completed));
-                    report.SetProgress(1);
+                    report.SetProgress(loadingStatus.SetStage(RealFlowLoadingStatus.Stage.Completed), "Error");
+                    report.SetProgress(1, result.ErrorMessage!);
                     return result;
                 }
             }

@@ -17,10 +17,10 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
             this.realmNavigator = realmNavigator;
         }
 
-        public async UniTask<Result> ExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
+        public async UniTask<Result> ExecuteAsync(IAsyncLoadProcessReport report, CancellationToken ct)
         {
             await realmNavigator.SwitchMiscVisibilityAsync();
-            report.SetProgress(loadingStatus.SetStage(RealFlowLoadingStatus.Stage.EnvironmentMiscSet));
+            report.SetProgress(loadingStatus.SetStage(RealFlowLoadingStatus.Stage.EnvironmentMiscSet), "Switching realm misc visibility");
             return Result.SuccessResult();
         }
     }

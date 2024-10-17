@@ -68,13 +68,21 @@ namespace DCL.Optimization.Pools
             return go.TryAddComponent<T>();
         }
 
-        private void HandleGet(T component)
+        private void HandleGet(T? component)
         {
             if (UnityObjectUtils.IsQuitting)
             {
                 ReportHub.LogError(ReportCategory.ENGINE, $"Trying to get a component {typeof(T).Name} from a pool while quitting!");
                 return;
             }
+
+#if UNITY_EDITOR
+            if (component is null || component == null)
+            {
+                ReportHub.LogError(ReportCategory.ENGINE, $"Trying to get a NULL component {typeof(T).Name} from a pool!");
+                return;
+            }
+#endif
 
             component.gameObject.SetActive(true);
             onGet?.Invoke(component);

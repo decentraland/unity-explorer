@@ -30,16 +30,15 @@ namespace ECS.SceneLifeCycle.Realm
         UniTask<Result> TryInitializeTeleportToParcelAsync(Vector2Int parcel, CancellationToken ct,
             bool isLocal = false);
 
-        UniTask InitializeTeleportToSpawnPointAsync(AsyncLoadProcessReport teleportLoadReport, CancellationToken ct, Vector2Int parcelToTeleport = default);
+        UniTask InitializeTeleportToSpawnPointAsync(IAsyncLoadProcessReport teleportLoadReport, CancellationToken ct, Vector2Int parcelToTeleport = default);
 
-        UniTask LoadTerrainAsync(AsyncLoadProcessReport loadReport, CancellationToken ct);
+        UniTask LoadTerrainAsync(IAsyncLoadProcessReport loadReport, CancellationToken ct);
 
         UniTask SwitchMiscVisibilityAsync();
 
         UniTask ChangeRealmAsync(URLDomain realm, CancellationToken ct);
 
-        UniTask<UniTask> TeleportToParcelAsync(Vector2Int parcel, AsyncLoadProcessReport processReport,
-            CancellationToken ct);
+        UniTask<UniTask> TeleportToParcelAsync(Vector2Int parcel, IAsyncLoadProcessReport processReport, CancellationToken ct);
 
         // True if changed to GenesisCity, False - when changed to any other realm
         event Action<bool> RealmChanged;

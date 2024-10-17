@@ -23,12 +23,12 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
             reloadRealm = enable;
         }
 
-        public async UniTask<Result> ExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
+        public async UniTask<Result> ExecuteAsync(IAsyncLoadProcessReport report, CancellationToken ct)
         {
             if (reloadRealm)
                 await realmController.RestartRealmAsync(ct);
 
-            report.SetProgress(loadingStatus.SetStage(RealFlowLoadingStatus.Stage.RealmRestarted));
+            report.SetProgress(loadingStatus.SetStage(RealFlowLoadingStatus.Stage.RealmRestarted), "Realm restarted");
             return Result.SuccessResult();
         }
     }

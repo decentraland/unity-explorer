@@ -16,6 +16,6 @@ namespace Global.Dynamic.TeleportOperations
     {
         public URLDomain CurrentDestinationRealm;
         public Vector2Int CurrentDestinationParcel;
-        public AsyncLoadProcessReport ParentReport;
+        public IAsyncLoadProcessReport ParentReport;
     }
 }

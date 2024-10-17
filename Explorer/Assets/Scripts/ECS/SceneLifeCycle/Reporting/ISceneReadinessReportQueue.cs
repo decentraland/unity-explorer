@@ -6,7 +6,7 @@ namespace ECS.SceneLifeCycle.Reporting
 {
     public partial interface ISceneReadinessReportQueue
     {
-        void Enqueue(Vector2Int parcel, AsyncLoadProcessReport report);
+        void Enqueue(Vector2Int parcel, IAsyncLoadProcessReport report);
 
         bool TryDequeue(IReadOnlyList<Vector2Int> parcels, out PooledLoadReportList? report);
     }

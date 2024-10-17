@@ -23,7 +23,7 @@ namespace DCL.Landscape
         private const int UNITY_MAX_COVERAGE_VALUE = 255;
         private const int UNITY_MAX_INSTANCE_COUNT = 16;
 
-        private readonly TerrainGeneratorLocalCache localCache;
+        private readonly TerrainGeneratorLocalCache? localCache;
         private readonly TimeProfiler timeProfiler;
         private readonly TerrainGenerationData terrainGenData;
         private NoiseGeneratorCache noiseGenCache;
@@ -37,7 +37,7 @@ namespace DCL.Landscape
         private int parcelSize;
         private int resolution;
 
-        public TerrainChunkDataGenerator(TerrainGeneratorLocalCache localCache, TimeProfiler timeProfiler, TerrainGenerationData terrainGenData, ReportData reportData)
+        public TerrainChunkDataGenerator(TerrainGeneratorLocalCache? localCache, TimeProfiler timeProfiler, TerrainGenerationData terrainGenData, ReportData reportData)
         {
             this.localCache = localCache;
             this.timeProfiler = timeProfiler;

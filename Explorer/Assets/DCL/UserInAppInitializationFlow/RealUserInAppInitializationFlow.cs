@@ -28,7 +28,7 @@ namespace DCL.UserInAppInitializationFlow
     public class RealUserInAppInitializationFlow : IUserInAppInitializationFlow
     {
         private static readonly ILoadingScreen.EmptyLoadingScreen EMPTY_LOADING_SCREEN = new ();
-        
+
         private readonly RealFlowLoadingStatus loadingStatus;
         private readonly IMVCManager mvcManager;
         private readonly AudioClipConfig backgroundMusic;
@@ -39,7 +39,7 @@ namespace DCL.UserInAppInitializationFlow
         private readonly CheckOnboardingStartupOperation checkOnboardingStartupOperation;
         private readonly RestartRealmStartupOperation restartRealmStartupOperation;
         private readonly IStartupOperation startupOperation;
-        
+
         public RealUserInAppInitializationFlow(
             RealFlowLoadingStatus loadingStatus,
             IHealthCheck livekitHealthCheck,
@@ -136,7 +136,7 @@ namespace DCL.UserInAppInitializationFlow
                                 result = await startupOperation.ExecuteAsync(parentLoadReport, ct);
 
                                 if (result.Success)
-                                    parentLoadReport.SetProgress(loadingStatus.SetStage(RealFlowLoadingStatus.Stage.Completed));
+                                    parentLoadReport.SetProgress(loadingStatus.SetStage(RealFlowLoadingStatus.Stage.Completed), "Completed");
 
                                 return result;
                             },

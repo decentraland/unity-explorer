@@ -86,7 +86,7 @@ namespace DCL.Landscape
         }
 
         public async UniTask GenerateTerrainAsync(NativeParallelHashSet<int2> ownedParcels, uint worldSeed = 1,
-            AsyncLoadProcessReport processReport = null, CancellationToken cancellationToken = default)
+            IAsyncLoadProcessReport? processReport = null, CancellationToken cancellationToken = default)
         {
             if (!IsInitialized) return;
 
@@ -115,7 +115,7 @@ namespace DCL.Landscape
                 await UniTask.Yield(cancellationToken);
             }
 
-            if (processReport != null) processReport.SetProgress(0.5f);
+            if (processReport != null) processReport.SetProgress(0.5f, "Generating terrain");
 
             // Generate Terrain GameObjects
             terrains.Clear();
@@ -127,7 +127,7 @@ namespace DCL.Landscape
             await ReEnableTerrainAsync();
 
             FreeMemory();
-            processReport?.SetProgress(1f);
+            processReport?.SetProgress(1f, "Terrain generated");
         }
 
         // waiting a frame to create the color map renderer created a new bug where some stones do not render properly, this should fix it

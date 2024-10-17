@@ -27,7 +27,7 @@ namespace Global.Dynamic.TeleportOperations
 
                 await realmNavigator.InitializeTeleportToSpawnPointAsync(teleportLoadReport, ct,
                     teleportParams.CurrentDestinationParcel);
-                teleportParams.ParentReport.SetProgress(RealFlowLoadingStatus.PROGRESS[PlayerTeleported]);
+                teleportParams.ParentReport.SetProgress(RealFlowLoadingStatus.PROGRESS[PlayerTeleported], "Player teleported");
                 return Result.SuccessResult();
             }
             catch (Exception e)

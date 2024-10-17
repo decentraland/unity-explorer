@@ -48,11 +48,11 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
             this.appParameters = appParameters;
         }
 
-        public async UniTask<Result> ExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
+        public async UniTask<Result> ExecuteAsync(IAsyncLoadProcessReport report, CancellationToken ct)
         {
             await CheckOnboardingAsync(ct);
 
-            report.SetProgress(loadingStatus.SetStage(RealFlowLoadingStatus.Stage.OnboardingChecked));
+            report.SetProgress(loadingStatus.SetStage(RealFlowLoadingStatus.Stage.OnboardingChecked), "Onboarding checked");
             return Result.SuccessResult();
         }
 
