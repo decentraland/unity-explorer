@@ -8,11 +8,11 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
 {
     public class RestartRealmStartupOperation : IStartupOperation
     {
-        private readonly RealFlowLoadingStatus loadingStatus;
+        private readonly ILoadingStatus loadingStatus;
         private readonly IRealmController realmController;
         private bool reloadRealm;
 
-        public RestartRealmStartupOperation(RealFlowLoadingStatus loadingStatus, IRealmController realmController)
+        public RestartRealmStartupOperation(ILoadingStatus loadingStatus, IRealmController realmController)
         {
             this.loadingStatus = loadingStatus;
             this.realmController = realmController;
@@ -25,10 +25,10 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
 
         public async UniTask<Result> ExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
         {
+            float finalizationProgress = loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.RealmRestarting);
             if (reloadRealm)
                 await realmController.RestartRealmAsync(ct);
-
-            report.SetProgress(loadingStatus.SetStage(RealFlowLoadingStatus.Stage.RealmRestarted));
+            report.SetProgress(finalizationProgress);
             return Result.SuccessResult();
         }
     }
