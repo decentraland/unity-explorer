@@ -25,6 +25,7 @@ namespace ECS.Unity.Materials.Tests
         {
             var materialComponent = new MaterialComponent(MaterialData.CreateBasicMaterial(
                 new TextureComponent("test-texture", TextureWrapMode.Mirror, FilterMode.Bilinear),
+                null,
                 0.5f,
                 Color.red,
                 true));
@@ -55,6 +56,7 @@ namespace ECS.Unity.Materials.Tests
         {
             var materialComponent = new MaterialComponent(MaterialData.CreateBasicMaterial(
                 new TextureComponent("test-texture", TextureWrapMode.Mirror, FilterMode.Bilinear),
+                null,
                 0.5f,
                 Color.red,
                 true));
