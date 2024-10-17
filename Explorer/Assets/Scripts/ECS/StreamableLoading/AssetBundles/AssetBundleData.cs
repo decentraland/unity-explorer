@@ -25,7 +25,7 @@ namespace ECS.StreamableLoading.AssetBundles
         private readonly string description;
 
 
-        public bool unloaded;
+        private bool unloaded;
 
         public AssetBundleData(AssetBundle assetBundle, AssetBundleMetrics? metrics, Object mainAsset, Type assetType, AssetBundleData[] dependencies, string version = "", string source = "")
             : base(assetBundle, ReportCategory.ASSET_BUNDLES)
