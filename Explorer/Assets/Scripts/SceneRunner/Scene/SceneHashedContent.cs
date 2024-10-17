@@ -38,28 +38,25 @@ namespace SceneRunner.Scene
             this.contentBaseUrl = contentBaseUrl;
         }
 
-        public bool TryGetContentUrl(string contentPath, out URLAddress resultURL, out string fileHash)
+        public bool TryGetContentUrl(string contentPath, out URLAddress resultURL)
         {
             if (resolvedContentURLs.TryGetValue(contentPath, out ContentAccessResult cachedResult))
             {
                 resultURL = cachedResult.URL;
-                fileHash = cachedResult.FileHash;
                 return cachedResult.Success;
             }
 
             if (fileToHash.TryGetValue(contentPath, out string hash))
             {
                 resultURL = contentBaseUrl.Append(URLPath.FromString(hash));
-                fileHash = hash;
-                resolvedContentURLs[contentPath] = new ContentAccessResult(true, resultURL, fileHash);
+                resolvedContentURLs[contentPath] = new ContentAccessResult(true, resultURL, null); // TODO: REVERT THIS
                 return true;
             }
 
             ReportHub.LogWarning(ReportCategory.SCENE_LOADING, $"{nameof(SceneHashedContent)}: {contentPath} not found in {nameof(fileToHash)}");
 
             resultURL = URLAddress.EMPTY;
-            fileHash = string.Empty;
-            resolvedContentURLs[contentPath] = new ContentAccessResult(false, resultURL, fileHash);
+            resolvedContentURLs[contentPath] = new ContentAccessResult(false, resultURL, null);
             return false;
         }
 

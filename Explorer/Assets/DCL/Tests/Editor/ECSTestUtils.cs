@@ -9,7 +9,7 @@ namespace DCL.Tests.Editor
         public static ISceneData SceneDataSub()
         {
             ISceneData sceneData = Substitute.For<ISceneData>();
-            sceneData.TryGetContentUrl(Arg.Any<string>(), out Arg.Any<URLAddress>(), out Arg.Any<string>())
+            sceneData.TryGetContentUrl(Arg.Any<string>(), out Arg.Any<URLAddress>())
                      .Returns(args =>
                       {
                           args[1] = URLAddress.FromString(args.ArgAt<string>(0));

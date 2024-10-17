@@ -6,7 +6,7 @@ namespace SceneRunner.Scene
     {
         URLDomain ContentBaseUrl { get; }
 
-        bool TryGetContentUrl(string contentPath, out URLAddress result, out string fileHash);
+        bool TryGetContentUrl(string contentPath, out URLAddress result);
 
         bool TryGetHash(string name, out string hash);
     }

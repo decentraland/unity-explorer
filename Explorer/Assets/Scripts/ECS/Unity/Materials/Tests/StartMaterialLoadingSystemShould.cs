@@ -49,7 +49,7 @@ namespace ECS.Unity.Materials.Tests
                 sceneData = Substitute.For<ISceneData>(), ATTEMPTS_COUNT, releasablePerformanceBudget, Substitute.For<IReadOnlyDictionary<CRDTEntity, Entity>>()
                 , new ExtendedObjectPool<Texture2D>(() => new Texture2D(1, 1)));
 
-            sceneData.TryGetMediaUrl(Arg.Any<string>(), out Arg.Any<URLAddress>(), out Arg.Any<string>())
+            sceneData.TryGetMediaUrl(Arg.Any<string>(), out Arg.Any<URLAddress>())
                      .Returns(c =>
                       {
                           c[1] = URLAddress.FromString(c.ArgAt<string>(0));

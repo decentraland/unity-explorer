@@ -64,25 +64,24 @@ namespace SceneRunner.Scene
         }
 
         public bool TryGetMainScriptUrl(out URLAddress result) =>
-            TryGetContentUrl(SceneEntityDefinition.metadata.main, out result, out string fileHash);
+            TryGetContentUrl(SceneEntityDefinition.metadata.main, out result);
 
-        public bool TryGetContentUrl(string url, out URLAddress result, out string fileHash) =>
-            SceneContent.TryGetContentUrl(url, out result, out fileHash);
+        public bool TryGetContentUrl(string url, out URLAddress result) =>
+            SceneContent.TryGetContentUrl(url, out result);
 
         public bool TryGetHash(string name, out string hash) =>
             SceneContent.TryGetHash(name, out hash);
 
-        public bool TryGetMediaUrl(string url, out URLAddress result, out string fileHash)
+        public bool TryGetMediaUrl(string url, out URLAddress result)
         {
             if (string.IsNullOrEmpty(url))
             {
                 result = URLAddress.EMPTY;
-                fileHash = string.Empty;
                 return false;
             }
 
             // Try resolve an internal URL
-            if (TryGetContentUrl(url, out result, out fileHash))
+            if (TryGetContentUrl(url, out result))
                 return true;
 
             if (!CHECK_ALLOWED_MEDIA_HOSTNAMES
@@ -93,6 +92,22 @@ namespace SceneRunner.Scene
             }
 
             result = URLAddress.EMPTY;
+            return false;
+        }
+
+        public bool TryGetMediaFileHash(string url, out string fileHash)
+        {
+            if (string.IsNullOrEmpty(url))
+            {
+                fileHash = string.Empty;
+                return false;
+            }
+
+            // Try resolve an internal URL
+            if (TryGetHash(url, out fileHash))
+                return true;
+
+            fileHash = string.Empty;
             return false;
         }
 

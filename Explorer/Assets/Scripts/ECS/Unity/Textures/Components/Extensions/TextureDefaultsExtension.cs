@@ -20,25 +20,41 @@ namespace ECS.Unity.Textures.Components.Extensions
                 return textureComponent;
             }
 
-            return self.TryGetTextureUrl(data, out URLAddress url, out string fileHash)
+            bool success = self.TryGetTextureUrl(data, out URLAddress url);
+            self.TryGetTextureFileHash(data, out string fileHash);
+
+            return success
                 ? new TextureComponent(url, fileHash, self.GetWrapMode(), self.GetFilterMode())
                 : null;
         }
 
-        public static bool TryGetTextureUrl(this TextureUnion self, ISceneData data, out URLAddress url, out string fileHash)
+        public static bool TryGetTextureUrl(this TextureUnion self, ISceneData data, out URLAddress url)
         {
             switch (self.TexCase)
             {
                 case TextureUnion.TexOneofCase.AvatarTexture:
-                    fileHash = string.Empty;
                     return self.AvatarTexture.TryGetTextureUrl(out url);
                 case TextureUnion.TexOneofCase.VideoTexture:
                     url = URLAddress.EMPTY; // just ignore to not break the loop
+                    return false;
+                case TextureUnion.TexOneofCase.Texture:
+                default:
+                    return self.Texture.TryGetTextureUrl(data, out url);
+            }
+        }
+
+        public static bool TryGetTextureFileHash(this TextureUnion self, ISceneData data, out string fileHash)
+        {
+            switch (self.TexCase)
+            {
+                case TextureUnion.TexOneofCase.AvatarTexture:
+                    return self.AvatarTexture.TryGetTextureFileHash(out fileHash);
+                case TextureUnion.TexOneofCase.VideoTexture:
                     fileHash = string.Empty;
                     return false;
                 case TextureUnion.TexOneofCase.Texture:
                 default:
-                    return self.Texture.TryGetTextureUrl(data, out url, out fileHash);
+                    return self.Texture.TryGetTextureFileHash(data, out fileHash);
             }
         }
 
@@ -84,13 +100,23 @@ namespace ECS.Unity.Textures.Components.Extensions
             }
         }
 
-        public static bool TryGetTextureUrl(this Texture self, ISceneData data, out URLAddress url, out string fileHash) =>
-            data.TryGetMediaUrl(self.Src, out url, out fileHash);
+        public static bool TryGetTextureUrl(this Texture self, ISceneData data, out URLAddress url) =>
+            data.TryGetMediaUrl(self.Src, out url);
+
+        public static bool TryGetTextureFileHash(this Texture self, ISceneData data, out string fileHash) =>
+            data.TryGetMediaFileHash(self.Src, out fileHash);
 
         public static bool TryGetTextureUrl(this AvatarTexture self, out URLAddress url)
         {
             // Not implemented
             url = URLAddress.EMPTY;
+            return false;
+        }
+
+        public static bool TryGetTextureFileHash(this AvatarTexture self, out string fileHash)
+        {
+            // Not implemented
+            fileHash = string.Empty;
             return false;
         }
 

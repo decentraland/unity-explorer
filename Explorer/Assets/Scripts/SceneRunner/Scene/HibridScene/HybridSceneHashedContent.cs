@@ -58,12 +58,11 @@ namespace SceneRunner.Scene
             this.webRequestController = webRequestController;
         }
 
-        public bool TryGetContentUrl(string contentPath, out URLAddress result, out string fileHash)
+        public bool TryGetContentUrl(string contentPath, out URLAddress result)
         {
             if (resolvedContentURLs.TryGetValue(contentPath, out var cachedResult))
             {
                 result = cachedResult.URL;
-                fileHash = cachedResult.FileHash;
                 return cachedResult.Success;
             }
 
@@ -73,23 +72,31 @@ namespace SceneRunner.Scene
                 if (filesToGetFromLocalHost.Contains(contentPath) || IsTexture(contentPath))
                 {
                     result = contentBaseUrl.Append(URLPath.FromString(hash));
-                    fileHash = hash;
-                    resolvedContentURLs[contentPath] = new ContentAccessResult(true, result, fileHash);
+                    resolvedContentURLs[contentPath] = new ContentAccessResult(true, result, null); // TODO: REVERT
                     return true;
                 }
 
                 result = abDomain.Append(URLPath.FromString(hash));
-                fileHash = hash;
-                resolvedContentURLs[contentPath] = new ContentAccessResult(true, result, fileHash);
+                resolvedContentURLs[contentPath] = new ContentAccessResult(true, result, null);
                 return true;
             }
 
             ReportHub.LogWarning(ReportCategory.SCENE_LOADING, $"{nameof(SceneHashedContent)}: {contentPath} not found in {nameof(fileToHash)}");
 
             result = URLAddress.EMPTY;
-            fileHash = string.Empty;
-            resolvedContentURLs[contentPath] = new ContentAccessResult(false, result, fileHash);
+            resolvedContentURLs[contentPath] = new ContentAccessResult(false, result, null);
             return false;
+        }
+
+        public bool TryGetContentFileHash(string contentPath, out string fileHash)
+        {
+            if (resolvedContentURLs.TryGetValue(contentPath, out var cachedResult))
+            {
+                fileHash = cachedResult.FileHash;
+                return cachedResult.Success;
+            }
+
+            return fileToHash.TryGetValue(contentPath, out fileHash);
         }
 
         public bool TryGetHash(string name, out string hash)

@@ -45,7 +45,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
 
         public async UniTask<IRuntime.ReadFileResponse> ReadFileAsync(string fileName, CancellationToken ct)
         {
-            sceneData.TryGetContentUrl(fileName, out URLAddress url, out string fileHash);
+            sceneData.TryGetContentUrl(fileName, out URLAddress url);
             sceneData.TryGetHash(fileName, out string hash);
 
             await UniTask.SwitchToMainThread();
