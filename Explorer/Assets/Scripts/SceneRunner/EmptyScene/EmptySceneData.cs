@@ -41,13 +41,13 @@ namespace SceneRunner.EmptyScene
         public bool TryGetMainScriptUrl(out URLAddress result) =>
             throw new NotImplementedException();
 
-        public bool TryGetContentUrl(string url, out URLAddress result) =>
+        public bool TryGetContentUrl(string url, out URLAddress result, out string fileHash) =>
             throw new NotImplementedException();
 
         public bool TryGetHash(string name, out string hash) =>
             throw new NotImplementedException();
 
-        public bool TryGetMediaUrl(string url, out URLAddress result) =>
+        public bool TryGetMediaUrl(string url, out URLAddress result, out string fileHash) =>
             throw new NotImplementedException();
 
         public bool IsUrlDomainAllowed(string url) =>

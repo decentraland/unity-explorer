@@ -71,7 +71,7 @@ namespace ECS.SceneLifeCycle.Systems
             const string NAME = "main.crdt";
 
             // if scene does not contain main.crdt, do nothing
-            if (!sceneContent.TryGetContentUrl(NAME, out var url))
+            if (!sceneContent.TryGetContentUrl(NAME, out var url, out string fileHash))
                 return ReadOnlyMemory<byte>.Empty;
 
             return await webRequestController.GetAsync(new CommonArguments(url), ct, reportCategory).GetDataCopyAsync();
@@ -108,7 +108,7 @@ namespace ECS.SceneLifeCycle.Systems
         {
             const string NAME = "scene.json";
 
-            if (!sceneContent.TryGetContentUrl(NAME, out var sceneJsonUrl))
+            if (!sceneContent.TryGetContentUrl(NAME, out var sceneJsonUrl, out string fileHash))
             {
                 //What happens if we dont have a scene.json file? Will the default one work?
                 ReportHub.LogWarning(reportCategory.WithSessionStatic(), $"scene.json does not exist for scene {sceneID}, no override is possible");

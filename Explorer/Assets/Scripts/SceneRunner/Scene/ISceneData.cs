@@ -40,7 +40,7 @@ namespace SceneRunner.Scene
         ///     Translates URL encoded in SDK components into a path in the scene bundle
         ///     from which an asset can be downloaded from
         /// </summary>
-        bool TryGetContentUrl(string url, out URLAddress result);
+        bool TryGetContentUrl(string url, out URLAddress result, out string fileHash);
 
         /// <summary>
         ///     Translates the name of the scene asset into the hash, that can be used as part of URL
@@ -53,7 +53,7 @@ namespace SceneRunner.Scene
         /// <param name="url"></param>
         /// <param name="result"></param>
         /// <returns></returns>
-        bool TryGetMediaUrl(string url, out URLAddress result);
+        bool TryGetMediaUrl(string url, out URLAddress result, out string fileHash);
 
         bool IsUrlDomainAllowed(string url);
 
@@ -87,9 +87,10 @@ namespace SceneRunner.Scene
                 return false;
             }
 
-            public bool TryGetContentUrl(string url, out URLAddress result)
+            public bool TryGetContentUrl(string url, out URLAddress result, out string fileHash)
             {
                 result = URLAddress.EMPTY;
+                fileHash = string.Empty;
                 return false;
             }
 
@@ -99,9 +100,10 @@ namespace SceneRunner.Scene
                 return false;
             }
 
-            public bool TryGetMediaUrl(string url, out URLAddress result)
+            public bool TryGetMediaUrl(string url, out URLAddress result, out string fileHash)
             {
                 result = URLAddress.EMPTY;
+                fileHash = string.Empty;
                 return false;
             }
 

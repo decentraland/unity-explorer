@@ -16,27 +16,29 @@ namespace ECS.Unity.Textures.Components.Extensions
 
             if (self.IsVideoTexture())
             {
-                var textureComponent = new TextureComponent(URLAddress.EMPTY, self.GetWrapMode(), self.GetFilterMode(), true, self.GetVideoTextureId());
+                var textureComponent = new TextureComponent(URLAddress.EMPTY, string.Empty, self.GetWrapMode(), self.GetFilterMode(), true, self.GetVideoTextureId());
                 return textureComponent;
             }
 
-            return self.TryGetTextureUrl(data, out URLAddress url)
-                ? new TextureComponent(url, self.GetWrapMode(), self.GetFilterMode())
+            return self.TryGetTextureUrl(data, out URLAddress url, out string fileHash)
+                ? new TextureComponent(url, fileHash, self.GetWrapMode(), self.GetFilterMode())
                 : null;
         }
 
-        public static bool TryGetTextureUrl(this TextureUnion self, ISceneData data, out URLAddress url)
+        public static bool TryGetTextureUrl(this TextureUnion self, ISceneData data, out URLAddress url, out string fileHash)
         {
             switch (self.TexCase)
             {
                 case TextureUnion.TexOneofCase.AvatarTexture:
+                    fileHash = string.Empty;
                     return self.AvatarTexture.TryGetTextureUrl(out url);
                 case TextureUnion.TexOneofCase.VideoTexture:
                     url = URLAddress.EMPTY; // just ignore to not break the loop
+                    fileHash = string.Empty;
                     return false;
                 case TextureUnion.TexOneofCase.Texture:
                 default:
-                    return self.Texture.TryGetTextureUrl(data, out url);
+                    return self.Texture.TryGetTextureUrl(data, out url, out fileHash);
             }
         }
 
@@ -82,8 +84,8 @@ namespace ECS.Unity.Textures.Components.Extensions
             }
         }
 
-        public static bool TryGetTextureUrl(this Texture self, ISceneData data, out URLAddress url) =>
-            data.TryGetMediaUrl(self.Src, out url);
+        public static bool TryGetTextureUrl(this Texture self, ISceneData data, out URLAddress url, out string fileHash) =>
+            data.TryGetMediaUrl(self.Src, out url, out fileHash);
 
         public static bool TryGetTextureUrl(this AvatarTexture self, out URLAddress url)
         {

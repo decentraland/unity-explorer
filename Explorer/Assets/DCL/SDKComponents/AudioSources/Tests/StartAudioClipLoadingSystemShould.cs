@@ -33,7 +33,7 @@ namespace DCL.SDKComponents.AudioSources.Tests
 
             ISceneData sceneData = Substitute.For<ISceneData>();
 
-            sceneData.TryGetContentUrl(Arg.Any<string>(), out Arg.Any<URLAddress>())
+            sceneData.TryGetContentUrl(Arg.Any<string>(), out Arg.Any<URLAddress>(), out Arg.Any<string>())
                      .Returns(args =>
                       {
                           args[1] = URLAddress.FromString(args.ArgAt<string>(0));

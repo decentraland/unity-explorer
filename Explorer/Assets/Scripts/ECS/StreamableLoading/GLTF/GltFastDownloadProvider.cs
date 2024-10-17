@@ -45,7 +45,7 @@ namespace ECS.StreamableLoading.GLTF
             bool isBaseGltfFetch = uri.OriginalString.Equals(targetGltfOriginalPath);
             string originalFilePath = string.Concat(targetGltfDirectoryPath, GetFileNameFromUri(uri));
 
-            if (!sceneData.SceneContent.TryGetContentUrl(originalFilePath, out var tryGetContentUrlResult))
+            if (!sceneData.SceneContent.TryGetContentUrl(originalFilePath, out var tryGetContentUrlResult, out string tryGetContentUrlFileHash))
             {
                 if (isBaseGltfFetch) acquiredBudget.Release();
                 throw new Exception($"Error on GLTF download ({targetGltfOriginalPath} - {uri}): NOT FOUND");
@@ -75,7 +75,7 @@ namespace ECS.StreamableLoading.GLTF
         public async Task<ITextureDownload> RequestTextureAsync(Uri uri, bool nonReadable, bool forceLinear)
         {
             string textureOriginalPath = string.Concat(targetGltfDirectoryPath, GetFileNameFromUri(uri));
-            sceneData.SceneContent.TryGetContentUrl(textureOriginalPath, out var tryGetContentUrlResult);
+            sceneData.SceneContent.TryGetContentUrl(textureOriginalPath, out var tryGetContentUrlResult, out string tryGetContentUrlFileHash);
 
             var texturePromise = Promise.Create(world, new GetTextureIntention
             {

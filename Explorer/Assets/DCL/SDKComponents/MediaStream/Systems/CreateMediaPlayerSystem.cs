@@ -76,7 +76,7 @@ namespace DCL.SDKComponents.MediaStream
         private MediaPlayerComponent CreateMediaPlayerComponent(Entity entity, string url, bool hasVolume, float volume)
         {
             // if it is not valid, we try get it as a scene local video
-            if (!url.IsValidUrl() && sceneData.TryGetMediaUrl(url, out URLAddress mediaUrl))
+            if (!url.IsValidUrl() && sceneData.TryGetMediaUrl(url, out URLAddress mediaUrl, out string mediaFileHash))
                 url = mediaUrl;
 
             var component = new MediaPlayerComponent

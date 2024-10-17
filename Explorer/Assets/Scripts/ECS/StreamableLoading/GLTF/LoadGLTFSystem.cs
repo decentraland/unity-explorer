@@ -62,7 +62,7 @@ namespace ECS.StreamableLoading.GLTF
 
         protected override async UniTask<StreamableLoadingResult<GLTFData>> FlowInternalAsync(GetGLTFIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
-            if (!sceneData.SceneContent.TryGetContentUrl(intention.Name!, out var finalDownloadUrl))
+            if (!sceneData.SceneContent.TryGetContentUrl(intention.Name!, out var finalDownloadUrl, out string finalDownloadHash))
                 return new StreamableLoadingResult<GLTFData>(
                     new ReportData(GetReportCategory()),
                     new Exception("The content to download couldn't be found"));

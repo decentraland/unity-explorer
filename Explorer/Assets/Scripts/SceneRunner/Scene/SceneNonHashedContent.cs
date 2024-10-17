@@ -17,15 +17,17 @@ namespace SceneRunner.Scene
             this.contentBaseUrl = contentBaseUrl;
         }
 
-        public bool TryGetContentUrl(string contentPath, out URLAddress result)
+        public bool TryGetContentUrl(string contentPath, out URLAddress result, out string fileHash)
         {
             if (resolvedContentURLs.TryGetValue(contentPath, out (bool success, URLAddress url) cachedResult))
             {
                 result = cachedResult.url;
+                fileHash = string.Empty;
                 return cachedResult.success;
             }
 
             result = contentBaseUrl.Append(URLPath.FromString(contentPath));
+            fileHash = string.Empty;
             resolvedContentURLs[contentPath] = (true, result);
             return true;
         }
