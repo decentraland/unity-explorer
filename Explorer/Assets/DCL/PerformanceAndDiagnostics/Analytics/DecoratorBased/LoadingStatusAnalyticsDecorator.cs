@@ -15,11 +15,12 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         
         public ReactiveProperty<LoadingStatus.LoadingStage> CurrentStage => core.CurrentStage;
         public ReactiveProperty<string> AssetState => core.AssetState;
-        private bool firstLoginDone;
+        private bool isFirstLoading;
 
         public LoadingStatusAnalyticsDecorator(ILoadingStatus loadingStatus, IAnalyticsController analytics)
         {
             core = loadingStatus;
+            isFirstLoading = true;
             this.analytics = analytics;
         }
 
@@ -40,10 +41,10 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         public float SetCurrentStage(LoadingStatus.LoadingStage stage)
         {            
             //After the first loading screen flow, we dont want to report analytics anymore
-            if (!firstLoginDone)
+            if (isFirstLoading)
             {
                 OnLoadingStageChanged(stage);
-                firstLoginDone = stage == LoadingStatus.LoadingStage.Completed;
+                isFirstLoading = stage != LoadingStatus.LoadingStage.Completed; 
             }
             return core.SetCurrentStage(stage);
         }

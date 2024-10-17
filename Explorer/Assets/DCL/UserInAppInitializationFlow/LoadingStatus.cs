@@ -15,19 +15,19 @@ namespace DCL.UserInAppInitializationFlow
         {
             [LoadingStage.Init] = 0f, 
             [LoadingStage.AuthenticationScreenShowing] = 0.05f, 
-            /*Used in initialization Flow*/ [LoadingStage.LiveKitConnectionEnsuring] = 0.1f,
-            /*Used in Teleport Flow*/ [LoadingStage.LivekitStopping] = 0.1f, 
+            [LoadingStage.LiveKitConnectionEnsuring] = 0.1f, //Used in initialization Flow
+            [LoadingStage.LivekitStopping] = 0.1f, //Used in Teleport Flow
             [LoadingStage.FeatureFlagInitializing] = 0.15f,
-            /*Used in Teleport Flow*/ [LoadingStage.RealmChanging] = 0.25f,
+            [LoadingStage.RealmChanging] = 0.25f, //Used in Teleport Flow
             [LoadingStage.ProfileLoading] = 0.2f, 
             [LoadingStage.EnvironmentMiscSetting] = 0.25f, 
             [LoadingStage.PlayerAvatarLoading] = 0.4f,
             [LoadingStage.LandscapeLoading] = 0.7f,
             [LoadingStage.OnboardingChecking] = 0.80f,
-            /*Used in initialization Flow*/ [LoadingStage.RealmRestarting] = 0.85f, 
+            [LoadingStage.RealmRestarting] = 0.85f, //Used in initialization Flow
             [LoadingStage.PlayerTeleporting] = 0.95f, 
-            /*Used in initialization Flow*/ [LoadingStage.GlobalPXsLoading] = 0.99f,
-            /*Used in Teleport Flow*/ [LoadingStage.LivekitRestarting] = 0.99f, 
+            [LoadingStage.GlobalPXsLoading] = 0.99f, //Used in initialization Flow
+            [LoadingStage.LivekitRestarting] = 0.99f, //Used in Teleport Flow
             [LoadingStage.Completed] = 1f
         };
 
