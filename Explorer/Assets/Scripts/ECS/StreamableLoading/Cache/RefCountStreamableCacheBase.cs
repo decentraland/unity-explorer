@@ -63,14 +63,6 @@ namespace ECS.StreamableLoading.Cache
 
         public void AddReference(in TLoadingIntention _, TAssetData asset)
         {
-            if (asset is AssetBundleData data)
-            {
-                if (data.Asset != null && data.Asset.name.Contains(
-                        "bafkreifhsax5ph6m4wzow6cfm7dupdehsni7a3itnmi3cscywxftwujiay"))
-                {
-                    Debug.Log("For the debug");
-                }
-            }
             asset.AddReference();
         }
 
