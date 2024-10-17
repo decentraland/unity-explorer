@@ -13,7 +13,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
     [UpdateInGroup(typeof(CameraGroup))]
     public partial class AvatarShapeVisibilitySystem : BaseUnityLoopSystem
     {
-        private const float AVATAR_MINIMUM_CAMERA_DISTANCE_SQR = 1;
+        private const float AVATAR_MINIMUM_CAMERA_DISTANCE_SQR = 3.5f * 3.5f;
         private SingleInstanceEntity camera;
 
         public AvatarShapeVisibilitySystem(World world) : base(world) { }
