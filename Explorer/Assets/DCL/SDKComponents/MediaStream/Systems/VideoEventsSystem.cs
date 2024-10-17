@@ -12,6 +12,7 @@ using ECS.Abstract;
 using ECS.Groups;
 using RenderHeads.Media.AVProVideo;
 using SceneRunner.Scene;
+using UnityEngine;
 
 namespace DCL.SDKComponents.MediaStream
 {
@@ -20,6 +21,8 @@ namespace DCL.SDKComponents.MediaStream
     [ThrottlingEnabled]
     public partial class VideoEventsSystem : BaseUnityLoopSystem
     {
+        private const float MAX_VIDEO_FROZEN_SECONDS_BEFORE_ERROR = 10f;
+
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IComponentPool<PBVideoEvent> componentPool;
@@ -44,10 +47,11 @@ namespace DCL.SDKComponents.MediaStream
         {
             if (!frameTimeBudget.TrySpendBudget()) return;
 
-            VideoState newState = GetCurrentVideoState(mediaPlayer.MediaPlayer.Control, mediaPlayer.previousTime);
+            VideoState newState = GetCurrentVideoState(mediaPlayer.MediaPlayer.Control, mediaPlayer.PreviousCheckTime, mediaPlayer.LastStateChangeTime);
 
             if (mediaPlayer.State == newState) return;
-            mediaPlayer.previousTime = mediaPlayer.MediaPlayer.Control.GetCurrentTime();
+            mediaPlayer.LastStateChangeTime = Time.timeSinceLevelLoad;
+            mediaPlayer.PreviousCheckTime = mediaPlayer.MediaPlayer.Control.GetCurrentTime();
             mediaPlayer.State = newState;
 
             AppendMessage(in sdkEntity, in mediaPlayer);
@@ -70,30 +74,30 @@ namespace DCL.SDKComponents.MediaStream
             );
         }
 
-        private static VideoState GetCurrentVideoState(IMediaControl mediaPlayerControl, double previousTime)
+        private static VideoState GetCurrentVideoState(IMediaControl mediaPlayerControl, double previousCheckTime, float lastStateChangeTime)
         {
-            if (mediaPlayerControl.IsPlaying())
-            {
-                // Debug.Log($"PRAVS - GetCurrentVideoState() - PLAYING..."
-                //           + $"\n+ last error: {mediaPlayerControl.GetLastError()}"
-                //           + $"\n+ current time: {mediaPlayerControl.GetCurrentTime()}"
-                //           + $"\n+ current time frames: {mediaPlayerControl.GetCurrentTimeFrames()}"
-                //           + $"");
-
-                if (mediaPlayerControl.GetCurrentTime().Equals(previousTime))
-                    return VideoState.VsBuffering;
-
-                return VideoState.VsPlaying;
-            }
+            // Important: while PLAYING or PAUSED, MediaPlayerControl may also be BUFFERING and/or SEEKING.
 
             if (mediaPlayerControl.IsFinished()) return VideoState.VsNone;
-            if (mediaPlayerControl.IsPaused()) return VideoState.VsPaused;
-            if (mediaPlayerControl.IsBuffering()) return VideoState.VsBuffering;
-            if (mediaPlayerControl.IsSeeking()) return VideoState.VsSeeking;
-
             if (mediaPlayerControl.GetLastError() != ErrorCode.None) return VideoState.VsError;
 
-            return VideoState.VsNone;
+            VideoState state = mediaPlayerControl.IsPaused() ? VideoState.VsPaused : VideoState.VsNone;
+
+            if (mediaPlayerControl.IsPlaying())
+            {
+                state = VideoState.VsPlaying;
+
+                if (mediaPlayerControl.GetCurrentTime().Equals(previousCheckTime)) // Video is frozen
+                {
+                    state = mediaPlayerControl.IsSeeking() ? VideoState.VsSeeking : VideoState.VsBuffering;
+
+                    // If the seeking/buffering never ends, update state with error so the scene can react
+                    if ((Time.timeSinceLevelLoad - lastStateChangeTime) > MAX_VIDEO_FROZEN_SECONDS_BEFORE_ERROR)
+                        state = VideoState.VsError;
+                }
+            }
+
+            return state;
         }
     }
 }
