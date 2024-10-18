@@ -47,11 +47,11 @@ namespace DCL.SDKComponents.MediaStream
         {
             if (!frameTimeBudget.TrySpendBudget()) return;
 
-            VideoState newState = GetCurrentVideoState(mediaPlayer.MediaPlayer.Control, mediaPlayer.PreviousCheckTime, mediaPlayer.LastStateChangeTime);
+            VideoState newState = GetCurrentVideoState(mediaPlayer.MediaPlayer.Control, mediaPlayer.PreviousPlayingTimeCheck, mediaPlayer.LastStateChangeTime);
 
             if (mediaPlayer.State == newState) return;
             mediaPlayer.LastStateChangeTime = Time.timeSinceLevelLoad;
-            mediaPlayer.PreviousCheckTime = mediaPlayer.MediaPlayer.Control.GetCurrentTime();
+            mediaPlayer.PreviousPlayingTimeCheck = mediaPlayer.MediaPlayer.Control.GetCurrentTime();
             mediaPlayer.State = newState;
 
             AppendMessage(in sdkEntity, in mediaPlayer);
@@ -74,7 +74,7 @@ namespace DCL.SDKComponents.MediaStream
             );
         }
 
-        private static VideoState GetCurrentVideoState(IMediaControl mediaPlayerControl, double previousCheckTime, float lastStateChangeTime)
+        private static VideoState GetCurrentVideoState(IMediaControl mediaPlayerControl, double previousPlayingTimeCheck, float lastStateChangeTime)
         {
             // Important: while PLAYING or PAUSED, MediaPlayerControl may also be BUFFERING and/or SEEKING.
 
@@ -87,7 +87,7 @@ namespace DCL.SDKComponents.MediaStream
             {
                 state = VideoState.VsPlaying;
 
-                if (mediaPlayerControl.GetCurrentTime().Equals(previousCheckTime)) // Video is frozen
+                if (mediaPlayerControl.GetCurrentTime().Equals(previousPlayingTimeCheck)) // Video is frozen
                 {
                     state = mediaPlayerControl.IsSeeking() ? VideoState.VsSeeking : VideoState.VsBuffering;
 
