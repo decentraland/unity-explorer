@@ -10,8 +10,8 @@ namespace DCL.LOD
         //Threshold for bucket partition (inclusive)
         int[] LodPartitionBucketThresholds { get;  }
         int SDK7LodThreshold { get; set;  }
-        /// <summary>  The time in seconds before changing from a scene/scene promise to LOD. </summary>
-        float TimeToChangeToLod { get; set; }
+
+
         //Texture array settings. Default resolutions and their default sizes
         TextureArrayResolutionDescriptor[] DefaultTextureArrayResolutionDescriptors { get;  }
         int ArraySizeForMissingResolutions { get; }
