@@ -3,6 +3,7 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.UserInAppInitializationFlow;
+using static DCL.UserInAppInitializationFlow.RealFlowLoadingStatus.Stage;
 using Utility.Types;
 
 namespace Global.Dynamic.TeleportOperations
@@ -22,10 +23,8 @@ namespace Global.Dynamic.TeleportOperations
         {
             try
             {
-                float finalizationProgress =
-                    teleportParams.LoadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.LivekitRestarting);
                 await roomHub.StartAsync().Timeout(livekitTimeout);
-                teleportParams.ParentReport.SetProgress(finalizationProgress);
+                teleportParams.ParentReport.SetProgress(RealFlowLoadingStatus.PROGRESS[Completed]);
                 return Result.SuccessResult();
             }
             catch (Exception e)

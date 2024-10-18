@@ -29,7 +29,7 @@ namespace DCL.UserInAppInitializationFlow
     {
         private static readonly ILoadingScreen.EmptyLoadingScreen EMPTY_LOADING_SCREEN = new ();
         
-        private readonly ILoadingStatus loadingStatus;
+        private readonly RealFlowLoadingStatus loadingStatus;
         private readonly IMVCManager mvcManager;
         private readonly AudioClipConfig backgroundMusic;
         private readonly IRealmNavigator realmNavigator;
@@ -41,7 +41,7 @@ namespace DCL.UserInAppInitializationFlow
         private readonly IStartupOperation startupOperation;
         
         public RealUserInAppInitializationFlow(
-            ILoadingStatus loadingStatus,
+            RealFlowLoadingStatus loadingStatus,
             IHealthCheck livekitHealthCheck,
             IDecentralandUrlsSource decentralandUrlsSource,
             IMVCManager mvcManager,
@@ -96,7 +96,7 @@ namespace DCL.UserInAppInitializationFlow
 
         public async UniTask ExecuteAsync(UserInAppInitializationFlowParameters parameters, CancellationToken ct)
         {
-            loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Init);
+            loadingStatus.SetStage(RealFlowLoadingStatus.Stage.Init);
 
             Result result = default;
 
@@ -113,7 +113,7 @@ namespace DCL.UserInAppInitializationFlow
 
                 if (parameters.ShowAuthentication)
                 {
-                    loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.AuthenticationScreenShowing);
+                    loadingStatus.SetStage(RealFlowLoadingStatus.Stage.AuthenticationScreenShown);
                     await ShowAuthenticationScreenAsync(ct);
                 }
 
@@ -125,7 +125,7 @@ namespace DCL.UserInAppInitializationFlow
                     await roomHub.StartAsync().Timeout(TimeSpan.FromSeconds(10));
                     result = teleportResult.Success ? teleportResult : Result.ErrorResult(teleportResult.ErrorMessage);
                     // We need to flag the process as completed, otherwise the multiplayer systems will not run
-                    loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Completed);
+                    loadingStatus.SetStage(RealFlowLoadingStatus.Stage.Completed);
                 }
                 else
                 {
@@ -136,7 +136,7 @@ namespace DCL.UserInAppInitializationFlow
                                 result = await startupOperation.ExecuteAsync(parentLoadReport, ct);
 
                                 if (result.Success)
-                                    parentLoadReport.SetProgress(loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Completed));
+                                    parentLoadReport.SetProgress(loadingStatus.SetStage(RealFlowLoadingStatus.Stage.Completed));
 
                                 return result;
                             },
@@ -154,7 +154,6 @@ namespace DCL.UserInAppInitializationFlow
             while (result.Success == false && parameters.ShowAuthentication);
 
             await checkOnboardingStartupOperation.MarkOnboardingAsDoneAsync(parameters.World, parameters.PlayerEntity, ct);
-            loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Completed);
         }
 
         private static void ApplyErrorIfLoadingScreenError(ref Result result, Result showResult)

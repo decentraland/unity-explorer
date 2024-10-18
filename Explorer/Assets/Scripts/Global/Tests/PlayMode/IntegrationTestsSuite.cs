@@ -22,7 +22,6 @@ using MVC.PopupsController.PopupCloser;
 using NSubstitute;
 using System;
 using System.Threading;
-using DCL.PerformanceAndDiagnostics.Analytics;
 using UnityEngine.AddressableAssets;
 
 namespace Global.Tests.PlayMode
@@ -61,8 +60,6 @@ namespace Global.Tests.PlayMode
                 new Entity(),
                 new SystemMemoryCap(MemoryCapMode.MAX_SYSTEM_MEMORY),
                 new WorldVolumeMacBus(),
-                false,
-                Substitute.For<IAnalyticsController>(),
                 ct);
 
             if (!success)

@@ -4,6 +4,7 @@ using Cysharp.Threading.Tasks;
 using DCL.UserInAppInitializationFlow;
 using ECS.SceneLifeCycle.Realm;
 using Utility.Types;
+using static DCL.UserInAppInitializationFlow.RealFlowLoadingStatus.Stage;
 
 
 namespace Global.Dynamic.TeleportOperations
@@ -22,11 +23,11 @@ namespace Global.Dynamic.TeleportOperations
         {
             try
             {
-                float finalizationProgress = teleportParams.LoadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.LandscapeLoading);
                 var landscapeLoadReport
-                    = teleportParams.ParentReport.CreateChildReport(finalizationProgress);
+                    = teleportParams.ParentReport.CreateChildReport(RealFlowLoadingStatus.PROGRESS[LandscapeLoaded]);
+
                 await realmNavigator.LoadTerrainAsync(landscapeLoadReport, ct);
-                teleportParams.ParentReport.SetProgress(finalizationProgress);
+                teleportParams.ParentReport.SetProgress(RealFlowLoadingStatus.PROGRESS[LandscapeLoaded]);
                 return Result.SuccessResult();
             }
             catch (Exception e)
