@@ -22,7 +22,7 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
         private const string APP_PARAMETER_LOCAL_SCENE = "local-scene";
         private const string APP_PARAMETER_POSITION = "position";
 
-        private readonly RealFlowLoadingStatus loadingStatus;
+        private readonly ILoadingStatus loadingStatus;
         private readonly IRealmController realmController;
         private readonly ISelfProfile selfProfile;
         private readonly FeatureFlagsCache featureFlagsCache;
@@ -33,7 +33,7 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
         private bool isProfilePendingToBeUpdated;
 
         public CheckOnboardingStartupOperation(
-            RealFlowLoadingStatus loadingStatus,
+            ILoadingStatus loadingStatus,
             IRealmController realmController,
             ISelfProfile selfProfile,
             FeatureFlagsCache featureFlagsCache,
@@ -50,9 +50,9 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
 
         public async UniTask<Result> ExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
         {
+            float finalizationProgress = loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.OnboardingChecking);
             await CheckOnboardingAsync(ct);
-
-            report.SetProgress(loadingStatus.SetStage(RealFlowLoadingStatus.Stage.OnboardingChecked));
+            report.SetProgress(finalizationProgress);
             return Result.SuccessResult();
         }
 
