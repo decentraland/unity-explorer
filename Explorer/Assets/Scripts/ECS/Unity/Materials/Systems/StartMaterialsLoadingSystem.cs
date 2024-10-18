@@ -115,7 +115,7 @@ namespace ECS.Unity.Materials.Systems
         private MaterialData CreateMaterialData(in PBMaterial material)
         {
             if (material.Unlit != null)
-                return CreateBasicMaterialData(material, albedoTexture: material.Unlit.Texture.CreateTextureComponent(sceneData));
+                return CreateBasicMaterialData(material, albedoTexture: material.Unlit.Texture.CreateTextureComponent(sceneData), material.Unlit.AlphaTexture.CreateTextureComponent(sceneData));
 
             TextureComponent? albedoTexture = material.Pbr.Texture.CreateTextureComponent(sceneData);
             TextureComponent? alphaTexture = material.Pbr.AlphaTexture.CreateTextureComponent(sceneData);
@@ -160,10 +160,14 @@ namespace ECS.Unity.Materials.Systems
                 TryCreateGetTexturePromise(in materialComponent.Data.Textures.EmissiveTexture, oldTexturesData?.EmissiveTexture, ref materialComponent.EmissiveTexPromise, partitionComponent);
                 TryCreateGetTexturePromise(in materialComponent.Data.Textures.BumpTexture, oldTexturesData?.BumpTexture, ref materialComponent.BumpTexPromise, partitionComponent);
             }
+            else
+            {
+                TryCreateGetTexturePromise(in materialComponent.Data.Textures.AlphaTexture, oldTexturesData?.AlphaTexture, ref materialComponent.AlphaTexPromise, partitionComponent);
+            }
         }
 
-        private static MaterialData CreateBasicMaterialData(in PBMaterial pbMaterial, in TextureComponent? albedoTexture) =>
-            MaterialData.CreateBasicMaterial(albedoTexture, pbMaterial.GetAlphaTest(), pbMaterial.GetDiffuseColor(), pbMaterial.GetCastShadows());
+        private static MaterialData CreateBasicMaterialData(in PBMaterial pbMaterial, in TextureComponent? albedoTexture, in TextureComponent? alphaTexture) =>
+            MaterialData.CreateBasicMaterial(albedoTexture, alphaTexture, pbMaterial.GetAlphaTest(), pbMaterial.GetDiffuseColor(), pbMaterial.GetCastShadows());
 
         private bool TryCreateGetTexturePromise(in TextureComponent? textureComponent,
             in TextureComponent? oldTextureComponent,
