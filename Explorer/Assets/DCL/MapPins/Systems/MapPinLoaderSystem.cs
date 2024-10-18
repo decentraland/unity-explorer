@@ -166,7 +166,7 @@ namespace DCL.SDKComponents.MapPins.Systems
 
             DereferenceTexture(ref promise);
 
-            promise = Promise.Create(World, new GetTextureIntention(textureComponentValue.Src, textureComponentValue.WrapMode, textureComponentValue.FilterMode, attemptsCount: ATTEMPTS_COUNT), partitionComponent);
+            promise = Promise.Create(World, new GetTextureIntention(textureComponentValue.Src, textureComponentValue.FileHash, textureComponentValue.WrapMode, textureComponentValue.FilterMode, attemptsCount: ATTEMPTS_COUNT), partitionComponent);
             return true;
         }
 

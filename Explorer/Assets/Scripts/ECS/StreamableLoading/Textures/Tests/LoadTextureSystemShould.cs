@@ -19,7 +19,7 @@ namespace ECS.StreamableLoading.Textures.Tests
         private string wrongTypePath => $"file://{Application.dataPath + "/../TestResources/CRDT/arraybuffer.test"}";
 
         protected override GetTextureIntention CreateSuccessIntention() =>
-            new (successPath, TextureWrapMode.MirrorOnce, FilterMode.Trilinear);
+            new (successPath, string.Empty, TextureWrapMode.MirrorOnce, FilterMode.Trilinear);
 
         protected override GetTextureIntention CreateNotFoundIntention() =>
             new () { CommonArguments = new CommonLoadingArguments(failPath) };
