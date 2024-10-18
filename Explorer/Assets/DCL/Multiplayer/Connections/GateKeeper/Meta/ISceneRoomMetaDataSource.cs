@@ -10,7 +10,9 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
         /// </summary>
         bool ScenesCommunicationIsIsolated { get; }
 
-        UniTask<MetaData> MetaDataAsync(CancellationToken token);
+        MetaData.Input GetMetadataInput();
+
+        UniTask<MetaData> MetaDataAsync(MetaData.Input input, CancellationToken token);
 
         bool MetadataIsDirty { get; }
     }

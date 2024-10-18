@@ -45,7 +45,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Fixed
             if (connectiveRoom.CurrentState() is not IConnectiveRoom.State.Running)
             {
                 string connectionString = await ConnectionStringAsync(token);
-                await connectToRoomAsyncDelegate(connectionString, token);
+                await connectToRoomAsyncDelegate(connectionString, static () => RoomSelection.NEW, token);
             }
         }
 

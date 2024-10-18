@@ -106,7 +106,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
         {
             if (CurrentState() is IConnectiveRoom.State.Stopped) throw new InvalidOperationException("Room is not running");
             connectToRoomAsyncDelegate.EnsureNotNull("Connection delegate is not passed yet");
-            connectToRoomAsyncDelegate!(connectionString, token).Forget();
+            connectToRoomAsyncDelegate!(connectionString, static () => RoomSelection.NEW, token).Forget();
         }
 
         private async UniTask ConnectToArchipelagoAsync(CancellationToken token)

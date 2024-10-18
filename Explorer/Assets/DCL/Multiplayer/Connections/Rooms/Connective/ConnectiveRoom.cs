@@ -27,7 +27,18 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
         CancellationToken token
     );
 
-    public delegate UniTask ConnectToRoomAsyncDelegate(string connectionString, CancellationToken token);
+    public enum RoomSelection : byte
+    {
+        NEW,
+        PREVIOUS,
+    }
+
+    /// <summary>
+    ///     When the new room is connected, it can be invalid so it's possible to revert to the previous one
+    /// </summary>
+    public delegate RoomSelection SelectValidRoom();
+
+    public delegate UniTask<RoomSelection> ConnectToRoomAsyncDelegate(string connectionString, SelectValidRoom selectValidRoom, CancellationToken token);
 
     public delegate UniTask DisconnectCurrentRoomAsyncDelegate(CancellationToken token);
 
@@ -138,7 +149,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
                 .Log($"{logPrefix} - Trying to disconnect current room finished");
         }
 
-        private async UniTask TryConnectToRoomAsync(string connectionString, CancellationToken token)
+        private async UniTask<RoomSelection> TryConnectToRoomAsync(string connectionString, SelectValidRoom selectValidRoom, CancellationToken token)
         {
             ReportHub
                 .WithReport(ReportCategory.LIVEKIT)
@@ -150,20 +161,43 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
 
             bool connectResult = await newRoom.ConnectAsync(credentials, token);
 
-            attemptToConnectState.Set(connectResult ? AttemptToConnectState.Success : AttemptToConnectState.Error);
+            AttemptToConnectState connectionState = connectResult ? AttemptToConnectState.Success : AttemptToConnectState.Error;
+            attemptToConnectState.Set(connectionState);
 
             if (connectResult == false)
             {
                 roomPool.Release(newRoom);
                 ReportHub.LogWarning(ReportCategory.LIVEKIT, $"{logPrefix} - Cannot connect to room with url: {credentials.Url} with token: {credentials.AuthToken}");
-                return;
+                return RoomSelection.PREVIOUS;
             }
 
-            await AssignNewRoomAndReleasePreviousAsync(newRoom, token);
-            roomState.Set(IConnectiveRoom.State.Running);
-            ReportHub
-                .WithReport(ReportCategory.LIVEKIT)
-                .Log($"{logPrefix} - Trying to connect to finished successfully: {connectionString}");
+            RoomSelection roomSelection = selectValidRoom();
+
+            switch (roomSelection)
+            {
+                case RoomSelection.NEW:
+                    await AssignNewRoomAndReleasePreviousAsync(newRoom, token);
+                    roomState.Set(IConnectiveRoom.State.Running);
+
+                    ReportHub
+                       .WithReport(ReportCategory.LIVEKIT)
+                       .Log($"{logPrefix} - Trying to connect to finished successfully {connectionString}");
+
+                    break;
+                case RoomSelection.PREVIOUS:
+                    // drop the new room
+                    await ReleaseRoomAsync(newRoom, token);
+
+                    // preserve the previous state (for whatever reason)
+                    ReportHub
+                       .WithReport(ReportCategory.LIVEKIT)
+                       .Log($"{logPrefix} - Connection to the previous room was preserved");
+
+                    break;
+                default: throw new ArgumentOutOfRangeException(nameof(roomSelection));
+            }
+
+            return roomSelection;
         }
 
         private async UniTask AssignNewRoomAndReleasePreviousAsync(IRoom newRoom, CancellationToken token)
@@ -171,10 +205,13 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
             room.Assign(newRoom, out IRoom? previous);
 
             if (previous is not null)
-            {
-                await previous.DisconnectAsync(token);
-                roomPool.Release(previous);
-            }
+                await ReleaseRoomAsync(previous, token);
+        }
+
+        private async UniTask ReleaseRoomAsync(IRoom room, CancellationToken token)
+        {
+            await room.DisconnectAsync(token);
+            roomPool.Release(room);
         }
     }
 }
