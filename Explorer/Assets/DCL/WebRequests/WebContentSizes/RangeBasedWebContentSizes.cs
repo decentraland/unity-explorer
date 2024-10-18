@@ -41,6 +41,7 @@ namespace DCL.WebRequests.WebContentSizes
                     reasonLog($"Seems the remote server doesn't support Range Header, Downloaded bytes {request.downloadedBytes} exceeded upper limit {UPPER_LIMIT}, aborting request");
                     reasonLog(ReadableResponseHeaders(request));
                     request.Abort();
+                    request.Dispose();
                     return false;
                 }
 
