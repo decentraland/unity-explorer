@@ -109,10 +109,11 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
                             () => metaDataSource.GetMetadataInput().Equals(previousMetaData) ? RoomSelection.PREVIOUS : RoomSelection.NEW,
                             token);
 
-                        scenesCache.TryGetByParcel(meta.Parcel, out connectedScene);
-
                         if (roomSelection == RoomSelection.NEW)
+                        {
                             previousMetaData = metaInput;
+                            scenesCache.TryGetByParcel(metaInput.Parcel, out connectedScene);
+                        }
                     }
 
                     waitForReconnectionRequiredTask = WaitForReconnectionRequiredAsync(token);
