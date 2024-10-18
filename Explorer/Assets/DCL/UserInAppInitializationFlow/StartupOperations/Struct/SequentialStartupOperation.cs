@@ -8,10 +8,10 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations.Struct
 {
     public class SequentialStartupOperation : IStartupOperation
     {
-        private readonly ILoadingStatus loadingStatus;
+        private readonly RealFlowLoadingStatus loadingStatus;
         private readonly IReadOnlyList<IStartupOperation> operations;
 
-        public SequentialStartupOperation(ILoadingStatus loadingStatus, params IStartupOperation[] operations)
+        public SequentialStartupOperation(RealFlowLoadingStatus loadingStatus, params IStartupOperation[] operations)
         {
             this.loadingStatus = loadingStatus;
             this.operations = operations;
@@ -25,7 +25,7 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations.Struct
 
                 if (result.Success == false)
                 {
-                    report.SetProgress(loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Completed));
+                    report.SetProgress(loadingStatus.SetStage(RealFlowLoadingStatus.Stage.Completed));
                     report.SetProgress(1);
                     return result;
                 }

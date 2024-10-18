@@ -22,14 +22,14 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
 {
     public class LoadGlobalPortableExperiencesStartupOperation : IStartupOperation
     {
-        private readonly ILoadingStatus loadingStatus;
+        private readonly RealFlowLoadingStatus loadingStatus;
         private readonly ISelfProfile selfProfile;
         private readonly FeatureFlagsCache featureFlagsCache;
         private readonly IDebugSettings debugSettings;
         private readonly IPortableExperiencesController portableExperiencesController;
 
         public LoadGlobalPortableExperiencesStartupOperation(
-            ILoadingStatus loadingStatus,
+            RealFlowLoadingStatus loadingStatus,
             ISelfProfile selfProfile,
             FeatureFlagsCache featureFlagsCache,
             IDebugSettings debugSettings,
@@ -44,11 +44,22 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
 
         public async UniTask<Result> ExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
         {
-            float finalizationProgress = loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.GlobalPXsLoading);
+            await CheckGlobalPxLoadingConditionsAsync(ct);
+
+            report.SetProgress(loadingStatus.SetStage(RealFlowLoadingStatus.Stage.GlobalPXsLoaded));
+            return Result.SuccessResult();
+        }
+
+        private async UniTask CheckGlobalPxLoadingConditionsAsync(CancellationToken ct)
+        {
+            var ownProfile = await selfProfile.ProfileAsync(ct);
+
+            //If we havent completed the tutorial, we won't load the GlobalPX as it will interfere with the onboarding.
+            if (ownProfile is not { TutorialStep: > 0 })
+                return;
+
             LoadDebugPortableExperiences(ct);
             LoadRemotePortableExperiences(ct);
-            report.SetProgress(finalizationProgress);
-            return Result.SuccessResult();
         }
 
         private void LoadRemotePortableExperiences(CancellationToken ct)
