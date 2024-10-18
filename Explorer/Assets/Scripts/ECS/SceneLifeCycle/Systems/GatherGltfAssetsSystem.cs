@@ -62,7 +62,9 @@ namespace ECS.SceneLifeCycle.Systems
 
         public override void Dispose()
         {
-            HashSetPool<EntityReference>.Release(entitiesUnderObservation);
+            //Dispose may be called before initialize. Null-check is required
+            if (entitiesUnderObservation != null)
+                HashSetPool<EntityReference>.Release(entitiesUnderObservation);
             entitiesUnderObservation = null;
             sceneData.SceneLoadingConcluded = true;
         }
