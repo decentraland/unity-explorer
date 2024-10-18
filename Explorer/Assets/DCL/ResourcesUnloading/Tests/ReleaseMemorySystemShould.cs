@@ -86,27 +86,6 @@ namespace DCL.ResourcesUnloading.Tests
             aggresiveStrategy.Received(1).TryUnload(cacheCleaner);
         }
 
-        [Test]
-        public void UnloadDoesntGetCalledAgainIfRunningInStrategy()
-        {
-            // Arrange
-            memoryBudgetProvider.GetMemoryUsageStatus().Returns(MemoryUsageStatus.WARNING);
-
-            // Act
-            //Run until the fail and one more
-            for (var i = 0; i < frameFailThreshold + 1; i++)
-                releaseMemorySystem.Update(0);
-
-            //Simulate that it started running
-            aggresiveStrategy.IsRunning.Returns(true);
-
-            for (var i = 0; i < frameFailThreshold + 5; i++)
-                releaseMemorySystem.Update(0);
-
-            standardStrategy.Received(frameFailThreshold).TryUnload(cacheCleaner);
-            aggresiveStrategy.Received(1).TryUnload(cacheCleaner);
-        }
-    
     }
     
 }

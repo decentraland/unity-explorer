@@ -31,9 +31,6 @@ namespace DCL.ResourcesUnloading.UnloadStrategies
 
         public void TryUnload()
         {
-            if (IsRunning())
-                return;
-
             consecutiveFailedFrames++;
             if (consecutiveFailedFrames > failuresFrameThreshold)
                 IncreaseAggresivenessTier();
@@ -41,10 +38,6 @@ namespace DCL.ResourcesUnloading.UnloadStrategies
             unloadStrategies[currentUnloadStrategy].TryUnload(cacheCleaner);
         }
 
-        private bool IsRunning()
-        {
-            return unloadStrategies[currentUnloadStrategy].IsRunning;
-        }
 
         public void ResetToNormal()
         {
