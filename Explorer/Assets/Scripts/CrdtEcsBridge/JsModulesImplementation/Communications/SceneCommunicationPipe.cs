@@ -73,10 +73,13 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
             if (!sceneRoom.IsSceneConnected(sceneId))
             {
                 if (assertiveness == ISceneCommunicationPipe.ConnectivityAssertiveness.DELIVERY_ASSERTED)
-                    ReportHub.LogError(ReportCategory.LIVEKIT, $"Scene \"{sceneId}\" expected to deliver the message but {nameof(GateKeeperSceneRoom)} is connected to \"{sceneRoom.ConnectedScene?.SceneEntityDefinition.id}\"");
+                    ReportHub.LogError(ReportCategory.COMMS_SCENE_HANDLER, $"Scene \"{sceneId}\" expected to deliver the message but {nameof(GateKeeperSceneRoom)} is connected to \"{sceneRoom.ConnectedScene?.SceneEntityDefinition.id}\"");
 
                 return;
             }
+
+            if (assertiveness == ISceneCommunicationPipe.ConnectivityAssertiveness.DELIVERY_ASSERTED)
+                ReportHub.Log(ReportCategory.COMMS_SCENE_HANDLER, $"Sending scene message to {sceneRoom.Room().Participants.RemoteParticipantIdentities().Count} peers");
 
             MessageWrap<Scene> sceneMessage = messagePipe.NewMessage<Scene>();
             sceneMessage.Payload.Data = ByteString.CopyFrom(message);
