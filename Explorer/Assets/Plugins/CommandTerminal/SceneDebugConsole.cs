@@ -14,9 +14,9 @@ namespace CommandTerminal
     }
 
     /// <summary>
-    ///     Dedicated toggleable console for displaying only SDK scene messages during local scene development
+    ///     Dedicated toggleable console for displaying only JS scene messages/logs/errors
     /// </summary>
-    public class SceneDebugTerminal : MonoBehaviour
+    public class SceneDebugConsole : MonoBehaviour
     {
         private const string ESCAPE_KEYBOARD_EVENT = "escape";
 

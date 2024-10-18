@@ -7,16 +7,16 @@ namespace DCL.Diagnostics
 {
     public class SceneDedicatedReportHandler : ReportHandlerBase
     {
-        private readonly SceneDebugTerminal sceneDebugTerminal;
+        private readonly SceneDebugConsole sceneDebugConsole;
 
         public SceneDedicatedReportHandler(ICategorySeverityMatrix matrix, bool debounceEnabled) : base(matrix, debounceEnabled)
         {
-            sceneDebugTerminal = GameObject.Instantiate(Resources.Load<GameObject>("SceneDebugTerminal")).GetComponent<SceneDebugTerminal>();
+            sceneDebugConsole = GameObject.Instantiate(Resources.Load<GameObject>("SceneDebugConsole")).GetComponent<SceneDebugConsole>();
         }
 
         internal override void LogInternal(LogType logType, ReportData reportData, Object context, object message)
         {
-            sceneDebugTerminal.Log(message.ToString());
+            sceneDebugConsole.Log(message.ToString());
         }
 
         internal override void LogFormatInternal(LogType logType, ReportData category, Object context, object message, params object[] args)
@@ -24,12 +24,12 @@ namespace DCL.Diagnostics
 
         internal override void LogExceptionInternal<T>(T ecsSystemException)
         {
-            sceneDebugTerminal.Log(ecsSystemException.Message, ecsSystemException.StackTrace, LogType.Exception);
+            sceneDebugConsole.Log(ecsSystemException.Message, ecsSystemException.StackTrace, LogType.Exception);
         }
 
         internal override void LogExceptionInternal(Exception exception, ReportData reportData, Object context)
         {
-            sceneDebugTerminal.Log(exception.Message, exception.StackTrace, LogType.Exception);
+            sceneDebugConsole.Log(exception.Message, exception.StackTrace, LogType.Exception);
         }
     }
 }
