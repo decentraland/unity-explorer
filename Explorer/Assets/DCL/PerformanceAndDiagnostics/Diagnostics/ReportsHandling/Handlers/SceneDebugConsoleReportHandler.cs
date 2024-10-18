@@ -5,11 +5,11 @@ using Object = UnityEngine.Object;
 
 namespace DCL.Diagnostics
 {
-    public class SceneDedicatedReportHandler : ReportHandlerBase
+    public class SceneDebugConsoleReportHandler : ReportHandlerBase
     {
         private readonly SceneDebugConsole sceneDebugConsole;
 
-        public SceneDedicatedReportHandler(ICategorySeverityMatrix matrix, bool debounceEnabled) : base(matrix, debounceEnabled)
+        public SceneDebugConsoleReportHandler(ICategorySeverityMatrix matrix, bool debounceEnabled) : base(matrix, debounceEnabled)
         {
             sceneDebugConsole = GameObject.Instantiate(Resources.Load<GameObject>("SceneDebugConsole")).GetComponent<SceneDebugConsole>();
         }

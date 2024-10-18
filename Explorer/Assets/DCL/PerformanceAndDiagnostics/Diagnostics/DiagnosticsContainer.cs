@@ -45,7 +45,7 @@ namespace DCL.Diagnostics
                 handlers.Add((ReportHandler.Sentry, sentryReportHandler = new SentryReportHandler(settings.GetMatrix(ReportHandler.Sentry), settings.DebounceEnabled)));
 
             if (enableSceneDebugConsole)
-                AddLocalSceneReportingHandler(handlers);
+                AddSceneDebugConsoleReportHandler(handlers);
 
             var logger = new ReportHubLogger(handlers);
 
@@ -60,7 +60,7 @@ namespace DCL.Diagnostics
             return new DiagnosticsContainer { ReportHubLogger = logger, defaultLogHandler = defaultLogHandler, Sentry = sentryReportHandler };
         }
 
-        private static void AddLocalSceneReportingHandler(List<(ReportHandler, IReportHandler)> handlers)
+        private static void AddSceneDebugConsoleReportHandler(List<(ReportHandler, IReportHandler)> handlers)
         {
             var jsOnlyMatrix = new CategorySeverityMatrix();
             var entries = new List<CategorySeverityMatrix.Entry>();
@@ -68,7 +68,7 @@ namespace DCL.Diagnostics
             entries.Add(new CategorySeverityMatrix.Entry() { Category = ReportCategory.JAVASCRIPT, Severity = LogType.Exception });
             entries.Add(new CategorySeverityMatrix.Entry() { Category = ReportCategory.JAVASCRIPT, Severity = LogType.Log });
             jsOnlyMatrix.entries = entries;
-            handlers.Add((ReportHandler.DebugLog, new SceneDedicatedReportHandler(jsOnlyMatrix, false)));
+            handlers.Add((ReportHandler.DebugLog, new SceneDebugConsoleReportHandler(jsOnlyMatrix, false)));
         }
     }
 }
