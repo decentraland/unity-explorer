@@ -4,6 +4,7 @@ using System;
 using Unity.Profiling;
 using UnityEngine;
 using UnityEngine.Assertions;
+using Utility;
 using Object = UnityEngine.Object;
 
 namespace ECS.StreamableLoading.AssetBundles
@@ -38,7 +39,6 @@ namespace ECS.StreamableLoading.AssetBundles
             
             description = $"AB:{AssetBundle?.name}_{version}_{source}";
             UnloadAB();
-
         }
 
         public AssetBundleData(AssetBundle assetBundle, AssetBundleMetrics? metrics, AssetBundleData[] dependencies) : base(assetBundle, ReportCategory.ASSET_BUNDLES)

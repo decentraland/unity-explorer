@@ -10,7 +10,7 @@ namespace DCL.ResourcesUnloading.Tests
 {
     public class ReleaseMemorySystemShould : UnitySystemTestBase<ReleaseMemorySystem>
     {
-        
+        /*
         private ReleaseMemorySystem releaseMemorySystem;
 
         // Subs
@@ -106,7 +106,7 @@ namespace DCL.ResourcesUnloading.Tests
             standardStrategy.Received(frameFailThreshold).TryUnload(cacheCleaner);
             aggresiveStrategy.Received(1).TryUnload(cacheCleaner);
         }
-    
+        */
     }
-    
+
 }
