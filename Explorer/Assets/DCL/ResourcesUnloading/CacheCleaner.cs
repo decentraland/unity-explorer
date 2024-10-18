@@ -58,7 +58,6 @@ namespace DCL.ResourcesUnloading
         {
             if (!fpsCapBudget.TrySpendBudget()) return;
 
-            assetBundleCache!.Unload(fpsCapBudget, AB_UNLOAD_CHUNK);
             nftShapeCache!.Unload(fpsCapBudget, NFT_SHAPE_UNLOAD_CHUNK);
             texturesCache!.Unload(fpsCapBudget, TEXTURE_UNLOAD_CHUNK);
             audioClipsCache!.Unload(fpsCapBudget, AUDIO_CLIP_UNLOAD_CHUNK);
@@ -66,6 +65,7 @@ namespace DCL.ResourcesUnloading
             wearableStorage!.Unload(fpsCapBudget);
             emoteCache!.Unload(fpsCapBudget);
             gltfContainerAssetsCache!.Unload(fpsCapBudget, GLTF_UNLOAD_CHUNK);
+            assetBundleCache!.Unload(fpsCapBudget, AB_UNLOAD_CHUNK);
             profileCache!.Unload(fpsCapBudget, PROFILE_UNLOAD_CHUNK);
             profileIntentionCache!.Unload(fpsCapBudget, PROFILE_UNLOAD_CHUNK);
             lodCache!.Unload(fpsCapBudget, GLTF_UNLOAD_CHUNK);
