@@ -20,24 +20,24 @@ namespace DCL.LOD
             SceneDefinitionComponent sceneDefinitionComponent, ILODSettingsAsset lodSettingsAsset, IRealmData realmData)
         {
             //If we are in a world, dont show lods
-            if (realmData.ScenesAreFixed) visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.SHOWING_SCENE;
+            if (realmData.ScenesAreFixed) visualSceneState.CandidateVisualSceneState = visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.SHOWING_SCENE;
 
             //If the scene is empty, no lods are possible
-            else if (sceneDefinitionComponent.IsEmpty) visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.SHOWING_SCENE;
-            else if (roadCoordinates.Contains(sceneDefinitionComponent.Definition.metadata.scene.DecodedBase)) visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.ROAD;
+            else if (sceneDefinitionComponent.IsEmpty) visualSceneState.CandidateVisualSceneState = visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.SHOWING_SCENE;
+            else if (roadCoordinates.Contains(sceneDefinitionComponent.Definition.metadata.scene.DecodedBase)) visualSceneState.CandidateVisualSceneState = visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.ROAD;
 
             //For SDK6 scenes, we just show lod0
-            else if (!sceneDefinitionComponent.IsSDK7) visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.SHOWING_LOD;
+            else if (!sceneDefinitionComponent.IsSDK7) visualSceneState.CandidateVisualSceneState = visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.SHOWING_LOD;
             else
             {
-                var candidateState = partition.Bucket < lodSettingsAsset.SDK7LodThreshold
+                visualSceneState.CandidateVisualSceneState = partition.Bucket < lodSettingsAsset.SDK7LodThreshold
                     ? VisualSceneStateEnum.SHOWING_SCENE
                     : VisualSceneStateEnum.SHOWING_LOD;
 
-                if (candidateState != visualSceneState.CurrentVisualSceneState)
+                if (visualSceneState.CandidateVisualSceneState != visualSceneState.CurrentVisualSceneState)
                 {
-                    visualSceneState.CurrentVisualSceneState = candidateState;
                     visualSceneState.IsDirty = true;
+                    visualSceneState.TimeToChange = 0;
                 }
             }
         }

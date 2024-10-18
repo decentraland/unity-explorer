@@ -126,12 +126,12 @@ namespace DCL.LOD.Tests
             SceneDefinitionComponent sceneDefinitionComponent = SceneDefinitionComponentFactory.CreateFromDefinition(sceneEntityDefinition, new IpfsPath());
             Entity entity = world.Create(partitionComponent, sceneDefinitionComponent);
 
-            system.Update(0);
+            system.Update(10);
 
             VisualSceneState visualSceneState = world.Get<VisualSceneState>(entity);
 
             Assert.IsFalse(visualSceneState.IsDirty);
-            Assert.IsTrue(visualSceneState.CurrentVisualSceneState == expectedVisualSceneState);
+            Assert.IsTrue(visualSceneState.CandidateVisualSceneState == expectedVisualSceneState);
         }
     }
 }

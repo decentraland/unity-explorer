@@ -53,8 +53,17 @@ jobs:
             .id")
           
           echo "Mac Artifact ID: $MAC_ARTIFACT_ID"
-          echo "MAC_ARTIFACT_ID=$MAC_ARTIFACT_ID" >> "$GITHUB_ENV"          
-          
+          echo "MAC_ARTIFACT_ID=$MAC_ARTIFACT_ID" >> "$GITHUB_ENV"
+
+          if [[ $GITHUB_REF == refs/tags/v* ]]; then
+            ARTIFACT_S3_DESTINATION_PATH="@dcl/$REPO/releases/$GITHUB_REF_NAME"
+          else
+            ARTIFACT_S3_DESTINATION_PATH="@dcl/$REPO/branch/${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}"
+          fi
+
+          echo "Artifact S3 Destination Path: $ARTIFACT_S3_DESTINATION_PATH"
+          echo "ARTIFACT_S3_DESTINATION_PATH=$ARTIFACT_S3_DESTINATION_PATH" >> "$GITHUB_ENV"
+
           PR_NUMBER=$(jq -r '.pull_requests[0].number' \
             <<< "$WORKFLOW_RUN_EVENT_OBJ")
           
@@ -81,7 +90,9 @@ jobs:
         env:
           JOB_PATH: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ env.PREVIOUS_JOB_ID }}"
           WINDOWS_ARTIFACT_URL: "${{ github.server_url }}/${{ github.repository }}/suites/${{ env.SUITE_ID }}/artifacts/${{ env.WINDOWS_ARTIFACT_ID }}"
+          WINDOWS_ARTIFACT_S3_URL: "${{ format('https://{0}.s3.amazonaws.com/{1}/Decentraland_windows64.zip', secrets.EXPLORER_TEAM_S3_BUCKET, env.ARTIFACT_S3_DESTINATION_PATH) }}"
           MAC_ARTIFACT_URL: "${{ github.server_url }}/${{ github.repository }}/suites/${{ env.SUITE_ID }}/artifacts/${{ env.MAC_ARTIFACT_ID }}"
+          MAC_ARTIFACT_S3_URL: "${{ format('https://{0}.s3.amazonaws.com/{1}/Decentraland_macos.zip', secrets.EXPLORER_TEAM_S3_BUCKET, env.ARTIFACT_S3_DESTINATION_PATH) }}"
           HEAD_SHA: "${{ env.HEAD_SHA }}"
         uses: peter-evans/create-or-update-comment@v3
         with:
@@ -93,13 +104,15 @@ jobs:
             
             Windows and Mac build successfull in Unity Cloud! You can find a link to the downloadable artifact below.
             
-            | Name             | Link                    |
-            | --------         | ----------------------- |
-            | Commit           | ${{ env.HEAD_SHA }}     |
-            | Logs             | ${{ env.JOB_PATH }}     |
-            | Download Windows | ${{ env.WINDOWS_ARTIFACT_URL }} |
-            | Download Mac     | ${{ env.MAC_ARTIFACT_URL }} |
-            | Built on         | ${{ env.BUILD_DATE }} |
+            | Name                | Link                    |
+            | --------            | ----------------------- |
+            | Commit              | ${{ env.HEAD_SHA }}     |
+            | Logs                | ${{ env.JOB_PATH }}     |
+            | Download Windows    | ${{ env.WINDOWS_ARTIFACT_URL }} |
+            | Download Windows S3 | ${{ env.WINDOWS_ARTIFACT_S3_URL }} |
+            | Download Mac        | ${{ env.MAC_ARTIFACT_URL }} |
+            | Download Mac S3     | ${{ env.MAC_ARTIFACT_S3_URL }} |
+            | Built on            | ${{ env.BUILD_DATE }} |
 
             [badge]: https://img.shields.io/badge/Build-Success!-3fb950?logo=github&style=for-the-badge
 
