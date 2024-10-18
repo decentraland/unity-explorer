@@ -58,7 +58,9 @@ jobs:
           if [[ $GITHUB_REF == refs/tags/v* ]]; then
             ARTIFACT_S3_DESTINATION_PATH="@dcl/$REPO/releases/$GITHUB_REF_NAME"
           else
-            ARTIFACT_S3_DESTINATION_PATH="@dcl/$REPO/branch/${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}"
+            HEAD_BRANCH=$(jq -r '.pull_requests[0].head.ref' \
+              <<< "$WORKFLOW_RUN_EVENT_OBJ")
+            ARTIFACT_S3_DESTINATION_PATH="@dcl/$REPO/branch/$HEAD_BRANCH"
           fi
 
           echo "Artifact S3 Destination Path: $ARTIFACT_S3_DESTINATION_PATH"
