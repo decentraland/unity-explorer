@@ -1,12 +1,17 @@
-using UnityEngine;
-
 namespace DCL.ResourcesUnloading.UnloadStrategies
 {
-    public abstract class IUnloadStrategy
+    
+    public interface IUnloadStrategy
+    {
+        void ResetStrategy();
+        void TryUnload(ICacheCleaner cacheCleaner);
+        bool FailedOverThreshold();
+    }
+    
+    public abstract class UnloadStrategy : IUnloadStrategy
     {
 
         private int currentFailureCount;
-        
         private readonly int FAILURE_THRESHOLD = 250;
 
         public virtual void ResetStrategy()

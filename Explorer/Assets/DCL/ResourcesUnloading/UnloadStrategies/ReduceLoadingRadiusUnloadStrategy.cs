@@ -3,7 +3,7 @@ using ECS.Prioritization;
 
 namespace DCL.ResourcesUnloading.UnloadStrategies
 {
-    public class ReduceLoadingRadiusUnloadStrategy : IUnloadStrategy
+    public class ReduceLoadingRadiusUnloadStrategy : UnloadStrategy
     {
         private readonly IRealmPartitionSettings realmPartitionSettings;
 
