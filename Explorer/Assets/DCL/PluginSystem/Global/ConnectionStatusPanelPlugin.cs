@@ -1,6 +1,7 @@
 using Arch.Core;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
+using DCL.DebugUtilities;
 using DCL.Multiplayer.Connections.Rooms.Status;
 using DCL.UI.ConnectionStatusPanel;
 using DCL.UI.MainUI;
@@ -22,6 +23,8 @@ namespace DCL.PluginSystem.Global
         private readonly ECSReloadScene ecsReloadScene;
         private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
+        private ConnectionStatusPanelController connectionStatusPanelController;
+        private readonly IDebugContainerBuilder debugBuilder;
 
         public ConnectionStatusPanelPlugin(
             IUserInAppInitializationFlow userInAppInitializationFlow,
@@ -31,7 +34,8 @@ namespace DCL.PluginSystem.Global
             ICurrentSceneInfo currentSceneInfo,
             ECSReloadScene ecsReloadScene,
             Arch.Core.World world,
-            Entity playerEntity
+            Entity playerEntity,
+            IDebugContainerBuilder debugBuilder
         )
         {
             this.userInAppInitializationFlow = userInAppInitializationFlow;
@@ -42,30 +46,34 @@ namespace DCL.PluginSystem.Global
             this.ecsReloadScene = ecsReloadScene;
             this.world = world;
             this.playerEntity = playerEntity;
+            this.debugBuilder = debugBuilder;
         }
 
         public void Dispose() { }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
 
+        public void SetVisibility(bool visibility) =>
+            connectionStatusPanelController?.SetVisibility(visibility);
+
         public async UniTask InitializeAsync(ConnectionStatusPanelSettings settings, CancellationToken ct)
         {
-            mvcManager.RegisterController(
-                new ConnectionStatusPanelController(() =>
-                    {
-                        var view = mainUIView.ConnectionStatusPanelView;
-                        view!.gameObject.SetActive(true);
-                        return view;
-                    },
-                    userInAppInitializationFlow,
-                    mvcManager,
-                    currentSceneInfo,
-                    ecsReloadScene,
-                    roomsStatus,
-                    world,
-                    playerEntity
-                )
+            connectionStatusPanelController = new ConnectionStatusPanelController(() =>
+                {
+                    var view = mainUIView.ConnectionStatusPanelView;
+                    view!.gameObject.SetActive(true);
+                    return view;
+                },
+                userInAppInitializationFlow,
+                mvcManager,
+                currentSceneInfo,
+                ecsReloadScene,
+                roomsStatus,
+                world,
+                playerEntity,
+                debugBuilder
             );
+            mvcManager.RegisterController(connectionStatusPanelController);
         }
 
         public class ConnectionStatusPanelSettings : IDCLPluginSettings { }
