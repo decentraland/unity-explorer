@@ -46,7 +46,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
             );
         }
 
-        public SceneShortInfo? ConnectedScene => connectedScene?.SceneData.SceneShortInfo;
+        public ISceneData? ConnectedScene => connectedScene?.SceneData;
 
         public bool IsSceneConnected(string? sceneId) =>
             !metaDataSource.ScenesCommunicationIsIsolated || sceneId == connectedScene?.SceneData.SceneEntityDefinition.id;

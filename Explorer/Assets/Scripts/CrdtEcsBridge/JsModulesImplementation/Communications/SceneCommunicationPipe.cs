@@ -1,4 +1,5 @@
-﻿using DCL.Multiplayer.Connections.GateKeeper.Rooms;
+﻿using DCL.Diagnostics;
+using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.Messaging;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.Messaging.Pipe;
@@ -7,7 +8,6 @@ using Google.Protobuf;
 using LiveKit.Proto;
 using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using System.Threading;
 
 namespace CrdtEcsBridge.JsModulesImplementation.Communications
@@ -68,9 +68,15 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
             sceneMessageHandlers.Remove(key);
         }
 
-        public void SendMessage(ReadOnlySpan<byte> message, string sceneId, CancellationToken ct)
+        public void SendMessage(ReadOnlySpan<byte> message, string sceneId, ISceneCommunicationPipe.ConnectivityAssertiveness assertiveness, CancellationToken ct)
         {
-            if (!sceneRoom.IsSceneConnected(sceneId)) return;
+            if (!sceneRoom.IsSceneConnected(sceneId))
+            {
+                if (assertiveness == ISceneCommunicationPipe.ConnectivityAssertiveness.DELIVERY_ASSERTED)
+                    ReportHub.LogError(ReportCategory.LIVEKIT, $"Scene \"{sceneId}\" expected to deliver the message but {nameof(GateKeeperSceneRoom)} is connected to \"{sceneRoom.ConnectedScene?.SceneEntityDefinition.id}\"");
+
+                return;
+            }
 
             MessageWrap<Scene> sceneMessage = messagePipe.NewMessage<Scene>();
             sceneMessage.Payload.Data = ByteString.CopyFrom(message);
