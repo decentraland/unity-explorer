@@ -2,6 +2,8 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using DCL.ECSComponents;
+using DCL.SceneRestrictionBusController.SceneRestriction;
+using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.SDKComponents.InputModifier.Components;
 using ECS.Abstract;
 using ECS.Groups;
@@ -16,12 +18,14 @@ namespace DCL.SDKComponents.PlayerInputMovement.Systems
         private readonly Entity playerEntity;
         private readonly World globalWorld;
         private readonly ISceneStateProvider sceneStateProvider;
+        private readonly ISceneRestrictionBusController sceneRestrictionBusController;
 
-        public InputModifierHandlerSystem(World world, World globalWorld, Entity playerEntity, ISceneStateProvider sceneStateProvider) : base(world)
+        public InputModifierHandlerSystem(World world, World globalWorld, Entity playerEntity, ISceneStateProvider sceneStateProvider, ISceneRestrictionBusController sceneRestrictionBusController) : base(world)
         {
             this.playerEntity = playerEntity;
             this.sceneStateProvider = sceneStateProvider;
             this.globalWorld = globalWorld;
+            this.sceneRestrictionBusController = sceneRestrictionBusController;
         }
 
         protected override void Update(float t)
@@ -38,6 +42,18 @@ namespace DCL.SDKComponents.PlayerInputMovement.Systems
             inputModifier.DisableRun = false;
             inputModifier.DisableJump = false;
             inputModifier.DisableEmote = false;
+
+            sceneRestrictionBusController.PushSceneRestriction(new MovementsBlockedRestriction
+            {
+                Type = SceneRestrictions.AVATAR_MOVEMENTS_BLOCKED,
+                Action = SceneRestrictionsAction.REMOVED,
+                DisableAll = inputModifier.DisableAll,
+                DisableWalk = inputModifier.DisableWalk,
+                DisableJog = inputModifier.DisableJog,
+                DisableRun = inputModifier.DisableRun,
+                DisableJump = inputModifier.DisableJump,
+                DisableEmote = inputModifier.DisableEmote,
+            });
         }
 
         [Query]
@@ -60,6 +76,18 @@ namespace DCL.SDKComponents.PlayerInputMovement.Systems
                 inputModifier.DisableJump = pb.DisableJump;
                 inputModifier.DisableEmote = pb.DisableEmote;
             }
+
+            sceneRestrictionBusController.PushSceneRestriction(new MovementsBlockedRestriction
+            {
+                Type = SceneRestrictions.AVATAR_MOVEMENTS_BLOCKED,
+                Action = SceneRestrictionsAction.APPLIED,
+                DisableAll = inputModifier.DisableAll,
+                DisableWalk = inputModifier.DisableWalk,
+                DisableJog = inputModifier.DisableJog,
+                DisableRun = inputModifier.DisableRun,
+                DisableJump = inputModifier.DisableJump,
+                DisableEmote = inputModifier.DisableEmote,
+            });
         }
 
         public void OnSceneIsCurrentChanged(bool value)

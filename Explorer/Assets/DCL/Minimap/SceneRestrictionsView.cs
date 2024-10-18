@@ -16,7 +16,7 @@ namespace DCL.Minimap
         internal TMP_Text avatarHiddenText { get; private set; }
 
         [field: SerializeField]
-        internal TMP_Text AvatarMovementsText { get; private set; }
+        internal TMP_Text avatarMovementsText { get; private set; }
 
         [field: SerializeField]
         internal TMP_Text passportBlockedText { get; private set; }
@@ -33,6 +33,10 @@ namespace DCL.Minimap
         public void OnPointerEnter() => OnPointerEnterEvent?.Invoke();
         public void OnPointerExit() => OnPointerExitEvent?.Invoke();
 
-        private void Awake() => toastCanvasGroup.alpha = 0;
+        private void Awake()
+        {
+            toastCanvasGroup.alpha = 0;
+            sceneRestrictionsIcon.gameObject.SetActive(false);
+        }
     }
 }

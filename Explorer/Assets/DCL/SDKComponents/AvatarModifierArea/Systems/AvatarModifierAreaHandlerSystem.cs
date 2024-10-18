@@ -3,6 +3,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
+using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.CharacterTriggerArea.Components;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
@@ -26,11 +27,13 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
         private static readonly QueryDescription AVATAR_BASE_QUERY = new QueryDescription().WithAll<AvatarBase>();
         private readonly World globalWorld;
         private readonly FindAvatarQuery findAvatarQuery;
+        private readonly ISceneRestrictionBusController sceneRestrictionBusController;
 
-        public AvatarModifierAreaHandlerSystem(World world, World globalWorld) : base(world)
+        public AvatarModifierAreaHandlerSystem(World world, World globalWorld, ISceneRestrictionBusController sceneRestrictionBusController) : base(world)
         {
             this.globalWorld = globalWorld;
             findAvatarQuery = new FindAvatarQuery(globalWorld);
+            this.sceneRestrictionBusController = sceneRestrictionBusController;
         }
 
         protected override void Update(float t)

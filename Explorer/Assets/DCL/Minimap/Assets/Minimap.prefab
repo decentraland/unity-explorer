@@ -4069,7 +4069,7 @@ MonoBehaviour:
   <sceneRestrictionsIcon>k__BackingField: {fileID: 5647564073185826373}
   <cameraLockedText>k__BackingField: {fileID: 8113691982349937636}
   <avatarHiddenText>k__BackingField: {fileID: 4643116987751637430}
-  <AvatarMovementsText>k__BackingField: {fileID: 4607078811238296590}
+  <avatarMovementsText>k__BackingField: {fileID: 4607078811238296590}
   <passportBlockedText>k__BackingField: {fileID: 1245299987690334209}
   <experiencesBlockedText>k__BackingField: {fileID: 1753101916599534990}
   <toastCanvasGroup>k__BackingField: {fileID: 9100162129129180478}

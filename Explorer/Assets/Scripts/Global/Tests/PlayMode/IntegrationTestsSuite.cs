@@ -11,6 +11,7 @@ using DCL.Multiplayer.Profiles.Poses;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.PluginSystem;
 using DCL.Profiles;
+using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.Settings;
 using DCL.Web3;
 using DCL.Web3.Identities;
@@ -60,6 +61,7 @@ namespace Global.Tests.PlayMode
                 new Entity(),
                 new SystemMemoryCap(MemoryCapMode.MAX_SYSTEM_MEMORY),
                 new WorldVolumeMacBus(),
+                Substitute.For<ISceneRestrictionBusController>(),
                 ct);
 
             if (!success)

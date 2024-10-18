@@ -3,6 +3,7 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.ECSComponents;
 using DCL.PluginSystem.World.Dependencies;
+using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.SDKComponents.PlayerInputMovement.Systems;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Systems;
@@ -15,11 +16,13 @@ namespace DCL.PluginSystem.World
     {
         private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
+        private readonly ISceneRestrictionBusController sceneRestrictionBusController;
 
-        public InputModifierPlugin(Arch.Core.World world, Entity playerEntity)
+        public InputModifierPlugin(Arch.Core.World world, Entity playerEntity, ISceneRestrictionBusController sceneRestrictionBusController)
         {
             this.world = world;
             this.playerEntity = playerEntity;
+            this.sceneRestrictionBusController = sceneRestrictionBusController;
         }
 
         public void Dispose()
@@ -33,7 +36,7 @@ namespace DCL.PluginSystem.World
             in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
             ResetDirtyFlagSystem<PBInputModifier>.InjectToWorld(ref builder);
-            var system = InputModifierHandlerSystem.InjectToWorld(ref builder, world, playerEntity, sharedDependencies.SceneStateProvider);
+            var system = InputModifierHandlerSystem.InjectToWorld(ref builder, world, playerEntity, sharedDependencies.SceneStateProvider, sceneRestrictionBusController);
             sceneIsCurrentListeners.Add(system);
         }
     }

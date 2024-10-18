@@ -1,17 +1,23 @@
+using DCL.SceneRestrictionBusController.SceneRestriction;
+using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DG.Tweening;
 using System;
+using UnityEngine;
 
 namespace DCL.Minimap
 {
     public class SceneRestrictionsController : IDisposable
     {
         private readonly SceneRestrictionsView restrictionsView;
-        public SceneRestrictionsController(SceneRestrictionsView restrictionsView)
+        private int restrictionsCount;
+
+        public SceneRestrictionsController(SceneRestrictionsView restrictionsView, ISceneRestrictionBusController sceneRestrictionBusController)
         {
             this.restrictionsView = restrictionsView;
 
             restrictionsView.OnPointerEnterEvent += OnMouseEnter;
             restrictionsView.OnPointerExitEvent += OnMouseExit;
+            sceneRestrictionBusController.SubscribeToSceneRestriction(ManageSceneRestrictions);
         }
 
         public void Dispose()
@@ -25,5 +31,24 @@ namespace DCL.Minimap
 
         private void OnMouseExit() =>
             restrictionsView.toastCanvasGroup.DOFade(0f, 0.5f);
+
+        private void ManageSceneRestrictions(ISceneRestriction sceneRestriction)
+        {
+            bool isRestrictionAdded = sceneRestriction.Action == SceneRestrictionsAction.APPLIED;
+
+            GameObject textIndicator = sceneRestriction.Type switch
+                                       {
+                                           SceneRestrictions.CAMERA_LOCKED => restrictionsView.cameraLockedText.gameObject,
+                                           SceneRestrictions.AVATAR_HIDDEN => restrictionsView.avatarHiddenText.gameObject,
+                                           SceneRestrictions.AVATAR_MOVEMENTS_BLOCKED => restrictionsView.avatarMovementsText.gameObject,
+                                           SceneRestrictions.PASSPORT_CANNOT_BE_OPENED => restrictionsView.passportBlockedText.gameObject,
+                                           SceneRestrictions.EXPERIENCES_BLOCKED => restrictionsView.experiencesBlockedText.gameObject,
+                                           _ => throw new ArgumentOutOfRangeException(),
+                                       };
+
+            textIndicator.SetActive(isRestrictionAdded);
+            restrictionsCount += isRestrictionAdded ? 1 : -1;
+            restrictionsView.sceneRestrictionsIcon.gameObject.SetActive(restrictionsCount > 0);
+        }
     }
 }

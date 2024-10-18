@@ -16,6 +16,7 @@ using DCL.MapRenderer.MapLayers;
 using DCL.MapRenderer.MapLayers.Pins;
 using DCL.MapRenderer.MapLayers.PlayerMarker;
 using DCL.PlacesAPIService;
+using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.UI;
 using DG.Tweening;
 using ECS;
@@ -44,6 +45,7 @@ namespace DCL.Minimap
         private readonly IRealmNavigator realmNavigator;
         private readonly IScenesCache scenesCache;
         private readonly IMapPathEventBus mapPathEventBus;
+        private readonly ISceneRestrictionBusController sceneRestrictionBusController;
 
         private CancellationTokenSource cts;
         private MapRendererTrackPlayerPosition mapRendererTrackPlayerPosition;
@@ -65,7 +67,8 @@ namespace DCL.Minimap
             IChatMessagesBus chatMessagesBus,
             IRealmNavigator realmNavigator,
             IScenesCache scenesCache,
-            IMapPathEventBus mapPathEventBus
+            IMapPathEventBus mapPathEventBus,
+            ISceneRestrictionBusController sceneRestrictionBusController
         ) : base(viewFactory)
         {
             this.mapRenderer = mapRenderer;
@@ -76,6 +79,7 @@ namespace DCL.Minimap
             this.realmNavigator = realmNavigator;
             this.scenesCache = scenesCache;
             this.mapPathEventBus = mapPathEventBus;
+            this.sceneRestrictionBusController = sceneRestrictionBusController;
         }
 
         public void HookPlayerPositionTrackingSystem(TrackPlayerPositionSystem system) =>
@@ -97,7 +101,7 @@ namespace DCL.Minimap
             viewInstance.SideMenuCanvasGroup.alpha = 0;
             viewInstance.SideMenuCanvasGroup.gameObject.SetActive(false);
             new SideMenuController(viewInstance.sideMenuView);
-            sceneRestrictionsController = new SceneRestrictionsController(viewInstance.sceneRestrictionsView);
+            sceneRestrictionsController = new SceneRestrictionsController(viewInstance.sceneRestrictionsView, sceneRestrictionBusController);
             SetWorldMode(realmData.ScenesAreFixed);
             realmNavigator.RealmChanged += OnRealmChanged;
             mapPathEventBus.OnShowPinInMinimapEdge += ShowPinInMinimapEdge;
