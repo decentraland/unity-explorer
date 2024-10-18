@@ -56,12 +56,12 @@ namespace DCL.GlobalPartitioning
                 CreateQuery<GetWearableAssetBundleManifestIntention, SceneAssetBundleManifest>(),
                 CreateQuery<GetAssetBundleIntention, AssetBundleData>(),
                 CreateQuery<GetGLTFIntention, GLTFData>(),
-                CreateQuery<GetProfileIntention, Profile>(),
-                CreateQuery<GetTextureIntention, Texture2D>(),
-                CreateQuery<GetNFTShapeIntention, Texture2D>(),
+                CreateQuery<GetProfileIntention, ProfileData>(),
+                CreateQuery<GetTextureIntention, Texture2DData>(),
+                CreateQuery<GetNFTShapeIntention, Texture2DData>(),
                 CreateQuery<GetEmotesByPointersFromRealmIntention, EmotesDTOList>(),
                 CreateQuery<GetOwnedEmotesFromRealmIntention, EmotesResolution>(),
-                CreateQuery<GetAudioClipIntention, AudioClip>(),
+                CreateQuery<GetAudioClipIntention, AudioClipData>(),
             };
         }
 
