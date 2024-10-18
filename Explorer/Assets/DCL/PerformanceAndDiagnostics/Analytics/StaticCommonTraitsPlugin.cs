@@ -9,6 +9,9 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
     public class StaticCommonTraitsPlugin : EventPlugin
     {
         private const string DCL_EDITOR = "dcl-editor";
+        private const string UNITY_EDITOR = "unity-editor";
+        private const string DEBUG = "debug";
+        private const string RELEASE = "release";
 
         private readonly JsonElement sessionId;
         private readonly JsonElement launcherAnonymousId;
@@ -31,15 +34,15 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         private static string ChooseRuntime(IAppArgs appArgs)
         {
             if (Application.isEditor)
-                return "unity-editor";
+                return UNITY_EDITOR;
 
             if (appArgs.HasFlag(DCL_EDITOR))
                 return DCL_EDITOR;
 
             if (Debug.isDebugBuild || appArgs.HasDebugFlag())
-                return "debug";
+                return DEBUG;
 
-            return "release";
+            return RELEASE;
         }
 
         public override TrackEvent Track(TrackEvent trackEvent)
