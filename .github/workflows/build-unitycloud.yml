@@ -237,6 +237,7 @@ jobs:
         run: tar --exclude='build/Decentraland_BackUpThisFolder_ButDontShipItWithYourGame' -cvf build.tar build
           
       - name: Upload artifact for macOS
+        id: upload-macos-artifact
         if: matrix.target == 'macos'
         uses: actions/upload-artifact@v4
         with:
@@ -245,6 +246,7 @@ jobs:
           if-no-files-found: error
 
       - name: Upload artifact for Windows
+        id: upload-windows-artifact
         if: matrix.target == 'windows64'
         uses: actions/upload-artifact@v4
         with:
@@ -254,7 +256,28 @@ jobs:
             !build/**/*_BackUpThisFolder_ButDontShipItWithYourGame
             !build/**/*_BurstDebugInformation_DoNotShip
           if-no-files-found: error
-          
+
+      - name: Compress the build folder to upload it to S3
+        run: |
+          mkdir upload_to_s3/ && \
+          if [ "${{ matrix.target }}" == "macos" ]; then
+            zip -r upload_to_s3/Decentraland_${{ matrix.target }}.zip build.tar
+          elif [ "${{ matrix.target }}" == "windows64" ]; then
+            zip -r upload_to_s3/Decentraland_${{ matrix.target }}.zip build -x "build/*_BackUpThisFolder_ButDontShipItWithYourGame**" -x "build/*_BurstDebugInformation_DoNotShip**"
+          fi
+
+      - name: Upload artifact to S3
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.EXPLORER_TEAM_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.EXPLORER_TEAM_AWS_SECRET_ACCESS_KEY }}
+          EXPLORER_TEAM_S3_BUCKET: ${{ secrets.EXPLORER_TEAM_S3_BUCKET }}
+          DESTINATION_PATH: ${{ inputs.tag_version && format('@dcl/{0}/releases/{1}', github.event.repository.name, inputs.tag_version) || format('@dcl/{0}/branch/{1}', github.event.repository.name, github.head_ref || github.ref_name) }}
+        run: |
+          npx @dcl/cdn-uploader@next \
+            --bucket $EXPLORER_TEAM_S3_BUCKET \
+            --local-folder upload_to_s3 \
+            --bucket-folder $DESTINATION_PATH
+
       - name: Upload debug symbols
         uses: actions/upload-artifact@v4
         with:
