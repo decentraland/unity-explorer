@@ -14,9 +14,6 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
         private readonly IExposedTransform characterTransform;
         private readonly IPlacesAPIService placesAPIService;
 
-        private readonly Func<bool> waitForGenesisCity;
-        private readonly Func<bool> waitForPlayerPositionChange;
-
         private readonly bool forceSceneIsolation;
 
         public SceneRoomMetaDataSource(IRealmData realmData, IExposedTransform characterTransform, IPlacesAPIService placesAPIService, bool forceSceneIsolation)
@@ -25,40 +22,31 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
             this.characterTransform = characterTransform;
             this.placesAPIService = placesAPIService;
             this.forceSceneIsolation = forceSceneIsolation;
-
-            waitForGenesisCity = () => !realmData.ScenesAreFixed;
-            waitForPlayerPositionChange = () => this.characterTransform.Position.IsDirty;
         }
 
         public bool ScenesCommunicationIsIsolated => forceSceneIsolation || !realmData.ScenesAreFixed;
 
-        public async UniTask<MetaData> MetaDataAsync(CancellationToken token)
+        public MetaData.Input GetMetadataInput() =>
+            realmData.ScenesAreFixed
+                ? new MetaData.Input(realmData.RealmName, Vector2Int.zero)
+                : new MetaData.Input(realmData.RealmName, characterTransform.Position.ToParcel());
+
+        public async UniTask<MetaData> MetaDataAsync(MetaData.Input input, CancellationToken token)
         {
             // Places API is relevant for Genesis City only
             if (realmData.ScenesAreFixed)
-                return new MetaData(realmData.RealmName, realmData.RealmName, Vector2Int.zero);
+                return new MetaData(input.RealmName, input);
 
-            (string? id, Vector2Int parcel) tuple = await ParcelIdAsync(token);
-            return new MetaData(realmData.RealmName, tuple.id, tuple.parcel);
+            string? id = await ParcelIdAsync(input, token);
+            return new MetaData(id, input);
         }
 
-        public UniTask WaitForMetaDataIsDirtyAsync(CancellationToken token)
+        public bool MetadataIsDirty => !realmData.ScenesAreFixed && characterTransform.Position.IsDirty;
+
+        private async UniTask<string?> ParcelIdAsync(MetaData.Input input, CancellationToken token)
         {
-            if (realmData.ScenesAreFixed)
-
-                // Wait for realm change
-                return UniTask.WaitUntil(waitForGenesisCity, cancellationToken: token);
-
-            // Wait for player position change (ideally for parcel change)
-            return UniTask.WaitUntil(waitForPlayerPositionChange, cancellationToken: token);
-        }
-
-        private async UniTask<(string? id, Vector2Int parcel)> ParcelIdAsync(CancellationToken token)
-        {
-            Vector3 position = characterTransform.Position;
-            Vector2Int parcel = position.ToParcel();
-            PlacesData.PlaceInfo? result = await placesAPIService.GetPlaceAsync(parcel, token);
-            return (result?.id, parcel);
+            PlacesData.PlaceInfo? result = await placesAPIService.GetPlaceAsync(input.Parcel, token);
+            return result?.id;
         }
     }
 }

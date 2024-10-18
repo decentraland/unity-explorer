@@ -65,9 +65,9 @@ namespace DCL.Diagnostics
         public const string JAVASCRIPT = nameof(JAVASCRIPT);
 
         /// <summary>
-        ///     Archipelago requests
+        ///     Archipelago and gatekeeper requests
         /// </summary>
-        public const string ARCHIPELAGO_REQUEST = nameof(ARCHIPELAGO_REQUEST);
+        public const string COMMS_SCENE_HANDLER = nameof(COMMS_SCENE_HANDLER);
 
         /// <summary>
         ///     Unspecified ECS World Exceptions

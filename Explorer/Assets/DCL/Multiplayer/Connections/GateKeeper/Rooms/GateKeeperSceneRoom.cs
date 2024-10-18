@@ -18,7 +18,6 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
         private readonly ISceneRoomMetaDataSource metaDataSource;
         private readonly IConnectiveRoom connectiveRoom;
         private readonly string sceneHandleUrl;
-        private readonly Func<bool> roomIsNotRunning;
 
         private readonly IScenesCache scenesCache;
 
@@ -27,7 +26,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
         /// </summary>
         private ISceneFacade? connectedScene;
 
-        private MetaData previousMetaData;
+        private MetaData.Input previousMetaData;
 
         public GateKeeperSceneRoom(
             IWebRequestController webRequests,
@@ -45,11 +44,9 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
                 RunConnectCycleStepAsync,
                 nameof(GateKeeperSceneRoom)
             );
-
-            roomIsNotRunning = () => connectiveRoom.CurrentState() is not IConnectiveRoom.State.Running;
         }
 
-        public SceneShortInfo? ConnectedScene => connectedScene?.SceneData.SceneShortInfo;
+        public ISceneData? ConnectedScene => connectedScene?.SceneData;
 
         public bool IsSceneConnected(string? sceneId) =>
             !metaDataSource.ScenesCommunicationIsIsolated || sceneId == connectedScene?.SceneData.SceneEntityDefinition.id;
@@ -73,36 +70,70 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
 
         private async UniTask RunConnectCycleStepAsync(ConnectToRoomAsyncDelegate connectToRoomAsyncDelegate, DisconnectCurrentRoomAsyncDelegate disconnectCurrentRoomAsyncDelegate, CancellationToken token)
         {
-            MetaData meta = await metaDataSource.MetaDataAsync(token);
+            MetaData meta = default;
 
-            // Connect or disconnect, at the same time check if metadata has potentially changed
-            await UniTask.WhenAll(WaitForMetadataDirtyAsync(token), ProcessMetaDataAsync(token));
-
-            async UniTask ProcessMetaDataAsync(CancellationToken token)
+            try
             {
+                MetaData.Input metaInput = metaDataSource.GetMetadataInput();
+                meta = await metaDataSource.MetaDataAsync(metaInput, token);
+
+                UniTask waitForReconnectionRequiredTask;
+
+                // Disconnect if no sceneId assigned, disconnection can't be interrupted
                 if (meta.sceneId == null)
                 {
                     connectedScene = null;
                     await disconnectCurrentRoomAsyncDelegate(token);
+
+                    // After disconnection we need to wait for metadata to change
+                    waitForReconnectionRequiredTask = WaitForMetadataIsDirtyAsync(token);
+
+                    previousMetaData = metaInput;
+
+                    async UniTask WaitForMetadataIsDirtyAsync(CancellationToken token)
+                    {
+                        while (!metaDataSource.MetadataIsDirty)
+                            await UniTask.Yield(token);
+                    }
                 }
-                else if (!meta.Equals(previousMetaData))
+                else
                 {
-                    string connectionString = await ConnectionStringAsync(meta, token);
-                    await connectToRoomAsyncDelegate(connectionString, token);
-                    scenesCache.TryGetByParcel(meta.Parcel, out connectedScene);
+                    if (!metaInput.Equals(previousMetaData))
+                    {
+                        string connectionString = await ConnectionStringAsync(meta, token);
+
+                        // if the player returns to the previous scene but the new room has been connected, the previous connection should be preserved
+                        // and the new connection should be discarded
+                        RoomSelection roomSelection = await connectToRoomAsyncDelegate(
+                            connectionString,
+                            () => metaDataSource.GetMetadataInput().Equals(previousMetaData) ? RoomSelection.PREVIOUS : RoomSelection.NEW,
+                            token);
+
+                        if (roomSelection == RoomSelection.NEW)
+                        {
+                            previousMetaData = metaInput;
+                            scenesCache.TryGetByParcel(metaInput.Parcel, out connectedScene);
+                        }
+                    }
+
+                    waitForReconnectionRequiredTask = WaitForReconnectionRequiredAsync(token);
+
+                    // Either room has disconnected or metadata has changed
+                    async UniTask WaitForReconnectionRequiredAsync(CancellationToken token)
+                    {
+                        while (connectiveRoom.CurrentState() is IConnectiveRoom.State.Running
+                               && !metaDataSource.MetadataIsDirty)
+                            await UniTask.Yield(token);
+                    }
                 }
 
-                previousMetaData = meta;
+                await waitForReconnectionRequiredTask;
             }
-        }
-
-        /// <summary>
-        ///     Either room has disconnected or metadata has changed
-        /// </summary>
-        /// <param name="token"></param>
-        private async UniTask WaitForMetadataDirtyAsync(CancellationToken token)
-        {
-            await UniTask.WhenAny(UniTask.WaitUntil(roomIsNotRunning, cancellationToken: token), metaDataSource.WaitForMetaDataIsDirtyAsync(token));
+            catch (Exception e) when (e is not OperationCanceledException)
+            {
+                // if we don't catch an exception, any failure leads to the loop being stopped
+                ReportHub.Log(ReportCategory.COMMS_SCENE_HANDLER, $"Exception occured in {nameof(RunConnectCycleStepAsync)} when {meta} was being processed: {e}");
+            }
         }
 
         private async UniTask<string> ConnectionStringAsync(MetaData meta, CancellationToken token)
@@ -114,7 +145,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
                                                         .CreateFromJson<AdapterResponse>(WRJsonParser.Unity);
 
             string connectionString = response.adapter;
-            ReportHub.WithReport(ReportCategory.ARCHIPELAGO_REQUEST).Log($"String is: {connectionString}");
+            ReportHub.WithReport(ReportCategory.COMMS_SCENE_HANDLER).Log($"String is: {connectionString}");
             return connectionString;
         }
 
