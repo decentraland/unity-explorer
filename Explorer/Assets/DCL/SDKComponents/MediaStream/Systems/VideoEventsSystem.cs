@@ -80,9 +80,9 @@ namespace DCL.SDKComponents.MediaStream
 
             if (mediaPlayerControl.IsFinished()) return VideoState.VsNone;
             if (mediaPlayerControl.GetLastError() != ErrorCode.None) return VideoState.VsError;
+            if (mediaPlayerControl.IsPaused()) return VideoState.VsPaused;
 
-            VideoState state = mediaPlayerControl.IsPaused() ? VideoState.VsPaused : VideoState.VsNone;
-
+            VideoState state = VideoState.VsNone;
             if (mediaPlayerControl.IsPlaying())
             {
                 state = VideoState.VsPlaying;
@@ -96,7 +96,6 @@ namespace DCL.SDKComponents.MediaStream
                         state = VideoState.VsError;
                 }
             }
-
             return state;
         }
     }
