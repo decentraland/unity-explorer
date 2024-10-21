@@ -22,6 +22,7 @@ using DCL.PluginSystem.World.Dependencies;
 using DCL.Profiling;
 using DCL.Quality;
 using DCL.ResourcesUnloading;
+using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.SDKComponents.VideoPlayer;
 using DCL.Settings;
 using DCL.Time;
@@ -133,6 +134,7 @@ namespace Global
             Entity playerEntity,
             ISystemMemoryCap memoryCap,
             WorldVolumeMacBus worldVolumeMacBus,
+            ISceneRestrictionBusController sceneRestrictionBusController,
             bool enableAnalytics,
             IAnalyticsController analyticsController,
             CancellationToken ct)
@@ -202,7 +204,7 @@ namespace Global
                     diagnosticsContainer.Sentry!.AddCurrentSceneToScope(scope, container.ScenesCache.CurrentScene.Info);
             });
 
-            container.LoadingStatus = enableAnalytics ? 
+            container.LoadingStatus = enableAnalytics ?
                 new LoadingStatusAnalyticsDecorator(new LoadingStatus(), analyticsController) : new LoadingStatus();
 
             container.ECSWorldPlugins = new IDCLWorldPlugin[]
@@ -219,7 +221,7 @@ namespace Global
                 new PrimitivesRenderingPlugin(sharedDependencies),
                 new VisibilityPlugin(),
                 new AudioSourcesPlugin(sharedDependencies, container.WebRequestsContainer.WebRequestController, container.CacheCleaner, container.assetsProvisioner),
-                assetBundlePlugin, 
+                assetBundlePlugin,
                 new GltfContainerPlugin(sharedDependencies, container.CacheCleaner, container.SceneReadinessReportQueue, container.SingletonSharedDependencies.SceneAssetLock, componentsContainer.ComponentPoolsRegistry, localSceneDevelopment, useRemoteAssetBundles, container.LoadingStatus),
                 new InteractionPlugin(sharedDependencies, profilingProvider, exposedGlobalDataContainer.GlobalInputEvents, componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner),
                 new SceneUIPlugin(sharedDependencies, container.assetsProvisioner, container.InputBlock),
@@ -227,13 +229,13 @@ namespace Global
                 new AnimatorPlugin(),
                 new TweenPlugin(),
                 new MediaPlayerPlugin(sharedDependencies, videoTexturePool, sharedDependencies.FrameTimeBudget, container.assetsProvisioner, container.WebRequestsContainer.WebRequestController, container.CacheCleaner, worldVolumeMacBus),
-                new CharacterTriggerAreaPlugin(globalWorld, container.MainPlayerAvatarBaseProxy, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, container.CharacterContainer.CharacterObject, componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner, container.CacheCleaner, exposedGlobalDataContainer.ExposedCameraData),
+                new CharacterTriggerAreaPlugin(globalWorld, container.MainPlayerAvatarBaseProxy, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, container.CharacterContainer.CharacterObject, componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner, container.CacheCleaner, exposedGlobalDataContainer.ExposedCameraData, sceneRestrictionBusController, web3IdentityProvider),
                 new InteractionsAudioPlugin(container.assetsProvisioner),
                 new MapPinPlugin(globalWorld, container.FeatureFlagsCache),
                 new MultiplayerPlugin(),
                 new RealmInfoPlugin(container.RealmData, container.RoomHubProxy),
-                new InputModifierPlugin(globalWorld, container.PlayerEntity),
-                new MainCameraPlugin(componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner, container.CacheCleaner, exposedGlobalDataContainer.ExposedCameraData, globalWorld),
+                new InputModifierPlugin(globalWorld, container.PlayerEntity, sceneRestrictionBusController),
+                new MainCameraPlugin(componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner, container.CacheCleaner, exposedGlobalDataContainer.ExposedCameraData, sceneRestrictionBusController, globalWorld),
 
 #if UNITY_EDITOR
                 new GizmosWorldPlugin(),
@@ -247,7 +249,6 @@ namespace Global
                     container.RealmPartitionSettings),
                 textureResolvePlugin,
             };
-
 
             return (container, true);
         }

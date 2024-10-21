@@ -56,6 +56,7 @@ using DCL.PluginSystem.Global;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.SceneLoadingScreens.LoadingScreen;
+using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.Settings;
 using DCL.SidebarBus;
 using DCL.UI.MainUI;
@@ -138,7 +139,6 @@ namespace Global.Dynamic
         public IRoomHub RoomHub { get; private set; } = null!;
 
         private MultiplayerMovementMessageBus? multiplayerMovementMessageBus;
-        
 
         public override void Dispose()
         {
@@ -157,6 +157,7 @@ namespace Global.Dynamic
             World globalWorld,
             Entity playerEntity,
             IAppArgs appArgs,
+            ISceneRestrictionBusController sceneRestrictionBusController,
             ILoadingStatus loadingStatus,
             CancellationToken ct)
         {
@@ -512,7 +513,7 @@ namespace Global.Dynamic
                     globalWorld, playerEntity),
                 new ErrorPopupPlugin(container.MvcManager, assetsProvisioner),
                 connectionStatusPanelPlugin,
-                new MinimapPlugin(container.MvcManager, container.MapRendererContainer, placesAPIService, staticContainer.RealmData, container.ChatMessagesBus, realmNavigator, staticContainer.ScenesCache, mainUIView, mapPathEventBus),
+                new MinimapPlugin(container.MvcManager, container.MapRendererContainer, placesAPIService, staticContainer.RealmData, container.ChatMessagesBus, realmNavigator, staticContainer.ScenesCache, mainUIView, mapPathEventBus, sceneRestrictionBusController),
                 new ChatPlugin(assetsProvisioner, container.MvcManager, container.ChatMessagesBus, chatHistory, entityParticipantTable, nametagsData, dclInput, unityEventSystem, mainUIView, staticContainer.InputBlock, globalWorld, playerEntity),
                 new ExplorePanelPlugin(
                     assetsProvisioner,

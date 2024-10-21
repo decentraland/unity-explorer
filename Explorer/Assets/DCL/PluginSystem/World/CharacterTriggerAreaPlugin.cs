@@ -11,9 +11,11 @@ using DCL.Optimization.Pools;
 using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.ResourcesUnloading;
+using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.SDKComponents.AvatarModifierArea.Systems;
 using DCL.SDKComponents.CameraModeArea.Systems;
 using DCL.Utilities;
+using DCL.Web3.Identities;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Systems;
 using System.Collections.Generic;
@@ -33,6 +35,8 @@ namespace DCL.PluginSystem.World
         private readonly ObjectProxy<Entity> cameraEntityProxy;
         private readonly ICharacterObject characterObject;
         private readonly IExposedCameraData cameraData;
+        private readonly ISceneRestrictionBusController sceneRestrictionBusController;
+        private readonly IWeb3IdentityCache web3IdentityCache;
 
         private IComponentPool<CharacterTriggerArea.CharacterTriggerArea>? characterTriggerAreaPoolRegistry;
 
@@ -44,7 +48,9 @@ namespace DCL.PluginSystem.World
             IComponentPoolsRegistry poolsRegistry,
             IAssetsProvisioner assetsProvisioner,
             CacheCleaner cacheCleaner,
-            IExposedCameraData cameraData)
+            IExposedCameraData cameraData,
+            ISceneRestrictionBusController sceneRestrictionBusController,
+            IWeb3IdentityCache web3IdentityCache)
         {
             this.globalWorld = globalWorld;
             this.assetsProvisioner = assetsProvisioner;
@@ -54,6 +60,8 @@ namespace DCL.PluginSystem.World
             this.cameraEntityProxy = cameraEntityProxy;
             this.characterObject = characterObject;
             this.cameraData = cameraData;
+            this.sceneRestrictionBusController = sceneRestrictionBusController;
+            this.web3IdentityCache = web3IdentityCache;
         }
 
         public void Dispose()
@@ -72,8 +80,8 @@ namespace DCL.PluginSystem.World
 
             CharacterTriggerAreaHandlerSystem.InjectToWorld(ref builder, characterTriggerAreaPoolRegistry!, mainPlayerAvatarBaseProxy, sharedDependencies.SceneStateProvider, characterObject);
 
-            finalizeWorldSystems.Add(AvatarModifierAreaHandlerSystem.InjectToWorld(ref builder, globalWorld));
-            finalizeWorldSystems.Add(CameraModeAreaHandlerSystem.InjectToWorld(ref builder, globalWorld, cameraEntityProxy, cameraData));
+            finalizeWorldSystems.Add(AvatarModifierAreaHandlerSystem.InjectToWorld(ref builder, globalWorld, sceneRestrictionBusController, web3IdentityCache));
+            finalizeWorldSystems.Add(CameraModeAreaHandlerSystem.InjectToWorld(ref builder, globalWorld, cameraEntityProxy, cameraData, sceneRestrictionBusController));
             finalizeWorldSystems.Add(CharacterTriggerAreaCleanupSystem.InjectToWorld(ref builder, characterTriggerAreaPoolRegistry!));
         }
 
