@@ -33,6 +33,8 @@ namespace Global.Dynamic.DebugSettings
         private bool overrideConnectionQuality;
         [SerializeField]
         private ConnectionQuality connectionQuality;
+        [SerializeField]
+        private string[] appParameters;
 
         public static DebugSettings Release() =>
             new ()
@@ -49,6 +51,7 @@ namespace Global.Dynamic.DebugSettings
                 connectionQuality = ConnectionQuality.QualityExcellent,
                 enableRemotePortableExperiences = true,
                 emotesToAddToUserProfile = null,
+                appParameters = Environment.GetCommandLineArgs(),
             };
 
         // To avoid configuration issues, force full flow on build (Application.isEditor is always true in Editor, but in profile builds (i.e. when set to Development) we will have the expected release flow too.
@@ -64,5 +67,6 @@ namespace Global.Dynamic.DebugSettings
         public bool EnableEmulateNoLivekitConnection => Application.isEditor? this.enableEmulateNoLivekitConnection : RELEASE_SETTINGS.enableEmulateNoLivekitConnection;
         public bool OverrideConnectionQuality => Application.isEditor ? this.overrideConnectionQuality : RELEASE_SETTINGS.overrideConnectionQuality;
         public ConnectionQuality ConnectionQuality => Application.isEditor ? this.connectionQuality : RELEASE_SETTINGS.connectionQuality;
+        public string[] AppParameters => Application.isEditor ? appParameters : RELEASE_SETTINGS.appParameters;
     }
 }

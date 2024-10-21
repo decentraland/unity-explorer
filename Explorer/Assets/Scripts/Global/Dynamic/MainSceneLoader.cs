@@ -89,7 +89,13 @@ namespace Global.Dynamic
 
         private async UniTask InitializeFlowAsync(CancellationToken ct)
         {
-            var applicationParametersParser = new ApplicationParametersParser(Environment.GetCommandLineArgs());
+            var applicationParametersParser = new ApplicationParametersParser(
+#if UNITY_EDITOR
+                debugSettings.AppParameters
+#else
+                Environment.GetCommandLineArgs()
+#endif
+                );
             ISystemMemoryCap memoryCap = new SystemMemoryCap(MemoryCapMode.MAX_SYSTEM_MEMORY); // we use max memory on the loading screen
 
             settings.ApplyConfig(applicationParametersParser);
