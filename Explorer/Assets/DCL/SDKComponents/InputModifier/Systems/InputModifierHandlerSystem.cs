@@ -13,7 +13,7 @@ using SceneRunner.Scene;
 namespace DCL.SDKComponents.PlayerInputMovement.Systems
 {
     [UpdateInGroup(typeof(SyncedInitializationSystemGroup))]
-    public partial class InputModifierHandlerSystem : BaseUnityLoopSystem, ISceneIsCurrentListener
+    public partial class InputModifierHandlerSystem : BaseUnityLoopSystem, ISceneIsCurrentListener, IFinalizeWorldSystem
     {
         private readonly Entity playerEntity;
         private readonly World globalWorld;
@@ -97,6 +97,11 @@ namespace DCL.SDKComponents.PlayerInputMovement.Systems
         {
             if (!value)
                 ResetModifiersOnLeave();
+        }
+
+        public void FinalizeComponents(in Query query)
+        {
+            ResetModifiersOnLeave();
         }
     }
 }
