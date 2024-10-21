@@ -9,6 +9,7 @@ using DCL.Profiles;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.SDKComponents.AvatarModifierArea.Components;
 using DCL.SDKComponents.AvatarModifierArea.Systems;
+using DCL.Web3.Identities;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.TestSuite;
@@ -39,7 +40,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
         public void Setup()
         {
             globalWorld = World.Create();
-            system = new AvatarModifierAreaHandlerSystem(world, globalWorld, Substitute.For<ISceneRestrictionBusController>());
+            system = new AvatarModifierAreaHandlerSystem(world, globalWorld, Substitute.For<ISceneRestrictionBusController>(), Substitute.For<IWeb3IdentityCache>());
 
             fakeTriggerAreaGO = new GameObject("fake character area trigger");
             characterTriggerArea = fakeTriggerAreaGO.AddComponent<CharacterTriggerArea.CharacterTriggerArea>();
