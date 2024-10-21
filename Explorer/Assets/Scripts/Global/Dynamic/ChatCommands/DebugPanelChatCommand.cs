@@ -2,6 +2,7 @@
 using DCL.Chat.Commands;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.Views;
+using DCL.PluginSystem.Global;
 using System;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -13,12 +14,14 @@ namespace Global.Dynamic.ChatCommands
         public static readonly Regex REGEX = new (@"^/debug(?:\s+(\w+))?$", RegexOptions.Compiled);
 
         private readonly IDebugContainerBuilder debugContainerBuilder;
+        private readonly ConnectionStatusPanelPlugin connectionStatusPanelPlugin;
 
         private string? param;
 
-        public DebugPanelChatCommand(IDebugContainerBuilder debugContainerBuilder)
+        public DebugPanelChatCommand(IDebugContainerBuilder debugContainerBuilder, ConnectionStatusPanelPlugin connectionStatusPanelPlugin)
         {
             this.debugContainerBuilder = debugContainerBuilder;
+            this.connectionStatusPanelPlugin = connectionStatusPanelPlugin;
         }
 
         public UniTask<string> ExecuteAsync(Match match, CancellationToken _)
@@ -29,6 +32,7 @@ namespace Global.Dynamic.ChatCommands
             {
                 bool visible = !debugContainerBuilder.IsVisible;
                 debugContainerBuilder.IsVisible = visible;
+                connectionStatusPanelPlugin.SetVisibility(visible);
 
                 return UniTask.FromResult(string.Empty);
             }
