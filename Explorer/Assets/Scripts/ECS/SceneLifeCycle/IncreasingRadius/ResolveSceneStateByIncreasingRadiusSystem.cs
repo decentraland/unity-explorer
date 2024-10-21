@@ -51,7 +51,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                 Allocator.Persistent);
         }
 
-        public override void Dispose()
+        protected override void OnDispose()
         {
             orderedData.Dispose();
         }

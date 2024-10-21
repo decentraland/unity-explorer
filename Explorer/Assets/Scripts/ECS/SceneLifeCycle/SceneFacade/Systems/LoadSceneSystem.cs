@@ -45,9 +45,8 @@ namespace ECS.SceneLifeCycle.Systems
             asset.DisposeAsync().Forget();
         }
 
-        public override void Dispose()
+        protected override void OnDispose()
         {
-            base.Dispose();
             loadEmptySceneSystemLogic.Dispose();
         }
     }
