@@ -29,6 +29,7 @@ struct VertexOutput
     float3 normalDir : TEXCOORD1;
     float3 tangentDir : TEXCOORD2;
     float3 bitangentDir : TEXCOORD3;
+    float4 positionCS : TEXCOORD4;
 
     UNITY_VERTEX_OUTPUT_STEREO
 };
@@ -91,11 +92,13 @@ VertexOutput vert (VertexInput v)
     #endif
     //v.2.0.7.5
     o.pos.z = o.pos.z + _Offset_Z * _ClipCameraPos.z;
+    o.positionCS = TransformWorldToHClip(o.pos);
     return o;
 }
 
 float4 frag(VertexOutput i) : SV_Target
 {
+    Dithering(_FadePosition.xyz, i.positionCS, _EndFadeDistance, _StartFadeDistance);
     //v.2.0.5
     // if (_ZOverDrawMode > 0.99f)
     // {

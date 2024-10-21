@@ -32,7 +32,7 @@ struct Varyings
 {
     float4 positionCS   : SV_POSITION;
     float2 uv           : TEXCOORD1;
-    float3 normalWS                 : TEXCOORD2;
+    float3 normalWS     : TEXCOORD2;
 
     UNITY_VERTEX_INPUT_INSTANCE_ID
     UNITY_VERTEX_OUTPUT_STEREO
@@ -66,6 +66,7 @@ void DepthNormalsFragment(
 #endif
 )
 {
+    Dithering(_FadePosition.xyz, input.positionCS, _EndFadeDistance, _StartFadeDistance);
     UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 
     Alpha(SampleAlbedoAlpha(input.uv).a, _BaseColor, _Cutoff);

@@ -517,8 +517,12 @@ VertexOutput vert (VertexInput v)
     #include "DCL_ToonBodyDoubleShadeWithFeather.hlsl"
 #endif //#if defined(_SHADINGGRADEMAP)
 
+
+
 float4 frag(VertexOutput i, half facing : VFACE) : SV_TARGET
 {
+    Dithering(_FadePosition.xyz, i.positionCS, _EndFadeDistance, _StartFadeDistance);
+    
     #if defined(_SHADINGGRADEMAP)
         return fragShadingGradeMap(i, facing);
     #else
