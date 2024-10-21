@@ -6,7 +6,7 @@ set -e  # Exit immediately if any command exits with a non-zero status
 # Build
 
 clear
-cmake .. -DCMAKE_BUILD_TYPE=Release -DASTCENC_SHAREDLIB=ON -DASTCENC_UNIVERSAL_BUILD=ON -DASTCENC_DYNAMIC_LIBRARY=ON
+cmake . -DCMAKE_BUILD_TYPE=Release -DASTCENC_SHAREDLIB=ON -DASTCENC_UNIVERSAL_BUILD=ON -DASTCENC_DYNAMIC_LIBRARY=ON
 cd astc-encoder-build
 make clean
 make -j10;
@@ -17,7 +17,7 @@ make -j10;
 
 # Moving files to the dedicated directory
 
-RELATIVE_PATH=../../../../../TexturesServerWrap/Libraries/Mac
+RELATIVE_PATH=../../../../TexturesServerWrap/Libraries/Mac
 ASTC_PATH=astc-encoder-build/Source
 
 mv libtexturesfuse.dylib $RELATIVE_PATH/libtexturesfuse.dylib

@@ -1,5 +1,9 @@
 #include "astcenc.h"
 #include "handles.h"
+
+#include "texture.h"
+#include "compressonator.h"
+
 #include <stdint.h>
 #include <unordered_set>
 
