@@ -55,6 +55,8 @@ namespace SceneRunner.Scene
         /// <returns></returns>
         bool TryGetMediaUrl(string url, out URLAddress result);
 
+        bool TryGetMediaFileHash(string url, out string fileHash);
+
         bool IsUrlDomainAllowed(string url);
 
         bool IsSdk7();
@@ -102,6 +104,12 @@ namespace SceneRunner.Scene
             public bool TryGetMediaUrl(string url, out URLAddress result)
             {
                 result = URLAddress.EMPTY;
+                return false;
+            }
+
+            public bool TryGetMediaFileHash(string url, out string fileHash)
+            {
+                fileHash = string.Empty;
                 return false;
             }
 
