@@ -19,7 +19,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
 
         void RemoveSceneMessageHandler(string sceneId, MsgType msgType, SceneMessageHandler onSceneMessage);
 
-        void SendMessage(ReadOnlySpan<byte> message, string sceneId, CancellationToken ct);
+        void SendMessage(ReadOnlySpan<byte> message, string sceneId, CancellationToken ct, string? recipient = null);
 
         readonly ref struct DecodedMessage
         {

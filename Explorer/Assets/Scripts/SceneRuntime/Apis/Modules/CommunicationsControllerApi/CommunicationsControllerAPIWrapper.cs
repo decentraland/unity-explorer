@@ -1,6 +1,7 @@
 using CrdtEcsBridge.PoolsProviders;
 using DCL.Diagnostics;
 using JetBrains.Annotations;
+using Microsoft.ClearScript;
 using Microsoft.ClearScript.JavaScript;
 using System;
 using System.Collections.Generic;
@@ -30,8 +31,7 @@ namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
             lastInput.Clear();
         }
 
-        [UsedImplicitly]
-        public object SendBinary(IList<object> dataList)
+        private void SendBinary(IList<object> dataList, string? recipient)
         {
             try
             {
@@ -62,13 +62,44 @@ namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
                     lastInput.RemoveAt(lastIndex);
                 }
 
-                return api.SendBinary(lastInput);
+                api.SendBinary(lastInput, recipient);
             }
             catch (Exception e)
             {
                 ReportHub.LogException(e, ReportCategory.ENGINE);
                 throw;
             }
+        }
+
+        [UsedImplicitly]
+        public object SendBinary(IList<object> broadcastData)
+        {
+            SendBinary(broadcastData, null);
+            return api.GetResult();
+        }
+
+        [UsedImplicitly]
+        public object SendBinary(IList<object> broadcastData, object? perRecipientData)
+        {
+            SendBinary(broadcastData, null);
+
+            if (perRecipientData is IList<object> perRecipientDataList)
+            {
+                for (var i = 0; i < perRecipientDataList.Count; i++)
+                {
+                    object? obj = perRecipientDataList[i];
+
+                    if (obj is IScriptObject perRecipientStruct)
+                    {
+                        var recipient = (string)perRecipientStruct.GetProperty("address");
+                        var data = (IList<object>)perRecipientStruct.GetProperty("data");
+
+                        SendBinary(data, recipient);
+                    }
+                }
+            }
+
+            return api.GetResult();
         }
     }
 }

@@ -48,12 +48,15 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
             cancellationTokenSource.SafeCancelAndDispose();
         }
 
-        public object SendBinary(IReadOnlyList<PoolableByteArray> data)
+        public void SendBinary(IReadOnlyList<PoolableByteArray> broadcastData, string? recipient = null)
         {
-            foreach (PoolableByteArray poolable in data)
+            foreach (PoolableByteArray poolable in broadcastData)
                 if (poolable.Length > 0)
-                    EncodeAndSendMessage(ISceneCommunicationPipe.MsgType.Uint8Array, poolable.Memory.Span);
+                    EncodeAndSendMessage(ISceneCommunicationPipe.MsgType.Uint8Array, poolable.Memory.Span, recipient);
+        }
 
+        public object GetResult()
+        {
             lock (eventsToProcess)
             {
                 object result = jsOperations.ConvertToScriptTypedArrays(eventsToProcess);
@@ -71,12 +74,12 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
             eventsToProcess.Clear();
         }
 
-        protected void EncodeAndSendMessage(ISceneCommunicationPipe.MsgType msgType, ReadOnlySpan<byte> message)
+        protected void EncodeAndSendMessage(ISceneCommunicationPipe.MsgType msgType, ReadOnlySpan<byte> message, string? recipient = null)
         {
             Span<byte> encodedMessage = stackalloc byte[message.Length + 1];
             encodedMessage[0] = (byte)msgType;
             message.CopyTo(encodedMessage[1..]);
-            sceneCommunicationPipe.SendMessage(encodedMessage, sceneId, cancellationTokenSource.Token);
+            sceneCommunicationPipe.SendMessage(encodedMessage, sceneId, cancellationTokenSource.Token, recipient);
         }
 
         protected abstract void OnMessageReceived(ISceneCommunicationPipe.DecodedMessage decodedMessage);

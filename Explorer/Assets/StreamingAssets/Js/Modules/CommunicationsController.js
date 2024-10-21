@@ -1,5 +1,5 @@
 module.exports.sendBinary = async function(message) {
-    const resultData = UnityCommunicationsControllerApi.SendBinary(message.data)
+    const resultData = UnityCommunicationsControllerApi.SendBinary(message.data, message.messagesToAddress)
     return {
         data: resultData
     };
