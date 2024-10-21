@@ -89,10 +89,10 @@ namespace ECS.Unity.Materials.Tests
 
         internal static MaterialComponent CreateMaterialComponent() =>
             new (MaterialData.CreatePBRMaterial(
-                new TextureComponent("albedo", TextureWrapMode.Mirror, FilterMode.Point),
-                new TextureComponent("alpha", TextureWrapMode.Mirror, FilterMode.Trilinear),
-                new TextureComponent("emissive", TextureWrapMode.Mirror, FilterMode.Bilinear),
-                new TextureComponent("bump", TextureWrapMode.Mirror, FilterMode.Point),
+                new TextureComponent("albedo", string.Empty, TextureWrapMode.Mirror, FilterMode.Point),
+                new TextureComponent("alpha", string.Empty, TextureWrapMode.Mirror, FilterMode.Trilinear),
+                new TextureComponent("emissive", string.Empty, TextureWrapMode.Mirror, FilterMode.Bilinear),
+                new TextureComponent("bump", string.Empty, TextureWrapMode.Mirror, FilterMode.Point),
                 0.5f,
                 true,
                 Color.red,

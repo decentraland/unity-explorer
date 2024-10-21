@@ -3,7 +3,9 @@ using DCL.Optimization.PerformanceBudgeting;
 using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Collections.Generic;
+using ECS.StreamableLoading.AssetBundles;
 using Unity.Profiling;
+using UnityEngine;
 
 namespace ECS.StreamableLoading.Cache
 {
