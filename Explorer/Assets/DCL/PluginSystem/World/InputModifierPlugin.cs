@@ -35,6 +35,7 @@ namespace DCL.PluginSystem.World
             ResetDirtyFlagSystem<PBInputModifier>.InjectToWorld(ref builder);
             var system = InputModifierHandlerSystem.InjectToWorld(ref builder, world, playerEntity, sharedDependencies.SceneStateProvider);
             sceneIsCurrentListeners.Add(system);
+            finalizeWorldSystems.Add(system);
         }
     }
 }

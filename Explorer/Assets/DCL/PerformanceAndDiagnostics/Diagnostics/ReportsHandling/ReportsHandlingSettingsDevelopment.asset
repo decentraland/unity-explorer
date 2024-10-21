@@ -486,6 +486,12 @@ MonoBehaviour:
       Severity: 1
     - Category: WEARABLE
       Severity: 1
+    - Category: COMMS_SCENE_HANDLER
+      Severity: 0
+    - Category: COMMS_SCENE_HANDLER
+      Severity: 4
+    - Category: COMMS_SCENE_HANDLER
+      Severity: 1
   sentryMatrix:
     entries: []
   debounceEnabled: 1

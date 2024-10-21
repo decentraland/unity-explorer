@@ -6,6 +6,7 @@ using DCL.Multiplayer.Connections.RoomHubs;
 using ECS;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
+using SceneRunner.Scene;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -76,7 +77,7 @@ namespace DCL.Multiplayer.Profiles.Poses
                     return;
 
                 IGateKeeperSceneRoom sceneRoom = roomHub.SceneRoom();
-                SceneShortInfo? sceneInfo = sceneRoom.ConnectedScene;
+                ISceneData? sceneInfo = sceneRoom.ConnectedScene;
                 if (sceneInfo == null) return;
 
                 SceneRoomMetadata message;
@@ -84,7 +85,7 @@ namespace DCL.Multiplayer.Profiles.Poses
                 try { message = JsonUtility.FromJson<SceneRoomMetadata>(participant.Metadata); }
                 catch (Exception) { return; }
 
-                ParticipantsOnUpdatesFromParticipant(participant, new IRemoteMetadata.ParticipantMetadata(sceneInfo.Value.BaseParcel, URLDomain.FromString(message.lambdasEndpoint)));
+                ParticipantsOnUpdatesFromParticipant(participant, new IRemoteMetadata.ParticipantMetadata(sceneInfo.SceneShortInfo.BaseParcel, URLDomain.FromString(message.lambdasEndpoint)));
             }
         }
 
