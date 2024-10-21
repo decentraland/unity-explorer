@@ -13,7 +13,6 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
     [UpdateInGroup(typeof(CameraGroup))]
     public partial class AvatarShapeVisibilitySystem : BaseUnityLoopSystem
     {
-        private const float AVATAR_MINIMUM_CAMERA_DISTANCE_SQR = 1;
         private SingleInstanceEntity camera;
 
         public AvatarShapeVisibilitySystem(World world) : base(world) { }
@@ -28,7 +27,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             AddPlayerCachedVisibilityComponentQuery(World, camera.GetCameraComponent(World));
             AddOthersCachedVisibilityComponentQuery(World);
 
-            UpdateVisibilityOnCameraDistanceQuery(World, camera.GetCameraComponent(World));
+            UpdateMainPlayerAvatarVisibilityOnFirstPersonQuery(World, camera.GetCameraComponent(World));
             UpdateAvatarsVisibilityStateQuery(World);
         }
 
@@ -53,10 +52,10 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         }
 
         [Query]
-        private void UpdateVisibilityOnCameraDistance([Data] in CameraComponent cameraComponent, ref AvatarShapeComponent avatarShape, ref AvatarCachedVisibilityComponent avatarCachedVisibility, in PlayerComponent playerComponent)
+        [All(typeof(PlayerComponent))]
+        private void UpdateMainPlayerAvatarVisibilityOnFirstPerson([Data] in CameraComponent camera, ref AvatarShapeComponent avatarShape, ref AvatarCachedVisibilityComponent avatarCachedVisibility)
         {
-            Vector3 cameraToPlayer = playerComponent.CameraFocus.position - cameraComponent.Camera.transform.position;
-            bool shouldBeHidden = avatarShape.HiddenByModifierArea || cameraToPlayer.sqrMagnitude < AVATAR_MINIMUM_CAMERA_DISTANCE_SQR;
+            bool shouldBeHidden = avatarShape.HiddenByModifierArea || camera.Mode == CameraMode.FirstPerson;
             UpdateVisibilityState(ref avatarShape, ref avatarCachedVisibility, shouldBeHidden);
         }
 

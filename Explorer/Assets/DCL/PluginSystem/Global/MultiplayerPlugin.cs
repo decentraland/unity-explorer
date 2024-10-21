@@ -48,7 +48,7 @@ namespace DCL.PluginSystem.Global
         private readonly IMessagePipesHub messagePipesHub;
         private readonly IProfileBroadcast profileBroadcast;
         private readonly IProfileRepository profileRepository;
-        private readonly IReadOnlyRealFlowLoadingStatus realFlowLoadingStatus;
+        private readonly ILoadingStatus realFlowLoadingStatus;
         private readonly IRealmData realmData;
         private readonly IRemoteEntities remoteEntities;
         private readonly IRemoteMetadata remoteMetadata;
@@ -67,7 +67,7 @@ namespace DCL.PluginSystem.Global
             IProfileRepository profileRepository,
             IProfileBroadcast profileBroadcast,
             IDebugContainerBuilder debugContainerBuilder,
-            IReadOnlyRealFlowLoadingStatus realFlowLoadingStatus,
+            ILoadingStatus realFlowLoadingStatus,
             IEntityParticipantTable entityParticipantTable,
             IMessagePipesHub messagePipesHub,
             IRemoteMetadata remoteMetadata,

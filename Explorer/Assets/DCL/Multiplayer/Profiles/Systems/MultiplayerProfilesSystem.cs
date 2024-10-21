@@ -33,7 +33,7 @@ namespace DCL.Multiplayer.Profiles.Systems
         private readonly IRemoteEntities remoteEntities;
         private readonly IRemoteMetadata remoteMetadata;
         private readonly ICharacterObject characterObject;
-        private readonly IReadOnlyRealFlowLoadingStatus realFlowLoadingStatus;
+        private readonly ILoadingStatus realFlowLoadingStatus;
         private readonly IRealmData realmData;
 
         public MultiplayerProfilesSystem(
@@ -45,7 +45,7 @@ namespace DCL.Multiplayer.Profiles.Systems
             IRemoteEntities remoteEntities,
             IRemoteMetadata remoteMetadata,
             ICharacterObject characterObject,
-            IReadOnlyRealFlowLoadingStatus realFlowLoadingStatus,
+            ILoadingStatus realFlowLoadingStatus,
             IRealmData realmData
         ) : base(world)
         {
@@ -62,7 +62,7 @@ namespace DCL.Multiplayer.Profiles.Systems
 
         protected override void Update(float t)
         {
-            if (realFlowLoadingStatus.CurrentStage.Value is not RealFlowLoadingStatus.Stage.Completed)
+            if (realFlowLoadingStatus.CurrentStage.Value is not LoadingStatus.LoadingStage.Completed)
                 return;
 
             // On realm switch it may be not configured yet
