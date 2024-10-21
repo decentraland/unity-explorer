@@ -5,7 +5,6 @@ using DCL.ResourcesUnloading;
 using DCL.ResourcesUnloading.UnloadStrategies;
 using ECS.Abstract;
 using ECS.Groups;
-using UnityEngine;
 
 namespace DCL.PluginSystem.Global
 {
@@ -13,21 +12,23 @@ namespace DCL.PluginSystem.Global
     public partial class ReleaseMemorySystem : BaseUnityLoopSystem
     {
         private readonly IMemoryUsageProvider memoryBudgetProvider;
-        private readonly UnloadStrategyHandler unloadStrategyHandler;
+        private readonly UnloadStrategy unloadStrategy;
+        private readonly ICacheCleaner cacheCleaner;
 
         internal ReleaseMemorySystem(Arch.Core.World world, IMemoryUsageProvider memoryBudgetProvider,
-            UnloadStrategyHandler unloadStrategyHandler) : base(world)
+            UnloadStrategy unloadStrategy, ICacheCleaner cacheCleaner) : base(world)
         {
             this.memoryBudgetProvider = memoryBudgetProvider;
-            this.unloadStrategyHandler = unloadStrategyHandler;
+            this.unloadStrategy = unloadStrategy;
+            this.cacheCleaner = cacheCleaner;
         }
 
         protected override void Update(float t)
         {
             if (memoryBudgetProvider.GetMemoryUsageStatus() != MemoryUsageStatus.NORMAL)
-                unloadStrategyHandler.TryUnload();
+                unloadStrategy.TryUnload(cacheCleaner);
             else
-                unloadStrategyHandler.ResetToNormal();
+                unloadStrategy.Reset();
         }
     }
 }

@@ -1,4 +1,3 @@
-using System;
 using ECS.Prioritization;
 
 namespace DCL.ResourcesUnloading.UnloadStrategies
@@ -7,18 +6,17 @@ namespace DCL.ResourcesUnloading.UnloadStrategies
     {
         private readonly IRealmPartitionSettings realmPartitionSettings;
 
-        public ReduceLoadingRadiusUnloadStrategy(IRealmPartitionSettings realmPartitionSettings)
+        public ReduceLoadingRadiusUnloadStrategy(UnloadStrategy previousStrategy, IRealmPartitionSettings realmPartitionSettings) : base(previousStrategy)
         {
             this.realmPartitionSettings = realmPartitionSettings;
         }
 
-        public override void TryUnload(ICacheCleaner cacheCleaner)
+        protected override void RunStrategy(ICacheCleaner cacheCleaner)
         {
             //Forces MaxLoadingDistanceInParcels to the minimum value
             //TODO (Juani): A message warning that the distance has been silently modified
             realmPartitionSettings.MaxLoadingDistanceInParcels = realmPartitionSettings.MinLoadingDistanceInParcels;
-            base.TryUnload(cacheCleaner);
-        }
 
+        }
     }
 }
