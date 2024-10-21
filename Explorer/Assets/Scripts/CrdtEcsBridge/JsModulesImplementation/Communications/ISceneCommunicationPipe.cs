@@ -13,13 +13,26 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
             Uint8Array = 2,
         }
 
+        public enum ConnectivityAssertiveness
+        {
+            /// <summary>
+            ///     Message will be dropped silently if the scene is not connected
+            /// </summary>
+            DROP_IF_NOT_CONNECTED = 0,
+
+            /// <summary>
+            ///     Additional information will be printed if the scene is not connected
+            /// </summary>
+            DELIVERY_ASSERTED = 1,
+        }
+
         public delegate void SceneMessageHandler(DecodedMessage message);
 
         void AddSceneMessageHandler(string sceneId, MsgType msgType, SceneMessageHandler onSceneMessage);
 
         void RemoveSceneMessageHandler(string sceneId, MsgType msgType, SceneMessageHandler onSceneMessage);
 
-        void SendMessage(ReadOnlySpan<byte> message, string sceneId, CancellationToken ct);
+        void SendMessage(ReadOnlySpan<byte> message, string sceneId, ConnectivityAssertiveness assertiveness, CancellationToken ct);
 
         readonly ref struct DecodedMessage
         {
