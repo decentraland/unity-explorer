@@ -18,10 +18,11 @@ namespace ECS.StreamableLoading.Textures
         public readonly FilterMode FilterMode;
         public readonly bool IsVideoTexture;
         public readonly CRDTEntity VideoPlayerEntity;
+        public readonly string FileHash;
 
         public CancellationTokenSource CancellationTokenSource => CommonArguments.CancellationTokenSource;
 
-        public GetTextureIntention(string url, TextureWrapMode wrapMode, FilterMode filterMode, bool isReadable = false, int attemptsCount = StreamableLoadingDefaults.ATTEMPTS_COUNT)
+        public GetTextureIntention(string url, string fileHash, TextureWrapMode wrapMode, FilterMode filterMode, bool isReadable = false, int attemptsCount = StreamableLoadingDefaults.ATTEMPTS_COUNT)
         {
             CommonArguments = new CommonLoadingArguments(url, attempts: attemptsCount);
             WrapMode = wrapMode;
@@ -29,11 +30,13 @@ namespace ECS.StreamableLoading.Textures
             IsReadable = isReadable;
             IsVideoTexture = false;
             VideoPlayerEntity = -1;
+            FileHash = fileHash;
         }
 
         public GetTextureIntention(CRDTEntity videoPlayerEntity)
         {
             CommonArguments = new CommonLoadingArguments(string.Empty);
+            FileHash = string.Empty;
             WrapMode = TextureWrapMode.Clamp;
             FilterMode = FilterMode.Bilinear;
             IsReadable = false;
@@ -42,7 +45,7 @@ namespace ECS.StreamableLoading.Textures
         }
 
         public bool Equals(GetTextureIntention other) =>
-            this.AreUrlEquals(other) &&
+            FileHash == other.FileHash &&
             IsReadable == other.IsReadable &&
             WrapMode == other.WrapMode &&
             FilterMode == other.FilterMode &&
@@ -53,7 +56,7 @@ namespace ECS.StreamableLoading.Textures
             obj is GetTextureIntention other && Equals(other);
 
         public override int GetHashCode() =>
-            HashCode.Combine(IsReadable, (int)WrapMode, (int)FilterMode, CommonArguments.URL, IsVideoTexture, VideoPlayerEntity);
+            HashCode.Combine(IsReadable, (int)WrapMode, (int)FilterMode, FileHash, IsVideoTexture, VideoPlayerEntity);
 
         public override string ToString() =>
             $"Get Texture: {(IsVideoTexture ? $"Video {VideoPlayerEntity}" : CommonArguments.URL)}";
