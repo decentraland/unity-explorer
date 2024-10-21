@@ -26,8 +26,13 @@ namespace DCL.Minimap
             restrictionsView.OnPointerExitEvent -= OnMouseExit;
         }
 
-        private void OnMouseEnter() =>
+        private void OnMouseEnter()
+        {
+            Vector3 toastPosition = restrictionsView.toastRectTransform.anchoredPosition;
+            toastPosition.x = restrictionsView.sceneRestrictionsIcon.transform.localPosition.x;
+            restrictionsView.toastRectTransform.anchoredPosition = toastPosition;
             restrictionsView.toastCanvasGroup.DOFade(1f, 0.5f);
+        }
 
         private void OnMouseExit() =>
             restrictionsView.toastCanvasGroup.DOFade(0f, 0.5f);

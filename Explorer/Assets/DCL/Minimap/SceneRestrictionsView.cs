@@ -27,6 +27,8 @@ namespace DCL.Minimap
         [field: SerializeField]
         internal CanvasGroup toastCanvasGroup { get; private set; }
 
+        internal RectTransform toastRectTransform { get; private set; }
+
         internal event Action? OnPointerEnterEvent;
         internal event Action? OnPointerExitEvent;
 
@@ -37,6 +39,7 @@ namespace DCL.Minimap
         {
             toastCanvasGroup.alpha = 0;
             sceneRestrictionsIcon.gameObject.SetActive(false);
+            toastRectTransform = toastCanvasGroup.GetComponent<RectTransform>();
         }
     }
 }
