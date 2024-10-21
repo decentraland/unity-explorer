@@ -85,6 +85,8 @@ void DepthNormalsFragment(
 #endif
 )
 {
+    Dithering(_FadePosition.xyz, input.positionCS, _EndFadeDistance, _StartFadeDistance);
+    
     UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 
     Alpha(SampleAlbedoAlpha(input.uv, TEXTURE2D_ARGS(_BaseMap, sampler_BaseMap)).a, _BaseColor, _Cutoff);
