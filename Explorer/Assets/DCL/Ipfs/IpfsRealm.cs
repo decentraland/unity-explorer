@@ -120,10 +120,8 @@ namespace DCL.Ipfs
         private UniTask SendFormAsync(WWWForm form, CancellationToken ct)
         {
             URLAddress url = GetEntitiesUrl();
-            //Added an attempts delay to allow a retry after 2 seconds in order
-            //to reduce the chances of parallel profiles deployments
             return webRequestController.PostAsync(
-                new CommonArguments(url, attemptsDelay: 2000f),
+                new CommonArguments(url),
                 GenericPostArguments.CreateWWWForm(form),
                 ct,
                 ReportCategory.REALM

@@ -29,7 +29,6 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
         internal static readonly string TEST_FOLDER = $"file://{Application.dataPath + "/../TestResources/AssetBundles/"}";
 
         internal AssetBundle assetBundle;
-        private StreamableLoadingResult<AssetBundleData> assetBundleData;
 
         public async UniTask<StreamableLoadingResult<AssetBundleData>> LoadAssetBundle(string hash)
         {
@@ -39,16 +38,16 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
 
             try
             {
-                assetBundleData = await LoadAssetBundleSystem.CreateAssetBundleDataAsync(assetBundle, null, typeof(GameObject), "", new AssetBundleLoadingMutex(), Array.Empty<AssetBundleData>(),
+                return await LoadAssetBundleSystem.CreateAssetBundleDataAsync(assetBundle, null, typeof(GameObject), "", new AssetBundleLoadingMutex(), Array.Empty<AssetBundleData>(),
                     ReportCategory.ASSET_BUNDLES, "", "", CancellationToken.None);
-                return assetBundleData;
             }
             catch (Exception e) { return new StreamableLoadingResult<AssetBundleData>(ReportCategory.ASSET_BUNDLES, e); }
         }
 
         public void UnloadBundle()
         {
-            assetBundleData.Asset?.Dispose();
+            assetBundle?.Unload(false);
+            assetBundle = null;
         }
     }
 }

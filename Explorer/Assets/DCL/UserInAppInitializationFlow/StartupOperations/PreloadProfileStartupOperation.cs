@@ -8,10 +8,10 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
 {
     public class PreloadProfileStartupOperation : IStartupOperation
     {
-        private readonly ILoadingStatus loadingStatus;
+        private readonly RealFlowLoadingStatus loadingStatus;
         private readonly ISelfProfile selfProfile;
 
-        public PreloadProfileStartupOperation(ILoadingStatus loadingStatus, ISelfProfile selfProfile)
+        public PreloadProfileStartupOperation(RealFlowLoadingStatus loadingStatus, ISelfProfile selfProfile)
         {
             this.loadingStatus = loadingStatus;
             this.selfProfile = selfProfile;
@@ -19,9 +19,8 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
 
         public async UniTask<Result> ExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
         {
-            float finalizationProgress = loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.ProfileLoading);
             await selfProfile.ProfileOrPublishIfNotAsync(ct);
-            report.SetProgress(finalizationProgress);
+            report.SetProgress(loadingStatus.SetStage(RealFlowLoadingStatus.Stage.ProfileLoaded));
             return Result.SuccessResult();
         }
     }

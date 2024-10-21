@@ -9,11 +9,21 @@ namespace CommunicationData.URLHelpers
     public readonly struct URLAddress : IEquatable<URLAddress>, IEquatable<string>
     {
         public static readonly URLAddress EMPTY = new (string.Empty);
+
         public readonly string Value;
+        private readonly string CacheableURL;
+
+        private static readonly string HTTP_STARTER = "https";
+        private static readonly string VALIDATION_PATTERN = "/v[0-9]+/";
 
         internal URLAddress(string value)
         {
             Value = value;
+
+            if (!string.IsNullOrEmpty(Value) && Value.StartsWith(HTTP_STARTER))
+                CacheableURL = Regex.Replace(Value, VALIDATION_PATTERN, "/");
+            else
+                CacheableURL = Value;
         }
 
         public static implicit operator string(in URLAddress address) =>
@@ -46,5 +56,9 @@ namespace CommunicationData.URLHelpers
         public override string ToString() =>
             Value;
 
+        public string GetCacheableURL()
+        {
+            return CacheableURL;
+        }
     }
 }

@@ -14,25 +14,20 @@ namespace DCL.WebRequests
 
         public const int DEFAULT_ATTEMPTS_COUNT = 3;
 
-        public const float DEFAULT_ATTEMPTS_DELAY = 0f;
-
         public readonly URLAddress URL;
 
         public readonly int AttemptsCount;
-
-        public readonly float AttemptsDelay;
 
         public readonly int Timeout;
 
         public readonly DownloadHandler? CustomDownloadHandler;
 
-        public CommonArguments(URLAddress url, DownloadHandler? customDownloadHandler = null, int attemptsCount = DEFAULT_ATTEMPTS_COUNT, int timeout = DEFAULT_TIMEOUT, float attemptsDelay = DEFAULT_ATTEMPTS_DELAY)
+        public CommonArguments(URLAddress url, DownloadHandler? customDownloadHandler = null, int attemptsCount = DEFAULT_ATTEMPTS_COUNT, int timeout = DEFAULT_TIMEOUT)
         {
             URL = url;
             CustomDownloadHandler = customDownloadHandler;
             AttemptsCount = attemptsCount;
             Timeout = timeout;
-            AttemptsDelay = attemptsDelay;
         }
 
         public static implicit operator CommonArguments(URLAddress url) =>
@@ -48,9 +43,6 @@ namespace DCL.WebRequests
 
         public int TotalAttempts() =>
             Mathf.Max(1, AttemptsCount);
-
-        public float AttemptsDelayInMilliseconds() =>
-            Mathf.Max(0, AttemptsDelay);
 
         public override string ToString() =>
             $"CommonArguments: {URL} with attempts {AttemptsCount} with timeout {Timeout} with downloadHandler {CustomDownloadHandler}";

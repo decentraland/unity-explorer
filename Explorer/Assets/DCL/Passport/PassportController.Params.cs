@@ -6,13 +6,11 @@ namespace DCL.Passport
         {
             public string UserId { get; }
             public string? BadgeIdSelected { get; }
-            public bool IsOwnProfile { get; }
 
-            public Params(string userId, string? badgeIdSelected = null, bool isOwnProfile = false)
+            public Params(string userId, string? badgeIdSelected = null)
             {
                 UserId = userId;
                 BadgeIdSelected = badgeIdSelected;
-                IsOwnProfile = isOwnProfile;
             }
         }
     }

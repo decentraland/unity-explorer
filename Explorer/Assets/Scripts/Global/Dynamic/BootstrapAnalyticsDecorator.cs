@@ -137,13 +137,21 @@ namespace Global.Dynamic
 
         public async UniTask UserInitializationAsync(DynamicWorldContainer dynamicWorldContainer, GlobalWorld globalWorld, Entity playerEntity, ISplashScreen splashScreen, CancellationToken ct)
         {
-            await core.UserInitializationAsync(dynamicWorldContainer, globalWorld, playerEntity, splashScreen, ct);
+            using (dynamicWorldContainer.RealFlowLoadingStatus.CurrentStage.Subscribe(OnLoadingStageChanged))
+                await core.UserInitializationAsync(dynamicWorldContainer, globalWorld, playerEntity, splashScreen, ct);
+
             analytics.Track(General.INITIAL_LOADING, new JsonObject
             {
                 { STAGE_KEY, "8 - end" },
             });
         }
 
-    
+        private void OnLoadingStageChanged(RealFlowLoadingStatus.Stage stage)
+        {
+            analytics.Track(General.INITIAL_LOADING, new JsonObject
+            {
+                { STAGE_KEY, $"7.{loadingScreenStageId++} - loading screen: {stage}" },
+            });
+        }
     }
 }

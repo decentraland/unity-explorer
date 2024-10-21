@@ -68,8 +68,8 @@ namespace DCL.Multiplayer.Connections.Demo
                 loonCharacterObject,
                 ICurrentAdapterAddress.NewDefault(new IRealmData.Fake())
             );
-            var realFlowLoadingStatus = new LoadingStatus();
-            realFlowLoadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Completed);
+            var realFlowLoadingStatus = new RealFlowLoadingStatus();
+            realFlowLoadingStatus.SetStage(RealFlowLoadingStatus.Stage.Completed);
             system = new ConnectionRoomsSystem(world, archipelagoIslandRoom, new IGateKeeperSceneRoom.Fake(), realFlowLoadingStatus);
 
             while (this)

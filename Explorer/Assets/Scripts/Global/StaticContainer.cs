@@ -39,8 +39,6 @@ using Global.AppArgs;
 using SceneRunner.Mapping;
 using System.Collections.Generic;
 using System.Threading;
-using DCL.PerformanceAndDiagnostics.Analytics;
-using DCL.UserInAppInitializationFlow;
 using PortableExperiences.Controller;
 using UnityEngine;
 using Utility;
@@ -98,8 +96,6 @@ namespace Global
         public IPortableExperiencesController PortableExperiencesController { get; private set; }
         public IDebugContainerBuilder DebugContainerBuilder { get; private set; }
 
-        public ILoadingStatus LoadingStatus { get; private set; }
-
         public void Dispose()
         {
             realmPartitionSettings.Dispose();
@@ -135,8 +131,6 @@ namespace Global
             ISystemMemoryCap memoryCap,
             WorldVolumeMacBus worldVolumeMacBus,
             ISceneRestrictionBusController sceneRestrictionBusController,
-            bool enableAnalytics,
-            IAnalyticsController analyticsController,
             CancellationToken ct)
         {
             ProfilingCounters.CleanAllCounters();
@@ -204,9 +198,6 @@ namespace Global
                     diagnosticsContainer.Sentry!.AddCurrentSceneToScope(scope, container.ScenesCache.CurrentScene.Info);
             });
 
-            container.LoadingStatus = enableAnalytics ?
-                new LoadingStatusAnalyticsDecorator(new LoadingStatus(), analyticsController) : new LoadingStatus();
-
             container.ECSWorldPlugins = new IDCLWorldPlugin[]
             {
                 new TransformsPlugin(sharedDependencies, exposedPlayerTransform, exposedGlobalDataContainer.ExposedCameraData),
@@ -222,7 +213,7 @@ namespace Global
                 new VisibilityPlugin(),
                 new AudioSourcesPlugin(sharedDependencies, container.WebRequestsContainer.WebRequestController, container.CacheCleaner, container.assetsProvisioner),
                 assetBundlePlugin,
-                new GltfContainerPlugin(sharedDependencies, container.CacheCleaner, container.SceneReadinessReportQueue, container.SingletonSharedDependencies.SceneAssetLock, componentsContainer.ComponentPoolsRegistry, localSceneDevelopment, useRemoteAssetBundles, container.LoadingStatus),
+                new GltfContainerPlugin(sharedDependencies, container.CacheCleaner, container.SceneReadinessReportQueue, container.SingletonSharedDependencies.SceneAssetLock, componentsContainer.ComponentPoolsRegistry, localSceneDevelopment, useRemoteAssetBundles),
                 new InteractionPlugin(sharedDependencies, profilingProvider, exposedGlobalDataContainer.GlobalInputEvents, componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner),
                 new SceneUIPlugin(sharedDependencies, container.assetsProvisioner, container.InputBlock),
                 container.CharacterContainer.CreateWorldPlugin(componentsContainer.ComponentPoolsRegistry),

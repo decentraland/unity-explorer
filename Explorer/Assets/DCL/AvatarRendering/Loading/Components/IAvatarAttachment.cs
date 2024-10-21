@@ -3,6 +3,7 @@ using DCL.AvatarRendering.Loading.DTO;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
 using SceneRunner.Scene;
+using System.Linq;
 
 namespace DCL.AvatarRendering.Loading.Components
 {
@@ -113,9 +114,8 @@ namespace DCL.AvatarRendering.Loading.Components
             {
                 var representation = dto.Metadata.AbstractData.representations[i];
 
-                for (var id = 0; id < representation.bodyShapes.Length; id++)
-                    if (Equals(representation.bodyShapes[id], (string)bodyShape))
-                        return avatarAttachment.TryGetContentHashByKey(representation.mainFile, out hash);
+                if (representation.bodyShapes.Contains(bodyShape))
+                    return avatarAttachment.TryGetContentHashByKey(representation.mainFile, out hash);
             }
 
             hash = null;

@@ -8,41 +8,23 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 {
     public class StaticCommonTraitsPlugin : EventPlugin
     {
-        private const string DCL_EDITOR = "dcl-editor";
-        private const string UNITY_EDITOR = "unity-editor";
-        private const string DEBUG = "debug";
-        private const string RELEASE = "release";
-
         private readonly JsonElement sessionId;
         private readonly JsonElement launcherAnonymousId;
+        private readonly JsonElement runtime;
 
         private readonly JsonElement dclRendererType = SystemInfo.deviceType.ToString(); // Desktop, Console, Handeheld (Mobile), Unknown
         private readonly JsonElement rendererVersion = Application.version;
         private readonly JsonElement os = SystemInfo.operatingSystem;
-        private readonly JsonElement runtime;
 
         public override PluginType Type => PluginType.Enrichment;
 
         public StaticCommonTraitsPlugin(IAppArgs appArgs, LauncherTraits launcherTraits)
         {
-            sessionId = !string.IsNullOrEmpty(launcherTraits.SessionId) ? launcherTraits.SessionId : SystemInfo.deviceUniqueIdentifier + DateTime.Now.ToString("yyyyMMddHHmmssfff");
-            launcherAnonymousId = launcherTraits.LauncherAnonymousId;
+            this.sessionId = !string.IsNullOrEmpty(launcherTraits.SessionId) ? launcherTraits.SessionId : SystemInfo.deviceUniqueIdentifier + DateTime.Now.ToString("yyyyMMddHHmmssfff");
+            this.launcherAnonymousId = launcherTraits.LauncherAnonymousId;
 
-            runtime = ChooseRuntime(appArgs);
-        }
-
-        private static string ChooseRuntime(IAppArgs appArgs)
-        {
-            if (Application.isEditor)
-                return UNITY_EDITOR;
-
-            if (appArgs.HasFlag(DCL_EDITOR))
-                return DCL_EDITOR;
-
-            if (Debug.isDebugBuild || appArgs.HasDebugFlag())
-                return DEBUG;
-
-            return RELEASE;
+            runtime = Application.isEditor ? "editor" :
+                Debug.isDebugBuild || appArgs.HasDebugFlag() ? "debug" : "release";
         }
 
         public override TrackEvent Track(TrackEvent trackEvent)

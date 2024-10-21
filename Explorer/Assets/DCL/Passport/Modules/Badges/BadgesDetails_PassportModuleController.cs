@@ -17,8 +17,6 @@ namespace DCL.Passport.Modules.Badges
     {
         private const string ALL_FILTER = "All";
 
-        public event Action<string> OnBadgeSelected;
-
         private readonly BadgesDetails_PassportModuleView view;
         private readonly BadgesAPIClient badgesAPIClient;
         private readonly PassportErrorsController passportErrorsController;
@@ -52,13 +50,7 @@ namespace DCL.Passport.Modules.Badges
             badgeInfoController = new BadgeInfo_PassportModuleSubController(badgeInfoModuleView, webRequestController, badgesAPIClient, passportErrorsController);
             badgeDetailsCardsController = new BadgeDetailsCards_PassportModuleSubController(view, webRequestController, badgesCategoriesController, badgeInfoController);
 
-            badgeDetailsCardsController.OnBadgeSelected += BadgeSelected;
             badgesCategoriesController.OnBadgesFilterButtonClicked += OnBadgesCategoryButtonClicked;
-        }
-
-        private void BadgeSelected(string badgeId)
-        {
-            OnBadgeSelected?.Invoke(badgeId);
         }
 
         public void SetBadgeByDefault(string badgeId) =>

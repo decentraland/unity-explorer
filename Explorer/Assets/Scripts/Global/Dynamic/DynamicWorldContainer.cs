@@ -138,8 +138,9 @@ namespace Global.Dynamic
 
         public IRoomHub RoomHub { get; private set; } = null!;
 
-        private MultiplayerMovementMessageBus? multiplayerMovementMessageBus;
+        public RealFlowLoadingStatus RealFlowLoadingStatus { get; private set; } = null!;
 
+        private MultiplayerMovementMessageBus? multiplayerMovementMessageBus;
 
         public override void Dispose()
         {
@@ -159,7 +160,6 @@ namespace Global.Dynamic
             Entity playerEntity,
             IAppArgs appArgs,
             ISceneRestrictionBusController sceneRestrictionBusController,
-            ILoadingStatus loadingStatus,
             CancellationToken ct)
         {
             var container = new DynamicWorldContainer();
@@ -243,6 +243,7 @@ namespace Global.Dynamic
                 new DCLMultiPool();
 
             var memoryPool = new ArrayMemoryPool(ArrayPool<byte>.Shared!);
+            container.RealFlowLoadingStatus = new RealFlowLoadingStatus();
 
             var assetBundlesURL = URLDomain.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.AssetBundlesCDN));
 
@@ -341,8 +342,8 @@ namespace Global.Dynamic
                 dynamicWorldParams.EnableLandscape,
                 staticContainer.ExposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy,
                 exposedGlobalDataContainer.CameraSamplingData,
-                localSceneDevelopment,
-                loadingStatus);
+                localSceneDevelopment
+            );
 
             IHealthCheck livekitHealthCheck = bootstrapContainer.DebugSettings.EnableEmulateNoLivekitConnection
                 ? new IHealthCheck.AlwaysFails("Livekit connection is in debug, always fail mode")
@@ -361,7 +362,7 @@ namespace Global.Dynamic
             livekitHealthCheck.WithRetries();
 
             container.UserInAppInAppInitializationFlow = new RealUserInAppInitializationFlow(
-                loadingStatus,
+                container.RealFlowLoadingStatus,
                 livekitHealthCheck,
                 bootstrapContainer.DecentralandUrlsSource,
                 container.MvcManager,
@@ -457,7 +458,7 @@ namespace Global.Dynamic
                     container.ProfileRepository,
                     container.ProfileBroadcast,
                     debugBuilder,
-                    loadingStatus,
+                    container.RealFlowLoadingStatus,
                     entityParticipantTable,
                     container.MessagePipesHub,
                     container.RemoteMetadata,
@@ -557,7 +558,8 @@ namespace Global.Dynamic
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
                 new Web3AuthenticationPlugin(assetsProvisioner, dynamicWorldDependencies.Web3Authenticator, debugBuilder, container.MvcManager, selfProfile, webBrowser, staticContainer.RealmData, identityCache, characterPreviewFactory, dynamicWorldDependencies.SplashScreen, audioMixerVolumesController, staticContainer.FeatureFlagsCache, characterPreviewEventBus, globalWorld),
-                new StylizedSkyboxPlugin(assetsProvisioner, dynamicSettings.DirectionalLight, debugBuilder), new LoadingScreenPlugin(assetsProvisioner, container.MvcManager, audioMixerVolumesController, staticContainer.InputBlock, debugBuilder, loadingStatus),
+                new StylizedSkyboxPlugin(assetsProvisioner, dynamicSettings.DirectionalLight, debugBuilder),
+                new LoadingScreenPlugin(assetsProvisioner, container.MvcManager, audioMixerVolumesController, staticContainer.InputBlock),
                 new ExternalUrlPromptPlugin(assetsProvisioner, webBrowser, container.MvcManager, dclCursor),
                 new TeleportPromptPlugin(assetsProvisioner, container.MvcManager,
                     staticContainer.WebRequestsContainer.WebRequestController, placesAPIService, dclCursor,

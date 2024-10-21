@@ -2,7 +2,6 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using Utility;
 
 namespace SceneRunner.Scene
 {
@@ -16,7 +15,7 @@ namespace SceneRunner.Scene
         private readonly string sceneID;
         private readonly string buildDate;
         private readonly bool ignoreConvertedFiles;
-
+        
         //From v25 onwards, the asset bundle path contains the sceneID in the hash
         //This was done to solve cache issues
         public const int ASSET_BUNDLE_VERSION_REQUIRES_HASH = 25;
@@ -28,7 +27,7 @@ namespace SceneRunner.Scene
             this.assetBundlesBaseUrl = assetBundlesBaseUrl;
             this.version = version;
             hasSceneIDInPath = int.Parse(version.AsSpan().Slice(1)) >= 25;
-            convertedFiles = new HashSet<string>(files, new UrlHashComparer());
+            convertedFiles = new HashSet<string>(files, StringComparer.OrdinalIgnoreCase);
             this.sceneID = sceneID;
             this.buildDate = buildDate;
             ignoreConvertedFiles = false;
@@ -71,18 +70,11 @@ namespace SceneRunner.Scene
         {
             if (hasSceneIDInPath)
                 return assetBundlesBaseUrl.Append(new URLPath($"{version}/{sceneID}/{hash}"));
-
+            
             return assetBundlesBaseUrl.Append(new URLPath($"{version}/{hash}"));
         }
 
         public string GetVersion() =>
             version;
-
-        //Used for the OngoingRequests cache. We need to avoid version and sceneID in this URL to able to reuse assets.
-        //The first loaded hash will be the one used for all the other requests
-        public URLAddress GetCacheableURL(string hash)
-        {
-            return assetBundlesBaseUrl.Append(new URLPath(hash));
-        }
     }
 }
