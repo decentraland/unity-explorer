@@ -235,7 +235,7 @@ namespace Global
                 new MultiplayerPlugin(),
                 new RealmInfoPlugin(container.RealmData, container.RoomHubProxy),
                 new InputModifierPlugin(globalWorld, container.PlayerEntity, sceneRestrictionBusController),
-                new MainCameraPlugin(componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner, container.CacheCleaner, exposedGlobalDataContainer.ExposedCameraData, globalWorld),
+                new MainCameraPlugin(componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner, container.CacheCleaner, exposedGlobalDataContainer.ExposedCameraData, sceneRestrictionBusController, globalWorld),
 
 #if UNITY_EDITOR
                 new GizmosWorldPlugin(),
