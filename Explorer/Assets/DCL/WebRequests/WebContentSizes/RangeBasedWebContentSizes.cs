@@ -30,7 +30,7 @@ namespace DCL.WebRequests.WebContentSizes
 
         public async UniTask<bool> IsOkSizeAsync(string url, CancellationToken token)
         {
-            var request = NewRequest(url);
+            using var request = NewRequest(url);
             request.SendWebRequest().WithCancellation(token);
 
             while (token.IsCancellationRequested == false
@@ -41,7 +41,6 @@ namespace DCL.WebRequests.WebContentSizes
                     reasonLog($"Seems the remote server doesn't support Range Header, Downloaded bytes {request.downloadedBytes} exceeded upper limit {UPPER_LIMIT}, aborting request");
                     reasonLog(ReadableResponseHeaders(request));
                     request.Abort();
-                    request.Dispose();
                     return false;
                 }
 
