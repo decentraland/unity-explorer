@@ -1,34 +1,40 @@
 namespace DCL.ResourcesUnloading.UnloadStrategies
 {
-    
-    public interface IUnloadStrategy
+    public abstract class UnloadStrategy 
     {
-        void ResetStrategy();
-        void TryUnload(ICacheCleaner cacheCleaner);
-        bool FailedOverThreshold();
-    }
-    
-    public abstract class UnloadStrategy : IUnloadStrategy
-    {
+        private readonly UnloadStrategy? PreviousStrategy;
 
-        private int currentFailureCount;
-        private readonly int FAILURE_THRESHOLD = 250;
+        internal int currentFailureCount;
+        internal int FAILURE_THRESHOLD = 300;
 
-        public virtual void ResetStrategy()
+        protected UnloadStrategy(UnloadStrategy? previousStrategy)
+        {
+            this.PreviousStrategy = previousStrategy;
+        }
+        
+        protected abstract void RunStrategy(ICacheCleaner cacheCleaner);
+        protected virtual void ResetStrategy() {}
+
+        public void Reset()
         {
             currentFailureCount = 0;
+            ResetStrategy();
+            PreviousStrategy?.Reset();
         }
 
         public bool FailedOverThreshold()
         {
-            return currentFailureCount > FAILURE_THRESHOLD;
+            return currentFailureCount >= FAILURE_THRESHOLD;
         }
 
-        public virtual void TryUnload(ICacheCleaner cacheCleaner)
+        public void TryUnload(ICacheCleaner cacheCleaner)
         {
-            cacheCleaner.UnloadCache();
-            cacheCleaner.UpdateProfilingCounters();
-            currentFailureCount++;
+            if (PreviousStrategy == null || PreviousStrategy.FailedOverThreshold())
+            {
+                RunStrategy(cacheCleaner);
+                currentFailureCount++;
+            }
+            PreviousStrategy?.TryUnload(cacheCleaner);
         }
     }
 }

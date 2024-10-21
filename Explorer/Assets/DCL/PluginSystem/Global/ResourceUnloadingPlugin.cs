@@ -10,20 +10,23 @@ namespace DCL.PluginSystem.Global
     public class ResourceUnloadingPlugin : IDCLGlobalPluginWithoutSettings
     {
         private readonly MemoryBudget memoryBudget;
-        private readonly UnloadStrategyHandler unloadStrategyHandler;
+        private readonly UnloadStrategy unloadStrategy;
+        private readonly ICacheCleaner cacheCleaner;
 
 
-        public ResourceUnloadingPlugin(MemoryBudget memoryBudget, CacheCleaner cacheCleaner,
+        public ResourceUnloadingPlugin(MemoryBudget memoryBudget, ICacheCleaner cacheCleaner,
             IRealmPartitionSettings realmPartitionSettings)
         {
             this.memoryBudget = memoryBudget;
-            unloadStrategyHandler =
-                new UnloadStrategyHandler(realmPartitionSettings, cacheCleaner);
+            this.cacheCleaner = cacheCleaner;
+            //Outer strategy is more aggresive and runs last
+            unloadStrategy = new UnloadUnusedAssetUnloadStrategy(
+                new ReduceLoadingRadiusUnloadStrategy(new StandardUnloadStrategy(), realmPartitionSettings));
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            ReleaseMemorySystem.InjectToWorld(ref builder, memoryBudget, unloadStrategyHandler);
+            ReleaseMemorySystem.InjectToWorld(ref builder, memoryBudget, unloadStrategy, cacheCleaner);
         }
     }
 }

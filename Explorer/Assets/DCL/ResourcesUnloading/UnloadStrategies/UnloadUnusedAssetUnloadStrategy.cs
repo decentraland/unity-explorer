@@ -5,16 +5,16 @@ namespace DCL.ResourcesUnloading.UnloadStrategies
     public class UnloadUnusedAssetUnloadStrategy : UnloadStrategy
     {
 
-        private int FRAMES_UNTIL_UNLOAD_IS_INVOKED = 1000;
+        private readonly int FRAMES_UNTIL_UNLOAD_IS_INVOKED = 4_000;
         private int currentFrameCountForUnloadAssets;
         
-        public UnloadUnusedAssetUnloadStrategy()
+        public UnloadUnusedAssetUnloadStrategy(UnloadStrategy previousStrategy) : base(previousStrategy)
         {
             //We equalize it so its invoked on first invocation of TryUnload
             currentFrameCountForUnloadAssets = FRAMES_UNTIL_UNLOAD_IS_INVOKED;
         }
 
-        public override void TryUnload(ICacheCleaner cacheCleaner)
+        protected override void RunStrategy(ICacheCleaner cacheCleaner)
         {
             currentFrameCountForUnloadAssets++;
             if (currentFrameCountForUnloadAssets > FRAMES_UNTIL_UNLOAD_IS_INVOKED)
@@ -22,12 +22,10 @@ namespace DCL.ResourcesUnloading.UnloadStrategies
                 Resources.UnloadUnusedAssets();
                 currentFrameCountForUnloadAssets = 0;
             }
-            base.TryUnload(cacheCleaner);
         }
-        
-        public override void ResetStrategy()
+
+        protected override void ResetStrategy()
         {
-            base.ResetStrategy();
             currentFrameCountForUnloadAssets = FRAMES_UNTIL_UNLOAD_IS_INVOKED;
         }
 
