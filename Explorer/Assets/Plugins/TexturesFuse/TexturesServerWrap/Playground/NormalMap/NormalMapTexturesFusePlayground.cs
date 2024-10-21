@@ -5,6 +5,7 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using UnityEngine;
+using UnityEngine.Experimental.Rendering;
 
 namespace Plugins.TexturesFuse.TexturesServerWrap.Playground
 {
@@ -33,16 +34,10 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground
             byte[] buffer = await File.ReadAllBytesAsync(path, destroyCancellationToken)! ?? Array.Empty<byte>();
             byte[] normalBuffer = await File.ReadAllBytesAsync(normalMapPath, destroyCancellationToken)! ?? Array.Empty<byte>();
 
-            var results = await UniTask.WhenAll(
-                unzip.TextureFromBytesAsync(buffer, destroyCancellationToken),
-                unzip.TextureFromBytesAsync(normalBuffer, destroyCancellationToken)
-            );
-
-            var texture1 = results.Item1.Unwrap();
-            var texture2 = results.Item2.Unwrap();
+            var texture1 = (await unzip.TextureFromBytesAsync(buffer, destroyCancellationToken)).Unwrap();
 
             currentTexture = texture1.Texture;
-            currentNormalMapTexture = NewNormalMapTexture(texture2.Texture);
+            currentNormalMapTexture = NewNormalMapTexture(normalBuffer);
 
             var mpb = new MaterialPropertyBlock();
             mpb.SetTexture("_BaseMap", currentTexture);
@@ -57,31 +52,19 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground
             }
 
             texture1.Dispose();
-            texture2.Dispose();
         }
 
-        private static Texture2D NewNormalMapTexture(Texture2D originalTexture)
+        private Texture2D NewNormalMapTexture(byte[] buffer)
         {
-            var output = new Texture2D(originalTexture.width, originalTexture.height, TextureFormat.RGB24, false);
+            const int WIDTH = 512;
+            const int HEIGHT = 512;
 
-            for (var i = 0; i < originalTexture.width; i++)
-            for (var j = 0; j < originalTexture.height; j++)
-            {
-                var pixel = originalTexture.GetPixel(i, j);
-                float tempX = (pixel.r * 2) - 1;
-                float tempY = -(pixel.g * 2) - 1;
-                float tempZ = Mathf.Sqrt(1 - (tempX * tempX) - (tempY * tempY));
+            var normalMapTexture = new Texture2D(WIDTH, HEIGHT, TextureFormat.BC5, false, true);
 
-                output.SetPixel(
-                    i,
-                    j,
-                    new Color((tempX * 0.5f) + 0.5f, (tempY * 0.5f) + 0.5f, (tempZ * 0.5f) + 0.5f)
-                );
-            }
+            normalMapTexture.LoadRawTextureData(buffer);
+            normalMapTexture.Apply();
 
-            output.Apply();
-
-            return output;
+            return normalMapTexture;
         }
     }
 }
