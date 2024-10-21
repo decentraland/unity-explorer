@@ -1,5 +1,5 @@
 {
-    "name": "LocalSceneTerminal",
+    "name": "SceneDebugConsole",
     "rootNamespace": "",
     "references": [],
     "includePlatforms": [],
