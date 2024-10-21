@@ -68,6 +68,7 @@ namespace ECS.StreamableLoading.AssetBundles
                 ca.Timeout = StreamableLoadingDefaults.TIMEOUT;
                 ca.CurrentSource = AssetSource.WEB;
                 ca.URL = assetBundleIntention.Manifest.GetAssetBundleURL(assetBundleIntention.Hash);
+                ca.CacheableURL = assetBundleIntention.Manifest.GetCacheableURL(assetBundleIntention.Hash);
                 assetBundleIntention.CommonArguments = ca;
                 assetBundleIntention.cacheHash = assetBundleIntention.Manifest.ComputeHash(assetBundleIntention.Hash);
             }
