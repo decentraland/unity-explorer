@@ -31,8 +31,8 @@ namespace DCL.SDKComponents.Tween.Components
             sdkTransform.Rotation.Value = startRotation;
             sdkTransform.Scale = startScale;
 
-            transform.rotation = startRotation;
-            transform.position = currentValue;
+            transform.localRotation = startRotation;
+            transform.localPosition = currentValue;
             transform.localScale = startScale;
         }
     }
@@ -60,8 +60,8 @@ namespace DCL.SDKComponents.Tween.Components
             sdkTransform.Rotation.Value = startRotation;
 
             transform.localScale = currentValue;
-            transform.position = startPosition;
-            transform.rotation = startRotation;
+            transform.localPosition = startPosition;
+            transform.localRotation = startRotation;
         }
     }
 
@@ -89,8 +89,8 @@ namespace DCL.SDKComponents.Tween.Components
             sdkTransform.Position.Value = startPosition;
             sdkTransform.Scale = startScale;
 
-            transform.rotation = currentValue;
-            transform.position = startPosition;
+            transform.localRotation = currentValue;
+            transform.localPosition = startPosition;
             transform.localScale = startScale;
         }
     }
