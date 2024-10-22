@@ -51,7 +51,7 @@ namespace Global.Dynamic.DebugSettings
                 connectionQuality = ConnectionQuality.QualityExcellent,
                 enableRemotePortableExperiences = true,
                 emotesToAddToUserProfile = null,
-                appParameters = Environment.GetCommandLineArgs(),
+                appParameters = Array.Empty<string>(),
             };
 
         // To avoid configuration issues, force full flow on build (Application.isEditor is always true in Editor, but in profile builds (i.e. when set to Development) we will have the expected release flow too.
