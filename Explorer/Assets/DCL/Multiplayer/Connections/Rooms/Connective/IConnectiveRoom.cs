@@ -21,7 +21,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
 
         IRoom Room();
 
-        class Fake : IConnectiveRoom
+        class Null : IConnectiveRoom
         {
             public UniTask<bool> StartAsync() =>
                 UniTask.FromResult(true);
