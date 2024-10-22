@@ -11,8 +11,8 @@ namespace DCL.WebRequests.ArgsFactory
             this.texturesUnzip = texturesUnzip;
         }
 
-        public GetTextureArguments NewArguments() =>
-            new (texturesUnzip);
+        public GetTextureArguments NewArguments(TextureType textureType) =>
+            new (texturesUnzip, textureType);
 
         public void Dispose()
         {

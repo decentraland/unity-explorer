@@ -17,10 +17,12 @@ namespace DCL.WebRequests
     {
         private readonly ITexturesUnzip texturesUnzip;
         private readonly string url;
+        private readonly TextureType textureType;
 
-        private GetTextureWebRequest(UnityWebRequest unityWebRequest, ITexturesUnzip texturesUnzip, string url)
+        private GetTextureWebRequest(UnityWebRequest unityWebRequest, ITexturesUnzip texturesUnzip, string url, TextureType textureType)
         {
             this.url = url;
+            this.textureType = textureType;
             this.texturesUnzip = texturesUnzip;
             UnityWebRequest = unityWebRequest;
         }
@@ -36,7 +38,7 @@ namespace DCL.WebRequests
         internal static GetTextureWebRequest Initialize(in CommonArguments commonArguments, GetTextureArguments textureArguments)
         {
             UnityWebRequest wr = UnityWebRequest.Get(commonArguments.URL)!;
-            return new GetTextureWebRequest(wr, textureArguments.TexturesUnzip, commonArguments.URL);
+            return new GetTextureWebRequest(wr, textureArguments.TexturesUnzip, commonArguments.URL, textureArguments.TextureType);
         }
 
         public readonly struct CreateTextureOp : IWebRequestOp<GetTextureWebRequest, OwnedTexture2D>
@@ -55,7 +57,8 @@ namespace DCL.WebRequests
                 try
                 {
                     byte[] data = webRequest.UnityWebRequest.downloadHandler?.data ?? Array.Empty<byte>();
-                    var result = await webRequest.texturesUnzip.TextureFromBytesAsync(data, ct).Timeout(TimeSpan.FromSeconds(15));
+
+                    var result = await webRequest.texturesUnzip.TextureFromBytesAsync(data, webRequest.textureType, ct).Timeout(TimeSpan.FromSeconds(15));
 
                     if (result.Success == false)
                     {

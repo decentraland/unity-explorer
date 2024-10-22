@@ -2,6 +2,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.WebRequests.ArgsFactory;
+using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -61,7 +62,7 @@ namespace DCL.WebRequests.Analytics
                     // texture
                     await webRequestController.GetTextureAsync(
                         new CommonArguments(FAIL, attemptsCount: retriesCount),
-                        getTextureArgsFactory.NewArguments(),
+                        getTextureArgsFactory.NewArguments(TextureType.Albedo),
                         new GetTextureWebRequest.CreateTextureOp(TextureWrapMode.Clamp, FilterMode.Bilinear),
                         CancellationToken.None,
                         reportData: ReportCategory.DEBUG

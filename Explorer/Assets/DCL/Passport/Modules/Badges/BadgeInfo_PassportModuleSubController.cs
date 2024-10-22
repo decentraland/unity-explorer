@@ -5,6 +5,7 @@ using DCL.Diagnostics;
 using DCL.Passport.Fields.Badges;
 using DCL.WebRequests;
 using DCL.WebRequests.ArgsFactory;
+using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -296,7 +297,7 @@ namespace DCL.Passport.Modules.Badges
         private async UniTask<Texture2D> RemoteTextureAsync(string url, CancellationToken ct) =>
             (await webRequestController.GetTextureAsync(
                 new CommonArguments(URLAddress.FromString(url)),
-                getTextureArgsFactory.NewArguments(),
+                getTextureArgsFactory.NewArguments(TextureType.Albedo),
                 GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp, FilterMode.Bilinear),
                 ct,
                 ReportCategory.BADGES)

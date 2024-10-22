@@ -2,7 +2,6 @@
 using DCL.WebRequests;
 using DCL.WebRequests.ArgsFactory;
 using ECS.Prioritization.Components;
-using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
 using NUnit.Framework;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
@@ -41,7 +40,7 @@ namespace ECS.StreamableLoading.Tests
 
         private Promise NewPromise(World world)
         {
-            var intention = new GetTextureIntention(successPath, TextureWrapMode.Repeat, FilterMode.Bilinear);
+            var intention = new GetTextureIntention(successPath, TextureWrapMode.Repeat, FilterMode.Bilinear, TextureType.Albedo);
 
             var partition = PartitionComponent.TOP_PRIORITY;
             return Promise.Create(world, intention, partition);

@@ -1,5 +1,6 @@
 ﻿using CRDT;
 using ECS.StreamableLoading.Common.Components;
+using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -12,16 +13,19 @@ namespace ECS.StreamableLoading.Textures
 
         public readonly TextureWrapMode WrapMode;
         public readonly FilterMode FilterMode;
+        public readonly TextureType TextureType;
+        // OR
         public readonly bool IsVideoTexture;
         public readonly CRDTEntity VideoPlayerEntity;
 
         public CancellationTokenSource CancellationTokenSource => CommonArguments.CancellationTokenSource;
 
-        public GetTextureIntention(string url, TextureWrapMode wrapMode, FilterMode filterMode, int attemptsCount = StreamableLoadingDefaults.ATTEMPTS_COUNT)
+        public GetTextureIntention(string url, TextureWrapMode wrapMode, FilterMode filterMode, TextureType textureType, int attemptsCount = StreamableLoadingDefaults.ATTEMPTS_COUNT)
         {
             CommonArguments = new CommonLoadingArguments(url, attempts: attemptsCount);
             WrapMode = wrapMode;
             FilterMode = filterMode;
+            TextureType = textureType;
             IsVideoTexture = false;
             VideoPlayerEntity = -1;
         }
@@ -33,6 +37,7 @@ namespace ECS.StreamableLoading.Textures
             FilterMode = FilterMode.Bilinear;
             IsVideoTexture = true;
             VideoPlayerEntity = videoPlayerEntity;
+            TextureType = TextureType.Albedo; //Ignored
         }
 
         public bool Equals(GetTextureIntention other) =>

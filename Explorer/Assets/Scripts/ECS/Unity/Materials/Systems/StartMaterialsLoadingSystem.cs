@@ -2,7 +2,6 @@
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
-using CommunicationData.URLHelpers;
 using CRDT;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
@@ -17,6 +16,7 @@ using ECS.Unity.Materials.Components.Defaults;
 using ECS.Unity.Textures.Components;
 using ECS.Unity.Textures.Components.Extensions;
 using ECS.Unity.Textures.Utils;
+using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using SceneRunner.Scene;
 using System.Collections.Generic;
 using UnityEngine;
@@ -120,7 +120,7 @@ namespace ECS.Unity.Materials.Systems
             TextureComponent? albedoTexture = material.Pbr.Texture.CreateTextureComponent(sceneData);
             TextureComponent? alphaTexture = material.Pbr.AlphaTexture.CreateTextureComponent(sceneData);
             TextureComponent? emissiveTexture = material.Pbr.EmissiveTexture.CreateTextureComponent(sceneData);
-            TextureComponent? bumpTexture = material.Pbr.BumpTexture.CreateTextureComponent(sceneData);
+            TextureComponent? bumpTexture = material.Pbr.BumpTexture.CreateTextureComponent(sceneData)?.WithTextureType(TextureType.NormalMap);
 
             return CreatePBRMaterialData(material, albedoTexture, alphaTexture, emissiveTexture, bumpTexture);
         }
@@ -165,9 +165,12 @@ namespace ECS.Unity.Materials.Systems
         private static MaterialData CreateBasicMaterialData(in PBMaterial pbMaterial, in TextureComponent? albedoTexture) =>
             MaterialData.CreateBasicMaterial(albedoTexture, pbMaterial.GetAlphaTest(), pbMaterial.GetDiffuseColor(), pbMaterial.GetCastShadows());
 
-        private bool TryCreateGetTexturePromise(in TextureComponent? textureComponent,
+        private bool TryCreateGetTexturePromise(
+            in TextureComponent? textureComponent,
             in TextureComponent? oldTextureComponent,
-            ref Promise? promise, PartitionComponent partitionComponent)
+            ref Promise? promise,
+            PartitionComponent partitionComponent
+        )
         {
             if (textureComponent == null)
             {
@@ -197,7 +200,17 @@ namespace ECS.Unity.Materials.Systems
                         : new StreamableLoadingResult<Texture2DData>(GetReportCategory(), CreateException(new EcsEntityNotFoundException(textureComponentValue.VideoPlayerEntity, $"Entity {textureComponentValue.VideoPlayerEntity} not found!. VideoTexture will not be created."))));
             }
             else
-                promise = Promise.Create(World!, new GetTextureIntention(textureComponentValue.Src, textureComponentValue.WrapMode, textureComponentValue.FilterMode, attemptsCount: attemptsCount), partitionComponent);
+                promise = Promise.Create(
+                    World!,
+                    new GetTextureIntention(
+                        textureComponentValue.Src,
+                        textureComponentValue.WrapMode,
+                        textureComponentValue.FilterMode,
+                        textureComponentValue.TextureType,
+                        attemptsCount: attemptsCount
+                    ),
+                    partitionComponent
+                );
 
             return true;
         }

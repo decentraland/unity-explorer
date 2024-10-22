@@ -12,6 +12,7 @@ using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
 using ECS.StreamableLoading.NFTShapes.DTOs;
 using ECS.StreamableLoading.Textures;
+using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System;
 using System.Threading;
 
@@ -38,7 +39,7 @@ namespace ECS.StreamableLoading.NFTShapes
             // Attempts should be always 1 as there is a repeat loop in `LoadSystemBase`
             var result = await webRequestController.GetTextureAsync(
                 new CommonLoadingArguments(URLAddress.FromString(imageUrl), attempts: 1),
-                getTextureArgsFactory.NewArguments(),
+                getTextureArgsFactory.NewArguments(TextureType.Albedo),
                 new GetTextureWebRequest.CreateTextureOp(GetNFTShapeIntention.WRAP_MODE, GetNFTShapeIntention.FILTER_MODE),
                 ct,
                 GetReportData()

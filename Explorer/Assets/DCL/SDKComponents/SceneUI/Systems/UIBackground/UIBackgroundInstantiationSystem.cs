@@ -1,7 +1,6 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using CRDT;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
@@ -19,8 +18,6 @@ using ECS.StreamableLoading.Textures;
 using ECS.Unity.Textures.Components;
 using ECS.Unity.Textures.Components.Extensions;
 using SceneRunner.Scene;
-using System;
-using UnityEngine;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.Texture2DData, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
 namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
@@ -88,11 +85,10 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
                 uiBackgroundComponent.Image.SetupFromSdkModel(ref sdkModel);
                 uiBackgroundComponent.Status = LifeCycle.LoadingFinished;
             }
-            else if(uiBackgroundComponent is { TexturePromise: not null, Status: LifeCycle.LoadingFinished })
-            {
+            else if (uiBackgroundComponent is { TexturePromise: not null, Status: LifeCycle.LoadingFinished })
+
                 // Ensure texture has latest data from model
                 uiBackgroundComponent.Image.SetupFromSdkModel(ref sdkModel, uiBackgroundComponent.Image.Texture);
-            }
 
             sdkModel.IsDirty = false;
         }
@@ -104,14 +100,15 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
                 uiBackgroundComponent.TexturePromise.Value.IsConsumed)
                 return;
 
-            if(!frameTimeBudgetProvider.TrySpendBudget() ||
-               !memoryBudgetProvider.TrySpendBudget())
+            if (!frameTimeBudgetProvider.TrySpendBudget() ||
+                !memoryBudgetProvider.TrySpendBudget())
                 return;
 
             var texturePromise = uiBackgroundComponent.TexturePromise.Value;
 
             // We hide the image until the texture is loaded in order to avoid to show a white image in the meanwhile
             uiBackgroundComponent.Image.IsHidden = true;
+
             if (texturePromise.TryConsume(World, out StreamableLoadingResult<Texture2DData> promiseResult))
             {
                 // Backgrounds with texture
@@ -147,7 +144,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
             // If component is being reused forget the previous promise
             TryAddAbortIntention(World, ref promise);
 
-            promise = Promise.Create(World, new GetTextureIntention(textureComponentValue.Src, textureComponentValue.WrapMode, textureComponentValue.FilterMode, attemptsCount: ATTEMPTS_COUNT), partitionComponent);
+            promise = Promise.Create(World, new GetTextureIntention(textureComponentValue.Src, textureComponentValue.WrapMode, textureComponentValue.FilterMode, textureComponentValue.TextureType, attemptsCount: ATTEMPTS_COUNT), partitionComponent);
         }
 
         private static void TryAddAbortIntention(World world, ref Promise? promise)

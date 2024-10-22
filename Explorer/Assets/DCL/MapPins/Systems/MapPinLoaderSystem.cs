@@ -48,6 +48,7 @@ namespace DCL.SDKComponents.MapPins.Systems
             UpdateMapPinQuery(World);
             HandleComponentRemovalQuery(World);
             HandleEntityDestructionQuery(World);
+
             if (useCustomMapPinIcons) { ResolvePromiseQuery(World); }
         }
 
@@ -58,8 +59,9 @@ namespace DCL.SDKComponents.MapPins.Systems
             MapPinComponent mapPinComponent = new MapPinComponent
             {
                 IsDirty = true,
-                Position = new Vector2Int((int) pbMapPin.Position.X, (int) pbMapPin.Position.Y)
+                Position = new Vector2Int((int)pbMapPin.Position.X, (int)pbMapPin.Position.Y)
             };
+
             pbMapPin.IsDirty = false;
 
             bool hasTexturePromise = useCustomMapPinIcons;
@@ -72,7 +74,6 @@ namespace DCL.SDKComponents.MapPins.Systems
 
             World.Add(entity, new MapPinHolderComponent(globalWorld.Create(pbMapPin, mapPinComponent), hasTexturePromise));
         }
-
 
         //This query is required because in the global world otherwise we cannot resolve easily
         //the promise of the texture, as it is bound to the entity in the scene world
@@ -166,9 +167,19 @@ namespace DCL.SDKComponents.MapPins.Systems
 
             DereferenceTexture(ref promise);
 
-            promise = Promise.Create(World, new GetTextureIntention(textureComponentValue.Src, textureComponentValue.WrapMode, textureComponentValue.FilterMode, attemptsCount: ATTEMPTS_COUNT), partitionComponent);
+            promise = Promise.Create(
+                World,
+                new GetTextureIntention(
+                    textureComponentValue.Src,
+                    textureComponentValue.WrapMode,
+                    textureComponentValue.FilterMode,
+                    textureComponentValue.TextureType,
+                    attemptsCount: ATTEMPTS_COUNT
+                ),
+                partitionComponent
+            );
+
             return true;
         }
-
     }
 }
