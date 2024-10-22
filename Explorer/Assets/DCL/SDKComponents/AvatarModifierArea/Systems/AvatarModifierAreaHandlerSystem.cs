@@ -141,7 +141,6 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
                 localAvatarTransform = null;
                 sceneRestrictionBusController.PushSceneRestriction(new AvatarHiddenRestriction
                 {
-                    Type = SceneRestrictions.AVATAR_HIDDEN,
                     Action = SceneRestrictionsAction.REMOVED,
                 });
             }
@@ -167,7 +166,6 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
                 localAvatarTransform = avatarTransform;
                 sceneRestrictionBusController.PushSceneRestriction(new AvatarHiddenRestriction
                 {
-                    Type = SceneRestrictions.AVATAR_HIDDEN,
                     Action = SceneRestrictionsAction.APPLIED,
                 });
             }

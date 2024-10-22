@@ -56,7 +56,10 @@ namespace DCL.Minimap
 
             restrictionsRegistry[sceneRestriction.Type] = isRestrictionAdded;
 
-            restrictionsView.sceneRestrictionsIcon.gameObject.SetActive(RestrictionsRegistryHasAtLeastOneActive());
+            bool restrictionIconEnabled = RestrictionsRegistryHasAtLeastOneActive();
+            restrictionsView.sceneRestrictionsIcon.gameObject.SetActive(restrictionIconEnabled);
+            if (!restrictionIconEnabled)
+                OnMouseExit();
         }
 
         private bool RestrictionsRegistryHasAtLeastOneActive()

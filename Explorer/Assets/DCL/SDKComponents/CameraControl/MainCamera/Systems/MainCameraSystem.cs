@@ -91,7 +91,6 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
                 );
                 sceneRestrictionBusController.PushSceneRestriction(new CameraLockedRestriction
                 {
-                    Type = SceneRestrictions.CAMERA_LOCKED,
                     Action = SceneRestrictionsAction.APPLIED,
                 });
             }
@@ -105,7 +104,6 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
                 previousVirtualCamera!.enabled = false;
                 sceneRestrictionBusController.PushSceneRestriction(new CameraLockedRestriction
                 {
-                    Type = SceneRestrictions.CAMERA_LOCKED,
                     Action = SceneRestrictionsAction.REMOVED,
                 });
             }

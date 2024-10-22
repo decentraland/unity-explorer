@@ -121,7 +121,6 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
             sceneRestrictionBusController.PushSceneRestriction(new CameraLockedRestriction()
             {
                 Action = SceneRestrictionsAction.APPLIED,
-                Type = SceneRestrictions.CAMERA_LOCKED,
             });
         }
 
@@ -138,7 +137,6 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
             sceneRestrictionBusController.PushSceneRestriction(new CameraLockedRestriction()
             {
                 Action = SceneRestrictionsAction.REMOVED,
-                Type = SceneRestrictions.CAMERA_LOCKED,
             });
         }
 
