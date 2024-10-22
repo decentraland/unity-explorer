@@ -16,6 +16,7 @@ namespace DCL.SDKComponents.MediaStream
         public MediaPlayer MediaPlayer;
 
         public string URL;
+        public bool IsFromContentServer;
         public VideoState State;
 
         public CancellationTokenSource Cts;
