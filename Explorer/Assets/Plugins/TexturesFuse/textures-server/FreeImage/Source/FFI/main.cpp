@@ -53,7 +53,7 @@ size_t dataLenForASTC(
     return total_blocks * 16;
 }
 
-ImageResult __cdecl texturesfuse_initialize(InitOptions initOptions, context **contextOutput)
+ImageResult texturesfuse_initialize(InitOptions initOptions, context **contextOutput)
 {
     if (!contextOutput)
     {
@@ -97,7 +97,7 @@ ImageResult __cdecl texturesfuse_initialize(InitOptions initOptions, context **c
     return Success;
 }
 
-ImageResult __cdecl texturesfuse_dispose(context *context)
+ImageResult texturesfuse_dispose(context *context)
 {
     if (context->disposed)
     {
@@ -115,13 +115,13 @@ ImageResult __cdecl texturesfuse_dispose(context *context)
     return Success;
 }
 
-ImageResult __cdecl texturesfuse_release(context *context, FfiHandle handle)
+ImageResult texturesfuse_release(context *context, FfiHandle handle)
 {
     bool result = context->handles.tryReleaseHandle(handle);
     return result ? Success : ErrorReleaseNoHandleFound;
 }
 
-ImageResult __cdecl texturesfuse_processed_image_from_memory(
+ImageResult texturesfuse_processed_image_from_memory(
     context *context,
     BYTE *bytes,
     int bytesLength,
@@ -179,7 +179,7 @@ ImageResult __cdecl texturesfuse_processed_image_from_memory(
     return Success;
 }
 
-ImageResult __cdecl texturesfuse_astc_image_from_memory(
+ImageResult texturesfuse_astc_image_from_memory(
     context *context,
     astcenc_swizzle swizzle,
     BYTE *bytes,
@@ -298,7 +298,7 @@ ImageResult __cdecl texturesfuse_astc_image_from_memory(
     return Success;
 }
 
-ImageResult __cdecl texturesfuse_bc5_image_from_memory(
+ImageResult texturesfuse_bc5_image_from_memory(
     context *context,
     BYTE *bytes,
     int bytesLength,

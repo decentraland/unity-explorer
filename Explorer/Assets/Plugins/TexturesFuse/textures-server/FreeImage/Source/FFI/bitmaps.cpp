@@ -95,7 +95,8 @@ ImageResult WithAlphaImage(FIBITMAP *bitmap, FIBITMAP **output)
     case FIT_UINT16:
     case FIT_INT16:
     case FIT_RGB16:
-
+        convertedImageFunc = FreeImage_ConvertTo32Bits;
+        break;
     case FIT_DOUBLE:
     case FIT_COMPLEX:
 
