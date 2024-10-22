@@ -6,12 +6,10 @@ using DCL.Character.Components;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using DCL.Profiles;
-using Decentraland.Kernel.Apis;
 using ECS.Abstract;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
 using ECS.Unity.Systems;
-using ECS.Unity.Transforms.Components;
 using Unity.Collections;
 using Unity.Jobs;
 using UnityEngine;
@@ -27,15 +25,20 @@ namespace DCL.Systems
     public partial class PartitionGlobalAssetEntitiesSystem : BaseUnityLoopSystem
     {
         private readonly IReadOnlyCameraSamplingData samplingData;
-        private readonly IPartitionSettings partitionSettings;
         private readonly IComponentPool<PartitionComponent> partitionComponentPool;
+
+        private readonly NativeArray<int> partiotionSqrDistanceBuckets;
 
         internal PartitionGlobalAssetEntitiesSystem(World world, IComponentPool<PartitionComponent> partitionComponentPool,
             IPartitionSettings settings, IReadOnlyCameraSamplingData cameraSamplingData) : base(world)
         {
             this.partitionComponentPool = partitionComponentPool;
-            partitionSettings = settings;
             samplingData = cameraSamplingData;
+
+            partiotionSqrDistanceBuckets = new NativeArray<int>(settings.SqrDistanceBuckets.Count, Allocator.Persistent);
+
+            for (var i = 0; i < settings.SqrDistanceBuckets.Count; i++)
+                partiotionSqrDistanceBuckets[i] = settings.SqrDistanceBuckets[i];
         }
 
         protected override void Update(float t)
@@ -95,51 +98,81 @@ namespace DCL.Systems
         {
             Vector3 vectorToCamera = entityPosition - cameraTransform;
 
-            float sqrDistance = Vector3.SqrMagnitude(vectorToCamera);
+            // Behind
+            var isBehindResult = new NativeArray<bool>(1, Allocator.Temp);
 
-            byte bucketIndex;
-            for (bucketIndex = 0; bucketIndex < partitionSettings.SqrDistanceBuckets.Count; bucketIndex++)
-                if (sqrDistance < partitionSettings.SqrDistanceBuckets[bucketIndex])
-                    break;
-
-            NativeArray<byte> bucketIndexResult = new NativeArray<byte>(1, Allocator.Temp);
-            PartitionIsBehindJob bucketIndexJob = new PartitionIsBehindJob
+            var isBehindJob = new PartitionIsBehindJob
             {
-                sqrDistance = sqrDistance,
-                result = bucketIndexResult,
+                CameraForward = cameraForward,
+                VectorToCamera = vectorToCamera,
+                IsBehindResult = isBehindResult,
             };
-            var bucketIndexJobHandle = bucketIndexJob.Schedule();
-            bucketIndexJobHandle.Complete();
-            bucketIndex = bucketIndexResult[0];
 
-            if (partitionComponent.Bucket != bucketIndex)
+            JobHandle isBehindJobHandle = isBehindJob.Schedule();
+            isBehindJobHandle.Complete();
+            bool isBehind = isBehindResult[0];
+            isBehindResult.Dispose();
+
+            if (partitionComponent.IsBehind != isBehind)
             {
-                partitionComponent.Bucket = bucketIndex;
                 partitionComponent.IsDirty = true;
+                partitionComponent.IsBehind = isBehind;
                 return;
             }
 
-            bool oldIsBehind = partitionComponent.IsBehind;
-            partitionComponent.IsBehind = Vector3.Dot(cameraForward, vectorToCamera) < 0;
+            // Bucket
+            var bucketIndexResult = new NativeArray<byte>(1, Allocator.Temp);
 
-            partitionComponent.IsDirty = oldIsBehind != partitionComponent.IsBehind;
+            var bucketIndexJob = new PartitionBucketJob
+            {
+                SqrDistanceBuckets = partiotionSqrDistanceBuckets,
+                VectorToCamera = vectorToCamera,
+                Result = bucketIndexResult,
+            };
+
+            JobHandle bucketIndexJobHandle = bucketIndexJob.Schedule();
+
+            bucketIndexJobHandle.Complete();
+            byte bucketIndex = bucketIndexResult[0];
+            bucketIndexResult.Dispose();
+
+            partitionComponent.IsDirty = partitionComponent.Bucket != bucketIndex;
+            partitionComponent.Bucket = bucketIndex;
+        }
+    }
+
+    public struct PartitionBucketJob : IJob
+    {
+        [ReadOnly] public NativeArray<int> SqrDistanceBuckets;
+        [ReadOnly] public Vector3 VectorToCamera;
+
+        public NativeArray<byte> Result;
+
+        public void Execute()
+        {
+            float sqrDistance = Vector3.SqrMagnitude(VectorToCamera);
+
+            for (byte bucketIndex = 0; bucketIndex < SqrDistanceBuckets.Length; bucketIndex++)
+            {
+                if (sqrDistance < SqrDistanceBuckets[bucketIndex])
+                {
+                    Result[0] = bucketIndex;
+                    return;
+                }
+            }
         }
     }
 
     public struct PartitionIsBehindJob : IJob
     {
-        public float sqrDistance;
-        public NativeArray<byte> result;
+        [ReadOnly] public Vector3 CameraForward;
+        [ReadOnly] public Vector3 VectorToCamera;
+
+        public NativeArray<bool> IsBehindResult;
 
         public void Execute()
         {
-            byte bucketIndex;
-            for (bucketIndex = 0; bucketIndex < partitionSettings.SqrDistanceBuckets.Count; bucketIndex++)
-                if (sqrDistance < partitionSettings.SqrDistanceBuckets[bucketIndex])
-                {
-                    result[0] = bucketIndex;
-                    return;
-                }
+            IsBehindResult[0] = Vector3.Dot(CameraForward, VectorToCamera) < 0;
         }
     }
 }
