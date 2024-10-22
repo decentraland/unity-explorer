@@ -12,7 +12,7 @@ using ECS.Abstract;
 using ECS.Groups;
 using RenderHeads.Media.AVProVideo;
 using SceneRunner.Scene;
-using System;
+using UnityEngine;
 
 namespace DCL.SDKComponents.MediaStream
 {
@@ -21,6 +21,8 @@ namespace DCL.SDKComponents.MediaStream
     [ThrottlingEnabled]
     public partial class VideoEventsSystem : BaseUnityLoopSystem
     {
+        private const float MAX_VIDEO_FROZEN_SECONDS_BEFORE_ERROR = 10f;
+
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IComponentPool<PBVideoEvent> componentPool;
@@ -45,9 +47,11 @@ namespace DCL.SDKComponents.MediaStream
         {
             if (!frameTimeBudget.TrySpendBudget()) return;
 
-            VideoState newState = GetCurrentVideoState(mediaPlayer.MediaPlayer.Control);
+            VideoState newState = GetCurrentVideoState(mediaPlayer.MediaPlayer.Control, mediaPlayer.PreviousPlayingTimeCheck, mediaPlayer.LastStateChangeTime);
 
             if (mediaPlayer.State == newState) return;
+            mediaPlayer.LastStateChangeTime = Time.realtimeSinceStartup;
+            mediaPlayer.PreviousPlayingTimeCheck = mediaPlayer.MediaPlayer.Control.GetCurrentTime();
             mediaPlayer.State = newState;
 
             AppendMessage(in sdkEntity, in mediaPlayer);
@@ -70,17 +74,29 @@ namespace DCL.SDKComponents.MediaStream
             );
         }
 
-        private static VideoState GetCurrentVideoState(IMediaControl mediaPlayerControl)
+        private static VideoState GetCurrentVideoState(IMediaControl mediaPlayerControl, double previousPlayingTimeCheck, float lastStateChangeTime)
         {
-            if (mediaPlayerControl.IsPlaying()) return VideoState.VsPlaying;
-            if (mediaPlayerControl.IsPaused()) return VideoState.VsPaused;
+            // Important: while PLAYING or PAUSED, MediaPlayerControl may also be BUFFERING and/or SEEKING.
+
             if (mediaPlayerControl.IsFinished()) return VideoState.VsNone;
-            if (mediaPlayerControl.IsBuffering()) return VideoState.VsBuffering;
-            if (mediaPlayerControl.IsSeeking()) return VideoState.VsSeeking;
-
             if (mediaPlayerControl.GetLastError() != ErrorCode.None) return VideoState.VsError;
+            if (mediaPlayerControl.IsPaused()) return VideoState.VsPaused;
 
-            return VideoState.VsNone;
+            VideoState state = VideoState.VsNone;
+            if (mediaPlayerControl.IsPlaying())
+            {
+                state = VideoState.VsPlaying;
+
+                if (mediaPlayerControl.GetCurrentTime().Equals(previousPlayingTimeCheck)) // Video is frozen
+                {
+                    state = mediaPlayerControl.IsSeeking() ? VideoState.VsSeeking : VideoState.VsBuffering;
+
+                    // If the seeking/buffering never ends, update state with error so the scene can react
+                    if ((Time.realtimeSinceStartup - lastStateChangeTime) > MAX_VIDEO_FROZEN_SECONDS_BEFORE_ERROR)
+                        state = VideoState.VsError;
+                }
+            }
+            return state;
         }
     }
 }
