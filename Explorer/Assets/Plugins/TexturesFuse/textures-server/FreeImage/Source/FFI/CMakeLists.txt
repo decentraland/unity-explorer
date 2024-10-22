@@ -634,26 +634,23 @@ include_directories(
 # add_definitions(-DTEST_TEXTURESFUSE)
 # add_executable(texturesfuse ${SOURCES})
 
-add_library(texturesfuse SHARED ${SOURCES})
+add_library(texturesfuse SHARED)
 
 # Compressor
 set(COMPRESSATOR_ROOT ${CMAKE_SOURCE_DIR}/../../../Compressator)
 
+message("COMPRESSATOR_ROOT Is: ${COMPRESSATOR_ROOT}")
+
 target_include_directories(texturesfuse PRIVATE ${COMPRESSATOR_ROOT}/include)
-target_link_libraries(texturesfuse PRIVATE ${COMPRESSATOR_ROOT}/lib/libCMP_Framework.a)
-target_link_libraries(texturesfuse PRIVATE ${COMPRESSATOR_ROOT}/lib/libCMP_Core_AVX.a)
-target_link_libraries(texturesfuse PRIVATE ${COMPRESSATOR_ROOT}/lib/libCMP_Core_AVX512.a)
-target_link_libraries(texturesfuse PRIVATE ${COMPRESSATOR_ROOT}/lib/libCMP_Core_SSE.a)
-target_link_libraries(texturesfuse PRIVATE ${COMPRESSATOR_ROOT}/lib/libCMP_Core.a)
-target_link_libraries(texturesfuse PRIVATE ${COMPRESSATOR_ROOT}/lib/libCMP_Common.a)
-target_link_libraries(texturesfuse PRIVATE ${COMPRESSATOR_ROOT}/lib/libCMP_Compressonator.a)
-target_link_libraries(texturesfuse PRIVATE ${COMPRESSATOR_ROOT}/lib/libCMP_GpuDecode.a)
-target_link_libraries(texturesfuse PRIVATE ${COMPRESSATOR_ROOT}/lib/libImage_DDS.a)
-target_link_libraries(texturesfuse PRIVATE ${COMPRESSATOR_ROOT}/lib/libImage_TGA.a)
+target_link_libraries(texturesfuse ${COMPRESSATOR_ROOT}/lib/libCMP_Core_AVX.a)
+target_link_libraries(texturesfuse ${COMPRESSATOR_ROOT}/lib/libCMP_Core_AVX512.a)
+target_link_libraries(texturesfuse ${COMPRESSATOR_ROOT}/lib/libCMP_Core_SSE.a)
+target_link_libraries(texturesfuse ${COMPRESSATOR_ROOT}/lib/libCMP_Core.a)
+target_link_libraries(texturesfuse ${COMPRESSATOR_ROOT}/lib/libCMP_Compressonator.a)
 
-
+target_sources(texturesfuse PRIVATE ${SOURCES})
 
 
 # Link the external library
 # TODO support for Win/linux
-target_link_libraries(texturesfuse PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/astc-encoder-build/Source/libastcenc-shared.dylib)
+target_link_libraries(texturesfuse ${CMAKE_CURRENT_BINARY_DIR}/astc-encoder-build/Source/libastcenc-shared.dylib)
