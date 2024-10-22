@@ -35,6 +35,11 @@ namespace DCL.SDKComponents.PlayerInputMovement.Systems
         {
             ApplyModifiersQuery(World);
 
+            CheckAndSendBusMessage();
+        }
+
+        private void CheckAndSendBusMessage()
+        {
             if (!currentBusMessage.Equals(previousBusMessage))
             {
                 if (currentBusMessage is { DisableAll: false, DisableWalk: false, DisableJog: false, DisableRun: false, DisableJump: false, DisableEmote: false })
@@ -96,12 +101,16 @@ namespace DCL.SDKComponents.PlayerInputMovement.Systems
         public void OnSceneIsCurrentChanged(bool value)
         {
             if (!value)
+            {
                 ResetModifiersOnLeave();
+                CheckAndSendBusMessage();
+            }
         }
 
         public void FinalizeComponents(in Query query)
         {
             ResetModifiersOnLeave();
+            CheckAndSendBusMessage();
         }
     }
 }

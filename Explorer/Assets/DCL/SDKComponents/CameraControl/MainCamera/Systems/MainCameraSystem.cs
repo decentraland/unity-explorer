@@ -159,9 +159,13 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
         }
 
         [Query]
-        private void FinalizeMainCameraComponent(in MainCameraComponent mainCameraComponent)
+        private void FinalizeMainCameraComponent(Entity entity, in MainCameraComponent mainCameraComponent)
         {
             DisableActiveVirtualCamera(mainCameraComponent);
+            sceneRestrictionBusController.PushSceneRestriction(new CameraLockedRestriction(entity.Id)
+            {
+                Action = SceneRestrictionsAction.REMOVED,
+            });
         }
 
         public void FinalizeComponents(in Query query)
