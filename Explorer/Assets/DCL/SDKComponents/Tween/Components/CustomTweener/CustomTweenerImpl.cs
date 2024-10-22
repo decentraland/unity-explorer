@@ -25,12 +25,15 @@ namespace DCL.SDKComponents.Tween.Components
             return (start, end);
         }
 
-        public override void SetResult(ref SDKTransform sdkTransform)
+        public override void SetResult(ref SDKTransform sdkTransform, Transform transform)
         {
             sdkTransform.Position.Value = currentValue;
-
             sdkTransform.Rotation.Value = startRotation;
             sdkTransform.Scale = startScale;
+
+            transform.rotation = startRotation;
+            transform.position = currentValue;
+            transform.localScale = startScale;
         }
     }
 
@@ -50,12 +53,15 @@ namespace DCL.SDKComponents.Tween.Components
             return (start, end);
         }
 
-        public override void SetResult(ref SDKTransform sdkTransform)
+        public override void SetResult(ref SDKTransform sdkTransform, Transform transform)
         {
             sdkTransform.Scale = currentValue;
-
             sdkTransform.Position.Value = startPosition;
             sdkTransform.Rotation.Value = startRotation;
+
+            transform.localScale = currentValue;
+            transform.position = startPosition;
+            transform.rotation = startRotation;
         }
     }
 
@@ -77,11 +83,15 @@ namespace DCL.SDKComponents.Tween.Components
                 end, duration);
         }
 
-        public override void SetResult(ref SDKTransform sdkTransform)
+        public override void SetResult(ref SDKTransform sdkTransform, Transform transform)
         {
             sdkTransform.Rotation.Value = currentValue;
             sdkTransform.Position.Value = startPosition;
             sdkTransform.Scale = startScale;
+
+            transform.rotation = currentValue;
+            transform.position = startPosition;
+            transform.localScale = startScale;
         }
     }
 }

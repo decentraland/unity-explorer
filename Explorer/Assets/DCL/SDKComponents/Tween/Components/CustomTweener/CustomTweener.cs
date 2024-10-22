@@ -21,7 +21,7 @@ namespace DCL.SDKComponents.Tween.Components
 
         protected abstract TweenerCore<T, T, TU> CreateTweener(T start, T end, float duration);
         protected abstract (T, T) GetTweenValues(PBTween pbTween, SDKTransform startTransform);
-        public abstract void SetResult(ref SDKTransform sdkTransform);
+        public abstract void SetResult(ref SDKTransform sdkTransform, Transform transform);
 
         public void Play() =>
             core.Play();
