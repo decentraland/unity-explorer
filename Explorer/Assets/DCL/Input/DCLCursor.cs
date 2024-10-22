@@ -14,12 +14,16 @@ namespace DCL.Input
         private readonly IEventSystem eventSystem;
         private readonly Texture2D normalCursor;
         private readonly Texture2D interactionCursor;
+        private readonly Vector2 normalCursorHotspot;
+        private readonly Vector2 interactionCursorHotspot;
         private CursorStyle cursorStyle = CursorStyle.None;
 
-        public DCLCursor(Texture2D normalCursor, Texture2D interactionCursor)
+        public DCLCursor(Texture2D normalCursor, Texture2D interactionCursor, Vector2 normalCursorHotspot, Vector2 interactionCursorHotspot)
         {
             this.normalCursor = normalCursor;
             this.interactionCursor = interactionCursor;
+            this.normalCursorHotspot = normalCursorHotspot;
+            this.interactionCursorHotspot = interactionCursorHotspot;
             SetStyle(CursorStyle.Normal);
         }
 
@@ -51,10 +55,10 @@ namespace DCL.Input
             switch (cursorStyle)
             {
                 case CursorStyle.Normal:
-                    Cursor.SetCursor(normalCursor, Vector2.zero, CursorMode.Auto);
+                    Cursor.SetCursor(normalCursor, normalCursorHotspot, CursorMode.Auto);
                     return;
                 case CursorStyle.Interaction:
-                    Cursor.SetCursor(interactionCursor, Vector2.zero, CursorMode.Auto);
+                    Cursor.SetCursor(interactionCursor, interactionCursorHotspot, CursorMode.Auto);
                     return;
                 default:
                     Cursor.SetCursor(null, Vector2.zero, CursorMode.Auto);
