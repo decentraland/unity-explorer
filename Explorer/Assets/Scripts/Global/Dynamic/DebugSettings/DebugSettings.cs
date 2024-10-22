@@ -67,6 +67,6 @@ namespace Global.Dynamic.DebugSettings
         public bool EnableEmulateNoLivekitConnection => Application.isEditor? this.enableEmulateNoLivekitConnection : RELEASE_SETTINGS.enableEmulateNoLivekitConnection;
         public bool OverrideConnectionQuality => Application.isEditor ? this.overrideConnectionQuality : RELEASE_SETTINGS.overrideConnectionQuality;
         public ConnectionQuality ConnectionQuality => Application.isEditor ? this.connectionQuality : RELEASE_SETTINGS.connectionQuality;
-        public string[] AppParameters => Application.isEditor ? appParameters : RELEASE_SETTINGS.appParameters;
+        public string[] AppParameters => appParameters;
     }
 }
