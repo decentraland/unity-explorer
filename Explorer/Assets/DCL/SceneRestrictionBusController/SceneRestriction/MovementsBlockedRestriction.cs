@@ -12,9 +12,10 @@ namespace DCL.SceneRestrictionBusController.SceneRestriction
         public bool DisableJump { get; set; }
         public bool DisableEmote { get; set; }
 
-        public MovementsBlockedRestriction() : base()
+        public MovementsBlockedRestriction(int entityId) : base()
         {
             Type = SceneRestrictions.AVATAR_MOVEMENTS_BLOCKED;
+            EntityId = entityId;
         }
 
         public override bool Equals(object obj)
@@ -32,7 +33,7 @@ namespace DCL.SceneRestrictionBusController.SceneRestriction
         }
 
         public object Clone() =>
-            new MovementsBlockedRestriction
+            new MovementsBlockedRestriction(this.EntityId)
             {
                 Type = this.Type,
                 Action = this.Action,

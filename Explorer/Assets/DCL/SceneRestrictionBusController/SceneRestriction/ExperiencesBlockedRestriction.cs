@@ -2,9 +2,10 @@ namespace DCL.SceneRestrictionBusController.SceneRestriction
 {
     public class ExperiencesBlockedRestriction : SceneRestrictionBase
     {
-        public ExperiencesBlockedRestriction() : base()
+        public ExperiencesBlockedRestriction(int entityId) : base()
         {
             Type = SceneRestrictions.EXPERIENCES_BLOCKED;
+            EntityId = entityId;
         }
     }
 }

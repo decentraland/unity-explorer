@@ -59,7 +59,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
         private void ResetAffectedEntities(in Entity entity, ref CharacterTriggerAreaComponent triggerAreaComponent, ref AvatarModifierAreaComponent modifierComponent)
         {
             foreach (Transform avatarTransform in triggerAreaComponent.CurrentAvatarsInside)
-                ShowAvatar(avatarTransform);
+                ShowAvatar(avatarTransform, entity);
 
             World!.Remove<AvatarModifierAreaComponent>(entity);
         }
@@ -77,7 +77,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
 
         [Query]
         [All(typeof(TransformComponent))]
-        private void UpdateAvatarModifierArea(ref PBAvatarModifierArea pbAvatarModifierArea, ref AvatarModifierAreaComponent modifierAreaComponent, ref CharacterTriggerAreaComponent triggerAreaComponent)
+        private void UpdateAvatarModifierArea(Entity e, ref PBAvatarModifierArea pbAvatarModifierArea, ref AvatarModifierAreaComponent modifierAreaComponent, ref CharacterTriggerAreaComponent triggerAreaComponent)
         {
             if (pbAvatarModifierArea.IsDirty)
             {
@@ -87,27 +87,27 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
 
                 // Update effect on now excluded/non-excluded avatars
                 foreach (Transform avatarTransform in triggerAreaComponent.CurrentAvatarsInside)
-                    HideAvatar(avatarTransform, modifierAreaComponent.ExcludedIds);
+                    HideAvatar(avatarTransform, modifierAreaComponent.ExcludedIds, e);
             }
 
             foreach (Transform avatarTransform in triggerAreaComponent.ExitedAvatarsToBeProcessed)
-                ShowAvatar(avatarTransform);
+                ShowAvatar(avatarTransform, e);
 
             triggerAreaComponent.TryClearExitedAvatarsToBeProcessed();
 
             foreach (Transform avatarTransform in triggerAreaComponent.EnteredAvatarsToBeProcessed)
-                HideAvatar(avatarTransform, modifierAreaComponent.ExcludedIds);
+                HideAvatar(avatarTransform, modifierAreaComponent.ExcludedIds, e);
 
             triggerAreaComponent.TryClearEnteredAvatarsToBeProcessed();
         }
 
         [Query]
         [All(typeof(DeleteEntityIntention), typeof(PBAvatarModifierArea))]
-        private void HandleEntityDestruction(ref CharacterTriggerAreaComponent triggerAreaComponent, ref AvatarModifierAreaComponent modifierComponent)
+        private void HandleEntityDestruction(Entity e, ref CharacterTriggerAreaComponent triggerAreaComponent, ref AvatarModifierAreaComponent modifierComponent)
         {
             // Reset state of affected entities
             foreach (Transform avatarTransform in triggerAreaComponent.CurrentAvatarsInside)
-                ShowAvatar(avatarTransform);
+                ShowAvatar(avatarTransform, e);
 
             modifierComponent.Dispose();
         }
@@ -118,14 +118,14 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
         {
             // Reset state of affected entities
             foreach (Transform avatarTransform in triggerAreaComponent.CurrentAvatarsInside)
-                ShowAvatar(avatarTransform);
+                ShowAvatar(avatarTransform, e);
 
             modifierComponent.Dispose();
 
             World!.Remove<AvatarModifierAreaComponent>(e);
         }
 
-        private void ShowAvatar(Transform avatarTransform)
+        private void ShowAvatar(Transform avatarTransform, Entity sourceEntity)
         {
             var result = findAvatarQuery.AvatarWithTransform(avatarTransform);
             if (!result.Success) return;
@@ -139,14 +139,14 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
             if (avatarTransform == localAvatarTransform)
             {
                 localAvatarTransform = null;
-                sceneRestrictionBusController.PushSceneRestriction(new AvatarHiddenRestriction
+                sceneRestrictionBusController.PushSceneRestriction(new AvatarHiddenRestriction(sourceEntity.Id)
                 {
                     Action = SceneRestrictionsAction.REMOVED,
                 });
             }
         }
 
-        private void HideAvatar(Transform avatarTransform, HashSet<string> excludedIds)
+        private void HideAvatar(Transform avatarTransform, HashSet<string> excludedIds, Entity sourceEntity)
         {
             var result = findAvatarQuery.AvatarWithTransform(avatarTransform);
             if (!result.Success) return;
@@ -164,7 +164,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
             if (shouldHide && profile.UserId == web3IdentityCache.Identity?.Address)
             {
                 localAvatarTransform = avatarTransform;
-                sceneRestrictionBusController.PushSceneRestriction(new AvatarHiddenRestriction
+                sceneRestrictionBusController.PushSceneRestriction(new AvatarHiddenRestriction(sourceEntity.Id)
                 {
                     Action = SceneRestrictionsAction.APPLIED,
                 });

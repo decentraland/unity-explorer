@@ -20,8 +20,8 @@ namespace DCL.SDKComponents.PlayerInputMovement.Systems
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly ISceneRestrictionBusController sceneRestrictionBusController;
 
-        private MovementsBlockedRestriction currentBusMessage = new();
-        private MovementsBlockedRestriction previousBusMessage = new();
+        private MovementsBlockedRestriction currentBusMessage = new(0);
+        private MovementsBlockedRestriction previousBusMessage = new(0);
 
         public InputModifierHandlerSystem(World world, World globalWorld, Entity playerEntity, ISceneStateProvider sceneStateProvider, ISceneRestrictionBusController sceneRestrictionBusController) : base(world)
         {
@@ -44,6 +44,16 @@ namespace DCL.SDKComponents.PlayerInputMovement.Systems
             }
         }
 
+        private void CopyInputModifierIntoBusMessage(InputModifierComponent inputModifier)
+        {
+            currentBusMessage.DisableAll = inputModifier.DisableAll;
+            currentBusMessage.DisableWalk = inputModifier.DisableWalk;
+            currentBusMessage.DisableJog = inputModifier.DisableJog;
+            currentBusMessage.DisableRun = inputModifier.DisableRun;
+            currentBusMessage.DisableJump = inputModifier.DisableJump;
+            currentBusMessage.DisableEmote = inputModifier.DisableEmote;
+        }
+
         private void ResetModifiersOnLeave()
         {
             ref InputModifierComponent inputModifier = ref globalWorld.Get<InputModifierComponent>(playerEntity);
@@ -54,13 +64,8 @@ namespace DCL.SDKComponents.PlayerInputMovement.Systems
             inputModifier.DisableJump = false;
             inputModifier.DisableEmote = false;
 
+            CopyInputModifierIntoBusMessage(inputModifier);
             currentBusMessage.Action = SceneRestrictionsAction.REMOVED;
-            currentBusMessage.DisableAll = inputModifier.DisableAll;
-            currentBusMessage.DisableWalk = inputModifier.DisableWalk;
-            currentBusMessage.DisableJog = inputModifier.DisableJog;
-            currentBusMessage.DisableRun = inputModifier.DisableRun;
-            currentBusMessage.DisableJump = inputModifier.DisableJump;
-            currentBusMessage.DisableEmote = inputModifier.DisableEmote;
         }
 
         [Query]
@@ -84,13 +89,8 @@ namespace DCL.SDKComponents.PlayerInputMovement.Systems
                 inputModifier.DisableEmote = pb.DisableEmote;
             }
 
+            CopyInputModifierIntoBusMessage(inputModifier);
             currentBusMessage.Action = SceneRestrictionsAction.APPLIED;
-            currentBusMessage.DisableAll = inputModifier.DisableAll;
-            currentBusMessage.DisableWalk = inputModifier.DisableWalk;
-            currentBusMessage.DisableJog = inputModifier.DisableJog;
-            currentBusMessage.DisableRun = inputModifier.DisableRun;
-            currentBusMessage.DisableJump = inputModifier.DisableJump;
-            currentBusMessage.DisableEmote = inputModifier.DisableEmote;
         }
 
         public void OnSceneIsCurrentChanged(bool value)

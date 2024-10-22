@@ -76,7 +76,7 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
             {
                 if (!activeAreas.Contains(entity))
                 {
-                    OnEnteredCameraModeArea((CameraMode)pbCameraModeArea.Mode);
+                    OnEnteredCameraModeArea((CameraMode)pbCameraModeArea.Mode, entity);
                     activeAreas.Add(entity);
                 }
                 characterTriggerAreaComponent.TryClearEnteredAvatarsToBeProcessed();
@@ -85,7 +85,7 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
             {
                 if (activeAreas.Contains(entity))
                 {
-                    OnExitedCameraModeArea();
+                    OnExitedCameraModeArea(entity);
                     activeAreas.Remove(entity);
                 }
                 characterTriggerAreaComponent.TryClearExitedAvatarsToBeProcessed();
@@ -96,7 +96,7 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
         [All(typeof(DeleteEntityIntention), typeof(PBCameraModeArea), typeof(CameraModeAreaComponent))]
         private void HandleEntityDestruction(Entity entity)
         {
-            OnExitedCameraModeArea();
+            OnExitedCameraModeArea(entity);
             activeAreas.Remove(entity);
         }
 
@@ -105,12 +105,12 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
         [All(typeof(CameraModeAreaComponent))]
         private void HandleComponentRemoval(Entity entity)
         {
-            OnExitedCameraModeArea();
+            OnExitedCameraModeArea(entity);
             activeAreas.Remove(entity);
             World.Remove<CameraModeAreaComponent>(entity);
         }
 
-        internal void OnEnteredCameraModeArea(CameraMode targetCameraMode)
+        internal void OnEnteredCameraModeArea(CameraMode targetCameraMode, Entity entity)
         {
             ref CameraComponent camera = ref globalWorld.Get<CameraComponent>(cameraEntityProxy.Object!);
 
@@ -118,13 +118,13 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
             camera.Mode = targetCameraMode;
             camera.AddCameraInputLock();
 
-            sceneRestrictionBusController.PushSceneRestriction(new CameraLockedRestriction()
+            sceneRestrictionBusController.PushSceneRestriction(new CameraLockedRestriction(entity.Id)
             {
                 Action = SceneRestrictionsAction.APPLIED,
             });
         }
 
-        internal void OnExitedCameraModeArea()
+        internal void OnExitedCameraModeArea(Entity entity)
         {
             ref CameraComponent camera = ref globalWorld.Get<CameraComponent>(cameraEntityProxy.Object!);
 
@@ -134,7 +134,7 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
             if (camera.CameraInputChangeEnabled)
                 camera.Mode = cameraModeBeforeLastAreaEnter;
 
-            sceneRestrictionBusController.PushSceneRestriction(new CameraLockedRestriction()
+            sceneRestrictionBusController.PushSceneRestriction(new CameraLockedRestriction(entity.Id)
             {
                 Action = SceneRestrictionsAction.REMOVED,
             });
@@ -144,7 +144,7 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
         [All(typeof(CameraModeAreaComponent))]
         private void FinalizeComponents(Entity entity)
         {
-            OnExitedCameraModeArea();
+            OnExitedCameraModeArea(entity);
             activeAreas.Remove(entity);
             World.Remove<CameraModeAreaComponent>(entity);
         }

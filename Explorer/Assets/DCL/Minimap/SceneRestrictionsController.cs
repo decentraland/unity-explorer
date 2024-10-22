@@ -10,7 +10,7 @@ namespace DCL.Minimap
     public class SceneRestrictionsController : IDisposable
     {
         private readonly SceneRestrictionsView restrictionsView;
-        private readonly Dictionary<SceneRestrictions, bool> restrictionsRegistry = new();
+        private readonly Dictionary<SceneRestrictions, HashSet<int>> restrictionsRegistry = new();
 
         public SceneRestrictionsController(SceneRestrictionsView restrictionsView, ISceneRestrictionBusController sceneRestrictionBusController)
         {
@@ -54,7 +54,13 @@ namespace DCL.Minimap
 
             textIndicator.SetActive(isRestrictionAdded);
 
-            restrictionsRegistry[sceneRestriction.Type] = isRestrictionAdded;
+            HashSet<int> hashSet = GetOrCreateHashSet(sceneRestriction.Type);
+
+            if (isRestrictionAdded)
+                hashSet.Add(sceneRestriction.EntityId);
+            else
+                hashSet.Remove(sceneRestriction.EntityId);
+
 
             bool restrictionIconEnabled = RestrictionsRegistryHasAtLeastOneActive();
             restrictionsView.sceneRestrictionsIcon.gameObject.SetActive(restrictionIconEnabled);
@@ -64,11 +70,21 @@ namespace DCL.Minimap
 
         private bool RestrictionsRegistryHasAtLeastOneActive()
         {
-            foreach (bool flag in restrictionsRegistry.Values)
-                if (flag)
+            foreach (HashSet<int> entities in restrictionsRegistry.Values)
+                if (entities.Count > 0)
                     return true;
 
             return false;
+        }
+
+        private HashSet<int> GetOrCreateHashSet(SceneRestrictions restriction)
+        {
+            if (!restrictionsRegistry.TryGetValue(restriction, out HashSet<int> hashSet))
+            {
+                hashSet = new HashSet<int>();
+                restrictionsRegistry[restriction] = hashSet;
+            }
+            return hashSet;
         }
     }
 }
