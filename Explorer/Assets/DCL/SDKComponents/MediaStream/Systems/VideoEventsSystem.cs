@@ -50,7 +50,7 @@ namespace DCL.SDKComponents.MediaStream
             VideoState newState = GetCurrentVideoState(mediaPlayer.MediaPlayer.Control, mediaPlayer.PreviousPlayingTimeCheck, mediaPlayer.LastStateChangeTime);
 
             if (mediaPlayer.State == newState) return;
-            mediaPlayer.LastStateChangeTime = Time.timeSinceLevelLoad;
+            mediaPlayer.LastStateChangeTime = Time.realtimeSinceStartup;
             mediaPlayer.PreviousPlayingTimeCheck = mediaPlayer.MediaPlayer.Control.GetCurrentTime();
             mediaPlayer.State = newState;
 
@@ -92,7 +92,7 @@ namespace DCL.SDKComponents.MediaStream
                     state = mediaPlayerControl.IsSeeking() ? VideoState.VsSeeking : VideoState.VsBuffering;
 
                     // If the seeking/buffering never ends, update state with error so the scene can react
-                    if ((Time.timeSinceLevelLoad - lastStateChangeTime) > MAX_VIDEO_FROZEN_SECONDS_BEFORE_ERROR)
+                    if ((Time.realtimeSinceStartup - lastStateChangeTime) > MAX_VIDEO_FROZEN_SECONDS_BEFORE_ERROR)
                         state = VideoState.VsError;
                 }
             }
