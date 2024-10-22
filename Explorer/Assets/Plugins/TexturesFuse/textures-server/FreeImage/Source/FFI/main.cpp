@@ -1,3 +1,5 @@
+#include "texture.h"
+#include "compressonator.h"
 #include "bitmaps.h"
 #include <string>
 #include <fstream>
@@ -246,7 +248,7 @@ ImageResult __cdecl texturesfuse_astc_image_from_memory(
     *width = FreeImage_GetWidth(image);
     *height = FreeImage_GetHeight(image);
 
-    void** dataBuffer = new void *[1];
+    void **dataBuffer = new void *[1];
 
     // Create an astcenc_image structure
     astcenc_image astcImage;
@@ -255,7 +257,7 @@ ImageResult __cdecl texturesfuse_astc_image_from_memory(
     astcImage.dim_z = 1; // depth for 2D is 1
     astcImage.data_type = astcType;
     astcImage.data = dataBuffer; // Only one 2D image layer
-    astcImage.data[0] = bits;       // Point to the raw image data
+    astcImage.data[0] = bits;    // Point to the raw image data
 
     auto config = context->config;
     auto astcContext = context->astcContext;
@@ -291,6 +293,101 @@ ImageResult __cdecl texturesfuse_astc_image_from_memory(
         delete[] *outputBytes;
         return ErrorFromASTC(astcError);
     }
+    *releaseHandle = context->handles.registerHandle(*outputBytes);
+
+    return Success;
+}
+
+ImageResult __cdecl texturesfuse_bc5_image_from_memory(
+    context *context,
+    BYTE *bytes,
+    int bytesLength,
+    int maxSideLength,
+
+    BYTE **outputBytes,
+    int *outputLength,
+    unsigned int *width,
+    unsigned int *height,
+    FfiHandle *releaseHandle)
+{
+    FIBITMAP *image;
+    auto result = BitmapFromMemory(bytes, static_cast<DWORD>(bytesLength), &image);
+
+    if (result != Success)
+    {
+        return result;
+    }
+
+    result = ClampedImage(image, maxSideLength, &image);
+    if (result != Success)
+    {
+        return result;
+    }
+
+    result = WithAlphaImage(image, &image);
+    if (result != Success)
+    {
+        return result;
+    }
+
+    LogImageInfo(image, "image to process with BC5: ");
+
+    BYTE *bits = FreeImage_GetBits(image);
+    if (!bits)
+    {
+        FreeImage_Unload(image);
+        return ErrorCannotGetBits;
+    }
+
+    *width = FreeImage_GetWidth(image);
+    *height = FreeImage_GetHeight(image);
+
+    const unsigned int bitsLength = *width * *height * 4;//since 1 byte per channel
+
+    SwapRGBAtoBGRA(bits, bitsLength);
+
+//TODO BGR input
+    CMP_Texture sourceTexture;
+    sourceTexture.dwSize = sizeof(CMP_Texture);
+    sourceTexture.dwWidth = *width;
+    sourceTexture.dwHeight = *height;
+    sourceTexture.dwPitch = 0;
+    sourceTexture.format = CMP_FORMAT_BGRA_8888;
+    sourceTexture.dwDataSize = bitsLength;
+    sourceTexture.pData = bits;
+
+
+    // Set up destination texture (BC5 format)
+    CMP_Texture destTexture;
+    destTexture.dwSize = sizeof(CMP_Texture);
+    destTexture.dwWidth = *width;
+    destTexture.dwHeight = *height;
+    destTexture.dwPitch = 0;                                        // Compressonator will compute the pitch for BC5
+    destTexture.format = CMP_FORMAT_BC5;                                // Target format is BC5
+    destTexture.dwDataSize = CMP_CalculateBufferSize(&destTexture); // Calculate required memory for BC5 compression
+    destTexture.pData = new CMP_BYTE[destTexture.dwDataSize];   
+
+    // len shouldn't be too long
+    *outputLength = static_cast<int>(destTexture.dwDataSize);
+
+    *outputBytes = destTexture.pData;
+
+    CMP_CompressOptions options;
+    options.bDisableMultiThreading = true;
+
+    // Perform compression to BC5 format
+    CMP_ERROR cmpResult = CMP_ConvertTexture(&sourceTexture, &destTexture, &options, nullptr);
+
+    FreeImage_Unload(image);
+
+    if (cmpResult != CMP_OK)
+    {
+        FreeImage_OutputMessageProc(FIF_UNKNOWN, "Error during decoding BC5: %d", cmpResult);
+        
+        delete[] destTexture.pData;
+        return ErrorBC5;
+    }
+
     *releaseHandle = context->handles.registerHandle(*outputBytes);
 
     return Success;

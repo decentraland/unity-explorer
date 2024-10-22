@@ -237,3 +237,15 @@ void LogImageInfo(FIBITMAP *bitmap, const char *prefix)
         colorType,
         profileName);
 }
+
+void SwapRGBAtoBGRA(BYTE *imageData, const size_t length)
+{
+    // Not best way, could be optimized with multithreading or with GPU
+    // swap RGBA -> BGRA
+    for (size_t i = 0; i < length; i += 4)
+    {
+        BYTE buffer = imageData[i];
+        imageData[i] = imageData[i + 2];
+        imageData[i + 2] = buffer;
+    }
+}
