@@ -2,6 +2,7 @@ using DCL.SceneRestrictionBusController.SceneRestriction;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DG.Tweening;
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace DCL.Minimap
@@ -9,7 +10,7 @@ namespace DCL.Minimap
     public class SceneRestrictionsController : IDisposable
     {
         private readonly SceneRestrictionsView restrictionsView;
-        private int restrictionsCount;
+        private readonly Dictionary<SceneRestrictions, bool> restrictionsRegistry = new();
 
         public SceneRestrictionsController(SceneRestrictionsView restrictionsView, ISceneRestrictionBusController sceneRestrictionBusController)
         {
@@ -52,8 +53,19 @@ namespace DCL.Minimap
                                        };
 
             textIndicator.SetActive(isRestrictionAdded);
-            restrictionsCount += isRestrictionAdded ? 1 : -1;
-            restrictionsView.sceneRestrictionsIcon.gameObject.SetActive(restrictionsCount > 0);
+
+            restrictionsRegistry[sceneRestriction.Type] = isRestrictionAdded;
+
+            restrictionsView.sceneRestrictionsIcon.gameObject.SetActive(RestrictionsRegistryHasAtLeastOneActive());
+        }
+
+        private bool RestrictionsRegistryHasAtLeastOneActive()
+        {
+            foreach (bool flag in restrictionsRegistry.Values)
+                if (flag)
+                    return true;
+
+            return false;
         }
     }
 }
