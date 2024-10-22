@@ -274,12 +274,12 @@ namespace DCL.Passport.Modules.Badges
                 if (assets?.textures3d == null)
                     return;
 
-                string baseColorUrl = assets.textures3d.baseColor;
-                string normalUrl = assets.textures3d.normal;
-                string hrmUrl = assets.textures3d.hrm;
+                string baseColorUrl = assets.textures3d.baseColor ?? string.Empty;
+                string normalUrl = assets.textures3d.normal ?? string.Empty;
+                string hrmUrl = assets.textures3d.hrm ?? string.Empty;
 
                 Texture2D baseColorTexture = await RemoteTextureAsync(baseColorUrl, ct);
-                Texture2D normalTexture = await RemoteTextureAsync(normalUrl, ct);
+                Texture2D normalTexture = await RemoteTextureAsync(normalUrl, ct, TextureType.NormalMap);
                 Texture2D hrmTexture = await RemoteTextureAsync(hrmUrl, ct);
 
                 Set3DImage(baseColorTexture, normalTexture, hrmTexture);
@@ -294,7 +294,7 @@ namespace DCL.Passport.Modules.Badges
             }
         }
 
-        private async UniTask<Texture2D> RemoteTextureAsync(string url, CancellationToken ct) =>
+        private async UniTask<Texture2D> RemoteTextureAsync(string url, CancellationToken ct, TextureType textureType = TextureType.Albedo) =>
             (await webRequestController.GetTextureAsync(
                 new CommonArguments(URLAddress.FromString(url)),
                 getTextureArgsFactory.NewArguments(TextureType.Albedo),
