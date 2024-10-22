@@ -24,13 +24,13 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
         class Fake : IConnectiveRoom
         {
             public UniTask<bool> StartAsync() =>
-                UniTask.FromResult(false);
+                UniTask.FromResult(true);
 
             public UniTask StopAsync() =>
                 UniTask.CompletedTask;
 
             public State CurrentState() =>
-                State.Stopped;
+                State.Running;
 
             public IRoom Room() =>
                 NullRoom.INSTANCE;
