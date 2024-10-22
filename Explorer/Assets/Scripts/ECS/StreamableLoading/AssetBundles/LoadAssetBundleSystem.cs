@@ -111,7 +111,7 @@ namespace ECS.StreamableLoading.AssetBundles
                 string source = intention.CommonArguments.CurrentSource.ToStringNonAlloc();
 
                 // if the type was not specified don't load any assets
-                return await CreateAssetBundleDataAsync(assetBundle, metrics, intention.ExpectedObjectType, mainAsset, loadingMutex, dependencies, GetReportData(), version, source, ct);
+                return await CreateAssetBundleDataAsync(assetBundle, metrics, intention.ExpectedObjectType, mainAsset, loadingMutex, dependencies, GetReportData(), version, source, intention.LookForShaderAssets, ct);
             }
             catch (Exception e)
             {
@@ -134,11 +134,21 @@ namespace ECS.StreamableLoading.AssetBundles
             ReportData reportCategory,
             string version,
             string source,
+            bool lookForShaderAssets,
             CancellationToken ct)
         {
             // if the type was not specified don't load any assets
             if (expectedObjType == null)
                 return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(assetBundle, metrics, dependencies));
+            
+            if (expectedObjType == typeof(GameObject) && lookForShaderAssets)
+            {
+                //If there are no dependencies, it means that this gameobject asset bundle has the shader in it.
+                //All gameobject asset bundles ahould at least have the dependency on the shader.
+                //This will cause a material leak, as the same material will be loaded again. This needs to be solved at asset bundle level
+                if (dependencies.Length == 0)
+                    throw new AssetBundleContainsShaderException(assetBundle.name);
+            }
 
             Object? asset = await LoadAllAssetsAsync(assetBundle, expectedObjType, mainAsset, loadingMutex, reportCategory, ct);
 
