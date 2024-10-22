@@ -24,7 +24,7 @@ using static DG.Tweening.Ease;
 namespace DCL.SDKComponents.Tween.Systems
 {
     [UpdateInGroup(typeof(SyncedSimulationSystemGroup))]
-    [UpdateAfter(typeof(UpdateTransformSystem))]
+    [UpdateBefore(typeof(UpdateTransformSystem))]
     [UpdateAfter(typeof(TweenLoaderSystem))]
     [LogCategory(ReportCategory.TWEEN)]
     public partial class TweenUpdaterSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
