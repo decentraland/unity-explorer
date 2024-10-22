@@ -197,7 +197,7 @@ namespace Global.Dynamic
             ProvidedAsset<MultiplayerDebugSettings> multiplayerDebugSettings = await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.MultiplayerDebugSettings, ct);
 
             var unityEventSystem = new UnityEventSystem(EventSystem.current.EnsureNotNull());
-            var dclCursor = new DCLCursor(normalCursorAsset.Value, interactionCursorAsset.Value);
+            var dclCursor = new DCLCursor(normalCursorAsset.Value, interactionCursorAsset.Value, cursorSettings.NormalCursorHotspot, cursorSettings.InteractionCursorHotspot);
 
             staticContainer.QualityContainer.AddDebugViews(debugBuilder);
 
