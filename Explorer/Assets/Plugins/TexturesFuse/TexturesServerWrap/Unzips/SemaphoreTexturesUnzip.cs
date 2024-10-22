@@ -16,11 +16,11 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
             semaphoreSlim = new SemaphoreSlim(1, 1);
         }
 
-        public async UniTask<EnumResult<OwnedTexture2D, NativeMethods.ImageResult>> TextureFromBytesAsync(ReadOnlyMemory<byte> bytes, CancellationToken token)
+        public async UniTask<EnumResult<OwnedTexture2D, NativeMethods.ImageResult>> TextureFromBytesAsync(ReadOnlyMemory<byte> bytes, TextureType type, CancellationToken token)
         {
             await semaphoreSlim.WaitAsync(token);
 
-            try { return await origin.TextureFromBytesAsync(bytes, token); }
+            try { return await origin.TextureFromBytesAsync(bytes, type, token); }
             finally { semaphoreSlim.Release(); }
         }
 

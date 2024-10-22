@@ -14,7 +14,11 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
     /// </summary>
     public interface ITexturesUnzip : IDisposable
     {
-        UniTask<EnumResult<OwnedTexture2D, NativeMethods.ImageResult>> TextureFromBytesAsync(ReadOnlyMemory<byte> bytes, CancellationToken token);
+        UniTask<EnumResult<OwnedTexture2D, NativeMethods.ImageResult>> TextureFromBytesAsync(
+            ReadOnlyMemory<byte> bytes,
+            TextureType type,
+            CancellationToken token
+        );
 
         interface IOptions
         {

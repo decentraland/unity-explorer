@@ -58,12 +58,16 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
             GC.SuppressFinalize(this);
         }
 
-        public async UniTask<EnumResult<OwnedTexture2D, NativeMethods.ImageResult>> TextureFromBytesAsync(ReadOnlyMemory<byte> bytes, CancellationToken token)
+        public async UniTask<EnumResult<OwnedTexture2D, NativeMethods.ImageResult>> TextureFromBytesAsync(
+            ReadOnlyMemory<byte> bytes,
+            TextureType type,
+            CancellationToken token
+        )
         {
             token.ThrowIfCancellationRequested();
             await UniTask.SwitchToThreadPool();
             token.ThrowIfCancellationRequested();
-            ProcessImage(bytes, out var handle, out var pointer, out int outputLength, out NativeMethods.ImageResult result, out uint width, out uint height, out TextureFormat format);
+            ProcessImage(bytes, type, out var handle, out var pointer, out int outputLength, out NativeMethods.ImageResult result, out uint width, out uint height, out bool linear, out TextureFormat format);
             await UniTask.SwitchToMainThread();
 
             if (result is NativeMethods.ImageResult.Success && token.IsCancellationRequested)
@@ -83,13 +87,41 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
 
             //TODO do linear on RGBA?
             //TODO mipChain and mipmaps
-            var texture = new Texture2D((int)width, (int)height, format, false, false, true);
+            var texture = new Texture2D((int)width, (int)height, format, false, linear, true);
             texture.LoadRawTextureData(pointer, outputLength);
             texture.Apply();
 
             return EnumResult<OwnedTexture2D, NativeMethods.ImageResult>.SuccessResult(
                 OwnedTexture2D.NewTexture(texture, context, handle)
             );
+        }
+
+        internal unsafe NativeMethods.ImageResult LoadBC5Image(
+            byte* ptr,
+            int ptrLength,
+            out byte* output,
+            out int outputLength,
+            out uint width,
+            out uint height,
+            out TextureFormat textureFormat,
+            out IntPtr handle
+        )
+        {
+            var result = NativeMethods.TexturesFuseBC5ImageFromMemory(
+                context,
+                ptr,
+                ptrLength,
+                options.MaxSide,
+                out output,
+                out outputLength,
+                out width,
+                out height,
+                out handle
+            );
+
+            textureFormat = TextureFormat.BC5;
+
+            return result;
         }
 
         internal unsafe NativeMethods.ImageResult LoadASTCImage(
@@ -162,12 +194,14 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
 
         private void ProcessImage(
             ReadOnlyMemory<byte> bytes,
+            TextureType type,
             out IntPtr handle,
             out IntPtr pointer,
             out int outputLength,
             out NativeMethods.ImageResult result,
             out uint width,
             out uint height,
+            out bool linear,
             out TextureFormat format
         )
         {
@@ -177,7 +211,23 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
                 {
                     var mode = options.Mode;
 
-                    if (mode.IsASTC())
+                    if (type is TextureType.NormalMap)
+                    {
+                        result = LoadBC5Image(
+                            ptr,
+                            bytes.Length,
+                            out byte* output,
+                            out outputLength,
+                            out width,
+                            out height,
+                            out format,
+                            out handle
+                        );
+
+                        pointer = new IntPtr(output);
+                        linear = true;
+                    }
+                    else if (mode.IsASTC())
                     {
                         result = LoadASTCImage(
                             ptr,
@@ -191,6 +241,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
                         );
 
                         pointer = new IntPtr(output);
+                        linear = false;
                     }
                     else if (mode is Mode.RGB)
                     {
@@ -206,6 +257,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
                         );
 
                         pointer = new IntPtr(output);
+                        linear = false;
                     }
                     else
                         throw new Exception($"Unsupported mode: {mode}");

@@ -26,12 +26,12 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
             origin.Dispose();
         }
 
-        public async UniTask<EnumResult<OwnedTexture2D, NativeMethods.ImageResult>> TextureFromBytesAsync(ReadOnlyMemory<byte> bytes, CancellationToken token)
+        public async UniTask<EnumResult<OwnedTexture2D, NativeMethods.ImageResult>> TextureFromBytesAsync(ReadOnlyMemory<byte> bytes, TextureType type, CancellationToken token)
         {
             ulong i = index++;
             stopwatch.Restart();
             ReportHub.Log(ReportCategory.TEXTURES, $"TexturesUnzip - {prefix}: start decompress {i}");
-            var result = await origin.TextureFromBytesAsync(bytes, token);
+            var result = await origin.TextureFromBytesAsync(bytes, type, token);
             stopwatch.Stop();
             ReportHub.Log(ReportCategory.TEXTURES, $"TexturesUnzip - {prefix}: end decompress {i} with time spent: {stopwatch.ElapsedMilliseconds} ms");
             return result;

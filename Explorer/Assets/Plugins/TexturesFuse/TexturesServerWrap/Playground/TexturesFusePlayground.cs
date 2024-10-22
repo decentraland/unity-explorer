@@ -38,7 +38,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground
         private async UniTask<OwnedTexture2D> FetchedAndOverrideTexture()
         {
             texture?.Dispose();
-            texture = (await unzip.TextureFromBytesAsync(buffer, destroyCancellationToken)).Unwrap();
+            texture = (await unzip.TextureFromBytesAsync(buffer, TextureType.Albedo, destroyCancellationToken)).Unwrap();
             print($"Compressed size: {texture.Texture.GetRawTextureData()!.Length} bytes");
             return texture;
         }

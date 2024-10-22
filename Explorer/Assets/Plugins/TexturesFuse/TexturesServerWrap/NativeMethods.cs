@@ -67,7 +67,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap
             }
 
             public static InitOptions NewDefault() =>
-                new()
+                new ()
                 {
                     ASTCProfile = 0,
                     blockX = 4,
@@ -90,7 +90,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap
             public int a;
 
             public static Swizzle NewDefault() =>
-                new()
+                new ()
                 {
                     r = 0,
                     g = 1,
@@ -148,7 +148,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap
             public double gamma;
 
             public static Adjustments NewEmpty() =>
-                new()
+                new ()
                 {
                     use = false,
                     brightness = 0,
@@ -198,6 +198,19 @@ namespace Plugins.TexturesFuse.TexturesServerWrap
             int bytesLength,
             int maxSideLength,
             Adjustments adjustments,
+            out byte* outputBytes,
+            out int outputLength,
+            out uint width,
+            out uint height,
+            out IntPtr releaseHandle
+        );
+
+        [DllImport(LIBRARY_NAME, CallingConvention = CallingConvention.Cdecl, EntryPoint = PREFIX + "bc5_image_from_memory")]
+        internal extern static unsafe ImageResult TexturesFuseBC5ImageFromMemory(
+            IntPtr context,
+            byte* bytes,
+            int bytesLength,
+            int maxSideLength,
             out byte* outputBytes,
             out int outputLength,
             out uint width,

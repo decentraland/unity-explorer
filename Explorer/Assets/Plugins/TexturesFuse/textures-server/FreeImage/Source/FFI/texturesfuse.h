@@ -77,6 +77,8 @@ extern "C"
         ErrorASTC_BAD_CONTEXT = 48,
         ErrorASTC_NOT_IMPLEMENTED = 49,
         ErrorASTC_BAD_DECODE_MODE = 50,
+
+        ErrorBC5 = 60,
     };
 
     struct Adjustments
@@ -125,6 +127,18 @@ extern "C"
         int bytesLength,
         int maxSideLength,
         Adjustments adjustments,
+
+        BYTE **outputBytes,
+        int *outputLength,
+        unsigned int *width,
+        unsigned int *height,
+        FfiHandle *releaseHandle);
+
+    FFI_API ImageResult texturesfuse_bc5_image_from_memory(
+        context *context,
+        BYTE *bytes,
+        int bytesLength,
+        int maxSideLength,
 
         BYTE **outputBytes,
         int *outputLength,

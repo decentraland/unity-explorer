@@ -5,15 +5,21 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using UnityEngine;
-using UnityEngine.Experimental.Rendering;
 
 namespace Plugins.TexturesFuse.TexturesServerWrap.Playground
 {
     public class NormalMapTexturesFusePlayground : MonoBehaviour
     {
+        public enum LoadMode
+        {
+            Direct,
+            WithTextureFuseEncoding
+        }
+
         [Header("Dependencies")]
         [SerializeField] private MeshRenderer cubeMesh = null!;
         [Header("Config")]
+        [SerializeField] private LoadMode loadMode;
         [SerializeField] private TexturesFusePlayground.Options options = new ();
         [SerializeField] private string path = "Assets/Plugins/TexturesFuse/textures-server/FreeImage/Source/FFI/image.jpg";
         [SerializeField] private string normalMapPath = "Assets/Plugins/TexturesFuse/textures-server/FreeImage/Source/FFI/image_normal.jpg";
@@ -30,14 +36,26 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground
         private async void Start()
         {
             cubeMesh.EnsureNotNull();
-            using var unzip = /*ITexturesUnzip.NewDebug();*/ new PooledTexturesUnzip(() => new TexturesUnzip(options.InitOptions, options, debugOutputFromNative), 2);
+            using var unzip = new PooledTexturesUnzip(() => new TexturesUnzip(options.InitOptions, options, debugOutputFromNative), 2);
             byte[] buffer = await File.ReadAllBytesAsync(path, destroyCancellationToken)! ?? Array.Empty<byte>();
             byte[] normalBuffer = await File.ReadAllBytesAsync(normalMapPath, destroyCancellationToken)! ?? Array.Empty<byte>();
 
-            var texture1 = (await unzip.TextureFromBytesAsync(buffer, destroyCancellationToken)).Unwrap();
+            var texture1 = (await unzip.TextureFromBytesAsync(buffer, TextureType.Albedo, destroyCancellationToken)).Unwrap();
 
             currentTexture = texture1.Texture;
-            currentNormalMapTexture = NewNormalMapTexture(normalBuffer);
+
+            currentNormalMapTexture = loadMode switch
+                                      {
+                                          LoadMode.Direct => NewNormalMapTexture(normalBuffer),
+                                          LoadMode.WithTextureFuseEncoding => (await unzip.TextureFromBytesAsync(
+                                                                                  normalBuffer,
+                                                                                  TextureType.NormalMap,
+                                                                                  destroyCancellationToken
+                                                                              ))
+                                                                             .Unwrap()
+                                                                             .Texture,
+                                          _ => throw new ArgumentOutOfRangeException(),
+                                      };
 
             var mpb = new MaterialPropertyBlock();
             mpb.SetTexture("_BaseMap", currentTexture);

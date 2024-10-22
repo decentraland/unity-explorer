@@ -167,6 +167,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   cubeMesh: {fileID: 1853004497}
+  loadMode: 1
   options:
     maxSide: 1024
     adjustments:
@@ -186,7 +187,7 @@ MonoBehaviour:
       b: 2
       a: 3
   path: Assets/Plugins/TexturesFuse/TexturesServerWrap/Playground/NormalMap/brick_wall2-diff-512.png
-  normalMapPath: Assets/Plugins/TexturesFuse/TexturesServerWrap/Playground/NormalMap/brick_wall2-nor-512.bc5
+  normalMapPath: Assets/Plugins/TexturesFuse/TexturesServerWrap/Playground/NormalMap/brick_wall2-nor-512.png
   rotationSpeed: 0
   debugOutputFromNative: 1
   currentTexture: {fileID: 0}
