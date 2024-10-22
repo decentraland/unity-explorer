@@ -22,6 +22,9 @@ namespace ECS.StreamableLoading.Textures
 
         public CancellationTokenSource CancellationTokenSource => CommonArguments.CancellationTokenSource;
 
+        // Note: Depending on the origin of the texture, it may not have a file hash, so the source URL is used in equality comparisons
+        private string cacheKey => string.IsNullOrEmpty(FileHash) ? CommonArguments.URL.Value : FileHash;
+
         public GetTextureIntention(string url, string fileHash, TextureWrapMode wrapMode, FilterMode filterMode, bool isReadable = false, int attemptsCount = StreamableLoadingDefaults.ATTEMPTS_COUNT)
         {
             CommonArguments = new CommonLoadingArguments(url, attempts: attemptsCount);
@@ -45,7 +48,7 @@ namespace ECS.StreamableLoading.Textures
         }
 
         public bool Equals(GetTextureIntention other) =>
-            FileHash == other.FileHash &&
+            cacheKey == other.cacheKey &&
             IsReadable == other.IsReadable &&
             WrapMode == other.WrapMode &&
             FilterMode == other.FilterMode &&
@@ -56,7 +59,7 @@ namespace ECS.StreamableLoading.Textures
             obj is GetTextureIntention other && Equals(other);
 
         public override int GetHashCode() =>
-            HashCode.Combine(IsReadable, (int)WrapMode, (int)FilterMode, FileHash, IsVideoTexture, VideoPlayerEntity);
+            HashCode.Combine(IsReadable, (int)WrapMode, (int)FilterMode, cacheKey, IsVideoTexture, VideoPlayerEntity);
 
         public override string ToString() =>
             $"Get Texture: {(IsVideoTexture ? $"Video {VideoPlayerEntity}" : CommonArguments.URL)}";
