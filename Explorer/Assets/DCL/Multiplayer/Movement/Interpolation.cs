@@ -42,7 +42,7 @@ namespace DCL.Multiplayer.Movement
         {
             Quaternion lookRotation;
 
-            if (lookDirection != Vector3.zero)
+            if (lookDirection != Vector3.zero && new Vector3(lookDirection.x, 0, lookDirection.z) != Vector3.zero)
             {
                 lookDirection.y = 0; // Flattened to have ground plane direction only (XZ)
                 lookRotation = Quaternion.LookRotation(lookDirection, Vector3.up);
