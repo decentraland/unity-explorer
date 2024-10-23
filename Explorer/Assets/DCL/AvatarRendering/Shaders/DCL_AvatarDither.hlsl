@@ -1,7 +1,7 @@
 ﻿#ifndef DCL_TOON_DITHER_INCLUDED
 #define DCL_TOON_DITHER_INCLUDED
 
-#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/UnityInput.hlsl"
+#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 
 void Dithering( float3 positionWS, float4 positionCS, float fEndFadeDistance, float fStartFadeDistance)
 {
