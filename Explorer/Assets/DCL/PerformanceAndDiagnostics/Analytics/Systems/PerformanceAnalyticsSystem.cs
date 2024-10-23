@@ -8,6 +8,7 @@ using ECS;
 using ECS.Abstract;
 using ECS.SceneLifeCycle;
 using SceneRuntime;
+using Unity.Profiling;
 using UnityEngine;
 using Utility.Json;
 using static DCL.PerformanceAndDiagnostics.Analytics.AnalyticsEvents;
@@ -21,7 +22,9 @@ namespace DCL.Analytics.Systems
     public partial class PerformanceAnalyticsSystem : BaseUnityLoopSystem
     {
         private const int FRAMES_SAMPLES_CAPACITY = 1024;
-        private const ulong HICCUP_THRESHOLD_MS = 50; // 50 ms ~ 20 FPS
+
+        private static readonly ProfilerMarker rMarker = new ("PerformanceAnalyticsSystem.Report");
+        private static readonly ProfilerMarker sbMarker = new ("PerformanceAnalyticsSystem.StringBuilder");
 
         private readonly AnalyticsConfiguration config;
         private readonly IAnalyticsController analytics;
@@ -71,7 +74,6 @@ namespace DCL.Analytics.Systems
             if (lastReportTime > config.PerformanceReportInterval)
             {
                 ReportPerformanceMetrics(lastReportTime);
-
                 lastReportTime = 0;
 
                 mainThreadFrameTimes.Clear();
@@ -108,12 +110,11 @@ namespace DCL.Analytics.Systems
 
             // MainThread
             (bool hasValue, long count, long sumTime, long min, long max, float avg) hiccups = profiler.CalculateMainThreadHiccups();
-
-            jsonObjectBuilder.Set("hiccups_in_thousand_frames", !hiccups.hasValue? 0 : hiccups.count);
-            jsonObjectBuilder.Set("hiccups_time", !hiccups.hasValue? 0 : hiccups.sumTime * NS_TO_MS);
-            jsonObjectBuilder.Set("hiccups_min", !hiccups.hasValue? 0 : hiccups.min * NS_TO_MS);
-            jsonObjectBuilder.Set("hiccups_max", !hiccups.hasValue? 0 : hiccups.max * NS_TO_MS);
-            jsonObjectBuilder.Set("hiccups_avg", !hiccups.hasValue? 0 : hiccups.avg * NS_TO_MS);
+            jsonObjectBuilder.Set("hiccups_in_thousand_frames", !hiccups.hasValue ? 0 : hiccups.count);
+            jsonObjectBuilder.Set("hiccups_time", !hiccups.hasValue ? 0 : hiccups.sumTime * NS_TO_MS);
+            jsonObjectBuilder.Set("hiccups_min", !hiccups.hasValue ? 0 : hiccups.min * NS_TO_MS);
+            jsonObjectBuilder.Set("hiccups_max", !hiccups.hasValue ? 0 : hiccups.max * NS_TO_MS);
+            jsonObjectBuilder.Set("hiccups_avg", !hiccups.hasValue ? 0 : hiccups.avg * NS_TO_MS);
 
             jsonObjectBuilder.Set("min_frame_time", mainThreadFrameTimes.Min * NS_TO_MS);
             jsonObjectBuilder.Set("max_frame_time", mainThreadFrameTimes.Max * NS_TO_MS);
@@ -127,17 +128,16 @@ namespace DCL.Analytics.Systems
             jsonObjectBuilder.Set("frame_time_percentile_90", mainThreadFrameTimes.Percentile(90) * NS_TO_MS);
             jsonObjectBuilder.Set("frame_time_percentile_95", mainThreadFrameTimes.Percentile(95) * NS_TO_MS);
 
-            jsonObjectBuilder.Set("samples", "<disabled>"); // -> assemble an array of samples (small one from percentiles)
-            jsonObjectBuilder.Set("samples_amount", mainThreadFrameTimes.SamplesAmount); // use samples.Count > 10
+            jsonObjectBuilder.Set("samples", mainThreadFrameTimes.GetSamplesArrayAsString());
+            jsonObjectBuilder.Set("samples_amount", mainThreadFrameTimes.SamplesAmount);
 
             // GPU
             hiccups = profiler.CalculateGpuHiccups();
-            jsonObjectBuilder.Set("gpu_hiccups_in_thousand_frames", !hiccups.hasValue? 0 : hiccups.count);
-            jsonObjectBuilder.Set("gpu_hiccups_time", !hiccups.hasValue? 0 : hiccups.sumTime * NS_TO_MS);
-            jsonObjectBuilder.Set("gpu_hiccups_min", !hiccups.hasValue? 0 : hiccups.min * NS_TO_MS);
-            jsonObjectBuilder.Set("gpu_hiccups_max", !hiccups.hasValue? 0 : hiccups.max * NS_TO_MS);
-            jsonObjectBuilder.Set("gpu_hiccups_avg", !hiccups.hasValue? 0 : hiccups.avg * NS_TO_MS);
-
+            jsonObjectBuilder.Set("gpu_hiccups_in_thousand_frames", !hiccups.hasValue ? 0 : hiccups.count);
+            jsonObjectBuilder.Set("gpu_hiccups_time", !hiccups.hasValue ? 0 : hiccups.sumTime * NS_TO_MS);
+            jsonObjectBuilder.Set("gpu_hiccups_min", !hiccups.hasValue ? 0 : hiccups.min * NS_TO_MS);
+            jsonObjectBuilder.Set("gpu_hiccups_max", !hiccups.hasValue ? 0 : hiccups.max * NS_TO_MS);
+            jsonObjectBuilder.Set("gpu_hiccups_avg", !hiccups.hasValue ? 0 : hiccups.avg * NS_TO_MS);
 
             jsonObjectBuilder.Set("gpu_min_frame_time", gpuFrameTimes.Min * NS_TO_MS);
             jsonObjectBuilder.Set("gpu_max_frame_time", gpuFrameTimes.Max * NS_TO_MS);

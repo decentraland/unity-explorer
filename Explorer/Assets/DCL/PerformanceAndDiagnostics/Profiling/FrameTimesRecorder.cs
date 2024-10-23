@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Text;
+using UnityEngine;
 
 namespace DCL.Profiling
 {
@@ -9,6 +11,8 @@ namespace DCL.Profiling
     public class FrameTimesRecorder
     {
         private const int MANUAL_SHIFT_THRESHOLD = 16; // Threshold for when to use Array.Copy vs manual shifting
+
+        private readonly StringBuilder stringBuilder = new ();
 
         private int capacity;
         private ulong[] samples;
@@ -100,8 +104,25 @@ namespace DCL.Profiling
             return samples[index];
         }
 
-        public ReadOnlySpan<ulong> GetSortedSamples() =>
-            new (samples, 0, SamplesAmount);
+        public string GetSamplesArrayAsString()
+        {
+            const float NS_TO_MS = 1e-6f;
+
+            stringBuilder.Clear();
+            stringBuilder.Append("[");
+
+            for (var i = 0; i < SamplesAmount; i++)
+            {
+                stringBuilder.Append(Mathf.Round(samples[i] * NS_TO_MS));
+
+                if (i < SamplesAmount - 1)
+                    stringBuilder.Append(",");
+            }
+
+            stringBuilder.Append("]");
+
+            return stringBuilder.ToString();
+        }
 
         public void Clear()
         {
