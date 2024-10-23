@@ -9,7 +9,9 @@ using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.Groups;
+using System;
 using System.Collections.Generic;
+using UnityEngine;
 using UnityEngine.Pool;
 using UAnimator = UnityEngine.Animator;
 
@@ -39,24 +41,38 @@ namespace DCL.SDKComponents.Animator.Systems
             if (gltfContainerComponent.Promise.Result?.Asset == null) return;
             if (gltfContainerComponent.Promise.Result.Value.Asset.Animators.Count == 0) return;
 
+            var stateHashes = new Dictionary<string, AnimatorParamHashes.StateParamHashes>();
+
             foreach (UAnimator animator in gltfContainerComponent.Promise.Result.Value.Asset.Animators)
+            {
                 InitializeAnimator(animator);
 
+                AnimationClip[] clips = animator.runtimeAnimatorController.animationClips;
+
+                for (var i = 0; i < clips.Length; i++)
+                {
+                    AnimationClip clip = clips[i];
+                    stateHashes[clip.name] = CreateParamHashes(i + 1, i);
+                }
+            }
+
             List<SDKAnimationState> sdkAnimationStates = ListPool<SDKAnimationState>.Get();
+            AnimatorParamHashes animatorParams = new (stateHashes);
 
             for (var i = 0; i < pbAnimator.States.Count; i++)
             {
-                PBAnimationState pbAnimationState = pbAnimator.States[i];
+                PBAnimationState? pbAnimationState = pbAnimator.States[i];
                 var sdkAnimationState = new SDKAnimationState(pbAnimationState);
                 sdkAnimationStates.Add(sdkAnimationState);
             }
 
             var sdkAnimatorComponent = new SDKAnimatorComponent(sdkAnimationStates)
-                {
-                    IsDirty = true,
-                };
+            {
+                IsDirty = true,
+            };
 
-            World.Add(entity, sdkAnimatorComponent);
+            World.Add(entity, sdkAnimatorComponent, animatorParams);
+
             // The PBAnimator is only dirtied on SDK side either on Create/CreateOrReplace
             // or when doing changes to it when triggered by events on the scene, so we never set it to true on the client.
             pbAnimator.IsDirty = false;
@@ -64,7 +80,8 @@ namespace DCL.SDKComponents.Animator.Systems
 
         [Query]
         [None(typeof(LegacyGltfAnimation))]
-        private void UpdateAnimationState(ref SDKAnimatorComponent sdkAnimatorComponent, ref GltfContainerComponent gltfContainerComponent)
+        private void UpdateAnimationState(ref SDKAnimatorComponent sdkAnimatorComponent, ref GltfContainerComponent gltfContainerComponent,
+            ref AnimatorParamHashes animatorParamHashes)
         {
             if (!sdkAnimatorComponent.IsDirty) return;
             if (gltfContainerComponent.State != LoadingState.Finished) return;
@@ -73,7 +90,7 @@ namespace DCL.SDKComponents.Animator.Systems
             sdkAnimatorComponent.IsDirty = false;
 
             foreach (var animator in animators)
-                SetAnimationState(sdkAnimatorComponent.SDKAnimationStates, animator);
+                SetAnimationState(sdkAnimatorComponent.SDKAnimationStates, animator, animatorParamHashes);
         }
 
         [Query]
@@ -93,7 +110,7 @@ namespace DCL.SDKComponents.Animator.Systems
             animator.enabled = true;
         }
 
-        private void SetAnimationState(ICollection<SDKAnimationState> sdkAnimationStates, UAnimator animator)
+        private void SetAnimationState(ICollection<SDKAnimationState> sdkAnimationStates, UAnimator animator, AnimatorParamHashes animatorHashes)
         {
             if (sdkAnimationStates.Count == 0)
                 return;
@@ -109,7 +126,8 @@ namespace DCL.SDKComponents.Animator.Systems
             foreach (SDKAnimationState sdkAnimationState in sdkAnimationStates)
             {
                 string name = sdkAnimationState.Clip;
-                int layerIndex = animator.GetLayerIndex(name);
+                AnimatorParamHashes.StateParamHashes stateHashes = animatorHashes.Hashes[name];
+                int layerIndex = stateHashes.LayerIndex;
 
                 if (layerIndex == -1)
                 {
@@ -117,8 +135,8 @@ namespace DCL.SDKComponents.Animator.Systems
                     continue;
                 }
 
-                animator.SetBool($"{name}_Enabled", sdkAnimationState.Playing);
-                animator.SetBool($"{name}_Loop", sdkAnimationState.Loop);
+                animator.SetBool(stateHashes.EnabledParamHash, sdkAnimationState.Playing);
+                animator.SetBool(stateHashes.LoopParamHash, sdkAnimationState.Loop);
 
                 // TODO: it could be an edge case due sdkAnimationState.ShouldReset.. support it if need it
 
@@ -135,7 +153,7 @@ namespace DCL.SDKComponents.Animator.Systems
                     // So the trigger gets enabled and makes the execution play twice (after it finishes), although is set to loop:false
                     // The fix consists on avoid triggering the animation if it is already playing, to avoid stacking the trigger.
                     if (!isAnimationAlreadyPlaying)
-                        animator.SetTrigger($"{name}_Trigger");
+                        animator.SetTrigger(stateHashes.TriggerParamHash);
 
                     // Animators don't support speed by state, just a global speed
                     animator.speed = sdkAnimationState.Speed;
@@ -160,5 +178,14 @@ namespace DCL.SDKComponents.Animator.Systems
                 animator.enabled = false;
             }
         }
+
+        private static AnimatorParamHashes.StateParamHashes CreateParamHashes(int layer, int state) =>
+            new()
+            {
+                LayerIndex = layer,
+                EnabledParamHash = UAnimator.StringToHash($"State_{state}_Enabled"),
+                LoopParamHash = UAnimator.StringToHash($"State_{state}_Loop"),
+                TriggerParamHash = UAnimator.StringToHash($"State_{state}_Trigger"),
+            };
     }
 }
