@@ -8,6 +8,7 @@ using ECS;
 using ECS.Abstract;
 using ECS.SceneLifeCycle;
 using SceneRuntime;
+using Unity.Profiling;
 using UnityEngine;
 using Utility.Json;
 using static DCL.PerformanceAndDiagnostics.Analytics.AnalyticsEvents;
@@ -20,22 +21,27 @@ namespace DCL.Analytics.Systems
     [UpdateAfter(typeof(DebugViewProfilingSystem))]
     public partial class PerformanceAnalyticsSystem : BaseUnityLoopSystem
     {
+        private const int FRAMES_SAMPLES_CAPACITY = 1024;
+        private const ulong HICCUP_THRESHOLD_MS = 50; // 50 ms ~ 20 FPS
+
+        private static readonly ProfilerMarker AddFramesMarker = new ("PerformanceAnalyticsSystem.AddFrames");
+        private static readonly ProfilerMarker ReportMarker = new ("PerformanceAnalyticsSystem.Report");
+
         private readonly AnalyticsConfiguration config;
         private readonly IAnalyticsController analytics;
         private readonly IJsonObjectBuilder jsonObjectBuilder;
 
         private readonly IRealmData realmData;
 
-        private readonly IAnalyticsReportProfiler profiler;
+        private readonly IMemoryProfiler profiler;
         private readonly V8ActiveEngines v8ActiveEngines;
-        private readonly IScenesCache scenesCache;
+        // private readonly IScenesCache scenesCache;
 
+        private readonly FrameTimesRecorder mainThreadFrameTimes = new (FRAMES_SAMPLES_CAPACITY);
+        private readonly HiccupsCounter mainThreadHiccups = new (HICCUP_THRESHOLD_MS);
 
-        private readonly FrameTimesRecorder mainThreadFrameTimes = new (capacity: 1024);
-        private readonly HiccupsCounter mainThreadHiccups = new (hiccupThresholdMs: 50);
-
-        private readonly FrameTimesRecorder gpuFrameTimes = new (capacity: 1024);
-        private readonly HiccupsCounter gpuHiccups = new (hiccupThresholdMs: 50);
+        private readonly FrameTimesRecorder gpuFrameTimes = new (FRAMES_SAMPLES_CAPACITY);
+        private readonly HiccupsCounter gpuHiccups = new (HICCUP_THRESHOLD_MS);
 
         private float lastReportTime;
 
@@ -43,7 +49,7 @@ namespace DCL.Analytics.Systems
             World world,
             IAnalyticsController analytics,
             IRealmData realmData,
-            IAnalyticsReportProfiler profiler,
+            IMemoryProfiler profiler,
             V8ActiveEngines v8ActiveEngines,
             IScenesCache scenesCache,
             IJsonObjectBuilder jsonObjectBuilder
@@ -52,7 +58,7 @@ namespace DCL.Analytics.Systems
             this.realmData = realmData;
             this.profiler = profiler;
             this.v8ActiveEngines = v8ActiveEngines;
-            this.scenesCache = scenesCache;
+            // this.scenesCache = scenesCache;
             this.analytics = analytics;
             this.jsonObjectBuilder = jsonObjectBuilder;
             config = analytics.Configuration;
@@ -62,39 +68,39 @@ namespace DCL.Analytics.Systems
         {
             if (!realmData.Configured) return;
 
-            mainThreadFrameTimes.AddFrameTime(profiler.CurrentFrameTimeValueNs);
-            mainThreadHiccups.CheckForHiccup(profiler.CurrentFrameTimeValueNs);
-
-            gpuFrameTimes.AddFrameTime(profiler.CurrentGpuFrameTimeValueNs);
-            gpuHiccups.CheckForHiccup(profiler.CurrentGpuFrameTimeValueNs);
-
-            lastReportTime += t;
-
-            if (lastReportTime > config.PerformanceReportInterval)
+            using (AddFramesMarker.Auto())
             {
-                ReportPerformanceMetrics();
+                mainThreadFrameTimes.AddFrameTime(profiler.LastFrameTimeValueNs);
+                mainThreadHiccups.CheckForHiccup(profiler.LastFrameTimeValueNs);
 
-                lastReportTime = 0;
+                gpuFrameTimes.AddFrameTime(profiler.LastGpuFrameTimeValueNs);
+                gpuHiccups.CheckForHiccup(profiler.LastGpuFrameTimeValueNs);
 
-                mainThreadFrameTimes.Clear();
-                mainThreadHiccups.Clear();
+                lastReportTime += t;
+            }
 
-                gpuFrameTimes.Clear();
-                gpuHiccups.Clear();
+            using (ReportMarker.Auto())
+            {
+                if (lastReportTime > config.PerformanceReportInterval)
+                {
+                    ReportPerformanceMetrics();
+
+                    lastReportTime = 0;
+
+                    mainThreadFrameTimes.Clear();
+                    mainThreadHiccups.Clear();
+
+                    gpuFrameTimes.Clear();
+                    gpuHiccups.Clear();
+                }
             }
         }
 
         private void ReportPerformanceMetrics()
         {
-            // (AnalyticsFrameTimeReport? gpuFrameTimeReport, AnalyticsFrameTimeReport? mainThreadReport, string samplesArray)
-            //     = profiler.GetFrameTimesNs(percentiles);
-            //
-            // if (!mainThreadReport.HasValue || !gpuFrameTimeReport.HasValue)
-            //     return;
-
-            bool isCurrentScene = scenesCache is { CurrentScene: { SceneStateProvider: { IsCurrent: true } } };
-            JsMemorySizeInfo totalJsMemoryData = v8ActiveEngines.GetEnginesSumMemoryData();
-            JsMemorySizeInfo currentSceneJsMemoryData = isCurrentScene ? v8ActiveEngines.GetEnginesMemoryDataForScene(scenesCache.CurrentScene.Info) : new JsMemorySizeInfo();
+            // bool isCurrentScene = scenesCache is { CurrentScene: { SceneStateProvider: { IsCurrent: true } } };
+            // JsMemorySizeInfo totalJsMemoryData = v8ActiveEngines.GetEnginesSumMemoryData();
+            // JsMemorySizeInfo currentSceneJsMemoryData = isCurrentScene ? v8ActiveEngines.GetEnginesMemoryDataForScene(scenesCache.CurrentScene.Info) : new JsMemorySizeInfo();
 
             {
                 // TODO (Vit): include more detailed quality information (renderFeatures, fog, etc). Probably from QualitySettingsAsset.cs
@@ -102,13 +108,13 @@ namespace DCL.Analytics.Systems
                 jsonObjectBuilder.Set("player_count", 0); // TODO (Vit): How many users where nearby the current user
 
                 // JS runtime memory
-                jsonObjectBuilder.Set("jsheap_used", totalJsMemoryData.UsedHeapSizeMB);
-                jsonObjectBuilder.Set("jsheap_total", totalJsMemoryData.TotalHeapSizeMB);
-                jsonObjectBuilder.Set("jsheap_total_executable", totalJsMemoryData.TotalHeapSizeExecutableMB);
-                jsonObjectBuilder.Set("jsheap_limit", totalJsMemoryData.HeapSizeLimitMB);
-                jsonObjectBuilder.Set("jsheap_used_current_scene", !isCurrentScene ? -1f : currentSceneJsMemoryData.UsedHeapSizeMB);
-                jsonObjectBuilder.Set("jsheap_total_current_scene", !isCurrentScene ? -1f : currentSceneJsMemoryData.TotalHeapSizeMB);
-                jsonObjectBuilder.Set("jsheap_total_executable_current_scene", !isCurrentScene ? -1f : currentSceneJsMemoryData.TotalHeapSizeExecutableMB);
+                jsonObjectBuilder.Set("jsheap_used", "<disabled>"); // totalJsMemoryData.UsedHeapSizeMB);
+                jsonObjectBuilder.Set("jsheap_total", "<disabled>"); // totalJsMemoryData.TotalHeapSizeMB);
+                jsonObjectBuilder.Set("jsheap_total_executable", "<disabled>"); // totalJsMemoryData.TotalHeapSizeExecutableMB);
+                jsonObjectBuilder.Set("jsheap_limit", "<disabled>"); // totalJsMemoryData.HeapSizeLimitMB);
+                jsonObjectBuilder.Set("jsheap_used_current_scene", "<disabled>"); // !isCurrentScene ? -1f : currentSceneJsMemoryData.UsedHeapSizeMB);
+                jsonObjectBuilder.Set("jsheap_total_current_scene", "<disabled>"); // !isCurrentScene ? -1f : currentSceneJsMemoryData.TotalHeapSizeMB);
+                jsonObjectBuilder.Set("jsheap_total_executable_current_scene", "<disabled>"); // !isCurrentScene ? -1f : currentSceneJsMemoryData.TotalHeapSizeExecutableMB);
                 jsonObjectBuilder.Set("running_v8_engines", v8ActiveEngines.Count);
 
                 // Memory
@@ -118,7 +124,7 @@ namespace DCL.Analytics.Systems
                 jsonObjectBuilder.Set("total_gc_alloc", ((ulong)profiler.TotalGcAlloc).ByteToMB());
 
                 // MainThread
-                jsonObjectBuilder.Set("samples", 0);// mainThreadFrameTimes.GetSortedSamplesMs());
+                jsonObjectBuilder.Set("samples", "<disabled>"); // mainThreadFrameTimes.GetSortedSamplesMs());
                 jsonObjectBuilder.Set("samples_amount", mainThreadFrameTimes.SamplesAmount);
                 jsonObjectBuilder.Set("total_time", mainThreadFrameTimes.TotalRecordedTime * NS_TO_MS);
 
@@ -162,7 +168,8 @@ namespace DCL.Analytics.Systems
                 jsonObjectBuilder.Set("gpu_frame_time_percentile_95", gpuFrameTimes.Percentile(95) * NS_TO_MS);
             }
 
-            using var pooled = jsonObjectBuilder.BuildPooled();
+            using PooledJsonObject pooled = jsonObjectBuilder.BuildPooled();
+
             analytics.Track(General.PERFORMANCE_REPORT, pooled.Json);
         }
     }
