@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 
 namespace Utility.Types
 {
@@ -76,6 +77,18 @@ namespace Utility.Types
 
         public static EnumResult<TValue, TErrorEnum> ErrorResult(TErrorEnum state, string errorMessage) =>
             new (default(TValue)!, (state, errorMessage));
+
+        public static bool TryErrorIfCancelled(CancellationToken token, out EnumResult<TValue, TErrorEnum> result)
+        {
+            if (token.IsCancellationRequested)
+            {
+                result = ErrorResult(default(TErrorEnum)!, "Operation was cancelled");
+                return true;
+            }
+
+            result = SuccessResult(default(TValue)!);
+            return false;
+        }
 
         public TValue Unwrap() =>
             Success

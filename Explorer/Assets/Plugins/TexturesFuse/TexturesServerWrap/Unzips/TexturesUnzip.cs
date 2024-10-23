@@ -5,6 +5,10 @@ using System;
 using System.Threading;
 using UnityEngine;
 using Utility.Types;
+using Result = Utility.Types.EnumResult<
+    Plugins.TexturesFuse.TexturesServerWrap.Unzips.OwnedTexture2D,
+    Plugins.TexturesFuse.TexturesServerWrap.NativeMethods.ImageResult
+>;
 
 namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
 {
@@ -58,16 +62,20 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
             GC.SuppressFinalize(this);
         }
 
-        public async UniTask<EnumResult<OwnedTexture2D, NativeMethods.ImageResult>> TextureFromBytesAsync(
+        public async UniTask<Result> TextureFromBytesAsync(
             IntPtr bytes,
             int bytesLength,
             TextureType type,
             CancellationToken token
         )
         {
-            token.ThrowIfCancellationRequested();
+            if (Result.TryErrorIfCancelled(token, out var errorResult))
+                return errorResult;
+
             await UniTask.SwitchToThreadPool();
-            token.ThrowIfCancellationRequested();
+
+            if (Result.TryErrorIfCancelled(token, out errorResult))
+                return errorResult;
 
             ProcessImage(bytes, bytesLength, type, out var handle, out var pointer, out int outputLength, out NativeMethods.ImageResult result, out uint width, out uint height, out bool linear, out TextureFormat format);
             await UniTask.SwitchToMainThread();
@@ -75,7 +83,8 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
             if (result is NativeMethods.ImageResult.Success && token.IsCancellationRequested)
             {
                 NativeMethods.TexturesFuseRelease(context, handle);
-                token.ThrowIfCancellationRequested();
+                if (Result.TryErrorIfCancelled(token, out errorResult))
+                    return errorResult;
             }
 
             if (result is not NativeMethods.ImageResult.Success)
@@ -93,7 +102,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
             texture.LoadRawTextureData(pointer, outputLength);
             texture.Apply();
 
-            return EnumResult<OwnedTexture2D, NativeMethods.ImageResult>.SuccessResult(
+            return Result.SuccessResult(
                 OwnedTexture2D.NewTexture(texture, context, handle)
             );
         }
