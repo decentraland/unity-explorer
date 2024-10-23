@@ -24,9 +24,6 @@ namespace DCL.Analytics.Systems
         private const int FRAMES_SAMPLES_CAPACITY = 1024;
         private const ulong HICCUP_THRESHOLD_MS = 50; // 50 ms ~ 20 FPS
 
-        private static readonly ProfilerMarker AddFramesMarker = new ("PerformanceAnalyticsSystem.AddFrames");
-        private static readonly ProfilerMarker ReportMarker = new ("PerformanceAnalyticsSystem.Report");
-
         private readonly AnalyticsConfiguration config;
         private readonly IAnalyticsController analytics;
         private readonly IJsonObjectBuilder jsonObjectBuilder;
@@ -35,6 +32,7 @@ namespace DCL.Analytics.Systems
 
         private readonly IMemoryProfiler profiler;
         private readonly V8ActiveEngines v8ActiveEngines;
+
         // private readonly IScenesCache scenesCache;
 
         private readonly FrameTimesRecorder mainThreadFrameTimes = new (FRAMES_SAMPLES_CAPACITY);
@@ -58,6 +56,7 @@ namespace DCL.Analytics.Systems
             this.realmData = realmData;
             this.profiler = profiler;
             this.v8ActiveEngines = v8ActiveEngines;
+
             // this.scenesCache = scenesCache;
             this.analytics = analytics;
             this.jsonObjectBuilder = jsonObjectBuilder;
@@ -68,31 +67,25 @@ namespace DCL.Analytics.Systems
         {
             if (!realmData.Configured) return;
 
-            using (AddFramesMarker.Auto())
+            mainThreadFrameTimes.AddFrameTime(profiler.LastFrameTimeValueNs);
+            mainThreadHiccups.CheckForHiccup(profiler.LastFrameTimeValueNs);
+
+            gpuFrameTimes.AddFrameTime(profiler.LastGpuFrameTimeValueNs);
+            gpuHiccups.CheckForHiccup(profiler.LastGpuFrameTimeValueNs);
+
+            lastReportTime += t;
+
+            if (lastReportTime > config.PerformanceReportInterval)
             {
-                mainThreadFrameTimes.AddFrameTime(profiler.LastFrameTimeValueNs);
-                mainThreadHiccups.CheckForHiccup(profiler.LastFrameTimeValueNs);
+                ReportPerformanceMetrics();
 
-                gpuFrameTimes.AddFrameTime(profiler.LastGpuFrameTimeValueNs);
-                gpuHiccups.CheckForHiccup(profiler.LastGpuFrameTimeValueNs);
+                lastReportTime = 0;
 
-                lastReportTime += t;
-            }
+                mainThreadFrameTimes.Clear();
+                mainThreadHiccups.Clear();
 
-            using (ReportMarker.Auto())
-            {
-                if (lastReportTime > config.PerformanceReportInterval)
-                {
-                    ReportPerformanceMetrics();
-
-                    lastReportTime = 0;
-
-                    mainThreadFrameTimes.Clear();
-                    mainThreadHiccups.Clear();
-
-                    gpuFrameTimes.Clear();
-                    gpuHiccups.Clear();
-                }
+                gpuFrameTimes.Clear();
+                gpuHiccups.Clear();
             }
         }
 
