@@ -13,7 +13,7 @@ namespace DCL.Profiling
     {
         private const float NS_TO_MS = 1e-6f; // nanoseconds to milliseconds
         private const int HICCUP_THRESHOLD_IN_NS = 50_000_000; // 50 ms ~ 20 FPS
-        private const int FRAME_BUFFER_SIZE = 1_000; // 1000 samples: for 30 FPS it's 33 seconds gameplay, for 60 FPS it's 16.6 seconds
+        private const int FRAME_BUFFER_SIZE = 1; // 1_000; // 1000 samples: for 30 FPS it's 33 seconds gameplay, for 60 FPS it's 16.6 seconds
 
         private static readonly ProfilerRecorderSampleComparer PROFILER_SAMPLES_COMPARER = new ();
         private readonly List<ProfilerRecorderSample> samples = new (FRAME_BUFFER_SIZE);
@@ -32,6 +32,8 @@ namespace DCL.Profiling
         public long GcUsedMemoryInBytes => gcUsedMemoryRecorder.CurrentValue;
 
         public ulong CurrentFrameTimeValueNs => (ulong)mainThreadTimeRecorder.CurrentValue;
+        public ulong CurrentGpuFrameTimeValueNs => (ulong)gpuFrameTimeRecorder.CurrentValue;
+
         public long LastFrameTimeValueNs => mainThreadTimeRecorder.LastValue;
         public float TotalGcAlloc => GetRecorderSamplesSum(gcAllocatedInFrameRecorder);
 
@@ -84,24 +86,24 @@ namespace DCL.Profiling
             AnalyticsFrameTimeReport? mainThreadReport = GetFrameStatsWithPercentiles(mainThreadTimeRecorder, percentile);
 
             return (gpuReport,mainThreadReport, GetSamplesArrayAsString());
+        }
 
-            string GetSamplesArrayAsString()
+        private string GetSamplesArrayAsString()
+        {
+            stringBuilder.Clear();
+            stringBuilder.Append("[");
+
+            for (var i = 0; i < samples.Count; i++)
             {
-                stringBuilder.Clear();
-                stringBuilder.Append("[");
+                stringBuilder.AppendFormat("{0:0.000}", samples[i].Value * NS_TO_MS);
 
-                for (var i = 0; i < samples.Count; i++)
-                {
-                    stringBuilder.AppendFormat("{0:0.000}", samples[i].Value * NS_TO_MS);
-
-                    if (i < samples.Count - 1)
-                        stringBuilder.Append(",");
-                }
-
-                stringBuilder.Append("]");
-
-                return stringBuilder.ToString();
+                if (i < samples.Count - 1)
+                    stringBuilder.Append(",");
             }
+
+            stringBuilder.Append("]");
+
+            return stringBuilder.ToString();
         }
 
         // Exclusive percentile calculation variant, it rounds to nearest (in contrast to inclusive approach)

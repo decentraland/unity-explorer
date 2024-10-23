@@ -6,6 +6,7 @@ namespace DCL.Profiling
     {
         long TotalUsedMemoryInBytes { get; }
         ulong CurrentFrameTimeValueNs { get; }
+        ulong CurrentGpuFrameTimeValueNs { get; }
         long SystemUsedMemoryInBytes { get; }
     }
 
