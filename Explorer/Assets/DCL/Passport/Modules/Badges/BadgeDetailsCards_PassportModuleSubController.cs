@@ -15,6 +15,7 @@ namespace DCL.Passport.Modules.Badges
         private const int GRID_ITEMS_PER_ROW = 6;
 
         public readonly Dictionary<string,List<BadgeDetailCard_PassportFieldView>> InstantiatedBadgeDetailCards = new ();
+        public event Action<string> OnBadgeSelected;
 
         private readonly BadgesDetails_PassportModuleView view;
         private readonly BadgesCategories_PassportModuleSubController badgesCategoriesController;
@@ -96,6 +97,8 @@ namespace DCL.Passport.Modules.Badges
                 BadgesUtils.SetBadgeAsRead(badgeDetailCard.Model.data.id);
                 badgeDetailCard.SetAsNew(false);
             }
+
+            OnBadgeSelected?.Invoke(badgeDetailCard.Model.data.id);
         }
 
         public void CreateEmptyDetailCards()

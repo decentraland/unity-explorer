@@ -171,6 +171,7 @@ namespace DCL.SDKComponents.MapPins.Systems
                 World,
                 new GetTextureIntention(
                     textureComponentValue.Src,
+                    textureComponentValue.FileHash,
                     textureComponentValue.WrapMode,
                     textureComponentValue.FilterMode,
                     textureComponentValue.TextureType,

@@ -45,7 +45,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Fixed
             if (connectiveRoom.CurrentState() is not IConnectiveRoom.State.Running)
             {
                 string connectionString = await ConnectionStringAsync(token);
-                await connectToRoomAsyncDelegate(connectionString, token);
+                await connectToRoomAsyncDelegate(connectionString, static () => RoomSelection.NEW, token);
             }
         }
 
@@ -56,7 +56,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Fixed
             var result = webRequests.SignedFetchPostAsync(adapterUrl, metadata, token);
             AdapterResponse response = await result.CreateFromJson<AdapterResponse>(WRJsonParser.Unity);
             string connectionString = response.fixedAdapter;
-            ReportHub.WithReport(ReportCategory.ARCHIPELAGO_REQUEST).Log($"String is: {connectionString}");
+            ReportHub.WithReport(ReportCategory.COMMS_SCENE_HANDLER).Log($"String is: {connectionString}");
             return connectionString;
         }
 

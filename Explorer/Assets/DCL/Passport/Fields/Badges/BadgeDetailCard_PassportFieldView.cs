@@ -143,12 +143,12 @@ namespace DCL.Passport.Fields.Badges
             if (badgeInfo.data.isTier)
             {
                 int progressPercentage = badgeInfo.GetProgressPercentage();
-                ProgressBarFill.sizeDelta = new Vector2(progressPercentage * (ProgressBar.sizeDelta.x / 100), ProgressBarFill.sizeDelta.y);
+                ProgressBarFill.sizeDelta = new Vector2(Mathf.Clamp(progressPercentage, 0, 100) * (ProgressBar.sizeDelta.x / 100), ProgressBarFill.sizeDelta.y);
             }
             else
             {
                 int simpleBadgeProgressPercentage = badgeInfo.data.progress.stepsDone * 100 / badgeInfo.data.progress.totalStepsTarget;
-                ProgressBarFill.sizeDelta = new Vector2(simpleBadgeProgressPercentage * (ProgressBar.sizeDelta.x / 100), ProgressBarFill.sizeDelta.y);
+                ProgressBarFill.sizeDelta = new Vector2(Mathf.Clamp(simpleBadgeProgressPercentage, 0, 100) * (ProgressBar.sizeDelta.x / 100), ProgressBarFill.sizeDelta.y);
             }
         }
 

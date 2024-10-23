@@ -5,7 +5,6 @@ using DCL.MapRenderer.MapLayers.Pins;
 using DCL.PlacesAPIService;
 using DCL.UI;
 using DCL.WebRequests;
-using ECS.SceneLifeCycle.Realm;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -38,6 +37,8 @@ namespace DCL.Navmap
         private Vector2Int destination = DEFAULT_DESTINATION_PARCEL;
         private PlacesData.PlaceInfo currentParcelPlaceInfo;
 
+        private NavmapZoomController zoomController;
+
         public event Action<Vector2Int> OnJumpIn;
         public event Action<PlacesData.PlaceInfo?> OnSetAsDestination;
         private readonly IChatMessagesBus chatMessagesBus;
@@ -48,7 +49,8 @@ namespace DCL.Navmap
             IWebRequestController webRequestController,
             IGetTextureArgsFactory getTextureArgsFactory,
             IMapPathEventBus mapPathEventBus,
-            IChatMessagesBus chatMessagesBus
+            IChatMessagesBus chatMessagesBus,
+            NavmapZoomController zoomController
         )
         {
             this.view = view;
@@ -56,6 +58,7 @@ namespace DCL.Navmap
             this.getTextureArgsFactory = getTextureArgsFactory;
             this.mapPathEventBus = mapPathEventBus;
             this.chatMessagesBus = chatMessagesBus;
+            this.zoomController = zoomController;
 
             view.closeButton.onClick.AddListener(HidePanel);
             view.mapPinCloseButton.onClick.AddListener(HidePanel);
@@ -71,13 +74,25 @@ namespace DCL.Navmap
             ResetCategories();
             InitButtons();
             this.mapPathEventBus.OnRemovedDestination += RemoveDestination;
+
+            view.onPointerEnterAction += NavmapBlockZoom;
+            view.onPointerExitAction += NavmapUnblockZoom;
         }
+
+        private void NavmapBlockZoom() =>
+            zoomController.SetBlockZoom(true);
+
+        private void NavmapUnblockZoom() =>
+            zoomController.SetBlockZoom(false);
 
         public void Dispose()
         {
             likeButtonController.OnButtonClicked -= OnLike;
             dislikeButtonController.OnButtonClicked -= OnDislike;
             favoriteButtonController.OnButtonClicked -= OnFavorite;
+
+            view.onPointerEnterAction -= NavmapBlockZoom;
+            view.onPointerExitAction -= NavmapUnblockZoom;
         }
 
         private void InitButtons()
@@ -206,7 +221,8 @@ namespace DCL.Navmap
         {
             OnJumpIn?.Invoke(parcel);
 
-            if (destination == parcel) { mapPathEventBus.ArrivedToDestination(); }
+            if (destination == parcel)
+                mapPathEventBus.ArrivedToDestination();
 
             chatMessagesBus.Send($"/{ChatCommandsUtils.COMMAND_GOTO} {parcel.x},{parcel.y}", ORIGIN);
         }

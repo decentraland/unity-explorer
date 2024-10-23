@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using RenderHeads.Media.AVProVideo;
 using DCL.ECSComponents;
+using DCL.Settings;
 
 namespace DCL.SDKComponents.MediaStream.Wrapper
 {
@@ -21,7 +22,8 @@ namespace DCL.SDKComponents.MediaStream.Wrapper
         private readonly IWebRequestController webRequestController;
         private readonly IExtendedObjectPool<Texture2D> videoTexturePool;
         private readonly IPerformanceBudget frameTimeBudget;
-        private readonly IComponentPool<MediaPlayer> mediaPlayerPool;
+        private readonly GameObjectPool<MediaPlayer> mediaPlayerPool;
+        private readonly WorldVolumeMacBus worldVolumeMacBus;
 
         public MediaPlayerPluginWrapper(
             IComponentPoolsRegistry componentPoolsRegistry,
@@ -29,7 +31,8 @@ namespace DCL.SDKComponents.MediaStream.Wrapper
             CacheCleaner cacheCleaner,
             IExtendedObjectPool<Texture2D> videoTexturePool,
             IPerformanceBudget frameTimeBudget,
-            MediaPlayer mediaPlayerPrefab)
+            MediaPlayer mediaPlayerPrefab,
+            WorldVolumeMacBus worldVolumeMacBus)
         {
 #if AV_PRO_PRESENT && !UNITY_EDITOR_LINUX && !UNITY_STANDALONE_LINUX
             this.componentPoolsRegistry = componentPoolsRegistry;
@@ -37,14 +40,13 @@ namespace DCL.SDKComponents.MediaStream.Wrapper
 
             this.videoTexturePool = videoTexturePool;
             this.frameTimeBudget = frameTimeBudget;
+            this.worldVolumeMacBus = worldVolumeMacBus;
             cacheCleaner.Register(videoTexturePool);
-
-            var parentContainer = new GameObject("MediaPlayerContainer");
 
             mediaPlayerPool = componentPoolsRegistry.AddGameObjectPool(
                 creationHandler: () =>
                 {
-                    var mediaPlayer = Object.Instantiate(mediaPlayerPrefab);
+                    var mediaPlayer = Object.Instantiate(mediaPlayerPrefab, mediaPlayerPool!.PoolContainerTransform);
                     mediaPlayer.PlatformOptionsWindows.audioOutput = Windows.AudioOutput.Unity;
                     mediaPlayer.PlatformOptionsMacOSX.audioMode = MediaPlayer.OptionsApple.AudioMode.Unity;
                     //Add other options if we release on other platforms :D
@@ -52,7 +54,6 @@ namespace DCL.SDKComponents.MediaStream.Wrapper
                 },
                 onGet: mediaPlayer =>
                 {
-                    mediaPlayer.transform.SetParent(parentContainer.transform);
                     mediaPlayer.AutoOpen = false;
                     mediaPlayer.enabled = true;
                 },
@@ -71,7 +72,7 @@ namespace DCL.SDKComponents.MediaStream.Wrapper
 #if AV_PRO_PRESENT && !UNITY_EDITOR_LINUX && !UNITY_STANDALONE_LINUX
 
             CreateMediaPlayerSystem.InjectToWorld(ref builder, webRequestController, sceneData, mediaPlayerPool, sceneStateProvider, frameTimeBudget);
-            UpdateMediaPlayerSystem.InjectToWorld(ref builder, webRequestController, sceneData, sceneStateProvider, frameTimeBudget);
+            UpdateMediaPlayerSystem.InjectToWorld(ref builder, webRequestController, sceneData, sceneStateProvider, frameTimeBudget, worldVolumeMacBus);
             VideoEventsSystem.InjectToWorld(ref builder, ecsToCrdtWriter, sceneStateProvider, componentPoolsRegistry.GetReferenceTypePool<PBVideoEvent>(), frameTimeBudget);
 
             finalizeWorldSystems.Add(CleanUpMediaPlayerSystem.InjectToWorld(ref builder, mediaPlayerPool, videoTexturePool));

@@ -82,7 +82,8 @@ namespace ECS.Unity.Materials.Tests
 
         internal static MaterialComponent CreateMaterialComponent() =>
             new (MaterialData.CreateBasicMaterial(
-                new TextureComponent("albedo", TextureWrapMode.Mirror, FilterMode.Point),
+                new TextureComponent("albedo",string.Empty, TextureWrapMode.Mirror, FilterMode.Point),
+                null,
                 0,
                 Color.red,
                 false));

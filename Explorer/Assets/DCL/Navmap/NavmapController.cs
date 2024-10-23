@@ -106,7 +106,8 @@ namespace DCL.Navmap
                 webRequestController,
                 getTextureArgsFactory,
                 mapPathEventBus,
-                chatMessagesBus
+                chatMessagesBus,
+                zoomController
             );
 
             FloatingPanelController.OnJumpIn += _ => searchBarController.ResetSearch();

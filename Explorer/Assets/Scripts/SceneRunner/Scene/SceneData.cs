@@ -95,6 +95,22 @@ namespace SceneRunner.Scene
             return false;
         }
 
+        public bool TryGetMediaFileHash(string url, out string fileHash)
+        {
+            if (string.IsNullOrEmpty(url))
+            {
+                fileHash = string.Empty;
+                return false;
+            }
+
+            // Try resolve an internal URL
+            if (TryGetHash(url, out fileHash))
+                return true;
+
+            fileHash = string.Empty;
+            return false;
+        }
+
         public bool IsUrlDomainAllowed(string url)
         {
             if (Uri.TryCreate(url, UriKind.Absolute, out Uri uri))

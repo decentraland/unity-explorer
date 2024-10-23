@@ -85,13 +85,6 @@ namespace DCL.UI.SystemMenu
             OnClosed?.Invoke();
         }
 
-
-        protected override void OnViewClose()
-        {
-            logoutCts.SafeCancelAndDispose();
-            base.OnViewClose();
-        }
-
         private void ShowTermsOfService() =>
             webBrowser.OpenUrl(DecentralandUrl.TermsOfUse);
 
@@ -105,7 +98,7 @@ namespace DCL.UI.SystemMenu
             if (string.IsNullOrEmpty(userId))
                 return;
 
-            mvcManager.ShowAsync(PassportController.IssueCommand(new PassportController.Params(userId))).Forget();
+            mvcManager.ShowAsync(PassportController.IssueCommand(new PassportController.Params(userId, isOwnProfile: true))).Forget();
         }
 
         private void ExitApp()

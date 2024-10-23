@@ -30,7 +30,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             {
                 { typeof(ChatController), CreateAnalytics<ChatController>(c => new ChatEventsAnalytics(analytics, c)) },
                 { typeof(ExplorePanelController), CreateAnalytics<ExplorePanelController>(c => new MapEventsAnalytics(analytics, c.NavmapController)) },
-                { typeof(PassportController), CreateAnalytics<PassportController>(c => new OpenPassportAnalytics(analytics, c)) },
+                { typeof(PassportController), CreateAnalytics<PassportController>(c => new PassportAnalytics(analytics, c)) },
                 { typeof(AuthenticationScreenController), CreateAnalytics<AuthenticationScreenController>(c => new AuthenticationScreenAnalytics(analytics, c)) },
             };
 

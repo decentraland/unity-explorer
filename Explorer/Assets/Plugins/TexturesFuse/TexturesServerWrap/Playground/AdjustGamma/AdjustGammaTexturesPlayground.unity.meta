@@ -1,6 +1,11 @@
 fileFormatVersion: 2
+<<<<<<<< HEAD:Explorer/Assets/Plugins/TexturesFuse/TexturesServerWrap/Playground/AdjustGamma/AdjustGammaTexturesPlayground.unity.meta
 guid: 9477319168b0246abb872ead82850303
 DefaultImporter:
+========
+guid: df3e76247a5a62b48b4cb62b71694a93
+AssemblyDefinitionReferenceImporter:
+>>>>>>>> dev:Explorer/Assets/DCL/SDKComponents/TextShape/System/DCL.TextShapeSystems.asmref.meta
   externalObjects: {}
   userData: 
   assetBundleName: 

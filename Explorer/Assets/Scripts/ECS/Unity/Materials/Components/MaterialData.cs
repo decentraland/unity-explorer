@@ -90,11 +90,11 @@ namespace ECS.Unity.Materials.Components
             DirectIntensity = directIntensity;
         }
 
-        internal static MaterialData CreateBasicMaterial(TextureComponent? albedoTexture, float alphaTest, Color diffuseColor, bool castShadows)
+        internal static MaterialData CreateBasicMaterial(TextureComponent? albedoTexture, TextureComponent? alphaTexture, float alphaTest, Color diffuseColor, bool castShadows)
         {
             Color defaultColor = Color.white;
 
-            return new MaterialData(false, albedoTexture, null, null, null,
+            return new MaterialData(false, albedoTexture, alphaTexture, null, null,
                 alphaTest, castShadows, defaultColor, diffuseColor, defaultColor, defaultColor, MaterialTransparencyMode.Auto,
                 0, 0, 0, 0, 0);
         }

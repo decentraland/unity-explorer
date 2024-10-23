@@ -59,7 +59,7 @@ namespace DCL.PluginSystem.World
             decentralandUrlsSource,
             instantiationFrameTimeBudgetProvider,
             componentPoolsRegistry,
-            new FramesPool(NewFramePrefabs(assetsProvisioner, out var framePrefabs)),
+            new FramesPool(NewFramePrefabs(assetsProvisioner, out var framePrefabs), componentPoolsRegistry),
             framePrefabs,
             webRequestController,
             getTextureArgsFactory,
