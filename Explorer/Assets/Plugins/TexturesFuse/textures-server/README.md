@@ -8,3 +8,9 @@ Quote:
  Build ASTC: 
  1. Go to directory `astc-encoder`
  2. `cmake . -DASTCENC_SHAREDLIB=ON -DASTCENC_UNIVERSAL_BUILD=ON -DASTCENC_DYNAMIC_LIBRARY=ON`
+
+ Build Compressonator:
+ 1. Follow README.md in ./СompressonatorWorkaround
+
+ Build Lib
+ 1. Run FreeImage/Source/FFI/build.sh
