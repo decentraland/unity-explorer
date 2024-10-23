@@ -2071,6 +2071,24 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "ToggleDebugConsole",
+                    "type": "Button",
+                    "id": "8a10f0d2-822d-4ec6-be75-9be85ad4fbc6",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "ToggleDebugConsoleLarger",
+                    "type": "Button",
+                    "id": "65d092fb-6cb5-423f-8b70-93f843b54813",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -2172,6 +2190,50 @@
                     "action": "ToggleNametags",
                     "isComposite": false,
                     "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "5f780ed0-edb4-436b-af9f-1215c2382586",
+                    "path": "<Keyboard>/backquote",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "ToggleDebugConsole",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "SHIFT+`",
+                    "id": "f2a9130b-c569-4b29-b34d-033430240dce",
+                    "path": "OneModifier",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "ToggleDebugConsoleLarger",
+                    "isComposite": true,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "modifier",
+                    "id": "70efa665-f110-4699-970a-70813d9831ba",
+                    "path": "<Keyboard>/leftShift",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "ToggleDebugConsoleLarger",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "binding",
+                    "id": "3cccce46-fdd9-4912-b9bf-80a37b3523d2",
+                    "path": "<Keyboard>/backquote",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "ToggleDebugConsoleLarger",
+                    "isComposite": false,
+                    "isPartOfComposite": true
                 }
             ]
         },

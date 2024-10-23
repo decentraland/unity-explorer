@@ -2093,6 +2093,24 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""ToggleDebugConsole"",
+                    ""type"": ""Button"",
+                    ""id"": ""8a10f0d2-822d-4ec6-be75-9be85ad4fbc6"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""ToggleDebugConsoleLarger"",
+                    ""type"": ""Button"",
+                    ""id"": ""65d092fb-6cb5-423f-8b70-93f843b54813"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -2194,6 +2212,50 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""action"": ""ToggleNametags"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""5f780ed0-edb4-436b-af9f-1215c2382586"",
+                    ""path"": ""<Keyboard>/backquote"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""ToggleDebugConsole"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": ""SHIFT+`"",
+                    ""id"": ""f2a9130b-c569-4b29-b34d-033430240dce"",
+                    ""path"": ""OneModifier"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""ToggleDebugConsoleLarger"",
+                    ""isComposite"": true,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": ""modifier"",
+                    ""id"": ""70efa665-f110-4699-970a-70813d9831ba"",
+                    ""path"": ""<Keyboard>/leftShift"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""ToggleDebugConsoleLarger"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""binding"",
+                    ""id"": ""3cccce46-fdd9-4912-b9bf-80a37b3523d2"",
+                    ""path"": ""<Keyboard>/backquote"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""ToggleDebugConsoleLarger"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
                 }
             ]
         },
@@ -2947,6 +3009,8 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         m_Shortcuts_ToggleAvatarBubbles = m_Shortcuts.FindAction("ToggleAvatarBubbles", throwIfNotFound: true);
         m_Shortcuts_ShowHideUI = m_Shortcuts.FindAction("ShowHideUI", throwIfNotFound: true);
         m_Shortcuts_ToggleNametags = m_Shortcuts.FindAction("ToggleNametags", throwIfNotFound: true);
+        m_Shortcuts_ToggleDebugConsole = m_Shortcuts.FindAction("ToggleDebugConsole", throwIfNotFound: true);
+        m_Shortcuts_ToggleDebugConsoleLarger = m_Shortcuts.FindAction("ToggleDebugConsoleLarger", throwIfNotFound: true);
         // Emotes
         m_Emotes = asset.FindActionMap("Emotes", throwIfNotFound: true);
         m_Emotes_Slot1 = m_Emotes.FindAction("Slot 1", throwIfNotFound: true);
@@ -3563,6 +3627,8 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
     private readonly InputAction m_Shortcuts_ToggleAvatarBubbles;
     private readonly InputAction m_Shortcuts_ShowHideUI;
     private readonly InputAction m_Shortcuts_ToggleNametags;
+    private readonly InputAction m_Shortcuts_ToggleDebugConsole;
+    private readonly InputAction m_Shortcuts_ToggleDebugConsoleLarger;
     public struct ShortcutsActions
     {
         private @DCLInput m_Wrapper;
@@ -3576,6 +3642,8 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         public InputAction @ToggleAvatarBubbles => m_Wrapper.m_Shortcuts_ToggleAvatarBubbles;
         public InputAction @ShowHideUI => m_Wrapper.m_Shortcuts_ShowHideUI;
         public InputAction @ToggleNametags => m_Wrapper.m_Shortcuts_ToggleNametags;
+        public InputAction @ToggleDebugConsole => m_Wrapper.m_Shortcuts_ToggleDebugConsole;
+        public InputAction @ToggleDebugConsoleLarger => m_Wrapper.m_Shortcuts_ToggleDebugConsoleLarger;
         public InputActionMap Get() { return m_Wrapper.m_Shortcuts; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -3612,6 +3680,12 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @ToggleNametags.started += instance.OnToggleNametags;
             @ToggleNametags.performed += instance.OnToggleNametags;
             @ToggleNametags.canceled += instance.OnToggleNametags;
+            @ToggleDebugConsole.started += instance.OnToggleDebugConsole;
+            @ToggleDebugConsole.performed += instance.OnToggleDebugConsole;
+            @ToggleDebugConsole.canceled += instance.OnToggleDebugConsole;
+            @ToggleDebugConsoleLarger.started += instance.OnToggleDebugConsoleLarger;
+            @ToggleDebugConsoleLarger.performed += instance.OnToggleDebugConsoleLarger;
+            @ToggleDebugConsoleLarger.canceled += instance.OnToggleDebugConsoleLarger;
         }
 
         private void UnregisterCallbacks(IShortcutsActions instance)
@@ -3643,6 +3717,12 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @ToggleNametags.started -= instance.OnToggleNametags;
             @ToggleNametags.performed -= instance.OnToggleNametags;
             @ToggleNametags.canceled -= instance.OnToggleNametags;
+            @ToggleDebugConsole.started -= instance.OnToggleDebugConsole;
+            @ToggleDebugConsole.performed -= instance.OnToggleDebugConsole;
+            @ToggleDebugConsole.canceled -= instance.OnToggleDebugConsole;
+            @ToggleDebugConsoleLarger.started -= instance.OnToggleDebugConsoleLarger;
+            @ToggleDebugConsoleLarger.performed -= instance.OnToggleDebugConsoleLarger;
+            @ToggleDebugConsoleLarger.canceled -= instance.OnToggleDebugConsoleLarger;
         }
 
         public void RemoveCallbacks(IShortcutsActions instance)
@@ -3990,6 +4070,8 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         void OnToggleAvatarBubbles(InputAction.CallbackContext context);
         void OnShowHideUI(InputAction.CallbackContext context);
         void OnToggleNametags(InputAction.CallbackContext context);
+        void OnToggleDebugConsole(InputAction.CallbackContext context);
+        void OnToggleDebugConsoleLarger(InputAction.CallbackContext context);
     }
     public interface IEmotesActions
     {
