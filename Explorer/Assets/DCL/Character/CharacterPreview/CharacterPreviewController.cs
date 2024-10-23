@@ -87,25 +87,44 @@ namespace DCL.CharacterPreview
                 PartitionComponent.TOP_PRIORITY
             );
 
-            globalWorld.Create(EmotePromise.Create(globalWorld,
+            Entity emotePromiseEntity = globalWorld.Create(EmotePromise.Create(globalWorld,
                 EmoteComponentsUtils.CreateGetEmotesByPointersIntention(avatarShape.BodyShape,
                     avatarModel.Emotes ?? (IReadOnlyCollection<URN>)Array.Empty<URN>()),
                 PartitionComponent.TOP_PRIORITY));
 
+            EntityReference emotePromiseRef = globalWorld.Reference(emotePromiseEntity);
+
             avatarShape.IsDirty = true;
 
-            return WaitForAvatarInstantiatedAsync(ct);
+            return WaitForAvatarInstantiatedAsync(emotePromiseRef, ct);
         }
 
-        private async UniTask WaitForAvatarInstantiatedAsync(CancellationToken ct)
+        private async UniTask WaitForAvatarInstantiatedAsync(EntityReference emotePromiseEntity, CancellationToken ct)
         {
-            while (!ct.IsCancellationRequested && globalWorld.Get<AvatarShapeComponent>(characterPreviewEntity).IsDirty)
+            World world = globalWorld;
+            Entity avatarEntity = characterPreviewEntity;
+
+            while (!ct.IsCancellationRequested
+                   && (!IsAvatarLoaded() || !IsEmoteLoaded()))
                 await UniTask.Yield(ct);
+
+            return;
+
+            bool IsAvatarLoaded()
+            {
+                return !world.Get<AvatarShapeComponent>(avatarEntity).IsDirty;
+            }
+
+            bool IsEmoteLoaded()
+            {
+                return !emotePromiseEntity.IsAlive(world)
+                       || world.Get<EmotePromise>(emotePromiseEntity).IsConsumed;
+            }
         }
 
         public void PlayEmote(string emoteId)
         {
-            globalWorld.Add(characterPreviewEntity, new CharacterEmoteIntent { EmoteId = emoteId, TriggerSource = TriggerSource.PREVIEW});
+            globalWorld.Add(characterPreviewEntity, new CharacterEmoteIntent { EmoteId = emoteId, TriggerSource = TriggerSource.PREVIEW });
         }
 
         public void StopEmotes()
