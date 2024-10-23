@@ -40,10 +40,7 @@ namespace DCL.Profiling
             int insertIndex = BinarySearchForInsertionPosition(frameTime);
 
             if (insertIndex < SamplesAmount)
-            {
-                // Array.Copy(samples, insertIndex, samples, insertIndex + 1, currentIndex - insertIndex);
                 ShiftElementsRight(insertIndex, SamplesAmount - insertIndex);
-            }
 
             samples[insertIndex] = frameTime;
             SamplesAmount++;
@@ -104,17 +101,6 @@ namespace DCL.Profiling
 
         public ReadOnlySpan<ulong> GetSortedSamples() =>
             new (samples, 0, SamplesAmount);
-
-        public ReadOnlySpan<float> GetSortedSamplesMs()
-        {
-             const float NS_TO_MS = 1e-6f;
-
-            var msValues = new float[SamplesAmount];
-            for (var i = 0; i < SamplesAmount; i++)
-                msValues[i] = samples[i] * NS_TO_MS;
-
-            return msValues;
-        }
 
         public void Clear()
         {
