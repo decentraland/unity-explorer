@@ -79,9 +79,9 @@ namespace DCL.Profiling
 
         public (AnalyticsFrameTimeReport? gpuFrameTime, AnalyticsFrameTimeReport? mainThreadFrameTime, string mainThreadSamples) GetFrameTimesNs(int[] percentile)
         {
-            var gpuReport = GetFrameStatsWithPercentiles(gpuFrameTimeRecorder, percentile);
+            AnalyticsFrameTimeReport? gpuReport = GetFrameStatsWithPercentiles(gpuFrameTimeRecorder, percentile);
             // Main thread should be last to calculate, so Samples reflects mainThread FrameData and not GPU FrameData
-            var mainThreadReport = GetFrameStatsWithPercentiles(mainThreadTimeRecorder, percentile);
+            AnalyticsFrameTimeReport? mainThreadReport = GetFrameStatsWithPercentiles(mainThreadTimeRecorder, percentile);
 
             return (gpuReport,mainThreadReport, GetSamplesArrayAsString());
 
