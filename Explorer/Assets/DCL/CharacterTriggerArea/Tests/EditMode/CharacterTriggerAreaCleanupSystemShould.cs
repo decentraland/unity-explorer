@@ -34,8 +34,7 @@ namespace DCL.CharacterTriggerArea.Tests
             system = new CharacterTriggerAreaCleanupSystem(world, poolRegistry);
         }
 
-        [TearDown]
-        public void Teardown()
+        protected override void OnTearDown()
         {
             poolRegistry.Dispose();
             Object.DestroyImmediate(fakeAvatarGO);

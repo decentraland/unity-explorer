@@ -57,10 +57,8 @@ namespace DCL.SkyBox
             lightJob.Output = new NativeReference<SunPosition.LightJob.Result>(Allocator.Persistent);
         }
 
-        public override void Dispose()
+        protected override void OnDispose()
         {
-            base.Dispose();
-
             jobHandle.Complete();
             lightJob.Output.Dispose();
         }

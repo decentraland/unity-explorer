@@ -56,8 +56,9 @@ namespace DCL.CharacterCamera.Tests
         }
 
         [TearDown]
-        public void Teardown()
+        public override void TearDown()
         {
+            base.TearDown();
             InputSystem.RemoveDevice(keyboard);
             InputSystem.RemoveDevice(mouse);
         }

@@ -74,7 +74,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             this.avatarTransformMatrixBatchJob = avatarTransformMatrixBatchJob;
         }
 
-        public override void Dispose()
+        protected override void OnDispose()
         {
             vertOutBuffer.Dispose();
         }
