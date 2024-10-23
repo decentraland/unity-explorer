@@ -7,7 +7,7 @@ namespace DCL.Profiling
     ///     Profiling provider to provide in game metrics. Profiler recorder returns values in NS, so to stay consistent with it,
     ///     our most used metric is going to be NS
     /// </summary>
-    public class Profiler : IDebugViewProfiler
+    public class Profiler : IProfiler
     {
         private const int HICCUP_THRESHOLD_IN_NS = 50_000_000; // 50 ms ~ 20 FPS
         private const int FRAME_BUFFER_SIZE = 1_000; // 1000 samples: for 30 FPS it's 33 seconds gameplay, for 60 FPS it's 16.6 seconds
@@ -56,6 +56,7 @@ namespace DCL.Profiling
 
             long minFrameTime = long.MaxValue;
             long maxFrameTime = long.MinValue;
+
             long hiccupCount = 0;
 
             samples.Clear();
@@ -71,6 +72,46 @@ namespace DCL.Profiling
             }
 
             return new FrameTimeStats(minFrameTime, maxFrameTime, hiccupCount);
+        }
+
+        public (bool hasValue, long count, long sumTime, long min, long max, float avg) CalculateMainThreadHiccups() =>
+            CalculateThreadHiccups(mainThreadTimeRecorder);
+
+        public (bool hasValue, long count, long sumTime, long min, long max, float avg) CalculateGpuHiccups() =>
+            CalculateThreadHiccups(gpuFrameTimeRecorder);
+
+        private (bool hasValue, long count, long sumTime, long min, long max, float avg) CalculateThreadHiccups(ProfilerRecorder recorder)
+        {
+            int availableSamples = recorder.Capacity;
+
+            if (availableSamples == 0)
+                return (false, 0, 0, 0, 0, 0);
+
+            long hiccupCount = 0;
+            long hiccupTotalTime = 0;
+            long hiccupMin = -1;
+            long hiccupMax = -1;
+
+            samples.Clear();
+            recorder.CopyTo(samples);
+
+            for (var i = 0; i < samples.Count; i++)
+            {
+                long frameTime = samples[i].Value;
+
+                if (frameTime > HICCUP_THRESHOLD_IN_NS)
+                {
+                    hiccupCount++;
+                    hiccupTotalTime += frameTime;
+
+                    if (frameTime > hiccupMax) hiccupMax = frameTime;
+
+                    if (hiccupMin == -1) hiccupMin = frameTime;
+                    else if (frameTime < hiccupMin) hiccupMin = frameTime;
+                }
+            }
+
+            return (true, hiccupCount, hiccupTotalTime, hiccupMin, hiccupMax, hiccupCount == 0 ? 0 : hiccupTotalTime / (float)hiccupCount);
         }
 
         private float GetRecorderSamplesSum(ProfilerRecorder recorder)

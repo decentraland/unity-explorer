@@ -8,7 +8,6 @@ using ECS;
 using ECS.Abstract;
 using ECS.SceneLifeCycle;
 using SceneRuntime;
-using Unity.Profiling;
 using UnityEngine;
 using Utility.Json;
 using static DCL.PerformanceAndDiagnostics.Analytics.AnalyticsEvents;
@@ -30,16 +29,13 @@ namespace DCL.Analytics.Systems
 
         private readonly IRealmData realmData;
 
-        private readonly IMemoryProfiler profiler;
+        private readonly IProfiler profiler;
         private readonly V8ActiveEngines v8ActiveEngines;
 
         // private readonly IScenesCache scenesCache;
 
         private readonly FrameTimesRecorder mainThreadFrameTimes = new (FRAMES_SAMPLES_CAPACITY);
-        private readonly HiccupsCounter mainThreadHiccups = new (HICCUP_THRESHOLD_MS);
-
         private readonly FrameTimesRecorder gpuFrameTimes = new (FRAMES_SAMPLES_CAPACITY);
-        private readonly HiccupsCounter gpuHiccups = new (HICCUP_THRESHOLD_MS);
 
         private float lastReportTime;
 
@@ -47,7 +43,7 @@ namespace DCL.Analytics.Systems
             World world,
             IAnalyticsController analytics,
             IRealmData realmData,
-            IMemoryProfiler profiler,
+            IProfiler profiler,
             V8ActiveEngines v8ActiveEngines,
             IScenesCache scenesCache,
             IJsonObjectBuilder jsonObjectBuilder
@@ -68,98 +64,92 @@ namespace DCL.Analytics.Systems
             if (!realmData.Configured) return;
 
             mainThreadFrameTimes.AddFrameTime(profiler.LastFrameTimeValueNs);
-            mainThreadHiccups.CheckForHiccup(profiler.LastFrameTimeValueNs);
-
             gpuFrameTimes.AddFrameTime(profiler.LastGpuFrameTimeValueNs);
-            gpuHiccups.CheckForHiccup(profiler.LastGpuFrameTimeValueNs);
 
             lastReportTime += t;
 
             if (lastReportTime > config.PerformanceReportInterval)
             {
-                ReportPerformanceMetrics();
+                ReportPerformanceMetrics(lastReportTime);
 
                 lastReportTime = 0;
 
                 mainThreadFrameTimes.Clear();
-                mainThreadHiccups.Clear();
-
                 gpuFrameTimes.Clear();
-                gpuHiccups.Clear();
             }
         }
 
-        private void ReportPerformanceMetrics()
+        private void ReportPerformanceMetrics(float measureTime)
         {
+            jsonObjectBuilder.Set("total_time", measureTime);
+
+            // TODO (Vit): include more detailed quality information (renderFeatures, fog, etc). Probably from QualitySettingsAsset.cs
+            jsonObjectBuilder.Set("quality_level", QualitySettings.names[QualitySettings.GetQualityLevel()]);
+            jsonObjectBuilder.Set("player_count", 0); // TODO (Vit): How many users where nearby the current user
+
+            // JS runtime memory
             // bool isCurrentScene = scenesCache is { CurrentScene: { SceneStateProvider: { IsCurrent: true } } };
             // JsMemorySizeInfo totalJsMemoryData = v8ActiveEngines.GetEnginesSumMemoryData();
             // JsMemorySizeInfo currentSceneJsMemoryData = isCurrentScene ? v8ActiveEngines.GetEnginesMemoryDataForScene(scenesCache.CurrentScene.Info) : new JsMemorySizeInfo();
+            // jsonObjectBuilder.Set("jsheap_used", totalJsMemoryData.UsedHeapSizeMB);
+            // jsonObjectBuilder.Set("jsheap_total", totalJsMemoryData.TotalHeapSizeMB);
+            // jsonObjectBuilder.Set("jsheap_total_executable", totalJsMemoryData.TotalHeapSizeExecutableMB);
+            // jsonObjectBuilder.Set("jsheap_limit", totalJsMemoryData.HeapSizeLimitMB);
+            // jsonObjectBuilder.Set("jsheap_used_current_scene", !isCurrentScene ? -1f : currentSceneJsMemoryData.UsedHeapSizeMB);
+            // jsonObjectBuilder.Set("jsheap_total_current_scene", !isCurrentScene ? -1f : currentSceneJsMemoryData.TotalHeapSizeMB);
+            // jsonObjectBuilder.Set("jsheap_total_executable_current_scene", !isCurrentScene ? -1f : currentSceneJsMemoryData.TotalHeapSizeExecutableMB);
+            jsonObjectBuilder.Set("running_v8_engines", v8ActiveEngines.Count);
 
-            {
-                // TODO (Vit): include more detailed quality information (renderFeatures, fog, etc). Probably from QualitySettingsAsset.cs
-                jsonObjectBuilder.Set("quality_level", QualitySettings.names[QualitySettings.GetQualityLevel()]);
-                jsonObjectBuilder.Set("player_count", 0); // TODO (Vit): How many users where nearby the current user
+            // Memory
+            jsonObjectBuilder.Set("total_used_memory", ((ulong)profiler.TotalUsedMemoryInBytes).ByteToMB());
+            jsonObjectBuilder.Set("system_used_memory", ((ulong)profiler.SystemUsedMemoryInBytes).ByteToMB());
+            jsonObjectBuilder.Set("gc_used_memory", ((ulong)profiler.GcUsedMemoryInBytes).ByteToMB());
+            jsonObjectBuilder.Set("total_gc_alloc", ((ulong)profiler.TotalGcAlloc).ByteToMB());
 
-                // JS runtime memory
-                jsonObjectBuilder.Set("jsheap_used", "<disabled>"); // totalJsMemoryData.UsedHeapSizeMB);
-                jsonObjectBuilder.Set("jsheap_total", "<disabled>"); // totalJsMemoryData.TotalHeapSizeMB);
-                jsonObjectBuilder.Set("jsheap_total_executable", "<disabled>"); // totalJsMemoryData.TotalHeapSizeExecutableMB);
-                jsonObjectBuilder.Set("jsheap_limit", "<disabled>"); // totalJsMemoryData.HeapSizeLimitMB);
-                jsonObjectBuilder.Set("jsheap_used_current_scene", "<disabled>"); // !isCurrentScene ? -1f : currentSceneJsMemoryData.UsedHeapSizeMB);
-                jsonObjectBuilder.Set("jsheap_total_current_scene", "<disabled>"); // !isCurrentScene ? -1f : currentSceneJsMemoryData.TotalHeapSizeMB);
-                jsonObjectBuilder.Set("jsheap_total_executable_current_scene", "<disabled>"); // !isCurrentScene ? -1f : currentSceneJsMemoryData.TotalHeapSizeExecutableMB);
-                jsonObjectBuilder.Set("running_v8_engines", v8ActiveEngines.Count);
+            // MainThread
+            (bool hasValue, long count, long sumTime, long min, long max, float avg) hiccups = profiler.CalculateMainThreadHiccups();
 
-                // Memory
-                jsonObjectBuilder.Set("total_used_memory", ((ulong)profiler.TotalUsedMemoryInBytes).ByteToMB());
-                jsonObjectBuilder.Set("system_used_memory", ((ulong)profiler.SystemUsedMemoryInBytes).ByteToMB());
-                jsonObjectBuilder.Set("gc_used_memory", ((ulong)profiler.GcUsedMemoryInBytes).ByteToMB());
-                jsonObjectBuilder.Set("total_gc_alloc", ((ulong)profiler.TotalGcAlloc).ByteToMB());
+            jsonObjectBuilder.Set("hiccups_in_thousand_frames", !hiccups.hasValue? 0 : hiccups.count);
+            jsonObjectBuilder.Set("hiccups_time", !hiccups.hasValue? 0 : hiccups.sumTime * NS_TO_MS);
+            jsonObjectBuilder.Set("hiccups_min", !hiccups.hasValue? 0 : hiccups.min * NS_TO_MS);
+            jsonObjectBuilder.Set("hiccups_max", !hiccups.hasValue? 0 : hiccups.max * NS_TO_MS);
+            jsonObjectBuilder.Set("hiccups_avg", !hiccups.hasValue? 0 : hiccups.avg * NS_TO_MS);
 
-                // MainThread
-                jsonObjectBuilder.Set("samples", "<disabled>"); // mainThreadFrameTimes.GetSortedSamplesMs());
-                jsonObjectBuilder.Set("samples_amount", mainThreadFrameTimes.SamplesAmount);
-                jsonObjectBuilder.Set("total_time", mainThreadFrameTimes.TotalRecordedTime * NS_TO_MS);
+            jsonObjectBuilder.Set("min_frame_time", mainThreadFrameTimes.Min * NS_TO_MS);
+            jsonObjectBuilder.Set("max_frame_time", mainThreadFrameTimes.Max * NS_TO_MS);
+            jsonObjectBuilder.Set("mean_frame_time", mainThreadFrameTimes.Avg * NS_TO_MS);
+            jsonObjectBuilder.Set("frame_time_percentile_5", mainThreadFrameTimes.Percentile(5) * NS_TO_MS);
+            jsonObjectBuilder.Set("frame_time_percentile_10", mainThreadFrameTimes.Percentile(10) * NS_TO_MS);
+            jsonObjectBuilder.Set("frame_time_percentile_20", mainThreadFrameTimes.Percentile(20) * NS_TO_MS);
+            jsonObjectBuilder.Set("frame_time_percentile_50", mainThreadFrameTimes.Percentile(50) * NS_TO_MS);
+            jsonObjectBuilder.Set("frame_time_percentile_75", mainThreadFrameTimes.Percentile(75) * NS_TO_MS);
+            jsonObjectBuilder.Set("frame_time_percentile_80", mainThreadFrameTimes.Percentile(80) * NS_TO_MS);
+            jsonObjectBuilder.Set("frame_time_percentile_90", mainThreadFrameTimes.Percentile(90) * NS_TO_MS);
+            jsonObjectBuilder.Set("frame_time_percentile_95", mainThreadFrameTimes.Percentile(95) * NS_TO_MS);
 
-                jsonObjectBuilder.Set("hiccups_in_thousand_frames", mainThreadHiccups.Amount);
-                jsonObjectBuilder.Set("hiccups_time", mainThreadHiccups.SumTime * NS_TO_MS);
-                jsonObjectBuilder.Set("hiccups_min", mainThreadHiccups.Min * NS_TO_MS);
-                jsonObjectBuilder.Set("hiccups_max", mainThreadHiccups.Max * NS_TO_MS);
-                jsonObjectBuilder.Set("hiccups_avg", mainThreadHiccups.Avg * NS_TO_MS);
+            jsonObjectBuilder.Set("samples", "<disabled>"); // -> assemble an array of samples (small one from percentiles)
+            jsonObjectBuilder.Set("samples_amount", mainThreadFrameTimes.SamplesAmount); // use samples.Count > 10
 
-                jsonObjectBuilder.Set("min_frame_time", mainThreadFrameTimes.Min * NS_TO_MS);
-                jsonObjectBuilder.Set("max_frame_time", mainThreadFrameTimes.Max * NS_TO_MS);
-                jsonObjectBuilder.Set("mean_frame_time", mainThreadFrameTimes.Avg * NS_TO_MS);
+            // GPU
+            hiccups = profiler.CalculateGpuHiccups();
+            jsonObjectBuilder.Set("gpu_hiccups_in_thousand_frames", !hiccups.hasValue? 0 : hiccups.count);
+            jsonObjectBuilder.Set("gpu_hiccups_time", !hiccups.hasValue? 0 : hiccups.sumTime * NS_TO_MS);
+            jsonObjectBuilder.Set("gpu_hiccups_min", !hiccups.hasValue? 0 : hiccups.min * NS_TO_MS);
+            jsonObjectBuilder.Set("gpu_hiccups_max", !hiccups.hasValue? 0 : hiccups.max * NS_TO_MS);
+            jsonObjectBuilder.Set("gpu_hiccups_avg", !hiccups.hasValue? 0 : hiccups.avg * NS_TO_MS);
 
-                jsonObjectBuilder.Set("frame_time_percentile_5", mainThreadFrameTimes.Percentile(5) * NS_TO_MS);
-                jsonObjectBuilder.Set("frame_time_percentile_10", mainThreadFrameTimes.Percentile(10) * NS_TO_MS);
-                jsonObjectBuilder.Set("frame_time_percentile_20", mainThreadFrameTimes.Percentile(20) * NS_TO_MS);
-                jsonObjectBuilder.Set("frame_time_percentile_50", mainThreadFrameTimes.Percentile(50) * NS_TO_MS);
-                jsonObjectBuilder.Set("frame_time_percentile_75", mainThreadFrameTimes.Percentile(75) * NS_TO_MS);
-                jsonObjectBuilder.Set("frame_time_percentile_80", mainThreadFrameTimes.Percentile(80) * NS_TO_MS);
-                jsonObjectBuilder.Set("frame_time_percentile_90", mainThreadFrameTimes.Percentile(90) * NS_TO_MS);
-                jsonObjectBuilder.Set("frame_time_percentile_95", mainThreadFrameTimes.Percentile(95) * NS_TO_MS);
 
-                // GPU
-                jsonObjectBuilder.Set("gpu_hiccups_in_thousand_frames", gpuHiccups.Amount);
-                jsonObjectBuilder.Set("gpu_hiccups_time", gpuHiccups.SumTime * NS_TO_MS);
-                jsonObjectBuilder.Set("gpu_hiccups_min", gpuHiccups.Min * NS_TO_MS);
-                jsonObjectBuilder.Set("gpu_hiccups_max", gpuHiccups.Max * NS_TO_MS);
-                jsonObjectBuilder.Set("gpu_hiccups_avg", gpuHiccups.Avg * NS_TO_MS);
-
-                jsonObjectBuilder.Set("gpu_min_frame_time", gpuFrameTimes.Min * NS_TO_MS);
-                jsonObjectBuilder.Set("gpu_max_frame_time", gpuFrameTimes.Max * NS_TO_MS);
-                jsonObjectBuilder.Set("gpu_mean_frame_time", gpuFrameTimes.Avg * NS_TO_MS);
-
-                jsonObjectBuilder.Set("gpu_frame_time_percentile_5", gpuFrameTimes.Percentile(5) * NS_TO_MS);
-                jsonObjectBuilder.Set("gpu_frame_time_percentile_10", gpuFrameTimes.Percentile(10) * NS_TO_MS);
-                jsonObjectBuilder.Set("gpu_frame_time_percentile_20", gpuFrameTimes.Percentile(20) * NS_TO_MS);
-                jsonObjectBuilder.Set("gpu_frame_time_percentile_50", gpuFrameTimes.Percentile(50) * NS_TO_MS);
-                jsonObjectBuilder.Set("gpu_frame_time_percentile_75", gpuFrameTimes.Percentile(75) * NS_TO_MS);
-                jsonObjectBuilder.Set("gpu_frame_time_percentile_80", gpuFrameTimes.Percentile(80) * NS_TO_MS);
-                jsonObjectBuilder.Set("gpu_frame_time_percentile_90", gpuFrameTimes.Percentile(90) * NS_TO_MS);
-                jsonObjectBuilder.Set("gpu_frame_time_percentile_95", gpuFrameTimes.Percentile(95) * NS_TO_MS);
-            }
+            jsonObjectBuilder.Set("gpu_min_frame_time", gpuFrameTimes.Min * NS_TO_MS);
+            jsonObjectBuilder.Set("gpu_max_frame_time", gpuFrameTimes.Max * NS_TO_MS);
+            jsonObjectBuilder.Set("gpu_mean_frame_time", gpuFrameTimes.Avg * NS_TO_MS);
+            jsonObjectBuilder.Set("gpu_frame_time_percentile_5", gpuFrameTimes.Percentile(5) * NS_TO_MS);
+            jsonObjectBuilder.Set("gpu_frame_time_percentile_10", gpuFrameTimes.Percentile(10) * NS_TO_MS);
+            jsonObjectBuilder.Set("gpu_frame_time_percentile_20", gpuFrameTimes.Percentile(20) * NS_TO_MS);
+            jsonObjectBuilder.Set("gpu_frame_time_percentile_50", gpuFrameTimes.Percentile(50) * NS_TO_MS);
+            jsonObjectBuilder.Set("gpu_frame_time_percentile_75", gpuFrameTimes.Percentile(75) * NS_TO_MS);
+            jsonObjectBuilder.Set("gpu_frame_time_percentile_80", gpuFrameTimes.Percentile(80) * NS_TO_MS);
+            jsonObjectBuilder.Set("gpu_frame_time_percentile_90", gpuFrameTimes.Percentile(90) * NS_TO_MS);
+            jsonObjectBuilder.Set("gpu_frame_time_percentile_95", gpuFrameTimes.Percentile(95) * NS_TO_MS);
 
             using PooledJsonObject pooled = jsonObjectBuilder.BuildPooled();
 

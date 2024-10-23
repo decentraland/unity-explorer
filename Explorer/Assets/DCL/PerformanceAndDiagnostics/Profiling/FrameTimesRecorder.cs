@@ -5,17 +5,18 @@ namespace DCL.Profiling
     /// <summary>
     ///     Calculated in Nanoseconds (if not specified)
     /// </summary>
+    /// Can be further optimized by taking into account ulong
     public class FrameTimesRecorder
     {
         private const int MANUAL_SHIFT_THRESHOLD = 16; // Threshold for when to use Array.Copy vs manual shifting
-        private ulong[] samples;
+
         private int capacity;
+        private ulong[] samples;
 
-        public ulong TotalRecordedTime { get; private set; } // [ns]
+        private ulong totalRecordedTime;
+
         public int SamplesAmount { get; private set; }
-
-        public float Avg => SamplesAmount == 0 ? 0 : TotalRecordedTime / (float)SamplesAmount;
-
+        public float Avg => SamplesAmount == 0 ? 0 : totalRecordedTime / (float)SamplesAmount;
         public ulong Min => samples[0];
         public ulong Max => SamplesAmount == 0 ? samples[0] : samples[SamplesAmount - 1];
 
@@ -28,7 +29,7 @@ namespace DCL.Profiling
 
         public void AddFrameTime(ulong frameTime)
         {
-            TotalRecordedTime += frameTime;
+            totalRecordedTime += frameTime;
             InsertSampleSorted(frameTime);
         }
 
@@ -105,7 +106,7 @@ namespace DCL.Profiling
         public void Clear()
         {
             SamplesAmount = 0;
-            TotalRecordedTime = 0;
+            totalRecordedTime = 0;
         }
     }
 }

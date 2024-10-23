@@ -23,7 +23,7 @@ namespace DCL.Profiling.ECS
         private const float FRAME_STATS_COOLDOWN = 30; // update each <FRAME_STATS_COOLDOWN> frames (statistic buffer == 1000)
 
         private readonly IRealmData realmData;
-        private readonly IDebugViewProfiler profiler;
+        private readonly IProfiler profiler;
         private readonly MemoryBudget memoryBudget;
         private readonly V8ActiveEngines v8ActiveEngines;
         private readonly IScenesCache scenesCache;
@@ -64,7 +64,7 @@ namespace DCL.Profiling.ECS
         private bool frameTimingsEnabled;
         private bool sceneMetricsEnabled;
 
-        private DebugViewProfilingSystem(World world, IRealmData realmData, IDebugViewProfiler profiler, MemoryBudget memoryBudget, IDebugContainerBuilder debugBuilder,
+        private DebugViewProfilingSystem(World world, IRealmData realmData, IProfiler profiler, MemoryBudget memoryBudget, IDebugContainerBuilder debugBuilder,
             V8ActiveEngines v8ActiveEngines, IScenesCache scenesCache) : base(world)
         {
             this.realmData = realmData;
@@ -198,7 +198,7 @@ namespace DCL.Profiling.ECS
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void UpdateFrameStatisticsView(IDebugViewProfiler debugProfiler)
+        private void UpdateFrameStatisticsView(IProfiler debugProfiler)
         {
             FrameTimeStats? frameTimeStats = debugProfiler.CalculateMainThreadFrameTimesNs();
 
