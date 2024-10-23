@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using System;
+using System.Runtime.InteropServices;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Pool;
@@ -15,7 +16,8 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
     public interface ITexturesUnzip : IDisposable
     {
         UniTask<EnumResult<OwnedTexture2D, NativeMethods.ImageResult>> TextureFromBytesAsync(
-            ReadOnlyMemory<byte> bytes,
+            IntPtr bytes,
+            int bytesLength,
             TextureType type,
             CancellationToken token
         );
@@ -67,6 +69,35 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
 
     public static class TexturesUnzipExtensions
     {
+        private struct HandleScope : IDisposable
+        {
+            private GCHandle handle;
+
+            public IntPtr Addr => handle.AddrOfPinnedObject();
+
+            public HandleScope(object obj)
+            {
+                handle = GCHandle.Alloc(obj, GCHandleType.Pinned);
+            }
+
+            public void Dispose()
+            {
+                handle.Free();
+            }
+        }
+
+        public static async UniTask<EnumResult<OwnedTexture2D, NativeMethods.ImageResult>> TextureFromBytesAsync(
+            this ITexturesUnzip unzip,
+            byte[] bytes,
+            TextureType type,
+            CancellationToken token
+        )
+        {
+            using var pinned = new HandleScope(bytes);
+            var result = await unzip.TextureFromBytesAsync(pinned.Addr, bytes.Length, type, token);
+            return result;
+        }
+
         public static SemaphoreTexturesUnzip WithSemaphore(this ITexturesUnzip texturesUnzip) =>
             new (texturesUnzip);
 

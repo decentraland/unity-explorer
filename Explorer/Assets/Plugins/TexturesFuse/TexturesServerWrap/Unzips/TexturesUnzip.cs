@@ -59,7 +59,8 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
         }
 
         public async UniTask<EnumResult<OwnedTexture2D, NativeMethods.ImageResult>> TextureFromBytesAsync(
-            ReadOnlyMemory<byte> bytes,
+            IntPtr bytes,
+            int bytesLength,
             TextureType type,
             CancellationToken token
         )
@@ -67,7 +68,8 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
             token.ThrowIfCancellationRequested();
             await UniTask.SwitchToThreadPool();
             token.ThrowIfCancellationRequested();
-            ProcessImage(bytes, type, out var handle, out var pointer, out int outputLength, out NativeMethods.ImageResult result, out uint width, out uint height, out bool linear, out TextureFormat format);
+
+            ProcessImage(bytes, bytesLength, type, out var handle, out var pointer, out int outputLength, out NativeMethods.ImageResult result, out uint width, out uint height, out bool linear, out TextureFormat format);
             await UniTask.SwitchToMainThread();
 
             if (result is NativeMethods.ImageResult.Success && token.IsCancellationRequested)
@@ -193,7 +195,8 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
         }
 
         private void ProcessImage(
-            ReadOnlyMemory<byte> bytes,
+            IntPtr bytes,
+            int bytesLength,
             TextureType type,
             out IntPtr handle,
             out IntPtr pointer,
@@ -207,7 +210,37 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
         {
             unsafe
             {
-                fixed (byte* ptr = bytes.Span)
+                ProcessImage(
+                    new ReadOnlySpan<byte>(bytes.ToPointer()!, bytesLength),
+                    type,
+                    out handle,
+                    out pointer,
+                    out outputLength,
+                    out result,
+                    out width,
+                    out height,
+                    out linear,
+                    out format
+                );
+            }
+        }
+
+        private void ProcessImage(
+            ReadOnlySpan<byte> bytes,
+            TextureType type,
+            out IntPtr handle,
+            out IntPtr pointer,
+            out int outputLength,
+            out NativeMethods.ImageResult result,
+            out uint width,
+            out uint height,
+            out bool linear,
+            out TextureFormat format
+        )
+        {
+            unsafe
+            {
+                fixed (byte* ptr = bytes)
                 {
                     var mode = options.Mode;
 

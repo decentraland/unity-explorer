@@ -4,6 +4,8 @@ using DCL.Profiling;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System;
 using System.Threading;
+using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
 using UnityEngine.Networking;
 using Utility;
@@ -56,9 +58,13 @@ namespace DCL.WebRequests
             {
                 try
                 {
-                    byte[] data = webRequest.UnityWebRequest.downloadHandler?.data ?? Array.Empty<byte>();
+                    using var request = webRequest.UnityWebRequest;
+                    var data = request.downloadHandler?.nativeData;
 
-                    var result = await webRequest.texturesUnzip.TextureFromBytesAsync(data, webRequest.textureType, ct).Timeout(TimeSpan.FromSeconds(15));
+                    if (data == null)
+                        return null;
+
+                    var result = await webRequest.texturesUnzip.TextureFromBytesAsync(AsPointer(data.Value), data.Value.Length, webRequest.textureType, ct).Timeout(TimeSpan.FromSeconds(15));
 
                     if (result.Success == false)
                     {
@@ -78,6 +84,15 @@ namespace DCL.WebRequests
                 {
                     ReportHub.LogException(new Exception($"Error during loading texture from url: {webRequest.url}", e), ReportCategory.TEXTURES);
                     return null;
+                }
+            }
+
+            private static IntPtr AsPointer<T>(NativeArray<T>.ReadOnly readOnly) where T: struct
+            {
+                unsafe
+                {
+                    var ptr = readOnly.GetUnsafeReadOnlyPtr();
+                    return new IntPtr(ptr!);
                 }
             }
         }
