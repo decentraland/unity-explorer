@@ -34,8 +34,10 @@ namespace DCL.LOD
                     ? VisualSceneStateEnum.SHOWING_SCENE
                     : VisualSceneStateEnum.SHOWING_LOD;
 
-                if (visualSceneState.CandidateVisualSceneState != visualSceneState.CurrentVisualSceneState)
+                if (visualSceneState.CandidateVisualSceneState != visualSceneState.CurrentVisualSceneState && visualSceneState.TimeToChange < 0.01f)
                 {
+                    if (visualSceneState.CurrentVisualSceneState.Equals(VisualSceneStateEnum.UNINITIALIZED))
+                        visualSceneState.CurrentVisualSceneState = visualSceneState.CandidateVisualSceneState;
                     visualSceneState.IsDirty = true;
                     visualSceneState.TimeToChange = 0;
                 }
