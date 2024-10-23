@@ -138,7 +138,7 @@ namespace Global.Dynamic
         public IRoomHub RoomHub { get; private set; } = null!;
 
         private MultiplayerMovementMessageBus? multiplayerMovementMessageBus;
-        
+
 
         public override void Dispose()
         {
@@ -196,7 +196,7 @@ namespace Global.Dynamic
             ProvidedAsset<MultiplayerDebugSettings> multiplayerDebugSettings = await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.MultiplayerDebugSettings, ct);
 
             var unityEventSystem = new UnityEventSystem(EventSystem.current.EnsureNotNull());
-            var dclCursor = new DCLCursor(normalCursorAsset.Value, interactionCursorAsset.Value);
+            var dclCursor = new DCLCursor(normalCursorAsset.Value, interactionCursorAsset.Value, cursorSettings.NormalCursorHotspot, cursorSettings.InteractionCursorHotspot);
 
             staticContainer.QualityContainer.AddDebugViews(debugBuilder);
 
@@ -390,11 +390,14 @@ namespace Global.Dynamic
 
             var chatHistory = new ChatHistory();
 
+            var currentSceneInfo = new CurrentSceneInfo();
+            ConnectionStatusPanelPlugin connectionStatusPanelPlugin = new ConnectionStatusPanelPlugin(container.UserInAppInAppInitializationFlow, container.MvcManager, mainUIView, roomsStatus, currentSceneInfo, container.reloadSceneController, globalWorld, playerEntity, debugBuilder);
+
             var chatCommandsFactory = new Dictionary<Regex, Func<IChatCommand>>
             {
                 { GoToChatCommand.REGEX, () => new GoToChatCommand(realmNavigator) },
                 { ChangeRealmChatCommand.REGEX, () => new ChangeRealmChatCommand(realmNavigator, bootstrapContainer.DecentralandUrlsSource) },
-                { DebugPanelChatCommand.REGEX, () => new DebugPanelChatCommand(debugBuilder) },
+                { DebugPanelChatCommand.REGEX, () => new DebugPanelChatCommand(debugBuilder, connectionStatusPanelPlugin) },
                 { ShowEntityInfoChatCommand.REGEX, () => new ShowEntityInfoChatCommand(worldInfoHub) },
                 { ClearChatCommand.REGEX, () => new ClearChatCommand(chatHistory) },
                 { ReloadSceneChatCommand.REGEX, () => new ReloadSceneChatCommand(container.reloadSceneController) },
@@ -437,8 +440,6 @@ namespace Global.Dynamic
             var sidebarBus = new SidebarBus();
             AudioMixer generalAudioMixer = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.GeneralAudioMixer, ct)).Value;
             var audioMixerVolumesController = new AudioMixerVolumesController(generalAudioMixer);
-
-            var currentSceneInfo = new CurrentSceneInfo();
 
             container.multiplayerMovementMessageBus = new MultiplayerMovementMessageBus(container.MessagePipesHub, entityParticipantTable, globalWorld);
 
@@ -510,7 +511,7 @@ namespace Global.Dynamic
                     profileCache, sidebarBus, chatEntryConfiguration,
                     globalWorld, playerEntity),
                 new ErrorPopupPlugin(container.MvcManager, assetsProvisioner),
-                new ConnectionStatusPanelPlugin(container.UserInAppInAppInitializationFlow, container.MvcManager, mainUIView, roomsStatus, currentSceneInfo, container.reloadSceneController, globalWorld, playerEntity),
+                connectionStatusPanelPlugin,
                 new MinimapPlugin(container.MvcManager, container.MapRendererContainer, placesAPIService, staticContainer.RealmData, container.ChatMessagesBus, realmNavigator, staticContainer.ScenesCache, mainUIView, mapPathEventBus),
                 new ChatPlugin(assetsProvisioner, container.MvcManager, container.ChatMessagesBus, chatHistory, entityParticipantTable, nametagsData, dclInput, unityEventSystem, mainUIView, staticContainer.InputBlock, globalWorld, playerEntity),
                 new ExplorePanelPlugin(

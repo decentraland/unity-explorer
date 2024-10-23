@@ -84,6 +84,8 @@ namespace DCL.SDKComponents.MediaStream
                 MediaPlayer = mediaPlayerPool.Get(),
                 URL = url,
                 State = url.IsValidUrl() ? VideoState.VsNone : VideoState.VsError,
+                PreviousPlayingTimeCheck = -1,
+                LastStateChangeTime = -1,
                 Cts = new CancellationTokenSource(),
                 OpenMediaPromise = new OpenMediaPromise(),
             };
