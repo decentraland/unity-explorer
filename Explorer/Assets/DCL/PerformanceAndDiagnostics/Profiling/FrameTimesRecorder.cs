@@ -10,8 +10,6 @@ namespace DCL.Profiling
     /// Can be further optimized by taking into account ulong
     public class FrameTimesRecorder
     {
-        private const int MANUAL_SHIFT_THRESHOLD = 16; // Threshold for when to use Array.Copy vs manual shifting
-
         private readonly StringBuilder stringBuilder = new ();
 
         private int capacity;
@@ -45,21 +43,10 @@ namespace DCL.Profiling
             int insertIndex = BinarySearchForInsertionPosition(frameTime);
 
             if (insertIndex < SamplesAmount)
-                ShiftElementsRight(insertIndex, SamplesAmount - insertIndex);
+                Array.Copy(samples, insertIndex, samples, insertIndex + 1, SamplesAmount - insertIndex);
 
             samples[insertIndex] = frameTime;
             SamplesAmount++;
-        }
-
-        private void ShiftElementsRight(int startIndex, int count)
-        {
-            if (count <= 0) return;
-
-            if (count <= MANUAL_SHIFT_THRESHOLD) // Use manual shifting for small moves
-                for (int i = startIndex + count - 1; i >= startIndex; i--)
-                    samples[i + 1] = samples[i];
-            else // Use Array.Copy for larger moves
-                Array.Copy(samples, startIndex, samples, startIndex + 1, count);
         }
 
         private void GrowArray()

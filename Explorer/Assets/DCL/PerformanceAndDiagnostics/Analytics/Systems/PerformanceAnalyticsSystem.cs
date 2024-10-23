@@ -8,7 +8,6 @@ using ECS;
 using ECS.Abstract;
 using ECS.SceneLifeCycle;
 using SceneRuntime;
-using Unity.Profiling;
 using UnityEngine;
 using Utility.Json;
 using static DCL.PerformanceAndDiagnostics.Analytics.AnalyticsEvents;
@@ -22,9 +21,6 @@ namespace DCL.Analytics.Systems
     public partial class PerformanceAnalyticsSystem : BaseUnityLoopSystem
     {
         private const int FRAMES_SAMPLES_CAPACITY = 1024;
-
-        private static readonly ProfilerMarker rMarker = new ("PerformanceAnalyticsSystem.Report");
-        private static readonly ProfilerMarker sbMarker = new ("PerformanceAnalyticsSystem.StringBuilder");
 
         private readonly AnalyticsConfiguration config;
         private readonly IAnalyticsController analytics;
