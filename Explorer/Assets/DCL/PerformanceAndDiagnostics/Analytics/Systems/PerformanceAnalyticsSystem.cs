@@ -53,6 +53,8 @@ namespace DCL.Analytics.Systems
 
         protected override void Update(float t)
         {
+            return;
+
             if (!realmData.Configured) return;
 
             lastReportTime += t;
