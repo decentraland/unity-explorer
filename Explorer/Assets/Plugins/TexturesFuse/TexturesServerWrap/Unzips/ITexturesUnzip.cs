@@ -15,6 +15,10 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
     /// </summary>
     public interface ITexturesUnzip : IDisposable
     {
+        /// <param name="bytes">Pointer to the array of encoded data, client guarantees the pointer will be valid for the whole duration of Task.</param>
+        /// <param name="bytesLength">Length of encoded data.</param>
+        /// <param name="type">Desired type that result will be consumed.</param>
+        /// <param name="token">Cancellation Token to cancel operation.</param>
         UniTask<EnumResult<OwnedTexture2D, NativeMethods.ImageResult>> TextureFromBytesAsync(
             IntPtr bytes,
             int bytesLength,
