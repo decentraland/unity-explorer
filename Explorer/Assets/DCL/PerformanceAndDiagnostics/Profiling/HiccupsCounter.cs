@@ -17,7 +17,7 @@
 
         public float Avg => Amount == 0 ? 0 : SumTime / (float)Amount;
 
-        public HiccupsCounter(ulong hiccupThresholdMs = 50) // 50 ms ~ 20 FPS
+        public HiccupsCounter(ulong hiccupThresholdMs)
         {
             hiccupThresholdInNS = hiccupThresholdMs * 1_000_000;
             Clear();

@@ -128,7 +128,7 @@ namespace DCL.Profiling.ECS
 
             if (performanceVisibilityBinding.IsExpanded)
             {
-                SetFPS(fps, profiler.LastFrameTimeValueNs);
+                SetFPS(fps, (long)profiler.LastFrameTimeValueNs);
 
                 if (framesSinceMetricsUpdate > FRAME_STATS_COOLDOWN)
                 {
