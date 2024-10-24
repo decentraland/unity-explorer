@@ -139,13 +139,8 @@ struct VertexInput
     float3 normal : NORMAL;
     float4 tangent : TANGENT;
     float2 texcoord0 : TEXCOORD0;
-                
-    //#ifdef _IS_ANGELRING_OFF
-        float2 lightmapUV   : TEXCOORD1;
-    // #elif _IS_ANGELRING_ON
-    //     float2 texcoord1 : TEXCOORD1;
-    //     float2 lightmapUV   : TEXCOORD2;
-    // #endif
+    float2 lightmapUV   : TEXCOORD1;
+
     UNITY_VERTEX_INPUT_INSTANCE_ID
 };
 
@@ -153,62 +148,25 @@ struct VertexOutput
 {
     float4 pos : SV_POSITION;
     float2 uv0 : TEXCOORD0;
-    //v.2.0.4
-    // #ifdef _IS_ANGELRING_OFF
-        float4 posWorld : TEXCOORD1;
-        float3 normalDir : TEXCOORD2;
-        float3 tangentDir : TEXCOORD3;
-        float3 bitangentDir : TEXCOORD4;
-        //v.2.0.7
-        float mirrorFlag : TEXCOORD5;
+    float4 posWorld : TEXCOORD1;
+    float3 normalDir : TEXCOORD2;
+    float3 tangentDir : TEXCOORD3;
+    float3 bitangentDir : TEXCOORD4;
+    float mirrorFlag : TEXCOORD5;
 
-        DECLARE_LIGHTMAP_OR_SH(lightmapUV, vertexSH, 6);
-        #if defined(_ADDITIONAL_LIGHTS_VERTEX) || (VERSION_LOWER(12, 0))
-            half4 fogFactorAndVertexLight   : TEXCOORD7; // x: fogFactor, yzw: vertex light
-        #else
-            half  fogFactor            	: TEXCOORD7; 
-        #endif 
+    DECLARE_LIGHTMAP_OR_SH(lightmapUV, vertexSH, 6);
+    half  fogFactor            	: TEXCOORD7; 
 
-        # ifndef _MAIN_LIGHT_SHADOWS
+    # ifndef _MAIN_LIGHT_SHADOWS
         float4 positionCS               : TEXCOORD8;
-            int   mainLightID              : TEXCOORD9;
-        # else
-            float4 shadowCoord              : TEXCOORD8;
-            float4 positionCS               : TEXCOORD9;
-            int   mainLightID              : TEXCOORD10;
-        # endif
-        UNITY_VERTEX_INPUT_INSTANCE_ID
-        UNITY_VERTEX_OUTPUT_STEREO
-    // #elif _IS_ANGELRING_ON
-    //     float2 uv1 : TEXCOORD1;
-    //     float4 posWorld : TEXCOORD2;
-    //     float3 normalDir : TEXCOORD3;
-    //     float3 tangentDir : TEXCOORD4;
-    //     float3 bitangentDir : TEXCOORD5;
-    //     //v.2.0.7
-    //     float mirrorFlag : TEXCOORD6;
-    //
-    //     DECLARE_LIGHTMAP_OR_SH(lightmapUV, vertexSH, 7);
-    //     #if defined(_ADDITIONAL_LIGHTS_VERTEX) || (VERSION_LOWER(12, 0))
-    //         half4 fogFactorAndVertexLight   : TEXCOORD8; // x: fogFactor, yzw: vertex light
-    //     #else
-    //     half  fogFactor            	: TEXCOORD8; // x: fogFactor, yzw: vertex light
-    //     #endif
-    //
-    //     # ifndef _MAIN_LIGHT_SHADOWS
-    //         float4 positionCS               : TEXCOORD9;
-    //         int   mainLightID              : TEXCOORD10;
-    //     # else
-    //         float4 shadowCoord              : TEXCOORD9;
-    //         float4 positionCS               : TEXCOORD10;
-    //         int   mainLightID              : TEXCOORD11;
-    //     # endif
-    //     UNITY_VERTEX_INPUT_INSTANCE_ID
-    //     UNITY_VERTEX_OUTPUT_STEREO
-    // #else
-    //     LIGHTING_COORDS(7,8)
-    //     UNITY_FOG_COORDS(9)
-    // #endif
+        int   mainLightID              : TEXCOORD9;
+    # else
+        float4 shadowCoord              : TEXCOORD8;
+        float4 positionCS               : TEXCOORD9;
+        int   mainLightID              : TEXCOORD10;
+    # endif
+    UNITY_VERTEX_INPUT_INSTANCE_ID
+    UNITY_VERTEX_OUTPUT_STEREO
 };
  
 // Abstraction over Light shading data.

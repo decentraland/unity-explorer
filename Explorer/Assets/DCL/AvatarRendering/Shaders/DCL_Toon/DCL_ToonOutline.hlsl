@@ -92,13 +92,13 @@ VertexOutput vert (VertexInput v)
     #endif
     //v.2.0.7.5
     o.pos.z = o.pos.z + _Offset_Z * _ClipCameraPos.z;
-    o.positionCS = TransformWorldToHClip(o.pos);
+    o.positionCS = TransformWorldToHClip(_ClipCameraPos.xyz);
     return o;
 }
 
 float4 frag(VertexOutput i) : SV_Target
 {
-    Dithering(_FadePosition.xyz, i.positionCS, _EndFadeDistance, _StartFadeDistance);
+    Dithering(_FadePosition.xyz, i.positionCS, _StartFadeDistance, _StartFadeDistance);
     //v.2.0.5
     // if (_ZOverDrawMode > 0.99f)
     // {
