@@ -86,7 +86,7 @@ namespace DCL.SDKComponents.MediaStream
 
             if (component.State != VideoState.VsError)
             {
-                float actualVolume = sdkComponent.Volume * worldVolumePercentage * masterVolumePercentage;
+                float actualVolume = (sdkComponent.HasVolume ? sdkComponent.Volume : MediaPlayerComponent.DEFAULT_VOLUME) * worldVolumePercentage * masterVolumePercentage;
                 component.MediaPlayer.UpdateVolume(sceneStateProvider.IsCurrent, sdkComponent.HasVolume, actualVolume);
             }
 
@@ -101,7 +101,7 @@ namespace DCL.SDKComponents.MediaStream
 
             if (component.State != VideoState.VsError)
             {
-                float actualVolume = sdkComponent.Volume * worldVolumePercentage * masterVolumePercentage;
+                float actualVolume = (sdkComponent.HasVolume ? sdkComponent.Volume : MediaPlayerComponent.DEFAULT_VOLUME) * worldVolumePercentage * masterVolumePercentage;
                 component.MediaPlayer.UpdateVolume(sceneStateProvider.IsCurrent, sdkComponent.HasVolume, actualVolume);
             }
 
