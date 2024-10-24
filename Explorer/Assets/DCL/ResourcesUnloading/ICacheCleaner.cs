@@ -4,6 +4,7 @@
     {
         void UnloadCache();
 
+        void UnloadCacheImmediate();
         void UpdateProfilingCounters();
     }
 }

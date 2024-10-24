@@ -38,6 +38,12 @@ namespace ECS.StreamableLoading.Cache
         /// </summary>
         void Unload(IPerformanceBudget frameTimeBudget, int maxUnloadAmount);
 
+        /// <summary>
+        ///     Unload assets without taking into consideration budgeting.
+        ///     Use it with caution
+        /// </summary>
+        void UnloadImmediate();
+
 #region Referencing
         /// <summary>
         ///     Base implementation is empty as not every asset requires reference counting

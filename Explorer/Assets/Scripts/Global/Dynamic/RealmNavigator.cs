@@ -21,6 +21,7 @@ using System.Linq;
 using System.Threading;
 using DCL.Diagnostics;
 using DCL.Ipfs;
+using DCL.ResourcesUnloading;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
 using Global.Dynamic.TeleportOperations;
@@ -59,6 +60,8 @@ namespace Global.Dynamic
         private readonly ITeleportOperation[] teleportInSameRealmOperation;
         private readonly ILoadingStatus loadingStatus;
 
+        private readonly TeleportCounter teleportCounter;
+
         public event Action<bool>? RealmChanged;
 
         public RealmNavigator(
@@ -78,7 +81,9 @@ namespace Global.Dynamic
             ObjectProxy<Entity> cameraEntity,
             CameraSamplingData cameraSamplingData,
             bool isLocalSceneDevelopment,
-            ILoadingStatus loadingStatus)
+            ILoadingStatus loadingStatus,
+            ICacheCleaner cacheCleaner,
+            int teleportsBeforeCacheCleaning)
         {
             this.loadingScreen = loadingScreen;
             this.mapRenderer = mapRenderer;
@@ -95,12 +100,14 @@ namespace Global.Dynamic
             this.isLocalSceneDevelopment = isLocalSceneDevelopment;
             this.globalWorld = globalWorld;
             this.loadingStatus = loadingStatus;
+            teleportCounter = new TeleportCounter();
 
             var livekitTimeout = TimeSpan.FromSeconds(10f);
 
             realmChangeOperations = new ITeleportOperation[]
             {
                 new RestartLoadingStatus(),
+                new UnloadCacheImmediateTeleportOperation(teleportCounter, cacheCleaner, teleportsBeforeCacheCleaning),
                 new RemoveRemoteEntitiesTeleportOperation(remoteEntities, globalWorld),
                 new StopRoomAsyncTeleportOperation(roomHub, livekitTimeout),
                 new RemoveCameraSamplingDataTeleportOperation(globalWorld, cameraEntity),
@@ -109,12 +116,16 @@ namespace Global.Dynamic
                 new LoadLandscapeTeleportOperation(this),
                 new PrewarmRoadAssetPoolsTeleportOperation(realmController, roadsPlugin),
                 new MoveToParcelInNewRealmTeleportOperation(this),
-                new RestartRoomAsyncTeleportOperation(roomHub, livekitTimeout), new CompleteLoadingStatus()
+                new RestartRoomAsyncTeleportOperation(roomHub, livekitTimeout),
+                new CompleteLoadingStatus(teleportCounter)
             };
 
             teleportInSameRealmOperation = new ITeleportOperation[]
             {
-                new RestartLoadingStatus(), new MoveToParcelInSameRealmTeleportOperation(this), new CompleteLoadingStatus()
+                new RestartLoadingStatus(),
+                new UnloadCacheImmediateTeleportOperation(teleportCounter, cacheCleaner, teleportsBeforeCacheCleaning),
+                new MoveToParcelInSameRealmTeleportOperation(this),
+                new CompleteLoadingStatus(teleportCounter)
             };
 
         }

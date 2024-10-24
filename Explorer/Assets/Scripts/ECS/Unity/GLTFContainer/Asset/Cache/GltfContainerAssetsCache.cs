@@ -91,6 +91,30 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
             asset.Root.transform.SetParent(parentContainer, false);
         }
 
+        public void UnloadImmediate()
+        {
+            var unloadedAmount = 0;
+
+            while (unloadQueue.Count > 0 && unloadQueue.TryDequeue(out var key) &&
+                   cache.TryGetValue(key, out var assets))
+            {
+                unloadedAmount += UnloadGLTF(assets, key);
+            }
+
+            ProfilingCounters.GltfInCacheAmount.Value -= unloadedAmount;
+        }
+
+        private int UnloadGLTF(List<GltfContainerAsset> assets, string key)
+        {
+            var assetsToUnload = assets.Count;
+            foreach (var asset in assets)
+                asset.Dispose();
+
+            assets.Clear();
+            cache.Remove(key);
+            return assetsToUnload;
+        }
+
         public void Unload(IPerformanceBudget frameTimeBudget, int maxUnloadAmount)
         {
             var unloadedAmount = 0;
@@ -99,13 +123,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
                    && unloadedAmount < maxUnloadAmount && unloadQueue.Count > 0
                    && unloadQueue.TryDequeue(out string key) && cache.TryGetValue(key, out List<GltfContainerAsset> assets))
             {
-                unloadedAmount += assets.Count;
-
-                foreach (GltfContainerAsset asset in assets)
-                    asset.Dispose();
-
-                assets.Clear();
-                cache.Remove(key);
+                unloadedAmount += UnloadGLTF(assets, key);
             }
 
             ProfilingCounters.GltfInCacheAmount.Value -= unloadedAmount;

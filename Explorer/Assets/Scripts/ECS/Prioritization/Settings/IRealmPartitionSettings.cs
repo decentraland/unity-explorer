@@ -48,6 +48,11 @@ namespace ECS.Prioritization
         int ScenesDefinitionsRequestBatchSize { get; }
 
         /// <summary>
+        ///     How many teleports to do before forcing an unload cache
+        /// </summary>
+        int UnloadCacheAfterTeleportCount { get; }
+
+        /// <summary>
         ///     Get the desired update frequency for a scene in a given partition.
         ///     It should take both bucket index and isBehind into account.
         /// </summary>
