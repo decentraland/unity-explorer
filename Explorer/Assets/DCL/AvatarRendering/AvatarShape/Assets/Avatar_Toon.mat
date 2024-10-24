@@ -440,7 +440,7 @@ Material:
     - _EnableBlendModePreserveSpecularLighting: 1
     - _EnableFogOnTransparent: 1
     - _EnableGeometricSpecularAA: 0
-    - _EndFadeDistance: 0.5
+    - _EndFadeDistance: 0.8
     - _EnergyConservingSpecularColor: 1
     - _EnvironmentReflections: 1
     - _FadeDirection: 0

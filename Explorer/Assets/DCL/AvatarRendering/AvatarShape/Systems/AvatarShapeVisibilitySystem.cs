@@ -2,6 +2,7 @@
 using Arch.System;
 using Arch.SystemGroups;
 using DCL.AvatarRendering.AvatarShape.Components;
+using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Character.Components;
 using DCL.CharacterCamera;
 using ECS.Abstract;
@@ -27,7 +28,8 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             AddPlayerCachedVisibilityComponentQuery(World, camera.GetCameraComponent(World));
             AddOthersCachedVisibilityComponentQuery(World);
 
-            UpdateVisibilityOnCameraDistanceQuery(World);
+            UpdateMainPlayerAvatarVisibilityOnCameraDistanceQuery(World);
+            UpdateNonPlayerAvatarVisibilityOnCameraDistanceQuery(World);
             UpdateAvatarsVisibilityStateQuery(World);
         }
 
@@ -52,10 +54,16 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         }
 
         [Query]
-        [All(typeof(PlayerComponent))]
-        private void UpdateVisibilityOnCameraDistance(in AvatarCustomSkinningComponent skinningComponent, in PlayerComponent playerComponent)
+        private void UpdateMainPlayerAvatarVisibilityOnCameraDistance(in AvatarCustomSkinningComponent skinningComponent, in PlayerComponent playerComponent)
         {
             skinningComponent.SetFadingPosition(playerComponent.CameraFocus.position);
+        }
+
+        [Query]
+        [None(typeof(PlayerComponent))]
+        private void UpdateNonPlayerAvatarVisibilityOnCameraDistance(in AvatarCustomSkinningComponent skinningComponent, in AvatarBase avatarBase)
+        {
+            skinningComponent.SetFadingPosition(avatarBase.HeadAnchorPoint.position);
         }
 
         [Query]
