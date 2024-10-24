@@ -47,21 +47,17 @@ BytesResult bytesFromFile(std::string path)
     return result;
 }
 
-int main()
+void BC5Compression(const int width, const int height, const std::string workDirectory)
 {
     std::cout << "Start\n";
 
-    std::string workDirectory = "../../TexturesServerWrap/Playground/NormalMap/";
     std::string path = workDirectory + "brick_wall2-nor-512.bin";
     std::string outputPath = workDirectory + "brick_wall2-nor-512.bc5";
     std::string restoredPath = workDirectory + "brick_wall2-nor-512_restored.bin";
 
-    const int width = 512;
-    const int height = 512;
-    const int bufferSize = width * height * 4;
-
     const CMP_FORMAT sourceFormat = CMP_FORMAT_BGRA_8888;
     const CMP_FORMAT destFormat = CMP_FORMAT_BC5;
+    const int bufferSize = width * height * 4;
 
     BytesResult byteResult = bytesFromFile(path);
 
@@ -145,6 +141,13 @@ int main()
 
     delete[] imageData;
     delete[] destTexture.pData;
+}
 
-    return 0;
+int main()
+{
+    const int width = 512;
+    const int height = 512;
+    const std::string workDirectory = "../../TexturesServerWrap/Playground/NormalMap/";
+
+    BC5Compression(width, height, workDirectory);
 }
