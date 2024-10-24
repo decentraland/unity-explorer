@@ -9,6 +9,8 @@ namespace DCL.Minimap
 {
     public class SceneRestrictionsController : IDisposable
     {
+        private const float TOAST_X_POSITION_OFFSET_ICON_WIDTH_SCALER = 0.75f;
+
         private readonly SceneRestrictionsView restrictionsView;
         private readonly Dictionary<SceneRestrictions, HashSet<int>> restrictionsRegistry = new();
 
@@ -30,13 +32,13 @@ namespace DCL.Minimap
         private void OnMouseEnter()
         {
             Vector3 toastPosition = restrictionsView.toastRectTransform.anchoredPosition;
-            toastPosition.x = restrictionsView.sceneRestrictionsIcon.transform.localPosition.x - (restrictionsView.sceneRestrictionsIcon.rect.width * 0.75f);
+            toastPosition.x = restrictionsView.sceneRestrictionsIcon.transform.localPosition.x - (restrictionsView.sceneRestrictionsIcon.rect.width * TOAST_X_POSITION_OFFSET_ICON_WIDTH_SCALER);
             restrictionsView.toastRectTransform.anchoredPosition = toastPosition;
-            restrictionsView.toastCanvasGroup.DOFade(1f, 0.5f);
+            restrictionsView.toastCanvasGroup.DOFade(1f, restrictionsView.fadeTime);
         }
 
         private void OnMouseExit() =>
-            restrictionsView.toastCanvasGroup.DOFade(0f, 0.5f);
+            restrictionsView.toastCanvasGroup.DOFade(0f, restrictionsView.fadeTime);
 
         private void ManageSceneRestrictions(ISceneRestriction sceneRestriction)
         {

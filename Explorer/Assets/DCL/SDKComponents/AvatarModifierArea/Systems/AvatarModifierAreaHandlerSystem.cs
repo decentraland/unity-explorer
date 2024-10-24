@@ -77,7 +77,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
 
         [Query]
         [All(typeof(TransformComponent))]
-        private void UpdateAvatarModifierArea(Entity e, ref PBAvatarModifierArea pbAvatarModifierArea, ref AvatarModifierAreaComponent modifierAreaComponent, ref CharacterTriggerAreaComponent triggerAreaComponent)
+        private void UpdateAvatarModifierArea(Entity entity, ref PBAvatarModifierArea pbAvatarModifierArea, ref AvatarModifierAreaComponent modifierAreaComponent, ref CharacterTriggerAreaComponent triggerAreaComponent)
         {
             if (pbAvatarModifierArea.IsDirty)
             {
@@ -87,42 +87,42 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
 
                 // Update effect on now excluded/non-excluded avatars
                 foreach (Transform avatarTransform in triggerAreaComponent.CurrentAvatarsInside)
-                    HideAvatar(avatarTransform, modifierAreaComponent.ExcludedIds, e);
+                    HideAvatar(avatarTransform, modifierAreaComponent.ExcludedIds, entity);
             }
 
             foreach (Transform avatarTransform in triggerAreaComponent.ExitedAvatarsToBeProcessed)
-                ShowAvatar(avatarTransform, e);
+                ShowAvatar(avatarTransform, entity);
 
             triggerAreaComponent.TryClearExitedAvatarsToBeProcessed();
 
             foreach (Transform avatarTransform in triggerAreaComponent.EnteredAvatarsToBeProcessed)
-                HideAvatar(avatarTransform, modifierAreaComponent.ExcludedIds, e);
+                HideAvatar(avatarTransform, modifierAreaComponent.ExcludedIds, entity);
 
             triggerAreaComponent.TryClearEnteredAvatarsToBeProcessed();
         }
 
         [Query]
         [All(typeof(DeleteEntityIntention), typeof(PBAvatarModifierArea))]
-        private void HandleEntityDestruction(Entity e, ref CharacterTriggerAreaComponent triggerAreaComponent, ref AvatarModifierAreaComponent modifierComponent)
+        private void HandleEntityDestruction(Entity entity, ref CharacterTriggerAreaComponent triggerAreaComponent, ref AvatarModifierAreaComponent modifierComponent)
         {
             // Reset state of affected entities
             foreach (Transform avatarTransform in triggerAreaComponent.CurrentAvatarsInside)
-                ShowAvatar(avatarTransform, e);
+                ShowAvatar(avatarTransform, entity);
 
             modifierComponent.Dispose();
         }
 
         [Query]
         [None(typeof(DeleteEntityIntention), typeof(PBAvatarModifierArea))]
-        private void HandleComponentRemoval(Entity e, ref CharacterTriggerAreaComponent triggerAreaComponent, ref AvatarModifierAreaComponent modifierComponent)
+        private void HandleComponentRemoval(Entity entity, ref CharacterTriggerAreaComponent triggerAreaComponent, ref AvatarModifierAreaComponent modifierComponent)
         {
             // Reset state of affected entities
             foreach (Transform avatarTransform in triggerAreaComponent.CurrentAvatarsInside)
-                ShowAvatar(avatarTransform, e);
+                ShowAvatar(avatarTransform, entity);
 
             modifierComponent.Dispose();
 
-            World!.Remove<AvatarModifierAreaComponent>(e);
+            World!.Remove<AvatarModifierAreaComponent>(entity);
         }
 
         private void ShowAvatar(Transform avatarTransform, Entity sourceEntity)

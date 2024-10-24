@@ -27,6 +27,9 @@ namespace DCL.Minimap
         [field: SerializeField]
         internal CanvasGroup toastCanvasGroup { get; private set; }
 
+        [field: SerializeField]
+        internal float fadeTime { get; set; } = 0.3f;
+
         internal RectTransform toastRectTransform { get; private set; }
 
         internal event Action? OnPointerEnterEvent;
