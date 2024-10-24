@@ -346,7 +346,6 @@ ImageResult texturesfuse_bc5_image_from_memory(
 
     SwapRGBAtoBGRA(bits, bitsLength);
 
-//TODO BGR input
     CMP_Texture sourceTexture;
     sourceTexture.dwSize = sizeof(CMP_Texture);
     sourceTexture.dwWidth = *width;
