@@ -51,11 +51,14 @@ namespace DCL.Settings.ModuleControllers
 
                 // Exclude all resolutions that are not 16:9 or 16:10
                 if (!ResolutionUtils.IsResolutionCompatibleWithAspectRatio(resolution.width, resolution.height, 16, 9) &&
-                    !ResolutionUtils.IsResolutionCompatibleWithAspectRatio(resolution.width, resolution.height, 16, 10))
+                    !ResolutionUtils.IsResolutionCompatibleWithAspectRatio(resolution.width, resolution.height, 16, 10) &&
+                    //Check for vertical monitors as well
+                    !ResolutionUtils.IsResolutionCompatibleWithAspectRatio(resolution.width, resolution.height, 9, 16) &&
+                    !ResolutionUtils.IsResolutionCompatibleWithAspectRatio(resolution.width, resolution.height, 10, 16))
                     continue;
 
-                // Exclude all resolutions width less than 1024
-                if (resolution.width <= 1024)
+                // Exclude all resolutions width less than 1024 (same for height in case of vertical monitors)
+                if (Mathf.Min(resolution.width, resolution.height) <= 1024)
                     continue;
 
                 // Exclude possible duplicates
