@@ -71,6 +71,8 @@ namespace DCL.CharacterPreview
 
         public UniTask UpdateAvatarAsync(CharacterPreviewAvatarModel avatarModel, CancellationToken ct)
         {
+            ct.ThrowIfCancellationRequested();
+
             ref AvatarShapeComponent avatarShape = ref globalWorld.Get<AvatarShapeComponent>(characterPreviewEntity);
 
             avatarShape.SkinColor = avatarModel.SkinColor;
