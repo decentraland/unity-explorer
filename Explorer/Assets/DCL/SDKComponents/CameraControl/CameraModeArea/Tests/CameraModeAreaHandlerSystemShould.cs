@@ -4,6 +4,7 @@ using CrdtEcsBridge.Components;
 using DCL.CharacterCamera;
 using DCL.CharacterTriggerArea.Components;
 using DCL.ECSComponents;
+using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.SDKComponents.CameraModeArea.Components;
 using DCL.SDKComponents.CameraModeArea.Systems;
 using DCL.Utilities;
@@ -35,7 +36,7 @@ namespace DCL.SDKComponents.CameraModeArea.Tests
             var cameraEntityProxy = new ObjectProxy<Entity>();
             cameraEntityProxy.SetObject(cameraEntity);
 
-            system = new CameraModeAreaHandlerSystem(world, globalWorld, cameraEntityProxy, Substitute.For<IExposedCameraData>());
+            system = new CameraModeAreaHandlerSystem(world, globalWorld, cameraEntityProxy, Substitute.For<IExposedCameraData>(), Substitute.For<ISceneRestrictionBusController>());
 
             entity = world.Create(PartitionComponent.TOP_PRIORITY);
             AddTransformToEntity(entity);
@@ -126,12 +127,13 @@ namespace DCL.SDKComponents.CameraModeArea.Tests
         [Test]
         public void UpdateCameraModeOnTriggerAreaEnter()
         {
-            system.OnEnteredCameraModeArea(CameraMode.FirstPerson);
+            Entity dummyEntity = new Entity();
+            system.OnEnteredCameraModeArea(CameraMode.FirstPerson, dummyEntity);
             Assert.IsTrue(globalWorld.TryGet(cameraEntity, out CameraComponent cameraComponent));
             Assert.AreEqual(CameraMode.FirstPerson, cameraComponent.Mode);
             Assert.IsFalse(cameraComponent.CameraInputChangeEnabled);
 
-            system.OnEnteredCameraModeArea(CameraMode.ThirdPerson);
+            system.OnEnteredCameraModeArea(CameraMode.ThirdPerson, dummyEntity);
             Assert.IsTrue(globalWorld.TryGet(cameraEntity, out cameraComponent));
             Assert.AreEqual(CameraMode.ThirdPerson, cameraComponent.Mode);
             Assert.IsFalse(cameraComponent.CameraInputChangeEnabled);
@@ -140,43 +142,44 @@ namespace DCL.SDKComponents.CameraModeArea.Tests
         [Test]
         public void HandleCameraModeResetCorrectlyOnTriggerAreaExit()
         {
+            Entity dummyEntity = new Entity();
             Assert.IsTrue(globalWorld.TryGet(cameraEntity, out CameraComponent cameraComponent));
             CameraMode originalCameraMode = cameraComponent.Mode;
 
             // "Enter" trigger area
             CameraMode firstTriggerAreaMode = CameraMode.FirstPerson;
-            system.OnEnteredCameraModeArea(firstTriggerAreaMode);
+            system.OnEnteredCameraModeArea(firstTriggerAreaMode, dummyEntity);
             Assert.IsTrue(globalWorld.TryGet(cameraEntity, out cameraComponent));
             Assert.AreEqual(firstTriggerAreaMode, cameraComponent.Mode);
             Assert.IsFalse(cameraComponent.CameraInputChangeEnabled);
 
             // "Exit" trigger area
-            system.OnExitedCameraModeArea();
+            system.OnExitedCameraModeArea(dummyEntity);
             Assert.IsTrue(globalWorld.TryGet(cameraEntity, out cameraComponent));
             Assert.AreEqual(originalCameraMode, cameraComponent.Mode);
             Assert.IsTrue(cameraComponent.CameraInputChangeEnabled);
 
             // "Enter" trigger area again
-            system.OnEnteredCameraModeArea(firstTriggerAreaMode);
+            system.OnEnteredCameraModeArea(firstTriggerAreaMode, dummyEntity);
             Assert.IsTrue(globalWorld.TryGet(cameraEntity, out cameraComponent));
             Assert.AreEqual(firstTriggerAreaMode, cameraComponent.Mode);
             Assert.IsFalse(cameraComponent.CameraInputChangeEnabled);
 
             // "Enter" 2nd trigger are without exiting the previous one
             CameraMode secondTriggerAreaMode = CameraMode.Free;
-            system.OnEnteredCameraModeArea(secondTriggerAreaMode);
+            system.OnEnteredCameraModeArea(secondTriggerAreaMode, dummyEntity);
             Assert.IsTrue(globalWorld.TryGet(cameraEntity, out cameraComponent));
             Assert.AreEqual(secondTriggerAreaMode, cameraComponent.Mode);
             Assert.IsFalse(cameraComponent.CameraInputChangeEnabled);
 
             // "Exit" 1st trigger area
-            system.OnExitedCameraModeArea();
+            system.OnExitedCameraModeArea(dummyEntity);
             Assert.IsTrue(globalWorld.TryGet(cameraEntity, out cameraComponent));
             Assert.AreEqual(secondTriggerAreaMode, cameraComponent.Mode);
             Assert.IsFalse(cameraComponent.CameraInputChangeEnabled);
 
             // "Exit" last trigger area
-            system.OnExitedCameraModeArea();
+            system.OnExitedCameraModeArea(dummyEntity);
             Assert.IsTrue(globalWorld.TryGet(cameraEntity, out cameraComponent));
             Assert.AreEqual(firstTriggerAreaMode, cameraComponent.Mode);
             Assert.IsTrue(cameraComponent.CameraInputChangeEnabled);
@@ -185,6 +188,7 @@ namespace DCL.SDKComponents.CameraModeArea.Tests
         [Test]
         public void HandleComponentRemoveCorrectly()
         {
+            Entity dummyEntity = new Entity();
             Assert.IsTrue(globalWorld.TryGet(cameraEntity, out CameraComponent cameraComponent));
             CameraMode originalCameraMode = cameraComponent.Mode;
 
@@ -207,7 +211,7 @@ namespace DCL.SDKComponents.CameraModeArea.Tests
 
             // "Enter" trigger area
             CameraMode firstTriggerAreaMode = CameraMode.FirstPerson;
-            system.OnEnteredCameraModeArea(firstTriggerAreaMode);
+            system.OnEnteredCameraModeArea(firstTriggerAreaMode, dummyEntity);
             Assert.IsTrue(globalWorld.TryGet(cameraEntity, out cameraComponent));
             Assert.AreEqual(firstTriggerAreaMode, cameraComponent.Mode);
             Assert.IsFalse(cameraComponent.CameraInputChangeEnabled);
@@ -227,6 +231,7 @@ namespace DCL.SDKComponents.CameraModeArea.Tests
         [Test]
         public void HandleEntityDestructionCorrectly()
         {
+            Entity dummyEntity = new Entity();
             Assert.IsTrue(globalWorld.TryGet(cameraEntity, out CameraComponent cameraComponent));
             CameraMode originalCameraMode = cameraComponent.Mode;
 
@@ -249,7 +254,7 @@ namespace DCL.SDKComponents.CameraModeArea.Tests
 
             // "Enter" trigger area
             CameraMode firstTriggerAreaMode = CameraMode.FirstPerson;
-            system.OnEnteredCameraModeArea(firstTriggerAreaMode);
+            system.OnEnteredCameraModeArea(firstTriggerAreaMode, dummyEntity);
             Assert.IsTrue(globalWorld.TryGet(cameraEntity, out cameraComponent));
             Assert.AreEqual(firstTriggerAreaMode, cameraComponent.Mode);
             Assert.IsFalse(cameraComponent.CameraInputChangeEnabled);

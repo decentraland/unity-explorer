@@ -4,6 +4,7 @@ using CRDT;
 using CrdtEcsBridge.Components;
 using DCL.CharacterCamera;
 using DCL.ECSComponents;
+using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.SDKComponents.CameraControl.MainCamera.Components;
 using DCL.SDKComponents.CameraControl.MainCamera.Systems;
 using DCL.Utilities;
@@ -92,7 +93,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
             cameraData.CinemachineBrain.Returns(cinemachineBrain);
             cameraData.CameraEntityProxy.Returns(cameraEntityProxy);
 
-            system = new MainCameraSystem(world, mainCameraEntity, entitiesMap, sceneStateProvider, cameraData, globalWorld);
+            system = new MainCameraSystem(world, mainCameraEntity, entitiesMap, sceneStateProvider, cameraData, Substitute.For<ISceneRestrictionBusController>(), globalWorld);
         }
 
         [TearDown]
