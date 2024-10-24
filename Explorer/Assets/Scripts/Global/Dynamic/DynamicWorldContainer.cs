@@ -256,7 +256,8 @@ namespace Global.Dynamic
             var selfProfile = new SelfProfile(container.ProfileRepository, identityCache, equippedWearables, wearableCatalog,
                 emotesCache, equippedEmotes, forceRender, selfEmotes);
 
-            IEmoteProvider emoteProvider = new EcsEmoteProvider(globalWorld, staticContainer.RealmData);
+            IEmoteProvider emoteProvider = new ApplicationParamsEmoteProvider(appArgs,
+                new EcsEmoteProvider(globalWorld, staticContainer.RealmData));
 
             container.wearablesProvider = new ApplicationParametersWearablesProvider(appArgs,
                 new ECSWearablesProvider(identityCache, globalWorld),
