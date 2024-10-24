@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace DCL.ResourcesUnloading.UnloadStrategies
 {
-    public class UnloadUnusedAssetUnloadStrategy : UnloadStrategy
+    public class UnloadUnusedAssetUnloadStrategy : UnloadStrategyBase
     {
         private readonly int FRAMES_UNTIL_UNLOAD_IS_INVOKED = 5_000;
         private int currentFrameCountForUnloadAssets;

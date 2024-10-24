@@ -5,7 +5,7 @@ namespace DCL.ResourcesUnloading.UnloadStrategies
 {
     public class UnloadStrategyHandler
     {
-        internal UnloadStrategy[] unloadStrategies;
+        internal UnloadStrategyBase[] unloadStrategies;
         private readonly ICacheCleaner cacheCleaner;
 
         private readonly int DEFAULT_FRAME_FAILURE_THRESHOLD = 250;
@@ -17,7 +17,7 @@ namespace DCL.ResourcesUnloading.UnloadStrategies
 
             //The base strategy at 0 will always run
             //On top of that, we adds logic that run only if the previous one fails in an additive manner
-            unloadStrategies = new UnloadStrategy[]
+            unloadStrategies = new UnloadStrategyBase[]
             {
                 new StandardUnloadStrategy(DEFAULT_FRAME_FAILURE_THRESHOLD, cacheCleaner),
                 new ReduceLoadingRadiusUnloadStrategy(DEFAULT_FRAME_FAILURE_THRESHOLD, realmPartitionSettings),

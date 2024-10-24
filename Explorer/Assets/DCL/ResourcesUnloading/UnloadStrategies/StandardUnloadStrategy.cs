@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace DCL.ResourcesUnloading.UnloadStrategies
 {
-    public class StandardUnloadStrategy : UnloadStrategy
+    public class StandardUnloadStrategy : UnloadStrategyBase
     {
         private readonly ICacheCleaner cacheCleaner;
 

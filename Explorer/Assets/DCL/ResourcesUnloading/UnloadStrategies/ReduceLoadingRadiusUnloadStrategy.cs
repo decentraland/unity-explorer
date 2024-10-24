@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace DCL.ResourcesUnloading.UnloadStrategies
 {
-    public class ReduceLoadingRadiusUnloadStrategy : UnloadStrategy
+    public class ReduceLoadingRadiusUnloadStrategy : UnloadStrategyBase
     {
         private readonly IRealmPartitionSettings realmPartitionSettings;
 

@@ -1,11 +1,11 @@
 namespace DCL.ResourcesUnloading.UnloadStrategies
 {
-    public abstract class UnloadStrategy
+    public abstract class UnloadStrategyBase
     {
         internal int currentFailureCount;
         internal int failureThreshold;
 
-        protected UnloadStrategy(int failureThreshold)
+        protected UnloadStrategyBase(int failureThreshold)
         {
             this.failureThreshold = failureThreshold;
         }

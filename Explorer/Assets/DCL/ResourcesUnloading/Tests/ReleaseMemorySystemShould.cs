@@ -10,7 +10,7 @@ namespace DCL.ResourcesUnloading.Tests
 {
     public class ReleaseMemorySystemShould : UnitySystemTestBase<ReleaseMemorySystem>
     {
-        public class MockUnloadStrategy : UnloadStrategy
+        public class MockUnloadStrategy : UnloadStrategyBase
         {
             public int strategyRunCount;
 
@@ -31,7 +31,7 @@ namespace DCL.ResourcesUnloading.Tests
         private IMemoryUsageProvider memoryBudgetProvider;
         private ICacheCleaner cacheCleaner;
 
-        private UnloadStrategy[] unloadStrategies;
+        private UnloadStrategyBase[] unloadStrategies;
 
         private MockUnloadStrategy standardStrategy;
         private MockUnloadStrategy aggresiveStrategy;
@@ -71,7 +71,7 @@ namespace DCL.ResourcesUnloading.Tests
             releaseMemorySystem.Update(0);
 
             // Assert
-            Assert.AreEqual(standardStrategy.strategyRunCount, callsAmount);
+            Assert.AreEqual(callsAmount, standardStrategy.strategyRunCount);
         }
 
         [Test]
@@ -84,14 +84,14 @@ namespace DCL.ResourcesUnloading.Tests
             releaseMemorySystem.Update(0);
 
             // Assert
-            Assert.AreEqual(standardStrategy.strategyRunCount, 1);
+            Assert.AreEqual(1, standardStrategy.strategyRunCount);
             
             // Act
             releaseMemorySystem.Update(0);
             
             // Assert
-            Assert.AreEqual(standardStrategy.strategyRunCount, 2);
-            Assert.AreEqual(aggresiveStrategy.strategyRunCount, 1);
+            Assert.AreEqual(2, standardStrategy.strategyRunCount);
+            Assert.AreEqual(1, aggresiveStrategy.strategyRunCount);
 
 
             // Act
@@ -99,8 +99,8 @@ namespace DCL.ResourcesUnloading.Tests
             releaseMemorySystem.Update(0);
 
             // Assert
-            Assert.AreEqual(standardStrategy.currentFailureCount, 0);
-            Assert.AreEqual(aggresiveStrategy.currentFailureCount, 0);
+            Assert.AreEqual(0, standardStrategy.currentFailureCount);
+            Assert.AreEqual(0, aggresiveStrategy.currentFailureCount);
             Assert.IsFalse(standardStrategy.FaillingOverThreshold());
         }
         
@@ -113,14 +113,14 @@ namespace DCL.ResourcesUnloading.Tests
             releaseMemorySystem.Update(0);
 
             // Assert
-            Assert.AreEqual(standardStrategy.strategyRunCount, 1);
+            Assert.AreEqual(1, standardStrategy.strategyRunCount);
 
             // Act
             releaseMemorySystem.Update(0);
             
             // Assert
-            Assert.AreEqual(standardStrategy.strategyRunCount, 2);
-            Assert.AreEqual(aggresiveStrategy.strategyRunCount, 1);
+            Assert.AreEqual(2, standardStrategy.strategyRunCount);
+            Assert.AreEqual(1, aggresiveStrategy.strategyRunCount);
         }
 
         [Test]
@@ -128,27 +128,17 @@ namespace DCL.ResourcesUnloading.Tests
         {
             // Arrange
             memoryBudgetProvider.GetMemoryUsageStatus().Returns(MemoryUsageStatus.WARNING);
-            standardStrategy.currentFailureCount = 5;
+            standardStrategy.failureThreshold = 5;
 
             // Act
 
             for (var i = 0; i < 5; i++)
-            {
                 releaseMemorySystem.Update(0);
-            }
 
 
             // Assert
-            Assert.AreEqual(standardStrategy.strategyRunCount, 1);
-            Assert.AreEqual(aggresiveStrategy.strategyRunCount, 0);
-
-
-            // Act
-            releaseMemorySystem.Update(0);
-
-            // Assert
-            Assert.AreEqual(standardStrategy.strategyRunCount, 2);
-            Assert.AreEqual(aggresiveStrategy.strategyRunCount, 1);
+            Assert.AreEqual(5, standardStrategy.strategyRunCount);
+            Assert.AreEqual(0, aggresiveStrategy.strategyRunCount);
         }
 
         
