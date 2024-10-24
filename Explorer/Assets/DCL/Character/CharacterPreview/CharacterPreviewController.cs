@@ -106,9 +106,10 @@ namespace DCL.CharacterPreview
             World world = globalWorld;
             Entity avatarEntity = characterPreviewEntity;
 
-            while (!ct.IsCancellationRequested
-                   && (!IsAvatarLoaded() || !IsEmoteLoaded()))
+            while (!IsAvatarLoaded() || !IsEmoteLoaded())
                 await UniTask.Yield(ct);
+
+            ct.ThrowIfCancellationRequested();
 
             return;
 
