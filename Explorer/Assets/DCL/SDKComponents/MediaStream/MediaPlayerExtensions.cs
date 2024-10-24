@@ -1,5 +1,7 @@
+using Cysharp.Threading.Tasks;
 using DCL.ECSComponents;
 using RenderHeads.Media.AVProVideo;
+using System;
 using UnityEngine;
 
 namespace DCL.SDKComponents.MediaStream
@@ -55,10 +57,22 @@ namespace DCL.SDKComponents.MediaStream
             if (!mediaPlayer.MediaOpened) return;
 
             IMediaControl control = mediaPlayer.Control;
+            control.Pause();
 
-            control.SetLooping(sdkVideoPlayer.HasLoop && sdkVideoPlayer.Loop); // default: false
+            SetPlaybackPropertiesAsync(control, sdkVideoPlayer).Forget();
+        }
+
+        private static async UniTask SetPlaybackPropertiesAsync(IMediaControl control, PBVideoPlayer sdkVideoPlayer)
+        {
+            // If there are no seekable times and we try to seek, AVPro mistakenly plays it from the start.
+            await UniTask.WaitUntil(() => control.GetSeekableTimes().Count > 0);
+
+            if (sdkVideoPlayer is {HasPlaying: true, Playing: true })
+                control.Play();
+
+            control.SetLooping(sdkVideoPlayer is {HasLoop: true, Loop: true }); // default: false
             control.SetPlaybackRate(sdkVideoPlayer.HasPlaybackRate ? sdkVideoPlayer.PlaybackRate : MediaPlayerComponent.DEFAULT_PLAYBACK_RATE);
-            control.SeekFast(sdkVideoPlayer.HasPosition ? sdkVideoPlayer.Position : MediaPlayerComponent.DEFAULT_POSITION);
+            control.Seek(sdkVideoPlayer.HasPosition ? sdkVideoPlayer.Position : MediaPlayerComponent.DEFAULT_POSITION);
         }
 
         public static void UpdatePlaybackProperties(this MediaPlayer mediaPlayer, PBVideoPlayer sdkVideoPlayer)
@@ -74,7 +88,7 @@ namespace DCL.SDKComponents.MediaStream
                 control.SetPlaybackRate(sdkVideoPlayer.PlaybackRate);
 
             if (sdkVideoPlayer.HasPosition)
-                control.SeekFast(sdkVideoPlayer.Position);
+                control.Seek(sdkVideoPlayer.Position);
         }
     }
 }
