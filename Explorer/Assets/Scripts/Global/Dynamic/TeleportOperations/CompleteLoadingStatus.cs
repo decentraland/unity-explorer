@@ -8,16 +8,18 @@ namespace Global.Dynamic.TeleportOperations
     public class CompleteLoadingStatus : ITeleportOperation
     {
         private readonly TeleportCounter teleportCounter;
+        private readonly bool goingToNewRealm;
 
-        public CompleteLoadingStatus(TeleportCounter teleportCounter)
+        public CompleteLoadingStatus(TeleportCounter teleportCounter, bool goingToNewRealm)
         {
             this.teleportCounter = teleportCounter;
+            this.goingToNewRealm = goingToNewRealm;
         }
         
         public UniTask<Result> ExecuteAsync(TeleportParams teleportParams, CancellationToken ct)
         {
             teleportParams.ParentReport.SetProgress(teleportParams.LoadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Completed));
-            teleportCounter.teleportsDone++;
+            teleportCounter.AddSuccessfullTeleport(teleportParams.CurrentDestinationParcel, goingToNewRealm);
             return UniTask.FromResult(Result.SuccessResult());
         }
     }

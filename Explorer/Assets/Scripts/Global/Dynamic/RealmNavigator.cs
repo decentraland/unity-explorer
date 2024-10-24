@@ -100,14 +100,14 @@ namespace Global.Dynamic
             this.isLocalSceneDevelopment = isLocalSceneDevelopment;
             this.globalWorld = globalWorld;
             this.loadingStatus = loadingStatus;
-            teleportCounter = new TeleportCounter();
+            teleportCounter = new TeleportCounter(teleportsBeforeCacheCleaning);
 
             var livekitTimeout = TimeSpan.FromSeconds(10f);
 
             realmChangeOperations = new ITeleportOperation[]
             {
                 new RestartLoadingStatus(),
-                new UnloadCacheImmediateTeleportOperation(teleportCounter, cacheCleaner, teleportsBeforeCacheCleaning),
+                new UnloadCacheImmediateTeleportOperation(teleportCounter, cacheCleaner),
                 new RemoveRemoteEntitiesTeleportOperation(remoteEntities, globalWorld),
                 new StopRoomAsyncTeleportOperation(roomHub, livekitTimeout),
                 new RemoveCameraSamplingDataTeleportOperation(globalWorld, cameraEntity),
@@ -117,15 +117,15 @@ namespace Global.Dynamic
                 new PrewarmRoadAssetPoolsTeleportOperation(realmController, roadsPlugin),
                 new MoveToParcelInNewRealmTeleportOperation(this),
                 new RestartRoomAsyncTeleportOperation(roomHub, livekitTimeout),
-                new CompleteLoadingStatus(teleportCounter)
+                new CompleteLoadingStatus(teleportCounter, true)
             };
 
             teleportInSameRealmOperation = new ITeleportOperation[]
             {
                 new RestartLoadingStatus(),
-                new UnloadCacheImmediateTeleportOperation(teleportCounter, cacheCleaner, teleportsBeforeCacheCleaning),
+                new UnloadCacheImmediateTeleportOperation(teleportCounter, cacheCleaner),
                 new MoveToParcelInSameRealmTeleportOperation(this),
-                new CompleteLoadingStatus(teleportCounter)
+                new CompleteLoadingStatus(teleportCounter, false)
             };
 
         }

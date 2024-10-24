@@ -12,26 +12,21 @@ namespace Global.Dynamic.TeleportOperations
     {
         private readonly TeleportCounter teleportCounter;
         private readonly ICacheCleaner cacheCleaner;
-        private readonly int teleportsBeforeUnload;
 
-        public UnloadCacheImmediateTeleportOperation(TeleportCounter teleportCounter, ICacheCleaner cacheCleaner,
-            int teleportsBeforeUnload)
+        public UnloadCacheImmediateTeleportOperation(TeleportCounter teleportCounter, ICacheCleaner cacheCleaner)
         {
             this.teleportCounter = teleportCounter;
             this.cacheCleaner = cacheCleaner;
-            this.teleportsBeforeUnload = teleportsBeforeUnload;
         }
 
         public UniTask<Result> ExecuteAsync(TeleportParams teleportParams, CancellationToken ct)
         {
             teleportParams.LoadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.UnloadCacheChecking);
-            if (teleportCounter.teleportsDone >= teleportsBeforeUnload)
+            if (teleportCounter.ReachedTeleportLimit())
             {
                 cacheCleaner.UnloadCacheImmediate();
                 Resources.UnloadUnusedAssets();
-                teleportCounter.teleportsDone = 0;
             }
-
             return UniTask.FromResult(Result.SuccessResult());
         }
     }
