@@ -30,7 +30,7 @@ namespace DCL.Minimap
         private void OnMouseEnter()
         {
             Vector3 toastPosition = restrictionsView.toastRectTransform.anchoredPosition;
-            toastPosition.x = restrictionsView.sceneRestrictionsIcon.transform.localPosition.x;
+            toastPosition.x = restrictionsView.sceneRestrictionsIcon.transform.localPosition.x - (restrictionsView.sceneRestrictionsIcon.rect.width * 0.75f);
             restrictionsView.toastRectTransform.anchoredPosition = toastPosition;
             restrictionsView.toastCanvasGroup.DOFade(1f, 0.5f);
         }
