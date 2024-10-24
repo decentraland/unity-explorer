@@ -21,3 +21,4 @@ MonoBehaviour:
   <UnloadingDistanceToleranceInParcels>k__BackingField: 1
   <ScenesRequestBatchSize>k__BackingField: 6
   <ScenesDefinitionsRequestBatchSize>k__BackingField: 30
+  <UnloadCacheAfterTeleportCount>k__BackingField: 4

@@ -109,13 +109,32 @@ namespace DCL.AvatarRendering.Loading.Assets
                    && unloadedAmount < maxUnloadAmount && unloadQueue.Count > 0
                    && unloadQueue.TryDequeue(out AttachmentAssetBase key) && cache.TryGetValue(key, out List<CachedAttachment> assets))
             {
-                unloadedAmount += assets!.Count;
+                unloadedAmount += UnloadAttachment(assets, key);
+            }
 
-                foreach (CachedAttachment asset in assets)
-                    asset.Dispose();
+            ProfilingCounters.CachedWearablesInCacheAmount.Value -= unloadedAmount;
+        }
 
-                assets.Clear();
-                cache.Remove(key);
+        private int UnloadAttachment(List<CachedAttachment> assets, AttachmentAssetBase key)
+        {
+            var assetsToUnload = assets!.Count;
+
+            foreach (var asset in assets)
+                asset.Dispose();
+
+            assets.Clear();
+            cache.Remove(key);
+            return assetsToUnload;
+        }
+
+        public void UnloadImmediate()
+        {
+            var unloadedAmount = 0;
+
+            while (unloadQueue.Count > 0
+                   && unloadQueue.TryDequeue(out var key) && cache.TryGetValue(key, out var assets))
+            {
+                unloadedAmount += UnloadAttachment(assets, key);
             }
 
             ProfilingCounters.CachedWearablesInCacheAmount.Value -= unloadedAmount;

@@ -61,6 +61,8 @@ namespace ECS.StreamableLoading.Cache
         public bool TryGet(in TLoadingIntention key, out TAssetData asset) =>
             cache.TryGetValue(key, out asset);
 
+        
+
         public void AddReference(in TLoadingIntention _, TAssetData asset)
         {
             asset.AddReference();
@@ -72,16 +74,33 @@ namespace ECS.StreamableLoading.Cache
 
             for (int i = listedCache.Count - 1; frameTimeBudget.TrySpendBudget() && i >= 0 && maxUnloadAmount > 0; i--)
             {
-                (TLoadingIntention key, TAssetData asset) = listedCache[i];
-                if (!asset.CanBeDisposed()) continue;
-
-                asset.Dispose();
-                cache.Remove(key);
-                listedCache.RemoveAt(i);
-
-                maxUnloadAmount--;
+                if (TryUnloadAsset(i))
+                    maxUnloadAmount--;
             }
 
+            inCacheCount.Value = cache.Count;
+        }
+
+        // Returns true if the asset was unloaded
+        private bool TryUnloadAsset(int i)
+        {
+            (var key, var asset) = listedCache[i];
+            if (!asset.CanBeDisposed()) return false;
+
+            asset.Dispose();
+            cache.Remove(key);
+            listedCache.RemoveAt(i);
+            return true;
+        }
+
+
+        public void UnloadImmediate()
+        {
+            listedCache.Sort(COMPARE_BY_LAST_USED_FRAME_REVERSED);
+
+            for (var i = listedCache.Count - 1; i >= 0; i--)
+                TryUnloadAsset(i);
+            
             inCacheCount.Value = cache.Count;
         }
 
