@@ -1,5 +1,5 @@
 using UnityEngine;
-using UnityEngine.Assertions;
+using UnityEngine.InputSystem;
 
 // ORIGINAL OPEN SOURCE PLUGIN SCRIPT:
 // https://github.com/stillwwater/command_terminal/blob/0f5918ea79014955b24c7d431625a97a1cac8797/CommandTerminal/Terminal.cs
@@ -18,8 +18,6 @@ namespace CommandTerminal
     /// </summary>
     public class SceneDebugConsole : MonoBehaviour
     {
-        private const string ESCAPE_KEYBOARD_EVENT = "escape";
-
         [Header("Window")]
         [Range(0, 1)]
         [SerializeField]
@@ -33,8 +31,9 @@ namespace CommandTerminal
         [SerializeField]
         private float toggleSpeed = 1000;
 
-        [SerializeField] private string toggleHotkey = "`";
-        [SerializeField] private string toggleFullHotkey = "#`";
+        [SerializeField] private InputActionAsset inputActions;
+        private InputAction toggleInputAction;
+        private InputAction toggleLargeInputAction;
         [SerializeField] private int logsMaxAmount = 512;
 
         [Header("Theme")]
@@ -60,7 +59,11 @@ namespace CommandTerminal
 
         private void Start()
         {
-            Assert.AreNotEqual(toggleHotkey.ToLower(), "return", "Return is not a valid ToggleHotkey");
+            var shortcutsInputActionsMap = inputActions.FindActionMap("Shortcuts");
+            toggleInputAction = shortcutsInputActionsMap.FindAction("ToggleSceneDebugConsole");
+            toggleInputAction.Enable();
+            toggleLargeInputAction = shortcutsInputActionsMap.FindAction("ToggleSceneDebugConsoleLarger");
+            toggleLargeInputAction.Enable();
 
             SetupWindow();
             SetupLabels();
@@ -71,20 +74,23 @@ namespace CommandTerminal
             consoleBuffer = new ConsoleBuffer(logsMaxAmount);
         }
 
-        private void OnGUI()
+        private void Update()
         {
             if (isClosed)
             {
-                if (Event.current.Equals(Event.KeyboardEvent(toggleHotkey)))
-                    SetState(TerminalState.OpenSmall);
-                else if (Event.current.Equals(Event.KeyboardEvent(toggleFullHotkey)))
+                if (toggleLargeInputAction.triggered)
                     SetState(TerminalState.OpenFull);
+                else if (toggleInputAction.triggered)
+                    SetState(TerminalState.OpenSmall);
             }
-            else if (Event.current.Equals(Event.KeyboardEvent(ESCAPE_KEYBOARD_EVENT))
-                     || Event.current.Equals(Event.KeyboardEvent(toggleHotkey))
-                     || Event.current.Equals(Event.KeyboardEvent(toggleFullHotkey)))
+            else if (toggleInputAction.triggered || toggleLargeInputAction.triggered)
+            {
                 SetState(TerminalState.Close);
+            }
+        }
 
+        private void OnGUI()
+        {
             if (isClosed) return;
 
             HandleOpenness();

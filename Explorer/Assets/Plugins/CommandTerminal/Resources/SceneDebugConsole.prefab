@@ -44,13 +44,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ac7a2214776444260b2303810587daf3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  MaxHeight: 0.7
-  SmallTerminalRatio: 0.33
-  ToggleSpeed: 1000
-  ToggleHotkey: '`'
-  ToggleFullHotkey: '#`'
-  ConsoleFont: {fileID: 0}
-  BackgroundColor: {r: 0, g: 0, b: 0, a: 1}
-  ForegroundColor: {r: 1, g: 1, b: 1, a: 1}
-  WarningColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
-  ErrorColor: {r: 1, g: 0, b: 0, a: 1}
+  maxHeight: 0.7
+  smallTerminalRatio: 0.33
+  toggleSpeed: 1000
+  inputActions: {fileID: -944628639613478452, guid: 6cec26357c7fb8f44b03ce452209387d, type: 3}
+  logsMaxAmount: 512
+  fontSize: 20
+  consoleFont: {fileID: 0}
+  backgroundColor: {r: 0, g: 0, b: 0, a: 1}
+  foregroundColor: {r: 1, g: 1, b: 1, a: 1}
+  warningColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  errorColor: {r: 1, g: 0, b: 0, a: 1}

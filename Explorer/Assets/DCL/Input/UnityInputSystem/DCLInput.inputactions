@@ -2073,7 +2073,7 @@
                     "initialStateCheck": false
                 },
                 {
-                    "name": "ToggleDebugConsole",
+                    "name": "ToggleSceneDebugConsole",
                     "type": "Button",
                     "id": "8a10f0d2-822d-4ec6-be75-9be85ad4fbc6",
                     "expectedControlType": "Button",
@@ -2082,7 +2082,7 @@
                     "initialStateCheck": false
                 },
                 {
-                    "name": "ToggleDebugConsoleLarger",
+                    "name": "ToggleSceneDebugConsoleLarger",
                     "type": "Button",
                     "id": "65d092fb-6cb5-423f-8b70-93f843b54813",
                     "expectedControlType": "Button",
@@ -2198,7 +2198,7 @@
                     "interactions": "",
                     "processors": "",
                     "groups": "",
-                    "action": "ToggleDebugConsole",
+                    "action": "ToggleSceneDebugConsole",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },
@@ -2209,7 +2209,7 @@
                     "interactions": "",
                     "processors": "",
                     "groups": "",
-                    "action": "ToggleDebugConsoleLarger",
+                    "action": "ToggleSceneDebugConsoleLarger",
                     "isComposite": true,
                     "isPartOfComposite": false
                 },
@@ -2220,7 +2220,7 @@
                     "interactions": "",
                     "processors": "",
                     "groups": "",
-                    "action": "ToggleDebugConsoleLarger",
+                    "action": "ToggleSceneDebugConsoleLarger",
                     "isComposite": false,
                     "isPartOfComposite": true
                 },
@@ -2231,7 +2231,7 @@
                     "interactions": "",
                     "processors": "",
                     "groups": "",
-                    "action": "ToggleDebugConsoleLarger",
+                    "action": "ToggleSceneDebugConsoleLarger",
                     "isComposite": false,
                     "isPartOfComposite": true
                 }

@@ -2095,7 +2095,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""initialStateCheck"": false
                 },
                 {
-                    ""name"": ""ToggleDebugConsole"",
+                    ""name"": ""ToggleSceneDebugConsole"",
                     ""type"": ""Button"",
                     ""id"": ""8a10f0d2-822d-4ec6-be75-9be85ad4fbc6"",
                     ""expectedControlType"": ""Button"",
@@ -2104,7 +2104,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""initialStateCheck"": false
                 },
                 {
-                    ""name"": ""ToggleDebugConsoleLarger"",
+                    ""name"": ""ToggleSceneDebugConsoleLarger"",
                     ""type"": ""Button"",
                     ""id"": ""65d092fb-6cb5-423f-8b70-93f843b54813"",
                     ""expectedControlType"": ""Button"",
@@ -2220,7 +2220,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
-                    ""action"": ""ToggleDebugConsole"",
+                    ""action"": ""ToggleSceneDebugConsole"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 },
@@ -2231,7 +2231,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
-                    ""action"": ""ToggleDebugConsoleLarger"",
+                    ""action"": ""ToggleSceneDebugConsoleLarger"",
                     ""isComposite"": true,
                     ""isPartOfComposite"": false
                 },
@@ -2242,7 +2242,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
-                    ""action"": ""ToggleDebugConsoleLarger"",
+                    ""action"": ""ToggleSceneDebugConsoleLarger"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": true
                 },
@@ -2253,7 +2253,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
-                    ""action"": ""ToggleDebugConsoleLarger"",
+                    ""action"": ""ToggleSceneDebugConsoleLarger"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": true
                 }
@@ -3009,8 +3009,8 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         m_Shortcuts_ToggleAvatarBubbles = m_Shortcuts.FindAction("ToggleAvatarBubbles", throwIfNotFound: true);
         m_Shortcuts_ShowHideUI = m_Shortcuts.FindAction("ShowHideUI", throwIfNotFound: true);
         m_Shortcuts_ToggleNametags = m_Shortcuts.FindAction("ToggleNametags", throwIfNotFound: true);
-        m_Shortcuts_ToggleDebugConsole = m_Shortcuts.FindAction("ToggleDebugConsole", throwIfNotFound: true);
-        m_Shortcuts_ToggleDebugConsoleLarger = m_Shortcuts.FindAction("ToggleDebugConsoleLarger", throwIfNotFound: true);
+        m_Shortcuts_ToggleSceneDebugConsole = m_Shortcuts.FindAction("ToggleSceneDebugConsole", throwIfNotFound: true);
+        m_Shortcuts_ToggleSceneDebugConsoleLarger = m_Shortcuts.FindAction("ToggleSceneDebugConsoleLarger", throwIfNotFound: true);
         // Emotes
         m_Emotes = asset.FindActionMap("Emotes", throwIfNotFound: true);
         m_Emotes_Slot1 = m_Emotes.FindAction("Slot 1", throwIfNotFound: true);
@@ -3627,8 +3627,8 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
     private readonly InputAction m_Shortcuts_ToggleAvatarBubbles;
     private readonly InputAction m_Shortcuts_ShowHideUI;
     private readonly InputAction m_Shortcuts_ToggleNametags;
-    private readonly InputAction m_Shortcuts_ToggleDebugConsole;
-    private readonly InputAction m_Shortcuts_ToggleDebugConsoleLarger;
+    private readonly InputAction m_Shortcuts_ToggleSceneDebugConsole;
+    private readonly InputAction m_Shortcuts_ToggleSceneDebugConsoleLarger;
     public struct ShortcutsActions
     {
         private @DCLInput m_Wrapper;
@@ -3642,8 +3642,8 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         public InputAction @ToggleAvatarBubbles => m_Wrapper.m_Shortcuts_ToggleAvatarBubbles;
         public InputAction @ShowHideUI => m_Wrapper.m_Shortcuts_ShowHideUI;
         public InputAction @ToggleNametags => m_Wrapper.m_Shortcuts_ToggleNametags;
-        public InputAction @ToggleDebugConsole => m_Wrapper.m_Shortcuts_ToggleDebugConsole;
-        public InputAction @ToggleDebugConsoleLarger => m_Wrapper.m_Shortcuts_ToggleDebugConsoleLarger;
+        public InputAction @ToggleSceneDebugConsole => m_Wrapper.m_Shortcuts_ToggleSceneDebugConsole;
+        public InputAction @ToggleSceneDebugConsoleLarger => m_Wrapper.m_Shortcuts_ToggleSceneDebugConsoleLarger;
         public InputActionMap Get() { return m_Wrapper.m_Shortcuts; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -3680,12 +3680,12 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @ToggleNametags.started += instance.OnToggleNametags;
             @ToggleNametags.performed += instance.OnToggleNametags;
             @ToggleNametags.canceled += instance.OnToggleNametags;
-            @ToggleDebugConsole.started += instance.OnToggleDebugConsole;
-            @ToggleDebugConsole.performed += instance.OnToggleDebugConsole;
-            @ToggleDebugConsole.canceled += instance.OnToggleDebugConsole;
-            @ToggleDebugConsoleLarger.started += instance.OnToggleDebugConsoleLarger;
-            @ToggleDebugConsoleLarger.performed += instance.OnToggleDebugConsoleLarger;
-            @ToggleDebugConsoleLarger.canceled += instance.OnToggleDebugConsoleLarger;
+            @ToggleSceneDebugConsole.started += instance.OnToggleSceneDebugConsole;
+            @ToggleSceneDebugConsole.performed += instance.OnToggleSceneDebugConsole;
+            @ToggleSceneDebugConsole.canceled += instance.OnToggleSceneDebugConsole;
+            @ToggleSceneDebugConsoleLarger.started += instance.OnToggleSceneDebugConsoleLarger;
+            @ToggleSceneDebugConsoleLarger.performed += instance.OnToggleSceneDebugConsoleLarger;
+            @ToggleSceneDebugConsoleLarger.canceled += instance.OnToggleSceneDebugConsoleLarger;
         }
 
         private void UnregisterCallbacks(IShortcutsActions instance)
@@ -3717,12 +3717,12 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @ToggleNametags.started -= instance.OnToggleNametags;
             @ToggleNametags.performed -= instance.OnToggleNametags;
             @ToggleNametags.canceled -= instance.OnToggleNametags;
-            @ToggleDebugConsole.started -= instance.OnToggleDebugConsole;
-            @ToggleDebugConsole.performed -= instance.OnToggleDebugConsole;
-            @ToggleDebugConsole.canceled -= instance.OnToggleDebugConsole;
-            @ToggleDebugConsoleLarger.started -= instance.OnToggleDebugConsoleLarger;
-            @ToggleDebugConsoleLarger.performed -= instance.OnToggleDebugConsoleLarger;
-            @ToggleDebugConsoleLarger.canceled -= instance.OnToggleDebugConsoleLarger;
+            @ToggleSceneDebugConsole.started -= instance.OnToggleSceneDebugConsole;
+            @ToggleSceneDebugConsole.performed -= instance.OnToggleSceneDebugConsole;
+            @ToggleSceneDebugConsole.canceled -= instance.OnToggleSceneDebugConsole;
+            @ToggleSceneDebugConsoleLarger.started -= instance.OnToggleSceneDebugConsoleLarger;
+            @ToggleSceneDebugConsoleLarger.performed -= instance.OnToggleSceneDebugConsoleLarger;
+            @ToggleSceneDebugConsoleLarger.canceled -= instance.OnToggleSceneDebugConsoleLarger;
         }
 
         public void RemoveCallbacks(IShortcutsActions instance)
@@ -4070,8 +4070,8 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         void OnToggleAvatarBubbles(InputAction.CallbackContext context);
         void OnShowHideUI(InputAction.CallbackContext context);
         void OnToggleNametags(InputAction.CallbackContext context);
-        void OnToggleDebugConsole(InputAction.CallbackContext context);
-        void OnToggleDebugConsoleLarger(InputAction.CallbackContext context);
+        void OnToggleSceneDebugConsole(InputAction.CallbackContext context);
+        void OnToggleSceneDebugConsoleLarger(InputAction.CallbackContext context);
     }
     public interface IEmotesActions
     {
