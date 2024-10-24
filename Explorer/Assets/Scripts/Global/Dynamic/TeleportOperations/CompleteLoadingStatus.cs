@@ -19,7 +19,8 @@ namespace Global.Dynamic.TeleportOperations
         public UniTask<Result> ExecuteAsync(TeleportParams teleportParams, CancellationToken ct)
         {
             teleportParams.ParentReport.SetProgress(teleportParams.LoadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Completed));
-            teleportCounter.AddSuccessfullTeleport(teleportParams.CurrentDestinationParcel, goingToNewRealm);
+            teleportCounter.AddSuccessfullTeleport(teleportParams.CurrentDestinationParcel,
+                teleportParams.CurrentDestinationRealm, goingToNewRealm);
             return UniTask.FromResult(Result.SuccessResult());
         }
     }
