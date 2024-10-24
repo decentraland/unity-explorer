@@ -106,7 +106,7 @@ namespace DCL.SDKComponents.MediaStream
             }
 
             HandleComponentChange(ref component, sdkComponent, sdkComponent.Src, sdkComponent.HasPlaying, sdkComponent.Playing, sdkComponent, static (mediaPlayer, sdk) => mediaPlayer.UpdatePlaybackProperties(sdk));
-            ConsumePromise(ref component, sdkComponent.HasPlaying && sdkComponent.Playing, sdkComponent, static (mediaPlayer, sdk) => mediaPlayer.SetPlaybackProperties(sdk));
+            ConsumePromise(ref component, false, sdkComponent, static (mediaPlayer, sdk) => mediaPlayer.SetPlaybackProperties(sdk));
         }
 
         [Query]
