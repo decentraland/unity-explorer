@@ -10,6 +10,8 @@ using DCL.Utilities;
 using DCL.Web3;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
+using DCL.WebRequests.ArgsFactory;
+using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using SuperScrollView;
 using System;
 using System.Collections.Generic;
@@ -23,16 +25,17 @@ namespace DCL.Notifications.NotificationsMenu
     {
         private const int PIXELS_PER_UNIT = 50;
         private const int IDENTITY_CHANGE_POLLING_INTERVAL = 5000;
-        private static readonly List<NotificationType> NOTIFICATION_TYPES_TO_IGNORE = new()
-            {
-                NotificationType.INTERNAL_ARRIVED_TO_DESTINATION
-            };
+        private static readonly List<NotificationType> NOTIFICATION_TYPES_TO_IGNORE = new ()
+        {
+            NotificationType.INTERNAL_ARRIVED_TO_DESTINATION
+        };
 
         private readonly NotificationsMenuView view;
         private readonly NotificationsRequestController notificationsRequestController;
         private readonly INotificationsBusController notificationsBusController;
         private readonly NotificationIconTypes notificationIconTypes;
         private readonly IWebRequestController webRequestController;
+        private readonly IGetTextureArgsFactory getTextureArgsFactory;
         private readonly NftTypeIconSO rarityBackgroundMapping;
         private readonly ISidebarBus sidebarBus;
         private readonly Dictionary<string, Sprite> notificationThumbnailCache = new ();
@@ -51,6 +54,7 @@ namespace DCL.Notifications.NotificationsMenu
             INotificationsBusController notificationsBusController,
             NotificationIconTypes notificationIconTypes,
             IWebRequestController webRequestController,
+            IGetTextureArgsFactory getTextureArgsFactory,
             ISidebarBus sidebarBus,
             NftTypeIconSO rarityBackgroundMapping,
             IWeb3IdentityCache web3IdentityCache)
@@ -62,6 +66,7 @@ namespace DCL.Notifications.NotificationsMenu
             this.notificationsBusController = notificationsBusController;
             this.notificationIconTypes = notificationIconTypes;
             this.webRequestController = webRequestController;
+            this.getTextureArgsFactory = getTextureArgsFactory;
             this.sidebarBus = sidebarBus;
             this.rarityBackgroundMapping = rarityBackgroundMapping;
             this.web3IdentityCache = web3IdentityCache;
@@ -93,14 +98,8 @@ namespace DCL.Notifications.NotificationsMenu
         {
             notificationPanelCts = notificationPanelCts.SafeRestart();
 
-            if (!forceClose && !view.gameObject.activeSelf)
-            {
-                view.ShowAsync(notificationPanelCts.Token).Forget();
-            }
-            else if (view.gameObject.activeSelf)
-            {
-                view.HideAsync(notificationPanelCts.Token).Forget();
-            }
+            if (!forceClose && !view.gameObject.activeSelf) { view.ShowAsync(notificationPanelCts.Token).Forget(); }
+            else if (view.gameObject.activeSelf) { view.HideAsync(notificationPanelCts.Token).Forget(); }
         }
 
         private void OnViewShown()
@@ -228,12 +227,15 @@ namespace DCL.Notifications.NotificationsMenu
         private async UniTask LoadNotificationThumbnailAsync(NotificationView notificationView, INotification notificationData,
             CancellationToken ct)
         {
-            Texture2D texture = await webRequestController.GetTextureAsync(
+            OwnedTexture2D ownedTexture = await webRequestController.GetTextureAsync(
                 new CommonArguments(URLAddress.FromString(notificationData.GetThumbnail())),
-                new GetTextureArguments(false),
+                getTextureArgsFactory.NewArguments(TextureType.Albedo),
                 GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp),
                 ct,
                 ReportCategory.UI);
+
+            Texture2D texture = ownedTexture.Texture;
+
             Sprite? thumbnailSprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height),
                 VectorUtilities.OneHalf, PIXELS_PER_UNIT, 0, SpriteMeshType.FullRect, Vector4.one, false);
             //Try add has been added in case it happens that BE returns duplicated notifications id
@@ -244,7 +246,7 @@ namespace DCL.Notifications.NotificationsMenu
 
         private void OnNotificationReceived(INotification notification)
         {
-            if(NOTIFICATION_TYPES_TO_IGNORE.Contains(notification.Type))
+            if (NOTIFICATION_TYPES_TO_IGNORE.Contains(notification.Type))
                 return;
 
             notifications.Insert(0, notification);

@@ -1,6 +1,8 @@
 ﻿using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.WebRequests.ArgsFactory;
+using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -13,10 +15,12 @@ namespace DCL.WebRequests.Analytics
         private static readonly URLAddress FAIL = URLAddress.FromString("https://ab-cdn.decentraland.org/LOD/1/bafkreibkkn6xli3w7dhfk6adaj3bi2xa5a4lk35anv2hwx6bddnjcpbbzi_1_mac");
 
         private readonly IWebRequestController webRequestController;
+        private readonly IGetTextureArgsFactory getTextureArgsFactory;
 
-        public WebRequestStressTestUtility(IWebRequestController webRequestController)
+        public WebRequestStressTestUtility(IWebRequestController webRequestController, IGetTextureArgsFactory getTextureArgsFactory)
         {
             this.webRequestController = webRequestController;
+            this.getTextureArgsFactory = getTextureArgsFactory;
         }
 
         public async UniTask StartConcurrentAsync(int count, int retriesCount, bool failed, float delay)
@@ -58,7 +62,7 @@ namespace DCL.WebRequests.Analytics
                     // texture
                     await webRequestController.GetTextureAsync(
                         new CommonArguments(FAIL, attemptsCount: retriesCount),
-                        new GetTextureArguments(false),
+                        getTextureArgsFactory.NewArguments(TextureType.Albedo),
                         new GetTextureWebRequest.CreateTextureOp(TextureWrapMode.Clamp, FilterMode.Bilinear),
                         CancellationToken.None,
                         reportData: ReportCategory.DEBUG

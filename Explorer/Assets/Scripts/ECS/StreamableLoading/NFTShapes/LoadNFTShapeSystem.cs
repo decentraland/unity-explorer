@@ -5,16 +5,16 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.WebRequests;
-using DCL.WebRequests.WebContentSizes;
+using DCL.WebRequests.ArgsFactory;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
 using ECS.StreamableLoading.NFTShapes.DTOs;
 using ECS.StreamableLoading.Textures;
+using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System;
 using System.Threading;
-using UnityEngine;
 
 namespace ECS.StreamableLoading.NFTShapes
 {
@@ -23,31 +23,33 @@ namespace ECS.StreamableLoading.NFTShapes
     public partial class LoadNFTShapeSystem : LoadSystemBase<Texture2DData, GetNFTShapeIntention>
     {
         private readonly IWebRequestController webRequestController;
-        private readonly IWebContentSizes webContentSizes;
+        private readonly IGetTextureArgsFactory getTextureArgsFactory;
 
-        public LoadNFTShapeSystem(World world, IStreamableCache<Texture2DData, GetNFTShapeIntention> cache, IWebRequestController webRequestController, IWebContentSizes webContentSizes) : base(world, cache)
+        public LoadNFTShapeSystem(World world, IStreamableCache<Texture2DData, GetNFTShapeIntention> cache, IWebRequestController webRequestController, IGetTextureArgsFactory getTextureArgsFactory) : base(world, cache)
         {
             this.webRequestController = webRequestController;
-            this.webContentSizes = webContentSizes;
+            this.getTextureArgsFactory = getTextureArgsFactory;
         }
 
         protected override async UniTask<StreamableLoadingResult<Texture2DData>> FlowInternalAsync(GetNFTShapeIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
             string imageUrl = await ImageUrlAsync(intention.CommonArguments, ct);
-            bool isOkSize = await webContentSizes.IsOkSizeAsync(imageUrl, ct);
-
-            if (isOkSize == false)
-                return new StreamableLoadingResult<Texture2DData>(GetReportCategory(), new Exception("Image size is too big"));
 
             // texture request
             // Attempts should be always 1 as there is a repeat loop in `LoadSystemBase`
             var result = await webRequestController.GetTextureAsync(
                 new CommonLoadingArguments(URLAddress.FromString(imageUrl), attempts: 1),
-                new GetTextureArguments(false),
+                getTextureArgsFactory.NewArguments(TextureType.Albedo),
                 new GetTextureWebRequest.CreateTextureOp(GetNFTShapeIntention.WRAP_MODE, GetNFTShapeIntention.FILTER_MODE),
                 ct,
                 GetReportData()
             );
+
+            if (result == null)
+                return new StreamableLoadingResult<Texture2DData>(
+                    GetReportData(),
+                    new Exception($"Error loading texture from url {intention.CommonArguments.URL}")
+                );
 
             return new StreamableLoadingResult<Texture2DData>(new Texture2DData(result));
         }

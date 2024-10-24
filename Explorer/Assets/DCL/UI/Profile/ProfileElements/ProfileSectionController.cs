@@ -3,6 +3,7 @@ using DCL.Chat;
 using DCL.Profiles;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
+using DCL.WebRequests.ArgsFactory;
 using MVC;
 using System.Threading;
 using Utility;
@@ -15,6 +16,7 @@ namespace DCL.UI.ProfileElements
         private readonly IProfileRepository profileRepository;
         private readonly ChatEntryConfigurationSO chatEntryConfiguration;
         private readonly IWebRequestController webRequestController;
+        private readonly IGetTextureArgsFactory getTextureArgsFactory;
 
         private ImageController profileImageController;
         private UserNameElementController nameElementController;
@@ -26,12 +28,15 @@ namespace DCL.UI.ProfileElements
             IWeb3IdentityCache identityCache,
             IProfileRepository profileRepository,
             IWebRequestController webRequestController,
-            ChatEntryConfigurationSO chatEntryConfiguration) : base(viewFactory)
+            IGetTextureArgsFactory getTextureArgsFactory,
+            ChatEntryConfigurationSO chatEntryConfiguration
+        ) : base(viewFactory)
         {
             this.identityCache = identityCache;
             this.profileRepository = profileRepository;
             this.chatEntryConfiguration = chatEntryConfiguration;
             this.webRequestController = webRequestController;
+            this.getTextureArgsFactory = getTextureArgsFactory;
         }
 
         protected override void OnViewInstantiated()
@@ -39,7 +44,7 @@ namespace DCL.UI.ProfileElements
             base.OnViewInstantiated();
             nameElementController = new UserNameElementController(viewInstance!.UserNameElement, chatEntryConfiguration);
             walletAddressElementController = new UserWalletAddressElementController(viewInstance.UserWalletAddressElement);
-            profileImageController = new ImageController(viewInstance.FaceSnapshotImage, webRequestController);
+            profileImageController = new ImageController(viewInstance.FaceSnapshotImage, webRequestController, getTextureArgsFactory);
         }
 
         protected override void OnBeforeViewShow()
@@ -60,6 +65,7 @@ namespace DCL.UI.ProfileElements
             viewInstance!.FaceFrame.color = chatEntryConfiguration.GetNameColor(profile.Name);
 
             profileImageController!.StopLoading();
+
             //temporarily disabled the profile image request until we have the correct
             //picture deployment
             //await profileImageController!.RequestImageAsync(profile.Avatar.FaceSnapshotUrl, ct);
@@ -67,7 +73,9 @@ namespace DCL.UI.ProfileElements
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
-        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) => UniTask.Never(ct);
+        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
+            UniTask.Never(ct);
+
         public new void Dispose()
         {
             cts.SafeCancelAndDispose();

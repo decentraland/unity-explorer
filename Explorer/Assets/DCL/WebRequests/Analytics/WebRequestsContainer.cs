@@ -1,9 +1,10 @@
 using Cysharp.Threading.Tasks;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
-using DCL.Optimization.PerformanceBudgeting;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics.Metrics;
+using DCL.WebRequests.ArgsFactory;
+using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using Utility.Multithreading;
 using Utility.Storage;
 
@@ -15,9 +16,14 @@ namespace DCL.WebRequests.Analytics
 
         public IWebRequestsAnalyticsContainer AnalyticsContainer { get; }
 
-        private WebRequestsContainer(IWebRequestController webRequestController,
-            IWebRequestsAnalyticsContainer analyticsContainer)
+        public IGetTextureArgsFactory GetTextureArgsFactory { get; }
+
+        private WebRequestsContainer(
+            IWebRequestController webRequestController,
+            IWebRequestsAnalyticsContainer analyticsContainer,
+            IGetTextureArgsFactory getTextureArgsFactory)
         {
+            GetTextureArgsFactory = getTextureArgsFactory;
             WebRequestController = webRequestController;
             AnalyticsContainer = analyticsContainer;
         }
@@ -42,11 +48,13 @@ namespace DCL.WebRequests.Analytics
                 .WithArtificialDelay(options)
                 .WithBudget(totalBudget);
 
+            var getTextureArgsFactory = new GetTextureArgsFactory(ITexturesUnzip.NewDebug());//TODO propagate args
+
             CreateStressTestUtility();
             CreateWebRequestDelayUtility();
             CreateWebRequestsMetricsDebugUtility();
 
-            return new WebRequestsContainer(webRequestController, analyticsContainer);
+            return new WebRequestsContainer(webRequestController, analyticsContainer, getTextureArgsFactory);
 
             void CreateWebRequestsMetricsDebugUtility()
             {
@@ -74,7 +82,7 @@ namespace DCL.WebRequests.Analytics
 
             void CreateStressTestUtility()
             {
-                var stressTestUtility = new WebRequestStressTestUtility(webRequestController);
+                var stressTestUtility = new WebRequestStressTestUtility(webRequestController, getTextureArgsFactory);
 
                 var count = new ElementBinding<int>(50);
                 var retriesCount = new ElementBinding<int>(3);

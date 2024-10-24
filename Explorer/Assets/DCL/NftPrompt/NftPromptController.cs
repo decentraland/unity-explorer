@@ -5,6 +5,7 @@ using DCL.Input;
 using DCL.NftInfoAPIService;
 using DCL.UI;
 using DCL.WebRequests;
+using DCL.WebRequests.ArgsFactory;
 using MVC;
 using System;
 using System.Threading;
@@ -25,6 +26,7 @@ namespace DCL.NftPrompt
         private readonly ICursor cursor;
         private readonly INftMarketAPIClient nftInfoAPIClient;
         private readonly IWebRequestController webRequestController;
+        private readonly IGetTextureArgsFactory getTextureArgsFactory;
         private Action<NftPromptResultType> resultCallback;
 
         private NftInfo? lastNftInfo;
@@ -37,17 +39,20 @@ namespace DCL.NftPrompt
             IWebBrowser webBrowser,
             ICursor cursor,
             INftMarketAPIClient nftInfoAPIClient,
-            IWebRequestController webRequestController) : base(viewFactory)
+            IWebRequestController webRequestController,
+            IGetTextureArgsFactory getTextureArgsFactory
+        ) : base(viewFactory)
         {
             this.webBrowser = webBrowser;
             this.cursor = cursor;
             this.nftInfoAPIClient = nftInfoAPIClient;
             this.webRequestController = webRequestController;
+            this.getTextureArgsFactory = getTextureArgsFactory;
         }
 
         protected override void OnViewInstantiated()
         {
-            placeImageController = new ImageController(viewInstance.ImageNft, webRequestController);
+            placeImageController = new ImageController(viewInstance.ImageNft, webRequestController, getTextureArgsFactory);
             viewInstance.ButtonClose.onClick.AddListener(Dismiss);
             viewInstance.ButtonCancel.onClick.AddListener(Dismiss);
             viewInstance.ButtonOpenMarket.onClick.AddListener(ViewOnMarket);
@@ -56,6 +61,7 @@ namespace DCL.NftPrompt
         protected override void OnViewShow()
         {
             cursor.Unlock();
+
             RequestNft(inputData.Chain, inputData.ContractAddress, inputData.TokenId, result =>
             {
                 if (result != NftPromptResultType.ViewOnMarket || string.IsNullOrEmpty(marketUrl))
@@ -147,6 +153,7 @@ namespace DCL.NftPrompt
             viewInstance.TextNftName.text = info.name;
 
             bool hasMultipleOwners = info.owners.Length > 1;
+
             if (hasMultipleOwners)
                 viewInstance.TextMultipleOwner.text = string.Format(MULTIPLE_OWNERS_FORMAT, info.owners.Length);
             else
@@ -160,16 +167,19 @@ namespace DCL.NftPrompt
             viewInstance.MultipleOwnersContainer.gameObject.SetActive(hasMultipleOwners);
 
             bool hasDescription = !string.IsNullOrEmpty(info.description);
+
             if (hasDescription)
                 viewInstance.TextDescription.text = info.description;
 
             viewInstance.ContainerDescription.SetActive(hasDescription);
 
             viewInstance.TextOpenMarketButton.text = "VIEW";
+
             if (!string.IsNullOrEmpty(info.marketName))
                 viewInstance.TextOpenMarketButton.text = $"{viewInstance.TextOpenMarketButton.text} ON {info.marketName.ToUpper()}";
 
             marketUrl = null;
+
             if (!string.IsNullOrEmpty(info.marketLink))
                 marketUrl = info.marketLink;
             else if (!string.IsNullOrEmpty(info.assetLink))

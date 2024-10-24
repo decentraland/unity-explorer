@@ -3,6 +3,7 @@ using DCL.Profiles;
 using DCL.UI;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
+using DCL.WebRequests.ArgsFactory;
 using MVC;
 using System.Threading;
 using Utility;
@@ -16,6 +17,7 @@ namespace DCL.UI.ProfileElements
         private readonly IWeb3IdentityCache identityCache;
         private readonly IProfileRepository profileRepository;
         private readonly IWebRequestController webRequestController;
+        private readonly IGetTextureArgsFactory getTextureArgsFactory;
 
         private ImageController? profileImageController;
         private CancellationTokenSource? loadProfileCts;
@@ -25,19 +27,21 @@ namespace DCL.UI.ProfileElements
         public ProfileWidgetController(ViewFactoryMethod viewFactory,
             IWeb3IdentityCache identityCache,
             IProfileRepository profileRepository,
-            IWebRequestController webRequestController)
-            : base(viewFactory)
+            IWebRequestController webRequestController,
+            IGetTextureArgsFactory getTextureArgsFactory
+        ) : base(viewFactory)
         {
             this.identityCache = identityCache;
             this.profileRepository = profileRepository;
             this.webRequestController = webRequestController;
+            this.getTextureArgsFactory = getTextureArgsFactory;
         }
 
         protected override void OnViewInstantiated()
         {
             base.OnViewInstantiated();
 
-            profileImageController = new ImageController(viewInstance.FaceSnapshotImage, webRequestController);
+            profileImageController = new ImageController(viewInstance.FaceSnapshotImage, webRequestController, getTextureArgsFactory);
         }
 
         protected override void OnBeforeViewShow()

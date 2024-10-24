@@ -1,11 +1,10 @@
 using Arch.Core;
 using Arch.SystemGroups;
-using Arch.SystemGroups.Metadata;
-using CRDT;
 using Cysharp.Threading.Tasks;
 using DCL.WebRequests;
 using DCL.Diagnostics;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.WebRequests.ArgsFactory;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
@@ -21,10 +20,12 @@ namespace ECS.StreamableLoading.Textures
     public partial class LoadTextureSystem : LoadSystemBase<Texture2DData, GetTextureIntention>
     {
         private readonly IWebRequestController webRequestController;
+        protected readonly IGetTextureArgsFactory getTextureArgsFactory;
 
-        internal LoadTextureSystem(World world, IStreamableCache<Texture2DData, GetTextureIntention> cache, IWebRequestController webRequestController) : base(world, cache)
+        internal LoadTextureSystem(World world, IStreamableCache<Texture2DData, GetTextureIntention> cache, IWebRequestController webRequestController, IGetTextureArgsFactory getTextureArgsFactory) : base(world, cache)
         {
             this.webRequestController = webRequestController;
+            this.getTextureArgsFactory = getTextureArgsFactory;
         }
 
         protected override async UniTask<StreamableLoadingResult<Texture2DData>> FlowInternalAsync(GetTextureIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
@@ -34,10 +35,17 @@ namespace ECS.StreamableLoading.Textures
             // Attempts should be always 1 as there is a repeat loop in `LoadSystemBase`
             var result = await webRequestController.GetTextureAsync(
                 intention.CommonArguments,
-                new GetTextureArguments(intention.IsReadable),
+                getTextureArgsFactory.NewArguments(intention.TextureType),
                 GetTextureWebRequest.CreateTexture(intention.WrapMode, intention.FilterMode),
                 ct,
-                GetReportData());
+                GetReportData()
+            );
+
+            if (result == null)
+                return new StreamableLoadingResult<Texture2DData>(
+                    GetReportData(),
+                    new Exception($"Error loading texture from url {intention.CommonArguments.URL}")
+                );
 
             return new StreamableLoadingResult<Texture2DData>(new Texture2DData(result));
         }

@@ -1,3 +1,9 @@
 [submodule "Explorer/Assets/git-submodules/unity-shared-dependencies"]
 	path = Explorer/Assets/git-submodules/unity-shared-dependencies
 	url = https://github.com/decentraland/unity-shared-dependencies.git
+[submodule "Explorer/Assets/Plugins/TexturesFuse/textures-server/СompressonatorWorkaround/compressonator"]
+	path = Explorer/Assets/Plugins/TexturesFuse/textures-server/СompressonatorWorkaround/compressonator
+	url = https://github.com/GPUOpen-Tools/compressonator
+[submodule "Explorer/Assets/Plugins/TexturesFuse/textures-server/СompressonatorWorkaround/externals_repos/simde"]
+	path = Explorer/Assets/Plugins/TexturesFuse/textures-server/СompressonatorWorkaround/externals_repos/simde
+	url = https://github.com/simd-everywhere/simde

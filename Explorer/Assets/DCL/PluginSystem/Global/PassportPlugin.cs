@@ -17,6 +17,7 @@ using DCL.Passport;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.WebRequests;
+using DCL.WebRequests.ArgsFactory;
 using ECS;
 using MVC;
 using System.Threading;
@@ -36,6 +37,7 @@ namespace DCL.PluginSystem.Global
         private readonly IRealmData realmData;
         private readonly URLDomain assetBundleURL;
         private readonly IWebRequestController webRequestController;
+        private readonly IGetTextureArgsFactory getTextureArgsFactory;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
         private readonly ISelfProfile selfProfile;
         private readonly IWebBrowser webBrowser;
@@ -59,6 +61,7 @@ namespace DCL.PluginSystem.Global
             IRealmData realmData,
             URLDomain assetBundleURL,
             IWebRequestController webRequestController,
+            IGetTextureArgsFactory getTextureArgsFactory,
             CharacterPreviewEventBus characterPreviewEventBus,
             ISelfProfile selfProfile,
             IWebBrowser webBrowser,
@@ -80,6 +83,7 @@ namespace DCL.PluginSystem.Global
             this.realmData = realmData;
             this.assetBundleURL = assetBundleURL;
             this.webRequestController = webRequestController;
+            this.getTextureArgsFactory = getTextureArgsFactory;
             this.characterPreviewEventBus = characterPreviewEventBus;
             this.selfProfile = selfProfile;
             this.webBrowser = webBrowser;
@@ -130,6 +134,7 @@ namespace DCL.PluginSystem.Global
                 decentralandUrlsSource,
                 badgesAPIClient,
                 webRequestController,
+                getTextureArgsFactory,
                 inputBlock,
                 notificationsBusController,
                 remoteMetadata

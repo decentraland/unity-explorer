@@ -8,7 +8,7 @@ using DCL.UserInAppInitializationFlow;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
-using JetBrains.Annotations;
+using DCL.WebRequests.ArgsFactory;
 using MVC;
 using System.Threading;
 using Utility;
@@ -27,6 +27,7 @@ namespace DCL.UI.ProfileElements
             IWeb3IdentityCache identityCache,
             IProfileRepository profileRepository,
             IWebRequestController webRequestController,
+            IGetTextureArgsFactory getTextureArgsFactory,
             World world,
             Entity playerEntity,
             IWebBrowser webBrowser,
@@ -37,14 +38,15 @@ namespace DCL.UI.ProfileElements
             ChatEntryConfigurationSO chatEntryConfiguration
         ) : base(viewFactory)
         {
-            profileSectionController = new ProfileSectionController(() => viewInstance!.ProfileMenu, identityCache, profileRepository, webRequestController, chatEntryConfiguration);
+            profileSectionController = new ProfileSectionController(() => viewInstance!.ProfileMenu, identityCache, profileRepository, webRequestController, getTextureArgsFactory, chatEntryConfiguration);
             systemSectionController = new SystemMenuController(() => viewInstance!.SystemMenuView, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, identityCache, mvcManager);
             systemSectionController.OnClosed += OnClose;
         }
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
-        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) => UniTask.Never(ct);
+        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
+            UniTask.Never(ct);
 
         protected override void OnViewInstantiated()
         {

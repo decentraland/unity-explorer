@@ -1,8 +1,9 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.Diagnostics;
 using DCL.WebRequests;
+using DCL.WebRequests.ArgsFactory;
+using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System;
 using Utility;
 using System.Threading;
@@ -15,17 +16,19 @@ namespace DCL.UI
         private const int PIXELS_PER_UNIT = 50;
         private readonly ImageView view;
         private readonly IWebRequestController webRequestController;
+        private readonly IGetTextureArgsFactory getTextureArgsFactory;
         private CancellationTokenSource cts;
 
-        public ImageController(ImageView view, IWebRequestController webRequestController)
+        public ImageController(ImageView view, IWebRequestController webRequestController, IGetTextureArgsFactory getTextureArgsFactory)
         {
             this.view = view;
             this.webRequestController = webRequestController;
+            this.getTextureArgsFactory = getTextureArgsFactory;
         }
 
         public void RequestImage(string uri, bool removePrevious = false, bool hideImageWhileLoading = false)
         {
-            if(removePrevious)
+            if (removePrevious)
                 view.Image.sprite = null;
 
             if (hideImageWhileLoading)
@@ -46,7 +49,17 @@ namespace DCL.UI
             try
             {
                 view.LoadingObject.SetActive(true);
-                Texture2D texture = await webRequestController.GetTextureAsync(new CommonArguments(URLAddress.FromString(uri)), new GetTextureArguments(false), GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp), ct, ReportCategory.UI);
+
+                //TODO potential memory leak, due no CacheCleaner
+                OwnedTexture2D ownedTexture = await webRequestController.GetTextureAsync(
+                    new CommonArguments(URLAddress.FromString(uri)),
+                    getTextureArgsFactory.NewArguments(TextureType.Albedo),
+                    GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp),
+                    ct,
+                    ReportCategory.UI
+                );
+
+                var texture = ownedTexture.Texture;
                 texture.filterMode = FilterMode.Bilinear;
                 view.Image.sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), VectorUtilities.OneHalf, PIXELS_PER_UNIT, 0, SpriteMeshType.FullRect, Vector4.one, false);
                 view.LoadingObject.SetActive(false);

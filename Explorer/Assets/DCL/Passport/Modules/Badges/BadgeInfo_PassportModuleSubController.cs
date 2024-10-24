@@ -4,6 +4,8 @@ using DCL.BadgesAPIService;
 using DCL.Diagnostics;
 using DCL.Passport.Fields.Badges;
 using DCL.WebRequests;
+using DCL.WebRequests.ArgsFactory;
+using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -24,6 +26,7 @@ namespace DCL.Passport.Modules.Badges
 
         private readonly BadgeInfo_PassportModuleView badgeInfoModuleView;
         private readonly IWebRequestController webRequestController;
+        private readonly IGetTextureArgsFactory getTextureArgsFactory;
         private readonly BadgesAPIClient badgesAPIClient;
         private readonly PassportErrorsController passportErrorsController;
         private readonly IObjectPool<BadgeTierButton_PassportFieldView> badgeTierButtonsPool;
@@ -38,11 +41,13 @@ namespace DCL.Passport.Modules.Badges
         public BadgeInfo_PassportModuleSubController(
             BadgeInfo_PassportModuleView badgeInfoModuleView,
             IWebRequestController webRequestController,
+            IGetTextureArgsFactory getTextureArgsFactory,
             BadgesAPIClient badgesAPIClient,
             PassportErrorsController passportErrorsController)
         {
             this.badgeInfoModuleView = badgeInfoModuleView;
             this.webRequestController = webRequestController;
+            this.getTextureArgsFactory = getTextureArgsFactory;
             this.badgesAPIClient = badgesAPIClient;
             this.passportErrorsController = passportErrorsController;
 
@@ -51,7 +56,7 @@ namespace DCL.Passport.Modules.Badges
                 defaultCapacity: BADGE_TIER_BUTTON_POOL_DEFAULT_CAPACITY,
                 actionOnGet: badgeTierButton =>
                 {
-                    badgeTierButton.ConfigureImageController(webRequestController);
+                    badgeTierButton.ConfigureImageController(webRequestController, getTextureArgsFactory);
                     badgeTierButton.gameObject.SetActive(true);
                     badgeTierButton.SetAsSelected(false);
                     badgeTierButton.transform.SetAsLastSibling();
@@ -114,6 +119,7 @@ namespace DCL.Passport.Modules.Badges
                 foreach (TierData tier in tiers)
                 {
                     string tierCompletedAt = badgeInfo.GetTierCompletedDate(tier.tierId);
+
                     if (!isOwnProfile && string.IsNullOrEmpty(tierCompletedAt))
                         continue;
 
@@ -144,6 +150,7 @@ namespace DCL.Passport.Modules.Badges
         private void SelectLastCompletedTierButton(BadgeInfo badge, IReadOnlyList<TierData> tiers)
         {
             int? lastCompletedTierIndex = null;
+
             for (var i = 0; i < tiers.Count; i++)
             {
                 if (badge.data.progress.stepsDone >= tiers[i].criteria.steps)
@@ -151,6 +158,7 @@ namespace DCL.Passport.Modules.Badges
             }
 
             var selectedIndex = 0;
+
             for (var i = 0; i < instantiatedBadgeTierButtons.Count; i++)
             {
                 if (i != lastCompletedTierIndex)
@@ -224,6 +232,7 @@ namespace DCL.Passport.Modules.Badges
         private void SetupTierBadge(BadgeInfo badgeInfo, IReadOnlyList<TierData> tiers)
         {
             int nextTierToCompleteIndex = tiers.Count - 1;
+
             for (var i = 0; i < tiers.Count; i++)
             {
                 if (badgeInfo.data.progress.nextStepsTarget == tiers[i].criteria.steps)
@@ -265,13 +274,13 @@ namespace DCL.Passport.Modules.Badges
                 if (assets?.textures3d == null)
                     return;
 
-                string baseColorUrl = assets.textures3d.baseColor;
-                string normalUrl = assets.textures3d.normal;
-                string hrmUrl = assets.textures3d.hrm;
+                string baseColorUrl = assets.textures3d.baseColor ?? string.Empty;
+                string normalUrl = assets.textures3d.normal ?? string.Empty;
+                string hrmUrl = assets.textures3d.hrm ?? string.Empty;
 
-                Texture2D baseColorTexture = await webRequestController.GetTextureAsync(new CommonArguments(URLAddress.FromString(baseColorUrl)), new GetTextureArguments(false), GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp, FilterMode.Bilinear), ct, ReportCategory.BADGES);
-                Texture2D normalTexture = await webRequestController.GetTextureAsync(new CommonArguments(URLAddress.FromString(normalUrl)), new GetTextureArguments(false), GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp, FilterMode.Bilinear), ct, ReportCategory.BADGES);
-                Texture2D hrmTexture = await webRequestController.GetTextureAsync(new CommonArguments(URLAddress.FromString(hrmUrl)), new GetTextureArguments(false), GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp, FilterMode.Bilinear), ct, ReportCategory.BADGES);
+                Texture2D baseColorTexture = await RemoteTextureAsync(baseColorUrl, ct);
+                Texture2D normalTexture = await RemoteTextureAsync(normalUrl, ct, TextureType.NormalMap);
+                Texture2D hrmTexture = await RemoteTextureAsync(hrmUrl, ct);
 
                 Set3DImage(baseColorTexture, normalTexture, hrmTexture);
                 SetBadgeInfoViewAsLoading(false);
@@ -284,6 +293,15 @@ namespace DCL.Passport.Modules.Badges
                 ReportHub.LogError(ReportCategory.BADGES, $"{ERROR_MESSAGE} ERROR: {e.Message}");
             }
         }
+
+        private async UniTask<Texture2D> RemoteTextureAsync(string url, CancellationToken ct, TextureType textureType = TextureType.Albedo) =>
+            (await webRequestController.GetTextureAsync(
+                new CommonArguments(URLAddress.FromString(url)),
+                getTextureArgsFactory.NewArguments(textureType),
+                GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp, FilterMode.Bilinear),
+                ct,
+                ReportCategory.BADGES)
+            ).Texture;
 
         private void SetBadgeInfoViewAsLoading(bool isLoading)
         {

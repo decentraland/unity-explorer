@@ -1,12 +1,16 @@
+using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
+
 namespace DCL.WebRequests
 {
     public readonly struct GetTextureArguments
     {
-        public readonly bool IsReadable;
+        public readonly ITexturesUnzip TexturesUnzip;
+        public readonly TextureType TextureType;
 
-        public GetTextureArguments(bool isReadable)
+        public GetTextureArguments(ITexturesUnzip texturesUnzip, TextureType textureType)
         {
-            IsReadable = isReadable;
+            TexturesUnzip = texturesUnzip;
+            TextureType = textureType;
         }
     }
 }
