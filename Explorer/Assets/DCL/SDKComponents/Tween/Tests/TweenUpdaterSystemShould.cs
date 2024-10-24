@@ -9,6 +9,7 @@ using NSubstitute;
 using NUnit.Framework;
 using Arch.Core;
 using Decentraland.Common;
+using SceneRunner.Scene;
 using Entity = Arch.Core.Entity;
 
 namespace DCL.SDKComponents.Tween.Tests
@@ -29,7 +30,7 @@ namespace DCL.SDKComponents.Tween.Tests
         public void SetUp()
         {
             tweneerPool = new TweenerPool();
-            system = new TweenUpdaterSystem(world, Substitute.For<IECSToCRDTWriter>(), tweneerPool, null);
+            system = new TweenUpdaterSystem(world, Substitute.For<IECSToCRDTWriter>(), tweneerPool, null, Substitute.For<SceneStateProvider>());
             var crdtEntity = new CRDTEntity(1);
 
             var startVector = new Vector3() { X = 0, Y = 0, Z = 0};

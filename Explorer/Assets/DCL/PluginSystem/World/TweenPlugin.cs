@@ -8,6 +8,7 @@ using ECS.LifeCycle.Systems;
 using System.Collections.Generic;
 using System.Threading;
 using DCL.SDKComponents.Tween.Components;
+using SceneRunner.Scene;
 using UnityEngine.Pool;
 
 namespace DCL.PluginSystem.World
@@ -28,7 +29,7 @@ namespace DCL.PluginSystem.World
         {
             ResetDirtyFlagSystem<PBTween>.InjectToWorld(ref builder);
             TweenLoaderSystem.InjectToWorld(ref builder);
-            var tweenUpdaterSystem = TweenUpdaterSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, tweenerPool, sharedDependencies.EcsSystemsGate);
+            var tweenUpdaterSystem = TweenUpdaterSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, tweenerPool, sharedDependencies.EcsSystemsGate, sharedDependencies.SceneStateProvider);
             finalizeWorldSystems.Add(tweenUpdaterSystem);
         }
     }
