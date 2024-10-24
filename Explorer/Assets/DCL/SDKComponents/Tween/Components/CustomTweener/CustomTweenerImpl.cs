@@ -16,24 +16,22 @@ namespace DCL.SDKComponents.Tween.Components
             return DOTween.To(() => currentValue, x => currentValue = x, end, duration);
         }
 
-        protected override (Vector3, Vector3) GetTweenValues(PBTween pbTween, SDKTransform startTransform)
+        protected override (Vector3, Vector3) GetTweenValues(PBTween pbTween)
         {
             Vector3 start = PrimitivesConversionExtensions.PBVectorToUnityVector(pbTween.Move.Start);
             Vector3 end = PrimitivesConversionExtensions.PBVectorToUnityVector(pbTween.Move.End);
-            startTransform.Position.Value = start;
             currentValue = start;
             return (start, end);
         }
 
-        public override void SetResult(ref SDKTransform sdkTransform, Transform transform)
+        public override void UpdateSDKTransform(ref SDKTransform sdkTransform)
         {
             sdkTransform.Position.Value = currentValue;
-            sdkTransform.Rotation.Value = startRotation;
-            sdkTransform.Scale = startScale;
+        }
 
-            transform.localRotation = startRotation;
+        public override void UpdateTransform(Transform transform)
+        {
             transform.localPosition = currentValue;
-            transform.localScale = startScale;
         }
     }
 
@@ -44,34 +42,32 @@ namespace DCL.SDKComponents.Tween.Components
             return DOTween.To(() => currentValue, x => currentValue = x, end, duration);
         }
 
-        protected override (Vector3, Vector3) GetTweenValues(PBTween pbTween, SDKTransform startTransform)
+        protected override (Vector3, Vector3) GetTweenValues(PBTween pbTween)
         {
             Vector3 start = PrimitivesConversionExtensions.PBVectorToUnityVector(pbTween.Scale.Start);
             Vector3 end = PrimitivesConversionExtensions.PBVectorToUnityVector(pbTween.Scale.End);
-            startTransform.Scale = start;
             currentValue = start;
             return (start, end);
         }
 
-        public override void SetResult(ref SDKTransform sdkTransform, Transform transform)
+        public override void UpdateSDKTransform(ref SDKTransform sdkTransform)
         {
             sdkTransform.Scale = currentValue;
-            sdkTransform.Position.Value = startPosition;
-            sdkTransform.Rotation.Value = startRotation;
-
-            transform.localScale = currentValue;
-            transform.localPosition = startPosition;
-            transform.localRotation = startRotation;
         }
+
+        public override void UpdateTransform(Transform transform)
+        {
+            transform.localScale = currentValue;
+        }
+
     }
 
     public class RotationTweener : CustomTweener<Quaternion, NoOptions>
     {
-        protected override (Quaternion, Quaternion) GetTweenValues(PBTween pbTween, SDKTransform startTransform)
+        protected override (Quaternion, Quaternion) GetTweenValues(PBTween pbTween)
         {
             Quaternion start = PrimitivesConversionExtensions.PBQuaternionToUnityQuaternion(pbTween.Rotate.Start);
             Quaternion end = PrimitivesConversionExtensions.PBQuaternionToUnityQuaternion(pbTween.Rotate.End);
-            startTransform.Rotation.Value = start;
             currentValue = start;
             return (start, end);
         }
@@ -83,15 +79,15 @@ namespace DCL.SDKComponents.Tween.Components
                 end, duration);
         }
 
-        public override void SetResult(ref SDKTransform sdkTransform, Transform transform)
+        public override void UpdateSDKTransform(ref SDKTransform sdkTransform)
         {
             sdkTransform.Rotation.Value = currentValue;
-            sdkTransform.Position.Value = startPosition;
-            sdkTransform.Scale = startScale;
-
-            transform.localRotation = currentValue;
-            transform.localPosition = startPosition;
-            transform.localScale = startScale;
         }
+
+        public override void UpdateTransform(Transform transform)
+        {
+            transform.localRotation = currentValue;
+        }
+
     }
 }
