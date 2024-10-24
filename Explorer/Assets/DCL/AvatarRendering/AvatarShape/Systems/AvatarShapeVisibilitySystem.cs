@@ -27,7 +27,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             AddPlayerCachedVisibilityComponentQuery(World, camera.GetCameraComponent(World));
             AddOthersCachedVisibilityComponentQuery(World);
 
-            UpdateMainPlayerAvatarVisibilityOnFirstPersonQuery(World, camera.GetCameraComponent(World));
+            UpdateVisibilityOnCameraDistanceQuery(World);
             UpdateAvatarsVisibilityStateQuery(World);
         }
 
@@ -53,10 +53,9 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
         [Query]
         [All(typeof(PlayerComponent))]
-        private void UpdateMainPlayerAvatarVisibilityOnFirstPerson([Data] in CameraComponent camera, ref AvatarShapeComponent avatarShape, ref AvatarCachedVisibilityComponent avatarCachedVisibility)
+        private void UpdateVisibilityOnCameraDistance(in AvatarCustomSkinningComponent skinningComponent, in PlayerComponent playerComponent)
         {
-            bool shouldBeHidden = avatarShape.HiddenByModifierArea || camera.Mode == CameraMode.FirstPerson;
-            UpdateVisibilityState(ref avatarShape, ref avatarCachedVisibility, shouldBeHidden);
+            skinningComponent.SetFadingPosition(playerComponent.CameraFocus.position);
         }
 
         [Query]
