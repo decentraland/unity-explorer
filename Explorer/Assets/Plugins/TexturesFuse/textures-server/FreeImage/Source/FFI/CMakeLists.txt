@@ -11,26 +11,27 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(LIBRARY_OUTPUT_DIRECTORY "../../../../TexturesServerWrap/Libraries")
 
 # Set additional C++ compiler options
-if(MSVC)
+if(WIN32)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Os /EHsc /DNDULOCL /DNO_LCMS /D__ANSI__")
 else()
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Os -fexceptions -fvisibility=default -Wno-ctor-dtor-privacy -DNO_LCMS -D__ANSI__ -stdlib=libc++ -Wc++11-narrowing")
 endif()
 
-if(MSVC)
+if(WIN32)
   add_definitions(-D_CRT_SECURE_NO_WARNINGS)
   add_definitions(-DOPJ_STATIC)
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /ignore:4217")
   set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} /ignore:4217")
 endif()
 
-#Mac Only
-#xcrun --show-sdk-path
-set(CMAKE_OSX_SYSROOT "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk")
-set(MACOSX_DEPLOYMENT_TARGET 10.11)
-set(CMAKE_OSX_ARCHITECTURES "x86_64;arm64")
-#add default headers
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isysroot ${CMAKE_OSX_SYSROOT} -mmacosx-version-min=${MACOSX_DEPLOYMENT_TARGET}")
+if(APPLE)
+    #xcrun --show-sdk-path
+    set(CMAKE_OSX_SYSROOT "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk")
+    set(MACOSX_DEPLOYMENT_TARGET 10.11)
+    set(CMAKE_OSX_ARCHITECTURES "x86_64;arm64")
+    #add default headers
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isysroot ${CMAKE_OSX_SYSROOT} -mmacosx-version-min=${MACOSX_DEPLOYMENT_TARGET}")
+endif()
 
 add_definitions(-DFFI_TEXTURESFUSE)
 
@@ -642,15 +643,29 @@ set(COMPRESSATOR_ROOT ${CMAKE_SOURCE_DIR}/../../../Compressator)
 message("COMPRESSATOR_ROOT Is: ${COMPRESSATOR_ROOT}")
 
 target_include_directories(texturesfuse PRIVATE ${COMPRESSATOR_ROOT}/include)
-target_link_libraries(texturesfuse ${COMPRESSATOR_ROOT}/lib/libCMP_Core_AVX.a)
-target_link_libraries(texturesfuse ${COMPRESSATOR_ROOT}/lib/libCMP_Core_AVX512.a)
-target_link_libraries(texturesfuse ${COMPRESSATOR_ROOT}/lib/libCMP_Core_SSE.a)
-target_link_libraries(texturesfuse ${COMPRESSATOR_ROOT}/lib/libCMP_Core.a)
-target_link_libraries(texturesfuse ${COMPRESSATOR_ROOT}/lib/libCMP_Compressonator.a)
+
+if(WIN32)
+    target_link_libraries(texturesfuse ${COMPRESSATOR_ROOT}/lib/libCMP_Core_AVX512.lib)
+    target_link_libraries(texturesfuse ${COMPRESSATOR_ROOT}/lib/libCMP_Core_SSE.lib)
+    target_link_libraries(texturesfuse ${COMPRESSATOR_ROOT}/lib/libCMP_Core_AVX.lib)
+    target_link_libraries(texturesfuse ${COMPRESSATOR_ROOT}/lib/libCMP_Core.lib)
+    target_link_libraries(texturesfuse ${COMPRESSATOR_ROOT}/lib/libCMP_Compressonator.lib)
+else()
+    target_link_libraries(texturesfuse ${COMPRESSATOR_ROOT}/lib/libCMP_Core_AVX512.a)
+    target_link_libraries(texturesfuse ${COMPRESSATOR_ROOT}/lib/libCMP_Core_SSE.a)
+    target_link_libraries(texturesfuse ${COMPRESSATOR_ROOT}/lib/libCMP_Core_AVX.a)
+    target_link_libraries(texturesfuse ${COMPRESSATOR_ROOT}/lib/libCMP_Core.a)
+    target_link_libraries(texturesfuse ${COMPRESSATOR_ROOT}/lib/libCMP_Compressonator.a)  
+endif()
+  
 
 target_sources(texturesfuse PRIVATE ${SOURCES})
 
 
 # Link the external library
 # TODO support for Win/linux
-target_link_libraries(texturesfuse ${CMAKE_CURRENT_BINARY_DIR}/astc-encoder-build/Source/libastcenc-shared.dylib)
+if(WIN32)
+    target_link_libraries(texturesfuse ${CMAKE_CURRENT_BINARY_DIR}/astc-encoder-build/Source/Release/astcenc-native-shared.dll)
+else()
+    target_link_libraries(texturesfuse ${CMAKE_CURRENT_BINARY_DIR}/astc-encoder-build/Source/libastcenc-shared.dylib)
+endif()
