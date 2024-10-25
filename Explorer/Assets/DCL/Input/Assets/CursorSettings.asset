@@ -17,10 +17,10 @@ MonoBehaviour:
     m_SubObjectName: 
     m_SubObjectType: 
     m_EditorAssetChanged: 1
-  <NormalCursorHotspot>k__BackingField: {x: 5, y: 3}
+  <NormalCursorHotspot>k__BackingField: {x: 2.5, y: 1.5}
   <InteractionCursor>k__BackingField:
     m_AssetGUID: 23dcf75316411d344be316dc2cb0e41f
     m_SubObjectName: 
     m_SubObjectType: 
     m_EditorAssetChanged: 0
-  <InteractionCursorHotspot>k__BackingField: {x: 9, y: 3}
+  <InteractionCursorHotspot>k__BackingField: {x: 4.5, y: 1.5}
