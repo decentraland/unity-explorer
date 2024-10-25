@@ -143,11 +143,48 @@ void BC5Compression(const int width, const int height, const std::string workDir
     delete[] destTexture.pData;
 }
 
+// MIP MAP Interfaces
+// CMP_INT CMP_API   CMP_CalcMaxMipLevel(CMP_INT nHeight, CMP_INT nWidth, CMP_BOOL bForGPU);
+// CMP_INT CMP_API   CMP_CalcMinMipSize(CMP_INT nHeight, CMP_INT nWidth, CMP_INT MipsLevel);
+// CMP_INT CMP_API   CMP_GenerateMIPLevelsEx(CMP_MipSet* pMipSet, CMP_CFilterParams* pCFilterParams);
+// CMP_INT CMP_API   CMP_GenerateMIPLevels(CMP_MipSet* pMipSet, CMP_INT nMinSize);
+// CMP_ERROR CMP_API CMP_CreateCompressMipSet(CMP_MipSet* pMipSetCMP, CMP_MipSet* pMipSetSRC);
+// CMP_ERROR CMP_API CMP_CreateMipSet(CMP_MipSet* pMipSet, CMP_INT nWidth, CMP_INT nHeight, CMP_INT nDepth, ChannelFormat channelFormat, TextureType textureType);
+
+void MipMaps(const int width, const int height)
+{
+    CMP_INT mipsLevel = CMP_CalcMaxMipLevel(height, width, true);
+    std::cout << "Max mipLevel: " << mipsLevel << '\n';
+
+    CMP_INT minMipSize = CMP_CalcMinMipSize(height, width, mipsLevel);
+    std::cout << "Min mipSize: " << minMipSize << '\n';
+
+    CMP_MipSet mipSet = {};
+    // mipSet.dwDataSize = sizeof(CMP_MipSet);
+    // mipSet.dwHeight = height;
+    // mipSet.dwWidth = width;
+    // mipSet.m_TextureType = TT_2D;
+    // mipSet.m_nMipLevels = mipsLevel;
+    // mipSet.
+
+    CMP_ERROR error = CMP_CreateMipSet(&mipSet, width, height, 1, CF_8bit, TT_2D);
+    if (error != CMP_OK)
+    {
+        std::cerr << "Error!: " << error << '\n';
+    }
+
+    // CMP_INT generatedCount = CMP_GenerateMIPLevels(&mipSet, minMipSize);
+    // std::cout << "Generated mipCount: " << generatedCount << '\n';
+
+    
+}
+
 int main()
 {
     const int width = 512;
     const int height = 512;
     const std::string workDirectory = "../../TexturesServerWrap/Playground/NormalMap/";
 
-    BC5Compression(width, height, workDirectory);
+    // BC5Compression(width, height, workDirectory);
+    MipMaps(width, height);//TODO
 }
