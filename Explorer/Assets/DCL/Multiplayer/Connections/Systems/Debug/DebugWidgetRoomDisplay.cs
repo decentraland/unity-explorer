@@ -18,6 +18,7 @@ namespace DCL.Multiplayer.Connections.Systems.Debug
         private readonly ElementBinding<string> roomSid;
         private readonly ElementBinding<string> connectionQuality;
         private readonly ElementBinding<string> connectiveState;
+        private readonly ElementBinding<string> connectionLoopHealth;
         private readonly ElementBinding<string> activateButtonText;
 
         private readonly DebugWidgetVisibilityBinding visibilityBinding = new (true);
@@ -52,12 +53,14 @@ namespace DCL.Multiplayer.Connections.Systems.Debug
             remoteParticipantsScene = new ElementBinding<string>(string.Empty);
             selfMetadata = new ElementBinding<string>(string.Empty);
             connectiveState = new ElementBinding<string>(string.Empty);
+            connectionLoopHealth = new ElementBinding<string>(string.Empty);
             activateButtonText = new ElementBinding<string>(ResolveActivateButtonText());
 
             widgetBuilder
                .SetVisibilityBinding(visibilityBinding)
                .AddCustomMarker("Room State", stateScene)
                .AddCustomMarker("Connecting State", connectiveState)
+               .AddCustomMarker("Connection Loop", connectionLoopHealth)
                .AddCustomMarker("Connection Quality", connectionQuality)
                .AddCustomMarker("Remote Participants", remoteParticipantsScene)
                .AddCustomMarker("Room Sid", roomSid)
@@ -78,6 +81,7 @@ namespace DCL.Multiplayer.Connections.Systems.Debug
         {
             connectionQuality.SetAndUpdate(room.Room().Participants.LocalParticipant().ConnectionQuality.ToString());
             connectiveState.SetAndUpdate(room.Room().Info.ConnectionState.ToString());
+            connectionLoopHealth.SetAndUpdate(room.CurrentConnectionLoopHealth.ToString());
             stateScene.SetAndUpdate(room.CurrentState().ToString());
             selfSid.SetAndUpdate(room.CurrentState() is IConnectiveRoom.State.Running ? room.Room().Participants.LocalParticipant().Sid : "Not connected");
             selfMetadata.SetAndUpdate(room.CurrentState() is IConnectiveRoom.State.Running ? room.Room().Participants.LocalParticipant().Metadata : "Not connected");
