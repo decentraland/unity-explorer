@@ -30,12 +30,20 @@ namespace DCL.LOD
             else if (!sceneDefinitionComponent.IsSDK7) visualSceneState.CandidateVisualSceneState = visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.SHOWING_LOD;
             else
             {
-                visualSceneState.CandidateVisualSceneState = partition.Bucket < lodSettingsAsset.SDK7LodThreshold
+                var candidateVisualSceneState =  partition.Bucket < lodSettingsAsset.SDK7LodThreshold
                     ? VisualSceneStateEnum.SHOWING_SCENE
                     : VisualSceneStateEnum.SHOWING_LOD;
 
-                if (visualSceneState.CandidateVisualSceneState != visualSceneState.CurrentVisualSceneState)
+                if (visualSceneState.CurrentVisualSceneState == VisualSceneStateEnum.UNINITIALIZED)
                 {
+                    visualSceneState.CandidateVisualSceneState = candidateVisualSceneState;
+                    visualSceneState.CurrentVisualSceneState = candidateVisualSceneState;
+                    visualSceneState.IsDirty = true;
+                }
+                else if (visualSceneState.CandidateVisualSceneState != candidateVisualSceneState &&
+                         candidateVisualSceneState != visualSceneState.CurrentVisualSceneState)
+                {
+                    visualSceneState.CandidateVisualSceneState = candidateVisualSceneState;
                     visualSceneState.IsDirty = true;
                     visualSceneState.TimeToChange = 0;
                 }
