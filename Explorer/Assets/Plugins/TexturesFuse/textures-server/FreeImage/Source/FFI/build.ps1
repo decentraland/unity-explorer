@@ -7,13 +7,6 @@ $ErrorActionPreference = "Stop"
 # Clear the console
 Clear-Host
 
-# Build configuration
-$RELATIVE_PATH = "..\..\..\..\TexturesServerWrap\Libraries\Windows"
-$ASTC_PATH = "astc-encoder-build\Source\Release"
-
-# Ensure output directory exists
-New-Item -ItemType Directory -Force -Path $RELATIVE_PATH | Out-Null
-
 # Configure main project
 cmake . -G "Visual Studio 17 2022" `
     -DCMAKE_BUILD_TYPE=Release `
@@ -23,18 +16,22 @@ cmake . -G "Visual Studio 17 2022" `
 
 # Build ASTC encoder
 Set-Location astc-encoder-build
-cmake --build . --clean-first --config Release --parallel 10
+cmake --build . --clean-first --config Release --parallel 20
 Set-Location ..
 
 # Build main project
-cmake --build . --clean-first --config Release --parallel 10
+cmake --build . --clean-first --config Release --parallel 20
+
+# Build configuration
+$RELATIVE_PATH = "..\..\..\..\TexturesServerWrap\Libraries\Windows"
+$ASTC_PATH = "astc-encoder-build\Source\Release"
 
 # Moving files to the dedicated directory
 # Note: In Windows, .dylib becomes .dll
 Move-Item -Force "Release\texturesfuse.dll" "$RELATIVE_PATH\texturesfuse.dll"
-Move-Item -Force "$ASTC_PATH\Release\astcenc-shared.dll" "$RELATIVE_PATH\astcenc-shared.dll"
-Move-Item -Force "$ASTC_PATH\Release\astcenc-avx2-shared.dll" "$RELATIVE_PATH\astcenc-avx2-shared.dll"
-Move-Item -Force "$ASTC_PATH\Release\astcenc-sse4.1-shared.dll" "$RELATIVE_PATH\astcenc-sse4.1-shared.dll"
+Move-Item -Force "$ASTC_PATH\astcenc-native-shared.dll" "$RELATIVE_PATH\astcenc-shared.dll"
+# Move-Item -Force "$ASTC_PATH\astcenc-avx2-shared.dll" "$RELATIVE_PATH\astcenc-avx2-shared.dll"
+# Move-Item -Force "$ASTC_PATH\astcenc-sse4.1-shared.dll" "$RELATIVE_PATH\astcenc-sse4.1-shared.dll"
 # Note: NEON is ARM-specific and typically not built on Windows x64
 # Move-Item -Force "$ASTC_PATH\Release\astcenc-neon-shared.dll" "$RELATIVE_PATH\astcenc-neon-shared.dll"
 
@@ -55,5 +52,3 @@ Remove-Item -Force -Recurse -ErrorAction SilentlyContinue @(
     "Debug",
     "x64"
 )
-
-Write-Host "Build completed successfully!" -ForegroundColor Green

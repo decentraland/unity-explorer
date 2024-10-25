@@ -665,7 +665,7 @@ target_sources(texturesfuse PRIVATE ${SOURCES})
 # Link the external library
 # TODO support for Win/linux
 if(WIN32)
-    target_link_libraries(texturesfuse ${CMAKE_CURRENT_BINARY_DIR}/astc-encoder-build/Source/Release/astcenc-native-shared.dll)
+    target_link_libraries(texturesfuse ${CMAKE_CURRENT_BINARY_DIR}/astc-encoder-build/Source/Release/astcenc-native-shared.lib)
 else()
     target_link_libraries(texturesfuse ${CMAKE_CURRENT_BINARY_DIR}/astc-encoder-build/Source/libastcenc-shared.dylib)
 endif()
