@@ -165,7 +165,7 @@ namespace DCL.SDKComponents.MediaStream
 
             if (component.OpenMediaPromise.IsReachableConsume(component.URL))
             {
-                component.MediaPlayer.OpenMedia(MediaPathType.AbsolutePathOrURL, component.IsFromContentServer ? component.URL : component.URL + "?includeMimeType", autoPlay);
+                component.MediaPlayer.OpenMedia(MediaPathType.AbsolutePathOrURL, component.IsFromContentServer ? string.Format("{0}?includeMimeType", component.URL) : component.URL, autoPlay);
 
                 if (sdkVideoComponent != null)
                     onOpened?.Invoke(component.MediaPlayer, sdkVideoComponent);
