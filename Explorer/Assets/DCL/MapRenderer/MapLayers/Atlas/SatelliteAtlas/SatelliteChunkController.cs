@@ -27,6 +27,8 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
         private CancellationTokenSource? linkedCts;
         private int webRequestAttempts;
 
+        private OwnedTexture2D? currentOwnedTexture;
+
         public SatelliteChunkController(
             SpriteRenderer prefab,
             IWebRequestController webRequestController,
@@ -62,6 +64,9 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
             internalCts?.Dispose();
             internalCts = null;
 
+            currentOwnedTexture?.Dispose();
+            currentOwnedTexture = null;
+
             if (atlasChunk)
                 UnityObjectUtils.SafeDestroy(atlasChunk.gameObject);
         }
@@ -74,8 +79,10 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
             atlasChunk.MainSpriteRenderer.color = INITIAL_COLOR;
             var url = $"{CHUNKS_API}{chunkId.x}%2C{chunkId.y}.jpg";
 
-            //TODO Potential lick due CacheCleaner behaviour is unclean
-            OwnedTexture2D ownedTexture = (
+            currentOwnedTexture?.Dispose();
+            currentOwnedTexture = null;
+
+            currentOwnedTexture = (
                 await webRequestController.GetTextureAsync(
                     new CommonArguments(URLAddress.FromString(url)),
                     getTextureArgsFactory.NewArguments(TextureType.Albedo),
@@ -84,7 +91,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
                     linkedCts.Token, ReportCategory.UI
                 )
             )!;
-            Texture2D texture = ownedTexture.Texture;
+            Texture2D texture = currentOwnedTexture.Texture;
 
             textureContainer.AddChunk(chunkId, texture);
 
