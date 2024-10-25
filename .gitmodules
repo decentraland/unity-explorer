@@ -7,3 +7,6 @@
 [submodule "Explorer/Assets/Plugins/TexturesFuse/textures-server/СompressonatorWorkaround/externals_repos/simde"]
 	path = Explorer/Assets/Plugins/TexturesFuse/textures-server/СompressonatorWorkaround/externals_repos/simde
 	url = https://github.com/simd-everywhere/simde
+[submodule "Explorer/Assets/Plugins/TexturesFuse/textures-server/astc-encoder"]
+	path = Explorer/Assets/Plugins/TexturesFuse/textures-server/astc-encoder
+	url = https://github.com/ARM-software/astc-encoder
