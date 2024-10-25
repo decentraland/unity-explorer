@@ -2,6 +2,7 @@ using DCL.Diagnostics;
 using System;
 using UnityEngine;
 using UnityEngine.Pool;
+using Object = UnityEngine.Object;
 
 namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
 {
