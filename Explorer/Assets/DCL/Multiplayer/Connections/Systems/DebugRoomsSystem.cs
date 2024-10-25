@@ -15,7 +15,6 @@ using System;
 namespace DCL.Multiplayer.Connections.Systems
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
-    [UpdateAfter(typeof(ConnectionRoomsSystem))]
     public partial class DebugRoomsSystem : BaseUnityLoopSystem
     {
         private readonly IRoomDisplay roomDisplay;
@@ -33,33 +32,29 @@ namespace DCL.Multiplayer.Connections.Systems
         {
             this.roomsStatus = roomsStatus;
 
-            bool gateKeeperRoomDisplayResult = DebugWidgetRoomDisplay.TryCreate(
-                IDebugContainerBuilder.Categories.ROOM_SCENE,
-                gateKeeperSceneRoom,
-                debugBuilder,
-                null,
-                out var gateKeeperRoomDisplay
-            );
-
-            bool archipelagoRoomDisplayResult = DebugWidgetRoomDisplay.TryCreate(
-                IDebugContainerBuilder.Categories.ROOM_ISLAND,
-                archipelagoIslandRoom,
-                debugBuilder,
-                null,
-                out var archipelagoRoomDisplay
-            );
-
-            var infoVisibilityBinding = new DebugWidgetVisibilityBinding(true);
-
-            var infoWidget = debugBuilder
-                            .TryAddWidget(IDebugContainerBuilder.Categories.ROOM_INFO)
-                           ?.SetVisibilityBinding(infoVisibilityBinding);
+            DebugWidgetBuilder? infoWidget = debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.ROOM_INFO);
 
             if (infoWidget == null)
             {
                 roomDisplay = new IRoomDisplay.Null();
                 return;
             }
+
+            var infoVisibilityBinding = new DebugWidgetVisibilityBinding(true);
+
+            infoWidget.SetVisibilityBinding(infoVisibilityBinding);
+
+            IRoomDisplay gateKeeperRoomDisplay = DebugWidgetGateKeeperRoomDisplay.Create(
+                IDebugContainerBuilder.Categories.ROOM_SCENE,
+                gateKeeperSceneRoom,
+                debugBuilder
+            );
+
+            IRoomDisplay archipelagoRoomDisplay = DebugWidgetRoomDisplay.Create(
+                IDebugContainerBuilder.Categories.ROOM_ISLAND,
+                archipelagoIslandRoom,
+                debugBuilder
+            );
 
             var avatarsRoomDisplay = new AvatarsRoomDisplay(
                 entityParticipantTable,
@@ -80,11 +75,7 @@ namespace DCL.Multiplayer.Connections.Systems
             );
 
             roomDisplay = new DebounceRoomDisplay(
-                new SeveralRoomDisplay(
-                    gateKeeperRoomDisplay ?? new IRoomDisplay.Null() as IRoomDisplay,
-                    archipelagoRoomDisplay ?? new IRoomDisplay.Null() as IRoomDisplay,
-                    infoRoomDisplay
-                ),
+                new SeveralRoomDisplay(gateKeeperRoomDisplay, archipelagoRoomDisplay, infoRoomDisplay),
                 TimeSpan.FromSeconds(1)
             );
 

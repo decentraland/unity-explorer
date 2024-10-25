@@ -114,7 +114,6 @@ namespace DCL.PluginSystem.Global
             IFFIClient.Default.EnsureInitialize();
 
             DebugRoomsSystem.InjectToWorld(ref builder, roomsStatus, archipelagoIslandRoom, gateKeeperSceneRoom, entityParticipantTable, remoteMetadata, debugContainerBuilder);
-            ConnectionRoomsSystem.InjectToWorld(ref builder, archipelagoIslandRoom, gateKeeperSceneRoom, realFlowLoadingStatus);
 
             MultiplayerProfilesSystem.InjectToWorld(ref builder,
                 new RemoteAnnouncements(messagePipesHub),

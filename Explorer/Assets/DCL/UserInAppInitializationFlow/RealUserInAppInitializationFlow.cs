@@ -109,7 +109,7 @@ namespace DCL.UserInAppInitializationFlow
             {
                 if (parameters.FromLogout)
                     // Disconnect current livekit connection on logout so the avatar is removed from other peers
-                    await roomHub.StopIfNotAsync().Timeout(TimeSpan.FromSeconds(10));
+                    await roomHub.StopAsync().Timeout(TimeSpan.FromSeconds(10));
 
                 if (parameters.ShowAuthentication)
                 {

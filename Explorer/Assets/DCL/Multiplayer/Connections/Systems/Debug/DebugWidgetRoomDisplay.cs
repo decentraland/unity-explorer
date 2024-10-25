@@ -1,13 +1,16 @@
+using Cysharp.Threading.Tasks;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.Multiplayer.Connections.Rooms.Connective;
-using System;
 
 namespace DCL.Multiplayer.Connections.Systems.Debug
 {
     public class DebugWidgetRoomDisplay : IRoomDisplay
     {
-        private readonly IConnectiveRoom room;
+        private const string ACTIVATE_BUTTON = "Activate";
+        private const string DEACTIVATE_BUTTON = "Deactivate";
+
+        private readonly IActivatableConnectiveRoom room;
         private readonly ElementBinding<string> stateScene;
         private readonly ElementBinding<string> remoteParticipantsScene;
         private readonly ElementBinding<string> selfSid;
@@ -15,30 +18,31 @@ namespace DCL.Multiplayer.Connections.Systems.Debug
         private readonly ElementBinding<string> roomSid;
         private readonly ElementBinding<string> connectionQuality;
         private readonly ElementBinding<string> connectiveState;
+        private readonly ElementBinding<string> activateButtonText;
 
         private readonly DebugWidgetVisibilityBinding visibilityBinding = new (true);
 
-        public static bool TryCreate(
-            string roomName,
-            IConnectiveRoom connectiveRoom,
-            IDebugContainerBuilder debugBuilder,
-            Action<DebugWidgetBuilder>? postBuildAction,
-            out DebugWidgetRoomDisplay? display
-        )
+        private bool activated = true;
+
+        protected static bool TryCreateWidget(IDebugContainerBuilder debugBuilder, string roomName, out DebugWidgetBuilder? widgetBuilder)
         {
-            var widget = debugBuilder.TryAddWidget(roomName);
-
-            if (widget == null)
-            {
-                display = null;
-                return false;
-            }
-
-            display = new DebugWidgetRoomDisplay(connectiveRoom, widget, postBuildAction);
-            return true;
+            widgetBuilder = debugBuilder.TryAddWidget(roomName);
+            return widgetBuilder != null;
         }
 
-        public DebugWidgetRoomDisplay(IConnectiveRoom connectiveRoom, DebugWidgetBuilder widgetBuilder, Action<DebugWidgetBuilder>? postBuildAction = null)
+        public static IRoomDisplay Create(
+            string roomName,
+            IActivatableConnectiveRoom connectiveRoom,
+            IDebugContainerBuilder debugBuilder
+        )
+        {
+            if (!TryCreateWidget(debugBuilder, roomName, out DebugWidgetBuilder? widgetBuilder))
+                return new IRoomDisplay.Null();
+
+            return new DebugWidgetRoomDisplay(connectiveRoom, widgetBuilder!);
+        }
+
+        public DebugWidgetRoomDisplay(IActivatableConnectiveRoom connectiveRoom, DebugWidgetBuilder widgetBuilder)
         {
             room = connectiveRoom;
             selfSid = new ElementBinding<string>(string.Empty);
@@ -48,39 +52,18 @@ namespace DCL.Multiplayer.Connections.Systems.Debug
             remoteParticipantsScene = new ElementBinding<string>(string.Empty);
             selfMetadata = new ElementBinding<string>(string.Empty);
             connectiveState = new ElementBinding<string>(string.Empty);
+            activateButtonText = new ElementBinding<string>(ResolveActivateButtonText());
 
             widgetBuilder
-               .SetVisibilityBinding(visibilityBinding)!
-               .AddCustomMarker("Room State", stateScene)!
-               .AddCustomMarker("Connecting State", connectiveState)!
-               .AddCustomMarker("Connection Quality", connectionQuality)!
-               .AddCustomMarker("Remote Participants", remoteParticipantsScene)!
-               .AddCustomMarker("Room Sid", roomSid)!
-               .AddCustomMarker("Self Sid", selfSid)!
-               .AddCustomMarker("Self Metadata", selfMetadata);
-
-            postBuildAction?.Invoke(widgetBuilder);
-        }
-
-        public DebugWidgetRoomDisplay(
-            IConnectiveRoom room,
-            ElementBinding<string> stateScene,
-            ElementBinding<string> remoteParticipantsScene,
-            ElementBinding<string> selfSid,
-            ElementBinding<string> connectionQuality,
-            ElementBinding<string> roomSid,
-            ElementBinding<string> selfMetadata,
-            ElementBinding<string> connectiveState
-        )
-        {
-            this.room = room;
-            this.stateScene = stateScene;
-            this.remoteParticipantsScene = remoteParticipantsScene;
-            this.selfSid = selfSid;
-            this.connectionQuality = connectionQuality;
-            this.roomSid = roomSid;
-            this.selfMetadata = selfMetadata;
-            this.connectiveState = connectiveState;
+               .SetVisibilityBinding(visibilityBinding)
+               .AddCustomMarker("Room State", stateScene)
+               .AddCustomMarker("Connecting State", connectiveState)
+               .AddCustomMarker("Connection Quality", connectionQuality)
+               .AddCustomMarker("Remote Participants", remoteParticipantsScene)
+               .AddCustomMarker("Room Sid", roomSid)
+               .AddCustomMarker("Self Sid", selfSid)
+               .AddCustomMarker("Self Metadata", selfMetadata)
+               .AddSingleButton(activateButtonText, ActivateOrDeactivate);
         }
 
         public void Update()
@@ -88,6 +71,11 @@ namespace DCL.Multiplayer.Connections.Systems.Debug
             if (visibilityBinding.IsConnectedAndExpanded == false)
                 return;
 
+            UpdateInternal();
+        }
+
+        protected virtual void UpdateInternal()
+        {
             connectionQuality.SetAndUpdate(room.Room().Participants.LocalParticipant().ConnectionQuality.ToString());
             connectiveState.SetAndUpdate(room.Room().Info.ConnectionState.ToString());
             stateScene.SetAndUpdate(room.CurrentState().ToString());
@@ -95,6 +83,28 @@ namespace DCL.Multiplayer.Connections.Systems.Debug
             selfMetadata.SetAndUpdate(room.CurrentState() is IConnectiveRoom.State.Running ? room.Room().Participants.LocalParticipant().Metadata : "Not connected");
             roomSid.SetAndUpdate(room.CurrentState() is IConnectiveRoom.State.Running ? room.Room().Info.Sid : "Not connected");
             remoteParticipantsScene.SetAndUpdate(room.ParticipantCountInfo());
+            UpdateActivateButtonText();
+        }
+
+        private void ActivateOrDeactivate()
+        {
+            if (activated)
+                room.Deactivate().Forget();
+            else
+                room.Activate().Forget();
+
+            UpdateActivateButtonText();
+        }
+
+        private void UpdateActivateButtonText()
+        {
+            activateButtonText.SetAndUpdate(ResolveActivateButtonText());
+        }
+
+        private string ResolveActivateButtonText()
+        {
+            activated = room.Activated;
+            return activated ? DEACTIVATE_BUTTON : ACTIVATE_BUTTON;
         }
     }
 }
