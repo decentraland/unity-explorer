@@ -4,6 +4,12 @@
 
 The purpose of this plugin is to provide a feature to decode, resize and load textures in runtime in multi-threading mode. TextureFuse has been created due original Unity API won't support required features.
 
+Features:
+1. 5 image formats support (PNG, JPG, WEBP, TIF, GIF)
+2. Multithreading decoding on background threads
+3. RGBA32, ASTC, BC5 texture formats support
+4. Easy access high-level API
+
 ### C# API
 
 To use this plugin you need an instance of object with `ITexturesUnzip` interface.
