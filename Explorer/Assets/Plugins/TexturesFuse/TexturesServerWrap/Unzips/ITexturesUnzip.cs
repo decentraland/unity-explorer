@@ -53,7 +53,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
             }
         }
 
-        public static ITexturesUnzip NewDebug()
+        public static ITexturesUnzip NewDefault()
         {
             var init = NativeMethods.InitOptions.NewDefault();
             var options = new IOptions.Const(Mode.ASTC_6x6, NativeMethods.Swizzle.NewDefault(), 1024, NativeMethods.Adjustments.NewEmpty());

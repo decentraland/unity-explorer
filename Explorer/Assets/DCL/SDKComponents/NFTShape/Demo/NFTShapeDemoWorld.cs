@@ -52,7 +52,7 @@ namespace DCL.SDKComponents.NFTShape.Demo
                     new WebRequestController(
                         new MemoryWeb3IdentityCache()
                     ),
-                    new GetTextureArgsFactory(ITexturesUnzip.NewDebug())
+                    new GetTextureArgsFactory(ITexturesUnzip.NewDefault())
                 ).InitializeAndReturnSelf(),
                 w => new LoadCycleNftShapeSystem(w, new BasedURNSource(new DecentralandUrlsSource(DecentralandEnvironment.Org))),
                 w => new InstantiateNftShapeSystem(w, new PoolNFTShapeRendererFactory(new ComponentPoolsRegistry(), framesPool), new FrameTimeCapBudget.Default(), framePrefabs, buffer),

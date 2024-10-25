@@ -48,7 +48,7 @@ namespace DCL.WebRequests.Analytics
                 .WithArtificialDelay(options)
                 .WithBudget(totalBudget);
 
-            var getTextureArgsFactory = new GetTextureArgsFactory(ITexturesUnzip.NewDebug());//TODO propagate args
+            var getTextureArgsFactory = new GetTextureArgsFactory(ITexturesUnzip.NewDefault());//TODO propagate args
 
             CreateStressTestUtility();
             CreateWebRequestDelayUtility();
