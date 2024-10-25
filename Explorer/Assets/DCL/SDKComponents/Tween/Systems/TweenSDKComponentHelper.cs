@@ -18,14 +18,17 @@ namespace DCL.SDKComponents.Tween.Helpers
 
         public static void UpdateTweenResult(ref SDKTransform sdkTransform, ref TransformComponent transformComponent, ICustomTweener tweener, bool shouldUpdateTransform)
         {
-            sdkTransform.IsDirty = true;
             tweener.UpdateSDKTransform(ref sdkTransform);
 
+            //we only set the SDK transform to dirty here if we didn't already update the transform, but if the sdkTransform was already dirty,
+            //we dont change it, as it might have pending updates to be done from the scene side.
             if (shouldUpdateTransform)
             {
                 tweener.UpdateTransform(transformComponent.Transform);
                 transformComponent.UpdateCache();
-            }
+            } else
+                sdkTransform.IsDirty = true;
+
         }
 
         public static void WriteSDKTransformUpdateInCRDT(SDKTransform sdkTransform, IECSToCRDTWriter ecsToCrdtWriter, CRDTEntity sdkEntity)
