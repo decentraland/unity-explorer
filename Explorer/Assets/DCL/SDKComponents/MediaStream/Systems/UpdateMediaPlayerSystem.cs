@@ -165,6 +165,9 @@ namespace DCL.SDKComponents.MediaStream
 
             if (component.OpenMediaPromise.IsReachableConsume(component.URL))
             {
+                //The problem is that video files coming from our content server are flagged as application/octet-stream,
+                //but mac OS without a specific content type cannot play them. (more info here https://github.com/RenderHeads/UnityPlugin-AVProVideo/issues/2008 )
+                //This adds a query param for video files from content server to force the correct content type
                 component.MediaPlayer.OpenMedia(MediaPathType.AbsolutePathOrURL, component.IsFromContentServer ? string.Format("{0}?includeMimeType", component.URL) : component.URL, autoPlay);
 
                 if (sdkVideoComponent != null)
