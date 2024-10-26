@@ -1,4 +1,5 @@
-﻿using Arch.Core;
+﻿using Arch.Buffer;
+using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using CrdtEcsBridge.Components.Transform;
@@ -62,93 +63,85 @@ namespace ECS.Unity.Systems
             {
                 // Repartition everything
                 // RePartitionExistingEntityQuery(World, cameraPosition, cameraForward, false);
-                // RepartitionExistingEntityWithoutTransformQuery(World, scenePosition, cameraPosition, cameraForward);
-                RequestPartitionForExistingEntityQuery(World, scenePosition);
+                RepartitionExistingEntityWithoutTransformQuery(World, scenePosition, cameraPosition, cameraForward);
+                // RequestPartitionForExistingEntityQuery(World, scenePosition);
             }
-            // else
-            // {
-            //     ResetDirtyQuery(World);
-            //
-            //     // Repartition all entities with dirty transform
-            //     RePartitionExistingEntityQuery(World, cameraPosition, cameraForward, true);
-            // }
+            else
+            {
+                ResetDirtyQuery(World);
+                // Repartition all entities with dirty transform
+                RePartitionExistingEntityQuery(World, cameraPosition, cameraForward, true);
+            }
 
             // Then partition all entities that are not partitioned yet
-            // PartitionNewEntityQuery(World, cameraPosition, cameraForward);
-            // PartitionNewEntityWithoutTransformQuery(World, scenePosition, cameraPosition, cameraForward);
-
-            RequestPartitionForNewEntityQuery(World, scenePosition);
+            // PartitionNewEntityQuery(World);
+            PartitionNewEntityWithoutTransformQuery(World, scenePosition);
+            // RequestPartitionForNewEntityQuery(World, scenePosition);
             ProcessPartitionQuery(World, cameraPosition, cameraForward);
         }
 
+
         [Query]
-        [Any(typeof(PBNftShape), typeof(PBGltfContainer), typeof(PBMaterial), typeof(PBAvatarShape), typeof(PBAudioSource), typeof(PBAudioStream), typeof(PBUiBackground), typeof(PBRaycast))] // PbMaterial is attached to the renderer and can contain textures
-        private void ResetDirty(ref PartitionComponent partitionComponent)
+        private void ProcessPartition(in Entity entity, ref PartitionRequest request, ref PartitionComponent partition, [Data] Vector3 cameraPosition, [Data] Vector3 cameraForward)
+        {
+            if(request.IsProcessed)
+                return;
+
+            RePartition(cameraPosition, cameraForward, request.InPosition, ref partition);
+
+            if (request.IsNewEntity)
+                partition.IsDirty = false;
+
+            request.IsProcessed = true;
+        }
+
+        [Query]
+        [Any(typeof(PBNftShape), typeof(PBGltfContainer), typeof(PBMaterial), typeof(PBAvatarShape), typeof(PBAudioSource), typeof(PBAudioStream), typeof(PBUiBackground), typeof(PBRaycast))]
+        [None(typeof(PartitionComponent), typeof(PartitionRequest))]
+        private void PartitionNewEntityWithoutTransform([Data] Vector3 scenePosition, in Entity entity)
+        {
+            var pos = World.TryGet(entity, out TransformComponent transformComponent)
+                ? transformComponent.Cached.WorldPosition
+                : scenePosition;
+
+            World.Add(entity, partitionComponentPool.Get(), new PartitionRequest
+                {
+                    InPosition = pos,
+                    IsNewEntity = true,
+                    IsProcessed = false
+                }
+            );
+        }
+
+        [Query]
+        private void RepartitionExistingEntityWithoutTransform(in Entity entity, ref PartitionRequest request, [Data] Vector3 scenePosition, [Data] Vector3 cameraPosition, [Data] Vector3 cameraForward)
+        {
+            var pos = World.TryGet(entity, out TransformComponent transformComponent)
+                ? transformComponent.Cached.WorldPosition
+                : scenePosition;
+
+            request.InPosition = pos;
+            request.IsNewEntity = false;
+            request.IsProcessed = false;
+            // RePartition(cameraPosition, cameraForward, scenePosition, ref partitionComponent);
+        }
+
+        [Query]
+        private void ResetDirty(ref PartitionRequest request, ref PartitionComponent partitionComponent)
         {
             partitionComponent.IsDirty = false;
         }
 
         [Query]
-        [Any(typeof(PBNftShape), typeof(PBGltfContainer), typeof(PBMaterial), typeof(PBAvatarShape), typeof(PBAudioSource), typeof(PBAudioStream), typeof(PBUiBackground), typeof(PBRaycast))]
-        [None(typeof(PartitionComponent))]
-        private void RequestPartitionForNewEntity(Entity entity, [Data] Vector3 scenePosition)
-        {
-            PartitionComponent partitionComponent = partitionComponentPool.Get();
-
-            World.Add(entity, partitionComponent, new PartitionRequest
-                {
-                    InPosition = World.TryGet(entity, out TransformComponent transformComponent)
-                        ? transformComponent.Cached.WorldPosition
-                        : scenePosition,
-                    IsNewEntity = true,
-                }
-            );
-        }
-
-        [Query]
-        [Any(typeof(PBNftShape), typeof(PBGltfContainer), typeof(PBMaterial), typeof(PBAvatarShape), typeof(PBAudioSource), typeof(PBAudioStream), typeof(PBUiBackground), typeof(PBRaycast))]
-        [All(typeof(PartitionComponent))]
-        private void RequestPartitionForExistingEntity(Entity entity, [Data] Vector3 scenePosition)
-        {
-            World.Add(entity, new PartitionRequest
-                {
-                    InPosition = World.TryGet(entity, out TransformComponent transformComponent)
-                        ? transformComponent.Cached.WorldPosition
-                        : scenePosition,
-                    IsNewEntity = false,
-                }
-            );
-        }
-
-        [Query]
-        private void ProcessPartition(in Entity entity, ref PartitionRequest request, ref PartitionComponent partition, [Data] Vector3 cameraPosition, [Data] Vector3 cameraForward)
-        {
-            RePartition(cameraPosition, cameraForward, request.InPosition, ref partition);
-
-            if (request.IsNewEntity)
-                partition.IsDirty = true;
-
-            this.World.Remove<PartitionRequest>(entity);
-        }
-
-        [Query]
-        [Any(typeof(PBNftShape), typeof(PBGltfContainer), typeof(PBMaterial), typeof(PBAvatarShape), typeof(PBAudioSource), typeof(PBAudioStream), typeof(PBUiBackground), typeof(PBRaycast))]
-        [None(typeof(TransformComponent))]
-        private void RepartitionExistingEntityWithoutTransform
-            ([Data] Vector3 scenePosition, [Data] Vector3 cameraPosition, [Data] Vector3 cameraForward, ref PartitionComponent partitionComponent)
-        {
-            RePartition(cameraPosition, cameraForward, scenePosition, ref partitionComponent);
-        }
-
-        [Query]
-        [Any(typeof(PBNftShape), typeof(PBGltfContainer), typeof(PBMaterial), typeof(PBAvatarShape), typeof(PBAudioSource), typeof(PBAudioStream), typeof(PBUiBackground), typeof(PBRaycast))]
         private void RePartitionExistingEntity([Data] Vector3 cameraPosition, [Data] Vector3 cameraForward, [Data] bool checkTransform,
-            ref SDKTransform sdkTransform, ref TransformComponent transformComponent, ref PartitionComponent partitionComponent)
+            ref SDKTransform sdkTransform, ref TransformComponent transformComponent, ref PartitionRequest request)
         {
             if (checkTransform && !sdkTransform.IsDirty)
                 return;
 
-            RePartition(cameraPosition, cameraForward, transformComponent.Cached.WorldPosition, ref partitionComponent);
+            request.InPosition = transformComponent.Cached.WorldPosition;
+            request.IsNewEntity = false;
+            request.IsProcessed = false;
         }
 
         private void RePartition(Vector3 cameraTransform, Vector3 cameraForward, Vector3 entityPosition, ref PartitionComponent partitionComponent)
@@ -193,9 +186,10 @@ namespace ECS.Unity.Systems
         }
     }
 
-    public struct PartitionRequest
+    internal struct PartitionRequest
     {
         public Vector3 InPosition;
         public bool IsNewEntity;
+        public bool IsProcessed;
     }
 }
