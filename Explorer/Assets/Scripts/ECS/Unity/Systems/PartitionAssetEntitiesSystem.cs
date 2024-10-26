@@ -1,5 +1,4 @@
-﻿using Arch.Buffer;
-using Arch.Core;
+﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using CrdtEcsBridge.Components.Transform;
@@ -15,8 +14,6 @@ using UnityEngine;
 
 namespace ECS.Unity.Systems
 {
-    public struct PartitionRequest { public Vector3 InPosition; }
-
     /// <summary>
     ///     <para>
     ///         Runs in a scene world, modifies partition component for all entities that contain
@@ -38,8 +35,6 @@ namespace ECS.Unity.Systems
         private readonly IPartitionSettings partitionSettings;
         private readonly IPartitionComponent scenePartition;
 
-        private readonly CommandBuffer buffer = new ();
-
         internal PartitionAssetEntitiesSystem(World world,
             IPartitionSettings partitionSettings,
             IPartitionComponent partition,
@@ -56,16 +51,30 @@ namespace ECS.Unity.Systems
 
         protected override void Update(float t)
         {
-            if (!samplingData.IsDirty)
+            // First re-partition if player position or rotation is changed
+            // if is true then re-partition if Transform.isDirty
+
+            Vector3 scenePosition = World.Get<TransformComponent>(sceneRoot).Cached.WorldPosition;
+            Vector3 cameraPosition = samplingData.Position;
+            Vector3 cameraForward = samplingData.Forward;
+
+            if (samplingData.IsDirty)
+            {
+                // Repartition everything
+                RePartitionExistingEntityQuery(World, cameraPosition, cameraForward, false);
+                RepartitionExistingEntityWithoutTransformQuery(World, scenePosition, cameraPosition, cameraForward);
+            }
+            else
+            {
                 ResetDirtyQuery(World);
 
-            RequestPartitionForEntitiesQuery(World, samplingData.IsDirty, World.Get<TransformComponent>(sceneRoot).Cached.WorldPosition);
+                // Repartition all entities with dirty transform
+                RePartitionExistingEntityQuery(World, cameraPosition, cameraForward, true);
+            }
 
-            ProcessPartitioningQuery(World,
-                cameraposition: samplingData.Position,
-                cameraforward: samplingData.Forward);
-
-            buffer.Playback(World);
+            // Then partition all entities that are not partitioned yet
+            PartitionNewEntityQuery(World, cameraPosition, cameraForward);
+            PartitionNewEntityWithoutTransformQuery(World, scenePosition, cameraPosition, cameraForward);
         }
 
         [Query]
@@ -77,43 +86,49 @@ namespace ECS.Unity.Systems
 
         [Query]
         [Any(typeof(PBNftShape), typeof(PBGltfContainer), typeof(PBMaterial), typeof(PBAvatarShape), typeof(PBAudioSource), typeof(PBAudioStream), typeof(PBUiBackground), typeof(PBRaycast))]
-        private void RequestPartitionForEntities(Entity entity, [Data] bool playerTransformHasChanged, [Data] Vector3 scenePosition)
+        [None(typeof(PartitionComponent))]
+        private void PartitionNewEntity([Data] Vector3 cameraPosition, [Data] Vector3 cameraForward, in Entity entity, ref TransformComponent transformComponent)
         {
-            if (!World.Has<PartitionComponent>(entity)
-                || playerTransformHasChanged
-                || (World.TryGet<SDKTransform>(entity, out var sdkTransform) && sdkTransform.IsDirty))
-            {
-                World.Add(entity, new PartitionRequest
-                {
-                    InPosition = World.TryGet(entity, out TransformComponent transformComponent)
-                        ? transformComponent.Cached.WorldPosition
-                        : scenePosition,
-                });
-            }
+            PartitionComponent partitionComponent = partitionComponentPool.Get();
+            RePartition(cameraPosition, cameraForward, transformComponent.Cached.WorldPosition, ref partitionComponent);
+            partitionComponent.IsDirty = true;
+            World.Add(entity, partitionComponent);
         }
 
         [Query]
-        private void ProcessPartitioning(Entity entity, ref PartitionRequest request, [Data] Vector3 cameraPosition, [Data] Vector3 cameraForward)
+        [Any(typeof(PBNftShape), typeof(PBGltfContainer), typeof(PBMaterial), typeof(PBAvatarShape), typeof(PBAudioSource), typeof(PBAudioStream), typeof(PBUiBackground), typeof(PBRaycast))]
+        [None(typeof(TransformComponent), typeof(PartitionComponent))]
+        private void PartitionNewEntityWithoutTransform([Data] Vector3 scenePosition, [Data] Vector3 cameraPosition, [Data] Vector3 cameraForward, in Entity entity)
         {
-            if(World.TryGet<PartitionComponent>(entity, out var partitionComponent))
-            {
-                RePartition(cameraPosition, cameraForward, request.InPosition, ref partitionComponent);
-            }
-            else
-            {
-                partitionComponent = partitionComponentPool.Get();
-                buffer.Add(entity, partitionComponent);
+            PartitionComponent partitionComponent = partitionComponentPool.Get();
+            RePartition(cameraPosition, cameraForward, scenePosition, ref partitionComponent);
+            partitionComponent.IsDirty = true;
+            World.Add(entity, partitionComponent);
+        }
 
-                RePartition(cameraPosition, cameraForward, request.InPosition, ref partitionComponent);
-                partitionComponent.IsDirty = true;
-            }
+        [Query]
+        [Any(typeof(PBNftShape), typeof(PBGltfContainer), typeof(PBMaterial), typeof(PBAvatarShape), typeof(PBAudioSource), typeof(PBAudioStream), typeof(PBUiBackground), typeof(PBRaycast))]
+        [None(typeof(TransformComponent))]
+        private void RepartitionExistingEntityWithoutTransform([Data] Vector3 scenePosition, [Data] Vector3 cameraPosition, [Data] Vector3 cameraForward, ref PartitionComponent partitionComponent)
+        {
+            RePartition(cameraPosition, cameraForward, scenePosition, ref partitionComponent);
+        }
 
-            buffer.Remove<PartitionRequest>(entity);
+        [Query]
+        [Any(typeof(PBNftShape), typeof(PBGltfContainer), typeof(PBMaterial), typeof(PBAvatarShape), typeof(PBAudioSource), typeof(PBAudioStream), typeof(PBUiBackground), typeof(PBRaycast))]
+        private void RePartitionExistingEntity([Data] Vector3 cameraPosition, [Data] Vector3 cameraForward, [Data] bool checkTransform,
+            ref SDKTransform sdkTransform, ref TransformComponent transformComponent, ref PartitionComponent partitionComponent)
+        {
+            if (checkTransform && !sdkTransform.IsDirty)
+                return;
+
+            RePartition(cameraPosition, cameraForward, transformComponent.Cached.WorldPosition, ref partitionComponent);
         }
 
         private void RePartition(Vector3 cameraTransform, Vector3 cameraForward, Vector3 entityPosition, ref PartitionComponent partitionComponent)
         {
             // TODO pure math logic can be jobified for much better performance
+
             byte bucket = partitionComponent.Bucket;
             bool isBehind = partitionComponent.IsBehind;
 
@@ -127,20 +142,28 @@ namespace ECS.Unity.Systems
                 partitionComponent.Bucket = scenePartition.Bucket;
                 partitionComponent.IsBehind = scenePartition.IsBehind;
             }
-            else
-            {
-                // Find the bucket
-                byte bucketIndex;
-
-                for (bucketIndex = 0; bucketIndex < partitionSettings.SqrDistanceBuckets.Count; bucketIndex++)
-                    if (sqrDistance < partitionSettings.SqrDistanceBuckets[bucketIndex])
-                        break;
-
-                partitionComponent.Bucket = bucketIndex;
-                partitionComponent.IsBehind = Vector3.Dot(cameraForward, vectorToCamera) < 0; // cheap as sqrMagnitude
-            }
+            else ResolvePartitionFromDistance(partitionSettings, cameraForward, partitionComponent, sqrDistance, vectorToCamera);
 
             partitionComponent.IsDirty = bucket != partitionComponent.Bucket || isBehind != partitionComponent.IsBehind;
+        }
+
+        public static void ResolvePartitionFromDistance(IPartitionSettings partitionSettings, Vector3 cameraForward, PartitionComponent partitionComponent,
+            float sqrDistance, Vector3 vectorToCamera)
+        {
+            // Find the bucket
+            byte bucketIndex;
+
+            for (bucketIndex = 0; bucketIndex < partitionSettings.SqrDistanceBuckets.Count; bucketIndex++)
+            {
+                if (sqrDistance < partitionSettings.SqrDistanceBuckets[bucketIndex])
+                    break;
+            }
+
+            partitionComponent.Bucket = bucketIndex;
+
+            // Is behind is a dot product
+            // mind that taking cosines is not cheap
+            partitionComponent.IsBehind = Vector3.Dot(cameraForward, vectorToCamera) < 0;
         }
     }
 }
