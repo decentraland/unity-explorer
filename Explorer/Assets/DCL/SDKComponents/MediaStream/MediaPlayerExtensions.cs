@@ -55,24 +55,25 @@ namespace DCL.SDKComponents.MediaStream
         public static void SetPlaybackProperties(this MediaPlayer mediaPlayer, PBVideoPlayer sdkVideoPlayer)
         {
             if (!mediaPlayer.MediaOpened) return;
-
-            IMediaControl control = mediaPlayer.Control;
-            control.Pause();
-
-            SetPlaybackPropertiesAsync(control, sdkVideoPlayer).Forget();
+            SetPlaybackPropertiesAsync(mediaPlayer.Control, sdkVideoPlayer).Forget();
         }
 
         private static async UniTask SetPlaybackPropertiesAsync(IMediaControl control, PBVideoPlayer sdkVideoPlayer)
         {
-            // If there are no seekable times and we try to seek, AVPro mistakenly plays it from the start.
-            await UniTask.WaitUntil(() => control.GetSeekableTimes().Count > 0);
+            // If there are no seekable/buffered times, and we try to seek, AVPro may mistakenly play it from the start.
+            await UniTask.WaitUntil(() => control.GetBufferedTimes().Count > 0);
 
-            if (sdkVideoPlayer is {HasPlaying: true, Playing: true })
-                control.Play();
+#if (UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX)
+            // The only way found to make the video initialization consistent and reliable on MacOS even after a scene reload
+            await UniTask.Delay(TimeSpan.FromSeconds(1f));
+#endif
 
-            control.SetLooping(sdkVideoPlayer is {HasLoop: true, Loop: true }); // default: false
+            control.SetLooping(sdkVideoPlayer is { HasLoop: true, Loop: true }); // default: false
             control.SetPlaybackRate(sdkVideoPlayer.HasPlaybackRate ? sdkVideoPlayer.PlaybackRate : MediaPlayerComponent.DEFAULT_PLAYBACK_RATE);
             control.Seek(sdkVideoPlayer.HasPosition ? sdkVideoPlayer.Position : MediaPlayerComponent.DEFAULT_POSITION);
+
+            if (sdkVideoPlayer is { HasPlaying: true, Playing: true })
+                control.Play();
         }
 
         public static void UpdatePlaybackProperties(this MediaPlayer mediaPlayer, PBVideoPlayer sdkVideoPlayer)

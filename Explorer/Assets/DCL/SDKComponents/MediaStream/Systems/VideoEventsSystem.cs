@@ -18,7 +18,6 @@ namespace DCL.SDKComponents.MediaStream
 {
     [UpdateInGroup(typeof(SyncedPreRenderingSystemGroup))]
     [LogCategory(ReportCategory.MEDIA_STREAM)]
-    [ThrottlingEnabled]
     public partial class VideoEventsSystem : BaseUnityLoopSystem
     {
         private const float MAX_VIDEO_FROZEN_SECONDS_BEFORE_ERROR = 10f;
