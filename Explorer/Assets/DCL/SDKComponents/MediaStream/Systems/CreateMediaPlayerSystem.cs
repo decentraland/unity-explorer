@@ -83,6 +83,7 @@ namespace DCL.SDKComponents.MediaStream
             {
                 MediaPlayer = mediaPlayerPool.Get(),
                 URL = url,
+                IsFromContentServer = url.Contains("/content/contents"),
                 State = url.IsValidUrl() ? VideoState.VsNone : VideoState.VsError,
                 PreviousPlayingTimeCheck = -1,
                 LastStateChangeTime = -1,
