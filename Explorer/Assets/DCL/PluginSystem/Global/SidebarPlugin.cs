@@ -5,6 +5,7 @@ using DCL.AssetsProvision;
 using DCL.Backpack;
 using DCL.Browser;
 using DCL.Chat;
+using DCL.Controls;
 using DCL.Notifications;
 using DCL.Notifications.NotificationsMenu;
 using DCL.NotificationsBusController.NotificationsBus;
@@ -21,6 +22,7 @@ using MVC;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using UnityEngine.InputSystem;
 
 namespace DCL.PluginSystem.Global
 {
@@ -40,6 +42,7 @@ namespace DCL.PluginSystem.Global
         private readonly IProfileCache profileCache;
         private readonly ISidebarBus sidebarBus;
         private readonly ChatEntryConfigurationSO chatEntryConfigurationSo;
+        private readonly DCLInput dclInput;
         private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
 
@@ -58,6 +61,7 @@ namespace DCL.PluginSystem.Global
             IProfileCache profileCache,
             ISidebarBus sidebarBus,
             ChatEntryConfigurationSO chatEntryConfigurationSo,
+            DCLInput dclInput,
             Arch.Core.World world,
             Entity playerEntity)
         {
@@ -75,6 +79,7 @@ namespace DCL.PluginSystem.Global
             this.profileCache = profileCache;
             this.sidebarBus = sidebarBus;
             this.chatEntryConfigurationSo = chatEntryConfigurationSo;
+            this.dclInput = dclInput;
             this.world = world;
             this.playerEntity = playerEntity;
         }
@@ -105,7 +110,20 @@ namespace DCL.PluginSystem.Global
                 profileRepository,
                 webBrowser
             ));
+
+            mvcManager.RegisterController(new ControlsMenuController(() =>
+                {
+                    ControlsMenuView view = mainUIView.SidebarView.ControlsMenuView;
+                    view.gameObject.SetActive(true);
+                    return view;
+                },
+                dclInput,
+                mvcManager));
+            dclInput.Shortcuts.ControlsMenu.performed -= OpenControlsMenu;
         }
+
+        private void OpenControlsMenu(InputAction.CallbackContext callbackContext) =>
+            mvcManager.ShowAsync(ControlsMenuController.IssueCommand()).Forget();
 
         public class SidebarSettings : IDCLPluginSettings
         {

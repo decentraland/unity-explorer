@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Chat;
+using DCL.Controls;
 using DCL.ExplorePanel;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Notifications.NotificationsMenu;
@@ -82,6 +83,7 @@ namespace DCL.UI.Sidebar
             viewInstance.notificationsButton.onClick.AddListener(OpenNotificationsPanel);
             viewInstance.autoHideToggle.onValueChanged.AddListener(OnAutoHideToggleChanged);
             viewInstance.backpackNotificationIndicator.SetActive(false);
+            viewInstance.controlsButton.onClick.AddListener(OnControlsButtonClicked);
             viewInstance.helpButton.onClick.AddListener(OnHelpButtonClicked);
             notificationsBusController.SubscribeToNotificationTypeReceived(NotificationType.REWARD_ASSIGNMENT, OnRewardNotificationReceived);
             notificationsBusController.SubscribeToNotificationTypeClick(NotificationType.REWARD_ASSIGNMENT, OnRewardNotificationClicked);
@@ -90,6 +92,9 @@ namespace DCL.UI.Sidebar
 
         private void OnHelpButtonClicked() =>
             webBrowser.OpenUrl(DecentralandUrl.Help);
+
+        private void OnControlsButtonClicked() =>
+            mvcManager.ShowAsync(ControlsMenuController.IssueCommand());
 
         private void OnAutoHideToggleChanged(bool value)
         {

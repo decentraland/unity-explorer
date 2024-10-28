@@ -508,7 +508,7 @@ namespace Global.Dynamic
                     webBrowser,
                     dynamicWorldDependencies.Web3Authenticator,
                     container.UserInAppInAppInitializationFlow,
-                    profileCache, sidebarBus, chatEntryConfiguration,
+                    profileCache, sidebarBus, chatEntryConfiguration, dclInput,
                     globalWorld, playerEntity),
                 new ErrorPopupPlugin(container.MvcManager, assetsProvisioner),
                 connectionStatusPanelPlugin,

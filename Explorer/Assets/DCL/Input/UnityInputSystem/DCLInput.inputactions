@@ -2071,6 +2071,15 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "ControlsMenu",
+                    "type": "Button",
+                    "id": "db982177-7603-4505-a59e-1dccc089acce",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -2170,6 +2179,17 @@
                     "processors": "",
                     "groups": "",
                     "action": "ToggleNametags",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "aa9b2eb4-76ae-4527-b80c-67d62f7a6b31",
+                    "path": "<Keyboard>/#(H)",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "ControlsMenu",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

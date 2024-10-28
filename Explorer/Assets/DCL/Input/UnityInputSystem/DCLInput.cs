@@ -2093,6 +2093,15 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""ControlsMenu"",
+                    ""type"": ""Button"",
+                    ""id"": ""db982177-7603-4505-a59e-1dccc089acce"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -2192,6 +2201,17 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""ToggleNametags"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""aa9b2eb4-76ae-4527-b80c-67d62f7a6b31"",
+                    ""path"": ""<Keyboard>/#(H)"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""ControlsMenu"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -2947,6 +2967,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         m_Shortcuts_ToggleAvatarBubbles = m_Shortcuts.FindAction("ToggleAvatarBubbles", throwIfNotFound: true);
         m_Shortcuts_ShowHideUI = m_Shortcuts.FindAction("ShowHideUI", throwIfNotFound: true);
         m_Shortcuts_ToggleNametags = m_Shortcuts.FindAction("ToggleNametags", throwIfNotFound: true);
+        m_Shortcuts_ControlsMenu = m_Shortcuts.FindAction("ControlsMenu", throwIfNotFound: true);
         // Emotes
         m_Emotes = asset.FindActionMap("Emotes", throwIfNotFound: true);
         m_Emotes_Slot1 = m_Emotes.FindAction("Slot 1", throwIfNotFound: true);
@@ -3563,6 +3584,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
     private readonly InputAction m_Shortcuts_ToggleAvatarBubbles;
     private readonly InputAction m_Shortcuts_ShowHideUI;
     private readonly InputAction m_Shortcuts_ToggleNametags;
+    private readonly InputAction m_Shortcuts_ControlsMenu;
     public struct ShortcutsActions
     {
         private @DCLInput m_Wrapper;
@@ -3576,6 +3598,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         public InputAction @ToggleAvatarBubbles => m_Wrapper.m_Shortcuts_ToggleAvatarBubbles;
         public InputAction @ShowHideUI => m_Wrapper.m_Shortcuts_ShowHideUI;
         public InputAction @ToggleNametags => m_Wrapper.m_Shortcuts_ToggleNametags;
+        public InputAction @ControlsMenu => m_Wrapper.m_Shortcuts_ControlsMenu;
         public InputActionMap Get() { return m_Wrapper.m_Shortcuts; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -3612,6 +3635,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @ToggleNametags.started += instance.OnToggleNametags;
             @ToggleNametags.performed += instance.OnToggleNametags;
             @ToggleNametags.canceled += instance.OnToggleNametags;
+            @ControlsMenu.started += instance.OnControlsMenu;
+            @ControlsMenu.performed += instance.OnControlsMenu;
+            @ControlsMenu.canceled += instance.OnControlsMenu;
         }
 
         private void UnregisterCallbacks(IShortcutsActions instance)
@@ -3643,6 +3669,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @ToggleNametags.started -= instance.OnToggleNametags;
             @ToggleNametags.performed -= instance.OnToggleNametags;
             @ToggleNametags.canceled -= instance.OnToggleNametags;
+            @ControlsMenu.started -= instance.OnControlsMenu;
+            @ControlsMenu.performed -= instance.OnControlsMenu;
+            @ControlsMenu.canceled -= instance.OnControlsMenu;
         }
 
         public void RemoveCallbacks(IShortcutsActions instance)
@@ -3990,6 +4019,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         void OnToggleAvatarBubbles(InputAction.CallbackContext context);
         void OnShowHideUI(InputAction.CallbackContext context);
         void OnToggleNametags(InputAction.CallbackContext context);
+        void OnControlsMenu(InputAction.CallbackContext context);
     }
     public interface IEmotesActions
     {
