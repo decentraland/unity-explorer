@@ -80,12 +80,12 @@ namespace SceneRunner.Scene
                 return false;
             }
 
-            // Try resolve an internal URL
+            // Try resolve an internal scene asset URL
             if (TryGetContentUrl(url, out result))
                 return true;
 
-            if (!CHECK_ALLOWED_MEDIA_HOSTNAMES
-                || (HasRequiredPermission(ScenePermissionNames.ALLOW_MEDIA_HOSTNAMES) && IsUrlDomainAllowed(url)))
+            if (CHECK_ALLOWED_MEDIA_HOSTNAMES
+                && (HasRequiredPermission(ScenePermissionNames.ALLOW_MEDIA_HOSTNAMES) && IsUrlDomainAllowed(url)))
             {
                 result = URLAddress.FromString(url);
                 return true;

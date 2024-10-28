@@ -134,9 +134,7 @@ namespace DCL.SDKComponents.MediaStream
         {
             if (!sdkComponent.IsDirty) return;
 
-            sceneData.TryGetMediaUrl(url, out URLAddress localMediaUrl);
-
-            if (component.URL != url && component.URL != localMediaUrl)
+            if (component.URL != url && (!sceneData.TryGetMediaUrl(url, out URLAddress localMediaUrl) || component.URL != localMediaUrl))
             {
                 component.MediaPlayer.CloseCurrentStream();
 
@@ -172,20 +170,24 @@ namespace DCL.SDKComponents.MediaStream
             }
             else
             {
-                component.State = VideoState.VsError;
+                component.SetState(string.IsNullOrEmpty(component.URL) ? VideoState.VsNone : VideoState.VsError);
                 component.MediaPlayer.CloseCurrentStream();
             }
         }
 
         private void UpdateStreamUrl(ref MediaPlayerComponent component, string url)
         {
-            component.MediaPlayer.CloseCurrentStream();
-
-            if (!url.IsValidUrl() && sceneData.TryGetMediaUrl(url, out URLAddress mediaUrl))
-                url = mediaUrl;
+            bool isValidStreamUrl = url.IsValidUrl();
+            bool isValidLocalPath = false;
+            if (!isValidStreamUrl)
+            {
+                isValidLocalPath = sceneData.TryGetMediaUrl(url, out URLAddress mediaUrl);
+                if(isValidLocalPath)
+                    url = mediaUrl;
+            }
 
             component.URL = url;
-            component.State = url.IsValidUrl() ? VideoState.VsNone : VideoState.VsError;
+            component.SetState(isValidStreamUrl || isValidLocalPath || string.IsNullOrEmpty(url) ? VideoState.VsNone : VideoState.VsError);
         }
 
         public override void Dispose()
