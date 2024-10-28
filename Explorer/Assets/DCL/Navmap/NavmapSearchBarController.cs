@@ -6,32 +6,25 @@ using DCL.PlacesAPIService;
 using DCL.UI;
 using DCL.WebRequests;
 using System;
-using System.Linq;
 using System.Threading;
-using UnityEngine;
 using Utility;
 
 namespace DCL.Navmap
 {
     public class NavmapSearchBarController : IDisposable
     {
-        private const string PREVIOUS_SEARCHES_KEY = "previous_searches";
-        private const int MAX_PREVIOUS_SEARCHES = 5;
-
-        public event Action<string> OnResultClicked;
-        public event Action OnSearchTextChanged;
+        public event Action<string>? OnResultClicked;
+        public event Action? OnSearchTextChanged;
 
         private readonly SearchBarView view;
         private readonly IPlacesAPIService placesAPIService;
         private readonly HistoryRecordPanelView historyRecordPanelView;
         private readonly SearchResultPanelController searchResultPanelController;
         private readonly IInputBlock inputBlock;
+        private readonly ISearchHistory searchHistory;
 
-        private CancellationTokenSource cts;
+        private CancellationTokenSource? searchCancellationToken;
         private bool isAlreadySelected;
-        private string[] previousSearches;
-        private string previousSearchesString;
-        private string playerPrefsPreviousSearches;
 
         public NavmapSearchBarController(
             SearchBarView view,
@@ -40,12 +33,14 @@ namespace DCL.Navmap
             IPlacesAPIService placesAPIService,
             FloatingPanelView floatingPanelView,
             IWebRequestController webRequestController,
-            IInputBlock inputBlock)
+            IInputBlock inputBlock,
+            ISearchHistory searchHistory)
         {
             this.view = view;
             this.historyRecordPanelView = historyRecordPanelView;
             this.placesAPIService = placesAPIService;
             this.inputBlock = inputBlock;
+            this.searchHistory = searchHistory;
 
             searchResultPanelController = new SearchResultPanelController(searchResultPanelView, webRequestController);
             searchResultPanelController.OnResultClicked += ClickedResult;
@@ -61,6 +56,16 @@ namespace DCL.Navmap
             view.clearSearchButton.gameObject.SetActive(false);
             GetAndShowPreviousSearches();
             historyRecordPanelView.gameObject.SetActive(false);
+        }
+
+        public void Dispose()
+        {
+            searchCancellationToken.SafeCancelAndDispose();
+            view.inputField.onSelect.RemoveAllListeners();
+            view.inputField.onValueChanged.RemoveAllListeners();
+            view.inputField.onSubmit.RemoveAllListeners();
+            view.clearSearchButton.onClick.RemoveAllListeners();
+            searchResultPanelController.OnResultClicked -= ClickedResult;
         }
 
         private void ClickedHistoryResult(string historyText)
@@ -83,8 +88,7 @@ namespace DCL.Navmap
         {
             view.clearSearchButton.gameObject.SetActive(!string.IsNullOrEmpty(searchText));
             OnSearchTextChanged?.Invoke();
-            cts.SafeCancelAndDispose();
-            cts = new CancellationTokenSource();
+            searchCancellationToken = searchCancellationToken.SafeRestart();
 
             if (string.IsNullOrEmpty(searchText) || searchText.Length < 3)
             {
@@ -95,7 +99,9 @@ namespace DCL.Navmap
             historyRecordPanelView.gameObject.SetActive(false);
 
             // Suppress cancellation but let other exceptions be printed
-            SearchAndShowAsync(searchText).SuppressCancellationThrow().Forget();
+            SearchAndShowAsync(searchText, searchCancellationToken.Token)
+               .SuppressCancellationThrow()
+               .Forget();
         }
 
         public void ResetSearch()
@@ -122,14 +128,14 @@ namespace DCL.Navmap
             }
         }
 
-        private async UniTask SearchAndShowAsync(string searchText)
+        private async UniTask SearchAndShowAsync(string searchText, CancellationToken ct)
         {
             searchResultPanelController.SetLoadingState();
-            await UniTask.Delay(1000, cancellationToken: cts.Token);
+            await UniTask.Delay(1000, cancellationToken: ct);
             searchResultPanelController.Show();
 
-            AddToPreviousSearch(searchText);
-            using PlacesData.IPlacesAPIResponse response = await placesAPIService.SearchPlacesAsync(searchText, 0, 8, cts.Token);
+            searchHistory.Add(searchText);
+            using PlacesData.IPlacesAPIResponse response = await placesAPIService.SearchPlacesAsync(searchText, 0, 8, ct);
             searchResultPanelController.SetResults(response.Data);
         }
 
@@ -142,46 +148,12 @@ namespace DCL.Navmap
 
         private void GetAndShowPreviousSearches()
         {
-            cts = cts.SafeRestart();
-            previousSearches = GetPreviousSearches();
+            searchCancellationToken = searchCancellationToken.SafeRestart();
+            string[] previousSearches = searchHistory.Get();
             if (previousSearches.Length <= 0) return;
 
             historyRecordPanelView.gameObject.SetActive(true);
             historyRecordPanelView.SetHistoryRecords(previousSearches);
-        }
-
-        private void AddToPreviousSearch(string searchToAdd)
-        {
-            playerPrefsPreviousSearches = PlayerPrefs.GetString(PREVIOUS_SEARCHES_KEY);
-            previousSearches = string.IsNullOrEmpty(playerPrefsPreviousSearches) ? Array.Empty<string>() : playerPrefsPreviousSearches.Split('|');
-
-            switch (previousSearches.Length)
-            {
-                case > 0 when previousSearches[0] == searchToAdd:
-                    return;
-                case < MAX_PREVIOUS_SEARCHES:
-                    PlayerPrefs.SetString(PREVIOUS_SEARCHES_KEY, previousSearches.Length > 0 ? searchToAdd + "|" + string.Join("|", previousSearches) : searchToAdd);
-                    break;
-                default:
-                    PlayerPrefs.SetString(PREVIOUS_SEARCHES_KEY, searchToAdd + "|" + string.Join("|", previousSearches.Take(4)));
-                    break;
-            }
-        }
-
-        private string[] GetPreviousSearches()
-        {
-            previousSearchesString = PlayerPrefs.GetString(PREVIOUS_SEARCHES_KEY, "");
-            return string.IsNullOrEmpty(previousSearchesString) ? Array.Empty<string>() : previousSearchesString.Split('|');
-        }
-
-        public void Dispose()
-        {
-            cts.SafeCancelAndDispose();
-            view.inputField.onSelect.RemoveAllListeners();
-            view.inputField.onValueChanged.RemoveAllListeners();
-            view.inputField.onSubmit.RemoveAllListeners();
-            view.clearSearchButton.onClick.RemoveAllListeners();
-            searchResultPanelController.OnResultClicked -= ClickedResult;
         }
     }
 }
