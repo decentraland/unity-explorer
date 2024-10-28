@@ -226,7 +226,7 @@ namespace DCL.PluginSystem.Global
 
             navmapController = new NavmapController(navmapView: explorePanelView.GetComponentInChildren<NavmapView>(),
                 mapRendererContainer.MapRenderer, placesAPIService, webRequestController, webBrowser, dclInput,
-                realmNavigator, realmData, mapPathEventBus, world, playerEntity, inputBlock, chatMessagesBus);
+                realmData, mapPathEventBus, world, playerEntity, inputBlock, chatMessagesBus, new PlayerPrefsSearchHistory());
 
             await navmapController.InitializeAssetsAsync(assetsProvisioner, ct);
             await backpackSubPlugin.InitializeAsync(settings.BackpackSettings, explorePanelView.GetComponentInChildren<BackpackView>(), ct);
