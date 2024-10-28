@@ -7,7 +7,6 @@ using UnityEngine;
 using Utility;
 using Utility.Types;
 using Random = UnityEngine.Random;
-using static DCL.Chat.Commands.IChatCommand;
 
 namespace Global.Dynamic.ChatCommands
 {
@@ -17,7 +16,7 @@ namespace Global.Dynamic.ChatCommands
         private const string PARAMETER_RANDOM = "random";
 
         public static readonly Regex REGEX =
-            new(
+            new (
                 $@"^/({ChatCommandsUtils.COMMAND_GOTO}|{COMMAND_GOTO_LOCAL})\s+(?:(-?\d+)\s*,\s*(-?\d+)|{PARAMETER_RANDOM})$",
                 RegexOptions.Compiled);
         private readonly IRealmNavigator realmNavigator;
@@ -45,7 +44,7 @@ namespace Global.Dynamic.ChatCommands
                 y = Random.Range(GenesisCityData.MIN_PARCEL.y, GenesisCityData.MAX_SQUARE_CITY_PARCEL.y);
             }
 
-            var teleportResult =
+            Result teleportResult =
                 await realmNavigator.TryInitializeTeleportToParcelAsync(new Vector2Int(x, y), ct, isLocal);
 
             if (ct.IsCancellationRequested)
@@ -53,7 +52,7 @@ namespace Global.Dynamic.ChatCommands
 
             return teleportResult.Success
                 ? $"🟢 You teleported to {x},{y} in Genesis City"
-                : "🔴 Teleport failed. Try again later!";
+                : $"🔴 Teleport failed: {teleportResult.ErrorMessage}";
         }
     }
 }

@@ -16,9 +16,7 @@ namespace DCL.Multiplayer.Profiles.RemoveIntentions
         public OwnedBunch<RemoveIntention> Bunch()
         {
             OwnedBunch<RemoveIntention> bunch = origin.Bunch();
-            ReportHub
-               .WithReport(ReportCategory.LIVEKIT)
-               .Log($"LogRemoveIntentions: bunch with count {bunch.Collection().Count}");
+            ReportHub.Log(ReportCategory.LIVEKIT, $"LogRemoveIntentions: bunch with count {bunch.Collection().Count}");
             return bunch;
         }
     }

@@ -23,7 +23,7 @@ namespace DCL.SDKComponents.AudioSources
 
         private CleanUpAudioSourceSystem(World world, AudioClipsCache cache, IComponentPoolsRegistry poolsRegistry) : base(world)
         {
-            releaseAudioSourceComponent = new ReleaseAudioSourceComponent(world, cache, poolsRegistry);
+            releaseAudioSourceComponent = new ReleaseAudioSourceComponent(world, poolsRegistry);
         }
 
         protected override void Update(float t)
@@ -56,20 +56,17 @@ namespace DCL.SDKComponents.AudioSources
         private readonly struct ReleaseAudioSourceComponent : IForEach<AudioSourceComponent>
         {
             private readonly World world;
-            private readonly AudioClipsCache cache;
             private readonly IComponentPool componentPool;
 
-            public ReleaseAudioSourceComponent(World world, AudioClipsCache cache, IComponentPoolsRegistry poolsRegistry)
+            public ReleaseAudioSourceComponent(World world, IComponentPoolsRegistry poolsRegistry)
             {
                 this.world = world;
-                this.cache = cache;
-
                 poolsRegistry.TryGetPool(typeof(AudioSource), out componentPool);
             }
 
             public void Update(ref AudioSourceComponent component)
             {
-                component.CleanUp(world, cache);
+                component.CleanUp(world);
 
                 //AudioSource can be null if the promise is still loading, if we return it now, we will basically return a null ref
                 if (component.AudioSource != null)

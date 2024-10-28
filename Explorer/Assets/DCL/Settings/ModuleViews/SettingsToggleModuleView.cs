@@ -20,6 +20,9 @@ namespace DCL.Settings.ModuleViews
             OnToggleValueChanged(ToggleView.Toggle.isOn);
         }
 
+        public override void SetInteractable(bool interactable) =>
+            ToggleView.Toggle.interactable = interactable;
+
         protected override void Configure(Config configuration)
         {
             ToggleView.Toggle.interactable = configuration.IsEnabled;

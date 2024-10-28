@@ -15,9 +15,9 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         private readonly Dictionary<URN, LinkedListNode<(URN key, long lastUsedFrame)>> cacheKeysDictionary = new (new Dictionary<URN, LinkedListNode<(URN key, long lastUsedFrame)>>(), URNIgnoreCaseEqualityComparer.Default);
         private readonly Dictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>> ownedNftsRegistry = new (new Dictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>>(), URNIgnoreCaseEqualityComparer.Default);
 
-        internal Dictionary<URN, IWearable> wearablesCache { get; } = new (new Dictionary<URN, IWearable>(), URNIgnoreCaseEqualityComparer.Default);
-
         private readonly object lockObject = new ();
+
+        internal Dictionary<URN, IWearable> wearablesCache { get; } = new (new Dictionary<URN, IWearable>(), URNIgnoreCaseEqualityComparer.Default);
 
         public IWearable GetOrAddByDTO(WearableDTO wearableDto, bool qualifiedForUnloading = true)
         {
@@ -80,6 +80,8 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
                     if (!TryUnloadAllWearableAssets(wearable)) continue;
 
+                    DisposeThumbnail(wearable);
+
                     wearablesCache.Remove(urn);
                     cacheKeysDictionary.Remove(urn);
                     listedCacheKeys.Remove(node);
@@ -134,7 +136,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
             for (var i = 0; i < wearable.WearableAssetResults.Length; i++)
             {
-                ref var assets = ref wearable.WearableAssetResults[i];
+                ref WearableAssets assets = ref wearable.WearableAssetResults[i];
                 assetsCount += assets.Results?.Length ?? 0;
 
                 for (var j = 0; j < assets.Results?.Length; j++)
@@ -151,6 +153,8 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
                     if (wearableAsset is { ReferenceCount: 0 })
                     {
+                        // TODO it's not clear why countNullOrEmpty is not incremented
+
                         wearableAsset.Dispose();
                         assets.Results[j] = null;
                     }
@@ -158,6 +162,12 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             }
 
             return countNullOrEmpty == assetsCount;
+        }
+
+        private static void DisposeThumbnail(IWearable wearable)
+        {
+            if (wearable.ThumbnailAssetResult is { IsInitialized: true })
+                wearable.ThumbnailAssetResult.Value.Asset.RemoveReference();
         }
 
         private void UpdateListedCachePriority(URN @for)

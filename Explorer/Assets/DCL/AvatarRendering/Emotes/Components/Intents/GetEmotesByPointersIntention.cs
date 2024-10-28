@@ -12,19 +12,20 @@ namespace DCL.AvatarRendering.Emotes
 {
     public struct GetEmotesByPointersIntention : IAssetIntention, IDisposable, IEquatable<GetEmotesByPointersIntention>
     {
+        private readonly List<URN> pointers;
+        private bool isDisposed;
+
         public CancellationTokenSource CancellationTokenSource { get; }
 
         public IReadOnlyCollection<URN> Pointers => pointers;
 
         // TODO why so many allocations?
-        public HashSet<URN> ProcessedPointers { get; }
+        public HashSet<URN> RequestedPointers { get; }
         public HashSet<URN> SuccessfulPointers { get; }
         public AssetSource PermittedSources { get; }
         public BodyShape BodyShape { get; }
 
         public LoadTimeout Timeout;
-
-        private readonly List<URN> pointers;
 
         public GetEmotesByPointersIntention(List<URN> pointers,
             BodyShape bodyShape,
@@ -33,7 +34,7 @@ namespace DCL.AvatarRendering.Emotes
         {
             this.pointers = pointers;
             CancellationTokenSource = new CancellationTokenSource();
-            ProcessedPointers = POINTERS_HASHSET_POOL.Get();
+            RequestedPointers = POINTERS_HASHSET_POOL.Get();
             SuccessfulPointers = POINTERS_HASHSET_POOL.Get();
             PermittedSources = permittedSources;
             BodyShape = bodyShape;
@@ -51,9 +52,11 @@ namespace DCL.AvatarRendering.Emotes
 
         public void Dispose()
         {
+            if (isDisposed) return;
             POINTERS_POOL.Release(pointers);
-            POINTERS_HASHSET_POOL.Release(ProcessedPointers);
+            POINTERS_HASHSET_POOL.Release(RequestedPointers);
             POINTERS_HASHSET_POOL.Release(SuccessfulPointers);
+            isDisposed = true;
         }
     }
 }

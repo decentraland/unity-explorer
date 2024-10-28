@@ -24,6 +24,8 @@ namespace DCL.Passport.Modules
         private readonly IObjectPool<AdditionalField_PassportFieldView> additionalFieldsPoolForEdition;
         private readonly List<AdditionalField_PassportFieldView> instantiatedAdditionalFieldsForEdition = new ();
 
+        private readonly string[] validInputFormatsForDate = { "dd/MM/yyyy", "ddMMyyyy" };
+
         public int CurrentAdditionalFieldsCount => instantiatedAdditionalFields.Count;
 
         public UserAdditionalFields_PassportSubModuleController(UserDetailedInfo_PassportModuleView view)
@@ -231,7 +233,7 @@ namespace DCL.Passport.Modules
         {
             foreach (var additionalFieldForEdition in instantiatedAdditionalFieldsForEdition)
             {
-                string valueToSave = !string.IsNullOrEmpty(additionalFieldForEdition.EditionTextInput.text) ? additionalFieldForEdition.EditionTextInput.text : null;
+                string? valueToSave = !string.IsNullOrEmpty(additionalFieldForEdition.EditionTextInput.text) ? additionalFieldForEdition.EditionTextInput.text : null;
                 switch (additionalFieldForEdition.Type)
                 {
                     case AdditionalFieldType.GENDER:
@@ -242,7 +244,7 @@ namespace DCL.Passport.Modules
                         break;
                     case AdditionalFieldType.BIRTH_DATE:
                         if (valueToSave != null)
-                            currentProfile.Birthdate = DateTime.ParseExact(valueToSave, "dd/MM/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal);
+                            currentProfile.Birthdate = DateTime.ParseExact(valueToSave, validInputFormatsForDate, CultureInfo.InvariantCulture, DateTimeStyles.None);
                         else
                             currentProfile.Birthdate = null;
                         break;

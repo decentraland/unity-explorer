@@ -29,7 +29,7 @@ namespace DCL.LOD.Systems
                .ToArray();
 
         private static readonly ListObjectPool<TextureArraySlot?> TEXTURE_ARRAY_SLOTS = new (listInstanceDefaultCapacity: 10, defaultCapacity: 20);
-        public static string LOD_SHADER = "DCL/Scene_TexArray";
+        private static string LOD_SHADER = "DCL/Scene_TexArray";
         private static readonly List<Material> TEMP_MATERIALS = new (3);
 
         public static TextureArraySlot?[] ApplyTextureArrayToLOD(string sceneID, Vector2Int baseCoordinate, GameObject instantiatedLOD, TextureArrayContainer lodTextureArrayContainer)

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using DCL.CharacterMotion.Components;
+using System.Collections.Generic;
 
 namespace DCL.Multiplayer.Movement.Settings
 {
@@ -26,5 +27,8 @@ namespace DCL.Multiplayer.Movement.Settings
         // EXTRAPOLATION
         bool UseExtrapolation { get; }
         RemotePlayerExtrapolationSettings ExtrapolationSettings { get; }
+        float AccelerationTimeThreshold { get; }
+        float IdleSlowDownSpeed { get; }
+        Dictionary<MovementKind, float> MoveKindByDistance { get; }
     }
 }

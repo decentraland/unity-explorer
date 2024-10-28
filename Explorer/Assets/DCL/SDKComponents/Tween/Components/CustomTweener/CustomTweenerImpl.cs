@@ -16,11 +16,11 @@ namespace DCL.SDKComponents.Tween.Components
             return DOTween.To(() => currentValue, x => currentValue = x, end, duration);
         }
 
-        protected override (Vector3, Vector3) GetTweenValues(PBTween pbTween, Transform startTransform)
+        protected override (Vector3, Vector3) GetTweenValues(PBTween pbTween, SDKTransform startTransform)
         {
             Vector3 start = PrimitivesConversionExtensions.PBVectorToUnityVector(pbTween.Move.Start);
             Vector3 end = PrimitivesConversionExtensions.PBVectorToUnityVector(pbTween.Move.End);
-            startTransform.localPosition = start;
+            startTransform.Position.Value = start;
             currentValue = start;
             return (start, end);
         }
@@ -41,11 +41,11 @@ namespace DCL.SDKComponents.Tween.Components
             return DOTween.To(() => currentValue, x => currentValue = x, end, duration);
         }
 
-        protected override (Vector3, Vector3) GetTweenValues(PBTween pbTween, Transform startTransform)
+        protected override (Vector3, Vector3) GetTweenValues(PBTween pbTween, SDKTransform startTransform)
         {
             Vector3 start = PrimitivesConversionExtensions.PBVectorToUnityVector(pbTween.Scale.Start);
             Vector3 end = PrimitivesConversionExtensions.PBVectorToUnityVector(pbTween.Scale.End);
-            startTransform.localScale = start;
+            startTransform.Scale = start;
             currentValue = start;
             return (start, end);
         }
@@ -61,11 +61,11 @@ namespace DCL.SDKComponents.Tween.Components
 
     public class RotationTweener : CustomTweener<Quaternion, NoOptions>
     {
-        protected override (Quaternion, Quaternion) GetTweenValues(PBTween pbTween, Transform startTransform)
+        protected override (Quaternion, Quaternion) GetTweenValues(PBTween pbTween, SDKTransform startTransform)
         {
             Quaternion start = PrimitivesConversionExtensions.PBQuaternionToUnityQuaternion(pbTween.Rotate.Start);
             Quaternion end = PrimitivesConversionExtensions.PBQuaternionToUnityQuaternion(pbTween.Rotate.End);
-            startTransform.localRotation = start;
+            startTransform.Rotation.Value = start;
             currentValue = start;
             return (start, end);
         }
@@ -80,7 +80,6 @@ namespace DCL.SDKComponents.Tween.Components
         public override void SetResult(ref SDKTransform sdkTransform)
         {
             sdkTransform.Rotation.Value = currentValue;
-
             sdkTransform.Position.Value = startPosition;
             sdkTransform.Scale = startScale;
         }

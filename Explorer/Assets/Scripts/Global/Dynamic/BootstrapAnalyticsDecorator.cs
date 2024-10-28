@@ -3,7 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.DebugUtilities;
 using DCL.Multiplayer.Connections.DecentralandUrls;
-using DCL.Multiplayer.Movement.Systems;
+using DCL.Optimization.PerformanceBudgeting;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
@@ -46,9 +46,9 @@ namespace Global.Dynamic
             core.PreInitializeSetup(cursorRoot, debugUiRoot, splashScreen, ct);
         }
 
-        public async UniTask<(StaticContainer?, bool)> LoadStaticContainerAsync(BootstrapContainer bootstrapContainer, PluginSettingsContainer globalPluginSettingsContainer, DebugViewsCatalog debugViewsCatalog, Entity playerEntity, CancellationToken ct)
+        public async UniTask<(StaticContainer?, bool)> LoadStaticContainerAsync(BootstrapContainer bootstrapContainer, PluginSettingsContainer globalPluginSettingsContainer, DebugViewsCatalog debugViewsCatalog, Entity playerEntity, ISystemMemoryCap memoryCap, CancellationToken ct)
         {
-            (StaticContainer? container, bool isSuccess) result = await core.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugViewsCatalog, playerEntity, ct);
+            (StaticContainer? container, bool isSuccess) result = await core.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugViewsCatalog, playerEntity, memoryCap, ct);
 
             analytics.SetCommonParam(result.container!.RealmData, bootstrapContainer.IdentityCache, result.container.CharacterContainer.Transform);
 
@@ -137,21 +137,13 @@ namespace Global.Dynamic
 
         public async UniTask UserInitializationAsync(DynamicWorldContainer dynamicWorldContainer, GlobalWorld globalWorld, Entity playerEntity, ISplashScreen splashScreen, CancellationToken ct)
         {
-            using (dynamicWorldContainer.RealFlowLoadingStatus.CurrentStage.Subscribe(OnLoadingStageChanged))
-                await core.UserInitializationAsync(dynamicWorldContainer, globalWorld, playerEntity, splashScreen, ct);
-
+            await core.UserInitializationAsync(dynamicWorldContainer, globalWorld, playerEntity, splashScreen, ct);
             analytics.Track(General.INITIAL_LOADING, new JsonObject
             {
                 { STAGE_KEY, "8 - end" },
             });
         }
 
-        private void OnLoadingStageChanged(RealFlowLoadingStatus.Stage stage)
-        {
-            analytics.Track(General.INITIAL_LOADING, new JsonObject
-            {
-                { STAGE_KEY, $"7.{loadingScreenStageId++} - loading screen: {stage}" },
-            });
-        }
+    
     }
 }

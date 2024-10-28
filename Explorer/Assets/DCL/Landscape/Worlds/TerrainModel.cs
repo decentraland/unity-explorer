@@ -72,6 +72,9 @@ namespace DCL.Landscape
             }
         }
 
+        public bool IsInsideBounds(Vector2Int parcel) =>
+            parcel.x >= MinParcel.x && parcel.x <= MaxParcel.x && parcel.y >= MinParcel.y && parcel.y <= MaxParcel.y;
+
         private void CalculateChunkSizeAndCount()
         {
             int maxSideLengthInUnits = Mathf.Max(SizeInUnits.x, SizeInUnits.y);

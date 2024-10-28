@@ -3,6 +3,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.AvatarShape;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.Character.Components;
 using DCL.CharacterPreview.Components;
@@ -111,12 +112,14 @@ namespace DCL.MapRenderer.MapLayers.Users
         }
     }
 
+    [UpdateAfter(typeof(AvatarGroup))]
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     public partial class TrackPlayersPositionSystem : ControllerECSBridgeSystem
     {
         internal TrackPlayersPositionSystem(World world) : base(world) { }
     }
 
+    [UpdateAfter(typeof(AvatarGroup))]
     [UpdateAfter(typeof(TrackPlayersPositionSystem))]
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     public partial class RemovedTrackedPlayersPositionSystem : ControllerECSBridgeSystem

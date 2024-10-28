@@ -12,14 +12,19 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 {
     public class WalkedDistanceAnalytics : IDisposable
     {
+        private const float SEND_INTERVAL = 30;
+        private const long SEND_AT_STEPS = 100;
+
         private readonly IAnalyticsController analytics;
         private readonly ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy;
 
         private CancellationTokenSource cts;
         private AvatarAnimationEventsHandler animEventsHandler;
 
-        private long stepCount;
         private bool isDisposed;
+
+        private float countdown = SEND_INTERVAL;
+        public long StepCount { get; private set; }
 
         public WalkedDistanceAnalytics(IAnalyticsController analytics, ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy)
         {
@@ -56,6 +61,33 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             Dispose();
         }
 
+        public void Update(float deltaTime)
+        {
+            countdown -= deltaTime;
+
+            if (countdown <= 0 || StepCount > SEND_AT_STEPS)
+            {
+                SendAnalytics();
+                Reset();
+            }
+        }
+
+        private void SendAnalytics()
+        {
+            if (StepCount == 0) return;
+
+            analytics.Track(AnalyticsEvents.Badges.WALKED_DISTANCE, new JsonObject
+            {
+                { "step_count", StepCount },
+            });
+        }
+
+        public void Reset()
+        {
+            StepCount = 0;
+            countdown = SEND_INTERVAL;
+        }
+
         private async UniTask SubscribeToPlayerStepAsync(CancellationToken ct)
         {
             await UniTask.WaitUntil(() => mainPlayerAvatarBaseProxy.Configured, PlayerLoopTiming.LastPostLateUpdate, ct);
@@ -69,19 +101,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         private void OnPlayerStep()
         {
-            stepCount++;
-        }
-
-        private void SendAnalytics()
-        {
-            if (stepCount == 0) return;
-
-            analytics.Track(AnalyticsEvents.Badges.WALKED_DISTANCE, new JsonObject
-            {
-                { "step_count", stepCount },
-            });
-
-            stepCount = 0;
+            StepCount++;
         }
     }
 }

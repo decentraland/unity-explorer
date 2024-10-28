@@ -44,7 +44,19 @@ namespace DCL.PluginSystem.World
             basicMatPool = new ObjectPool<Material>(() => new Material(settings.basicMaterial), actionOnDestroy: UnityObjectUtils.SafeDestroy, defaultCapacity: settings.PoolInitialCapacity, maxSize: settings.PoolMaxSize);
             pbrMatPool = new ObjectPool<Material>(() => new Material(settings.pbrMaterial), actionOnDestroy: UnityObjectUtils.SafeDestroy, defaultCapacity: settings.PoolInitialCapacity, maxSize: settings.PoolMaxSize);
 
-            destroyMaterial = (in MaterialData data, Material material) => { (data.IsPbrMaterial ? pbrMatPool : basicMatPool).Release(material); };
+            destroyMaterial = (in MaterialData data, Material material) =>
+            {
+                if (data.IsPbrMaterial)
+                {
+                    material.CopyPropertiesFromMaterial(settings.pbrMaterial);
+                    pbrMatPool.Release(material);
+                }
+                else
+                {
+                    material.CopyPropertiesFromMaterial(settings.basicMaterial);
+                    basicMatPool.Release(material);
+                }
+            };
 
             loadingAttemptsCount = settings.LoadingAttemptsCount;
             return UniTask.CompletedTask;
@@ -60,7 +72,7 @@ namespace DCL.PluginSystem.World
             CreatePBRMaterialSystem.InjectToWorld(ref builder, pbrMatPool, capFrameTimeBudget, memoryBudgetProvider);
             ApplyMaterialSystem.InjectToWorld(ref builder, sharedDependencies.SceneData);
             ResetMaterialSystem.InjectToWorld(ref builder, destroyMaterial, sharedDependencies.SceneData);
-            CleanUpMaterialsSystem.InjectToWorld(ref builder, destroyMaterial);
+            finalizeWorldSystems.Add(CleanUpMaterialsSystem.InjectToWorld(ref builder, destroyMaterial));
         }
 
         [Serializable]

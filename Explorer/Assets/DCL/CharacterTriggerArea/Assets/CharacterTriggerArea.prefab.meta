@@ -1,14 +1,7 @@
 fileFormatVersion: 2
-<<<<<<<< HEAD:Explorer/Assets/DCL/CharacterTriggerArea/Assets/CharacterTriggerArea.prefab.meta
 guid: 8c2fa120406894778bdb7d4e45135d3b
 PrefabImporter:
   externalObjects: {}
-========
-guid: ac22a06cb5912442f99218b2f2da6592
-NativeFormatImporter:
-  externalObjects: {}
-  mainObjectFileID: 11400000
->>>>>>>> 7da2dc527b0da92a75b8731a77e8a1daff9c44af:Explorer/Assets/DCL/NameTags/NametagsData.asset.meta
   userData: 
   assetBundleName: 
   assetBundleVariant: 

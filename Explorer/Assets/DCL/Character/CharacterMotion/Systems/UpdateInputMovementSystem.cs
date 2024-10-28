@@ -17,14 +17,12 @@ namespace DCL.CharacterMotion.Systems
         private readonly InputAction movementAxis;
         private readonly InputAction sprintAction;
         private readonly InputAction walkAction;
-        private readonly InputAction autoWalkAction;
 
         public UpdateInputMovementSystem(World world, DCLInput dclInput) : base(world)
         {
             movementAxis = dclInput.Player.Movement;
             sprintAction = dclInput.Player.Sprint;
             walkAction = dclInput.Player.Walk;
-            autoWalkAction = dclInput.Player.AutoWalk;
         }
 
         protected override void Update(float t)
@@ -43,12 +41,6 @@ namespace DCL.CharacterMotion.Systems
 
             inputToUpdate.Axes = movementAxis.ReadValue<Vector2>();
 
-            if (!inputModifierComponent.DisableWalk && autoWalkAction.WasPerformedThisFrame())
-                inputToUpdate.AutoWalk = !inputToUpdate.AutoWalk;
-
-            if (inputToUpdate is { AutoWalk: true, Axes: { sqrMagnitude: > 0.1f } })
-                inputToUpdate.AutoWalk = false;
-
             if (inputToUpdate.Axes == Vector2.zero)
                 inputToUpdate.Kind = MovementKind.IDLE;
             else
@@ -57,12 +49,6 @@ namespace DCL.CharacterMotion.Systems
                 bool walkPressed = walkAction.IsPressed();
 
                 inputToUpdate.Kind = ProcessInputMovementKind(inputModifierComponent, runPressed, walkPressed);
-            }
-
-            if (inputToUpdate.AutoWalk)
-            {
-                inputToUpdate.Axes = new Vector2(0, 1);
-                inputToUpdate.Kind = MovementKind.WALK;
             }
         }
 

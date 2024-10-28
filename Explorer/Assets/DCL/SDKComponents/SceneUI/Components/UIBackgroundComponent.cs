@@ -1,7 +1,8 @@
 ﻿using DCL.Optimization.Pools;
 using DCL.SDKComponents.SceneUI.Classes;
+using ECS.StreamableLoading;
 using System;
-using Promise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.Texture2D, ECS.StreamableLoading.Textures.GetTextureIntention>;
+using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.Texture2DData, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
 namespace DCL.SDKComponents.SceneUI.Components
 {
@@ -9,7 +10,7 @@ namespace DCL.SDKComponents.SceneUI.Components
     {
         public DCLImage Image;
         public Promise? TexturePromise;
-        public ECS.StreamableLoading.LifeCycle Status;
+        public LifeCycle Status;
 
         DCLImage IPoolableComponentProvider<DCLImage>.PoolableComponent => Image;
         Type IPoolableComponentProvider<DCLImage>.PoolableComponentType => typeof(DCLImage);

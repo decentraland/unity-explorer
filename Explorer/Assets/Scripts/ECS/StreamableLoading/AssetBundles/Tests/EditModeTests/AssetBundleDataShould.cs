@@ -16,7 +16,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
                 assetBundleData.AddReference();
 
             // Assert
-            Assert.That(assetBundleData.referencesCount, Is.EqualTo(refCount));
+            Assert.That(assetBundleData.referenceCount, Is.EqualTo(refCount));
         }
 
         [TestCase(13, 3, 10)]
@@ -35,7 +35,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
                 assetBundleData.Dereference();
 
             // Assert
-            Assert.That(assetBundleData.referencesCount, Is.EqualTo(remainedRefs));
+            Assert.That(assetBundleData.referenceCount, Is.EqualTo(remainedRefs));
         }
 
         [TestCase(5, false)]

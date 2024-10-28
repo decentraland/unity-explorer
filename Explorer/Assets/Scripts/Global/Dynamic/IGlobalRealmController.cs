@@ -12,5 +12,6 @@ namespace Global.Dynamic
         GlobalWorld GlobalWorld { get; set; }
 
         UniTask<AssetPromise<SceneEntityDefinition, GetSceneDefinition>[]> WaitForFixedScenePromisesAsync(CancellationToken ct);
+        UniTask<SceneDefinitions?> WaitForStaticScenesEntityDefinitionsAsync(CancellationToken ct);
     }
 }

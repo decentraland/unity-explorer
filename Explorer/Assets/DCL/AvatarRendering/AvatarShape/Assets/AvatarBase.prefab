@@ -937,7 +937,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2561918839770535189}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fff0960ef4ea6e04eac66b4a7fd2189d, type: 3}
   m_Name: 
@@ -1048,7 +1048,7 @@ MonoBehaviour:
   AvatarAnimator: {fileID: 6654053651110562472}
   MovementBlendThreshold: 0.1
   walkIntervalSeconds: 0.37
-  jobIntervalSeconds: 0.31
+  jogIntervalSeconds: 0.31
   runIntervalSeconds: 0.25
   jumpIntervalSeconds: 0.25
   landIntervalSeconds: 0.25
@@ -3520,7 +3520,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2645e75a453f6954f8aa7b950093750d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  RandomID: 0
   <AvatarAnimator>k__BackingField: {fileID: 6654053651110562472}
+  <RigBuilder>k__BackingField: {fileID: 2952854576378652397}
   <AvatarSkinnedMeshRenderer>k__BackingField: {fileID: 918335364077391645}
   <FeetIKRig>k__BackingField: {fileID: 8371887180010344672}
   <RightLegConstraint>k__BackingField: {fileID: 1621103848960102164}

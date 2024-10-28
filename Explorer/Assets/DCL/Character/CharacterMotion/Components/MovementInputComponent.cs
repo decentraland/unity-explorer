@@ -5,7 +5,6 @@ namespace DCL.CharacterMotion.Components
 {
     public struct MovementInputComponent : IInputComponent
     {
-        public bool AutoWalk;
         public MovementKind Kind;
 
         /// <summary>

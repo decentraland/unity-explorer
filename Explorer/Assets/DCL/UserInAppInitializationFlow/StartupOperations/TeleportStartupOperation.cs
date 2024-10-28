@@ -9,11 +9,11 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
 {
     public class TeleportStartupOperation : IStartupOperation
     {
-        private readonly RealFlowLoadingStatus loadingStatus;
+        private readonly ILoadingStatus loadingStatus;
         private readonly IRealmNavigator realmNavigator;
         private readonly Vector2Int startParcel;
 
-        public TeleportStartupOperation(RealFlowLoadingStatus loadingStatus, IRealmNavigator realmNavigator, Vector2Int startParcel)
+        public TeleportStartupOperation(ILoadingStatus loadingStatus, IRealmNavigator realmNavigator, Vector2Int startParcel)
         {
             this.loadingStatus = loadingStatus;
             this.realmNavigator = realmNavigator;
@@ -22,11 +22,10 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
 
         public async UniTask<Result> ExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
         {
-            AsyncLoadProcessReport teleportLoadReport
-                = report.CreateChildReport(RealFlowLoadingStatus.PROGRESS[RealFlowLoadingStatus.Stage.PlayerTeleported]);
-
+            float finalizationProgress = loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.PlayerTeleporting);
+            AsyncLoadProcessReport teleportLoadReport = report.CreateChildReport(finalizationProgress);
             await realmNavigator.InitializeTeleportToSpawnPointAsync(teleportLoadReport, ct, startParcel);
-            report.SetProgress(loadingStatus.SetStage(RealFlowLoadingStatus.Stage.Completed));
+            report.SetProgress(finalizationProgress);
             return Result.SuccessResult();
         }
     }

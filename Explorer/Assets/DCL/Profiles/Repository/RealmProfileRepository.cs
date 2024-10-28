@@ -88,7 +88,7 @@ namespace DCL.Profiles
                 type = IpfsRealmEntityType.Profile.ToEntityString(),
             };
 
-        public async UniTask<Profile?> GetAsync(string id, int version, CancellationToken ct)
+        public async UniTask<Profile?> GetAsync(string id, int version, URLDomain? fromCatalyst, CancellationToken ct)
         {
             if (string.IsNullOrEmpty(id)) return null;
             if (TryProfileFromCache(id, version, out Profile? profileInCache)) return profileInCache;
@@ -97,7 +97,7 @@ namespace DCL.Profiles
 
             try
             {
-                URLAddress url = Url(id, version);
+                URLAddress url = Url(id, fromCatalyst);
                 GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> response = webRequestController.GetAsync(new CommonArguments(url), ct, ReportCategory.REALM, ignoreErrorCodes: IWebRequestController.IGNORE_NOT_FOUND);
 
                 using GetProfileJsonRootDto? root = await response.CreateFromNewtonsoftJsonAsync<GetProfileJsonRootDto>(
@@ -130,13 +130,12 @@ namespace DCL.Profiles
             }
         }
 
-        private URLAddress Url(string id, int version)
+        private URLAddress Url(string id, URLDomain? fromCatalyst)
         {
             urlBuilder.Clear();
 
-            urlBuilder.AppendDomain(realm.Ipfs.LambdasBaseUrl)
-                      .AppendPath(URLPath.FromString($"profiles/{id}"))
-                      .AppendParameter(new URLParameter("version", version.ToString()));
+            urlBuilder.AppendDomain(fromCatalyst ?? realm.Ipfs.LambdasBaseUrl)
+                      .AppendPath(URLPath.FromString($"profiles/{id}"));
 
             return urlBuilder.Build();
         }

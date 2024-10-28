@@ -7,6 +7,6 @@ namespace DCL.AvatarRendering.Wearables
 {
     public interface IThumbnailProvider
     {
-        UniTask<Sprite?> GetAsync(IAvatarAttachment avatarAttachment, CancellationToken ct);
+        UniTask<Sprite> GetAsync(IAvatarAttachment avatarAttachment, CancellationToken ct);
     }
 }

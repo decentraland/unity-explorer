@@ -29,9 +29,12 @@ namespace DCL.AvatarRendering.Loading.Assets
 
         public Dictionary<AttachmentAssetBase, List<CachedAttachment>> cache { get; }
 
-        public AttachmentsAssetsCache(int initialCapacity)
+        public AttachmentsAssetsCache(int initialCapacity, IComponentPoolsRegistry poolsRegistry)
         {
+            var poolParent = poolsRegistry.RootContainerTransform();
             var parentContainerGo = new GameObject($"POOL_CONTAINER_{nameof(AttachmentsAssetsCache)}");
+            parentContainerGo.transform.parent = poolParent;
+
             parentContainerGo.SetActive(false);
             parentContainer = parentContainerGo.transform;
 

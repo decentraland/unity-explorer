@@ -87,10 +87,10 @@ namespace DCL.CharacterPreview
                 PartitionComponent.TOP_PRIORITY
             );
 
-            avatarShape.EmotePromise = EmotePromise.Create(globalWorld,
+            globalWorld.Create(EmotePromise.Create(globalWorld,
                 EmoteComponentsUtils.CreateGetEmotesByPointersIntention(avatarShape.BodyShape,
                     avatarModel.Emotes ?? (IReadOnlyCollection<URN>)Array.Empty<URN>()),
-                PartitionComponent.TOP_PRIORITY);
+                PartitionComponent.TOP_PRIORITY));
 
             avatarShape.IsDirty = true;
 

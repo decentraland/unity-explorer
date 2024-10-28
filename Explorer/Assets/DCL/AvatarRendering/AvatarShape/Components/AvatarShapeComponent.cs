@@ -1,11 +1,8 @@
 using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Loading.Components;
-using DCL.AvatarRendering.Wearables.Helpers;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using UnityEngine;
 using WearablePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.WearablesResolution, DCL.AvatarRendering.Wearables.Components.Intentions.GetWearablesByPointersIntention>;
-using EmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution, DCL.AvatarRendering.Emotes.GetEmotesByPointersIntention>;
 
 namespace DCL.AvatarRendering.AvatarShape.Components
 {
@@ -13,7 +10,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
     {
         public bool IsDirty;
         public bool IsVisible;
-        public bool HiddenByModifierArea { get; private set; }
+        public bool HiddenByModifierArea;
 
         public Color SkinColor;
         public Color HairColor;
@@ -21,14 +18,13 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         public BodyShape BodyShape;
 
         public WearablePromise WearablePromise;
-        public EmotePromise EmotePromise;
 
         public string ID;
         public string Name;
 
         public readonly List<CachedAttachment> InstantiatedWearables;
 
-        public AvatarShapeComponent(string name, string id, BodyShape bodyShape, WearablePromise wearablePromise, EmotePromise emotePromise,
+        public AvatarShapeComponent(string name, string id, BodyShape bodyShape, WearablePromise wearablePromise,
             Color skinColor, Color hairColor, Color eyesColor)
         {
             ID = id;
@@ -36,7 +32,6 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             BodyShape = bodyShape;
             IsDirty = true;
             WearablePromise = wearablePromise;
-            EmotePromise = emotePromise;
             InstantiatedWearables = new List<CachedAttachment>();
             SkinColor = skinColor;
             HairColor = hairColor;
@@ -51,12 +46,6 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             Name = name;
             InstantiatedWearables = new List<CachedAttachment>();
             IsVisible = true;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void UpdateHiddenStatus(bool hidden)
-        {
-            HiddenByModifierArea = hidden;
         }
     }
 }

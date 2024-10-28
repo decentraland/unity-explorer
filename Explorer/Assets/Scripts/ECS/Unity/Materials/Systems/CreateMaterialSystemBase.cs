@@ -1,11 +1,12 @@
 using Arch.Core;
 using ECS.Abstract;
 using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.Textures;
 using ECS.Unity.Materials.Components;
 using ECS.Unity.Textures.Components;
 using UnityEngine;
 using UnityEngine.Pool;
-using Promise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.Texture2D, ECS.StreamableLoading.Textures.GetTextureIntention>;
+using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.Texture2DData, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
 namespace ECS.Unity.Materials.Systems
 {
@@ -40,9 +41,9 @@ namespace ECS.Unity.Materials.Systems
             promise = promiseValue;
         }
 
-        protected bool TryGetTextureResult(ref Promise? promise, out StreamableLoadingResult<Texture2D> textureResult)
+        protected bool TryGetTextureResult(ref Promise? promise, out StreamableLoadingResult<Texture2DData> textureResult)
         {
-            textureResult = default(StreamableLoadingResult<Texture2D>);
+            textureResult = default(StreamableLoadingResult<Texture2DData>);
 
             if (promise == null)
                 return true;
@@ -55,11 +56,11 @@ namespace ECS.Unity.Materials.Systems
             return result;
         }
 
-        protected static void TrySetTexture(Material material, ref StreamableLoadingResult<Texture2D> textureResult, int propId, in TextureComponent? textureComponent)
+        protected static void TrySetTexture(Material material, ref StreamableLoadingResult<Texture2DData> textureResult, int propId, in TextureComponent? textureComponent)
         {
             if (!textureResult.Succeeded) return;
 
-            material.SetTexture(propId, textureResult.Asset);
+            material.SetTexture(propId, textureResult.Asset!);
 
             if (textureComponent is { IsVideoTexture: true })
                 material.SetTextureScale(propId, VIDEO_TEXTURE_VERTICAL_FLIP);

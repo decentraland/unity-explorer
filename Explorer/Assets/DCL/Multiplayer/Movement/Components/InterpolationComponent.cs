@@ -12,6 +12,8 @@ namespace DCL.Multiplayer.Movement
         public float TotalDuration;
 
         public InterpolationType SplineType;
+        public bool UseMessageRotation;
+
         public bool Enabled { get; private set; }
 
         public void Restart(NetworkMovementMessage from, NetworkMovementMessage to, InterpolationType interpolationType, ICharacterControllerSettings settings)
@@ -29,6 +31,7 @@ namespace DCL.Multiplayer.Movement
 
             End.animState.SlideBlendValue = AnimationSlideBlendLogic.CalculateBlendValue(TotalDuration, Start.animState.SlideBlendValue, End.isSliding, settings);
 
+            UseMessageRotation = true;
             Enabled = true;
         }
 

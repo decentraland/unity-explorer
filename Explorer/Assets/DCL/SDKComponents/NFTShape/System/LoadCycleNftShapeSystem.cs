@@ -9,9 +9,9 @@ using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.NFTShapes;
 using ECS.StreamableLoading.NFTShapes.URNs;
+using ECS.StreamableLoading.Textures;
 using ECS.Unity.Groups;
-using UnityEngine;
-using Promise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.Texture2D, ECS.StreamableLoading.NFTShapes.GetNFTShapeIntention>;
+using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.Texture2DData, ECS.StreamableLoading.NFTShapes.GetNFTShapeIntention>;
 
 namespace DCL.SDKComponents.NFTShape.System
 {
@@ -31,7 +31,6 @@ namespace DCL.SDKComponents.NFTShape.System
         {
             StartQuery(World!);
             FinishAndApplyQuery(World!);
-            AbortLoadingIfComponentDeletedQuery(World);
         }
 
         [Query]
@@ -43,18 +42,9 @@ namespace DCL.SDKComponents.NFTShape.System
         }
 
         [Query]
-        [None(typeof(PBNftShape))]
-        private void AbortLoadingIfComponentDeleted(ref NFTLoadingComponent nftLoadingComponent)
-        {
-            nftLoadingComponent.Promise.ForgetLoading(World);
-
-            // Entity will be removed automatically with all remaining components
-        }
-
-        [Query]
         private void FinishAndApply(ref NFTLoadingComponent nftLoadingComponent, in NftShapeRendererComponent nftShapeRendererComponent)
         {
-            if (!nftLoadingComponent.Promise.IsConsumed && nftLoadingComponent.Promise.TryConsume(World!, out StreamableLoadingResult<Texture2D> result))
+            if (!nftLoadingComponent.Promise.IsConsumed && nftLoadingComponent.Promise.TryConsume(World!, out StreamableLoadingResult<Texture2DData> result))
             {
                 if (result.Succeeded)
                     nftShapeRendererComponent.PoolableComponent.Apply(result.Asset!);

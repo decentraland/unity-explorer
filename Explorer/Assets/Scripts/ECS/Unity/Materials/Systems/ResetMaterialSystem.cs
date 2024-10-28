@@ -8,6 +8,7 @@ using ECS.Unity.Materials.Components;
 using ECS.Unity.PrimitiveRenderer.Components;
 using ECS.Unity.SceneBoundsChecker;
 using SceneRunner.Scene;
+using UnityEngine;
 
 namespace ECS.Unity.Materials.Systems
 {

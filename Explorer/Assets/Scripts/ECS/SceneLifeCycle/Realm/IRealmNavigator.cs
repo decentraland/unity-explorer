@@ -40,10 +40,8 @@ namespace ECS.SceneLifeCycle.Realm
 
         UniTask<UniTask> TeleportToParcelAsync(Vector2Int parcel, AsyncLoadProcessReport processReport,
             CancellationToken ct);
-        
+
         // True if changed to GenesisCity, False - when changed to any other realm
         event Action<bool> RealmChanged;
-        
-        
     }
 }

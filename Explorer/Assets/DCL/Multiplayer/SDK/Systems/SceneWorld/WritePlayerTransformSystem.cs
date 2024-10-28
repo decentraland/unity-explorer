@@ -55,6 +55,9 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
         [All(typeof(DeleteEntityIntention))]
         private void HandleComponentRemoval(in PlayerSceneCRDTEntity playerCRDTEntity)
         {
+            // Main player Transform is handled by 'WriteMainPlayerTransformSystem' and is never removed
+            if (playerCRDTEntity.CRDTEntity.Id == SpecialEntitiesID.PLAYER_ENTITY) return;
+
             ecsToCRDTWriter.DeleteMessage<SDKTransform>(playerCRDTEntity.CRDTEntity);
         }
     }

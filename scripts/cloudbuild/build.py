@@ -254,14 +254,18 @@ def poll_build(id):
     if id == -1:
         print('Error: No build ID known (-1)')
         sys.exit(1)
-
     retries = 0
     max_retries = 5
     wait_time = 2
     while retries < max_retries:
         try:
             response = requests.get(f'{URL}/buildtargets/{os.getenv('TARGET')}/builds/{id}', headers=HEADERS)
-            break
+            if response.status_code == 200:
+                break
+            else:
+                print(f'Failed to poll build with ID {id} with status code: {response.status_code}')
+                print('Response body:', response.text)
+                raise Exception(f"HTTP error {response.status_code}")
         except Exception as e:
             print(f'Request failed: {e}')
             retries += 1
@@ -270,16 +274,11 @@ def poll_build(id):
                 time.sleep(wait_time)
                 wait_time *= 2  # Increase wait time exponentially for each retry
             else:
-                raise Exception(f'Failed after {max_retries} retries')
-
-    if response.status_code != 200:
-        print(f'Failed to poll build with ID {id} with status code: {response.status_code}')
-        print('Response body:', response.text)
-        sys.exit(1)
-
+                print(f'Failed after {max_retries} retries')
+                sys.exit(1)
+    
     global build_healthy
     response_json = response.json()
-
     # { created , queued , sentToBuilder , started , restarted , success , failure , canceled , unknown }
     status = response_json['buildStatus']
     match status:

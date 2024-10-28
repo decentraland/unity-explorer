@@ -38,49 +38,11 @@ namespace ECS.StreamableLoading.Cache
         /// </summary>
         void Unload(IPerformanceBudget frameTimeBudget, int maxUnloadAmount);
 
-#region Fake
-        class Fake : IStreamableCache<TAsset, TLoadingIntention>
-        {
-            public IDictionary<string, UniTaskCompletionSource<StreamableLoadingResult<TAsset>?>> OngoingRequests { get; } = new Dictionary<string, UniTaskCompletionSource<StreamableLoadingResult<TAsset>?>>();
-            public IDictionary<string, StreamableLoadingResult<TAsset>> IrrecoverableFailures { get; } = new Dictionary<string, StreamableLoadingResult<TAsset>>();
-
-            public void Dispose() { }
-
-            public bool Equals(TLoadingIntention x, TLoadingIntention y) =>
-                throw new Exception("I am fake, try replace me with a real implementation");
-
-            public int GetHashCode(TLoadingIntention obj) =>
-                throw new Exception("I am fake, try replace me with a real implementation");
-
-            public bool TryGet(in TLoadingIntention key, out TAsset asset)
-            {
-                asset = default(TAsset);
-                return false;
-            }
-
-            public void Add(in TLoadingIntention key, TAsset asset)
-            {
-                //ignore
-            }
-
-            public void Unload(IPerformanceBudget frameTimeBudget, int maxUnloadAmount)
-            {
-                //ignore
-            }
-        }
-#endregion
-
 #region Referencing
         /// <summary>
         ///     Base implementation is empty as not every asset requires reference counting
         /// </summary>
         void AddReference(in TLoadingIntention key, TAsset asset) { }
-
-        /// <summary>
-        ///     Signal the cache that a single usage of asset went out of scope.
-        ///     It is needed for cache with limited capacity based on LRU, reference counting
-        /// </summary>
-        void Dereference(in TLoadingIntention key, TAsset asset) { }
 #endregion
     }
 }

@@ -23,6 +23,7 @@ using ECS.LifeCycle.Systems;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.NFTShapes;
 using ECS.StreamableLoading.NFTShapes.URNs;
+using ECS.StreamableLoading.Textures;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -39,7 +40,7 @@ namespace DCL.PluginSystem.World
         private readonly IWebContentSizes webContentSizes;
         private readonly IFramePrefabs framePrefabs;
         private readonly ILazyMaxSize lazyMaxSize;
-        private readonly IStreamableCache<Texture2D, GetNFTShapeIntention> cache = new NftShapeCache();
+        private readonly IStreamableCache<Texture2DData, GetNFTShapeIntention> cache = new NftShapeCache();
 
         static NFTShapePlugin()
         {
@@ -57,7 +58,7 @@ namespace DCL.PluginSystem.World
             decentralandUrlsSource,
             instantiationFrameTimeBudgetProvider,
             componentPoolsRegistry,
-            new FramesPool(NewFramePrefabs(assetsProvisioner, out var framePrefabs)),
+            new FramesPool(NewFramePrefabs(assetsProvisioner, out var framePrefabs), componentPoolsRegistry),
             framePrefabs,
             webRequestController,
             cacheCleaner,
@@ -138,6 +139,7 @@ namespace DCL.PluginSystem.World
 
             ResetDirtyFlagSystem<PBNftShape>.InjectToWorld(ref builder);
 
+            finalizeWorldSystems.Add(CleanUpNftShapeSystem.InjectToWorld(ref builder));
             finalizeWorldSystems.RegisterReleasePoolableComponentSystem<INftShapeRenderer, NftShapeRendererComponent>(ref builder, componentPoolsRegistry);
         }
 

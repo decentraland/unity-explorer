@@ -241,7 +241,7 @@ namespace DCL.Passport.Modules.Badges
                 badgeInfoModuleView.NextTierValueText.text = nextTierToComplete.tierName;
                 badgeInfoModuleView.NextTierDescriptionText.text = nextTierToComplete.description;
                 int nextTierProgressPercentage = badgeInfo.GetProgressPercentage();
-                badgeInfoModuleView.NextTierProgressBarFill.sizeDelta = new Vector2((!badgeInfo.isLocked ? nextTierProgressPercentage : 0) * (badgeInfoModuleView.NextTierProgressBar.sizeDelta.x / 100), badgeInfoModuleView.NextTierProgressBarFill.sizeDelta.y);
+                badgeInfoModuleView.NextTierProgressBarFill.sizeDelta = new Vector2(Mathf.Clamp(nextTierProgressPercentage, 0, 100) * (badgeInfoModuleView.NextTierProgressBar.sizeDelta.x / 100), badgeInfoModuleView.NextTierProgressBarFill.sizeDelta.y);
                 badgeInfoModuleView.NextTierProgressValueText.text = $"{badgeInfo.data.progress.stepsDone}/{badgeInfo.data.progress.nextStepsTarget ?? badgeInfo.data.progress.totalStepsTarget}";
             }
         }
@@ -252,7 +252,7 @@ namespace DCL.Passport.Modules.Badges
             badgeInfoModuleView.BadgeDateText.text = !badgeInfo.isLocked ? $"Unlocked: {BadgesUtils.FormatTimestampDate(badgeInfo.data.completedAt)}" : "Locked";
             badgeInfoModuleView.BadgeDescriptionText.text = badgeInfo.data.description;
             int simpleBadgeProgressPercentage = badgeInfo.data.progress.stepsDone * 100 / badgeInfo.data.progress.totalStepsTarget;
-            badgeInfoModuleView.SimpleBadgeProgressBarFill.sizeDelta = new Vector2(simpleBadgeProgressPercentage * (badgeInfoModuleView.SimpleBadgeProgressBar.sizeDelta.x / 100), badgeInfoModuleView.SimpleBadgeProgressBarFill.sizeDelta.y);
+            badgeInfoModuleView.SimpleBadgeProgressBarFill.sizeDelta = new Vector2(Mathf.Clamp(simpleBadgeProgressPercentage, 0, 100) * (badgeInfoModuleView.SimpleBadgeProgressBar.sizeDelta.x / 100), badgeInfoModuleView.SimpleBadgeProgressBarFill.sizeDelta.y);
             badgeInfoModuleView.SimpleBadgeProgressValueText.text = $"{badgeInfo.data.progress.stepsDone}/{badgeInfo.data.progress.totalStepsTarget}";
         }
 

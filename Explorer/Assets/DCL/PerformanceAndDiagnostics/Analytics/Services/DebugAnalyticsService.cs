@@ -1,11 +1,10 @@
 ﻿using DCL.Diagnostics;
 using Segment.Analytics;
 using Segment.Serialization;
-using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace DCL.PerformanceAndDiagnostics.Analytics
+namespace DCL.PerformanceAndDiagnostics.Analytics.Services
 {
     public class DebugAnalyticsService : IAnalyticsService
     {
@@ -31,7 +30,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             ReportHub.Log(ReportCategory.ANALYTICS, message.ToString());
         }
 
-        public void AddPlugin(Plugin plugin) { }
+        public void AddPlugin(EventPlugin plugin) { }
 
         public void Flush()
         {

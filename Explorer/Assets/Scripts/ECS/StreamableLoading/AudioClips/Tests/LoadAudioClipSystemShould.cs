@@ -6,6 +6,7 @@ using DCL.WebRequests.Analytics;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Tests;
+using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
 using UnityEngine;
@@ -13,7 +14,7 @@ using UnityEngine;
 namespace ECS.StreamableLoading.AudioClips.Tests
 {
     [TestFixture]
-    public class LoadAudioClipSystemShould : LoadSystemBaseShould<LoadAudioClipSystem, AudioClip, GetAudioClipIntention>
+    public class LoadAudioClipSystemShould : LoadSystemBaseShould<LoadAudioClipSystem, AudioClipData, GetAudioClipIntention>
     {
         private string successPath => $"file://{Application.dataPath + "/../TestResources/Audio/cuckoo-test-clip.mp3"}";
         private string failPath => $"file://{Application.dataPath + "/../TestResources/Audio/non_existing.mp3"}";
@@ -33,13 +34,15 @@ namespace ECS.StreamableLoading.AudioClips.Tests
             new () { CommonArguments = new CommonLoadingArguments(wrongTypePath) };
 
         protected override LoadAudioClipSystem CreateSystem() =>
-            new (world, cache, TestSuite.TestWebRequestController.INSTANCE);
+            new (world, cache, TestWebRequestController.INSTANCE);
 
         public static LoadAudioClipSystem CreateSystem(World world) =>
-            new (world, Substitute.For<IStreamableCache<AudioClip, GetAudioClipIntention>>(), TestSuite.TestWebRequestController.INSTANCE);
+            new (world, Substitute.For<IStreamableCache<AudioClipData, GetAudioClipIntention>>(), TestWebRequestController.INSTANCE);
 
-        protected override void AssertSuccess(AudioClip asset)
+        protected override void AssertSuccess(AudioClipData data)
         {
+            AudioClip asset = data.Asset;
+
             Assert.That(asset.loadState, Is.EqualTo(AudioDataLoadState.Loaded));
             Assert.That(asset.loadType, Is.EqualTo(AudioClipLoadType.DecompressOnLoad));
             Assert.That(asset.ambisonic, Is.EqualTo(false));

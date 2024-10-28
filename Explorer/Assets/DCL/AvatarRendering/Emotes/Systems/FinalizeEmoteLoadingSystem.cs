@@ -3,6 +3,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using CommunicationData.URLHelpers;
+using DCL.AvatarRendering.Emotes.Load;
 using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Loading.Systems.Abstract;
@@ -10,22 +11,24 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
 using DCL.Optimization.Pools;
 using ECS.StreamableLoading.AssetBundles;
+using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
-using UnityEngine;
 using AssetBundleManifestPromise = ECS.StreamableLoading.Common.AssetPromise<SceneRunner.Scene.SceneAssetBundleManifest, DCL.AvatarRendering.Wearables.Components.GetWearableAssetBundleManifestIntention>;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
-using AudioPromise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.AudioClip, ECS.StreamableLoading.AudioClips.GetAudioClipIntention>;
+using AudioPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AudioClips.AudioClipData, ECS.StreamableLoading.AudioClips.GetAudioClipIntention>;
 using EmotesFromRealmPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesDTOList,
     DCL.AvatarRendering.Emotes.GetEmotesByPointersFromRealmIntention>;
+using EmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
+    DCL.AvatarRendering.Emotes.GetEmotesByPointersIntention>;
 
 namespace DCL.AvatarRendering.Emotes
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [LogCategory(ReportCategory.EMOTE)]
-    [UpdateAfter(typeof(Load.LoadEmotesByPointersSystem))]
-    [UpdateAfter(typeof(Load.LoadSceneEmotesSystem))]
+    [UpdateAfter(typeof(LoadEmotesByPointersSystem))]
+    [UpdateAfter(typeof(LoadSceneEmotesSystem))]
     public partial class FinalizeEmoteLoadingSystem : FinalizeElementsLoadingSystem<GetEmotesByPointersFromRealmIntention, IEmote, EmoteDTO, EmotesDTOList>
     {
         public FinalizeEmoteLoadingSystem(World world, IEmoteStorage emoteStorage) : base(world, emoteStorage, new ListObjectPool<URN>()) { }
@@ -36,6 +39,7 @@ namespace DCL.AvatarRendering.Emotes
             FinalizeAssetBundleManifestLoadingQuery(World);
             FinalizeAssetBundleLoadingQuery(World);
             FinalizeAudioClipPromiseQuery(World);
+            ConsumeAndDisposeFinishedEmotePromiseQuery(World);
         }
 
         [Query]
@@ -102,10 +106,8 @@ namespace DCL.AvatarRendering.Emotes
                 {
                     var asset = new StreamableLoadingResult<AttachmentRegularAsset>(result.ToRegularAsset());
 
-                    if (emote.IsUnisex())
+                    if (emote.IsUnisex() && emote.HasSameClipForAllGenders())
                     {
-                        // TODO: can an emote have different files for each gender?
-                        // if that the case, we should not set the same asset result for both body shapes
                         emote.AssetResults[BodyShape.MALE] = asset;
                         emote.AssetResults[BodyShape.FEMALE] = asset;
                     }
@@ -126,13 +128,24 @@ namespace DCL.AvatarRendering.Emotes
 
             if (promise.IsConsumed) return;
 
-            if (!promise.SafeTryConsume(World!, GetReportCategory(), out StreamableLoadingResult<AudioClip> result))
+            if (!promise.SafeTryConsume(World!, GetReportCategory(), out StreamableLoadingResult<AudioClipData> result))
                 return;
 
             if (result.Succeeded)
                 emote.AudioAssetResults[bodyShape] = result;
 
             World!.Destroy(entity);
+        }
+
+        [Query]
+        private void ConsumeAndDisposeFinishedEmotePromise(in Entity entity, ref EmotePromise promise)
+        {
+            // The result is added into the emote storage at FinalizeEmoteDTO already, no need to do anything else
+            if (!promise.SafeTryConsume(World, GetReportData(), out StreamableLoadingResult<EmotesResolution> result)) return;
+
+            promise.LoadingIntention.Dispose();
+
+            World.Destroy(entity);
         }
 
         private static void ResetEmoteResultOnCancellation(IEmote emote, BodyShape bodyShape)

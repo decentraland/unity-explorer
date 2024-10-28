@@ -61,7 +61,9 @@ namespace DCL.AuthenticationScreenFlow
         private readonly ICharacterPreviewFactory characterPreviewFactory;
         private readonly ISplashScreen splashScreenAnimator;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
+#if !UNITY_EDITOR
         private readonly FeatureFlagsCache featureFlagsCache;
+#endif
         private readonly AudioMixerVolumesController audioMixerVolumesController;
         private readonly World world;
 
@@ -92,13 +94,14 @@ namespace DCL.AuthenticationScreenFlow
         {
             this.web3Authenticator = web3Authenticator;
             this.selfProfile = selfProfile;
+#if !UNITY_EDITOR
             this.featureFlagsCache = featureFlagsCache;
+#endif
             this.webBrowser = webBrowser;
             this.storedIdentityProvider = storedIdentityProvider;
             this.characterPreviewFactory = characterPreviewFactory;
             this.splashScreenAnimator = splashScreenAnimator;
             this.characterPreviewEventBus = characterPreviewEventBus;
-            this.featureFlagsCache = featureFlagsCache;
             this.audioMixerVolumesController = audioMixerVolumesController;
             this.world = world;
         }

@@ -21,6 +21,8 @@ namespace DCL.Optimization.Pools
             this.rootContainer = rootContainer;
         }
 
+        public Transform RootContainerTransform() => rootContainer;
+
         public void Dispose()
         {
             lock (pools)
@@ -52,14 +54,14 @@ namespace DCL.Optimization.Pools
             lock (pools) { return pools[type]; }
         }
 
-        public IComponentPool<T> AddGameObjectPool<T>(Func<T> creationHandler = null, Action<T> onRelease = null, int maxSize = 1024, Action<T> onGet = null) where T: Component
+        public GameObjectPool<T> AddGameObjectPool<T>(Func<T>? creationHandler = null, Action<T>? onRelease = null, int maxSize = 1024, Action<T>? onGet = null) where T: Component
         {
             lock (pools)
             {
                 if (pools.TryGetValue(typeof(T), out var existingPool))
                 {
                     ReportHub.LogError("ComponentPoolsRegistry", $"Pool for type {typeof(T)} already exists!");
-                    return (IComponentPool<T>) existingPool;
+                    return (GameObjectPool<T>) existingPool;
                 }
 
                 var newPool = new GameObjectPool<T>(rootContainer, creationHandler, onRelease, maxSize, onGet);

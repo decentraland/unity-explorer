@@ -122,14 +122,24 @@ namespace DCL.Passport.Modules
         {
             saveInfoCts = saveInfoCts.SafeRestart();
             SaveInfoAsync(saveInfoCts.Token).Forget();
-            return;
+        }
 
-            async UniTaskVoid SaveInfoAsync(CancellationToken ct)
+        private async UniTaskVoid SaveInfoAsync(CancellationToken ct)
+        {
+            try
             {
                 SetInfoSectionAsSavingStatus(true);
                 descriptionController.SaveDataIntoProfile();
                 additionalFieldsController.SaveDataIntoProfile();
                 await passportProfileInfoController.UpdateProfileAsync(ct);
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception e)
+            {
+                const string ERROR_MESSAGE = "There was an error while trying to save your profile. Please try again!";
+                passportErrorsController.Show(ERROR_MESSAGE);
+                ReportHub.LogError(ReportCategory.PROFILE, $"{ERROR_MESSAGE} ERROR: {e.Message}");
+                SetInfoSectionAsEditionMode(false);
             }
         }
 

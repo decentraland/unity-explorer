@@ -32,6 +32,10 @@ using UnityEngine.AddressableAssets;
 using UnityEngine.Pool;
 using Utility;
 using Object = UnityEngine.Object;
+using StartAvatarMatricesCalculationSystem = DCL.AvatarRendering.AvatarShape.Systems.StartAvatarMatricesCalculationSystem;
+#if UNITY_EDITOR
+using DCL.AvatarAnimation;
+#endif
 
 namespace DCL.PluginSystem.Global
 {
@@ -49,7 +53,7 @@ namespace DCL.PluginSystem.Global
         private readonly IPerformanceBudget memoryBudget;
         private readonly IRealmData realmData;
 
-        private readonly AttachmentsAssetsCache attachmentsAssetsCache = new (100);
+        private readonly AttachmentsAssetsCache attachmentsAssetsCache;
 
         // late init
         private IComponentPool<AvatarBase> avatarPoolRegistry = null!;
@@ -59,6 +63,7 @@ namespace DCL.PluginSystem.Global
         private readonly NametagsData nametagsData;
 
         private IComponentPool<Transform> transformPoolRegistry = null!;
+        private Transform? poolParent = null;
 
         private IObjectPool<NametagView> nametagViewPool = null!;
         private TextureArrayContainer textureArrayContainer;
@@ -108,6 +113,7 @@ namespace DCL.PluginSystem.Global
             this.wearableStorage = wearableStorage;
             componentPoolsRegistry = poolsRegistry;
             avatarTransformMatrixJobWrapper = new AvatarTransformMatrixJobWrapper();
+            attachmentsAssetsCache = new AttachmentsAssetsCache(100, poolsRegistry);
 
             cacheCleaner.Register(attachmentsAssetsCache);
         }
@@ -116,6 +122,7 @@ namespace DCL.PluginSystem.Global
         {
             attachmentsAssetsCache.Dispose();
             avatarTransformMatrixJobWrapper.Dispose();
+            UnityObjectUtils.SafeDestroyGameObject(poolParent);
         }
 
         public async UniTask InitializeAsync(AvatarShapeSettings settings, CancellationToken ct)
@@ -147,7 +154,7 @@ namespace DCL.PluginSystem.Global
             foreach (var extendedObjectPool in avatarMaterialPoolHandler.GetAllMaterialsPools())
                 cacheCleaner.Register(extendedObjectPool.Pool);
 
-            
+
             AvatarInstantiatorSystem.InjectToWorld(ref builder, frameTimeCapBudget, memoryBudget, avatarPoolRegistry, avatarMaterialPoolHandler,
                 computeShaderPool, attachmentsAssetsCache, skinningStrategy, vertOutBuffer, mainPlayerAvatarBaseProxy, defaultFaceFeaturesHandler,
                 wearableStorage,  avatarTransformMatrixJobWrapper);
@@ -168,6 +175,9 @@ namespace DCL.PluginSystem.Global
 
             //Debug scripts
             InstantiateRandomAvatarsSystem.InjectToWorld(ref builder, debugContainerBuilder, realmData, transformPoolRegistry, avatarRandomizerAsset);
+#if UNITY_EDITOR
+            PlayableDirectorUpdatingSystem.InjectToWorld(ref builder);
+#endif
         }
 
         private async UniTask CreateAvatarBasePoolAsync(AvatarShapeSettings settings, CancellationToken ct)
@@ -182,10 +192,18 @@ namespace DCL.PluginSystem.Global
         {
             NametagView nametagPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.NametagView, ct: ct)).Value.GetComponent<NametagView>();
 
+            var poolRoot = componentPoolsRegistry.RootContainerTransform();
+            poolParent = new GameObject("POOL_CONTAINER_NameTags").transform;
+            poolParent.parent = poolRoot;
+
             nametagViewPool = new ObjectPool<NametagView>(
-                () => Object.Instantiate(nametagPrefab, Vector3.zero, Quaternion.identity, null),
-                actionOnGet: (nametagView) => nametagView.gameObject.SetActive(true),
-                actionOnRelease: (nametagView) => nametagView.gameObject.SetActive(false),
+                () =>
+                {
+                    var nameTagView = Object.Instantiate(nametagPrefab, Vector3.zero, Quaternion.identity, poolParent);
+                    nameTagView.gameObject.SetActive(false);
+                    return nameTagView;
+                },
+                actionOnRelease: (nameTagView) => nameTagView.gameObject.SetActive(false),
                 actionOnDestroy: UnityObjectUtils.SafeDestroy);
         }
 

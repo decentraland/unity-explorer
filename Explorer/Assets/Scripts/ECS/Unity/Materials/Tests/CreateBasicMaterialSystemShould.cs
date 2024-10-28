@@ -61,7 +61,7 @@ namespace ECS.Unity.Materials.Tests
 
             component.Status = StreamableLoading.LifeCycle.LoadingInProgress;
 
-            component.AlbedoTexPromise = AssetPromise<Texture2D, GetTextureIntention>.Create(world, new GetTextureIntention(), PartitionComponent.TOP_PRIORITY);
+            component.AlbedoTexPromise = AssetPromise<Texture2DData, GetTextureIntention>.Create(world, new GetTextureIntention(), PartitionComponent.TOP_PRIORITY);
 
             Entity e = world.Create(component);
 
@@ -73,15 +73,16 @@ namespace ECS.Unity.Materials.Tests
             Assert.That(afterUpdate.Result, Is.Null);
         }
 
-        private void CreateAndFinalizeTexturePromise(ref AssetPromise<Texture2D, GetTextureIntention>? promise)
+        private void CreateAndFinalizeTexturePromise(ref AssetPromise<Texture2DData, GetTextureIntention>? promise)
         {
-            promise = AssetPromise<Texture2D, GetTextureIntention>.Create(world, new GetTextureIntention(), PartitionComponent.TOP_PRIORITY);
-            world.Add(promise.Value.Entity, new StreamableLoadingResult<Texture2D>(Texture2D.grayTexture));
+            promise = AssetPromise<Texture2DData, GetTextureIntention>.Create(world, new GetTextureIntention(), PartitionComponent.TOP_PRIORITY);
+            world.Add(promise.Value.Entity, new StreamableLoadingResult<Texture2DData>(new Texture2DData(Texture2D.grayTexture)));
         }
 
         internal static MaterialComponent CreateMaterialComponent() =>
             new (MaterialData.CreateBasicMaterial(
-                new TextureComponent("albedo", TextureWrapMode.Mirror, FilterMode.Point),
+                new TextureComponent("albedo",string.Empty, TextureWrapMode.Mirror, FilterMode.Point),
+                null,
                 0,
                 Color.red,
                 false));

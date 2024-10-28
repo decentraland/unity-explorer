@@ -1,5 +1,3 @@
-#nullable enable
-
 using DCL.Multiplayer.HealthChecks;
 using DCL.Web3.Identities;
 using ECS;

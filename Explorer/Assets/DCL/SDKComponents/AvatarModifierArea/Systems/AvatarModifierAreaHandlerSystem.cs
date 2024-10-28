@@ -4,7 +4,6 @@ using Arch.SystemGroups;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.CharacterTriggerArea.Components;
-using DCL.CharacterTriggerArea.Systems;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Multiplayer.Connections.Typing;
@@ -43,6 +42,20 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
             HandleComponentRemovalQuery(World!);
         }
 
+        public void FinalizeComponents(in Query query)
+        {
+            ResetAffectedEntitiesQuery(World!);
+        }
+
+        [Query]
+        private void ResetAffectedEntities(in Entity entity, ref CharacterTriggerAreaComponent triggerAreaComponent, ref AvatarModifierAreaComponent modifierComponent)
+        {
+            foreach (Transform avatarTransform in triggerAreaComponent.CurrentAvatarsInside)
+                ShowAvatar(avatarTransform);
+
+            World!.Remove<AvatarModifierAreaComponent>(entity);
+        }
+
         [Query]
         [None(typeof(CharacterTriggerAreaComponent), typeof(AvatarModifierAreaComponent))]
         [All(typeof(TransformComponent))]
@@ -65,13 +78,18 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
                 modifierAreaComponent.SetExcludedIds(pbAvatarModifierArea.ExcludeIds!);
 
                 // Update effect on now excluded/non-excluded avatars
-                foreach (Transform avatarTransform in triggerAreaComponent.CurrentAvatarsInside) { CorrectAvatarHidingState(avatarTransform, modifierAreaComponent.ExcludedIds); }
+                foreach (Transform avatarTransform in triggerAreaComponent.CurrentAvatarsInside)
+                    HideAvatar(avatarTransform, modifierAreaComponent.ExcludedIds);
             }
 
-            foreach (Transform avatarTransform in triggerAreaComponent.ExitedAvatarsToBeProcessed) { ToggleAvatarHiding(avatarTransform, false, modifierAreaComponent.ExcludedIds); }
+            foreach (Transform avatarTransform in triggerAreaComponent.ExitedAvatarsToBeProcessed)
+                ShowAvatar(avatarTransform);
+
             triggerAreaComponent.TryClearExitedAvatarsToBeProcessed();
 
-            foreach (Transform avatarTransform in triggerAreaComponent.EnteredAvatarsToBeProcessed) { ToggleAvatarHiding(avatarTransform, true, modifierAreaComponent.ExcludedIds); }
+            foreach (Transform avatarTransform in triggerAreaComponent.EnteredAvatarsToBeProcessed)
+                HideAvatar(avatarTransform, modifierAreaComponent.ExcludedIds);
+
             triggerAreaComponent.TryClearEnteredAvatarsToBeProcessed();
         }
 
@@ -80,7 +98,8 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
         private void HandleEntityDestruction(ref CharacterTriggerAreaComponent triggerAreaComponent, ref AvatarModifierAreaComponent modifierComponent)
         {
             // Reset state of affected entities
-            foreach (Transform avatarTransform in triggerAreaComponent.CurrentAvatarsInside) { ToggleAvatarHiding(avatarTransform, false, modifierComponent.ExcludedIds); }
+            foreach (Transform avatarTransform in triggerAreaComponent.CurrentAvatarsInside)
+                ShowAvatar(avatarTransform);
 
             modifierComponent.Dispose();
         }
@@ -91,48 +110,40 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
         {
             // Reset state of affected entities
             foreach (Transform avatarTransform in triggerAreaComponent.CurrentAvatarsInside)
-                ToggleAvatarHiding(avatarTransform, false, modifierComponent.ExcludedIds);
+                ShowAvatar(avatarTransform);
 
             modifierComponent.Dispose();
 
             World!.Remove<AvatarModifierAreaComponent>(e);
         }
 
-        internal void ToggleAvatarHiding(Transform avatarTransform, bool shouldHide, HashSet<string> excludedIds)
+        private void ShowAvatar(Transform avatarTransform)
         {
             var result = findAvatarQuery.AvatarWithTransform(avatarTransform);
             if (!result.Success) return;
 
             var entity = result.Result;
 
-            if (globalWorld.TryGet(entity, out Profile? profile) && excludedIds.Contains(profile!.UserId)) return;
-            globalWorld.Get<AvatarShapeComponent>(entity).UpdateHiddenStatus(shouldHide);
+            ref AvatarShapeComponent avatarShape = ref globalWorld.TryGetRef<AvatarShapeComponent>(entity, out bool hasAvatarShape);
+            if (!hasAvatarShape) return;
+
+            avatarShape.HiddenByModifierArea = false;
         }
 
-        internal void CorrectAvatarHidingState(Transform avatarTransform, HashSet<string> excludedIds)
+        private void HideAvatar(Transform avatarTransform, HashSet<string> excludedIds)
         {
             var result = findAvatarQuery.AvatarWithTransform(avatarTransform);
             if (!result.Success) return;
 
             var entity = result.Result;
 
-            if (globalWorld.TryGet(entity, out Profile? profile))
-                globalWorld.Get<AvatarShapeComponent>(entity).UpdateHiddenStatus(excludedIds.Contains(profile!.UserId) == false);
-        }
+            if (!globalWorld.TryGet(entity, out Profile? profile)) return;
 
-        [Query]
-        private void FinalizeComponents(in Entity entity, ref CharacterTriggerAreaComponent triggerAreaComponent, ref AvatarModifierAreaComponent modifierComponent)
-        {
-            // Reset state of affected entities
-            foreach (Transform avatarTransform in triggerAreaComponent.CurrentAvatarsInside)
-                ToggleAvatarHiding(avatarTransform, false, modifierComponent.ExcludedIds);
+            ref AvatarShapeComponent avatarShape = ref globalWorld.TryGetRef<AvatarShapeComponent>(entity, out bool hasAvatarShape);
+            if (!hasAvatarShape) return;
 
-            World!.Remove<AvatarModifierAreaComponent>(entity);
-        }
-
-        public void FinalizeComponents(in Query query)
-        {
-            FinalizeComponentsQuery(World!);
+            bool shouldHide = !excludedIds.Contains(profile!.UserId);
+            avatarShape.HiddenByModifierArea = shouldHide;
         }
 
         private class FindAvatarQuery
@@ -163,7 +174,8 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
             private void FindEntity(Entity entity)
             {
                 if (foundedEntityOrNull != Entity.Null) return;
-                if (globalWorld.Get<AvatarBase>(entity).transform.parent == requiredTransform) foundedEntityOrNull = entity;
+                if (globalWorld.Get<AvatarBase>(entity).transform.parent != requiredTransform) return;
+                foundedEntityOrNull = entity;
             }
         }
     }

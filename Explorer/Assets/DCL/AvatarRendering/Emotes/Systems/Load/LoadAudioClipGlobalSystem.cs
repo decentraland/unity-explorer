@@ -13,6 +13,6 @@ namespace DCL.AvatarRendering.Emotes.Load
     [LogCategory(ReportCategory.SDK_AUDIO_SOURCES)]
     public partial class LoadAudioClipGlobalSystem : LoadAudioClipSystem
     {
-        internal LoadAudioClipGlobalSystem(World world, IStreamableCache<AudioClip, GetAudioClipIntention> cache, IWebRequestController webRequestController) : base(world, cache, webRequestController) { }
+        internal LoadAudioClipGlobalSystem(World world, IStreamableCache<AudioClipData, GetAudioClipIntention> cache, IWebRequestController webRequestController) : base(world, cache, webRequestController) { }
     }
 }

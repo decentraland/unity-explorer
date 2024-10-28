@@ -1,5 +1,6 @@
 using Arch.SystemGroups;
 using DCL.ECSComponents;
+using DCL.Optimization.Pools;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.ResourcesUnloading;
 using ECS.Abstract;
@@ -13,6 +14,7 @@ using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.GLTFContainer.Systems;
 using ECS.Unity.Visibility.Systems;
 using System.Collections.Generic;
+using DCL.UserInAppInitializationFlow;
 using ECS.SceneLifeCycle;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.GLTF;
@@ -32,15 +34,17 @@ namespace DCL.PluginSystem.World
         private readonly SceneAssetLock sceneAssetLock;
         private readonly bool localSceneDevelopment;
         private readonly bool useRemoteAssetBundles;
+        private readonly ILoadingStatus loadingStatus;
 
-        public GltfContainerPlugin(ECSWorldSingletonSharedDependencies globalDeps, CacheCleaner cacheCleaner, ISceneReadinessReportQueue sceneReadinessReportQueue, SceneAssetLock sceneAssetLock, bool localSceneDevelopment, bool useRemoteAssetBundles)
+        public GltfContainerPlugin(ECSWorldSingletonSharedDependencies globalDeps, CacheCleaner cacheCleaner, ISceneReadinessReportQueue sceneReadinessReportQueue, SceneAssetLock sceneAssetLock, IComponentPoolsRegistry poolsRegistry, bool localSceneDevelopment, bool useRemoteAssetBundles, ILoadingStatus loadingStatus)
         {
             this.globalDeps = globalDeps;
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
             this.sceneAssetLock = sceneAssetLock;
             this.localSceneDevelopment = localSceneDevelopment;
             this.useRemoteAssetBundles = useRemoteAssetBundles;
-            assetsCache = new GltfContainerAssetsCache();
+            this.loadingStatus = loadingStatus;
+            assetsCache = new GltfContainerAssetsCache(poolsRegistry);
 
             cacheCleaner.Register(assetsCache);
         }
@@ -75,7 +79,7 @@ namespace DCL.PluginSystem.World
             GltfContainerVisibilitySystem.InjectToWorld(ref builder, buffer);
 
             GatherGltfAssetsSystem.InjectToWorld(ref builder, sceneReadinessReportQueue, sharedDependencies.SceneData,
-                buffer, sharedDependencies.SceneStateProvider, globalDeps.MemoryBudget);
+                buffer, sharedDependencies.SceneStateProvider, globalDeps.MemoryBudget, loadingStatus);
 
             ResetDirtyFlagSystem<PBGltfContainer>.InjectToWorld(ref builder);
 

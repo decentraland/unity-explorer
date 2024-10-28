@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace ECS.StreamableLoading.GLTF
 {
-    public class GLTFData : IAssetData
+    public class GLTFData : IStreamableRefCountData
     {
         public readonly GltfImport gltfImportedData;
         public readonly GameObject containerGameObject;

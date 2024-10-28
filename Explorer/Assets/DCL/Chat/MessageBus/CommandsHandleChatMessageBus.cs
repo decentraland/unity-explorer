@@ -32,12 +32,12 @@ namespace DCL.Chat.MessageBus
             commandCts.SafeCancelAndDispose();
         }
 
-        public void Send(string message)
+        public void Send(string message, string origin)
         {
             //If the message doesn't start as a command (with "/"), we just forward it to the chat
-            if (!chatCommandsHandler.StartsLikeCommand(message))
+            if (!ChatCommandsHandler.StartsLikeCommand(message))
             {
-                origin.Send(message);
+                this.origin.Send(message, origin);
                 return;
             }
 

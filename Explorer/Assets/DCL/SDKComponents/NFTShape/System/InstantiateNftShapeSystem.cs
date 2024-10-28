@@ -9,6 +9,7 @@ using DCL.SDKComponents.NFTShape.Frames.FramePrefabs;
 using DCL.SDKComponents.NFTShape.Renderer;
 using DCL.SDKComponents.NFTShape.Renderer.Factory;
 using ECS.Abstract;
+using ECS.StreamableLoading.Cache;
 using ECS.Unity.Groups;
 using ECS.Unity.Materials.Components;
 using ECS.Unity.Transforms.Components;
@@ -71,6 +72,7 @@ namespace DCL.SDKComponents.NFTShape.System
             if (!sourceChanged) return;
 
             changedNftShapes.Add(entity, nftShapeRendererComponent);
+            loadingComponent.Promise.TryDereference(World);
             loadingComponent.Promise.ForgetLoading(World);
             World.Remove<NFTLoadingComponent>(entity);
 

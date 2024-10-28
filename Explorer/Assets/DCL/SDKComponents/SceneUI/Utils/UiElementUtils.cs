@@ -153,7 +153,7 @@ namespace DCL.SDKComponents.SceneUI.Utils
             }
         }
 
-        public static void SetupFromSdkModel(this DCLImage imageToSetup, ref PBUiBackground model, Texture2D texture = null)
+        public static void SetupFromSdkModel(this DCLImage imageToSetup, ref PBUiBackground model, Texture2D? texture = null)
         {
             imageToSetup.Color = model.GetColor();
             imageToSetup.Slices = model.GetBorder();

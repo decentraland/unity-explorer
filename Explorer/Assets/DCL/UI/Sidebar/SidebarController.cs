@@ -139,7 +139,7 @@ namespace DCL.UI.Sidebar
 
         private async UniTaskVoid UpdateFrameColorAsync()
         {
-            Profile? profile = await profileRepository.GetAsync(identityCache.Identity!.Address, 0, profileWidgetCts.Token);
+            Profile? profile = await profileRepository.GetAsync(identityCache.Identity!.Address, profileWidgetCts.Token);
             viewInstance!.FaceFrame.color = chatEntryConfiguration.GetNameColor(profile?.Name);
         }
 

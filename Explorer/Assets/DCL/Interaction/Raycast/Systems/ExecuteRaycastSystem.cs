@@ -44,9 +44,9 @@ namespace DCL.Interaction.Raycast.Systems
         private readonly ISceneStateProvider sceneStateProvider;
 
         private readonly ISceneData sceneData;
-        private List<RaycastData> orderedRaycastData;
+        private List<RaycastData>? orderedRaycastData;
 
-        private readonly PBRaycastResult EMPTY_RAYCAST_RESULT;
+        private readonly PBRaycastResult emptyRaycastResult;
 
         internal ExecuteRaycastSystem(World world,
             ISceneData sceneData,
@@ -68,7 +68,7 @@ namespace DCL.Interaction.Raycast.Systems
             this.entitiesMap = entitiesMap;
             this.ecsToCRDTWriter = ecsToCRDTWriter;
             this.sceneStateProvider = sceneStateProvider;
-            EMPTY_RAYCAST_RESULT = raycastComponentPool.Get();
+            emptyRaycastResult = raycastComponentPool.Get();
         }
 
         public override void Initialize()
@@ -78,8 +78,10 @@ namespace DCL.Interaction.Raycast.Systems
 
         public override void Dispose()
         {
-            ListPool<RaycastData>.Release(orderedRaycastData);
-            raycastComponentPool.Release(EMPTY_RAYCAST_RESULT);
+            if (orderedRaycastData != null)
+                ListPool<RaycastData>.Release(orderedRaycastData);
+
+            raycastComponentPool.Release(emptyRaycastResult);
         }
 
         protected override void Update(float t)
@@ -294,8 +296,8 @@ namespace DCL.Interaction.Raycast.Systems
         [None(typeof(DeleteEntityIntention))]
         private void ClearRaycastIntents(ref CRDTEntity crdtEntity, ref PBRaycast raycast)
         {
-            EMPTY_RAYCAST_RESULT.Hits.Clear();
-            ecsToCRDTWriter.PutMessage(EMPTY_RAYCAST_RESULT, crdtEntity);
+            emptyRaycastResult.Hits.Clear();
+            ecsToCRDTWriter.PutMessage(emptyRaycastResult, crdtEntity);
         }
     }
 }

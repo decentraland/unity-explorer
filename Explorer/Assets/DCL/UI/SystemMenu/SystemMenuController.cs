@@ -85,13 +85,6 @@ namespace DCL.UI.SystemMenu
             OnClosed?.Invoke();
         }
 
-
-        protected override void OnViewClose()
-        {
-            logoutCts.SafeCancelAndDispose();
-            base.OnViewClose();
-        }
-
         private void ShowTermsOfService() =>
             webBrowser.OpenUrl(DecentralandUrl.TermsOfUse);
 
@@ -105,7 +98,7 @@ namespace DCL.UI.SystemMenu
             if (string.IsNullOrEmpty(userId))
                 return;
 
-            mvcManager.ShowAsync(PassportController.IssueCommand(new PassportController.Params(userId))).Forget();
+            mvcManager.ShowAsync(PassportController.IssueCommand(new PassportController.Params(userId, isOwnProfile: true))).Forget();
         }
 
         private void ExitApp()
@@ -127,13 +120,19 @@ namespace DCL.UI.SystemMenu
 
                 profileCache.Remove(address);
 
-                await userInAppInitializationFlow.ExecuteAsync(true, true,
-
-                    // We have to reload the realm so the scenes are recreated when coming back to the world
-                    // The realm fetches the scene entity definitions again and creates the components in ecs
-                    // so the SceneFacade can be later attached into the entity
-                    true,
-                    world, playerEntity, ct);
+                await userInAppInitializationFlow.ExecuteAsync(
+                    new UserInAppInitializationFlowParameters
+                    {
+                        ShowAuthentication = true,
+                        ShowLoading = true,
+                        // We have to reload the realm so the scenes are recreated when coming back to the world
+                        // The realm fetches the scene entity definitions again and creates the components in ecs
+                        // so the SceneFacade can be later attached into the entity
+                        ReloadRealm = true,
+                        FromLogout = true,
+                        World = world,
+                        PlayerEntity = playerEntity,
+                    }, ct);
             }
 
             logoutCts = logoutCts.SafeRestart();

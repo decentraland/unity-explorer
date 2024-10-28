@@ -9,6 +9,14 @@ PrefabInstance:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 401758791842004506, guid: e7d14406516774d91886b6b4d1a26a58, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 1.1
+      objectReference: {fileID: 0}
+    - target: {fileID: 401758791842004506, guid: e7d14406516774d91886b6b4d1a26a58, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 1.1
+      objectReference: {fileID: 0}
+    - target: {fileID: 401758791842004506, guid: e7d14406516774d91886b6b4d1a26a58, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0.5
       objectReference: {fileID: 0}
@@ -84,6 +92,14 @@ PrefabInstance:
       propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3757444117798041812, guid: e7d14406516774d91886b6b4d1a26a58, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 1.7
+      objectReference: {fileID: 0}
+    - target: {fileID: 3757444117798041812, guid: e7d14406516774d91886b6b4d1a26a58, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 1.7
+      objectReference: {fileID: 0}
     - target: {fileID: 5509360222516807291, guid: e7d14406516774d91886b6b4d1a26a58, type: 3}
       propertyPath: m_IsActive
       value: 0
@@ -114,7 +130,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5678877870475829863, guid: e7d14406516774d91886b6b4d1a26a58, type: 3}
       propertyPath: m_Name
-      value: PinMarkerObject_Destination Variant
+      value: MapPinMarkerObject_Destination Variant
       objectReference: {fileID: 0}
     - target: {fileID: 7497024445081897480, guid: e7d14406516774d91886b6b4d1a26a58, type: 3}
       propertyPath: m_IsActive
@@ -124,6 +140,10 @@ PrefabInstance:
       propertyPath: m_Sprite
       value: 
       objectReference: {fileID: 21300000, guid: fe445879d71a74c8ea58321ac9797532, type: 3}
+    - target: {fileID: 8021033074534932352, guid: e7d14406516774d91886b6b4d1a26a58, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0.66
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

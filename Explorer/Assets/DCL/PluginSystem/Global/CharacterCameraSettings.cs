@@ -1,8 +1,10 @@
 using DCL.AssetsProvision;
 using DCL.Audio;
 using DCL.CharacterCamera.Settings;
+using DCL.Settings.Settings;
 using System;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 
 namespace DCL.PluginSystem.Global
 {
@@ -13,6 +15,7 @@ namespace DCL.PluginSystem.Global
         [field: Space]
         [field: SerializeField] internal CinemachinePresetRef cinemachinePreset { get; private set; }
         [field: SerializeField] internal CinemachineCameraAudioSettingsReference cinemachineCameraAudioSettingsReference { get; private set; }
+        [field: SerializeField] internal AssetReferenceT<ControlsSettingsAsset> controlsSettingsAsset { get; private set; }
 
         [Serializable]
         public class CinemachinePresetRef : ComponentReference<CinemachinePreset>

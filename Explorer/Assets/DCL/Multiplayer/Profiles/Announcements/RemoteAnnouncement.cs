@@ -12,6 +12,6 @@ namespace DCL.Multiplayer.Profiles.RemoteAnnouncements
         }
 
         public override string ToString() =>
-            $"(RemoteAnnouncement: {{ Version: {Version}, WalletId: {WalletId} }})";
+            $"(RemoteAnnouncement: (Version: {Version}, WalletId: {WalletId}))";
     }
 }

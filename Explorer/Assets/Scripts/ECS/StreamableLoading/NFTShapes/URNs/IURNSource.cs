@@ -7,21 +7,6 @@ namespace ECS.StreamableLoading.NFTShapes.URNs
     {
         URLAddress UrlOrEmpty(URN urn);
 
-        class Fake : IURNSource
-        {
-            private readonly URLAddress url;
-
-            public Fake(string url) : this(URLAddress.FromString(url)) { }
-
-            public Fake(URLAddress url)
-            {
-                this.url = url;
-            }
-
-            public URLAddress UrlOrEmpty(URN urn) =>
-                url;
-        }
-
         public static string BaseURL(IDecentralandUrlsSource decentralandUrlsSource) =>
             $"{decentralandUrlsSource.Url(DecentralandUrl.OpenSea)}/api/v2/chain/{{chain}}/contract/{{address}}/nfts/{{id}}";
     }

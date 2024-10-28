@@ -40,6 +40,8 @@ namespace DCL.PluginSystem.World
             ResetDirtyFlagSystem<PBAvatarAttach>.InjectToWorld(ref builder);
             var avatarShapeHandlerSystem = AvatarAttachHandlerSystem.InjectToWorld(ref builder, mainPlayerAvatarBaseProxy, sharedDependencies.SceneStateProvider);
             finalizeWorldSystems.Add(avatarShapeHandlerSystem);
+
+            AvatarAttachHandlerSetupSystem.InjectToWorld(ref builder, mainPlayerAvatarBaseProxy, sharedDependencies.SceneStateProvider);
         }
     }
 }

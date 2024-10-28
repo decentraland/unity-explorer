@@ -10,6 +10,7 @@ using DCL.Diagnostics;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Multiplayer.Profiles.Poses;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
 using DCL.Passport.Modules;
@@ -29,6 +30,13 @@ namespace DCL.Passport
 {
     public partial class PassportController : ControllerBase<PassportView, PassportController.Params>
     {
+        private enum OpenBadgeSectionOrigin
+        {
+            Button,
+            Notification
+        }
+
+
         private static readonly int BG_SHADER_COLOR_1 = Shader.PropertyToID("_Color1");
 
         private readonly ICursor cursor;
@@ -52,8 +60,10 @@ namespace DCL.Passport
         private readonly List<IPassportModuleController> overviewPassportModules = new ();
         private readonly List<IPassportModuleController> badgesPassportModules = new ();
         private readonly IInputBlock inputBlock;
+        private readonly IRemoteMetadata remoteMetadata;
 
         private Profile? ownProfile;
+        private bool isOwnProfile;
         private string currentUserId;
         private CancellationTokenSource? openPassportFromBadgeNotificationCts;
         private CancellationTokenSource? characterPreviewLoadingCts;
@@ -61,10 +71,13 @@ namespace DCL.Passport
         private PassportCharacterPreviewController? characterPreviewController;
         private PassportSection currentSection;
         private PassportSection alreadyLoadedSections;
+        private BadgesDetails_PassportModuleController badgesDetailsPassportModuleController;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
-        public event Action<string>? PassportOpened;
+        public event Action<string, bool>? PassportOpened;
+        public event Action<string, bool, string>? BadgesSectionOpened;
+        public event Action<string, bool>? BadgeSelected;
 
         public PassportController(
             ViewFactoryMethod viewFactory,
@@ -86,8 +99,8 @@ namespace DCL.Passport
             BadgesAPIClient badgesAPIClient,
             IWebRequestController webRequestController,
             IInputBlock inputBlock,
-            INotificationsBusController notificationBusController
-        ) : base(viewFactory)
+            INotificationsBusController notificationBusController,
+            IRemoteMetadata remoteMetadata) : base(viewFactory)
         {
             this.cursor = cursor;
             this.profileRepository = profileRepository;
@@ -106,6 +119,7 @@ namespace DCL.Passport
             this.badgesAPIClient = badgesAPIClient;
             this.webRequestController = webRequestController;
             this.inputBlock = inputBlock;
+            this.remoteMetadata = remoteMetadata;
 
             passportProfileInfoController = new PassportProfileInfoController(selfProfile, world, playerEntity);
             notificationBusController.SubscribeToNotificationTypeReceived(NotificationType.BADGE_GRANTED, OnBadgeNotificationReceived);
@@ -121,10 +135,13 @@ namespace DCL.Passport
             overviewPassportModules.Add(new UserDetailedInfo_PassportModuleController(viewInstance.UserDetailedInfoModuleView, mvcManager, selfProfile, viewInstance.AddLinkModal, passportErrorsController, passportProfileInfoController));
             overviewPassportModules.Add(new EquippedItems_PassportModuleController(viewInstance.EquippedItemsModuleView, world, rarityBackgrounds, rarityColors, categoryIcons, thumbnailProvider, webBrowser, decentralandUrlsSource, passportErrorsController));
             overviewPassportModules.Add(new BadgesOverview_PassportModuleController(viewInstance.BadgesOverviewModuleView, badgesAPIClient, passportErrorsController, webRequestController));
-            badgesPassportModules.Add(new BadgesDetails_PassportModuleController(viewInstance.BadgesDetailsModuleView, viewInstance.BadgeInfoModuleView, badgesAPIClient, passportErrorsController, webRequestController, selfProfile));
+
+            badgesDetailsPassportModuleController = new BadgesDetails_PassportModuleController(viewInstance.BadgesDetailsModuleView, viewInstance.BadgeInfoModuleView, badgesAPIClient, passportErrorsController, webRequestController, selfProfile);
+            badgesPassportModules.Add(badgesDetailsPassportModuleController);
 
             passportProfileInfoController.PublishError += OnPublishError;
             passportProfileInfoController.OnProfilePublished += OnProfilePublished;
+            badgesDetailsPassportModuleController.OnBadgeSelected += OnBadgeSelected;
 
             viewInstance.OverviewSectionButton.Button.onClick.AddListener(OpenOverviewSection);
             viewInstance.BadgesSectionButton.Button.onClick.AddListener(() => OpenBadgesSection());
@@ -138,6 +155,7 @@ namespace DCL.Passport
         protected override void OnViewShow()
         {
             currentUserId = inputData.UserId;
+            isOwnProfile = inputData.IsOwnProfile;
             alreadyLoadedSections = PassportSection.NONE;
             cursor.Unlock();
 
@@ -149,7 +167,8 @@ namespace DCL.Passport
             inputBlock.Disable(InputMapComponent.Kind.SHORTCUTS , InputMapComponent.Kind.CAMERA , InputMapComponent.Kind.PLAYER);
 
             viewInstance!.ErrorNotification.Hide(true);
-            PassportOpened?.Invoke(currentUserId);
+
+            PassportOpened?.Invoke(currentUserId, isOwnProfile);
         }
 
         protected override void OnViewClose()
@@ -207,7 +226,7 @@ namespace DCL.Passport
                     return;
 
                 // Load user profile
-                Profile? profile = await profileRepository.GetAsync(userId, 0, ct);
+                Profile? profile = await profileRepository.GetAsync(userId, 0, remoteMetadata.GetLambdaDomainOrNull(userId), ct);
 
                 if (profile == null)
                     return;
@@ -249,8 +268,9 @@ namespace DCL.Passport
             foreach (IPassportModuleController module in passportModulesToSetup)
             {
                 if (module is BadgesDetails_PassportModuleController badgesDetailsController && !string.IsNullOrEmpty(badgeIdSelected))
+                {
                     badgesDetailsController.SetBadgeByDefault(badgeIdSelected);
-
+                }
                 module.Setup(profile);
             }
         }
@@ -275,6 +295,7 @@ namespace DCL.Passport
             LoadPassportSectionAsync(currentUserId, PassportSection.OVERVIEW, characterPreviewLoadingCts.Token).Forget();
             currentSection = PassportSection.OVERVIEW;
             viewInstance.BadgeInfoModuleView.gameObject.SetActive(false);
+            characterPreviewController?.OnShow();
         }
 
         private void OpenBadgesSection(string? badgeIdSelected = null)
@@ -294,6 +315,9 @@ namespace DCL.Passport
             LoadPassportSectionAsync(currentUserId, PassportSection.BADGES, characterPreviewLoadingCts.Token, badgeIdSelected).Forget();
             currentSection = PassportSection.BADGES;
             viewInstance.BadgeInfoModuleView.gameObject.SetActive(true);
+            characterPreviewController?.OnHide(triggerOnHideBusEvent: false);
+            bool isOwnPassport = ownProfile?.UserId == currentUserId;
+            BadgesSectionOpened?.Invoke(currentUserId, isOwnPassport, OpenBadgeSectionOrigin.Button.ToString());
         }
 
         private void OnBadgeNotificationReceived(INotification notification) =>
@@ -317,7 +341,10 @@ namespace DCL.Passport
                 ownProfile ??= await selfProfile.ProfileAsync(ct);
 
                 if (ownProfile != null)
-                    mvcManager.ShowAsync(IssueCommand(new Params(ownProfile.UserId, badgeIdToOpen)), ct).Forget();
+                {
+                    BadgesSectionOpened?.Invoke(ownProfile.UserId, true, OpenBadgeSectionOrigin.Notification.ToString());
+                    mvcManager.ShowAsync(IssueCommand(new Params(ownProfile.UserId, badgeIdToOpen, isOwnProfile: true)), ct).Forget();
+                }
             }
             catch (OperationCanceledException) { }
             catch (Exception e)
@@ -326,6 +353,12 @@ namespace DCL.Passport
                 passportErrorsController!.Show(ERROR_MESSAGE);
                 ReportHub.LogError(ReportCategory.PROFILE, $"{ERROR_MESSAGE} ERROR: {e.Message}");
             }
+        }
+
+        private void OnBadgeSelected(string badgeId)
+        {
+            bool isOwnPassport = ownProfile?.UserId == currentUserId;
+            BadgeSelected?.Invoke(badgeId, isOwnPassport);
         }
     }
 }

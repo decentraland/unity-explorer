@@ -2,6 +2,7 @@ using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.Optimization.PerformanceBudgeting;
+using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Common.Components;
 using System.Collections.Generic;
 using Utility.Multithreading;
@@ -77,6 +78,9 @@ namespace DCL.AvatarRendering.Emotes
 
                     if (!TryUnloadAllWearableAssets(emote)) continue;
 
+                    DisposeThumbnail(emote);
+                    DisposeAudioClips(emote);
+
                     emotes.Remove(urn);
                     cacheKeysDictionary.Remove(urn);
                     listedCacheKeys.Remove(node);
@@ -148,11 +152,27 @@ namespace DCL.AvatarRendering.Emotes
                     emote.AssetResults[i] = null;
                 }
 
+                // TODO obscure logic - it's not clear what's happening here
                 if ((!emote.IsLoading && result == null) || !result.HasValue || result.Value is { Succeeded: true, Asset: null })
                     countNullOrEmpty++;
             }
 
             return countNullOrEmpty == emote.AssetResults.Length;
+        }
+
+        private static void DisposeThumbnail(IEmote wearable)
+        {
+            if (wearable.ThumbnailAssetResult is { IsInitialized: true })
+                wearable.ThumbnailAssetResult.Value.Asset.RemoveReference();
+        }
+
+        private static void DisposeAudioClips(IEmote emote)
+        {
+            foreach (StreamableLoadingResult<AudioClipData>? audioAssetResult in emote.AudioAssetResults)
+            {
+                if (audioAssetResult is { Succeeded: true })
+                    audioAssetResult.Value.Asset!.Dereference();
+            }
         }
     }
 }

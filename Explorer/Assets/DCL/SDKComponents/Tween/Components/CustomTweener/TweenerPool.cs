@@ -18,7 +18,7 @@ namespace DCL.SDKComponents.Tween.Components
             scaleTweenersPool = new ObjectPool<ScaleTweener>(() => new ScaleTweener());
         }
 
-        public ICustomTweener GetTweener(PBTween pbTween, SDKTransform sdkTransform, Transform entityTransform, float durationInSeconds)
+        public ICustomTweener GetTweener(PBTween pbTween, SDKTransform sdkTransform, float durationInSeconds)
         {
             ICustomTweener tweener = null;
             switch (pbTween.ModeCase)
@@ -34,7 +34,7 @@ namespace DCL.SDKComponents.Tween.Components
                     break;
             }
 
-            tweener!.Initialize(pbTween, sdkTransform, entityTransform, durationInSeconds);
+            tweener!.Initialize(pbTween, sdkTransform, durationInSeconds);
             return tweener;
         }
 

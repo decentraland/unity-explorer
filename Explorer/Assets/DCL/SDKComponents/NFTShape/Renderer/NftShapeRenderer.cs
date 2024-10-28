@@ -42,9 +42,9 @@ namespace DCL.SDKComponents.NFTShape.Renderer
                 frame.UpdateStatus(AbstractFrame.Status.Loading);
         }
 
-        public void Apply(Texture2D material)
+        public void Apply(Texture2D tex)
         {
-            frame.EnsureNotNull().Place(material);
+            frame.EnsureNotNull().Place(tex);
         }
 
         public void NotifyFailed()

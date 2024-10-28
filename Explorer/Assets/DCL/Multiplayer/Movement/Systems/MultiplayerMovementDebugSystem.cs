@@ -6,6 +6,7 @@ using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.Multiplayer.Movement.Settings;
 using DCL.Multiplayer.Profiles.Entities;
+using DCL.Multiplayer.Profiles.Poses;
 using DCL.Multiplayer.Profiles.RemoteProfiles;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Profiles;
@@ -38,6 +39,7 @@ namespace DCL.Multiplayer.Movement.Systems
         private readonly MultiplayerDebugSettings debugSettings;
         private readonly IMultiplayerMovementSettings mainSettings;
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
+        private readonly IRemoteMetadata remoteMetadata;
 
         private readonly ElementBinding<string> entityId;
 
@@ -51,8 +53,12 @@ namespace DCL.Multiplayer.Movement.Systems
         private readonly ElementBinding<string> isEnabled;
         private readonly ElementBinding<string> time;
         private readonly ElementBinding<string> duration;
+
+        private readonly ElementBinding<string> metadata;
+
         private readonly NetworkMessageBindings intStart = new ();
         private readonly NetworkMessageBindings intEnd = new ();
+
         private readonly DebugWidgetVisibilityBinding widgetVisibility = new (true);
 
         private Entity? selfReplicaEntity;
@@ -61,7 +67,7 @@ namespace DCL.Multiplayer.Movement.Systems
 
         internal MultiplayerMovementDebugSystem(World world, Entity playerEntity, IRealmData realmData, IDebugContainerBuilder debugBuilder, RemoteEntities remoteEntities,
             ExposedTransform playerTransform, MultiplayerDebugSettings debugSettings, IMultiplayerMovementSettings mainSettings,
-            IReadOnlyEntityParticipantTable entityParticipantTable) : base(world)
+            IReadOnlyEntityParticipantTable entityParticipantTable, IRemoteMetadata remoteMetadata) : base(world)
         {
             this.playerEntity = playerEntity;
             this.realmData = realmData;
@@ -70,6 +76,7 @@ namespace DCL.Multiplayer.Movement.Systems
             this.debugSettings = debugSettings;
             this.mainSettings = mainSettings;
             this.entityParticipantTable = entityParticipantTable;
+            this.remoteMetadata = remoteMetadata;
 
             widget = debugBuilder.TryAddWidget("Multiplayer Movement")
                                 ?.SetVisibilityBinding(widgetVisibility);
@@ -80,7 +87,8 @@ namespace DCL.Multiplayer.Movement.Systems
                    .AddToggleField("Use Compression", evt => this.mainSettings.UseCompression = evt.newValue, this.mainSettings.UseCompression)
                    .AddToggleField("Use Linear", evt => SelectInterpolationType(evt.newValue), useLinear)
                    .AddToggleField("Use speed-up", evt => this.mainSettings.InterpolationSettings.UseSpeedUp = evt.newValue, this.mainSettings.InterpolationSettings.UseSpeedUp)
-                   .AddCustomMarker("Entity Id", entityId = new ElementBinding<string>(string.Empty));
+                   .AddCustomMarker("Entity Id", entityId = new ElementBinding<string>(string.Empty))
+                   .AddCustomMarker("Metadata", metadata = new ElementBinding<string>(string.Empty));
 
             widget?.AddCustomMarker("MOVEMENT", new ElementBinding<string>(string.Empty))
                    .AddCustomMarker("Inbox Count", inboxCount = new ElementBinding<string>(string.Empty))
@@ -121,6 +129,8 @@ namespace DCL.Multiplayer.Movement.Systems
             Entity entity = entityParticipantTable.Entity(debugProfileId);
 
             entityId.Value = entity.Id.ToString();
+
+            metadata.Value = remoteMetadata.Metadata.TryGetValue(debugProfileId, out IRemoteMetadata.ParticipantMetadata participantMetadata) ? participantMetadata.ToString() : string.Empty;
 
             if (World.TryGet(entity, out RemotePlayerMovementComponent remotePlayerMovementComponent) && remotePlayerMovementComponent.Queue != null)
             {

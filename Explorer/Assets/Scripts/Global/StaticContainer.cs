@@ -23,6 +23,7 @@ using DCL.Profiling;
 using DCL.Quality;
 using DCL.ResourcesUnloading;
 using DCL.SDKComponents.VideoPlayer;
+using DCL.Settings;
 using DCL.Time;
 using DCL.Utilities;
 using DCL.Web3;
@@ -35,9 +36,10 @@ using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.Reporting;
 using Global.AppArgs;
 using SceneRunner.Mapping;
-using Sentry;
 using System.Collections.Generic;
 using System.Threading;
+using DCL.PerformanceAndDiagnostics.Analytics;
+using DCL.UserInAppInitializationFlow;
 using PortableExperiences.Controller;
 using UnityEngine;
 using Utility;
@@ -72,6 +74,8 @@ namespace Global
         public WebRequestsContainer WebRequestsContainer { get; private set; }
         public IReadOnlyList<IDCLWorldPlugin> ECSWorldPlugins { get; private set; }
 
+        public ISystemMemoryCap MemoryCap { get; private set; }
+
         /// <summary>
         ///     Some plugins may implement both interfaces
         /// </summary>
@@ -92,6 +96,8 @@ namespace Global
         public IFeatureFlagsProvider FeatureFlagsProvider { get; private set; }
         public IPortableExperiencesController PortableExperiencesController { get; private set; }
         public IDebugContainerBuilder DebugContainerBuilder { get; private set; }
+
+        public ILoadingStatus LoadingStatus { get; private set; }
 
         public void Dispose()
         {
@@ -125,6 +131,10 @@ namespace Global
             bool useRemoteAssetBundles,
             World globalWorld,
             Entity playerEntity,
+            ISystemMemoryCap memoryCap,
+            WorldVolumeMacBus worldVolumeMacBus,
+            bool enableAnalytics,
+            IAnalyticsController analyticsController,
             CancellationToken ct)
         {
             ProfilingCounters.CleanAllCounters();
@@ -141,6 +151,7 @@ namespace Global
             container.SceneReadinessReportQueue = new SceneReadinessReportQueue(container.ScenesCache);
             container.InputBlock = new ECSInputBlock(globalWorld);
             container.assetsProvisioner = assetsProvisioner;
+            container.MemoryCap = memoryCap;
 
             var exposedPlayerTransform = new ExposedTransform();
 
@@ -160,8 +171,7 @@ namespace Global
                 new PartitionedWorldsAggregate.Factory(),
                 new ConcurrentLoadingPerformanceBudget(staticSettings.AssetsLoadingBudget),
                 new FrameTimeCapBudget(staticSettings.FrameTimeCap, profilingProvider),
-                new MemoryBudget(new StandaloneSystemMemory(), profilingProvider,
-                    Application.isEditor ? staticSettings.MemoryThresholdsEditor : staticSettings.MemoryThresholds),
+                new MemoryBudget(memoryCap, profilingProvider, staticSettings.MemoryThresholds),
                 new SceneAssetLock(),
                 new SceneMapping()
             );
@@ -192,6 +202,9 @@ namespace Global
                     diagnosticsContainer.Sentry!.AddCurrentSceneToScope(scope, container.ScenesCache.CurrentScene.Info);
             });
 
+            container.LoadingStatus = enableAnalytics ? 
+                new LoadingStatusAnalyticsDecorator(new LoadingStatus(), analyticsController) : new LoadingStatus();
+
             container.ECSWorldPlugins = new IDCLWorldPlugin[]
             {
                 new TransformsPlugin(sharedDependencies, exposedPlayerTransform, exposedGlobalDataContainer.ExposedCameraData),
@@ -206,14 +219,14 @@ namespace Global
                 new PrimitivesRenderingPlugin(sharedDependencies),
                 new VisibilityPlugin(),
                 new AudioSourcesPlugin(sharedDependencies, container.WebRequestsContainer.WebRequestController, container.CacheCleaner, container.assetsProvisioner),
-                assetBundlePlugin,
-                new GltfContainerPlugin(sharedDependencies, container.CacheCleaner, container.SceneReadinessReportQueue, container.SingletonSharedDependencies.SceneAssetLock, localSceneDevelopment, useRemoteAssetBundles),
+                assetBundlePlugin, 
+                new GltfContainerPlugin(sharedDependencies, container.CacheCleaner, container.SceneReadinessReportQueue, container.SingletonSharedDependencies.SceneAssetLock, componentsContainer.ComponentPoolsRegistry, localSceneDevelopment, useRemoteAssetBundles, container.LoadingStatus),
                 new InteractionPlugin(sharedDependencies, profilingProvider, exposedGlobalDataContainer.GlobalInputEvents, componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner),
                 new SceneUIPlugin(sharedDependencies, container.assetsProvisioner, container.InputBlock),
                 container.CharacterContainer.CreateWorldPlugin(componentsContainer.ComponentPoolsRegistry),
                 new AnimatorPlugin(),
                 new TweenPlugin(),
-                new MediaPlayerPlugin(sharedDependencies, videoTexturePool, sharedDependencies.FrameTimeBudget, container.assetsProvisioner, container.WebRequestsContainer.WebRequestController, container.CacheCleaner),
+                new MediaPlayerPlugin(sharedDependencies, videoTexturePool, sharedDependencies.FrameTimeBudget, container.assetsProvisioner, container.WebRequestsContainer.WebRequestController, container.CacheCleaner, worldVolumeMacBus),
                 new CharacterTriggerAreaPlugin(globalWorld, container.MainPlayerAvatarBaseProxy, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, container.CharacterContainer.CharacterObject, componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner, container.CacheCleaner, exposedGlobalDataContainer.ExposedCameraData),
                 new InteractionsAudioPlugin(container.assetsProvisioner),
                 new MapPinPlugin(globalWorld, container.FeatureFlagsCache),
@@ -234,6 +247,7 @@ namespace Global
                     container.RealmPartitionSettings),
                 textureResolvePlugin,
             };
+
 
             return (container, true);
         }

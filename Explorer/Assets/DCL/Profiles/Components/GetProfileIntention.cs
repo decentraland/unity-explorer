@@ -8,6 +8,9 @@ namespace DCL.Profiles
     {
         public string ProfileId { get; }
         public int Version { get; }
+
+        // TODO lambda endpoint should be added here
+
         public CancellationTokenSource CancellationTokenSource => CommonArguments.CancellationTokenSource;
         public CommonLoadingArguments CommonArguments { get; set; }
 

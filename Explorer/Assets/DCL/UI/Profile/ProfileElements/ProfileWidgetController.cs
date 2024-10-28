@@ -53,7 +53,7 @@ namespace DCL.UI.ProfileElements
 
         private async UniTaskVoid LoadAsync(CancellationToken ct)
         {
-            Profile? profile = await profileRepository.GetAsync(identityCache.Identity!.Address, 0, ct);
+            Profile? profile = await profileRepository.GetAsync(identityCache.Identity!.Address, ct);
 
             if (viewInstance.NameLabel != null) viewInstance.NameLabel.text = profile?.Name ?? GUEST_NAME;
 
