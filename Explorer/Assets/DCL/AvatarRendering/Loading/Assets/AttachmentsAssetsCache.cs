@@ -111,7 +111,7 @@ namespace DCL.AvatarRendering.Loading.Assets
             {
                 unloadedAmount += assets!.Count;
 
-                foreach (var asset in assets)
+                foreach (CachedAttachment asset in assets)
                     asset.Dispose();
 
                 assets.Clear();

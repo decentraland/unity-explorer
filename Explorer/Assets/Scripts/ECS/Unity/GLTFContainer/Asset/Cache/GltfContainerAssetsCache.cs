@@ -101,7 +101,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
             {
                 unloadedAmount += assets.Count;
 
-                foreach (var asset in assets)
+                foreach (GltfContainerAsset asset in assets)
                     asset.Dispose();
 
                 assets.Clear();
