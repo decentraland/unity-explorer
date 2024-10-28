@@ -53,7 +53,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.Market => $"https://market.decentraland.{ENV}",
                 // All ABs are in org
                 DecentralandUrl.AssetBundlesCDN => $"https://ab-cdn.decentraland.{ENV}",
-                DecentralandUrl.ArchipelagoStatus => $"https://archipelago-stats.decentraland.{ENV}/status",
+                DecentralandUrl.ArchipelagoStatus => $"https://archipelago-ea-stats.decentraland.{ENV}/status",
                 DecentralandUrl.GatekeeperStatus => $"https://comms-gatekeeper.decentraland.{ENV}/status",
                 DecentralandUrl.Genesis => $"https://realm-provider-ea.decentraland.{ENV}/main",
                 DecentralandUrl.Badges => $"https://badges.decentraland.{ENV}",
