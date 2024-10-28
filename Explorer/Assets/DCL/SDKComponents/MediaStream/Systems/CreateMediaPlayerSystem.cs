@@ -24,6 +24,8 @@ namespace DCL.SDKComponents.MediaStream
     [ThrottlingEnabled]
     public partial class CreateMediaPlayerSystem : BaseUnityLoopSystem
     {
+        private static string CONTENT_SERVER_PREFIX = "/content/contents";
+
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IPerformanceBudget frameTimeBudget;
         private readonly IComponentPool<MediaPlayer> mediaPlayerPool;
@@ -90,6 +92,7 @@ namespace DCL.SDKComponents.MediaStream
             {
                 MediaPlayer = mediaPlayerPool.Get(),
                 URL = url,
+                IsFromContentServer = url.Contains(CONTENT_SERVER_PREFIX),
                 PreviousCurrentTimeChecked = -1,
                 LastPropagatedState = VideoState.VsPaused,
                 Cts = new CancellationTokenSource(),

@@ -18,17 +18,17 @@ namespace DCL.AvatarRendering.Wearables
 {
     public class ApplicationParametersWearablesProvider : IWearablesProvider
     {
-        private readonly IAppArgs applicationParametersParser;
+        private readonly IAppArgs appArgs;
         private readonly IWearablesProvider source;
         private readonly World world;
         private readonly string[] allWearableCategories = WearablesConstants.CATEGORIES_PRIORITY.ToArray();
         private readonly List<IWearable> resultWearablesBuffer = new ();
 
-        public ApplicationParametersWearablesProvider(IAppArgs applicationParametersParser,
+        public ApplicationParametersWearablesProvider(IAppArgs appArgs,
             IWearablesProvider source,
             World world)
         {
-            this.applicationParametersParser = applicationParametersParser;
+            this.appArgs = appArgs;
             this.source = source;
             this.world = world;
         }
@@ -41,14 +41,18 @@ namespace DCL.AvatarRendering.Wearables
             string? name = null,
             List<IWearable>? results = null)
         {
-            if (!applicationParametersParser.TryGetValue("self-preview-wearables", out string? wearablesCsv))
+            if (!appArgs.TryGetValue("self-preview-wearables", out string? wearablesCsv))
                 return await source.GetAsync(pageSize, pageNumber, ct, sortingField, orderBy, category, collectionType, name, results);
 
             URN[] pointers = wearablesCsv!.Split(',', StringSplitOptions.RemoveEmptyEntries)
-                                          .Select(s => new URN(s)).ToArray();
+                                          .Select(s => new URN(s))
+                                          .ToArray();
 
-            IReadOnlyCollection<IWearable>? maleWearables = await RequestPointersAsync(pointers, BodyShape.MALE, ct);
-            IReadOnlyCollection<IWearable>? femaleWearables = await RequestPointersAsync(pointers, BodyShape.FEMALE, ct);
+            (IReadOnlyCollection<IWearable>? maleWearables, IReadOnlyCollection<IWearable>? femaleWearables) =
+                await UniTask.WhenAll(RequestPointersAsync(pointers, BodyShape.MALE, ct),
+                    RequestPointersAsync(pointers, BodyShape.FEMALE, ct));
+
+            results ??= new List<IWearable>();
 
             lock (resultWearablesBuffer)
             {
@@ -61,7 +65,8 @@ namespace DCL.AvatarRendering.Wearables
                     resultWearablesBuffer.AddRange(femaleWearables);
 
                 int pageIndex = pageNumber - 1;
-                return (resultWearablesBuffer.Skip(pageIndex * pageSize).Take(pageSize).ToArray(), resultWearablesBuffer.Count);
+                results.AddRange(resultWearablesBuffer.Skip(pageIndex * pageSize).Take(pageSize));
+                return (results, resultWearablesBuffer.Count);
             }
         }
 
@@ -70,6 +75,7 @@ namespace DCL.AvatarRendering.Wearables
             CancellationToken ct)
         {
             var promise = WearablePromise.Create(world,
+
                 // We pass all categories as force renderer to force the download of all of them
                 // Otherwise they will be skipped if any wearable is hiding the category
                 WearableComponentsUtils.CreateGetWearablesByPointersIntention(bodyShape, pointers, allWearableCategories),
