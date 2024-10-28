@@ -24,7 +24,7 @@ namespace Global.Dynamic.TeleportOperations
             teleportParams.LoadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.UnloadCacheChecking);
             if (teleportCounter.ReachedTeleportLimit())
             {
-                cacheCleaner.UnloadCacheImmediate();
+                cacheCleaner.UnloadCache(false);
                 Resources.UnloadUnusedAssets();
             }
             return UniTask.FromResult(Result.SuccessResult());

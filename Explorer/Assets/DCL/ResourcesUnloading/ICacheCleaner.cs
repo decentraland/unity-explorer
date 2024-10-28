@@ -2,9 +2,7 @@
 {
     public interface ICacheCleaner
     {
-        void UnloadCache();
-
-        void UnloadCacheImmediate();
+        void UnloadCache(bool budgeted = true);
         void UpdateProfilingCounters();
     }
 }
