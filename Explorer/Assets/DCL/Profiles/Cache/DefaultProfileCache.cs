@@ -25,8 +25,6 @@ namespace DCL.Profiles
         public void Unload(IPerformanceBudget concurrentBudgetProvider, int maxAmount)
         {
             // TODO: clear unused profiles
-            //When done, remember to add the `UnloadImmediate` call in CacheCleaner
-
             UpdateProfilingCounter();
         }
 

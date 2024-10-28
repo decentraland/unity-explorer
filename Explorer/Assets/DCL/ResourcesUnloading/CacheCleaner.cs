@@ -47,10 +47,12 @@ namespace DCL.ResourcesUnloading
 
         private IEmoteStorage? emoteCache;
 
+        private readonly IPerformanceBudget unlimitedFPSBudget;
+
         public CacheCleaner(IPerformanceBudget fpsCapBudget)
         {
             this.fpsCapBudget = fpsCapBudget;
-
+            unlimitedFPSBudget = new NullPerformanceBudget();
             extendedObjectPools = new List<IThrottledClearable> { AvatarCustomSkinningComponent.USED_SLOTS_POOL };
         }
 
@@ -76,18 +78,18 @@ namespace DCL.ResourcesUnloading
 
         public void UnloadCacheImmediate()
         {
-            nftShapeCache!.UnloadImmediate();
-            texturesCache!.UnloadImmediate();
-            audioClipsCache!.UnloadImmediate();
-            wearableAssetsCache!.UnloadImmediate();
-            wearableStorage!.Unload(fpsCapBudget);
-            emoteCache!.Unload(fpsCapBudget);
-            gltfContainerAssetsCache!.UnloadImmediate();
-            lodCache!.UnloadImmediate();
-            assetBundleCache!.UnloadImmediate();
+            nftShapeCache!.Unload(unlimitedFPSBudget, int.MaxValue);
+            texturesCache!.Unload(unlimitedFPSBudget, int.MaxValue);
+            audioClipsCache!.Unload(unlimitedFPSBudget, int.MaxValue);
+            wearableAssetsCache!.Unload(unlimitedFPSBudget, int.MaxValue);
+            wearableStorage!.Unload(unlimitedFPSBudget);
+            emoteCache!.Unload(unlimitedFPSBudget);
+            gltfContainerAssetsCache!.Unload(unlimitedFPSBudget, int.MaxValue);
+            lodCache!.Unload(unlimitedFPSBudget, int.MaxValue);
+            assetBundleCache!.Unload(unlimitedFPSBudget, int.MaxValue);
             //TODO - Commented out since profile cache is not unloading anything. Uncomment when solved
-            //profileCache!.Unload(fpsCapBudget, PROFILE_UNLOAD_CHUNK);
-            profileIntentionCache!.UnloadImmediate();
+            //profileCache!.Unload(unlimitedFPSBudget, int.MaxValue);
+            profileIntentionCache!.Unload(unlimitedFPSBudget, int.MaxValue);
 
             ClearExtendedObjectPools();
         }

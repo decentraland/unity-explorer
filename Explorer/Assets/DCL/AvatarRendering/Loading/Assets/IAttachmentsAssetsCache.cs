@@ -12,6 +12,5 @@ namespace DCL.AvatarRendering.Loading.Assets
 
         void Unload(IPerformanceBudget frameTimeBudget, int maxUnloadAmount);
 
-        void UnloadImmediate();
     }
 }

@@ -63,10 +63,6 @@ namespace ECS.StreamableLoading.Cache
 
         public void Unload(IPerformanceBudget frameTimeBudget, int maxUnloadAmount) { }
 
-        public void UnloadImmediate()
-        {
-        }
-
         bool IEqualityComparer<TLoadingIntention>.Equals(TLoadingIntention x, TLoadingIntention y) =>
             EqualityComparer<TLoadingIntention>.Default.Equals(x, y);
 
