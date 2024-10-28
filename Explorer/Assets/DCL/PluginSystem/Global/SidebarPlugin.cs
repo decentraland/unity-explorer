@@ -119,7 +119,7 @@ namespace DCL.PluginSystem.Global
                 },
                 dclInput,
                 mvcManager));
-            dclInput.Shortcuts.ControlsMenu.performed -= OpenControlsMenu;
+            dclInput.Shortcuts.ControlsMenu.performed += OpenControlsMenu;
         }
 
         private void OpenControlsMenu(InputAction.CallbackContext callbackContext) =>
