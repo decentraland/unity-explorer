@@ -536,7 +536,6 @@ Shader "DCL/DCL_Toon"
 //            }
 
             HLSLPROGRAM
-            //#pragma exclude_renderers gles gles3 glcore
             #pragma target 4.5
             #pragma vertex vert
             #pragma fragment frag

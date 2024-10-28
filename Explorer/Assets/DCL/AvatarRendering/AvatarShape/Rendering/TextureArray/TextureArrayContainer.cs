@@ -46,7 +46,7 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
             return results;
         }
 
-        public TextureArraySlot?[] SetTextures(IReadOnlyDictionary<int, Texture> textures, Material targetMaterial)
+        public TextureArraySlot?[] SetTextures(IReadOnlyDictionary<int, Texture> textures, Material targetMaterial, int defaultSlotIndex = 0)
         {
             TextureArraySlot?[] results = slotsPool.Get();
 
@@ -57,7 +57,7 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
                 if (textures.TryGetValue(mapping.OriginalTextureID, out var texture))
                     results[i] = mapping.Handler.SetTexture(targetMaterial, texture as Texture2D, new Vector2Int(texture.width, texture.height));
                 else
-                    mapping.Handler.SetDefaultTexture(targetMaterial, mapping.DefaultFallbackResolution);
+                    mapping.Handler.SetDefaultTexture(targetMaterial, mapping.DefaultFallbackResolution, defaultSlotIndex);
             }
 
             return results;
