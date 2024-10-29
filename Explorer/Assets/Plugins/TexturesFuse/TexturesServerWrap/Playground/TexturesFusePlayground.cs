@@ -21,7 +21,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground
 
         private ITexturesUnzip unzip = null!;
         private byte[] buffer = Array.Empty<byte>();
-        private OwnedTexture2D? texture;
+        private IOwnedTexture2D? texture;
 
         [ContextMenu(nameof(Start))]
         private void Start()
@@ -40,7 +40,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground
             display.Display(result.Texture);
         }
 
-        private async UniTask<OwnedTexture2D> FetchedAndOverrideTextureAsync()
+        private async UniTask<IOwnedTexture2D> FetchedAndOverrideTextureAsync()
         {
             texture?.Dispose();
             texture = (await unzip.TextureFromBytesAsync(buffer, TextureType.Albedo, destroyCancellationToken)).Unwrap();

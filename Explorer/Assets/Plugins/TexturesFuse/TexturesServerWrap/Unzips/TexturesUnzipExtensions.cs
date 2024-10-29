@@ -25,7 +25,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
             }
         }
 
-        public static async UniTask<EnumResult<OwnedTexture2D, NativeMethods.ImageResult>> TextureFromBytesAsync(
+        public static async UniTask<EnumResult<IOwnedTexture2D, NativeMethods.ImageResult>> TextureFromBytesAsync(
             this ITexturesUnzip unzip,
             byte[] bytes,
             TextureType type,

@@ -51,7 +51,7 @@ namespace DCL.UI
                 view.LoadingObject.SetActive(true);
 
                 //TODO potential memory leak, due no CacheCleaner
-                OwnedTexture2D ownedTexture = await webRequestController.GetTextureAsync(
+                IOwnedTexture2D ownedTexture = await webRequestController.GetTextureAsync(
                     new CommonArguments(URLAddress.FromString(uri)),
                     getTextureArgsFactory.NewArguments(TextureType.Albedo),
                     GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp),

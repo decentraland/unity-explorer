@@ -43,7 +43,7 @@ namespace DCL.WebRequests
             return new GetTextureWebRequest(wr, textureArguments.TexturesUnzip, commonArguments.URL, textureArguments.TextureType);
         }
 
-        public readonly struct CreateTextureOp : IWebRequestOp<GetTextureWebRequest, OwnedTexture2D>
+        public readonly struct CreateTextureOp : IWebRequestOp<GetTextureWebRequest, IOwnedTexture2D>
         {
             private readonly TextureWrapMode wrapMode;
             private readonly FilterMode filterMode;
@@ -54,7 +54,7 @@ namespace DCL.WebRequests
                 this.filterMode = filterMode;
             }
 
-            public async UniTask<OwnedTexture2D?> ExecuteAsync(GetTextureWebRequest webRequest, CancellationToken ct)
+            public async UniTask<IOwnedTexture2D?> ExecuteAsync(GetTextureWebRequest webRequest, CancellationToken ct)
             {
                 try
                 {

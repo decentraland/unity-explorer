@@ -19,7 +19,7 @@ namespace DCL.WebRequests
         public static SuppressExceptionWithFallback<TCoreOp, TWebRequest, TResult> SuppressExceptionsWithFallback<TCoreOp, TWebRequest, TResult>(this TCoreOp coreOp, TResult fallbackValue, SuppressExceptionWithFallback.Behaviour behaviour = SuppressExceptionWithFallback.Behaviour.Default, ReportData? reportContext = null) where TWebRequest: struct, ITypedWebRequest where TCoreOp: IWebRequestOp<TWebRequest, TResult> =>
             new (coreOp, fallbackValue, behaviour, reportContext);
 
-        public static SuppressExceptionWithFallback<GetTextureWebRequest.CreateTextureOp, GetTextureWebRequest, OwnedTexture2D> SuppressExceptionsWithFallback(
+        public static SuppressExceptionWithFallback<GetTextureWebRequest.CreateTextureOp, GetTextureWebRequest, IOwnedTexture2D> SuppressExceptionsWithFallback(
             this GetTextureWebRequest.CreateTextureOp coreOp,
             OwnedTexture2D fallbackValue,
             SuppressExceptionWithFallback.Behaviour behaviour = SuppressExceptionWithFallback.Behaviour.Default,

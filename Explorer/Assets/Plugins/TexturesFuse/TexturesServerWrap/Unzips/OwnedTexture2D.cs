@@ -6,7 +6,27 @@ using Object = UnityEngine.Object;
 
 namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
 {
-    public class OwnedTexture2D : IDisposable
+    public interface IOwnedTexture2D : IDisposable
+    {
+        public Texture2D Texture { get; }
+
+        class Const : IOwnedTexture2D
+        {
+            public Texture2D Texture { get; }
+
+            public Const(Texture2D texture)
+            {
+                Texture = texture;
+            }
+
+            public void Dispose()
+            {
+                Object.Destroy(Texture);
+            }
+        }
+    }
+
+    public class OwnedTexture2D : IOwnedTexture2D
     {
         private static readonly ObjectPool<OwnedTexture2D> POOL = new (() => new OwnedTexture2D());
 

@@ -27,7 +27,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
         private CancellationTokenSource? linkedCts;
         private int webRequestAttempts;
 
-        private OwnedTexture2D? currentOwnedTexture;
+        private IOwnedTexture2D? currentOwnedTexture;
 
         public SatelliteChunkController(
             SpriteRenderer prefab,

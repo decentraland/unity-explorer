@@ -194,7 +194,7 @@ namespace DCL.WebRequests
         /// <summary>
         ///     Make a request that is optimized for texture creation
         /// </summary>
-        public static UniTask<OwnedTexture2D> GetTextureAsync<TOp>(
+        public static UniTask<IOwnedTexture2D> GetTextureAsync<TOp>(
             this IWebRequestController controller,
             CommonArguments commonArguments,
             GetTextureArguments args,
@@ -203,8 +203,8 @@ namespace DCL.WebRequests
             ReportData reportData,
             WebRequestHeadersInfo? headersInfo = null,
             WebRequestSignInfo? signInfo = null
-        ) where TOp: struct, IWebRequestOp<GetTextureWebRequest, OwnedTexture2D> =>
-            controller.SendAsync<GetTextureWebRequest, GetTextureArguments, TOp, OwnedTexture2D>(GET_TEXTURE, commonArguments, args, webRequestOp, ct, reportData, headersInfo, signInfo);
+        ) where TOp: struct, IWebRequestOp<GetTextureWebRequest, IOwnedTexture2D> =>
+            controller.SendAsync<GetTextureWebRequest, GetTextureArguments, TOp, IOwnedTexture2D>(GET_TEXTURE, commonArguments, args, webRequestOp, ct, reportData, headersInfo, signInfo);
 
         /// <summary>
         ///     Make a request that is optimized for audio clip

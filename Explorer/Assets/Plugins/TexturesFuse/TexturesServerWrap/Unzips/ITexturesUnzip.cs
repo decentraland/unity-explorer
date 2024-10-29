@@ -15,7 +15,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
         /// <param name="bytesLength">Length of encoded data.</param>
         /// <param name="type">Desired type that result will be consumed.</param>
         /// <param name="token">Cancellation Token to cancel operation.</param>
-        UniTask<EnumResult<OwnedTexture2D, NativeMethods.ImageResult>> TextureFromBytesAsync(
+        UniTask<EnumResult<IOwnedTexture2D, NativeMethods.ImageResult>> TextureFromBytesAsync(
             IntPtr bytes,
             int bytesLength,
             TextureType type,
@@ -62,6 +62,14 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
                 // .WithSemaphore() -
                 // is not required since PooledTexturesUnzip has synchronization for the access and prevents double calling of TextureFromBytesAsync
                ,
+                3
+            );
+        }
+
+        public static ITexturesUnzip NewTestInstance()
+        {
+            return new PooledTexturesUnzip(
+                () => new ManagedTexturesUnzip(),
                 3
             );
         }

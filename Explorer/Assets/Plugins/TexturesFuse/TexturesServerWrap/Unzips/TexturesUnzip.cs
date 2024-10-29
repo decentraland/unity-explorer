@@ -4,9 +4,8 @@ using DCL.Diagnostics;
 using System;
 using System.Threading;
 using UnityEngine;
-using Utility.Types;
 using Result = Utility.Types.EnumResult<
-    Plugins.TexturesFuse.TexturesServerWrap.Unzips.OwnedTexture2D,
+    Plugins.TexturesFuse.TexturesServerWrap.Unzips.IOwnedTexture2D,
     Plugins.TexturesFuse.TexturesServerWrap.NativeMethods.ImageResult
 >;
 
@@ -90,7 +89,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
             if (result is not NativeMethods.ImageResult.Success)
             {
                 ReportHub.LogError(ReportCategory.TEXTURES, $"TexturesFuseASTCImageFromMemory error during decoding: {result}");
-                return EnumResult<OwnedTexture2D, NativeMethods.ImageResult>.ErrorResult(result, string.Empty);
+                return Result.ErrorResult(result, string.Empty);
             }
 
             if (handle == IntPtr.Zero)

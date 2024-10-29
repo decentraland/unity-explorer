@@ -26,7 +26,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
             origin.Dispose();
         }
 
-        public async UniTask<EnumResult<OwnedTexture2D, NativeMethods.ImageResult>> TextureFromBytesAsync(IntPtr bytes, int bytesLength, TextureType type, CancellationToken token)
+        public async UniTask<EnumResult<IOwnedTexture2D, NativeMethods.ImageResult>> TextureFromBytesAsync(IntPtr bytes, int bytesLength, TextureType type, CancellationToken token)
         {
             ulong i = index++;
             stopwatch.Restart();

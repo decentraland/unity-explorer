@@ -227,7 +227,7 @@ namespace DCL.Notifications.NotificationsMenu
         private async UniTask LoadNotificationThumbnailAsync(NotificationView notificationView, INotification notificationData,
             CancellationToken ct)
         {
-            OwnedTexture2D ownedTexture = await webRequestController.GetTextureAsync(
+            IOwnedTexture2D ownedTexture = await webRequestController.GetTextureAsync(
                 new CommonArguments(URLAddress.FromString(notificationData.GetThumbnail())),
                 getTextureArgsFactory.NewArguments(TextureType.Albedo),
                 GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp),
