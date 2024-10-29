@@ -1,5 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.WebRequests.GenericDelete;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -8,7 +9,6 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.Networking;
 using Utility;
-using Utility.Times;
 using static DCL.WebRequests.WebRequestControllerExtensions;
 
 namespace DCL.WebRequests
@@ -19,50 +19,6 @@ namespace DCL.WebRequests
     public static class GenericDownloadHandlerUtils
     {
         public delegate Exception CreateExceptionOnParseFail(Exception exception, string text);
-
-        public static Adapter<GenericPostRequest, GenericPostArguments> SignedFetchPostAsync(
-            this IWebRequestController controller,
-            CommonArguments commonArguments,
-            string jsonMetaData,
-            CancellationToken ct
-        )
-        {
-            ulong unixTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
-
-            return new Adapter<GenericPostRequest, GenericPostArguments>(
-                controller,
-                commonArguments,
-                GenericPostArguments.Empty,
-                ct,
-                ReportCategory.GENERIC_WEB_REQUEST,
-                new WebRequestHeadersInfo().WithSign(jsonMetaData, unixTimestamp),
-                WebRequestSignInfo.NewFromRaw(jsonMetaData, commonArguments.URL, unixTimestamp, "post"),
-                null,
-                POST_GENERIC
-            );
-        }
-
-        public static Adapter<GenericGetRequest, GenericGetArguments> SignedFetchGetAsync(
-            this IWebRequestController controller,
-            CommonArguments commonArguments,
-            string jsonMetaData,
-            CancellationToken ct
-        )
-        {
-            ulong unixTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
-
-            return new Adapter<GenericGetRequest, GenericGetArguments>(
-                controller,
-                commonArguments,
-                new GenericGetArguments(),
-                ct,
-                ReportCategory.GENERIC_WEB_REQUEST,
-                new WebRequestHeadersInfo().WithSign(jsonMetaData, unixTimestamp),
-                WebRequestSignInfo.NewFromRaw(jsonMetaData, commonArguments.URL, unixTimestamp, "get"),
-                null,
-                GET_GENERIC
-            );
-        }
 
         public static Adapter<GenericGetRequest, GenericGetArguments> GetAsync(this IWebRequestController controller, CommonArguments commonArguments, CancellationToken ct, ReportData reportData, WebRequestHeadersInfo? headersInfo = null,
             WebRequestSignInfo? signInfo = null, ISet<long>? ignoreErrorCodes = null) =>
