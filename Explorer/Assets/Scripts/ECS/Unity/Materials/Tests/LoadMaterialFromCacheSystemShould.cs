@@ -5,6 +5,7 @@ using ECS.Unity.Materials.Systems;
 using ECS.Unity.Textures.Components;
 using NSubstitute;
 using NUnit.Framework;
+using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using UnityEngine;
 using Utility.Primitives;
 
@@ -89,7 +90,7 @@ namespace ECS.Unity.Materials.Tests
                 new TextureComponent("1","file-hash", TextureWrapMode.Mirror, FilterMode.Bilinear),
                 new TextureComponent("2","file-hash", TextureWrapMode.MirrorOnce, FilterMode.Trilinear),
                 new TextureComponent("3","file-hash", TextureWrapMode.Repeat, FilterMode.Point),
-                new TextureComponent("4","file-hash", TextureWrapMode.Clamp, FilterMode.Point),
+                new TextureComponent("4","file-hash", TextureWrapMode.Clamp, FilterMode.Point, textureType: TextureType.NormalMap),
                 0.5f,
                 true,
                 Color.red,
