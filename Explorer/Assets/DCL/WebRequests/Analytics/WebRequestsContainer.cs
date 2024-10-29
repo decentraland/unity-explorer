@@ -28,8 +28,12 @@ namespace DCL.WebRequests.Analytics
             AnalyticsContainer = analyticsContainer;
         }
 
-        public static WebRequestsContainer Create(IWeb3IdentityCache web3IdentityProvider,
-            IDebugContainerBuilder debugContainerBuilder, int totalBudget)
+        public static WebRequestsContainer Create(
+            IWeb3IdentityCache web3IdentityProvider,
+            ITexturesUnzip texturesUnzip,
+            IDebugContainerBuilder debugContainerBuilder,
+            int totalBudget
+        )
         {
             var analyticsContainer = new WebRequestsAnalyticsContainer()
                 .AddTrackedMetric<ActiveCounter>()
@@ -48,7 +52,7 @@ namespace DCL.WebRequests.Analytics
                 .WithArtificialDelay(options)
                 .WithBudget(totalBudget);
 
-            var getTextureArgsFactory = new GetTextureArgsFactory(ITexturesUnzip.NewDefault());//TODO propagate args
+            var getTextureArgsFactory = new GetTextureArgsFactory(texturesUnzip);
 
             CreateStressTestUtility();
             CreateWebRequestDelayUtility();

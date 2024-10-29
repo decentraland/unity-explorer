@@ -20,6 +20,7 @@ using ECS.Abstract;
 using Global.AppArgs;
 using Global.Dynamic.DebugSettings;
 using MVC;
+using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using SceneRunner.Debugging;
 using System;
 using System.Threading;
@@ -74,10 +75,29 @@ namespace Global.Dynamic
             DotNetLoggingPlugin.Initialize();
         }
 
-        public async UniTask<(StaticContainer?, bool)> LoadStaticContainerAsync(BootstrapContainer bootstrapContainer, PluginSettingsContainer globalPluginSettingsContainer, DebugViewsCatalog debugViewsCatalog, Entity playerEntity, ISystemMemoryCap memoryCap, CancellationToken ct) =>
-            await StaticContainer.CreateAsync(bootstrapContainer.DecentralandUrlsSource, bootstrapContainer.AssetsProvisioner, bootstrapContainer.ReportHandlingSettings, appArgs, debugViewsCatalog, globalPluginSettingsContainer,
-                bootstrapContainer.DiagnosticsContainer, bootstrapContainer.IdentityCache, bootstrapContainer.VerifiedEthereumApi, bootstrapContainer.LocalSceneDevelopment, bootstrapContainer.UseRemoteAssetBundles, world, playerEntity, memoryCap, bootstrapContainer.WorldVolumeMacBus,
-                EnableAnalytics, bootstrapContainer.Analytics, ct);
+        public async UniTask<(StaticContainer?, bool)> LoadStaticContainerAsync(BootstrapContainer bootstrapContainer, PluginSettingsContainer globalPluginSettingsContainer, DebugViewsCatalog debugViewsCatalog, Entity playerEntity, ISystemMemoryCap memoryCap,
+            CancellationToken ct) =>
+            await StaticContainer.CreateAsync(
+                bootstrapContainer.DecentralandUrlsSource,
+                bootstrapContainer.AssetsProvisioner,
+                bootstrapContainer.ReportHandlingSettings,
+                appArgs,
+                ITexturesUnzip.NewDefault(),
+                debugViewsCatalog,
+                globalPluginSettingsContainer,
+                bootstrapContainer.DiagnosticsContainer,
+                bootstrapContainer.IdentityCache,
+                bootstrapContainer.VerifiedEthereumApi,
+                bootstrapContainer.LocalSceneDevelopment,
+                bootstrapContainer.UseRemoteAssetBundles,
+                world,
+                playerEntity,
+                memoryCap,
+                bootstrapContainer.WorldVolumeMacBus,
+                EnableAnalytics,
+                bootstrapContainer.Analytics,
+                ct
+            );
 
         public async UniTask<(DynamicWorldContainer?, bool)> LoadDynamicWorldContainerAsync(BootstrapContainer bootstrapContainer,
             StaticContainer staticContainer,
@@ -182,6 +202,7 @@ namespace Global.Dynamic
 
             GlobalWorld globalWorld = dynamicWorldContainer.GlobalWorldFactory.Create(sceneSharedContainer.SceneFactory,
                 sceneSharedContainer.V8ActiveEngines, playerEntity);
+
             dynamicWorldContainer.RealmController.GlobalWorld = globalWorld;
 
             staticContainer.DebugContainerBuilder.BuildWithFlex(debugUiRoot);
@@ -217,7 +238,7 @@ namespace Global.Dynamic
                     FromLogout = false,
                     World = globalWorld.EcsWorld,
                     PlayerEntity = playerEntity,
-               }, ct);
+                }, ct);
 
             OpenDefaultUI(dynamicWorldContainer.MvcManager, ct);
             splashScreen.Hide();

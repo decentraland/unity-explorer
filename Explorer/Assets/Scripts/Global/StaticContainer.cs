@@ -40,6 +40,7 @@ using System.Collections.Generic;
 using System.Threading;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.UserInAppInitializationFlow;
+using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using PortableExperiences.Controller;
 using UnityEngine;
 using Utility;
@@ -122,6 +123,7 @@ namespace Global
             IAssetsProvisioner assetsProvisioner,
             IReportsHandlingSettings reportHandlingSettings,
             IAppArgs appArgs,
+            ITexturesUnzip texturesUnzip,
             DebugViewsCatalog debugViewsCatalog,
             IPluginSettingsContainer settingsContainer,
             DiagnosticsContainer diagnosticsContainer,
@@ -184,8 +186,12 @@ namespace Global
             container.EntityCollidersGlobalCache = new EntityCollidersGlobalCache();
             container.ExposedGlobalDataContainer = exposedGlobalDataContainer;
 
-            container.WebRequestsContainer = WebRequestsContainer.Create(web3IdentityProvider,
-                container.DebugContainerBuilder, staticSettings.WebRequestsBudget);
+            container.WebRequestsContainer = WebRequestsContainer.Create(
+                web3IdentityProvider,
+                texturesUnzip,
+                container.DebugContainerBuilder,
+                staticSettings.WebRequestsBudget
+            );
 
             container.PhysicsTickProvider = new PhysicsTickProvider();
             container.FeatureFlagsCache = new FeatureFlagsCache();
@@ -205,8 +211,7 @@ namespace Global
                     diagnosticsContainer.Sentry!.AddCurrentSceneToScope(scope, container.ScenesCache.CurrentScene.Info);
             });
 
-            container.LoadingStatus = enableAnalytics ? 
-                new LoadingStatusAnalyticsDecorator(new LoadingStatus(), analyticsController) : new LoadingStatus();
+            container.LoadingStatus = enableAnalytics ? new LoadingStatusAnalyticsDecorator(new LoadingStatus(), analyticsController) : new LoadingStatus();
 
             container.ECSWorldPlugins = new IDCLWorldPlugin[]
             {
@@ -222,7 +227,7 @@ namespace Global
                 new PrimitivesRenderingPlugin(sharedDependencies),
                 new VisibilityPlugin(),
                 new AudioSourcesPlugin(sharedDependencies, container.WebRequestsContainer.WebRequestController, container.CacheCleaner, container.assetsProvisioner),
-                assetBundlePlugin, 
+                assetBundlePlugin,
                 new GltfContainerPlugin(sharedDependencies, container.CacheCleaner, container.SceneReadinessReportQueue, container.SingletonSharedDependencies.SceneAssetLock, componentsContainer.ComponentPoolsRegistry, localSceneDevelopment, useRemoteAssetBundles, container.LoadingStatus),
                 new InteractionPlugin(sharedDependencies, profilingProvider, exposedGlobalDataContainer.GlobalInputEvents, componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner),
                 new SceneUIPlugin(sharedDependencies, container.assetsProvisioner, container.InputBlock),
@@ -250,7 +255,6 @@ namespace Global
                     container.RealmPartitionSettings),
                 textureResolvePlugin,
             };
-
 
             return (container, true);
         }

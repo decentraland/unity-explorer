@@ -23,6 +23,7 @@ using NSubstitute;
 using System;
 using System.Threading;
 using DCL.PerformanceAndDiagnostics.Analytics;
+using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using UnityEngine.AddressableAssets;
 
 namespace Global.Tests.PlayMode
@@ -46,10 +47,12 @@ namespace Global.Tests.PlayMode
 
             var diagnosticsContainer = DiagnosticsContainer.Create(reportSettings);
 
-            (StaticContainer? staticContainer, bool success) = await StaticContainer.CreateAsync(dclUrls,
+            (StaticContainer? staticContainer, bool success) = await StaticContainer.CreateAsync(
+                dclUrls,
                 assetProvisioner,
                 Substitute.For<IReportsHandlingSettings>(),
                 Substitute.For<IAppArgs>(),
+                ITexturesUnzip.NewTestInstance(),
                 new DebugViewsCatalog(),
                 globalSettingsContainer,
                 diagnosticsContainer,
