@@ -1,3 +1,4 @@
+using Cysharp.Threading.Tasks;
 using Plugins.TexturesFuse.TexturesServerWrap.Playground.Displays;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System;
@@ -21,7 +22,12 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground
         [SerializeField] private string outputPath = "Assets/Plugins/TexturesFuse/TexturesServerWrap/Playground/ASTCTexturesCompatability/test_output.astc";
 
         [ContextMenu(nameof(Start))]
-        private async void Start()
+        private void Start()
+        {
+            StartAsync().Forget();
+        }
+
+        private async UniTaskVoid StartAsync()
         {
             var unzip = new TexturesUnzip(options.InitOptions, options, debugOutputFromNative);
             byte[] buffer = await File.ReadAllBytesAsync(path, destroyCancellationToken)!;

@@ -24,18 +24,23 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground
         private OwnedTexture2D? texture;
 
         [ContextMenu(nameof(Start))]
-        private async void Start()
+        private void Start()
+        {
+            StartAsync().Forget();
+        }
+
+        private async UniTaskVoid StartAsync()
         {
             display.EnsureNotNull();
             unzip = new TexturesUnzip(options.InitOptions, options, debugOutputFromNative);
             buffer = await File.ReadAllBytesAsync(path, destroyCancellationToken)!;
             print($"Original size: {buffer.Length} bytes");
 
-            var result = await FetchedAndOverrideTexture();
+            var result = await FetchedAndOverrideTextureAsync();
             display.Display(result.Texture);
         }
 
-        private async UniTask<OwnedTexture2D> FetchedAndOverrideTexture()
+        private async UniTask<OwnedTexture2D> FetchedAndOverrideTextureAsync()
         {
             texture?.Dispose();
             texture = (await unzip.TextureFromBytesAsync(buffer, TextureType.Albedo, destroyCancellationToken)).Unwrap();

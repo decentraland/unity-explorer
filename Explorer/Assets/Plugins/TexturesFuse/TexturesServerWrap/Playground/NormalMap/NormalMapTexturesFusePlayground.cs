@@ -33,7 +33,12 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground
 
         [ContextMenu(nameof(Start))]
         [SuppressMessage("ReSharper", "Unity.PreferAddressByIdToGraphicsParams")]
-        private async void Start()
+        private void Start()
+        {
+            StartAsync().Forget();
+        }
+
+        private async UniTaskVoid StartAsync()
         {
             cubeMesh.EnsureNotNull();
             using var unzip = new PooledTexturesUnzip(() => new TexturesUnzip(options.InitOptions, options, debugOutputFromNative), 2);

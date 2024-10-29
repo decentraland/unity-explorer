@@ -26,7 +26,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
 
         public async UniTask<EnumResult<OwnedTexture2D, NativeMethods.ImageResult>> TextureFromBytesAsync(IntPtr bytes, int bytesLength, TextureType type, CancellationToken token)
         {
-            using var workerScope = await WorkerScope.NewWorkerScope(workers, timeout);
+            using var workerScope = await WorkerScope.NewWorkerScopeAsync(workers, timeout);
             return await workerScope.Worker.TextureFromBytesAsync(bytes, bytesLength, type, token);
         }
 
@@ -49,7 +49,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
                 this.Worker = worker;
             }
 
-            public static async UniTask<WorkerScope> NewWorkerScope(ConcurrentBag<ITexturesUnzip> workers, TimeSpan timeout)
+            public static async UniTask<WorkerScope> NewWorkerScopeAsync(ConcurrentBag<ITexturesUnzip> workers, TimeSpan timeout)
             {
                 var startTime = DateTime.UtcNow;
                 ITexturesUnzip worker;

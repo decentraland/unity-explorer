@@ -26,8 +26,8 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground
         private void Start()
         {
             buffer = File.ReadAllBytes(path);
-            left.Apply(buffer, debugOutputFromNative, destroyCancellationToken).Forget();
-            right.Apply(buffer, debugOutputFromNative, destroyCancellationToken).Forget();
+            left.ApplyAsync(buffer, debugOutputFromNative, destroyCancellationToken).Forget();
+            right.ApplyAsync(buffer, debugOutputFromNative, destroyCancellationToken).Forget();
         }
 
         [ContextMenu(nameof(SaveToFile))]
@@ -43,7 +43,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground
             [SerializeField] private TexturesFusePlayground.Options options = new ();
             private ITexturesUnzip unzip = null!;
 
-            public async UniTaskVoid Apply(byte[] imageData, bool debugOutputFromNative, CancellationToken token)
+            public async UniTaskVoid ApplyAsync(byte[] imageData, bool debugOutputFromNative, CancellationToken token)
             {
                 unzip = new TexturesUnzip(options.InitOptions, options, debugOutputFromNative);
                 var result = await unzip.TextureFromBytesAsync(imageData, TextureType.Albedo, token);

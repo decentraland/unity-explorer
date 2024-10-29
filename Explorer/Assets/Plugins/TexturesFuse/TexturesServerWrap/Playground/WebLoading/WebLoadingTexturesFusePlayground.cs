@@ -48,10 +48,10 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground.WebLoading
         public void Next()
         {
             IncreaseIndex();
-            LoadAndDisplay(textureOptionList[currentIndex]!).Forget();
+            LoadAndDisplayAsync(textureOptionList[currentIndex]!).Forget();
         }
 
-        private async UniTaskVoid LoadAndDisplay(TextureOption option)
+        private async UniTaskVoid LoadAndDisplayAsync(TextureOption option)
         {
             var texture = await webRequests.GetTextureAsync(
                 new CommonArguments(
