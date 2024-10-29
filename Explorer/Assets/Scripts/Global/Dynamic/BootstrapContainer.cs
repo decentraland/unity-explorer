@@ -93,9 +93,10 @@ namespace Global.Dynamic
                 (container.Bootstrap, container.Analytics) = await CreateBootstrapperAsync(debugSettings, applicationParametersParser, container, container.settings, realmLaunchSettings, world, ct);
                 (container.IdentityCache, container.VerifiedEthereumApi, container.Web3Authenticator) = CreateWeb3Dependencies(sceneLoaderSettings, web3AccountFactory, browser, container, decentralandUrlsSource);
 
+                bool enableSceneDebugConsole = realmLaunchSettings.IsLocalSceneDevelopmentRealm || applicationParametersParser.HasFlag("scene-console");
                 container.DiagnosticsContainer = container.enableAnalytics
-                    ? DiagnosticsContainer.Create(container.ReportHandlingSettings, realmLaunchSettings.IsLocalSceneDevelopmentRealm, (ReportHandler.DebugLog, new CriticalLogsAnalyticsHandler(container.Analytics)))
-                    : DiagnosticsContainer.Create(container.ReportHandlingSettings);
+                    ? DiagnosticsContainer.Create(container.ReportHandlingSettings, enableSceneDebugConsole, (ReportHandler.DebugLog, new CriticalLogsAnalyticsHandler(container.Analytics)))
+                    : DiagnosticsContainer.Create(container.ReportHandlingSettings, enableSceneDebugConsole);
 
                 container.DiagnosticsContainer.AddSentryScopeConfigurator(AddIdentityToSentryScope);
 
