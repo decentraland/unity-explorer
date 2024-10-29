@@ -22,8 +22,10 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
             var texture = new Texture2D(1, 1);
             var array = new byte[bytesLength];
             Marshal.Copy(bytes, array, 0, bytesLength);
-            texture.LoadImage(array);
-            return EnumResult<IOwnedTexture2D, NativeMethods.ImageResult>.SuccessResult(new IOwnedTexture2D.Const(texture));
+
+            return texture.LoadImage(array)
+                ? EnumResult<IOwnedTexture2D, NativeMethods.ImageResult>.SuccessResult(new IOwnedTexture2D.Const(texture))
+                : EnumResult<IOwnedTexture2D, NativeMethods.ImageResult>.ErrorResult(NativeMethods.ImageResult.ErrorUnknown, "Failed to load image");
         }
     }
 }
