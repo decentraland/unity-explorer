@@ -15,13 +15,10 @@ namespace DCL.SDKComponents.Tween.Components
         protected T currentValue;
         private TweenerCore<T, T, TU> core;
 
-        protected Vector3 startPosition;
-        protected Quaternion startRotation;
-        protected Vector3 startScale;
-
         protected abstract TweenerCore<T, T, TU> CreateTweener(T start, T end, float duration);
-        protected abstract (T, T) GetTweenValues(PBTween pbTween, SDKTransform startTransform);
-        public abstract void SetResult(ref SDKTransform sdkTransform);
+        protected abstract (T, T) GetTweenValues(PBTween pbTween);
+        public abstract void UpdateSDKTransform(ref SDKTransform sdkTransform);
+        public abstract void UpdateTransform(Transform transform);
 
         public void Play() =>
             core.Play();
@@ -46,16 +43,12 @@ namespace DCL.SDKComponents.Tween.Components
             core.SetEase(ease).SetAutoKill(false).OnComplete(() => { finished = true; }).Goto(tweenModelCurrentTime, isPlaying);
         }
 
-        public void Initialize(PBTween pbTween, SDKTransform sdkTransform, float durationInSeconds)
+        public void Initialize(PBTween pbTween, float durationInSeconds)
         {
             core?.Kill();
             finished = false;
 
-            startPosition = sdkTransform.Position;
-            startRotation = sdkTransform.Rotation;
-            startScale = sdkTransform.Scale;
-
-            var tweenValues = GetTweenValues(pbTween, sdkTransform);
+            var tweenValues = GetTweenValues(pbTween);
             core = CreateTweener(tweenValues.Item1, tweenValues.Item2, durationInSeconds);
         }
     }
