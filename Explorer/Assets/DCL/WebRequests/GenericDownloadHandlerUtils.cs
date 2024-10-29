@@ -42,6 +42,28 @@ namespace DCL.WebRequests
             );
         }
 
+        public static Adapter<GenericGetRequest, GenericGetArguments> SignedFetchGetAsync(
+            this IWebRequestController controller,
+            CommonArguments commonArguments,
+            string jsonMetaData,
+            CancellationToken ct
+        )
+        {
+            ulong unixTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
+
+            return new Adapter<GenericGetRequest, GenericGetArguments>(
+                controller,
+                commonArguments,
+                new GenericGetArguments(),
+                ct,
+                ReportCategory.GENERIC_WEB_REQUEST,
+                new WebRequestHeadersInfo().WithSign(jsonMetaData, unixTimestamp),
+                WebRequestSignInfo.NewFromRaw(jsonMetaData, commonArguments.URL, unixTimestamp, "get"),
+                null,
+                GET_GENERIC
+            );
+        }
+
         public static Adapter<GenericGetRequest, GenericGetArguments> GetAsync(this IWebRequestController controller, CommonArguments commonArguments, CancellationToken ct, ReportData reportData, WebRequestHeadersInfo? headersInfo = null,
             WebRequestSignInfo? signInfo = null, ISet<long>? ignoreErrorCodes = null) =>
             new (controller, commonArguments, default(GenericGetArguments), ct, reportData, headersInfo, signInfo, ignoreErrorCodes, GET_GENERIC);

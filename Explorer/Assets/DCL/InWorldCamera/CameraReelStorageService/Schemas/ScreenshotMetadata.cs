@@ -79,17 +79,17 @@ namespace DCL.InWorldCamera
         //     return list;
         // }
 
-        public DateTime GetLocalizedDateTime()
-        {
-            if (!long.TryParse(dateTime, out long unixTimestamp)) return new DateTime();
-            return DateTimeOffset.FromUnixTimeSeconds(unixTimestamp).ToLocalTime().DateTime;
-        }
-
-        public DateTime GetStartOfTheMonthDate()
-        {
-            DateTime localizedDateTime = GetLocalizedDateTime();
-            return new DateTime(localizedDateTime.Year, localizedDateTime.Month, 1);
-        }
+        // public DateTime GetLocalizedDateTime()
+        // {
+        //     if (!long.TryParse(dateTime, out long unixTimestamp)) return new DateTime();
+        //     return DateTimeOffset.FromUnixTimeSeconds(unixTimestamp).ToLocalTime().DateTime;
+        // }
+        //
+        // public DateTime GetStartOfTheMonthDate()
+        // {
+        //     DateTime localizedDateTime = GetLocalizedDateTime();
+        //     return new DateTime(localizedDateTime.Year, localizedDateTime.Month, 1);
+        // }
     }
 
     [Serializable]
