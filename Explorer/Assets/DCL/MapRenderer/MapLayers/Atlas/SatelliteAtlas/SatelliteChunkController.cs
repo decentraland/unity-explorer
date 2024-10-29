@@ -12,7 +12,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
 {
     public class SatelliteChunkController : IChunkController
     {
-        private const string CHUNKS_API = "https://media.githubusercontent.com/media/genesis-city/genesis.city/master/map/latest/3/";
+        private const string CHUNKS_API = "https://media.githubusercontent.com/media/genesis-city/genesis.city/master/map/latest/4/";
         private static readonly Color FINAL_COLOR = Color.white;
         private static readonly Color INITIAL_COLOR = new (0, 0, 0, 0);
         private readonly MapRendererTextureContainer textureContainer;

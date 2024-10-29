@@ -110,8 +110,8 @@ namespace DCL.MapRenderer.ComponentsFactory
 
         private UniTask CreateSatelliteAtlasAsync(Dictionary<MapLayer, IMapLayerController> layers, MapRendererConfiguration configuration, ICoordsUtils coordsUtils, IMapCullingController cullingController, CancellationToken cancellationToken)
         {
-            const int GRID_SIZE = 8; // satellite images are provided by 8x8 grid.
-            const int PARCELS_INSIDE_CHUNK = 40; // One satellite image contains 40 parcels.
+            const int GRID_SIZE = 16; // satellite images are provided by 8x8 grid.
+            const int PARCELS_INSIDE_CHUNK = 20; // One satellite image contains 40 parcels.
 
             var chunkAtlas = new SatelliteChunkAtlasController(configuration.SatelliteAtlasRoot, GRID_SIZE, PARCELS_INSIDE_CHUNK, coordsUtils, cullingController, chunkBuilder: CreateSatelliteChunkAsync);
 

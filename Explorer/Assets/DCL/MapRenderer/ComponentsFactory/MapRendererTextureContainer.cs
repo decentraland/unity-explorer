@@ -13,10 +13,10 @@ namespace DCL.MapRenderer.ComponentsFactory
             chunks[position] = texture2D;
         }
 
-        public Texture2D GetChunk(Vector2Int position) =>
-            chunks[position];
+        public Texture2D? GetChunk(Vector2Int position) =>
+            chunks.GetValueOrDefault(position, Texture2D.grayTexture);
 
         public bool IsComplete() =>
-            chunks.Count >= 64;
+            chunks.Count >= 256;
     }
 }
