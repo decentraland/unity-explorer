@@ -90,7 +90,7 @@ namespace DCL.AvatarRendering.Emotes
         {
             output.Clear();
 
-            using GetEmotesByPointersIntention intention = EmoteComponentsUtils.CreateGetEmotesByPointersIntention(bodyShape, emoteIds);
+            GetEmotesByPointersIntention intention = EmoteComponentsUtils.CreateGetEmotesByPointersIntention(bodyShape, emoteIds);
             var promise = PromiseByPointers.Create(world, intention, PartitionComponent.TOP_PRIORITY);
             promise = await promise.ToUniTaskAsync(world, cancellationToken: ct);
 

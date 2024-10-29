@@ -1,5 +1,4 @@
 ﻿using Arch.SystemGroups;
-using Cysharp.Threading.Tasks;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.ResourcesUnloading;
 using DCL.ResourcesUnloading.UnloadStrategies;
@@ -11,7 +10,6 @@ namespace DCL.PluginSystem.Global
     {
         private readonly MemoryBudget memoryBudget;
         private readonly UnloadStrategyHandler unloadStrategyHandler;
-        private const int FRAME_FAIL_THRESHOLD = 60;
 
 
         public ResourceUnloadingPlugin(MemoryBudget memoryBudget, CacheCleaner cacheCleaner,
@@ -19,7 +17,7 @@ namespace DCL.PluginSystem.Global
         {
             this.memoryBudget = memoryBudget;
             unloadStrategyHandler =
-                new UnloadStrategyHandler(realmPartitionSettings, FRAME_FAIL_THRESHOLD, cacheCleaner);
+                new UnloadStrategyHandler(realmPartitionSettings, cacheCleaner);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)

@@ -42,7 +42,8 @@ namespace ECS.StreamableLoading.GLTF
                     reportData,
                     new Exception("The content to download couldn't be found"));
 
-            GltFastDownloadProvider gltfDownloadProvider = new GltFastDownloadProvider(World, sceneData, partition, intention.Name!, reportData, webRequestController);
+            // Acquired budget is released inside GLTFastDownloadedProvider once the GLTF has been fetched
+            GltFastDownloadProvider gltfDownloadProvider = new GltFastDownloadProvider(World, sceneData, partition, intention.Name!, reportData, webRequestController, acquiredBudget);
             var gltfImport = new GltfImport(
                 downloadProvider: gltfDownloadProvider,
                 logger: gltfConsoleLogger,
@@ -56,9 +57,6 @@ namespace ECS.StreamableLoading.GLTF
             };
 
             bool success = await gltfImport.Load(intention.Name, gltFastSettings, ct);
-
-            // Release budget now to not hold it until dependencies are resolved to prevent a deadlock
-            acquiredBudget.Release();
             gltfDownloadProvider.Dispose();
 
             if (success)
@@ -79,7 +77,7 @@ namespace ECS.StreamableLoading.GLTF
                 new Exception("The content to download couldn't be found"));
         }
 
-        public async UniTask InstantiateGltfAsync(GltfImport gltfImport, Transform rootContainerTransform)
+        private async UniTask InstantiateGltfAsync(GltfImport gltfImport, Transform rootContainerTransform)
         {
             if (gltfImport.SceneCount > 1)
                 for (int i = 0; i < gltfImport.SceneCount; i++)

@@ -117,7 +117,7 @@ namespace ECS.StreamableLoading.Common.Systems
 
                 // if the request is cached wait for it
                 // If there is an ongoing request it means that the result is neither cached, nor failed
-                if (cache.OngoingRequests.SyncTryGetValue(intention.CommonArguments.URL.GetCacheableURL(), out var cachedSource))
+                if (cache.OngoingRequests.SyncTryGetValue(intention.CommonArguments.GetCacheableURL(), out var cachedSource))
                 {
                     // Release budget immediately, if we don't do it and load a lot of bundles with dependencies sequentially, it will be a deadlock
                     acquiredBudget.Release();
@@ -141,7 +141,7 @@ namespace ECS.StreamableLoading.Common.Systems
                 // Try load from cache first
 
                 // If the given URL failed irrecoverably just return the failure
-                if (cache.IrrecoverableFailures.TryGetValue(intention.CommonArguments.URL.GetCacheableURL(), out var failure))
+                if (cache.IrrecoverableFailures.TryGetValue(intention.CommonArguments.GetCacheableURL(), out var failure))
                 {
                     result = failure;
                     return;
@@ -245,7 +245,7 @@ namespace ECS.StreamableLoading.Common.Systems
             var source = new UniTaskCompletionSource<StreamableLoadingResult<TAsset>?>(); //AutoResetUniTaskCompletionSource<StreamableLoadingResult<TAsset>?>.Create();
 
             // ReportHub.Log(GetReportCategory(), $"OngoingRequests.SyncAdd {intention.CommonArguments.URL}");
-            cache.OngoingRequests.SyncAdd(intention.CommonArguments.URL.GetCacheableURL(), source);
+            cache.OngoingRequests.SyncAdd(intention.CommonArguments.GetCacheableURL(), source);
 
             var ongoingRequestRemoved = false;
 
@@ -299,7 +299,7 @@ namespace ECS.StreamableLoading.Common.Systems
                 if (!ongoingRequestRemoved)
                 {
                     // ReportHub.Log(GetReportCategory(), $"OngoingRequests.SyncRemove {intention.CommonArguments.URL}");
-                    cache.OngoingRequests.SyncRemove(intention.CommonArguments.URL.GetCacheableURL());
+                    cache.OngoingRequests.SyncRemove(intention.CommonArguments.GetCacheableURL());
                     ongoingRequestRemoved = true;
                 }
             }
@@ -313,7 +313,7 @@ namespace ECS.StreamableLoading.Common.Systems
 
         private StreamableLoadingResult<TAsset> SetIrrecoverableFailure(TIntention intention, StreamableLoadingResult<TAsset> failure)
         {
-            cache.IrrecoverableFailures.Add(intention.CommonArguments.URL.GetCacheableURL(), failure);
+            cache.IrrecoverableFailures.Add(intention.CommonArguments.GetCacheableURL(), failure);
             return failure;
         }
     }

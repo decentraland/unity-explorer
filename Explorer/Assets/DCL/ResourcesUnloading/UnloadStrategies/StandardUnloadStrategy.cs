@@ -2,15 +2,19 @@ using UnityEngine;
 
 namespace DCL.ResourcesUnloading.UnloadStrategies
 {
-    public class StandardUnloadStrategy : IUnloadStrategy
+    public class StandardUnloadStrategy : UnloadStrategyBase
     {
-        public bool IsRunning => false;
+        private readonly ICacheCleaner cacheCleaner;
 
-
-        public void TryUnload(ICacheCleaner cacheCleaner)
+        public override void RunStrategy()
         {
             cacheCleaner.UnloadCache();
             cacheCleaner.UpdateProfilingCounters();
+        }
+
+        public StandardUnloadStrategy(int failureThreshold, ICacheCleaner cacheCleaner) : base(failureThreshold)
+        {
+            this.cacheCleaner = cacheCleaner;
         }
     }
 }
