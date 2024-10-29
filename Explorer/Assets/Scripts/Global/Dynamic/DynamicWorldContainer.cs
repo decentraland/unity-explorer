@@ -100,7 +100,7 @@ namespace Global.Dynamic
 
         private ECSReloadScene? reloadSceneController;
         private LocalSceneDevelopmentController? localSceneDevelopmentController;
-        private ECSWearablesProvider? wearablesProvider;
+        private IWearablesProvider? wearablesProvider;
 
         public IMVCManager MvcManager { get; private set; } = null!;
 
@@ -220,7 +220,6 @@ namespace Global.Dynamic
 
             var nftInfoAPIClient = new OpenSeaAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
             var wearableCatalog = new WearableStorage();
-            container.wearablesProvider = new ECSWearablesProvider(identityCache, globalWorld);
             var characterPreviewFactory = new CharacterPreviewFactory(staticContainer.ComponentsContainer.ComponentPoolsRegistry);
             IWebBrowser webBrowser = bootstrapContainer.WebBrowser;
             ChatEntryConfigurationSO chatEntryConfiguration = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.ChatEntryConfiguration, ct)).Value;
@@ -257,7 +256,12 @@ namespace Global.Dynamic
             var selfProfile = new SelfProfile(container.ProfileRepository, identityCache, equippedWearables, wearableCatalog,
                 emotesCache, equippedEmotes, forceRender, selfEmotes);
 
-            IEmoteProvider emoteProvider = new EcsEmoteProvider(globalWorld, staticContainer.RealmData);
+            IEmoteProvider emoteProvider = new ApplicationParamsEmoteProvider(appArgs,
+                new EcsEmoteProvider(globalWorld, staticContainer.RealmData));
+
+            container.wearablesProvider = new ApplicationParametersWearablesProvider(appArgs,
+                new ECSWearablesProvider(identityCache, globalWorld),
+                globalWorld);
 
             container.SceneRoomMetaDataSource = new SceneRoomMetaDataSource(staticContainer.RealmData, staticContainer.CharacterContainer.Transform, placesAPIService, dynamicWorldParams.IsolateScenesCommunication);
 

@@ -17,7 +17,7 @@ namespace DCL.PluginSystem.Global
 {
     public class AnalyticsPlugin : IDCLGlobalPlugin
     {
-        private readonly IAnalyticsReportProfiler profiler;
+        private readonly IProfiler profiler;
         private readonly IRealmNavigator realmNavigator;
         private readonly IRealmData realmData;
         private readonly IScenesCache scenesCache;
@@ -27,7 +27,7 @@ namespace DCL.PluginSystem.Global
 
         private readonly WalkedDistanceAnalytics walkedDistanceAnalytics;
 
-        public AnalyticsPlugin(IAnalyticsController analytics, IAnalyticsReportProfiler profiler, IRealmNavigator realmNavigator, IRealmData realmData, IScenesCache scenesCache,
+        public AnalyticsPlugin(IAnalyticsController analytics, IProfiler profiler, IRealmNavigator realmNavigator, IRealmData realmData, IScenesCache scenesCache,
             ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy, IWeb3IdentityCache identityCache, IDebugContainerBuilder debugContainerBuilder)
         {
             this.analytics = analytics;
