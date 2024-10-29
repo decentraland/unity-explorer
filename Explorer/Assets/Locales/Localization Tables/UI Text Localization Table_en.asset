@@ -36,10 +36,16 @@ MonoBehaviour:
     m_Localized: Not compatible with equipped body shape.
     m_Metadata:
       m_Items: []
+  - m_Id: 136891422374617088
+    m_Localized: Camera Reel
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds:
     - rid: 6697045577537945602
       type: {class: SmartFormatTag, ns: UnityEngine.Localization.Metadata, asm: Unity.Localization}
       data:
-        m_Entries: 00e0afa7e278ca00
+        m_Entries: 
+        m_SharedEntries:
+        - id: 56990860166815744

@@ -19,10 +19,8 @@ namespace DCL.ExplorePanel
             RegisterHotkeys();
         }
 
-        public void Dispose()
-        {
+        public void Dispose() =>
             UnregisterHotkeys();
-        }
 
         private void RegisterHotkeys()
         {
@@ -30,6 +28,7 @@ namespace DCL.ExplorePanel
             dclInput.Shortcuts.Map.performed += OnMapHotkeyPressed;
             dclInput.Shortcuts.Settings.performed += OnSettingsHotkeyPressed;
             dclInput.Shortcuts.Backpack.performed += OnBackpackHotkeyPressed;
+            dclInput.Shortcuts.CameraReel.performed += OnCameraReelHotkeyPressed;
         }
 
         private void UnregisterHotkeys()
@@ -38,12 +37,11 @@ namespace DCL.ExplorePanel
             dclInput.Shortcuts.Map.performed -= OnMapHotkeyPressed;
             dclInput.Shortcuts.Settings.performed -= OnSettingsHotkeyPressed;
             dclInput.Shortcuts.Backpack.performed -= OnBackpackHotkeyPressed;
+            dclInput.Shortcuts.CameraReel.performed -= OnCameraReelHotkeyPressed;
         }
 
-        private void OnMainMenuHotkeyPressed(InputAction.CallbackContext obj)
-        {
+        private void OnMainMenuHotkeyPressed(InputAction.CallbackContext obj) =>
             mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(lastShownSection)));
-        }
 
         private void OnMapHotkeyPressed(InputAction.CallbackContext obj)
         {
@@ -61,6 +59,12 @@ namespace DCL.ExplorePanel
         {
             mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Backpack)));
             lastShownSection = ExploreSections.Backpack;
+        }
+
+        private void OnCameraReelHotkeyPressed(InputAction.CallbackContext obj)
+        {
+            mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.CameraReel)));
+            lastShownSection = ExploreSections.CameraReel;
         }
     }
 }

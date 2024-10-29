@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Backpack;
 using DCL.Input;
 using DCL.Input.Component;
+using DCL.InWorldCamera.CameraReel;
 using DCL.Navmap;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
@@ -21,6 +22,7 @@ namespace DCL.ExplorePanel
     {
         private readonly SettingsController settingsController;
         private readonly BackpackController backpackController;
+        private readonly CameraReelController cameraReelController;
         private readonly ProfileWidgetController profileWidgetController;
         private readonly ProfileMenuController profileMenuController;
         private readonly DCLInput dclInput;
@@ -47,6 +49,7 @@ namespace DCL.ExplorePanel
             NavmapController navmapController,
             SettingsController settingsController,
             BackpackController backpackController,
+            CameraReelController cameraReelController,
             ProfileWidgetController profileWidgetController,
             ProfileMenuController profileMenuController,
             DCLInput dclInput,
@@ -58,6 +61,7 @@ namespace DCL.ExplorePanel
             NavmapController = navmapController;
             this.settingsController = settingsController;
             this.backpackController = backpackController;
+            this.cameraReelController = cameraReelController;
             this.profileWidgetController = profileWidgetController;
             this.dclInput = dclInput;
             this.mvcManager = mvcManager;
@@ -88,6 +92,7 @@ namespace DCL.ExplorePanel
                 { ExploreSections.Navmap, NavmapController },
                 { ExploreSections.Settings, settingsController },
                 { ExploreSections.Backpack, backpackController },
+                { ExploreSections.CameraReel, cameraReelController },
             };
 
             sectionSelectorController = new SectionSelectorController<ExploreSections>(exploreSections, ExploreSections.Navmap);

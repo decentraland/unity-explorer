@@ -4,7 +4,8 @@ namespace DCL.UI
     {
         Navmap,
         Settings,
-        Backpack
+        Backpack,
+        CameraReel
     }
 
     public enum BackpackSections

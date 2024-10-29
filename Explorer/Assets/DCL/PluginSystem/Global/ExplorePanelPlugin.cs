@@ -40,6 +40,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using DCL.Chat.MessageBus;
+using DCL.InWorldCamera.CameraReel;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Settings.Settings;
 using UnityEngine;
@@ -231,8 +232,10 @@ namespace DCL.PluginSystem.Global
             await navmapController.InitializeAssetsAsync(assetsProvisioner, ct);
             await backpackSubPlugin.InitializeAsync(settings.BackpackSettings, explorePanelView.GetComponentInChildren<BackpackView>(), ct);
 
+            var cameraReelController = new CameraReelController(explorePanelView.GetComponentInChildren<CameraReelView>());
+
             mvcManager.RegisterController(new
-                ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackSubPlugin.backpackController!,
+                ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackSubPlugin.backpackController!, cameraReelController,
                     new ProfileWidgetController(() => explorePanelView.ProfileWidget, web3IdentityCache, profileRepository, webRequestController),
                     new ProfileMenuController(() => explorePanelView.ProfileMenuView, web3IdentityCache, profileRepository, webRequestController, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager, chatEntryConfiguration),
                     dclInput, notificationsBusController, mvcManager, inputBlock));

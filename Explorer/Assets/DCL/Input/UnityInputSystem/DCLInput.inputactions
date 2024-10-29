@@ -2071,6 +2071,15 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "CameraReel",
+                    "type": "Button",
+                    "id": "a85b7e84-9b6b-41d0-acbf-2e7f4e09b14d",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -2170,6 +2179,17 @@
                     "processors": "",
                     "groups": "",
                     "action": "ToggleNametags",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "8f588eae-933a-4996-83a4-5d873e81b509",
+                    "path": "<Keyboard>/#(R)",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "CameraReel",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }
