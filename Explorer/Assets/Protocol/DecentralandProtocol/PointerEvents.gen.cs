@@ -387,7 +387,7 @@ namespace DCL.ECSComponents {
         public const int ShowFeedbackFieldNumber = 4;
         private bool showFeedback_;
         /// <summary>
-        /// enable or disable hover text (default true)
+        /// enable or disable hover text and highlight (default true)
         /// </summary>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
