@@ -20,6 +20,8 @@ namespace DCL.SDKComponents.PlayerInputMovement.Systems
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly ISceneRestrictionBusController sceneRestrictionBusController;
 
+        private SceneRestrictionsAction lastBusMessageAction = SceneRestrictionsAction.REMOVED;
+
         public InputModifierHandlerSystem(World world, World globalWorld, Entity playerEntity, ISceneStateProvider sceneStateProvider, ISceneRestrictionBusController sceneRestrictionBusController) : base(world)
         {
             this.playerEntity = playerEntity;
@@ -35,6 +37,10 @@ namespace DCL.SDKComponents.PlayerInputMovement.Systems
 
         private void SendBusMessage(InputModifierComponent inputModifier)
         {
+            SceneRestrictionsAction currentAction = inputModifier is { DisableAll: false, DisableWalk: false, DisableJog: false, DisableRun: false, DisableJump: false, DisableEmote: false } ? SceneRestrictionsAction.REMOVED : SceneRestrictionsAction.APPLIED;
+
+            if (currentAction == lastBusMessageAction) return;
+
             MovementsBlockedRestriction busMessage = new MovementsBlockedRestriction(0)
             {
                 DisableAll = inputModifier.DisableAll,
@@ -43,13 +49,11 @@ namespace DCL.SDKComponents.PlayerInputMovement.Systems
                 DisableRun = inputModifier.DisableRun,
                 DisableJump = inputModifier.DisableJump,
                 DisableEmote = inputModifier.DisableEmote,
-                Action = SceneRestrictionsAction.APPLIED,
+                Action = currentAction,
             };
 
-            if (busMessage is { DisableAll: false, DisableWalk: false, DisableJog: false, DisableRun: false, DisableJump: false, DisableEmote: false })
-                busMessage.Action = SceneRestrictionsAction.REMOVED;
-
             sceneRestrictionBusController.PushSceneRestriction(busMessage);
+            lastBusMessageAction = currentAction;
         }
 
         private void ResetModifiersOnLeave()
