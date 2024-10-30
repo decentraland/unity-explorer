@@ -89,7 +89,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
                     virtualCameraCRDTEntity.Value,
                     hasPreviousVirtualCamera ? previousVirtualCamera!.transform.position : cinemachineCurrentActiveCamPos
                 );
-                sceneRestrictionBusController.PushSceneRestriction(new CameraLockedRestriction(entity.Id)
+                sceneRestrictionBusController.PushSceneRestriction(new CameraLockedRestriction
                 {
                     Action = SceneRestrictionsAction.APPLIED,
                 });
@@ -102,7 +102,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
             if (hasPreviousVirtualCamera)
             {
                 previousVirtualCamera!.enabled = false;
-                sceneRestrictionBusController.PushSceneRestriction(new CameraLockedRestriction(entity.Id)
+                sceneRestrictionBusController.PushSceneRestriction(new CameraLockedRestriction
                 {
                     Action = SceneRestrictionsAction.REMOVED,
                 });
@@ -159,10 +159,10 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
         }
 
         [Query]
-        private void FinalizeMainCameraComponent(Entity entity, in MainCameraComponent mainCameraComponent)
+        private void FinalizeMainCameraComponent(in MainCameraComponent mainCameraComponent)
         {
             DisableActiveVirtualCamera(mainCameraComponent);
-            sceneRestrictionBusController.PushSceneRestriction(new CameraLockedRestriction(entity.Id)
+            sceneRestrictionBusController.PushSceneRestriction(new CameraLockedRestriction
             {
                 Action = SceneRestrictionsAction.REMOVED,
             });

@@ -12,7 +12,7 @@ namespace DCL.Minimap
         private const float TOAST_X_POSITION_OFFSET_ICON_WIDTH_SCALER = 0.75f;
 
         private readonly SceneRestrictionsView restrictionsView;
-        private readonly Dictionary<SceneRestrictions, HashSet<int>> restrictionsRegistry = new();
+        private readonly Dictionary<SceneRestrictions, int> restrictionsRegistry = new();
 
         public SceneRestrictionsController(SceneRestrictionsView restrictionsView, ISceneRestrictionBusController sceneRestrictionBusController)
         {
@@ -21,6 +21,9 @@ namespace DCL.Minimap
             restrictionsView.OnPointerEnterEvent += OnMouseEnter;
             restrictionsView.OnPointerExitEvent += OnMouseExit;
             sceneRestrictionBusController.SubscribeToSceneRestriction(ManageSceneRestrictions);
+
+            foreach (SceneRestrictions restriction in Enum.GetValues(typeof(SceneRestrictions)))
+                restrictionsRegistry[restriction] = 0;
         }
 
         public void Dispose()
@@ -54,15 +57,12 @@ namespace DCL.Minimap
                                            _ => throw new ArgumentOutOfRangeException(),
                                        };
 
-            textIndicator.SetActive(isRestrictionAdded);
+            int currentRestrictionCounter = restrictionsRegistry[sceneRestriction.Type];
+            currentRestrictionCounter += isRestrictionAdded ? 1 : -1;
+            currentRestrictionCounter = Mathf.Clamp(currentRestrictionCounter, 0, int.MaxValue);
+            restrictionsRegistry[sceneRestriction.Type] = currentRestrictionCounter;
 
-            HashSet<int> hashSet = GetOrCreateHashSet(sceneRestriction.Type);
-
-            if (isRestrictionAdded)
-                hashSet.Add(sceneRestriction.EntityId);
-            else
-                hashSet.Remove(sceneRestriction.EntityId);
-
+            textIndicator.SetActive(currentRestrictionCounter > 0);
 
             bool restrictionIconEnabled = RestrictionsRegistryHasAtLeastOneActive();
             restrictionsView.sceneRestrictionsIcon.gameObject.SetActive(restrictionIconEnabled);
@@ -72,21 +72,11 @@ namespace DCL.Minimap
 
         private bool RestrictionsRegistryHasAtLeastOneActive()
         {
-            foreach (HashSet<int> entities in restrictionsRegistry.Values)
-                if (entities.Count > 0)
+            foreach (int counter in restrictionsRegistry.Values)
+                if (counter > 0)
                     return true;
 
             return false;
-        }
-
-        private HashSet<int> GetOrCreateHashSet(SceneRestrictions restriction)
-        {
-            if (!restrictionsRegistry.TryGetValue(restriction, out HashSet<int> hashSet))
-            {
-                hashSet = new HashSet<int>();
-                restrictionsRegistry[restriction] = hashSet;
-            }
-            return hashSet;
         }
     }
 }

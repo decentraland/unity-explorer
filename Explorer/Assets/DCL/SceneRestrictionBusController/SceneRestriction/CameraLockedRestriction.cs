@@ -2,10 +2,9 @@ namespace DCL.SceneRestrictionBusController.SceneRestriction
 {
     public class CameraLockedRestriction : SceneRestrictionBase
     {
-        public CameraLockedRestriction(int entityId) : base()
+        public CameraLockedRestriction() : base()
         {
             Type = SceneRestrictions.CAMERA_LOCKED;
-            EntityId = entityId;
         }
     }
 }

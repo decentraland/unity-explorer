@@ -9,10 +9,9 @@ namespace DCL.SceneRestrictionBusController.SceneRestriction
         public bool DisableJump { get; set; }
         public bool DisableEmote { get; set; }
 
-        public MovementsBlockedRestriction(int entityId) : base()
+        public MovementsBlockedRestriction() : base()
         {
             Type = SceneRestrictions.AVATAR_MOVEMENTS_BLOCKED;
-            EntityId = entityId;
         }
     }
 }

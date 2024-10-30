@@ -4,6 +4,5 @@ namespace DCL.SceneRestrictionBusController.SceneRestriction
     {
         SceneRestrictions Type { get; set; }
         SceneRestrictionsAction Action { get; set; }
-        int EntityId { get; set; }
     }
 }

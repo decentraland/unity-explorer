@@ -41,7 +41,7 @@ namespace DCL.SDKComponents.PlayerInputMovement.Systems
 
             if (currentAction == lastBusMessageAction) return;
 
-            MovementsBlockedRestriction busMessage = new MovementsBlockedRestriction(0)
+            MovementsBlockedRestriction busMessage = new MovementsBlockedRestriction
             {
                 DisableAll = inputModifier.DisableAll,
                 DisableWalk = inputModifier.DisableWalk,
