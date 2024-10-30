@@ -93,6 +93,37 @@ Transform:
   m_Children: []
   m_Father: {fileID: 5694240695484966351}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &3451485946834493550
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4085516147652670838}
+  m_Layer: 27
+  m_Name: Categories
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4085516147652670838
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3451485946834493550}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 5694240695484966351}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &4129027619254272993
 GameObject:
   m_ObjectHideFlags: 0
@@ -192,6 +223,7 @@ Transform:
   - {fileID: 5609044988966314515}
   - {fileID: 3920442518738607191}
   - {fileID: 195609709436987355}
+  - {fileID: 4085516147652670838}
   - {fileID: 7640763729826473348}
   - {fileID: 3838431434337016036}
   - {fileID: 6552871214085833848}
@@ -212,12 +244,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c1518fa59fec409ea8f6ff340ffff185, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  <AtlasRoot>k__BackingField: {fileID: 7964758222206947239}
   <SatelliteAtlasRoot>k__BackingField: {fileID: 1137272574085786475}
   <ColdUserMarkersRoot>k__BackingField: {fileID: 5609044988966314515}
   <HotUserMarkersRoot>k__BackingField: {fileID: 3920442518738607191}
   <FriendUserMarkersRoot>k__BackingField: {fileID: 2512951518552392734}
   <ScenesOfInterestMarkersRoot>k__BackingField: {fileID: 195609709436987355}
+  <CategoriesMarkersRoot>k__BackingField: {fileID: 4085516147652670838}
   <FavoritesMarkersRoot>k__BackingField: {fileID: 6230479589610019337}
   <HomePointRoot>k__BackingField: {fileID: 7640763729826473348}
   <PlayerMarkerRoot>k__BackingField: {fileID: 3838431434337016036}

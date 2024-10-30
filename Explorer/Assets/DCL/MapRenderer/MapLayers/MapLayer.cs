@@ -11,9 +11,20 @@ namespace DCL.MapRenderer.MapLayers
         HotUsersMarkers = 1 << 4,
         ParcelHoverHighlight = 1 << 6,
         Favorites = 1 << 7,
-        Pins = 1 << 8,
-        PlayerMarker = 1 << 9,
-        Path = 1 << 10,
+        Art = 1 << 8,
+        Crypto = 1 << 9,
+        Social = 1 << 10,
+        Game = 1 << 11,
+        Shop = 1 << 12,
+        Education = 1 << 13,
+        Music = 1 << 14,
+        Fashion = 1 << 15,
+        Casino = 1 << 16,
+        Sports = 1 << 17,
+        Business = 1 << 18,
+        Pins = 1 << 19,
+        PlayerMarker = 1 << 20,
+        Path = 1 << 21,
 
         // Add yours
     }
