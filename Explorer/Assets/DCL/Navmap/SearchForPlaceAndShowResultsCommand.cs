@@ -8,21 +8,19 @@ namespace DCL.Navmap
     {
         private readonly IPlacesAPIService placesAPIService;
         private readonly SearchResultPanelController searchResultPanelController;
-        private readonly ISearchHistory searchHistory;
         private readonly string searchText;
         private readonly int pageNumber;
         private readonly int pageSize;
+        private PlacesData.IPlacesAPIResponse? response;
 
         public SearchForPlaceAndShowResultsCommand(IPlacesAPIService placesAPIService,
             SearchResultPanelController searchResultPanelController,
-            ISearchHistory searchHistory,
             string searchText,
             int pageNumber = 0,
             int pageSize = 8)
         {
             this.placesAPIService = placesAPIService;
             this.searchResultPanelController = searchResultPanelController;
-            this.searchHistory = searchHistory;
             this.searchText = searchText;
             this.pageNumber = pageNumber;
             this.pageSize = pageSize;
@@ -30,14 +28,12 @@ namespace DCL.Navmap
 
         public async UniTask ExecuteAsync(CancellationToken ct)
         {
-            searchHistory.Add(searchText);
-
             searchResultPanelController.Show();
 
             searchResultPanelController.SetLoadingState();
             await UniTask.Delay(1000, cancellationToken: ct);
 
-            using PlacesData.IPlacesAPIResponse response = await placesAPIService.SearchPlacesAsync(searchText, pageNumber, pageSize, ct);
+            response ??= await placesAPIService.SearchPlacesAsync(searchText, pageNumber, pageSize, ct);
             searchResultPanelController.SetResults(response.Data);
         }
 
@@ -45,6 +41,12 @@ namespace DCL.Navmap
         {
             searchResultPanelController.Hide();
             searchResultPanelController.ClearResults();
+        }
+
+        public void Dispose()
+        {
+            response?.Dispose();
+            response = null;
         }
     }
 }

@@ -53,7 +53,7 @@ namespace DCL.Navmap
             view.clearSearchButton.onClick.RemoveAllListeners();
         }
 
-        public void ClearSearch()
+        private void ClearSearch()
         {
             view.inputField.SetTextWithoutNotify("");
             view.clearSearchButton.gameObject.SetActive(false);
@@ -101,8 +101,11 @@ namespace DCL.Navmap
                 inputBlock.Enable(InputMapComponent.Kind.SHORTCUTS);
         }
 
-        private async UniTask SearchAndShowAsync(string searchText, CancellationToken ct) =>
+        private async UniTask SearchAndShowAsync(string searchText, CancellationToken ct)
+        {
+            searchHistory.Add(searchText);
             await navmapBus.SearchForPlaceAsync(searchText, ct);
+        }
 
         private void ShowPreviousSearches()
         {

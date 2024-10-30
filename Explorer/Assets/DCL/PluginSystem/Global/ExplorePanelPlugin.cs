@@ -3,6 +3,7 @@ using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.Audio;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Equipped;
 using DCL.AvatarRendering.Wearables;
@@ -237,7 +238,7 @@ namespace DCL.PluginSystem.Global
             navmapController = new NavmapController(navmapView,
                 mapRendererContainer.MapRenderer, placesAPIService, webRequestController, webBrowser, dclInput,
                 realmData, mapPathEventBus, world, playerEntity, inputBlock, chatMessagesBus, searchHistory,
-                navmapBus);
+                navmapBus, UIAudioEventsBus.Instance);
 
             await backpackSubPlugin.InitializeAsync(settings.BackpackSettings, explorePanelView.GetComponentInChildren<BackpackView>(), ct);
 
@@ -270,8 +271,7 @@ namespace DCL.PluginSystem.Global
         }
 
         private INavmapCommand CreateSearchPlaceCommand(string search) =>
-            new SearchForPlaceAndShowResultsCommand(placesAPIService, searchResultPanelController!,
-                searchHistory!, search);
+            new SearchForPlaceAndShowResultsCommand(placesAPIService, searchResultPanelController!, search);
 
         public class ExplorePanelSettings : IDCLPluginSettings
         {

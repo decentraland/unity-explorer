@@ -17,6 +17,8 @@ namespace DCL.Navmap
 
         UniTask GoBackAsync(CancellationToken ct);
 
+        void ClearHistory();
+
         void SelectDestination(PlacesData.PlaceInfo place);
 
         void JumpIn(PlacesData.PlaceInfo place);

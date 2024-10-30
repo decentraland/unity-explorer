@@ -36,9 +36,19 @@ namespace DCL.Navmap
         {
             if (!commands.TryPop(out INavmapCommand? lastCommand)) return;
             lastCommand.Undo();
+            lastCommand.Dispose();
 
             if (!commands.TryPeek(out var currentCommand)) return;
             await currentCommand.ExecuteAsync(ct);
+        }
+
+        public void ClearHistory()
+        {
+            for (var i = 0; i < commands.Count; i++)
+            {
+                if (!commands.TryPop(out var command)) continue;
+                command.Dispose();
+            }
         }
 
         public void SelectDestination(PlacesData.PlaceInfo place) =>
