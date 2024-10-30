@@ -62,7 +62,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
                 // .WithSemaphore() -
                 // is not required since PooledTexturesUnzip has synchronization for the access and prevents double calling of TextureFromBytesAsync
                ,
-                3
+                Environment.ProcessorCount - 1 // 1 worker is used by the main thread
             );
         }
 
