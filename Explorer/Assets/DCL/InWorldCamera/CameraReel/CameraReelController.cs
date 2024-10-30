@@ -1,4 +1,5 @@
 using DCL.UI;
+using DG.Tweening;
 using System;
 using UnityEngine;
 
@@ -13,7 +14,17 @@ namespace DCL.InWorldCamera.CameraReel
         {
             this.view = view;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
+
+            this.view.OnMouseEnter += OnStorageFullIconEnter;
+            this.view.OnMouseExit += OnStorageFullIconExit;
         }
+
+        private void OnStorageFullIconEnter() =>
+            view.storageFullToast.DOFade(1f, view.storageFullToastFadeTime);
+
+        private void OnStorageFullIconExit() =>
+            view.storageFullToast.DOFade(0f, view.storageFullToastFadeTime);
+
 
         public void Activate() =>
             view.gameObject.SetActive(true);
@@ -36,7 +47,8 @@ namespace DCL.InWorldCamera.CameraReel
 
         public void Dispose()
         {
-
+            view.OnMouseEnter -= OnStorageFullIconEnter;
+            view.OnMouseExit -= OnStorageFullIconExit;
         }
     }
 }

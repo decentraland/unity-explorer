@@ -7204,6 +7204,10 @@ PrefabInstance:
       propertyPath: m_AnchorMin.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6681011948887701118, guid: 56d4550f784694f7a89e739437f9ca7a, type: 3}
+      propertyPath: m_Size
+      value: 0.99997056
+      objectReference: {fileID: 0}
     - target: {fileID: 7620183808261252133, guid: 56d4550f784694f7a89e739437f9ca7a, type: 3}
       propertyPath: m_Name
       value: CameraReel
@@ -7223,6 +7227,10 @@ PrefabInstance:
     - target: {fileID: 8062752488789234650, guid: 56d4550f784694f7a89e739437f9ca7a, type: 3}
       propertyPath: m_SizeDelta.y
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8098133582204182747, guid: 56d4550f784694f7a89e739437f9ca7a, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0.01807078
       objectReference: {fileID: 0}
     - target: {fileID: 8766873387529285875, guid: 56d4550f784694f7a89e739437f9ca7a, type: 3}
       propertyPath: m_AnchorMax.x
