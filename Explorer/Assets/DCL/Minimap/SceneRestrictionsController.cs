@@ -3,6 +3,7 @@ using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DG.Tweening;
 using System;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 
 namespace DCL.Minimap
@@ -13,6 +14,15 @@ namespace DCL.Minimap
 
         private readonly SceneRestrictionsView restrictionsView;
         private readonly Dictionary<SceneRestrictions, int> restrictionsRegistry = new();
+        private readonly Dictionary<SceneRestrictions, GameObject> restrictionsGameObjects = new();
+        private readonly Dictionary<SceneRestrictions, string> restrictionsTexts = new()
+        {
+            { SceneRestrictions.CAMERA_LOCKED, "• The camera is locked" },
+            { SceneRestrictions.AVATAR_HIDDEN, "• The avatars are hidden" },
+            { SceneRestrictions.AVATAR_MOVEMENTS_BLOCKED, "• Avatar movements are blocked" },
+            { SceneRestrictions.PASSPORT_CANNOT_BE_OPENED, "• Passports can not be opened" },
+            { SceneRestrictions.EXPERIENCES_BLOCKED, "• Experiences are blocked" },
+        };
 
         public SceneRestrictionsController(SceneRestrictionsView restrictionsView, ISceneRestrictionBusController sceneRestrictionBusController)
         {
@@ -23,7 +33,15 @@ namespace DCL.Minimap
             sceneRestrictionBusController.SubscribeToSceneRestriction(ManageSceneRestrictions);
 
             foreach (SceneRestrictions restriction in Enum.GetValues(typeof(SceneRestrictions)))
+            {
                 restrictionsRegistry[restriction] = 0;
+
+                GameObject restrictionsObject = GameObject.Instantiate(restrictionsView.restrictionTextPrefab, restrictionsView.toastTextParent.transform);
+                restrictionsObject.GetComponent<TMP_Text>().SetText(restrictionsTexts[restriction]);
+                restrictionsObject.SetActive(false);
+                restrictionsObject.name = restriction.ToString();
+                restrictionsGameObjects[restriction] = restrictionsObject;
+            }
         }
 
         public void Dispose()
@@ -45,24 +63,14 @@ namespace DCL.Minimap
 
         private void ManageSceneRestrictions(ISceneRestriction sceneRestriction)
         {
-            bool isRestrictionAdded = sceneRestriction.Action == SceneRestrictionsAction.APPLIED;
-
-            GameObject textIndicator = sceneRestriction.Type switch
-                                       {
-                                           SceneRestrictions.CAMERA_LOCKED => restrictionsView.cameraLockedText.gameObject,
-                                           SceneRestrictions.AVATAR_HIDDEN => restrictionsView.avatarHiddenText.gameObject,
-                                           SceneRestrictions.AVATAR_MOVEMENTS_BLOCKED => restrictionsView.avatarMovementsText.gameObject,
-                                           SceneRestrictions.PASSPORT_CANNOT_BE_OPENED => restrictionsView.passportBlockedText.gameObject,
-                                           SceneRestrictions.EXPERIENCES_BLOCKED => restrictionsView.experiencesBlockedText.gameObject,
-                                           _ => throw new ArgumentOutOfRangeException(),
-                                       };
-
             int currentRestrictionCounter = restrictionsRegistry[sceneRestriction.Type];
-            currentRestrictionCounter += isRestrictionAdded ? 1 : -1;
+
+            currentRestrictionCounter += sceneRestriction.Action == SceneRestrictionsAction.APPLIED ? 1 : -1;
             currentRestrictionCounter = Mathf.Clamp(currentRestrictionCounter, 0, int.MaxValue);
+
             restrictionsRegistry[sceneRestriction.Type] = currentRestrictionCounter;
 
-            textIndicator.SetActive(currentRestrictionCounter > 0);
+            restrictionsGameObjects[sceneRestriction.Type].SetActive(currentRestrictionCounter > 0);
 
             bool restrictionIconEnabled = RestrictionsRegistryHasAtLeastOneActive();
             restrictionsView.sceneRestrictionsIcon.gameObject.SetActive(restrictionIconEnabled);

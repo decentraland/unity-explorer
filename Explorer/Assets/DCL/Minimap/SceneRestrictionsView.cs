@@ -1,5 +1,4 @@
 using System;
-using TMPro;
 using UnityEngine;
 
 namespace DCL.Minimap
@@ -10,22 +9,13 @@ namespace DCL.Minimap
         internal RectTransform sceneRestrictionsIcon { get; private set; }
 
         [field: SerializeField]
-        internal TMP_Text cameraLockedText { get; private set; }
-
-        [field: SerializeField]
-        internal TMP_Text avatarHiddenText { get; private set; }
-
-        [field: SerializeField]
-        internal TMP_Text avatarMovementsText { get; private set; }
-
-        [field: SerializeField]
-        internal TMP_Text passportBlockedText { get; private set; }
-
-        [field: SerializeField]
-        internal TMP_Text experiencesBlockedText { get; private set; }
+        internal GameObject restrictionTextPrefab { get; private set; }
 
         [field: SerializeField]
         internal CanvasGroup toastCanvasGroup { get; private set; }
+
+        [field: SerializeField]
+        internal GameObject toastTextParent { get; private set; }
 
         [field: SerializeField]
         internal float fadeTime { get; set; } = 0.3f;
