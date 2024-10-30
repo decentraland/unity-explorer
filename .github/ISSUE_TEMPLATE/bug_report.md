@@ -8,7 +8,7 @@ assignees: ''
 
 ---
 
-### **Explorer Alpha build versions:**
+### **Build version:**
 
 
 ### **Issue Description:**
@@ -20,13 +20,17 @@ assignees: ''
   2.
   3.
 
-### **Expected behaviour:**
+### **Expected behavior:**
 
 
 ### **Current behaviour:**
 
 
+### **Repro Index:**
+<!-- Starting on 0/10 attempts -->
+
 #### **Evidence:**
+
 
 #### **Additional Notes:**
 <!-- If the test is made on Mac, specify if the chip is M1 or Intel -->
