@@ -77,7 +77,7 @@ namespace DCL.Nametags
         }
 
         [Query]
-        [None(typeof(NametagView))]
+        [None(typeof(NametagView), typeof(DeleteEntityIntention))]
         private void AddTag([Data] in CameraComponent camera, Entity e, in AvatarShapeComponent avatarShape, in CharacterTransform characterTransform, in PartitionComponent partitionComponent, in Profile profile)
         {
             if (partitionComponent.IsBehind || IsOutOfRenderRange(camera, characterTransform) || (camera.Mode == CameraMode.FirstPerson && World.Has<PlayerComponent>(e))) return;
@@ -147,7 +147,6 @@ namespace DCL.Nametags
         }
 
         [Query]
-        [All(typeof(NametagView))]
         private void RemoveAllTags(Entity e, NametagView nametagView)
         {
             nametagViewPool.Release(nametagView);

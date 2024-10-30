@@ -18,7 +18,7 @@ namespace DCL.Multiplayer.Connections.Systems
         private readonly IRoomHub roomHub;
 
         [Query]
-        [None(typeof(DebugRoomIndicatorComponent), typeof(PlayerComponent))]
+        [None(typeof(DebugRoomIndicatorComponent), typeof(PlayerComponent), typeof(DeleteEntityIntention))]
         private void AddIndicator(Entity entity, NametagView nametagView)
         {
             DebugRoomIndicatorView? view = roomIndicatorPool.Get();
@@ -44,7 +44,7 @@ namespace DCL.Multiplayer.Connections.Systems
             room.Participants.RemoteParticipant(id) != null ? source : DebugRoomIndicatorComponent.RoomSource.NONE;
 
         [Query]
-        [None(typeof(NametagView), typeof(PlayerComponent))]
+        [None(typeof(NametagView), typeof(PlayerComponent), typeof(DeleteEntityIntention))]
         private void RemoveIndicatorOnComponentRemoval(Entity entity, in DebugRoomIndicatorComponent component)
         {
             RemoveIndicatorInternal(entity, component);

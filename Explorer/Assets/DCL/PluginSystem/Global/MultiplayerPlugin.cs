@@ -61,7 +61,7 @@ namespace DCL.PluginSystem.Global
         private readonly ICharacterDataPropagationUtility characterDataPropagationUtility;
         private readonly IComponentPoolsRegistry poolsRegistry;
 
-        private IObjectPool<DebugRoomIndicatorView> debugRoomIndicatorPool;
+        private IObjectPool<DebugRoomIndicatorView>? debugRoomIndicatorPool;
 
         public MultiplayerPlugin(
             IAssetsProvisioner assetsProvisioner,

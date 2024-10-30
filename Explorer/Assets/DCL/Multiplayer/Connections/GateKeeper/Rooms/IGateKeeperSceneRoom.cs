@@ -15,7 +15,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
         /// <returns></returns>
         bool IsSceneConnected(string? sceneId);
 
-        class Fake : IConnectiveRoom.Fake, IGateKeeperSceneRoom
+        class Fake : Null, IGateKeeperSceneRoom
         {
             public ISceneData? ConnectedScene { get; } = new ISceneData.Fake();
 
