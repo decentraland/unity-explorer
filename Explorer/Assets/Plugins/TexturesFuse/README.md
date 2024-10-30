@@ -101,7 +101,7 @@ As result you will get .dll/.dylib files respectively for windows and mac.
 The files will be located in `Plugins/TexturesFuse/TexturesServerWrap/Libraries`
 
 ### Build ASTC 
- 1. Ensure you pulled `astc-encoder` with submodules or run `git clone https://github.com/ARM-software/astc-encoder` in `textures-server` directory (tested with commit's hash: `5c46d8ea866751213269bd6527d4f71c890f23a0`)
+ 1. Ensure you pulled `astc-encoder` with submodules `git submodule update --init --recursive`
  2. Go to directory `astc-encoder`
  3. Run 
     - Mac: - `cmake . -DASTCENC_SHAREDLIB=ON -DASTCENC_UNIVERSAL_BUILD=ON -DASTCENC_DYNAMIC_LIBRARY=ON -DCMAKE_BUILD_TYPE=Release` 

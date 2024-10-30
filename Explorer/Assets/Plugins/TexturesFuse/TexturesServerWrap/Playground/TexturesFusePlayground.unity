@@ -272,7 +272,7 @@ MonoBehaviour:
       g: 1
       b: 2
       a: 3
-  path: Assets/Plugins/TexturesFuse/textures-server/FreeImage/Source/FFI/image.jpg
+  path: Assets/Plugins/TexturesFuse/TexturesServerWrap/Playground/NormalMap/brick_wall2-diff-512.png
   debugOutputFromNative: 1
   outputPath: Assets/Plugins/TexturesFuse/TexturesServerWrap/Playground/ASTCTexturesCompatability/test_output.astc
 --- !u!1 &1203531619
