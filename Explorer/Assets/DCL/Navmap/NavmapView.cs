@@ -3,6 +3,7 @@ using DCL.MapRenderer.ConsumerUtils;
 using DCL.UI;
 using System;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace DCL.Navmap
 {
@@ -17,8 +18,10 @@ namespace DCL.Navmap
         [field: SerializeField]
         public HistoryRecordPanelView HistoryRecordPanelView;
 
+        [FormerlySerializedAs("eventInfoCard")]
+        [FormerlySerializedAs("floatingPanelView")]
         [field: SerializeField]
-        public FloatingPanelView floatingPanelView;
+        public EventInfoCardView eventInfoCardView;
 
         [field: SerializeField]
         public NavmapFilterView filterView;

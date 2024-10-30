@@ -1,50 +1,25 @@
-using Cysharp.Threading.Tasks;
-using DCL.AssetsProvision;
-using DCL.Character.CharacterMotion.Components;
 using DCL.PlacesAPIService;
 using DCL.UI;
-using DCL.WebRequests;
-using System;
 using System.Collections.Generic;
-using System.Threading;
-using UnityEngine;
 using UnityEngine.Pool;
-using Object = UnityEngine.Object;
 
 namespace DCL.Navmap
 {
     public class SearchResultPanelController
     {
         private readonly SearchResultPanelView view;
-        private readonly IWebRequestController webRequestController;
         private readonly List<FullSearchResultsView> usedPoolElements;
-        private ObjectPool<FullSearchResultsView> resultsPool;
-        public event Action<string> OnResultClicked;
+        private readonly ObjectPool<FullSearchResultsView> resultsPool;
+        private readonly INavmapBus navmapBus;
 
-        public SearchResultPanelController(SearchResultPanelView view, IWebRequestController webRequestController)
+        public SearchResultPanelController(SearchResultPanelView view,
+            ObjectPool<FullSearchResultsView> resultsPool,
+            INavmapBus navmapBus)
         {
             this.view = view;
-            this.webRequestController = webRequestController;
+            this.resultsPool = resultsPool;
+            this.navmapBus = navmapBus;
             usedPoolElements = new List<FullSearchResultsView>();
-        }
-
-        public async UniTask InitialiseAssetsAsync(IAssetsProvisioner assetsProvisioner, CancellationToken ct)
-        {
-            FullSearchResultsView asset = (await assetsProvisioner.ProvideInstanceAsync(view.ResultRef, ct: ct)).Value;
-
-            resultsPool = new ObjectPool<FullSearchResultsView>(
-                () => CreatePoolElements(asset),
-                actionOnGet: result => result.gameObject.SetActive(true),
-                actionOnRelease: result => result.gameObject.SetActive(false),
-                defaultCapacity: 8
-            );
-        }
-
-        private FullSearchResultsView CreatePoolElements(FullSearchResultsView asset)
-        {
-            FullSearchResultsView fullSearchResultsView = Object.Instantiate(asset, view.searchResultsContainer);
-            fullSearchResultsView.ConfigurePlaceImageController(webRequestController);
-            return fullSearchResultsView;
         }
 
         public void Show()
@@ -56,37 +31,32 @@ namespace DCL.Navmap
             view.gameObject.SetActive(true);
             view.CanvasGroup.interactable = true;
             view.CanvasGroup.blocksRaycasts = true;
-            ResetAnimator();
             view.panelAnimator.SetTrigger(UIAnimationHashes.IN);
         }
 
-        public void Reset()
+        public void ClearResults()
         {
-            ResetAnimator();
-            view.gameObject.SetActive(false);
-        }
+            foreach (FullSearchResultsView fullSearchResultsView in usedPoolElements)
+            {
+                fullSearchResultsView.resultButton.onClick.RemoveAllListeners();
+                fullSearchResultsView.resultAnimator.Rebind();
+                fullSearchResultsView.resultAnimator.Update(0f);
+                resultsPool.Release(fullSearchResultsView);
+            }
 
-        public void ResetAnimator()
-        {
-            view.panelAnimator.Rebind();
-            view.panelAnimator.Update(0f);
+            usedPoolElements.Clear();
         }
 
         public void Hide()
         {
-            ReleasePool();
+            ClearResults();
             view.CanvasGroup.interactable = false;
             view.CanvasGroup.blocksRaycasts = false;
             view.panelAnimator.SetTrigger(UIAnimationHashes.OUT);
         }
 
-        public void AnimateLeftRight(bool left) =>
-            view.panelAnimator.SetTrigger(left ? UIAnimationHashes.TO_LEFT : UIAnimationHashes.TO_RIGHT);
-
         public void SetLoadingState()
         {
-            ReleasePool();
-
             for (var i = 0; i < 8; i++)
             {
                 FullSearchResultsView fullSearchResultsView = resultsPool.Get();
@@ -96,7 +66,8 @@ namespace DCL.Navmap
 
         public void SetResults(IReadOnlyList<PlacesData.PlaceInfo> places)
         {
-            ReleasePool();
+            ClearResults();
+
             view.NoResultsContainer.gameObject.SetActive(places.Count == 0);
 
             foreach (PlacesData.PlaceInfo placeInfo in places)
@@ -110,21 +81,8 @@ namespace DCL.Navmap
                 fullSearchResultsView.playersCount.text = placeInfo.user_count.ToString();
                 fullSearchResultsView.resultAnimator.SetTrigger(UIAnimationHashes.LOADED);
                 fullSearchResultsView.SetPlaceImage(placeInfo.image);
-                fullSearchResultsView.resultButton.onClick.AddListener(() => OnResultClicked?.Invoke(placeInfo.base_position));
+                fullSearchResultsView.resultButton.onClick.AddListener(() => navmapBus.SelectPlace(placeInfo));
             }
-        }
-
-        private void ReleasePool()
-        {
-            foreach (FullSearchResultsView fullSearchResultsView in usedPoolElements)
-            {
-                fullSearchResultsView.resultButton.onClick.RemoveAllListeners();
-                fullSearchResultsView.resultAnimator.Rebind();
-                fullSearchResultsView.resultAnimator.Update(0f);
-                resultsPool.Release(fullSearchResultsView);
-            }
-
-            usedPoolElements.Clear();
         }
     }
 }

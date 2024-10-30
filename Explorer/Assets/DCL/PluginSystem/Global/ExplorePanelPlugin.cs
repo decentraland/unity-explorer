@@ -45,6 +45,7 @@ using DCL.Settings.Settings;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Audio;
+using UnityEngine.Pool;
 
 // ReSharper disable UnusedAutoPropertyAccessor.Local
 namespace DCL.PluginSystem.Global
@@ -77,7 +78,6 @@ namespace DCL.PluginSystem.Global
         private readonly IEmoteProvider emoteProvider;
         private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
-
         private readonly IMapPathEventBus mapPathEventBus;
         private readonly ICollection<string> forceRender;
         private ExplorePanelInputHandler? inputHandler;
@@ -88,15 +88,14 @@ namespace DCL.PluginSystem.Global
         private readonly ChatEntryConfigurationSO chatEntryConfiguration;
         private readonly IInputBlock inputBlock;
         private readonly IChatMessagesBus chatMessagesBus;
-
         private readonly ISystemMemoryCap systemMemoryCap;
         private readonly WorldVolumeMacBus worldVolumeMacBus;
 
         private NavmapController? navmapController;
         private SettingsController? settingsController;
         private BackpackSubPlugin? backpackSubPlugin;
-
-
+        private SearchResultPanelController? searchResultPanelController;
+        private ISearchHistory? searchHistory;
 
         public ExplorePanelPlugin(IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
@@ -224,11 +223,22 @@ namespace DCL.PluginSystem.Global
             ProvidedAsset<ControlsSettingsAsset> controlsSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.ControlsSettingsAsset, ct);
             settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>(), settingsMenuConfiguration.Value, generalAudioMixer.Value, realmPartitionSettings.Value, landscapeData.Value, qualitySettingsAsset.Value, controlsSettingsAsset.Value, systemMemoryCap, worldVolumeMacBus);
 
-            navmapController = new NavmapController(navmapView: explorePanelView.GetComponentInChildren<NavmapView>(),
-                mapRendererContainer.MapRenderer, placesAPIService, webRequestController, webBrowser, dclInput,
-                realmData, mapPathEventBus, world, playerEntity, inputBlock, chatMessagesBus, new PlayerPrefsSearchHistory());
+            searchHistory = new PlayerPrefsSearchHistory();
 
-            await navmapController.InitializeAssetsAsync(assetsProvisioner, ct);
+            NavmapView navmapView = explorePanelView.GetComponentInChildren<NavmapView>();
+
+            INavmapBus navmapBus = new NavmapCommandBus(CreateSearchPlaceCommand);
+
+            ObjectPool<FullSearchResultsView> searchResultsPool = await InitializeSearchResultsPool(navmapView.SearchBarResultPanel, ct);
+
+            searchResultPanelController = new SearchResultPanelController(navmapView.SearchBarResultPanel,
+                searchResultsPool, navmapBus);
+
+            navmapController = new NavmapController(navmapView,
+                mapRendererContainer.MapRenderer, placesAPIService, webRequestController, webBrowser, dclInput,
+                realmData, mapPathEventBus, world, playerEntity, inputBlock, chatMessagesBus, searchHistory,
+                navmapBus);
+
             await backpackSubPlugin.InitializeAsync(settings.BackpackSettings, explorePanelView.GetComponentInChildren<BackpackView>(), ct);
 
             mvcManager.RegisterController(new
@@ -239,6 +249,29 @@ namespace DCL.PluginSystem.Global
 
             inputHandler = new ExplorePanelInputHandler(dclInput, mvcManager);
         }
+
+        private async UniTask<ObjectPool<FullSearchResultsView>> InitializeSearchResultsPool(SearchResultPanelView view, CancellationToken ct)
+        {
+            FullSearchResultsView asset = (await assetsProvisioner.ProvideInstanceAsync(view.ResultRef, ct: ct)).Value;
+
+            return new ObjectPool<FullSearchResultsView>(
+                () => CreatePoolElements(asset),
+                actionOnGet: result => result.gameObject.SetActive(true),
+                actionOnRelease: result => result.gameObject.SetActive(false),
+                defaultCapacity: 8
+            );
+
+            FullSearchResultsView CreatePoolElements(FullSearchResultsView asset)
+            {
+                FullSearchResultsView fullSearchResultsView = Object.Instantiate(asset, view.searchResultsContainer);
+                fullSearchResultsView.ConfigurePlaceImageController(webRequestController);
+                return fullSearchResultsView;
+            }
+        }
+
+        private INavmapCommand CreateSearchPlaceCommand(string search) =>
+            new SearchForPlaceAndShowResultsCommand(placesAPIService, searchResultPanelController!,
+                searchHistory!, search);
 
         public class ExplorePanelSettings : IDCLPluginSettings
         {

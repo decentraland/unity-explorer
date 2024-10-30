@@ -1,8 +1,7 @@
 using Arch.Core;
-using Cysharp.Threading.Tasks;
-using DCL.AssetsProvision;
 using DCL.Audio;
 using DCL.Browser;
+using DCL.Chat.MessageBus;
 using DCL.Input;
 using DCL.MapRenderer;
 using DCL.MapRenderer.CommonBehavior;
@@ -15,13 +14,11 @@ using DCL.PlacesAPIService;
 using DCL.UI;
 using DCL.WebRequests;
 using ECS;
-using ECS.SceneLifeCycle.Realm;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
-using DCL.Chat.MessageBus;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Utility;
@@ -44,6 +41,7 @@ namespace DCL.Navmap
         private readonly SatelliteController satelliteController;
         private readonly IRealmData realmData;
         private readonly IMapPathEventBus mapPathEventBus;
+        private readonly INavmapBus navmapBus;
         private readonly SectionSelectorController<NavmapSections> sectionSelectorController;
         private readonly Dictionary<NavmapSections, TabSelectorView> tabsBySections;
         private readonly Dictionary<NavmapSections, ISection> mapSections;
@@ -51,8 +49,8 @@ namespace DCL.Navmap
         private readonly StringBuilder parcelTitleStringBuilder = new ();
         private readonly NavmapLocationController navmapLocationController;
 
-        private CancellationTokenSource animationCts;
-        private IMapCameraController cameraController;
+        private CancellationTokenSource? animationCts;
+        private IMapCameraController? cameraController;
 
         private Vector2 lastParcelHovered;
         private NavmapSections lastShownSection;
@@ -60,7 +58,8 @@ namespace DCL.Navmap
 
         public IReadOnlyDictionary<MapLayer, IMapLayerParameter> LayersParameters { get; } = new Dictionary<MapLayer, IMapLayerParameter>
             { { MapLayer.PlayerMarker, new PlayerMarkerParameter { BackgroundIsActive = true } } };
-        public FloatingPanelController FloatingPanelController { get; }
+        public EventInfoCardController EventInfoCardController { get; }
+        public INavmapBus NavmapBus => navmapBus;
 
         public NavmapController(
             NavmapView navmapView,
@@ -75,25 +74,26 @@ namespace DCL.Navmap
             Entity playerEntity,
             IInputBlock inputBlock,
             IChatMessagesBus chatMessagesBus,
-            ISearchHistory searchHistory)
+            ISearchHistory searchHistory,
+            INavmapBus navmapBus)
         {
             this.navmapView = navmapView;
             this.mapRenderer = mapRenderer;
             this.realmData = realmData;
             this.mapPathEventBus = mapPathEventBus;
+            this.navmapBus = navmapBus;
 
             rectTransform = this.navmapView.transform.parent.GetComponent<RectTransform>();
 
             zoomController = new NavmapZoomController(navmapView.zoomView, dclInput);
             filterController = new NavmapFilterController(this.navmapView.filterView, mapRenderer, webBrowser);
-            searchBarController = new NavmapSearchBarController(navmapView.SearchBarView, navmapView.SearchBarResultPanel, navmapView.HistoryRecordPanelView, placesAPIService, navmapView.floatingPanelView, webRequestController, inputBlock, searchHistory);
-            FloatingPanelController = new FloatingPanelController(navmapView.floatingPanelView, placesAPIService,
-                webRequestController, mapPathEventBus, chatMessagesBus, zoomController);
-            FloatingPanelController.OnJumpIn += _ => searchBarController.ResetSearch();
-            FloatingPanelController.OnSetAsDestination += SetDestination;
+            searchBarController = new NavmapSearchBarController(navmapView.SearchBarView,
+                navmapView.HistoryRecordPanelView, inputBlock, searchHistory, navmapBus);
+            EventInfoCardController = new EventInfoCardController(navmapView.eventInfoCardView, placesAPIService,
+                webRequestController, mapPathEventBus, chatMessagesBus, zoomController, navmapBus);
+            navmapBus.OnDestinationSelected += SetDestination;
             this.navmapView.DestinationInfoElement.QuitButton.onClick.AddListener(OnRemoveDestinationButtonClicked);
-            searchBarController.OnResultClicked += OnResultClicked;
-            searchBarController.OnSearchTextChanged += FloatingPanelController.HidePanel;
+            navmapBus.OnPlaceSelected += OnPlaceSelected;
             satelliteController = new SatelliteController(navmapView.GetComponentInChildren<SatelliteView>(), this.navmapView.MapCameraDragBehaviorData, mapRenderer, webBrowser);
             mapPathEventBus.OnRemovedDestination += RemoveDestination;
 
@@ -137,7 +137,7 @@ namespace DCL.Navmap
             navmapView.SatelliteRenderImage.HoveredMapPin -= OnMapPinHovered;
             animationCts?.Dispose();
             zoomController?.Dispose();
-            FloatingPanelController?.Dispose();
+            EventInfoCardController?.Dispose();
             searchBarController?.Dispose();
         }
 
@@ -196,12 +196,9 @@ namespace DCL.Navmap
             }
         }
 
-        public async UniTask InitializeAssetsAsync(IAssetsProvisioner assetsProvisioner, CancellationToken ct) =>
-            await searchBarController.InitialiseAssetsAsync(assetsProvisioner, ct);
-
-        private void OnResultClicked(string coordinates)
+        private void OnPlaceSelected(PlacesData.PlaceInfo place)
         {
-            if (VectorUtilities.TryParseVector2Int(coordinates, out Vector2Int result))
+            if (VectorUtilities.TryParseVector2Int(place.base_position, out Vector2Int result))
                 //This will trigger a "parcel clicked" event with the data from the parcel
                 this.navmapView.SatelliteRenderImage.OnSearchResultParcelSelected(result);
         }
@@ -210,7 +207,7 @@ namespace DCL.Navmap
         {
             lastParcelClicked = clickedParcel;
             UIAudioEventsBus.Instance.SendPlayAudioEvent(navmapView.ClickAudio);
-            FloatingPanelController.HandlePanelVisibility(clickedParcel.Parcel, clickedParcel.PinMarker, false);
+            EventInfoCardController.Show(clickedParcel.Parcel, clickedParcel.PinMarker);
         }
 
         public void Activate()

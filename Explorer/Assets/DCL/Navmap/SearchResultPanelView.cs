@@ -1,6 +1,7 @@
 using DCL.AssetsProvision;
 using System;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace DCL.Navmap
 {
@@ -17,6 +18,12 @@ namespace DCL.Navmap
 
         [field: SerializeField]
         public CanvasGroup CanvasGroup { get; private set; }
+
+        [field: SerializeField]
+        public Button ExpandButton { get; private set; }
+
+        [field: SerializeField]
+        public Button CollapseButton { get; private set; }
 
         [field: SerializeField]
         public Animator panelAnimator;
