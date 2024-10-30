@@ -3,22 +3,29 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
+using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
+using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Connections.Rooms.Status;
 using DCL.Multiplayer.Connections.Systems.Debug;
 using DCL.Multiplayer.Profiles.Poses;
 using DCL.Multiplayer.Profiles.Tables;
+using DCL.Nametags;
 using ECS.Abstract;
 using System;
+using UnityEngine.Pool;
 
 namespace DCL.Multiplayer.Connections.Systems
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
+    [UpdateAfter(typeof(NametagPlacementSystem))]
+    [LogCategory(ReportCategory.DEBUG)]
     public partial class DebugRoomsSystem : BaseUnityLoopSystem
     {
         private readonly IRoomDisplay roomDisplay;
         private readonly RoomsStatus roomsStatus;
+        private readonly ElementBinding<bool> debugAvatarsRooms;
 
         public DebugRoomsSystem(
             World world,
@@ -27,10 +34,13 @@ namespace DCL.Multiplayer.Connections.Systems
             IGateKeeperSceneRoom gateKeeperSceneRoom,
             IReadOnlyEntityParticipantTable entityParticipantTable,
             IRemoteMetadata remoteMetadata,
-            IDebugContainerBuilder debugBuilder
-        ) : base(world)
+            IDebugContainerBuilder debugBuilder,
+            IRoomHub roomHub,
+            IObjectPool<DebugRoomIndicatorView> roomIndicatorPool) : base(world)
         {
             this.roomsStatus = roomsStatus;
+            this.roomIndicatorPool = roomIndicatorPool;
+            this.roomHub = roomHub;
 
             DebugWidgetBuilder? infoWidget = debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.ROOM_INFO);
 
@@ -61,6 +71,8 @@ namespace DCL.Multiplayer.Connections.Systems
                 infoWidget
             );
 
+            debugAvatarsRooms = avatarsRoomDisplay.debugAvatarsRooms;
+
             var remotePosesRoomDisplay = new RemotePosesRoomDisplay(
                 remoteMetadata,
                 infoWidget
@@ -86,6 +98,10 @@ namespace DCL.Multiplayer.Connections.Systems
         {
             roomDisplay.Update();
             roomsStatus.Update();
+
+            UpdateRoomIndicators();
         }
+
+        partial void UpdateRoomIndicators();
     }
 }

@@ -12,6 +12,7 @@ using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Connections.Rooms.Status;
 using DCL.Multiplayer.Connections.Systems;
+using DCL.Multiplayer.Connections.Systems.RoomIndicator;
 using DCL.Multiplayer.Profiles.BroadcastProfiles;
 using DCL.Multiplayer.Profiles.Entities;
 using DCL.Multiplayer.Profiles.Poses;
@@ -33,6 +34,8 @@ using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using UnityEngine.Pool;
+using Object = UnityEngine.Object;
 
 namespace DCL.PluginSystem.Global
 {
@@ -57,6 +60,8 @@ namespace DCL.PluginSystem.Global
         private readonly IScenesCache scenesCache;
         private readonly ICharacterDataPropagationUtility characterDataPropagationUtility;
         private readonly IComponentPoolsRegistry poolsRegistry;
+
+        private IObjectPool<DebugRoomIndicatorView> debugRoomIndicatorPool;
 
         public MultiplayerPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -100,20 +105,23 @@ namespace DCL.PluginSystem.Global
             this.poolsRegistry = poolsRegistry;
         }
 
+        public void Dispose() { }
+
         public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
         {
             RemoteAvatarCollider remoteAvatarCollider = (await assetsProvisioner.ProvideMainAssetAsync(settings.RemoteAvatarColliderPrefab, ct)).Value.GetComponent<RemoteAvatarCollider>();
             remoteEntities.Initialize(remoteAvatarCollider);
-        }
 
-        public void Dispose() { }
+            await CreateCreateRoomIndicatorPoolAsync(settings, ct);
+        }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments globalPluginArguments)
         {
 #if !NO_LIVEKIT_MODE
             IFFIClient.Default.EnsureInitialize();
 
-            DebugRoomsSystem.InjectToWorld(ref builder, roomsStatus, archipelagoIslandRoom, gateKeeperSceneRoom, entityParticipantTable, remoteMetadata, debugContainerBuilder);
+            DebugRoomsSystem.InjectToWorld(ref builder, roomsStatus, archipelagoIslandRoom, gateKeeperSceneRoom, entityParticipantTable, remoteMetadata, debugContainerBuilder,
+                roomHub, debugRoomIndicatorPool);
 
             MultiplayerProfilesSystem.InjectToWorld(ref builder,
                 new RemoteAnnouncements(messagePipesHub),
@@ -138,13 +146,26 @@ namespace DCL.PluginSystem.Global
 #endif
         }
 
+        private async UniTask CreateCreateRoomIndicatorPoolAsync(Settings settings, CancellationToken ct)
+        {
+            DebugRoomIndicatorView? indicatorPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.DebugRoomIndicator, ct: ct)).Value.GetComponent<DebugRoomIndicatorView>();
+
+            debugRoomIndicatorPool = new GameObjectPool<DebugRoomIndicatorView>(poolsRegistry.RootContainerTransform(),
+                creationHandler: () => Object.Instantiate(indicatorPrefab, Vector3.zero, Quaternion.identity), maxSize: PoolConstants.AVATARS_COUNT);
+        }
+
         [Serializable]
         public class Settings : IDCLPluginSettings
         {
-            [field: Header(nameof(MultiplayerPlugin) + "." + nameof(Settings))]
-            [field: Space]
-            [field: SerializeField]
-            public AssetReferenceGameObject RemoteAvatarColliderPrefab;
+            [SerializeField] public AssetReferenceGameObject RemoteAvatarColliderPrefab;
+
+            public DebugRoomIndicatorViewReference DebugRoomIndicator;
+
+            [Serializable]
+            public class DebugRoomIndicatorViewReference : ComponentReference<DebugRoomIndicatorView>
+            {
+                public DebugRoomIndicatorViewReference(string guid) : base(guid) { }
+            }
         }
     }
 }
