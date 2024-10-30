@@ -3,19 +3,17 @@
 
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 
-void Dithering( float3 positionWS, float4 positionCS, float fEndFadeDistance, float fStartFadeDistance)
+void Dithering( float fFadeDistance, float4 positionCS, float fEndFadeDistance, float fStartFadeDistance)
 {
     float4 ndc = positionCS * 0.5f;
     float4 positionNDC; // Homogeneous normalized device coordinates
     positionNDC.xy = float2(ndc.x, ndc.y * _ProjectionParams.x) + ndc.w;
     positionNDC.zw = positionCS.zw;
-
-    float dist = length(positionWS - _WorldSpaceCameraPos);
     
-    if (dist >= fStartFadeDistance)
+    if (fFadeDistance >= fStartFadeDistance)
         return;
 
-    float hideAmount = (dist - fEndFadeDistance) / (fStartFadeDistance - fEndFadeDistance);
+    float hideAmount = (fFadeDistance - fEndFadeDistance) / (fStartFadeDistance - fEndFadeDistance);
     
     // Screen-door transparency: Discard pixel if below threshold.
     const float4x4 thresholdMatrix =

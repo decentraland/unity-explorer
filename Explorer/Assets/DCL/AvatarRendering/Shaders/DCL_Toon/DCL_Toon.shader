@@ -36,7 +36,7 @@ Shader "DCL/DCL_Toon"
         
         [HideInInspector] [PerRendererData] _EndFadeDistance ("EndFadeDistance", Float) = 0
         [HideInInspector] [PerRendererData] _StartFadeDistance ("StartFadeDistance", Float) = 0
-        [HideInInspector] [PerRendererData] _FadePosition ("FadePosition", Vector) = (0,0,0,0) 
+        [HideInInspector] [PerRendererData] _FadeDistance ("FadeDistance", Float) = 1
         
         [HideInInspector] _MainTexArr ("Main Texture Array", 2DArray) = "white" {}
         [HideInInspector] _NormalMapArr ("Normal Texture Array", 2DArray) = "bump" {}

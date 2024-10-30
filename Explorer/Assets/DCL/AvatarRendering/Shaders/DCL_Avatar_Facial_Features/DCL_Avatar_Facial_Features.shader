@@ -62,7 +62,7 @@ Shader "DCL/DCL_Avatar_Facial_Features"
         
         [HideInInspector] [PerRendererData] _EndFadeDistance ("EndFadeDistance", Float) = 0
         [HideInInspector] [PerRendererData] _StartFadeDistance ("StartFadeDistance", Float) = 0
-        [HideInInspector] [PerRendererData] _FadePosition ("FadePosition", Vector) = (0,0,0,0)
+        [HideInInspector] [PerRendererData] _FadeDistance ("FadeDistance", Float) = 1
     }
 
     SubShader

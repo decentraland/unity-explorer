@@ -171,7 +171,7 @@ UNITY_DEFINE_INSTANCED_PROP(float4, _HighlightObjectOffset)
 UNITY_DEFINE_INSTANCED_PROP(float4, _HighlightColour)
 UNITY_DEFINE_INSTANCED_PROP(float, _EndFadeDistance)
 UNITY_DEFINE_INSTANCED_PROP(float, _StartFadeDistance)
-UNITY_DEFINE_INSTANCED_PROP(float4, _FadePosition)
+UNITY_DEFINE_INSTANCED_PROP(float, _FadeDistance)
 UNITY_INSTANCING_BUFFER_END(UnityPerMaterial)
 
 #define _utsTechnique                       UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _utsTechnique)
@@ -339,7 +339,7 @@ UNITY_INSTANCING_BUFFER_END(UnityPerMaterial)
 #define _HighlightColour                    UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _HighlightColour)
 #define _EndFadeDistance                    UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _EndFadeDistance)
 #define _StartFadeDistance                  UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _StartFadeDistance)
-#define _FadePosition                       UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _FadePosition)
+#define _FadeDistance                       UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _FadeDistance)
 
 #ifdef _DCL_TEXTURE_ARRAYS
     #define DCL_DECLARE_TEX2DARRAY(tex) Texture2DArray tex; SamplerState sampler##tex

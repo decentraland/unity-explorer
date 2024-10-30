@@ -101,7 +101,7 @@ VertexOutput vert (VertexInput v)
 
 float4 frag(VertexOutput i) : SV_Target
 {
-    Dithering(_FadePosition.xyz, i.positionCS, _StartFadeDistance, _StartFadeDistance);
+    Dithering(_FadeDistance, i.positionCS, _StartFadeDistance, _StartFadeDistance);
     //v.2.0.5
     // if (_ZOverDrawMode > 0.99f)
     // {

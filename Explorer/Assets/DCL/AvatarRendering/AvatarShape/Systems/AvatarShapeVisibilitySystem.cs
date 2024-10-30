@@ -56,14 +56,14 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         [Query]
         private void UpdateMainPlayerAvatarVisibilityOnCameraDistance(in AvatarCustomSkinningComponent skinningComponent, in PlayerComponent playerComponent)
         {
-            skinningComponent.SetFadingPosition(playerComponent.CameraFocus.position);
+            skinningComponent.SetFadingDistance((playerComponent.CameraFocus.position - camera.GetCameraComponent(World).Camera.gameObject.transform.position).magnitude);
         }
 
         [Query]
         [None(typeof(PlayerComponent))]
         private void UpdateNonPlayerAvatarVisibilityOnCameraDistance(in AvatarCustomSkinningComponent skinningComponent, in AvatarBase avatarBase)
         {
-            skinningComponent.SetFadingPosition(avatarBase.HeadAnchorPoint.position);
+            skinningComponent.SetFadingDistance((avatarBase.HeadAnchorPoint.position - camera.GetCameraComponent(World).Camera.gameObject.transform.position).magnitude);
         }
 
         [Query]

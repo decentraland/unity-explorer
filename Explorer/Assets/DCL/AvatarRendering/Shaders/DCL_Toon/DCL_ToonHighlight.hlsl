@@ -92,6 +92,6 @@ VertexOutput vert_highlight (VertexInput v)
 
 float4 frag_highlight(VertexOutput i) : SV_Target
 {
-    Dithering(_FadePosition.xyz, i.positionCS, _EndFadeDistance, _StartFadeDistance);
+    Dithering(_FadeDistance, i.positionCS, _EndFadeDistance, _StartFadeDistance);
     return _HighlightColour;
 }

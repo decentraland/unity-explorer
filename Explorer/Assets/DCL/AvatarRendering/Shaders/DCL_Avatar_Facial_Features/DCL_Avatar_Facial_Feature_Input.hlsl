@@ -17,7 +17,7 @@ CBUFFER_START(UnityPerMaterial)
     int _MaskTexArr_ID;
     float _EndFadeDistance;
     float _StartFadeDistance;
-    float4 _FadePosition;
+    float _FadeDistance;
 CBUFFER_END
 
 #ifdef UNITY_DOTS_INSTANCING_ENABLED
@@ -33,7 +33,7 @@ CBUFFER_END
         UNITY_DOTS_INSTANCED_PROP(int, _MaskTexArr_ID)
         UNITY_DOTS_INSTANCED_PROP(float, _EndFadeDistance)
         UNITY_DOTS_INSTANCED_PROP(float, _StartFadeDistance)
-        UNITY_DOTS_INSTANCED_PROP(float4, _FadePosition)
+        UNITY_DOTS_INSTANCED_PROP(float, _FadeDistance)
     UNITY_DOTS_INSTANCING_END(MaterialPropertyMetadata)
 
     #define _BaseColor              UNITY_ACCESS_DOTS_INSTANCED_PROP_WITH_DEFAULT(float4 , _BaseColor)
@@ -47,7 +47,7 @@ CBUFFER_END
     #define _MaskTexArr_ID          UNITY_ACCESS_DOTS_INSTANCED_PROP_WITH_DEFAULT(int, _MaskTexArr_ID)
     #define _EndFadeDistance        UNITY_ACCESS_DOTS_INSTANCED_PROP_WITH_DEFAULT(float, _EndFadeDistance)
     #define _StartFadeDistance      UNITY_ACCESS_DOTS_INSTANCED_PROP_WITH_DEFAULT(float, _StartFadeDistance)
-    #define _FadePosition           UNITY_ACCESS_DOTS_INSTANCED_PROP_WITH_DEFAULT(float4, _FadePosition)
+    #define _FadeDistance           UNITY_ACCESS_DOTS_INSTANCED_PROP_WITH_DEFAULT(float, _FadeDistance)
 #endif
 
 #ifdef _DCL_TEXTURE_ARRAYS

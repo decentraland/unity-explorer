@@ -85,7 +85,7 @@ void DepthNormalsFragment(
 #endif
 )
 {
-    Dithering(_FadePosition.xyz, input.positionCS, _EndFadeDistance, _StartFadeDistance);
+    Dithering(_FadeDistance, input.positionCS, _EndFadeDistance, _StartFadeDistance);
     
     UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 
