@@ -97,6 +97,7 @@ namespace Global
         public IFeatureFlagsProvider FeatureFlagsProvider { get; private set; }
         public IPortableExperiencesController PortableExperiencesController { get; private set; }
         public IDebugContainerBuilder DebugContainerBuilder { get; private set; }
+        public ISceneRestrictionBusController SceneRestrictionBusController { get; private set; }
 
         public ILoadingStatus LoadingStatus { get; private set; }
 
@@ -134,7 +135,6 @@ namespace Global
             Entity playerEntity,
             ISystemMemoryCap memoryCap,
             WorldVolumeMacBus worldVolumeMacBus,
-            ISceneRestrictionBusController sceneRestrictionBusController,
             bool enableAnalytics,
             IAnalyticsController analyticsController,
             CancellationToken ct)
@@ -154,6 +154,7 @@ namespace Global
             container.InputBlock = new ECSInputBlock(globalWorld);
             container.assetsProvisioner = assetsProvisioner;
             container.MemoryCap = memoryCap;
+            container.SceneRestrictionBusController = new SceneRestrictionBusController();
 
             var exposedPlayerTransform = new ExposedTransform();
 
@@ -229,13 +230,13 @@ namespace Global
                 new AnimatorPlugin(),
                 new TweenPlugin(),
                 new MediaPlayerPlugin(sharedDependencies, videoTexturePool, sharedDependencies.FrameTimeBudget, container.assetsProvisioner, container.WebRequestsContainer.WebRequestController, container.CacheCleaner, worldVolumeMacBus),
-                new CharacterTriggerAreaPlugin(globalWorld, container.MainPlayerAvatarBaseProxy, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, container.CharacterContainer.CharacterObject, componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner, container.CacheCleaner, exposedGlobalDataContainer.ExposedCameraData, sceneRestrictionBusController, web3IdentityProvider),
+                new CharacterTriggerAreaPlugin(globalWorld, container.MainPlayerAvatarBaseProxy, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, container.CharacterContainer.CharacterObject, componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner, container.CacheCleaner, exposedGlobalDataContainer.ExposedCameraData, container.SceneRestrictionBusController, web3IdentityProvider),
                 new InteractionsAudioPlugin(container.assetsProvisioner),
                 new MapPinPlugin(globalWorld, container.FeatureFlagsCache),
                 new MultiplayerPlugin(),
                 new RealmInfoPlugin(container.RealmData, container.RoomHubProxy),
-                new InputModifierPlugin(globalWorld, container.PlayerEntity, sceneRestrictionBusController),
-                new MainCameraPlugin(componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner, container.CacheCleaner, exposedGlobalDataContainer.ExposedCameraData, sceneRestrictionBusController, globalWorld),
+                new InputModifierPlugin(globalWorld, container.PlayerEntity, container.SceneRestrictionBusController),
+                new MainCameraPlugin(componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner, container.CacheCleaner, exposedGlobalDataContainer.ExposedCameraData, container.SceneRestrictionBusController, globalWorld),
 
 #if UNITY_EDITOR
                 new GizmosWorldPlugin(),

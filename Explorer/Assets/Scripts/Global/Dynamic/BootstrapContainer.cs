@@ -8,7 +8,6 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PerformanceAndDiagnostics.Analytics.Services;
 using DCL.PluginSystem;
-using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.Settings;
 using DCL.Web3;
 using DCL.Web3.Abstract;
@@ -51,8 +50,6 @@ namespace Global.Dynamic
         public bool LocalSceneDevelopment { get; private set; }
         public bool UseRemoteAssetBundles { get; private set; }
 
-        public ISceneRestrictionBusController SceneRestrictionBusController { get; private set; }
-
         public override void Dispose()
         {
             base.Dispose();
@@ -88,7 +85,6 @@ namespace Global.Dynamic
                 ApplicationParametersParser = applicationParametersParser,
                 DebugSettings = debugSettings,
                 WorldVolumeMacBus = new WorldVolumeMacBus(),
-                SceneRestrictionBusController = new SceneRestrictionBusController(),
             };
 
             await bootstrapContainer.InitializeContainerAsync<BootstrapContainer, BootstrapSettings>(settingsContainer, ct, async container =>

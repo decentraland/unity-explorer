@@ -1,9 +1,6 @@
-
-using System;
-
 namespace DCL.SceneRestrictionBusController.SceneRestriction
 {
-    public class MovementsBlockedRestriction : SceneRestrictionBase, ICloneable
+    public class MovementsBlockedRestriction : SceneRestrictionBase
     {
         public bool DisableAll { get; set; }
         public bool DisableWalk { get; set; }
@@ -17,32 +14,5 @@ namespace DCL.SceneRestrictionBusController.SceneRestriction
             Type = SceneRestrictions.AVATAR_MOVEMENTS_BLOCKED;
             EntityId = entityId;
         }
-
-        public override bool Equals(object obj)
-        {
-            if (obj == null)
-                return false;
-            MovementsBlockedRestriction other = obj as MovementsBlockedRestriction;
-
-            return this.DisableAll == other!.DisableAll
-                   && this.DisableWalk == other!.DisableWalk
-                   && this.DisableJog == other!.DisableJog
-                   && this.DisableRun == other!.DisableRun
-                   && this.DisableJump == other!.DisableJump
-                   && this.DisableEmote == other!.DisableEmote;
-        }
-
-        public object Clone() =>
-            new MovementsBlockedRestriction(this.EntityId)
-            {
-                Type = this.Type,
-                Action = this.Action,
-                DisableAll = this.DisableAll,
-                DisableWalk = this.DisableWalk,
-                DisableJog = this.DisableJog,
-                DisableRun = this.DisableRun,
-                DisableJump = this.DisableJump,
-                DisableEmote = this.DisableEmote,
-            };
     }
 }

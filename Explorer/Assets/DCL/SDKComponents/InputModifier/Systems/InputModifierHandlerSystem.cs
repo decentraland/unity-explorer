@@ -20,9 +20,6 @@ namespace DCL.SDKComponents.PlayerInputMovement.Systems
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly ISceneRestrictionBusController sceneRestrictionBusController;
 
-        private MovementsBlockedRestriction currentBusMessage = new(0);
-        private MovementsBlockedRestriction previousBusMessage = new(0);
-
         public InputModifierHandlerSystem(World world, World globalWorld, Entity playerEntity, ISceneStateProvider sceneStateProvider, ISceneRestrictionBusController sceneRestrictionBusController) : base(world)
         {
             this.playerEntity = playerEntity;
@@ -34,29 +31,25 @@ namespace DCL.SDKComponents.PlayerInputMovement.Systems
         protected override void Update(float t)
         {
             ApplyModifiersQuery(World);
-
-            CheckAndSendBusMessage();
         }
 
-        private void CheckAndSendBusMessage()
+        private void SendBusMessage(InputModifierComponent inputModifier)
         {
-            if (!currentBusMessage.Equals(previousBusMessage))
+            MovementsBlockedRestriction busMessage = new MovementsBlockedRestriction(0)
             {
-                if (currentBusMessage is { DisableAll: false, DisableWalk: false, DisableJog: false, DisableRun: false, DisableJump: false, DisableEmote: false })
-                    currentBusMessage.Action = SceneRestrictionsAction.REMOVED;
-                sceneRestrictionBusController.PushSceneRestriction(currentBusMessage);
-                previousBusMessage = (MovementsBlockedRestriction)currentBusMessage.Clone();
-            }
-        }
+                DisableAll = inputModifier.DisableAll,
+                DisableWalk = inputModifier.DisableWalk,
+                DisableJog = inputModifier.DisableJog,
+                DisableRun = inputModifier.DisableRun,
+                DisableJump = inputModifier.DisableJump,
+                DisableEmote = inputModifier.DisableEmote,
+                Action = SceneRestrictionsAction.APPLIED,
+            };
 
-        private void CopyInputModifierIntoBusMessage(InputModifierComponent inputModifier)
-        {
-            currentBusMessage.DisableAll = inputModifier.DisableAll;
-            currentBusMessage.DisableWalk = inputModifier.DisableWalk;
-            currentBusMessage.DisableJog = inputModifier.DisableJog;
-            currentBusMessage.DisableRun = inputModifier.DisableRun;
-            currentBusMessage.DisableJump = inputModifier.DisableJump;
-            currentBusMessage.DisableEmote = inputModifier.DisableEmote;
+            if (busMessage is { DisableAll: false, DisableWalk: false, DisableJog: false, DisableRun: false, DisableJump: false, DisableEmote: false })
+                busMessage.Action = SceneRestrictionsAction.REMOVED;
+
+            sceneRestrictionBusController.PushSceneRestriction(busMessage);
         }
 
         private void ResetModifiersOnLeave()
@@ -69,8 +62,7 @@ namespace DCL.SDKComponents.PlayerInputMovement.Systems
             inputModifier.DisableJump = false;
             inputModifier.DisableEmote = false;
 
-            CopyInputModifierIntoBusMessage(inputModifier);
-            currentBusMessage.Action = SceneRestrictionsAction.REMOVED;
+            SendBusMessage(inputModifier);
         }
 
         [Query]
@@ -78,6 +70,8 @@ namespace DCL.SDKComponents.PlayerInputMovement.Systems
         {
             if (!sceneStateProvider.IsCurrent) return;
             if(pbInputModifier.ModeCase == PBInputModifier.ModeOneofCase.None) return;
+
+            if (!pbInputModifier.IsDirty) return;
 
             ref var inputModifier = ref globalWorld.Get<InputModifierComponent>(playerEntity);
             PBInputModifier.Types.StandardInput? pb = pbInputModifier.Standard;
@@ -94,23 +88,18 @@ namespace DCL.SDKComponents.PlayerInputMovement.Systems
                 inputModifier.DisableEmote = pb.DisableEmote;
             }
 
-            CopyInputModifierIntoBusMessage(inputModifier);
-            currentBusMessage.Action = SceneRestrictionsAction.APPLIED;
+            SendBusMessage(inputModifier);
         }
 
         public void OnSceneIsCurrentChanged(bool value)
         {
             if (!value)
-            {
                 ResetModifiersOnLeave();
-                CheckAndSendBusMessage();
-            }
         }
 
         public void FinalizeComponents(in Query query)
         {
             ResetModifiersOnLeave();
-            CheckAndSendBusMessage();
         }
     }
 }
