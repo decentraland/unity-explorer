@@ -134,11 +134,12 @@ extern "C"
         unsigned int *height,
         FfiHandle *releaseHandle);
 
-    FFI_API ImageResult texturesfuse_bc5_image_from_memory(
+    FFI_API ImageResult texturesfuse_cmp_image_from_memory(
         context *context,
         BYTE *bytes,
         int bytesLength,
         int maxSideLength,
+        CMP_FORMAT cmpFormat,
 
         BYTE **outputBytes,
         int *outputLength,

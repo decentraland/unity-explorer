@@ -82,6 +82,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
             if (result is NativeMethods.ImageResult.Success && token.IsCancellationRequested)
             {
                 NativeMethods.TexturesFuseRelease(context, handle);
+
                 if (Result.TryErrorIfCancelled(token, out errorResult))
                     return errorResult;
             }
@@ -105,9 +106,10 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
             );
         }
 
-        internal unsafe NativeMethods.ImageResult LoadBC5Image(
+        internal unsafe NativeMethods.ImageResult LoadCMPImage(
             byte* ptr,
             int ptrLength,
+            NativeMethods.CMP_FORMAT cmpFormat,
             out byte* output,
             out int outputLength,
             out uint width,
@@ -116,11 +118,12 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
             out IntPtr handle
         )
         {
-            var result = NativeMethods.TexturesFuseBC5ImageFromMemory(
+            var result = NativeMethods.TexturesFuseCMPImageFromMemory(
                 context,
                 ptr,
                 ptrLength,
                 options.MaxSide,
+                cmpFormat,
                 out output,
                 out outputLength,
                 out width,
@@ -128,7 +131,92 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
                 out handle
             );
 
-            textureFormat = TextureFormat.BC5;
+            switch (cmpFormat)
+            {
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_BC7:
+                    textureFormat = TextureFormat.BC7;
+                    break;
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_BC5:
+                    textureFormat = TextureFormat.BC5;
+                    break;
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_Unknown:
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_RGBA_8888_S:
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_ARGB_8888_S:
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_ARGB_8888:
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_ABGR_8888:
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_RGBA_8888:
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_BGRA_8888:
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_RGB_888:
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_RGB_888_S:
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_BGR_888:
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_RG_8_S:
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_RG_8:
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_R_8_S:
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_R_8:
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_ARGB_2101010:
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_RGBA_1010102:
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_ARGB_16:
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_ABGR_16:
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_RGBA_16:
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_BGRA_16:
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_RG_16:
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_R_16:
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_RGBE_32F:
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_ARGB_16F:
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_ABGR_16F:
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_RGBA_16F:
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_BGRA_16F:
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_RG_16F:
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_R_16F:
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_ARGB_32F:
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_ABGR_32F:
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_RGBA_32F:
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_BGRA_32F:
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_RGB_32F:
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_BGR_32F:
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_RG_32F:
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_R_32F:
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_BROTLIG:
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_BC1:
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_BC2:
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_BC3:
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_BC4:
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_BC4_S:
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_BC5_S:
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_BC6H:
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_BC6H_SF:
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_ATI1N:
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_ATI2N:
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_ATI2N_XY:
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_ATI2N_DXT5:
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_DXT1:
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_DXT3:
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_DXT5:
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_DXT5_xGBR:
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_DXT5_RxBG:
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_DXT5_RBxG:
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_DXT5_xRBG:
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_DXT5_RGxB:
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_DXT5_xGxR:
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_ATC_RGB:
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_ATC_RGBA_Explicit:
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_ATC_RGBA_Interpolated:
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_ASTC:
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_APC:
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_PVRTC:
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_ETC_RGB:
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_ETC2_RGB:
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_ETC2_SRGB:
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_ETC2_RGBA:
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_ETC2_RGBA1:
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_ETC2_SRGBA:
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_ETC2_SRGBA1:
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_BINARY:
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_GTC:
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_BASIS:
+                case NativeMethods.CMP_FORMAT.CMP_FORMAT_MAX:
+                default: throw new ArgumentOutOfRangeException(nameof(cmpFormat), cmpFormat, null!);
+            }
 
             return result;
         }
@@ -253,9 +341,10 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
 
                     if (type is TextureType.NormalMap)
                     {
-                        result = LoadBC5Image(
+                        result = LoadCMPImage(
                             ptr,
                             bytes.Length,
+                            NativeMethods.CMP_FORMAT.CMP_FORMAT_BC5,
                             out byte* output,
                             out outputLength,
                             out width,
@@ -266,6 +355,23 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
 
                         pointer = new IntPtr(output);
                         linear = true;
+                    }
+                    else if (mode is Mode.BC7)
+                    {
+                        result = LoadCMPImage(
+                            ptr,
+                            bytes.Length,
+                            NativeMethods.CMP_FORMAT.CMP_FORMAT_BC7,
+                            out byte* output,
+                            out outputLength,
+                            out width,
+                            out height,
+                            out format,
+                            out handle
+                        );
+
+                        pointer = new IntPtr(output);
+                        linear = false;
                     }
                     else if (mode.IsASTC())
                     {

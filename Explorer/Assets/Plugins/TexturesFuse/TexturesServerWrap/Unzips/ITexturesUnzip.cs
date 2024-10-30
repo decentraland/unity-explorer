@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using System;
 using System.Threading;
+using UnityEngine;
 using Utility.Types;
 
 namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
@@ -52,7 +53,15 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
         public static ITexturesUnzip NewDefault()
         {
             var init = NativeMethods.InitOptions.NewDefault();
-            var options = new IOptions.Const(Mode.ASTC_6x6, NativeMethods.Swizzle.NewDefault(), 1024, NativeMethods.Adjustments.NewEmpty());
+
+            var mode = Application.platform
+                is RuntimePlatform.WindowsPlayer
+                or RuntimePlatform.WindowsEditor
+                or RuntimePlatform.WindowsServer
+                ? Mode.BC7
+                : Mode.ASTC_6x6;
+
+            var options = new IOptions.Const(mode, NativeMethods.Swizzle.NewDefault(), 1024, NativeMethods.Adjustments.NewEmpty());
             var index = 0;
 
             return new PooledTexturesUnzip(

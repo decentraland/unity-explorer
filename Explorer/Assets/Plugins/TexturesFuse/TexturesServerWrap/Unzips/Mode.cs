@@ -16,6 +16,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
         ASTC_8x8,
         ASTC_10x10,
         ASTC_12x12,
+        BC7,
     }
 
     public static class ModeExtensions
@@ -33,12 +34,14 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
                 Mode.ASTC_8x8 => TextureFormat.ASTC_8x8,
                 Mode.ASTC_10x10 => TextureFormat.ASTC_10x10,
                 Mode.ASTC_12x12 => TextureFormat.ASTC_12x12,
+                Mode.BC7 => TextureFormat.BC7,
                 _ => throw new ArgumentOutOfRangeException(nameof(mode), mode, string.Empty)
             };
 
         public static Result<uint> ASTCChunkSize(this Mode mode) =>
             mode switch
             {
+                Mode.BC7 => Result<uint>.ErrorResult("Mode is not ASTC"),
                 Mode.RGB => Result<uint>.ErrorResult("Mode is not ASTC"),
                 Mode.ASTC_4x4 => Result<uint>.SuccessResult(4),
                 Mode.ASTC_5x5 => Result<uint>.SuccessResult(5),
