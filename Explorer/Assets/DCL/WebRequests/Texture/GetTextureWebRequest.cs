@@ -16,8 +16,6 @@ namespace DCL.WebRequests
     /// </summary>
     public readonly struct GetTextureWebRequest : ITypedWebRequest
     {
-        private static readonly TimeSpan TIMEOUT = TimeSpan.FromSeconds(15);
-
         private readonly ITexturesUnzip texturesUnzip;
         private readonly string url;
         private readonly TextureType textureType;
@@ -68,8 +66,8 @@ namespace DCL.WebRequests
                                                   AsPointer(data.Value),
                                                   data.Value.Length,
                                                   webRequest.textureType,
-                                                  ct)
-                                             .Timeout(TIMEOUT);
+                                                  ct
+                                              );
 
                 if (result.Success == false)
                     throw new Exception($"CreateTextureOp: Error loading texture url: {webRequest.url} - {result}");
