@@ -77,7 +77,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
 
         [Query]
         [All(typeof(TransformComponent))]
-        private void UpdateAvatarModifierArea(Entity entity, ref PBAvatarModifierArea pbAvatarModifierArea, ref AvatarModifierAreaComponent modifierAreaComponent, ref CharacterTriggerAreaComponent triggerAreaComponent)
+        private void UpdateAvatarModifierArea(ref PBAvatarModifierArea pbAvatarModifierArea, ref AvatarModifierAreaComponent modifierAreaComponent, ref CharacterTriggerAreaComponent triggerAreaComponent)
         {
             if (pbAvatarModifierArea.IsDirty)
             {
