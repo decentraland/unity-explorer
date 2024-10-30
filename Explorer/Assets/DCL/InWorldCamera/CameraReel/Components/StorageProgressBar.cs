@@ -29,7 +29,7 @@ namespace DCL.InWorldCamera.CameraReel.Components
 
         private void OnValidate()
         {
-            if (background is null || foreground is null) return;
+            if (background is null || foreground is null || label is null) return;
 
             UpdateGraphics();
         }

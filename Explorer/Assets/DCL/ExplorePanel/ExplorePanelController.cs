@@ -168,6 +168,18 @@ namespace DCL.ExplorePanel
             dclInput.Shortcuts.Map.performed += OnMapHotkeyPressed;
             dclInput.Shortcuts.Settings.performed += OnSettingsHotkeyPressed;
             dclInput.Shortcuts.Backpack.performed += OnBackpackHotkeyPressed;
+            dclInput.Shortcuts.CameraReel.performed += OnCameraReelHotkeyPressed;
+        }
+
+        private void OnCameraReelHotkeyPressed(InputAction.CallbackContext ctx)
+        {
+            if (lastShownSection != ExploreSections.CameraReel)
+            {
+                sectionSelectorController.SetAnimationState(false, tabsBySections[lastShownSection]);
+                ShowSection(ExploreSections.CameraReel);
+            }
+            else
+                isControlClosing = true;
         }
 
         private void OnCloseMainMenu(InputAction.CallbackContext obj)
@@ -236,6 +248,7 @@ namespace DCL.ExplorePanel
             dclInput.Shortcuts.Map.performed -= OnMapHotkeyPressed;
             dclInput.Shortcuts.Settings.performed -= OnSettingsHotkeyPressed;
             dclInput.Shortcuts.Backpack.performed -= OnBackpackHotkeyPressed;
+            dclInput.Shortcuts.CameraReel.performed -= OnCameraReelHotkeyPressed;
         }
 
         private void BlockUnwantedInputs()

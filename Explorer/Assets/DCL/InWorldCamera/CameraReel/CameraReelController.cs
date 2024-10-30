@@ -7,10 +7,12 @@ namespace DCL.InWorldCamera.CameraReel
     public class CameraReelController : ISection, IDisposable
     {
         private readonly CameraReelView view;
+        private readonly RectTransform rectTransform;
 
         public CameraReelController(CameraReelView view)
         {
             this.view = view;
+            rectTransform = view.transform.parent.GetComponent<RectTransform>();
         }
 
         public void Activate() =>
@@ -21,20 +23,20 @@ namespace DCL.InWorldCamera.CameraReel
 
         public void Animate(int triggerId)
         {
-            throw new NotImplementedException();
+
         }
 
         public void ResetAnimator()
         {
-            throw new NotImplementedException();
+
         }
 
         public RectTransform GetRectTransform() =>
-            throw new NotImplementedException();
+            rectTransform;
 
         public void Dispose()
         {
-            throw new NotImplementedException();
+
         }
     }
 }
