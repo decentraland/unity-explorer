@@ -4,6 +4,7 @@ using Cysharp.Threading.Tasks;
 using DCL.WebRequests;
 using DCL.Diagnostics;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.Utilities.Extensions;
 using DCL.WebRequests.ArgsFactory;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
@@ -41,13 +42,7 @@ namespace ECS.StreamableLoading.Textures
                 GetReportData()
             );
 
-            if (result == null)
-                return new StreamableLoadingResult<Texture2DData>(
-                    GetReportData(),
-                    new Exception($"Error loading texture from url {intention.CommonArguments.URL}")
-                );
-
-            return new StreamableLoadingResult<Texture2DData>(new Texture2DData(result));
+            return new StreamableLoadingResult<Texture2DData>(new Texture2DData(result.EnsureNotNull()));
         }
     }
 }

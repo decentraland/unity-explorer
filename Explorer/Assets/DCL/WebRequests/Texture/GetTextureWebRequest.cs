@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using DCL.Diagnostics;
 using DCL.Profiling;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System;
@@ -17,6 +16,8 @@ namespace DCL.WebRequests
     /// </summary>
     public readonly struct GetTextureWebRequest : ITypedWebRequest
     {
+        private static readonly TimeSpan TIMEOUT = TimeSpan.FromSeconds(15);
+
         private readonly ITexturesUnzip texturesUnzip;
         private readonly string url;
         private readonly TextureType textureType;
@@ -56,35 +57,30 @@ namespace DCL.WebRequests
 
             public async UniTask<IOwnedTexture2D?> ExecuteAsync(GetTextureWebRequest webRequest, CancellationToken ct)
             {
-                try
-                {
-                    using var request = webRequest.UnityWebRequest;
-                    var data = request.downloadHandler?.nativeData;
+                using var request = webRequest.UnityWebRequest;
+                var data = request.downloadHandler?.nativeData;
 
-                    if (data == null)
-                        return null;
+                if (data == null)
+                    throw new Exception("Texture content is empty");
 
-                    var result = await webRequest.texturesUnzip.TextureFromBytesAsync(AsPointer(data.Value), data.Value.Length, webRequest.textureType, ct).Timeout(TimeSpan.FromSeconds(15));
+                var result = await webRequest.texturesUnzip
+                                             .TextureFromBytesAsync(
+                                                  AsPointer(data.Value),
+                                                  data.Value.Length,
+                                                  webRequest.textureType,
+                                                  ct)
+                                             .Timeout(TIMEOUT);
 
-                    if (result.Success == false)
-                    {
-                        ReportHub.LogError(ReportCategory.TEXTURES, $"CreateTextureOp: Error loading texture url: {webRequest.url} - {result}");
-                        return null;
-                    }
+                if (result.Success == false)
+                    throw new Exception($"CreateTextureOp: Error loading texture url: {webRequest.url} - {result}");
 
-                    var texture = result.Value.Texture;
+                var texture = result.Value.Texture;
 
-                    texture.wrapMode = wrapMode;
-                    texture.filterMode = filterMode;
-                    texture.SetDebugName(webRequest.url);
-                    ProfilingCounters.TexturesAmount.Value++;
-                    return result.Value;
-                }
-                catch (Exception e)
-                {
-                    ReportHub.LogException(new Exception($"Error during loading texture from url: {webRequest.url}", e), ReportCategory.TEXTURES);
-                    return null;
-                }
+                texture.wrapMode = wrapMode;
+                texture.filterMode = filterMode;
+                texture.SetDebugName(webRequest.url);
+                ProfilingCounters.TexturesAmount.Value++;
+                return result.Value;
             }
 
             private static IntPtr AsPointer<T>(NativeArray<T>.ReadOnly readOnly) where T: struct
