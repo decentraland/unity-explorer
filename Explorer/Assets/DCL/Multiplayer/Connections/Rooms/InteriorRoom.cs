@@ -89,7 +89,8 @@ namespace DCL.Multiplayer.Connections.Rooms
                         Subscribe(newRoom);
 
                         // During the connection we skipped the connection callback, so we need to notify the subscribers
-                        SimulateConnectionStateChanged();
+                        if (newRoom is not NullRoom)
+                            SimulateConnectionStateChanged();
                     }
 
                     break;

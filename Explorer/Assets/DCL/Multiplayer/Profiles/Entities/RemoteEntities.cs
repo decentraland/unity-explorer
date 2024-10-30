@@ -16,6 +16,7 @@ using ECS.Prioritization.Components;
 using LiveKit.Rooms;
 using System.Collections.Generic;
 using DCL.Profiles;
+using LiveKit.Proto;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility.PriorityQueue;
@@ -73,7 +74,7 @@ namespace DCL.Multiplayer.Profiles.Entities
                 string walletId = removeIntention.WalletId;
 
                 if (DoesStillExist(walletId))
-                    return;
+                    continue;
 
                 TryRemove(walletId, world);
             }
@@ -106,10 +107,9 @@ namespace DCL.Multiplayer.Profiles.Entities
 
         private bool DoesStillExist(string wallet)
         {
-            bool ContainsInRoom(IRoom room)
-            {
-                return room.Participants.RemoteParticipant(wallet) != null;
-            }
+            bool ContainsInRoom(IRoom room) =>
+                room.Info.ConnectionState != ConnectionState.ConnDisconnected
+                && room.Participants.RemoteParticipant(wallet) != null;
 
             return ContainsInRoom(roomHub.IslandRoom()) || ContainsInRoom(roomHub.SceneRoom().Room());
         }
