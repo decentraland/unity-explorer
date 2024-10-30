@@ -98,7 +98,7 @@ def append_line_to_cmake():
     set_vars(core_make)
     with open(core_make, 'a') as file:
         write_simde(file, '${CMAKE_SOURCE_DIR}/../../')
-        link_opencv(file, True)
+        #link_opencv(file, True)
 
 if __name__ == "__main__":    
     
