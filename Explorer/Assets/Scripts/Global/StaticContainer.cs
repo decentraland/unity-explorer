@@ -202,7 +202,7 @@ namespace Global
                     diagnosticsContainer.Sentry!.AddCurrentSceneToScope(scope, container.ScenesCache.CurrentScene.Info);
             });
 
-            container.LoadingStatus = enableAnalytics ? 
+            container.LoadingStatus = enableAnalytics ?
                 new LoadingStatusAnalyticsDecorator(new LoadingStatus(), analyticsController) : new LoadingStatus();
 
             container.ECSWorldPlugins = new IDCLWorldPlugin[]
@@ -219,10 +219,10 @@ namespace Global
                 new PrimitivesRenderingPlugin(sharedDependencies),
                 new VisibilityPlugin(),
                 new AudioSourcesPlugin(sharedDependencies, container.WebRequestsContainer.WebRequestController, container.CacheCleaner, container.assetsProvisioner),
-                assetBundlePlugin, 
+                assetBundlePlugin,
                 new GltfContainerPlugin(sharedDependencies, container.CacheCleaner, container.SceneReadinessReportQueue, container.SingletonSharedDependencies.SceneAssetLock, componentsContainer.ComponentPoolsRegistry, localSceneDevelopment, useRemoteAssetBundles, container.LoadingStatus),
                 new InteractionPlugin(sharedDependencies, profilingProvider, exposedGlobalDataContainer.GlobalInputEvents, componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner),
-                new SceneUIPlugin(sharedDependencies, container.assetsProvisioner, container.InputBlock),
+                new SceneUIPlugin(sharedDependencies, container.assetsProvisioner, container.InputBlock, container.InputProxy),
                 container.CharacterContainer.CreateWorldPlugin(componentsContainer.ComponentPoolsRegistry),
                 new AnimatorPlugin(),
                 new TweenPlugin(),
