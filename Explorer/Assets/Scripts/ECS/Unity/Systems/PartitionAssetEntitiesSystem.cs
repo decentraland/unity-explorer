@@ -38,6 +38,8 @@ namespace ECS.Unity.Systems
         private readonly IPartitionSettings partitionSettings;
         private readonly IPartitionComponent scenePartition;
 
+        private readonly NativeArray<int> sqrDistanceBuckets;
+
         internal PartitionAssetEntitiesSystem(World world,
             IPartitionSettings partitionSettings,
             IPartitionComponent partition,
@@ -50,6 +52,10 @@ namespace ECS.Unity.Systems
             this.samplingData = samplingData;
             this.partitionComponentPool = partitionComponentPool;
             this.sceneRoot = sceneRoot;
+
+            sqrDistanceBuckets = new NativeArray<int>(partitionSettings.SqrDistanceBuckets.Count, Allocator.Persistent);
+            for (var i = 0; i < partitionSettings.SqrDistanceBuckets.Count; i++)
+                sqrDistanceBuckets[i] = partitionSettings.SqrDistanceBuckets[i];
         }
 
         protected override void Update(float t)
@@ -62,71 +68,82 @@ namespace ECS.Unity.Systems
             Vector3 cameraPosition = samplingData.Position;
             Vector3 cameraForward = samplingData.Forward;
 
-            RepartitionAllQuery(World, cameraPosition, cameraForward);
+            RepartitionAllQuery(World);
 
-            NativeArray<int> sqrDistanceBuckets = new NativeArray<int>(partitionSettings.SqrDistanceBuckets.Count, Allocator.Persistent);
-            for (var i = 0; i < partitionSettings.SqrDistanceBuckets.Count; i++)
-                sqrDistanceBuckets[i] = partitionSettings.SqrDistanceBuckets[i];
-
-            Dictionary<Entity, int> entityToJobId = new Dictionary<Entity, int>();
-
+            // Jobification
             NativeArray<byte> Bucket = new NativeArray<byte>(entitiesToRepartition.Count, Allocator.TempJob);
             NativeArray<bool> IsBehind = new NativeArray<bool>(entitiesToRepartition.Count, Allocator.TempJob);
             NativeArray<Vector3> Position = new NativeArray<Vector3>(entitiesToRepartition.Count, Allocator.TempJob);
 
-            int j = 0;
-            foreach (var jobPreparationData in entitiesToRepartition)
+            for (var i = 0; i < entitiesToRepartition.Count; i++)
             {
-                entityToJobId[jobPreparationData.Entity] = j;
-
-                Bucket[j] = jobPreparationData.Bucket;
-                IsBehind[j] = jobPreparationData.IsBehind;
-                Position[j] = jobPreparationData.Position;
-
-                j++;
+                RepartitionJobData jobPreparationData = entitiesToRepartition[i];
+                Bucket[i] = jobPreparationData.PartitionComponent.Bucket;
+                IsBehind[i] = jobPreparationData.PartitionComponent.IsBehind;
+                Position[i] = jobPreparationData.Position;
             }
 
-         // HashSet<int> entityToPartition = new (64);
-         // NativeArray<byte> bucket = new (2, Allocator.TempJob);
-         // NativeArray<bool> isBehind = new ();
-         // NativeArray<Vector3> entityPosition = new ();
-         // NativeArray<bool> isDirty = new ();
+            PartitionJob partitionJob = new PartitionJob
+            {
+                FastPathSqrDistance = partitionSettings.FastPathSqrDistance,
+                SqrDistanceBuckets = sqrDistanceBuckets,
+                CameraPosition = cameraPosition,
+                CameraForward = cameraForward,
+                SceneBucket = scenePartition.Bucket,
+                SceneIsBehind = scenePartition.IsBehind,
 
+                Bucket = Bucket,
+                IsBehind = IsBehind,
+                Position = Position,
+            };
 
+            JobHandle handle = partitionJob.Schedule(Bucket.Length, 1);
+            handle.Complete();
+
+            for (var i = 0; i < entitiesToRepartition.Count; i++)
+            {
+                var partitionComponent = entitiesToRepartition[i].PartitionComponent;
+
+                partitionComponent.IsDirty = partitionComponent.Bucket != Bucket[i] || partitionComponent.IsBehind != IsBehind[i];
+                partitionComponent.Bucket = Bucket[i];
+                partitionComponent.IsBehind = IsBehind[i];
+            }
+
+            // Free the memory allocated by the arrays
+            Bucket.Dispose();
+            IsBehind.Dispose();
+            Position.Dispose();
+
+            entitiesToRepartition.Clear();
         }
 
-        private readonly HashSet<RepartitionJobData> entitiesToRepartition = new (64);
+        private readonly List<RepartitionJobData> entitiesToRepartition = new (64);
 
         public struct RepartitionJobData
         {
-            public Entity Entity;
-            public byte Bucket;
-            public bool IsBehind;
+            public PartitionComponent PartitionComponent;
             public Vector3 Position;
         }
 
-        public struct MyJob : IJobParallelFor
+        public struct PartitionJob : IJobParallelFor
         {
             public int FastPathSqrDistance;
-            public NativeArray<int> SqrDistanceBuckets;
-
-            public Vector3 CameraPosition;
-            public Vector3 CameraForward;
+            [ReadOnly] public NativeArray<int> SqrDistanceBuckets;
 
             public byte SceneBucket;
             public bool SceneIsBehind;
 
-            [ReadOnly] public NativeArray<RepartitionJobData> RepartitionData;
+            public Vector3 CameraPosition;
+            public Vector3 CameraForward;
+
+            [ReadOnly] public NativeArray<Vector3> Position;
+
             public NativeArray<byte> Bucket;
             public NativeArray<bool> IsBehind;
-            public NativeArray<Vector3> Position;
 
             public void Execute(int index)
             {
-                Bucket[index] = RepartitionData[index].Bucket;
-                IsBehind[index] = RepartitionData[index].IsBehind;
-
-                Vector3 vectorToCamera = RepartitionData[index].Position - CameraPosition;
+                Vector3 vectorToCamera = Position[index] - CameraPosition;
                 float sqrDistance = Vector3.SqrMagnitude(vectorToCamera);
 
                 if (sqrDistance > FastPathSqrDistance)
@@ -145,8 +162,6 @@ namespace ECS.Unity.Systems
                     Bucket[index] = bucketIndex;
                     IsBehind[index] = Vector3.Dot(CameraForward, vectorToCamera) < 0;
                 }
-
-                // IsDirty[index] = Bucket[index] != RepartitionData[index].Bucket || IsBehind[index] != RepartitionData[index].IsBehind;
             }
         }
 
@@ -183,7 +198,7 @@ namespace ECS.Unity.Systems
         }
 
         [Query]
-        private void RepartitionAll(in Entity entity, ref Repartition repartition, ref PartitionComponent partitionComponent, [Data] Vector3 cameraPosition, [Data] Vector3 cameraForward)
+        private void RepartitionAll(ref Repartition repartition, ref PartitionComponent partitionComponent)
         {
             if (repartition.Processed) return;
 
@@ -191,9 +206,7 @@ namespace ECS.Unity.Systems
 
             entitiesToRepartition.Add(new RepartitionJobData
             {
-                Entity = entity,
-                Bucket = partitionComponent.Bucket,
-                IsBehind = partitionComponent.IsBehind,
+                PartitionComponent = partitionComponent,
                 Position = repartition.InPosition
             });
 
@@ -205,9 +218,6 @@ namespace ECS.Unity.Systems
                 repartition.IsNewEntity = false;
             }
         }
-
-
-
 
         private void RePartition(Vector3 cameraPosition, Vector3 cameraForward, Vector3 entityPosition, PartitionComponent partitionComponent)
         {
