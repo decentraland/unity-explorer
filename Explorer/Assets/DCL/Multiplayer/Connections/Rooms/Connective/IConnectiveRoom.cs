@@ -42,16 +42,16 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
 
         IRoom Room();
 
-        class Fake : IConnectiveRoom
+        class Null : IConnectiveRoom
         {
             public UniTask<bool> StartAsync() =>
-                UniTask.FromResult(false);
+                UniTask.FromResult(true);
 
             public UniTask StopAsync() =>
                 UniTask.CompletedTask;
 
             public State CurrentState() =>
-                State.Stopped;
+                State.Running;
 
             public ConnectionLoopHealth CurrentConnectionLoopHealth => ConnectionLoopHealth.Stopped;
 

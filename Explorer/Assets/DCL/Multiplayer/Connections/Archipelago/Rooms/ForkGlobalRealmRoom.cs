@@ -41,7 +41,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
                 return httpsRoomFactory();
 
             if (adapterUrl.Contains("offline:offline"))
-                return new IConnectiveRoom.Fake();
+                return new IConnectiveRoom.Null();
 
             throw new InvalidOperationException($"Cannot determine the protocol from the about url: {adapterUrl}");
         }
