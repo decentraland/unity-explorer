@@ -95,7 +95,6 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
             if (handle == IntPtr.Zero)
                 throw new Exception("TexturesFuseProcessedImageFromMemory failed");
 
-            //TODO do linear on RGBA?
             //TODO mipChain and mipmaps
             var texture = new Texture2D((int)width, (int)height, format, false, linear, true);
             texture.LoadRawTextureData(pointer, outputLength);
