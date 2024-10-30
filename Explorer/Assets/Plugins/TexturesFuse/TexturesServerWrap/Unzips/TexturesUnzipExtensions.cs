@@ -37,9 +37,6 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
             return result;
         }
 
-        public static SemaphoreTexturesUnzip WithSemaphore(this ITexturesUnzip texturesUnzip) =>
-            new (texturesUnzip);
-
         public static LogTexturesUnzip WithLog(this ITexturesUnzip texturesUnzip, string prefix) =>
             new (texturesUnzip, prefix);
     }
