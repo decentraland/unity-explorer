@@ -89,7 +89,8 @@ namespace DCL.Landscape
             terrains = new List<Terrain>();
         }
 
-        public void Initialize(TerrainGenerationData terrainGenData, ref NativeList<int2> emptyParcels, ref NativeParallelHashSet<int2> ownedParcels, string parcelChecksum)
+        public void Initialize(TerrainGenerationData terrainGenData, ref NativeList<int2> emptyParcels,
+            ref NativeParallelHashSet<int2> ownedParcels, string parcelChecksum, bool isZone)
         {
             this.ownedParcels = ownedParcels;
             this.emptyParcels = emptyParcels;
@@ -97,7 +98,8 @@ namespace DCL.Landscape
 
             parcelSize = terrainGenData.parcelSize;
             factory = new TerrainFactory(terrainGenData);
-            localCache = new TerrainGeneratorLocalCache(terrainGenData.seed, this.terrainGenData.chunkSize, CACHE_VERSION, parcelChecksum);
+            localCache = new TerrainGeneratorLocalCache(terrainGenData.seed, this.terrainGenData.chunkSize,
+                CACHE_VERSION, parcelChecksum, isZone);
 
             chunkDataGenerator = new TerrainChunkDataGenerator(localCache, timeProfiler, terrainGenData, reportData);
             boundariesGenerator = new TerrainBoundariesGenerator(factory, parcelSize);
