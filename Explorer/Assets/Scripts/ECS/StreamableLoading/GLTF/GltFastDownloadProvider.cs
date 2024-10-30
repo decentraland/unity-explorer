@@ -68,7 +68,7 @@ namespace ECS.StreamableLoading.GLTF
             byte[] data = Array.Empty<byte>();
             string error = string.Empty;
             string text = string.Empty;
-            bool success = true;
+            bool success;
 
             try
             {
@@ -77,15 +77,17 @@ namespace ECS.StreamableLoading.GLTF
 
                 if (!GltfValidator.IsGltfBinaryFormat(downloadHandler.nativeData))
                     text = downloadHandler.text;
+
+                error = downloadHandler.error;
             }
             catch (UnityWebRequestException e)
             {
-                error = $"Error on GLTF download ({targetGltfOriginalPath} - {uri}): {e.Error} - {e.Message}";;
-                success = false;
+                error = $"Error on GLTF download ({targetGltfOriginalPath} - {uri}): {e.Error} - {e.Message}";
             }
             finally
             {
                 if (isBaseGltfFetch) acquiredBudget.Release();
+                success = string.IsNullOrEmpty(error);
             }
 
             return new GltfDownloadResult
