@@ -74,11 +74,9 @@ def clone_current_target(use_cache):
         print(f"Using cache strategy target: {remoteCacheStrategy}")
 
         del body['settings']['buildTargetCopyCache']
-
+        
         # Remove buildtargetid for new targets
         del body['buildtargetid']
-
-        print(body)
         
         return body
 
