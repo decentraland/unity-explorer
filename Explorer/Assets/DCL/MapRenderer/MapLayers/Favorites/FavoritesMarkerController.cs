@@ -150,6 +150,9 @@ namespace DCL.MapRenderer.MapLayers.Favorites
             return UniTask.CompletedTask;
         }
 
+        public UniTask InitializeAsync(CancellationToken cancellationToken) =>
+            UniTask.CompletedTask;
+
         public UniTask Enable(CancellationToken cancellationToken)
         {
             GetFavoritesAsync(CancellationToken.None).Forget();

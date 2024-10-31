@@ -13,21 +13,21 @@ using ICoordsUtils = DCL.MapRenderer.CoordsUtils.ICoordsUtils;
 using IPlacesAPIService = DCL.PlacesAPIService.IPlacesAPIService;
 using PlacesData = DCL.PlacesAPIService.PlacesData;
 
-namespace DCL.MapRenderer.MapLayers.Categories.Art
+namespace DCL.MapRenderer.MapLayers.Categories
 {
-    internal class ArtCategoryMarkersController : MapLayerControllerBase, IMapCullingListener<ICategoryMarker>, IMapLayerController, IZoomScalingLayer
+    internal class CategoryMarkersController : MapLayerControllerBase, IMapCullingListener<ICategoryMarker>, IMapLayerController, IZoomScalingLayer
     {
         private const string EMPTY_PARCEL_NAME = "Empty parcel";
-        private const MapLayer MAP_LAYER = MapLayer.Art;
+        private MapLayer mapLayer;
 
         private static readonly PoolExtensions.Scope<List<PlacesData.PlaceInfo>> EMPTY_PLACES = PoolExtensions.EmptyScope(new List<PlacesData.PlaceInfo>());
 
-        internal delegate ICategoryMarker ArtCategoryMarkerBuilder(
+        internal delegate ICategoryMarker CategoryMarkerBuilder(
             IObjectPool<CategoryMarkerObject> objectsPool,
             IMapCullingController cullingController);
 
         private readonly IObjectPool<CategoryMarkerObject> objectsPool;
-        private readonly ArtCategoryMarkerBuilder builder;
+        private readonly CategoryMarkerBuilder builder;
         private readonly CategoryIconMappingsSO categoryIconMappings;
         private readonly IPlacesAPIService placesAPIService;
 
@@ -37,14 +37,15 @@ namespace DCL.MapRenderer.MapLayers.Categories.Art
 
         private bool isEnabled;
 
-        public ArtCategoryMarkersController(
+        public CategoryMarkersController(
             IPlacesAPIService placesAPIService,
             IObjectPool<CategoryMarkerObject> objectsPool,
-            ArtCategoryMarkerBuilder builder,
+            CategoryMarkerBuilder builder,
             Transform instantiationParent,
             ICoordsUtils coordsUtils,
             IMapCullingController cullingController,
-            CategoryIconMappingsSO categoryIconMappings)
+            CategoryIconMappingsSO categoryIconMappings,
+            MapLayer mapLayer)
             : base(instantiationParent, coordsUtils, cullingController)
         {
             this.placesAPIService = placesAPIService;
@@ -84,7 +85,7 @@ namespace DCL.MapRenderer.MapLayers.Categories.Art
                 var position = coordsUtils.CoordsToPosition(centerParcel);
 
                 marker.SetData(placeInfo.title, position);
-                marker.SetCategorySprite(categoryIconMappings.GetCategoryImage(MAP_LAYER));
+                marker.SetCategorySprite(categoryIconMappings.GetCategoryImage(mapLayer));
                 markers.Add(placeInfo, marker);
 
                 if (isEnabled)

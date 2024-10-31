@@ -7,6 +7,7 @@ using DCL.Character.Components;
 using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
 using MVC;
+using System;
 using System.Threading;
 using UnityEngine;
 using Utility;
@@ -45,6 +46,9 @@ namespace DCL.MapRenderer.MapLayers.PlayerMarker
         {
             playerMarker = builder(instantiationParent);
         }
+
+        public UniTask InitializeAsync(CancellationToken cancellationToken) =>
+            UniTask.CompletedTask;
 
         public void CreateSystems(ref ArchSystemsWorldBuilder<World> builder)
         {
