@@ -61,7 +61,7 @@ namespace DCL.Minimap
         private void OnMouseExit() =>
             restrictionsView.toastCanvasGroup.DOFade(0f, restrictionsView.fadeTime);
 
-        private void ManageSceneRestrictions(ISceneRestriction sceneRestriction)
+        private void ManageSceneRestrictions(SceneRestriction sceneRestriction)
         {
             int currentRestrictionCounter = restrictionsRegistry[sceneRestriction.Type];
 

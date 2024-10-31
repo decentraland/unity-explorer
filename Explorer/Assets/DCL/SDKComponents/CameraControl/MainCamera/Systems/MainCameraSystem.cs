@@ -89,10 +89,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
                     virtualCameraCRDTEntity.Value,
                     hasPreviousVirtualCamera ? previousVirtualCamera!.transform.position : cinemachineCurrentActiveCamPos
                 );
-                sceneRestrictionBusController.PushSceneRestriction(new CameraLockedRestriction
-                {
-                    Action = SceneRestrictionsAction.APPLIED,
-                });
+                sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateCameraLocked(SceneRestrictionsAction.APPLIED));
             }
             else
             {
@@ -102,10 +99,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
             if (hasPreviousVirtualCamera)
             {
                 previousVirtualCamera!.enabled = false;
-                sceneRestrictionBusController.PushSceneRestriction(new CameraLockedRestriction
-                {
-                    Action = SceneRestrictionsAction.REMOVED,
-                });
+                sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateCameraLocked(SceneRestrictionsAction.REMOVED));
             }
 
             UpdateGlobalWorldCameraMode(mainCameraComponent.virtualCameraInstance != null);
@@ -162,10 +156,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
         private void FinalizeMainCameraComponent(in MainCameraComponent mainCameraComponent)
         {
             DisableActiveVirtualCamera(mainCameraComponent);
-            sceneRestrictionBusController.PushSceneRestriction(new CameraLockedRestriction
-            {
-                Action = SceneRestrictionsAction.REMOVED,
-            });
+            sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateCameraLocked(SceneRestrictionsAction.REMOVED));
         }
 
         public void FinalizeComponents(in Query query)

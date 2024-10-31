@@ -139,10 +139,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
             if (avatarTransform == localAvatarTransform)
             {
                 localAvatarTransform = null;
-                sceneRestrictionBusController.PushSceneRestriction(new AvatarHiddenRestriction
-                {
-                    Action = SceneRestrictionsAction.REMOVED,
-                });
+                sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateAvatarHidden(SceneRestrictionsAction.REMOVED));
             }
         }
 
@@ -164,10 +161,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
             if (shouldHide && profile.UserId == web3IdentityCache.Identity?.Address)
             {
                 localAvatarTransform = avatarTransform;
-                sceneRestrictionBusController.PushSceneRestriction(new AvatarHiddenRestriction
-                {
-                    Action = SceneRestrictionsAction.APPLIED,
-                });
+                sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateAvatarHidden(SceneRestrictionsAction.APPLIED));
             }
         }
 

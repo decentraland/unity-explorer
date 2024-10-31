@@ -1,10 +1,9 @@
-using DCL.SceneRestrictionBusController.SceneRestriction;
 
 namespace DCL.SceneRestrictionBusController.SceneRestrictionBus
 {
     public interface ISceneRestrictionBusController
     {
-        void PushSceneRestriction(ISceneRestriction sceneRestriction);
+        void PushSceneRestriction(SceneRestriction.SceneRestriction sceneRestriction);
         void SubscribeToSceneRestriction(SceneRestrictionBusController.SceneRestrictionReceivedDelegate callback);
     }
 }

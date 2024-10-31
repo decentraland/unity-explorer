@@ -118,10 +118,7 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
             camera.Mode = targetCameraMode;
             camera.AddCameraInputLock();
 
-            sceneRestrictionBusController.PushSceneRestriction(new CameraLockedRestriction
-            {
-                Action = SceneRestrictionsAction.APPLIED,
-            });
+            sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateCameraLocked(SceneRestrictionsAction.APPLIED));
         }
 
         internal void OnExitedCameraModeArea()
@@ -134,10 +131,7 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
             if (camera.CameraInputChangeEnabled)
                 camera.Mode = cameraModeBeforeLastAreaEnter;
 
-            sceneRestrictionBusController.PushSceneRestriction(new CameraLockedRestriction
-            {
-                Action = SceneRestrictionsAction.REMOVED,
-            });
+            sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateCameraLocked(SceneRestrictionsAction.REMOVED));
         }
 
         [Query]

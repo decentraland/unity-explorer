@@ -41,18 +41,7 @@ namespace DCL.SDKComponents.PlayerInputMovement.Systems
 
             if (currentAction == lastBusMessageAction) return;
 
-            MovementsBlockedRestriction busMessage = new MovementsBlockedRestriction
-            {
-                DisableAll = inputModifier.DisableAll,
-                DisableWalk = inputModifier.DisableWalk,
-                DisableJog = inputModifier.DisableJog,
-                DisableRun = inputModifier.DisableRun,
-                DisableJump = inputModifier.DisableJump,
-                DisableEmote = inputModifier.DisableEmote,
-                Action = currentAction,
-            };
-
-            sceneRestrictionBusController.PushSceneRestriction(busMessage);
+            sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateAvatarMovementsBlocked(currentAction));
             lastBusMessageAction = currentAction;
         }
 
