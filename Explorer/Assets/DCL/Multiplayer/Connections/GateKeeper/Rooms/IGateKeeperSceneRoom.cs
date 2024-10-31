@@ -24,10 +24,10 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
             public bool IsSceneConnected(string? sceneId) =>
                 false;
 
-            public UniTask Activate() =>
+            public UniTask ActivateAsync() =>
                 UniTask.CompletedTask;
 
-            public UniTask Deactivate() =>
+            public UniTask DeactivateAsync() =>
                 UniTask.CompletedTask;
         }
     }

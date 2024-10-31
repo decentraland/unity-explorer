@@ -68,9 +68,9 @@ namespace DCL.Multiplayer.Connections.Rooms
         ///     Disconnects from the current room and connects to the <see cref="NullRoom" />
         /// </summary>
         public UniTask ResetRoom(IObjectPool<IRoom> roomsPool, CancellationToken ct) =>
-            SwapRooms(RoomSelection.NEW, assigned, NullRoom.INSTANCE, roomsPool, ct);
+            SwapRoomsAsync(RoomSelection.NEW, assigned, NullRoom.INSTANCE, roomsPool, ct);
 
-        internal async UniTask SwapRooms(RoomSelection roomSelection, IRoom previous, IRoom newRoom, IObjectPool<IRoom> roomsPool, CancellationToken ct)
+        internal async UniTask SwapRoomsAsync(RoomSelection roomSelection, IRoom previous, IRoom newRoom, IObjectPool<IRoom> roomsPool, CancellationToken ct)
         {
             switch (roomSelection)
             {

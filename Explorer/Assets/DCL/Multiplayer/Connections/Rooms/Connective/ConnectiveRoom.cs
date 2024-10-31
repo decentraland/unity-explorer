@@ -118,18 +118,18 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
         {
             roomState.Set(IConnectiveRoom.State.Starting);
 
-            await ExecuteWithRecovery(PrewarmAsync, nameof(PrewarmAsync), IConnectiveRoom.ConnectionLoopHealth.Prewarming, IConnectiveRoom.ConnectionLoopHealth.PrewarmFailed, token);
+            await ExecuteWithRecoveryAsync(PrewarmAsync, nameof(PrewarmAsync), IConnectiveRoom.ConnectionLoopHealth.Prewarming, IConnectiveRoom.ConnectionLoopHealth.PrewarmFailed, token);
 
             while (token.IsCancellationRequested == false)
             {
-                await ExecuteWithRecovery(CycleStepAsync, nameof(CycleStepAsync), IConnectiveRoom.ConnectionLoopHealth.Running, IConnectiveRoom.ConnectionLoopHealth.CycleFailed, token);
+                await ExecuteWithRecoveryAsync(CycleStepAsync, nameof(CycleStepAsync), IConnectiveRoom.ConnectionLoopHealth.Running, IConnectiveRoom.ConnectionLoopHealth.CycleFailed, token);
                 await UniTask.Delay(HEARTBEATS_INTERVAL, cancellationToken: token);
             }
 
             connectionLoopHealth.Set(IConnectiveRoom.ConnectionLoopHealth.Stopped);
         }
 
-        private async UniTask ExecuteWithRecovery(Func<CancellationToken, UniTask> func, string funcName, IConnectiveRoom.ConnectionLoopHealth enterState, IConnectiveRoom.ConnectionLoopHealth stateOnException, CancellationToken ct)
+        private async UniTask ExecuteWithRecoveryAsync(Func<CancellationToken, UniTask> func, string funcName, IConnectiveRoom.ConnectionLoopHealth enterState, IConnectiveRoom.ConnectionLoopHealth stateOnException, CancellationToken ct)
         {
             do
             {
@@ -233,7 +233,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
             // now it's a moment to check if we should drop the new room and keep the previous one
             RoomSelection roomSelection = SelectValidRoom();
 
-            await room.SwapRooms(roomSelection, previous, newRoom, roomsPool, ct);
+            await room.SwapRoomsAsync(roomSelection, previous, newRoom, roomsPool, ct);
 
             return (connectResult, roomSelection);
         }

@@ -11,12 +11,12 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
         ///     or was changed while the room was deactivated
         /// </summary>
         /// <returns></returns>
-        UniTask Activate();
+        UniTask ActivateAsync();
 
         /// <summary>
         ///     Deactivation leads to the room being stopped and its implementation being replaced with <see cref="NullRoom" />
         /// </summary>
         /// <returns></returns>
-        UniTask Deactivate();
+        UniTask DeactivateAsync();
     }
 }

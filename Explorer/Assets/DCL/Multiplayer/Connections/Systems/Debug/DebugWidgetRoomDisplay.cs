@@ -93,9 +93,9 @@ namespace DCL.Multiplayer.Connections.Systems.Debug
         private void ActivateOrDeactivate()
         {
             if (activated)
-                room.Deactivate().Forget();
+                room.DeactivateAsync().Forget();
             else
-                room.Activate().Forget();
+                room.ActivateAsync().Forget();
 
             UpdateActivateButtonText();
         }

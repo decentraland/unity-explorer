@@ -24,7 +24,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
                 room.Assign(current.Room(), out _);
         }
 
-        protected async UniTask<bool> Renew(IConnectiveRoom newRoom)
+        protected async UniTask<bool> RenewAsync(IConnectiveRoom newRoom)
         {
             if (current != null)
                 await current.StopIfNotAsync();

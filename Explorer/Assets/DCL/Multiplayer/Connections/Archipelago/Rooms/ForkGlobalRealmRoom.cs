@@ -28,7 +28,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
             new Activatable(this);
 
         public override UniTask<bool> StartAsync() =>
-            Renew(ChooseRoom());
+            RenewAsync(ChooseRoom());
 
         private IConnectiveRoom ChooseRoom()
         {

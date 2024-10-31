@@ -34,7 +34,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
         ///     When activated the room will resume the most recent requested state (e.g. it will start according to the correct realm or parcel)
         /// </summary>
         /// <returns></returns>
-        public UniTask Activate()
+        public UniTask ActivateAsync()
         {
             if (Activated)
             {
@@ -54,7 +54,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
         /// <summary>
         ///     When deactivated the room will not activate on its own (e.g. when the realm or parcel has changed)
         /// </summary>
-        public async UniTask Deactivate()
+        public async UniTask DeactivateAsync()
         {
             if (!Activated)
             {
