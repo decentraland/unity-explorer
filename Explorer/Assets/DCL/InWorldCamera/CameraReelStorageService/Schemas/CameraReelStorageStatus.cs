@@ -2,16 +2,17 @@
 {
     public readonly struct CameraReelStorageStatus
     {
-        public readonly int CurrentScreenshots;
+        public readonly int ScreenshotsAmount;
         public readonly int MaxScreenshots;
+
         public readonly bool HasFreeSpace;
 
-        public CameraReelStorageStatus(int currentScreenshots, int maxScreenshots)
+        public CameraReelStorageStatus(int screenshotsAmount, int maxScreenshots)
         {
-            this.CurrentScreenshots = currentScreenshots;
+            this.ScreenshotsAmount = screenshotsAmount;
             MaxScreenshots = maxScreenshots;
 
-            HasFreeSpace = CurrentScreenshots < MaxScreenshots;
+            HasFreeSpace = ScreenshotsAmount < MaxScreenshots;
         }
     }
 }

@@ -31,8 +31,8 @@ namespace DCL.InWorldCamera.CameraReelStorageService.Playground
         [Header("UPLOAD")]
         public string ThumbnailUrl;
 
-        private ICameraReelImagesStorage imagesStorageInternal;
-        private ICameraReelImagesStorage imagesStorage => imagesStorageInternal ??= new CameraReelS3BucketImagesStorage(webRequestController);
+        private ICameraReelScreenshotsStorage screenshotsStorageInternal;
+        private ICameraReelScreenshotsStorage screenshotsStorage => screenshotsStorageInternal ??= new CameraReelS3BucketScreenshotsStorage(webRequestController);
 
         private ICameraReelImagesMetadataDatabase metadataDatabase
         {
@@ -58,8 +58,8 @@ namespace DCL.InWorldCamera.CameraReelStorageService.Playground
             Storage.maxImages = Result.maxImages;
 
             CameraReelResponse screenshot = Result.images.First();
-            ImageTexture = await imagesStorage.GetScreenshotImage(screenshot.url);
-            ThumbnailTexture = await imagesStorage.GetScreenshotThumbnail(screenshot.thumbnailUrl);
+            ImageTexture = await screenshotsStorage.GetScreenshotImage(screenshot.url);
+            ThumbnailTexture = await screenshotsStorage.GetScreenshotThumbnail(screenshot.thumbnailUrl);
         }
 
         [ContextMenu(nameof(UPLOAD_IMAGE))]

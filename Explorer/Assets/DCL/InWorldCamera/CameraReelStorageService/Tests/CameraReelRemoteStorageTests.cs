@@ -10,7 +10,7 @@ using UnityEngine;
 
 namespace DCL.InWorldCamera.CameraReelStorageService.Tests
 {
-    public class CameraReelStorageServicesTests
+    public class CameraReelRemoteStorageTests
     {
         private const DecentralandEnvironment ENVIRONMENT = DecentralandEnvironment.Zone;
 
@@ -21,7 +21,7 @@ namespace DCL.InWorldCamera.CameraReelStorageService.Tests
         private readonly CancellationToken ct = CancellationToken.None;
         private readonly IWebRequestController webRequestController = IWebRequestController.DEFAULT;
 
-        private ICameraReelImagesStorage imagesStorage;
+        private ICameraReelScreenshotsStorage screenshotsStorage;
         private ICameraReelImagesMetadataDatabase metadataDatabase;
 
         [SetUp]
@@ -30,7 +30,7 @@ namespace DCL.InWorldCamera.CameraReelStorageService.Tests
             var urlsSource = new DecentralandUrlsSource(ENVIRONMENT);
 
             metadataDatabase = new CameraReelImagesMetadataRemoteDatabase(webRequestController, urlsSource);
-            imagesStorage = new CameraReelS3BucketImagesStorage(webRequestController);
+            screenshotsStorage = new CameraReelS3BucketScreenshotsStorage(webRequestController);
         }
 
         [Test]
@@ -80,13 +80,13 @@ namespace DCL.InWorldCamera.CameraReelStorageService.Tests
                 Assert.That(firstScreenshot.thumbnailUrl, Is.Not.Empty);
 
                 // Test image retrieval
-                Texture2D image = await imagesStorage.GetScreenshotImage(firstScreenshot.url);
+                Texture2D image = await screenshotsStorage.GetScreenshotImage(firstScreenshot.url);
                 Assert.That(image, Is.Not.Null);
                 Assert.That(image.width, Is.EqualTo(IMAGE_WIDTH));
                 Assert.That(image.height, Is.EqualTo(IMAGE_HEIGHT));
 
                 // Test thumbnail retrieval
-                Texture2D thumbnail = await imagesStorage.GetScreenshotThumbnail(firstScreenshot.thumbnailUrl);
+                Texture2D thumbnail = await screenshotsStorage.GetScreenshotThumbnail(firstScreenshot.thumbnailUrl);
                 Assert.That(thumbnail, Is.Not.Null);
                 Assert.That(thumbnail.width, Is.GreaterThan(0));
                 Assert.That(thumbnail.height, Is.GreaterThan(0));

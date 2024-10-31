@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace DCL.InWorldCamera.CameraReelStorageService
 {
-    public interface ICameraReelImagesStorage
+    public interface ICameraReelScreenshotsStorage
     {
         public UniTask<Texture2D> GetScreenshotImage(string url);
 

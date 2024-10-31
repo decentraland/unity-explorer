@@ -7,11 +7,11 @@ using UnityEngine;
 
 namespace DCL.InWorldCamera.CameraReelStorageService
 {
-    public class CameraReelS3BucketImagesStorage : ICameraReelImagesStorage
+    public class CameraReelS3BucketScreenshotsStorage : ICameraReelScreenshotsStorage
     {
         private readonly IWebRequestController webRequestController;
 
-        public CameraReelS3BucketImagesStorage(IWebRequestController webRequestController)
+        public CameraReelS3BucketScreenshotsStorage(IWebRequestController webRequestController)
         {
             this.webRequestController = webRequestController;
         }
