@@ -50,5 +50,6 @@ namespace DCL.ECS7
         public const int TWEEN_SEQUENCE = 1104;
         public const int AUDIO_EVENT = 1105;
         public const int REALM_INFO = 1106;
+        public const int GLTF_NODE = 1200;
     }
 }
