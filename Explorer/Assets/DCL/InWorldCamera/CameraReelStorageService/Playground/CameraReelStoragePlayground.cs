@@ -2,6 +2,7 @@ using DCL.Browser.DecentralandUrls;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
+using System.Linq;
 using System.Threading;
 using UnityEngine;
 
@@ -22,6 +23,10 @@ namespace DCL.InWorldCamera.Playground
 
         [Header("DELETE")]
         public string ImageUid = "09f01d43-140f-4c8b-ad63-40bac3dc187d";
+
+        [Header("UPLOAD")]
+        public Texture2D uploadTexture;
+        public string thumbnailUrl;
 
         private CameraReelWebRequestClient client;
 
@@ -51,6 +56,21 @@ namespace DCL.InWorldCamera.Playground
 
             CurrentImages = result.currentImages;
             MaxImages = result.maxImages;
+        }
+
+        [ContextMenu(nameof(GET_AND_UPLOAD_IMAGE))]
+        public async void GET_AND_UPLOAD_IMAGE()
+        {
+            Initialize();
+
+            CameraReelResponses result = await client.GetScreenshotGalleryRequest(identity.Identity.Address, Limit, Offset, default(CancellationToken));
+
+            CameraReelUploadResponse response = await client.UploadScreenshotRequest(
+                uploadTexture.EncodeToJPG(), result.images.First().metadata, default(CancellationToken));
+
+            thumbnailUrl = response.image.thumbnailUrl;
+            CurrentImages = response.currentImages;
+            MaxImages = response.maxImages;
         }
 
         [ContextMenu(nameof(DELETE_IMAGE))]
