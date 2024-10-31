@@ -11,8 +11,9 @@ namespace DCL.WebRequests
     public static class WebRequestUtils
     {
         public static string CANNOT_CONNECT_ERROR = "Cannot connect to destination host";
-        
+
         public const int BAD_REQUEST = 400;
+        public const int FORBIDDEN_ACCESS = 403;
         public const int NOT_FOUND = 404;
 
         public static SuppressExceptionWithFallback<TCoreOp, TWebRequest, TResult> SuppressExceptionsWithFallback<TCoreOp, TWebRequest, TResult>(this TCoreOp coreOp, TResult fallbackValue, SuppressExceptionWithFallback.Behaviour behaviour = SuppressExceptionWithFallback.Behaviour.Default, ReportData? reportContext = null) where TWebRequest: struct, ITypedWebRequest where TCoreOp: IWebRequestOp<TWebRequest, TResult> =>
