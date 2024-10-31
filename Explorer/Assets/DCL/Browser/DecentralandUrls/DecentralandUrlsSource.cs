@@ -51,14 +51,14 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.FeatureFlags => $"https://feature-flags.decentraland.{ENV}",
                 DecentralandUrl.Help => $"https://decentraland.{ENV}/help/",
                 DecentralandUrl.Market => $"https://market.decentraland.{ENV}",
-                // All ABs are in org
-                DecentralandUrl.AssetBundlesCDN => $"https://ab-cdn.decentraland.{ENV}",
+                DecentralandUrl.AssetBundlesCDN => $"https://ab-cdn.decentraland.{ENV}", // All ABs are in org
                 DecentralandUrl.ArchipelagoStatus => $"https://archipelago-ea-stats.decentraland.{ENV}/status",
                 DecentralandUrl.GatekeeperStatus => $"https://comms-gatekeeper.decentraland.{ENV}/status",
                 DecentralandUrl.Genesis => $"https://realm-provider-ea.decentraland.{ENV}/main",
                 DecentralandUrl.Badges => $"https://badges.decentraland.{ENV}",
                 DecentralandUrl.CameraReelUsers =>  $"https://camera-reel-service.decentraland.{ENV}/api/users",
                 DecentralandUrl.CameraReelImages => $"https://camera-reel-service.decentraland.{ENV}/api/images",
+                _ => throw new ArgumentOutOfRangeException(nameof(decentralandUrl), decentralandUrl, null!)
             };
     }
 }
