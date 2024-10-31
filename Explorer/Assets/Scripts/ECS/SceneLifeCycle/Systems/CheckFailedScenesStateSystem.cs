@@ -13,7 +13,7 @@ using SceneRunner.Scene;
 namespace ECS.SceneLifeCycle.Systems
 {
     [UpdateInGroup(typeof(RealmGroup))]
-    public  class CheckFailedScenesStateSystem : BaseUnityLoopSystem
+    public partial class CheckFailedScenesStateSystem : BaseUnityLoopSystem
     {
         private readonly ISceneReadinessReportQueue sceneReadinesReportQueue;
         private readonly IChatHistory chatHistory;
