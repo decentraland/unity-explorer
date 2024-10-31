@@ -19,25 +19,6 @@ namespace DCL.Navmap
         [field: SerializeField]
         public CanvasGroup CanvasGroup { get; private set; }
 
-        [field: SerializeField]
-        public Button ExpandButton { get; private set; }
-
-        [field: SerializeField]
-        public Button CollapseButton { get; private set; }
-
-        [field: SerializeField]
-        public Animator panelAnimator;
-
-        private void OnEnable()
-        {
-            panelAnimator.enabled = true;
-        }
-
-        private void OnDisable()
-        {
-            panelAnimator.enabled = false;
-        }
-
         [Serializable]
         public class ResultAssetReference : ComponentReference<FullSearchResultsView>
         {

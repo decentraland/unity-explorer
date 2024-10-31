@@ -254,6 +254,7 @@ namespace DCL.Navmap
 
             zoomController.Deactivate();
             cameraController?.Release(this);
+            NavmapBus.ClearHistory();
         }
 
         public void Animate(int triggerId)

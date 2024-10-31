@@ -24,14 +24,18 @@ namespace DCL.Navmap
 
         public void Show()
         {
-            if (view.panelAnimator.GetCurrentAnimatorStateInfo(0).IsName("In"))
-                return;
-
             view.NoResultsContainer.gameObject.SetActive(false);
             view.gameObject.SetActive(true);
             view.CanvasGroup.interactable = true;
             view.CanvasGroup.blocksRaycasts = true;
-            view.panelAnimator.SetTrigger(UIAnimationHashes.IN);
+        }
+
+        public void Hide()
+        {
+            ClearResults();
+            view.CanvasGroup.interactable = false;
+            view.CanvasGroup.blocksRaycasts = false;
+            view.gameObject.SetActive(false);
         }
 
         public void ClearResults()
@@ -45,14 +49,6 @@ namespace DCL.Navmap
             }
 
             usedPoolElements.Clear();
-        }
-
-        public void Hide()
-        {
-            ClearResults();
-            view.CanvasGroup.interactable = false;
-            view.CanvasGroup.blocksRaycasts = false;
-            view.panelAnimator.SetTrigger(UIAnimationHashes.OUT);
         }
 
         public void SetLoadingState()
@@ -76,7 +72,7 @@ namespace DCL.Navmap
                 usedPoolElements.Add(fullSearchResultsView);
                 fullSearchResultsView.placeName.text = placeInfo.title;
                 fullSearchResultsView.placeCreator.gameObject.SetActive(!string.IsNullOrEmpty(placeInfo.contact_name) && placeInfo.contact_name != "Unknown");
-                fullSearchResultsView.placeCreator.text = string.Format("created by <b>{0}</b>", placeInfo.contact_name);
+                fullSearchResultsView.placeCreator.text = $"created by <b>{placeInfo.contact_name}</b>";
                 fullSearchResultsView.playerCounterContainer.SetActive(placeInfo.user_count > 0);
                 fullSearchResultsView.playersCount.text = placeInfo.user_count.ToString();
                 fullSearchResultsView.resultAnimator.SetTrigger(UIAnimationHashes.LOADED);
