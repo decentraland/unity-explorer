@@ -1,4 +1,4 @@
-﻿namespace DCL.InWorldCamera
+﻿namespace DCL.InWorldCamera.CameraReelStorageService.Schemas
 {
     public readonly struct CameraReelStorageStatus
     {

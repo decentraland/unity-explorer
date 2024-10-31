@@ -388,7 +388,7 @@ GameObject:
   - component: {fileID: 1362899097}
   - component: {fileID: 1362899096}
   m_Layer: 0
-  m_Name: _Boot
+  m_Name: _entry-S3_and_DB
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -418,7 +418,6 @@ MonoBehaviour:
     maxImages: 0
   ImageTexture: {fileID: 0}
   ThumbnailTexture: {fileID: 0}
-  ImageUid: 09f01d43-140f-4c8b-ad63-40bac3dc187d
   ThumbnailUrl: 
 --- !u!4 &1362899097
 Transform:

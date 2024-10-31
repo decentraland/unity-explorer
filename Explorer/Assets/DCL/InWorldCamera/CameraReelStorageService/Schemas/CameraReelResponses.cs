@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace DCL.InWorldCamera
+namespace DCL.InWorldCamera.CameraReelStorageService.Schemas
 {
     [Serializable]
     public class CameraReelResponses

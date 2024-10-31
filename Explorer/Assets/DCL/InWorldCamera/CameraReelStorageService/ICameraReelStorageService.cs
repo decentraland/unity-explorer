@@ -1,9 +1,10 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using System;
 using System.Threading;
 using UnityEngine;
 
-namespace DCL.InWorldCamera
+namespace DCL.InWorldCamera.CameraReelStorageService
 {
     public interface ICameraReelStorageService
     {

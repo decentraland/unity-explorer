@@ -1,6 +1,5 @@
-using CommunicationData.URLHelpers;
 using DCL.Browser.DecentralandUrls;
-using DCL.Diagnostics;
+using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
@@ -8,10 +7,12 @@ using System.Linq;
 using System.Threading;
 using UnityEngine;
 
-namespace DCL.InWorldCamera.Playground
+namespace DCL.InWorldCamera.CameraReelStorageService.Playground
 {
     public class CameraReelNetworkClientManualTest : MonoBehaviour
     {
+        private readonly IWeb3IdentityCache.Default identity = new ();
+        private readonly IWebRequestController webRequestController = IWebRequestController.DEFAULT;
         public DecentralandEnvironment Env;
 
         public CameraReelStorageResponse Storage;
@@ -28,47 +29,41 @@ namespace DCL.InWorldCamera.Playground
         [Header("UPLOAD")]
         public string ThumbnailUrl;
 
-        private CameraReelWebRequestClient client
+        private ICameraReelImagesStorage imagesStorageInternal;
+        private ICameraReelImagesStorage imagesStorage => imagesStorageInternal ??= new CameraReelS3BucketImagesStorage(webRequestController);
+
+        private ICameraReelImagesMetadataDatabase metadataDatabase
         {
             get
             {
-                DecentralandUrlsSource urlsSource = new DecentralandUrlsSource(Env);
-                return new CameraReelWebRequestClient(webRequestController, urlsSource);
+                var urlsSource = new DecentralandUrlsSource(Env);
+                return new CameraReelImagesMetadataRemoteDatabase(webRequestController, urlsSource);
             }
         }
-
-        private readonly IWeb3IdentityCache.Default identity = new ();
-        private readonly IWebRequestController webRequestController = IWebRequestController.DEFAULT;
 
         [ContextMenu(nameof(GET_STORAGE))]
         public async void GET_STORAGE()
         {
-            Storage = await client.GetUserGalleryStorageInfoRequest(identity.Identity.Address, default(CancellationToken));
+            Storage = await metadataDatabase.GetStorageInfo(identity.Identity.Address, default(CancellationToken));
         }
 
         [ContextMenu(nameof(GET_GALLERY))]
         public async void GET_GALLERY()
         {
-            Result = await client.GetScreenshotGalleryRequest(identity.Identity.Address, Limit, Offset, default(CancellationToken));
+            Result = await metadataDatabase.GetScreenshots(identity.Identity.Address, Limit, Offset, default(CancellationToken));
 
             Storage.currentImages = Result.currentImages;
             Storage.maxImages = Result.maxImages;
 
-            ImageTexture = await webRequestController.GetTextureAsync(
-                new CommonArguments(URLAddress.FromString(Result.images.First().url)),
-                new GetTextureArguments(false),
-                GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp), default(CancellationToken), ReportCategory.CAMERA_REEL);
-
-            ThumbnailTexture = await webRequestController.GetTextureAsync(
-                new CommonArguments(URLAddress.FromString(Result.images.First().thumbnailUrl)),
-                new GetTextureArguments(false),
-                GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp), default(CancellationToken), ReportCategory.CAMERA_REEL);
+            CameraReelResponse screenshot = Result.images.First();
+            ImageTexture = await imagesStorage.GetScreenshotImage(screenshot.url);
+            ThumbnailTexture = await imagesStorage.GetScreenshotThumbnail(screenshot.thumbnailUrl);
         }
 
         [ContextMenu(nameof(UPLOAD_IMAGE))]
         public async void UPLOAD_IMAGE()
         {
-            CameraReelUploadResponse response = await client.UploadScreenshotRequest(
+            CameraReelUploadResponse response = await metadataDatabase.UploadScreenshot(
                 ImageTexture.EncodeToJPG(), Result.images.First().metadata, default(CancellationToken));
 
             Storage.currentImages = response.currentImages;
@@ -80,7 +75,7 @@ namespace DCL.InWorldCamera.Playground
         [ContextMenu(nameof(DELETE_IMAGE))]
         public async void DELETE_IMAGE()
         {
-            Storage = await client.DeleteScreenshotRequest(Result.images.First().id, default(CancellationToken));
+            Storage = await metadataDatabase.DeleteScreenshot(Result.images.First().id, default(CancellationToken));
         }
     }
 }

@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEngine;
 
-namespace DCL.InWorldCamera
+namespace DCL.InWorldCamera.CameraReelStorageService.Schemas
 {
     [Serializable]
     public class ScreenshotMetadata

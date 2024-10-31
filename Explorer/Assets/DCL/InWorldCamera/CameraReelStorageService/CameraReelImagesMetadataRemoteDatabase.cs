@@ -1,17 +1,16 @@
 ﻿using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.Multiplayer.Connections.DecentralandUrls;
-using DCL.Web3.Identities;
 using DCL.WebRequests;
-using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Networking;
 
-namespace DCL.InWorldCamera
+namespace DCL.InWorldCamera.CameraReelStorageService
 {
-    public class CameraReelWebRequestClient : ICameraReelNetworkClient
+    public class CameraReelImagesMetadataRemoteDatabase : ICameraReelImagesMetadataDatabase
     {
         private readonly IWebRequestController webRequestController;
 
@@ -19,7 +18,7 @@ namespace DCL.InWorldCamera
         private readonly URLDomain imageDomain;
         private readonly URLDomain userDomain;
 
-        public CameraReelWebRequestClient(IWebRequestController webRequestController, IDecentralandUrlsSource decentralandUrlsSource)
+        public CameraReelImagesMetadataRemoteDatabase(IWebRequestController webRequestController, IDecentralandUrlsSource decentralandUrlsSource)
         {
             this.webRequestController = webRequestController;
 
@@ -27,11 +26,12 @@ namespace DCL.InWorldCamera
             userDomain = URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.CameraReelUsers));
         }
 
-        public async UniTask<CameraReelStorageResponse> GetUserGalleryStorageInfoRequest(string userAddress, CancellationToken ct)
+        public async UniTask<CameraReelStorageResponse> GetStorageInfo(string userAddress, CancellationToken ct)
         {
             URLAddress url = urlBuilder.AppendDomain(userDomain)
                                        .AppendSubDirectory(URLSubdirectory.FromString(userAddress))
                                        .Build();
+
             urlBuilder.Clear();
 
             CameraReelStorageResponse responseData = await webRequestController
@@ -41,12 +41,13 @@ namespace DCL.InWorldCamera
             return responseData;
         }
 
-        public async UniTask<CameraReelResponses> GetScreenshotGalleryRequest(string userAddress, int limit, int offset, CancellationToken ct)
+        public async UniTask<CameraReelResponses> GetScreenshots(string userAddress, int limit, int offset, CancellationToken ct)
         {
             URLAddress url = urlBuilder.AppendDomain(userDomain)
                                        .AppendSubDirectory(URLSubdirectory.FromString(userAddress))
                                        .AppendSubDirectory(URLSubdirectory.FromString($"images?limit={limit}&offset={offset}"))
                                        .Build();
+
             urlBuilder.Clear();
 
             CameraReelResponses responseData = await webRequestController
@@ -56,11 +57,12 @@ namespace DCL.InWorldCamera
             return responseData;
         }
 
-        public async UniTask<CameraReelStorageResponse> DeleteScreenshotRequest(string uuid, CancellationToken ct)
+        public async UniTask<CameraReelStorageResponse> DeleteScreenshot(string uuid, CancellationToken ct)
         {
             URLAddress url = urlBuilder.AppendDomain(imageDomain)
                                        .AppendSubDirectory(URLSubdirectory.FromString(uuid))
                                        .Build();
+
             urlBuilder.Clear();
 
             CameraReelStorageResponse responseData = await webRequestController
@@ -70,7 +72,7 @@ namespace DCL.InWorldCamera
             return responseData;
         }
 
-        public async UniTask<CameraReelUploadResponse> UploadScreenshotRequest(byte[] image, ScreenshotMetadata metadata, CancellationToken ct)
+        public async UniTask<CameraReelUploadResponse> UploadScreenshot(byte[] image, ScreenshotMetadata metadata, CancellationToken ct)
         {
             URLAddress url = urlBuilder.AppendDomain(imageDomain).Build();
             urlBuilder.Clear();
@@ -82,8 +84,8 @@ namespace DCL.InWorldCamera
             };
 
             CameraReelUploadResponse responseData = await webRequestController
-                                                           .SignedFetchPostAsync(url, GenericPostArguments.CreateMultipartForm(formData), string.Empty, ct)
-                                                           .CreateFromJson<CameraReelUploadResponse>(WRJsonParser.Unity);
+                                                         .SignedFetchPostAsync(url, GenericPostArguments.CreateMultipartForm(formData), string.Empty, ct)
+                                                         .CreateFromJson<CameraReelUploadResponse>(WRJsonParser.Unity);
 
             return responseData;
         }
