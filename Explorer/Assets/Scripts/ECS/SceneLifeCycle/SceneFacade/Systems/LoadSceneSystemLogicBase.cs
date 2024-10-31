@@ -8,6 +8,7 @@ using DCL.WebRequests;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using SceneRunner;
+using SceneRunner.EmptyScene;
 using SceneRunner.Scene;
 using Utility;
 
@@ -53,8 +54,15 @@ namespace ECS.SceneLifeCycle.Systems
 
             // Launch at the end of the frame
             await UniTask.SwitchToMainThread(PlayerLoopTiming.LastPostLateUpdate, ct);
-
-            ISceneFacade? sceneFacade = await sceneFactory.CreateSceneFromSceneDefinition(sceneData, partition, ct);
+            ISceneFacade? sceneFacade;
+            try
+            {
+                sceneFacade = await sceneFactory.CreateSceneFromSceneDefinition(sceneData, partition, ct);
+            }
+            catch (Exception e)
+            {
+                return new BrokenScene(sceneData);
+            }
 
             await UniTask.SwitchToMainThread();
 

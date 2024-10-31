@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.WebRequests;
+using ECS.SceneLifeCycle.Reporting;
 using SceneRunner.Scene;
 
 namespace ECS.SceneLifeCycle.Systems

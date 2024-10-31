@@ -72,7 +72,7 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
         private void ResolvePlayerCRDTScene(in CharacterTransform characterTransform, ref PlayerCRDTEntity globalPlayerCRDTEntity, CRDTEntity reservedEntityId)
         {
             bool newSceneIsValid = scenesCache.TryGetByParcel(characterTransform.Transform.ParcelPosition(), out ISceneFacade currentScene)
-                                   && !currentScene.IsEmpty;
+                                   && currentScene is { IsEmpty: false, IsBrokenScene: false };
 
             if (globalPlayerCRDTEntity.SceneFacade != currentScene)
             {

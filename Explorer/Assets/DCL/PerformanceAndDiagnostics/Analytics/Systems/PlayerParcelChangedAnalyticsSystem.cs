@@ -64,6 +64,9 @@ namespace DCL.Analytics.Systems
                     { "new_parcel", newParcel.ToString() },
                     { "scene_hash", sceneIsDefined ? currentScene.Info.Name : IAnalyticsController.UNDEFINED },
                     { "is_empty_scene", sceneIsDefined ? currentScene.IsEmpty : IAnalyticsController.UNDEFINED },
+                    {
+                        "is_broken_scene", sceneIsDefined ? currentScene.IsBrokenScene : IAnalyticsController.UNDEFINED
+                    }
                 });
 
                 oldParcel = newParcel;

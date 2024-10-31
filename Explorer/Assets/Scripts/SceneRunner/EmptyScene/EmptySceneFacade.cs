@@ -26,6 +26,7 @@ namespace SceneRunner.EmptyScene
         public PersistentEntities PersistentEntities => default;
 
         public bool IsEmpty => true;
+        public bool IsBrokenScene => false;
         public ISceneData SceneData { get; } = new EmptySceneData(new List<Vector2Int>());
 
         public void Dispose()
@@ -79,10 +80,12 @@ namespace SceneRunner.EmptyScene
         public readonly struct Args
         {
             public readonly SceneShortInfo ShortInfo;
+            public readonly bool IsFailedScene;
 
-            public Args(SceneShortInfo shortInfo)
+            public Args(SceneShortInfo shortInfo, bool isFailedScene = false)
             {
                 ShortInfo = shortInfo;
+                IsFailedScene = isFailedScene;
             }
         }
     }

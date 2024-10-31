@@ -35,6 +35,7 @@ using SceneRunner.Scene;
 using SceneRuntime;
 using System.Collections.Generic;
 using System.Threading;
+using DCL.Chat.History;
 using SystemGroups.Visualiser;
 using UnityEngine;
 using Utility;
@@ -66,6 +67,7 @@ namespace Global.Dynamic
         private readonly CurrentSceneInfo currentSceneInfo;
         private readonly HybridSceneParams hybridSceneParams;
         private readonly bool localSceneDevelopment;
+        private readonly IChatHistory chatHistory;
 
         public GlobalWorldFactory(in StaticContainer staticContainer,
             CameraSamplingData cameraSamplingData, RealmSamplingData realmSamplingData,
@@ -76,7 +78,8 @@ namespace Global.Dynamic
             ILODCache lodCache,
             IEmotesMessageBus emotesMessageBus,
             World world,
-            bool localSceneDevelopment)
+            bool localSceneDevelopment,
+            IChatHistory chatHistory)
         {
             partitionedWorldsAggregateFactory = staticContainer.SingletonSharedDependencies.AggregateFactory;
             componentPoolsRegistry = staticContainer.ComponentsContainer.ComponentPoolsRegistry;
@@ -99,6 +102,7 @@ namespace Global.Dynamic
             this.emotesMessageBus = emotesMessageBus;
             this.localSceneDevelopment = localSceneDevelopment;
             this.world = world;
+            this.chatHistory = chatHistory;
 
             memoryBudget = staticContainer.SingletonSharedDependencies.MemoryBudget;
             physicsTickProvider = staticContainer.PhysicsTickProvider;
@@ -140,6 +144,8 @@ namespace Global.Dynamic
             LoadFixedPointersSystem.InjectToWorld(ref builder);
             LoadPortableExperiencePointersSystem.InjectToWorld(ref builder);
 
+            CheckFailedScenesStateSystem.InjectToWorld(ref builder, staticContainer.SceneReadinessReportQueue, chatHistory);
+
             // are replace by increasing radius
             var jobsMathHelper = new ParcelMathJobifiedHelper();
             StartSplittingByRingsSystem.InjectToWorld(ref builder, realmPartitionSettings, jobsMathHelper);
@@ -171,7 +177,7 @@ namespace Global.Dynamic
             UnloadPortableExperiencesSystem.InjectToWorld(ref builder);
 
             UpdateCurrentSceneSystem.InjectToWorld(ref builder, realmData, scenesCache, currentSceneInfo, playerEntity, staticContainer.SingletonSharedDependencies.SceneAssetLock, debugContainerBuilder);
-
+            
             var pluginArgs = new GlobalPluginArguments(playerEntity, v8ActiveEngines);
 
             foreach (IDCLGlobalPlugin plugin in globalPlugins)

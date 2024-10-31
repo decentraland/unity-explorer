@@ -28,6 +28,7 @@ namespace SceneRunner
         public ISceneData SceneData { get; }
 
         public bool IsEmpty => false;
+        public bool IsBrokenScene => false;
 
         public SceneShortInfo Info => SceneData.SceneShortInfo;
 

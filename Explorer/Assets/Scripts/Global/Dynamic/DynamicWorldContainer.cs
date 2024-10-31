@@ -648,7 +648,8 @@ namespace Global.Dynamic
                 container.LODContainer.LodCache,
                 multiplayerEmotesMessageBus,
                 globalWorld,
-                localSceneDevelopment
+                localSceneDevelopment,
+                chatHistory
             );
 
             container.GlobalPlugins = globalPlugins;
