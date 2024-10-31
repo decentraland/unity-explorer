@@ -25,6 +25,11 @@ true;
         public const int EMPTY_SCENES_COUNT = 400;
 
         /// <summary>
+        ///     Initial capacity of pools that should exist per broken scene context
+        /// </summary>
+        public const int BROKEN_SCENES_COUNT = 20;
+
+        /// <summary>
         ///     The maximum number of scenes before everything explodes according to our expectations
         /// </summary>
         public const int SCENES_MAX_CAPACITY = 300;

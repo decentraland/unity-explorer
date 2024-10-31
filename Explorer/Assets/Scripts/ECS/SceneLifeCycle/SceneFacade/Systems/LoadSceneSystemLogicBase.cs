@@ -61,7 +61,7 @@ namespace ECS.SceneLifeCycle.Systems
             }
             catch (Exception e)
             {
-                return new BrokenScene(sceneData);
+                return BrokenSceneFacade.Create(sceneData, e);
             }
 
             await UniTask.SwitchToMainThread();

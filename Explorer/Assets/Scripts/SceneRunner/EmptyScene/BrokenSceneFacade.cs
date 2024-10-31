@@ -3,39 +3,41 @@ using System.Linq;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Optimization.Pools;
+using DCL.Optimization.ThreadSafePool;
 using DCL.PluginSystem.World;
 using SceneRunner.Scene;
 using UnityEngine;
+using UnityEngine.Pool;
 
 namespace SceneRunner.EmptyScene
 {
     /// <summary>
     ///     An SDK7 scene flagged as broken
     /// </summary>
-    public class BrokenScene : ISceneFacade
+    public class BrokenSceneFacade : ISceneFacade
     {
-        public BrokenScene(ISceneData sceneData)
-        {
-            SceneData = sceneData;
-            SceneStateProvider = new SceneStateProvider();
-            SceneStateProvider.State = SceneState.EngineError;
-        }
+        private static readonly IObjectPool<BrokenSceneFacade> POOL = new ThreadSafeObjectPool<BrokenSceneFacade>(() => new BrokenSceneFacade(), defaultCapacity: PoolConstants.BROKEN_SCENES_COUNT);
 
+        private BrokenSceneFacade() { }
+        
+      
         public void Dispose()
         {
-            // TODO release managed resources here
+            POOL.Release(this);
         }
 
-        public UniTask DisposeAsync()
+        public async UniTask DisposeAsync()
         {
-            return UniTask.CompletedTask;
+            await UniTask.SwitchToThreadPool();
+            Dispose();
         }
 
         public SceneShortInfo Info { get; }
-        public ISceneStateProvider SceneStateProvider { get; }
+        public ISceneStateProvider SceneStateProvider { get; private set; }
         public SceneEcsExecutor EcsExecutor { get; }
         public PersistentEntities PersistentEntities { get; }
-        public ISceneData SceneData { get; }
+        public ISceneData SceneData { get; private set; }
         public bool IsEmpty => false;
         public bool IsBrokenScene => true;
 
@@ -75,6 +77,18 @@ namespace SceneRunner.EmptyScene
         UniTask ISceneFacade.Tick(float dt)
         {
             return UniTask.CompletedTask;
+        }
+
+        public static BrokenSceneFacade Create(ISceneData sceneData, Exception e)
+        {
+            var brokenScene = POOL.Get();
+            brokenScene.SceneData = sceneData;
+            var sceneStateProvider = new SceneStateProvider();
+            sceneStateProvider.State = SceneState.EngineError;
+            brokenScene.SceneStateProvider = sceneStateProvider;
+
+            ReportHub.LogError(ReportCategory.SCENE_LOADING, $"Scene {sceneData.SceneEntityDefinition.metadata.scene.DecodedBase} failed to load with exception {e.Message}");
+            return brokenScene;
         }
     }
 }

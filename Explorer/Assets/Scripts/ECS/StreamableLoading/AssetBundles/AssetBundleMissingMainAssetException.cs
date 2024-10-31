@@ -27,12 +27,12 @@ namespace ECS.StreamableLoading.AssetBundles
     {
         private readonly string sourceName;
 
-        public AssetBundleContainsShaderException(string sourceName) : base($"{sourceName} contains a shader in it when it should be a dependecy. This will cause a leak")
+        public AssetBundleContainsShaderException(string sourceName) : base($"{sourceName} contains a shader in it when it should be a dependency.")
         {
             this.sourceName = sourceName;
         }
 
         public override string ToString() =>
-            $"{sourceName} contains a shader in it when it should be a dependecy. This will cause a leak";
+            $"{sourceName} contains a shader in it when it should be a dependency.";
     }
 }
