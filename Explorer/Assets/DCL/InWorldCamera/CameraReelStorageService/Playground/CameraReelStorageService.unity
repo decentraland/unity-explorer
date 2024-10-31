@@ -407,12 +407,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   env: 1
-  CurrentImages: 0
-  MaxImages: 0
+  CurrentImages: 499
+  MaxImages: 500
   Limit: 10
   Offset: 0
   ImageUid: 09f01d43-140f-4c8b-ad63-40bac3dc187d
-  uploadTexture: {fileID: 2800000, guid: a2219697073014232b2c52386770c95b, type: 3}
+  uploadTexture: {fileID: 2800000, guid: 86cd3669a4cb3094ca2f6830b8bb9f88, type: 3}
   thumbnailUrl: 
 --- !u!4 &1362899097
 Transform:
