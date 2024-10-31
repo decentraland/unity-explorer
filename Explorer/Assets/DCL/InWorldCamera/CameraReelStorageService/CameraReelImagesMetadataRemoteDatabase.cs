@@ -10,7 +10,7 @@ using UnityEngine.Networking;
 
 namespace DCL.InWorldCamera.CameraReelStorageService
 {
-    public class CameraReelImagesMetadataRemoteDatabase : ICameraReelImagesMetadataDatabase
+    internal class CameraReelImagesMetadataRemoteDatabase : ICameraReelImagesMetadataDatabase
     {
         private readonly IWebRequestController webRequestController;
 
@@ -26,7 +26,7 @@ namespace DCL.InWorldCamera.CameraReelStorageService
             userDomain = URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.CameraReelUsers));
         }
 
-        public async UniTask<CameraReelStorageResponse> GetStorageInfo(string userAddress, CancellationToken ct)
+        public async UniTask<CameraReelStorageResponse> GetStorageInfoAsync(string userAddress, CancellationToken ct)
         {
             URLAddress url = urlBuilder.AppendDomain(userDomain)
                                        .AppendSubDirectory(URLSubdirectory.FromString(userAddress))
@@ -41,7 +41,7 @@ namespace DCL.InWorldCamera.CameraReelStorageService
             return responseData;
         }
 
-        public async UniTask<CameraReelResponses> GetScreenshots(string userAddress, int limit, int offset, CancellationToken ct)
+        public async UniTask<CameraReelResponses> GetScreenshotsAsync(string userAddress, int limit, int offset, CancellationToken ct)
         {
             URLAddress url = urlBuilder.AppendDomain(userDomain)
                                        .AppendSubDirectory(URLSubdirectory.FromString(userAddress))
@@ -57,7 +57,7 @@ namespace DCL.InWorldCamera.CameraReelStorageService
             return responseData;
         }
 
-        public async UniTask<CameraReelStorageResponse> DeleteScreenshot(string uuid, CancellationToken ct)
+        public async UniTask<CameraReelStorageResponse> DeleteScreenshotAsync(string uuid, CancellationToken ct)
         {
             URLAddress url = urlBuilder.AppendDomain(imageDomain)
                                        .AppendSubDirectory(URLSubdirectory.FromString(uuid))
@@ -72,7 +72,7 @@ namespace DCL.InWorldCamera.CameraReelStorageService
             return responseData;
         }
 
-        public async UniTask<CameraReelUploadResponse> UploadScreenshot(byte[] image, ScreenshotMetadata metadata, CancellationToken ct)
+        public async UniTask<CameraReelUploadResponse> UploadScreenshotAsync(byte[] image, ScreenshotMetadata metadata, CancellationToken ct)
         {
             URLAddress url = urlBuilder.AppendDomain(imageDomain).Build();
             urlBuilder.Clear();

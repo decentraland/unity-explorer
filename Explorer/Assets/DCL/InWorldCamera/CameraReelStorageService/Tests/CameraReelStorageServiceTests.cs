@@ -28,7 +28,7 @@ namespace DCL.InWorldCamera.CameraReelStorageService.Tests
         {
             // Arrange
             var expectedResponse = new CameraReelStorageResponse { currentImages = 5, maxImages = 10 };
-            metadataDatabase.GetStorageInfo(USER_ADDRESS, Arg.Any<CancellationToken>())
+            metadataDatabase.GetStorageInfoAsync(USER_ADDRESS, Arg.Any<CancellationToken>())
                             .Returns(UniTask.FromResult(expectedResponse));
 
             // Act
@@ -37,7 +37,7 @@ namespace DCL.InWorldCamera.CameraReelStorageService.Tests
             // Assert
             Assert.That(result.ScreenshotsAmount, Is.EqualTo(expectedResponse.currentImages));
             Assert.That(result.MaxScreenshots, Is.EqualTo(expectedResponse.maxImages));
-            await metadataDatabase.Received(1).GetStorageInfo(USER_ADDRESS, Arg.Any<CancellationToken>());
+            await metadataDatabase.Received(1).GetStorageInfoAsync(USER_ADDRESS, Arg.Any<CancellationToken>());
         }
 
         [Test]
@@ -46,7 +46,7 @@ namespace DCL.InWorldCamera.CameraReelStorageService.Tests
             // Arrange
 
             var expectedResponse = new CameraReelResponses();
-            metadataDatabase.GetScreenshots(USER_ADDRESS, LIMIT, OFFSET, Arg.Any<CancellationToken>())
+            metadataDatabase.GetScreenshotsAsync(USER_ADDRESS, LIMIT, OFFSET, Arg.Any<CancellationToken>())
                             .Returns(UniTask.FromResult(expectedResponse));
 
             // Act
@@ -54,7 +54,7 @@ namespace DCL.InWorldCamera.CameraReelStorageService.Tests
 
             // Assert
             Assert.That(result, Is.EqualTo(expectedResponse));
-            await metadataDatabase.Received(1).GetScreenshots(USER_ADDRESS, LIMIT, OFFSET, Arg.Any<CancellationToken>());
+            await metadataDatabase.Received(1).GetScreenshotsAsync(USER_ADDRESS, LIMIT, OFFSET, Arg.Any<CancellationToken>());
         }
 
         [Test]
@@ -63,7 +63,7 @@ namespace DCL.InWorldCamera.CameraReelStorageService.Tests
             // Arrange
             const string UUID = "test-uuid";
             var expectedResponse = new CameraReelStorageResponse { currentImages = 4, maxImages = 10 };
-            metadataDatabase.DeleteScreenshot(UUID, Arg.Any<CancellationToken>())
+            metadataDatabase.DeleteScreenshotAsync(UUID, Arg.Any<CancellationToken>())
                             .Returns(UniTask.FromResult(expectedResponse));
 
             // Act
@@ -72,7 +72,7 @@ namespace DCL.InWorldCamera.CameraReelStorageService.Tests
             // Assert
             Assert.That(result.ScreenshotsAmount, Is.EqualTo(expectedResponse.currentImages));
             Assert.That(result.MaxScreenshots, Is.EqualTo(expectedResponse.maxImages));
-            await metadataDatabase.Received(1).DeleteScreenshot(UUID, Arg.Any<CancellationToken>());
+            await metadataDatabase.Received(1).DeleteScreenshotAsync(UUID, Arg.Any<CancellationToken>());
         }
     }
 }

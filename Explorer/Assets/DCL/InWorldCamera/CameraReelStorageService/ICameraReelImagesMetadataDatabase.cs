@@ -4,14 +4,14 @@ using System.Threading;
 
 namespace DCL.InWorldCamera.CameraReelStorageService
 {
-    public interface ICameraReelImagesMetadataDatabase
+    internal interface ICameraReelImagesMetadataDatabase
     {
-        UniTask<CameraReelStorageResponse> GetStorageInfo(string userAddress, CancellationToken ct);
+        UniTask<CameraReelStorageResponse> GetStorageInfoAsync(string userAddress, CancellationToken ct);
 
-        UniTask<CameraReelResponses> GetScreenshots(string userAddress, int limit, int offset, CancellationToken ct);
+        UniTask<CameraReelResponses> GetScreenshotsAsync(string userAddress, int limit, int offset, CancellationToken ct);
 
-        UniTask<CameraReelUploadResponse> UploadScreenshot(byte[] image, ScreenshotMetadata metadata, CancellationToken ct);
+        UniTask<CameraReelUploadResponse> UploadScreenshotAsync(byte[] image, ScreenshotMetadata metadata, CancellationToken ct);
 
-        UniTask<CameraReelStorageResponse> DeleteScreenshot(string uuid, CancellationToken ct);
+        UniTask<CameraReelStorageResponse> DeleteScreenshotAsync(string uuid, CancellationToken ct);
     }
 }
