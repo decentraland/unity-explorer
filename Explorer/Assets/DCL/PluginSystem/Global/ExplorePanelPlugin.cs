@@ -270,8 +270,8 @@ namespace DCL.PluginSystem.Global
             }
         }
 
-        private INavmapCommand CreateSearchPlaceCommand(string search) =>
-            new SearchForPlaceAndShowResultsCommand(placesAPIService, searchResultPanelController!, search);
+        private INavmapCommand CreateSearchPlaceCommand(string search, NavmapSearchPlaceFilter filter, NavmapSearchPlaceSorting sorting) =>
+            new SearchForPlaceAndShowResultsCommand(placesAPIService, searchResultPanelController!, search, filter, sorting);
 
         public class ExplorePanelSettings : IDCLPluginSettings
         {

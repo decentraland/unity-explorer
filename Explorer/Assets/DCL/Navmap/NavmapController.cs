@@ -91,7 +91,8 @@ namespace DCL.Navmap
             zoomController = new NavmapZoomController(navmapView.zoomView, dclInput);
             filterController = new NavmapFilterController(this.navmapView.filterView, mapRenderer, webBrowser);
             searchBarController = new NavmapSearchBarController(navmapView.SearchBarView,
-                navmapView.HistoryRecordPanelView, inputBlock, searchHistory, navmapBus);
+                navmapView.HistoryRecordPanelView, navmapView.PlacesAndEventsPanelView.SearchFiltersView,
+                inputBlock, searchHistory, navmapBus);
             eventInfoCardController = new EventInfoCardController(navmapView.eventInfoCardView, placesAPIService,
                 webRequestController, mapPathEventBus, chatMessagesBus, zoomController, navmapBus);
             navmapBus.OnDestinationSelected += SetDestination;

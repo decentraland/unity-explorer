@@ -13,7 +13,7 @@ namespace DCL.Navmap
 
         void SelectPlace(PlacesData.PlaceInfo place);
 
-        UniTask SearchForPlaceAsync(string place, CancellationToken ct);
+        UniTask SearchForPlaceAsync(string place, NavmapSearchPlaceFilter filter, NavmapSearchPlaceSorting sorting, CancellationToken ct);
 
         UniTask GoBackAsync(CancellationToken ct);
 

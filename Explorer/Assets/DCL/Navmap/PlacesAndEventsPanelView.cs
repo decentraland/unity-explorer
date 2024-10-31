@@ -10,5 +10,8 @@ namespace DCL.Navmap
 
         [field: SerializeField]
         public Button CollapseButton { get; private set; }
+
+        [field: SerializeField]
+        public SearchFiltersView SearchFiltersView { get; private set; }
     }
 }

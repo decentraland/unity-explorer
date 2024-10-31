@@ -16,6 +16,9 @@ namespace DCL.Navmap
         public SearchResultPanelView SearchBarResultPanel;
 
         [field: SerializeField]
+        public PlacesAndEventsPanelView PlacesAndEventsPanelView { get; private set; }
+
+        [field: SerializeField]
         public HistoryRecordPanelView HistoryRecordPanelView;
 
         [FormerlySerializedAs("eventInfoCard")]

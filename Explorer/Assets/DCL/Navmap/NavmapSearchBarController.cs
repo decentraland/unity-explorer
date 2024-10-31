@@ -12,22 +12,28 @@ namespace DCL.Navmap
     {
         private readonly SearchBarView view;
         private readonly HistoryRecordPanelView historyRecordPanelView;
+        private readonly SearchFiltersView searchFiltersView;
         private readonly IInputBlock inputBlock;
         private readonly ISearchHistory searchHistory;
         private readonly INavmapBus navmapBus;
 
         private CancellationTokenSource? searchCancellationToken;
         private bool isAlreadySelected;
+        private NavmapSearchPlaceFilter currentPlaceFilter = NavmapSearchPlaceFilter.All;
+        private NavmapSearchPlaceSorting currentPlaceSorting = NavmapSearchPlaceSorting.MostActive;
+        private string currentSearchText = "";
 
         public NavmapSearchBarController(
             SearchBarView view,
             HistoryRecordPanelView historyRecordPanelView,
+            SearchFiltersView searchFiltersView,
             IInputBlock inputBlock,
             ISearchHistory searchHistory,
             INavmapBus navmapBus)
         {
             this.view = view;
             this.historyRecordPanelView = historyRecordPanelView;
+            this.searchFiltersView = searchFiltersView;
             this.inputBlock = inputBlock;
             this.searchHistory = searchHistory;
             this.navmapBus = navmapBus;
@@ -35,13 +41,21 @@ namespace DCL.Navmap
             historyRecordPanelView.OnClickedHistoryRecord += ClickedHistoryResult;
 
             navmapBus.OnJumpIn += _ => ClearSearch();
-            view.inputField.onSelect.AddListener(_ => OnSelectedSearchbarChange(true));
-            view.inputField.onDeselect.AddListener(_ => OnSelectedSearchbarChange(false));
-            view.inputField.onValueChanged.AddListener(OnValueChanged);
+            view.inputField.onSelect.AddListener(_ => OnSearchBarSelected(true));
+            view.inputField.onDeselect.AddListener(_ => OnSearchBarSelected(false));
+            view.inputField.onValueChanged.AddListener(OnInputValueChanged);
             view.clearSearchButton.onClick.AddListener(ClearSearch);
             view.clearSearchButton.gameObject.SetActive(false);
             ShowPreviousSearches();
             historyRecordPanelView.gameObject.SetActive(false);
+            searchFiltersView.AllButton.onClick.AddListener(() => Search(NavmapSearchPlaceFilter.All));
+            searchFiltersView.FavoritesButton.onClick.AddListener(() => Search(NavmapSearchPlaceFilter.Favorites));
+            searchFiltersView.VisitedButton.onClick.AddListener(() => Search(NavmapSearchPlaceFilter.Visited));
+            searchFiltersView.NewestButton.onClick.AddListener(() => Search(NavmapSearchPlaceSorting.Newest));
+            searchFiltersView.BestRatedButton.onClick.AddListener(() => Search(NavmapSearchPlaceSorting.BestRated));
+            searchFiltersView.MostActiveButton.onClick.AddListener(() => Search(NavmapSearchPlaceSorting.MostActive));
+            searchFiltersView.Toggle(currentPlaceSorting);
+            searchFiltersView.Toggle(currentPlaceFilter);
         }
 
         public void Dispose()
@@ -62,11 +76,11 @@ namespace DCL.Navmap
         private void ClickedHistoryResult(string historyText)
         {
             view.inputField.SetTextWithoutNotify(historyText);
-            OnValueChanged(historyText);
+            OnInputValueChanged(historyText);
             historyRecordPanelView.gameObject.SetActive(false);
         }
 
-        private void OnValueChanged(string searchText)
+        private void OnInputValueChanged(string searchText)
         {
             view.clearSearchButton.gameObject.SetActive(!string.IsNullOrEmpty(searchText));
             searchCancellationToken = searchCancellationToken.SafeRestart();
@@ -79,13 +93,22 @@ namespace DCL.Navmap
 
             historyRecordPanelView.gameObject.SetActive(false);
 
-            // Suppress cancellation but let other exceptions be printed
-            SearchAndShowAsync(searchText, searchCancellationToken.Token)
-               .SuppressCancellationThrow()
+            currentSearchText = searchText;
+
+            SearchAsync(searchCancellationToken.Token)
                .Forget();
+
+            return;
+
+            async UniTaskVoid SearchAsync(CancellationToken ct)
+            {
+                await UniTask.Delay(1000, cancellationToken: ct).SuppressCancellationThrow();
+                searchHistory.Add(searchText);
+                await SearchAndShowAsync(ct).SuppressCancellationThrow();
+            }
         }
 
-        private void OnSelectedSearchbarChange(bool isSelected)
+        private void OnSearchBarSelected(bool isSelected)
         {
             if (isSelected == isAlreadySelected)
                 return;
@@ -101,12 +124,6 @@ namespace DCL.Navmap
                 inputBlock.Enable(InputMapComponent.Kind.SHORTCUTS);
         }
 
-        private async UniTask SearchAndShowAsync(string searchText, CancellationToken ct)
-        {
-            searchHistory.Add(searchText);
-            await navmapBus.SearchForPlaceAsync(searchText, ct);
-        }
-
         private void ShowPreviousSearches()
         {
             searchCancellationToken = searchCancellationToken.SafeRestart();
@@ -116,5 +133,24 @@ namespace DCL.Navmap
             historyRecordPanelView.gameObject.SetActive(true);
             historyRecordPanelView.SetHistoryRecords(previousSearches);
         }
+
+        private void Search(NavmapSearchPlaceFilter filter)
+        {
+            currentPlaceFilter = filter;
+            searchCancellationToken = searchCancellationToken.SafeRestart();
+            searchFiltersView.Toggle(filter);
+            SearchAndShowAsync(searchCancellationToken.Token).Forget();
+        }
+
+        private void Search(NavmapSearchPlaceSorting sorting)
+        {
+            currentPlaceSorting = sorting;
+            searchCancellationToken = searchCancellationToken.SafeRestart();
+            searchFiltersView.Toggle(sorting);
+            SearchAndShowAsync(searchCancellationToken.Token).Forget();
+        }
+
+        private async UniTask SearchAndShowAsync(CancellationToken ct) =>
+            await navmapBus.SearchForPlaceAsync(currentSearchText, currentPlaceFilter, currentPlaceSorting, ct);
     }
 }

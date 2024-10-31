@@ -1034,6 +1034,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   SearchBarView: {fileID: 1891039494146652281}
   SearchBarResultPanel: {fileID: 2187651677707840928}
+  <PlacesAndEventsPanelView>k__BackingField: {fileID: 2403423542637521529}
   HistoryRecordPanelView: {fileID: 3448136470281908273}
   eventInfoCardView: {fileID: 6116657360967466757}
   filterView: {fileID: 7028833074500842829}
@@ -3928,6 +3929,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f671620221bb141f2866f219c4c14841, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &2403423542637521529 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5512777827168382604, guid: d330fb8cc4eee463fa5fddbbf652ab9e, type: 3}
+  m_PrefabInstance: {fileID: 7916200886554920181}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4bd0d1e559654e38abeeac42fff9adb7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!224 &8855090872630494435 stripped
