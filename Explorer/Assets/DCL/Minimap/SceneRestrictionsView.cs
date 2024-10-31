@@ -3,36 +3,49 @@ using UnityEngine;
 
 namespace DCL.Minimap
 {
-    public class SceneRestrictionsView : MonoBehaviour
+    public interface ISceneRestrictionsView
+    {
+        RectTransform SceneRestrictionsIcon { get; set; }
+        GameObject RestrictionTextPrefab { get; set; }
+        CanvasGroup ToastCanvasGroup { get; set; }
+        GameObject ToastTextParent { get; set; }
+        float FadeTime { get; set; }
+        RectTransform ToastRectTransform { get; set; }
+
+        event Action? OnPointerEnterEvent;
+        event Action? OnPointerExitEvent;
+    }
+
+    public class SceneRestrictionsView : MonoBehaviour, ISceneRestrictionsView
     {
         [field: SerializeField]
-        internal RectTransform sceneRestrictionsIcon { get; private set; }
+        public RectTransform SceneRestrictionsIcon { get; set; }
 
         [field: SerializeField]
-        internal GameObject restrictionTextPrefab { get; private set; }
+        public GameObject RestrictionTextPrefab { get; set; }
 
         [field: SerializeField]
-        internal CanvasGroup toastCanvasGroup { get; private set; }
+        public CanvasGroup ToastCanvasGroup { get; set; }
 
         [field: SerializeField]
-        internal GameObject toastTextParent { get; private set; }
+        public GameObject ToastTextParent { get; set; }
 
         [field: SerializeField]
-        internal float fadeTime { get; set; } = 0.3f;
+        public float FadeTime { get; set; } = 0.3f;
 
-        internal RectTransform toastRectTransform { get; private set; }
+        public RectTransform ToastRectTransform { get; set; }
 
-        internal event Action? OnPointerEnterEvent;
-        internal event Action? OnPointerExitEvent;
+        public event Action? OnPointerEnterEvent;
+        public event Action? OnPointerExitEvent;
 
         public void OnPointerEnter() => OnPointerEnterEvent?.Invoke();
         public void OnPointerExit() => OnPointerExitEvent?.Invoke();
 
         private void Awake()
         {
-            toastCanvasGroup.alpha = 0;
-            sceneRestrictionsIcon.gameObject.SetActive(false);
-            toastRectTransform = toastCanvasGroup.GetComponent<RectTransform>();
+            ToastCanvasGroup.alpha = 0;
+            SceneRestrictionsIcon.gameObject.SetActive(false);
+            ToastRectTransform = ToastCanvasGroup.GetComponent<RectTransform>();
         }
     }
 }

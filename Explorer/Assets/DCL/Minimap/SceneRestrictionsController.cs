@@ -12,7 +12,7 @@ namespace DCL.Minimap
     {
         private const float TOAST_X_POSITION_OFFSET_ICON_WIDTH_SCALER = 0.75f;
 
-        private readonly SceneRestrictionsView restrictionsView;
+        private readonly ISceneRestrictionsView restrictionsView;
         private readonly Dictionary<SceneRestrictions, int> restrictionsRegistry = new();
         private readonly Dictionary<SceneRestrictions, GameObject> restrictionsGameObjects = new();
         private readonly Dictionary<SceneRestrictions, string> restrictionsTexts = new()
@@ -24,7 +24,7 @@ namespace DCL.Minimap
             { SceneRestrictions.EXPERIENCES_BLOCKED, "• Experiences are blocked" },
         };
 
-        public SceneRestrictionsController(SceneRestrictionsView restrictionsView, ISceneRestrictionBusController sceneRestrictionBusController)
+        public SceneRestrictionsController(ISceneRestrictionsView restrictionsView, ISceneRestrictionBusController sceneRestrictionBusController)
         {
             this.restrictionsView = restrictionsView;
 
@@ -36,7 +36,7 @@ namespace DCL.Minimap
             {
                 restrictionsRegistry[restriction] = 0;
 
-                GameObject restrictionsObject = GameObject.Instantiate(restrictionsView.restrictionTextPrefab, restrictionsView.toastTextParent.transform);
+                GameObject restrictionsObject = GameObject.Instantiate(restrictionsView.RestrictionTextPrefab, restrictionsView.ToastTextParent.transform);
                 restrictionsObject.GetComponent<TMP_Text>().SetText(restrictionsTexts[restriction]);
                 restrictionsObject.SetActive(false);
                 restrictionsObject.name = restriction.ToString();
@@ -52,14 +52,14 @@ namespace DCL.Minimap
 
         private void OnMouseEnter()
         {
-            Vector3 toastPosition = restrictionsView.toastRectTransform.anchoredPosition;
-            toastPosition.x = restrictionsView.sceneRestrictionsIcon.transform.localPosition.x - (restrictionsView.sceneRestrictionsIcon.rect.width * TOAST_X_POSITION_OFFSET_ICON_WIDTH_SCALER);
-            restrictionsView.toastRectTransform.anchoredPosition = toastPosition;
-            restrictionsView.toastCanvasGroup.DOFade(1f, restrictionsView.fadeTime);
+            Vector3 toastPosition = restrictionsView.ToastRectTransform.anchoredPosition;
+            toastPosition.x = restrictionsView.SceneRestrictionsIcon.transform.localPosition.x - (restrictionsView.SceneRestrictionsIcon.rect.width * TOAST_X_POSITION_OFFSET_ICON_WIDTH_SCALER);
+            restrictionsView.ToastRectTransform.anchoredPosition = toastPosition;
+            restrictionsView.ToastCanvasGroup.DOFade(1f, restrictionsView.FadeTime);
         }
 
         private void OnMouseExit() =>
-            restrictionsView.toastCanvasGroup.DOFade(0f, restrictionsView.fadeTime);
+            restrictionsView.ToastCanvasGroup.DOFade(0f, restrictionsView.FadeTime);
 
         private void ManageSceneRestrictions(SceneRestriction sceneRestriction)
         {
@@ -73,7 +73,7 @@ namespace DCL.Minimap
             restrictionsGameObjects[sceneRestriction.Type].SetActive(currentRestrictionCounter > 0);
 
             bool restrictionIconEnabled = RestrictionsRegistryHasAtLeastOneActive();
-            restrictionsView.sceneRestrictionsIcon.gameObject.SetActive(restrictionIconEnabled);
+            restrictionsView.SceneRestrictionsIcon.gameObject.SetActive(restrictionIconEnabled);
             if (!restrictionIconEnabled)
                 OnMouseExit();
         }
