@@ -165,6 +165,7 @@ namespace DCL.WebRequests
                 {
                     // It means there is no such end-point at all
                     case WebRequestUtils.BAD_REQUEST:
+                    case WebRequestUtils.FORBIDDEN_ACCESS:
                     case WebRequestUtils.NOT_FOUND:
                         return false;
                 }
