@@ -9,10 +9,12 @@ using UnityEngine;
 
 namespace DCL.InWorldCamera.CameraReelStorageService.Playground
 {
-    public class CameraReelNetworkClientManualTest : MonoBehaviour
+    public class CameraReelRemoteServicesManualTest : MonoBehaviour
     {
         private readonly IWeb3IdentityCache.Default identity = new ();
         private readonly IWebRequestController webRequestController = IWebRequestController.DEFAULT;
+        private readonly CancellationToken ct = CancellationToken.None;
+
         public DecentralandEnvironment Env;
 
         public CameraReelStorageResponse Storage;
@@ -44,13 +46,13 @@ namespace DCL.InWorldCamera.CameraReelStorageService.Playground
         [ContextMenu(nameof(GET_STORAGE))]
         public async void GET_STORAGE()
         {
-            Storage = await metadataDatabase.GetStorageInfo(identity.Identity.Address, default(CancellationToken));
+            Storage = await metadataDatabase.GetStorageInfo(identity.Identity.Address, ct);
         }
 
         [ContextMenu(nameof(GET_GALLERY))]
         public async void GET_GALLERY()
         {
-            Result = await metadataDatabase.GetScreenshots(identity.Identity.Address, Limit, Offset, default(CancellationToken));
+            Result = await metadataDatabase.GetScreenshots(identity.Identity.Address, Limit, Offset, ct);
 
             Storage.currentImages = Result.currentImages;
             Storage.maxImages = Result.maxImages;
@@ -63,8 +65,7 @@ namespace DCL.InWorldCamera.CameraReelStorageService.Playground
         [ContextMenu(nameof(UPLOAD_IMAGE))]
         public async void UPLOAD_IMAGE()
         {
-            CameraReelUploadResponse response = await metadataDatabase.UploadScreenshot(
-                ImageTexture.EncodeToJPG(), Result.images.First().metadata, default(CancellationToken));
+            CameraReelUploadResponse response = await metadataDatabase.UploadScreenshot(ImageTexture.EncodeToJPG(), Result.images.First().metadata, ct);
 
             Storage.currentImages = response.currentImages;
             Storage.maxImages = response.maxImages;
@@ -75,7 +76,7 @@ namespace DCL.InWorldCamera.CameraReelStorageService.Playground
         [ContextMenu(nameof(DELETE_IMAGE))]
         public async void DELETE_IMAGE()
         {
-            Storage = await metadataDatabase.DeleteScreenshot(Result.images.First().id, default(CancellationToken));
+            Storage = await metadataDatabase.DeleteScreenshot(Result.images.First().id, ct);
         }
     }
 }
