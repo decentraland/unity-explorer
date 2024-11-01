@@ -10,7 +10,8 @@ namespace DCL.PlacesAPIService
 {
     public interface IPlacesAPIService
     {
-        UniTask<PlacesData.IPlacesAPIResponse> SearchPlacesAsync(string searchText, int pageNumber, int pageSize, CancellationToken ct);
+        UniTask<PlacesData.IPlacesAPIResponse> SearchPlacesAsync(string searchText, int pageNumber, int pageSize, CancellationToken ct,
+            Sort sortBy = Sort.MOST_ACTIVE, SortDirection sortDirection = SortDirection.DESC);
 
         UniTask<(IReadOnlyList<PlacesData.PlaceInfo> places, int total)> GetMostActivePlacesAsync(int pageNumber, int pageSize, string filter = "", string sort = "", CancellationToken ct = default,
             bool renewCache = false);
@@ -19,7 +20,8 @@ namespace DCL.PlacesAPIService
 
         UniTask<PlacesData.PlaceInfo?> GetPlaceAsync(string placeUUID, CancellationToken ct, bool renewCache = false);
 
-        UniTask<PoolExtensions.Scope<List<PlacesData.PlaceInfo>>> GetFavoritesAsync(int pageNumber, int pageSize, CancellationToken ct, bool renewCache = false);
+        UniTask<PoolExtensions.Scope<List<PlacesData.PlaceInfo>>> GetFavoritesAsync(int pageNumber, int pageSize, CancellationToken ct, bool renewCache = false,
+            Sort sortBy = Sort.MOST_ACTIVE, SortDirection sortDirection = SortDirection.DESC);
 
         UniTask<PoolExtensions.Scope<List<PlacesData.PlaceInfo>>> GetPlacesByCoordsListAsync(IEnumerable<Vector2Int> coordsList, CancellationToken ct, bool renewCache = false);
 
@@ -30,6 +32,19 @@ namespace DCL.PlacesAPIService
         UniTask<IReadOnlyList<string>> GetPointsOfInterestCoordsAsync(CancellationToken ct, bool renewCache = false);
 
         UniTask ReportPlaceAsync(PlaceContentReportPayload placeContentReportPayload, CancellationToken ct);
+
+        enum Sort
+        {
+            MOST_ACTIVE,
+            CREATED_AT,
+            LIKE_SCORE,
+        }
+
+        enum SortDirection
+        {
+            DESC,
+            ASC,
+        }
     }
 
     public static class PlacesAPIServiceExtensions

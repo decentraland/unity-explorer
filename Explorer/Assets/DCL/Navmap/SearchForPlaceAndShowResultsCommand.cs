@@ -41,21 +41,24 @@ namespace DCL.Navmap
             searchResultPanelController.Show();
             searchResultPanelController.SetLoadingState();
 
-            // TODO: use sorting
             if (places == null)
             {
                 places = ListPool<PlacesData.PlaceInfo>.Get();
 
+                (IPlacesAPIService.Sort sort, IPlacesAPIService.SortDirection sortDirection) = GetSorting();
+
                 if (filter == NavmapSearchPlaceFilter.All)
                 {
-                    using PlacesData.IPlacesAPIResponse response = await placesAPIService.SearchPlacesAsync(searchText, pageNumber, pageSize, ct);
+                    using PlacesData.IPlacesAPIResponse response = await placesAPIService.SearchPlacesAsync(searchText, pageNumber, pageSize, ct,
+                        sort, sortDirection);
                     places.AddRange(response.Data);
                 }
                 else if (filter == NavmapSearchPlaceFilter.Favorites)
                 {
                     using PoolExtensions.Scope<List<PlacesData.PlaceInfo>> response = await placesAPIService.GetFavoritesAsync(pageNumber, pageSize, ct,
                         // We have to renew cache, otherwise it throws an exception by trying to release the list from the pool
-                        true);
+                        // Something is not right there
+                        true, sort, sortDirection);
                     places.AddRange(response.Value);
                 }
                 else if (filter == NavmapSearchPlaceFilter.Visited)
@@ -76,6 +79,17 @@ namespace DCL.Navmap
         public void Dispose()
         {
             ListPool<PlacesData.PlaceInfo>.Release(places);
+        }
+
+        private (IPlacesAPIService.Sort sort, IPlacesAPIService.SortDirection direction) GetSorting()
+        {
+            return sorting switch
+                   {
+                       NavmapSearchPlaceSorting.Newest => (IPlacesAPIService.Sort.CREATED_AT, IPlacesAPIService.SortDirection.DESC),
+                       NavmapSearchPlaceSorting.BestRated => (IPlacesAPIService.Sort.LIKE_SCORE, IPlacesAPIService.SortDirection.DESC),
+                       NavmapSearchPlaceSorting.MostActive => (IPlacesAPIService.Sort.MOST_ACTIVE, IPlacesAPIService.SortDirection.DESC),
+                       _ => throw new NotSupportedException()
+                   };
         }
     }
 }

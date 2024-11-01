@@ -37,9 +37,16 @@ namespace DCL.PlacesAPIService
             return urlBuilder;
         }
 
-        public async UniTask<PlacesData.PlacesAPIResponse> SearchPlacesAsync(string searchString, int pageNumber, int pageSize, CancellationToken ct)
+        public async UniTask<PlacesData.PlacesAPIResponse> SearchPlacesAsync(string searchString, int pageNumber, int pageSize, CancellationToken ct,
+            string sortBy = "", string sortDirection = "")
         {
             string url = baseURL + "?search={0}&offset={1}&limit={2}";
+
+            if (!string.IsNullOrEmpty(sortBy))
+                url += $"&{sortBy}";
+
+            if (!string.IsNullOrEmpty(sortDirection))
+                url += $"&{sortDirection}";
 
             GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> result = webRequestController.GetAsync(string.Format(url, searchString.Replace(" ", "+"), pageNumber * pageSize, pageSize), ct, ReportCategory.UI);
 
@@ -134,11 +141,19 @@ namespace DCL.PlacesAPIService
             return targetList;
         }
 
-        public async UniTask<PlacesData.IPlacesAPIResponse> GetFavoritesAsync(int pageNumber, int pageSize, CancellationToken ct)
+        public async UniTask<PlacesData.IPlacesAPIResponse> GetFavoritesAsync(int pageNumber, int pageSize, CancellationToken ct,
+            string sortBy = "", string sortDirection = "")
         {
             string url = baseURL + "?only_favorites=true&with_realms_detail=true&offset={0}&limit={1}";
 
-            GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> result = webRequestController.GetAsync(string.Format(url, pageNumber * pageSize, pageSize), ct, ReportCategory.UI);
+            if (!string.IsNullOrEmpty(sortBy))
+                url += $"&{sortBy}";
+
+            if (!string.IsNullOrEmpty(sortDirection))
+                url += $"&{sortDirection}";
+
+            GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> result = webRequestController.GetAsync(
+                string.Format(url, pageNumber * pageSize, pageSize), ct, ReportCategory.UI);
 
             PlacesData.PlacesAPIResponse response = PlacesData.PLACES_API_RESPONSE_POOL.Get();
 
@@ -152,9 +167,16 @@ namespace DCL.PlacesAPIService
             return response;
         }
 
-        public async UniTask<PlacesData.IPlacesAPIResponse> GetAllFavoritesAsync(CancellationToken ct)
+        public async UniTask<PlacesData.IPlacesAPIResponse> GetAllFavoritesAsync(CancellationToken ct,
+            string sortBy = "", string sortDirection = "")
         {
             string url = baseURL + "?only_favorites=true&with_realms_detail=true";
+
+            if (!string.IsNullOrEmpty(sortBy))
+                url += $"&{sortBy}";
+
+            if (!string.IsNullOrEmpty(sortDirection))
+                url += $"&{sortDirection}";
 
             GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> result = webRequestController.GetAsync(url, ct, ReportCategory.UI);
 

@@ -30,8 +30,12 @@ namespace DCL.PlacesAPIService
             this.client = client;
         }
 
-        public async UniTask<PlacesData.IPlacesAPIResponse> SearchPlacesAsync(string searchText, int pageNumber, int pageSize, CancellationToken ct) =>
-            await client.SearchPlacesAsync(searchText, pageNumber, pageSize, ct);
+        public async UniTask<PlacesData.IPlacesAPIResponse> SearchPlacesAsync(string searchText, int pageNumber, int pageSize,
+            CancellationToken ct,
+            IPlacesAPIService.Sort sortBy = IPlacesAPIService.Sort.MOST_ACTIVE,
+            IPlacesAPIService.SortDirection sortDirection = IPlacesAPIService.SortDirection.DESC) =>
+            await client.SearchPlacesAsync(searchText, pageNumber, pageSize, ct,
+                sortBy.ToString().ToLower(), sortDirection.ToString().ToLower());
 
         public async UniTask<PlacesData.PlaceInfo?> GetPlaceAsync(Vector2Int coords, CancellationToken ct, bool renewCache = false)
         {
@@ -95,25 +99,11 @@ namespace DCL.PlacesAPIService
             return rentedPlaces;
         }
 
-        public async UniTask<PoolExtensions.Scope<List<PlacesData.PlaceInfo>>> GetFavoritesAsync(int pageNumber, int pageSize, CancellationToken ct, bool renewCache = false)
+        public async UniTask<PoolExtensions.Scope<List<PlacesData.PlaceInfo>>> GetFavoritesAsync(int pageNumber, int pageSize, CancellationToken ct, bool renewCache = false,
+            IPlacesAPIService.Sort sortBy = IPlacesAPIService.Sort.MOST_ACTIVE,
+            IPlacesAPIService.SortDirection sortDirection = IPlacesAPIService.SortDirection.DESC)
         {
             const int CACHE_EXPIRATION = 30; // Seconds
-
-            // We need to pass the source to avoid conflicts with parallel calls forcing renewCache
-            async UniTask RetrieveFavoritesAsync(UniTaskCompletionSource<PlacesData.IPlacesAPIResponse> source)
-            {
-                PlacesData.IPlacesAPIResponse favorites;
-
-                // We dont use the ct param, otherwise the whole flow would be cancel if the first call is cancelled
-                if (pageNumber == -1 && pageSize == -1) favorites = await client.GetAllFavoritesAsync(ct);
-                else { favorites = await client.GetFavoritesAsync(pageNumber, pageSize, disposeCts.Token); }
-
-                foreach (PlacesData.PlaceInfo place in favorites.Data)
-                    TryCachePlace(place);
-
-                composedFavoritesDirty = true;
-                source.TrySetResult(favorites);
-            }
 
             if (serverFavoritesCompletionSource == null || renewCache || DateTime.Now - serverFavoritesLastRetrieval > TimeSpan.FromSeconds(CACHE_EXPIRATION))
             {
@@ -149,7 +139,30 @@ namespace DCL.PlacesAPIService
             }
 
             composedFavoritesDirty = false;
+
             return rentedPlaces;
+
+            // We need to pass the source to avoid conflicts with parallel calls forcing renewCache
+            async UniTask RetrieveFavoritesAsync(UniTaskCompletionSource<PlacesData.IPlacesAPIResponse> source)
+            {
+                PlacesData.IPlacesAPIResponse favorites;
+
+                string sortByParam = sortBy.ToString().ToLower();
+                string sortDirectionParam = sortDirection.ToString().ToLower();
+
+                // We dont use the ct param, otherwise the whole flow would be cancel if the first call is cancelled
+                if (pageNumber == -1 && pageSize == -1)
+                    favorites = await client.GetAllFavoritesAsync(ct, sortByParam, sortDirectionParam);
+                else
+                    favorites = await client.GetFavoritesAsync(pageNumber, pageSize, disposeCts.Token,
+                        sortByParam, sortDirectionParam);
+
+                foreach (PlacesData.PlaceInfo place in favorites.Data)
+                    TryCachePlace(place);
+
+                composedFavoritesDirty = true;
+                source.TrySetResult(favorites);
+            }
         }
 
         public async UniTask SetPlaceFavoriteAsync(string placeUUID, bool isFavorite, CancellationToken ct)
