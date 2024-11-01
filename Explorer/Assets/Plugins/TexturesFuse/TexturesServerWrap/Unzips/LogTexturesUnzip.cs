@@ -34,6 +34,10 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
             var result = await origin.TextureFromBytesAsync(bytes, bytesLength, type, token);
             stopwatch.Stop();
             ReportHub.Log(ReportCategory.TEXTURES, $"TexturesUnzip - {prefix}: end decompress {i} with time spent: {stopwatch.ElapsedMilliseconds} ms");
+
+            if (result.Success == false)
+                ReportHub.LogError(ReportCategory.TEXTURES, $"TexturesUnzip - {prefix}: decompress {i} failed with error: {result}");
+
             return result;
         }
     }
