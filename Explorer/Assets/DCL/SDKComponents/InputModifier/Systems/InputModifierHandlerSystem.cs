@@ -2,6 +2,8 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using DCL.ECSComponents;
+using DCL.SceneRestrictionBusController.SceneRestriction;
+using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.SDKComponents.InputModifier.Components;
 using ECS.Abstract;
 using ECS.Groups;
@@ -16,17 +18,31 @@ namespace DCL.SDKComponents.PlayerInputMovement.Systems
         private readonly Entity playerEntity;
         private readonly World globalWorld;
         private readonly ISceneStateProvider sceneStateProvider;
+        private readonly ISceneRestrictionBusController sceneRestrictionBusController;
 
-        public InputModifierHandlerSystem(World world, World globalWorld, Entity playerEntity, ISceneStateProvider sceneStateProvider) : base(world)
+        private SceneRestrictionsAction lastBusMessageAction = SceneRestrictionsAction.REMOVED;
+
+        public InputModifierHandlerSystem(World world, World globalWorld, Entity playerEntity, ISceneStateProvider sceneStateProvider, ISceneRestrictionBusController sceneRestrictionBusController) : base(world)
         {
             this.playerEntity = playerEntity;
             this.sceneStateProvider = sceneStateProvider;
             this.globalWorld = globalWorld;
+            this.sceneRestrictionBusController = sceneRestrictionBusController;
         }
 
         protected override void Update(float t)
         {
             ApplyModifiersQuery(World);
+        }
+
+        private void SendBusMessage(InputModifierComponent inputModifier)
+        {
+            SceneRestrictionsAction currentAction = inputModifier is { DisableAll: false, DisableWalk: false, DisableJog: false, DisableRun: false, DisableJump: false, DisableEmote: false } ? SceneRestrictionsAction.REMOVED : SceneRestrictionsAction.APPLIED;
+
+            if (currentAction == lastBusMessageAction) return;
+
+            sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateAvatarMovementsBlocked(currentAction));
+            lastBusMessageAction = currentAction;
         }
 
         private void ResetModifiersOnLeave()
@@ -38,6 +54,8 @@ namespace DCL.SDKComponents.PlayerInputMovement.Systems
             inputModifier.DisableRun = false;
             inputModifier.DisableJump = false;
             inputModifier.DisableEmote = false;
+
+            SendBusMessage(inputModifier);
         }
 
         [Query]
@@ -45,6 +63,8 @@ namespace DCL.SDKComponents.PlayerInputMovement.Systems
         {
             if (!sceneStateProvider.IsCurrent) return;
             if(pbInputModifier.ModeCase == PBInputModifier.ModeOneofCase.None) return;
+
+            if (!pbInputModifier.IsDirty) return;
 
             ref var inputModifier = ref globalWorld.Get<InputModifierComponent>(playerEntity);
             PBInputModifier.Types.StandardInput? pb = pbInputModifier.Standard;
@@ -60,6 +80,8 @@ namespace DCL.SDKComponents.PlayerInputMovement.Systems
                 inputModifier.DisableJump = pb.DisableJump;
                 inputModifier.DisableEmote = pb.DisableEmote;
             }
+
+            SendBusMessage(inputModifier);
         }
 
         public void OnSceneIsCurrentChanged(bool value)
