@@ -43,14 +43,14 @@ namespace DCL.InWorldCamera.CameraReelStorageService.Playground
             }
         }
 
-        [ContextMenu(nameof(GET_STORAGE))]
-        public async void GET_STORAGE()
+        [ContextMenu("GET STORAGE")]
+        public async void GetStorageAsync()
         {
             Storage = await metadataDatabase.GetStorageInfoAsync(identity.Identity.Address, ct);
         }
 
-        [ContextMenu(nameof(GET_GALLERY))]
-        public async void GET_GALLERY()
+        [ContextMenu("GET GALLERY")]
+        public async void GetGalleryAsync()
         {
             Result = await metadataDatabase.GetScreenshotsAsync(identity.Identity.Address, Limit, Offset, ct);
 
@@ -58,12 +58,12 @@ namespace DCL.InWorldCamera.CameraReelStorageService.Playground
             Storage.maxImages = Result.maxImages;
 
             CameraReelResponse screenshot = Result.images.First();
-            ImageTexture = await screenshotsStorage.GetScreenshotImage(screenshot.url);
-            ThumbnailTexture = await screenshotsStorage.GetScreenshotThumbnail(screenshot.thumbnailUrl);
+            ImageTexture = await screenshotsStorage.GetScreenshotImageAsync(screenshot.url);
+            ThumbnailTexture = await screenshotsStorage.GetScreenshotThumbnailAsync(screenshot.thumbnailUrl);
         }
 
-        [ContextMenu(nameof(UPLOAD_IMAGE))]
-        public async void UPLOAD_IMAGE()
+        [ContextMenu("UPLOAD IMAGE")]
+        public async void UploadImageAsync()
         {
             CameraReelUploadResponse response = await metadataDatabase.UploadScreenshotAsync(ImageTexture.EncodeToJPG(), Result.images.First().metadata, ct);
 
@@ -73,8 +73,8 @@ namespace DCL.InWorldCamera.CameraReelStorageService.Playground
             ThumbnailUrl = response.image.thumbnailUrl;
         }
 
-        [ContextMenu(nameof(DELETE_IMAGE))]
-        public async void DELETE_IMAGE()
+        [ContextMenu("DELETE IMAGE")]
+        public async void DeleteImageAsync()
         {
             Storage = await metadataDatabase.DeleteScreenshotAsync(Result.images.First().id, ct);
         }

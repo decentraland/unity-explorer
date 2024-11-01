@@ -10,12 +10,12 @@ namespace DCL.InWorldCamera.CameraReelStorageService
     {
         event Action<CameraReelResponse, CameraReelStorageStatus> ScreenshotUploaded;
 
-        UniTask<CameraReelStorageStatus> GetUserGalleryStorageInfo(string userAddress, CancellationToken ct = default);
+        UniTask<CameraReelStorageStatus> GetUserGalleryStorageInfoAsync(string userAddress, CancellationToken ct = default);
 
-        UniTask<CameraReelResponses> GetScreenshotGallery(string userAddress, int limit, int offset, CancellationToken ct = default);
+        UniTask<CameraReelResponses> GetScreenshotGalleryAsync(string userAddress, int limit, int offset, CancellationToken ct = default);
 
-        UniTask<CameraReelStorageStatus> DeleteScreenshot(string uuid, CancellationToken ct = default);
+        UniTask<CameraReelStorageStatus> DeleteScreenshotAsync(string uuid, CancellationToken ct = default);
 
-        UniTask<CameraReelStorageStatus> UploadScreenshot(Texture2D image, ScreenshotMetadata metadata, CancellationToken ct = default);
+        UniTask<CameraReelStorageStatus> UploadScreenshotAsync(Texture2D image, ScreenshotMetadata metadata, CancellationToken ct = default);
     }
 }

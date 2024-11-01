@@ -16,13 +16,13 @@ namespace DCL.InWorldCamera.CameraReelStorageService
             this.webRequestController = webRequestController;
         }
 
-        public async UniTask<Texture2D> GetScreenshotImage(string url) =>
-            await GetImage(url);
+        public async UniTask<Texture2D> GetScreenshotImageAsync(string url) =>
+            await GetImageAsync(url);
 
-        public async UniTask<Texture2D> GetScreenshotThumbnail(string url) =>
-            await GetImage(url);
+        public async UniTask<Texture2D> GetScreenshotThumbnailAsync(string url) =>
+            await GetImageAsync(url);
 
-        private async UniTask<Texture2D> GetImage(string url) =>
+        private async UniTask<Texture2D> GetImageAsync(string url) =>
             await webRequestController.GetTextureAsync(
                 new CommonArguments(URLAddress.FromString(url)),
                 new GetTextureArguments(false),

@@ -32,7 +32,7 @@ namespace DCL.InWorldCamera.CameraReelStorageService.Tests
                             .Returns(UniTask.FromResult(expectedResponse));
 
             // Act
-            CameraReelStorageStatus result = await storageService.GetUserGalleryStorageInfo(USER_ADDRESS);
+            CameraReelStorageStatus result = await storageService.GetUserGalleryStorageInfoAsync(USER_ADDRESS);
 
             // Assert
             Assert.That(result.ScreenshotsAmount, Is.EqualTo(expectedResponse.currentImages));
@@ -50,7 +50,7 @@ namespace DCL.InWorldCamera.CameraReelStorageService.Tests
                             .Returns(UniTask.FromResult(expectedResponse));
 
             // Act
-            var result = await storageService.GetScreenshotGallery(USER_ADDRESS, LIMIT, OFFSET, CancellationToken.None);
+            var result = await storageService.GetScreenshotGalleryAsync(USER_ADDRESS, LIMIT, OFFSET, CancellationToken.None);
 
             // Assert
             Assert.That(result, Is.EqualTo(expectedResponse));
@@ -67,7 +67,7 @@ namespace DCL.InWorldCamera.CameraReelStorageService.Tests
                             .Returns(UniTask.FromResult(expectedResponse));
 
             // Act
-            var result = await storageService.DeleteScreenshot(UUID);
+            var result = await storageService.DeleteScreenshotAsync(UUID);
 
             // Assert
             Assert.That(result.ScreenshotsAmount, Is.EqualTo(expectedResponse.currentImages));
