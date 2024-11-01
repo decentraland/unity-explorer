@@ -48,6 +48,7 @@ namespace DCL.Landscape.Utils
         private string checksum;
         private const string FILE_NAME = "/terrain_cache";
         private const string DICTIONARY_PATH = "/terrain_cache_dictionaries/";
+        private const string ZONE_MODIFIER = "_zone";
 
 
         public const string ALPHA_MAPS = "alphaMaps";
@@ -76,56 +77,69 @@ namespace DCL.Landscape.Utils
 
         private TerrainLocalCache() { }
 
-        public void SaveMetadataToFile(int seed, int chunkSize, int version, string parcelChecksum)
+        public void SaveMetadataToFile(int seed, int chunkSize, int version, string parcelChecksum, bool isZone)
         {
-            var path = GetFilePath(seed, chunkSize, version);
+            var path = GetFilePath(seed, chunkSize, version, isZone);
             checksum = parcelChecksum;
             using FileStream fileStream = File.Create(path);
             FORMATTER.Serialize(fileStream, this);
         }
 
-        public void SaveArrayToFile<T>(string name, string offsetX, string offsetZ, T[] arrayToSave) where T : struct
-        {
-            var pathForDictionary = GetDictionaryFilePath(name, offsetX, offsetZ);
-            using var fileStreamForHeights = File.Create(pathForDictionary);
-            FORMATTER.Serialize(fileStreamForHeights, arrayToSave);
-        }
-
-        public void SaveArrayToFile<T>(string name, string offsetX, string offsetZ, string layer, T[] arrayToSave)
+        public void SaveArrayToFile<T>(string name, string offsetX, string offsetZ, T[] arrayToSave, bool isZone)
             where T : struct
         {
-            var pathForDictionary = GetDictionaryFilePath(name, offsetX, offsetZ, layer);
+            var pathForDictionary = GetDictionaryFilePath(name, offsetX, offsetZ, isZone);
             using var fileStreamForHeights = File.Create(pathForDictionary);
             FORMATTER.Serialize(fileStreamForHeights, arrayToSave);
         }
 
-        public async UniTask<T[]> RetrieveArrayFromFileAsync<T>(string name, string offsetX, string offsetZ)
+        public void SaveArrayToFile<T>(string name, string offsetX, string offsetZ, string layer, T[] arrayToSave,
+            bool isZone)
+            where T : struct
+        {
+            var pathForDictionary = GetDictionaryFilePath(name, offsetX, offsetZ, layer, isZone);
+            using var fileStreamForHeights = File.Create(pathForDictionary);
+            FORMATTER.Serialize(fileStreamForHeights, arrayToSave);
+        }
+
+        public async UniTask<T[]> RetrieveArrayFromFileAsync<T>(string name, string offsetX, string offsetZ,
+            bool isZone)
         {
             await using var fileStream =
-                new FileStream(GetDictionaryFilePath(name, offsetX, offsetZ), FileMode.Open);
+                new FileStream(GetDictionaryFilePath(name, offsetX, offsetZ, isZone), FileMode.Open);
             return await UniTask.RunOnThreadPool(() => (T[])FORMATTER.Deserialize(fileStream));
         }
 
         public async UniTask<T[]> RetrieveArrayFromFileAsync<T>(string name, string offsetX, string offsetZ,
-            string layer)
+            string layer, bool isZone)
         {
             await using var fileStream =
-                new FileStream(GetDictionaryFilePath(name, offsetX, offsetZ, layer), FileMode.Open);
+                new FileStream(GetDictionaryFilePath(name, offsetX, offsetZ, layer, isZone), FileMode.Open);
             return await UniTask.RunOnThreadPool(() => (T[])FORMATTER.Deserialize(fileStream));
         }
 
-        private static string GetDictionaryFilePath(string name, string x, string y)
+        private static string GetDictionaryFilePath(string name, string x, string y, bool isZone)
         {
+            if (isZone)
+                return GetDictionaryDirectory() + $"{name}{ZONE_MODIFIER}_{x}_{y}.data";
+            
             return GetDictionaryDirectory() + $"{name}_{x}_{y}.data";
         }
 
-        private static string GetDictionaryFilePath(string name, string x, string y, string layer)
+        private static string GetDictionaryFilePath(string name, string x, string y, string layer, bool isZone)
         {
+            if (isZone)
+                return GetDictionaryDirectory() + $"{name}{ZONE_MODIFIER}_{x}_{y}_{layer}.data";
+            
             return GetDictionaryDirectory() + $"{name}_{x}_{y}_{layer}.data";
         }
 
-        private static string GetFilePath(int seed, int chunkSize, int version)
+        private static string GetFilePath(int seed, int chunkSize, int version, bool isZone)
         {
+            if (isZone)
+                return Application.persistentDataPath + FILE_NAME + ZONE_MODIFIER +
+                       $"_{seed}_{chunkSize}_v{version}.data";
+            
             return Application.persistentDataPath + FILE_NAME + $"_{seed}_{chunkSize}_v{version}.data";
         }
 
@@ -134,14 +148,15 @@ namespace DCL.Landscape.Utils
             return Application.persistentDataPath + DICTIONARY_PATH;
         }
 
-        public static async UniTask<TerrainLocalCache> LoadAsync(int seed, int chunkSize, int version, string parcelChecksum, bool force)
+        public static async UniTask<TerrainLocalCache> LoadAsync(int seed, int chunkSize, int version,
+            string parcelChecksum, bool force, bool isZone)
         {
             var emptyCache = new TerrainLocalCache
             {
                 checksum = parcelChecksum,
             };
 
-            string? filePath = GetFilePath(seed, chunkSize, version);
+            var filePath = GetFilePath(seed, chunkSize, version, isZone);
             var dictionaryPath = GetDictionaryDirectory();
 
             CheckCorruptStates();
@@ -199,24 +214,26 @@ namespace DCL.Landscape.Utils
         private readonly int chunkSize;
         private readonly int version;
         private readonly string parcelChecksum;
+        private readonly bool isZone;
 
-        public TerrainGeneratorLocalCache(int seed, int chunkSize, int version, string parcelChecksum)
+        public TerrainGeneratorLocalCache(int seed, int chunkSize, int version, string parcelChecksum, bool isZone)
         {
             this.seed = seed;
             this.chunkSize = chunkSize;
             this.version = version;
             this.parcelChecksum = parcelChecksum;
+            this.isZone = isZone;
         }
 
         public async UniTask LoadAsync(bool force)
         {
-            localCache = await TerrainLocalCache.LoadAsync(seed, chunkSize, version, parcelChecksum, force);
+            localCache = await TerrainLocalCache.LoadAsync(seed, chunkSize, version, parcelChecksum, force, isZone);
             ReportHub.Log(ReportCategory.LANDSCAPE, "Landscape cache loaded and its validity status is: " + localCache.IsValid());
         }
 
         public void Save()
         {
-            localCache.SaveMetadataToFile(seed, chunkSize, version, parcelChecksum);
+            localCache.SaveMetadataToFile(seed, chunkSize, version, parcelChecksum, isZone);
         }
 
         public bool IsValid() =>
@@ -226,7 +243,8 @@ namespace DCL.Landscape.Utils
         {
             var heightMaps = await localCache.RetrieveArrayFromFileAsync<float>(TerrainLocalCache.HEIGHTS,
                 offsetX.ToString(),
-                offsetZ.ToString());
+                offsetZ.ToString(),
+                isZone);
             return UnFlatten(heightMaps, localCache.heightX, localCache.heightY);
         }
 
@@ -234,7 +252,8 @@ namespace DCL.Landscape.Utils
         {
             var alphaMaps = await localCache.RetrieveArrayFromFileAsync<float>(TerrainLocalCache.ALPHA_MAPS,
                 offsetX.ToString(),
-                offsetZ.ToString());
+                offsetZ.ToString(),
+                isZone);
             return UnFlatten(alphaMaps, localCache.alphaX, localCache.alphaY, localCache.alphaZ);
         }
 
@@ -244,14 +263,15 @@ namespace DCL.Landscape.Utils
             var treesDTO =
                 await localCache.RetrieveArrayFromFileAsync<TreeInstanceDTO>(TerrainLocalCache.TREES,
                     offsetX.ToString(),
-                    offsetZ.ToString());
+                    offsetZ.ToString(),
+                    isZone);
             return treesDTO.Select(TreeInstanceDTO.ToOriginal).ToArray();
         }
 
         public async UniTask<int[,]> GetDetailLayerAsync(int offsetX, int offsetZ, int layer)
         {
             var detailLayer = await localCache.RetrieveArrayFromFileAsync<int>(TerrainLocalCache.DETAIL_LAYER,
-                offsetX.ToString(), offsetZ.ToString(), layer.ToString());
+                offsetX.ToString(), offsetZ.ToString(), layer.ToString(), isZone);
             return UnFlatten(detailLayer, localCache.detailX, localCache.detailY);
         }
 
@@ -260,7 +280,8 @@ namespace DCL.Landscape.Utils
             try
             {
                 var holesLayer =
-                    await localCache.RetrieveArrayFromFileAsync<bool>("holes", offsetX.ToString(), offsetZ.ToString());
+                    await localCache.RetrieveArrayFromFileAsync<bool>("holes", offsetX.ToString(), offsetZ.ToString(),
+                        isZone);
                 return UnFlatten(holesLayer, localCache.holesX, localCache.holesY);
             }
             catch (Exception e)
@@ -273,7 +294,7 @@ namespace DCL.Landscape.Utils
         {
             (bool[] array, int row, int col) valueTuple = Flatten(valuePairValue);
             localCache.SaveArrayToFile(TerrainLocalCache.HOLES, offsetX.ToString(), offsetZ.ToString(),
-                valueTuple.array);
+                valueTuple.array, isZone);
             localCache.holesX = valueTuple.row;
             localCache.holesY = valueTuple.col;
         }
@@ -283,7 +304,7 @@ namespace DCL.Landscape.Utils
         {
             (float[] array, int row, int col) valueTuple = Flatten(heightArray);
             localCache.SaveArrayToFile(TerrainLocalCache.HEIGHTS, offsetX.ToString(), offsetZ.ToString(),
-                valueTuple.array);
+                valueTuple.array, isZone);
             localCache.heightX = valueTuple.row;
             localCache.heightY = valueTuple.col;
         }
@@ -292,7 +313,7 @@ namespace DCL.Landscape.Utils
         {
             (float[] array, int x, int y, int z) valueTuple = Flatten(alphaMaps);
             localCache.SaveArrayToFile(TerrainLocalCache.ALPHA_MAPS, offsetX.ToString(), offsetZ.ToString(),
-                valueTuple.array);
+                valueTuple.array, isZone);
             localCache.alphaX = valueTuple.x;
             localCache.alphaY = valueTuple.y;
             localCache.alphaZ = valueTuple.z;
@@ -301,14 +322,14 @@ namespace DCL.Landscape.Utils
         public void SaveTreeInstances(int offsetX, int offsetZ, TreeInstance[] instances)
         {
             localCache.SaveArrayToFile(TerrainLocalCache.TREES, offsetX.ToString(), offsetZ.ToString(),
-                instances.Select(TreeInstanceDTO.Copy).ToArray());
+                instances.Select(TreeInstanceDTO.Copy).ToArray(), isZone);
         }
 
         public void SaveDetailLayer(int offsetX, int offsetZ, int layer, int[,] detailLayer)
         {
             (int[] array, int row, int col) valueTuple = Flatten(detailLayer);
             localCache.SaveArrayToFile(TerrainLocalCache.DETAIL_LAYER, offsetX.ToString(), offsetZ.ToString(),
-                layer.ToString(), valueTuple.array);
+                layer.ToString(), valueTuple.array, isZone);
             localCache.detailX = valueTuple.row;
             localCache.detailY = valueTuple.col;
         }
