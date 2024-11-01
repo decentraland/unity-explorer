@@ -248,6 +248,8 @@ namespace DCL.Diagnostics
         /// </summary>
         public const string UI = nameof(UI);
 
+        public const string CAMERA_REEL = nameof(CAMERA_REEL);
+
         /// <summary>
         ///     Fetch requests initiated from the Scene side through the fetch API
         /// </summary>
