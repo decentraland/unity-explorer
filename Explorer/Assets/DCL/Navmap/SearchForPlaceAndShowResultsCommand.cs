@@ -45,7 +45,7 @@ namespace DCL.Navmap
             {
                 places = ListPool<PlacesData.PlaceInfo>.Get();
 
-                (IPlacesAPIService.Sort sort, IPlacesAPIService.SortDirection sortDirection) = GetSorting();
+                (IPlacesAPIService.SortBy sort, IPlacesAPIService.SortDirection sortDirection) = GetSorting();
 
                 if (filter == NavmapSearchPlaceFilter.All)
                 {
@@ -79,15 +79,16 @@ namespace DCL.Navmap
         public void Dispose()
         {
             ListPool<PlacesData.PlaceInfo>.Release(places);
+            places = null;
         }
 
-        private (IPlacesAPIService.Sort sort, IPlacesAPIService.SortDirection direction) GetSorting()
+        private (IPlacesAPIService.SortBy sort, IPlacesAPIService.SortDirection direction) GetSorting()
         {
             return sorting switch
                    {
-                       NavmapSearchPlaceSorting.Newest => (IPlacesAPIService.Sort.CREATED_AT, IPlacesAPIService.SortDirection.DESC),
-                       NavmapSearchPlaceSorting.BestRated => (IPlacesAPIService.Sort.LIKE_SCORE, IPlacesAPIService.SortDirection.DESC),
-                       NavmapSearchPlaceSorting.MostActive => (IPlacesAPIService.Sort.MOST_ACTIVE, IPlacesAPIService.SortDirection.DESC),
+                       NavmapSearchPlaceSorting.Newest => (IPlacesAPIService.SortBy.CREATED_AT, IPlacesAPIService.SortDirection.DESC),
+                       NavmapSearchPlaceSorting.BestRated => (IPlacesAPIService.SortBy.LIKE_SCORE, IPlacesAPIService.SortDirection.DESC),
+                       NavmapSearchPlaceSorting.MostActive => (IPlacesAPIService.SortBy.MOST_ACTIVE, IPlacesAPIService.SortDirection.DESC),
                        _ => throw new NotSupportedException()
                    };
         }

@@ -1,8 +1,5 @@
 using Arch.Core;
 using DCL.Audio;
-using DCL.Browser;
-using DCL.Chat.MessageBus;
-using DCL.Input;
 using DCL.MapRenderer;
 using DCL.MapRenderer.CommonBehavior;
 using DCL.MapRenderer.ConsumerUtils;
@@ -12,7 +9,6 @@ using DCL.MapRenderer.MapLayers.Pins;
 using DCL.MapRenderer.MapLayers.PlayerMarker;
 using DCL.PlacesAPIService;
 using DCL.UI;
-using DCL.WebRequests;
 using ECS;
 using System;
 using System.Collections.Generic;
@@ -35,13 +31,13 @@ namespace DCL.Navmap
         private readonly NavmapView navmapView;
         private readonly IMapRenderer mapRenderer;
         private readonly NavmapZoomController zoomController;
-        private readonly NavmapFilterController filterController;
         private readonly NavmapSearchBarController searchBarController;
         private readonly RectTransform rectTransform;
         private readonly SatelliteController satelliteController;
         private readonly IRealmData realmData;
         private readonly IMapPathEventBus mapPathEventBus;
         private readonly UIAudioEventsBus audioEventsBus;
+        private readonly PlacesAndEventsPanelController placesAndEventsPanelController;
         private readonly SectionSelectorController<NavmapSections> sectionSelectorController;
         private readonly Dictionary<NavmapSections, TabSelectorView> tabsBySections;
         private readonly Dictionary<NavmapSections, ISection> mapSections;
@@ -60,50 +56,46 @@ namespace DCL.Navmap
         public IReadOnlyDictionary<MapLayer, IMapLayerParameter> LayersParameters { get; } = new Dictionary<MapLayer, IMapLayerParameter>
             { { MapLayer.PlayerMarker, new PlayerMarkerParameter { BackgroundIsActive = true } } };
 
+        // TODO: we need this property for the MVCManagerAnalyticsDecorator only.. something is not right in the design
         public INavmapBus NavmapBus { get; }
 
         public NavmapController(
             NavmapView navmapView,
             IMapRenderer mapRenderer,
-            IPlacesAPIService placesAPIService,
-            IWebRequestController webRequestController,
-            IWebBrowser webBrowser,
-            DCLInput dclInput,
             IRealmData realmData,
             IMapPathEventBus mapPathEventBus,
             World world,
             Entity playerEntity,
-            IInputBlock inputBlock,
-            IChatMessagesBus chatMessagesBus,
-            ISearchHistory searchHistory,
             INavmapBus navmapBus,
-            UIAudioEventsBus audioEventsBus)
+            UIAudioEventsBus audioEventsBus,
+            PlacesAndEventsPanelController placesAndEventsPanelController,
+            NavmapSearchBarController navmapSearchBarController,
+            NavmapZoomController navmapZoomController,
+            EventInfoCardController infoCardController,
+            SatelliteController satelliteController)
         {
             this.navmapView = navmapView;
             this.mapRenderer = mapRenderer;
             this.realmData = realmData;
             this.mapPathEventBus = mapPathEventBus;
             this.audioEventsBus = audioEventsBus;
+            this.placesAndEventsPanelController = placesAndEventsPanelController;
             this.NavmapBus = navmapBus;
 
             rectTransform = this.navmapView.transform.parent.GetComponent<RectTransform>();
 
-            zoomController = new NavmapZoomController(navmapView.zoomView, dclInput);
-            filterController = new NavmapFilterController(this.navmapView.filterView, mapRenderer, webBrowser);
-            searchBarController = new NavmapSearchBarController(navmapView.SearchBarView,
-                navmapView.HistoryRecordPanelView, navmapView.PlacesAndEventsPanelView.SearchFiltersView,
-                inputBlock, searchHistory, navmapBus);
-            eventInfoCardController = new EventInfoCardController(navmapView.eventInfoCardView, placesAPIService,
-                webRequestController, mapPathEventBus, chatMessagesBus, zoomController, navmapBus);
+            zoomController = navmapZoomController;
+            searchBarController = navmapSearchBarController;
+            eventInfoCardController = infoCardController;
             navmapBus.OnDestinationSelected += SetDestination;
             this.navmapView.DestinationInfoElement.QuitButton.onClick.AddListener(OnRemoveDestinationButtonClicked);
             navmapBus.OnPlaceSelected += OnPlaceSelected;
-            satelliteController = new SatelliteController(navmapView.GetComponentInChildren<SatelliteView>(), this.navmapView.MapCameraDragBehaviorData, mapRenderer, webBrowser);
+            this.satelliteController = satelliteController;
             mapPathEventBus.OnRemovedDestination += RemoveDestination;
 
             mapSections = new Dictionary<NavmapSections, ISection>
             {
-                { NavmapSections.Satellite, satelliteController },
+                { NavmapSections.Satellite, this.satelliteController },
             };
 
             sectionSelectorController = new SectionSelectorController<NavmapSections>(mapSections, NavmapSections.Satellite);
@@ -232,7 +224,8 @@ namespace DCL.Navmap
             zoomController.Activate(cameraController);
             lastParcelHovered = Vector2.zero;
 
-            foreach ((NavmapSections section, TabSelectorView? tab) in tabsBySections) { ToggleSection(section == NavmapSections.Satellite, tab, section, true); }
+            foreach ((NavmapSections section, TabSelectorView? tab) in tabsBySections)
+                ToggleSection(section == NavmapSections.Satellite, tab, section, true);
 
             sectionSelectorController.SetAnimationState(true, tabsBySections[NavmapSections.Satellite]);
 
@@ -243,11 +236,12 @@ namespace DCL.Navmap
                 else
                     navmapView.WorldsWarningNotificationView.Hide();
             }
+
+            placesAndEventsPanelController.Show();
         }
 
         public void Deactivate()
         {
-            filterController.CloseFilterContent();
             navmapView.WorldsWarningNotificationView.Hide();
 
             foreach (ISection mapSectionsValue in mapSections.Values)
@@ -260,7 +254,6 @@ namespace DCL.Navmap
 
         public void Animate(int triggerId)
         {
-            filterController.CloseFilterContent();
             navmapView.PanelAnimator.SetTrigger(triggerId);
             navmapView.HeaderAnimator.SetTrigger(triggerId);
         }

@@ -32,10 +32,10 @@ namespace DCL.PlacesAPIService
 
         public async UniTask<PlacesData.IPlacesAPIResponse> SearchPlacesAsync(string searchText, int pageNumber, int pageSize,
             CancellationToken ct,
-            IPlacesAPIService.Sort sortBy = IPlacesAPIService.Sort.MOST_ACTIVE,
+            IPlacesAPIService.SortBy sortByBy = IPlacesAPIService.SortBy.MOST_ACTIVE,
             IPlacesAPIService.SortDirection sortDirection = IPlacesAPIService.SortDirection.DESC) =>
             await client.SearchPlacesAsync(searchText, pageNumber, pageSize, ct,
-                sortBy.ToString().ToLower(), sortDirection.ToString().ToLower());
+                sortByBy.ToString().ToLower(), sortDirection.ToString().ToLower());
 
         public async UniTask<PlacesData.PlaceInfo?> GetPlaceAsync(Vector2Int coords, CancellationToken ct, bool renewCache = false)
         {
@@ -100,7 +100,7 @@ namespace DCL.PlacesAPIService
         }
 
         public async UniTask<PoolExtensions.Scope<List<PlacesData.PlaceInfo>>> GetFavoritesAsync(int pageNumber, int pageSize, CancellationToken ct, bool renewCache = false,
-            IPlacesAPIService.Sort sortBy = IPlacesAPIService.Sort.MOST_ACTIVE,
+            IPlacesAPIService.SortBy sortByBy = IPlacesAPIService.SortBy.MOST_ACTIVE,
             IPlacesAPIService.SortDirection sortDirection = IPlacesAPIService.SortDirection.DESC)
         {
             const int CACHE_EXPIRATION = 30; // Seconds
@@ -147,7 +147,7 @@ namespace DCL.PlacesAPIService
             {
                 PlacesData.IPlacesAPIResponse favorites;
 
-                string sortByParam = sortBy.ToString().ToLower();
+                string sortByParam = sortByBy.ToString().ToLower();
                 string sortDirectionParam = sortDirection.ToString().ToLower();
 
                 // We dont use the ct param, otherwise the whole flow would be cancel if the first call is cancelled

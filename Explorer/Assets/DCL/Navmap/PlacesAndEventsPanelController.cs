@@ -1,3 +1,7 @@
+using Cysharp.Threading.Tasks;
+using System.Threading;
+using Utility;
+
 namespace DCL.Navmap
 {
     public class PlacesAndEventsPanelController
@@ -5,18 +9,26 @@ namespace DCL.Navmap
         private readonly PlacesAndEventsPanelView view;
         private readonly NavmapSearchBarController searchBarController;
         private readonly SearchResultPanelController searchResultController;
-        private readonly EventInfoCardController eventInfoController;
+
+        private CancellationTokenSource? searchPlacesCancellationToken;
 
         public PlacesAndEventsPanelController(
             PlacesAndEventsPanelView view,
             NavmapSearchBarController searchBarController,
-            SearchResultPanelController searchResultController,
-            EventInfoCardController eventInfoController)
+            SearchResultPanelController searchResultController)
         {
             this.view = view;
             this.searchBarController = searchBarController;
             this.searchResultController = searchResultController;
-            this.eventInfoController = eventInfoController;
+        }
+
+        public void Show()
+        {
+            view.gameObject.SetActive(true);
+            searchResultController.Show();
+
+            searchPlacesCancellationToken = searchPlacesCancellationToken.SafeRestart();
+            searchBarController.SearchAndShowAsync(searchPlacesCancellationToken.Token).Forget();
         }
     }
 }

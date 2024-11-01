@@ -67,6 +67,9 @@ namespace DCL.Navmap
             view.clearSearchButton.onClick.RemoveAllListeners();
         }
 
+        public async UniTask SearchAndShowAsync(CancellationToken ct) =>
+            await navmapBus.SearchForPlaceAsync(currentSearchText, currentPlaceFilter, currentPlaceSorting, ct);
+
         private void ClearSearch()
         {
             view.inputField.SetTextWithoutNotify("");
@@ -149,8 +152,5 @@ namespace DCL.Navmap
             searchFiltersView.Toggle(sorting);
             SearchAndShowAsync(searchCancellationToken.Token).Forget();
         }
-
-        private async UniTask SearchAndShowAsync(CancellationToken ct) =>
-            await navmapBus.SearchForPlaceAsync(currentSearchText, currentPlaceFilter, currentPlaceSorting, ct);
     }
 }

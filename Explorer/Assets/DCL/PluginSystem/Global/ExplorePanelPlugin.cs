@@ -235,10 +235,36 @@ namespace DCL.PluginSystem.Global
             searchResultPanelController = new SearchResultPanelController(navmapView.SearchBarResultPanel,
                 searchResultsPool, navmapBus);
 
+            NavmapSearchBarController searchBarController = new (navmapView.SearchBarView,
+                navmapView.HistoryRecordPanelView, navmapView.PlacesAndEventsPanelView.SearchFiltersView,
+                inputBlock, searchHistory, navmapBus);
+
+            PlacesAndEventsPanelController placesAndEventsPanelController = new (navmapView.PlacesAndEventsPanelView,
+                searchBarController, searchResultPanelController);
+
+            NavmapZoomController zoomController = new (navmapView.zoomView, dclInput);
+
+            IMapRenderer mapRenderer = mapRendererContainer.MapRenderer;
+
+            EventInfoCardController eventInfoCardController = new (navmapView.eventInfoCardView, placesAPIService,
+                webRequestController, mapPathEventBus, chatMessagesBus, zoomController, navmapBus);
+
+            SatelliteController satelliteController = new (navmapView.GetComponentInChildren<SatelliteView>(),
+                navmapView.MapCameraDragBehaviorData, mapRenderer, webBrowser);
+
             navmapController = new NavmapController(navmapView,
-                mapRendererContainer.MapRenderer, placesAPIService, webRequestController, webBrowser, dclInput,
-                realmData, mapPathEventBus, world, playerEntity, inputBlock, chatMessagesBus, searchHistory,
-                navmapBus, UIAudioEventsBus.Instance);
+                mapRenderer,
+                realmData,
+                mapPathEventBus,
+                world,
+                playerEntity,
+                navmapBus,
+                UIAudioEventsBus.Instance,
+                placesAndEventsPanelController,
+                searchBarController,
+                zoomController,
+                eventInfoCardController,
+                satelliteController);
 
             await backpackSubPlugin.InitializeAsync(settings.BackpackSettings, explorePanelView.GetComponentInChildren<BackpackView>(), ct);
 
