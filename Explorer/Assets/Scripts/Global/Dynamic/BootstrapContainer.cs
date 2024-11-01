@@ -50,6 +50,8 @@ namespace Global.Dynamic
         public bool LocalSceneDevelopment { get; private set; }
         public bool UseRemoteAssetBundles { get; private set; }
 
+        public DecentralandEnvironment Environment { get; private set; }
+
         public override void Dispose()
         {
             base.Dispose();
@@ -85,6 +87,7 @@ namespace Global.Dynamic
                 ApplicationParametersParser = applicationParametersParser,
                 DebugSettings = debugSettings,
                 WorldVolumeMacBus = new WorldVolumeMacBus(),
+                Environment = sceneLoaderSettings.DecentralandEnvironment
             };
 
             await bootstrapContainer.InitializeContainerAsync<BootstrapContainer, BootstrapSettings>(settingsContainer, ct, async container =>
