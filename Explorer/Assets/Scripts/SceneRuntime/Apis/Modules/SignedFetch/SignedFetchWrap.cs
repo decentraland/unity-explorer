@@ -8,8 +8,10 @@ using Newtonsoft.Json;
 using SceneRunner.Scene;
 using SceneRuntime.Apis.Modules.SignedFetch.Messages;
 using System;
+using System.Text;
 using System.Collections.Generic;
 using System.Threading;
+using System.Security.Cryptography;
 using UnityEngine;
 using Utility;
 using Utility.Times;
@@ -63,13 +65,28 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
             });
         }
 
+        public static String sha256_hash(String value) {
+            StringBuilder Sb = new StringBuilder();
+
+            using (SHA256 hash = SHA256Managed.Create()) {
+                Encoding enc = Encoding.UTF8;
+                Byte[] result = hash.ComputeHash(enc.GetBytes(value));
+
+                foreach (Byte b in result)
+                Sb.Append(b.ToString("x2"));
+            }
+
+            return Sb.ToString();
+        }
+
         private object SignedFetch(SignedFetchRequest request)
         {
             ReportHub.Log(ReportCategory.SCENE_FETCH_REQUEST, $"Signed request received {request}");
 
             string? method = request.init?.method?.ToLower();
             ulong unixTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
-            string signatureMetadata = CreateSignatureMetadata();
+            string hashBody = request.init.body.Length > 0 ? sha256_hash(request.init.body) : null;
+            string signatureMetadata = CreateSignatureMetadata(hashBody);
 
             string hostUrl = decentralandUrlsSource.Url(DecentralandUrl.Host);
 
@@ -161,7 +178,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
             cancellationTokenSource.SafeCancelAndDispose();
         }
 
-        private string CreateSignatureMetadata()
+        private string CreateSignatureMetadata(string? hashPayload)
         {
             Vector2Int parcel = sceneData.SceneEntityDefinition.metadata.scene.DecodedBase;
 
@@ -184,6 +201,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
                     protocol = realmData.Protocol,
                     serverName = realmData.RealmName,
                 },
+                hashPayload = hashPayload
             };
 
             return JsonUtility.ToJson(metadata);
@@ -202,6 +220,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
             public bool isGuest;
             public Realm realm;
             public string signer;
+            public string? hashPayload;
 
             [Serializable]
             public struct Realm
