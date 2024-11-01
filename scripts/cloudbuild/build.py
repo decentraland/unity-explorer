@@ -73,10 +73,13 @@ def clone_current_target(use_cache):
 
         print(f"Using cache strategy target: {remoteCacheStrategy}")
 
-        del body['settings']['buildTargetCopyCache']
+        # Remove cache for new targets
+        if 'buildTargetCopyCache' in body['settings']:
+            del body['settings']['buildTargetCopyCache']
         
-        # Remove buildtargetid for new targets
-        del body['buildtargetid']
+        # Remove buildtargetid for new targets (unity bug)
+        if 'buildtargetid' in body:
+            del body['buildtargetid']
         
         return body
 
