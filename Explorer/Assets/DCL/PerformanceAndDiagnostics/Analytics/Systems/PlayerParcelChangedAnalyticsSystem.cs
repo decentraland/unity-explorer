@@ -63,9 +63,9 @@ namespace DCL.Analytics.Systems
                     { "old_parcel", oldParcel == MIN_INT2 ? "(NaN, NaN)" : oldParcel.ToString() },
                     { "new_parcel", newParcel.ToString() },
                     { "scene_hash", sceneIsDefined ? currentScene.Info.Name : IAnalyticsController.UNDEFINED },
-                    { "is_empty_scene", sceneIsDefined ? currentScene.IsEmpty : IAnalyticsController.UNDEFINED },
                     {
-                        "is_broken_scene", sceneIsDefined ? currentScene.IsBrokenScene : IAnalyticsController.UNDEFINED
+                        "failed_to_initialize",
+                        sceneIsDefined ? currentScene.FailedToInitialize : IAnalyticsController.UNDEFINED
                     }
                 });
 

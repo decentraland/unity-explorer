@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.UserInAppInitializationFlow;
 using ECS.SceneLifeCycle.Realm;
 using Utility.Types;
@@ -34,6 +35,8 @@ namespace Global.Dynamic.TeleportOperations
             }
             catch (Exception e)
             {
+                ReportHub.LogError(ReportCategory.REALM,
+                    $"Teleport to parcel {teleportParams.CurrentDestinationParcel} in same realm failed with exception {e.Message}");
                 return Result.ErrorResult("Error while teleporting in same realm");
             }
         }

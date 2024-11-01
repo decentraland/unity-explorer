@@ -33,7 +33,7 @@ namespace ECS.SceneLifeCycle.Systems
         [Query]
         private void CheckFailedScene(ref ISceneFacade sceneFacade)
         {
-            if (sceneFacade.IsBrokenScene)
+            if (sceneFacade.FailedToInitialize)
             {
                 if (sceneReadinesReportQueue.TryDequeue(sceneFacade.SceneData.Parcels, out reports))
                 {
@@ -42,7 +42,6 @@ namespace ECS.SceneLifeCycle.Systems
                         var report = reports.Value[i];
                         report.SetProgress(1);
                     }
-
                     reports.Value.Dispose();
                     reports = null;
                     chatHistory.AddMessage(ChatMessage.NewFromSystem($"🔴 Scene {sceneFacade.SceneData.SceneEntityDefinition.metadata.scene.DecodedBase} failed to load"));

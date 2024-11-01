@@ -21,13 +21,14 @@ namespace SceneRunner.EmptyScene
         private EmptySceneFacade() { }
 
         public SceneShortInfo Info => args.ShortInfo;
-        public ISceneStateProvider SceneStateProvider { get; }
+        public ISceneStateProvider SceneStateProvider { get; private set; }
         public SceneEcsExecutor EcsExecutor { get; }
         public PersistentEntities PersistentEntities => default;
 
         public bool IsEmpty => true;
-        public bool IsBrokenScene => false;
-        public ISceneData SceneData { get; } = new EmptySceneData(new List<Vector2Int>());
+        public bool FailedToInitialize { get; private set; }
+
+        public ISceneData SceneData { get; private set; }
 
         public void Dispose()
         {
@@ -74,19 +75,30 @@ namespace SceneRunner.EmptyScene
         {
             EmptySceneFacade f = POOL.Get();
             f.args = args;
+            f.SceneData = new EmptySceneData(new List<Vector2Int>());
             return f;
         }
 
         public readonly struct Args
         {
             public readonly SceneShortInfo ShortInfo;
-            public readonly bool IsFailedScene;
 
-            public Args(SceneShortInfo shortInfo, bool isFailedScene = false)
+            public Args(SceneShortInfo shortInfo)
             {
                 ShortInfo = shortInfo;
-                IsFailedScene = isFailedScene;
             }
+        }
+
+        public static ISceneFacade CreateBrokenScene(SceneData sceneData, Exception e)
+        {
+            var f = POOL.Get();
+            ReportHub.LogError(ReportCategory.SCENE_LOADING,
+                $"Scene {sceneData.SceneEntityDefinition.metadata.scene.DecodedBase} failed to load with exception {e.Message}");
+            f.SceneData = sceneData;
+            f.FailedToInitialize = true;
+            f.SceneStateProvider = new SceneStateProvider();
+            f.SceneStateProvider.State = SceneState.EngineError;
+            return f;
         }
     }
 }
