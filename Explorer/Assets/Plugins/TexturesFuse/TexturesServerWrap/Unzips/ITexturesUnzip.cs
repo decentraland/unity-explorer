@@ -1,4 +1,6 @@
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
+using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -64,6 +66,8 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
             var options = new IOptions.Const(mode, NativeMethods.Swizzle.NewDefault(), 1024, NativeMethods.Adjustments.NewEmpty());
             var index = 0;
 
+            ReportHub.Log(ReportCategory.TEXTURES, $"TexturesUnzip - NewDefault with options: {options.ToStringInfo()}");
+
             return new PooledTexturesUnzip(
                 () => new TexturesUnzip(init, options, true)
                    .WithLog((++index).ToString())
@@ -83,4 +87,10 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
             );
         }
     }
+}
+
+public static class OptionsExtensions
+{
+    public static string ToStringInfo(this ITexturesUnzip.IOptions options) =>
+        $"[Options, Mode: {options.Mode}, Swizzle: {options.Swizzle}, MaxSide: {options.MaxSide}, Adjustments: {options.Adjustments}]";
 }
