@@ -45,10 +45,8 @@ namespace ECS.Unity.Systems
 
         private readonly NativeArray<int> sqrDistanceBuckets;
 
-        private readonly HashSet<(Repartitionable, PartitionComponent)> repartitionableSet = new ();
-
         private JobHandle handle;
-        private int idInJob;
+        private int idInJobCounter;
 
         private NativeList<byte> bucket = new (1024, Allocator.Persistent);
         private NativeList<bool> isBehind = new (1024, Allocator.Persistent);
@@ -73,99 +71,17 @@ namespace ECS.Unity.Systems
                 sqrDistanceBuckets[i] = partitionSettings.SqrDistanceBuckets[i];
         }
 
-        //  protected override void Update(float t)
-        // {
-        //     idInJob = 0;
-        //
-        //     Vector3 scenePosition = World.Get<TransformComponent>(sceneRoot).Cached.WorldPosition;
-        //
-        //     if (samplingData.IsDirty) // Camera has moved
-        //         RepartitionAllEntitiesQuery(World, scenePosition);
-        //     else
-        //     {
-        //         ResetEntitiesWithoutTransformQuery(World);
-        //         RepartitionEntitiesWithTransformQuery(World);
-        //     }
-        //
-        //     PartitionNewEntitiesQuery(World, scenePosition);
-        //
-        //     if (idInJob == 0)
-        //         return;
-        //
-        //     PartitionJob partitionJob;
-        //
-        //     using (job_PrepareMarker.Auto())
-        //         partitionJob = new PartitionJob
-        //         {
-        //             FastPathSqrDistance = partitionSettings.FastPathSqrDistance,
-        //             SqrDistanceBuckets = sqrDistanceBuckets,
-        //             CameraPosition = samplingData.Position,
-        //             CameraForward = samplingData.Forward,
-        //             SceneBucket = scenePartition.Bucket,
-        //             SceneIsBehind = scenePartition.IsBehind,
-        //
-        //             Bucket = bucket,
-        //             IsBehind = isBehind,
-        //             Position = position,
-        //         };
-        //
-        //     using (job_RunMarker.Auto())
-        //     {
-        //         handle = partitionJob.Schedule(idInJob, 64);
-        //         handle.Complete();
-        //     }
-        //
-        //     using (job_ResultMarker.Auto())
-        //     {
-        //         foreach ((Repartitionable repartitionable, PartitionComponent partitionComponent) in repartitionableSet)
-        //             if (repartitionable.IdInJob > 0 && repartitionable.IdInJob < bucket.Length)
-        //             {
-        //                 partitionComponent.Bucket = bucket[repartitionable.IdInJob];
-        //                 partitionComponent.IsBehind =  isBehind[repartitionable.IdInJob];
-        //
-        //                 partitionComponent.IsDirty = repartitionable.IsNewEntity
-        //                                              || partitionComponent.Bucket != bucket[repartitionable.IdInJob]
-        //                                              || partitionComponent.IsBehind != isBehind[repartitionable.IdInJob];
-        //             }
-        //
-        //         repartitionableSet.Clear();
-        //         bucket.Clear();
-        //         isBehind.Clear();
-        //         position.Clear();
-        //     }
-        // }
-
         protected override void Update(float t)
         {
-            // First re-partition if player position or rotation is changed
-            // if is true then re-partition if Transform.isDirty
             Vector3 scenePosition = World.Get<TransformComponent>(sceneRoot).Cached.WorldPosition;
 
-            if (samplingData.IsDirty)
+            RePartitionExistingSceneEntitiesQuery(World, samplingData.IsDirty, scenePosition);
+            PartitionNewEntitiesQuery(World, scenePosition);
+
+            if (idInJobCounter != 0)
             {
-                // Repartition everything
-                RePartitionExistingEntityQuery(World, false);
-                RepartitionExistingEntityWithoutTransformQuery(World, scenePosition);
-            }
-            else
-            {
-                ResetDirtyQuery(World);
-
-                // Repartition all entities with dirty transform
-                RePartitionExistingEntityQuery(World, true);
-            }
-
-            // Then partition all entities that are not partitioned yet
-            PartitionNewEntityQuery(World);
-            PartitionNewEntityWithoutTransformQuery(World, scenePosition);
-
-            if (idInJob == 0)
-                return;
-
-            PartitionJob partitionJob;
-
-            using (job_PrepareMarker.Auto())
-                partitionJob = new PartitionJob
+                Debug.Log("VVV running the job");
+                handle = new PartitionJob
                 {
                     FastPathSqrDistance = partitionSettings.FastPathSqrDistance,
                     SqrDistanceBuckets = sqrDistanceBuckets,
@@ -177,40 +93,12 @@ namespace ECS.Unity.Systems
                     Bucket = bucket,
                     IsBehind = isBehind,
                     Position = position,
-                };
+                }.Schedule(idInJobCounter, 64);
 
-            using (job_RunMarker.Auto())
-            {
-                handle = partitionJob.Schedule(idInJob, 64);
                 handle.Complete();
-            }
-
-            using (job_ResultMarker.Auto())
-            {
-                // foreach ((Repartitionable repartitionable, PartitionComponent partitionComponent) in repartitionableSet)
-                //     if (repartitionable.IdInJob >= 0 && repartitionable.IdInJob < bucket.Length)
-                //     {
-                //         partitionComponent.Bucket = bucket[repartitionable.IdInJob];
-                //         partitionComponent.IsBehind = isBehind[repartitionable.IdInJob];
-                //
-                //         partitionComponent.IsDirty = repartitionable.IsNewEntity
-                //                                      || partitionComponent.Bucket != bucket[repartitionable.IdInJob]
-                //                                      || partitionComponent.IsBehind != isBehind[repartitionable.IdInJob];
-                //     }
-
                 ApplyJobResultsQuery(World);
-                Clear();
+                ClearJob();
             }
-        }
-
-        private void Clear()
-        {
-            bucket.Clear();
-            isBehind.Clear();
-            position.Clear();
-
-            repartitionableSet.Clear();
-            idInJob = 0;
         }
 
         [Query]
@@ -227,117 +115,103 @@ namespace ECS.Unity.Systems
         }
 
         [Query]
-        private void ResetDirty(ref Repartitionable repartitionable, ref PartitionComponent partitionComponent)
-        {
-            partitionComponent.IsDirty = false;
-            repartitionable.IdInJob = -1;
-        }
-
-        [Query]
         [Any(typeof(PBNftShape), typeof(PBGltfContainer), typeof(PBMaterial), typeof(PBAvatarShape), typeof(PBAudioSource), typeof(PBAudioStream), typeof(PBUiBackground), typeof(PBRaycast))]
         [None(typeof(PartitionComponent))]
-        private void PartitionNewEntity(in Entity entity, ref TransformComponent transformComponent)
+        private void PartitionNewEntities(in Entity entity, [Data] Vector3 scenePosition)
         {
             PartitionComponent partitionComponent = partitionComponentPool.Get();
 
             var repartitionable = new Repartitionable();
-            AddToJob(ref repartitionable, partitionComponent, transformComponent.Cached.WorldPosition);
+
+            Vector3 pos = World.TryGet(entity, out TransformComponent transformComponent) ? transformComponent.Cached.WorldPosition : scenePosition;
+            AddToJob(ref repartitionable, partitionComponent, pos);
             repartitionable.IsNewEntity = true;
-
-            // RePartition(cameraPosition, cameraForward, transformComponent.Cached.WorldPosition, ref partitionComponent);
-            partitionComponent.IsDirty = true;
-            World.Add(entity, partitionComponent);
-        }
-
-        [Query]
-        [Any(typeof(PBNftShape), typeof(PBGltfContainer), typeof(PBMaterial), typeof(PBAvatarShape), typeof(PBAudioSource), typeof(PBAudioStream), typeof(PBUiBackground), typeof(PBRaycast))]
-        [None(typeof(TransformComponent), typeof(PartitionComponent))]
-        private void PartitionNewEntityWithoutTransform(in Entity entity, [Data] Vector3 scenePosition)
-        {
-            PartitionComponent partitionComponent = partitionComponentPool.Get();
-
-            var repartitionable = new Repartitionable();
-            AddToJob(ref repartitionable, partitionComponent, scenePosition);
-            repartitionable.IsNewEntity = true;
-
-            // RePartition(cameraPosition, cameraForward, scenePosition, ref partitionComponent);
 
             partitionComponent.IsDirty = true;
             World.Add(entity, partitionComponent);
         }
 
         [Query]
-        [None(typeof(TransformComponent))]
-        private void RepartitionExistingEntityWithoutTransform(ref Repartitionable repartitionable, ref PartitionComponent partitionComponent, [Data] Vector3 scenePosition)
+        private void RePartitionExistingSceneEntities(in Entity entity, ref Repartitionable repartitionable, ref PartitionComponent partitionComponent, [Data] bool playerPositionOrRotationChanged, [Data] Vector3 scenePosition)
         {
-            AddToJob(ref repartitionable, partitionComponent, scenePosition);
+            bool hasTransform = World.TryGet(entity, out TransformComponent transformComponent) && World.Has<SDKTransform>(entity);
 
-            // RePartition(cameraPosition, cameraForward, scenePosition, ref partitionComponent);
-        }
+            if (playerPositionOrRotationChanged)
+            {
+                Vector3 pos = hasTransform ? transformComponent.Cached.WorldPosition : scenePosition;
+                AddToJob(ref repartitionable, partitionComponent, pos);
+            }
+            else // re-partition if Entity transform changed
+            {
+                partitionComponent.IsDirty = false;
+                repartitionable.IdInJob = -1;
 
-        [Query]
-        private void RePartitionExistingEntity(ref Repartitionable repartitionable, ref PartitionComponent partitionComponent, ref SDKTransform sdkTransform, ref TransformComponent transformComponent, [Data] bool checkTransform)
-        {
-            if (checkTransform && !sdkTransform.IsDirty)
-                return;
-
-            AddToJob(ref repartitionable, partitionComponent, transformComponent.Cached.WorldPosition);
-
-            // RePartition(cameraPosition, cameraForward, transformComponent.Cached.WorldPosition, ref partitionComponent);
+                if (hasTransform && World.Get<SDKTransform>(entity).IsDirty)
+                    AddToJob(ref repartitionable, partitionComponent, transformComponent.Cached.WorldPosition);
+            }
         }
 
         private void AddToJob(ref Repartitionable repartitionable, PartitionComponent partitionComponent, Vector3 inPosition)
         {
+            Debug.Log("VVV adding to job");
+
             repartitionable.IsNewEntity = false;
-            repartitionable.IdInJob = idInJob;
+            repartitionable.IdInJob = idInJobCounter;
 
             bucket.Add(partitionComponent.Bucket);
             isBehind.Add(partitionComponent.IsBehind);
             position.Add(inPosition);
 
-            repartitionableSet.Add((repartitionable, partitionComponent));
-
-            idInJob++;
+            idInJobCounter++;
         }
 
-        [BurstCompile]
-        public struct PartitionJob : IJobParallelFor
+        private void ClearJob()
         {
-            public int FastPathSqrDistance;
-            [ReadOnly] public NativeArray<int> SqrDistanceBuckets;
+            bucket.Clear();
+            isBehind.Clear();
+            position.Clear();
 
-            public byte SceneBucket;
-            public bool SceneIsBehind;
+            idInJobCounter = 0;
+        }
+    }
 
-            public Vector3 CameraPosition;
-            public Vector3 CameraForward;
+    [BurstCompile]
+    public struct PartitionJob : IJobParallelFor
+    {
+        public int FastPathSqrDistance;
+        [ReadOnly] public NativeArray<int> SqrDistanceBuckets;
 
-            [ReadOnly] public NativeArray<Vector3> Position;
+        public byte SceneBucket;
+        public bool SceneIsBehind;
 
-            public NativeArray<byte> Bucket;
-            public NativeArray<bool> IsBehind;
+        public Vector3 CameraPosition;
+        public Vector3 CameraForward;
 
-            public void Execute(int index)
+        [ReadOnly] public NativeArray<Vector3> Position;
+
+        public NativeArray<byte> Bucket;
+        public NativeArray<bool> IsBehind;
+
+        public void Execute(int index)
+        {
+            Vector3 vectorToCamera = Position[index] - CameraPosition;
+            float sqrDistance = Vector3.SqrMagnitude(vectorToCamera);
+
+            if (sqrDistance > FastPathSqrDistance)
             {
-                Vector3 vectorToCamera = Position[index] - CameraPosition;
-                float sqrDistance = Vector3.SqrMagnitude(vectorToCamera);
+                Bucket[index] = SceneBucket;
+                IsBehind[index] = SceneIsBehind;
+            }
+            else
+            {
+                // Find the bucket
+                byte bucketIndex = 0;
 
-                if (sqrDistance > FastPathSqrDistance)
-                {
-                    Bucket[index] = SceneBucket;
-                    IsBehind[index] = SceneIsBehind;
-                }
-                else
-                {
-                    // Find the bucket
-                    byte bucketIndex = 0;
+                while (bucketIndex < SqrDistanceBuckets.Length && sqrDistance >= SqrDistanceBuckets[bucketIndex])
+                    bucketIndex++;
 
-                    while (bucketIndex < SqrDistanceBuckets.Length && sqrDistance >= SqrDistanceBuckets[bucketIndex])
-                        bucketIndex++;
-
-                    Bucket[index] = bucketIndex;
-                    IsBehind[index] = Vector3.Dot(CameraForward, vectorToCamera) < 0;
-                }
+                Bucket[index] = bucketIndex;
+                IsBehind[index] = Vector3.Dot(CameraForward, vectorToCamera) < 0;
             }
         }
     }
