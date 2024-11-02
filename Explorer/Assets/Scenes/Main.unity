@@ -461,13 +461,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   launchSettings:
-    initialRealm: 0
+    initialRealm: 5
     targetScene: {x: 0, y: 0}
     predefinedScenes:
       enabled: 0
       parcels:
       - {x: 145, y: 60}
-    targetWorld: MetadyneLabs.dcl.eth
+    targetWorld: yemel.dcl.eth
     customRealm: https://sdk-team-cdn.decentraland.org/ipfs/goerli-plaza-main-latest
     remoteHibridWorld: MetadyneLabs.dcl.eth
     remoteHybridSceneContentServer: 1
@@ -493,7 +493,7 @@ MonoBehaviour:
     <DropdownField>k__BackingField: {fileID: 9197481963319205126, guid: 63de32c36b8356d42bb93522421d6379, type: 3}
   debugSettings:
     showSplash: 1
-    showAuthentication: 1
+    showAuthentication: 0
     showLoading: 1
     enableLandscape: 0
     enableLOD: 0
@@ -504,6 +504,7 @@ MonoBehaviour:
     emotesToAddToUserProfile: []
     overrideConnectionQuality: 0
     connectionQuality: 2
+    appParameters: []
   globalPluginSettingsContainer: {fileID: 11400000, guid: 7575a56449e4af444b9c13267319c95d, type: 2}
   scenePluginSettingsContainer: {fileID: 11400000, guid: 52a2a6abe420a8b4db9dc55df4b42e92, type: 2}
   uiToolkitRoot: {fileID: 1901323878}

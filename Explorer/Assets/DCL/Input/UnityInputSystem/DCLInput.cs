@@ -2934,6 +2934,155 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""isPartOfComposite"": false
                 }
             ]
+        },
+        {
+            ""name"": ""InWorldCamera"",
+            ""id"": ""941cde24-4210-40c2-b2a7-fb1737e2e30c"",
+            ""actions"": [
+                {
+                    ""name"": ""Translation"",
+                    ""type"": ""Value"",
+                    ""id"": ""136e837d-9685-4d5d-bc2e-26686a2258e4"",
+                    ""expectedControlType"": ""Vector2"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": true
+                }
+            ],
+            ""bindings"": [
+                {
+                    ""name"": ""WASD"",
+                    ""id"": ""4c515f86-ed5d-4f32-8273-78d2ede0b164"",
+                    ""path"": ""2DVector(mode=1)"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Translation"",
+                    ""isComposite"": true,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": ""up"",
+                    ""id"": ""c6a55f1d-b4e3-40b8-86da-ff78bc6eef94"",
+                    ""path"": ""<Keyboard>/w"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Translation"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""down"",
+                    ""id"": ""70ac2f89-3c3f-48ad-8fa8-8c8fde9321bc"",
+                    ""path"": ""<Keyboard>/s"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Translation"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""left"",
+                    ""id"": ""48bf83ca-2b58-40a0-98e8-2360dc1153a8"",
+                    ""path"": ""<Keyboard>/a"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Translation"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""right"",
+                    ""id"": ""afe59b41-282b-4f48-90b1-9eba3ec6ef47"",
+                    ""path"": ""<Keyboard>/d"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Translation"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""ARROWS"",
+                    ""id"": ""6ffadb5c-5eb3-4636-93b4-5596040519a9"",
+                    ""path"": ""2DVector(mode=1)"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Translation"",
+                    ""isComposite"": true,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": ""up"",
+                    ""id"": ""6f54fe5b-5ae1-450b-9754-ea5a2c50bd9a"",
+                    ""path"": ""<Keyboard>/upArrow"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Translation"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""down"",
+                    ""id"": ""9f6d2144-f90d-441f-ab91-a685854c69fa"",
+                    ""path"": ""<Keyboard>/downArrow"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Translation"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""left"",
+                    ""id"": ""457a2eee-d0db-47f1-9da7-eaff77cd1e8e"",
+                    ""path"": ""<Keyboard>/leftArrow"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Translation"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""right"",
+                    ""id"": ""cb9aab51-b3c2-4e8f-9b29-7104d36c2fa9"",
+                    ""path"": ""<Keyboard>/rightArrow"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Translation"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""f476e881-a768-4d91-aa75-be7bd3f5b61c"",
+                    ""path"": ""<Gamepad>/leftStick"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Translation"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""5007c67a-2f32-425e-bb1f-43f48695d05e"",
+                    ""path"": ""<XInputController>/leftStick"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Translation"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                }
+            ]
         }
     ],
     ""controlSchemes"": [
@@ -3037,6 +3186,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         m_EmoteWheel_Slot7 = m_EmoteWheel.FindAction("Slot 7", throwIfNotFound: true);
         m_EmoteWheel_Slot8 = m_EmoteWheel.FindAction("Slot 8", throwIfNotFound: true);
         m_EmoteWheel_Slot9 = m_EmoteWheel.FindAction("Slot 9", throwIfNotFound: true);
+        // InWorldCamera
+        m_InWorldCamera = asset.FindActionMap("InWorldCamera", throwIfNotFound: true);
+        m_InWorldCamera_Translation = m_InWorldCamera.FindAction("Translation", throwIfNotFound: true);
     }
 
     public void Dispose()
@@ -3992,6 +4144,52 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         }
     }
     public EmoteWheelActions @EmoteWheel => new EmoteWheelActions(this);
+
+    // InWorldCamera
+    private readonly InputActionMap m_InWorldCamera;
+    private List<IInWorldCameraActions> m_InWorldCameraActionsCallbackInterfaces = new List<IInWorldCameraActions>();
+    private readonly InputAction m_InWorldCamera_Translation;
+    public struct InWorldCameraActions
+    {
+        private @DCLInput m_Wrapper;
+        public InWorldCameraActions(@DCLInput wrapper) { m_Wrapper = wrapper; }
+        public InputAction @Translation => m_Wrapper.m_InWorldCamera_Translation;
+        public InputActionMap Get() { return m_Wrapper.m_InWorldCamera; }
+        public void Enable() { Get().Enable(); }
+        public void Disable() { Get().Disable(); }
+        public bool enabled => Get().enabled;
+        public static implicit operator InputActionMap(InWorldCameraActions set) { return set.Get(); }
+        public void AddCallbacks(IInWorldCameraActions instance)
+        {
+            if (instance == null || m_Wrapper.m_InWorldCameraActionsCallbackInterfaces.Contains(instance)) return;
+            m_Wrapper.m_InWorldCameraActionsCallbackInterfaces.Add(instance);
+            @Translation.started += instance.OnTranslation;
+            @Translation.performed += instance.OnTranslation;
+            @Translation.canceled += instance.OnTranslation;
+        }
+
+        private void UnregisterCallbacks(IInWorldCameraActions instance)
+        {
+            @Translation.started -= instance.OnTranslation;
+            @Translation.performed -= instance.OnTranslation;
+            @Translation.canceled -= instance.OnTranslation;
+        }
+
+        public void RemoveCallbacks(IInWorldCameraActions instance)
+        {
+            if (m_Wrapper.m_InWorldCameraActionsCallbackInterfaces.Remove(instance))
+                UnregisterCallbacks(instance);
+        }
+
+        public void SetCallbacks(IInWorldCameraActions instance)
+        {
+            foreach (var item in m_Wrapper.m_InWorldCameraActionsCallbackInterfaces)
+                UnregisterCallbacks(item);
+            m_Wrapper.m_InWorldCameraActionsCallbackInterfaces.Clear();
+            AddCallbacks(instance);
+        }
+    }
+    public InWorldCameraActions @InWorldCamera => new InWorldCameraActions(this);
     private int m_DesktopSchemeIndex = -1;
     public InputControlScheme DesktopScheme
     {
@@ -4100,5 +4298,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         void OnSlot7(InputAction.CallbackContext context);
         void OnSlot8(InputAction.CallbackContext context);
         void OnSlot9(InputAction.CallbackContext context);
+    }
+    public interface IInWorldCameraActions
+    {
+        void OnTranslation(InputAction.CallbackContext context);
     }
 }
