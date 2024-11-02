@@ -7,13 +7,6 @@ namespace Global.Dynamic.TeleportOperations
 {
     public class CompleteLoadingStatus : ITeleportOperation
     {
-        private readonly bool goingToNewRealm;
-
-        public CompleteLoadingStatus(bool goingToNewRealm)
-        {
-            this.goingToNewRealm = goingToNewRealm;
-        }
-        
         public UniTask<Result> ExecuteAsync(TeleportParams teleportParams, CancellationToken ct)
         {
             teleportParams.ParentReport.SetProgress(teleportParams.LoadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Completed));

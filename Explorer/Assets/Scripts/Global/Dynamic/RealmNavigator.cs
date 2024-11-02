@@ -115,7 +115,7 @@ namespace Global.Dynamic
                 new UnloadCacheImmediateTeleportOperation(cacheCleaner, memoryUsageProvider),
                 new MoveToParcelInNewRealmTeleportOperation(this),
                 new RestartRoomAsyncTeleportOperation(roomHub, livekitTimeout),
-                new CompleteLoadingStatus(true)
+                new CompleteLoadingStatus()
             };
 
             teleportInSameRealmOperation = new ITeleportOperation[]
@@ -123,7 +123,7 @@ namespace Global.Dynamic
                 new RestartLoadingStatus(),
                 new UnloadCacheImmediateTeleportOperation(cacheCleaner, memoryUsageProvider),
                 new MoveToParcelInSameRealmTeleportOperation(this),
-                new CompleteLoadingStatus(false)
+                new CompleteLoadingStatus()
             };
 
         }

@@ -158,7 +158,6 @@ namespace Global.Dynamic
             Entity playerEntity,
             IAppArgs appArgs,
             ISceneRestrictionBusController sceneRestrictionBusController,
-            ILoadingStatus loadingStatus,
             CancellationToken ct)
         {
             var container = new DynamicWorldContainer();
