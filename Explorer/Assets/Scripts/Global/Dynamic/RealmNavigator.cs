@@ -21,6 +21,8 @@ using System.Linq;
 using System.Threading;
 using DCL.Diagnostics;
 using DCL.Ipfs;
+using DCL.Optimization.PerformanceBudgeting;
+using DCL.Profiling;
 using DCL.ResourcesUnloading;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
@@ -51,7 +53,7 @@ namespace Global.Dynamic
         private readonly bool landscapeEnabled;
         private readonly ObjectProxy<Entity> cameraEntity;
         private readonly CameraSamplingData cameraSamplingData;
-        private bool isLocalSceneDevelopment;
+        private readonly bool isLocalSceneDevelopment;
 
         private URLDomain currentRealm;
         private Vector2Int currentParcel;
@@ -59,8 +61,6 @@ namespace Global.Dynamic
         private readonly ITeleportOperation[] realmChangeOperations;
         private readonly ITeleportOperation[] teleportInSameRealmOperation;
         private readonly ILoadingStatus loadingStatus;
-
-        private readonly TeleportCounter teleportCounter;
 
         public event Action<bool>? RealmChanged;
 
@@ -83,7 +83,7 @@ namespace Global.Dynamic
             bool isLocalSceneDevelopment,
             ILoadingStatus loadingStatus,
             ICacheCleaner cacheCleaner,
-            int teleportsBeforeCacheCleaning)
+            IMemoryUsageProvider memoryUsageProvider)
         {
             this.loadingScreen = loadingScreen;
             this.mapRenderer = mapRenderer;
@@ -100,14 +100,11 @@ namespace Global.Dynamic
             this.isLocalSceneDevelopment = isLocalSceneDevelopment;
             this.globalWorld = globalWorld;
             this.loadingStatus = loadingStatus;
-            teleportCounter = new TeleportCounter(teleportsBeforeCacheCleaning);
-
             var livekitTimeout = TimeSpan.FromSeconds(10f);
 
             realmChangeOperations = new ITeleportOperation[]
             {
                 new RestartLoadingStatus(),
-                new UnloadCacheImmediateTeleportOperation(teleportCounter, cacheCleaner),
                 new RemoveRemoteEntitiesTeleportOperation(remoteEntities, globalWorld),
                 new StopRoomAsyncTeleportOperation(roomHub, livekitTimeout),
                 new RemoveCameraSamplingDataTeleportOperation(globalWorld, cameraEntity),
@@ -115,17 +112,18 @@ namespace Global.Dynamic
                 new ChangeRealmTeleportOperation(this),
                 new LoadLandscapeTeleportOperation(this),
                 new PrewarmRoadAssetPoolsTeleportOperation(realmController, roadsPlugin),
+                new UnloadCacheImmediateTeleportOperation(cacheCleaner, memoryUsageProvider),
                 new MoveToParcelInNewRealmTeleportOperation(this),
                 new RestartRoomAsyncTeleportOperation(roomHub, livekitTimeout),
-                new CompleteLoadingStatus(teleportCounter, true)
+                new CompleteLoadingStatus(true)
             };
 
             teleportInSameRealmOperation = new ITeleportOperation[]
             {
                 new RestartLoadingStatus(),
-                new UnloadCacheImmediateTeleportOperation(teleportCounter, cacheCleaner),
+                new UnloadCacheImmediateTeleportOperation(cacheCleaner, memoryUsageProvider),
                 new MoveToParcelInSameRealmTeleportOperation(this),
-                new CompleteLoadingStatus(teleportCounter, false)
+                new CompleteLoadingStatus(false)
             };
 
         }

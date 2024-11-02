@@ -13,7 +13,7 @@ namespace ECS.Prioritization
         [SerializeField] private int behindFps = 1;
         [SerializeField] private float aggregatePositionTolerance = 0.5f;
         [SerializeField] private int maxLoadingDistanceInParcels;
-        
+
         [field: SerializeField] public int MinLoadingDistanceInParcels { get; private set; }
 
         [field: SerializeField]
@@ -48,8 +48,6 @@ namespace ECS.Prioritization
         public int ScenesDefinitionsRequestBatchSize { get; private set; }
 
         public float AggregatePositionSqrTolerance { get; private set; }
-
-        [field: SerializeField] public int UnloadCacheAfterTeleportCount { get; private set; }
 
         private void OnEnable()
         {
