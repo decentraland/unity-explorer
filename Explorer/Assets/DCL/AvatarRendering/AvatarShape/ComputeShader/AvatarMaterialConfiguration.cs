@@ -31,11 +31,11 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
         private static readonly int ALPHA_DST_BLEND_TARGET = Shader.PropertyToID("_AlphaDstBlend");
         private static readonly int ALPHA_DST_BLEND_ORIGINAL = Shader.PropertyToID("_DstBlendAlpha");
 
-        private static readonly (string suffix, string category, int defaultSlotIndex, GetFacialFeatureColor getColor)[] SUFFIX_CATEGORY_MAP =
+        private static readonly (string suffix, string category, int defaultSlotIndexUsed, GetFacialFeatureColor getColor)[] SUFFIX_CATEGORY_MAP =
         {
-            ("eyes", WearablesConstants.Categories.EYES, defaultSlotIndex: 1, (in AvatarShapeComponent shape) => shape.EyesColor),
-            ("eyebrows", WearablesConstants.Categories.EYEBROWS, defaultSlotIndex: 0, (in AvatarShapeComponent shape) => shape.HairColor),
-            ("mouth", WearablesConstants.Categories.MOUTH, defaultSlotIndex: 0, (in AvatarShapeComponent shape) => shape.SkinColor),
+            ("eyes", WearablesConstants.Categories.EYES, defaultSlotIndexUsed: 1, (in AvatarShapeComponent shape) => shape.EyesColor),
+            ("eyebrows", WearablesConstants.Categories.EYEBROWS, defaultSlotIndexUsed: 0, (in AvatarShapeComponent shape) => shape.HairColor),
+            ("mouth", WearablesConstants.Categories.MOUTH, defaultSlotIndexUsed: 0, (in AvatarShapeComponent shape) => shape.SkinColor),
         };
 
         public static AvatarCustomSkinningComponent.MaterialSetup SetupMaterial(Renderer meshRenderer, Material originalMaterial, int lastWearableVertCount, IAvatarMaterialPoolHandler poolHandler,
@@ -115,12 +115,12 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
         {
             for (var i = 0; i < SUFFIX_CATEGORY_MAP.Length; i++)
             {
-                (string suffix, string category, int defaultSlotIndex, GetFacialFeatureColor getColor) = SUFFIX_CATEGORY_MAP[i];
+                (string suffix, string category, int defaultSlotIndexUsed, GetFacialFeatureColor getColor) = SUFFIX_CATEGORY_MAP[i];
 
                 if (meshRenderer.name.Contains(suffix, StringComparison.OrdinalIgnoreCase))
                 {
                     result = true;
-                    return DoFacialFeature(poolHandler, facialFeatures.Value[category], getColor(in avatarShapeComponent), defaultSlotIndex);
+                    return DoFacialFeature(poolHandler, facialFeatures.Value[category], getColor(in avatarShapeComponent), defaultSlotIndexUsed);
                 }
             }
 
@@ -128,11 +128,11 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             return default((Material, TextureArraySlot?[], int));
         }
 
-        private static (Material, TextureArraySlot?[], int) DoFacialFeature(IAvatarMaterialPoolHandler poolHandler, IReadOnlyDictionary<int, Texture> replacementTexture, Color color, int defaultSlotIndex = 0)
+        private static (Material, TextureArraySlot?[], int) DoFacialFeature(IAvatarMaterialPoolHandler poolHandler, IReadOnlyDictionary<int, Texture> replacementTexture, Color color, int defaultSlotIndexUsed = 0)
         {
             PoolMaterialSetup poolMaterialSetup = poolHandler.GetMaterialPool(TextureArrayConstants.SHADERID_DCL_FACIAL_FEATURES);
             Material avatarMaterial = poolMaterialSetup.Pool.Get();
-            TextureArraySlot?[] slots = poolMaterialSetup.TextureArrayContainer.SetTextures(replacementTexture, avatarMaterial, defaultSlotIndex);
+            TextureArraySlot?[] slots = poolMaterialSetup.TextureArrayContainer.SetTextures(replacementTexture, avatarMaterial, defaultSlotIndexUsed);
             avatarMaterial.SetColor(BASE_COLOR, color);
             avatarMaterial.SetInt(Z_WRITE_MODE, 0);
             avatarMaterial.renderQueue = (int)RenderQueue.AlphaTest;
