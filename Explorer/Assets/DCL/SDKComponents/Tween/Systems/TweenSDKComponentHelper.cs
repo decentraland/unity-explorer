@@ -3,6 +3,7 @@ using CrdtEcsBridge.Components.Transform;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.ECSComponents;
 using DCL.SDKComponents.Tween.Components;
+using ECS.Unity.Transforms.Components;
 using UnityEngine;
 
 namespace DCL.SDKComponents.Tween.Helpers
@@ -15,19 +16,30 @@ namespace DCL.SDKComponents.Tween.Helpers
                 static (component, tweenStateStatus) => component.State = tweenStateStatus, sdkEntity, tweenStateStatus);
         }
 
-        public static void WriteTweenResult(ref SDKTransform sdkTransform, (ICustomTweener, CRDTEntity) tweenResult)
+        public static void UpdateTweenResult(ref SDKTransform sdkTransform, ref TransformComponent transformComponent, ICustomTweener tweener, bool shouldUpdateTransform)
         {
-            sdkTransform.IsDirty = true;
-            sdkTransform.ParentId = tweenResult.Item2;
-            tweenResult.Item1.SetResult(ref sdkTransform);
+            tweener.UpdateSDKTransform(ref sdkTransform);
+
+            //we only set the SDK transform to dirty here if we didn't already update the transform, but if the sdkTransform was already dirty,
+            //we dont change it, as it might have pending updates to be done from the scene side.
+            if (shouldUpdateTransform)
+            {
+                tweener.UpdateTransform(transformComponent.Transform);
+                transformComponent.UpdateCache();
+            } else
+                sdkTransform.IsDirty = true;
+
         }
 
-        public static void WriteTweenResultInCRDT(IECSToCRDTWriter ecsToCrdtWriter, CRDTEntity sdkEntity, (ICustomTweener, CRDTEntity) result)
+        public static void WriteSDKTransformUpdateInCRDT(SDKTransform sdkTransform, IECSToCRDTWriter ecsToCrdtWriter, CRDTEntity sdkEntity)
         {
-            ecsToCrdtWriter.PutMessage<SDKTransform, (ICustomTweener, CRDTEntity)>(
-                static (component, result) => WriteTweenResult(ref component, result),
-                sdkEntity, result);
+            ecsToCrdtWriter.PutMessage<SDKTransform, SDKTransform>((component , transform) =>
+            {
+                component.Position.Value = transform.Position.Value;
+                component.ParentId = transform.ParentId;
+                component.Rotation.Value = transform.Rotation.Value;
+                component.Scale = transform.Scale;
+            }, sdkEntity, sdkTransform);
         }
-
     }
 }

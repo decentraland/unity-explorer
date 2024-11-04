@@ -30,7 +30,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
                 UniTask.CompletedTask;
 
             public State CurrentState() =>
-                State.Running;
+                State.Stopped;
 
             public IRoom Room() =>
                 NullRoom.INSTANCE;
