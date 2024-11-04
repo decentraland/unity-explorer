@@ -96,6 +96,8 @@ Decodes and resizes the texture from the provided memory chunk into BC5 format.
 
 ## How to build
 
+Run the build script in ./textures-server directory or:
+
 To build you need to follow these steps. 
 As result you will get .dll/.dylib files respectively for windows and mac.
 The files will be located in `Plugins/TexturesFuse/TexturesServerWrap/Libraries`
