@@ -261,7 +261,7 @@ MonoBehaviour:
       brightness: 0
       contrast: 0
       gamma: 0
-    mode: 3
+    mode: 7
     initOptions:
       ASTCProfile: 0
       blockZ: 1
@@ -272,6 +272,11 @@ MonoBehaviour:
       g: 1
       b: 2
       a: 3
+    useOverride: 0
+    fquality: 1
+    disableMultithreading: 1
+    dwnumThreads: 1
+    cmpComputeTypeEncode: 1
   path: Assets/Plugins/TexturesFuse/TexturesServerWrap/Playground/NormalMap/brick_wall2-diff-512.png
   debugOutputFromNative: 1
   outputPath: Assets/Plugins/TexturesFuse/TexturesServerWrap/Playground/ASTCTexturesCompatability/test_output.astc

@@ -173,7 +173,7 @@ MonoBehaviour:
       brightness: 0
       contrast: 0
       gamma: 0
-    mode: 6
+    mode: 7
     initOptions:
       ASTCProfile: 0
       blockZ: 1
@@ -184,8 +184,15 @@ MonoBehaviour:
       g: 1
       b: 2
       a: 3
-  path: Assets/Plugins/TexturesFuse/textures-server/FreeImage/Source/FFI/image.jpg
-  threads: 20
+    useOverride: 0
+    fquality: 1
+    disableMultithreading: 1
+    dwnumThreads: 1
+    cmpComputeTypeEncode: 1
+  textureType: 0
+  path: Assets/Plugins/TexturesFuse/TexturesServerWrap/Playground/NormalMap/brick_wall2-diff-512.png
+  workersCount: 1
+  delay: 0.01
   debugOutputFromNative: 1
 --- !u!1 &1203531619
 GameObject:

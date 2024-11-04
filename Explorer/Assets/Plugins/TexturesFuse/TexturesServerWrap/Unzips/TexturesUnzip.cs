@@ -124,6 +124,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
                 ptrLength,
                 options.MaxSide,
                 cmpFormat,
+                options.CMP_CompressOptions,
                 out output,
                 out outputLength,
                 out width,

@@ -1,4 +1,6 @@
+using Cysharp.Threading.Tasks;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
+using System.Collections;
 using System.IO;
 using System.Threading;
 using UnityEngine;
@@ -9,32 +11,28 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground
     {
         [Header("Config")]
         [SerializeField] private TexturesFusePlayground.Options options = new ();
+        [Space]
+        [SerializeField] private TextureType textureType = TextureType.Albedo;
         [SerializeField] private string path = "Assets/Plugins/TexturesFuse/textures-server/FreeImage/Source/FFI/image.jpg";
-        [SerializeField] private int threads = 20;
+        [Space]
+        [Min(1)]
+        [SerializeField] private int workersCount = 1;
+        [SerializeField] private float delay = 0.1f;
         [SerializeField] private bool debugOutputFromNative;
 
         [ContextMenu(nameof(Start))]
-        private void Start()
+        private IEnumerator Start()
         {
             byte[] buffer = File.ReadAllBytes(path);
 
-            for (var i = 0; i < threads; i++)
-                new Thread(
-                    () =>
-                    {
-                        var unzip = new TexturesUnzip(options.InitOptions, options, debugOutputFromNative);
+            var unzip = ITexturesUnzip.NewDefault(options, workersCount);
+            var wait = new WaitForSeconds(delay);
 
-                        while (destroyCancellationToken.IsCancellationRequested == false)
-                            unsafe
-                            {
-                                fixed (byte* ptr = buffer)
-                                {
-                                    // unzip.LoadASTCImage(ptr, buffer.Length, out _, out _, out _, out _, out var handle);
-                                    // NativeMethods.TexturesFuseDispose(handle);
-                                }
-                            }
-                    }
-                ).Start();
+            while (this)
+            {
+                unzip.TextureFromBytesAsync(buffer, textureType, destroyCancellationToken).Forget();
+                yield return wait;
+            }
         }
     }
 }

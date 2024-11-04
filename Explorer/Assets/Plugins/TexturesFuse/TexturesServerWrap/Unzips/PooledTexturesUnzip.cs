@@ -4,6 +4,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using Utility.Multithreading;
 using Utility.Types;
 
 namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
@@ -12,7 +13,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
     {
         private readonly IReadOnlyList<ITexturesUnzip> uniqueUnzips;
         private readonly TimeSpan timeout = TimeSpan.FromSeconds(15);
-        private readonly ConcurrentBag<ITexturesUnzip> workers;
+        private readonly ConcurrentQueue<ITexturesUnzip> workers;
 
         public PooledTexturesUnzip(Func<ITexturesUnzip> ctor, int count) : this(
             Enumerable.Range(0, count).Select(_ => ctor()).ToArray()
@@ -21,7 +22,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
         public PooledTexturesUnzip(IReadOnlyList<ITexturesUnzip> uniqueUnzips)
         {
             this.uniqueUnzips = uniqueUnzips;
-            workers = new ConcurrentBag<ITexturesUnzip>(uniqueUnzips);
+            workers = new ConcurrentQueue<ITexturesUnzip>(uniqueUnzips);
         }
 
         public async UniTask<EnumResult<IOwnedTexture2D, NativeMethods.ImageResult>> TextureFromBytesAsync(IntPtr bytes, int bytesLength, TextureType type, CancellationToken token)
@@ -39,24 +40,25 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
         private readonly struct WorkerScope : IDisposable
         {
             private static readonly TimeSpan POLL_DELAY = TimeSpan.FromMilliseconds(50);
+            private static readonly Atomic<DateTime> SHARED_START_TIME = new(DateTime.UtcNow);
 
             public readonly ITexturesUnzip Worker;
-            private readonly ConcurrentBag<ITexturesUnzip> workers;
+            private readonly ConcurrentQueue<ITexturesUnzip> workers;
 
-            private WorkerScope(ConcurrentBag<ITexturesUnzip> workers, ITexturesUnzip worker)
+            private WorkerScope(ConcurrentQueue<ITexturesUnzip> workers, ITexturesUnzip worker)
             {
                 this.workers = workers;
                 this.Worker = worker;
             }
 
-            public static async UniTask<WorkerScope> NewWorkerScopeAsync(ConcurrentBag<ITexturesUnzip> workers, TimeSpan timeout)
+            public static async UniTask<WorkerScope> NewWorkerScopeAsync(ConcurrentQueue<ITexturesUnzip> workers, TimeSpan timeout)
             {
-                var startTime = DateTime.UtcNow;
+                SHARED_START_TIME.Set(DateTime.UtcNow);
                 ITexturesUnzip worker;
 
-                while (workers.TryTake(out worker) == false)
+                while (workers.TryDequeue(out worker) == false)
                 {
-                    if (DateTime.UtcNow - startTime > timeout)
+                    if (DateTime.UtcNow - SHARED_START_TIME.Value() > timeout)
                         throw new TimeoutException();
 
                     await UniTask.Delay(POLL_DELAY);
@@ -67,7 +69,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
 
             public void Dispose()
             {
-                workers.Add(Worker);
+                workers.Enqueue(Worker);
             }
         }
     }

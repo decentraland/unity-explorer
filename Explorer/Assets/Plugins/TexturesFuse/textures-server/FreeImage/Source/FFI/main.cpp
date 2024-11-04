@@ -304,6 +304,7 @@ ImageResult texturesfuse_cmp_image_from_memory(
     int bytesLength,
     int maxSideLength,
     CMP_FORMAT cmpFormat,
+    CMP_CompressOptions compressOptions,
 
     BYTE **outputBytes,
     int *outputLength,
@@ -374,10 +375,8 @@ ImageResult texturesfuse_cmp_image_from_memory(
 
     *outputBytes = destTexture.pData;
 
-    CMP_CompressOptions options;
-    options.bDisableMultiThreading = true;
-
-    CMP_ERROR cmpResult = CMP_ConvertTexture(&sourceTexture, &destTexture, &options, nullptr);
+    compressOptions.dwSize = sizeof(CMP_CompressOptions);
+    CMP_ERROR cmpResult = CMP_ConvertTexture(&sourceTexture, &destTexture, &compressOptions, nullptr);
 
     FreeImage_Unload(image);
 

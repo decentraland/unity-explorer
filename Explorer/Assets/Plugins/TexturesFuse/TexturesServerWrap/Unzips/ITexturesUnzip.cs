@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using UnityEngine;
 using Utility.Types;
@@ -35,47 +36,66 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
 
             NativeMethods.Adjustments Adjustments { get; }
 
+            [SuppressMessage("ReSharper", "InconsistentNaming")]
+            NativeMethods.CMP_CompressOptions CMP_CompressOptions { get; }
+
             class Const : IOptions
             {
-                public Const(Mode mode, NativeMethods.Swizzle swizzle, int maxSide, NativeMethods.Adjustments adjustments)
+                public Const(Mode mode, NativeMethods.Swizzle swizzle, int maxSide, NativeMethods.Adjustments adjustments, NativeMethods.CMP_CompressOptions cmpCompressOptions)
                 {
                     Mode = mode;
                     Swizzle = swizzle;
                     MaxSide = maxSide;
                     Adjustments = adjustments;
+                    CMP_CompressOptions = cmpCompressOptions;
                 }
 
                 public Mode Mode { get; }
                 public NativeMethods.Swizzle Swizzle { get; }
                 public int MaxSide { get; }
                 public NativeMethods.Adjustments Adjustments { get; }
+
+                public NativeMethods.CMP_CompressOptions CMP_CompressOptions { get; }
             }
         }
 
-        public static ITexturesUnzip NewDefault()
+        private static bool IsWindows() =>
+            Application.platform
+                is RuntimePlatform.WindowsPlayer
+                or RuntimePlatform.WindowsEditor
+                or RuntimePlatform.WindowsServer;
+
+        public static ITexturesUnzip NewDefault(IOptions? options = null, int? workersCount = null)
         {
             var init = NativeMethods.InitOptions.NewDefault();
 
-            var mode = Application.platform
-                is RuntimePlatform.WindowsPlayer
-                or RuntimePlatform.WindowsEditor
-                or RuntimePlatform.WindowsServer
-                ? Mode.BC7
-                : Mode.ASTC_6x6;
+            if (options == null)
+            {
+                var mode = IsWindows()
+                    ? Mode.BC7
+                    : Mode.ASTC_6x6;
 
-            var options = new IOptions.Const(mode, NativeMethods.Swizzle.NewDefault(), 1024, NativeMethods.Adjustments.NewEmpty());
+                options = new IOptions.Const(
+                    mode,
+                    NativeMethods.Swizzle.NewDefault(),
+                    1024,
+                    NativeMethods.Adjustments.NewEmpty(),
+                    NativeMethods.CMP_CompressOptions.NewDefault()
+                );
+            }
+
             var index = 0;
 
             ReportHub.Log(ReportCategory.TEXTURES, $"TexturesUnzip - NewDefault with options: {options.ToStringInfo()}");
 
             return new PooledTexturesUnzip(
                 () => new TexturesUnzip(init, options, true)
-                   .WithLog((++index).ToString())
-
-                // .WithSemaphore() -
-                // is not required since PooledTexturesUnzip has synchronization for the access and prevents double calling of TextureFromBytesAsync
-               ,
-                Environment.ProcessorCount - 1 // 1 worker is used by the main thread
+                   .WithLog($"Worker: {++index}"),
+                workersCount ?? (
+                    IsWindows()
+                        ? 1 // BC7 has issue with multithreading on Windows, should be solved later
+                        : Environment.ProcessorCount - 1  // 1 worker is used by the main thread
+                )
             );
         }
 

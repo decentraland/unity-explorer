@@ -63,6 +63,13 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground
             [SerializeField] private Mode mode = Mode.RGB;
             [SerializeField] private NativeMethods.InitOptions initOptions;
             [SerializeField] private NativeMethods.Swizzle swizzle;
+            [Header("CMP options")]
+            [SerializeField] private bool useOverride;
+            [Space]
+            [SerializeField] private float fquality = 1;
+            [SerializeField] private bool disableMultithreading = true;
+            [SerializeField] private int dwnumThreads = 1;
+            [SerializeField] private NativeMethods.CMP_Compute_type cmpComputeTypeEncode = NativeMethods.CMP_Compute_type.CMP_CPU;
 
             public Mode Mode => mode;
 
@@ -73,6 +80,24 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground
             public NativeMethods.Adjustments Adjustments => adjustments;
 
             public NativeMethods.InitOptions InitOptions => initOptions;
+
+            public NativeMethods.CMP_CompressOptions CMP_CompressOptions
+            {
+                get
+                {
+                    NativeMethods.CMP_CompressOptions defaultOptions = NativeMethods.CMP_CompressOptions.NewDefault();
+
+                    if (useOverride)
+                    {
+                        defaultOptions.fquality = fquality;
+                        defaultOptions.bDisableMultiThreading = disableMultithreading;
+                        defaultOptions.dwnumThreads = (uint)dwnumThreads;
+                        defaultOptions.nEncodeWith = cmpComputeTypeEncode;
+                    }
+
+                    return defaultOptions;
+                }
+            }
         }
     }
 }

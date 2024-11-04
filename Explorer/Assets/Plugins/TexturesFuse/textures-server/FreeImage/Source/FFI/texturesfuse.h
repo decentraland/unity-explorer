@@ -140,6 +140,7 @@ extern "C"
         int bytesLength,
         int maxSideLength,
         CMP_FORMAT cmpFormat,
+        CMP_CompressOptions compressOptions,
 
         BYTE **outputBytes,
         int *outputLength,
