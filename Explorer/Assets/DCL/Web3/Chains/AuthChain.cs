@@ -10,6 +10,8 @@ namespace DCL.Web3.Chains
     {
         private static readonly ThreadSafeObjectPool<AuthChain> POOL = new (() => new AuthChain());
 
+        // If you ever change the container or key type, please check that your change does not break
+        // the AuthChainHeaderNames class, if it still exists at the time.
         private readonly Dictionary<AuthLinkType, AuthLink> chain = new ();
 
         private bool disposed;
