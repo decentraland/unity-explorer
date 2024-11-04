@@ -277,7 +277,7 @@ MonoBehaviour:
     disableMultithreading: 1
     dwnumThreads: 1
     cmpComputeTypeEncode: 1
-  path: Assets/Plugins/TexturesFuse/TexturesServerWrap/Playground/NormalMap/brick_wall2-diff-512.png
+  path: Assets/Plugins/TexturesFuse/textures-server/FreeImage/Source/FFI/TestImages/example.tif
   debugOutputFromNative: 1
   outputPath: Assets/Plugins/TexturesFuse/TexturesServerWrap/Playground/ASTCTexturesCompatability/test_output.astc
 --- !u!1 &1203531619

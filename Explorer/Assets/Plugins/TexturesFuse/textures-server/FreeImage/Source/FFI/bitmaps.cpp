@@ -61,6 +61,32 @@ ImageResult ClampedImage(FIBITMAP *bitmap, int maxSideSize, FIBITMAP **output)
     return Success;
 }
 
+ImageResult AlignInMultipleOf4(FIBITMAP *bitmap, FIBITMAP **output)
+{
+    const int MULTIPLE = 4;
+
+    if (!output)
+    {
+        FreeImage_Unload(bitmap);
+        return ErrorInvalidPointer;
+    }
+
+    unsigned imageWidth = FreeImage_GetWidth(bitmap);
+    unsigned imageHeight = FreeImage_GetHeight(bitmap);
+
+    imageWidth = imageWidth - (imageWidth % MULTIPLE);
+    imageHeight = imageHeight - (imageHeight % MULTIPLE);
+
+    FIBITMAP *resized = FreeImage_Copy(bitmap, 0, 0, imageWidth, imageHeight);
+    FreeImage_Unload(bitmap);
+    if (!resized)
+    {
+        return ErrorCannotDownscale;
+    }
+    *output = resized;
+    return Success;
+}
+
 ImageResult WithAlphaImage(FIBITMAP *bitmap, FIBITMAP **output)
 {
     if (!output)
@@ -212,7 +238,7 @@ const char *ProfileNameFromBitmap(FIBITMAP *bitmap)
     FIICCPROFILE *profile = FreeImage_GetICCProfile(bitmap);
     if (profile && profile->data && profile->size > 0)
     {
-        //TODO maybe no null terminator
+        // TODO maybe no null terminator
         return (const char *)profile->data;
     }
     return "Unknown Profile";
@@ -225,7 +251,7 @@ void LogImageInfo(FIBITMAP *bitmap, const char *prefix)
     const int bpp = static_cast<int>(FreeImage_GetBPP(bitmap));
     const char *imageType = NameFromImageType(FreeImage_GetImageType(bitmap));
     const char *colorType = NameFromColorType(FreeImage_GetColorType(bitmap));
-    const char *profileName = "";//ProfileNameFromBitmap(bitmap);
+    const char *profileName = ""; // ProfileNameFromBitmap(bitmap);
 
     FreeImage_OutputMessageProc(
         FIF_UNKNOWN,

@@ -79,6 +79,7 @@ extern "C"
         ErrorASTC_BAD_DECODE_MODE = 50,
 
         ErrorBC5 = 60,
+        ErrorCannotResize = 61,
     };
 
     struct Adjustments

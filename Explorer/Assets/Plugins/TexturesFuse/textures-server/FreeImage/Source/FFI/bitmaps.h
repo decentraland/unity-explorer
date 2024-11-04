@@ -16,6 +16,13 @@ ImageResult ClampedImage(FIBITMAP *bitmap, int maxSideSize, FIBITMAP **output);
  * @param output result bitmap of the operation
  * @return result of the operation
  */
+ImageResult AlignInMultipleOf4(FIBITMAP *bitmap, FIBITMAP **output);
+
+/**
+ * @param bitmap takes ownership of bitmap, don't use this reference after
+ * @param output result bitmap of the operation
+ * @return result of the operation
+ */
 ImageResult WithAlphaImage(FIBITMAP *bitmap, FIBITMAP **output);
 
 /**

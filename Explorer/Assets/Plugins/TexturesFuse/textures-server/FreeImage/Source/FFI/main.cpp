@@ -326,6 +326,15 @@ ImageResult texturesfuse_cmp_image_from_memory(
         return result;
     }
 
+    if (cmpFormat == CMP_FORMAT_BC5 || cmpFormat == CMP_FORMAT_BC7)
+    {
+        result = AlignInMultipleOf4(image, &image);
+        if (result != Success)
+        {
+            return result;
+        }
+    }
+
     result = WithAlphaImage(image, &image);
     if (result != Success)
     {
