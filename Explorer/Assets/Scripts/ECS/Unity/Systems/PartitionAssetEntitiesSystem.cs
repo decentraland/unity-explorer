@@ -45,10 +45,8 @@ namespace ECS.Unity.Systems
 
         private readonly NativeArray<int> sqrDistanceBuckets;
 
-        private readonly HashSet<(Repartitionable, PartitionComponent)> repartitionableSet = new ();
-
         private JobHandle handle;
-        private int idInJob;
+        private int InJobIdentifier;
 
         private NativeList<byte> bucket = new (1024, Allocator.Persistent);
         private NativeList<bool> isBehind = new (1024, Allocator.Persistent);
@@ -73,67 +71,11 @@ namespace ECS.Unity.Systems
                 sqrDistanceBuckets[i] = partitionSettings.SqrDistanceBuckets[i];
         }
 
-        //  protected override void Update(float t)
-        // {
-        //     idInJob = 0;
-        //
-        //     Vector3 scenePosition = World.Get<TransformComponent>(sceneRoot).Cached.WorldPosition;
-        //
-        //     if (samplingData.IsDirty) // Camera has moved
-        //         RepartitionAllEntitiesQuery(World, scenePosition);
-        //     else
-        //     {
-        //         ResetEntitiesWithoutTransformQuery(World);
-        //         RepartitionEntitiesWithTransformQuery(World);
-        //     }
-        //
-        //     PartitionNewEntitiesQuery(World, scenePosition);
-        //
-        //     if (idInJob == 0)
-        //         return;
-        //
-        //     PartitionJob partitionJob;
-        //
-        //     using (job_PrepareMarker.Auto())
-        //         partitionJob = new PartitionJob
-        //         {
-        //             FastPathSqrDistance = partitionSettings.FastPathSqrDistance,
-        //             SqrDistanceBuckets = sqrDistanceBuckets,
-        //             CameraPosition = samplingData.Position,
-        //             CameraForward = samplingData.Forward,
-        //             SceneBucket = scenePartition.Bucket,
-        //             SceneIsBehind = scenePartition.IsBehind,
-        //
-        //             Bucket = bucket,
-        //             IsBehind = isBehind,
-        //             Position = position,
-        //         };
-        //
-        //     using (job_RunMarker.Auto())
-        //     {
-        //         handle = partitionJob.Schedule(idInJob, 64);
-        //         handle.Complete();
-        //     }
-        //
-        //     using (job_ResultMarker.Auto())
-        //     {
-        //         foreach ((Repartitionable repartitionable, PartitionComponent partitionComponent) in repartitionableSet)
-        //             if (repartitionable.IdInJob > 0 && repartitionable.IdInJob < bucket.Length)
-        //             {
-        //                 partitionComponent.Bucket = bucket[repartitionable.IdInJob];
-        //                 partitionComponent.IsBehind =  isBehind[repartitionable.IdInJob];
-        //
-        //                 partitionComponent.IsDirty = repartitionable.IsNewEntity
-        //                                              || partitionComponent.Bucket != bucket[repartitionable.IdInJob]
-        //                                              || partitionComponent.IsBehind != isBehind[repartitionable.IdInJob];
-        //             }
-        //
-        //         repartitionableSet.Clear();
-        //         bucket.Clear();
-        //         isBehind.Clear();
-        //         position.Clear();
-        //     }
-        // }
+        private static ProfilerMarker mRePartitionExistingEntityQuery = new ("PartitionAssetEntitiesSystem.RePartitionExistingEntityQuery");
+        private static ProfilerMarker mRepartitionExistingEntityWithoutTransformQuery = new ("PartitionAssetEntitiesSystem.RepartitionExistingEntityWithoutTransformQuery");
+        private static ProfilerMarker mResetDirtyQuery = new ("PartitionAssetEntitiesSystem.ResetDirtyQuery");
+        private static ProfilerMarker mPartitionNewEntityQuery = new ("PartitionAssetEntitiesSystem.PartitionNewEntityQuery");
+        private static ProfilerMarker mPartitionNewEntityWithoutTransformQuery = new ("PartitionAssetEntitiesSystem.PartitionNewEntityWithoutTransformQuery");
 
         protected override void Update(float t)
         {
@@ -144,22 +86,28 @@ namespace ECS.Unity.Systems
             if (samplingData.IsDirty)
             {
                 // Repartition everything
-                RePartitionExistingEntityQuery(World, false);
-                RepartitionExistingEntityWithoutTransformQuery(World, scenePosition);
+                using (mRePartitionExistingEntityQuery.Auto())
+                    RePartitionExistingEntityQuery(World, false);
+                using (mRepartitionExistingEntityWithoutTransformQuery.Auto())
+                    RepartitionExistingEntityWithoutTransformQuery(World, scenePosition);
             }
             else
             {
-                ResetDirtyQuery(World);
+                using (mResetDirtyQuery.Auto())
+                    ResetDirtyQuery(World);
 
                 // Repartition all entities with dirty transform
-                RePartitionExistingEntityQuery(World, true);
+                using (mRePartitionExistingEntityQuery.Auto())
+                    RePartitionExistingEntityQuery(World, true);
             }
 
             // Then partition all entities that are not partitioned yet
-            PartitionNewEntityQuery(World);
-            PartitionNewEntityWithoutTransformQuery(World, scenePosition);
+            using (mPartitionNewEntityQuery.Auto())
+                PartitionNewEntityQuery(World);
+            using (mPartitionNewEntityWithoutTransformQuery.Auto())
+                PartitionNewEntityWithoutTransformQuery(World, scenePosition);
 
-            if (idInJob == 0)
+            if (InJobIdentifier == 0)
                 return;
 
             PartitionJob partitionJob;
@@ -181,23 +129,12 @@ namespace ECS.Unity.Systems
 
             using (job_RunMarker.Auto())
             {
-                handle = partitionJob.Schedule(idInJob, 64);
+                handle = partitionJob.Schedule(InJobIdentifier, 64);
                 handle.Complete();
             }
 
             using (job_ResultMarker.Auto())
             {
-                // foreach ((Repartitionable repartitionable, PartitionComponent partitionComponent) in repartitionableSet)
-                //     if (repartitionable.IdInJob >= 0 && repartitionable.IdInJob < bucket.Length)
-                //     {
-                //         partitionComponent.Bucket = bucket[repartitionable.IdInJob];
-                //         partitionComponent.IsBehind = isBehind[repartitionable.IdInJob];
-                //
-                //         partitionComponent.IsDirty = repartitionable.IsNewEntity
-                //                                      || partitionComponent.Bucket != bucket[repartitionable.IdInJob]
-                //                                      || partitionComponent.IsBehind != isBehind[repartitionable.IdInJob];
-                //     }
-
                 ApplyJobResultsQuery(World);
                 Clear();
             }
@@ -209,8 +146,7 @@ namespace ECS.Unity.Systems
             isBehind.Clear();
             position.Clear();
 
-            repartitionableSet.Clear();
-            idInJob = 0;
+            InJobIdentifier = 0;
         }
 
         [Query]
@@ -289,15 +225,13 @@ namespace ECS.Unity.Systems
         private void AddToJob(ref Repartitionable repartitionable, PartitionComponent partitionComponent, Vector3 inPosition)
         {
             repartitionable.IsNewEntity = false;
-            repartitionable.IdInJob = idInJob;
+            repartitionable.IdInJob = InJobIdentifier;
 
             bucket.Add(partitionComponent.Bucket);
             isBehind.Add(partitionComponent.IsBehind);
             position.Add(inPosition);
 
-            repartitionableSet.Add((repartitionable, partitionComponent));
-
-            idInJob++;
+            InJobIdentifier++;
         }
 
         [BurstCompile]
