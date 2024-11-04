@@ -180,7 +180,6 @@ namespace ECS.Unity.Systems
             AddToJob(ref repartitionable, partitionComponent, transformComponent.Cached.WorldPosition);
             repartitionable.IsNewEntity = true;
 
-            // RePartition(cameraPosition, cameraForward, transformComponent.Cached.WorldPosition, ref partitionComponent);
             partitionComponent.IsDirty = true;
             World.Add(entity, partitionComponent);
         }
@@ -196,8 +195,6 @@ namespace ECS.Unity.Systems
             AddToJob(ref repartitionable, partitionComponent, scenePosition);
             repartitionable.IsNewEntity = true;
 
-            // RePartition(cameraPosition, cameraForward, scenePosition, ref partitionComponent);
-
             partitionComponent.IsDirty = true;
             World.Add(entity, partitionComponent);
         }
@@ -207,8 +204,6 @@ namespace ECS.Unity.Systems
         private void RepartitionExistingEntityWithoutTransform(ref Repartitionable repartitionable, ref PartitionComponent partitionComponent, [Data] Vector3 scenePosition)
         {
             AddToJob(ref repartitionable, partitionComponent, scenePosition);
-
-            // RePartition(cameraPosition, cameraForward, scenePosition, ref partitionComponent);
         }
 
         [Query]
@@ -218,8 +213,6 @@ namespace ECS.Unity.Systems
                 return;
 
             AddToJob(ref repartitionable, partitionComponent, transformComponent.Cached.WorldPosition);
-
-            // RePartition(cameraPosition, cameraForward, transformComponent.Cached.WorldPosition, ref partitionComponent);
         }
 
         private void AddToJob(ref Repartitionable repartitionable, PartitionComponent partitionComponent, Vector3 inPosition)
