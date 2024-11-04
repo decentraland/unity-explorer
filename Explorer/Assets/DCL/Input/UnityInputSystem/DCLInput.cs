@@ -2947,6 +2947,15 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": true
+                },
+                {
+                    ""name"": ""ToggleActivity"",
+                    ""type"": ""Button"",
+                    ""id"": ""66da96d0-1e0e-483f-bbc0-a6c0815fcc03"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -3006,7 +3015,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""isPartOfComposite"": true
                 },
                 {
-                    ""name"": ""ARROWS"",
+                    ""name"": ""Arrows"",
                     ""id"": ""6ffadb5c-5eb3-4636-93b4-5596040519a9"",
                     ""path"": ""2DVector(mode=1)"",
                     ""interactions"": """",
@@ -3079,6 +3088,17 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""Translation"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""937cba60-6721-4f50-818c-24ea82c0e3cd"",
+                    ""path"": ""<Keyboard>/c"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""ToggleActivity"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -3189,6 +3209,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         // InWorldCamera
         m_InWorldCamera = asset.FindActionMap("InWorldCamera", throwIfNotFound: true);
         m_InWorldCamera_Translation = m_InWorldCamera.FindAction("Translation", throwIfNotFound: true);
+        m_InWorldCamera_ToggleActivity = m_InWorldCamera.FindAction("ToggleActivity", throwIfNotFound: true);
     }
 
     public void Dispose()
@@ -4149,11 +4170,13 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
     private readonly InputActionMap m_InWorldCamera;
     private List<IInWorldCameraActions> m_InWorldCameraActionsCallbackInterfaces = new List<IInWorldCameraActions>();
     private readonly InputAction m_InWorldCamera_Translation;
+    private readonly InputAction m_InWorldCamera_ToggleActivity;
     public struct InWorldCameraActions
     {
         private @DCLInput m_Wrapper;
         public InWorldCameraActions(@DCLInput wrapper) { m_Wrapper = wrapper; }
         public InputAction @Translation => m_Wrapper.m_InWorldCamera_Translation;
+        public InputAction @ToggleActivity => m_Wrapper.m_InWorldCamera_ToggleActivity;
         public InputActionMap Get() { return m_Wrapper.m_InWorldCamera; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -4166,6 +4189,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @Translation.started += instance.OnTranslation;
             @Translation.performed += instance.OnTranslation;
             @Translation.canceled += instance.OnTranslation;
+            @ToggleActivity.started += instance.OnToggleActivity;
+            @ToggleActivity.performed += instance.OnToggleActivity;
+            @ToggleActivity.canceled += instance.OnToggleActivity;
         }
 
         private void UnregisterCallbacks(IInWorldCameraActions instance)
@@ -4173,6 +4199,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @Translation.started -= instance.OnTranslation;
             @Translation.performed -= instance.OnTranslation;
             @Translation.canceled -= instance.OnTranslation;
+            @ToggleActivity.started -= instance.OnToggleActivity;
+            @ToggleActivity.performed -= instance.OnToggleActivity;
+            @ToggleActivity.canceled -= instance.OnToggleActivity;
         }
 
         public void RemoveCallbacks(IInWorldCameraActions instance)
@@ -4302,5 +4331,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
     public interface IInWorldCameraActions
     {
         void OnTranslation(InputAction.CallbackContext context);
+        void OnToggleActivity(InputAction.CallbackContext context);
     }
 }
