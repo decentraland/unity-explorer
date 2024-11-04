@@ -10,7 +10,8 @@ cd CompressonatorWorkaround/
 python3.12 ./compressonator/build/fetch_dependencies.py
 python3.12 ./compressonator/build/fetch_dependencies.py # intended
 python3.12 integrate_simde.py
-builds_mac.sh
+./builds_mac.sh
+cd ..
 
 cd FreeImage/Source/FFI/
 ./build.sh
