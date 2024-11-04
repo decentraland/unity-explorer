@@ -2,6 +2,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.MapRenderer.ComponentsFactory;
+using DCL.Utilities.Extensions;
 using DCL.WebRequests;
 using DCL.WebRequests.ArgsFactory;
 using DG.Tweening;

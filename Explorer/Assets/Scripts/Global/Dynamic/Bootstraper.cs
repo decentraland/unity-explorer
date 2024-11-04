@@ -16,7 +16,6 @@ using DCL.UI.MainUI;
 using DCL.UserInAppInitializationFlow;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
-using ECS.Abstract;
 using Global.AppArgs;
 using Global.Dynamic.DebugSettings;
 using MVC;
@@ -75,8 +74,14 @@ namespace Global.Dynamic
             DotNetLoggingPlugin.Initialize();
         }
 
-        public async UniTask<(StaticContainer?, bool)> LoadStaticContainerAsync(BootstrapContainer bootstrapContainer, PluginSettingsContainer globalPluginSettingsContainer, DebugViewsCatalog debugViewsCatalog, Entity playerEntity, ISystemMemoryCap memoryCap,
-            CancellationToken ct) =>
+        public async UniTask<(StaticContainer?, bool)> LoadStaticContainerAsync(
+            BootstrapContainer bootstrapContainer,
+            PluginSettingsContainer globalPluginSettingsContainer,
+            DebugViewsCatalog debugViewsCatalog,
+            Entity playerEntity,
+            ISystemMemoryCap memoryCap,
+            CancellationToken ct
+        ) =>
             await StaticContainer.CreateAsync(
                 bootstrapContainer.DecentralandUrlsSource,
                 bootstrapContainer.AssetsProvisioner,
@@ -150,6 +155,7 @@ namespace Global.Dynamic
                 world,
                 playerEntity,
                 appArgs,
+                staticContainer.SceneRestrictionBusController,
                 staticContainer.LoadingStatus,
                 ct);
         }
@@ -202,6 +208,7 @@ namespace Global.Dynamic
 
             GlobalWorld globalWorld = dynamicWorldContainer.GlobalWorldFactory.Create(sceneSharedContainer.SceneFactory,
                 sceneSharedContainer.V8ActiveEngines, playerEntity);
+
 
             dynamicWorldContainer.RealmController.GlobalWorld = globalWorld;
 

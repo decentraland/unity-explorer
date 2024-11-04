@@ -1,7 +1,6 @@
 ﻿using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.Optimization.PerformanceBudgeting;
 using DCL.WebRequests.GenericDelete;
 using System;
 using System.Collections.Generic;
@@ -10,7 +9,6 @@ using DCL.DebugUtilities.UIBindings;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using UnityEngine;
 using UnityEngine.Networking;
-using Utility.Times;
 
 namespace DCL.WebRequests
 {
@@ -55,29 +53,6 @@ namespace DCL.WebRequests
                     suppressErrors
                 ), op
             );
-
-        public static UniTask<TResult> SignedFetchPostAsync<TOp, TResult>(
-            this IWebRequestController controller,
-            CommonArguments commonArguments,
-            TOp webRequestOp,
-            string signatureMetadata,
-            ReportData reportData,
-            CancellationToken ct
-        )
-            where TOp: struct, IWebRequestOp<GenericPostRequest, TResult>
-        {
-            ulong unixTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
-
-            return controller.PostAsync<TOp, TResult>(
-                commonArguments,
-                webRequestOp,
-                GenericPostArguments.Empty,
-                ct,
-                reportData,
-                signInfo: WebRequestSignInfo.NewFromRaw(signatureMetadata, commonArguments.URL, unixTimestamp, "post"),
-                headersInfo: new WebRequestHeadersInfo().WithSign(signatureMetadata, unixTimestamp)
-            );
-        }
 
         /// <summary>
         ///     Make a generic get request to download arbitrary data
