@@ -66,12 +66,12 @@ jobs:
         Invoke-WebRequest -Uri "https://launcher-public-service-prod06.ol.epicgames.com/launcher/api/installer/download/BuildPatchTool.zip" -OutFile "BuildPatchTool.zip"
         echo "Extracting BuildPatchTool..."
         Expand-Archive -Path "BuildPatchTool.zip" -DestinationPath "C:\Users\runneradmin\tools"
-        echo "BuildPatchTool extracted to C:\Users\runneradmin\tools\BuildPatchTool\Engine\Binaries\Win64"
+        echo "BuildPatchTool extracted to C:\Users\runneradmin\tools"
 
     - name: List contents of BuildPatchTool directory
       run: |
         echo "Contents of BuildPatchTool directory:"
-        dir "C:\Users\runneradmin\tools\BuildPatchTool\Engine\Binaries\Win64"
+        dir "C:\Users\runneradmin\tools"
 
     - name: Add BuildPatchTool to PATH
       run: echo "C:\Users\runneradmin\tools\BuildPatchTool\Engine\Binaries\Win64" >> $env:GITHUB_PATH
