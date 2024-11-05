@@ -24,6 +24,8 @@ namespace DCL.SDKComponents.MediaStream
     [ThrottlingEnabled]
     public partial class CreateMediaPlayerSystem : BaseUnityLoopSystem
     {
+        private static string CONTENT_SERVER_PREFIX = "/content/contents";
+
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IPerformanceBudget frameTimeBudget;
         private readonly IComponentPool<MediaPlayer> mediaPlayerPool;
@@ -76,19 +78,27 @@ namespace DCL.SDKComponents.MediaStream
         private MediaPlayerComponent CreateMediaPlayerComponent(Entity entity, string url, bool hasVolume, float volume)
         {
             // if it is not valid, we try get it as a scene local video
-            if (!url.IsValidUrl() && sceneData.TryGetMediaUrl(url, out URLAddress mediaUrl))
-                url = mediaUrl;
+            bool isValidStreamUrl = url.IsValidUrl();
+            bool isValidLocalPath = false;
+
+            if (!isValidStreamUrl)
+            {
+                isValidLocalPath = sceneData.TryGetMediaUrl(url, out URLAddress mediaUrl);
+                if(isValidLocalPath)
+                    url = mediaUrl;
+            }
 
             var component = new MediaPlayerComponent
             {
                 MediaPlayer = mediaPlayerPool.Get(),
                 URL = url,
-                State = url.IsValidUrl() ? VideoState.VsNone : VideoState.VsError,
-                PreviousPlayingTimeCheck = -1,
-                LastStateChangeTime = -1,
+                IsFromContentServer = url.Contains(CONTENT_SERVER_PREFIX),
+                PreviousCurrentTimeChecked = -1,
+                LastPropagatedState = VideoState.VsPaused,
                 Cts = new CancellationTokenSource(),
                 OpenMediaPromise = new OpenMediaPromise(),
             };
+            component.SetState(isValidStreamUrl || isValidLocalPath || string.IsNullOrEmpty(url) ? VideoState.VsNone : VideoState.VsError);
 
 #if UNITY_EDITOR
             component.MediaPlayer.gameObject.name = $"MediaPlayer_Entity_{entity}";

@@ -1,7 +1,5 @@
 ﻿using DCL.ECSComponents;
-using DCL.Optimization.Pools;
 using RenderHeads.Media.AVProVideo;
-using System;
 using System.Threading;
 using Utility;
 
@@ -16,9 +14,11 @@ namespace DCL.SDKComponents.MediaStream
         public MediaPlayer MediaPlayer;
 
         public string URL;
-        public VideoState State;
-        public double PreviousPlayingTimeCheck;
-        public float LastStateChangeTime;
+        public bool IsFromContentServer;
+        public VideoState State { get; private set; }
+        public VideoState LastPropagatedState;
+        public double PreviousCurrentTimeChecked;
+        public float LastStateChangeTime { get; private set; }
 
         public CancellationTokenSource Cts;
         public OpenMediaPromise OpenMediaPromise;
@@ -26,6 +26,13 @@ namespace DCL.SDKComponents.MediaStream
         public bool IsPlaying => MediaPlayer.Control.IsPlaying();
         public float CurrentTime => (float)MediaPlayer.Control.GetCurrentTime();
         public float Duration => (float)MediaPlayer.Info.GetDuration();
+
+        public void SetState(VideoState newState)
+        {
+            if (State == newState) return;
+            State = newState;
+            LastStateChangeTime = UnityEngine.Time.realtimeSinceStartup;
+        }
 
         public void Dispose()
         {
