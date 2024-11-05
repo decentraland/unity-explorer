@@ -20,11 +20,17 @@ jobs:
           LATEST_RELEASE=$(curl -s https://api.github.com/repos/${{ github.repository }}/releases/latest | jq -r .tag_name)
           echo "Latest Release: $LATEST_RELEASE"
 
-          echo "is_latest_release=$(if [ "$RELEASE_TAG" == "$LATEST_RELEASE" ]; then echo 'true'; else echo 'false'; fi)" >> $GITHUB_ENV
+          # Set output for is_latest_release based on comparison
+          if [ "$RELEASE_TAG" == "$LATEST_RELEASE" ]; then
+            echo "is_latest_release='true'" >> $GITHUB_OUTPUT
+          else
+            echo "is_latest_release='false'" >> $GITHUB_OUTPUT
+          fi
+
           echo "latest_release=$LATEST_RELEASE" >> $GITHUB_ENV
 
       - name: Run actions if release is the latest
-        if: env.is_latest_release == 'true'
+        if: steps.check_latest.outputs.is_latest_release == 'true'
         env:
           AWS_MAX_ATTEMPTS: 3
           AWS_RETRY_MODE: standard
