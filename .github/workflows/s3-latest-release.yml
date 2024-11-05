@@ -26,6 +26,8 @@ jobs:
       - name: Run actions if release is the latest
         if: env.is_latest_release == 'true'
         env:
+          AWS_MAX_ATTEMPTS: 3
+          AWS_RETRY_MODE: standard
           AWS_ACCESS_KEY_ID: ${{ secrets.EXPLORER_TEAM_AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.EXPLORER_TEAM_AWS_SECRET_ACCESS_KEY }}
           EXPLORER_TEAM_S3_BUCKET: ${{ secrets.EXPLORER_TEAM_S3_BUCKET }}
