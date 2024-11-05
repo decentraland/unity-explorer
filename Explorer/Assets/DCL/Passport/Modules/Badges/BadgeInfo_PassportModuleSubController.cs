@@ -279,7 +279,8 @@ namespace DCL.Passport.Modules.Badges
                 string hrmUrl = assets.textures3d.hrm ?? string.Empty;
 
                 Texture2D baseColorTexture = await RemoteTextureAsync(baseColorUrl, ct);
-                Texture2D normalTexture = await RemoteTextureAsync(normalUrl, ct, TextureType.NormalMap);
+                //TODO actually normal maps should be in Normal format, but the Shader relies on none BC5 format, should be fixed in the future
+                Texture2D normalTexture = await RemoteTextureAsync(normalUrl, ct);
                 Texture2D hrmTexture = await RemoteTextureAsync(hrmUrl, ct);
 
                 Set3DImage(baseColorTexture, normalTexture, hrmTexture);
