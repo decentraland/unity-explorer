@@ -58,7 +58,7 @@ jobs:
     - name: List contents of macOS build directory
       run: |
         echo "Contents of macOS build directory:"
-        dir "C:\Users\runneradmin\BuildRoot_Mac" /s
+        dir "C:\Users\runneradmin\BuildRoot_Mac" -Recurse
 
     - name: Download BuildPatchTool
       run: |
