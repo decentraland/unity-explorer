@@ -2,8 +2,7 @@
 using Arch.System;
 using Arch.SystemGroups;
 using DCL.ECSComponents;
-using DCL.TimeR;
-using DCL.TimeR;
+using DCL.Time;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.Prioritization.Components;
