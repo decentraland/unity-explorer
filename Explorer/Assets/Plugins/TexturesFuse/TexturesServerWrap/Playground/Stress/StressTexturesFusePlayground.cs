@@ -2,7 +2,6 @@ using Cysharp.Threading.Tasks;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System.Collections;
 using System.IO;
-using System.Threading;
 using UnityEngine;
 
 namespace Plugins.TexturesFuse.TexturesServerWrap.Playground
@@ -30,9 +29,17 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground
 
             while (this)
             {
-                unzip.TextureFromBytesAsync(buffer, textureType, destroyCancellationToken).Forget();
+                AcquireAndDisposeAsync(buffer, unzip).Forget();
                 yield return wait;
             }
+        }
+
+        private async UniTaskVoid AcquireAndDisposeAsync(byte[] buffer, ITexturesUnzip unzip)
+        {
+            var result = await unzip.TextureFromBytesAsync(buffer, textureType, destroyCancellationToken);
+
+            if (result.Success)
+                result.Value.Dispose();
         }
     }
 }
