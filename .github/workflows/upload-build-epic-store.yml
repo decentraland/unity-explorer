@@ -65,7 +65,7 @@ jobs:
         echo "Downloading BuildPatchTool..."
         Invoke-WebRequest -Uri "https://launcher-public-service-prod06.ol.epicgames.com/launcher/api/installer/download/BuildPatchTool.zip" -OutFile "BuildPatchTool.zip"
         echo "Extracting BuildPatchTool..."
-        Expand-Archive -Path "BuildPatchTool.zip" -DestinationPath "C:\Users\runneradmin\tools"
+        Expand-Archive -Path "BuildPatchTool.zip" -DestinationPath "C:\Users\runneradmin\tools\BuildPatchTool"
         echo "BuildPatchTool extracted to C:\Users\runneradmin\tools\BuildPatchTool"
 
     - name: List contents of BuildPatchTool directory
