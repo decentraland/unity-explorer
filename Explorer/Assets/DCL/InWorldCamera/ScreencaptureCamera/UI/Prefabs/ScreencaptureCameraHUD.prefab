@@ -87,6 +87,7 @@ GameObject:
   - component: {fileID: 405257682719442047}
   - component: {fileID: 405257682719442046}
   - component: {fileID: 405257682719442045}
+  - component: {fileID: 5645814392825967031}
   m_Layer: 5
   m_Name: ScreencaptureCameraHUD
   m_TagString: Untagged
@@ -181,6 +182,19 @@ MonoBehaviour:
   m_BlockingMask:
     serializedVersion: 2
     m_Bits: 4294967295
+--- !u!114 &5645814392825967031
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 405257682719442044}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2d5120df372247eb89adb2fa4b2de189, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Screenshot: {fileID: 0}
 --- !u!1 &405257684294210920
 GameObject:
   m_ObjectHideFlags: 0

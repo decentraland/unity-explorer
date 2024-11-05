@@ -675,6 +675,15 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "ToggleInWorld",
+                    "type": "Button",
+                    "id": "633a69c6-dec3-41ff-9fdf-bcd8c5049c19",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -950,6 +959,17 @@
                     "processors": "",
                     "groups": "",
                     "action": "ToggleFreeFly",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "ae2613fd-2d22-4d94-9b41-3f61b24cf1e4",
+                    "path": "<Keyboard>/c",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "ToggleInWorld",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }
@@ -2927,9 +2947,9 @@
                     "initialStateCheck": true
                 },
                 {
-                    "name": "ToggleActivity",
+                    "name": "Screenshot",
                     "type": "Button",
-                    "id": "66da96d0-1e0e-483f-bbc0-a6c0815fcc03",
+                    "id": "7710aa41-5a63-496b-9e59-a35bacb9a6b0",
                     "expectedControlType": "Button",
                     "processors": "",
                     "interactions": "",
@@ -3071,12 +3091,12 @@
                 },
                 {
                     "name": "",
-                    "id": "937cba60-6721-4f50-818c-24ea82c0e3cd",
-                    "path": "<Keyboard>/c",
+                    "id": "67618fc3-7aae-4057-96fc-02acde036027",
+                    "path": "<Keyboard>/space",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
-                    "action": "ToggleActivity",
+                    "action": "Screenshot",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

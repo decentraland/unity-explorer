@@ -14,6 +14,7 @@ namespace DCL.CharacterCamera.Components
         public bool ZoomOut;
         public bool SwitchState;
         public bool SetFreeFly;
+        public bool SetInWorld;
         public bool ChangeShoulder;
 
         /// <summary>
