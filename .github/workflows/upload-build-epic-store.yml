@@ -78,7 +78,7 @@ jobs:
 
     - name: Upload Windows artifact
       run: |
-        C:\Users\runneradmin\tools\BuildPatchTool\Engine\Binaries\Win64\BuildPatchTool.exe `
+        & "C:\Users\runneradmin\tools\BuildPatchTool\Engine\Binaries\Win64\BuildPatchTool.exe" `
         -OrganizationId="${{ secrets.EPIC_STORE_ORG_ID }}" `
         -ProductId="${{ secrets.EPIC_STORE_PRODUCT_ID }}" `
         -ArtifactId="${{ secrets.EPIC_STORE_ARTIFACT_ID }}" `
