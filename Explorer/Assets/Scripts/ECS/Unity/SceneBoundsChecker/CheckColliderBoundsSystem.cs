@@ -2,7 +2,8 @@
 using Arch.System;
 using Arch.SystemGroups;
 using DCL.ECSComponents;
-using DCL.Time;
+using DCL.TimeR;
+using DCL.TimeR;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.Prioritization.Components;
@@ -123,7 +124,7 @@ namespace ECS.Unity.SceneBoundsChecker
                     // While the collider remains inactive, the bounds will continue to be zero, causing incorrect calculations.
                     // Therefore, it is necessary to force the collider to be activated at least once
                     sdkCollider.ForceActiveBySceneBounds(auxiliaryBounds.extents == Vector3.zero
-                                                         || (auxiliaryBounds.max.y <= sceneGeometry.Height && sceneGeometry.CircumscribedPlanes.Contains(auxiliaryBounds)));
+                                                         || (auxiliaryBounds.max.y <= sceneGeometry.Height && sceneGeometry.CircumscribedPlanes.Contains(sdkCollider.Collider.bounds)));
 
                     // write the structure back
                     colliders[i] = sdkCollider;
