@@ -264,7 +264,8 @@ jobs:
           if [ "${{ matrix.target }}" == "macos" ]; then
             zip -r upload_to_s3/Decentraland_${{ matrix.target }}.zip build.tar
           elif [ "${{ matrix.target }}" == "windows64" ]; then
-            zip -r upload_to_s3/Decentraland_${{ matrix.target }}.zip build/* -x "build/*_BackUpThisFolder_ButDontShipItWithYourGame**" -x "build/*_BurstDebugInformation_DoNotShip**"
+            cd build
+            zip -r ../upload_to_s3/Decentraland_${{ matrix.target }}.zip . -x "*_BackUpThisFolder_ButDontShipItWithYourGame**" -x "*_BurstDebugInformation_DoNotShip**"
           fi
 
       - name: Upload artifact to S3
