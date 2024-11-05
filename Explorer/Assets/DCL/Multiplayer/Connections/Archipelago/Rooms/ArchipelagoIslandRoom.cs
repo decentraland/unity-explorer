@@ -60,7 +60,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
         protected override async UniTask PrewarmAsync(CancellationToken token)
         {
             await ConnectToArchipelagoAsync(token);
-            signFlow.StartListeningForConnectionStringAsync(OnNewConnectionString, token);
+            signFlow.StartListeningForConnectionStringAsync(OnNewConnectionString, token).Forget();
         }
 
         protected override async UniTask CycleStepAsync(CancellationToken token)
