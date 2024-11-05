@@ -12,6 +12,5 @@ namespace DCL.LOD
         void Release(in string key, LODCacheInfo asset);
 
         void Unload(IPerformanceBudget frameTimeBudgetProvider, int maxUnloadAmount);
-        void UnloadImmediate();
     }
 }

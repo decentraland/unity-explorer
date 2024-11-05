@@ -129,7 +129,6 @@ namespace Global.Dynamic
                 playerEntity,
                 appArgs,
                 staticContainer.SceneRestrictionBusController,
-                staticContainer.LoadingStatus,
                 ct);
         }
 

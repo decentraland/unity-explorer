@@ -65,7 +65,7 @@ namespace DCL.LOD
 
         public void Dispose()
         {
-            UnloadImmediate();
+            Unload(new NullPerformanceBudget(), int.MaxValue);
             UnityObjectUtils.SafeDestroyGameObject(roadAssetParent);
         }
 
@@ -124,15 +124,6 @@ namespace DCL.LOD
                 roadAssetPool.Release(asset);
             else
                 roadAssetPoolDictionary[DEFAULT_ROAD_KEY].Release(asset);
-        }
-
-        /// <summary>
-        /// Destroys all road asset instances in all pools. Instances must be released before they can be destroyed using this method.
-        /// </summary>
-        public void UnloadImmediate()
-        {
-            foreach (KeyValuePair<string, IObjectPool<Transform>> keyValuePair in roadAssetPoolDictionary)
-                keyValuePair.Value.Clear();
         }
 
         // Called by the CacheCleaner
