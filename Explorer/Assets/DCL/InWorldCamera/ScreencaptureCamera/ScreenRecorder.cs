@@ -5,7 +5,7 @@ using Object = UnityEngine.Object;
 
 namespace DCL.InWorldCamera.ScreencaptureCamera
 {
-     public class ScreenRecorder
+    public class ScreenRecorder
     {
         private const int TARGET_FRAME_WIDTH = 1920;
         private const int TARGET_FRAME_HEIGHT = 1080;
@@ -46,13 +46,12 @@ namespace DCL.InWorldCamera.ScreencaptureCamera
             ScreenFrameData rescaledScreenFrame = CalculateRoundRescaledScreenFrame(currentScreenFrame, roundedUpscale);
 
             Texture2D screenshotTexture = ScreenCapture.CaptureScreenshotAsTexture(roundedUpscale); // upscaled Screen Frame resolution
-            Texture2D upscaledFrameTexture = CropTexture2D(screenshotTexture, rescaledScreenFrame.CalculateFrameCorners(), rescaledScreenFrame.FrameWidthInt, rescaledScreenFrame.FrameHeightInt);
-            ResizeTexture2D(upscaledFrameTexture);
+            screenshotTexture = CropTexture2D(screenshotTexture, rescaledScreenFrame.CalculateFrameCorners(), rescaledScreenFrame.FrameWidthInt, rescaledScreenFrame.FrameHeightInt);
+            ResizeTexture2D(screenshotTexture);
 
             onComplete?.Invoke(screenshot);
 
             Object.Destroy(screenshotTexture);
-            Object.Destroy(upscaledFrameTexture);
 
             IsCapturing = false;
         }

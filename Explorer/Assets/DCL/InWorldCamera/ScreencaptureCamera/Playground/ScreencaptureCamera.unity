@@ -703,9 +703,29 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 68611560}
     - target: {fileID: 1866878135409823549, guid: 740a8080d106c64469673c78aefd4d5c, type: 3}
+      propertyPath: metadata.dateTime
+      value: 1730817741
+      objectReference: {fileID: 0}
+    - target: {fileID: 1866878135409823549, guid: 740a8080d106c64469673c78aefd4d5c, type: 3}
+      propertyPath: metadata.userName
+      value: Vit
+      objectReference: {fileID: 0}
+    - target: {fileID: 1866878135409823549, guid: 740a8080d106c64469673c78aefd4d5c, type: 3}
       propertyPath: canvasRectTransform
       value: 
       objectReference: {fileID: 68611561}
+    - target: {fileID: 1866878135409823549, guid: 740a8080d106c64469673c78aefd4d5c, type: 3}
+      propertyPath: metadata.userAddress
+      value: 0x05de05303eab867d51854e8b4fe03f7acb0624d9
+      objectReference: {fileID: 0}
+    - target: {fileID: 1866878135409823549, guid: 740a8080d106c64469673c78aefd4d5c, type: 3}
+      propertyPath: metadata.scene.location.x
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1866878135409823549, guid: 740a8080d106c64469673c78aefd4d5c, type: 3}
+      propertyPath: metadata.scene.location.y
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 3221808711166188028, guid: 740a8080d106c64469673c78aefd4d5c, type: 3}
       propertyPath: m_Name
       value: _ScreenshottShooter
