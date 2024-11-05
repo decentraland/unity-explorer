@@ -20,8 +20,6 @@ namespace DCL.MapRenderer.MapLayers.Categories
         private const string EMPTY_PARCEL_NAME = "Empty parcel";
         private MapLayer mapLayer;
 
-        private static readonly PoolExtensions.Scope<List<PlacesData.PlaceInfo>> EMPTY_PLACES = PoolExtensions.EmptyScope(new List<PlacesData.PlaceInfo>());
-
         internal delegate ICategoryMarker CategoryMarkerBuilder(
             IObjectPool<CategoryMarkerObject> objectsPool,
             IMapCullingController cullingController);
@@ -31,7 +29,7 @@ namespace DCL.MapRenderer.MapLayers.Categories
         private readonly CategoryIconMappingsSO categoryIconMappings;
         private readonly IPlacesAPIService placesAPIService;
 
-        private readonly Dictionary<PlacesData.PlaceInfo, ICategoryMarker> markers = new ();
+        private readonly Dictionary<PlacesData.CategoryPlaceData, ICategoryMarker> markers = new ();
         private readonly List<Vector2Int> vectorCoords = new ();
         private Vector2Int decodePointer;
 
@@ -56,23 +54,10 @@ namespace DCL.MapRenderer.MapLayers.Categories
 
         public async UniTask InitializeAsync(CancellationToken cancellationToken)
         {
-            IReadOnlyList<string> artPlace =
-                await placesAPIService.GetPointsOfInterestCoordsAsync(cancellationToken)
-                                      .SuppressAnyExceptionWithFallback(Array.Empty<string>(), ReportCategory.UI);
-            vectorCoords.Clear();
-
-            foreach (var s in artPlace)
-            {
-                try { vectorCoords.Add(IpfsHelper.DecodePointer(s)); }
-                catch (Exception e) { ReportHub.LogException(e, ReportCategory.UI); }
-            }
-
-            using var placesByCoordsListAsync =
-                await placesAPIService.GetPlacesByCoordsListAsync(vectorCoords, cancellationToken, true)
-                                      .SuppressAnyExceptionWithFallback(EMPTY_PLACES, ReportCategory.UI);
+            List<PlacesData.CategoryPlaceData> placesOfCategory = await placesAPIService.GetPlacesByCategoryListAsync(MapLayerUtils.MapLayerToCategory[mapLayer], cancellationToken);
 
             // non-blocking retrieval of scenes of interest happens independently on the minimap rendering
-            foreach (PlacesData.PlaceInfo placeInfo in placesByCoordsListAsync.Value)
+            foreach (PlacesData.CategoryPlaceData placeInfo in placesOfCategory)
             {
                 if (markers.ContainsKey(placeInfo))
                     continue;
@@ -81,10 +66,10 @@ namespace DCL.MapRenderer.MapLayers.Categories
                     continue;
 
                 var marker = builder(objectsPool, mapCullingController);
-                var centerParcel = GetParcelsCenter(placeInfo);
-                var position = coordsUtils.CoordsToPosition(centerParcel);
+                //var centerParcel = GetParcelsCenter(placeInfo);
+                var position = coordsUtils.CoordsToPosition(placeInfo.base_position);
 
-                marker.SetData(placeInfo.title, position);
+                marker.SetData(placeInfo.name, position);
                 marker.SetCategorySprite(categoryIconMappings.GetCategoryImage(mapLayer));
                 markers.Add(placeInfo, marker);
 
@@ -141,8 +126,8 @@ namespace DCL.MapRenderer.MapLayers.Categories
             return centerParcel;
         }
 
-        private static bool IsEmptyParcel(PlacesData.PlaceInfo sceneInfo) =>
-            sceneInfo.title is EMPTY_PARCEL_NAME;
+        private static bool IsEmptyParcel(PlacesData.CategoryPlaceData sceneInfo) =>
+            sceneInfo.name is EMPTY_PARCEL_NAME;
 
         public void ApplyCameraZoom(float baseZoom, float zoom)
         {

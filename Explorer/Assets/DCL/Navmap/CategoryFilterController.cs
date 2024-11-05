@@ -1,8 +1,6 @@
 using DCL.MapRenderer;
 using DCL.MapRenderer.MapLayers;
-using System;
 using System.Collections.Generic;
-using UnityEngine.UI;
 
 namespace DCL.Navmap
 {

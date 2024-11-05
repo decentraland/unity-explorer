@@ -23,6 +23,7 @@ namespace DCL.PlacesAPIService
         private string baseURL => decentralandUrlsSource.Url(DecentralandUrl.ApiPlaces);
         private URLDomain baseURLDomain => URLDomain.FromString(baseURL);
         private URLAddress poiURL => URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.POI));
+        private URLAddress placesByCategoryURL => URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.POI));
         private URLAddress contentModerationReportURL => URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.ContentModerationReport));
 
         public PlacesAPIClient(IWebRequestController webRequestController, IDecentralandUrlsSource decentralandUrlsSource)
@@ -207,6 +208,19 @@ namespace DCL.PlacesAPIService
 
             if (response.data == null)
                 throw new Exception("No POIs info retrieved");
+
+            return response.data;
+        }
+
+        public async UniTask<List<PlacesData.CategoryPlaceData>> GetPlacesByCategoryListAsync(string category, CancellationToken ct)
+        {
+            GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> result = webRequestController.GetAsync(placesByCategoryURL, ct, ReportCategory.UI);
+
+            PlacesData.CategoryPlaceResponse response = await result.CreateFromJson<PlacesData.CategoryPlaceResponse>(WRJsonParser.Unity,
+                createCustomExceptionOnFailure: static (_, text) => new PlacesAPIException("Error parsing get places by category response:", text));
+
+            if (response.data == null)
+                throw new Exception($"No Places for category {category} retrieved");
 
             return response.data;
         }
