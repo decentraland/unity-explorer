@@ -27,7 +27,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
 
         public async UniTask<EnumResult<IOwnedTexture2D, NativeMethods.ImageResult>> TextureFromBytesAsync(IntPtr bytes, int bytesLength, TextureType type, CancellationToken token)
         {
-            using var workerScope = await WorkerScope.NewWorkerScopeAsync(workers, timeout);
+            using var workerScope = await WorkerScope.NewWorkerScopeAsync(workers, timeout, token);
             return await workerScope.Worker.TextureFromBytesAsync(bytes, bytesLength, type, token);
         }
 
@@ -40,7 +40,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
         private readonly struct WorkerScope : IDisposable
         {
             private static readonly TimeSpan POLL_DELAY = TimeSpan.FromMilliseconds(50);
-            private static readonly Atomic<DateTime> SHARED_START_TIME = new(DateTime.UtcNow);
+            private static readonly Atomic<DateTime> SHARED_START_TIME = new (DateTime.UtcNow);
 
             public readonly ITexturesUnzip Worker;
             private readonly ConcurrentQueue<ITexturesUnzip> workers;
@@ -51,7 +51,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
                 this.Worker = worker;
             }
 
-            public static async UniTask<WorkerScope> NewWorkerScopeAsync(ConcurrentQueue<ITexturesUnzip> workers, TimeSpan timeout)
+            public static async UniTask<WorkerScope> NewWorkerScopeAsync(ConcurrentQueue<ITexturesUnzip> workers, TimeSpan timeout, CancellationToken token)
             {
                 SHARED_START_TIME.Set(DateTime.UtcNow);
                 ITexturesUnzip worker;
@@ -61,7 +61,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
                     if (DateTime.UtcNow - SHARED_START_TIME.Value() > timeout)
                         throw new TimeoutException();
 
-                    await UniTask.Delay(POLL_DELAY);
+                    await UniTask.Delay(POLL_DELAY, cancellationToken: token);
                 }
 
                 return new WorkerScope(workers, worker!);
