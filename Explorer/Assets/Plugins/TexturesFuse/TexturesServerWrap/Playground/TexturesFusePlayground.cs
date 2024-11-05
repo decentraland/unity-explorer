@@ -5,6 +5,8 @@ using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System;
 using System.IO;
 using UnityEngine;
+using UnityEngine.Networking;
+using UnityEngine.Serialization;
 
 namespace Plugins.TexturesFuse.TexturesServerWrap.Playground
 {
@@ -13,8 +15,11 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground
         [Header("Dependencies")]
         [SerializeField] private AbstractDebugDisplay display = null!;
         [Header("Config")]
+        [SerializeField] private TextureType textureType;
+        [Space]
+        [SerializeField] private bool overrideDefaultUnzip;
         [SerializeField] private Options options = new ();
-        [SerializeField] private string path = "Assets/Plugins/TexturesFuse/textures-server/FreeImage/Source/FFI/image.jpg";
+        [FormerlySerializedAs("path")] [SerializeField] private string pathOrUri = "Assets/Plugins/TexturesFuse/textures-server/FreeImage/Source/FFI/image.jpg";
         [SerializeField] private bool debugOutputFromNative;
         [Space]
         [SerializeField] private string outputPath = "Assets/Plugins/TexturesFuse/TexturesServerWrap/Playground/ASTCTexturesCompatability/test_output.astc";
@@ -32,8 +37,12 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground
         private async UniTaskVoid StartAsync()
         {
             display.EnsureNotNull();
-            unzip = new TexturesUnzip(options.InitOptions, options, debugOutputFromNative).WithLog(string.Empty);
-            buffer = await File.ReadAllBytesAsync(path, destroyCancellationToken)!;
+
+            unzip = overrideDefaultUnzip
+                ? new TexturesUnzip(options.InitOptions, options, debugOutputFromNative).WithLog(string.Empty)
+                : ITexturesUnzip.NewDefault();
+
+            buffer = await BufferAsync(pathOrUri);
             print($"Original size: {buffer.Length} bytes");
 
             var result = await FetchedAndOverrideTextureAsync();
@@ -43,15 +52,36 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground
         private async UniTask<IOwnedTexture2D> FetchedAndOverrideTextureAsync()
         {
             texture?.Dispose();
-            texture = (await unzip.TextureFromBytesAsync(buffer, TextureType.Albedo, destroyCancellationToken)).Unwrap();
+            texture = (await unzip.TextureFromBytesAsync(buffer, textureType, destroyCancellationToken)).Unwrap();
             print($"Compressed size: {texture.Texture.GetRawTextureData()!.Length} bytes");
             return texture;
+        }
+
+        private void OnDestroy()
+        {
+            texture?.Dispose();
+            unzip.Dispose();
         }
 
         [ContextMenu(nameof(SaveToFile))]
         public void SaveToFile()
         {
             File.WriteAllBytes(outputPath, texture!.Texture.GetRawTextureData()!);
+        }
+
+        private async UniTask<byte[]> BufferAsync(string uri)
+        {
+            if (uri.StartsWith("http", StringComparison.Ordinal))
+            {
+                var result = await UnityWebRequest.Get(uri)!.SendWebRequest()!;
+
+                if (result.result is not UnityWebRequest.Result.Success)
+                    throw new Exception($"Failed to fetch {uri}");
+
+                return result.downloadHandler!.data!;
+            }
+
+            return await File.ReadAllBytesAsync(pathOrUri, destroyCancellationToken)!;
         }
 
         [Serializable]

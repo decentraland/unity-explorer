@@ -254,6 +254,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   display: {fileID: 1454420715}
+  textureType: 0
+  overrideDefaultUnzip: 0
   options:
     maxSide: 512
     adjustments:
@@ -277,7 +279,7 @@ MonoBehaviour:
     disableMultithreading: 1
     dwnumThreads: 1
     cmpComputeTypeEncode: 1
-  path: Assets/Plugins/TexturesFuse/textures-server/FreeImage/Source/FFI/TestImages/example.tif
+  pathOrUri: https://assets-cdn.decentraland.org/dclcitizen/3d/hrm.png
   debugOutputFromNative: 1
   outputPath: Assets/Plugins/TexturesFuse/TexturesServerWrap/Playground/ASTCTexturesCompatability/test_output.astc
 --- !u!1 &1203531619
