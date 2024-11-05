@@ -1,7 +1,10 @@
 name: Upload Latest Build to Epic Store
 
 on:
-  workflow_dispatch:  # Trigger this manually or use another event.
+  workflow_dispatch:
+  push:
+    branches:
+      - chore/automatic-upload-epic
 
 jobs:
   debug-build-artifacts:
