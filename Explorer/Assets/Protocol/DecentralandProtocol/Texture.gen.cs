@@ -25,31 +25,35 @@ namespace Decentraland.Common {
       byte[] descriptorData = global::System.Convert.FromBase64String(
           string.Concat(
             "CiFkZWNlbnRyYWxhbmQvY29tbW9uL3RleHR1cmUucHJvdG8SE2RlY2VudHJh",
-            "bGFuZC5jb21tb24itAEKB1RleHR1cmUSCwoDc3JjGAEgASgJEjwKCXdyYXBf",
-            "bW9kZRgCIAEoDjIkLmRlY2VudHJhbGFuZC5jb21tb24uVGV4dHVyZVdyYXBN",
-            "b2RlSACIAQESQAoLZmlsdGVyX21vZGUYAyABKA4yJi5kZWNlbnRyYWxhbmQu",
-            "Y29tbW9uLlRleHR1cmVGaWx0ZXJNb2RlSAGIAQFCDAoKX3dyYXBfbW9kZUIO",
-            "CgxfZmlsdGVyX21vZGUivgEKDUF2YXRhclRleHR1cmUSDwoHdXNlcl9pZBgB",
-            "IAEoCRI8Cgl3cmFwX21vZGUYAiABKA4yJC5kZWNlbnRyYWxhbmQuY29tbW9u",
-            "LlRleHR1cmVXcmFwTW9kZUgAiAEBEkAKC2ZpbHRlcl9tb2RlGAMgASgOMiYu",
-            "ZGVjZW50cmFsYW5kLmNvbW1vbi5UZXh0dXJlRmlsdGVyTW9kZUgBiAEBQgwK",
-            "Cl93cmFwX21vZGVCDgoMX2ZpbHRlcl9tb2RlIskBCgxWaWRlb1RleHR1cmUS",
-            "GwoTdmlkZW9fcGxheWVyX2VudGl0eRgBIAEoDRI8Cgl3cmFwX21vZGUYAiAB",
+            "bGFuZC5jb21tb24aIWRlY2VudHJhbGFuZC9jb21tb24vdmVjdG9ycy5wcm90",
+            "byKwAgoHVGV4dHVyZRILCgNzcmMYASABKAkSPAoJd3JhcF9tb2RlGAIgASgO",
+            "MiQuZGVjZW50cmFsYW5kLmNvbW1vbi5UZXh0dXJlV3JhcE1vZGVIAIgBARJA",
+            "CgtmaWx0ZXJfbW9kZRgDIAEoDjImLmRlY2VudHJhbGFuZC5jb21tb24uVGV4",
+            "dHVyZUZpbHRlck1vZGVIAYgBARIxCgZvZmZzZXQYBCABKAsyHC5kZWNlbnRy",
+            "YWxhbmQuY29tbW9uLlZlY3RvcjJIAogBARIxCgZ0aWxpbmcYBSABKAsyHC5k",
+            "ZWNlbnRyYWxhbmQuY29tbW9uLlZlY3RvcjJIA4gBAUIMCgpfd3JhcF9tb2Rl",
+            "Qg4KDF9maWx0ZXJfbW9kZUIJCgdfb2Zmc2V0QgkKB190aWxpbmcivgEKDUF2",
+            "YXRhclRleHR1cmUSDwoHdXNlcl9pZBgBIAEoCRI8Cgl3cmFwX21vZGUYAiAB",
             "KA4yJC5kZWNlbnRyYWxhbmQuY29tbW9uLlRleHR1cmVXcmFwTW9kZUgAiAEB",
             "EkAKC2ZpbHRlcl9tb2RlGAMgASgOMiYuZGVjZW50cmFsYW5kLmNvbW1vbi5U",
             "ZXh0dXJlRmlsdGVyTW9kZUgBiAEBQgwKCl93cmFwX21vZGVCDgoMX2ZpbHRl",
-            "cl9tb2RlIsABCgxUZXh0dXJlVW5pb24SLwoHdGV4dHVyZRgBIAEoCzIcLmRl",
-            "Y2VudHJhbGFuZC5jb21tb24uVGV4dHVyZUgAEjwKDmF2YXRhcl90ZXh0dXJl",
-            "GAIgASgLMiIuZGVjZW50cmFsYW5kLmNvbW1vbi5BdmF0YXJUZXh0dXJlSAAS",
-            "OgoNdmlkZW9fdGV4dHVyZRgDIAEoCzIhLmRlY2VudHJhbGFuZC5jb21tb24u",
-            "VmlkZW9UZXh0dXJlSABCBQoDdGV4KkAKD1RleHR1cmVXcmFwTW9kZRIOCgpU",
-            "V01fUkVQRUFUEAASDQoJVFdNX0NMQU1QEAESDgoKVFdNX01JUlJPUhACKkcK",
-            "EVRleHR1cmVGaWx0ZXJNb2RlEg0KCVRGTV9QT0lOVBAAEhAKDFRGTV9CSUxJ",
-            "TkVBUhABEhEKDVRGTV9UUklMSU5FQVIQAmIGcHJvdG8z"));
+            "cl9tb2RlIskBCgxWaWRlb1RleHR1cmUSGwoTdmlkZW9fcGxheWVyX2VudGl0",
+            "eRgBIAEoDRI8Cgl3cmFwX21vZGUYAiABKA4yJC5kZWNlbnRyYWxhbmQuY29t",
+            "bW9uLlRleHR1cmVXcmFwTW9kZUgAiAEBEkAKC2ZpbHRlcl9tb2RlGAMgASgO",
+            "MiYuZGVjZW50cmFsYW5kLmNvbW1vbi5UZXh0dXJlRmlsdGVyTW9kZUgBiAEB",
+            "QgwKCl93cmFwX21vZGVCDgoMX2ZpbHRlcl9tb2RlIsABCgxUZXh0dXJlVW5p",
+            "b24SLwoHdGV4dHVyZRgBIAEoCzIcLmRlY2VudHJhbGFuZC5jb21tb24uVGV4",
+            "dHVyZUgAEjwKDmF2YXRhcl90ZXh0dXJlGAIgASgLMiIuZGVjZW50cmFsYW5k",
+            "LmNvbW1vbi5BdmF0YXJUZXh0dXJlSAASOgoNdmlkZW9fdGV4dHVyZRgDIAEo",
+            "CzIhLmRlY2VudHJhbGFuZC5jb21tb24uVmlkZW9UZXh0dXJlSABCBQoDdGV4",
+            "KkAKD1RleHR1cmVXcmFwTW9kZRIOCgpUV01fUkVQRUFUEAASDQoJVFdNX0NM",
+            "QU1QEAESDgoKVFdNX01JUlJPUhACKkcKEVRleHR1cmVGaWx0ZXJNb2RlEg0K",
+            "CVRGTV9QT0lOVBAAEhAKDFRGTV9CSUxJTkVBUhABEhEKDVRGTV9UUklMSU5F",
+            "QVIQAmIGcHJvdG8z"));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
-          new pbr::FileDescriptor[] { },
+          new pbr::FileDescriptor[] { global::Decentraland.Common.VectorsReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(new[] {typeof(global::Decentraland.Common.TextureWrapMode), typeof(global::Decentraland.Common.TextureFilterMode), }, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Common.Texture), global::Decentraland.Common.Texture.Parser, new[]{ "Src", "WrapMode", "FilterMode" }, new[]{ "WrapMode", "FilterMode" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Common.Texture), global::Decentraland.Common.Texture.Parser, new[]{ "Src", "WrapMode", "FilterMode", "Offset", "Tiling" }, new[]{ "WrapMode", "FilterMode", "Offset", "Tiling" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Common.AvatarTexture), global::Decentraland.Common.AvatarTexture.Parser, new[]{ "UserId", "WrapMode", "FilterMode" }, new[]{ "WrapMode", "FilterMode" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Common.VideoTexture), global::Decentraland.Common.VideoTexture.Parser, new[]{ "VideoPlayerEntity", "WrapMode", "FilterMode" }, new[]{ "WrapMode", "FilterMode" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Common.TextureUnion), global::Decentraland.Common.TextureUnion.Parser, new[]{ "Texture", "AvatarTexture", "VideoTexture" }, new[]{ "Tex" }, null, null, null)
@@ -113,6 +117,8 @@ namespace Decentraland.Common {
       src_ = other.src_;
       wrapMode_ = other.wrapMode_;
       filterMode_ = other.filterMode_;
+      offset_ = other.offset_ != null ? other.offset_.Clone() : null;
+      tiling_ = other.tiling_ != null ? other.tiling_.Clone() : null;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -190,6 +196,36 @@ namespace Decentraland.Common {
       _hasBits0 &= ~2;
     }
 
+    /// <summary>Field number for the "offset" field.</summary>
+    public const int OffsetFieldNumber = 4;
+    private global::Decentraland.Common.Vector2 offset_;
+    /// <summary>
+    /// default = Vector2.Zero
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::Decentraland.Common.Vector2 Offset {
+      get { return offset_; }
+      set {
+        offset_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "tiling" field.</summary>
+    public const int TilingFieldNumber = 5;
+    private global::Decentraland.Common.Vector2 tiling_;
+    /// <summary>
+    /// default = Vector2.Zero
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::Decentraland.Common.Vector2 Tiling {
+      get { return tiling_; }
+      set {
+        tiling_ = value;
+      }
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -208,6 +244,8 @@ namespace Decentraland.Common {
       if (Src != other.Src) return false;
       if (WrapMode != other.WrapMode) return false;
       if (FilterMode != other.FilterMode) return false;
+      if (!object.Equals(Offset, other.Offset)) return false;
+      if (!object.Equals(Tiling, other.Tiling)) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -218,6 +256,8 @@ namespace Decentraland.Common {
       if (Src.Length != 0) hash ^= Src.GetHashCode();
       if (HasWrapMode) hash ^= WrapMode.GetHashCode();
       if (HasFilterMode) hash ^= FilterMode.GetHashCode();
+      if (offset_ != null) hash ^= Offset.GetHashCode();
+      if (tiling_ != null) hash ^= Tiling.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -248,6 +288,14 @@ namespace Decentraland.Common {
         output.WriteRawTag(24);
         output.WriteEnum((int) FilterMode);
       }
+      if (offset_ != null) {
+        output.WriteRawTag(34);
+        output.WriteMessage(Offset);
+      }
+      if (tiling_ != null) {
+        output.WriteRawTag(42);
+        output.WriteMessage(Tiling);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -270,6 +318,14 @@ namespace Decentraland.Common {
         output.WriteRawTag(24);
         output.WriteEnum((int) FilterMode);
       }
+      if (offset_ != null) {
+        output.WriteRawTag(34);
+        output.WriteMessage(Offset);
+      }
+      if (tiling_ != null) {
+        output.WriteRawTag(42);
+        output.WriteMessage(Tiling);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -288,6 +344,12 @@ namespace Decentraland.Common {
       }
       if (HasFilterMode) {
         size += 1 + pb::CodedOutputStream.ComputeEnumSize((int) FilterMode);
+      }
+      if (offset_ != null) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(Offset);
+      }
+      if (tiling_ != null) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(Tiling);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -309,6 +371,18 @@ namespace Decentraland.Common {
       }
       if (other.HasFilterMode) {
         FilterMode = other.FilterMode;
+      }
+      if (other.offset_ != null) {
+        if (offset_ == null) {
+          Offset = new global::Decentraland.Common.Vector2();
+        }
+        Offset.MergeFrom(other.Offset);
+      }
+      if (other.tiling_ != null) {
+        if (tiling_ == null) {
+          Tiling = new global::Decentraland.Common.Vector2();
+        }
+        Tiling.MergeFrom(other.Tiling);
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -337,6 +411,20 @@ namespace Decentraland.Common {
             FilterMode = (global::Decentraland.Common.TextureFilterMode) input.ReadEnum();
             break;
           }
+          case 34: {
+            if (offset_ == null) {
+              Offset = new global::Decentraland.Common.Vector2();
+            }
+            input.ReadMessage(Offset);
+            break;
+          }
+          case 42: {
+            if (tiling_ == null) {
+              Tiling = new global::Decentraland.Common.Vector2();
+            }
+            input.ReadMessage(Tiling);
+            break;
+          }
         }
       }
     #endif
@@ -362,6 +450,20 @@ namespace Decentraland.Common {
           }
           case 24: {
             FilterMode = (global::Decentraland.Common.TextureFilterMode) input.ReadEnum();
+            break;
+          }
+          case 34: {
+            if (offset_ == null) {
+              Offset = new global::Decentraland.Common.Vector2();
+            }
+            input.ReadMessage(Offset);
+            break;
+          }
+          case 42: {
+            if (tiling_ == null) {
+              Tiling = new global::Decentraland.Common.Vector2();
+            }
+            input.ReadMessage(Tiling);
             break;
           }
         }
