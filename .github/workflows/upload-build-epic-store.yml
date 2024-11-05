@@ -1,0 +1,103 @@
+name: Upload Latest Build to Epic Store
+
+on:
+  workflow_dispatch:  # Trigger this manually or use another event.
+
+jobs:
+  debug-build-artifacts:
+    runs-on: windows-latest  # This job runs on a Windows runner.
+
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v3
+
+    - name: Get the latest release info
+      id: get_release
+      run: |
+        RELEASE_DATA=$(curl -s https://api.github.com/repos/decentraland/unity-explorer/releases/latest)
+        echo "::set-output name=version::$(echo $RELEASE_DATA | jq -r '.tag_name')"
+        echo "::set-output name=windows_url::$(echo $RELEASE_DATA | jq -r '.assets[] | select(.name == "Decentraland_windows64.zip") | .browser_download_url')"
+        echo "::set-output name=macos_url::$(echo $RELEASE_DATA | jq -r '.assets[] | select(.name == "Decentraland_macos.zip") | .browser_download_url')"
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Log release version and download URLs
+      run: |
+        echo "Release version: ${{ steps.get_release.outputs.version }}"
+        echo "Windows download URL: ${{ steps.get_release.outputs.windows_url }}"
+        echo "macOS download URL: ${{ steps.get_release.outputs.macos_url }}"
+
+    - name: Download Windows build artifact
+      run: |
+        echo "Downloading Windows build artifact..."
+        curl -L -o Decentraland_windows64.zip "${{ steps.get_release.outputs.windows_url }}"
+        echo "Extracting Windows build artifact..."
+        Expand-Archive -Path Decentraland_windows64.zip -DestinationPath "C:\Users\runneradmin\BuildRoot_Windows"
+        echo "Windows build artifact extracted to C:\Users\runneradmin\BuildRoot_Windows"
+
+    - name: List contents of Windows build directory
+      run: |
+        echo "Contents of Windows build directory:"
+        dir "C:\Users\runneradmin\BuildRoot_Windows"
+
+    - name: Download macOS build artifact
+      run: |
+        echo "Downloading macOS build artifact..."
+        curl -L -o Decentraland_macos.zip "${{ steps.get_release.outputs.macos_url }}"
+        echo "Extracting macOS build artifact..."
+        Expand-Archive -Path Decentraland_macos.zip -DestinationPath "C:\Users\runneradmin\MacBuildTemp"
+        tar -xf "C:\Users\runneradmin\MacBuildTemp\build.tar" -C "C:\Users\runneradmin\BuildRoot_Mac"
+        echo "macOS build artifact extracted to C:\Users\runneradmin\BuildRoot_Mac"
+
+    - name: List contents of macOS build directory
+      run: |
+        echo "Contents of macOS build directory:"
+        dir "C:\Users\runneradmin\BuildRoot_Mac" /s
+
+    - name: Download BuildPatchTool
+      run: |
+        echo "Downloading BuildPatchTool..."
+        Invoke-WebRequest -Uri "https://launcher-public-service-prod06.ol.epicgames.com/launcher/api/installer/download/BuildPatchTool.zip" -OutFile "BuildPatchTool.zip"
+        echo "Extracting BuildPatchTool..."
+        Expand-Archive -Path "BuildPatchTool.zip" -DestinationPath "C:\Users\runneradmin\tools"
+        echo "BuildPatchTool extracted to C:\Users\runneradmin\tools\BuildPatchTool\Engine\Binaries\Win64"
+
+    - name: List contents of BuildPatchTool directory
+      run: |
+        echo "Contents of BuildPatchTool directory:"
+        dir "C:\Users\runneradmin\tools\BuildPatchTool\Engine\Binaries\Win64"
+
+    - name: Add BuildPatchTool to PATH
+      run: echo "C:\Users\runneradmin\tools\BuildPatchTool\Engine\Binaries\Win64" >> $env:GITHUB_PATH
+
+    # The upload commands are commented out for testing
+    # - name: Upload Windows artifact
+    #   run: |
+    #     C:\Users\runneradmin\tools\BuildPatchTool\Engine\Binaries\Win64\BuildPatchTool.exe `
+    #     -OrganizationId="o-3hrhp24yjdde6d88a55bms6d2kcgds" `
+    #     -ProductId="a168f7578eb14227a086553e83b7b9d0" `
+    #     -ArtifactId="c2c218674b814690a6f369585cfc6e9f" `
+    #     -ClientId="${{ secrets.CLIENT_ID }}" `
+    #     -ClientSecret="${{ secrets.CLIENT_SECRET }}" `
+    #     -mode=UploadBinary `
+    #     -BuildRoot="C:\Users\runneradmin\BuildRoot_Windows" `
+    #     -CloudDir="C:\Users\runneradmin\CloudDir_Windows" `
+    #     -BuildVersion="${{ steps.get_release.outputs.version }}" `
+    #     -AppLaunch="Decentraland.exe" `
+    #     -AppArgs=""
+
+    # - name: Upload macOS artifact
+    #   run: |
+    #     C:\Users\runneradmin\tools\BuildPatchTool\Engine\Binaries\Win64\BuildPatchTool.exe `
+    #     -OrganizationId="o-3hrhp24yjdde6d88a55bms6d2kcgds" `
+    #     -ProductId="a168f7578eb14227a086553e83b7b9d0" `
+    #     -ArtifactId="c2c218674b814690a6f369585cfc6e9f" `
+    #     -ClientId="${{ secrets.CLIENT_ID }}" `
+    #     -ClientSecret="${{ secrets.CLIENT_SECRET }}" `
+    #     -mode=UploadBinary `
+    #     -BuildRoot="C:\Users\runneradmin\BuildRoot_Mac" `
+    #     -CloudDir="C:\Users\runneradmin\CloudDir_Mac" `
+    #     -BuildVersion="${{ steps.get_release.outputs.version }}" `
+    #     -AppLaunch="Decentraland.app/Contents/MacOS/Decentraland" `
+    #     -AppArgs="" `
+    #     -platform="Mac"
