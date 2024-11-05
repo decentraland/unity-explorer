@@ -1,0 +1,50 @@
+name: S3 Latest Release
+
+on:
+  release:
+    types: 
+      - published
+      - edited
+
+jobs:
+  check-latest-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check if current release is the latest release
+        id: check_latest
+        run: |
+          RELEASE_TAG=$(jq -r .release.tag_name "$GITHUB_EVENT_PATH")
+          echo "Release Tag: $RELEASE_TAG"
+
+          # Get the latest release from the API
+          LATEST_RELEASE=$(curl -s https://api.github.com/repos/${{ github.repository }}/releases/latest | jq -r .tag_name)
+          echo "Latest Release: $LATEST_RELEASE"
+
+          echo "is_latest_release=$(if [ "$RELEASE_TAG" == "$LATEST_RELEASE" ]; then echo 'true'; else echo 'false'; fi)" >> $GITHUB_ENV
+          echo "latest_release=$LATEST_RELEASE" >> $GITHUB_ENV
+
+      - name: Run actions if release is the latest
+        if: env.is_latest_release == 'true'
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.EXPLORER_TEAM_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.EXPLORER_TEAM_AWS_SECRET_ACCESS_KEY }}
+          EXPLORER_TEAM_S3_BUCKET: ${{ secrets.EXPLORER_TEAM_S3_BUCKET }}
+          SOURCE_PATH_ARTIFACT: ${{ format('@dcl/{0}/releases/{1}', github.event.repository.name, env.latest_release) }}
+          DESTINATION_PATH: ${{ format('@dcl/{0}/releases/latest', github.event.repository.name) }}
+          DESTINATION_PATH_ARTIFACT: ${{ format('@dcl/{0}/releases/latest/{1}', github.event.repository.name, env.latest_release) }}
+          TEMP_PATH: ${{ format('@dcl/{0}/releases/temp', github.event.repository.name) }}
+        run: |
+          # Step 1: Move old data from latest to temp
+          aws s3 mv s3://$EXPLORER_TEAM_S3_BUCKET/$DESTINATION_PATH/ s3://$EXPLORER_TEAM_S3_BUCKET/$TEMP_PATH/ --recursive
+
+          # Step 2: Remove all data from latest
+          aws s3 rm s3://$EXPLORER_TEAM_S3_BUCKET/$DESTINATION_PATH/ --recursive
+
+          # Step 3: Copy new data from source to latest. If it fails, restore from temp
+          if ! aws s3 cp s3://$EXPLORER_TEAM_S3_BUCKET/$SOURCE_PATH_ARTIFACT/ s3://$EXPLORER_TEAM_S3_BUCKET/$DESTINATION_PATH_ARTIFACT/ --recursive; then
+            echo "Copy failed. Restoring old data from temp."
+            aws s3 mv s3://$EXPLORER_TEAM_S3_BUCKET/$TEMP_PATH/ s3://$EXPLORER_TEAM_S3_BUCKET/$DESTINATION_PATH/ --recursive
+          else
+            # Step 4: If the copy succeeded, remove all data from temp
+            aws s3 rm s3://$EXPLORER_TEAM_S3_BUCKET/$TEMP_PATH/ --recursive
+          fi
