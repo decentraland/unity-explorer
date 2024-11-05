@@ -66,19 +66,19 @@ jobs:
         Invoke-WebRequest -Uri "https://launcher-public-service-prod06.ol.epicgames.com/launcher/api/installer/download/BuildPatchTool.zip" -OutFile "BuildPatchTool.zip"
         echo "Extracting BuildPatchTool..."
         Expand-Archive -Path "BuildPatchTool.zip" -DestinationPath "C:\Users\runneradmin\tools"
-        echo "BuildPatchTool extracted to C:\Users\runneradmin\tools"
+        echo "BuildPatchTool extracted to C:\Users\runneradmin\tools\BuildPatchTool"
 
     - name: List contents of BuildPatchTool directory
       run: |
         echo "Contents of BuildPatchTool directory:"
-        dir "C:\Users\runneradmin\tools"
+        dir "C:\Users\runneradmin\tools\BuildPatchTool"
 
     - name: Add BuildPatchTool to PATH
       run: echo "C:\Users\runneradmin\tools\BuildPatchTool\Engine\Binaries\Win64" >> $env:GITHUB_PATH
 
     - name: Upload Windows artifact
       run: |
-        & "C:\Users\runneradmin\tools\BuildPatchTool\Engine\Binaries\Win64\BuildPatchTool.exe" `
+        C:\Users\runneradmin\tools\BuildPatchTool\Engine\Binaries\Win64\BuildPatchTool.exe `
         -OrganizationId="${{ secrets.EPIC_STORE_ORG_ID }}" `
         -ProductId="${{ secrets.EPIC_STORE_PRODUCT_ID }}" `
         -ArtifactId="${{ secrets.EPIC_STORE_ARTIFACT_ID }}" `
