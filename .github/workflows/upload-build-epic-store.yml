@@ -51,6 +51,7 @@ jobs:
         curl -L -o Decentraland_macos.zip "${{ steps.get_release.outputs.macos_url }}"
         echo "Extracting macOS build artifact..."
         Expand-Archive -Path Decentraland_macos.zip -DestinationPath "C:\Users\runneradmin\MacBuildTemp"
+        New-Item -ItemType Directory -Path "C:\Users\runneradmin\BuildRoot_Mac" -Force
         tar -xf "C:\Users\runneradmin\MacBuildTemp\build.tar" -C "C:\Users\runneradmin\BuildRoot_Mac"
         echo "macOS build artifact extracted to C:\Users\runneradmin\BuildRoot_Mac"
 
