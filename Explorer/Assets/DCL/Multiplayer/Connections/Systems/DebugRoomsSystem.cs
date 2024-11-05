@@ -25,6 +25,7 @@ namespace DCL.Multiplayer.Connections.Systems
     {
         private readonly IRoomDisplay roomDisplay;
         private readonly RoomsStatus roomsStatus;
+        private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly ElementBinding<bool> debugAvatarsRooms;
 
         public DebugRoomsSystem(
@@ -35,12 +36,11 @@ namespace DCL.Multiplayer.Connections.Systems
             IReadOnlyEntityParticipantTable entityParticipantTable,
             IRemoteMetadata remoteMetadata,
             IDebugContainerBuilder debugBuilder,
-            IRoomHub roomHub,
             IObjectPool<DebugRoomIndicatorView> roomIndicatorPool) : base(world)
         {
             this.roomsStatus = roomsStatus;
+            this.entityParticipantTable = entityParticipantTable;
             this.roomIndicatorPool = roomIndicatorPool;
-            this.roomHub = roomHub;
 
             DebugWidgetBuilder? infoWidget = debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.ROOM_INFO);
 

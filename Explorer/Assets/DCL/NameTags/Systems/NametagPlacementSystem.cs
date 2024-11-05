@@ -97,6 +97,7 @@ namespace DCL.Nametags
 
         [Query]
         [All(typeof(AvatarBase), typeof(NametagView))]
+        [None(typeof(DeleteEntityIntention))]
         private void EnableTag(in NametagView nametagView)
         {
             if (nametagView.isActiveAndEnabled)

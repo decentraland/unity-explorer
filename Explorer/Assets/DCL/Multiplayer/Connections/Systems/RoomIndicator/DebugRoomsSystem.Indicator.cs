@@ -3,10 +3,11 @@ using Arch.System;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.Character.Components;
 using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.Multiplayer.Connections.Rooms;
 using DCL.Multiplayer.Connections.Systems.RoomIndicator;
+using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
 using ECS.LifeCycle.Components;
-using LiveKit.Rooms;
 using UnityEngine.Pool;
 
 // ReSharper disable once CheckNamespace
@@ -15,7 +16,6 @@ namespace DCL.Multiplayer.Connections.Systems
     public partial class DebugRoomsSystem
     {
         private readonly IObjectPool<DebugRoomIndicatorView> roomIndicatorPool;
-        private readonly IRoomHub roomHub;
 
         [Query]
         [None(typeof(DebugRoomIndicatorComponent), typeof(PlayerComponent), typeof(DeleteEntityIntention))]
@@ -30,18 +30,14 @@ namespace DCL.Multiplayer.Connections.Systems
         [None(typeof(PlayerComponent))]
         private void UpdateIndicator(in AvatarShapeComponent avatarShapeComponent, NametagView nametagView, ref DebugRoomIndicatorComponent indicatorComponent)
         {
-            DebugRoomIndicatorComponent.RoomSource prevValue = indicatorComponent.ConnectedTo;
+            RoomSource prevValue = indicatorComponent.ConnectedTo;
 
-            indicatorComponent.ConnectedTo = CheckRoomContains(avatarShapeComponent.ID, roomHub.IslandRoom(), DebugRoomIndicatorComponent.RoomSource.ISLAND) |
-                                             CheckRoomContains(avatarShapeComponent.ID, roomHub.SceneRoom().Room(), DebugRoomIndicatorComponent.RoomSource.GATEKEEPER);
+            indicatorComponent.ConnectedTo = entityParticipantTable.TryGet(avatarShapeComponent.ID, out IReadOnlyEntityParticipantTable.Entry entry) ? entry.ConnectedTo : RoomSource.NONE;
 
             if (prevValue != indicatorComponent.ConnectedTo) { indicatorComponent.View.SetRooms(indicatorComponent.ConnectedTo); }
 
             indicatorComponent.View.UpdateTransparency(nametagView.alpha);
         }
-
-        private DebugRoomIndicatorComponent.RoomSource CheckRoomContains(string id, IRoom room, DebugRoomIndicatorComponent.RoomSource source) =>
-            room.Participants.RemoteParticipant(id) != null ? source : DebugRoomIndicatorComponent.RoomSource.NONE;
 
         [Query]
         [None(typeof(NametagView), typeof(PlayerComponent), typeof(DeleteEntityIntention))]

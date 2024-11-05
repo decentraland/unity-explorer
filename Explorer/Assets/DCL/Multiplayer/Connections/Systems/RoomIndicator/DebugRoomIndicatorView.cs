@@ -1,4 +1,6 @@
-﻿using DCL.Multiplayer.Connections.Systems.RoomIndicator;
+﻿using DCL.Multiplayer.Connections.Rooms;
+using DCL.Multiplayer.Connections.Systems.RoomIndicator;
+using DCL.Multiplayer.Profiles.Entities;
 using System;
 using System.Linq;
 using TMPro;
@@ -12,7 +14,7 @@ namespace DCL.Multiplayer.Connections.Systems
         [Serializable]
         internal struct Coloring
         {
-            public DebugRoomIndicatorComponent.RoomSource source;
+            public RoomSource source;
             public string indicator;
             public Color color;
         }
@@ -28,7 +30,7 @@ namespace DCL.Multiplayer.Connections.Systems
             rectTransform = GetComponent<RectTransform>();
         }
 
-        public void SetRooms(DebugRoomIndicatorComponent.RoomSource source)
+        public void SetRooms(RoomSource source)
         {
             Color color = Color.white;
             var indicator = "N/A";
