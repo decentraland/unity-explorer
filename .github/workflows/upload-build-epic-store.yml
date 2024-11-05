@@ -76,6 +76,16 @@ jobs:
     - name: Add BuildPatchTool to PATH
       run: echo "C:\Users\runneradmin\tools\BuildPatchTool\Engine\Binaries\Win64" >> $env:GITHUB_PATH
 
+    - name: Ensure BuildRoot and CloudDir paths exist for Windows
+      run: |
+        New-Item -ItemType Directory -Path "C:\Users\runneradmin\tools\BuildPatchTool\BuildRoot_Windows" -Force
+        New-Item -ItemType Directory -Path "C:\Users\runneradmin\tools\BuildPatchTool\CloudDir_Windows" -Force
+
+    - name: Ensure BuildRoot and CloudDir paths exist for macOS
+      run: |
+        New-Item -ItemType Directory -Path "C:\Users\runneradmin\tools\BuildPatchTool\BuildRoot_Mac" -Force
+        New-Item -ItemType Directory -Path "C:\Users\runneradmin\tools\BuildPatchTool\CloudDir_Mac" -Force
+
     - name: Upload Windows artifact
       run: |
         C:\Users\runneradmin\tools\BuildPatchTool\Engine\Binaries\Win64\BuildPatchTool.exe `
@@ -85,12 +95,21 @@ jobs:
         -ClientId="${{ secrets.EPIC_STORE_CLIENT_ID }}" `
         -ClientSecret="${{ secrets.EPIC_STORE_CLIENT_SECRET }}" `
         -mode=UploadBinary `
-        -BuildRoot="C:\Users\runneradmin\tools\BuildRoot_Windows" `
-        -CloudDir="C:\Users\runneradmin\tools\CloudDir_Windows" `
+        -BuildRoot="C:\Users\runneradmin\tools\BuildPatchTool\BuildRoot_Windows" `
+        -CloudDir="C:\Users\runneradmin\tools\BuildPatchTool\CloudDir_Windows" `
         -BuildVersion="${{ steps.get_release.outputs.version }}" `
         -AppLaunch="Decentraland.exe" `
         -AppArgs=""
-        -Platform="Windows"
+
+    - name: Log BuildPatchTool log if upload fails
+      if: failure()  # This ensures the step runs only if the previous step fails
+      run: |
+        if (Test-Path "C:\Users\runneradmin\AppData\Local\BuildPatchTool\Saved\Logs\BuildPatchTool.log") {
+          Write-Host "Contents of BuildPatchTool.log:"
+          Get-Content -Path "C:\Users\runneradmin\AppData\Local\BuildPatchTool\Saved\Logs\BuildPatchTool.log" -Tail 100
+        } else {
+          Write-Host "BuildPatchTool.log not found."
+        }
 
   # - name: Upload macOS artifact
   #   run: |
