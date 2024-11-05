@@ -41,6 +41,7 @@ using System.Linq;
 using System.Threading;
 using DCL.Chat.MessageBus;
 using DCL.InWorldCamera.CameraReel;
+using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Settings.Settings;
 using UnityEngine;
@@ -63,6 +64,7 @@ namespace DCL.PluginSystem.Global
         private readonly IEquippedEmotes equippedEmotes;
         private readonly IWeb3Authenticator web3Authenticator;
         private readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly ICameraReelStorageService cameraReelStorageService;
         private readonly IWearableStorage wearableStorage;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
         private readonly IWebBrowser webBrowser;
@@ -105,6 +107,7 @@ namespace DCL.PluginSystem.Global
             IPlacesAPIService placesAPIService,
             IWebRequestController webRequestController,
             IWeb3IdentityCache web3IdentityCache,
+            ICameraReelStorageService cameraReelStorageService,
             IWearableStorage wearableStorage,
             ICharacterPreviewFactory characterPreviewFactory,
             IProfileRepository profileRepository,
@@ -143,6 +146,7 @@ namespace DCL.PluginSystem.Global
             this.placesAPIService = placesAPIService;
             this.webRequestController = webRequestController;
             this.web3IdentityCache = web3IdentityCache;
+            this.cameraReelStorageService = cameraReelStorageService;
             this.wearableStorage = wearableStorage;
             this.characterPreviewFactory = characterPreviewFactory;
             this.profileRepository = profileRepository;
@@ -232,7 +236,9 @@ namespace DCL.PluginSystem.Global
             await navmapController.InitializeAssetsAsync(assetsProvisioner, ct);
             await backpackSubPlugin.InitializeAsync(settings.BackpackSettings, explorePanelView.GetComponentInChildren<BackpackView>(), ct);
 
-            var cameraReelController = new CameraReelController(explorePanelView.GetComponentInChildren<CameraReelView>());
+            var cameraReelController = new CameraReelController(explorePanelView.GetComponentInChildren<CameraReelView>(),
+                cameraReelStorageService,
+                web3IdentityCache);
 
             mvcManager.RegisterController(new
                 ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackSubPlugin.backpackController!, cameraReelController,

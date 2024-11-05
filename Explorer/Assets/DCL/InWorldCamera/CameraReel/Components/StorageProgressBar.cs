@@ -1,3 +1,4 @@
+using System;
 using TMPro;
 using UnityEngine;
 
@@ -8,12 +9,14 @@ namespace DCL.InWorldCamera.CameraReel.Components
         private const float MIN_VALUE = 0f;
         private const float MAX_VALUE = 100f;
 
+        private const string LABEL_PLACEHOLDER = "Storage {0}/{1} photos taken";
+
         [Range(MIN_VALUE, MAX_VALUE)] public float valuePercentage;
 
         [Space]
         [Header("Configuration")]
-        public float MaxRealValue = 100f;
-        public float MinRealValue = 0f;
+        public float? MaxRealValue;
+        public float? MinRealValue;
 
         [Space]
         [Header("Internal references")]
@@ -23,7 +26,10 @@ namespace DCL.InWorldCamera.CameraReel.Components
 
         public void SetPercentageValue(float value)
         {
-            this.valuePercentage = Mathf.Clamp(value, MinRealValue, MaxRealValue);
+            if (!MaxRealValue.HasValue || !MinRealValue.HasValue)
+                throw new Exception("MaxRealValue and MinRealValue must be set before setting a value");
+
+            this.valuePercentage = Mathf.Clamp(value, MinRealValue.Value, MaxRealValue.Value);
             UpdateGraphics();
         }
 
@@ -36,8 +42,14 @@ namespace DCL.InWorldCamera.CameraReel.Components
 
         private void UpdateGraphics()
         {
+            if (!MaxRealValue.HasValue || !MinRealValue.HasValue)
+            {
+                label.SetText("Storage -/- photos taken");
+                return;
+            }
+
             foreground.sizeDelta = new Vector2(valuePercentage * (background.rect.width / 100f), foreground.sizeDelta.y);
-            label.SetText("Storage {0}/{1} photos taken", Mathf.RoundToInt(Mathf.Lerp(MinRealValue, MaxRealValue, valuePercentage / MAX_VALUE)), MaxRealValue);
+            label.SetText(LABEL_PLACEHOLDER, Mathf.RoundToInt(Mathf.Lerp(MinRealValue.Value, MaxRealValue.Value, valuePercentage / MAX_VALUE)), MaxRealValue.Value);
         }
     }
 }

@@ -20,7 +20,7 @@ namespace DCL.InWorldCamera.CameraReelStorageService.Tests
         public void Setup()
         {
             metadataDatabase = Substitute.For<ICameraReelImagesMetadataDatabase>();
-            storageService = new CameraReelRemoteStorageService(metadataDatabase);
+            storageService = new CameraReelRemoteStorageService(metadataDatabase, Substitute.For<ICameraReelScreenshotsStorage>());
         }
 
         [Test]

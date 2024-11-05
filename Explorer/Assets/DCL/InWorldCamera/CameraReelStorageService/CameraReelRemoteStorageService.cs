@@ -6,15 +6,17 @@ using UnityEngine;
 
 namespace DCL.InWorldCamera.CameraReelStorageService
 {
-    public class CameraReelRemoteStorageService : ICameraReelStorageService
+    public class CameraReelRemoteStorageService : ICameraReelStorageService, ICameraReelScreenshotsStorage
     {
         private readonly ICameraReelImagesMetadataDatabase imagesMetadataDatabase;
+        private readonly ICameraReelScreenshotsStorage screenshotsStorage;
 
         public event Action<CameraReelResponse, CameraReelStorageStatus> ScreenshotUploaded;
 
-        internal CameraReelRemoteStorageService(ICameraReelImagesMetadataDatabase imagesMetadataDatabase)
+        public CameraReelRemoteStorageService(ICameraReelImagesMetadataDatabase imagesMetadataDatabase, ICameraReelScreenshotsStorage screenshotsStorage)
         {
             this.imagesMetadataDatabase = imagesMetadataDatabase;
+            this.screenshotsStorage = screenshotsStorage;
         }
 
         public async UniTask<CameraReelStorageStatus> GetUserGalleryStorageInfoAsync(string userAddress, CancellationToken ct = default)
@@ -40,5 +42,11 @@ namespace DCL.InWorldCamera.CameraReelStorageService
             ScreenshotUploaded?.Invoke(response.image, storageStatus);
             return storageStatus;
         }
+
+        public UniTask<Texture2D> GetScreenshotImageAsync(string url) =>
+            screenshotsStorage.GetScreenshotImageAsync(url);
+
+        public UniTask<Texture2D> GetScreenshotThumbnailAsync(string url) =>
+            screenshotsStorage.GetScreenshotThumbnailAsync(url);
     }
 }

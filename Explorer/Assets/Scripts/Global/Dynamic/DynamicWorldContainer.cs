@@ -19,6 +19,7 @@ using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.DebugUtilities;
 using DCL.Input;
+using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.Landscape;
 using DCL.LOD.Systems;
 using DCL.MapRenderer;
@@ -453,6 +454,10 @@ namespace Global.Dynamic
 
             var badgesAPIClient = new BadgesAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
 
+            ICameraReelImagesMetadataDatabase cameraReelImagesMetadataDatabase = new CameraReelImagesMetadataRemoteDatabase(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
+            ICameraReelScreenshotsStorage cameraReelScreenshotsStorage = new CameraReelS3BucketScreenshotsStorage(staticContainer.WebRequestsContainer.WebRequestController);
+            ICameraReelStorageService cameraReelStorageService = new CameraReelRemoteStorageService(cameraReelImagesMetadataDatabase, cameraReelScreenshotsStorage);
+
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
                 new MultiplayerPlugin(
@@ -529,6 +534,7 @@ namespace Global.Dynamic
                     placesAPIService,
                     staticContainer.WebRequestsContainer.WebRequestController,
                     identityCache,
+                    cameraReelStorageService,
                     wearableCatalog,
                     characterPreviewFactory,
                     container.ProfileRepository,

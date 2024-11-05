@@ -1,4 +1,5 @@
 using DCL.InWorldCamera.CameraReel.Components;
+using SuperScrollView;
 using System;
 using UnityEngine;
 
@@ -6,11 +7,20 @@ namespace DCL.InWorldCamera.CameraReel
 {
     public class CameraReelView : MonoBehaviour
     {
-        [Header("Storage")]
+        [Header("Storage objects")]
         [SerializeField] internal StorageProgressBar storageProgressBar;
         [SerializeField] internal GameObject storageFullIcon;
+        [SerializeField] internal GameObject loadingSpinner;
+        [SerializeField] internal GameObject emptyState;
         [SerializeField] internal CanvasGroup storageFullToast;
+        [SerializeField] internal LoopListView2 loopList;
+
+        [Header("Storage configuration")]
         [SerializeField] internal float storageFullToastFadeTime = 0.3f;
+
+        [Header("Thumbnail objects")]
+        [SerializeField] internal ReelThumbnailView thumbnailViewPrefab;
+        [SerializeField] internal GameObject unusedThumbnailViewObject;
 
         internal event Action OnMouseEnter;
         internal event Action OnMouseExit;
