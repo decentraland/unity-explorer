@@ -17,18 +17,20 @@ jobs:
     - name: Get the latest release info
       id: get_release
       run: |
-        RELEASE_DATA=$(curl -s https://api.github.com/repos/decentraland/unity-explorer/releases/latest)
-        echo "::set-output name=version::$(echo $RELEASE_DATA | jq -r '.tag_name')"
-        echo "::set-output name=windows_url::$(echo $RELEASE_DATA | jq -r '.assets[] | select(.name == "Decentraland_windows64.zip") | .browser_download_url')"
-        echo "::set-output name=macos_url::$(echo $RELEASE_DATA | jq -r '.assets[] | select(.name == "Decentraland_macos.zip") | .browser_download_url')"
+        $releaseData = Invoke-RestMethod -Uri "https://api.github.com/repos/decentraland/unity-explorer/releases/latest"
+        $version = $releaseData.tag_name
+        $windowsUrl = ($releaseData.assets | Where-Object { $_.name -eq "Decentraland_windows64.zip" }).browser_download_url
+        $macosUrl = ($releaseData.assets | Where-Object { $_.name -eq "Decentraland_macos.zip" }).browser_download_url
+
+        Write-Host "Release version: $version"
+        Write-Host "Windows download URL: $windowsUrl"
+        Write-Host "macOS download URL: $macosUrl"
+
+        echo "::set-output name=version::$version"
+        echo "::set-output name=windows_url::$windowsUrl"
+        echo "::set-output name=macos_url::$macosUrl"
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-    - name: Log release version and download URLs
-      run: |
-        echo "Release version: ${{ steps.get_release.outputs.version }}"
-        echo "Windows download URL: ${{ steps.get_release.outputs.windows_url }}"
-        echo "macOS download URL: ${{ steps.get_release.outputs.macos_url }}"
 
     - name: Download Windows build artifact
       run: |
