@@ -22,9 +22,9 @@ jobs:
 
           # Set output for is_latest_release based on comparison
           if [ "$RELEASE_TAG" == "$LATEST_RELEASE" ]; then
-            echo "is_latest_release='true'" >> $GITHUB_OUTPUT
+            echo "is_latest_release=true" >> $GITHUB_OUTPUT
           else
-            echo "is_latest_release='false'" >> $GITHUB_OUTPUT
+            echo "is_latest_release=false" >> $GITHUB_OUTPUT
           fi
 
           echo "latest_release=$LATEST_RELEASE" >> $GITHUB_ENV
