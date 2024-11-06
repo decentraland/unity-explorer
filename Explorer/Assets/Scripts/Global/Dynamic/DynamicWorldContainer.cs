@@ -456,7 +456,7 @@ namespace Global.Dynamic
 
             ICameraReelImagesMetadataDatabase cameraReelImagesMetadataDatabase = new CameraReelImagesMetadataRemoteDatabase(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
             ICameraReelScreenshotsStorage cameraReelScreenshotsStorage = new CameraReelS3BucketScreenshotsStorage(staticContainer.WebRequestsContainer.WebRequestController);
-            ICameraReelStorageService cameraReelStorageService = new CameraReelRemoteStorageService(cameraReelImagesMetadataDatabase, cameraReelScreenshotsStorage);
+            CameraReelRemoteStorageService cameraReelStorageService = new CameraReelRemoteStorageService(cameraReelImagesMetadataDatabase, cameraReelScreenshotsStorage);
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
@@ -534,6 +534,7 @@ namespace Global.Dynamic
                     placesAPIService,
                     staticContainer.WebRequestsContainer.WebRequestController,
                     identityCache,
+                    cameraReelStorageService,
                     cameraReelStorageService,
                     wearableCatalog,
                     characterPreviewFactory,

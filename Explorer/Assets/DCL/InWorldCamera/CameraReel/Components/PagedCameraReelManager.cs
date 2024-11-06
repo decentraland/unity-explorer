@@ -16,7 +16,7 @@ namespace DCL.InWorldCamera.CameraReel.Components
         private readonly int pageSize;
         private readonly Dictionary<DateTime, List<CameraReelResponse>> elements = new ();
         private readonly List<DateTime> buckets = new ();
-        private readonly CancellationTokenSource cancellationTokenSource = new();
+        private CancellationTokenSource cancellationTokenSource = new();
         private int currentOffset;
         private int fetchedImages;
         private bool allImagesFetched;
@@ -61,6 +61,7 @@ namespace DCL.InWorldCamera.CameraReel.Components
             currentOffset = 0;
             fetchedImages = 0;
             allImagesFetched = false;
+            cancellationTokenSource = cancellationTokenSource.SafeRestart();
 
             while (buckets.Count <= 1 && !allImagesFetched)
                 await FetchNextPage(ct);

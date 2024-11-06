@@ -65,6 +65,7 @@ namespace DCL.PluginSystem.Global
         private readonly IWeb3Authenticator web3Authenticator;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly ICameraReelStorageService cameraReelStorageService;
+        private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
         private readonly IWearableStorage wearableStorage;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
         private readonly IWebBrowser webBrowser;
@@ -108,6 +109,7 @@ namespace DCL.PluginSystem.Global
             IWebRequestController webRequestController,
             IWeb3IdentityCache web3IdentityCache,
             ICameraReelStorageService cameraReelStorageService,
+            ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
             IWearableStorage wearableStorage,
             ICharacterPreviewFactory characterPreviewFactory,
             IProfileRepository profileRepository,
@@ -147,6 +149,7 @@ namespace DCL.PluginSystem.Global
             this.webRequestController = webRequestController;
             this.web3IdentityCache = web3IdentityCache;
             this.cameraReelStorageService = cameraReelStorageService;
+            this.cameraReelScreenshotsStorage = cameraReelScreenshotsStorage;
             this.wearableStorage = wearableStorage;
             this.characterPreviewFactory = characterPreviewFactory;
             this.profileRepository = profileRepository;
@@ -238,6 +241,7 @@ namespace DCL.PluginSystem.Global
 
             var cameraReelController = new CameraReelController(explorePanelView.GetComponentInChildren<CameraReelView>(),
                 cameraReelStorageService,
+                cameraReelScreenshotsStorage,
                 web3IdentityCache);
 
             mvcManager.RegisterController(new

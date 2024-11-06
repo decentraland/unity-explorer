@@ -21,16 +21,22 @@ namespace DCL.InWorldCamera.CameraReel
         private readonly CameraReelView view;
         private readonly RectTransform rectTransform;
         private readonly ICameraReelStorageService cameraReelStorageService;
+        private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly PagedCameraReelManager pagedCameraReelManager;
         private readonly ReelThumbnailPoolManager reelThumbnailPoolManager;
 
         private CancellationTokenSource showCancellationTokenSource;
 
-        public CameraReelController(CameraReelView view, ICameraReelStorageService cameraReelStorageService, IWeb3IdentityCache web3IdentityCache)
+        public CameraReelController(
+            CameraReelView view,
+            ICameraReelStorageService cameraReelStorageService,
+            ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
+            IWeb3IdentityCache web3IdentityCache)
         {
             this.view = view;
             this.cameraReelStorageService = cameraReelStorageService;
+            this.cameraReelScreenshotsStorage = cameraReelScreenshotsStorage;
             this.web3IdentityCache = web3IdentityCache;
 
             pagedCameraReelManager = new PagedCameraReelManager(cameraReelStorageService, web3IdentityCache, PAGINATION_LIMIT);
@@ -53,6 +59,7 @@ namespace DCL.InWorldCamera.CameraReel
         {
             view.emptyState.SetActive(false);
             view.loadingSpinner.SetActive(true);
+            view.loopList.gameObject.SetActive(false);
 
             CameraReelStorageStatus storageStatus = await cameraReelStorageService.GetUserGalleryStorageInfoAsync(web3IdentityCache.Identity.Address, ct);
             SetStorageStatus(storageStatus);
@@ -66,6 +73,7 @@ namespace DCL.InWorldCamera.CameraReel
 
             await pagedCameraReelManager.Initialize(ct);
 
+            view.loopList.gameObject.SetActive(true);
             view.loopList.SetListItemCount(pagedCameraReelManager.GetBucketCount(), false);
             view.loadingSpinner.SetActive(false);
         }
@@ -76,7 +84,7 @@ namespace DCL.InWorldCamera.CameraReel
             MonthGridView gridView = listItem.GetComponent<MonthGridView>();
             var imageBucket = pagedCameraReelManager.GetBucket(index);
 
-            gridView.Setup(imageBucket.Item1, imageBucket.Item2, reelThumbnailPoolManager);
+            gridView.Setup(imageBucket.Item1, imageBucket.Item2, reelThumbnailPoolManager, cameraReelScreenshotsStorage);
 
             return listItem;
         }

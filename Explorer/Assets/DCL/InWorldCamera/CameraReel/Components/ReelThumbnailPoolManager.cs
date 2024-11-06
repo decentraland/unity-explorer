@@ -1,6 +1,8 @@
+using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using UnityEngine;
 using UnityEngine.Pool;
+using UnityEngine.UI;
 
 namespace DCL.InWorldCamera.CameraReel.Components
 {
@@ -18,7 +20,7 @@ namespace DCL.InWorldCamera.CameraReel.Components
                 thumbnail => thumbnail.gameObject.SetActive(true),
                 thumbnail =>
                 {
-                    thumbnail.transform.parent = unusedPoolObjectParent.transform;
+                    thumbnail.transform.SetParent(unusedPoolObjectParent.transform, false);
                     thumbnail.gameObject.SetActive(false);
                 },
                 thumbnail => GameObject.Destroy(thumbnail.gameObject),
@@ -27,11 +29,11 @@ namespace DCL.InWorldCamera.CameraReel.Components
                 maxSize);
         }
 
-        public ReelThumbnailView Get(CameraReelResponse cameraReelResponse, MonthGridView parent)
+        public ReelThumbnailView Get(CameraReelResponse cameraReelResponse, GridLayoutGroup parent, ICameraReelScreenshotsStorage cameraReelScreenshotsStorage)
         {
             ReelThumbnailView result = reelThumbnailPool.Get();
-            result.transform.parent = parent.transform;
-            result.Setup(cameraReelResponse);
+            result.transform.SetParent(parent.transform, false);
+            result.Setup(cameraReelResponse, cameraReelScreenshotsStorage);
 
             return result;
         }
