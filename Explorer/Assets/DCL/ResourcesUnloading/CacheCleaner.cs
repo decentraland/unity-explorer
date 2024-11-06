@@ -47,38 +47,44 @@ namespace DCL.ResourcesUnloading
 
         private IEmoteStorage? emoteCache;
 
+        private readonly IPerformanceBudget unlimitedFPSBudget;
+
         public CacheCleaner(IPerformanceBudget fpsCapBudget)
         {
             this.fpsCapBudget = fpsCapBudget;
-
+            unlimitedFPSBudget = new NullPerformanceBudget();
             extendedObjectPools = new List<IThrottledClearable> { AvatarCustomSkinningComponent.USED_SLOTS_POOL };
         }
 
-        public void UnloadCache()
+        public void UnloadCache(bool budgeted = true)
         {
-            if (!fpsCapBudget.TrySpendBudget()) return;
+            if (budgeted)
+                if (!fpsCapBudget.TrySpendBudget())
+                    return;
 
-            nftShapeCache!.Unload(fpsCapBudget, NFT_SHAPE_UNLOAD_CHUNK);
-            texturesCache!.Unload(fpsCapBudget, TEXTURE_UNLOAD_CHUNK);
-            audioClipsCache!.Unload(fpsCapBudget, AUDIO_CLIP_UNLOAD_CHUNK);
-            wearableAssetsCache!.Unload(fpsCapBudget, WEARABLES_UNLOAD_CHUNK);
-            wearableStorage!.Unload(fpsCapBudget);
-            emoteCache!.Unload(fpsCapBudget);
-            gltfContainerAssetsCache!.Unload(fpsCapBudget, GLTF_UNLOAD_CHUNK);
-            assetBundleCache!.Unload(fpsCapBudget, AB_UNLOAD_CHUNK);
-            profileCache!.Unload(fpsCapBudget, PROFILE_UNLOAD_CHUNK);
-            profileIntentionCache!.Unload(fpsCapBudget, PROFILE_UNLOAD_CHUNK);
-            lodCache!.Unload(fpsCapBudget, GLTF_UNLOAD_CHUNK);
-            roadCache!.Unload(fpsCapBudget, GLTF_UNLOAD_CHUNK);
+            var budgetToUse = budgeted ? fpsCapBudget : unlimitedFPSBudget;
 
-            ClearExtendedObjectPools();
+            nftShapeCache!.Unload(budgetToUse, budgeted ? NFT_SHAPE_UNLOAD_CHUNK : int.MaxValue);
+            texturesCache!.Unload(budgetToUse, budgeted ? TEXTURE_UNLOAD_CHUNK : int.MaxValue);
+            audioClipsCache!.Unload(budgetToUse, budgeted ? AUDIO_CLIP_UNLOAD_CHUNK : int.MaxValue);
+            wearableAssetsCache!.Unload(budgetToUse, budgeted ? WEARABLES_UNLOAD_CHUNK : int.MaxValue);
+            wearableStorage!.Unload(budgetToUse);
+            emoteCache!.Unload(budgetToUse);
+            gltfContainerAssetsCache!.Unload(budgetToUse, budgeted ? GLTF_UNLOAD_CHUNK : int.MaxValue);
+            lodCache!.Unload(budgetToUse, budgeted ? GLTF_UNLOAD_CHUNK : int.MaxValue);
+            assetBundleCache!.Unload(budgetToUse, budgeted ? AB_UNLOAD_CHUNK : int.MaxValue);
+            profileCache!.Unload(budgetToUse, budgeted ? PROFILE_UNLOAD_CHUNK : int.MaxValue);
+            profileIntentionCache!.Unload(budgetToUse, budgeted ? PROFILE_UNLOAD_CHUNK : int.MaxValue);
+            roadCache!.Unload(budgetToUse, budgeted ? GLTF_UNLOAD_CHUNK : int.MaxValue);
+
+            ClearExtendedObjectPools(budgetToUse, budgeted ? POOLS_UNLOAD_CHUNK : int.MaxValue);
         }
 
-        private void ClearExtendedObjectPools()
+        private void ClearExtendedObjectPools(IPerformanceBudget budgetToUse, int maxUnload)
         {
             foreach (IThrottledClearable pool in extendedObjectPools)
-                if (fpsCapBudget.TrySpendBudget())
-                    pool.ClearThrottled(POOLS_UNLOAD_CHUNK);
+                if (budgetToUse.TrySpendBudget())
+                    pool.ClearThrottled(maxUnload);
         }
 
         public void Register(ILODCache lodAssetsPool)

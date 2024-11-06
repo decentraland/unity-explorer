@@ -158,7 +158,6 @@ namespace Global.Dynamic
             Entity playerEntity,
             IAppArgs appArgs,
             ISceneRestrictionBusController sceneRestrictionBusController,
-            ILoadingStatus loadingStatus,
             CancellationToken ct)
         {
             var container = new DynamicWorldContainer();
@@ -350,7 +349,9 @@ namespace Global.Dynamic
                 staticContainer.ExposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy,
                 exposedGlobalDataContainer.CameraSamplingData,
                 localSceneDevelopment,
-                loadingStatus);
+                staticContainer.LoadingStatus,
+                staticContainer.CacheCleaner,
+                staticContainer.SingletonSharedDependencies.MemoryBudget);
 
             IHealthCheck livekitHealthCheck = bootstrapContainer.DebugSettings.EnableEmulateNoLivekitConnection
                 ? new IHealthCheck.AlwaysFails("Livekit connection is in debug, always fail mode")
@@ -369,7 +370,7 @@ namespace Global.Dynamic
             livekitHealthCheck.WithRetries();
 
             container.UserInAppInAppInitializationFlow = new RealUserInAppInitializationFlow(
-                loadingStatus,
+                staticContainer.LoadingStatus,
                 livekitHealthCheck,
                 bootstrapContainer.DecentralandUrlsSource,
                 container.MvcManager,
@@ -466,7 +467,7 @@ namespace Global.Dynamic
                     container.ProfileRepository,
                     container.ProfileBroadcast,
                     debugBuilder,
-                    loadingStatus,
+                    staticContainer.LoadingStatus,
                     entityParticipantTable,
                     container.MessagePipesHub,
                     container.RemoteMetadata,
@@ -566,7 +567,9 @@ namespace Global.Dynamic
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
                 new Web3AuthenticationPlugin(assetsProvisioner, dynamicWorldDependencies.Web3Authenticator, debugBuilder, container.MvcManager, selfProfile, webBrowser, staticContainer.RealmData, identityCache, characterPreviewFactory, dynamicWorldDependencies.SplashScreen, audioMixerVolumesController, staticContainer.FeatureFlagsCache, characterPreviewEventBus, globalWorld),
-                new StylizedSkyboxPlugin(assetsProvisioner, dynamicSettings.DirectionalLight, debugBuilder), new LoadingScreenPlugin(assetsProvisioner, container.MvcManager, audioMixerVolumesController, staticContainer.InputBlock, debugBuilder, loadingStatus),
+                new StylizedSkyboxPlugin(assetsProvisioner, dynamicSettings.DirectionalLight, debugBuilder),
+                new LoadingScreenPlugin(assetsProvisioner, container.MvcManager, audioMixerVolumesController,
+                    staticContainer.InputBlock, debugBuilder, staticContainer.LoadingStatus),
                 new ExternalUrlPromptPlugin(assetsProvisioner, webBrowser, container.MvcManager, dclCursor),
                 new TeleportPromptPlugin(assetsProvisioner, container.MvcManager,
                     staticContainer.WebRequestsContainer.WebRequestController, placesAPIService, dclCursor,
