@@ -492,10 +492,6 @@ MonoBehaviour:
       Severity: 4
     - Category: COMMS_SCENE_HANDLER
       Severity: 1
-    - Category: TEXTURES
-      Severity: 3
-    - Category: TEXTURES
-      Severity: 2
   sentryMatrix:
     entries: []
   debounceEnabled: 1

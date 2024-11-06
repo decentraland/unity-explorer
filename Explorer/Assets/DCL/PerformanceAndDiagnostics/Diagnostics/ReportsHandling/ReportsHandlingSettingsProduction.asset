@@ -189,10 +189,6 @@ MonoBehaviour:
     - Category: ANALYTICS
       Severity: 1
     - Category: TEXTURES
-      Severity: 3
-    - Category: TEXTURES
-      Severity: 2
-    - Category: TEXTURES
       Severity: 0
   sentryMatrix:
     entries:
