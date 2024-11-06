@@ -95,8 +95,7 @@ namespace DCL.PluginSystem.Global
         private NavmapController? navmapController;
         private SettingsController? settingsController;
         private BackpackSubPlugin? backpackSubPlugin;
-
-
+        private CategoryFilterController? categoryFilterController;
 
         public ExplorePanelPlugin(IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
@@ -177,6 +176,7 @@ namespace DCL.PluginSystem.Global
 
         public void Dispose()
         {
+            categoryFilterController?.Dispose();
             navmapController?.Dispose();
             settingsController?.Dispose();
             backpackSubPlugin?.Dispose();
@@ -224,7 +224,9 @@ namespace DCL.PluginSystem.Global
             ProvidedAsset<ControlsSettingsAsset> controlsSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.ControlsSettingsAsset, ct);
             settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>(), settingsMenuConfiguration.Value, generalAudioMixer.Value, realmPartitionSettings.Value, landscapeData.Value, qualitySettingsAsset.Value, controlsSettingsAsset.Value, systemMemoryCap, worldVolumeMacBus);
 
-            navmapController = new NavmapController(navmapView: explorePanelView.GetComponentInChildren<NavmapView>(),
+            NavmapView navmapView = explorePanelView.GetComponentInChildren<NavmapView>();
+            categoryFilterController = new CategoryFilterController(navmapView.categoryToggles, mapRendererContainer.MapRenderer);
+            navmapController = new NavmapController(navmapView: navmapView,
                 mapRendererContainer.MapRenderer, placesAPIService, webRequestController, webBrowser, dclInput,
                 realmNavigator, realmData, mapPathEventBus, world, playerEntity, inputBlock, chatMessagesBus);
 
