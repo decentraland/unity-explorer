@@ -133,7 +133,8 @@ namespace Global
                .Add(SDKComponentBuilder<PBMapPin>.Create(ComponentID.MAP_PIN).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBInputModifier>.Create(ComponentID.INPUT_MODIFIER).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBMainCamera>.Create(ComponentID.MAIN_CAMERA).AsProtobufComponent())
-               .Add(SDKComponentBuilder<PBVirtualCamera>.Create(ComponentID.VIRTUAL_CAMERA).AsProtobufComponent());
+               .Add(SDKComponentBuilder<PBVirtualCamera>.Create(ComponentID.VIRTUAL_CAMERA).AsProtobufComponent())
+               .Add(SDKComponentBuilder<PBGltfNode>.Create(ComponentID.GLTF_NODE).AsProtobufComponent());
 
             Transform rootContainer = new GameObject("ROOT_POOL_CONTAINER").transform;
 

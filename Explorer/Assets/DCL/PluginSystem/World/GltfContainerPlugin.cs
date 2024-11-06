@@ -3,6 +3,7 @@ using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.ResourcesUnloading;
+using DCL.SDKComponents.GltfNode.Systems;
 using ECS.Abstract;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Systems;
@@ -81,12 +82,13 @@ namespace DCL.PluginSystem.World
             GatherGltfAssetsSystem.InjectToWorld(ref builder, sceneReadinessReportQueue, sharedDependencies.SceneData,
                 buffer, sharedDependencies.SceneStateProvider, globalDeps.MemoryBudget, loadingStatus);
 
+            // GltfNode
+            GltfNodeSystem.InjectToWorld(ref builder);
+            // TODO: GltfNodeLoadingState
+
+
             ResetDirtyFlagSystem<PBGltfContainer>.InjectToWorld(ref builder);
-
-            var cleanUpGltfContainerSystem =
-                CleanUpGltfContainerSystem.InjectToWorld(ref builder, assetsCache, sharedDependencies.EntityCollidersSceneCache);
-
-            finalizeWorldSystems.Add(cleanUpGltfContainerSystem);
+            finalizeWorldSystems.Add(CleanUpGltfContainerSystem.InjectToWorld(ref builder, assetsCache, sharedDependencies.EntityCollidersSceneCache));
         }
     }
 }
