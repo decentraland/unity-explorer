@@ -16,7 +16,6 @@ using DCL.Profiles.Self;
 using ECS;
 using ECS.Abstract;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using UnityEngine;
 using Utility;
@@ -105,7 +104,7 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.CameraObject.Systems
             List<string> wearables = new List<string>();
 
             foreach (URN w in avatarWearables)
-                if(w.IsThirdPartyCollection())
+                if(!w.IsBaseWearable())
                     wearables.Add(w.ToString());
 
             return wearables.ToArray();
