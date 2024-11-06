@@ -83,7 +83,7 @@ namespace DCL.PluginSystem.World
                 buffer, sharedDependencies.SceneStateProvider, globalDeps.MemoryBudget, loadingStatus);
 
             // GltfNode
-            GltfNodeSystem.InjectToWorld(ref builder);
+            GltfNodeSystem.InjectToWorld(ref builder, sharedDependencies.EntitiesMap);
             // TODO: GltfNodeLoadingState
 
 
