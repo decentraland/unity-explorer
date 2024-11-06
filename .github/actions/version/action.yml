@@ -41,14 +41,12 @@ runs:
           MINOR="${BASH_REMATCH[2]}"
           BUILD="${BASH_REMATCH[3]}"
           NAME="${BASH_REMATCH[4]}"
-          COMMITS_SINCE="${BASH_REMATCH[5]}"
           
           echo "Version parsed match:"
           echo "[Major]: $MAJOR"
           echo "[Minor]: $MINOR"
           echo "[Build]: $BUILD"
           echo "[Name]: $NAME"
-          echo "Commits since tag: $COMMITS_SINCE"
         else
           echo "Failling! Tag does not match expected format: $TAG"
           exit 1
@@ -60,8 +58,10 @@ runs:
         else
           BRANCH_NAME=$(echo "$GITHUB_REF" | cut -d'/' -f 3)
         fi
+
+        COMMIT_HASH=${GITHUB_SHA}
           
-        FULLVER="v${MAJOR}.${MINOR}.$((BUILD + COMMITS_SINCE))-${NAME}-${BRANCH_NAME}"
+        FULLVER="v${MAJOR}.${MINOR}.$((BUILD))-${NAME}-${BRANCH_NAME}-${COMMIT_HASH}"
         echo "Full version: $FULLVER"
         echo "full_version=$FULLVER" >> "$GITHUB_OUTPUT"
         
@@ -69,7 +69,7 @@ runs:
         echo "Tag version: $TAGVER"
         echo "tag_version=$TAGVER" >> "$GITHUB_OUTPUT"
         
-        NEXT_FULLVER="v${MAJOR}.$((MINOR + 1)).0-${NAME}-${BRANCH_NAME}"
+        NEXT_FULLVER="v${MAJOR}.$((MINOR + 1)).0-${NAME}-${BRANCH_NAME}-${COMMIT_HASH}"
         echo "Next full version: $NEXT_FULLVER"
         echo "next_full_version=$NEXT_FULLVER" >> "$GITHUB_OUTPUT"
                                                                   
