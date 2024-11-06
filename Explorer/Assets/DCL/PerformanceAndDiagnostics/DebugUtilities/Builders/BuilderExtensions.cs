@@ -94,5 +94,14 @@ namespace DCL.DebugUtilities
 
             return builder.AddControl(label, marker);
         }
+
+        public static DebugWidgetBuilder AddCustomMarker(this DebugWidgetBuilder builder,
+            ElementBinding<string> binding)
+        {
+            var marker = new DebugSetOnlyLabelDef(binding);
+            return builder.AddControl(marker, null);
+        }
+        
+        
     }
 }
