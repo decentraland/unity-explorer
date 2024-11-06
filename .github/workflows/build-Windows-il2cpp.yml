@@ -11,6 +11,12 @@ on:
         description: 'Set to true, deep profiling will also be enabled'
         required: false
         default: 'false'
+  push:
+    branches:
+      - fix/revive-github-builds
+  pull_request:
+    branches:
+      - fix/revive-github-builds
 
 env:
   UNITY_LICENSE: ${{ secrets.UNITY_PERSONAL_LICENSE }}
