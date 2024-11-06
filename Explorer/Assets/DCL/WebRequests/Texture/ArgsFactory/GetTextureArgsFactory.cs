@@ -4,19 +4,19 @@ namespace DCL.WebRequests.ArgsFactory
 {
     public class GetTextureArgsFactory : IGetTextureArgsFactory
     {
-        private readonly ITexturesUnzip texturesUnzip;
+        private readonly ITexturesFuse texturesFuse;
 
-        public GetTextureArgsFactory(ITexturesUnzip texturesUnzip)
+        public GetTextureArgsFactory(ITexturesFuse texturesFuse)
         {
-            this.texturesUnzip = texturesUnzip;
+            this.texturesFuse = texturesFuse;
         }
 
         public GetTextureArguments NewArguments(TextureType textureType) =>
-            new (texturesUnzip, textureType);
+            new (texturesFuse, textureType);
 
         public void Dispose()
         {
-            texturesUnzip.Dispose();
+            texturesFuse.Dispose();
         }
     }
 }

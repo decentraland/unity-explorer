@@ -7,14 +7,14 @@ using Utility.Types;
 
 namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
 {
-    public class LogTexturesUnzip : ITexturesUnzip
+    public class LogTexturesFuse : ITexturesFuse
     {
-        private readonly ITexturesUnzip origin;
+        private readonly ITexturesFuse origin;
         private readonly Stopwatch stopwatch;
         private readonly string prefix;
         private ulong index;
 
-        public LogTexturesUnzip(ITexturesUnzip origin, string prefix)
+        public LogTexturesFuse(ITexturesFuse origin, string prefix)
         {
             this.origin = origin;
             this.prefix = prefix;

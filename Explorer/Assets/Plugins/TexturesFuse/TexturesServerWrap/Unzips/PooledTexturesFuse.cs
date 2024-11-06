@@ -9,20 +9,20 @@ using Utility.Types;
 
 namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
 {
-    public class PooledTexturesUnzip : ITexturesUnzip
+    public class PooledTexturesFuse : ITexturesFuse
     {
-        private readonly IReadOnlyList<ITexturesUnzip> uniqueUnzips;
+        private readonly IReadOnlyList<ITexturesFuse> uniqueUnzips;
         private readonly TimeSpan timeout = TimeSpan.FromSeconds(15);
-        private readonly ConcurrentQueue<ITexturesUnzip> workers;
+        private readonly ConcurrentQueue<ITexturesFuse> workers;
 
-        public PooledTexturesUnzip(Func<ITexturesUnzip> ctor, int count) : this(
+        public PooledTexturesFuse(Func<ITexturesFuse> ctor, int count) : this(
             Enumerable.Range(0, count).Select(_ => ctor()).ToArray()
         ) { }
 
-        public PooledTexturesUnzip(IReadOnlyList<ITexturesUnzip> uniqueUnzips)
+        public PooledTexturesFuse(IReadOnlyList<ITexturesFuse> uniqueUnzips)
         {
             this.uniqueUnzips = uniqueUnzips;
-            workers = new ConcurrentQueue<ITexturesUnzip>(uniqueUnzips);
+            workers = new ConcurrentQueue<ITexturesFuse>(uniqueUnzips);
         }
 
         public async UniTask<EnumResult<IOwnedTexture2D, NativeMethods.ImageResult>> TextureFromBytesAsync(IntPtr bytes, int bytesLength, TextureType type, CancellationToken token)
@@ -42,19 +42,19 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
             private static readonly TimeSpan POLL_DELAY = TimeSpan.FromMilliseconds(50);
             private static readonly Atomic<DateTime> SHARED_START_TIME = new (DateTime.UtcNow);
 
-            public readonly ITexturesUnzip Worker;
-            private readonly ConcurrentQueue<ITexturesUnzip> workers;
+            public readonly ITexturesFuse Worker;
+            private readonly ConcurrentQueue<ITexturesFuse> workers;
 
-            private WorkerScope(ConcurrentQueue<ITexturesUnzip> workers, ITexturesUnzip worker)
+            private WorkerScope(ConcurrentQueue<ITexturesFuse> workers, ITexturesFuse worker)
             {
                 this.workers = workers;
                 this.Worker = worker;
             }
 
-            public static async UniTask<WorkerScope> NewWorkerScopeAsync(ConcurrentQueue<ITexturesUnzip> workers, TimeSpan timeout, CancellationToken token)
+            public static async UniTask<WorkerScope> NewWorkerScopeAsync(ConcurrentQueue<ITexturesFuse> workers, TimeSpan timeout, CancellationToken token)
             {
                 SHARED_START_TIME.Set(DateTime.UtcNow);
-                ITexturesUnzip worker;
+                ITexturesFuse worker;
 
                 while (workers.TryDequeue(out worker) == false)
                 {

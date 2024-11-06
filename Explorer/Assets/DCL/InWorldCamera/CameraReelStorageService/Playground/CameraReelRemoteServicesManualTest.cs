@@ -34,7 +34,7 @@ namespace DCL.InWorldCamera.CameraReelStorageService.Playground
         public string ThumbnailUrl;
 
         private ICameraReelScreenshotsStorage screenshotsStorageInternal;
-        private ICameraReelScreenshotsStorage screenshotsStorage => screenshotsStorageInternal ??= new CameraReelS3BucketScreenshotsStorage(webRequestController, new GetTextureArgsFactory(ITexturesUnzip.NewTestInstance()));
+        private ICameraReelScreenshotsStorage screenshotsStorage => screenshotsStorageInternal ??= new CameraReelS3BucketScreenshotsStorage(webRequestController, new GetTextureArgsFactory(ITexturesFuse.NewTestInstance()));
 
         private ICameraReelImagesMetadataDatabase metadataDatabase
         {

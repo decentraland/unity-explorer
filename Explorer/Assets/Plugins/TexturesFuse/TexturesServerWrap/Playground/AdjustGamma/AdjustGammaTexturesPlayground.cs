@@ -41,12 +41,12 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground
         {
             [SerializeField] private AbstractDebugDisplay display = null!;
             [SerializeField] private TexturesFusePlayground.Options options = new ();
-            private ITexturesUnzip unzip = null!;
+            private ITexturesFuse fuse = null!;
 
             public async UniTaskVoid ApplyAsync(byte[] imageData, bool debugOutputFromNative, CancellationToken token)
             {
-                unzip = new TexturesUnzip(options.InitOptions, options, debugOutputFromNative);
-                var result = await unzip.TextureFromBytesAsync(imageData, TextureType.Albedo, token);
+                fuse = new Unzips.TexturesFuse(options.InitOptions, options, debugOutputFromNative);
+                var result = await fuse.TextureFromBytesAsync(imageData, TextureType.Albedo, token);
                 display.Display(result.Unwrap().Texture);
             }
         }

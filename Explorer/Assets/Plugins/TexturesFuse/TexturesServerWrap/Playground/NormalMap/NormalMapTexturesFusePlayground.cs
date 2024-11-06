@@ -41,7 +41,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground
         private async UniTaskVoid StartAsync()
         {
             cubeMesh.EnsureNotNull();
-            using var unzip = new PooledTexturesUnzip(() => new TexturesUnzip(options.InitOptions, options, debugOutputFromNative), 2);
+            using var unzip = new PooledTexturesFuse(() => new Unzips.TexturesFuse(options.InitOptions, options, debugOutputFromNative), 2);
             byte[] buffer = await File.ReadAllBytesAsync(path, destroyCancellationToken)! ?? Array.Empty<byte>();
             byte[] normalBuffer = await File.ReadAllBytesAsync(normalMapPath, destroyCancellationToken)! ?? Array.Empty<byte>();
 

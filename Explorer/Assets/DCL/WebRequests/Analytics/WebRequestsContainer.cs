@@ -31,7 +31,7 @@ namespace DCL.WebRequests.Analytics
 
         public static WebRequestsContainer Create(
             IWeb3IdentityCache web3IdentityProvider,
-            ITexturesUnzip texturesUnzip,
+            ITexturesFuse texturesFuse,
             IDebugContainerBuilder debugContainerBuilder,
             int totalBudget
         )
@@ -53,7 +53,7 @@ namespace DCL.WebRequests.Analytics
                 .WithArtificialDelay(options)
                 .WithBudget(totalBudget);
 
-            var getTextureArgsFactory = new GetTextureArgsFactory(texturesUnzip);
+            var getTextureArgsFactory = new GetTextureArgsFactory(texturesFuse);
 
             CreateStressTestUtility();
             CreateWebRequestDelayUtility();

@@ -13,7 +13,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
     ///     Provides decoded and compressed textures from raw memory.
     ///     Its implementations don't guarantee thread safety.
     /// </summary>
-    public interface ITexturesUnzip : IDisposable
+    public interface ITexturesFuse : IDisposable
     {
         /// <param name="bytes">Pointer to the array of encoded data, client guarantees the pointer will be valid for the whole duration of Task.</param>
         /// <param name="bytesLength">Length of encoded data.</param>
@@ -65,7 +65,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
                 or RuntimePlatform.WindowsEditor
                 or RuntimePlatform.WindowsServer;
 
-        public static ITexturesUnzip NewDefault(IOptions? options = null, int? workersCount = null)
+        public static ITexturesFuse NewDefault(IOptions? options = null, int? workersCount = null)
         {
             var init = NativeMethods.InitOptions.NewDefault();
 
@@ -88,8 +88,8 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
 
             ReportHub.Log(ReportCategory.TEXTURES, $"TexturesUnzip - NewDefault with options: {options.ToStringInfo()}");
 
-            return new PooledTexturesUnzip(
-                () => new TexturesUnzip(init, options, true)
+            return new PooledTexturesFuse(
+                () => new TexturesFuse(init, options, true)
                    .WithLog($"Worker: {++index}"),
                 workersCount ?? (
                     IsWindows()
@@ -99,10 +99,10 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
             );
         }
 
-        public static ITexturesUnzip NewTestInstance()
+        public static ITexturesFuse NewTestInstance()
         {
-            return new PooledTexturesUnzip(
-                () => new ManagedTexturesUnzip(),
+            return new PooledTexturesFuse(
+                () => new ManagedTexturesFuse(),
                 3
             );
         }
@@ -111,6 +111,6 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
 
 public static class OptionsExtensions
 {
-    public static string ToStringInfo(this ITexturesUnzip.IOptions options) =>
+    public static string ToStringInfo(this ITexturesFuse.IOptions options) =>
         $"[Options, Mode: {options.Mode}, Swizzle: {options.Swizzle}, MaxSide: {options.MaxSide}, Adjustments: {options.Adjustments}]";
 }

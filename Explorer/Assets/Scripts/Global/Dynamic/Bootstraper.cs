@@ -87,7 +87,7 @@ namespace Global.Dynamic
                 bootstrapContainer.AssetsProvisioner,
                 bootstrapContainer.ReportHandlingSettings,
                 appArgs,
-                ITexturesUnzip.NewDefault(),
+                ITexturesFuse.NewDefault(),
                 debugViewsCatalog,
                 globalPluginSettingsContainer,
                 bootstrapContainer.DiagnosticsContainer,

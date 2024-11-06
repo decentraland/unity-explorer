@@ -126,7 +126,7 @@ namespace Global
             IAssetsProvisioner assetsProvisioner,
             IReportsHandlingSettings reportHandlingSettings,
             IAppArgs appArgs,
-            ITexturesUnzip texturesUnzip,
+            ITexturesFuse texturesFuse,
             DebugViewsCatalog debugViewsCatalog,
             IPluginSettingsContainer settingsContainer,
             DiagnosticsContainer diagnosticsContainer,
@@ -192,7 +192,7 @@ namespace Global
 
             container.WebRequestsContainer = WebRequestsContainer.Create(
                 web3IdentityProvider,
-                texturesUnzip,
+                texturesFuse,
                 container.DebugContainerBuilder,
                 staticSettings.WebRequestsBudget
             );

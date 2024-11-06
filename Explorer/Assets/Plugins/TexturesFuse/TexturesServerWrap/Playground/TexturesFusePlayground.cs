@@ -24,7 +24,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground
         [Space]
         [SerializeField] private string outputPath = "Assets/Plugins/TexturesFuse/TexturesServerWrap/Playground/ASTCTexturesCompatability/test_output.astc";
 
-        private ITexturesUnzip unzip = null!;
+        private ITexturesFuse fuse = null!;
         private byte[] buffer = Array.Empty<byte>();
         private IOwnedTexture2D? texture;
 
@@ -38,9 +38,9 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground
         {
             display.EnsureNotNull();
 
-            unzip = overrideDefaultUnzip
-                ? new TexturesUnzip(options.InitOptions, options, debugOutputFromNative).WithLog(string.Empty)
-                : ITexturesUnzip.NewDefault();
+            fuse = overrideDefaultUnzip
+                ? new Unzips.TexturesFuse(options.InitOptions, options, debugOutputFromNative).WithLog(string.Empty)
+                : ITexturesFuse.NewDefault();
 
             buffer = await BufferAsync(pathOrUri);
             print($"Original size: {buffer.Length} bytes");
@@ -52,7 +52,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground
         private async UniTask<IOwnedTexture2D> FetchedAndOverrideTextureAsync()
         {
             texture?.Dispose();
-            texture = (await unzip.TextureFromBytesAsync(buffer, textureType, destroyCancellationToken)).Unwrap();
+            texture = (await fuse.TextureFromBytesAsync(buffer, textureType, destroyCancellationToken)).Unwrap();
             print($"Compressed size: {texture.Texture.GetRawTextureData()!.Length} bytes");
             return texture;
         }
@@ -60,7 +60,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground
         private void OnDestroy()
         {
             texture?.Dispose();
-            unzip.Dispose();
+            fuse.Dispose();
         }
 
         [ContextMenu(nameof(SaveToFile))]
@@ -85,7 +85,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground
         }
 
         [Serializable]
-        public class Options : ITexturesUnzip.IOptions
+        public class Options : ITexturesFuse.IOptions
         {
             [SerializeField] private int maxSide = 1024;
 

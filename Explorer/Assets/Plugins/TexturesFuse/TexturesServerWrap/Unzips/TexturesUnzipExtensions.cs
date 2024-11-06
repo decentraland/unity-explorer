@@ -26,18 +26,18 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
         }
 
         public static async UniTask<EnumResult<IOwnedTexture2D, NativeMethods.ImageResult>> TextureFromBytesAsync(
-            this ITexturesUnzip unzip,
+            this ITexturesFuse fuse,
             byte[] bytes,
             TextureType type,
             CancellationToken token
         )
         {
             using var pinned = new HandleScope(bytes);
-            var result = await unzip.TextureFromBytesAsync(pinned.Addr, bytes.Length, type, token);
+            var result = await fuse.TextureFromBytesAsync(pinned.Addr, bytes.Length, type, token);
             return result;
         }
 
-        public static LogTexturesUnzip WithLog(this ITexturesUnzip texturesUnzip, string prefix) =>
-            new (texturesUnzip, prefix);
+        public static LogTexturesFuse WithLog(this ITexturesFuse texturesFuse, string prefix) =>
+            new (texturesFuse, prefix);
     }
 }

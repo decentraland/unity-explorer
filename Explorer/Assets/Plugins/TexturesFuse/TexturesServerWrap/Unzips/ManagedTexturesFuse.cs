@@ -10,7 +10,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
     /// <summary>
     ///     For testing purposes only
     /// </summary>
-    public class ManagedTexturesUnzip : ITexturesUnzip
+    public class ManagedTexturesFuse : ITexturesFuse
     {
         public void Dispose()
         {

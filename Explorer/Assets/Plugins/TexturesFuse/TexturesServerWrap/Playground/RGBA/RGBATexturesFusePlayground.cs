@@ -29,7 +29,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground
 
         private async UniTaskVoid StartAsync()
         {
-            var unzip = new TexturesUnzip(options.InitOptions, options, debugOutputFromNative);
+            var unzip = new Unzips.TexturesFuse(options.InitOptions, options, debugOutputFromNative);
             byte[] buffer = await File.ReadAllBytesAsync(path, destroyCancellationToken)!;
             print($"Original size: {buffer.Length} bytes");
 

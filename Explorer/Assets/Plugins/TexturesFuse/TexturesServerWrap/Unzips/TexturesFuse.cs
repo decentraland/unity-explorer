@@ -12,15 +12,15 @@ using Result = Utility.Types.EnumResult<
 namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
 {
     /// <summary>
-    /// <inheritdoc cref="ITexturesUnzip"/>
+    /// <inheritdoc cref="ITexturesFuse"/>
     /// </summary>
-    public class TexturesUnzip : ITexturesUnzip
+    public class TexturesFuse : ITexturesFuse
     {
-        private readonly ITexturesUnzip.IOptions options;
+        private readonly ITexturesFuse.IOptions options;
         private readonly IntPtr context;
         private bool disposed;
 
-        public TexturesUnzip(NativeMethods.InitOptions initOptions, ITexturesUnzip.IOptions options, bool debug)
+        public TexturesFuse(NativeMethods.InitOptions initOptions, ITexturesFuse.IOptions options, bool debug)
         {
             this.options = options;
 
@@ -46,7 +46,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
                 ReportHub.LogError(ReportCategory.TEXTURES, $"TexturesFuseDispose failed: {result}");
         }
 
-        ~TexturesUnzip()
+        ~TexturesFuse()
         {
             Dispose();
         }

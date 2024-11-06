@@ -16,15 +16,15 @@ namespace DCL.WebRequests
     /// </summary>
     public readonly struct GetTextureWebRequest : ITypedWebRequest
     {
-        private readonly ITexturesUnzip texturesUnzip;
+        private readonly ITexturesFuse texturesFuse;
         private readonly string url;
         private readonly TextureType textureType;
 
-        private GetTextureWebRequest(UnityWebRequest unityWebRequest, ITexturesUnzip texturesUnzip, string url, TextureType textureType)
+        private GetTextureWebRequest(UnityWebRequest unityWebRequest, ITexturesFuse texturesFuse, string url, TextureType textureType)
         {
             this.url = url;
             this.textureType = textureType;
-            this.texturesUnzip = texturesUnzip;
+            this.texturesFuse = texturesFuse;
             UnityWebRequest = unityWebRequest;
         }
 
@@ -39,7 +39,7 @@ namespace DCL.WebRequests
         internal static GetTextureWebRequest Initialize(in CommonArguments commonArguments, GetTextureArguments textureArguments)
         {
             UnityWebRequest wr = UnityWebRequest.Get(commonArguments.URL)!;
-            return new GetTextureWebRequest(wr, textureArguments.TexturesUnzip, commonArguments.URL, textureArguments.TextureType);
+            return new GetTextureWebRequest(wr, textureArguments.TexturesFuse, commonArguments.URL, textureArguments.TextureType);
         }
 
         public readonly struct CreateTextureOp : IWebRequestOp<GetTextureWebRequest, IOwnedTexture2D>
@@ -61,7 +61,7 @@ namespace DCL.WebRequests
                 if (data == null)
                     throw new Exception("Texture content is empty");
 
-                var result = await webRequest.texturesUnzip
+                var result = await webRequest.texturesFuse
                                              .TextureFromBytesAsync(
                                                   AsPointer(data.Value),
                                                   data.Value.Length,

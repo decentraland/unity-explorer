@@ -31,14 +31,14 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground.WebLoading
         [SerializeField] private Texture2D? current;
 
         private IWebRequestController webRequests = null!;
-        private ITexturesUnzip unzip = null!;
+        private ITexturesFuse fuse = null!;
 
         [ContextMenu(nameof(Start))]
         private void Start()
         {
             display.EnsureNotNull();
 
-            unzip = new TexturesUnzip(options.InitOptions, options, debugOutputFromNative);
+            fuse = new Unzips.TexturesFuse(options.InitOptions, options, debugOutputFromNative);
             webRequests = IWebRequestController.DEFAULT;
 
             Next();
@@ -57,7 +57,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground.WebLoading
                 new CommonArguments(
                     URLAddress.FromString(option.url)
                 ),
-                new GetTextureArguments(unzip, option.textureType),
+                new GetTextureArguments(fuse, option.textureType),
                 new GetTextureWebRequest.CreateTextureOp(TextureWrapMode.Clamp, FilterMode.Bilinear),
                 destroyCancellationToken,
                 ReportCategory.UNSPECIFIED

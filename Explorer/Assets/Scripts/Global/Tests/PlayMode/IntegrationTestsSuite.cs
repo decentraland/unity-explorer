@@ -52,7 +52,7 @@ namespace Global.Tests.PlayMode
                 assetProvisioner,
                 Substitute.For<IReportsHandlingSettings>(),
                 Substitute.For<IAppArgs>(),
-                ITexturesUnzip.NewTestInstance(),
+                ITexturesFuse.NewTestInstance(),
                 new DebugViewsCatalog(),
                 globalSettingsContainer,
                 diagnosticsContainer,

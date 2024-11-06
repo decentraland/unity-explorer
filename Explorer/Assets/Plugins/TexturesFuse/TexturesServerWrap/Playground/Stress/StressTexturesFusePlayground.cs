@@ -24,7 +24,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground
         {
             byte[] buffer = File.ReadAllBytes(path);
 
-            var unzip = ITexturesUnzip.NewDefault(options, workersCount);
+            var unzip = ITexturesFuse.NewDefault(options, workersCount);
             var wait = new WaitForSeconds(delay);
 
             while (this)
@@ -34,9 +34,9 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground
             }
         }
 
-        private async UniTaskVoid AcquireAndDisposeAsync(byte[] buffer, ITexturesUnzip unzip)
+        private async UniTaskVoid AcquireAndDisposeAsync(byte[] buffer, ITexturesFuse fuse)
         {
-            var result = await unzip.TextureFromBytesAsync(buffer, textureType, destroyCancellationToken);
+            var result = await fuse.TextureFromBytesAsync(buffer, textureType, destroyCancellationToken);
 
             if (result.Success)
                 result.Value.Dispose();
