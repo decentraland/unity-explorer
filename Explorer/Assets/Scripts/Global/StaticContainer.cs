@@ -232,7 +232,7 @@ namespace Global
                 new VisibilityPlugin(),
                 new AudioSourcesPlugin(sharedDependencies, container.WebRequestsContainer.WebRequestController, container.CacheCleaner, container.assetsProvisioner),
                 assetBundlePlugin,
-                new GltfContainerPlugin(sharedDependencies, container.CacheCleaner, container.SceneReadinessReportQueue, container.SingletonSharedDependencies.SceneAssetLock, componentsContainer.ComponentPoolsRegistry, localSceneDevelopment, useRemoteAssetBundles, container.LoadingStatus),
+                new GltfContainerPlugin(sharedDependencies, container.CacheCleaner, container.SceneReadinessReportQueue, componentsContainer.ComponentPoolsRegistry, localSceneDevelopment, useRemoteAssetBundles, container.WebRequestsContainer.WebRequestController, container.LoadingStatus),
                 new InteractionPlugin(sharedDependencies, profilingProvider, exposedGlobalDataContainer.GlobalInputEvents, componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner),
                 new SceneUIPlugin(sharedDependencies, container.assetsProvisioner, container.InputBlock, container.InputProxy),
                 container.CharacterContainer.CreateWorldPlugin(componentsContainer.ComponentPoolsRegistry),
