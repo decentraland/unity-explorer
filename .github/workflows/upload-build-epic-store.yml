@@ -32,18 +32,28 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+    - name: Ensure BuildRoot and CloudDir paths exist for Windows
+      run: |
+        New-Item -ItemType Directory -Path "C:\Users\runneradmin\tools\BuildPatchTool\BuildRoot_Windows" -Force
+        New-Item -ItemType Directory -Path "C:\Users\runneradmin\tools\BuildPatchTool\CloudDir_Windows" -Force
+
+    - name: Ensure BuildRoot and CloudDir paths exist for macOS
+      run: |
+        New-Item -ItemType Directory -Path "C:\Users\runneradmin\tools\BuildPatchTool\BuildRoot_Mac" -Force
+        New-Item -ItemType Directory -Path "C:\Users\runneradmin\tools\BuildPatchTool\CloudDir_Mac" -Force
+
     - name: Download Windows build artifact
       run: |
         echo "Downloading Windows build artifact..."
         curl -L -o Decentraland_windows64.zip "${{ steps.get_release.outputs.windows_url }}"
         echo "Extracting Windows build artifact..."
-        Expand-Archive -Path Decentraland_windows64.zip -DestinationPath "C:\Users\runneradmin\BuildRoot_Windows"
-        echo "Windows build artifact extracted to C:\Users\runneradmin\BuildRoot_Windows"
+        Expand-Archive -Path Decentraland_windows64.zip -DestinationPath "C:\Users\runneradmin\tools\BuildPatchTool\BuildRoot_Windows"
+        echo "Windows build artifact extracted to C:\Users\runneradmin\tools\BuildPatchTool\BuildRoot_Windows"
 
     - name: List contents of Windows build directory
       run: |
         echo "Contents of Windows build directory:"
-        dir "C:\Users\runneradmin\BuildRoot_Windows"
+        dir "C:\Users\runneradmin\tools\BuildPatchTool\BuildRoot_Windows"
 
     - name: Download macOS build artifact
       run: |
@@ -51,14 +61,14 @@ jobs:
         curl -L -o Decentraland_macos.zip "${{ steps.get_release.outputs.macos_url }}"
         echo "Extracting macOS build artifact..."
         Expand-Archive -Path Decentraland_macos.zip -DestinationPath "C:\Users\runneradmin\MacBuildTemp"
-        New-Item -ItemType Directory -Path "C:\Users\runneradmin\BuildRoot_Mac" -Force
-        tar -xf "C:\Users\runneradmin\MacBuildTemp\build.tar" -C "C:\Users\runneradmin\BuildRoot_Mac"
-        echo "macOS build artifact extracted to C:\Users\runneradmin\BuildRoot_Mac"
+        New-Item -ItemType Directory -Path "C:\Users\runneradmin\tools\BuildPatchTool\BuildRoot_Mac" -Force
+        tar -xf "C:\Users\runneradmin\MacBuildTemp\build.tar" -C "C:\Users\runneradmin\tools\BuildPatchTool\BuildRoot_Mac"
+        echo "macOS build artifact extracted to C:\Users\runneradmin\tools\BuildPatchTool\BuildRoot_Mac"
 
     - name: List contents of macOS build directory
       run: |
         echo "Contents of macOS build directory:"
-        dir "C:\Users\runneradmin\BuildRoot_Mac" -Recurse
+        dir "C:\Users\runneradmin\tools\BuildPatchTool\BuildRoot_Mac"
 
     - name: Download BuildPatchTool
       run: |
@@ -75,16 +85,6 @@ jobs:
 
     - name: Add BuildPatchTool to PATH
       run: echo "C:\Users\runneradmin\tools\BuildPatchTool\Engine\Binaries\Win64" >> $env:GITHUB_PATH
-
-    - name: Ensure BuildRoot and CloudDir paths exist for Windows
-      run: |
-        New-Item -ItemType Directory -Path "C:\Users\runneradmin\tools\BuildPatchTool\BuildRoot_Windows" -Force
-        New-Item -ItemType Directory -Path "C:\Users\runneradmin\tools\BuildPatchTool\CloudDir_Windows" -Force
-
-    - name: Ensure BuildRoot and CloudDir paths exist for macOS
-      run: |
-        New-Item -ItemType Directory -Path "C:\Users\runneradmin\tools\BuildPatchTool\BuildRoot_Mac" -Force
-        New-Item -ItemType Directory -Path "C:\Users\runneradmin\tools\BuildPatchTool\CloudDir_Mac" -Force
 
     - name: Upload Windows artifact
       run: |
