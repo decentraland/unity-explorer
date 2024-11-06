@@ -13,7 +13,6 @@ using DCL.SDKComponents.NFTShape.System;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
-using DCL.WebRequests.ArgsFactory;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.DeferredLoading;
@@ -49,10 +48,7 @@ namespace DCL.SDKComponents.NFTShape.Demo
                 w => new LoadNFTShapeSystem(
                     w,
                     new NftShapeCache(),
-                    new WebRequestController(
-                        new MemoryWeb3IdentityCache()
-                    ),
-                    new GetTextureArgsFactory(ITexturesFuse.NewDefault())
+                    IWebRequestController.DEFAULT
                 ).InitializeAndReturnSelf(),
                 w => new LoadCycleNftShapeSystem(w, new BasedURNSource(new DecentralandUrlsSource(DecentralandEnvironment.Org))),
                 w => new InstantiateNftShapeSystem(w, new PoolNFTShapeRendererFactory(new ComponentPoolsRegistry(), framesPool), new FrameTimeCapBudget.Default(), framePrefabs, buffer),

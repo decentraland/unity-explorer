@@ -3,28 +3,24 @@ using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics.Metrics;
-using DCL.WebRequests.ArgsFactory;
+using DCL.WebRequests.RequestsHub;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
-using System;
 using Utility.Multithreading;
 using Utility.Storage;
 
 namespace DCL.WebRequests.Analytics
 {
-    public class WebRequestsContainer : IDisposable
+    public class WebRequestsContainer
     {
         public IWebRequestController WebRequestController { get; }
 
         public IWebRequestsAnalyticsContainer AnalyticsContainer { get; }
 
-        public IGetTextureArgsFactory GetTextureArgsFactory { get; }
-
         private WebRequestsContainer(
             IWebRequestController webRequestController,
-            IWebRequestsAnalyticsContainer analyticsContainer,
-            IGetTextureArgsFactory getTextureArgsFactory)
+            IWebRequestsAnalyticsContainer analyticsContainer
+        )
         {
-            GetTextureArgsFactory = getTextureArgsFactory;
             WebRequestController = webRequestController;
             AnalyticsContainer = analyticsContainer;
         }
@@ -47,19 +43,17 @@ namespace DCL.WebRequests.Analytics
             var requestCompleteDebugMetric = new ElementBinding<ulong>(0);
             var cannotConnectToHostExceptionDebugMetric = new ElementBinding<ulong>(0);
 
-            var webRequestController = new WebRequestController(analyticsContainer, web3IdentityProvider)
+            var webRequestController = new WebRequestController(analyticsContainer, web3IdentityProvider, new RequestHub(texturesFuse))
                 .WithDebugMetrics(cannotConnectToHostExceptionDebugMetric, requestCompleteDebugMetric)
                 .WithLog()
                 .WithArtificialDelay(options)
                 .WithBudget(totalBudget);
 
-            var getTextureArgsFactory = new GetTextureArgsFactory(texturesFuse);
-
             CreateStressTestUtility();
             CreateWebRequestDelayUtility();
             CreateWebRequestsMetricsDebugUtility();
 
-            return new WebRequestsContainer(webRequestController, analyticsContainer, getTextureArgsFactory);
+            return new WebRequestsContainer(webRequestController, analyticsContainer);
 
             void CreateWebRequestsMetricsDebugUtility()
             {
@@ -87,7 +81,7 @@ namespace DCL.WebRequests.Analytics
 
             void CreateStressTestUtility()
             {
-                var stressTestUtility = new WebRequestStressTestUtility(webRequestController, getTextureArgsFactory);
+                var stressTestUtility = new WebRequestStressTestUtility(webRequestController);
 
                 var count = new ElementBinding<int>(50);
                 var retriesCount = new ElementBinding<int>(3);
@@ -161,11 +155,6 @@ namespace DCL.WebRequests.Analytics
                 enableSetting.ForceSave(enable);
                 delaySetting.ForceSave(delay);
             }
-        }
-
-        public void Dispose()
-        {
-            GetTextureArgsFactory.Dispose();
         }
     }
 }

@@ -6,7 +6,6 @@ using DCL.Notifications;
 using DCL.Notifications.NewNotification;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.WebRequests;
-using DCL.WebRequests.ArgsFactory;
 using MVC;
 using System;
 using System.Threading;
@@ -20,20 +19,17 @@ namespace DCL.PluginSystem.Global
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IMVCManager mvcManager;
         private readonly IWebRequestController webRequestController;
-        private readonly IGetTextureArgsFactory getTextureArgsFactory;
         private readonly INotificationsBusController notificationsBusController;
 
         public NotificationPlugin(
             IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
             IWebRequestController webRequestController,
-            IGetTextureArgsFactory getTextureArgsFactory,
             INotificationsBusController notificationsBusController)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
             this.webRequestController = webRequestController;
-            this.getTextureArgsFactory = getTextureArgsFactory;
             this.notificationsBusController = notificationsBusController;
         }
 
@@ -49,8 +45,7 @@ namespace DCL.PluginSystem.Global
                     notificationsBusController,
                     notificationIconTypes,
                     rarityBackgroundMapping,
-                    webRequestController,
-                    getTextureArgsFactory
+                    webRequestController
                 );
 
             mvcManager.RegisterController(newNotificationController);

@@ -10,7 +10,6 @@ using DCL.Utilities;
 using DCL.Web3;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
-using DCL.WebRequests.ArgsFactory;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using SuperScrollView;
 using System;
@@ -35,7 +34,6 @@ namespace DCL.Notifications.NotificationsMenu
         private readonly INotificationsBusController notificationsBusController;
         private readonly NotificationIconTypes notificationIconTypes;
         private readonly IWebRequestController webRequestController;
-        private readonly IGetTextureArgsFactory getTextureArgsFactory;
         private readonly NftTypeIconSO rarityBackgroundMapping;
         private readonly ISidebarBus sidebarBus;
         private readonly Dictionary<string, Sprite> notificationThumbnailCache = new ();
@@ -44,7 +42,7 @@ namespace DCL.Notifications.NotificationsMenu
         private readonly IWeb3IdentityCache web3IdentityCache;
 
         private CancellationTokenSource? notificationThumbnailCts;
-        private CancellationTokenSource? notificationPanelCts = new CancellationTokenSource();
+        private CancellationTokenSource? notificationPanelCts = new ();
         private int unreadNotifications;
         private Web3Address? previousWeb3Identity;
 
@@ -54,7 +52,6 @@ namespace DCL.Notifications.NotificationsMenu
             INotificationsBusController notificationsBusController,
             NotificationIconTypes notificationIconTypes,
             IWebRequestController webRequestController,
-            IGetTextureArgsFactory getTextureArgsFactory,
             ISidebarBus sidebarBus,
             NftTypeIconSO rarityBackgroundMapping,
             IWeb3IdentityCache web3IdentityCache)
@@ -66,7 +63,6 @@ namespace DCL.Notifications.NotificationsMenu
             this.notificationsBusController = notificationsBusController;
             this.notificationIconTypes = notificationIconTypes;
             this.webRequestController = webRequestController;
-            this.getTextureArgsFactory = getTextureArgsFactory;
             this.sidebarBus = sidebarBus;
             this.rarityBackgroundMapping = rarityBackgroundMapping;
             this.web3IdentityCache = web3IdentityCache;
@@ -229,7 +225,7 @@ namespace DCL.Notifications.NotificationsMenu
         {
             IOwnedTexture2D ownedTexture = await webRequestController.GetTextureAsync(
                 new CommonArguments(URLAddress.FromString(notificationData.GetThumbnail())),
-                getTextureArgsFactory.NewArguments(TextureType.Albedo),
+                new GetTextureArguments(TextureType.Albedo),
                 GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp),
                 ct,
                 ReportCategory.UI);
@@ -238,6 +234,7 @@ namespace DCL.Notifications.NotificationsMenu
 
             Sprite? thumbnailSprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height),
                 VectorUtilities.OneHalf, PIXELS_PER_UNIT, 0, SpriteMeshType.FullRect, Vector4.one, false);
+
             //Try add has been added in case it happens that BE returns duplicated notifications id
             //In that case we will just use the same thumbnail for each notification with the same id
             notificationThumbnailCache.TryAdd(notificationData.Id, thumbnailSprite);

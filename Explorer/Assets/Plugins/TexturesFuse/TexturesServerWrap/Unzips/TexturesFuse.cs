@@ -14,7 +14,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
     /// <summary>
     /// <inheritdoc cref="ITexturesFuse"/>
     /// </summary>
-    public class TexturesFuse : ITexturesFuse
+    internal class TexturesFuse : ITexturesFuse
     {
         private readonly ITexturesFuse.IOptions options;
         private readonly IntPtr context;

@@ -2,7 +2,6 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.WebRequests;
-using DCL.WebRequests.ArgsFactory;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System;
 using Utility;
@@ -16,14 +15,12 @@ namespace DCL.UI
         private const int PIXELS_PER_UNIT = 50;
         private readonly ImageView view;
         private readonly IWebRequestController webRequestController;
-        private readonly IGetTextureArgsFactory getTextureArgsFactory;
         private CancellationTokenSource cts;
 
-        public ImageController(ImageView view, IWebRequestController webRequestController, IGetTextureArgsFactory getTextureArgsFactory)
+        public ImageController(ImageView view, IWebRequestController webRequestController)
         {
             this.view = view;
             this.webRequestController = webRequestController;
-            this.getTextureArgsFactory = getTextureArgsFactory;
         }
 
         public void RequestImage(string uri, bool removePrevious = false, bool hideImageWhileLoading = false)
@@ -53,7 +50,7 @@ namespace DCL.UI
                 //TODO potential memory leak, due no CacheCleaner
                 IOwnedTexture2D ownedTexture = await webRequestController.GetTextureAsync(
                     new CommonArguments(URLAddress.FromString(uri)),
-                    getTextureArgsFactory.NewArguments(TextureType.Albedo),
+                    new GetTextureArguments(TextureType.Albedo),
                     GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp),
                     ct,
                     ReportCategory.UI

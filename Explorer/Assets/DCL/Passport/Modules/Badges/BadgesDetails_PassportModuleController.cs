@@ -6,7 +6,6 @@ using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.WebRequests;
-using DCL.WebRequests.ArgsFactory;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -42,7 +41,6 @@ namespace DCL.Passport.Modules.Badges
             BadgesAPIClient badgesAPIClient,
             PassportErrorsController passportErrorsController,
             IWebRequestController webRequestController,
-            IGetTextureArgsFactory getTextureArgsFactory,
             ISelfProfile selfProfile)
         {
             this.view = view;
@@ -51,8 +49,8 @@ namespace DCL.Passport.Modules.Badges
             this.selfProfile = selfProfile;
 
             badgesCategoriesController = new BadgesCategories_PassportModuleSubController(view);
-            badgeInfoController = new BadgeInfo_PassportModuleSubController(badgeInfoModuleView, webRequestController, getTextureArgsFactory, badgesAPIClient, passportErrorsController);
-            badgeDetailsCardsController = new BadgeDetailsCards_PassportModuleSubController(view, webRequestController, getTextureArgsFactory, badgesCategoriesController, badgeInfoController);
+            badgeInfoController = new BadgeInfo_PassportModuleSubController(badgeInfoModuleView, webRequestController, badgesAPIClient, passportErrorsController);
+            badgeDetailsCardsController = new BadgeDetailsCards_PassportModuleSubController(view, webRequestController, badgesCategoriesController, badgeInfoController);
 
             badgeDetailsCardsController.OnBadgeSelected += BadgeSelected;
             badgesCategoriesController.OnBadgesFilterButtonClicked += OnBadgesCategoryButtonClicked;

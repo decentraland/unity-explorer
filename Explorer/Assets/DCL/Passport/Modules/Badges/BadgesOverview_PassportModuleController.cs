@@ -4,7 +4,6 @@ using DCL.Diagnostics;
 using DCL.Passport.Fields.Badges;
 using DCL.Profiles;
 using DCL.WebRequests;
-using DCL.WebRequests.ArgsFactory;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -31,8 +30,7 @@ namespace DCL.Passport.Modules.Badges
             BadgesOverview_PassportModuleView view,
             BadgesAPIClient badgesAPIClient,
             PassportErrorsController passportErrorsController,
-            IWebRequestController webRequestController,
-            IGetTextureArgsFactory getTextureArgsFactory
+            IWebRequestController webRequestController
         )
         {
             this.view = view;
@@ -44,7 +42,7 @@ namespace DCL.Passport.Modules.Badges
                 defaultCapacity: BADGES_OVERVIEW_MAX_COUNT,
                 actionOnGet: badgeOverviewItemView =>
                 {
-                    badgeOverviewItemView.ConfigureImageController(webRequestController, getTextureArgsFactory);
+                    badgeOverviewItemView.ConfigureImageController(webRequestController);
                     badgeOverviewItemView.gameObject.SetActive(true);
                     badgeOverviewItemView.gameObject.transform.SetAsLastSibling();
                 },

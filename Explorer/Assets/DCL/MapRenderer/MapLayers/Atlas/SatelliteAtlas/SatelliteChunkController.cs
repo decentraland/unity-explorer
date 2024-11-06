@@ -4,7 +4,6 @@ using DCL.Diagnostics;
 using DCL.MapRenderer.ComponentsFactory;
 using DCL.Utilities.Extensions;
 using DCL.WebRequests;
-using DCL.WebRequests.ArgsFactory;
 using DG.Tweening;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System.Threading;
@@ -21,7 +20,6 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
         private readonly MapRendererTextureContainer textureContainer;
 
         private readonly IWebRequestController webRequestController;
-        private readonly IGetTextureArgsFactory getTextureArgsFactory;
         private readonly AtlasChunk atlasChunk;
 
         private CancellationTokenSource? internalCts;
@@ -33,7 +31,6 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
         public SatelliteChunkController(
             SpriteRenderer prefab,
             IWebRequestController webRequestController,
-            IGetTextureArgsFactory getTextureArgsFactory,
             MapRendererTextureContainer textureContainer,
             Vector3 chunkLocalPosition,
             Vector2Int coordsCenter,
@@ -41,7 +38,6 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
             int drawOrder)
         {
             this.webRequestController = webRequestController;
-            this.getTextureArgsFactory = getTextureArgsFactory;
             this.textureContainer = textureContainer;
             internalCts = new CancellationTokenSource();
 
@@ -82,7 +78,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
 
             var textureTask = webRequestController.GetTextureAsync(
                 new CommonArguments(URLAddress.FromString(url)),
-                getTextureArgsFactory.NewArguments(TextureType.Albedo),
+                new GetTextureArguments(TextureType.Albedo),
                 GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp, FilterMode.Trilinear),
                 linkedCts.Token,
                 ReportCategory.UI

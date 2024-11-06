@@ -68,6 +68,7 @@ namespace Global
         private ProvidedAsset<RealmPartitionSettingsAsset> realmPartitionSettings;
 
         private IAssetsProvisioner assetsProvisioner;
+        private ITexturesFuse texturesFuse;
 
         public ComponentsContainer ComponentsContainer { get; private set; }
         public CharacterContainer CharacterContainer { get; private set; }
@@ -108,7 +109,7 @@ namespace Global
             partitionSettings.Dispose();
             QualityContainer.Dispose();
             Profiler.Dispose();
-            WebRequestsContainer.Dispose();
+            texturesFuse.Dispose();
         }
 
         public async UniTask InitializeAsync(StaticSettings settings, CancellationToken ct)
@@ -158,6 +159,7 @@ namespace Global
             container.assetsProvisioner = assetsProvisioner;
             container.MemoryCap = memoryCap;
             container.SceneRestrictionBusController = new SceneRestrictionBusController();
+            container.texturesFuse = texturesFuse;
 
             var exposedPlayerTransform = new ExposedTransform();
 
@@ -205,7 +207,7 @@ namespace Global
                 container.FeatureFlagsCache);
 
             var assetBundlePlugin = new AssetBundlesPlugin(reportHandlingSettings, container.CacheCleaner, container.WebRequestsContainer.WebRequestController);
-            var textureResolvePlugin = new TexturesLoadingPlugin(container.WebRequestsContainer.WebRequestController, container.WebRequestsContainer.GetTextureArgsFactory, container.CacheCleaner);
+            var textureResolvePlugin = new TexturesLoadingPlugin(container.WebRequestsContainer.WebRequestController, container.CacheCleaner);
 
             ExtendedObjectPool<Texture2D> videoTexturePool = VideoTextureFactory.CreateVideoTexturesPool();
 
@@ -221,7 +223,7 @@ namespace Global
             {
                 new TransformsPlugin(sharedDependencies, exposedPlayerTransform, exposedGlobalDataContainer.ExposedCameraData),
                 new BillboardPlugin(exposedGlobalDataContainer.ExposedCameraData),
-                new NFTShapePlugin(decentralandUrlsSource, container.assetsProvisioner, sharedDependencies.FrameTimeBudget, componentsContainer.ComponentPoolsRegistry, container.WebRequestsContainer.WebRequestController, container.WebRequestsContainer.GetTextureArgsFactory, container.CacheCleaner),
+                new NFTShapePlugin(decentralandUrlsSource, container.assetsProvisioner, sharedDependencies.FrameTimeBudget, componentsContainer.ComponentPoolsRegistry, container.WebRequestsContainer.WebRequestController, container.CacheCleaner),
                 new TextShapePlugin(sharedDependencies.FrameTimeBudget, container.CacheCleaner, componentsContainer.ComponentPoolsRegistry),
                 new MaterialsPlugin(sharedDependencies, videoTexturePool),
                 textureResolvePlugin,

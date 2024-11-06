@@ -1,7 +1,6 @@
 using DCL.BadgesAPIService;
 using DCL.UI;
 using DCL.WebRequests;
-using DCL.WebRequests.ArgsFactory;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -27,12 +26,12 @@ namespace DCL.Passport.Fields.Badges
         private void OnEnable() =>
             SetBadgeNameToastActive(false);
 
-        public void ConfigureImageController(IWebRequestController webRequestController, IGetTextureArgsFactory getTextureArgsFactory)
+        public void ConfigureImageController(IWebRequestController webRequestController)
         {
             if (imageController != null)
                 return;
 
-            imageController = new ImageController(BadgeImage, webRequestController, getTextureArgsFactory);
+            imageController = new ImageController(BadgeImage, webRequestController);
         }
 
         public void StopLoadingImage() =>

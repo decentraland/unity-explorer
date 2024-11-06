@@ -4,7 +4,6 @@ using DCL.BadgesAPIService;
 using DCL.Diagnostics;
 using DCL.Passport.Fields.Badges;
 using DCL.WebRequests;
-using DCL.WebRequests.ArgsFactory;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System;
 using System.Collections.Generic;
@@ -26,7 +25,6 @@ namespace DCL.Passport.Modules.Badges
 
         private readonly BadgeInfo_PassportModuleView badgeInfoModuleView;
         private readonly IWebRequestController webRequestController;
-        private readonly IGetTextureArgsFactory getTextureArgsFactory;
         private readonly BadgesAPIClient badgesAPIClient;
         private readonly PassportErrorsController passportErrorsController;
         private readonly IObjectPool<BadgeTierButton_PassportFieldView> badgeTierButtonsPool;
@@ -41,13 +39,11 @@ namespace DCL.Passport.Modules.Badges
         public BadgeInfo_PassportModuleSubController(
             BadgeInfo_PassportModuleView badgeInfoModuleView,
             IWebRequestController webRequestController,
-            IGetTextureArgsFactory getTextureArgsFactory,
             BadgesAPIClient badgesAPIClient,
             PassportErrorsController passportErrorsController)
         {
             this.badgeInfoModuleView = badgeInfoModuleView;
             this.webRequestController = webRequestController;
-            this.getTextureArgsFactory = getTextureArgsFactory;
             this.badgesAPIClient = badgesAPIClient;
             this.passportErrorsController = passportErrorsController;
 
@@ -56,7 +52,7 @@ namespace DCL.Passport.Modules.Badges
                 defaultCapacity: BADGE_TIER_BUTTON_POOL_DEFAULT_CAPACITY,
                 actionOnGet: badgeTierButton =>
                 {
-                    badgeTierButton.ConfigureImageController(webRequestController, getTextureArgsFactory);
+                    badgeTierButton.ConfigureImageController(webRequestController);
                     badgeTierButton.gameObject.SetActive(true);
                     badgeTierButton.SetAsSelected(false);
                     badgeTierButton.transform.SetAsLastSibling();
@@ -298,7 +294,7 @@ namespace DCL.Passport.Modules.Badges
         private async UniTask<Texture2D> RemoteTextureAsync(string url, CancellationToken ct, TextureType textureType = TextureType.Albedo) =>
             (await webRequestController.GetTextureAsync(
                 new CommonArguments(URLAddress.FromString(url)),
-                getTextureArgsFactory.NewArguments(textureType),
+                new GetTextureArguments(textureType),
                 GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp, FilterMode.Bilinear),
                 ct,
                 ReportCategory.BADGES)

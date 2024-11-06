@@ -3,7 +3,6 @@ using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
-using DCL.WebRequests.ArgsFactory;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System.Linq;
 using System.Threading;
@@ -34,7 +33,7 @@ namespace DCL.InWorldCamera.CameraReelStorageService.Playground
         public string ThumbnailUrl;
 
         private ICameraReelScreenshotsStorage screenshotsStorageInternal;
-        private ICameraReelScreenshotsStorage screenshotsStorage => screenshotsStorageInternal ??= new CameraReelS3BucketScreenshotsStorage(webRequestController, new GetTextureArgsFactory(ITexturesFuse.NewTestInstance()));
+        private ICameraReelScreenshotsStorage screenshotsStorage => screenshotsStorageInternal ??= new CameraReelS3BucketScreenshotsStorage(webRequestController);
 
         private ICameraReelImagesMetadataDatabase metadataDatabase
         {

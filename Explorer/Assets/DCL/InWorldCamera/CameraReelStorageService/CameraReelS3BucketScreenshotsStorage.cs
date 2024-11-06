@@ -2,7 +2,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.WebRequests;
-using DCL.WebRequests.ArgsFactory;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System.Threading;
 using UnityEngine;
@@ -12,12 +11,10 @@ namespace DCL.InWorldCamera.CameraReelStorageService
     public class CameraReelS3BucketScreenshotsStorage : ICameraReelScreenshotsStorage
     {
         private readonly IWebRequestController webRequestController;
-        private readonly IGetTextureArgsFactory getTextureArgsFactory;
 
-        public CameraReelS3BucketScreenshotsStorage(IWebRequestController webRequestController, IGetTextureArgsFactory getTextureArgsFactory)
+        public CameraReelS3BucketScreenshotsStorage(IWebRequestController webRequestController)
         {
             this.webRequestController = webRequestController;
-            this.getTextureArgsFactory = getTextureArgsFactory;
         }
 
         public async UniTask<Texture2D> GetScreenshotImageAsync(string url) =>
@@ -31,7 +28,7 @@ namespace DCL.InWorldCamera.CameraReelStorageService
         {
             var texture = await webRequestController.GetTextureAsync(
                 new CommonArguments(URLAddress.FromString(url)),
-                getTextureArgsFactory.NewArguments(TextureType.Albedo),
+                new GetTextureArguments(TextureType.Albedo),
                 GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp), default(CancellationToken), ReportCategory.CAMERA_REEL);
 
             return texture.Texture;

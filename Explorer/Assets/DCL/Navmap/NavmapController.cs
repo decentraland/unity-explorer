@@ -22,7 +22,6 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using DCL.Chat.MessageBus;
-using DCL.WebRequests.ArgsFactory;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Utility;
@@ -68,7 +67,6 @@ namespace DCL.Navmap
             IMapRenderer mapRenderer,
             IPlacesAPIService placesAPIService,
             IWebRequestController webRequestController,
-            IGetTextureArgsFactory getTextureArgsFactory,
             IWebBrowser webBrowser,
             DCLInput dclInput,
             IRealmNavigator realmNavigator,
@@ -96,7 +94,6 @@ namespace DCL.Navmap
                 placesAPIService,
                 navmapView.floatingPanelView,
                 webRequestController,
-                getTextureArgsFactory,
                 inputBlock
             );
 
@@ -104,7 +101,6 @@ namespace DCL.Navmap
                 navmapView.floatingPanelView,
                 placesAPIService,
                 webRequestController,
-                getTextureArgsFactory,
                 mapPathEventBus,
                 chatMessagesBus,
                 zoomController

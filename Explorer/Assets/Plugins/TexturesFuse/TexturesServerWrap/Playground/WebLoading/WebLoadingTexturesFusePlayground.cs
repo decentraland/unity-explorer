@@ -57,7 +57,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground.WebLoading
                 new CommonArguments(
                     URLAddress.FromString(option.url)
                 ),
-                new GetTextureArguments(fuse, option.textureType),
+                new GetTextureArguments(option.textureType),
                 new GetTextureWebRequest.CreateTextureOp(TextureWrapMode.Clamp, FilterMode.Bilinear),
                 destroyCancellationToken,
                 ReportCategory.UNSPECIFIED

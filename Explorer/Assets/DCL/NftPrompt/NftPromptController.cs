@@ -5,7 +5,6 @@ using DCL.Input;
 using DCL.NftInfoAPIService;
 using DCL.UI;
 using DCL.WebRequests;
-using DCL.WebRequests.ArgsFactory;
 using MVC;
 using System;
 using System.Threading;
@@ -26,7 +25,6 @@ namespace DCL.NftPrompt
         private readonly ICursor cursor;
         private readonly INftMarketAPIClient nftInfoAPIClient;
         private readonly IWebRequestController webRequestController;
-        private readonly IGetTextureArgsFactory getTextureArgsFactory;
         private Action<NftPromptResultType> resultCallback;
 
         private NftInfo? lastNftInfo;
@@ -39,20 +37,18 @@ namespace DCL.NftPrompt
             IWebBrowser webBrowser,
             ICursor cursor,
             INftMarketAPIClient nftInfoAPIClient,
-            IWebRequestController webRequestController,
-            IGetTextureArgsFactory getTextureArgsFactory
+            IWebRequestController webRequestController
         ) : base(viewFactory)
         {
             this.webBrowser = webBrowser;
             this.cursor = cursor;
             this.nftInfoAPIClient = nftInfoAPIClient;
             this.webRequestController = webRequestController;
-            this.getTextureArgsFactory = getTextureArgsFactory;
         }
 
         protected override void OnViewInstantiated()
         {
-            placeImageController = new ImageController(viewInstance.ImageNft, webRequestController, getTextureArgsFactory);
+            placeImageController = new ImageController(viewInstance.ImageNft, webRequestController);
             viewInstance.ButtonClose.onClick.AddListener(Dismiss);
             viewInstance.ButtonCancel.onClick.AddListener(Dismiss);
             viewInstance.ButtonOpenMarket.onClick.AddListener(ViewOnMarket);

@@ -5,7 +5,6 @@ using DCL.Input.Component;
 using DCL.PlacesAPIService;
 using DCL.UI;
 using DCL.WebRequests;
-using DCL.WebRequests.ArgsFactory;
 using System;
 using System.Linq;
 using System.Threading;
@@ -41,7 +40,6 @@ namespace DCL.Navmap
             IPlacesAPIService placesAPIService,
             FloatingPanelView floatingPanelView,
             IWebRequestController webRequestController,
-            IGetTextureArgsFactory getTextureArgsFactory,
             IInputBlock inputBlock
         )
         {
@@ -50,7 +48,7 @@ namespace DCL.Navmap
             this.placesAPIService = placesAPIService;
             this.inputBlock = inputBlock;
 
-            searchResultPanelController = new SearchResultPanelController(searchResultPanelView, webRequestController, getTextureArgsFactory);
+            searchResultPanelController = new SearchResultPanelController(searchResultPanelView, webRequestController);
             searchResultPanelController.OnResultClicked += ClickedResult;
 
             historyRecordPanelView.OnClickedHistoryRecord += ClickedHistoryResult;

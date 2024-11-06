@@ -1,6 +1,7 @@
 using DCL.Diagnostics;
 using DCL.Web3.Chains;
 using DCL.Web3.Identities;
+using DCL.WebRequests.RequestsHub;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;

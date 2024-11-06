@@ -44,7 +44,6 @@ namespace Global.Dynamic
                     assetsProvisioner,
                     c.mapRendererSettings.Value,
                     staticContainer.WebRequestsContainer.WebRequestController,
-                    staticContainer.WebRequestsContainer.GetTextureArgsFactory,
                     decentralandUrlsSource,
                     c.TextureContainer,
                     placesAPIService,

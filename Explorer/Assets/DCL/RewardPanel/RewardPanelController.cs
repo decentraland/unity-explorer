@@ -2,7 +2,6 @@ using Cysharp.Threading.Tasks;
 using DCL.Backpack;
 using DCL.UI;
 using DCL.WebRequests;
-using DCL.WebRequests.ArgsFactory;
 using JetBrains.Annotations;
 using MVC;
 using Nethereum.ABI.Model;
@@ -14,7 +13,6 @@ namespace DCL.RewardPanel
     public class RewardPanelController : ControllerBase<RewardPanelView, RewardPanelParameter>
     {
         private readonly IWebRequestController webRequestController;
-        private readonly IGetTextureArgsFactory getTextureArgsFactory;
         private readonly NFTColorsSO nftRarityColors;
         private readonly NftTypeIconSO nftRarityBackgrounds;
         private readonly NftTypeIconSO nftCategoryIcons;
@@ -24,14 +22,12 @@ namespace DCL.RewardPanel
         public RewardPanelController(
             ViewFactoryMethod viewFactory,
             IWebRequestController webRequestController,
-            IGetTextureArgsFactory getTextureArgsFactory,
             NFTColorsSO nftRarityColors,
             NftTypeIconSO nftRarityBackgrounds,
             NftTypeIconSO nftCategoryIcons
         ) : base(viewFactory)
         {
             this.webRequestController = webRequestController;
-            this.getTextureArgsFactory = getTextureArgsFactory;
             this.nftRarityColors = nftRarityColors;
             this.nftRarityBackgrounds = nftRarityBackgrounds;
             this.nftCategoryIcons = nftCategoryIcons;
@@ -39,7 +35,7 @@ namespace DCL.RewardPanel
 
         protected override void OnViewInstantiated()
         {
-            imageController = new ImageController(viewInstance.ThumbnailImage, webRequestController, getTextureArgsFactory);
+            imageController = new ImageController(viewInstance.ThumbnailImage, webRequestController);
         }
 
         protected override void OnBeforeViewShow()

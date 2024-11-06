@@ -1,7 +1,5 @@
 using DCL.UI;
 using DCL.WebRequests;
-using DCL.WebRequests.ArgsFactory;
-using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -37,8 +35,8 @@ namespace DCL.Navmap
 
         private ImageController imageController;
 
-        public void ConfigurePlaceImageController(IWebRequestController webRequestController, IGetTextureArgsFactory getTextureArgsFactory) =>
-            imageController = new ImageController(placeImage, webRequestController, getTextureArgsFactory);
+        public void ConfigurePlaceImageController(IWebRequestController webRequestController) =>
+            imageController = new ImageController(placeImage, webRequestController);
 
         public void SetPlaceImage(string imageUrl) =>
             imageController.RequestImage(imageUrl, true);

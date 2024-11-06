@@ -4,7 +4,6 @@ using DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
 using DCL.UI;
 using DCL.WebRequests;
-using DCL.WebRequests.ArgsFactory;
 using DG.Tweening;
 using MVC;
 using System;
@@ -26,7 +25,6 @@ namespace DCL.Notifications.NewNotification
         private readonly NotificationIconTypes notificationIconTypes;
         private readonly NftTypeIconSO rarityBackgroundMapping;
         private readonly IWebRequestController webRequestController;
-        private readonly IGetTextureArgsFactory getTextureArgsFactory;
         private readonly Queue<INotification> notificationQueue = new ();
         private bool isDisplaying;
         private ImageController thumbnailImageController;
@@ -39,15 +37,13 @@ namespace DCL.Notifications.NewNotification
             INotificationsBusController notificationsBusController,
             NotificationIconTypes notificationIconTypes,
             NftTypeIconSO rarityBackgroundMapping,
-            IWebRequestController webRequestController,
-            IGetTextureArgsFactory getTextureArgsFactory
+            IWebRequestController webRequestController
         ) : base(viewFactory)
         {
             this.notificationsBusController = notificationsBusController;
             this.notificationIconTypes = notificationIconTypes;
             this.rarityBackgroundMapping = rarityBackgroundMapping;
             this.webRequestController = webRequestController;
-            this.getTextureArgsFactory = getTextureArgsFactory;
             notificationsBusController.SubscribeToAllNotificationTypesReceived(QueueNewNotification);
             cts = new CancellationTokenSource();
             cts.Token.ThrowIfCancellationRequested();
@@ -55,11 +51,11 @@ namespace DCL.Notifications.NewNotification
 
         protected override void OnViewInstantiated()
         {
-            thumbnailImageController = new ImageController(viewInstance!.NotificationView.NotificationImage, webRequestController, getTextureArgsFactory);
+            thumbnailImageController = new ImageController(viewInstance!.NotificationView.NotificationImage, webRequestController);
             viewInstance.NotificationView.NotificationClicked += ClickedNotification;
             viewInstance.NotificationView.CloseButton.onClick.AddListener(StopAnimation);
             viewInstance.SystemNotificationView.CloseButton.onClick.AddListener(StopAnimation);
-            badgeThumbnailImageController = new ImageController(viewInstance.BadgeNotificationView.NotificationImage, webRequestController, getTextureArgsFactory);
+            badgeThumbnailImageController = new ImageController(viewInstance.BadgeNotificationView.NotificationImage, webRequestController);
             viewInstance.BadgeNotificationView.NotificationClicked += ClickedNotification;
         }
 

@@ -1,7 +1,4 @@
-﻿using Cysharp.Threading.Tasks;
-using System.Threading;
-
-namespace DCL.WebRequests
+﻿namespace DCL.WebRequests.RequestsHub
 {
     /// <summary>
     ///     Creates/Initialize Web Request based on common and specific arguments

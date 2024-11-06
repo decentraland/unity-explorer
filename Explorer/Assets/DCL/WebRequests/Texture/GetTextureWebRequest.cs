@@ -36,10 +36,10 @@ namespace DCL.WebRequests
         public static CreateTextureOp CreateTexture(TextureWrapMode wrapMode, FilterMode filterMode = FilterMode.Point) =>
             new (wrapMode, filterMode);
 
-        internal static GetTextureWebRequest Initialize(in CommonArguments commonArguments, GetTextureArguments textureArguments)
+        internal static GetTextureWebRequest Initialize(in CommonArguments commonArguments, GetTextureArguments textureArguments, ITexturesFuse texturesFuse)
         {
             UnityWebRequest wr = UnityWebRequest.Get(commonArguments.URL)!;
-            return new GetTextureWebRequest(wr, textureArguments.TexturesFuse, commonArguments.URL, textureArguments.TextureType);
+            return new GetTextureWebRequest(wr, texturesFuse, commonArguments.URL, textureArguments.TextureType);
         }
 
         public readonly struct CreateTextureOp : IWebRequestOp<GetTextureWebRequest, IOwnedTexture2D>

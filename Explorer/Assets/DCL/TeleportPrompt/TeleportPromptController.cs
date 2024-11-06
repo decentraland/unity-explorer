@@ -9,7 +9,6 @@ using MVC;
 using System;
 using System.Threading;
 using DCL.Chat.MessageBus;
-using DCL.WebRequests.ArgsFactory;
 using UnityEngine;
 using Utility;
 
@@ -22,7 +21,6 @@ namespace DCL.TeleportPrompt
 
         private readonly ICursor cursor;
         private readonly IWebRequestController webRequestController;
-        private readonly IGetTextureArgsFactory getTextureArgsFactory;
         private readonly IPlacesAPIService placesAPIService;
         private ImageController placeImageController;
         private Action<TeleportPromptResultType> resultCallback;
@@ -33,21 +31,19 @@ namespace DCL.TeleportPrompt
             ViewFactoryMethod viewFactory,
             ICursor cursor,
             IWebRequestController webRequestController,
-            IGetTextureArgsFactory getTextureArgsFactory,
             IPlacesAPIService placesAPIService,
             IChatMessagesBus chatMessagesBus
         ) : base(viewFactory)
         {
             this.cursor = cursor;
             this.webRequestController = webRequestController;
-            this.getTextureArgsFactory = getTextureArgsFactory;
             this.placesAPIService = placesAPIService;
             this.chatMessagesBus = chatMessagesBus;
         }
 
         protected override void OnViewInstantiated()
         {
-            placeImageController = new ImageController(viewInstance.placeImage, webRequestController, getTextureArgsFactory);
+            placeImageController = new ImageController(viewInstance.placeImage, webRequestController);
             viewInstance.cancelButton.onClick.AddListener(Dismiss);
             viewInstance.continueButton.onClick.AddListener(Approve);
         }

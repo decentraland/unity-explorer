@@ -9,7 +9,7 @@ using Utility.Types;
 
 namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
 {
-    public class PooledTexturesFuse : ITexturesFuse
+    internal class PooledTexturesFuse : ITexturesFuse
     {
         private readonly IReadOnlyList<ITexturesFuse> uniqueUnzips;
         private readonly TimeSpan timeout = TimeSpan.FromSeconds(15);

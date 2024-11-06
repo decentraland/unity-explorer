@@ -1,7 +1,6 @@
 using DCL.BadgesAPIService;
 using DCL.UI;
 using DCL.WebRequests;
-using DCL.WebRequests.ArgsFactory;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -41,12 +40,12 @@ namespace DCL.Passport.Fields.Badges
 
         private ImageController? imageController;
 
-        public void ConfigureImageController(IWebRequestController webRequestController, IGetTextureArgsFactory getTextureArgsFactory)
+        public void ConfigureImageController(IWebRequestController webRequestController)
         {
             if (imageController != null)
                 return;
 
-            imageController = new ImageController(TierImage, webRequestController, getTextureArgsFactory);
+            imageController = new ImageController(TierImage, webRequestController);
         }
 
         public void StopLoadingImage() =>

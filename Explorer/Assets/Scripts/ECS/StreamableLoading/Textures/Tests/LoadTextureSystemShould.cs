@@ -1,5 +1,4 @@
-﻿using DCL.WebRequests.ArgsFactory;
-using ECS.StreamableLoading.Common.Components;
+﻿using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Tests;
 using ECS.TestSuite;
 using NUnit.Framework;
@@ -25,7 +24,7 @@ namespace ECS.StreamableLoading.Textures.Tests
             new () { CommonArguments = new CommonLoadingArguments(wrongTypePath) };
 
         protected override LoadTextureSystem CreateSystem() =>
-            new (world, cache, TestWebRequestController.INSTANCE, new GetTextureArgsFactory(ITexturesFuse.NewTestInstance()));
+            new (world, cache, TestWebRequestController.INSTANCE);
 
         protected override void AssertSuccess(Texture2DData data)
         {

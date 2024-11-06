@@ -4,7 +4,6 @@ using DCL.WebRequests.GenericDelete;
 using System;
 using System.Threading;
 using Utility.Times;
-using static DCL.WebRequests.WebRequestControllerExtensions;
 
 namespace DCL.WebRequests
 {
@@ -50,8 +49,7 @@ namespace DCL.WebRequests
                 ReportCategory.GENERIC_WEB_REQUEST,
                 new WebRequestHeadersInfo().WithSign(jsonMetaData, unixTimestamp),
                 WebRequestSignInfo.NewFromRaw(jsonMetaData, commonArguments.URL, unixTimestamp, "post"),
-                null,
-                POST_GENERIC
+                null
             );
         }
 
@@ -73,8 +71,7 @@ namespace DCL.WebRequests
                 ReportCategory.GENERIC_WEB_REQUEST,
                 new WebRequestHeadersInfo().WithSign(jsonMetaData, unixTimestamp),
                 WebRequestSignInfo.NewFromRaw(jsonMetaData, commonArguments.URL, unixTimestamp, "post"),
-                null,
-                POST_GENERIC
+                null
             );
         }
 
@@ -95,8 +92,7 @@ namespace DCL.WebRequests
                 ReportCategory.GENERIC_WEB_REQUEST,
                 new WebRequestHeadersInfo().WithSign(jsonMetaData, unixTimestamp),
                 WebRequestSignInfo.NewFromRaw(jsonMetaData, commonArguments.URL, unixTimestamp, "get"),
-                null,
-                GET_GENERIC
+                null
             );
         }
 
@@ -117,8 +113,7 @@ namespace DCL.WebRequests
                 ReportCategory.GENERIC_WEB_REQUEST,
                 new WebRequestHeadersInfo().WithSign(jsonMetaData, unixTimestamp),
                 WebRequestSignInfo.NewFromRaw(jsonMetaData, commonArguments.URL, unixTimestamp, "delete"),
-                null,
-                DELETE_GENERIC
+                null
             );
         }
     }
