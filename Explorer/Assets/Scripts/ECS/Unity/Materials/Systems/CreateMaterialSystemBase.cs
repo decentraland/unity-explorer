@@ -70,7 +70,15 @@ namespace ECS.Unity.Materials.Systems
             // This case happens on nft-museum at sdk-goerli-plaza 85,-8. A plane exists which has a texture that acts as a "preview" of the stream.
             // Whenever you get close or far, the texture is changed either to video stream or regular exposing this issue
             else
+            {
                 material.SetTextureScale(propId, Vector2.one);
+
+                if (textureComponent != null)
+                {
+                    material.SetTextureOffset(propId, textureComponent.Value.TextureOffset);
+                    material.SetTextureScale(propId, textureComponent.Value.TextureTiling);
+                }
+            }
         }
     }
 }

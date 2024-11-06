@@ -4,6 +4,7 @@ using SceneRunner.Scene;
 using UnityEngine;
 using Texture = Decentraland.Common.Texture;
 using TextureWrapMode = UnityEngine.TextureWrapMode;
+using Vector2 = UnityEngine.Vector2;
 
 namespace ECS.Unity.Textures.Components.Extensions
 {
@@ -24,7 +25,7 @@ namespace ECS.Unity.Textures.Components.Extensions
             self.TryGetTextureFileHash(data, out string fileHash);
 
             return success
-                ? new TextureComponent(url, fileHash, self.GetWrapMode(), self.GetFilterMode())
+                ? new TextureComponent(url, fileHash, self.GetWrapMode(), self.GetFilterMode(), textureOffset: self.GetOffset(), textureTiling: self.GetTiling())
                 : null;
         }
 
@@ -100,6 +101,32 @@ namespace ECS.Unity.Textures.Components.Extensions
             }
         }
 
+        public static Vector2 GetOffset(this TextureUnion self)
+        {
+            switch (self.TexCase)
+            {
+                case TextureUnion.TexOneofCase.AvatarTexture:
+                case TextureUnion.TexOneofCase.VideoTexture:
+                default:
+                    return Vector2.zero;
+                case TextureUnion.TexOneofCase.Texture:
+                    return self.Texture.Offset.ToUnityVector2();
+            }
+        }
+
+        public static Vector2 GetTiling(this TextureUnion self)
+        {
+            switch (self.TexCase)
+            {
+                case TextureUnion.TexOneofCase.AvatarTexture:
+                case TextureUnion.TexOneofCase.VideoTexture:
+                default:
+                    return Vector2.one;
+                case TextureUnion.TexOneofCase.Texture:
+                    return self.Texture.Tiling.ToUnityVector2();
+            }
+        }
+
         public static bool TryGetTextureUrl(this Texture self, ISceneData data, out URLAddress url) =>
             data.TryGetMediaUrl(self.Src, out url);
 
@@ -143,5 +170,8 @@ namespace ECS.Unity.Textures.Components.Extensions
 
         public static TextureWrapMode ToUnityWrapMode(this Decentraland.Common.TextureWrapMode self) =>
             (TextureWrapMode)self;
+
+        public static Vector2 ToUnityVector2(this Decentraland.Common.Vector2 self) =>
+            new (self.X, self.Y);
     }
 }
