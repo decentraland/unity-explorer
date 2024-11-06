@@ -97,7 +97,7 @@ jobs:
  #       -mode=UploadBinary `
  #       -BuildRoot="C:\Users\runneradmin\tools\BuildPatchTool\BuildRoot_Windows" `
  #       -CloudDir="C:\Users\runneradmin\tools\BuildPatchTool\CloudDir_Windows" `
- #       -BuildVersion="${{ steps.get_release.outputs.version }}" `
+ #       -BuildVersion="${{ steps.get_release.outputs.version }-windows}" `
  #       -AppLaunch="Decentraland.exe" `
  #       -AppArgs=""
 
@@ -112,7 +112,7 @@ jobs:
         -mode=UploadBinary `
         -BuildRoot="C:\Users\runneradmin\tools\BuildPatchTool\BuildRoot_Mac" `
         -CloudDir="C:\Users\runneradmin\tools\BuildPatchTool\CloudDir_Mac" `
-        -BuildVersion="${{ steps.get_release.outputs.version }}" `
+        -BuildVersion="${{ steps.get_release.outputs.version }}-mac" `
         -AppLaunch="Decentraland.app/Contents/MacOS/Decentraland" `
         -AppArgs="" `
         -Platform="Mac"
