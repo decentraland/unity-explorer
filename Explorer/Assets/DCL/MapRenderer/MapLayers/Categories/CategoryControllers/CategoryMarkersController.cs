@@ -22,7 +22,8 @@ namespace DCL.MapRenderer.MapLayers.Categories
 
         internal delegate ICategoryMarker CategoryMarkerBuilder(
             IObjectPool<CategoryMarkerObject> objectsPool,
-            IMapCullingController cullingController);
+            IMapCullingController cullingController,
+            ICoordsUtils coordsUtils);
 
         private readonly IObjectPool<CategoryMarkerObject> objectsPool;
         private readonly CategoryMarkerBuilder builder;
@@ -64,7 +65,7 @@ namespace DCL.MapRenderer.MapLayers.Categories
                 if (IsEmptyParcel(placeInfo))
                     continue;
 
-                var marker = builder(objectsPool, mapCullingController);
+                var marker = builder(objectsPool, mapCullingController, coordsUtils);
                 var position = coordsUtils.CoordsToPosition(placeInfo.base_position);
 
                 marker.SetData(placeInfo.name, position);

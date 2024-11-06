@@ -23,7 +23,8 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
 
         internal delegate ISceneOfInterestMarker SceneOfInterestMarkerBuilder(
             IObjectPool<SceneOfInterestMarkerObject> objectsPool,
-            IMapCullingController cullingController);
+            IMapCullingController cullingController,
+            ICoordsUtils coordsUtils);
 
         private readonly IObjectPool<SceneOfInterestMarkerObject> objectsPool;
         private readonly SceneOfInterestMarkerBuilder builder;
@@ -75,7 +76,7 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
                 if (IsEmptyParcel(placeInfo))
                     continue;
 
-                var marker = builder(objectsPool, mapCullingController);
+                var marker = builder(objectsPool, mapCullingController, coordsUtils);
                 var centerParcel = GetParcelsCenter(placeInfo);
                 var position = coordsUtils.CoordsToPosition(centerParcel);
 

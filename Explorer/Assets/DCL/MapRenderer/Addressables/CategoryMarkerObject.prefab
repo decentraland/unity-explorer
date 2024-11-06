@@ -219,7 +219,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1f5f5a22bae64834aeb9a552ea5831b9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  <pivot>k__BackingField: {x: 0.5, y: 0.5}
+  <pivot>k__BackingField: {x: 0, y: 0}
   <title>k__BackingField: {fileID: 4613185049253147113}
   <renderers>k__BackingField:
   - {fileID: 5155384069659503510}

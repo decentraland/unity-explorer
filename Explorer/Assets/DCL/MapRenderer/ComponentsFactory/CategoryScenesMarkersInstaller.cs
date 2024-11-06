@@ -99,8 +99,8 @@ namespace DCL.MapRenderer.ComponentsFactory
             return categoryMarkerObject;
         }
 
-        private static ICategoryMarker CreateMarker(IObjectPool<CategoryMarkerObject> objectsPool, IMapCullingController cullingController) =>
-            new CategoryMarker(objectsPool, cullingController);
+        private static ICategoryMarker CreateMarker(IObjectPool<CategoryMarkerObject> objectsPool, IMapCullingController cullingController, ICoordsUtils coordsUtils) =>
+            new CategoryMarker(objectsPool, cullingController, coordsUtils);
 
         private async UniTask<CategoryMarkerObject> GetPrefabAsync(CancellationToken cancellationToken) =>
             (await assetsProvisioner.ProvideMainAssetAsync(mapSettings.CategoryMarker, cancellationToken)).Value;
