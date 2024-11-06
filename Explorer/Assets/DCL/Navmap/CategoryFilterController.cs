@@ -14,6 +14,7 @@ namespace DCL.Navmap
 
             foreach (CategoryToggleView categoryToggleView in categoryToggles)
             {
+                mapRenderer.SetSharedLayer(categoryToggleView.Layer, false);
                 categoryToggleView.ToggleChanged += OnCategoryToggleChanged;
             }
         }

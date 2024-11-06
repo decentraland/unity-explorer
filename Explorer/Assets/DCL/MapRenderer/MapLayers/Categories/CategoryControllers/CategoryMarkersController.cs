@@ -18,7 +18,7 @@ namespace DCL.MapRenderer.MapLayers.Categories
     internal class CategoryMarkersController : MapLayerControllerBase, IMapCullingListener<ICategoryMarker>, IMapLayerController, IZoomScalingLayer
     {
         private const string EMPTY_PARCEL_NAME = "Empty parcel";
-        private MapLayer mapLayer;
+        private readonly MapLayer mapLayer;
 
         internal delegate ICategoryMarker CategoryMarkerBuilder(
             IObjectPool<CategoryMarkerObject> objectsPool,
@@ -30,7 +30,6 @@ namespace DCL.MapRenderer.MapLayers.Categories
         private readonly IPlacesAPIService placesAPIService;
 
         private readonly Dictionary<PlacesData.CategoryPlaceData, ICategoryMarker> markers = new ();
-        private readonly List<Vector2Int> vectorCoords = new ();
         private Vector2Int decodePointer;
 
         private bool isEnabled;
@@ -50,13 +49,13 @@ namespace DCL.MapRenderer.MapLayers.Categories
             this.objectsPool = objectsPool;
             this.builder = builder;
             this.categoryIconMappings = categoryIconMappings;
+            this.mapLayer = mapLayer;
         }
 
         public async UniTask InitializeAsync(CancellationToken cancellationToken)
         {
             List<PlacesData.CategoryPlaceData> placesOfCategory = await placesAPIService.GetPlacesByCategoryListAsync(MapLayerUtils.MapLayerToCategory[mapLayer], cancellationToken);
 
-            // non-blocking retrieval of scenes of interest happens independently on the minimap rendering
             foreach (PlacesData.CategoryPlaceData placeInfo in placesOfCategory)
             {
                 if (markers.ContainsKey(placeInfo))
@@ -66,7 +65,6 @@ namespace DCL.MapRenderer.MapLayers.Categories
                     continue;
 
                 var marker = builder(objectsPool, mapCullingController);
-                //var centerParcel = GetParcelsCenter(placeInfo);
                 var position = coordsUtils.CoordsToPosition(placeInfo.base_position);
 
                 marker.SetData(placeInfo.name, position);
@@ -96,34 +94,6 @@ namespace DCL.MapRenderer.MapLayers.Categories
         public void OnMapObjectCulled(ICategoryMarker marker)
         {
             marker.OnBecameInvisible();
-        }
-
-        private static Vector2Int GetParcelsCenter(PlacesData.PlaceInfo sceneInfo)
-        {
-            Vector2 centerTile = Vector2.zero;
-
-            for (var i = 0; i < sceneInfo.Positions.Length; i++)
-            {
-                Vector2Int parcel = sceneInfo.Positions[i];
-                centerTile += parcel;
-            }
-
-            centerTile /= sceneInfo.Positions.Length;
-            float distance = float.PositiveInfinity;
-            Vector2Int centerParcel = Vector2Int.zero;
-
-            for (var i = 0; i < sceneInfo.Positions.Length; i++)
-            {
-                var parcel = sceneInfo.Positions[i];
-
-                if (Vector2.Distance(centerTile, parcel) < distance)
-                {
-                    distance = Vector2Int.Distance(centerParcel, parcel);
-                    centerParcel = parcel;
-                }
-            }
-
-            return centerParcel;
         }
 
         private static bool IsEmptyParcel(PlacesData.CategoryPlaceData sceneInfo) =>

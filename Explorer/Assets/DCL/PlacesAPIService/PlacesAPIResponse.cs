@@ -115,13 +115,6 @@ namespace DCL.PlacesAPIService
         }
 
         [Serializable]
-        public class CategoryPlaceResponse
-        {
-            public int total;
-            public List<CategoryPlaceData> data;
-        }
-
-        [Serializable]
         public class CategoryPlaceData
         {
             public Vector2Int base_position;

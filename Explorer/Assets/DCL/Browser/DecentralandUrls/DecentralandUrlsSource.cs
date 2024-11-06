@@ -40,7 +40,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.ApiAuth => $"https://auth-api.decentraland.{ENV}",
                 DecentralandUrl.AuthSignature => $"https://decentraland.{ENV}/auth/requests",
                 DecentralandUrl.POI => $"https://dcl-lists.decentraland.{ENV}/pois",
-                DecentralandUrl.PlacesByCategory => $"https://places.decentraland.{ENV}/api/places/category",
+                DecentralandUrl.PlacesByCategory => $"https://places.decentraland.{ENV}/api/map",
                 DecentralandUrl.ContentModerationReport => $"https://places.decentraland.{ENV}/api/report",
                 DecentralandUrl.GateKeeperSceneAdapter => $"https://comms-gatekeeper.decentraland.{ENV}/get-scene-adapter",
                 DecentralandUrl.OpenSea => $"https://opensea.decentraland.{ENV}",

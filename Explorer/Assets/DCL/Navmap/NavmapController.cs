@@ -87,6 +87,7 @@ namespace DCL.Navmap
 
             zoomController = new NavmapZoomController(navmapView.zoomView, dclInput);
             filterController = new NavmapFilterController(this.navmapView.filterView, mapRenderer, webBrowser);
+            new CategoryFilterController(this.navmapView.categoryToggles, mapRenderer);
             searchBarController = new NavmapSearchBarController(navmapView.SearchBarView, navmapView.SearchBarResultPanel, navmapView.HistoryRecordPanelView, placesAPIService, navmapView.floatingPanelView, webRequestController, inputBlock);
             FloatingPanelController = new FloatingPanelController(navmapView.floatingPanelView, placesAPIService,
                 webRequestController, mapPathEventBus, chatMessagesBus, zoomController);

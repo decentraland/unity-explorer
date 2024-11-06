@@ -35,8 +35,8 @@ namespace DCL.Navmap
 
         private void OnToggleValueChanged(bool isOn)
         {
-            Label.color = isOn ? OnColor : OffColor;
-            Background.color = isOn ? OffColor : OnColor;
+            Label.color = isOn ? OffColor : OnColor;
+            Background.color = isOn ? OnColor : OffColor;
             ToggleChanged?.Invoke(Layer, isOn);
         }
     }
