@@ -19,6 +19,8 @@ namespace ECS.Unity.GLTFContainer.Systems
 
         internal static void SetupInvisibleColliders(ref GltfContainerComponent component, GltfContainerAsset asset)
         {
+            if (asset.InvisibleColliders.Count == 0) return;
+
             // Invisible colliders are contained in the asset by default (not instantiation on demand needed)
             if (component.InvisibleMeshesCollisionMask != ColliderLayer.ClNone)
                 EnableColliders(asset.InvisibleColliders, component.InvisibleMeshesCollisionMask);
