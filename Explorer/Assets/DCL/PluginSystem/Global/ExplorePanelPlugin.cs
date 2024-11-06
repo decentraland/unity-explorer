@@ -41,6 +41,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using DCL.Chat.MessageBus;
+using DCL.EventsApi;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Settings.Settings;
 using UnityEngine;
@@ -91,6 +92,7 @@ namespace DCL.PluginSystem.Global
         private readonly IChatMessagesBus chatMessagesBus;
         private readonly ISystemMemoryCap systemMemoryCap;
         private readonly WorldVolumeMacBus worldVolumeMacBus;
+        private readonly IEventsApiService eventsApiService;
 
         private NavmapController? navmapController;
         private SettingsController? settingsController;
@@ -134,7 +136,8 @@ namespace DCL.PluginSystem.Global
             Entity playerEntity,
             IChatMessagesBus chatMessagesBus,
             ISystemMemoryCap systemMemoryCap,
-            WorldVolumeMacBus worldVolumeMacBus)
+            WorldVolumeMacBus worldVolumeMacBus,
+            IEventsApiService eventsApiService)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -173,6 +176,7 @@ namespace DCL.PluginSystem.Global
             this.chatMessagesBus = chatMessagesBus;
             this.systemMemoryCap = systemMemoryCap;
             this.worldVolumeMacBus = worldVolumeMacBus;
+            this.eventsApiService = eventsApiService;
         }
 
         public void Dispose()
@@ -297,7 +301,7 @@ namespace DCL.PluginSystem.Global
         }
 
         private INavmapCommand CreateSearchPlaceCommand(string search, NavmapSearchPlaceFilter filter, NavmapSearchPlaceSorting sorting) =>
-            new SearchForPlaceAndShowResultsCommand(placesAPIService, searchResultPanelController!, search, filter, sorting);
+            new SearchForPlaceAndShowResultsCommand(placesAPIService, eventsApiService, searchResultPanelController!, search, filter, sorting);
 
         public class ExplorePanelSettings : IDCLPluginSettings
         {

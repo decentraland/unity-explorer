@@ -34,6 +34,9 @@ namespace DCL.Navmap
         [field: SerializeField]
         public Animator resultAnimator;
 
+        [field: SerializeField]
+        public GameObject LiveContainer { get; private set; }
+
         private ImageController imageController;
 
         public void ConfigurePlaceImageController(IWebRequestController webRequestController) =>

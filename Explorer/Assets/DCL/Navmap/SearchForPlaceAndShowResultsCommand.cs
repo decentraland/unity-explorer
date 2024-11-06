@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.EventsApi;
 using DCL.Optimization.Pools;
 using DCL.PlacesAPIService;
 using System;
@@ -11,6 +12,7 @@ namespace DCL.Navmap
     public class SearchForPlaceAndShowResultsCommand : INavmapCommand
     {
         private readonly IPlacesAPIService placesAPIService;
+        private readonly IEventsApiService eventsApiService;
         private readonly SearchResultPanelController searchResultPanelController;
         private readonly string searchText;
         private readonly NavmapSearchPlaceFilter filter;
@@ -18,8 +20,11 @@ namespace DCL.Navmap
         private readonly int pageNumber;
         private readonly int pageSize;
         private List<PlacesData.PlaceInfo>? places;
+        private HashSet<string>? placesWithLiveEvents;
 
-        public SearchForPlaceAndShowResultsCommand(IPlacesAPIService placesAPIService,
+        public SearchForPlaceAndShowResultsCommand(
+            IPlacesAPIService placesAPIService,
+            IEventsApiService eventsApiService,
             SearchResultPanelController searchResultPanelController,
             string searchText,
             NavmapSearchPlaceFilter filter,
@@ -28,6 +33,7 @@ namespace DCL.Navmap
             int pageSize = 8)
         {
             this.placesAPIService = placesAPIService;
+            this.eventsApiService = eventsApiService;
             this.searchResultPanelController = searchResultPanelController;
             this.searchText = searchText;
             this.filter = filter;
@@ -41,6 +47,55 @@ namespace DCL.Navmap
             searchResultPanelController.Show();
             searchResultPanelController.SetLoadingState();
 
+            await ProcessPlaces(ct);
+            await ProcessLiveEvents(ct);
+        }
+
+        public void Undo()
+        {
+            searchResultPanelController.Hide();
+            searchResultPanelController.ClearResults();
+        }
+
+        public void Dispose()
+        {
+            ListPool<PlacesData.PlaceInfo>.Release(places);
+            HashSetPool<string>.Release(placesWithLiveEvents);
+            places = null;
+            placesWithLiveEvents = null;
+        }
+
+        private async UniTask ProcessLiveEvents(CancellationToken ct)
+        {
+            if (places == null) return;
+
+            if (placesWithLiveEvents == null)
+            {
+                placesWithLiveEvents = HashSetPool<string>.Get();
+                HashSet<string> placesIds = HashSetPool<string>.Get();
+
+                foreach (PlacesData.PlaceInfo place in places)
+                    placesIds.Add(place.base_position);
+
+                try
+                {
+                    IReadOnlyList<EventDTO> eventsForCurrentPlaces = await eventsApiService.GetEventsByParcelsAsync(placesIds, ct);
+
+                    foreach (EventDTO @event in eventsForCurrentPlaces)
+                        if (@event.live)
+                            placesWithLiveEvents.Add($"{@event.coordinates[0]},${@event.coordinates[1]}");
+                }
+                finally
+                {
+                    HashSetPool<string>.Release(placesIds);
+                }
+            }
+
+            searchResultPanelController.SetLiveEvents(placesWithLiveEvents);
+        }
+
+        private async UniTask ProcessPlaces(CancellationToken ct)
+        {
             if (places == null)
             {
                 places = ListPool<PlacesData.PlaceInfo>.Get();
@@ -68,18 +123,6 @@ namespace DCL.Navmap
             }
 
             searchResultPanelController.SetResults(places!);
-        }
-
-        public void Undo()
-        {
-            searchResultPanelController.Hide();
-            searchResultPanelController.ClearResults();
-        }
-
-        public void Dispose()
-        {
-            ListPool<PlacesData.PlaceInfo>.Release(places);
-            places = null;
         }
 
         private (IPlacesAPIService.SortBy sort, IPlacesAPIService.SortDirection direction) GetSorting()

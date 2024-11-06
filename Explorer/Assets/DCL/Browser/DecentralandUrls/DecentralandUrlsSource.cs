@@ -41,6 +41,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.AuthSignature => $"https://decentraland.{ENV}/auth/requests",
                 DecentralandUrl.POI => $"https://dcl-lists.decentraland.{ENV}/pois",
                 DecentralandUrl.ContentModerationReport => $"https://places.decentraland.{ENV}/api/report",
+                DecentralandUrl.ApiEvents => $"https://events.decentraland.{ENV}/api/events",
                 DecentralandUrl.GateKeeperSceneAdapter => $"https://comms-gatekeeper.decentraland.{ENV}/get-scene-adapter",
                 DecentralandUrl.OpenSea => $"https://opensea.decentraland.{ENV}",
                 DecentralandUrl.Host => $"https://decentraland.{ENV}",

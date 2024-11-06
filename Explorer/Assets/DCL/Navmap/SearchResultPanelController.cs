@@ -8,7 +8,7 @@ namespace DCL.Navmap
     public class SearchResultPanelController
     {
         private readonly SearchResultPanelView view;
-        private readonly List<FullSearchResultsView> usedPoolElements;
+        private readonly Dictionary<string, FullSearchResultsView> usedPoolElements;
         private readonly ObjectPool<FullSearchResultsView> resultsPool;
         private readonly INavmapBus navmapBus;
 
@@ -19,7 +19,7 @@ namespace DCL.Navmap
             this.view = view;
             this.resultsPool = resultsPool;
             this.navmapBus = navmapBus;
-            usedPoolElements = new List<FullSearchResultsView>();
+            usedPoolElements = new Dictionary<string, FullSearchResultsView>();
         }
 
         public void Show()
@@ -40,7 +40,7 @@ namespace DCL.Navmap
 
         public void ClearResults()
         {
-            foreach (FullSearchResultsView fullSearchResultsView in usedPoolElements)
+            foreach ((string _, FullSearchResultsView fullSearchResultsView) in usedPoolElements)
             {
                 fullSearchResultsView.resultButton.onClick.RemoveAllListeners();
                 fullSearchResultsView.resultAnimator.Rebind();
@@ -56,7 +56,7 @@ namespace DCL.Navmap
             for (var i = 0; i < 8; i++)
             {
                 FullSearchResultsView fullSearchResultsView = resultsPool.Get();
-                usedPoolElements.Add(fullSearchResultsView);
+                usedPoolElements.Add(i.ToString(), fullSearchResultsView);
             }
         }
 
@@ -69,15 +69,26 @@ namespace DCL.Navmap
             foreach (PlacesData.PlaceInfo placeInfo in places)
             {
                 FullSearchResultsView fullSearchResultsView = resultsPool.Get();
-                usedPoolElements.Add(fullSearchResultsView);
+                usedPoolElements.Add(placeInfo.base_position, fullSearchResultsView);
                 fullSearchResultsView.placeName.text = placeInfo.title;
-                fullSearchResultsView.placeCreator.gameObject.SetActive(!string.IsNullOrEmpty(placeInfo.contact_name) && placeInfo.contact_name != "Unknown");
+                fullSearchResultsView.placeCreator.gameObject.SetActive(
+                    !string.IsNullOrEmpty(placeInfo.contact_name) && placeInfo.contact_name != "Unknown");
                 fullSearchResultsView.placeCreator.text = $"created by <b>{placeInfo.contact_name}</b>";
                 fullSearchResultsView.playerCounterContainer.SetActive(placeInfo.user_count > 0);
                 fullSearchResultsView.playersCount.text = placeInfo.user_count.ToString();
                 fullSearchResultsView.resultAnimator.SetTrigger(UIAnimationHashes.LOADED);
                 fullSearchResultsView.SetPlaceImage(placeInfo.image);
                 fullSearchResultsView.resultButton.onClick.AddListener(() => navmapBus.SelectPlace(placeInfo));
+                fullSearchResultsView.LiveContainer.SetActive(false);
+            }
+        }
+
+        public void SetLiveEvents(HashSet<string> parcels)
+        {
+            foreach (string parcel in parcels)
+            {
+                if (!usedPoolElements.TryGetValue(parcel, out FullSearchResultsView element)) continue;
+                element.LiveContainer.SetActive(true);
             }
         }
     }

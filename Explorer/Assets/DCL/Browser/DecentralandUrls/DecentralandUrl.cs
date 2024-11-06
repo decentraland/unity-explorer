@@ -17,6 +17,8 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         POI,
         ContentModerationReport,
 
+        ApiEvents,
+
         ApiAuth,
         AuthSignature,
 
