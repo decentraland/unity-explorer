@@ -24,8 +24,11 @@ namespace DCL.Multiplayer.Profiles.Tables
             catch (Exception e) { throw new Exception($"Cannot find entity for walletId: {walletId}", e); }
         }
 
-        public bool TryGet(string walletId, out IReadOnlyEntityParticipantTable.Entry entry) =>
-            walletIdToEntity.TryGetValue(walletId, out entry);
+        public bool TryGet(string walletId, out IReadOnlyEntityParticipantTable.Entry entry)
+        {
+            entry = default(IReadOnlyEntityParticipantTable.Entry);
+            return !string.IsNullOrEmpty(walletId) && walletIdToEntity.TryGetValue(walletId, out entry);
+        }
 
         public bool Has(string walletId) =>
             !string.IsNullOrEmpty(walletId) && walletIdToEntity.ContainsKey(walletId);
