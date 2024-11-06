@@ -13,6 +13,7 @@ using SceneRunner.Scene;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using UnityEngine.Networking;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.Texture2DData, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
 namespace ECS.StreamableLoading.GLTF
@@ -70,9 +71,11 @@ namespace ECS.StreamableLoading.GLTF
             string text = string.Empty;
             bool success;
 
+            DownloadHandler? downloadHandler = null;
+
             try
             {
-                var downloadHandler = await webRequestController.GetAsync(commonArguments, new CancellationToken(), reportData).ExposeDownloadHandlerAsync();
+                downloadHandler = await webRequestController.GetAsync(commonArguments, new CancellationToken(), reportData).ExposeDownloadHandlerAsync();
                 data = downloadHandler.data;
 
                 if (!GltfValidator.IsGltfBinaryFormat(downloadHandler.nativeData))
@@ -88,6 +91,7 @@ namespace ECS.StreamableLoading.GLTF
             {
                 if (isBaseGltfFetch) acquiredBudget.Release();
                 success = string.IsNullOrEmpty(error);
+                downloadHandler?.Dispose();
             }
 
             return new GltfDownloadResult
