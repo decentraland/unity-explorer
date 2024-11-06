@@ -57,31 +57,31 @@ namespace DCL.MapRenderer.ComponentsFactory
             var shopController = new CategoryMarkersController(placesAPIService, objectsPool, CreateMarker, configuration.CategoriesMarkersRoot, coordsUtils, cullingController, mapSettings.CategoryIconMappings, MapLayer.Shop);
             var sportsController = new CategoryMarkersController(placesAPIService, objectsPool, CreateMarker, configuration.CategoriesMarkersRoot, coordsUtils, cullingController, mapSettings.CategoryIconMappings, MapLayer.Sports);
 
-            await InitializeController(artController, MapLayer.Art, cancellationToken);
+            await InitializeControllerAsync(artController, MapLayer.Art, cancellationToken);
             zoomScalingWriter.Add(artController);
-            await InitializeController(gameController, MapLayer.Game, cancellationToken);
+            await InitializeControllerAsync(gameController, MapLayer.Game, cancellationToken);
             zoomScalingWriter.Add(gameController);
-            await InitializeController(cryptoController, MapLayer.Crypto, cancellationToken);
+            await InitializeControllerAsync(cryptoController, MapLayer.Crypto, cancellationToken);
             zoomScalingWriter.Add(cryptoController);
-            await InitializeController(educationController, MapLayer.Education, cancellationToken);
+            await InitializeControllerAsync(educationController, MapLayer.Education, cancellationToken);
             zoomScalingWriter.Add(educationController);
-            await InitializeController(socialController, MapLayer.Social, cancellationToken);
+            await InitializeControllerAsync(socialController, MapLayer.Social, cancellationToken);
             zoomScalingWriter.Add(socialController);
-            await InitializeController(businessController, MapLayer.Business, cancellationToken);
+            await InitializeControllerAsync(businessController, MapLayer.Business, cancellationToken);
             zoomScalingWriter.Add(businessController);
-            await InitializeController(casinoController, MapLayer.Casino, cancellationToken);
+            await InitializeControllerAsync(casinoController, MapLayer.Casino, cancellationToken);
             zoomScalingWriter.Add(casinoController);
-            await InitializeController(fashionController, MapLayer.Fashion, cancellationToken);
+            await InitializeControllerAsync(fashionController, MapLayer.Fashion, cancellationToken);
             zoomScalingWriter.Add(fashionController);
-            await InitializeController(musicController, MapLayer.Music, cancellationToken);
+            await InitializeControllerAsync(musicController, MapLayer.Music, cancellationToken);
             zoomScalingWriter.Add(musicController);
-            await InitializeController(shopController, MapLayer.Shop, cancellationToken);
+            await InitializeControllerAsync(shopController, MapLayer.Shop, cancellationToken);
             zoomScalingWriter.Add(shopController);
-            await InitializeController(sportsController, MapLayer.Sports, cancellationToken);
+            await InitializeControllerAsync(sportsController, MapLayer.Sports, cancellationToken);
             zoomScalingWriter.Add(sportsController);
         }
 
-        private async UniTask InitializeController(IMapLayerController controller, MapLayer layer, CancellationToken cancellationToken)
+        private async UniTask InitializeControllerAsync(IMapLayerController controller, MapLayer layer, CancellationToken cancellationToken)
         {
             await controller.InitializeAsync(cancellationToken);
             writer.Add(layer, controller);
