@@ -4,5 +4,6 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
     {
         Org,
         Zone,
+        Today
     }
 }
