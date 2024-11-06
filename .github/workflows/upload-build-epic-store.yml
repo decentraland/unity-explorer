@@ -68,7 +68,7 @@ jobs:
     - name: List contents of macOS build directory
       run: |
         echo "Contents of macOS build directory:"
-        dir "C:\Users\runneradmin\tools\BuildPatchTool\BuildRoot_Mac"
+        dir "C:\Users\runneradmin\tools\BuildPatchTool\BuildRoot_Mac" -Recurse
 
     - name: Download BuildPatchTool
       run: |
@@ -110,7 +110,7 @@ jobs:
         -ClientId="${{ secrets.EPIC_STORE_CLIENT_ID }}" `
         -ClientSecret="${{ secrets.EPIC_STORE_CLIENT_SECRET }}" `
         -mode=UploadBinary `
-        -BuildRoot="C:\Users\runneradmin\tools\BuildPatchTool\BuildRoot_Mac" `
+        -BuildRoot="C:\Users\runneradmin\tools\BuildPatchTool\BuildRoot_Mac\build" `
         -CloudDir="C:\Users\runneradmin\tools\BuildPatchTool\CloudDir_Mac" `
         -BuildVersion="${{ steps.get_release.outputs.version }}-mac" `
         -AppLaunch="Decentraland.app/Contents/MacOS/Decentraland" `
