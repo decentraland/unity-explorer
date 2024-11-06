@@ -5,12 +5,13 @@ using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics.Metrics;
 using DCL.WebRequests.ArgsFactory;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
+using System;
 using Utility.Multithreading;
 using Utility.Storage;
 
 namespace DCL.WebRequests.Analytics
 {
-    public class WebRequestsContainer
+    public class WebRequestsContainer : IDisposable
     {
         public IWebRequestController WebRequestController { get; }
 
@@ -160,6 +161,11 @@ namespace DCL.WebRequests.Analytics
                 enableSetting.ForceSave(enable);
                 delaySetting.ForceSave(delay);
             }
+        }
+
+        public void Dispose()
+        {
+            GetTextureArgsFactory.Dispose();
         }
     }
 }
