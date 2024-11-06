@@ -1,18 +1,22 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Character.Components;
 using DCL.CharacterCamera;
 using DCL.CharacterCamera.Systems;
 using DCL.Diagnostics;
+using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.InWorldCamera.ScreencaptureCamera.UI;
+using DCL.Multiplayer.Profiles.Entities;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using ECS;
 using ECS.Abstract;
-using ECS.Unity.Transforms.Components;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using UnityEngine;
 using Utility;
@@ -52,9 +56,59 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.CameraObject.Systems
             this.placesAPIService = placesAPIService;
         }
 
+        public override void Initialize()
+        {
+            base.Initialize();
+            camera = World.CacheCamera();
+        }
+
+        List<VisiblePerson> visiblePeople = new List<VisiblePerson>();
+
         protected override void Update(float t)
         {
             EmitInputQuery(World);
+
+            if (isMakingScreenshot)
+            {
+                Plane[] frustumPlanes = GeometryUtility.CalculateFrustumPlanes(camera.GetCameraComponent(World).Camera);
+
+                // Check self
+                // if (GeometryUtility.TestPlanesAABB(frustumPlanes, player.collider.bounds)) list.Add(player);
+
+                visiblePeople.Clear();
+
+                CollectVisiblePeopleQuery(World, frustumPlanes);
+                CollectMetadata(visiblePeople.ToArray()).Forget();
+                isMakingScreenshot = false;
+            }
+        }
+
+        [Query]
+        private void CollectVisiblePeople(in Entity entity, Profile profile, RemoteAvatarCollider avatarCollider, [Data] Plane[] frustumPlanes)
+        {
+            if (GeometryUtility.TestPlanesAABB(frustumPlanes, avatarCollider.Collider.bounds))
+            {
+                VisiblePerson visiblePerson = new VisiblePerson
+                {
+                    userName = profile.Name,
+                    userAddress = profile.UserId,
+                    isGuest = false,
+                    wearables = FilterNonBaseWearables(profile.Avatar.Wearables)
+                };
+
+                visiblePeople.Add(visiblePerson);
+            }
+        }
+
+        private static string[] FilterNonBaseWearables(IReadOnlyCollection<URN> avatarWearables)
+        {
+            List<string> wearables = new List<string>();
+
+            foreach (URN w in avatarWearables)
+                if(w.IsThirdPartyCollection())
+                    wearables.Add(w.ToString());
+
+            return wearables.ToArray();
         }
 
         [Query]
@@ -73,11 +127,14 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.CameraObject.Systems
             {
                 hud.GetComponent<Canvas>().enabled = false;
                 hud.StartCoroutine(recorder.CaptureScreenshot(Show));
-                CollectMetadata().Forget();
+                isMakingScreenshot = true;
             }
         }
 
-        private async UniTask CollectMetadata()
+        private bool isMakingScreenshot = false;
+        private SingleInstanceEntity camera;
+
+        private async UniTask CollectMetadata(VisiblePerson[] visiblePeople)
         {
             ownProfile ??= await selfProfile.ProfileAsync(default(CancellationToken));
 
@@ -92,7 +149,7 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.CameraObject.Systems
                 sceneName = placeInfo?.title ?? "Unknown place";
             }
 
-            hud.Metadata = ScreenshotMetadataProcessor.Create(ownProfile, realmData, parcel, sceneName);
+            hud.Metadata = ScreenshotMetadataProcessor.Create(ownProfile, realmData, parcel, sceneName, visiblePeople);
             Debug.Log("VVV 1");
         }
 

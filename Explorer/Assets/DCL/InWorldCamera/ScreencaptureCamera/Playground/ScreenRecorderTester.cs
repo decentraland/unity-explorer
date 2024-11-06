@@ -11,6 +11,7 @@ using DCL.Profiles.Self;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -42,7 +43,7 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Playground
         public async Task CaptureMetadata()
         {
             Profile profile = await CreateProfile().ProfileAsync(default(CancellationToken));
-            metadata = ScreenshotMetadataProcessor.Create(profile, null, Vector2Int.one, "Test Playground");
+            metadata = ScreenshotMetadataProcessor.Create(profile, null, Vector2Int.one, "Test Playground", Array.Empty<VisiblePerson>());
         }
 
         private SelfProfile CreateProfile()

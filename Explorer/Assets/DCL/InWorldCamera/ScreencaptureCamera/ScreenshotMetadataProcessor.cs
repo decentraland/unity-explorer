@@ -8,7 +8,7 @@ namespace DCL.InWorldCamera.ScreencaptureCamera
 {
     public static class ScreenshotMetadataProcessor
     {
-        public static ScreenshotMetadata Create(Profile profile, RealmData realm, Vector2Int playerPosition, string sceneName)
+        public static ScreenshotMetadata Create(Profile profile, RealmData realm, Vector2Int playerPosition, string sceneName, VisiblePerson[] visiblePeople)
         {
             var metadata = new ScreenshotMetadata
             {
@@ -21,8 +21,7 @@ namespace DCL.InWorldCamera.ScreencaptureCamera
                     name = sceneName,
                     location = new Location(playerPosition),
                 },
-                // visiblePeople = GetVisiblePeoplesMetadata(
-                    // visiblePlayers: CalculateVisiblePlayersInFrustum(ownPlayer, avatarsLODController, screenshotCamera)),
+                visiblePeople = visiblePeople,
             };
 
             return metadata;
