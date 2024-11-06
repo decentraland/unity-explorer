@@ -22,8 +22,6 @@ namespace DCL.LOD
             //If we are in a world, dont show lods
             if (realmData.ScenesAreFixed) visualSceneState.CandidateVisualSceneState = visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.SHOWING_SCENE;
 
-            //If the scene is empty, no lods are possible
-            else if (sceneDefinitionComponent.IsEmpty) visualSceneState.CandidateVisualSceneState = visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.SHOWING_SCENE;
             else if (roadCoordinates.Contains(sceneDefinitionComponent.Definition.metadata.scene.DecodedBase)) visualSceneState.CandidateVisualSceneState = visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.ROAD;
 
             //For SDK6 scenes, we just show lod0

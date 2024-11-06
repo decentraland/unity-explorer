@@ -1,9 +1,8 @@
-﻿using System;
-using UnityEngine;
-using UnityEngine.Serialization;
-
-namespace ECS.SceneLifeCycle.Components
+﻿namespace ECS.SceneLifeCycle.Components
 {
+    /// <summary>
+    ///     Does not exist for empty scenes
+    /// </summary>
     public struct VisualSceneState
     {
         /// <summary>  The current VisualSceneState that the scene is, could be different from the CandidateVisualSceneState if we are delaying the switch from Scene -> LODs </summary>
@@ -20,7 +19,6 @@ namespace ECS.SceneLifeCycle.Components
         UNINITIALIZED,
         SHOWING_SCENE,
         SHOWING_LOD,
-        ROAD
+        ROAD,
     }
-
 }

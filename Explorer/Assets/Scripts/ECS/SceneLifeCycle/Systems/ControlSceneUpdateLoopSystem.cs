@@ -95,7 +95,6 @@ namespace ECS.SceneLifeCycle.Systems
             ref PartitionComponent partition)
         {
             if (!partition.IsDirty) return;
-            if (sceneDefinition.IsEmpty) return; // Never tweak FPS of empty scenes
 
             sceneFacade.SetTargetFPS(realmPartitionSettings.GetSceneUpdateFrequency(in partition));
         }

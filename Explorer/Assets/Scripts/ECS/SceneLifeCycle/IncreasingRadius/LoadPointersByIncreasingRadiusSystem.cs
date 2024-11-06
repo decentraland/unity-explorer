@@ -157,7 +157,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                 {
                     int2 parcel = requestedList[i];
                     if (!processedScenePointers.Value.Add(parcel)) continue;
-                    World.Create(SceneDefinitionComponentFactory.CreateEmpty(parcel.ToVector2Int()));
+                    World.Create(EmptySceneComponent.Create());
                 }
             }
             else

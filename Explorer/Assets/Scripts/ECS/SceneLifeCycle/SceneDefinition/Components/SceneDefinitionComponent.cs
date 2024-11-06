@@ -16,7 +16,6 @@ namespace ECS.SceneLifeCycle.SceneDefinition
         public IReadOnlyList<Vector2Int> Parcels { get; }
         public IReadOnlyList<ParcelMathHelper.ParcelCorners> ParcelsCorners { get; }
         public IpfsPath IpfsPath { get; }
-        public bool IsEmpty { get; }
         public bool IsSDK7 { get; }
         public ParcelMathHelper.SceneGeometry SceneGeometry { get; }
         public bool IsPortableExperience { get; }
@@ -34,7 +33,6 @@ namespace ECS.SceneLifeCycle.SceneDefinition
             Parcels = parcels;
             ParcelsCorners = parcelsCorners;
             IpfsPath = ipfsPath;
-            IsEmpty = isEmpty;
             IsSDK7 = isSDK7;
             SceneGeometry = sceneGeometry;
             InternalJobIndex = -1;
@@ -75,34 +73,6 @@ namespace ECS.SceneLifeCycle.SceneDefinition
                 isSDK7: definition.metadata.runtimeVersion == "7",
                 isPortableExperience: true
             );
-
-        /// <summary>
-        ///     Create empty scene pointer
-        /// </summary>
-        public static SceneDefinitionComponent CreateEmpty(Vector2Int parcel)
-        {
-            var id = $"empty-parcel-{parcel.x}-{parcel.y}";
-
-            var definition = new SceneEntityDefinition(
-                id,
-                new SceneMetadata
-                {
-                    main = "bin/game.js",
-                    scene = EMPTY_METADATA,
-
-                    // content will be filled by the loading system
-                }
-            );
-
-            return CreateSceneDefinitionComponent(
-                definition,
-                new[] { parcel },
-                new IpfsPath(id, URLDomain.EMPTY),
-                isEmpty: true,
-                isSDK7: false,
-                isPortableExperience: false
-            );
-        }
 
         private static SceneDefinitionComponent CreateSceneDefinitionComponent(
             SceneEntityDefinition definition,
