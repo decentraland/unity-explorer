@@ -2,13 +2,20 @@ name: Upload Latest Build to Epic Store
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - chore/automatic-upload-epic
+    inputs:
+      platform:
+        description: "Select the platform(s) to upload"
+        required: true
+        default: "both"
+        type: choice
+        options:
+          - windows
+          - mac
+          - both
 
 jobs:
   debug-build-artifacts:
-    runs-on: windows-latest  # This job runs on a Windows runner.
+    runs-on: windows-latest
 
     steps:
     - name: Check out code
@@ -26,23 +33,26 @@ jobs:
         Write-Host "Windows download URL: $windowsUrl"
         Write-Host "macOS download URL: $macosUrl"
 
-        echo "::set-output name=version::$version"
-        echo "::set-output name=windows_url::$windowsUrl"
-        echo "::set-output name=macos_url::$macosUrl"
+        echo "version=$version" >> $env:GITHUB_OUTPUT
+        echo "windows_url=$windowsUrl" >> $env:GITHUB_OUTPUT
+        echo "macos_url=$macosUrl" >> $env:GITHUB_OUTPUT
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Ensure BuildRoot and CloudDir paths exist for Windows
+      if: ${{ github.event.inputs.platform == 'windows' || github.event.inputs.platform == 'both' }}
       run: |
         New-Item -ItemType Directory -Path "C:\Users\runneradmin\tools\BuildPatchTool\BuildRoot_Windows" -Force
         New-Item -ItemType Directory -Path "C:\Users\runneradmin\tools\BuildPatchTool\CloudDir_Windows" -Force
 
     - name: Ensure BuildRoot and CloudDir paths exist for macOS
+      if: ${{ github.event.inputs.platform == 'mac' || github.event.inputs.platform == 'both' }}
       run: |
         New-Item -ItemType Directory -Path "C:\Users\runneradmin\tools\BuildPatchTool\BuildRoot_Mac" -Force
         New-Item -ItemType Directory -Path "C:\Users\runneradmin\tools\BuildPatchTool\CloudDir_Mac" -Force
 
     - name: Download Windows build artifact
+      if: ${{ github.event.inputs.platform == 'windows' || github.event.inputs.platform == 'both' }}
       run: |
         echo "Downloading Windows build artifact..."
         curl -L -o Decentraland_windows64.zip "${{ steps.get_release.outputs.windows_url }}"
@@ -50,12 +60,8 @@ jobs:
         Expand-Archive -Path Decentraland_windows64.zip -DestinationPath "C:\Users\runneradmin\tools\BuildPatchTool\BuildRoot_Windows"
         echo "Windows build artifact extracted to C:\Users\runneradmin\tools\BuildPatchTool\BuildRoot_Windows"
 
-    - name: List contents of Windows build directory
-      run: |
-        echo "Contents of Windows build directory:"
-        dir "C:\Users\runneradmin\tools\BuildPatchTool\BuildRoot_Windows"
-
     - name: Download macOS build artifact
+      if: ${{ github.event.inputs.platform == 'mac' || github.event.inputs.platform == 'both' }}
       run: |
         echo "Downloading macOS build artifact..."
         curl -L -o Decentraland_macos.zip "${{ steps.get_release.outputs.macos_url }}"
@@ -65,11 +71,6 @@ jobs:
         tar -xf "C:\Users\runneradmin\MacBuildTemp\build.tar" -C "C:\Users\runneradmin\tools\BuildPatchTool\BuildRoot_Mac"
         echo "macOS build artifact extracted to C:\Users\runneradmin\tools\BuildPatchTool\BuildRoot_Mac"
 
-    - name: List contents of macOS build directory
-      run: |
-        echo "Contents of macOS build directory:"
-        dir "C:\Users\runneradmin\tools\BuildPatchTool\BuildRoot_Mac" -Recurse
-
     - name: Download BuildPatchTool
       run: |
         echo "Downloading BuildPatchTool..."
@@ -78,30 +79,27 @@ jobs:
         Expand-Archive -Path "BuildPatchTool.zip" -DestinationPath "C:\Users\runneradmin\tools\BuildPatchTool"
         echo "BuildPatchTool extracted to C:\Users\runneradmin\tools\BuildPatchTool"
 
-    - name: List contents of BuildPatchTool directory
-      run: |
-        echo "Contents of BuildPatchTool directory:"
-        dir "C:\Users\runneradmin\tools\BuildPatchTool"
-
     - name: Add BuildPatchTool to PATH
       run: echo "C:\Users\runneradmin\tools\BuildPatchTool\Engine\Binaries\Win64" >> $env:GITHUB_PATH
 
- #   - name: Upload Windows artifact
- #     run: |
- #       C:\Users\runneradmin\tools\BuildPatchTool\Engine\Binaries\Win64\BuildPatchTool.exe `
- #       -OrganizationId="${{ secrets.EPIC_STORE_ORG_ID }}" `
- #       -ProductId="${{ secrets.EPIC_STORE_PRODUCT_ID }}" `
- #       -ArtifactId="${{ secrets.EPIC_STORE_ARTIFACT_ID }}" `
- #       -ClientId="${{ secrets.EPIC_STORE_CLIENT_ID }}" `
- #       -ClientSecret="${{ secrets.EPIC_STORE_CLIENT_SECRET }}" `
- #       -mode=UploadBinary `
- #       -BuildRoot="C:\Users\runneradmin\tools\BuildPatchTool\BuildRoot_Windows" `
- #       -CloudDir="C:\Users\runneradmin\tools\BuildPatchTool\CloudDir_Windows" `
- #       -BuildVersion="${{ steps.get_release.outputs.version }-windows}" `
- #       -AppLaunch="Decentraland.exe" `
- #       -AppArgs=""
+    - name: Upload Windows artifact
+      if: ${{ github.event.inputs.platform == 'windows' || github.event.inputs.platform == 'both' }}
+      run: |
+        C:\Users\runneradmin\tools\BuildPatchTool\Engine\Binaries\Win64\BuildPatchTool.exe `
+        -OrganizationId="${{ secrets.EPIC_STORE_ORG_ID }}" `
+        -ProductId="${{ secrets.EPIC_STORE_PRODUCT_ID }}" `
+        -ArtifactId="${{ secrets.EPIC_STORE_ARTIFACT_ID }}" `
+        -ClientId="${{ secrets.EPIC_STORE_CLIENT_ID }}" `
+        -ClientSecret="${{ secrets.EPIC_STORE_CLIENT_SECRET }}" `
+        -mode=UploadBinary `
+        -BuildRoot="C:\Users\runneradmin\tools\BuildPatchTool\BuildRoot_Windows" `
+        -CloudDir="C:\Users\runneradmin\tools\BuildPatchTool\CloudDir_Windows" `
+        -BuildVersion="${{ steps.get_release.outputs.version }}-win" `
+        -AppLaunch="Decentraland.exe" `
+        -AppArgs=""
 
     - name: Upload macOS artifact
+      if: ${{ github.event.inputs.platform == 'mac' || github.event.inputs.platform == 'both' }}
       run: |
         C:\Users\runneradmin\tools\BuildPatchTool\Engine\Binaries\Win64\BuildPatchTool.exe `
         -OrganizationId="${{ secrets.EPIC_STORE_ORG_ID }}" `
@@ -118,7 +116,7 @@ jobs:
         -Platform="Mac"
 
     - name: Log BuildPatchTool log if upload fails
-      if: failure()  # This ensures the step runs only if the previous step fails
+      if: failure()
       run: |
         if (Test-Path "C:\Users\runneradmin\AppData\Local\BuildPatchTool\Saved\Logs\BuildPatchTool.log") {
           Write-Host "Contents of BuildPatchTool.log:"
@@ -126,4 +124,3 @@ jobs:
         } else {
           Write-Host "BuildPatchTool.log not found."
         }
-
