@@ -80,18 +80,23 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
             atlasChunk.MainSpriteRenderer.color = INITIAL_COLOR;
             var url = $"{CHUNKS_API}{chunkId.x}%2C{chunkId.y}.jpg";
 
+            var textureTask = webRequestController.GetTextureAsync(
+                new CommonArguments(URLAddress.FromString(url)),
+                getTextureArgsFactory.NewArguments(TextureType.Albedo),
+                GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp, FilterMode.Trilinear),
+                linkedCts.Token,
+                ReportCategory.UI
+            );
+
             currentOwnedTexture?.Dispose();
             currentOwnedTexture = null;
 
-            currentOwnedTexture = (
-                await webRequestController.GetTextureAsync(
-                    new CommonArguments(URLAddress.FromString(url)),
-                    getTextureArgsFactory.NewArguments(TextureType.Albedo),
-                    GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp, FilterMode.Trilinear)
-                                        .SuppressExceptionsWithFallback(OwnedTexture2D.NewEmptyTexture(), reportContext: ReportCategory.UI),
-                    linkedCts.Token, ReportCategory.UI
-                )
+            currentOwnedTexture = await textureTask!.SuppressExceptionWithFallbackAsync(
+                OwnedTexture2D.NewEmptyTexture(),
+                SuppressExceptionWithFallback.Behaviour.SuppressAnyException,
+                reportData: ReportCategory.UI
             )!;
+
             Texture2D texture = currentOwnedTexture.Texture;
 
             textureContainer.AddChunk(chunkId, texture);
