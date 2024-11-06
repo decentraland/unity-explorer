@@ -3,6 +3,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.Character;
 using DCL.Character.Components;
 using DCL.CharacterCamera;
 using DCL.CharacterCamera.Systems;
@@ -15,6 +16,7 @@ using DCL.Profiles;
 using DCL.Profiles.Self;
 using ECS;
 using ECS.Abstract;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -36,6 +38,7 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.CameraObject.Systems
         private readonly RealmData realmData;
         private readonly Entity playerEntity;
         private readonly IPlacesAPIService placesAPIService;
+        private readonly CharacterController characterObjectController;
 
         private ScreenRecorder recorder;
 
@@ -44,8 +47,13 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.CameraObject.Systems
 
         private Profile? ownProfile;
 
+        private readonly List<VisiblePerson> visiblePeople = new ();
+
+        private bool isMakingScreenshot;
+        private SingleInstanceEntity camera;
+
         public InWorldCameraInputSystem(World world, DCLInput.InWorldCameraActions inputSchema, GameObject hudPrefab, SelfProfile selfProfile, RealmData realmData,
-            Entity playerEntity, IPlacesAPIService placesAPIService) : base(world)
+            Entity playerEntity, IPlacesAPIService placesAPIService, ICharacterObject characterObject) : base(world)
         {
             this.inputSchema = inputSchema;
             this.hudPrefab = hudPrefab;
@@ -53,15 +61,20 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.CameraObject.Systems
             this.realmData = realmData;
             this.playerEntity = playerEntity;
             this.placesAPIService = placesAPIService;
+            characterObjectController = characterObject.Controller;
         }
 
         public override void Initialize()
         {
             base.Initialize();
             camera = World.CacheCamera();
+            GetOwnProfileAsync().Forget();
         }
 
-        List<VisiblePerson> visiblePeople = new List<VisiblePerson>();
+        private async UniTask GetOwnProfileAsync()
+        {
+            ownProfile ??= await selfProfile.ProfileAsync(default(CancellationToken));
+        }
 
         protected override void Update(float t)
         {
@@ -69,12 +82,24 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.CameraObject.Systems
 
             if (isMakingScreenshot)
             {
+                visiblePeople.Clear();
+
                 Plane[] frustumPlanes = GeometryUtility.CalculateFrustumPlanes(camera.GetCameraComponent(World).Camera);
 
                 // Check self
-                // if (GeometryUtility.TestPlanesAABB(frustumPlanes, player.collider.bounds)) list.Add(player);
+                if (GeometryUtility.TestPlanesAABB(frustumPlanes, characterObjectController.bounds))
+                {
+                    var ownVisiblePerson = new VisiblePerson
+                    {
+                        userName = ownProfile?.Name ?? "Unknown",
+                        userAddress = ownProfile?.UserId ?? "Unknown",
+                        isGuest = false,
+                        wearables = FilterNonBaseWearables(ownProfile?.Avatar.Wearables ?? Array.Empty<URN>()),
+                    };
 
-                visiblePeople.Clear();
+                    visiblePeople.Add(ownVisiblePerson);
+                }
+
 
                 CollectVisiblePeopleQuery(World, frustumPlanes);
                 CollectMetadata(visiblePeople.ToArray()).Forget();
@@ -87,12 +112,12 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.CameraObject.Systems
         {
             if (GeometryUtility.TestPlanesAABB(frustumPlanes, avatarCollider.Collider.bounds))
             {
-                VisiblePerson visiblePerson = new VisiblePerson
+                var visiblePerson = new VisiblePerson
                 {
                     userName = profile.Name,
                     userAddress = profile.UserId,
                     isGuest = false,
-                    wearables = FilterNonBaseWearables(profile.Avatar.Wearables)
+                    wearables = FilterNonBaseWearables(profile.Avatar.Wearables),
                 };
 
                 visiblePeople.Add(visiblePerson);
@@ -101,10 +126,10 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.CameraObject.Systems
 
         private static string[] FilterNonBaseWearables(IReadOnlyCollection<URN> avatarWearables)
         {
-            List<string> wearables = new List<string>();
+            var wearables = new List<string>();
 
             foreach (URN w in avatarWearables)
-                if(!w.IsBaseWearable())
+                if (!w.IsBaseWearable())
                     wearables.Add(w.ToString());
 
             return wearables.ToArray();
@@ -130,16 +155,13 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.CameraObject.Systems
             }
         }
 
-        private bool isMakingScreenshot = false;
-        private SingleInstanceEntity camera;
-
         private async UniTask CollectMetadata(VisiblePerson[] visiblePeople)
         {
-            ownProfile ??= await selfProfile.ProfileAsync(default(CancellationToken));
-
-            var parcel = World.Get<CharacterTransform>(playerEntity).Position.ToParcel();
+            await GetOwnProfileAsync();
+            Vector2Int parcel = World.Get<CharacterTransform>(playerEntity).Position.ToParcel();
 
             string sceneName;
+
             if (realmData.ScenesAreFixed)
                 sceneName = realmData.RealmName.Replace(".dcl.eth", string.Empty);
             else
@@ -149,7 +171,6 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.CameraObject.Systems
             }
 
             hud.Metadata = ScreenshotMetadataProcessor.Create(ownProfile, realmData, parcel, sceneName, visiblePeople);
-            Debug.Log("VVV 1");
         }
 
         private void Show(Texture2D screenshot)
