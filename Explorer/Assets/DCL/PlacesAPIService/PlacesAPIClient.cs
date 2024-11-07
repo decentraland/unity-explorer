@@ -43,10 +43,10 @@ namespace DCL.PlacesAPIService
             string url = baseURL + "?search={0}&offset={1}&limit={2}";
 
             if (!string.IsNullOrEmpty(sortBy))
-                url += $"&{sortBy}";
+                url += $"&order_by={sortBy}";
 
             if (!string.IsNullOrEmpty(sortDirection))
-                url += $"&{sortDirection}";
+                url += $"&order={sortDirection}";
 
             GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> result = webRequestController.GetAsync(string.Format(url, searchString.Replace(" ", "+"), pageNumber * pageSize, pageSize), ct, ReportCategory.UI);
 
@@ -173,10 +173,10 @@ namespace DCL.PlacesAPIService
             string url = baseURL + "?only_favorites=true&with_realms_detail=true";
 
             if (!string.IsNullOrEmpty(sortBy))
-                url += $"&{sortBy}";
+                url += $"&order_by{sortBy}";
 
             if (!string.IsNullOrEmpty(sortDirection))
-                url += $"&{sortDirection}";
+                url += $"&order={sortDirection}";
 
             GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> result = webRequestController.GetAsync(url, ct, ReportCategory.UI);
 
