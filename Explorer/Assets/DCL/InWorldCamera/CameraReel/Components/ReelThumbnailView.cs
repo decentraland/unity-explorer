@@ -2,14 +2,17 @@ using Cysharp.Threading.Tasks;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.UI;
+using DG.Tweening;
+using System;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using Utility;
 
 namespace DCL.InWorldCamera.CameraReel.Components
 {
-    public class ReelThumbnailView : MonoBehaviour
+    public class ReelThumbnailView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
         private const int THUMBNAIL_WIDTH = 272;
         private const int THUMBNAIL_HEIGHT = 201;
@@ -19,17 +22,15 @@ namespace DCL.InWorldCamera.CameraReel.Components
 
         private CameraReelResponse cameraReelResponse;
         private CancellationTokenSource loadImageCts;
+        private ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
 
-        public void Setup(CameraReelResponse cameraReelData, ICameraReelScreenshotsStorage cameraReelScreenshotsStorage)
+        public void Setup(CameraReelResponse cameraReelData, ICameraReelScreenshotsStorage cameraReelScreenshotsStorageService)
         {
             this.cameraReelResponse = cameraReelData;
+            this.cameraReelScreenshotsStorage = cameraReelScreenshotsStorageService;
             loadImageCts = loadImageCts.SafeRestart();
+            thumbnailImage.sprite = null;
             LoadImage(cameraReelScreenshotsStorage, loadImageCts.Token).Forget();
-        }
-
-        public void Reset()
-        {
-            thumbnailImage.gameObject.SetActive(false);
         }
 
         private async UniTask LoadImage(ICameraReelScreenshotsStorage cameraReelScreenshotsStorage, CancellationToken token)
@@ -40,8 +41,10 @@ namespace DCL.InWorldCamera.CameraReel.Components
             loadingBrightView.FinishLoadingAnimation(thumbnailImage.gameObject);
         }
 
-        private void OnDisable() =>
-            loadImageCts.SafeCancelAndDispose();
+        public void OnPointerEnter(PointerEventData eventData) =>
+            transform.DOScale(Vector3.one * 1.03f, 0.3f);
 
+        public void OnPointerExit(PointerEventData eventData) =>
+            transform.DOScale(Vector3.one, 0.3f);
     }
 }

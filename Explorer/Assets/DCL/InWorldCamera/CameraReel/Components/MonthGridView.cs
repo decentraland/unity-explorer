@@ -15,23 +15,24 @@ namespace DCL.InWorldCamera.CameraReel.Components
         [SerializeField] private GridLayoutGroup gridLayoutGroup;
 
         private readonly List<ReelThumbnailView> reelThumbnailViews = new ();
-        private ReelThumbnailPoolManager reelThumbnailPoolManager;
+        private ReelGalleryPoolManager reelGalleryPoolManager;
 
-        public void Setup(DateTime bucket, List<CameraReelResponse> images, ReelThumbnailPoolManager reelThumbnailPool, ICameraReelScreenshotsStorage cameraReelScreenshotsStorage)
+        public void Setup(DateTime bucket, List<CameraReelResponse> images, ReelGalleryPoolManager reelGalleryPool, ICameraReelScreenshotsStorage cameraReelScreenshotsStorage)
         {
-            this.reelThumbnailPoolManager = reelThumbnailPool;
+            this.reelGalleryPoolManager = reelGalleryPool;
 
             monthText.SetText(bucket.ToString("MMMM yyyy", CultureInfo.InvariantCulture));
 
             for (int i = 0; i < images.Count; i++)
-                reelThumbnailViews.Add(reelThumbnailPoolManager.Get(images[i], gridLayoutGroup, cameraReelScreenshotsStorage));
+                reelThumbnailViews.Add(reelGalleryPoolManager.GetThumbnailElement(images[i], gridLayoutGroup, cameraReelScreenshotsStorage));
         }
 
-        private void OnDisable()
+        public void Release()
         {
             for(int i = 0; i < reelThumbnailViews.Count; i++)
-                reelThumbnailPoolManager.Release(reelThumbnailViews[i]);
+                reelGalleryPoolManager.ReleaseThumbnailElement(reelThumbnailViews[i]);
             reelThumbnailViews.Clear();
         }
+
     }
 }

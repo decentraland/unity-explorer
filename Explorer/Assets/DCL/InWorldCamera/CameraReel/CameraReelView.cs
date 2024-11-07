@@ -1,5 +1,4 @@
 using DCL.InWorldCamera.CameraReel.Components;
-using SuperScrollView;
 using System;
 using UnityEngine;
 
@@ -13,7 +12,8 @@ namespace DCL.InWorldCamera.CameraReel
         [SerializeField] internal GameObject loadingSpinner;
         [SerializeField] internal GameObject emptyState;
         [SerializeField] internal CanvasGroup storageFullToast;
-        [SerializeField] internal LoopListView2 loopList;
+        [SerializeField] internal RectTransform scrollContentRect;
+        [SerializeField] internal GameObject scrollViewGameObject;
 
         [Header("Storage configuration")]
         [SerializeField] internal float storageFullToastFadeTime = 0.3f;
@@ -21,6 +21,10 @@ namespace DCL.InWorldCamera.CameraReel
         [Header("Thumbnail objects")]
         [SerializeField] internal ReelThumbnailView thumbnailViewPrefab;
         [SerializeField] internal GameObject unusedThumbnailViewObject;
+
+        [Header("Grid objects")]
+        [SerializeField] internal MonthGridView monthGridPrefab;
+        [SerializeField] internal GameObject unusedGridViewObject;
 
         internal event Action OnMouseEnter;
         internal event Action OnMouseExit;

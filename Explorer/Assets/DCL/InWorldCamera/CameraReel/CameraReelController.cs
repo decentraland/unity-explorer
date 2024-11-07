@@ -16,7 +16,11 @@ namespace DCL.InWorldCamera.CameraReel
 {
     public class CameraReelController : ISection, IDisposable
     {
-        private readonly int PAGINATION_LIMIT = 100;
+        private const int PAGINATION_LIMIT = 100;
+        private const int THUMBNAIL_POOL_DEFAULT_CAPACITY = 100;
+        private const int THUMBNAIL_POOL_MAX_SIZE = 500;
+        private const int GRID_POOL_DEFAULT_CAPACITY = 10;
+        private const int GRID_POOL_MAX_SIZE = 500;
 
         private readonly CameraReelView view;
         private readonly RectTransform rectTransform;
@@ -24,7 +28,8 @@ namespace DCL.InWorldCamera.CameraReel
         private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly PagedCameraReelManager pagedCameraReelManager;
-        private readonly ReelThumbnailPoolManager reelThumbnailPoolManager;
+        private readonly ReelGalleryPoolManager reelGalleryPoolManager;
+        private readonly List<MonthGridView> monthGridViews = new ();
 
         private CancellationTokenSource showCancellationTokenSource;
 
@@ -40,9 +45,8 @@ namespace DCL.InWorldCamera.CameraReel
             this.web3IdentityCache = web3IdentityCache;
 
             pagedCameraReelManager = new PagedCameraReelManager(cameraReelStorageService, web3IdentityCache, PAGINATION_LIMIT);
-            reelThumbnailPoolManager = new ReelThumbnailPoolManager(view.thumbnailViewPrefab, view.unusedThumbnailViewObject, 100, 500);
+            reelGalleryPoolManager = new ReelGalleryPoolManager(view.thumbnailViewPrefab, view.monthGridPrefab, view.unusedThumbnailViewObject, view.unusedGridViewObject, THUMBNAIL_POOL_DEFAULT_CAPACITY, THUMBNAIL_POOL_MAX_SIZE, GRID_POOL_DEFAULT_CAPACITY, GRID_POOL_MAX_SIZE);
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
-            this.view.loopList.InitListView(0, OnGetItemByIndex);
 
 
             this.view.OnMouseEnter += OnStorageFullIconEnter;
@@ -59,7 +63,7 @@ namespace DCL.InWorldCamera.CameraReel
         {
             view.emptyState.SetActive(false);
             view.loadingSpinner.SetActive(true);
-            view.loopList.gameObject.SetActive(false);
+            view.scrollViewGameObject.SetActive(false);
 
             CameraReelStorageStatus storageStatus = await cameraReelStorageService.GetUserGalleryStorageInfoAsync(web3IdentityCache.Identity.Address, ct);
             SetStorageStatus(storageStatus);
@@ -71,22 +75,28 @@ namespace DCL.InWorldCamera.CameraReel
                 return;
             }
 
-            await pagedCameraReelManager.Initialize(ct);
+            await pagedCameraReelManager.Initialize(storageStatus.ScreenshotsAmount, ct);
 
-            view.loopList.gameObject.SetActive(true);
-            view.loopList.SetListItemCount(pagedCameraReelManager.GetBucketCount(), false);
+            for (int i = 0; i < pagedCameraReelManager.GetBucketCount(); i++)
+            {
+                MonthGridView monthGridView = reelGalleryPoolManager.GetGridElement(view.scrollContentRect);
+                var imageBucket = pagedCameraReelManager.GetBucket(i);
+                monthGridView.Setup(imageBucket.Item1, imageBucket.Item2, reelGalleryPoolManager, cameraReelScreenshotsStorage);
+                monthGridViews.Add(monthGridView);
+            }
+
+            view.scrollViewGameObject.SetActive(true);
             view.loadingSpinner.SetActive(false);
         }
 
-        private LoopListViewItem2 OnGetItemByIndex(LoopListView2 loopListView, int index)
+        private void ReleaseGridViews()
         {
-            LoopListViewItem2 listItem = loopListView.NewListViewItem(loopListView.ItemPrefabDataList[0].mItemPrefab.name);
-            MonthGridView gridView = listItem.GetComponent<MonthGridView>();
-            var imageBucket = pagedCameraReelManager.GetBucket(index);
-
-            gridView.Setup(imageBucket.Item1, imageBucket.Item2, reelThumbnailPoolManager, cameraReelScreenshotsStorage);
-
-            return listItem;
+            for (int i = 0; i < monthGridViews.Count; i++)
+            {
+                monthGridViews[i].Release();
+                reelGalleryPoolManager.ReleaseGridElement(monthGridViews[i]);
+            }
+            monthGridViews.Clear();
         }
 
         private void SetStorageStatus(CameraReelStorageStatus storageStatus)
@@ -109,7 +119,7 @@ namespace DCL.InWorldCamera.CameraReel
             view.gameObject.SetActive(false);
             showCancellationTokenSource.SafeCancelAndDispose();
             pagedCameraReelManager.Flush();
-            view.loopList.SetListItemCount(0, false);
+            ReleaseGridViews();
         }
 
         public void Animate(int triggerId)

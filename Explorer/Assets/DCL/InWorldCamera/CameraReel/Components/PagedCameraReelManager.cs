@@ -17,9 +17,6 @@ namespace DCL.InWorldCamera.CameraReel.Components
         private readonly Dictionary<DateTime, List<CameraReelResponse>> elements = new ();
         private readonly List<DateTime> buckets = new ();
         private CancellationTokenSource cancellationTokenSource = new();
-        private int currentOffset;
-        private int fetchedImages;
-        private bool allImagesFetched;
 
         public PagedCameraReelManager(
             ICameraReelStorageService cameraReelStorageService,
@@ -31,41 +28,35 @@ namespace DCL.InWorldCamera.CameraReel.Components
             this.pageSize = pageSize;
         }
 
-        private async UniTask FetchNextPage(CancellationToken ct)
-        {
-            //TODO: make it parallel
-            CameraReelResponses cameraReelResponses = await cameraReelStorageService.GetScreenshotGalleryAsync(web3IdentityCache.Identity.Address, pageSize, currentOffset, ct);
-            currentOffset += pageSize;
-            fetchedImages += cameraReelResponses.images.Count;
-
-            allImagesFetched = fetchedImages == cameraReelResponses.currentImages;
-
-            for (int i = 0; i < cameraReelResponses.images.Count; i++)
-            {
-                DateTime imageBucket = GetImageBucket(cameraReelResponses.images[i]);
-
-                if (!elements.ContainsKey(imageBucket))
-                {
-                    elements[imageBucket] = new List<CameraReelResponse>();
-                    buckets.Add(imageBucket);
-                }
-
-                elements[imageBucket].Add(cameraReelResponses.images[i]);
-            }
-        }
-
         public int GetBucketCount() =>
             buckets.Count;
 
-        public async UniTask Initialize(CancellationToken ct)
+        public async UniTask Initialize(int totalScreenshot, CancellationToken ct)
         {
-            currentOffset = 0;
-            fetchedImages = 0;
-            allImagesFetched = false;
             cancellationTokenSource = cancellationTokenSource.SafeRestart();
 
-            while (!allImagesFetched)
-                await FetchNextPage(ct);
+            int parallelNumber = (int)MathF.Ceiling(totalScreenshot * 1f / pageSize);
+
+            UniTask<CameraReelResponses>[] tasks = new UniTask<CameraReelResponses>[parallelNumber];
+
+            for (int i = 0; i < parallelNumber; i++)
+                tasks[i] = cameraReelStorageService.GetScreenshotGalleryAsync(web3IdentityCache.Identity.Address, pageSize, pageSize * i, ct);
+
+            CameraReelResponses[] taskResults = await UniTask.WhenAll(tasks);
+
+            for (int j = 0; j < taskResults.Length; j++)
+                for (int i = 0; i < taskResults[j].images.Count; i++)
+                {
+                    DateTime imageBucket = GetImageBucket(taskResults[j].images[i]);
+
+                    if (!elements.ContainsKey(imageBucket))
+                    {
+                        elements[imageBucket] = new List<CameraReelResponse>();
+                        buckets.Add(imageBucket);
+                    }
+
+                    elements[imageBucket].Add(taskResults[j].images[i]);
+                }
         }
 
         public (DateTime, List<CameraReelResponse>) GetBucket(int index) =>
@@ -73,9 +64,6 @@ namespace DCL.InWorldCamera.CameraReel.Components
 
         public void Flush()
         {
-            currentOffset = 0;
-            fetchedImages = 0;
-            allImagesFetched = false;
             elements.Clear();
             buckets.Clear();
             cancellationTokenSource.SafeCancelAndDispose();
