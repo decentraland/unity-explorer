@@ -286,6 +286,11 @@ MonoBehaviour:
       g: 1
       b: 2
       a: 3
+    useOverride: 0
+    fquality: 1
+    disableMultithreading: 1
+    dwnumThreads: 1
+    cmpComputeTypeEncode: 1
   path: Assets/Plugins/TexturesFuse/TexturesServerWrap/Playground/NormalMap/brick_wall2-nor-512.png
   debugOutputFromNative: 1
   outputPath: Assets/Plugins/TexturesFuse/TexturesServerWrap/Playground/NormalMap/brick_wall2-nor-512.bin
