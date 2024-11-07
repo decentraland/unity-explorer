@@ -20,6 +20,7 @@ namespace DCL.InWorldCamera.CameraReel.Components
                 thumbnail => thumbnail.gameObject.SetActive(true),
                 thumbnail =>
                 {
+                    thumbnail.Reset();
                     thumbnail.transform.SetParent(unusedPoolObjectParent.transform, false);
                     thumbnail.gameObject.SetActive(false);
                 },

@@ -27,6 +27,11 @@ namespace DCL.InWorldCamera.CameraReel.Components
             LoadImage(cameraReelScreenshotsStorage, loadImageCts.Token).Forget();
         }
 
+        public void Reset()
+        {
+            thumbnailImage.gameObject.SetActive(false);
+        }
+
         private async UniTask LoadImage(ICameraReelScreenshotsStorage cameraReelScreenshotsStorage, CancellationToken token)
         {
             loadingBrightView.StartLoadingAnimation(thumbnailImage.gameObject);

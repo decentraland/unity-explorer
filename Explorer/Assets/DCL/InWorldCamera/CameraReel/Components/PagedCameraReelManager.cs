@@ -33,6 +33,7 @@ namespace DCL.InWorldCamera.CameraReel.Components
 
         private async UniTask FetchNextPage(CancellationToken ct)
         {
+            //TODO: make it parallel
             CameraReelResponses cameraReelResponses = await cameraReelStorageService.GetScreenshotGalleryAsync(web3IdentityCache.Identity.Address, pageSize, currentOffset, ct);
             currentOffset += pageSize;
             fetchedImages += cameraReelResponses.images.Count;
@@ -63,17 +64,12 @@ namespace DCL.InWorldCamera.CameraReel.Components
             allImagesFetched = false;
             cancellationTokenSource = cancellationTokenSource.SafeRestart();
 
-            while (buckets.Count <= 1 && !allImagesFetched)
+            while (!allImagesFetched)
                 await FetchNextPage(ct);
         }
 
-        public (DateTime, List<CameraReelResponse>) GetBucket(int index)
-        {
-            if (index == Math.Max(buckets.Count - 2, 0) && !allImagesFetched)
-                FetchNextPage(cancellationTokenSource.Token).Forget();
-
-            return (buckets[index], elements[buckets[index]]);
-        }
+        public (DateTime, List<CameraReelResponse>) GetBucket(int index) =>
+            (buckets[index], elements[buckets[index]]);
 
         public void Flush()
         {
@@ -88,7 +84,7 @@ namespace DCL.InWorldCamera.CameraReel.Components
         private DateTime GetImageBucket(CameraReelResponse image)
         {
             DateTime actualDateTime = !long.TryParse(image.metadata.dateTime, out long unixTimestamp) ? new DateTime() : DateTimeOffset.FromUnixTimeSeconds(unixTimestamp).ToLocalTime().DateTime;
-            return new DateTime(actualDateTime.Year, actualDateTime.Month, 1);
+            return new DateTime(actualDateTime.Year, actualDateTime.Month, 1, 0, 0, 0, 0);
         }
     }
 
