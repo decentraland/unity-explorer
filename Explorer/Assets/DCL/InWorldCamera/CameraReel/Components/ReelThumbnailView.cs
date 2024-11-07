@@ -22,7 +22,7 @@ namespace DCL.InWorldCamera.CameraReel.Components
         [SerializeField] private RectTransform optionButtonContainer;
 
         [Header("Configuration")]
-        [SerializeField] private Vector3 optionButtonOffset = new (-15.83997f, -25.79999f, 0);
+        [SerializeField] private Vector3 optionButtonOffset = new (-15.83997f, -22f, 0);
         [SerializeField] private float scaleFactorOnHover = 1.03f;
         [SerializeField] private float scaleAnimationDuration = 0.3f;
 

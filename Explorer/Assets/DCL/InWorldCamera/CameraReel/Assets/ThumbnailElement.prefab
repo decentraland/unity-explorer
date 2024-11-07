@@ -361,4 +361,6 @@ MonoBehaviour:
   loadingBrightView: {fileID: 2807589170081878738}
   thumbnailImage: {fileID: 7565253543610037553}
   optionButtonContainer: {fileID: 3651668776247032185}
-  optionButtonOffset: {x: -15.83997, y: -25.79999, z: 0}
+  optionButtonOffset: {x: -15.83997, y: -22, z: 0}
+  scaleFactorOnHover: 1.03
+  scaleAnimationDuration: 0.3
