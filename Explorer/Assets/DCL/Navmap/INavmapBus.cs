@@ -7,11 +7,10 @@ namespace DCL.Navmap
 {
     public interface INavmapBus
     {
-        event Action<PlacesData.PlaceInfo> OnPlaceSelected;
         event Action<PlacesData.PlaceInfo> OnJumpIn;
         event Action<PlacesData.PlaceInfo>? OnDestinationSelected;
 
-        void SelectPlace(PlacesData.PlaceInfo place);
+        UniTask SelectPlaceAsync(PlacesData.PlaceInfo place, CancellationToken ct);
 
         UniTask SearchForPlaceAsync(string place, NavmapSearchPlaceFilter filter, NavmapSearchPlaceSorting sorting, CancellationToken ct);
 

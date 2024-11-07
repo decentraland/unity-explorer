@@ -99,6 +99,9 @@ namespace DCL.PluginSystem.Global
         private BackpackSubPlugin? backpackSubPlugin;
         private SearchResultPanelController? searchResultPanelController;
         private ISearchHistory? searchHistory;
+        private PlacesAndEventsPanelController? placesAndEventsPanelController;
+        private NavmapView? navmapView;
+        private PlaceInfoPanelController? placeInfoPanelController;
 
         public ExplorePanelPlugin(IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
@@ -230,9 +233,10 @@ namespace DCL.PluginSystem.Global
 
             searchHistory = new PlayerPrefsSearchHistory();
 
-            NavmapView navmapView = explorePanelView.GetComponentInChildren<NavmapView>();
+            navmapView = explorePanelView.GetComponentInChildren<NavmapView>();
 
-            INavmapBus navmapBus = new NavmapCommandBus(CreateSearchPlaceCommand);
+            INavmapBus navmapBus = new NavmapCommandBus(CreateSearchPlaceCommand,
+                CreateShowPlaceCommand);
 
             ObjectPool<FullSearchResultsView> searchResultsPool = await InitializeSearchResultsPool(navmapView.SearchBarResultPanel, ct);
 
@@ -243,8 +247,11 @@ namespace DCL.PluginSystem.Global
                 navmapView.HistoryRecordPanelView, navmapView.PlacesAndEventsPanelView.SearchFiltersView,
                 inputBlock, searchHistory, navmapBus);
 
-            PlacesAndEventsPanelController placesAndEventsPanelController = new (navmapView.PlacesAndEventsPanelView,
-                searchBarController, searchResultPanelController);
+            placeInfoPanelController = new PlaceInfoPanelController(navmapView.PlacesAndEventsPanelView.PlaceInfoPanelView,
+                webRequestController, placesAPIService, mapPathEventBus, navmapBus, chatMessagesBus);
+
+            placesAndEventsPanelController = new (navmapView.PlacesAndEventsPanelView,
+                searchBarController, searchResultPanelController, placeInfoPanelController);
 
             NavmapZoomController zoomController = new (navmapView.zoomView, dclInput);
 
@@ -301,7 +308,11 @@ namespace DCL.PluginSystem.Global
         }
 
         private INavmapCommand CreateSearchPlaceCommand(string search, NavmapSearchPlaceFilter filter, NavmapSearchPlaceSorting sorting) =>
-            new SearchForPlaceAndShowResultsCommand(placesAPIService, eventsApiService, searchResultPanelController!, search, filter, sorting);
+            new SearchForPlaceAndShowResultsCommand(placesAPIService, eventsApiService, placesAndEventsPanelController,
+                searchResultPanelController!, search, filter, sorting);
+
+        private INavmapCommand CreateShowPlaceCommand(PlacesData.PlaceInfo placeInfo) =>
+            new ShowPlaceInfoCommand(placeInfo, navmapView, placeInfoPanelController, placesAndEventsPanelController, eventsApiService);
 
         public class ExplorePanelSettings : IDCLPluginSettings
         {

@@ -13,6 +13,7 @@ namespace DCL.Navmap
     {
         private readonly IPlacesAPIService placesAPIService;
         private readonly IEventsApiService eventsApiService;
+        private readonly PlacesAndEventsPanelController placesAndEventsPanelController;
         private readonly SearchResultPanelController searchResultPanelController;
         private readonly string searchText;
         private readonly NavmapSearchPlaceFilter filter;
@@ -25,6 +26,7 @@ namespace DCL.Navmap
         public SearchForPlaceAndShowResultsCommand(
             IPlacesAPIService placesAPIService,
             IEventsApiService eventsApiService,
+            PlacesAndEventsPanelController placesAndEventsPanelController,
             SearchResultPanelController searchResultPanelController,
             string searchText,
             NavmapSearchPlaceFilter filter,
@@ -34,6 +36,7 @@ namespace DCL.Navmap
         {
             this.placesAPIService = placesAPIService;
             this.eventsApiService = eventsApiService;
+            this.placesAndEventsPanelController = placesAndEventsPanelController;
             this.searchResultPanelController = searchResultPanelController;
             this.searchText = searchText;
             this.filter = filter;
@@ -44,7 +47,7 @@ namespace DCL.Navmap
 
         public async UniTask ExecuteAsync(CancellationToken ct)
         {
-            searchResultPanelController.Show();
+            placesAndEventsPanelController.Toggle(PlacesAndEventsPanelController.Section.Search);
             searchResultPanelController.SetLoadingState();
 
             await ProcessPlaces(ct);
@@ -79,11 +82,12 @@ namespace DCL.Navmap
 
                 try
                 {
-                    IReadOnlyList<EventDTO> eventsForCurrentPlaces = await eventsApiService.GetEventsByParcelsAsync(placesIds, ct);
+                    IReadOnlyList<EventDTO> eventsForCurrentPlaces = await eventsApiService.GetEventsByParcelAsync(placesIds, ct,
+                        true);
 
                     foreach (EventDTO @event in eventsForCurrentPlaces)
                         if (@event.live)
-                            placesWithLiveEvents.Add($"{@event.coordinates[0]},${@event.coordinates[1]}");
+                            placesWithLiveEvents.Add($"{@event.x},${@event.y}");
                 }
                 finally
                 {

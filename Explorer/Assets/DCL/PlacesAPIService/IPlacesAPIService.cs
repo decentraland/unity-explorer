@@ -25,7 +25,7 @@ namespace DCL.PlacesAPIService
 
         UniTask<PoolExtensions.Scope<List<PlacesData.PlaceInfo>>> GetPlacesByCoordsListAsync(IEnumerable<Vector2Int> coordsList, CancellationToken ct, bool renewCache = false);
 
-        UniTask SetPlaceVoteAsync(bool? isUpvote, string placeUUID, CancellationToken ct);
+        UniTask RatePlace(bool? isUpvote, string placeUUID, CancellationToken ct);
 
         UniTask SetPlaceFavoriteAsync(string placeUUID, bool isFavorite, CancellationToken ct);
 

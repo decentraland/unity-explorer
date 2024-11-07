@@ -26,5 +26,7 @@ namespace DCL.EventsApi
         public string start_at;
         public string[] recurrent_dates;
         public bool world;
+        public int x;
+        public int y;
     }
 }

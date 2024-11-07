@@ -2,6 +2,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.WebRequests;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 
@@ -20,7 +21,8 @@ namespace DCL.EventsApi
             this.baseUrl = baseUrl;
         }
 
-        public async UniTask<IReadOnlyList<EventDTO>> GetEventsByParcelsAsync(ISet<string> parcels, CancellationToken ct)
+        public async UniTask<IReadOnlyList<EventDTO>> GetEventsByParcelAsync(ISet<string> parcels, CancellationToken ct,
+            bool onlyLiveEvents = false)
         {
             urlBuilder.Clear();
             urlBuilder.AppendDomain(baseUrl);
@@ -28,8 +30,31 @@ namespace DCL.EventsApi
             foreach (string parcel in parcels)
                 urlBuilder.AppendParameter(new URLParameter("positions[]", parcel));
 
+            if (onlyLiveEvents)
+                urlBuilder.AppendParameter(new URLParameter("list", "live"));
+
             URLAddress url = urlBuilder.Build();
 
+            return await FetchEventList(url, ct);
+        }
+
+        public async UniTask<IReadOnlyList<EventDTO>> GetEventsByParcelAsync(string parcel, CancellationToken ct,
+            bool onlyLiveEvents = false)
+        {
+            urlBuilder.Clear();
+            urlBuilder.AppendDomain(baseUrl);
+            urlBuilder.AppendParameter(new URLParameter("position", parcel));
+
+            if (onlyLiveEvents)
+                urlBuilder.AppendParameter(new URLParameter("list", "live"));
+
+            URLAddress url = urlBuilder.Build();
+
+            return await FetchEventList(url, ct);
+        }
+
+        private async UniTask<IReadOnlyList<EventDTO>> FetchEventList(URLAddress url, CancellationToken ct)
+        {
             GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> result = webRequestController.GetAsync(
                 url, ct, ReportCategory.EVENTS);
 
@@ -39,7 +64,7 @@ namespace DCL.EventsApi
             if (!response.ok)
                 throw new EventsApiException("Error fetching events");
 
-            return response.data;
+            return response.data ?? Array.Empty<EventDTO>();
         }
     }
 }

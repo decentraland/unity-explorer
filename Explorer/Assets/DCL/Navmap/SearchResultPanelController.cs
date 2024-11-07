@@ -1,7 +1,10 @@
+using Cysharp.Threading.Tasks;
 using DCL.PlacesAPIService;
 using DCL.UI;
 using System.Collections.Generic;
+using System.Threading;
 using UnityEngine.Pool;
+using Utility;
 
 namespace DCL.Navmap
 {
@@ -11,6 +14,7 @@ namespace DCL.Navmap
         private readonly Dictionary<string, FullSearchResultsView> usedPoolElements;
         private readonly ObjectPool<FullSearchResultsView> resultsPool;
         private readonly INavmapBus navmapBus;
+        private CancellationTokenSource? showPlaceInfoCancellationToken;
 
         public SearchResultPanelController(SearchResultPanelView view,
             ObjectPool<FullSearchResultsView> resultsPool,
@@ -68,6 +72,9 @@ namespace DCL.Navmap
 
             foreach (PlacesData.PlaceInfo placeInfo in places)
             {
+                // Why two places with the same base position comes in the list?
+                if (usedPoolElements.ContainsKey(placeInfo.base_position)) continue;
+
                 FullSearchResultsView fullSearchResultsView = resultsPool.Get();
                 usedPoolElements.Add(placeInfo.base_position, fullSearchResultsView);
                 fullSearchResultsView.placeName.text = placeInfo.title;
@@ -78,7 +85,11 @@ namespace DCL.Navmap
                 fullSearchResultsView.playersCount.text = placeInfo.user_count.ToString();
                 fullSearchResultsView.resultAnimator.SetTrigger(UIAnimationHashes.LOADED);
                 fullSearchResultsView.SetPlaceImage(placeInfo.image);
-                fullSearchResultsView.resultButton.onClick.AddListener(() => navmapBus.SelectPlace(placeInfo));
+                fullSearchResultsView.resultButton.onClick.AddListener(() =>
+                {
+                    showPlaceInfoCancellationToken = showPlaceInfoCancellationToken.SafeRestart();
+                    navmapBus.SelectPlaceAsync(placeInfo, showPlaceInfoCancellationToken.Token).Forget();
+                });
                 fullSearchResultsView.LiveContainer.SetActive(false);
             }
         }

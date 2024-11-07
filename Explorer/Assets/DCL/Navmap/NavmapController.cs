@@ -89,7 +89,6 @@ namespace DCL.Navmap
             eventInfoCardController = infoCardController;
             navmapBus.OnDestinationSelected += SetDestination;
             this.navmapView.DestinationInfoElement.QuitButton.onClick.AddListener(OnRemoveDestinationButtonClicked);
-            navmapBus.OnPlaceSelected += OnPlaceSelected;
             this.satelliteController = satelliteController;
             mapPathEventBus.OnRemovedDestination += RemoveDestination;
 
@@ -188,13 +187,6 @@ namespace DCL.Navmap
             navmapView.MapPinTooltip.Hide();
             lastParcelHovered = parcel;
             audioEventsBus.SendPlayAudioEvent(navmapView.HoverAudio);
-        }
-
-        private void OnPlaceSelected(PlacesData.PlaceInfo place)
-        {
-            if (VectorUtilities.TryParseVector2Int(place.base_position, out Vector2Int result))
-                //This will trigger a "parcel clicked" event with the data from the parcel
-                this.navmapView.SatelliteRenderImage.OnSearchResultParcelSelected(result);
         }
 
         private void OnParcelClicked(MapRenderImage.ParcelClickData clickedParcel)

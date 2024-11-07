@@ -9,21 +9,30 @@ namespace DCL.Navmap
     public class NavmapCommandBus : INavmapBus
     {
         public delegate INavmapCommand SearchPlaceFactory(string search, NavmapSearchPlaceFilter filter, NavmapSearchPlaceSorting sorting);
+        public delegate INavmapCommand ShowPlaceInfoFactory(PlacesData.PlaceInfo placeInfo);
 
         private readonly Stack<INavmapCommand> commands = new ();
         private readonly SearchPlaceFactory searchPlaceFactory;
+        private readonly ShowPlaceInfoFactory showPlaceInfoFactory;
 
-        public event Action<PlacesData.PlaceInfo>? OnPlaceSelected;
         public event Action<PlacesData.PlaceInfo>? OnJumpIn;
         public event Action<PlacesData.PlaceInfo>? OnDestinationSelected;
 
-        public NavmapCommandBus(SearchPlaceFactory searchPlaceFactory)
+        public NavmapCommandBus(SearchPlaceFactory searchPlaceFactory,
+            ShowPlaceInfoFactory showPlaceInfoFactory)
         {
             this.searchPlaceFactory = searchPlaceFactory;
+            this.showPlaceInfoFactory = showPlaceInfoFactory;
         }
 
-        public void SelectPlace(PlacesData.PlaceInfo place) =>
-            OnPlaceSelected?.Invoke(place);
+        public async UniTask SelectPlaceAsync(PlacesData.PlaceInfo place, CancellationToken ct)
+        {
+            INavmapCommand command = showPlaceInfoFactory.Invoke(place);
+
+            await command.ExecuteAsync(ct);
+
+            commands.Push(command);
+        }
 
         public async UniTask SearchForPlaceAsync(string place, NavmapSearchPlaceFilter filter, NavmapSearchPlaceSorting sorting,
             CancellationToken ct)

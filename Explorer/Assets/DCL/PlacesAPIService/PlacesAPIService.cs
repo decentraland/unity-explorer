@@ -172,9 +172,9 @@ namespace DCL.PlacesAPIService
             await client.SetPlaceFavoriteAsync(placeUUID, isFavorite, ct);
         }
 
-        public async UniTask SetPlaceVoteAsync(bool? isUpvote, string placeUUID, CancellationToken ct)
+        public async UniTask RatePlace(bool? isUpvote, string placeUUID, CancellationToken ct)
         {
-            await client.SetPlaceVoteAsync(isUpvote, placeUUID, ct);
+            await client.RatePlace(isUpvote, placeUUID, ct);
         }
 
         private void TryCachePlace(PlacesData.PlaceInfo? placeInfo)
