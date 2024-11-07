@@ -1,3 +1,4 @@
+using DCL.Navmap.FilterPanel;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -10,5 +11,9 @@ namespace DCL.Navmap
 
         [field: SerializeField]
         public Button CenterToHomeButton { get; private set; }
+
+        [field: SerializeField]
+        public NavmapFilterPanelView FiltersPanel { get; private set; }
+
     }
 }

@@ -22,6 +22,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using DCL.Chat.MessageBus;
+using DCL.Navmap.FilterPanel;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Utility;
@@ -51,6 +52,7 @@ namespace DCL.Navmap
         private readonly Mouse mouse;
         private readonly StringBuilder parcelTitleStringBuilder = new ();
         private readonly NavmapLocationController navmapLocationController;
+        private readonly NavmapFilterPanelController navmapFilterPanelController;
 
         private CancellationTokenSource animationCts;
         private IMapCameraController cameraController;
@@ -127,7 +129,7 @@ namespace DCL.Navmap
             navmapView.WorldsWarningNotificationView.SetText(WORLDS_WARNING_MESSAGE);
             navmapView.WorldsWarningNotificationView.Hide();
             mouse = InputSystem.GetDevice<Mouse>();
-
+            navmapFilterPanelController = new NavmapFilterPanelController(mapRenderer, navmapView.LocationView.FiltersPanel);
             navmapLocationController = new NavmapLocationController(navmapView.LocationView, world, playerEntity);
         }
 
