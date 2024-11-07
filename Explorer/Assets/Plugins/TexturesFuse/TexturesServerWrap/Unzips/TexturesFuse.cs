@@ -4,6 +4,7 @@ using DCL.Diagnostics;
 using System;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.Profiling;
 using Result = Utility.Types.EnumResult<
     Plugins.TexturesFuse.TexturesServerWrap.Unzips.IOwnedTexture2D,
     Plugins.TexturesFuse.TexturesServerWrap.NativeMethods.ImageResult
@@ -76,7 +77,10 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
             if (Result.TryErrorIfCancelled(token, out errorResult))
                 return errorResult;
 
+            Profiler.BeginThreadProfiling("TexturesFuse", "ProcessImage");
             ProcessImage(bytes, bytesLength, type, out var handle, out var pointer, out int outputLength, out NativeMethods.ImageResult result, out uint width, out uint height, out bool linear, out TextureFormat format);
+            Profiler.EndThreadProfiling();
+
             await UniTask.SwitchToMainThread();
 
             if (result is NativeMethods.ImageResult.Success && token.IsCancellationRequested)
