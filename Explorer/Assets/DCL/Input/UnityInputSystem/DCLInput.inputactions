@@ -2954,6 +2954,15 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "ToggleInWorld",
+                    "type": "Button",
+                    "id": "1c0e90f7-a879-4d52-a0a1-03f102d8a464",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -3097,6 +3106,17 @@
                     "processors": "",
                     "groups": "",
                     "action": "Screenshot",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "b172c6f9-d4bc-43e8-93c8-49b1040d8568",
+                    "path": "<Keyboard>/c",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "ToggleInWorld",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

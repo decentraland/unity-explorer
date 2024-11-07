@@ -2976,6 +2976,15 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""ToggleInWorld"",
+                    ""type"": ""Button"",
+                    ""id"": ""1c0e90f7-a879-4d52-a0a1-03f102d8a464"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -3121,6 +3130,17 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""action"": ""Screenshot"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""b172c6f9-d4bc-43e8-93c8-49b1040d8568"",
+                    ""path"": ""<Keyboard>/c"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""ToggleInWorld"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -3231,6 +3251,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         m_InWorldCamera = asset.FindActionMap("InWorldCamera", throwIfNotFound: true);
         m_InWorldCamera_Translation = m_InWorldCamera.FindAction("Translation", throwIfNotFound: true);
         m_InWorldCamera_Screenshot = m_InWorldCamera.FindAction("Screenshot", throwIfNotFound: true);
+        m_InWorldCamera_ToggleInWorld = m_InWorldCamera.FindAction("ToggleInWorld", throwIfNotFound: true);
     }
 
     public void Dispose()
@@ -4200,12 +4221,14 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
     private List<IInWorldCameraActions> m_InWorldCameraActionsCallbackInterfaces = new List<IInWorldCameraActions>();
     private readonly InputAction m_InWorldCamera_Translation;
     private readonly InputAction m_InWorldCamera_Screenshot;
+    private readonly InputAction m_InWorldCamera_ToggleInWorld;
     public struct InWorldCameraActions
     {
         private @DCLInput m_Wrapper;
         public InWorldCameraActions(@DCLInput wrapper) { m_Wrapper = wrapper; }
         public InputAction @Translation => m_Wrapper.m_InWorldCamera_Translation;
         public InputAction @Screenshot => m_Wrapper.m_InWorldCamera_Screenshot;
+        public InputAction @ToggleInWorld => m_Wrapper.m_InWorldCamera_ToggleInWorld;
         public InputActionMap Get() { return m_Wrapper.m_InWorldCamera; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -4221,6 +4244,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @Screenshot.started += instance.OnScreenshot;
             @Screenshot.performed += instance.OnScreenshot;
             @Screenshot.canceled += instance.OnScreenshot;
+            @ToggleInWorld.started += instance.OnToggleInWorld;
+            @ToggleInWorld.performed += instance.OnToggleInWorld;
+            @ToggleInWorld.canceled += instance.OnToggleInWorld;
         }
 
         private void UnregisterCallbacks(IInWorldCameraActions instance)
@@ -4231,6 +4257,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @Screenshot.started -= instance.OnScreenshot;
             @Screenshot.performed -= instance.OnScreenshot;
             @Screenshot.canceled -= instance.OnScreenshot;
+            @ToggleInWorld.started -= instance.OnToggleInWorld;
+            @ToggleInWorld.performed -= instance.OnToggleInWorld;
+            @ToggleInWorld.canceled -= instance.OnToggleInWorld;
         }
 
         public void RemoveCallbacks(IInWorldCameraActions instance)
@@ -4362,5 +4391,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
     {
         void OnTranslation(InputAction.CallbackContext context);
         void OnScreenshot(InputAction.CallbackContext context);
+        void OnToggleInWorld(InputAction.CallbackContext context);
     }
 }

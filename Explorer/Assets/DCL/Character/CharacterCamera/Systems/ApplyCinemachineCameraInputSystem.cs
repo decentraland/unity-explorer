@@ -70,7 +70,7 @@ namespace DCL.CharacterCamera.Systems
             }
 
             cameraInput.SetFreeFly = isFreeCameraAllowed && input.Camera.ToggleFreeFly!.triggered;
-            cameraInput.SetInWorld = input.Camera.ToggleInWorld!.WasPressedThisFrame();
+            cameraInput.SetInWorld = input.Camera.ToggleInWorld!.triggered;
             cameraInput.SwitchState = input.Camera.SwitchState!.WasPressedThisFrame();
             cameraInput.ChangeShoulder = input.Camera.ChangeShoulder!.WasPressedThisFrame();
 

@@ -21,7 +21,6 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using Utility;
-using static DCL.InWorldCamera.ScreencaptureCamera.CameraObject.InWorldCameraComponents;
 using Object = UnityEngine.Object;
 
 namespace DCL.InWorldCamera.ScreencaptureCamera.CameraObject.Systems
@@ -78,7 +77,7 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.CameraObject.Systems
 
         protected override void Update(float t)
         {
-            EmitInputQuery(World);
+            TakeScreenshotQuery(World);
 
             if (isMakingScreenshot)
             {
@@ -105,10 +104,13 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.CameraObject.Systems
                 CollectMetadata(visiblePeople.ToArray()).Forget();
                 isMakingScreenshot = false;
             }
+
+            EnableCameraQuery(World);
+            DisableCameraQuery(World);
         }
 
         [Query]
-        private void CollectVisiblePeople(in Entity entity, Profile profile, RemoteAvatarCollider avatarCollider, [Data] Plane[] frustumPlanes)
+        private void CollectVisiblePeople(Profile profile, RemoteAvatarCollider avatarCollider, [Data] Plane[] frustumPlanes)
         {
             if (GeometryUtility.TestPlanesAABB(frustumPlanes, avatarCollider.Collider.bounds))
             {
@@ -136,18 +138,44 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.CameraObject.Systems
         }
 
         [Query]
-        [All(typeof(IsInWorldCamera))]
-        private void EmitInput(in Entity entity)
+        [None(typeof(IsInWorldCamera))]
+        private void EnableCamera(Entity camera, ref CameraComponent cameraComponent)
         {
-            if (!isInstantiated)
+            if (inputSchema.ToggleInWorld!.triggered)
             {
-                hud = Object.Instantiate(hudPrefab, Vector3.zero, Quaternion.identity).GetComponent<ScreenshotHudView>();
-                recorder = new ScreenRecorder(hud.GetComponent<RectTransform>());
+                cameraComponent.Mode = CameraMode.InWorld;
 
-                isInstantiated = true;
+                if (isInstantiated)
+                    hud.gameObject.SetActive(true);
+                else
+                {
+                    hud = Object.Instantiate(hudPrefab, Vector3.zero, Quaternion.identity).GetComponent<ScreenshotHudView>();
+                    recorder = new ScreenRecorder(hud.GetComponent<RectTransform>());
+                    isInstantiated = true;
+                }
+
+                World.Add<IsInWorldCamera>(camera);
             }
+        }
 
-            if (isInstantiated && inputSchema.Screenshot.triggered)
+        [Query]
+        [All(typeof(IsInWorldCamera))]
+        private void DisableCamera(Entity camera, ref CameraComponent cameraComponent)
+        {
+            if (inputSchema.ToggleInWorld!.triggered)
+            {
+                cameraComponent.Mode = CameraMode.ThirdPerson;
+                hud.gameObject.SetActive(false);
+
+                World.Remove<IsInWorldCamera>(camera);
+            }
+        }
+
+        [Query]
+        [All(typeof(IsInWorldCamera))]
+        private void TakeScreenshot()
+        {
+            if (inputSchema.Screenshot.triggered)
             {
                 hud.GetComponent<Canvas>().enabled = false;
                 hud.StartCoroutine(recorder.CaptureScreenshot(Show));

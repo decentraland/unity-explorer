@@ -10,9 +10,9 @@ using DCL.CharacterCamera.Settings;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.Input.Systems;
+using DCL.InWorldCamera.ScreencaptureCamera.CameraObject;
 using ECS.Abstract;
 using UnityEngine;
-using static DCL.InWorldCamera.ScreencaptureCamera.CameraObject.InWorldCameraComponents;
 
 namespace DCL.Character.CharacterCamera.Systems
 {
@@ -23,8 +23,9 @@ namespace DCL.Character.CharacterCamera.Systems
     [UpdateInGroup(typeof(CameraGroup))]
     public partial class ControlCinemachineVirtualCameraSystem : BaseUnityLoopSystem
     {
+        private readonly ICinemachineCameraAudioSettings cinemachineCameraAudioSettings;
+
         private SingleInstanceEntity inputMap;
-        private ICinemachineCameraAudioSettings cinemachineCameraAudioSettings;
         private int hotkeySwitchStateDirection = 1;
 
         internal ControlCinemachineVirtualCameraSystem(World world, ICinemachineCameraAudioSettings cinemachineCameraAudioSettings) : base(world)
@@ -69,8 +70,6 @@ namespace DCL.Character.CharacterCamera.Systems
             HandleSwitchStateQuery(World);
             HandleFreeFlyStateQuery(World);
             HandleOffsetQuery(World, dt);
-
-            HandleInWorldStateQuery(World);
         }
 
         [Query]
@@ -98,16 +97,6 @@ namespace DCL.Character.CharacterCamera.Systems
         {
             if (input.SetFreeFly)
                 cameraComponent.Mode = cameraComponent.Mode != CameraMode.Free ? CameraMode.Free : CameraMode.ThirdPerson;
-        }
-
-        [Query]
-        private void HandleInWorldState(Entity camera, ref CameraComponent cameraComponent, in CameraInput input)
-        {
-            if (input.SetInWorld)
-            {
-                cameraComponent.Mode = cameraComponent.Mode != CameraMode.InWorld ? CameraMode.InWorld : CameraMode.ThirdPerson;
-                World.Add<IsInWorldCamera>(camera);
-            }
         }
 
         [Query]
