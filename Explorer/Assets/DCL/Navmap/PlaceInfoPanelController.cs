@@ -45,7 +45,6 @@ namespace DCL.Navmap
             this.chatMessagesBus = chatMessagesBus;
             thumbnailImage = new ImageController(view.Thumbnail, webRequestController);
 
-            navmapBus.OnDestinationSelected += SetDestination;
             mapPathEventBus.OnSetDestination += SetDestination;
             mapPathEventBus.OnRemovedDestination += RemoveDestination;
 
@@ -112,6 +111,8 @@ namespace DCL.Navmap
 
             favoriteCancellationToken = favoriteCancellationToken.SafeRestart();
             UpdateFavoriteStatusAsync(favoriteCancellationToken.Token).Forget();
+
+            UpdateDestinationStatus();
         }
 
         public void SetLiveEvent(EventDTO @event)
@@ -181,27 +182,20 @@ namespace DCL.Navmap
         private void RemoveDestination()
         {
             destination = null;
-            view.StartNavigationButton.gameObject.SetActive(true);
-            view.StopNavigationButton.gameObject.SetActive(false);
-        }
-
-        private void SetDestination(PlacesData.PlaceInfo place)
-        {
-            if (place.id != this.place?.id)
-                RemoveDestination();
-            else
-            {
-                if (VectorUtilities.TryParseVector2Int(place.base_position, out Vector2Int result))
-                    SetDestination(result, null);
-            }
+            UpdateDestinationStatus();
         }
 
         private void SetDestination(Vector2Int parcel, IPinMarker? arg2)
         {
-            if (parcel != currentBaseParcel) return;
             destination = parcel;
-            view.StartNavigationButton.gameObject.SetActive(false);
-            view.StopNavigationButton.gameObject.SetActive(true);
+            UpdateDestinationStatus();
+        }
+
+        private void UpdateDestinationStatus()
+        {
+            bool isDestinationThisPlace = destination == currentBaseParcel;
+            view.StartNavigationButton.gameObject.SetActive(!isDestinationThisPlace);
+            view.StopNavigationButton.gameObject.SetActive(isDestinationThisPlace);
         }
 
         private void SetAsHome()
