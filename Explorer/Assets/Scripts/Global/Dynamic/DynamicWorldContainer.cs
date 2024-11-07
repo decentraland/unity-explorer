@@ -291,7 +291,8 @@ namespace Global.Dynamic
                 staticContainer.RealmData,
                 staticContainer.ScenesCache,
                 staticContainer.PartitionDataContainer,
-                staticContainer.SingletonSharedDependencies.SceneAssetLock);
+                staticContainer.SingletonSharedDependencies.SceneAssetLock,
+                debugBuilder);
 
             bool localSceneDevelopment = !string.IsNullOrEmpty(dynamicWorldParams.LocalSceneDevelopmentRealm);
             container.reloadSceneController = new ECSReloadScene(staticContainer.ScenesCache, globalWorld, playerEntity, localSceneDevelopment);
@@ -405,7 +406,11 @@ namespace Global.Dynamic
             var chatCommandsFactory = new Dictionary<Regex, Func<IChatCommand>>
             {
                 { GoToChatCommand.REGEX, () => new GoToChatCommand(realmNavigator) },
-                { ChangeRealmChatCommand.REGEX, () => new ChangeRealmChatCommand(realmNavigator, bootstrapContainer.DecentralandUrlsSource) },
+                {
+                    ChangeRealmChatCommand.REGEX,
+                    () => new ChangeRealmChatCommand(realmNavigator, bootstrapContainer.DecentralandUrlsSource,
+                        new EnvironmentValidator(bootstrapContainer.Environment))
+                },
                 { DebugPanelChatCommand.REGEX, () => new DebugPanelChatCommand(debugBuilder, connectionStatusPanelPlugin) },
                 { ShowEntityInfoChatCommand.REGEX, () => new ShowEntityInfoChatCommand(worldInfoHub) },
                 { ClearChatCommand.REGEX, () => new ClearChatCommand(chatHistory) },
