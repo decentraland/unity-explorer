@@ -26,6 +26,9 @@ namespace DCL.InWorldCamera.CameraReel
         [SerializeField] internal MonthGridView monthGridPrefab;
         [SerializeField] internal GameObject unusedGridViewObject;
 
+        [Header("Context menu")]
+        [SerializeField] internal OptionButtonView optionsButton;
+
         internal event Action OnMouseEnter;
         internal event Action OnMouseExit;
 

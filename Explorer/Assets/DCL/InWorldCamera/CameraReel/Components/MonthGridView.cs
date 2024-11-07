@@ -17,14 +17,14 @@ namespace DCL.InWorldCamera.CameraReel.Components
         private readonly List<ReelThumbnailView> reelThumbnailViews = new ();
         private ReelGalleryPoolManager reelGalleryPoolManager;
 
-        public void Setup(DateTime bucket, List<CameraReelResponse> images, ReelGalleryPoolManager reelGalleryPool, ICameraReelScreenshotsStorage cameraReelScreenshotsStorage)
+        public void Setup(DateTime bucket, List<CameraReelResponse> images, ReelGalleryPoolManager reelGalleryPool, ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,OptionButtonView optionsButton)
         {
             this.reelGalleryPoolManager = reelGalleryPool;
 
             monthText.SetText(bucket.ToString("MMMM yyyy", CultureInfo.InvariantCulture));
 
             for (int i = 0; i < images.Count; i++)
-                reelThumbnailViews.Add(reelGalleryPoolManager.GetThumbnailElement(images[i], gridLayoutGroup, cameraReelScreenshotsStorage));
+                reelThumbnailViews.Add(reelGalleryPoolManager.GetThumbnailElement(images[i], gridLayoutGroup, cameraReelScreenshotsStorage, optionsButton));
         }
 
         public void Release()

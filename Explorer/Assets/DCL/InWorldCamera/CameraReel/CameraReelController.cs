@@ -5,7 +5,6 @@ using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.UI;
 using DCL.Web3.Identities;
 using DG.Tweening;
-using SuperScrollView;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -81,7 +80,7 @@ namespace DCL.InWorldCamera.CameraReel
             {
                 MonthGridView monthGridView = reelGalleryPoolManager.GetGridElement(view.scrollContentRect);
                 var imageBucket = pagedCameraReelManager.GetBucket(i);
-                monthGridView.Setup(imageBucket.Item1, imageBucket.Item2, reelGalleryPoolManager, cameraReelScreenshotsStorage);
+                monthGridView.Setup(imageBucket.Item1, imageBucket.Item2, reelGalleryPoolManager, cameraReelScreenshotsStorage, view.optionsButton);
                 monthGridViews.Add(monthGridView);
             }
 
@@ -139,6 +138,7 @@ namespace DCL.InWorldCamera.CameraReel
         {
             view.OnMouseEnter -= OnStorageFullIconEnter;
             view.OnMouseExit -= OnStorageFullIconExit;
+            view.optionsButton.Dispose();
         }
     }
 }

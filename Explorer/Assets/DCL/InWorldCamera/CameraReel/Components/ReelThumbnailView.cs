@@ -3,7 +3,6 @@ using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.UI;
 using DG.Tweening;
-using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -17,17 +16,27 @@ namespace DCL.InWorldCamera.CameraReel.Components
         private const int THUMBNAIL_WIDTH = 272;
         private const int THUMBNAIL_HEIGHT = 201;
 
+        [Header("References")]
         [SerializeField] private LoadingBrightView loadingBrightView;
         [SerializeField] private Image thumbnailImage;
+        [SerializeField] private RectTransform optionButtonContainer;
+
+        [Header("Configuration")]
+        [SerializeField] private Vector3 optionButtonOffset = new (-15.83997f, -25.79999f, 0);
+        [SerializeField] private float scaleFactorOnHover = 1.03f;
+        [SerializeField] private float scaleAnimationDuration = 0.3f;
 
         private CameraReelResponse cameraReelResponse;
         private CancellationTokenSource loadImageCts;
         private ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
+        private OptionButtonView optionButton;
 
-        public void Setup(CameraReelResponse cameraReelData, ICameraReelScreenshotsStorage cameraReelScreenshotsStorageService)
+        public void Setup(CameraReelResponse cameraReelData, ICameraReelScreenshotsStorage cameraReelScreenshotsStorageService, OptionButtonView optionsButton)
         {
             this.cameraReelResponse = cameraReelData;
             this.cameraReelScreenshotsStorage = cameraReelScreenshotsStorageService;
+            this.optionButton = optionsButton;
+
             loadImageCts = loadImageCts.SafeRestart();
             thumbnailImage.sprite = null;
             LoadImage(cameraReelScreenshotsStorage, loadImageCts.Token).Forget();
@@ -41,10 +50,20 @@ namespace DCL.InWorldCamera.CameraReel.Components
             loadingBrightView.FinishLoadingAnimation(thumbnailImage.gameObject);
         }
 
-        public void OnPointerEnter(PointerEventData eventData) =>
-            transform.DOScale(Vector3.one * 1.03f, 0.3f);
+        public void OnPointerEnter(PointerEventData eventData)
+        {
+            transform.DOScale(Vector3.one * scaleFactorOnHover, scaleAnimationDuration);
+            optionButton.transform.SetParent(optionButtonContainer.transform);
+            optionButton.transform.localPosition = optionButtonOffset;
+            optionButton.SetImageData(cameraReelResponse);
+            optionButton.gameObject.SetActive(true);
+        }
 
-        public void OnPointerExit(PointerEventData eventData) =>
-            transform.DOScale(Vector3.one, 0.3f);
+        public void OnPointerExit(PointerEventData eventData)
+        {
+            transform.DOScale(Vector3.one, scaleAnimationDuration);
+            optionButton.ResetState();
+            optionButton.gameObject.SetActive(false);
+        }
     }
 }

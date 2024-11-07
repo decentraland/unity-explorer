@@ -47,11 +47,11 @@ namespace DCL.InWorldCamera.CameraReel.Components
                 gridMaxSize);
         }
 
-        public ReelThumbnailView GetThumbnailElement(CameraReelResponse cameraReelResponse, GridLayoutGroup parent, ICameraReelScreenshotsStorage cameraReelScreenshotsStorage)
+        public ReelThumbnailView GetThumbnailElement(CameraReelResponse cameraReelResponse, GridLayoutGroup parent, ICameraReelScreenshotsStorage cameraReelScreenshotsStorage, OptionButtonView optionsButton)
         {
             ReelThumbnailView result = reelThumbnailPool.Get();
             result.transform.SetParent(parent.transform, false);
-            result.Setup(cameraReelResponse, cameraReelScreenshotsStorage);
+            result.Setup(cameraReelResponse, cameraReelScreenshotsStorage, optionsButton);
 
             return result;
         }
