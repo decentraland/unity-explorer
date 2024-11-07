@@ -88,18 +88,24 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
 
             ReportHub.Log(ReportCategory.TEXTURES, $"TexturesUnzip - NewDefault with options: {options.ToStringInfo()}");
 
+            if (Application.platform is RuntimePlatform.LinuxPlayer or RuntimePlatform.LinuxEditor)
+                return NewManagedInstance();
+
             return new PooledTexturesFuse(
                 () => new TexturesFuse(init, options, true)
                    .WithLog($"Worker: {++index}"),
                 workersCount ?? (
                     IsWindows()
                         ? 1 // BC7 has issue with multithreading on Windows, should be solved later
-                        : Environment.ProcessorCount - 1  // 1 worker is used by the main thread
+                        : Environment.ProcessorCount - 1 // 1 worker is used by the main thread
                 )
             );
         }
 
-        public static ITexturesFuse NewTestInstance()
+        public static ITexturesFuse NewTestInstance() =>
+            NewManagedInstance();
+
+        private static ITexturesFuse NewManagedInstance()
         {
             return new PooledTexturesFuse(
                 () => new ManagedTexturesFuse(),
