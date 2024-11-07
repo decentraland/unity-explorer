@@ -10,17 +10,20 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using Utility.Times;
 
 namespace DCL.PlacesAPIService
 {
     public class PlacesAPIClient : IPlacesAPIClient
     {
+        private static readonly JsonSerializerSettings SERIALIZER_SETTINGS = new () { Converters = new JsonConverter[] { new PlacesByCategoryJsonDtoConverter() } };
         private static readonly URLParameter WITH_REALMS_DETAIL = new ("with_realms_detail", "true");
 
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
 
         private readonly URLBuilder urlBuilder = new ();
+        private ulong unixTimestamp;
 
         private string baseURL => decentralandUrlsSource.Url(DecentralandUrl.ApiPlaces);
         private URLDomain baseURLDomain => URLDomain.FromString(baseURL);
@@ -139,9 +142,17 @@ namespace DCL.PlacesAPIService
 
         public async UniTask<PlacesData.IPlacesAPIResponse> GetFavoritesAsync(int pageNumber, int pageSize, CancellationToken ct)
         {
+            unixTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
             string url = baseURL + "?only_favorites=true&with_realms_detail=true&offset={0}&limit={1}";
+            var fullUrl = string.Format(url, pageNumber * pageSize, pageSize);
 
-            GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> result = webRequestController.GetAsync(string.Format(url, pageNumber * pageSize, pageSize), ct, ReportCategory.UI);
+            GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> result =
+                webRequestController.GetAsync(
+                    fullUrl,
+                    ct,
+                    ReportCategory.UI,
+                    signInfo: WebRequestSignInfo.NewFromRaw(string.Empty, fullUrl, unixTimestamp, "get"),
+                    headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, unixTimestamp));
 
             PlacesData.PlacesAPIResponse response = PlacesData.PLACES_API_RESPONSE_POOL.Get();
 
@@ -157,9 +168,16 @@ namespace DCL.PlacesAPIService
 
         public async UniTask<PlacesData.IPlacesAPIResponse> GetAllFavoritesAsync(CancellationToken ct)
         {
+            unixTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
             string url = baseURL + "?only_favorites=true&with_realms_detail=true";
 
-            GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> result = webRequestController.GetAsync(url, ct, ReportCategory.UI);
+            GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> result =
+                webRequestController.GetAsync(
+                    url,
+                    ct,
+                    ReportCategory.UI,
+                    signInfo: WebRequestSignInfo.NewFromRaw(string.Empty, url, unixTimestamp, "get"),
+                    headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, unixTimestamp));
 
             PlacesData.PlacesAPIResponse response = PlacesData.PLACES_API_RESPONSE_POOL.Get();
 
@@ -175,16 +193,26 @@ namespace DCL.PlacesAPIService
 
         public async UniTask SetPlaceFavoriteAsync(string placeUUID, bool isFavorite, CancellationToken ct)
         {
+            unixTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
             string url = baseURL + "/{0}/favorites";
             const string FAVORITE_PAYLOAD = "{\"favorites\": true}";
             const string NOT_FAVORITE_PAYLOAD = "{\"favorites\": false}";
 
-            await webRequestController.PatchAsync(string.Format(url, placeUUID), GenericPatchArguments.CreateJson(isFavorite ? FAVORITE_PAYLOAD : NOT_FAVORITE_PAYLOAD), ct, ReportCategory.UI)
+            var fullUrl = string.Format(url, placeUUID);
+
+            await webRequestController.PatchAsync(
+                                           fullUrl,
+                                           GenericPatchArguments.CreateJson(isFavorite ? FAVORITE_PAYLOAD : NOT_FAVORITE_PAYLOAD),
+                                           ct,
+                                           ReportCategory.UI,
+                                           signInfo: WebRequestSignInfo.NewFromRaw(string.Empty, fullUrl, unixTimestamp, "patch"),
+                                           headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, unixTimestamp))
                                       .WithCustomExceptionAsync(static exc => new PlacesAPIException(exc, "Error setting place favorite:"));
         }
 
         public async UniTask SetPlaceVoteAsync(bool? isUpvote, string placeUUID, CancellationToken ct)
         {
+            unixTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
             string url = baseURL + "/{0}/likes";
             const string LIKE_PAYLOAD = "{\"like\": true}";
             const string DISLIKE_PAYLOAD = "{\"like\": false}";
@@ -197,7 +225,15 @@ namespace DCL.PlacesAPIService
             else
                 payload = isUpvote == true ? LIKE_PAYLOAD : DISLIKE_PAYLOAD;
 
-            await webRequestController.PostAsync(string.Format(url, placeUUID), GenericPostArguments.CreateJson(payload), ct, ReportCategory.UI)
+            var fullUrl = string.Format(url, placeUUID);
+
+            await webRequestController.PostAsync(
+                                           fullUrl,
+                                           GenericPostArguments.CreateJson(payload),
+                                           ct,
+                                           ReportCategory.UI,
+                                           signInfo: WebRequestSignInfo.NewFromRaw(string.Empty, fullUrl, unixTimestamp, "post"),
+                                           headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, unixTimestamp))
                                       .WithCustomExceptionAsync(static exc => new PlacesAPIException(exc, "Error setting place vote:"));
         }
 
@@ -213,8 +249,6 @@ namespace DCL.PlacesAPIService
 
             return response.data;
         }
-
-        private static readonly JsonSerializerSettings SERIALIZER_SETTINGS = new () { Converters = new JsonConverter[] { new PlacesByCategoryJsonDtoConverter() } };
 
         public async UniTask<List<PlacesData.CategoryPlaceData>> GetPlacesByCategoryListAsync(string category, CancellationToken ct)
         {
