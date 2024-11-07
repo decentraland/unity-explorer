@@ -22,6 +22,7 @@ using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using DCL.DebugUtilities;
 using Unity.Mathematics;
 
 namespace Global.Dynamic
@@ -52,6 +53,8 @@ namespace Global.Dynamic
 
         public IRealmData RealmData => realmData;
 
+        private readonly RealmNavigatorDebugView realmNavigatorDebugView;
+
         public GlobalWorld GlobalWorld
         {
             get => globalWorld.EnsureNotNull("GlobalWorld in RealmController is null");
@@ -73,7 +76,8 @@ namespace Global.Dynamic
             RealmData realmData,
             IScenesCache scenesCache,
             PartitionDataContainer partitionDataContainer,
-            SceneAssetLock sceneAssetLock)
+            SceneAssetLock sceneAssetLock,
+            IDebugContainerBuilder debugContainerBuilder)
         {
             this.web3IdentityCache = web3IdentityCache;
             this.webRequestController = webRequestController;
@@ -85,6 +89,8 @@ namespace Global.Dynamic
             this.scenesCache = scenesCache;
             this.partitionDataContainer = partitionDataContainer;
             this.sceneAssetLock = sceneAssetLock;
+
+            realmNavigatorDebugView = new RealmNavigatorDebugView(debugContainerBuilder);
         }
 
         public async UniTask SetRealmAsync(URLDomain realm, CancellationToken ct)
@@ -107,7 +113,7 @@ namespace Global.Dynamic
                 new IpfsRealm(web3IdentityCache, webRequestController, realm, result),
                 result.configurations.realmName.EnsureNotNull("Realm name not found"),
                 result.configurations.networkId,
-                result.comms?.adapter ?? result.comms?.fixedAdapter ?? "offline", //"offline property like in previous implementation"
+                result.comms?.adapter ?? result.comms?.fixedAdapter ?? "offline:offline", //"offline property like in previous implementation"
                 result.comms?.protocol ?? "v3",
                 hostname
             );
@@ -127,6 +133,8 @@ namespace Global.Dynamic
             partitionDataContainer.Restart();
 
             currentDomain = realm;
+            realmNavigatorDebugView.UpdateRealmName(currentDomain.Value.ToString(), result.lambdas.publicUrl,
+                result.content.publicUrl);
         }
 
         public async UniTask RestartRealmAsync(CancellationToken ct)

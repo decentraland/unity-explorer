@@ -16,7 +16,6 @@ using DCL.UI.MainUI;
 using DCL.UserInAppInitializationFlow;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
-using ECS.Abstract;
 using Global.AppArgs;
 using Global.Dynamic.DebugSettings;
 using MVC;
@@ -76,8 +75,7 @@ namespace Global.Dynamic
 
         public async UniTask<(StaticContainer?, bool)> LoadStaticContainerAsync(BootstrapContainer bootstrapContainer, PluginSettingsContainer globalPluginSettingsContainer, DebugViewsCatalog debugViewsCatalog, Entity playerEntity, ISystemMemoryCap memoryCap, CancellationToken ct) =>
             await StaticContainer.CreateAsync(bootstrapContainer.DecentralandUrlsSource, bootstrapContainer.AssetsProvisioner, bootstrapContainer.ReportHandlingSettings, appArgs, debugViewsCatalog, globalPluginSettingsContainer,
-                bootstrapContainer.DiagnosticsContainer, bootstrapContainer.IdentityCache, bootstrapContainer.VerifiedEthereumApi, bootstrapContainer.LocalSceneDevelopment, bootstrapContainer.UseRemoteAssetBundles, world, playerEntity, memoryCap, bootstrapContainer.WorldVolumeMacBus,
-                EnableAnalytics, bootstrapContainer.Analytics, ct);
+                bootstrapContainer.DiagnosticsContainer, bootstrapContainer.IdentityCache, bootstrapContainer.VerifiedEthereumApi, bootstrapContainer.LocalSceneDevelopment, bootstrapContainer.UseRemoteAssetBundles, world, playerEntity, memoryCap, bootstrapContainer.WorldVolumeMacBus, EnableAnalytics, bootstrapContainer.Analytics, ct);
 
         public async UniTask<(DynamicWorldContainer?, bool)> LoadDynamicWorldContainerAsync(BootstrapContainer bootstrapContainer,
             StaticContainer staticContainer,
@@ -130,7 +128,7 @@ namespace Global.Dynamic
                 world,
                 playerEntity,
                 appArgs,
-                staticContainer.LoadingStatus,
+                staticContainer.SceneRestrictionBusController,
                 ct);
         }
 

@@ -14,7 +14,8 @@ namespace DCL.UserInAppInitializationFlow
         private static readonly Dictionary<LoadingStage, float> PROGRESS = new (EnumUtils.GetEqualityComparer<LoadingStage>())
         {
             [LoadingStage.Init] = 0f, 
-            [LoadingStage.AuthenticationScreenShowing] = 0.05f, 
+            [LoadingStage.AuthenticationScreenShowing] = 0.05f,
+            [LoadingStage.UnloadCacheChecking] = 0.05f, 
             [LoadingStage.LiveKitConnectionEnsuring] = 0.1f, //Used in initialization Flow
             [LoadingStage.LivekitStopping] = 0.1f, //Used in Teleport Flow
             [LoadingStage.FeatureFlagInitializing] = 0.15f,
@@ -38,6 +39,7 @@ namespace DCL.UserInAppInitializationFlow
             AuthenticationScreenShowing,
             LiveKitConnectionEnsuring,
             FeatureFlagInitializing,
+            UnloadCacheChecking,
             ProfileLoading,
             EnvironmentMiscSetting,
             PlayerAvatarLoading,
