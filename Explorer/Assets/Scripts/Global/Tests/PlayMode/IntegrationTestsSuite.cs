@@ -84,7 +84,8 @@ namespace Global.Tests.PlayMode
                     Substitute.For<IPopupCloserView>()
                 ),
                 new IMessagePipesHub.Fake(),
-                Substitute.For<IRemoteMetadata>()
+                Substitute.For<IRemoteMetadata>(),
+                staticContainer.CacheCleaner
             );
 
             return (staticContainer, sceneSharedContainer);

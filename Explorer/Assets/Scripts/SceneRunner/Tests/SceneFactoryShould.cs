@@ -9,7 +9,9 @@ using DCL.Interaction.Utility;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Poses;
+using DCL.Optimization.PerformanceBudgeting;
 using DCL.Profiles;
+using DCL.ResourcesUnloading;
 using DCL.Web3;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
@@ -40,10 +42,12 @@ namespace SceneRunner.Tests
             path = $"file://{Application.dataPath + "/../TestResources/Scenes/Cube/cube.js"}";
             activeEngines = new V8ActiveEngines();
             engineFactory = new V8EngineFactory(activeEngines);
+            CacheCleaner cacheCleaner = new (new NullPerformanceBudget());
 
             ECSWorldFacade ecsWorldFacade = TestSystemsWorld.Create();
 
-            sceneRuntimeFactory = new SceneRuntimeFactory(TestWebRequestController.INSTANCE, new IRealmData.Fake(), engineFactory, activeEngines);
+            sceneRuntimeFactory = new SceneRuntimeFactory(TestWebRequestController.INSTANCE,
+                new IRealmData.Fake(), engineFactory, activeEngines, cacheCleaner);
 
             ecsWorldFactory = Substitute.For<IECSWorldFactory>();
             ecsWorldFactory.CreateWorld(in Arg.Any<ECSWorldFactoryArgs>()).Returns(ecsWorldFacade);

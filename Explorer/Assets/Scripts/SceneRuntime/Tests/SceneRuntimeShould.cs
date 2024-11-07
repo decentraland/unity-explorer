@@ -3,6 +3,8 @@ using CrdtEcsBridge.PoolsProviders;
 using Cysharp.Threading.Tasks;
 using ECS.TestSuite;
 using DCL.Diagnostics;
+using DCL.Optimization.PerformanceBudgeting;
+using DCL.ResourcesUnloading;
 using ECS;
 using JetBrains.Annotations;
 using NSubstitute;
@@ -35,7 +37,9 @@ namespace SceneRuntime.Tests
         private static SceneRuntimeFactory NewSceneRuntimeFactory()
         {
             var activeEngines = new V8ActiveEngines();
-            return new SceneRuntimeFactory(TestWebRequestController.INSTANCE, new IRealmData.Fake(), new V8EngineFactory(activeEngines), activeEngines);
+            var cacheCleaner = new CacheCleaner(new NullPerformanceBudget());
+            return new SceneRuntimeFactory(TestWebRequestController.INSTANCE, new IRealmData.Fake(),
+                new V8EngineFactory(activeEngines), activeEngines, cacheCleaner);
         }
 
         [UnityTest]

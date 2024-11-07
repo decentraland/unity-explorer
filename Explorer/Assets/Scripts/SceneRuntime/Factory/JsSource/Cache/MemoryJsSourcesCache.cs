@@ -1,3 +1,5 @@
+using DCL.Optimization;
+using DCL.Optimization.PerformanceBudgeting;
 using System.Collections.Generic;
 
 namespace SceneRuntime.Factory.WebSceneSource.Cache
@@ -13,5 +15,8 @@ namespace SceneRuntime.Factory.WebSceneSource.Cache
 
         public bool TryGet(string path, out string? sourceCode) =>
             cache.TryGetValue(path, out sourceCode);
+
+        public void Unload(IPerformanceBudget budgetToUse) =>
+            cache.Clear();
     }
 }

@@ -8,6 +8,7 @@ using DCL.Multiplayer.Profiles.Poses;
 using DCL.PluginSystem.World.Dependencies;
 using MVC;
 using DCL.Profiles;
+using DCL.ResourcesUnloading;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
@@ -20,12 +21,22 @@ using SceneRuntime.Factory;
 namespace Global
 {
     /// <summary>
-    ///     Holds dependencies shared between all scene instances. <br />
-    ///     Consider breaking down this class as much as needed if the number of dependencies grows
+    /// This class is never stored in a field and goes out of scope at the end of
+    /// <see cref="Bootstrap.CreateGlobalWorld"/>. Consequently, it does not own any code and is not in
+    /// fact a container.
     /// </summary>
     public class SceneSharedContainer
     {
+        /// <summary>
+        /// Is actually owned by <see cref="ECS.SceneLifeCycle.Systems.LoadSceneSystem"/>
+        /// </summary>
         public ISceneFactory SceneFactory { get; private set; }
+
+        /// <summary>
+        /// Is actually collectively owned by some of the global plugins.
+        /// <see cref="GlobalWorldFactory.Create"/> loops through all(?) global plugins and passes it to
+        /// each.
+        /// </summary>
         public V8ActiveEngines V8ActiveEngines { get; private set; }
 
         public static SceneSharedContainer Create(in StaticContainer staticContainer,
@@ -38,6 +49,7 @@ namespace Global
             IMVCManager mvcManager,
             IMessagePipesHub messagePipesHub,
             IRemoteMetadata remoteMetadata,
+            CacheCleaner cacheCleaner,
             bool cacheJsSources = true)
         {
             ECSWorldSingletonSharedDependencies sharedDependencies = staticContainer.SingletonSharedDependencies;
@@ -55,7 +67,9 @@ namespace Global
                 V8ActiveEngines = v8ActiveEngines,
                 SceneFactory = new SceneFactory(
                     ecsWorldFactory,
-                    new SceneRuntimeFactory(staticContainer.WebRequestsContainer.WebRequestController, realmData ?? new IRealmData.Fake(), new V8EngineFactory(v8ActiveEngines), v8ActiveEngines, cacheJsSources),
+                    new SceneRuntimeFactory(staticContainer.WebRequestsContainer.WebRequestController,
+                        realmData ?? new IRealmData.Fake(), new V8EngineFactory(v8ActiveEngines),
+                        v8ActiveEngines, cacheCleaner, cacheJsSources),
                     new SharedPoolsProvider(),
                     new CRDTSerializer(),
                     staticContainer.ComponentsContainer.SDKComponentsRegistry,

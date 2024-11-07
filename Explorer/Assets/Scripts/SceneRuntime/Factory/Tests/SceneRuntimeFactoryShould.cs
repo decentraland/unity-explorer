@@ -3,6 +3,8 @@ using CrdtEcsBridge.PoolsProviders;
 using Cysharp.Threading.Tasks;
 using ECS.TestSuite;
 using DCL.Diagnostics;
+using DCL.Optimization.PerformanceBudgeting;
+using DCL.ResourcesUnloading;
 using ECS;
 using NSubstitute;
 using NUnit.Framework;
@@ -22,12 +24,14 @@ namespace SceneRuntime.Factory.Tests
 
         private V8EngineFactory engineFactory;
         private V8ActiveEngines activeEngines;
+        private CacheCleaner cacheCleaner;
 
         [SetUp]
         public void SetUp()
         {
             activeEngines = new V8ActiveEngines();
             engineFactory = new V8EngineFactory(activeEngines);
+            cacheCleaner = new CacheCleaner(new NullPerformanceBudget());
         }
 
         [TearDown]
@@ -41,7 +45,8 @@ namespace SceneRuntime.Factory.Tests
             UniTask.ToCoroutine(async () =>
             {
                 // Arrange
-                var factory = new SceneRuntimeFactory(TestWebRequestController.INSTANCE, new IRealmData.Fake(), engineFactory, activeEngines);
+                var factory = new SceneRuntimeFactory(TestWebRequestController.INSTANCE,
+                    new IRealmData.Fake(), engineFactory, activeEngines, cacheCleaner);
 
                 var sourceCode = @"
                 const engineApi = require('~system/EngineApi')
@@ -74,7 +79,8 @@ namespace SceneRuntime.Factory.Tests
             UniTask.ToCoroutine(async () =>
             {
                 // Arrange
-                var factory = new SceneRuntimeFactory(TestWebRequestController.INSTANCE, new IRealmData.Fake(), engineFactory, activeEngines);
+                var factory = new SceneRuntimeFactory(TestWebRequestController.INSTANCE,
+                    new IRealmData.Fake(), engineFactory, activeEngines, cacheCleaner);
                 var path = URLAddress.FromString($"file://{Application.dataPath + "/../TestResources/Scenes/Cube/cube.js"}");
 
                 // Act
@@ -97,7 +103,8 @@ namespace SceneRuntime.Factory.Tests
         public void WrapInModuleCommonJs()
         {
             // Arrange
-            var factory = new SceneRuntimeFactory(TestWebRequestController.INSTANCE, new IRealmData.Fake(), engineFactory, activeEngines);
+            var factory = new SceneRuntimeFactory(TestWebRequestController.INSTANCE,
+                new IRealmData.Fake(), engineFactory, activeEngines, cacheCleaner);
             var sourceCode = "console.log('Hello, world!');";
 
             // Act
