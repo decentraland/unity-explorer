@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using DCL.MapRenderer.MapLayers.Categories;
+using UnityEngine;
 
 namespace DCL.MapRenderer
 {
@@ -25,6 +26,12 @@ namespace DCL.MapRenderer
 
         [field: SerializeField]
         public IMapRendererSettings.SceneOfInterestMarkerObjectRef SceneOfInterestMarker { get; private set; }
+
+        [field: SerializeField]
+        public IMapRendererSettings.CategoryMarkerObjectRef CategoryMarker { get; private set; }
+
+        [field: SerializeField]
+        public CategoryIconMappingsSO CategoryIconMappings { get; private set; }
 
         [field: SerializeField]
         public IMapRendererSettings.FavoriteMarkerObjectRef FavoriteMarker { get; private set; }

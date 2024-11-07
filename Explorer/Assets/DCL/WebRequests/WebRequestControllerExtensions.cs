@@ -1,7 +1,6 @@
 ﻿using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.Optimization.PerformanceBudgeting;
 using DCL.WebRequests.GenericDelete;
 using System;
 using System.Collections.Generic;
@@ -9,7 +8,6 @@ using System.Threading;
 using DCL.DebugUtilities.UIBindings;
 using UnityEngine;
 using UnityEngine.Networking;
-using Utility.Times;
 
 namespace DCL.WebRequests
 {
@@ -53,30 +51,7 @@ namespace DCL.WebRequests
                     ignoreErrorCodes,
                     suppressErrors
                 ), op
-            );
-
-        public static UniTask<TResult> SignedFetchPostAsync<TOp, TResult>(
-            this IWebRequestController controller,
-            CommonArguments commonArguments,
-            TOp webRequestOp,
-            string signatureMetadata,
-            ReportData reportData,
-            CancellationToken ct
-        )
-            where TOp: struct, IWebRequestOp<GenericPostRequest, TResult>
-        {
-            ulong unixTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
-
-            return controller.PostAsync<TOp, TResult>(
-                commonArguments,
-                webRequestOp,
-                GenericPostArguments.Empty,
-                ct,
-                reportData,
-                signInfo: WebRequestSignInfo.NewFromRaw(signatureMetadata, commonArguments.URL, unixTimestamp, "post"),
-                headersInfo: new WebRequestHeadersInfo().WithSign(signatureMetadata, unixTimestamp)
-            );
-        }
+            )!;
 
         /// <summary>
         ///     Make a generic get request to download arbitrary data
@@ -165,6 +140,7 @@ namespace DCL.WebRequests
                 {
                     // It means there is no such end-point at all
                     case WebRequestUtils.BAD_REQUEST:
+                    case WebRequestUtils.FORBIDDEN_ACCESS:
                     case WebRequestUtils.NOT_FOUND:
                         return false;
                 }
@@ -237,16 +213,11 @@ namespace DCL.WebRequests
             new LogWebRequestController(origin);
 
         public static IWebRequestController WithDebugMetrics(this IWebRequestController origin,
-            ElementBinding<ulong> requestCannotConnectDebugMetric, ElementBinding<ulong> requestCompleteDebugMetric)
-        {
-            return new DebugMetricsWebRequestController(origin, requestCannotConnectDebugMetric,
+            ElementBinding<ulong> requestCannotConnectDebugMetric, ElementBinding<ulong> requestCompleteDebugMetric) =>
+            new DebugMetricsWebRequestController(origin, requestCannotConnectDebugMetric,
                 requestCompleteDebugMetric);
-        }
 
-        public static IWebRequestController WithBudget(this IWebRequestController origin, int totalBudget)
-        {
-            return new BudgetedWebRequestController(origin, totalBudget);
-        }
-
+        public static IWebRequestController WithBudget(this IWebRequestController origin, int totalBudget) =>
+            new BudgetedWebRequestController(origin, totalBudget);
     }
 }

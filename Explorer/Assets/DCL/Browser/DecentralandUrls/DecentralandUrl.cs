@@ -15,6 +15,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
 
         ApiPlaces,
         POI,
+        PlacesByCategory,
         ContentModerationReport,
 
         ApiAuth,
@@ -40,5 +41,8 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         AssetBundlesCDN,
 
         Badges,
+
+        CameraReelUsers,
+        CameraReelImages
     }
 }

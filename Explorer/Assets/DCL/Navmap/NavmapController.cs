@@ -33,7 +33,8 @@ namespace DCL.Navmap
         private const string EMPTY_PARCEL_NAME = "Empty parcel";
         private const string WORLDS_WARNING_MESSAGE = "This is the Genesis City map. If you jump into any of this places you will leave the world you are currently visiting.";
         private const MapLayer ACTIVE_MAP_LAYERS =
-            MapLayer.SatelliteAtlas | MapLayer.PlayerMarker | MapLayer.ParcelHoverHighlight | MapLayer.ScenesOfInterest | MapLayer.Favorites | MapLayer.HotUsersMarkers | MapLayer.Pins;
+            MapLayer.SatelliteAtlas | MapLayer.PlayerMarker | MapLayer.ParcelHoverHighlight | MapLayer.ScenesOfInterest | MapLayer.Favorites | MapLayer.HotUsersMarkers | MapLayer.Pins |
+            MapLayer.Art | MapLayer.Business | MapLayer.Casino | MapLayer.Crypto | MapLayer.Education | MapLayer.Fashion | MapLayer.Game | MapLayer.Music | MapLayer.Shop | MapLayer.Social | MapLayer.Sports;
 
         private readonly NavmapView navmapView;
         private readonly IMapRenderer mapRenderer;

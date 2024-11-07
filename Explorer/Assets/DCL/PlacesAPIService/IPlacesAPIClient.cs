@@ -41,5 +41,7 @@ namespace DCL.PlacesAPIService
         UniTask SetPlaceVoteAsync(bool? isUpvote, string placeUUID, CancellationToken ct);
 
         UniTask<List<string>> GetPointsOfInterestCoordsAsync(CancellationToken ct);
+
+        UniTask<List<PlacesData.CategoryPlaceData>> GetPlacesByCategoryListAsync(string category, CancellationToken ct);
     }
 }
