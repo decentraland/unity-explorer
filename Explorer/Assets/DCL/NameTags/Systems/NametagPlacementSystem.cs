@@ -16,9 +16,10 @@ using System.Runtime.CompilerServices;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using UnityEngine;
 using UnityEngine.Pool;
-#if UNITY_EDITOR
-using Utility.Editor;
-#endif
+
+// #if UNITY_EDITOR
+// using Utility.Editor;
+// #endif
 
 namespace DCL.Nametags
 {
@@ -59,13 +60,9 @@ namespace DCL.Nametags
         protected override void Update(float t)
         {
             if (!nametagsData.showNameTags)
-            {
-                RemoveAllTagsQuery(World);
                 return;
-            }
 
             EnableTagQuery(World);
-            RemoveTagQuery(World);
 
             CameraComponent camera = playerCamera.GetCameraComponent(World);
 
@@ -138,20 +135,6 @@ namespace DCL.Nametags
         private void RemoveUnusedChatBubbleComponents(Entity e)
         {
             World.Remove<ChatBubbleComponent>(e);
-        }
-
-        [Query]
-        private void RemoveTag(NametagView nametagView, in DeleteEntityIntention deleteEntityIntention)
-        {
-            if (deleteEntityIntention.DeferDeletion == false)
-                nametagViewPool.Release(nametagView);
-        }
-
-        [Query]
-        private void RemoveAllTags(Entity e, NametagView nametagView)
-        {
-            nametagViewPool.Release(nametagView);
-            World.Remove<NametagView>(e);
         }
 
         [Query]
