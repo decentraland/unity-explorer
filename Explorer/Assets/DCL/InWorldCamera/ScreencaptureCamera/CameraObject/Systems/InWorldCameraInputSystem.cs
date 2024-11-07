@@ -105,8 +105,13 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.CameraObject.Systems
                 isMakingScreenshot = false;
             }
 
-            EnableCameraQuery(World);
-            DisableCameraQuery(World);
+            if (inputSchema.ToggleInWorld!.triggered)
+            {
+                if(!World.Has<IsInWorldCamera>(camera))
+                    EnableCameraQuery(World);
+                else
+                    DisableCameraQuery(World);
+            }
         }
 
         [Query]
@@ -141,41 +146,35 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.CameraObject.Systems
         [None(typeof(IsInWorldCamera))]
         private void EnableCamera(Entity camera, ref CameraComponent cameraComponent)
         {
-            if (inputSchema.ToggleInWorld!.triggered)
+            cameraComponent.Mode = CameraMode.InWorld;
+
+            if (isInstantiated)
+                hud.gameObject.SetActive(true);
+            else
             {
-                cameraComponent.Mode = CameraMode.InWorld;
-
-                if (isInstantiated)
-                    hud.gameObject.SetActive(true);
-                else
-                {
-                    hud = Object.Instantiate(hudPrefab, Vector3.zero, Quaternion.identity).GetComponent<ScreenshotHudView>();
-                    recorder = new ScreenRecorder(hud.GetComponent<RectTransform>());
-                    isInstantiated = true;
-                }
-
-                World.Add<IsInWorldCamera>(camera);
+                hud = Object.Instantiate(hudPrefab, Vector3.zero, Quaternion.identity).GetComponent<ScreenshotHudView>();
+                recorder = new ScreenRecorder(hud.GetComponent<RectTransform>());
+                isInstantiated = true;
             }
+
+            World.Add<IsInWorldCamera>(camera);
         }
 
         [Query]
         [All(typeof(IsInWorldCamera))]
         private void DisableCamera(Entity camera, ref CameraComponent cameraComponent)
         {
-            if (inputSchema.ToggleInWorld!.triggered)
-            {
-                cameraComponent.Mode = CameraMode.ThirdPerson;
-                hud.gameObject.SetActive(false);
+            cameraComponent.Mode = CameraMode.ThirdPerson;
+            hud.gameObject.SetActive(false);
 
-                World.Remove<IsInWorldCamera>(camera);
-            }
+            World.Remove<IsInWorldCamera>(camera);
         }
 
         [Query]
         [All(typeof(IsInWorldCamera))]
         private void TakeScreenshot()
         {
-            if (inputSchema.Screenshot.triggered)
+            if (inputSchema.Screenshot.triggered && !isMakingScreenshot)
             {
                 hud.GetComponent<Canvas>().enabled = false;
                 hud.StartCoroutine(recorder.CaptureScreenshot(Show));
