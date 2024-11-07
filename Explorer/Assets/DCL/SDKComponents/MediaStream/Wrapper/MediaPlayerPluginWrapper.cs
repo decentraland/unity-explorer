@@ -1,11 +1,11 @@
-﻿using Arch.Core;
+using Arch.Core;
 using Arch.SystemGroups;
 using CrdtEcsBridge.ECSToCRDTWriter;
+using DCL.CharacterCamera;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.ResourcesUnloading;
 using DCL.WebRequests;
-using ECS.ComponentsPooling.Systems;
 using ECS.LifeCycle;
 using SceneRunner.Scene;
 using System.Collections.Generic;
@@ -24,6 +24,7 @@ namespace DCL.SDKComponents.MediaStream.Wrapper
         private readonly IPerformanceBudget frameTimeBudget;
         private readonly GameObjectPool<MediaPlayer> mediaPlayerPool;
         private readonly WorldVolumeMacBus worldVolumeMacBus;
+        private readonly IExposedCameraData exposedCameraData;
 
         public MediaPlayerPluginWrapper(
             IComponentPoolsRegistry componentPoolsRegistry,
@@ -32,8 +33,11 @@ namespace DCL.SDKComponents.MediaStream.Wrapper
             IExtendedObjectPool<Texture2D> videoTexturePool,
             IPerformanceBudget frameTimeBudget,
             MediaPlayer mediaPlayerPrefab,
-            WorldVolumeMacBus worldVolumeMacBus)
+            WorldVolumeMacBus worldVolumeMacBus,
+            IExposedCameraData exposedCameraData)
         {
+            this.exposedCameraData = exposedCameraData;
+
 #if AV_PRO_PRESENT && !UNITY_EDITOR_LINUX && !UNITY_STANDALONE_LINUX
             this.componentPoolsRegistry = componentPoolsRegistry;
             this.webRequestController = webRequestController;
@@ -73,6 +77,7 @@ namespace DCL.SDKComponents.MediaStream.Wrapper
 
             CreateMediaPlayerSystem.InjectToWorld(ref builder, webRequestController, sceneData, mediaPlayerPool, sceneStateProvider, frameTimeBudget);
             UpdateMediaPlayerSystem.InjectToWorld(ref builder, webRequestController, sceneData, sceneStateProvider, frameTimeBudget, worldVolumeMacBus);
+            UpdateMediaPlayerVisibilitySystem.InjectToWorld(ref builder, exposedCameraData);
             VideoEventsSystem.InjectToWorld(ref builder, ecsToCrdtWriter, sceneStateProvider, frameTimeBudget);
 
             finalizeWorldSystems.Add(CleanUpMediaPlayerSystem.InjectToWorld(ref builder, mediaPlayerPool, videoTexturePool));

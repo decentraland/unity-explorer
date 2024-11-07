@@ -1,5 +1,5 @@
 {
-    "name": "DCL.VideoPlayer.PluginWrapper",
+    "name": "DCL.MediaPlayer.PluginWrapper",
     "rootNamespace": "",
     "references": [
         "GUID:1b8e1e1bd01505f478f0369c04a4fb2f",
@@ -18,7 +18,8 @@
         "GUID:46c2e553ecab9ff4784aee64075136c9",
         "GUID:4a12c0b1b77ec6b418a8d7bd5c925be3",
         "GUID:543b8f091a5947a3880b7f2bca2358bd",
-        "GUID:1d75b3d8691c845b1a51082e81433dfc"
+        "GUID:1d75b3d8691c845b1a51082e81433dfc",
+        "GUID:fa7b3fdbb04d67549916da7bd2af58ab"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

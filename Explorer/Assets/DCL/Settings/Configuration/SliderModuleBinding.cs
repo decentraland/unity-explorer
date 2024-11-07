@@ -25,6 +25,7 @@ namespace DCL.Settings.Configuration
             MUSIC_VOLUME_FEATURE,
             UI_SOUNDS_VOLUME_FEATURE,
             AVATAR_SOUNDS_VOLUME_FEATURE,
+            MAX_SIMULTANEOUS_VIDEOS,
             // add other features...
         }
 
@@ -44,6 +45,7 @@ namespace DCL.Settings.Configuration
             SettingsFeatureController controller = Feature switch
                                                    {
                                                        SliderFeatures.SCENE_DISTANCE_FEATURE => new SceneDistanceSettingsController(viewInstance, realmPartitionSettingsAsset),
+                                                       SliderFeatures.MAX_SIMULTANEOUS_VIDEOS => new MaxSimultaneousVideosSettingsController(viewInstance),
                                                        SliderFeatures.ENVIRONMENT_DISTANCE_FEATURE => new EnvironmentDistanceSettingsController(viewInstance, landscapeData),
                                                        SliderFeatures.MOUSE_VERTICAL_SENSITIVITY_FEATURE => new MouseVerticalSensitivitySettingsController(viewInstance, controlsSettingsAsset),
                                                        SliderFeatures.MOUSE_HORIZONTAL_SENSITIVITY_FEATURE => new MouseHorizontalSensitivitySettingsController(viewInstance, controlsSettingsAsset),

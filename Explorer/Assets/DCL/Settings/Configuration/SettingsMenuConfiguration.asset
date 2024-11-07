@@ -29,6 +29,7 @@ MonoBehaviour:
       <Modules>k__BackingField:
       - rid: 5242998342527483909
       - rid: 5242998342527483910
+      - rid: 6974826370534473731
   <SoundSectionConfig>k__BackingField:
     <SettingsGroups>k__BackingField:
     - <GroupTitle>k__BackingField: Volume
@@ -268,3 +269,18 @@ MonoBehaviour:
           - 144
           defaultOptionIndex: 0
         <Feature>k__BackingField: 5
+    - rid: 6974826370534473731
+      type: {class: SliderModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
+      data:
+        <View>k__BackingField: {fileID: 4706452128062998708, guid: 27c8bedb89b5739458399a3bd3d255ac, type: 3}
+        <Config>k__BackingField:
+          <ModuleName>k__BackingField: Maximum simultaneous videos
+          <Description>k__BackingField: The maximum amount of videos that can be
+            streamed at the same time in camera.
+          <IsEnabled>k__BackingField: 1
+          sliderType: 0
+          minValue: 1
+          maxValue: 50
+          wholeNumbers: 1
+          defaultValue: 5
+        <Feature>k__BackingField: 9
