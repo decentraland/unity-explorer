@@ -130,7 +130,7 @@ namespace DCL.Navmap
             navmapView.WorldsWarningNotificationView.Hide();
             mouse = InputSystem.GetDevice<Mouse>();
             navmapFilterPanelController = new NavmapFilterPanelController(mapRenderer, navmapView.LocationView.FiltersPanel);
-            navmapLocationController = new NavmapLocationController(navmapView.LocationView, world, playerEntity);
+            navmapLocationController = new NavmapLocationController(navmapView.LocationView, world, playerEntity, navmapFilterPanelController);
         }
 
         public void Dispose()

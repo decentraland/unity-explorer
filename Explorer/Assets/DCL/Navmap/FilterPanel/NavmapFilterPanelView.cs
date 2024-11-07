@@ -11,6 +11,9 @@ namespace DCL.Navmap.FilterPanel
         public event Action<MapLayer, bool> OnFilterChanged;
 
         [field: SerializeField]
+        internal CanvasGroup canvasGroup;
+
+        [field: SerializeField]
         private Toggle minigamesToggle;
 
         [field: SerializeField]

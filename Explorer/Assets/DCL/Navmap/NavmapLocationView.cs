@@ -7,6 +7,9 @@ namespace DCL.Navmap
     public class NavmapLocationView : MonoBehaviour
     {
         [field: SerializeField]
+        public Button FilterPanelButton { get; private set; }
+
+        [field: SerializeField]
         public Button CenterToPlayerButton { get; private set; }
 
         [field: SerializeField]
