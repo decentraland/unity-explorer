@@ -3,6 +3,7 @@ using DCL.Chat.Commands;
 using DCL.Chat.MessageBus;
 using DCL.EventsApi;
 using DCL.MapRenderer;
+using DCL.MapRenderer.MapLayers.Pins;
 using DCL.PlacesAPIService;
 using DCL.UI;
 using DCL.WebRequests;
@@ -45,6 +46,8 @@ namespace DCL.Navmap
             thumbnailImage = new ImageController(view.Thumbnail, webRequestController);
 
             navmapBus.OnDestinationSelected += SetDestination;
+            mapPathEventBus.OnSetDestination += SetDestination;
+            mapPathEventBus.OnRemovedDestination += RemoveDestination;
 
             view.EventsTabButton.onClick.AddListener(() =>
             {
@@ -73,6 +76,7 @@ namespace DCL.Navmap
             view.SetAsHomeButton.onClick.AddListener(SetAsHome);
             view.JumpInButton.onClick.AddListener(JumpIn);
             view.StartNavigationButton.onClick.AddListener(StartNavigation);
+            view.StopNavigationButton.onClick.AddListener(StopNavigation);
         }
 
         public void Show()
@@ -169,12 +173,35 @@ namespace DCL.Navmap
             navmapBus.SelectDestination(place);
         }
 
+        private void StopNavigation()
+        {
+            mapPathEventBus.RemoveDestination();
+        }
+
+        private void RemoveDestination()
+        {
+            destination = null;
+            view.StartNavigationButton.gameObject.SetActive(true);
+            view.StopNavigationButton.gameObject.SetActive(false);
+        }
+
         private void SetDestination(PlacesData.PlaceInfo place)
         {
-            if (VectorUtilities.TryParseVector2Int(place.base_position, out Vector2Int result))
-                destination = result;
+            if (place.id != this.place?.id)
+                RemoveDestination();
             else
-                destination = null;
+            {
+                if (VectorUtilities.TryParseVector2Int(place.base_position, out Vector2Int result))
+                    SetDestination(result, null);
+            }
+        }
+
+        private void SetDestination(Vector2Int parcel, IPinMarker? arg2)
+        {
+            if (parcel != currentBaseParcel) return;
+            destination = parcel;
+            view.StartNavigationButton.gameObject.SetActive(false);
+            view.StopNavigationButton.gameObject.SetActive(true);
         }
 
         private void SetAsHome()
