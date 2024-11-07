@@ -17,6 +17,7 @@ namespace DCL.InWorldCamera.CameraReelStorageService.Schemas
         public string id;
         public string url;
         public string thumbnailUrl;
+        public bool isPublic;
 
         public ScreenshotMetadata metadata;
     }

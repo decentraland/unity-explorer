@@ -32,11 +32,6 @@ namespace DCL.InWorldCamera.CameraReel.Components
 
             optionButton.onClick.AddListener(OnOptionClicked);
 
-            setAsPublic.onValueChanged.AddListener(toggle =>
-            {
-                OnSetPublicRequested?.Invoke(imageData, toggle);
-            });
-
             shareOnX.onClick.AddListener(() =>
             {
                 OnShareToXRequested?.Invoke(imageData);
@@ -62,11 +57,21 @@ namespace DCL.InWorldCamera.CameraReel.Components
             });
         }
 
+        private void SetAsPublicInvoke(bool toggle) =>
+            OnSetPublicRequested?.Invoke(imageData, toggle);
+
         private void OnOptionClicked()
         {
             bool active = !contextMenu.activeSelf;
             contextMenu.SetActive(active);
             hoverHelper.SetActive(active);
+
+            if (!active) return;
+
+            //Align the "public" toggle status according to the imageData without triggering an "invoke"
+            setAsPublic.onValueChanged.RemoveListener(SetAsPublicInvoke);
+            setAsPublic.isOn = imageData.isPublic;
+            setAsPublic.onValueChanged.AddListener(SetAsPublicInvoke);
         }
 
         public void SetImageData(CameraReelResponse cameraReelResponse) =>
