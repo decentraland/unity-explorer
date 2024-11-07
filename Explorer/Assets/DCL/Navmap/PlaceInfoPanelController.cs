@@ -144,7 +144,9 @@ namespace DCL.Navmap
 
         private async UniTaskVoid UpdateFavoriteStatusAsync(CancellationToken ct)
         {
-            bool isFavorite = await placesAPIService.IsFavoritePlaceAsync(place!, ct);
+            // Need to renew cache, otherwise it throws an exception of the object already been released
+            // Something is not right there
+            bool isFavorite = await placesAPIService.IsFavoritePlaceAsync(place!, ct, true);
             favoriteButton.SetButtonState(isFavorite);
         }
 

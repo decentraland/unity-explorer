@@ -34,7 +34,6 @@ using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
 using ECS.Prioritization;
-using ECS.SceneLifeCycle.Realm;
 using Global.Dynamic;
 using MVC;
 using System.Collections.Generic;
@@ -68,7 +67,6 @@ namespace DCL.PluginSystem.Global
         private readonly IWearableStorage wearableStorage;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
         private readonly IWebBrowser webBrowser;
-        private readonly IRealmNavigator realmNavigator;
         private readonly IEmoteStorage emoteStorage;
         private readonly DCLInput dclInput;
         private readonly IWebRequestController webRequestController;
@@ -102,6 +100,7 @@ namespace DCL.PluginSystem.Global
         private PlacesAndEventsPanelController? placesAndEventsPanelController;
         private NavmapView? navmapView;
         private PlaceInfoPanelController? placeInfoPanelController;
+        private NavmapSearchBarController? searchBarController;
 
         public ExplorePanelPlugin(IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
@@ -119,7 +118,6 @@ namespace DCL.PluginSystem.Global
             IEquippedEmotes equippedEmotes,
             IWebBrowser webBrowser,
             IEmoteStorage emoteStorage,
-            IRealmNavigator realmNavigator,
             ICollection<string> forceRender,
             DCLInput dclInput,
             IRealmData realmData,
@@ -157,7 +155,6 @@ namespace DCL.PluginSystem.Global
             this.equippedWearables = equippedWearables;
             this.equippedEmotes = equippedEmotes;
             this.webBrowser = webBrowser;
-            this.realmNavigator = realmNavigator;
             this.forceRender = forceRender;
             this.realmData = realmData;
             this.profileCache = profileCache;
@@ -243,7 +240,7 @@ namespace DCL.PluginSystem.Global
             searchResultPanelController = new SearchResultPanelController(navmapView.SearchBarResultPanel,
                 searchResultsPool, navmapBus);
 
-            NavmapSearchBarController searchBarController = new (navmapView.SearchBarView,
+            searchBarController = new (navmapView.SearchBarView,
                 navmapView.HistoryRecordPanelView, navmapView.PlacesAndEventsPanelView.SearchFiltersView,
                 inputBlock, searchHistory, navmapBus);
 
@@ -308,11 +305,12 @@ namespace DCL.PluginSystem.Global
         }
 
         private INavmapCommand CreateSearchPlaceCommand(string search, NavmapSearchPlaceFilter filter, NavmapSearchPlaceSorting sorting) =>
-            new SearchForPlaceAndShowResultsCommand(placesAPIService, eventsApiService, placesAndEventsPanelController,
+            new SearchForPlaceAndShowResultsCommand(placesAPIService, eventsApiService, placesAndEventsPanelController!,
                 searchResultPanelController!, search, filter, sorting);
 
         private INavmapCommand CreateShowPlaceCommand(PlacesData.PlaceInfo placeInfo) =>
-            new ShowPlaceInfoCommand(placeInfo, navmapView, placeInfoPanelController, placesAndEventsPanelController, eventsApiService);
+            new ShowPlaceInfoCommand(placeInfo, navmapView!, placeInfoPanelController!, placesAndEventsPanelController!, eventsApiService,
+                searchBarController!);
 
         public class ExplorePanelSettings : IDCLPluginSettings
         {

@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using DCL.PlacesAPIService;
 using System.Threading;
 using Utility;
 
@@ -39,11 +38,11 @@ namespace DCL.Navmap
         {
             switch (section)
             {
-                case Section.Search:
+                case Section.SEARCH:
                     searchResultController.Show();
                     placeInfoPanelController.Hide();
                     break;
-                case Section.Place:
+                case Section.PLACE:
                     searchResultController.Hide();
                     placeInfoPanelController.Show();
                     break;
@@ -52,9 +51,9 @@ namespace DCL.Navmap
 
         public enum Section
         {
-            Search,
-            Place,
-            Event
+            SEARCH,
+            PLACE,
+            EVENT,
         }
     }
 }

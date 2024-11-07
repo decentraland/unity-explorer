@@ -15,6 +15,7 @@ namespace DCL.Navmap
         private readonly PlaceInfoPanelController placeInfoPanelController;
         private readonly PlacesAndEventsPanelController placesAndEventsPanelController;
         private readonly IEventsApiService eventsApiService;
+        private readonly NavmapSearchBarController searchBarController;
         private IReadOnlyList<EventDTO>? events;
 
         public ShowPlaceInfoCommand(
@@ -22,13 +23,15 @@ namespace DCL.Navmap
             NavmapView navmapView,
             PlaceInfoPanelController placeInfoPanelController,
             PlacesAndEventsPanelController placesAndEventsPanelController,
-            IEventsApiService eventsApiService)
+            IEventsApiService eventsApiService,
+            NavmapSearchBarController searchBarController)
         {
             this.placeInfo = placeInfo;
             this.navmapView = navmapView;
             this.placeInfoPanelController = placeInfoPanelController;
             this.placesAndEventsPanelController = placesAndEventsPanelController;
             this.eventsApiService = eventsApiService;
+            this.searchBarController = searchBarController;
         }
 
         public void Dispose()
@@ -41,9 +44,12 @@ namespace DCL.Navmap
                 //This will trigger a "parcel clicked" event with the data from the parcel
                 this.navmapView.SatelliteRenderImage.OnSearchResultParcelSelected(result);
 
-            placesAndEventsPanelController.Toggle(PlacesAndEventsPanelController.Section.Place);
+            placesAndEventsPanelController.Toggle(PlacesAndEventsPanelController.Section.PLACE);
 
             placeInfoPanelController.Set(placeInfo);
+            searchBarController.SetText(placeInfo);
+            searchBarController.Interactable = false;
+            searchBarController.EnableBack();
 
             events ??= await eventsApiService.GetEventsByParcelAsync(placeInfo.base_position, ct, true);
 
@@ -57,6 +63,10 @@ namespace DCL.Navmap
 
         public void Undo()
         {
+            // TODO: we could restore the text that had the search bar before the modification
+            searchBarController.ClearSearch();
+            searchBarController.Interactable = true;
+            searchBarController.DisableBack();
         }
     }
 }

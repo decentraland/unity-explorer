@@ -47,7 +47,7 @@ namespace DCL.Navmap
 
         public async UniTask ExecuteAsync(CancellationToken ct)
         {
-            placesAndEventsPanelController.Toggle(PlacesAndEventsPanelController.Section.Search);
+            placesAndEventsPanelController.Toggle(PlacesAndEventsPanelController.Section.SEARCH);
             searchResultPanelController.SetLoadingState();
 
             await ProcessPlaces(ct);

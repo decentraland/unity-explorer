@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Input;
 using DCL.Input.Component;
+using DCL.PlacesAPIService;
 using DCL.UI;
 using System;
 using System.Threading;
@@ -18,10 +19,17 @@ namespace DCL.Navmap
         private readonly INavmapBus navmapBus;
 
         private CancellationTokenSource? searchCancellationToken;
+        private CancellationTokenSource? backCancellationToken;
         private bool isAlreadySelected;
         private NavmapSearchPlaceFilter currentPlaceFilter = NavmapSearchPlaceFilter.All;
         private NavmapSearchPlaceSorting currentPlaceSorting = NavmapSearchPlaceSorting.MostActive;
         private string currentSearchText = "";
+
+        public bool Interactable
+        {
+            get => view.inputField.interactable;
+            set => view.inputField.interactable = value;
+        }
 
         public NavmapSearchBarController(
             SearchBarView view,
@@ -45,6 +53,7 @@ namespace DCL.Navmap
             view.inputField.onDeselect.AddListener(_ => OnSearchBarSelected(false));
             view.inputField.onValueChanged.AddListener(OnInputValueChanged);
             view.clearSearchButton.onClick.AddListener(ClearSearch);
+            view.BackButton.onClick.AddListener(OnBackClicked);
             view.clearSearchButton.gameObject.SetActive(false);
             ShowPreviousSearches();
             historyRecordPanelView.gameObject.SetActive(false);
@@ -70,10 +79,31 @@ namespace DCL.Navmap
         public async UniTask SearchAndShowAsync(CancellationToken ct) =>
             await navmapBus.SearchForPlaceAsync(currentSearchText, currentPlaceFilter, currentPlaceSorting, ct);
 
-        private void ClearSearch()
+        public void SetText(PlacesData.PlaceInfo place)
+        {
+            view.inputField.SetTextWithoutNotify(place.title);
+        }
+
+        public void ClearSearch()
         {
             view.inputField.SetTextWithoutNotify("");
             view.clearSearchButton.gameObject.SetActive(false);
+        }
+
+        public void EnableBack()
+        {
+            view.BackButton.gameObject.SetActive(true);
+        }
+
+        public void DisableBack()
+        {
+            view.BackButton.gameObject.SetActive(false);
+        }
+
+        private void OnBackClicked()
+        {
+            backCancellationToken = backCancellationToken.SafeRestart();
+            navmapBus.GoBackAsync(backCancellationToken.Token).Forget();
         }
 
         private void ClickedHistoryResult(string historyText)

@@ -537,7 +537,6 @@ namespace Global.Dynamic
                     equippedEmotes,
                     webBrowser,
                     emotesCache,
-                    realmNavigator,
                     forceRender,
                     dclInput,
                     staticContainer.RealmData,
