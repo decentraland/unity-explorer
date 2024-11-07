@@ -2,10 +2,10 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
+using DCL.Character.Components;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using ECS.Abstract;
-using DCL.Utilities;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
@@ -38,9 +38,9 @@ namespace ECS.Unity.AvatarShape.Systems
 
         [Query]
         [None(typeof(SDKAvatarShapeComponent))]
-        private void LoadAvatarShape(in Entity entity, ref PBAvatarShape pbAvatarShape, ref PartitionComponent partitionComponent, ref TransformComponent transformComponent)
+        private void LoadAvatarShape(Entity entity, ref PBAvatarShape pbAvatarShape, ref PartitionComponent partitionComponent, in TransformComponent transformComponent)
         {
-            World.Add(entity, new SDKAvatarShapeComponent(globalWorld.Create(pbAvatarShape, partitionComponent, transformComponent)));
+            World.Add(entity, new SDKAvatarShapeComponent(globalWorld.Create(pbAvatarShape, partitionComponent, new CharacterTransform(transformComponent.Transform))));
         }
 
         [Query]
@@ -54,7 +54,7 @@ namespace ECS.Unity.AvatarShape.Systems
 
         [Query]
         [None(typeof(PBAvatarShape), typeof(DeleteEntityIntention))]
-        private void HandleComponentRemoval(in Entity entity, ref SDKAvatarShapeComponent sdkAvatarShapeComponent)
+        private void HandleComponentRemoval(Entity entity, ref SDKAvatarShapeComponent sdkAvatarShapeComponent)
         {
             // If the component is removed at scene-world, the global-world representation should disappear entirely
             globalWorld.Add(sdkAvatarShapeComponent.globalWorldEntity, new DeleteEntityIntention());
@@ -64,7 +64,7 @@ namespace ECS.Unity.AvatarShape.Systems
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
-        private void HandleEntityDestruction(in Entity entity, ref SDKAvatarShapeComponent sdkAvatarShapeComponent)
+        private void HandleEntityDestruction(Entity entity, ref SDKAvatarShapeComponent sdkAvatarShapeComponent)
         {
             World.Remove<SDKAvatarShapeComponent>(entity);
             World.Remove<PBAvatarShape>(entity);
