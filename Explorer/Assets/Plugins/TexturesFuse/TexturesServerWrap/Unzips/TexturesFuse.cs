@@ -19,11 +19,13 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
     {
         private readonly ITexturesFuse.IOptions options;
         private readonly IntPtr context;
+        private readonly CustomSampler sampler;
         private bool disposed;
 
         public TexturesFuse(NativeMethods.InitOptions initOptions, ITexturesFuse.IOptions options, bool debug)
         {
             this.options = options;
+            sampler = CustomSampler.Create("ProcessImage");
 
             initOptions = initOptions.NewWithMode(options.Mode);
             initOptions.outputMessage = debug ? OutputMessage : null;
@@ -77,7 +79,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
             if (Result.TryErrorIfCancelled(token, out errorResult))
                 return errorResult;
 
-            Profiler.BeginThreadProfiling("TexturesFuse", "ProcessImage");
+            Profiler.BeginThreadProfiling("TexturesFuse", "TextureFromBytes");
             ProcessImage(bytes, bytesLength, type, out var handle, out var pointer, out int outputLength, out NativeMethods.ImageResult result, out uint width, out uint height, out bool linear, out TextureFormat format);
             Profiler.EndThreadProfiling();
 
@@ -338,6 +340,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
             out TextureFormat format
         )
         {
+            sampler.Begin();
             unsafe
             {
                 fixed (byte* ptr = bytes)
@@ -414,6 +417,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
                         throw new Exception($"Unsupported mode: {mode}");
                 }
             }
+            sampler.End();
         }
 
         private static TextureFormat? FormatFromBpp(NativeMethods.FreeImageColorType colorType, uint bpp)
