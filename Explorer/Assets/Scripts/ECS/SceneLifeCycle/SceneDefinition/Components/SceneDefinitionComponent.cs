@@ -27,7 +27,7 @@ namespace ECS.SceneLifeCycle.SceneDefinition
             IReadOnlyList<Vector2Int> parcels,
             IReadOnlyList<ParcelMathHelper.ParcelCorners> parcelsCorners,
             ParcelMathHelper.SceneGeometry sceneGeometry,
-            IpfsPath ipfsPath, bool isEmpty, bool isSDK7, bool isPortableExperience)
+            IpfsPath ipfsPath, bool isSDK7, bool isPortableExperience)
         {
             Definition = definition;
             Parcels = parcels;
@@ -59,8 +59,7 @@ namespace ECS.SceneLifeCycle.SceneDefinition
 
         public static SceneDefinitionComponent CreateFromDefinition(SceneEntityDefinition definition, IpfsPath ipfsPath, bool isPortableExperience = false) =>
             isPortableExperience ?
-                CreatePortableExperienceSceneDefinitionComponent(definition, ipfsPath) :
-                CreateSceneDefinitionComponent(definition, definition.metadata.scene.DecodedParcels, ipfsPath, isEmpty: false, isSDK7: definition.metadata.runtimeVersion == "7", isPortableExperience: false);
+                CreatePortableExperienceSceneDefinitionComponent(definition, ipfsPath) : CreateSceneDefinitionComponent(definition, definition.metadata.scene.DecodedParcels, ipfsPath, isSDK7: definition.metadata.runtimeVersion == "7", isPortableExperience: false);
 
         private static SceneDefinitionComponent CreatePortableExperienceSceneDefinitionComponent(SceneEntityDefinition definition, IpfsPath ipfsPath) =>
             new (
@@ -69,7 +68,6 @@ namespace ECS.SceneLifeCycle.SceneDefinition
                 PORTABLE_EXPERIENCES_PARCEL_CORNERS,
                 PORTABLE_EXPERIENCES_SCENE_GEOMETRY,
                 ipfsPath,
-                isEmpty: false,
                 isSDK7: definition.metadata.runtimeVersion == "7",
                 isPortableExperience: true
             );
@@ -78,7 +76,6 @@ namespace ECS.SceneLifeCycle.SceneDefinition
             SceneEntityDefinition definition,
             IReadOnlyList<Vector2Int> parcels,
             IpfsPath ipfsPath,
-            bool isEmpty,
             bool isSDK7,
             bool isPortableExperience)
         {
@@ -91,7 +88,6 @@ namespace ECS.SceneLifeCycle.SceneDefinition
                 parcelCorners,
                 sceneGeometry,
                 ipfsPath,
-                isEmpty,
                 isSDK7,
                 isPortableExperience
             );
