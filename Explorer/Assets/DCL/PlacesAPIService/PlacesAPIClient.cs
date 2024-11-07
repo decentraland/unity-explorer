@@ -3,7 +3,9 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.Pools;
+using DCL.PlacesAPIService.Serialization;
 using DCL.WebRequests;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -23,6 +25,7 @@ namespace DCL.PlacesAPIService
         private string baseURL => decentralandUrlsSource.Url(DecentralandUrl.ApiPlaces);
         private URLDomain baseURLDomain => URLDomain.FromString(baseURL);
         private URLAddress poiURL => URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.POI));
+        private URLAddress placesByCategoryURL => URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.PlacesByCategory));
         private URLAddress contentModerationReportURL => URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.ContentModerationReport));
 
         public PlacesAPIClient(IWebRequestController webRequestController, IDecentralandUrlsSource decentralandUrlsSource)
@@ -209,6 +212,21 @@ namespace DCL.PlacesAPIService
                 throw new Exception("No POIs info retrieved");
 
             return response.data;
+        }
+
+        private static readonly JsonSerializerSettings SERIALIZER_SETTINGS = new () { Converters = new JsonConverter[] { new PlacesByCategoryJsonDtoConverter() } };
+
+        public async UniTask<List<PlacesData.CategoryPlaceData>> GetPlacesByCategoryListAsync(string category, CancellationToken ct)
+        {
+            var url = string.Format("{0}?categories={1}", placesByCategoryURL, category);
+
+            List<PlacesData.CategoryPlaceData> categoryPlaces = await webRequestController.GetAsync(url, ct, ReportCategory.UI)
+                                                                                                   .CreateFromNewtonsoftJsonAsync<List<PlacesData.CategoryPlaceData>>(serializerSettings: SERIALIZER_SETTINGS);
+
+            if (categoryPlaces == null)
+                throw new Exception($"No Places for category {category} retrieved");
+
+            return categoryPlaces;
         }
 
         public async UniTask ReportPlaceAsync(PlaceContentReportPayload placeContentReportPayload, CancellationToken ct)

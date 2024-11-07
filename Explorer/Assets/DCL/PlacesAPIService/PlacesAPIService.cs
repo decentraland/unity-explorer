@@ -95,6 +95,9 @@ namespace DCL.PlacesAPIService
             return rentedPlaces;
         }
 
+        public async UniTask<List<PlacesData.CategoryPlaceData>> GetPlacesByCategoryListAsync(string category, CancellationToken ct) =>
+            await client.GetPlacesByCategoryListAsync(category, ct);
+
         public async UniTask<PoolExtensions.Scope<List<PlacesData.PlaceInfo>>> GetFavoritesAsync(int pageNumber, int pageSize, CancellationToken ct, bool renewCache = false)
         {
             const int CACHE_EXPIRATION = 30; // Seconds
