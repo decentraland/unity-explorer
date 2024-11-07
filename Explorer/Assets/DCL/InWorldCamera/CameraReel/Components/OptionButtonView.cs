@@ -9,6 +9,8 @@ namespace DCL.InWorldCamera.CameraReel.Components
     {
         [SerializeField] private GameObject contextMenu;
         [SerializeField] private GameObject hoverHelper;
+        [SerializeField] private Button optionButton;
+
         [Header("Controls")]
         [SerializeField] private Toggle setAsPublic;
         [SerializeField] private Button shareOnX;
@@ -27,6 +29,8 @@ namespace DCL.InWorldCamera.CameraReel.Components
         private void Awake()
         {
             ResetState();
+
+            optionButton.onClick.AddListener(OnOptionClicked);
 
             setAsPublic.onValueChanged.AddListener(toggle =>
             {
@@ -58,7 +62,7 @@ namespace DCL.InWorldCamera.CameraReel.Components
             });
         }
 
-        public void OnOptionClicked()
+        private void OnOptionClicked()
         {
             bool active = !contextMenu.activeSelf;
             contextMenu.SetActive(active);
@@ -77,6 +81,7 @@ namespace DCL.InWorldCamera.CameraReel.Components
 
         public void Dispose()
         {
+            optionButton.onClick.RemoveAllListeners();
             setAsPublic.onValueChanged.RemoveAllListeners();
             shareOnX.onClick.RemoveAllListeners();
             copyLink.onClick.RemoveAllListeners();
