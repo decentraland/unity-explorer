@@ -655,6 +655,7 @@ namespace Global.Dynamic
                 container.LODContainer.LodCache,
                 multiplayerEmotesMessageBus,
                 globalWorld,
+                staticContainer.SceneReadinessReportQueue,
                 localSceneDevelopment
             );
 

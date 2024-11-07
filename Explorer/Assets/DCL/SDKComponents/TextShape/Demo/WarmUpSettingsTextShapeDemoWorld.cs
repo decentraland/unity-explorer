@@ -23,7 +23,7 @@ namespace DCL.SDKComponents.TextShape.Demo
         private readonly PBBillboard billboard;
 
         public WarmUpSettingsTextShapeDemoWorld(TextShapeProperties textShapeProperties, BillboardProperties billboardProperties, Func<bool> visible, IFontsStorage fontsStorage)
-            : this(new PBTextShape(), new PBVisibilityComponent(), new PBBillboard(), textShapeProperties, billboardProperties, visible, fontsStorage, new EmptySceneData(Array.Empty<Vector2Int>())) { }
+            : this(new PBTextShape(), new PBVisibilityComponent(), new PBBillboard(), textShapeProperties, billboardProperties, visible, fontsStorage, new ISceneData.Fake()) { }
 
         public WarmUpSettingsTextShapeDemoWorld(
             PBTextShape textShape,

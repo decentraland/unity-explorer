@@ -1,6 +1,8 @@
-﻿using DCL.AsyncLoadReporting;
+﻿using Arch.Core;
+using DCL.AsyncLoadReporting;
 using ECS.SceneLifeCycle.Reporting;
 using ECS.SceneLifeCycle.SceneDefinition;
+using UnityEngine;
 
 namespace ECS.SceneLifeCycle
 {
@@ -12,13 +14,26 @@ namespace ECS.SceneLifeCycle
             scenesCache.AddNonRealScene(sceneDefinitionComponent.Parcels);
 
             if (sceneReadinessReportQueue.TryDequeue(sceneDefinitionComponent.Parcels, out PooledLoadReportList? reports))
+                ReportProgressFinished(reports);
+        }
+
+        private static void ReportProgressFinished(PooledLoadReportList? reports)
+        {
+            for (var i = 0; i < reports!.Value.Count; i++)
             {
-                for (var i = 0; i < reports!.Value.Count; i++)
-                {
-                    AsyncLoadProcessReport report = reports.Value[i];
-                    report.SetProgress(1f);
-                }
+                AsyncLoadProcessReport report = reports.Value[i];
+                report.SetProgress(1f);
             }
+        }
+
+        public static EmptySceneComponent CreateEmptyScene(Vector2Int parcel, ISceneReadinessReportQueue sceneReadinessReportQueue, IScenesCache scenesCache)
+        {
+            scenesCache.AddNonRealScene(parcel);
+
+            if (sceneReadinessReportQueue.TryDequeue(parcel, out PooledLoadReportList? reports))
+                ReportProgressFinished(reports);
+
+            return EmptySceneComponent.Create();
         }
     }
 }

@@ -6,6 +6,7 @@ using CommunicationData.URLHelpers;
 using DCL.Ipfs;
 using ECS.Prioritization;
 using ECS.SceneLifeCycle.Components;
+using ECS.SceneLifeCycle.Reporting;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.SceneLifeCycle.Systems;
 using ECS.StreamableLoading.Common;
@@ -17,9 +18,6 @@ using Utility;
 
 namespace ECS.SceneLifeCycle.IncreasingRadius
 {
-    /// <summary>
-    ///     Mutually exclusive to <see cref="LoadPointersByRadiusSystem" />
-    /// </summary>
     [UpdateAfter(typeof(LoadFixedPointersSystem))]
     [UpdateInGroup(typeof(RealmGroup))]
     public partial class LoadPointersByIncreasingRadiusSystem : LoadScenePointerSystemBase
@@ -27,6 +25,8 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         private readonly ParcelMathJobifiedHelper parcelMathJobifiedHelper;
         private readonly IRealmPartitionSettings realmPartitionSettings;
         private readonly IPartitionSettings partitionSettings;
+        private readonly IScenesCache scenesCache;
+        private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
 
         private float[]? sqrDistances;
 
@@ -34,11 +34,14 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
         internal LoadPointersByIncreasingRadiusSystem(World world,
             ParcelMathJobifiedHelper parcelMathJobifiedHelper,
-            IRealmPartitionSettings realmPartitionSettings, IPartitionSettings partitionSettings) : base(world)
+            IRealmPartitionSettings realmPartitionSettings, IPartitionSettings partitionSettings,
+            ISceneReadinessReportQueue sceneReadinessReportQueue, IScenesCache scenesCache) : base(world)
         {
             this.parcelMathJobifiedHelper = parcelMathJobifiedHelper;
             this.realmPartitionSettings = realmPartitionSettings;
             this.partitionSettings = partitionSettings;
+            this.sceneReadinessReportQueue = sceneReadinessReportQueue;
+            this.scenesCache = scenesCache;
         }
 
         protected override void Update(float t)
@@ -157,7 +160,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                 {
                     int2 parcel = requestedList[i];
                     if (!processedScenePointers.Value.Add(parcel)) continue;
-                    World.Create(EmptySceneComponent.Create());
+                    World.Create(SceneUtils.CreateEmptyScene(parcel.ToVector2Int(), sceneReadinessReportQueue, scenesCache));
                 }
             }
             else

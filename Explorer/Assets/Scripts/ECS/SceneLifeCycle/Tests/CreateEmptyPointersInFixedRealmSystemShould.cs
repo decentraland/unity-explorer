@@ -2,6 +2,7 @@
 using ECS.Prioritization;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.IncreasingRadius;
+using ECS.SceneLifeCycle.Reporting;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.TestSuite;
 using NSubstitute;
@@ -32,7 +33,9 @@ namespace ECS.SceneLifeCycle.Tests
         {
             system = new CreateEmptyPointersInFixedRealmSystem(world,
                 mathJobifiedHelper = new ParcelMathJobifiedHelper(),
-                realmPartitionSettings = Substitute.For<IRealmPartitionSettings>());
+                realmPartitionSettings = Substitute.For<IRealmPartitionSettings>(),
+                Substitute.For<ISceneReadinessReportQueue>(),
+                Substitute.For<IScenesCache>());
 
             realmPartitionSettings.ScenesDefinitionsRequestBatchSize.Returns(int.MaxValue);
         }

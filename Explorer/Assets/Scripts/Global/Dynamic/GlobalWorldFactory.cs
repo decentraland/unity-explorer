@@ -27,6 +27,7 @@ using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.CurrentScene;
 using ECS.SceneLifeCycle.IncreasingRadius;
+using ECS.SceneLifeCycle.Reporting;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.SceneLifeCycle.Systems;
 using ECS.StreamableLoading.Cache;
@@ -64,6 +65,7 @@ namespace Global.Dynamic
         private readonly IEmotesMessageBus emotesMessageBus;
         private readonly World world;
         private readonly CurrentSceneInfo currentSceneInfo;
+        private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
         private readonly HybridSceneParams hybridSceneParams;
         private readonly bool localSceneDevelopment;
 
@@ -76,6 +78,7 @@ namespace Global.Dynamic
             ILODCache lodCache,
             IEmotesMessageBus emotesMessageBus,
             World world,
+            ISceneReadinessReportQueue sceneReadinessReportQueue,
             bool localSceneDevelopment)
         {
             partitionedWorldsAggregateFactory = staticContainer.SingletonSharedDependencies.AggregateFactory;
@@ -98,6 +101,7 @@ namespace Global.Dynamic
             this.lodCache = lodCache;
             this.emotesMessageBus = emotesMessageBus;
             this.localSceneDevelopment = localSceneDevelopment;
+            this.sceneReadinessReportQueue = sceneReadinessReportQueue;
             this.world = world;
 
             memoryBudget = staticContainer.SingletonSharedDependencies.MemoryBudget;
@@ -131,7 +135,6 @@ namespace Global.Dynamic
 
             LoadSceneSystem.InjectToWorld(ref builder,
                 loadSceneSystemLogic,
-                new LoadEmptySceneSystemLogic(),
                 sceneFactory, NoCache<ISceneFacade, GetSceneFacadeIntention>.INSTANCE);
 
             GlobalDeferredLoadingSystem.InjectToWorld(ref builder, sceneBudget, memoryBudget, staticContainer.SingletonSharedDependencies.SceneAssetLock);
@@ -145,7 +148,7 @@ namespace Global.Dynamic
             StartSplittingByRingsSystem.InjectToWorld(ref builder, realmPartitionSettings, jobsMathHelper);
 
             LoadPointersByIncreasingRadiusSystem.InjectToWorld(ref builder, jobsMathHelper, realmPartitionSettings,
-                partitionSettings);
+                partitionSettings, sceneReadinessReportQueue, scenesCache);
 
             ResolveSceneStateByIncreasingRadiusSystem.InjectToWorld(ref builder, realmPartitionSettings);
             //Removed, since we now have landscape surrounding the world

@@ -4,7 +4,7 @@ using Arch.SystemGroups;
 using ECS.Abstract;
 using ECS.Prioritization;
 using ECS.SceneLifeCycle.Components;
-using ECS.SceneLifeCycle.SceneDefinition;
+using ECS.SceneLifeCycle.Reporting;
 using Unity.Collections;
 using Utility;
 
@@ -21,13 +21,19 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
     {
         private readonly ParcelMathJobifiedHelper parcelMathJobifiedHelper;
         private readonly IRealmPartitionSettings realmPartitionSettings;
+        private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
+        private readonly IScenesCache scenesCache;
 
         internal CreateEmptyPointersInFixedRealmSystem(World world,
             ParcelMathJobifiedHelper parcelMathJobifiedHelper,
-            IRealmPartitionSettings realmPartitionSettings) : base(world)
+            IRealmPartitionSettings realmPartitionSettings,
+            ISceneReadinessReportQueue sceneReadinessReportQueue,
+            IScenesCache scenesCache) : base(world)
         {
             this.parcelMathJobifiedHelper = parcelMathJobifiedHelper;
             this.realmPartitionSettings = realmPartitionSettings;
+            this.sceneReadinessReportQueue = sceneReadinessReportQueue;
+            this.scenesCache = scenesCache;
         }
 
         protected override void Update(float t)
@@ -61,7 +67,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                 // we need to check it again as parcelInfo.AlreadyProcessed corresponds to the moment of splitting
                 if (!processedScenePointers.Value.Contains(parcelInfo.Parcel))
                 {
-                    World.Create(EmptySceneComponent.Create());
+                    World.Create(SceneUtils.CreateEmptyScene(parcelInfo.Parcel.ToVector2Int(), sceneReadinessReportQueue, scenesCache));
                     pointersCreated++;
                     processedScenePointers.Value.Add(parcelInfo.Parcel);
                 }

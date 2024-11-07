@@ -101,16 +101,6 @@ namespace ECS.SceneLifeCycle.Systems
         [None(typeof(PartitionComponent))]
         private void PartitionNewEntity(in Entity entity, ref SceneDefinitionComponent definition)
         {
-            // If we partition empty scene then their number can grow infinitely as we don't have boundaries
-            if (definition.IsEmpty)
-            {
-                PartitionComponent partitionComponent = partitionComponentPool.Get();
-                // some default values to not break other systems
-                partitionComponent.Bucket = emptyScenePartition;
-                World.Add(entity, partitionComponent);
-                return;
-            }
-
             if (definition.IsPortableExperience)
             {
                 PartitionComponent partitionComponent = partitionComponentPool.Get();

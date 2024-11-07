@@ -5,7 +5,7 @@
     /// </summary>
     public readonly struct EmptySceneComponent
     {
-        public static EmptySceneComponent Create() =>
+        internal static EmptySceneComponent Create() =>
             new ();
     }
 }
