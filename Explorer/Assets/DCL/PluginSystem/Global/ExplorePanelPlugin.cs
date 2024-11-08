@@ -95,6 +95,7 @@ namespace DCL.PluginSystem.Global
         private NavmapController? navmapController;
         private SettingsController? settingsController;
         private BackpackSubPlugin? backpackSubPlugin;
+        private CategoryFilterController? categoryFilterController;
         private SearchResultPanelController? searchResultPanelController;
         private ISearchHistory? searchHistory;
         private PlacesAndEventsPanelController? placesAndEventsPanelController;
@@ -181,6 +182,7 @@ namespace DCL.PluginSystem.Global
 
         public void Dispose()
         {
+            categoryFilterController?.Dispose();
             navmapController?.Dispose();
             settingsController?.Dispose();
             backpackSubPlugin?.Dispose();
@@ -228,9 +230,10 @@ namespace DCL.PluginSystem.Global
             ProvidedAsset<ControlsSettingsAsset> controlsSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.ControlsSettingsAsset, ct);
             settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>(), settingsMenuConfiguration.Value, generalAudioMixer.Value, realmPartitionSettings.Value, landscapeData.Value, qualitySettingsAsset.Value, controlsSettingsAsset.Value, systemMemoryCap, worldVolumeMacBus);
 
-            searchHistory = new PlayerPrefsSearchHistory();
+            NavmapView navmapView = explorePanelView.GetComponentInChildren<NavmapView>();
+            categoryFilterController = new CategoryFilterController(navmapView.categoryToggles, mapRendererContainer.MapRenderer);
 
-            navmapView = explorePanelView.GetComponentInChildren<NavmapView>();
+            searchHistory = new PlayerPrefsSearchHistory();
 
             INavmapBus navmapBus = new NavmapCommandBus(CreateSearchPlaceCommand,
                 CreateShowPlaceCommand);

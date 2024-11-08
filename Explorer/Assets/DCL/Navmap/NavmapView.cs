@@ -2,6 +2,7 @@ using DCL.Audio;
 using DCL.MapRenderer.ConsumerUtils;
 using DCL.UI;
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -9,6 +10,9 @@ namespace DCL.Navmap
 {
     public class NavmapView : MonoBehaviour
     {
+        [field: SerializeField]
+        public List<CategoryToggleView> categoryToggles;
+
         [field: SerializeField]
         public SearchBarView SearchBarView;
 

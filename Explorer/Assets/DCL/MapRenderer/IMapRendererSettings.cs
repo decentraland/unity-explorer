@@ -1,6 +1,7 @@
 using DCL.AssetsProvision;
 using DCL.MapRenderer.ComponentsFactory;
 using DCL.MapRenderer.MapCameraController;
+using DCL.MapRenderer.MapLayers.Categories;
 using DCL.MapRenderer.MapLayers.Favorites;
 using DCL.MapRenderer.MapLayers.ParcelHighlight;
 using DCL.MapRenderer.MapLayers.Pins;
@@ -34,6 +35,10 @@ namespace DCL.MapRenderer
         PinMarkerRef PinMarker { get; }
 
         SceneOfInterestMarkerObjectRef SceneOfInterestMarker { get; }
+
+        CategoryMarkerObjectRef CategoryMarker { get; }
+
+        CategoryIconMappingsSO CategoryIconMappings { get; }
 
         FavoriteMarkerObjectRef FavoriteMarker { get; }
 
@@ -89,6 +94,12 @@ namespace DCL.MapRenderer
         public class SceneOfInterestMarkerObjectRef : ComponentReference<SceneOfInterestMarkerObject>
         {
             public SceneOfInterestMarkerObjectRef(string guid) : base(guid) { }
+        }
+
+        [Serializable]
+        public class CategoryMarkerObjectRef : ComponentReference<CategoryMarkerObject>
+        {
+            public CategoryMarkerObjectRef(string guid) : base(guid) { }
         }
 
         [Serializable]

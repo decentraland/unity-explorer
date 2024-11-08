@@ -114,6 +114,13 @@ namespace DCL.PlacesAPIService
             }
         }
 
+        [Serializable]
+        public class CategoryPlaceData
+        {
+            public Vector2Int base_position;
+            public string name;
+        }
+
         // TODO: This class should be moved to the PlacesAPIService folder
         [Serializable]
         public class PlacesAPIResponse : PaginatedResponse, IPlacesAPIResponse
