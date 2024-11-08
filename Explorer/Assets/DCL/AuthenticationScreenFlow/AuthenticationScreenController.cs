@@ -132,9 +132,12 @@ namespace DCL.AuthenticationScreenFlow
             viewInstance.VerificationCodeHintButton.onClick.AddListener(OpenOrCloseVerificationCodeHint);
             viewInstance.DiscordButton.onClick.AddListener(OpenDiscord);
             viewInstance.RequestAlphaAccessButton.onClick.AddListener(RequestAlphaAccess);
-            viewInstance.VersionText.text = Application.version;
+
 #if UNITY_EDITOR
             viewInstance.VersionText.text = "editor-version";
+#else
+            var version = $"{Application.version} ({Application.installerName})";
+            viewInstance.VersionText.text = version;
 #endif
 
             characterPreviewController = new AuthenticationScreenCharacterPreviewController(viewInstance.CharacterPreviewView, characterPreviewFactory, world, characterPreviewEventBus);
