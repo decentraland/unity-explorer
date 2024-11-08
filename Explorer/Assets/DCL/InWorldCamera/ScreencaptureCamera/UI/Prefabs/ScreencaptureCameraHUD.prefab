@@ -94,7 +94,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &405257682719442040
 RectTransform:
   m_ObjectHideFlags: 0
@@ -194,7 +194,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2d5120df372247eb89adb2fa4b2de189, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  Canvas: {fileID: 405257682719442047}
   Screenshot: {fileID: 0}
+  Metadata:
+    userName: 
+    userAddress: 
+    dateTime: 
+    realm: 
+    scene:
+      name: 
+      location:
+        x: 
+        y: 
+    visiblePeople: []
 --- !u!1 &405257684294210920
 GameObject:
   m_ObjectHideFlags: 0

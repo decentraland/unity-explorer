@@ -3,7 +3,9 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Character;
-using DCL.InWorldCamera.ScreencaptureCamera.CameraObject.Systems;
+using DCL.InWorldCamera.ScreencaptureCamera;
+using DCL.InWorldCamera.ScreencaptureCamera.Systems;
+using DCL.InWorldCamera.ScreencaptureCamera.UI;
 using DCL.PlacesAPIService;
 using DCL.Profiles.Self;
 using ECS;
@@ -12,6 +14,7 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using static DCL.PluginSystem.Global.InWorldCameraPlugin;
+using Object = UnityEngine.Object;
 
 namespace DCL.PluginSystem.Global
 {
@@ -25,7 +28,9 @@ namespace DCL.PluginSystem.Global
         private readonly IPlacesAPIService placesAPIService;
         private readonly ICharacterObject characterObject;
 
-        private ProvidedAsset<GameObject> hud;
+        private ProvidedAsset<GameObject> hudPrefab;
+        private ScreenRecorder recorder;
+        private GameObject hud;
 
         public InWorldCameraPlugin(DCLInput input, IAssetsProvisioner assetsProvisioner, SelfProfile selfProfile,
             RealmData realmData, Entity playerEntity, IPlacesAPIService placesAPIService, ICharacterObject characterObject)
@@ -41,17 +46,24 @@ namespace DCL.PluginSystem.Global
 
         public async UniTask InitializeAsync(InWorldCameraSettings settings, CancellationToken ct)
         {
-            hud = await assetsProvisioner.ProvideMainAssetAsync(settings.ScreencaptureHud, ct);
+            hudPrefab = await assetsProvisioner.ProvideMainAssetAsync(settings.ScreencaptureHud, ct);
+
+            hudPrefab.Value.SetActive(false);
+            hud = Object.Instantiate(hudPrefab.Value, Vector3.zero, Quaternion.identity);
+
+            recorder = new ScreenRecorder(hud.GetComponent<RectTransform>());
         }
 
         public void Dispose()
         {
-            hud.Dispose();
+            hudPrefab.Dispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            EnableInWorldCameraSystem.InjectToWorld(ref builder, input.InWorldCamera, hud.Value);//, selfProfile, realmData, playerEntity, placesAPIService, characterObject);
+            EnableInWorldCameraSystem.InjectToWorld(ref builder, input.InWorldCamera, hud);
+            CameraScreencaptureSystem.InjectToWorld(ref builder, recorder, input.InWorldCamera, hud.GetComponent<ScreenshotHudView>(),
+                selfProfile, realmData, playerEntity, placesAPIService, characterObject);
         }
 
         [Serializable]

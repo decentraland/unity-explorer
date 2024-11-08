@@ -59,18 +59,12 @@ namespace DCL.CharacterCamera.Systems
                     ApplyFreeCameraMovement(dt, camera, cameraInput, cinemachinePreset); // Apply free movement
                     ApplyFOV(dt, cinemachinePreset, in cameraInput); // Apply Field of View
                     break;
-                case CameraMode.InWorld:
-                    ApplyPOV(cinemachinePreset.InWorldCameraData.POV, in cameraInput);
-                    ApplyInWorldCameraMovement(dt, camera, cameraInput, cinemachinePreset);
-                    ApplyInWorldFOV(dt, cinemachinePreset, in cameraInput);
-                    break;
                 default:
                     ReportHub.LogError(GetReportData(), $"Camera mode is unknown {camera.Mode}");
                     break;
             }
 
             cameraInput.SetFreeFly = isFreeCameraAllowed && input.Camera.ToggleFreeFly!.triggered;
-            cameraInput.SetInWorld = input.Camera.ToggleInWorld!.triggered;
             cameraInput.SwitchState = input.Camera.SwitchState!.WasPressedThisFrame();
             cameraInput.ChangeShoulder = input.Camera.ChangeShoulder!.WasPressedThisFrame();
 
@@ -95,9 +89,6 @@ namespace DCL.CharacterCamera.Systems
                 case CameraMode.Free:
                     cinemachinePreset.ForceFreeCameraLookAt(lookAtIntent);
                     break;
-                case CameraMode.InWorld:
-                    cinemachinePreset.ForceWorldCameraLookAt(lookAtIntent);
-                    break;
                 default:
                     ReportHub.LogError(GetReportData(), $"Camera mode is unknown {camera.Mode}");
                     break;
@@ -121,21 +112,6 @@ namespace DCL.CharacterCamera.Systems
                                                   * (cinemachinePreset.FreeCameraData.Speed * dt);
         }
 
-        private static void ApplyInWorldCameraMovement(float dt, in CameraComponent camera, in CameraInput cameraInput,
-            ICinemachinePreset cinemachinePreset)
-        {
-            // Camera's position is under Cinemachine control
-            Transform cinemachineTransform = cinemachinePreset.InWorldCameraData.Camera.transform;
-
-            // Camera's rotation is not
-            Transform cameraTransform = camera.Camera.transform;
-            Vector3 direction = (cameraTransform.forward * cameraInput.FreeMovement.y) +
-                                (cameraTransform.up * cameraInput.FreePanning.y) +
-                                (cameraTransform.right * cameraInput.FreeMovement.x);
-
-            cinemachineTransform.localPosition += direction * (cinemachinePreset.InWorldCameraData.Speed * dt);
-        }
-
         private static void ApplyPOV(CinemachinePOV cinemachinePOV, in CameraInput cameraInput)
         {
             if (cinemachinePOV)
@@ -150,14 +126,6 @@ namespace DCL.CharacterCamera.Systems
             CinemachineVirtualCamera tpc = cinemachinePreset.FreeCameraData.Camera;
             LensSettings tpcMLens = tpc.m_Lens;
             tpcMLens.FieldOfView += cameraInput.FreeFOV.y * cinemachinePreset.FreeCameraData.Speed * dt;
-            tpc.m_Lens = tpcMLens;
-        }
-
-        private static void ApplyInWorldFOV(float dt, ICinemachinePreset cinemachinePreset, in CameraInput cameraInput)
-        {
-            CinemachineVirtualCamera tpc = cinemachinePreset.InWorldCameraData.Camera;
-            LensSettings tpcMLens = tpc.m_Lens;
-            tpcMLens.FieldOfView += cameraInput.FreeFOV.y * cinemachinePreset.InWorldCameraData.Speed * dt;
             tpc.m_Lens = tpcMLens;
         }
     }

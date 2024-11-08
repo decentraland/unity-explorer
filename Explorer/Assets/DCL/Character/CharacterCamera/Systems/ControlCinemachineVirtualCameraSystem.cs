@@ -10,7 +10,6 @@ using DCL.CharacterCamera.Settings;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.Input.Systems;
-using DCL.InWorldCamera.ScreencaptureCamera.CameraObject;
 using ECS.Abstract;
 using UnityEngine;
 
@@ -144,18 +143,6 @@ namespace DCL.Character.CharacterCamera.Systems
                     inputMapComponent.UnblockInput(InputMapComponent.Kind.PLAYER);
                     inputMapComponent.BlockInput(InputMapComponent.Kind.FREE_CAMERA);
                 }
-                else if (targetCameraMode == CameraMode.InWorld)
-                {
-                    ref InputMapComponent inputMapComponent = ref inputMap.GetInputMapComponent(World);
-                    inputMapComponent.UnblockInput(InputMapComponent.Kind.IN_WORLD_CAMERA);
-                    inputMapComponent.BlockInput(InputMapComponent.Kind.PLAYER);
-                }
-                else if (currentCameraMode == CameraMode.InWorld)
-                {
-                    ref InputMapComponent inputMapComponent = ref inputMap.GetInputMapComponent(World);
-                    inputMapComponent.UnblockInput(InputMapComponent.Kind.PLAYER);
-                    inputMapComponent.BlockInput(InputMapComponent.Kind.IN_WORLD_CAMERA);
-                }
             }
 
             switch (camera.Mode)
@@ -191,11 +178,6 @@ namespace DCL.Character.CharacterCamera.Systems
                 case CameraMode.Free:
                     SetActiveCamera(ref cameraState, cinemachinePreset.FreeCameraData.Camera);
                     SetDefaultFreeCameraPosition(in cinemachinePreset);
-                    break;
-
-                case CameraMode.InWorld:
-                    SetActiveCamera(ref cameraState, cinemachinePreset.InWorldCameraData.Camera);
-                    SetDefaultInWorldCameraPosition(in cinemachinePreset);
                     break;
             }
         }
@@ -325,8 +307,6 @@ namespace DCL.Character.CharacterCamera.Systems
                     return cinemachinePreset.ThirdPersonCameraData.Camera.enabled;
                 case CameraMode.DroneView:
                     return cinemachinePreset.DroneViewCameraData.Camera.enabled;
-                case CameraMode.InWorld:
-                    return cinemachinePreset.InWorldCameraData.Camera.enabled;
                 default:
                     return cinemachinePreset.FreeCameraData.Camera.enabled;
             }
@@ -338,7 +318,6 @@ namespace DCL.Character.CharacterCamera.Systems
             if (currentCamera == cinemachinePreset.ThirdPersonCameraData.Camera) return CameraMode.ThirdPerson;
             if (currentCamera == cinemachinePreset.DroneViewCameraData.Camera) return CameraMode.DroneView;
             if (currentCamera == cinemachinePreset.FreeCameraData.Camera) return CameraMode.Free;
-            if (currentCamera == cinemachinePreset.InWorldCameraData.Camera) return CameraMode.InWorld;
 
             // Want to enlarge this if chain? Nope, refactor this.
             return CameraMode.ThirdPerson;

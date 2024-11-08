@@ -3,11 +3,10 @@ using Arch.SystemGroups;
 using DCL.CharacterCamera;
 using DCL.CharacterCamera.Systems;
 using DCL.Diagnostics;
-using DCL.InWorldCamera.ScreencaptureCamera.UI;
 using ECS.Abstract;
 using UnityEngine;
 
-namespace DCL.InWorldCamera.ScreencaptureCamera.CameraObject.Systems
+namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
 {
     [UpdateInGroup(typeof(CameraGroup))]
     [UpdateAfter(typeof(ApplyCinemachineCameraInputSystem))]
@@ -15,18 +14,14 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.CameraObject.Systems
     public partial class EnableInWorldCameraSystem : BaseUnityLoopSystem
     {
         private readonly DCLInput.InWorldCameraActions inputSchema;
-        private readonly GameObject hudPrefab;
+        private readonly GameObject hud;
 
         private SingleInstanceEntity camera;
 
-        private bool isInstantiated;
-        private ScreenshotHudView hud;
-        private ScreenRecorder recorder;
-
-        public EnableInWorldCameraSystem(World world, DCLInput.InWorldCameraActions inputSchema, GameObject hudPrefab) : base(world)
+        public EnableInWorldCameraSystem(World world, DCLInput.InWorldCameraActions inputSchema, GameObject hud) : base(world)
         {
             this.inputSchema = inputSchema;
-            this.hudPrefab = hudPrefab;
+            this.hud = hud;
         }
 
         public override void Initialize()
@@ -47,28 +42,13 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.CameraObject.Systems
 
         private void EnableCamera()
         {
-            ref CameraComponent cameraComponent = ref World.Get<CameraComponent>(camera);
-            cameraComponent.Mode = CameraMode.InWorld;
-
-            if (isInstantiated)
-                hud.gameObject.SetActive(true);
-            else
-            {
-                hud = Object.Instantiate(hudPrefab, Vector3.zero, Quaternion.identity).GetComponent<ScreenshotHudView>();
-                recorder = new ScreenRecorder(hud.GetComponent<RectTransform>());
-                isInstantiated = true;
-            }
-
+            hud.SetActive(true);
             World.Add<IsInWorldCamera>(camera);
         }
 
         private void DisableCamera()
         {
-            ref CameraComponent cameraComponent = ref World.Get<CameraComponent>(camera);
-            cameraComponent.Mode = CameraMode.ThirdPerson;
-
-            hud.gameObject.SetActive(false);
-
+            hud.SetActive(false);
             World.Remove<IsInWorldCamera>(camera);
         }
     }
