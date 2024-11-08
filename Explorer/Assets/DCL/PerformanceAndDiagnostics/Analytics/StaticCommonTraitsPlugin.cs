@@ -18,6 +18,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         private readonly JsonElement dclRendererType = SystemInfo.deviceType.ToString(); // Desktop, Console, Handeheld (Mobile), Unknown
         private readonly JsonElement rendererVersion = Application.version;
+        private readonly JsonElement installerName = Application.installerName;
         private readonly JsonElement os = SystemInfo.operatingSystem;
         private readonly JsonElement runtime;
 
@@ -51,6 +52,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             trackEvent.Context["session_id"] = sessionId;
             trackEvent.Context["launcher_anonymous_id"] = launcherAnonymousId;
             trackEvent.Context["renderer_version"] = rendererVersion;
+            trackEvent.Context["installer_name"] = installerName;
             trackEvent.Context["runtime"] = runtime;
             trackEvent.Context["operating_system"] = os;
 
