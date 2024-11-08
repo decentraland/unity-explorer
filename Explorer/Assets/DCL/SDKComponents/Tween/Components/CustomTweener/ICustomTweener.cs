@@ -18,5 +18,6 @@ namespace DCL.SDKComponents.Tween.Components
         void Initialize(PBTween pbTween, float durationInSeconds);
         void UpdateSDKTransform(ref SDKTransform sdkTransform);
         void UpdateTransform(Transform transform);
+        void UpdateMaterial(Material material);
     }
 }

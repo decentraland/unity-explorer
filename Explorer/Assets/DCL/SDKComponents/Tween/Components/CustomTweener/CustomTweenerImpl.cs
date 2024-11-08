@@ -5,6 +5,7 @@ using DG.Tweening;
 using DG.Tweening.Core;
 using DG.Tweening.CustomPlugins;
 using DG.Tweening.Plugins.Options;
+using ECS.Unity.Textures.Components.Extensions;
 using UnityEngine;
 
 namespace DCL.SDKComponents.Tween.Components
@@ -33,6 +34,8 @@ namespace DCL.SDKComponents.Tween.Components
         {
             transform.localPosition = currentValue;
         }
+
+        public override void UpdateMaterial(Material _) { }
     }
 
     public class ScaleTweener : CustomTweener<Vector3, VectorOptions>
@@ -60,6 +63,7 @@ namespace DCL.SDKComponents.Tween.Components
             transform.localScale = currentValue;
         }
 
+        public override void UpdateMaterial(Material _) { }
     }
 
     public class RotationTweener : CustomTweener<Quaternion, NoOptions>
@@ -89,5 +93,29 @@ namespace DCL.SDKComponents.Tween.Components
             transform.localRotation = currentValue;
         }
 
+        public override void UpdateMaterial(Material _) { }
+    }
+
+    public class TextureMoveTweener : CustomTweener<Vector2, VectorOptions>
+    {
+        protected override TweenerCore<Vector2, Vector2, VectorOptions> CreateTweener(Vector2 start, Vector2 end, float duration) =>
+            DOTween.To(() => currentValue, x => currentValue = x, end, duration);
+
+        protected override (Vector2, Vector2) GetTweenValues(PBTween pbTween)
+        {
+            Vector2 start = pbTween.TextureMove.Start.ToUnityVector2();
+            Vector2 end = pbTween.TextureMove.End.ToUnityVector2();
+            currentValue = start;
+            return (start, end);
+        }
+
+        public override void UpdateSDKTransform(ref SDKTransform _) { }
+
+        public override void UpdateTransform(Transform _) { }
+
+        public override void UpdateMaterial(Material material)
+        {
+            material.SetTextureOffset(Shader.PropertyToID("_BaseMap"), currentValue);
+        }
     }
 }

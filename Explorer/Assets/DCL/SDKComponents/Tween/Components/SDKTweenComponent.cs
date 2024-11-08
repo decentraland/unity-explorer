@@ -8,19 +8,13 @@ namespace DCL.SDKComponents.Tween.Components
         public TweenStateStatus TweenStateStatus { get; set; }
         public ICustomTweener CustomTweener { get; set; }
 
-
-        public bool IsActive()
-        {
-            return CustomTweener != null && CustomTweener.IsActive();
-        }
+        public bool IsActive() =>
+            CustomTweener != null && CustomTweener.IsActive();
 
         public void Rewind()
         {
             CustomTweener.Pause();
             CustomTweener.Rewind();
         }
-
-       
     }
-    
 }

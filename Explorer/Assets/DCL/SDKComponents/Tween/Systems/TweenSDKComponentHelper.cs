@@ -3,8 +3,8 @@ using CrdtEcsBridge.Components.Transform;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.ECSComponents;
 using DCL.SDKComponents.Tween.Components;
+using ECS.Unity.Materials.Components;
 using ECS.Unity.Transforms.Components;
-using UnityEngine;
 
 namespace DCL.SDKComponents.Tween.Helpers
 {
@@ -26,14 +26,20 @@ namespace DCL.SDKComponents.Tween.Helpers
             {
                 tweener.UpdateTransform(transformComponent.Transform);
                 transformComponent.UpdateCache();
-            } else
+            }
+            else
                 sdkTransform.IsDirty = true;
+        }
 
+        public static void UpdateTweenResult(ICustomTweener tweener, ref MaterialComponent materialComponent, bool shouldUpdateMaterial)
+        {
+            if (shouldUpdateMaterial)
+                tweener.UpdateMaterial(materialComponent.Result!);
         }
 
         public static void WriteSDKTransformUpdateInCRDT(SDKTransform sdkTransform, IECSToCRDTWriter ecsToCrdtWriter, CRDTEntity sdkEntity)
         {
-            ecsToCrdtWriter.PutMessage<SDKTransform, SDKTransform>((component , transform) =>
+            ecsToCrdtWriter.PutMessage<SDKTransform, SDKTransform>((component, transform) =>
             {
                 component.Position.Value = transform.Position.Value;
                 component.ParentId = transform.ParentId;

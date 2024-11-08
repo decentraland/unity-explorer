@@ -3,6 +3,7 @@ using DCL.ECSComponents;
 using DG.Tweening;
 using DG.Tweening.Core;
 using DG.Tweening.Plugins.Options;
+using System;
 using UnityEngine;
 
 namespace DCL.SDKComponents.Tween.Components
@@ -19,6 +20,7 @@ namespace DCL.SDKComponents.Tween.Components
         protected abstract (T, T) GetTweenValues(PBTween pbTween);
         public abstract void UpdateSDKTransform(ref SDKTransform sdkTransform);
         public abstract void UpdateTransform(Transform transform);
+        public abstract void UpdateMaterial(Material material);
 
         public void Play() =>
             core.Play();
