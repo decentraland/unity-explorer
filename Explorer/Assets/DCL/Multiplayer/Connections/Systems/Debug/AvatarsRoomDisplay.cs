@@ -9,19 +9,17 @@ namespace DCL.Multiplayer.Connections.Systems.Debug
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly ElementBinding<string> activeCount;
 
+        internal readonly ElementBinding<bool> debugAvatarsRooms;
+
         public AvatarsRoomDisplay(IReadOnlyEntityParticipantTable entityParticipantTable, DebugWidgetBuilder widgetBuilder)
         {
             this.entityParticipantTable = entityParticipantTable;
             activeCount = new ElementBinding<string>(string.Empty);
+            debugAvatarsRooms = new ElementBinding<bool>(false);
 
             widgetBuilder
-               .AddCustomMarker("Active Avatars", activeCount);
-        }
-
-        public AvatarsRoomDisplay(IReadOnlyEntityParticipantTable entityParticipantTable, ElementBinding<string> activeCount)
-        {
-            this.entityParticipantTable = entityParticipantTable;
-            this.activeCount = activeCount;
+               .AddCustomMarker("Active Avatars", activeCount)
+               .AddControl(new DebugConstLabelDef("Show Room Indicator"), new DebugToggleDef(debugAvatarsRooms));
         }
 
         public void Update()
