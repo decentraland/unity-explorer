@@ -29,6 +29,7 @@ namespace DCL.Nametags
     public partial class NametagPlacementSystem : BaseUnityLoopSystem
     {
         private const float NAMETAG_SCALE_MULTIPLIER = 0.15f;
+        private const string NAMETAG_DEFAULT_WALLET_ID = "0000";
 
         private readonly IObjectPool<NametagView> nametagViewPool;
         private readonly ChatEntryConfigurationSO chatEntryConfiguration;
@@ -87,7 +88,7 @@ namespace DCL.Nametags
         }
 
         [Query]
-        [None(typeof(NametagView), typeof(Profile))]
+        [None(typeof(NametagView), typeof(Profile), typeof(DeleteEntityIntention))]
         private void AddTagForNonPlayerAvatars([Data] in CameraComponent camera, Entity e, in AvatarShapeComponent avatarShape, in CharacterTransform characterTransform, in PartitionComponent partitionComponent)
         {
             if (partitionComponent.IsBehind || IsOutOfRenderRange(camera, characterTransform) || string.IsNullOrEmpty(avatarShape.Name)) return;
@@ -186,11 +187,14 @@ namespace DCL.Nametags
         private NametagView CreateNameTagView(in AvatarShapeComponent avatarShape, bool hasClaimedName, bool useVerifiedIcon = true)
         {
             NametagView nametagView = nametagViewPool.Get();
+            nametagView.gameObject.name = avatarShape.ID;
             nametagView.Id = avatarShape.ID;
             nametagView.Username.color = chatEntryConfiguration.GetNameColor(avatarShape.Name);
             nametagView.InjectConfiguration(chatBubbleConfigurationSo);
-            nametagView.SetUsername(avatarShape.Name, avatarShape.ID.Substring(avatarShape.ID.Length - 4), hasClaimedName, useVerifiedIcon);
-            nametagView.gameObject.name = avatarShape.ID;
+
+            int walletIdLastDigitsIndex = avatarShape.ID.Length - 4;
+            string walletId = walletIdLastDigitsIndex >= 0 ? avatarShape.ID.Substring(walletIdLastDigitsIndex) : NAMETAG_DEFAULT_WALLET_ID;
+            nametagView.SetUsername(avatarShape.Name, walletId, hasClaimedName, useVerifiedIcon);
 
             return nametagView;
         }
