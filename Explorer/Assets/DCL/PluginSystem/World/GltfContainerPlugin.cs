@@ -1,4 +1,5 @@
 using Arch.SystemGroups;
+using CrdtEcsBridge.Components.Transform;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.World.Dependencies;
@@ -36,6 +37,7 @@ namespace DCL.PluginSystem.World
         private readonly bool localSceneDevelopment;
         private readonly bool useRemoteAssetBundles;
         private readonly ILoadingStatus loadingStatus;
+        private readonly IComponentPool<SDKTransform> sdkTransformPool;
 
         public GltfContainerPlugin(ECSWorldSingletonSharedDependencies globalDeps, CacheCleaner cacheCleaner, ISceneReadinessReportQueue sceneReadinessReportQueue, SceneAssetLock sceneAssetLock, IComponentPoolsRegistry poolsRegistry, bool localSceneDevelopment, bool useRemoteAssetBundles, ILoadingStatus loadingStatus)
         {
@@ -46,7 +48,7 @@ namespace DCL.PluginSystem.World
             this.useRemoteAssetBundles = useRemoteAssetBundles;
             this.loadingStatus = loadingStatus;
             assetsCache = new GltfContainerAssetsCache(poolsRegistry);
-
+            sdkTransformPool = poolsRegistry.GetReferenceTypePool<SDKTransform>();
             cacheCleaner.Register(assetsCache);
         }
 
@@ -83,7 +85,7 @@ namespace DCL.PluginSystem.World
                 buffer, sharedDependencies.SceneStateProvider, globalDeps.MemoryBudget, loadingStatus);
 
             // GltfNode
-            GltfNodeSystem.InjectToWorld(ref builder, sharedDependencies.EntitiesMap);
+            GltfNodeSystem.InjectToWorld(ref builder, sharedDependencies.EntitiesMap, sharedDependencies.EcsToCRDTWriter, sdkTransformPool, sharedDependencies.SceneData);
             // TODO: GltfNodeLoadingState
 
 
