@@ -19,7 +19,13 @@ namespace DCL.InWorldCamera.CameraReel.Components
 
         [HideInInspector] public DateTime DateTimeBucket;
 
-        public List<ReelThumbnailView> Setup(DateTime bucket, List<CameraReelResponse> images, ReelGalleryPoolManager reelGalleryPool, ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,OptionButtonView optionsButton)
+        public List<ReelThumbnailView> Setup(
+            DateTime bucket,
+            List<CameraReelResponse> images,
+            ReelGalleryPoolManager reelGalleryPool,
+            ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
+            OptionButtonView optionsButton,
+            Action<CameraReelResponse, Sprite> onThumbnailLoaded)
         {
             this.reelGalleryPoolManager = reelGalleryPool;
             DateTimeBucket = bucket;
@@ -27,8 +33,13 @@ namespace DCL.InWorldCamera.CameraReel.Components
             monthText.SetText(bucket.ToString("MMMM yyyy", CultureInfo.InvariantCulture));
 
             List<ReelThumbnailView> newViews = new();
+
             for (int i = 0; i < images.Count; i++)
-                newViews.Add(reelGalleryPoolManager.GetThumbnailElement(images[i], gridLayoutGroup, cameraReelScreenshotsStorage, optionsButton));
+            {
+                ReelThumbnailView thumbnailView = reelGalleryPoolManager.GetThumbnailElement(images[i], gridLayoutGroup, cameraReelScreenshotsStorage, optionsButton);
+                thumbnailView.OnThumbnailLoaded += onThumbnailLoaded;
+                newViews.Add(thumbnailView);
+            }
 
             reelThumbnailViews.AddRange(newViews);
 
@@ -37,8 +48,11 @@ namespace DCL.InWorldCamera.CameraReel.Components
 
         public void Release()
         {
-            for(int i = 0; i < reelThumbnailViews.Count; i++)
+            for (int i = 0; i < reelThumbnailViews.Count; i++)
+            {
+                reelThumbnailViews[i].Release();
                 reelGalleryPoolManager.ReleaseThumbnailElement(reelThumbnailViews[i]);
+            }
             reelThumbnailViews.Clear();
         }
 

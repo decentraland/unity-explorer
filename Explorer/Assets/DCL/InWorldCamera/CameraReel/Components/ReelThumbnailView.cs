@@ -3,6 +3,7 @@ using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.UI;
 using DG.Tweening;
+using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -25,11 +26,14 @@ namespace DCL.InWorldCamera.CameraReel.Components
         [SerializeField] private Vector3 optionButtonOffset = new (-15.83997f, -22f, 0);
         [SerializeField] private float scaleFactorOnHover = 1.03f;
         [SerializeField] private float scaleAnimationDuration = 0.3f;
+        [SerializeField] private float thumbnailLoadedAnimationDuration = 0.3f;
 
         private CameraReelResponse cameraReelResponse;
         private CancellationTokenSource loadImageCts;
         private ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
         private OptionButtonView optionButton;
+
+        public event Action<CameraReelResponse, Sprite> OnThumbnailLoaded;
 
         public void Setup(CameraReelResponse cameraReelData, ICameraReelScreenshotsStorage cameraReelScreenshotsStorageService, OptionButtonView optionsButton)
         {
@@ -45,9 +49,15 @@ namespace DCL.InWorldCamera.CameraReel.Components
         private async UniTask LoadImage(ICameraReelScreenshotsStorage cameraReelScreenshotsStorage, CancellationToken token)
         {
             loadingBrightView.StartLoadingAnimation(thumbnailImage.gameObject);
+
             Texture2D thumbnailTexture = await cameraReelScreenshotsStorage.GetScreenshotThumbnailAsync(cameraReelResponse.thumbnailUrl);
             thumbnailImage.sprite = Sprite.Create(thumbnailTexture, new Rect(0, 0, THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT), Vector2.zero);
+
             loadingBrightView.FinishLoadingAnimation(thumbnailImage.gameObject);
+
+            thumbnailImage.DOFade(1f, thumbnailLoadedAnimationDuration);
+
+            OnThumbnailLoaded?.Invoke(cameraReelResponse, thumbnailImage.sprite);
         }
 
         public void OnPointerEnter(PointerEventData eventData)
@@ -64,6 +74,11 @@ namespace DCL.InWorldCamera.CameraReel.Components
             transform.DOScale(Vector3.one, scaleAnimationDuration);
             optionButton.ResetState();
             optionButton.gameObject.SetActive(false);
+        }
+
+        public void Release()
+        {
+            OnThumbnailLoaded = null;
         }
     }
 }
