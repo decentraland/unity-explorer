@@ -65,7 +65,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
             });
         }
 
-        public static String sha256_hash(String value) {
+        private static String sha256_hash(String value) {
             StringBuilder Sb = new StringBuilder();
 
             using (SHA256 hash = SHA256Managed.Create()) {
