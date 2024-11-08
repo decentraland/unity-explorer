@@ -741,8 +741,8 @@ MonoBehaviour:
   m_Colors:
     m_NormalColor: {r: 0, g: 0, b: 0, a: 0.6}
     m_HighlightedColor: {r: 0, g: 0, b: 0, a: 0.8}
-    m_PressedColor: {r: 0, g: 0, b: 0, a: 0.6}
-    m_SelectedColor: {r: 0.08627451, g: 0.08235294, b: 0.09411765, a: 1}
+    m_PressedColor: {r: 0, g: 0, b: 0, a: 0.69803923}
+    m_SelectedColor: {r: 0, g: 0, b: 0, a: 0.6}
     m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.5019608}
     m_ColorMultiplier: 1
     m_FadeDuration: 0.1
@@ -1525,7 +1525,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 186, y: 1}
+  m_SizeDelta: {x: 184, y: 1}
   m_Pivot: {x: 1, y: 1}
 --- !u!222 &6116607182511838969
 CanvasRenderer:
