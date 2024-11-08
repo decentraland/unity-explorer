@@ -1,3 +1,4 @@
+using DCL.AssetsProvision;
 using DCL.UI;
 using System;
 using TMPro;
@@ -53,6 +54,12 @@ namespace DCL.Navmap
         [field: SerializeField]
         public TMP_Text PlayerCountLabel { get; private set; }
 
+        [field: SerializeField]
+        public EventElementAssetReference EventElementViewRef { get; private set; }
+
+        [field: SerializeField]
+        public RectTransform TabsLayoutRoot { get; private set; }
+
         [field: Header("Overview Tab")]
         [field: SerializeField]
         public Button OverviewTabButton { get; private set; }
@@ -103,6 +110,12 @@ namespace DCL.Navmap
         {
             public string category;
             public GameObject container;
+        }
+
+        [Serializable]
+        public class EventElementAssetReference : ComponentReference<EventElementView>
+        {
+            public EventElementAssetReference(string guid) : base(guid) { }
         }
     }
 }

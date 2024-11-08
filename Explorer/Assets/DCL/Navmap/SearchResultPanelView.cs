@@ -20,7 +20,7 @@ namespace DCL.Navmap
         public CanvasGroup CanvasGroup { get; private set; }
 
         [Serializable]
-        public class ResultAssetReference : ComponentReference<FullSearchResultsView>
+        public class ResultAssetReference : ComponentReference<PlaceElementView>
         {
             public ResultAssetReference(string guid) : base(guid) { }
         }

@@ -238,17 +238,19 @@ namespace DCL.PluginSystem.Global
             INavmapBus navmapBus = new NavmapCommandBus(CreateSearchPlaceCommand,
                 CreateShowPlaceCommand);
 
-            ObjectPool<FullSearchResultsView> searchResultsPool = await InitializeSearchResultsPool(navmapView.SearchBarResultPanel, ct);
+            ObjectPool<PlaceElementView> placeElementsPool = await InitializePlaceElementsPool(navmapView.SearchBarResultPanel, ct);
+            ObjectPool<EventElementView> eventElementsPool = await InitializeEventElementsPool(navmapView.PlacesAndEventsPanelView.PlaceInfoPanelView, ct);
 
             searchResultPanelController = new SearchResultPanelController(navmapView.SearchBarResultPanel,
-                searchResultsPool, navmapBus);
+                placeElementsPool, navmapBus);
 
             searchBarController = new (navmapView.SearchBarView,
                 navmapView.HistoryRecordPanelView, navmapView.PlacesAndEventsPanelView.SearchFiltersView,
                 inputBlock, searchHistory, navmapBus);
 
             placeInfoPanelController = new PlaceInfoPanelController(navmapView.PlacesAndEventsPanelView.PlaceInfoPanelView,
-                webRequestController, placesAPIService, mapPathEventBus, navmapBus, chatMessagesBus);
+                webRequestController, placesAPIService, mapPathEventBus, navmapBus, chatMessagesBus, eventsApiService,
+                eventElementsPool);
 
             placesAndEventsPanelController = new (navmapView.PlacesAndEventsPanelView,
                 searchBarController, searchResultPanelController, placeInfoPanelController);
@@ -288,22 +290,41 @@ namespace DCL.PluginSystem.Global
             inputHandler = new ExplorePanelInputHandler(dclInput, mvcManager);
         }
 
-        private async UniTask<ObjectPool<FullSearchResultsView>> InitializeSearchResultsPool(SearchResultPanelView view, CancellationToken ct)
+        private async UniTask<ObjectPool<PlaceElementView>> InitializePlaceElementsPool(SearchResultPanelView view, CancellationToken ct)
         {
-            FullSearchResultsView asset = (await assetsProvisioner.ProvideInstanceAsync(view.ResultRef, ct: ct)).Value;
+            PlaceElementView asset = (await assetsProvisioner.ProvideInstanceAsync(view.ResultRef, ct: ct)).Value;
 
-            return new ObjectPool<FullSearchResultsView>(
+            return new ObjectPool<PlaceElementView>(
                 () => CreatePoolElements(asset),
                 actionOnGet: result => result.gameObject.SetActive(true),
                 actionOnRelease: result => result.gameObject.SetActive(false),
                 defaultCapacity: 8
             );
 
-            FullSearchResultsView CreatePoolElements(FullSearchResultsView asset)
+            PlaceElementView CreatePoolElements(PlaceElementView asset)
             {
-                FullSearchResultsView fullSearchResultsView = Object.Instantiate(asset, view.searchResultsContainer);
-                fullSearchResultsView.ConfigurePlaceImageController(webRequestController);
-                return fullSearchResultsView;
+                PlaceElementView placeElementView = Object.Instantiate(asset, view.searchResultsContainer);
+                placeElementView.ConfigurePlaceImageController(webRequestController);
+                return placeElementView;
+            }
+        }
+
+        private async UniTask<ObjectPool<EventElementView>> InitializeEventElementsPool(PlaceInfoPanelView view, CancellationToken ct)
+        {
+            EventElementView asset = (await assetsProvisioner.ProvideInstanceAsync(view.EventElementViewRef, ct: ct)).Value;
+
+            return new ObjectPool<EventElementView>(
+                () => CreatePoolElements(asset),
+                actionOnGet: result => result.gameObject.SetActive(true),
+                actionOnRelease: result => result.gameObject.SetActive(false),
+                defaultCapacity: 8
+            );
+
+            EventElementView CreatePoolElements(EventElementView asset)
+            {
+                EventElementView placeElementView = Object.Instantiate(asset, view.EventsTabContainer.transform);
+                placeElementView.Init(webRequestController);
+                return placeElementView;
             }
         }
 

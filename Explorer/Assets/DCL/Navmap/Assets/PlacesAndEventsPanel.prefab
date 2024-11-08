@@ -18321,6 +18321,12 @@ MonoBehaviour:
   <CreatorNameLabel>k__BackingField: {fileID: 4968360359927067191}
   <LikeRateLabel>k__BackingField: {fileID: 7894314724600710811}
   <PlayerCountLabel>k__BackingField: {fileID: 5817072539188960492}
+  <EventElementViewRef>k__BackingField:
+    m_AssetGUID: 624d527621f514c5999533539668c4d3
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_EditorAssetChanged: 0
+  <TabsLayoutRoot>k__BackingField: {fileID: 2668638129558591895}
   <OverviewTabButton>k__BackingField: {fileID: 139852077125555819}
   <OverviewTabContainer>k__BackingField: {fileID: 5367378000087364028}
   <OverviewTabSelected>k__BackingField: {fileID: 1570948238320567703}

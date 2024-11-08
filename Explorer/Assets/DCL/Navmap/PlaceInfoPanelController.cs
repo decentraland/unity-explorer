@@ -8,8 +8,11 @@ using DCL.PlacesAPIService;
 using DCL.UI;
 using DCL.WebRequests;
 using System;
+using System.Collections.Generic;
+using System.Globalization;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.Pool;
 using Utility;
 
 namespace DCL.Navmap
@@ -17,17 +20,22 @@ namespace DCL.Navmap
     public class PlaceInfoPanelController
     {
         private readonly PlaceInfoPanelView view;
+        private readonly IWebRequestController webRequestController;
         private readonly IPlacesAPIService placesAPIService;
         private readonly IMapPathEventBus mapPathEventBus;
         private readonly INavmapBus navmapBus;
         private readonly IChatMessagesBus chatMessagesBus;
+        private readonly IEventsApiService eventsApiService;
+        private readonly ObjectPool<EventElementView> eventElementPool ;
         private readonly ImageController thumbnailImage;
         private readonly MultiStateButtonController dislikeButton;
         private readonly MultiStateButtonController likeButton;
         private readonly MultiStateButtonController favoriteButton;
+        private readonly List<EventElementView> eventElements = new ();
         private PlacesData.PlaceInfo? place;
         private CancellationTokenSource? favoriteCancellationToken;
         private CancellationTokenSource? rateCancellationToken;
+        private CancellationTokenSource? eventsCancellationToken;
         private Vector2Int? currentBaseParcel;
         private Vector2Int? destination;
 
@@ -36,13 +44,18 @@ namespace DCL.Navmap
             IPlacesAPIService placesAPIService,
             IMapPathEventBus mapPathEventBus,
             INavmapBus navmapBus,
-            IChatMessagesBus chatMessagesBus)
+            IChatMessagesBus chatMessagesBus,
+            IEventsApiService eventsApiService,
+            ObjectPool<EventElementView> eventElementPool)
         {
             this.view = view;
+            this.webRequestController = webRequestController;
             this.placesAPIService = placesAPIService;
             this.mapPathEventBus = mapPathEventBus;
             this.navmapBus = navmapBus;
             this.chatMessagesBus = chatMessagesBus;
+            this.eventsApiService = eventsApiService;
+            this.eventElementPool = eventElementPool;
             thumbnailImage = new ImageController(view.Thumbnail, webRequestController);
 
             mapPathEventBus.OnSetDestination += SetDestination;
@@ -51,7 +64,7 @@ namespace DCL.Navmap
             view.EventsTabButton.onClick.AddListener(() =>
             {
                 Toggle(Section.EVENTS);
-                FetchEvents();
+                FetchAndShowEventsOfThePlace();
             });
 
             view.PhotosTabButton.onClick.AddListener(() =>
@@ -113,6 +126,7 @@ namespace DCL.Navmap
             UpdateFavoriteStatusAsync(favoriteCancellationToken.Token).Forget();
 
             UpdateDestinationStatus();
+            ClearEventElements();
         }
 
         public void SetLiveEvent(EventDTO @event)
@@ -228,9 +242,90 @@ namespace DCL.Navmap
             }
         }
 
-        private void FetchEvents()
+        private void FetchAndShowEventsOfThePlace()
         {
-            // TODO
+            eventsCancellationToken = eventsCancellationToken.SafeRestart();
+            FetchEventsAndShowThemAsync(eventsCancellationToken.Token).Forget();
+
+            return;
+
+            async UniTaskVoid FetchEventsAndShowThemAsync(CancellationToken ct)
+            {
+                SetAsLoadingState();
+
+                IReadOnlyList<EventDTO> events = await eventsApiService.GetEventsByParcelAsync(place!.base_position, ct);
+
+                ClearEventElements();
+
+                foreach (EventDTO @event in events)
+                {
+                    EventElementView element = eventElementPool.Get();
+                    eventElements.Add(element);
+
+                    var schedule = "";
+
+                    if (DateTime.TryParse(@event.start_at, null, DateTimeStyles.RoundtripKind, out DateTime startAt))
+                    {
+                        schedule = @event.live
+                            ? $"Event started {(DateTime.UtcNow - startAt).TotalMinutes} min ago"
+                            // TODO: we might need to convert to local, currently R:RFC1123 GMT
+                            : startAt.ToString("R");
+                    }
+
+                    element.InterestedButton!.OnButtonClicked += GetInterested;
+                    element.ShowDetailsButton.onClick.AddListener(() => OpenEventDetails(@event));
+                    element.ShareButton.onClick.AddListener(() => Share(@event));
+                    element.Thumbnail?.RequestImage(@event.image, true);
+                    element.LiveContainer.SetActive(@event.live);
+                    element.EventNameLabel.text = @event.name;
+                    element.InterestedUserCountLabel.text = @event.total_attendees.ToString();
+                    // TODO: get data from places api: https://places.decentraland.org/api/places?positions=-71,117 -> user_count
+                    // element.JoinedUserCountLabel.text = @event.
+                    element.ScheduleLabel.text = schedule;
+                    element.Animator.SetTrigger(UIAnimationHashes.LOADED);
+                }
+
+                view.TabsLayoutRoot.ForceUpdateLayoutAsync(CancellationToken.None).Forget();
+            }
+
+            void GetInterested(bool interested)
+            {
+            }
+
+            void SetAsLoadingState()
+            {
+                for (var i = 0; i < 8; i++)
+                {
+                    EventElementView element = eventElementPool.Get();
+                    eventElements.Add(element);
+                }
+            }
+
+            void Share(EventDTO @event)
+            {
+                // TODO
+            }
+
+            void OpenEventDetails(EventDTO @event)
+            {
+                // TODO
+            }
+        }
+
+        private void ClearEventElements()
+        {
+            foreach (EventElementView element in eventElements)
+            {
+                element.ShareButton.onClick.RemoveAllListeners();
+                element.ShowDetailsButton.onClick.RemoveAllListeners();
+                element.InterestedButton?.ClearClickListeners();
+                element.Animator.Rebind();
+                element.Animator.Update(0f);
+                element.Thumbnail?.StopLoading();
+                eventElementPool.Release(element);
+            }
+
+            eventElements.Clear();
         }
 
         private void FetchPhotos()
