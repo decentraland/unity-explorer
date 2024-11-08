@@ -122,10 +122,13 @@ namespace DCL.Navmap
             view.clearSearchButton.gameObject.SetActive(!string.IsNullOrEmpty(searchText));
             searchCancellationToken = searchCancellationToken.SafeRestart();
 
-            if (string.IsNullOrEmpty(searchText) || searchText.Length < 3)
+            if (string.IsNullOrEmpty(searchText))
+            {
                 historyRecordPanelView.gameObject.SetActive(true);
-            else
-                historyRecordPanelView.gameObject.SetActive(false);
+                return;
+            }
+
+            historyRecordPanelView.gameObject.SetActive(false);
 
             currentSearchText = searchText;
 
@@ -138,8 +141,7 @@ namespace DCL.Navmap
             {
                 await UniTask.Delay(1000, cancellationToken: ct).SuppressCancellationThrow();
 
-                if (!string.IsNullOrEmpty(searchText))
-                    searchHistory.Add(searchText);
+                searchHistory.Add(searchText);
 
                 await SearchAndShowAsync(ct).SuppressCancellationThrow();
             }
