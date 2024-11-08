@@ -6,6 +6,7 @@ using CRDT;
 using CrdtEcsBridge.Components;
 using DCL.Character.Components;
 using DCL.Diagnostics;
+using DCL.ECSComponents;
 using DCL.Multiplayer.Profiles.Systems;
 using DCL.Multiplayer.SDK.Components;
 using DCL.Profiles;
@@ -46,7 +47,7 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
 
         [Query]
         [All(typeof(Profile))]
-        [None(typeof(PlayerCRDTEntity), typeof(DeleteEntityIntention))]
+        [None(typeof(PlayerCRDTEntity), typeof(PBAvatarShape), typeof(DeleteEntityIntention))]
         private void AddPlayerCRDTEntity(Entity entity, in CharacterTransform characterTransform)
         {
             // Reserve entity straight-away, numeration will be preserved across all scenes
@@ -63,7 +64,7 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
         }
 
         [Query]
-        [None(typeof(DeleteEntityIntention))]
+        [None(typeof(DeleteEntityIntention), typeof(PBAvatarShape))]
         private void ModifyPlayerScene(in CharacterTransform characterTransform, ref PlayerCRDTEntity playerCRDTEntity)
         {
             ResolvePlayerCRDTScene(characterTransform, ref playerCRDTEntity, playerCRDTEntity.CRDTEntity);

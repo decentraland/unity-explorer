@@ -38,7 +38,7 @@ namespace ECS.Unity.AvatarShape.Systems
 
         [Query]
         [None(typeof(SDKAvatarShapeComponent))]
-        private void LoadAvatarShape(Entity entity, ref PBAvatarShape pbAvatarShape, ref PartitionComponent partitionComponent, in TransformComponent transformComponent)
+        private void LoadAvatarShape(Entity entity, ref PBAvatarShape pbAvatarShape, ref PartitionComponent partitionComponent, ref TransformComponent transformComponent)
         {
             World.Add(entity, new SDKAvatarShapeComponent(globalWorld.Create(pbAvatarShape, partitionComponent, new CharacterTransform(transformComponent.Transform))));
         }

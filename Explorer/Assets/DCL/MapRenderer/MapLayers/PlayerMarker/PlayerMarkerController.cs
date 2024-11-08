@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.Character.Components;
+using DCL.ECSComponents;
 using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
 using MVC;
@@ -54,8 +55,9 @@ namespace DCL.MapRenderer.MapLayers.PlayerMarker
             system.Activate();
         }
 
-        [All(typeof(PlayerComponent))]
         [Query]
+        [All(typeof(PlayerComponent))]
+        [None(typeof(PBAvatarShape))]
         private void SetPlayerTransform(in CharacterTransform transformComponent)
         {
             SetPosition(transformComponent.Transform.position);

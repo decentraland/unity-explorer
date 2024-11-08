@@ -14,6 +14,7 @@ using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using System.Runtime.CompilerServices;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
+using DCL.ECSComponents;
 using UnityEngine;
 using UnityEngine.Pool;
 
@@ -76,7 +77,7 @@ namespace DCL.Nametags
         }
 
         [Query]
-        [None(typeof(NametagView), typeof(DeleteEntityIntention))]
+        [None(typeof(NametagView), typeof(PBAvatarShape), typeof(DeleteEntityIntention))]
         private void AddTagForPlayerAvatars([Data] in CameraComponent camera, Entity e, in AvatarShapeComponent avatarShape, in CharacterTransform characterTransform, in PartitionComponent partitionComponent, in Profile profile)
         {
             if (partitionComponent.IsBehind || IsOutOfRenderRange(camera, characterTransform) || (camera.Mode == CameraMode.FirstPerson && World.Has<PlayerComponent>(e))) return;
@@ -89,6 +90,7 @@ namespace DCL.Nametags
 
         [Query]
         [None(typeof(NametagView), typeof(Profile), typeof(DeleteEntityIntention))]
+        [All(typeof(PBAvatarShape))]
         private void AddTagForNonPlayerAvatars([Data] in CameraComponent camera, Entity e, in AvatarShapeComponent avatarShape, in CharacterTransform characterTransform, in PartitionComponent partitionComponent)
         {
             if (partitionComponent.IsBehind || IsOutOfRenderRange(camera, characterTransform) || string.IsNullOrEmpty(avatarShape.Name)) return;
@@ -111,6 +113,7 @@ namespace DCL.Nametags
         }
 
         [Query]
+        [None(typeof(PBAvatarShape))]
         private void UpdateOwnTag([Data] in CameraComponent camera, in AvatarShapeComponent avatarShape, in CharacterTransform characterTransform, in Profile profile, in NametagView nametagView)
         {
             if (nametagView.Id == avatarShape.ID)

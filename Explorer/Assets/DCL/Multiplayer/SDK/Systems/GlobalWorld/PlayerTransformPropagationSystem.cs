@@ -6,6 +6,7 @@ using CrdtEcsBridge.Components;
 using CrdtEcsBridge.Components.Transform;
 using DCL.Character.Components;
 using DCL.Diagnostics;
+using DCL.ECSComponents;
 using DCL.Multiplayer.SDK.Components;
 using DCL.Optimization.Pools;
 using ECS.Abstract;
@@ -34,7 +35,7 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
         }
 
         [Query]
-        [None(typeof(DeleteEntityIntention))]
+        [None(typeof(DeleteEntityIntention), typeof(PBAvatarShape))]
         private void PropagateTransformToScene(in CharacterTransform characterTransform, in PlayerCRDTEntity playerCRDTEntity)
         {
             if (!characterTransform.Transform.hasChanged) return;
