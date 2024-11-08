@@ -52,7 +52,7 @@ namespace DCL.Navmap
             view.inputField.onSelect.AddListener(_ => OnSearchBarSelected(true));
             view.inputField.onDeselect.AddListener(_ => OnSearchBarSelected(false));
             view.inputField.onValueChanged.AddListener(OnInputValueChanged);
-            view.clearSearchButton.onClick.AddListener(ClearSearch);
+            view.clearSearchButton.onClick.AddListener(() => ClearSearch(true));
             view.BackButton.onClick.AddListener(OnBackClicked);
             view.clearSearchButton.gameObject.SetActive(false);
             ShowPreviousSearches();
@@ -84,9 +84,13 @@ namespace DCL.Navmap
             view.inputField.SetTextWithoutNotify(place.title);
         }
 
-        public void ClearSearch()
+        public void ClearSearch(bool notify = false)
         {
-            view.inputField.SetTextWithoutNotify("");
+            if (notify)
+                view.inputField.text = "";
+            else
+                view.inputField.SetTextWithoutNotify("");
+
             view.clearSearchButton.gameObject.SetActive(false);
         }
 
@@ -119,12 +123,9 @@ namespace DCL.Navmap
             searchCancellationToken = searchCancellationToken.SafeRestart();
 
             if (string.IsNullOrEmpty(searchText) || searchText.Length < 3)
-            {
                 historyRecordPanelView.gameObject.SetActive(true);
-                return;
-            }
-
-            historyRecordPanelView.gameObject.SetActive(false);
+            else
+                historyRecordPanelView.gameObject.SetActive(false);
 
             currentSearchText = searchText;
 
@@ -136,7 +137,10 @@ namespace DCL.Navmap
             async UniTaskVoid SearchAsync(CancellationToken ct)
             {
                 await UniTask.Delay(1000, cancellationToken: ct).SuppressCancellationThrow();
-                searchHistory.Add(searchText);
+
+                if (!string.IsNullOrEmpty(searchText))
+                    searchHistory.Add(searchText);
+
                 await SearchAndShowAsync(ct).SuppressCancellationThrow();
             }
         }

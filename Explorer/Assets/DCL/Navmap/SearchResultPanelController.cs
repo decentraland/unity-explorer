@@ -59,8 +59,10 @@ namespace DCL.Navmap
         {
             for (var i = 0; i < 8; i++)
             {
+                var key = i.ToString();
+                if (usedPoolElements.ContainsKey(key)) continue;
                 FullSearchResultsView fullSearchResultsView = resultsPool.Get();
-                usedPoolElements.Add(i.ToString(), fullSearchResultsView);
+                usedPoolElements.Add(key, fullSearchResultsView);
             }
         }
 
