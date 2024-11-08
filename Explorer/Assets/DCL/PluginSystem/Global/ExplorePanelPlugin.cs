@@ -230,7 +230,7 @@ namespace DCL.PluginSystem.Global
             ProvidedAsset<ControlsSettingsAsset> controlsSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.ControlsSettingsAsset, ct);
             settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>(), settingsMenuConfiguration.Value, generalAudioMixer.Value, realmPartitionSettings.Value, landscapeData.Value, qualitySettingsAsset.Value, controlsSettingsAsset.Value, systemMemoryCap, worldVolumeMacBus);
 
-            NavmapView navmapView = explorePanelView.GetComponentInChildren<NavmapView>();
+            navmapView = explorePanelView.GetComponentInChildren<NavmapView>();
             categoryFilterController = new CategoryFilterController(navmapView.categoryToggles, mapRendererContainer.MapRenderer);
 
             searchHistory = new PlayerPrefsSearchHistory();
