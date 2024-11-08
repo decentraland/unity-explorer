@@ -26,9 +26,9 @@ using Object = UnityEngine.Object;
 namespace DCL.InWorldCamera.ScreencaptureCamera.CameraObject.Systems
 {
     [UpdateInGroup(typeof(CameraGroup))]
-    [UpdateAfter(typeof(ApplyCinemachineCameraInputSystem))]
+    [UpdateAfter(typeof(EnableInWorldCameraSystem))]
     [LogCategory(ReportCategory.IN_WORLD_CAMERA)]
-    public partial class InWorldCameraInputSystem : BaseUnityLoopSystem
+    public partial class CameraScreencaptureSystem : BaseUnityLoopSystem
     {
         private readonly DCLInput.InWorldCameraActions inputSchema;
 
@@ -51,7 +51,7 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.CameraObject.Systems
         private bool isMakingScreenshot;
         private SingleInstanceEntity camera;
 
-        public InWorldCameraInputSystem(World world, DCLInput.InWorldCameraActions inputSchema, GameObject hudPrefab, SelfProfile selfProfile, RealmData realmData,
+        public CameraScreencaptureSystem(World world, DCLInput.InWorldCameraActions inputSchema, GameObject hudPrefab, SelfProfile selfProfile, RealmData realmData,
             Entity playerEntity, IPlacesAPIService placesAPIService, ICharacterObject characterObject) : base(world)
         {
             this.inputSchema = inputSchema;
@@ -102,14 +102,6 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.CameraObject.Systems
                 CollectVisiblePeopleQuery(World, frustumPlanes);
                 CollectMetadata().Forget();
             }
-
-            if (inputSchema.ToggleInWorld!.triggered)
-            {
-                if (World.Has<IsInWorldCamera>(camera))
-                    DisableCamera();
-                else
-                    EnableCamera();
-            }
         }
 
         private async UniTask GetOwnProfileAsync()
@@ -143,32 +135,6 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.CameraObject.Systems
                     wearables.Add(w.ToString());
 
             return wearables.ToArray();
-        }
-
-        private void EnableCamera()
-        {
-            ref CameraComponent cameraComponent = ref World.TryGetRef<CameraComponent>(camera, out bool exists);
-            if (exists) cameraComponent.Mode = CameraMode.InWorld;
-
-            if (isInstantiated)
-                hud.gameObject.SetActive(true);
-            else
-            {
-                hud = Object.Instantiate(hudPrefab, Vector3.zero, Quaternion.identity).GetComponent<ScreenshotHudView>();
-                recorder = new ScreenRecorder(hud.GetComponent<RectTransform>());
-                isInstantiated = true;
-            }
-
-            World.Add<IsInWorldCamera>(camera);
-        }
-
-        private void DisableCamera()
-        {
-            ref CameraComponent cameraComponent = ref World.TryGetRef<CameraComponent>(camera, out bool exists);
-            if (exists) cameraComponent.Mode = CameraMode.ThirdPerson;
-
-            hud.gameObject.SetActive(false);
-            World.Remove<IsInWorldCamera>(camera);
         }
 
         private async UniTask CollectMetadata()

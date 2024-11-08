@@ -26,17 +26,5 @@ namespace DCL.InWorldCamera.ScreencaptureCamera
 
             return metadata;
         }
-
-        public static DateTime GetLocalizedDateTime(this ScreenshotMetadata screenshotMetadata)
-        {
-            if (!long.TryParse(screenshotMetadata.dateTime, out long unixTimestamp)) return new DateTime();
-            return DateTimeOffset.FromUnixTimeSeconds(unixTimestamp).ToLocalTime().DateTime;
-        }
-
-        public static DateTime GetStartOfTheMonthDate(this ScreenshotMetadata screenshotMetadata)
-        {
-            DateTime localizedDateTime = GetLocalizedDateTime(screenshotMetadata);
-            return new DateTime(localizedDateTime.Year, localizedDateTime.Month, 1);
-        }
     }
 }

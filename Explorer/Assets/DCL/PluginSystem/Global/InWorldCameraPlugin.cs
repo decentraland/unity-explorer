@@ -51,7 +51,7 @@ namespace DCL.PluginSystem.Global
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            InWorldCameraInputSystem.InjectToWorld(ref builder, input.InWorldCamera, hud.Value, selfProfile, realmData, playerEntity, placesAPIService, characterObject);
+            EnableInWorldCameraSystem.InjectToWorld(ref builder, input.InWorldCamera, hud.Value);//, selfProfile, realmData, playerEntity, placesAPIService, characterObject);
         }
 
         [Serializable]
