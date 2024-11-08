@@ -360,7 +360,7 @@ ImageResult texturesfuse_cmp_image_from_memory(
         SwapRGBAtoBGRA(bits, bitsLength);
     }
 
-    CMP_Texture sourceTexture;
+    CMP_Texture sourceTexture = {0};
     sourceTexture.dwSize = sizeof(CMP_Texture);
     sourceTexture.dwWidth = *width;
     sourceTexture.dwHeight = *height;
@@ -370,7 +370,7 @@ ImageResult texturesfuse_cmp_image_from_memory(
     sourceTexture.pData = bits;
 
     // Set up destination texture (BC5 format)
-    CMP_Texture destTexture;
+    CMP_Texture destTexture = {0};
     destTexture.dwSize = sizeof(CMP_Texture);
     destTexture.dwWidth = *width;
     destTexture.dwHeight = *height;
