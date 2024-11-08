@@ -70,7 +70,8 @@ namespace DCL.Nametags
             CameraComponent camera = playerCamera.GetCameraComponent(World);
 
             UpdateTagQuery(World, camera);
-            AddTagQuery(World, camera);
+            AddTagForPlayerAvatarsQuery(World, camera);
+            AddTagForNonPlayerAvatarsQuery(World, camera);
             ProcessChatBubbleComponentsQuery(World);
             UpdateOwnTagQuery(World, camera);
             RemoveUnusedChatBubbleComponentsQuery(World);
@@ -78,18 +79,23 @@ namespace DCL.Nametags
 
         [Query]
         [None(typeof(NametagView))]
-        private void AddTag([Data] in CameraComponent camera, Entity e, in AvatarShapeComponent avatarShape, in CharacterTransform characterTransform, in PartitionComponent partitionComponent, in Profile profile)
+        private void AddTagForPlayerAvatars([Data] in CameraComponent camera, Entity e, in AvatarShapeComponent avatarShape, in CharacterTransform characterTransform, in PartitionComponent partitionComponent, in Profile profile)
         {
             if (partitionComponent.IsBehind || IsOutOfRenderRange(camera, characterTransform) || (camera.Mode == CameraMode.FirstPerson && World.Has<PlayerComponent>(e))) return;
 
-            NametagView nametagView = nametagViewPool.Get();
-            nametagView.Id = avatarShape.ID;
-            nametagView.Username.color = chatEntryConfiguration.GetNameColor(avatarShape.Name);
-            nametagView.InjectConfiguration(chatBubbleConfigurationSo);
-            nametagView.SetUsername(avatarShape.Name, avatarShape.ID.Substring(avatarShape.ID.Length - 4), profile.HasClaimedName);
-            nametagView.gameObject.name = avatarShape.ID;
-            UpdateTagTransparencyAndScale(nametagView, camera.Camera, characterTransform.Position);
+            NametagView nametagView = CreateNameTagView(in avatarShape, profile.HasClaimedName);
+            UpdateTagPosition(nametagView, camera.Camera, characterTransform.Position);
 
+            World.Add(e, nametagView);
+        }
+
+        [Query]
+        [None(typeof(NametagView), typeof(Profile))]
+        private void AddTagForNonPlayerAvatars([Data] in CameraComponent camera, Entity e, in AvatarShapeComponent avatarShape, in CharacterTransform characterTransform, in PartitionComponent partitionComponent)
+        {
+            if (partitionComponent.IsBehind || IsOutOfRenderRange(camera, characterTransform) || string.IsNullOrEmpty(avatarShape.Name)) return;
+
+            NametagView nametagView = CreateNameTagView(in avatarShape, true, false);
             UpdateTagPosition(nametagView, camera.Camera, characterTransform.Position);
 
             World.Add(e, nametagView);
@@ -129,7 +135,6 @@ namespace DCL.Nametags
 
             World.Remove<ChatBubbleComponent>(e);
         }
-
 
         [Query]
         [All(typeof(ChatBubbleComponent))]
@@ -194,5 +199,17 @@ namespace DCL.Nametags
 
         private bool IsOutOfRenderRange(CameraComponent camera, CharacterTransform characterTransform) =>
             Vector3.Distance(camera.Camera.transform.position, characterTransform.Position) > chatBubbleConfigurationSo.maxDistance;
+
+        private NametagView CreateNameTagView(in AvatarShapeComponent avatarShape, bool hasClaimedName, bool useVerifiedIcon = true)
+        {
+            NametagView nametagView = nametagViewPool.Get();
+            nametagView.Id = avatarShape.ID;
+            nametagView.Username.color = chatEntryConfiguration.GetNameColor(avatarShape.Name);
+            nametagView.InjectConfiguration(chatBubbleConfigurationSo);
+            nametagView.SetUsername(avatarShape.Name, avatarShape.ID.Substring(avatarShape.ID.Length - 4), hasClaimedName, useVerifiedIcon);
+            nametagView.gameObject.name = avatarShape.ID;
+
+            return nametagView;
+        }
     }
 }
