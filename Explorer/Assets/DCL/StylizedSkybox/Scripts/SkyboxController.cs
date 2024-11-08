@@ -1,4 +1,5 @@
 using DCL.Diagnostics;
+using DCL.FeatureFlags;
 using UnityEngine;
 using TMPro;
 using UnityEngine.Rendering;
@@ -62,10 +63,6 @@ public class SkyboxController : MonoBehaviour
 
     private void Start()
     {
-        SetTime(SecondsInDay / 2);
-
-        if (PlayOnStart) { Play(); }
-        else { Pause(); }
     }
 
     private void Update()
@@ -96,7 +93,7 @@ public class SkyboxController : MonoBehaviour
         UpdateTimeUI();
     }
 
-    public void Initialize(Material skyboxMat, Light dirLight, AnimationClip skyboxAnimationClip)
+    public void Initialize(Material skyboxMat, Light dirLight, AnimationClip skyboxAnimationClip, FeatureFlagsCache featureFlagsCache)
     {
         if (skyboxMat != null)
             skyboxMaterial = skyboxMat;
@@ -139,8 +136,34 @@ public class SkyboxController : MonoBehaviour
             RenderSettings.fog = true;
         }
 
+        bool useRemoteSkyboxSettings = featureFlagsCache != null && featureFlagsCache.Configuration.IsEnabled("alfa-skybox-settings");
+
+        int defaultTime = SecondsInDay / 2;
+
+        if (!useRemoteSkyboxSettings)
+        {
+            ApplySkyboxState(defaultTime);
+            return;
+        }
+
+        if (!featureFlagsCache.Configuration.TryGetJsonPayload("alfa-skybox-settings", "settings", out SkyboxSettings skyboxSettings))
+        {
+            ApplySkyboxState(defaultTime);
+            return;
+        }
+
+        Speed = skyboxSettings.speed;
+        ApplySkyboxState(skyboxSettings.time);
+    }
+
+    private void ApplySkyboxState(float time)
+    {
+        SetTime(time);
+        if (PlayOnStart) Play();
+        else Pause();
         isInitialized = true;
     }
+
 
     /// <summary>
     ///     Auxiliary method for the Inspector to Pause the cycle
@@ -303,7 +326,15 @@ public class SkyboxController : MonoBehaviour
         //Added the flag to allow editing of the prefab in a separate scene
         //that doesn't have the regular plugin init flow
         if (editMode)
-            Initialize(null, null, null);
+            Initialize(null, null, null, null);
     }
 #endif
+
+    private struct SkyboxSettings
+    {
+        public int time;
+        public int speed;
+    }
 }
+
+
