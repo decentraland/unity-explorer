@@ -15,20 +15,11 @@ namespace DCL.InWorldCamera.CameraReel
 {
     public class CameraReelController : ISection, IDisposable
     {
-        private const int PAGINATION_LIMIT = 100;
-        private const int THUMBNAIL_POOL_DEFAULT_CAPACITY = 100;
-        private const int THUMBNAIL_POOL_MAX_SIZE = 500;
-        private const int GRID_POOL_DEFAULT_CAPACITY = 10;
-        private const int GRID_POOL_MAX_SIZE = 500;
-
         private readonly CameraReelView view;
         private readonly RectTransform rectTransform;
         private readonly ICameraReelStorageService cameraReelStorageService;
         private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
         private readonly IWeb3IdentityCache web3IdentityCache;
-        private readonly PagedCameraReelManager pagedCameraReelManager;
-        private readonly ReelGalleryPoolManager reelGalleryPoolManager;
-        private readonly List<MonthGridView> monthGridViews = new ();
 
         private CancellationTokenSource showCancellationTokenSource;
 
@@ -43,10 +34,7 @@ namespace DCL.InWorldCamera.CameraReel
             this.cameraReelScreenshotsStorage = cameraReelScreenshotsStorage;
             this.web3IdentityCache = web3IdentityCache;
 
-            pagedCameraReelManager = new PagedCameraReelManager(cameraReelStorageService, web3IdentityCache, PAGINATION_LIMIT);
-            reelGalleryPoolManager = new ReelGalleryPoolManager(view.thumbnailViewPrefab, view.monthGridPrefab, view.unusedThumbnailViewObject, view.unusedGridViewObject, THUMBNAIL_POOL_DEFAULT_CAPACITY, THUMBNAIL_POOL_MAX_SIZE, GRID_POOL_DEFAULT_CAPACITY, GRID_POOL_MAX_SIZE);
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
-
 
             this.view.OnMouseEnter += OnStorageFullIconEnter;
             this.view.OnMouseExit += OnStorageFullIconExit;
@@ -62,7 +50,7 @@ namespace DCL.InWorldCamera.CameraReel
         {
             view.emptyState.SetActive(false);
             view.loadingSpinner.SetActive(true);
-            view.scrollViewGameObject.SetActive(false);
+            view.cameraReelGalleryView.gameObject.SetActive(false);
 
             CameraReelStorageStatus storageStatus = await cameraReelStorageService.GetUserGalleryStorageInfoAsync(web3IdentityCache.Identity.Address, ct);
             SetStorageStatus(storageStatus);
@@ -74,28 +62,12 @@ namespace DCL.InWorldCamera.CameraReel
                 return;
             }
 
-            await pagedCameraReelManager.Initialize(storageStatus.ScreenshotsAmount, ct);
+            view.cameraReelGalleryView.SetUp(cameraReelStorageService, cameraReelScreenshotsStorage);
 
-            for (int i = 0; i < pagedCameraReelManager.GetBucketCount(); i++)
-            {
-                MonthGridView monthGridView = reelGalleryPoolManager.GetGridElement(view.scrollContentRect);
-                var imageBucket = pagedCameraReelManager.GetBucket(i);
-                monthGridView.Setup(imageBucket.Item1, imageBucket.Item2, reelGalleryPoolManager, cameraReelScreenshotsStorage, view.optionsButton);
-                monthGridViews.Add(monthGridView);
-            }
+            await view.cameraReelGalleryView.ShowWalletGallery(web3IdentityCache.Identity.Address, view.optionsButton, ct);
 
-            view.scrollViewGameObject.SetActive(true);
+            view.cameraReelGalleryView.gameObject.SetActive(true);
             view.loadingSpinner.SetActive(false);
-        }
-
-        private void ReleaseGridViews()
-        {
-            for (int i = 0; i < monthGridViews.Count; i++)
-            {
-                monthGridViews[i].Release();
-                reelGalleryPoolManager.ReleaseGridElement(monthGridViews[i]);
-            }
-            monthGridViews.Clear();
         }
 
         private void SetStorageStatus(CameraReelStorageStatus storageStatus)
@@ -117,8 +89,6 @@ namespace DCL.InWorldCamera.CameraReel
         {
             view.gameObject.SetActive(false);
             showCancellationTokenSource.SafeCancelAndDispose();
-            pagedCameraReelManager.Flush();
-            ReleaseGridViews();
         }
 
         public void Animate(int triggerId)

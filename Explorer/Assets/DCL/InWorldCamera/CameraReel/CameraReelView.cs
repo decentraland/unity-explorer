@@ -12,19 +12,12 @@ namespace DCL.InWorldCamera.CameraReel
         [SerializeField] internal GameObject loadingSpinner;
         [SerializeField] internal GameObject emptyState;
         [SerializeField] internal CanvasGroup storageFullToast;
-        [SerializeField] internal RectTransform scrollContentRect;
-        [SerializeField] internal GameObject scrollViewGameObject;
+
+        [Header("Gallery")]
+        [SerializeField] internal CameraReelGalleryView cameraReelGalleryView;
 
         [Header("Storage configuration")]
         [SerializeField] internal float storageFullToastFadeTime = 0.3f;
-
-        [Header("Thumbnail objects")]
-        [SerializeField] internal ReelThumbnailView thumbnailViewPrefab;
-        [SerializeField] internal GameObject unusedThumbnailViewObject;
-
-        [Header("Grid objects")]
-        [SerializeField] internal MonthGridView monthGridPrefab;
-        [SerializeField] internal GameObject unusedGridViewObject;
 
         [Header("Context menu")]
         [SerializeField] internal OptionButtonView optionsButton;

@@ -11,65 +11,49 @@ namespace DCL.InWorldCamera.CameraReel.Components
 {
     public class PagedCameraReelManager
     {
+        public bool AllImagesLoaded { get; private set; } = false;
+
         private readonly ICameraReelStorageService cameraReelStorageService;
-        private readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly string walletAddress;
         private readonly int pageSize;
-        private readonly Dictionary<DateTime, List<CameraReelResponse>> elements = new ();
-        private readonly List<DateTime> buckets = new ();
-        private CancellationTokenSource cancellationTokenSource = new();
+
+        private int currentOffset = 0;
+        private int currentLoadedImages = 0;
 
         public PagedCameraReelManager(
             ICameraReelStorageService cameraReelStorageService,
-            IWeb3IdentityCache web3IdentityCache,
+            string wallet,
             int pageSize)
         {
             this.cameraReelStorageService = cameraReelStorageService;
-            this.web3IdentityCache = web3IdentityCache;
+            this.walletAddress = wallet;
             this.pageSize = pageSize;
         }
 
-        public int GetBucketCount() =>
-            buckets.Count;
 
-        public async UniTask Initialize(int totalScreenshot, CancellationToken ct)
+        public async UniTask<Dictionary<DateTime, List<CameraReelResponse>>> FetchNextPage(CancellationToken ct)
         {
-            cancellationTokenSource = cancellationTokenSource.SafeRestart();
+            CameraReelResponses response = await cameraReelStorageService.GetScreenshotGalleryAsync(walletAddress, pageSize, currentOffset, ct);
+            currentOffset += pageSize;
 
-            int parallelNumber = (int)MathF.Ceiling(totalScreenshot * 1f / pageSize);
+            currentLoadedImages += response.images.Count;
+            AllImagesLoaded = currentLoadedImages == response.currentImages;
 
-            UniTask<CameraReelResponses>[] tasks = new UniTask<CameraReelResponses>[parallelNumber];
+            Dictionary<DateTime, List<CameraReelResponse>> elements = new ();
+            for (int i = 0; i < response.images.Count; i++)
+            {
+                DateTime imageBucket = GetImageBucket(response.images[i]);
 
-            for (int i = 0; i < parallelNumber; i++)
-                tasks[i] = cameraReelStorageService.GetScreenshotGalleryAsync(web3IdentityCache.Identity.Address, pageSize, pageSize * i, ct);
+                if (!elements.ContainsKey(imageBucket))
+                    elements[imageBucket] = new List<CameraReelResponse>();
 
-            CameraReelResponses[] taskResults = await UniTask.WhenAll(tasks);
+                elements[imageBucket].Add(response.images[i]);
+            }
 
-            for (int j = 0; j < taskResults.Length; j++)
-                for (int i = 0; i < taskResults[j].images.Count; i++)
-                {
-                    DateTime imageBucket = GetImageBucket(taskResults[j].images[i]);
-
-                    if (!elements.ContainsKey(imageBucket))
-                    {
-                        elements[imageBucket] = new List<CameraReelResponse>();
-                        buckets.Add(imageBucket);
-                    }
-
-                    elements[imageBucket].Add(taskResults[j].images[i]);
-                }
+            return elements;
         }
 
-        public (DateTime, List<CameraReelResponse>) GetBucket(int index) =>
-            (buckets[index], elements[buckets[index]]);
-
-        public void Flush()
-        {
-            elements.Clear();
-            buckets.Clear();
-            cancellationTokenSource.SafeCancelAndDispose();
-        }
-
-        private DateTime GetImageBucket(CameraReelResponse image)
+        public DateTime GetImageBucket(CameraReelResponse image)
         {
             DateTime actualDateTime = !long.TryParse(image.metadata.dateTime, out long unixTimestamp) ? new DateTime() : DateTimeOffset.FromUnixTimeSeconds(unixTimestamp).ToLocalTime().DateTime;
             return new DateTime(actualDateTime.Year, actualDateTime.Month, 1, 0, 0, 0, 0);
