@@ -304,7 +304,7 @@ ImageResult texturesfuse_cmp_image_from_memory(
     int bytesLength,
     int maxSideLength,
     CMP_FORMAT cmpFormat,
-    CMP_CompressOptions compressOptions,
+    CMP_CustomOptions compressOptions,
 
     BYTE **outputBytes,
     int *outputLength,
@@ -384,8 +384,16 @@ ImageResult texturesfuse_cmp_image_from_memory(
 
     *outputBytes = destTexture.pData;
 
-    compressOptions.dwSize = sizeof(CMP_CompressOptions);
-    CMP_ERROR cmpResult = CMP_ConvertTexture(&sourceTexture, &destTexture, &compressOptions, nullptr);
+    CMP_CompressOptions options = {0};
+    options.dwSize = sizeof(CMP_CompressOptions);
+    options.fquality = compressOptions.fQuality;
+    options.bDisableMultiThreading = compressOptions.disableMultithreading;
+    options.dwnumThreads = compressOptions.dwnumThreads;
+    options.nEncodeWith = compressOptions.encodeWith;
+
+    FreeImage_OutputMessageProc(FIF_UNKNOWN, "Encoding with option is: %d", options.nEncodeWith);
+
+    CMP_ERROR cmpResult = CMP_ConvertTexture(&sourceTexture, &destTexture, &options, nullptr);
 
     FreeImage_Unload(image);
 
@@ -402,7 +410,7 @@ ImageResult texturesfuse_cmp_image_from_memory(
     return Success;
 }
 
-#ifdef TEST_TEXTURESFUSE // revert to ifdef
+#ifndef TEST_TEXTURESFUSE // revert to ifdef
 
 std::streamsize sizeOf(std::ifstream *stream)
 {
@@ -448,49 +456,53 @@ bytesFromFile(std::string path)
 
 int main()
 {
-    InitOptions options;
-    options.ASTCProfile = ASTCENC_PRF_LDR_SRGB;
-    options.blockX = 6;
-    options.blockY = 6;
-    options.blockZ = 1;
-    options.quality = 10;
-    options.flags = 1;
+    std::cout << "Hello world!";
 
-    std::string imagePath = "../image.jpg";
-    std::string outputPath = "../output.jpg";
-    int maxSideLength = 512;
+    return 0;
 
-    context *context;
-    auto imageResult = texturesfuse_initialize(options, &context);
-    if (imageResult != Success)
-    {
-        std::cout << "Context init result: " << imageResult << '\n';
-        return 0;
-    }
+    // InitOptions options;
+    // options.ASTCProfile = ASTCENC_PRF_LDR_SRGB;
+    // options.blockX = 6;
+    // options.blockY = 6;
+    // options.blockZ = 1;
+    // options.quality = 10;
+    // options.flags = 1;
 
-    BytesResult result = bytesFromFile(imagePath);
+    // std::string imagePath = "../image.jpg";
+    // std::string outputPath = "../output.jpg";
+    // int maxSideLength = 512;
 
-    BYTE *output;
-    int outputLength;
-    unsigned int width;
-    unsigned int height;
-    FfiHandle handle;
+    // context *context;
+    // auto imageResult = texturesfuse_initialize(options, &context);
+    // if (imageResult != Success)
+    // {
+    //     std::cout << "Context init result: " << imageResult << '\n';
+    //     return 0;
+    // }
 
-    imageResult = texturesfuse_astc_image_from_memory(
-        context,
-        result.data,
-        static_cast<int>(result.size),
-        maxSideLength,
+    // BytesResult result = bytesFromFile(imagePath);
 
-        &output,
-        &outputLength,
-        &width,
-        &height,
-        &handle);
+    // BYTE *output;
+    // int outputLength;
+    // unsigned int width;
+    // unsigned int height;
+    // FfiHandle handle;
 
-    std::cout << "Image result: " << imageResult << '\n';
+    // imageResult = texturesfuse_astc_image_from_memory(
+    //     context,
+    //     result.data,
+    //     static_cast<int>(result.size),
+    //     maxSideLength,
 
-    texturesfuse_dispose(context);
+    //     &output,
+    //     &outputLength,
+    //     &width,
+    //     &height,
+    //     &handle);
+
+    // std::cout << "Image result: " << imageResult << '\n';
+
+    // texturesfuse_dispose(context);
 }
 
 #endif

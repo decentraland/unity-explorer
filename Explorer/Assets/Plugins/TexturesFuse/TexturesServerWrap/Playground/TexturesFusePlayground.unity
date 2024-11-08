@@ -255,7 +255,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   display: {fileID: 1454420715}
   textureType: 0
-  overrideDefaultUnzip: 0
+  overrideDefaultUnzip: 1
   options:
     maxSide: 512
     adjustments:
@@ -274,10 +274,10 @@ MonoBehaviour:
       g: 1
       b: 2
       a: 3
-    useOverride: 0
-    fquality: 1
-    disableMultithreading: 1
-    dwnumThreads: 1
+    useOverride: 1
+    fquality: 0.0015
+    disableMultithreading: 0
+    dwnumThreads: 0
     cmpComputeTypeEncode: 1
   pathOrUri: https://assets-cdn.decentraland.org/dclcitizen/3d/hrm.png
   debugOutputFromNative: 1

@@ -90,6 +90,14 @@ extern "C"
         double gamma;
     };
 
+    struct CMP_CustomOptions
+    {
+        float fQuality;
+        bool disableMultithreading;
+        CMP_DWORD dwnumThreads;
+        CMP_Compute_type encodeWith;
+    };
+
     /**
      * Context provides synchronization. Library is stateless and all multithreading/threadsafety should be resolved on client's side.
      * Context shouldn't be mutated by client's side by design.
@@ -141,7 +149,7 @@ extern "C"
         int bytesLength,
         int maxSideLength,
         CMP_FORMAT cmpFormat,
-        CMP_CompressOptions compressOptions,
+        CMP_CustomOptions compressOptions,
 
         BYTE **outputBytes,
         int *outputLength,

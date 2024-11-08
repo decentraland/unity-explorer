@@ -37,11 +37,11 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
             NativeMethods.Adjustments Adjustments { get; }
 
             [SuppressMessage("ReSharper", "InconsistentNaming")]
-            NativeMethods.CMP_CompressOptions CMP_CompressOptions { get; }
+            NativeMethods.CMP_CustomOptions CMP_CompressOptions { get; }
 
             class Const : IOptions
             {
-                public Const(Mode mode, NativeMethods.Swizzle swizzle, int maxSide, NativeMethods.Adjustments adjustments, NativeMethods.CMP_CompressOptions cmpCompressOptions)
+                public Const(Mode mode, NativeMethods.Swizzle swizzle, int maxSide, NativeMethods.Adjustments adjustments, NativeMethods.CMP_CustomOptions cmpCompressOptions)
                 {
                     Mode = mode;
                     Swizzle = swizzle;
@@ -55,7 +55,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
                 public int MaxSide { get; }
                 public NativeMethods.Adjustments Adjustments { get; }
 
-                public NativeMethods.CMP_CompressOptions CMP_CompressOptions { get; }
+                public NativeMethods.CMP_CustomOptions CMP_CompressOptions { get; }
             }
         }
 
@@ -80,7 +80,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
                     NativeMethods.Swizzle.NewDefault(),
                     1024,
                     NativeMethods.Adjustments.NewEmpty(),
-                    NativeMethods.CMP_CompressOptions.NewDefault()
+                    NativeMethods.CMP_CustomOptions.NewDefault()
                 );
             }
 

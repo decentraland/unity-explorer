@@ -13,10 +13,6 @@ namespace Plugins.TexturesFuse.TexturesServerWrap
         private const string LIBRARY_NAME = "libtexturesfuse";
         private const string PREFIX = "texturesfuse_";
 
-        private const int AMD_MAX_CMDS = 20;
-        private const int AMD_MAX_CMD_STR = 32;
-        private const int AMD_MAX_CMD_PARAM = 16;
-
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate void OutputMessageDelegate(int format, string message);
 
@@ -142,16 +138,6 @@ namespace Plugins.TexturesFuse.TexturesServerWrap
 
         [SuppressMessage("ReSharper", "InconsistentNaming")]
         [SuppressMessage("ReSharper", "ArrangeTypeMemberModifiers")]
-        public enum CMP_GPUDecode
-        {
-            GPUDecode_OPENGL = 0, // Use OpenGL   to decode Textures (default)
-            GPUDecode_DIRECTX, // Use DirectX  to decode Textures
-            GPUDecode_VULKAN, // Use Vulkan  to decode Textures
-            GPUDecode_INVALID
-        }
-
-        [SuppressMessage("ReSharper", "InconsistentNaming")]
-        [SuppressMessage("ReSharper", "ArrangeTypeMemberModifiers")]
         public enum CMP_Compute_type
         {
             CMP_UNKNOWN = 0,
@@ -172,195 +158,6 @@ namespace Plugins.TexturesFuse.TexturesServerWrap
             CMP_Speed_Fast, // Slightly lower quality but much faster compression mode - DXTn & ATInN only
             CMP_Speed_SuperFast, // Slightly lower quality but much, much faster compression mode - DXTn & ATInN only
         };
-
-        [SuppressMessage("ReSharper", "InconsistentNaming")]
-        [SuppressMessage("ReSharper", "ArrangeTypeMemberModifiers")]
-        [Serializable]
-        [StructLayout(LayoutKind.Sequential)]
-        public struct KernelDeviceInfo
-        {
-            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 256)]
-            byte[] m_deviceName; //[256];  // Device name (CPU or GPU)
-            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 128)]
-            byte[] m_version; //[128];     // Kernel pipeline version number (CPU or GPU)
-            int m_maxUCores; // Max Unit device CPU cores or GPU compute units (CU)
-
-            // AMD GCN::One compute unit combines 64 shader processors
-            // with 4 Texture Mapping units (TMU)
-        };
-
-        [SuppressMessage("ReSharper", "InconsistentNaming")]
-        [SuppressMessage("ReSharper", "ArrangeTypeMemberModifiers")]
-        [Serializable]
-        [StructLayout(LayoutKind.Sequential)]
-        public struct KernelPerformanceStats
-        {
-            float m_computeShaderElapsedMS; // Total Elapsed Shader Time to process all the blocks
-            int m_num_blocks; // Number of Texel (Typically 4x4) blocks
-            float m_CmpMTxPerSec; // Number of Mega Texels processed per second
-        };
-
-        [SuppressMessage("ReSharper", "InconsistentNaming")]
-        [SuppressMessage("ReSharper", "ArrangeTypeMemberModifiers")]
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        public delegate void CMP_PrintInfoStr([MarshalAs(UnmanagedType.LPStr)] string infoStr);
-
-        [SuppressMessage("ReSharper", "InconsistentNaming")]
-        [SuppressMessage("ReSharper", "ArrangeTypeMemberModifiers")]
-        [Serializable]
-        [StructLayout(LayoutKind.Sequential)]
-        public struct AMD_CMD_SET
-        {
-            [MarshalAs(UnmanagedType.ByValArray, SizeConst = AMD_MAX_CMD_STR)]
-            byte[] strCommand; //[AMD_MAX_CMD_STR];
-
-            [MarshalAs(UnmanagedType.ByValArray, SizeConst = AMD_MAX_CMD_PARAM)]
-            byte[] strParameter; //[AMD_MAX_CMD_PARAM];
-        }
-
-        [SuppressMessage("ReSharper", "InconsistentNaming")]
-        [SuppressMessage("ReSharper", "ArrangeTypeMemberModifiers")]
-        [Serializable]
-        [StructLayout(LayoutKind.Sequential)]
-        public struct CMP_CompressOptions
-        {
-            public uint dwSize; // The size of this structure.
-
-            // New to v4.5
-            // Flags to control parameters in Brotli-G compression preconditioning
-            public bool doPreconditionBRLG;
-            public bool doDeltaEncodeBRLG;
-            public bool doSwizzleBRLG;
-
-            // New to v4.3
-            public uint dwPageSize; // Used by Brotli-G Codec for setting the page size used for compression
-
-            // New to v4.2
-            public bool bUseRefinementSteps; // Used by BC1, BC2, and BC3 codecs to improve quality,
-
-            // this setting will increase encoding time for better quality results
-            public int nRefinementSteps; // Currently only 1 step is implemented
-
-            // v4.1 and older settings
-            public bool bUseChannelWeighting; // Use channel weights. With swizzled formats the weighting applies to the data within the specified
-
-            // channel not the channel itself. Channel weigthing is not implemented for BC6H and BC7
-            public float fWeightingRed; // The weighting of the Red or X Channel.
-            public float fWeightingGreen; // The weighting of the Green or Y Channel.
-            public float fWeightingBlue; // The weighting of the Blue or Z Channel.
-            public bool bUseAdaptiveWeighting; // Adapt weighting on a per-block basis.
-            public bool bDXT1UseAlpha; // Encode single-bit alpha data. Only valid when compressing to DXT1 & BC1.
-            public bool bUseGPUDecompress; // Use GPU to decompress. Decode API can be changed by specified in DecodeWith parameter. Default is OpenGL.
-            public bool bUseCGCompress; // Use SPMD/GPU to compress. Encode API can be changed by specified in EncodeWith parameter. Default is OpenCL.
-            public byte nAlphaThreshold; // The alpha threshold to use when compressing to DXT1 & BC1 with bDXT1UseAlpha.
-
-            // Texels with an alpha value less than the threshold are treated as transparent.
-            // Note: When nCompressionSpeed is not set to Normal AphaThreshold is ignored for DXT1 & BC1
-            public bool bDisableMultiThreading; // Disable multi-threading of the compression. This will slow the compression but can be
-
-            // useful if you're managing threads in your application.
-            // if set BC7 dwnumThreads will default to 1 during encoding and then return back to its original value when done.
-            public CMP_Speed nCompressionSpeed; // The trade-off between compression speed & quality.
-
-            // Notes:
-            // 1. This value is ignored for BC6H and BC7 (for BC7 the compression speed depends on fquaility value)
-            // 2. For 64 bit DXT1 to DXT5 and BC1 to BC5 nCompressionSpeed is ignored and set to Noramal Speed
-            // 3. To force the use of nCompressionSpeed setting regarless of Note 2 use fQuality at 0.05
-            public CMP_GPUDecode nGPUDecode; // This value is set using DecodeWith argument (OpenGL, DirectX) default is OpenGL
-            public CMP_Compute_type nEncodeWith; // This value is set using EncodeWith argument, currently only OpenCL is used
-            public uint dwnumThreads; // Number of threads to initialize for BC7 encoding (Max up to 128). Default set to auto,
-            public float fquality; // Quality of encoding. This value ranges between 0.0 and 1.0. BC7 & BC6 default is 0.05, others codecs are set at 1.0
-
-            // setting fquality above 0.0 gives the fastest, lowest quality encoding, 1.0 is the slowest,
-            // highest quality encoding. Default set to a low value of 0.05
-            public bool brestrictColour; // This setting is a quality tuning setting for BC7 which may be necessary for convenience in some
-
-            // applications. Default set to false. If set and the block does not need alpha it instructs
-            //  the code not to use modes that have combined colour + alpha - this avoids the possibility that the encoder might
-            //  choose an alpha other than 1.0 (due to parity) and cause something to become accidentally slightly transparent
-            //  (it's possible that when encoding 3-component texture applications will assume that the 4th component can
-            //  safely be assumed to be 1.0 all the time.)
-            public bool brestrictAlpha; // This setting is a quality tuning setting for BC7 which may be necessary for some textures. Default set to false,
-
-            // if set it will also apply restriction to blocks with alpha to avoid issues with punch-through
-            // or thresholded alpha encoding
-            public uint dwmodeMask; // Mode to set BC7 to encode blocks using any of 8 different block modes in order to obtain the highest quality. Default set to 0xFF)
-
-            // You can combine the bits to test for which modes produce the best image quality.
-            // The mode that produces the best image quality above a set quality level (fquality) is used and subsequent modes set in the mask
-            // are not tested, this optimizes the performance of the compression versus the required quality.
-            // If you prefer to check all modes regardless of the quality then set the fquality to a value of 0
-            public int NumCmds; // Count of the number of command value pairs in CmdSet[].  Max value that can be set is AMD_MAX_CMDS = 20 on this release
-
-            [MarshalAs(UnmanagedType.ByValArray, SizeConst = AMD_MAX_CMDS)]
-            public AMD_CMD_SET[] CmdSet; // Extended command options that can be set for the specified codec\n
-
-            // Example to set the number of threads and quality used for compression\n
-            //        CMP_CompressOptions Options;\n
-            //        memset(Options,0,sizeof(CMP_CompressOptions));\n
-            //        Options.dwSize = sizeof(CMP_CompressOptions)\n
-            //        Options.CmdSet[0].strCommand   = "NumThreads"\n
-            //        Options.CmdSet[0].strParameter = "8";\n
-            //        Options.CmdSet[1].strCommand   = "Quality"\n
-            //        Options.CmdSet[1].strParameter = "1.0";\n
-            //        Options.NumCmds = 2;\n
-            public float fInputDefog; // ToneMap properties for float type image send into non float compress algorithm.
-            public float fInputExposure; //
-            public float fInputKneeLow; //
-            public float fInputKneeHigh; //
-            public float fInputGamma; //
-            public float fInputFilterGamma; // Gamma correction value applied for mipmap generation
-
-            public int iCmpLevel; // < draco setting: compression level (range 0-10: higher mean more compressed) - default 7
-            public int iPosBits; // quantization bits for position - default 14
-            public int iTexCBits; // quantization bits for texture coordinates - default 12
-            public int iNormalBits; // quantization bits for normal - default 10
-            public int iGenericBits; // quantization bits for generic - default 8
-
-#if USE_3DMESH_OPTIMIZE
-            int iVcacheSize; // For mesh vertices optimization, hardware vertex cache size. (value range 1 - no limit as it
-
-            // allows users to simulate hardware cache size to find the most optimum size)- default is enabled with cache size = 16
-            int iVcacheFIFOSize; // For mesh vertices optimization, hardware vertex cache size. (value range 1 - no limit as it
-
-            // allows users to simulate hardware cache size to find the most optimum size)- default is disabled.
-            float fOverdrawACMR; // For mesh overdraw optimization,  optimize overdraw with ACMR (average cache miss ratio)
-
-            // threshold value specified (value range 1-3) - default is enabled with ACMR value = 1.05 (i.e. 5% worse)
-            int iSimplifyLOD; // simplify mesh using LOD (Level of Details) value specified.(value range 1- no limit as it allows users
-
-            // to simplify the mesh until the level they desired. Higher level means less triangles drawn, less details.)
-            bool bVertexFetch; // optimize vertices fetch . boolean value 0 - disabled, 1-enabled. -default is enabled.
-#endif
-
-            public CMP_FORMAT SourceFormat;
-            public CMP_FORMAT DestFormat;
-            public bool format_support_hostEncoder; // Temp setting used while encoding with gpu or hpc plugins
-
-            // User Print Info interface
-            public CMP_PrintInfoStr m_PrintInfoStr;
-
-            // User Info for Performance Query on GPU or CPU Encoder Processing
-            public bool getPerfStats; // Set to true if you want to get Performance Stats
-            public KernelPerformanceStats perfStats; // Data storage for the performance stats obtained from GPU or CPU while running encoder processing
-            public bool getDeviceInfo; // Set to true if you want to get target device info
-            public KernelDeviceInfo deviceInfo; // Data storage for the performance stats obtained from GPU or CPU while running encoder processing
-            public bool genGPUMipMaps; // When ecoding with GPU HW use it to generate MipMap images, valid only when miplevels is set else default is toplevel 1
-            public bool useSRGBFrames; // when using GPU HW for encoding and mipmap generation use SRGB frames, default is RGB
-            public int miplevels; // miplevels to use when GPU is used to generate them
-
-            public static CMP_CompressOptions NewDefault()
-            {
-                return new CMP_CompressOptions
-                {
-                    dwSize = 0,// Defined on native side
-                    dwnumThreads = 1,
-                    fquality = 1,//highest quality
-                    bDisableMultiThreading = true,
-                    nCompressionSpeed = CMP_Speed.CMP_Speed_Normal,
-                };
-            }
-        }
 
         [SuppressMessage("ReSharper", "InconsistentNaming")]
         [SuppressMessage("ReSharper", "ArrangeTypeMemberModifiers")]
@@ -544,6 +341,27 @@ namespace Plugins.TexturesFuse.TexturesServerWrap
             Cmyk = 5 //! CMYK color model
         }
 
+        [SuppressMessage("ReSharper", "InconsistentNaming")]
+        [SuppressMessage("ReSharper", "ArrangeTypeMemberModifiers")]
+        [Serializable]
+        [StructLayout(LayoutKind.Sequential)]
+        public struct CMP_CustomOptions
+        {
+            public float fQuality;
+            public bool disableMultithreading;
+            public uint dwnumThreads;
+            public CMP_Compute_type encodeWith;
+
+            public static CMP_CustomOptions NewDefault() =>
+                new()
+                {
+                    fQuality = 1f,
+                    disableMultithreading = true,
+                    dwnumThreads = 1,
+                    encodeWith = CMP_Compute_type.CMP_CPU,
+                };
+        };
+
         [DllImport(LIBRARY_NAME, CallingConvention = CallingConvention.Cdecl, EntryPoint = PREFIX + "initialize")]
         internal extern static ImageResult TexturesFuseInitialize(InitOptions initOptions, out IntPtr context);
 
@@ -589,7 +407,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap
             int bytesLength,
             int maxSideLength,
             CMP_FORMAT cmpFormat,
-            CMP_CompressOptions compressOptions,
+            CMP_CustomOptions compressOptions,
             out byte* outputBytes,
             out int outputLength,
             out uint width,

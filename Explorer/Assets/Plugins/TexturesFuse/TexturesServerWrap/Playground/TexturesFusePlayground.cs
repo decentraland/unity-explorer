@@ -111,18 +111,18 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground
 
             public NativeMethods.InitOptions InitOptions => initOptions;
 
-            public NativeMethods.CMP_CompressOptions CMP_CompressOptions
+            public NativeMethods.CMP_CustomOptions CMP_CompressOptions
             {
                 get
                 {
-                    NativeMethods.CMP_CompressOptions defaultOptions = NativeMethods.CMP_CompressOptions.NewDefault();
+                    NativeMethods.CMP_CustomOptions defaultOptions = NativeMethods.CMP_CustomOptions.NewDefault();
 
                     if (useOverride)
                     {
-                        defaultOptions.fquality = fquality;
-                        defaultOptions.bDisableMultiThreading = disableMultithreading;
+                        defaultOptions.fQuality = fquality;
+                        defaultOptions.disableMultithreading = disableMultithreading;
                         defaultOptions.dwnumThreads = (uint)dwnumThreads;
-                        defaultOptions.nEncodeWith = cmpComputeTypeEncode;
+                        defaultOptions.encodeWith = cmpComputeTypeEncode;
                     }
 
                     return defaultOptions;
