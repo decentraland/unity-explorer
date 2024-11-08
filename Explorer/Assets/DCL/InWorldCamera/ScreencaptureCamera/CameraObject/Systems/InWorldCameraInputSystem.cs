@@ -39,14 +39,14 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.CameraObject.Systems
         private readonly IPlacesAPIService placesAPIService;
         private readonly CharacterController characterObjectController;
 
+        private readonly List<VisiblePerson> visiblePeople = new ();
+
         private ScreenRecorder recorder;
 
         private bool isInstantiated;
         private ScreenshotHudView hud;
 
         private Profile? ownProfile;
-
-        private readonly List<VisiblePerson> visiblePeople = new ();
 
         private bool isMakingScreenshot;
         private SingleInstanceEntity camera;
@@ -70,14 +70,14 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.CameraObject.Systems
             GetOwnProfileAsync().Forget();
         }
 
-        private async UniTask GetOwnProfileAsync()
-        {
-            ownProfile ??= await selfProfile.ProfileAsync(default(CancellationToken));
-        }
-
         protected override void Update(float t)
         {
-            TakeScreenshotQuery(World);
+            if (World.Has<IsInWorldCamera>(camera) && inputSchema.Screenshot.triggered && !isMakingScreenshot)
+            {
+                hud.GetComponent<Canvas>().enabled = false;
+                hud.StartCoroutine(recorder.CaptureScreenshot(Show));
+                isMakingScreenshot = true;
+            }
 
             if (isMakingScreenshot)
             {
@@ -85,7 +85,7 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.CameraObject.Systems
 
                 Plane[] frustumPlanes = GeometryUtility.CalculateFrustumPlanes(camera.GetCameraComponent(World).Camera);
 
-                // Check self
+                // Add self
                 if (GeometryUtility.TestPlanesAABB(frustumPlanes, characterObjectController.bounds))
                 {
                     var ownVisiblePerson = new VisiblePerson
@@ -99,19 +99,22 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.CameraObject.Systems
                     visiblePeople.Add(ownVisiblePerson);
                 }
 
-
                 CollectVisiblePeopleQuery(World, frustumPlanes);
-                CollectMetadata(visiblePeople.ToArray()).Forget();
-                isMakingScreenshot = false;
+                CollectMetadata().Forget();
             }
 
             if (inputSchema.ToggleInWorld!.triggered)
             {
-                if(!World.Has<IsInWorldCamera>(camera))
-                    EnableCameraQuery(World);
+                if (World.Has<IsInWorldCamera>(camera))
+                    DisableCamera();
                 else
-                    DisableCameraQuery(World);
+                    EnableCamera();
             }
+        }
+
+        private async UniTask GetOwnProfileAsync()
+        {
+            ownProfile ??= await selfProfile.ProfileAsync(default(CancellationToken));
         }
 
         [Query]
@@ -142,11 +145,10 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.CameraObject.Systems
             return wearables.ToArray();
         }
 
-        [Query]
-        [None(typeof(IsInWorldCamera))]
-        private void EnableCamera(Entity camera, ref CameraComponent cameraComponent)
+        private void EnableCamera()
         {
-            cameraComponent.Mode = CameraMode.InWorld;
+            ref CameraComponent cameraComponent = ref World.TryGetRef<CameraComponent>(camera, out bool exists);
+            if (exists) cameraComponent.Mode = CameraMode.InWorld;
 
             if (isInstantiated)
                 hud.gameObject.SetActive(true);
@@ -160,44 +162,36 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.CameraObject.Systems
             World.Add<IsInWorldCamera>(camera);
         }
 
-        [Query]
-        [All(typeof(IsInWorldCamera))]
-        private void DisableCamera(Entity camera, ref CameraComponent cameraComponent)
+        private void DisableCamera()
         {
-            cameraComponent.Mode = CameraMode.ThirdPerson;
-            hud.gameObject.SetActive(false);
+            ref CameraComponent cameraComponent = ref World.TryGetRef<CameraComponent>(camera, out bool exists);
+            if (exists) cameraComponent.Mode = CameraMode.ThirdPerson;
 
+            hud.gameObject.SetActive(false);
             World.Remove<IsInWorldCamera>(camera);
         }
 
-        [Query]
-        [All(typeof(IsInWorldCamera))]
-        private void TakeScreenshot()
+        private async UniTask CollectMetadata()
         {
-            if (inputSchema.Screenshot.triggered && !isMakingScreenshot)
-            {
-                hud.GetComponent<Canvas>().enabled = false;
-                hud.StartCoroutine(recorder.CaptureScreenshot(Show));
-                isMakingScreenshot = true;
-            }
+            Vector2Int sceneParcel = World.Get<CharacterTransform>(playerEntity).Position.ToParcel();
+
+            await GetOwnProfileAsync();
+            string? sceneName = await GetSceneNameAsync(sceneParcel);
+
+            ScreenshotMetadata? screenshotMetadata = ScreenshotMetadataProcessor.Create(ownProfile, realmData, sceneParcel, sceneName, visiblePeople.ToArray());
+
+            hud.Metadata = screenshotMetadata;
+            isMakingScreenshot = false;
         }
 
-        private async UniTask CollectMetadata(VisiblePerson[] visiblePeople)
+        private async UniTask<string> GetSceneNameAsync(Vector2Int at)
         {
-            await GetOwnProfileAsync();
-            Vector2Int parcel = World.Get<CharacterTransform>(playerEntity).Position.ToParcel();
-
-            string sceneName;
-
             if (realmData.ScenesAreFixed)
-                sceneName = realmData.RealmName.Replace(".dcl.eth", string.Empty);
-            else
-            {
-                PlacesData.PlaceInfo? placeInfo = await placesAPIService.GetPlaceAsync(parcel, default(CancellationToken));
-                sceneName = placeInfo?.title ?? "Unknown place";
-            }
+                return realmData.RealmName.Replace(".dcl.eth", string.Empty);
 
-            hud.Metadata = ScreenshotMetadataProcessor.Create(ownProfile, realmData, parcel, sceneName, visiblePeople);
+            PlacesData.PlaceInfo? placeInfo = await placesAPIService.GetPlaceAsync(at, default(CancellationToken));
+
+            return placeInfo?.title ?? "Unknown place";
         }
 
         private void Show(Texture2D screenshot)
