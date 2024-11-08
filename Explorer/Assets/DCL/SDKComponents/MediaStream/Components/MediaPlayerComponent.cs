@@ -17,6 +17,7 @@ namespace DCL.SDKComponents.MediaStream
         public bool IsFromContentServer;
         public VideoState State { get; private set; }
         public VideoState LastPropagatedState;
+        public float LastPropagatedVideoTime;
         public double PreviousCurrentTimeChecked;
         public float LastStateChangeTime { get; private set; }
 

@@ -25,7 +25,8 @@ namespace Global.Dynamic.TeleportOperations
             {
                 float finalizationProgress =
                     teleportParams.LoadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.LivekitStopping);
-                await roomHub.StopIfNotAsync().Timeout(livekitTimeout);
+
+                await roomHub.StopAsync().Timeout(livekitTimeout);
                 teleportParams.ParentReport.SetProgress(finalizationProgress);
                 return Result.SuccessResult();
             }

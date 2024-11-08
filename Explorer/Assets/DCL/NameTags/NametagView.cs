@@ -58,6 +58,7 @@ namespace DCL.Nametags
 
         [field: SerializeField]
         public float MaxWidth { get; private set; }
+        public float alpha { private set; get; }
 
         private readonly Color finishColor = new (1, 1, 1, 0);
         private Vector2 messageContentAnchoredPosition;
@@ -70,7 +71,6 @@ namespace DCL.Nametags
         private Vector2 backgroundFinalSize;
         private Vector2 textContentInitialPosition;
         private Vector2 usernamePos;
-        private float alpha;
         private float previousDistance;
         private float additionalHeight;
         private readonly Color startingTextColor = new (1, 1, 1, 0);
