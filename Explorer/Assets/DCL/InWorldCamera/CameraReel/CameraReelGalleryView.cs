@@ -40,6 +40,7 @@ namespace DCL.InWorldCamera.CameraReel
         private ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
         private readonly Dictionary<DateTime, MonthGridView> monthViews = new ();
         private readonly Dictionary<MonthGridView, List<ReelThumbnailView>> reelThumbnailViews = new ();
+        private readonly Dictionary<CameraReelResponse, Sprite> reelThumbnailCache = new ();
         private CancellationTokenSource loadNextPageCts = new ();
         private OptionButtonView optionsButton;
 
@@ -81,20 +82,23 @@ namespace DCL.InWorldCamera.CameraReel
             foreach (var bucket in result)
             {
                 MonthGridView monthGridView;
-                if (monthViews.ContainsKey(bucket.Key))
-                    monthGridView = monthViews[bucket.Key];
+                if (monthViews.TryGetValue(bucket.Key, out MonthGridView monthView))
+                    monthGridView = monthView;
                 else
                 {
                      monthGridView = reelGalleryPoolManager.GetGridElement(scrollContentRect);
                      monthViews.Add(bucket.Key, monthGridView);
                 }
 
-                List<ReelThumbnailView> thumbnailViews = monthGridView.Setup(bucket.Key, bucket.Value, reelGalleryPoolManager, cameraReelScreenshotsStorage, optionsButton);
+                List<ReelThumbnailView> thumbnailViews = monthGridView.Setup(bucket.Key, bucket.Value, reelGalleryPoolManager, cameraReelScreenshotsStorage, optionsButton,
+                    (cameraReelResponse, sprite) => reelThumbnailCache.Add(cameraReelResponse, sprite));
 
-                if (reelThumbnailViews.ContainsKey(monthGridView))
-                    reelThumbnailViews[monthGridView].AddRange(thumbnailViews);
+                if (reelThumbnailViews.TryGetValue(monthGridView, out List<ReelThumbnailView> thumbnails))
+                    thumbnails.AddRange(thumbnailViews);
                 else
                     reelThumbnailViews.Add(monthGridView, thumbnailViews);
+
+                await UniTask.NextFrame(ct);
 
                 isLoading = false;
             }
@@ -122,6 +126,7 @@ namespace DCL.InWorldCamera.CameraReel
             }
             reelThumbnailViews.Clear();
             monthViews.Clear();
+            reelThumbnailCache.Clear();
         }
 
         private void OnDisable()
