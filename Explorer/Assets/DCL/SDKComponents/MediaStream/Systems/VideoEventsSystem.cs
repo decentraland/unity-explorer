@@ -59,9 +59,10 @@ namespace DCL.SDKComponents.MediaStream
 
         private void PropagateStateInVideoEvent(in CRDTEntity sdkEntity, ref MediaPlayerComponent mediaPlayer)
         {
-            if (mediaPlayer.LastPropagatedState == mediaPlayer.State) return;
+            if (mediaPlayer.LastPropagatedState == mediaPlayer.State && mediaPlayer.LastPropagatedVideoTime.Equals(mediaPlayer.CurrentTime)) return;
 
             mediaPlayer.LastPropagatedState = mediaPlayer.State;
+            mediaPlayer.LastPropagatedVideoTime = mediaPlayer.CurrentTime;
             ecsToCRDTWriter.AppendMessage<PBVideoEvent, (MediaPlayerComponent mediaPlayer, uint timestamp)>
             (
                 prepareMessage: static (pbVideoEvent, data) =>

@@ -269,7 +269,9 @@ namespace Global.Dynamic
             container.SceneRoomMetaDataSource = new SceneRoomMetaDataSource(staticContainer.RealmData, staticContainer.CharacterContainer.Transform, placesAPIService, dynamicWorldParams.IsolateScenesCommunication);
 
             var metaDataSource = new SceneRoomLogMetaDataSource(container.SceneRoomMetaDataSource);
-            var gateKeeperSceneRoom = new GateKeeperSceneRoom(staticContainer.WebRequestsContainer.WebRequestController, metaDataSource, bootstrapContainer.DecentralandUrlsSource, staticContainer.ScenesCache);
+
+            IGateKeeperSceneRoom gateKeeperSceneRoom = new GateKeeperSceneRoom(staticContainer.WebRequestsContainer.WebRequestController, metaDataSource, bootstrapContainer.DecentralandUrlsSource, staticContainer.ScenesCache)
+               .AsActivatable();
 
             var currentAdapterAddress = ICurrentAdapterAddress.NewDefault(staticContainer.RealmData);
 
@@ -359,7 +361,7 @@ namespace Global.Dynamic
                         DecentralandUrl.ArchipelagoStatus,
                         DecentralandUrl.GatekeeperStatus
                     ),
-                    new LivekitHealthCheck(container.RoomHub)
+                    new StartLiveKitRooms(container.RoomHub)
                 );
 
             livekitHealthCheck = dynamicWorldParams.EnableAnalytics
