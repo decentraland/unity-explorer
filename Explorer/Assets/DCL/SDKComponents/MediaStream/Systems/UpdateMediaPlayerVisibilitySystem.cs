@@ -10,6 +10,7 @@ using ECS.Groups;
 using ECS.Prioritization.Components;
 using ECS.Unity.PrimitiveRenderer.Components;
 using ECS.Unity.Transforms.Components;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -25,7 +26,10 @@ namespace DCL.SDKComponents.MediaStream
         private readonly Utility.Storage.PersistentSetting<float> maxSimultaneousVideosSetting;
 
         private readonly List<VideoStateByPriorityComponent> sortedVideoPriorities = new List<VideoStateByPriorityComponent>();
-        private const float MAX_DISTANCE = 1000.0f;
+        private const float MAX_DISTANCE = 100.0f;
+        private const float DISTANCE_WEIGHT = 2.0f;
+        private const float ANGLE_WEIGHT = 4.0f;
+        private const float SCREEN_SIZE_WEIGHT = 1.0f;
 
         public UpdateMediaPlayerVisibilitySystem(World world, IExposedCameraData exposedCameraData) : base(world)
         {
@@ -37,8 +41,13 @@ namespace DCL.SDKComponents.MediaStream
         {
             sortedVideoPriorities.Clear();
             AddVideoStatesByPriorityQuery(World);
-            UpdateVideoPrioritiesQuery(World);
-            UpdateVideoVisibilityDependingOnPriorityQuery(World, (int)maxSimultaneousVideosSetting.Value);
+
+            if (exposedCameraData.CinemachineBrain != null)
+            {
+                float horizontalFOV = Camera.VerticalToHorizontalFieldOfView(exposedCameraData.CinemachineBrain.OutputCamera.fieldOfView, exposedCameraData.CinemachineBrain.OutputCamera.aspect);
+                UpdateVideoPrioritiesQuery(World, exposedCameraData.CinemachineBrain.OutputCamera.fieldOfView, horizontalFOV, exposedCameraData.WorldPosition.Value, exposedCameraData.WorldRotation.Value);
+                UpdateVideoVisibilityDependingOnPriorityQuery(World, (int)maxSimultaneousVideosSetting.Value);
+            }
 
             Debug.Log("<color=cyan>" + sortedVideoPriorities.Count + "</color>");
         }
@@ -55,44 +64,35 @@ namespace DCL.SDKComponents.MediaStream
             return renderer.bounds.size.y;
         }
 
-        private float CalculateCullRelativeHeight(float defaultFOV, float size, float cullDistance)
+        private float CalculateCullRelativeHeight(float cameraFOV, float size, float distance)
         {
-            //The cull distance is at loading distance - 1 parcel for some space buffer
-            //(It should first load, and then cull in)
-            float halfFov = defaultFOV / 2.0f * Mathf.Deg2Rad;
+            float halfFov = cameraFOV / 2.0f * Mathf.Deg2Rad;
             float tanValue = Mathf.Tan(halfFov);
-            return CalculateScreenRelativeCullHeight(tanValue, cullDistance + size / 2, size / 2, 0);
-        }
-
-        //This will give us the percent of the screen in which the object will be culled when being at (unloadingDistance - 1) parcel
-        public static float CalculateScreenRelativeCullHeight(float tanValue, float distanceToCenter, float objectExtents, float defaultLODBias)
-        {
-            return objectExtents / (distanceToCenter * tanValue) * defaultLODBias;
+            return size * 0.5f / (distance * tanValue);
         }
 
         [Query]
-        private void UpdateVideoPriorities(Entity entity, in MediaPlayerComponent mediaPlayer, ref VideoStateByPriorityComponent videoStateByPriority, in PartitionComponent partitionComponent, in TransformComponent transform)
+        private void UpdateVideoPriorities([Data] float cameraFov, [Data] float cameraHorizontalFov,
+                                            [Data] Vector3 cameraWorldPosition, [Data] Quaternion cameraWorldRotation,
+                                            ref VideoStateByPriorityComponent videoStateByPriority, in TransformComponent transform)
         {
             if(!videoStateByPriority.WantsToPlay)
                 return;
 
-            float dotProduct = Vector3.Dot((transform.Transform.position - exposedCameraData.WorldPosition.Value).normalized, exposedCameraData.WorldRotation.Value * Vector3.forward);
+            float dotProduct = Vector3.Dot((transform.Transform.position - cameraWorldPosition).normalized, cameraWorldRotation * Vector3.forward);
 
-            // Skips videos that are behind the camera
-            if (dotProduct > 0.0f)
+            // Skips videos that are out of the camera
+            if (Mathf.Acos(dotProduct) * Mathf.Rad2Deg <= cameraHorizontalFov * 0.5f)
             {
-                float sqrDistance = Mathf.Clamp((transform.Transform.position - exposedCameraData.WorldPosition.Value).sqrMagnitude, 0.0f, MAX_DISTANCE);
-                float screenSize = CalculateCullRelativeHeight(90.0f, videoStateByPriority.Size, Mathf.Sqrt(sqrDistance));
+                float distance = Mathf.Clamp((transform.Transform.position - cameraWorldPosition).magnitude, 0.0f, MAX_DISTANCE);
+                float screenSize = Mathf.Clamp01(CalculateCullRelativeHeight(cameraFov, videoStateByPriority.Size, Mathf.Sqrt(distance)));
 
-                const float DISTANCE_WEIGHT = 2.0f;
-                const float ANGLE_WEIGHT = 4.0f;
-                const float SCREEN_SIZE_WEIGHT = 1.0f;
-
-                videoStateByPriority.Score = (MAX_DISTANCE - sqrDistance) / MAX_DISTANCE * DISTANCE_WEIGHT +
+                videoStateByPriority.Score = (MAX_DISTANCE - distance) / MAX_DISTANCE * DISTANCE_WEIGHT +
                                              screenSize * SCREEN_SIZE_WEIGHT +
                                              dotProduct * ANGLE_WEIGHT;
 
-                Debug.Log($"[{entity.Id}] Dist: {sqrDistance} Size:{videoStateByPriority.Size} Dot:{dotProduct} SCORE:{videoStateByPriority.Score}");
+                Debug.Log($"[{videoStateByPriority.Entity.Id}] Dist: {distance} Size:{videoStateByPriority.Size} / {screenSize} Dot:{dotProduct} SCORE:{videoStateByPriority.Score}");
+//                Debug.Log(Mathf.Acos(dotProduct) * Mathf.Rad2Deg + " --- " + horizontalFOV * 0.5f);
 
                 // Sorts the playing video list by score
                 int i = 0;
