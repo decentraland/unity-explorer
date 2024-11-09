@@ -61,10 +61,6 @@ public class SkyboxController : MonoBehaviour
     private bool pause;
     private float sinceLastRefresh = 5;
 
-    private void Start()
-    {
-    }
-
     private void Update()
     {
         if (!isInitialized)
@@ -136,24 +132,18 @@ public class SkyboxController : MonoBehaviour
             RenderSettings.fog = true;
         }
 
-        bool useRemoteSkyboxSettings = featureFlagsCache != null && featureFlagsCache.Configuration.IsEnabled("alfa-skybox-settings");
+        bool useRemoteSkyboxSettings = featureFlagsCache != null && featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.SKYBOX_SETTINGS);
+
+        if (useRemoteSkyboxSettings &&
+            featureFlagsCache.Configuration.TryGetJsonPayload(FeatureFlagsStrings.SKYBOX_SETTINGS, FeatureFlagsStrings.SKYBOX_SETTINGS_VARIANT, out SkyboxSettings skyboxSettings))
+        {
+            Speed = skyboxSettings.speed;
+            ApplySkyboxState(skyboxSettings.time);
+            return;
+        }
 
         int defaultTime = SecondsInDay / 2;
-
-        if (!useRemoteSkyboxSettings)
-        {
-            ApplySkyboxState(defaultTime);
-            return;
-        }
-
-        if (!featureFlagsCache.Configuration.TryGetJsonPayload("alfa-skybox-settings", "settings", out SkyboxSettings skyboxSettings))
-        {
-            ApplySkyboxState(defaultTime);
-            return;
-        }
-
-        Speed = skyboxSettings.speed;
-        ApplySkyboxState(skyboxSettings.time);
+        ApplySkyboxState(defaultTime);
     }
 
     private void ApplySkyboxState(float time)
