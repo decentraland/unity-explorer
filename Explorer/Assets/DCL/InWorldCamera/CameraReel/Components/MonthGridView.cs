@@ -39,6 +39,7 @@ namespace DCL.InWorldCamera.CameraReel.Components
             {
                 ReelThumbnailView thumbnailView = reelGalleryPoolManager.GetThumbnailElement(images[i], gridLayoutGroup, cameraReelScreenshotsStorage, optionsButton);
                 thumbnailView.OnThumbnailLoaded += onThumbnailLoaded;
+                thumbnailView.OnThumbnailClicked += onThumbnailClicked;
                 newViews.Add(thumbnailView);
             }
 

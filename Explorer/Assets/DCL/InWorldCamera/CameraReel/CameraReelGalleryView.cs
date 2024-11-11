@@ -72,7 +72,7 @@ namespace DCL.InWorldCamera.CameraReel
 
         private void OnThumbnailClicked(CameraReelResponse cameraReelResponse)
         {
-
+            Debug.Log($"OnThumbnailClicked: {cameraReelResponse.id}");
         }
 
         public async UniTask ShowWalletGallery(string walletAddress, OptionButtonView optionsButton, CancellationToken ct)
@@ -114,7 +114,7 @@ namespace DCL.InWorldCamera.CameraReel
 
                 List<ReelThumbnailView> thumbnailViews = monthGridView.Setup(bucket.Key, bucket.Value, reelGalleryPoolManager, cameraReelScreenshotsStorage, optionsButton,
                     (cameraReelResponse, sprite) => reelThumbnailCache.Add(cameraReelResponse, sprite),
-                    (cameraReelResponse) => OnThumbnailClicked(cameraReelResponse));
+                    OnThumbnailClicked);
 
                 if (reelThumbnailViews.TryGetValue(monthGridView, out List<ReelThumbnailView> thumbnails))
                     thumbnails.AddRange(thumbnailViews);

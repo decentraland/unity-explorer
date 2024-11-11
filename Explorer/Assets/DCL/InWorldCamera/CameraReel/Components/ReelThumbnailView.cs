@@ -21,6 +21,8 @@ namespace DCL.InWorldCamera.CameraReel.Components
         public Image thumbnailImage;
         [SerializeField] private LoadingBrightView loadingBrightView;
         [SerializeField] private RectTransform optionButtonContainer;
+        [SerializeField] private Button button;
+        [SerializeField] private GameObject outline;
 
         [Header("Configuration")]
         [SerializeField] private Vector3 optionButtonOffset = new (-15.83997f, -22f, 0);
@@ -35,6 +37,7 @@ namespace DCL.InWorldCamera.CameraReel.Components
         private OptionButtonView optionButton;
 
         public event Action<CameraReelResponse, Sprite> OnThumbnailLoaded;
+        public event Action<CameraReelResponse> OnThumbnailClicked;
 
         public void Setup(CameraReelResponse cameraReelData, ICameraReelScreenshotsStorage cameraReelScreenshotsStorageService, OptionButtonView optionsButton)
         {
@@ -59,6 +62,7 @@ namespace DCL.InWorldCamera.CameraReel.Components
             thumbnailImage.DOFade(1f, thumbnailLoadedAnimationDuration);
 
             OnThumbnailLoaded?.Invoke(cameraReelResponse, thumbnailImage.sprite);
+            button.onClick.AddListener( () => OnThumbnailClicked?.Invoke(cameraReelResponse));
         }
 
         public void OnPointerEnter(PointerEventData eventData)
@@ -68,6 +72,7 @@ namespace DCL.InWorldCamera.CameraReel.Components
             optionButton.transform.localPosition = optionButtonOffset;
             optionButton.SetImageData(cameraReelResponse);
             optionButton.gameObject.SetActive(true);
+            outline.SetActive(true);
         }
 
         public void OnPointerExit(PointerEventData eventData)
@@ -75,11 +80,15 @@ namespace DCL.InWorldCamera.CameraReel.Components
             transform.DOScale(Vector3.one, scaleAnimationDuration);
             optionButton.ResetState();
             optionButton.gameObject.SetActive(false);
+            outline.SetActive(false);
         }
 
         public void Release()
         {
             OnThumbnailLoaded = null;
+            OnThumbnailClicked = null;
+            button.onClick.RemoveAllListeners();
+            outline.SetActive(false);
         }
     }
 }
