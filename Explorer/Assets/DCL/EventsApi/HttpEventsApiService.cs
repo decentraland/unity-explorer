@@ -33,9 +33,7 @@ namespace DCL.EventsApi
             if (onlyLiveEvents)
                 urlBuilder.AppendParameter(new URLParameter("list", "live"));
 
-            URLAddress url = urlBuilder.Build();
-
-            return await FetchEventList(url, ct);
+            return await FetchEventList(urlBuilder.Build(), ct);
         }
 
         public async UniTask<IReadOnlyList<EventDTO>> GetEventsByParcelAsync(string parcel, CancellationToken ct,
@@ -48,9 +46,7 @@ namespace DCL.EventsApi
             if (onlyLiveEvents)
                 urlBuilder.AppendParameter(new URLParameter("list", "live"));
 
-            URLAddress url = urlBuilder.Build();
-
-            return await FetchEventList(url, ct);
+            return await FetchEventList(urlBuilder.Build(), ct);
         }
 
         private async UniTask<IReadOnlyList<EventDTO>> FetchEventList(URLAddress url, CancellationToken ct)

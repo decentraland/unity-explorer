@@ -11,6 +11,8 @@ namespace DCL.Navmap
 {
     public class NavmapSearchBarController : IDisposable
     {
+        private const int INPUT_DEBOUNCE_DELAY_MS = 1000;
+
         private readonly SearchBarView view;
         private readonly HistoryRecordPanelView historyRecordPanelView;
         private readonly SearchFiltersView searchFiltersView;
@@ -52,7 +54,7 @@ namespace DCL.Navmap
             view.inputField.onSelect.AddListener(_ => OnSearchBarSelected(true));
             view.inputField.onDeselect.AddListener(_ => OnSearchBarSelected(false));
             view.inputField.onValueChanged.AddListener(OnInputValueChanged);
-            view.clearSearchButton.onClick.AddListener(() => ClearSearch(true));
+            view.clearSearchButton.onClick.AddListener(ClearSearch);
             view.BackButton.onClick.AddListener(OnBackClicked);
             view.clearSearchButton.gameObject.SetActive(false);
             ShowPreviousSearches();
@@ -84,12 +86,9 @@ namespace DCL.Navmap
             view.inputField.SetTextWithoutNotify(place.title);
         }
 
-        public void ClearSearch(bool notify = false)
+        public void ClearSearch()
         {
-            if (notify)
-                view.inputField.text = "";
-            else
-                view.inputField.SetTextWithoutNotify("");
+            view.inputField.SetTextWithoutNotify(string.Empty);
 
             view.clearSearchButton.gameObject.SetActive(false);
         }
@@ -139,7 +138,7 @@ namespace DCL.Navmap
 
             async UniTaskVoid SearchAsync(CancellationToken ct)
             {
-                await UniTask.Delay(1000, cancellationToken: ct).SuppressCancellationThrow();
+                await UniTask.Delay(INPUT_DEBOUNCE_DELAY_MS, cancellationToken: ct).SuppressCancellationThrow();
 
                 searchHistory.Add(searchText);
 
