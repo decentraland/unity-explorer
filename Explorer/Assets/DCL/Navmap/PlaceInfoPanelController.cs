@@ -35,7 +35,9 @@ namespace DCL.Navmap
         private PlacesData.PlaceInfo? place;
         private CancellationTokenSource? favoriteCancellationToken;
         private CancellationTokenSource? rateCancellationToken;
-        private CancellationTokenSource? eventsCancellationToken;
+        private CancellationTokenSource? fetchEventsCancellationToken;
+        private CancellationTokenSource? attendEventCancellationToken;
+        private CancellationTokenSource? openEventDetailsCancellationToken;
         private Vector2Int? currentBaseParcel;
         private Vector2Int? destination;
 
@@ -244,8 +246,8 @@ namespace DCL.Navmap
 
         private void FetchAndShowEventsOfThePlace()
         {
-            eventsCancellationToken = eventsCancellationToken.SafeRestart();
-            FetchEventsAndShowThemAsync(eventsCancellationToken.Token).Forget();
+            fetchEventsCancellationToken = fetchEventsCancellationToken.SafeRestart();
+            FetchEventsAndShowThemAsync(fetchEventsCancellationToken.Token).Forget();
 
             return;
 
@@ -272,7 +274,11 @@ namespace DCL.Navmap
                             : startAt.ToString("R");
                     }
 
-                    element.InterestedButton!.OnButtonClicked += GetInterested;
+                    element.InterestedButton!.OnButtonClicked += interested =>
+                    {
+                        attendEventCancellationToken = attendEventCancellationToken.SafeRestart();
+                        SetAsInterestedAsync(interested, @event, element, attendEventCancellationToken.Token).Forget();
+                    };
                     element.ShowDetailsButton.onClick.AddListener(() => OpenEventDetails(@event));
                     element.ShareButton.onClick.AddListener(() => Share(@event));
                     element.Thumbnail?.RequestImage(@event.image, true);
@@ -287,8 +293,15 @@ namespace DCL.Navmap
                 view.TabsLayoutRoot.ForceUpdateLayoutAsync(CancellationToken.None).Forget();
             }
 
-            void GetInterested(bool interested)
+            async UniTaskVoid SetAsInterestedAsync(bool interested, EventDTO @event,
+                EventElementView element, CancellationToken ct)
             {
+                if (interested)
+                    await eventsApiService.MarkAsInterestedAsync(@event.id, ct);
+                else
+                    await eventsApiService.MarkAsNotInterestedAsync(@event.id, ct);
+
+                element.InterestedButton!.SetButtonState(interested);
             }
 
             void SetAsLoadingState()
@@ -307,7 +320,8 @@ namespace DCL.Navmap
 
             void OpenEventDetails(EventDTO @event)
             {
-                // TODO
+                openEventDetailsCancellationToken = openEventDetailsCancellationToken.SafeRestart();
+                navmapBus.SelectEventAsync(@event, openEventDetailsCancellationToken.Token, place).Forget();
             }
         }
 

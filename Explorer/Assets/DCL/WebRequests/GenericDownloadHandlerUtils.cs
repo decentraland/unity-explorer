@@ -34,6 +34,16 @@ namespace DCL.WebRequests
             WebRequestSignInfo? signInfo = null) =>
             new (controller, commonArguments, arguments, ct, reportData, headersInfo, signInfo, null, POST_GENERIC);
 
+        public static Adapter<GenericDeleteRequest, GenericDeleteArguments> DeleteAsync(
+            this IWebRequestController controller,
+            CommonArguments commonArguments,
+            GenericDeleteArguments arguments,
+            CancellationToken ct,
+            ReportData reportData,
+            WebRequestHeadersInfo? headersInfo = null,
+            WebRequestSignInfo? signInfo = null) =>
+            new (controller, commonArguments, arguments, ct, reportData, headersInfo, signInfo, null, DELETE_GENERIC);
+
         public static Adapter<GenericPutRequest, GenericPutArguments> PutAsync(
             this IWebRequestController controller,
             CommonArguments commonArguments,

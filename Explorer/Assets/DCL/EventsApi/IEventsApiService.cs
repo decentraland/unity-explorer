@@ -11,5 +11,9 @@ namespace DCL.EventsApi
 
         /// <param name="parcel">Parcel in format: "x,y"</param>
         UniTask<IReadOnlyList<EventDTO>> GetEventsByParcelAsync(string parcel, CancellationToken ct, bool onlyLiveEvents = false);
+
+        UniTask MarkAsInterestedAsync(string eventId, CancellationToken ct);
+
+        UniTask MarkAsNotInterestedAsync(string eventId, CancellationToken ct);
     }
 }

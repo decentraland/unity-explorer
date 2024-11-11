@@ -1,7 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Input;
 using DCL.Input.Component;
-using DCL.PlacesAPIService;
 using DCL.UI;
 using System;
 using System.Threading;
@@ -100,9 +99,6 @@ namespace DCL.Navmap
 
         public void SetInputText(string text) =>
             view.inputField.SetTextWithoutNotify(text);
-
-        public void SetInputText(PlacesData.PlaceInfo place) =>
-            view.inputField.SetTextWithoutNotify(place.title);
 
         public void ClearInput()
         {
