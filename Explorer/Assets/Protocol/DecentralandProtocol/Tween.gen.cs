@@ -43,31 +43,31 @@ namespace DCL.ECSComponents {
             "LAoDZW5kGAIgASgLMh8uZGVjZW50cmFsYW5kLmNvbW1vbi5RdWF0ZXJuaW9u",
             "Il8KBVNjYWxlEisKBXN0YXJ0GAEgASgLMhwuZGVjZW50cmFsYW5kLmNvbW1v",
             "bi5WZWN0b3IzEikKA2VuZBgCIAEoCzIcLmRlY2VudHJhbGFuZC5jb21tb24u",
-            "VmVjdG9yMyKjAgoLVGV4dHVyZU1vdmUSKwoFc3RhcnQYASABKAsyHC5kZWNl",
-            "bnRyYWxhbmQuY29tbW9uLlZlY3RvcjMSKQoDZW5kGAIgASgLMhwuZGVjZW50",
-            "cmFsYW5kLmNvbW1vbi5WZWN0b3IzEkgKD3RleHR1cmVfdG9fbW92ZRgDIAEo",
+            "VmVjdG9yMyKlAgoLVGV4dHVyZU1vdmUSKwoFc3RhcnQYASABKAsyHC5kZWNl",
+            "bnRyYWxhbmQuY29tbW9uLlZlY3RvcjISKQoDZW5kGAIgASgLMhwuZGVjZW50",
+            "cmFsYW5kLmNvbW1vbi5WZWN0b3IyEkgKD3RleHR1cmVfdG9fbW92ZRgDIAEo",
             "DjIqLmRlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50cy5UZXh0dXJlVG9Nb3Zl",
-            "SACIAQESSQoQdGV4dHVyZV9tb3ZlbWVudBgFIAEoDjIqLmRlY2VudHJhbGFu",
-            "ZC5zZGsuY29tcG9uZW50cy5UZXh0dXJlVG9Nb3ZlSAGIAQFCEgoQX3RleHR1",
-            "cmVfdG9fbW92ZUITChFfdGV4dHVyZV9tb3ZlbWVudCpOCg1UZXh0dXJlVG9N",
-            "b3ZlEg4KClRUTV9BTEJFRE8QABINCglUVE1fQUxQSEEQARIQCgxUVE1fRU1J",
-            "U1NJVkUQAhIMCghUVE1fQlVNUBADKkkKD1RleHR1cmVNb3ZlbWVudBINCglU",
-            "TV9PRkZTRVQQABINCglUTV9USUxJTkcQARIYChRUTV9PRkZTRVRfQU5EX1RJ",
-            "TElORxADKucECg5FYXNpbmdGdW5jdGlvbhINCglFRl9MSU5FQVIQABIRCg1F",
-            "Rl9FQVNFSU5RVUFEEAESEgoORUZfRUFTRU9VVFFVQUQQAhIPCgtFRl9FQVNF",
-            "UVVBRBADEhEKDUVGX0VBU0VJTlNJTkUQBBISCg5FRl9FQVNFT1VUU0lORRAF",
-            "Eg8KC0VGX0VBU0VTSU5FEAYSEQoNRUZfRUFTRUlORVhQTxAHEhIKDkVGX0VB",
-            "U0VPVVRFWFBPEAgSDwoLRUZfRUFTRUVYUE8QCRIUChBFRl9FQVNFSU5FTEFT",
-            "VElDEAoSFQoRRUZfRUFTRU9VVEVMQVNUSUMQCxISCg5FRl9FQVNFRUxBU1RJ",
-            "QxAMEhMKD0VGX0VBU0VJTkJPVU5DRRANEhQKEEVGX0VBU0VPVVRCT1VOQ0UQ",
-            "DhIRCg1FRl9FQVNFQk9VTkNFEA8SEgoORUZfRUFTRUlOQ1VCSUMQEBITCg9F",
-            "Rl9FQVNFT1VUQ1VCSUMQERIQCgxFRl9FQVNFQ1VCSUMQEhISCg5FRl9FQVNF",
-            "SU5RVUFSVBATEhMKD0VGX0VBU0VPVVRRVUFSVBAUEhAKDEVGX0VBU0VRVUFS",
-            "VBAVEhIKDkVGX0VBU0VJTlFVSU5UEBYSEwoPRUZfRUFTRU9VVFFVSU5UEBcS",
-            "EAoMRUZfRUFTRVFVSU5UEBgSEQoNRUZfRUFTRUlOQ0lSQxAZEhIKDkVGX0VB",
-            "U0VPVVRDSVJDEBoSDwoLRUZfRUFTRUNJUkMQGxIRCg1FRl9FQVNFSU5CQUNL",
-            "EBwSEgoORUZfRUFTRU9VVEJBQ0sQHRIPCgtFRl9FQVNFQkFDSxAeQhSqAhFE",
-            "Q0wuRUNTQ29tcG9uZW50c2IGcHJvdG8z"));
+            "SACIAQESSwoQdGV4dHVyZV9tb3ZlbWVudBgFIAEoDjIsLmRlY2VudHJhbGFu",
+            "ZC5zZGsuY29tcG9uZW50cy5UZXh0dXJlTW92ZW1lbnRIAYgBAUISChBfdGV4",
+            "dHVyZV90b19tb3ZlQhMKEV90ZXh0dXJlX21vdmVtZW50Kk4KDVRleHR1cmVU",
+            "b01vdmUSDgoKVFRNX0FMQkVETxAAEg0KCVRUTV9BTFBIQRABEhAKDFRUTV9F",
+            "TUlTU0lWRRACEgwKCFRUTV9CVU1QEAMqSQoPVGV4dHVyZU1vdmVtZW50Eg0K",
+            "CVRNX09GRlNFVBAAEg0KCVRNX1RJTElORxABEhgKFFRNX09GRlNFVF9BTkRf",
+            "VElMSU5HEAMq5wQKDkVhc2luZ0Z1bmN0aW9uEg0KCUVGX0xJTkVBUhAAEhEK",
+            "DUVGX0VBU0VJTlFVQUQQARISCg5FRl9FQVNFT1VUUVVBRBACEg8KC0VGX0VB",
+            "U0VRVUFEEAMSEQoNRUZfRUFTRUlOU0lORRAEEhIKDkVGX0VBU0VPVVRTSU5F",
+            "EAUSDwoLRUZfRUFTRVNJTkUQBhIRCg1FRl9FQVNFSU5FWFBPEAcSEgoORUZf",
+            "RUFTRU9VVEVYUE8QCBIPCgtFRl9FQVNFRVhQTxAJEhQKEEVGX0VBU0VJTkVM",
+            "QVNUSUMQChIVChFFRl9FQVNFT1VURUxBU1RJQxALEhIKDkVGX0VBU0VFTEFT",
+            "VElDEAwSEwoPRUZfRUFTRUlOQk9VTkNFEA0SFAoQRUZfRUFTRU9VVEJPVU5D",
+            "RRAOEhEKDUVGX0VBU0VCT1VOQ0UQDxISCg5FRl9FQVNFSU5DVUJJQxAQEhMK",
+            "D0VGX0VBU0VPVVRDVUJJQxAREhAKDEVGX0VBU0VDVUJJQxASEhIKDkVGX0VB",
+            "U0VJTlFVQVJUEBMSEwoPRUZfRUFTRU9VVFFVQVJUEBQSEAoMRUZfRUFTRVFV",
+            "QVJUEBUSEgoORUZfRUFTRUlOUVVJTlQQFhITCg9FRl9FQVNFT1VUUVVJTlQQ",
+            "FxIQCgxFRl9FQVNFUVVJTlQQGBIRCg1FRl9FQVNFSU5DSVJDEBkSEgoORUZf",
+            "RUFTRU9VVENJUkMQGhIPCgtFRl9FQVNFQ0lSQxAbEhEKDUVGX0VBU0VJTkJB",
+            "Q0sQHBISCg5FRl9FQVNFT1VUQkFDSxAdEg8KC0VGX0VBU0VCQUNLEB5CFKoC",
+            "EURDTC5FQ1NDb21wb25lbnRzYgZwcm90bzM="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::Decentraland.Common.VectorsReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(new[] {typeof(global::DCL.ECSComponents.TextureToMove), typeof(global::DCL.ECSComponents.TextureMovement), typeof(global::DCL.ECSComponents.EasingFunction), }, null, new pbr::GeneratedClrTypeInfo[] {
@@ -1556,10 +1556,10 @@ namespace DCL.ECSComponents {
 
     /// <summary>Field number for the "start" field.</summary>
     public const int StartFieldNumber = 1;
-    private global::Decentraland.Common.Vector3 start_;
+    private global::Decentraland.Common.Vector2 start_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public global::Decentraland.Common.Vector3 Start {
+    public global::Decentraland.Common.Vector2 Start {
       get { return start_; }
       set {
         start_ = value;
@@ -1568,10 +1568,10 @@ namespace DCL.ECSComponents {
 
     /// <summary>Field number for the "end" field.</summary>
     public const int EndFieldNumber = 2;
-    private global::Decentraland.Common.Vector3 end_;
+    private global::Decentraland.Common.Vector2 end_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public global::Decentraland.Common.Vector3 End {
+    public global::Decentraland.Common.Vector2 End {
       get { return end_; }
       set {
         end_ = value;
@@ -1608,14 +1608,14 @@ namespace DCL.ECSComponents {
 
     /// <summary>Field number for the "texture_movement" field.</summary>
     public const int TextureMovementFieldNumber = 5;
-    private global::DCL.ECSComponents.TextureToMove textureMovement_;
+    private global::DCL.ECSComponents.TextureMovement textureMovement_;
     /// <summary>
     /// default TextureMovement.TM_OFFSET
     /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public global::DCL.ECSComponents.TextureToMove TextureMovement {
-      get { if ((_hasBits0 & 2) != 0) { return textureMovement_; } else { return global::DCL.ECSComponents.TextureToMove.TtmAlbedo; } }
+    public global::DCL.ECSComponents.TextureMovement TextureMovement {
+      get { if ((_hasBits0 & 2) != 0) { return textureMovement_; } else { return global::DCL.ECSComponents.TextureMovement.TmOffset; } }
       set {
         _hasBits0 |= 2;
         textureMovement_ = value;
@@ -1760,13 +1760,13 @@ namespace DCL.ECSComponents {
       }
       if (other.start_ != null) {
         if (start_ == null) {
-          Start = new global::Decentraland.Common.Vector3();
+          Start = new global::Decentraland.Common.Vector2();
         }
         Start.MergeFrom(other.Start);
       }
       if (other.end_ != null) {
         if (end_ == null) {
-          End = new global::Decentraland.Common.Vector3();
+          End = new global::Decentraland.Common.Vector2();
         }
         End.MergeFrom(other.End);
       }
@@ -1793,14 +1793,14 @@ namespace DCL.ECSComponents {
             break;
           case 10: {
             if (start_ == null) {
-              Start = new global::Decentraland.Common.Vector3();
+              Start = new global::Decentraland.Common.Vector2();
             }
             input.ReadMessage(Start);
             break;
           }
           case 18: {
             if (end_ == null) {
-              End = new global::Decentraland.Common.Vector3();
+              End = new global::Decentraland.Common.Vector2();
             }
             input.ReadMessage(End);
             break;
@@ -1810,7 +1810,7 @@ namespace DCL.ECSComponents {
             break;
           }
           case 40: {
-            TextureMovement = (global::DCL.ECSComponents.TextureToMove) input.ReadEnum();
+            TextureMovement = (global::DCL.ECSComponents.TextureMovement) input.ReadEnum();
             break;
           }
         }
@@ -1830,14 +1830,14 @@ namespace DCL.ECSComponents {
             break;
           case 10: {
             if (start_ == null) {
-              Start = new global::Decentraland.Common.Vector3();
+              Start = new global::Decentraland.Common.Vector2();
             }
             input.ReadMessage(Start);
             break;
           }
           case 18: {
             if (end_ == null) {
-              End = new global::Decentraland.Common.Vector3();
+              End = new global::Decentraland.Common.Vector2();
             }
             input.ReadMessage(End);
             break;
@@ -1847,7 +1847,7 @@ namespace DCL.ECSComponents {
             break;
           }
           case 40: {
-            TextureMovement = (global::DCL.ECSComponents.TextureToMove) input.ReadEnum();
+            TextureMovement = (global::DCL.ECSComponents.TextureMovement) input.ReadEnum();
             break;
           }
         }
