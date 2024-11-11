@@ -17,5 +17,7 @@
         public const string ONBOARDING = "onboarding";
         public const string ONBOARDING_ENABLED_VARIANT = "enabled";
         public const string GENESIS_STARTING_PARCEL = "alfa-genesis-spawn-parcel";
+        public const string SKYBOX_SETTINGS = "alfa-skybox-settings";
+        public const string SKYBOX_SETTINGS_VARIANT = "settings";
     }
 }
