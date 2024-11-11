@@ -6,11 +6,11 @@ using System.Threading;
 
 namespace DCL.Multiplayer.HealthChecks
 {
-    public class LivekitHealthCheck : IHealthCheck
+    public class StartLiveKitRooms : IHealthCheck
     {
         private readonly IRoomHub roomHub;
 
-        public LivekitHealthCheck(IRoomHub roomHub)
+        public StartLiveKitRooms(IRoomHub roomHub)
         {
             this.roomHub = roomHub;
         }
