@@ -130,15 +130,15 @@ namespace DCL.SDKComponents.Tween.Systems
 
         [Query]
         [All(typeof(SDKTweenTextureComponent))]
-        private void UpdateTweenTextureSequence(in PBTween pbTween,ref SDKTweenComponent sdkTweenComponent, ref MaterialComponent materialComponent)
+        private void UpdateTweenTextureSequence(CRDTEntity sdkEntity, in PBTween pbTween,ref SDKTweenComponent sdkTweenComponent, ref MaterialComponent materialComponent)
         {
             if (sdkTweenComponent.IsDirty)
                 SetupTween(ref sdkTweenComponent, in pbTween);
             else
-                UpdateTweenTextureState(ref sdkTweenComponent, ref materialComponent);
+                UpdateTweenTextureState(sdkEntity, ref sdkTweenComponent, ref materialComponent);
         }
 
-        private void UpdateTweenTextureState(ref SDKTweenComponent sdkTweenComponent, ref MaterialComponent materialComponent)
+        private void UpdateTweenTextureState(CRDTEntity sdkEntity, ref SDKTweenComponent sdkTweenComponent, ref MaterialComponent materialComponent)
         {
             TweenStateStatus newState = GetCurrentTweenState(sdkTweenComponent);
 
@@ -146,6 +146,7 @@ namespace DCL.SDKComponents.Tween.Systems
             {
                 sdkTweenComponent.TweenStateStatus = newState;
                 UpdateTweenMaterial(sdkTweenComponent, ref materialComponent, sceneStateProvider.IsCurrent);
+                TweenSDKComponentHelper.WriteTweenStateInCRDT(ecsToCRDTWriter, sdkEntity, sdkTweenComponent.TweenStateStatus);
             }
             else if (newState == TweenStateStatus.TsActive)
             {
