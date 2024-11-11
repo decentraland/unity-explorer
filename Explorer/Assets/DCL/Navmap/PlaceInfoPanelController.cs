@@ -268,7 +268,7 @@ namespace DCL.Navmap
                     {
                         schedule = @event.live
                             ? $"Event started {(DateTime.UtcNow - startAt).TotalMinutes} min ago"
-                            // TODO: we might need to convert to local, currently R:RFC1123 GMT
+                            // TODO: we might need to convert to local, currently R:RFC1123 Fri, 18 Apr 2008 20:30:00 GMT
                             : startAt.ToString("R");
                     }
 
@@ -279,8 +279,7 @@ namespace DCL.Navmap
                     element.LiveContainer.SetActive(@event.live);
                     element.EventNameLabel.text = @event.name;
                     element.InterestedUserCountLabel.text = @event.total_attendees.ToString();
-                    // TODO: get data from places api: https://places.decentraland.org/api/places?positions=-71,117 -> user_count
-                    // element.JoinedUserCountLabel.text = @event.
+                    element.JoinedUserCountLabel.text = place.user_count.ToString();
                     element.ScheduleLabel.text = schedule;
                     element.Animator.SetTrigger(UIAnimationHashes.LOADED);
                 }
