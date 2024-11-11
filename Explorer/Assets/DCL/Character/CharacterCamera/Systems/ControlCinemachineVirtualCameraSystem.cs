@@ -41,7 +41,6 @@ namespace DCL.Character.CharacterCamera.Systems
         [Query]
         private void ApplyDefaultCameraMode(ref ICinemachinePreset cinemachinePreset, ref CameraComponent camera, ref CinemachineCameraState cameraState)
         {
-            cinemachinePreset.InWorldCameraData.Camera.enabled = false;
             cinemachinePreset.FreeCameraData.Camera.enabled = false;
             cinemachinePreset.FirstPersonCameraData.Camera.enabled = false;
             cinemachinePreset.ThirdPersonCameraData.Camera.enabled = false;
@@ -285,16 +284,6 @@ namespace DCL.Character.CharacterCamera.Systems
             // copy POV
             preset.FreeCameraData.POV.m_HorizontalAxis.Value = preset.ThirdPersonCameraData.Camera.m_XAxis.Value;
             preset.FreeCameraData.POV.m_VerticalAxis.Value = preset.ThirdPersonCameraData.Camera.m_YAxis.Value;
-        }
-
-        private static void SetDefaultInWorldCameraPosition(in ICinemachinePreset preset)
-        {
-            // take previous position from third person camera
-            preset.InWorldCameraData.Camera.transform.position = preset.ThirdPersonCameraData.Camera.transform.position;
-
-            // copy POV
-            // preset.InWorldCameraData.POV.m_HorizontalAxis.Value = preset.ThirdPersonCameraData.Camera.m_XAxis.Value;
-            // preset.InWorldCameraData.POV.m_VerticalAxis.Value = preset.ThirdPersonCameraData.Camera.m_YAxis.Value;
         }
 
         private bool IsCorrectCameraEnabled(CameraMode mode, ICinemachinePreset cinemachinePreset)

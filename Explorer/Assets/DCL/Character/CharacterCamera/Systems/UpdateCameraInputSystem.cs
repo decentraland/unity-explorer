@@ -28,7 +28,6 @@ namespace DCL.CharacterCamera.Systems
         {
             cameraActions = dclInput.Camera;
             freeCameraActions = dclInput.FreeCamera;
-            inWorldCameraActions = dclInput.InWorldCamera;
         }
 
         protected override void Update(float t)
@@ -98,13 +97,6 @@ namespace DCL.CharacterCamera.Systems
                     cameraInput.FreePanning *= SLOW_CAMERA_INPUT_FREE_PANNING_MODIFIER;
                     cameraInput.FreeFOV *= SLOW_CAMERA_INPUT_FREE_FOV_MODIFIER;
                 }
-            }
-
-            if(inWorldCameraActions.enabled)
-            {
-                cameraInput.FreeMovement = inWorldCameraActions.Translation.ReadValue<Vector2>();
-                // cameraInput.FreePanning = freeCameraActions.Panning.ReadValue<Vector2>();
-                // cameraInput.FreeFOV = freeCameraActions.FOV.ReadValue<Vector2>();
             }
         }
     }
