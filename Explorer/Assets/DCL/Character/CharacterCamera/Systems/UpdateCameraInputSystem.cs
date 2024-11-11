@@ -22,7 +22,6 @@ namespace DCL.CharacterCamera.Systems
 
         private readonly DCLInput.CameraActions cameraActions;
         private readonly DCLInput.FreeCameraActions freeCameraActions;
-        private readonly DCLInput.InWorldCameraActions inWorldCameraActions;
 
         internal UpdateCameraInputSystem(World world, DCLInput dclInput) : base(world)
         {
