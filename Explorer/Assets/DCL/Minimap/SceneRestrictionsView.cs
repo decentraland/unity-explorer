@@ -44,6 +44,7 @@ namespace DCL.Minimap
         private void Awake()
         {
             ToastCanvasGroup.alpha = 0;
+            ToastCanvasGroup.gameObject.SetActive(false);
             SceneRestrictionsIcon.gameObject.SetActive(false);
             ToastRectTransform = ToastCanvasGroup.GetComponent<RectTransform>();
         }

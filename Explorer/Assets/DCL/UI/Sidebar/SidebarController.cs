@@ -11,6 +11,7 @@ using DCL.SidebarBus;
 using DCL.UI.ProfileElements;
 using DCL.Web3.Identities;
 using MVC;
+using System;
 using System.Threading;
 using Utility;
 
@@ -31,6 +32,8 @@ namespace DCL.UI.Sidebar
 
         private CancellationTokenSource profileWidgetCts = new ();
         private CancellationTokenSource systemMenuCts = new ();
+
+        public event Action? HelpOpened;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
@@ -88,8 +91,11 @@ namespace DCL.UI.Sidebar
             viewInstance.sidebarSettingsWidget.OnViewHidden += OnSidebarSettingsClosed;
         }
 
-        private void OnHelpButtonClicked() =>
+        private void OnHelpButtonClicked()
+        {
             webBrowser.OpenUrl(DecentralandUrl.Help);
+            HelpOpened?.Invoke();
+        }
 
         private void OnAutoHideToggleChanged(bool value)
         {
