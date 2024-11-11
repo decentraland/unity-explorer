@@ -24,11 +24,13 @@ namespace DCL.InWorldCamera.ScreencaptureCamera
 
         private readonly Texture2D screenshot = new (TARGET_FRAME_WIDTH, TARGET_FRAME_HEIGHT, TextureFormat.RGB24, false);
 
+        private readonly WaitForEndOfFrame waitForEndOfFrame = new ();
+
         private RenderTexture originalBaseTargetTexture;
 
         private ScreenFrameData debugTargetScreenFrame;
 
-        public RecordingState State { get; private set; }
+        public RecordingState State { get; private set; } = RecordingState.IDLE;
 
         public ScreenRecorder(RectTransform canvasRectTransform)
         {
@@ -36,14 +38,13 @@ namespace DCL.InWorldCamera.ScreencaptureCamera
             Debug.Assert(targetAspectRatio != 0, "Target aspect ratio cannot be null");
 
             this.canvasRectTransform = canvasRectTransform;
-            State = RecordingState.IDLE;
         }
 
         public virtual IEnumerator CaptureScreenshot()
         {
             State = RecordingState.CAPTURING;
 
-            yield return new WaitForEndOfFrame(); // for UI to appear on screenshot. Converting to UniTask didn't work :(
+            yield return waitForEndOfFrame; // for UI to appear on screenshot. Converting to UniTask didn't work :(
 
             ScreenFrameData currentScreenFrame = CalculateCurrentScreenFrame();
             (_, float targetRescale) = CalculateTargetScreenFrame(currentScreenFrame);

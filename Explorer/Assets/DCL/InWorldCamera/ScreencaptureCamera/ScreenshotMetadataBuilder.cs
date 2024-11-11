@@ -57,15 +57,13 @@ namespace DCL.InWorldCamera.ScreencaptureCamera
         {
             if (GeometryUtility.TestPlanesAABB(frustumPlanes, avatarCollider.bounds))
             {
-                var visiblePerson = new VisiblePerson
+                visiblePeople.Add(new VisiblePerson
                 {
                     userName = profile?.Name ?? "Unknown",
                     userAddress = profile?.UserId ?? "Unknown",
                     isGuest = false,
                     wearables = FilterNonBaseWearables(profile?.Avatar.Wearables ?? Array.Empty<URN>()),
-                };
-
-                visiblePeople.Add(visiblePerson);
+                });
             }
         }
 
