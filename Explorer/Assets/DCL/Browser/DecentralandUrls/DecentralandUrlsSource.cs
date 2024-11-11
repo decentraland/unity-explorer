@@ -32,14 +32,14 @@ namespace DCL.Browser.DecentralandUrls
                     GENESIS_URL = string.Format(GENESIS_URL_TEMPLATE, environmentDomainLowerCase);
                     break;
                 case DecentralandEnvironment.Today:
-                    
-                    //The today environemnt is a mixture of the org and today enviroments. 
+
+                    //The today environemnt is a mixture of the org and today enviroments.
                     //We want to fetch pointers from org, but asset bundles from today
-                    //Thats because how peer-testing.decentraland.org works. 
+                    //Thats because how peer-testing.decentraland.org works.
                     //Its a catalyst that replicates the org environment and eth network, but doesnt propagate back to the production catalysts
                     environmentDomainLowerCase = DecentralandEnvironment.Org.ToString()!.ToLower();
                     ASSET_BUNDLE_URL = "https://ab-cdn.decentraland.today";
-                    
+
                     //On staging, we hardcode the catalyst because its the only valid one with a valid comms configuration
                     GENESIS_URL = "https://peer-testing.decentraland.org";
                     break;
@@ -69,15 +69,14 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.POI => $"https://dcl-lists.decentraland.{ENV}/pois",
                 DecentralandUrl.PlacesByCategory => $"https://places.decentraland.{ENV}/api/map",
                 DecentralandUrl.ContentModerationReport => $"https://places.decentraland.{ENV}/api/report",
-                DecentralandUrl.GateKeeperSceneAdapter =>
-                    $"https://comms-gatekeeper.decentraland.{ENV}/get-scene-adapter",
+                DecentralandUrl.GateKeeperSceneAdapter => $"https://comms-gatekeeper.decentraland.{ENV}/get-scene-adapter",
+                DecentralandUrl.ApiEvents => $"https://events.decentraland.{ENV}/api/events",
                 DecentralandUrl.OpenSea => $"https://opensea.decentraland.{ENV}",
                 DecentralandUrl.Host => $"https://decentraland.{ENV}",
                 DecentralandUrl.PeerAbout => $"https://peer.decentraland.{ENV}/about",
                 DecentralandUrl.DAO => $"https://decentraland.{ENV}/dao/",
                 DecentralandUrl.Notification => $"https://notifications.decentraland.{ENV}/notifications",
-                DecentralandUrl.NotificationRead =>
-                    $"https://notifications.decentraland.{ENV}/notifications/read",
+                DecentralandUrl.NotificationRead => $"https://notifications.decentraland.{ENV}/notifications/read",
                 DecentralandUrl.FeatureFlags => $"https://feature-flags.decentraland.{ENV}",
                 DecentralandUrl.Help => $"https://decentraland.{ENV}/help/",
                 DecentralandUrl.Market => $"https://market.decentraland.{ENV}",
@@ -87,8 +86,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.Genesis => GENESIS_URL,
                 DecentralandUrl.Badges => $"https://badges.decentraland.{ENV}",
                 DecentralandUrl.CameraReelUsers => $"https://camera-reel-service.decentraland.{ENV}/api/users",
-                DecentralandUrl.CameraReelImages =>
-                    $"https://camera-reel-service.decentraland.{ENV}/api/images",
+                DecentralandUrl.CameraReelImages => $"https://camera-reel-service.decentraland.{ENV}/api/images",
                 _ => throw new ArgumentOutOfRangeException(nameof(decentralandUrl), decentralandUrl, null!)
             };
     }
