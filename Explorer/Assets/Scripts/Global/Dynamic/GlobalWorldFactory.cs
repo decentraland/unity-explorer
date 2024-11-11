@@ -144,8 +144,6 @@ namespace Global.Dynamic
             LoadFixedPointersSystem.InjectToWorld(ref builder);
             LoadPortableExperiencePointersSystem.InjectToWorld(ref builder);
 
-            CheckFailedScenesStateSystem.InjectToWorld(ref builder, staticContainer.SceneReadinessReportQueue, chatHistory);
-
             // are replace by increasing radius
             var jobsMathHelper = new ParcelMathJobifiedHelper();
             StartSplittingByRingsSystem.InjectToWorld(ref builder, realmPartitionSettings, jobsMathHelper);
@@ -158,7 +156,8 @@ namespace Global.Dynamic
             //CreateEmptyPointersInFixedRealmSystem.InjectToWorld(ref builder, jobsMathHelper, realmPartitionSettings);
 
             ResolveStaticPointersSystem.InjectToWorld(ref builder);
-            ControlSceneUpdateLoopSystem.InjectToWorld(ref builder, realmPartitionSettings, destroyCancellationSource.Token, scenesCache);
+            ControlSceneUpdateLoopSystem.InjectToWorld(ref builder, realmPartitionSettings,
+                destroyCancellationSource.Token, scenesCache, staticContainer.SceneReadinessReportQueue, chatHistory);
 
             IComponentPool<PartitionComponent> partitionComponentPool = componentPoolsRegistry.GetReferenceTypePool<PartitionComponent>();
             PartitionSceneEntitiesSystem.InjectToWorld(ref builder, partitionComponentPool, partitionSettings, cameraSamplingData, staticContainer.PartitionDataContainer, staticContainer.RealmPartitionSettings);

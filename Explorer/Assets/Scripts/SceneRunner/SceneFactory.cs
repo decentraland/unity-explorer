@@ -243,7 +243,18 @@ namespace SceneRunner
                 );
             }
 
-            sceneRuntime.ExecuteSceneJson();
+            try
+            {
+                sceneRuntime.ExecuteSceneJson();
+            }
+            catch (Exception e)
+            {
+                await UniTask.SwitchToMainThread(PlayerLoopTiming.Initialization);
+                deps.Dispose();
+                sceneRuntime?.Dispose();
+                throw;
+            }
+            
 
             if (sceneData.IsPortableExperience())
             {

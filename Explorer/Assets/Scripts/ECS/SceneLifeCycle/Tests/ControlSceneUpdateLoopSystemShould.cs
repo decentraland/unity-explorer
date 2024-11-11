@@ -12,6 +12,8 @@ using NUnit.Framework;
 using SceneRunner.Scene;
 using System.Threading;
 using System.Threading.Tasks;
+using DCL.Chat.History;
+using ECS.SceneLifeCycle.Reporting;
 
 namespace ECS.SceneLifeCycle.Tests
 {
@@ -23,7 +25,9 @@ namespace ECS.SceneLifeCycle.Tests
         public void SetUp()
         {
             realmPartitionSettings = Substitute.For<IRealmPartitionSettings>();
-            system = new ControlSceneUpdateLoopSystem(world, realmPartitionSettings, CancellationToken.None, Substitute.For<IScenesCache>());
+            system = new ControlSceneUpdateLoopSystem(world, realmPartitionSettings, CancellationToken.None,
+                Substitute.For<IScenesCache>(), Substitute.For<ISceneReadinessReportQueue>(),
+                Substitute.For<IChatHistory>());
         }
 
         [Test]

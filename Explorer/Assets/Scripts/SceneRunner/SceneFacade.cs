@@ -28,7 +28,6 @@ namespace SceneRunner
         public ISceneData SceneData { get; }
 
         public bool IsEmpty => false;
-        public bool FailedToInitialize => false;
 
         public SceneShortInfo Info => SceneData.SceneShortInfo;
 

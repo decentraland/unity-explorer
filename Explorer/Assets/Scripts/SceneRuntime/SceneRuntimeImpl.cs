@@ -69,6 +69,7 @@ namespace SceneRuntime
 
         public void ExecuteSceneJson()
         {
+            //const __VERSION__ = '0.1.0'
             engine.Execute(@"
             const __internalScene = require('~scene.js')
             const __internalOnStart = async function () {

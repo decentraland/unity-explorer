@@ -13,6 +13,11 @@ using ECS.StreamableLoading.Common;
 using SceneRunner.Scene;
 using System;
 using System.Threading;
+using DCL.Chat;
+using DCL.Chat.History;
+using ECS.SceneLifeCycle.Reporting;
+using SceneRunner.EmptyScene;
+using UnityEngine;
 
 namespace ECS.SceneLifeCycle.Systems
 {
@@ -28,14 +33,22 @@ namespace ECS.SceneLifeCycle.Systems
 
         private readonly IScenesCache scenesCache;
 
+        private readonly ISceneReadinessReportQueue sceneReadinesReportQueue;
+        private readonly IChatHistory chatHistory;
+        private PooledLoadReportList? reports;
+
         internal ControlSceneUpdateLoopSystem(World world,
             IRealmPartitionSettings realmPartitionSettings,
             CancellationToken destroyCancellationToken,
-            IScenesCache scenesCache) : base(world)
+            IScenesCache scenesCache,
+            ISceneReadinessReportQueue sceneReadinesReportQueue,
+            IChatHistory chatHistory) : base(world)
         {
             this.realmPartitionSettings = realmPartitionSettings;
             this.destroyCancellationToken = destroyCancellationToken;
             this.scenesCache = scenesCache;
+            this.sceneReadinesReportQueue = sceneReadinesReportQueue;
+            this.chatHistory = chatHistory;
         }
 
         protected override void Update(float t)
@@ -47,45 +60,74 @@ namespace ECS.SceneLifeCycle.Systems
         [Query]
         [None(typeof(DeleteEntityIntention), typeof(ISceneFacade))]
         private void StartScene(in Entity entity, ref AssetPromise<ISceneFacade, GetSceneFacadeIntention> promise,
-            ref PartitionComponent partition)
+            ref PartitionComponent partition, ref SceneDefinitionComponent sceneDefinitionComponent)
         {
             // Gracefully consume with the possibility of repetitions (in case the scene loading has failed)
             if (promise.IsConsumed) return;
 
-            if (promise.TryConsume(World, out var result) && result.Succeeded)
+            if (promise.TryConsume(World, out var result))
             {
-                var scene = result.Asset!;
-
-                var fps = realmPartitionSettings.GetSceneUpdateFrequency(in partition);
-
-                async UniTaskVoid RunOnThreadPoolAsync()
+                if (result.Succeeded)
                 {
-                    try
+                    var scene = result.Asset!;
+
+                    var fps = realmPartitionSettings.GetSceneUpdateFrequency(in partition);
+
+                    async UniTaskVoid RunOnThreadPoolAsync()
                     {
-                        await UniTask.SwitchToThreadPool();
-                        if (destroyCancellationToken.IsCancellationRequested) return;
+                        try
+                        {
+                            await UniTask.SwitchToThreadPool();
+                            if (destroyCancellationToken.IsCancellationRequested) return;
 
-                        // Provide basic Thread Pool synchronization context
-                        SynchronizationContext.SetSynchronizationContext(new SynchronizationContext());
+                            // Provide basic Thread Pool synchronization context
+                            SynchronizationContext.SetSynchronizationContext(new SynchronizationContext());
 
-                        // FPS is set by another system
-                        await scene.StartUpdateLoopAsync(fps, destroyCancellationToken);
+                            // FPS is set by another system
+                            await scene.StartUpdateLoopAsync(fps, destroyCancellationToken);
+                        }
+                        catch (Exception e)
+                        {
+                            ReportHub.LogException(e, GetReportData());
+                        }
                     }
-                    catch (Exception e) { ReportHub.LogException(e, GetReportData()); }
-                }
 
-                RunOnThreadPoolAsync().Forget();
+                    RunOnThreadPoolAsync().Forget();
 
-                if (promise.LoadingIntention.DefinitionComponent.IsPortableExperience)
-                {
-                    scenesCache.AddPortableExperienceScene(scene, promise.LoadingIntention.DefinitionComponent.IpfsPath.EntityId);
+                    if (promise.LoadingIntention.DefinitionComponent.IsPortableExperience)
+                    {
+                        scenesCache.AddPortableExperienceScene(scene,
+                            promise.LoadingIntention.DefinitionComponent.IpfsPath.EntityId);
+                    }
+                    else
+                    {
+                        // So we know the scene has started
+                        scenesCache.Add(scene, promise.LoadingIntention.DefinitionComponent.Parcels);
+                    }
+
+                    World.Add(entity, scene);
                 }
                 else
                 {
-                    // So we know the scene has started
-                    scenesCache.Add(scene, promise.LoadingIntention.DefinitionComponent.Parcels);
+                    if (sceneReadinesReportQueue.TryDequeue(
+                            sceneDefinitionComponent.Definition.metadata.scene.DecodedParcels, out reports))
+                    {
+                        for (var i = 0; i < reports!.Value.Count; i++)
+                        {
+                            var report = reports.Value[i];
+                            report.SetProgress(1);
+                        }
+
+                        reports.Value.Dispose();
+                        reports = null;
+                        chatHistory.AddMessage(ChatMessage.NewFromSystem(
+                            $"🔴 Scene {sceneDefinitionComponent.Definition.metadata.scene.DecodedBase} failed to load"));
+                    }
+
+                    World.Add(entity,
+                        new EmptySceneFacade.Args(new SceneShortInfo(
+                            sceneDefinitionComponent.Definition.metadata.scene.DecodedBase, "BROKEN SDK7 SCENE")));
                 }
-                World.Add(entity, scene);
             }
         }
 

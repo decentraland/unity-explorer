@@ -21,14 +21,12 @@ namespace SceneRunner.EmptyScene
         private EmptySceneFacade() { }
 
         public SceneShortInfo Info => args.ShortInfo;
-        public ISceneStateProvider SceneStateProvider { get; private set; }
+        public ISceneStateProvider SceneStateProvider { get; }
         public SceneEcsExecutor EcsExecutor { get; }
         public PersistentEntities PersistentEntities => default;
 
         public bool IsEmpty => true;
-        public bool FailedToInitialize { get; private set; }
-
-        public ISceneData SceneData { get; private set; }
+        public ISceneData SceneData { get; } = new EmptySceneData(new List<Vector2Int>());
 
         public void Dispose()
         {
@@ -75,7 +73,6 @@ namespace SceneRunner.EmptyScene
         {
             EmptySceneFacade f = POOL.Get();
             f.args = args;
-            f.SceneData = new EmptySceneData(new List<Vector2Int>());
             return f;
         }
 
@@ -87,18 +84,6 @@ namespace SceneRunner.EmptyScene
             {
                 ShortInfo = shortInfo;
             }
-        }
-
-        public static ISceneFacade CreateBrokenScene(SceneData sceneData, Exception e)
-        {
-            var f = POOL.Get();
-            ReportHub.LogError(ReportCategory.SCENE_LOADING,
-                $"Scene {sceneData.SceneEntityDefinition.metadata.scene.DecodedBase} failed to load with exception {e.Message}");
-            f.SceneData = sceneData;
-            f.FailedToInitialize = true;
-            f.SceneStateProvider = new SceneStateProvider();
-            f.SceneStateProvider.State = SceneState.EngineError;
-            return f;
         }
     }
 }
