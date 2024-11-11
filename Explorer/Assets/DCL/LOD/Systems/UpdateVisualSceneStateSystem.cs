@@ -120,11 +120,11 @@ namespace ECS.SceneLifeCycle.Systems
         {
             if (visualSceneState.CandidateVisualSceneState != VisualSceneStateEnum.SHOWING_LOD) return;
 
-            if (visualSceneState.TimeToChange < lodSettingsAsset.TimeToChangeToLod)
+            /*if (visualSceneState.TimeToChange < lodSettingsAsset.TimeToChangeToLod)
             {
                 visualSceneState.TimeToChange += deltaTime;
                 return;
-            }
+            }*/
             visualSceneState.TimeToChange = 0;
             visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.SHOWING_LOD;
 
@@ -160,11 +160,11 @@ namespace ECS.SceneLifeCycle.Systems
         {
             if (visualSceneState.CandidateVisualSceneState != VisualSceneStateEnum.SHOWING_LOD) return;
 
-            if (visualSceneState.TimeToChange < lodSettingsAsset.TimeToChangeToLod)
+            /*if (visualSceneState.TimeToChange < lodSettingsAsset.TimeToChangeToLod)
             {
                 visualSceneState.TimeToChange += deltaTime;
                 return;
-            }
+            }*/
 
             visualSceneState.TimeToChange = 0;
             visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.SHOWING_LOD;

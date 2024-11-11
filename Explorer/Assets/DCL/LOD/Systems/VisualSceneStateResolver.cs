@@ -30,11 +30,49 @@ namespace DCL.LOD
             else if (!sceneDefinitionComponent.IsSDK7) visualSceneState.CandidateVisualSceneState = visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.SHOWING_LOD;
             else
             {
-                var candidateVisualSceneState =  partition.Bucket < lodSettingsAsset.SDK7LodThreshold
-                    ? VisualSceneStateEnum.SHOWING_SCENE
-                    : VisualSceneStateEnum.SHOWING_LOD;
+
 
                 if (visualSceneState.CurrentVisualSceneState == VisualSceneStateEnum.UNINITIALIZED)
+                {
+                    var candidateVisualSceneState = partition.Bucket < lodSettingsAsset.SDK7LodThreshold
+                        ? VisualSceneStateEnum.SHOWING_SCENE
+                        : VisualSceneStateEnum.SHOWING_LOD;
+
+                    visualSceneState.CandidateVisualSceneState =
+                        visualSceneState.CurrentVisualSceneState = candidateVisualSceneState;
+                    visualSceneState.IsDirty = true;
+                }
+
+                if (visualSceneState.CurrentVisualSceneState == VisualSceneStateEnum.SHOWING_SCENE)
+                {
+                    var candidateVisualSceneState = partition.Bucket < lodSettingsAsset.SDK7LodThreshold + 1
+                        ? VisualSceneStateEnum.SHOWING_SCENE
+                        : VisualSceneStateEnum.SHOWING_LOD;
+
+
+                    if (visualSceneState.CurrentVisualSceneState != candidateVisualSceneState)
+                    {
+                        visualSceneState.CandidateVisualSceneState =
+                            visualSceneState.CurrentVisualSceneState = candidateVisualSceneState;
+                        visualSceneState.IsDirty = true;
+                    }
+                }
+
+                if (visualSceneState.CurrentVisualSceneState == VisualSceneStateEnum.SHOWING_LOD)
+                {
+                    var candidateVisualSceneState = partition.Bucket < lodSettingsAsset.SDK7LodThreshold
+                        ? VisualSceneStateEnum.SHOWING_SCENE
+                        : VisualSceneStateEnum.SHOWING_LOD;
+
+                    if (visualSceneState.CurrentVisualSceneState != candidateVisualSceneState)
+                    {
+                        visualSceneState.CandidateVisualSceneState =
+                            visualSceneState.CurrentVisualSceneState = candidateVisualSceneState;
+                        visualSceneState.IsDirty = true;
+                    }
+                }
+
+                /*if (visualSceneState.CurrentVisualSceneState == VisualSceneStateEnum.UNINITIALIZED)
                 {
                     visualSceneState.CandidateVisualSceneState = candidateVisualSceneState;
                     visualSceneState.CurrentVisualSceneState = candidateVisualSceneState;
@@ -46,7 +84,7 @@ namespace DCL.LOD
                     visualSceneState.CandidateVisualSceneState = candidateVisualSceneState;
                     visualSceneState.IsDirty = true;
                     visualSceneState.TimeToChange = 0;
-                }
+                }*/
             }
         }
     }
