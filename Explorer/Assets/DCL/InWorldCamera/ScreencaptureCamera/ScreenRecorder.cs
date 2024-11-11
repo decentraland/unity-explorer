@@ -17,7 +17,7 @@ namespace DCL.InWorldCamera.ScreencaptureCamera
     {
         private const int TARGET_FRAME_WIDTH = 1920;
         private const int TARGET_FRAME_HEIGHT = 1080;
-        private const float FRAME_SCALE = 0.87f; // Defines the scale of the frame in relation to the screen
+        public const float FRAME_SCALE = 0.87f; // Defines the scale of the frame in relation to the screen
 
         private readonly float targetAspectRatio;
         private readonly RectTransform canvasRectTransform;

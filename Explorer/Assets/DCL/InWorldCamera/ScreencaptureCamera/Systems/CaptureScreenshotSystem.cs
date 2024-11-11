@@ -82,10 +82,9 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
 
         private void CollectMetadata()
         {
-            metadataBuilder.Init(
-                sceneParcel: World.Get<CharacterTransform>(playerEntity).Position.ToParcel(),
-                frustumPlanes: GeometryUtility.CalculateFrustumPlanes(cameraEntity.GetCameraComponent(World).Camera)
-            );
+            GetScaledFrustumPlanes(cameraEntity.GetCameraComponent(World).Camera, ScreenRecorder.FRAME_SCALE, out var frustumPlanes);
+
+            metadataBuilder.Init(sceneParcel: World.Get<CharacterTransform>(playerEntity).Position.ToParcel(), frustumPlanes);
 
             AddPeopleInFrameToMetadataQuery(World);
             metadataBuilder.Build(ctx.Token).Forget();
@@ -95,6 +94,23 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
         private void AddPeopleInFrameToMetadata(Profile profile, RemoteAvatarCollider avatarCollider)
         {
             metadataBuilder.AddProfile(profile, avatarCollider.Collider);
+        }
+
+        private static void GetScaledFrustumPlanes(Camera camera, float scaleFactor, out Plane[] frustumPlanes)
+        {
+            float originalFOV = camera.fieldOfView;
+            float originalAspect = camera.aspect;
+
+            // Calculate new FOV and aspect ratio for the scaled view
+            camera.fieldOfView = Mathf.Atan(Mathf.Tan(originalFOV * 0.5f * Mathf.Deg2Rad) * scaleFactor) * 2f * Mathf.Rad2Deg;
+            camera.aspect = originalAspect; // Maintain the same aspect ratio since we're scaling uniformly
+
+            // Get the scaled frustum planes
+            frustumPlanes = GeometryUtility.CalculateFrustumPlanes(camera);
+
+            // Restore original camera settings
+            camera.fieldOfView = originalFOV;
+            camera.aspect = originalAspect;
         }
     }
 }
