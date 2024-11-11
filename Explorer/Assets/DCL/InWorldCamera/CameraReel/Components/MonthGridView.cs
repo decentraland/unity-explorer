@@ -25,7 +25,8 @@ namespace DCL.InWorldCamera.CameraReel.Components
             ReelGalleryPoolManager reelGalleryPool,
             ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
             OptionButtonView optionsButton,
-            Action<CameraReelResponse, Sprite> onThumbnailLoaded)
+            Action<CameraReelResponse, Sprite> onThumbnailLoaded,
+            Action<CameraReelResponse> onThumbnailClicked)
         {
             this.reelGalleryPoolManager = reelGalleryPool;
             DateTimeBucket = bucket;

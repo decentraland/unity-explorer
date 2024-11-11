@@ -22,7 +22,12 @@ namespace DCL.InWorldCamera.CameraReel.Components
         {
             reelThumbnailPool = new ObjectPool<ReelThumbnailView>(
                 () => GameObject.Instantiate(reelThumbnailPrefab),
-                thumbnail => thumbnail.gameObject.SetActive(true),
+                thumbnail =>
+                {
+                    thumbnail.gameObject.SetActive(true);
+                    thumbnail.thumbnailImage.enabled = true;
+                    thumbnail.thumbnailImage.sprite = null;
+                },
                 thumbnail =>
                 {
                     thumbnail.transform.SetParent(unusedThumbnailPoolObjectParent.transform, false);

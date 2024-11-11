@@ -18,8 +18,8 @@ namespace DCL.InWorldCamera.CameraReel.Components
         private const int THUMBNAIL_HEIGHT = 201;
 
         [Header("References")]
+        public Image thumbnailImage;
         [SerializeField] private LoadingBrightView loadingBrightView;
-        [SerializeField] private Image thumbnailImage;
         [SerializeField] private RectTransform optionButtonContainer;
 
         [Header("Configuration")]
@@ -28,7 +28,8 @@ namespace DCL.InWorldCamera.CameraReel.Components
         [SerializeField] private float scaleAnimationDuration = 0.3f;
         [SerializeField] private float thumbnailLoadedAnimationDuration = 0.3f;
 
-        private CameraReelResponse cameraReelResponse;
+        [HideInInspector] public CameraReelResponse cameraReelResponse;
+
         private CancellationTokenSource loadImageCts;
         private ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
         private OptionButtonView optionButton;
