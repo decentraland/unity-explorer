@@ -11,14 +11,14 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
     [UpdateInGroup(typeof(CameraGroup))]
     [UpdateAfter(typeof(ApplyCinemachineCameraInputSystem))]
     [LogCategory(ReportCategory.IN_WORLD_CAMERA)]
-    public partial class EnableInWorldCameraSystem : BaseUnityLoopSystem
+    public partial class ToggleInWorldCameraActivitySystem : BaseUnityLoopSystem
     {
         private readonly DCLInput.InWorldCameraActions inputSchema;
         private readonly GameObject hud;
 
         private SingleInstanceEntity camera;
 
-        public EnableInWorldCameraSystem(World world, DCLInput.InWorldCameraActions inputSchema, GameObject hud) : base(world)
+        public ToggleInWorldCameraActivitySystem(World world, DCLInput.InWorldCameraActions inputSchema, GameObject hud) : base(world)
         {
             this.inputSchema = inputSchema;
             this.hud = hud;
@@ -42,13 +42,13 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
 
         private void EnableCamera()
         {
-            hud.SetActive(true);
+            hud.SetActive(true); // TODO (Vit):Temporary solution, will be replaced by MVC
             World.Add<IsInWorldCamera>(camera);
         }
 
         private void DisableCamera()
         {
-            hud.SetActive(false);
+            hud.SetActive(false); // TODO (Vit):Temporary solution, will be replaced by MVC
             World.Remove<IsInWorldCamera>(camera);
         }
     }

@@ -3,18 +3,13 @@ using UnityEngine;
 
 namespace DCL.InWorldCamera.ScreencaptureCamera.UI
 {
-    public class ScreenshotHudView : MonoBehaviour, ICoroutineRunner
+    // TODO (Vit): This is a a placeholder UI that will be replaced by a proper UI in near future
+    public class ScreenshotHudView : MonoBehaviour
     {
         public Canvas Canvas;
 
         [Space]
         public Texture2D Screenshot;
         public ScreenshotMetadata Metadata;
-
-        public void AssignScreenshot(Texture2D screenshot)
-        {
-            Screenshot = screenshot;
-            Canvas.enabled = true;
-        }
     }
 }

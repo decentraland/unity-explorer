@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using UnityEngine;
 
-namespace DCL.InWorldCamera.ScreencaptureCamera.UI
+namespace Utility
 {
     public interface ICoroutineRunner
     {

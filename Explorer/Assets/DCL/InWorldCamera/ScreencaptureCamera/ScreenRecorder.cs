@@ -5,6 +5,14 @@ using Object = UnityEngine.Object;
 
 namespace DCL.InWorldCamera.ScreencaptureCamera
 {
+    public enum RecordingState
+    {
+        UNKNOWN = 0,
+        IDLE = 1,
+        CAPTURING = 2,
+        SCREENSHOT_READY = 3,
+    }
+
     public class ScreenRecorder
     {
         private const int TARGET_FRAME_WIDTH = 1920;
@@ -20,7 +28,7 @@ namespace DCL.InWorldCamera.ScreencaptureCamera
 
         private ScreenFrameData debugTargetScreenFrame;
 
-        public bool IsCapturing { get; private set; }
+        public RecordingState State { get; private set; }
 
         public ScreenRecorder(RectTransform canvasRectTransform)
         {
@@ -28,11 +36,12 @@ namespace DCL.InWorldCamera.ScreencaptureCamera
             Debug.Assert(targetAspectRatio != 0, "Target aspect ratio cannot be null");
 
             this.canvasRectTransform = canvasRectTransform;
+            State = RecordingState.IDLE;
         }
 
-        public virtual IEnumerator CaptureScreenshot(Action<Texture2D> onComplete)
+        public virtual IEnumerator CaptureScreenshot()
         {
-            IsCapturing = true;
+            State = RecordingState.CAPTURING;
 
             yield return new WaitForEndOfFrame(); // for UI to appear on screenshot. Converting to UniTask didn't work :(
 
@@ -49,11 +58,18 @@ namespace DCL.InWorldCamera.ScreencaptureCamera
             screenshotTexture = CropTexture2D(screenshotTexture, rescaledScreenFrame.CalculateFrameCorners(), rescaledScreenFrame.FrameWidthInt, rescaledScreenFrame.FrameHeightInt);
             ResizeTexture2D(screenshotTexture);
 
-            onComplete?.Invoke(screenshot);
-
             Object.Destroy(screenshotTexture);
 
-            IsCapturing = false;
+            State = RecordingState.SCREENSHOT_READY;
+        }
+
+        public Texture2D GetScreenshotAndReset()
+        {
+            if (State != RecordingState.SCREENSHOT_READY)
+                return null;
+
+            State = RecordingState.IDLE;
+            return screenshot;
         }
 
         private static Texture2D CropTexture2D(Texture2D texture, Vector2Int startCorner, int width, int height)

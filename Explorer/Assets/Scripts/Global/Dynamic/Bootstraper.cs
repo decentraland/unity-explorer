@@ -24,6 +24,7 @@ using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UIElements;
+using Utility;
 
 namespace Global.Dynamic
 {
@@ -89,6 +90,7 @@ namespace Global.Dynamic
             WorldInfoTool worldInfoTool,
             Entity playerEntity,
             IAppArgs appArgs,
+            ICoroutineRunner coroutineRunner,
             CancellationToken ct)
         {
             dynamicWorldDependencies = new DynamicWorldDependencies
@@ -130,6 +132,7 @@ namespace Global.Dynamic
                 appArgs,
                 staticContainer.SceneRestrictionBusController,
                 staticContainer.LoadingStatus,
+                coroutineRunner,
                 ct);
         }
 

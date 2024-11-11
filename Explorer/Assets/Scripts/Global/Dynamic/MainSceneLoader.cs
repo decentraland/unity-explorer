@@ -22,10 +22,11 @@ using System.Linq;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UIElements;
+using Utility;
 
 namespace Global.Dynamic
 {
-    public class MainSceneLoader : MonoBehaviour
+    public class MainSceneLoader : MonoBehaviour, ICoroutineRunner
     {
         [Header("Startup Config")] [SerializeField]
         private RealmLaunchSettings launchSettings = null!;
@@ -131,6 +132,7 @@ namespace Global.Dynamic
                 (dynamicWorldContainer, isLoaded) = await bootstrap.LoadDynamicWorldContainerAsync(bootstrapContainer, staticContainer!, scenePluginSettingsContainer, settings,
                     dynamicSettings, uiToolkitRoot, cursorRoot, splashScreen, backgroundMusic, worldInfoTool.EnsureNotNull(), playerEntity,
                     applicationParametersParser,
+                    coroutineRunner: this,
                     destroyCancellationToken);
 
                 if (!isLoaded)

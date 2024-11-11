@@ -13,6 +13,7 @@ using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using Utility;
 using static DCL.PluginSystem.Global.InWorldCameraPlugin;
 using Object = UnityEngine.Object;
 
@@ -27,13 +28,15 @@ namespace DCL.PluginSystem.Global
         private readonly Entity playerEntity;
         private readonly IPlacesAPIService placesAPIService;
         private readonly ICharacterObject characterObject;
+        private readonly ICoroutineRunner coroutineRunner;
 
         private ProvidedAsset<GameObject> hudPrefab;
         private ScreenRecorder recorder;
         private GameObject hud;
+        private ScreenshotMetadataBuilder metadataBuilder;
 
         public InWorldCameraPlugin(DCLInput input, IAssetsProvisioner assetsProvisioner, SelfProfile selfProfile,
-            RealmData realmData, Entity playerEntity, IPlacesAPIService placesAPIService, ICharacterObject characterObject)
+            RealmData realmData, Entity playerEntity, IPlacesAPIService placesAPIService, ICharacterObject characterObject, ICoroutineRunner coroutineRunner)
         {
             this.input = input;
             this.assetsProvisioner = assetsProvisioner;
@@ -42,6 +45,7 @@ namespace DCL.PluginSystem.Global
             this.playerEntity = playerEntity;
             this.placesAPIService = placesAPIService;
             this.characterObject = characterObject;
+            this.coroutineRunner = coroutineRunner;
         }
 
         public async UniTask InitializeAsync(InWorldCameraSettings settings, CancellationToken ct)
@@ -52,6 +56,7 @@ namespace DCL.PluginSystem.Global
             hud = Object.Instantiate(hudPrefab.Value, Vector3.zero, Quaternion.identity);
 
             recorder = new ScreenRecorder(hud.GetComponent<RectTransform>());
+            metadataBuilder = new ScreenshotMetadataBuilder(selfProfile, characterObject.Controller, realmData, placesAPIService);
         }
 
         public void Dispose()
@@ -61,9 +66,8 @@ namespace DCL.PluginSystem.Global
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            EnableInWorldCameraSystem.InjectToWorld(ref builder, input.InWorldCamera, hud);
-            CameraScreencaptureSystem.InjectToWorld(ref builder, recorder, input.InWorldCamera, hud.GetComponent<ScreenshotHudView>(),
-                selfProfile, realmData, playerEntity, placesAPIService, characterObject);
+            ToggleInWorldCameraActivitySystem.InjectToWorld(ref builder, input.InWorldCamera, hud);
+            CaptureScreenshotSystem.InjectToWorld(ref builder, recorder, input.InWorldCamera, hud.GetComponent<ScreenshotHudView>(), playerEntity, metadataBuilder, coroutineRunner);
         }
 
         [Serializable]

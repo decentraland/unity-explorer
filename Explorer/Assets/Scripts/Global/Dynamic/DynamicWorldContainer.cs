@@ -57,7 +57,6 @@ using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
-using DCL.Settings;
 using DCL.SidebarBus;
 using DCL.UI.MainUI;
 using DCL.StylizedSkybox.Scripts.Plugin;
@@ -89,6 +88,7 @@ using UnityEngine;
 using UnityEngine.Audio;
 using UnityEngine.EventSystems;
 using UnityEngine.Pool;
+using Utility;
 using Utility.Ownership;
 using Utility.PriorityQueue;
 using Object = UnityEngine.Object;
@@ -159,6 +159,7 @@ namespace Global.Dynamic
             IAppArgs appArgs,
             ISceneRestrictionBusController sceneRestrictionBusController,
             ILoadingStatus loadingStatus,
+            ICoroutineRunner coroutineRunner,
             CancellationToken ct)
         {
             var container = new DynamicWorldContainer();
@@ -481,7 +482,9 @@ namespace Global.Dynamic
                 new InputPlugin(dclInput, dclCursor, unityEventSystem, assetsProvisioner, dynamicWorldDependencies.CursorUIDocument, multiplayerEmotesMessageBus, container.MvcManager, debugBuilder, dynamicWorldDependencies.RootUIDocument, dynamicWorldDependencies.CursorUIDocument, exposedGlobalDataContainer.ExposedCameraData),
                 new GlobalInteractionPlugin(dclInput, dynamicWorldDependencies.RootUIDocument, assetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents, dclCursor, unityEventSystem, container.MvcManager),
                 new CharacterCameraPlugin(assetsProvisioner, realmSamplingData, exposedGlobalDataContainer.ExposedCameraData, debugBuilder, dynamicWorldDependencies.CommandLineArgs, dclInput),
-                new InWorldCameraPlugin(dclInput, assetsProvisioner, selfProfile, staticContainer.RealmData, playerEntity, placesAPIService, staticContainer.CharacterContainer.CharacterObject),
+#if UNITY_EDITOR // WIP. Currently working only in Editor
+                new InWorldCameraPlugin(dclInput, assetsProvisioner, selfProfile, staticContainer.RealmData, playerEntity, placesAPIService, staticContainer.CharacterContainer.CharacterObject, coroutineRunner),
+#endif
                 new WearablePlugin(assetsProvisioner, staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, assetBundlesURL, staticContainer.CacheCleaner, wearableCatalog),
                 new EmotePlugin(staticContainer.WebRequestsContainer.WebRequestController, emotesCache, staticContainer.RealmData, multiplayerEmotesMessageBus, debugBuilder,
                     assetsProvisioner, selfProfile, container.MvcManager, dclInput, staticContainer.CacheCleaner, identityCache, entityParticipantTable, assetBundlesURL, mainUIView, dclCursor, staticContainer.InputBlock, globalWorld, playerEntity),
