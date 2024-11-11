@@ -12,6 +12,9 @@ namespace DCL.DebugUtilities
         public static DebugWidgetBuilder AddSingleButton(this DebugWidgetBuilder builder, string buttonName, Action onClick) =>
             builder.AddControl(new DebugButtonDef(buttonName, onClick), null);
 
+        public static DebugWidgetBuilder AddSingleButton(this DebugWidgetBuilder builder, ElementBinding<string> buttonName, Action onClick) =>
+            builder.AddControl(new DebugButtonDef(buttonName, onClick), null);
+
         public static DebugWidgetBuilder AddToggleField(this DebugWidgetBuilder builder, string toggleName, EventCallback<ChangeEvent<bool>> onToggle, bool initialState)
         {
             var label = new DebugConstLabelDef(toggleName);

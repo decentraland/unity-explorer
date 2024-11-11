@@ -282,6 +282,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a39f0a305be6be143aabcbf7ebb59d62
+    m_Address: RoomIndicator
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: aabac5666448b4345a76347f94ea32a4
     m_Address: BackpackItem
     m_ReadOnly: 0
