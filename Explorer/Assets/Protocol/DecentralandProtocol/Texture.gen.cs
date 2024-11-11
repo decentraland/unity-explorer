@@ -200,7 +200,8 @@ namespace Decentraland.Common {
     public const int OffsetFieldNumber = 4;
     private global::Decentraland.Common.Vector2 offset_;
     /// <summary>
-    /// default = Vector2.Zero
+    /// Final uv = offset + (input_uv * tiling)
+    /// Offset for texture positioning. 
     /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
@@ -215,7 +216,7 @@ namespace Decentraland.Common {
     public const int TilingFieldNumber = 5;
     private global::Decentraland.Common.Vector2 tiling_;
     /// <summary>
-    /// default = Vector2.Zero
+    /// Tiling multiplier for texture repetition.
     /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]

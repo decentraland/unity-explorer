@@ -138,7 +138,7 @@ namespace DCL.SDKComponents.Tween.Systems
                 UpdateTweenTextureState(ref sdkTweenComponent, ref materialComponent);
         }
 
-        private void UpdateTweenTextureState( ref SDKTweenComponent sdkTweenComponent, ref MaterialComponent materialComponent)
+        private void UpdateTweenTextureState(ref SDKTweenComponent sdkTweenComponent, ref MaterialComponent materialComponent)
         {
             TweenStateStatus newState = GetCurrentTweenState(sdkTweenComponent);
 
@@ -157,7 +157,8 @@ namespace DCL.SDKComponents.Tween.Systems
             ref MaterialComponent materialComponent,
             bool isInCurrentScene)
         {
-            TweenSDKComponentHelper.UpdateTweenResult(sdkTweenComponent.CustomTweener, ref materialComponent, isInCurrentScene);
+            if(materialComponent.Result)
+                TweenSDKComponentHelper.UpdateTweenResult(sdkTweenComponent.CustomTweener, ref materialComponent, isInCurrentScene);
         }
 
         [Query]
