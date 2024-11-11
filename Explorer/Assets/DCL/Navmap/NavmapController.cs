@@ -1,9 +1,5 @@
 using Arch.Core;
-using Cysharp.Threading.Tasks;
-using DCL.AssetsProvision;
 using DCL.Audio;
-using DCL.Browser;
-using DCL.Input;
 using DCL.MapRenderer;
 using DCL.MapRenderer.CommonBehavior;
 using DCL.MapRenderer.ConsumerUtils;
@@ -13,9 +9,7 @@ using DCL.MapRenderer.MapLayers.Pins;
 using DCL.MapRenderer.MapLayers.PlayerMarker;
 using DCL.PlacesAPIService;
 using DCL.UI;
-using DCL.WebRequests;
 using ECS;
-using ECS.SceneLifeCycle.Realm;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -40,12 +34,13 @@ namespace DCL.Navmap
         private readonly NavmapView navmapView;
         private readonly IMapRenderer mapRenderer;
         private readonly NavmapZoomController zoomController;
-        private readonly NavmapFilterController filterController;
         private readonly NavmapSearchBarController searchBarController;
         private readonly RectTransform rectTransform;
         private readonly SatelliteController satelliteController;
         private readonly IRealmData realmData;
         private readonly IMapPathEventBus mapPathEventBus;
+        private readonly UIAudioEventsBus audioEventsBus;
+        private readonly PlacesAndEventsPanelController placesAndEventsPanelController;
         private readonly SectionSelectorController<NavmapSections> sectionSelectorController;
         private readonly Dictionary<NavmapSections, TabSelectorView> tabsBySections;
         private readonly Dictionary<NavmapSections, ISection> mapSections;
@@ -53,9 +48,10 @@ namespace DCL.Navmap
         private readonly StringBuilder parcelTitleStringBuilder = new ();
         private readonly NavmapLocationController navmapLocationController;
         private readonly NavmapFilterPanelController navmapFilterPanelController;
+        private readonly EventInfoCardController eventInfoCardController;
 
-        private CancellationTokenSource animationCts;
-        private IMapCameraController cameraController;
+        private CancellationTokenSource? animationCts;
+        private IMapCameraController? cameraController;
 
         private Vector2 lastParcelHovered;
         private NavmapSections lastShownSection;
@@ -63,46 +59,46 @@ namespace DCL.Navmap
 
         public IReadOnlyDictionary<MapLayer, IMapLayerParameter> LayersParameters { get; } = new Dictionary<MapLayer, IMapLayerParameter>
             { { MapLayer.PlayerMarker, new PlayerMarkerParameter { BackgroundIsActive = true } } };
-        public FloatingPanelController FloatingPanelController { get; }
+
+        // TODO: we need this property for the MVCManagerAnalyticsDecorator only.. something is not right in the design
+        public INavmapBus NavmapBus { get; }
 
         public NavmapController(
             NavmapView navmapView,
             IMapRenderer mapRenderer,
-            IPlacesAPIService placesAPIService,
-            IWebRequestController webRequestController,
-            IWebBrowser webBrowser,
-            DCLInput dclInput,
-            IRealmNavigator realmNavigator,
             IRealmData realmData,
             IMapPathEventBus mapPathEventBus,
             World world,
             Entity playerEntity,
-            IInputBlock inputBlock,
-            IChatMessagesBus chatMessagesBus)
+            INavmapBus navmapBus,
+            UIAudioEventsBus audioEventsBus,
+            PlacesAndEventsPanelController placesAndEventsPanelController,
+            NavmapSearchBarController navmapSearchBarController,
+            NavmapZoomController navmapZoomController,
+            EventInfoCardController infoCardController,
+            SatelliteController satelliteController)
         {
             this.navmapView = navmapView;
             this.mapRenderer = mapRenderer;
             this.realmData = realmData;
             this.mapPathEventBus = mapPathEventBus;
+            this.audioEventsBus = audioEventsBus;
+            this.placesAndEventsPanelController = placesAndEventsPanelController;
+            this.NavmapBus = navmapBus;
 
             rectTransform = this.navmapView.transform.parent.GetComponent<RectTransform>();
 
-            zoomController = new NavmapZoomController(navmapView.zoomView, dclInput);
-            filterController = new NavmapFilterController(this.navmapView.filterView, mapRenderer, webBrowser);
-            searchBarController = new NavmapSearchBarController(navmapView.SearchBarView, navmapView.SearchBarResultPanel, navmapView.HistoryRecordPanelView, placesAPIService, navmapView.floatingPanelView, webRequestController, inputBlock);
-            FloatingPanelController = new FloatingPanelController(navmapView.floatingPanelView, placesAPIService,
-                webRequestController, mapPathEventBus, chatMessagesBus, zoomController);
-            FloatingPanelController.OnJumpIn += _ => searchBarController.ResetSearch();
-            FloatingPanelController.OnSetAsDestination += SetDestination;
+            zoomController = navmapZoomController;
+            searchBarController = navmapSearchBarController;
+            eventInfoCardController = infoCardController;
+            navmapBus.OnDestinationSelected += SetDestination;
             this.navmapView.DestinationInfoElement.QuitButton.onClick.AddListener(OnRemoveDestinationButtonClicked);
-            searchBarController.OnResultClicked += OnResultClicked;
-            searchBarController.OnSearchTextChanged += FloatingPanelController.HidePanel;
-            satelliteController = new SatelliteController(navmapView.GetComponentInChildren<SatelliteView>(), this.navmapView.MapCameraDragBehaviorData, mapRenderer, webBrowser);
+            this.satelliteController = satelliteController;
             mapPathEventBus.OnRemovedDestination += RemoveDestination;
 
             mapSections = new Dictionary<NavmapSections, ISection>
             {
-                { NavmapSections.Satellite, satelliteController },
+                { NavmapSections.Satellite, this.satelliteController },
             };
 
             sectionSelectorController = new SectionSelectorController<NavmapSections>(mapSections, NavmapSections.Satellite);
@@ -139,9 +135,9 @@ namespace DCL.Navmap
             navmapView.SatelliteRenderImage.HoveredParcel -= OnParcelHovered;
             navmapView.SatelliteRenderImage.HoveredMapPin -= OnMapPinHovered;
             animationCts?.Dispose();
-            zoomController?.Dispose();
-            FloatingPanelController?.Dispose();
-            searchBarController?.Dispose();
+            zoomController.Dispose();
+            eventInfoCardController.Dispose();
+            searchBarController.Dispose();
         }
 
         private void OnRemoveDestinationButtonClicked()
@@ -191,29 +187,17 @@ namespace DCL.Navmap
 
         private void OnParcelHovered(Vector2 parcel)
         {
-            if (!parcel.Equals(lastParcelHovered))
-            {
-                navmapView.MapPinTooltip.Hide();
-                lastParcelHovered = parcel;
-                UIAudioEventsBus.Instance.SendPlayAudioEvent(navmapView.HoverAudio);
-            }
-        }
-
-        public async UniTask InitializeAssetsAsync(IAssetsProvisioner assetsProvisioner, CancellationToken ct) =>
-            await searchBarController.InitialiseAssetsAsync(assetsProvisioner, ct);
-
-        private void OnResultClicked(string coordinates)
-        {
-            if (VectorUtilities.TryParseVector2Int(coordinates, out Vector2Int result))
-                //This will trigger a "parcel clicked" event with the data from the parcel
-                this.navmapView.SatelliteRenderImage.OnSearchResultParcelSelected(result);
+            if (parcel.Equals(lastParcelHovered)) return;
+            navmapView.MapPinTooltip.Hide();
+            lastParcelHovered = parcel;
+            audioEventsBus.SendPlayAudioEvent(navmapView.HoverAudio);
         }
 
         private void OnParcelClicked(MapRenderImage.ParcelClickData clickedParcel)
         {
             lastParcelClicked = clickedParcel;
-            UIAudioEventsBus.Instance.SendPlayAudioEvent(navmapView.ClickAudio);
-            FloatingPanelController.HandlePanelVisibility(clickedParcel.Parcel, clickedParcel.PinMarker, false);
+            audioEventsBus.SendPlayAudioEvent(navmapView.ClickAudio);
+            eventInfoCardController.Show(clickedParcel.Parcel, clickedParcel.PinMarker);
         }
 
         public void Activate()
@@ -236,22 +220,24 @@ namespace DCL.Navmap
             zoomController.Activate(cameraController);
             lastParcelHovered = Vector2.zero;
 
-            foreach ((NavmapSections section, TabSelectorView? tab) in tabsBySections) { ToggleSection(section == NavmapSections.Satellite, tab, section, true); }
+            foreach ((NavmapSections section, TabSelectorView? tab) in tabsBySections)
+                ToggleSection(section == NavmapSections.Satellite, tab, section, true);
 
             sectionSelectorController.SetAnimationState(true, tabsBySections[NavmapSections.Satellite]);
 
             if (!navmapView.WorldsWarningNotificationView.WasEverClosed)
             {
-                if (realmData.Configured && realmData.ScenesAreFixed)
+                if (realmData is {Configured: true, ScenesAreFixed: true })
                     navmapView.WorldsWarningNotificationView.Show();
                 else
                     navmapView.WorldsWarningNotificationView.Hide();
             }
+
+            placesAndEventsPanelController.Show();
         }
 
         public void Deactivate()
         {
-            filterController.CloseFilterContent();
             navmapView.WorldsWarningNotificationView.Hide();
 
             foreach (ISection mapSectionsValue in mapSections.Values)
@@ -259,11 +245,11 @@ namespace DCL.Navmap
 
             zoomController.Deactivate();
             cameraController?.Release(this);
+            NavmapBus.ClearHistory();
         }
 
         public void Animate(int triggerId)
         {
-            filterController.CloseFilterContent();
             navmapView.PanelAnimator.SetTrigger(triggerId);
             navmapView.HeaderAnimator.SetTrigger(triggerId);
         }

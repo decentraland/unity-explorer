@@ -30,8 +30,12 @@ namespace DCL.PlacesAPIService
             this.client = client;
         }
 
-        public async UniTask<PlacesData.IPlacesAPIResponse> SearchPlacesAsync(string searchText, int pageNumber, int pageSize, CancellationToken ct) =>
-            await client.SearchPlacesAsync(searchText, pageNumber, pageSize, ct);
+        public async UniTask<PlacesData.IPlacesAPIResponse> SearchPlacesAsync(string searchText, int pageNumber, int pageSize,
+            CancellationToken ct,
+            IPlacesAPIService.SortBy sortByBy = IPlacesAPIService.SortBy.MOST_ACTIVE,
+            IPlacesAPIService.SortDirection sortDirection = IPlacesAPIService.SortDirection.DESC) =>
+            await client.SearchPlacesAsync(searchText, pageNumber, pageSize, ct,
+                sortByBy.ToString().ToLower(), sortDirection.ToString().ToLower());
 
         public async UniTask<PlacesData.PlaceInfo?> GetPlaceAsync(Vector2Int coords, CancellationToken ct, bool renewCache = false)
         {
@@ -98,25 +102,11 @@ namespace DCL.PlacesAPIService
         public async UniTask<List<PlacesData.CategoryPlaceData>> GetPlacesByCategoryListAsync(string category, CancellationToken ct) =>
             await client.GetPlacesByCategoryListAsync(category, ct);
 
-        public async UniTask<PoolExtensions.Scope<List<PlacesData.PlaceInfo>>> GetFavoritesAsync(int pageNumber, int pageSize, CancellationToken ct, bool renewCache = false)
+        public async UniTask<PoolExtensions.Scope<List<PlacesData.PlaceInfo>>> GetFavoritesAsync(int pageNumber, int pageSize, CancellationToken ct, bool renewCache = false,
+            IPlacesAPIService.SortBy sortByBy = IPlacesAPIService.SortBy.MOST_ACTIVE,
+            IPlacesAPIService.SortDirection sortDirection = IPlacesAPIService.SortDirection.DESC)
         {
             const int CACHE_EXPIRATION = 30; // Seconds
-
-            // We need to pass the source to avoid conflicts with parallel calls forcing renewCache
-            async UniTask RetrieveFavoritesAsync(UniTaskCompletionSource<PlacesData.IPlacesAPIResponse> source)
-            {
-                PlacesData.IPlacesAPIResponse favorites;
-
-                // We dont use the ct param, otherwise the whole flow would be cancel if the first call is cancelled
-                if (pageNumber == -1 && pageSize == -1) favorites = await client.GetAllFavoritesAsync(ct);
-                else { favorites = await client.GetFavoritesAsync(pageNumber, pageSize, disposeCts.Token); }
-
-                foreach (PlacesData.PlaceInfo place in favorites.Data)
-                    TryCachePlace(place);
-
-                composedFavoritesDirty = true;
-                source.TrySetResult(favorites);
-            }
 
             if (serverFavoritesCompletionSource == null || renewCache || DateTime.Now - serverFavoritesLastRetrieval > TimeSpan.FromSeconds(CACHE_EXPIRATION))
             {
@@ -152,7 +142,30 @@ namespace DCL.PlacesAPIService
             }
 
             composedFavoritesDirty = false;
+
             return rentedPlaces;
+
+            // We need to pass the source to avoid conflicts with parallel calls forcing renewCache
+            async UniTask RetrieveFavoritesAsync(UniTaskCompletionSource<PlacesData.IPlacesAPIResponse> source)
+            {
+                PlacesData.IPlacesAPIResponse favorites;
+
+                string sortByParam = sortByBy.ToString().ToLower();
+                string sortDirectionParam = sortDirection.ToString().ToLower();
+
+                // We dont use the ct param, otherwise the whole flow would be cancel if the first call is cancelled
+                if (pageNumber == -1 && pageSize == -1)
+                    favorites = await client.GetAllFavoritesAsync(ct, sortByParam, sortDirectionParam);
+                else
+                    favorites = await client.GetFavoritesAsync(pageNumber, pageSize, disposeCts.Token,
+                        sortByParam, sortDirectionParam);
+
+                foreach (PlacesData.PlaceInfo place in favorites.Data)
+                    TryCachePlace(place);
+
+                composedFavoritesDirty = true;
+                source.TrySetResult(favorites);
+            }
         }
 
         public async UniTask SetPlaceFavoriteAsync(string placeUUID, bool isFavorite, CancellationToken ct)
@@ -162,9 +175,9 @@ namespace DCL.PlacesAPIService
             await client.SetPlaceFavoriteAsync(placeUUID, isFavorite, ct);
         }
 
-        public async UniTask SetPlaceVoteAsync(bool? isUpvote, string placeUUID, CancellationToken ct)
+        public async UniTask RatePlace(bool? isUpvote, string placeUUID, CancellationToken ct)
         {
-            await client.SetPlaceVoteAsync(isUpvote, placeUUID, ct);
+            await client.RatePlace(isUpvote, placeUUID, ct);
         }
 
         private void TryCachePlace(PlacesData.PlaceInfo? placeInfo)

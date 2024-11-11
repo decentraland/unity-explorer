@@ -18,6 +18,7 @@ using DCL.Chat.Commands;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.DebugUtilities;
+using DCL.EventsApi;
 using DCL.Input;
 using DCL.Landscape;
 using DCL.LOD.Systems;
@@ -59,8 +60,8 @@ using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.Settings;
 using DCL.SidebarBus;
-using DCL.UI.MainUI;
 using DCL.StylizedSkybox.Scripts.Plugin;
+using DCL.UI.MainUI;
 using DCL.UserInAppInitializationFlow;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
@@ -172,6 +173,8 @@ namespace Global.Dynamic
             IThirdPartyNftProviderSource thirdPartyNftProviderSource = new RealmThirdPartyNftProviderSource(staticContainer.WebRequestsContainer.WebRequestController,
                 staticContainer.RealmData);
 
+            IEventsApiService eventsApiService = new HttpEventsApiService(staticContainer.WebRequestsContainer.WebRequestController,
+                URLDomain.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.ApiEvents)));
             var placesAPIService = new PlacesAPIService(new PlacesAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource));
             var mapPathEventBus = new MapPathEventBus();
             INotificationsBusController notificationsBusController = new NotificationsBusController();
@@ -269,7 +272,9 @@ namespace Global.Dynamic
             container.SceneRoomMetaDataSource = new SceneRoomMetaDataSource(staticContainer.RealmData, staticContainer.CharacterContainer.Transform, placesAPIService, dynamicWorldParams.IsolateScenesCommunication);
 
             var metaDataSource = new SceneRoomLogMetaDataSource(container.SceneRoomMetaDataSource);
-            var gateKeeperSceneRoom = new GateKeeperSceneRoom(staticContainer.WebRequestsContainer.WebRequestController, metaDataSource, bootstrapContainer.DecentralandUrlsSource, staticContainer.ScenesCache);
+
+            IGateKeeperSceneRoom gateKeeperSceneRoom = new GateKeeperSceneRoom(staticContainer.WebRequestsContainer.WebRequestController, metaDataSource, bootstrapContainer.DecentralandUrlsSource, staticContainer.ScenesCache)
+               .AsActivatable();
 
             var currentAdapterAddress = ICurrentAdapterAddress.NewDefault(staticContainer.RealmData);
 
@@ -359,7 +364,7 @@ namespace Global.Dynamic
                         DecentralandUrl.ArchipelagoStatus,
                         DecentralandUrl.GatekeeperStatus
                     ),
-                    new LivekitHealthCheck(container.RoomHub)
+                    new StartLiveKitRooms(container.RoomHub)
                 );
 
             livekitHealthCheck = dynamicWorldParams.EnableAnalytics
@@ -545,7 +550,6 @@ namespace Global.Dynamic
                     equippedEmotes,
                     webBrowser,
                     emotesCache,
-                    realmNavigator,
                     forceRender,
                     dclInput,
                     staticContainer.RealmData,
@@ -565,12 +569,13 @@ namespace Global.Dynamic
                     playerEntity,
                     container.ChatMessagesBus,
                     staticContainer.MemoryCap,
-                    bootstrapContainer.WorldVolumeMacBus
+                    bootstrapContainer.WorldVolumeMacBus,
+                    eventsApiService
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
                 new Web3AuthenticationPlugin(assetsProvisioner, dynamicWorldDependencies.Web3Authenticator, debugBuilder, container.MvcManager, selfProfile, webBrowser, staticContainer.RealmData, identityCache, characterPreviewFactory, dynamicWorldDependencies.SplashScreen, audioMixerVolumesController, staticContainer.FeatureFlagsCache, characterPreviewEventBus, globalWorld),
-                new StylizedSkyboxPlugin(assetsProvisioner, dynamicSettings.DirectionalLight, debugBuilder),
+                new StylizedSkyboxPlugin(assetsProvisioner, dynamicSettings.DirectionalLight, debugBuilder, staticContainer.FeatureFlagsCache),
                 new LoadingScreenPlugin(assetsProvisioner, container.MvcManager, audioMixerVolumesController,
                     staticContainer.InputBlock, debugBuilder, staticContainer.LoadingStatus),
                 new ExternalUrlPromptPlugin(assetsProvisioner, webBrowser, container.MvcManager, dclCursor),

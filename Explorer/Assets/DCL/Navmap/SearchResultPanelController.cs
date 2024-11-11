@@ -1,122 +1,50 @@
 using Cysharp.Threading.Tasks;
-using DCL.AssetsProvision;
-using DCL.Character.CharacterMotion.Components;
 using DCL.PlacesAPIService;
 using DCL.UI;
-using DCL.WebRequests;
-using System;
 using System.Collections.Generic;
 using System.Threading;
-using UnityEngine;
 using UnityEngine.Pool;
-using Object = UnityEngine.Object;
+using Utility;
 
 namespace DCL.Navmap
 {
     public class SearchResultPanelController
     {
         private readonly SearchResultPanelView view;
-        private readonly IWebRequestController webRequestController;
-        private readonly List<FullSearchResultsView> usedPoolElements;
-        private ObjectPool<FullSearchResultsView> resultsPool;
-        public event Action<string> OnResultClicked;
+        private readonly Dictionary<string, PlaceElementView> usedPoolElements;
+        private readonly ObjectPool<PlaceElementView> resultsPool;
+        private readonly INavmapBus navmapBus;
+        private CancellationTokenSource? showPlaceInfoCancellationToken;
 
-        public SearchResultPanelController(SearchResultPanelView view, IWebRequestController webRequestController)
+        public SearchResultPanelController(SearchResultPanelView view,
+            ObjectPool<PlaceElementView> resultsPool,
+            INavmapBus navmapBus)
         {
             this.view = view;
-            this.webRequestController = webRequestController;
-            usedPoolElements = new List<FullSearchResultsView>();
-        }
-
-        public async UniTask InitialiseAssetsAsync(IAssetsProvisioner assetsProvisioner, CancellationToken ct)
-        {
-            FullSearchResultsView asset = (await assetsProvisioner.ProvideInstanceAsync(view.ResultRef, ct: ct)).Value;
-
-            resultsPool = new ObjectPool<FullSearchResultsView>(
-                () => CreatePoolElements(asset),
-                actionOnGet: result => result.gameObject.SetActive(true),
-                actionOnRelease: result => result.gameObject.SetActive(false),
-                defaultCapacity: 8
-            );
-        }
-
-        private FullSearchResultsView CreatePoolElements(FullSearchResultsView asset)
-        {
-            FullSearchResultsView fullSearchResultsView = Object.Instantiate(asset, view.searchResultsContainer);
-            fullSearchResultsView.ConfigurePlaceImageController(webRequestController);
-            return fullSearchResultsView;
+            this.resultsPool = resultsPool;
+            this.navmapBus = navmapBus;
+            usedPoolElements = new Dictionary<string, PlaceElementView>();
         }
 
         public void Show()
         {
-            if (view.panelAnimator.GetCurrentAnimatorStateInfo(0).IsName("In"))
-                return;
-
             view.NoResultsContainer.gameObject.SetActive(false);
             view.gameObject.SetActive(true);
             view.CanvasGroup.interactable = true;
             view.CanvasGroup.blocksRaycasts = true;
-            ResetAnimator();
-            view.panelAnimator.SetTrigger(UIAnimationHashes.IN);
-        }
-
-        public void Reset()
-        {
-            ResetAnimator();
-            view.gameObject.SetActive(false);
-        }
-
-        public void ResetAnimator()
-        {
-            view.panelAnimator.Rebind();
-            view.panelAnimator.Update(0f);
         }
 
         public void Hide()
         {
-            ReleasePool();
+            ClearResults();
             view.CanvasGroup.interactable = false;
             view.CanvasGroup.blocksRaycasts = false;
-            view.panelAnimator.SetTrigger(UIAnimationHashes.OUT);
+            view.gameObject.SetActive(false);
         }
 
-        public void AnimateLeftRight(bool left) =>
-            view.panelAnimator.SetTrigger(left ? UIAnimationHashes.TO_LEFT : UIAnimationHashes.TO_RIGHT);
-
-        public void SetLoadingState()
+        public void ClearResults()
         {
-            ReleasePool();
-
-            for (var i = 0; i < 8; i++)
-            {
-                FullSearchResultsView fullSearchResultsView = resultsPool.Get();
-                usedPoolElements.Add(fullSearchResultsView);
-            }
-        }
-
-        public void SetResults(IReadOnlyList<PlacesData.PlaceInfo> places)
-        {
-            ReleasePool();
-            view.NoResultsContainer.gameObject.SetActive(places.Count == 0);
-
-            foreach (PlacesData.PlaceInfo placeInfo in places)
-            {
-                FullSearchResultsView fullSearchResultsView = resultsPool.Get();
-                usedPoolElements.Add(fullSearchResultsView);
-                fullSearchResultsView.placeName.text = placeInfo.title;
-                fullSearchResultsView.placeCreator.gameObject.SetActive(!string.IsNullOrEmpty(placeInfo.contact_name) && placeInfo.contact_name != "Unknown");
-                fullSearchResultsView.placeCreator.text = string.Format("created by <b>{0}</b>", placeInfo.contact_name);
-                fullSearchResultsView.playerCounterContainer.SetActive(placeInfo.user_count > 0);
-                fullSearchResultsView.playersCount.text = placeInfo.user_count.ToString();
-                fullSearchResultsView.resultAnimator.SetTrigger(UIAnimationHashes.LOADED);
-                fullSearchResultsView.SetPlaceImage(placeInfo.image);
-                fullSearchResultsView.resultButton.onClick.AddListener(() => OnResultClicked?.Invoke(placeInfo.base_position));
-            }
-        }
-
-        private void ReleasePool()
-        {
-            foreach (FullSearchResultsView fullSearchResultsView in usedPoolElements)
+            foreach ((string _, PlaceElementView fullSearchResultsView) in usedPoolElements)
             {
                 fullSearchResultsView.resultButton.onClick.RemoveAllListeners();
                 fullSearchResultsView.resultAnimator.Rebind();
@@ -125,6 +53,56 @@ namespace DCL.Navmap
             }
 
             usedPoolElements.Clear();
+        }
+
+        public void SetLoadingState()
+        {
+            for (var i = 0; i < 8; i++)
+            {
+                var key = i.ToString();
+                if (usedPoolElements.ContainsKey(key)) continue;
+                PlaceElementView placeElementView = resultsPool.Get();
+                usedPoolElements.Add(key, placeElementView);
+            }
+        }
+
+        public void SetResults(IReadOnlyList<PlacesData.PlaceInfo> places)
+        {
+            ClearResults();
+
+            view.NoResultsContainer.gameObject.SetActive(places.Count == 0);
+
+            foreach (PlacesData.PlaceInfo placeInfo in places)
+            {
+                // Why two places with the same base position comes in the list?
+                if (usedPoolElements.ContainsKey(placeInfo.base_position)) continue;
+
+                PlaceElementView placeElementView = resultsPool.Get();
+                usedPoolElements.Add(placeInfo.base_position, placeElementView);
+                placeElementView.placeName.text = placeInfo.title;
+                placeElementView.placeCreator.gameObject.SetActive(
+                    !string.IsNullOrEmpty(placeInfo.contact_name) && placeInfo.contact_name != "Unknown");
+                placeElementView.placeCreator.text = $"created by <b>{placeInfo.contact_name}</b>";
+                placeElementView.playerCounterContainer.SetActive(placeInfo.user_count > 0);
+                placeElementView.playersCount.text = placeInfo.user_count.ToString();
+                placeElementView.resultAnimator.SetTrigger(UIAnimationHashes.LOADED);
+                placeElementView.SetPlaceImage(placeInfo.image);
+                placeElementView.resultButton.onClick.AddListener(() =>
+                {
+                    showPlaceInfoCancellationToken = showPlaceInfoCancellationToken.SafeRestart();
+                    navmapBus.SelectPlaceAsync(placeInfo, showPlaceInfoCancellationToken.Token).Forget();
+                });
+                placeElementView.LiveContainer.SetActive(false);
+            }
+        }
+
+        public void SetLiveEvents(HashSet<string> parcels)
+        {
+            foreach (string parcel in parcels)
+            {
+                if (!usedPoolElements.TryGetValue(parcel, out PlaceElementView element)) continue;
+                element.LiveContainer.SetActive(true);
+            }
         }
     }
 }

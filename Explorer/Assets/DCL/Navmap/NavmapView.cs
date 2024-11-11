@@ -4,6 +4,7 @@ using DCL.UI;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace DCL.Navmap
 {
@@ -19,10 +20,15 @@ namespace DCL.Navmap
         public SearchResultPanelView SearchBarResultPanel;
 
         [field: SerializeField]
-        public HistoryRecordPanelView HistoryRecordPanelView;
+        public PlacesAndEventsPanelView PlacesAndEventsPanelView { get; private set; }
 
         [field: SerializeField]
-        public FloatingPanelView floatingPanelView;
+        public HistoryRecordPanelView HistoryRecordPanelView;
+
+        [FormerlySerializedAs("eventInfoCard")]
+        [FormerlySerializedAs("floatingPanelView")]
+        [field: SerializeField]
+        public EventInfoCardView eventInfoCardView;
 
         [field: SerializeField]
         public NavmapFilterView filterView;

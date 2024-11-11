@@ -167,6 +167,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 624d527621f514c5999533539668c4d3
+    m_Address: Assets/DCL/Navmap/Assets/EventEntry.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 62f68ba25f6c905428b36a081b072566
     m_Address: EmoteAudioSource
     m_ReadOnly: 0
@@ -274,6 +279,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: a1d5d4f99234041159f0c215eef3eff3
     m_Address: NewNotificationPanel
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a39f0a305be6be143aabcbf7ebb59d62
+    m_Address: RoomIndicator
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

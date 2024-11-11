@@ -12,7 +12,8 @@ namespace DCL.PlacesAPIService
         ///     Search places by string
         /// </summary>
         /// <returns>Response is being pooled so it must be disposed after consumption</returns>
-        UniTask<PlacesData.PlacesAPIResponse> SearchPlacesAsync(string searchString, int pageNumber, int pageSize, CancellationToken ct);
+        UniTask<PlacesData.PlacesAPIResponse> SearchPlacesAsync(string searchString, int pageNumber, int pageSize, CancellationToken ct,
+            string sortBy = "", string sortDirection = "");
 
         /// <returns>Response is being pooled so it must be disposed after consumption</returns>
         UniTask<PlacesData.PlacesAPIResponse> GetMostActivePlacesAsync(int pageNumber, int pageSize, string filter = "", string sort = "", CancellationToken ct = default);
@@ -28,9 +29,10 @@ namespace DCL.PlacesAPIService
 
         UniTask<PlacesData.PlaceInfo?> GetPlaceAsync(string placeUUID, CancellationToken ct);
 
-        UniTask<PlacesData.IPlacesAPIResponse> GetFavoritesAsync(int pageNumber, int pageSize, CancellationToken ct);
+        UniTask<PlacesData.IPlacesAPIResponse> GetFavoritesAsync(int pageNumber, int pageSize, CancellationToken ct,
+            string sortBy = "", string sortDirection = "");
 
-        UniTask<PlacesData.IPlacesAPIResponse> GetAllFavoritesAsync(CancellationToken ct);
+        UniTask<PlacesData.IPlacesAPIResponse> GetAllFavoritesAsync(CancellationToken ct, string sortBy = "", string sortDirection = "");
 
         UniTask<List<PlacesData.PlaceInfo>> GetPlacesByCoordsListAsync(IReadOnlyList<Vector2Int> coordsList, List<PlacesData.PlaceInfo> targetList, CancellationToken ct);
 
@@ -38,7 +40,7 @@ namespace DCL.PlacesAPIService
 
         UniTask SetPlaceFavoriteAsync(string placeUUID, bool isFavorite, CancellationToken ct);
 
-        UniTask SetPlaceVoteAsync(bool? isUpvote, string placeUUID, CancellationToken ct);
+        UniTask RatePlace(bool? isUpvote, string placeUUID, CancellationToken ct);
 
         UniTask<List<string>> GetPointsOfInterestCoordsAsync(CancellationToken ct);
 

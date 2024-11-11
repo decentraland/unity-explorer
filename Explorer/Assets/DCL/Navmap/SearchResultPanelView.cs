@@ -1,6 +1,7 @@
 using DCL.AssetsProvision;
 using System;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace DCL.Navmap
 {
@@ -18,21 +19,8 @@ namespace DCL.Navmap
         [field: SerializeField]
         public CanvasGroup CanvasGroup { get; private set; }
 
-        [field: SerializeField]
-        public Animator panelAnimator;
-
-        private void OnEnable()
-        {
-            panelAnimator.enabled = true;
-        }
-
-        private void OnDisable()
-        {
-            panelAnimator.enabled = false;
-        }
-
         [Serializable]
-        public class ResultAssetReference : ComponentReference<FullSearchResultsView>
+        public class ResultAssetReference : ComponentReference<PlaceElementView>
         {
             public ResultAssetReference(string guid) : base(guid) { }
         }

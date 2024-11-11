@@ -3,6 +3,7 @@ using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.Audio;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Equipped;
 using DCL.AvatarRendering.Wearables;
@@ -33,18 +34,19 @@ using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
 using ECS.Prioritization;
-using ECS.SceneLifeCycle.Realm;
 using Global.Dynamic;
 using MVC;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using DCL.Chat.MessageBus;
+using DCL.EventsApi;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Settings.Settings;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Audio;
+using UnityEngine.Pool;
 
 // ReSharper disable UnusedAutoPropertyAccessor.Local
 namespace DCL.PluginSystem.Global
@@ -65,7 +67,6 @@ namespace DCL.PluginSystem.Global
         private readonly IWearableStorage wearableStorage;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
         private readonly IWebBrowser webBrowser;
-        private readonly IRealmNavigator realmNavigator;
         private readonly IEmoteStorage emoteStorage;
         private readonly DCLInput dclInput;
         private readonly IWebRequestController webRequestController;
@@ -77,7 +78,6 @@ namespace DCL.PluginSystem.Global
         private readonly IEmoteProvider emoteProvider;
         private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
-
         private readonly IMapPathEventBus mapPathEventBus;
         private readonly ICollection<string> forceRender;
         private ExplorePanelInputHandler? inputHandler;
@@ -88,14 +88,20 @@ namespace DCL.PluginSystem.Global
         private readonly ChatEntryConfigurationSO chatEntryConfiguration;
         private readonly IInputBlock inputBlock;
         private readonly IChatMessagesBus chatMessagesBus;
-
         private readonly ISystemMemoryCap systemMemoryCap;
         private readonly WorldVolumeMacBus worldVolumeMacBus;
+        private readonly IEventsApiService eventsApiService;
 
         private NavmapController? navmapController;
         private SettingsController? settingsController;
         private BackpackSubPlugin? backpackSubPlugin;
         private CategoryFilterController? categoryFilterController;
+        private SearchResultPanelController? searchResultPanelController;
+        private ISearchHistory? searchHistory;
+        private PlacesAndEventsPanelController? placesAndEventsPanelController;
+        private NavmapView? navmapView;
+        private PlaceInfoPanelController? placeInfoPanelController;
+        private NavmapSearchBarController? searchBarController;
 
         public ExplorePanelPlugin(IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
@@ -113,7 +119,6 @@ namespace DCL.PluginSystem.Global
             IEquippedEmotes equippedEmotes,
             IWebBrowser webBrowser,
             IEmoteStorage emoteStorage,
-            IRealmNavigator realmNavigator,
             ICollection<string> forceRender,
             DCLInput dclInput,
             IRealmData realmData,
@@ -133,7 +138,8 @@ namespace DCL.PluginSystem.Global
             Entity playerEntity,
             IChatMessagesBus chatMessagesBus,
             ISystemMemoryCap systemMemoryCap,
-            WorldVolumeMacBus worldVolumeMacBus)
+            WorldVolumeMacBus worldVolumeMacBus,
+            IEventsApiService eventsApiService)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -150,7 +156,6 @@ namespace DCL.PluginSystem.Global
             this.equippedWearables = equippedWearables;
             this.equippedEmotes = equippedEmotes;
             this.webBrowser = webBrowser;
-            this.realmNavigator = realmNavigator;
             this.forceRender = forceRender;
             this.realmData = realmData;
             this.profileCache = profileCache;
@@ -172,6 +177,7 @@ namespace DCL.PluginSystem.Global
             this.chatMessagesBus = chatMessagesBus;
             this.systemMemoryCap = systemMemoryCap;
             this.worldVolumeMacBus = worldVolumeMacBus;
+            this.eventsApiService = eventsApiService;
         }
 
         public void Dispose()
@@ -224,13 +230,55 @@ namespace DCL.PluginSystem.Global
             ProvidedAsset<ControlsSettingsAsset> controlsSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.ControlsSettingsAsset, ct);
             settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>(), settingsMenuConfiguration.Value, generalAudioMixer.Value, realmPartitionSettings.Value, landscapeData.Value, qualitySettingsAsset.Value, controlsSettingsAsset.Value, systemMemoryCap, worldVolumeMacBus);
 
-            NavmapView navmapView = explorePanelView.GetComponentInChildren<NavmapView>();
+            navmapView = explorePanelView.GetComponentInChildren<NavmapView>();
             categoryFilterController = new CategoryFilterController(navmapView.categoryToggles, mapRendererContainer.MapRenderer);
-            navmapController = new NavmapController(navmapView: navmapView,
-                mapRendererContainer.MapRenderer, placesAPIService, webRequestController, webBrowser, dclInput,
-                realmNavigator, realmData, mapPathEventBus, world, playerEntity, inputBlock, chatMessagesBus);
 
-            await navmapController.InitializeAssetsAsync(assetsProvisioner, ct);
+            searchHistory = new PlayerPrefsSearchHistory();
+
+            INavmapBus navmapBus = new NavmapCommandBus(CreateSearchPlaceCommand,
+                CreateShowPlaceCommand);
+
+            ObjectPool<PlaceElementView> placeElementsPool = await InitializePlaceElementsPool(navmapView.SearchBarResultPanel, ct);
+            ObjectPool<EventElementView> eventElementsPool = await InitializeEventElementsPool(navmapView.PlacesAndEventsPanelView.PlaceInfoPanelView, ct);
+
+            searchResultPanelController = new SearchResultPanelController(navmapView.SearchBarResultPanel,
+                placeElementsPool, navmapBus);
+
+            searchBarController = new (navmapView.SearchBarView,
+                navmapView.HistoryRecordPanelView, navmapView.PlacesAndEventsPanelView.SearchFiltersView,
+                inputBlock, searchHistory, navmapBus);
+
+            placeInfoPanelController = new PlaceInfoPanelController(navmapView.PlacesAndEventsPanelView.PlaceInfoPanelView,
+                webRequestController, placesAPIService, mapPathEventBus, navmapBus, chatMessagesBus, eventsApiService,
+                eventElementsPool);
+
+            placesAndEventsPanelController = new (navmapView.PlacesAndEventsPanelView,
+                searchBarController, searchResultPanelController, placeInfoPanelController);
+
+            NavmapZoomController zoomController = new (navmapView.zoomView, dclInput);
+
+            IMapRenderer mapRenderer = mapRendererContainer.MapRenderer;
+
+            EventInfoCardController eventInfoCardController = new (navmapView.eventInfoCardView, placesAPIService,
+                webRequestController, mapPathEventBus, chatMessagesBus, zoomController, navmapBus);
+
+            SatelliteController satelliteController = new (navmapView.GetComponentInChildren<SatelliteView>(),
+                navmapView.MapCameraDragBehaviorData, mapRenderer, webBrowser);
+
+            navmapController = new NavmapController(navmapView,
+                mapRenderer,
+                realmData,
+                mapPathEventBus,
+                world,
+                playerEntity,
+                navmapBus,
+                UIAudioEventsBus.Instance,
+                placesAndEventsPanelController,
+                searchBarController,
+                zoomController,
+                eventInfoCardController,
+                satelliteController);
+
             await backpackSubPlugin.InitializeAsync(settings.BackpackSettings, explorePanelView.GetComponentInChildren<BackpackView>(), ct);
 
             mvcManager.RegisterController(new
@@ -241,6 +289,52 @@ namespace DCL.PluginSystem.Global
 
             inputHandler = new ExplorePanelInputHandler(dclInput, mvcManager);
         }
+
+        private async UniTask<ObjectPool<PlaceElementView>> InitializePlaceElementsPool(SearchResultPanelView view, CancellationToken ct)
+        {
+            PlaceElementView asset = (await assetsProvisioner.ProvideInstanceAsync(view.ResultRef, ct: ct)).Value;
+
+            return new ObjectPool<PlaceElementView>(
+                () => CreatePoolElements(asset),
+                actionOnGet: result => result.gameObject.SetActive(true),
+                actionOnRelease: result => result.gameObject.SetActive(false),
+                defaultCapacity: 8
+            );
+
+            PlaceElementView CreatePoolElements(PlaceElementView asset)
+            {
+                PlaceElementView placeElementView = Object.Instantiate(asset, view.searchResultsContainer);
+                placeElementView.ConfigurePlaceImageController(webRequestController);
+                return placeElementView;
+            }
+        }
+
+        private async UniTask<ObjectPool<EventElementView>> InitializeEventElementsPool(PlaceInfoPanelView view, CancellationToken ct)
+        {
+            EventElementView asset = (await assetsProvisioner.ProvideInstanceAsync(view.EventElementViewRef, ct: ct)).Value;
+
+            return new ObjectPool<EventElementView>(
+                () => CreatePoolElements(asset),
+                actionOnGet: result => result.gameObject.SetActive(true),
+                actionOnRelease: result => result.gameObject.SetActive(false),
+                defaultCapacity: 8
+            );
+
+            EventElementView CreatePoolElements(EventElementView asset)
+            {
+                EventElementView placeElementView = Object.Instantiate(asset, view.EventsTabContainer.transform);
+                placeElementView.Init(webRequestController);
+                return placeElementView;
+            }
+        }
+
+        private INavmapCommand CreateSearchPlaceCommand(string search, NavmapSearchPlaceFilter filter, NavmapSearchPlaceSorting sorting) =>
+            new SearchForPlaceAndShowResultsCommand(placesAPIService, eventsApiService, placesAndEventsPanelController!,
+                searchResultPanelController!, search, filter, sorting);
+
+        private INavmapCommand CreateShowPlaceCommand(PlacesData.PlaceInfo placeInfo) =>
+            new ShowPlaceInfoCommand(placeInfo, navmapView!, placeInfoPanelController!, placesAndEventsPanelController!, eventsApiService,
+                searchBarController!);
 
         public class ExplorePanelSettings : IDCLPluginSettings
         {

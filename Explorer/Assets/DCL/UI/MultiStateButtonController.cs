@@ -4,7 +4,7 @@ namespace DCL.UI
 {
     public class MultiStateButtonController
     {
-        public event Action<bool> OnButtonClicked;
+        public event Action<bool>? OnButtonClicked;
 
         private readonly MultiStateButtonView view;
         private readonly bool replacesImage;
@@ -19,17 +19,22 @@ namespace DCL.UI
             view.button.onClick.AddListener(ButtonClicked);
         }
 
-        private void ButtonClicked()
+        public void ClearClickListeners()
         {
-            isButtonOn = !isButtonOn;
-            SetButtonGraphic(isButtonOn);
-            OnButtonClicked?.Invoke(isButtonOn);
+            view.button.onClick.RemoveAllListeners();
         }
 
         public void SetButtonState(bool isOn)
         {
             isButtonOn = isOn;
             SetButtonGraphic(isOn);
+        }
+
+        private void ButtonClicked()
+        {
+            isButtonOn = !isButtonOn;
+            SetButtonGraphic(isButtonOn);
+            OnButtonClicked?.Invoke(isButtonOn);
         }
 
         private void SetButtonGraphic(bool isOn)

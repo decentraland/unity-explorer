@@ -43,9 +43,16 @@ namespace DCL.PlacesAPIService
             return urlBuilder;
         }
 
-        public async UniTask<PlacesData.PlacesAPIResponse> SearchPlacesAsync(string searchString, int pageNumber, int pageSize, CancellationToken ct)
+        public async UniTask<PlacesData.PlacesAPIResponse> SearchPlacesAsync(string searchString, int pageNumber, int pageSize, CancellationToken ct,
+            string sortBy = "", string sortDirection = "")
         {
             string url = baseURL + "?search={0}&offset={1}&limit={2}";
+
+            if (!string.IsNullOrEmpty(sortBy))
+                url += $"&order_by={sortBy}";
+
+            if (!string.IsNullOrEmpty(sortDirection))
+                url += $"&order={sortDirection}";
 
             GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> result = webRequestController.GetAsync(string.Format(url, searchString.Replace(" ", "+"), pageNumber * pageSize, pageSize), ct, ReportCategory.UI);
 
@@ -140,19 +147,26 @@ namespace DCL.PlacesAPIService
             return targetList;
         }
 
-        public async UniTask<PlacesData.IPlacesAPIResponse> GetFavoritesAsync(int pageNumber, int pageSize, CancellationToken ct)
+        public async UniTask<PlacesData.IPlacesAPIResponse> GetFavoritesAsync(int pageNumber, int pageSize, CancellationToken ct,
+            string sortBy = "", string sortDirection = "")
         {
             unixTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
             string url = baseURL + "?only_favorites=true&with_realms_detail=true&offset={0}&limit={1}";
             var fullUrl = string.Format(url, pageNumber * pageSize, pageSize);
 
+            if (!string.IsNullOrEmpty(sortBy))
+                url += $"&{sortBy}";
+
+            if (!string.IsNullOrEmpty(sortDirection))
+                url += $"&{sortDirection}";
+
             GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> result =
-                webRequestController.GetAsync(
-                    fullUrl,
-                    ct,
-                    ReportCategory.UI,
-                    signInfo: WebRequestSignInfo.NewFromRaw(string.Empty, fullUrl, unixTimestamp, "get"),
-                    headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, unixTimestamp));
+                    webRequestController.GetAsync(
+                        fullUrl,
+                        ct,
+                        ReportCategory.UI,
+                        signInfo: WebRequestSignInfo.NewFromRaw(string.Empty, fullUrl, unixTimestamp, "get"),
+                        headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, unixTimestamp));
 
             PlacesData.PlacesAPIResponse response = PlacesData.PLACES_API_RESPONSE_POOL.Get();
 
@@ -166,10 +180,17 @@ namespace DCL.PlacesAPIService
             return response;
         }
 
-        public async UniTask<PlacesData.IPlacesAPIResponse> GetAllFavoritesAsync(CancellationToken ct)
+        public async UniTask<PlacesData.IPlacesAPIResponse> GetAllFavoritesAsync(CancellationToken ct,
+            string sortBy = "", string sortDirection = "")
         {
             unixTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
             string url = baseURL + "?only_favorites=true&with_realms_detail=true";
+
+            if (!string.IsNullOrEmpty(sortBy))
+                url += $"&order_by{sortBy}";
+
+            if (!string.IsNullOrEmpty(sortDirection))
+                url += $"&order={sortDirection}";
 
             GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> result =
                 webRequestController.GetAsync(
@@ -210,7 +231,7 @@ namespace DCL.PlacesAPIService
                                       .WithCustomExceptionAsync(static exc => new PlacesAPIException(exc, "Error setting place favorite:"));
         }
 
-        public async UniTask SetPlaceVoteAsync(bool? isUpvote, string placeUUID, CancellationToken ct)
+        public async UniTask RatePlace(bool? isUpvote, string placeUUID, CancellationToken ct)
         {
             unixTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
             string url = baseURL + "/{0}/likes";
