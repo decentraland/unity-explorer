@@ -30,7 +30,12 @@ namespace DCL.Navmap
         public bool Interactable
         {
             get => view.inputField.interactable;
-            set => view.inputField.interactable = value;
+
+            set
+            {
+                view.inputField.interactable = value;
+                view.clearSearchButton.gameObject.SetActive(value && !string.IsNullOrEmpty(view.inputField.text));
+            }
         }
 
         public NavmapSearchBarController(
@@ -50,11 +55,11 @@ namespace DCL.Navmap
 
             historyRecordPanelView.OnClickedHistoryRecord += ClickedHistoryResult;
 
-            navmapBus.OnJumpIn += _ => ClearSearch();
+            navmapBus.OnJumpIn += _ => ClearInput();
             view.inputField.onSelect.AddListener(_ => OnSearchBarSelected(true));
             view.inputField.onDeselect.AddListener(_ => OnSearchBarSelected(false));
             view.inputField.onValueChanged.AddListener(OnInputValueChanged);
-            view.clearSearchButton.onClick.AddListener(ClearSearch);
+            view.clearSearchButton.onClick.AddListener(ClearInput);
             view.BackButton.onClick.AddListener(OnBackClicked);
             view.clearSearchButton.gameObject.SetActive(false);
             ShowPreviousSearches();
@@ -78,15 +83,28 @@ namespace DCL.Navmap
             view.clearSearchButton.onClick.RemoveAllListeners();
         }
 
-        public async UniTask SearchAndShowAsync(CancellationToken ct) =>
-            await navmapBus.SearchForPlaceAsync(currentSearchText, currentPlaceFilter, currentPlaceSorting, ct);
-
-        public void SetText(PlacesData.PlaceInfo place)
+        public async UniTask SearchAndShowAsync(CancellationToken ct)
         {
-            view.inputField.SetTextWithoutNotify(place.title);
+            NavmapSearchPlaceSorting sorting = currentPlaceSorting;
+            NavmapSearchPlaceFilter filter = currentPlaceFilter;
+
+            // Search by text makes a search without filters
+            if (!string.IsNullOrEmpty(currentSearchText))
+            {
+                sorting = NavmapSearchPlaceSorting.None;
+                filter = NavmapSearchPlaceFilter.All;
+            }
+
+            await navmapBus.SearchForPlaceAsync(currentSearchText, filter, sorting, ct);
         }
 
-        public void ClearSearch()
+        public void SetInputText(string text) =>
+            view.inputField.SetTextWithoutNotify(text);
+
+        public void SetInputText(PlacesData.PlaceInfo place) =>
+            view.inputField.SetTextWithoutNotify(place.title);
+
+        public void ClearInput()
         {
             view.inputField.SetTextWithoutNotify(string.Empty);
 

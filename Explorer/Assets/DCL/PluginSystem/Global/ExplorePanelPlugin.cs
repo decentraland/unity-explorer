@@ -330,7 +330,7 @@ namespace DCL.PluginSystem.Global
 
         private INavmapCommand CreateSearchPlaceCommand(string search, NavmapSearchPlaceFilter filter, NavmapSearchPlaceSorting sorting) =>
             new SearchForPlaceAndShowResultsCommand(placesAPIService, eventsApiService, placesAndEventsPanelController!,
-                searchResultPanelController!, search, filter, sorting);
+                searchResultPanelController!, searchBarController!, search, filter, sorting);
 
         private INavmapCommand CreateShowPlaceCommand(PlacesData.PlaceInfo placeInfo) =>
             new ShowPlaceInfoCommand(placeInfo, navmapView!, placeInfoPanelController!, placesAndEventsPanelController!, eventsApiService,

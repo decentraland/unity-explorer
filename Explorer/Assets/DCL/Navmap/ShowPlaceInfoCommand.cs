@@ -47,7 +47,7 @@ namespace DCL.Navmap
             placesAndEventsPanelController.Toggle(PlacesAndEventsPanelController.Section.PLACE);
 
             placeInfoPanelController.Set(placeInfo);
-            searchBarController.SetText(placeInfo);
+            searchBarController.SetInputText(placeInfo);
             searchBarController.Interactable = false;
             searchBarController.EnableBack();
 
@@ -64,7 +64,7 @@ namespace DCL.Navmap
         public void Undo()
         {
             // TODO: we could restore the text that had the search bar before the modification
-            searchBarController.ClearSearch();
+            searchBarController.ClearInput();
             searchBarController.Interactable = true;
             searchBarController.DisableBack();
         }

@@ -11,7 +11,7 @@ namespace DCL.PlacesAPIService
     public interface IPlacesAPIService
     {
         UniTask<PlacesData.IPlacesAPIResponse> SearchPlacesAsync(string searchText, int pageNumber, int pageSize, CancellationToken ct,
-            SortBy sortByBy = SortBy.MOST_ACTIVE, SortDirection sortDirection = SortDirection.DESC);
+            SortBy sortBy = SortBy.MOST_ACTIVE, SortDirection sortDirection = SortDirection.DESC);
 
         UniTask<(IReadOnlyList<PlacesData.PlaceInfo> places, int total)> GetMostActivePlacesAsync(int pageNumber, int pageSize, string filter = "", string sort = "", CancellationToken ct = default,
             bool renewCache = false);
@@ -37,6 +37,7 @@ namespace DCL.PlacesAPIService
 
         enum SortBy
         {
+            NONE,
             MOST_ACTIVE,
             CREATED_AT,
             LIKE_SCORE,
