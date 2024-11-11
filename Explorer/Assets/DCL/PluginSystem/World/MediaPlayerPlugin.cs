@@ -6,6 +6,7 @@ using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.ResourcesUnloading;
+using DCL.SDKComponents.MediaStream.Settings;
 using DCL.SDKComponents.MediaStream.Wrapper;
 using DCL.Settings;
 using DCL.WebRequests;
@@ -16,7 +17,6 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
-using Utility;
 
 namespace DCL.PluginSystem.World
 {
@@ -63,7 +63,7 @@ namespace DCL.PluginSystem.World
         public async UniTask InitializeAsync(MediaPlayerPluginSettings settings, CancellationToken ct)
         {
             mediaPlayerPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.MediaPlayerPrefab, ct: ct)).Value.GetComponent<MediaPlayer>();
-            mediaPlayerPluginWrapper = new MediaPlayerPluginWrapper(sharedDependencies.ComponentPoolsRegistry, webRequestController, cacheCleaner, videoTexturePool, frameTimeBudget, mediaPlayerPrefab, worldVolumeMacBus, exposedCameraData);
+            mediaPlayerPluginWrapper = new MediaPlayerPluginWrapper(sharedDependencies.ComponentPoolsRegistry, webRequestController, cacheCleaner, videoTexturePool, frameTimeBudget, mediaPlayerPrefab, worldVolumeMacBus, exposedCameraData, settings.VideoPrioritizationSettings);
 
         }
 
@@ -72,6 +72,8 @@ namespace DCL.PluginSystem.World
         {
             [field: SerializeField]
             public AssetReferenceGameObject MediaPlayerPrefab;
+
+            public VideoPrioritizationSettings VideoPrioritizationSettings;
         }
     }
 }

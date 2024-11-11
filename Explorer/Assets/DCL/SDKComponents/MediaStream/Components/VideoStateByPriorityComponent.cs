@@ -1,5 +1,5 @@
 ﻿using Arch.Core;
-using DCL.ECSComponents;
+using UnityEngine;
 
 namespace DCL.SDKComponents.MediaStream
 {
@@ -23,12 +23,24 @@ namespace DCL.SDKComponents.MediaStream
         /// </summary>
         public Entity Entity;
 
+        /// <summary>
+        ///
+        /// </summary>
         public float Size;
 
-        public float LastTimePaused;
-
+        /// <summary>
+        ///
+        /// </summary>
         public bool IsPlaying;
 
+        /// <summary>
+        ///
+        /// </summary>
         public float MediaPlayStartTime;
+
+        /// <summary>
+        ///
+        /// </summary>
+        public MeshRenderer DebugPrioritySign;
     }
 }

@@ -1,16 +1,16 @@
-﻿using Arch.Core;
+﻿#define DEBUG_PRIORITIES
+
+using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
 using DCL.CharacterCamera;
 using DCL.Diagnostics;
-using DCL.ECSComponents;
+using DCL.SDKComponents.MediaStream.Settings;
 using ECS.Abstract;
 using ECS.Groups;
-using ECS.Prioritization.Components;
 using ECS.Unity.PrimitiveRenderer.Components;
 using ECS.Unity.Transforms.Components;
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -24,16 +24,18 @@ namespace DCL.SDKComponents.MediaStream
     {
         private readonly IExposedCameraData exposedCameraData;
         private readonly Utility.Storage.PersistentSetting<float> maxSimultaneousVideosSetting;
+        private readonly VideoPrioritizationSettings videoPrioritizationSettings;
 
-        private readonly List<VideoStateByPriorityComponent> sortedVideoPriorities = new List<VideoStateByPriorityComponent>();
+        private readonly List<VideoStateByPriorityComponent> sortedVideoPriorities = new ();
         private const float MAX_DISTANCE = 100.0f;
-        private const float DISTANCE_WEIGHT = 2.0f;
-        private const float ANGLE_WEIGHT = 4.0f;
-        private const float SCREEN_SIZE_WEIGHT = 1.0f;
 
-        public UpdateMediaPlayerVisibilitySystem(World world, IExposedCameraData exposedCameraData) : base(world)
+        public UpdateMediaPlayerVisibilitySystem(World world, IExposedCameraData exposedCameraData, VideoPrioritizationSettings videoPrioritizationSettings) : base(world)
         {
+            this.videoPrioritizationSettings = videoPrioritizationSettings;
+
             this.exposedCameraData = exposedCameraData;
+
+            // TODO: This should be done in a better way:
             maxSimultaneousVideosSetting = Utility.Storage.PersistentSetting.CreateFloat("Settings_MaxSimultaneousVideos", 1);
         }
 
@@ -49,26 +51,38 @@ namespace DCL.SDKComponents.MediaStream
                 UpdateVideoVisibilityDependingOnPriorityQuery(World, (int)maxSimultaneousVideosSetting.Value);
             }
 
+#if DEBUG_PRIORITIES
+
             Debug.Log("<color=cyan>" + sortedVideoPriorities.Count + "</color>");
+
+            float maximumPlayingVideos = Mathf.Min(sortedVideoPriorities.Count, maxSimultaneousVideosSetting.Value);
+
+            for (int i = 0; i < sortedVideoPriorities.Count; ++i)
+            {
+                sortedVideoPriorities[i].DebugPrioritySign.material.color = (i >= maximumPlayingVideos) ? Color.blue :
+                                                                                                          new Color(i / maximumPlayingVideos, 1.0f - i / maximumPlayingVideos, 0.0f, 1.0f);
+            }
+#endif
         }
 
         [Query]
         [None(typeof(VideoStateByPriorityComponent))]
         private void AddVideoStatesByPriority(Entity entity, in MediaPlayerComponent mediaPlayer, in PrimitiveMeshRendererComponent rendererComponent)
         {
-            World.Add(entity, new VideoStateByPriorityComponent(){ Entity = entity, WantsToPlay = mediaPlayer.State == VideoState.VsPlaying, Size = CalculateSizeFromMeshRenderer(rendererComponent.MeshRenderer)});
-        }
+            float videoMeshLocalVerticalSize = rendererComponent.MeshRenderer.bounds.size.y;
 
-        private float CalculateSizeFromMeshRenderer(MeshRenderer renderer)
-        {
-            return renderer.bounds.size.y;
-        }
+            VideoStateByPriorityComponent newVideoStateByPriority = new VideoStateByPriorityComponent(){
+                                                                            Entity = entity,
+                                                                            WantsToPlay = mediaPlayer.IsPlaying,
+                                                                            Size = videoMeshLocalVerticalSize};
 
-        private float CalculateCullRelativeHeight(float cameraFOV, float size, float distance)
-        {
-            float halfFov = cameraFOV / 2.0f * Mathf.Deg2Rad;
-            float tanValue = Mathf.Tan(halfFov);
-            return size * 0.5f / (distance * tanValue);
+#if DEBUG_PRIORITIES
+            GameObject prioritySign = CreateDebugPrioritySign();
+            prioritySign.transform.position = rendererComponent.MeshRenderer.bounds.max;
+            newVideoStateByPriority.DebugPrioritySign = prioritySign.GetComponent<MeshRenderer>();
+#endif
+
+            World.Add(entity, newVideoStateByPriority);
         }
 
         [Query]
@@ -76,6 +90,11 @@ namespace DCL.SDKComponents.MediaStream
                                             [Data] Vector3 cameraWorldPosition, [Data] Quaternion cameraWorldRotation,
                                             ref VideoStateByPriorityComponent videoStateByPriority, in TransformComponent transform)
         {
+
+#if DEBUG_PRIORITIES
+            videoStateByPriority.DebugPrioritySign.material.color = Color.black;
+#endif
+
             if(!videoStateByPriority.WantsToPlay)
                 return;
 
@@ -87,12 +106,13 @@ namespace DCL.SDKComponents.MediaStream
                 float distance = Mathf.Clamp((transform.Transform.position - cameraWorldPosition).magnitude, 0.0f, MAX_DISTANCE);
                 float screenSize = Mathf.Clamp01(CalculateCullRelativeHeight(cameraFov, videoStateByPriority.Size, Mathf.Sqrt(distance)));
 
-                videoStateByPriority.Score = (MAX_DISTANCE - distance) / MAX_DISTANCE * DISTANCE_WEIGHT +
-                                             screenSize * SCREEN_SIZE_WEIGHT +
-                                             dotProduct * ANGLE_WEIGHT;
+                videoStateByPriority.Score = (MAX_DISTANCE - distance) / MAX_DISTANCE * videoPrioritizationSettings.DistanceWeight +
+                                             screenSize * videoPrioritizationSettings.SizeInScreenWeight +
+                                             dotProduct * videoPrioritizationSettings.AngleWeight;
 
-                Debug.Log($"[{videoStateByPriority.Entity.Id}] Dist: {distance} Size:{videoStateByPriority.Size} / {screenSize} Dot:{dotProduct} SCORE:{videoStateByPriority.Score}");
-//                Debug.Log(Mathf.Acos(dotProduct) * Mathf.Rad2Deg + " --- " + horizontalFOV * 0.5f);
+#if DEBUG_PRIORITIES
+                Debug.Log($"VIDEO ENTITY[{videoStateByPriority.Entity.Id}] Dist: {distance} Size:{videoStateByPriority.Size} / {screenSize} Dot:{dotProduct} SCORE:{videoStateByPriority.Score}");
+#endif
 
                 // Sorts the playing video list by score
                 int i = 0;
@@ -137,7 +157,10 @@ namespace DCL.SDKComponents.MediaStream
                 }
 
                 videoStateByPriority.IsPlaying = true;
-                Debug.Log("xxx: ----PLAY: " + videoStateByPriority.Entity.Id + " t:" + seekTime);
+
+#if DEBUG_PRIORITIES
+                Debug.Log("VIDEO PLAYED BY PRIORITY: " + videoStateByPriority.Entity.Id + " t:" + seekTime);
+#endif
             }
             else if(!mustPlay && (videoStateByPriority.IsPlaying || mediaPlayer.MediaPlayer.Control.IsPlaying()))
             {
@@ -146,11 +169,38 @@ namespace DCL.SDKComponents.MediaStream
                     mediaPlayer.MediaPlayer.Control.Pause();
                 }
 
-                videoStateByPriority.LastTimePaused = Time.realtimeSinceStartup;
                 videoStateByPriority.IsPlaying = false;
 
-                Debug.Log("xxx: ----PAUSE: " + videoStateByPriority.Entity.Id);
+#if DEBUG_PRIORITIES
+                Debug.Log("VIDEO PAUSED BY PRIORITY: " + videoStateByPriority.Entity.Id);
+#endif
             }
+        }
+
+#if DEBUG_PRIORITIES
+
+        private static GameObject CreateDebugPrioritySign()
+        {
+            GameObject plane = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            plane.transform.localScale = Vector3.one * 0.5f;
+            plane.name = "DebugPrioritySign";
+
+            Material cubeMaterial = new Material(Shader.Find("DCL/Unlit"));
+            cubeMaterial.color = Color.white;
+            plane.GetComponent<MeshRenderer>().material = cubeMaterial;
+
+            GameObject.Destroy(plane.GetComponent<Collider>());
+
+            return plane;
+        }
+
+#endif
+
+        private float CalculateCullRelativeHeight(float cameraFOV, float size, float distance)
+        {
+            float halfFov = cameraFOV / 2.0f * Mathf.Deg2Rad;
+            float tanValue = Mathf.Tan(halfFov);
+            return size * 0.5f / (distance * tanValue);
         }
 
     }
