@@ -70,7 +70,7 @@ namespace DCL.Minimap
 
             restrictionsRegistry[sceneRestriction.Type] = currentRestrictionCounter;
 
-            restrictionsGameObjects[sceneRestriction.Type].SetActive(currentRestrictionCounter > 0);
+            restrictionsGameObjects[sceneRestriction.Type]?.SetActive(currentRestrictionCounter > 0);
 
             bool restrictionIconEnabled = RestrictionsRegistryHasAtLeastOneActive();
             restrictionsView.SceneRestrictionsIcon.gameObject.SetActive(restrictionIconEnabled);

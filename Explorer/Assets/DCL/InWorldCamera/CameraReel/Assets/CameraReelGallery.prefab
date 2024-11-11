@@ -111,10 +111,10 @@ RectTransform:
   - {fileID: 4034794011650801746}
   m_Father: {fileID: 2279193595894905825}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 1, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
+  m_AnchorMin: {x: 1, y: 0.5}
+  m_AnchorMax: {x: 1, y: 0.5}
   m_AnchoredPosition: {x: 0, y: -2.5}
-  m_SizeDelta: {x: 20, y: -25}
+  m_SizeDelta: {x: 20, y: 1348.0001}
   m_Pivot: {x: 1, y: 0.5}
 --- !u!222 &784499514660572436
 CanvasRenderer:
@@ -238,7 +238,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: -20, y: -20}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1058596068931705742
 CanvasRenderer:
@@ -562,9 +562,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ec6735352be14eacb561225405a95c1d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  paginationLimit: 100
   scrollContentRect: {fileID: 2207382435968079271}
   scrollRect: {fileID: 3885099440022164921}
+  paginationLimit: 100
+  loadMoreScrollThreshold: 0.4
   thumbnailViewPrefab: {fileID: 2729414431232023218, guid: be5951e4b569b41cab587d1d8047a817, type: 3}
   unusedThumbnailViewObject: {fileID: 7888472503356853142}
   monthGridPrefab: {fileID: 1533018384698385197, guid: ba84ad730ed804baa8a38cd23f6cc11a, type: 3}
@@ -603,7 +604,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: -20, y: -20}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &7888472503356853142
 GameObject:
