@@ -12,8 +12,10 @@
         public const string CUSTOM_MAP_PINS_ICONS = "alfa-map-pins-custom-icons";
         public const string USER_ALLOW_LIST = "user-allow-list";
         public const string CSV_VARIANT = "csv-variant";
+        public const string STRING_VARIANT = "string-variant";
         public const string WALLETS_VARIANT = "wallet";
         public const string ONBOARDING = "onboarding";
         public const string ONBOARDING_ENABLED_VARIANT = "enabled";
+        public const string GENESIS_STARTING_PARCEL = "alfa-genesis-spawn-parcel";
     }
 }
