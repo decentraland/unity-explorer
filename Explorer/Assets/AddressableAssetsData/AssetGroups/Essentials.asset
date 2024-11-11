@@ -197,11 +197,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 73f988cecacd42e48920937e996e446d
-    m_Address: Assets/DCL/InWorldCamera/ScreencaptureCamera/UI/Prefabs/ScreencaptureCameraHUD.prefab
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 7491e2fb7fd484d2b8aed984dfc7c6ab
     m_Address: NftRarityColors
     m_ReadOnly: 0
@@ -274,6 +269,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: a1d5d4f99234041159f0c215eef3eff3
     m_Address: NewNotificationPanel
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a39f0a305be6be143aabcbf7ebb59d62
+    m_Address: RoomIndicator
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

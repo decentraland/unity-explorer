@@ -95,6 +95,7 @@ namespace DCL.SDKComponents.MediaStream
                 IsFromContentServer = url.Contains(CONTENT_SERVER_PREFIX),
                 PreviousCurrentTimeChecked = -1,
                 LastPropagatedState = VideoState.VsPaused,
+                LastPropagatedVideoTime = 0,
                 Cts = new CancellationTokenSource(),
                 OpenMediaPromise = new OpenMediaPromise(),
             };

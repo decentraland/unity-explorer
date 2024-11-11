@@ -46,7 +46,6 @@ MonoBehaviour:
   - rid: 3601422469352914947
   - rid: 2799748226177040387
   - rid: 2799748311381442562
-  - rid: 6849204396312756226
   references:
     version: 2
     RefIds:
@@ -328,6 +327,11 @@ MonoBehaviour:
       data:
         RemoteAvatarColliderPrefab:
           m_AssetGUID: 9c4c0e79124f01744a5f969e08ad0370
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        DebugRoomIndicator:
+          m_AssetGUID: a39f0a305be6be143aabcbf7ebb59d62
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
@@ -631,14 +635,6 @@ MonoBehaviour:
       data:
         <controllerSettings>k__BackingField:
           m_AssetGUID: df2e68b45160aee4eaaf2475e21525e4
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
-    - rid: 6849204396312756226
-      type: {class: InWorldCameraPlugin/InWorldCameraSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
-      data:
-        <ScreencaptureHud>k__BackingField:
-          m_AssetGUID: 73f988cecacd42e48920937e996e446d
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0

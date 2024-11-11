@@ -292,8 +292,6 @@ MonoBehaviour:
       Severity: 0
     - Category: PLAYER_SDK_DATA
       Severity: 4
-    - Category: UNSPECIFIED
-      Severity: 3
     - Category: ASSET_BUNDLES
       Severity: 0
     - Category: ASSET_BUNDLES
@@ -342,12 +340,6 @@ MonoBehaviour:
       Severity: 4
     - Category: SDK_CAMERA
       Severity: 4
-    - Category: DEBUG
-      Severity: 3
-    - Category: UNSPECIFIED
-      Severity: 2
-    - Category: DEBUG
-      Severity: 2
     - Category: ANALYTICS
       Severity: 1
     - Category: ANIMATOR
@@ -492,6 +484,8 @@ MonoBehaviour:
       Severity: 4
     - Category: COMMS_SCENE_HANDLER
       Severity: 1
+    - Category: LIVEKIT
+      Severity: 2
   sentryMatrix:
     entries: []
   debounceEnabled: 1

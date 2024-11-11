@@ -2,7 +2,7 @@
 name: Bug report
 about: Create a report to help us improve
 title: '[QA] Title' 
-labels: 'bug' 
+labels: 'bug, new'
 assignees: ''
 
 
@@ -20,16 +20,16 @@ assignees: ''
   2.
   3.
 
-### **Expected behavior:**
+### ❌ **Actual Result:**
 
 
-### **Current behaviour:**
+### ✔️ **Expected Result:**
 
 
 ### **Repro Index:**
 <!-- Starting on 0/10 attempts -->
 
-#### **Evidence:**
+### **Evidence:**
 
 
 #### **Additional Notes:**
