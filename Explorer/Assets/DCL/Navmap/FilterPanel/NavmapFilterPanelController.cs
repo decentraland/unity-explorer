@@ -27,11 +27,8 @@ namespace DCL.Navmap.FilterPanel
         public void ToggleFilterPanel()
         {
             isToggled = !isToggled;
-            view.canvasGroup.DOFade(isToggled ? 1 : 0, ANIMATION_DURATION).SetEase(Ease.Linear).OnComplete(() =>
-            {
-                view.canvasGroup.blocksRaycasts = isToggled;
-                view.canvasGroup.interactable = isToggled;
-            });
+            view.ToggleFilterPanel(isToggled);
+            view.canvasGroup.DOFade(isToggled ? 1 : 0, ANIMATION_DURATION).SetEase(Ease.Linear);
         }
     }
 }

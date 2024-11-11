@@ -48,10 +48,17 @@ namespace DCL.Navmap.FilterPanel
         private void Start()
         {
             minigamesToggle.onValueChanged.AddListener((isOn) => OnToggleClicked(MapLayer.Pins, isOn));
-            //liveEventsToggle.onValueChanged.AddListener((isOn) => OnToggleClicked(MapLayer.ScenesOfInterest, isOn));
             poisToggle.onValueChanged.AddListener((isOn) => OnToggleClicked(MapLayer.ScenesOfInterest, isOn));
             peopleToggle.onValueChanged.AddListener((isOn) => OnToggleClicked(MapLayer.HotUsersMarkers, isOn));
             favoritesToggle.onValueChanged.AddListener((isOn) => OnToggleClicked(MapLayer.Favorites, isOn));
+        }
+
+        public void ToggleFilterPanel(bool isOn)
+        {
+            canvasGroup.alpha = isOn ? 1 : 0;
+            canvasGroup.blocksRaycasts = isOn;
+            canvasGroup.interactable = isOn;
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(isOn ? OpenAudio : CloseAudio);
         }
 
         private void OnToggleClicked(MapLayer mapLayer, bool isOn)
