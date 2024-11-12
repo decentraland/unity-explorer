@@ -10,9 +10,7 @@ using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
-using SceneRunner;
 using SceneRunner.Scene;
-using System.Runtime.CompilerServices;
 using Arch.System;
 using ECS.Unity.Transforms.Components;
 
@@ -52,25 +50,19 @@ namespace ECS.SceneLifeCycle.Systems
         private void UpdateSceneToLOD(in Entity entity, ref SceneLODInfo sceneLODInfo,
             ref ISceneFacade sceneFacade, ref SceneDefinitionComponent sceneDefinitionComponent)
         {
+            if (!sceneDefinitionComponent.IsEmpty)
+            {
+                sceneFacade.EcsExecutor.World.Get<TransformComponent>(sceneFacade.PersistentEntities.SceneRoot)
+                    .Transform.gameObject.SetActive(sceneFacade.SceneData.SceneLoadingConcluded);
+            }
+            
             if (sceneFacade.SceneData.SceneLoadingConcluded)
             {
                 sceneLODInfo.DisposeSceneLODAndRemoveFromCache(scenesCache, sceneDefinitionComponent.Parcels, lodCache,
                     World);
                 World.Remove<SceneLODInfo>(entity);
-                if (sceneFacade is SceneRunner.SceneFacade &&
-                    sceneFacade.EcsExecutor.World.Has<TransformComponent>(sceneFacade.PersistentEntities.SceneRoot))
-                    sceneFacade.EcsExecutor.World.Get<TransformComponent>(sceneFacade.PersistentEntities.SceneRoot)
-                        .Transform.gameObject.SetActive(true);
-            }
-            else
-            {
-                if (sceneFacade is SceneRunner.SceneFacade &&
-                    sceneFacade.EcsExecutor.World.Has<TransformComponent>(sceneFacade.PersistentEntities.SceneRoot))
-                    sceneFacade.EcsExecutor.World.Get<TransformComponent>(sceneFacade.PersistentEntities.SceneRoot)
-                        .Transform.gameObject.SetActive(false);
             }
         }
-
 
         [Query]
         private void UpdateVisualSceneState(in Entity entity, ref PartitionComponent partitionComponent,
