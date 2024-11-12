@@ -93,7 +93,8 @@ namespace Global.Dynamic
             await bootstrapContainer.InitializeContainerAsync<BootstrapContainer, BootstrapSettings>(settingsContainer, ct, async container =>
             {
                 container.reportHandlingSettings = await ProvideReportHandlingSettingsAsync(container.AssetsProvisioner!, container.settings, ct);
-                (container.Bootstrap, container.Analytics) = await CreateBootstrapperAsync(debugSettings, applicationParametersParser, container, container.settings, realmLaunchSettings, world, ct);
+                 var buildData = await container.AssetsProvisioner!.ProvideMainAssetValueAsync(container.settings.BuilData, ct);
+                (container.Bootstrap, container.Analytics) = await CreateBootstrapperAsync(debugSettings, applicationParametersParser, container, container.settings, realmLaunchSettings, world, buildData, ct);
                 (container.IdentityCache, container.VerifiedEthereumApi, container.Web3Authenticator) = CreateWeb3Dependencies(sceneLoaderSettings, web3AccountFactory, browser, container, decentralandUrlsSource);
 
                 bool enableSceneDebugConsole = realmLaunchSettings.IsLocalSceneDevelopmentRealm || applicationParametersParser.HasFlag("scene-console");
@@ -119,6 +120,7 @@ namespace Global.Dynamic
             BootstrapSettings bootstrapSettings,
             RealmLaunchSettings realmLaunchSettings,
             World world,
+            BuildData buildData,
             CancellationToken ct)
         {
             AnalyticsConfiguration analyticsConfig = (await container.AssetsProvisioner.ProvideMainAssetAsync(bootstrapSettings.AnalyticsConfigRef, ct)).Value;
@@ -142,7 +144,7 @@ namespace Global.Dynamic
                     SessionId = sessionId!,
                 };
 
-                var analyticsController = new AnalyticsController(service, appArgs, analyticsConfig, launcherTraits);
+                var analyticsController = new AnalyticsController(service, appArgs, analyticsConfig, launcherTraits, buildData);
 
                 return (new BootstrapAnalyticsDecorator(coreBootstrap, analyticsController), analyticsController);
             }
@@ -235,11 +237,10 @@ namespace Global.Dynamic
     public class BootstrapSettings : IDCLPluginSettings
     {
         [field: SerializeField] public AnalyticsConfigurationRef AnalyticsConfigRef;
-        [field: SerializeField]
-        public ReportHandlingSettingsRef ReportHandlingSettingsDevelopment { get; private set; }
+        [field: SerializeField] public ReportHandlingSettingsRef ReportHandlingSettingsDevelopment { get; private set; }
+        [field: SerializeField] public ReportHandlingSettingsRef ReportHandlingSettingsProduction { get; private set; }
+        [field: SerializeField] public BuildDataRef BuilData { get; private set; }
 
-        [field: SerializeField]
-        public ReportHandlingSettingsRef ReportHandlingSettingsProduction { get; private set; }
 
         [Serializable]
         public class ReportHandlingSettingsRef : AssetReferenceT<ReportsHandlingSettings>
@@ -251,6 +252,12 @@ namespace Global.Dynamic
         public class AnalyticsConfigurationRef : AssetReferenceT<AnalyticsConfiguration>
         {
             public AnalyticsConfigurationRef(string guid) : base(guid) { }
+        }
+
+        [Serializable]
+        public class BuildDataRef : AssetReferenceT<BuildData>
+        {
+            public BuildDataRef(string guid) : base(guid) { }
         }
     }
 }

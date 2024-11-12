@@ -18,18 +18,18 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         private readonly JsonElement dclRendererType = SystemInfo.deviceType.ToString(); // Desktop, Console, Handeheld (Mobile), Unknown
         private readonly JsonElement rendererVersion = Application.version;
-        private readonly JsonElement installerSource = Application.installerName;
+        private readonly JsonElement installSource;
         private readonly JsonElement os = SystemInfo.operatingSystem;
         private readonly JsonElement runtime;
 
         public override PluginType Type => PluginType.Enrichment;
 
-        public StaticCommonTraitsPlugin(IAppArgs appArgs, LauncherTraits launcherTraits)
+        public StaticCommonTraitsPlugin(IAppArgs appArgs, LauncherTraits launcherTraits, BuildData buildData)
         {
             sessionId = !string.IsNullOrEmpty(launcherTraits.SessionId) ? launcherTraits.SessionId : SystemInfo.deviceUniqueIdentifier + DateTime.Now.ToString("yyyyMMddHHmmssfff");
             launcherAnonymousId = launcherTraits.LauncherAnonymousId;
-
             runtime = ChooseRuntime(appArgs);
+            installSource = buildData.InstallSource;
         }
 
         private static string ChooseRuntime(IAppArgs appArgs)
@@ -52,7 +52,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             trackEvent.Context["session_id"] = sessionId;
             trackEvent.Context["launcher_anonymous_id"] = launcherAnonymousId;
             trackEvent.Context["renderer_version"] = rendererVersion;
-            trackEvent.Context["installer_source"] = installerSource;
+            trackEvent.Context["install_source"] = installSource;
             trackEvent.Context["runtime"] = runtime;
             trackEvent.Context["operating_system"] = os;
 

@@ -283,6 +283,11 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+        <BuilData>k__BackingField:
+          m_AssetGUID: b5fb13ac5db3bbb49a6e6aa3d2df0309
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
     - rid: 2799748226177040387
       type: {class: ConnectionStatusPanelPlugin/ConnectionStatusPanelSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data: 
