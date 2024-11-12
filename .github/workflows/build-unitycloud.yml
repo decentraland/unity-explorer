@@ -71,10 +71,7 @@ on:
       install_source:
         required: false
         default: 'launcher'
-        type: choice
-        options:
-          - launcher
-          - epic
+        type: string
       tag_version:
         type: string
         required: false
