@@ -91,12 +91,12 @@ namespace DCL.InWorldCamera.CameraReel
 
             thumbnailImages = new ReelThumbnailView[storageStatus.MaxScreenshots];
 
-            await LoadMorePage(ct);
+            await LoadMorePage(true, ct);
 
             scrollRect.onValueChanged.AddListener(OnScrollRectValueChanged);
         }
 
-        private async UniTask LoadMorePage(CancellationToken ct)
+        private async UniTask LoadMorePage(bool firstLoading, CancellationToken ct)
         {
             isLoading = true;
             Dictionary<DateTime, List<CameraReelResponse>> result = await pagedCameraReelManager.FetchNextPage(ct);
@@ -130,7 +130,12 @@ namespace DCL.InWorldCamera.CameraReel
 
             await UniTask.NextFrame(ct);
 
-            CheckElementsVisibility(ScrollDirection.UP);
+            if (firstLoading)
+                for (int i = beginVisible; i < currentSize && ViewIntersectsImage(thumbnailImages[i].thumbnailImage); i++)
+                    EnableThumbnailImage(thumbnailImages[i]);
+            else
+                CheckElementsVisibility(ScrollDirection.UP);
+
             previousY = scrollRect.verticalNormalizedPosition;
             isLoading = false;
         }
@@ -149,7 +154,7 @@ namespace DCL.InWorldCamera.CameraReel
         {
             if (pagedCameraReelManager.AllImagesLoaded || isLoading) return;
 
-            LoadMorePage(loadNextPageCts.Token).Forget();
+            LoadMorePage(false, loadNextPageCts.Token).Forget();
         }
 
         private void DisableThumbnailImage(ReelThumbnailView thumbnailView)
