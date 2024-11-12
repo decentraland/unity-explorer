@@ -38,6 +38,13 @@ namespace DCL.InWorldCamera.CameraReel
 
             this.view.OnMouseEnter += OnStorageFullIconEnter;
             this.view.OnMouseExit += OnStorageFullIconExit;
+            this.view.cameraReelGalleryView.ThumbnailClicked += ThumbnailClicked;
+            this.view.cameraReelGalleryView.StorageUpdated += SetStorageStatus;
+        }
+
+        private void ThumbnailClicked(CameraReelResponse cameraReelResponse)
+        {
+            Debug.Log($"OnThumbnailClicked: {cameraReelResponse.id}");
         }
 
         private void OnStorageFullIconEnter() =>
@@ -109,6 +116,8 @@ namespace DCL.InWorldCamera.CameraReel
             view.OnMouseEnter -= OnStorageFullIconEnter;
             view.OnMouseExit -= OnStorageFullIconExit;
             view.optionsButton.Dispose();
+            view.cameraReelGalleryView.ThumbnailClicked -= ThumbnailClicked;
+            view.cameraReelGalleryView.StorageUpdated -= SetStorageStatus;
         }
     }
 }

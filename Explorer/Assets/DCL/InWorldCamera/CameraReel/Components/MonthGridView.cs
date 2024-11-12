@@ -17,8 +17,6 @@ namespace DCL.InWorldCamera.CameraReel.Components
         private readonly List<ReelThumbnailView> reelThumbnailViews = new ();
         private ReelGalleryPoolManager reelGalleryPoolManager;
 
-        [HideInInspector] public DateTime DateTimeBucket;
-
         public List<ReelThumbnailView> Setup(
             DateTime bucket,
             List<CameraReelResponse> images,
@@ -29,7 +27,6 @@ namespace DCL.InWorldCamera.CameraReel.Components
             Action<CameraReelResponse> onThumbnailClicked)
         {
             this.reelGalleryPoolManager = reelGalleryPool;
-            DateTimeBucket = bucket;
 
             monthText.SetText(bucket.ToString("MMMM yyyy", CultureInfo.InvariantCulture));
 
@@ -47,6 +44,20 @@ namespace DCL.InWorldCamera.CameraReel.Components
 
             return newViews;
         }
+
+        public void RemoveThumbnail(CameraReelResponse cameraReelResponse)
+        {
+            for (int i = 0; i < reelThumbnailViews.Count; i++)
+                if (reelThumbnailViews[i].cameraReelResponse == cameraReelResponse)
+                {
+                    reelThumbnailViews[i].Release();
+                    reelGalleryPoolManager.ReleaseThumbnailElement(reelThumbnailViews[i]);
+                    reelThumbnailViews.RemoveAt(i);
+                }
+        }
+
+        public bool GridIsEmpty() =>
+            reelThumbnailViews.Count == 0;
 
         public void Release()
         {

@@ -42,7 +42,7 @@ namespace DCL.InWorldCamera.CameraReel.Components
             Dictionary<DateTime, List<CameraReelResponse>> elements = new ();
             for (int i = 0; i < response.images.Count; i++)
             {
-                DateTime imageBucket = GetImageBucket(response.images[i]);
+                DateTime imageBucket = GetImageDateTime(response.images[i]);
 
                 if (!elements.ContainsKey(imageBucket))
                     elements[imageBucket] = new List<CameraReelResponse>();
@@ -53,7 +53,7 @@ namespace DCL.InWorldCamera.CameraReel.Components
             return elements;
         }
 
-        public DateTime GetImageBucket(CameraReelResponse image)
+        public static DateTime GetImageDateTime(CameraReelResponse image)
         {
             DateTime actualDateTime = !long.TryParse(image.metadata.dateTime, out long unixTimestamp) ? new DateTime() : DateTimeOffset.FromUnixTimeSeconds(unixTimestamp).ToLocalTime().DateTime;
             return new DateTime(actualDateTime.Year, actualDateTime.Month, 1, 0, 0, 0, 0);

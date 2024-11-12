@@ -24,7 +24,7 @@ namespace DCL.InWorldCamera.CameraReel.Components
         public event Action<CameraReelResponse> OnDownloadRequested;
         public event Action<CameraReelResponse> OnDeletePictureRequested;
 
-        private CameraReelResponse imageData;
+        public CameraReelResponse imageData { get; private set; }
 
         private void Awake()
         {
