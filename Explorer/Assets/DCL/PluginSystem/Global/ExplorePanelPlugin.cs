@@ -42,6 +42,7 @@ using System.Threading;
 using DCL.Chat.MessageBus;
 using DCL.InWorldCamera.CameraReel;
 using DCL.InWorldCamera.CameraReelStorageService;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Settings.Settings;
 using UnityEngine;
@@ -66,6 +67,7 @@ namespace DCL.PluginSystem.Global
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly ICameraReelStorageService cameraReelStorageService;
         private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IWearableStorage wearableStorage;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
         private readonly IWebBrowser webBrowser;
@@ -110,6 +112,7 @@ namespace DCL.PluginSystem.Global
             IWeb3IdentityCache web3IdentityCache,
             ICameraReelStorageService cameraReelStorageService,
             ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
+            IDecentralandUrlsSource decentralandUrlsSource,
             IWearableStorage wearableStorage,
             ICharacterPreviewFactory characterPreviewFactory,
             IProfileRepository profileRepository,
@@ -150,6 +153,7 @@ namespace DCL.PluginSystem.Global
             this.web3IdentityCache = web3IdentityCache;
             this.cameraReelStorageService = cameraReelStorageService;
             this.cameraReelScreenshotsStorage = cameraReelScreenshotsStorage;
+            this.decentralandUrlsSource = decentralandUrlsSource;
             this.wearableStorage = wearableStorage;
             this.characterPreviewFactory = characterPreviewFactory;
             this.profileRepository = profileRepository;
@@ -242,7 +246,9 @@ namespace DCL.PluginSystem.Global
             var cameraReelController = new CameraReelController(explorePanelView.GetComponentInChildren<CameraReelView>(),
                 cameraReelStorageService,
                 cameraReelScreenshotsStorage,
-                web3IdentityCache);
+                web3IdentityCache,
+                webBrowser,
+                decentralandUrlsSource);
 
             mvcManager.RegisterController(new
                 ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackSubPlugin.backpackController!, cameraReelController,

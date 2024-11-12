@@ -18,13 +18,13 @@ namespace DCL.InWorldCamera.CameraReel.Components
         [SerializeField] private Button download;
         [SerializeField] private Button delete;
 
-        public event Action<CameraReelResponse, bool> OnSetPublicRequested;
-        public event Action<CameraReelResponse> OnShareToXRequested;
-        public event Action<CameraReelResponse> OnCopyPictureLinkRequested;
-        public event Action<CameraReelResponse> OnDownloadRequested;
-        public event Action<CameraReelResponse> OnDeletePictureRequested;
+        public event Action<CameraReelResponse, bool> SetPublicRequested;
+        public event Action<CameraReelResponse> ShareToXRequested;
+        public event Action<CameraReelResponse> CopyPictureLinkRequested;
+        public event Action<CameraReelResponse> DownloadRequested;
+        public event Action<CameraReelResponse> DeletePictureRequested;
 
-        public CameraReelResponse imageData { get; private set; }
+        public CameraReelResponse ImageData { get; private set; }
 
         private void Awake()
         {
@@ -34,31 +34,31 @@ namespace DCL.InWorldCamera.CameraReel.Components
 
             shareOnX.onClick.AddListener(() =>
             {
-                OnShareToXRequested?.Invoke(imageData);
+                ShareToXRequested?.Invoke(ImageData);
                 ResetState();
             });
 
             copyLink.onClick.AddListener(() =>
             {
-                OnCopyPictureLinkRequested?.Invoke(imageData);
+                CopyPictureLinkRequested?.Invoke(ImageData);
                 ResetState();
             });
 
             download.onClick.AddListener(() =>
             {
-                OnDownloadRequested?.Invoke(imageData);
+                DownloadRequested?.Invoke(ImageData);
                 ResetState();
             });
 
             delete.onClick.AddListener(() =>
             {
-                OnDeletePictureRequested?.Invoke(imageData);
+                DeletePictureRequested?.Invoke(ImageData);
                 ResetState();
             });
         }
 
         private void SetAsPublicInvoke(bool toggle) =>
-            OnSetPublicRequested?.Invoke(imageData, toggle);
+            SetPublicRequested?.Invoke(ImageData, toggle);
 
         private void OnOptionClicked()
         {
@@ -70,12 +70,12 @@ namespace DCL.InWorldCamera.CameraReel.Components
 
             //Align the "public" toggle status according to the imageData without triggering an "invoke"
             setAsPublic.onValueChanged.RemoveListener(SetAsPublicInvoke);
-            setAsPublic.isOn = imageData.isPublic;
+            setAsPublic.isOn = ImageData.isPublic;
             setAsPublic.onValueChanged.AddListener(SetAsPublicInvoke);
         }
 
         public void SetImageData(CameraReelResponse cameraReelResponse) =>
-            imageData = cameraReelResponse;
+            ImageData = cameraReelResponse;
 
         public void ResetState()
         {
@@ -92,6 +92,11 @@ namespace DCL.InWorldCamera.CameraReel.Components
             copyLink.onClick.RemoveAllListeners();
             download.onClick.RemoveAllListeners();
             delete.onClick.RemoveAllListeners();
+            SetPublicRequested = null;
+            ShareToXRequested = null;
+            CopyPictureLinkRequested = null;
+            DownloadRequested = null;
+            DeletePictureRequested = null;
         }
     }
 }

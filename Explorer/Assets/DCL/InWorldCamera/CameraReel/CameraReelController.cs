@@ -1,12 +1,12 @@
 using Cysharp.Threading.Tasks;
-using DCL.InWorldCamera.CameraReel.Components;
+using DCL.Browser;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.UI;
 using DCL.Web3.Identities;
 using DG.Tweening;
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using Utility;
@@ -20,6 +20,8 @@ namespace DCL.InWorldCamera.CameraReel
         private readonly ICameraReelStorageService cameraReelStorageService;
         private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
         private readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly IWebBrowser webBrowser;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
 
         private CancellationTokenSource showCancellationTokenSource;
 
@@ -27,12 +29,16 @@ namespace DCL.InWorldCamera.CameraReel
             CameraReelView view,
             ICameraReelStorageService cameraReelStorageService,
             ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
-            IWeb3IdentityCache web3IdentityCache)
+            IWeb3IdentityCache web3IdentityCache,
+            IWebBrowser webBrowser,
+            IDecentralandUrlsSource decentralandUrlsSource)
         {
             this.view = view;
             this.cameraReelStorageService = cameraReelStorageService;
             this.cameraReelScreenshotsStorage = cameraReelScreenshotsStorage;
             this.web3IdentityCache = web3IdentityCache;
+            this.webBrowser = webBrowser;
+            this.decentralandUrlsSource = decentralandUrlsSource;
 
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
 
@@ -69,9 +75,9 @@ namespace DCL.InWorldCamera.CameraReel
                 return;
             }
 
-            view.cameraReelGalleryView.SetUp(cameraReelStorageService, cameraReelScreenshotsStorage);
+            view.cameraReelGalleryView.SetUp(view.optionsButton, cameraReelStorageService, cameraReelScreenshotsStorage, webBrowser, decentralandUrlsSource);
 
-            await view.cameraReelGalleryView.ShowWalletGallery(web3IdentityCache.Identity.Address, view.optionsButton, ct);
+            await view.cameraReelGalleryView.ShowWalletGallery(web3IdentityCache.Identity.Address, ct);
 
             view.cameraReelGalleryView.gameObject.SetActive(true);
             view.loadingSpinner.SetActive(false);
@@ -118,6 +124,7 @@ namespace DCL.InWorldCamera.CameraReel
             view.optionsButton.Dispose();
             view.cameraReelGalleryView.ThumbnailClicked -= ThumbnailClicked;
             view.cameraReelGalleryView.StorageUpdated -= SetStorageStatus;
+            view.optionsButton.Dispose();
         }
     }
 }

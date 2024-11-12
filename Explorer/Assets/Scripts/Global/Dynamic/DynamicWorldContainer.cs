@@ -544,6 +544,7 @@ namespace Global.Dynamic
                     identityCache,
                     cameraReelStorageService,
                     cameraReelStorageService,
+                    bootstrapContainer.DecentralandUrlsSource,
                     wearableCatalog,
                     characterPreviewFactory,
                     container.ProfileRepository,

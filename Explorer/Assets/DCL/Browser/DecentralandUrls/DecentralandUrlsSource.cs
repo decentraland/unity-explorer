@@ -32,14 +32,14 @@ namespace DCL.Browser.DecentralandUrls
                     GENESIS_URL = string.Format(GENESIS_URL_TEMPLATE, environmentDomainLowerCase);
                     break;
                 case DecentralandEnvironment.Today:
-                    
-                    //The today environemnt is a mixture of the org and today enviroments. 
+
+                    //The today environemnt is a mixture of the org and today enviroments.
                     //We want to fetch pointers from org, but asset bundles from today
-                    //Thats because how peer-testing.decentraland.org works. 
+                    //Thats because how peer-testing.decentraland.org works.
                     //Its a catalyst that replicates the org environment and eth network, but doesnt propagate back to the production catalysts
                     environmentDomainLowerCase = DecentralandEnvironment.Org.ToString()!.ToLower();
                     ASSET_BUNDLE_URL = "https://ab-cdn.decentraland.today";
-                    
+
                     //On staging, we hardcode the catalyst because its the only valid one with a valid comms configuration
                     GENESIS_URL = "https://peer-testing.decentraland.org";
                     break;
@@ -85,9 +85,9 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.GatekeeperStatus => $"https://comms-gatekeeper.decentraland.{ENV}/status",
                 DecentralandUrl.Genesis => GENESIS_URL,
                 DecentralandUrl.Badges => $"https://badges.decentraland.{ENV}",
-                DecentralandUrl.CameraReelUsers => $"https://camera-reel-service.decentraland.{ENV}/api/users",
-                DecentralandUrl.CameraReelImages =>
-                    $"https://camera-reel-service.decentraland.{ENV}/api/images",
+                DecentralandUrl.CameraReelUsers =>  $"https://camera-reel-service.decentraland.{ENV}/api/users",
+                DecentralandUrl.CameraReelImages => $"https://camera-reel-service.decentraland.{ENV}/api/images",
+                DecentralandUrl.CameraReelLink => $"https://reels.decentraland.{ENV}",
                 _ => throw new ArgumentOutOfRangeException(nameof(decentralandUrl), decentralandUrl, null!)
             };
     }

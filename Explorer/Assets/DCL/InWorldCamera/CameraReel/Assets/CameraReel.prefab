@@ -2223,7 +2223,7 @@ PrefabInstance:
     - target: {fileID: 3341115844978798891, guid: aae56f4776100974ba051333a3974811, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 21300000, guid: cb8d7b1147d7f42ccaf203e780f69acb, type: 3}
+      objectReference: {fileID: 21300000, guid: 26a52df623c514a6087f35458a11ab2d, type: 3}
     - target: {fileID: 4292958671161261228, guid: aae56f4776100974ba051333a3974811, type: 3}
       propertyPath: m_Alpha
       value: 0
@@ -2231,6 +2231,14 @@ PrefabInstance:
     - target: {fileID: 4397080764487562581, guid: aae56f4776100974ba051333a3974811, type: 3}
       propertyPath: m_Name
       value: SuccessNotification
+      objectReference: {fileID: 0}
+    - target: {fileID: 4953635589825674653, guid: aae56f4776100974ba051333a3974811, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 16
+      objectReference: {fileID: 0}
+    - target: {fileID: 4953635589825674653, guid: aae56f4776100974ba051333a3974811, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 16
       objectReference: {fileID: 0}
     - target: {fileID: 7587919746443121769, guid: aae56f4776100974ba051333a3974811, type: 3}
       propertyPath: m_text
