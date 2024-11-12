@@ -23,6 +23,7 @@ namespace DCL.Navmap
         private PlacesData.PlaceInfo? place;
         private EventDTO? @event;
         private CancellationTokenSource? interestedCancellationToken;
+        private CancellationTokenSource? updateLayoutCancellationToken;
 
         public EventInfoPanelController(EventInfoPanelView view,
             IWebRequestController webRequestController,
@@ -85,6 +86,9 @@ namespace DCL.Navmap
             view.HostAndPlaceLabel.text = $"hosted by <b>{@event.user_name}</b> - at <b>{place.title} ({@event.x}, {@event.y})</b>";
             view.DescriptionLabel.text = @event.description;
             thumbnailController.RequestImage(@event.image);
+
+            updateLayoutCancellationToken = updateLayoutCancellationToken.SafeRestart();
+            view.LayoutRoot.ForceUpdateLayoutAsync(updateLayoutCancellationToken.Token).Forget();
         }
 
         private void SetInterested(bool interested)

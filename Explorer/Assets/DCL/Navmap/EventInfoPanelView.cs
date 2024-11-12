@@ -45,5 +45,8 @@ namespace DCL.Navmap
 
         [field: SerializeField]
         public GameObject AttendeeContainer { get; private set; }
+
+        [field: SerializeField]
+        public RectTransform LayoutRoot { get; private set; }
     }
 }
