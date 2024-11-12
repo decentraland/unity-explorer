@@ -15,6 +15,7 @@ using CrdtEcsBridge.PoolsProviders;
 using CrdtEcsBridge.UpdateGate;
 using CrdtEcsBridge.WorldSynchronizer;
 using Cysharp.Threading.Tasks;
+using DCL.AssetsProvision.CodeResolver;
 using DCL.Diagnostics;
 using DCL.Interaction.Utility;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -45,11 +46,11 @@ using SceneRuntime.Apis.Modules;
 using SceneRuntime.Apis.Modules.CommunicationsControllerApi;
 using SceneRuntime.Apis.Modules.EngineApi;
 using SceneRuntime.Apis.Modules.FetchApi;
-using SceneRuntime.Apis.Modules.PortableExperiencesApi;
 using SceneRuntime.Apis.Modules.RestrictedActionsApi;
 using SceneRuntime.Apis.Modules.Runtime;
 using SceneRuntime.Apis.Modules.SceneApi;
 using SceneRuntime.Factory;
+using SceneRuntime.Factory.WebSceneSource;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -75,7 +76,9 @@ namespace SceneRunner.Tests
             activeEngines = new V8ActiveEngines();
             engineFactory = new V8EngineFactory(activeEngines);
 
-            sceneRuntimeFactory = new SceneRuntimeFactory(TestWebRequestController.INSTANCE, new IRealmData.Fake(), engineFactory, activeEngines);
+            sceneRuntimeFactory = new SceneRuntimeFactory(TestWebRequestController.INSTANCE,
+                new IRealmData.Fake(), engineFactory, activeEngines,
+                new WebJsSources(new JsCodeResolver(TestWebRequestController.INSTANCE)));
 
             ecsWorldFactory = Substitute.For<IECSWorldFactory>().EnsureNotNull();
 
