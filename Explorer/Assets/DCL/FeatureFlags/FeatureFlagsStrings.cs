@@ -15,5 +15,7 @@
         public const string WALLETS_VARIANT = "wallet";
         public const string ONBOARDING = "onboarding";
         public const string ONBOARDING_ENABLED_VARIANT = "enabled";
+        public const string SKYBOX_SETTINGS = "alfa-skybox-settings";
+        public const string SKYBOX_SETTINGS_VARIANT = "settings";
     }
 }

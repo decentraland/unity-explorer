@@ -22,6 +22,9 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
             public bool Equals(Input other) =>
                 RealmName == other.RealmName && Parcel.Equals(other.Parcel);
 
+            public bool Equals(MetaData other) =>
+                RealmName == other.realmName && Parcel.Equals(other.Parcel);
+
             public override bool Equals(object? obj) =>
                 obj is Input other && Equals(other);
 

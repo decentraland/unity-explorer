@@ -1,0 +1,46 @@
+name: S3 Latest Release
+
+on:
+  release:
+    types: 
+      - published
+      - edited
+
+jobs:
+  check-latest-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check if current release is the latest release
+        id: check_latest
+        run: |
+          RELEASE_TAG=$(jq -r .release.tag_name "$GITHUB_EVENT_PATH")
+          echo "Release Tag: $RELEASE_TAG"
+
+          # Get the latest release from the API
+          LATEST_RELEASE=$(curl -s https://api.github.com/repos/${{ github.repository }}/releases/latest | jq -r .tag_name)
+          echo "Latest Release: $LATEST_RELEASE"
+
+          # Set output for is_latest_release based on comparison
+          if [ "$RELEASE_TAG" == "$LATEST_RELEASE" ]; then
+            echo "is_latest_release=true" >> $GITHUB_OUTPUT
+          else
+            echo "is_latest_release=false" >> $GITHUB_OUTPUT
+          fi
+
+          echo "latest_release=$LATEST_RELEASE" >> $GITHUB_ENV
+
+      - name: Run actions if release is the latest
+        if: steps.check_latest.outputs.is_latest_release == 'true'
+        env:
+          AWS_MAX_ATTEMPTS: 3
+          AWS_RETRY_MODE: standard
+          AWS_ACCESS_KEY_ID: ${{ secrets.EXPLORER_TEAM_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.EXPLORER_TEAM_AWS_SECRET_ACCESS_KEY }}
+          EXPLORER_TEAM_S3_BUCKET: ${{ secrets.EXPLORER_TEAM_S3_BUCKET }}
+          RELEASES_PATH: ${{ format('@dcl/{0}/releases', github.event.repository.name) }}
+        run: |
+          echo '{
+            "version": "${{ env.latest_release }}",
+            "timestamp": "'$(date -u +"%Y-%m-%dT%H:%M:%SZ")'"
+          }' > latest.json
+          aws s3 cp latest.json s3://$EXPLORER_TEAM_S3_BUCKET/$RELEASES_PATH/latest.json
