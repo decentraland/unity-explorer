@@ -1,5 +1,6 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.Optimization;
 using SceneRuntime.Factory.WebSceneSource.Cache;
 using System.Threading;
 
