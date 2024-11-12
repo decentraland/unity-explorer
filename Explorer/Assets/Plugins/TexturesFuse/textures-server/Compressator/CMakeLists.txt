@@ -17,6 +17,8 @@ add_executable(TestExe)
 
 target_include_directories(TestExe PRIVATE ${CMAKE_SOURCE_DIR}/include)
 target_sources(TestExe PRIVATE main.cpp)
+
+target_link_libraries(TestExe ${CMAKE_SOURCE_DIR}/lib/libCMP_Framework.a)
 target_link_libraries(TestExe ${CMAKE_SOURCE_DIR}/lib/libCMP_Compressonator.a)
 target_link_libraries(TestExe ${CMAKE_SOURCE_DIR}/lib/libCMP_Core_AVX.a)
 target_link_libraries(TestExe ${CMAKE_SOURCE_DIR}/lib/libCMP_Core_AVX512.a)

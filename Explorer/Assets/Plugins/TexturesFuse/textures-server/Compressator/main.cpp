@@ -185,6 +185,8 @@ int main()
     const int height = 512;
     const std::string workDirectory = "../../TexturesServerWrap/Playground/NormalMap/";
 
+    CMP_InitFramework();
+
     // BC5Compression(width, height, workDirectory);
     MipMaps(width, height);//TODO
 }
