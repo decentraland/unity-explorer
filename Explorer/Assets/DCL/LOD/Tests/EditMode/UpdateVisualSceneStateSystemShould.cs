@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using DCL.Ipfs;
 using DCL.LOD;
 using DCL.LOD.Components;
+using DCL.PluginSystem.World;
 using ECS;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
@@ -11,6 +12,7 @@ using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.SceneLifeCycle.Systems;
 using ECS.StreamableLoading.Common;
 using ECS.TestSuite;
+using ECS.Unity.Transforms.Components;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
@@ -55,6 +57,7 @@ public class UpdateVisualSceneStateSystemShould : UnitySystemTestBase<UpdateVisu
                 },
                 runtimeVersion = "7",
             },
+            
         };
 
         sceneDefinitionComponent = SceneDefinitionComponentFactory.CreateFromDefinition(sceneEntityDefinition, new IpfsPath());
@@ -74,7 +77,36 @@ public class UpdateVisualSceneStateSystemShould : UnitySystemTestBase<UpdateVisu
         system.Update(0);
 
         Assert.IsTrue(world.Has<AssetPromise<ISceneFacade, GetSceneFacadeIntention>>(entityReference));
+
+        //Simulate a completition of the scene
+        var loadedScene = Substitute.For<ISceneFacade>();
+        var sceneData = Substitute.For<ISceneData>();
+
+        var sceneWorld = World.Create();
+        var sceneRootEntity = sceneWorld.Create();
+        var transform = new GameObject().transform;
+        var transformComponent = new TransformComponent(transform);
+        sceneWorld.Add(sceneRootEntity, transformComponent);
+
+        var persistentEntities = new PersistentEntities(sceneWorld.Create(), sceneWorld.Create(), sceneRootEntity);
+
+        loadedScene.EcsExecutor.Returns(new SceneEcsExecutor(sceneWorld));
+        loadedScene.PersistentEntities.Returns(persistentEntities);
+
+        world.Add(entityReference, loadedScene);
+
+        system.Update(0);
+
+        Assert.IsTrue(world.Has<SceneLODInfo>(entityReference));
+        Assert.IsTrue(world.Has<ISceneFacade>(entityReference));
+        Assert.IsFalse(transform.gameObject.activeInHierarchy);
+
+        loadedScene.SceneData.SceneLoadingConcluded.Returns(true);
+
+        system.Update(0);
         Assert.IsFalse(world.Has<SceneLODInfo>(entityReference));
+        Assert.IsTrue(world.Has<ISceneFacade>(entityReference));
+        Assert.IsTrue(transform.gameObject.activeInHierarchy);
     }
 
     [Test]
