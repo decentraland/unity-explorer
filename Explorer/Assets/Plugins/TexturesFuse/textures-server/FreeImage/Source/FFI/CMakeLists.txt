@@ -645,12 +645,14 @@ message("COMPRESSATOR_ROOT Is: ${COMPRESSATOR_ROOT}")
 target_include_directories(texturesfuse PRIVATE ${COMPRESSATOR_ROOT}/include)
 
 if(WIN32)
+    target_link_libraries(texturesfuse ${COMPRESSATOR_ROOT}/lib/libCMP_Framework.lib)
     target_link_libraries(texturesfuse ${COMPRESSATOR_ROOT}/lib/libCMP_Core_AVX512.lib)
     target_link_libraries(texturesfuse ${COMPRESSATOR_ROOT}/lib/libCMP_Core_SSE.lib)
     target_link_libraries(texturesfuse ${COMPRESSATOR_ROOT}/lib/libCMP_Core_AVX.lib)
     target_link_libraries(texturesfuse ${COMPRESSATOR_ROOT}/lib/libCMP_Core.lib)
     target_link_libraries(texturesfuse ${COMPRESSATOR_ROOT}/lib/libCMP_Compressonator.lib)
 else()
+    target_link_libraries(texturesfuse ${COMPRESSATOR_ROOT}/lib/libCMP_Framework.a)
     target_link_libraries(texturesfuse ${COMPRESSATOR_ROOT}/lib/libCMP_Core_AVX512.a)
     target_link_libraries(texturesfuse ${COMPRESSATOR_ROOT}/lib/libCMP_Core_SSE.a)
     target_link_libraries(texturesfuse ${COMPRESSATOR_ROOT}/lib/libCMP_Core_AVX.a)
@@ -662,8 +664,6 @@ endif()
 target_sources(texturesfuse PRIVATE ${SOURCES})
 
 
-# Link the external library
-# TODO support for Win/linux
 if(WIN32)
     target_link_libraries(texturesfuse ${CMAKE_CURRENT_BINARY_DIR}/astc-encoder-build/Source/Release/astcenc-native-shared.lib)
 else()
