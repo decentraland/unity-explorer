@@ -1,4 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
+using System;
 
 namespace DCL.AsyncLoadReporting
 {
@@ -14,13 +15,14 @@ namespace DCL.AsyncLoadReporting
 
         private readonly IAsyncReactiveProperty<float> progressCounter;
 
-        public UniTaskCompletionSource CompletionSource { get; }
+        private readonly UniTaskCompletionSource completionSource;
+
         public IReadOnlyAsyncReactiveProperty<float> ProgressCounter => progressCounter;
 
         private AsyncLoadProcessReport(UniTaskCompletionSource completionSource,
             IAsyncReactiveProperty<float> progressCounter)
         {
-            CompletionSource = completionSource;
+            this.completionSource = completionSource;
             this.progressCounter = progressCounter;
             offset = 0;
             until = 1;
@@ -28,7 +30,7 @@ namespace DCL.AsyncLoadReporting
 
         private AsyncLoadProcessReport(AsyncLoadProcessReport parent, float offset, float until)
         {
-            CompletionSource = new UniTaskCompletionSource();
+            completionSource = new UniTaskCompletionSource();
             progressCounter = new AsyncReactiveProperty<float>(0f);
             this.parent = parent;
             this.offset = offset;
@@ -42,7 +44,13 @@ namespace DCL.AsyncLoadReporting
             parent?.SetProgress(offset + (progressCounter.Value * (until - offset)));
 
             if (progressCounter.Value >= 1f)
-                CompletionSource.TrySetResult();
+                completionSource.TrySetResult();
+        }
+
+        public void SetException(Exception e)
+        {
+            completionSource.TrySetException(e);
+            parent?.SetException(e);
         }
 
         public AsyncLoadProcessReport CreateChildReport(float until) =>

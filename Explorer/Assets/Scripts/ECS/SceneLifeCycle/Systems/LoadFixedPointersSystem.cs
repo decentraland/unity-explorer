@@ -19,7 +19,6 @@ namespace ECS.SceneLifeCycle.Systems
     ///     Loads scene definition from fixed scene pointers if the realm provides them
     /// </summary>
     [UpdateInGroup(typeof(RealmGroup))]
-    [UpdateAfter(typeof(CreateEmptyPointersInFixedRealmSystem))] // we must execute it after to complete the split job, otherwise we write in a collection that is used by it
     public partial class LoadFixedPointersSystem : LoadScenePointerSystemBase
     {
         internal LoadFixedPointersSystem(World world) : base(world) { }

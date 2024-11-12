@@ -26,7 +26,6 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
     [UpdateAfter(typeof(LoadPointersByIncreasingRadiusSystem))]
     [UpdateAfter(typeof(LoadFixedPointersSystem))]
     [UpdateAfter(typeof(LoadStaticPointersSystem))]
-    [UpdateAfter(typeof(CreateEmptyPointersInFixedRealmSystem))]
     public partial class ResolveSceneStateByIncreasingRadiusSystem : BaseUnityLoopSystem
     {
         private static readonly Comparer COMPARER_INSTANCE = new ();

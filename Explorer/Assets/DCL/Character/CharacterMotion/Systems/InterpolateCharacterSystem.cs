@@ -62,7 +62,8 @@ namespace DCL.CharacterMotion.Systems
 
             // Teleport the character
             controller.transform.position = teleportIntent.Position;
-            // Reset the current platform so we dont bounce back if we are touching the world plane
+
+            // Reset the current platform so we dont bounce back if we are touching the    world plane
             platformComponent.CurrentPlatform = null;
 
             playerJustTeleportedCountDown = COUNTDOWN_FRAMES;
