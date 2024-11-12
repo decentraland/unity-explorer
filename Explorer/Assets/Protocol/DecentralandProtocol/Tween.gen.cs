@@ -43,37 +43,64 @@ namespace DCL.ECSComponents {
             "LAoDZW5kGAIgASgLMh8uZGVjZW50cmFsYW5kLmNvbW1vbi5RdWF0ZXJuaW9u",
             "Il8KBVNjYWxlEisKBXN0YXJ0GAEgASgLMhwuZGVjZW50cmFsYW5kLmNvbW1v",
             "bi5WZWN0b3IzEikKA2VuZBgCIAEoCzIcLmRlY2VudHJhbGFuZC5jb21tb24u",
-            "VmVjdG9yMyJlCgtUZXh0dXJlTW92ZRIrCgVzdGFydBgBIAEoCzIcLmRlY2Vu",
-            "dHJhbGFuZC5jb21tb24uVmVjdG9yMhIpCgNlbmQYAiABKAsyHC5kZWNlbnRy",
-            "YWxhbmQuY29tbW9uLlZlY3RvcjIq5wQKDkVhc2luZ0Z1bmN0aW9uEg0KCUVG",
-            "X0xJTkVBUhAAEhEKDUVGX0VBU0VJTlFVQUQQARISCg5FRl9FQVNFT1VUUVVB",
-            "RBACEg8KC0VGX0VBU0VRVUFEEAMSEQoNRUZfRUFTRUlOU0lORRAEEhIKDkVG",
-            "X0VBU0VPVVRTSU5FEAUSDwoLRUZfRUFTRVNJTkUQBhIRCg1FRl9FQVNFSU5F",
-            "WFBPEAcSEgoORUZfRUFTRU9VVEVYUE8QCBIPCgtFRl9FQVNFRVhQTxAJEhQK",
-            "EEVGX0VBU0VJTkVMQVNUSUMQChIVChFFRl9FQVNFT1VURUxBU1RJQxALEhIK",
-            "DkVGX0VBU0VFTEFTVElDEAwSEwoPRUZfRUFTRUlOQk9VTkNFEA0SFAoQRUZf",
-            "RUFTRU9VVEJPVU5DRRAOEhEKDUVGX0VBU0VCT1VOQ0UQDxISCg5FRl9FQVNF",
-            "SU5DVUJJQxAQEhMKD0VGX0VBU0VPVVRDVUJJQxAREhAKDEVGX0VBU0VDVUJJ",
-            "QxASEhIKDkVGX0VBU0VJTlFVQVJUEBMSEwoPRUZfRUFTRU9VVFFVQVJUEBQS",
-            "EAoMRUZfRUFTRVFVQVJUEBUSEgoORUZfRUFTRUlOUVVJTlQQFhITCg9FRl9F",
-            "QVNFT1VUUVVJTlQQFxIQCgxFRl9FQVNFUVVJTlQQGBIRCg1FRl9FQVNFSU5D",
-            "SVJDEBkSEgoORUZfRUFTRU9VVENJUkMQGhIPCgtFRl9FQVNFQ0lSQxAbEhEK",
-            "DUVGX0VBU0VJTkJBQ0sQHBISCg5FRl9FQVNFT1VUQkFDSxAdEg8KC0VGX0VB",
-            "U0VCQUNLEB5CFKoCEURDTC5FQ1NDb21wb25lbnRzYgZwcm90bzM="));
+            "VmVjdG9yMyKlAgoLVGV4dHVyZU1vdmUSKwoFc3RhcnQYASABKAsyHC5kZWNl",
+            "bnRyYWxhbmQuY29tbW9uLlZlY3RvcjISKQoDZW5kGAIgASgLMhwuZGVjZW50",
+            "cmFsYW5kLmNvbW1vbi5WZWN0b3IyEkgKD3RleHR1cmVfdG9fbW92ZRgDIAEo",
+            "DjIqLmRlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50cy5UZXh0dXJlVG9Nb3Zl",
+            "SACIAQESSwoQdGV4dHVyZV9tb3ZlbWVudBgFIAEoDjIsLmRlY2VudHJhbGFu",
+            "ZC5zZGsuY29tcG9uZW50cy5UZXh0dXJlTW92ZW1lbnRIAYgBAUISChBfdGV4",
+            "dHVyZV90b19tb3ZlQhMKEV90ZXh0dXJlX21vdmVtZW50Kk4KDVRleHR1cmVU",
+            "b01vdmUSDgoKVFRNX0FMQkVETxAAEg0KCVRUTV9BTFBIQRABEhAKDFRUTV9F",
+            "TUlTU0lWRRACEgwKCFRUTV9CVU1QEAMqSQoPVGV4dHVyZU1vdmVtZW50Eg0K",
+            "CVRNX09GRlNFVBAAEg0KCVRNX1RJTElORxABEhgKFFRNX09GRlNFVF9BTkRf",
+            "VElMSU5HEAMq5wQKDkVhc2luZ0Z1bmN0aW9uEg0KCUVGX0xJTkVBUhAAEhEK",
+            "DUVGX0VBU0VJTlFVQUQQARISCg5FRl9FQVNFT1VUUVVBRBACEg8KC0VGX0VB",
+            "U0VRVUFEEAMSEQoNRUZfRUFTRUlOU0lORRAEEhIKDkVGX0VBU0VPVVRTSU5F",
+            "EAUSDwoLRUZfRUFTRVNJTkUQBhIRCg1FRl9FQVNFSU5FWFBPEAcSEgoORUZf",
+            "RUFTRU9VVEVYUE8QCBIPCgtFRl9FQVNFRVhQTxAJEhQKEEVGX0VBU0VJTkVM",
+            "QVNUSUMQChIVChFFRl9FQVNFT1VURUxBU1RJQxALEhIKDkVGX0VBU0VFTEFT",
+            "VElDEAwSEwoPRUZfRUFTRUlOQk9VTkNFEA0SFAoQRUZfRUFTRU9VVEJPVU5D",
+            "RRAOEhEKDUVGX0VBU0VCT1VOQ0UQDxISCg5FRl9FQVNFSU5DVUJJQxAQEhMK",
+            "D0VGX0VBU0VPVVRDVUJJQxAREhAKDEVGX0VBU0VDVUJJQxASEhIKDkVGX0VB",
+            "U0VJTlFVQVJUEBMSEwoPRUZfRUFTRU9VVFFVQVJUEBQSEAoMRUZfRUFTRVFV",
+            "QVJUEBUSEgoORUZfRUFTRUlOUVVJTlQQFhITCg9FRl9FQVNFT1VUUVVJTlQQ",
+            "FxIQCgxFRl9FQVNFUVVJTlQQGBIRCg1FRl9FQVNFSU5DSVJDEBkSEgoORUZf",
+            "RUFTRU9VVENJUkMQGhIPCgtFRl9FQVNFQ0lSQxAbEhEKDUVGX0VBU0VJTkJB",
+            "Q0sQHBISCg5FRl9FQVNFT1VUQkFDSxAdEg8KC0VGX0VBU0VCQUNLEB5CFKoC",
+            "EURDTC5FQ1NDb21wb25lbnRzYgZwcm90bzM="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::Decentraland.Common.VectorsReflection.Descriptor, },
-          new pbr::GeneratedClrTypeInfo(new[] {typeof(global::DCL.ECSComponents.EasingFunction), }, null, new pbr::GeneratedClrTypeInfo[] {
+          new pbr::GeneratedClrTypeInfo(new[] {typeof(global::DCL.ECSComponents.TextureToMove), typeof(global::DCL.ECSComponents.TextureMovement), typeof(global::DCL.ECSComponents.EasingFunction), }, null, new pbr::GeneratedClrTypeInfo[] {
             new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBTween), global::DCL.ECSComponents.PBTween.Parser, new[]{ "Duration", "EasingFunction", "Move", "Rotate", "Scale", "TextureMove", "Playing", "CurrentTime" }, new[]{ "Mode", "Playing", "CurrentTime" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.Move), global::DCL.ECSComponents.Move.Parser, new[]{ "Start", "End", "FaceDirection" }, new[]{ "FaceDirection" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.Rotate), global::DCL.ECSComponents.Rotate.Parser, new[]{ "Start", "End" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.Scale), global::DCL.ECSComponents.Scale.Parser, new[]{ "Start", "End" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.TextureMove), global::DCL.ECSComponents.TextureMove.Parser, new[]{ "Start", "End" }, null, null, null, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.TextureMove), global::DCL.ECSComponents.TextureMove.Parser, new[]{ "Start", "End", "TextureToMove", "TextureMovement" }, new[]{ "TextureToMove", "TextureMovement" }, null, null, null)
           }));
     }
     #endregion
 
   }
   #region Enums
+  public enum TextureToMove {
+    /// <summary>
+    /// default
+    /// </summary>
+    [pbr::OriginalName("TTM_ALBEDO")] TtmAlbedo = 0,
+    [pbr::OriginalName("TTM_ALPHA")] TtmAlpha = 1,
+    [pbr::OriginalName("TTM_EMISSIVE")] TtmEmissive = 2,
+    [pbr::OriginalName("TTM_BUMP")] TtmBump = 3,
+  }
+
+  public enum TextureMovement {
+    /// <summary>
+    /// default
+    /// </summary>
+    [pbr::OriginalName("TM_OFFSET")] TmOffset = 0,
+    [pbr::OriginalName("TM_TILING")] TmTiling = 1,
+    [pbr::OriginalName("TM_OFFSET_AND_TILING")] TmOffsetAndTiling = 3,
+  }
+
   /// <summary>
   /// Implementation guidelines for these easing functions can be found
   /// at https://github.com/ai/easings.net/blob/6fcd5f852a470bf1a7890e8178afa0f471d5f2ec/src/easings/easingsFunctions.ts
@@ -1485,6 +1512,7 @@ namespace DCL.ECSComponents {
   {
     private static readonly pb::MessageParser<TextureMove> _parser = new pb::MessageParser<TextureMove>(() => new TextureMove());
     private pb::UnknownFieldSet _unknownFields;
+    private int _hasBits0;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pb::MessageParser<TextureMove> Parser { get { return _parser; } }
@@ -1512,8 +1540,11 @@ namespace DCL.ECSComponents {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public TextureMove(TextureMove other) : this() {
+      _hasBits0 = other._hasBits0;
       start_ = other.start_ != null ? other.start_.Clone() : null;
       end_ = other.end_ != null ? other.end_.Clone() : null;
+      textureToMove_ = other.textureToMove_;
+      textureMovement_ = other.textureMovement_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -1547,6 +1578,62 @@ namespace DCL.ECSComponents {
       }
     }
 
+    /// <summary>Field number for the "texture_to_move" field.</summary>
+    public const int TextureToMoveFieldNumber = 3;
+    private global::DCL.ECSComponents.TextureToMove textureToMove_;
+    /// <summary>
+    /// default TextureToMove.TTM_ALBEDO
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::DCL.ECSComponents.TextureToMove TextureToMove {
+      get { if ((_hasBits0 & 1) != 0) { return textureToMove_; } else { return global::DCL.ECSComponents.TextureToMove.TtmAlbedo; } }
+      set {
+        _hasBits0 |= 1;
+        textureToMove_ = value;
+      }
+    }
+    /// <summary>Gets whether the "texture_to_move" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasTextureToMove {
+      get { return (_hasBits0 & 1) != 0; }
+    }
+    /// <summary>Clears the value of the "texture_to_move" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearTextureToMove() {
+      _hasBits0 &= ~1;
+    }
+
+    /// <summary>Field number for the "texture_movement" field.</summary>
+    public const int TextureMovementFieldNumber = 5;
+    private global::DCL.ECSComponents.TextureMovement textureMovement_;
+    /// <summary>
+    /// default TextureMovement.TM_OFFSET
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::DCL.ECSComponents.TextureMovement TextureMovement {
+      get { if ((_hasBits0 & 2) != 0) { return textureMovement_; } else { return global::DCL.ECSComponents.TextureMovement.TmOffset; } }
+      set {
+        _hasBits0 |= 2;
+        textureMovement_ = value;
+      }
+    }
+    /// <summary>Gets whether the "texture_movement" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasTextureMovement {
+      get { return (_hasBits0 & 2) != 0; }
+    }
+    /// <summary>Clears the value of the "texture_movement" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearTextureMovement() {
+      _hasBits0 &= ~2;
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -1564,6 +1651,8 @@ namespace DCL.ECSComponents {
       }
       if (!object.Equals(Start, other.Start)) return false;
       if (!object.Equals(End, other.End)) return false;
+      if (TextureToMove != other.TextureToMove) return false;
+      if (TextureMovement != other.TextureMovement) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -1573,6 +1662,8 @@ namespace DCL.ECSComponents {
       int hash = 1;
       if (start_ != null) hash ^= Start.GetHashCode();
       if (end_ != null) hash ^= End.GetHashCode();
+      if (HasTextureToMove) hash ^= TextureToMove.GetHashCode();
+      if (HasTextureMovement) hash ^= TextureMovement.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -1599,6 +1690,14 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(18);
         output.WriteMessage(End);
       }
+      if (HasTextureToMove) {
+        output.WriteRawTag(24);
+        output.WriteEnum((int) TextureToMove);
+      }
+      if (HasTextureMovement) {
+        output.WriteRawTag(40);
+        output.WriteEnum((int) TextureMovement);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -1617,6 +1716,14 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(18);
         output.WriteMessage(End);
       }
+      if (HasTextureToMove) {
+        output.WriteRawTag(24);
+        output.WriteEnum((int) TextureToMove);
+      }
+      if (HasTextureMovement) {
+        output.WriteRawTag(40);
+        output.WriteEnum((int) TextureMovement);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -1632,6 +1739,12 @@ namespace DCL.ECSComponents {
       }
       if (end_ != null) {
         size += 1 + pb::CodedOutputStream.ComputeMessageSize(End);
+      }
+      if (HasTextureToMove) {
+        size += 1 + pb::CodedOutputStream.ComputeEnumSize((int) TextureToMove);
+      }
+      if (HasTextureMovement) {
+        size += 1 + pb::CodedOutputStream.ComputeEnumSize((int) TextureMovement);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -1656,6 +1769,12 @@ namespace DCL.ECSComponents {
           End = new global::Decentraland.Common.Vector2();
         }
         End.MergeFrom(other.End);
+      }
+      if (other.HasTextureToMove) {
+        TextureToMove = other.TextureToMove;
+      }
+      if (other.HasTextureMovement) {
+        TextureMovement = other.TextureMovement;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -1686,6 +1805,14 @@ namespace DCL.ECSComponents {
             input.ReadMessage(End);
             break;
           }
+          case 24: {
+            TextureToMove = (global::DCL.ECSComponents.TextureToMove) input.ReadEnum();
+            break;
+          }
+          case 40: {
+            TextureMovement = (global::DCL.ECSComponents.TextureMovement) input.ReadEnum();
+            break;
+          }
         }
       }
     #endif
@@ -1713,6 +1840,14 @@ namespace DCL.ECSComponents {
               End = new global::Decentraland.Common.Vector2();
             }
             input.ReadMessage(End);
+            break;
+          }
+          case 24: {
+            TextureToMove = (global::DCL.ECSComponents.TextureToMove) input.ReadEnum();
+            break;
+          }
+          case 40: {
+            TextureMovement = (global::DCL.ECSComponents.TextureMovement) input.ReadEnum();
             break;
           }
         }
