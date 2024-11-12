@@ -110,6 +110,7 @@ def append_line_to_cmake():
 target_include_directories(CMP_Framework 
     PUBLIC 
     ${PROJECT_SOURCE_DIR}/../externals_repos/simde/simde/x86
+    ${PROJECT_SOURCE_DIR}/../externals_repos/simde/simde/x86/AVX512
 
     ${PROJECT_SOURCE_DIR}/cmp_core/source
     ${PROJECT_SOURCE_DIR}/cmp_core/shaders
