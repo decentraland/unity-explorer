@@ -330,6 +330,11 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+        DebugRoomIndicator:
+          m_AssetGUID: a39f0a305be6be143aabcbf7ebb59d62
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
     - rid: 3022170012058910723
       type: {class: LandscapeSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -604,7 +609,6 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         frameTimeCap: 33
         frameTimeCapDeepProfiler: 300
-        memoryCap: 16
         <ScenesLoadingBudget>k__BackingField: 100
         <AssetsLoadingBudget>k__BackingField: 50
         <WebRequestsBudget>k__BackingField: 20
