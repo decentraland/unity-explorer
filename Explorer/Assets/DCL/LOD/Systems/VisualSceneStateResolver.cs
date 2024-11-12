@@ -20,71 +20,33 @@ namespace DCL.LOD
             SceneDefinitionComponent sceneDefinitionComponent, ILODSettingsAsset lodSettingsAsset, IRealmData realmData)
         {
             //If we are in a world, dont show lods
-            if (realmData.ScenesAreFixed) visualSceneState.CandidateVisualSceneState = visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.SHOWING_SCENE;
+            if (realmData.ScenesAreFixed) visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.SHOWING_SCENE;
 
             //If the scene is empty, no lods are possible
-            else if (sceneDefinitionComponent.IsEmpty) visualSceneState.CandidateVisualSceneState = visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.SHOWING_SCENE;
-            else if (roadCoordinates.Contains(sceneDefinitionComponent.Definition.metadata.scene.DecodedBase)) visualSceneState.CandidateVisualSceneState = visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.ROAD;
+            else if (sceneDefinitionComponent.IsEmpty)
+                visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.SHOWING_SCENE;
+            else if (roadCoordinates.Contains(sceneDefinitionComponent.Definition.metadata.scene.DecodedBase))
+                visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.ROAD;
 
             //For SDK6 scenes, we just show lod0
-            else if (!sceneDefinitionComponent.IsSDK7) visualSceneState.CandidateVisualSceneState = visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.SHOWING_LOD;
+            else if (!sceneDefinitionComponent.IsSDK7)
+                visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.SHOWING_LOD;
             else
             {
+                var isSceneLoaded = visualSceneState.CurrentVisualSceneState == VisualSceneStateEnum.SHOWING_SCENE
+                    ? 1
+                    : 0;
 
+                //If scene is loaded, the unload distance is bigger
+                var candidateVisualSceneState = partition.Bucket < lodSettingsAsset.SDK7LodThreshold + isSceneLoaded
+                    ? VisualSceneStateEnum.SHOWING_SCENE
+                    : VisualSceneStateEnum.SHOWING_LOD;
 
-                if (visualSceneState.CurrentVisualSceneState == VisualSceneStateEnum.UNINITIALIZED)
+                if (visualSceneState.CurrentVisualSceneState != candidateVisualSceneState)
                 {
-                    var candidateVisualSceneState = partition.Bucket < lodSettingsAsset.SDK7LodThreshold
-                        ? VisualSceneStateEnum.SHOWING_SCENE
-                        : VisualSceneStateEnum.SHOWING_LOD;
-
-                    visualSceneState.CandidateVisualSceneState =
-                        visualSceneState.CurrentVisualSceneState = candidateVisualSceneState;
-                    visualSceneState.IsDirty = true;
-                }
-
-                if (visualSceneState.CurrentVisualSceneState == VisualSceneStateEnum.SHOWING_SCENE)
-                {
-                    var candidateVisualSceneState = partition.Bucket < lodSettingsAsset.SDK7LodThreshold + 1
-                        ? VisualSceneStateEnum.SHOWING_SCENE
-                        : VisualSceneStateEnum.SHOWING_LOD;
-
-
-                    if (visualSceneState.CurrentVisualSceneState != candidateVisualSceneState)
-                    {
-                        visualSceneState.CandidateVisualSceneState =
-                            visualSceneState.CurrentVisualSceneState = candidateVisualSceneState;
-                        visualSceneState.IsDirty = true;
-                    }
-                }
-
-                if (visualSceneState.CurrentVisualSceneState == VisualSceneStateEnum.SHOWING_LOD)
-                {
-                    var candidateVisualSceneState = partition.Bucket < lodSettingsAsset.SDK7LodThreshold
-                        ? VisualSceneStateEnum.SHOWING_SCENE
-                        : VisualSceneStateEnum.SHOWING_LOD;
-
-                    if (visualSceneState.CurrentVisualSceneState != candidateVisualSceneState)
-                    {
-                        visualSceneState.CandidateVisualSceneState =
-                            visualSceneState.CurrentVisualSceneState = candidateVisualSceneState;
-                        visualSceneState.IsDirty = true;
-                    }
-                }
-
-                /*if (visualSceneState.CurrentVisualSceneState == VisualSceneStateEnum.UNINITIALIZED)
-                {
-                    visualSceneState.CandidateVisualSceneState = candidateVisualSceneState;
                     visualSceneState.CurrentVisualSceneState = candidateVisualSceneState;
                     visualSceneState.IsDirty = true;
                 }
-                else if (visualSceneState.CandidateVisualSceneState != candidateVisualSceneState &&
-                         candidateVisualSceneState != visualSceneState.CurrentVisualSceneState)
-                {
-                    visualSceneState.CandidateVisualSceneState = candidateVisualSceneState;
-                    visualSceneState.IsDirty = true;
-                    visualSceneState.TimeToChange = 0;
-                }*/
             }
         }
     }
