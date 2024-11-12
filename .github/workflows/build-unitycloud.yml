@@ -104,7 +104,6 @@ jobs:
       sentry_enabled: ${{ steps.get_sentry.outputs.sentry_enabled }}
       clean_build: ${{ steps.set_defaults.outputs.clean_build }}
       cache_strategy: ${{ steps.set_defaults.outputs.cache_strategy }}
-      install_source: ${{ github.event.inputs.install_source || inputs.install_source || steps.set_defaults.outputs.install_source }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
