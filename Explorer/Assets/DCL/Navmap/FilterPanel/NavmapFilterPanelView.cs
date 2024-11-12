@@ -29,10 +29,16 @@ namespace DCL.Navmap.FilterPanel
         private Toggle peopleToggle;
 
         [field: SerializeField]
-        private Button satelliteButton;
+        private Toggle satelliteButton;
 
         [field: SerializeField]
-        private Button parcelButton;
+        private GameObject satelliteButtonHighlight;
+
+        [field: SerializeField]
+        private Toggle parcelButton;
+
+        [field: SerializeField]
+        private GameObject parcelButtonHighlight;
 
 
         [field: Header("Audio")]
@@ -51,6 +57,15 @@ namespace DCL.Navmap.FilterPanel
             poisToggle.onValueChanged.AddListener((isOn) => OnToggleClicked(MapLayer.ScenesOfInterest, isOn));
             peopleToggle.onValueChanged.AddListener((isOn) => OnToggleClicked(MapLayer.HotUsersMarkers, isOn));
             favoritesToggle.onValueChanged.AddListener((isOn) => OnToggleClicked(MapLayer.Favorites, isOn));
+
+            satelliteButton.onValueChanged.AddListener((isOn) => ToggleMapType(MapLayer.SatelliteAtlas, isOn));
+            parcelButton.onValueChanged.AddListener((isOn) => ToggleMapType(MapLayer.ParcelsAtlas, isOn));
+        }
+
+        private void OnEnable()
+        {
+            ToggleMapType(MapLayer.ParcelsAtlas, false);
+            ToggleMapType(MapLayer.SatelliteAtlas, true);
         }
 
         public void ToggleFilterPanel(bool isOn)
@@ -59,6 +74,14 @@ namespace DCL.Navmap.FilterPanel
             canvasGroup.blocksRaycasts = isOn;
             canvasGroup.interactable = isOn;
             UIAudioEventsBus.Instance.SendPlayAudioEvent(isOn ? OpenAudio : CloseAudio);
+        }
+
+        private void ToggleMapType(MapLayer mapLayer, bool isOn)
+        {
+            satelliteButtonHighlight.SetActive(mapLayer == MapLayer.SatelliteAtlas && isOn);
+            parcelButtonHighlight.SetActive(mapLayer == MapLayer.ParcelsAtlas && isOn);
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(isOn ? ToggleOnAudio : ToggleOffAudio);
+            OnFilterChanged?.Invoke(mapLayer, isOn);
         }
 
         private void OnToggleClicked(MapLayer mapLayer, bool isOn)

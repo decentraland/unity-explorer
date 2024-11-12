@@ -73,6 +73,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.ApiEvents => $"https://events.decentraland.{ENV}/api/events",
                 DecentralandUrl.OpenSea => $"https://opensea.decentraland.{ENV}",
                 DecentralandUrl.Host => $"https://decentraland.{ENV}",
+                DecentralandUrl.ApiChunks => $"https://api.decentraland.{ENV}/v1/map.png",
                 DecentralandUrl.PeerAbout => $"https://peer.decentraland.{ENV}/about",
                 DecentralandUrl.DAO => $"https://decentraland.{ENV}/dao/",
                 DecentralandUrl.Notification => $"https://notifications.decentraland.{ENV}/notifications",
