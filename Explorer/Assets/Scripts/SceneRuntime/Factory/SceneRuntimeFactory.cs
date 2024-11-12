@@ -1,11 +1,9 @@
 using CommunicationData.URLHelpers;
 using CrdtEcsBridge.PoolsProviders;
 using Cysharp.Threading.Tasks;
-using DCL.AssetsProvision.CodeResolver;
 using DCL.WebRequests;
 using DCL.Diagnostics;
 using DCL.Optimization;
-using DCL.ResourcesUnloading;
 using ECS;
 using SceneRuntime.Factory.JsSceneSourceCode;
 using SceneRuntime.Factory.WebSceneSource;
@@ -38,26 +36,13 @@ namespace SceneRuntime.Factory
         private readonly IJsSceneLocalSourceCode jsSceneLocalSourceCode = new IJsSceneLocalSourceCode.Default();
 
         public SceneRuntimeFactory(IWebRequestController webRequestController, IRealmData realmData,
-            V8EngineFactory engineFactory, V8ActiveEngines activeEngines, CacheCleaner cacheCleaner,
-            bool cacheJsSources = true)
+            V8EngineFactory engineFactory, V8ActiveEngines activeEngines, IWebJsSources webJsSources)
         {
             this.realmData = realmData;
             this.engineFactory = engineFactory;
             this.activeEngines = activeEngines;
             jsSourcesCache = EnabledJsScenesFileCachingOrIgnore();
-
-            var nonCachedWebJsSources = new WebJsSources(new JsCodeResolver(webRequestController));
-
-            if (cacheJsSources)
-            {
-                MemoryJsSourcesCache cache = new ();
-                cacheCleaner.Register(cache);
-                webJsSources = new CachedWebJsSources(nonCachedWebJsSources, cache);
-            }
-            else
-            {
-                webJsSources = nonCachedWebJsSources;
-            }
+            this.webJsSources = webJsSources;
         }
 
         /// <summary>

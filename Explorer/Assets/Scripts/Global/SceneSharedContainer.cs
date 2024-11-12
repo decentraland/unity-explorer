@@ -8,7 +8,6 @@ using DCL.Multiplayer.Profiles.Poses;
 using DCL.PluginSystem.World.Dependencies;
 using MVC;
 using DCL.Profiles;
-using DCL.ResourcesUnloading;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
@@ -17,6 +16,7 @@ using SceneRunner;
 using SceneRunner.ECSWorld;
 using SceneRuntime;
 using SceneRuntime.Factory;
+using SceneRuntime.Factory.WebSceneSource;
 
 namespace Global
 {
@@ -49,8 +49,7 @@ namespace Global
             IMVCManager mvcManager,
             IMessagePipesHub messagePipesHub,
             IRemoteMetadata remoteMetadata,
-            CacheCleaner cacheCleaner,
-            bool cacheJsSources = true)
+            IWebJsSources webJsSources)
         {
             ECSWorldSingletonSharedDependencies sharedDependencies = staticContainer.SingletonSharedDependencies;
             ExposedGlobalDataContainer exposedGlobalDataContainer = staticContainer.ExposedGlobalDataContainer;
@@ -69,7 +68,7 @@ namespace Global
                     ecsWorldFactory,
                     new SceneRuntimeFactory(staticContainer.WebRequestsContainer.WebRequestController,
                         realmData ?? new IRealmData.Fake(), new V8EngineFactory(v8ActiveEngines),
-                        v8ActiveEngines, cacheCleaner, cacheJsSources),
+                        v8ActiveEngines, webJsSources),
                     new SharedPoolsProvider(),
                     new CRDTSerializer(),
                     staticContainer.ComponentsContainer.SDKComponentsRegistry,

@@ -15,16 +15,15 @@ using CrdtEcsBridge.PoolsProviders;
 using CrdtEcsBridge.UpdateGate;
 using CrdtEcsBridge.WorldSynchronizer;
 using Cysharp.Threading.Tasks;
+using DCL.AssetsProvision.CodeResolver;
 using DCL.Diagnostics;
 using DCL.Interaction.Utility;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Poses;
-using DCL.Optimization.PerformanceBudgeting;
 using DCL.PluginSystem.World;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.Profiles;
-using DCL.ResourcesUnloading;
 using DCL.Time;
 using DCL.Utilities.Extensions;
 using DCL.Web3;
@@ -47,11 +46,11 @@ using SceneRuntime.Apis.Modules;
 using SceneRuntime.Apis.Modules.CommunicationsControllerApi;
 using SceneRuntime.Apis.Modules.EngineApi;
 using SceneRuntime.Apis.Modules.FetchApi;
-using SceneRuntime.Apis.Modules.PortableExperiencesApi;
 using SceneRuntime.Apis.Modules.RestrictedActionsApi;
 using SceneRuntime.Apis.Modules.Runtime;
 using SceneRuntime.Apis.Modules.SceneApi;
 using SceneRuntime.Factory;
+using SceneRuntime.Factory.WebSceneSource;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -76,10 +75,10 @@ namespace SceneRunner.Tests
             path = $"file://{Application.dataPath + "/../TestResources/Scenes/Cube/cube.js"}";
             activeEngines = new V8ActiveEngines();
             engineFactory = new V8EngineFactory(activeEngines);
-            CacheCleaner cacheCleaner = new (new NullPerformanceBudget());
 
             sceneRuntimeFactory = new SceneRuntimeFactory(TestWebRequestController.INSTANCE,
-                new IRealmData.Fake(), engineFactory, activeEngines, cacheCleaner);
+                new IRealmData.Fake(), engineFactory, activeEngines,
+                new WebJsSources(new JsCodeResolver(TestWebRequestController.INSTANCE)));
 
             ecsWorldFactory = Substitute.For<IECSWorldFactory>().EnsureNotNull();
 

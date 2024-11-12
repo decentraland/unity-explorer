@@ -1,10 +1,9 @@
 using CommunicationData.URLHelpers;
 using CrdtEcsBridge.PoolsProviders;
 using Cysharp.Threading.Tasks;
+using DCL.AssetsProvision.CodeResolver;
 using ECS.TestSuite;
 using DCL.Diagnostics;
-using DCL.Optimization.PerformanceBudgeting;
-using DCL.ResourcesUnloading;
 using ECS;
 using JetBrains.Annotations;
 using NSubstitute;
@@ -12,6 +11,7 @@ using NUnit.Framework;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis.Modules.EngineApi;
 using SceneRuntime.Factory;
+using SceneRuntime.Factory.WebSceneSource;
 using System;
 using System.Collections;
 using System.Threading;
@@ -37,9 +37,9 @@ namespace SceneRuntime.Tests
         private static SceneRuntimeFactory NewSceneRuntimeFactory()
         {
             var activeEngines = new V8ActiveEngines();
-            var cacheCleaner = new CacheCleaner(new NullPerformanceBudget());
             return new SceneRuntimeFactory(TestWebRequestController.INSTANCE, new IRealmData.Fake(),
-                new V8EngineFactory(activeEngines), activeEngines, cacheCleaner);
+                new V8EngineFactory(activeEngines), activeEngines,
+                new WebJsSources(new JsCodeResolver(TestWebRequestController.INSTANCE)));
         }
 
         [UnityTest]

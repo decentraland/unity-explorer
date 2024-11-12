@@ -5,13 +5,12 @@ using CrdtEcsBridge.Components;
 using CrdtEcsBridge.JsModulesImplementation.Communications;
 using CrdtEcsBridge.PoolsProviders;
 using Cysharp.Threading.Tasks;
+using DCL.AssetsProvision.CodeResolver;
 using DCL.Interaction.Utility;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Poses;
-using DCL.Optimization.PerformanceBudgeting;
 using DCL.Profiles;
-using DCL.ResourcesUnloading;
 using DCL.Web3;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
@@ -27,6 +26,7 @@ using SceneRunner.Scene;
 using SceneRunner.Tests.TestUtils;
 using SceneRuntime;
 using SceneRuntime.Factory;
+using SceneRuntime.Factory.WebSceneSource;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -42,12 +42,12 @@ namespace SceneRunner.Tests
             path = $"file://{Application.dataPath + "/../TestResources/Scenes/Cube/cube.js"}";
             activeEngines = new V8ActiveEngines();
             engineFactory = new V8EngineFactory(activeEngines);
-            CacheCleaner cacheCleaner = new (new NullPerformanceBudget());
 
             ECSWorldFacade ecsWorldFacade = TestSystemsWorld.Create();
 
             sceneRuntimeFactory = new SceneRuntimeFactory(TestWebRequestController.INSTANCE,
-                new IRealmData.Fake(), engineFactory, activeEngines, cacheCleaner);
+                new IRealmData.Fake(), engineFactory, activeEngines,
+                new WebJsSources(new JsCodeResolver(TestWebRequestController.INSTANCE)));
 
             ecsWorldFactory = Substitute.For<IECSWorldFactory>();
             ecsWorldFactory.CreateWorld(in Arg.Any<ECSWorldFactoryArgs>()).Returns(ecsWorldFacade);
