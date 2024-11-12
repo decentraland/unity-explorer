@@ -67,7 +67,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
             var url = $"{CHUNKS_API}{chunkId.x}%2C{chunkId.y}.jpg";
 
             var textureTask = webRequestController.GetTextureAsync(
-                new CommonArguments(URLAddress.FromString(url), attemptsCount: 1, timeout: 10),
+                new CommonArguments(URLAddress.FromString(url), attemptsCount: 1, timeout: 5),
                 new GetTextureArguments(false), GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp, FilterMode.Trilinear),
                 linkedCts.Token, ReportCategory.UI);
 
