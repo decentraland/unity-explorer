@@ -59,6 +59,14 @@ def insert_at_start(file_path: str, content: str):
     with open(file_path, 'w') as file:
         file.write(content + original)
         
+def insert_at_end(file_path: str, content: str):
+    original = ""
+    with open(file_path, 'r') as file:
+        original = file.read()
+    
+    with open(file_path, 'w') as file:
+        file.write(original + content)
+        
 def set_vars(file_path: str):
     content = """
 set(COMPRESSONATOR_ROOT_PATH ${PROJECT_SOURCE_DIR}/..)
@@ -93,7 +101,24 @@ def append_line_to_cmake():
     
     with open(lib_make, 'a') as file:
         write_simde(file, '${CMAKE_SOURCE_DIR}/../../')
+        
+        
+    framework_make = 'compressonator/cmp_framework/CMakeLists.txt'
+    set_vars(framework_make)
+    insert_at_start(framework_make, 'set(PROJECT_SOURCE_DIR "${PROJECT_SOURCE_DIR}/..")')
+    insert_at_end(framework_make,"""
+target_include_directories(CMP_Framework 
+    PUBLIC 
+    ${PROJECT_SOURCE_DIR}/../externals_repos/simde/simde/x86
+
+    ${PROJECT_SOURCE_DIR}/cmp_core/source
+    ${PROJECT_SOURCE_DIR}/cmp_core/shaders
+)
+""")
     
+    insert_at_start('compressonator/external/stb/stb_image.h', '#include "sse2.h"')
+    
+
     core_make = 'compressonator/cmp_core/CMakeLists.txt'
     set_vars(core_make)
     with open(core_make, 'a') as file:
