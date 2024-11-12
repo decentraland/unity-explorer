@@ -93,7 +93,7 @@ namespace Global.Dynamic
             await bootstrapContainer.InitializeContainerAsync<BootstrapContainer, BootstrapSettings>(settingsContainer, ct, async container =>
             {
                 container.reportHandlingSettings = await ProvideReportHandlingSettingsAsync(container.AssetsProvisioner!, container.settings, ct);
-                 var buildData = await container.AssetsProvisioner!.ProvideMainAssetValueAsync(container.settings.BuilData, ct);
+                 var buildData = await container.AssetsProvisioner!.ProvideMainAssetValueAsync(container.settings.BuildData, ct);
                 (container.Bootstrap, container.Analytics) = await CreateBootstrapperAsync(debugSettings, applicationParametersParser, container, container.settings, realmLaunchSettings, world, buildData, ct);
                 (container.IdentityCache, container.VerifiedEthereumApi, container.Web3Authenticator) = CreateWeb3Dependencies(sceneLoaderSettings, web3AccountFactory, browser, container, decentralandUrlsSource);
 
@@ -239,7 +239,7 @@ namespace Global.Dynamic
         [field: SerializeField] public AnalyticsConfigurationRef AnalyticsConfigRef;
         [field: SerializeField] public ReportHandlingSettingsRef ReportHandlingSettingsDevelopment { get; private set; }
         [field: SerializeField] public ReportHandlingSettingsRef ReportHandlingSettingsProduction { get; private set; }
-        [field: SerializeField] public BuildDataRef BuilData { get; private set; }
+        [field: SerializeField] public BuildDataRef BuildData { get; private set; }
 
 
         [Serializable]
