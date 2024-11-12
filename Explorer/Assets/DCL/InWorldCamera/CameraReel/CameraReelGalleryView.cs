@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.InWorldCamera.CameraReel.Components;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
+using DCL.UI;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -25,13 +26,19 @@ namespace DCL.InWorldCamera.CameraReel
         private const int GRID_POOL_MAX_SIZE = 500;
 
         [Header("References")]
-        [SerializeField] internal RectTransform scrollContentRect;
-        [SerializeField] internal ScrollRect scrollRect;
-        [SerializeField] internal RectTransform elementMask;
+        [SerializeField] private RectTransform scrollContentRect;
+        [SerializeField] private ScrollRect scrollRect;
+        [SerializeField] private RectTransform elementMask;
+        [SerializeField] private GameObject deleteReelModal;
+        [SerializeField] private Button deleteReelButton;
+        [SerializeField] private Button[] cancelDeleteIntentButtons;
+        [SerializeField] private WarningNotificationView errorNotificationView;
+        [SerializeField] private WarningNotificationView successNotificationView;
 
         [Header("Configuration")]
         public int paginationLimit = 100;
         [SerializeField] private float loadMoreScrollThreshold = 0.4f;
+        [SerializeField] private float errorSuccessToastDuration = 3f;
 
         [Header("Thumbnail objects")]
         [SerializeField] private ReelThumbnailView thumbnailViewPrefab;
@@ -59,6 +66,9 @@ namespace DCL.InWorldCamera.CameraReel
         private bool wasSetUp = false;
         private bool isLoading = false;
 
+        public event Action<CameraReelResponse> ThumbnailClicked;
+        public event Action<CameraReelStorageStatus> StorageUpdated;
+
         public void SetUp(ICameraReelStorageService cameraReelStorageService, ICameraReelScreenshotsStorage cameraReelScreenshotsStorage)
         {
             this.cameraReelStorageService = cameraReelStorageService;
@@ -67,12 +77,54 @@ namespace DCL.InWorldCamera.CameraReel
             reelGalleryPoolManager ??= new ReelGalleryPoolManager(thumbnailViewPrefab, monthGridPrefab, unusedThumbnailViewObject,
                 unusedGridViewObject, THUMBNAIL_POOL_DEFAULT_CAPACITY, THUMBNAIL_POOL_MAX_SIZE, GRID_POOL_DEFAULT_CAPACITY,
                 GRID_POOL_MAX_SIZE);
+
+            for(int i = 0; i < cancelDeleteIntentButtons.Length; i++)
+                cancelDeleteIntentButtons[i].onClick.AddListener(OnDeletionModalCancelClick);
+            deleteReelButton?.onClick.AddListener(DeleteScreenshot);
+
             wasSetUp = true;
         }
 
-        private void OnThumbnailClicked(CameraReelResponse cameraReelResponse)
+        private void OnDeletionModalCancelClick() =>
+            deleteReelModal.SetActive(false);
+
+        private void OnDeletionOptionClicked(CameraReelResponse response) =>
+            deleteReelModal.SetActive(true);
+
+        private void DeleteScreenshot()
         {
-            Debug.Log($"OnThumbnailClicked: {cameraReelResponse.id}");
+            if (optionsButton?.imageData is null) return;
+            DeleteScreenshotsAsync(optionsButton.imageData).Forget();
+            OnDeletionModalCancelClick();
+        }
+
+        private async UniTask DeleteScreenshotsAsync(CameraReelResponse cameraReelResponse, CancellationToken ct = default)
+        {
+            try
+            {
+                CameraReelStorageStatus response = await cameraReelStorageService.DeleteScreenshotAsync(cameraReelResponse.id, ct);
+                StorageUpdated?.Invoke(response);
+
+                MonthGridView monthGridView = GetMonthGridView(PagedCameraReelManager.GetImageDateTime(cameraReelResponse));
+                monthGridView.RemoveThumbnail(cameraReelResponse);
+
+                if (monthGridView.GridIsEmpty())
+                    ReleaseGridView(monthGridView);
+
+                if (successNotificationView is null) return;
+
+                successNotificationView.Show();
+                await UniTask.Delay((int) errorSuccessToastDuration * 1000, cancellationToken: ct);
+                successNotificationView.Hide();
+            }
+            catch (Exception)
+            {
+                if (errorNotificationView is null) return;
+
+                errorNotificationView.Show();
+                await UniTask.Delay((int) errorSuccessToastDuration * 1000, cancellationToken: ct);
+                errorNotificationView.Hide();
+            }
         }
 
         public async UniTask ShowWalletGallery(string walletAddress, OptionButtonView optionsButton, CancellationToken ct)
@@ -94,6 +146,21 @@ namespace DCL.InWorldCamera.CameraReel
             await LoadMorePage(true, ct);
 
             scrollRect.onValueChanged.AddListener(OnScrollRectValueChanged);
+            this.optionsButton.OnDeletePictureRequested += OnDeletionOptionClicked;
+        }
+
+        private MonthGridView GetMonthGridView(DateTime dateTime)
+        {
+            MonthGridView monthGridView;
+            if (monthViews.TryGetValue(dateTime, out MonthGridView monthView))
+                monthGridView = monthView;
+            else
+            {
+                monthGridView = reelGalleryPoolManager.GetGridElement(scrollContentRect);
+                monthViews.Add(dateTime, monthGridView);
+            }
+
+            return monthGridView;
         }
 
         private async UniTask LoadMorePage(bool firstLoading, CancellationToken ct)
@@ -103,18 +170,11 @@ namespace DCL.InWorldCamera.CameraReel
 
             foreach (var bucket in result)
             {
-                MonthGridView monthGridView;
-                if (monthViews.TryGetValue(bucket.Key, out MonthGridView monthView))
-                    monthGridView = monthView;
-                else
-                {
-                     monthGridView = reelGalleryPoolManager.GetGridElement(scrollContentRect);
-                     monthViews.Add(bucket.Key, monthGridView);
-                }
+                MonthGridView monthGridView = GetMonthGridView(bucket.Key);
 
                 List<ReelThumbnailView> thumbnailViews = monthGridView.Setup(bucket.Key, bucket.Value, reelGalleryPoolManager, cameraReelScreenshotsStorage, optionsButton,
                     (cameraReelResponse, sprite) => reelThumbnailCache.Add(cameraReelResponse, sprite),
-                    OnThumbnailClicked);
+                    cameraReelResponse => ThumbnailClicked?.Invoke(cameraReelResponse));
 
                 if (reelThumbnailViews.TryGetValue(monthGridView, out List<ReelThumbnailView> thumbnails))
                     thumbnails.AddRange(thumbnailViews);
@@ -225,13 +285,21 @@ namespace DCL.InWorldCamera.CameraReel
             return img.yMax >= view.yMin && img.yMin < view.yMax;
         }
 
+        private void ReleaseGridView(MonthGridView monthGridView)
+        {
+            monthGridView.Release();
+            reelGalleryPoolManager.ReleaseGridElement(monthGridView);
+        }
+
         private void ReleaseGridViews()
         {
             foreach (MonthGridView monthGridView in monthViews.Values)
-            {
-                monthGridView.Release();
-                reelGalleryPoolManager.ReleaseGridElement(monthGridView);
-            }
+                ReleaseGridView(monthGridView);
+        }
+
+        private void OnDisable()
+        {
+            ReleaseGridViews();
             reelThumbnailViews.Clear();
             monthViews.Clear();
             reelThumbnailCache.Clear();
@@ -239,12 +307,9 @@ namespace DCL.InWorldCamera.CameraReel
             endVisible = 0;
             currentSize = 0;
             thumbnailImages = null;
-        }
-
-        private void OnDisable()
-        {
-            ReleaseGridViews();
             scrollRect.onValueChanged.RemoveListener(OnScrollRectValueChanged);
+            if (optionsButton is not null)
+                optionsButton.OnDeletePictureRequested -= OnDeletionOptionClicked;
             loadNextPageCts.SafeCancelAndDispose();
         }
     }
