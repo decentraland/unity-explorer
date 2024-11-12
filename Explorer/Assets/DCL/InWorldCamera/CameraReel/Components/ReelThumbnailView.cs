@@ -68,18 +68,24 @@ namespace DCL.InWorldCamera.CameraReel.Components
         public void OnPointerEnter(PointerEventData eventData)
         {
             transform.DOScale(Vector3.one * scaleFactorOnHover, scaleAnimationDuration);
-            optionButton.transform.SetParent(optionButtonContainer.transform);
-            optionButton.transform.localPosition = optionButtonOffset;
-            optionButton.SetImageData(cameraReelResponse);
-            optionButton.gameObject.SetActive(true);
+            if (optionButton != null)
+            {
+                optionButton.transform.SetParent(optionButtonContainer.transform);
+                optionButton.transform.localPosition = optionButtonOffset;
+                optionButton.SetImageData(cameraReelResponse);
+                optionButton.gameObject.SetActive(true);
+            }
             outline.SetActive(true);
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
             transform.DOScale(Vector3.one, scaleAnimationDuration);
-            optionButton.ResetState();
-            optionButton.gameObject.SetActive(false);
+            if (optionButton != null)
+            {
+                optionButton.ResetState();
+                optionButton.gameObject.SetActive(false);
+            }
             outline.SetActive(false);
         }
 
