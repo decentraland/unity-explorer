@@ -67,7 +67,7 @@ namespace DCL.InWorldCamera.ScreencaptureCamera
             }
         }
 
-        public async UniTask Build(CancellationToken ct)
+        public async UniTask BuildAsync(CancellationToken ct)
         {
             string? sceneName = await GetSceneNameAsync(sceneParcel, ct);
 
