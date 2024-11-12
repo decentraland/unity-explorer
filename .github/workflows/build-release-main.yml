@@ -5,8 +5,6 @@ on:
   push:
     branches:
       - main
-  # schedule:
-  #  - cron: '10 0 * * 3'
 
 jobs:
   get-info:
@@ -31,6 +29,9 @@ jobs:
   build:
     name: Build Unity Cloud
     needs: get-info
+    strategy:
+      matrix:
+        install_source: ['launcher', 'epic']
     uses: ./.github/workflows/build-unitycloud.yml
     with:
       profile: none
@@ -39,5 +40,6 @@ jobs:
       version: ${{ needs.get-info.outputs.full_version }}
       sentry_enabled: true
       is_release_build: true
+      install_source: ${{ matrix.install_source }}
       tag_version: ${{ needs.get-info.outputs.tag_version }}
     secrets: inherit
