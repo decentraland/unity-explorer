@@ -32,7 +32,7 @@ namespace DCL.Multiplayer.Connections.RoomHubs
             return result is { Item1: true, Item2: true };
         }
 
-        public UniTask StopIfNotAsync() =>
+        public UniTask StopAsync() =>
             UniTask.WhenAll(
                 archipelagoIslandRoom.StopIfNotAsync(),
                 gateKeeperSceneRoom.StopIfNotAsync()

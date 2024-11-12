@@ -52,6 +52,7 @@ namespace DCL.Minimap
 
         private void OnMouseEnter()
         {
+            restrictionsView.ToastCanvasGroup.gameObject.SetActive(true);
             Vector3 toastPosition = restrictionsView.ToastRectTransform.anchoredPosition;
             toastPosition.x = restrictionsView.SceneRestrictionsIcon.transform.localPosition.x - (restrictionsView.SceneRestrictionsIcon.rect.width * TOAST_X_POSITION_OFFSET_ICON_WIDTH_SCALER);
             restrictionsView.ToastRectTransform.anchoredPosition = toastPosition;
@@ -59,7 +60,7 @@ namespace DCL.Minimap
         }
 
         private void OnMouseExit() =>
-            restrictionsView.ToastCanvasGroup.DOFade(0f, restrictionsView.FadeTime);
+            restrictionsView.ToastCanvasGroup.DOFade(0f, restrictionsView.FadeTime).OnComplete(() => restrictionsView.ToastCanvasGroup.gameObject.SetActive(false));
 
         private void ManageSceneRestrictions(SceneRestriction sceneRestriction)
         {
