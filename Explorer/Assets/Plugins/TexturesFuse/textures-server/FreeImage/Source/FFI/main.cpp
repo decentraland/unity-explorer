@@ -93,6 +93,8 @@ ImageResult texturesfuse_initialize(InitOptions initOptions, context **contextOu
 
     FreeImage_OutputMessageProc(FIF_UNKNOWN, "TexturesFuse successfully initialized!");
 
+    CMP_InitFramework();
+
     *contextOutput = context;
     return Success;
 }
