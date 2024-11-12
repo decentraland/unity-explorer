@@ -20,13 +20,16 @@ using System;
 using System.Linq;
 using System.Threading;
 using DCL.Diagnostics;
+using DCL.FeatureFlags;
 using DCL.Ipfs;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Profiling;
 using DCL.ResourcesUnloading;
+using DCL.Web3;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
 using Global.Dynamic.TeleportOperations;
+using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
@@ -54,6 +57,7 @@ namespace Global.Dynamic
         private readonly ObjectProxy<Entity> cameraEntity;
         private readonly CameraSamplingData cameraSamplingData;
         private readonly bool isLocalSceneDevelopment;
+        private readonly FeatureFlagsCache featureFlagsCache;
 
         private URLDomain currentRealm;
         private Vector2Int currentParcel;
@@ -83,7 +87,8 @@ namespace Global.Dynamic
             bool isLocalSceneDevelopment,
             ILoadingStatus loadingStatus,
             ICacheCleaner cacheCleaner,
-            IMemoryUsageProvider memoryUsageProvider)
+            IMemoryUsageProvider memoryUsageProvider,
+            FeatureFlagsCache featureFlagsCache)
         {
             this.loadingScreen = loadingScreen;
             this.mapRenderer = mapRenderer;
@@ -100,6 +105,7 @@ namespace Global.Dynamic
             this.isLocalSceneDevelopment = isLocalSceneDevelopment;
             this.globalWorld = globalWorld;
             this.loadingStatus = loadingStatus;
+            this.featureFlagsCache = featureFlagsCache;
             var livekitTimeout = TimeSpan.FromSeconds(10f);
 
             realmChangeOperations = new ITeleportOperation[]
@@ -247,8 +253,15 @@ namespace Global.Dynamic
             if (isWorld)
                 waitForSceneReadiness = await TeleportToWorldSpawnPointAsync(parcelToTeleport, teleportLoadReport, ct);
             else
+            {
+                if (parcelToTeleport == Vector2Int.zero &&
+                    featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.GENESIS_STARTING_PARCEL) &&
+                    featureFlagsCache.Configuration.TryGetTextPayload(FeatureFlagsStrings.GENESIS_STARTING_PARCEL, FeatureFlagsStrings.STRING_VARIANT, out string parcelCoords))
+                {
+                    RealmHelper.TryParseParcelFromString(parcelCoords, out parcelToTeleport);
+                }
                 waitForSceneReadiness = await TeleportToParcelAsync(parcelToTeleport, teleportLoadReport, ct);
-
+            }
             // add camera sampling data to the camera entity to start partitioning
             Assert.IsTrue(cameraEntity.Configured);
             globalWorld.Add(cameraEntity.Object, cameraSamplingData);

@@ -59,6 +59,10 @@ Shader "DCL/DCL_Avatar_Facial_Features"
         
         [HideInInspector] [PerRendererData] _lastWearableVertCount ("Last wearable Vert Count", Integer) = -1
         [HideInInspector] [PerRendererData] _lastAvatarVertCount ("Last avatar vert count", Integer) = -1
+        
+        [HideInInspector] [PerRendererData] _EndFadeDistance ("EndFadeDistance", Float) = 0
+        [HideInInspector] [PerRendererData] _StartFadeDistance ("StartFadeDistance", Float) = 0
+        [HideInInspector] [PerRendererData] _FadeDistance ("FadeDistance", Float) = 1
     }
 
     SubShader
@@ -152,6 +156,7 @@ Shader "DCL/DCL_Avatar_Facial_Features"
 
             // -------------------------------------
             // Includes
+            #include "Assets/DCL/AvatarRendering/Shaders/DCL_AvatarDither.hlsl"
             #include "DCL_Avatar_Facial_Feature_Input.hlsl"
             #include "DCL_Avatar_Facial_Feature_ForwardPass.hlsl"
             ENDHLSL
@@ -242,6 +247,7 @@ Shader "DCL/DCL_Avatar_Facial_Features"
 
             // -------------------------------------
             // Includes
+            #include "Assets/DCL/AvatarRendering/Shaders/DCL_AvatarDither.hlsl"
             #include "DCL_Avatar_Facial_Feature_Input.hlsl"
             #include "DCL_Avatar_Facial_Feature_DepthOnlyPass.hlsl"
             ENDHLSL
@@ -289,6 +295,7 @@ Shader "DCL/DCL_Avatar_Facial_Features"
 
             // -------------------------------------
             // Includes
+            #include "Assets/DCL/AvatarRendering/Shaders/DCL_AvatarDither.hlsl"
             #include "DCL_Avatar_Facial_Feature_Input.hlsl"
             #include "DCL_Avatar_Facial_Feature_DepthNormalsPass.hlsl"
             ENDHLSL
