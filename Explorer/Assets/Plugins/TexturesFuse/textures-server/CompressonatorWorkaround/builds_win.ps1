@@ -7,7 +7,7 @@ Set-Location compressonator/cmp_compressonatorlib
 cmake . -G "Visual Studio 17 2022" `
     -DOPTION_CMP_QT=OFF `
     -DOPTION_CMP_VULKAN=OFF `
-    -DOPTION_CMP_DIRECTX=OFF `
+    -DOPTION_CMP_DIRECTX=ON `
     -DOPTION_CMP_OPENCV=OFF `
     -DOPTION_ENABLE_ALL_APPS=OFF `
     -DOPTION_BUILD_CMP_SDK=ON `
@@ -36,7 +36,7 @@ Set-Location compressonator/cmp_core
 cmake . -G "Visual Studio 17 2022" `
     -DOPTION_CMP_QT=OFF `
     -DOPTION_CMP_VULKAN=OFF `
-    -DOPTION_CMP_DIRECTX=OFF `
+    -DOPTION_CMP_DIRECTX=ON `
     -DOPTION_CMP_OPENCV=OFF `
     -DOPTION_ENABLE_ALL_APPS=OFF `
     -DOPTION_BUILD_CMP_SDK=ON `
@@ -70,7 +70,7 @@ Set-Location compressonator/cmp_framework
 cmake . -G "Visual Studio 17 2022" `
     -DOPTION_CMP_QT=OFF `
     -DOPTION_CMP_VULKAN=OFF `
-    -DOPTION_CMP_DIRECTX=OFF `
+    -DOPTION_CMP_DIRECTX=ON `
     -DOPTION_CMP_OPENCV=OFF `
     -DOPTION_ENABLE_ALL_APPS=OFF `
     -DOPTION_BUILD_CMP_SDK=ON `
