@@ -1,36 +1,33 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using Arch.SystemGroups.Throttling;
 using CRDT;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
-using DCL.Optimization.Pools;
 using ECS.Abstract;
 using ECS.Groups;
 using RenderHeads.Media.AVProVideo;
 using SceneRunner.Scene;
-using System;
+using UnityEngine;
 
 namespace DCL.SDKComponents.MediaStream
 {
     [UpdateInGroup(typeof(SyncedPreRenderingSystemGroup))]
     [LogCategory(ReportCategory.MEDIA_STREAM)]
-    [ThrottlingEnabled]
     public partial class VideoEventsSystem : BaseUnityLoopSystem
     {
+        private const float MAX_VIDEO_FROZEN_SECONDS_BEFORE_ERROR = 10f;
+
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
         private readonly ISceneStateProvider sceneStateProvider;
-        private readonly IComponentPool<PBVideoEvent> componentPool;
         private readonly IPerformanceBudget frameTimeBudget;
 
-        private VideoEventsSystem(World world, IECSToCRDTWriter ecsToCrdtWriter, ISceneStateProvider sceneStateProvider, IComponentPool<PBVideoEvent> componentPool, IPerformanceBudget frameTimeBudget) : base(world)
+        private VideoEventsSystem(World world, IECSToCRDTWriter ecsToCrdtWriter, ISceneStateProvider sceneStateProvider, IPerformanceBudget frameTimeBudget) : base(world)
         {
             ecsToCRDTWriter = ecsToCrdtWriter;
             this.sceneStateProvider = sceneStateProvider;
-            this.componentPool = componentPool;
             this.frameTimeBudget = frameTimeBudget;
         }
 
@@ -41,20 +38,31 @@ namespace DCL.SDKComponents.MediaStream
 
         [Query]
         [All(typeof(PBVideoPlayer))]
-        private void PropagateVideoEvents(ref CRDTEntity sdkEntity, ref MediaPlayerComponent mediaPlayer)
+        private void PropagateVideoEvents(in CRDTEntity sdkEntity, ref MediaPlayerComponent mediaPlayer)
         {
             if (!frameTimeBudget.TrySpendBudget()) return;
 
-            VideoState newState = GetCurrentVideoState(mediaPlayer.MediaPlayer.Control);
+            // The Media Player could already been flagged with errors detected on the video promise, those have to be propagated.
+            if (mediaPlayer.State != VideoState.VsError)
+            {
+                VideoState newState = GetCurrentVideoState(mediaPlayer);
 
-            if (mediaPlayer.State == newState) return;
-            mediaPlayer.State = newState;
+                if (mediaPlayer.State != newState)
+                {
+                    mediaPlayer.PreviousCurrentTimeChecked = mediaPlayer.MediaPlayer.Control.GetCurrentTime();
+                    mediaPlayer.SetState(newState);
+                }
+            }
 
-            AppendMessage(in sdkEntity, in mediaPlayer);
+            PropagateStateInVideoEvent(in sdkEntity, ref mediaPlayer);
         }
 
-        private void AppendMessage(in CRDTEntity sdkEntity, in MediaPlayerComponent mediaPlayer)
+        private void PropagateStateInVideoEvent(in CRDTEntity sdkEntity, ref MediaPlayerComponent mediaPlayer)
         {
+            if (mediaPlayer.LastPropagatedState == mediaPlayer.State && mediaPlayer.LastPropagatedVideoTime.Equals(mediaPlayer.CurrentTime)) return;
+
+            mediaPlayer.LastPropagatedState = mediaPlayer.State;
+            mediaPlayer.LastPropagatedVideoTime = mediaPlayer.CurrentTime;
             ecsToCRDTWriter.AppendMessage<PBVideoEvent, (MediaPlayerComponent mediaPlayer, uint timestamp)>
             (
                 prepareMessage: static (pbVideoEvent, data) =>
@@ -70,17 +78,33 @@ namespace DCL.SDKComponents.MediaStream
             );
         }
 
-        private static VideoState GetCurrentVideoState(IMediaControl mediaPlayerControl)
+        private static VideoState GetCurrentVideoState(in MediaPlayerComponent mediaPlayer)
         {
-            if (mediaPlayerControl.IsPlaying()) return VideoState.VsPlaying;
-            if (mediaPlayerControl.IsPaused()) return VideoState.VsPaused;
+            if (string.IsNullOrEmpty(mediaPlayer.URL)) return VideoState.VsNone;
+
+            // Important: while PLAYING or PAUSED, MediaPlayerControl may also be BUFFERING and/or SEEKING.
+            var mediaPlayerControl = mediaPlayer.MediaPlayer.Control;
+
             if (mediaPlayerControl.IsFinished()) return VideoState.VsNone;
-            if (mediaPlayerControl.IsBuffering()) return VideoState.VsBuffering;
-            if (mediaPlayerControl.IsSeeking()) return VideoState.VsSeeking;
-
             if (mediaPlayerControl.GetLastError() != ErrorCode.None) return VideoState.VsError;
+            if (mediaPlayerControl.IsPaused()) return VideoState.VsPaused;
 
-            return VideoState.VsNone;
+            VideoState state = VideoState.VsNone;
+            if (mediaPlayerControl.IsPlaying())
+            {
+                state = VideoState.VsPlaying;
+
+                if (mediaPlayerControl.GetCurrentTime().Equals(mediaPlayer.PreviousCurrentTimeChecked)) // Video is frozen
+                {
+                    state = mediaPlayerControl.IsSeeking() ? VideoState.VsSeeking : VideoState.VsBuffering;
+
+                    // If the seeking/buffering never ends, update state with error so the scene can react
+                    if ((Time.realtimeSinceStartup - mediaPlayer.LastStateChangeTime) > MAX_VIDEO_FROZEN_SECONDS_BEFORE_ERROR)
+                        state = VideoState.VsError;
+                }
+            }
+
+            return state;
         }
     }
 }

@@ -16,13 +16,13 @@ namespace DCL.Rendering.Menus
 
         private static readonly string[] ASSET_NAMES =
         {
-            "Scene.shader", "SceneVariants.shadervariants", "SceneVariantsManuallyAdded.shadervariants",
+            "Scene.shader", "SceneVariants.shadervariants",
         };
 
         [MenuItem("Decentraland/Shaders/Compile \"Scene\" Shader Variants")]
         public static void ExecuteMenuItem()
         {
-            string sPlatform = PlatformUtils.GetPlatform();
+            string sPlatform = PlatformUtils.GetCurrentPlatform();
             BuildTarget bt = BuildTarget.StandaloneWindows64; // default
 
             switch (sPlatform)

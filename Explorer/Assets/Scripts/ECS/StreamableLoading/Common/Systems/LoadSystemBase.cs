@@ -117,7 +117,7 @@ namespace ECS.StreamableLoading.Common.Systems
 
                 // if the request is cached wait for it
                 // If there is an ongoing request it means that the result is neither cached, nor failed
-                if (cache.OngoingRequests.SyncTryGetValue(intention.CommonArguments.URL.GetCacheableURL(), out var cachedSource))
+                if (cache.OngoingRequests.SyncTryGetValue(intention.CommonArguments.GetCacheableURL(), out var cachedSource))
                 {
                     // Release budget immediately, if we don't do it and load a lot of bundles with dependencies sequentially, it will be a deadlock
                     acquiredBudget.Release();
@@ -141,7 +141,7 @@ namespace ECS.StreamableLoading.Common.Systems
                 // Try load from cache first
 
                 // If the given URL failed irrecoverably just return the failure
-                if (cache.IrrecoverableFailures.TryGetValue(intention.CommonArguments.URL.GetCacheableURL(), out var failure))
+                if (cache.IrrecoverableFailures.TryGetValue(intention.CommonArguments.GetCacheableURL(), out var failure))
                 {
                     result = failure;
                     return;
@@ -161,10 +161,7 @@ namespace ECS.StreamableLoading.Common.Systems
             catch (Exception e)
             {
                 // If we don't set an exception it will spin forever
-                result = new StreamableLoadingResult<TAsset>(e);
-
-                if (e is not OperationCanceledException)
-                    ReportException(e);
+                result = new StreamableLoadingResult<TAsset>(GetReportCategory(), e);
             }
             finally { FinalizeLoading(entity, intention, result, source, acquiredBudget); }
         }
@@ -182,7 +179,7 @@ namespace ECS.StreamableLoading.Common.Systems
 
             if (!exists)
             {
-                ReportHub.LogError(GetReportCategory(), $"Leak detected on loading {intention.ToString()} from {source}");
+                ReportHub.LogError(GetReportData(), $"Leak detected on loading {intention.ToString()} from {source}");
 
                 // it could be already disposed of, but it's safe to call it again
                 acquiredBudget?.Dispose();
@@ -213,7 +210,7 @@ namespace ECS.StreamableLoading.Common.Systems
             {
                 IncreaseRefCount(in intention, result.Value.Asset!);
 
-                ReportHub.Log(GetReportCategory(), $"{intention}'s successfully loaded from {source}");
+                ReportHub.Log(GetReportData(), $"{intention}'s successfully loaded from {source}");
             }
         }
 
@@ -241,14 +238,6 @@ namespace ECS.StreamableLoading.Common.Systems
         protected abstract UniTask<StreamableLoadingResult<TAsset>> FlowInternalAsync(TIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct);
 
         /// <summary>
-        ///     Can't move it to another system as the update cycle is not synchronized with systems but based on UniTasks
-        /// </summary>
-        private void ReportException(Exception exception)
-        {
-            AssetsLoadingUtility.ReportException(GetReportCategory(), exception);
-        }
-
-        /// <summary>
         ///     Part of the flow that can be reused by multiple intentions
         /// </summary>
         private async UniTask<StreamableLoadingResult<TAsset>?> CacheableFlowAsync(TIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
@@ -256,7 +245,7 @@ namespace ECS.StreamableLoading.Common.Systems
             var source = new UniTaskCompletionSource<StreamableLoadingResult<TAsset>?>(); //AutoResetUniTaskCompletionSource<StreamableLoadingResult<TAsset>?>.Create();
 
             // ReportHub.Log(GetReportCategory(), $"OngoingRequests.SyncAdd {intention.CommonArguments.URL}");
-            cache.OngoingRequests.SyncAdd(intention.CommonArguments.URL.GetCacheableURL(), source);
+            cache.OngoingRequests.SyncAdd(intention.CommonArguments.GetCacheableURL(), source);
 
             var ongoingRequestRemoved = false;
 
@@ -310,7 +299,7 @@ namespace ECS.StreamableLoading.Common.Systems
                 if (!ongoingRequestRemoved)
                 {
                     // ReportHub.Log(GetReportCategory(), $"OngoingRequests.SyncRemove {intention.CommonArguments.URL}");
-                    cache.OngoingRequests.SyncRemove(intention.CommonArguments.URL.GetCacheableURL());
+                    cache.OngoingRequests.SyncRemove(intention.CommonArguments.GetCacheableURL());
                     ongoingRequestRemoved = true;
                 }
             }
@@ -318,13 +307,13 @@ namespace ECS.StreamableLoading.Common.Systems
 
         private async UniTask<StreamableLoadingResult<TAsset>?> RepeatLoopAsync(TIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
-            StreamableLoadingResult<TAsset>? result = await intention.RepeatLoopAsync(acquiredBudget, partition, cachedInternalFlowDelegate, GetReportCategory(), ct);
+            StreamableLoadingResult<TAsset>? result = await intention.RepeatLoopAsync(acquiredBudget, partition, cachedInternalFlowDelegate, GetReportData(), ct);
             return result is { Succeeded: false } ? SetIrrecoverableFailure(intention, result.Value) : result;
         }
 
         private StreamableLoadingResult<TAsset> SetIrrecoverableFailure(TIntention intention, StreamableLoadingResult<TAsset> failure)
         {
-            cache.IrrecoverableFailures.Add(intention.CommonArguments.URL.GetCacheableURL(), failure);
+            cache.IrrecoverableFailures.Add(intention.CommonArguments.GetCacheableURL(), failure);
             return failure;
         }
     }

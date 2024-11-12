@@ -5,7 +5,12 @@ namespace DCL.Profiling
     public interface IBudgetProfiler : IDisposable
     {
         long TotalUsedMemoryInBytes { get; }
+        long SystemUsedMemoryInBytes { get; }
+
         ulong CurrentFrameTimeValueNs { get; }
+
+        ulong LastFrameTimeValueNs { get; }
+        ulong LastGpuFrameTimeValueNs { get; }
     }
 
     public readonly struct FrameTimeStats

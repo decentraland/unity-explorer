@@ -1,4 +1,5 @@
 using Arch.SystemGroups;
+using CrdtEcsBridge.Components.Transform;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.Emotes;
@@ -11,6 +12,7 @@ using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Connections.Rooms.Status;
 using DCL.Multiplayer.Connections.Systems;
+using DCL.Multiplayer.Connections.Systems.RoomIndicator;
 using DCL.Multiplayer.Profiles.BroadcastProfiles;
 using DCL.Multiplayer.Profiles.Entities;
 using DCL.Multiplayer.Profiles.Poses;
@@ -21,6 +23,7 @@ using DCL.Multiplayer.Profiles.Systems;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Multiplayer.SDK.Components;
 using DCL.Multiplayer.SDK.Systems.GlobalWorld;
+using DCL.Optimization.Pools;
 using DCL.Profiles;
 using DCL.UserInAppInitializationFlow;
 using ECS;
@@ -31,6 +34,8 @@ using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using UnityEngine.Pool;
+using Object = UnityEngine.Object;
 
 namespace DCL.PluginSystem.Global
 {
@@ -40,20 +45,23 @@ namespace DCL.PluginSystem.Global
         private readonly IArchipelagoIslandRoom archipelagoIslandRoom;
         private readonly ICharacterObject characterObject;
         private readonly IDebugContainerBuilder debugContainerBuilder;
-        private readonly IEmoteCache emoteCache;
+        private readonly IEmoteStorage emoteStorage;
         private readonly IEntityParticipantTable entityParticipantTable;
         private readonly IGateKeeperSceneRoom gateKeeperSceneRoom;
         private readonly IMessagePipesHub messagePipesHub;
         private readonly IProfileBroadcast profileBroadcast;
         private readonly IProfileRepository profileRepository;
-        private readonly IReadOnlyRealFlowLoadingStatus realFlowLoadingStatus;
+        private readonly ILoadingStatus realFlowLoadingStatus;
         private readonly IRealmData realmData;
         private readonly IRemoteEntities remoteEntities;
-        private readonly IRemotePoses remotePoses;
+        private readonly IRemoteMetadata remoteMetadata;
         private readonly IRoomHub roomHub;
         private readonly RoomsStatus roomsStatus;
         private readonly IScenesCache scenesCache;
         private readonly ICharacterDataPropagationUtility characterDataPropagationUtility;
+        private readonly IComponentPoolsRegistry poolsRegistry;
+
+        private IObjectPool<DebugRoomIndicatorView>? debugRoomIndicatorPool;
 
         public MultiplayerPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -64,16 +72,17 @@ namespace DCL.PluginSystem.Global
             IProfileRepository profileRepository,
             IProfileBroadcast profileBroadcast,
             IDebugContainerBuilder debugContainerBuilder,
-            IReadOnlyRealFlowLoadingStatus realFlowLoadingStatus,
+            ILoadingStatus realFlowLoadingStatus,
             IEntityParticipantTable entityParticipantTable,
             IMessagePipesHub messagePipesHub,
-            IRemotePoses remotePoses,
+            IRemoteMetadata remoteMetadata,
             ICharacterObject characterObject,
             IRealmData realmData,
             IRemoteEntities remoteEntities,
             IScenesCache scenesCache,
-            IEmoteCache emoteCache,
-            ICharacterDataPropagationUtility characterDataPropagationUtility)
+            IEmoteStorage emoteStorage,
+            ICharacterDataPropagationUtility characterDataPropagationUtility,
+            IComponentPoolsRegistry poolsRegistry)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.archipelagoIslandRoom = archipelagoIslandRoom;
@@ -86,40 +95,43 @@ namespace DCL.PluginSystem.Global
             this.realFlowLoadingStatus = realFlowLoadingStatus;
             this.entityParticipantTable = entityParticipantTable;
             this.messagePipesHub = messagePipesHub;
-            this.remotePoses = remotePoses;
+            this.remoteMetadata = remoteMetadata;
             this.characterObject = characterObject;
             this.remoteEntities = remoteEntities;
             this.realmData = realmData;
             this.scenesCache = scenesCache;
-            this.emoteCache = emoteCache;
+            this.emoteStorage = emoteStorage;
             this.characterDataPropagationUtility = characterDataPropagationUtility;
+            this.poolsRegistry = poolsRegistry;
         }
+
+        public void Dispose() { }
 
         public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
         {
             RemoteAvatarCollider remoteAvatarCollider = (await assetsProvisioner.ProvideMainAssetAsync(settings.RemoteAvatarColliderPrefab, ct)).Value.GetComponent<RemoteAvatarCollider>();
             remoteEntities.Initialize(remoteAvatarCollider);
-        }
 
-        public void Dispose() { }
+            await CreateCreateRoomIndicatorPoolAsync(settings, ct);
+        }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments globalPluginArguments)
         {
 #if !NO_LIVEKIT_MODE
             IFFIClient.Default.EnsureInitialize();
 
-            DebugRoomsSystem.InjectToWorld(ref builder, roomsStatus, archipelagoIslandRoom, gateKeeperSceneRoom, entityParticipantTable, remotePoses, debugContainerBuilder);
-            ConnectionRoomsSystem.InjectToWorld(ref builder, archipelagoIslandRoom, gateKeeperSceneRoom, realFlowLoadingStatus);
+            DebugRoomsSystem.InjectToWorld(ref builder, roomsStatus, archipelagoIslandRoom, gateKeeperSceneRoom, entityParticipantTable, remoteMetadata, debugContainerBuilder,
+                debugRoomIndicatorPool);
 
             MultiplayerProfilesSystem.InjectToWorld(ref builder,
                 new RemoteAnnouncements(messagePipesHub),
                 new LogRemoveIntentions(
                     new ThreadSafeRemoveIntentions(roomHub)
                 ),
-                new RemoteProfiles(profileRepository),
+                new RemoteProfiles(profileRepository, remoteMetadata),
                 profileBroadcast,
                 remoteEntities,
-                remotePoses,
+                remoteMetadata,
                 characterObject,
                 realFlowLoadingStatus,
                 realmData
@@ -127,19 +139,33 @@ namespace DCL.PluginSystem.Global
 
             ResetDirtyFlagSystem<PlayerCRDTEntity>.InjectToWorld(ref builder);
             PlayerCRDTEntitiesHandlerSystem.InjectToWorld(ref builder, scenesCache);
-            PlayerProfileDataPropagationSystem.InjectToWorld(ref builder, characterDataPropagationUtility, globalPluginArguments.PlayerEntity);
+            PlayerProfileDataPropagationSystem.InjectToWorld(ref builder, characterDataPropagationUtility);
             ResetDirtyFlagSystem<AvatarEmoteCommandComponent>.InjectToWorld(ref builder);
-            AvatarEmoteCommandPropagationSystem.InjectToWorld(ref builder, emoteCache);
+            AvatarEmoteCommandPropagationSystem.InjectToWorld(ref builder, emoteStorage);
+            PlayerTransformPropagationSystem.InjectToWorld(ref builder, poolsRegistry.GetReferenceTypePool<SDKTransform>());
 #endif
+        }
+
+        private async UniTask CreateCreateRoomIndicatorPoolAsync(Settings settings, CancellationToken ct)
+        {
+            DebugRoomIndicatorView? indicatorPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.DebugRoomIndicator, ct: ct)).Value.GetComponent<DebugRoomIndicatorView>();
+
+            debugRoomIndicatorPool = new GameObjectPool<DebugRoomIndicatorView>(poolsRegistry.RootContainerTransform(),
+                creationHandler: () => Object.Instantiate(indicatorPrefab, Vector3.zero, Quaternion.identity), maxSize: PoolConstants.AVATARS_COUNT);
         }
 
         [Serializable]
         public class Settings : IDCLPluginSettings
         {
-            [field: Header(nameof(MultiplayerPlugin) + "." + nameof(Settings))]
-            [field: Space]
-            [field: SerializeField]
-            public AssetReferenceGameObject RemoteAvatarColliderPrefab;
+            [SerializeField] public AssetReferenceGameObject RemoteAvatarColliderPrefab;
+
+            public DebugRoomIndicatorViewReference DebugRoomIndicator;
+
+            [Serializable]
+            public class DebugRoomIndicatorViewReference : ComponentReference<DebugRoomIndicatorView>
+            {
+                public DebugRoomIndicatorViewReference(string guid) : base(guid) { }
+            }
         }
     }
 }

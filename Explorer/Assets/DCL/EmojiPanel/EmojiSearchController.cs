@@ -19,21 +19,13 @@ namespace DCL.Emoji
         private CancellationTokenSource cts;
         private readonly IObjectPool<EmojiButton> searchItemsPool;
         private readonly List<EmojiButton> usedPoolItems = new ();
-        private readonly IInputBlock inputBlock;
 
-        public EmojiSearchController(SearchBarView view, Transform parent, EmojiButton emojiButton, IInputBlock inputBlock)
+        public EmojiSearchController(SearchBarView view, Transform parent, EmojiButton emojiButton)
         {
             this.view = view;
-            this.inputBlock = inputBlock;
 
             view.inputField.onValueChanged.AddListener(OnValueChanged);
-            view.inputField.onSelect.AddListener(BlockUnwantedInputs);
-            view.inputField.onDeselect.AddListener(UnblockUnwantedInputs);
-            view.inputField.onEndEdit.AddListener(UnblockUnwantedInputs);
-            view.Disabled += UnblockUnwantedInputs;
-
             view.clearSearchButton.onClick.AddListener(ClearSearch);
-
             view.clearSearchButton.gameObject.SetActive(false);
 
             searchItemsPool = new ObjectPool<EmojiButton>(
@@ -47,27 +39,8 @@ namespace DCL.Emoji
         public void Dispose()
         {
             ReleaseAllSearchResults();
-
             view.inputField.onValueChanged.RemoveListener(OnValueChanged);
-            view.inputField.onSelect.RemoveListener(BlockUnwantedInputs);
-            view.inputField.onDeselect.RemoveListener(UnblockUnwantedInputs);
-            view.inputField.onEndEdit.RemoveListener(UnblockUnwantedInputs);
-            view.Disabled -= UnblockUnwantedInputs;
-
             view.clearSearchButton.onClick.RemoveListener(ClearSearch);
-        }
-
-        private void BlockUnwantedInputs(string _)
-        {
-            inputBlock.Disable(InputMapComponent.Kind.Shortcuts , InputMapComponent.Kind.Player);
-        }
-
-        private void UnblockUnwantedInputs(string _) =>
-            UnblockUnwantedInputs();
-
-        private void UnblockUnwantedInputs()
-        {
-            inputBlock.Enable(InputMapComponent.Kind.Shortcuts , InputMapComponent.Kind.Player);
         }
 
         private EmojiButton CreatePoolElements(Transform parent, EmojiButton emojiButton)

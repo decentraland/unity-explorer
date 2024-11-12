@@ -1,6 +1,7 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Emotes;
+using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
@@ -195,7 +196,7 @@ namespace DCL.Passport.Modules
                 equippedWearableItem.FlapBackground.color = rarityColor;
                 equippedWearableItem.CategoryImage.sprite = categoryIcons.GetTypeImage(wearable.GetCategory());
                 string marketPlaceLink = GetMarketplaceLink(wearable.GetUrn());
-                equippedWearableItem.BuyButton.interactable = wearable.IsOnChain() && marketPlaceLink != string.Empty;
+                equippedWearableItem.BuyButton.gameObject.SetActive(wearable.IsOnChain() && marketPlaceLink != string.Empty);
                 equippedWearableItem.BuyButton.onClick.AddListener(() => webBrowser.OpenUrl(marketPlaceLink));
                 WaitForThumbnailAsync(wearable, equippedWearableItem, getEquippedItemsCts.Token).Forget();
                 instantiatedEquippedItems.Add(equippedWearableItem);
@@ -218,7 +219,7 @@ namespace DCL.Passport.Modules
                 equippedWearableItem.FlapBackground.color = rarityColor;
                 equippedWearableItem.CategoryImage.sprite = categoryIcons.GetTypeImage("emote");
                 string marketPlaceLink = GetMarketplaceLink(emote.GetUrn());
-                equippedWearableItem.BuyButton.interactable = emote.IsOnChain() && rarityName != "base" && marketPlaceLink != string.Empty;
+                equippedWearableItem.BuyButton.gameObject.SetActive(emote.IsOnChain() && rarityName != "base" && marketPlaceLink != string.Empty);
                 equippedWearableItem.BuyButton.onClick.AddListener(() => webBrowser.OpenUrl(marketPlaceLink));
                 WaitForThumbnailAsync(emote, equippedWearableItem, getEquippedItemsCts.Token).Forget();
                 instantiatedEquippedItems.Add(equippedWearableItem);
@@ -235,22 +236,26 @@ namespace DCL.Passport.Modules
             }
         }
 
-        private int CalculateMissingEmptyItems(int totalItems)
+        private static int CalculateMissingEmptyItems(int totalItems)
         {
-            int remainder = totalItems % 6;
-            int missingItems = remainder == 0 ? 0 : 6 - remainder;
+            int remainder = totalItems % GRID_ITEMS_PER_ROW;
+            int missingItems = remainder == 0 ? 0 : GRID_ITEMS_PER_ROW - remainder;
             return missingItems;
         }
 
-        private async UniTaskVoid AwaitEquippedItemsPromiseAsync(WearablePromise equippedWearablesPromise, EmotePromise equippedEmotesPromise, CancellationToken ct)
+        private async UniTaskVoid AwaitEquippedItemsPromiseAsync(
+            WearablePromise equippedWearablesPromise,
+            EmotePromise equippedEmotesPromise,
+            CancellationToken ct
+        )
         {
             try
             {
                 var wearablesUniTaskAsync = await equippedWearablesPromise.ToUniTaskAsync(world, cancellationToken: ct);
                 var emotesUniTaskAsync = await equippedEmotesPromise.ToUniTaskAsync(world, cancellationToken: ct);
                 var currentWearables = wearablesUniTaskAsync.Result!.Value.Asset.Wearables;
-                var currentEmotes = emotesUniTaskAsync.Result!.Value.Asset.Emotes;
-                SetGridElements(currentWearables, currentEmotes);
+                using var consumed = emotesUniTaskAsync.Result!.Value.Asset.ConsumeEmotes();
+                SetGridElements(currentWearables, consumed.Value);
             }
             catch (OperationCanceledException) { }
             catch (Exception e)
@@ -265,7 +270,7 @@ namespace DCL.Passport.Modules
         {
             try
             {
-                Sprite? sprite = await thumbnailProvider.GetAsync(itemWearable, ct);
+                Sprite sprite = await thumbnailProvider.GetAsync(itemWearable, ct);
                 itemView.EquippedItemThumbnail.sprite = sprite;
             }
             catch (OperationCanceledException) { }
@@ -282,7 +287,7 @@ namespace DCL.Passport.Modules
         {
             try
             {
-                Sprite? sprite = await thumbnailProvider.GetAsync(itemEmote, ct);
+                Sprite sprite = await thumbnailProvider.GetAsync(itemEmote, ct);
                 itemView.EquippedItemThumbnail.sprite = sprite;
             }
             catch (OperationCanceledException) { }

@@ -1,4 +1,6 @@
 ﻿using CommunicationData.URLHelpers;
+using DCL.AvatarRendering.Emotes;
+using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Optimization.PerformanceBudgeting;
@@ -14,6 +16,8 @@ using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using DCL.LOD;
+using DCL.Profiles;
+using ECS.StreamableLoading.NFTShapes;
 using Unity.PerformanceTesting;
 using UnityEngine;
 using static Utility.Tests.TestsCategories;
@@ -27,14 +31,18 @@ namespace DCL.ResourcesUnloading.Tests
         private IReleasablePerformanceBudget releasablePerformanceBudget;
 
         // Caches
-        private WearableCache wearableCache;
-        private WearableAssetsCache wearableAssetsCache;
+        private WearableStorage wearableStorage;
+        private AttachmentsAssetsCache attachmentsAssetsCache;
         private TexturesCache texturesCache;
         private AudioClipsCache audioClipsCache;
         private GltfContainerAssetsCache gltfContainerAssetsCache;
         private LODCache lodAssets;
         private RoadAssetsPool roadAssets;
-
+        private NftShapeCache nftShapeCache;
+        private IEmoteStorage emoteStorage;
+        private IProfileCache profileCache;
+        private ProfileIntentionCache profileIntentionCache;
+        private IComponentPoolsRegistry poolsRegistry;
 
         private AssetBundleCache assetBundleCache;
 
@@ -44,26 +52,34 @@ namespace DCL.ResourcesUnloading.Tests
         public void SetUp()
         {
             releasablePerformanceBudget = Substitute.For<IReleasablePerformanceBudget>();
+            poolsRegistry = Substitute.For<IComponentPoolsRegistry>();
 
             texturesCache = new TexturesCache();
             audioClipsCache = new AudioClipsCache();
             assetBundleCache = new AssetBundleCache();
-            gltfContainerAssetsCache = new GltfContainerAssetsCache();
-            wearableAssetsCache = new WearableAssetsCache(100);
-            wearableCache = new WearableCache();
+            gltfContainerAssetsCache = new GltfContainerAssetsCache(poolsRegistry);
+            attachmentsAssetsCache = new AttachmentsAssetsCache(100, poolsRegistry);
+            wearableStorage = new WearableStorage();
             lodAssets = new LODCache(new GameObjectPool<LODGroup>(new GameObject().transform));
             roadAssets = new RoadAssetsPool(new List<GameObject>());
-
+            nftShapeCache = new NftShapeCache();
+            emoteStorage = new MemoryEmotesStorage();
+            profileCache = new DefaultProfileCache();
+            profileIntentionCache = new ProfileIntentionCache();
 
             cacheCleaner = new CacheCleaner(releasablePerformanceBudget);
             cacheCleaner.Register(texturesCache);
             cacheCleaner.Register(audioClipsCache);
             cacheCleaner.Register(gltfContainerAssetsCache);
             cacheCleaner.Register(assetBundleCache);
-            cacheCleaner.Register(wearableAssetsCache);
-            cacheCleaner.Register(wearableCache);
+            cacheCleaner.Register(attachmentsAssetsCache);
+            cacheCleaner.Register(wearableStorage);
             cacheCleaner.Register(lodAssets);
             cacheCleaner.Register(roadAssets);
+            cacheCleaner.Register(nftShapeCache);
+            cacheCleaner.Register(emoteStorage);
+            cacheCleaner.Register(profileCache);
+            cacheCleaner.Register(profileIntentionCache);
         }
 
         [TearDown]
@@ -75,8 +91,8 @@ namespace DCL.ResourcesUnloading.Tests
             audioClipsCache.Dispose();
             assetBundleCache.Dispose();
             gltfContainerAssetsCache.Dispose();
-            wearableAssetsCache.Dispose();
-            wearableCache.Unload(releasablePerformanceBudget);
+            attachmentsAssetsCache.Dispose();
+            wearableStorage.Unload(releasablePerformanceBudget);
             lodAssets.Unload(releasablePerformanceBudget, 3);
             roadAssets.Unload(releasablePerformanceBudget, 3);
         }
@@ -105,6 +121,28 @@ namespace DCL.ResourcesUnloading.Tests
                    .Run();
         }
 
+        [Test, Performance]
+        [TestCase(1)]
+        [TestCase(10)]
+        [TestCase(100)]
+        public void CacheCleaningAllocations(int cachedElementsAmount)
+        {
+            // Arrange
+            releasablePerformanceBudget.TrySpendBudget().Returns(true);
+
+            for (var i = 0; i < cachedElementsAmount; i++)
+                FillCachesWithElements(hashID: $"test{i}");
+
+            SampleGroup totalAllocatedMemory = new SampleGroup("TotalAllocatedMemory", SampleUnit.Kilobyte, increaseIsBetter: false);
+
+            // Act
+            long memoryBefore = UnityEngine.Profiling.Profiler.GetTotalAllocatedMemoryLong();
+            cacheCleaner.UnloadCache();
+            long memoryAfter = UnityEngine.Profiling.Profiler.GetTotalAllocatedMemoryLong();
+
+            Measure.Custom(totalAllocatedMemory, (memoryAfter - memoryBefore) / 1024f);
+        }
+
         [Category(INTEGRATION)]
         [Test]
         public void DisposingShouldProperlyDereferenceDependencyChain()
@@ -115,10 +153,10 @@ namespace DCL.ResourcesUnloading.Tests
             var gltfAsset = GltfContainerAsset.Create(new GameObject(), assetBundleData);
             assetBundleData.AddReference();
 
-            var wearableAsset = new WearableRegularAsset(new GameObject(), new List<WearableRegularAsset.RendererInfo>(5), assetBundleData);
+            var wearableAsset = new AttachmentRegularAsset(new GameObject(), new List<AttachmentRegularAsset.RendererInfo>(5), assetBundleData);
             assetBundleData.AddReference();
 
-            var cachedWearable = new CachedWearable(wearableAsset, new GameObject());
+            var cachedWearable = new CachedAttachment(wearableAsset, new GameObject());
             wearableAsset.AddReference();
 
             // Act
@@ -128,7 +166,7 @@ namespace DCL.ResourcesUnloading.Tests
 
             // Assert
             Assert.That(wearableAsset.ReferenceCount, Is.EqualTo(0));
-            Assert.That(assetBundleData.referencesCount, Is.EqualTo(0));
+            Assert.That(assetBundleData.referenceCount, Is.EqualTo(0));
         }
 
         [Category(INTEGRATION)]
@@ -145,8 +183,8 @@ namespace DCL.ResourcesUnloading.Tests
             // Assert
             Assert.That(texturesCache.cache.Count, Is.EqualTo(0));
             Assert.That(audioClipsCache.cache.Count, Is.EqualTo(0));
-            Assert.That(wearableCache.WearableAssetsInCatalog, Is.EqualTo(0));
-            Assert.That(wearableAssetsCache.cache.Count, Is.EqualTo(0));
+            Assert.That(wearableStorage.WearableAssetsInCatalog, Is.EqualTo(0));
+            Assert.That(attachmentsAssetsCache.cache.Count, Is.EqualTo(0));
             Assert.That(gltfContainerAssetsCache.cache.Count, Is.EqualTo(0));
             Assert.That(assetBundleCache.cache.Count, Is.EqualTo(0));
         }
@@ -154,13 +192,13 @@ namespace DCL.ResourcesUnloading.Tests
         private void FillCachesWithElements(string hashID)
         {
             var textureIntention = new GetTextureIntention { CommonArguments = new CommonLoadingArguments { URL = URLAddress.FromString(hashID) } };
-            texturesCache.Add(textureIntention, new Texture2D(1, 1));
+            texturesCache.Add(textureIntention, new Texture2DData(new Texture2D(1, 1)));
 
             var audioClipIntention = new GetAudioClipIntention { CommonArguments = new CommonLoadingArguments { URL = URLAddress.FromString(hashID) } };
-            var audioClip = AudioClip.Create(hashID, 1, 1, 2000, false);
+            var audioClip = new AudioClipData(AudioClip.Create(hashID, 1, 1, 2000, false));
             audioClipsCache.Add(audioClipIntention, audioClip);
             audioClipsCache.AddReference(in audioClipIntention, audioClip);
-            audioClipsCache.Dereference(audioClipIntention, audioClip);
+            audioClip.Dereference();
 
             var assetBundleData = new AssetBundleData(null, null, new GameObject(), typeof(GameObject), Array.Empty<AssetBundleData>());
             assetBundleCache.Add(new GetAssetBundleIntention { Hash = hashID }, assetBundleData);
@@ -169,14 +207,14 @@ namespace DCL.ResourcesUnloading.Tests
             assetBundleData.AddReference();
             gltfContainerAssetsCache.Dereference(hashID, gltfContainerAsset); // add to cache
 
-            var wearableAsset = new WearableRegularAsset(new GameObject(), new List<WearableRegularAsset.RendererInfo>(10), assetBundleData);
+            var wearableAsset = new AttachmentRegularAsset(new GameObject(), new List<AttachmentRegularAsset.RendererInfo>(10), assetBundleData);
             assetBundleData.AddReference();
-            var wearable = new Wearable { WearableAssetResults = { [0] = new StreamableLoadingResult<WearableAssetBase>(wearableAsset) } };
-            wearableCache.AddWearable(hashID, wearable, true); // add to cache
+            var wearable = new Wearable { WearableAssetResults = { [0] = new StreamableLoadingResult<AttachmentAssetBase>(wearableAsset) } };
+            wearableStorage.AddWearable(hashID, wearable, true); // add to cache
 
-            var cachedWearable = new CachedWearable(wearableAsset, new GameObject());
+            var cachedWearable = new CachedAttachment(wearableAsset, new GameObject());
             wearableAsset.AddReference();
-            wearableAssetsCache.Release(cachedWearable); // add to cache
+            attachmentsAssetsCache.Release(cachedWearable); // add to cache
         }
     }
 }

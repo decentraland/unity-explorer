@@ -14,7 +14,7 @@ namespace Utility
             Vector3.zero,
             new SceneCircumscribedPlanes(float.MinValue, float.MaxValue, float.MinValue, float.MaxValue), float.MaxValue);
 
-        public static readonly Vector3 RoadPivotDeviation  =  new (8, 0, 8);
+        public static readonly Vector3 RoadPivotDeviation = new (8, 0, 8);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int2 ToInt2(this Vector2Int vector2Int) =>
@@ -119,6 +119,12 @@ namespace Utility
             }
         }
 
+        public static Vector2Int WorldToGridPosition(Vector3 worldPosition) =>
+            new (
+                (int)Mathf.Floor(worldPosition.x / PARCEL_SIZE),
+                (int)Mathf.Floor(worldPosition.z / PARCEL_SIZE)
+            );
+
         public static Vector2 WorldToGridPositionUnclamped(Vector3 worldPosition) =>
             new (worldPosition.x / PARCEL_SIZE, worldPosition.z / PARCEL_SIZE);
 
@@ -131,8 +137,14 @@ namespace Utility
         public static Vector2Int ToParcel(this CanBeDirty<Vector3> position) =>
             position.Value.ToParcel();
 
+        /// <summary>
+        /// Checks whether a bounding box is fully contained into the XZ boundaries of the scene.
+        /// </summary>
+        /// <param name="boundingPlanes">The planes that define the boundaries of the scene.</param>
+        /// <param name="bounds">The bounding box to check.</param>
+        /// <returns>True if the box is contained; False otherwise.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool Intersects(this in SceneCircumscribedPlanes boundingPlanes, Bounds bounds)
+        public static bool Contains(this in SceneCircumscribedPlanes boundingPlanes, Bounds bounds)
         {
             Vector3 min = bounds.min;
             Vector3 max = bounds.max;
@@ -140,6 +152,17 @@ namespace Utility
             return boundingPlanes.MinX < min.x && boundingPlanes.MaxX > max.x
                                                && boundingPlanes.MinZ < min.z && boundingPlanes.MaxZ > max.z;
         }
+
+        /// <summary>
+        /// Checks whether a point is contained in the XZ projection of the bounding box of a scene.
+        /// </summary>
+        /// <param name="boundingPlanes">The project bounding-box rectangle.</param>
+        /// <param name="point">The point to check.</param>
+        /// <returns>True if the point intersects the rectangle; False otherwise.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool Contains(this in SceneCircumscribedPlanes boundingPlanes, Vector3 point) =>
+            boundingPlanes.MinX < point.x && boundingPlanes.MaxX > point.x
+                                          && boundingPlanes.MinZ < point.z && boundingPlanes.MaxZ > point.z;
 
         public readonly struct ParcelCorners
         {

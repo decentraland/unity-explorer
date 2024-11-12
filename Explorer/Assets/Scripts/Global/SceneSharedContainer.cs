@@ -4,12 +4,14 @@ using CrdtEcsBridge.PoolsProviders;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.Multiplayer.Profiles.Poses;
 using DCL.PluginSystem.World.Dependencies;
 using MVC;
 using DCL.Profiles;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
+using Global.Dynamic;
 using SceneRunner;
 using SceneRunner.ECSWorld;
 using SceneRuntime;
@@ -28,13 +30,14 @@ namespace Global
 
         public static SceneSharedContainer Create(in StaticContainer staticContainer,
             IDecentralandUrlsSource decentralandUrlsSource,
-            IMVCManager mvcManager,
             IWeb3IdentityCache web3IdentityCache,
-            IProfileRepository profileRepository,
             IWebRequestController webRequestController,
+            IRealmData realmData,
+            IProfileRepository profileRepository,
             IRoomHub roomHub,
-            IRealmData? realmData,
+            IMVCManager mvcManager,
             IMessagePipesHub messagePipesHub,
+            IRemoteMetadata remoteMetadata,
             bool cacheJsSources = true)
         {
             ECSWorldSingletonSharedDependencies sharedDependencies = staticContainer.SingletonSharedDependencies;
@@ -66,8 +69,8 @@ namespace Global
                     webRequestController,
                     roomHub,
                     realmData,
-                    new CommunicationControllerHub(messagePipesHub)
-                ),
+                    staticContainer.PortableExperiencesController,
+                    new SceneCommunicationPipe(messagePipesHub, roomHub.SceneRoom()), remoteMetadata),
             };
         }
     }

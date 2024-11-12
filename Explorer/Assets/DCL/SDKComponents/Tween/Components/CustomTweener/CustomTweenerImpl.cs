@@ -16,21 +16,22 @@ namespace DCL.SDKComponents.Tween.Components
             return DOTween.To(() => currentValue, x => currentValue = x, end, duration);
         }
 
-        protected override (Vector3, Vector3) GetTweenValues(PBTween pbTween, Transform startTransform)
+        protected override (Vector3, Vector3) GetTweenValues(PBTween pbTween)
         {
             Vector3 start = PrimitivesConversionExtensions.PBVectorToUnityVector(pbTween.Move.Start);
             Vector3 end = PrimitivesConversionExtensions.PBVectorToUnityVector(pbTween.Move.End);
-            startTransform.localPosition = start;
             currentValue = start;
             return (start, end);
         }
 
-        public override void SetResult(ref SDKTransform sdkTransform)
+        public override void UpdateSDKTransform(ref SDKTransform sdkTransform)
         {
-            sdkTransform.Position = currentValue;
+            sdkTransform.Position.Value = currentValue;
+        }
 
-            sdkTransform.Rotation = startRotation;
-            sdkTransform.Scale = startScale;
+        public override void UpdateTransform(Transform transform)
+        {
+            transform.localPosition = currentValue;
         }
     }
 
@@ -41,31 +42,32 @@ namespace DCL.SDKComponents.Tween.Components
             return DOTween.To(() => currentValue, x => currentValue = x, end, duration);
         }
 
-        protected override (Vector3, Vector3) GetTweenValues(PBTween pbTween, Transform startTransform)
+        protected override (Vector3, Vector3) GetTweenValues(PBTween pbTween)
         {
             Vector3 start = PrimitivesConversionExtensions.PBVectorToUnityVector(pbTween.Scale.Start);
             Vector3 end = PrimitivesConversionExtensions.PBVectorToUnityVector(pbTween.Scale.End);
-            startTransform.localScale = start;
             currentValue = start;
             return (start, end);
         }
 
-        public override void SetResult(ref SDKTransform sdkTransform)
+        public override void UpdateSDKTransform(ref SDKTransform sdkTransform)
         {
             sdkTransform.Scale = currentValue;
-
-            sdkTransform.Position = startPosition;
-            sdkTransform.Rotation = startRotation;
         }
+
+        public override void UpdateTransform(Transform transform)
+        {
+            transform.localScale = currentValue;
+        }
+
     }
 
     public class RotationTweener : CustomTweener<Quaternion, NoOptions>
     {
-        protected override (Quaternion, Quaternion) GetTweenValues(PBTween pbTween, Transform startTransform)
+        protected override (Quaternion, Quaternion) GetTweenValues(PBTween pbTween)
         {
             Quaternion start = PrimitivesConversionExtensions.PBQuaternionToUnityQuaternion(pbTween.Rotate.Start);
             Quaternion end = PrimitivesConversionExtensions.PBQuaternionToUnityQuaternion(pbTween.Rotate.End);
-            startTransform.localRotation = start;
             currentValue = start;
             return (start, end);
         }
@@ -77,12 +79,15 @@ namespace DCL.SDKComponents.Tween.Components
                 end, duration);
         }
 
-        public override void SetResult(ref SDKTransform sdkTransform)
+        public override void UpdateSDKTransform(ref SDKTransform sdkTransform)
         {
-            sdkTransform.Rotation = currentValue;
-
-            sdkTransform.Position = startPosition;
-            sdkTransform.Scale = startScale;
+            sdkTransform.Rotation.Value = currentValue;
         }
+
+        public override void UpdateTransform(Transform transform)
+        {
+            transform.localRotation = currentValue;
+        }
+
     }
 }

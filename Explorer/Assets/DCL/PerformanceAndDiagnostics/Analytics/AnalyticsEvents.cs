@@ -1,10 +1,12 @@
 ﻿namespace DCL.PerformanceAndDiagnostics.Analytics
 {
+    /// <summary>
+    ///     IMPORTANT!!
+    ///     After doing any change to the events here, we need to hit the "Refresh Events" button on the AnalyticsConfiguration Scriptable Object so the new events are recognized!!
+    ///     IMPORTANT!!
+    /// </summary>
     public static class AnalyticsEvents
     {
-        // TODO (Vit): Remains
-        // - Equip item
-
         public static class General
         {
             public const string SYSTEM_INFO_REPORT = "system_info_report";
@@ -28,7 +30,15 @@
         {
             public const string MESSAGE_SENT = "chat_message_sent";
             public const string BUBBLE_SWITCHED = "chat_bubble_switched";
+            public const string OPEN_SUPPORT = "open_support";
+        }
+
+        public static class Profile
+        {
+            public const string OWN_PROFILE_OPENED = "profile_opened";
             public const string PASSPORT_OPENED = "passport_opened";
+            public const string BADGES_TAB_OPENED = "badges_tab_opened";
+            public const string BADGE_UI_CLICK = "badge_ui_click";
         }
 
         public static class Map

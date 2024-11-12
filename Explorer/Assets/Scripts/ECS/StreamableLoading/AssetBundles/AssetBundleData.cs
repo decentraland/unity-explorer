@@ -1,9 +1,10 @@
-﻿using DCL.Profiling;
-using JetBrains.Annotations;
+﻿using DCL.Diagnostics;
+using DCL.Profiling;
 using System;
+using Unity.Profiling;
 using UnityEngine;
 using UnityEngine.Assertions;
-using Utility.Multithreading;
+using Utility;
 using Object = UnityEngine.Object;
 
 namespace ECS.StreamableLoading.AssetBundles
@@ -11,46 +12,43 @@ namespace ECS.StreamableLoading.AssetBundles
     /// <summary>
     ///     A wrapper over <see cref="AssetBundle" /> to provide additional data
     /// </summary>
-    public class AssetBundleData : IDisposable
+    public class AssetBundleData : StreamableRefCountData<AssetBundle>
     {
         private readonly Object? mainAsset;
         private readonly Type? assetType;
 
-        public readonly AssetBundle AssetBundle;
+        internal AssetBundle AssetBundle => Asset;
+
         public readonly AssetBundleData[] Dependencies;
 
         public readonly AssetBundleMetrics? Metrics;
 
-        internal int referencesCount;
-        public long LastUsedFrame { get; private set; }
+        private readonly string description;
 
-        private readonly string version;
-        private readonly string source;
+
+        private bool unloaded;
 
         public AssetBundleData(AssetBundle assetBundle, AssetBundleMetrics? metrics, Object mainAsset, Type assetType, AssetBundleData[] dependencies, string version = "", string source = "")
+            : base(assetBundle, ReportCategory.ASSET_BUNDLES)
         {
-            AssetBundle = assetBundle;
             Metrics = metrics;
 
             this.mainAsset = mainAsset;
             Dependencies = dependencies;
             this.assetType = assetType;
-            this.version = version;
-            this.source = source;
-
-            ProfilingCounters.ABDataAmount.Value++;
+            
+            description = $"AB:{AssetBundle?.name}_{version}_{source}";
+            UnloadAB();
         }
 
-        public AssetBundleData(AssetBundle assetBundle, AssetBundleMetrics? metrics, AssetBundleData[] dependencies)
+        public AssetBundleData(AssetBundle assetBundle, AssetBundleMetrics? metrics, AssetBundleData[] dependencies) : base(assetBundle, ReportCategory.ASSET_BUNDLES)
         {
-            AssetBundle = assetBundle;
+            //Dependencies cant be unloaded, since we dont know who will need them =(
             Metrics = metrics;
 
             this.mainAsset = null;
             this.assetType = null;
             Dependencies = dependencies;
-
-            ProfilingCounters.ABDataAmount.Value++;
         }
 
         public AssetBundleData(AssetBundle assetBundle, AssetBundleMetrics? metrics, GameObject mainAsset, AssetBundleData[] dependencies)
@@ -58,17 +56,33 @@ namespace ECS.StreamableLoading.AssetBundles
         {
         }
 
-        public void Dispose()
+        protected override ref ProfilerCounterValue<int> totalCount => ref ProfilingCounters.ABDataAmount;
+
+        protected override ref ProfilerCounterValue<int> referencedCount => ref ProfilingCounters.ABReferencedAmount;
+
+        
+        private void UnloadAB()
         {
-            if (!CanBeDisposed()) return;
+            //We immediately unload the asset bundle, as we don't need it anymore.
+            //Very hacky, because the asset will remain in cache as AssetBundle == null
+            //When DestroyObject is invoked, it will do nothing.
+            //When cache in cleaned, the AssetBundleData will be removed from the list. Its there doing nothing
+            if (unloaded)
+                return;
+            unloaded = true;
+            AssetBundle?.UnloadAsync(false);
+        }
+        
+        protected override void DestroyObject()
+        {
+            foreach (AssetBundleData child in Dependencies)
+                child.Dereference();
+            
+            if(mainAsset!=null)
+                Object.DestroyImmediate(mainAsset, true);
 
-            if (AssetBundle != null)
+            if (!unloaded)
                 AssetBundle.UnloadAsync(unloadAllLoadedObjects: true);
-
-            if (referencesCount > 0)
-                ProfilingCounters.ABReferencedAmount.Value--;
-
-            ProfilingCounters.ABDataAmount.Value--;
         }
 
         public T GetMainAsset<T>() where T : Object
@@ -77,36 +91,10 @@ namespace ECS.StreamableLoading.AssetBundles
 
             if (assetType != typeof(T))
                 throw new ArgumentException("Asset type mismatch: " + typeof(T) + " != " + assetType);
-
             return (T)mainAsset!;
         }
 
-        public bool CanBeDisposed() =>
-            referencesCount == 0;
-
-        public void AddReference()
-        {
-            referencesCount++;
-            LastUsedFrame = MultithreadingUtility.FrameCount;
-
-            if (referencesCount == 1)
-                ProfilingCounters.ABReferencedAmount.Value++;
-        }
-
-        public void Dereference()
-        {
-            referencesCount--;
-            LastUsedFrame = MultithreadingUtility.FrameCount;
-
-            Assert.IsFalse(referencesCount < 0, "References count of asset bundle cannot be less then zero!");
-
-            if (referencesCount == 0)
-                ProfilingCounters.ABReferencedAmount.Value--;
-        }
-
-        public string GetInstanceName()
-        {
-            return $"AB:{AssetBundle.name}_{version}_{source}";
-        }
+        public string GetInstanceName() => description;
+            
     }
 }

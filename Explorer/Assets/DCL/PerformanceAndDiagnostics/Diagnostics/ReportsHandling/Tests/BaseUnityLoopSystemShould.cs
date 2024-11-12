@@ -63,28 +63,28 @@ namespace Diagnostics.ReportsHandling.Tests
         [Test]
         public void DefineCategory()
         {
-            var system = new DirectCategorySystem(null);
+            var system = new DirectCategorySystem(World.Create());
             Assert.That(system.GetReportCategory(), Is.EqualTo("DirectCategorySystem"));
         }
 
         [Test]
         public void InheritCategoryFromGroup()
         {
-            var system = new InheritedCategorySystem(null);
+            var system = new InheritedCategorySystem(World.Create());
             Assert.That(system.GetReportCategory(), Is.EqualTo("DirectCategoryGroup"));
         }
 
         [Test]
         public void OverrideCategoryFromGroup()
         {
-            var system = new OverrideCategorySystem(null);
+            var system = new OverrideCategorySystem(World.Create());
             Assert.That(system.GetReportCategory(), Is.EqualTo("OverrideCategorySystem"));
         }
 
         [Test]
         public void FallbackToEcsCategory()
         {
-            var system = new FallbackCategorySystem(null);
+            var system = new FallbackCategorySystem(World.Create());
             Assert.That(system.GetReportCategory(), Is.EqualTo(ReportCategory.ECS));
         }
     }

@@ -1,6 +1,9 @@
+using DCL.AvatarRendering.Loading.Components;
+using DCL.AvatarRendering.Loading.DTO;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
 using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.Textures;
 using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
@@ -8,7 +11,6 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.Assertions;
 
-//Removed all references to EmoteData in WearableItem
 namespace DCL.AvatarRendering.Wearables.Components
 {
     public enum WearableType : byte
@@ -25,17 +27,20 @@ namespace DCL.AvatarRendering.Wearables.Components
 
         public WearableAssets[] WearableAssetResults { get; } = new WearableAssets[BodyShape.COUNT];
 
-        public StreamableLoadingResult<WearableDTO> WearableDTO { get; private set; }
+        public StreamableLoadingResult<WearableDTO> Model { get; set; }
 
-        public StreamableLoadingResult<Sprite>? ThumbnailAssetResult { get; set; }
+        public StreamableLoadingResult<SpriteData>.WithFallback? ThumbnailAssetResult { get; set; }
 
         public WearableType Type { get; private set; }
 
-        public bool IsLoading { get; set; } = true;
+        public bool IsLoading { get; private set; } = true;
 
-        public Wearable()
+        public void UpdateLoadingStatus(bool isLoading)
         {
+            IsLoading = isLoading;
         }
+
+        public Wearable() { }
 
         public Wearable(StreamableLoadingResult<WearableDTO> dto)
         {
@@ -45,19 +50,19 @@ namespace DCL.AvatarRendering.Wearables.Components
 
         public bool IsOnChain()
         {
-            var id = ((IAvatarAttachment) this).GetUrn().ToString();
-            return !id.StartsWith("urn:decentraland:off-chain:base-avatars:");
+            var id = this.GetUrn().ToString();
+            bool startsWith = id.StartsWith("urn:decentraland:off-chain:base-avatars:", StringComparison.Ordinal);
+            return startsWith == false;
         }
 
-        public AvatarAttachmentDTO GetDTO() =>
-            WearableDTO.Asset!;
+        public AvatarAttachmentDTO DTO => Model.Asset!;
 
         public string GetCategory() =>
-            WearableDTO.Asset!.metadata.data.category;
+            Model.Asset!.metadata.data.category;
 
         public bool TryResolveDTO(StreamableLoadingResult<WearableDTO> result)
         {
-            if (WearableDTO.IsInitialized)
+            if (Model.IsInitialized)
                 return false;
 
             ResolveDTO(result);
@@ -66,7 +71,7 @@ namespace DCL.AvatarRendering.Wearables.Components
 
         private void ResolveDTO(StreamableLoadingResult<WearableDTO> result)
         {
-            WearableDTO = result;
+            Model = result;
 
             if (IsFacialFeature())
                 Type = WearableType.FacialFeature;
@@ -76,14 +81,9 @@ namespace DCL.AvatarRendering.Wearables.Components
                 Type = WearableType.Regular;
         }
 
-        public void ResolvedFailedDTO(StreamableLoadingResult<WearableDTO> result)
-        {
-            WearableDTO = result;
-        }
-
         public bool TryGetFileHashConditional(BodyShape bodyShape, Func<string, bool> contentMatch, out string? hash)
         {
-            AvatarAttachmentDTO wearableDTO = GetDTO();
+            AvatarAttachmentDTO wearableDTO = DTO;
 
             for (var i = 0; i < wearableDTO.Metadata.AbstractData.representations.Length; i++)
             {
@@ -114,7 +114,7 @@ namespace DCL.AvatarRendering.Wearables.Components
 
         public void GetHidingList(string bodyShapeType, HashSet<string> hideListResult)
         {
-            AvatarAttachmentDTO dto = GetDTO();
+            AvatarAttachmentDTO dto = DTO;
 
             AvatarAttachmentDTO.Representation? representation = GetRepresentation(bodyShapeType);
             AvatarAttachmentDTO.DataBase? data = dto.Metadata.AbstractData;
@@ -151,7 +151,7 @@ namespace DCL.AvatarRendering.Wearables.Components
 
         public bool IsCompatibleWithBodyShape(string bodyShape)
         {
-            foreach (AvatarAttachmentDTO.Representation dataRepresentation in GetDTO().Metadata.AbstractData.representations)
+            foreach (AvatarAttachmentDTO.Representation dataRepresentation in DTO.Metadata.AbstractData.representations)
             {
                 if (dataRepresentation.bodyShapes.Contains(bodyShape))
                     return true;
@@ -181,7 +181,7 @@ namespace DCL.AvatarRendering.Wearables.Components
 
         private AvatarAttachmentDTO.Representation? GetRepresentation(string bodyShapeType)
         {
-            AvatarAttachmentDTO dto = GetDTO();
+            AvatarAttachmentDTO dto = DTO;
 
             foreach (AvatarAttachmentDTO.Representation representation in dto.Metadata.AbstractData.representations)
             {
@@ -195,7 +195,7 @@ namespace DCL.AvatarRendering.Wearables.Components
         private string[]? GetReplacesList(string bodyShapeType)
         {
             AvatarAttachmentDTO.Representation? representation = GetRepresentation(bodyShapeType);
-            AvatarAttachmentDTO dto = GetDTO();
+            AvatarAttachmentDTO dto = DTO;
 
             if (representation == null)
             {
@@ -220,7 +220,7 @@ namespace DCL.AvatarRendering.Wearables.Components
                 if (wearableItem == null)
                     continue;
 
-                if (result.Contains(wearableItem.GetDTO().Metadata.AbstractData.category))
+                if (result.Contains(wearableItem.GetCategory()))
                     continue;
 
                 HashSet<string> wearableHidesList = new (StringComparer.OrdinalIgnoreCase);

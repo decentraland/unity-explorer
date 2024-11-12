@@ -19,7 +19,7 @@ namespace DCL.Diagnostics
             { ReportCategory.GENERIC_WEB_REQUEST, ColorUtility.ToHtmlStringRGB(new Color(0.902f, 0.886f, 0.082f)) },
 
             // Rooms
-            { ReportCategory.ARCHIPELAGO_REQUEST, ColorUtility.ToHtmlStringRGB(new Color(0.982f, 0.996f, 0.182f)) },
+            { ReportCategory.COMMS_SCENE_HANDLER, ColorUtility.ToHtmlStringRGB(new Color(0.982f, 0.996f, 0.182f)) },
             { ReportCategory.LIVEKIT, ColorUtility.ToHtmlStringRGB(new Color(0.982f, 0.996f, 0.282f)) },
             { ReportCategory.SDK_LOCAL_SCENE_DEVELOPMENT, ColorUtility.ToHtmlStringRGB(new Color(0.982f, 0.996f, 0.282f)) },
 

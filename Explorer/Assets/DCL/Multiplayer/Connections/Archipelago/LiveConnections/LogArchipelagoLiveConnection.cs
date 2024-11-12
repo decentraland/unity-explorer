@@ -11,7 +11,6 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
     public class LogArchipelagoLiveConnection : IArchipelagoLiveConnection
     {
         private readonly IArchipelagoLiveConnection origin;
-        private readonly Action<string> log;
 
         private bool? previousConnected;
 
@@ -23,7 +22,9 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
 
                 if (previousConnected != result)
                 {
-                    log($"ArchipelagoLiveConnection connected: {result}");
+                    ReportHub
+                       .WithReport(ReportCategory.COMMS_SCENE_HANDLER)
+                        .Log($"ArchipelagoLiveConnection connected: {result}");
                     previousConnected = result;
                 }
 
@@ -31,42 +32,55 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
             }
         }
 
-        public LogArchipelagoLiveConnection(IArchipelagoLiveConnection origin) : this(origin, ReportHub.WithReport(ReportCategory.ARCHIPELAGO_REQUEST).Log) { }
-
-        public LogArchipelagoLiveConnection(IArchipelagoLiveConnection origin, Action<string> log)
+        public LogArchipelagoLiveConnection(IArchipelagoLiveConnection origin)
         {
             this.origin = origin;
-            this.log = log;
         }
 
         public async UniTask<Result> ConnectAsync(string adapterUrl, CancellationToken token)
         {
-            log($"ArchipelagoLiveConnection ConnectAsync start to: {adapterUrl}");
+            ReportHub
+               .WithReport(ReportCategory.COMMS_SCENE_HANDLER)
+                .Log($"ArchipelagoLiveConnection ConnectAsync start to: {adapterUrl}");
             var result = await origin.ConnectAsync(adapterUrl, token);
-            log($"ArchipelagoLiveConnection ConnectAsync finished to: {adapterUrl} with result: {result.Success}");
+            ReportHub
+               .WithReport(ReportCategory.COMMS_SCENE_HANDLER)
+                .Log($"ArchipelagoLiveConnection ConnectAsync finished to: {adapterUrl} with result: {result.Success}");
             return result;
         }
 
         public async UniTask DisconnectAsync(CancellationToken token)
         {
-            log("ArchipelagoLiveConnection DisconnectAsync start");
+            ReportHub
+               .WithReport(ReportCategory.COMMS_SCENE_HANDLER)
+                .Log("ArchipelagoLiveConnection DisconnectAsync start");
             await origin.DisconnectAsync(token);
-            log("ArchipelagoLiveConnection DisconnectAsync finished");
+            ReportHub
+               .WithReport(ReportCategory.COMMS_SCENE_HANDLER)
+                .Log("ArchipelagoLiveConnection DisconnectAsync finished");
         }
 
         public async UniTask<EnumResult<IArchipelagoLiveConnection.ResponseError>> SendAsync(MemoryWrap data, CancellationToken token)
         {
-            log($"ArchipelagoLiveConnection SendAsync start with size: {data.Length} and content: {data.HexReadableString()}");
+            ReportHub
+               .WithReport(ReportCategory.COMMS_SCENE_HANDLER)
+                .Log($"ArchipelagoLiveConnection SendAsync start with size: {data.Length} and content: {data.HexReadableString()}");
             var result = await origin.SendAsync(data, token);
-            log($"ArchipelagoLiveConnection SendAsync finished with size: {data.Length} and content: {data.HexReadableString()}");
+            ReportHub
+               .WithReport(ReportCategory.COMMS_SCENE_HANDLER)
+                .Log($"ArchipelagoLiveConnection SendAsync finished with size: {data.Length} and content: {data.HexReadableString()}");
             return result;
         }
 
         public async UniTask<EnumResult<MemoryWrap, IArchipelagoLiveConnection.ResponseError>> ReceiveAsync(CancellationToken token)
         {
-            log("ArchipelagoLiveConnection ReceiveAsync start");
+            ReportHub
+               .WithReport(ReportCategory.COMMS_SCENE_HANDLER)
+                .Log("ArchipelagoLiveConnection ReceiveAsync start");
             var result = await origin.ReceiveAsync(token);
-            log($"ArchipelagoLiveConnection ReceiveAsync finished with error: {result.Error?.Message ?? "no error"}, size: {(result.Success ? result.Value.Length : 0)}");
+            ReportHub
+               .WithReport(ReportCategory.COMMS_SCENE_HANDLER)
+                .Log($"ArchipelagoLiveConnection ReceiveAsync finished with error: {result.Error?.Message ?? "no error"}, size: {(result.Success ? result.Value.Length : 0)}");
             return result;
         }
     }

@@ -1,5 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.WebRequests.GenericDelete;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -8,7 +9,6 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.Networking;
 using Utility;
-using Utility.Times;
 using static DCL.WebRequests.WebRequestControllerExtensions;
 
 namespace DCL.WebRequests
@@ -20,77 +20,48 @@ namespace DCL.WebRequests
     {
         public delegate Exception CreateExceptionOnParseFail(Exception exception, string text);
 
-        public static Adapter<GenericPostRequest, GenericPostArguments> SignedFetchPostAsync(
-            this IWebRequestController controller,
-            CommonArguments commonArguments,
-            string jsonMetaData,
-            CancellationToken ct
-        )
-        {
-            ulong unixTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
-
-            return new Adapter<GenericPostRequest, GenericPostArguments>(
-                controller,
-                commonArguments,
-                GenericPostArguments.Empty,
-                ct,
-                ReportCategory.GENERIC_WEB_REQUEST,
-                new WebRequestHeadersInfo().WithSign(jsonMetaData, unixTimestamp),
-                WebRequestSignInfo.NewFromRaw(jsonMetaData, commonArguments.URL, unixTimestamp, "post"),
-                null,
-                POST_GENERIC
-            );
-        }
-
-        public static Adapter<GenericGetRequest, GenericGetArguments> GetAsync(
-            this IWebRequestController controller,
-            CommonArguments commonArguments,
-            CancellationToken ct,
-            string reportCategory = ReportCategory.GENERIC_WEB_REQUEST,
-            WebRequestHeadersInfo? headersInfo = null,
-            WebRequestSignInfo? signInfo = null,
-            ISet<long>? ignoreErrorCodes = null
-        ) =>
-            new (controller, commonArguments, default(GenericGetArguments), ct, reportCategory, headersInfo, signInfo, ignoreErrorCodes, GET_GENERIC);
+        public static Adapter<GenericGetRequest, GenericGetArguments> GetAsync(this IWebRequestController controller, CommonArguments commonArguments, CancellationToken ct, ReportData reportData, WebRequestHeadersInfo? headersInfo = null,
+            WebRequestSignInfo? signInfo = null, ISet<long>? ignoreErrorCodes = null) =>
+            new (controller, commonArguments, default(GenericGetArguments), ct, reportData, headersInfo, signInfo, ignoreErrorCodes, GET_GENERIC);
 
         public static Adapter<GenericPostRequest, GenericPostArguments> PostAsync(
             this IWebRequestController controller,
             CommonArguments commonArguments,
             GenericPostArguments arguments,
             CancellationToken ct,
-            string reportCategory = ReportCategory.GENERIC_WEB_REQUEST,
+            ReportData reportData,
             WebRequestHeadersInfo? headersInfo = null,
             WebRequestSignInfo? signInfo = null) =>
-            new (controller, commonArguments, arguments, ct, reportCategory, headersInfo, signInfo, null, POST_GENERIC);
+            new (controller, commonArguments, arguments, ct, reportData, headersInfo, signInfo, null, POST_GENERIC);
 
         public static Adapter<GenericPutRequest, GenericPutArguments> PutAsync(
             this IWebRequestController controller,
             CommonArguments commonArguments,
             GenericPutArguments arguments,
             CancellationToken ct,
-            string reportCategory = ReportCategory.GENERIC_WEB_REQUEST,
+            ReportData reportData,
             WebRequestHeadersInfo? headersInfo = null,
             WebRequestSignInfo? signInfo = null) =>
-            new (controller, commonArguments, arguments, ct, reportCategory, headersInfo, signInfo, null, PUT_GENERIC);
+            new (controller, commonArguments, arguments, ct, reportData, headersInfo, signInfo, null, PUT_GENERIC);
 
         public static Adapter<GenericPatchRequest, GenericPatchArguments> PatchAsync(
             this IWebRequestController controller,
             CommonArguments commonArguments,
             GenericPatchArguments arguments,
             CancellationToken ct,
-            string reportCategory = ReportCategory.GENERIC_WEB_REQUEST,
+            ReportData reportData,
             WebRequestHeadersInfo? headersInfo = null,
             WebRequestSignInfo? signInfo = null) =>
-            new (controller, commonArguments, arguments, ct, reportCategory, headersInfo, signInfo, null, PATCH_GENERIC);
+            new (controller, commonArguments, arguments, ct, reportData, headersInfo, signInfo, null, PATCH_GENERIC);
 
         public static Adapter<GenericHeadRequest, GenericHeadArguments> HeadAsync(
             this IWebRequestController controller,
             CommonArguments commonArguments,
             CancellationToken ct,
-            string reportCategory = ReportCategory.GENERIC_WEB_REQUEST,
+            ReportData reportData,
             WebRequestHeadersInfo? headersInfo = null,
             WebRequestSignInfo? signInfo = null) =>
-            new (controller, commonArguments, default(GenericHeadArguments), ct, reportCategory, headersInfo, signInfo, null, HEAD_GENERIC);
+            new (controller, commonArguments, default(GenericHeadArguments), ct, reportData, headersInfo, signInfo, null, HEAD_GENERIC);
 
         private static async UniTask SwitchToMainThreadAsync(WRThreadFlags flags)
         {
@@ -119,16 +90,16 @@ namespace DCL.WebRequests
             private readonly WebRequestHeadersInfo? headersInfo;
             private readonly ISet<long>? ignoreErrorCodes;
             private readonly InitializeRequest<TWebRequestArgs, TRequest> initializeRequest;
-            private readonly string reportCategory;
+            private readonly ReportData reportData;
             private readonly WebRequestSignInfo? signInfo;
 
-            public Adapter(IWebRequestController controller, CommonArguments commonArguments, TWebRequestArgs args, CancellationToken ct, string reportCategory,
+            public Adapter(IWebRequestController controller, CommonArguments commonArguments, TWebRequestArgs args, CancellationToken ct, ReportData reportData,
                 WebRequestHeadersInfo? headersInfo, WebRequestSignInfo? signInfo, ISet<long>? ignoreErrorCodes, InitializeRequest<TWebRequestArgs, TRequest> initializeRequest)
             {
                 this.commonArguments = commonArguments;
                 this.args = args;
                 this.ct = ct;
-                this.reportCategory = reportCategory;
+                this.reportData = reportData;
                 this.headersInfo = headersInfo;
                 this.signInfo = signInfo;
                 this.ignoreErrorCodes = ignoreErrorCodes;
@@ -137,7 +108,7 @@ namespace DCL.WebRequests
             }
 
             internal UniTask<TResult> SendAsync<TOp, TResult>(TOp op) where TOp: struct, IWebRequestOp<TRequest, TResult> =>
-                controller.SendAsync<TRequest, TWebRequestArgs, TOp, TResult>(initializeRequest, commonArguments, args, op, ct, reportCategory, headersInfo, signInfo, ignoreErrorCodes);
+                controller.SendAsync<TRequest, TWebRequestArgs, TOp, TResult>(initializeRequest, commonArguments, args, op, ct, reportData, headersInfo, signInfo, ignoreErrorCodes);
 
             public UniTask WithNoOpAsync() =>
                 SendAsync<WebRequestUtils.NoOp<TRequest>, WebRequestUtils.NoResult>(new WebRequestUtils.NoOp<TRequest>());
@@ -158,6 +129,16 @@ namespace DCL.WebRequests
 
             public UniTask<byte[]> GetDataCopyAsync() =>
                 SendAsync<GetDataCopyOp<TRequest>, byte[]>(new GetDataCopyOp<TRequest>());
+
+            public UniTask<string> GetResponseHeaderAsync(string headerName) =>
+                SendAsync<GetResponseHeaderOp<TRequest>, string>(new GetResponseHeaderOp<TRequest>(headerName));
+
+            /// <summary>
+            ///     Exposes the download handler to the caller so it's the caller responsibility to dispose it later
+            /// </summary>
+            /// <returns></returns>
+            public UniTask<DownloadHandler> ExposeDownloadHandlerAsync() =>
+                SendAsync<ExposeDownloadHandler<TRequest>, DownloadHandler>(new ExposeDownloadHandler<TRequest>());
 
             public UniTask<int> StatusCodeAsync() =>
                 SendAsync<StatusCodeOp<TRequest>, int>(new StatusCodeOp<TRequest>());
@@ -308,6 +289,28 @@ namespace DCL.WebRequests
         {
             public UniTask<byte[]?> ExecuteAsync(TRequest webRequest, CancellationToken ct) =>
                 UniTask.FromResult(webRequest.UnityWebRequest.downloadHandler.data)!;
+        }
+
+        public struct GetResponseHeaderOp<TRequest> : IWebRequestOp<TRequest, string> where TRequest: struct, ITypedWebRequest, IGenericDownloadHandlerRequest
+        {
+            private readonly string headerName;
+
+            public GetResponseHeaderOp(string headerName)
+            {
+                this.headerName = headerName;
+            }
+
+            public UniTask<string?> ExecuteAsync(TRequest webRequest, CancellationToken ct) =>
+                UniTask.FromResult(webRequest.UnityWebRequest.GetResponseHeader(headerName))!;
+        }
+
+        public struct ExposeDownloadHandler<TRequest> : IWebRequestOp<TRequest, DownloadHandler> where TRequest: struct, ITypedWebRequest, IGenericDownloadHandlerRequest
+        {
+            public UniTask<DownloadHandler?> ExecuteAsync(TRequest webRequest, CancellationToken ct)
+            {
+                webRequest.UnityWebRequest.disposeDownloadHandlerOnDispose = false;
+                return UniTask.FromResult(webRequest.UnityWebRequest.downloadHandler)!;
+            }
         }
     }
 }

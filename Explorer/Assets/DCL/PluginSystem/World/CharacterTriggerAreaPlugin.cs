@@ -4,15 +4,18 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Character;
+using DCL.CharacterCamera;
 using DCL.CharacterTriggerArea.Systems;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.ResourcesUnloading;
+using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.SDKComponents.AvatarModifierArea.Systems;
 using DCL.SDKComponents.CameraModeArea.Systems;
 using DCL.Utilities;
+using DCL.Web3.Identities;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Systems;
 using System.Collections.Generic;
@@ -31,6 +34,9 @@ namespace DCL.PluginSystem.World
         private readonly ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy;
         private readonly ObjectProxy<Entity> cameraEntityProxy;
         private readonly ICharacterObject characterObject;
+        private readonly IExposedCameraData cameraData;
+        private readonly ISceneRestrictionBusController sceneRestrictionBusController;
+        private readonly IWeb3IdentityCache web3IdentityCache;
 
         private IComponentPool<CharacterTriggerArea.CharacterTriggerArea>? characterTriggerAreaPoolRegistry;
 
@@ -41,7 +47,10 @@ namespace DCL.PluginSystem.World
             ICharacterObject characterObject,
             IComponentPoolsRegistry poolsRegistry,
             IAssetsProvisioner assetsProvisioner,
-            CacheCleaner cacheCleaner)
+            CacheCleaner cacheCleaner,
+            IExposedCameraData cameraData,
+            ISceneRestrictionBusController sceneRestrictionBusController,
+            IWeb3IdentityCache web3IdentityCache)
         {
             this.globalWorld = globalWorld;
             this.assetsProvisioner = assetsProvisioner;
@@ -50,6 +59,9 @@ namespace DCL.PluginSystem.World
             this.mainPlayerAvatarBaseProxy = mainPlayerAvatarBaseProxy;
             this.cameraEntityProxy = cameraEntityProxy;
             this.characterObject = characterObject;
+            this.cameraData = cameraData;
+            this.sceneRestrictionBusController = sceneRestrictionBusController;
+            this.web3IdentityCache = web3IdentityCache;
         }
 
         public void Dispose()
@@ -67,10 +79,9 @@ namespace DCL.PluginSystem.World
             ResetDirtyFlagSystem<PBCameraModeArea>.InjectToWorld(ref builder);
 
             CharacterTriggerAreaHandlerSystem.InjectToWorld(ref builder, characterTriggerAreaPoolRegistry!, mainPlayerAvatarBaseProxy, sharedDependencies.SceneStateProvider, characterObject);
-            CharacterTriggerAreaCleanUpRegisteredCollisionsSystem.InjectToWorld(ref builder);
 
-            finalizeWorldSystems.Add(AvatarModifierAreaHandlerSystem.InjectToWorld(ref builder, globalWorld));
-            finalizeWorldSystems.Add(CameraModeAreaHandlerSystem.InjectToWorld(ref builder, globalWorld, cameraEntityProxy));
+            finalizeWorldSystems.Add(AvatarModifierAreaHandlerSystem.InjectToWorld(ref builder, globalWorld, sceneRestrictionBusController, web3IdentityCache));
+            finalizeWorldSystems.Add(CameraModeAreaHandlerSystem.InjectToWorld(ref builder, globalWorld, cameraEntityProxy, cameraData, sceneRestrictionBusController));
             finalizeWorldSystems.Add(CharacterTriggerAreaCleanupSystem.InjectToWorld(ref builder, characterTriggerAreaPoolRegistry!));
         }
 

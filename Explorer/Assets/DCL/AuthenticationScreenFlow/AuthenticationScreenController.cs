@@ -11,18 +11,20 @@ using DCL.Profiles.Self;
 using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.UI;
 using DCL.Utilities;
-using DCL.Web3;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using MVC;
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.Assertions;
 using UnityEngine.Localization.SmartFormat.PersistentVariables;
 using UnityEngine.UI;
 using Utility;
+
+#if !UNITY_EDITOR
+using DCL.Web3;
+using System.Collections.Generic;
+#endif
 
 namespace DCL.AuthenticationScreenFlow
 {
@@ -59,7 +61,9 @@ namespace DCL.AuthenticationScreenFlow
         private readonly ICharacterPreviewFactory characterPreviewFactory;
         private readonly ISplashScreen splashScreenAnimator;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
+#if !UNITY_EDITOR
         private readonly FeatureFlagsCache featureFlagsCache;
+#endif
         private readonly AudioMixerVolumesController audioMixerVolumesController;
         private readonly World world;
 
@@ -90,13 +94,14 @@ namespace DCL.AuthenticationScreenFlow
         {
             this.web3Authenticator = web3Authenticator;
             this.selfProfile = selfProfile;
+#if !UNITY_EDITOR
             this.featureFlagsCache = featureFlagsCache;
+#endif
             this.webBrowser = webBrowser;
             this.storedIdentityProvider = storedIdentityProvider;
             this.characterPreviewFactory = characterPreviewFactory;
             this.splashScreenAnimator = splashScreenAnimator;
             this.characterPreviewEventBus = characterPreviewEventBus;
-            this.featureFlagsCache = featureFlagsCache;
             this.audioMixerVolumesController = audioMixerVolumesController;
             this.world = world;
         }
@@ -115,7 +120,7 @@ namespace DCL.AuthenticationScreenFlow
         {
             base.OnViewInstantiated();
 
-            profileNameLabel = (StringVariable)viewInstance.ProfileNameLabel.StringReference["profileName"];
+            profileNameLabel = (StringVariable)viewInstance!.ProfileNameLabel.StringReference["profileName"];
 
             viewInstance.LoginButton.onClick.AddListener(StartLoginFlowUntilEnd);
             viewInstance.CancelAuthenticationProcess.onClick.AddListener(CancelLoginProcess);
@@ -132,7 +137,7 @@ namespace DCL.AuthenticationScreenFlow
             viewInstance.VersionText.text = "editor-version";
 #endif
 
-            characterPreviewController = new AuthenticationScreenCharacterPreviewController(viewInstance.CharacterPreviewView, characterPreviewFactory, world!, characterPreviewEventBus);
+            characterPreviewController = new AuthenticationScreenCharacterPreviewController(viewInstance.CharacterPreviewView, characterPreviewFactory, world, characterPreviewEventBus);
         }
 
         protected override void OnBeforeViewShow()
@@ -157,7 +162,7 @@ namespace DCL.AuthenticationScreenFlow
 
             CancelLoginProcess();
             CancelVerificationCountdown();
-            viewInstance.FinalizeContainer.SetActive(false);
+            viewInstance!.FinalizeContainer.SetActive(false);
             web3Authenticator.SetVerificationListener(null);
 
             audioMixerVolumesController.UnmuteGroup(AudioMixerExposedParam.World_Volume);
@@ -209,7 +214,7 @@ namespace DCL.AuthenticationScreenFlow
 
         private void ShowRestrictedUserPopup()
         {
-            viewInstance.RestrictedUserContainer.SetActive(true);
+            viewInstance!.RestrictedUserContainer.SetActive(true);
         }
 
         private bool IsUserAllowedToAccessToBeta(IWeb3Identity storedIdentity)
@@ -217,8 +222,8 @@ namespace DCL.AuthenticationScreenFlow
 #if UNITY_EDITOR
             return true;
 #else
-            if (!featureFlagsCache.Configuration.IsEnabled("user-allow-list", "wallets")) return true;
-            if (!featureFlagsCache.Configuration.TryGetCsvPayload("user-allow-list", "wallets", out List<List<string>>? allowedUsersCsv))
+            if (!featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.USER_ALLOW_LIST, FeatureFlagsStrings.WALLETS_VARIANT)) return true;
+            if (!featureFlagsCache.Configuration.TryGetCsvPayload(FeatureFlagsStrings.USER_ALLOW_LIST, FeatureFlagsStrings.WALLETS_VARIANT, out List<List<string>>? allowedUsersCsv))
                 return true;
 
             bool isUserAllowed = allowedUsersCsv![0]
@@ -228,8 +233,12 @@ namespace DCL.AuthenticationScreenFlow
 #endif
         }
 
-        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
-            (lifeCycleTask ??= new UniTaskCompletionSource()).Task.AttachExternalCancellation(ct);
+        protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
+        {
+            lifeCycleTask?.TrySetCanceled(ct);
+            lifeCycleTask = new UniTaskCompletionSource();
+            await lifeCycleTask.Task;
+        }
 
         private void StartLoginFlowUntilEnd()
         {
@@ -237,7 +246,7 @@ namespace DCL.AuthenticationScreenFlow
             {
                 try
                 {
-                    viewInstance.ConnectingToServerContainer.SetActive(true);
+                    viewInstance!.ConnectingToServerContainer.SetActive(true);
                     viewInstance.LoginButton.interactable = false;
 
                     web3Authenticator.SetVerificationListener(ShowVerification);
@@ -277,7 +286,7 @@ namespace DCL.AuthenticationScreenFlow
 
         private void ShowVerification(int code, DateTime expiration)
         {
-            viewInstance.VerificationCodeLabel.text = code.ToString();
+            viewInstance!.VerificationCodeLabel.text = code.ToString();
 
             CancelVerificationCountdown();
             verificationCountdownCancellationToken = new CancellationTokenSource();
@@ -304,7 +313,7 @@ namespace DCL.AuthenticationScreenFlow
         {
             async UniTaskVoid ChangeAccountAsync(CancellationToken ct)
             {
-                viewInstance.FinalizeAnimator.SetTrigger(UIAnimationHashes.TO_OTHER);
+                viewInstance!.FinalizeAnimator.SetTrigger(UIAnimationHashes.TO_OTHER);
                 await UniTask.Delay(ANIMATION_DELAY, cancellationToken: ct);
                 await web3Authenticator.LogoutAsync(ct);
                 SwitchState(ViewState.Login);
@@ -320,7 +329,8 @@ namespace DCL.AuthenticationScreenFlow
         {
             async UniTaskVoid AnimateAndAwaitAsync()
             {
-                viewInstance.FinalizeAnimator.SetTrigger(UIAnimationHashes.JUMP_IN);
+                //Disabled animation until proper animation is setup, otherwise we get animation hash errors
+                //viewInstance!.FinalizeAnimator.SetTrigger(UIAnimationHashes.JUMP_IN);
                 await UniTask.Delay(ANIMATION_DELAY);
                 characterPreviewController?.OnHide();
                 lifeCycleTask?.TrySetResult();
@@ -335,7 +345,7 @@ namespace DCL.AuthenticationScreenFlow
             switch (state)
             {
                 case ViewState.Login:
-                    ResetAnimator(viewInstance.LoginAnimator);
+                    ResetAnimator(viewInstance!.LoginAnimator);
                     viewInstance.PendingAuthentication.SetActive(false);
                     viewInstance.Slides.SetActive(true);
                     viewInstance.LoginContainer.SetActive(true);
@@ -349,7 +359,7 @@ namespace DCL.AuthenticationScreenFlow
                     CurrentState.Value = AuthenticationStatus.Login;
                     break;
                 case ViewState.LoginInProgress:
-                    ResetAnimator(viewInstance.VerificationAnimator);
+                    ResetAnimator(viewInstance!.VerificationAnimator);
                     viewInstance.PendingAuthentication.SetActive(true);
                     viewInstance.Slides.SetActive(true);
                     viewInstance.LoginAnimator.SetTrigger(UIAnimationHashes.OUT);
@@ -362,7 +372,7 @@ namespace DCL.AuthenticationScreenFlow
                     viewInstance.RestrictedUserContainer.SetActive(false);
                     break;
                 case ViewState.Loading:
-                    viewInstance.PendingAuthentication.SetActive(false);
+                    viewInstance!.PendingAuthentication.SetActive(false);
                     viewInstance.LoginContainer.SetActive(false);
                     viewInstance.Slides.SetActive(true);
                     viewInstance.ProgressContainer.SetActive(true);
@@ -373,7 +383,7 @@ namespace DCL.AuthenticationScreenFlow
                     viewInstance.RestrictedUserContainer.SetActive(false);
                     break;
                 case ViewState.Finalize:
-                    ResetAnimator(viewInstance.FinalizeAnimator);
+                    ResetAnimator(viewInstance!.FinalizeAnimator);
                     viewInstance.Slides.SetActive(false);
                     viewInstance.PendingAuthentication.SetActive(false);
                     viewInstance.LoginContainer.SetActive(false);
@@ -405,7 +415,7 @@ namespace DCL.AuthenticationScreenFlow
 
         private void OpenOrCloseVerificationCodeHint()
         {
-            viewInstance.VerificationCodeHintContainer.SetActive(!viewInstance.VerificationCodeHintContainer.activeSelf);
+            viewInstance!.VerificationCodeHintContainer.SetActive(!viewInstance.VerificationCodeHintContainer.activeSelf);
         }
 
         private void OpenDiscord() =>

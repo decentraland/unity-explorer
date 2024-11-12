@@ -19,4 +19,8 @@ MonoBehaviour:
     value: {fileID: 21300000, guid: de68e65bf4fba44b7a66667b1e4e3c6e, type: 3}
   - key: 25
     value: {fileID: 21300000, guid: 479c1fa50834d4504a321e03a5ccee10, type: 3}
-  defaultIcon: {fileID: 21300000, guid: 51d0609124e474b04a9b42ec3746f089, type: 3}
+  - key: 24
+    value: {fileID: 21300000, guid: de68e65bf4fba44b7a66667b1e4e3c6e, type: 3}
+  - key: 17
+    value: {fileID: 21300000, guid: de68e65bf4fba44b7a66667b1e4e3c6e, type: 3}
+  defaultIcon: {fileID: 21300000, guid: 93b9e2f69bc2e4cada2159afb0632935, type: 3}

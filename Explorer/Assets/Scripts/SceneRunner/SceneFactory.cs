@@ -1,6 +1,7 @@
 ﻿using CommunicationData.URLHelpers;
 using CRDT.Serializer;
 using CrdtEcsBridge.Components;
+using CrdtEcsBridge.JsModulesImplementation;
 using CrdtEcsBridge.JsModulesImplementation.Communications;
 using CrdtEcsBridge.JsModulesImplementation.Communications.SDKMessageBus;
 using CrdtEcsBridge.PoolsProviders;
@@ -10,6 +11,7 @@ using DCL.Interaction.Utility;
 using DCL.Ipfs;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.Multiplayer.Profiles.Poses;
 using DCL.Profiles;
 using DCL.Web3;
 using DCL.Web3.Identities;
@@ -18,6 +20,7 @@ using ECS;
 using ECS.Prioritization.Components;
 using Microsoft.ClearScript;
 using MVC;
+using PortableExperiences.Controller;
 using SceneRunner.ECSWorld;
 using SceneRunner.Scene;
 using SceneRuntime;
@@ -28,6 +31,7 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.Networking;
 using Utility;
+using Utility.Multithreading;
 
 namespace SceneRunner
 {
@@ -50,7 +54,9 @@ namespace SceneRunner
         private readonly ISharedPoolsProvider sharedPoolsProvider;
         private readonly IMVCManager mvcManager;
         private readonly IRealmData? realmData;
-        private readonly ICommunicationControllerHub messagePipesHub;
+        private readonly IPortableExperiencesController portableExperiencesController;
+        private readonly ISceneCommunicationPipe messagePipesHub;
+        private readonly IRemoteMetadata remoteMetadata;
 
         private IGlobalWorldActions globalWorldActions = null!;
 
@@ -70,7 +76,9 @@ namespace SceneRunner
             IWebRequestController webRequestController,
             IRoomHub roomHub,
             IRealmData? realmData,
-            ICommunicationControllerHub messagePipesHub)
+            IPortableExperiencesController portableExperiencesController,
+            ISceneCommunicationPipe messagePipesHub,
+            IRemoteMetadata remoteMetadata)
         {
             this.ecsWorldFactory = ecsWorldFactory;
             this.sceneRuntimeFactory = sceneRuntimeFactory;
@@ -88,6 +96,8 @@ namespace SceneRunner
             this.roomHub = roomHub;
             this.realmData = realmData;
             this.messagePipesHub = messagePipesHub;
+            this.remoteMetadata = remoteMetadata;
+            this.portableExperiencesController = portableExperiencesController;
         }
 
         public async UniTask<ISceneFacade> CreateSceneFromFileAsync(string jsCodeUrl, IPartitionComponent partitionProvider, CancellationToken ct, string id = "")
@@ -115,7 +125,7 @@ namespace SceneRunner
         {
             const string SCENE_JSON_FILE_NAME = "scene.json";
 
-            var fullPath = URLDomain.FromString($"file://{Application.streamingAssetsPath}/Scenes/{directoryName}/");
+            var fullPath = URLDomain.FromString($"file://{Application.dataPath}/Scenes/TestJsScenes/{directoryName}/");
 
             string rawSceneJsonPath = fullPath.Value + SCENE_JSON_FILE_NAME;
 
@@ -142,9 +152,9 @@ namespace SceneRunner
 
         private async UniTask<ISceneFacade> CreateSceneAsync(ISceneData sceneData, IPartitionComponent partitionProvider, CancellationToken ct)
         {
-            var deps = new SceneInstanceDependencies(decentralandUrlsSource, sdkComponentsRegistry, entityCollidersGlobalCache, sceneData, partitionProvider, ecsWorldFactory, entityFactory);
+            var deps = new SceneInstanceDependencies(decentralandUrlsSource, sdkComponentsRegistry, entityCollidersGlobalCache, sceneData, partitionProvider, ecsWorldFactory, entityFactory, webRequestController);
 
-            // Try create scene runtime
+            // Try to create scene runtime
             SceneRuntimeImpl sceneRuntime;
 
             try { sceneRuntime = await sceneRuntimeFactory.CreateByPathAsync(deps.SceneCodeUrl, deps.PoolsProvider, sceneData.SceneShortInfo, ct, SceneRuntimeFactory.InstantiationBehavior.SwitchToThreadPool); }
@@ -170,12 +180,16 @@ namespace SceneRunner
 
             SceneInstanceDependencies.WithRuntimeAndJsAPIBase runtimeDeps;
 
+            var engineAPIMutexOwner = new MultiThreadSync.Owner(nameof(EngineAPIImplementation));
+
             if (ENABLE_SDK_OBSERVABLES)
             {
-                var sdkCommsControllerAPI = new SDKMessageBusCommsAPIImplementation(sceneData, messagePipesHub, sceneRuntime, deps.SceneStateProvider);
+                var sdkCommsControllerAPI = new SDKMessageBusCommsAPIImplementation(sceneData, messagePipesHub, sceneRuntime);
                 sceneRuntime.RegisterSDKMessageBusCommsApi(sdkCommsControllerAPI);
 
-                runtimeDeps = new SceneInstanceDependencies.WithRuntimeJsAndSDKObservablesEngineAPI(deps, sceneRuntime, sharedPoolsProvider, crdtSerializer, mvcManager, globalWorldActions, realmData!, messagePipesHub);
+                runtimeDeps = new SceneInstanceDependencies.WithRuntimeJsAndSDKObservablesEngineAPI(deps, sceneRuntime,
+                    sharedPoolsProvider, crdtSerializer, mvcManager, globalWorldActions, realmData!, messagePipesHub,
+                    webRequestController, engineAPIMutexOwner);
 
                 sceneRuntime.RegisterAll(
                     (ISDKObservableEventsEngineApi)runtimeDeps.EngineAPI,
@@ -195,12 +209,16 @@ namespace SceneRunner
                     deps.PoolsProvider,
                     runtimeDeps.SimpleFetchApi,
                     sceneData,
-                    realmData!
+                    realmData!,
+                    portableExperiencesController,
+                    remoteMetadata
                 );
             }
             else
             {
-                runtimeDeps = new SceneInstanceDependencies.WithRuntimeAndJsAPI(deps, sceneRuntime, sharedPoolsProvider, crdtSerializer, mvcManager, globalWorldActions, realmData!, messagePipesHub);
+                runtimeDeps = new SceneInstanceDependencies.WithRuntimeAndJsAPI(deps, sceneRuntime, sharedPoolsProvider,
+                    crdtSerializer, mvcManager, globalWorldActions, realmData!, messagePipesHub, webRequestController,
+                    engineAPIMutexOwner);
 
                 sceneRuntime.RegisterAll(
                     runtimeDeps.EngineAPI,
@@ -219,11 +237,21 @@ namespace SceneRunner
                     deps.PoolsProvider,
                     runtimeDeps.SimpleFetchApi,
                     sceneData,
-                    realmData!
+                    realmData!,
+                    portableExperiencesController,
+                    remoteMetadata
                 );
             }
 
             sceneRuntime.ExecuteSceneJson();
+
+            if (sceneData.IsPortableExperience())
+            {
+                return new PortableExperienceSceneFacade(
+                    sceneData,
+                    runtimeDeps
+                );
+            }
 
             return new SceneFacade(
                 sceneData,

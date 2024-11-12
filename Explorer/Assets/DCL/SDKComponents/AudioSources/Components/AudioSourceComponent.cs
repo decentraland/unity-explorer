@@ -1,9 +1,7 @@
-﻿#nullable enable
-
-using System;
+﻿using System;
 using UnityEngine;
 using UnityEngine.Audio;
-using Promise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.AudioClip, ECS.StreamableLoading.AudioClips.GetAudioClipIntention>;
+using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AudioClips.AudioClipData, ECS.StreamableLoading.AudioClips.GetAudioClipIntention>;
 
 namespace DCL.SDKComponents.AudioSources
 {
@@ -34,6 +32,18 @@ namespace DCL.SDKComponents.AudioSources
             if (audioMixerGroup != null) { audioSource.outputAudioMixerGroup = audioMixerGroup; }
 
             AudioSourceAssigned = true;
+        }
+
+        /// <summary>
+        /// Sets the mute property of the Unity's AudioSource, if it was loaded.
+        /// </summary>
+        /// <param name="mute">The value to replace AudioSource's.</param>
+        public void Mute(bool mute)
+        {
+            if (AudioSource != null)
+            {
+                AudioSource.mute = mute;
+            }
         }
 
         public void Dispose()

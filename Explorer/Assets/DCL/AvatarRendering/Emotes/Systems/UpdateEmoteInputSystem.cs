@@ -9,6 +9,7 @@ using DCL.EmotesWheel;
 using DCL.Input;
 using DCL.Multiplayer.Emotes;
 using DCL.Profiles;
+using DCL.SDKComponents.InputModifier.Components;
 using ECS.Abstract;
 using MVC;
 using System;
@@ -22,6 +23,7 @@ namespace DCL.AvatarRendering.Emotes
     [UpdateInGroup(typeof(InputGroup))]
     public partial class UpdateEmoteInputSystem : BaseUnityLoopSystem
     {
+        private const int AFTER_WHEEL_WAS_CLOSED_FRAMES_DELAY = 30;
         private readonly Dictionary<string, int> actionNameById = new ();
         private readonly IEmotesMessageBus messageBus;
         private readonly IMVCManager mvcManager;
@@ -32,7 +34,7 @@ namespace DCL.AvatarRendering.Emotes
         private bool isWheelBlocked;
         private int framesAfterWheelWasClosed;
 
-        public UpdateEmoteInputSystem(World world, DCLInput dclInput, IEmotesMessageBus messageBus,
+        private UpdateEmoteInputSystem(World world, DCLInput dclInput, IEmotesMessageBus messageBus,
             IMVCManager mvcManager) : base(world)
         {
             shortcuts = dclInput.Shortcuts;
@@ -42,7 +44,7 @@ namespace DCL.AvatarRendering.Emotes
 
             this.mvcManager.OnViewClosed += OnEmoteWheelClosed;
 
-            GetReportCategory();
+            GetReportData();
 
             ListenToSlotsInput(emotesActions.Get());
         }
@@ -76,7 +78,7 @@ namespace DCL.AvatarRendering.Emotes
             if (shortcuts.EmoteWheel.WasReleasedThisFrame()
                 // Close and open actions conflicts each other since they are assigned to the same input key
                 // we need to avoid opening it again after it has been recently closed
-                // We also have to consider race conditions so i see no other way than setting a delay
+                // We also have to consider race conditions, so I see no other way than setting a delay
                 && framesAfterWheelWasClosed == 0)
             {
                 if (!isWheelBlocked)
@@ -100,8 +102,10 @@ namespace DCL.AvatarRendering.Emotes
         [Query]
         [All(typeof(PlayerComponent))]
         [None(typeof(CharacterEmoteIntent))]
-        private void TriggerEmote([Data] int emoteIndex, in Entity entity, in Profile profile)
+        private void TriggerEmote([Data] int emoteIndex, in Entity entity, in Profile profile, in InputModifierComponent inputModifier)
         {
+            if(inputModifier.DisableEmote) return;
+
             IReadOnlyList<URN> emotes = profile.Avatar.Emotes;
             if (emoteIndex < 0 || emoteIndex >= emotes.Count) return;
 
@@ -128,7 +132,7 @@ namespace DCL.AvatarRendering.Emotes
                     inputAction.started += OnSlotPerformed;
                     actionNameById[actionName] = i;
                 }
-                catch (Exception e) { ReportHub.LogException(e, new ReportData(GetReportCategory())); }
+                catch (Exception e) { ReportHub.LogException(e, GetReportData()); }
             }
         }
 
@@ -151,7 +155,7 @@ namespace DCL.AvatarRendering.Emotes
         private void OnEmoteWheelClosed(IController obj)
         {
             if (obj is not EmotesWheelController) return;
-            framesAfterWheelWasClosed = 30;
+            framesAfterWheelWasClosed = AFTER_WHEEL_WAS_CLOSED_FRAMES_DELAY;
         }
     }
 }

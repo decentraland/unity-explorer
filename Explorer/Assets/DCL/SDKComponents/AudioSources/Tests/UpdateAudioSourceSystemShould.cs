@@ -32,7 +32,7 @@ namespace DCL.SDKComponents.AudioSources.Tests
 
             void CreateComponent()
             {
-                component = new AudioSourceComponent(AssetPromise<AudioClip, GetAudioClipIntention>.Create(world, new GetAudioClipIntention(), PartitionComponent.TOP_PRIORITY), CreatePBAudioSource().AudioClipUrl);
+                component = new AudioSourceComponent(AssetPromise<AudioClipData, GetAudioClipIntention>.Create(world, new GetAudioClipIntention(), PartitionComponent.TOP_PRIORITY), CreatePBAudioSource().AudioClipUrl);
             }
 
             void CreateEntity()
@@ -53,8 +53,10 @@ namespace DCL.SDKComponents.AudioSources.Tests
             IPerformanceBudget budgetProvider = Substitute.For<IPerformanceBudget>();
             budgetProvider.TrySpendBudget().Returns(true);
 
-            IStreamableCache<AudioClip, GetAudioClipIntention> cache = Substitute.For<IStreamableCache<AudioClip, GetAudioClipIntention>>();
-            return new UpdateAudioSourceSystem(world, ECSTestUtils.SceneDataSub(), cache, poolsRegistry, budgetProvider, budgetProvider, null);
+            ISceneStateProvider sceneStateProvider = Substitute.For<ISceneStateProvider>();
+            sceneStateProvider.IsCurrent.Returns(true);
+
+            return new UpdateAudioSourceSystem(world, ECSTestUtils.SceneDataSub(), poolsRegistry, budgetProvider, budgetProvider, null, sceneStateProvider);
         }
 
         [Test]
@@ -73,7 +75,7 @@ namespace DCL.SDKComponents.AudioSources.Tests
         public void CreateAudioSourceFromResolvedPromise()
         {
             // Arrange
-            world.Add(component.ClipPromise.Entity, new StreamableLoadingResult<AudioClip>(TestAudioClip));
+            world.Add(component.ClipPromise.Entity, new StreamableLoadingResult<AudioClipData>(new AudioClipData(TestAudioClip)));
 
             // Act
             system.Update(0);

@@ -1,16 +1,21 @@
 using Arch.Core;
+using CRDT;
+using CrdtEcsBridge.Components;
 using Cysharp.Threading.Tasks;
+using DCL.ApplicationVersionGuard;
 using DCL.Audio;
+using DCL.AuthenticationScreenFlow;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.Input.Component;
+using DCL.Optimization.PerformanceBudgeting;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using Global.AppArgs;
-using LiveKit.Proto;
+using MVC;
 using SceneRunner.Debugging;
 using System;
 using System.Linq;
@@ -20,65 +25,6 @@ using UnityEngine.UIElements;
 
 namespace Global.Dynamic
 {
-    public interface IDebugSettings
-    {
-        bool ShowSplash { get; }
-        bool ShowAuthentication { get; }
-        bool ShowLoading { get; }
-        bool EnableLandscape { get; }
-        bool EnableLOD { get; }
-        bool EnableEmulateNoLivekitConnection { get; }
-        bool OverrideConnectionQuality { get; }
-        ConnectionQuality ConnectionQuality { get; }
-    }
-
-    [Serializable]
-    public class DebugSettings : IDebugSettings
-    {
-        private static readonly DebugSettings RELEASE_SETTINGS = Release();
-
-        [SerializeField]
-        private bool showSplash;
-        [SerializeField]
-        private bool showAuthentication;
-        [SerializeField]
-        private bool showLoading;
-        [SerializeField]
-        private bool enableLandscape;
-        [SerializeField]
-        private bool enableLOD;
-        [SerializeField]
-        private bool enableEmulateNoLivekitConnection;
-        [Space]
-        [SerializeField]
-        private bool overrideConnectionQuality;
-        [SerializeField]
-        private ConnectionQuality connectionQuality;
-
-        public static DebugSettings Release() =>
-            new ()
-            {
-                showSplash = true,
-                showAuthentication = true,
-                showLoading = true,
-                enableLandscape = true,
-                enableLOD = true,
-                enableEmulateNoLivekitConnection = false,
-                overrideConnectionQuality = false,
-                connectionQuality = ConnectionQuality.QualityExcellent
-            };
-
-        // To avoid configuration issues, force full flow on build (Debug.isDebugBuild is always true in Editor)
-        public bool ShowSplash => Debug.isDebugBuild ? this.showSplash : RELEASE_SETTINGS.showSplash;
-        public bool ShowAuthentication => Debug.isDebugBuild ? this.showAuthentication : RELEASE_SETTINGS.showAuthentication;
-        public bool ShowLoading => Debug.isDebugBuild ? this.showLoading : RELEASE_SETTINGS.showLoading;
-        public bool EnableLandscape => Debug.isDebugBuild ? this.enableLandscape : RELEASE_SETTINGS.enableLandscape;
-        public bool EnableLOD => Debug.isDebugBuild ? this.enableLOD : RELEASE_SETTINGS.enableLOD;
-        public bool EnableEmulateNoLivekitConnection => Debug.isDebugBuild ? this.enableEmulateNoLivekitConnection : RELEASE_SETTINGS.enableEmulateNoLivekitConnection;
-        public bool OverrideConnectionQuality => Debug.isDebugBuild ? this.overrideConnectionQuality : RELEASE_SETTINGS.overrideConnectionQuality;
-        public ConnectionQuality ConnectionQuality => Debug.isDebugBuild ? this.connectionQuality : RELEASE_SETTINGS.connectionQuality;
-    }
-
     public class MainSceneLoader : MonoBehaviour
     {
         [Header("Startup Config")] [SerializeField]
@@ -88,7 +34,7 @@ namespace Global.Dynamic
         [SerializeField] private DebugViewsCatalog debugViewsCatalog = new ();
 
         [Space]
-        [SerializeField] private DebugSettings debugSettings = new ();
+        [SerializeField] private DebugSettings.DebugSettings debugSettings = new ();
 
         [Header("References")]
         [SerializeField] private PluginSettingsContainer globalPluginSettingsContainer = null!;
@@ -100,6 +46,7 @@ namespace Global.Dynamic
         [SerializeField] private DynamicSettings dynamicSettings = null!;
         [SerializeField] private GameObject splashRoot = null!;
         [SerializeField] private Animator splashScreenAnimation = null!;
+        [SerializeField] private Animator logoAnimation = null!;
         [SerializeField] private AudioClipConfig backgroundMusic = null!;
         [SerializeField] private WorldInfoTool worldInfoTool = null!;
 
@@ -142,7 +89,14 @@ namespace Global.Dynamic
 
         private async UniTask InitializeFlowAsync(CancellationToken ct)
         {
-            var applicationParametersParser = new ApplicationParametersParser(Environment.GetCommandLineArgs());
+            var applicationParametersParser = new ApplicationParametersParser(
+#if UNITY_EDITOR
+                debugSettings.AppParameters
+#else
+                Environment.GetCommandLineArgs()
+#endif
+                );
+            ISystemMemoryCap memoryCap = new SystemMemoryCap(MemoryCapMode.MAX_SYSTEM_MEMORY); // we use max memory on the loading screen
 
             settings.ApplyConfig(applicationParametersParser);
             launchSettings.ApplyConfig(applicationParametersParser);
@@ -160,11 +114,11 @@ namespace Global.Dynamic
             try
             {
                 var splashScreen = new SplashScreen(splashScreenAnimation, splashRoot, debugSettings.ShowSplash);
-
                 bootstrap.PreInitializeSetup(cursorRoot, debugUiRoot, splashScreen, destroyCancellationToken);
 
                 bool isLoaded;
-                (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugViewsCatalog, ct);
+                Entity playerEntity = world.Create(new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY));
+                (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugViewsCatalog, playerEntity, memoryCap, ct);
 
                 if (!isLoaded)
                 {
@@ -172,10 +126,12 @@ namespace Global.Dynamic
                     return;
                 }
 
-                Entity playerEntity = bootstrap.CreatePlayerEntity(staticContainer!);
+                bootstrap.InitializePlayerEntity(staticContainer!, playerEntity);
 
                 (dynamicWorldContainer, isLoaded) = await bootstrap.LoadDynamicWorldContainerAsync(bootstrapContainer, staticContainer!, scenePluginSettingsContainer, settings,
-                    dynamicSettings, uiToolkitRoot, cursorRoot, splashScreen, backgroundMusic, worldInfoTool.EnsureNotNull(), playerEntity, destroyCancellationToken);
+                    dynamicSettings, uiToolkitRoot, cursorRoot, splashScreen, backgroundMusic, worldInfoTool.EnsureNotNull(), playerEntity,
+                    applicationParametersParser,
+                    destroyCancellationToken);
 
                 if (!isLoaded)
                 {
@@ -184,6 +140,9 @@ namespace Global.Dynamic
                 }
 
                 await bootstrap.InitializeFeatureFlagsAsync(bootstrapContainer.IdentityCache!.Identity, bootstrapContainer.DecentralandUrlsSource, staticContainer!, ct);
+
+                if (await DoesApplicationRequireVersionUpdateAsync(applicationParametersParser, splashScreen, ct))
+                    return; // stop bootstrapping;
 
                 DisableInputs();
 
@@ -195,11 +154,16 @@ namespace Global.Dynamic
 
                 globalWorld = bootstrap.CreateGlobalWorld(bootstrapContainer, staticContainer!, dynamicWorldContainer!, debugUiRoot, playerEntity);
 
-                staticContainer!.PlayerEntityProxy.SetObject(playerEntity);
-
                 await bootstrap.LoadStartingRealmAsync(dynamicWorldContainer!, ct);
+
                 await bootstrap.UserInitializationAsync(dynamicWorldContainer!, globalWorld, playerEntity, splashScreen, ct);
 
+                //This is done in order to release the memory usage of the splash screen logo animation sprites
+                //The logo is used only at first launch, so we can safely release it after the game is loaded
+                logoAnimation.StopPlayback();
+                logoAnimation.runtimeAnimatorController = null;
+
+                memoryCap.Mode = MemoryCapMode.FROM_SETTINGS;
                 RestoreInputs();
             }
             catch (OperationCanceledException)
@@ -212,6 +176,39 @@ namespace Global.Dynamic
                 GameReports.PrintIsDead();
                 throw;
             }
+        }
+
+        private async UniTask<bool> DoesApplicationRequireVersionUpdateAsync(ApplicationParametersParser applicationParametersParser, SplashScreen splashScreen, CancellationToken ct)
+        {
+            applicationParametersParser.TryGetValue(ApplicationVersionGuard.SIMULATE_VERSION_CLI_ARG, out string? version);
+            string? currentVersion = version ?? Application.version;
+
+            bool runVersionControl = debugSettings.EnableVersionUpdateGuard;
+
+            if (applicationParametersParser.HasDebugFlag() && !Application.isEditor)
+                runVersionControl = applicationParametersParser.TryGetValue(ApplicationVersionGuard.ENABLE_VERSION_CONTROL_CLI_ARG, out string? enforceDebugMode) && enforceDebugMode == "true";
+
+            if (!runVersionControl)
+                return false;
+
+            var appVersionGuard = new ApplicationVersionGuard(staticContainer!.WebRequestsContainer.WebRequestController, bootstrapContainer!.WebBrowser);
+            string? latestVersion = await appVersionGuard.GetLatestVersionAsync(ct);
+
+            if (!currentVersion.IsOlderThan(latestVersion))
+                return false;
+
+            splashScreen.Hide();
+
+            var appVerRedirectionScreenPrefab = await bootstrapContainer!.AssetsProvisioner!.ProvideMainAssetAsync(dynamicSettings.AppVerRedirectionScreenPrefab, ct);
+
+            ControllerBase<LauncherRedirectionScreenView, ControllerNoData>.ViewFactoryMethod authScreenFactory =
+                LauncherRedirectionScreenController.CreateLazily(appVerRedirectionScreenPrefab.Value.GetComponent<LauncherRedirectionScreenView>(), null);
+
+            var launcherRedirectionScreenController = new LauncherRedirectionScreenController(appVersionGuard, authScreenFactory, currentVersion, latestVersion);
+            dynamicWorldContainer!.MvcManager.RegisterController(launcherRedirectionScreenController);
+
+            await dynamicWorldContainer!.MvcManager.ShowAsync(LauncherRedirectionScreenController.IssueCommand(), ct);
+            return true;
         }
 
         private void DisableInputs()
@@ -230,7 +227,7 @@ namespace Global.Dynamic
         {
             // We enable Inputs through the inputBlock so the block counters can be properly updated and the component Active flags are up-to-date as well
             // We restore all inputs except EmoteWheel and FreeCamera as they should be disabled by default
-            staticContainer!.InputBlock.Enable(InputMapComponent.Kind.Shortcuts, InputMapComponent.Kind.Player, InputMapComponent.Kind.Emotes, InputMapComponent.Kind.Camera);
+            staticContainer!.InputBlock.Enable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.PLAYER, InputMapComponent.Kind.EMOTES, InputMapComponent.Kind.CAMERA);
         }
 
         [ContextMenu(nameof(ValidateSettingsAsync))]

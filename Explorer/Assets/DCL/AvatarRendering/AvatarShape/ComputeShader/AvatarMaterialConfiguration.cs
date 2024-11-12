@@ -71,6 +71,10 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             avatarMaterial.SetColor(BASE_COLOR, baseColor);
             avatarMaterial.renderQueue = (int)RenderQueue.Geometry;
 
+            // this should really check for keyword _EMISSION, however for some reason it's rather inconsistent.
+            var emissionColor = originalMaterial.GetColor("_EmissionColor");
+            avatarMaterial.SetColor("_Emissive_Color", emissionColor);
+
             if (originalMaterial.IsKeywordEnabled("_ALPHATEST_ON") || originalMaterial.GetFloat(ALPHA_CLIP) > 0)
                 ConfigureAlphaTest(originalMaterial, avatarMaterial, baseColor);
             else if (originalMaterial.IsKeywordEnabled("_SURFACE_TYPE_TRANSPARENT") || originalMaterial.GetFloat(SURFACE) > 0)
@@ -146,7 +150,8 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             else if (name.Contains(ComputeShaderConstants.HAIR_MATERIAL_NAME, StringComparison.OrdinalIgnoreCase))
                 avatarMaterial.SetColor(BASE_COLOR, avatarShapeComponent.HairColor);
 
-            avatarMaterial.SetInt(CULL_MODE, (int)originalMaterial.GetFloat(CULL));
+            //Force back-face culling for all avatar materials
+            avatarMaterial.SetInt(CULL_MODE, 2);
         }
     }
 }

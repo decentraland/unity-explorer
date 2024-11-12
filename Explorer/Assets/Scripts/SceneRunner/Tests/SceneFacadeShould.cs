@@ -15,9 +15,11 @@ using CrdtEcsBridge.PoolsProviders;
 using CrdtEcsBridge.UpdateGate;
 using CrdtEcsBridge.WorldSynchronizer;
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.Interaction.Utility;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.Multiplayer.Profiles.Poses;
 using DCL.PluginSystem.World;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.Profiles;
@@ -33,6 +35,7 @@ using ECS.TestSuite;
 using MVC;
 using NSubstitute;
 using NUnit.Framework;
+using PortableExperiences.Controller;
 using SceneRunner.ECSWorld;
 using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
@@ -42,6 +45,7 @@ using SceneRuntime.Apis.Modules;
 using SceneRuntime.Apis.Modules.CommunicationsControllerApi;
 using SceneRuntime.Apis.Modules.EngineApi;
 using SceneRuntime.Apis.Modules.FetchApi;
+using SceneRuntime.Apis.Modules.PortableExperiencesApi;
 using SceneRuntime.Apis.Modules.RestrictedActionsApi;
 using SceneRuntime.Apis.Modules.Runtime;
 using SceneRuntime.Apis.Modules.SceneApi;
@@ -104,10 +108,11 @@ namespace SceneRunner.Tests
                 Substitute.For<IWeb3IdentityCache>(),
                 Substitute.For<IDecentralandUrlsSource>(),
                 IWebRequestController.DEFAULT,
-                new IRoomHub.Fake(),
+                NullRoomHub.INSTANCE,
                 Substitute.For<IRealmData>(),
-                Substitute.For<ICommunicationControllerHub>()
-            );
+                Substitute.For<IPortableExperiencesController>(),
+                Substitute.For<ISceneCommunicationPipe>(),
+                Substitute.For<IRemoteMetadata>());
         }
 
         [OneTimeTearDown]
@@ -255,7 +260,7 @@ namespace SceneRunner.Tests
 
             var apis = new List<IJsApiWrapper>();
 
-            var runtime = sceneFacade.deps.Runtime;
+            ISceneRuntime runtime = sceneFacade.deps.Runtime;
 
             runtime.When(r => r.Register(Arg.Any<string>(), Arg.Any<IJsApiWrapper>()))
                    .Do(info => apis.Add(info.ArgAt<IJsApiWrapper>(1)));
@@ -372,7 +377,7 @@ namespace SceneRunner.Tests
                     new URLAddress(),
                     new SceneEcsExecutor(),
                     Substitute.For<ISceneData>(),
-                    new MultithreadSync(),
+                    new MultiThreadSync(new SceneShortInfo()),
                     Substitute.For<ICRDTDeserializer>(),
                     Substitute.For<IECSToCRDTWriter>(),
                     Substitute.For<ISystemGroupsUpdateGate>(),

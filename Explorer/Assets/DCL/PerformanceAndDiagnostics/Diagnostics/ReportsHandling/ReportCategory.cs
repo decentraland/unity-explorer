@@ -65,9 +65,9 @@ namespace DCL.Diagnostics
         public const string JAVASCRIPT = nameof(JAVASCRIPT);
 
         /// <summary>
-        ///     Archipelago requests
+        ///     Archipelago and gatekeeper requests
         /// </summary>
-        public const string ARCHIPELAGO_REQUEST = nameof(ARCHIPELAGO_REQUEST);
+        public const string COMMS_SCENE_HANDLER = nameof(COMMS_SCENE_HANDLER);
 
         /// <summary>
         ///     Unspecified ECS World Exceptions
@@ -180,6 +180,7 @@ namespace DCL.Diagnostics
         /// </summary>
         public const string WEARABLE = nameof(WEARABLE);
         public const string EMOTE = nameof(EMOTE);
+        public const string THUMBNAILS = nameof(THUMBNAILS);
 
         public const string AUTHENTICATION = nameof(AUTHENTICATION);
 
@@ -206,9 +207,9 @@ namespace DCL.Diagnostics
         public const string CHARACTER_TRIGGER_AREA = nameof(CHARACTER_TRIGGER_AREA);
 
         /// <summary>
-        ///     CameraModeArea SDK component
+        ///     SDK Camera related systems
         /// </summary>
-        public const string CAMERA_MODE_AREA = nameof(CAMERA_MODE_AREA);
+        public const string SDK_CAMERA = nameof(SDK_CAMERA);
 
         /// <summary>
         ///     Player-related data propagated to SDK
@@ -247,6 +248,8 @@ namespace DCL.Diagnostics
         /// </summary>
         public const string UI = nameof(UI);
 
+        public const string CAMERA_REEL = nameof(CAMERA_REEL);
+
         /// <summary>
         ///     Fetch requests initiated from the Scene side through the fetch API
         /// </summary>
@@ -257,6 +260,8 @@ namespace DCL.Diagnostics
         public const string SETTINGS_MENU = nameof(SETTINGS_MENU);
 
         public const string BACKPACK = nameof(BACKPACK);
+
+        public const string BADGES = nameof(BADGES);
 
         /// <summary>
         ///     Whatever is coming from external pure C# plugins
@@ -277,5 +282,16 @@ namespace DCL.Diagnostics
         ///     Default category into which falls everything that is reported without info and by default Unity Debug.Log
         /// </summary>
         public const string UNSPECIFIED = nameof(UNSPECIFIED);
+
+        public const string PORTABLE_EXPERIENCE= nameof(PORTABLE_EXPERIENCE);
+
+        /// <summary>
+        ///     Used for multithreading sync messages
+        /// </summary>
+        public const string SYNC = nameof(SYNC);
+
+        public const string VERSION_CONTROL= nameof(VERSION_CONTROL);
+
+        public const string ONBOARDING = nameof(ONBOARDING);
     }
 }

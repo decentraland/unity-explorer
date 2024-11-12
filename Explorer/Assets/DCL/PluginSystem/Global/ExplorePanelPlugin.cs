@@ -39,6 +39,9 @@ using MVC;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using DCL.Chat.MessageBus;
+using DCL.Optimization.PerformanceBudgeting;
+using DCL.Settings.Settings;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Audio;
@@ -59,11 +62,11 @@ namespace DCL.PluginSystem.Global
         private readonly IEquippedEmotes equippedEmotes;
         private readonly IWeb3Authenticator web3Authenticator;
         private readonly IWeb3IdentityCache web3IdentityCache;
-        private readonly IWearableCache wearableCache;
+        private readonly IWearableStorage wearableStorage;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
         private readonly IWebBrowser webBrowser;
         private readonly IRealmNavigator realmNavigator;
-        private readonly IEmoteCache emoteCache;
+        private readonly IEmoteStorage emoteStorage;
         private readonly DCLInput dclInput;
         private readonly IWebRequestController webRequestController;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
@@ -84,10 +87,16 @@ namespace DCL.PluginSystem.Global
         private readonly INotificationsBusController notificationsBusController;
         private readonly ChatEntryConfigurationSO chatEntryConfiguration;
         private readonly IInputBlock inputBlock;
+        private readonly IChatMessagesBus chatMessagesBus;
+
+        private readonly ISystemMemoryCap systemMemoryCap;
+        private readonly WorldVolumeMacBus worldVolumeMacBus;
 
         private NavmapController? navmapController;
         private SettingsController? settingsController;
         private BackpackSubPlugin? backpackSubPlugin;
+
+
 
         public ExplorePanelPlugin(IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
@@ -95,7 +104,7 @@ namespace DCL.PluginSystem.Global
             IPlacesAPIService placesAPIService,
             IWebRequestController webRequestController,
             IWeb3IdentityCache web3IdentityCache,
-            IWearableCache wearableCache,
+            IWearableStorage wearableStorage,
             ICharacterPreviewFactory characterPreviewFactory,
             IProfileRepository profileRepository,
             IWeb3Authenticator web3Authenticator,
@@ -104,7 +113,7 @@ namespace DCL.PluginSystem.Global
             IEquippedWearables equippedWearables,
             IEquippedEmotes equippedEmotes,
             IWebBrowser webBrowser,
-            IEmoteCache emoteCache,
+            IEmoteStorage emoteStorage,
             IRealmNavigator realmNavigator,
             ICollection<string> forceRender,
             DCLInput dclInput,
@@ -122,7 +131,10 @@ namespace DCL.PluginSystem.Global
             IInputBlock inputBlock,
             IEmoteProvider emoteProvider,
             Arch.Core.World world,
-            Entity playerEntity)
+            Entity playerEntity,
+            IChatMessagesBus chatMessagesBus,
+            ISystemMemoryCap systemMemoryCap,
+            WorldVolumeMacBus worldVolumeMacBus)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -130,7 +142,7 @@ namespace DCL.PluginSystem.Global
             this.placesAPIService = placesAPIService;
             this.webRequestController = webRequestController;
             this.web3IdentityCache = web3IdentityCache;
-            this.wearableCache = wearableCache;
+            this.wearableStorage = wearableStorage;
             this.characterPreviewFactory = characterPreviewFactory;
             this.profileRepository = profileRepository;
             this.web3Authenticator = web3Authenticator;
@@ -145,7 +157,7 @@ namespace DCL.PluginSystem.Global
             this.profileCache = profileCache;
             this.assetBundleURL = assetBundleURL;
             this.notificationsBusController = notificationsBusController;
-            this.emoteCache = emoteCache;
+            this.emoteStorage = emoteStorage;
             this.dclInput = dclInput;
             this.characterPreviewEventBus = characterPreviewEventBus;
             this.mapPathEventBus = mapPathEventBus;
@@ -158,6 +170,9 @@ namespace DCL.PluginSystem.Global
             this.emoteProvider = emoteProvider;
             this.world = world;
             this.playerEntity = playerEntity;
+            this.chatMessagesBus = chatMessagesBus;
+            this.systemMemoryCap = systemMemoryCap;
+            this.worldVolumeMacBus = worldVolumeMacBus;
         }
 
         public void Dispose()
@@ -176,11 +191,11 @@ namespace DCL.PluginSystem.Global
                 assetsProvisioner,
                 web3IdentityCache,
                 characterPreviewFactory,
-                wearableCache,
+                wearableStorage,
                 selfProfile,
                 equippedWearables,
                 equippedEmotes,
-                emoteCache,
+                emoteStorage,
                 settings.EmbeddedEmotesAsURN(),
                 forceRender,
                 realmData,
@@ -206,9 +221,12 @@ namespace DCL.PluginSystem.Global
 
             ProvidedAsset<LandscapeData> landscapeData = await assetsProvisioner.ProvideMainAssetAsync(settings.LandscapeData, ct);
             ProvidedAsset<QualitySettingsAsset> qualitySettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.QualitySettingsAsset, ct);
-            settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>(), settingsMenuConfiguration.Value, generalAudioMixer.Value, realmPartitionSettings.Value, landscapeData.Value, qualitySettingsAsset.Value);
+            ProvidedAsset<ControlsSettingsAsset> controlsSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.ControlsSettingsAsset, ct);
+            settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>(), settingsMenuConfiguration.Value, generalAudioMixer.Value, realmPartitionSettings.Value, landscapeData.Value, qualitySettingsAsset.Value, controlsSettingsAsset.Value, systemMemoryCap, worldVolumeMacBus);
 
-            navmapController = new NavmapController(navmapView: explorePanelView.GetComponentInChildren<NavmapView>(), mapRendererContainer.MapRenderer, placesAPIService, webRequestController, webBrowser, dclInput, realmNavigator, realmData, mapPathEventBus, world, playerEntity, inputBlock);
+            navmapController = new NavmapController(navmapView: explorePanelView.GetComponentInChildren<NavmapView>(),
+                mapRendererContainer.MapRenderer, placesAPIService, webRequestController, webBrowser, dclInput,
+                realmNavigator, realmData, mapPathEventBus, world, playerEntity, inputBlock, chatMessagesBus);
 
             await navmapController.InitializeAssetsAsync(assetsProvisioner, ct);
             await backpackSubPlugin.InitializeAsync(settings.BackpackSettings, explorePanelView.GetComponentInChildren<BackpackView>(), ct);
@@ -216,7 +234,7 @@ namespace DCL.PluginSystem.Global
             mvcManager.RegisterController(new
                 ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackSubPlugin.backpackController!,
                     new ProfileWidgetController(() => explorePanelView.ProfileWidget, web3IdentityCache, profileRepository, webRequestController),
-                    new ProfileMenuController(() => explorePanelView.ProfileMenuView, explorePanelView.ProfileMenuView.ProfileMenu, web3IdentityCache, profileRepository, webRequestController, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager, chatEntryConfiguration),
+                    new ProfileMenuController(() => explorePanelView.ProfileMenuView, web3IdentityCache, profileRepository, webRequestController, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager, chatEntryConfiguration),
                     dclInput, notificationsBusController, mvcManager, inputBlock));
 
             inputHandler = new ExplorePanelInputHandler(dclInput, mvcManager);
@@ -249,6 +267,9 @@ namespace DCL.PluginSystem.Global
 
             [field: SerializeField]
             public AssetReferenceT<QualitySettingsAsset> QualitySettingsAsset { get; private set; }
+
+            [field: SerializeField]
+            public AssetReferenceT<ControlsSettingsAsset> ControlsSettingsAsset { get; private set; }
 
             public IReadOnlyCollection<URN> EmbeddedEmotesAsURN() =>
                 EmbeddedEmotes.Select(s => new URN(s)).ToArray();

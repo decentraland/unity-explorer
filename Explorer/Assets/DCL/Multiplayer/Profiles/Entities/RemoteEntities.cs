@@ -4,6 +4,7 @@ using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
 using DCL.Interaction.Utility;
 using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.Multiplayer.Connections.Rooms;
 using DCL.Multiplayer.Movement;
 using DCL.Multiplayer.Profiles.RemoteProfiles;
 using DCL.Multiplayer.Profiles.RemoveIntentions;
@@ -16,6 +17,7 @@ using ECS.Prioritization.Components;
 using LiveKit.Rooms;
 using System.Collections.Generic;
 using DCL.Profiles;
+using LiveKit.Proto;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility.PriorityQueue;
@@ -30,7 +32,8 @@ namespace DCL.Multiplayer.Profiles.Entities
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
         private readonly List<string> tempRemoveAll = new ();
         private readonly IEntityCollidersGlobalCache collidersGlobalCache;
-        private readonly Dictionary<string, Collider> collidersByWalletId = new ();
+        private readonly Dictionary<string, RemoteAvatarCollider> collidersByWalletId = new ();
+        private readonly Transform? remoteEntitiesParent = null;
         private IComponentPool<RemoteAvatarCollider> remoteAvatarColliderPool = null!;
         private IComponentPool<Transform> transformPool = null!;
 
@@ -46,11 +49,14 @@ namespace DCL.Multiplayer.Profiles.Entities
             this.componentPoolsRegistry = componentPoolsRegistry;
             this.queuePool = queuePool;
             this.collidersGlobalCache = collidersGlobalCache;
+#if UNITY_EDITOR
+            remoteEntitiesParent = new GameObject("REMOTE_ENTITIES").transform;
+#endif
         }
 
         public void Initialize(RemoteAvatarCollider remoteAvatarCollider)
         {
-            remoteAvatarColliderPool = componentPoolsRegistry.AddGameObjectPool(() => Object.Instantiate(remoteAvatarCollider, Vector3.zero, Quaternion.identity));
+            remoteAvatarColliderPool = componentPoolsRegistry.AddGameObjectPool(() => Object.Instantiate(remoteAvatarCollider));
             transformPool = componentPoolsRegistry
                            .GetReferenceTypePool<Transform>()
                            .EnsureNotNull("ReferenceTypePool of type Transform not found in the registry");
@@ -68,10 +74,7 @@ namespace DCL.Multiplayer.Profiles.Entities
             {
                 string walletId = removeIntention.WalletId;
 
-                if (DoesStillExist(walletId))
-                    return;
-
-                TryRemove(walletId, world);
+                TryRemove(walletId, removeIntention.FromRoom, world);
             }
         }
 
@@ -79,44 +82,50 @@ namespace DCL.Multiplayer.Profiles.Entities
         {
             tempRemoveAll.Clear();
             tempRemoveAll.AddRange(entityParticipantTable.Wallets());
-            foreach (string wallet in tempRemoveAll) TryRemove(wallet, world);
+            foreach (string wallet in tempRemoveAll) Remove(wallet, RoomSource.GATEKEEPER | RoomSource.ISLAND, world);
         }
 
-        public void TryRemove(string walletId, World world)
+        public void TryRemove(string walletId, RoomSource roomSource, World world)
         {
-            if (entityParticipantTable.Has(walletId) == false)
+            if (!entityParticipantTable.Has(walletId))
                 return;
 
-            var entity = entityParticipantTable.Entity(walletId);
+            Remove(walletId, roomSource, world);
+        }
 
-            if (collidersByWalletId.TryGetValue(walletId, out Collider collider))
+        private void Remove(string walletId, RoomSource roomSource, World world)
+        {
+            IReadOnlyEntityParticipantTable.Entry entry = entityParticipantTable.Get(walletId);
+
+            if (!entityParticipantTable.Release(walletId, roomSource))
+                return;
+
+            if (collidersByWalletId.TryGetValue(walletId, out RemoteAvatarCollider remoteAvatarCollider))
             {
-                collidersGlobalCache.RemoveGlobalEntityAssociation(collider);
+                remoteAvatarColliderPool.Release(remoteAvatarCollider);
+                collidersGlobalCache.RemoveGlobalEntityAssociation(remoteAvatarCollider.Collider);
                 collidersByWalletId.Remove(walletId);
             }
 
-            world.AddOrGet(entity, new DeleteEntityIntention());
-            entityParticipantTable.Release(walletId);
-        }
-
-        private bool DoesStillExist(string wallet)
-        {
-            bool ContainsInRoom(IRoom room)
-            {
-                return room.Participants.RemoteParticipant(wallet) != null;
-            }
-
-            return ContainsInRoom(roomHub.IslandRoom()) || ContainsInRoom(roomHub.SceneRoom());
+            world.AddOrGet(entry.Entity, new DeleteEntityIntention());
         }
 
         public Entity TryCreateOrUpdateRemoteEntity(in RemoteProfile profile, World world)
         {
-            if (entityParticipantTable.Has(profile.WalletId))
-                return UpdateCharacter(profile, world);
+            Entity entity;
 
-            Entity entity = CreateCharacter(profile, world);
-            entityParticipantTable.Register(profile.WalletId, entity);
+            if (entityParticipantTable.TryGet(profile.WalletId, out IReadOnlyEntityParticipantTable.Entry entry))
+            {
+                UpdateCharacter(profile, world, entry.Entity);
+                entity = entry.Entity;
+            }
+            else
+            {
+                entity = CreateCharacter(profile, world);
+                entityParticipantTable.Register(profile.WalletId, entity, profile.FromRoom);
+            }
 
+            entityParticipantTable.AddRoomSource(profile.WalletId, profile.FromRoom);
             return entity;
         }
 
@@ -124,7 +133,7 @@ namespace DCL.Multiplayer.Profiles.Entities
         {
             var transform = transformPool.Get()!;
             transform.name = $"REMOTE_ENTITY_{profile.WalletId}";
-            transform.transform.SetParent(null);
+            transform.transform.SetParent(remoteEntitiesParent);
             transform.transform.rotation = Quaternion.identity;
             transform.transform.localScale = Vector3.one;
 
@@ -133,7 +142,7 @@ namespace DCL.Multiplayer.Profiles.Entities
             remoteAvatarCollider.transform.SetParent(transform);
             remoteAvatarCollider.transform.rotation = Quaternion.identity;
             remoteAvatarCollider.transform.localScale = Vector3.one;
-            collidersByWalletId.TryAdd(profile.WalletId, remoteAvatarCollider.Collider);
+            collidersByWalletId.TryAdd(profile.WalletId, remoteAvatarCollider);
 
             var transformComp = new CharacterTransform(transform);
 
@@ -155,21 +164,19 @@ namespace DCL.Multiplayer.Profiles.Entities
             return entity;
         }
 
-        private Entity UpdateCharacter(in RemoteProfile remoteProfile, World world)
+        private void UpdateCharacter(in RemoteProfile remoteProfile, World world, Entity entity)
         {
-            var entity = entityParticipantTable.Entity(remoteProfile.WalletId);
             var profile = remoteProfile.Profile;
 
             if (world.TryGet(entity, out Profile? existingProfile))
                 if (existingProfile!.Version == profile.Version)
-                    return entity;
+                    return;
 
             world.Set(entity, profile);
             // Force to update the avatar through the profile
             profile.IsDirty = true;
 
             ProfileUtils.CreateProfilePicturePromise(profile, world, PartitionComponent.TOP_PRIORITY);
-            return entity;
         }
     }
 }

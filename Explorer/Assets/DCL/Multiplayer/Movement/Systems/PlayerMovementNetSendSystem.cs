@@ -112,10 +112,7 @@ namespace DCL.Multiplayer.Movement.Systems
             float dist = (playerMovement.Character.transform.position - playerMovement.LastSentMessage.position).magnitude;
             float speed = dist / (UnityEngine.Time.unscaledTime - playerMovement.LastSentMessage.timestamp);
 
-            var tier = 0;
-
-            while (tier < settings.VelocityTiers.Length && speed >= settings.VelocityTiers[tier])
-                tier++;
+            byte velocityTier = VelocityTierFromSpeed(speed);
 
             playerMovement.LastSentMessage = new NetworkMovementMessage
             {
@@ -125,7 +122,7 @@ namespace DCL.Multiplayer.Movement.Systems
                 velocitySqrMagnitude = playerMovement.Character.velocity.sqrMagnitude,
 
                 rotationY = playerMovement.Character.transform.eulerAngles.y,
-                tier = tier,
+                velocityTier = velocityTier,
 
                 isStunned = playerStunComponent.IsStunned,
                 isSliding = animation.IsSliding,
@@ -138,9 +135,9 @@ namespace DCL.Multiplayer.Movement.Systems
                     IsFalling = animation.States.IsFalling,
                     IsLongFall = animation.States.IsLongFall,
 
-                    // We don't send blend values explicitly. It is calculated from MovementKind and IsSliding fields
-                    SlideBlendValue = 0f,
-                    MovementBlendValue = 0f,
+                    // Just for testing purposes. We don't send blend values explicitly. It is calculated from MovementKind and IsSliding fields
+                    SlideBlendValue = animation.States.SlideBlendValue,
+                    MovementBlendValue = animation.States.MovementBlendValue,
                 },
 
                 movementKind = movement.Kind,
@@ -152,11 +149,19 @@ namespace DCL.Multiplayer.Movement.Systems
             if (debugSettings.SelfSending
                 && movement.Kind != MovementKind.RUN // simulate package lost when Running
                )
-            {
                 messageBus.SelfSendWithDelayAsync(playerMovement.LastSentMessage,
                                debugSettings.Latency + (debugSettings.Latency * Random.Range(0, debugSettings.LatencyJitter)))
                           .Forget();
-            }
+        }
+
+        private byte VelocityTierFromSpeed(float speed)
+        {
+            byte velocityTier = 0;
+
+            while (velocityTier < settings.VelocityTiers.Length && speed >= settings.VelocityTiers[velocityTier])
+                velocityTier++;
+
+            return velocityTier;
         }
     }
 }

@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading;
 using UnityEngine;
-using static DCL.Chat.Commands.IChatCommand;
+using Utility.Types;
 
 namespace Global.Dynamic.ChatCommands
 {
@@ -27,18 +27,24 @@ namespace Global.Dynamic.ChatCommands
         // Parameters to URL mapping
         private readonly Dictionary<string, string> paramUrls;
 
-        public static readonly Regex REGEX = new ($@"^/({COMMAND_WORLD}|{COMMAND_GOTO})\s+((?!-?\d+\s*,\s*-?\d+$).+?)(?:\s+(-?\d+)\s*,\s*(-?\d+))?$", RegexOptions.Compiled);
+        public static readonly Regex REGEX =
+            new(
+                $@"^/({COMMAND_WORLD}|{ChatCommandsUtils.COMMAND_GOTO})\s+((?!-?\d+\s*,\s*-?\d+$).+?)(?:\s+(-?\d+)\s*,\s*(-?\d+))?$",
+                RegexOptions.Compiled);
         private readonly URLDomain worldDomain = URLDomain.FromString(IRealmNavigator.WORLDS_DOMAIN);
 
         private readonly Dictionary<string, URLAddress> worldAddressesCaches = new ();
         private readonly IRealmNavigator realmNavigator;
+        private readonly EnvironmentValidator environmentValidator;
 
         private string? worldName;
         private string? realmUrl;
 
-        public ChangeRealmChatCommand(IRealmNavigator realmNavigator, IDecentralandUrlsSource decentralandUrlsSource)
+        public ChangeRealmChatCommand(IRealmNavigator realmNavigator, IDecentralandUrlsSource decentralandUrlsSource,
+            EnvironmentValidator environmentValidator)
         {
             this.realmNavigator = realmNavigator;
+            this.environmentValidator = environmentValidator;
 
             paramUrls = new Dictionary<string, string>
             {
@@ -55,7 +61,11 @@ namespace Global.Dynamic.ChatCommands
         {
             worldName = match.Groups[2].Value;
 
-            if (!paramUrls.TryGetValue(worldName, out realmUrl))
+            if (worldName.StartsWith("https"))
+            {
+                realmUrl = worldName;
+            }
+            else if (!paramUrls.TryGetValue(worldName, out realmUrl))
             {
                 if (!worldName.EndsWith(WORLD_SUFFIX))
                     worldName += WORLD_SUFFIX;
@@ -65,18 +75,30 @@ namespace Global.Dynamic.ChatCommands
 
             var realm = URLDomain.FromString(realmUrl!);
 
+            var environmentValidationResult = environmentValidator.ValidateTeleport(realm.ToString());
+
+            if (!environmentValidationResult.Success)
+                return environmentValidationResult.ErrorMessage!;
+                
             Vector2Int parcel = default;
 
             if (match.Groups[3].Success && match.Groups[4].Success)
                 parcel = new Vector2Int(int.Parse(match.Groups[3].Value), int.Parse(match.Groups[4].Value));
 
-            bool isSuccess = await realmNavigator.TryChangeRealmAsync(realm, ct, parcel);
+            if (!realmNavigator.CheckIsNewRealm(realm))
+                return $"🟡 You are already in {worldName}!";
+
+            if (!await realmNavigator.CheckRealmIsReacheableAsync(realm, ct))
+                return $"🔴 Error. The world {worldName} doesn't exist or not reachable!";
+
+            var result = await realmNavigator.TryChangeRealmAsync(realm, ct, parcel);
 
             if (ct.IsCancellationRequested)
                 return "🔴 Error. The operation was canceled!";
 
-            return isSuccess ? $"🟢 Welcome to the {worldName} world!" :
-                realm == realmNavigator.CurrentRealm ? $"🟡 You are already in {worldName}!" : $"🔴 Error. The world {worldName} doesn't exist or not reachable!";
+            return result.Success
+                ? $"🟢 Welcome to the {worldName} world!"
+                : $"🔴 Teleport was not fully successful to {worldName} world"!;
         }
 
         private string GetWorldAddress(string worldPath)

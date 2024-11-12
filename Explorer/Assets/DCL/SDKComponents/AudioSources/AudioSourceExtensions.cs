@@ -25,12 +25,17 @@ namespace DCL.SDKComponents.AudioSources
             audioSource.pitch = pbAudioSource.HasPitch ? pbAudioSource.Pitch : Default.PITCH;
             audioSource.volume = pbAudioSource.HasVolume ? pbAudioSource.Volume : Default.VOLUME;
 
+            if (pbAudioSource.HasGlobal)
+                audioSource.spatialBlend = pbAudioSource.Global ? 0 : 1;
+            else
+                audioSource.spatialBlend = 1;
+
             if (audioSource.clip == null) return;
 
             audioSource.Stop();
 
-            if (pbAudioSource.Playing)
-                audioSource.PlayOneShot(audioSource.clip!);
+            if (pbAudioSource.HasPlaying && pbAudioSource.Playing)
+                audioSource.Play();
         }
 
         public static float GetVolume(this PBAudioSource pbAudioSource) =>

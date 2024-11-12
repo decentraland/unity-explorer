@@ -3,6 +3,7 @@ using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.AvatarRendering.Wearables.Helpers;
 using System.Collections.Generic;
 using DCL.AvatarRendering.AvatarShape.Helpers;
+using DCL.AvatarRendering.Loading.Assets;
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
@@ -13,11 +14,11 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 {
     public abstract class CustomSkinning
     {
-        public abstract AvatarCustomSkinningComponent Initialize(IList<CachedWearable> gameObjects,
+        public abstract AvatarCustomSkinningComponent Initialize(IList<CachedAttachment> gameObjects,
             UnityEngine.ComputeShader skinningShader, IAvatarMaterialPoolHandler avatarMaterial,
             AvatarShapeComponent avatarShapeComponent, in FacialFeaturesTextures facialFeatureTexture);
 
-        public abstract void ComputeSkinning(NativeArray<float4x4> bonesResult, ref AvatarCustomSkinningComponent skinning);
+        public abstract void ComputeSkinning(NativeArray<float4x4> bonesResult, int indexInGlobalResultArray, ref AvatarCustomSkinningComponent skinning);
 
         private protected abstract AvatarCustomSkinningComponent.MaterialSetup SetupMaterial(Renderer meshRenderer, Material originalMaterial, int lastWearableVertCount, IAvatarMaterialPoolHandler celShadingMaterial,
             AvatarShapeComponent shapeComponent, in FacialFeaturesTextures facialFeaturesTextures);

@@ -2,6 +2,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.MapRenderer.ComponentsFactory;
+using DCL.Utilities.Extensions;
 using DCL.WebRequests;
 using DG.Tweening;
 using System.Threading;
@@ -64,10 +65,10 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
             atlasChunk.MainSpriteRenderer.color = INITIAL_COLOR;
             var url = $"{CHUNKS_API}{chunkId.x}%2C{chunkId.y}.jpg";
 
-            Texture2D texture = (await webRequestController.GetTextureAsync(new CommonArguments(URLAddress.FromString(url)),
-                new GetTextureArguments(false), GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp, FilterMode.Trilinear)
-                                                                    .SuppressExceptionsWithFallback(Texture2D.whiteTexture, reportContext: ReportCategory.UI),
-                linkedCts.Token))!;
+            var textureTask = webRequestController.GetTextureAsync(new CommonArguments(URLAddress.FromString(url)),
+                new GetTextureArguments(false), GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp, FilterMode.Trilinear),
+                linkedCts.Token, ReportCategory.UI);
+            var texture = await textureTask!.SuppressExceptionWithFallbackAsync(Texture2D.whiteTexture, SuppressExceptionWithFallback.Behaviour.SuppressAnyException, reportData: ReportCategory.UI)!;
 
             textureContainer.AddChunk(chunkId, texture);
 

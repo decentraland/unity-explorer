@@ -1,4 +1,5 @@
 import os
+import stat
 import re
 import sys
 import time
@@ -9,6 +10,21 @@ import datetime
 import argparse
 # Local
 import utils
+
+from zipfile import ZipFile, ZipInfo
+
+class ZipFileWithPermissions(zipfile.ZipFile):
+    def _extract_member(self, member, targetpath, pwd):
+        if not isinstance(member, zipfile.ZipInfo):
+            member = self.getinfo(member)
+
+        targetpath = super()._extract_member(member, targetpath, pwd)
+
+        attr = member.external_attr >> 16
+        if attr != 0:
+            os.chmod(targetpath, attr)
+        return targetpath
+
 
 # Define whether this is a release workflow based on IS_RELEASE_BUILD
 is_release_workflow = os.getenv('IS_RELEASE_BUILD', 'false').lower() == 'true'
@@ -45,11 +61,7 @@ def get_target(target):
         print("Response body:", response.text)
         sys.exit(1)
 
-# Some of the code in here won't be used
-# Unity does not allow more than 1 item in queue by target
-# So we *always* create a new target, no matter what
-# by appending the commit's SHA
-def clone_current_target():
+def clone_current_target(use_cache):
     def generate_body(template_target, name, branch, options, remoteCacheStrategy):
         body = get_target(template_target)
 
@@ -57,13 +69,18 @@ def clone_current_target():
         body['settings']['scm']['branch'] = branch
         body['settings']['advanced']['unity']['playerExporter']['buildOptions'] = options
         body['settings']['remoteCacheStrategy'] = remoteCacheStrategy
+        body['settings']['buildSchedule']['isEnabled'] = False
 
         print(f"Using cache strategy target: {remoteCacheStrategy}")
 
         # Remove cache for new targets
         if 'buildTargetCopyCache' in body['settings']:
             del body['settings']['buildTargetCopyCache']
-
+        
+        # Remove buildtargetid for new targets (unity bug)
+        if 'buildtargetid' in body:
+            del body['buildtargetid']
+        
         return body
 
     # Set target name based on branch, without commit SHA
@@ -79,9 +96,11 @@ def clone_current_target():
     else:
         new_target_name = base_target_name
 
+    template_target = os.getenv('TARGET')
+
     # Generate request body
     body = generate_body(
-        os.getenv('TARGET'),
+        template_target,
         new_target_name,
         os.getenv('BRANCH_NAME'),
         os.getenv('BUILD_OPTIONS').split(','),
@@ -90,14 +109,31 @@ def clone_current_target():
     existing_target = get_target(new_target_name)
     
     if 'error' in existing_target:
-        # Create new target without cache
-        response = requests.post(f'{URL}/buildtargets', headers=HEADERS, json=body)
-        print("No cache build target used for new target")
+        print(f"New target found")
+        # Create new target with template cache
+        if use_cache:
+            body['settings']['buildTargetCopyCache'] = template_target
+            print(f"Using template cache build target: {template_target}")
+        else:
+            print(f"Not using cache")
+        try:
+            response = requests.post(f'{URL}/buildtargets', headers=HEADERS, json=body)
+        except ConnectionError as e:
+            print(f'ConnectionError while trying to post new target: {e}. Retrying...')
+            time.sleep(2)  # Add a small delay before retrying
+            clone_current_target(use_cache)  # Retry the whole process
     else:
-
-        body['settings']['buildTargetCopyCache'] = new_target_name
-        print(f"Using cache build target: {new_target_name}")
-        response = requests.put(f'{URL}/buildtargets/{new_target_name}', headers=HEADERS, json=body)
+        if use_cache:
+            body['settings']['buildTargetCopyCache'] = new_target_name
+            print(f"Using existing cache build target: {new_target_name}")
+        else:
+            print(f"Not using cache")
+        try:
+            response = requests.put(f'{URL}/buildtargets/{new_target_name}', headers=HEADERS, json=body)
+        except ConnectionError as e:
+            print(f'ConnectionError while trying to post exisiting target: {e}. Retrying...')
+            time.sleep(2)  # Add a small delay before retrying
+            clone_current_target(use_cache)  # Retry the whole process
 
     print(f"clone_current_target response status: {response.status_code}")
     if response.status_code == 200 or response.status_code == 201:
@@ -107,7 +143,11 @@ def clone_current_target():
     elif response.status_code == 500 and 'Build target name already in use for this project!' in response.text:
         print('Target update failed due to a possible race condition. Retrying...')
         time.sleep(2)  # Add a small delay before retrying
-        clone_current_target()  # Retry the whole process
+        clone_current_target(True)  # Retry the whole process
+    elif response.status_code == 400:
+        print('Target update failed due to incompatible cache file. Retrying...')
+        time.sleep(2)  # Add a small delay before retrying
+        clone_current_target(False)  # Retry the whole process
     else:
         print('Target failed to clone/update with status code:', response.status_code)
         print('Response body:', response.text)
@@ -218,14 +258,18 @@ def poll_build(id):
     if id == -1:
         print('Error: No build ID known (-1)')
         sys.exit(1)
-
     retries = 0
     max_retries = 5
     wait_time = 2
     while retries < max_retries:
         try:
             response = requests.get(f'{URL}/buildtargets/{os.getenv('TARGET')}/builds/{id}', headers=HEADERS)
-            break
+            if response.status_code == 200:
+                break
+            else:
+                print(f'Failed to poll build with ID {id} with status code: {response.status_code}')
+                print('Response body:', response.text)
+                raise Exception(f"HTTP error {response.status_code}")
         except Exception as e:
             print(f'Request failed: {e}')
             retries += 1
@@ -234,16 +278,11 @@ def poll_build(id):
                 time.sleep(wait_time)
                 wait_time *= 2  # Increase wait time exponentially for each retry
             else:
-                raise Exception(f'Failed after {max_retries} retries')
-
-    if response.status_code != 200:
-        print(f'Failed to poll build with ID {id} with status code: {response.status_code}')
-        print('Response body:', response.text)
-        sys.exit(1)
-
+                print(f'Failed after {max_retries} retries')
+                sys.exit(1)
+    
     global build_healthy
     response_json = response.json()
-
     # { created , queued , sentToBuilder , started , restarted , success , failure , canceled , unknown }
     status = response_json['buildStatus']
     match status:
@@ -261,9 +300,9 @@ def poll_build(id):
             print(f'Build status is not known!: "{status}"')
             sys.exit(1)
             return False
-
+            
 def download_artifact(id):
-    response = requests.get(f'{URL}/buildtargets/{os.getenv('TARGET')}/builds/{id}', headers=HEADERS)
+    response = requests.get(f'{URL}/buildtargets/{os.getenv("TARGET")}/builds/{id}', headers=HEADERS)
 
     if response.status_code != 200:
         print(f'Failed to get build artifacts with ID {id} with status code: {response.status_code}')
@@ -279,21 +318,50 @@ def download_artifact(id):
 
     download_dir = 'build'
     filepath = os.path.join(download_dir, 'artifact.zip')
+
+    # Print current working directory and target download directory
+    print(f"Current working directory: {os.getcwd()}")
+    print(f"Target download directory: {os.path.join(os.getcwd(), download_dir)}")
+
     os.makedirs(download_dir, exist_ok=True)
 
-    print('Started downloading artifacts from Unity Cloud...')
-
+    print(f'Started downloading artifacts from Unity Cloud to {download_dir}...')
     response = requests.get(artifact_url)
     with open(filepath, 'wb') as f:
         f.write(response.content)
 
-    print('Started extracting artifacts from Unity Cloud...')
+    print(f'Started extracting artifacts from Unity Cloud to {download_dir}...')
+    try:
+        with ZipFileWithPermissions(filepath, 'r') as zip_ref:
+            zip_ref.extractall(download_dir)
 
-    with zipfile.ZipFile(filepath, 'r') as zip_ref:
-        zip_ref.extractall(download_dir)
+        # Check if this is a macOS target and verify we have the right permissions set
+        if 'macos' in os.getenv('TARGET', '').lower():
+            explorer_path = os.path.join(download_dir, 'Decentraland.app', 'Contents', 'MacOS', 'Explorer')
+            if os.path.exists(explorer_path):
+                is_executable = os.access(explorer_path, os.X_OK)
+                print(f"Is Explorer executable? {'Yes' if is_executable else 'No'}")
+                print(f"Explorer permissions: {oct(os.stat(explorer_path).st_mode)}")
+            else:
+                print(f"Warning: Explorer executable not found at {explorer_path}")
+        else:
+            print("Not a macOS target, skipping Explorer executable check.")
+
+    except zipfile.BadZipFile as e:
+        print(f'Failed to unzip the artifact at {filepath}: {e}')
+        sys.exit(1)
+    except Exception as e:
+        print(f'An unexpected error occurred during the extraction: {e}')
+        sys.exit(1)
 
     os.remove(filepath)
     print('Artifacts ready!')
+
+    # Final check to confirm build folder exists
+    if os.path.exists(download_dir):
+        print(f"Build folder confirmed at: {os.path.join(os.getcwd(), download_dir)}")
+    else:
+        print(f"ERROR: Build folder not found at expected location: {os.path.join(os.getcwd(), download_dir)}")
 
 def download_log(id):
     response = requests.get(f'{URL}/buildtargets/{os.getenv('TARGET')}/builds/{id}/log', headers=HEADERS)
@@ -390,7 +458,10 @@ else:
     #
     # If the target already exists, it will check if it has running builds on it
     # If it has running builds, a new target will be created with an added timestamp (Unity can't queue)
-    clone_current_target()
+    try:
+        clone_current_target(True)
+    except Exception as e:
+        print(f"Operation failed: {e}")
 
     # Set ENVs (Parameters)
     # This must run immediately before starting a build
@@ -432,8 +503,9 @@ if not build_healthy:
     print(f'Build unhealthy - check the downloaded logs or go to https://cloud.unity.com/ and search for target "{os.getenv('TARGET')}" and build ID "{id}"')
     sys.exit(1)
 
-# Cleanup (only if build is healthy)
+# Cleanup (only if build is healthy and not release)
 # We only delete all artifacts, not the build target
-delete_build(id)
+if not is_release_workflow:
+    delete_build(id)
 
 utils.delete_build_info()

@@ -1,6 +1,4 @@
 ﻿using CrdtEcsBridge.PoolsProviders;
-using DCL.Multiplayer.Connections.Messaging;
-using Decentraland.Kernel.Comms.Rfc4;
 using SceneRunner.Scene;
 using SceneRuntime;
 using SceneRuntime.Apis.Modules.CommunicationsControllerApi;
@@ -12,74 +10,61 @@ using Utility;
 
 namespace CrdtEcsBridge.JsModulesImplementation.Communications
 {
-    public class CommunicationsControllerAPIImplementationBase : ICommunicationsControllerAPI
+    public abstract class CommunicationsControllerAPIImplementationBase : ICommunicationsControllerAPI
     {
-        internal enum MsgType
-        {
-            String = 1, // SDK scenes MessageBus messages
-            Uint8Array = 2,
-        }
+        /// <summary>
+        ///     Special signal to receive CRDT State from a peer
+        /// </summary>
+        private const byte REQ_CRDT_STATE = 2;
 
-        protected readonly CancellationTokenSource cancellationTokenSource = new ();
-        protected readonly ICommunicationControllerHub messagePipesHub;
-        protected readonly ISceneData sceneData;
-        protected readonly ISceneStateProvider sceneStateProvider;
-        protected readonly IJsOperations jsOperations;
-        protected readonly Action<ICommunicationControllerHub.SceneMessage> onMessageReceivedCached;
         protected readonly List<IMemoryOwner<byte>> eventsToProcess = new ();
+        private readonly CancellationTokenSource cancellationTokenSource = new ();
+        private readonly ISceneCommunicationPipe sceneCommunicationPipe;
+        private readonly string sceneId;
+        private readonly IJsOperations jsOperations;
+        private readonly ISceneCommunicationPipe.MsgType typeToHandle;
+
+        private readonly ISceneCommunicationPipe.SceneMessageHandler onMessageReceivedCached;
+
         internal IReadOnlyList<IMemoryOwner<byte>> EventsToProcess => eventsToProcess;
 
-        public CommunicationsControllerAPIImplementationBase(
+        protected CommunicationsControllerAPIImplementationBase(
             ISceneData sceneData,
-            ICommunicationControllerHub messagePipesHub,
+            ISceneCommunicationPipe sceneCommunicationPipe,
             IJsOperations jsOperations,
-            ISceneStateProvider sceneStateProvider)
+            ISceneCommunicationPipe.MsgType typeToHandle)
         {
-            this.sceneData = sceneData;
-            this.messagePipesHub = messagePipesHub;
+            sceneId = sceneData.SceneEntityDefinition.id!;
+            this.sceneCommunicationPipe = sceneCommunicationPipe;
             this.jsOperations = jsOperations;
-            this.sceneStateProvider = sceneStateProvider;
+            this.typeToHandle = typeToHandle;
 
             onMessageReceivedCached = OnMessageReceived;
+
+            this.sceneCommunicationPipe.AddSceneMessageHandler(sceneId, typeToHandle, onMessageReceivedCached);
         }
 
         public void Dispose()
         {
+            sceneCommunicationPipe.RemoveSceneMessageHandler(sceneId, typeToHandle, onMessageReceivedCached);
+
             lock (eventsToProcess) { CleanUpReceivedMessages(); }
 
             cancellationTokenSource.SafeCancelAndDispose();
         }
 
-        public void OnSceneIsCurrentChanged(bool isCurrent)
-        {
-            if (isCurrent)
-                messagePipesHub.SetSceneMessageHandler(onMessageReceivedCached);
-            else
-                messagePipesHub.RemoveSceneMessageHandler(onMessageReceivedCached);
-        }
-
         public object SendBinary(IReadOnlyList<PoolableByteArray> data)
         {
-            if (!sceneStateProvider.IsCurrent)
-                return jsOperations.ConvertToScriptTypedArrays(Array.Empty<IMemoryOwner<byte>>());
-
             foreach (PoolableByteArray poolable in data)
-            {
-                if (poolable.Length == 0)
-                    continue;
-
-                Memory<byte> message = poolable.Memory;
-
-                EncodeAndSend();
-
-                void EncodeAndSend()
+                if (poolable.Length > 0)
                 {
-                    Span<byte> encodedMessage = stackalloc byte[message.Length + 1];
-                    encodedMessage[0] = (byte)MsgType.Uint8Array;
-                    message.Span.CopyTo(encodedMessage[1..]);
-                    SendMessage(encodedMessage);
+                    ISceneCommunicationPipe.ConnectivityAssertiveness assertiveness = poolable.Span[0] == REQ_CRDT_STATE
+                        ? ISceneCommunicationPipe.ConnectivityAssertiveness.DELIVERY_ASSERTED
+                        : ISceneCommunicationPipe.ConnectivityAssertiveness.DROP_IF_NOT_CONNECTED;
+
+                    EncodeAndSendMessage(ISceneCommunicationPipe.MsgType.Uint8Array, poolable.Memory.Span, assertiveness);
                 }
-            }
+
 
             lock (eventsToProcess)
             {
@@ -98,18 +83,15 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
             eventsToProcess.Clear();
         }
 
-        private void SendMessage(ReadOnlySpan<byte> message)
+        protected void EncodeAndSendMessage(ISceneCommunicationPipe.MsgType msgType, ReadOnlySpan<byte> message, ISceneCommunicationPipe.ConnectivityAssertiveness assertiveness)
         {
-            messagePipesHub.SendMessage(message, sceneData.SceneEntityDefinition.id!, cancellationTokenSource.Token);
+            Span<byte> encodedMessage = stackalloc byte[message.Length + 1];
+            encodedMessage[0] = (byte)msgType;
+            message.CopyTo(encodedMessage[1..]);
+
+            sceneCommunicationPipe.SendMessage(encodedMessage, sceneId, assertiveness, cancellationTokenSource.Token);
         }
 
-        protected virtual void OnMessageReceived(ICommunicationControllerHub.SceneMessage receivedMessage) { }
-
-        internal static MsgType DecodeMessage(ref ReadOnlySpan<byte> value)
-        {
-            var msgType = (MsgType)value[0];
-            value = value[1..];
-            return msgType;
-        }
+        protected abstract void OnMessageReceived(ISceneCommunicationPipe.DecodedMessage decodedMessage);
     }
 }

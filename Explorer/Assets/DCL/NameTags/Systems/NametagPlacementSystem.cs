@@ -13,11 +13,13 @@ using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using System.Runtime.CompilerServices;
+using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using UnityEngine;
 using UnityEngine.Pool;
-#if UNITY_EDITOR
-using Utility.Editor;
-#endif
+
+// #if UNITY_EDITOR
+// using Utility.Editor;
+// #endif
 
 namespace DCL.Nametags
 {
@@ -58,12 +60,9 @@ namespace DCL.Nametags
         protected override void Update(float t)
         {
             if (!nametagsData.showNameTags)
-            {
-                RemoveAllTagsQuery(World);
                 return;
-            }
 
-            RemoveTagQuery(World);
+            EnableTagQuery(World);
 
             CameraComponent camera = playerCamera.GetCameraComponent(World);
 
@@ -71,10 +70,11 @@ namespace DCL.Nametags
             AddTagQuery(World, camera);
             ProcessChatBubbleComponentsQuery(World);
             UpdateOwnTagQuery(World, camera);
+            RemoveUnusedChatBubbleComponentsQuery(World);
         }
 
         [Query]
-        [None(typeof(NametagView))]
+        [None(typeof(NametagView), typeof(DeleteEntityIntention))]
         private void AddTag([Data] in CameraComponent camera, Entity e, in AvatarShapeComponent avatarShape, in CharacterTransform characterTransform, in PartitionComponent partitionComponent, in Profile profile)
         {
             if (partitionComponent.IsBehind || IsOutOfRenderRange(camera, characterTransform) || (camera.Mode == CameraMode.FirstPerson && World.Has<PlayerComponent>(e))) return;
@@ -90,6 +90,17 @@ namespace DCL.Nametags
             UpdateTagPosition(nametagView, camera.Camera, characterTransform.Position);
 
             World.Add(e, nametagView);
+        }
+
+        [Query]
+        [All(typeof(AvatarBase), typeof(NametagView))]
+        [None(typeof(DeleteEntityIntention))]
+        private void EnableTag(in NametagView nametagView)
+        {
+            if (nametagView.isActiveAndEnabled)
+                return;
+
+            nametagView.gameObject.SetActive(true);
         }
 
         [Query]
@@ -117,19 +128,13 @@ namespace DCL.Nametags
             World.Remove<ChatBubbleComponent>(e);
         }
 
-        [Query]
-        private void RemoveTag(NametagView nametagView, in DeleteEntityIntention deleteEntityIntention)
-        {
-            if (deleteEntityIntention.DeferDeletion == false)
-                nametagViewPool.Release(nametagView);
-        }
 
         [Query]
-        [All(typeof(NametagView))]
-        private void RemoveAllTags(Entity e, NametagView nametagView)
+        [All(typeof(ChatBubbleComponent))]
+        //This query is used to remove the ChatBubbleComponent from the entity if the chat bubble has not been displayed
+        private void RemoveUnusedChatBubbleComponents(Entity e)
         {
-            nametagViewPool.Release(nametagView);
-            World.Remove<NametagView>(e);
+            World.Remove<ChatBubbleComponent>(e);
         }
 
         [Query]

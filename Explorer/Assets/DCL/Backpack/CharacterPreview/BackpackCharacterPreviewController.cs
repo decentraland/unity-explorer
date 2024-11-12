@@ -3,6 +3,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Equipped;
+using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
@@ -130,6 +131,7 @@ namespace DCL.Backpack.CharacterPreview
                     previewAvatarModel.SkinColor = newColor;
                     break;
             }
+
             OnModelUpdated();
         }
 
@@ -179,14 +181,18 @@ namespace DCL.Backpack.CharacterPreview
             {
                 URN urn = emote.GetUrn().Shorten();
 
-                // In case you want to preview an emote, it might happen that the asset bundles are not loaded
-                // By adding the emote we force to fetch them if missing
+                // Ensure assets are loaded for the emote
                 if (!previewAvatarModel.Emotes?.Contains(urn) ?? true)
                 {
                     previewAvatarModel.Emotes!.Add(urn);
-                    await ShowLoadingSpinnerAndUpdateAvatarAsync(ct);
-                    // Remove the emote so it stays original
-                    previewAvatarModel.Emotes!.Remove(urn);
+
+                    try { await ShowLoadingSpinnerAndUpdateAvatarAsync(ct); }
+                    catch (OperationCanceledException) { }
+                    finally
+                    {
+                        // Remove the emote so it stays original
+                        previewAvatarModel.Emotes!.Remove(urn);
+                    }
                 }
 
                 PlayEmote(urn);

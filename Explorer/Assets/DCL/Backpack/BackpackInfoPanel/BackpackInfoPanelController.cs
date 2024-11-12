@@ -2,14 +2,18 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.Emotes;
+using DCL.AvatarRendering.Loading.Components;
+using DCL.AvatarRendering.Thumbnails.Utils;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.ThirdParty;
 using DCL.Backpack.BackpackBus;
+using DCL.Diagnostics;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using Utility;
+using IAvatarAttachment = DCL.AvatarRendering.Loading.Components.IAvatarAttachment;
 
 namespace DCL.Backpack
 {
@@ -102,20 +106,14 @@ namespace DCL.Backpack
 
         private async UniTaskVoid WaitForThumbnailAsync(IAvatarAttachment itemWearable, CancellationToken ct)
         {
-            do
-            {
-                await UniTask.Delay(MINIMUM_WAIT_TIME, cancellationToken: ct);
-            }
-            while (itemWearable.ThumbnailAssetResult == null);
-
-            view.WearableThumbnail.sprite = itemWearable.ThumbnailAssetResult.Value.Asset;
+            view.WearableThumbnail.sprite = await itemWearable.WaitForThumbnailAsync(MINIMUM_WAIT_TIME, ct);
             view.LoadingSpinner.SetActive(false);
             view.WearableThumbnail.gameObject.SetActive(true);
         }
 
         private async UniTaskVoid TrySetThirdPartyProviderNameAsync(IAvatarAttachment nft, CancellationToken ct)
         {
-            IReadOnlyList<ThirdPartyNftProviderDefinition> tpws = await thirdPartyNftProviderSource.GetAsync(ct);
+            IReadOnlyList<ThirdPartyNftProviderDefinition> tpws = await thirdPartyNftProviderSource.GetAsync(ReportCategory.BACKPACK, ct);
             URN urn = nft.GetUrn();
 
             foreach (ThirdPartyNftProviderDefinition tpw in tpws)

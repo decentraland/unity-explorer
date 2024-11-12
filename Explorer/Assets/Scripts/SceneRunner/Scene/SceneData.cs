@@ -40,8 +40,8 @@ namespace SceneRunner.Scene
             IReadOnlyList<Vector2Int> parcels,
             StaticSceneMessages staticSceneMessages)
         {
-            this.SceneContent = sceneContent;
-            this.SceneEntityDefinition = sceneDefinition;
+            SceneContent = sceneContent;
+            SceneEntityDefinition = sceneDefinition;
             AssetBundleManifest = assetBundleManifest;
             StaticSceneMessages = staticSceneMessages;
             Parcels = parcels;
@@ -95,6 +95,22 @@ namespace SceneRunner.Scene
             return false;
         }
 
+        public bool TryGetMediaFileHash(string url, out string fileHash)
+        {
+            if (string.IsNullOrEmpty(url))
+            {
+                fileHash = string.Empty;
+                return false;
+            }
+
+            // Try resolve an internal URL
+            if (TryGetHash(url, out fileHash))
+                return true;
+
+            fileHash = string.Empty;
+            return false;
+        }
+
         public bool IsUrlDomainAllowed(string url)
         {
             if (Uri.TryCreate(url, UriKind.Absolute, out Uri uri))
@@ -108,6 +124,9 @@ namespace SceneRunner.Scene
 
             return false;
         }
+
+        public bool IsPortableExperience() =>
+            SceneEntityDefinition.metadata.isPortableExperience;
 
         public bool IsSdk7() =>
             SceneEntityDefinition.metadata.runtimeVersion == "7";

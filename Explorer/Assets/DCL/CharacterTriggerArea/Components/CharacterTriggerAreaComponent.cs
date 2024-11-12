@@ -11,16 +11,16 @@ namespace DCL.CharacterTriggerArea.Components
     public struct CharacterTriggerAreaComponent : IDirtyMarker
     {
         private static readonly IReadOnlyCollection<Transform> EMPTY_COLLECTION = Array.Empty<Transform>();
-        public Vector3 AreaSize;
-        private CharacterTriggerArea? monoBehaviour;
+        internal CharacterTriggerArea? monoBehaviour;
         private readonly bool targetOnlyMainPlayer;
+        public Vector3 AreaSize { get; private set; }
 
-        public readonly IReadOnlyCollection<Transform> EnteredThisFrame => monoBehaviour != null
-            ? monoBehaviour.EnteredThisFrame
+        public readonly IReadOnlyCollection<Transform> EnteredAvatarsToBeProcessed => monoBehaviour != null
+            ? monoBehaviour.EnteredAvatarsToBeProcessed
             : EMPTY_COLLECTION;
 
-        public readonly IReadOnlyCollection<Transform> ExitedThisFrame => monoBehaviour != null
-            ? monoBehaviour.ExitedThisFrame
+        public readonly IReadOnlyCollection<Transform> ExitedAvatarsToBeProcessed => monoBehaviour != null
+            ? monoBehaviour.ExitedAvatarsToBeProcessed
             : EMPTY_COLLECTION;
 
         public readonly IReadOnlyCollection<Transform> CurrentAvatarsInside => monoBehaviour != null
@@ -35,11 +35,6 @@ namespace DCL.CharacterTriggerArea.Components
             this.monoBehaviour = monoBehaviour;
 
             IsDirty = true;
-        }
-
-        public void ForceAssignArea(CharacterTriggerArea characterTriggerArea)
-        {
-            monoBehaviour = characterTriggerArea;
         }
 
         public void TryAssignArea(IComponentPool<CharacterTriggerArea> pool, Transform mainPlayerTransform)
@@ -57,6 +52,12 @@ namespace DCL.CharacterTriggerArea.Components
             }
 
             monoBehaviour!.BoxCollider.size = AreaSize;
+        }
+
+        public void UpdateAreaSize(Vector3 size)
+        {
+            AreaSize = size;
+            IsDirty = true;
         }
 
         public readonly void TryUpdateTransform(ref TransformComponent transformComponent)
@@ -85,11 +86,13 @@ namespace DCL.CharacterTriggerArea.Components
             }
         }
 
-        public void TryClear()
-        {
-            if (monoBehaviour != null)
-                monoBehaviour.Clear();
-        }
+        public void TryClear() => monoBehaviour?.Clear();
+
+        public void TryClearEnteredAvatarsToBeProcessed() =>
+            monoBehaviour?.ClearEnteredAvatarsToBeProcessed();
+
+        public void TryClearExitedAvatarsToBeProcessed() =>
+            monoBehaviour?.ClearExitedAvatarsToBeProcessed();
 
         public bool TryDispose(ISceneStateProvider sceneStateProvider)
         {

@@ -1,7 +1,6 @@
 ﻿using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
-using DCL.AsyncLoadReporting;
 using DCL.DebugUtilities;
 using DCL.Landscape;
 using DCL.Landscape.Config;
@@ -28,6 +27,7 @@ namespace DCL.PluginSystem.Global
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly MapRendererTextureContainer textureContainer;
         private readonly bool enableLandscape;
+        private readonly bool isZone;
         private ProvidedAsset<RealmPartitionSettingsAsset> realmPartitionSettings;
         private ProvidedAsset<LandscapeData> landscapeData;
         private ProvidedAsset<ParcelData> parcelData;
@@ -42,18 +42,19 @@ namespace DCL.PluginSystem.Global
             IDebugContainerBuilder debugContainerBuilder,
             MapRendererTextureContainer textureContainer,
             IWebRequestController webRequestController,
-            bool enableLandscape)
+            bool enableLandscape,
+            bool isZone)
         {
             this.floor = floor;
             this.assetsProvisioner = assetsProvisioner;
             this.debugContainerBuilder = debugContainerBuilder;
             this.textureContainer = textureContainer;
             this.enableLandscape = enableLandscape;
-
+            this.isZone = isZone;
             this.terrainGenerator = terrainGenerator;
             this.worldTerrainGenerator = worldTerrainGenerator;
 
-            parcelService = new LandscapeParcelService(webRequestController);
+            parcelService = new LandscapeParcelService(webRequestController, isZone);
         }
 
         public void Dispose()
@@ -91,7 +92,8 @@ namespace DCL.PluginSystem.Global
                 parcelChecksum = fetchParcelResult.Checksum;
             }
 
-            terrainGenerator.Initialize(landscapeData.Value.terrainData, ref emptyParcels, ref ownedParcels, parcelChecksum);
+            terrainGenerator.Initialize(landscapeData.Value.terrainData, ref emptyParcels, ref ownedParcels,
+                parcelChecksum, isZone);
             worldTerrainGenerator.Initialize(landscapeData.Value.worldsTerrainData);
         }
 

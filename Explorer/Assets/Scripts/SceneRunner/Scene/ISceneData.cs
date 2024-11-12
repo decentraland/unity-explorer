@@ -9,12 +9,12 @@ namespace SceneRunner.Scene
 {
     public interface ISceneData
     {
-        public bool SceneLoadingConcluded { get; set; }
+        bool SceneLoadingConcluded { get; set; }
         SceneShortInfo SceneShortInfo { get; }
 
         IReadOnlyList<Vector2Int> Parcels { get; }
-        public ISceneContent SceneContent { get;}
-        public SceneEntityDefinition SceneEntityDefinition { get; }
+        ISceneContent SceneContent { get; }
+        SceneEntityDefinition SceneEntityDefinition { get; }
 
         /// <summary>
         ///     Position of the base parcel in the world
@@ -55,9 +55,13 @@ namespace SceneRunner.Scene
         /// <returns></returns>
         bool TryGetMediaUrl(string url, out URLAddress result);
 
+        bool TryGetMediaFileHash(string url, out string fileHash);
+
         bool IsUrlDomainAllowed(string url);
 
         bool IsSdk7();
+
+        bool IsPortableExperience();
 
         class Fake : ISceneData
         {
@@ -103,11 +107,20 @@ namespace SceneRunner.Scene
                 return false;
             }
 
+            public bool TryGetMediaFileHash(string url, out string fileHash)
+            {
+                fileHash = string.Empty;
+                return false;
+            }
+
             public bool IsUrlDomainAllowed(string url) =>
                 false;
 
             public bool IsSdk7() =>
                 true;
+
+            public bool IsPortableExperience() =>
+                false;
         }
     }
 }

@@ -23,7 +23,7 @@ namespace DCL.Profiling.ECS
         private const float FRAME_STATS_COOLDOWN = 30; // update each <FRAME_STATS_COOLDOWN> frames (statistic buffer == 1000)
 
         private readonly IRealmData realmData;
-        private readonly IDebugViewProfiler profiler;
+        private readonly IProfiler profiler;
         private readonly MemoryBudget memoryBudget;
         private readonly V8ActiveEngines v8ActiveEngines;
         private readonly IScenesCache scenesCache;
@@ -31,7 +31,7 @@ namespace DCL.Profiling.ECS
 
         private readonly PerformanceBottleneckDetector bottleneckDetector = new ();
 
-        private DebugWidgetVisibilityBinding visibilityBinding;
+        private DebugWidgetVisibilityBinding performanceVisibilityBinding;
         private DebugWidgetVisibilityBinding memoryVisibilityBinding;
 
         private ElementBinding<string> hiccups;
@@ -62,8 +62,9 @@ namespace DCL.Profiling.ECS
         private int framesSinceMetricsUpdate;
 
         private bool frameTimingsEnabled;
+        private bool sceneMetricsEnabled;
 
-        private DebugViewProfilingSystem(World world, IRealmData realmData, IDebugViewProfiler profiler, MemoryBudget memoryBudget, IDebugContainerBuilder debugBuilder,
+        private DebugViewProfilingSystem(World world, IRealmData realmData, IProfiler profiler, MemoryBudget memoryBudget, IDebugContainerBuilder debugBuilder,
             V8ActiveEngines v8ActiveEngines, IScenesCache scenesCache) : base(world)
         {
             this.realmData = realmData;
@@ -80,7 +81,7 @@ namespace DCL.Profiling.ECS
                 var version = new ElementBinding<string>(Application.version);
 
                 debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.PERFORMANCE)
-                           ?.SetVisibilityBinding(visibilityBinding = new DebugWidgetVisibilityBinding(true))
+                           ?.SetVisibilityBinding(performanceVisibilityBinding = new DebugWidgetVisibilityBinding(true))
                             .AddCustomMarker("Version:", version)
                             .AddCustomMarker("Frame rate:", fps = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("Min FPS last 1k frames:", minfps = new ElementBinding<string>(string.Empty))
@@ -98,12 +99,13 @@ namespace DCL.Profiling.ECS
                            ?.SetVisibilityBinding(memoryVisibilityBinding = new DebugWidgetVisibilityBinding(true))
                             .AddSingleButton("Resources.UnloadUnusedAssets", () => Resources.UnloadUnusedAssets())
                             .AddSingleButton("GC.Collect", GC.Collect)
-                            .AddCustomMarker("Total Used Memory [MB]:", usedMemory = new ElementBinding<string>(string.Empty))
+                            .AddCustomMarker("System Used Memory [MB]:", usedMemory = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("Gc Used Memory [MB]:", gcUsedMemory = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("Memory Budget Thresholds [MB]:", memoryCheckpoints = new ElementBinding<string>(string.Empty))
                             .AddSingleButton("Memory NORMAL", () => this.memoryBudget.SimulatedMemoryUsage = MemoryUsageStatus.NORMAL)
                             .AddSingleButton("Memory WARNING", () => this.memoryBudget.SimulatedMemoryUsage = MemoryUsageStatus.WARNING)
                             .AddSingleButton("Memory FULL", () => this.memoryBudget.SimulatedMemoryUsage = MemoryUsageStatus.FULL)
+                            .AddToggleField("Enable Scene Metrics", evt => sceneMetricsEnabled = evt.newValue, sceneMetricsEnabled)
                             .AddCustomMarker("Js-Heap Total [MB]:", jsHeapTotalSize = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("Js-Heap Used [MB]:", jsHeapUsedSize = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("Js-Heap Total Exec [MB]:", jsHeapTotalExecutable = new ElementBinding<string>(string.Empty))
@@ -117,11 +119,16 @@ namespace DCL.Profiling.ECS
             if (!realmData.Configured) return;
 
             if (memoryVisibilityBinding.IsExpanded)
+            {
                 UpdateMemoryView(profiler);
 
-            if (visibilityBinding.IsExpanded)
+                if(sceneMetricsEnabled)
+                    UpdateSceneMetrics();
+            }
+
+            if (performanceVisibilityBinding.IsExpanded)
             {
-                SetFPS(fps, profiler.LastFrameTimeValueNs);
+                SetFPS(fps, (long)profiler.LastFrameTimeValueNs);
 
                 if (framesSinceMetricsUpdate > FRAME_STATS_COOLDOWN)
                 {
@@ -129,11 +136,25 @@ namespace DCL.Profiling.ECS
                     UpdateFrameStatisticsView(profiler);
                 }
 
+
+
                 if (frameTimingsEnabled && bottleneckDetector.IsFrameTimingSupported && bottleneckDetector.TryCapture())
                     UpdateFrameTimings();
 
                 framesSinceMetricsUpdate++;
             }
+        }
+
+        private void UpdateSceneMetrics()
+        {
+            bool isCurrentScene = scenesCache is { CurrentScene: { SceneStateProvider: { IsCurrent: true } } };
+            JsMemorySizeInfo totalJsMemoryData = v8ActiveEngines.GetEnginesSumMemoryData();
+            JsMemorySizeInfo currentSceneJsMemoryData = isCurrentScene ? v8ActiveEngines.GetEnginesMemoryDataForScene(scenesCache.CurrentScene.Info) : new JsMemorySizeInfo();
+
+            jsHeapUsedSize.Value = $"{totalJsMemoryData.UsedHeapSizeMB:F1} | {currentSceneJsMemoryData.UsedHeapSizeMB:F1}";
+            jsHeapTotalSize.Value = $"{totalJsMemoryData.TotalHeapSizeMB:F1} | {currentSceneJsMemoryData.TotalHeapSizeMB:F1}";
+            jsHeapTotalExecutable.Value = $"{totalJsMemoryData.TotalHeapSizeExecutableMB:F1} | {currentSceneJsMemoryData.TotalHeapSizeExecutableMB:F1}";
+            jsHeapLimit.Value = $"{totalJsMemoryData.HeapSizeLimitMB:F1}";
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -152,17 +173,11 @@ namespace DCL.Profiling.ECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void UpdateMemoryView(IMemoryProfiler memoryProfiler)
         {
-            usedMemory.Value = $"<color={GetMemoryUsageColor()}>{(ulong)BytesFormatter.Convert((ulong)memoryProfiler.TotalUsedMemoryInBytes, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte)}</color>";
+            usedMemory.Value =
+                $"<color={GetMemoryUsageColor()}>{(ulong)BytesFormatter.Convert((ulong)memoryProfiler.SystemUsedMemoryInBytes, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte)}</color>";
             gcUsedMemory.Value = BytesFormatter.Convert((ulong)memoryProfiler.GcUsedMemoryInBytes, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte).ToString("F0", CultureInfo.InvariantCulture);
 
-            bool isCurrentScene = scenesCache is { CurrentScene: { SceneStateProvider: { IsCurrent: true } } };
-            JsMemorySizeInfo totalJsMemoryData = v8ActiveEngines.GetEnginesSumMemoryData();
-            JsMemorySizeInfo currentSceneJsMemoryData = isCurrentScene ? v8ActiveEngines.GetEnginesMemoryDataForScene(scenesCache.CurrentScene.Info) : new JsMemorySizeInfo();
 
-            jsHeapUsedSize.Value = $"{totalJsMemoryData.UsedHeapSizeMB:F1} | {currentSceneJsMemoryData.UsedHeapSizeMB:F1}";
-            jsHeapTotalSize.Value = $"{totalJsMemoryData.TotalHeapSizeMB:F1} | {currentSceneJsMemoryData.TotalHeapSizeMB:F1}";
-            jsHeapTotalExecutable.Value = $"{totalJsMemoryData.TotalHeapSizeExecutableMB:F1} | {currentSceneJsMemoryData.TotalHeapSizeExecutableMB:F1}";
-            jsHeapLimit.Value = $"{totalJsMemoryData.HeapSizeLimitMB:F1}";
 
             jsEnginesCount.Value = v8ActiveEngines.Count.ToString();
 
@@ -183,7 +198,7 @@ namespace DCL.Profiling.ECS
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void UpdateFrameStatisticsView(IDebugViewProfiler debugProfiler)
+        private void UpdateFrameStatisticsView(IProfiler debugProfiler)
         {
             FrameTimeStats? frameTimeStats = debugProfiler.CalculateMainThreadFrameTimesNs();
 
@@ -205,7 +220,7 @@ namespace DCL.Profiling.ECS
                                _ => "red",
                            };
 
-            elementBinding.Value = $"<color={color}>{value})</color>";
+            elementBinding.Value = $"<color={color}>{value}</color>";
         }
 
         private static void SetFPS(ElementBinding<string> elementBinding, long value)

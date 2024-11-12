@@ -1,10 +1,11 @@
 using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.Multiplayer.Connections.Rooms;
 using DCL.Multiplayer.Profiles.Bunches;
+using DCL.Optimization.Multithreading;
 using DCL.Utilities.Extensions;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
 using System.Collections.Generic;
-using Utility.Multithreading;
 
 namespace DCL.Multiplayer.Profiles.RemoveIntentions
 {
@@ -12,20 +13,41 @@ namespace DCL.Multiplayer.Profiles.RemoveIntentions
     {
         private readonly IRoomHub roomHub;
         private readonly HashSet<RemoveIntention> list = new ();
-        private readonly MultithreadSync multithreadSync = new();
+        private readonly MutexSync multithreadSync = new();
 
         public ThreadSafeRemoveIntentions(IRoomHub roomHub)
         {
             this.roomHub = roomHub;
 
-            this.roomHub.IslandRoom().Participants.UpdatesFromParticipant += ParticipantsOnUpdatesFromParticipant;
-            this.roomHub.SceneRoom().Participants.UpdatesFromParticipant += ParticipantsOnUpdatesFromParticipant;
+            this.roomHub.IslandRoom().Participants.UpdatesFromParticipant += OnParticipantUpdateFromIsland;
+            this.roomHub.SceneRoom().Room().Participants.UpdatesFromParticipant += OnParticipantUpdateFromScene;
 
-            this.roomHub.IslandRoom().ConnectionUpdated += OnConnectionUpdated;
-            this.roomHub.SceneRoom().ConnectionUpdated += OnConnectionUpdated;
+            this.roomHub.IslandRoom().ConnectionUpdated += OnConnectionUpdateFromIsland;
+            this.roomHub.SceneRoom().Room().ConnectionUpdated += OnConnectionUpdateFromScene;
         }
 
-        private void OnConnectionUpdated(IRoom room, ConnectionUpdate connectionupdate)
+        // TODO how to remove boiler-plate methods and preserve RoomSource?
+        private void OnConnectionUpdateFromIsland(IRoom room, ConnectionUpdate connectionupdate)
+        {
+            OnConnectionUpdated(room, connectionupdate, RoomSource.ISLAND);
+        }
+
+        private void OnConnectionUpdateFromScene(IRoom room, ConnectionUpdate connectionupdate)
+        {
+            OnConnectionUpdated(room, connectionupdate, RoomSource.GATEKEEPER);
+        }
+
+        private void OnParticipantUpdateFromIsland(Participant participant, UpdateFromParticipant update)
+        {
+            ParticipantsOnUpdatesFromParticipant(participant, update, RoomSource.ISLAND);
+        }
+
+        private void OnParticipantUpdateFromScene(Participant participant, UpdateFromParticipant update)
+        {
+            ParticipantsOnUpdatesFromParticipant(participant, update, RoomSource.GATEKEEPER);
+        }
+
+        private void OnConnectionUpdated(IRoom room, ConnectionUpdate connectionupdate, RoomSource roomSource)
         {
             if (connectionupdate is ConnectionUpdate.Disconnected)
             {
@@ -34,25 +56,24 @@ namespace DCL.Multiplayer.Profiles.RemoveIntentions
                 foreach (string identity in room.Participants.RemoteParticipantIdentities())
                 {
                     Participant participant = room.Participants.RemoteParticipant(identity).EnsureNotNull();
-                    list.Add(new RemoveIntention(participant.Identity));
+                    list.Add(new RemoveIntention(participant.Identity, roomSource));
                 }
-
             }
+        }
+
+        private void ParticipantsOnUpdatesFromParticipant(Participant participant, UpdateFromParticipant update, RoomSource roomSource)
+        {
+            if (update is UpdateFromParticipant.Disconnected)
+                ThreadSafeAdd(new RemoveIntention(participant.Identity, roomSource));
         }
 
         ~ThreadSafeRemoveIntentions()
         {
-            roomHub.IslandRoom().Participants.UpdatesFromParticipant -= ParticipantsOnUpdatesFromParticipant;
-            roomHub.SceneRoom().Participants.UpdatesFromParticipant -= ParticipantsOnUpdatesFromParticipant;
+            roomHub.IslandRoom().Participants.UpdatesFromParticipant -= OnParticipantUpdateFromIsland;
+            roomHub.SceneRoom().Room().Participants.UpdatesFromParticipant -= OnParticipantUpdateFromScene;
 
-            roomHub.IslandRoom().ConnectionUpdated -= OnConnectionUpdated;
-            roomHub.SceneRoom().ConnectionUpdated -= OnConnectionUpdated;
-        }
-
-        private void ParticipantsOnUpdatesFromParticipant(Participant participant, UpdateFromParticipant update)
-        {
-            if (update is UpdateFromParticipant.Disconnected)
-                ThreadSafeAdd(new RemoveIntention(participant.Identity));
+            roomHub.IslandRoom().ConnectionUpdated -= OnConnectionUpdateFromIsland;
+            roomHub.SceneRoom().Room().ConnectionUpdated -= OnConnectionUpdateFromScene;
         }
 
         public OwnedBunch<RemoveIntention> Bunch() =>

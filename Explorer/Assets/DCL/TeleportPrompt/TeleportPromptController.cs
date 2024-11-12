@@ -1,17 +1,14 @@
 ﻿using Cysharp.Threading.Tasks;
-using DCL.AsyncLoadReporting;
+using DCL.Chat.Commands;
 using DCL.Diagnostics;
 using DCL.Input;
-using DCL.ParcelsService;
 using DCL.PlacesAPIService;
-using DCL.SceneLoadingScreens;
 using DCL.UI;
 using DCL.WebRequests;
-using ECS.SceneLifeCycle.Reporting;
 using MVC;
 using System;
 using System.Threading;
-using ECS.SceneLifeCycle.Realm;
+using DCL.Chat.MessageBus;
 using UnityEngine;
 using Utility;
 
@@ -19,30 +16,27 @@ namespace DCL.TeleportPrompt
 {
     public partial class TeleportPromptController : ControllerBase<TeleportPromptView, TeleportPromptController.Params>
     {
+        private const string ORIGIN = "teleport prompt";
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         private readonly ICursor cursor;
-        private readonly IRealmNavigator realmNavigator;
-        private readonly IMVCManager mvcManager;
         private readonly IWebRequestController webRequestController;
         private readonly IPlacesAPIService placesAPIService;
         private ImageController placeImageController;
         private Action<TeleportPromptResultType> resultCallback;
         private CancellationTokenSource cts;
+        private readonly IChatMessagesBus chatMessagesBus;
 
         public TeleportPromptController(
             ViewFactoryMethod viewFactory,
             ICursor cursor,
-            IRealmNavigator realmNavigator,
-            IMVCManager mvcManager,
             IWebRequestController webRequestController,
-            IPlacesAPIService placesAPIService) : base(viewFactory)
+            IPlacesAPIService placesAPIService, IChatMessagesBus chatMessagesBus) : base(viewFactory)
         {
             this.cursor = cursor;
-            this.realmNavigator = realmNavigator;
-            this.mvcManager = mvcManager;
             this.webRequestController = webRequestController;
             this.placesAPIService = placesAPIService;
+            this.chatMessagesBus = chatMessagesBus;
         }
 
         protected override void OnViewInstantiated()
@@ -51,6 +45,7 @@ namespace DCL.TeleportPrompt
             viewInstance.cancelButton.onClick.AddListener(Dismiss);
             viewInstance.continueButton.onClick.AddListener(Approve);
         }
+
 
         protected override void OnViewShow()
         {
@@ -61,7 +56,7 @@ namespace DCL.TeleportPrompt
                 if (result != TeleportPromptResultType.Approved)
                     return;
 
-                realmNavigator.TryInitializeTeleportToParcelAsync(inputData.Coords, new CancellationToken()).Forget();
+                chatMessagesBus.Send($"/{ChatCommandsUtils.COMMAND_GOTO} {inputData.Coords.x},{inputData.Coords.y}", ORIGIN);
             });
         }
 

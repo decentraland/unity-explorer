@@ -3,6 +3,9 @@ using LiveKit.Rooms;
 
 namespace DCL.Multiplayer.Connections.Rooms.Connective
 {
+    /// <summary>
+    ///     Represent the core of the connection to a room
+    /// </summary>
     public interface IConnectiveRoom
     {
         enum State
@@ -10,7 +13,23 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
             Stopped,
             Starting,
             Running,
-            Stopping
+            Stopping,
+        }
+
+        public enum ConnectionLoopHealth
+        {
+            Prewarming,
+
+            PrewarmFailed,
+
+            Running,
+
+            /// <summary>
+            ///     Gracefully stopped
+            /// </summary>
+            Stopped,
+
+            CycleFailed,
         }
 
         UniTask<bool> StartAsync();
@@ -19,18 +38,22 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
 
         State CurrentState();
 
+        ConnectionLoopHealth CurrentConnectionLoopHealth { get; }
+
         IRoom Room();
 
-        class Fake : IConnectiveRoom
+        class Null : IConnectiveRoom
         {
             public UniTask<bool> StartAsync() =>
-                UniTask.FromResult(false);
+                UniTask.FromResult(true);
 
             public UniTask StopAsync() =>
                 UniTask.CompletedTask;
 
             public State CurrentState() =>
                 State.Stopped;
+
+            public ConnectionLoopHealth CurrentConnectionLoopHealth => ConnectionLoopHealth.Stopped;
 
             public IRoom Room() =>
                 NullRoom.INSTANCE;

@@ -1,3 +1,4 @@
+using DCL.Multiplayer.Profiles.Announcements;
 using DCL.Multiplayer.Profiles.Bunches;
 using DCL.Multiplayer.Profiles.RemoteAnnouncements;
 using System.Collections.Generic;

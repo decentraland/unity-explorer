@@ -5,6 +5,7 @@ using DCL.Ipfs;
 using DCL.Multiplayer.Connections.Messaging;
 using DCL.Multiplayer.Connections.Messaging.Pipe;
 using Decentraland.Kernel.Comms.Rfc4;
+using ECS;
 using Google.Protobuf;
 using LiveKit.Internal.FFIClients.Pools;
 using NSubstitute;
@@ -22,7 +23,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
     public class CommunicationControllerAPIImplementationShould
     {
         private CommunicationsControllerAPIImplementation api;
-        private TestCommunicationControllerHub communicationControllerHub;
+        private TestSceneCommunicationPipe sceneCommunicationPipe;
         private IMessagePipe messagePipe;
         private IJsOperations jsOperations;
         private ICRDTMemoryAllocator crdtMemoryAllocator;
@@ -30,17 +31,19 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
         [SetUp]
         public void SetUp()
         {
-            communicationControllerHub = new TestCommunicationControllerHub();
+            sceneCommunicationPipe = new TestSceneCommunicationPipe();
 
             ISceneData sceneData = Substitute.For<ISceneData>();
             sceneData.SceneEntityDefinition.Returns(new SceneEntityDefinition { id = "TEST_SCENE" });
 
             crdtMemoryAllocator = CRDTOriginalMemorySlicer.Create();
-            var sceneStateProvider = Substitute.For<ISceneStateProvider>();
+            ISceneStateProvider sceneStateProvider = Substitute.For<ISceneStateProvider>();
             sceneStateProvider.IsCurrent.Returns(true);
 
-            api = new CommunicationsControllerAPIImplementation(sceneData, communicationControllerHub, jsOperations = Substitute.For<IJsOperations>(), crdtMemoryAllocator, sceneStateProvider);
-            api.OnSceneIsCurrentChanged(true);
+            IRealmData realmData = Substitute.For<IRealmData>();
+            realmData.ScenesAreFixed.Returns(false);
+
+            api = new CommunicationsControllerAPIImplementation(sceneData, sceneCommunicationPipe, jsOperations = Substitute.For<IJsOperations>(), crdtMemoryAllocator);
         }
 
         [Test]
@@ -55,10 +58,10 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
 
             api.SendBinary(outerArray);
 
-            var expectedCalls = outerArray.Select(o => o.Prepend((byte)CommunicationsControllerAPIImplementation.MsgType.Uint8Array).ToArray()).ToList();
+            var expectedCalls = outerArray.Select(o => o.Prepend((byte)ISceneCommunicationPipe.MsgType.Uint8Array).ToArray()).ToList();
 
             // Assert the 2d array is equal
-            CollectionAssert.AreEqual(expectedCalls, communicationControllerHub.sendMessageCalls);
+            CollectionAssert.AreEqual(expectedCalls, sceneCommunicationPipe.sendMessageCalls);
 
             // Assert JSOperations called
             jsOperations.Received().ConvertToScriptTypedArrays(api.EventsToProcess);
@@ -68,14 +71,12 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
         public void OnMessageReceived()
         {
             const string WALLET_ID = "0x71C7656EC7ab88b098defB751B7401B5f6d8976F";
-            const string SCENE_ID = "TEST_SCENE";
 
-            byte[] data = GetRandomBytes(50).Prepend((byte)CommunicationsControllerAPIImplementation.MsgType.Uint8Array).ToArray();
+            byte[] data = GetRandomBytes(50).Prepend((byte)ISceneCommunicationPipe.MsgType.Uint8Array).ToArray();
 
-            var receivedMessage = new ReceivedMessage<Scene>(new Scene { Data = ByteString.CopyFrom(data), SceneId = SCENE_ID }, new Packet(), WALLET_ID, Substitute.For<IMultiPool>());
-            communicationControllerHub.onSceneMessage.Invoke(ICommunicationControllerHub.SceneMessage.CopyFrom(receivedMessage));
+            sceneCommunicationPipe.onSceneMessage.Invoke(new ISceneCommunicationPipe.DecodedMessage(data.AsSpan()[1..], WALLET_ID));
 
-            byte[] walletBytes = Encoding.UTF8.GetBytes(receivedMessage.FromWalletId);
+            byte[] walletBytes = Encoding.UTF8.GetBytes(WALLET_ID);
 
             IEnumerable<byte> expectedMessage =
                 walletBytes.Concat(data.Skip(1))
@@ -101,22 +102,19 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
         }
 
         // This class exists because we can't mock ReadOnlySpan (ref structs)
-        private class TestCommunicationControllerHub : ICommunicationControllerHub
+        private class TestSceneCommunicationPipe : ISceneCommunicationPipe
         {
             internal readonly List<byte[]> sendMessageCalls = new ();
-            internal Action<ICommunicationControllerHub.SceneMessage> onSceneMessage;
+            internal ISceneCommunicationPipe.SceneMessageHandler onSceneMessage;
 
-            public void SetSceneMessageHandler(Action<ICommunicationControllerHub.SceneMessage> onSceneMessage)
+            public void AddSceneMessageHandler(string sceneId, ISceneCommunicationPipe.MsgType msgType, ISceneCommunicationPipe.SceneMessageHandler onSceneMessage)
             {
                 this.onSceneMessage = onSceneMessage;
             }
 
-            public void RemoveSceneMessageHandler(Action<ICommunicationControllerHub.SceneMessage> onSceneMessage)
-            {
+            public void RemoveSceneMessageHandler(string sceneId, ISceneCommunicationPipe.MsgType msgType, ISceneCommunicationPipe.SceneMessageHandler onSceneMessage) { }
 
-            }
-
-            public void SendMessage(ReadOnlySpan<byte> message, string sceneId, CancellationToken ct)
+            public void SendMessage(ReadOnlySpan<byte> message, string sceneId, ISceneCommunicationPipe.ConnectivityAssertiveness assertiveness, CancellationToken ct)
             {
                 sendMessageCalls.Add(message.ToArray());
             }

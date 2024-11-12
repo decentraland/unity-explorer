@@ -16,7 +16,7 @@ MonoBehaviour:
   - key: rare
     value: {r: 0.20392157, g: 0.80784315, b: 0.4627451, a: 1}
   - key: epic
-    value: {r: 0.26274514, g: 0.6907097, b: 1, a: 1}
+    value: {r: 0.26274514, g: 0.56078434, b: 1, a: 1}
   - key: uncommon
     value: {r: 1, g: 0.5137255, b: 0.38431373, a: 1}
   - key: legendary

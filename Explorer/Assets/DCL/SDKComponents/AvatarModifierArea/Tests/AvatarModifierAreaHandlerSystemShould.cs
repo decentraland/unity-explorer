@@ -1,18 +1,20 @@
 using Arch.Core;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
-using DCL.AvatarRendering.Wearables;
+using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.CharacterTriggerArea.Components;
 using DCL.ECSComponents;
 using DCL.Profiles;
+using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.SDKComponents.AvatarModifierArea.Components;
 using DCL.SDKComponents.AvatarModifierArea.Systems;
-using DCL.Utilities;
+using DCL.Web3.Identities;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.TestSuite;
 using ECS.Unity.Transforms.Components;
+using NSubstitute;
 using NUnit.Framework;
 using System.Collections.Generic;
 using UnityEngine;
@@ -38,12 +40,11 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
         public void Setup()
         {
             globalWorld = World.Create();
-            system = new AvatarModifierAreaHandlerSystem(world, globalWorld);
+            system = new AvatarModifierAreaHandlerSystem(world, globalWorld, Substitute.For<ISceneRestrictionBusController>(), Substitute.For<IWeb3IdentityCache>());
 
             fakeTriggerAreaGO = new GameObject("fake character area trigger");
             characterTriggerArea = fakeTriggerAreaGO.AddComponent<CharacterTriggerArea.CharacterTriggerArea>();
 
-            fakeAvatarEntity = globalWorld.Create();
             fakeAvatarGO = new GameObject("fake avatar");
             fakeAvatarShapeTransform = fakeAvatarGO.transform;
             fakeAvatarShapeCollider = fakeAvatarGO.AddComponent<BoxCollider>();
@@ -51,12 +52,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
             AvatarBase fakeAvatarBase = fakeAvatarBaseGO.AddComponent<AvatarBase>();
             fakeAvatarBaseGO.transform.SetParent(fakeAvatarShapeTransform);
 
-            globalWorld.Add(fakeAvatarEntity, fakeAvatarBase, new AvatarShapeComponent(),
-                new TransformComponent
-                {
-                    Transform = fakeAvatarShapeTransform,
-                });
-
+            fakeAvatarEntity = globalWorld.Create(fakeAvatarBase, new AvatarShapeComponent(), new TransformComponent { Transform = fakeAvatarShapeTransform });
             triggerAreaEntity = world.Create(PartitionComponent.TOP_PRIORITY);
             AddTransformToEntity(triggerAreaEntity);
         }
@@ -202,15 +198,46 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
         [Test]
         public void ToggleHidingFlagCorrectly()
         {
-            var excludedIds = new HashSet<string>();
+            const string FAKE_USER_ID = "Ia4Ia5Cth0ulhu2Ftaghn2";
 
-            system.ToggleAvatarHiding(fakeAvatarShapeTransform, true, excludedIds);
+            globalWorld.Add(fakeAvatarEntity, new Profile(FAKE_USER_ID, "fake user", new Avatar(
+                BodyShape.MALE,
+                WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE),
+                WearablesConstants.DefaultColors.GetRandomEyesColor(),
+                WearablesConstants.DefaultColors.GetRandomHairColor(),
+                WearablesConstants.DefaultColors.GetRandomSkinColor())), new AvatarShapeComponent());
 
-            Assert.IsTrue(globalWorld.Get<AvatarShapeComponent>(triggerAreaEntity).HiddenByModifierArea);
+            world.Add(fakeAvatarEntity, new AvatarShapeComponent());
 
-            system.ToggleAvatarHiding(fakeAvatarShapeTransform, false, excludedIds);
+            var pbComponent = new PBAvatarModifierArea
+            {
+                Area = new Vector3
+                {
+                    X = 1.68f,
+                    Y = 2.96f,
+                    Z = 8.66f,
+                },
+                IsDirty = true,
+            };
 
-            Assert.IsFalse(globalWorld.Get<AvatarShapeComponent>(triggerAreaEntity).HiddenByModifierArea);
+            world.Add(triggerAreaEntity, pbComponent);
+            system.Update(0);
+
+            // "Enter" trigger area
+            characterTriggerArea.OnTriggerEnter(fakeAvatarShapeCollider);
+            CharacterTriggerAreaComponent component = world.Get<CharacterTriggerAreaComponent>(triggerAreaEntity);
+            component.monoBehaviour = characterTriggerArea;
+            world.Set(triggerAreaEntity, component);
+
+            system.Update(0f);
+
+            Assert.IsTrue(globalWorld.Get<AvatarShapeComponent>(fakeAvatarEntity).HiddenByModifierArea);
+
+            characterTriggerArea.OnTriggerExit(fakeAvatarShapeCollider);
+
+            system.Update(0f);
+
+            Assert.IsFalse(globalWorld.Get<AvatarShapeComponent>(fakeAvatarEntity).HiddenByModifierArea);
         }
 
         [Test]
@@ -223,14 +250,14 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
                 WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE),
                 WearablesConstants.DefaultColors.GetRandomEyesColor(),
                 WearablesConstants.DefaultColors.GetRandomHairColor(),
-                WearablesConstants.DefaultColors.GetRandomSkinColor())));
+                WearablesConstants.DefaultColors.GetRandomSkinColor())), new AvatarShapeComponent());
 
             var excludedIds = new HashSet<string>();
             excludedIds.Add(FAKE_USER_ID);
 
-            system.ToggleAvatarHiding(fakeAvatarShapeTransform, true, excludedIds);
+            system.Update(0f);
 
-            Assert.IsFalse(globalWorld.Get<AvatarShapeComponent>(triggerAreaEntity).HiddenByModifierArea);
+            Assert.IsFalse(globalWorld.Get<AvatarShapeComponent>(fakeAvatarEntity).HiddenByModifierArea);
         }
 
         [Test]
@@ -290,7 +317,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
             characterTriggerArea.OnTriggerEnter(fakeAvatar2ShapeCollider);
 
             CharacterTriggerAreaComponent component = world.Get<CharacterTriggerAreaComponent>(triggerAreaEntity);
-            component.ForceAssignArea(characterTriggerArea);
+            component.monoBehaviour = characterTriggerArea;
             world.Set(triggerAreaEntity, component);
 
             system.Update(0);
@@ -329,6 +356,15 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
         [Test]
         public void HandleComponentRemoveCorrectly()
         {
+            const string FAKE_USER_ID = "Ia4Ia5Cth0ulhu2Ftaghn2";
+
+            globalWorld.Add(fakeAvatarEntity, new Profile(FAKE_USER_ID, "fake user", new Avatar(
+                BodyShape.MALE,
+                WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE),
+                WearablesConstants.DefaultColors.GetRandomEyesColor(),
+                WearablesConstants.DefaultColors.GetRandomHairColor(),
+                WearablesConstants.DefaultColors.GetRandomSkinColor())));
+
             var pbComponent = new PBAvatarModifierArea
             {
                 Area = new Vector3
@@ -348,7 +384,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
             // "Enter" trigger area
             characterTriggerArea.OnTriggerEnter(fakeAvatarShapeCollider);
             CharacterTriggerAreaComponent component = world.Get<CharacterTriggerAreaComponent>(triggerAreaEntity);
-            component.ForceAssignArea(characterTriggerArea);
+            component.monoBehaviour = characterTriggerArea;
             world.Set(triggerAreaEntity, component);
 
             system.Update(0);
@@ -368,6 +404,15 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
         [Test]
         public void HandleEntityDestructionCorrectly()
         {
+            const string FAKE_USER_ID = "Ia4Ia5Cth0ulhu2Ftaghn2";
+
+            globalWorld.Add(fakeAvatarEntity, new Profile(FAKE_USER_ID, "fake user", new Avatar(
+                BodyShape.MALE,
+                WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE),
+                WearablesConstants.DefaultColors.GetRandomEyesColor(),
+                WearablesConstants.DefaultColors.GetRandomHairColor(),
+                WearablesConstants.DefaultColors.GetRandomSkinColor())));
+
             var pbComponent = new PBAvatarModifierArea
             {
                 Area = new Vector3
@@ -387,7 +432,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
             // "Enter" trigger area
             characterTriggerArea.OnTriggerEnter(fakeAvatarShapeCollider);
             CharacterTriggerAreaComponent component = world.Get<CharacterTriggerAreaComponent>(triggerAreaEntity);
-            component.ForceAssignArea(characterTriggerArea);
+            component.monoBehaviour = characterTriggerArea;
             world.Set(triggerAreaEntity, component);
 
             system.Update(0);

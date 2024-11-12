@@ -1,26 +1,34 @@
 using Cysharp.Threading.Tasks;
-using DCL.Multiplayer.Connections.Rooms;
 using DCL.Multiplayer.Connections.Rooms.Connective;
-using LiveKit.Rooms;
+using SceneRunner.Scene;
 
 namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
 {
-    public interface IGateKeeperSceneRoom : IConnectiveRoom
+    public interface IGateKeeperSceneRoom : IActivatableConnectiveRoom
     {
-        class Fake : IGateKeeperSceneRoom
-        {
-            public UniTask<bool> StartAsync() =>
-                UniTask.FromResult(false);
+        public ISceneData? ConnectedScene { get; }
 
-            public UniTask StopAsync() =>
+        /// <summary>
+        ///     Tells if no communication channel is attached to the given scene
+        /// </summary>
+        /// <param name="sceneId"></param>
+        /// <returns></returns>
+        bool IsSceneConnected(string? sceneId);
+
+        class Fake : Null, IGateKeeperSceneRoom
+        {
+            public ISceneData? ConnectedScene { get; } = new ISceneData.Fake();
+
+            public bool Activated => true;
+
+            public bool IsSceneConnected(string? sceneId) =>
+                false;
+
+            public UniTask ActivateAsync() =>
                 UniTask.CompletedTask;
 
-            //ignore
-            public State CurrentState() =>
-                State.Stopped;
-
-            public IRoom Room() =>
-                NullRoom.INSTANCE;
+            public UniTask DeactivateAsync() =>
+                UniTask.CompletedTask;
         }
     }
 }

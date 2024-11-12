@@ -5,9 +5,9 @@ using System.Text.RegularExpressions;
 
 namespace DCL.Chat
 {
-    internal class ChatCommandsHandler
+    public class ChatCommandsHandler
     {
-        public const string CHAT_COMMAND_CHAR = "/";
+        private const string CHAT_COMMAND_CHAR = "/";
 
         private readonly Dictionary<Regex, IChatCommand> commandsCache = new ();
         private readonly IReadOnlyDictionary<Regex, Func<IChatCommand>> commandsFactory;
@@ -19,8 +19,6 @@ namespace DCL.Chat
 
         public bool TryGetChatCommand(in string message, ref (IChatCommand command, Match match) commandTuple)
         {
-            if (StartsLikeCommand(message) == false) return false;
-
             foreach (Regex? commandRegex in commandsFactory.Keys)
             {
                 commandTuple.match = commandRegex.Match(message);
@@ -38,7 +36,7 @@ namespace DCL.Chat
             return false;
         }
 
-        public bool StartsLikeCommand(string message) =>
+        public static bool StartsLikeCommand(string message) =>
             message
                .AsSpan()
                .Trim()

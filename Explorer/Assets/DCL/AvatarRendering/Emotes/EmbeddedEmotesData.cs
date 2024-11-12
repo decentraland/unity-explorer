@@ -1,6 +1,10 @@
-using DCL.AvatarRendering.Wearables;
+using DCL.AvatarRendering.Loading.Assets;
+using DCL.AvatarRendering.Loading.Components;
+using DCL.AvatarRendering.Loading.DTO;
 using DCL.AvatarRendering.Wearables.Helpers;
+using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.Textures;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,7 +22,10 @@ namespace DCL.AvatarRendering.Emotes
         public string name;
         public AudioClip audioClip;
         public Sprite thumbnail;
+        // Represents unisex prefab
         public GameObject prefab;
+        public GameObject male;
+        public GameObject female;
         public EmoteDTO.Metadata.Data entity;
     }
 
@@ -37,8 +44,8 @@ namespace DCL.AvatarRendering.Emotes
 
             foreach (EmbeddedEmote embeddedEmote in emotes)
             {
-                var emote = new Emote();
                 var model = new EmoteDTO();
+                var emote = new Emote(new StreamableLoadingResult<EmoteDTO>(), false);
                 model.id = embeddedEmote.id;
 
                 // No content hashes available
@@ -63,19 +70,42 @@ namespace DCL.AvatarRendering.Emotes
                 model.metadata.emoteDataADR74 = embeddedEmote.entity;
 
                 emote.Model = new StreamableLoadingResult<EmoteDTO>(model);
-                emote.IsLoading = false;
-                emote.ThumbnailAssetResult = new StreamableLoadingResult<Sprite>(embeddedEmote.thumbnail);
+                emote.ThumbnailAssetResult = embeddedEmote.thumbnail.ToUnownedSpriteData();
 
-                WearableRegularAsset asset = CreateWearableAsset(embeddedEmote.prefab);
-                asset.AddReference();
-                var assetLoadResult = new StreamableLoadingResult<WearableRegularAsset>(asset);
-                emote.AssetResults[BodyShape.MALE] = assetLoadResult;
-                emote.AssetResults[BodyShape.FEMALE] = assetLoadResult;
+                if (embeddedEmote.male != null)
+                {
+                    AttachmentRegularAsset maleAsset = CreateAttachmentAsset(embeddedEmote.male);
+                    maleAsset.AddReference();
+                    var maleAssetResult = new StreamableLoadingResult<AttachmentRegularAsset>(maleAsset);
+                    emote.AssetResults[BodyShape.MALE] = maleAssetResult;
+                }
+
+                if (embeddedEmote.female != null)
+                {
+                    AttachmentRegularAsset femaleAsset = CreateAttachmentAsset(embeddedEmote.female);
+                    femaleAsset.AddReference();
+                    var femaleAssetResult = new StreamableLoadingResult<AttachmentRegularAsset>(femaleAsset);
+                    emote.AssetResults[BodyShape.FEMALE] = femaleAssetResult;
+                }
+
+                if (embeddedEmote.male == null || embeddedEmote.female == null)
+                {
+                    // If possible, only one allocation for both genders
+                    AttachmentRegularAsset unisexAsset = CreateAttachmentAsset(embeddedEmote.prefab);
+                    unisexAsset.AddReference();
+                    var unisexAssetResult = new StreamableLoadingResult<AttachmentRegularAsset>(unisexAsset);
+
+                    if (embeddedEmote.male == null)
+                        emote.AssetResults[BodyShape.MALE] = unisexAssetResult;
+
+                    if (embeddedEmote.female == null)
+                        emote.AssetResults[BodyShape.FEMALE] = unisexAssetResult;
+                }
 
                 if (embeddedEmote.audioClip != null)
                 {
-                    emote.AudioAssetResults[BodyShape.MALE] = new StreamableLoadingResult<AudioClip>(embeddedEmote.audioClip);
-                    emote.AudioAssetResults[BodyShape.FEMALE] = new StreamableLoadingResult<AudioClip>(embeddedEmote.audioClip);
+                    emote.AudioAssetResults[BodyShape.MALE] = new StreamableLoadingResult<AudioClipData>(new AudioClipData(embeddedEmote.audioClip));
+                    emote.AudioAssetResults[BodyShape.FEMALE] = new StreamableLoadingResult<AudioClipData>(new AudioClipData(embeddedEmote.audioClip));
                 }
 
                 emote.ManifestResult = null;
@@ -86,59 +116,14 @@ namespace DCL.AvatarRendering.Emotes
             return generatedEmotes;
         }
 
-        private static WearableRegularAsset CreateWearableAsset(GameObject glb)
+        private static AttachmentRegularAsset CreateAttachmentAsset(GameObject glb)
         {
-            var rendererInfos = new List<WearableRegularAsset.RendererInfo>();
+            var rendererInfos = new List<AttachmentRegularAsset.RendererInfo>();
 
             foreach (SkinnedMeshRenderer? renderer in glb.GetComponentsInChildren<SkinnedMeshRenderer>())
-                rendererInfos.Add(new WearableRegularAsset.RendererInfo(renderer, renderer.sharedMaterial));
+                rendererInfos.Add(new AttachmentRegularAsset.RendererInfo(renderer, renderer.sharedMaterial));
 
-            return new WearableRegularAsset(glb, rendererInfos, null);
+            return new AttachmentRegularAsset(glb, rendererInfos, null);
         }
-
-#if UNITY_EDITOR
-        private void Reset()
-        {
-            if (emotes.Length == 0)
-            {
-                var emotes = new List<EmbeddedEmote>();
-
-                string[] thumbGUIDs = AssetDatabase.FindAssets("t:Sprite", new[] { "Assets/DCL/AvatarRendering/AvatarShape/Assets/EmbeddedEmotes/Thumbnails" });
-                string[] prefabGUIDs = AssetDatabase.FindAssets("t:Prefab", new[] { "Assets/DCL/AvatarRendering/AvatarShape/Assets/EmbeddedEmotes/Prefabs" });
-
-                var sprites = new List<Sprite>();
-                var prefabs = new List<GameObject>();
-
-                foreach (string thumbGUID in thumbGUIDs)
-                {
-                    string assetPath = AssetDatabase.GUIDToAssetPath(thumbGUID);
-                    Sprite sprite = AssetDatabase.LoadAssetAtPath<Sprite>(assetPath);
-                    sprites.Add(sprite);
-                }
-
-                foreach (string prefabGUID in prefabGUIDs)
-                {
-                    string assetPath = AssetDatabase.GUIDToAssetPath(prefabGUID);
-                    GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(assetPath);
-                    prefabs.Add(prefab);
-                }
-
-                foreach (GameObject prefab in prefabs)
-                {
-                    string nameWithoutSuffix = prefab.name.Replace("_Emote", "");
-
-                    emotes.Add(new EmbeddedEmote
-                    {
-                        id = nameWithoutSuffix,
-                        name = nameWithoutSuffix,
-                        thumbnail = sprites.FirstOrDefault(t => t.name.Contains(prefab.name))!,
-                        prefab = prefab,
-                    });
-                }
-
-                this.emotes = emotes.ToArray();
-            }
-        }
-#endif
     }
 }

@@ -1,54 +1,49 @@
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.Archipelago.AdapterAddress.Current;
-using DCL.Multiplayer.Connections.Rooms;
+using DCL.Multiplayer.Connections.Archipelago.Rooms.Fixed;
 using DCL.Multiplayer.Connections.Rooms.Connective;
-using LiveKit.Rooms;
 using System;
 
 namespace DCL.Multiplayer.Connections.Archipelago.Rooms
 {
-    public class ForkGlobalRealmRoom : IArchipelagoIslandRoom
+    public class ForkGlobalRealmRoom : ProxiedConnectiveRoomBase
     {
+        private class Activatable : ActivatableConnectiveRoom, IArchipelagoIslandRoom
+        {
+            public Activatable(ForkGlobalRealmRoom origin, bool initialState = true) : base(origin, initialState) { }
+        }
+
         private readonly ICurrentAdapterAddress currentAdapterAddress;
-        private readonly Func<IConnectiveRoom> wssRoomFactory;
-        private readonly Func<IConnectiveRoom> httpsRoomFactory;
+        private readonly Func<ArchipelagoIslandRoom> wssRoomFactory;
+        private readonly Func<FixedConnectiveRoom> httpsRoomFactory;
 
-        private readonly InteriorRoom interiorRoom = new ();
-        private IConnectiveRoom? current;
-
-        public ForkGlobalRealmRoom(ICurrentAdapterAddress currentAdapterAddress, Func<IConnectiveRoom> wssRoomFactory, Func<IConnectiveRoom> httpsRoomFactory)
+        public ForkGlobalRealmRoom(ICurrentAdapterAddress currentAdapterAddress, Func<ArchipelagoIslandRoom> wssRoomFactory, Func<FixedConnectiveRoom> httpsRoomFactory)
         {
             this.currentAdapterAddress = currentAdapterAddress;
             this.wssRoomFactory = wssRoomFactory;
             this.httpsRoomFactory = httpsRoomFactory;
         }
 
-        public async UniTask<bool> StartAsync()
-        {
-            if (current != null && current.CurrentState() is not IConnectiveRoom.State.Stopped)
-                throw new InvalidOperationException("First stop previous room before starting a new one");
+        public IArchipelagoIslandRoom AsActivatable() =>
+            new Activatable(this);
 
+        public override UniTask<bool> StartAsync() =>
+            RenewAsync(ChooseRoom());
+
+        private IConnectiveRoom ChooseRoom()
+        {
             string adapterUrl = currentAdapterAddress.AdapterUrl();
 
             if (adapterUrl.Contains("wss://"))
-                current = wssRoomFactory();
-            else if (adapterUrl.Contains("https://"))
-                current = httpsRoomFactory();
-            else
-                throw new InvalidOperationException($"Cannot determine the protocol from the about url: {adapterUrl}");
+                return wssRoomFactory();
 
-            var task = current!.StartAsync();
-            interiorRoom.Assign(current.Room(), out _);
-            return await task;
+            if (adapterUrl.Contains("https://"))
+                return httpsRoomFactory();
+
+            if (adapterUrl.Contains("offline:offline"))
+                return new IConnectiveRoom.Null();
+
+            throw new InvalidOperationException($"Cannot determine the protocol from the about url: {adapterUrl}");
         }
-
-        public UniTask StopAsync() =>
-            current?.StopAsync() ?? throw new InvalidOperationException("Nothing to stop");
-
-        public IConnectiveRoom.State CurrentState() =>
-            current?.CurrentState() ?? IConnectiveRoom.State.Stopped;
-
-        public IRoom Room() =>
-            interiorRoom;
     }
 }

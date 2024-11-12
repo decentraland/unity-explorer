@@ -4,6 +4,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.Emotes;
+using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables;
 using DCL.Backpack;
 using DCL.DebugUtilities;
@@ -25,14 +26,18 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
-using CharacterEmoteSystem = DCL.AvatarRendering.Emotes.CharacterEmoteSystem;
+using CharacterEmoteSystem = DCL.AvatarRendering.Emotes.Play.CharacterEmoteSystem;
+using LoadAudioClipGlobalSystem = DCL.AvatarRendering.Emotes.Load.LoadAudioClipGlobalSystem;
+using LoadEmotesByPointersSystem = DCL.AvatarRendering.Emotes.Load.LoadEmotesByPointersSystem;
+using LoadOwnedEmotesSystem = DCL.AvatarRendering.Emotes.Load.LoadOwnedEmotesSystem;
+using LoadSceneEmotesSystem = DCL.AvatarRendering.Emotes.Load.LoadSceneEmotesSystem;
 
 namespace DCL.PluginSystem.Global
 {
     public class EmotePlugin : IDCLGlobalPlugin<EmotePlugin.EmoteSettings>
     {
         private readonly IWebRequestController webRequestController;
-        private readonly IEmoteCache emoteCache;
+        private readonly IEmoteStorage emoteStorage;
         private readonly IRealmData realmData;
         private readonly IEmotesMessageBus messageBus;
         private readonly IDebugContainerBuilder debugBuilder;
@@ -53,7 +58,7 @@ namespace DCL.PluginSystem.Global
         private EmotesWheelController? emotesWheelController;
 
         public EmotePlugin(IWebRequestController webRequestController,
-            IEmoteCache emoteCache,
+            IEmoteStorage emoteStorage,
             IRealmData realmData,
             IEmotesMessageBus messageBus,
             IDebugContainerBuilder debugBuilder,
@@ -81,7 +86,7 @@ namespace DCL.PluginSystem.Global
             this.entityParticipantTable = entityParticipantTable;
             this.assetBundleURL = assetBundleURL;
             this.webRequestController = webRequestController;
-            this.emoteCache = emoteCache;
+            this.emoteStorage = emoteStorage;
             this.realmData = realmData;
             this.mainUIView = mainUIView;
             this.cursor = cursor;
@@ -102,37 +107,36 @@ namespace DCL.PluginSystem.Global
         {
             var customStreamingSubdirectory = URLSubdirectory.FromString("/Emotes/");
 
-            FinalizeEmoteAssetBundleSystem.InjectToWorld(ref builder);
+            FinalizeEmoteLoadingSystem.InjectToWorld(ref builder, emoteStorage);
 
             LoadEmotesByPointersSystem.InjectToWorld(ref builder, webRequestController,
                 new NoCache<EmotesDTOList, GetEmotesByPointersFromRealmIntention>(false, false),
-                emoteCache, realmData,
-                customStreamingSubdirectory);
+                emoteStorage, realmData, customStreamingSubdirectory);
 
             LoadOwnedEmotesSystem.InjectToWorld(ref builder, realmData, webRequestController,
                 new NoCache<EmotesResolution, GetOwnedEmotesFromRealmIntention>(false, false),
-                emoteCache);
+                emoteStorage);
 
-            CharacterEmoteSystem.InjectToWorld(ref builder, emoteCache, messageBus, audioSourceReference, debugBuilder);
+            CharacterEmoteSystem.InjectToWorld(ref builder, emoteStorage, messageBus, audioSourceReference, debugBuilder);
 
             LoadAudioClipGlobalSystem.InjectToWorld(ref builder, audioClipsCache, webRequestController);
 
             RemoteEmotesSystem.InjectToWorld(ref builder, web3IdentityCache, entityParticipantTable, messageBus, arguments.PlayerEntity);
 
-            LoadSceneEmotesSystem.InjectToWorld(ref builder, emoteCache, customStreamingSubdirectory);
+            LoadSceneEmotesSystem.InjectToWorld(ref builder, emoteStorage, customStreamingSubdirectory);
         }
 
         public async UniTask InitializeAsync(EmoteSettings settings, CancellationToken ct)
         {
             EmbeddedEmotesData embeddedEmotesData = (await assetsProvisioner.ProvideMainAssetAsync(settings.EmbeddedEmotes, ct)).Value;
 
-            // TODO: convert into an async operation so we dont increment the loading times at app's startup
+            // TODO: convert into an async operation so we don't increment the loading times at app's startup
             IEnumerable<IEmote> embeddedEmotes = embeddedEmotesData.GenerateEmotes();
 
             audioSourceReference = (await assetsProvisioner.ProvideMainAssetAsync(settings.EmoteAudioSource, ct)).Value.GetComponent<AudioSource>();
 
             foreach (IEmote embeddedEmote in embeddedEmotes)
-                emoteCache.Set(embeddedEmote.GetUrn(), embeddedEmote);
+                emoteStorage.AddEmbeded(embeddedEmote.GetUrn(), embeddedEmote);
 
             var persistentEmoteWheelOpenerController = new PersistentEmoteWheelOpenerController(() => mainUIView.SidebarView.PersistentEmoteWheelOpener, mvcManager);
 
@@ -146,7 +150,7 @@ namespace DCL.PluginSystem.Global
             IThumbnailProvider thumbnailProvider = new ECSThumbnailProvider(realmData, world, assetBundleURL, webRequestController);
 
             emotesWheelController = new EmotesWheelController(EmotesWheelController.CreateLazily(emotesWheelPrefab, null),
-                selfProfile, emoteCache, emoteWheelRarityBackgrounds, world, playerEntity, thumbnailProvider,
+                selfProfile, emoteStorage, emoteWheelRarityBackgrounds, world, playerEntity, thumbnailProvider,
                 inputBlock, dclInput, mvcManager, cursor);
 
             mvcManager.RegisterController(emotesWheelController);

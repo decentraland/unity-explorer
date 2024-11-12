@@ -3,11 +3,13 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Equipped;
+using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
 using DCL.UI;
+using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
 using System;
 using System.Collections.Generic;
@@ -16,6 +18,7 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
+using IAvatarAttachment = DCL.AvatarRendering.Loading.Components.IAvatarAttachment;
 using Object = UnityEngine.Object;
 
 namespace DCL.Backpack.EmotesSection
@@ -134,23 +137,37 @@ namespace DCL.Backpack.EmotesSection
             {
                 IReadOnlyList<IEmote> emotes;
 
-                (IReadOnlyList<IEmote>? customOwnedEmotes, int totalAmount) = await emoteProvider.GetOwnedEmotesAsync(web3IdentityCache.Identity!.Address,
-                    pageNum: pageNumber, pageSize: CURRENT_PAGE_SIZE,
-                    orderOperation: currentOrder,
-                    name: currentSearch,
-                    ct: ct);
+                using var _ = ListPool<IEmote>.Get(out var customOwnedEmotes);
+                customOwnedEmotes = customOwnedEmotes.EnsureNotNull();
+
+                int totalAmount = await emoteProvider.GetOwnedEmotesAsync(
+                    web3IdentityCache.Identity!.Address,
+                    ct,
+                    new IEmoteProvider.OwnedEmotesRequestOptions(
+                        pageNum: pageNumber,
+                        pageSize: CURRENT_PAGE_SIZE,
+                        collectionId: null,
+                        orderOperation: currentOrder,
+                        name: currentSearch
+                    ),
+                    customOwnedEmotes
+                );
 
                 if (onChainEmotesOnly)
                     emotes = customOwnedEmotes;
                 else
                 {
-                    IReadOnlyList<IEmote> embeddedEmotes = await emoteProvider.GetEmotesAsync(embeddedEmoteIds, currentBodyShape, ct);
+                    using var scope = ListPool<IEmote>.Get(out var embeddedEmotes);
+                    embeddedEmotes = embeddedEmotes.EnsureNotNull();
+
+                    await emoteProvider.GetEmotesAsync(embeddedEmoteIds, currentBodyShape, ct, embeddedEmotes);
+
                     IEnumerable<IEmote> filteredEmotes = embeddedEmotes;
 
-                    if (!string.IsNullOrEmpty(currentSearch))
+                    if (!string.IsNullOrEmpty(currentSearch!))
                         filteredEmotes = embeddedEmotes.Where(emote => emote.GetName().Contains(currentSearch));
 
-                    if (!string.IsNullOrEmpty(currentCategory))
+                    if (!string.IsNullOrEmpty(currentCategory!))
                         filteredEmotes = embeddedEmotes.Where(emote => emote.GetCategory() == currentCategory);
 
                     filteredEmotes = currentOrder.By switch
@@ -297,7 +314,7 @@ namespace DCL.Backpack.EmotesSection
         {
             ct.ThrowIfCancellationRequested();
 
-            Sprite? sprite = await thumbnailProvider.GetAsync(emote, ct);
+            Sprite sprite = await thumbnailProvider.GetAsync(emote, ct);
 
             itemView.WearableThumbnail.sprite = sprite;
             itemView.LoadingView.FinishLoadingAnimation(itemView.FullBackpackItem);

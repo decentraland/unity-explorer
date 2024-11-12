@@ -3,49 +3,32 @@ using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Archipelago.AdapterAddress.Current;
 using DCL.Multiplayer.Connections.Rooms.Connective;
 using DCL.WebRequests;
-using LiveKit.Rooms;
 using System;
 using System.Threading;
 using UnityEngine;
 
 namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Fixed
 {
-    public class FixedConnectiveRoom : IConnectiveRoom
+    public class FixedConnectiveRoom : ConnectiveRoom
     {
         private readonly IWebRequestController webRequests;
-        private readonly IConnectiveRoom connectiveRoom;
         private readonly ICurrentAdapterAddress currentAdapterAddress;
 
         public FixedConnectiveRoom(IWebRequestController webRequests, ICurrentAdapterAddress currentAdapterAddress)
         {
             this.webRequests = webRequests;
             this.currentAdapterAddress = currentAdapterAddress;
-
-            connectiveRoom = new ConnectiveRoom(
-                static _ => UniTask.CompletedTask,
-                RunConnectCycleStepAsync,
-                nameof(FixedConnectiveRoom)
-            );
         }
 
-        public UniTask<bool> StartAsync() =>
-            connectiveRoom.StartAsync();
+        protected override UniTask PrewarmAsync(CancellationToken token) =>
+            UniTask.CompletedTask;
 
-        public UniTask StopAsync() =>
-            connectiveRoom.StopAsync();
-
-        public IConnectiveRoom.State CurrentState() =>
-            connectiveRoom.CurrentState();
-
-        public IRoom Room() =>
-            connectiveRoom.Room();
-
-        private async UniTask RunConnectCycleStepAsync(ConnectToRoomAsyncDelegate connectToRoomAsyncDelegate, DisconnectCurrentRoomAsyncDelegate disconnectCurrentRoomAsyncDelegate, CancellationToken token)
+        protected override async UniTask CycleStepAsync(CancellationToken token)
         {
-            if (connectiveRoom.CurrentState() is not IConnectiveRoom.State.Running)
+            if (CurrentState() is not IConnectiveRoom.State.Running)
             {
                 string connectionString = await ConnectionStringAsync(token);
-                await connectToRoomAsyncDelegate(connectionString, token);
+                await TryConnectToRoomAsync(connectionString, token);
             }
         }
 
@@ -56,7 +39,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Fixed
             var result = webRequests.SignedFetchPostAsync(adapterUrl, metadata, token);
             AdapterResponse response = await result.CreateFromJson<AdapterResponse>(WRJsonParser.Unity);
             string connectionString = response.fixedAdapter;
-            ReportHub.WithReport(ReportCategory.ARCHIPELAGO_REQUEST).Log($"String is: {connectionString}");
+            ReportHub.WithReport(ReportCategory.COMMS_SCENE_HANDLER).Log($"String is: {connectionString}");
             return connectionString;
         }
 

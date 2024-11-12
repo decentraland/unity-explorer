@@ -2,7 +2,6 @@
 using Arch.System;
 using Arch.SystemGroups;
 using DCL.AvatarRendering.AvatarShape.Components;
-using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Character.Components;
 using DCL.CharacterCamera;
 using ECS.Abstract;
@@ -27,17 +26,17 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         {
             AddPlayerCachedVisibilityComponentQuery(World, camera.GetCameraComponent(World));
             AddOthersCachedVisibilityComponentQuery(World);
-            
-            UpdatePlayerFirstPersonQuery(World, camera.GetCameraComponent(World));
+
+            UpdateMainPlayerAvatarVisibilityOnFirstPersonQuery(World, camera.GetCameraComponent(World));
             UpdateAvatarsVisibilityStateQuery(World);
         }
 
         [Query]
         [All(typeof(AvatarShapeComponent), typeof(PlayerComponent))]
         [None(typeof(AvatarCachedVisibilityComponent))]
-        private void AddPlayerCachedVisibilityComponent([Data] in CameraComponent camera, in Entity entity, ref AvatarShapeComponent avatarShape)
+        private void AddPlayerCachedVisibilityComponent([Data] in CameraComponent cameraComponent, in Entity entity, ref AvatarShapeComponent avatarShape)
         {
-            bool shouldBeHidden = avatarShape.HiddenByModifierArea || camera.Mode == CameraMode.FirstPerson;
+            bool shouldBeHidden = avatarShape.HiddenByModifierArea || cameraComponent.Mode == CameraMode.FirstPerson;
             var cachedVisibility = InitializeCachedComponent(shouldBeHidden, ref avatarShape);
             World.Add(entity, cachedVisibility);
         }
@@ -54,7 +53,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
         [Query]
         [All(typeof(PlayerComponent))]
-        private void UpdatePlayerFirstPerson([Data] in CameraComponent camera, ref AvatarShapeComponent avatarShape, ref AvatarCachedVisibilityComponent avatarCachedVisibility)
+        private void UpdateMainPlayerAvatarVisibilityOnFirstPerson([Data] in CameraComponent camera, ref AvatarShapeComponent avatarShape, ref AvatarCachedVisibilityComponent avatarCachedVisibility)
         {
             bool shouldBeHidden = avatarShape.HiddenByModifierArea || camera.Mode == CameraMode.FirstPerson;
             UpdateVisibilityState(ref avatarShape, ref avatarCachedVisibility, shouldBeHidden);
@@ -96,7 +95,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
         private static void ToggleAvatarShape(ref AvatarShapeComponent avatarShape, bool toggle)
         {
-            foreach (CachedWearable wearable in avatarShape.InstantiatedWearables)
+            foreach (var wearable in avatarShape.InstantiatedWearables)
             foreach (Renderer renderer in wearable.Renderers)
                 renderer.enabled = toggle;
         }

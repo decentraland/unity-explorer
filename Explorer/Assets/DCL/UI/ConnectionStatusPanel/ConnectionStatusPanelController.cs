@@ -1,5 +1,6 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
+using DCL.DebugUtilities;
 using DCL.Multiplayer.Connections.Rooms.Status;
 using DCL.UI.ConnectionStatusPanel.StatusEntry;
 using DCL.UI.ErrorPopup;
@@ -25,6 +26,7 @@ namespace DCL.UI.ConnectionStatusPanel
         private readonly IRoomsStatus roomsStatus;
         private readonly World world;
         private readonly Entity playerEntity;
+        private readonly IDebugContainerBuilder debugBuilder;
         private readonly CancellationTokenSource cancellationTokenSource = new ();
         private readonly List<IDisposable> subscriptions = new (2);
         private bool isSceneReloading;
@@ -39,7 +41,8 @@ namespace DCL.UI.ConnectionStatusPanel
             ECSReloadScene ecsReloadScene,
             IRoomsStatus roomsStatus,
             World world,
-            Entity playerEntity
+            Entity playerEntity,
+            IDebugContainerBuilder debugBuilder
         ) : base(viewFactory)
         {
             this.userInAppInitializationFlow = userInAppInitializationFlow;
@@ -49,6 +52,7 @@ namespace DCL.UI.ConnectionStatusPanel
             this.roomsStatus = roomsStatus;
             this.world = world;
             this.playerEntity = playerEntity;
+            this.debugBuilder = debugBuilder;
         }
 
         protected override void OnViewInstantiated()
@@ -58,6 +62,12 @@ namespace DCL.UI.ConnectionStatusPanel
             Bind(roomsStatus.ConnectionQualityScene, viewInstance.SceneRoom);
             Bind(roomsStatus.ConnectionQualityIsland, viewInstance.GlobalRoom);
         }
+
+        protected override void OnViewShow() =>
+            SetVisibility(debugBuilder.IsVisible);
+
+        public void SetVisibility(bool isVisible) =>
+            viewInstance?.gameObject.SetActive(isVisible);
 
         private void SceneStatusOnUpdate(ICurrentSceneInfo.Status? obj)
         {
@@ -110,7 +120,16 @@ namespace DCL.UI.ConnectionStatusPanel
                 return;
 
             await mvcManager.ShowAsync(new ShowCommand<ErrorPopupView, ErrorPopupData>(ErrorPopupData.Empty), ct);
-            await userInAppInitializationFlow.ExecuteAsync(true, true, true, world, playerEntity, ct);
+            await userInAppInitializationFlow.ExecuteAsync(
+                new UserInAppInitializationFlowParameters
+                {
+                    ShowAuthentication = true,
+                    ShowLoading = true,
+                    ReloadRealm = true,
+                    FromLogout = false,
+                    World = world,
+                    PlayerEntity = playerEntity,
+                }, ct);
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>

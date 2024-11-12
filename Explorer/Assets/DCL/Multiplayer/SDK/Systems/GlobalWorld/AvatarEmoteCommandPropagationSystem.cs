@@ -8,6 +8,7 @@ using DCL.Multiplayer.SDK.Components;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using SceneRunner.Scene;
+using CharacterEmoteSystem = DCL.AvatarRendering.Emotes.Play.CharacterEmoteSystem;
 
 namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
 {
@@ -16,11 +17,11 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
     [LogCategory(ReportCategory.PLAYER_SDK_DATA)]
     public partial class AvatarEmoteCommandPropagationSystem : BaseUnityLoopSystem
     {
-        private readonly IEmoteCache emoteCache;
+        private readonly IEmoteStorage emoteStorage;
 
-        public AvatarEmoteCommandPropagationSystem(World world, IEmoteCache emoteCache) : base(world)
+        public AvatarEmoteCommandPropagationSystem(World world, IEmoteStorage emoteStorage) : base(world)
         {
-            this.emoteCache = emoteCache;
+            this.emoteStorage = emoteStorage;
         }
 
         protected override void Update(float t)
@@ -30,8 +31,12 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void UpdateEmoteCommandDataComponent(PlayerCRDTEntity playerCRDTEntity, CharacterEmoteIntent emoteIntent)
+        private void UpdateEmoteCommandDataComponent(in PlayerCRDTEntity playerCRDTEntity, CharacterEmoteIntent emoteIntent)
         {
+            if (!playerCRDTEntity.AssignedToScene) return;
+
+            if (!emoteStorage.TryGetElement(emoteIntent.EmoteId.Shorten(), out IEmote emote)) return;
+
             SceneEcsExecutor sceneEcsExecutor = playerCRDTEntity.SceneFacade.EcsExecutor;
             World sceneWorld = sceneEcsExecutor.World;
 
@@ -40,17 +45,14 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
             if (!componentFound)
                 emoteCommandComponent = new AvatarEmoteCommandComponent();
 
-            if (emoteCache.TryGetEmote(emoteIntent.EmoteId.Shorten(), out IEmote emote))
-            {
-                emoteCommandComponent.IsDirty = true;
-                emoteCommandComponent.PlayingEmote = emoteIntent.EmoteId;
-                emoteCommandComponent.LoopingEmote = emote.IsLooping();
+            emoteCommandComponent.IsDirty = true;
+            emoteCommandComponent.PlayingEmote = emoteIntent.EmoteId;
+            emoteCommandComponent.LoopingEmote = emote.IsLooping();
 
-                if (componentFound)
-                    sceneWorld.Set(playerCRDTEntity.SceneWorldEntity, emoteCommandComponent);
-                else
-                    sceneWorld.Add(playerCRDTEntity.SceneWorldEntity, emoteCommandComponent);
-            }
+            if (componentFound)
+                sceneWorld.Set(playerCRDTEntity.SceneWorldEntity, emoteCommandComponent);
+            else
+                sceneWorld.Add(playerCRDTEntity.SceneWorldEntity, emoteCommandComponent);
         }
     }
 }

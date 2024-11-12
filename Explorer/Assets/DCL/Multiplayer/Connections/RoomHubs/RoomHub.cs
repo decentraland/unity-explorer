@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.Rooms.Connective;
 using LiveKit.Rooms;
 
@@ -7,9 +8,9 @@ namespace DCL.Multiplayer.Connections.RoomHubs
     public class RoomHub : IRoomHub
     {
         private readonly IConnectiveRoom archipelagoIslandRoom;
-        private readonly IConnectiveRoom gateKeeperSceneRoom;
+        private readonly IGateKeeperSceneRoom gateKeeperSceneRoom;
 
-        public RoomHub(IConnectiveRoom archipelagoIslandRoom, IConnectiveRoom gateKeeperSceneRoom)
+        public RoomHub(IConnectiveRoom archipelagoIslandRoom, IGateKeeperSceneRoom gateKeeperSceneRoom)
         {
             this.archipelagoIslandRoom = archipelagoIslandRoom;
             this.gateKeeperSceneRoom = gateKeeperSceneRoom;
@@ -18,8 +19,8 @@ namespace DCL.Multiplayer.Connections.RoomHubs
         public IRoom IslandRoom() =>
             archipelagoIslandRoom.Room();
 
-        public IRoom SceneRoom() =>
-            gateKeeperSceneRoom.Room();
+        public IGateKeeperSceneRoom SceneRoom() =>
+            gateKeeperSceneRoom;
 
         public async UniTask<bool> StartAsync()
         {
@@ -31,7 +32,7 @@ namespace DCL.Multiplayer.Connections.RoomHubs
             return result is { Item1: true, Item2: true };
         }
 
-        public UniTask StopIfNotAsync() =>
+        public UniTask StopAsync() =>
             UniTask.WhenAll(
                 archipelagoIslandRoom.StopIfNotAsync(),
                 gateKeeperSceneRoom.StopIfNotAsync()

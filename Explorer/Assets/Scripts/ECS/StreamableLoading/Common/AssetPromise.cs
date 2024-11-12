@@ -24,7 +24,7 @@ namespace ECS.StreamableLoading.Common
         public EntityReference Entity { get; private set; }
 
         /// <summary>
-        ///     Loading intention will persist so it can be used to dereference unused assets
+        ///     Loading intention will persist, so it can be used to dereference unused assets
         /// </summary>
         public TLoadingIntention LoadingIntention { get; private set; }
 
@@ -134,6 +134,18 @@ namespace ECS.StreamableLoading.Common
         {
             world.Destroy(Entity);
             Entity = EntityReference.Null;
+        }
+
+        public bool TryForgetWithEntityIfCancelled(Entity selfEntity, World world)
+        {
+            if (LoadingIntention.CancellationTokenSource.IsCancellationRequested)
+            {
+                ForgetLoading(world);
+                world.Destroy(selfEntity);
+                return true;
+            }
+
+            return false;
         }
 
         public bool Equals(AssetPromise<TAsset, TLoadingIntention> other) =>

@@ -70,7 +70,7 @@ MonoBehaviour:
   <AccelerationTime>k__BackingField: 0.5
   <AirAcceleration>k__BackingField: 15
   <MaxAirAcceleration>k__BackingField: 20
-  <StopTimeSec>k__BackingField: 0.12
+  <StopTimeSec>k__BackingField: 0
   <LongJumpTime>k__BackingField: 0.5
   <LongJumpGravityScale>k__BackingField: 0.5
   <JumpGravityFactor>k__BackingField: 4

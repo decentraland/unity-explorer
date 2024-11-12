@@ -22,6 +22,7 @@ MonoBehaviour:
   - rid: 857448817791336450
   - rid: 278567035285012480
   - rid: 892605786557251584
+  - rid: 9152013866018013188
   references:
     version: 2
     RefIds:
@@ -95,16 +96,16 @@ MonoBehaviour:
     - rid: 6784895267130048516
       type: {class: MaterialsPlugin/Settings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
       data:
-        basicMaterial:
-          m_AssetGUID: 0009549658aa1be40bbed401477fbd48
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
-        pbrMaterial:
-          m_AssetGUID: 60d3d51407bdce5449781acd4ee86781
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
+        basicMaterial: {fileID: 0}
+        pbrMaterial: {fileID: 0}
         <LoadingAttemptsCount>k__BackingField: 6
         <PoolInitialCapacity>k__BackingField: 256
         <PoolMaxSize>k__BackingField: 2048
+    - rid: 9152013866018013188
+      type: {class: MainCameraPlugin/Settings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
+      data:
+        VirtualCameraPrefab:
+          m_AssetGUID: 4f24a591312ba473ab5ac65d6658cb94
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0

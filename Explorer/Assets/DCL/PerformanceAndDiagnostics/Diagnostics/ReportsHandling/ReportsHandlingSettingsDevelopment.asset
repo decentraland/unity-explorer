@@ -38,8 +38,6 @@ MonoBehaviour:
       Severity: 0
     - Category: ARCHIPELAGO_REQUEST
       Severity: 0
-    - Category: ASSET_BUNDLES
-      Severity: 0
     - Category: ASSETS_PROVISION
       Severity: 0
     - Category: AUDIO
@@ -168,8 +166,6 @@ MonoBehaviour:
       Severity: 4
     - Category: ARCHIPELAGO_REQUEST
       Severity: 4
-    - Category: ASSET_BUNDLES
-      Severity: 4
     - Category: ASSETS_PROVISION
       Severity: 4
     - Category: AUDIO
@@ -296,8 +292,200 @@ MonoBehaviour:
       Severity: 0
     - Category: PLAYER_SDK_DATA
       Severity: 4
+    - Category: ASSET_BUNDLES
+      Severity: 0
+    - Category: ASSET_BUNDLES
+      Severity: 4
+    - Category: BACKPACK
+      Severity: 0
+    - Category: BADGES
+      Severity: 0
+    - Category: BACKPACK
+      Severity: 4
+    - Category: BADGES
+      Severity: 4
+    - Category: HIGHLIGHTS
+      Severity: 0
+    - Category: HIGHLIGHTS
+      Severity: 4
+    - Category: ONBOARDING
+      Severity: 0
+    - Category: ONBOARDING
+      Severity: 4
+    - Category: PORTABLE_EXPERIENCE
+      Severity: 0
+    - Category: PORTABLE_EXPERIENCE
+      Severity: 4
+    - Category: SDK_CAMERA
+      Severity: 0
+    - Category: SDK_LOCAL_SCENE_DEVELOPMENT
+      Severity: 0
+    - Category: STARTUP
+      Severity: 0
+    - Category: SYNC
+      Severity: 0
+    - Category: THUMBNAILS
+      Severity: 0
+    - Category: VERSION_CONTROL
+      Severity: 0
+    - Category: VERSION_CONTROL
+      Severity: 4
+    - Category: THUMBNAILS
+      Severity: 4
+    - Category: SYNC
+      Severity: 4
+    - Category: STARTUP
+      Severity: 4
+    - Category: SDK_LOCAL_SCENE_DEVELOPMENT
+      Severity: 4
+    - Category: SDK_CAMERA
+      Severity: 4
+    - Category: ANALYTICS
+      Severity: 1
+    - Category: ANIMATOR
+      Severity: 1
+    - Category: ARCHIPELAGO_REQUEST
+      Severity: 1
+    - Category: ASSET_BUNDLES
+      Severity: 1
+    - Category: ASSETS_PROVISION
+      Severity: 1
+    - Category: AUDIO
+      Severity: 1
+    - Category: AUDIO_CLIP_WEB_REQUEST
+      Severity: 1
+    - Category: AUTHENTICATION
+      Severity: 1
+    - Category: AVATAR
+      Severity: 1
+    - Category: AVATAR_ATTACH
+      Severity: 1
+    - Category: BACKPACK
+      Severity: 1
+    - Category: BADGES
+      Severity: 1
+    - Category: CHARACTER_TRIGGER_AREA
+      Severity: 1
+    - Category: CRDT
+      Severity: 1
+    - Category: CRDT_ECS_BRIDGE
+      Severity: 1
+    - Category: DEBUG
+      Severity: 1
+    - Category: ECS
+      Severity: 1
+    - Category: EMOTE
+      Severity: 1
+    - Category: ENGINE
+      Severity: 1
+    - Category: FEATURE_FLAGS
+      Severity: 1
+    - Category: GENERIC_WEB_REQUEST
+      Severity: 1
+    - Category: GLTF_CONTAINER
+      Severity: 1
+    - Category: HIGHLIGHTS
+      Severity: 1
+    - Category: INPUT
+      Severity: 1
+    - Category: JAVASCRIPT
+      Severity: 1
+    - Category: LANDSCAPE
+      Severity: 1
+    - Category: LIVEKIT
+      Severity: 1
+    - Category: LOD
+      Severity: 1
+    - Category: MATERIALS
+      Severity: 1
+    - Category: MEDIA_STREAM
+      Severity: 1
+    - Category: MOTION
+      Severity: 1
+    - Category: MULTIPLAYER
+      Severity: 1
+    - Category: MULTIPLAYER_MOVEMENT
+      Severity: 1
+    - Category: MVC
+      Severity: 1
+    - Category: NFT_INFO_WEB_REQUEST
+      Severity: 1
+    - Category: NFT_SHAPE_WEB_REQUEST
+      Severity: 1
+    - Category: ONBOARDING
+      Severity: 1
+    - Category: PLAYER_SDK_DATA
+      Severity: 1
+    - Category: PLUGINS
+      Severity: 1
+    - Category: PORTABLE_EXPERIENCE
+      Severity: 1
+    - Category: PRIMITIVE_COLLIDERS
+      Severity: 1
+    - Category: PRIMITIVE_MESHES
+      Severity: 1
+    - Category: PRIORITIZATION
+      Severity: 1
+    - Category: PROFILE
+      Severity: 1
+    - Category: QUALITY
+      Severity: 1
+    - Category: REALM
+      Severity: 1
+    - Category: REALM_DATA_DIRTY_RESET_SYSTEM
+      Severity: 1
+    - Category: RESTRICTED_ACTIONS
+      Severity: 1
+    - Category: ROADS
+      Severity: 1
+    - Category: SCENE_FACTORY
+      Severity: 1
+    - Category: SCENE_FETCH_REQUEST
+      Severity: 1
+    - Category: SCENE_LOADING
+      Severity: 1
+    - Category: SCENE_UI
+      Severity: 1
+    - Category: SDK_AUDIO_SOURCES
+      Severity: 1
+    - Category: SDK_CAMERA
+      Severity: 1
+    - Category: SDK_LOCAL_SCENE_DEVELOPMENT
+      Severity: 1
+    - Category: SDK_OBSERVABLES
+      Severity: 1
+    - Category: SETTINGS_MENU
+      Severity: 1
+    - Category: STARTUP
+      Severity: 1
+    - Category: STREAMABLE_LOADING
+      Severity: 1
+    - Category: SYNC
+      Severity: 1
+    - Category: TEXTURE_WEB_REQUEST
+      Severity: 1
+    - Category: TEXTURES
+      Severity: 1
+    - Category: THUMBNAILS
+      Severity: 1
+    - Category: TWEEN
+      Severity: 1
+    - Category: UI
+      Severity: 1
     - Category: UNSPECIFIED
-      Severity: 3
+      Severity: 1
+    - Category: VERSION_CONTROL
+      Severity: 1
+    - Category: WEARABLE
+      Severity: 1
+    - Category: COMMS_SCENE_HANDLER
+      Severity: 0
+    - Category: COMMS_SCENE_HANDLER
+      Severity: 4
+    - Category: COMMS_SCENE_HANDLER
+      Severity: 1
+    - Category: LIVEKIT
+      Severity: 2
   sentryMatrix:
     entries: []
   debounceEnabled: 1

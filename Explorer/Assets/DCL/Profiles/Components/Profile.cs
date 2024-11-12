@@ -1,8 +1,9 @@
-using DCL.AvatarRendering.Wearables;
+using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.ECSComponents;
 using DCL.Optimization.ThreadSafePool;
 using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.Textures;
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
@@ -24,7 +25,7 @@ namespace DCL.Profiles
         private string userId;
         private string name;
         private bool hasClaimedName;
-        public StreamableLoadingResult<Sprite>? ProfilePicture { get; set; }
+        public StreamableLoadingResult<SpriteData>.WithFallback? ProfilePicture { get; set; }
 
         public string UserId
         {
@@ -64,7 +65,7 @@ namespace DCL.Profiles
 
         public bool HasConnectedWeb3 { get; internal set; }
         public string? Description { get; set; }
-        public int TutorialStep { get; internal set; }
+        public int TutorialStep { get; set; }
         public string? Email { get; internal set; }
         public string? Country { get; set; }
         public string? EmploymentStatus { get; set; }
@@ -136,6 +137,7 @@ namespace DCL.Profiles
             this.Name = "";
             this.TutorialStep = default(int);
             this.HasConnectedWeb3 = default(bool);
+            ProfilePicture = null;
             this.IsDirty = false;
         }
 
@@ -159,8 +161,11 @@ namespace DCL.Profiles
                 avatar
             );
 
-        public void Dispose() =>
+        public void Dispose()
+        {
+            ProfilePicture.TryDereference();
             POOL.Release(this);
+        }
 
         private string GenerateDisplayName()
         {

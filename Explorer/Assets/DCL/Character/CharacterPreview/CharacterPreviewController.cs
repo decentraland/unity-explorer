@@ -3,6 +3,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.Emotes;
+using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
@@ -70,6 +71,8 @@ namespace DCL.CharacterPreview
 
         public UniTask UpdateAvatarAsync(CharacterPreviewAvatarModel avatarModel, CancellationToken ct)
         {
+            ct.ThrowIfCancellationRequested();
+
             ref AvatarShapeComponent avatarShape = ref globalWorld.Get<AvatarShapeComponent>(characterPreviewEntity);
 
             avatarShape.SkinColor = avatarModel.SkinColor;
@@ -86,25 +89,50 @@ namespace DCL.CharacterPreview
                 PartitionComponent.TOP_PRIORITY
             );
 
-            avatarShape.EmotePromise = EmotePromise.Create(globalWorld,
+            Entity emotePromiseEntity = globalWorld.Create(EmotePromise.Create(globalWorld,
                 EmoteComponentsUtils.CreateGetEmotesByPointersIntention(avatarShape.BodyShape,
                     avatarModel.Emotes ?? (IReadOnlyCollection<URN>)Array.Empty<URN>()),
-                PartitionComponent.TOP_PRIORITY);
+                PartitionComponent.TOP_PRIORITY));
+
+            EntityReference emotePromiseRef = globalWorld.Reference(emotePromiseEntity);
 
             avatarShape.IsDirty = true;
 
-            return WaitForAvatarInstantiatedAsync(ct);
+            return WaitForAvatarInstantiatedAsync(emotePromiseRef, ct);
         }
 
-        private async UniTask WaitForAvatarInstantiatedAsync(CancellationToken ct)
+        private async UniTask WaitForAvatarInstantiatedAsync(EntityReference emotePromiseEntity, CancellationToken ct)
         {
-            while (!ct.IsCancellationRequested && globalWorld.Get<AvatarShapeComponent>(characterPreviewEntity).IsDirty)
+            World world = globalWorld;
+            Entity avatarEntity = characterPreviewEntity;
+
+            while (!IsAvatarLoaded() || !IsEmoteLoaded())
                 await UniTask.Yield(ct);
+
+            ct.ThrowIfCancellationRequested();
+
+            return;
+
+            bool IsAvatarLoaded()
+            {
+                return !world.Get<AvatarShapeComponent>(avatarEntity).IsDirty;
+            }
+
+            bool IsEmoteLoaded()
+            {
+                return !emotePromiseEntity.IsAlive(world)
+                       || world.Get<EmotePromise>(emotePromiseEntity).IsConsumed;
+            }
         }
 
         public void PlayEmote(string emoteId)
         {
-            globalWorld.Add(characterPreviewEntity, new CharacterEmoteIntent { EmoteId = emoteId, TriggerSource = TriggerSource.PREVIEW});
+            var intent = new CharacterEmoteIntent { EmoteId = emoteId, TriggerSource = TriggerSource.PREVIEW };
+
+            if (globalWorld.Has<CharacterEmoteIntent>(characterPreviewEntity))
+                globalWorld.Set(characterPreviewEntity, intent);
+            else
+                globalWorld.Add(characterPreviewEntity, intent);
         }
 
         public void StopEmotes()

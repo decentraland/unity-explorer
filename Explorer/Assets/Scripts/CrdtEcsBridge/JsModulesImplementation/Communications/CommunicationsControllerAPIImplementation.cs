@@ -1,12 +1,9 @@
 ﻿using CRDT.Memory;
-using CrdtEcsBridge.PoolsProviders;
 using SceneRunner.Scene;
 using SceneRuntime;
 using System;
 using System.Buffers;
-using System.Collections.Generic;
 using System.Text;
-using Utility;
 
 namespace CrdtEcsBridge.JsModulesImplementation.Communications
 {
@@ -14,41 +11,31 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
     {
         private readonly ICRDTMemoryAllocator crdtMemoryAllocator;
 
-        public CommunicationsControllerAPIImplementation(
-            ISceneData sceneData,
-            ICommunicationControllerHub messagePipesHub,
+        public CommunicationsControllerAPIImplementation(ISceneData sceneData,
+            ISceneCommunicationPipe messagePipesHub,
             IJsOperations jsOperations,
-            ICRDTMemoryAllocator crdtMemoryAllocator,
-            ISceneStateProvider sceneStateProvider) : base(
-            sceneData,
+            ICRDTMemoryAllocator crdtMemoryAllocator) : base(sceneData,
             messagePipesHub,
-            jsOperations,
-            sceneStateProvider)
+            jsOperations, ISceneCommunicationPipe.MsgType.Uint8Array)
         {
             this.crdtMemoryAllocator = crdtMemoryAllocator;
         }
 
-        protected override void OnMessageReceived(ICommunicationControllerHub.SceneMessage receivedMessage)
+        protected override void OnMessageReceived(ISceneCommunicationPipe.DecodedMessage message)
         {
-            ReadOnlySpan<byte> decodedMessage = receivedMessage.Data.Span;
-            MsgType msgType = DecodeMessage(ref decodedMessage);
-
-            if (msgType != MsgType.Uint8Array || decodedMessage.Length == 0)
-                return;
-
             // Wallet Id
-            int walletBytesCount = Encoding.UTF8.GetByteCount(receivedMessage.WalletId);
+            int walletBytesCount = Encoding.UTF8.GetByteCount(message.FromWalletId);
             Span<byte> senderBytes = stackalloc byte[walletBytesCount];
-            Encoding.UTF8.GetBytes(receivedMessage.WalletId, senderBytes);
+            Encoding.UTF8.GetBytes(message.FromWalletId, senderBytes);
 
-            int messageLength = senderBytes.Length + decodedMessage.Length + 1;
+            int messageLength = senderBytes.Length + message.Data.Length + 1;
 
             IMemoryOwner<byte>? serializedMessageOwner = crdtMemoryAllocator.GetMemoryBuffer(messageLength);
             Span<byte> serializedMessage = serializedMessageOwner.Memory.Span;
 
             serializedMessage[0] = (byte)senderBytes.Length;
             senderBytes.CopyTo(serializedMessage[1..]);
-            decodedMessage.CopyTo(serializedMessage.Slice(senderBytes.Length + 1));
+            message.Data.CopyTo(serializedMessage.Slice(senderBytes.Length + 1));
 
             lock (eventsToProcess) { eventsToProcess.Add(serializedMessageOwner); }
         }

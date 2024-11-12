@@ -18,15 +18,15 @@ namespace DCL.Optimization.PerformanceBudgeting.Tests
         private MemoryBudget memoryBudget;
 
         private IBudgetProfiler profiler;
-        private ISystemMemory systemMemory;
+        private ISystemMemoryCap systemMemoryCap;
 
         [SetUp]
         public void Setup()
         {
             profiler = Substitute.For<IBudgetProfiler>();
-            systemMemory = Substitute.For<ISystemMemory>();
+            systemMemoryCap = Substitute.For<ISystemMemoryCap>();
 
-            memoryBudget = new MemoryBudget(systemMemory, profiler, memoryThreshold);
+            memoryBudget = new MemoryBudget(systemMemoryCap, profiler, memoryThreshold);
         }
 
         [TestCase(1000, 500, MemoryUsageStatus.NORMAL)]
@@ -35,8 +35,8 @@ namespace DCL.Optimization.PerformanceBudgeting.Tests
         public void ReturnCorrectMemoryStatus_OnDifferentMemoryUsages(long systemMemoryInMB, long usedMemoryInMB, MemoryUsageStatus expectedUsage)
         {
             // Arrange
-            memoryBudget.actualSystemMemory = systemMemoryInMB;
-            profiler.TotalUsedMemoryInBytes.Returns(usedMemoryInMB * BYTES_IN_MEGABYTE);
+            profiler.SystemUsedMemoryInBytes.Returns(usedMemoryInMB * BYTES_IN_MEGABYTE);
+            systemMemoryCap.MemoryCapInMB.Returns((int)systemMemoryInMB);
 
             // Act-Assert
             Assert.That(memoryBudget.GetMemoryUsageStatus(), Is.EqualTo(expectedUsage));
@@ -47,8 +47,8 @@ namespace DCL.Optimization.PerformanceBudgeting.Tests
         public void CanSpendBudgetOnlyWhenMemoryIsNotFull(long systemMemoryInMB, long usedMemoryInMB, bool canSpendBudget)
         {
             // Arrange
-            profiler.TotalUsedMemoryInBytes.Returns(usedMemoryInMB * BYTES_IN_MEGABYTE);
-            memoryBudget.actualSystemMemory = systemMemoryInMB;
+            profiler.SystemUsedMemoryInBytes.Returns(usedMemoryInMB * BYTES_IN_MEGABYTE);
+            systemMemoryCap.MemoryCapInMB.Returns((int)systemMemoryInMB);
 
             // Act-Assert
             Assert.That(memoryBudget.TrySpendBudget(), Is.EqualTo(canSpendBudget));

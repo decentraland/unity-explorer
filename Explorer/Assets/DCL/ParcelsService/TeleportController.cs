@@ -23,6 +23,7 @@ namespace DCL.ParcelsService
 {
     public class TeleportController : ITeleportController
     {
+        private const string TRAM_LINE_TITLE = "Tram Line";
         private static readonly Random RANDOM = new ();
 
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
@@ -59,6 +60,7 @@ namespace DCL.ParcelsService
             retrieveScene = null;
         }
 
+
         public async UniTask<WaitForSceneReadiness?> TeleportToSceneSpawnPointAsync(Vector2Int parcel, AsyncLoadProcessReport loadReport, CancellationToken ct)
         {
             // if current scene is still loading it will block the teleport until its assets are resolved or timed out
@@ -76,11 +78,11 @@ namespace DCL.ParcelsService
             Vector3 targetWorldPosition;
             Vector3? cameraTarget = null;
 
-            if (sceneDef != null)
+            if (sceneDef != null && !IsTramLine(sceneDef.metadata.OriginalJson.AsSpan()))
             {
                 // Override parcel as it's a new target
                 parcel = sceneDef.metadata.scene.DecodedBase;
-                Vector3 parcelBaseWorldPosition = ParcelMathHelper.GetPositionByParcelPosition(parcel);
+                Vector3 parcelBaseWorldPosition = GetPositionByParcelPositionWithErrorCompensation(parcel);
                 targetWorldPosition = parcelBaseWorldPosition;
 
                 List<SpawnPoint>? spawnPoints = sceneDef.metadata.spawnPoints;
@@ -97,7 +99,7 @@ namespace DCL.ParcelsService
                 }
             }
             else
-                targetWorldPosition = ParcelMathHelper.GetPositionByParcelPosition(parcel, true);
+                targetWorldPosition = GetPositionByParcelPositionWithErrorCompensation(parcel, true);
 
             await UniTask.Yield(PlayerLoopTiming.LastPostLateUpdate);
 
@@ -118,6 +120,41 @@ namespace DCL.ParcelsService
             }
 
             return new WaitForSceneReadiness(parcel, loadReport, sceneReadinessReportQueue);
+        }
+
+        private static bool IsTramLine(ReadOnlySpan<char> originalJson) =>
+            ExtractTitleValue(originalJson).SequenceEqual(TRAM_LINE_TITLE.AsSpan());
+
+        private static ReadOnlySpan<char> ExtractTitleValue(ReadOnlySpan<char> json)
+        {
+            int titleIndex = json.IndexOf(@"""title"":");
+            if (titleIndex == -1)
+                return ReadOnlySpan<char>.Empty;
+
+            // Move to the start of the title value (after "title": ")
+            int valueStartIndex = json[titleIndex..].IndexOf(':') + 1;
+            ReadOnlySpan<char> valueSpan = json.Slice(titleIndex + valueStartIndex);
+
+            int openQuoteIndex = valueSpan.IndexOf('"');
+            if (openQuoteIndex == -1)
+                return ReadOnlySpan<char>.Empty;
+
+            int closeQuoteIndex = valueSpan[(openQuoteIndex + 1)..].IndexOf('"');
+            if (closeQuoteIndex == -1)
+                return ReadOnlySpan<char>.Empty;
+
+            return valueSpan.Slice(openQuoteIndex + 1, closeQuoteIndex);
+        }
+
+        /// <summary>
+        ///     Pulls position a little bit towards the center of the parcel to compensate a possible float error
+        ///     that shifts position outside the parcel
+        /// </summary>
+        private static Vector3 GetPositionByParcelPositionWithErrorCompensation(Vector2Int parcel, bool adaptYPositionToTerrain = false)
+        {
+            const float EPSILON = 0.0001f;
+
+            return ParcelMathHelper.GetPositionByParcelPosition(parcel, adaptYPositionToTerrain) + new Vector3(EPSILON, 0, EPSILON);
         }
 
         // TODO: this method should be removed, implies possible mantainance efforts and its only for debugging purposes

@@ -6,11 +6,9 @@ using DCL.Multiplayer.Connections.Archipelago.LiveConnections;
 using DCL.Multiplayer.Connections.Archipelago.SignFlow;
 using DCL.Multiplayer.Connections.Rooms.Connective;
 using DCL.Multiplayer.Connections.Typing;
-using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
 using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Internal.FFIClients.Pools.Memory;
-using LiveKit.Rooms;
 using System;
 using System.Buffers;
 using System.Net.WebSockets;
@@ -20,24 +18,26 @@ using Utility.Multithreading;
 
 namespace DCL.Multiplayer.Connections.Archipelago.Rooms
 {
-    public class ArchipelagoIslandRoom : IArchipelagoIslandRoom
+    public class ArchipelagoIslandRoom : ConnectiveRoom
     {
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IArchipelagoSignFlow signFlow;
         private readonly ICharacterObject characterObject;
-        private readonly IConnectiveRoom connectiveRoom;
+
         private readonly ICurrentAdapterAddress currentAdapterAddress;
 
-        private ConnectToRoomAsyncDelegate? connectToRoomAsyncDelegate;
+        private string? newConnectionString;
 
         public ArchipelagoIslandRoom(ICharacterObject characterObject, IWeb3IdentityCache web3IdentityCache, IMultiPool multiPool, ICurrentAdapterAddress currentAdapterAddress) : this(
             web3IdentityCache,
+            // We cannot use ArrayPool<byte>.Shared since some operations might not be thread safe (like the handshake)
+            // producing unexpected errors when sending the data through the websocket
             new LiveConnectionArchipelagoSignFlow(
                 new WebSocketArchipelagoLiveConnection(
                     () => new ClientWebSocket(),
-                    new ArrayMemoryPool(ArrayPool<byte>.Shared!)
+                    new ArrayMemoryPool(ArrayPool<byte>.Create())
                 ).WithLog(),
-                new ArrayMemoryPool(ArrayPool<byte>.Shared!),
+                new ArrayMemoryPool(ArrayPool<byte>.Create()),
                 multiPool
             ).WithLog(),
             characterObject,
@@ -55,41 +55,24 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
             this.signFlow = signFlow;
             this.characterObject = characterObject;
             this.currentAdapterAddress = currentAdapterAddress;
-
-            connectiveRoom = new RenewableConnectiveRoom(
-                () => new ConnectiveRoom(
-                    PrewarmAsync,
-                    SendHeartbeatAsync,
-                    nameof(ArchipelagoIslandRoom)
-                )
-            );
         }
 
-        public UniTask<bool> StartAsync() =>
-            connectiveRoom.StartAsync();
-
-        public UniTask StopAsync() =>
-            UniTask.WhenAll(
-
-                //signFlow.DisconnectAsync(CancellationToken.None),
-                connectiveRoom.StopAsync()
-            );
-
-        public IConnectiveRoom.State CurrentState() =>
-            connectiveRoom.CurrentState();
-
-        public IRoom Room() =>
-            connectiveRoom.Room();
-
-        private async UniTask PrewarmAsync(CancellationToken token)
+        protected override async UniTask PrewarmAsync(CancellationToken token)
         {
             await ConnectToArchipelagoAsync(token);
-            signFlow.StartListeningForConnectionStringAsync(newString => OnNewConnectionString(newString, token), token);
+            signFlow.StartListeningForConnectionStringAsync(OnNewConnectionString, token).Forget();
         }
 
-        private async UniTask SendHeartbeatAsync(ConnectToRoomAsyncDelegate connectDelegate, DisconnectCurrentRoomAsyncDelegate disconnectCurrentRoomAsyncDelegate, CancellationToken token)
+        protected override async UniTask CycleStepAsync(CancellationToken token)
         {
-            connectToRoomAsyncDelegate = connectDelegate;
+            if (newConnectionString != null)
+            {
+                string connectionString = newConnectionString;
+                newConnectionString = null;
+
+                await TryConnectToRoomAsync(connectionString, token);
+            }
+
             await UniTask.SwitchToMainThread(token);
             Vector3 position = characterObject.Position;
             await using ExecuteOnThreadPoolScope _ = await ExecuteOnThreadPoolScope.NewScopeWithReturnOnMainThreadAsync();
@@ -97,14 +80,12 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
             var result = await signFlow.SendHeartbeatAsync(position, token);
 
             if (result.Success == false)
-                ReportHub.LogWarning(ReportCategory.ARCHIPELAGO_REQUEST, $"Cannot send heartbeat, connection is closed: {result.ErrorMessage}");
+                ReportHub.LogWarning(ReportCategory.COMMS_SCENE_HANDLER, $"Cannot send heartbeat, connection is closed: {result.ErrorMessage}");
         }
 
-        private void OnNewConnectionString(string connectionString, CancellationToken token)
+        private void OnNewConnectionString(string connectionString)
         {
-            if (CurrentState() is IConnectiveRoom.State.Stopped) throw new InvalidOperationException("Room is not running");
-            connectToRoomAsyncDelegate.EnsureNotNull("Connection delegate is not passed yet");
-            connectToRoomAsyncDelegate!(connectionString, token).Forget();
+            newConnectionString = connectionString;
         }
 
         private async UniTask ConnectToArchipelagoAsync(CancellationToken token)
@@ -122,15 +103,25 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
             string ethereumAddress = identity.Address;
             var messageForSignResult = await signFlow.MessageForSignAsync(ethereumAddress, token);
 
-            if (messageForSignResult.Success == false)
+            if (messageForSignResult.Success == false ||
+                !HandshakePayloadIsValid(messageForSignResult.Result))
             {
-                ReportHub.LogError(ReportCategory.ARCHIPELAGO_REQUEST, $"Cannot obtain a message to sign a welcome peer");
+                ReportHub.LogError(ReportCategory.COMMS_SCENE_HANDLER, "Cannot obtain a message to sign a welcome peer");
                 return LightResult<string>.FAILURE;
             }
 
             string signedMessage = identity.Sign(messageForSignResult.Result).ToJson();
-            ReportHub.Log(ReportCategory.ARCHIPELAGO_REQUEST, $"Signed message: {signedMessage}");
+            ReportHub.Log(ReportCategory.COMMS_SCENE_HANDLER, $"Signed message: {signedMessage}");
             return await signFlow.WelcomePeerIdAsync(signedMessage, token);
+        }
+
+        private bool HandshakePayloadIsValid(string payload)
+        {
+            if (!payload.StartsWith("dcl-"))
+                return false;
+
+            ReadOnlySpan<char> span = payload.AsSpan(4);
+            return span.IndexOf(':') == -1;
         }
     }
 }

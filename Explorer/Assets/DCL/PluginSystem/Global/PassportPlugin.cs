@@ -5,11 +5,14 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.Wearables;
 using DCL.Backpack;
+using DCL.BadgesAPIService;
 using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Chat;
 using DCL.Input;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Multiplayer.Profiles.Poses;
+using DCL.NotificationsBusController.NotificationsBus;
 using DCL.Passport;
 using DCL.Profiles;
 using DCL.Profiles.Self;
@@ -37,7 +40,10 @@ namespace DCL.PluginSystem.Global
         private readonly ISelfProfile selfProfile;
         private readonly IWebBrowser webBrowser;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
+        private readonly BadgesAPIClient badgesAPIClient;
         private readonly IInputBlock inputBlock;
+        private readonly IRemoteMetadata remoteMetadata;
+        private readonly INotificationsBusController notificationsBusController;
         private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
 
@@ -57,7 +63,10 @@ namespace DCL.PluginSystem.Global
             ISelfProfile selfProfile,
             IWebBrowser webBrowser,
             IDecentralandUrlsSource decentralandUrlsSource,
+            BadgesAPIClient badgesAPIClient,
+            INotificationsBusController notificationsBusController,
             IInputBlock inputBlock,
+            IRemoteMetadata remoteMetadata,
             Arch.Core.World world,
             Entity playerEntity
         )
@@ -75,7 +84,10 @@ namespace DCL.PluginSystem.Global
             this.selfProfile = selfProfile;
             this.webBrowser = webBrowser;
             this.decentralandUrlsSource = decentralandUrlsSource;
+            this.badgesAPIClient = badgesAPIClient;
             this.inputBlock = inputBlock;
+            this.remoteMetadata = remoteMetadata;
+            this.notificationsBusController = notificationsBusController;
             this.world = world;
             this.playerEntity = playerEntity;
         }
@@ -116,7 +128,11 @@ namespace DCL.PluginSystem.Global
                 thumbnailProvider,
                 webBrowser,
                 decentralandUrlsSource,
-                inputBlock
+                badgesAPIClient,
+                webRequestController,
+                inputBlock,
+                notificationsBusController,
+                remoteMetadata
             );
 
             mvcManager.RegisterController(passportController);

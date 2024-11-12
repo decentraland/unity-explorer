@@ -4,11 +4,11 @@ using CommunicationData.URLHelpers;
 using CrdtEcsBridge.RestrictedActions;
 using DCL.AvatarRendering.AvatarShape.Systems;
 using DCL.DebugUtilities;
+using DCL.Diagnostics;
 using DCL.GlobalPartitioning;
 using DCL.Ipfs;
 using DCL.LOD;
 using DCL.Multiplayer.Emotes;
-using DCL.Multiplayer.SDK.Systems.GlobalWorld;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.Global;
@@ -36,6 +36,7 @@ using SceneRuntime;
 using System.Collections.Generic;
 using System.Threading;
 using SystemGroups.Visualiser;
+using UnityEngine;
 using Utility;
 
 namespace Global.Dynamic
@@ -64,18 +65,18 @@ namespace Global.Dynamic
         private readonly World world;
         private readonly CurrentSceneInfo currentSceneInfo;
         private readonly HybridSceneParams hybridSceneParams;
-        private readonly ICharacterDataPropagationUtility characterDataPropagationUtility;
+        private readonly bool localSceneDevelopment;
 
         public GlobalWorldFactory(in StaticContainer staticContainer,
             CameraSamplingData cameraSamplingData, RealmSamplingData realmSamplingData,
             URLDomain assetBundlesURL, IRealmData realmData,
             IReadOnlyList<IDCLGlobalPlugin> globalPlugins, IDebugContainerBuilder debugContainerBuilder,
             IScenesCache scenesCache, HybridSceneParams hybridSceneParams,
-            ICharacterDataPropagationUtility characterDataPropagationUtility,
             CurrentSceneInfo currentSceneInfo,
             ILODCache lodCache,
             IEmotesMessageBus emotesMessageBus,
-            World world)
+            World world,
+            bool localSceneDevelopment)
         {
             partitionedWorldsAggregateFactory = staticContainer.SingletonSharedDependencies.AggregateFactory;
             componentPoolsRegistry = staticContainer.ComponentsContainer.ComponentPoolsRegistry;
@@ -93,10 +94,10 @@ namespace Global.Dynamic
             this.staticContainer = staticContainer;
             this.scenesCache = scenesCache;
             this.hybridSceneParams = hybridSceneParams;
-            this.characterDataPropagationUtility = characterDataPropagationUtility;
             this.currentSceneInfo = currentSceneInfo;
             this.lodCache = lodCache;
             this.emotesMessageBus = emotesMessageBus;
+            this.localSceneDevelopment = localSceneDevelopment;
             this.world = world;
 
             memoryBudget = staticContainer.SingletonSharedDependencies.MemoryBudget;
@@ -111,7 +112,10 @@ namespace Global.Dynamic
             globalSceneStateProvider.State = SceneState.Running;
 
             var builder = new ArchSystemsWorldBuilder<World>(world);
-            builder.InjectCustomGroup(new SyncedPreRenderingSystemGroup(null, globalSceneStateProvider));
+
+            AddShortInfo(world);
+
+            builder.InjectCustomGroup(new SyncedPreRenderingSystemGroup(globalSceneStateProvider));
 
             IReleasablePerformanceBudget sceneBudget = new ConcurrentLoadingPerformanceBudget(staticSettings.ScenesLoadingBudget);
 
@@ -121,9 +125,9 @@ namespace Global.Dynamic
             LoadSceneSystemLogicBase loadSceneSystemLogic;
 
             if (hybridSceneParams.EnableHybridScene)
-                loadSceneSystemLogic = new LoadHybridSceneSystemLogic(webRequestController, assetBundlesURL, hybridSceneParams, characterDataPropagationUtility, world, playerEntity);
+                loadSceneSystemLogic = new LoadHybridSceneSystemLogic(webRequestController, assetBundlesURL, hybridSceneParams);
             else
-                loadSceneSystemLogic = new LoadSceneSystemLogic(webRequestController, assetBundlesURL, characterDataPropagationUtility, world, playerEntity);
+                loadSceneSystemLogic = new LoadSceneSystemLogic(webRequestController, assetBundlesURL);
 
             LoadSceneSystem.InjectToWorld(ref builder,
                 loadSceneSystemLogic,
@@ -134,6 +138,7 @@ namespace Global.Dynamic
 
             LoadStaticPointersSystem.InjectToWorld(ref builder);
             LoadFixedPointersSystem.InjectToWorld(ref builder);
+            LoadPortableExperiencePointersSystem.InjectToWorld(ref builder);
 
             // are replace by increasing radius
             var jobsMathHelper = new ParcelMathJobifiedHelper();
@@ -163,7 +168,9 @@ namespace Global.Dynamic
 
             OwnAvatarLoaderFromDebugMenuSystem.InjectToWorld(ref builder, playerEntity, debugContainerBuilder, realmData);
 
-            UpdateCurrentSceneSystem.InjectToWorld(ref builder, realmData, scenesCache, currentSceneInfo, playerEntity, staticContainer.SingletonSharedDependencies.SceneAssetLock);
+            UnloadPortableExperiencesSystem.InjectToWorld(ref builder);
+
+            UpdateCurrentSceneSystem.InjectToWorld(ref builder, realmData, scenesCache, currentSceneInfo, playerEntity, staticContainer.SingletonSharedDependencies.SceneAssetLock, debugContainerBuilder);
 
             var pluginArgs = new GlobalPluginArguments(playerEntity, v8ActiveEngines);
 
@@ -172,7 +179,7 @@ namespace Global.Dynamic
 
             var finalizeWorldSystems = new IFinalizeWorldSystem[]
             {
-                UnloadSceneSystem.InjectToWorld(ref builder, scenesCache, staticContainer.SingletonSharedDependencies.SceneAssetLock), UnloadSceneLODSystem.InjectToWorld(ref builder, scenesCache, lodCache),
+                UnloadSceneSystem.InjectToWorld(ref builder, scenesCache, staticContainer.SingletonSharedDependencies.SceneAssetLock, localSceneDevelopment), UnloadSceneLODSystem.InjectToWorld(ref builder, scenesCache, lodCache),
                 new ReleaseRealmPooledComponentSystem(componentPoolsRegistry),
             };
 
@@ -186,6 +193,11 @@ namespace Global.Dynamic
             sceneFactory.SetGlobalWorldActions(new GlobalWorldActions(globalWorld.EcsWorld, playerEntity, emotesMessageBus));
 
             return globalWorld;
+        }
+
+        private static void AddShortInfo(World world)
+        {
+            world.Create(new SceneShortInfo(Vector2Int.zero, "global"));
         }
     }
 }

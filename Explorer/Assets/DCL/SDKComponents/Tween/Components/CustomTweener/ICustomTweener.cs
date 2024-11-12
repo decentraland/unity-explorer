@@ -15,7 +15,8 @@ namespace DCL.SDKComponents.Tween.Components
         bool IsFinished();
         bool IsActive();
 
-        void Initialize(PBTween pbTween, SDKTransform sdkTransform, Transform startTransform, float durationInSeconds);
-        void SetResult(ref SDKTransform sdkTransform);
+        void Initialize(PBTween pbTween, float durationInSeconds);
+        void UpdateSDKTransform(ref SDKTransform sdkTransform);
+        void UpdateTransform(Transform transform);
     }
 }

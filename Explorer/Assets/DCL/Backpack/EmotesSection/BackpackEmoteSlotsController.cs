@@ -1,8 +1,11 @@
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Emotes;
+using DCL.AvatarRendering.Loading.Components;
+using DCL.AvatarRendering.Thumbnails.Utils;
 using DCL.Backpack.BackpackBus;
 using System;
 using System.Threading;
+using UnityEngine;
 using Utility;
 
 namespace DCL.Backpack.EmotesSection
@@ -99,10 +102,9 @@ namespace DCL.Backpack.EmotesSection
         {
             avatarSlotView.StartLoadingAnimation();
 
-            do await UniTask.Delay(MIN_WAIT_TIME, cancellationToken: ct);
-            while (emote.ThumbnailAssetResult == null);
+            Sprite? sprite = await emote.WaitForThumbnailAsync(MIN_WAIT_TIME, ct);
 
-            avatarSlotView.SlotWearableThumbnail.sprite = emote.ThumbnailAssetResult.Value.Asset;
+            avatarSlotView.SlotWearableThumbnail.sprite = sprite;
             avatarSlotView.SlotWearableThumbnail.gameObject.SetActive(true);
             avatarSlotView.LoadingView.FinishLoadingAnimation(avatarSlotView.NftContainer);
         }

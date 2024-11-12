@@ -1,13 +1,11 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
-using DCL.Diagnostics;
 using DCL.Multiplayer.Emotes;
 using DCL.Multiplayer.Profiles.Bunches;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Web3.Identities;
 using ECS.Abstract;
-using System.Collections.Generic;
 using UnityEngine.Pool;
 
 namespace DCL.AvatarRendering.Emotes
@@ -30,50 +28,29 @@ namespace DCL.AvatarRendering.Emotes
 
         protected override void Update(float t)
         {
-            HashSet<RemoteEmoteIntention> savedIntentions = HashSetPool<RemoteEmoteIntention>.Get();
+            using var scope = HashSetPool<RemoteEmoteIntention>.Get(out var savedIntentions);
 
             // this using cleans up the intention list
             using (OwnedBunch<RemoteEmoteIntention> emoteIntentions = emotesMessageBus.EmoteIntentions())
             {
                 if (!emoteIntentions.Available())
-                {
-                    HashSetPool<RemoteEmoteIntention>.Release(savedIntentions);
                     return;
-                }
 
                 foreach (RemoteEmoteIntention remoteEmoteIntention in emoteIntentions.Collection())
-                {
-                    Entity entity = EntityOrNull(remoteEmoteIntention.WalletId);
-
-                    // The entity was not created yet, so we wait until its created to be able to consume the intent
-                    if (entity == Entity.Null)
+                { // The entity was not created yet, so we wait until its created to be able to consume the intent
+                    if (!entityParticipantTable.TryGet(remoteEmoteIntention.WalletId, out IReadOnlyEntityParticipantTable.Entry entry))
                     {
-                        savedIntentions.Add(remoteEmoteIntention);
+                        savedIntentions!.Add(remoteEmoteIntention);
                         continue;
                     }
 
-                    ref CharacterEmoteIntent intention = ref World.AddOrGet<CharacterEmoteIntent>(entity);
-                    intention.EmoteId = remoteEmoteIntention.EmoteId;
-                    intention.Spatial = true;
-                    intention.TriggerSource = TriggerSource.REMOTE;
+                    ref CharacterEmoteIntent intention = ref World!.AddOrGet<CharacterEmoteIntent>(entry.Entity);
+                    intention.UpdateRemoteId(remoteEmoteIntention.EmoteId);
                 }
             }
 
-            foreach (RemoteEmoteIntention savedIntention in savedIntentions)
+            foreach (RemoteEmoteIntention savedIntention in savedIntentions!)
                 emotesMessageBus.SaveForRetry(savedIntention);
-
-            HashSetPool<RemoteEmoteIntention>.Release(savedIntentions);
-        }
-
-        private Entity EntityOrNull(string walletId)
-        {
-            if (identityCache.Identity!.Address.Equals(walletId))
-                return playerEntity;
-
-            if (entityParticipantTable.Has(walletId))
-                return entityParticipantTable.Entity(walletId);
-
-            return Entity.Null;
         }
     }
 }

@@ -161,15 +161,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
-                },
-                {
-                    ""name"": ""AutoWalk"",
-                    ""type"": ""Button"",
-                    ""id"": ""b4656ae5-6783-44e3-aab6-f47c82bbb0b5"",
-                    ""expectedControlType"": ""Button"",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -599,17 +590,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""Walk"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""ce03bf46-b4a6-4780-b639-6cf34b8a35cc"",
-                    ""path"": ""<Keyboard>/capsLock"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""AutoWalk"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -2113,6 +2093,24 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""ToggleSceneDebugConsole"",
+                    ""type"": ""Button"",
+                    ""id"": ""8a10f0d2-822d-4ec6-be75-9be85ad4fbc6"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""ToggleSceneDebugConsoleLarger"",
+                    ""type"": ""Button"",
+                    ""id"": ""65d092fb-6cb5-423f-8b70-93f843b54813"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -2214,6 +2212,50 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""action"": ""ToggleNametags"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""5f780ed0-edb4-436b-af9f-1215c2382586"",
+                    ""path"": ""<Keyboard>/backquote"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""ToggleSceneDebugConsole"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": ""SHIFT+`"",
+                    ""id"": ""f2a9130b-c569-4b29-b34d-033430240dce"",
+                    ""path"": ""OneModifier"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""ToggleSceneDebugConsoleLarger"",
+                    ""isComposite"": true,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": ""modifier"",
+                    ""id"": ""70efa665-f110-4699-970a-70813d9831ba"",
+                    ""path"": ""<Keyboard>/leftShift"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""ToggleSceneDebugConsoleLarger"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""binding"",
+                    ""id"": ""3cccce46-fdd9-4912-b9bf-80a37b3523d2"",
+                    ""path"": ""<Keyboard>/backquote"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""ToggleSceneDebugConsoleLarger"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
                 }
             ]
         },
@@ -2919,7 +2961,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         m_Player_ActionBackward = m_Player.FindAction("ActionBackward", throwIfNotFound: true);
         m_Player_ActionRight = m_Player.FindAction("ActionRight", throwIfNotFound: true);
         m_Player_ActionLeft = m_Player.FindAction("ActionLeft", throwIfNotFound: true);
-        m_Player_AutoWalk = m_Player.FindAction("AutoWalk", throwIfNotFound: true);
         // Camera
         m_Camera = asset.FindActionMap("Camera", throwIfNotFound: true);
         m_Camera_ZoomOut = m_Camera.FindAction("ZoomOut", throwIfNotFound: true);
@@ -2968,6 +3009,8 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         m_Shortcuts_ToggleAvatarBubbles = m_Shortcuts.FindAction("ToggleAvatarBubbles", throwIfNotFound: true);
         m_Shortcuts_ShowHideUI = m_Shortcuts.FindAction("ShowHideUI", throwIfNotFound: true);
         m_Shortcuts_ToggleNametags = m_Shortcuts.FindAction("ToggleNametags", throwIfNotFound: true);
+        m_Shortcuts_ToggleSceneDebugConsole = m_Shortcuts.FindAction("ToggleSceneDebugConsole", throwIfNotFound: true);
+        m_Shortcuts_ToggleSceneDebugConsoleLarger = m_Shortcuts.FindAction("ToggleSceneDebugConsoleLarger", throwIfNotFound: true);
         // Emotes
         m_Emotes = asset.FindActionMap("Emotes", throwIfNotFound: true);
         m_Emotes_Slot1 = m_Emotes.FindAction("Slot 1", throwIfNotFound: true);
@@ -3070,7 +3113,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
     private readonly InputAction m_Player_ActionBackward;
     private readonly InputAction m_Player_ActionRight;
     private readonly InputAction m_Player_ActionLeft;
-    private readonly InputAction m_Player_AutoWalk;
     public struct PlayerActions
     {
         private @DCLInput m_Wrapper;
@@ -3090,7 +3132,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         public InputAction @ActionBackward => m_Wrapper.m_Player_ActionBackward;
         public InputAction @ActionRight => m_Wrapper.m_Player_ActionRight;
         public InputAction @ActionLeft => m_Wrapper.m_Player_ActionLeft;
-        public InputAction @AutoWalk => m_Wrapper.m_Player_AutoWalk;
         public InputActionMap Get() { return m_Wrapper.m_Player; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -3145,9 +3186,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @ActionLeft.started += instance.OnActionLeft;
             @ActionLeft.performed += instance.OnActionLeft;
             @ActionLeft.canceled += instance.OnActionLeft;
-            @AutoWalk.started += instance.OnAutoWalk;
-            @AutoWalk.performed += instance.OnAutoWalk;
-            @AutoWalk.canceled += instance.OnAutoWalk;
         }
 
         private void UnregisterCallbacks(IPlayerActions instance)
@@ -3197,9 +3235,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @ActionLeft.started -= instance.OnActionLeft;
             @ActionLeft.performed -= instance.OnActionLeft;
             @ActionLeft.canceled -= instance.OnActionLeft;
-            @AutoWalk.started -= instance.OnAutoWalk;
-            @AutoWalk.performed -= instance.OnAutoWalk;
-            @AutoWalk.canceled -= instance.OnAutoWalk;
         }
 
         public void RemoveCallbacks(IPlayerActions instance)
@@ -3592,6 +3627,8 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
     private readonly InputAction m_Shortcuts_ToggleAvatarBubbles;
     private readonly InputAction m_Shortcuts_ShowHideUI;
     private readonly InputAction m_Shortcuts_ToggleNametags;
+    private readonly InputAction m_Shortcuts_ToggleSceneDebugConsole;
+    private readonly InputAction m_Shortcuts_ToggleSceneDebugConsoleLarger;
     public struct ShortcutsActions
     {
         private @DCLInput m_Wrapper;
@@ -3605,6 +3642,8 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         public InputAction @ToggleAvatarBubbles => m_Wrapper.m_Shortcuts_ToggleAvatarBubbles;
         public InputAction @ShowHideUI => m_Wrapper.m_Shortcuts_ShowHideUI;
         public InputAction @ToggleNametags => m_Wrapper.m_Shortcuts_ToggleNametags;
+        public InputAction @ToggleSceneDebugConsole => m_Wrapper.m_Shortcuts_ToggleSceneDebugConsole;
+        public InputAction @ToggleSceneDebugConsoleLarger => m_Wrapper.m_Shortcuts_ToggleSceneDebugConsoleLarger;
         public InputActionMap Get() { return m_Wrapper.m_Shortcuts; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -3641,6 +3680,12 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @ToggleNametags.started += instance.OnToggleNametags;
             @ToggleNametags.performed += instance.OnToggleNametags;
             @ToggleNametags.canceled += instance.OnToggleNametags;
+            @ToggleSceneDebugConsole.started += instance.OnToggleSceneDebugConsole;
+            @ToggleSceneDebugConsole.performed += instance.OnToggleSceneDebugConsole;
+            @ToggleSceneDebugConsole.canceled += instance.OnToggleSceneDebugConsole;
+            @ToggleSceneDebugConsoleLarger.started += instance.OnToggleSceneDebugConsoleLarger;
+            @ToggleSceneDebugConsoleLarger.performed += instance.OnToggleSceneDebugConsoleLarger;
+            @ToggleSceneDebugConsoleLarger.canceled += instance.OnToggleSceneDebugConsoleLarger;
         }
 
         private void UnregisterCallbacks(IShortcutsActions instance)
@@ -3672,6 +3717,12 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @ToggleNametags.started -= instance.OnToggleNametags;
             @ToggleNametags.performed -= instance.OnToggleNametags;
             @ToggleNametags.canceled -= instance.OnToggleNametags;
+            @ToggleSceneDebugConsole.started -= instance.OnToggleSceneDebugConsole;
+            @ToggleSceneDebugConsole.performed -= instance.OnToggleSceneDebugConsole;
+            @ToggleSceneDebugConsole.canceled -= instance.OnToggleSceneDebugConsole;
+            @ToggleSceneDebugConsoleLarger.started -= instance.OnToggleSceneDebugConsoleLarger;
+            @ToggleSceneDebugConsoleLarger.performed -= instance.OnToggleSceneDebugConsoleLarger;
+            @ToggleSceneDebugConsoleLarger.canceled -= instance.OnToggleSceneDebugConsoleLarger;
         }
 
         public void RemoveCallbacks(IShortcutsActions instance)
@@ -3967,7 +4018,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         void OnActionBackward(InputAction.CallbackContext context);
         void OnActionRight(InputAction.CallbackContext context);
         void OnActionLeft(InputAction.CallbackContext context);
-        void OnAutoWalk(InputAction.CallbackContext context);
     }
     public interface ICameraActions
     {
@@ -4020,6 +4070,8 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         void OnToggleAvatarBubbles(InputAction.CallbackContext context);
         void OnShowHideUI(InputAction.CallbackContext context);
         void OnToggleNametags(InputAction.CallbackContext context);
+        void OnToggleSceneDebugConsole(InputAction.CallbackContext context);
+        void OnToggleSceneDebugConsoleLarger(InputAction.CallbackContext context);
     }
     public interface IEmotesActions
     {

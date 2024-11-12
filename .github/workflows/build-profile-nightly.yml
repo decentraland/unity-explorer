@@ -1,0 +1,38 @@
+name: Nightly Profile Build
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 2 * * *'  # Runs at 2 AM UTC every day
+
+jobs:
+  get-info:
+    name: Get Info
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      latest_version: ${{ steps.get_version.outputs.latest_version }}
+      full_version: ${{ steps.get_version.outputs.next_full_version }}
+      tag_version: ${{ steps.get_version.outputs.next_tag_version }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: dev
+      - name: Get version
+        id: get_version
+        uses: ./.github/actions/version
+
+  build:
+    name: Build Unity Cloud
+    needs: get-info
+    uses: ./.github/workflows/build-unitycloud.yml
+    with:
+      profile: profile
+      clean_build: true
+      cache_strategy: library
+      version: ${{ needs.get-info.outputs.full_version }}
+      sentry_enabled: true
+      is_release_build: false
+      tag_version: ${{ needs.get-info.outputs.tag_version }}
+    secrets: inherit

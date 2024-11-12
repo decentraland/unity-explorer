@@ -4,6 +4,7 @@ using DCL.AsyncLoadReporting;
 using System;
 using System.Threading;
 using UnityEngine;
+using Utility.Types;
 
 namespace ECS.SceneLifeCycle.Realm
 {
@@ -19,17 +20,26 @@ namespace ECS.SceneLifeCycle.Realm
         public const string SDK_TEST_SCENES_URL = "https://sdk-team-cdn.decentraland.org/ipfs/sdk7-test-scenes-main-latest";
         public const string TEST_SCENES_URL = "https://sdk-test-scenes.decentraland.zone";
 
-        URLDomain? CurrentRealm { get; }
+        UniTask<Result> TryChangeRealmAsync(URLDomain realm, CancellationToken ct,
+            Vector2Int parcelToTeleport = default);
 
-        UniTask<bool> TryChangeRealmAsync(URLDomain realm, CancellationToken ct, Vector2Int parcelToTeleport = default);
+        bool CheckIsNewRealm(URLDomain realm);
 
-        UniTask<bool> TryInitializeTeleportToParcelAsync(Vector2Int parcel, CancellationToken ct, bool isLocal = false);
+        UniTask<bool> CheckRealmIsReacheableAsync(URLDomain realm, CancellationToken ct);
+
+        UniTask<Result> TryInitializeTeleportToParcelAsync(Vector2Int parcel, CancellationToken ct,
+            bool isLocal = false);
 
         UniTask InitializeTeleportToSpawnPointAsync(AsyncLoadProcessReport teleportLoadReport, CancellationToken ct, Vector2Int parcelToTeleport = default);
 
         UniTask LoadTerrainAsync(AsyncLoadProcessReport loadReport, CancellationToken ct);
 
         UniTask SwitchMiscVisibilityAsync();
+
+        UniTask ChangeRealmAsync(URLDomain realm, CancellationToken ct);
+
+        UniTask<UniTask> TeleportToParcelAsync(Vector2Int parcel, AsyncLoadProcessReport processReport,
+            CancellationToken ct);
 
         // True if changed to GenesisCity, False - when changed to any other realm
         event Action<bool> RealmChanged;

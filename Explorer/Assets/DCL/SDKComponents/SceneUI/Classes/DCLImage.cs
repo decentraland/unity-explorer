@@ -10,7 +10,7 @@ namespace DCL.SDKComponents.SceneUI.Classes
 
         private VisualElement canvas;
         private DCLImageScaleMode scaleMode;
-        private Texture2D texture2D;
+        private Texture2D? texture2D;
         private Vector4 slices;
         private Color color;
         private DCLUVs uvs;
@@ -47,6 +47,12 @@ namespace DCL.SDKComponents.SceneUI.Classes
             set => SetUVs(value);
         }
 
+        public bool IsHidden
+        {
+            get => canvas.style.opacity == 0f;
+            set => canvas.style.opacity = value ? 0f : 1f;
+        }
+
         private IStyle style => canvas.style;
 
         public void Initialize(VisualElement canvasToApply)
@@ -57,6 +63,7 @@ namespace DCL.SDKComponents.SceneUI.Classes
             this.color = new Color(1, 1, 1, 0);
             this.uvs = default(DCLUVs);
             this.canvas = canvasToApply;
+            IsHidden = false;
 
             canvasToApply.generateVisualContent += OnGenerateVisualContent;
         }

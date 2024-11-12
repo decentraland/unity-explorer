@@ -16,10 +16,14 @@ using ECS.SceneLifeCycle.Systems;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.DeferredLoading;
+using ECS.StreamableLoading.GLTF;
 using ECS.StreamableLoading.NFTShapes;
 using ECS.StreamableLoading.Textures;
 using SceneRunner.Scene;
 using UnityEngine;
+using LoadWearableAssetBundleManifestSystem = DCL.AvatarRendering.Wearables.Systems.Load.LoadWearableAssetBundleManifestSystem;
+using LoadWearablesByParamSystem = DCL.AvatarRendering.Wearables.Systems.Load.LoadWearablesByParamSystem;
+using LoadWearablesDTOByPointersSystem = DCL.AvatarRendering.Wearables.Systems.Load.LoadWearablesDTOByPointersSystem;
 
 namespace DCL.GlobalPartitioning
 {
@@ -51,12 +55,13 @@ namespace DCL.GlobalPartitioning
                 CreateQuery<GetWearableByParamIntention, IWearable[]>(),
                 CreateQuery<GetWearableAssetBundleManifestIntention, SceneAssetBundleManifest>(),
                 CreateQuery<GetAssetBundleIntention, AssetBundleData>(),
-                CreateQuery<GetProfileIntention, Profile>(),
-                CreateQuery<GetTextureIntention, Texture2D>(),
-                CreateQuery<GetNFTShapeIntention, Texture2D>(),
+                CreateQuery<GetGLTFIntention, GLTFData>(),
+                CreateQuery<GetProfileIntention, ProfileData>(),
+                CreateQuery<GetTextureIntention, Texture2DData>(),
+                CreateQuery<GetNFTShapeIntention, Texture2DData>(),
                 CreateQuery<GetEmotesByPointersFromRealmIntention, EmotesDTOList>(),
                 CreateQuery<GetOwnedEmotesFromRealmIntention, EmotesResolution>(),
-                CreateQuery<GetAudioClipIntention, AudioClip>(),
+                CreateQuery<GetAudioClipIntention, AudioClipData>(),
             };
         }
 

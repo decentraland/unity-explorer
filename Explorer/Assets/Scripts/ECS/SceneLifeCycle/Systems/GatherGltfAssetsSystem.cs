@@ -9,6 +9,8 @@ using ECS.SceneLifeCycle.Reporting;
 using ECS.Unity.GLTFContainer.Components;
 using SceneRunner.Scene;
 using System.Collections.Generic;
+using DCL.Optimization.PerformanceBudgeting;
+using DCL.UserInAppInitializationFlow;
 using UnityEngine;
 using UnityEngine.Pool;
 
@@ -34,13 +36,20 @@ namespace ECS.SceneLifeCycle.Systems
         private readonly EntityEventBuffer<GltfContainerComponent> eventsBuffer;
         private readonly EntityEventBuffer<GltfContainerComponent>.ForEachDelegate forEachEvent;
         private readonly ISceneStateProvider sceneStateProvider;
+        private readonly MemoryBudget memoryBudget;
+        private readonly ILoadingStatus loadingStatus;
 
-        internal GatherGltfAssetsSystem(World world, ISceneReadinessReportQueue readinessReportQueue, ISceneData sceneData, EntityEventBuffer<GltfContainerComponent> eventsBuffer, ISceneStateProvider sceneStateProvider) : base(world)
+        internal GatherGltfAssetsSystem(World world, ISceneReadinessReportQueue readinessReportQueue,
+            ISceneData sceneData, EntityEventBuffer<GltfContainerComponent> eventsBuffer,
+            ISceneStateProvider sceneStateProvider, MemoryBudget memoryBudget,
+            ILoadingStatus loadingStatus) : base(world)
         {
             this.readinessReportQueue = readinessReportQueue;
             this.sceneData = sceneData;
             this.eventsBuffer = eventsBuffer;
             this.sceneStateProvider = sceneStateProvider;
+            this.memoryBudget = memoryBudget;
+            this.loadingStatus = loadingStatus;
 
             forEachEvent = GatherEntities;
         }
@@ -53,8 +62,11 @@ namespace ECS.SceneLifeCycle.Systems
 
         public override void Dispose()
         {
-            HashSetPool<EntityReference>.Release(entitiesUnderObservation);
-            entitiesUnderObservation = null;
+            if (entitiesUnderObservation != null)
+            {
+                HashSetPool<EntityReference>.Release(entitiesUnderObservation);
+                entitiesUnderObservation = null;
+            }
             sceneData.SceneLoadingConcluded = true;
         }
 
@@ -120,12 +132,24 @@ namespace ECS.SceneLifeCycle.Systems
                 if (Time.time - startTime > WaitForSceneReadiness.TIMEOUT.TotalSeconds)
                     concluded = true;
 
+                // Memory is full. Assets may be on deadlock. Show broken state of scene
+                if (memoryBudget.GetMemoryUsageStatus() == MemoryUsageStatus.FULL)
+                {
+                    for (var i = 0; i < reports!.Value.Count; i++)
+                    {
+                        var report = reports.Value[i];
+                        report.SetProgress(1);
+                    }
+
+                    concluded = true;
+                }
+
                 if (concluded)
                 {
                     reports.Value.Dispose();
                     reports = null;
                 }
-
+                loadingStatus.UpdateAssetsLoaded(assetsResolved, totalAssetsToResolve);
                 sceneData.SceneLoadingConcluded = concluded;
             }
         }

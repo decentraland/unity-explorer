@@ -1,6 +1,6 @@
 using ECS.StreamableLoading.Textures;
 using ECS.Unity.Textures.Components;
-using Promise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.Texture2D, ECS.StreamableLoading.Textures.GetTextureIntention>;
+using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.Texture2DData, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
 namespace DCL.SDKComponents.Utils
 {
@@ -14,7 +14,7 @@ namespace DCL.SDKComponents.Utils
             Promise promiseValue = promise.Value;
             GetTextureIntention intention = promiseValue.LoadingIntention;
 
-            return textureComponent.Src == promiseValue.LoadingIntention.CommonArguments.URL &&
+            return textureComponent.FileHash == promiseValue.LoadingIntention.FileHash &&
                    textureComponent.WrapMode == intention.WrapMode &&
                    textureComponent.FilterMode == intention.FilterMode;
         }

@@ -1,16 +1,17 @@
-using DCL.AvatarRendering.Wearables.Components;
-using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.AvatarRendering.Loading.Assets;
+using DCL.AvatarRendering.Loading.Components;
+using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Common.Components;
-using UnityEngine;
 
 namespace DCL.AvatarRendering.Emotes
 {
-    public interface IEmote : IAvatarAttachment
+    public interface IEmote : IAvatarAttachment<EmoteDTO>
     {
-        StreamableLoadingResult<EmoteDTO> Model { get; set; }
-        StreamableLoadingResult<AudioClip>?[] AudioAssetResults { get; set; }
-        StreamableLoadingResult<WearableRegularAsset>?[] AssetResults { get; }
+        StreamableLoadingResult<AudioClipData>?[] AudioAssetResults { get; }
+        StreamableLoadingResult<AttachmentRegularAsset>?[] AssetResults { get; }
 
         bool IsLooping();
+
+        bool HasSameClipForAllGenders();
     }
 }

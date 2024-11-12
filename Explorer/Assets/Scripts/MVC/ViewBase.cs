@@ -6,8 +6,6 @@ using UnityEngine.UI;
 
 namespace MVC
 {
-    //TODO: DAVIDE?! Maybe we can extract some basic logic from ViewBase into a more generic class (UIElementBase??) and only keep in ViewBase the view specific things,
-    //so we can create proper class hierarchies for View/Controller based UIs and just Elements (without controllers)?
     public abstract class ViewBase : MonoBehaviour
     {
         public event Action? OnViewHidden;

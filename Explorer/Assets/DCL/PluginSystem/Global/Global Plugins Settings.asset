@@ -228,6 +228,11 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+        <ControlsSettingsAsset>k__BackingField:
+          m_AssetGUID: 26489687fb2f3419886df8e49f34b006
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
     - rid: 1841402216112979969
       type: {class: CharacterContainer/Settings, ns: DCL.Character.Plugin, asm: DCL.Plugins}
       data:
@@ -322,6 +327,11 @@ MonoBehaviour:
       data:
         RemoteAvatarColliderPrefab:
           m_AssetGUID: 9c4c0e79124f01744a5f969e08ad0370
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        DebugRoomIndicator:
+          m_AssetGUID: a39f0a305be6be143aabcbf7ebb59d62
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
@@ -597,9 +607,11 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
-        <FrameTimeCap>k__BackingField: 33
+        frameTimeCap: 33
+        frameTimeCapDeepProfiler: 300
         <ScenesLoadingBudget>k__BackingField: 100
         <AssetsLoadingBudget>k__BackingField: 50
+        <WebRequestsBudget>k__BackingField: 20
     - rid: 6784895265412481026
       type: {class: CharacterCameraSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -610,6 +622,11 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         <cinemachineCameraAudioSettingsReference>k__BackingField:
           m_AssetGUID: 86a5a8acd91f6994788c37e301d06c56
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <controlsSettingsAsset>k__BackingField:
+          m_AssetGUID: 26489687fb2f3419886df8e49f34b006
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0

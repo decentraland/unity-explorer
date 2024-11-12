@@ -7,7 +7,8 @@ using DCL.AvatarRendering.AvatarShape.Helpers;
 using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.Emotes;
-using DCL.AvatarRendering.Wearables;
+using DCL.AvatarRendering.Loading.Assets;
+using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
@@ -42,18 +43,21 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         private readonly CustomSkinning skinningStrategy;
         private readonly TextureArrayContainer textureArrays;
         private readonly FixedComputeBufferHandler vertOutBuffer;
-        private readonly IWearableAssetsCache wearableAssetsCache;
+        private readonly IAttachmentsAssetsCache wearableAssetsCache;
         private readonly IPerformanceBudget memoryBudget;
         private readonly ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy;
         private readonly IDefaultFaceFeaturesHandler defaultFaceFeaturesHandler;
-        private readonly IWearableCache wearableCache;
+        private readonly IWearableStorage wearableStorage;
         private readonly IWearable?[] fallbackBodyShape = new IWearable[1];
+
+        private readonly AvatarTransformMatrixJobWrapper avatarTransformMatrixBatchJob;
+
 
         public AvatarInstantiatorSystem(World world, IPerformanceBudget instantiationFrameTimeBudget, IPerformanceBudget memoryBudget,
             IComponentPool<AvatarBase> avatarPoolRegistry, IAvatarMaterialPoolHandler avatarMaterialPoolHandler, IObjectPool<UnityEngine.ComputeShader> computeShaderPool,
-            IWearableAssetsCache wearableAssetsCache, CustomSkinning skinningStrategy, FixedComputeBufferHandler vertOutBuffer,
+            IAttachmentsAssetsCache wearableAssetsCache, CustomSkinning skinningStrategy, FixedComputeBufferHandler vertOutBuffer,
             ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy, IDefaultFaceFeaturesHandler defaultFaceFeaturesHandler,
-            IWearableCache wearableCache) : base(world)
+            IWearableStorage wearableStorage, AvatarTransformMatrixJobWrapper avatarTransformMatrixBatchJob) : base(world)
         {
             this.instantiationFrameTimeBudget = instantiationFrameTimeBudget;
             this.avatarPoolRegistry = avatarPoolRegistry;
@@ -66,7 +70,8 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             computeShaderSkinningPool = computeShaderPool;
             this.mainPlayerAvatarBaseProxy = mainPlayerAvatarBaseProxy;
             this.defaultFaceFeaturesHandler = defaultFaceFeaturesHandler;
-            this.wearableCache = wearableCache;
+            this.wearableStorage = wearableStorage;
+            this.avatarTransformMatrixBatchJob = avatarTransformMatrixBatchJob;
         }
 
         public override void Dispose()
@@ -87,8 +92,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         {
             if (!ReadyToInstantiateNewAvatar(ref avatarShapeComponent)) return null;
 
-            if (!avatarShapeComponent.WearablePromise.SafeTryConsume(World, out WearablesLoadResult wearablesResult)) return null;
-            if (!avatarShapeComponent.EmotePromise.SafeTryConsume(World, out EmotesLoadResult emotesResult)) return null;
+            if (!avatarShapeComponent.WearablePromise.SafeTryConsume(World, GetReportCategory(), out WearablesLoadResult wearablesResult)) return null;
 
             AvatarBase avatarBase = avatarPoolRegistry.Get();
             avatarBase.gameObject.name = $"Avatar {avatarShapeComponent.ID}";
@@ -111,7 +115,8 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
             avatarTransform.ResetLocalTRS();
 
-            var avatarTransformMatrixComponent = AvatarTransformMatrixComponent.Create(avatarBase.transform, avatarBase.AvatarSkinnedMeshRenderer.bones);
+            var avatarTransformMatrixComponent =
+                AvatarTransformMatrixComponent.Create(avatarBase.AvatarSkinnedMeshRenderer.bones);
 
             AvatarCustomSkinningComponent skinningComponent = InstantiateAvatar(ref avatarShapeComponent, in wearablesResult, avatarBase);
 
@@ -127,21 +132,26 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             var avatarBase = InstantiateNewAvatar(entity, ref avatarShapeComponent, ref transformComponent);
 
             if (avatarBase != null)
+            {
+                avatarBase.RigBuilder.enabled = true;
                 mainPlayerAvatarBaseProxy.SetObject(avatarBase);
+            }
         }
 
         [Query]
         [All(typeof(CharacterTransform))]
         [None(typeof(DeleteEntityIntention))]
         private void InstantiateExistingAvatar(ref AvatarShapeComponent avatarShapeComponent, AvatarBase avatarBase,
-            ref AvatarCustomSkinningComponent skinningComponent)
+            ref AvatarCustomSkinningComponent skinningComponent,
+            ref AvatarTransformMatrixComponent avatarTransformMatrixComponent)
         {
             if (!ReadyToInstantiateNewAvatar(ref avatarShapeComponent)) return;
 
-            if (!avatarShapeComponent.WearablePromise.SafeTryConsume(World, out WearablesLoadResult wearablesResult)) return;
-            if (!avatarShapeComponent.EmotePromise.SafeTryConsume(World, out EmotesLoadResult emotesResult)) return;
+            if (!avatarShapeComponent.WearablePromise.SafeTryConsume(World, GetReportCategory(), out WearablesLoadResult wearablesResult)) return;
 
-            ReleaseAvatar.Execute(vertOutBuffer, wearableAssetsCache, avatarMaterialPoolHandler, computeShaderSkinningPool, avatarShapeComponent, ref skinningComponent);
+            ReleaseAvatar.Execute(vertOutBuffer, wearableAssetsCache, avatarMaterialPoolHandler,
+                computeShaderSkinningPool, avatarShapeComponent, ref skinningComponent,
+                ref avatarTransformMatrixComponent, avatarTransformMatrixBatchJob);
 
             // Override by ref
             skinningComponent = InstantiateAvatar(ref avatarShapeComponent, in wearablesResult, avatarBase);
@@ -152,7 +162,6 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             AvatarBase avatarBase)
         {
             GetWearablesByPointersIntention wearableIntention = avatarShapeComponent.WearablePromise.LoadingIntention;
-            GetEmotesByPointersIntention emoteIntention = avatarShapeComponent.EmotePromise.LoadingIntention;
 
             HashSet<string> wearablesToHide = wearablesResult.Succeeded ? wearablesResult.Asset.HiddenCategories : EMPTY_STRING_HASH_SET;
             HashSet<string> usedCategories = HashSetPool<string>.Get();
@@ -170,7 +179,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                 if (fallbackBodyShape[0] == null)
 
                     // Could be a very rare case on which the body shape is not available. This case will make the flow fail
-                    if (wearableCache.TryGetWearable(BodyShape.MALE, out IWearable maleBody))
+                    if (wearableStorage.TryGetElement(BodyShape.MALE, out IWearable maleBody))
                         fallbackBodyShape[0] = maleBody;
 
                 visibleWearables = fallbackBodyShape!;
@@ -184,7 +193,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             {
                 IWearable resultWearable = visibleWearables[i];
 
-                var instance = resultWearable.AppendToAvatar(wearableAssetsCache, usedCategories, ref facialFeatureTexture, ref avatarShapeComponent, attachPoint, GetReportCategory());
+                GameObject instance = resultWearable.AppendToAvatar(wearableAssetsCache, usedCategories, ref facialFeatureTexture, ref avatarShapeComponent, attachPoint);
 
                 if (resultWearable.Type == WearableType.BodyShape)
                     bodyShape = instance;
@@ -200,7 +209,6 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             avatarBase.gameObject.SetActive(true);
 
             wearableIntention.Dispose();
-            emoteIntention.Dispose();
 
             if (wearablesResult.Succeeded)
                 wearablesResult.Asset.Dispose();

@@ -21,14 +21,14 @@ namespace DCL.Multiplayer.Movement
         public CompressedNetworkMovementMessage Compress(NetworkMovementMessage message) =>
             new ()
             {
-                temporalData = CompressTemporalData(message.timestamp, message.movementKind, message.isSliding, message.animState, message.isStunned, message.rotationY, message.tier),
-                movementData = CompressMovementData(message.position, message.velocity, encodingSettings.GetConfigForTier(message.tier)),
+                temporalData = CompressTemporalData(message.timestamp, message.movementKind, message.isSliding, message.animState, message.isStunned, message.rotationY, message.velocityTier),
+                movementData = CompressMovementData(message.position, message.velocity, encodingSettings.GetConfigForTier(message.velocityTier)),
             };
 
         private int CompressTemporalData(float timestamp, MovementKind movementKind, bool isSliding, AnimationStates animState, bool isStunned,
             float rotationY, int tier)
         {
-            int temporalData = timestampEncoder.Compress(timestamp);
+            int temporalData = timestampEncoder.Compress(Mathf.Abs(timestamp));
 
             // Animations
             temporalData |= ((int)movementKind & MessageEncodingSettings.TWO_BITS_MASK) << encodingSettings.MOVEMENT_KIND_START_BIT;
@@ -40,7 +40,7 @@ namespace DCL.Multiplayer.Movement
             if (animState.IsFalling) temporalData |= 1 << encodingSettings.FALLING_BIT;
             if (animState.IsLongFall) temporalData |= 1 << encodingSettings.LONG_FALL_BIT;
 
-            int compressedRotation = FloatQuantizer.Compress(rotationY, 0f, 360f, encodingSettings.ROTATION_Y_BITS);
+            int compressedRotation = FloatQuantizer.Compress(NormalizeAngle(rotationY), 0f, 360f, encodingSettings.ROTATION_Y_BITS);
             temporalData |= compressedRotation << encodingSettings.ROTATION_START_BIT;
 
             temporalData |= (tier & MessageEncodingSettings.TWO_BITS_MASK) << encodingSettings.TIER_START_BIT;
@@ -59,17 +59,22 @@ namespace DCL.Multiplayer.Movement
                 position.z - (parcel.y * ParcelMathHelper.PARCEL_SIZE) // Y is Z in this case
             );
 
-            int xzBits = settings.XZ_BITS;
-            int yBits = settings.Y_BITS;
+            byte xzBits = settings.XZ__BITS;
+            byte yBits = settings.Y__BITS;
+
             int compressedX = FloatQuantizer.Compress(relativePosition.x, 0, ParcelMathHelper.PARCEL_SIZE, xzBits);
             int compressedZ = FloatQuantizer.Compress(relativePosition.y, 0, ParcelMathHelper.PARCEL_SIZE, xzBits);
-            int compressedY = FloatQuantizer.Compress(position.y, 0, settings.Y_MAX, yBits);
+            int compressedY = FloatQuantizer.Compress(position.y, 0, settings.Y__MAX, yBits);
 
-            int maxVelocity = settings.MAX_VELOCITY;
-            int velocityBits = settings.VELOCITY_BITS;
-            int compressedVelocityX = FloatQuantizer.Compress(velocity.x, -maxVelocity, maxVelocity, velocityBits);
-            int compressedVelocityY = FloatQuantizer.Compress(velocity.y, -maxVelocity, maxVelocity, velocityBits);
-            int compressedVelocityZ = FloatQuantizer.Compress(velocity.z, -maxVelocity, maxVelocity, velocityBits);
+            int maxVelocity = settings.MAX__VELOCITY;
+            byte velocityBits = settings.VELOCITY_AXIS_FIELD_SIZE_IN_BITS;
+
+            const float SAFE_ZONE = 0.05f;
+            if (velocity.sqrMagnitude < SAFE_ZONE) velocity = Vector3.zero;
+
+            int compressedVelocityX = CompressedVelocity(velocity.x, maxVelocity, velocityBits);
+            int compressedVelocityY = CompressedVelocity(velocity.y, maxVelocity, velocityBits);
+            int compressedVelocityZ = CompressedVelocity(velocity.z, maxVelocity, velocityBits);
 
             return (uint)parcelIndex
                    | ((long)compressedX << MessageEncodingSettings.PARCEL_BITS)
@@ -85,24 +90,27 @@ namespace DCL.Multiplayer.Movement
             int compressedTemporalData = compressedMessage.temporalData;
             int tier = (compressedMessage.temporalData >> encodingSettings.TIER_START_BIT) & MessageEncodingSettings.TWO_BITS_MASK;
 
-            (Vector3 position, Vector3 velocity) movementData = DecompressMovementData(compressedMessage.movementData, encodingSettings.GetConfigForTier(tier));
+            (Vector3 position, Vector3 correctedVelocity) = DecompressMovementData(compressedMessage.movementData, encodingSettings.GetConfigForTier(tier));
 
             int rotationMask = (1 << encodingSettings.ROTATION_Y_BITS) - 1;
             int compressedRotation = (compressedTemporalData >> encodingSettings.ROTATION_START_BIT) & rotationMask;
             float timestamp = timestampEncoder.Decompress(compressedTemporalData);
 
+            var movementKind = (MovementKind)((compressedTemporalData >> encodingSettings.MOVEMENT_KIND_START_BIT) & MessageEncodingSettings.TWO_BITS_MASK);
+
             return new NetworkMovementMessage
             {
-                tier = tier,
+                velocityTier = (byte)tier,
+
                 // Decompressed movement data
-                position = movementData.position,
-                velocity = movementData.velocity,
-                velocitySqrMagnitude = movementData.velocity.sqrMagnitude,
+                position = position,
+                velocity = correctedVelocity,
+                velocitySqrMagnitude = correctedVelocity.sqrMagnitude,
                 rotationY = FloatQuantizer.Decompress(compressedRotation, 0f, 360f, encodingSettings.ROTATION_Y_BITS),
 
                 // Decompress temporal data
                 timestamp = timestamp,
-                movementKind = (MovementKind)((compressedTemporalData >> encodingSettings.MOVEMENT_KIND_START_BIT) & MessageEncodingSettings.TWO_BITS_MASK),
+                movementKind = movementKind,
 
                 animState = new AnimationStates
                 {
@@ -126,15 +134,15 @@ namespace DCL.Multiplayer.Movement
             const int PARCEL_BITS = MessageEncodingSettings.PARCEL_BITS;
             const int PARCEL_MASK = (1 << PARCEL_BITS) - 1;
 
-            int xzBits = settings.XZ_BITS;
+            int xzBits = settings.XZ__BITS;
             int xzMask = (1 << xzBits) - 1;
 
-            int yBits = settings.Y_BITS;
-            int yMax = settings.Y_MAX;
+            int yBits = settings.Y__BITS;
+            int yMax = settings.Y__MAX;
             int yMask = (1 << yBits) - 1;
 
-            int maxVelocity = settings.MAX_VELOCITY;
-            int velocityBits = settings.VELOCITY_BITS;
+            int maxVelocity = settings.MAX__VELOCITY;
+            int velocityBits = settings.VELOCITY_AXIS_FIELD_SIZE_IN_BITS;
             int velocityMask = (1 << velocityBits) - 1;
 
             Vector2Int parcel = parcelEncoder.Decode((int)(movementData & PARCEL_MASK));
@@ -157,11 +165,45 @@ namespace DCL.Multiplayer.Movement
             var extractedVelocityY = (int)((movementData >> (PARCEL_BITS + xzBits + xzBits + yBits + velocityBits)) & velocityMask);
             var extractedVelocityZ = (int)((movementData >> (PARCEL_BITS + xzBits + xzBits + yBits + velocityBits + velocityBits)) & velocityMask);
 
-            float decompressedVelocityX = FloatQuantizer.Decompress(extractedVelocityX, -maxVelocity, maxVelocity, velocityBits);
-            float decompressedVelocityY = FloatQuantizer.Decompress(extractedVelocityY, -maxVelocity, maxVelocity, velocityBits);
-            float decompressedVelocityZ = FloatQuantizer.Decompress(extractedVelocityZ, -maxVelocity, maxVelocity, velocityBits);
+            float decompressedVelocityX = DecompressedVelocity(extractedVelocityX, maxVelocity, velocityBits);
+            float decompressedVelocityY = DecompressedVelocity(extractedVelocityY, maxVelocity, velocityBits);
+            float decompressedVelocityZ = DecompressedVelocity(extractedVelocityZ, maxVelocity, velocityBits);
 
             return (worldPosition, velocity: new Vector3(decompressedVelocityX, decompressedVelocityY, decompressedVelocityZ));
         }
+
+        private static int CompressedVelocity(float velocity, int range, int sizeInBits)
+        {
+            int withoutSignBits = sizeInBits - 1;
+            float absVelocity = Mathf.Abs(velocity);
+            int compressed = FloatQuantizer.Compress(absVelocity, 0, range, withoutSignBits);
+            compressed <<= 1;
+            compressed |= NegativeSignFlag(velocity);
+            return compressed;
+        }
+
+        private static float DecompressedVelocity(int compressed, int range, int sizeInBits)
+        {
+            bool negativeSign = (compressed & 1) == 1;
+            int withoutSign = compressed >> 1;
+            int withoutSignBits = sizeInBits - 1;
+            float decompressed = FloatQuantizer.Decompress(withoutSign, 0, range, withoutSignBits);
+            if (negativeSign) decompressed *= -1;
+            return decompressed;
+        }
+
+        private static float NormalizeAngle(float angle)
+        {
+            while (angle < 0f)
+                angle += 360f;
+            while (angle >= 360f)
+                angle -= 360f;
+            return angle;
+        }
+
+        private static byte NegativeSignFlag(float value) =>
+            value < 0
+                ? (byte)1
+                : (byte)0;
     }
 }

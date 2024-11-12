@@ -5,6 +5,7 @@ using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
 using DCL.Input;
 using DCL.Input.Systems;
+using DCL.SDKComponents.InputModifier.Components;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -16,14 +17,12 @@ namespace DCL.CharacterMotion.Systems
         private readonly InputAction movementAxis;
         private readonly InputAction sprintAction;
         private readonly InputAction walkAction;
-        private readonly InputAction autoWalkAction;
 
         public UpdateInputMovementSystem(World world, DCLInput dclInput) : base(world)
         {
             movementAxis = dclInput.Player.Movement;
             sprintAction = dclInput.Player.Sprint;
             walkAction = dclInput.Player.Walk;
-            autoWalkAction = dclInput.Player.AutoWalk;
         }
 
         protected override void Update(float t)
@@ -32,9 +31,9 @@ namespace DCL.CharacterMotion.Systems
         }
 
         [Query]
-        private void UpdateInput(ref MovementInputComponent inputToUpdate)
+        private void UpdateInput(ref MovementInputComponent inputToUpdate, in InputModifierComponent inputModifierComponent)
         {
-            if (!movementAxis.enabled)
+            if (!movementAxis.enabled || inputModifierComponent is { DisableAll: true } or { DisableWalk: true, DisableJog: true, DisableRun: true })
             {
                 inputToUpdate.Axes = Vector2.zero;
                 return;
@@ -42,22 +41,45 @@ namespace DCL.CharacterMotion.Systems
 
             inputToUpdate.Axes = movementAxis.ReadValue<Vector2>();
 
-            if (autoWalkAction.WasPerformedThisFrame()) { inputToUpdate.AutoWalk = !inputToUpdate.AutoWalk; }
-
-            if (inputToUpdate.Axes.sqrMagnitude > 0.1f) { inputToUpdate.AutoWalk = false; }
-
-            // Running action wins over walking
-            inputToUpdate.Kind = sprintAction.IsPressed() ? MovementKind.RUN :
-                walkAction.IsPressed() ? MovementKind.WALK : MovementKind.JOG;
-
             if (inputToUpdate.Axes == Vector2.zero)
                 inputToUpdate.Kind = MovementKind.IDLE;
-
-            if (inputToUpdate.AutoWalk)
+            else
             {
-                inputToUpdate.Axes = new Vector2(0, 1);
-                inputToUpdate.Kind = MovementKind.WALK;
+                bool runPressed = sprintAction.IsPressed();
+                bool walkPressed = walkAction.IsPressed();
+
+                inputToUpdate.Kind = ProcessInputMovementKind(inputModifierComponent, runPressed, walkPressed);
             }
+        }
+
+        private static MovementKind ProcessInputMovementKind(InputModifierComponent inputModifierComponent, bool runPressed, bool walkPressed)
+        {
+            // Running action wins over walking
+            if (runPressed)
+            {
+                if (inputModifierComponent.DisableRun)
+                    return inputModifierComponent.DisableJog ? MovementKind.WALK : MovementKind.JOG;
+
+                return MovementKind.RUN;
+            }
+
+            if (walkPressed)
+            {
+                if (inputModifierComponent.DisableWalk)
+                    return inputModifierComponent.DisableJog ? MovementKind.RUN : MovementKind.JOG;
+
+                return MovementKind.WALK;
+            }
+
+            if (inputModifierComponent.DisableJog)
+            {
+                if (inputModifierComponent.DisableWalk)
+                    return MovementKind.RUN;
+
+                return MovementKind.WALK;
+            }
+
+            return MovementKind.JOG;
         }
     }
 }

@@ -21,13 +21,17 @@ namespace DCL.SDKComponents.MediaStream
 
         public bool IsResolved => status == Status.Resolved;
 
-        public async UniTask UrlReachabilityResolveAsync(IWebRequestController webRequestController, string url, CancellationToken ct)
+        public async UniTask UrlReachabilityResolveAsync(IWebRequestController webRequestController, string url, ReportData reportData, CancellationToken ct)
         {
             status = Status.Pending;
             isReachable = false;
             this.url = url;
 
-            isReachable = await webRequestController.IsReachableAsync(URLAddress.FromString(this.url), ct);
+            isReachable = await webRequestController.IsHeadReachableAsync(reportData, URLAddress.FromString(this.url), ct);
+            //This is needed because some servers might not handle HEAD requests correctly and return 404 errors, even thou they are perfectly
+            if (!isReachable)
+                isReachable = await webRequestController.IsGetReachableAsync(reportData, URLAddress.FromString(this.url), ct);
+
             ReportHub.Log(ReportCategory.MEDIA_STREAM, $"Resource <{url}> isReachable = <{isReachable}>");
 
             status = Status.Resolved;

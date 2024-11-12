@@ -1,5 +1,5 @@
 using CommunicationData.URLHelpers;
-using DCL.AvatarRendering.Wearables;
+using DCL.AvatarRendering.Loading.Components;
 using DCL.Utilities.Extensions;
 using System.Collections.Generic;
 using UnityEngine;
@@ -47,6 +47,15 @@ namespace DCL.Profiles
             BodySnapshotUrl = URLAddress.EMPTY;
         }
 
+        public bool IsEmotesWheelEmpty()
+        {
+            foreach (URN urn in Emotes)
+                if (!urn.IsNullOrEmpty())
+                    return false;
+
+            return true;
+        }
+
         public bool IsSameAvatar(Avatar? other)
         {
             if (other == null)
@@ -63,19 +72,47 @@ namespace DCL.Profiles
 
         public void Clear()
         {
-            this.wearables.Clear();
-            this.forceRender.Clear();
+            wearables.Clear();
+            forceRender.Clear();
 
-            for (var i = 0; i < this.emotes.Length; i++)
-                this.emotes[i] = "";
+            for (var i = 0; i < emotes.Length; i++)
+                emotes[i] = "";
 
-            this.BodyShape = default(BodyShape);
-            this.EyesColor = default(Color);
-            this.HairColor = default(Color);
-            this.SkinColor = default(Color);
-            this.SkinColor = default(Color);
-            this.BodySnapshotUrl = default(URLAddress);
-            this.FaceSnapshotUrl = default(URLAddress);
+            BodyShape = default(BodyShape);
+            EyesColor = default(Color);
+            HairColor = default(Color);
+            SkinColor = default(Color);
+            SkinColor = default(Color);
+            BodySnapshotUrl = default(URLAddress);
+            FaceSnapshotUrl = default(URLAddress);
         }
+
+#if UNITY_EDITOR
+
+        /// <summary>
+        /// Fills one of the emote slots of the avatar's profile with an emote URN, if it is not already in the list. If all slots are already filled, the last one will be replaced with the provided URN.
+        /// This method is used by editor tools or for debugging, it must never be used in production.
+        /// </summary>
+        /// <param name="emoteURN">The URN of the emote to add.</param>
+        public void AddEmote(URN emoteURN)
+        {
+            int i = 0;
+
+            for (; i < emotes.Length; ++i)
+            {
+                if (emotes[i].IsNullOrEmpty())
+                {
+                    emotes[i] = emoteURN;
+                    break;
+                }
+                else if (emotes[i] == emoteURN)
+                    break;
+            }
+
+            if (i == emotes.Length)
+                emotes[0] = emoteURN;
+        }
+
+#endif
     }
 }

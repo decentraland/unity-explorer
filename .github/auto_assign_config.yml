@@ -8,17 +8,18 @@ reviewGroups:
   techleads:
     - mikhail-dcl
     - dalkia
-  devs:    
-    - sandrade-dcl    
+  devs:      
     - lorux0
     - davidejensen
     - popuz
     - pravusjif
     - fcolarich
     - NickKhalow
+    - QThund
   qa:
     - Ludmilafantaniella
     - anicalbano
+    - dafgreco
 
 filterLabels:
   exclude:

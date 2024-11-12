@@ -1,11 +1,9 @@
-﻿using Arch.Core;
-using System;
+﻿using System;
 using System.Threading;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Ipfs;
-using DCL.Multiplayer.SDK.Systems.GlobalWorld;
 using DCL.WebRequests;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
@@ -19,20 +17,14 @@ namespace ECS.SceneLifeCycle.Systems
     {
         protected readonly URLDomain assetBundleURL;
         protected readonly IWebRequestController webRequestController;
-        private readonly ICharacterDataPropagationUtility characterDataPropagationUtility;
-        private readonly World globalWorld;
-        private readonly Entity playerEntity;
 
-        protected LoadSceneSystemLogicBase(IWebRequestController webRequestController, ICharacterDataPropagationUtility characterDataPropagationUtility, URLDomain assetBundleURL, World globalWorld, Entity playerEntity)
+        protected LoadSceneSystemLogicBase(IWebRequestController webRequestController, URLDomain assetBundleURL)
         {
             this.assetBundleURL = assetBundleURL;
-            this.globalWorld = globalWorld;
-            this.playerEntity = playerEntity;
-            this.characterDataPropagationUtility = characterDataPropagationUtility;
             this.webRequestController = webRequestController;
         }
 
-        public async UniTask<ISceneFacade> FlowAsync(ISceneFactory sceneFactory, GetSceneFacadeIntention intention, string reportCategory, IPartitionComponent partition, CancellationToken ct)
+        public async UniTask<ISceneFacade> FlowAsync(ISceneFactory sceneFactory, GetSceneFacadeIntention intention, ReportData reportCategory, IPartitionComponent partition, CancellationToken ct)
         {
             var definitionComponent = intention.DefinitionComponent;
             var ipfsPath = definitionComponent.IpfsPath;
@@ -66,18 +58,15 @@ namespace ECS.SceneLifeCycle.Systems
 
             await UniTask.SwitchToMainThread();
 
-            // ensure PlayerData is available on Initialize
-            characterDataPropagationUtility.PropagateGlobalPlayerToScenePlayer(globalWorld, playerEntity, sceneFacade);
-
             sceneFacade.Initialize();
             return sceneFacade;
         }
 
         protected abstract string GetAssetBundleSceneId(string ipfsPathEntityId);
 
-        protected abstract UniTask<ISceneContent> GetSceneHashedContentAsync(SceneEntityDefinition definition, URLDomain contentBaseUrl, string reportCategory);
+        protected abstract UniTask<ISceneContent> GetSceneHashedContentAsync(SceneEntityDefinition definition, URLDomain contentBaseUrl, ReportData reportCategory);
 
-        protected async UniTask<ReadOnlyMemory<byte>> LoadMainCrdtAsync(ISceneContent sceneContent, string reportCategory, CancellationToken ct)
+        protected async UniTask<ReadOnlyMemory<byte>> LoadMainCrdtAsync(ISceneContent sceneContent, ReportData reportCategory, CancellationToken ct)
         {
             const string NAME = "main.crdt";
 
@@ -88,9 +77,9 @@ namespace ECS.SceneLifeCycle.Systems
             return await webRequestController.GetAsync(new CommonArguments(url), ct, reportCategory).GetDataCopyAsync();
         }
 
-        protected async UniTask<SceneAssetBundleManifest> LoadAssetBundleManifestAsync(string sceneId, string reportCategory, CancellationToken ct)
+        protected async UniTask<SceneAssetBundleManifest> LoadAssetBundleManifestAsync(string sceneId, ReportData reportCategory, CancellationToken ct)
         {
-            var url = assetBundleURL.Append(URLPath.FromString($"manifest/{sceneId}{PlatformUtils.GetPlatform()}.json"));
+            var url = assetBundleURL.Append(URLPath.FromString($"manifest/{sceneId}{PlatformUtils.GetCurrentPlatform()}.json"));
 
             try
             {
@@ -98,15 +87,15 @@ namespace ECS.SceneLifeCycle.Systems
                     .CreateFromJson<SceneAbDto>(WRJsonParser.Unity, WRThreadFlags.SwitchToThreadPool);
 
                 if (sceneAbDto.ValidateVersion())
-                    return new SceneAssetBundleManifest(assetBundleURL, sceneAbDto.Version, sceneAbDto.files);
+                    return new SceneAssetBundleManifest(assetBundleURL, sceneAbDto.Version, sceneAbDto.files, sceneId, sceneAbDto.Date);
 
-                ReportHub.LogError(new ReportData(reportCategory, ReportHint.SessionStatic), $"Asset Bundle Version Mismatch for {sceneId}");
+                ReportHub.LogError(reportCategory.WithSessionStatic(), $"Asset Bundle Version Mismatch for {sceneId}");
                 return SceneAssetBundleManifest.NULL;
             }
             catch
             {
                 // Don't block the scene if the loading manifest failed, just use NULL
-                ReportHub.LogError(new ReportData(reportCategory, ReportHint.SessionStatic), $"Asset Bundles Manifest is not loaded for scene {sceneId}");
+                ReportHub.LogError(reportCategory.WithSessionStatic(), $"Asset Bundles Manifest is not loaded for scene {sceneId}");
                 return SceneAssetBundleManifest.NULL;
             }
         }
@@ -115,14 +104,14 @@ namespace ECS.SceneLifeCycle.Systems
         ///     Loads scene metadata from a separate endpoint to ensure it contains "baseUrl" and overrides the existing metadata
         ///     with new one
         /// </summary>
-        protected async UniTask<UniTaskVoid> OverrideSceneMetadataAsync(ISceneContent sceneContent, GetSceneFacadeIntention intention, string reportCategory, string sceneID, CancellationToken ct)
+        protected async UniTask<UniTaskVoid> OverrideSceneMetadataAsync(ISceneContent sceneContent, GetSceneFacadeIntention intention, ReportData reportCategory, string sceneID, CancellationToken ct)
         {
             const string NAME = "scene.json";
 
             if (!sceneContent.TryGetContentUrl(NAME, out var sceneJsonUrl))
             {
                 //What happens if we dont have a scene.json file? Will the default one work?
-                ReportHub.LogWarning(new ReportData(reportCategory, ReportHint.SessionStatic), $"scene.json does not exist for scene {sceneID}, no override is possible");
+                ReportHub.LogWarning(reportCategory.WithSessionStatic(), $"scene.json does not exist for scene {sceneID}, no override is possible");
                 return default;
             }
 
