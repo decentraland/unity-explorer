@@ -79,11 +79,9 @@ namespace DCL.PluginSystem.Global
         public async UniTask InitializeAsync(Web3AuthPluginSettings settings, CancellationToken ct)
         {
             AuthenticationScreenView authScreenPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.AuthScreenPrefab, ct: ct)).Value;
-            var buildData = await assetsProvisioner.ProvideMainAssetValueAsync(settings.BuildData, ct);
-
             ControllerBase<AuthenticationScreenView, ControllerNoData>.ViewFactoryMethod authScreenFactory = AuthenticationScreenController.CreateLazily(authScreenPrefab, null);
 
-            authenticationScreenController = new AuthenticationScreenController(authScreenFactory, web3Authenticator, selfProfile, featureFlagsCache, webBrowser, storedIdentityProvider, characterPreviewFactory, splashScreen, characterPreviewEventBus, audioMixerVolumesController, buildData, world);
+            authenticationScreenController = new AuthenticationScreenController(authScreenFactory, web3Authenticator, selfProfile, featureFlagsCache, webBrowser, storedIdentityProvider, characterPreviewFactory, splashScreen, characterPreviewEventBus, audioMixerVolumesController, settings.BuildData, world);
             mvcManager.RegisterController(authenticationScreenController);
         }
 
@@ -98,19 +96,12 @@ namespace DCL.PluginSystem.Global
         [field: Header(nameof(Web3AuthenticationPlugin) + "." + nameof(Web3AuthPluginSettings))]
         [field: Space]
         [field: SerializeField] public AuthScreenObjectRef AuthScreenPrefab { get; private set; }
-        [field: SerializeField] public BuildDataRef BuildData { get; private set; }
+        [field: SerializeField] public BuildData BuildData { get; private set; }
 
         [Serializable]
         public class AuthScreenObjectRef : ComponentReference<AuthenticationScreenView>
         {
             public AuthScreenObjectRef(string guid) : base(guid) { }
         }
-
-        [Serializable]
-        public class BuildDataRef : AssetReferenceT<BuildData>
-        {
-            public BuildDataRef(string guid) : base(guid) { }
-        }
-
     }
 }

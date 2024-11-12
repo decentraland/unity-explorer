@@ -93,8 +93,7 @@ namespace Global.Dynamic
             await bootstrapContainer.InitializeContainerAsync<BootstrapContainer, BootstrapSettings>(settingsContainer, ct, async container =>
             {
                 container.reportHandlingSettings = await ProvideReportHandlingSettingsAsync(container.AssetsProvisioner!, container.settings, ct);
-                 var buildData = await container.AssetsProvisioner!.ProvideMainAssetValueAsync(container.settings.BuildData, ct);
-                (container.Bootstrap, container.Analytics) = await CreateBootstrapperAsync(debugSettings, applicationParametersParser, container, container.settings, realmLaunchSettings, world, buildData, ct);
+                (container.Bootstrap, container.Analytics) = await CreateBootstrapperAsync(debugSettings, applicationParametersParser, container, container.settings, realmLaunchSettings, world, container.settings.BuildData, ct);
                 (container.IdentityCache, container.VerifiedEthereumApi, container.Web3Authenticator) = CreateWeb3Dependencies(sceneLoaderSettings, web3AccountFactory, browser, container, decentralandUrlsSource);
 
                 bool enableSceneDebugConsole = realmLaunchSettings.IsLocalSceneDevelopmentRealm || applicationParametersParser.HasFlag("scene-console");
@@ -239,7 +238,7 @@ namespace Global.Dynamic
         [field: SerializeField] public AnalyticsConfigurationRef AnalyticsConfigRef;
         [field: SerializeField] public ReportHandlingSettingsRef ReportHandlingSettingsDevelopment { get; private set; }
         [field: SerializeField] public ReportHandlingSettingsRef ReportHandlingSettingsProduction { get; private set; }
-        [field: SerializeField] public BuildDataRef BuildData { get; private set; }
+        [field: SerializeField] public BuildData BuildData { get; private set; }
 
 
         [Serializable]
@@ -252,12 +251,6 @@ namespace Global.Dynamic
         public class AnalyticsConfigurationRef : AssetReferenceT<AnalyticsConfiguration>
         {
             public AnalyticsConfigurationRef(string guid) : base(guid) { }
-        }
-
-        [Serializable]
-        public class BuildDataRef : AssetReferenceT<BuildData>
-        {
-            public BuildDataRef(string guid) : base(guid) { }
         }
     }
 }
