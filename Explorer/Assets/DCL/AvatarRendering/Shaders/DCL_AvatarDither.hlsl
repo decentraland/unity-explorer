@@ -27,7 +27,7 @@ void Dithering( float fFadeDistance, float4 positionCS, float fEndFadeDistance, 
     float2 uv = positionNDC.xy / positionNDC.w;
     uv *= _ScreenParams.xy; // pixel position
     uint index = (uint(uv.x) % 4) * 4 + uint(uv.y) % 4;
-    if((hideAmount - DITHER_THRESHOLDS[index]) < 0.0)
+    if((hideAmount - DITHER_THRESHOLDS[index]) <= 0.0)
         clip(-1);
 }
 
