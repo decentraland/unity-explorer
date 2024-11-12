@@ -90,7 +90,7 @@ def clone_current_target(use_cache):
     install_source = os.getenv('PARAM_INSTALL_SOURCE', 'launcher')
 
     # Include install_source in the target name only if it's not 'launcher'
-    if install_source != 'launcher':
+    if install_source and install_source != 'launcher':
         base_target_name = f"{base_target_name}-{install_source}"
 
     print(f"Start clone_current_target for {base_target_name}")
