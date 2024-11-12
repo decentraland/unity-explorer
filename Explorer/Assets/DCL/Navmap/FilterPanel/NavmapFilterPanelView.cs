@@ -58,14 +58,13 @@ namespace DCL.Navmap.FilterPanel
             peopleToggle.onValueChanged.AddListener((isOn) => OnToggleClicked(MapLayer.HotUsersMarkers, isOn));
             favoritesToggle.onValueChanged.AddListener((isOn) => OnToggleClicked(MapLayer.Favorites, isOn));
 
-            satelliteButton.onValueChanged.AddListener((isOn) => ToggleMapType(MapLayer.SatelliteAtlas, isOn));
-            parcelButton.onValueChanged.AddListener((isOn) => ToggleMapType(MapLayer.ParcelsAtlas, isOn));
+            satelliteButton.onValueChanged.AddListener(ToggleSatelliteMap);
+            parcelButton.onValueChanged.AddListener(ToggleParcelMap);
         }
 
         private void OnEnable()
         {
-            ToggleMapType(MapLayer.ParcelsAtlas, false);
-            ToggleMapType(MapLayer.SatelliteAtlas, true);
+            ToggleSatelliteMap(true);
         }
 
         public void ToggleFilterPanel(bool isOn)
@@ -76,12 +75,28 @@ namespace DCL.Navmap.FilterPanel
             UIAudioEventsBus.Instance.SendPlayAudioEvent(isOn ? OpenAudio : CloseAudio);
         }
 
-        private void ToggleMapType(MapLayer mapLayer, bool isOn)
+        private void ToggleSatelliteMap(bool isOn)
         {
-            satelliteButtonHighlight.SetActive(mapLayer == MapLayer.SatelliteAtlas && isOn);
-            parcelButtonHighlight.SetActive(mapLayer == MapLayer.ParcelsAtlas && isOn);
-            UIAudioEventsBus.Instance.SendPlayAudioEvent(isOn ? ToggleOnAudio : ToggleOffAudio);
-            OnFilterChanged?.Invoke(mapLayer, isOn);
+            if (!isOn)
+                return;
+
+            satelliteButtonHighlight.SetActive(true);
+            parcelButtonHighlight.SetActive(false);
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(ToggleOnAudio);
+            OnFilterChanged?.Invoke(MapLayer.ParcelsAtlas, false);
+            OnFilterChanged?.Invoke(MapLayer.SatelliteAtlas, true);
+        }
+
+        private void ToggleParcelMap(bool isOn)
+        {
+            if (!isOn)
+                return;
+
+            satelliteButtonHighlight.SetActive(false);
+            parcelButtonHighlight.SetActive(true);
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(ToggleOnAudio);
+            OnFilterChanged?.Invoke(MapLayer.SatelliteAtlas, false);
+            OnFilterChanged?.Invoke(MapLayer.ParcelsAtlas, true);
         }
 
         private void OnToggleClicked(MapLayer mapLayer, bool isOn)

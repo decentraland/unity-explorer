@@ -49,6 +49,7 @@ namespace DCL.Navmap
         public void Activate()
         {
             mapRenderer.SetSharedLayer(MapLayer.SatelliteAtlas, true);
+            mapRenderer.SetSharedLayer(MapLayer.ParcelsAtlas, false);
             view.SatelliteRenderImage.texture = cameraController.GetRenderTexture();
             view.SatellitePixelPerfectMapRendererTextureProvider.Activate(cameraController);
             view.SatelliteRenderImage.Activate(null, cameraController.GetRenderTexture(), cameraController);
