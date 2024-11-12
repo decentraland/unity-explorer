@@ -43,6 +43,10 @@ on:
         required: false
         default: ''
         type: string
+      install_source:
+        required: false
+        default: 'launcher'
+        type: string
   workflow_call:
     inputs:
       profile:
@@ -101,6 +105,7 @@ jobs:
       sentry_enabled: ${{ steps.get_sentry.outputs.sentry_enabled }}
       clean_build: ${{ steps.set_defaults.outputs.clean_build }}
       cache_strategy: ${{ steps.set_defaults.outputs.cache_strategy }}
+      install_source: ${{ steps.set_defaults.outputs.install_source }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -157,6 +162,16 @@ jobs:
           echo "Set cache_strategy to: $cache_strategy"
           echo "cache_strategy=${cache_strategy}" >> $GITHUB_OUTPUT
 
+          if [ "${{ github.event.inputs.install_source }}" ]; then
+            install_source=${{ github.event.inputs.install_source }}
+          elif [ "${{ inputs.install_source }}" ]; then
+            install_source=${{ inputs.install_source }}
+          else
+            install_source='launcher'
+          fi
+          echo "Set install_source to: $install_source"
+          echo "install_source=${install_source}" >> $GITHUB_OUTPUT
+
       - name: Get BuildOptions
         id: get_options
         run: |
@@ -208,9 +223,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r scripts/cloudbuild/requirements.txt
 
-      - name: Print install_source input value
-        run: echo "Install Source: ${{ inputs.install_source }}"
-
       - name: Execute Unity Cloud build
         env:
           API_KEY: ${{ secrets.UNITY_CLOUD_API_KEY }}
@@ -237,7 +249,7 @@ jobs:
           PARAM_SENTRY_ENABLED: ${{ needs.prebuild.outputs.sentry_enabled }}
           PARAM_SENTRY_UPLOAD_DEBUG_SYMBOLS: ${{ needs.prebuild.outputs.sentry_upload_symbols }}
           PARAM_SEGMENT_WRITE_KEY: ${{ secrets.SEGMENT_WRITE_KEY }}
-          PARAM_INSTALL_SOURCE: ${{ inputs.install_source }}
+          PARAM_INSTALL_SOURCE: ${{ needs.prebuild.outputs.install_source }}
 
         run: python -u scripts/cloudbuild/build.py
 
@@ -248,10 +260,10 @@ jobs:
       - name: Set artifact name
         id: set_artifact_name
         run: |
-          if [ "${{ inputs.install_source }}" == "launcher" ]; then
+          if [ "${{ needs.prebuild.outputs.install_source }}" == "launcher" ]; then
             echo "artifact_name=Decentraland_${{ matrix.target }}" >> $GITHUB_ENV
           else
-            echo "artifact_name=Decentraland_${{ matrix.target }}_${{ inputs.install_source }}" >> $GITHUB_ENV
+            echo "artifact_name=Decentraland_${{ matrix.target }}_${{ needs.prebuild.outputs.install_source }}" >> $GITHUB_ENV
           fi
 
       - name: Upload artifact for macOS
@@ -311,7 +323,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.target }}_${{ inputs.install_source }}_unity_log
+          name: ${{ matrix.target }}_${{ needs.prebuild.outputs.install_source }}_unity_log
           path: unity_cloud_log.log
           if-no-files-found: error
 
@@ -323,7 +335,7 @@ jobs:
       - name: Extract and display errors
         if: always()
         run: |
-          echo "=== Extracted Errors for ${{ matrix.target }} ${{ inputs.install_source }} ==="
+          echo "=== Extracted Errors for ${{ matrix.target }} ${{ needs.prebuild.outputs.install_source }} ==="
           grep -iE "error c|fatal" unity_cloud_log.log | sed 's/^/\x1b[31m/' | sed 's/$/\x1b[0m/' || echo "No 'error c' or 'fatal' errors found in ${{ matrix.target }} log."
 
       # Will run always (even if failing)
@@ -336,7 +348,7 @@ jobs:
       - name: Upload Shader Compilation Report
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.target }}_${{ inputs.install_source }}_shader_compilation_report
+          name: ${{ matrix.target }}_${{ needs.prebuild.outputs.install_source }}_shader_compilation_report
           path: shader_compilation_report.log
           if-no-files-found: error
 
