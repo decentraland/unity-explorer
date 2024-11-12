@@ -78,10 +78,10 @@ namespace DCL.Navmap
             view.OverviewTabButton.onClick.AddListener(() => Toggle(Section.OVERVIEW));
 
             dislikeButton = new MultiStateButtonController(view.DislikeButton, true);
-            dislikeButton.OnButtonClicked += Rate;
+            dislikeButton.OnButtonClicked += OnDislikeButtonClick;
 
             likeButton = new MultiStateButtonController(view.LikeButton, true);
-            likeButton.OnButtonClicked += Rate;
+            likeButton.OnButtonClicked += OnLikeButtonClick;
 
             favoriteButton = new MultiStateButtonController(view.FavoriteButton, true);
             favoriteButton.OnButtonClicked += SetAsFavorite;
@@ -121,6 +121,9 @@ namespace DCL.Navmap
             view.CoordinatesLabel.text = place.base_position;
             view.ParcelCountLabel.text = place.Positions.Length.ToString();
             view.AppearsOnContainer.SetActive(place.categories.Length > 0);
+
+            likeButton.SetButtonState(place.user_like);
+            dislikeButton.SetButtonState(place.user_dislike);
 
             SetCategories(place);
 
@@ -230,7 +233,7 @@ namespace DCL.Navmap
 
         private void Share() { }
 
-        private void Rate(bool isLike)
+        private void OnLikeButtonClick(bool isEnabled)
         {
             rateCancellationToken = rateCancellationToken.SafeRestart();
             RateAsync(rateCancellationToken.Token).Forget();
@@ -238,9 +241,23 @@ namespace DCL.Navmap
 
             async UniTaskVoid RateAsync(CancellationToken ct)
             {
-                await placesAPIService.RatePlace(isLike, place!.id, ct);
-                likeButton.SetButtonState(isLike);
-                dislikeButton.SetButtonState(!isLike);
+                await placesAPIService.RatePlace(isEnabled ? true : null, place!.id, ct);
+                likeButton.SetButtonState(isEnabled);
+                dislikeButton.SetButtonState(false);
+            }
+        }
+
+        private void OnDislikeButtonClick(bool isEnabled)
+        {
+            rateCancellationToken = rateCancellationToken.SafeRestart();
+            RateAsync(rateCancellationToken.Token).Forget();
+            return;
+
+            async UniTaskVoid RateAsync(CancellationToken ct)
+            {
+                await placesAPIService.RatePlace(isEnabled ? false : null, place!.id, ct);
+                likeButton.SetButtonState(false);
+                dislikeButton.SetButtonState(isEnabled);
             }
         }
 
