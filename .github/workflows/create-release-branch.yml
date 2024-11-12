@@ -1,0 +1,41 @@
+name: Create Release Branch and PR
+
+on:
+  workflow_dispatch:
+
+jobs:
+  create-release-branch:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v3
+        with:
+          ref: dev
+
+      - name: Create release branch
+        id: create_branch
+        run: |
+          DATE=$(date +"%d-%m-%Y")
+          RELEASE_BRANCH="release/release_${DATE}"
+          
+          git checkout -B $RELEASE_BRANCH
+          git push --set-upstream origin $RELEASE_BRANCH
+          
+          # Output the branch name for use in subsequent steps
+          echo "branch_name=$RELEASE_BRANCH" >> $GITHUB_OUTPUT
+
+      - name: Create Pull Request
+        uses: repo-sync/pull-request@v2
+        with:
+          source_branch: ${{ steps.create_branch.outputs.branch_name }}
+          destination_branch: "main"
+          pr_title: "release: $(date +"%d-%m-%Y")"
+          pr_body: |
+            :rocket: **Automated release PR**
+
+            This PR prepares a new release from the `dev` branch to `main`.
+          pr_label: "release,auto-pr"
+          pr_draft: false
+          pr_allow_empty: false
+          github_token: ${{ secrets.GITHUB_TOKEN }}
