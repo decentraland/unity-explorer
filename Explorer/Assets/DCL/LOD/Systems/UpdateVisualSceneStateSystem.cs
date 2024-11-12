@@ -111,13 +111,14 @@ namespace ECS.SceneLifeCycle.Systems
             {
                 sceneFacade.EcsExecutor.World.Get<TransformComponent>(sceneFacade.PersistentEntities.SceneRoot)
                     .Transform.gameObject.SetActive(sceneFacade.SceneData.SceneLoadingConcluded);
-            }
-            
-            if (sceneFacade.SceneData.SceneLoadingConcluded)
-            {
-                sceneLODInfo.DisposeSceneLODAndRemoveFromCache(scenesCache, sceneDefinitionComponent.Parcels, lodCache,
-                    World);
-                World.Remove<SceneLODInfo>(entity);
+
+                if (sceneFacade.SceneData.SceneLoadingConcluded)
+                {
+                    sceneLODInfo.DisposeSceneLODAndRemoveFromCache(scenesCache, sceneDefinitionComponent.Parcels,
+                        lodCache,
+                        World);
+                    World.Remove<SceneLODInfo>(entity);
+                }
             }
         }
 
