@@ -34,6 +34,10 @@ Shader "DCL/DCL_Toon"
         [HideInInspector] [PerRendererData] _lastWearableVertCount ("Last wearable Vert Count", Integer) = -1
         [HideInInspector] [PerRendererData] _lastAvatarVertCount ("Last avatar vert count", Integer) = -1
         
+        [HideInInspector] [PerRendererData] _EndFadeDistance ("EndFadeDistance", Float) = 0
+        [HideInInspector] [PerRendererData] _StartFadeDistance ("StartFadeDistance", Float) = 0
+        [HideInInspector] [PerRendererData] _FadeDistance ("FadeDistance", Float) = 1
+        
         [HideInInspector] _MainTexArr ("Main Texture Array", 2DArray) = "white" {}
         [HideInInspector] _NormalMapArr ("Normal Texture Array", 2DArray) = "bump" {}
         [HideInInspector] _Emissive_TexArr ("Emissive Texture Array", 2DArray) = "black" {}
@@ -555,6 +559,7 @@ Shader "DCL/DCL_Toon"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 #ifdef UNIVERSAL_PIPELINE_CORE_INCLUDED
+            #include "Assets/DCL/AvatarRendering/Shaders/DCL_AvatarDither.hlsl"
             #include "DCL_ToonInput.hlsl"
             #include "DCL_ToonHead.hlsl"
             #include "DCL_ToonOutline.hlsl"
@@ -601,6 +606,7 @@ Shader "DCL/DCL_Toon"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 #ifdef UNIVERSAL_PIPELINE_CORE_INCLUDED
+            #include "Assets/DCL/AvatarRendering/Shaders/DCL_AvatarDither.hlsl"
             #include "DCL_ToonInput.hlsl"
             #include "DCL_ToonHead.hlsl"
             #include "DCL_ToonHighlight.hlsl"
@@ -672,6 +678,7 @@ Shader "DCL/DCL_Toon"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 #ifdef UNIVERSAL_PIPELINE_CORE_INCLUDED
+            #include "Assets/DCL/AvatarRendering/Shaders/DCL_AvatarDither.hlsl"
             #include "DCL_ToonInput.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/Shaders/LitForwardPass.hlsl"
             #include "DCL_ToonHead.hlsl"
@@ -735,9 +742,9 @@ Shader "DCL/DCL_Toon"
 
             #pragma shader_feature_local _DCL_COMPUTE_SKINNING
             #pragma shader_feature_local _DCL_TEXTURE_ARRAYS
-
-
+            
             #include "DCL_ToonInput.hlsl"
+            #include "Assets/DCL/AvatarRendering/Shaders/DCL_AvatarDither.hlsl"
             #include "DCL_ToonDepthOnlyPass.hlsl"
             ENDHLSL
         }
@@ -771,6 +778,7 @@ Shader "DCL/DCL_Toon"
             #pragma shader_feature_local _DCL_TEXTURE_ARRAYS
             
             #include "DCL_ToonInput.hlsl"
+            #include "Assets/DCL/AvatarRendering/Shaders/DCL_AvatarDither.hlsl"
             #include "DCL_ToonDepthNormalsPass.hlsl"
 
             ENDHLSL

@@ -1,0 +1,35 @@
+name: Create Release Branch and PR
+
+on:
+  workflow_dispatch:
+
+jobs:
+  create-release-branch:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v3
+        with:
+          ref: dev
+          
+      - name: Get current date
+        id: get_date
+        run: echo "current_date=$(date +"%d-%m-%Y")" >> $GITHUB_ENV
+
+      - name: Create or update branch
+        run: |
+          git checkout -B release/release_${{ env.current_date }}
+          git push --force --set-upstream origin release/release_${{ env.current_date }}
+
+      - name: Create pull request
+        uses: repo-sync/pull-request@v2
+        with:
+          source_branch: "release/release_${{ env.current_date }}"
+          destination_branch: "main"
+          pr_title: "release: ${{ env.current_date }}"
+          pr_body: ":rocket: Automated release PR"
+          pr_label: "release, auto-pr"
+          pr_draft: false
+          pr_allow_empty: false
+          github_token: ${{ secrets.GITHUB_TOKEN }}

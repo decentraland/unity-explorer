@@ -355,7 +355,8 @@ namespace Global.Dynamic
                 localSceneDevelopment,
                 staticContainer.LoadingStatus,
                 staticContainer.CacheCleaner,
-                staticContainer.SingletonSharedDependencies.MemoryBudget);
+                staticContainer.SingletonSharedDependencies.MemoryBudget,
+                staticContainer.FeatureFlagsCache);
 
             IHealthCheck livekitHealthCheck = bootstrapContainer.DebugSettings.EnableEmulateNoLivekitConnection
                 ? new IHealthCheck.AlwaysFails("Livekit connection is in debug, always fail mode")
