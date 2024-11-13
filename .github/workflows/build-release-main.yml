@@ -12,8 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
-      latest_version: ${{ steps.get_version.outputs.latest_version }}
-      full_version: ${{ steps.get_version.outputs.next_full_version }}
+      version: ${{ steps.get_version.outputs.next_short_version }}
       tag_version: ${{ steps.get_version.outputs.next_tag_version }}
     steps:
       - name: Checkout code
@@ -37,7 +36,7 @@ jobs:
       profile: none
       clean_build: true
       cache_strategy: none
-      version: ${{ needs.get-info.outputs.full_version }}
+      version: ${{ needs.get-info.outputs.next_short_version }}
       sentry_enabled: true
       is_release_build: true
       install_source: ${{ matrix.install_source }}

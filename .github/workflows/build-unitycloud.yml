@@ -38,15 +38,6 @@ on:
           - library
           - workspace
           - inherit
-      version:
-        description: 'Override for build version to use'
-        required: false
-        default: ''
-        type: string
-      install_source:
-        required: false
-        default: 'launcher'
-        type: string
   workflow_call:
     inputs:
       profile:
