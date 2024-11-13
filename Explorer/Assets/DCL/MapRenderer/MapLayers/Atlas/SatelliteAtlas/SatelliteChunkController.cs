@@ -1,4 +1,5 @@
-﻿using CommunicationData.URLHelpers;
+﻿using System;
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.MapRenderer.ComponentsFactory;
@@ -9,6 +10,7 @@ using UnityEngine;
 using Utility;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
+using Object = UnityEngine.Object;
 
 namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
 {
@@ -67,9 +69,9 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
             var url = $"{CHUNKS_API}{chunkId.x}%2C{chunkId.y}.jpg";
 
             var textureTask = webRequestController.GetTextureAsync(
-                new CommonArguments(URLAddress.FromString(url), attemptsCount: 1, timeout: 5),
+                new CommonArguments(URLAddress.FromString(url), attemptsCount: 1),
                 new GetTextureArguments(false), GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp, FilterMode.Trilinear),
-                linkedCts.Token, ReportCategory.UI);
+                linkedCts.Token, ReportCategory.UI).Timeout(TimeSpan.FromSeconds(3));
 
             Texture2D texture;
 
