@@ -68,8 +68,8 @@ namespace DCL.MapRenderer.ComponentsFactory
             return favorite;
         }
 
-        private static IFavoritesMarker CreateMarker(IObjectPool<FavoriteMarkerObject> objectsPool, IMapCullingController cullingController) =>
-            new FavoritesMarker(objectsPool, cullingController);
+        private static IFavoritesMarker CreateMarker(IObjectPool<FavoriteMarkerObject> objectsPool, IMapCullingController cullingController, ICoordsUtils coordsUtils) =>
+            new FavoritesMarker(objectsPool, cullingController, coordsUtils);
 
         private async UniTask<FavoriteMarkerObject> GetPrefabAsync(CancellationToken cancellationToken) =>
             (await assetsProvisioner.ProvideMainAssetAsync(mapSettings.FavoriteMarker, cancellationToken)).Value.GetComponent<FavoriteMarkerObject>();

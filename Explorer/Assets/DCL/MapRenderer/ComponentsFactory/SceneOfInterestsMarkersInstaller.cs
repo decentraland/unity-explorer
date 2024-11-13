@@ -69,8 +69,8 @@ namespace DCL.MapRenderer.ComponentsFactory
             return sceneOfInterestMarkerObject;
         }
 
-        private static ISceneOfInterestMarker CreateMarker(IObjectPool<SceneOfInterestMarkerObject> objectsPool, IMapCullingController cullingController) =>
-            new SceneOfInterestMarker(objectsPool, cullingController);
+        private static ISceneOfInterestMarker CreateMarker(IObjectPool<SceneOfInterestMarkerObject> objectsPool, IMapCullingController cullingController, ICoordsUtils coordsUtils) =>
+            new SceneOfInterestMarker(objectsPool, cullingController, coordsUtils);
 
         private async UniTask<SceneOfInterestMarkerObject> GetPrefabAsync(CancellationToken cancellationToken) =>
             (await assetsProvisioner.ProvideMainAssetAsync(mapSettings.SceneOfInterestMarker, cancellationToken)).Value;

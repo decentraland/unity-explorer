@@ -5,6 +5,7 @@ using DCL.MapRenderer.MapLayers;
 using DCL.MapRenderer.MapLayers.Pins;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
+using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Pool;
@@ -156,6 +157,9 @@ namespace DCL.MapRenderer
         {
             internalPinMarker.OnBecameInvisible();
         }
+
+        public UniTask InitializeAsync(CancellationToken cancellationToken) =>
+            UniTask.CompletedTask;
 
         public UniTask Enable(CancellationToken cancellationToken)
         {

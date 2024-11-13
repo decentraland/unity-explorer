@@ -13,6 +13,7 @@ using DCL.MapRenderer.MapLayers.UsersMarker;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
 using MVC;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -47,6 +48,9 @@ namespace DCL.MapRenderer.MapLayers.Users
             objectsPool.Clear();
             wrapsPool.Clear();
         }
+
+        public UniTask InitializeAsync(CancellationToken cancellationToken) =>
+            UniTask.CompletedTask;
 
         public void CreateSystems(ref ArchSystemsWorldBuilder<World> builder)
         {

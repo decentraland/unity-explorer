@@ -52,6 +52,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1b149c5240fcd49309285605ce2e8067
+    m_Address: CategoryMarkerObject
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 1d026bc5d9fd448798b32a455c0f3978
     m_Address: Nametag
     m_ReadOnly: 0
@@ -159,6 +164,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 605506dac7ec04ed09953980478e93d4
     m_Address: SceneLoadingScreen
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 624d527621f514c5999533539668c4d3
+    m_Address: Assets/DCL/Navmap/Assets/EventEntry.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -354,6 +364,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: f80a8f4fcad2b4246b66c94221314244
     m_Address: AtlasChunk
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: fdd9de2cf51974e4f9be30ab72d8eabd
+    m_Address: MapLayerIconMapping
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

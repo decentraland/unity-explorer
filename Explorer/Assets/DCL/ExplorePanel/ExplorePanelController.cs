@@ -27,16 +27,14 @@ namespace DCL.ExplorePanel
         private readonly IMVCManager mvcManager;
         private readonly IInputBlock inputBlock;
 
-        private Dictionary<ExploreSections, TabSelectorView> tabsBySections;
-        private Dictionary<ExploreSections, ISection> exploreSections;
-
-        private SectionSelectorController<ExploreSections> sectionSelectorController;
-        private CancellationTokenSource animationCts;
+        private Dictionary<ExploreSections, TabSelectorView>? tabsBySections;
+        private Dictionary<ExploreSections, ISection>? exploreSections;
+        private SectionSelectorController<ExploreSections>? sectionSelectorController;
+        private CancellationTokenSource? animationCts;
         private CancellationTokenSource? profileWidgetCts;
         private CancellationTokenSource? profileMenuCts;
-        private TabSelectorView previousSelector;
+        private TabSelectorView? previousSelector;
         private ExploreSections lastShownSection;
-
         private bool isControlClosing;
 
         public NavmapController NavmapController { get; }
@@ -114,9 +112,9 @@ namespace DCL.ExplorePanel
         protected override void OnViewShow()
         {
             isControlClosing = false;
-            sectionSelectorController.ResetAnimators();
+            sectionSelectorController!.ResetAnimators();
 
-            foreach ((ExploreSections section, TabSelectorView? tab) in tabsBySections)
+            foreach ((ExploreSections section, TabSelectorView? tab) in tabsBySections!)
             {
                 ToggleSection(section == inputData.Section, tab, section, true);
                 sectionSelectorController.SetAnimationState(section == inputData.Section, tabsBySections[section]);
@@ -141,19 +139,18 @@ namespace DCL.ExplorePanel
         private void ToggleSection(bool isOn, TabSelectorView tabSelectorView, ExploreSections shownSection, bool animate)
         {
             if (isOn && animate && shownSection != lastShownSection)
-                sectionSelectorController.SetAnimationState(false, tabsBySections[lastShownSection]);
+                sectionSelectorController!.SetAnimationState(false, tabsBySections![lastShownSection]);
 
             animationCts.SafeCancelAndDispose();
             animationCts = new CancellationTokenSource();
-            sectionSelectorController.OnTabSelectorToggleValueChangedAsync(isOn, tabSelectorView, shownSection, animationCts.Token, animate).Forget();
+            sectionSelectorController!.OnTabSelectorToggleValueChangedAsync(isOn, tabSelectorView, shownSection, animationCts.Token, animate).Forget();
 
-            if (isOn)
-            {
-                if (shownSection == lastShownSection)
-                    exploreSections[lastShownSection].Activate();
+            if (!isOn) return;
 
-                lastShownSection = shownSection;
-            }
+            if (shownSection == lastShownSection)
+                exploreSections![lastShownSection].Activate();
+
+            lastShownSection = shownSection;
         }
 
         private void RegisterHotkeys()
@@ -175,7 +172,7 @@ namespace DCL.ExplorePanel
         {
             if (lastShownSection != ExploreSections.Navmap)
             {
-                sectionSelectorController.SetAnimationState(false, tabsBySections[lastShownSection]);
+                sectionSelectorController!.SetAnimationState(false, tabsBySections![lastShownSection]);
                 ShowSection(ExploreSections.Navmap);
             }
             else
@@ -186,7 +183,7 @@ namespace DCL.ExplorePanel
         {
             if (lastShownSection != ExploreSections.Settings)
             {
-                sectionSelectorController.SetAnimationState(false, tabsBySections[lastShownSection]);
+                sectionSelectorController!.SetAnimationState(false, tabsBySections![lastShownSection]);
                 ShowSection(ExploreSections.Settings);
             }
             else
@@ -197,7 +194,7 @@ namespace DCL.ExplorePanel
         {
             if (lastShownSection != ExploreSections.Backpack)
             {
-                sectionSelectorController.SetAnimationState(false, tabsBySections[lastShownSection]);
+                sectionSelectorController!.SetAnimationState(false, tabsBySections![lastShownSection]);
                 ShowSection(ExploreSections.Backpack);
             }
             else
@@ -206,12 +203,12 @@ namespace DCL.ExplorePanel
 
         private void ShowSection(ExploreSections section)
         {
-            ToggleSection(true, tabsBySections[section], section, true);
+            ToggleSection(true, tabsBySections![section], section, true);
         }
 
         protected override void OnViewClose()
         {
-            foreach (ISection exploreSectionsValue in exploreSections.Values)
+            foreach (ISection exploreSectionsValue in exploreSections!.Values)
                 exploreSectionsValue.Deactivate();
 
             if (profileMenuController.State is ControllerState.ViewFocused or ControllerState.ViewBlurred)
@@ -235,12 +232,12 @@ namespace DCL.ExplorePanel
 
         private void BlockUnwantedInputs()
         {
-            inputBlock.Disable(InputMapComponent.Kind.CAMERA , InputMapComponent.Kind.PLAYER);
+            inputBlock.Disable(InputMapComponent.Kind.CAMERA, InputMapComponent.Kind.PLAYER);
         }
 
         private void UnblockUnwantedInputs()
         {
-            inputBlock.Enable(InputMapComponent.Kind.CAMERA , InputMapComponent.Kind.PLAYER);
+            inputBlock.Enable(InputMapComponent.Kind.CAMERA, InputMapComponent.Kind.PLAYER);
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct)

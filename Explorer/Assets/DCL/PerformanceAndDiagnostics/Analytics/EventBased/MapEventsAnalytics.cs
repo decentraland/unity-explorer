@@ -1,30 +1,34 @@
 ﻿using DCL.Navmap;
+using DCL.PlacesAPIService;
 using Segment.Serialization;
 using System;
-using UnityEngine;
+using Utility;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics
 {
     public class MapEventsAnalytics : IDisposable
     {
         private readonly IAnalyticsController analytics;
-        private readonly NavmapController navmapController;
+        private readonly INavmapBus navmapBus;
 
-        public MapEventsAnalytics(IAnalyticsController analytics, NavmapController navmapController)
+        public MapEventsAnalytics(IAnalyticsController analytics,
+            INavmapBus navmapBus)
         {
             this.analytics = analytics;
-            this.navmapController = navmapController;
+            this.navmapBus = navmapBus;
 
-            this.navmapController.FloatingPanelController.OnJumpIn += OnJumpIn;
+            navmapBus.OnJumpIn += OnJumpIn;
         }
 
         public void Dispose()
         {
-            navmapController.FloatingPanelController.OnJumpIn -= OnJumpIn;
+            navmapBus.OnJumpIn -= OnJumpIn;
         }
 
-        private void OnJumpIn(Vector2Int parcel)
+        private void OnJumpIn(PlacesData.PlaceInfo place)
         {
+            if (!VectorUtilities.TryParseVector2Int(place.base_position, out var parcel)) return;
+
             analytics.Track(AnalyticsEvents.Map.JUMP_IN, new JsonObject
             {
                 { "parcel", parcel.ToString() },

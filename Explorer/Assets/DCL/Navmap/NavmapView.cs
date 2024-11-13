@@ -2,12 +2,17 @@ using DCL.Audio;
 using DCL.MapRenderer.ConsumerUtils;
 using DCL.UI;
 using System;
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace DCL.Navmap
 {
     public class NavmapView : MonoBehaviour
     {
+        [field: SerializeField]
+        public List<CategoryToggleView> categoryToggles;
+
         [field: SerializeField]
         public SearchBarView SearchBarView;
 
@@ -15,10 +20,15 @@ namespace DCL.Navmap
         public SearchResultPanelView SearchBarResultPanel;
 
         [field: SerializeField]
-        public HistoryRecordPanelView HistoryRecordPanelView;
+        public PlacesAndEventsPanelView PlacesAndEventsPanelView { get; private set; }
 
         [field: SerializeField]
-        public FloatingPanelView floatingPanelView;
+        public HistoryRecordPanelView HistoryRecordPanelView;
+
+        [FormerlySerializedAs("eventInfoCard")]
+        [FormerlySerializedAs("floatingPanelView")]
+        [field: SerializeField]
+        public EventInfoCardView eventInfoCardView;
 
         [field: SerializeField]
         public NavmapFilterView filterView;

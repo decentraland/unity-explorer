@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e658e8ab172c4695b52464e0201349b5, type: 3}
+  m_Name: MapLayerIconMapping
+  m_EditorClassIdentifier: 
+  nftIcons:
+  - key: 256
+    value: {fileID: 21300000, guid: 931eee84c7fed40fe92010c5aab882ba, type: 3}
+  - key: 512
+    value: {fileID: 21300000, guid: e862b5fadf97d4afb96cf1f7aeb3cbfe, type: 3}
+  - key: 1024
+    value: {fileID: 21300000, guid: 0209f81960a0e487a9a0e51e59da83b8, type: 3}
+  - key: 2048
+    value: {fileID: 21300000, guid: f3075470eeb8c4bd59645e2f9d7bda51, type: 3}
+  - key: 4096
+    value: {fileID: 21300000, guid: 642bb4afb2ed14de6ac29ea8aad60f7b, type: 3}
+  - key: 8192
+    value: {fileID: 21300000, guid: 01d714363ca1242868369a364d4aadcf, type: 3}
+  - key: 16384
+    value: {fileID: 21300000, guid: 23232a0e1a9634b1d980780def7f9c73, type: 3}
+  - key: 32768
+    value: {fileID: 21300000, guid: b4087860baec34319b26fa2f30d6dbd5, type: 3}
+  - key: 65536
+    value: {fileID: 21300000, guid: 5e54e825ac962474795e01d3cd482f0b, type: 3}
+  - key: 131072
+    value: {fileID: 21300000, guid: 85f66ad95d7474cfd9f3e72db4d8e6ca, type: 3}
+  - key: 262144
+    value: {fileID: 21300000, guid: d3bdc91d4c12b4849a2aa6fa73d846b2, type: 3}
+  defaultIcon: {fileID: 21300000, guid: fa52936e6ce564a07ac976145f3d489a, type: 3}

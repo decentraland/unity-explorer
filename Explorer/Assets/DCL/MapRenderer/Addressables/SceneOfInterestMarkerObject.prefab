@@ -305,7 +305,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0c8326184a894749955fc89910bafba7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  <pivot>k__BackingField: {x: 1, y: 0}
+  <pivot>k__BackingField: {x: 0.5, y: 0.5}
   <title>k__BackingField: {fileID: 4613185049253147113}
   <renderers>k__BackingField:
   - {fileID: 3130431528363719345}

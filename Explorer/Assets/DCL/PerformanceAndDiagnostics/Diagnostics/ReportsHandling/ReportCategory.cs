@@ -293,5 +293,7 @@ namespace DCL.Diagnostics
         public const string VERSION_CONTROL= nameof(VERSION_CONTROL);
 
         public const string ONBOARDING = nameof(ONBOARDING);
+
+        public const string EVENTS = nameof(EVENTS);
     }
 }

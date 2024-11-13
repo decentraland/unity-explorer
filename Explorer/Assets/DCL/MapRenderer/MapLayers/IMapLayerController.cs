@@ -16,6 +16,8 @@ namespace DCL.MapRenderer.MapLayers
 
     internal interface IMapLayerController : IDisposable
     {
+        UniTask InitializeAsync(CancellationToken cancellationToken);
+
         void CreateSystems(ref ArchSystemsWorldBuilder<Arch.Core.World> builder) { }
 
         /// <summary>

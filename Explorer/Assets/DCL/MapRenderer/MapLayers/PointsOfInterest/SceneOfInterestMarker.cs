@@ -1,4 +1,5 @@
 ﻿using DCL.MapRenderer.CommonBehavior;
+using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
 using System;
 using UnityEngine;
@@ -11,6 +12,7 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
         internal const int MAX_TITLE_LENGTH = 29;
 
         private readonly IMapCullingController cullingController;
+        private readonly ICoordsUtils coordsUtils;
 
         private MapMarkerPoolableBehavior<SceneOfInterestMarkerObject> poolableBehavior;
         private float currentBaseScale;
@@ -24,10 +26,11 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
 
         internal string title { get; private set; }
 
-        public SceneOfInterestMarker(IObjectPool<SceneOfInterestMarkerObject> objectsPool, IMapCullingController cullingController)
+        public SceneOfInterestMarker(IObjectPool<SceneOfInterestMarkerObject> objectsPool, IMapCullingController cullingController, ICoordsUtils coordsUtils)
         {
             poolableBehavior = new MapMarkerPoolableBehavior<SceneOfInterestMarkerObject>(objectsPool);
             this.cullingController = cullingController;
+            this.coordsUtils = coordsUtils;
         }
 
         public void Dispose()
@@ -38,7 +41,7 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
 
         public void SetData(string title, Vector3 position)
         {
-            poolableBehavior.SetCurrentPosition(position);
+            poolableBehavior.SetCurrentPosition(coordsUtils.PivotPosition(this, position));
             this.title = title.Length > MAX_TITLE_LENGTH ? title.Substring(0, MAX_TITLE_LENGTH) : title;
         }
 

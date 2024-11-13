@@ -9,6 +9,7 @@ using DCL.MapRenderer.Culling;
 using DCL.MapPins.Components;
 using ECS.LifeCycle.Components;
 using MVC;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -46,6 +47,9 @@ namespace DCL.MapRenderer.MapLayers.Pins
             this.mapPathEventBus = mapPathEventBus;
             this.mapPathEventBus.OnRemovedDestination += OnRemovedDestination;
         }
+
+        public UniTask InitializeAsync(CancellationToken cancellationToken) =>
+            UniTask.CompletedTask;
 
         public void CreateSystems(ref ArchSystemsWorldBuilder<World> builder)
         {

@@ -15,7 +15,6 @@ namespace DCL.Navmap
         private const string GENESIS_CITY_LINK = "https://genesis.city/";
 
         private readonly SatelliteView view;
-        private readonly MapCameraDragBehavior.MapCameraDragBehaviorData mapCameraDragBehaviorData;
         private readonly RectTransform rectTransform;
         private readonly IMapRenderer mapRenderer;
         private readonly IWebBrowser webBrowser;
@@ -29,7 +28,6 @@ namespace DCL.Navmap
             IWebBrowser webBrowser)
         {
             this.view = view;
-            this.mapCameraDragBehaviorData = mapCameraDragBehaviorData;
             this.mapRenderer = mapRenderer;
             this.webBrowser = webBrowser;
 
@@ -51,6 +49,7 @@ namespace DCL.Navmap
         public void Activate()
         {
             mapRenderer.SetSharedLayer(MapLayer.SatelliteAtlas, true);
+            mapRenderer.SetSharedLayer(MapLayer.ParcelsAtlas, false);
             view.SatelliteRenderImage.texture = cameraController.GetRenderTexture();
             view.SatellitePixelPerfectMapRendererTextureProvider.Activate(cameraController);
             view.SatelliteRenderImage.Activate(null, cameraController.GetRenderTexture(), cameraController);

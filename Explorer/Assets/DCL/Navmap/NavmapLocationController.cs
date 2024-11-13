@@ -1,6 +1,8 @@
 using Arch.Core;
 using DCL.Character.Components;
 using DCL.MapRenderer.MapCameraController;
+using DCL.Navmap.FilterPanel;
+using System;
 using UnityEngine;
 using Utility;
 
@@ -15,14 +17,22 @@ namespace DCL.Navmap
 
         private readonly World world;
         private readonly Entity playerEntity;
+        private readonly NavmapFilterPanelController navmapFilterPanelController;
 
-        public NavmapLocationController(NavmapLocationView view, World world, Entity playerEntity)
+        public NavmapLocationController(NavmapLocationView view, World world, Entity playerEntity, NavmapFilterPanelController navmapFilterPanelController)
         {
             this.world = world;
             this.playerEntity = playerEntity;
+            this.navmapFilterPanelController = navmapFilterPanelController;
             world.TryGet(playerEntity, out playerTransformComponent);
 
             view.CenterToPlayerButton.onClick.AddListener(CenterToPlayer);
+            view.FilterPanelButton.onClick.AddListener(ToggleFilterPanel);
+        }
+
+        private void ToggleFilterPanel()
+        {
+            navmapFilterPanelController.ToggleFilterPanel();
         }
 
         public void InjectCameraController(IMapCameraController controller)

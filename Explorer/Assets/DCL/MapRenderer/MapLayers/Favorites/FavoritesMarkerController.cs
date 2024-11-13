@@ -15,7 +15,8 @@ namespace DCL.MapRenderer.MapLayers.Favorites
 
         internal delegate IFavoritesMarker FavoritesMarkerBuilder(
             IObjectPool<FavoriteMarkerObject> objectsPool,
-            IMapCullingController cullingController);
+            IMapCullingController cullingController,
+            ICoordsUtils coordsUtils);
 
         private readonly IPlacesAPIService placesAPIService;
         private readonly IObjectPool<FavoriteMarkerObject> objectsPool;
@@ -92,10 +93,10 @@ namespace DCL.MapRenderer.MapLayers.Favorites
             if (IsEmptyParcel(sceneInfo))
                 return;
 
-            var marker = builder(objectsPool, mapCullingController);
+            var marker = builder(objectsPool, mapCullingController, coordsUtils);
 
             var centerParcel = GetParcelsCenter(sceneInfo);
-            var position = coordsUtils.CoordsToPosition(centerParcel, marker);
+            var position = coordsUtils.CoordsToPosition(centerParcel);
 
             marker.SetData(sceneInfo.title, position);
 
@@ -149,6 +150,9 @@ namespace DCL.MapRenderer.MapLayers.Favorites
 
             return UniTask.CompletedTask;
         }
+
+        public UniTask InitializeAsync(CancellationToken cancellationToken) =>
+            UniTask.CompletedTask;
 
         public UniTask Enable(CancellationToken cancellationToken)
         {
