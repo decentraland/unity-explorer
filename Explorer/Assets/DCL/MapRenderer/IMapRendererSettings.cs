@@ -38,6 +38,8 @@ namespace DCL.MapRenderer
 
         CategoryMarkerObjectRef CategoryMarker { get; }
 
+        ClusterMarkerObjectRef ClusterMarker { get; }
+
         CategoryIconMappingsSO CategoryIconMappings { get; }
 
         FavoriteMarkerObjectRef FavoriteMarker { get; }
@@ -94,6 +96,12 @@ namespace DCL.MapRenderer
         public class SceneOfInterestMarkerObjectRef : ComponentReference<SceneOfInterestMarkerObject>
         {
             public SceneOfInterestMarkerObjectRef(string guid) : base(guid) { }
+        }
+
+        [Serializable]
+        public class ClusterMarkerObjectRef : ComponentReference<ClusterMarkerObject>
+        {
+            public ClusterMarkerObjectRef(string guid) : base(guid) { }
         }
 
         [Serializable]
