@@ -1,0 +1,343 @@
+using Cysharp.Threading.Tasks;
+using DCL.Browser;
+using DCL.InWorldCamera.CameraReel.Components;
+using DCL.InWorldCamera.CameraReelStorageService;
+using DCL.InWorldCamera.CameraReelStorageService.Schemas;
+using DCL.Multiplayer.Connections.DecentralandUrls;
+using JetBrains.Annotations;
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using UnityEditor;
+using UnityEngine;
+using UnityEngine.UI;
+using Utility;
+
+namespace DCL.InWorldCamera.CameraReel
+{
+    public class CameraReelGalleryController : IDisposable
+    {
+        private enum ScrollDirection
+        {
+            UP,
+            DOWN
+        }
+
+        public event Action<CameraReelResponse> ThumbnailClicked;
+        public event Action<CameraReelStorageStatus> StorageUpdated;
+
+        private const int THUMBNAIL_POOL_DEFAULT_CAPACITY = 100;
+        private const int THUMBNAIL_POOL_MAX_SIZE = 10000;
+        private const int GRID_POOL_DEFAULT_CAPACITY = 10;
+        private const int GRID_POOL_MAX_SIZE = 500;
+
+        private PagedCameraReelManager pagedCameraReelManager;
+
+        private readonly CameraReelGalleryView view;
+        private readonly ICameraReelStorageService cameraReelStorageService;
+        private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
+        [CanBeNull] private readonly OptionButtonView optionButtonView;
+        private readonly ReelGalleryPoolManager reelGalleryPoolManager;
+        private readonly Dictionary<DateTime, MonthGridView> monthViews = new ();
+        private readonly Dictionary<MonthGridView, List<ReelThumbnailView>> reelThumbnailViews = new ();
+        private readonly Dictionary<CameraReelResponse, Sprite> reelThumbnailCache = new ();
+
+        private bool isLoading = false;
+        private float previousY = 1f;
+        private CancellationTokenSource loadNextPageCts = new ();
+        private ReelThumbnailView[] thumbnailImages;
+        private int beginVisible;
+        private int endVisible;
+        private int currentSize;
+
+        public CameraReelGalleryController(CameraReelGalleryView view,
+            ICameraReelStorageService cameraReelStorageService,
+            ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
+            IWebBrowser webBrowser,
+            IDecentralandUrlsSource decentralandUrlsSource,
+            OptionButtonView optionButtonView = null)
+        {
+            this.view = view;
+            this.cameraReelStorageService = cameraReelStorageService;
+            this.cameraReelScreenshotsStorage = cameraReelScreenshotsStorage;
+            this.optionButtonView = optionButtonView;
+            this.view.Disable += OnDisable;
+
+            reelGalleryPoolManager = new ReelGalleryPoolManager(view.thumbnailViewPrefab, view.monthGridPrefab, view.unusedThumbnailViewObject,
+                view.unusedGridViewObject, THUMBNAIL_POOL_DEFAULT_CAPACITY, THUMBNAIL_POOL_MAX_SIZE, GRID_POOL_DEFAULT_CAPACITY,
+                GRID_POOL_MAX_SIZE);
+
+            for(int i = 0; i < view.cancelDeleteIntentButtons.Length; i++)
+                view.cancelDeleteIntentButtons[i].onClick.AddListener(OnDeletionModalCancelClick);
+            view.deleteReelButton?.onClick.AddListener(DeleteScreenshot);
+
+            if (this.optionButtonView != null)
+            {
+                this.optionButtonView.SetPublicRequested += (cameraReelRes, publicFlag) => { };
+
+                this.optionButtonView.ShareToXRequested += cameraReelResponse =>
+                {
+                    string description = "Check out what I'm doing in Decentraland right now and join me!".Replace(" ", "%20");
+                    string url = $"{decentralandUrlsSource.Url(DecentralandUrl.CameraReelLink)}/{cameraReelResponse.id}";
+                    string xUrl = $"https://x.com/intent/post?text={description}&hashtags=DCLCamera&url={url}";
+
+                    EditorGUIUtility.systemCopyBuffer = xUrl;
+                    webBrowser.OpenUrl(xUrl);
+                };
+
+                this.optionButtonView.CopyPictureLinkRequested += cameraReelResponse =>
+                {
+                    EditorGUIUtility.systemCopyBuffer = $"{decentralandUrlsSource.Url(DecentralandUrl.CameraReelLink)}/{cameraReelResponse.id}";
+                    ShowSuccessNotification("Link copied!").Forget();
+                };
+
+                this.optionButtonView.DownloadRequested += cameraReelResponse => { webBrowser.OpenUrl(cameraReelResponse.url); };
+            }
+        }
+
+        private void OnDeletionModalCancelClick() =>
+            view.deleteReelModal.SetActive(false);
+
+        private void DeletionOptionClicked(CameraReelResponse response) =>
+            view.deleteReelModal.SetActive(true);
+
+        private void DeleteScreenshot()
+        {
+            if (optionButtonView?.ImageData is null) return;
+            DeleteScreenshotsAsync(optionButtonView.ImageData).Forget();
+            OnDeletionModalCancelClick();
+        }
+
+        private async UniTask DeleteScreenshotsAsync(CameraReelResponse cameraReelResponse, CancellationToken ct = default)
+        {
+            try
+            {
+                CameraReelStorageStatus response = await cameraReelStorageService.DeleteScreenshotAsync(cameraReelResponse.id, ct);
+                StorageUpdated?.Invoke(response);
+
+                MonthGridView monthGridView = GetMonthGridView(PagedCameraReelManager.GetImageDateTime(cameraReelResponse));
+                monthGridView.RemoveThumbnail(cameraReelResponse);
+
+                if (monthGridView.GridIsEmpty())
+                    ReleaseGridView(monthGridView);
+
+                if (view.successNotificationView is null) return;
+
+                await ShowSuccessNotification("Photo successfully deleted", ct);
+            }
+            catch (Exception)
+            {
+                if (view.errorNotificationView is null) return;
+
+                view.errorNotificationView.Show();
+                await UniTask.Delay((int) view.errorSuccessToastDuration * 1000, cancellationToken: ct);
+                view.errorNotificationView.Hide();
+            }
+        }
+
+        public async UniTask ShowWalletGallery(string walletAddress, CancellationToken ct)
+        {
+            pagedCameraReelManager = new PagedCameraReelManager(cameraReelStorageService, walletAddress, view.paginationLimit);
+            loadNextPageCts = loadNextPageCts.SafeRestart();
+
+            view.scrollRect.verticalNormalizedPosition = 1f;
+            previousY = 1f;
+
+            CameraReelStorageStatus storageStatus = await cameraReelStorageService.GetUserGalleryStorageInfoAsync(walletAddress, ct);
+
+            thumbnailImages = new ReelThumbnailView[storageStatus.MaxScreenshots];
+
+            await LoadMorePage(true, ct);
+
+            view.scrollRect.onValueChanged.AddListener(OnScrollRectValueChanged);
+
+            if (optionButtonView is not null)
+            {
+                optionButtonView.DeletePictureRequested += DeletionOptionClicked;
+            }
+        }
+
+        private async UniTask ShowSuccessNotification(string message, CancellationToken ct = default)
+        {
+            view.successNotificationView.SetText(message);
+            view.successNotificationView.Show();
+            await UniTask.Delay((int) view.errorSuccessToastDuration * 1000, cancellationToken: ct);
+            view.successNotificationView.Hide();
+        }
+
+        private MonthGridView GetMonthGridView(DateTime dateTime)
+        {
+            MonthGridView monthGridView;
+            if (monthViews.TryGetValue(dateTime, out MonthGridView monthView))
+                monthGridView = monthView;
+            else
+            {
+                monthGridView = reelGalleryPoolManager.GetGridElement(view.scrollContentRect);
+                monthViews.Add(dateTime, monthGridView);
+            }
+
+            return monthGridView;
+        }
+
+        private async UniTask LoadMorePage(bool firstLoading, CancellationToken ct)
+        {
+            isLoading = true;
+            Dictionary<DateTime, List<CameraReelResponse>> result = await pagedCameraReelManager.FetchNextPage(ct);
+
+            foreach (var bucket in result)
+            {
+                MonthGridView monthGridView = GetMonthGridView(bucket.Key);
+
+                List<ReelThumbnailView> thumbnailViews = monthGridView.Setup(bucket.Key, bucket.Value, reelGalleryPoolManager, cameraReelScreenshotsStorage, optionButtonView,
+                    (cameraReelResponse, sprite) => reelThumbnailCache.Add(cameraReelResponse, sprite),
+                    cameraReelResponse => ThumbnailClicked?.Invoke(cameraReelResponse));
+
+                if (reelThumbnailViews.TryGetValue(monthGridView, out List<ReelThumbnailView> thumbnails))
+                    thumbnails.AddRange(thumbnailViews);
+                else
+                    reelThumbnailViews.Add(monthGridView, thumbnailViews);
+
+                for (int i = 0; i < thumbnailViews.Count; i++)
+                    thumbnailImages[currentSize + i] = thumbnailViews[i];
+
+                currentSize += thumbnailViews.Count;
+                endVisible = currentSize - 1;
+            }
+
+            await UniTask.NextFrame(ct);
+
+            if (firstLoading)
+                for (int i = beginVisible; i < currentSize && ViewIntersectsImage(thumbnailImages[i].thumbnailImage); i++)
+                    EnableThumbnailImage(thumbnailImages[i]);
+            else
+                CheckElementsVisibility(ScrollDirection.UP);
+
+            previousY = view.scrollRect.verticalNormalizedPosition;
+            isLoading = false;
+        }
+
+        private void OnScrollRectValueChanged(Vector2 value)
+        {
+            if (value.y <= view.loadMoreScrollThreshold)
+                OnBeforeReachScrollBottom();
+
+            CheckElementsVisibility(value.y > previousY ? ScrollDirection.UP : ScrollDirection.DOWN);
+
+            previousY = value.y;
+        }
+
+        private void OnBeforeReachScrollBottom()
+        {
+            if (pagedCameraReelManager.AllImagesLoaded || isLoading) return;
+
+            LoadMorePage(false, loadNextPageCts.Token).Forget();
+        }
+
+        private void DisableThumbnailImage(ReelThumbnailView thumbnailView)
+        {
+            thumbnailView.thumbnailImage.sprite = null;
+            thumbnailView.thumbnailImage.enabled = false;
+        }
+
+        private void EnableThumbnailImage(ReelThumbnailView thumbnailView)
+        {
+            if (reelThumbnailCache.TryGetValue(thumbnailView.cameraReelResponse, out Sprite sprite)) thumbnailView.thumbnailImage.sprite = sprite;
+            thumbnailView.thumbnailImage.enabled = true;
+        }
+
+        private void CheckElementsVisibility(ScrollDirection scrollDirection)
+        {
+            if (scrollDirection == ScrollDirection.UP)
+            {
+                int index = beginVisible;
+
+                while (index >= 0 && ViewIntersectsImage(thumbnailImages[index].thumbnailImage))
+                {
+                    EnableThumbnailImage(thumbnailImages[index]);
+                    index--;
+                    beginVisible--;
+                }
+                beginVisible = Mathf.Clamp(beginVisible, 0, currentSize - 1);
+
+                index = endVisible;
+
+                while (index >= 0 && !ViewIntersectsImage(thumbnailImages[index].thumbnailImage))
+                {
+                    DisableThumbnailImage(thumbnailImages[index]);
+                    index--;
+                    endVisible--;
+                }
+                endVisible = Mathf.Clamp(endVisible, 0, currentSize - 1);
+            }
+            else
+            {
+                int index = endVisible;
+
+                while (index < currentSize && ViewIntersectsImage(thumbnailImages[index].thumbnailImage))
+                {
+                    EnableThumbnailImage(thumbnailImages[index]);
+                    index++;
+                    endVisible++;
+                }
+                endVisible = Mathf.Clamp(endVisible, 0, currentSize - 1);
+
+                index = beginVisible;
+
+                while (index < currentSize && !ViewIntersectsImage(thumbnailImages[index].thumbnailImage))
+                {
+                    DisableThumbnailImage(thumbnailImages[index]);
+                    index++;
+                    beginVisible++;
+                }
+                beginVisible = Mathf.Clamp(beginVisible, 0, currentSize - 1);
+            }
+        }
+
+        private bool ViewIntersectsImage(Image image)
+        {
+            var viewRect = this.view.elementMask.GetWorldRect();
+            var img = image.rectTransform.GetWorldRect();
+
+            return img.yMax >= viewRect.yMin && img.yMin < viewRect.yMax;
+        }
+
+        private void ReleaseGridView(MonthGridView monthGridView)
+        {
+            monthGridView.Release();
+            reelGalleryPoolManager.ReleaseGridElement(monthGridView);
+        }
+
+        private void ReleaseGridViews()
+        {
+            foreach (MonthGridView monthGridView in monthViews.Values)
+                ReleaseGridView(monthGridView);
+        }
+
+        private void OnDisable()
+        {
+            ReleaseGridViews();
+            reelThumbnailViews.Clear();
+            monthViews.Clear();
+            reelThumbnailCache.Clear();
+            beginVisible = 0;
+            endVisible = 0;
+            currentSize = 0;
+            thumbnailImages = null;
+            view.scrollRect.onValueChanged.RemoveListener(OnScrollRectValueChanged);
+
+            if (optionButtonView is not null)
+            {
+                optionButtonView.DeletePictureRequested -= DeletionOptionClicked;
+            }
+            loadNextPageCts.SafeCancelAndDispose();
+        }
+
+        public void Dispose()
+        {
+            OnDisable();
+            view.Disable -= OnDisable;
+            ThumbnailClicked = null;
+            StorageUpdated = null;
+        }
+    }
+}

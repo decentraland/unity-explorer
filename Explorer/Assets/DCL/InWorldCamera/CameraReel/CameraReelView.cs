@@ -14,13 +14,13 @@ namespace DCL.InWorldCamera.CameraReel
         [SerializeField] internal CanvasGroup storageFullToast;
 
         [Header("Gallery")]
-        [SerializeField] internal CameraReelGalleryView cameraReelGalleryView;
+        public CameraReelGalleryView cameraReelGalleryView;
 
         [Header("Storage configuration")]
         [SerializeField] internal float storageFullToastFadeTime = 0.3f;
 
         [Header("Context menu")]
-        [SerializeField] internal OptionButtonView optionsButton;
+        public OptionButtonView optionsButton;
 
         internal event Action OnMouseEnter;
         internal event Action OnMouseExit;

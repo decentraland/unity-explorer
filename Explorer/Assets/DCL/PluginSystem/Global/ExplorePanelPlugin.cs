@@ -243,12 +243,12 @@ namespace DCL.PluginSystem.Global
             await navmapController.InitializeAssetsAsync(assetsProvisioner, ct);
             await backpackSubPlugin.InitializeAsync(settings.BackpackSettings, explorePanelView.GetComponentInChildren<BackpackView>(), ct);
 
-            var cameraReelController = new CameraReelController(explorePanelView.GetComponentInChildren<CameraReelView>(),
+            CameraReelView cameraReelView = explorePanelView.GetComponentInChildren<CameraReelView>();
+            var cameraReelController = new CameraReelController(cameraReelView,
+                new CameraReelGalleryController(cameraReelView.cameraReelGalleryView, this.cameraReelStorageService,
+                    cameraReelScreenshotsStorage, webBrowser, decentralandUrlsSource, cameraReelView.optionsButton),
                 cameraReelStorageService,
-                cameraReelScreenshotsStorage,
-                web3IdentityCache,
-                webBrowser,
-                decentralandUrlsSource);
+                web3IdentityCache);
 
             mvcManager.RegisterController(new
                 ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackSubPlugin.backpackController!, cameraReelController,
