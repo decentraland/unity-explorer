@@ -1,15 +1,18 @@
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
+using DCL.ExplorePanel.Components;
 using DCL.InWorldCamera.CameraReel.Components;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DG.Tweening;
 using JetBrains.Annotations;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 using Utility;
 
@@ -30,12 +33,14 @@ namespace DCL.InWorldCamera.CameraReel
         private const int THUMBNAIL_POOL_MAX_SIZE = 10000;
         private const int GRID_POOL_DEFAULT_CAPACITY = 10;
         private const int GRID_POOL_MAX_SIZE = 500;
+        private const int ANIMATION_DELAY = 300;
 
         private PagedCameraReelManager pagedCameraReelManager;
 
         private readonly CameraReelGalleryView view;
         private readonly ICameraReelStorageService cameraReelStorageService;
         private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
+        private readonly IExplorePanelEscapeAction explorePanelEscapeAction;
         [CanBeNull] private readonly OptionButtonView optionButtonView;
         private readonly ReelGalleryPoolManager reelGalleryPoolManager;
         private readonly Dictionary<DateTime, MonthGridView> monthViews = new ();
@@ -55,11 +60,13 @@ namespace DCL.InWorldCamera.CameraReel
             ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
             IWebBrowser webBrowser,
             IDecentralandUrlsSource decentralandUrlsSource,
+            IExplorePanelEscapeAction explorePanelEscapeAction,
             OptionButtonView optionButtonView = null)
         {
             this.view = view;
             this.cameraReelStorageService = cameraReelStorageService;
             this.cameraReelScreenshotsStorage = cameraReelScreenshotsStorage;
+            this.explorePanelEscapeAction = explorePanelEscapeAction;
             this.optionButtonView = optionButtonView;
             this.view.Disable += OnDisable;
 
@@ -67,8 +74,9 @@ namespace DCL.InWorldCamera.CameraReel
                 view.unusedGridViewObject, THUMBNAIL_POOL_DEFAULT_CAPACITY, THUMBNAIL_POOL_MAX_SIZE, GRID_POOL_DEFAULT_CAPACITY,
                 GRID_POOL_MAX_SIZE);
 
-            for(int i = 0; i < view.cancelDeleteIntentButtons.Length; i++)
-                view.cancelDeleteIntentButtons[i].onClick.AddListener(OnDeletionModalCancelClick);
+
+            view.cancelDeleteIntentButton?.onClick.AddListener(() => OnDeletionModalCancelClick());
+            view.cancelDeleteIntentBackgroundButton?.onClick.AddListener(() => OnDeletionModalCancelClick(false));
             view.deleteReelButton?.onClick.AddListener(DeleteScreenshot);
 
             if (this.optionButtonView != null)
@@ -95,17 +103,47 @@ namespace DCL.InWorldCamera.CameraReel
             }
         }
 
-        private void OnDeletionModalCancelClick() =>
-            view.deleteReelModal.SetActive(false);
+        private void ShowDeleteModal()
+        {
+            explorePanelEscapeAction.RegisterEscapeAction(HideDeleteModal);
+            view.deleteReelModal.gameObject.SetActive(true);
+            view.deleteReelModal.DOFade(1f, view.deleteModalAnimationDuration);
+        }
+
+        private void HideDeleteModal(InputAction.CallbackContext callbackContext = default)
+        {
+            explorePanelEscapeAction.RemoveEscapeAction(HideDeleteModal);
+            view.deleteReelModal.DOFade(0f, view.deleteModalAnimationDuration).OnComplete(() => view.deleteReelModal.gameObject.SetActive(false));
+        }
+
+        private void OnDeletionModalCancelClick(bool waitForAnimation = true)
+        {
+            async UniTaskVoid AnimateAndAwaitAsync()
+            {
+                await UniTask.Delay(ANIMATION_DELAY);
+                HideDeleteModal();
+            }
+
+            if (waitForAnimation)
+                AnimateAndAwaitAsync().Forget();
+            else
+                HideDeleteModal();
+        }
 
         private void DeletionOptionClicked(CameraReelResponse response) =>
-            view.deleteReelModal.SetActive(true);
+            ShowDeleteModal();
 
         private void DeleteScreenshot()
         {
-            if (optionButtonView?.ImageData is null) return;
-            DeleteScreenshotsAsync(optionButtonView.ImageData).Forget();
-            OnDeletionModalCancelClick();
+            async UniTaskVoid AnimateAndAwaitAsync()
+            {
+                await UniTask.Delay(ANIMATION_DELAY);
+                if (optionButtonView?.ImageData is null) return;
+                DeleteScreenshotsAsync(optionButtonView.ImageData).Forget();
+                HideDeleteModal();
+            }
+
+            AnimateAndAwaitAsync().Forget();
         }
 
         private async UniTask DeleteScreenshotsAsync(CameraReelResponse cameraReelResponse, CancellationToken ct = default)
@@ -338,6 +376,9 @@ namespace DCL.InWorldCamera.CameraReel
             view.Disable -= OnDisable;
             ThumbnailClicked = null;
             StorageUpdated = null;
+            view.cancelDeleteIntentButton?.onClick.RemoveAllListeners();
+            view.cancelDeleteIntentBackgroundButton?.onClick.RemoveAllListeners();
+            explorePanelEscapeAction.RemoveEscapeAction(HideDeleteModal);
         }
     }
 }

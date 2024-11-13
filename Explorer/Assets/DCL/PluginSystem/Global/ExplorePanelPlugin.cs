@@ -40,6 +40,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using DCL.Chat.MessageBus;
+using DCL.ExplorePanel.Component;
 using DCL.InWorldCamera.CameraReel;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -243,10 +244,12 @@ namespace DCL.PluginSystem.Global
             await navmapController.InitializeAssetsAsync(assetsProvisioner, ct);
             await backpackSubPlugin.InitializeAsync(settings.BackpackSettings, explorePanelView.GetComponentInChildren<BackpackView>(), ct);
 
+            inputHandler = new ExplorePanelInputHandler(dclInput, mvcManager);
+
             CameraReelView cameraReelView = explorePanelView.GetComponentInChildren<CameraReelView>();
             var cameraReelController = new CameraReelController(cameraReelView,
                 new CameraReelGalleryController(cameraReelView.cameraReelGalleryView, this.cameraReelStorageService,
-                    cameraReelScreenshotsStorage, webBrowser, decentralandUrlsSource, cameraReelView.optionsButton),
+                    cameraReelScreenshotsStorage, webBrowser, decentralandUrlsSource, inputHandler, cameraReelView.optionsButton),
                 cameraReelStorageService,
                 web3IdentityCache);
 
@@ -254,9 +257,7 @@ namespace DCL.PluginSystem.Global
                 ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackSubPlugin.backpackController!, cameraReelController,
                     new ProfileWidgetController(() => explorePanelView.ProfileWidget, web3IdentityCache, profileRepository, webRequestController),
                     new ProfileMenuController(() => explorePanelView.ProfileMenuView, web3IdentityCache, profileRepository, webRequestController, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager, chatEntryConfiguration),
-                    dclInput, notificationsBusController, mvcManager, inputBlock));
-
-            inputHandler = new ExplorePanelInputHandler(dclInput, mvcManager);
+                    dclInput, inputHandler, notificationsBusController, mvcManager, inputBlock));
         }
 
         public class ExplorePanelSettings : IDCLPluginSettings

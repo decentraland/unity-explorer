@@ -1688,28 +1688,80 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 4262729055748910023, guid: 0fce4c1a785b1495bbf861787a9a3224, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects:
     - targetCorrespondingSourceObject: {fileID: 7795484629579185964, guid: 0fce4c1a785b1495bbf861787a9a3224, type: 3}
       insertIndex: -1
       addedObject: {fileID: 610608083673687014}
     m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 9152785347356188261, guid: 0fce4c1a785b1495bbf861787a9a3224, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2621133779284227303}
     - targetCorrespondingSourceObject: {fileID: 7055680895387827021, guid: 0fce4c1a785b1495bbf861787a9a3224, type: 3}
       insertIndex: -1
       addedObject: {fileID: 2071320602167504460}
+    - targetCorrespondingSourceObject: {fileID: 1917658591094120776, guid: 0fce4c1a785b1495bbf861787a9a3224, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4717585251721260079}
+    - targetCorrespondingSourceObject: {fileID: 1917658591094120776, guid: 0fce4c1a785b1495bbf861787a9a3224, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5665386967234548294}
   m_SourcePrefab: {fileID: 100100000, guid: 0fce4c1a785b1495bbf861787a9a3224, type: 3}
 --- !u!224 &536306474347706627 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 3721001069623505348, guid: 0fce4c1a785b1495bbf861787a9a3224, type: 3}
   m_PrefabInstance: {fileID: 3806369787269695687}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &3336627960266975631 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1917658591094120776, guid: 0fce4c1a785b1495bbf861787a9a3224, type: 3}
+  m_PrefabInstance: {fileID: 3806369787269695687}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &4717585251721260079
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3336627960266975631}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6a66e979ca644f3d91fd0980c5cd5f5f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <Button>k__BackingField: {fileID: 5032795209157105169}
+  <ButtonAnimator>k__BackingField: {fileID: 5665386967234548294}
+  <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
+  <ButtonHoverAudio>k__BackingField: {fileID: 0}
+--- !u!95 &5665386967234548294
+Animator:
+  serializedVersion: 5
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3336627960266975631}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 22100000, guid: 6038ddfbdd6664304a5af2714d9836a1, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!114 &5032795209157105169 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 8145575438935498454, guid: 0fce4c1a785b1495bbf861787a9a3224, type: 3}
   m_PrefabInstance: {fileID: 3806369787269695687}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
+  m_GameObject: {fileID: 3336627960266975631}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
@@ -1731,6 +1783,18 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 9152785347356188261, guid: 0fce4c1a785b1495bbf861787a9a3224, type: 3}
   m_PrefabInstance: {fileID: 3806369787269695687}
   m_PrefabAsset: {fileID: 0}
+--- !u!225 &2621133779284227303
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5465057537964218018}
+  m_Enabled: 1
+  m_Alpha: 0
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1 &6140694666919850890 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 7055680895387827021, guid: 0fce4c1a785b1495bbf861787a9a3224, type: 3}
@@ -2248,6 +2312,10 @@ PrefabInstance:
       propertyPath: m_margin.z
       value: -50.291748
       objectReference: {fileID: 0}
+    - target: {fileID: 7587919746443121769, guid: aae56f4776100974ba051333a3974811, type: 3}
+      propertyPath: m_HorizontalAlignment
+      value: 2
+      objectReference: {fileID: 0}
     - target: {fileID: 8484038669331806353, guid: aae56f4776100974ba051333a3974811, type: 3}
       propertyPath: m_IsActive
       value: 0
@@ -2489,7 +2557,8 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 7586763801550350530, guid: 8927010f4b0ec4e41898c84d134fa8af, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects:
     - targetCorrespondingSourceObject: {fileID: 7607163653512616225, guid: 8927010f4b0ec4e41898c84d134fa8af, type: 3}
@@ -2499,6 +2568,12 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 5259426266971447885, guid: 8927010f4b0ec4e41898c84d134fa8af, type: 3}
       insertIndex: -1
       addedObject: {fileID: 2753563601073215919}
+    - targetCorrespondingSourceObject: {fileID: 5259426266971447885, guid: 8927010f4b0ec4e41898c84d134fa8af, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 247128952891591212}
+    - targetCorrespondingSourceObject: {fileID: 5259426266971447885, guid: 8927010f4b0ec4e41898c84d134fa8af, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8701341596875590605}
   m_SourcePrefab: {fileID: 100100000, guid: 8927010f4b0ec4e41898c84d134fa8af, type: 3}
 --- !u!224 &610608083673687014 stripped
 RectTransform:
@@ -2522,6 +2597,43 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &247128952891591212
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2960694035901765770}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6a66e979ca644f3d91fd0980c5cd5f5f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <Button>k__BackingField: {fileID: 4791968999280437012}
+  <ButtonAnimator>k__BackingField: {fileID: 8701341596875590605}
+  <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
+  <ButtonHoverAudio>k__BackingField: {fileID: 0}
+--- !u!95 &8701341596875590605
+Animator:
+  serializedVersion: 5
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2960694035901765770}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 22100000, guid: b9a77588c1b65445993d6a1bcaec7c37, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!114 &4791968999280437012 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 2552201450955513299, guid: 8927010f4b0ec4e41898c84d134fa8af, type: 3}
@@ -2683,7 +2795,7 @@ PrefabInstance:
     - target: {fileID: 4110944459725859003, guid: ade6e83ad45fc4c7e81daa5a6e0f7bab, type: 3}
       propertyPath: deleteReelModal
       value: 
-      objectReference: {fileID: 5465057537964218018}
+      objectReference: {fileID: 2621133779284227303}
     - target: {fileID: 4110944459725859003, guid: ade6e83ad45fc4c7e81daa5a6e0f7bab, type: 3}
       propertyPath: deleteReelButton
       value: 
@@ -2696,6 +2808,14 @@ PrefabInstance:
       propertyPath: successNotificationView
       value: 
       objectReference: {fileID: 2752032496125254721}
+    - target: {fileID: 4110944459725859003, guid: ade6e83ad45fc4c7e81daa5a6e0f7bab, type: 3}
+      propertyPath: cancelDeleteIntentButton
+      value: 
+      objectReference: {fileID: 4791968999280437012}
+    - target: {fileID: 4110944459725859003, guid: ade6e83ad45fc4c7e81daa5a6e0f7bab, type: 3}
+      propertyPath: cancelDeleteIntentBackgroundButton
+      value: 
+      objectReference: {fileID: 2071320602167504460}
     - target: {fileID: 4110944459725859003, guid: ade6e83ad45fc4c7e81daa5a6e0f7bab, type: 3}
       propertyPath: cancelDeleteIntentButtons.Array.size
       value: 2

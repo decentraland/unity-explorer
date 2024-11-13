@@ -1,5 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Backpack;
+using DCL.ExplorePanel.Component;
+using DCL.ExplorePanel.Components;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.InWorldCamera.CameraReel;
@@ -26,6 +28,7 @@ namespace DCL.ExplorePanel
         private readonly ProfileWidgetController profileWidgetController;
         private readonly ProfileMenuController profileMenuController;
         private readonly DCLInput dclInput;
+        private readonly IExplorePanelEscapeAction explorePanelEscapeAction;
         private readonly IMVCManager mvcManager;
         private readonly IInputBlock inputBlock;
 
@@ -53,6 +56,7 @@ namespace DCL.ExplorePanel
             ProfileWidgetController profileWidgetController,
             ProfileMenuController profileMenuController,
             DCLInput dclInput,
+            IExplorePanelEscapeAction explorePanelEscapeAction,
             INotificationsBusController notificationBusController,
             IMVCManager mvcManager,
             IInputBlock inputBlock)
@@ -64,6 +68,7 @@ namespace DCL.ExplorePanel
             this.cameraReelController = cameraReelController;
             this.profileWidgetController = profileWidgetController;
             this.dclInput = dclInput;
+            this.explorePanelEscapeAction = explorePanelEscapeAction;
             this.mvcManager = mvcManager;
             this.profileMenuController = profileMenuController;
             notificationBusController.SubscribeToNotificationTypeClick(NotificationType.REWARD_ASSIGNMENT, OnRewardAssigned);
@@ -164,7 +169,7 @@ namespace DCL.ExplorePanel
         private void RegisterHotkeys()
         {
             dclInput.Shortcuts.MainMenu.performed += OnCloseMainMenu;
-            dclInput.UI.Close.performed += OnCloseMainMenu;
+            explorePanelEscapeAction.RegisterEscapeAction(OnCloseMainMenu);
             dclInput.Shortcuts.Map.performed += OnMapHotkeyPressed;
             dclInput.Shortcuts.Settings.performed += OnSettingsHotkeyPressed;
             dclInput.Shortcuts.Backpack.performed += OnBackpackHotkeyPressed;
@@ -244,7 +249,7 @@ namespace DCL.ExplorePanel
         private void UnRegisterHotkeys()
         {
             dclInput.Shortcuts.MainMenu.performed -= OnCloseMainMenu;
-            dclInput.UI.Close.performed -= OnCloseMainMenu;
+            explorePanelEscapeAction.RemoveEscapeAction(OnCloseMainMenu);
             dclInput.Shortcuts.Map.performed -= OnMapHotkeyPressed;
             dclInput.Shortcuts.Settings.performed -= OnSettingsHotkeyPressed;
             dclInput.Shortcuts.Backpack.performed -= OnBackpackHotkeyPressed;

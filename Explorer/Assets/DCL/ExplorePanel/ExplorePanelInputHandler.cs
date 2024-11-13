@@ -1,14 +1,17 @@
+using DCL.ExplorePanel.Components;
 using DCL.UI;
 using MVC;
 using System;
+using System.Collections.Generic;
 using UnityEngine.InputSystem;
 
-namespace DCL.ExplorePanel
+namespace DCL.ExplorePanel.Component
 {
-    public class ExplorePanelInputHandler : IDisposable
+    public class ExplorePanelInputHandler : IDisposable, IExplorePanelEscapeAction
     {
         private readonly DCLInput dclInput;
         private readonly IMVCManager mvcManager;
+        private readonly LinkedList<Action<InputAction.CallbackContext>> escapeActions = new ();
         private static ExploreSections lastShownSection;
 
         public ExplorePanelInputHandler(DCLInput dclInput, IMVCManager mvcManager)
@@ -17,6 +20,25 @@ namespace DCL.ExplorePanel
             this.mvcManager = mvcManager;
             lastShownSection = ExploreSections.Navmap;
             RegisterHotkeys();
+        }
+
+        public void RegisterEscapeAction(Action<InputAction.CallbackContext> action)
+        {
+            Action<InputAction.CallbackContext>? lastAction = escapeActions.Last?.Value;
+            dclInput.UI.Close.performed -= lastAction;
+            dclInput.UI.Close.performed += action;
+
+            if (!escapeActions.Contains(action))
+                escapeActions.AddLast(action);
+        }
+
+        public void RemoveEscapeAction(Action<InputAction.CallbackContext> action)
+        {
+            if (!escapeActions.Contains(action)) return;
+
+            dclInput.UI.Close.performed -= action;
+            escapeActions.Remove(action);
+            dclInput.UI.Close.performed += escapeActions.Last?.Value;
         }
 
         public void Dispose() =>
@@ -38,6 +60,10 @@ namespace DCL.ExplorePanel
             dclInput.Shortcuts.Settings.performed -= OnSettingsHotkeyPressed;
             dclInput.Shortcuts.Backpack.performed -= OnBackpackHotkeyPressed;
             dclInput.Shortcuts.CameraReel.performed -= OnCameraReelHotkeyPressed;
+
+            foreach (var escapeAction in escapeActions)
+                dclInput.UI.Close.performed -= escapeAction;
+            escapeActions.Clear();
         }
 
         private void OnMainMenuHotkeyPressed(InputAction.CallbackContext obj) =>
