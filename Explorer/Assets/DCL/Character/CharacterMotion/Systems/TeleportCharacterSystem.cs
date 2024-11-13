@@ -33,7 +33,7 @@ namespace DCL.CharacterMotion.Systems
         protected override void Update(float t)
         {
             TeleportPlayerQuery(World);
-            TryRemoveJustTeleported(World);
+            TryRemoveJustTeleportedQuery(World);
         }
 
         [Query]
