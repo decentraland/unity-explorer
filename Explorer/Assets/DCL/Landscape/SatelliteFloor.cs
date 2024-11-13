@@ -1,6 +1,7 @@
 ﻿using DCL.Landscape.Settings;
 using DCL.MapRenderer.ComponentsFactory;
 using Cysharp.Threading.Tasks;
+using Cysharp.Threading.Tasks.Triggers;
 using UnityEngine;
 using Utility;
 
@@ -23,8 +24,8 @@ namespace DCL.Landscape
         private MaterialPropertyBlock materialPropertyBlock;
         private LandscapeData landscapeData;
 
-        private bool satelliteRenderersEnabled;
-        private bool Initialized;
+        private bool satelliteCurrentRenderState;
+        private bool initialized;
 
         public void Initialize(LandscapeData config)
         {
@@ -67,19 +68,22 @@ namespace DCL.Landscape
                 satelliteRenderers[x + (y * SATELLITE_MAP_RESOLUTION)] = satelliteRenderer;
             }
 
-            Initialized = true;
+            initialized = true;
             SwitchVisibilityAsync(landscapeData.showSatelliteView);
         }
 
 
-        public async UniTask SwitchVisibilityAsync(bool isVisible)
+        public void SwitchVisibilityAsync(bool isVisibleRequested)
         {
-            if (satelliteRenderersEnabled == isVisible) return;
+            var isVisible = landscapeData.showSatelliteView && isVisibleRequested;
 
-            if (!Initialized)
-                await UniTask.WaitUntil(() => Initialized);
+            //If the satellite view is not initialized, we can't change the visibility
+            if (!initialized)
+                return;
 
-            satelliteRenderersEnabled = isVisible;
+            if (satelliteCurrentRenderState == isVisible) return;
+
+            satelliteCurrentRenderState = isVisible;
 
             foreach (Renderer satelliteRenderer in satelliteRenderers)
                 satelliteRenderer.forceRenderingOff = !isVisible;
