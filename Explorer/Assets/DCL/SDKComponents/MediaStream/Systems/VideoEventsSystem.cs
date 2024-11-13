@@ -99,8 +99,11 @@ namespace DCL.SDKComponents.MediaStream
                     state = mediaPlayerControl.IsSeeking() ? VideoState.VsSeeking : VideoState.VsBuffering;
 
                     // If the seeking/buffering never ends, update state with error so the scene can react
-                    if ((Time.realtimeSinceStartup - mediaPlayer.LastStateChangeTime) > MAX_VIDEO_FROZEN_SECONDS_BEFORE_ERROR)
+                    if ((Time.realtimeSinceStartup - mediaPlayer.LastStateChangeTime) > MAX_VIDEO_FROZEN_SECONDS_BEFORE_ERROR &&
+                        mediaPlayer.LastPropagatedState != VideoState.VsPaused)
+                    {
                         state = VideoState.VsError;
+                    }
                 }
             }
 
