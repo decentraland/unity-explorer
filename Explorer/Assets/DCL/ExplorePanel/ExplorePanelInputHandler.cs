@@ -24,8 +24,9 @@ namespace DCL.ExplorePanel.Component
 
         public void RegisterEscapeAction(Action<InputAction.CallbackContext> action)
         {
-            Action<InputAction.CallbackContext>? lastAction = escapeActions.Last?.Value;
-            dclInput.UI.Close.performed -= lastAction;
+            if (escapeActions.Count > 0)
+                dclInput.UI.Close.performed -= escapeActions.Last.Value;
+
             dclInput.UI.Close.performed += action;
 
             if (!escapeActions.Contains(action))
@@ -38,7 +39,9 @@ namespace DCL.ExplorePanel.Component
 
             dclInput.UI.Close.performed -= action;
             escapeActions.Remove(action);
-            dclInput.UI.Close.performed += escapeActions.Last?.Value;
+
+            if (escapeActions.Count > 0)
+                dclInput.UI.Close.performed += escapeActions.Last.Value;
         }
 
         public void Dispose() =>
