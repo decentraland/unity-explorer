@@ -48,33 +48,26 @@ namespace ECS.SceneLifeCycle.Systems
             CheckSceneToLODQuery(World);
             CheckPromiseToLODQuery(World);
 
-            CleanSceneToLODQuery(World);
-            CleanPromiseToLODQuery(World);
+            CleanSceneLODSharedStateQuery(World);
+            CleanPromiseLODSharedStateQuery(World);
         }
 
         [Query]
         [None(typeof(SceneLODInfo))]
-        private void CheckPromiseToLOD(in Entity entity, ref VisualSceneState visualSceneState,
-            ref AssetPromise<ISceneFacade, GetSceneFacadeIntention> promise,
-            ref SceneDefinitionComponent sceneDefinitionComponent)
+        [All(typeof(AssetPromise<ISceneFacade, GetSceneFacadeIntention>))]
+        private void CheckPromiseToLOD(in Entity entity, ref VisualSceneState visualSceneState)
         {
             if (!visualSceneState.IsDirty) return;
-
             if (visualSceneState.CurrentVisualSceneState == VisualSceneStateEnum.SHOWING_SCENE) return;
 
             visualSceneState.IsDirty = false;
-            
-            promise.ForgetLoading(World);
-
             World.Add(entity, SceneLODInfo.Create());
-            World.Remove<AssetPromise<ISceneFacade, GetSceneFacadeIntention>>(entity);
         }
 
         [Query]
         [None(typeof(SceneLODInfo))]
         [All(typeof(ISceneFacade))]
-        private void CheckSceneToLOD(in Entity entity, ref VisualSceneState visualSceneState,
-            ref SceneDefinitionComponent sceneDefinitionComponent, ref ISceneFacade sceneFacade)
+        private void CheckSceneToLOD(in Entity entity, ref VisualSceneState visualSceneState)
         {
             if (!visualSceneState.IsDirty) return;
 
@@ -103,7 +96,7 @@ namespace ECS.SceneLifeCycle.Systems
         }
 
         [Query]
-        private void CleanSceneToLOD(in Entity entity, ref SceneLODInfo sceneLODInfo,
+        private void CleanSceneLODSharedState(in Entity entity, ref SceneLODInfo sceneLODInfo,
             ref ISceneFacade sceneFacade, ref SceneDefinitionComponent sceneDefinitionComponent,
             ref VisualSceneState visualSceneState)
         {
@@ -124,23 +117,20 @@ namespace ECS.SceneLifeCycle.Systems
                     sceneDefinitionComponent.Parcels, sceneAssetLock);
                 World.Remove<ISceneFacade, AssetPromise<ISceneFacade, GetSceneFacadeIntention>>(entity);
             }
-
-            //If the state changed in the middle of the transitition, we need to keep it clean
-            visualSceneState.IsDirty = false;
         }
-
+        
         [Query]
         [All(typeof(SceneLODInfo))]
-        private void CleanPromiseToLOD(in Entity entity, ref VisualSceneState visualSceneState,
-            ref AssetPromise<ISceneFacade, GetSceneFacadeIntention> promise)
+        private void CleanPromiseLODSharedState(in Entity entity,
+            ref AssetPromise<ISceneFacade, GetSceneFacadeIntention> promise,
+            ref VisualSceneState visualSceneState)
         {
-            if (!visualSceneState.IsDirty) return;
-
-            if (visualSceneState.CurrentVisualSceneState != VisualSceneStateEnum.SHOWING_LOD) return;
-
-            visualSceneState.IsDirty = false;
-            promise.ForgetLoading(World);
-            World.Remove<AssetPromise<ISceneFacade, GetSceneFacadeIntention>>(entity);
+            if (visualSceneState.CurrentVisualSceneState == VisualSceneStateEnum.SHOWING_LOD)
+            {
+                //Dispose promise
+                promise.ForgetLoading(World);
+                World.Remove<AssetPromise<ISceneFacade, GetSceneFacadeIntention>>(entity);
+            }
         }
 
         [Query]
