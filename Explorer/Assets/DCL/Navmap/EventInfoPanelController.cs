@@ -100,7 +100,11 @@ namespace DCL.Navmap
             view.LayoutRoot.ForceUpdateLayoutAsync(updateLayoutCancellationToken.Token).Forget();
 
             ClearScheduleElements();
+            AddRecurrentEvents(@event);
+        }
 
+        private void AddRecurrentEvents(EventDTO @event)
+        {
             DateTime.TryParse(@event.next_start_at, null, DateTimeStyles.RoundtripKind, out DateTime nextStartAt);
 
             foreach (string dateStr in @event.recurrent_dates)
@@ -160,7 +164,7 @@ namespace DCL.Navmap
 
         private void Share()
         {
-
+            // TODO
         }
 
         private void JumpIn()
