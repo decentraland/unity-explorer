@@ -102,32 +102,19 @@ public class UpdateVisualSceneStateSystemShould : UnitySystemTestBase<UpdateVisu
 
         //Simulate a completition of the scene
         var loadedScene = Substitute.For<ISceneFacade>();
-
-        var sceneWorld = World.Create();
-        var sceneRootEntity = sceneWorld.Create();
-        var transform = new GameObject().transform;
-        var transformComponent = new TransformComponent(transform);
-        sceneWorld.Add(sceneRootEntity, transformComponent);
-
-        var persistentEntities = new PersistentEntities(sceneWorld.Create(), sceneWorld.Create(), sceneRootEntity);
-
-        loadedScene.EcsExecutor.Returns(new SceneEcsExecutor(sceneWorld));
-        loadedScene.PersistentEntities.Returns(persistentEntities);
-
+        loadedScene.IsSceneReady().Returns(false);
         world.Add(entityReference, loadedScene);
 
         system.Update(0);
 
         Assert.IsTrue(world.Has<SceneLODInfo>(entityReference));
         Assert.IsTrue(world.Has<ISceneFacade>(entityReference));
-        Assert.IsFalse(transform.gameObject.activeInHierarchy);
 
-        loadedScene.SceneData.SceneLoadingConcluded.Returns(true);
+        loadedScene.IsSceneReady().Returns(true);
 
         system.Update(0);
         Assert.IsFalse(world.Has<SceneLODInfo>(entityReference));
         Assert.IsTrue(world.Has<ISceneFacade>(entityReference));
-        Assert.IsTrue(transform.gameObject.activeInHierarchy);
     }
 
     [Test]

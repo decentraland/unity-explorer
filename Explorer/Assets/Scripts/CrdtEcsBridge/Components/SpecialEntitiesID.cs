@@ -5,6 +5,7 @@ namespace CrdtEcsBridge.Components
         public const int SCENE_ROOT_ENTITY = 0;
         public const int PLAYER_ENTITY = 1;
         public const int CAMERA_ENTITY = 2;
+        public const int SCENE_CONTAINER_ENTITY = 7;
         public const int OTHER_PLAYER_ENTITIES_FROM = 32;
         public const int OTHER_PLAYER_ENTITIES_TO = 256;
 

@@ -55,16 +55,19 @@ namespace ECS.SceneLifeCycle.Systems
         [Query]
         [None(typeof(SceneLODInfo))]
         private void CheckPromiseToLOD(in Entity entity, ref VisualSceneState visualSceneState,
-            ref AssetPromise<ISceneFacade, GetSceneFacadeIntention> promise)
+            ref AssetPromise<ISceneFacade, GetSceneFacadeIntention> promise,
+            ref SceneDefinitionComponent sceneDefinitionComponent)
         {
             if (!visualSceneState.IsDirty) return;
 
-            if (visualSceneState.CurrentVisualSceneState != VisualSceneStateEnum.SHOWING_LOD) return;
+            if (visualSceneState.CurrentVisualSceneState == VisualSceneStateEnum.SHOWING_SCENE) return;
 
-            promise.ForgetLoading(World);
-            World.Remove<AssetPromise<ISceneFacade, GetSceneFacadeIntention>>(entity);
-            World.Add(entity, SceneLODInfo.Create());
             visualSceneState.IsDirty = false;
+            
+            promise.ForgetLoading(World);
+
+            World.Add(entity, SceneLODInfo.Create());
+            World.Remove<AssetPromise<ISceneFacade, GetSceneFacadeIntention>>(entity);
         }
 
         [Query]
@@ -75,15 +78,10 @@ namespace ECS.SceneLifeCycle.Systems
         {
             if (!visualSceneState.IsDirty) return;
 
-            if (visualSceneState.CurrentVisualSceneState != VisualSceneStateEnum.SHOWING_LOD) return;
-
-            //Dispose scene
-            sceneFacade.DisposeSceneFacadeAndRemoveFromCache(scenesCache,
-                sceneDefinitionComponent.Parcels, sceneAssetLock);
-            World.Remove<ISceneFacade, AssetPromise<ISceneFacade, GetSceneFacadeIntention>>(entity);
-            World.Add(entity, SceneLODInfo.Create());
-
+            if (visualSceneState.CurrentVisualSceneState == VisualSceneStateEnum.SHOWING_SCENE) return;
+            
             visualSceneState.IsDirty = false;
+            World.Add(entity, SceneLODInfo.Create());
         }
 
 
@@ -95,25 +93,23 @@ namespace ECS.SceneLifeCycle.Systems
         {
             if (!visualSceneState.IsDirty) return;
 
-            if (visualSceneState.CurrentVisualSceneState != VisualSceneStateEnum.SHOWING_SCENE) return;
+            if (visualSceneState.CurrentVisualSceneState == VisualSceneStateEnum.SHOWING_LOD) return;
+
+            visualSceneState.IsDirty = false;
 
             World.Add(entity, AssetPromise<ISceneFacade, GetSceneFacadeIntention>.Create(World,
                 new GetSceneFacadeIntention(realmData.Ipfs, sceneDefinitionComponent),
                 partitionComponent));
-
-            visualSceneState.IsDirty = false;
         }
 
         [Query]
         private void CleanSceneToLOD(in Entity entity, ref SceneLODInfo sceneLODInfo,
-            ref ISceneFacade sceneFacade, ref SceneDefinitionComponent sceneDefinitionComponent)
+            ref ISceneFacade sceneFacade, ref SceneDefinitionComponent sceneDefinitionComponent,
+            ref VisualSceneState visualSceneState)
         {
-            if (!sceneDefinitionComponent.IsEmpty)
+            if (visualSceneState.CurrentVisualSceneState == VisualSceneStateEnum.SHOWING_SCENE)
             {
-                sceneFacade.EcsExecutor.World.Get<TransformComponent>(sceneFacade.PersistentEntities.SceneRoot)
-                    .Transform.gameObject.SetActive(sceneFacade.SceneData.SceneLoadingConcluded);
-
-                if (sceneFacade.SceneData.SceneLoadingConcluded)
+                if (sceneFacade.IsSceneReady())
                 {
                     sceneLODInfo.DisposeSceneLODAndRemoveFromCache(scenesCache, sceneDefinitionComponent.Parcels,
                         lodCache,
@@ -121,6 +117,16 @@ namespace ECS.SceneLifeCycle.Systems
                     World.Remove<SceneLODInfo>(entity);
                 }
             }
+            else if (visualSceneState.CurrentVisualSceneState == VisualSceneStateEnum.SHOWING_LOD)
+            {
+                //Dispose scene
+                sceneFacade.DisposeSceneFacadeAndRemoveFromCache(scenesCache,
+                    sceneDefinitionComponent.Parcels, sceneAssetLock);
+                World.Remove<ISceneFacade, AssetPromise<ISceneFacade, GetSceneFacadeIntention>>(entity);
+            }
+
+            //If the state changed in the middle of the transitition, we need to keep it clean
+            visualSceneState.IsDirty = false;
         }
 
         [Query]
@@ -132,9 +138,9 @@ namespace ECS.SceneLifeCycle.Systems
 
             if (visualSceneState.CurrentVisualSceneState != VisualSceneStateEnum.SHOWING_LOD) return;
 
+            visualSceneState.IsDirty = false;
             promise.ForgetLoading(World);
             World.Remove<AssetPromise<ISceneFacade, GetSceneFacadeIntention>>(entity);
-            visualSceneState.IsDirty = false;
         }
 
         [Query]

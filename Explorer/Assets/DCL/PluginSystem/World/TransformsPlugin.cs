@@ -59,9 +59,9 @@ namespace DCL.PluginSystem.World
         private void CreateReservedTransforms(ArchSystemsWorldBuilder<Arch.Core.World> builder,
             ECSWorldInstanceSharedDependencies sharedDependencies, PersistentEntities persistentEntities)
         {
-            Transform sceneRootContainerTransform = GetNewTransform(position: sharedDependencies.SceneData.Geometry.BaseParcelPosition);
+            var sceneRootContainerTransform = GetNewTransform(position: new Vector3(0, -10000, 0));
             sceneRootContainerTransform.name = $"{sharedDependencies.SceneData.SceneShortInfo.BaseParcel}_{sharedDependencies.SceneData.SceneShortInfo.Name}_Container";
-            builder.World.Create(new TransformComponent(sceneRootContainerTransform));
+            builder.World.Add(persistentEntities.SceneContainer, new TransformComponent(sceneRootContainerTransform));
 
             Transform sceneRootTransform = GetNewTransform(sceneRootContainerTransform);
             sceneRootTransform.name = $"{sharedDependencies.SceneData.SceneShortInfo.BaseParcel}_{sharedDependencies.SceneData.SceneShortInfo.Name}_SceneRoot";

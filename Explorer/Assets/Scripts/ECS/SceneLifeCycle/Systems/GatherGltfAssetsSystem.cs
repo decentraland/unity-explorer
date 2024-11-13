@@ -1,5 +1,4 @@
 ﻿using Arch.Core;
-using Arch.System;
 using Arch.SystemGroups;
 using DCL.AsyncLoadReporting;
 using DCL.ECSComponents;
@@ -11,6 +10,7 @@ using SceneRunner.Scene;
 using System.Collections.Generic;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.UserInAppInitializationFlow;
+using ECS.Unity.Transforms.Components;
 using UnityEngine;
 using UnityEngine.Pool;
 
@@ -38,11 +38,15 @@ namespace ECS.SceneLifeCycle.Systems
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly MemoryBudget memoryBudget;
         private readonly ILoadingStatus loadingStatus;
+        private readonly Entity sceneContainerEntity;
+
+        private readonly string sceneID;
 
         internal GatherGltfAssetsSystem(World world, ISceneReadinessReportQueue readinessReportQueue,
             ISceneData sceneData, EntityEventBuffer<GltfContainerComponent> eventsBuffer,
             ISceneStateProvider sceneStateProvider, MemoryBudget memoryBudget,
-            ILoadingStatus loadingStatus) : base(world)
+            ILoadingStatus loadingStatus,
+            Entity sceneContainerEntity) : base(world)
         {
             this.readinessReportQueue = readinessReportQueue;
             this.sceneData = sceneData;
@@ -50,7 +54,9 @@ namespace ECS.SceneLifeCycle.Systems
             this.sceneStateProvider = sceneStateProvider;
             this.memoryBudget = memoryBudget;
             this.loadingStatus = loadingStatus;
+            this.sceneContainerEntity = sceneContainerEntity;
 
+            sceneID = this.sceneData.SceneEntityDefinition.id;
             forEachEvent = GatherEntities;
         }
 
@@ -83,9 +89,7 @@ namespace ECS.SceneLifeCycle.Systems
 
                 if (reports == null && !readinessReportQueue.TryDequeue(sceneData.Parcels, out reports))
                 {
-                    // if there is no report to dequeue, nothing to do
-                    concluded = true;
-                    sceneData.SceneLoadingConcluded = true;
+                    Conclude();
                     return;
                 }
 
@@ -148,9 +152,18 @@ namespace ECS.SceneLifeCycle.Systems
                 {
                     reports.Value.Dispose();
                     reports = null;
+                    Conclude();
                 }
                 loadingStatus.UpdateAssetsLoaded(assetsResolved, totalAssetsToResolve);
                 sceneData.SceneLoadingConcluded = concluded;
+            }
+
+            void Conclude()
+            {
+                concluded = true;
+                sceneData.SceneLoadingConcluded = true;
+                World.Get<TransformComponent>(sceneContainerEntity).Transform.position =
+                    sceneData.Geometry.BaseParcelPosition;
             }
         }
 
