@@ -38,11 +38,6 @@ on:
           - library
           - workspace
           - inherit
-      version:
-        description: 'Override for build version to use'
-        required: false
-        default: ''
-        type: string
   workflow_call:
     inputs:
       profile:
