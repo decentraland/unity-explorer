@@ -59,6 +59,8 @@ namespace DCL.PluginSystem.World
         private void CreateReservedTransforms(ArchSystemsWorldBuilder<Arch.Core.World> builder,
             ECSWorldInstanceSharedDependencies sharedDependencies, PersistentEntities persistentEntities)
         {
+            //The scene container, which is only modified by the client, starts in a position that cannot be seen by the player. Once it finished loading
+            //in GatherGLTFAssetSystem.cs, it will be moved to the correct position.
             var sceneRootContainerTransform = GetNewTransform(position: new Vector3(0, -10000, 0));
             sceneRootContainerTransform.name = $"{sharedDependencies.SceneData.SceneShortInfo.BaseParcel}_{sharedDependencies.SceneData.SceneShortInfo.Name}_Container";
             builder.World.Add(persistentEntities.SceneContainer, new TransformComponent(sceneRootContainerTransform));
