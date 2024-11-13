@@ -123,9 +123,8 @@ namespace DCL.Navmap
             // Same link as https://decentraland.org/events/event?id=... website
             var description = $"jump in: https://play.decentraland.org/?position={@event?.x},{@event?.y}";
 
-            if (!DateTime.TryParse(@event?.next_start_at, null, DateTimeStyles.RoundtripKind, out DateTime nextStartAt)) return;
-            if (!DateTime.TryParse(@event?.next_finish_at, null, DateTimeStyles.RoundtripKind, out DateTime nextFinishAt)) return;
-
+            DateTime nextStartAt = DateTime.Parse(@event?.next_start_at, null, DateTimeStyles.RoundtripKind);
+            DateTime nextFinishAt = DateTime.Parse(@event?.next_finish_at, null, DateTimeStyles.RoundtripKind);
             TimeSpan duration = nextFinishAt - nextStartAt;
 
             userCalendar.Add(@event?.name, description, startAt, startAt + duration);
