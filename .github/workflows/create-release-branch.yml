@@ -32,4 +32,3 @@ jobs:
             --title "release: ${{ env.current_date }}" \
             --body ":rocket: Automated release PR" \
             --label release,auto-pr \
-            --draft false

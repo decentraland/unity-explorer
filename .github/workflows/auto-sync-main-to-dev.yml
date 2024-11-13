@@ -27,4 +27,3 @@ jobs:
             --title "chore: sync main to dev" \
             --body ":crown: *An automated PR*" \
             --label auto-pr \
-            --draft false
