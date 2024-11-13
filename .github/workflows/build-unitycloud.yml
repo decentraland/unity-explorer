@@ -63,6 +63,10 @@ on:
         type: boolean
         required: false
         default: false
+      install_source:
+        required: false
+        default: 'launcher'
+        type: string
       tag_version:
         type: string
         required: false
@@ -92,6 +96,7 @@ jobs:
       sentry_enabled: ${{ steps.get_sentry.outputs.sentry_enabled }}
       clean_build: ${{ steps.set_defaults.outputs.clean_build }}
       cache_strategy: ${{ steps.set_defaults.outputs.cache_strategy }}
+      install_source: ${{ steps.set_defaults.outputs.install_source }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -147,6 +152,16 @@ jobs:
           fi
           echo "Set cache_strategy to: $cache_strategy"
           echo "cache_strategy=${cache_strategy}" >> $GITHUB_OUTPUT
+
+          if [ "${{ github.event.inputs.install_source }}" ]; then
+            install_source=${{ github.event.inputs.install_source }}
+          elif [ "${{ inputs.install_source }}" ]; then
+            install_source=${{ inputs.install_source }}
+          else
+            install_source='launcher'
+          fi
+          echo "Set install_source to: $install_source"
+          echo "install_source=${install_source}" >> $GITHUB_OUTPUT
 
       - name: Get BuildOptions
         id: get_options
@@ -225,6 +240,7 @@ jobs:
           PARAM_SENTRY_ENABLED: ${{ needs.prebuild.outputs.sentry_enabled }}
           PARAM_SENTRY_UPLOAD_DEBUG_SYMBOLS: ${{ needs.prebuild.outputs.sentry_upload_symbols }}
           PARAM_SEGMENT_WRITE_KEY: ${{ secrets.SEGMENT_WRITE_KEY }}
+          PARAM_INSTALL_SOURCE: ${{ needs.prebuild.outputs.install_source }}
 
         run: python -u scripts/cloudbuild/build.py
 
@@ -232,12 +248,21 @@ jobs:
         if: matrix.target == 'macos'
         run: tar --exclude='build/Decentraland_BackUpThisFolder_ButDontShipItWithYourGame' -cvf build.tar build
           
+      - name: Set artifact name
+        id: set_artifact_name
+        run: |
+          if [ "${{ needs.prebuild.outputs.install_source }}" == "launcher" ]; then
+            echo "artifact_name=Decentraland_${{ matrix.target }}" >> $GITHUB_ENV
+          else
+            echo "artifact_name=Decentraland_${{ matrix.target }}_${{ needs.prebuild.outputs.install_source }}" >> $GITHUB_ENV
+          fi
+
       - name: Upload artifact for macOS
         id: upload-macos-artifact
         if: matrix.target == 'macos'
         uses: actions/upload-artifact@v4
         with:
-          name: Decentraland_${{ matrix.target }}
+          name: ${{ env.artifact_name }}
           path: build.tar
           if-no-files-found: error
 
@@ -246,7 +271,7 @@ jobs:
         if: matrix.target == 'windows64'
         uses: actions/upload-artifact@v4
         with:
-          name: Decentraland_${{ matrix.target }}
+          name: ${{ env.artifact_name }}
           path: |
             build
             !build/**/*_BackUpThisFolder_ButDontShipItWithYourGame
@@ -257,10 +282,10 @@ jobs:
         run: |
           mkdir upload_to_s3/ && \
           if [ "${{ matrix.target }}" == "macos" ]; then
-            zip -r upload_to_s3/Decentraland_${{ matrix.target }}.zip build.tar
+            zip -r upload_to_s3/${{ env.artifact_name }}.zip build.tar
           elif [ "${{ matrix.target }}" == "windows64" ]; then
             cd build
-            zip -r ../upload_to_s3/Decentraland_${{ matrix.target }}.zip . -x "*_BackUpThisFolder_ButDontShipItWithYourGame**" -x "*_BurstDebugInformation_DoNotShip**"
+            zip -r ../upload_to_s3/${{ env.artifact_name }}.zip . -x "*_BackUpThisFolder_ButDontShipItWithYourGame**" -x "*_BurstDebugInformation_DoNotShip**"
           fi
 
       - name: Upload artifact to S3
@@ -278,7 +303,7 @@ jobs:
       - name: Upload debug symbols
         uses: actions/upload-artifact@v4
         with:
-          name: Decentraland_${{ matrix.target }}_debug_symbols
+          name: ${{ env.artifact_name }}_debug_symbols
           path: |
             build/**/*_BackUpThisFolder_ButDontShipItWithYourGame
             build/**/*_BurstDebugInformation_DoNotShip
@@ -289,7 +314,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.target }}_unity_log
+          name: ${{ matrix.target }}_${{ needs.prebuild.outputs.install_source }}_unity_log
           path: unity_cloud_log.log
           if-no-files-found: error
 
@@ -301,7 +326,7 @@ jobs:
       - name: Extract and display errors
         if: always()
         run: |
-          echo "=== Extracted Errors for ${{ matrix.target }} ==="
+          echo "=== Extracted Errors for ${{ matrix.target }} ${{ needs.prebuild.outputs.install_source }} ==="
           grep -iE "error c|fatal" unity_cloud_log.log | sed 's/^/\x1b[31m/' | sed 's/$/\x1b[0m/' || echo "No 'error c' or 'fatal' errors found in ${{ matrix.target }} log."
 
       # Will run always (even if failing)
@@ -314,7 +339,7 @@ jobs:
       - name: Upload Shader Compilation Report
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.target }}_shader_compilation_report
+          name: ${{ matrix.target }}_${{ needs.prebuild.outputs.install_source }}_shader_compilation_report
           path: shader_compilation_report.log
           if-no-files-found: error
 
