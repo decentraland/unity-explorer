@@ -15,7 +15,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
-using DCL.Chat.MessageBus;
 using DCL.Navmap.FilterPanel;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -28,7 +27,7 @@ namespace DCL.Navmap
         private const string EMPTY_PARCEL_NAME = "Empty parcel";
         private const string WORLDS_WARNING_MESSAGE = "This is the Genesis City map. If you jump into any of this places you will leave the world you are currently visiting.";
         private const MapLayer ACTIVE_MAP_LAYERS =
-            MapLayer.SatelliteAtlas | MapLayer.PlayerMarker | MapLayer.ParcelHoverHighlight | MapLayer.ScenesOfInterest | MapLayer.Favorites | MapLayer.HotUsersMarkers | MapLayer.Pins |
+            MapLayer.SatelliteAtlas | MapLayer.ParcelsAtlas | MapLayer.PlayerMarker | MapLayer.ParcelHoverHighlight | MapLayer.ScenesOfInterest | MapLayer.Favorites | MapLayer.HotUsersMarkers | MapLayer.Pins |
             MapLayer.Art | MapLayer.Business | MapLayer.Casino | MapLayer.Crypto | MapLayer.Education | MapLayer.Fashion | MapLayer.Game | MapLayer.Music | MapLayer.Shop | MapLayer.Social | MapLayer.Sports;
 
         private readonly NavmapView navmapView;
@@ -41,9 +40,6 @@ namespace DCL.Navmap
         private readonly IMapPathEventBus mapPathEventBus;
         private readonly UIAudioEventsBus audioEventsBus;
         private readonly PlacesAndEventsPanelController placesAndEventsPanelController;
-        private readonly SectionSelectorController<NavmapSections> sectionSelectorController;
-        private readonly Dictionary<NavmapSections, TabSelectorView> tabsBySections;
-        private readonly Dictionary<NavmapSections, ISection> mapSections;
         private readonly Mouse mouse;
         private readonly StringBuilder parcelTitleStringBuilder = new ();
         private readonly NavmapLocationController navmapLocationController;
@@ -95,23 +91,6 @@ namespace DCL.Navmap
             this.navmapView.DestinationInfoElement.QuitButton.onClick.AddListener(OnRemoveDestinationButtonClicked);
             this.satelliteController = satelliteController;
             mapPathEventBus.OnRemovedDestination += RemoveDestination;
-
-            mapSections = new Dictionary<NavmapSections, ISection>
-            {
-                { NavmapSections.Satellite, this.satelliteController },
-            };
-
-            sectionSelectorController = new SectionSelectorController<NavmapSections>(mapSections, NavmapSections.Satellite);
-            tabsBySections = navmapView.TabSelectorMappedViews.ToDictionary(map => map.Section, map => map.TabSelectorViews);
-
-            foreach ((NavmapSections section, TabSelectorView? tabSelector) in tabsBySections)
-            {
-                tabSelector.TabSelectorToggle.onValueChanged.RemoveAllListeners();
-
-                tabSelector.TabSelectorToggle.onValueChanged.AddListener(
-                    isOn => { ToggleSection(isOn, tabSelector, section, true); }
-                );
-            }
 
             this.navmapView.SatelliteRenderImage.ParcelClicked += OnParcelClicked;
             this.navmapView.SatelliteRenderImage.HoveredMapPin += OnMapPinHovered;
@@ -172,19 +151,6 @@ namespace DCL.Navmap
             navmapView.MapPinTooltip.Show();
         }
 
-        private void ToggleSection(bool isOn, TabSelectorView tabSelectorView, NavmapSections shownSection, bool animate)
-        {
-            if (isOn && animate && shownSection != lastShownSection)
-                sectionSelectorController.SetAnimationState(false, tabsBySections[lastShownSection]);
-
-            animationCts.SafeCancelAndDispose();
-            animationCts = new CancellationTokenSource();
-            sectionSelectorController.OnTabSelectorToggleValueChangedAsync(isOn, tabSelectorView, shownSection, animationCts.Token, animate).Forget();
-
-            if (isOn)
-                lastShownSection = shownSection;
-        }
-
         private void OnParcelHovered(Vector2 parcel)
         {
             if (parcel.Equals(lastParcelHovered)) return;
@@ -216,14 +182,9 @@ namespace DCL.Navmap
 
             satelliteController.InjectCameraController(cameraController);
             navmapLocationController.InjectCameraController(cameraController);
-            mapSections[NavmapSections.Satellite].Activate();
+            satelliteController.Activate();
             zoomController.Activate(cameraController);
             lastParcelHovered = Vector2.zero;
-
-            foreach ((NavmapSections section, TabSelectorView? tab) in tabsBySections)
-                ToggleSection(section == NavmapSections.Satellite, tab, section, true);
-
-            sectionSelectorController.SetAnimationState(true, tabsBySections[NavmapSections.Satellite]);
 
             if (!navmapView.WorldsWarningNotificationView.WasEverClosed)
             {
@@ -239,9 +200,7 @@ namespace DCL.Navmap
         public void Deactivate()
         {
             navmapView.WorldsWarningNotificationView.Hide();
-
-            foreach (ISection mapSectionsValue in mapSections.Values)
-                mapSectionsValue.Deactivate();
+            satelliteController.Deactivate();
 
             zoomController.Deactivate();
             cameraController?.Release(this);
