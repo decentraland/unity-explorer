@@ -3,6 +3,7 @@ name: Create PR for syncing main to dev
 on:
   push:
     branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   create-pr:
