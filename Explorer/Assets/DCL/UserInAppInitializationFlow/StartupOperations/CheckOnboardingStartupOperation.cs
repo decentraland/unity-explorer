@@ -23,29 +23,29 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
         private const string APP_PARAMETER_POSITION = "position";
 
         private readonly ILoadingStatus loadingStatus;
-        private readonly IRealmController realmController;
         private readonly ISelfProfile selfProfile;
         private readonly FeatureFlagsCache featureFlagsCache;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IAppArgs appParameters;
+        private readonly IRealmNavigator realmNavigator;
 
         private Profile? ownProfile;
         private bool isProfilePendingToBeUpdated;
 
         public CheckOnboardingStartupOperation(
             ILoadingStatus loadingStatus,
-            IRealmController realmController,
             ISelfProfile selfProfile,
             FeatureFlagsCache featureFlagsCache,
             IDecentralandUrlsSource decentralandUrlsSource,
-            IAppArgs appParameters)
+            IAppArgs appParameters,
+            IRealmNavigator realmNavigator)
         {
             this.loadingStatus = loadingStatus;
-            this.realmController = realmController;
             this.selfProfile = selfProfile;
             this.featureFlagsCache = featureFlagsCache;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.appParameters = appParameters;
+            this.realmNavigator = realmNavigator;
         }
 
         public async UniTask<Result> ExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
@@ -67,7 +67,7 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
 
             // If the user has already completed the tutorial, we don't need to check the onboarding realm
             if (ownProfile is { TutorialStep: > 0 } )
-                return;
+                //return;
 
             // If the onboarding feature flag is enabled, we set the realm to the onboarding realm
             if (featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.ONBOARDING, FeatureFlagsStrings.ONBOARDING_ENABLED_VARIANT))
@@ -80,14 +80,15 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
 
                 try
                 {
-                    await realmController.SetRealmAsync(URLDomain.FromString($"{IRealmNavigator.WORLDS_DOMAIN}/{realm}"), ct);
+                    URLDomain realmURL = URLDomain.FromString($"{IRealmNavigator.WORLDS_DOMAIN}/{realm}");
+                    await realmNavigator.TryChangeRealmAsync(realmURL, ct);
                     isProfilePendingToBeUpdated = true;
                 }
                 catch (Exception)
                 {
                     // We redirect to Genesis City if the onboarding realm is not found
                     ReportHub.LogError(ReportCategory.ONBOARDING, $"Error trying to set '{realm}' realm for onboarding. Redirecting to Genesis City.");
-                    await realmController.SetRealmAsync(URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Genesis)), ct);
+                    await realmNavigator.TryChangeRealmAsync(URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Genesis)), ct);
                 }
             }
         }
