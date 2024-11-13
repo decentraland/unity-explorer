@@ -19,17 +19,17 @@ jobs:
 
       - name: Create or update branch
         run: |
-          git checkout -B release/release_${{ env.current_date }}
-          git push --force --set-upstream origin release/release_${{ env.current_date }}
+          git checkout -B release/release-${{ env.current_date }}
+          git push --force --set-upstream origin release/release-${{ env.current_date }}
 
-      - name: Create pull request
-        uses: repo-sync/pull-request@v2
-        with:
-          source_branch: "release/release_${{ env.current_date }}"
-          destination_branch: "main"
-          pr_title: "release: ${{ env.current_date }}"
-          pr_body: ":rocket: Automated release PR"
-          pr_label: "release, auto-pr"
-          pr_draft: false
-          pr_allow_empty: false
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create pull request using GitHub CLI
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr create \
+            --base main \
+            --head release/release-${{ env.current_date }} \
+            --title "release: ${{ env.current_date }}" \
+            --body ":rocket: Automated release PR" \
+            --label release,auto-pr \
+            --draft false
