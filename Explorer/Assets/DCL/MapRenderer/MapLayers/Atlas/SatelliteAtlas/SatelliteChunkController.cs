@@ -65,11 +65,11 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
             atlasChunk.MainSpriteRenderer.enabled = false;
             atlasChunk.MainSpriteRenderer.color = INITIAL_COLOR;
             var url = $"{CHUNKS_API}{chunkId.x}%2C{chunkId.y}.jpg";
-
+            
             var textureTask = webRequestController.GetTextureAsync(
-                new CommonArguments(URLAddress.FromString(url), attemptsCount: 1, timeout: 5),
+                new CommonArguments(URLAddress.FromString(url), attemptsCount: 1),
                 new GetTextureArguments(false), GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp, FilterMode.Trilinear),
-                linkedCts.Token, ReportCategory.UI);
+                linkedCts.Token, ReportCategory.UI).Timeout(TimeSpan.FromSeconds(3));
 
             Texture2D texture;
 
