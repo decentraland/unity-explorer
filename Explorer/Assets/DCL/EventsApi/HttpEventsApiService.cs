@@ -6,6 +6,7 @@ using DCL.WebRequests.GenericDelete;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using UnityEngine;
 
 namespace DCL.EventsApi
 {
@@ -20,6 +21,20 @@ namespace DCL.EventsApi
         {
             this.webRequestController = webRequestController;
             this.baseUrl = baseUrl;
+        }
+
+        public async UniTask<IReadOnlyList<EventDTO>> GetEventsByParcelAsync(IEnumerable<Vector2Int> parcels, CancellationToken ct, bool onlyLiveEvents = false)
+        {
+            urlBuilder.Clear();
+            urlBuilder.AppendDomain(baseUrl);
+
+            foreach (Vector2Int parcel in parcels)
+                urlBuilder.AppendParameter(new URLParameter("positions[]", $"{parcel.x},{parcel.y}"));
+
+            if (onlyLiveEvents)
+                urlBuilder.AppendParameter(new URLParameter("list", "live"));
+
+            return await FetchEventList(urlBuilder.Build(), ct);
         }
 
         public async UniTask<IReadOnlyList<EventDTO>> GetEventsByParcelAsync(ISet<string> parcels, CancellationToken ct,

@@ -93,6 +93,7 @@ namespace DCL.PluginSystem.Global
         private readonly ISystemMemoryCap systemMemoryCap;
         private readonly WorldVolumeMacBus worldVolumeMacBus;
         private readonly IEventsApiService eventsApiService;
+        private readonly IUserCalendar userCalendar;
 
         private NavmapController? navmapController;
         private SettingsController? settingsController;
@@ -142,7 +143,8 @@ namespace DCL.PluginSystem.Global
             IChatMessagesBus chatMessagesBus,
             ISystemMemoryCap systemMemoryCap,
             WorldVolumeMacBus worldVolumeMacBus,
-            IEventsApiService eventsApiService)
+            IEventsApiService eventsApiService,
+            IUserCalendar userCalendar)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -181,6 +183,7 @@ namespace DCL.PluginSystem.Global
             this.systemMemoryCap = systemMemoryCap;
             this.worldVolumeMacBus = worldVolumeMacBus;
             this.eventsApiService = eventsApiService;
+            this.userCalendar = userCalendar;
         }
 
         public void Dispose()
@@ -242,12 +245,13 @@ namespace DCL.PluginSystem.Global
                 CreateShowPlaceCommand, CreateShowEventCommand);
 
             ObjectPool<PlaceElementView> placeElementsPool = await InitializePlaceElementsPool(navmapView.SearchBarResultPanel, ct);
-            ObjectPool<EventElementView> eventElementsPool = await InitializeEventElementsPool(navmapView.PlacesAndEventsPanelView.PlaceInfoPanelView, ct);
+            ObjectPool<EventElementView> eventElementsPool = await InitializeEventElementsForPlacePool(navmapView.PlacesAndEventsPanelView.PlaceInfoPanelView, ct);
+            ObjectPool<EventScheduleElementView> eventScheduleElementsPool = await InitializeEventScheduleElementsPool(navmapView.PlacesAndEventsPanelView.EventInfoPanelView, ct);
 
             searchResultPanelController = new SearchResultPanelController(navmapView.SearchBarResultPanel,
                 placeElementsPool, navmapBus);
 
-            searchBarController = new (navmapView.SearchBarView,
+            searchBarController = new NavmapSearchBarController(navmapView.SearchBarView,
                 navmapView.HistoryRecordPanelView, navmapView.PlacesAndEventsPanelView.SearchFiltersView,
                 inputBlock, searchHistory, navmapBus);
 
@@ -256,7 +260,8 @@ namespace DCL.PluginSystem.Global
                 eventElementsPool);
 
             eventInfoPanelController = new EventInfoPanelController(navmapView.PlacesAndEventsPanelView.EventInfoPanelView,
-                webRequestController, navmapBus, chatMessagesBus, eventsApiService);
+                webRequestController, navmapBus, chatMessagesBus, eventsApiService, eventScheduleElementsPool,
+                userCalendar);
 
             placesAndEventsPanelController = new PlacesAndEventsPanelController(navmapView.PlacesAndEventsPanelView,
                 searchBarController, searchResultPanelController, placeInfoPanelController, eventInfoPanelController);
@@ -315,7 +320,7 @@ namespace DCL.PluginSystem.Global
             }
         }
 
-        private async UniTask<ObjectPool<EventElementView>> InitializeEventElementsPool(PlaceInfoPanelView view, CancellationToken ct)
+        private async UniTask<ObjectPool<EventElementView>> InitializeEventElementsForPlacePool(PlaceInfoPanelView view, CancellationToken ct)
         {
             EventElementView asset = (await assetsProvisioner.ProvideInstanceAsync(view.EventElementViewRef, ct: ct)).Value;
 
@@ -330,6 +335,24 @@ namespace DCL.PluginSystem.Global
             {
                 EventElementView placeElementView = Object.Instantiate(asset, view.EventsTabContainer.transform);
                 placeElementView.Init(webRequestController);
+                return placeElementView;
+            }
+        }
+
+        private async UniTask<ObjectPool<EventScheduleElementView>> InitializeEventScheduleElementsPool(EventInfoPanelView view, CancellationToken ct)
+        {
+            EventScheduleElementView asset = (await assetsProvisioner.ProvideInstanceAsync(view.ScheduleElementRef, ct: ct)).Value;
+
+            return new ObjectPool<EventScheduleElementView>(
+                () => CreatePoolElements(asset),
+                actionOnGet: result => result.gameObject.SetActive(true),
+                actionOnRelease: result => result.gameObject.SetActive(false),
+                defaultCapacity: 8
+            );
+
+            EventScheduleElementView CreatePoolElements(EventScheduleElementView asset)
+            {
+                EventScheduleElementView placeElementView = Object.Instantiate(asset, view.ScheduleElementsContainer);
                 return placeElementView;
             }
         }

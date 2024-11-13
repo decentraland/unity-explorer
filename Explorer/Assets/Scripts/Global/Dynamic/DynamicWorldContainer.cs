@@ -464,6 +464,8 @@ namespace Global.Dynamic
 
             var badgesAPIClient = new BadgesAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
 
+            IUserCalendar userCalendar = new GoogleUserCalendar(webBrowser);
+
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
                 new MultiplayerPlugin(
@@ -570,7 +572,8 @@ namespace Global.Dynamic
                     container.ChatMessagesBus,
                     staticContainer.MemoryCap,
                     bootstrapContainer.WorldVolumeMacBus,
-                    eventsApiService
+                    eventsApiService,
+                    userCalendar
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),

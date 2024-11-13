@@ -6,8 +6,10 @@ using DCL.PlacesAPIService;
 using DCL.UI;
 using DCL.WebRequests;
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Threading;
+using UnityEngine.Pool;
 using Utility;
 
 namespace DCL.Navmap
@@ -18,8 +20,11 @@ namespace DCL.Navmap
         private readonly INavmapBus navmapBus;
         private readonly IChatMessagesBus chatMessagesBus;
         private readonly IEventsApiService eventsApiService;
+        private readonly ObjectPool<EventScheduleElementView> scheduleElementPool;
+        private readonly IUserCalendar userCalendar;
         private readonly ImageController thumbnailController;
         private readonly MultiStateButtonController interestedButtonController;
+        private readonly List<EventScheduleElementView> scheduleElements = new ();
         private PlacesData.PlaceInfo? place;
         private EventDTO? @event;
         private CancellationTokenSource? interestedCancellationToken;
@@ -29,12 +34,16 @@ namespace DCL.Navmap
             IWebRequestController webRequestController,
             INavmapBus navmapBus,
             IChatMessagesBus chatMessagesBus,
-            IEventsApiService eventsApiService)
+            IEventsApiService eventsApiService,
+            ObjectPool<EventScheduleElementView> scheduleElementPool,
+            IUserCalendar userCalendar)
         {
             this.view = view;
             this.navmapBus = navmapBus;
             this.chatMessagesBus = chatMessagesBus;
             this.eventsApiService = eventsApiService;
+            this.scheduleElementPool = scheduleElementPool;
+            this.userCalendar = userCalendar;
             thumbnailController = new ImageController(view.Thumbnail, webRequestController);
             interestedButtonController = new MultiStateButtonController(view.InterestedButton, true);
             interestedButtonController.OnButtonClicked += SetInterested;
@@ -89,6 +98,48 @@ namespace DCL.Navmap
 
             updateLayoutCancellationToken = updateLayoutCancellationToken.SafeRestart();
             view.LayoutRoot.ForceUpdateLayoutAsync(updateLayoutCancellationToken.Token).Forget();
+
+            ClearScheduleElements();
+
+            DateTime.TryParse(@event.next_start_at, null, DateTimeStyles.RoundtripKind, out DateTime nextStartAt);
+
+            foreach (string dateStr in @event.recurrent_dates)
+            {
+                if (!DateTime.TryParse(dateStr, null, DateTimeStyles.RoundtripKind, out DateTime date)) continue;
+                if (date < nextStartAt) continue;
+
+                EventScheduleElementView element = scheduleElementPool.Get();
+
+                // TODO: we might need to convert to local, currently R:RFC1123 Fri, 18 Apr 2008 20:30:00 GMT
+                element.DateLabel.text = date.ToString("R");
+
+                element.AddToCalendarButton.onClick.AddListener(() => AddRecurrentEventToCalendar(date));
+                scheduleElements.Add(element);
+            }
+        }
+
+        private void AddRecurrentEventToCalendar(DateTime startAt)
+        {
+            // Same link as https://decentraland.org/events/event?id=... website
+            var description = $"jump in: https://play.decentraland.org/?position={@event?.x},{@event?.y}";
+
+            if (!DateTime.TryParse(@event?.next_start_at, null, DateTimeStyles.RoundtripKind, out DateTime nextStartAt)) return;
+            if (!DateTime.TryParse(@event?.next_finish_at, null, DateTimeStyles.RoundtripKind, out DateTime nextFinishAt)) return;
+
+            TimeSpan duration = nextFinishAt - nextStartAt;
+
+            userCalendar.Add(@event?.name, description, startAt, startAt + duration);
+        }
+
+        private void ClearScheduleElements()
+        {
+            foreach (EventScheduleElementView scheduleElement in scheduleElements)
+            {
+                scheduleElement.AddToCalendarButton.onClick.RemoveAllListeners();
+                scheduleElementPool.Release(scheduleElement);
+            }
+
+            scheduleElements.Clear();
         }
 
         private void SetInterested(bool interested)

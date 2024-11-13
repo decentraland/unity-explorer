@@ -10,6 +10,7 @@ namespace DCL.EventsApi
         public string image;
         public string description;
         public string next_start_at;
+        public string next_finish_at;
         public string finish_at;
         public string scene_name;
         public int[] coordinates;

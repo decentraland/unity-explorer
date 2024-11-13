@@ -270,7 +270,7 @@ namespace DCL.Navmap
             {
                 SetAsLoadingState();
 
-                IReadOnlyList<EventDTO> events = await eventsApiService.GetEventsByParcelAsync(place!.base_position, ct);
+                IReadOnlyList<EventDTO> events = await eventsApiService.GetEventsByParcelAsync(place!.Positions, ct);
 
                 ClearEventElements();
 

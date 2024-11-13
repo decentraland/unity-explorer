@@ -1,4 +1,6 @@
+using DCL.AssetsProvision;
 using DCL.UI;
+using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -48,5 +50,17 @@ namespace DCL.Navmap
 
         [field: SerializeField]
         public RectTransform LayoutRoot { get; private set; }
+
+        [field: SerializeField]
+        public EventScheduleElementAssetReference ScheduleElementRef { get; private set; }
+
+        [field: SerializeField]
+        public Transform ScheduleElementsContainer { get; private set; }
+
+        [Serializable]
+        public class EventScheduleElementAssetReference : ComponentReference<EventScheduleElementView>
+        {
+            public EventScheduleElementAssetReference(string guid) : base(guid) { }
+        }
     }
 }
