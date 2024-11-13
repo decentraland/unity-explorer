@@ -111,7 +111,6 @@ namespace DCL.InWorldCamera.CameraReel
         {
             view.OnMouseEnter -= OnStorageFullIconEnter;
             view.OnMouseExit -= OnStorageFullIconExit;
-            view.optionsButton.Dispose();
             cameraReelGalleryController.Dispose();
         }
     }

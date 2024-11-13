@@ -34,12 +34,12 @@ namespace DCL.InWorldCamera.CameraReel.Components
 
         private CancellationTokenSource loadImageCts;
         private ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
-        private OptionButtonView optionButton;
+        private OptionButtonController optionButton;
 
         public event Action<CameraReelResponse, Sprite> OnThumbnailLoaded;
         public event Action<CameraReelResponse> OnThumbnailClicked;
 
-        public void Setup(CameraReelResponse cameraReelData, ICameraReelScreenshotsStorage cameraReelScreenshotsStorageService, OptionButtonView optionsButton)
+        public void Setup(CameraReelResponse cameraReelData, ICameraReelScreenshotsStorage cameraReelScreenshotsStorageService, OptionButtonController optionsButton)
         {
             this.cameraReelResponse = cameraReelData;
             this.cameraReelScreenshotsStorage = cameraReelScreenshotsStorageService;
@@ -70,10 +70,10 @@ namespace DCL.InWorldCamera.CameraReel.Components
             transform.DOScale(Vector3.one * scaleFactorOnHover, scaleAnimationDuration);
             if (optionButton != null)
             {
-                optionButton.transform.SetParent(optionButtonContainer.transform);
-                optionButton.transform.localPosition = optionButtonOffset;
+                optionButton.GetViewGameObject().transform.SetParent(optionButtonContainer.transform);
+                optionButton.GetViewGameObject().transform.localPosition = optionButtonOffset;
                 optionButton.SetImageData(cameraReelResponse);
-                optionButton.gameObject.SetActive(true);
+                optionButton.GetViewGameObject().SetActive(true);
             }
             outline.SetActive(true);
         }
@@ -83,8 +83,8 @@ namespace DCL.InWorldCamera.CameraReel.Components
             transform.DOScale(Vector3.one, scaleAnimationDuration);
             if (optionButton != null)
             {
-                optionButton.ResetState();
-                optionButton.gameObject.SetActive(false);
+                optionButton.ResetViewState();
+                optionButton.GetViewGameObject().SetActive(false);
             }
             outline.SetActive(false);
         }

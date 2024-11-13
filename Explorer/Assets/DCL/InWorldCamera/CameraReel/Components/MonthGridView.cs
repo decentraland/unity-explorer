@@ -22,7 +22,7 @@ namespace DCL.InWorldCamera.CameraReel.Components
             List<CameraReelResponse> images,
             ReelGalleryPoolManager reelGalleryPool,
             ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
-            OptionButtonView optionsButton,
+            OptionButtonController optionsButton,
             Action<CameraReelResponse, Sprite> onThumbnailLoaded,
             Action<CameraReelResponse> onThumbnailClicked)
         {
