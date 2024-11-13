@@ -59,7 +59,7 @@ namespace ECS.SceneLifeCycle.Systems
         {
             if (!visualSceneState.IsDirty) return;
 
-            if (!visualSceneState.CurrentVisualSceneState.Equals(VisualSceneStateEnum.SHOWING_LOD)) return;
+            if (visualSceneState.CurrentVisualSceneState != VisualSceneStateEnum.SHOWING_LOD) return;
 
             promise.ForgetLoading(World);
             World.Remove<AssetPromise<ISceneFacade, GetSceneFacadeIntention>>(entity);
@@ -75,7 +75,7 @@ namespace ECS.SceneLifeCycle.Systems
         {
             if (!visualSceneState.IsDirty) return;
 
-            if (!visualSceneState.CurrentVisualSceneState.Equals(VisualSceneStateEnum.SHOWING_LOD)) return;
+            if (visualSceneState.CurrentVisualSceneState != VisualSceneStateEnum.SHOWING_LOD) return;
 
             //Dispose scene
             sceneFacade.DisposeSceneFacadeAndRemoveFromCache(scenesCache,
@@ -95,7 +95,7 @@ namespace ECS.SceneLifeCycle.Systems
         {
             if (!visualSceneState.IsDirty) return;
 
-            if (!visualSceneState.CurrentVisualSceneState.Equals(VisualSceneStateEnum.SHOWING_SCENE)) return;
+            if (visualSceneState.CurrentVisualSceneState != VisualSceneStateEnum.SHOWING_SCENE) return;
 
             World.Add(entity, AssetPromise<ISceneFacade, GetSceneFacadeIntention>.Create(World,
                 new GetSceneFacadeIntention(realmData.Ipfs, sceneDefinitionComponent),
@@ -130,7 +130,7 @@ namespace ECS.SceneLifeCycle.Systems
         {
             if (!visualSceneState.IsDirty) return;
 
-            if (!visualSceneState.CurrentVisualSceneState.Equals(VisualSceneStateEnum.SHOWING_LOD)) return;
+            if (visualSceneState.CurrentVisualSceneState != VisualSceneStateEnum.SHOWING_LOD) return;
 
             promise.ForgetLoading(World);
             World.Remove<AssetPromise<ISceneFacade, GetSceneFacadeIntention>>(entity);
