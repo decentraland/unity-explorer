@@ -13,12 +13,17 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         private readonly IAnalyticsService analytics;
         public AnalyticsConfiguration Configuration { get; }
 
-        public AnalyticsController(IAnalyticsService analyticsService, IAppArgs appArgs, AnalyticsConfiguration configuration, LauncherTraits launcherTraits)
+        public AnalyticsController(
+            IAnalyticsService analyticsService,
+            IAppArgs appArgs,
+            AnalyticsConfiguration configuration,
+            LauncherTraits launcherTraits,
+            BuildData buildData)
         {
             analytics = analyticsService;
             Configuration = configuration;
 
-            analytics.AddPlugin(new StaticCommonTraitsPlugin(appArgs, launcherTraits));
+            analytics.AddPlugin(new StaticCommonTraitsPlugin(appArgs, launcherTraits, buildData));
             analytics.Identify(SystemInfo.deviceUniqueIdentifier!);
             analytics.Flush();
         }
