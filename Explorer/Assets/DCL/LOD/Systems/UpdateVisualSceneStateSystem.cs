@@ -49,6 +49,7 @@ namespace ECS.SceneLifeCycle.Systems
             CheckPromiseToLODQuery(World);
 
             CleanSceneToLODQuery(World);
+            CleanPromiseToLODQuery(World);
         }
 
         [Query]
@@ -120,6 +121,20 @@ namespace ECS.SceneLifeCycle.Systems
                     World.Remove<SceneLODInfo>(entity);
                 }
             }
+        }
+
+        [Query]
+        [All(typeof(SceneLODInfo))]
+        private void CleanPromiseToLOD(in Entity entity, ref VisualSceneState visualSceneState,
+            ref AssetPromise<ISceneFacade, GetSceneFacadeIntention> promise)
+        {
+            if (!visualSceneState.IsDirty) return;
+
+            if (!visualSceneState.CurrentVisualSceneState.Equals(VisualSceneStateEnum.SHOWING_LOD)) return;
+
+            promise.ForgetLoading(World);
+            World.Remove<AssetPromise<ISceneFacade, GetSceneFacadeIntention>>(entity);
+            visualSceneState.IsDirty = false;
         }
 
         [Query]

@@ -67,6 +67,28 @@ public class UpdateVisualSceneStateSystemShould : UnitySystemTestBase<UpdateVisu
             new VisualSceneStateResolver(new HashSet<Vector2Int>()), new SceneAssetLock());
     }
 
+
+    [Test]
+    public void CancelPromiseAndKeepLOD()
+    {
+        visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.SHOWING_LOD;
+        partitionComponent.Bucket = 0;
+        var entityReference = world.Create(visualSceneState, partitionComponent, sceneDefinitionComponent,
+            new SceneLODInfo());
+
+        system.Update(0);
+
+        Assert.IsTrue(world.Has<AssetPromise<ISceneFacade, GetSceneFacadeIntention>>(entityReference));
+        Assert.IsTrue(world.Has<SceneLODInfo>(entityReference));
+
+        visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.SHOWING_LOD;
+        partitionComponent.Bucket = 3;
+        system.Update(0);
+
+        Assert.IsFalse(world.Has<AssetPromise<ISceneFacade, GetSceneFacadeIntention>>(entityReference));
+        Assert.IsTrue(world.Has<SceneLODInfo>(entityReference));
+    }
+
     [Test]
     public void UpdateFromSceneLODInfoToScenePromise()
     {
@@ -80,7 +102,6 @@ public class UpdateVisualSceneStateSystemShould : UnitySystemTestBase<UpdateVisu
 
         //Simulate a completition of the scene
         var loadedScene = Substitute.For<ISceneFacade>();
-        var sceneData = Substitute.For<ISceneData>();
 
         var sceneWorld = World.Create();
         var sceneRootEntity = sceneWorld.Create();
