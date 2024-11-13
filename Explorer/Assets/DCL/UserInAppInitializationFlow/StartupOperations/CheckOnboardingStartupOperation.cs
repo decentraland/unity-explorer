@@ -67,7 +67,7 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
 
             // If the user has already completed the tutorial, we don't need to check the onboarding realm
             if (ownProfile is { TutorialStep: > 0 } )
-                //return;
+                return;
 
             // If the onboarding feature flag is enabled, we set the realm to the onboarding realm
             if (featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.ONBOARDING, FeatureFlagsStrings.ONBOARDING_ENABLED_VARIANT))
