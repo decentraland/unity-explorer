@@ -20,7 +20,7 @@ namespace DCL.CharacterMotion.Systems
     [LogCategory(ReportCategory.MOTION)]
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [UpdateAfter(typeof(CameraGroup))]
-    [UpdateAfter(typeof(InterpolateCharacterSystem))]
+    [UpdateAfter(typeof(ChangeCharacterPositionGroup))]
     public partial class RotateCharacterSystem : BaseUnityLoopSystem
     {
         private RotateCharacterSystem(World world) : base(world) { }

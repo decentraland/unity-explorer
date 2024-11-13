@@ -8,6 +8,18 @@ namespace DCL.AsyncLoadReporting
     /// </summary>
     public class AsyncLoadProcessReport
     {
+        public readonly struct Status
+        {
+            public readonly Exception? Exception;
+            public readonly UniTaskStatus TaskStatus;
+
+            public Status(Exception? exception, UniTaskStatus taskStatus)
+            {
+                Exception = exception;
+                TaskStatus = taskStatus;
+            }
+        }
+
         private readonly AsyncLoadProcessReport? parent;
 
         private readonly float offset;
@@ -16,6 +28,8 @@ namespace DCL.AsyncLoadReporting
         private readonly IAsyncReactiveProperty<float> progressCounter;
 
         private readonly UniTaskCompletionSource completionSource;
+
+        private Exception? exception;
 
         public IReadOnlyAsyncReactiveProperty<float> ProgressCounter => progressCounter;
 
@@ -37,6 +51,11 @@ namespace DCL.AsyncLoadReporting
             this.until = until;
         }
 
+        public UniTask Task => completionSource.Task;
+
+        public Status GetStatus() =>
+            new (exception, completionSource.UnsafeGetStatus());
+
         public void SetProgress(float progress)
         {
             progressCounter.Value = progress;
@@ -49,8 +68,16 @@ namespace DCL.AsyncLoadReporting
 
         public void SetException(Exception e)
         {
+            exception = e;
+
             completionSource.TrySetException(e);
             parent?.SetException(e);
+        }
+
+        public void SetCancelled()
+        {
+            completionSource.TrySetCanceled();
+            parent?.SetCancelled();
         }
 
         public AsyncLoadProcessReport CreateChildReport(float until) =>

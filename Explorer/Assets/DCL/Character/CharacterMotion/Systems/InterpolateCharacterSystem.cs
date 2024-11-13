@@ -1,16 +1,12 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using Arch.SystemGroups.DefaultSystemGroups;
-using Cysharp.Threading.Tasks;
 using DCL.Character.CharacterMotion.Components;
 using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Platforms;
 using DCL.CharacterMotion.Settings;
-using DCL.Diagnostics;
 using ECS.Abstract;
-using System;
 using ECS.LifeCycle.Components;
 using UnityEngine;
 using Utility;
@@ -23,12 +19,10 @@ namespace DCL.CharacterMotion.Systems
     ///         Modifies Transform (by calling `CharacterController` so the value is exposed to other systems ignoring Physics behind
     ///     </para>
     /// </summary>
-    [UpdateInGroup(typeof(PresentationSystemGroup))]
-    [LogCategory(ReportCategory.MOTION)]
+    [UpdateInGroup(typeof(ChangeCharacterPositionGroup))]
     [UpdateBefore(typeof(CameraGroup))]
     public partial class InterpolateCharacterSystem : BaseUnityLoopSystem
     {
-        private const int COUNTDOWN_FRAMES = 20;
         private const float ALMOST_ZERO = 0.00001f;
 
         private int playerJustTeleportedCountDown;
@@ -38,40 +32,10 @@ namespace DCL.CharacterMotion.Systems
         protected override void Update(float t)
         {
             InterpolateQuery(World, t);
-            TeleportPlayerQuery(World);
         }
 
         [Query]
-        private void TeleportPlayer(in Entity entity, in CharacterController controller, ref CharacterPlatformComponent platformComponent, in PlayerTeleportIntent teleportIntent)
-        {
-            if (teleportIntent.LoadReport != null)
-            {
-                switch (teleportIntent.LoadReport.CompletionSource.UnsafeGetStatus())
-                {
-                    case UniTaskStatus.Pending: return;
-                    case UniTaskStatus.Succeeded: break;
-                    case UniTaskStatus.Faulted:
-                    case UniTaskStatus.Canceled:
-                        World.Remove<PlayerTeleportIntent>(entity);
-                        return;
-                    default: throw new ArgumentOutOfRangeException();
-                }
-            }
-
-            World.Remove<PlayerTeleportIntent>(entity);
-
-            // Teleport the character
-            controller.transform.position = teleportIntent.Position;
-
-            // Reset the current platform so we dont bounce back if we are touching the    world plane
-            platformComponent.CurrentPlatform = null;
-
-            playerJustTeleportedCountDown = COUNTDOWN_FRAMES;
-        }
-
-
-        [Query]
-        [None(typeof(PlayerTeleportIntent), typeof(DeleteEntityIntention))]
+        [None(typeof(PlayerTeleportIntent), typeof(DeleteEntityIntention), typeof(PlayerTeleportIntent.JustTeleported))]
         private void Interpolate(
             [Data] float dt,
             in ICharacterControllerSettings settings,
@@ -82,14 +46,6 @@ namespace DCL.CharacterMotion.Systems
             in JumpInputComponent jump,
             in MovementInputComponent movementInput)
         {
-            if (playerJustTeleportedCountDown > 0)
-            {
-                // We need to skip the first few frames after a teleport to avoid getting conflicts with the interpolation.
-                // This sometimes provoked the teleport to be ignored and the character to be stuck in the previous position.
-                playerJustTeleportedCountDown--;
-                return;
-            }
-
             ApplyVelocityStun.Execute(ref rigidTransform, in stunComponent);
 
             Transform characterTransform = characterController.transform;

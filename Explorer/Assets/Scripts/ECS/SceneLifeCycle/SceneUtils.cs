@@ -1,5 +1,4 @@
-﻿using Arch.Core;
-using DCL.AsyncLoadReporting;
+﻿using DCL.AsyncLoadReporting;
 using ECS.SceneLifeCycle.Reporting;
 using ECS.SceneLifeCycle.SceneDefinition;
 using UnityEngine;
@@ -19,9 +18,11 @@ namespace ECS.SceneLifeCycle
 
         private static void ReportProgressFinished(PooledLoadReportList? reports)
         {
-            for (var i = 0; i < reports!.Value.Count; i++)
+            using PooledLoadReportList reportsValue = reports!.Value;
+
+            for (var i = 0; i < reportsValue.Count; i++)
             {
-                AsyncLoadProcessReport report = reports.Value[i];
+                AsyncLoadProcessReport report = reportsValue[i];
                 report.SetProgress(1f);
             }
         }

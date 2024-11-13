@@ -19,7 +19,7 @@ namespace DCL.CharacterMotion.Systems
 {
     [LogCategory(ReportCategory.MOTION)]
     [UpdateInGroup(typeof(PresentationSystemGroup))]
-    [UpdateAfter(typeof(InterpolateCharacterSystem))]
+    [UpdateAfter(typeof(ChangeCharacterPositionGroup))]
     public partial class HandsIKSystem : BaseUnityLoopSystem
     {
         private bool handsIkSystemIsEnabled = true;

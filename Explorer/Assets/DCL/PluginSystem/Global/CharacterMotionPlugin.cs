@@ -10,6 +10,7 @@ using DCL.CharacterMotion.Systems;
 using DCL.DebugUtilities;
 using DCL.Optimization.Pools;
 using ECS.ComponentsPooling.Systems;
+using ECS.SceneLifeCycle.Reporting;
 using System.Threading;
 using UnityEngine;
 
@@ -21,6 +22,7 @@ namespace DCL.PluginSystem.Global
         private readonly ICharacterObject characterObject;
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
+        private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
 
         private ProvidedAsset<CharacterControllerSettings> settings;
 
@@ -64,6 +66,7 @@ namespace DCL.PluginSystem.Global
                 new HeadIKComponent());
 
             InterpolateCharacterSystem.InjectToWorld(ref builder);
+            TeleportCharacterSystem.InjectToWorld(ref builder, sceneReadinessReportQueue);
             RotateCharacterSystem.InjectToWorld(ref builder);
             CalculateCharacterVelocitySystem.InjectToWorld(ref builder, debugContainerBuilder);
             CharacterAnimationSystem.InjectToWorld(ref builder);

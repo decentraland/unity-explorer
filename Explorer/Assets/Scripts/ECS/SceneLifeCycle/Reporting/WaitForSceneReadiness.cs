@@ -1,21 +1,18 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.AsyncLoadReporting;
 using System;
-using System.Threading;
 using UnityEngine;
 
 namespace ECS.SceneLifeCycle.Reporting
 {
     public static class WaitForSceneReadinessExtensions
     {
-        public static UniTask ToUniTask(this WaitForSceneReadiness? waitForSceneReadiness, CancellationToken ct) =>
-            waitForSceneReadiness?.ExecuteAsync(ct) ?? UniTask.CompletedTask;
+        public static UniTask ToUniTask(this WaitForSceneReadiness? waitForSceneReadiness) =>
+            waitForSceneReadiness?.ExecuteAsync() ?? UniTask.CompletedTask;
     }
 
     public class WaitForSceneReadiness
     {
-        public static readonly TimeSpan TIMEOUT = TimeSpan.FromSeconds(60);
-
         private readonly Vector2Int parcel;
         private readonly AsyncLoadProcessReport loadProcessReport;
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
@@ -33,7 +30,7 @@ namespace ECS.SceneLifeCycle.Reporting
         ///     Add the scene readiness report to the queue and wait for its resolution
         /// </summary>
         /// <returns></returns>
-        internal async UniTask ExecuteAsync(CancellationToken ct)
+        internal async UniTask ExecuteAsync()
         {
             if (executed)
                 throw new Exception(nameof(WaitForSceneReadiness) + " can be executed only once");
@@ -43,21 +40,7 @@ namespace ECS.SceneLifeCycle.Reporting
             // Add report to the queue so it will be grabbed by the actual scene or LODs
             sceneReadinessReportQueue.Enqueue(parcel, loadProcessReport);
 
-            try
-            {
-                // add timeout in case of a trouble
-                await loadProcessReport.CompletionSource.Task
-                    .Timeout(TIMEOUT)
-                    .AttachExternalCancellation(ct);
-            }
-            catch (Exception e)
-            {
-                loadProcessReport.CompletionSource.TrySetException(e);
-                sceneReadinessReportQueue.TryDequeue(new []
-                {
-                    parcel
-                }, out _);
-            }
+            await loadProcessReport.Task;
         }
     }
 }

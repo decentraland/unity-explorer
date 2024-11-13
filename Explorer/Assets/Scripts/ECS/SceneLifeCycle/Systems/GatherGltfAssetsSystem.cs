@@ -11,6 +11,7 @@ using SceneRunner.Scene;
 using System.Collections.Generic;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.UserInAppInitializationFlow;
+using System;
 using UnityEngine;
 using UnityEngine.Pool;
 
@@ -19,6 +20,8 @@ namespace ECS.SceneLifeCycle.Systems
     [UpdateInGroup(typeof(SyncedPreRenderingSystemGroup))]
     public partial class GatherGltfAssetsSystem : BaseUnityLoopSystem
     {
+        private static readonly TimeSpan TIMEOUT = TimeSpan.FromSeconds(60);
+
         private const int FRAMES_COUNT = 90;
 
         private readonly ISceneReadinessReportQueue readinessReportQueue;
@@ -128,8 +131,8 @@ namespace ECS.SceneLifeCycle.Systems
                 entitiesUnderObservation.ExceptWith(toDelete);
                 ListPool<EntityReference>.Release(toDelete);
 
-                // If is still not concluded apply certain timeout to be in sync with `WaitForSceneReadiness`
-                if (Time.time - startTime > WaitForSceneReadiness.TIMEOUT.TotalSeconds)
+                // it's an internal timeout
+                if (Time.time - startTime > TIMEOUT.TotalSeconds)
                     concluded = true;
 
                 // Memory is full. Assets may be on deadlock. Show broken state of scene

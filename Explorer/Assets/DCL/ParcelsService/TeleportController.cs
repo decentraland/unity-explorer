@@ -68,7 +68,7 @@ namespace DCL.ParcelsService
 
             if (retrieveScene == null)
             {
-                TeleportCharacter(new PlayerTeleportIntent(ParcelMathHelper.GetPositionByParcelPosition(parcel, true), parcel, loadReport));
+                TeleportCharacter(new PlayerTeleportIntent(ParcelMathHelper.GetPositionByParcelPosition(parcel, true), parcel, ct, loadReport));
                 loadReport.SetProgress(1f);
                 return null;
             }
@@ -103,7 +103,7 @@ namespace DCL.ParcelsService
 
             await UniTask.Yield(PlayerLoopTiming.LastPostLateUpdate);
 
-            TeleportCharacter(new PlayerTeleportIntent(targetWorldPosition, parcel, loadReport));
+            TeleportCharacter(new PlayerTeleportIntent(targetWorldPosition, parcel, ct, loadReport));
 
             if (cameraTarget != null)
             {
@@ -162,7 +162,7 @@ namespace DCL.ParcelsService
         {
             if (retrieveScene == null)
             {
-                TeleportCharacter(new PlayerTeleportIntent(ParcelMathHelper.GetPositionByParcelPosition(parcel, true), parcel, loadReport));
+                TeleportCharacter(new PlayerTeleportIntent(ParcelMathHelper.GetPositionByParcelPosition(parcel, true), parcel, ct, loadReport));
                 loadReport.SetProgress(1f);
                 return;
             }
@@ -180,7 +180,7 @@ namespace DCL.ParcelsService
             // Add report to the queue so it will be grabbed by the actual scene
             sceneReadinessReportQueue.Enqueue(parcel, loadReport);
 
-            TeleportCharacter(new PlayerTeleportIntent(characterPos, parcel, loadReport));
+            TeleportCharacter(new PlayerTeleportIntent(characterPos, parcel, ct, loadReport));
 
             if (sceneDef == null)
             {
@@ -189,12 +189,7 @@ namespace DCL.ParcelsService
                 return;
             }
 
-            try
-            {
-                // add timeout in case of a trouble
-                await loadReport.CompletionSource.Task.Timeout(TimeSpan.FromSeconds(30));
-            }
-            catch (Exception e) { loadReport.CompletionSource.TrySetException(e); }
+            await loadReport.Task;
         }
 
         private SpawnPoint PickSpawnPoint(IReadOnlyList<SpawnPoint> spawnPoints, Vector3 targetWorldPosition, Vector3 parcelBaseWorldPosition)

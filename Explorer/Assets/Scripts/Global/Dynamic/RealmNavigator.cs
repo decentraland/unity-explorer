@@ -409,7 +409,7 @@ namespace Global.Dynamic
             WaitForSceneReadiness? waitForSceneReadiness =
                 await teleportController.TeleportToSceneSpawnPointAsync(parcel, processReport, ct);
 
-            return waitForSceneReadiness.ToUniTask(ct);
+            return waitForSceneReadiness.ToUniTask();
         }
 
         private async UniTask<UniTask> TeleportToWorldSpawnPointAsync(Vector2Int parcelToTeleport,
@@ -426,7 +426,7 @@ namespace Global.Dynamic
             WaitForSceneReadiness? waitForSceneReadiness =
                 await teleportController.TeleportToSceneSpawnPointAsync(parcelToTeleport, processReport, ct);
 
-            return waitForSceneReadiness.ToUniTask(ct);
+            return waitForSceneReadiness.ToUniTask();
         }
 
         public async UniTask ChangeRealmAsync(URLDomain realm, CancellationToken ct)

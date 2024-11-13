@@ -178,7 +178,7 @@ namespace DCL.SceneLoadingScreens
 
             try
             {
-                await UniTask.WhenAny(inputData.AsyncLoadProcessReport.CompletionSource.Task, UpdateProgressBarAsync());
+                await UniTask.WhenAny(inputData.AsyncLoadProcessReport.Task, UpdateProgressBarAsync());
                 ct.ThrowIfCancellationRequested();
             }
             catch (OperationCanceledException) { }

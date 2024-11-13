@@ -33,15 +33,26 @@ namespace ECS.Prioritization
             if (Vector3.SqrMagnitude(position - partitionDiscreteData.Position) > sqrPositionTolerance
                 || Quaternion.Angle(rotation, partitionDiscreteData.Rotation) > angleTolerance)
             {
-                partitionDiscreteData.Position = position;
-                partitionDiscreteData.Rotation = rotation;
-                partitionDiscreteData.Forward = camTransform.forward;
-                partitionDiscreteData.Parcel = position.ToParcel();
-                partitionDiscreteData.IsDirty = true;
+                UpdatePartitionDiscreteData(partitionDiscreteData, position, rotation, camTransform.forward);
             }
             else partitionDiscreteData.IsDirty = false;
 
             return partitionDiscreteData.IsDirty;
+        }
+
+        public static void UpdatePartitionDiscreteData(PartitionDiscreteDataBase partitionDiscreteData, Transform transform)
+        {
+            UpdatePartitionDiscreteData(partitionDiscreteData, transform.localPosition, transform.localRotation, transform.forward);
+        }
+
+        private static void UpdatePartitionDiscreteData(PartitionDiscreteDataBase partitionDiscreteData, Vector3 position,
+            Quaternion rotation, Vector3 forward)
+        {
+            partitionDiscreteData.Position = position;
+            partitionDiscreteData.Rotation = rotation;
+            partitionDiscreteData.Forward = forward;
+            partitionDiscreteData.Parcel = position.ToParcel();
+            partitionDiscreteData.IsDirty = true;
         }
 
         public struct ParcelCornersData : IDisposable
