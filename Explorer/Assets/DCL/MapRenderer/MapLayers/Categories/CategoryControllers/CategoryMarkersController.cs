@@ -28,19 +28,17 @@ namespace DCL.MapRenderer.MapLayers.Categories
 
         private readonly IObjectPool<CategoryMarkerObject> objectsPool;
         private readonly CategoryMarkerBuilder builder;
-        private readonly IObjectPool<ClusterMarkerObject> clusterObjectsPool;
-        private readonly ClusterMarkerBuilder clusterBuilder;
         private readonly CategoryIconMappingsSO categoryIconMappings;
         private readonly IPlacesAPIService placesAPIService;
 
-        private readonly Dictionary<Vector2Int, ICategoryMarker> markers = new();
-        private readonly List<IClusterMarker> clusteredMarkers = new();
-        private readonly Dictionary<Vector2Int, List<ICategoryMarker>> spatialHashGrid = new();
+        private readonly Dictionary<Vector2Int, IClusterableMarker> markers = new();
 
         private Vector2Int decodePointer;
         private bool isEnabled;
         private float clusterCellSize;
-
+        private float baseZoom;
+        private float zoom;
+        private ClusterController clusterController;
         public CategoryMarkersController(
             IPlacesAPIService placesAPIService,
             IObjectPool<CategoryMarkerObject> objectsPool,
@@ -57,10 +55,9 @@ namespace DCL.MapRenderer.MapLayers.Categories
             this.placesAPIService = placesAPIService;
             this.objectsPool = objectsPool;
             this.builder = builder;
-            this.clusterObjectsPool = clusterObjectsPool;
-            this.clusterBuilder = clusterBuilder;
             this.categoryIconMappings = categoryIconMappings;
             this.mapLayer = mapLayer;
+            clusterController = new ClusterController(mapCullingController, clusterObjectsPool, clusterBuilder, coordsUtils, mapLayer, categoryIconMappings);
         }
 
         public async UniTask InitializeAsync(CancellationToken cancellationToken)
@@ -92,64 +89,17 @@ namespace DCL.MapRenderer.MapLayers.Categories
 
         public void ApplyCameraZoom(float baseZoom, float zoom)
         {
+            this.baseZoom = baseZoom;
+            this.zoom = zoom;
             clusterCellSize = ClusterUtilities.CalculateCellSize(zoom);
 
-            UpdateClusters();
+            if(isEnabled)
+                clusterController.UpdateClusters(clusterCellSize, baseZoom, zoom, markers);
 
             foreach (ICategoryMarker marker in markers.Values)
                 marker.SetZoom(coordsUtils.ParcelSize, baseZoom, zoom);
 
-            foreach (IClusterMarker clusteredMarker in clusteredMarkers)
-                clusteredMarker.SetZoom(coordsUtils.ParcelSize, baseZoom, zoom);
-        }
-
-        private void UpdateClusters()
-        {
-            if (!isEnabled)
-                return;
-
-            foreach (IClusterMarker clusteredMarker in clusteredMarkers)
-            {
-                mapCullingController.StopTracking(clusteredMarker);
-                clusteredMarker.OnBecameInvisible();
-            }
-            clusteredMarkers.Clear();
-            spatialHashGrid.Clear();
-
-            foreach (var markerEntry in markers)
-            {
-                Vector2Int hashPosition = ClusterUtilities.GetHashPosition(markerEntry.Key, clusterCellSize);
-
-                if (!spatialHashGrid.ContainsKey(hashPosition))
-                    spatialHashGrid[hashPosition] = new List<ICategoryMarker>();
-
-                spatialHashGrid[hashPosition].Add(markerEntry.Value);
-            }
-
-            foreach (var cell in spatialHashGrid)
-            {
-                if (cell.Value.Count > 1)
-                {
-                    Vector3 averagePosition = Vector3.zero;
-                    foreach (ICategoryMarker marker in cell.Value)
-                    {
-                        averagePosition += marker.CurrentPosition;
-                        mapCullingController.StopTracking(marker);
-                        marker.OnBecameInvisible();
-                    }
-                    averagePosition /= cell.Value.Count;
-
-                    var clusterMarker = clusterBuilder(clusterObjectsPool, mapCullingController, coordsUtils);
-                    clusterMarker.SetData(string.Format("{0}", cell.Value.Count), averagePosition);
-                    clusterMarker.SetCategorySprite(categoryIconMappings.GetCategoryImage(mapLayer));
-                    clusterMarker.OnBecameVisible();
-                    clusteredMarkers.Add(clusterMarker);
-                }
-                else
-                {
-                    cell.Value[0].OnBecameVisible();
-                }
-            }
+            clusterController.ApplyCameraZoom(baseZoom, zoom);
         }
 
         public UniTask Disable(CancellationToken cancellationToken)
@@ -160,11 +110,7 @@ namespace DCL.MapRenderer.MapLayers.Categories
                 marker.OnBecameInvisible();
             }
 
-            foreach (IClusterMarker clusteredMarker in clusteredMarkers)
-            {
-                mapCullingController.StopTracking(clusteredMarker);
-                clusteredMarker.OnBecameInvisible();
-            }
+            clusterController.Disable();
 
             isEnabled = false;
             return UniTask.CompletedTask;
@@ -176,7 +122,7 @@ namespace DCL.MapRenderer.MapLayers.Categories
                 mapCullingController.StartTracking(marker, this);
 
             isEnabled = true;
-            UpdateClusters();
+            clusterController.UpdateClusters(clusterCellSize, baseZoom, zoom, markers);
             return UniTask.CompletedTask;
         }
 
