@@ -101,7 +101,7 @@ namespace DCL.Navmap
 
             navmapView.DestinationInfoElement.gameObject.SetActive(false);
 
-            navmapView.WorldsWarningNotificationView.SetText(WORLDS_WARNING_MESSAGE);
+            navmapView.WorldsWarningNotificationView.Text.text = WORLDS_WARNING_MESSAGE;
             navmapView.WorldsWarningNotificationView.Hide();
             mouse = InputSystem.GetDevice<Mouse>();
             navmapFilterPanelController = new NavmapFilterPanelController(mapRenderer, navmapView.LocationView.FiltersPanel);

@@ -20,9 +20,6 @@ namespace DCL.UI
                 Hide();
             });
 
-        public void SetText(string text) =>
-            Text.text = text;
-
         public void Show()
         {
             CanvasGroup.DOFade(1, 0.3f);

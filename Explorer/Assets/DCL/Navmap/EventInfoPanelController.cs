@@ -22,6 +22,7 @@ namespace DCL.Navmap
         private readonly IEventsApiService eventsApiService;
         private readonly ObjectPool<EventScheduleElementView> scheduleElementPool;
         private readonly IUserCalendar userCalendar;
+        private readonly SharePlacesAndEventsContextMenuController shareContextMenu;
         private readonly ImageController thumbnailController;
         private readonly MultiStateButtonController interestedButtonController;
         private readonly List<EventScheduleElementView> scheduleElements = new ();
@@ -36,7 +37,8 @@ namespace DCL.Navmap
             IChatMessagesBus chatMessagesBus,
             IEventsApiService eventsApiService,
             ObjectPool<EventScheduleElementView> scheduleElementPool,
-            IUserCalendar userCalendar)
+            IUserCalendar userCalendar,
+            SharePlacesAndEventsContextMenuController shareContextMenu)
         {
             this.view = view;
             this.navmapBus = navmapBus;
@@ -44,6 +46,7 @@ namespace DCL.Navmap
             this.eventsApiService = eventsApiService;
             this.scheduleElementPool = scheduleElementPool;
             this.userCalendar = userCalendar;
+            this.shareContextMenu = shareContextMenu;
             thumbnailController = new ImageController(view.Thumbnail, webRequestController);
             interestedButtonController = new MultiStateButtonController(view.InterestedButton, true);
             interestedButtonController.OnButtonClicked += SetInterested;
@@ -164,7 +167,8 @@ namespace DCL.Navmap
 
         private void Share()
         {
-            // TODO
+            shareContextMenu.Set(@event!.Value);
+            shareContextMenu.Show(view.SharePivot);
         }
 
         private void JumpIn()

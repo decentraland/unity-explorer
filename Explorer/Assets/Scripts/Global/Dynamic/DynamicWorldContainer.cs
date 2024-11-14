@@ -17,6 +17,7 @@ using DCL.Chat;
 using DCL.Chat.Commands;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
+using DCL.Clipboard;
 using DCL.DebugUtilities;
 using DCL.EventsApi;
 using DCL.Input;
@@ -466,6 +467,7 @@ namespace Global.Dynamic
             var badgesAPIClient = new BadgesAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
 
             IUserCalendar userCalendar = new GoogleUserCalendar(webBrowser);
+            ISystemClipboard clipboard = new UnityClipboard();
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
@@ -574,7 +576,8 @@ namespace Global.Dynamic
                     staticContainer.MemoryCap,
                     bootstrapContainer.WorldVolumeMacBus,
                     eventsApiService,
-                    userCalendar
+                    userCalendar,
+                    clipboard
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
