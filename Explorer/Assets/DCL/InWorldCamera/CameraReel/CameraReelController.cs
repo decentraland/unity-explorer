@@ -67,7 +67,7 @@ namespace DCL.InWorldCamera.CameraReel
                 return;
             }
 
-            await cameraReelGalleryController.ShowWalletGallery(web3IdentityCache.Identity.Address, ct);
+            await cameraReelGalleryController.ShowWalletGallery(web3IdentityCache.Identity.Address, ct, storageStatus);
 
             view.cameraReelGalleryView.gameObject.SetActive(true);
             view.loadingSpinner.SetActive(false);

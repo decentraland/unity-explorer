@@ -249,7 +249,7 @@ namespace DCL.PluginSystem.Global
             CameraReelView cameraReelView = explorePanelView.GetComponentInChildren<CameraReelView>();
             var cameraReelController = new CameraReelController(cameraReelView,
                 new CameraReelGalleryController(cameraReelView.cameraReelGalleryView, this.cameraReelStorageService,
-                    cameraReelScreenshotsStorage, webBrowser, decentralandUrlsSource, inputHandler, cameraReelView.optionsButton),
+                    cameraReelScreenshotsStorage, webBrowser, decentralandUrlsSource, inputHandler, cameraReelView.optionsButton, cameraReelView.contextMenu),
                 cameraReelStorageService,
                 web3IdentityCache);
 

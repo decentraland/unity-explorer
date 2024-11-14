@@ -7,83 +7,52 @@ namespace DCL.InWorldCamera.CameraReel.Components
     public class OptionButtonController : IDisposable
     {
         private readonly OptionButtonView view;
+        private readonly ContextMenuController contextMenuController;
 
-        public event Action<CameraReelResponse, bool> SetPublicRequested;
-        public event Action<CameraReelResponse> ShareToXRequested;
-        public event Action<CameraReelResponse> CopyPictureLinkRequested;
-        public event Action<CameraReelResponse> DownloadRequested;
-        public event Action<CameraReelResponse> DeletePictureRequested;
+        public event Action Hide;
 
-        private CameraReelResponse imageData;
-
-        public OptionButtonController(OptionButtonView view)
+        public OptionButtonController(OptionButtonView view,
+            ContextMenuController contextMenuController)
         {
             this.view = view;
 
             this.view.optionButton.onClick.AddListener(OnOptionClicked);
+            this.contextMenuController = contextMenuController;
 
-            this.view.shareOnX.onClick.AddListener(() =>
-            {
-                ShareToXRequested?.Invoke(imageData);
-                view.ResetState();
-            });
-
-            this.view.copyLink.onClick.AddListener(() =>
-            {
-                CopyPictureLinkRequested?.Invoke(imageData);
-                view.ResetState();
-            });
-
-            this.view.download.onClick.AddListener(() =>
-            {
-                DownloadRequested?.Invoke(imageData);
-                view.ResetState();
-            });
-
-            this.view.delete.onClick.AddListener(() =>
-            {
-                DeletePictureRequested?.Invoke(imageData);
-                view.ResetState();
-            });
+            this.contextMenuController.AnyControlClicked += HideControl;
         }
 
-        public void ResetViewState() => view.ResetState();
+        public bool IsContextMenuOpen() => contextMenuController.IsOpen();
 
-        public GameObject GetViewGameObject() => view.gameObject;
+        public void Show(CameraReelResponse cameraReelResponse, Transform parent, Vector3 offsetPosition = default)
+        {
+            view.transform.SetParent(parent);
+            view.transform.localPosition = offsetPosition;
+            view.gameObject.SetActive(true);
+            contextMenuController.SetImageData(cameraReelResponse);
+        }
 
-        private void SetAsPublicInvoke(bool toggle) =>
-            SetPublicRequested?.Invoke(imageData, toggle);
+        public void HideControl()
+        {
+            view.transform.localScale = Vector3.one;
+            contextMenuController.Hide();
+            Hide?.Invoke();
+            view.gameObject.SetActive(false);
+        }
 
         private void OnOptionClicked()
         {
-            bool active = !view.contextMenu.activeSelf;
-            view.contextMenu.SetActive(active);
-            view.hoverHelper.SetActive(active);
-
-            if (!active) return;
-
-            //Align the "public" toggle status according to the imageData without triggering an "invoke"
-            view.setAsPublic.onValueChanged.RemoveListener(SetAsPublicInvoke);
-            view.setAsPublic.isOn = imageData.isPublic;
-            view.setAsPublic.onValueChanged.AddListener(SetAsPublicInvoke);
+            if (!contextMenuController.IsOpen())
+                contextMenuController.Show(view.gameObject.transform.position);
+            else
+                contextMenuController.Hide();
         }
-
-        public void SetImageData(CameraReelResponse cameraReelResponse) =>
-            imageData = cameraReelResponse;
 
         public void Dispose()
         {
             view.optionButton.onClick.RemoveAllListeners();
-            view.setAsPublic.onValueChanged.RemoveAllListeners();
-            view.shareOnX.onClick.RemoveAllListeners();
-            view.copyLink.onClick.RemoveAllListeners();
-            view.download.onClick.RemoveAllListeners();
-            view.delete.onClick.RemoveAllListeners();
-            SetPublicRequested = null;
-            ShareToXRequested = null;
-            CopyPictureLinkRequested = null;
-            DownloadRequested = null;
-            DeletePictureRequested = null;
+            contextMenuController.Dispose();
+            Hide = null;
         }
     }
 }

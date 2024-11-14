@@ -46,6 +46,7 @@ namespace DCL.InWorldCamera.CameraReel
         private readonly Dictionary<MonthGridView, List<ReelThumbnailView>> reelThumbnailViews = new ();
         private readonly Dictionary<CameraReelResponse, Sprite> reelThumbnailCache = new ();
         private readonly OptionButtonController optionButtonController;
+        private readonly ContextMenuController contextMenuController;
 
         private bool isLoading = false;
         private float previousY = 1f;
@@ -62,7 +63,8 @@ namespace DCL.InWorldCamera.CameraReel
             IWebBrowser webBrowser,
             IDecentralandUrlsSource decentralandUrlsSource,
             IExplorePanelEscapeAction explorePanelEscapeAction,
-            OptionButtonView optionButtonView = null)
+            OptionButtonView optionButtonView = null,
+            ContextMenuView contextMenuView = null)
         {
             this.view = view;
             this.cameraReelStorageService = cameraReelStorageService;
@@ -70,8 +72,11 @@ namespace DCL.InWorldCamera.CameraReel
             this.explorePanelEscapeAction = explorePanelEscapeAction;
             this.view.Disable += OnDisable;
 
-            if (optionButtonView is not null)
-                this.optionButtonController = new OptionButtonController(optionButtonView);
+            if (optionButtonView is not null && contextMenuView is not null)
+            {
+                this.contextMenuController = new ContextMenuController(contextMenuView);
+                this.optionButtonController = new OptionButtonController(optionButtonView, contextMenuController);
+            }
 
             reelGalleryPoolManager = new ReelGalleryPoolManager(view.thumbnailViewPrefab, view.monthGridPrefab, view.unusedThumbnailViewObject,
                 view.unusedGridViewObject, THUMBNAIL_POOL_DEFAULT_CAPACITY, THUMBNAIL_POOL_MAX_SIZE, GRID_POOL_DEFAULT_CAPACITY,
@@ -82,11 +87,11 @@ namespace DCL.InWorldCamera.CameraReel
             view.cancelDeleteIntentBackgroundButton?.onClick.AddListener(() => OnDeletionModalCancelClick(false));
             view.deleteReelButton?.onClick.AddListener(DeleteScreenshot);
 
-            if (this.optionButtonController != null)
+            if (this.contextMenuController != null)
             {
-                this.optionButtonController.SetPublicRequested += (cameraReelRes, publicFlag) => { };
+                this.contextMenuController.SetPublicRequested += (cameraReelRes, publicFlag) => { };
 
-                this.optionButtonController.ShareToXRequested += cameraReelResponse =>
+                this.contextMenuController.ShareToXRequested += cameraReelResponse =>
                 {
                     string description = "Check out what I'm doing in Decentraland right now and join me!".Replace(" ", "%20");
                     string url = $"{decentralandUrlsSource.Url(DecentralandUrl.CameraReelLink)}/{cameraReelResponse.id}";
@@ -96,15 +101,15 @@ namespace DCL.InWorldCamera.CameraReel
                     webBrowser.OpenUrl(xUrl);
                 };
 
-                this.optionButtonController.CopyPictureLinkRequested += cameraReelResponse =>
+                this.contextMenuController.CopyPictureLinkRequested += cameraReelResponse =>
                 {
                     EditorGUIUtility.systemCopyBuffer = $"{decentralandUrlsSource.Url(DecentralandUrl.CameraReelLink)}/{cameraReelResponse.id}";
                     ShowSuccessNotification("Link copied!").Forget();
                 };
 
-                this.optionButtonController.DownloadRequested += cameraReelResponse => { webBrowser.OpenUrl(cameraReelResponse.url); };
+                this.contextMenuController.DownloadRequested += cameraReelResponse => { webBrowser.OpenUrl(cameraReelResponse.url); };
 
-                this.optionButtonController.DeletePictureRequested += cameraReelResponse =>
+                this.contextMenuController.DeletePictureRequested += cameraReelResponse =>
                 {
                     ShowDeleteModal();
                     reelToDelete = cameraReelResponse;
@@ -181,7 +186,7 @@ namespace DCL.InWorldCamera.CameraReel
             reelToDelete = null;
         }
 
-        public async UniTask ShowWalletGallery(string walletAddress, CancellationToken ct)
+        public async UniTask ShowWalletGallery(string walletAddress, CancellationToken ct, CameraReelStorageStatus? storageStatus = null)
         {
             pagedCameraReelManager = new PagedCameraReelManager(cameraReelStorageService, walletAddress, view.paginationLimit);
             loadNextPageCts = loadNextPageCts.SafeRestart();
@@ -189,9 +194,9 @@ namespace DCL.InWorldCamera.CameraReel
             view.scrollRect.verticalNormalizedPosition = 1f;
             previousY = 1f;
 
-            CameraReelStorageStatus storageStatus = await cameraReelStorageService.GetUserGalleryStorageInfoAsync(walletAddress, ct);
+            storageStatus ??= await cameraReelStorageService.GetUserGalleryStorageInfoAsync(walletAddress, ct);
 
-            thumbnailImages = new ReelThumbnailView[storageStatus.MaxScreenshots];
+            thumbnailImages = new ReelThumbnailView[storageStatus.Value.MaxScreenshots];
 
             await LoadMorePage(true, ct);
 

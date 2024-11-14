@@ -21,6 +21,7 @@ namespace DCL.InWorldCamera.CameraReel
 
         [Header("Context menu")]
         public OptionButtonView optionsButton;
+        public ContextMenuView contextMenu;
 
         internal event Action OnMouseEnter;
         internal event Action OnMouseExit;

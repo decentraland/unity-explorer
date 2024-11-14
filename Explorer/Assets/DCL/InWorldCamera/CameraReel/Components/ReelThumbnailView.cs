@@ -45,6 +45,9 @@ namespace DCL.InWorldCamera.CameraReel.Components
             this.cameraReelScreenshotsStorage = cameraReelScreenshotsStorageService;
             this.optionButton = optionsButton;
 
+            if (this.optionButton is not null)
+                this.optionButton.Hide += ToNormalAnimation;
+
             loadImageCts = loadImageCts.SafeRestart();
             thumbnailImage.sprite = null;
             LoadImage(cameraReelScreenshotsStorage, loadImageCts.Token).Forget();
@@ -68,24 +71,26 @@ namespace DCL.InWorldCamera.CameraReel.Components
         public void OnPointerEnter(PointerEventData eventData)
         {
             transform.DOScale(Vector3.one * scaleFactorOnHover, scaleAnimationDuration);
-            if (optionButton != null)
-            {
-                optionButton.GetViewGameObject().transform.SetParent(optionButtonContainer.transform);
-                optionButton.GetViewGameObject().transform.localPosition = optionButtonOffset;
-                optionButton.SetImageData(cameraReelResponse);
-                optionButton.GetViewGameObject().SetActive(true);
-            }
+            optionButton?.Show(cameraReelResponse, optionButtonContainer.transform, optionButtonOffset);
             outline.SetActive(true);
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
-            transform.DOScale(Vector3.one, scaleAnimationDuration);
             if (optionButton != null)
             {
-                optionButton.ResetViewState();
-                optionButton.GetViewGameObject().SetActive(false);
+                if (optionButton.IsContextMenuOpen()) return;
+
+                optionButton.HideControl();
+                ToNormalAnimation();
             }
+            else
+                ToNormalAnimation();
+        }
+
+        private void ToNormalAnimation()
+        {
+            transform.DOScale(Vector3.one, scaleAnimationDuration);
             outline.SetActive(false);
         }
 
@@ -95,6 +100,7 @@ namespace DCL.InWorldCamera.CameraReel.Components
             OnThumbnailClicked = null;
             button.onClick.RemoveAllListeners();
             outline.SetActive(false);
+            optionButton.Hide -= ToNormalAnimation;
         }
     }
 }

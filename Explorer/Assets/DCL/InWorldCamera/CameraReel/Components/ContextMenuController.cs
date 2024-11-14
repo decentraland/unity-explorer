@@ -1,0 +1,155 @@
+using DCL.InWorldCamera.CameraReelStorageService.Schemas;
+using System;
+using UnityEngine;
+
+namespace DCL.InWorldCamera.CameraReel.Components
+{
+    public class ContextMenuController : IDisposable
+    {
+        private enum ContextMenuOpenDirection
+        {
+            BOTTOM_RIGHT,
+            BOTTOM_LEFT,
+            TOP_LEFT,
+            TOP_RIGHT
+        }
+
+        private readonly ContextMenuView view;
+        private readonly RectTransform controlsRectTransform;
+        private readonly Rect backgroundButtonRect;
+
+        public event Action<CameraReelResponse, bool> SetPublicRequested;
+        public event Action<CameraReelResponse> ShareToXRequested;
+        public event Action<CameraReelResponse> CopyPictureLinkRequested;
+        public event Action<CameraReelResponse> DownloadRequested;
+        public event Action<CameraReelResponse> DeletePictureRequested;
+
+        public event Action AnyControlClicked;
+
+        private CameraReelResponse imageData;
+
+        public ContextMenuController(ContextMenuView view)
+        {
+            this.view = view;
+
+            this.view.backgroundCloseButton.onClick.AddListener(Hide);
+            this.view.backgroundCloseButton.onClick.AddListener(() => AnyControlClicked?.Invoke());
+
+            this.controlsRectTransform = this.view.controlsParent.GetComponent<RectTransform>();
+            this.backgroundButtonRect = this.view.backgroundCloseButton.GetComponent<RectTransform>().GetWorldRect();
+
+            view.shareOnX.onClick.AddListener(() =>
+            {
+                ShareToXRequested?.Invoke(imageData);
+                AnyControlClicked?.Invoke();
+            });
+
+            view.copyLink.onClick.AddListener(() =>
+            {
+                CopyPictureLinkRequested?.Invoke(imageData);
+                AnyControlClicked?.Invoke();
+            });
+
+            view.download.onClick.AddListener(() =>
+            {
+                DownloadRequested?.Invoke(imageData);
+                AnyControlClicked?.Invoke();
+            });
+
+            view.delete.onClick.AddListener(() =>
+            {
+                DeletePictureRequested?.Invoke(imageData);
+                AnyControlClicked?.Invoke();
+            });
+        }
+
+        private void SetAsPublicInvoke(bool toggle) =>
+            SetPublicRequested?.Invoke(imageData, toggle);
+
+        public void Show(Vector3 anchorPosition)
+        {
+            //Align the "public" toggle status according to the imageData without triggering an "invoke"
+            view.setAsPublic.onValueChanged.RemoveListener(SetAsPublicInvoke);
+            view.setAsPublic.isOn = imageData.isPublic;
+            view.setAsPublic.onValueChanged.AddListener(SetAsPublicInvoke);
+
+            view.controlsParent.transform.position = GetControlsPosition(anchorPosition);
+
+            view.gameObject.SetActive(true);
+        }
+
+        private Vector3 GetOffsetByDirection(ContextMenuOpenDirection direction)
+        {
+            Vector3 result = direction switch
+            {
+                ContextMenuOpenDirection.BOTTOM_RIGHT => view.offsetFromTarget,
+                ContextMenuOpenDirection.BOTTOM_LEFT => new Vector3(-view.offsetFromTarget.x - controlsRectTransform.rect.width, view.offsetFromTarget.y, view.offsetFromTarget.z),
+                ContextMenuOpenDirection.TOP_RIGHT => new Vector3(view.offsetFromTarget.x, -view.offsetFromTarget.y + controlsRectTransform.rect.height, view.offsetFromTarget.z),
+                ContextMenuOpenDirection.TOP_LEFT => new Vector3(-view.offsetFromTarget.x - controlsRectTransform.rect.width, -view.offsetFromTarget.y + controlsRectTransform.rect.height, view.offsetFromTarget.z),
+                _ => Vector3.zero
+            };
+
+            return result;
+        }
+
+        private Vector3 GetControlsPosition(Vector3 anchorPosition)
+        {
+            Vector3 position = anchorPosition;
+            position.x += controlsRectTransform.rect.width / 2;
+            position.y -= controlsRectTransform.rect.height / 2;
+
+            Vector3 newPosition = position + GetOffsetByDirection(ContextMenuOpenDirection.BOTTOM_RIGHT);
+            foreach (ContextMenuOpenDirection enumVal in Enum.GetValues(typeof(ContextMenuOpenDirection)))
+            {
+                Vector3 currentPosition = position + GetOffsetByDirection(enumVal);
+                if (IsRectFullyContained(backgroundButtonRect, GetProjectedRect(currentPosition)))
+                {
+                    newPosition = currentPosition;
+                    break;
+                }
+            }
+
+            return newPosition;
+        }
+
+        private bool IsRectFullyContained(Rect outerRect, Rect innerRect) =>
+            outerRect.xMin <= innerRect.xMin &&
+            outerRect.xMax >= innerRect.xMax &&
+            outerRect.yMin <= innerRect.yMin &&
+            outerRect.yMax >= innerRect.yMax;
+
+        private Rect GetProjectedRect(Vector3 newPosition)
+        {
+            Vector3 originalPosition = view.controlsParent.transform.position;
+            view.controlsParent.transform.position = newPosition;
+            Rect rect = controlsRectTransform.GetWorldRect();
+            view.controlsParent.transform.position = originalPosition;
+
+            return rect;
+        }
+
+        public void Hide() =>
+            view.gameObject.SetActive(false);
+
+        public bool IsOpen() =>
+            view.gameObject.activeSelf;
+
+        public void SetImageData(CameraReelResponse cameraReelResponse) =>
+            imageData = cameraReelResponse;
+
+        public void Dispose()
+        {
+            view.backgroundCloseButton.onClick.RemoveAllListeners();
+            view.setAsPublic.onValueChanged.RemoveAllListeners();
+            view.shareOnX.onClick.RemoveAllListeners();
+            view.copyLink.onClick.RemoveAllListeners();
+            view.download.onClick.RemoveAllListeners();
+            view.delete.onClick.RemoveAllListeners();
+            SetPublicRequested = null;
+            ShareToXRequested = null;
+            CopyPictureLinkRequested = null;
+            DownloadRequested = null;
+            DeletePictureRequested = null;
+        }
+    }
+}
