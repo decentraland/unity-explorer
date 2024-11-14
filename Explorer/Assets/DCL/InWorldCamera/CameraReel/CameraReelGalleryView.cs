@@ -23,7 +23,7 @@ namespace DCL.InWorldCamera.CameraReel
 
         [Header("Configuration")]
         public int paginationLimit = 100;
-        [SerializeField] internal float loadMoreScrollThreshold = 0.4f;
+        [SerializeField] internal int loadMoreCounterThreshold = 12;
         [SerializeField] internal float errorSuccessToastDuration = 3f;
         [SerializeField] internal float deleteModalAnimationDuration = 0.3f;
 

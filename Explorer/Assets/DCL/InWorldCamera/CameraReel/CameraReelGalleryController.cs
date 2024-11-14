@@ -46,6 +46,7 @@ namespace DCL.InWorldCamera.CameraReel
         private readonly Dictionary<CameraReelResponse, Sprite> reelThumbnailCache = new ();
         private readonly OptionButtonController optionButtonController;
         private readonly ContextMenuController contextMenuController;
+        private readonly Rect elementMaskRect;
 
         private bool isLoading = false;
         private bool isDragging = false;
@@ -75,6 +76,7 @@ namespace DCL.InWorldCamera.CameraReel
             this.view.scrollRectDragHandler.EndDrag += ScrollEndDrag;
             this.view.scrollBarDragHandler.BeginDrag += ScrollBeginDrag;
             this.view.scrollBarDragHandler.EndDrag += ScrollEndDrag;
+            this.elementMaskRect = this.view.elementMask.GetWorldRect();
 
             if (optionButtonView is not null && contextMenuView is not null)
             {
@@ -251,14 +253,13 @@ namespace DCL.InWorldCamera.CameraReel
                     thumbnailImages[currentSize + i] = thumbnailViews[i];
 
                 currentSize += thumbnailViews.Count;
-                endVisible = currentSize - 1;
             }
+            endVisible = currentSize - 1;
 
             await UniTask.NextFrame(ct);
 
             if (firstLoading)
-                for (int i = beginVisible; i < currentSize && ViewIntersectsImage(thumbnailImages[i].thumbnailImage); i++)
-                    EnableThumbnailImage(thumbnailImages[i]);
+                ResetThumbnailsVisibility();
             else
                 CheckElementsVisibility(ScrollDirection.UP);
 
@@ -276,15 +277,33 @@ namespace DCL.InWorldCamera.CameraReel
 
         private void OnScrollRectValueChanged(Vector2 value)
         {
-            CheckNeedsToLoadMore();
             CheckElementsVisibility(value.y > previousY ? ScrollDirection.UP : ScrollDirection.DOWN);
+            CheckNeedsToLoadMore();
 
             previousY = value.y;
+
+            if (endVisible < beginVisible)
+                ResetThumbnailsVisibility();
+        }
+
+        private void ResetThumbnailsVisibility()
+        {
+            beginVisible = -1;
+            for (int i = 0; i < currentSize; i++)
+                if (ViewIntersectsImage(thumbnailImages[i].thumbnailImage))
+                {
+                    if (beginVisible < 0)
+                        beginVisible = i;
+
+                    EnableThumbnailImage(thumbnailImages[i]);
+                    endVisible = i;
+                } else
+                    DisableThumbnailImage(thumbnailImages[i]);
         }
 
         private void CheckNeedsToLoadMore()
         {
-            if (currentSize - endVisible < 12 && !pagedCameraReelManager.AllImagesLoaded && !isLoading && !isDragging)
+            if (currentSize - endVisible < view.loadMoreCounterThreshold && !pagedCameraReelManager.AllImagesLoaded && !isLoading && !isDragging)
                 LoadMorePage(false, loadNextPageCts.Token).Forget();
         }
 
@@ -350,10 +369,9 @@ namespace DCL.InWorldCamera.CameraReel
 
         private bool ViewIntersectsImage(Image image)
         {
-            var viewRect = this.view.elementMask.GetWorldRect();
             var img = image.rectTransform.GetWorldRect();
 
-            return img.yMax >= viewRect.yMin && img.yMin < viewRect.yMax;
+            return img.yMax >= elementMaskRect.yMin && img.yMin < elementMaskRect.yMax;
         }
 
         private void ReleaseGridView(MonthGridView monthGridView)
