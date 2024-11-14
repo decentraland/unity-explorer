@@ -1,4 +1,4 @@
-﻿#define DEBUG_PRIORITIES
+﻿#define DEBUG_VIDEO_PRIORITIES
 
 using Arch.Core;
 using Arch.System;
@@ -48,10 +48,10 @@ namespace DCL.SDKComponents.MediaStream
             {
                 float horizontalFOV = Camera.VerticalToHorizontalFieldOfView(exposedCameraData.CinemachineBrain.OutputCamera.fieldOfView, exposedCameraData.CinemachineBrain.OutputCamera.aspect);
                 UpdateVideoPrioritiesQuery(World, exposedCameraData.CinemachineBrain.OutputCamera.fieldOfView, horizontalFOV, exposedCameraData.WorldPosition.Value, exposedCameraData.WorldRotation.Value);
-                UpdateVideoVisibilityDependingOnPriorityQuery(World, (int)maxSimultaneousVideosSetting.Value);
+                UpdateVideoStateDependingOnPriorityQuery(World, (int)maxSimultaneousVideosSetting.Value);
             }
 
-#if DEBUG_PRIORITIES
+#if DEBUG_VIDEO_PRIORITIES
 
             Debug.Log("<color=cyan>" + sortedVideoPriorities.Count + "</color>");
 
@@ -76,7 +76,7 @@ namespace DCL.SDKComponents.MediaStream
                                                                             WantsToPlay = mediaPlayer.IsPlaying,
                                                                             Size = videoMeshLocalVerticalSize};
 
-#if DEBUG_PRIORITIES
+#if DEBUG_VIDEO_PRIORITIES
             GameObject prioritySign = CreateDebugPrioritySign();
             prioritySign.transform.position = rendererComponent.MeshRenderer.bounds.max;
             newVideoStateByPriority.DebugPrioritySign = prioritySign.GetComponent<MeshRenderer>();
@@ -88,46 +88,69 @@ namespace DCL.SDKComponents.MediaStream
         [Query]
         private void UpdateVideoPriorities([Data] float cameraFov, [Data] float cameraHorizontalFov,
                                             [Data] Vector3 cameraWorldPosition, [Data] Quaternion cameraWorldRotation,
+                                            in MediaPlayerComponent mediaPlayer,
                                             ref VideoStateByPriorityComponent videoStateByPriority, in TransformComponent transform)
         {
 
-#if DEBUG_PRIORITIES
+#if DEBUG_VIDEO_PRIORITIES
             videoStateByPriority.DebugPrioritySign.material.color = Color.black;
 #endif
-
-            if(!videoStateByPriority.WantsToPlay)
-                return;
-
-            float dotProduct = Vector3.Dot((transform.Transform.position - cameraWorldPosition).normalized, cameraWorldRotation * Vector3.forward);
-
-            // Skips videos that are out of the camera
-            if (Mathf.Acos(dotProduct) * Mathf.Rad2Deg <= cameraHorizontalFov * 0.5f)
+            // If the state of the video was changed manually...
+            if (videoStateByPriority.IsPlaying != mediaPlayer.MediaPlayer.Control.IsPlaying())
             {
-                float distance = Mathf.Clamp((transform.Transform.position - cameraWorldPosition).magnitude, 0.0f, MAX_DISTANCE);
-                float screenSize = Mathf.Clamp01(CalculateCullRelativeHeight(cameraFov, videoStateByPriority.Size, Mathf.Sqrt(distance)));
-
-                videoStateByPriority.Score = (MAX_DISTANCE - distance) / MAX_DISTANCE * videoPrioritizationSettings.DistanceWeight +
-                                             screenSize * videoPrioritizationSettings.SizeInScreenWeight +
-                                             dotProduct * videoPrioritizationSettings.AngleWeight;
-
-#if DEBUG_PRIORITIES
-                Debug.Log($"VIDEO ENTITY[{videoStateByPriority.Entity.Id}] Dist: {distance} Size:{videoStateByPriority.Size} / {screenSize} Dot:{dotProduct} SCORE:{videoStateByPriority.Score}");
+                if (mediaPlayer.MediaPlayer.Control.IsPlaying())
+                {
+                    videoStateByPriority.WantsToPlay = true;
+                    videoStateByPriority.MediaPlayStartTime = Time.realtimeSinceStartup;
+                    
+#if DEBUG_VIDEO_PRIORITIES
+                    Debug.Log("Video: PLAYED MANUALLY");
 #endif
 
-                // Sorts the playing video list by score
-                int i = 0;
-
-                for (; i < sortedVideoPriorities.Count; ++i)
-                {
-                    if (sortedVideoPriorities[i].Score <= videoStateByPriority.Score) { break; }
                 }
+                else
+                {
+                    videoStateByPriority.WantsToPlay = false;
 
-                if (i <= sortedVideoPriorities.Count) { sortedVideoPriorities.Insert(i, videoStateByPriority); }
+#if DEBUG_VIDEO_PRIORITIES
+                    Debug.Log("Video: PAUSED MANUALLY");
+#endif
+                }
+            }
+
+            if (videoStateByPriority.WantsToPlay)
+            {
+                float dotProduct = Vector3.Dot((transform.Transform.position - cameraWorldPosition).normalized, cameraWorldRotation * Vector3.forward);
+
+                // Skips videos that are out of the camera
+                if (Mathf.Acos(dotProduct) * Mathf.Rad2Deg <= cameraHorizontalFov * 0.5f)
+                {
+                    float distance = Mathf.Clamp((transform.Transform.position - cameraWorldPosition).magnitude, 0.0f, MAX_DISTANCE);
+                    float screenSize = Mathf.Clamp01(CalculateCullRelativeHeight(cameraFov, videoStateByPriority.Size, Mathf.Sqrt(distance)));
+
+                    videoStateByPriority.Score = (MAX_DISTANCE - distance) / MAX_DISTANCE * videoPrioritizationSettings.DistanceWeight +
+                                                 screenSize * videoPrioritizationSettings.SizeInScreenWeight +
+                                                 dotProduct * videoPrioritizationSettings.AngleWeight;
+
+#if DEBUG_VIDEO_PRIORITIES
+                    Debug.Log($"VIDEO ENTITY[{videoStateByPriority.Entity.Id}] Dist: {distance} Size:{videoStateByPriority.Size} / {screenSize} Dot:{dotProduct} SCORE:{videoStateByPriority.Score}");
+#endif
+
+                    // Sorts the playing video list by score
+                    int i = 0;
+
+                    for (; i < sortedVideoPriorities.Count; ++i)
+                    {
+                        if (sortedVideoPriorities[i].Score <= videoStateByPriority.Score) { break; }
+                    }
+
+                    if (i <= sortedVideoPriorities.Count) { sortedVideoPriorities.Insert(i, videoStateByPriority); }
+                }
             }
         }
 
         [Query]
-        private void UpdateVideoVisibilityDependingOnPriority([Data] int maxSimultaneousVideos, ref VideoStateByPriorityComponent videoStateByPriority, ref MediaPlayerComponent mediaPlayer)
+        private void UpdateVideoStateDependingOnPriority([Data] int maxSimultaneousVideos, ref VideoStateByPriorityComponent videoStateByPriority, ref MediaPlayerComponent mediaPlayer)
         {
             bool mustPlay = false;
             int playingVideoCount = Mathf.Min(maxSimultaneousVideos, sortedVideoPriorities.Count);
@@ -158,7 +181,7 @@ namespace DCL.SDKComponents.MediaStream
 
                 videoStateByPriority.IsPlaying = true;
 
-#if DEBUG_PRIORITIES
+#if DEBUG_VIDEO_PRIORITIES
                 Debug.Log("VIDEO PLAYED BY PRIORITY: " + videoStateByPriority.Entity.Id + " t:" + seekTime);
 #endif
             }
@@ -171,13 +194,13 @@ namespace DCL.SDKComponents.MediaStream
 
                 videoStateByPriority.IsPlaying = false;
 
-#if DEBUG_PRIORITIES
+#if DEBUG_VIDEO_PRIORITIES
                 Debug.Log("VIDEO PAUSED BY PRIORITY: " + videoStateByPriority.Entity.Id);
 #endif
             }
         }
 
-#if DEBUG_PRIORITIES
+#if DEBUG_VIDEO_PRIORITIES
 
         private static GameObject CreateDebugPrioritySign()
         {

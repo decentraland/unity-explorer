@@ -39,6 +39,28 @@ namespace DCL.SDKComponents.MediaStream
             }
         }
 
+        public static MediaPlayer UpdatePlayback(this MediaPlayer mediaPlayer, bool hasPlaying, bool playing)
+        {
+            if (!mediaPlayer.MediaOpened) return mediaPlayer;
+
+            IMediaControl control = mediaPlayer.Control;
+
+            if (hasPlaying)
+            {
+                if (playing != control.IsPlaying())
+                {
+                    if (playing)
+                        control.Play();
+                    else
+                        control.Pause();
+                }
+            }
+            else if (control.IsPlaying())
+                control.Stop();
+
+            return mediaPlayer;
+        }
+
         public static void SetPlaybackProperties(this MediaPlayer mediaPlayer, PBVideoPlayer sdkVideoPlayer)
         {
             if (!mediaPlayer.MediaOpened) return;

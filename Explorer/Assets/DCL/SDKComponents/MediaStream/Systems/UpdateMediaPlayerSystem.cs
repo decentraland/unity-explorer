@@ -80,7 +80,7 @@ namespace DCL.SDKComponents.MediaStream
         }
 
         [Query]
-        private void UpdateAudioStream(ref MediaPlayerComponent component, PBAudioStream sdkComponent, ref VideoStateByPriorityComponent videoStateByPriority)
+        private void UpdateAudioStream(ref MediaPlayerComponent component, PBAudioStream sdkComponent)
         {
             if (!frameTimeBudget.TrySpendBudget()) return;
 
@@ -90,12 +90,12 @@ namespace DCL.SDKComponents.MediaStream
                 component.MediaPlayer.UpdateVolume(sceneStateProvider.IsCurrent, sdkComponent.HasVolume, actualVolume);
             }
 
-            HandleComponentChange(ref component, sdkComponent, ref videoStateByPriority, sdkComponent.Url, sdkComponent.HasPlaying, sdkComponent.Playing);
+            HandleComponentChange(ref component, sdkComponent, sdkComponent.Url, sdkComponent.HasPlaying, sdkComponent.Playing);
             ConsumePromise(ref component, sdkComponent.HasPlaying && sdkComponent.Playing);
         }
 
         [Query]
-        private void UpdateVideoStream(ref MediaPlayerComponent component, PBVideoPlayer sdkComponent, ref VideoStateByPriorityComponent videoStateByPriority)
+        private void UpdateVideoStream(ref MediaPlayerComponent component, PBVideoPlayer sdkComponent)
         {
             if (!frameTimeBudget.TrySpendBudget()) return;
 
@@ -105,7 +105,7 @@ namespace DCL.SDKComponents.MediaStream
                 component.MediaPlayer.UpdateVolume(sceneStateProvider.IsCurrent, sdkComponent.HasVolume, actualVolume);
             }
 
-            HandleComponentChange(ref component, sdkComponent, ref videoStateByPriority, sdkComponent.Src, sdkComponent.HasPlaying, sdkComponent.Playing, sdkComponent, static (mediaPlayer, sdk) => mediaPlayer.UpdatePlaybackProperties(sdk));
+            HandleComponentChange(ref component, sdkComponent, sdkComponent.Src, sdkComponent.HasPlaying, sdkComponent.Playing, sdkComponent, static (mediaPlayer, sdk) => mediaPlayer.UpdatePlaybackProperties(sdk));
             ConsumePromise(ref component, false, sdkComponent, static (mediaPlayer, sdk) => mediaPlayer.SetPlaybackProperties(sdk));
         }
 
@@ -129,8 +129,7 @@ namespace DCL.SDKComponents.MediaStream
                 assignedTexture.Texture.Asset.ResizeTexture(to: avText); // will be updated on the next frame/update-loop
         }
 
-        private void HandleComponentChange(ref MediaPlayerComponent component, IDirtyMarker sdkComponent, ref VideoStateByPriorityComponent videoStateByPriority,
-            string url, bool hasPlaying, bool isPlaying,
+        private void HandleComponentChange(ref MediaPlayerComponent component, IDirtyMarker sdkComponent, string url, bool hasPlaying, bool isPlaying,
             PBVideoPlayer sdkVideoComponent = null, Action<MediaPlayer, PBVideoPlayer> onPlaybackUpdate = null)
         {
             if (!sdkComponent.IsDirty) return;
@@ -149,46 +148,13 @@ namespace DCL.SDKComponents.MediaStream
             }
             else if (component.State != VideoState.VsError)
             {
-                UpdatePlayback(component.MediaPlayer, ref videoStateByPriority, hasPlaying, isPlaying);
+                component.MediaPlayer.UpdatePlayback(hasPlaying, isPlaying);
 
                 if (sdkVideoComponent != null)
                     onPlaybackUpdate?.Invoke(component.MediaPlayer, sdkVideoComponent);
             }
 
             sdkComponent.IsDirty = false;
-        }
-
-        public static void UpdatePlayback(in MediaPlayer mediaPlayer, ref VideoStateByPriorityComponent videoStateByPriority, bool hasPlaying, bool playing)
-        {
-            if (!mediaPlayer.MediaOpened) return;
-
-            IMediaControl control = mediaPlayer.Control;
-
-            if (hasPlaying)
-            {
-                if (playing != control.IsPlaying())
-                {
-                    if (playing)
-                    {
-                        control.Play();
-                        videoStateByPriority.WantsToPlay = true;
-                        videoStateByPriority.MediaPlayStartTime = Time.realtimeSinceStartup;
-                        Debug.Log("xxx: PLAY");
-                    }
-                    else
-                    {
-                        control.Pause();
-                        videoStateByPriority.WantsToPlay = false;
-                        Debug.Log("xxx: PAUSE");
-                    }
-                }
-            }
-            else if (control.IsPlaying())
-            {
-                control.Stop();
-                videoStateByPriority.WantsToPlay = false;
-                Debug.Log("xxx: STOP");
-            }
         }
 
         private static void ConsumePromise(ref MediaPlayerComponent component, bool autoPlay, PBVideoPlayer sdkVideoComponent = null, Action<MediaPlayer, PBVideoPlayer> onOpened = null)
