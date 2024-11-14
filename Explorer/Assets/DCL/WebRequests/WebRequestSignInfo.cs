@@ -19,11 +19,11 @@ namespace DCL.WebRequests
             this.stringToSign = stringToSign;
         }
 
-        public static WebRequestSignInfo? NewFromRaw(string? rawToSign, string url, ulong unixTimestamp, string method)
-        {
-            if (rawToSign == null)
-                return null;
+        public static WebRequestSignInfo? NewFromUrl(string url, ulong unixTimestamp, string method) =>
+            NewFromRaw(string.Empty, url, unixTimestamp, method);
 
+        public static WebRequestSignInfo? NewFromRaw(string rawToSign, string url, ulong unixTimestamp, string method)
+        {
             string path = new Uri(url).AbsolutePath;
             string payload = $"{method}:{path}:{unixTimestamp}:{rawToSign}".ToLower();
             return new WebRequestSignInfo(payload);
