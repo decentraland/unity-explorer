@@ -3,11 +3,12 @@ using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Utilities;
 using ECS.Prioritization.Components;
+using System;
 using Utility.Types;
 
 namespace Global.Dynamic.TeleportOperations
 {
-    public class RemoveCameraSamplingDataTeleportOperation : ITeleportOperation
+    public class RemoveCameraSamplingDataTeleportOperation : TeleportOperationBase
     {
         private readonly World globalWorld;
         private readonly ObjectProxy<Entity> cameraEntity;
@@ -18,11 +19,11 @@ namespace Global.Dynamic.TeleportOperations
             this.cameraEntity = cameraEntity;
         }
 
-        public UniTask<Result> ExecuteAsync(TeleportParams teleportParams, CancellationToken ct)
+        protected override UniTask ExecuteAsyncInternal(TeleportParams teleportParams, CancellationToken ct)
         {
             // By removing the CameraSamplingData, we stop the ring calculation
             globalWorld.Remove<CameraSamplingData>(cameraEntity.Object);
-            return UniTask.FromResult(Result.SuccessResult());
+            return UniTask.CompletedTask;
         }
     }
 }

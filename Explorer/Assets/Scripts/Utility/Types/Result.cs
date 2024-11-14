@@ -1,3 +1,5 @@
+using System;
+
 namespace Utility.Types
 {
     public readonly struct Result
@@ -16,6 +18,9 @@ namespace Utility.Types
 
         public static Result ErrorResult(string errorMessage) =>
             new (false, errorMessage);
+
+        public static Result CancelledResult() =>
+            new (false, nameof(OperationCanceledException));
     }
 
     public readonly struct Result<T>

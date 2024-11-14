@@ -49,6 +49,7 @@ namespace DCL.LOD.Systems
 
         private const int LOD_LEVELS = 2;
         private const int LODGROUP_POOL_PREWARM_VALUE = 500;
+
         private LODContainer(IAssetsProvisioner assetsProvisioner)
         {
             this.assetsProvisioner = assetsProvisioner;

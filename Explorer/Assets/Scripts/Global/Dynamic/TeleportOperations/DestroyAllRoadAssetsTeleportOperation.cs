@@ -1,33 +1,33 @@
 using System.Threading;
 using Arch.Core;
 using Cysharp.Threading.Tasks;
+using DCL.LOD;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Roads.Components;
-using DCL.Roads.Systems;
+using System;
 using Utility.Types;
 
 namespace Global.Dynamic.TeleportOperations
 {
-    public class DestroyAllRoadAssetsTeleportOperation : ITeleportOperation
+    public class DestroyAllRoadAssetsTeleportOperation : TeleportOperationBase
     {
         private readonly World globalWorld;
-        private readonly RoadPlugin roadPlugin;
+        private readonly RoadAssetsPool roadAssetsPool;
         private readonly IPerformanceBudget unlimitedFPSBudget;
 
-        public DestroyAllRoadAssetsTeleportOperation(World globalWorld, RoadPlugin roadPlugin)
+        public DestroyAllRoadAssetsTeleportOperation(World globalWorld, RoadAssetsPool roadAssetsPool)
         {
             this.globalWorld = globalWorld;
-            this.roadPlugin = roadPlugin;
+            this.roadAssetsPool = roadAssetsPool;
             unlimitedFPSBudget = new NullPerformanceBudget();
         }
 
-        public UniTask<Result> ExecuteAsync(TeleportParams teleportParams, CancellationToken ct)
+        protected override UniTask ExecuteAsyncInternal(TeleportParams teleportParams, CancellationToken ct)
         {
-            // Releases all the road assets, returning them to the pool and then destroys all the road assets
-            globalWorld.Query(new QueryDescription().WithAll<RoadInfo>(), (entity) => globalWorld.Get<RoadInfo>(entity).Dispose(roadPlugin.RoadAssetPool));
-            roadPlugin.RoadAssetPool.Unload(unlimitedFPSBudget, int.MaxValue);
+            globalWorld.Query(new QueryDescription().WithAll<RoadInfo>(), entity => globalWorld.Get<RoadInfo>(entity).Dispose(roadAssetsPool));
+            roadAssetsPool.Unload(unlimitedFPSBudget, int.MaxValue);
 
-            return UniTask.FromResult(Result.SuccessResult());
+            return UniTask.CompletedTask;
         }
     }
 }

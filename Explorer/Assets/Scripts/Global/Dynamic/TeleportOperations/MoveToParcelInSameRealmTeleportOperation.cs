@@ -1,14 +1,14 @@
 using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using DCL.AsyncLoadReporting;
 using DCL.UserInAppInitializationFlow;
 using ECS.SceneLifeCycle.Realm;
 using Utility.Types;
 
-
 namespace Global.Dynamic.TeleportOperations
 {
-    public class MoveToParcelInSameRealmTeleportOperation : ITeleportOperation
+    public class MoveToParcelInSameRealmTeleportOperation : TeleportOperationBase
     {
         private readonly IRealmNavigator realmNavigator;
 
@@ -17,25 +17,20 @@ namespace Global.Dynamic.TeleportOperations
             this.realmNavigator = realmNavigator;
         }
 
-        public async UniTask<Result> ExecuteAsync(TeleportParams teleportParams, CancellationToken ct)
+        protected override async UniTask ExecuteAsyncInternal(TeleportParams teleportParams, CancellationToken ct)
         {
-            try
-            {
-                float finalizationProgress =
-                    teleportParams.LoadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.PlayerTeleporting);
-                var teleportLoadReport
-                    = teleportParams.ParentReport.CreateChildReport(finalizationProgress);
-                var waitForSceneReadiness =
-                    await realmNavigator.TeleportToParcelAsync(teleportParams.CurrentDestinationParcel,
-                        teleportLoadReport, ct);
-                await waitForSceneReadiness;
-                teleportParams.ParentReport.SetProgress(finalizationProgress);
-                return Result.SuccessResult();
-            }
-            catch (Exception e)
-            {
-                return Result.ErrorResult("Error while teleporting in same realm");
-            }
+            float finalizationProgress =
+                teleportParams.LoadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.PlayerTeleporting);
+
+            AsyncLoadProcessReport teleportLoadReport
+                = teleportParams.ParentReport.CreateChildReport(finalizationProgress);
+
+            UniTask waitForSceneReadiness =
+                await realmNavigator.TeleportToParcelAsync(teleportParams.CurrentDestinationParcel,
+                    teleportLoadReport, ct);
+
+            await waitForSceneReadiness;
+            teleportParams.ParentReport.SetProgress(finalizationProgress);
         }
     }
 }

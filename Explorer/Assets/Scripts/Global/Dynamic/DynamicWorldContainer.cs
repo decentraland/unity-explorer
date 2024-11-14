@@ -339,7 +339,7 @@ namespace Global.Dynamic
                 remoteEntities,
                 bootstrapContainer.DecentralandUrlsSource,
                 globalWorld,
-                container.LODContainer.RoadPlugin,
+                container.LODContainer.RoadPlugin.RoadAssetPool, // TODO Plugins should not expose dependencies!
                 genesisTerrain,
                 worldsTerrain,
                 satelliteView,

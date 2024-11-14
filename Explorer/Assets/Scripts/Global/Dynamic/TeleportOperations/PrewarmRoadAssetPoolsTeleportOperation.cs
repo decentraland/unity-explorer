@@ -1,28 +1,26 @@
 using System.Threading;
 using Cysharp.Threading.Tasks;
-using DCL.Roads.Systems;
-using Utility.Types;
+using DCL.LOD;
 
 namespace Global.Dynamic.TeleportOperations
 {
-    public class PrewarmRoadAssetPoolsTeleportOperation : ITeleportOperation
+    public class PrewarmRoadAssetPoolsTeleportOperation : TeleportOperationBase
     {
         private readonly IGlobalRealmController realmController;
-        private readonly RoadPlugin roadPlugin;
+        private readonly RoadAssetsPool roadAssetsPool;
 
-        public PrewarmRoadAssetPoolsTeleportOperation(IGlobalRealmController realmController, RoadPlugin roadPlugin)
+        public PrewarmRoadAssetPoolsTeleportOperation(IGlobalRealmController realmController, RoadAssetsPool roadAssetsPool)
         {
-            this.roadPlugin = roadPlugin;
+            this.roadAssetsPool = roadAssetsPool;
             this.realmController = realmController;
         }
 
-        public UniTask<Result> ExecuteAsync(TeleportParams teleportParams, CancellationToken ct)
+        protected override UniTask ExecuteAsyncInternal(TeleportParams teleportParams, CancellationToken ct)
         {
-            // When Genesis is loaded, road asset pools must pre-allocate some instances to reduce allocations while playing
             if(!realmController.RealmData.ScenesAreFixed) // Is Genesis
-                roadPlugin.RoadAssetPool.Prewarm();
+                roadAssetsPool.Prewarm();
 
-            return UniTask.FromResult(Result.SuccessResult());
+            return UniTask.CompletedTask;
         }
     }
 }

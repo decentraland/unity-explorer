@@ -1,17 +1,14 @@
-using System;
 using System.Threading;
 using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Profiles.Entities;
-using Utility.Types;
 
 namespace Global.Dynamic.TeleportOperations
 {
-    public class RemoveRemoteEntitiesTeleportOperation : ITeleportOperation
+    public class RemoveRemoteEntitiesTeleportOperation : TeleportOperationBase
     {
         private readonly IRemoteEntities remoteEntities;
         private readonly World globalWorld;
-
 
         public RemoveRemoteEntitiesTeleportOperation(IRemoteEntities remoteEntities, World globalWorld)
         {
@@ -19,17 +16,10 @@ namespace Global.Dynamic.TeleportOperations
             this.globalWorld = globalWorld;
         }
 
-        public UniTask<Result> ExecuteAsync(TeleportParams teleportParams, CancellationToken ct)
+        protected override UniTask ExecuteAsyncInternal(TeleportParams teleportParams, CancellationToken ct)
         {
-            try
-            {
-                remoteEntities.ForceRemoveAll(globalWorld);
-                return UniTask.FromResult(Result.SuccessResult());
-            }
-            catch (Exception e)
-            {
-                return UniTask.FromResult(Result.ErrorResult("Failed to remove remote entities"));
-            }
+            remoteEntities.ForceRemoveAll(globalWorld);
+            return UniTask.CompletedTask;
         }
     }
 }
