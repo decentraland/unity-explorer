@@ -6,7 +6,6 @@ using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DG.Tweening;
-using JetBrains.Annotations;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -49,6 +48,7 @@ namespace DCL.InWorldCamera.CameraReel
         private readonly ContextMenuController contextMenuController;
 
         private bool isLoading = false;
+        private bool isDragging = false;
         private float previousY = 1f;
         private CancellationTokenSource loadNextPageCts = new ();
         private ReelThumbnailView[] thumbnailImages;
@@ -71,6 +71,10 @@ namespace DCL.InWorldCamera.CameraReel
             this.cameraReelScreenshotsStorage = cameraReelScreenshotsStorage;
             this.explorePanelEscapeAction = explorePanelEscapeAction;
             this.view.Disable += OnDisable;
+            this.view.scrollRectDragHandler.BeginDrag += ScrollBeginDrag;
+            this.view.scrollRectDragHandler.EndDrag += ScrollEndDrag;
+            this.view.scrollBarDragHandler.BeginDrag += ScrollBeginDrag;
+            this.view.scrollBarDragHandler.EndDrag += ScrollEndDrag;
 
             if (optionButtonView is not null && contextMenuView is not null)
             {
@@ -262,21 +266,26 @@ namespace DCL.InWorldCamera.CameraReel
             isLoading = false;
         }
 
+        private void ScrollBeginDrag() => isDragging = true;
+
+        private void ScrollEndDrag()
+        {
+            isDragging = false;
+            CheckNeedsToLoadMore();
+        }
+
         private void OnScrollRectValueChanged(Vector2 value)
         {
-            if (value.y <= view.loadMoreScrollThreshold)
-                OnBeforeReachScrollBottom();
-
+            CheckNeedsToLoadMore();
             CheckElementsVisibility(value.y > previousY ? ScrollDirection.UP : ScrollDirection.DOWN);
 
             previousY = value.y;
         }
 
-        private void OnBeforeReachScrollBottom()
+        private void CheckNeedsToLoadMore()
         {
-            if (pagedCameraReelManager.AllImagesLoaded || isLoading) return;
-
-            LoadMorePage(false, loadNextPageCts.Token).Forget();
+            if (currentSize - endVisible < 12 && !pagedCameraReelManager.AllImagesLoaded && !isLoading && !isDragging)
+                LoadMorePage(false, loadNextPageCts.Token).Forget();
         }
 
         private void DisableThumbnailImage(ReelThumbnailView thumbnailView)

@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 2279193595894905825}
   - component: {fileID: 9180951971093015944}
   - component: {fileID: 3885099440022164921}
+  - component: {fileID: 256479147985617462}
   m_Layer: 5
   m_Name: ScrollView
   m_TagString: Untagged
@@ -78,6 +79,18 @@ MonoBehaviour:
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &256479147985617462
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 603771030124122299}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bef540126917455dbb8524f7a5c6403d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1828077346074627345
 GameObject:
   m_ObjectHideFlags: 0
@@ -90,6 +103,7 @@ GameObject:
   - component: {fileID: 784499514660572436}
   - component: {fileID: 3207279119121419008}
   - component: {fileID: 3636608111683699458}
+  - component: {fileID: 5347515915714276202}
   m_Layer: 5
   m_Name: Scrollbar Vertical
   m_TagString: Untagged
@@ -204,6 +218,18 @@ MonoBehaviour:
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &5347515915714276202
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1828077346074627345}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bef540126917455dbb8524f7a5c6403d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &2977760952838749573
 GameObject:
   m_ObjectHideFlags: 0
@@ -803,8 +829,18 @@ MonoBehaviour:
   scrollContentRect: {fileID: 2207382435968079271}
   scrollRect: {fileID: 3885099440022164921}
   elementMask: {fileID: 0}
+  deleteReelModal: {fileID: 0}
+  deleteReelButton: {fileID: 0}
+  cancelDeleteIntentButton: {fileID: 0}
+  cancelDeleteIntentBackgroundButton: {fileID: 0}
+  errorNotificationView: {fileID: 0}
+  successNotificationView: {fileID: 0}
+  scrollRectDragHandler: {fileID: 256479147985617462}
+  scrollBarDragHandler: {fileID: 5347515915714276202}
   paginationLimit: 100
   loadMoreScrollThreshold: 0.4
+  errorSuccessToastDuration: 3
+  deleteModalAnimationDuration: 0.3
   thumbnailViewPrefab: {fileID: 2729414431232023218, guid: be5951e4b569b41cab587d1d8047a817, type: 3}
   unusedThumbnailViewObject: {fileID: 7888472503356853142}
   monthGridPrefab: {fileID: 1533018384698385197, guid: ba84ad730ed804baa8a38cd23f6cc11a, type: 3}

@@ -18,6 +18,8 @@ namespace DCL.InWorldCamera.CameraReel
         [SerializeField] internal Button cancelDeleteIntentBackgroundButton;
         [SerializeField] internal WarningNotificationView errorNotificationView;
         [SerializeField] internal WarningNotificationView successNotificationView;
+        [SerializeField] internal ScrollDragHandler scrollRectDragHandler;
+        [SerializeField] internal ScrollDragHandler scrollBarDragHandler;
 
         [Header("Configuration")]
         public int paginationLimit = 100;
