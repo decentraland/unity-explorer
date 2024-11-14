@@ -3,6 +3,7 @@ using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
+using System;
 using System.Linq;
 using System.Threading;
 using UnityEngine;
@@ -31,7 +32,6 @@ namespace DCL.InWorldCamera.CameraReelStorageService.Playground
 
         [Header("UPLOAD")]
         public ScreenshotMetadata Metadata;
-        public Texture2D Screenshot;
         [Space(5)]
         public string ResultThumbnailUrl;
 
@@ -66,10 +66,18 @@ namespace DCL.InWorldCamera.CameraReelStorageService.Playground
             ThumbnailTexture = await screenshotsStorage.GetScreenshotThumbnailAsync(screenshot.thumbnailUrl);
         }
 
+        [ContextMenu("DELETE IMAGE")]
+        public async void DeleteImageAsync()
+        {
+            Storage = await metadataDatabase.DeleteScreenshotAsync(Result.images.First().id, ct);
+        }
+
         [ContextMenu("UPLOAD IMAGE")]
         public async void UploadImageAsync()
         {
-            CameraReelUploadResponse response = await metadataDatabase.UploadScreenshotAsync(Screenshot.EncodeToJPG(),Metadata, ct);
+            Metadata.dateTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString();
+
+            CameraReelUploadResponse response = await metadataDatabase.UploadScreenshotAsync(MakeReadable(ImageTexture).EncodeToJPG(), Metadata, ct);
 
             Storage.currentImages = response.currentImages;
             Storage.maxImages = response.maxImages;
@@ -77,11 +85,34 @@ namespace DCL.InWorldCamera.CameraReelStorageService.Playground
             ResultThumbnailUrl = response.image.thumbnailUrl;
         }
 
-
-        [ContextMenu("DELETE IMAGE")]
-        public async void DeleteImageAsync()
+        private static Texture2D MakeReadable(Texture source)
         {
-            Storage = await metadataDatabase.DeleteScreenshotAsync(Result.images.First().id, ct);
+            var renderTexture = RenderTexture.GetTemporary(
+                source.width,
+                source.height,
+                0,
+                RenderTextureFormat.Default,
+                RenderTextureReadWrite.Linear
+            );
+
+            Graphics.Blit(source, renderTexture);
+
+            var readableTexture = new Texture2D(
+                source.width,
+                source.height,
+                TextureFormat.RGBA32,
+                false
+            );
+
+            RenderTexture previous = RenderTexture.active;
+            RenderTexture.active = renderTexture;
+            readableTexture.ReadPixels(new Rect(0, 0, renderTexture.width, renderTexture.height), 0, 0);
+            readableTexture.Apply();
+
+            RenderTexture.active = previous;
+            RenderTexture.ReleaseTemporary(renderTexture);
+
+            return readableTexture;
         }
     }
 }
