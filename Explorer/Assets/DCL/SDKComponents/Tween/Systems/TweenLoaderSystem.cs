@@ -30,12 +30,12 @@ namespace DCL.SDKComponents.Tween.Systems
 
             if (pbTween.ModeCase == PBTween.ModeOneofCase.TextureMove)
             {
-                SDKTweenTextureComponent sdkTweenTextureComponent = new SDKTweenTextureComponent();
+                var sdkTweenTextureComponent = new SDKTweenTextureComponent(pbTween.TextureMove.MovementType);
 
                 World.Add(entity, sdkTweenTextureComponent);
             }
 
-            SDKTweenComponent sdkTweenComponent = new SDKTweenComponent
+            var sdkTweenComponent = new SDKTweenComponent
             {
                 IsDirty = true,
             };

@@ -5,7 +5,6 @@ using DG.Tweening;
 using DG.Tweening.Core;
 using DG.Tweening.CustomPlugins;
 using DG.Tweening.Plugins.Options;
-using ECS.Unity.Textures.Components.Extensions;
 using UnityEngine;
 
 namespace DCL.SDKComponents.Tween.Components
@@ -35,7 +34,7 @@ namespace DCL.SDKComponents.Tween.Components
             transform.localPosition = currentValue;
         }
 
-        public override void UpdateMaterial(Material _) { }
+        public override void UpdateMaterial(SDKTweenTextureComponent _, Material __) { }
     }
 
     public class ScaleTweener : CustomTweener<Vector3, VectorOptions>
@@ -63,7 +62,7 @@ namespace DCL.SDKComponents.Tween.Components
             transform.localScale = currentValue;
         }
 
-        public override void UpdateMaterial(Material _) { }
+        public override void UpdateMaterial(SDKTweenTextureComponent _, Material __) { }
     }
 
     public class RotationTweener : CustomTweener<Quaternion, NoOptions>
@@ -93,7 +92,7 @@ namespace DCL.SDKComponents.Tween.Components
             transform.localRotation = currentValue;
         }
 
-        public override void UpdateMaterial(Material _) { }
+        public override void UpdateMaterial(SDKTweenTextureComponent _, Material __) { }
     }
 
     public class TextureMoveTweener : CustomTweener<Vector2, VectorOptions>
@@ -103,8 +102,8 @@ namespace DCL.SDKComponents.Tween.Components
 
         protected override (Vector2, Vector2) GetTweenValues(PBTween pbTween)
         {
-            Vector2 start = pbTween.TextureMove.Start.ToUnityVector2();
-            Vector2 end = pbTween.TextureMove.End.ToUnityVector2();
+            Vector2 start = pbTween.TextureMove.Start;
+            Vector2 end = pbTween.TextureMove.End;
             currentValue = start;
             return (start, end);
         }
@@ -113,9 +112,17 @@ namespace DCL.SDKComponents.Tween.Components
 
         public override void UpdateTransform(Transform _) { }
 
-        public override void UpdateMaterial(Material material)
+        public override void UpdateMaterial(SDKTweenTextureComponent textureComponent, Material material)
         {
-            material.SetTextureOffset(Shader.PropertyToID("_BaseMap"), currentValue);
+            switch (textureComponent.TextureMoveMovementType)
+            {
+                case TextureMovementType.TmtOffset:
+                    material.SetTextureOffset(Shader.PropertyToID("_BaseMap"), currentValue);
+                    break;
+                case TextureMovementType.TmtTiling:
+                    material.SetTextureScale(Shader.PropertyToID("_BaseMap"), currentValue);
+                    break;
+            }
         }
     }
 }

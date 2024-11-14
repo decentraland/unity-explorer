@@ -18,7 +18,6 @@ using ECS.Groups;
 using ECS.Unity.Materials.Components;
 using ECS.Unity.Transforms.Systems;
 using SceneRunner.Scene;
-using System;
 using static DCL.ECSComponents.EasingFunction;
 using static DG.Tweening.Ease;
 
@@ -92,83 +91,44 @@ namespace DCL.SDKComponents.Tween.Systems
             World.Remove<SDKTweenComponent>(in HandleComponentRemoval_QueryDescription);
         }
 
-#region MyRegion
-        public void FinalizeComponents(in Query query)
-        {
-            FinalizeComponentsQuery(World);
-        }
-
-        [Query]
-        [All(typeof(SDKTweenComponent))]
-        private void FinalizeComponents(CRDTEntity sdkEntity, ref SDKTweenComponent tweenComponent)
-        {
-            CleanUpTweenBeforeRemoval(sdkEntity, ref tweenComponent);
-        }
-
-        [Query]
-        [All(typeof(DeleteEntityIntention))]
-        private void HandleEntityDestruction(ref SDKTweenComponent tweenComponent, CRDTEntity sdkEntity)
-        {
-            CleanUpTweenBeforeRemoval(sdkEntity, ref tweenComponent);
-        }
-
-        [Query]
-        [None(typeof(PBTween), typeof(DeleteEntityIntention))]
-        private void HandleComponentRemoval(ref SDKTweenComponent tweenComponent, CRDTEntity sdkEntity)
-        {
-            CleanUpTweenBeforeRemoval(sdkEntity, ref tweenComponent);
-        }
-
-        [Query]
-        private void UpdatePBTween(ref PBTween pbTween, ref SDKTweenComponent sdkTweenComponent)
-        {
-            if (pbTween.ModeCase == PBTween.ModeOneofCase.None) return;
-
-            if (pbTween.IsDirty)
-                sdkTweenComponent.IsDirty = true;
-        }
-#endregion
-
         [Query]
         [All(typeof(SDKTweenTextureComponent))]
-        private void UpdateTweenTextureSequence(CRDTEntity sdkEntity, in PBTween pbTween, ref SDKTweenComponent sdkTweenComponent, ref MaterialComponent materialComponent)
+        private void UpdateTweenTextureSequence(CRDTEntity sdkEntity, in PBTween pbTween, ref SDKTweenComponent sdkTweenComponent, ref MaterialComponent materialComponent, SDKTweenTextureComponent textureComponent)
         {
             if (sdkTweenComponent.IsDirty)
             {
                 SetupTween(ref sdkTweenComponent, in pbTween);
-                UpdateTweenTextureStateAndMaterial(sdkEntity, sdkTweenComponent, ref materialComponent, sceneStateProvider.IsCurrent);
+                UpdateTweenTextureStateAndMaterial(sdkEntity, sdkTweenComponent, ref materialComponent, textureComponent, sceneStateProvider.IsCurrent);
             }
             else
-                UpdateTweenTextureState(sdkEntity, ref sdkTweenComponent, ref materialComponent);
+                UpdateTweenTextureState(sdkEntity, ref sdkTweenComponent, ref materialComponent, textureComponent);
         }
 
-        private void UpdateTweenTextureState(CRDTEntity sdkEntity, ref SDKTweenComponent sdkTweenComponent, ref MaterialComponent materialComponent)
+        private void UpdateTweenTextureState(CRDTEntity sdkEntity, ref SDKTweenComponent sdkTweenComponent, ref MaterialComponent materialComponent, SDKTweenTextureComponent textureComponent)
         {
             TweenStateStatus newState = GetCurrentTweenState(sdkTweenComponent);
 
             if (newState != sdkTweenComponent.TweenStateStatus)
             {
                 sdkTweenComponent.TweenStateStatus = newState;
-                UpdateTweenTextureStateAndMaterial(sdkEntity, sdkTweenComponent, ref materialComponent, sceneStateProvider.IsCurrent);
+                UpdateTweenTextureStateAndMaterial(sdkEntity, sdkTweenComponent, ref materialComponent, textureComponent, sceneStateProvider.IsCurrent);
             }
-            else if (newState == TweenStateStatus.TsActive)
-            {
-                UpdateTweenMaterial(sdkTweenComponent, ref materialComponent, sceneStateProvider.IsCurrent);
-            }
+            else if (newState == TweenStateStatus.TsActive) { UpdateTweenMaterial(sdkTweenComponent, ref materialComponent, textureComponent, sceneStateProvider.IsCurrent); }
         }
 
-        private void UpdateTweenTextureStateAndMaterial(CRDTEntity sdkEntity, SDKTweenComponent sdkTweenComponent, ref MaterialComponent materialComponent, bool isCurrent)
+        private void UpdateTweenTextureStateAndMaterial(CRDTEntity sdkEntity, SDKTweenComponent sdkTweenComponent, ref MaterialComponent materialComponent, SDKTweenTextureComponent textureComponent, bool isCurrent)
         {
-            UpdateTweenMaterial(sdkTweenComponent, ref materialComponent, sceneStateProvider.IsCurrent);
+            UpdateTweenMaterial(sdkTweenComponent, ref materialComponent, textureComponent, sceneStateProvider.IsCurrent);
             TweenSDKComponentHelper.WriteTweenStateInCRDT(ecsToCRDTWriter, sdkEntity, sdkTweenComponent.TweenStateStatus);
         }
 
-        private void UpdateTweenMaterial( SDKTweenComponent sdkTweenComponent,
+        private void UpdateTweenMaterial(SDKTweenComponent sdkTweenComponent,
             ref MaterialComponent materialComponent,
+            SDKTweenTextureComponent textureComponent,
             bool isInCurrentScene)
         {
-            if(materialComponent.Result)
-                TweenSDKComponentHelper.UpdateTweenResult(sdkTweenComponent.CustomTweener, ref materialComponent, isInCurrentScene);
+            if (materialComponent.Result)
+                TweenSDKComponentHelper.UpdateTweenResult(sdkTweenComponent.CustomTweener, ref materialComponent, textureComponent, isInCurrentScene);
         }
 
         [Query]
@@ -215,10 +175,7 @@ namespace DCL.SDKComponents.Tween.Systems
                 sdkTweenComponent.TweenStateStatus = newState;
                 UpdateTweenStateAndPosition(sdkEntity, sdkTweenComponent, ref sdkTransform, transformComponent, sceneStateProvider.IsCurrent);
             }
-            else if (newState == TweenStateStatus.TsActive)
-            {
-                UpdateTweenPosition(sdkEntity, sdkTweenComponent, ref sdkTransform, transformComponent, sceneStateProvider.IsCurrent);
-            }
+            else if (newState == TweenStateStatus.TsActive) { UpdateTweenPosition(sdkEntity, sdkTweenComponent, ref sdkTransform, transformComponent, sceneStateProvider.IsCurrent); }
         }
 
         private void UpdateTweenStateAndPosition(CRDTEntity sdkEntity, SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform, TransformComponent transformComponent, bool isInCurrentScene)
@@ -273,6 +230,41 @@ namespace DCL.SDKComponents.Tween.Systems
             if (tweener.CustomTweener.IsFinished()) return TweenStateStatus.TsCompleted;
             if (tweener.CustomTweener.IsPaused()) return TweenStateStatus.TsPaused;
             return TweenStateStatus.TsActive;
+        }
+
+        public void FinalizeComponents(in Query query)
+        {
+            FinalizeComponentsQuery(World);
+        }
+
+        [Query]
+        [All(typeof(SDKTweenComponent))]
+        private void FinalizeComponents(CRDTEntity sdkEntity, ref SDKTweenComponent tweenComponent)
+        {
+            CleanUpTweenBeforeRemoval(sdkEntity, ref tweenComponent);
+        }
+
+        [Query]
+        [All(typeof(DeleteEntityIntention))]
+        private void HandleEntityDestruction(ref SDKTweenComponent tweenComponent, CRDTEntity sdkEntity)
+        {
+            CleanUpTweenBeforeRemoval(sdkEntity, ref tweenComponent);
+        }
+
+        [Query]
+        [None(typeof(PBTween), typeof(DeleteEntityIntention))]
+        private void HandleComponentRemoval(ref SDKTweenComponent tweenComponent, CRDTEntity sdkEntity)
+        {
+            CleanUpTweenBeforeRemoval(sdkEntity, ref tweenComponent);
+        }
+
+        [Query]
+        private void UpdatePBTween(ref PBTween pbTween, ref SDKTweenComponent sdkTweenComponent)
+        {
+            if (pbTween.ModeCase == PBTween.ModeOneofCase.None) return;
+
+            if (pbTween.IsDirty)
+                sdkTweenComponent.IsDirty = true;
         }
     }
 }

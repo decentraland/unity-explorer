@@ -43,62 +43,47 @@ namespace DCL.ECSComponents {
             "LAoDZW5kGAIgASgLMh8uZGVjZW50cmFsYW5kLmNvbW1vbi5RdWF0ZXJuaW9u",
             "Il8KBVNjYWxlEisKBXN0YXJ0GAEgASgLMhwuZGVjZW50cmFsYW5kLmNvbW1v",
             "bi5WZWN0b3IzEikKA2VuZBgCIAEoCzIcLmRlY2VudHJhbGFuZC5jb21tb24u",
-            "VmVjdG9yMyKlAgoLVGV4dHVyZU1vdmUSKwoFc3RhcnQYASABKAsyHC5kZWNl",
+            "VmVjdG9yMyLFAQoLVGV4dHVyZU1vdmUSKwoFc3RhcnQYASABKAsyHC5kZWNl",
             "bnRyYWxhbmQuY29tbW9uLlZlY3RvcjISKQoDZW5kGAIgASgLMhwuZGVjZW50",
-            "cmFsYW5kLmNvbW1vbi5WZWN0b3IyEkgKD3RleHR1cmVfdG9fbW92ZRgDIAEo",
-            "DjIqLmRlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50cy5UZXh0dXJlVG9Nb3Zl",
-            "SACIAQESSwoQdGV4dHVyZV9tb3ZlbWVudBgFIAEoDjIsLmRlY2VudHJhbGFu",
-            "ZC5zZGsuY29tcG9uZW50cy5UZXh0dXJlTW92ZW1lbnRIAYgBAUISChBfdGV4",
-            "dHVyZV90b19tb3ZlQhMKEV90ZXh0dXJlX21vdmVtZW50Kk4KDVRleHR1cmVU",
-            "b01vdmUSDgoKVFRNX0FMQkVETxAAEg0KCVRUTV9BTFBIQRABEhAKDFRUTV9F",
-            "TUlTU0lWRRACEgwKCFRUTV9CVU1QEAMqSQoPVGV4dHVyZU1vdmVtZW50Eg0K",
-            "CVRNX09GRlNFVBAAEg0KCVRNX1RJTElORxABEhgKFFRNX09GRlNFVF9BTkRf",
-            "VElMSU5HEAMq5wQKDkVhc2luZ0Z1bmN0aW9uEg0KCUVGX0xJTkVBUhAAEhEK",
-            "DUVGX0VBU0VJTlFVQUQQARISCg5FRl9FQVNFT1VUUVVBRBACEg8KC0VGX0VB",
-            "U0VRVUFEEAMSEQoNRUZfRUFTRUlOU0lORRAEEhIKDkVGX0VBU0VPVVRTSU5F",
-            "EAUSDwoLRUZfRUFTRVNJTkUQBhIRCg1FRl9FQVNFSU5FWFBPEAcSEgoORUZf",
-            "RUFTRU9VVEVYUE8QCBIPCgtFRl9FQVNFRVhQTxAJEhQKEEVGX0VBU0VJTkVM",
-            "QVNUSUMQChIVChFFRl9FQVNFT1VURUxBU1RJQxALEhIKDkVGX0VBU0VFTEFT",
-            "VElDEAwSEwoPRUZfRUFTRUlOQk9VTkNFEA0SFAoQRUZfRUFTRU9VVEJPVU5D",
-            "RRAOEhEKDUVGX0VBU0VCT1VOQ0UQDxISCg5FRl9FQVNFSU5DVUJJQxAQEhMK",
-            "D0VGX0VBU0VPVVRDVUJJQxAREhAKDEVGX0VBU0VDVUJJQxASEhIKDkVGX0VB",
-            "U0VJTlFVQVJUEBMSEwoPRUZfRUFTRU9VVFFVQVJUEBQSEAoMRUZfRUFTRVFV",
-            "QVJUEBUSEgoORUZfRUFTRUlOUVVJTlQQFhITCg9FRl9FQVNFT1VUUVVJTlQQ",
-            "FxIQCgxFRl9FQVNFUVVJTlQQGBIRCg1FRl9FQVNFSU5DSVJDEBkSEgoORUZf",
-            "RUFTRU9VVENJUkMQGhIPCgtFRl9FQVNFQ0lSQxAbEhEKDUVGX0VBU0VJTkJB",
-            "Q0sQHBISCg5FRl9FQVNFT1VUQkFDSxAdEg8KC0VGX0VBU0VCQUNLEB5CFKoC",
-            "EURDTC5FQ1NDb21wb25lbnRzYgZwcm90bzM="));
+            "cmFsYW5kLmNvbW1vbi5WZWN0b3IyEkwKDW1vdmVtZW50X3R5cGUYAyABKA4y",
+            "MC5kZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVudHMuVGV4dHVyZU1vdmVtZW50",
+            "VHlwZUgAiAEBQhAKDl9tb3ZlbWVudF90eXBlKjUKE1RleHR1cmVNb3ZlbWVu",
+            "dFR5cGUSDgoKVE1UX09GRlNFVBAAEg4KClRNVF9USUxJTkcQASrnBAoORWFz",
+            "aW5nRnVuY3Rpb24SDQoJRUZfTElORUFSEAASEQoNRUZfRUFTRUlOUVVBRBAB",
+            "EhIKDkVGX0VBU0VPVVRRVUFEEAISDwoLRUZfRUFTRVFVQUQQAxIRCg1FRl9F",
+            "QVNFSU5TSU5FEAQSEgoORUZfRUFTRU9VVFNJTkUQBRIPCgtFRl9FQVNFU0lO",
+            "RRAGEhEKDUVGX0VBU0VJTkVYUE8QBxISCg5FRl9FQVNFT1VURVhQTxAIEg8K",
+            "C0VGX0VBU0VFWFBPEAkSFAoQRUZfRUFTRUlORUxBU1RJQxAKEhUKEUVGX0VB",
+            "U0VPVVRFTEFTVElDEAsSEgoORUZfRUFTRUVMQVNUSUMQDBITCg9FRl9FQVNF",
+            "SU5CT1VOQ0UQDRIUChBFRl9FQVNFT1VUQk9VTkNFEA4SEQoNRUZfRUFTRUJP",
+            "VU5DRRAPEhIKDkVGX0VBU0VJTkNVQklDEBASEwoPRUZfRUFTRU9VVENVQklD",
+            "EBESEAoMRUZfRUFTRUNVQklDEBISEgoORUZfRUFTRUlOUVVBUlQQExITCg9F",
+            "Rl9FQVNFT1VUUVVBUlQQFBIQCgxFRl9FQVNFUVVBUlQQFRISCg5FRl9FQVNF",
+            "SU5RVUlOVBAWEhMKD0VGX0VBU0VPVVRRVUlOVBAXEhAKDEVGX0VBU0VRVUlO",
+            "VBAYEhEKDUVGX0VBU0VJTkNJUkMQGRISCg5FRl9FQVNFT1VUQ0lSQxAaEg8K",
+            "C0VGX0VBU0VDSVJDEBsSEQoNRUZfRUFTRUlOQkFDSxAcEhIKDkVGX0VBU0VP",
+            "VVRCQUNLEB0SDwoLRUZfRUFTRUJBQ0sQHkIUqgIRRENMLkVDU0NvbXBvbmVu",
+            "dHNiBnByb3RvMw=="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::Decentraland.Common.VectorsReflection.Descriptor, },
-          new pbr::GeneratedClrTypeInfo(new[] {typeof(global::DCL.ECSComponents.TextureToMove), typeof(global::DCL.ECSComponents.TextureMovement), typeof(global::DCL.ECSComponents.EasingFunction), }, null, new pbr::GeneratedClrTypeInfo[] {
+          new pbr::GeneratedClrTypeInfo(new[] {typeof(global::DCL.ECSComponents.TextureMovementType), typeof(global::DCL.ECSComponents.EasingFunction), }, null, new pbr::GeneratedClrTypeInfo[] {
             new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBTween), global::DCL.ECSComponents.PBTween.Parser, new[]{ "Duration", "EasingFunction", "Move", "Rotate", "Scale", "TextureMove", "Playing", "CurrentTime" }, new[]{ "Mode", "Playing", "CurrentTime" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.Move), global::DCL.ECSComponents.Move.Parser, new[]{ "Start", "End", "FaceDirection" }, new[]{ "FaceDirection" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.Rotate), global::DCL.ECSComponents.Rotate.Parser, new[]{ "Start", "End" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.Scale), global::DCL.ECSComponents.Scale.Parser, new[]{ "Start", "End" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.TextureMove), global::DCL.ECSComponents.TextureMove.Parser, new[]{ "Start", "End", "TextureToMove", "TextureMovement" }, new[]{ "TextureToMove", "TextureMovement" }, null, null, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.TextureMove), global::DCL.ECSComponents.TextureMove.Parser, new[]{ "Start", "End", "MovementType" }, new[]{ "MovementType" }, null, null, null)
           }));
     }
     #endregion
 
   }
   #region Enums
-  public enum TextureToMove {
+  public enum TextureMovementType {
     /// <summary>
-    /// default
+    /// default = TextureMovementType.TMT_OFFSET
     /// </summary>
-    [pbr::OriginalName("TTM_ALBEDO")] TtmAlbedo = 0,
-    [pbr::OriginalName("TTM_ALPHA")] TtmAlpha = 1,
-    [pbr::OriginalName("TTM_EMISSIVE")] TtmEmissive = 2,
-    [pbr::OriginalName("TTM_BUMP")] TtmBump = 3,
-  }
-
-  public enum TextureMovement {
-    /// <summary>
-    /// default
-    /// </summary>
-    [pbr::OriginalName("TM_OFFSET")] TmOffset = 0,
-    [pbr::OriginalName("TM_TILING")] TmTiling = 1,
-    [pbr::OriginalName("TM_OFFSET_AND_TILING")] TmOffsetAndTiling = 3,
+    [pbr::OriginalName("TMT_OFFSET")] TmtOffset = 0,
+    [pbr::OriginalName("TMT_TILING")] TmtTiling = 1,
   }
 
   /// <summary>
@@ -1505,6 +1490,10 @@ namespace DCL.ECSComponents {
 
   }
 
+  /// <summary>
+  /// This tween mode allows to move the texture of a PbrMaterial or UnlitMaterial.
+  /// You can also specify the movement type (offset or tiling)
+  /// </summary>
   public sealed partial class TextureMove : pb::IMessage<TextureMove>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
@@ -1543,8 +1532,7 @@ namespace DCL.ECSComponents {
       _hasBits0 = other._hasBits0;
       start_ = other.start_ != null ? other.start_.Clone() : null;
       end_ = other.end_ != null ? other.end_.Clone() : null;
-      textureToMove_ = other.textureToMove_;
-      textureMovement_ = other.textureMovement_;
+      movementType_ = other.movementType_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -1578,60 +1566,32 @@ namespace DCL.ECSComponents {
       }
     }
 
-    /// <summary>Field number for the "texture_to_move" field.</summary>
-    public const int TextureToMoveFieldNumber = 3;
-    private global::DCL.ECSComponents.TextureToMove textureToMove_;
+    /// <summary>Field number for the "movement_type" field.</summary>
+    public const int MovementTypeFieldNumber = 3;
+    private global::DCL.ECSComponents.TextureMovementType movementType_;
     /// <summary>
-    /// default TextureToMove.TTM_ALBEDO
+    /// default = TextureMovementType.TMT_OFFSET
     /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public global::DCL.ECSComponents.TextureToMove TextureToMove {
-      get { if ((_hasBits0 & 1) != 0) { return textureToMove_; } else { return global::DCL.ECSComponents.TextureToMove.TtmAlbedo; } }
+    public global::DCL.ECSComponents.TextureMovementType MovementType {
+      get { if ((_hasBits0 & 1) != 0) { return movementType_; } else { return global::DCL.ECSComponents.TextureMovementType.TmtOffset; } }
       set {
         _hasBits0 |= 1;
-        textureToMove_ = value;
+        movementType_ = value;
       }
     }
-    /// <summary>Gets whether the "texture_to_move" field is set</summary>
+    /// <summary>Gets whether the "movement_type" field is set</summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public bool HasTextureToMove {
+    public bool HasMovementType {
       get { return (_hasBits0 & 1) != 0; }
     }
-    /// <summary>Clears the value of the "texture_to_move" field</summary>
+    /// <summary>Clears the value of the "movement_type" field</summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void ClearTextureToMove() {
+    public void ClearMovementType() {
       _hasBits0 &= ~1;
-    }
-
-    /// <summary>Field number for the "texture_movement" field.</summary>
-    public const int TextureMovementFieldNumber = 5;
-    private global::DCL.ECSComponents.TextureMovement textureMovement_;
-    /// <summary>
-    /// default TextureMovement.TM_OFFSET
-    /// </summary>
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public global::DCL.ECSComponents.TextureMovement TextureMovement {
-      get { if ((_hasBits0 & 2) != 0) { return textureMovement_; } else { return global::DCL.ECSComponents.TextureMovement.TmOffset; } }
-      set {
-        _hasBits0 |= 2;
-        textureMovement_ = value;
-      }
-    }
-    /// <summary>Gets whether the "texture_movement" field is set</summary>
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public bool HasTextureMovement {
-      get { return (_hasBits0 & 2) != 0; }
-    }
-    /// <summary>Clears the value of the "texture_movement" field</summary>
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void ClearTextureMovement() {
-      _hasBits0 &= ~2;
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -1651,8 +1611,7 @@ namespace DCL.ECSComponents {
       }
       if (!object.Equals(Start, other.Start)) return false;
       if (!object.Equals(End, other.End)) return false;
-      if (TextureToMove != other.TextureToMove) return false;
-      if (TextureMovement != other.TextureMovement) return false;
+      if (MovementType != other.MovementType) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -1662,8 +1621,7 @@ namespace DCL.ECSComponents {
       int hash = 1;
       if (start_ != null) hash ^= Start.GetHashCode();
       if (end_ != null) hash ^= End.GetHashCode();
-      if (HasTextureToMove) hash ^= TextureToMove.GetHashCode();
-      if (HasTextureMovement) hash ^= TextureMovement.GetHashCode();
+      if (HasMovementType) hash ^= MovementType.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -1690,13 +1648,9 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(18);
         output.WriteMessage(End);
       }
-      if (HasTextureToMove) {
+      if (HasMovementType) {
         output.WriteRawTag(24);
-        output.WriteEnum((int) TextureToMove);
-      }
-      if (HasTextureMovement) {
-        output.WriteRawTag(40);
-        output.WriteEnum((int) TextureMovement);
+        output.WriteEnum((int) MovementType);
       }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
@@ -1716,13 +1670,9 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(18);
         output.WriteMessage(End);
       }
-      if (HasTextureToMove) {
+      if (HasMovementType) {
         output.WriteRawTag(24);
-        output.WriteEnum((int) TextureToMove);
-      }
-      if (HasTextureMovement) {
-        output.WriteRawTag(40);
-        output.WriteEnum((int) TextureMovement);
+        output.WriteEnum((int) MovementType);
       }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
@@ -1740,11 +1690,8 @@ namespace DCL.ECSComponents {
       if (end_ != null) {
         size += 1 + pb::CodedOutputStream.ComputeMessageSize(End);
       }
-      if (HasTextureToMove) {
-        size += 1 + pb::CodedOutputStream.ComputeEnumSize((int) TextureToMove);
-      }
-      if (HasTextureMovement) {
-        size += 1 + pb::CodedOutputStream.ComputeEnumSize((int) TextureMovement);
+      if (HasMovementType) {
+        size += 1 + pb::CodedOutputStream.ComputeEnumSize((int) MovementType);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -1770,11 +1717,8 @@ namespace DCL.ECSComponents {
         }
         End.MergeFrom(other.End);
       }
-      if (other.HasTextureToMove) {
-        TextureToMove = other.TextureToMove;
-      }
-      if (other.HasTextureMovement) {
-        TextureMovement = other.TextureMovement;
+      if (other.HasMovementType) {
+        MovementType = other.MovementType;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -1806,11 +1750,7 @@ namespace DCL.ECSComponents {
             break;
           }
           case 24: {
-            TextureToMove = (global::DCL.ECSComponents.TextureToMove) input.ReadEnum();
-            break;
-          }
-          case 40: {
-            TextureMovement = (global::DCL.ECSComponents.TextureMovement) input.ReadEnum();
+            MovementType = (global::DCL.ECSComponents.TextureMovementType) input.ReadEnum();
             break;
           }
         }
@@ -1843,11 +1783,7 @@ namespace DCL.ECSComponents {
             break;
           }
           case 24: {
-            TextureToMove = (global::DCL.ECSComponents.TextureToMove) input.ReadEnum();
-            break;
-          }
-          case 40: {
-            TextureMovement = (global::DCL.ECSComponents.TextureMovement) input.ReadEnum();
+            MovementType = (global::DCL.ECSComponents.TextureMovementType) input.ReadEnum();
             break;
           }
         }

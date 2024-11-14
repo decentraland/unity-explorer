@@ -64,7 +64,7 @@ namespace ECS.Unity.Textures.Components.Extensions
             switch (self.TexCase)
             {
                 case TextureUnion.TexOneofCase.VideoTexture:
-                    return (int) self.VideoTexture.VideoPlayerEntity;
+                    return (int)self.VideoTexture.VideoPlayerEntity;
                 default:
                     return 0;
             }
@@ -110,7 +110,7 @@ namespace ECS.Unity.Textures.Components.Extensions
                 default:
                     return Vector2.zero;
                 case TextureUnion.TexOneofCase.Texture:
-                    return self.Texture.Offset.ToUnityVector2();
+                    return self.Texture.Offset ?? Vector2.zero;
             }
         }
 
@@ -123,7 +123,7 @@ namespace ECS.Unity.Textures.Components.Extensions
                 default:
                     return Vector2.one;
                 case TextureUnion.TexOneofCase.Texture:
-                    return self.Texture.Tiling.ToUnityVector2();
+                    return self.Texture.Tiling ?? Vector2.one;
             }
         }
 
@@ -170,8 +170,5 @@ namespace ECS.Unity.Textures.Components.Extensions
 
         public static TextureWrapMode ToUnityWrapMode(this Decentraland.Common.TextureWrapMode self) =>
             (TextureWrapMode)self;
-
-        public static Vector2 ToUnityVector2(this Decentraland.Common.Vector2 self) =>
-            new (self.X, self.Y);
     }
 }
