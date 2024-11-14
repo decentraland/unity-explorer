@@ -28,7 +28,7 @@ namespace DCL.UserInAppInitializationFlow
     public class RealUserInAppInitializationFlow : IUserInAppInitializationFlow
     {
         private static readonly ILoadingScreen.EmptyLoadingScreen EMPTY_LOADING_SCREEN = new ();
-        
+
         private readonly ILoadingStatus loadingStatus;
         private readonly IMVCManager mvcManager;
         private readonly AudioClipConfig backgroundMusic;
@@ -39,7 +39,7 @@ namespace DCL.UserInAppInitializationFlow
         private readonly CheckOnboardingStartupOperation checkOnboardingStartupOperation;
         private readonly RestartRealmStartupOperation restartRealmStartupOperation;
         private readonly IStartupOperation startupOperation;
-        
+
         public RealUserInAppInitializationFlow(
             ILoadingStatus loadingStatus,
             IHealthCheck livekitHealthCheck,
@@ -74,7 +74,7 @@ namespace DCL.UserInAppInitializationFlow
             var switchRealmMiscVisibilityStartupOperation = new SwitchRealmMiscVisibilityStartupOperation(loadingStatus, realmNavigator);
             loadPlayerAvatarStartupOperation = new LoadPlayerAvatarStartupOperation(loadingStatus, selfProfile, mainPlayerAvatarBaseProxy);
             var loadLandscapeStartupOperation = new LoadLandscapeStartupOperation(loadingStatus, realmNavigator);
-            checkOnboardingStartupOperation = new CheckOnboardingStartupOperation(loadingStatus, realmController, selfProfile, featureFlagsCache, decentralandUrlsSource, appParameters);
+            checkOnboardingStartupOperation = new CheckOnboardingStartupOperation(loadingStatus, selfProfile, featureFlagsCache, decentralandUrlsSource, appParameters, realmNavigator);
             restartRealmStartupOperation = new RestartRealmStartupOperation(loadingStatus, realmController);
             var teleportStartupOperation = new TeleportStartupOperation(loadingStatus, realmNavigator, startParcel);
             var loadGlobalPxOperation = new LoadGlobalPortableExperiencesStartupOperation(loadingStatus, selfProfile, featureFlagsCache, debugSettings, portableExperiencesController);
