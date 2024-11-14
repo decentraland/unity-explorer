@@ -1,5 +1,7 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
+using Cinemachine;
+using DCL.Character.CharacterCamera.Systems;
 using DCL.CharacterCamera;
 using DCL.CharacterCamera.Components;
 using DCL.CharacterCamera.Systems;
@@ -12,7 +14,9 @@ using UnityEngine;
 namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
 {
     [UpdateInGroup(typeof(CameraGroup))]
-    [UpdateAfter(typeof(ApplyCinemachineCameraInputSystem))]
+    [UpdateBefore(typeof(ApplyCinemachineCameraInputSystem))]
+    [UpdateAfter(typeof(ControlCinemachineVirtualCameraSystem))]
+
     [LogCategory(ReportCategory.IN_WORLD_CAMERA)]
     public partial class ToggleInWorldCameraActivitySystem : BaseUnityLoopSystem
     {
@@ -37,6 +41,14 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
 
         protected override void Update(float t)
         {
+            if(inputSchema.enabled)
+            {
+                ref var cameraInput = ref World.Get<CameraInput>(camera);
+                cameraInput.FreeMovement = inputSchema.Translation.ReadValue<Vector2>();
+                // cameraInput.FreePanning = freeCameraActions.Panning.ReadValue<Vector2>();
+                // cameraInput.FreeFOV = freeCameraActions.FOV.ReadValue<Vector2>();
+            }
+
             if (inputSchema.ToggleInWorld!.triggered)
             {
                 if (World.Has<IsInWorldCamera>(camera))
@@ -44,6 +56,38 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
                 else
                     EnableCamera();
             }
+        }
+
+        private static void ApplyPOV(CinemachinePOV cinemachinePOV, in CameraInput cameraInput)
+        {
+            if (cinemachinePOV)
+            {
+                cinemachinePOV.m_HorizontalAxis.m_InputAxisValue = cameraInput.Delta.x;
+                cinemachinePOV.m_VerticalAxis.m_InputAxisValue = cameraInput.Delta.y;
+            }
+        }
+
+        private static void ApplyInWorldCameraMovement(float dt, in CameraComponent camera, in CameraInput cameraInput,
+            ICinemachinePreset cinemachinePreset)
+        {
+            // Camera's position is under Cinemachine control
+            Transform cinemachineTransform = cinemachinePreset.InWorldCameraData.Camera.transform;
+
+            // Camera's rotation is not
+            Transform cameraTransform = camera.Camera.transform;
+            Vector3 direction = (cameraTransform.forward * cameraInput.FreeMovement.y) +
+                                (cameraTransform.up * cameraInput.FreePanning.y) +
+                                (cameraTransform.right * cameraInput.FreeMovement.x);
+
+            cinemachineTransform.localPosition += direction * (cinemachinePreset.InWorldCameraData.Speed * dt);
+        }
+
+        private static void ApplyInWorldFOV(float dt, ICinemachinePreset cinemachinePreset, in CameraInput cameraInput)
+        {
+            CinemachineVirtualCamera tpc = cinemachinePreset.InWorldCameraData.Camera;
+            LensSettings tpcMLens = tpc.m_Lens;
+            tpcMLens.FieldOfView += cameraInput.FreeFOV.y * cinemachinePreset.InWorldCameraData.Speed * dt;
+            tpc.m_Lens = tpcMLens;
         }
 
         private void EnableCamera()

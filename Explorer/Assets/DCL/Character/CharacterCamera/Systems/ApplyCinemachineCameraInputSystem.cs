@@ -5,6 +5,7 @@ using Cinemachine;
 using DCL.Character.CharacterCamera.Systems;
 using DCL.CharacterCamera.Components;
 using DCL.Diagnostics;
+using DCL.InWorldCamera.ScreencaptureCamera;
 using ECS.Abstract;
 using UnityEngine;
 
@@ -34,7 +35,7 @@ namespace DCL.CharacterCamera.Systems
         }
 
         [Query]
-        [None(typeof(CameraLookAtIntent))]
+        [None(typeof(CameraLookAtIntent), typeof(IsInWorldCamera))]
         private void Apply([Data] float dt, ref CameraComponent camera, ref CameraInput cameraInput, ref ICinemachinePreset cinemachinePreset)
         {
             switch (camera.Mode)
@@ -120,21 +121,6 @@ namespace DCL.CharacterCamera.Systems
                                                   * (cinemachinePreset.FreeCameraData.Speed * dt);
         }
 
-        private static void ApplyInWorldCameraMovement(float dt, in CameraComponent camera, in CameraInput cameraInput,
-            ICinemachinePreset cinemachinePreset)
-        {
-            // Camera's position is under Cinemachine control
-            Transform cinemachineTransform = cinemachinePreset.InWorldCameraData.Camera.transform;
-
-            // Camera's rotation is not
-            Transform cameraTransform = camera.Camera.transform;
-            Vector3 direction = (cameraTransform.forward * cameraInput.FreeMovement.y) +
-                                (cameraTransform.up * cameraInput.FreePanning.y) +
-                                (cameraTransform.right * cameraInput.FreeMovement.x);
-
-            cinemachineTransform.localPosition += direction * (cinemachinePreset.InWorldCameraData.Speed * dt);
-        }
-
         private static void ApplyPOV(CinemachinePOV cinemachinePOV, in CameraInput cameraInput)
         {
             if (cinemachinePOV)
@@ -152,12 +138,6 @@ namespace DCL.CharacterCamera.Systems
             tpc.m_Lens = tpcMLens;
         }
 
-        private static void ApplyInWorldFOV(float dt, ICinemachinePreset cinemachinePreset, in CameraInput cameraInput)
-        {
-            CinemachineVirtualCamera tpc = cinemachinePreset.InWorldCameraData.Camera;
-            LensSettings tpcMLens = tpc.m_Lens;
-            tpcMLens.FieldOfView += cameraInput.FreeFOV.y * cinemachinePreset.InWorldCameraData.Speed * dt;
-            tpc.m_Lens = tpcMLens;
-        }
+
     }
 }
