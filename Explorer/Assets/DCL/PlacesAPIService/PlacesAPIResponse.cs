@@ -55,8 +55,8 @@ namespace DCL.PlacesAPIService
             public int user_count;
             public int user_visits;
             public Realm[] realms_detail;
-
             public string like_rate;
+
             [SerializeField] private string[] positions;
 
             [JsonIgnore]

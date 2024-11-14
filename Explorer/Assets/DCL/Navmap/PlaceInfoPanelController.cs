@@ -113,7 +113,7 @@ namespace DCL.Navmap
             thumbnailImage.RequestImage(place.image);
             view.PlaceNameLabel.text = place.title;
             view.CreatorNameLabel.text = $"created by <b>{place.contact_name}</b>";
-            view.LikeRateLabel.text = place.like_rate;
+            view.LikeRateLabel.text = $"{(place.like_rate_as_float ?? 0) * 100:F0}%";
             view.PlayerCountLabel.text = place.user_count.ToString();
             view.DescriptionLabel.text = place.description;
             view.CoordinatesLabel.text = place.base_position;
