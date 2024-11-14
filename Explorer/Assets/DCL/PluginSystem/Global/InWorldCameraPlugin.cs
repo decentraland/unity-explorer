@@ -3,11 +3,14 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Character;
+using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.InWorldCamera.ScreencaptureCamera;
 using DCL.InWorldCamera.ScreencaptureCamera.Systems;
 using DCL.InWorldCamera.ScreencaptureCamera.UI;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PlacesAPIService;
 using DCL.Profiles.Self;
+using DCL.WebRequests;
 using ECS;
 using System;
 using System.Threading;
@@ -29,14 +32,18 @@ namespace DCL.PluginSystem.Global
         private readonly IPlacesAPIService placesAPIService;
         private readonly ICharacterObject characterObject;
         private readonly ICoroutineRunner coroutineRunner;
+        private readonly IWebRequestController webRequestController;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
 
         private ProvidedAsset<GameObject> hudPrefab;
         private ScreenRecorder recorder;
         private GameObject hud;
         private ScreenshotMetadataBuilder metadataBuilder;
+        private ICameraReelStorageService cameraReelStorageService;
 
         public InWorldCameraPlugin(DCLInput input, IAssetsProvisioner assetsProvisioner, SelfProfile selfProfile,
-            RealmData realmData, Entity playerEntity, IPlacesAPIService placesAPIService, ICharacterObject characterObject, ICoroutineRunner coroutineRunner)
+            RealmData realmData, Entity playerEntity, IPlacesAPIService placesAPIService, ICharacterObject characterObject, ICoroutineRunner coroutineRunner,
+            IWebRequestController webRequestController, IDecentralandUrlsSource decentralandUrlsSource)
         {
             this.input = input;
             this.assetsProvisioner = assetsProvisioner;
@@ -46,6 +53,8 @@ namespace DCL.PluginSystem.Global
             this.placesAPIService = placesAPIService;
             this.characterObject = characterObject;
             this.coroutineRunner = coroutineRunner;
+            this.webRequestController = webRequestController;
+            this.decentralandUrlsSource = decentralandUrlsSource;
         }
 
         public async UniTask InitializeAsync(InWorldCameraSettings settings, CancellationToken ct)
@@ -57,6 +66,8 @@ namespace DCL.PluginSystem.Global
 
             recorder = new ScreenRecorder(hud.GetComponent<RectTransform>());
             metadataBuilder = new ScreenshotMetadataBuilder(selfProfile, characterObject.Controller, realmData, placesAPIService);
+            cameraReelStorageService = new CameraReelRemoteStorageService(new CameraReelImagesMetadataRemoteDatabase(webRequestController, decentralandUrlsSource));
+
         }
 
         public void Dispose()
@@ -67,7 +78,7 @@ namespace DCL.PluginSystem.Global
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
             ToggleInWorldCameraActivitySystem.InjectToWorld(ref builder, input.InWorldCamera, hud);
-            CaptureScreenshotSystem.InjectToWorld(ref builder, recorder, input.InWorldCamera, hud.GetComponent<ScreenshotHudView>(), playerEntity, metadataBuilder, coroutineRunner);
+            CaptureScreenshotSystem.InjectToWorld(ref builder, recorder, input.InWorldCamera, hud.GetComponent<ScreenshotHudView>(), playerEntity, metadataBuilder, coroutineRunner, cameraReelStorageService);
         }
 
         [Serializable]
