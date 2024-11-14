@@ -1,4 +1,5 @@
-﻿using CommunicationData.URLHelpers;
+﻿using System;
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.MapRenderer.ComponentsFactory;
@@ -9,6 +10,7 @@ using UnityEngine;
 using Utility;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
+using Object = UnityEngine.Object;
 
 namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
 {
@@ -77,8 +79,9 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
             {
                 texture = await textureTask;
             }
-            catch
+            catch (Exception e)
             {
+                ReportHub.LogException(e, ReportCategory.UI);
                 texture = await Addressables.LoadAssetAsync<Texture2D>($"{chunkId.x},{chunkId.y}").Task;
             }
 
