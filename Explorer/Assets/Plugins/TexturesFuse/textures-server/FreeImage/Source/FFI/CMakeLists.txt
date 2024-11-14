@@ -633,7 +633,7 @@ include_directories(
 )
 
 # add_definitions(-DTEST_TEXTURESFUSE)
-№ TODO rollback
+# TODO rollback
 add_executable(texturesfuse ${SOURCES})
 # add_library(texturesfuse SHARED)
 
