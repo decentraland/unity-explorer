@@ -54,6 +54,7 @@ namespace DCL.SDKComponents.MediaStream
             CleanUpVideoTexture(ref textureConsumer);
             CleanUpMediaPlayer(ref mediaPlayer);
             World.Remove<MediaPlayerComponent, VideoTextureConsumer>(entity);
+            World.Remove<VideoStateByPriorityComponent>(entity);
         }
 
         /// <summary>
@@ -69,6 +70,7 @@ namespace DCL.SDKComponents.MediaStream
                 CleanUpVideoTexture(ref textureConsumer);
                 CleanUpMediaPlayer(ref mediaPlayerComponent);
                 World.Remove<MediaPlayerComponent, VideoTextureConsumer>(entity);
+                World.Remove<VideoStateByPriorityComponent>(entity);
             }
         }
 
