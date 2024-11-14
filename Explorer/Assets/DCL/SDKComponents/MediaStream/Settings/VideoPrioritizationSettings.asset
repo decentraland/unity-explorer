@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fdabaecc89a44639a539486656238701, type: 3}
   m_Name: VideoPrioritizationSettings
   m_EditorClassIdentifier: 
-  SizeInScreenWeight: 1
-  DistanceWeight: 2.03
-  AngleWeight: 4
-  MinimumSizeLimit: 0.0001
-  MaximumDistanceLimit: 731.2
+  SizeInScreenWeight: 6
+  DistanceWeight: 4
+  AngleWeight: 10
+  MinimumSizeLimit: 0.066
+  MaximumDistanceLimit: 80

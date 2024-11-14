@@ -26,7 +26,7 @@ namespace DCL.SDKComponents.MediaStream
         /// <summary>
         ///
         /// </summary>
-        public float HalfHeight;
+        public float HalfSize;
 
         /// <summary>
         ///

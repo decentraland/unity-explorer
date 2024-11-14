@@ -29,6 +29,10 @@ namespace DCL.SDKComponents.MediaStream
 
         private readonly List<VideoStateByPriorityComponent> sortedVideoPriorities = new ();
 
+        // Note: it was necessary to cache this in order to avoid a change in FOV when the character runs that ruins the computation of priorities
+        private float cachedCameraVerticalFOV;
+        private float cachedCameraHorizontalFOV;
+
         public UpdateMediaPlayerPrioritizationSystem(World world, IExposedCameraData exposedCameraData, VideoPrioritizationSettings videoPrioritizationSettings) : base(world)
         {
             this.videoPrioritizationSettings = videoPrioritizationSettings;
@@ -46,8 +50,14 @@ namespace DCL.SDKComponents.MediaStream
 
             if (exposedCameraData.CinemachineBrain != null)
             {
-                float horizontalFOV = Camera.VerticalToHorizontalFieldOfView(exposedCameraData.CinemachineBrain.OutputCamera.fieldOfView, exposedCameraData.CinemachineBrain.OutputCamera.aspect);
-                UpdateVideoPrioritiesQuery(World, exposedCameraData.CinemachineBrain.OutputCamera.fieldOfView, horizontalFOV, exposedCameraData.WorldPosition.Value, exposedCameraData.WorldRotation.Value);
+                // If camera FOV data was not cached yet...
+                if (cachedCameraVerticalFOV == 0.0f)
+                {
+                    cachedCameraVerticalFOV = exposedCameraData.CinemachineBrain.OutputCamera.fieldOfView;
+                    cachedCameraHorizontalFOV = Camera.VerticalToHorizontalFieldOfView(exposedCameraData.CinemachineBrain.OutputCamera.fieldOfView, exposedCameraData.CinemachineBrain.OutputCamera.aspect);
+                }
+
+                UpdateVideoPrioritiesQuery(World, cachedCameraVerticalFOV, cachedCameraHorizontalFOV, exposedCameraData.WorldPosition.Value, exposedCameraData.WorldRotation.Value);
                 UpdateVideoStateDependingOnPriorityQuery(World, (int)maxSimultaneousVideosSetting.Value);
             }
 
@@ -70,12 +80,13 @@ namespace DCL.SDKComponents.MediaStream
         [None(typeof(VideoStateByPriorityComponent))]
         private void AddVideoStatesByPriority(Entity entity, in MediaPlayerComponent mediaPlayer, in PrimitiveMeshRendererComponent rendererComponent)
         {
-            float videoMeshLocalVerticalSize = rendererComponent.MeshRenderer.bounds.size.y;
+            // Using the diagonal of the box instead of the height, meshes that occupy "the same" area on screen should have the same priority
+            float videoMeshLocalSize = (rendererComponent.MeshRenderer.bounds.max - rendererComponent.MeshRenderer.bounds.min).magnitude;
 
             VideoStateByPriorityComponent newVideoStateByPriority = new VideoStateByPriorityComponent(){
                                                                             Entity = entity,
                                                                             WantsToPlay = mediaPlayer.IsPlaying,
-                                                                            HalfHeight = videoMeshLocalVerticalSize * 0.5f};
+                                                                            HalfSize = videoMeshLocalSize * 0.5f};
 
 #if DEBUG_VIDEO_PRIORITIES
             GameObject prioritySign = CreateDebugPrioritySign();
@@ -122,6 +133,8 @@ namespace DCL.SDKComponents.MediaStream
             // If the video should be playing according to external state changes...
             if (videoStateByPriority.WantsToPlay)
             {
+                // Note: It was necessary to calculate a flattened version of the dot product to prevent some videos from pausing when they were big and
+                //       the character was too close, so the height of the center of the screen did not affect the result
                 Vector3 cameraToVideo = (transform.Transform.position - cameraWorldPosition).normalized;
                 Vector3 cameraToVideoFlattened = new Vector3(cameraToVideo.x, 0.0f, cameraToVideo.z).normalized;
 
@@ -138,29 +151,31 @@ namespace DCL.SDKComponents.MediaStream
                     // Skips videos that are too far
                     if (distance <= videoPrioritizationSettings.MaximumDistanceLimit)
                     {
-                        float screenSize = Mathf.Clamp01(CalculateObjectHeightRelativeToScreenHeight(cameraFov, videoStateByPriority.HalfHeight, Mathf.Sqrt(distance)));
+                        float screenSize = Mathf.Clamp01(CalculateObjectHeightRelativeToScreenHeight(cameraFov, videoStateByPriority.HalfSize, distance));
 
                         // Skips videos that are too small on screen
                         if (screenSize >= videoPrioritizationSettings.MinimumSizeLimit)
                         {
                             float dotProduct = Vector3.Dot(cameraToVideo, cameraDirection);
+
+                            // Final score
                             videoStateByPriority.Score = (videoPrioritizationSettings.MaximumDistanceLimit - distance) / videoPrioritizationSettings.MaximumDistanceLimit * videoPrioritizationSettings.DistanceWeight +
                                                          screenSize * videoPrioritizationSettings.SizeInScreenWeight +
                                                          dotProduct * videoPrioritizationSettings.AngleWeight;
 
 #if DEBUG_VIDEO_PRIORITIES
-                            Debug.Log($"VIDEO ENTITY[{videoStateByPriority.Entity.Id}] Dist: {distance} HSize:{videoStateByPriority.HalfHeight} / {CalculateObjectHeightRelativeToScreenHeight(cameraFov, videoStateByPriority.HalfHeight, Mathf.Sqrt(distance))} Dot:{dotProduct} SCORE:{videoStateByPriority.Score}");
+                            Debug.Log($"VIDEO ENTITY[{videoStateByPriority.Entity.Id}] Dist: {distance} HSize:{videoStateByPriority.HalfSize} / {CalculateObjectHeightRelativeToScreenHeight(cameraFov, videoStateByPriority.HalfSize, distance)} Dot:{dotProduct} SCORE:{videoStateByPriority.Score}");
 #endif
 
-                            // Sorts the playing video list by score
+                            // Sorts the playing video list by score, on insertion
                             int i = 0;
 
                             for (; i < sortedVideoPriorities.Count; ++i)
-                            {
-                                if (sortedVideoPriorities[i].Score <= videoStateByPriority.Score) { break; }
-                            }
+                                if (sortedVideoPriorities[i].Score <= videoStateByPriority.Score)
+                                    break;
 
-                            if (i <= sortedVideoPriorities.Count) { sortedVideoPriorities.Insert(i, videoStateByPriority); }
+                            if (i <= sortedVideoPriorities.Count)
+                                sortedVideoPriorities.Insert(i, videoStateByPriority);
                         }
                     }
                 }
@@ -218,11 +233,11 @@ namespace DCL.SDKComponents.MediaStream
             }
         }
 
-        private float CalculateObjectHeightRelativeToScreenHeight(float cameraFOV, float halfSize, float distance)
+        private float CalculateObjectHeightRelativeToScreenHeight(float cameraFOV, float halfHeight, float distance)
         {
             float halfFov = cameraFOV * 0.5f * Mathf.Deg2Rad;
             float tanValue = Mathf.Tan(halfFov);
-            return halfSize / (distance + halfSize) * tanValue * 2.0f;
+            return halfHeight / ((distance + halfHeight) * tanValue);
         }
 
         // Called when the scene is unloaded
