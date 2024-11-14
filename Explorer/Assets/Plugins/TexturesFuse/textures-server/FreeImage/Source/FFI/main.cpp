@@ -494,6 +494,8 @@ void Debug(FREE_IMAGE_FORMAT fif, const char *msg)
     printf("\n");
 }
 
+#include <chrono>
+
 int main()
 {
     InitOptions options;
@@ -531,6 +533,8 @@ int main()
     customOptions.encodeWith = CMP_Compute_type::CMP_GPU_VLK;
     customOptions.fQuality = 0.05;
 
+    auto start = std::chrono::high_resolution_clock::now();
+
     imageResult = texturesfuse_cmp_image_from_memory(
         context,
         result.data,
@@ -543,6 +547,13 @@ int main()
         &width,
         &height,
         &handle);
+
+    // Record the end time
+    auto end = std::chrono::high_resolution_clock::now();
+
+    // Calculate the duration in milliseconds
+    std::chrono::duration<double, std::milli> duration = end - start;
+    std::cout << "Execution time: " << duration.count() << " ms" << std::endl;
 
     std::cout << "Image result: " << imageResult << '\n';
 
