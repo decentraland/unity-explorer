@@ -1,8 +1,6 @@
 ﻿using DCL.Optimization.Pools;
 using System.Collections.Generic;
-using ECS.Unity.Materials;
 using UnityEngine;
-using UnityEngine.Animations;
 using Utility;
 
 namespace DCL.AvatarRendering.Loading.Assets
