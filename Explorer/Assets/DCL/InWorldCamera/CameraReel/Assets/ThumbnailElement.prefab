@@ -317,7 +317,7 @@ MonoBehaviour:
   optionButtonContainer: {fileID: 3651668776247032185}
   button: {fileID: 7425802945127696628}
   outline: {fileID: 4693459573345756047}
-  optionButtonOffset: {x: -15.83997, y: -22, z: 0}
+  optionButtonOffset: {x: -11, y: -23, z: 0}
   scaleFactorOnHover: 1.03
   scaleAnimationDuration: 0.3
   thumbnailLoadedAnimationDuration: 0.3
