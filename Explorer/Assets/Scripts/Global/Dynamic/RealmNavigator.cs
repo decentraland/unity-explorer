@@ -412,7 +412,7 @@ namespace Global.Dynamic
 
             RealmChanged?.Invoke(isGenesis);
             mapRenderer.SetSharedLayer(MapLayer.PlayerMarker, isGenesis);
-            satelliteFloor.SwitchVisibilityAsync(isGenesis);
+            satelliteFloor.SetCurrentlyInGenesis(isGenesis);
             roadsPlugin.RoadAssetPool?.SwitchVisibility(isGenesis);
         }
 

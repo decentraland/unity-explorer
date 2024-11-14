@@ -24,8 +24,8 @@ namespace DCL.Landscape
         private MaterialPropertyBlock materialPropertyBlock;
         private LandscapeData landscapeData;
 
-        private bool satelliteCurrentRenderState;
         private bool initialized;
+        private bool currentlyInGenesis;
 
         public void Initialize(LandscapeData config)
         {
@@ -69,24 +69,30 @@ namespace DCL.Landscape
             }
 
             initialized = true;
-            SwitchVisibilityAsync(landscapeData.showSatelliteView);
+            SwitchVisibility();
         }
 
-
-        public void SwitchVisibilityAsync(bool isVisibleRequested)
+        public void SetCurrentlyInGenesis(bool isGenesis)
         {
-            var isVisible = landscapeData.showSatelliteView && isVisibleRequested;
+            currentlyInGenesis = isGenesis;
+            SwitchVisibility();
+        }
 
-            //If the satellite view is not initialized, we can't change the visibility
+        public void SwitchVisibilitySetting()
+        {
+            SwitchVisibility();
+        }
+
+        private void SwitchVisibility()
+        {
+            var newVisibilityState = landscapeData.showSatelliteView && currentlyInGenesis;
+    
             if (!initialized)
                 return;
 
-            if (satelliteCurrentRenderState == isVisible) return;
-
-            satelliteCurrentRenderState = isVisible;
-
+            // Set rendering state for each renderer
             foreach (Renderer satelliteRenderer in satelliteRenderers)
-                satelliteRenderer.forceRenderingOff = !isVisible;
+                satelliteRenderer.forceRenderingOff = !newVisibilityState;
         }
     }
 }
