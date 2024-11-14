@@ -91,6 +91,9 @@ namespace Editor
             if (buildData != null)
             {
                 buildData.InstallSource = installSource;
+                EditorUtility.SetDirty(buildData);
+                AssetDatabase.SaveAssets();
+                AssetDatabase.Refresh();
                 Debug.Log($"Release Store set to: {installSource}");
             }
         }
