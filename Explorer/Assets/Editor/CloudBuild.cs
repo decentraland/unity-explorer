@@ -31,7 +31,7 @@ namespace Editor
             //
 
             //Unity suggestion: 1793168
-            //This should ensure that the rosyln compiler has been ran and everything is generated as needed.
+            //This should ensure that the roslyn compiler has been run and everything is generated as needed.
             EditorApplication.ExecuteMenuItem("File/Save Project");
 
             CompileSceneShader.CompileTheSceneShader(EditorUserBuildSettings.activeBuildTarget);
@@ -52,12 +52,47 @@ namespace Editor
                 Debug.Log($"[SEGMENT]: write key not found");
             }
 
+            if (Parameters.TryGetValue("INSTALL_SOURCE", out object source))
+            {
+                Debug.Log($"[INSTALL_SOURCE]: write key found");
+                WriteReleaseStoreToBuildData(source as string);
+            }
+            else
+            {
+                Debug.Log($"[INSTALL_SOURCE]: write key not found");
+            }
+
         }
 
         [UsedImplicitly]
         public static void PostExport()
         {
             Debug.Log($"~~ {nameof(CloudBuild)} PostExport ~~");
+        }
+
+        private static void WriteReleaseStoreToBuildData(string installSource)
+        {
+            string[] guids = AssetDatabase.FindAssets($"t:{nameof(BuildData)}");
+
+            switch (guids.Length)
+            {
+                case 0:
+                    Debug.LogError($"{nameof(BuildData)} asset not found!");
+                    return;
+                case > 1:
+                    Debug.LogWarning($"Multiple {nameof(BuildData)} assets found. Using the first one.");
+                    break;
+            }
+
+            AssetDatabase.Refresh();
+            string assetPath = AssetDatabase.GUIDToAssetPath(guids[0]);
+            BuildData buildData = AssetDatabase.LoadAssetAtPath<BuildData>(assetPath);
+
+            if (buildData != null)
+            {
+                buildData.InstallSource = installSource;
+                Debug.Log($"Release Store set to: {installSource}");
+            }
         }
 
         private static void WriteSegmentKeyToAnalyticsConfig(string segmentWriteKey)

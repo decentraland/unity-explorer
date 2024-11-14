@@ -46,7 +46,6 @@ MonoBehaviour:
   - rid: 3601422469352914947
   - rid: 2799748226177040387
   - rid: 2799748311381442562
-  - rid: 6849204534543122434
   references:
     version: 2
     RefIds:
@@ -76,6 +75,7 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+        <BuildData>k__BackingField: {fileID: 11400000, guid: b5fb13ac5db3bbb49a6e6aa3d2df0309, type: 2}
     - rid: 1268264176566403074
       type: {class: GlobalInteractionPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -284,6 +284,7 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+        <BuildData>k__BackingField: {fileID: 11400000, guid: b5fb13ac5db3bbb49a6e6aa3d2df0309, type: 2}
     - rid: 2799748226177040387
       type: {class: ConnectionStatusPanelPlugin/ConnectionStatusPanelSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data: 
@@ -636,14 +637,6 @@ MonoBehaviour:
       data:
         <controllerSettings>k__BackingField:
           m_AssetGUID: df2e68b45160aee4eaaf2475e21525e4
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
-    - rid: 6849204534543122434
-      type: {class: InWorldCameraPlugin/InWorldCameraSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
-      data:
-        <ScreencaptureHud>k__BackingField:
-          m_AssetGUID: 73f988cecacd42e48920937e996e446d
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
