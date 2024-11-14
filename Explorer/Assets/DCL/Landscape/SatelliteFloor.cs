@@ -26,6 +26,7 @@ namespace DCL.Landscape
 
         private bool initialized;
         private bool currentlyInGenesis;
+        private bool debugSettingEnabled;
 
         public void Initialize(LandscapeData config)
         {
@@ -35,6 +36,8 @@ namespace DCL.Landscape
             materialPropertyBlock = new MaterialPropertyBlock();
 
             satelliteRenderers = new Renderer[SATELLITE_MAP_RESOLUTION * SATELLITE_MAP_RESOLUTION];
+
+            debugSettingEnabled = landscapeData.showSatelliteView;
         }
 
         public void Create(MapRendererTextureContainer textureContainer)
@@ -78,14 +81,15 @@ namespace DCL.Landscape
             SwitchVisibility();
         }
 
-        public void SwitchVisibilitySetting()
+        public void SwitchVisibilitySetting(bool newValue)
         {
+            debugSettingEnabled = newValue;
             SwitchVisibility();
         }
 
         private void SwitchVisibility()
         {
-            var newVisibilityState = landscapeData.showSatelliteView && currentlyInGenesis;
+            var newVisibilityState = debugSettingEnabled && currentlyInGenesis;
     
             if (!initialized)
                 return;

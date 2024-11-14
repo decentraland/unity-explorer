@@ -62,7 +62,7 @@ namespace DCL.Landscape.Systems
 
         private void OnSatelliteToggle(ChangeEvent<bool> evt)
         {
-            floor.SwitchVisibilitySetting();
+            floor.SwitchVisibilitySetting(evt.newValue);
         }
 
         private void OnLoadRadiusConfirm(int value)
