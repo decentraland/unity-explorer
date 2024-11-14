@@ -829,16 +829,17 @@ MonoBehaviour:
   scrollContentRect: {fileID: 2207382435968079271}
   scrollRect: {fileID: 3885099440022164921}
   elementMask: {fileID: 0}
-  deleteReelModal: {fileID: 0}
+  scrollRectDragHandler: {fileID: 256479147985617462}
+  scrollBarDragHandler: {fileID: 5347515915714276202}
+  verticalScrollbar: {fileID: 3636608111683699458}
   deleteReelButton: {fileID: 0}
   cancelDeleteIntentButton: {fileID: 0}
   cancelDeleteIntentBackgroundButton: {fileID: 0}
   errorNotificationView: {fileID: 0}
   successNotificationView: {fileID: 0}
-  scrollRectDragHandler: {fileID: 256479147985617462}
-  scrollBarDragHandler: {fileID: 5347515915714276202}
+  deleteReelModal: {fileID: 0}
   paginationLimit: 100
-  loadMoreScrollThreshold: 0.4
+  loadMoreCounterThreshold: 12
   errorSuccessToastDuration: 3
   deleteModalAnimationDuration: 0.3
   thumbnailViewPrefab: {fileID: 2729414431232023218, guid: be5951e4b569b41cab587d1d8047a817, type: 3}

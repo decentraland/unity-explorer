@@ -88,7 +88,6 @@ namespace DCL.InWorldCamera.CameraReel
                 view.unusedGridViewObject, THUMBNAIL_POOL_DEFAULT_CAPACITY, THUMBNAIL_POOL_MAX_SIZE, GRID_POOL_DEFAULT_CAPACITY,
                 GRID_POOL_MAX_SIZE);
 
-
             view.cancelDeleteIntentButton?.onClick.AddListener(() => OnDeletionModalCancelClick());
             view.cancelDeleteIntentBackgroundButton?.onClick.AddListener(() => OnDeletionModalCancelClick(false));
             view.deleteReelButton?.onClick.AddListener(DeleteScreenshot);
@@ -235,6 +234,7 @@ namespace DCL.InWorldCamera.CameraReel
         {
             isLoading = true;
             Dictionary<DateTime, List<CameraReelResponse>> result = await pagedCameraReelManager.FetchNextPage(ct);
+            float handleHeight = view.verticalScrollbar.handleRect.rect.height;
 
             foreach (var bucket in result)
             {
@@ -256,12 +256,10 @@ namespace DCL.InWorldCamera.CameraReel
             }
             endVisible = currentSize - 1;
 
-            await UniTask.NextFrame(ct);
+            //Wait for layout to update after the addition of new elements
+            await UniTask.WaitWhile(() => Mathf.Approximately(view.verticalScrollbar.handleRect.rect.height, handleHeight), cancellationToken: ct);
 
-            if (firstLoading)
-                ResetThumbnailsVisibility();
-            else
-                CheckElementsVisibility(ScrollDirection.UP);
+            CheckElementsVisibility(ScrollDirection.UP);
 
             previousY = view.scrollRect.verticalNormalizedPosition;
             isLoading = false;

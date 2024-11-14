@@ -12,14 +12,17 @@ namespace DCL.InWorldCamera.CameraReel
         [SerializeField] internal RectTransform scrollContentRect;
         [SerializeField] internal ScrollRect scrollRect;
         [SerializeField] internal RectTransform elementMask;
-        [SerializeField] internal CanvasGroup deleteReelModal;
+        [SerializeField] internal ScrollDragHandler scrollRectDragHandler;
+        [SerializeField] internal ScrollDragHandler scrollBarDragHandler;
+        [SerializeField] internal Scrollbar verticalScrollbar;
+
+        [Header("Nullable references")]
         [SerializeField] internal Button deleteReelButton;
         [SerializeField] internal Button cancelDeleteIntentButton;
         [SerializeField] internal Button cancelDeleteIntentBackgroundButton;
         [SerializeField] internal WarningNotificationView errorNotificationView;
         [SerializeField] internal WarningNotificationView successNotificationView;
-        [SerializeField] internal ScrollDragHandler scrollRectDragHandler;
-        [SerializeField] internal ScrollDragHandler scrollBarDragHandler;
+        [SerializeField] internal CanvasGroup deleteReelModal;
 
         [Header("Configuration")]
         public int paginationLimit = 100;
