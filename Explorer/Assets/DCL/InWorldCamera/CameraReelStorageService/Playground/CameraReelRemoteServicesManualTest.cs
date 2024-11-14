@@ -17,6 +17,7 @@ namespace DCL.InWorldCamera.CameraReelStorageService.Playground
 
         public DecentralandEnvironment Env;
 
+        [Space(5)]
         public CameraReelStorageResponse Storage;
 
         [Header("GALLERY")]
@@ -29,7 +30,10 @@ namespace DCL.InWorldCamera.CameraReelStorageService.Playground
         public Texture2D ThumbnailTexture;
 
         [Header("UPLOAD")]
-        public string ThumbnailUrl;
+        public ScreenshotMetadata Metadata;
+        public Texture2D Screenshot;
+        [Space(5)]
+        public string ResultThumbnailUrl;
 
         private ICameraReelScreenshotsStorage screenshotsStorageInternal;
         private ICameraReelScreenshotsStorage screenshotsStorage => screenshotsStorageInternal ??= new CameraReelS3BucketScreenshotsStorage(webRequestController);
@@ -65,13 +69,14 @@ namespace DCL.InWorldCamera.CameraReelStorageService.Playground
         [ContextMenu("UPLOAD IMAGE")]
         public async void UploadImageAsync()
         {
-            CameraReelUploadResponse response = await metadataDatabase.UploadScreenshotAsync(ImageTexture.EncodeToJPG(), Result.images.First().metadata, ct);
+            CameraReelUploadResponse response = await metadataDatabase.UploadScreenshotAsync(Screenshot.EncodeToJPG(),Metadata, ct);
 
             Storage.currentImages = response.currentImages;
             Storage.maxImages = response.maxImages;
 
-            ThumbnailUrl = response.image.thumbnailUrl;
+            ResultThumbnailUrl = response.image.thumbnailUrl;
         }
+
 
         [ContextMenu("DELETE IMAGE")]
         public async void DeleteImageAsync()
