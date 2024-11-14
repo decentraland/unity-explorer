@@ -2,6 +2,7 @@
 using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.MapRenderer.Culling;
+using DCL.MapRenderer.MapLayers.Categories;
 using DCL.Optimization.Pools;
 using DCL.Utilities.Extensions;
 using System;
@@ -28,13 +29,17 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
 
         private readonly IObjectPool<SceneOfInterestMarkerObject> objectsPool;
         private readonly SceneOfInterestMarkerBuilder builder;
+        private readonly ClusterController clusterController;
         private readonly IPlacesAPIService placesAPIService;
 
-        private readonly Dictionary<PlacesData.PlaceInfo, ISceneOfInterestMarker> markers = new ();
+        private readonly Dictionary<Vector2Int, IClusterableMarker> markers = new ();
         private readonly List<Vector2Int> vectorCoords = new ();
         private Vector2Int decodePointer;
 
         private bool isEnabled;
+        private float clusterCellSize;
+        private float baseZoom;
+        private float zoom;
 
         public ScenesOfInterestMarkersController(
             IPlacesAPIService placesAPIService,
@@ -42,12 +47,14 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
             SceneOfInterestMarkerBuilder builder,
             Transform instantiationParent,
             ICoordsUtils coordsUtils,
-            IMapCullingController cullingController)
+            IMapCullingController cullingController,
+            ClusterController clusterController)
             : base(instantiationParent, coordsUtils, cullingController)
         {
             this.placesAPIService = placesAPIService;
             this.objectsPool = objectsPool;
             this.builder = builder;
+            this.clusterController = clusterController;
         }
 
         public async UniTask InitializeAsync(CancellationToken cancellationToken)
@@ -70,7 +77,7 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
             // non-blocking retrieval of scenes of interest happens independently on the minimap rendering
             foreach (PlacesData.PlaceInfo placeInfo in placesByCoordsListAsync.Value)
             {
-                if (markers.ContainsKey(placeInfo))
+                if (markers.ContainsKey(GetParcelsCenter(placeInfo)))
                     continue;
 
                 if (IsEmptyParcel(placeInfo))
@@ -81,7 +88,7 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
                 var position = coordsUtils.CoordsToPosition(centerParcel);
 
                 marker.SetData(placeInfo.title, position);
-                markers.Add(placeInfo, marker);
+                markers.Add(GetParcelsCenter(placeInfo), marker);
 
                 if (isEnabled)
                     mapCullingController.StartTracking(marker, this);
@@ -141,8 +148,17 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
 
         public void ApplyCameraZoom(float baseZoom, float zoom)
         {
+            this.baseZoom = baseZoom;
+            this.zoom = zoom;
+            clusterCellSize = ClusterUtilities.CalculateCellSize(zoom);
+
             foreach (ISceneOfInterestMarker marker in markers.Values)
                 marker.SetZoom(coordsUtils.ParcelSize, baseZoom, zoom);
+
+            if(isEnabled)
+                clusterController.UpdateClusters(clusterCellSize, baseZoom, zoom, markers);
+
+            clusterController.ApplyCameraZoom(baseZoom, zoom);
         }
 
         public void ResetToBaseScale()
@@ -171,7 +187,7 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
                 mapCullingController.StartTracking(marker, this);
 
             isEnabled = true;
-
+            clusterController.UpdateClusters(clusterCellSize, baseZoom, zoom, markers);
             return UniTask.CompletedTask;
         }
     }

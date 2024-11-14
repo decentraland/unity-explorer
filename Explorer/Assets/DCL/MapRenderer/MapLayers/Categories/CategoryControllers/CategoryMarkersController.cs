@@ -30,6 +30,7 @@ namespace DCL.MapRenderer.MapLayers.Categories
         private readonly CategoryMarkerBuilder builder;
         private readonly CategoryIconMappingsSO categoryIconMappings;
         private readonly IPlacesAPIService placesAPIService;
+        private readonly ClusterController clusterController;
 
         private readonly Dictionary<Vector2Int, IClusterableMarker> markers = new();
 
@@ -38,18 +39,17 @@ namespace DCL.MapRenderer.MapLayers.Categories
         private float clusterCellSize;
         private float baseZoom;
         private float zoom;
-        private ClusterController clusterController;
+
         public CategoryMarkersController(
             IPlacesAPIService placesAPIService,
             IObjectPool<CategoryMarkerObject> objectsPool,
             CategoryMarkerBuilder builder,
-            IObjectPool<ClusterMarkerObject> clusterObjectsPool,
-            ClusterMarkerBuilder clusterBuilder,
             Transform instantiationParent,
             ICoordsUtils coordsUtils,
             IMapCullingController cullingController,
             CategoryIconMappingsSO categoryIconMappings,
-            MapLayer mapLayer)
+            MapLayer mapLayer,
+            ClusterController clusterController)
             : base(instantiationParent, coordsUtils, cullingController)
         {
             this.placesAPIService = placesAPIService;
@@ -57,7 +57,7 @@ namespace DCL.MapRenderer.MapLayers.Categories
             this.builder = builder;
             this.categoryIconMappings = categoryIconMappings;
             this.mapLayer = mapLayer;
-            clusterController = new ClusterController(mapCullingController, clusterObjectsPool, clusterBuilder, coordsUtils, mapLayer, categoryIconMappings);
+            this.clusterController = clusterController;
         }
 
         public async UniTask InitializeAsync(CancellationToken cancellationToken)

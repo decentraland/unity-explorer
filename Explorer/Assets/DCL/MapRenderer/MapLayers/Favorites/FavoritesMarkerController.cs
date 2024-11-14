@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
+using DCL.MapRenderer.MapLayers.Categories;
 using DCL.PlacesAPIService;
 using System.Collections.Generic;
 using System.Threading;
@@ -21,10 +22,14 @@ namespace DCL.MapRenderer.MapLayers.Favorites
         private readonly IPlacesAPIService placesAPIService;
         private readonly IObjectPool<FavoriteMarkerObject> objectsPool;
         private readonly FavoritesMarkerBuilder builder;
+        private readonly ClusterController clusterController;
 
-        private readonly Dictionary<PlacesData.PlaceInfo, IFavoritesMarker> markers = new ();
+        private readonly Dictionary<Vector2Int, IClusterableMarker> markers = new ();
 
         private bool isEnabled;
+        private float clusterCellSize;
+        private float baseZoom;
+        private float zoom;
 
         public FavoritesMarkerController(
             IPlacesAPIService placesAPIService,
@@ -32,12 +37,14 @@ namespace DCL.MapRenderer.MapLayers.Favorites
             FavoritesMarkerBuilder builder,
             Transform instantiationParent,
             ICoordsUtils coordsUtils,
-            IMapCullingController cullingController)
+            IMapCullingController cullingController,
+            ClusterController clusterController)
             : base(instantiationParent, coordsUtils, cullingController)
         {
             this.placesAPIService = placesAPIService;
             this.objectsPool = objectsPool;
             this.builder = builder;
+            this.clusterController = clusterController;
         }
 
         protected override void DisposeImpl()
@@ -69,8 +76,17 @@ namespace DCL.MapRenderer.MapLayers.Favorites
 
         public void ApplyCameraZoom(float baseZoom, float zoom)
         {
+            this.baseZoom = baseZoom;
+            this.zoom = zoom;
+            clusterCellSize = ClusterUtilities.CalculateCellSize(zoom);
+
             foreach (IFavoritesMarker marker in markers.Values)
                 marker.SetZoom(coordsUtils.ParcelSize, baseZoom, zoom);
+
+            if(isEnabled)
+                clusterController.UpdateClusters(clusterCellSize, baseZoom, zoom, markers);
+
+            clusterController.ApplyCameraZoom(baseZoom, zoom);
         }
 
         public void ResetToBaseScale()
@@ -87,7 +103,7 @@ namespace DCL.MapRenderer.MapLayers.Favorites
 
             // if it was possible to update them then we need to cache by parcel coordinates instead
             // and recalculate the parcels centers accordingly
-            if (markers.ContainsKey(sceneInfo))
+            if (markers.ContainsKey(GetParcelsCenter(sceneInfo)))
                 return;
 
             if (IsEmptyParcel(sceneInfo))
@@ -100,7 +116,7 @@ namespace DCL.MapRenderer.MapLayers.Favorites
 
             marker.SetData(sceneInfo.title, position);
 
-            markers.Add(sceneInfo, marker);
+            markers.Add(GetParcelsCenter(sceneInfo), marker);
 
             if (isEnabled)
                 mapCullingController.StartTracking(marker, this);
@@ -161,7 +177,7 @@ namespace DCL.MapRenderer.MapLayers.Favorites
                 mapCullingController.StartTracking(marker, this);
 
             isEnabled = true;
-
+            clusterController.UpdateClusters(clusterCellSize, baseZoom, zoom, markers);
             return UniTask.CompletedTask;
         }
     }

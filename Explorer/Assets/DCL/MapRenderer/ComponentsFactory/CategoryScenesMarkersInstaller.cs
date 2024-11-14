@@ -30,6 +30,7 @@ namespace DCL.MapRenderer.ComponentsFactory
             IAssetsProvisioner assetsProv,
             IMapRendererSettings settings,
             IPlacesAPIService placesAPI,
+            ObjectPool<ClusterMarkerObject> clusterObjectsPool,
             CancellationToken cancellationToken
         )
         {
@@ -38,7 +39,6 @@ namespace DCL.MapRenderer.ComponentsFactory
             placesAPIService = placesAPI;
             this.writer = layerWriter;
             CategoryMarkerObject? prefab = await GetPrefabAsync(cancellationToken);
-            ClusterMarkerObject? clusterPrefab = await GetClusterPrefabAsync(cancellationToken);
 
             var objectsPool = new ObjectPool<CategoryMarkerObject>(
                 () => CreatePoolMethod(configuration, prefab, coordsUtils),
@@ -46,23 +46,17 @@ namespace DCL.MapRenderer.ComponentsFactory
                 actionOnGet: obj => obj.gameObject.SetActive(true),
                 actionOnRelease: obj => obj.gameObject.SetActive(false));
 
-            var clusterObjectsPool = new ObjectPool<ClusterMarkerObject>(
-                () => CreateClusterPoolMethod(configuration, clusterPrefab, coordsUtils),
-                defaultCapacity: PREWARM_COUNT,
-                actionOnGet: obj => obj.gameObject.SetActive(true),
-                actionOnRelease: obj => obj.gameObject.SetActive(false));
-
-            var artController = new CategoryMarkersController(placesAPIService, objectsPool, CreateMarker, clusterObjectsPool, CreateClusterMarker, configuration.CategoriesMarkersRoot, coordsUtils, cullingController, mapSettings.CategoryIconMappings, MapLayer.Art);
-            var gameController = new CategoryMarkersController(placesAPIService, objectsPool, CreateMarker, clusterObjectsPool, CreateClusterMarker, configuration.CategoriesMarkersRoot, coordsUtils, cullingController, mapSettings.CategoryIconMappings, MapLayer.Game);
-            var cryptoController = new CategoryMarkersController(placesAPIService, objectsPool, CreateMarker, clusterObjectsPool, CreateClusterMarker, configuration.CategoriesMarkersRoot, coordsUtils, cullingController, mapSettings.CategoryIconMappings, MapLayer.Crypto);
-            var educationController = new CategoryMarkersController(placesAPIService, objectsPool, CreateMarker, clusterObjectsPool, CreateClusterMarker, configuration.CategoriesMarkersRoot, coordsUtils, cullingController, mapSettings.CategoryIconMappings, MapLayer.Education);
-            var socialController = new CategoryMarkersController(placesAPIService, objectsPool, CreateMarker, clusterObjectsPool, CreateClusterMarker, configuration.CategoriesMarkersRoot, coordsUtils, cullingController, mapSettings.CategoryIconMappings, MapLayer.Social);
-            var businessController = new CategoryMarkersController(placesAPIService, objectsPool, CreateMarker, clusterObjectsPool, CreateClusterMarker, configuration.CategoriesMarkersRoot, coordsUtils, cullingController, mapSettings.CategoryIconMappings, MapLayer.Business);
-            var casinoController = new CategoryMarkersController(placesAPIService, objectsPool, CreateMarker, clusterObjectsPool, CreateClusterMarker, configuration.CategoriesMarkersRoot, coordsUtils, cullingController, mapSettings.CategoryIconMappings, MapLayer.Casino);
-            var fashionController = new CategoryMarkersController(placesAPIService, objectsPool, CreateMarker, clusterObjectsPool, CreateClusterMarker, configuration.CategoriesMarkersRoot, coordsUtils, cullingController, mapSettings.CategoryIconMappings, MapLayer.Fashion);
-            var musicController = new CategoryMarkersController(placesAPIService, objectsPool, CreateMarker, clusterObjectsPool, CreateClusterMarker, configuration.CategoriesMarkersRoot, coordsUtils, cullingController, mapSettings.CategoryIconMappings, MapLayer.Music);
-            var shopController = new CategoryMarkersController(placesAPIService, objectsPool, CreateMarker, clusterObjectsPool, CreateClusterMarker, configuration.CategoriesMarkersRoot, coordsUtils, cullingController, mapSettings.CategoryIconMappings, MapLayer.Shop);
-            var sportsController = new CategoryMarkersController(placesAPIService, objectsPool, CreateMarker, clusterObjectsPool, CreateClusterMarker, configuration.CategoriesMarkersRoot, coordsUtils, cullingController, mapSettings.CategoryIconMappings, MapLayer.Sports);
+            var artController = CreateCategoryController(MapLayer.Art, objectsPool, clusterObjectsPool, configuration, coordsUtils, cullingController);
+            var gameController = CreateCategoryController(MapLayer.Game, objectsPool, clusterObjectsPool, configuration, coordsUtils, cullingController);
+            var cryptoController = CreateCategoryController(MapLayer.Crypto, objectsPool, clusterObjectsPool, configuration, coordsUtils, cullingController);
+            var educationController = CreateCategoryController(MapLayer.Education, objectsPool, clusterObjectsPool, configuration, coordsUtils, cullingController);
+            var socialController = CreateCategoryController(MapLayer.Social, objectsPool, clusterObjectsPool, configuration, coordsUtils, cullingController);
+            var businessController = CreateCategoryController(MapLayer.Business, objectsPool, clusterObjectsPool, configuration, coordsUtils, cullingController);
+            var casinoController = CreateCategoryController(MapLayer.Casino, objectsPool, clusterObjectsPool, configuration, coordsUtils, cullingController);
+            var fashionController = CreateCategoryController(MapLayer.Fashion, objectsPool, clusterObjectsPool, configuration, coordsUtils, cullingController);
+            var musicController = CreateCategoryController(MapLayer.Music, objectsPool, clusterObjectsPool, configuration, coordsUtils, cullingController);
+            var shopController = CreateCategoryController(MapLayer.Shop, objectsPool, clusterObjectsPool, configuration, coordsUtils, cullingController);
+            var sportsController = CreateCategoryController(MapLayer.Sports, objectsPool, clusterObjectsPool, configuration, coordsUtils, cullingController);
 
             await InitializeControllerAsync(artController, MapLayer.Art, cancellationToken);
             zoomScalingWriter.Add(artController);
@@ -88,6 +82,21 @@ namespace DCL.MapRenderer.ComponentsFactory
             zoomScalingWriter.Add(sportsController);
         }
 
+        private CategoryMarkersController CreateCategoryController(MapLayer layer, ObjectPool<CategoryMarkerObject> objectsPool, ObjectPool<ClusterMarkerObject> clusterObjectsPool, MapRendererConfiguration configuration, ICoordsUtils coordsUtils, IMapCullingController cullingController)
+        {
+            return new CategoryMarkersController(
+                placesAPIService,
+                objectsPool,
+                CreateMarker,
+                configuration.CategoriesMarkersRoot,
+                coordsUtils,
+                cullingController,
+                mapSettings.CategoryIconMappings,
+                layer,
+                new ClusterController(cullingController, clusterObjectsPool, CreateClusterMarker, coordsUtils, layer, mapSettings.CategoryIconMappings)
+            );
+        }
+
         private async UniTask InitializeControllerAsync(IMapLayerController controller, MapLayer layer, CancellationToken cancellationToken)
         {
             await controller.InitializeAsync(cancellationToken);
@@ -106,18 +115,6 @@ namespace DCL.MapRenderer.ComponentsFactory
             return categoryMarkerObject;
         }
 
-        private static ClusterMarkerObject CreateClusterPoolMethod(MapRendererConfiguration configuration, ClusterMarkerObject prefab, ICoordsUtils coordsUtils)
-        {
-            ClusterMarkerObject categoryMarkerObject = Object.Instantiate(prefab, configuration.CategoriesMarkersRoot);
-
-            for (var i = 0; i < categoryMarkerObject.renderers.Length; i++)
-                categoryMarkerObject.renderers[i].sortingOrder = MapRendererDrawOrder.CATEGORIES;
-
-            categoryMarkerObject.title.sortingOrder = MapRendererDrawOrder.CATEGORIES + 1;
-            coordsUtils.SetObjectScale(categoryMarkerObject);
-            return categoryMarkerObject;
-        }
-
         private static ICategoryMarker CreateMarker(IObjectPool<CategoryMarkerObject> objectsPool, IMapCullingController cullingController, ICoordsUtils coordsUtils) =>
             new CategoryMarker(objectsPool, cullingController, coordsUtils);
 
@@ -126,8 +123,5 @@ namespace DCL.MapRenderer.ComponentsFactory
 
         private async UniTask<CategoryMarkerObject> GetPrefabAsync(CancellationToken cancellationToken) =>
             (await assetsProvisioner.ProvideMainAssetAsync(mapSettings.CategoryMarker, cancellationToken)).Value;
-
-        private async UniTask<ClusterMarkerObject> GetClusterPrefabAsync(CancellationToken cancellationToken) =>
-            (await assetsProvisioner.ProvideMainAssetAsync(mapSettings.ClusterMarker, cancellationToken)).Value;
     }
 }
