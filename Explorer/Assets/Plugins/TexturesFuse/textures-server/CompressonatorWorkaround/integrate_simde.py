@@ -162,6 +162,9 @@ if __name__ == "__main__":
         
         #Remove threaded compress
         ('#define THREADED_COMPRESS', ''), #TODO back?
+        
+        #Fix plugins location
+        ('g_pluginManager.getPluginList(".", TRUE);', 'g_pluginManager.getPluginList("./plugins", TRUE);')
     ]
     
     allowed_extensions = ['cpp','c','h','txt','make','cmake']
