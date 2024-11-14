@@ -20,7 +20,7 @@ namespace DCL.SDKComponents.MediaStream
     [UpdateAfter(typeof(UpdateMediaPlayerSystem))]
     [LogCategory(ReportCategory.MEDIA_STREAM)]
     [ThrottlingEnabled]
-    public partial class UpdateMediaPlayerVisibilitySystem : BaseUnityLoopSystem
+    public partial class UpdateMediaPlayerPrioritizationSystem : BaseUnityLoopSystem
     {
         private readonly IExposedCameraData exposedCameraData;
         private readonly Utility.Storage.PersistentSetting<float> maxSimultaneousVideosSetting;
@@ -29,7 +29,7 @@ namespace DCL.SDKComponents.MediaStream
         private readonly List<VideoStateByPriorityComponent> sortedVideoPriorities = new ();
         private const float MAX_DISTANCE = 100.0f;
 
-        public UpdateMediaPlayerVisibilitySystem(World world, IExposedCameraData exposedCameraData, VideoPrioritizationSettings videoPrioritizationSettings) : base(world)
+        public UpdateMediaPlayerPrioritizationSystem(World world, IExposedCameraData exposedCameraData, VideoPrioritizationSettings videoPrioritizationSettings) : base(world)
         {
             this.videoPrioritizationSettings = videoPrioritizationSettings;
 
@@ -102,7 +102,7 @@ namespace DCL.SDKComponents.MediaStream
                 {
                     videoStateByPriority.WantsToPlay = true;
                     videoStateByPriority.MediaPlayStartTime = Time.realtimeSinceStartup;
-                    
+
 #if DEBUG_VIDEO_PRIORITIES
                     Debug.Log("Video: PLAYED MANUALLY");
 #endif
