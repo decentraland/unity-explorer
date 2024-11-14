@@ -36,6 +36,7 @@ namespace DCL.AvatarRendering.Loading.Assets
                 Transform child = children.Value[index];
                 child.gameObject.layer = parent.gameObject.layer;
 
+                //Wearables shouldnt have animators or animations since it will break the skinning
                 Object.Destroy(child.GetComponent<Animator>());
                 Object.Destroy(child.GetComponent<Animation>());
             }
