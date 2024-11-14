@@ -633,9 +633,9 @@ include_directories(
 )
 
 # add_definitions(-DTEST_TEXTURESFUSE)
-# add_executable(texturesfuse ${SOURCES})
-
-add_library(texturesfuse SHARED)
+№ TODO rollback
+add_executable(texturesfuse ${SOURCES})
+# add_library(texturesfuse SHARED)
 
 # Compressor
 set(COMPRESSATOR_ROOT ${CMAKE_SOURCE_DIR}/../../../Compressator)

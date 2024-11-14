@@ -4,6 +4,7 @@
 #include <string>
 #include <fstream>
 #include <iostream>
+#include "common.h"
 
 ImageResult ErrorFromASTC(astcenc_error error)
 {
@@ -53,6 +54,11 @@ size_t dataLenForASTC(
     return total_blocks * 16;
 }
 
+void Log(char *msg)
+{
+    FreeImage_OutputMessageProc(FIF_UNKNOWN, msg);
+}
+
 ImageResult texturesfuse_initialize(InitOptions initOptions, context **contextOutput)
 {
     if (!contextOutput)
@@ -91,9 +97,10 @@ ImageResult texturesfuse_initialize(InitOptions initOptions, context **contextOu
     FreeImage_Initialise();
     FreeImage_SetOutputMessage(initOptions.debugLogFunc);
 
-    FreeImage_OutputMessageProc(FIF_UNKNOWN, "TexturesFuse successfully initialized!");
-
     CMP_InitFramework();
+    PrintStatusLine = Log;
+
+    FreeImage_OutputMessageProc(FIF_UNKNOWN, "TexturesFuse successfully initialized!");
 
     *contextOutput = context;
     return Success;
@@ -362,12 +369,14 @@ ImageResult texturesfuse_cmp_image_from_memory(
         SwapRGBAtoBGRA(bits, bitsLength);
     }
 
+    CMP_FORMAT sourceFormat = CMP_FORMAT_BGRA_8888;
+
     CMP_Texture sourceTexture = {0};
     sourceTexture.dwSize = sizeof(CMP_Texture);
     sourceTexture.dwWidth = *width;
     sourceTexture.dwHeight = *height;
     sourceTexture.dwPitch = 0;
-    sourceTexture.format = CMP_FORMAT_BGRA_8888;
+    sourceTexture.format = sourceFormat;
     sourceTexture.dwDataSize = bitsLength;
     sourceTexture.pData = bits;
 
@@ -395,7 +404,30 @@ ImageResult texturesfuse_cmp_image_from_memory(
 
     FreeImage_OutputMessageProc(FIF_UNKNOWN, "Encoding with option is: %d", options.nEncodeWith);
 
-    CMP_ERROR cmpResult = CMP_ConvertTexture(&sourceTexture, &destTexture, &options, nullptr);
+    CMP_MipSet srcMipSet = {0};
+    srcMipSet.dwWidth = *width;
+    srcMipSet.dwHeight = *height;
+    srcMipSet.m_format = sourceFormat;
+
+    KernelOptions kOpt;
+    memset(&kOpt, 0, sizeof(KernelOptions));
+
+    kOpt.encodeWith = compressOptions.encodeWith;
+    kOpt.format = cmpFormat;
+    kOpt.fquality = compressOptions.fQuality;
+    kOpt.threads = compressOptions.dwnumThreads;
+
+    std::unique_ptr<CMIPS> cmip(new CMIPS);
+
+    CMP_ERROR cmpResult = CMP_CreateComputeLibrary(&srcMipSet, &kOpt, cmip.get());
+    if (cmpResult != CMP_OK)
+    {
+        FreeImage_OutputMessageProc(FIF_UNKNOWN, "Cannot create library CMP: %d", cmpResult);
+    }
+    options.format_support_hostEncoder = cmpResult == CMP_OK;
+    FreeImage_OutputMessageProc(FIF_UNKNOWN, "Linked file for decoding: %d", kOpt.srcfile);
+
+    cmpResult = CMP_ConvertTexture(&sourceTexture, &destTexture, &options, nullptr);
 
     FreeImage_Unload(image);
 
@@ -456,55 +488,65 @@ bytesFromFile(std::string path)
     return result;
 }
 
+void Debug(FREE_IMAGE_FORMAT fif, const char *msg)
+{
+    printf(msg);
+    printf("\n");
+}
+
 int main()
 {
-    std::cout << "Hello world!";
+    InitOptions options;
+    options.ASTCProfile = ASTCENC_PRF_LDR_SRGB;
+    options.blockX = 6;
+    options.blockY = 6;
+    options.blockZ = 1;
+    options.quality = 10;
+    options.flags = 1;
+    options.debugLogFunc = Debug;
 
-    return 0;
+    const std::string imagePath = "./image.jpg";
+    const std::string outputPath = "./output.jpg";
+    int maxSideLength = 512;
 
-    // InitOptions options;
-    // options.ASTCProfile = ASTCENC_PRF_LDR_SRGB;
-    // options.blockX = 6;
-    // options.blockY = 6;
-    // options.blockZ = 1;
-    // options.quality = 10;
-    // options.flags = 1;
+    context *context;
+    auto imageResult = texturesfuse_initialize(options, &context);
+    if (imageResult != Success)
+    {
+        std::cout << "Context init result: " << imageResult << '\n';
+        return 0;
+    }
 
-    // std::string imagePath = "../image.jpg";
-    // std::string outputPath = "../output.jpg";
-    // int maxSideLength = 512;
+    BytesResult result = bytesFromFile(imagePath);
 
-    // context *context;
-    // auto imageResult = texturesfuse_initialize(options, &context);
-    // if (imageResult != Success)
-    // {
-    //     std::cout << "Context init result: " << imageResult << '\n';
-    //     return 0;
-    // }
+    BYTE *output;
+    int outputLength;
+    unsigned int width;
+    unsigned int height;
+    FfiHandle handle;
 
-    // BytesResult result = bytesFromFile(imagePath);
+    CMP_CustomOptions customOptions = {0};
+    customOptions.disableMultithreading = true;
+    customOptions.dwnumThreads = 1;
+    customOptions.encodeWith = CMP_Compute_type::CMP_GPU_VLK;
+    customOptions.fQuality = 0.05;
 
-    // BYTE *output;
-    // int outputLength;
-    // unsigned int width;
-    // unsigned int height;
-    // FfiHandle handle;
+    imageResult = texturesfuse_cmp_image_from_memory(
+        context,
+        result.data,
+        result.size,
+        maxSideLength,
+        CMP_FORMAT_BC7,
+        customOptions,
+        &output,
+        &outputLength,
+        &width,
+        &height,
+        &handle);
 
-    // imageResult = texturesfuse_astc_image_from_memory(
-    //     context,
-    //     result.data,
-    //     static_cast<int>(result.size),
-    //     maxSideLength,
+    std::cout << "Image result: " << imageResult << '\n';
 
-    //     &output,
-    //     &outputLength,
-    //     &width,
-    //     &height,
-    //     &handle);
-
-    // std::cout << "Image result: " << imageResult << '\n';
-
-    // texturesfuse_dispose(context);
+    texturesfuse_dispose(context);
 }
 
 #endif
