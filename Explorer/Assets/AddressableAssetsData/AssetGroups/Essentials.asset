@@ -147,6 +147,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 58f16fd4b3584431d87e11f043b40408
+    m_Address: Assets/DCL/Navmap/Assets/EventScheduleElement.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 5c36aa92efab46341b9b02fd6a38a4e7
     m_Address: StylizedSkyboxController
     m_ReadOnly: 0

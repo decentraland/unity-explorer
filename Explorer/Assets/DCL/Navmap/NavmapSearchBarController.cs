@@ -1,7 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Input;
 using DCL.Input.Component;
-using DCL.PlacesAPIService;
 using DCL.UI;
 using System;
 using System.Threading;
@@ -30,7 +29,12 @@ namespace DCL.Navmap
         public bool Interactable
         {
             get => view.inputField.interactable;
-            set => view.inputField.interactable = value;
+
+            set
+            {
+                view.inputField.interactable = value;
+                view.clearSearchButton.gameObject.SetActive(value && !string.IsNullOrEmpty(view.inputField.text));
+            }
         }
 
         public NavmapSearchBarController(
@@ -50,11 +54,11 @@ namespace DCL.Navmap
 
             historyRecordPanelView.OnClickedHistoryRecord += ClickedHistoryResult;
 
-            navmapBus.OnJumpIn += _ => ClearSearch();
+            navmapBus.OnJumpIn += _ => ClearInput();
             view.inputField.onSelect.AddListener(_ => OnSearchBarSelected(true));
             view.inputField.onDeselect.AddListener(_ => OnSearchBarSelected(false));
             view.inputField.onValueChanged.AddListener(OnInputValueChanged);
-            view.clearSearchButton.onClick.AddListener(ClearSearch);
+            view.clearSearchButton.onClick.AddListener(ClearInput);
             view.BackButton.onClick.AddListener(OnBackClicked);
             view.clearSearchButton.gameObject.SetActive(false);
             ShowPreviousSearches();
@@ -81,12 +85,10 @@ namespace DCL.Navmap
         public async UniTask SearchAndShowAsync(CancellationToken ct) =>
             await navmapBus.SearchForPlaceAsync(currentSearchText, currentPlaceFilter, currentPlaceSorting, ct);
 
-        public void SetText(PlacesData.PlaceInfo place)
-        {
-            view.inputField.SetTextWithoutNotify(place.title);
-        }
+        public void SetInputText(string text) =>
+            view.inputField.SetTextWithoutNotify(text);
 
-        public void ClearSearch()
+        public void ClearInput()
         {
             view.inputField.SetTextWithoutNotify(string.Empty);
 
@@ -142,7 +144,8 @@ namespace DCL.Navmap
 
                 searchHistory.Add(searchText);
 
-                await SearchAndShowAsync(ct).SuppressCancellationThrow();
+                await navmapBus.SearchForPlaceAsync(currentSearchText, NavmapSearchPlaceFilter.All, NavmapSearchPlaceSorting.None, ct)
+                               .SuppressCancellationThrow();
             }
         }
 
@@ -177,7 +180,15 @@ namespace DCL.Navmap
             currentPlaceFilter = filter;
             searchCancellationToken = searchCancellationToken.SafeRestart();
             searchFiltersView.Toggle(filter);
-            SearchAndShowAsync(searchCancellationToken.Token).Forget();
+
+            SearchAsync(searchCancellationToken.Token).Forget();
+
+            return;
+
+            async UniTaskVoid SearchAsync(CancellationToken ct)
+            {
+                await navmapBus.SearchForPlaceAsync(currentSearchText, filter, currentPlaceSorting, ct);
+            }
         }
 
         private void Search(NavmapSearchPlaceSorting sorting)
@@ -185,7 +196,15 @@ namespace DCL.Navmap
             currentPlaceSorting = sorting;
             searchCancellationToken = searchCancellationToken.SafeRestart();
             searchFiltersView.Toggle(sorting);
-            SearchAndShowAsync(searchCancellationToken.Token).Forget();
+
+            SearchAsync(searchCancellationToken.Token).Forget();
+
+            return;
+
+            async UniTaskVoid SearchAsync(CancellationToken ct)
+            {
+                await navmapBus.SearchForPlaceAsync(currentSearchText, currentPlaceFilter, sorting, ct);
+            }
         }
     }
 }

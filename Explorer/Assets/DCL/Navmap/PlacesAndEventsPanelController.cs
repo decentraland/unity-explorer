@@ -10,6 +10,7 @@ namespace DCL.Navmap
         private readonly NavmapSearchBarController searchBarController;
         private readonly SearchResultPanelController searchResultController;
         private readonly PlaceInfoPanelController placeInfoPanelController;
+        private readonly EventInfoPanelController eventInfoPanelController;
 
         private CancellationTokenSource? searchPlacesCancellationToken;
 
@@ -17,12 +18,14 @@ namespace DCL.Navmap
             PlacesAndEventsPanelView view,
             NavmapSearchBarController searchBarController,
             SearchResultPanelController searchResultController,
-            PlaceInfoPanelController placeInfoPanelController)
+            PlaceInfoPanelController placeInfoPanelController,
+            EventInfoPanelController eventInfoPanelController)
         {
             this.view = view;
             this.searchBarController = searchBarController;
             this.searchResultController = searchResultController;
             this.placeInfoPanelController = placeInfoPanelController;
+            this.eventInfoPanelController = eventInfoPanelController;
         }
 
         public void Show()
@@ -41,10 +44,17 @@ namespace DCL.Navmap
                 case Section.SEARCH:
                     searchResultController.Show();
                     placeInfoPanelController.Hide();
+                    eventInfoPanelController.Hide();
                     break;
                 case Section.PLACE:
                     searchResultController.Hide();
                     placeInfoPanelController.Show();
+                    eventInfoPanelController.Hide();
+                    break;
+                case Section.EVENT:
+                    searchResultController.Hide();
+                    placeInfoPanelController.Hide();
+                    eventInfoPanelController.Show();
                     break;
             }
         }

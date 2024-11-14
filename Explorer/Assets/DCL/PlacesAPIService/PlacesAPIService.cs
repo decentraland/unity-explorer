@@ -32,10 +32,21 @@ namespace DCL.PlacesAPIService
 
         public async UniTask<PlacesData.IPlacesAPIResponse> SearchPlacesAsync(string searchText, int pageNumber, int pageSize,
             CancellationToken ct,
-            IPlacesAPIService.SortBy sortByBy = IPlacesAPIService.SortBy.MOST_ACTIVE,
-            IPlacesAPIService.SortDirection sortDirection = IPlacesAPIService.SortDirection.DESC) =>
-            await client.SearchPlacesAsync(searchText, pageNumber, pageSize, ct,
-                sortByBy.ToString().ToLower(), sortDirection.ToString().ToLower());
+            IPlacesAPIService.SortBy sortBy = IPlacesAPIService.SortBy.NONE,
+            IPlacesAPIService.SortDirection sortDirection = IPlacesAPIService.SortDirection.DESC)
+        {
+            string sortByStr = string.Empty;
+            string sortDirectionStr = string.Empty;
+
+            if (sortBy != IPlacesAPIService.SortBy.NONE)
+            {
+                sortByStr = sortBy.ToString().ToLower();
+                sortDirectionStr = sortDirection.ToString().ToLower();
+            }
+
+            return await client.SearchPlacesAsync(searchText, pageNumber, pageSize, ct,
+                sortByStr, sortDirectionStr);
+        }
 
         public async UniTask<PlacesData.PlaceInfo?> GetPlaceAsync(Vector2Int coords, CancellationToken ct, bool renewCache = false)
         {
