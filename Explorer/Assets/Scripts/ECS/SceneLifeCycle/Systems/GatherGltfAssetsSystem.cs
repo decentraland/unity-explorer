@@ -40,8 +40,6 @@ namespace ECS.SceneLifeCycle.Systems
         private readonly ILoadingStatus loadingStatus;
         private readonly Entity sceneContainerEntity;
 
-        private readonly string sceneID;
-
         internal GatherGltfAssetsSystem(World world, ISceneReadinessReportQueue readinessReportQueue,
             ISceneData sceneData, EntityEventBuffer<GltfContainerComponent> eventsBuffer,
             ISceneStateProvider sceneStateProvider, MemoryBudget memoryBudget,
@@ -56,7 +54,6 @@ namespace ECS.SceneLifeCycle.Systems
             this.loadingStatus = loadingStatus;
             this.sceneContainerEntity = sceneContainerEntity;
 
-            sceneID = this.sceneData.SceneEntityDefinition.id;
             forEachEvent = GatherEntities;
         }
 
