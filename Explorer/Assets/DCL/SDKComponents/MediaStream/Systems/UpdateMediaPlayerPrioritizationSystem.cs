@@ -1,4 +1,4 @@
-﻿#define DEBUG_VIDEO_PRIORITIES
+﻿//#define DEBUG_VIDEO_PRIORITIES
 
 using Arch.Core;
 using Arch.System;
@@ -10,8 +10,7 @@ using DCL.ECSComponents;
 using DCL.SDKComponents.MediaStream.Settings;
 using ECS.Abstract;
 using ECS.Groups;
-using ECS.Unity.PrimitiveRenderer.Components;
-using ECS.Unity.Transforms.Components;
+using ECS.Unity.Textures.Components;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -74,10 +73,10 @@ namespace DCL.SDKComponents.MediaStream
         [Query]
         [All(typeof(PBVideoPlayer))]
         [None(typeof(VideoStateByPriorityComponent))]
-        private void AddVideoStatesByPriority(Entity entity, in MediaPlayerComponent mediaPlayer, in PrimitiveMeshRendererComponent rendererComponent)
+        private void AddVideoStatesByPriority(Entity entity, in MediaPlayerComponent mediaPlayer, in VideoTextureConsumer rendererComponent)
         {
             // Using the diagonal of the box instead of the height, meshes that occupy "the same" area on screen should have the same priority
-            float videoMeshLocalSize = (rendererComponent.MeshRenderer.bounds.max - rendererComponent.MeshRenderer.bounds.min).magnitude;
+            float videoMeshLocalSize = (rendererComponent.BoundsMax - rendererComponent.BoundsMin).magnitude;
 
             VideoStateByPriorityComponent newVideoStateByPriority = new VideoStateByPriorityComponent(){
                                                                             Entity = entity,
@@ -86,7 +85,7 @@ namespace DCL.SDKComponents.MediaStream
 
 #if DEBUG_VIDEO_PRIORITIES
             GameObject prioritySign = CreateDebugPrioritySign();
-            prioritySign.transform.position = rendererComponent.MeshRenderer.bounds.max;
+            prioritySign.transform.position = rendererComponent.BoundsMax;
             newVideoStateByPriority.DebugPrioritySign = prioritySign.GetComponent<MeshRenderer>();
 #endif
 
@@ -97,7 +96,8 @@ namespace DCL.SDKComponents.MediaStream
         private void UpdateVideoPriorities([Data] float cameraFov, [Data] float cameraHorizontalFov,
                                            [Data] Vector3 cameraWorldPosition, [Data] Quaternion cameraWorldRotation,
                                            in MediaPlayerComponent mediaPlayer,
-                                           ref VideoStateByPriorityComponent videoStateByPriority, in TransformComponent transform)
+                                           ref VideoStateByPriorityComponent videoStateByPriority,
+                                           ref VideoTextureConsumer videoTextureConsumer)
         {
 
 #if DEBUG_VIDEO_PRIORITIES
@@ -129,9 +129,11 @@ namespace DCL.SDKComponents.MediaStream
             // If the video should be playing according to external state changes...
             if (videoStateByPriority.WantsToPlay)
             {
+                Vector3 videoCenterPosition = (videoTextureConsumer.BoundsMax + videoTextureConsumer.BoundsMin) * 0.5f;
+
                 // Note: It was necessary to calculate a flattened version of the dot product to prevent some videos from pausing when they were big and
                 //       the character was too close, so the height of the center of the screen did not affect the result
-                Vector3 cameraToVideo = (transform.Transform.position - cameraWorldPosition).normalized;
+                Vector3 cameraToVideo = (videoCenterPosition - cameraWorldPosition).normalized;
                 Vector3 cameraToVideoFlattened = new Vector3(cameraToVideo.x, 0.0f, cameraToVideo.z).normalized;
 
                 Vector3 cameraDirection = cameraWorldRotation * Vector3.forward;
@@ -142,7 +144,7 @@ namespace DCL.SDKComponents.MediaStream
                 // Skips videos that are out of the camera
                 if (Mathf.Acos(dotProductInXZ) * Mathf.Rad2Deg <= cameraHorizontalFov * 0.5f)
                 {
-                    float distance = (transform.Transform.position - cameraWorldPosition).magnitude;
+                    float distance = (videoCenterPosition - cameraWorldPosition).magnitude;
 
                     // Skips videos that are too far
                     if (distance <= videoPrioritizationSettings.MaximumDistanceLimit)
