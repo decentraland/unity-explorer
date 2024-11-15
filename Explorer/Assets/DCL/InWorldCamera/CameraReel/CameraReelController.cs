@@ -97,12 +97,16 @@ namespace DCL.InWorldCamera.CameraReel
 
         public void Animate(int triggerId)
         {
-
+            view.panelAnimator.SetTrigger(triggerId);
+            view.headerAnimator.SetTrigger(triggerId);
         }
 
         public void ResetAnimator()
         {
-
+            view.panelAnimator.Rebind();
+            view.headerAnimator.Rebind();
+            view.panelAnimator.Update(0);
+            view.headerAnimator.Update(0);
         }
 
         public RectTransform GetRectTransform() =>

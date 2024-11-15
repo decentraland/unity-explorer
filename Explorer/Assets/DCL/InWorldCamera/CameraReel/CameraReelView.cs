@@ -23,6 +23,10 @@ namespace DCL.InWorldCamera.CameraReel
         public OptionButtonView optionsButton;
         public ContextMenuView contextMenu;
 
+        [Header("Animators")]
+        [SerializeField] internal Animator panelAnimator;
+        [SerializeField] internal Animator headerAnimator;
+
         internal event Action OnMouseEnter;
         internal event Action OnMouseExit;
 
