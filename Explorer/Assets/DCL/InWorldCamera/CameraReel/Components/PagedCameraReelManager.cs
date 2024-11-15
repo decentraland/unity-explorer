@@ -16,6 +16,7 @@ namespace DCL.InWorldCamera.CameraReel.Components
         private readonly ICameraReelStorageService cameraReelStorageService;
         private readonly string walletAddress;
         private readonly int pageSize;
+        private readonly int totalImages;
 
         private int currentOffset = 0;
         private int currentLoadedImages = 0;
@@ -23,10 +24,12 @@ namespace DCL.InWorldCamera.CameraReel.Components
         public PagedCameraReelManager(
             ICameraReelStorageService cameraReelStorageService,
             string wallet,
+            int totalImages,
             int pageSize)
         {
             this.cameraReelStorageService = cameraReelStorageService;
             this.walletAddress = wallet;
+            this.totalImages = totalImages;
             this.pageSize = pageSize;
         }
 
@@ -37,7 +40,7 @@ namespace DCL.InWorldCamera.CameraReel.Components
             currentOffset += pageSize;
 
             currentLoadedImages += response.images.Count;
-            AllImagesLoaded = currentLoadedImages == response.currentImages;
+            AllImagesLoaded = currentLoadedImages == totalImages;
 
             Dictionary<DateTime, List<CameraReelResponse>> elements = new ();
             for (int i = 0; i < response.images.Count; i++)

@@ -217,14 +217,13 @@ namespace DCL.InWorldCamera.CameraReel
 
         public async UniTask ShowWalletGallery(string walletAddress, CancellationToken ct, CameraReelStorageStatus? storageStatus = null)
         {
-            pagedCameraReelManager = new PagedCameraReelManager(cameraReelStorageService, walletAddress, view.paginationLimit);
             loadNextPageCts = loadNextPageCts.SafeRestart();
 
             view.scrollRect.verticalNormalizedPosition = 1f;
             previousY = 1f;
 
             storageStatus ??= await cameraReelStorageService.GetUserGalleryStorageInfoAsync(walletAddress, ct);
-
+            pagedCameraReelManager = new PagedCameraReelManager(cameraReelStorageService, walletAddress, storageStatus.Value.ScreenshotsAmount, view.paginationLimit);
             thumbnailImages = new ReelThumbnailView[storageStatus.Value.MaxScreenshots];
 
             await LoadMorePage(ct);
