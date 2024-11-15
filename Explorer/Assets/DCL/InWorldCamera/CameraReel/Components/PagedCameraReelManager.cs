@@ -53,9 +53,12 @@ namespace DCL.InWorldCamera.CameraReel.Components
             return elements;
         }
 
-        public static DateTime GetImageDateTime(CameraReelResponse image)
+        public static DateTime GetImageDateTime(CameraReelResponse image) =>
+            GetDateTimeFromString(image.metadata.dateTime);
+
+        public static DateTime GetDateTimeFromString(string epochString)
         {
-            DateTime actualDateTime = !long.TryParse(image.metadata.dateTime, out long unixTimestamp) ? new DateTime() : DateTimeOffset.FromUnixTimeSeconds(unixTimestamp).ToLocalTime().DateTime;
+            DateTime actualDateTime = !long.TryParse(epochString, out long unixTimestamp) ? new DateTime() : DateTimeOffset.FromUnixTimeSeconds(unixTimestamp).ToLocalTime().DateTime;
             return new DateTime(actualDateTime.Year, actualDateTime.Month, 1, 0, 0, 0, 0);
         }
     }

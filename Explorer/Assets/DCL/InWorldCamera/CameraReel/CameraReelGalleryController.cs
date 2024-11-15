@@ -25,6 +25,18 @@ namespace DCL.InWorldCamera.CameraReel
             DOWN
         }
 
+        private struct ReelToDeleteInfo
+        {
+            public readonly string Id;
+            public readonly string Datetime;
+
+            public ReelToDeleteInfo(string id, string datetime)
+            {
+                Id = id;
+                Datetime = datetime;
+            }
+        }
+
         public event Action<CameraReelResponse> ThumbnailClicked;
         public event Action<CameraReelStorageStatus> StorageUpdated;
 
@@ -34,15 +46,12 @@ namespace DCL.InWorldCamera.CameraReel
         private const int GRID_POOL_MAX_SIZE = 500;
         private const int ANIMATION_DELAY = 300;
 
-        private PagedCameraReelManager pagedCameraReelManager;
-
         private readonly CameraReelGalleryView view;
         private readonly ICameraReelStorageService cameraReelStorageService;
         private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
         private readonly IExplorePanelEscapeAction explorePanelEscapeAction;
         private readonly ReelGalleryPoolManager reelGalleryPoolManager;
         private readonly Dictionary<DateTime, MonthGridView> monthViews = new ();
-        private readonly Dictionary<MonthGridView, List<ReelThumbnailView>> reelThumbnailViews = new ();
         private readonly Dictionary<CameraReelResponse, Sprite> reelThumbnailCache = new ();
         private readonly OptionButtonController optionButtonController;
         private readonly ContextMenuController contextMenuController;
@@ -57,6 +66,7 @@ namespace DCL.InWorldCamera.CameraReel
         private int endVisible;
         private int currentSize;
         private CameraReelResponse reelToDelete;
+        private PagedCameraReelManager pagedCameraReelManager;
 
         public CameraReelGalleryController(CameraReelGalleryView view,
             ICameraReelStorageService cameraReelStorageService,
@@ -155,25 +165,41 @@ namespace DCL.InWorldCamera.CameraReel
             {
                 await UniTask.Delay(ANIMATION_DELAY);
                 if (reelToDelete is not null)
-                    DeleteScreenshotsAsync(reelToDelete).Forget();
+                    DeleteScreenshotsAsync(new ReelToDeleteInfo(reelToDelete.id, reelToDelete.metadata.dateTime)).Forget();
+
+                reelToDelete = null;
                 HideDeleteModal();
             }
 
             AnimateAndAwaitAsync().Forget();
         }
 
-        private async UniTask DeleteScreenshotsAsync(CameraReelResponse cameraReelResponse, CancellationToken ct = default)
+        private async UniTask DeleteScreenshotsAsync(ReelToDeleteInfo reelToDeleteInfo, CancellationToken ct = default)
         {
             try
             {
-                CameraReelStorageStatus response = await cameraReelStorageService.DeleteScreenshotAsync(cameraReelResponse.id, ct);
+                CameraReelStorageStatus response = await cameraReelStorageService.DeleteScreenshotAsync(reelToDeleteInfo.Id, ct);
                 StorageUpdated?.Invoke(response);
 
-                MonthGridView monthGridView = GetMonthGridView(PagedCameraReelManager.GetImageDateTime(cameraReelResponse));
-                monthGridView.RemoveThumbnail(cameraReelResponse);
+                int deletedIndex = -1;
+                for (int i = beginVisible; i < currentSize; i++)
+                    if (deletedIndex >= 0)
+                        thumbnailImages[i - 1] = thumbnailImages[i];
+                    else if (thumbnailImages[i].cameraReelResponse.id == reelToDeleteInfo.Id)
+                        deletedIndex = i;
+
+                thumbnailImages[currentSize - 1] = null;
+                currentSize--;
+                ResetThumbnailsVisibility();
+
+                MonthGridView monthGridView = GetMonthGridView(PagedCameraReelManager.GetDateTimeFromString(reelToDeleteInfo.Datetime));
+                monthGridView.RemoveThumbnail(reelToDeleteInfo.Id);
 
                 if (monthGridView.GridIsEmpty())
+                {
+                    monthViews.Remove(monthGridView.DateTimeBucket);
                     ReleaseGridView(monthGridView);
+                }
 
                 if (view.successNotificationView is null) return;
 
@@ -187,8 +213,6 @@ namespace DCL.InWorldCamera.CameraReel
                 await UniTask.Delay((int) view.errorSuccessToastDuration * 1000, cancellationToken: ct);
                 view.errorNotificationView.Hide();
             }
-
-            reelToDelete = null;
         }
 
         public async UniTask ShowWalletGallery(string walletAddress, CancellationToken ct, CameraReelStorageStatus? storageStatus = null)
@@ -243,11 +267,6 @@ namespace DCL.InWorldCamera.CameraReel
                 List<ReelThumbnailView> thumbnailViews = monthGridView.Setup(bucket.Key, bucket.Value, reelGalleryPoolManager, cameraReelScreenshotsStorage, optionButtonController,
                     (cameraReelResponse, sprite) => reelThumbnailCache.Add(cameraReelResponse, sprite),
                     cameraReelResponse => ThumbnailClicked?.Invoke(cameraReelResponse));
-
-                if (reelThumbnailViews.TryGetValue(monthGridView, out List<ReelThumbnailView> thumbnails))
-                    thumbnails.AddRange(thumbnailViews);
-                else
-                    reelThumbnailViews.Add(monthGridView, thumbnailViews);
 
                 for (int i = 0; i < thumbnailViews.Count; i++)
                     thumbnailImages[currentSize + i] = thumbnailViews[i];
@@ -313,7 +332,8 @@ namespace DCL.InWorldCamera.CameraReel
 
         private void EnableThumbnailImage(ReelThumbnailView thumbnailView)
         {
-            if (reelThumbnailCache.TryGetValue(thumbnailView.cameraReelResponse, out Sprite sprite)) thumbnailView.thumbnailImage.sprite = sprite;
+            if (reelThumbnailCache.TryGetValue(thumbnailView.cameraReelResponse, out Sprite sprite))
+                thumbnailView.thumbnailImage.sprite = sprite;
             thumbnailView.thumbnailImage.enabled = true;
         }
 
@@ -377,7 +397,6 @@ namespace DCL.InWorldCamera.CameraReel
         private void OnDisable()
         {
             ReleaseGridViews();
-            reelThumbnailViews.Clear();
             monthViews.Clear();
             reelThumbnailCache.Clear();
             beginVisible = 0;
