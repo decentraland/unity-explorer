@@ -59,6 +59,63 @@ void Log(char *msg)
     FreeImage_OutputMessageProc(FIF_UNKNOWN, msg);
 }
 
+bool CMP_Log(float progress, CMP_DWORD_PTR user1, CMP_DWORD_PTR user2)
+{
+    printf("Progress %.2f, u1 %d u2 %d\n", progress, user1, user2);
+    return true;
+}
+
+int MipSetFrom(const CMP_DWORD width, const CMP_DWORD height, CMIPS *CMips, CMP_BYTE *data, const CMP_DWORD dataSize, CMP_MipSet *mipSet)
+{
+    memset(mipSet, 0, sizeof(CMP_MipSet));
+    mipSet->dwWidth = width;
+    mipSet->dwHeight = height;
+    mipSet->m_format = CMP_FORMAT_BGRA_8888;
+
+    // Set the channel formats and mip levels
+    mipSet->m_ChannelFormat = CF_8bit;
+    mipSet->m_TextureDataType = TDT_ARGB; // TODO check if need normal maps
+    mipSet->m_dwFourCC = 0;
+    mipSet->m_dwFourCC2 = 0;
+    mipSet->m_TextureType = TT_2D;
+    mipSet->m_nDepth = 1; // depthsupport
+
+    // Allocate default MipSet header
+    CMips->AllocateMipSet(mipSet,
+                          mipSet->m_ChannelFormat,
+                          mipSet->m_TextureDataType,
+                          mipSet->m_TextureType,
+                          width,
+                          height,
+                          mipSet->m_nDepth);
+
+    FreeImage_OutputMessageProc(FIF_UNKNOWN, "Levels");
+
+    // Determine buffer size and set Mip Set Levels we want to use for now
+    MipLevel *mipLevel = CMips->GetMipLevel(mipSet, 0);
+    mipSet->m_nMipLevels = 1;
+
+    FreeImage_OutputMessageProc(FIF_UNKNOWN, "Allocated data");
+
+    mipLevel->m_nWidth =mipSet->m_nWidth;
+    mipLevel->m_nHeight =mipSet->m_nHeight;
+    mipLevel->m_dwLinearSize = dataSize;
+    mipLevel->m_pbData = data;
+
+    CMP_BYTE *pData = (CMP_BYTE *)(mipLevel->m_pbData);
+
+    if (mipLevel->m_dwLinearSize != dataSize)
+    {
+        FreeImage_OutputMessageProc(FIF_UNKNOWN, "WRONG data");
+        return 1; // fatal case
+    }
+
+    FreeImage_OutputMessageProc(FIF_UNKNOWN, "Copy data");
+
+    memcpy(pData, data, dataSize);
+    return 0;
+}
+
 ImageResult texturesfuse_initialize(InitOptions initOptions, context **contextOutput)
 {
     if (!contextOutput)
@@ -369,45 +426,7 @@ ImageResult texturesfuse_cmp_image_from_memory(
         SwapRGBAtoBGRA(bits, bitsLength);
     }
 
-    CMP_FORMAT sourceFormat = CMP_FORMAT_BGRA_8888;
-
-    CMP_Texture sourceTexture = {0};
-    sourceTexture.dwSize = sizeof(CMP_Texture);
-    sourceTexture.dwWidth = *width;
-    sourceTexture.dwHeight = *height;
-    sourceTexture.dwPitch = 0;
-    sourceTexture.format = sourceFormat;
-    sourceTexture.dwDataSize = bitsLength;
-    sourceTexture.pData = bits;
-
-    // Set up destination texture (BC5 format)
-    CMP_Texture destTexture = {0};
-    destTexture.dwSize = sizeof(CMP_Texture);
-    destTexture.dwWidth = *width;
-    destTexture.dwHeight = *height;
-    destTexture.dwPitch = 0;
-    destTexture.format = cmpFormat;
-    destTexture.dwDataSize = CMP_CalculateBufferSize(&destTexture); // Calculate required memory for BC5 compression
-    destTexture.pData = new CMP_BYTE[destTexture.dwDataSize];
-
-    // len shouldn't be too long
-    *outputLength = static_cast<int>(destTexture.dwDataSize);
-
-    *outputBytes = destTexture.pData;
-
-    CMP_CompressOptions options = {0};
-    options.dwSize = sizeof(CMP_CompressOptions);
-    options.fquality = compressOptions.fQuality;
-    options.bDisableMultiThreading = compressOptions.disableMultithreading;
-    options.dwnumThreads = compressOptions.dwnumThreads;
-    options.nEncodeWith = compressOptions.encodeWith;
-
-    FreeImage_OutputMessageProc(FIF_UNKNOWN, "Encoding with option is: %d", options.nEncodeWith);
-
-    CMP_MipSet srcMipSet = {0};
-    srcMipSet.dwWidth = *width;
-    srcMipSet.dwHeight = *height;
-    srcMipSet.m_format = sourceFormat;
+    FreeImage_OutputMessageProc(FIF_UNKNOWN, "Encoding with compress option is: %d", compressOptions.encodeWith);
 
     KernelOptions kOpt;
     memset(&kOpt, 0, sizeof(KernelOptions));
@@ -417,17 +436,81 @@ ImageResult texturesfuse_cmp_image_from_memory(
     kOpt.fquality = compressOptions.fQuality;
     kOpt.threads = compressOptions.dwnumThreads;
 
+
+    CMP_FORMAT sourceFormat = CMP_FORMAT_BGRA_8888;
+
+    // CMP_Texture sourceTexture = {0};
+    // sourceTexture.dwSize = sizeof(CMP_Texture);
+    // sourceTexture.dwWidth = *width;
+    // sourceTexture.dwHeight = *height;
+    // sourceTexture.dwPitch = 0;
+    // sourceTexture.format = sourceFormat;
+    // sourceTexture.dwDataSize = bitsLength;
+    // sourceTexture.pData = bits;
+
+    // // Set up destination texture (BC5 format)
+    // CMP_Texture destTexture = {0};
+    // destTexture.dwSize = sizeof(CMP_Texture);
+    // destTexture.dwWidth = *width;
+    // destTexture.dwHeight = *height;
+    // destTexture.dwPitch = 0;
+    // destTexture.format = cmpFormat;
+    // destTexture.dwDataSize = CMP_CalculateBufferSize(&destTexture); // Calculate required memory for BC5 compression
+    // destTexture.pData = new CMP_BYTE[destTexture.dwDataSize];
+
+    // // len shouldn't be too long
+    // *outputLength = static_cast<int>(destTexture.dwDataSize);
+
+    // *outputBytes = destTexture.pData;
+
+    CMP_CompressOptions options = {0};
+    options.dwSize = sizeof(CMP_CompressOptions);
+    options.fquality = compressOptions.fQuality;
+    options.bDisableMultiThreading = compressOptions.disableMultithreading;
+    options.dwnumThreads = compressOptions.dwnumThreads;
+    options.nEncodeWith = compressOptions.encodeWith;
+
     std::unique_ptr<CMIPS> cmip(new CMIPS);
 
-    CMP_ERROR cmpResult = CMP_CreateComputeLibrary(&srcMipSet, &kOpt, cmip.get());
-    if (cmpResult != CMP_OK)
-    {
-        FreeImage_OutputMessageProc(FIF_UNKNOWN, "Cannot create library CMP: %d", cmpResult);
-    }
-    options.format_support_hostEncoder = cmpResult == CMP_OK;
-    FreeImage_OutputMessageProc(FIF_UNKNOWN, "Linked file for decoding: %d", kOpt.srcfile);
+    CMP_MipSet srcMipSet;
 
-    cmpResult = CMP_ConvertTexture(&sourceTexture, &destTexture, &options, nullptr);
+    auto mipResult = MipSetFrom(
+        *width,
+        *height,
+        cmip.get(),
+        bits,
+        bitsLength,
+        &srcMipSet);
+
+    if (mipResult)
+    {
+        FreeImage_OutputMessageProc(FIF_UNKNOWN, "Fatal error on MipSet source creation");
+        return ErrorUnknown;
+    }
+
+    // std::unique_ptr<CMIPS> cmip(new CMIPS);
+
+    // CMP_ERROR cmpResult = CMP_CreateComputeLibrary(&srcMipSet, &kOpt, cmip.get());
+    // if (cmpResult != CMP_OK)
+    // {
+    //     FreeImage_OutputMessageProc(FIF_UNKNOWN, "Cannot create library CMP: %d", cmpResult);
+    // }
+    // options.format_support_hostEncoder = cmpResult == CMP_OK;
+    // FreeImage_OutputMessageProc(FIF_UNKNOWN, "Linked file for decoding: %d", kOpt.srcfile);
+
+    // cmpResult = CMP_ConvertTexture(&sourceTexture, &destTexture, &options, nullptr);
+
+    // srcMipSet.pData
+
+    // memset(&srcMipSet, 0, sizeof(CMP_MipSet));
+    // if (CMP_LoadTexture(pszSourceFile, &MipSetIn) != CMP_OK) {
+    //     std::printf("Error: Loading source file!\n");
+    //     return -1;
+    //   }
+
+    CMP_MipSet dstMipSet = {0};
+
+    CMP_ERROR cmpResult = CMP_ProcessTexture(&srcMipSet, &dstMipSet, kOpt, CMP_Log);
 
     FreeImage_Unload(image);
 
@@ -435,9 +518,12 @@ ImageResult texturesfuse_cmp_image_from_memory(
     {
         FreeImage_OutputMessageProc(FIF_UNKNOWN, "Error during decoding CMP: %d", cmpResult);
 
-        delete[] destTexture.pData;
+        // delete[] destTexture.pData; TODO
         return ErrorBC5;
     }
+
+    *outputBytes= dstMipSet.pData;
+    *outputLength = dstMipSet.dwDataSize;
 
     *releaseHandle = context->handles.registerHandle(*outputBytes);
 
@@ -530,7 +616,7 @@ int main()
     CMP_CustomOptions customOptions = {0};
     customOptions.disableMultithreading = true;
     customOptions.dwnumThreads = 1;
-    customOptions.encodeWith = CMP_Compute_type::CMP_GPU_VLK;
+    customOptions.encodeWith = CMP_Compute_type::CMP_CPU;
     customOptions.fQuality = 0.05;
 
     auto start = std::chrono::high_resolution_clock::now();
