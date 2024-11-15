@@ -46,6 +46,7 @@ using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Settings.Settings;
+using Global.AppArgs;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Audio;
@@ -68,6 +69,7 @@ namespace DCL.PluginSystem.Global
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly ICameraReelStorageService cameraReelStorageService;
         private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
+        private readonly IAppArgs appArgs;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IWearableStorage wearableStorage;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
@@ -113,6 +115,7 @@ namespace DCL.PluginSystem.Global
             IWeb3IdentityCache web3IdentityCache,
             ICameraReelStorageService cameraReelStorageService,
             ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
+            IAppArgs appArgs,
             IDecentralandUrlsSource decentralandUrlsSource,
             IWearableStorage wearableStorage,
             ICharacterPreviewFactory characterPreviewFactory,
@@ -154,6 +157,7 @@ namespace DCL.PluginSystem.Global
             this.web3IdentityCache = web3IdentityCache;
             this.cameraReelStorageService = cameraReelStorageService;
             this.cameraReelScreenshotsStorage = cameraReelScreenshotsStorage;
+            this.appArgs = appArgs;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.wearableStorage = wearableStorage;
             this.characterPreviewFactory = characterPreviewFactory;
@@ -244,7 +248,8 @@ namespace DCL.PluginSystem.Global
             await navmapController.InitializeAssetsAsync(assetsProvisioner, ct);
             await backpackSubPlugin.InitializeAsync(settings.BackpackSettings, explorePanelView.GetComponentInChildren<BackpackView>(), ct);
 
-            inputHandler = new ExplorePanelInputHandler(dclInput, mvcManager);
+            bool includeCameraReel = appArgs.HasCameraReelsFlag() || Application.isEditor;
+            inputHandler = new ExplorePanelInputHandler(dclInput, mvcManager, includeCameraReel);
 
             CameraReelView cameraReelView = explorePanelView.GetComponentInChildren<CameraReelView>();
             var cameraReelController = new CameraReelController(cameraReelView,
@@ -257,7 +262,7 @@ namespace DCL.PluginSystem.Global
                 ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackSubPlugin.backpackController!, cameraReelController,
                     new ProfileWidgetController(() => explorePanelView.ProfileWidget, web3IdentityCache, profileRepository, webRequestController),
                     new ProfileMenuController(() => explorePanelView.ProfileMenuView, web3IdentityCache, profileRepository, webRequestController, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager, chatEntryConfiguration),
-                    dclInput, inputHandler, notificationsBusController, mvcManager, inputBlock));
+                    dclInput, inputHandler, notificationsBusController, mvcManager, inputBlock, includeCameraReel));
         }
 
         public class ExplorePanelSettings : IDCLPluginSettings

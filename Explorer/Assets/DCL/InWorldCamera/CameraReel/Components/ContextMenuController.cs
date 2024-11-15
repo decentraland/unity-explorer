@@ -80,7 +80,7 @@ namespace DCL.InWorldCamera.CameraReel.Components
 
         private Vector3 GetOffsetByDirection(ContextMenuOpenDirection direction)
         {
-            Vector3 result = direction switch
+            return direction switch
             {
                 ContextMenuOpenDirection.BOTTOM_RIGHT => view.offsetFromTarget,
                 ContextMenuOpenDirection.BOTTOM_LEFT => new Vector3(-view.offsetFromTarget.x - controlsRectTransform.rect.width, view.offsetFromTarget.y, view.offsetFromTarget.z),
@@ -88,8 +88,6 @@ namespace DCL.InWorldCamera.CameraReel.Components
                 ContextMenuOpenDirection.TOP_LEFT => new Vector3(-view.offsetFromTarget.x - controlsRectTransform.rect.width, -view.offsetFromTarget.y + controlsRectTransform.rect.height, view.offsetFromTarget.z),
                 _ => Vector3.zero
             };
-
-            return result;
         }
 
         private Vector3 GetControlsPosition(Vector3 anchorPosition)

@@ -12,12 +12,14 @@ namespace DCL.ExplorePanel.Component
         private readonly DCLInput dclInput;
         private readonly IMVCManager mvcManager;
         private readonly LinkedList<Action<InputAction.CallbackContext>> escapeActions = new ();
+        private readonly bool includeCameraReel;
         private static ExploreSections lastShownSection;
 
-        public ExplorePanelInputHandler(DCLInput dclInput, IMVCManager mvcManager)
+        public ExplorePanelInputHandler(DCLInput dclInput, IMVCManager mvcManager, bool includeCameraReel)
         {
             this.dclInput = dclInput;
             this.mvcManager = mvcManager;
+            this.includeCameraReel = includeCameraReel;
             lastShownSection = ExploreSections.Navmap;
             RegisterHotkeys();
         }
@@ -92,6 +94,8 @@ namespace DCL.ExplorePanel.Component
 
         private void OnCameraReelHotkeyPressed(InputAction.CallbackContext obj)
         {
+            if (!includeCameraReel) return;
+
             mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.CameraReel)));
             lastShownSection = ExploreSections.CameraReel;
         }
