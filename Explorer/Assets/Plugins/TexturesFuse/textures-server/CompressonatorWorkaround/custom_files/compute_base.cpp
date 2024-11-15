@@ -92,6 +92,8 @@ void CMP_RegisterHostPlugins()
 {
     if (HostPluginsRegistered == FALSE)
     {
+        g_pluginManager.getPluginList("./plugins", TRUE);
+
         // Hosts
         g_pluginManager.registerStaticPlugin("IMAGE", "DDS", (void*)make_Plugin_DDS);
         g_pluginManager.registerStaticPlugin("PIPELINE", "HPC", (void*)make_Plugin_HPC);
@@ -115,7 +117,6 @@ void CMP_RegisterHostPlugins()
 #ifdef USE_LOSSLESS_COMPRESSION
         g_pluginManager.registerStaticPlugin("ENCODER", "BRLG", (void*)make_Codec_Plugin_BRLG);
 #endif
-        g_pluginManager.getPluginList("./plugins", TRUE);
         HostPluginsRegistered = TRUE;
     }
 }
