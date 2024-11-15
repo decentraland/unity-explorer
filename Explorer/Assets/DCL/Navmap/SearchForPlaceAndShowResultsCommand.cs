@@ -15,6 +15,7 @@ namespace DCL.Navmap
         private readonly IEventsApiService eventsApiService;
         private readonly PlacesAndEventsPanelController placesAndEventsPanelController;
         private readonly SearchResultPanelController searchResultPanelController;
+        private readonly NavmapSearchBarController searchBarController;
         private readonly string searchText;
         private readonly NavmapSearchPlaceFilter filter;
         private readonly NavmapSearchPlaceSorting sorting;
@@ -28,6 +29,7 @@ namespace DCL.Navmap
             IEventsApiService eventsApiService,
             PlacesAndEventsPanelController placesAndEventsPanelController,
             SearchResultPanelController searchResultPanelController,
+            NavmapSearchBarController searchBarController,
             string searchText,
             NavmapSearchPlaceFilter filter,
             NavmapSearchPlaceSorting sorting,
@@ -38,6 +40,7 @@ namespace DCL.Navmap
             this.eventsApiService = eventsApiService;
             this.placesAndEventsPanelController = placesAndEventsPanelController;
             this.searchResultPanelController = searchResultPanelController;
+            this.searchBarController = searchBarController;
             this.searchText = searchText;
             this.filter = filter;
             this.sorting = sorting;
@@ -100,6 +103,9 @@ namespace DCL.Navmap
 
         private async UniTask ProcessPlaces(CancellationToken ct)
         {
+            searchBarController.SetInputText(searchText);
+            searchBarController.Interactable = true;
+
             if (places == null)
             {
                 places = ListPool<PlacesData.PlaceInfo>.Get();
@@ -136,7 +142,7 @@ namespace DCL.Navmap
                        NavmapSearchPlaceSorting.Newest => (IPlacesAPIService.SortBy.CREATED_AT, IPlacesAPIService.SortDirection.DESC),
                        NavmapSearchPlaceSorting.BestRated => (IPlacesAPIService.SortBy.LIKE_SCORE, IPlacesAPIService.SortDirection.DESC),
                        NavmapSearchPlaceSorting.MostActive => (IPlacesAPIService.SortBy.MOST_ACTIVE, IPlacesAPIService.SortDirection.DESC),
-                       _ => throw new NotSupportedException()
+                       _ => (IPlacesAPIService.SortBy.NONE, IPlacesAPIService.SortDirection.DESC),
                    };
         }
     }

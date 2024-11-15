@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.EventsApi;
 using DCL.PlacesAPIService;
 using System;
 using System.Collections.Generic;
@@ -10,24 +11,37 @@ namespace DCL.Navmap
     {
         public delegate INavmapCommand SearchPlaceFactory(string search, NavmapSearchPlaceFilter filter, NavmapSearchPlaceSorting sorting);
         public delegate INavmapCommand ShowPlaceInfoFactory(PlacesData.PlaceInfo placeInfo);
+        public delegate INavmapCommand ShowEventInfoFactory(EventDTO @event, PlacesData.PlaceInfo? place = null);
 
         private readonly Stack<INavmapCommand> commands = new ();
         private readonly SearchPlaceFactory searchPlaceFactory;
         private readonly ShowPlaceInfoFactory showPlaceInfoFactory;
+        private readonly ShowEventInfoFactory showEventInfoFactory;
 
         public event Action<PlacesData.PlaceInfo>? OnJumpIn;
         public event Action<PlacesData.PlaceInfo>? OnDestinationSelected;
 
         public NavmapCommandBus(SearchPlaceFactory searchPlaceFactory,
-            ShowPlaceInfoFactory showPlaceInfoFactory)
+            ShowPlaceInfoFactory showPlaceInfoFactory,
+            ShowEventInfoFactory showEventInfoFactory)
         {
             this.searchPlaceFactory = searchPlaceFactory;
             this.showPlaceInfoFactory = showPlaceInfoFactory;
+            this.showEventInfoFactory = showEventInfoFactory;
         }
 
         public async UniTask SelectPlaceAsync(PlacesData.PlaceInfo place, CancellationToken ct)
         {
             INavmapCommand command = showPlaceInfoFactory.Invoke(place);
+
+            await command.ExecuteAsync(ct);
+
+            commands.Push(command);
+        }
+
+        public async UniTask SelectEventAsync(EventDTO @event, CancellationToken ct, PlacesData.PlaceInfo? place = null)
+        {
+            INavmapCommand command = showEventInfoFactory.Invoke(@event);
 
             await command.ExecuteAsync(ct);
 

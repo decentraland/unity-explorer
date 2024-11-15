@@ -136,17 +136,7 @@ namespace Global.Dynamic
 
         private void ParsePositionAppParameter(string targetPositionParam)
         {
-            if (string.IsNullOrEmpty(targetPositionParam)) return;
-
-            Vector2Int targetPosition = Vector2Int.zero;
-
-            MatchCollection matches = new Regex(@"-*\d+").Matches(targetPositionParam);
-
-            if (matches.Count > 1)
-            {
-                targetPosition.x = int.Parse(matches[0].Value);
-                targetPosition.y = int.Parse(matches[1].Value);
-            }
+            if (!RealmHelper.TryParseParcelFromString(targetPositionParam, out var targetPosition)) return;
 
             targetScene = targetPosition;
         }

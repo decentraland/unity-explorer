@@ -20,7 +20,6 @@ namespace DCL.Navmap
     public class PlaceInfoPanelController
     {
         private readonly PlaceInfoPanelView view;
-        private readonly IWebRequestController webRequestController;
         private readonly IPlacesAPIService placesAPIService;
         private readonly IMapPathEventBus mapPathEventBus;
         private readonly INavmapBus navmapBus;
@@ -35,7 +34,9 @@ namespace DCL.Navmap
         private PlacesData.PlaceInfo? place;
         private CancellationTokenSource? favoriteCancellationToken;
         private CancellationTokenSource? rateCancellationToken;
-        private CancellationTokenSource? eventsCancellationToken;
+        private CancellationTokenSource? fetchEventsCancellationToken;
+        private CancellationTokenSource? attendEventCancellationToken;
+        private CancellationTokenSource? openEventDetailsCancellationToken;
         private Vector2Int? currentBaseParcel;
         private Vector2Int? destination;
 
@@ -49,7 +50,6 @@ namespace DCL.Navmap
             ObjectPool<EventElementView> eventElementPool)
         {
             this.view = view;
-            this.webRequestController = webRequestController;
             this.placesAPIService = placesAPIService;
             this.mapPathEventBus = mapPathEventBus;
             this.navmapBus = navmapBus;
@@ -76,10 +76,10 @@ namespace DCL.Navmap
             view.OverviewTabButton.onClick.AddListener(() => Toggle(Section.OVERVIEW));
 
             dislikeButton = new MultiStateButtonController(view.DislikeButton, true);
-            dislikeButton.OnButtonClicked += Rate;
+            dislikeButton.OnButtonClicked += OnDislikeButtonClick;
 
             likeButton = new MultiStateButtonController(view.LikeButton, true);
-            likeButton.OnButtonClicked += Rate;
+            likeButton.OnButtonClicked += OnLikeButtonClick;
 
             favoriteButton = new MultiStateButtonController(view.FavoriteButton, true);
             favoriteButton.OnButtonClicked += SetAsFavorite;
@@ -113,12 +113,15 @@ namespace DCL.Navmap
             thumbnailImage.RequestImage(place.image);
             view.PlaceNameLabel.text = place.title;
             view.CreatorNameLabel.text = $"created by <b>{place.contact_name}</b>";
-            view.LikeRateLabel.text = place.like_rate;
+            view.LikeRateLabel.text = $"{(place.like_rate_as_float ?? 0) * 100:F0}%";
             view.PlayerCountLabel.text = place.user_count.ToString();
             view.DescriptionLabel.text = place.description;
             view.CoordinatesLabel.text = place.base_position;
             view.ParcelCountLabel.text = place.Positions.Length.ToString();
             view.AppearsOnContainer.SetActive(place.categories.Length > 0);
+
+            likeButton.SetButtonState(place.user_like);
+            dislikeButton.SetButtonState(place.user_dislike);
 
             SetCategories(place);
 
@@ -228,7 +231,7 @@ namespace DCL.Navmap
 
         private void Share() { }
 
-        private void Rate(bool isLike)
+        private void OnLikeButtonClick(bool isEnabled)
         {
             rateCancellationToken = rateCancellationToken.SafeRestart();
             RateAsync(rateCancellationToken.Token).Forget();
@@ -236,16 +239,30 @@ namespace DCL.Navmap
 
             async UniTaskVoid RateAsync(CancellationToken ct)
             {
-                await placesAPIService.RatePlace(isLike, place!.id, ct);
-                likeButton.SetButtonState(isLike);
-                dislikeButton.SetButtonState(!isLike);
+                await placesAPIService.RatePlace(isEnabled ? true : null, place!.id, ct);
+                likeButton.SetButtonState(isEnabled);
+                dislikeButton.SetButtonState(false);
+            }
+        }
+
+        private void OnDislikeButtonClick(bool isEnabled)
+        {
+            rateCancellationToken = rateCancellationToken.SafeRestart();
+            RateAsync(rateCancellationToken.Token).Forget();
+            return;
+
+            async UniTaskVoid RateAsync(CancellationToken ct)
+            {
+                await placesAPIService.RatePlace(isEnabled ? false : null, place!.id, ct);
+                likeButton.SetButtonState(false);
+                dislikeButton.SetButtonState(isEnabled);
             }
         }
 
         private void FetchAndShowEventsOfThePlace()
         {
-            eventsCancellationToken = eventsCancellationToken.SafeRestart();
-            FetchEventsAndShowThemAsync(eventsCancellationToken.Token).Forget();
+            fetchEventsCancellationToken = fetchEventsCancellationToken.SafeRestart();
+            FetchEventsAndShowThemAsync(fetchEventsCancellationToken.Token).Forget();
 
             return;
 
@@ -253,7 +270,7 @@ namespace DCL.Navmap
             {
                 SetAsLoadingState();
 
-                IReadOnlyList<EventDTO> events = await eventsApiService.GetEventsByParcelAsync(place!.base_position, ct);
+                IReadOnlyList<EventDTO> events = await eventsApiService.GetEventsByParcelAsync(place!.Positions, ct);
 
                 ClearEventElements();
 
@@ -272,7 +289,11 @@ namespace DCL.Navmap
                             : startAt.ToString("R");
                     }
 
-                    element.InterestedButton!.OnButtonClicked += GetInterested;
+                    element.InterestedButton!.OnButtonClicked += interested =>
+                    {
+                        attendEventCancellationToken = attendEventCancellationToken.SafeRestart();
+                        SetAsInterestedAsync(interested, @event, element, attendEventCancellationToken.Token).Forget();
+                    };
                     element.ShowDetailsButton.onClick.AddListener(() => OpenEventDetails(@event));
                     element.ShareButton.onClick.AddListener(() => Share(@event));
                     element.Thumbnail?.RequestImage(@event.image, true);
@@ -287,8 +308,15 @@ namespace DCL.Navmap
                 view.TabsLayoutRoot.ForceUpdateLayoutAsync(CancellationToken.None).Forget();
             }
 
-            void GetInterested(bool interested)
+            async UniTaskVoid SetAsInterestedAsync(bool interested, EventDTO @event,
+                EventElementView element, CancellationToken ct)
             {
+                if (interested)
+                    await eventsApiService.MarkAsInterestedAsync(@event.id, ct);
+                else
+                    await eventsApiService.MarkAsNotInterestedAsync(@event.id, ct);
+
+                element.InterestedButton!.SetButtonState(interested);
             }
 
             void SetAsLoadingState()
@@ -307,7 +335,8 @@ namespace DCL.Navmap
 
             void OpenEventDetails(EventDTO @event)
             {
-                // TODO
+                openEventDetailsCancellationToken = openEventDetailsCancellationToken.SafeRestart();
+                navmapBus.SelectEventAsync(@event, openEventDetailsCancellationToken.Token, place).Forget();
             }
         }
 

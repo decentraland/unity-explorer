@@ -43,10 +43,12 @@ using DCL.Chat.MessageBus;
 using DCL.EventsApi;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Settings.Settings;
+using System;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Audio;
 using UnityEngine.Pool;
+using Object = UnityEngine.Object;
 
 // ReSharper disable UnusedAutoPropertyAccessor.Local
 namespace DCL.PluginSystem.Global
@@ -91,6 +93,7 @@ namespace DCL.PluginSystem.Global
         private readonly ISystemMemoryCap systemMemoryCap;
         private readonly WorldVolumeMacBus worldVolumeMacBus;
         private readonly IEventsApiService eventsApiService;
+        private readonly IUserCalendar userCalendar;
 
         private NavmapController? navmapController;
         private SettingsController? settingsController;
@@ -102,6 +105,7 @@ namespace DCL.PluginSystem.Global
         private NavmapView? navmapView;
         private PlaceInfoPanelController? placeInfoPanelController;
         private NavmapSearchBarController? searchBarController;
+        private EventInfoPanelController? eventInfoPanelController;
 
         public ExplorePanelPlugin(IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
@@ -139,7 +143,8 @@ namespace DCL.PluginSystem.Global
             IChatMessagesBus chatMessagesBus,
             ISystemMemoryCap systemMemoryCap,
             WorldVolumeMacBus worldVolumeMacBus,
-            IEventsApiService eventsApiService)
+            IEventsApiService eventsApiService,
+            IUserCalendar userCalendar)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -178,6 +183,7 @@ namespace DCL.PluginSystem.Global
             this.systemMemoryCap = systemMemoryCap;
             this.worldVolumeMacBus = worldVolumeMacBus;
             this.eventsApiService = eventsApiService;
+            this.userCalendar = userCalendar;
         }
 
         public void Dispose()
@@ -236,15 +242,16 @@ namespace DCL.PluginSystem.Global
             searchHistory = new PlayerPrefsSearchHistory();
 
             INavmapBus navmapBus = new NavmapCommandBus(CreateSearchPlaceCommand,
-                CreateShowPlaceCommand);
+                CreateShowPlaceCommand, CreateShowEventCommand);
 
             ObjectPool<PlaceElementView> placeElementsPool = await InitializePlaceElementsPool(navmapView.SearchBarResultPanel, ct);
-            ObjectPool<EventElementView> eventElementsPool = await InitializeEventElementsPool(navmapView.PlacesAndEventsPanelView.PlaceInfoPanelView, ct);
+            ObjectPool<EventElementView> eventElementsPool = await InitializeEventElementsForPlacePool(navmapView.PlacesAndEventsPanelView.PlaceInfoPanelView, ct);
+            ObjectPool<EventScheduleElementView> eventScheduleElementsPool = await InitializeEventScheduleElementsPool(navmapView.PlacesAndEventsPanelView.EventInfoPanelView, ct);
 
             searchResultPanelController = new SearchResultPanelController(navmapView.SearchBarResultPanel,
                 placeElementsPool, navmapBus);
 
-            searchBarController = new (navmapView.SearchBarView,
+            searchBarController = new NavmapSearchBarController(navmapView.SearchBarView,
                 navmapView.HistoryRecordPanelView, navmapView.PlacesAndEventsPanelView.SearchFiltersView,
                 inputBlock, searchHistory, navmapBus);
 
@@ -252,8 +259,12 @@ namespace DCL.PluginSystem.Global
                 webRequestController, placesAPIService, mapPathEventBus, navmapBus, chatMessagesBus, eventsApiService,
                 eventElementsPool);
 
-            placesAndEventsPanelController = new (navmapView.PlacesAndEventsPanelView,
-                searchBarController, searchResultPanelController, placeInfoPanelController);
+            eventInfoPanelController = new EventInfoPanelController(navmapView.PlacesAndEventsPanelView.EventInfoPanelView,
+                webRequestController, navmapBus, chatMessagesBus, eventsApiService, eventScheduleElementsPool,
+                userCalendar);
+
+            placesAndEventsPanelController = new PlacesAndEventsPanelController(navmapView.PlacesAndEventsPanelView,
+                searchBarController, searchResultPanelController, placeInfoPanelController, eventInfoPanelController);
 
             NavmapZoomController zoomController = new (navmapView.zoomView, dclInput);
 
@@ -309,7 +320,7 @@ namespace DCL.PluginSystem.Global
             }
         }
 
-        private async UniTask<ObjectPool<EventElementView>> InitializeEventElementsPool(PlaceInfoPanelView view, CancellationToken ct)
+        private async UniTask<ObjectPool<EventElementView>> InitializeEventElementsForPlacePool(PlaceInfoPanelView view, CancellationToken ct)
         {
             EventElementView asset = (await assetsProvisioner.ProvideInstanceAsync(view.EventElementViewRef, ct: ct)).Value;
 
@@ -328,13 +339,35 @@ namespace DCL.PluginSystem.Global
             }
         }
 
+        private async UniTask<ObjectPool<EventScheduleElementView>> InitializeEventScheduleElementsPool(EventInfoPanelView view, CancellationToken ct)
+        {
+            EventScheduleElementView asset = (await assetsProvisioner.ProvideInstanceAsync(view.ScheduleElementRef, ct: ct)).Value;
+
+            return new ObjectPool<EventScheduleElementView>(
+                () => CreatePoolElements(asset),
+                actionOnGet: result => result.gameObject.SetActive(true),
+                actionOnRelease: result => result.gameObject.SetActive(false),
+                defaultCapacity: 8
+            );
+
+            EventScheduleElementView CreatePoolElements(EventScheduleElementView asset)
+            {
+                EventScheduleElementView placeElementView = Object.Instantiate(asset, view.ScheduleElementsContainer);
+                return placeElementView;
+            }
+        }
+
         private INavmapCommand CreateSearchPlaceCommand(string search, NavmapSearchPlaceFilter filter, NavmapSearchPlaceSorting sorting) =>
             new SearchForPlaceAndShowResultsCommand(placesAPIService, eventsApiService, placesAndEventsPanelController!,
-                searchResultPanelController!, search, filter, sorting);
+                searchResultPanelController!, searchBarController!, search, filter, sorting);
 
         private INavmapCommand CreateShowPlaceCommand(PlacesData.PlaceInfo placeInfo) =>
             new ShowPlaceInfoCommand(placeInfo, navmapView!, placeInfoPanelController!, placesAndEventsPanelController!, eventsApiService,
                 searchBarController!);
+
+        private INavmapCommand CreateShowEventCommand(EventDTO @event, PlacesData.PlaceInfo? place = null) =>
+            new ShowEventInfoCommand(@event, eventInfoPanelController!, placesAndEventsPanelController!,
+                searchBarController!, placesAPIService, place);
 
         public class ExplorePanelSettings : IDCLPluginSettings
         {

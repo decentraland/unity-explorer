@@ -8,6 +8,9 @@ namespace DCL.MapRenderer.ComponentsFactory
     public class MapRendererConfiguration : MonoBehaviour
     {
         [field: SerializeField]
+        public Transform AtlasRoot { get; private set; }
+
+        [field: SerializeField]
         public Transform SatelliteAtlasRoot { get; private set; }
 
         [field: SerializeField]

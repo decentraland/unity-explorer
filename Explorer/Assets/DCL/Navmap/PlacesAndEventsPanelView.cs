@@ -15,6 +15,9 @@ namespace DCL.Navmap
         public PlaceInfoPanelView PlaceInfoPanelView { get; private set; }
 
         [field: SerializeField]
+        public EventInfoPanelView EventInfoPanelView { get; private set; }
+
+        [field: SerializeField]
         public SearchFiltersView SearchFiltersView { get; private set; }
     }
 }

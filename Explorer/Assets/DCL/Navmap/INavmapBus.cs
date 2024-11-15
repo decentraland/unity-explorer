@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.EventsApi;
 using DCL.PlacesAPIService;
 using System;
 using System.Threading;
@@ -11,6 +12,8 @@ namespace DCL.Navmap
         event Action<PlacesData.PlaceInfo>? OnDestinationSelected;
 
         UniTask SelectPlaceAsync(PlacesData.PlaceInfo place, CancellationToken ct);
+
+        UniTask SelectEventAsync(EventDTO @event, CancellationToken ct, PlacesData.PlaceInfo? place = null);
 
         UniTask SearchForPlaceAsync(string place, NavmapSearchPlaceFilter filter, NavmapSearchPlaceSorting sorting, CancellationToken ct);
 
