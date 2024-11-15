@@ -2670,6 +2670,7 @@ MonoBehaviour:
   <JoinedUserCountLabel>k__BackingField: {fileID: 3677489373184486733}
   <ScheduleLabel>k__BackingField: {fileID: 1913869656407313944}
   <ShareButton>k__BackingField: {fileID: 7893733979581362423}
+  <SharePivot>k__BackingField: {fileID: 3762464918319539163}
   <ShowDetailsButton>k__BackingField: {fileID: 4885775388727539516}
   <LiveContainer>k__BackingField: {fileID: 5548223226551481677}
   <Animator>k__BackingField: {fileID: 3063367541773527207}

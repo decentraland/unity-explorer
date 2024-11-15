@@ -26,6 +26,7 @@ namespace DCL.Navmap
         private readonly IChatMessagesBus chatMessagesBus;
         private readonly IEventsApiService eventsApiService;
         private readonly ObjectPool<EventElementView> eventElementPool ;
+        private readonly SharePlacesAndEventsContextMenuController shareContextMenu;
         private readonly ImageController thumbnailImage;
         private readonly MultiStateButtonController dislikeButton;
         private readonly MultiStateButtonController likeButton;
@@ -47,7 +48,8 @@ namespace DCL.Navmap
             INavmapBus navmapBus,
             IChatMessagesBus chatMessagesBus,
             IEventsApiService eventsApiService,
-            ObjectPool<EventElementView> eventElementPool)
+            ObjectPool<EventElementView> eventElementPool,
+            SharePlacesAndEventsContextMenuController shareContextMenu)
         {
             this.view = view;
             this.placesAPIService = placesAPIService;
@@ -56,6 +58,7 @@ namespace DCL.Navmap
             this.chatMessagesBus = chatMessagesBus;
             this.eventsApiService = eventsApiService;
             this.eventElementPool = eventElementPool;
+            this.shareContextMenu = shareContextMenu;
             thumbnailImage = new ImageController(view.Thumbnail, webRequestController);
 
             mapPathEventBus.OnSetDestination += SetDestination;
@@ -229,7 +232,11 @@ namespace DCL.Navmap
             chatMessagesBus.Send($"/{ChatCommandsUtils.COMMAND_GOTO} {currentBaseParcel?.x},{currentBaseParcel?.y}", "jump in");
         }
 
-        private void Share() { }
+        private void Share()
+        {
+            shareContextMenu.Set(place!);
+            shareContextMenu.Show(view.SharePivot);
+        }
 
         private void OnLikeButtonClick(bool isEnabled)
         {
@@ -295,7 +302,7 @@ namespace DCL.Navmap
                         SetAsInterestedAsync(interested, @event, element, attendEventCancellationToken.Token).Forget();
                     };
                     element.ShowDetailsButton.onClick.AddListener(() => OpenEventDetails(@event));
-                    element.ShareButton.onClick.AddListener(() => Share(@event));
+                    element.ShareButton.onClick.AddListener(() => Share(@event, element));
                     element.Thumbnail?.RequestImage(@event.image, true);
                     element.LiveContainer.SetActive(@event.live);
                     element.EventNameLabel.text = @event.name;
@@ -328,9 +335,10 @@ namespace DCL.Navmap
                 }
             }
 
-            void Share(EventDTO @event)
+            void Share(EventDTO @event, EventElementView element)
             {
-                // TODO
+                shareContextMenu.Set(@event);
+                shareContextMenu.Show(element.SharePivot);
             }
 
             void OpenEventDetails(EventDTO @event)

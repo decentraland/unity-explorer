@@ -35,6 +35,9 @@ namespace DCL.Navmap
         public Button ShareButton { get; private set; }
 
         [field: SerializeField]
+        public RectTransform SharePivot { get; private set; }
+
+        [field: SerializeField]
         public Button ShowDetailsButton { get; private set; }
 
         [field: SerializeField]
