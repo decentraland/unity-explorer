@@ -40,8 +40,8 @@ def write_simde(file: IOBase, project_root: str):
     
     file.write(content)
     file.write("""
-include_directories(${CMAKE_SOURCE_DIR}/../cmp_core/shaders)
-include_directories(${CMAKE_SOURCE_DIR}/../cmp_core/source)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../cmp_core/shaders)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../cmp_core/source)
                """)
 
 def link_opencv(file: IOBase, include_target_flag: bool):
@@ -71,9 +71,9 @@ def insert_at_end(file_path: str, content: str):
         
 def set_vars(file_path: str):
     content = """
-set(COMPRESSONATOR_ROOT_PATH ${PROJECT_SOURCE_DIR}/..)
+set(COMPRESSONATOR_ROOT_PATH ${CMAKE_CURRENT_SOURCE_DIR}/..)
 set(PROJECT_FOLDER_SDK "SDK")
-set(PROJECT_FOLDER_SDK_LIBS "${PROJECT_FOLDER_SDK}/Libraries")
+set(PROJECT_FOLDER_SDK_LIBS "${CMAKE_CURRENT_SOURCE_DIR}/Libraries")
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
@@ -92,7 +92,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isysroot ${CMAKE_OSX_SYSROOT} -mmacosx-
 def append_line_to_cmake():
 
     with open('compressonator/CMakeLists.txt', 'a') as file:
-        write_simde(file, '${CMAKE_SOURCE_DIR}/../')
+        write_simde(file, '${CMAKE_CURRENT_SOURCE_DIR}/../')
         link_opencv(file, False)
     
     lib_make = 'compressonator/cmp_compressonatorlib/CMakeLists.txt'
@@ -102,20 +102,20 @@ def append_line_to_cmake():
     replace_in_file(lib_make, '/cmp_compressonatorlib/', '/../cmp_compressonatorlib/')
     
     with open(lib_make, 'a') as file:
-        write_simde(file, '${CMAKE_SOURCE_DIR}/../../')
+        write_simde(file, '${CMAKE_CURRENT_SOURCE_DIR}/../../')
         
         
     framework_make = 'compressonator/cmp_framework/CMakeLists.txt'
     set_vars(framework_make)
-    insert_at_start(framework_make, 'set(PROJECT_SOURCE_DIR "${PROJECT_SOURCE_DIR}/..")')
+    insert_at_start(framework_make, 'set(PROJECT_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/..")')
     insert_at_end(framework_make,"""
 target_include_directories(CMP_Framework 
     PUBLIC 
-    ${PROJECT_SOURCE_DIR}/../externals_repos/simde/simde/x86
-    ${PROJECT_SOURCE_DIR}/../externals_repos/simde/simde/x86/AVX512
+    ${CMAKE_CURRENT_SOURCE_DIR}/../externals_repos/simde/simde/x86
+    ${CMAKE_CURRENT_SOURCE_DIR}/../externals_repos/simde/simde/x86/AVX512
 
-    ${PROJECT_SOURCE_DIR}/cmp_core/source
-    ${PROJECT_SOURCE_DIR}/cmp_core/shaders
+    ${CMAKE_CURRENT_SOURCE_DIR}/cmp_core/source
+    ${CMAKE_CURRENT_SOURCE_DIR}/cmp_core/shaders
 )
 """)
     
@@ -125,7 +125,7 @@ target_include_directories(CMP_Framework
     core_make = 'compressonator/cmp_core/CMakeLists.txt'
     set_vars(core_make)
     with open(core_make, 'a') as file:
-        write_simde(file, '${CMAKE_SOURCE_DIR}/../../')
+        write_simde(file, '${CMAKE_CURRENT_SOURCE_DIR}/../../')
         #link_opencv(file, True)
 
 if __name__ == "__main__":    
