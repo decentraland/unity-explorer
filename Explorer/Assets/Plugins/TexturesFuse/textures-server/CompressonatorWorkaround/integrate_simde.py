@@ -5,6 +5,7 @@ import re
 import fileinput
 import glob
 import subprocess
+import shutil
 
 import importlib.util
 
@@ -14,7 +15,7 @@ def replace_in_file(file_path, old_string, new_string):
             for line in file:
                 print(re.sub(old_string, new_string, line), end='')
     except Exception as e:
-        print(f'something went wrong in file: {file_path} - {str(e)}', file=sys.stderr)
+        print(f'something went wrong in file: {file_path} - {str(e)}\n', file=sys.stderr)
         os.rename(f'{file_path}.bak', file_path)
     finally:
         try:
@@ -28,6 +29,7 @@ def replace_in_directory(directory : str, old_string : str,  new_string : str, e
             if extensions:
                 if not any(filename.endswith(ext) for ext in extensions):
                     continue
+            print(f"    - Performing {filename}")
             file_path = os.path.join(dirpath, filename)
             replace_in_file(file_path, old_string, new_string)
 
@@ -164,7 +166,14 @@ if __name__ == "__main__":
         ('#define THREADED_COMPRESS', ''), #TODO back?
         
         #Fix plugins location
-        ('g_pluginManager.getPluginList(".", TRUE);', 'g_pluginManager.getPluginList("./plugins", TRUE);')
+        ('g_pluginManager.getPluginList(".", TRUE)', 'g_pluginManager.getPluginList("./plugins", TRUE)')
+    ]
+    
+    #file_name_target, from_path
+    #root dir: custom_files
+    custom_files = [
+        ("compressonator/cmp_framework/compute_base.cpp", "compute_base.cpp"),
+        ("compressonator/applications/_plugins/common/pluginmanager.cpp", "pluginmanager.cpp")
     ]
     
     allowed_extensions = ['cpp','c','h','txt','make','cmake']
@@ -180,6 +189,12 @@ if __name__ == "__main__":
     bakFiles = glob.glob(os.path.join(directory_path, '**/*.bak'))
     for bak in bakFiles:
         os.remove(bak)
+        
+    for target_path, origin_path in custom_files:
+        from_path = os.path.join('./custom_files', origin_path)
+        to_path = os.path.join('./', target_path)
+        print(f"Copying content from {from_path} to {to_path}")
+        shutil.copy(from_path, to_path)
         
     append_line_to_cmake()
     
