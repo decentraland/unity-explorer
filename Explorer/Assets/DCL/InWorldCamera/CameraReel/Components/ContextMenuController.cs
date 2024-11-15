@@ -98,25 +98,41 @@ namespace DCL.InWorldCamera.CameraReel.Components
             position.x += controlsRectTransform.rect.width / 2;
             position.y -= controlsRectTransform.rect.height / 2;
 
-            Vector3 newPosition = position + GetOffsetByDirection(ContextMenuOpenDirection.BOTTOM_RIGHT);
+            Vector3 newPosition = Vector3.zero;
+            float minNonOverlappingArea = float.MaxValue;
             foreach (ContextMenuOpenDirection enumVal in Enum.GetValues(typeof(ContextMenuOpenDirection)))
             {
                 Vector3 currentPosition = position + GetOffsetByDirection(enumVal);
-                if (IsRectFullyContained(backgroundButtonRect, GetProjectedRect(currentPosition)))
+                float nonOverlappingArea = CalculateNonOverlappingArea(backgroundButtonRect, GetProjectedRect(currentPosition));
+                if (nonOverlappingArea < minNonOverlappingArea)
                 {
                     newPosition = currentPosition;
-                    break;
+                    minNonOverlappingArea = nonOverlappingArea;
                 }
             }
 
             return newPosition;
         }
 
-        private bool IsRectFullyContained(Rect outerRect, Rect innerRect) =>
-            outerRect.xMin <= innerRect.xMin &&
-            outerRect.xMax >= innerRect.xMax &&
-            outerRect.yMin <= innerRect.yMin &&
-            outerRect.yMax >= innerRect.yMax;
+        private float CalculateNonOverlappingArea(Rect rect1, Rect rect2)
+        {
+            float area1 = rect1.width * rect1.height;
+            float area2 = rect2.width * rect2.height;
+
+            Rect intersection = Rect.MinMaxRect(
+                Mathf.Max(rect1.xMin, rect2.xMin),
+                Mathf.Max(rect1.yMin, rect2.yMin),
+                Mathf.Min(rect1.xMax, rect2.xMax),
+                Mathf.Min(rect1.yMax, rect2.yMax)
+            );
+
+            float intersectionArea = 0;
+
+            if (intersection is { width: > 0, height: > 0 })
+                intersectionArea = intersection.width * intersection.height;
+
+            return area1 + area2 - intersectionArea;
+        }
 
         private Rect GetProjectedRect(Vector3 newPosition)
         {
