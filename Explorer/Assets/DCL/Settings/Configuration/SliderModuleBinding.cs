@@ -1,6 +1,7 @@
 ﻿using DCL.Landscape.Settings;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Quality;
+using DCL.SDKComponents.MediaStream.Settings;
 using DCL.Settings.ModuleControllers;
 using DCL.Settings.ModuleViews;
 using DCL.Settings.Settings;
@@ -32,6 +33,7 @@ namespace DCL.Settings.Configuration
         public override SettingsFeatureController CreateModule(
             Transform parent,
             RealmPartitionSettingsAsset realmPartitionSettingsAsset,
+            VideoPrioritizationSettings videoPrioritizationSettings,
             LandscapeData landscapeData,
             AudioMixer generalAudioMixer,
             QualitySettingsAsset qualitySettingsAsset,
@@ -45,7 +47,7 @@ namespace DCL.Settings.Configuration
             SettingsFeatureController controller = Feature switch
                                                    {
                                                        SliderFeatures.SCENE_DISTANCE_FEATURE => new SceneDistanceSettingsController(viewInstance, realmPartitionSettingsAsset),
-                                                       SliderFeatures.MAX_SIMULTANEOUS_VIDEOS => new MaxSimultaneousVideosSettingsController(viewInstance),
+                                                       SliderFeatures.MAX_SIMULTANEOUS_VIDEOS => new MaxSimultaneousVideosSettingsController(viewInstance, videoPrioritizationSettings),
                                                        SliderFeatures.ENVIRONMENT_DISTANCE_FEATURE => new EnvironmentDistanceSettingsController(viewInstance, landscapeData),
                                                        SliderFeatures.MOUSE_VERTICAL_SENSITIVITY_FEATURE => new MouseVerticalSensitivitySettingsController(viewInstance, controlsSettingsAsset),
                                                        SliderFeatures.MOUSE_HORIZONTAL_SENSITIVITY_FEATURE => new MouseHorizontalSensitivitySettingsController(viewInstance, controlsSettingsAsset),

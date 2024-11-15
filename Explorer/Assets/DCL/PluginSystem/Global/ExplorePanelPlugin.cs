@@ -41,6 +41,8 @@ using System.Linq;
 using System.Threading;
 using DCL.Chat.MessageBus;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.PluginSystem.World;
+using DCL.SDKComponents.MediaStream.Settings;
 using DCL.Settings.Settings;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -218,12 +220,12 @@ namespace DCL.PluginSystem.Global
             ProvidedAsset<SettingsMenuConfiguration> settingsMenuConfiguration = await assetsProvisioner.ProvideMainAssetAsync(settings.SettingsMenuConfiguration, ct);
             ProvidedAsset<AudioMixer> generalAudioMixer = await assetsProvisioner.ProvideMainAssetAsync(settings.GeneralAudioMixer, ct);
             ProvidedAsset<RealmPartitionSettingsAsset> realmPartitionSettings = await assetsProvisioner.ProvideMainAssetAsync(settings.RealmPartitionSettings, ct);
+            ProvidedAsset<VideoPrioritizationSettings> videoPrioritizationSettings = await assetsProvisioner.ProvideMainAssetAsync(settings.VideoPrioritizationSettings, ct);
 
             ProvidedAsset<LandscapeData> landscapeData = await assetsProvisioner.ProvideMainAssetAsync(settings.LandscapeData, ct);
             ProvidedAsset<QualitySettingsAsset> qualitySettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.QualitySettingsAsset, ct);
             ProvidedAsset<ControlsSettingsAsset> controlsSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.ControlsSettingsAsset, ct);
-            settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>(), settingsMenuConfiguration.Value, generalAudioMixer.Value, realmPartitionSettings.Value, landscapeData.Value, qualitySettingsAsset.Value, controlsSettingsAsset.Value, systemMemoryCap, worldVolumeMacBus);
-
+            settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>(), settingsMenuConfiguration.Value, generalAudioMixer.Value, realmPartitionSettings.Value, videoPrioritizationSettings.Value, landscapeData.Value, qualitySettingsAsset.Value, controlsSettingsAsset.Value, systemMemoryCap, worldVolumeMacBus);
             navmapController = new NavmapController(navmapView: explorePanelView.GetComponentInChildren<NavmapView>(),
                 mapRendererContainer.MapRenderer, placesAPIService, webRequestController, webBrowser, dclInput,
                 realmNavigator, realmData, mapPathEventBus, world, playerEntity, inputBlock, chatMessagesBus);
@@ -261,6 +263,9 @@ namespace DCL.PluginSystem.Global
 
             [field: SerializeField]
             public StaticSettings.RealmPartitionSettingsRef RealmPartitionSettings { get; private set; }
+
+            [field: SerializeField]
+            public StaticSettings.VideoPrioritizationSettingsRef VideoPrioritizationSettings { get; private set; }
 
             [field: SerializeField]
             public LandscapeSettings.LandscapeDataRef LandscapeData { get; private set; }

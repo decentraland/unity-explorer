@@ -24,7 +24,6 @@ namespace DCL.SDKComponents.MediaStream
     public partial class UpdateMediaPlayerPrioritizationSystem : BaseUnityLoopSystem
     {
         private readonly IExposedCameraData exposedCameraData;
-        private readonly Utility.Storage.PersistentSetting<float> maxSimultaneousVideosSetting;
         private readonly VideoPrioritizationSettings videoPrioritizationSettings;
 
         private readonly List<VideoStateByPriorityComponent> sortedVideoPriorities = new ();
@@ -38,9 +37,6 @@ namespace DCL.SDKComponents.MediaStream
             this.videoPrioritizationSettings = videoPrioritizationSettings;
 
             this.exposedCameraData = exposedCameraData;
-
-            // TODO: This should be done in a better way:
-            maxSimultaneousVideosSetting = Utility.Storage.PersistentSetting.CreateFloat("Settings_MaxSimultaneousVideos", 1);
         }
 
         protected override void Update(float t)
@@ -58,14 +54,14 @@ namespace DCL.SDKComponents.MediaStream
                 }
 
                 UpdateVideoPrioritiesQuery(World, cachedCameraVerticalFOV, cachedCameraHorizontalFOV, exposedCameraData.WorldPosition.Value, exposedCameraData.WorldRotation.Value);
-                UpdateVideoStateDependingOnPriorityQuery(World, (int)maxSimultaneousVideosSetting.Value);
+                UpdateVideoStateDependingOnPriorityQuery(World, videoPrioritizationSettings.MaximumSimultaneousVideos);
             }
 
 #if DEBUG_VIDEO_PRIORITIES
 
             Debug.Log("<color=cyan>" + sortedVideoPriorities.Count + "</color>");
 
-            float maximumPlayingVideos = Mathf.Min(sortedVideoPriorities.Count, maxSimultaneousVideosSetting.Value);
+            float maximumPlayingVideos = Mathf.Min(sortedVideoPriorities.Count, videoPrioritizationSettings.MaximumSimultaneousVideos);
 
             for (int i = 0; i < sortedVideoPriorities.Count; ++i)
             {
