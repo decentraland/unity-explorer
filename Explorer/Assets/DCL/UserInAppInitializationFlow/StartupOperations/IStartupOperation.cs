@@ -10,10 +10,4 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
     {
         UniTask<Result> ExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct);
     }
-
-    public static class StartupOperationExtensions
-    {
-        public static IStartupOperation WithHandleExceptions(this IStartupOperation origin) =>
-            new HandleExceptionsStartupOperation(origin);
-    }
 }

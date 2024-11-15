@@ -11,7 +11,7 @@ namespace DCL.Utilities.Extensions
         /// <summary>
         ///     Suppresses all exceptions, reports them and converts them to <see cref="Result" />
         /// </summary>
-        public static async UniTask<Result> SuppressToResultAsync(this UniTask coreOp, ReportData? reportData = null)
+        public static async UniTask<Result> SuppressToResultAsync(this UniTask coreOp, ReportData? reportData = null, Func<Exception, Result>? exceptionToResult = null)
         {
             try
             {
@@ -22,7 +22,27 @@ namespace DCL.Utilities.Extensions
             catch (Exception e)
             {
                 ReportException(e);
-                return Result.ErrorResult(e.Message);
+                return exceptionToResult?.Invoke(e) ?? Result.ErrorResult(e.Message);
+            }
+
+            void ReportException(Exception e)
+            {
+                if (reportData != null)
+                    ReportHub.LogException(e, reportData.Value);
+            }
+        }
+
+        /// <summary>
+        ///     Suppresses all exceptions, reports them and converts them to <see cref="Result" />
+        /// </summary>
+        public static async UniTask<Result<T>> SuppressToResultAsync<T>(this UniTask<T> coreOp, ReportData? reportData = null, Func<Exception, Result<T>>? exceptionToResult = null)
+        {
+            try { return Result<T>.SuccessResult(await coreOp); }
+            catch (OperationCanceledException) { return Result<T>.CancelledResult(); }
+            catch (Exception e)
+            {
+                ReportException(e);
+                return exceptionToResult?.Invoke(e) ?? Result<T>.ErrorResult(e.Message);
             }
 
             void ReportException(Exception e)

@@ -15,7 +15,7 @@ namespace Global.Dynamic.TeleportOperations
             this.realmController = realmController;
         }
 
-        protected override UniTask ExecuteAsyncInternal(TeleportParams teleportParams, CancellationToken ct)
+        protected override UniTask InternalExecuteAsync(TeleportParams teleportParams, CancellationToken ct)
         {
             if(!realmController.RealmData.ScenesAreFixed) // Is Genesis
                 roadAssetsPool.Prewarm();

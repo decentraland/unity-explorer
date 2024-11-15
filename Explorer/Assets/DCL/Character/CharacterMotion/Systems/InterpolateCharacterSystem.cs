@@ -20,7 +20,6 @@ namespace DCL.CharacterMotion.Systems
     ///     </para>
     /// </summary>
     [UpdateInGroup(typeof(ChangeCharacterPositionGroup))]
-    [UpdateBefore(typeof(CameraGroup))]
     public partial class InterpolateCharacterSystem : BaseUnityLoopSystem
     {
         private const float ALMOST_ZERO = 0.00001f;

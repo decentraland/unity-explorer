@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using System.Collections.Generic;
 using System.Threading;
+using Utility.Types;
 
 namespace DCL.Multiplayer.HealthChecks.Struct
 {
@@ -13,15 +14,15 @@ namespace DCL.Multiplayer.HealthChecks.Struct
             this.list = list;
         }
 
-        public async UniTask<(bool success, string? errorMessage)> IsRemoteAvailableAsync(CancellationToken ct)
+        public async UniTask<Result> IsRemoteAvailableAsync(CancellationToken ct)
         {
             foreach (IHealthCheck healthCheck in list)
             {
                 var result = await healthCheck.IsRemoteAvailableAsync(ct);
-                if (result.success == false) return result;
+                if (result.Success == false) return result;
             }
 
-            return (true, null);
+            return Result.SuccessResult();
         }
     }
 }

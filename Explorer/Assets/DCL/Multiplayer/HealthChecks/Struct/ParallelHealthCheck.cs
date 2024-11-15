@@ -1,20 +1,21 @@
 using Cysharp.Threading.Tasks;
 using System.Collections.Generic;
 using System.Threading;
+using Utility.Types;
 
 namespace DCL.Multiplayer.HealthChecks.Struct
 {
     public class ParallelHealthCheck : IHealthCheck
     {
         private readonly IReadOnlyList<IHealthCheck> list;
-        private readonly List<UniTask<(bool success, string? errorMessage)>> temp = new ();
+        private readonly List<UniTask<Result>> temp = new ();
 
         public ParallelHealthCheck(params IHealthCheck[] list)
         {
             this.list = list;
         }
 
-        public async UniTask<(bool success, string? errorMessage)> IsRemoteAvailableAsync(CancellationToken ct)
+        public async UniTask<Result> IsRemoteAvailableAsync(CancellationToken ct)
         {
             temp.Clear();
 
@@ -24,10 +25,10 @@ namespace DCL.Multiplayer.HealthChecks.Struct
             var result = await UniTask.WhenAll(temp);
 
             foreach (var r in result)
-                if (r.success == false)
+                if (r.Success == false)
                     return r;
 
-            return (true, null);
+            return Result.SuccessResult();
         }
     }
 }

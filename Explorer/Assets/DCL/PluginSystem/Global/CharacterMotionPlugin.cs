@@ -29,12 +29,14 @@ namespace DCL.PluginSystem.Global
         public CharacterMotionPlugin(IAssetsProvisioner assetsProvisioner,
             ICharacterObject characterObject,
             IDebugContainerBuilder debugContainerBuilder,
-            IComponentPoolsRegistry componentPoolsRegistry)
+            IComponentPoolsRegistry componentPoolsRegistry,
+            ISceneReadinessReportQueue sceneReadinessReportQueue)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.characterObject = characterObject;
             this.debugContainerBuilder = debugContainerBuilder;
             this.componentPoolsRegistry = componentPoolsRegistry;
+            this.sceneReadinessReportQueue = sceneReadinessReportQueue;
         }
 
         public void Dispose()

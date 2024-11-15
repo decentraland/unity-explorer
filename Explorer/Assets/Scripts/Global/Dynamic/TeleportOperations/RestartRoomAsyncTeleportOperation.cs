@@ -17,7 +17,7 @@ namespace Global.Dynamic.TeleportOperations
             this.livekitTimeout = livekitTimeout;
         }
 
-        protected override async UniTask ExecuteAsyncInternal(TeleportParams teleportParams, CancellationToken ct)
+        protected override async UniTask InternalExecuteAsync(TeleportParams teleportParams, CancellationToken ct)
         {
             float finalizationProgress =
                 teleportParams.LoadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.LivekitRestarting);

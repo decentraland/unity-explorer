@@ -2,12 +2,13 @@ using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.HealthChecks.Struct;
 using System;
 using System.Threading;
+using Utility.Types;
 
 namespace DCL.Multiplayer.HealthChecks
 {
     public interface IHealthCheck
     {
-        UniTask<(bool success, string? errorMessage)> IsRemoteAvailableAsync(CancellationToken ct);
+        UniTask<Result> IsRemoteAvailableAsync(CancellationToken ct);
 
         class AlwaysFails : IHealthCheck
         {
@@ -18,8 +19,8 @@ namespace DCL.Multiplayer.HealthChecks
                 this.errorMessage = errorMessage;
             }
 
-            public UniTask<(bool success, string? errorMessage)> IsRemoteAvailableAsync(CancellationToken ct) =>
-                UniTask.FromResult((false, errorMessage))!;
+            public UniTask<Result> IsRemoteAvailableAsync(CancellationToken ct) =>
+                UniTask.FromResult(Result.ErrorResult(nameof(AlwaysFails)))!;
         }
     }
 

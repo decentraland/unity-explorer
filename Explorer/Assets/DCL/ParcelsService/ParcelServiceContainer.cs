@@ -3,6 +3,8 @@ using DCL.AsyncLoadReporting;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.SceneLoadingScreens;
+using DCL.SceneLoadingScreens.LoadingScreen;
+using DCL.Utilities.Extensions;
 using ECS;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Reporting;
@@ -24,11 +26,12 @@ namespace DCL.ParcelsService
             ISceneReadinessReportQueue sceneReadinessReportQueue,
             IDebugContainerBuilder debugContainerBuilder,
             IMVCManager mvcManager,
+            ILoadingScreen loadingScreen,
             SceneAssetLock assetLock)
         {
             var teleportController = new TeleportController(sceneReadinessReportQueue, assetLock);
 
-            BuildDebugWidget(teleportController, mvcManager, debugContainerBuilder);
+            BuildDebugWidget(teleportController, mvcManager, debugContainerBuilder, loadingScreen);
 
             return new ParcelServiceContainer
             {
@@ -38,14 +41,9 @@ namespace DCL.ParcelsService
             };
         }
 
-        private static void BuildDebugWidget(ITeleportController teleportController, IMVCManager mvcManager, IDebugContainerBuilder debugContainerBuilder)
+        private static void BuildDebugWidget(ITeleportController teleportController, IMVCManager mvcManager, IDebugContainerBuilder debugContainerBuilder, ILoadingScreen loadingScreen)
         {
             var binding = new PersistentElementBinding<Vector2Int>(PersistentSetting.CreateVector2Int("teleportCoordinates"));
-
-            UniTask ShowLoadingScreenAsync(AsyncLoadProcessReport loadReport) =>
-                mvcManager.ShowAsync(
-                    SceneLoadingScreenController.IssueCommand(new SceneLoadingScreenController.Params(loadReport))
-                );
 
             debugContainerBuilder
                .TryAddWidget("Teleport")
@@ -53,29 +51,24 @@ namespace DCL.ParcelsService
                .AddControl(
                     new DebugButtonDef("To Parcel", () =>
                         {
-                            AsyncLoadProcessReport loadReport = CreateReport();
-
-                            UniTask.WhenAll(
-                                        ShowLoadingScreenAsync(loadReport),
-                                        teleportController.TeleportToParcelAsync(binding.Value, loadReport, CancellationToken.None)
-                                    )
-                                   .Forget();
+                            loadingScreen.ShowWhileExecuteTaskAsync(
+                                              (report, token) => teleportController.TeleportToParcelAsync(binding.Value, report, token).SuppressToResultAsync()
+                                            , CancellationToken.None)
+                                         .Forget();
                         }
                     ),
                     new DebugButtonDef("To Spawn Point", () =>
                         {
-                            AsyncLoadProcessReport loadReport = CreateReport();
-
-                            UniTask.WhenAll(
-                                        ShowLoadingScreenAsync(loadReport),
-                                        teleportController.TeleportToSceneSpawnPointAsync(binding.Value, loadReport, CancellationToken.None))
-                                   .Forget();
+                            loadingScreen.ShowWhileExecuteTaskAsync(
+                                              async (report, token) =>
+                                              {
+                                                  WaitForSceneReadiness? sceneReadiness = await teleportController.TeleportToSceneSpawnPointAsync(binding.Value, report, token);
+                                                  return await sceneReadiness.ToUniTask().SuppressToResultAsync();
+                                              }, CancellationToken.None)
+                                         .Forget();
                         }
                     )
                 );
-
-            static AsyncLoadProcessReport CreateReport() =>
-                AsyncLoadProcessReport.Create(new CancellationTokenSource(TimeSpan.FromSeconds(30)).Token);
         }
     }
 }

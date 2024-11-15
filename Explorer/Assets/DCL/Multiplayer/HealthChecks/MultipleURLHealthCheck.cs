@@ -4,6 +4,7 @@ using DCL.Multiplayer.HealthChecks.Struct;
 using DCL.WebRequests;
 using System.Linq;
 using System.Threading;
+using Utility.Types;
 
 namespace DCL.Multiplayer.HealthChecks
 {
@@ -24,7 +25,7 @@ namespace DCL.Multiplayer.HealthChecks
             );
         }
 
-        public UniTask<(bool success, string? errorMessage)> IsRemoteAvailableAsync(CancellationToken ct) =>
+        public UniTask<Result> IsRemoteAvailableAsync(CancellationToken ct) =>
             healthCheck.IsRemoteAvailableAsync(ct);
     }
 }

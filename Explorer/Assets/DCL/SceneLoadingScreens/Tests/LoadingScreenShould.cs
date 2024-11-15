@@ -63,7 +63,7 @@ namespace DCL.SceneLoadingScreens.Tests
         }
 
         [Test]
-        public async Task ReduceLoadingScreenExceptionToResultAsync()
+        public async Task ReduceLoadingScreenExceptionToOperationResultAsync()
         {
             LogAssert.ignoreFailingMessages = true;
 
@@ -79,7 +79,7 @@ namespace DCL.SceneLoadingScreens.Tests
                 return Result.SuccessResult();
             }
 
-            Assert.That(finalRes.ErrorMessage, Is.EqualTo("MVC Exception"));
+            Assert.That(finalRes, Is.EqualTo(Result.SuccessResult()));
         }
 
         [Test]
@@ -97,7 +97,7 @@ namespace DCL.SceneLoadingScreens.Tests
             mvc.ShowAsync(Arg.Any<ShowCommand<SceneLoadingScreenView, SceneLoadingScreenController.Params>>(), Arg.Any<CancellationToken>())
                .Returns<UniTask>(async info =>
                 {
-                    mvcCancellation = info.Arg<CancellationToken>();
+                    mvcCancellation = info.Arg<ShowCommand<SceneLoadingScreenView, SceneLoadingScreenController.Params>>().InputData.LoadingProcessIsFinished;
                     await UniTask.Never(mvcCancellation).SuppressCancellationThrow();
                     mvcFinished = true;
                 });
@@ -124,7 +124,37 @@ namespace DCL.SceneLoadingScreens.Tests
 
             Assert.That(result.ErrorMessage, Is.EqualTo("Load Timeout!"));
             Assert.That(outerReport!.GetStatus().TaskStatus, Is.EqualTo(UniTaskStatus.Faulted));
-            Assert.That(outerReport.GetStatus().Exception!.Message, Is.EqualTo("Load Timeout!"));
+        }
+
+        [Test]
+        public async Task CancelLoadingScreenOnOpFinishedAsync()
+        {
+            CancellationToken mvcCancellation = CancellationToken.None;
+            IMVCManager mvc = Substitute.For<IMVCManager>();
+
+            mvc.ShowAsync(Arg.Any<ShowCommand<SceneLoadingScreenView, SceneLoadingScreenController.Params>>(), Arg.Any<CancellationToken>())
+               .Returns<UniTask>(async info =>
+                {
+                    mvcCancellation = info.Arg<ShowCommand<SceneLoadingScreenView, SceneLoadingScreenController.Params>>().InputData.LoadingProcessIsFinished;
+                    await UniTask.Never(mvcCancellation).SuppressCancellationThrow();
+                });
+
+            var loadingScreen = new LoadingScreen.LoadingScreen(mvc);
+
+            await loadingScreen.ShowWhileExecuteTaskAsync(CreateOp, CancellationToken.None);
+
+            async UniTask<Result> CreateOp(AsyncLoadProcessReport report, CancellationToken ct)
+            {
+                await UniTask.DelayFrame(10);
+
+                // if the internal operation didn't modify the loading report on its own, finalize it
+                report.SetProgress(1.0f);
+                return Result.SuccessResult();
+            }
+
+            await UniTask.Yield();
+
+            Assert.That(mvcCancellation.IsCancellationRequested, Is.True);
         }
 
         private IMVCManager CreateMVCManagerThrowsException()
@@ -146,7 +176,7 @@ namespace DCL.SceneLoadingScreens.Tests
             IMVCManager? sub = Substitute.For<IMVCManager>();
 
             sub.ShowAsync(Arg.Any<ShowCommand<SceneLoadingScreenView, SceneLoadingScreenController.Params>>(), Arg.Any<CancellationToken>())
-               .Returns(info => UniTask.WaitUntilCanceled(info.Arg<CancellationToken>()));
+               .Returns(info => UniTask.WaitUntilCanceled(info.Arg<ShowCommand<SceneLoadingScreenView, SceneLoadingScreenController.Params>>().InputData.LoadingProcessIsFinished));
 
             return sub;
         }

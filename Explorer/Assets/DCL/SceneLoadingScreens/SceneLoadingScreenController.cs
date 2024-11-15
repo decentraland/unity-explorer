@@ -118,9 +118,14 @@ namespace DCL.SceneLoadingScreens
             tipsRotationCancellationToken = tipsRotationCancellationToken.SafeRestart();
             RotateTipsOverTimeAsync(tips.Duration, tipsRotationCancellationToken.Token).Forget();
 
-            await UniTask.WhenAll(WaitUntilWorldIsLoadedAsync(0.8f, ct), WaitTimeThresholdAsync(0.2f, ct));
+            CancellationToken combinedToken = CancellationTokenSource.CreateLinkedTokenSource(ct, inputData.LoadingProcessIsFinished).Token;
 
-            await FadeOutAsync(ct);
+            await UniTask.WhenAll(WaitUntilWorldIsLoadedAsync(0.8f, combinedToken), WaitTimeThresholdAsync(0.2f, combinedToken))
+                         .SuppressCancellationThrow();
+
+            // Fade should be performed if loadingProcess is finished but the "hard" token is still ok
+            if (!ct.IsCancellationRequested)
+                await FadeOutAsync(ct);
         }
 
         private async UniTask FadeOutAsync(CancellationToken ct)
@@ -171,10 +176,7 @@ namespace DCL.SceneLoadingScreens
                 }
             }
 
-            try { await UpdateProgressBarAsync(); }
-            catch (OperationCanceledException) { }
-            catch (TimeoutException) { }
-            catch (Exception e) { ReportHub.LogException(e, new ReportData(ReportCategory.SCENE_LOADING)); }
+            await UpdateProgressBarAsync();
         }
 
         private void SetLoadProgress(float progress)

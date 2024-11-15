@@ -1,8 +1,10 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.Utilities.Extensions;
 using System;
 using System.Threading;
+using Utility.Types;
 
 namespace DCL.Multiplayer.HealthChecks
 {
@@ -15,17 +17,17 @@ namespace DCL.Multiplayer.HealthChecks
             this.roomHub = roomHub;
         }
 
-        public async UniTask<(bool success, string? errorMessage)> IsRemoteAvailableAsync(CancellationToken ct)
+        public async UniTask<Result> IsRemoteAvailableAsync(CancellationToken ct)
         {
             try
             {
                 bool result = await roomHub.StartAsync();
-                return (result, result ? null : "Cannot connect to livekit rooms");
+                return result ? Result.SuccessResult() : Result.ErrorResult("Cannot connect to livekit rooms");
             }
             catch (Exception e)
             {
                 ReportHub.LogException(e, ReportCategory.LIVEKIT);
-                return (false, "Cannot connect to livekit rooms");
+                return Result.ErrorResult("Cannot connect to livekit rooms");
             }
         }
     }

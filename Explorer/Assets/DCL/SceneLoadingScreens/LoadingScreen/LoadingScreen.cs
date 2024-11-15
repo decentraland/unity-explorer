@@ -37,38 +37,21 @@ namespace DCL.SceneLoadingScreens.LoadingScreen
 
             // Loading report will be the only source of truth for results and cancellation
             var timeOut = new CancellationTokenSource();
+            var operationFinished = new CancellationTokenSource();
 
             var loadReport = AsyncLoadProcessReport.Create(timeOut.Token);
-
-            // Bind loading screen with load report 1-to-1 via a cancellation token
-
-            UniTask<Result> showLoadingScreenTask = mvcManager.ShowAsync(
-                                                                   SceneLoadingScreenController.IssueCommand(new SceneLoadingScreenController.Params(loadReport)), timeOut.Token)
-                                                              .SuppressToResultAsync(ReportCategory.SCENE_LOADING);
-
-            // Preserve timeout result, otherwise it's super-seeded by ExecuteOperationAsync, and
-            // there will be no difference between Cancelled and Timeout
-            Result? firedTimeout = null;
 
             // Timeout will fire if the parent cancellation is fired or the operation takes too long
             async UniTask<Result> ExecuteTimeOutOrCancelled()
             {
                 bool isCancelled = await UniTask.Delay(loadingScreenTimeout, cancellationToken: ct).SuppressCancellationThrow();
 
-                if (isCancelled) return Result.CancelledResult();
-
-                firedTimeout = Result.ErrorResult("Load Timeout!");
-                timeOut.Cancel();
-                timeOut.Dispose();
-                return firedTimeout!.Value;
+                return isCancelled ? Result.CancelledResult() : Result.ErrorResult("Load Timeout!");
             }
 
             async UniTask<Result> ExecuteOperationAsync()
             {
                 Result result = await operation(loadReport, timeOut.Token);
-
-                if (firedTimeout.HasValue)
-                    result = firedTimeout.Value;
 
                 // if the operation has fully succeeded:
                 // 1. Set the progress to 1.0f
@@ -83,17 +66,51 @@ namespace DCL.SceneLoadingScreens.LoadingScreen
                 return result;
             }
 
-            (int winArgumentIndex, Result opResult, Result timeoutResult, Result loadingScreenResult)
-                = await UniTask.WhenAny(ExecuteOperationAsync(), ExecuteTimeOutOrCancelled(), showLoadingScreenTask);
+            Result? finalResult = null;
 
-            switch (winArgumentIndex)
+            async UniTask WaitForOperationResultOrTimeout()
             {
-                case 0: return opResult;
-                case 1: return timeoutResult;
-                default:
-                    ReportHub.LogError(ReportCategory.SCENE_LOADING, "Loading screen finished unexpectedly, but the loading process continues");
-                    return loadingScreenResult;
+                // one or another
+                (int winArgumentIndex, Result opResult, Result timeoutResult) = await UniTask.WhenAny(ExecuteOperationAsync(), ExecuteTimeOutOrCancelled());
+
+                switch (winArgumentIndex)
+                {
+                    case 0:
+                        finalResult = opResult;
+                        operationFinished.Cancel();
+                        operationFinished.Dispose();
+                        return;
+                    case 1:
+                        finalResult = timeoutResult;
+                        timeOut.Cancel();
+                        timeOut.Dispose();
+                        return;
+                    default:
+                        finalResult = Result.ErrorResult("Unexpected winArgumentIndex: " + winArgumentIndex);
+                        return;
+                }
             }
+
+            async UniTask<Result> ExecuteLoadingScreen()
+            {
+                // Bind loading screen with load report 1-to-1 via a cancellation token:
+                // 1. if the operation has finished -> cancel the loading screen with Fade
+                // 2. if timeout has fired -> cancel the loading screen with Fade
+                // 3. if the outer cancellation token has fired -> cancel the loading screen immediately
+                CancellationToken loadingScreenCancellationToken = CancellationTokenSource.CreateLinkedTokenSource(timeOut.Token, operationFinished.Token).Token;
+
+                Result result = await mvcManager.ShowAsync(
+                                                     SceneLoadingScreenController.IssueCommand(new SceneLoadingScreenController.Params(loadReport, loadingScreenCancellationToken)), ct)
+                                                .SuppressToResultAsync(ReportCategory.SCENE_LOADING);
+
+                if (finalResult == null)
+                    ReportHub.LogError(ReportCategory.SCENE_LOADING, "Loading screen finished unexpectedly, but the loading process continues");
+
+                return result;
+            }
+
+            await UniTask.WhenAll(WaitForOperationResultOrTimeout(), ExecuteLoadingScreen());
+            return finalResult!.Value;
         }
     }
 }

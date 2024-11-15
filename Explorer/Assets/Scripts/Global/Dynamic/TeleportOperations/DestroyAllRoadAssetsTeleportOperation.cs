@@ -22,7 +22,7 @@ namespace Global.Dynamic.TeleportOperations
             unlimitedFPSBudget = new NullPerformanceBudget();
         }
 
-        protected override UniTask ExecuteAsyncInternal(TeleportParams teleportParams, CancellationToken ct)
+        protected override UniTask InternalExecuteAsync(TeleportParams teleportParams, CancellationToken ct)
         {
             globalWorld.Query(new QueryDescription().WithAll<RoadInfo>(), entity => globalWorld.Get<RoadInfo>(entity).Dispose(roadAssetsPool));
             roadAssetsPool.Unload(unlimitedFPSBudget, int.MaxValue);

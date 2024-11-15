@@ -17,23 +17,17 @@ using System.Threading;
 using DCL.Optimization.Pools;
 using DCL.ResourcesUnloading;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 
 namespace DCL.LOD.Systems
 {
     /// <summary>
-    /// LOD Container unites LOD and Road Plugins and their common dependencies
+    ///     LOD Container unites LOD and Road Plugins and their common dependencies
     /// </summary>
     public class LODContainer : DCLWorldContainer<LODContainer.LODContainerSettings>
     {
-        [Serializable]
-        public class LODContainerSettings : IDCLPluginSettings
-        {
-            [field: SerializeField]
-            public StaticSettings.RoadDataRef RoadData { get; set; }
-
-            [field: SerializeField]
-            public StaticSettings.LODSettingsRef LODSettingAsset { get; set; }
-        }
+        private const int LOD_LEVELS = 2;
+        private const int LODGROUP_POOL_PREWARM_VALUE = 500;
 
         private readonly IAssetsProvisioner assetsProvisioner;
 
@@ -45,10 +39,9 @@ namespace DCL.LOD.Systems
 
         public RoadPlugin RoadPlugin { get; private set; } = null!;
 
-        public ILODCache LodCache { get; private set; } = null!;
+        public RoadAssetsPool RoadAssetsPool { get; private set; } = null!;
 
-        private const int LOD_LEVELS = 2;
-        private const int LODGROUP_POOL_PREWARM_VALUE = 500;
+        public ILODCache LodCache { get; private set; } = null!;
 
         private LODContainer(IAssetsProvisioner assetsProvisioner)
         {
@@ -72,16 +65,22 @@ namespace DCL.LOD.Systems
             {
                 var roadDataDictionary = new Dictionary<Vector2Int, RoadDescription>();
 
-                foreach (var roadDescription in c.roadSettingsAsset.Value.RoadDescriptions)
+                foreach (RoadDescription roadDescription in c.roadSettingsAsset.Value.RoadDescriptions)
                     roadDataDictionary.Add(roadDescription.RoadCoordinate, roadDescription);
 
                 var visualSceneStateResolver = new VisualSceneStateResolver(roadDataDictionary.Keys.ToHashSet());
 
+                var roadAssetPool = new RoadAssetsPool(c.roadAssetsPrefabList, staticContainer.ComponentsContainer.ComponentPoolsRegistry);
+                container.RoadAssetsPool = roadAssetPool;
+                staticContainer.CacheCleaner.Register(roadAssetPool);
+
                 // Create plugins
-                c.RoadPlugin = new RoadPlugin(staticContainer.CacheCleaner,
-                    staticContainer.SingletonSharedDependencies.FrameTimeBudget,
-                    staticContainer.SingletonSharedDependencies.MemoryBudget, c.roadAssetsPrefabList, roadDataDictionary,
-                    staticContainer.ScenesCache, staticContainer.SceneReadinessReportQueue, staticContainer.ComponentsContainer.ComponentPoolsRegistry);
+                c.RoadPlugin = new RoadPlugin(staticContainer.SingletonSharedDependencies.FrameTimeBudget,
+                    staticContainer.SingletonSharedDependencies.MemoryBudget,
+                    roadDataDictionary,
+                    staticContainer.ScenesCache,
+                    staticContainer.SceneReadinessReportQueue,
+                    roadAssetPool);
 
                 IComponentPool<LODGroup> lodGroupPool = staticContainer.ComponentsContainer.ComponentPoolsRegistry.AddGameObjectPool(LODGroupPoolUtils.CreateLODGroup, onRelease: LODGroupPoolUtils.ReleaseLODGroup);
                 LODGroupPoolUtils.DEFAULT_LOD_AMOUT = LOD_LEVELS;
@@ -95,7 +94,7 @@ namespace DCL.LOD.Systems
                     staticContainer.SingletonSharedDependencies.FrameTimeBudget,
                     staticContainer.ScenesCache, debugBuilder, staticContainer.SceneReadinessReportQueue,
                     visualSceneStateResolver, textureArrayContainerFactory, c.lodSettingsAsset.Value, staticContainer.SingletonSharedDependencies.SceneAssetLock,
-                    staticContainer.RealmPartitionSettings, c.LodCache,lodGroupPool, decentralandUrlsSource,new GameObject("LOD_CACHE").transform, lodEnabled, LOD_LEVELS);
+                    staticContainer.RealmPartitionSettings, c.LodCache, lodGroupPool, decentralandUrlsSource, new GameObject("LOD_CACHE").transform, lodEnabled, LOD_LEVELS);
 
                 return UniTask.CompletedTask;
             });
@@ -112,8 +111,19 @@ namespace DCL.LOD.Systems
             roadSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(lodContainerSettings.RoadData, ct: ct);
             lodSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(lodContainerSettings.LODSettingAsset, ct: ct);
             roadAssetsPrefabList = new List<GameObject>();
-            foreach (var t in roadSettingsAsset.Value.RoadAssetsReference)
+
+            foreach (AssetReferenceGameObject? t in roadSettingsAsset.Value.RoadAssetsReference)
                 roadAssetsPrefabList.Add((await assetsProvisioner.ProvideMainAssetAsync(t, ct: ct)).Value);
+        }
+
+        [Serializable]
+        public class LODContainerSettings : IDCLPluginSettings
+        {
+            [field: SerializeField]
+            public StaticSettings.RoadDataRef RoadData { get; set; }
+
+            [field: SerializeField]
+            public StaticSettings.LODSettingsRef LODSettingAsset { get; set; }
         }
     }
 }

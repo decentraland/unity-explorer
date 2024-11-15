@@ -91,7 +91,7 @@ namespace DCL.UserInAppInitializationFlow
                 restartRealmStartupOperation,
                 teleportStartupOperation,
                 loadGlobalPxOperation
-            ).WithHandleExceptions();
+            );
         }
 
         public async UniTask ExecuteAsync(UserInAppInitializationFlowParameters parameters, CancellationToken ct)

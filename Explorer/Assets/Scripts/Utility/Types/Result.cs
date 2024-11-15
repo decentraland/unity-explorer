@@ -41,6 +41,9 @@ namespace Utility.Types
 
         public static Result<T> ErrorResult(string errorMessage) =>
             new (default(T)!, errorMessage);
+
+        public static Result<T> CancelledResult() =>
+            new (default(T)!, nameof(OperationCanceledException));
     }
 
     public readonly struct EnumResult<TErrorEnum>

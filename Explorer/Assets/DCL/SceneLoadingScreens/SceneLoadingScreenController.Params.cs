@@ -1,4 +1,5 @@
 using DCL.AsyncLoadReporting;
+using System.Threading;
 
 namespace DCL.SceneLoadingScreens
 {
@@ -10,9 +11,15 @@ namespace DCL.SceneLoadingScreens
             // public Vector2Int Coordinate { get; }
             public AsyncLoadProcessReport AsyncLoadProcessReport { get; }
 
-            public Params(AsyncLoadProcessReport asyncLoadProcessReport)
+            /// <summary>
+            ///     This cancellation token will be fired if the loading process has finished and the loading screen should disappear gracefully
+            /// </summary>
+            public CancellationToken LoadingProcessIsFinished;
+
+            public Params(AsyncLoadProcessReport asyncLoadProcessReport, CancellationToken loadingProcessIsFinished)
             {
                 AsyncLoadProcessReport = asyncLoadProcessReport;
+                LoadingProcessIsFinished = loadingProcessIsFinished;
             }
         }
     }

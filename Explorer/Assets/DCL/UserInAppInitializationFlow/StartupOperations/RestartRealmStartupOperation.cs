@@ -2,11 +2,10 @@ using Cysharp.Threading.Tasks;
 using DCL.AsyncLoadReporting;
 using ECS.SceneLifeCycle.Realm;
 using System.Threading;
-using Utility.Types;
 
 namespace DCL.UserInAppInitializationFlow.StartupOperations
 {
-    public class RestartRealmStartupOperation : IStartupOperation
+    public class RestartRealmStartupOperation : StartUpOperationBase
     {
         private readonly ILoadingStatus loadingStatus;
         private readonly IRealmController realmController;
@@ -23,13 +22,12 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
             reloadRealm = enable;
         }
 
-        public async UniTask<Result> ExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
+        protected override async UniTask InternalExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
         {
             float finalizationProgress = loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.RealmRestarting);
             if (reloadRealm)
                 await realmController.RestartRealmAsync(ct);
             report.SetProgress(finalizationProgress);
-            return Result.SuccessResult();
         }
     }
 }
