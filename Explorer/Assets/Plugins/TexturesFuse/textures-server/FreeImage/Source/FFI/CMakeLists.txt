@@ -40,6 +40,13 @@ add_definitions(-DFREEIMAGE_COLORORDER=1)
 
 
 # Add ASTC encoder
+if(USE_PREBUILDED_ASTC) 
+
+message("Use existing ASTC LIB")
+
+else()
+
+message("Rebuild ASTC LIB")
 add_definitions(-DASTCENC_SHAREDLIB)
 add_definitions(-DASTCENC_UNIVERSAL_BUILD)
 add_definitions(-DASTCENC_DYNAMIC_LIBRARY)
@@ -47,6 +54,8 @@ add_subdirectory(
     ../../../astc-encoder
     ${CMAKE_BINARY_DIR}/astc-encoder-build
 )
+
+endif()
 
 
 message("Flags are: ${CMAKE_CXX_FLAGS}")
@@ -633,14 +642,9 @@ include_directories(
 )
 
 # add_definitions(-DTEST_TEXTURESFUSE)
-# TODO rollback
-add_executable(texturesfuse ${SOURCES})
-# add_library(texturesfuse SHARED)
+add_library(texturesfuse SHARED)
 
-# Compressor
-set(COMPRESSATOR_ROOT ${CMAKE_SOURCE_DIR}/../../../Compressator)
-
-message("COMPRESSATOR_ROOT Is: ${COMPRESSATOR_ROOT}")
+include(${CMAKE_SOURCE_DIR}/../cmake_configs/cmp_config.cmake)
 
 target_include_directories(texturesfuse PRIVATE ${COMPRESSATOR_ROOT}/include)
 
@@ -664,8 +668,26 @@ endif()
 target_sources(texturesfuse PRIVATE ${SOURCES})
 
 
+if(USE_PREBUILDED_ASTC)
+
 if(WIN32)
-    target_link_libraries(texturesfuse ${CMAKE_CURRENT_BINARY_DIR}/astc-encoder-build/Source/Release/astcenc-native-shared.lib)
+    target_link_libraries(
+        texturesfuse
+        ${CMAKE_CURRENT_BINARY_DIR}/../../../../../TexturesServerWrap/Libraries/Windows/libastcenc-shared.lib
+    )    
 else()
-    target_link_libraries(texturesfuse ${CMAKE_CURRENT_BINARY_DIR}/astc-encoder-build/Source/libastcenc-shared.dylib)
+    target_link_libraries(
+        texturesfuse
+        ${CMAKE_CURRENT_BINARY_DIR}/../../../../../TexturesServerWrap/Libraries/Mac/libastcenc-shared.dylib
+    )    
+endif()
+
+else()
+
+if(WIN32)
+    target_link_libraries(texturesfuse ${CMAKE_SOURCE_DIR}/astc-encoder-build/Source/Release/astcenc-native-shared.lib)
+else()
+    target_link_libraries(texturesfuse ${CMAKE_SOURCE_DIR}/astc-encoder-build/Source/libastcenc-shared.dylib)
+endif()
+
 endif()
