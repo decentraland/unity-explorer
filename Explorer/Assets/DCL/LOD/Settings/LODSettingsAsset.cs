@@ -15,8 +15,7 @@ namespace DCL.LOD
         };
         [field: SerializeField] public int SDK7LodThreshold { get; set; } = 2;
 
-        [Tooltip("The time in seconds before changing from a scene/scene promise to LOD")]
-        [field: SerializeField] public float TimeToChangeToLod { get; set; } = 5;
+        [field: SerializeField] public int UnloadTolerance { get; set; } = 1;
 
         [field: SerializeField] public TextureArrayResolutionDescriptor[] DefaultTextureArrayResolutionDescriptors { get; set; } =
         {
