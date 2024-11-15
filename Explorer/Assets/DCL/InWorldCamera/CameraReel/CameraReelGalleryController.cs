@@ -203,7 +203,7 @@ namespace DCL.InWorldCamera.CameraReel
 
             thumbnailImages = new ReelThumbnailView[storageStatus.Value.MaxScreenshots];
 
-            await LoadMorePage(true, ct);
+            await LoadMorePage(ct);
 
             view.scrollRect.onValueChanged.AddListener(OnScrollRectValueChanged);
         }
@@ -230,7 +230,7 @@ namespace DCL.InWorldCamera.CameraReel
             return monthGridView;
         }
 
-        private async UniTask LoadMorePage(bool firstLoading, CancellationToken ct)
+        private async UniTask LoadMorePage(CancellationToken ct)
         {
             isLoading = true;
             Dictionary<DateTime, List<CameraReelResponse>> result = await pagedCameraReelManager.FetchNextPage(ct);
@@ -259,7 +259,7 @@ namespace DCL.InWorldCamera.CameraReel
             //Wait for layout to update after the addition of new elements
             await UniTask.WaitWhile(() => Mathf.Approximately(view.verticalScrollbar.handleRect.rect.height, handleHeight), cancellationToken: ct);
 
-            CheckElementsVisibility(ScrollDirection.UP);
+            HandleElementsVisibility(ScrollDirection.UP);
 
             previousY = view.scrollRect.verticalNormalizedPosition;
             isLoading = false;
@@ -275,7 +275,7 @@ namespace DCL.InWorldCamera.CameraReel
 
         private void OnScrollRectValueChanged(Vector2 value)
         {
-            CheckElementsVisibility(value.y > previousY ? ScrollDirection.UP : ScrollDirection.DOWN);
+            HandleElementsVisibility(value.y > previousY ? ScrollDirection.UP : ScrollDirection.DOWN);
             CheckNeedsToLoadMore();
 
             previousY = value.y;
@@ -302,7 +302,7 @@ namespace DCL.InWorldCamera.CameraReel
         private void CheckNeedsToLoadMore()
         {
             if (currentSize - endVisible < view.loadMoreCounterThreshold && !pagedCameraReelManager.AllImagesLoaded && !isLoading && !isDragging)
-                LoadMorePage(false, loadNextPageCts.Token).Forget();
+                LoadMorePage(loadNextPageCts.Token).Forget();
         }
 
         private void DisableThumbnailImage(ReelThumbnailView thumbnailView)
@@ -317,52 +317,42 @@ namespace DCL.InWorldCamera.CameraReel
             thumbnailView.thumbnailImage.enabled = true;
         }
 
-        private void CheckElementsVisibility(ScrollDirection scrollDirection)
+        private void HandleElementsVisibility(ScrollDirection scrollDirection)
         {
             if (scrollDirection == ScrollDirection.UP)
             {
-                int index = beginVisible;
-
-                while (index >= 0 && ViewIntersectsImage(thumbnailImages[index].thumbnailImage))
-                {
-                    EnableThumbnailImage(thumbnailImages[index]);
-                    index--;
+                while (beginVisible >= 0 && ViewIntersectsImage(thumbnailImages[beginVisible].thumbnailImage))
                     beginVisible--;
-                }
+
+                beginVisible++;
                 beginVisible = Mathf.Clamp(beginVisible, 0, currentSize - 1);
 
-                index = endVisible;
-
-                while (index >= 0 && !ViewIntersectsImage(thumbnailImages[index].thumbnailImage))
-                {
-                    DisableThumbnailImage(thumbnailImages[index]);
-                    index--;
+                while (endVisible >= 0 && !ViewIntersectsImage(thumbnailImages[endVisible].thumbnailImage))
                     endVisible--;
-                }
                 endVisible = Mathf.Clamp(endVisible, 0, currentSize - 1);
             }
             else
             {
-                int index = endVisible;
-
-                while (index < currentSize && ViewIntersectsImage(thumbnailImages[index].thumbnailImage))
-                {
-                    EnableThumbnailImage(thumbnailImages[index]);
-                    index++;
+                while (endVisible < currentSize && ViewIntersectsImage(thumbnailImages[endVisible].thumbnailImage))
                     endVisible++;
-                }
+
+                endVisible--;
                 endVisible = Mathf.Clamp(endVisible, 0, currentSize - 1);
 
-                index = beginVisible;
-
-                while (index < currentSize && !ViewIntersectsImage(thumbnailImages[index].thumbnailImage))
-                {
-                    DisableThumbnailImage(thumbnailImages[index]);
-                    index++;
+                while (beginVisible < currentSize && !ViewIntersectsImage(thumbnailImages[beginVisible].thumbnailImage))
                     beginVisible++;
-                }
                 beginVisible = Mathf.Clamp(beginVisible, 0, currentSize - 1);
             }
+
+            for (int i = 0; i < beginVisible; i++)
+                if (thumbnailImages[i].thumbnailImage.enabled)
+                    DisableThumbnailImage(thumbnailImages[i]);
+            for (int i = beginVisible; i <= endVisible; i++)
+                if (!thumbnailImages[i].thumbnailImage.enabled)
+                    EnableThumbnailImage(thumbnailImages[i]);
+            for (int i = endVisible + 1; i < currentSize; i++)
+                if (thumbnailImages[i].thumbnailImage.enabled)
+                    DisableThumbnailImage(thumbnailImages[i]);
         }
 
         private bool ViewIntersectsImage(Image image)
