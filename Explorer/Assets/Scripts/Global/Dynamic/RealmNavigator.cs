@@ -150,11 +150,12 @@ namespace Global.Dynamic
         public async UniTask<Result> TryChangeRealmAsync(URLDomain realm, CancellationToken ct,
             Vector2Int parcelToTeleport = default)
         {
-            ct.ThrowIfCancellationRequested();
+            if (ct.IsCancellationRequested)
+                return Result.CancelledResult();
 
             currentRealm = realmController.RealmData.Ipfs.CatalystBaseUrl;
             var loadResult
-                = await loadingScreen.ShowWhileExecuteTaskAsync(DoChangeRealmAsync(realm, parcelToTeleport, ct), ct);
+                = await loadingScreen.ShowWhileExecuteTaskAsync(DoChangeRealmAsync(realm, parcelToTeleport), ct);
 
             if (!loadResult.Success)
             {
@@ -205,11 +206,9 @@ namespace Global.Dynamic
             return lastOpResult;
         }
 
-        private Func<AsyncLoadProcessReport, UniTask<Result>> DoChangeRealmAsync(URLDomain realm,
-            Vector2Int parcelToTeleport,
-            CancellationToken ct)
+        private Func<AsyncLoadProcessReport, CancellationToken, UniTask<Result>> DoChangeRealmAsync(URLDomain realm, Vector2Int parcelToTeleport)
         {
-            return async parentLoadReport =>
+            return async (parentLoadReport, ct) =>
             {
                 const string LOG_NAME = "Changing Realm";
                 const string FALLBACK_LOG_NAME = "Returning to Previous Realm";
@@ -272,7 +271,8 @@ namespace Global.Dynamic
         public async UniTask<Result> TryInitializeTeleportToParcelAsync(Vector2Int parcel, CancellationToken ct,
             bool isLocal = false)
         {
-            ct.ThrowIfCancellationRequested();
+            if (ct.IsCancellationRequested)
+                return Result.CancelledResult();
 
             Result parcelCheckResult = IsParcelInsideTerrain(parcel, isLocal, IsGenesisRealm());
             if (!parcelCheckResult.Success)
@@ -284,7 +284,7 @@ namespace Global.Dynamic
                 return await TryChangeRealmAsync(url, ct, parcel);
             }
 
-            Result loadResult = await loadingScreen.ShowWhileExecuteTaskAsync(TryTeleportAsync(parcel, ct), ct);
+            Result loadResult = await loadingScreen.ShowWhileExecuteTaskAsync(TryTeleportAsync(parcel), ct);
 
             if (!loadResult.Success)
             {
@@ -295,9 +295,9 @@ namespace Global.Dynamic
             return loadResult;
         }
 
-        private Func<AsyncLoadProcessReport, UniTask<Result>> TryTeleportAsync(Vector2Int parcel, CancellationToken ct)
+        private Func<AsyncLoadProcessReport, CancellationToken, UniTask<Result>> TryTeleportAsync(Vector2Int parcel)
         {
-            return async parentLoadReport =>
+            return async (parentLoadReport, ct) =>
             {
                 const string LOG_NAME = "Teleporting to Parcel";
 

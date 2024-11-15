@@ -40,7 +40,7 @@ namespace ECS.SceneLifeCycle.Reporting
             // Add report to the queue so it will be grabbed by the actual scene or LODs
             sceneReadinessReportQueue.Enqueue(parcel, loadProcessReport);
 
-            await loadProcessReport.Task;
+            await loadProcessReport.WaitUntilFinished();
         }
     }
 }

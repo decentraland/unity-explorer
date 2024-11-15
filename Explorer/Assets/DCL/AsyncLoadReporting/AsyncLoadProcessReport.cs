@@ -1,5 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using System;
+using System.Threading;
 
 namespace DCL.AsyncLoadReporting
 {
@@ -8,18 +9,6 @@ namespace DCL.AsyncLoadReporting
     /// </summary>
     public class AsyncLoadProcessReport
     {
-        public readonly struct Status
-        {
-            public readonly Exception? Exception;
-            public readonly UniTaskStatus TaskStatus;
-
-            public Status(Exception? exception, UniTaskStatus taskStatus)
-            {
-                Exception = exception;
-                TaskStatus = taskStatus;
-            }
-        }
-
         private readonly AsyncLoadProcessReport? parent;
 
         private readonly float offset;
@@ -28,30 +17,37 @@ namespace DCL.AsyncLoadReporting
         private readonly IAsyncReactiveProperty<float> progressCounter;
 
         private readonly UniTaskCompletionSource completionSource;
+        private readonly CancellationToken cancellationToken;
 
         private Exception? exception;
 
         public IReadOnlyAsyncReactiveProperty<float> ProgressCounter => progressCounter;
 
-        private AsyncLoadProcessReport(UniTaskCompletionSource completionSource,
-            IAsyncReactiveProperty<float> progressCounter)
-        {
-            this.completionSource = completionSource;
-            this.progressCounter = progressCounter;
-            offset = 0;
-            until = 1;
-        }
-
-        private AsyncLoadProcessReport(AsyncLoadProcessReport parent, float offset, float until)
+        private AsyncLoadProcessReport(AsyncLoadProcessReport? parent, float offset, float until, CancellationToken ct)
         {
             completionSource = new UniTaskCompletionSource();
             progressCounter = new AsyncReactiveProperty<float>(0f);
+
             this.parent = parent;
             this.offset = offset;
             this.until = until;
+
+            cancellationToken = ct;
+
+            ct.RegisterWithoutCaptureExecutionContext(SetCancelled);
         }
 
-        public UniTask Task => completionSource.Task;
+        /// <summary>
+        ///     Translates internals that can throw exceptions into a result free from exceptions
+        /// </summary>
+        /// <returns></returns>
+        public async UniTask<Status> WaitUntilFinished()
+        {
+            try { await completionSource.Task; }
+            catch (Exception e) { return new Status(e, completionSource.UnsafeGetStatus()); }
+
+            return new Status(null, completionSource.UnsafeGetStatus());
+        }
 
         public Status GetStatus() =>
             new (exception, completionSource.UnsafeGetStatus());
@@ -81,9 +77,21 @@ namespace DCL.AsyncLoadReporting
         }
 
         public AsyncLoadProcessReport CreateChildReport(float until) =>
-            new (this, ProgressCounter.Value, until);
+            new (this, ProgressCounter.Value, until, cancellationToken);
 
-        public static AsyncLoadProcessReport Create() =>
-            new (new UniTaskCompletionSource(), new AsyncReactiveProperty<float>(0f));
+        public static AsyncLoadProcessReport Create(CancellationToken ct) =>
+            new (null, 0, 1, ct);
+
+        public readonly struct Status
+        {
+            public readonly Exception? Exception;
+            public readonly UniTaskStatus TaskStatus;
+
+            public Status(Exception? exception, UniTaskStatus taskStatus)
+            {
+                Exception = exception;
+                TaskStatus = taskStatus;
+            }
+        }
     }
 }

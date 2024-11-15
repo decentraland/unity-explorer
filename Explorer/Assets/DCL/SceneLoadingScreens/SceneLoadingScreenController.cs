@@ -24,13 +24,15 @@ namespace DCL.SceneLoadingScreens
         private readonly IInputBlock inputBlock;
 
         private readonly AudioMixerGroup audioMixerGroupController;
+        private readonly List<UniTask> fadingTasks = new ();
 
         private int currentTip;
         private SceneTips tips;
         private CancellationTokenSource? tipsRotationCancellationToken;
         private CancellationTokenSource? tipsFadeCancellationToken;
         private IntVariable? progressLabel;
-        private readonly List<UniTask> fadingTasks = new ();
+
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
 
         public SceneLoadingScreenController(ViewFactoryMethod viewFactory,
             ISceneTipsProvider sceneTipsProvider,
@@ -43,8 +45,6 @@ namespace DCL.SceneLoadingScreens
             this.audioMixerVolumesController = audioMixerVolumesController;
             this.inputBlock = inputBlock;
         }
-
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
 
         public override void Dispose()
         {
@@ -111,19 +111,14 @@ namespace DCL.SceneLoadingScreens
 
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
         {
-            try
-            {
-                await LoadTipsAsync(ct).Timeout(inputData.Timeout);
+            await LoadTipsAsync(ct);
 
-                ShowTip(0);
+            ShowTip(0);
 
-                tipsRotationCancellationToken = tipsRotationCancellationToken.SafeRestart();
-                RotateTipsOverTimeAsync(tips.Duration, tipsRotationCancellationToken.Token).Forget();
+            tipsRotationCancellationToken = tipsRotationCancellationToken.SafeRestart();
+            RotateTipsOverTimeAsync(tips.Duration, tipsRotationCancellationToken.Token).Forget();
 
-                await UniTask.WhenAll(WaitUntilWorldIsLoadedAsync(0.8f, ct), WaitTimeThresholdAsync(0.2f, ct))
-                             .Timeout(inputData.Timeout);
-            }
-            catch (TimeoutException) { }
+            await UniTask.WhenAll(WaitUntilWorldIsLoadedAsync(0.8f, ct), WaitTimeThresholdAsync(0.2f, ct));
 
             await FadeOutAsync(ct);
         }
@@ -176,11 +171,7 @@ namespace DCL.SceneLoadingScreens
                 }
             }
 
-            try
-            {
-                await UniTask.WhenAny(inputData.AsyncLoadProcessReport.Task, UpdateProgressBarAsync());
-                ct.ThrowIfCancellationRequested();
-            }
+            try { await UpdateProgressBarAsync(); }
             catch (OperationCanceledException) { }
             catch (TimeoutException) { }
             catch (Exception e) { ReportHub.LogException(e, new ReportData(ReportCategory.SCENE_LOADING)); }
@@ -262,13 +253,12 @@ namespace DCL.SceneLoadingScreens
 
         private void BlockUnwantedInputs()
         {
-            inputBlock.Disable(InputMapComponent.Kind.CAMERA , InputMapComponent.Kind.SHORTCUTS , InputMapComponent.Kind.PLAYER);
+            inputBlock.Disable(InputMapComponent.Kind.CAMERA, InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.PLAYER);
         }
 
         private void UnblockUnwantedInputs()
         {
-            inputBlock.Enable(InputMapComponent.Kind.CAMERA , InputMapComponent.Kind.SHORTCUTS , InputMapComponent.Kind.PLAYER);
+            inputBlock.Enable(InputMapComponent.Kind.CAMERA, InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.PLAYER);
         }
-
     }
 }

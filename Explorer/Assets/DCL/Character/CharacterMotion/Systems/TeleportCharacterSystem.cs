@@ -16,7 +16,8 @@ using UnityEngine;
 namespace DCL.CharacterMotion.Systems
 {
     /// <summary>
-    ///     Mutually exclusive with <see cref="InterpolateCharacterSystem" />
+    ///     Mutually exclusive with <see cref="InterpolateCharacterSystem" />. <br />
+    ///     This system reacts on the status of <see cref="AsyncLoadProcessReport" /> to make the appropriate changes in ECS
     /// </summary>
     [UpdateInGroup(typeof(ChangeCharacterPositionGroup))]
     public partial class TeleportCharacterSystem : BaseUnityLoopSystem

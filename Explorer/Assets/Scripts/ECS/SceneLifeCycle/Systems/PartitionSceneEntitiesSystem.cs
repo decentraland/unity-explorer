@@ -34,8 +34,6 @@ namespace ECS.SceneLifeCycle.Systems
         private readonly IReadOnlyCameraSamplingData readOnlyCameraSamplingData;
         private readonly IRealmPartitionSettings realmPartitionSettings;
 
-        private readonly byte emptyScenePartition;
-
         internal readonly PartitionDataContainer partitionDataContainer;
 
         private JobHandle partitionJobHandle;
@@ -53,11 +51,7 @@ namespace ECS.SceneLifeCycle.Systems
             this.partitionDataContainer = partitionDataContainer;
             this.realmPartitionSettings = realmPartitionSettings;
 
-
             partitionDataContainer.Initialize(DEPLOYED_SCENES_LIMIT, partitionSettings.SqrDistanceBuckets, partitionSettings);
-            emptyScenePartition = (byte)(partitionSettings.SqrDistanceBuckets.Count - 1);
-
-
         }
 
         public override void Dispose()

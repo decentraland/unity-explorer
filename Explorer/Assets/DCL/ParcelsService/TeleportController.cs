@@ -23,6 +23,8 @@ namespace DCL.ParcelsService
 {
     public class TeleportController : ITeleportController
     {
+        private delegate void PickTargetDelegate(SceneEntityDefinition? sceneDef, ref Vector2Int parcel, out Vector3 targetWorldPosition, out Vector3? cameraTarget);
+
         private const string TRAM_LINE_TITLE = "Tram Line";
         private static readonly Random RANDOM = new ();
 
@@ -60,8 +62,8 @@ namespace DCL.ParcelsService
             retrieveScene = null;
         }
 
-
-        public async UniTask<WaitForSceneReadiness?> TeleportToSceneSpawnPointAsync(Vector2Int parcel, AsyncLoadProcessReport loadReport, CancellationToken ct)
+        private async UniTask<WaitForSceneReadiness?> TeleportAsync(Vector2Int parcel, PickTargetDelegate pickTargetDelegate,
+            AsyncLoadProcessReport loadReport, CancellationToken ct)
         {
             // if current scene is still loading it will block the teleport until its assets are resolved or timed out
             sceneAssetLock.Reset();
@@ -75,31 +77,7 @@ namespace DCL.ParcelsService
 
             SceneEntityDefinition? sceneDef = await retrieveScene.ByParcelAsync(parcel, ct);
 
-            Vector3 targetWorldPosition;
-            Vector3? cameraTarget = null;
-
-            if (sceneDef != null && !IsTramLine(sceneDef.metadata.OriginalJson.AsSpan()))
-            {
-                // Override parcel as it's a new target
-                parcel = sceneDef.metadata.scene.DecodedBase;
-                Vector3 parcelBaseWorldPosition = GetPositionByParcelPositionWithErrorCompensation(parcel);
-                targetWorldPosition = parcelBaseWorldPosition;
-
-                List<SpawnPoint>? spawnPoints = sceneDef.metadata.spawnPoints;
-
-                if (spawnPoints is { Count: > 0 })
-                {
-                    SpawnPoint spawnPoint = PickSpawnPoint(spawnPoints, targetWorldPosition, parcelBaseWorldPosition);
-
-                    // TODO validate offset position is within bounds of one of scene parcels
-                    targetWorldPosition += GetSpawnPositionOffset(spawnPoint);
-
-                    if (spawnPoint.cameraTarget != null)
-                        cameraTarget = spawnPoint.cameraTarget!.Value.ToVector3() + parcelBaseWorldPosition;
-                }
-            }
-            else
-                targetWorldPosition = GetPositionByParcelPositionWithErrorCompensation(parcel, true);
+            pickTargetDelegate(sceneDef, ref parcel, out Vector3 targetWorldPosition, out Vector3? cameraTarget);
 
             await UniTask.Yield(PlayerLoopTiming.LastPostLateUpdate);
 
@@ -122,12 +100,47 @@ namespace DCL.ParcelsService
             return new WaitForSceneReadiness(parcel, loadReport, sceneReadinessReportQueue);
         }
 
+        public UniTask<WaitForSceneReadiness?> TeleportToSceneSpawnPointAsync(Vector2Int parcel, AsyncLoadProcessReport loadReport, CancellationToken ct)
+        {
+            // if current scene is still loading it will block the teleport until its assets are resolved or timed out
+            return TeleportAsync(parcel, PickTarget, loadReport, ct);
+
+            static void PickTarget(SceneEntityDefinition? sceneDef, ref Vector2Int parcel, out Vector3 targetWorldPosition, out Vector3? cameraTarget)
+            {
+                cameraTarget = null;
+
+                if (sceneDef != null && !IsTramLine(sceneDef.metadata.OriginalJson.AsSpan()))
+                {
+                    // Override parcel as it's a new target
+                    parcel = sceneDef.metadata.scene.DecodedBase;
+                    Vector3 parcelBaseWorldPosition = GetPositionByParcelPositionWithErrorCompensation(parcel);
+                    targetWorldPosition = parcelBaseWorldPosition;
+
+                    List<SpawnPoint>? spawnPoints = sceneDef.metadata.spawnPoints;
+
+                    if (spawnPoints is { Count: > 0 })
+                    {
+                        SpawnPoint spawnPoint = PickSpawnPoint(spawnPoints, targetWorldPosition, parcelBaseWorldPosition);
+
+                        // TODO validate offset position is within bounds of one of scene parcels
+                        targetWorldPosition += GetSpawnPositionOffset(spawnPoint);
+
+                        if (spawnPoint.cameraTarget != null)
+                            cameraTarget = spawnPoint.cameraTarget!.Value.ToVector3() + parcelBaseWorldPosition;
+                    }
+                }
+                else
+                    targetWorldPosition = GetPositionByParcelPositionWithErrorCompensation(parcel, true);
+            }
+        }
+
         private static bool IsTramLine(ReadOnlySpan<char> originalJson) =>
             ExtractTitleValue(originalJson).SequenceEqual(TRAM_LINE_TITLE.AsSpan());
 
         private static ReadOnlySpan<char> ExtractTitleValue(ReadOnlySpan<char> json)
         {
             int titleIndex = json.IndexOf(@"""title"":");
+
             if (titleIndex == -1)
                 return ReadOnlySpan<char>.Empty;
 
@@ -136,10 +149,12 @@ namespace DCL.ParcelsService
             ReadOnlySpan<char> valueSpan = json.Slice(titleIndex + valueStartIndex);
 
             int openQuoteIndex = valueSpan.IndexOf('"');
+
             if (openQuoteIndex == -1)
                 return ReadOnlySpan<char>.Empty;
 
             int closeQuoteIndex = valueSpan[(openQuoteIndex + 1)..].IndexOf('"');
+
             if (closeQuoteIndex == -1)
                 return ReadOnlySpan<char>.Empty;
 
@@ -157,42 +172,23 @@ namespace DCL.ParcelsService
             return ParcelMathHelper.GetPositionByParcelPosition(parcel, adaptYPositionToTerrain) + new Vector3(EPSILON, 0, EPSILON);
         }
 
-        // TODO: this method should be removed, implies possible mantainance efforts and its only for debugging purposes
-        public async UniTask TeleportToParcelAsync(Vector2Int parcel, AsyncLoadProcessReport loadReport, CancellationToken ct)
+        public UniTask TeleportToParcelAsync(Vector2Int parcel, AsyncLoadProcessReport loadReport, CancellationToken ct)
         {
-            if (retrieveScene == null)
+            return TeleportAsync(parcel, PickTarget, loadReport, ct);
+
+            static void PickTarget(SceneEntityDefinition? sceneDef, ref Vector2Int parcel, out Vector3 targetWorldPosition, out Vector3? cameraTarget)
             {
-                TeleportCharacter(new PlayerTeleportIntent(ParcelMathHelper.GetPositionByParcelPosition(parcel, true), parcel, ct, loadReport));
-                loadReport.SetProgress(1f);
-                return;
+                targetWorldPosition = ParcelMathHelper.GetPositionByParcelPosition(parcel);
+                cameraTarget = null;
+
+                if (sceneDef != null)
+
+                    // Override parcel as it's a new target
+                    parcel = sceneDef.metadata.scene.DecodedBase;
             }
-
-            Vector3 characterPos = ParcelMathHelper.GetPositionByParcelPosition(parcel);
-            SceneEntityDefinition? sceneDef = await retrieveScene.ByParcelAsync(parcel, ct);
-
-            if (sceneDef != null)
-
-                // Override parcel as it's a new target
-                parcel = sceneDef.metadata.scene.DecodedBase;
-
-            await UniTask.Yield(PlayerLoopTiming.LastPostLateUpdate);
-
-            // Add report to the queue so it will be grabbed by the actual scene
-            sceneReadinessReportQueue.Enqueue(parcel, loadReport);
-
-            TeleportCharacter(new PlayerTeleportIntent(characterPos, parcel, ct, loadReport));
-
-            if (sceneDef == null)
-            {
-                // Instant completion for empty parcels
-                loadReport.SetProgress(1f);
-                return;
-            }
-
-            await loadReport.Task;
         }
 
-        private SpawnPoint PickSpawnPoint(IReadOnlyList<SpawnPoint> spawnPoints, Vector3 targetWorldPosition, Vector3 parcelBaseWorldPosition)
+        private static SpawnPoint PickSpawnPoint(IReadOnlyList<SpawnPoint> spawnPoints, Vector3 targetWorldPosition, Vector3 parcelBaseWorldPosition)
         {
             List<SpawnPoint> defaults = ListPool<SpawnPoint>.Get();
             defaults.AddRange(spawnPoints.Where(sp => sp.@default));

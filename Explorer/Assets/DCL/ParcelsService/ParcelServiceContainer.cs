@@ -44,12 +44,7 @@ namespace DCL.ParcelsService
 
             UniTask ShowLoadingScreenAsync(AsyncLoadProcessReport loadReport) =>
                 mvcManager.ShowAsync(
-                    SceneLoadingScreenController.IssueCommand(
-                        new SceneLoadingScreenController.Params(
-                            loadReport,
-                            TimeSpan.FromSeconds(30)
-                        )
-                    )
+                    SceneLoadingScreenController.IssueCommand(new SceneLoadingScreenController.Params(loadReport))
                 );
 
             debugContainerBuilder
@@ -58,7 +53,7 @@ namespace DCL.ParcelsService
                .AddControl(
                     new DebugButtonDef("To Parcel", () =>
                         {
-                            var loadReport = AsyncLoadProcessReport.Create()!;
+                            AsyncLoadProcessReport loadReport = CreateReport();
 
                             UniTask.WhenAll(
                                         ShowLoadingScreenAsync(loadReport),
@@ -69,7 +64,7 @@ namespace DCL.ParcelsService
                     ),
                     new DebugButtonDef("To Spawn Point", () =>
                         {
-                            var loadReport = AsyncLoadProcessReport.Create()!;
+                            AsyncLoadProcessReport loadReport = CreateReport();
 
                             UniTask.WhenAll(
                                         ShowLoadingScreenAsync(loadReport),
@@ -78,6 +73,9 @@ namespace DCL.ParcelsService
                         }
                     )
                 );
+
+            static AsyncLoadProcessReport CreateReport() =>
+                AsyncLoadProcessReport.Create(new CancellationTokenSource(TimeSpan.FromSeconds(30)).Token);
         }
     }
 }
