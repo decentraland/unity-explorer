@@ -644,11 +644,13 @@ include_directories(
 # add_definitions(-DTEST_TEXTURESFUSE)
 add_library(texturesfuse SHARED)
 
-include(${CMAKE_SOURCE_DIR}/../cmake_configs/cmp_config.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/../cmake_configs/cmp_config.cmake)
 
 target_include_directories(texturesfuse PRIVATE ${COMPRESSATOR_ROOT}/include)
 
 if(WIN32)
+    #TODO simplify
+
     target_link_libraries(texturesfuse ${COMPRESSATOR_ROOT}/lib/libCMP_Framework.lib)
     target_link_libraries(texturesfuse ${COMPRESSATOR_ROOT}/lib/libCMP_Core_AVX512.lib)
     target_link_libraries(texturesfuse ${COMPRESSATOR_ROOT}/lib/libCMP_Core_SSE.lib)
@@ -656,12 +658,11 @@ if(WIN32)
     target_link_libraries(texturesfuse ${COMPRESSATOR_ROOT}/lib/libCMP_Core.lib)
     target_link_libraries(texturesfuse ${COMPRESSATOR_ROOT}/lib/libCMP_Compressonator.lib)
 else()
-    target_link_libraries(texturesfuse ${COMPRESSATOR_ROOT}/lib/libCMP_Framework.a)
-    target_link_libraries(texturesfuse ${COMPRESSATOR_ROOT}/lib/libCMP_Core_AVX512.a)
-    target_link_libraries(texturesfuse ${COMPRESSATOR_ROOT}/lib/libCMP_Core_SSE.a)
-    target_link_libraries(texturesfuse ${COMPRESSATOR_ROOT}/lib/libCMP_Core_AVX.a)
-    target_link_libraries(texturesfuse ${COMPRESSATOR_ROOT}/lib/libCMP_Core.a)
-    target_link_libraries(texturesfuse ${COMPRESSATOR_ROOT}/lib/libCMP_Compressonator.a)  
+    add_subdirectory(${COMPRESSATOR_ORIGIN_ROOT}/cmp_core cmp_core_build)
+    add_subdirectory(${COMPRESSATOR_ORIGIN_ROOT}/cmp_compressonatorlib cmp_compressonatorlib_build)
+    add_subdirectory(${COMPRESSATOR_ORIGIN_ROOT}/cmp_framework cmp_framework_build)
+    
+    target_link_libraries(texturesfuse CMP_Framework) 
 endif()
   
 
