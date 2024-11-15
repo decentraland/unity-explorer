@@ -45,11 +45,11 @@ namespace DCL.Navmap
             searchBarController.SetInputText(@event.name);
             searchBarController.Interactable = false;
             searchBarController.EnableBack();
+            searchBarController.HideHistoryResults();
         }
 
         public void Undo()
         {
-            // TODO: we could restore the text that had the search bar before the modification
             searchBarController.ClearInput();
             searchBarController.Interactable = true;
             searchBarController.DisableBack();

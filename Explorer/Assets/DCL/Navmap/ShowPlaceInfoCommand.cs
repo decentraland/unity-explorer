@@ -47,23 +47,21 @@ namespace DCL.Navmap
             placesAndEventsPanelController.Toggle(PlacesAndEventsPanelController.Section.PLACE);
 
             placeInfoPanelController.Set(placeInfo);
+            placeInfoPanelController.Toggle(PlaceInfoPanelController.Section.OVERVIEW);
+            placeInfoPanelController.HideLiveEvent();
             searchBarController.SetInputText(placeInfo.title);
             searchBarController.Interactable = false;
             searchBarController.EnableBack();
+            searchBarController.HideHistoryResults();
 
             events ??= await eventsApiService.GetEventsByParcelAsync(placeInfo.base_position, ct, true);
 
             if (events.Count > 0)
                 placeInfoPanelController.SetLiveEvent(events[0]);
-            else
-                placeInfoPanelController.HideLiveEvent();
-
-            placeInfoPanelController.Toggle(PlaceInfoPanelController.Section.OVERVIEW);
         }
 
         public void Undo()
         {
-            // TODO: we could restore the text that had the search bar before the modification
             searchBarController.ClearInput();
             searchBarController.Interactable = true;
             searchBarController.DisableBack();
