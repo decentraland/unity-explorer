@@ -93,17 +93,7 @@ def append_line_to_cmake():
 
     with open('compressonator/CMakeLists.txt', 'a') as file:
         write_simde(file, '${CMAKE_CURRENT_SOURCE_DIR}/../')
-        link_opencv(file, False)
-    
-    lib_make = 'compressonator/cmp_compressonatorlib/CMakeLists.txt'
-    set_vars(lib_make)
-    replace_in_file(lib_make, '/cmp_framework/', '/../cmp_framework/')
-    replace_in_file(lib_make, '/applications/', '/../applications/')
-    replace_in_file(lib_make, '/cmp_compressonatorlib/', '/../cmp_compressonatorlib/')
-    
-    with open(lib_make, 'a') as file:
-        write_simde(file, '${CMAKE_CURRENT_SOURCE_DIR}/../../')
-        
+        link_opencv(file, False)        
         
     framework_make = 'compressonator/cmp_framework/CMakeLists.txt'
     set_vars(framework_make)
@@ -111,11 +101,11 @@ def append_line_to_cmake():
     insert_at_end(framework_make,"""
 target_include_directories(CMP_Framework 
     PUBLIC 
-    ${CMAKE_CURRENT_SOURCE_DIR}/../externals_repos/simde/simde/x86
-    ${CMAKE_CURRENT_SOURCE_DIR}/../externals_repos/simde/simde/x86/AVX512
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../externals_repos/simde/simde/x86
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../externals_repos/simde/simde/x86/AVX512
 
-    ${CMAKE_CURRENT_SOURCE_DIR}/cmp_core/source
-    ${CMAKE_CURRENT_SOURCE_DIR}/cmp_core/shaders
+    ${CMAKE_CURRENT_SOURCE_DIR}/../cmp_core/source
+    ${CMAKE_CURRENT_SOURCE_DIR}/../cmp_core/shaders
 )
 """)
     
@@ -173,7 +163,8 @@ if __name__ == "__main__":
     #root dir: custom_files
     custom_files = [
         ("compressonator/cmp_framework/compute_base.cpp", "compute_base.cpp"),
-        ("compressonator/applications/_plugins/common/pluginmanager.cpp", "pluginmanager.cpp")
+        ("compressonator/applications/_plugins/common/pluginmanager.cpp", "pluginmanager.cpp"),
+        ("compressonator/cmp_compressonatorlib/CMakeLists.txt", "libCMakeLists.txt")
     ]
     
     allowed_extensions = ['cpp','c','h','txt','make','cmake']
