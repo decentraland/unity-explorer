@@ -13,9 +13,11 @@ using DCL.WebRequests;
 using ECS.Abstract;
 using ECS.Unity.Groups;
 using ECS.Unity.Textures.Components;
+using ECS.Unity.Transforms.Components;
 using RenderHeads.Media.AVProVideo;
 using SceneRunner.Scene;
 using System.Threading;
+using UnityEngine;
 
 namespace DCL.SDKComponents.MediaStream
 {
@@ -50,20 +52,20 @@ namespace DCL.SDKComponents.MediaStream
 
         [Query]
         [None(typeof(MediaPlayerComponent))]
-        private void CreateAudioStream(in Entity entity, ref PBAudioStream sdkComponent)
+        private void CreateAudioStream(in Entity entity, TransformComponent transformComponent, ref PBAudioStream sdkComponent)
         {
-            CreateMediaPlayer(entity, sdkComponent.Url, sdkComponent.HasVolume, sdkComponent.Volume);
+            CreateMediaPlayer(entity, transformComponent.Transform.position, sdkComponent.Url, sdkComponent.HasVolume, sdkComponent.Volume);
         }
 
         [Query]
         [None(typeof(MediaPlayerComponent))]
         [All(typeof(VideoTextureConsumer))]
-        private void CreateVideoPlayer(in Entity entity, PBVideoPlayer sdkComponent)
+        private void CreateVideoPlayer(in Entity entity, TransformComponent transformComponent, PBVideoPlayer sdkComponent)
         {
-            CreateMediaPlayer(entity, sdkComponent.Src, sdkComponent.HasVolume, sdkComponent.Volume);
+            CreateMediaPlayer(entity, transformComponent.Transform.position, sdkComponent.Src, sdkComponent.HasVolume, sdkComponent.Volume);
         }
 
-        private void CreateMediaPlayer(Entity entity, string url, bool hasVolume, float volume)
+        private void CreateMediaPlayer(Entity entity, Vector3 initialPosition, string url, bool hasVolume, float volume)
         {
             if (!frameTimeBudget.TrySpendBudget()) return;
 
@@ -71,6 +73,9 @@ namespace DCL.SDKComponents.MediaStream
 
             if (component.State != VideoState.VsError)
                 component.OpenMediaPromise.UrlReachabilityResolveAsync(webRequestController, component.URL, GetReportData(), component.Cts.Token).SuppressCancellationThrow().Forget();
+
+            // Needed for positional sound
+            component.MediaPlayer.transform.position = initialPosition;
 
             World.Add(entity, component);
         }
