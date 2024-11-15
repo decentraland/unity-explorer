@@ -47,22 +47,25 @@ namespace Utility
         /// <summary>
         ///     Creates scene geometry from multiple occupied parcels
         /// </summary>
-        public static SceneGeometry CreateSceneGeometry(IReadOnlyList<ParcelCorners> parcelsCorners, Vector2Int baseParcel)
+        public static SceneGeometry CreateSceneGeometry(IReadOnlyList<Vector2Int> parcels, Vector2Int baseParcel)
         {
             float circumscribedPlaneMinX = float.MaxValue;
             float circumscribedPlaneMaxX = float.MinValue;
             float circumscribedPlaneMinZ = float.MaxValue;
             float circumscribedPlaneMaxZ = float.MinValue;
 
-            for (var i = 0; i < parcelsCorners.Count; i++)
+            for (var i = 0; i < parcels.Count; i++)
             {
-                ParcelCorners corners = parcelsCorners[i];
+                Vector2Int parcel = parcels[i];
 
-                circumscribedPlaneMinX = Mathf.Min(corners.minXZ.x, circumscribedPlaneMinX);
-                circumscribedPlaneMaxX = Mathf.Max(corners.maxXZ.x, circumscribedPlaneMaxX);
-                circumscribedPlaneMinZ = Mathf.Min(corners.minXZ.z, circumscribedPlaneMinZ);
-                circumscribedPlaneMaxZ = Mathf.Max(corners.maxXZ.z, circumscribedPlaneMaxZ);
+                circumscribedPlaneMinX = Mathf.Min(parcel.x, circumscribedPlaneMinX);
+                circumscribedPlaneMaxX = Mathf.Max(parcel.x, circumscribedPlaneMaxX);
+                circumscribedPlaneMinZ = Mathf.Min(parcel.y, circumscribedPlaneMinZ);
+                circumscribedPlaneMaxZ = Mathf.Max(parcel.y, circumscribedPlaneMaxZ);
             }
+
+            circumscribedPlaneMaxX += PARCEL_SIZE;
+            circumscribedPlaneMaxZ += PARCEL_SIZE;
 
             // to prevent on-boundary flickering (float accuracy) extend the circumscribed planes a little bit
 
@@ -74,19 +77,12 @@ namespace Utility
             circumscribedPlaneMaxZ += EXTEND_AMOUNT;
 
             Vector3 baseParcelPosition = GetPositionByParcelPosition(baseParcel);
-            float sceneHeight = Mathf.Log(parcelsCorners.Count + 1, 2) * 20; // log2(n+1) x 20, where n is the amount of parcels
+            float sceneHeight = Mathf.Log(parcels.Count + 1, 2) * 20; // log2(n+1) x 20, where n is the amount of parcels
 
             return new SceneGeometry(
                 baseParcelPosition,
                 new SceneCircumscribedPlanes(circumscribedPlaneMinX, circumscribedPlaneMaxX, circumscribedPlaneMinZ, circumscribedPlaneMaxZ), sceneHeight);
         }
-
-        public static ParcelCorners CalculateCorners(Vector2Int parcelPosition)
-        {
-            Vector3 min = GetPositionByParcelPosition(parcelPosition);
-            return new ParcelCorners(min, min + new Vector3(0, 0, PARCEL_SIZE), min + new Vector3(PARCEL_SIZE, 0, PARCEL_SIZE), min + new Vector3(PARCEL_SIZE, 0, 0));
-        }
-
 
         public static void ParcelsInRange(Vector3 position, int loadRadius, HashSet<int2> results)
         {
@@ -163,22 +159,6 @@ namespace Utility
         public static bool Contains(this in SceneCircumscribedPlanes boundingPlanes, Vector3 point) =>
             boundingPlanes.MinX < point.x && boundingPlanes.MaxX > point.x
                                           && boundingPlanes.MinZ < point.z && boundingPlanes.MaxZ > point.z;
-
-        public readonly struct ParcelCorners
-        {
-            public readonly Vector3 minXZ;
-            public readonly Vector3 minXmaxZ;
-            public readonly Vector3 maxXZ;
-            public readonly Vector3 maxXminZ;
-
-            public ParcelCorners(Vector3 minXZ, Vector3 minXmaxZ, Vector3 maxXZ, Vector3 maxXminZ)
-            {
-                this.minXZ = minXZ;
-                this.minXmaxZ = minXmaxZ;
-                this.maxXZ = maxXZ;
-                this.maxXminZ = maxXminZ;
-            }
-        }
 
         /// <summary>
         ///     Rectangular area around all scene parcels

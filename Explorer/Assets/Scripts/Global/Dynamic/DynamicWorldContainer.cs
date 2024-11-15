@@ -292,7 +292,6 @@ namespace Global.Dynamic
                 dynamicWorldParams.StaticLoadPositions,
                 staticContainer.RealmData,
                 staticContainer.ScenesCache,
-                staticContainer.PartitionDataContainer,
                 staticContainer.SingletonSharedDependencies.SceneAssetLock,
                 debugBuilder);
 

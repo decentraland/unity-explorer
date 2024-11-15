@@ -43,7 +43,6 @@ namespace Global.Dynamic
         private readonly RetrieveSceneFromFixedRealm retrieveSceneFromFixedRealm;
         private readonly RetrieveSceneFromVolatileWorld retrieveSceneFromVolatileWorld;
         private readonly TeleportController teleportController;
-        private readonly PartitionDataContainer partitionDataContainer;
         private readonly IScenesCache scenesCache;
         private readonly SceneAssetLock sceneAssetLock;
 
@@ -75,7 +74,6 @@ namespace Global.Dynamic
             IReadOnlyList<int2> staticLoadPositions,
             RealmData realmData,
             IScenesCache scenesCache,
-            PartitionDataContainer partitionDataContainer,
             SceneAssetLock sceneAssetLock,
             IDebugContainerBuilder debugContainerBuilder)
         {
@@ -87,7 +85,6 @@ namespace Global.Dynamic
             this.retrieveSceneFromFixedRealm = retrieveSceneFromFixedRealm;
             this.retrieveSceneFromVolatileWorld = retrieveSceneFromVolatileWorld;
             this.scenesCache = scenesCache;
-            this.partitionDataContainer = partitionDataContainer;
             this.sceneAssetLock = sceneAssetLock;
 
             realmNavigatorDebugView = new RealmNavigatorDebugView(debugContainerBuilder);
@@ -130,7 +127,6 @@ namespace Global.Dynamic
             sceneProviderStrategy.World = globalWorld.EcsWorld;
 
             teleportController.SceneProviderStrategy = sceneProviderStrategy;
-            partitionDataContainer.Restart();
 
             currentDomain = realm;
             realmNavigatorDebugView.UpdateRealmName(currentDomain.Value.ToString(), result.lambdas.publicUrl,

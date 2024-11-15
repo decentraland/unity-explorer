@@ -8,7 +8,7 @@ using ECS.SceneLifeCycle.Systems;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
-using ECS.SceneLifeCycle.Components;
+using System.Collections.Generic;
 using UnityEngine;
 using Utility;
 
@@ -27,15 +27,17 @@ namespace ECS.SceneLifeCycle.Tests
             partitionSettings.AngleTolerance.Returns(0);
             partitionSettings.PositionSqrTolerance.Returns(0);
             partitionSettings.FastPathSqrDistance.Returns(int.MaxValue);
-            partitionSettings.SqrDistanceBuckets.Returns(new[] { 16 * 16, 32 * 32, 64 * 64 });
+
+            partitionSettings.SqrDistanceBuckets.Returns(
+                new List<int> { 16 * 16, 32 * 32, 64 * 64 });
 
             samplingData = Substitute.For<IReadOnlyCameraSamplingData>();
             componentPool = Substitute.For<IComponentPool<PartitionComponent>>();
             componentPool.Get().Returns(_ => new PartitionComponent());
             IRealmPartitionSettings realmPartitionSettings = Substitute.For<IRealmPartitionSettings>();
 
-            system = new PartitionSceneEntitiesSystem(world, componentPool, partitionSettings, samplingData, new PartitionDataContainer(), realmPartitionSettings);
-            system.partitionDataContainer.Restart();
+            system = new PartitionSceneEntitiesSystem(world, componentPool, partitionSettings,
+                samplingData, realmPartitionSettings);
         }
 
         [Test]
@@ -54,10 +56,6 @@ namespace ECS.SceneLifeCycle.Tests
                         { DecodedParcels = new[] { Vector3.zero.ToParcel() } },
                 },
             }, new IpfsPath()));
-
-            system.Update(0);
-
-            system.ForceCompleteJob();
 
             system.Update(0);
 
@@ -90,7 +88,6 @@ namespace ECS.SceneLifeCycle.Tests
 
             // Run for the first time so the internals of the system change
             system.Update(0);
-            system.ForceCompleteJob();
 
             // Move to another partition
             coords = new Vector3(0, 0, 46);
@@ -99,8 +96,6 @@ namespace ECS.SceneLifeCycle.Tests
             samplingData.Parcel.Returns(coords.ToParcel());
 
             // Run for the second time
-            system.Update(0);
-            system.ForceCompleteJob();
             system.Update(0);
 
             // Partition should be set to the proper values
