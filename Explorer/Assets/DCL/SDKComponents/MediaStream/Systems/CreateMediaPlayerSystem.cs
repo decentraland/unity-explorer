@@ -52,20 +52,20 @@ namespace DCL.SDKComponents.MediaStream
 
         [Query]
         [None(typeof(MediaPlayerComponent))]
-        private void CreateAudioStream(in Entity entity, TransformComponent transformComponent, ref PBAudioStream sdkComponent)
+        private void CreateAudioStream(in Entity entity, ref PBAudioStream sdkComponent)
         {
-            CreateMediaPlayer(entity, transformComponent.Transform.position, sdkComponent.Url, sdkComponent.HasVolume, sdkComponent.Volume);
+            CreateMediaPlayer(entity, sdkComponent.Url, sdkComponent.HasVolume, sdkComponent.Volume);
         }
 
         [Query]
         [None(typeof(MediaPlayerComponent))]
         [All(typeof(VideoTextureConsumer))]
-        private void CreateVideoPlayer(in Entity entity, TransformComponent transformComponent, PBVideoPlayer sdkComponent)
+        private void CreateVideoPlayer(in Entity entity, PBVideoPlayer sdkComponent)
         {
-            CreateMediaPlayer(entity, transformComponent.Transform.position, sdkComponent.Src, sdkComponent.HasVolume, sdkComponent.Volume);
+            CreateMediaPlayer(entity, sdkComponent.Src, sdkComponent.HasVolume, sdkComponent.Volume);
         }
 
-        private void CreateMediaPlayer(Entity entity, Vector3 initialPosition, string url, bool hasVolume, float volume)
+        private void CreateMediaPlayer(Entity entity, string url, bool hasVolume, float volume)
         {
             if (!frameTimeBudget.TrySpendBudget()) return;
 
@@ -74,8 +74,10 @@ namespace DCL.SDKComponents.MediaStream
             if (component.State != VideoState.VsError)
                 component.OpenMediaPromise.UrlReachabilityResolveAsync(webRequestController, component.URL, GetReportData(), component.Cts.Token).SuppressCancellationThrow().Forget();
 
-            // Needed for positional sound
-            component.MediaPlayer.transform.position = initialPosition;
+            // There is no way to set this from the scene code, at the moment
+            // If the player has no transform, it will appear at 0,0,0 and nobody will hear it if it is in 3D
+            if (component.MediaPlayer.TryGetComponent(out AudioSource mediaPlayerAudio))
+                mediaPlayerAudio.spatialBlend = World.Has<TransformComponent>(entity) ? 1.0f : 0.0f;
 
             World.Add(entity, component);
         }

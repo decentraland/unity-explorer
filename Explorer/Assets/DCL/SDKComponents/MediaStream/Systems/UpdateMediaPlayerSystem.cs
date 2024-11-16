@@ -13,6 +13,7 @@ using DCL.WebRequests;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.Unity.Textures.Components;
+using ECS.Unity.Transforms.Components;
 using RenderHeads.Media.AVProVideo;
 using SceneRunner.Scene;
 using System;
@@ -73,10 +74,18 @@ namespace DCL.SDKComponents.MediaStream
 
         protected override void Update(float t)
         {
+            UpdateMediaPlayerPositionQuery(World);
             UpdateAudioStreamQuery(World);
             UpdateVideoStreamQuery(World);
 
             UpdateVideoTextureQuery(World);
+        }
+
+        [Query]
+        private void UpdateMediaPlayerPosition(ref MediaPlayerComponent mediaPlayer, ref TransformComponent transformComponent)
+        {
+            // Needed for positional sound
+            mediaPlayer.MediaPlayer.transform.position = transformComponent.Transform.position;
         }
 
         [Query]
