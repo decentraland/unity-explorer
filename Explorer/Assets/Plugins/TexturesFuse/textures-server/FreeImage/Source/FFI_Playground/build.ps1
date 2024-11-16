@@ -1,7 +1,7 @@
 cmake . -G "Visual Studio 17 2022" `
-    -DCMAKE_BUILD_TYPE=Release `
+    -DCMAKE_BUILD_TYPE=Debug `
     -DASTCENC_SHAREDLIB=ON `
     -DASTCENC_UNIVERSAL_BUILD=ON `
     -DASTCENC_DYNAMIC_LIBRARY=ON
 
-cmake --build . --clean-first --config Release --parallel 10
+cmake --build . --config Debug --parallel 10
