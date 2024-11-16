@@ -2,6 +2,7 @@
 #include "compressonator.h"
 #include "texturesfuse.h"
 #include "FreeImage.h"
+#include "anylog.h"
 #include <string>
 #include <fstream>
 #include <iostream>
@@ -63,12 +64,19 @@ bytesFromFile(std::string path)
 
 void Debug(FREE_IMAGE_FORMAT fif, const char *msg)
 {
-    printf(msg);
-    printf("\n");
+    AL_Log(msg);
+    AL_Log("\n");
+}
+
+void callback(const char *message)
+{
+    printf(message);
 }
 
 int main()
 {
+    AL_Init(callback);
+
     InitOptions options;
     options.ASTCProfile = ASTCENC_PRF_LDR_SRGB;
     options.blockX = 6;

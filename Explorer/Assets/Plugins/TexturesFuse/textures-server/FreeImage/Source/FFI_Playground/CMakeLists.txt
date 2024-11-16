@@ -42,6 +42,12 @@ add_subdirectory("../FFI" library_build)
 
 add_executable(playground main.cpp)
 
+if (NOT TARGET anylog)
+    add_subdirectory("../../../AnyLog" anylog_build)
+endif()
+target_link_libraries(playground PRIVATE anylog)
+target_include_directories(playground PRIVATE "../../../AnyLog")
+
 target_link_libraries(playground PRIVATE texturesfuse)
 
 include(${CMAKE_SOURCE_DIR}/../cmake_configs/cmp_config.cmake)

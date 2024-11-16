@@ -664,6 +664,12 @@ else()
     
     target_link_libraries(texturesfuse CMP_Framework) 
 endif()
+
+if (NOT TARGET anylog)
+    add_subdirectory("../../../AnyLog" anylog_build)
+endif()
+target_link_libraries(texturesfuse anylog)
+target_include_directories(texturesfuse PRIVATE "../../../AnyLog")
   
 
 target_sources(texturesfuse PRIVATE ${SOURCES})

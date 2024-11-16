@@ -5,6 +5,7 @@
 #include <fstream>
 #include <iostream>
 #include "common.h"
+#include "anylog.h"
 
 ImageResult ErrorFromASTC(astcenc_error error)
 {
@@ -59,6 +60,11 @@ void Log(char *msg)
     FreeImage_OutputMessageProc(FIF_UNKNOWN, msg);
 }
 
+void AL_Callback(const char *msg)
+{
+    FreeImage_OutputMessageProc(FIF_UNKNOWN, msg);
+}
+
 bool CMP_Log(float progress, CMP_DWORD_PTR user1, CMP_DWORD_PTR user2)
 {
     printf("Progress %.2f, u1 %d u2 %d\n", progress, user1, user2);
@@ -97,8 +103,8 @@ int MipSetFrom(const CMP_DWORD width, const CMP_DWORD height, CMIPS *CMips, CMP_
 
     FreeImage_OutputMessageProc(FIF_UNKNOWN, "Allocated data");
 
-    mipLevel->m_nWidth =mipSet->m_nWidth;
-    mipLevel->m_nHeight =mipSet->m_nHeight;
+    mipLevel->m_nWidth = mipSet->m_nWidth;
+    mipLevel->m_nHeight = mipSet->m_nHeight;
     mipLevel->m_dwLinearSize = dataSize;
     mipLevel->m_pbData = data;
 
@@ -153,6 +159,11 @@ ImageResult texturesfuse_initialize(InitOptions initOptions, context **contextOu
 
     FreeImage_Initialise();
     FreeImage_SetOutputMessage(initOptions.debugLogFunc);
+
+    if (initOptions.debugLogFunc)
+    {
+        AL_Init(AL_Callback);
+    }
 
     CMP_InitFramework();
     PrintStatusLine = Log;
@@ -436,7 +447,6 @@ ImageResult texturesfuse_cmp_image_from_memory(
     kOpt.fquality = compressOptions.fQuality;
     kOpt.threads = compressOptions.dwnumThreads;
 
-
     CMP_FORMAT sourceFormat = CMP_FORMAT_BGRA_8888;
 
     // CMP_Texture sourceTexture = {0};
@@ -522,7 +532,7 @@ ImageResult texturesfuse_cmp_image_from_memory(
         return ErrorBC5;
     }
 
-    *outputBytes= dstMipSet.pData;
+    *outputBytes = dstMipSet.pData;
     *outputLength = dstMipSet.dwDataSize;
 
     *releaseHandle = context->handles.registerHandle(*outputBytes);
