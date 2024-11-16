@@ -183,6 +183,7 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+        VideoPrioritizationSettings: {fileID: 11400000, guid: 12f48d0297bd3f746b92a97878478086, type: 2}
     - rid: 6784895267130048515
       type: {class: MaterialsPlugin/Settings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
       data:
