@@ -28,8 +28,7 @@ namespace ECS.SceneLifeCycle.Tests
             partitionSettings.PositionSqrTolerance.Returns(0);
             partitionSettings.FastPathSqrDistance.Returns(int.MaxValue);
 
-            partitionSettings.SqrDistanceBuckets.Returns(
-                new List<int> { 16 * 16, 32 * 32, 64 * 64 });
+            partitionSettings.SqrDistanceBuckets.Returns(new List<int> { 16 * 16, 32 * 32, 64 * 64 });
 
             samplingData = Substitute.For<IReadOnlyCameraSamplingData>();
             componentPool = Substitute.For<IComponentPool<PartitionComponent>>();
