@@ -406,13 +406,13 @@ namespace Global.Dynamic
             }
         }
 
-        public async UniTask SwitchMiscVisibilityAsync()
+        public void SwitchMiscVisibilityAsync()
         {
             bool isGenesis = IsGenesisRealm();
 
             RealmChanged?.Invoke(isGenesis);
             mapRenderer.SetSharedLayer(MapLayer.PlayerMarker, isGenesis);
-            await satelliteFloor.SwitchVisibilityAsync(isGenesis);
+            satelliteFloor.SetCurrentlyInGenesis(isGenesis);
             roadsPlugin.RoadAssetPool?.SwitchVisibility(isGenesis);
         }
 
@@ -446,7 +446,7 @@ namespace Global.Dynamic
         {
             await realmController.SetRealmAsync(realm, ct);
             currentRealm = realm;
-            await SwitchMiscVisibilityAsync();
+            SwitchMiscVisibilityAsync();
         }
 
         private bool IsGenesisRealm() =>
