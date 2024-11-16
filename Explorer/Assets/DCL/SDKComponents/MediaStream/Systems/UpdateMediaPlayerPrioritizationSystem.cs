@@ -129,20 +129,30 @@ namespace DCL.SDKComponents.MediaStream
             // If the video should be playing according to external state changes...
             if (videoStateByPriority.WantsToPlay)
             {
-                Vector3 videoCenterPosition = (videoTextureConsumer.BoundsMax + videoTextureConsumer.BoundsMin) * 0.5f;
+                Vector3 boundsMin = videoTextureConsumer.BoundsMin;
+                Vector3 boundsMax = videoTextureConsumer.BoundsMax;
+                Vector3 videoCenterPosition = (boundsMax + boundsMin) * 0.5f;
 
-                // Note: It was necessary to calculate a flattened version of the dot product to prevent some videos from pausing when they were big and
-                //       the character was too close, so the height of the center of the screen did not affect the result
+                bool isCameraInVideoBoundingBox = cameraWorldPosition.x >= boundsMin.x && cameraWorldPosition.y >= boundsMin.y && cameraWorldPosition.z >= boundsMin.z &&
+                                                  cameraWorldPosition.x <= boundsMax.x && cameraWorldPosition.y <= boundsMax.y && cameraWorldPosition.z <= boundsMax.z;
+
                 Vector3 cameraToVideo = (videoCenterPosition - cameraWorldPosition).normalized;
-                Vector3 cameraToVideoFlattened = new Vector3(cameraToVideo.x, 0.0f, cameraToVideo.z).normalized;
-
                 Vector3 cameraDirection = cameraWorldRotation * Vector3.forward;
-                Vector3 cameraDirectionFlattened = new Vector3(cameraDirection.x, 0.0f, cameraDirection.z).normalized;
+                bool isVideoInCameraFrustum = false;
 
-                float dotProductInXZ = Vector3.Dot(cameraToVideoFlattened, cameraDirectionFlattened);
+                if (!isCameraInVideoBoundingBox) // If the camera is inside the BB, it's not necessary to calculate anything else, the video is considered in camera
+                {
+                    // Note: It was necessary to calculate a flattened version of the dot product to prevent some videos from pausing when they were big and
+                    //       the character was too close, so the height of the center of the screen did not affect the result
+                    Vector3 cameraToVideoFlattened = new Vector3(cameraToVideo.x, 0.0f, cameraToVideo.z).normalized;
+                    Vector3 cameraDirectionFlattened = new Vector3(cameraDirection.x, 0.0f, cameraDirection.z).normalized;
 
-                // Skips videos that are out of the camera
-                if (Mathf.Acos(dotProductInXZ) * Mathf.Rad2Deg <= cameraHorizontalFov * 0.5f)
+                    float dotProductInXZ = Vector3.Dot(cameraToVideoFlattened, cameraDirectionFlattened);
+                    isVideoInCameraFrustum = Mathf.Acos(dotProductInXZ) * Mathf.Rad2Deg <= cameraHorizontalFov * 0.5f;
+                }
+                
+                // Skips videos that are out of the camera frustum in XZ
+                if (isCameraInVideoBoundingBox || isVideoInCameraFrustum)
                 {
                     float distance = (videoCenterPosition - cameraWorldPosition).magnitude;
 
