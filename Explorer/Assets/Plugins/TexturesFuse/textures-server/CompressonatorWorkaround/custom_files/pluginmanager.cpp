@@ -26,6 +26,8 @@
 
 #include "pluginmanager.h"
 
+#include "anylog.h"
+
 // Windows Header Files:
 #ifdef _WIN32
 #include <windows.h>
@@ -35,28 +37,28 @@
 #include <string>
 
 #ifdef USE_NewLoader
-#pragma warning(disable : 4091)  //'fopen': This function or variable may be unsafe.
+#pragma warning(disable : 4091) //'fopen': This function or variable may be unsafe.
 #include "imagehlp.h"
 #pragma comment(lib, "imagehlp.lib")
 
-bool GetDLLFileExports(LPCSTR szFileName, std::vector<std::string>& names)
+bool GetDLLFileExports(LPCSTR szFileName, std::vector<std::string> &names)
 {
-    //printf("%s\n",__FUNCTION__);
+    // printf("%s\n",__FUNCTION__);
     _LOADED_IMAGE LoadedImage;
 
     if (!MapAndLoad(szFileName, NULL, &LoadedImage, TRUE, TRUE))
         return false;
 
-    _IMAGE_EXPORT_DIRECTORY* ImageExportDirectory;
-    ULONG                    DataSize;
+    _IMAGE_EXPORT_DIRECTORY *ImageExportDirectory;
+    ULONG DataSize;
 
-    ImageExportDirectory = (_IMAGE_EXPORT_DIRECTORY*)ImageDirectoryEntryToData(LoadedImage.MappedAddress, false, IMAGE_DIRECTORY_ENTRY_EXPORT, &DataSize);
+    ImageExportDirectory = (_IMAGE_EXPORT_DIRECTORY *)ImageDirectoryEntryToData(LoadedImage.MappedAddress, false, IMAGE_DIRECTORY_ENTRY_EXPORT, &DataSize);
     if (ImageExportDirectory != NULL)
     {
-        DWORD* dExportNameAddress(0);
-        char*  FileExportName;
+        DWORD *dExportNameAddress(0);
+        char *FileExportName;
 
-        dExportNameAddress = (DWORD*)ImageRvaToVa(LoadedImage.FileHeader, LoadedImage.MappedAddress, ImageExportDirectory->AddressOfNames, NULL);
+        dExportNameAddress = (DWORD *)ImageRvaToVa(LoadedImage.FileHeader, LoadedImage.MappedAddress, ImageExportDirectory->AddressOfNames, NULL);
         if (!dExportNameAddress)
         {
             UnMapAndLoad(&LoadedImage);
@@ -65,7 +67,7 @@ bool GetDLLFileExports(LPCSTR szFileName, std::vector<std::string>& names)
 
         for (size_t i = 0; i < ImageExportDirectory->NumberOfNames; i++)
         {
-            FileExportName = (char*)ImageRvaToVa(LoadedImage.FileHeader, LoadedImage.MappedAddress, dExportNameAddress[i], NULL);
+            FileExportName = (char *)ImageRvaToVa(LoadedImage.FileHeader, LoadedImage.MappedAddress, dExportNameAddress[i], NULL);
             if (FileExportName)
                 names.push_back(FileExportName);
         }
@@ -156,36 +158,36 @@ bool GetDLLFileExports(LPCSTR szFileName, std::vector<std::string>& names)
 
 PluginManager::PluginManager()
 {
-    //printf("%s\n", __FUNCTION__);
+    // printf("%s\n", __FUNCTION__);
 
     m_pluginlistset = false;
 }
 
 PluginManager::~PluginManager()
 {
-    //printf("%s\n", __FUNCTION__);
+    // printf("%s\n", __FUNCTION__);
 
     clearPluginList();
 }
 
-void PluginManager::registerStaticPlugin(char* pluginType, char* pluginName, void* makePlugin)
+void PluginManager::registerStaticPlugin(char *pluginType, char *pluginName, void *makePlugin)
 {
-    //printf("%s\n", __FUNCTION__);
+    // printf("%s\n", __FUNCTION__);
 
-    PluginDetails* curPlugin = new PluginDetails();
-    curPlugin->funcHandle    = reinterpret_cast<PLUGIN_FACTORYFUNC>(makePlugin);
-    curPlugin->isStatic      = true;
+    PluginDetails *curPlugin = new PluginDetails();
+    curPlugin->funcHandle = reinterpret_cast<PLUGIN_FACTORYFUNC>(makePlugin);
+    curPlugin->isStatic = true;
     curPlugin->setType(pluginType);
     curPlugin->setName(pluginName);
 
     pluginRegister.push_back(curPlugin);
 }
 
-void PluginManager::registerStaticPlugin(char* pluginType, char* pluginName, char* uuid, void* makePlugin)
+void PluginManager::registerStaticPlugin(char *pluginType, char *pluginName, char *uuid, void *makePlugin)
 {
-    PluginDetails* curPlugin = new PluginDetails();
-    curPlugin->funcHandle    = reinterpret_cast<PLUGIN_FACTORYFUNC>(makePlugin);
-    curPlugin->isStatic      = true;
+    PluginDetails *curPlugin = new PluginDetails();
+    curPlugin->funcHandle = reinterpret_cast<PLUGIN_FACTORYFUNC>(makePlugin);
+    curPlugin->isStatic = true;
     curPlugin->setType(pluginType);
     curPlugin->setName(pluginName);
     curPlugin->setUUID(uuid);
@@ -193,9 +195,9 @@ void PluginManager::registerStaticPlugin(char* pluginType, char* pluginName, cha
     pluginRegister.push_back(curPlugin);
 }
 
-void PluginManager::getPluginDetails(PluginDetails* curPlugin)
+void PluginManager::getPluginDetails(PluginDetails *curPlugin)
 {
-    //printf("%s\n", __FUNCTION__);
+    // printf("%s\n", __FUNCTION__);
 
 #ifdef _WIN32
     HINSTANCE dllHandle;
@@ -237,7 +239,7 @@ void PluginManager::getPluginDetails(PluginDetails* curPlugin)
 
 void PluginManager::clearPluginList()
 {
-    //printf("%s\n", __FUNCTION__);
+    // printf("%s\n", __FUNCTION__);
 
     for (unsigned int i = 0; i < pluginRegister.size(); i++)
     {
@@ -247,10 +249,10 @@ void PluginManager::clearPluginList()
     pluginRegister.clear();
 }
 
-bool PluginManager::fileExists(const std::string& abs_filename)
+bool PluginManager::fileExists(const std::string &abs_filename)
 {
-    bool  ret = false;
-    FILE* fp;
+    bool ret = false;
+    FILE *fp;
 #ifdef _WIN32
     errno_t err = fopen_s(&fp, abs_filename.c_str(), "rb");
     if (err != 0)
@@ -266,9 +268,9 @@ bool PluginManager::fileExists(const std::string& abs_filename)
     return ret;
 }
 
-void PluginManager::getPluginList(char* SubFolderName, bool append)
+void PluginManager::getPluginList(char *SubFolderName, bool append)
 {
-    //printf("%s\n", __FUNCTION__);
+    // printf("%s\n", __FUNCTION__);
 
     // Check for prior setting, if set clear for new one
     if (m_pluginlistset)
@@ -281,11 +283,16 @@ void PluginManager::getPluginList(char* SubFolderName, bool append)
     else
         m_pluginlistset = true;
 
-    printf("Try get plugin list form subdir %s, with append %d\n", SubFolderName, append);
-
 #ifdef _WIN32
+
+    char buffer[MAX_PATH];
+    buffer[0] = 0;
+
+    GetModuleFileNameA(nullptr, buffer, MAX_PATH);
+    AL_Log("Try get plugin list form subdir %s, execution path is %s, with append %d\n", SubFolderName, buffer, append);
+
     WIN32_FIND_DATAA fd;
-    char             fname[MAX_PATH];
+    char fname[MAX_PATH];
 
     //----------------------------------
     // Load plugin List for processing
@@ -296,14 +303,14 @@ void PluginManager::getPluginList(char* SubFolderName, bool append)
 
     // v2.1 change - to check if path exists in PATH or AMDCOMPRESS_PLUGINS is set
     // else use current exe directory
-    char*  pPath;
+    char *pPath;
     size_t len;
 
 #ifdef _WIN32
     _dupenv_s(&pPath, &len, "AMDCOMPRESS_PLUGINS");
 #else
     pPath = getenv("AMDCOMPRESS_PLUGINS") + '\0';
-    len   = strlen(pPath);
+    len = strlen(pPath);
 #endif
 
     if (len > 0)
@@ -314,18 +321,18 @@ void PluginManager::getPluginList(char* SubFolderName, bool append)
     {
         bool pathFound = false;
 
-        //Get the exe directory
-        DWORD   pathsize;
+        // Get the exe directory
+        DWORD pathsize;
         HMODULE hModule = GetModuleHandleA(NULL);
-        pathsize        = GetModuleFileNameA(hModule, dirPath, MAX_PATH);
+        pathsize = GetModuleFileNameA(hModule, dirPath, MAX_PATH);
         if (pathsize > 0)
         {
-            char* appName    = (strrchr(dirPath, '\\') + 1);
-            int   pathLen    = (int)strlen(dirPath);
-            int   appNameLen = (int)strlen(appName);
+            char *appName = (strrchr(dirPath, '\\') + 1);
+            int pathLen = (int)strlen(dirPath);
+            int appNameLen = (int)strlen(appName);
 
             // Null terminate the dirPath so that FileName is removed
-            pathLen          = pathLen - appNameLen;
+            pathLen = pathLen - appNameLen;
             dirPath[pathLen] = 0;
             if (dirPath[pathLen - 1] == '/' || dirPath[pathLen - 1] == '\\')
             {
@@ -353,14 +360,14 @@ void PluginManager::getPluginList(char* SubFolderName, bool append)
             _dupenv_s(&pPath, &len, "PATH");
 #else
             pPath = getenv("PATH");
-            len   = strlen(pPath);
+            len = strlen(pPath);
 #endif
             if (len > 0)
             {
                 std::string s = pPath;
 
-                char   delimiter = ';';
-                size_t pos       = 0;
+                char delimiter = ';';
+                size_t pos = 0;
 
                 std::string token;
 
@@ -401,7 +408,7 @@ void PluginManager::getPluginList(char* SubFolderName, bool append)
 
     do
     {
-        HINSTANCE                dllHandle = NULL;
+        HINSTANCE dllHandle = NULL;
         std::vector<std::string> names;
 
         try
@@ -412,14 +419,14 @@ void PluginManager::getPluginList(char* SubFolderName, bool append)
 
 #ifdef USE_NewLoader
 
-                //printf("GetDLL File exports %s\n", fd.cFileName);
-                // Valid only for Windows need one for Linux
+                // printf("GetDLL File exports %s\n", fd.cFileName);
+                //  Valid only for Windows need one for Linux
                 names.clear();
                 GetDLLFileExports(fname, names);
 
                 if ((names.size() >= 3) && (names.size() <= 50))
                 {
-                    bool bmakePlugin    = false;
+                    bool bmakePlugin = false;
                     bool bgetPluginType = false;
                     bool bgetPluginName = false;
 
@@ -436,7 +443,7 @@ void PluginManager::getPluginList(char* SubFolderName, bool append)
                     if (bmakePlugin && bgetPluginType && bgetPluginName)
                     {
                         // we have a vaild plugin to register to use when needed save it!
-                        PluginDetails* curPlugin = new PluginDetails();
+                        PluginDetails *curPlugin = new PluginDetails();
                         curPlugin->setFileName(fname);
                         pluginRegister.push_back(curPlugin);
                     }
@@ -450,8 +457,8 @@ void PluginManager::getPluginList(char* SubFolderName, bool append)
                     funcHandle = reinterpret_cast<PLUGIN_FACTORYFUNC>(GetProcAddress(dllHandle, "makePlugin"));
                     if (funcHandle != NULL)
                     {
-                        PluginDetails* curPlugin = new PluginDetails();
-                        //printf("new: %s\n", fname);
+                        PluginDetails *curPlugin = new PluginDetails();
+                        // printf("new: %s\n", fname);
                         curPlugin->setFileName(fname);
 
                         PLUGIN_TEXTFUNC textFunc;
@@ -491,7 +498,7 @@ void PluginManager::getPluginList(char* SubFolderName, bool append)
 #endif
 }
 
-void* PluginManager::makeNewPluginInstance(int index)
+void *PluginManager::makeNewPluginInstance(int index)
 {
     if (!pluginRegister.at(index)->isRegistered)
         getPluginDetails(pluginRegister.at(index));
@@ -504,28 +511,28 @@ int PluginManager::getNumPlugins()
     return static_cast<int>(pluginRegister.size());
 }
 
-char* PluginManager::getPluginName(int index)
+char *PluginManager::getPluginName(int index)
 {
     if (!pluginRegister.at(index)->isRegistered)
         getPluginDetails(pluginRegister.at(index));
     return pluginRegister.at(index)->getName();
 }
 
-char* PluginManager::getPluginUUID(int index)
+char *PluginManager::getPluginUUID(int index)
 {
     if (!pluginRegister.at(index)->isRegistered)
         getPluginDetails(pluginRegister.at(index));
     return pluginRegister.at(index)->getUUID();
 }
 
-char* PluginManager::getPluginCategory(int index)
+char *PluginManager::getPluginCategory(int index)
 {
     if (!pluginRegister.at(index)->isRegistered)
         getPluginDetails(pluginRegister.at(index));
     return pluginRegister.at(index)->getCategory();
 }
 
-char* PluginManager::getPluginType(int index)
+char *PluginManager::getPluginType(int index)
 {
     if (!pluginRegister.at(index)->isRegistered)
         getPluginDetails(pluginRegister.at(index));
@@ -539,9 +546,9 @@ unsigned long PluginManager::getPluginOption(int index)
     return pluginRegister.at(index)->getOptions();
 }
 
-void* PluginManager::GetPlugin(char* type, const char* name)
+void *PluginManager::GetPlugin(char *type, const char *name)
 {
-    printf("try get plugin for type: %s, with name: %s\n", type, name);
+    AL_Log("try get plugin for type: %s, with name: %s\n", type, name);
 
     if (!m_pluginlistset)
     {
@@ -551,19 +558,19 @@ void* PluginManager::GetPlugin(char* type, const char* name)
     unsigned int numPlugins = getNumPlugins();
     for (unsigned int i = 0; i < numPlugins; i++)
     {
-        PluginDetails* pPlugin = pluginRegister.at(i);
+        PluginDetails *pPlugin = pluginRegister.at(i);
         if (!pPlugin->isRegistered)
             getPluginDetails(pPlugin);
-        printf("%2d getPlugin(Type %s name %s) == [%s,%s] \n", i, getPluginType(i), getPluginName(i), type, name);
+        AL_Log("%2d getPlugin(Type %s name %s) == [%s,%s] \n", i, getPluginType(i), getPluginName(i), type, name);
         if ((strcmp(getPluginType(i), type) == 0) && (strcmp(getPluginName(i), name) == 0))
         {
-            return ((void*)makeNewPluginInstance(i));
+            return ((void *)makeNewPluginInstance(i));
         }
     }
     return (NULL);
 }
 
-bool PluginManager::RemovePlugin(char* type, char* name)
+bool PluginManager::RemovePlugin(char *type, char *name)
 {
     if (!m_pluginlistset)
     {
@@ -585,7 +592,7 @@ bool PluginManager::RemovePlugin(char* type, char* name)
     return (false);
 }
 
-void* PluginManager::GetPlugin(char* uuid)
+void *PluginManager::GetPlugin(char *uuid)
 {
     if (!m_pluginlistset)
     {
@@ -600,13 +607,13 @@ void* PluginManager::GetPlugin(char* uuid)
 
         if (strcmp(getPluginUUID(i), uuid) == 0)
         {
-            return ((void*)makeNewPluginInstance(i));
+            return ((void *)makeNewPluginInstance(i));
         }
     }
     return (NULL);
 }
 
-bool PluginManager::PluginSupported(char* type, char* name)
+bool PluginManager::PluginSupported(char *type, char *name)
 {
     if (!type)
         return false;
@@ -623,7 +630,7 @@ bool PluginManager::PluginSupported(char* type, char* name)
         if (!pluginRegister.at(i)->isRegistered)
             getPluginDetails(pluginRegister.at(i));
 
-        //PrintInfo("Type : %s  Name : %s\n",pluginManager.getPluginType(i),pluginManager.getPluginName(i));
+        // PrintInfo("Type : %s  Name : %s\n",pluginManager.getPluginType(i),pluginManager.getPluginName(i));
         if ((strcmp(getPluginType(i), type) == 0) && (strcmp(getPluginName(i), name) == 0))
         {
             return (true);
@@ -632,12 +639,12 @@ bool PluginManager::PluginSupported(char* type, char* name)
     return (false);
 }
 
-void PluginManager::getPluginListTypeNames(char* pluginType, std::vector<std::string>& TypeNames)
+void PluginManager::getPluginListTypeNames(char *pluginType, std::vector<std::string> &TypeNames)
 {
     TypeNames.clear();
-    PluginDetails* plugin;
-    char*          pName;
-    char*          pType;
+    PluginDetails *plugin;
+    char *pName;
+    char *pType;
     for (unsigned int i = 0; i < pluginRegister.size(); i++)
     {
         plugin = pluginRegister.at(i);
@@ -662,12 +669,12 @@ void PluginManager::getPluginListTypeNames(char* pluginType, std::vector<std::st
     }
 }
 
-void PluginManager::getPluginListOptionNames(char* pluginType, unsigned long options, std::vector<std::string>& TypeNames)
+void PluginManager::getPluginListOptionNames(char *pluginType, unsigned long options, std::vector<std::string> &TypeNames)
 {
-    PluginDetails* plugin;
-    char*          pName;
-    char*          pType;
-    unsigned long  uOptions;
+    PluginDetails *plugin;
+    char *pName;
+    char *pType;
+    unsigned long uOptions;
 
     for (unsigned int i = 0; i < pluginRegister.size(); i++)
     {
@@ -677,13 +684,13 @@ void PluginManager::getPluginListOptionNames(char* pluginType, unsigned long opt
         if (strlen(pType) == 0)
         {
             getPluginDetails(plugin);
-            pName    = plugin->getName();
-            pType    = plugin->getType();
+            pName = plugin->getName();
+            pType = plugin->getType();
             uOptions = plugin->getOptions();
         }
         else
         {
-            pName    = plugin->getName();
+            pName = plugin->getName();
             uOptions = plugin->getOptions();
         }
 
@@ -709,7 +716,7 @@ PluginDetails::~PluginDetails()
     clearMembers();
 }
 
-void PluginDetails::setFileName(char* nm)
+void PluginDetails::setFileName(char *nm)
 {
 #ifdef _WIN32
     strcpy_s(filename, MAX_PLUGIN_FILENAME_STR, nm);
@@ -718,7 +725,7 @@ void PluginDetails::setFileName(char* nm)
 #endif
 }
 
-void PluginDetails::setName(char* nm)
+void PluginDetails::setName(char *nm)
 {
 #ifdef _WIN32
     strcpy_s(pluginName, MAX_PLUGIN_NAME_STR, nm);
@@ -727,7 +734,7 @@ void PluginDetails::setName(char* nm)
 #endif
 }
 
-void PluginDetails::setUUID(char* nm)
+void PluginDetails::setUUID(char *nm)
 {
 #ifdef _WIN32
     strcpy_s(pluginUUID, MAX_PLUGIN_UUID_STR, nm);
@@ -741,7 +748,7 @@ void PluginDetails::setOptions(unsigned long uoptions)
     pluginOptions = uoptions;
 }
 
-void PluginDetails::setType(char* nm)
+void PluginDetails::setType(char *nm)
 {
 #ifdef _WIN32
     strcpy_s(pluginType, MAX_PLUGIN_TYPE_STR, nm);
@@ -750,7 +757,7 @@ void PluginDetails::setType(char* nm)
 #endif
 }
 
-void PluginDetails::setCategory(char* nm)
+void PluginDetails::setCategory(char *nm)
 {
 #ifdef _WIN32
     strcpy_s(pluginCategory, MAX_PLUGIN_CATEGORY_STR, nm);
@@ -759,7 +766,7 @@ void PluginDetails::setCategory(char* nm)
 #endif
 }
 
-void* PluginDetails::makeNewInstance()
+void *PluginDetails::makeNewInstance()
 {
     if (isStatic)
     {

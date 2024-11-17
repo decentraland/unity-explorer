@@ -106,6 +106,12 @@ target_include_directories(CMP_Framework
 
     ${CMAKE_CURRENT_SOURCE_DIR}/../cmp_core/source
     ${CMAKE_CURRENT_SOURCE_DIR}/../cmp_core/shaders
+    
+    if (NOT TARGET anylog)
+        add_subdirectory("../../../AnyLog" anylog_build)
+    endif()
+    target_link_libraries(CMP_Framework PRIVATE anylog)
+    target_include_directories(CMP_Framework PRIVATE "../../../AnyLog")
 )
 """)
     
