@@ -33,8 +33,6 @@ namespace DCL.SDKComponents.Tween.Components
         {
             transform.localPosition = currentValue;
         }
-
-        public override void UpdateMaterial(SDKTweenTextureComponent _, Material __) { }
     }
 
     public class ScaleTweener : CustomTweener<Vector3, VectorOptions>
@@ -61,8 +59,6 @@ namespace DCL.SDKComponents.Tween.Components
         {
             transform.localScale = currentValue;
         }
-
-        public override void UpdateMaterial(SDKTweenTextureComponent _, Material __) { }
     }
 
     public class RotationTweener : CustomTweener<Quaternion, NoOptions>
@@ -91,8 +87,6 @@ namespace DCL.SDKComponents.Tween.Components
         {
             transform.localRotation = currentValue;
         }
-
-        public override void UpdateMaterial(SDKTweenTextureComponent _, Material __) { }
     }
 
     public class TextureMoveTweener : CustomTweener<Vector2, VectorOptions>
@@ -107,10 +101,6 @@ namespace DCL.SDKComponents.Tween.Components
             currentValue = start;
             return (start, end);
         }
-
-        public override void UpdateSDKTransform(ref SDKTransform _) { }
-
-        public override void UpdateTransform(Transform _) { }
 
         public override void UpdateMaterial(SDKTweenTextureComponent textureComponent, Material material)
         {

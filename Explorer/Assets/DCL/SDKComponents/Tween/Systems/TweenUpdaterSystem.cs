@@ -98,7 +98,7 @@ namespace DCL.SDKComponents.Tween.Systems
             if (sdkTweenComponent.IsDirty)
             {
                 SetupTween(ref sdkTweenComponent, in pbTween);
-                UpdateTweenTextureStateAndMaterial(sdkEntity, sdkTweenComponent, ref materialComponent, textureComponent, sceneStateProvider.IsCurrent);
+                UpdateTweenTextureStateAndMaterial(sdkEntity, sdkTweenComponent, ref materialComponent, textureComponent);
             }
             else
                 UpdateTweenTextureState(sdkEntity, ref sdkTweenComponent, ref materialComponent, textureComponent);
@@ -111,12 +111,12 @@ namespace DCL.SDKComponents.Tween.Systems
             if (newState != sdkTweenComponent.TweenStateStatus)
             {
                 sdkTweenComponent.TweenStateStatus = newState;
-                UpdateTweenTextureStateAndMaterial(sdkEntity, sdkTweenComponent, ref materialComponent, textureComponent, sceneStateProvider.IsCurrent);
+                UpdateTweenTextureStateAndMaterial(sdkEntity, sdkTweenComponent, ref materialComponent, textureComponent);
             }
             else if (newState == TweenStateStatus.TsActive) { UpdateTweenMaterial(sdkTweenComponent, ref materialComponent, textureComponent, sceneStateProvider.IsCurrent); }
         }
 
-        private void UpdateTweenTextureStateAndMaterial(CRDTEntity sdkEntity, SDKTweenComponent sdkTweenComponent, ref MaterialComponent materialComponent, SDKTweenTextureComponent textureComponent, bool isCurrent)
+        private void UpdateTweenTextureStateAndMaterial(CRDTEntity sdkEntity, SDKTweenComponent sdkTweenComponent, ref MaterialComponent materialComponent, SDKTweenTextureComponent textureComponent)
         {
             UpdateTweenMaterial(sdkTweenComponent, ref materialComponent, textureComponent, sceneStateProvider.IsCurrent);
             TweenSDKComponentHelper.WriteTweenStateInCRDT(ecsToCRDTWriter, sdkEntity, sdkTweenComponent.TweenStateStatus);

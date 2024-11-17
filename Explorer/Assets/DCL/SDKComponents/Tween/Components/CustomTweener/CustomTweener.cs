@@ -29,11 +29,11 @@ namespace DCL.SDKComponents.Tween.Components
 
         protected abstract (T, T) GetTweenValues(PBTween pbTween);
 
-        public abstract void UpdateSDKTransform(ref SDKTransform sdkTransform);
+        public virtual void UpdateSDKTransform(ref SDKTransform sdkTransform) { }
 
-        public abstract void UpdateTransform(Transform transform);
+        public virtual void UpdateTransform(Transform transform) { }
 
-        public abstract void UpdateMaterial(SDKTweenTextureComponent textureComponent, Material material);
+        public virtual void UpdateMaterial(SDKTweenTextureComponent textureComponent, Material material) { }
 
         public void Play() =>
             core.Play();
