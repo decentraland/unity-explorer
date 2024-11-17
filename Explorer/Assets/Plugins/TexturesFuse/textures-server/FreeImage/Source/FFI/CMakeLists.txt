@@ -648,22 +648,11 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/../cmake_configs/cmp_config.cmake)
 
 target_include_directories(texturesfuse PRIVATE ${COMPRESSATOR_ROOT}/include)
 
-if(WIN32)
-    #TODO simplify
+add_subdirectory(${COMPRESSATOR_ORIGIN_ROOT}/cmp_core build/cmp_core)
+add_subdirectory(${COMPRESSATOR_ORIGIN_ROOT}/cmp_compressonatorlib build/cmp_compressonatorlib)
+add_subdirectory(${COMPRESSATOR_ORIGIN_ROOT}/cmp_framework build/cmp_framework)
 
-    target_link_libraries(texturesfuse ${COMPRESSATOR_ROOT}/lib/libCMP_Framework.lib)
-    target_link_libraries(texturesfuse ${COMPRESSATOR_ROOT}/lib/libCMP_Core_AVX512.lib)
-    target_link_libraries(texturesfuse ${COMPRESSATOR_ROOT}/lib/libCMP_Core_SSE.lib)
-    target_link_libraries(texturesfuse ${COMPRESSATOR_ROOT}/lib/libCMP_Core_AVX.lib)
-    target_link_libraries(texturesfuse ${COMPRESSATOR_ROOT}/lib/libCMP_Core.lib)
-    target_link_libraries(texturesfuse ${COMPRESSATOR_ROOT}/lib/libCMP_Compressonator.lib)
-else()
-    add_subdirectory(${COMPRESSATOR_ORIGIN_ROOT}/cmp_core build/cmp_core)
-    add_subdirectory(${COMPRESSATOR_ORIGIN_ROOT}/cmp_compressonatorlib build/cmp_compressonatorlib)
-    add_subdirectory(${COMPRESSATOR_ORIGIN_ROOT}/cmp_framework build/cmp_framework)
-    
-    target_link_libraries(texturesfuse CMP_Framework) 
-endif()
+target_link_libraries(texturesfuse CMP_Framework) 
 
 if (NOT TARGET anylog)
     add_subdirectory("../../../AnyLog" anylog_build)
