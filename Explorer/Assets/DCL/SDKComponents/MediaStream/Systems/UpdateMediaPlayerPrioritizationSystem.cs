@@ -1,4 +1,7 @@
 ﻿//#define DEBUG_VIDEO_PRIORITIES
+// When the definition is enabled, a colored cube will be created next to each video's mesh renderer. Its color corresponds to the current priority of the video.
+// Green means higher priority, red means lower priority. Blue means that it was prioritized but it is not allowed to play due to the maximum limit.
+// Black means it has been discarded from prioritization.
 
 using Arch.Core;
 using Arch.System;
@@ -16,6 +19,12 @@ using UnityEngine;
 
 namespace DCL.SDKComponents.MediaStream
 {
+    /// <summary>
+    /// A system that limits the amount of video streams that can be playing at the same time on camera.
+    /// Videos are streamed using MediaPlayers. MediaPlayers can be played or paused manually outside this system. Those that are played manually will be
+    /// prioritized. Depending on the position and priority of the renderer every the video, it will keep playing or will be "culled", which means paused
+    /// until its priority/position allows it to resume the stream at the current time (not at the time it was paused, as if it was never paused at all).
+    /// </summary>
     [UpdateInGroup(typeof(SyncedPresentationSystemGroup))]
     [UpdateAfter(typeof(UpdateMediaPlayerSystem))]
     [LogCategory(ReportCategory.MEDIA_STREAM)]
@@ -34,7 +43,6 @@ namespace DCL.SDKComponents.MediaStream
         public UpdateMediaPlayerPrioritizationSystem(World world, IExposedCameraData exposedCameraData, VideoPrioritizationSettings videoPrioritizationSettings) : base(world)
         {
             this.videoPrioritizationSettings = videoPrioritizationSettings;
-
             this.exposedCameraData = exposedCameraData;
         }
 
@@ -70,13 +78,16 @@ namespace DCL.SDKComponents.MediaStream
 #endif
         }
 
+        /// <summary>
+        /// Adds the VideoStateByPriorityComponent to all entities streaming a video with a MediaPlayer.
+        /// </summary>
         [Query]
         [All(typeof(PBVideoPlayer))]
         [None(typeof(VideoStateByPriorityComponent))]
-        private void AddVideoStatesByPriority(Entity entity, in MediaPlayerComponent mediaPlayer, in VideoTextureConsumer rendererComponent)
+        private void AddVideoStatesByPriority(Entity entity, in MediaPlayerComponent mediaPlayer, in VideoTextureConsumer videoTextureConsumer)
         {
             // Using the diagonal of the box instead of the height, meshes that occupy "the same" area on screen should have the same priority
-            float videoMeshLocalSize = (rendererComponent.BoundsMax - rendererComponent.BoundsMin).magnitude;
+            float videoMeshLocalSize = (videoTextureConsumer.BoundsMax - videoTextureConsumer.BoundsMin).magnitude;
 
             VideoStateByPriorityComponent newVideoStateByPriority = new VideoStateByPriorityComponent(){
                                                                             Entity = entity,
@@ -84,14 +95,26 @@ namespace DCL.SDKComponents.MediaStream
                                                                             HalfSize = videoMeshLocalSize * 0.5f};
 
 #if DEBUG_VIDEO_PRIORITIES
+            // Adds a colored cube to a corner of the video mesh renderer which shows the priority of the video
             GameObject prioritySign = CreateDebugPrioritySign();
-            prioritySign.transform.position = rendererComponent.BoundsMax;
+            prioritySign.transform.position = videoTextureConsumer.BoundsMax;
             newVideoStateByPriority.DebugPrioritySign = prioritySign.GetComponent<MeshRenderer>();
 #endif
 
             World.Add(entity, newVideoStateByPriority);
         }
 
+        /// <summary>
+        /// Calculates the priority of each video.
+        /// First, videos whose renderer's position is not on camera (imagine a cone in the XZ plane) will be culled; in the same way, those that are too far
+        /// from the camera will also be culled. The rest of the videos will be prioritized calculating a score that depends on their positions and sizes.
+        /// The formula of the score is: S * w0 + D * w1 + A * w2, were S, D and A are values in [0, 1] and wX are arbitrary multipliers.
+        /// S = The size of the video mesh renderer relative to the screen.
+        /// D = The distance from the camera to the video mesh renderer, with a maximum.
+        /// A = The angle of the camera with respect to the video mesh renderer (the nearer to the center of the screen, the higher).
+        /// The first M videos with the highest score will resume / keep playing (were M is the maximum amount of videos allowed), the rest will be culled.
+        /// Every video is stored in a list sorted by score.
+        /// </summary>
         [Query]
         private void UpdateVideoPriorities([Data] float cameraFov, [Data] float cameraHorizontalFov,
                                            [Data] Vector3 cameraWorldPosition, [Data] Quaternion cameraWorldRotation,
@@ -114,7 +137,6 @@ namespace DCL.SDKComponents.MediaStream
 #if DEBUG_VIDEO_PRIORITIES
                     Debug.Log("Video: PLAYED MANUALLY");
 #endif
-
                 }
                 else
                 {
@@ -150,7 +172,7 @@ namespace DCL.SDKComponents.MediaStream
                     float dotProductInXZ = Vector3.Dot(cameraToVideoFlattened, cameraDirectionFlattened);
                     isVideoInCameraFrustum = Mathf.Acos(dotProductInXZ) * Mathf.Rad2Deg <= cameraHorizontalFov * 0.5f;
                 }
-                
+
                 // Skips videos that are out of the camera frustum in XZ
                 if (isCameraInVideoBoundingBox || isVideoInCameraFrustum)
                 {
@@ -190,6 +212,9 @@ namespace DCL.SDKComponents.MediaStream
             }
         }
 
+        /// <summary>
+        /// Resumes or pauses every video depending on its priority.
+        /// </summary>
         [Query]
         private void UpdateVideoStateDependingOnPriority([Data] int maxSimultaneousVideos, ref VideoStateByPriorityComponent videoStateByPriority, ref MediaPlayerComponent mediaPlayer)
         {
@@ -216,6 +241,7 @@ namespace DCL.SDKComponents.MediaStream
 
                 if (!mediaPlayer.MediaPlayer.Control.IsPlaying())
                 {
+                    // Videos are resumed at the current time, not at the time it was paused
                     mediaPlayer.MediaPlayer.Control.Play();
                     mediaPlayer.MediaPlayer.Control.Seek(seekTime);
                 }
@@ -223,7 +249,7 @@ namespace DCL.SDKComponents.MediaStream
                 videoStateByPriority.IsPlaying = true;
 
 #if DEBUG_VIDEO_PRIORITIES
-                Debug.Log("VIDEO PLAYED BY PRIORITY: " + videoStateByPriority.Entity.Id + " t:" + seekTime);
+                Debug.Log("VIDEO RESUMED BY PRIORITY: " + videoStateByPriority.Entity.Id + " t:" + seekTime);
 #endif
             }
             else if(!mustPlay && (videoStateByPriority.IsPlaying || mediaPlayer.MediaPlayer.Control.IsPlaying()))
@@ -236,11 +262,18 @@ namespace DCL.SDKComponents.MediaStream
                 videoStateByPriority.IsPlaying = false;
 
 #if DEBUG_VIDEO_PRIORITIES
-                Debug.Log("VIDEO PAUSED BY PRIORITY: " + videoStateByPriority.Entity.Id);
+                Debug.Log("VIDEO CULLED BY PRIORITY: " + videoStateByPriority.Entity.Id);
 #endif
             }
         }
 
+        /// <summary>
+        /// Given the height of an object, it calculates how much screen it covers in vertical.
+        /// </summary>
+        /// <param name="cameraFOV">The vertical FOV of the camera, in degrees.</param>
+        /// <param name="halfHeight">A half of the height of the object.</param>
+        /// <param name="distance">The distance from the camera to the object.</param>
+        /// <returns>The amount of screen covered in vertical, from 0 to 1 (total coverage).</returns>
         private float CalculateObjectHeightRelativeToScreenHeight(float cameraFOV, float halfHeight, float distance)
         {
             float halfFov = cameraFOV * 0.5f * Mathf.Deg2Rad;

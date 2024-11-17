@@ -7,6 +7,9 @@ namespace ECS.Unity.Textures.Components
 {
     public struct VideoTextureConsumer : IDisposable
     {
+        /// <summary>
+        /// Gets the current world position of the maximum corner of the bounding box that contains all the mesh renderers used by video consumers of one texture.
+        /// </summary>
         public Vector3 BoundsMax
         {
             get
@@ -23,6 +26,9 @@ namespace ECS.Unity.Textures.Components
             }
         }
 
+        /// <summary>
+        /// Gets the current world position of the minimum corner of the bounding box that contains all the mesh renderers used by video consumers of one texture.
+        /// </summary>
         public Vector3 BoundsMin
         {
             get
@@ -39,6 +45,7 @@ namespace ECS.Unity.Textures.Components
             }
         }
 
+        // All the renderers that use the video texture
         private readonly List<MeshRenderer> renderers;
 
         /// <summary>
@@ -62,6 +69,10 @@ namespace ECS.Unity.Textures.Components
             renderers.Clear();
         }
 
+        /// <summary>
+        /// Stores a reference to a renderer that consumes the same texture.
+        /// </summary>
+        /// <param name="renderer">The renderer using the video texture.</param>
         public void AddConsumerMeshRenderer(MeshRenderer renderer)
         {
             renderers.Add(renderer);
