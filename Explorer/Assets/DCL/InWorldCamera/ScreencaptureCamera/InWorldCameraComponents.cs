@@ -1,4 +1,9 @@
-﻿namespace DCL.InWorldCamera.ScreencaptureCamera
+﻿using UnityEngine;
+
+namespace DCL.InWorldCamera.ScreencaptureCamera
 {
-    public struct IsInWorldCamera { }
+    public struct InWorldCamera
+    {
+        public CharacterController FollowTarget;
+    }
 }

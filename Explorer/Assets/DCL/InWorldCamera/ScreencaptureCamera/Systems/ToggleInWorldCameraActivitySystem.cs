@@ -16,7 +16,6 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
     [UpdateInGroup(typeof(CameraGroup))]
     [UpdateBefore(typeof(ApplyCinemachineCameraInputSystem))]
     [UpdateAfter(typeof(ControlCinemachineVirtualCameraSystem))]
-
     [LogCategory(ReportCategory.IN_WORLD_CAMERA)]
     public partial class ToggleInWorldCameraActivitySystem : BaseUnityLoopSystem
     {
@@ -24,6 +23,8 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
         private readonly GameObject hud;
 
         private SingleInstanceEntity camera;
+        private ICinemachinePreset cinemachinePreset;
+        private CharacterController followTarget;
 
         public ToggleInWorldCameraActivitySystem(World world, DCLInput.InWorldCameraActions inputSchema, GameObject hud) : base(world)
         {
@@ -37,74 +38,31 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
 
             cinemachinePreset = World.Get<ICinemachinePreset>(camera);
             cinemachinePreset.InWorldCameraData.Camera.enabled = false;
-        }
 
-        private ICinemachinePreset cinemachinePreset;
+            followTarget = new GameObject("InWorldCameraFollowTarget").AddComponent<CharacterController>();
+            followTarget.gameObject.SetActive(false);
+        }
 
         protected override void Update(float t)
         {
-            if(World.Has<IsInWorldCamera>(camera))
-            {
-                ref var cameraInput = ref World.Get<CameraInput>(camera);
-                cameraInput.FreeMovement = inputSchema.Translation.ReadValue<Vector2>();
-                // cameraInput.FreePanning = freeCameraActions.Panning.ReadValue<Vector2>();
-                // cameraInput.FreeFOV = freeCameraActions.FOV.ReadValue<Vector2>();
-
-                ApplyInWorldCameraMovement(t, in camera.GetCameraComponent(World), in cameraInput, cinemachinePreset);
-
-                // Update the brain manually
-                cinemachinePreset.Brain.ManualUpdate();
-            }
-
             if (inputSchema.ToggleInWorld!.triggered)
             {
-                if (World.Has<IsInWorldCamera>(camera))
+                if (World.Has<InWorldCamera>(camera))
                     DisableCamera();
                 else
                     EnableCamera();
             }
         }
 
-        private static void ApplyInWorldCameraMovement(float dt, in CameraComponent camera, in CameraInput cameraInput,
-            ICinemachinePreset cinemachinePreset)
-        {
-            // Camera's position is under Cinemachine control
-            Transform cinemachineTransform = cinemachinePreset.InWorldCameraData.Camera.transform;
-
-            // Camera's rotation is not
-            Transform cameraTransform = camera.Camera.transform;
-            Vector3 direction = (cameraTransform.forward * cameraInput.FreeMovement.y) +
-                                (cameraTransform.up * cameraInput.FreePanning.y) +
-                                (cameraTransform.right * cameraInput.FreeMovement.x);
-
-            cinemachineTransform.localPosition += direction * (cinemachinePreset.InWorldCameraData.Speed * dt);
-        }
-
-        private static void ApplyInWorldFOV(float dt, ICinemachinePreset cinemachinePreset, in CameraInput cameraInput)
-        {
-            CinemachineVirtualCamera tpc = cinemachinePreset.InWorldCameraData.Camera;
-            LensSettings tpcMLens = tpc.m_Lens;
-            tpcMLens.FieldOfView += cameraInput.FreeFOV.y * cinemachinePreset.InWorldCameraData.Speed * dt;
-            tpc.m_Lens = tpcMLens;
-        }
-
-        private static void ApplyPOV(CinemachinePOV cinemachinePOV, in CameraInput cameraInput)
-        {
-            if (cinemachinePOV)
-            {
-                cinemachinePOV.m_HorizontalAxis.m_InputAxisValue = cameraInput.Delta.x;
-                cinemachinePOV.m_VerticalAxis.m_InputAxisValue = cameraInput.Delta.y;
-            }
-        }
-
         private void EnableCamera()
         {
             hud.SetActive(true); // TODO (Vit):Temporary solution, will be replaced by MVC
-            World.Add<IsInWorldCamera>(camera);
-            ref var cameraComponent = ref camera.GetCameraComponent(World);
+            World.Add(camera, new InWorldCamera { FollowTarget = followTarget });
+
+            ref CameraComponent cameraComponent = ref camera.GetCameraComponent(World);
             cameraComponent.Mode = CameraMode.InWorld;
 
-            ref var cameraState = ref World.Get<CinemachineCameraState>(camera);
+            ref CinemachineCameraState cameraState = ref World.Get<CinemachineCameraState>(camera);
 
             cameraState.CurrentCamera.enabled = false;
             cameraState.CurrentCamera = cinemachinePreset.InWorldCameraData.Camera;
@@ -112,10 +70,11 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
 
             // copy Position and POV
             cinemachinePreset.InWorldCameraData.Camera.transform.position = cinemachinePreset.ThirdPersonCameraData.Camera.transform.position;
+
             // cinemachinePreset.InWorldCameraData.Camera.transform.rotation = cinemachinePreset.ThirdPersonCameraData.Camera.transform.rotation;
 
             // Input block
-            var inputMap = World.CacheInputMap();
+            SingleInstanceEntity inputMap = World.CacheInputMap();
             ref InputMapComponent inputMapComponent = ref inputMap.GetInputMapComponent(World);
             inputMapComponent.UnblockInput(InputMapComponent.Kind.IN_WORLD_CAMERA);
             inputMapComponent.BlockInput(InputMapComponent.Kind.PLAYER);
@@ -124,10 +83,10 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
         private void DisableCamera()
         {
             hud.SetActive(false); // TODO (Vit):Temporary solution, will be replaced by MVC
-            World.Remove<IsInWorldCamera>(camera);
+            World.Remove<InWorldCamera>(camera);
             camera.GetCameraComponent(World).Mode = CameraMode.ThirdPerson;
 
-            var  inputMap = World.CacheInputMap();
+            SingleInstanceEntity inputMap = World.CacheInputMap();
             ref InputMapComponent inputMapComponent = ref inputMap.GetInputMapComponent(World);
             inputMapComponent.UnblockInput(InputMapComponent.Kind.PLAYER);
             inputMapComponent.BlockInput(InputMapComponent.Kind.IN_WORLD_CAMERA);

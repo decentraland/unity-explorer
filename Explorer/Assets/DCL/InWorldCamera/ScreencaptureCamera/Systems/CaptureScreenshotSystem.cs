@@ -72,7 +72,7 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
                 return;
             }
 
-            if (recorder.State == RecordingState.IDLE && inputSchema.Screenshot.triggered && World.Has<IsInWorldCamera>(cameraEntity))
+            if (recorder.State == RecordingState.IDLE && inputSchema.Screenshot.triggered && World.Has<InWorldCamera>(cameraEntity))
             {
                 hud.Canvas.enabled = false;  // TODO (Vit): This is a temporary solution for debug puproses. Will be replaced by proper MVC
                 coroutineRunner.StartCoroutine(recorder.CaptureScreenshot());

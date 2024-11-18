@@ -56,7 +56,7 @@ namespace DCL.Character.CharacterCamera.Systems
         }
 
         [Query]
-        [None(typeof(CameraBlockerComponent), typeof(IsInWorldCamera))]
+        [None(typeof(CameraBlockerComponent), typeof(InWorldCamera.ScreencaptureCamera.InWorldCamera))]
         private void HandleCameraInput([Data] float dt, in CameraComponent cameraComponent)
         {
             if (cameraComponent.Mode == CameraMode.SDKCamera) return;
@@ -141,7 +141,7 @@ namespace DCL.Character.CharacterCamera.Systems
         }
 
         [Query]
-        [None(typeof(IsInWorldCamera))]
+        [None(typeof(InWorldCamera.ScreencaptureCamera.InWorldCamera))]
         private void UpdateCameraState(ref CameraComponent cameraComponent, ref ICinemachinePreset cinemachinePreset, ref CinemachineCameraState state)
         {
             if (cameraComponent.Mode == CameraMode.SDKCamera) return;

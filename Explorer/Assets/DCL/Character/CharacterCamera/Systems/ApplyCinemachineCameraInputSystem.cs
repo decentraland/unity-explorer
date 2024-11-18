@@ -35,7 +35,7 @@ namespace DCL.CharacterCamera.Systems
         }
 
         [Query]
-        [None(typeof(CameraLookAtIntent), typeof(IsInWorldCamera))]
+        [None(typeof(CameraLookAtIntent), typeof(InWorldCamera.ScreencaptureCamera.InWorldCamera))]
         private void Apply([Data] float dt, ref CameraComponent camera, ref CameraInput cameraInput, ref ICinemachinePreset cinemachinePreset)
         {
             switch (camera.Mode)
@@ -74,7 +74,7 @@ namespace DCL.CharacterCamera.Systems
         }
 
         [Query]
-        [None(typeof(IsInWorldCamera))]
+        [None(typeof(InWorldCamera.ScreencaptureCamera.InWorldCamera))]
         private void ForceLookAt(in Entity entity, ref CameraComponent camera, ref ICinemachinePreset cinemachinePreset, in CameraLookAtIntent lookAtIntent)
         {
             switch (camera.Mode)
