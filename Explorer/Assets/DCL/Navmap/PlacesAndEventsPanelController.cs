@@ -90,7 +90,7 @@ namespace DCL.Navmap
 
             collapseExpandCancellationToken = collapseExpandCancellationToken.SafeRestart();
 
-            transform.DOAnchorPosX(470f, 1f)
+            transform.DOAnchorPosX(transform.rect.width, 1f)
                      .ToUniTask(cancellationToken: collapseExpandCancellationToken.Token)
                      .Forget();
         }
