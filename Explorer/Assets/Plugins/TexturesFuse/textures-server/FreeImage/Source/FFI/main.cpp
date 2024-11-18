@@ -165,6 +165,7 @@ ImageResult texturesfuse_initialize(InitOptions initOptions, context **contextOu
         AL_Init(AL_Callback);
     }
 
+    //Ensure to provide environment variable DCL_PLUGINS_DIR to the plugins path
     CMP_InitFramework();
     PrintStatusLine = Log;
 
