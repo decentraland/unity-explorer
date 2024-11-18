@@ -16,7 +16,7 @@ namespace DCL.MapRenderer.MapCameraController
         private const int MAX_TEXTURE_SIZE = 4096;
 
         public event Action<IMapActivityOwner, IMapCameraControllerInternal>? OnReleasing;
-        public event Action<float, float>? ZoomChanged;
+        public event Action<float, float, int>? ZoomChanged;
 
         public MapLayer EnabledLayers { get; private set; }
 
@@ -114,9 +114,9 @@ namespace DCL.MapRenderer.MapCameraController
         public IMapInteractivityController GetInteractivityController() =>
             interactivityBehavior;
 
-        public void SetZoom(float value)
+        public void SetZoom(float value, int zoomLevel)
         {
-            SetCameraSize(value);
+            SetCameraSize(value, zoomLevel);
             // Clamp local position as boundaries are dependent on zoom
             SetLocalPositionClamped(mapCameraObject.transform.localPosition);
             cullingController.SetCameraDirty(this);
@@ -151,7 +151,7 @@ namespace DCL.MapRenderer.MapCameraController
             translationSequence?.Kill();
             translationSequence = null;
 
-            SetCameraSize(zoom);
+            SetCameraSize(zoom, 3);
 
             Vector3 position = coordsUtils.CoordsToPositionUnclamped(coordinates);
             mapCameraObject.transform.localPosition = ClampLocalPosition(new Vector3(position.x, position.y, CAMERA_HEIGHT));
@@ -174,13 +174,13 @@ namespace DCL.MapRenderer.MapCameraController
                                 });
         }
 
-        private void SetCameraSize(float zoom)
+        private void SetCameraSize(float zoom, int zoomLevel)
         {
             zoom = Mathf.Clamp01(zoom);
             mapCameraObject.mapCamera.orthographicSize = Mathf.Lerp(zoomValues.y, zoomValues.x, zoom);
 
             interactivityBehavior.ApplyCameraZoom(zoomValues.x, mapCameraObject.mapCamera.orthographicSize);
-            ZoomChanged?.Invoke(zoomValues.x, mapCameraObject.mapCamera.orthographicSize);
+            ZoomChanged?.Invoke(zoomValues.x, mapCameraObject.mapCamera.orthographicSize, zoomLevel);
 
             CalculateCameraPositionBounds();
         }

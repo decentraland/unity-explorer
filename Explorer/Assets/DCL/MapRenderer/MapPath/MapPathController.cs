@@ -178,7 +178,7 @@ namespace DCL.MapRenderer
             return UniTask.CompletedTask;
         }
 
-        public void ApplyCameraZoom(float baseZoom, float newZoom)
+        public void ApplyCameraZoom(float baseZoom, float newZoom, int zoomLevel)
         {
             internalPinMarker.SetZoom(coordsUtils.ParcelSize, baseZoom, newZoom);
             mapPathRenderer.SetZoom(baseZoom, newZoom);

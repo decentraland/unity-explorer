@@ -27,7 +27,7 @@ namespace DCL.MapRenderer.MapLayers.Favorites
         private readonly Dictionary<Vector2Int, IClusterableMarker> markers = new ();
 
         private bool isEnabled;
-        private float clusterCellSize;
+        private int zoomLevel;
         private float baseZoom;
         private float zoom;
 
@@ -74,17 +74,17 @@ namespace DCL.MapRenderer.MapLayers.Favorites
             marker.OnBecameInvisible();
         }
 
-        public void ApplyCameraZoom(float baseZoom, float zoom)
+        public void ApplyCameraZoom(float baseZoom, float zoom, int zoomLevel)
         {
             this.baseZoom = baseZoom;
             this.zoom = zoom;
-            clusterCellSize = ClusterUtilities.CalculateCellSize(zoom);
+            this.zoomLevel = zoomLevel;
 
             foreach (IFavoritesMarker marker in markers.Values)
                 marker.SetZoom(coordsUtils.ParcelSize, baseZoom, zoom);
 
             if(isEnabled)
-                clusterController.UpdateClusters(clusterCellSize, baseZoom, zoom, markers);
+                clusterController.UpdateClusters(zoomLevel, baseZoom, zoom, markers);
 
             clusterController.ApplyCameraZoom(baseZoom, zoom);
         }
@@ -177,7 +177,7 @@ namespace DCL.MapRenderer.MapLayers.Favorites
                 mapCullingController.StartTracking(marker, this);
 
             isEnabled = true;
-            clusterController.UpdateClusters(clusterCellSize, baseZoom, zoom, markers);
+            clusterController.UpdateClusters(zoomLevel, baseZoom, zoom, markers);
             return UniTask.CompletedTask;
         }
     }

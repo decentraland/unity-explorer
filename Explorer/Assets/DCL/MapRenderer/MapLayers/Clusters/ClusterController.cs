@@ -16,6 +16,7 @@ namespace DCL.MapRenderer.MapLayers.Categories
         private readonly ICoordsUtils coordsUtils;
         private readonly MapLayer mapLayer;
         private readonly CategoryIconMappingsSO categoryIconMappings;
+        private int previousZoomLevel = -1;
 
         public ClusterController(
             IMapCullingController mapCullingController,
@@ -33,8 +34,13 @@ namespace DCL.MapRenderer.MapLayers.Categories
             this.categoryIconMappings = categoryIconMappings;
         }
 
-        public void UpdateClusters(float clusterCellSize, float baseZoom, float zoom, Dictionary<Vector2Int, IClusterableMarker> markers)
+        public void UpdateClusters(int zoomLevel, float baseZoom, float zoom, Dictionary<Vector2Int, IClusterableMarker> markers)
         {
+            if (previousZoomLevel == zoomLevel)
+                return;
+
+            previousZoomLevel = zoomLevel;
+            float clusterCellSize = ClusterUtilities.CalculateCellSize(zoomLevel);
             foreach (IClusterMarker clusteredMarker in clusteredMarkers)
             {
                 mapCullingController.StopTracking(clusteredMarker);
@@ -88,6 +94,7 @@ namespace DCL.MapRenderer.MapLayers.Categories
 
         public void Disable()
         {
+            previousZoomLevel = -1;
             foreach (IClusterMarker clusteredMarker in clusteredMarkers)
             {
                 mapCullingController.StopTracking(clusteredMarker);

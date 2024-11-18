@@ -37,7 +37,7 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
         private Vector2Int decodePointer;
 
         private bool isEnabled;
-        private float clusterCellSize;
+        private int zoomLevel;
         private float baseZoom;
         private float zoom;
 
@@ -146,17 +146,17 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
         private static bool IsEmptyParcel(PlacesData.PlaceInfo sceneInfo) =>
             sceneInfo.title is EMPTY_PARCEL_NAME;
 
-        public void ApplyCameraZoom(float baseZoom, float zoom)
+        public void ApplyCameraZoom(float baseZoom, float zoom, int zoomLevel)
         {
             this.baseZoom = baseZoom;
             this.zoom = zoom;
-            clusterCellSize = ClusterUtilities.CalculateCellSize(zoom);
+            this.zoomLevel = zoomLevel;
 
             foreach (ISceneOfInterestMarker marker in markers.Values)
                 marker.SetZoom(coordsUtils.ParcelSize, baseZoom, zoom);
 
             if(isEnabled)
-                clusterController.UpdateClusters(clusterCellSize, baseZoom, zoom, markers);
+                clusterController.UpdateClusters(zoomLevel, baseZoom, zoom, markers);
 
             clusterController.ApplyCameraZoom(baseZoom, zoom);
         }
@@ -187,7 +187,7 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
                 mapCullingController.StartTracking(marker, this);
 
             isEnabled = true;
-            clusterController.UpdateClusters(clusterCellSize, baseZoom, zoom, markers);
+            clusterController.UpdateClusters(zoomLevel, baseZoom, zoom, markers);
             return UniTask.CompletedTask;
         }
     }
