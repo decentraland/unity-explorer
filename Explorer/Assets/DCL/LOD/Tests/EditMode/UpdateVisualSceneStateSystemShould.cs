@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using DCL.Ipfs;
 using DCL.LOD;
 using DCL.LOD.Components;
+using DCL.PluginSystem.World;
 using ECS;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
@@ -11,6 +12,7 @@ using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.SceneLifeCycle.Systems;
 using ECS.StreamableLoading.Common;
 using ECS.TestSuite;
+using ECS.Unity.Transforms.Components;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
@@ -55,6 +57,7 @@ public class UpdateVisualSceneStateSystemShould : UnitySystemTestBase<UpdateVisu
                 },
                 runtimeVersion = "7",
             },
+            
         };
 
         sceneDefinitionComponent = SceneDefinitionComponentFactory.CreateFromDefinition(sceneEntityDefinition, new IpfsPath());
@@ -62,6 +65,28 @@ public class UpdateVisualSceneStateSystemShould : UnitySystemTestBase<UpdateVisu
 
         system = new UpdateVisualSceneStateSystem(world, realmData, scenesCahce, lodAssetsPool, lodSettings,
             new VisualSceneStateResolver(new HashSet<Vector2Int>()), new SceneAssetLock());
+    }
+
+
+    [Test]
+    public void CancelPromiseAndKeepLOD()
+    {
+        visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.SHOWING_LOD;
+        partitionComponent.Bucket = 0;
+        var entityReference = world.Create(visualSceneState, partitionComponent, sceneDefinitionComponent,
+            new SceneLODInfo());
+
+        system.Update(0);
+
+        Assert.IsTrue(world.Has<AssetPromise<ISceneFacade, GetSceneFacadeIntention>>(entityReference));
+        Assert.IsTrue(world.Has<SceneLODInfo>(entityReference));
+
+        visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.SHOWING_LOD;
+        partitionComponent.Bucket = 3;
+        system.Update(0);
+
+        Assert.IsFalse(world.Has<AssetPromise<ISceneFacade, GetSceneFacadeIntention>>(entityReference));
+        Assert.IsTrue(world.Has<SceneLODInfo>(entityReference));
     }
 
     [Test]
@@ -74,7 +99,22 @@ public class UpdateVisualSceneStateSystemShould : UnitySystemTestBase<UpdateVisu
         system.Update(0);
 
         Assert.IsTrue(world.Has<AssetPromise<ISceneFacade, GetSceneFacadeIntention>>(entityReference));
+
+        //Simulate a completition of the scene
+        var loadedScene = Substitute.For<ISceneFacade>();
+        loadedScene.IsSceneReady().Returns(false);
+        world.Add(entityReference, loadedScene);
+
+        system.Update(0);
+
+        Assert.IsTrue(world.Has<SceneLODInfo>(entityReference));
+        Assert.IsTrue(world.Has<ISceneFacade>(entityReference));
+
+        loadedScene.IsSceneReady().Returns(true);
+
+        system.Update(0);
         Assert.IsFalse(world.Has<SceneLODInfo>(entityReference));
+        Assert.IsTrue(world.Has<ISceneFacade>(entityReference));
     }
 
     [Test]

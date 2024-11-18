@@ -106,12 +106,13 @@ namespace SceneRunner.ECSWorld
             Entity sceneRootEntity = world.Create(new CRDTEntity(SpecialEntitiesID.SCENE_ROOT_ENTITY), new SceneRootComponent(), RemovedComponents.CreateDefault(), worldFactoryArgs.SceneData.SceneShortInfo);
             Entity playerEntity = world.Create(new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY), RemovedComponents.CreateDefault());
             Entity cameraEntity = world.Create(new CRDTEntity(SpecialEntitiesID.CAMERA_ENTITY), RemovedComponents.CreateDefault());
+            var sceneContainerEntity = world.Create(new CRDTEntity());
 
             sharedDependencies.EntitiesMap[SpecialEntitiesID.SCENE_ROOT_ENTITY] = sceneRootEntity;
             sharedDependencies.EntitiesMap[SpecialEntitiesID.PLAYER_ENTITY] = playerEntity;
             sharedDependencies.EntitiesMap[SpecialEntitiesID.CAMERA_ENTITY] = cameraEntity;
 
-            return new PersistentEntities(playerEntity, cameraEntity, sceneRootEntity);
+            return new PersistentEntities(playerEntity, cameraEntity, sceneRootEntity, sceneContainerEntity);
         }
     }
 }
