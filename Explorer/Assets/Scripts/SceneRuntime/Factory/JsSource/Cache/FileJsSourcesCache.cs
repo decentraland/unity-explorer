@@ -1,3 +1,5 @@
+using DCL.Optimization;
+using DCL.Optimization.PerformanceBudgeting;
 using System.IO;
 
 namespace SceneRuntime.Factory.WebSceneSource.Cache
@@ -28,6 +30,11 @@ namespace SceneRuntime.Factory.WebSceneSource.Cache
 
             sourceCode = File.ReadAllText(filePath);
             return true;
+        }
+
+        public void Unload(IPerformanceBudget budgetToUse)
+        {
+            // Nothing do to. This cache does not use any memory.
         }
 
         private string FilePath(string path) =>
