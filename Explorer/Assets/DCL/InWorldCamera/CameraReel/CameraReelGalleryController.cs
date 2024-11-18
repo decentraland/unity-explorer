@@ -103,7 +103,24 @@ namespace DCL.InWorldCamera.CameraReel
 
             if (this.contextMenuController != null)
             {
-                this.contextMenuController.SetPublicRequested += (cameraReelRes, publicFlag) => { };
+                this.contextMenuController.SetPublicRequested += (cameraReelRes, publicFlag) =>
+                {
+                    async UniTask SetPublicFlagAsync()
+                    {
+                        try
+                        {
+                            await this.cameraReelStorageService.UpdateScreenshotVisibilityAsync(cameraReelRes.id, publicFlag);
+                            cameraReelRes.isPublic = publicFlag;
+                            await ShowSuccessNotificationAsync("Photo successfully updated");
+                        }
+                        catch (Exception)
+                        {
+                            await ShowFailureNotificationAsync();
+                        }
+                    }
+
+                    SetPublicFlagAsync().Forget();
+                };
 
                 this.contextMenuController.ShareToXRequested += cameraReelResponse =>
                 {
@@ -208,9 +225,7 @@ namespace DCL.InWorldCamera.CameraReel
             {
                 if (view.errorNotificationView is null) return;
 
-                view.errorNotificationView.Show();
-                await UniTask.Delay((int) view.errorSuccessToastDuration * 1000, cancellationToken: ct);
-                view.errorNotificationView.Hide();
+                await ShowFailureNotificationAsync(ct);
             }
         }
 
@@ -236,6 +251,13 @@ namespace DCL.InWorldCamera.CameraReel
             view.successNotificationView.Show();
             await UniTask.Delay((int) view.errorSuccessToastDuration * 1000, cancellationToken: ct);
             view.successNotificationView.Hide();
+        }
+
+        private async UniTask ShowFailureNotificationAsync(CancellationToken ct = default)
+        {
+            view.errorNotificationView.Show();
+            await UniTask.Delay((int) view.errorSuccessToastDuration * 1000, cancellationToken: ct);
+            view.errorNotificationView.Hide();
         }
 
         private MonthGridController GetMonthGrid(DateTime dateTime)

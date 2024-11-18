@@ -72,6 +72,20 @@ namespace DCL.InWorldCamera.CameraReelStorageService
             return responseData;
         }
 
+        public async UniTask UpdateScreenshotVisibilityAsync(string uuid, bool isPublic, CancellationToken ct)
+        {
+            URLAddress url = urlBuilder.AppendDomain(imageDomain)
+                                       .AppendSubDirectory(URLSubdirectory.FromString(uuid))
+                                       .AppendSubDirectory(URLSubdirectory.FromString("visibility"))
+                                       .Build();
+
+            urlBuilder.Clear();
+
+            await webRequestController
+                 .SignedFetchPatchAsync(url, GenericPatchArguments.CreateJson($"{{\"is_public\": {isPublic.ToString().ToLower()}}}"), string.Empty, ct)
+                 .WithNoOpAsync();
+        }
+
         public async UniTask<CameraReelUploadResponse> UploadScreenshotAsync(byte[] image, ScreenshotMetadata metadata, CancellationToken ct)
         {
             URLAddress url = urlBuilder.AppendDomain(imageDomain).Build();

@@ -13,5 +13,7 @@ namespace DCL.InWorldCamera.CameraReelStorageService
         UniTask<CameraReelUploadResponse> UploadScreenshotAsync(byte[] image, ScreenshotMetadata metadata, CancellationToken ct);
 
         UniTask<CameraReelStorageResponse> DeleteScreenshotAsync(string uuid, CancellationToken ct);
+
+        UniTask UpdateScreenshotVisibilityAsync(string uuid, bool isPublic, CancellationToken ct);
     }
 }

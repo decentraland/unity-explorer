@@ -34,6 +34,9 @@ namespace DCL.InWorldCamera.CameraReelStorageService
             return new CameraReelStorageStatus(response.currentImages, response.maxImages);
         }
 
+        public async UniTask UpdateScreenshotVisibilityAsync(string uuid, bool isPublic, CancellationToken ct = default) =>
+            await imagesMetadataDatabase.UpdateScreenshotVisibilityAsync(uuid, isPublic, ct);
+
         public async UniTask<CameraReelStorageStatus> UploadScreenshotAsync(Texture2D image, ScreenshotMetadata metadata, CancellationToken ct = default)
         {
             CameraReelUploadResponse response = await imagesMetadataDatabase.UploadScreenshotAsync(image.EncodeToJPG(), metadata, ct);
@@ -44,9 +47,9 @@ namespace DCL.InWorldCamera.CameraReelStorageService
         }
 
         public UniTask<Texture2D> GetScreenshotImageAsync(string url, CancellationToken ct = default) =>
-            screenshotsStorage.GetScreenshotImageAsync(url);
+            screenshotsStorage.GetScreenshotImageAsync(url, ct);
 
         public UniTask<Texture2D> GetScreenshotThumbnailAsync(string url, CancellationToken ct = default) =>
-            screenshotsStorage.GetScreenshotThumbnailAsync(url);
+            screenshotsStorage.GetScreenshotThumbnailAsync(url, ct);
     }
 }

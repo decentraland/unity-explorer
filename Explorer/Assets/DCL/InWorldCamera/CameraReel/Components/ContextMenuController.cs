@@ -68,14 +68,14 @@ namespace DCL.InWorldCamera.CameraReel.Components
 
         public void Show(Vector3 anchorPosition)
         {
+            view.gameObject.SetActive(true);
+
             //Align the "public" toggle status according to the imageData without triggering an "invoke"
             view.setAsPublic.onValueChanged.RemoveListener(SetAsPublicInvoke);
             view.setAsPublic.isOn = imageData.isPublic;
             view.setAsPublic.onValueChanged.AddListener(SetAsPublicInvoke);
 
             view.controlsParent.transform.position = GetControlsPosition(anchorPosition);
-
-            view.gameObject.SetActive(true);
         }
 
         private Vector3 GetOffsetByDirection(ContextMenuOpenDirection direction)
