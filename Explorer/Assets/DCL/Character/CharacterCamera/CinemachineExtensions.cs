@@ -58,19 +58,5 @@ namespace DCL.CharacterCamera
                 cinemachinePreset.FreeCameraData.POV.m_VerticalAxis.Value = eulerDir.x;
             }
         }
-
-        public static void ForceWorldCameraLookAt(this ICinemachinePreset cinemachinePreset, CameraLookAtIntent lookAtIntent)
-        {
-            var newPos = new Vector3(lookAtIntent.PlayerPosition.x, lookAtIntent.PlayerPosition.y, lookAtIntent.PlayerPosition.z);
-            var cameraTarget = lookAtIntent.LookAtTarget;
-            var dirToLook = cameraTarget - newPos;
-            var eulerDir = Quaternion.LookRotation(dirToLook).eulerAngles;
-
-            if (cinemachinePreset.InWorldCameraData.POV != null)
-            {
-                cinemachinePreset.InWorldCameraData.POV.m_HorizontalAxis.Value = eulerDir.y;
-                cinemachinePreset.InWorldCameraData.POV.m_VerticalAxis.Value = eulerDir.x;
-            }
-        }
     }
 }

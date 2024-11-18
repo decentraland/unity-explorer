@@ -60,11 +60,6 @@ namespace DCL.CharacterCamera.Systems
                     ApplyFreeCameraMovement(dt, camera, cameraInput, cinemachinePreset); // Apply free movement
                     ApplyFOV(dt, cinemachinePreset, in cameraInput); // Apply Field of View
                     break;
-                case CameraMode.InWorld:
-                    ApplyPOV(cinemachinePreset.InWorldCameraData.POV, in cameraInput);
-                    ApplyInWorldCameraMovement(dt, camera, cameraInput, cinemachinePreset);
-                    ApplyInWorldFOV(dt, cinemachinePreset, in cameraInput);
-                    break;
                 default:
                     ReportHub.LogError(GetReportData(), $"Camera mode is unknown {camera.Mode}");
                     break;
@@ -79,6 +74,7 @@ namespace DCL.CharacterCamera.Systems
         }
 
         [Query]
+        [None(typeof(IsInWorldCamera))]
         private void ForceLookAt(in Entity entity, ref CameraComponent camera, ref ICinemachinePreset cinemachinePreset, in CameraLookAtIntent lookAtIntent)
         {
             switch (camera.Mode)
@@ -94,9 +90,6 @@ namespace DCL.CharacterCamera.Systems
                     break;
                 case CameraMode.Free:
                     cinemachinePreset.ForceFreeCameraLookAt(lookAtIntent);
-                    break;
-                case CameraMode.InWorld:
-                    cinemachinePreset.ForceWorldCameraLookAt(lookAtIntent);
                     break;
                 default:
                     ReportHub.LogError(GetReportData(), $"Camera mode is unknown {camera.Mode}");
@@ -137,7 +130,5 @@ namespace DCL.CharacterCamera.Systems
             tpcMLens.FieldOfView += cameraInput.FreeFOV.y * cinemachinePreset.FreeCameraData.Speed * dt;
             tpc.m_Lens = tpcMLens;
         }
-
-
     }
 }

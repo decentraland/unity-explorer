@@ -35,18 +35,25 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
         {
             camera = World.CacheCamera();
 
-            var cinemachinePreset = World.Get<ICinemachinePreset>(camera);
+            cinemachinePreset = World.Get<ICinemachinePreset>(camera);
             cinemachinePreset.InWorldCameraData.Camera.enabled = false;
         }
 
+        private ICinemachinePreset cinemachinePreset;
+
         protected override void Update(float t)
         {
-            if(inputSchema.enabled)
+            if(World.Has<IsInWorldCamera>(camera))
             {
                 ref var cameraInput = ref World.Get<CameraInput>(camera);
                 cameraInput.FreeMovement = inputSchema.Translation.ReadValue<Vector2>();
                 // cameraInput.FreePanning = freeCameraActions.Panning.ReadValue<Vector2>();
                 // cameraInput.FreeFOV = freeCameraActions.FOV.ReadValue<Vector2>();
+
+                ApplyInWorldCameraMovement(t, in camera.GetCameraComponent(World), in cameraInput, cinemachinePreset);
+
+                // Update the brain manually
+                cinemachinePreset.Brain.ManualUpdate();
             }
 
             if (inputSchema.ToggleInWorld!.triggered)
@@ -55,15 +62,6 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
                     DisableCamera();
                 else
                     EnableCamera();
-            }
-        }
-
-        private static void ApplyPOV(CinemachinePOV cinemachinePOV, in CameraInput cameraInput)
-        {
-            if (cinemachinePOV)
-            {
-                cinemachinePOV.m_HorizontalAxis.m_InputAxisValue = cameraInput.Delta.x;
-                cinemachinePOV.m_VerticalAxis.m_InputAxisValue = cameraInput.Delta.y;
             }
         }
 
@@ -90,6 +88,15 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
             tpc.m_Lens = tpcMLens;
         }
 
+        private static void ApplyPOV(CinemachinePOV cinemachinePOV, in CameraInput cameraInput)
+        {
+            if (cinemachinePOV)
+            {
+                cinemachinePOV.m_HorizontalAxis.m_InputAxisValue = cameraInput.Delta.x;
+                cinemachinePOV.m_VerticalAxis.m_InputAxisValue = cameraInput.Delta.y;
+            }
+        }
+
         private void EnableCamera()
         {
             hud.SetActive(true); // TODO (Vit):Temporary solution, will be replaced by MVC
@@ -98,21 +105,20 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
             cameraComponent.Mode = CameraMode.InWorld;
 
             ref var cameraState = ref World.Get<CinemachineCameraState>(camera);
-            var cinemachinePreset = World.Get<ICinemachinePreset>(camera);
 
             cameraState.CurrentCamera.enabled = false;
             cameraState.CurrentCamera = cinemachinePreset.InWorldCameraData.Camera;
             cameraState.CurrentCamera.enabled = true;
-            cinemachinePreset.InWorldCameraData.Camera.transform.position = cinemachinePreset.ThirdPersonCameraData.Camera.transform.position;
 
-            var  inputMap = World.CacheInputMap();
+            // copy Position and POV
+            cinemachinePreset.InWorldCameraData.Camera.transform.position = cinemachinePreset.ThirdPersonCameraData.Camera.transform.position;
+            // cinemachinePreset.InWorldCameraData.Camera.transform.rotation = cinemachinePreset.ThirdPersonCameraData.Camera.transform.rotation;
+
+            // Input block
+            var inputMap = World.CacheInputMap();
             ref InputMapComponent inputMapComponent = ref inputMap.GetInputMapComponent(World);
             inputMapComponent.UnblockInput(InputMapComponent.Kind.IN_WORLD_CAMERA);
             inputMapComponent.BlockInput(InputMapComponent.Kind.PLAYER);
-
-            // copy POV
-            // preset.InWorldCameraData.POV.m_HorizontalAxis.Value = preset.ThirdPersonCameraData.Camera.m_XAxis.Value;
-            // preset.InWorldCameraData.POV.m_VerticalAxis.Value = preset.ThirdPersonCameraData.Camera.m_YAxis.Value;
         }
 
         private void DisableCamera()
