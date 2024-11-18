@@ -36,9 +36,11 @@ extern "C"
         unsigned int flags;
 
 #pragma endregion ASTC_options
-        
+
         // @brief can be NULL
         FreeImage_OutputMessageFunction debugLogFunc;
+
+        char *pluginsPath;
     };
 
     enum ImageResult : int
@@ -54,7 +56,6 @@ extern "C"
         ErrorConvertImageToAlphaUnsupportedInputFormat = 7,
         ErrorOnConvertImageToAlpha = 8,
         ErrorWrongAlphaImage = 9,
-
 
         ErrorInvalidPointer = 10,
         ErrorASTCOnInit = 11,

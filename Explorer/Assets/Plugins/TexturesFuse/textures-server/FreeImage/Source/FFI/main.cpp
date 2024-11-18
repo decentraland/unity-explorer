@@ -7,6 +7,9 @@
 #include "common.h"
 #include "anylog.h"
 
+#include <stdio.h>
+#include <stdlib.h>
+
 ImageResult ErrorFromASTC(astcenc_error error)
 {
     switch (error)
@@ -164,6 +167,18 @@ ImageResult texturesfuse_initialize(InitOptions initOptions, context **contextOu
     {
         AL_Init(AL_Callback);
     }
+
+#ifdef _WIN32
+    std::string env = "AMDCOMPRESS_PLUGINS=";
+    const char *pluginsPath = initOptions.pluginsPath;
+    std::string result = env + pluginsPath;
+
+    if (_putenv(result.c_str()) == 0) {
+        AL_Log("Environment variable AMDCOMPRESS_PLUGINS set successfully.\n");
+    } else {
+        AL_Log("Failed to set environment variable");
+    }
+#endif
 
     //Ensure to provide environment variable DCL_PLUGINS_DIR to the plugins path
     CMP_InitFramework();

@@ -91,38 +91,11 @@ extern void* make_Codec_Plugin_BRLG();
 #include <cstdlib>
 #include "anylog.h"
 
-/// @param src must be not null
-/// @return a new allocated char*, the caller is responsible to free it
-char* NewStringFrom(const char* src)
-{
-    size_t len = std::strlen(src);
-    char* dst = new char[len + 1];
-    std::strcpy(dst, src);
-    return dst;
-}
-
 void CMP_RegisterHostPlugins()
 {
     if (HostPluginsRegistered == FALSE)
     {
-        //Like ./plugins, hacky way, but we don't have to modify the contracts of the lib
-        const char* env_var = "DCL_PLUGINS_DIR";
-        const char* plugins_dir_or_null = std::getenv(env_var);
-
-        if (plugins_dir_or_null == NULL)
-        {
-            AL_Log("ERROR: env variable DCL_PLUGINS_DIR is not declared!");
-            return;
-        }
-        
-        //Because getPluginList won't accept const
-        char* plugins_dir = NewStringFrom(plugins_dir_or_null);
-        AL_Log("env variable DCL_PLUGINS_DIR is %s", plugins_dir_or_null);
-
-        g_pluginManager.getPluginList(plugins_dir, TRUE);
-
-        delete[] plugins_dir;
-
+        g_pluginManager.getPluginList("./plugins", TRUE);
 
         // Hosts
         g_pluginManager.registerStaticPlugin("IMAGE", "DDS", (void*)make_Plugin_DDS);

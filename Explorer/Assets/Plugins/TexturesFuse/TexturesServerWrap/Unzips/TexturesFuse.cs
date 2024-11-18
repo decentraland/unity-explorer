@@ -23,8 +23,6 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
         private readonly CustomSampler sampler;
         private bool disposed;
 
-        private const string DIR_ENV = "DCL_PLUGINS_DIR";
-
         public TexturesFuse(NativeMethods.InitOptions initOptions, ITexturesFuse.IOptions options, bool debug)
         {
             this.options = options;
@@ -36,10 +34,10 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
             //TODO for build too.
             if (Application.isEditor)
             {
-                string dir = Path.Combine(Directory.GetCurrentDirectory(), "plugins");
-                Environment.SetEnvironmentVariable(DIR_ENV, dir, EnvironmentVariableTarget.User);
-                ReportHub.Log(ReportCategory.TEXTURES, $"TexturesFuse, {DIR_ENV} is set to - {dir}");
+                initOptions.pluginsPath = Path.Combine(Directory.GetCurrentDirectory(), "plugins");
+                ReportHub.Log(ReportCategory.TEXTURES, $"TexturesFuse, Plugins Path is set to - {initOptions.pluginsPath}");
             }
+
             var result = NativeMethods.TexturesFuseInitialize(initOptions, out context);
 
             if (result is not NativeMethods.ImageResult.Success)
@@ -352,6 +350,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
         )
         {
             sampler.Begin();
+
             unsafe
             {
                 fixed (byte* ptr = bytes)
@@ -428,6 +427,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
                         throw new Exception($"Unsupported mode: {mode}");
                 }
             }
+
             sampler.End();
         }
 

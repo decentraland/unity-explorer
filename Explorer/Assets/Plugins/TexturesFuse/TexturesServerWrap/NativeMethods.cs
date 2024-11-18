@@ -19,7 +19,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap
         [SuppressMessage("ReSharper", "InconsistentNaming")]
         [SuppressMessage("ReSharper", "ArrangeTypeMemberModifiers")]
         [Serializable]
-        [StructLayout(LayoutKind.Sequential)]
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
         public struct InitOptions
         {
 #pragma region ASTC_options
@@ -39,6 +39,9 @@ namespace Plugins.TexturesFuse.TexturesServerWrap
             ///     Could be null
             /// </summary>
             public OutputMessageDelegate? outputMessage;
+
+            [MarshalAs(UnmanagedType.LPStr)]
+            public string pluginsPath;
 
             public InitOptions NewWithMode(Mode mode)
             {
