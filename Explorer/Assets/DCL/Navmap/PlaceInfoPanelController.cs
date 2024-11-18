@@ -275,11 +275,15 @@ namespace DCL.Navmap
 
             async UniTaskVoid FetchEventsAndShowThemAsync(CancellationToken ct)
             {
+                view.EmptyEventsContainer.SetActive(false);
+
                 SetAsLoadingState();
 
                 IReadOnlyList<EventDTO> events = await eventsApiService.GetEventsByParcelAsync(place!.Positions, ct);
 
                 ClearEventElements();
+
+                view.EmptyEventsContainer.SetActive(events.Count == 0);
 
                 foreach (EventDTO @event in events)
                 {
