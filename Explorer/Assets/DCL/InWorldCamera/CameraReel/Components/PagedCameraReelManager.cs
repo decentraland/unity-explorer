@@ -34,7 +34,7 @@ namespace DCL.InWorldCamera.CameraReel.Components
         }
 
 
-        public async UniTask<Dictionary<DateTime, List<CameraReelResponse>>> FetchNextPage(CancellationToken ct)
+        public async UniTask<Dictionary<DateTime, List<CameraReelResponse>>> FetchNextPageAsync(CancellationToken ct)
         {
             CameraReelResponses response = await cameraReelStorageService.GetScreenshotGalleryAsync(walletAddress, pageSize, currentOffset, ct);
             currentOffset += pageSize;

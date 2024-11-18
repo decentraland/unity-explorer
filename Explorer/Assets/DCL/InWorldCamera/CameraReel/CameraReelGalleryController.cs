@@ -277,7 +277,7 @@ namespace DCL.InWorldCamera.CameraReel
         private async UniTask LoadMorePageAsync(CancellationToken ct)
         {
             isLoading = true;
-            Dictionary<DateTime, List<CameraReelResponse>> result = await pagedCameraReelManager.FetchNextPage(ct);
+            Dictionary<DateTime, List<CameraReelResponse>> result = await pagedCameraReelManager.FetchNextPageAsync(ct);
             float handleHeight = view.verticalScrollbar.handleRect.rect.height;
 
             foreach (var bucket in result)
