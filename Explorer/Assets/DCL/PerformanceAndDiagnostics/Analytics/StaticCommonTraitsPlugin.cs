@@ -8,7 +8,6 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 {
     public class StaticCommonTraitsPlugin : EventPlugin
     {
-        private const string DCL_EDITOR = "dcl-editor";
         private const string UNITY_EDITOR = "unity-editor";
         private const string DEBUG = "debug";
         private const string RELEASE = "release";
@@ -37,8 +36,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             if (Application.isEditor)
                 return UNITY_EDITOR;
 
-            if (appArgs.HasFlag(DCL_EDITOR))
-                return DCL_EDITOR;
+            if (appArgs.HasFlag(AppArgsFlags.DCL_EDITOR))
+                return AppArgsFlags.DCL_EDITOR;
 
             if (Debug.isDebugBuild || appArgs.HasDebugFlag())
                 return DEBUG;
