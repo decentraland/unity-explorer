@@ -9403,6 +9403,7 @@ GameObject:
   - component: {fileID: 2476161483524775475}
   - component: {fileID: 7041046612166940135}
   - component: {fileID: 7034264661199930327}
+  - component: {fileID: 2205716009107612975}
   m_Layer: 5
   m_Name: PlaceImage
   m_TagString: Untagged
@@ -9459,7 +9460,7 @@ MonoBehaviour:
       m_Calls: []
   m_Sprite: {fileID: 21300000, guid: 50c948c68942a4cf188b1f118ba70f8d, type: 3}
   m_Type: 0
-  m_PreserveAspect: 1
+  m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
   m_FillAmount: 1
@@ -9481,6 +9482,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <LoadingObject>k__BackingField: {fileID: 8785847530863206517}
   <Image>k__BackingField: {fileID: 7041046612166940135}
+--- !u!114 &2205716009107612975
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4401548969927227032}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 86710e43de46f6f4bac7c8e50813a599, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_AspectMode: 4
+  m_AspectRatio: 2
 --- !u!1 &4411245277179162714
 GameObject:
   m_ObjectHideFlags: 0
@@ -13237,6 +13252,7 @@ GameObject:
   - component: {fileID: 2938819556042397228}
   - component: {fileID: 5360393551618391596}
   - component: {fileID: 3666742794223157986}
+  - component: {fileID: 5775342485383089365}
   m_Layer: 5
   m_Name: PlaceImage
   m_TagString: Untagged
@@ -13315,6 +13331,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <LoadingObject>k__BackingField: {fileID: 4580176915640343002}
   <Image>k__BackingField: {fileID: 5360393551618391596}
+--- !u!114 &5775342485383089365
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6121586032296963006}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 86710e43de46f6f4bac7c8e50813a599, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_AspectMode: 4
+  m_AspectRatio: 2
 --- !u!1 &6164450381696971957
 GameObject:
   m_ObjectHideFlags: 0

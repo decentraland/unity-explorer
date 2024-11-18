@@ -31,9 +31,6 @@ namespace DCL.Navmap
         public EventInfoCardView eventInfoCardView;
 
         [field: SerializeField]
-        public NavmapFilterView filterView;
-
-        [field: SerializeField]
         public NavmapZoomView zoomView;
 
         [field: SerializeField]
@@ -56,9 +53,6 @@ namespace DCL.Navmap
 
         [field: SerializeField]
         public Animator PanelAnimator { get; private set; }
-
-        [field: SerializeField]
-        public Animator HeaderAnimator { get; private set; }
 
         [field: SerializeField]
         public WarningNotificationView WorldsWarningNotificationView { get; private set; }

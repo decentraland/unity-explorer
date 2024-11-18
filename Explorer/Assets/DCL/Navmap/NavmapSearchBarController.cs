@@ -58,6 +58,7 @@ namespace DCL.Navmap
             view.inputField.onSelect.AddListener(_ => OnSearchBarSelected(true));
             view.inputField.onDeselect.AddListener(_ => OnSearchBarSelected(false));
             view.inputField.onValueChanged.AddListener(OnInputValueChanged);
+            view.inputField.onSubmit.AddListener(OnInputValueChanged);
             view.clearSearchButton.onClick.AddListener(ClearInput);
             view.BackButton.onClick.AddListener(OnBackClicked);
             view.clearSearchButton.gameObject.SetActive(false);
@@ -105,6 +106,9 @@ namespace DCL.Navmap
             view.BackButton.gameObject.SetActive(false);
         }
 
+        public void HideHistoryResults() =>
+            historyRecordPanelView.gameObject.SetActive(false);
+
         private void OnBackClicked()
         {
             backCancellationToken = backCancellationToken.SafeRestart();
@@ -115,7 +119,7 @@ namespace DCL.Navmap
         {
             view.inputField.SetTextWithoutNotify(historyText);
             OnInputValueChanged(historyText);
-            historyRecordPanelView.gameObject.SetActive(false);
+            HideHistoryResults();
         }
 
         private void OnInputValueChanged(string searchText)
@@ -129,7 +133,7 @@ namespace DCL.Navmap
                 return;
             }
 
-            historyRecordPanelView.gameObject.SetActive(false);
+            HideHistoryResults();
 
             currentSearchText = searchText;
 

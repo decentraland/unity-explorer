@@ -1,5 +1,7 @@
 using Cysharp.Threading.Tasks;
+using DG.Tweening;
 using System.Threading;
+using UnityEngine;
 using Utility;
 
 namespace DCL.Navmap
@@ -13,6 +15,7 @@ namespace DCL.Navmap
         private readonly EventInfoPanelController eventInfoPanelController;
 
         private CancellationTokenSource? searchPlacesCancellationToken;
+        private CancellationTokenSource? collapseExpandCancellationToken;
 
         public PlacesAndEventsPanelController(
             PlacesAndEventsPanelView view,
@@ -26,6 +29,11 @@ namespace DCL.Navmap
             this.searchResultController = searchResultController;
             this.placeInfoPanelController = placeInfoPanelController;
             this.eventInfoPanelController = eventInfoPanelController;
+
+            view.CollapseButton.gameObject.SetActive(true);
+            view.ExpandButton.gameObject.SetActive(false);
+            view.CollapseButton.onClick.AddListener(Collapse);
+            view.ExpandButton.onClick.AddListener(Expand);
         }
 
         public void Show()
@@ -57,6 +65,34 @@ namespace DCL.Navmap
                     eventInfoPanelController.Show();
                     break;
             }
+        }
+
+        private void Expand()
+        {
+            view.CollapseButton.gameObject.SetActive(true);
+            view.ExpandButton.gameObject.SetActive(false);
+
+            RectTransform transform = (RectTransform) view.transform;
+
+            collapseExpandCancellationToken = collapseExpandCancellationToken.SafeRestart();
+
+            transform.DOAnchorPosX(0f, 1f)
+                     .ToUniTask(cancellationToken: collapseExpandCancellationToken.Token)
+                     .Forget();
+        }
+
+        private void Collapse()
+        {
+            view.CollapseButton.gameObject.SetActive(false);
+            view.ExpandButton.gameObject.SetActive(true);
+
+            RectTransform transform = (RectTransform) view.transform;
+
+            collapseExpandCancellationToken = collapseExpandCancellationToken.SafeRestart();
+
+            transform.DOAnchorPosX(transform.rect.width, 1f)
+                     .ToUniTask(cancellationToken: collapseExpandCancellationToken.Token)
+                     .Forget();
         }
 
         public enum Section
