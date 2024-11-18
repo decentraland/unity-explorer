@@ -73,6 +73,7 @@ namespace DCL.PluginSystem.Global
         public void Dispose()
         {
             hudPrefab.Dispose();
+            recorder.Dispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)

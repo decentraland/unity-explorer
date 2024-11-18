@@ -14,7 +14,7 @@ namespace DCL.InWorldCamera.ScreencaptureCamera
         SCREENSHOT_READY = 3,
     }
 
-    public sealed class ScreenRecorder
+    public sealed class ScreenRecorder : IDisposable
     {
         // Defines the target resolution of the screenshot. Final screenshot is adjusted to this resolution after cropping to the "Rule of three" frame.
         private const int TARGET_FRAME_WIDTH = 1920;
@@ -42,7 +42,7 @@ namespace DCL.InWorldCamera.ScreencaptureCamera
             this.canvasRectTransform = canvasRectTransform;
         }
 
-        ~ScreenRecorder()
+        public void Dispose()
         {
             if(screenshot != null)
                 Object.Destroy(screenshot);

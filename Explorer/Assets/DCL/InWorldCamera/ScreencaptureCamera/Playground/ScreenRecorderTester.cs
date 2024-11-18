@@ -34,6 +34,11 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Playground
 
         private ScreenRecorder recorder;
 
+        private void OnDestroy()
+        {
+            recorder?.Dispose();
+        }
+
         [ContextMenu(nameof(Screenshot))]
         private IEnumerator Screenshot()
         {
