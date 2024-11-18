@@ -58,7 +58,6 @@ using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
-using DCL.Settings;
 using DCL.SidebarBus;
 using DCL.UI.MainUI;
 using DCL.StylizedSkybox.Scripts.Plugin;
@@ -90,6 +89,7 @@ using UnityEngine;
 using UnityEngine.Audio;
 using UnityEngine.EventSystems;
 using UnityEngine.Pool;
+using Utility;
 using Utility.Ownership;
 using Utility.PriorityQueue;
 using Object = UnityEngine.Object;
@@ -159,6 +159,8 @@ namespace Global.Dynamic
             Entity playerEntity,
             IAppArgs appArgs,
             ISceneRestrictionBusController sceneRestrictionBusController,
+            ILoadingStatus loadingStatus,
+            ICoroutineRunner coroutineRunner,
             CancellationToken ct)
         {
             var container = new DynamicWorldContainer();
@@ -644,6 +646,9 @@ namespace Global.Dynamic
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);
+
+            if (appArgs.HasCameraReelsFlag() || Application.isEditor)
+                globalPlugins.Add(new InWorldCameraPlugin(dclInput, assetsProvisioner, selfProfile, staticContainer.RealmData, playerEntity, placesAPIService, staticContainer.CharacterContainer.CharacterObject, coroutineRunner, cameraReelStorageService));
 
             if (dynamicWorldParams.EnableAnalytics)
                 globalPlugins.Add(new AnalyticsPlugin(

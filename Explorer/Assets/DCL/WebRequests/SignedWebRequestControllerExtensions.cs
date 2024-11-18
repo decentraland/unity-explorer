@@ -68,7 +68,7 @@ namespace DCL.WebRequests
             return new GenericDownloadHandlerUtils.Adapter<GenericPostRequest, GenericPostArguments>(
                 controller,
                 commonArguments,
-                GenericPostArguments.Empty,
+                postArguments,
                 ct,
                 ReportCategory.GENERIC_WEB_REQUEST,
                 new WebRequestHeadersInfo().WithSign(jsonMetaData, unixTimestamp),

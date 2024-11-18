@@ -103,7 +103,7 @@ namespace DCL.PluginSystem.Global
 
             // Register systems
             ControlCinemachineVirtualCameraSystem.InjectToWorld(ref builder, cinemachineCameraAudioSettings.Value);
-            ApplyCinemachineCameraInputSystem.InjectToWorld(ref builder, input, commandLineArgs.HasDebugFlag());
+            ApplyCinemachineCameraInputSystem.InjectToWorld(ref builder, input, isFreeCameraAllowed: commandLineArgs.HasDebugFlag());
             PrepareExposedCameraDataSystem.InjectToWorld(ref builder, cinemachinePreset.Brain);
             ChinemachineFieldOfViewSystem.InjectToWorld(ref builder);
             ApplyCinemachineSettingsSystem.InjectToWorld(ref builder, debugBuilder, controlsSettingsAsset.Value);
