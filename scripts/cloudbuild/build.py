@@ -86,7 +86,15 @@ def clone_current_target(use_cache):
     # Set target name based on branch, without commit SHA
     base_target_name  = f'{re.sub(r'^t_', '', os.getenv('TARGET'))}-{re.sub('[^A-Za-z0-9]+', '-', os.getenv('BRANCH_NAME'))}'.lower()
 
+    # Get the install source from the environment variable
+    install_source = os.getenv('PARAM_INSTALL_SOURCE', 'launcher')
+
+    # Include install_source in the target name only if it's not 'launcher'
+    if install_source and install_source != 'launcher':
+        base_target_name = f"{base_target_name}-{install_source}"
+
     print(f"Start clone_current_target for {base_target_name}")
+
     if is_release_workflow:
          # Use the tag version in the target name if it's a release workflow
         tag_version = os.getenv('TAG_VERSION', 'unknown-version')
@@ -95,6 +103,8 @@ def clone_current_target(use_cache):
         new_target_name = f"{base_target_name}-{sanitized_tag_version}"
     else:
         new_target_name = base_target_name
+
+    print(f"Updated name for target: {new_target_name}")
 
     template_target = os.getenv('TARGET')
 
