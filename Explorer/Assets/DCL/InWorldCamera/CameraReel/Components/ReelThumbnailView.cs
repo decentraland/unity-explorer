@@ -14,9 +14,6 @@ namespace DCL.InWorldCamera.CameraReel.Components
 {
     public class ReelThumbnailView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
-        private const int THUMBNAIL_WIDTH = 272;
-        private const int THUMBNAIL_HEIGHT = 201;
-
         [Header("References")]
         public Image thumbnailImage;
         [SerializeField] private LoadingBrightView loadingBrightView;
@@ -57,8 +54,8 @@ namespace DCL.InWorldCamera.CameraReel.Components
         {
             loadingBrightView.StartLoadingAnimation(thumbnailImage.gameObject);
 
-            Texture2D thumbnailTexture = await cameraReelScreenshotsStorage.GetScreenshotThumbnailAsync(cameraReelResponse.thumbnailUrl);
-            thumbnailImage.sprite = Sprite.Create(thumbnailTexture, new Rect(0, 0, THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT), Vector2.zero);
+            Texture2D thumbnailTexture = await cameraReelScreenshotsStorage.GetScreenshotThumbnailAsync(cameraReelResponse.thumbnailUrl, token);
+            thumbnailImage.sprite = Sprite.Create(thumbnailTexture, new Rect(0, 0, thumbnailImage.rectTransform.rect.width, thumbnailImage.rectTransform.rect.height), Vector2.zero);
 
             loadingBrightView.FinishLoadingAnimation(thumbnailImage.gameObject);
 
