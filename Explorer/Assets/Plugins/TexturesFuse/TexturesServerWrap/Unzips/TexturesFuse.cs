@@ -37,7 +37,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
             if (Application.isEditor)
             {
                 string dir = Path.Combine(Directory.GetCurrentDirectory(), "plugins");
-                Environment.SetEnvironmentVariable(DIR_ENV, dir);
+                Environment.SetEnvironmentVariable(DIR_ENV, dir, EnvironmentVariableTarget.User);
                 ReportHub.Log(ReportCategory.TEXTURES, $"TexturesFuse, {DIR_ENV} is set to - {dir}");
             }
             var result = NativeMethods.TexturesFuseInitialize(initOptions, out context);
