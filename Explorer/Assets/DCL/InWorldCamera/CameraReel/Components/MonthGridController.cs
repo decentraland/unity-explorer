@@ -81,7 +81,7 @@ namespace DCL.InWorldCamera.CameraReel.Components
 
         public void Dispose()
         {
-
+            reelThumbnailViews.Clear();
         }
     }
 }

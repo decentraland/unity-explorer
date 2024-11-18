@@ -31,7 +31,11 @@ namespace DCL.InWorldCamera.CameraReel.Components
                     thumbnail.OnPoolGet(),
                 thumbnail =>
                     thumbnail.OnPoolRelease(unusedThumbnailPoolObjectParent.transform),
-                thumbnail => GameObject.Destroy(thumbnail.view.gameObject),
+                thumbnail =>
+                {
+                    GameObject.Destroy(thumbnail.view.gameObject);
+                    thumbnail.Dispose();
+                },
                 true,
                 thumbnailDefaultCapacity,
                 thumbnailMaxSize);
@@ -45,7 +49,11 @@ namespace DCL.InWorldCamera.CameraReel.Components
                 grid => grid.OnPoolGet(),
                 grid =>
                     grid.OnPoolRelease(unusedGridPoolObjectParent.transform),
-                grid => GameObject.Destroy(grid.view.gameObject),
+                grid =>
+                {
+                    GameObject.Destroy(grid.view.gameObject);
+                    grid.Dispose();
+                },
                 true,
                 gridDefaultCapacity,
                 gridMaxSize);
