@@ -48,6 +48,8 @@ namespace DCL.Profiles.Self
             this.forcedEmotes = forcedEmotes;
         }
 
+        public Profile? OwnProfile { get; private set; }
+
         public async UniTask<Profile?> ProfileAsync(CancellationToken ct)
         {
             if (web3IdentityCache.Identity == null)
@@ -68,6 +70,7 @@ namespace DCL.Profiles.Self
                 for (var slot = 0; slot < emoteStorage.EmbededURNs.Count && slot < profile.Avatar.Emotes.Count; slot++)
                     profile.Avatar.emotes[slot] = emoteStorage.EmbededURNs[slot];
 
+            OwnProfile = profile;
             return profile;
         }
 
@@ -105,6 +108,8 @@ namespace DCL.Profiles.Self
             // Skip publishing the same profile
             if (newProfile.Avatar.IsSameAvatar(profile.Avatar))
                 return profile;
+
+            OwnProfile = profile;
 
             await profileRepository.SetAsync(newProfile, ct);
             return await profileRepository.GetAsync(newProfile.UserId, newProfile.Version, ct);

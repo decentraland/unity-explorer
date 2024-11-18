@@ -18,6 +18,7 @@ namespace DCL.CharacterCamera
         {
             Camera = camera;
             CameraInputLocks = 0;
+            Mode = CameraMode.FirstPerson;
         }
 
         public int CameraInputLocks { get; private set; }
@@ -36,6 +37,6 @@ namespace DCL.CharacterCamera
             CameraInputLocks = CameraInputLocks - 1 < 0 ? 0 : CameraInputLocks - 1;
             IsDirty = true;
         }
-            
+
     }
 }
