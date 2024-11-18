@@ -40,6 +40,7 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
             cinemachinePreset.InWorldCameraData.Camera.enabled = false;
 
             followTarget = new GameObject("InWorldCameraFollowTarget").AddComponent<CharacterController>();
+            followTarget.gameObject.layer = LayerMask.NameToLayer("CharacterController");
 
             followTarget.slopeLimit = 0;
             followTarget.stepOffset = 0;
@@ -67,6 +68,7 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
         private void EnableCamera()
         {
             hud.SetActive(true); // TODO (Vit):Temporary solution, will be replaced by MVC
+
             World.Add(camera, new InWorldCamera { FollowTarget = followTarget });
 
             ref CameraComponent cameraComponent = ref camera.GetCameraComponent(World);

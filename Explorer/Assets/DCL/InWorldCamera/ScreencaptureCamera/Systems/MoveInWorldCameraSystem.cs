@@ -16,13 +16,15 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
         private const float MAX_DISTANCE_FROM_PLAYER = 16f;
         private const float TRANSLATION_SPEED = 5f;
 
+        private readonly Transform playerTransform;
         private readonly DCLInput.InWorldCameraActions inputSchema;
 
         private SingleInstanceEntity camera;
         private ICinemachinePreset cinemachinePreset;
 
-        public MoveInWorldCameraSystem(World world, DCLInput.InWorldCameraActions inputSchema) : base(world)
+        public MoveInWorldCameraSystem(World world, Transform playerTransform, DCLInput.InWorldCameraActions inputSchema) : base(world)
         {
+            this.playerTransform = playerTransform;
             this.inputSchema = inputSchema;
         }
 
@@ -34,20 +36,14 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
             cinemachinePreset.InWorldCameraData.Camera.enabled = false;
         }
 
-
         protected override void Update(float t)
         {
             if(World.TryGet(camera, out InWorldCamera inWorldCamera))
             {
                 var moveVector = GetMoveVectorFromInput(inWorldCamera.FollowTarget.transform, TRANSLATION_SPEED, t);
-                inWorldCamera.FollowTarget.Move(moveVector);
-                    // RestrictedMovementBySemiSphere(inWorldCamera.FollowTarget.transform, moveVector, MAX_DISTANCE_FROM_PLAYER));
+                var restrictedMovement = RestrictedMovementBySemiSphere(playerTransform.position, inWorldCamera.FollowTarget.transform, moveVector, MAX_DISTANCE_FROM_PLAYER);
 
-                // ref var cameraInput = ref World.Get<CameraInput>(camera);
-                // cameraInput.FreeMovement = inputSchema.Translation.ReadValue<Vector2>();
-                // cameraInput.FreePanning = freeCameraActions.Panning.ReadValue<Vector2>();
-                // cameraInput.FreeFOV = freeCameraActions.FOV.ReadValue<Vector2>();
-                // ApplyInWorldCameraMovement(t, in camera.GetCameraComponent(World), in cameraInput, cinemachinePreset);
+                inWorldCamera.FollowTarget.Move(restrictedMovement);
 
                 cinemachinePreset.Brain.ManualUpdate(); // Update the brain manually
             }
@@ -56,13 +52,10 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
         private Vector3 GetMoveVectorFromInput(Transform target, float moveSpeed, float deltaTime)
         {
             var input = inputSchema.Translation.ReadValue<Vector2>();
+
             Vector3 forward = target.forward.normalized * input.y;
             Vector3 horizontal = target.right.normalized * input.x;
-
-            // float verticalDirection = input.UpAction.isOn ? 1 :
-            //     input.DownAction.isOn ? -1 : 0f;
-
-            Vector3 vertical = Vector3.zero; //target.up.normalized * verticalDirection;
+            Vector3 vertical = target.up.normalized * inputSchema.Panning.ReadValue<float>();
 
             return (forward + horizontal + vertical) * (moveSpeed * deltaTime);
         }
@@ -87,29 +80,6 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
             return movementVector;
         }
 
-        private static void ApplyInWorldCameraMovement(float dt, in CameraComponent camera, in CameraInput cameraInput,
-            ICinemachinePreset cinemachinePreset)
-        {
-            // Camera's position is under Cinemachine control
-            Transform cinemachineTransform = cinemachinePreset.InWorldCameraData.Camera.transform;
-
-            // Camera's rotation is not
-            Transform cameraTransform = camera.Camera.transform;
-            Vector3 direction = (cameraTransform.forward * cameraInput.FreeMovement.y) +
-                                (cameraTransform.up * cameraInput.FreePanning.y) +
-                                (cameraTransform.right * cameraInput.FreeMovement.x);
-
-            cinemachineTransform.localPosition += direction * (cinemachinePreset.InWorldCameraData.Speed * dt);
-        }
-
-        // private static void ApplyInWorldFOV(float dt, ICinemachinePreset cinemachinePreset, in CameraInput cameraInput)
-        // {
-        //     CinemachineVirtualCamera tpc = cinemachinePreset.InWorldCameraData.Camera;
-        //     LensSettings tpcMLens = tpc.m_Lens;
-        //     tpcMLens.FieldOfView += cameraInput.FreeFOV.y * cinemachinePreset.InWorldCameraData.Speed * dt;
-        //     tpc.m_Lens = tpcMLens;
-        // }
-        //
         // private static void ApplyPOV(CinemachinePOV cinemachinePOV, in CameraInput cameraInput)
         // {
         //     if (cinemachinePOV)
