@@ -23,8 +23,8 @@ namespace DCL.LOD
             if (realmData.ScenesAreFixed) visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.SHOWING_SCENE;
 
             //If the scene is empty, no lods are possible
-            else if (sceneDefinitionComponent.IsEmpty) visualSceneState.CandidateVisualSceneState = visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.SHOWING_SCENE;
-            else if (roadCoordinates.Contains(sceneDefinitionComponent.Definition.metadata.scene.DecodedBase)) visualSceneState.CandidateVisualSceneState = VisualSceneStateEnum.ROAD;
+            else if (roadCoordinates.Contains(sceneDefinitionComponent.Definition.metadata.scene.DecodedBase))
+                visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.ROAD;
 
             //For SDK6 scenes, we just show lod0
             else if (!sceneDefinitionComponent.IsSDK7)
