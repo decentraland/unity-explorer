@@ -31,27 +31,59 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
         public override void Initialize()
         {
             camera = World.CacheCamera();
-
             cinemachinePreset = World.Get<ICinemachinePreset>(camera);
-            cinemachinePreset.InWorldCameraData.Camera.enabled = false;
+
         }
 
         protected override void Update(float t)
         {
-            if(World.TryGet(camera, out InWorldCamera inWorldCamera))
+            if (World.TryGet(camera, out InWorldCamera inWorldCamera))
             {
-                var moveVector = GetMoveVectorFromInput(inWorldCamera.FollowTarget.transform, TRANSLATION_SPEED, t);
-                var restrictedMovement = RestrictedMovementBySemiSphere(playerTransform.position, inWorldCamera.FollowTarget.transform, moveVector, MAX_DISTANCE_FROM_PLAYER);
-
-                inWorldCamera.FollowTarget.Move(restrictedMovement);
+                Translate(t, inWorldCamera.FollowTarget);
+                Rotate(t, inWorldCamera.FollowTarget.transform);
 
                 cinemachinePreset.Brain.ManualUpdate(); // Update the brain manually
             }
         }
 
+        private Vector2 currentRotation;
+        private Vector2 rotationVelocity;
+
+        private float rotationSpeed = 2;
+        private float maxRotationPerFrame = 10f;
+        private float rotationDamping =  0.1f;
+        private float minVerticalAngle = -90f;
+        private float maxVerticalAngle = 90f;
+
+        private void Rotate(float deltaTime, Transform target )
+        {
+            var lookInput = inputSchema.Rotation.ReadValue<Vector2>();
+
+            Vector2 targetRotation = lookInput * rotationSpeed;
+            currentRotation = Vector2.SmoothDamp(currentRotation, targetRotation, ref rotationVelocity, rotationDamping);
+
+            float horizontalRotation = Mathf.Clamp(currentRotation.x * deltaTime, -maxRotationPerFrame, maxRotationPerFrame);
+            float verticalRotation = Mathf.Clamp(currentRotation.y * deltaTime, -maxRotationPerFrame, maxRotationPerFrame);
+
+            target.Rotate(Vector3.up, horizontalRotation, Space.World);
+
+            float newVerticalAngle = target.eulerAngles.x - verticalRotation;
+            if (newVerticalAngle > 180f) newVerticalAngle -= 360f;
+            newVerticalAngle = Mathf.Clamp(newVerticalAngle, minVerticalAngle, maxVerticalAngle);
+
+            target.localRotation = Quaternion.Euler(newVerticalAngle, target.eulerAngles.y, 0f);
+        }
+
+        private void Translate(float deltaTime, CharacterController followTarget)
+        {
+            Vector3 moveVector = GetMoveVectorFromInput(followTarget.transform, TRANSLATION_SPEED, deltaTime);
+            Vector3 restrictedMovement = RestrictedMovementBySemiSphere(playerTransform.position, followTarget.transform, moveVector, MAX_DISTANCE_FROM_PLAYER);
+            followTarget.Move(restrictedMovement);
+        }
+
         private Vector3 GetMoveVectorFromInput(Transform target, float moveSpeed, float deltaTime)
         {
-            var input = inputSchema.Translation.ReadValue<Vector2>();
+            Vector2 input = inputSchema.Translation.ReadValue<Vector2>();
 
             Vector3 forward = target.forward.normalized * input.y;
             Vector3 horizontal = target.right.normalized * input.x;
@@ -79,14 +111,5 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
 
             return movementVector;
         }
-
-        // private static void ApplyPOV(CinemachinePOV cinemachinePOV, in CameraInput cameraInput)
-        // {
-        //     if (cinemachinePOV)
-        //     {
-        //         cinemachinePOV.m_HorizontalAxis.m_InputAxisValue = cameraInput.Delta.x;
-        //         cinemachinePOV.m_VerticalAxis.m_InputAxisValue = cameraInput.Delta.y;
-        //     }
-        // }
     }
 }

@@ -2978,6 +2978,15 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""initialStateCheck"": true
                 },
                 {
+                    ""name"": ""Rotation"",
+                    ""type"": ""Value"",
+                    ""id"": ""09e6172f-a1e5-4be7-95e0-b37ffa54dab8"",
+                    ""expectedControlType"": ""Vector2"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": true
+                },
+                {
                     ""name"": ""Screenshot"",
                     ""type"": ""Button"",
                     ""id"": ""7710aa41-5a63-496b-9e59-a35bacb9a6b0"",
@@ -3216,6 +3225,17 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""action"": ""Panning"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""62dfa0ab-cb90-4b04-98dc-a8ca411c1852"",
+                    ""path"": ""<Mouse>/delta"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Rotation"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -3326,6 +3346,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         m_InWorldCamera = asset.FindActionMap("InWorldCamera", throwIfNotFound: true);
         m_InWorldCamera_Translation = m_InWorldCamera.FindAction("Translation", throwIfNotFound: true);
         m_InWorldCamera_Panning = m_InWorldCamera.FindAction("Panning", throwIfNotFound: true);
+        m_InWorldCamera_Rotation = m_InWorldCamera.FindAction("Rotation", throwIfNotFound: true);
         m_InWorldCamera_Screenshot = m_InWorldCamera.FindAction("Screenshot", throwIfNotFound: true);
         m_InWorldCamera_ToggleInWorld = m_InWorldCamera.FindAction("ToggleInWorld", throwIfNotFound: true);
     }
@@ -4297,6 +4318,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
     private List<IInWorldCameraActions> m_InWorldCameraActionsCallbackInterfaces = new List<IInWorldCameraActions>();
     private readonly InputAction m_InWorldCamera_Translation;
     private readonly InputAction m_InWorldCamera_Panning;
+    private readonly InputAction m_InWorldCamera_Rotation;
     private readonly InputAction m_InWorldCamera_Screenshot;
     private readonly InputAction m_InWorldCamera_ToggleInWorld;
     public struct InWorldCameraActions
@@ -4305,6 +4327,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         public InWorldCameraActions(@DCLInput wrapper) { m_Wrapper = wrapper; }
         public InputAction @Translation => m_Wrapper.m_InWorldCamera_Translation;
         public InputAction @Panning => m_Wrapper.m_InWorldCamera_Panning;
+        public InputAction @Rotation => m_Wrapper.m_InWorldCamera_Rotation;
         public InputAction @Screenshot => m_Wrapper.m_InWorldCamera_Screenshot;
         public InputAction @ToggleInWorld => m_Wrapper.m_InWorldCamera_ToggleInWorld;
         public InputActionMap Get() { return m_Wrapper.m_InWorldCamera; }
@@ -4322,6 +4345,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @Panning.started += instance.OnPanning;
             @Panning.performed += instance.OnPanning;
             @Panning.canceled += instance.OnPanning;
+            @Rotation.started += instance.OnRotation;
+            @Rotation.performed += instance.OnRotation;
+            @Rotation.canceled += instance.OnRotation;
             @Screenshot.started += instance.OnScreenshot;
             @Screenshot.performed += instance.OnScreenshot;
             @Screenshot.canceled += instance.OnScreenshot;
@@ -4338,6 +4364,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @Panning.started -= instance.OnPanning;
             @Panning.performed -= instance.OnPanning;
             @Panning.canceled -= instance.OnPanning;
+            @Rotation.started -= instance.OnRotation;
+            @Rotation.performed -= instance.OnRotation;
+            @Rotation.canceled -= instance.OnRotation;
             @Screenshot.started -= instance.OnScreenshot;
             @Screenshot.performed -= instance.OnScreenshot;
             @Screenshot.canceled -= instance.OnScreenshot;
@@ -4475,6 +4504,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
     {
         void OnTranslation(InputAction.CallbackContext context);
         void OnPanning(InputAction.CallbackContext context);
+        void OnRotation(InputAction.CallbackContext context);
         void OnScreenshot(InputAction.CallbackContext context);
         void OnToggleInWorld(InputAction.CallbackContext context);
     }

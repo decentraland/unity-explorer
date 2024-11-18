@@ -2956,6 +2956,15 @@
                     "initialStateCheck": true
                 },
                 {
+                    "name": "Rotation",
+                    "type": "Value",
+                    "id": "09e6172f-a1e5-4be7-95e0-b37ffa54dab8",
+                    "expectedControlType": "Vector2",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
+                },
+                {
                     "name": "Screenshot",
                     "type": "Button",
                     "id": "7710aa41-5a63-496b-9e59-a35bacb9a6b0",
@@ -3194,6 +3203,17 @@
                     "action": "Panning",
                     "isComposite": false,
                     "isPartOfComposite": true
+                },
+                {
+                    "name": "",
+                    "id": "62dfa0ab-cb90-4b04-98dc-a8ca411c1852",
+                    "path": "<Mouse>/delta",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Rotation",
+                    "isComposite": false,
+                    "isPartOfComposite": false
                 }
             ]
         }
