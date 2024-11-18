@@ -40,7 +40,17 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
             cinemachinePreset.InWorldCameraData.Camera.enabled = false;
 
             followTarget = new GameObject("InWorldCameraFollowTarget").AddComponent<CharacterController>();
-            followTarget.gameObject.SetActive(false);
+
+            followTarget.slopeLimit = 0;
+            followTarget.stepOffset = 0;
+            followTarget.skinWidth = 0.01f;
+
+            followTarget.minMoveDistance = 0;
+            followTarget.center = Vector3.zero;
+            followTarget.radius = 0.1f;
+            followTarget.height = 0.2f;
+
+            followTarget.enabled = false;
         }
 
         protected override void Update(float t)
@@ -68,10 +78,16 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
             cameraState.CurrentCamera = cinemachinePreset.InWorldCameraData.Camera;
             cameraState.CurrentCamera.enabled = true;
 
+            cameraState.CurrentCamera.Follow = followTarget.transform;
+            cameraState.CurrentCamera.LookAt = followTarget.transform;
+
+            followTarget.transform.position = cinemachinePreset.ThirdPersonCameraData.Camera.transform.position;
+            followTarget.transform.rotation = cinemachinePreset.ThirdPersonCameraData.Camera.transform.rotation;
+            followTarget.enabled = true;
+
             // copy Position and POV
             cinemachinePreset.InWorldCameraData.Camera.transform.position = cinemachinePreset.ThirdPersonCameraData.Camera.transform.position;
-
-            // cinemachinePreset.InWorldCameraData.Camera.transform.rotation = cinemachinePreset.ThirdPersonCameraData.Camera.transform.rotation;
+            cinemachinePreset.InWorldCameraData.Camera.transform.rotation = cinemachinePreset.ThirdPersonCameraData.Camera.transform.rotation;
 
             // Input block
             SingleInstanceEntity inputMap = World.CacheInputMap();

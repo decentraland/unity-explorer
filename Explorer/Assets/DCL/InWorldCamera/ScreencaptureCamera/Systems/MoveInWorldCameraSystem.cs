@@ -1,6 +1,5 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
-using Cinemachine;
 using DCL.CharacterCamera;
 using DCL.CharacterCamera.Components;
 using DCL.Diagnostics;
@@ -14,6 +13,9 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
     [LogCategory(ReportCategory.IN_WORLD_CAMERA)]
     public partial class MoveInWorldCameraSystem : BaseUnityLoopSystem
     {
+        private const float MAX_DISTANCE_FROM_PLAYER = 16f;
+        private const float TRANSLATION_SPEED = 5f;
+
         private readonly DCLInput.InWorldCameraActions inputSchema;
 
         private SingleInstanceEntity camera;
@@ -35,16 +37,54 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
 
         protected override void Update(float t)
         {
-            if(World.Has<InWorldCamera>(camera))
+            if(World.TryGet(camera, out InWorldCamera inWorldCamera))
             {
-                ref var cameraInput = ref World.Get<CameraInput>(camera);
-                cameraInput.FreeMovement = inputSchema.Translation.ReadValue<Vector2>();
+                var moveVector = GetMoveVectorFromInput(inWorldCamera.FollowTarget.transform, TRANSLATION_SPEED, t);
+                inWorldCamera.FollowTarget.Move(moveVector);
+                    // RestrictedMovementBySemiSphere(inWorldCamera.FollowTarget.transform, moveVector, MAX_DISTANCE_FROM_PLAYER));
+
+                // ref var cameraInput = ref World.Get<CameraInput>(camera);
+                // cameraInput.FreeMovement = inputSchema.Translation.ReadValue<Vector2>();
                 // cameraInput.FreePanning = freeCameraActions.Panning.ReadValue<Vector2>();
                 // cameraInput.FreeFOV = freeCameraActions.FOV.ReadValue<Vector2>();
+                // ApplyInWorldCameraMovement(t, in camera.GetCameraComponent(World), in cameraInput, cinemachinePreset);
 
-                ApplyInWorldCameraMovement(t, in camera.GetCameraComponent(World), in cameraInput, cinemachinePreset);
                 cinemachinePreset.Brain.ManualUpdate(); // Update the brain manually
             }
+        }
+
+        private Vector3 GetMoveVectorFromInput(Transform target, float moveSpeed, float deltaTime)
+        {
+            var input = inputSchema.Translation.ReadValue<Vector2>();
+            Vector3 forward = target.forward.normalized * input.y;
+            Vector3 horizontal = target.right.normalized * input.x;
+
+            // float verticalDirection = input.UpAction.isOn ? 1 :
+            //     input.DownAction.isOn ? -1 : 0f;
+
+            Vector3 vertical = Vector3.zero; //target.up.normalized * verticalDirection;
+
+            return (forward + horizontal + vertical) * (moveSpeed * deltaTime);
+        }
+
+        private static Vector3 RestrictedMovementBySemiSphere(Vector3 playerPosition, Transform target, Vector3 movementVector, float maxDistanceFromPlayer)
+        {
+            if (target.position.y + movementVector.y <= 0f)
+                movementVector.y = 0f;
+
+            Vector3 desiredCameraPosition = target.position + movementVector;
+
+            float distanceFromPlayer = Vector3.Distance(desiredCameraPosition, playerPosition);
+
+            // If the distance is greater than the allowed radius, correct the movement vector
+            if (distanceFromPlayer > maxDistanceFromPlayer)
+            {
+                Vector3 directionFromPlayer = (desiredCameraPosition - playerPosition).normalized;
+                desiredCameraPosition = playerPosition + (directionFromPlayer * maxDistanceFromPlayer);
+                movementVector = desiredCameraPosition - target.position;
+            }
+
+            return movementVector;
         }
 
         private static void ApplyInWorldCameraMovement(float dt, in CameraComponent camera, in CameraInput cameraInput,
