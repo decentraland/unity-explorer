@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Browser;
 using DCL.Chat.Commands;
 using DCL.Chat.MessageBus;
 using DCL.EventsApi;
@@ -27,6 +28,7 @@ namespace DCL.Navmap
         private readonly IEventsApiService eventsApiService;
         private readonly ObjectPool<EventElementView> eventElementPool ;
         private readonly SharePlacesAndEventsContextMenuController shareContextMenu;
+        private readonly IWebBrowser webBrowser;
         private readonly ImageController thumbnailImage;
         private readonly MultiStateButtonController dislikeButton;
         private readonly MultiStateButtonController likeButton;
@@ -49,7 +51,8 @@ namespace DCL.Navmap
             IChatMessagesBus chatMessagesBus,
             IEventsApiService eventsApiService,
             ObjectPool<EventElementView> eventElementPool,
-            SharePlacesAndEventsContextMenuController shareContextMenu)
+            SharePlacesAndEventsContextMenuController shareContextMenu,
+            IWebBrowser webBrowser)
         {
             this.view = view;
             this.placesAPIService = placesAPIService;
@@ -59,6 +62,7 @@ namespace DCL.Navmap
             this.eventsApiService = eventsApiService;
             this.eventElementPool = eventElementPool;
             this.shareContextMenu = shareContextMenu;
+            this.webBrowser = webBrowser;
             thumbnailImage = new ImageController(view.Thumbnail, webRequestController);
 
             mapPathEventBus.OnSetDestination += SetDestination;
@@ -119,6 +123,7 @@ namespace DCL.Navmap
             view.LikeRateLabel.text = $"{(place.like_rate_as_float ?? 0) * 100:F0}%";
             view.PlayerCountLabel.text = place.user_count.ToString();
             view.DescriptionLabel.text = place.description;
+            view.DescriptionLabel.ConvertUrlsToClickeableLinks(OpenUrl);
             view.CoordinatesLabel.text = place.base_position;
             view.ParcelCountLabel.text = place.Positions.Length.ToString();
             view.AppearsOnContainer.SetActive(place.categories.Length > 0);
@@ -237,6 +242,9 @@ namespace DCL.Navmap
             shareContextMenu.Set(place!);
             shareContextMenu.Show(view.SharePivot);
         }
+
+        private void OpenUrl(string url) =>
+            webBrowser.OpenUrl(url);
 
         private void OnLikeButtonClick(bool isEnabled)
         {
