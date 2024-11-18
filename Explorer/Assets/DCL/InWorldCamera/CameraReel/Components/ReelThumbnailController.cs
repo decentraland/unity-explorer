@@ -41,10 +41,10 @@ namespace DCL.InWorldCamera.CameraReel.Components
 
             loadImageCts = loadImageCts.SafeRestart();
             view.thumbnailImage.sprite = null;
-            LoadImage(loadImageCts.Token).Forget();
+            LoadImageAsync(loadImageCts.Token).Forget();
         }
 
-        private async UniTask LoadImage(CancellationToken token)
+        private async UniTask LoadImageAsync(CancellationToken token)
         {
             view.loadingBrightView.StartLoadingAnimation(view.thumbnailImage.gameObject);
 
@@ -98,14 +98,14 @@ namespace DCL.InWorldCamera.CameraReel.Components
             loadImageCts.SafeCancelAndDispose();
         }
 
-        public void OnPointerEnter()
+        private void OnPointerEnter()
         {
             view.transform.DOScale(Vector3.one * view.scaleFactorOnHover, view.scaleAnimationDuration);
             optionButton?.Show(CameraReelResponse, view.optionButtonContainer.transform, view.optionButtonOffset);
             view.outline.SetActive(true);
         }
 
-        public void OnPointerExit()
+        private void OnPointerExit()
         {
             if (optionButton != null)
             {

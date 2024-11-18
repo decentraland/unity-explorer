@@ -9,7 +9,6 @@ using DG.Tweening;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
@@ -112,14 +111,14 @@ namespace DCL.InWorldCamera.CameraReel
                     string url = $"{decentralandUrlsSource.Url(DecentralandUrl.CameraReelLink)}/{cameraReelResponse.id}";
                     string xUrl = $"https://x.com/intent/post?text={description}&hashtags=DCLCamera&url={url}";
 
-                    EditorGUIUtility.systemCopyBuffer = xUrl;
+                    GUIUtility.systemCopyBuffer = xUrl;
                     webBrowser.OpenUrl(xUrl);
                 };
 
                 this.contextMenuController.CopyPictureLinkRequested += cameraReelResponse =>
                 {
-                    EditorGUIUtility.systemCopyBuffer = $"{decentralandUrlsSource.Url(DecentralandUrl.CameraReelLink)}/{cameraReelResponse.id}";
-                    ShowSuccessNotification("Link copied!").Forget();
+                    GUIUtility.systemCopyBuffer = $"{decentralandUrlsSource.Url(DecentralandUrl.CameraReelLink)}/{cameraReelResponse.id}";
+                    ShowSuccessNotificationAsync("Link copied!").Forget();
                 };
 
                 this.contextMenuController.DownloadRequested += cameraReelResponse => { webBrowser.OpenUrl(cameraReelResponse.url); };
@@ -203,7 +202,7 @@ namespace DCL.InWorldCamera.CameraReel
 
                 if (view.successNotificationView is null) return;
 
-                await ShowSuccessNotification("Photo successfully deleted", ct);
+                await ShowSuccessNotificationAsync("Photo successfully deleted", ct);
             }
             catch (Exception)
             {
@@ -215,7 +214,7 @@ namespace DCL.InWorldCamera.CameraReel
             }
         }
 
-        public async UniTask ShowWalletGallery(string walletAddress, CancellationToken ct, CameraReelStorageStatus? storageStatus = null)
+        public async UniTask ShowWalletGalleryAsync(string walletAddress, CancellationToken ct, CameraReelStorageStatus? storageStatus = null)
         {
             loadNextPageCts = loadNextPageCts.SafeRestart();
 
@@ -226,12 +225,12 @@ namespace DCL.InWorldCamera.CameraReel
             pagedCameraReelManager = new PagedCameraReelManager(cameraReelStorageService, walletAddress, storageStatus.Value.ScreenshotsAmount, view.paginationLimit);
             thumbnailImages = new ReelThumbnailController[storageStatus.Value.MaxScreenshots];
 
-            await LoadMorePage(ct);
+            await LoadMorePageAsync(ct);
 
             view.scrollRect.onValueChanged.AddListener(OnScrollRectValueChanged);
         }
 
-        private async UniTask ShowSuccessNotification(string message, CancellationToken ct = default)
+        private async UniTask ShowSuccessNotificationAsync(string message, CancellationToken ct = default)
         {
             view.successNotificationView.SetText(message);
             view.successNotificationView.Show();
@@ -253,7 +252,7 @@ namespace DCL.InWorldCamera.CameraReel
             return monthGridView;
         }
 
-        private async UniTask LoadMorePage(CancellationToken ct)
+        private async UniTask LoadMorePageAsync(CancellationToken ct)
         {
             isLoading = true;
             Dictionary<DateTime, List<CameraReelResponse>> result = await pagedCameraReelManager.FetchNextPage(ct);
@@ -320,7 +319,7 @@ namespace DCL.InWorldCamera.CameraReel
         private void CheckNeedsToLoadMore()
         {
             if (currentSize - endVisible < view.loadMoreCounterThreshold && !pagedCameraReelManager.AllImagesLoaded && !isLoading && !isDragging)
-                LoadMorePage(loadNextPageCts.Token).Forget();
+                LoadMorePageAsync(loadNextPageCts.Token).Forget();
         }
 
         private void DisableThumbnailImage(ReelThumbnailController thumbnailController)
