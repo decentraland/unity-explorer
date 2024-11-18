@@ -165,14 +165,6 @@ namespace Global.Dynamic
                 logoAnimation.StopPlayback();
                 logoAnimation.runtimeAnimatorController = null;
 
-                bootstrapContainer.DiagnosticsContainer.AddSentryScopeConfigurator((scope) =>
-                {
-                    bootstrapContainer.DiagnosticsContainer.Sentry?.AddRealmInfoToScope(scope,
-                        dynamicWorldContainer!.RealmController.RealmData.Ipfs.CatalystBaseUrl.Value,
-                        dynamicWorldContainer!.RealmController.RealmData.Ipfs.ContentBaseUrl.Value,
-                        dynamicWorldContainer!.RealmController.RealmData.Ipfs.LambdasBaseUrl.Value);
-                });
-
                 memoryCap.Mode = MemoryCapMode.FROM_SETTINGS;
                 RestoreInputs();
             }
