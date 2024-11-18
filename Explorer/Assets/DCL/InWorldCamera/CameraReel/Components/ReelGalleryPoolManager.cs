@@ -8,70 +8,69 @@ namespace DCL.InWorldCamera.CameraReel.Components
 {
     public class ReelGalleryPoolManager
     {
-        private readonly IObjectPool<ReelThumbnailView> reelThumbnailPool;
-        private readonly IObjectPool<MonthGridView> reelGridPool;
+        private readonly IObjectPool<ReelThumbnailController> reelThumbnailPool;
+        private readonly IObjectPool<MonthGridController> reelGridPool;
         public ReelGalleryPoolManager(
             ReelThumbnailView reelThumbnailPrefab,
             MonthGridView monthViewPrefab,
             GameObject unusedThumbnailPoolObjectParent,
             GameObject unusedGridPoolObjectParent,
+            ICameraReelScreenshotsStorage cameraReelScreenshotsStorageService,
             int thumbnailDefaultCapacity,
             int thumbnailMaxSize,
             int gridDefaultCapacity,
             int gridMaxSize)
         {
-            reelThumbnailPool = new ObjectPool<ReelThumbnailView>(
-                () => GameObject.Instantiate(reelThumbnailPrefab),
-                thumbnail =>
+            reelThumbnailPool = new ObjectPool<ReelThumbnailController>(
+                () =>
                 {
-                    thumbnail.gameObject.SetActive(true);
-                    thumbnail.thumbnailImage.enabled = true;
-                    thumbnail.thumbnailImage.sprite = null;
+                    ReelThumbnailView view = GameObject.Instantiate(reelThumbnailPrefab);
+                    return new ReelThumbnailController(view, cameraReelScreenshotsStorageService);
                 },
                 thumbnail =>
-                {
-                    thumbnail.transform.SetParent(unusedThumbnailPoolObjectParent.transform, false);
-                    thumbnail.gameObject.SetActive(false);
-                },
-                thumbnail => GameObject.Destroy(thumbnail.gameObject),
+                    thumbnail.OnPoolGet(),
+                thumbnail =>
+                    thumbnail.OnPoolRelease(unusedThumbnailPoolObjectParent.transform),
+                thumbnail => GameObject.Destroy(thumbnail.view.gameObject),
                 true,
                 thumbnailDefaultCapacity,
                 thumbnailMaxSize);
 
-            reelGridPool = new ObjectPool<MonthGridView>(
-                () => GameObject.Instantiate(monthViewPrefab),
-                grid => grid.gameObject.SetActive(true),
-                grid =>
+            reelGridPool = new ObjectPool<MonthGridController>(
+                () =>
                 {
-                    grid.transform.SetParent(unusedGridPoolObjectParent.transform, false);
-                    grid.gameObject.SetActive(false);
+                    MonthGridView view = GameObject.Instantiate(monthViewPrefab);
+                    return new MonthGridController(view, this);
                 },
-                grid => GameObject.Destroy(grid.gameObject),
+                grid => grid.OnPoolGet(),
+                grid =>
+                    grid.OnPoolRelease(unusedGridPoolObjectParent.transform),
+                grid => GameObject.Destroy(grid.view.gameObject),
                 true,
                 gridDefaultCapacity,
                 gridMaxSize);
         }
 
-        public ReelThumbnailView GetThumbnailElement(CameraReelResponse cameraReelResponse, GridLayoutGroup parent, ICameraReelScreenshotsStorage cameraReelScreenshotsStorage, OptionButtonController optionsButton)
+        public ReelThumbnailController GetThumbnailElement(CameraReelResponse cameraReelResponse, GridLayoutGroup parent, OptionButtonController optionsButton)
         {
-            ReelThumbnailView result = reelThumbnailPool.Get();
-            result.transform.SetParent(parent.transform, false);
-            result.Setup(cameraReelResponse, cameraReelScreenshotsStorage, optionsButton);
+            ReelThumbnailController result = reelThumbnailPool.Get();
+            result.view.transform.SetParent(parent.transform, false);
+            result.Setup(cameraReelResponse, optionsButton);
 
             return result;
         }
 
-        public void ReleaseThumbnailElement(ReelThumbnailView view) =>
+        public void ReleaseThumbnailElement(ReelThumbnailController view) =>
             reelThumbnailPool.Release(view);
 
-        public MonthGridView GetGridElement(RectTransform parent)
+        public MonthGridController GetGridElement(RectTransform parent)
         {
-            MonthGridView result = reelGridPool.Get();
-            result.transform.SetParent(parent, false);
+            MonthGridController result = reelGridPool.Get();
+            result.view.transform.SetParent(parent, false);
             return result;
         }
 
-        public void ReleaseGridElement(MonthGridView monthGridView) =>
+        public void ReleaseGridElement(MonthGridController monthGridView) =>
             reelGridPool.Release(monthGridView);
     }
 }

@@ -51,7 +51,7 @@ namespace DCL.InWorldCamera.CameraReel
         private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
         private readonly IExplorePanelEscapeAction explorePanelEscapeAction;
         private readonly ReelGalleryPoolManager reelGalleryPoolManager;
-        private readonly Dictionary<DateTime, MonthGridView> monthViews = new ();
+        private readonly Dictionary<DateTime, MonthGridController> monthViews = new ();
         private readonly Dictionary<CameraReelResponse, Sprite> reelThumbnailCache = new ();
         private readonly OptionButtonController optionButtonController;
         private readonly ContextMenuController contextMenuController;
@@ -61,7 +61,7 @@ namespace DCL.InWorldCamera.CameraReel
         private bool isDragging = false;
         private float previousY = 1f;
         private CancellationTokenSource loadNextPageCts = new ();
-        private ReelThumbnailView[] thumbnailImages;
+        private ReelThumbnailController[] thumbnailImages;
         private int beginVisible;
         private int endVisible;
         private int currentSize;
@@ -95,7 +95,7 @@ namespace DCL.InWorldCamera.CameraReel
             }
 
             reelGalleryPoolManager = new ReelGalleryPoolManager(view.thumbnailViewPrefab, view.monthGridPrefab, view.unusedThumbnailViewObject,
-                view.unusedGridViewObject, THUMBNAIL_POOL_DEFAULT_CAPACITY, THUMBNAIL_POOL_MAX_SIZE, GRID_POOL_DEFAULT_CAPACITY,
+                view.unusedGridViewObject, cameraReelScreenshotsStorage, THUMBNAIL_POOL_DEFAULT_CAPACITY, THUMBNAIL_POOL_MAX_SIZE, GRID_POOL_DEFAULT_CAPACITY,
                 GRID_POOL_MAX_SIZE);
 
             view.cancelDeleteIntentButton?.onClick.AddListener(() => OnDeletionModalCancelClick());
@@ -185,14 +185,14 @@ namespace DCL.InWorldCamera.CameraReel
                 for (int i = beginVisible; i < currentSize; i++)
                     if (deletedIndex >= 0)
                         thumbnailImages[i - 1] = thumbnailImages[i];
-                    else if (thumbnailImages[i].cameraReelResponse.id == reelToDeleteInfo.Id)
+                    else if (thumbnailImages[i].CameraReelResponse.id == reelToDeleteInfo.Id)
                         deletedIndex = i;
 
                 thumbnailImages[currentSize - 1] = null;
                 currentSize--;
                 ResetThumbnailsVisibility();
 
-                MonthGridView monthGridView = GetMonthGridView(PagedCameraReelManager.GetDateTimeFromString(reelToDeleteInfo.Datetime));
+                MonthGridController monthGridView = GetMonthGrid(PagedCameraReelManager.GetDateTimeFromString(reelToDeleteInfo.Datetime));
                 monthGridView.RemoveThumbnail(reelToDeleteInfo.Id);
 
                 if (monthGridView.GridIsEmpty())
@@ -224,7 +224,7 @@ namespace DCL.InWorldCamera.CameraReel
 
             storageStatus ??= await cameraReelStorageService.GetUserGalleryStorageInfoAsync(walletAddress, ct);
             pagedCameraReelManager = new PagedCameraReelManager(cameraReelStorageService, walletAddress, storageStatus.Value.ScreenshotsAmount, view.paginationLimit);
-            thumbnailImages = new ReelThumbnailView[storageStatus.Value.MaxScreenshots];
+            thumbnailImages = new ReelThumbnailController[storageStatus.Value.MaxScreenshots];
 
             await LoadMorePage(ct);
 
@@ -239,10 +239,10 @@ namespace DCL.InWorldCamera.CameraReel
             view.successNotificationView.Hide();
         }
 
-        private MonthGridView GetMonthGridView(DateTime dateTime)
+        private MonthGridController GetMonthGrid(DateTime dateTime)
         {
-            MonthGridView monthGridView;
-            if (monthViews.TryGetValue(dateTime, out MonthGridView monthView))
+            MonthGridController monthGridView;
+            if (monthViews.TryGetValue(dateTime, out MonthGridController monthView))
                 monthGridView = monthView;
             else
             {
@@ -261,9 +261,9 @@ namespace DCL.InWorldCamera.CameraReel
 
             foreach (var bucket in result)
             {
-                MonthGridView monthGridView = GetMonthGridView(bucket.Key);
+                MonthGridController monthGridView = GetMonthGrid(bucket.Key);
 
-                List<ReelThumbnailView> thumbnailViews = monthGridView.Setup(bucket.Key, bucket.Value, reelGalleryPoolManager, cameraReelScreenshotsStorage, optionButtonController,
+                List<ReelThumbnailController> thumbnailViews = monthGridView.Setup(bucket.Key, bucket.Value, optionButtonController,
                     (cameraReelResponse, sprite) => reelThumbnailCache.Add(cameraReelResponse, sprite),
                     cameraReelResponse => ThumbnailClicked?.Invoke(cameraReelResponse));
 
@@ -306,7 +306,7 @@ namespace DCL.InWorldCamera.CameraReel
         {
             beginVisible = -1;
             for (int i = 0; i < currentSize; i++)
-                if (ViewIntersectsImage(thumbnailImages[i].thumbnailImage))
+                if (ViewIntersectsImage(thumbnailImages[i].view.thumbnailImage))
                 {
                     if (beginVisible < 0)
                         beginVisible = i;
@@ -323,54 +323,54 @@ namespace DCL.InWorldCamera.CameraReel
                 LoadMorePage(loadNextPageCts.Token).Forget();
         }
 
-        private void DisableThumbnailImage(ReelThumbnailView thumbnailView)
+        private void DisableThumbnailImage(ReelThumbnailController thumbnailController)
         {
-            thumbnailView.thumbnailImage.sprite = null;
-            thumbnailView.thumbnailImage.enabled = false;
+            thumbnailController.view.thumbnailImage.sprite = null;
+            thumbnailController.view.thumbnailImage.enabled = false;
         }
 
-        private void EnableThumbnailImage(ReelThumbnailView thumbnailView)
+        private void EnableThumbnailImage(ReelThumbnailController thumbnailController)
         {
-            if (reelThumbnailCache.TryGetValue(thumbnailView.cameraReelResponse, out Sprite sprite))
-                thumbnailView.thumbnailImage.sprite = sprite;
-            thumbnailView.thumbnailImage.enabled = true;
+            if (reelThumbnailCache.TryGetValue(thumbnailController.CameraReelResponse, out Sprite sprite))
+                thumbnailController.view.thumbnailImage.sprite = sprite;
+            thumbnailController.view.thumbnailImage.enabled = true;
         }
 
         private void HandleElementsVisibility(ScrollDirection scrollDirection)
         {
             if (scrollDirection == ScrollDirection.UP)
             {
-                while (beginVisible >= 0 && ViewIntersectsImage(thumbnailImages[beginVisible].thumbnailImage))
+                while (beginVisible >= 0 && ViewIntersectsImage(thumbnailImages[beginVisible].view.thumbnailImage))
                     beginVisible--;
 
                 beginVisible++;
                 beginVisible = Mathf.Clamp(beginVisible, 0, currentSize - 1);
 
-                while (endVisible >= 0 && !ViewIntersectsImage(thumbnailImages[endVisible].thumbnailImage))
+                while (endVisible >= 0 && !ViewIntersectsImage(thumbnailImages[endVisible].view.thumbnailImage))
                     endVisible--;
                 endVisible = Mathf.Clamp(endVisible, 0, currentSize - 1);
             }
             else
             {
-                while (endVisible < currentSize && ViewIntersectsImage(thumbnailImages[endVisible].thumbnailImage))
+                while (endVisible < currentSize && ViewIntersectsImage(thumbnailImages[endVisible].view.thumbnailImage))
                     endVisible++;
 
                 endVisible--;
                 endVisible = Mathf.Clamp(endVisible, 0, currentSize - 1);
 
-                while (beginVisible < currentSize && !ViewIntersectsImage(thumbnailImages[beginVisible].thumbnailImage))
+                while (beginVisible < currentSize && !ViewIntersectsImage(thumbnailImages[beginVisible].view.thumbnailImage))
                     beginVisible++;
                 beginVisible = Mathf.Clamp(beginVisible, 0, currentSize - 1);
             }
 
             for (int i = 0; i < beginVisible; i++)
-                if (thumbnailImages[i].thumbnailImage.enabled)
+                if (thumbnailImages[i].view.thumbnailImage.enabled)
                     DisableThumbnailImage(thumbnailImages[i]);
             for (int i = beginVisible; i <= endVisible; i++)
-                if (!thumbnailImages[i].thumbnailImage.enabled)
+                if (!thumbnailImages[i].view.thumbnailImage.enabled)
                     EnableThumbnailImage(thumbnailImages[i]);
             for (int i = endVisible + 1; i < currentSize; i++)
-                if (thumbnailImages[i].thumbnailImage.enabled)
+                if (thumbnailImages[i].view.thumbnailImage.enabled)
                     DisableThumbnailImage(thumbnailImages[i]);
         }
 
@@ -381,7 +381,7 @@ namespace DCL.InWorldCamera.CameraReel
             return img.yMax >= elementMaskRect.yMin && img.yMin < elementMaskRect.yMax;
         }
 
-        private void ReleaseGridView(MonthGridView monthGridView)
+        private void ReleaseGridView(MonthGridController monthGridView)
         {
             monthGridView.Release();
             reelGalleryPoolManager.ReleaseGridElement(monthGridView);
@@ -389,7 +389,7 @@ namespace DCL.InWorldCamera.CameraReel
 
         private void ReleaseGridViews()
         {
-            foreach (MonthGridView monthGridView in monthViews.Values)
+            foreach (MonthGridController monthGridView in monthViews.Values)
                 ReleaseGridView(monthGridView);
         }
 
