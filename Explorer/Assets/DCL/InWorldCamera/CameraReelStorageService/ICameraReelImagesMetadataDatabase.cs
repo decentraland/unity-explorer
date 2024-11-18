@@ -4,7 +4,7 @@ using System.Threading;
 
 namespace DCL.InWorldCamera.CameraReelStorageService
 {
-    internal interface ICameraReelImagesMetadataDatabase
+    public interface ICameraReelImagesMetadataDatabase
     {
         UniTask<CameraReelStorageResponse> GetStorageInfoAsync(string userAddress, CancellationToken ct);
 
