@@ -11,16 +11,11 @@ namespace DCL.SceneLoadingScreens.LoadingScreen
 {
     public class LoadingScreen : ILoadingScreen
     {
-        private readonly TimeSpan loadingScreenTimeout;
+        private readonly LoadingScreenTimeout loadingScreenTimeout;
 
         private readonly IMVCManager mvcManager;
 
-        public LoadingScreen(IMVCManager mvcManager) : this(mvcManager, TimeSpan.FromMinutes(2))
-        {
-            this.mvcManager = mvcManager;
-        }
-
-        public LoadingScreen(IMVCManager mvcManager, TimeSpan loadingScreenTimeout)
+        public LoadingScreen(IMVCManager mvcManager, LoadingScreenTimeout loadingScreenTimeout)
         {
             this.mvcManager = mvcManager;
             this.loadingScreenTimeout = loadingScreenTimeout;
@@ -44,7 +39,7 @@ namespace DCL.SceneLoadingScreens.LoadingScreen
             // Timeout will fire if the parent cancellation is fired or the operation takes too long
             async UniTask<Result> ExecuteTimeOutOrCancelled()
             {
-                bool isCancelled = await UniTask.Delay(loadingScreenTimeout, cancellationToken: ct).SuppressCancellationThrow();
+                bool isCancelled = await UniTask.Delay(loadingScreenTimeout.Value, cancellationToken: ct).SuppressCancellationThrow();
 
                 return isCancelled ? Result.CancelledResult() : Result.ErrorResult("Load Timeout!");
             }

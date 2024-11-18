@@ -25,13 +25,13 @@ namespace DCL.ParcelsService
         public static ParcelServiceContainer Create(IRealmData realmData,
             ISceneReadinessReportQueue sceneReadinessReportQueue,
             IDebugContainerBuilder debugContainerBuilder,
-            IMVCManager mvcManager,
+            LoadingScreenTimeout loadingScreenTimeout,
             ILoadingScreen loadingScreen,
             SceneAssetLock assetLock)
         {
             var teleportController = new TeleportController(sceneReadinessReportQueue, assetLock);
 
-            BuildDebugWidget(teleportController, mvcManager, debugContainerBuilder, loadingScreen);
+            BuildDebugWidget(teleportController, debugContainerBuilder, loadingScreen, loadingScreenTimeout);
 
             return new ParcelServiceContainer
             {
@@ -41,9 +41,12 @@ namespace DCL.ParcelsService
             };
         }
 
-        private static void BuildDebugWidget(ITeleportController teleportController, IMVCManager mvcManager, IDebugContainerBuilder debugContainerBuilder, ILoadingScreen loadingScreen)
+        private static void BuildDebugWidget(ITeleportController teleportController, IDebugContainerBuilder debugContainerBuilder, ILoadingScreen loadingScreen, LoadingScreenTimeout loadingScreenTimeout)
         {
             var binding = new PersistentElementBinding<Vector2Int>(PersistentSetting.CreateVector2Int("teleportCoordinates"));
+
+            var timeout = new ElementBinding<float>((float)loadingScreenTimeout.Value.TotalSeconds,
+                evt => loadingScreenTimeout.Value = TimeSpan.FromSeconds(Mathf.Max(evt.newValue, 0)));
 
             debugContainerBuilder
                .TryAddWidget("Teleport")
@@ -68,7 +71,8 @@ namespace DCL.ParcelsService
                                          .Forget();
                         }
                     )
-                );
+                )
+               .AddFloatField("Timeout (s)", timeout);
         }
     }
 }

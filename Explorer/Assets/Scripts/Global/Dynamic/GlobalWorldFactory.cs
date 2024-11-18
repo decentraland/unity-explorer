@@ -162,6 +162,7 @@ namespace Global.Dynamic
             PartitionGlobalAssetEntitiesSystem.InjectToWorld(ref builder, partitionComponentPool, partitionSettings, cameraSamplingData);
 
             CheckCameraQualifiedForRepartitioningSystem.InjectToWorld(ref builder, partitionSettings, realmData, cameraSamplingData);
+            ResetCameraSamplingDataDirty.InjectToWorld(ref builder, realmData, cameraSamplingData);
             SortWorldsAggregateSystem.InjectToWorld(ref builder, partitionedWorldsAggregateFactory, realmPartitionSettings);
 
             DestroyEntitiesSystem.InjectToWorld(ref builder);

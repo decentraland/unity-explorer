@@ -1,5 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.AsyncLoadReporting;
+using DCL.SceneLoadingScreens.LoadingScreen;
 using MVC;
 using NSubstitute;
 using NUnit.Framework;
@@ -13,6 +14,9 @@ namespace DCL.SceneLoadingScreens.Tests
 {
     public class LoadingScreenShould
     {
+        private static readonly LoadingScreenTimeout TIMEOUT = new()
+            { Value = TimeSpan.FromSeconds(60) };
+
         /// <summary>
         ///     Happy path
         /// </summary>
@@ -20,7 +24,7 @@ namespace DCL.SceneLoadingScreens.Tests
         [TestCaseSource(nameof(PossibleResults))]
         public async Task ReportResultOfOperationAsync(Result result)
         {
-            var loadingScreen = new LoadingScreen.LoadingScreen(CreateMVCManagerNeverFails());
+            var loadingScreen = new LoadingScreen.LoadingScreen(CreateMVCManagerNeverFails(), TIMEOUT);
 
             Result finalRes = await loadingScreen.ShowWhileExecuteTaskAsync(CreateOp, CancellationToken.None);
 
@@ -44,7 +48,7 @@ namespace DCL.SceneLoadingScreens.Tests
         [TestCaseSource(nameof(PossibleResults))]
         public async Task FixUpLoadingReportAsync(Result result)
         {
-            var loadingScreen = new LoadingScreen.LoadingScreen(CreateMVCManagerNeverFails());
+            var loadingScreen = new LoadingScreen.LoadingScreen(CreateMVCManagerNeverFails(), TIMEOUT);
             AsyncLoadProcessReport outerReport = null;
 
             Result finalRes = await loadingScreen.ShowWhileExecuteTaskAsync(CreateOp, CancellationToken.None);
@@ -67,7 +71,7 @@ namespace DCL.SceneLoadingScreens.Tests
         {
             LogAssert.ignoreFailingMessages = true;
 
-            var loadingScreen = new LoadingScreen.LoadingScreen(CreateMVCManagerThrowsException());
+            var loadingScreen = new LoadingScreen.LoadingScreen(CreateMVCManagerThrowsException(), TIMEOUT);
             AsyncLoadProcessReport outerReport = null;
 
             Result finalRes = await loadingScreen.ShowWhileExecuteTaskAsync(CreateOp, CancellationToken.None);
@@ -111,7 +115,7 @@ namespace DCL.SceneLoadingScreens.Tests
                 return Result.CancelledResult();
             }
 
-            var loadingScreen = new LoadingScreen.LoadingScreen(mvc, TimeSpan.FromMilliseconds(200));
+            var loadingScreen = new LoadingScreen.LoadingScreen(mvc, new LoadingScreenTimeout { Value = TimeSpan.FromMilliseconds(200) });
             Result result = await loadingScreen.ShowWhileExecuteTaskAsync(CreateOp, CancellationToken.None);
 
             // let internal operations spin to the end
@@ -139,7 +143,7 @@ namespace DCL.SceneLoadingScreens.Tests
                     await UniTask.Never(mvcCancellation).SuppressCancellationThrow();
                 });
 
-            var loadingScreen = new LoadingScreen.LoadingScreen(mvc);
+            var loadingScreen = new LoadingScreen.LoadingScreen(mvc, TIMEOUT);
 
             await loadingScreen.ShowWhileExecuteTaskAsync(CreateOp, CancellationToken.None);
 

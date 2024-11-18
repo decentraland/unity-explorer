@@ -41,7 +41,6 @@ namespace ECS.SceneLifeCycle.Systems
             if (!realmData.Configured)
                 return;
 
-            cameraSamplingData.IsDirty = false;
             ModifyCameraSamplingBasedOnTeleportIntentQuery(World);
             CheckCameraTransformChangedQuery(World);
         }

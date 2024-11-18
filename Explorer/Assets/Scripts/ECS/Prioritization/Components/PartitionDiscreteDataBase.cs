@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using DCL.ECSComponents;
+using UnityEngine;
 
 namespace ECS.Prioritization.Components
 {
