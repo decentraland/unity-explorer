@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using Utility.Times;
 
 namespace DCL.EventsApi
 {
@@ -70,8 +71,13 @@ namespace DCL.EventsApi
             urlBuilder.Clear();
             urlBuilder.AppendDomain(baseUrl);
             urlBuilder.AppendPath(URLPath.FromString($"{eventId}/attendees"));
+            URLAddress url = urlBuilder.Build();
+            ulong timestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
+
             GenericDownloadHandlerUtils.Adapter<GenericPostRequest, GenericPostArguments> result = webRequestController.PostAsync(
-                urlBuilder.Build(), GenericPostArguments.Empty, ct, ReportCategory.EVENTS);
+                url, GenericPostArguments.Empty, ct, ReportCategory.EVENTS,
+                signInfo: WebRequestSignInfo.NewFromUrl(url, timestamp, "post"),
+                headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, timestamp));
 
             var response = await result.CreateFromJson<AttendResponse>(WRJsonParser.Unity,
                 createCustomExceptionOnFailure: static (e, text) => new EventsApiException($"Error on trying to create attend intention: {text}", e));
@@ -85,9 +91,13 @@ namespace DCL.EventsApi
             urlBuilder.Clear();
             urlBuilder.AppendDomain(baseUrl);
             urlBuilder.AppendPath(URLPath.FromString($"{eventId}/attendees"));
+            URLAddress url = urlBuilder.Build();
+            ulong timestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
 
             GenericDownloadHandlerUtils.Adapter<GenericDeleteRequest, GenericDeleteArguments> result = webRequestController.DeleteAsync(
-                urlBuilder.Build(), GenericDeleteArguments.Empty, ct, ReportCategory.EVENTS);
+                url, GenericDeleteArguments.Empty, ct, ReportCategory.EVENTS,
+                signInfo: WebRequestSignInfo.NewFromUrl(url, timestamp, "delete"),
+                headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, timestamp));
 
             var response = await result.CreateFromJson<AttendResponse>(WRJsonParser.Unity,
                 createCustomExceptionOnFailure: static (e, text) => new EventsApiException($"Error on trying to create attend intention: {text}", e));
@@ -98,8 +108,12 @@ namespace DCL.EventsApi
 
         private async UniTask<IReadOnlyList<EventDTO>> FetchEventList(URLAddress url, CancellationToken ct)
         {
+            ulong timestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
+
             GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> result = webRequestController.GetAsync(
-                url, ct, ReportCategory.EVENTS);
+                url, ct, ReportCategory.EVENTS,
+                signInfo: WebRequestSignInfo.NewFromUrl(url, timestamp, "post"),
+                headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, timestamp));
 
             var response = await result.CreateFromJson<EventDTOListResponse>(WRJsonParser.Unity,
                 createCustomExceptionOnFailure: static (e, text) => new EventsApiException($"Error fetching events: {text}", e));
