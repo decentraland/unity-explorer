@@ -1,11 +1,15 @@
 using DCL.InWorldCamera.CameraReel.Components;
 using System;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace DCL.InWorldCamera.CameraReel
 {
     public class CameraReelView : MonoBehaviour
     {
+        [Header("Controls")]
+        [SerializeField] internal Button goToCameraButton;
+
         [Header("Storage objects")]
         [SerializeField] internal StorageProgressBar storageProgressBar;
         [SerializeField] internal GameObject storageFullIcon;

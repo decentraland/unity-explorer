@@ -38,11 +38,17 @@ namespace DCL.InWorldCamera.CameraReel
             this.view.OnMouseExit += OnStorageFullIconExit;
             this.cameraReelGalleryController.ThumbnailClicked += ThumbnailClicked;
             this.cameraReelGalleryController.StorageUpdated += SetStorageStatus;
+            this.view.goToCameraButton.onClick.AddListener(OnGoToCameraButtonClicked);
+        }
+
+        private void OnGoToCameraButtonClicked()
+        {
+            //TODO (Lorenzo): Close gallery and open camera
         }
 
         private void ThumbnailClicked(CameraReelResponse cameraReelResponse)
         {
-            Debug.Log($"OnThumbnailClicked: {cameraReelResponse.id}");
+            //TODO (Lorenzo): Open full screen preview
         }
 
         private void OnStorageFullIconEnter() =>
@@ -117,6 +123,7 @@ namespace DCL.InWorldCamera.CameraReel
             view.OnMouseEnter -= OnStorageFullIconEnter;
             view.OnMouseExit -= OnStorageFullIconExit;
             cameraReelGalleryController.Dispose();
+            view.goToCameraButton.onClick.RemoveAllListeners();
         }
     }
 }
