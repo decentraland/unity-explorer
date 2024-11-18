@@ -74,7 +74,7 @@ namespace DCL.UserInAppInitializationFlow
             var switchRealmMiscVisibilityStartupOperation = new SwitchRealmMiscVisibilityStartupOperation(loadingStatus, realmNavigator);
             loadPlayerAvatarStartupOperation = new LoadPlayerAvatarStartupOperation(loadingStatus, selfProfile, mainPlayerAvatarBaseProxy);
             var loadLandscapeStartupOperation = new LoadLandscapeStartupOperation(loadingStatus, realmNavigator);
-            checkOnboardingStartupOperation = new CheckOnboardingStartupOperation(loadingStatus, realmController, selfProfile, featureFlagsCache, decentralandUrlsSource, appParameters);
+            checkOnboardingStartupOperation = new CheckOnboardingStartupOperation(loadingStatus, selfProfile, featureFlagsCache, decentralandUrlsSource, appParameters, realmNavigator);
             restartRealmStartupOperation = new RestartRealmStartupOperation(loadingStatus, realmController);
             var teleportStartupOperation = new TeleportStartupOperation(loadingStatus, realmNavigator, startParcel);
             var loadGlobalPxOperation = new LoadGlobalPortableExperiencesStartupOperation(loadingStatus, selfProfile, featureFlagsCache, debugSettings, portableExperiencesController);
@@ -109,7 +109,7 @@ namespace DCL.UserInAppInitializationFlow
             {
                 if (parameters.FromLogout)
                     // Disconnect current livekit connection on logout so the avatar is removed from other peers
-                    await roomHub.StopIfNotAsync().Timeout(TimeSpan.FromSeconds(10));
+                    await roomHub.StopAsync().Timeout(TimeSpan.FromSeconds(10));
 
                 if (parameters.ShowAuthentication)
                 {

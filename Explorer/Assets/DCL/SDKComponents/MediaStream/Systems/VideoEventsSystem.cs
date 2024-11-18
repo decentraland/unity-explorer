@@ -59,9 +59,10 @@ namespace DCL.SDKComponents.MediaStream
 
         private void PropagateStateInVideoEvent(in CRDTEntity sdkEntity, ref MediaPlayerComponent mediaPlayer)
         {
-            if (mediaPlayer.LastPropagatedState == mediaPlayer.State) return;
+            if (mediaPlayer.LastPropagatedState == mediaPlayer.State && mediaPlayer.LastPropagatedVideoTime.Equals(mediaPlayer.CurrentTime)) return;
 
             mediaPlayer.LastPropagatedState = mediaPlayer.State;
+            mediaPlayer.LastPropagatedVideoTime = mediaPlayer.CurrentTime;
             ecsToCRDTWriter.AppendMessage<PBVideoEvent, (MediaPlayerComponent mediaPlayer, uint timestamp)>
             (
                 prepareMessage: static (pbVideoEvent, data) =>
@@ -98,8 +99,13 @@ namespace DCL.SDKComponents.MediaStream
                     state = mediaPlayerControl.IsSeeking() ? VideoState.VsSeeking : VideoState.VsBuffering;
 
                     // If the seeking/buffering never ends, update state with error so the scene can react
-                    if ((Time.realtimeSinceStartup - mediaPlayer.LastStateChangeTime) > MAX_VIDEO_FROZEN_SECONDS_BEFORE_ERROR)
+                    if ((Time.realtimeSinceStartup - mediaPlayer.LastStateChangeTime) > MAX_VIDEO_FROZEN_SECONDS_BEFORE_ERROR &&
+                        mediaPlayer.LastPropagatedState != VideoState.VsPaused &&
+                        mediaPlayer.LastPropagatedState != VideoState.VsBuffering &&
+                        mediaPlayer.LastPropagatedState != VideoState.VsSeeking)
+                    {
                         state = VideoState.VsError;
+                    }
                 }
             }
 

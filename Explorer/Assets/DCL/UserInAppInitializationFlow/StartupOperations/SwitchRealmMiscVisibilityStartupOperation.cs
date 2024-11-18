@@ -20,7 +20,7 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
         protected override async UniTask InternalExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
         {
             float finalizationProgress = loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.EnvironmentMiscSetting);
-            await realmNavigator.SwitchMiscVisibilityAsync();
+            realmNavigator.SwitchMiscVisibilityAsync();
             report.SetProgress(finalizationProgress);
         }
     }
