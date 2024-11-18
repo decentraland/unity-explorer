@@ -10,7 +10,6 @@ namespace DCL.CharacterCamera.Settings
         [SerializeField] private CinemachineThirdPersonCameraData thirdPersonCameraData = null!;
         [SerializeField] private CinemachineThirdPersonCameraData droneViewCameraData = null!;
         [SerializeField] private CinemachineFreeCameraData freeCameraData = null!;
-
         [SerializeField] private int shoulderChangeSpeed;
 
         private void Awake()

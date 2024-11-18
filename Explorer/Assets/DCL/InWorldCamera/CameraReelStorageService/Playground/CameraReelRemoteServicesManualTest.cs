@@ -77,15 +77,18 @@ namespace DCL.InWorldCamera.CameraReelStorageService.Playground
         {
             Metadata.dateTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString();
 
-            CameraReelUploadResponse response = await metadataDatabase.UploadScreenshotAsync(MakeReadable(ImageTexture).EncodeToJPG(), Metadata, ct);
+            Texture2D readableCopy = MakeReadableCopy(ImageTexture);
+            CameraReelUploadResponse response = await metadataDatabase.UploadScreenshotAsync(readableCopy.EncodeToJPG(), Metadata, ct);
 
             Storage.currentImages = response.currentImages;
             Storage.maxImages = response.maxImages;
 
             ResultThumbnailUrl = response.image.thumbnailUrl;
+
+            Destroy(readableCopy);
         }
 
-        private static Texture2D MakeReadable(Texture source)
+        private static Texture2D MakeReadableCopy(Texture source)
         {
             var renderTexture = RenderTexture.GetTemporary(
                 source.width,

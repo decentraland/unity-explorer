@@ -1,4 +1,5 @@
 ﻿using CommunicationData.URLHelpers;
+using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Equipped;
 using DCL.AvatarRendering.Wearables.Equipped;
@@ -15,12 +16,12 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
-using System.Threading.Tasks;
 using UnityEngine;
+using Utility;
 
 namespace DCL.InWorldCamera.ScreencaptureCamera.Playground
 {
-    public class ScreenRecorderTester : MonoBehaviour
+    public sealed class ScreenRecorderTester : MonoBehaviour
     {
         public string profileUrl = "https://peer-eu1.decentraland.org/lambdas/";
 
@@ -34,24 +35,27 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Playground
         private ScreenRecorder recorder;
 
         [ContextMenu(nameof(Screenshot))]
-        public IEnumerator Screenshot()
+        private IEnumerator Screenshot()
         {
             recorder ??= new ScreenRecorder(canvasRectTransform);
-            hud.StartCoroutine(recorder.CaptureScreenshot());
 
-            yield return recorder.CaptureScreenshot();
+            StartCoroutine(recorder.CaptureScreenshot());
+            yield return GameObjectExtensions.WAIT_FOR_END_OF_FRAME;
 
-            hud.Screenshot = recorder.GetScreenshotAndReset();
+            Texture = recorder.GetScreenshotAndReset();
+            hud.Screenshot = Texture;
         }
 
+
         [ContextMenu(nameof(CaptureMetadata))]
-        public async Task CaptureMetadata()
+        public async UniTask CaptureMetadata()
         {
             Profile profile = await CreateProfile().ProfileAsync(default(CancellationToken));
 
             var builder = new ScreenshotMetadataBuilder(null, null, null, null);
             builder.FillMetadata(profile, null, Vector2Int.one, "Test Playground", Array.Empty<VisiblePerson>());
             metadata = builder.GetMetadataAndReset();
+            hud.Metadata = metadata;
         }
 
         private SelfProfile CreateProfile()

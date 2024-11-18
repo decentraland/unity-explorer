@@ -708,7 +708,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1866878135409823549, guid: 740a8080d106c64469673c78aefd4d5c, type: 3}
       propertyPath: metadata.dateTime
-      value: 1730817741
+      value: 
       objectReference: {fileID: 0}
     - target: {fileID: 1866878135409823549, guid: 740a8080d106c64469673c78aefd4d5c, type: 3}
       propertyPath: metadata.userName

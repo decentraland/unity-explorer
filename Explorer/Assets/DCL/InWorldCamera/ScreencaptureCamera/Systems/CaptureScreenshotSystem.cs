@@ -19,7 +19,7 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
     [UpdateInGroup(typeof(CameraGroup))]
     [UpdateAfter(typeof(ToggleInWorldCameraActivitySystem))]
     [LogCategory(ReportCategory.IN_WORLD_CAMERA)]
-    public partial class CaptureScreenshotSystem : BaseUnityLoopSystem
+    public sealed partial class CaptureScreenshotSystem : BaseUnityLoopSystem
     {
         private readonly ScreenRecorder recorder;
         private readonly ScreenshotMetadataBuilder metadataBuilder;
