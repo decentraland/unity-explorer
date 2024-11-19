@@ -158,8 +158,9 @@ namespace DCL.Navmap
                 return;
 
             UIAudioEventsBus.Instance.SendPlayAudioEvent(zoomIn? view.ZoomInAudio : view.ZoomOutAudio);
-            SetZoomLevel(currentZoomLevel + (zoomIn ? 1 : -1));
-            ScaleOverTimeAsync(cameraController.Zoom, targetNormalizedZoom, cts.Token).Forget();
+            int zoomLevel = currentZoomLevel + (zoomIn ? 1 : -1);
+            SetZoomLevel(zoomLevel);
+            ScaleOverTimeAsync(cameraController.Zoom, targetNormalizedZoom, zoomLevel, cts.Token).Forget();
 
             SetUiButtonsInteractivity();
         }
@@ -170,7 +171,7 @@ namespace DCL.Navmap
             view.ZoomOut.SetUiInteractable(isInteractable: currentZoomLevel > 0);
         }
 
-        private async UniTaskVoid ScaleOverTimeAsync(float from, float to, CancellationToken ct)
+        private async UniTaskVoid ScaleOverTimeAsync(float from, float to, int zoomLevel, CancellationToken ct)
         {
             isScaling = true;
             float scaleDuration = view.scaleDuration;
@@ -180,7 +181,7 @@ namespace DCL.Navmap
                 if (ct.IsCancellationRequested)
                     break;
 
-                cameraController.SetZoom(Mathf.Lerp(from, to, timer / scaleDuration));
+                cameraController.SetZoom(Mathf.Lerp(from, to, timer / scaleDuration), zoomLevel);
 
                 // omit CT, handle cancellation gracefully
                 await UniTask.NextFrame();

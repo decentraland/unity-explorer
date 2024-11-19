@@ -1,10 +1,11 @@
 ﻿using DCL.MapRenderer.Culling;
+using DCL.MapRenderer.MapLayers.Categories;
 using System;
 using UnityEngine;
 
 namespace DCL.MapRenderer.MapLayers.PointsOfInterest
 {
-    internal interface ISceneOfInterestMarker : IMapRendererMarker, IMapPositionProvider, IDisposable
+    internal interface ISceneOfInterestMarker : IMapRendererMarker, IMapPositionProvider, IDisposable, IClusterableMarker
     {
         bool IsVisible { get; }
 

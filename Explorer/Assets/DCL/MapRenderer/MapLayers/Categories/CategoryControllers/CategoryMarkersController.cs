@@ -1,11 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
-using DCL.Diagnostics;
-using DCL.Ipfs;
 using DCL.MapRenderer.Culling;
-using DCL.Optimization.Pools;
-using DCL.Utilities.Extensions;
-using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Pool;
@@ -25,15 +21,25 @@ namespace DCL.MapRenderer.MapLayers.Categories
             IMapCullingController cullingController,
             ICoordsUtils coordsUtils);
 
+        internal delegate IClusterMarker ClusterMarkerBuilder(
+            IObjectPool<ClusterMarkerObject> objectsPool,
+            IMapCullingController cullingController,
+            ICoordsUtils coordsUtils);
+
         private readonly IObjectPool<CategoryMarkerObject> objectsPool;
         private readonly CategoryMarkerBuilder builder;
         private readonly CategoryIconMappingsSO categoryIconMappings;
         private readonly IPlacesAPIService placesAPIService;
+        private readonly ClusterController clusterController;
 
-        private readonly Dictionary<PlacesData.CategoryPlaceData, ICategoryMarker> markers = new ();
+        private readonly Dictionary<Vector2Int, IClusterableMarker> markers = new();
+
         private Vector2Int decodePointer;
-
         private bool isEnabled;
+        private int zoomLevel;
+        private float baseZoom;
+        private float zoom;
+        private bool arePlacesLoaded;
 
         public CategoryMarkersController(
             IPlacesAPIService placesAPIService,
@@ -43,7 +49,8 @@ namespace DCL.MapRenderer.MapLayers.Categories
             ICoordsUtils coordsUtils,
             IMapCullingController cullingController,
             CategoryIconMappingsSO categoryIconMappings,
-            MapLayer mapLayer)
+            MapLayer mapLayer,
+            ClusterController clusterController)
             : base(instantiationParent, coordsUtils, cullingController)
         {
             this.placesAPIService = placesAPIService;
@@ -51,15 +58,21 @@ namespace DCL.MapRenderer.MapLayers.Categories
             this.builder = builder;
             this.categoryIconMappings = categoryIconMappings;
             this.mapLayer = mapLayer;
+            this.clusterController = clusterController;
         }
 
         public async UniTask InitializeAsync(CancellationToken cancellationToken)
+        {
+
+        }
+
+        private async UniTask LoadPlaces(CancellationToken cancellationToken)
         {
             List<PlacesData.CategoryPlaceData> placesOfCategory = await placesAPIService.GetPlacesByCategoryListAsync(MapLayerUtils.MapLayerToCategory[mapLayer], cancellationToken);
 
             foreach (PlacesData.CategoryPlaceData placeInfo in placesOfCategory)
             {
-                if (markers.ContainsKey(placeInfo))
+                if (markers.ContainsKey(placeInfo.base_position))
                     continue;
 
                 if (IsEmptyParcel(placeInfo))
@@ -70,11 +83,63 @@ namespace DCL.MapRenderer.MapLayers.Categories
 
                 marker.SetData(placeInfo.name, position);
                 marker.SetCategorySprite(categoryIconMappings.GetCategoryImage(mapLayer));
-                markers.Add(placeInfo, marker);
+                markers.Add(placeInfo.base_position, marker);
 
                 if (isEnabled)
                     mapCullingController.StartTracking(marker, this);
             }
+
+            arePlacesLoaded = true;
+        }
+
+        private static bool IsEmptyParcel(PlacesData.CategoryPlaceData sceneInfo) =>
+            sceneInfo.name == EMPTY_PARCEL_NAME;
+
+        public void ApplyCameraZoom(float baseZoom, float zoom, int zoomLevel)
+        {
+            this.baseZoom = baseZoom;
+            this.zoom = zoom;
+            this.zoomLevel = zoomLevel;
+
+            if(isEnabled)
+                clusterController.UpdateClusters(zoomLevel, baseZoom, zoom, markers);
+
+            foreach (ICategoryMarker marker in markers.Values)
+                marker.SetZoom(coordsUtils.ParcelSize, baseZoom, zoom);
+
+            clusterController.ApplyCameraZoom(baseZoom, zoom);
+        }
+
+        public UniTask Disable(CancellationToken cancellationToken)
+        {
+            foreach (ICategoryMarker marker in markers.Values)
+            {
+                mapCullingController.StopTracking(marker);
+                marker.OnBecameInvisible();
+            }
+
+            clusterController.Disable();
+
+            isEnabled = false;
+            return UniTask.CompletedTask;
+        }
+
+        public async UniTask Enable(CancellationToken cancellationToken)
+        {
+            if(!arePlacesLoaded)
+                await LoadPlaces(cancellationToken);
+
+            foreach (ICategoryMarker marker in markers.Values)
+                mapCullingController.StartTracking(marker, this);
+
+            isEnabled = true;
+            clusterController.UpdateClusters(zoomLevel, baseZoom, zoom, markers);
+        }
+
+        public void ResetToBaseScale()
+        {
+            foreach (var marker in markers.Values)
+                marker.ResetScale(coordsUtils.ParcelSize);
         }
 
         protected override void DisposeImpl()
@@ -95,45 +160,6 @@ namespace DCL.MapRenderer.MapLayers.Categories
         public void OnMapObjectCulled(ICategoryMarker marker)
         {
             marker.OnBecameInvisible();
-        }
-
-        private static bool IsEmptyParcel(PlacesData.CategoryPlaceData sceneInfo) =>
-            sceneInfo.name is EMPTY_PARCEL_NAME;
-
-        public void ApplyCameraZoom(float baseZoom, float zoom)
-        {
-            foreach (ICategoryMarker marker in markers.Values)
-                marker.SetZoom(coordsUtils.ParcelSize, baseZoom, zoom);
-        }
-
-        public void ResetToBaseScale()
-        {
-            foreach (var marker in markers.Values)
-                marker.ResetScale(coordsUtils.ParcelSize);
-        }
-
-        public UniTask Disable(CancellationToken cancellationToken)
-        {
-            // Make markers invisible to release everything to the pool and stop tracking
-            foreach (ICategoryMarker marker in markers.Values)
-            {
-                mapCullingController.StopTracking(marker);
-                marker.OnBecameInvisible();
-            }
-
-            isEnabled = false;
-
-            return UniTask.CompletedTask;
-        }
-
-        public UniTask Enable(CancellationToken cancellationToken)
-        {
-            foreach (ICategoryMarker marker in markers.Values)
-                mapCullingController.StartTracking(marker, this);
-
-            isEnabled = true;
-
-            return UniTask.CompletedTask;
         }
     }
 }

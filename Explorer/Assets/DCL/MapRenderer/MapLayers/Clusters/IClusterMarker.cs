@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace DCL.MapRenderer.MapLayers.Categories
 {
-    internal interface ICategoryMarker : IMapRendererMarker, IMapPositionProvider, IDisposable, IClusterableMarker
+    internal interface IClusterMarker : IMapRendererMarker, IMapPositionProvider, IDisposable
     {
         bool IsVisible { get; }
 

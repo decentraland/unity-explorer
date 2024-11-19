@@ -1,10 +1,11 @@
 using DCL.MapRenderer.Culling;
+using DCL.MapRenderer.MapLayers.Categories;
 using System;
 using UnityEngine;
 
 namespace DCL.MapRenderer.MapLayers.Favorites
 {
-    internal interface IFavoritesMarker : IMapRendererMarker, IMapPositionProvider, IDisposable
+    internal interface IFavoritesMarker : IMapRendererMarker, IMapPositionProvider, IDisposable, IClusterableMarker
     {
         bool IsVisible { get; }
 

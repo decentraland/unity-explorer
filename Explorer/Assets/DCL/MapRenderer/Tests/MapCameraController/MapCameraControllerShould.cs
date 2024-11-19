@@ -81,7 +81,7 @@ namespace DCL.MapRenderer.Tests.MapCameraController
         {
             ((IMapCameraControllerInternal)mapCamera).Initialize(new Vector2Int(20, 20), new Vector2Int(100, 200), MapLayer.SatelliteAtlas);
 
-            mapCamera.SetZoom(zoom);
+            mapCamera.SetZoom(zoom, 0);
 
             Assert.AreEqual(expected, mapCameraObject.mapCamera.orthographicSize / coordsUtils.ParcelSize);
             culling.Received().SetCameraDirty(mapCamera);
@@ -92,7 +92,7 @@ namespace DCL.MapRenderer.Tests.MapCameraController
         {
             coordsUtils.VisibleWorldBounds.Returns(Rect.MinMaxRect(-1000, -1000, 1000, 1000));
             ((IMapCameraControllerInternal)mapCamera).Initialize(new Vector2Int(20, 20), new Vector2Int(10, 20), MapLayer.SatelliteAtlas);
-            mapCamera.SetZoom(0);
+            mapCamera.SetZoom(0, 0);
 
             coordsUtils.CoordsToPositionUnclamped(Arg.Any<Vector2>()).Returns((x) => (Vector3)x.ArgAt<Vector2>(0) * 10); //Multiply input by 10
 
@@ -107,7 +107,7 @@ namespace DCL.MapRenderer.Tests.MapCameraController
         public void SetLocalPosition(Vector2 desired, Vector2 expected, Vector2Int zoomValues, float zoom)
         {
             ((IMapCameraControllerInternal)mapCamera).Initialize(new Vector2Int(20, 20), zoomValues, MapLayer.SatelliteAtlas);
-            mapCamera.SetZoom(zoom);
+            mapCamera.SetZoom(zoom, 0);
             mapCamera.SetLocalPosition(desired);
 
             Assert.AreEqual(new Vector3(expected.x, expected.y, mapCamera.CAMERA_HEIGHT_EXPOSED), mapCameraObject.transform.localPosition);

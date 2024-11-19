@@ -6,6 +6,7 @@ using DCL.MapRenderer.MapCameraController;
 using DCL.MapRenderer.MapLayers;
 using DCL.MapRenderer.MapLayers.Atlas;
 using DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas;
+using DCL.MapRenderer.MapLayers.Categories;
 using DCL.MapRenderer.MapLayers.ParcelHighlight;
 using DCL.MapRenderer.MapLayers.Pins;
 using DCL.MapRenderer.MapLayers.SatelliteAtlas;
@@ -24,6 +25,7 @@ namespace DCL.MapRenderer.ComponentsFactory
 {
     public class MapRendererChunkComponentsFactory : IMapRendererComponentsFactory
     {
+        private const int PREWARM_COUNT = 60;
         private readonly IAssetsProvisioner assetsProvisioner;
 
         private readonly IWebRequestController webRequestController;
@@ -88,14 +90,20 @@ namespace DCL.MapRenderer.ComponentsFactory
                 x => x.SetActive(false),
                 x => x.Dispose()
             );
+            ClusterMarkerObject? clusterPrefab = await GetClusterPrefabAsync(cancellationToken);
+            var clusterObjectsPool = new ObjectPool<ClusterMarkerObject>(
+                () => CreateClusterPoolMethod(configuration, clusterPrefab, coordsUtils),
+                defaultCapacity: PREWARM_COUNT,
+                actionOnGet: obj => obj.gameObject.SetActive(true),
+                actionOnRelease: obj => obj.gameObject.SetActive(false));
 
             await UniTask.WhenAll(
                 CreateParcelAtlasAsync(layers, configuration, coordsUtils, cullingController, cancellationToken),
                 CreateSatelliteAtlasAsync(layers, configuration, coordsUtils, cullingController, cancellationToken),
                 playerMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, mapSettings, assetsProvisioner, mapPathEventBus, cancellationToken),
-                sceneOfInterestMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, assetsProvisioner, mapSettings, placesAPIService, cancellationToken),
-                categoriesMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, assetsProvisioner, mapSettings, placesAPIService, cancellationToken),
-                favoritesMarkersInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, placesAPIService, assetsProvisioner, mapSettings, cancellationToken),
+                sceneOfInterestMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, assetsProvisioner, mapSettings, placesAPIService, clusterObjectsPool, cancellationToken),
+                categoriesMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, assetsProvisioner, mapSettings, placesAPIService, clusterObjectsPool, cancellationToken),
+                favoritesMarkersInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, placesAPIService, assetsProvisioner, mapSettings, clusterObjectsPool, cancellationToken),
                 hotUsersMarkersInstaller.InstallAsync(layers, configuration, coordsUtils, cullingController, assetsProvisioner, mapSettings, cancellationToken),
                 mapPathInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, mapSettings, assetsProvisioner, mapPathEventBus, notificationsBusController, cancellationToken)
                 /* List of other creators that can be executed in parallel */);
@@ -110,6 +118,24 @@ namespace DCL.MapRenderer.ComponentsFactory
                 return new MapCameraController.MapCameraController(interactivityController, instance, coordsUtils, cullingController);
             }
         }
+
+        private static IClusterMarker CreateClusterMarker(IObjectPool<ClusterMarkerObject> objectsPool, IMapCullingController cullingController, ICoordsUtils coordsUtils) =>
+            new ClusterMarker(objectsPool, cullingController, coordsUtils);
+
+        private static ClusterMarkerObject CreateClusterPoolMethod(MapRendererConfiguration configuration, ClusterMarkerObject prefab, ICoordsUtils coordsUtils)
+        {
+            ClusterMarkerObject categoryMarkerObject = Object.Instantiate(prefab, configuration.CategoriesMarkersRoot);
+
+            for (var i = 0; i < categoryMarkerObject.renderers.Length; i++)
+                categoryMarkerObject.renderers[i].sortingOrder = MapRendererDrawOrder.CATEGORIES;
+
+            categoryMarkerObject.title.sortingOrder = MapRendererDrawOrder.CATEGORIES + 1;
+            coordsUtils.SetObjectScale(categoryMarkerObject);
+            return categoryMarkerObject;
+        }
+
+        private async UniTask<ClusterMarkerObject> GetClusterPrefabAsync(CancellationToken cancellationToken) =>
+            (await assetsProvisioner.ProvideMainAssetAsync(mapSettings.ClusterMarker, cancellationToken)).Value;
 
         private UniTask CreateParcelAtlasAsync(Dictionary<MapLayer, IMapLayerController> layers, MapRendererConfiguration configuration, ICoordsUtils coordsUtils, IMapCullingController cullingController, CancellationToken cancellationToken)
         {

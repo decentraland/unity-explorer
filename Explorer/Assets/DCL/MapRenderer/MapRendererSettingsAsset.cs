@@ -31,6 +31,9 @@ namespace DCL.MapRenderer
         public IMapRendererSettings.CategoryMarkerObjectRef CategoryMarker { get; private set; }
 
         [field: SerializeField]
+        public IMapRendererSettings.ClusterMarkerObjectRef ClusterMarker { get; private set; }
+
+        [field: SerializeField]
         public CategoryIconMappingsSO CategoryIconMappings { get; private set; }
 
         [field: SerializeField]

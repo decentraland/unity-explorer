@@ -102,7 +102,7 @@ namespace DCL.MapRenderer.MapLayers.PlayerMarker
             playerMarker.SetRotation(Quaternion.AngleAxis(rotation.eulerAngles.y, Vector3.back));
         }
 
-        public void ApplyCameraZoom(float baseZoom, float zoom)
+        public void ApplyCameraZoom(float baseZoom, float zoom, int zoomLevel)
         {
             playerMarker.SetZoom(baseZoom, zoom);
         }
