@@ -42,28 +42,38 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
             {
                 Translate(t, inWorldCamera.FollowTarget);
                 Rotate(t, inWorldCamera.FollowTarget.transform);
-
-                // HandleFreeCameraMovement(cinemachinePreset, t);
+                HandleZoom(t);
 
                 cinemachinePreset.Brain.ManualUpdate(); // Update the brain manually
             }
         }
 
-        // private void HandleFreeCameraMovement(ICinemachinePreset cinemachinePreset, float deltaTime)
-        // {
-        //     var virtualCamera = cinemachinePreset.InWorldCameraData.Camera;
-        //     var transform = virtualCamera.transform;
-        //     Vector2 input = inputSchema.Translation.ReadValue<Vector2>();
-        //
-        //     Vector3 moveDir = new Vector3(input.x, 0, input.y);
-        //     moveDir = transform.TransformDirection(moveDir);
-        //     moveDir.y = inputSchema.Panning.ReadValue<float>();
-        //     // float speed = input.Sprint ? moveSpeed * 2 : moveSpeed; // Optional: sprint modifier
-        //
-        //     axis += Damper.Damp(moveDir - axis, 1f, deltaTime);
-        //
-        //     transform.position += axis * (TRANSLATION_SPEED * deltaTime);
-        // }
+        private const float FOV_CHANGE_SPEED = 3;
+        private const float FOV_DAMPING = 0.5f; // Adjust for smoother/faster transitions
+
+        private float currentFOV = 60f; // Starting FOV
+        private float fovVelocity; // For SmoothDamp
+        private float targetFOV = 60f;  // Add explicit target tracking
+
+        private void HandleZoom(float deltaTime)
+        {
+            float zoomInput = inputSchema.Zoom.ReadValue<float>();
+
+            // Immediately update target when input changes
+            if (!Mathf.Approximately(zoomInput, 0f))
+                targetFOV -= zoomInput * FOV_CHANGE_SPEED * deltaTime;
+
+            // Always smooth towards target
+            currentFOV = Mathf.SmoothDamp(
+                currentFOV,
+                targetFOV,
+                ref fovVelocity,
+                FOV_DAMPING
+            );
+
+            var virtualCamera = cinemachinePreset.InWorldCameraData.Camera;
+            virtualCamera.m_Lens.FieldOfView = currentFOV;
+        }
 
         private Vector3 axis;
 
@@ -78,6 +88,8 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
 
         private void Rotate(float deltaTime, Transform target )
         {
+            if (inputSchema.MouseDrag.IsPressed()) return;
+
             var lookInput = inputSchema.Rotation.ReadValue<Vector2>();
 
             Vector2 targetRotation = lookInput * rotationSpeed;
@@ -98,6 +110,16 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
         private void Translate(float deltaTime, CharacterController followTarget)
         {
             Vector3 moveVector = GetMoveVectorFromInput(followTarget.transform, TRANSLATION_SPEED, deltaTime);
+
+            if (inputSchema.MouseDrag.IsPressed())
+            {
+                Vector2 mouseDelta = inputSchema.Rotation.ReadValue<Vector2>();
+
+                Vector3 dragMove = new Vector3(mouseDelta.x, mouseDelta.y, 0);
+                dragMove = followTarget.transform.TransformDirection(dragMove);
+                moveVector += dragMove * (TRANSLATION_SPEED * 0.01f * deltaTime); // Adjust multiplier for sensitivity
+            }
+
             Vector3 restrictedMovement = RestrictedMovementBySemiSphere(playerTransform.position, followTarget.transform, moveVector, MAX_DISTANCE_FROM_PLAYER);
             followTarget.Move(restrictedMovement);
         }

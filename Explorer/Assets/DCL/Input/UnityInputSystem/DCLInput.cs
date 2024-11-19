@@ -3012,6 +3012,24 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Zoom"",
+                    ""type"": ""Value"",
+                    ""id"": ""95af3eff-4816-4d1d-b9e9-88a3ca0a78d5"",
+                    ""expectedControlType"": ""Axis"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": true
+                },
+                {
+                    ""name"": ""MouseDrag"",
+                    ""type"": ""Button"",
+                    ""id"": ""80c64c42-24a2-41f3-b6aa-f49bfacf0c60"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -3278,6 +3296,28 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""action"": ""Rotation"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""0e5d2aa9-586f-45ea-8752-812bad7b0faf"",
+                    ""path"": ""<Mouse>/scroll/y"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Zoom"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""14d2d69a-873a-4446-9057-59e2ff1718bf"",
+                    ""path"": ""<Mouse>/leftButton"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""MouseDrag"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -3392,6 +3432,8 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         m_InWorldCamera_Translation = m_InWorldCamera.FindAction("Translation", throwIfNotFound: true);
         m_InWorldCamera_Panning = m_InWorldCamera.FindAction("Panning", throwIfNotFound: true);
         m_InWorldCamera_Run = m_InWorldCamera.FindAction("Run", throwIfNotFound: true);
+        m_InWorldCamera_Zoom = m_InWorldCamera.FindAction("Zoom", throwIfNotFound: true);
+        m_InWorldCamera_MouseDrag = m_InWorldCamera.FindAction("MouseDrag", throwIfNotFound: true);
     }
 
     public void Dispose()
@@ -4365,6 +4407,8 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
     private readonly InputAction m_InWorldCamera_Translation;
     private readonly InputAction m_InWorldCamera_Panning;
     private readonly InputAction m_InWorldCamera_Run;
+    private readonly InputAction m_InWorldCamera_Zoom;
+    private readonly InputAction m_InWorldCamera_MouseDrag;
     public struct InWorldCameraActions
     {
         private @DCLInput m_Wrapper;
@@ -4375,6 +4419,8 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         public InputAction @Translation => m_Wrapper.m_InWorldCamera_Translation;
         public InputAction @Panning => m_Wrapper.m_InWorldCamera_Panning;
         public InputAction @Run => m_Wrapper.m_InWorldCamera_Run;
+        public InputAction @Zoom => m_Wrapper.m_InWorldCamera_Zoom;
+        public InputAction @MouseDrag => m_Wrapper.m_InWorldCamera_MouseDrag;
         public InputActionMap Get() { return m_Wrapper.m_InWorldCamera; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -4402,6 +4448,12 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @Run.started += instance.OnRun;
             @Run.performed += instance.OnRun;
             @Run.canceled += instance.OnRun;
+            @Zoom.started += instance.OnZoom;
+            @Zoom.performed += instance.OnZoom;
+            @Zoom.canceled += instance.OnZoom;
+            @MouseDrag.started += instance.OnMouseDrag;
+            @MouseDrag.performed += instance.OnMouseDrag;
+            @MouseDrag.canceled += instance.OnMouseDrag;
         }
 
         private void UnregisterCallbacks(IInWorldCameraActions instance)
@@ -4424,6 +4476,12 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @Run.started -= instance.OnRun;
             @Run.performed -= instance.OnRun;
             @Run.canceled -= instance.OnRun;
+            @Zoom.started -= instance.OnZoom;
+            @Zoom.performed -= instance.OnZoom;
+            @Zoom.canceled -= instance.OnZoom;
+            @MouseDrag.started -= instance.OnMouseDrag;
+            @MouseDrag.performed -= instance.OnMouseDrag;
+            @MouseDrag.canceled -= instance.OnMouseDrag;
         }
 
         public void RemoveCallbacks(IInWorldCameraActions instance)
@@ -4559,5 +4617,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         void OnTranslation(InputAction.CallbackContext context);
         void OnPanning(InputAction.CallbackContext context);
         void OnRun(InputAction.CallbackContext context);
+        void OnZoom(InputAction.CallbackContext context);
+        void OnMouseDrag(InputAction.CallbackContext context);
     }
 }

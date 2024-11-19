@@ -125,9 +125,14 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
 
                     cinemachinePreset.InWorldCameraData.Camera.transform.position = behindPosition;
                     cinemachinePreset.InWorldCameraData.Camera.transform.rotation = cinemachinePreset.FirstPersonCameraData.Camera.transform.rotation;
+
+                    cinemachinePreset.InWorldCameraData.Camera.m_Lens.FieldOfView = cinemachinePreset.FirstPersonCameraData.Camera.m_Lens.FieldOfView;
             }
             else
+            {
                 cinemachinePreset.InWorldCameraData.Camera.m_Transitions.m_InheritPosition = true;
+                cinemachinePreset.InWorldCameraData.Camera.m_Lens.FieldOfView = cinemachinePreset.ThirdPersonCameraData.Camera.m_Lens.FieldOfView;
+            }
 
             cameraComponent.Mode = CameraMode.InWorld;
             cameraState.CurrentCamera = cinemachinePreset.InWorldCameraData.Camera;
