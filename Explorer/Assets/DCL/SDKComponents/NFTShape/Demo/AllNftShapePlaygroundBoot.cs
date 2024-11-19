@@ -3,9 +3,11 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.DemoWorlds;
 using DCL.ECSComponents;
+using DCL.Optimization.Pools;
 using DCL.SDKComponents.NFTShape.Component;
 using DCL.SDKComponents.NFTShape.Frames.FramePrefabs;
 using DCL.SDKComponents.NFTShape.Frames.Pool;
+using ECS.Prioritization.Components;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -25,6 +27,8 @@ namespace DCL.SDKComponents.NFTShape.Demo
         [SerializeField] private int countInRow = 5;
         [SerializeField] private float distanceBetween = 1f;
 
+        private IComponentPool<PartitionComponent>? partitionComponentPool;
+
         private void Start()
         {
             LaunchAsync().Forget();
@@ -33,6 +37,9 @@ namespace DCL.SDKComponents.NFTShape.Demo
         private async UniTask LaunchAsync()
         {
             var world = World.Create();
+
+            partitionComponentPool = new ComponentPool.WithDefaultCtor<PartitionComponent>(
+                component => component.Clear());
 
             var framesPrefabs = new AssetProvisionerFramePrefabs(new AddressablesProvisioner());
             var framesPool = new FramesPool(framesPrefabs);
@@ -46,11 +53,17 @@ namespace DCL.SDKComponents.NFTShape.Demo
             new SeveralDemoWorld(
                     AllFrameTypes()
                        .Select(e => nftShapeProperties.With(e))
-                       .Select(e => new WarmUpSettingsNftShapeDemoWorld(world, framesPool, framesPrefabs, e, () => visible) as IDemoWorld)
+                       .Select(e => new WarmUpSettingsNftShapeDemoWorld(world, framesPool,
+                            framesPrefabs, e, () => visible, partitionComponentPool) as IDemoWorld)
                        .Append(new GridDemoWorld(world, countInRow, distanceBetween))
                        .ToList()
                 ).SetUpAndRunAsync(destroyCancellationToken)
                  .Forget();
+        }
+
+        private void OnDestroy()
+        {
+            partitionComponentPool?.Dispose();
         }
 
         private IEnumerable<NftFrameType> AllFrameTypes() =>

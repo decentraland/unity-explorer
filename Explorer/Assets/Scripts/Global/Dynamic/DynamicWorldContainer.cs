@@ -294,7 +294,9 @@ namespace Global.Dynamic
                 staticContainer.ScenesCache,
                 staticContainer.PartitionDataContainer,
                 staticContainer.SingletonSharedDependencies.SceneAssetLock,
-                debugBuilder);
+                debugBuilder,
+                staticContainer.ComponentsContainer.ComponentPoolsRegistry
+                               .GetReferenceTypePool<PartitionComponent>());
 
             bool localSceneDevelopment = !string.IsNullOrEmpty(dynamicWorldParams.LocalSceneDevelopmentRealm);
             container.reloadSceneController = new ECSReloadScene(staticContainer.ScenesCache, globalWorld, playerEntity, localSceneDevelopment);

@@ -46,6 +46,7 @@ namespace Global.Dynamic
         private readonly PartitionDataContainer partitionDataContainer;
         private readonly IScenesCache scenesCache;
         private readonly SceneAssetLock sceneAssetLock;
+        private readonly IComponentPool<PartitionComponent> partitionComponentPool;
 
         private GlobalWorld? globalWorld;
         private Entity realmEntity;
@@ -77,7 +78,8 @@ namespace Global.Dynamic
             IScenesCache scenesCache,
             PartitionDataContainer partitionDataContainer,
             SceneAssetLock sceneAssetLock,
-            IDebugContainerBuilder debugContainerBuilder)
+            IDebugContainerBuilder debugContainerBuilder,
+            IComponentPool<PartitionComponent> partitionComponentPool)
         {
             this.web3IdentityCache = web3IdentityCache;
             this.webRequestController = webRequestController;
@@ -89,7 +91,7 @@ namespace Global.Dynamic
             this.scenesCache = scenesCache;
             this.partitionDataContainer = partitionDataContainer;
             this.sceneAssetLock = sceneAssetLock;
-
+            this.partitionComponentPool = partitionComponentPool;
             realmNavigatorDebugView = new RealmNavigatorDebugView(debugContainerBuilder);
         }
 
@@ -224,7 +226,7 @@ namespace Global.Dynamic
 
         private void ComplimentWithVolatilePointers(World world, Entity realmEntity)
         {
-            world.Add(realmEntity, VolatileScenePointers.Create());
+            world.Add(realmEntity, VolatileScenePointers.Create(partitionComponentPool.Get()));
         }
 
         private bool ComplimentWithStaticPointers(World world, Entity realmEntity)

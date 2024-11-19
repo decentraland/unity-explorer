@@ -1,9 +1,11 @@
 using Arch.Core;
 using DCL.DemoWorlds;
 using DCL.ECSComponents;
+using DCL.Optimization.Pools;
 using DCL.SDKComponents.NFTShape.Component;
 using DCL.SDKComponents.NFTShape.Frames.FramePrefabs;
 using DCL.SDKComponents.NFTShape.Frames.Pool;
+using ECS.Prioritization.Components;
 using System;
 
 namespace DCL.SDKComponents.NFTShape.Demo
@@ -17,9 +19,17 @@ namespace DCL.SDKComponents.NFTShape.Demo
         private readonly PBNftShape nftShape;
         private readonly PBVisibilityComponent visibility;
 
-        public WarmUpSettingsNftShapeDemoWorld(IFramesPool framesPool, IReadOnlyFramePrefabs framePrefabs, NftShapeProperties nftShapeProperties, Func<bool> visible) : this(World.Create(), framesPool, framePrefabs, nftShapeProperties, visible) { }
+        public WarmUpSettingsNftShapeDemoWorld(IFramesPool framesPool,
+            IReadOnlyFramePrefabs framePrefabs, NftShapeProperties nftShapeProperties,
+            Func<bool> visible, IComponentPool<PartitionComponent> partitionComponentPool)
+            : this(World.Create(), framesPool, framePrefabs, nftShapeProperties, visible,
+                partitionComponentPool) { }
 
-        public WarmUpSettingsNftShapeDemoWorld(World world, IFramesPool framesPool, IReadOnlyFramePrefabs framePrefabs, NftShapeProperties nftShapeProperties, Func<bool> visible) : this(world, framesPool, framePrefabs, new PBNftShape(), new PBVisibilityComponent(), new PBBillboard(), nftShapeProperties, visible) { }
+        public WarmUpSettingsNftShapeDemoWorld(World world, IFramesPool framesPool,
+            IReadOnlyFramePrefabs framePrefabs, NftShapeProperties nftShapeProperties,
+            Func<bool> visible, IComponentPool<PartitionComponent> partitionComponentPool)
+            : this(world, framesPool, framePrefabs, new PBNftShape(), new PBVisibilityComponent(),
+                new PBBillboard(), nftShapeProperties, visible, partitionComponentPool) { }
 
         public WarmUpSettingsNftShapeDemoWorld(
             World world,
@@ -29,8 +39,8 @@ namespace DCL.SDKComponents.NFTShape.Demo
             PBVisibilityComponent visibility,
             PBBillboard billboard,
             NftShapeProperties nftShapeProperties,
-            Func<bool> visible
-        )
+            Func<bool> visible,
+            IComponentPool<PartitionComponent> partitionComponentPool)
         {
             this.nftShape = nftShape;
             this.visibility = visibility;
@@ -43,6 +53,7 @@ namespace DCL.SDKComponents.NFTShape.Demo
                     world,
                     framesPool,
                     framePrefabs,
+                    partitionComponentPool,
                     (nftShape, visibility, billboard)
                 )
             );

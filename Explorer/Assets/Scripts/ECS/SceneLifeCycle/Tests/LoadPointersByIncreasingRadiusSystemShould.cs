@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using DCL.Ipfs;
 using ECS.Prioritization;
+using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.TestSuite;
@@ -44,7 +45,9 @@ namespace ECS.SceneLifeCycle.Tests
             using var processedParcels = new NativeHashSet<int2>(100, AllocatorManager.Persistent);
 
             parcelMathJobifiedHelper.StartParcelsRingSplit(new int2(1, 1), radius, processedParcels);
-            var scenePointers = new VolatileScenePointers(new List<SceneEntityDefinition>(), new List<int2>());
+
+            var scenePointers = new VolatileScenePointers(new List<SceneEntityDefinition>(),
+                new List<int2>(), new PartitionComponent());
 
             Entity e = world.Create(realm, scenePointers, new ProcessedScenePointers { Value = processedParcels });
             system.Update(0);
@@ -71,7 +74,8 @@ namespace ECS.SceneLifeCycle.Tests
             foreach (ParcelMathJobifiedHelper.ParcelInfo parcel in array)
                 processedParcels.Add(parcel.Parcel);
 
-            var scenePointers = new VolatileScenePointers(new List<SceneEntityDefinition>(), new List<int2>());
+            var scenePointers = new VolatileScenePointers(new List<SceneEntityDefinition>(),
+                new List<int2>(), new PartitionComponent());
 
             Entity e = world.Create(realm, scenePointers, new ProcessedScenePointers { Value = processedParcels });
 
