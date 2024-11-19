@@ -41,7 +41,7 @@ namespace DCL.AvatarRendering.Wearables
             string? name = null,
             List<IWearable>? results = null)
         {
-            if (!appArgs.TryGetValue("self-preview-wearables", out string? wearablesCsv))
+            if (!appArgs.TryGetValue(AppArgsFlags.SELF_PREVIEW_WEARABLES, out string? wearablesCsv))
                 return await source.GetAsync(pageSize, pageNumber, ct, sortingField, orderBy, category, collectionType, name, results);
 
             URN[] pointers = wearablesCsv!.Split(',', StringSplitOptions.RemoveEmptyEntries)
