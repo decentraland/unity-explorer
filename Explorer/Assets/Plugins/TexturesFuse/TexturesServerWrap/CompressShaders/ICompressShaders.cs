@@ -25,5 +25,8 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.CompressShaders
             compressShaders.AreReady()
                 ? UniTask.CompletedTask
                 : compressShaders.WarmUpAsync(token);
+
+        public static LogCompressShaders WithLog(this ICompressShaders origin, string prefix) =>
+            new (origin, prefix);
     }
 }

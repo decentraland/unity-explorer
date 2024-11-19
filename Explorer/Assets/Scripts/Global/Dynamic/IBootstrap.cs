@@ -6,7 +6,6 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
-using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.Web3.Identities;
 using Global.AppArgs;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
@@ -18,12 +17,12 @@ namespace Global.Dynamic
 {
     public interface IBootstrap
     {
-        void PreInitializeSetup(UIDocument cursorRoot, UIDocument debugUiRoot, ISplashScreen splashScreen, CancellationToken ct);
+        void PreInitializeSetup(UIDocument cursorRoot, UIDocument debugUiRoot, CancellationToken ct);
 
         UniTask<(StaticContainer?, bool)> LoadStaticContainerAsync(BootstrapContainer bootstrapContainer, PluginSettingsContainer globalPluginSettingsContainer, DebugViewsCatalog debugViewsCatalog, Entity playerEntity, ITexturesFuse texturesFuse, ISystemMemoryCap memoryCap, CancellationToken ct);
 
         UniTask<(DynamicWorldContainer?, bool)> LoadDynamicWorldContainerAsync(BootstrapContainer bootstrapContainer, StaticContainer staticContainer, PluginSettingsContainer scenePluginSettingsContainer, DynamicSceneLoaderSettings settings, DynamicSettings dynamicSettings,
-            UIDocument uiToolkitRoot, UIDocument cursorRoot, ISplashScreen splashScreen, AudioClipConfig backgroundMusic,
+            UIDocument uiToolkitRoot, UIDocument cursorRoot, AudioClipConfig backgroundMusic,
             WorldInfoTool worldInfoTool,
             Entity playerEntity,
             IAppArgs appArgs,
@@ -40,7 +39,7 @@ namespace Global.Dynamic
         GlobalWorld CreateGlobalWorld(BootstrapContainer bootstrapContainer, StaticContainer staticContainer, DynamicWorldContainer dynamicWorldContainer,
             UIDocument debugUiRoot, Entity playerEntity);
 
-        UniTask UserInitializationAsync(DynamicWorldContainer dynamicWorldContainer, GlobalWorld globalWorld, Entity playerEntity, ISplashScreen splashScreen, CancellationToken ct);
+        UniTask UserInitializationAsync(DynamicWorldContainer dynamicWorldContainer, GlobalWorld globalWorld, Entity playerEntity, CancellationToken ct);
 
         UniTask LoadStartingRealmAsync(DynamicWorldContainer dynamicWorldContainer, CancellationToken ct);
     }
