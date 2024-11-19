@@ -90,6 +90,7 @@ namespace Global.Dynamic
             CancellationToken ct
         )
         {
+            splashScreen.Show();
             await compressShaders.WarmUpIfRequiredAsync(ct);
 
             return await StaticContainer.CreateAsync(
