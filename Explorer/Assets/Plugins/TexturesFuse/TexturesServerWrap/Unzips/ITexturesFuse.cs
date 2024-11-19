@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Platforms;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System;
 using System.Diagnostics.CodeAnalysis;
@@ -59,19 +60,13 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
             }
         }
 
-        private static bool IsWindows() =>
-            Application.platform
-                is RuntimePlatform.WindowsPlayer
-                or RuntimePlatform.WindowsEditor
-                or RuntimePlatform.WindowsServer;
-
         public static ITexturesFuse NewDefault(IOptions? options = null, int? workersCount = null)
         {
             var init = NativeMethods.InitOptions.NewDefault();
 
             if (options == null)
             {
-                var mode = IsWindows()
+                var mode = IPlatform.DEFAULT.Is(IPlatform.Kind.Windows)
                     ? Mode.BC7
                     : Mode.ASTC_6x6;
 
@@ -95,7 +90,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
                 () => new TexturesFuse(init, options, true)
                    .WithLog($"Worker: {++index}"),
                 workersCount ?? (
-                    IsWindows()
+                    IPlatform.DEFAULT.Is(IPlatform.Kind.Windows)
                         ? 1 // BC7 has issue with multithreading on Windows, should be solved later
                         : Environment.ProcessorCount - 1 // 1 worker is used by the main thread
                 )
