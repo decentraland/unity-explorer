@@ -196,7 +196,6 @@ namespace DCL.InWorldCamera.CameraReelGallery
             try
             {
                 CameraReelStorageStatus response = await cameraReelStorageService.DeleteScreenshotAsync(reelToDeleteInfo.Id, ct);
-                StorageUpdated?.Invoke(response);
 
                 int deletedIndex = -1;
                 for (int i = beginVisible; i < currentSize; i++)
@@ -218,11 +217,13 @@ namespace DCL.InWorldCamera.CameraReelGallery
                     ReleaseGridView(monthGridView);
                 }
 
+                StorageUpdated?.Invoke(response);
+
                 if (view.successNotificationView is null) return;
 
                 await ShowSuccessNotificationAsync("Photo successfully deleted");
             }
-            catch (Exception)
+            catch (UnityWebRequestException)
             {
                 if (view.errorNotificationView is null) return;
 

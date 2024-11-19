@@ -67,13 +67,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
             SetStorageStatus(storageStatus);
 
             if (storageStatus.ScreenshotsAmount == 0)
-            {
-                view.loadingSpinner.SetActive(false);
-                view.emptyState.SetActive(true);
                 return;
-            }
-
-            view.cameraReelGalleryView.gameObject.SetActive(true);
 
             await cameraReelGalleryController.ShowWalletGalleryAsync(web3IdentityCache.Identity.Address, ct, storageStatus);
 
@@ -86,6 +80,14 @@ namespace DCL.InWorldCamera.CameraReelGallery
             view.storageProgressBar.MinRealValue = 0;
             view.storageProgressBar.SetPercentageValue((storageStatus.ScreenshotsAmount * 1.0f / storageStatus.MaxScreenshots) * 100);
             view.storageFullIcon.SetActive(!storageStatus.HasFreeSpace);
+
+            if (storageStatus.ScreenshotsAmount == 0)
+            {
+                view.loadingSpinner.SetActive(false);
+                view.emptyState.SetActive(true);
+            }
+
+            view.cameraReelGalleryView.gameObject.SetActive(storageStatus.ScreenshotsAmount > 0);
         }
 
         public void Activate()
