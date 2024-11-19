@@ -49,7 +49,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
             view.loadingBrightView.StartLoadingAnimation(view.thumbnailImage.gameObject);
 
             Texture2D thumbnailTexture = await cameraReelScreenshotsStorage.GetScreenshotThumbnailAsync(CameraReelResponse.thumbnailUrl, token);
-            view.thumbnailImage.sprite = Sprite.Create(thumbnailTexture, new Rect(0, 0, view.thumbnailImage.rectTransform.rect.width, view.thumbnailImage.rectTransform.rect.height), Vector2.zero);
+            view.thumbnailImage.sprite = Sprite.Create(thumbnailTexture, new Rect(0, 0, thumbnailTexture.width, thumbnailTexture.height), Vector2.zero);
 
             view.loadingBrightView.FinishLoadingAnimation(view.thumbnailImage.gameObject);
 
