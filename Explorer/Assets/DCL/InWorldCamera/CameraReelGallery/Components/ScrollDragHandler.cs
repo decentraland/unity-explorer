@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-namespace DCL.InWorldCamera.CameraReel.Components
+namespace DCL.InWorldCamera.CameraReelGallery.Components
 {
     public class ScrollDragHandler : MonoBehaviour, IBeginDragHandler, IEndDragHandler, IDisposable
     {

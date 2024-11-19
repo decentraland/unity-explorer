@@ -2,7 +2,7 @@ using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using System;
 using UnityEngine;
 
-namespace DCL.InWorldCamera.CameraReel.Components
+namespace DCL.InWorldCamera.CameraReelGallery.Components
 {
     public class OptionButtonController : IDisposable
     {

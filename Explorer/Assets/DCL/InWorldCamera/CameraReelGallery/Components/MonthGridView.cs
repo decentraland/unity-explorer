@@ -2,7 +2,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace DCL.InWorldCamera.CameraReel.Components
+namespace DCL.InWorldCamera.CameraReelGallery.Components
 {
     public class MonthGridView : MonoBehaviour
     {

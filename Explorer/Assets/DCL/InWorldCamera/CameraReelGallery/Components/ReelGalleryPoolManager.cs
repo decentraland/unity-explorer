@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.Pool;
 using UnityEngine.UI;
 
-namespace DCL.InWorldCamera.CameraReel.Components
+namespace DCL.InWorldCamera.CameraReelGallery.Components
 {
     public class ReelGalleryPoolManager
     {

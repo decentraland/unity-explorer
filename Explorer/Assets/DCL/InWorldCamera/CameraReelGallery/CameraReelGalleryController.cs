@@ -1,7 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.ExplorePanel.Components;
-using DCL.InWorldCamera.CameraReel.Components;
+using DCL.InWorldCamera.CameraReelGallery.Components;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -14,7 +14,7 @@ using UnityEngine.InputSystem;
 using UnityEngine.UI;
 using Utility;
 
-namespace DCL.InWorldCamera.CameraReel
+namespace DCL.InWorldCamera.CameraReelGallery
 {
     public class CameraReelGalleryController : IDisposable
     {

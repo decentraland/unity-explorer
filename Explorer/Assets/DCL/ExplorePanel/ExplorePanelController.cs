@@ -3,7 +3,7 @@ using DCL.Backpack;
 using DCL.ExplorePanel.Components;
 using DCL.Input;
 using DCL.Input.Component;
-using DCL.InWorldCamera.CameraReel;
+using DCL.InWorldCamera.CameraReelGallery;
 using DCL.Navmap;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;

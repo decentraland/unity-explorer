@@ -1,9 +1,9 @@
-using DCL.InWorldCamera.CameraReel.Components;
+using DCL.InWorldCamera.CameraReelGallery.Components;
 using System;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace DCL.InWorldCamera.CameraReel
+namespace DCL.InWorldCamera.CameraReelGallery
 {
     public class CameraReelView : MonoBehaviour
     {

@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace DCL.InWorldCamera.CameraReel.Components
+namespace DCL.InWorldCamera.CameraReelGallery.Components
 {
     public static class RectTransformUtils
     {

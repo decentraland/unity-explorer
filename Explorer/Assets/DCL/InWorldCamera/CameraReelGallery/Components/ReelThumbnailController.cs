@@ -7,7 +7,7 @@ using System.Threading;
 using UnityEngine;
 using Utility;
 
-namespace DCL.InWorldCamera.CameraReel.Components
+namespace DCL.InWorldCamera.CameraReelGallery.Components
 {
     public class ReelThumbnailController : IDisposable
     {
@@ -53,7 +53,7 @@ namespace DCL.InWorldCamera.CameraReel.Components
 
             view.loadingBrightView.FinishLoadingAnimation(view.thumbnailImage.gameObject);
 
-            view.thumbnailImage.DOFade(1f, view.thumbnailLoadedAnimationDuration).ToUniTask(cancellationToken: token);
+            view.thumbnailImage.DOFade(1f, view.thumbnailLoadedAnimationDuration).ToUniTask(cancellationToken: token).Forget();
 
             ThumbnailLoaded?.Invoke(CameraReelResponse, view.thumbnailImage.sprite);
             view.button.onClick.AddListener( () => ThumbnailClicked?.Invoke(CameraReelResponse));

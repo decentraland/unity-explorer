@@ -1,13 +1,11 @@
 using Cysharp.Threading.Tasks;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
-using DCL.Web3.Identities;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using Utility;
 
-namespace DCL.InWorldCamera.CameraReel.Components
+namespace DCL.InWorldCamera.CameraReelGallery.Components
 {
     public class PagedCameraReelManager
     {

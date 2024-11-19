@@ -41,7 +41,7 @@ using System.Linq;
 using System.Threading;
 using DCL.Chat.MessageBus;
 using DCL.ExplorePanel.Component;
-using DCL.InWorldCamera.CameraReel;
+using DCL.InWorldCamera.CameraReelGallery;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.PerformanceBudgeting;

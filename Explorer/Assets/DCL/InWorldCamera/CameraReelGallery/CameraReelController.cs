@@ -9,7 +9,7 @@ using System.Threading;
 using UnityEngine;
 using Utility;
 
-namespace DCL.InWorldCamera.CameraReel
+namespace DCL.InWorldCamera.CameraReelGallery
 {
     public class CameraReelController : ISection, IDisposable
     {
