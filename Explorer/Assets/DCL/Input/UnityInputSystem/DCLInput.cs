@@ -2960,6 +2960,33 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             ""id"": ""941cde24-4210-40c2-b2a7-fb1737e2e30c"",
             ""actions"": [
                 {
+                    ""name"": ""ToggleInWorld"",
+                    ""type"": ""Button"",
+                    ""id"": ""1c0e90f7-a879-4d52-a0a1-03f102d8a464"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Screenshot"",
+                    ""type"": ""Button"",
+                    ""id"": ""7710aa41-5a63-496b-9e59-a35bacb9a6b0"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Rotation"",
+                    ""type"": ""Value"",
+                    ""id"": ""09e6172f-a1e5-4be7-95e0-b37ffa54dab8"",
+                    ""expectedControlType"": ""Vector2"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": true
+                },
+                {
                     ""name"": ""Translation"",
                     ""type"": ""Value"",
                     ""id"": ""136e837d-9685-4d5d-bc2e-26686a2258e4"",
@@ -2978,27 +3005,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""initialStateCheck"": true
                 },
                 {
-                    ""name"": ""Rotation"",
-                    ""type"": ""Value"",
-                    ""id"": ""09e6172f-a1e5-4be7-95e0-b37ffa54dab8"",
-                    ""expectedControlType"": ""Vector2"",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": true
-                },
-                {
-                    ""name"": ""Screenshot"",
+                    ""name"": ""Run"",
                     ""type"": ""Button"",
-                    ""id"": ""7710aa41-5a63-496b-9e59-a35bacb9a6b0"",
-                    ""expectedControlType"": ""Button"",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": false
-                },
-                {
-                    ""name"": ""ToggleInWorld"",
-                    ""type"": ""Button"",
-                    ""id"": ""1c0e90f7-a879-4d52-a0a1-03f102d8a464"",
+                    ""id"": ""ad452450-abd8-40d1-9dbf-16deecefd5d5"",
                     ""expectedControlType"": ""Button"",
                     ""processors"": """",
                     ""interactions"": """",
@@ -3139,28 +3148,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""isPartOfComposite"": false
                 },
                 {
-                    ""name"": """",
-                    ""id"": ""67618fc3-7aae-4057-96fc-02acde036027"",
-                    ""path"": ""<Keyboard>/space"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""Screenshot"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""b172c6f9-d4bc-43e8-93c8-49b1040d8568"",
-                    ""path"": ""<Keyboard>/c"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""ToggleInWorld"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
                     ""name"": ""1D Axis"",
                     ""id"": ""a34cb645-f736-460b-8a27-b7f4b911fc29"",
                     ""path"": ""1DAxis"",
@@ -3225,6 +3212,61 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""action"": ""Panning"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""7971e86a-be75-41d4-a5db-fd8e26414e8f"",
+                    ""path"": ""<Keyboard>/leftShift"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Run"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""ff886156-4733-4a09-be56-75927b0718ea"",
+                    ""path"": ""<Gamepad>/rightTrigger"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Run"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""eb3ab56f-4e70-4dc1-8bec-c16a25b2ff65"",
+                    ""path"": ""<XInputController>/rightTrigger"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Run"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""b172c6f9-d4bc-43e8-93c8-49b1040d8568"",
+                    ""path"": ""<Keyboard>/c"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""ToggleInWorld"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""67618fc3-7aae-4057-96fc-02acde036027"",
+                    ""path"": ""<Keyboard>/space"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Screenshot"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 },
                 {
                     ""name"": """",
@@ -3344,11 +3386,12 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         m_EmoteWheel_Slot9 = m_EmoteWheel.FindAction("Slot 9", throwIfNotFound: true);
         // InWorldCamera
         m_InWorldCamera = asset.FindActionMap("InWorldCamera", throwIfNotFound: true);
+        m_InWorldCamera_ToggleInWorld = m_InWorldCamera.FindAction("ToggleInWorld", throwIfNotFound: true);
+        m_InWorldCamera_Screenshot = m_InWorldCamera.FindAction("Screenshot", throwIfNotFound: true);
+        m_InWorldCamera_Rotation = m_InWorldCamera.FindAction("Rotation", throwIfNotFound: true);
         m_InWorldCamera_Translation = m_InWorldCamera.FindAction("Translation", throwIfNotFound: true);
         m_InWorldCamera_Panning = m_InWorldCamera.FindAction("Panning", throwIfNotFound: true);
-        m_InWorldCamera_Rotation = m_InWorldCamera.FindAction("Rotation", throwIfNotFound: true);
-        m_InWorldCamera_Screenshot = m_InWorldCamera.FindAction("Screenshot", throwIfNotFound: true);
-        m_InWorldCamera_ToggleInWorld = m_InWorldCamera.FindAction("ToggleInWorld", throwIfNotFound: true);
+        m_InWorldCamera_Run = m_InWorldCamera.FindAction("Run", throwIfNotFound: true);
     }
 
     public void Dispose()
@@ -4316,20 +4359,22 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
     // InWorldCamera
     private readonly InputActionMap m_InWorldCamera;
     private List<IInWorldCameraActions> m_InWorldCameraActionsCallbackInterfaces = new List<IInWorldCameraActions>();
+    private readonly InputAction m_InWorldCamera_ToggleInWorld;
+    private readonly InputAction m_InWorldCamera_Screenshot;
+    private readonly InputAction m_InWorldCamera_Rotation;
     private readonly InputAction m_InWorldCamera_Translation;
     private readonly InputAction m_InWorldCamera_Panning;
-    private readonly InputAction m_InWorldCamera_Rotation;
-    private readonly InputAction m_InWorldCamera_Screenshot;
-    private readonly InputAction m_InWorldCamera_ToggleInWorld;
+    private readonly InputAction m_InWorldCamera_Run;
     public struct InWorldCameraActions
     {
         private @DCLInput m_Wrapper;
         public InWorldCameraActions(@DCLInput wrapper) { m_Wrapper = wrapper; }
+        public InputAction @ToggleInWorld => m_Wrapper.m_InWorldCamera_ToggleInWorld;
+        public InputAction @Screenshot => m_Wrapper.m_InWorldCamera_Screenshot;
+        public InputAction @Rotation => m_Wrapper.m_InWorldCamera_Rotation;
         public InputAction @Translation => m_Wrapper.m_InWorldCamera_Translation;
         public InputAction @Panning => m_Wrapper.m_InWorldCamera_Panning;
-        public InputAction @Rotation => m_Wrapper.m_InWorldCamera_Rotation;
-        public InputAction @Screenshot => m_Wrapper.m_InWorldCamera_Screenshot;
-        public InputAction @ToggleInWorld => m_Wrapper.m_InWorldCamera_ToggleInWorld;
+        public InputAction @Run => m_Wrapper.m_InWorldCamera_Run;
         public InputActionMap Get() { return m_Wrapper.m_InWorldCamera; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -4339,40 +4384,46 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         {
             if (instance == null || m_Wrapper.m_InWorldCameraActionsCallbackInterfaces.Contains(instance)) return;
             m_Wrapper.m_InWorldCameraActionsCallbackInterfaces.Add(instance);
+            @ToggleInWorld.started += instance.OnToggleInWorld;
+            @ToggleInWorld.performed += instance.OnToggleInWorld;
+            @ToggleInWorld.canceled += instance.OnToggleInWorld;
+            @Screenshot.started += instance.OnScreenshot;
+            @Screenshot.performed += instance.OnScreenshot;
+            @Screenshot.canceled += instance.OnScreenshot;
+            @Rotation.started += instance.OnRotation;
+            @Rotation.performed += instance.OnRotation;
+            @Rotation.canceled += instance.OnRotation;
             @Translation.started += instance.OnTranslation;
             @Translation.performed += instance.OnTranslation;
             @Translation.canceled += instance.OnTranslation;
             @Panning.started += instance.OnPanning;
             @Panning.performed += instance.OnPanning;
             @Panning.canceled += instance.OnPanning;
-            @Rotation.started += instance.OnRotation;
-            @Rotation.performed += instance.OnRotation;
-            @Rotation.canceled += instance.OnRotation;
-            @Screenshot.started += instance.OnScreenshot;
-            @Screenshot.performed += instance.OnScreenshot;
-            @Screenshot.canceled += instance.OnScreenshot;
-            @ToggleInWorld.started += instance.OnToggleInWorld;
-            @ToggleInWorld.performed += instance.OnToggleInWorld;
-            @ToggleInWorld.canceled += instance.OnToggleInWorld;
+            @Run.started += instance.OnRun;
+            @Run.performed += instance.OnRun;
+            @Run.canceled += instance.OnRun;
         }
 
         private void UnregisterCallbacks(IInWorldCameraActions instance)
         {
+            @ToggleInWorld.started -= instance.OnToggleInWorld;
+            @ToggleInWorld.performed -= instance.OnToggleInWorld;
+            @ToggleInWorld.canceled -= instance.OnToggleInWorld;
+            @Screenshot.started -= instance.OnScreenshot;
+            @Screenshot.performed -= instance.OnScreenshot;
+            @Screenshot.canceled -= instance.OnScreenshot;
+            @Rotation.started -= instance.OnRotation;
+            @Rotation.performed -= instance.OnRotation;
+            @Rotation.canceled -= instance.OnRotation;
             @Translation.started -= instance.OnTranslation;
             @Translation.performed -= instance.OnTranslation;
             @Translation.canceled -= instance.OnTranslation;
             @Panning.started -= instance.OnPanning;
             @Panning.performed -= instance.OnPanning;
             @Panning.canceled -= instance.OnPanning;
-            @Rotation.started -= instance.OnRotation;
-            @Rotation.performed -= instance.OnRotation;
-            @Rotation.canceled -= instance.OnRotation;
-            @Screenshot.started -= instance.OnScreenshot;
-            @Screenshot.performed -= instance.OnScreenshot;
-            @Screenshot.canceled -= instance.OnScreenshot;
-            @ToggleInWorld.started -= instance.OnToggleInWorld;
-            @ToggleInWorld.performed -= instance.OnToggleInWorld;
-            @ToggleInWorld.canceled -= instance.OnToggleInWorld;
+            @Run.started -= instance.OnRun;
+            @Run.performed -= instance.OnRun;
+            @Run.canceled -= instance.OnRun;
         }
 
         public void RemoveCallbacks(IInWorldCameraActions instance)
@@ -4502,10 +4553,11 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
     }
     public interface IInWorldCameraActions
     {
+        void OnToggleInWorld(InputAction.CallbackContext context);
+        void OnScreenshot(InputAction.CallbackContext context);
+        void OnRotation(InputAction.CallbackContext context);
         void OnTranslation(InputAction.CallbackContext context);
         void OnPanning(InputAction.CallbackContext context);
-        void OnRotation(InputAction.CallbackContext context);
-        void OnScreenshot(InputAction.CallbackContext context);
-        void OnToggleInWorld(InputAction.CallbackContext context);
+        void OnRun(InputAction.CallbackContext context);
     }
 }

@@ -59,24 +59,25 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
 
         protected override void Update(float t)
         {
-            // if (World.Has<InWorldCamera>(camera) && !cinemachinePreset.Brain.IsBlending && !followTarget.enabled)
-            // {
-            //     var virtualCamera = cinemachinePreset.InWorldCameraData.Camera;
-            //
-            //     followTarget.transform.SetPositionAndRotation(virtualCamera.transform.position, virtualCamera.transform.rotation);
-            //     virtualCamera.Follow = followTarget.transform;
-            //     followTarget.enabled = true;
-            //
-            //     var hardLock = virtualCamera.GetCinemachineComponent<CinemachineHardLockToTarget>();
-            //     hardLock.m_Damping = 0f;
-            //     var aim = virtualCamera.GetCinemachineComponent<CinemachineSameAsFollowTarget>();
-            //     aim.m_Damping = 0f;
-            //
-            //     cinemachinePreset.Brain.ManualUpdate();
-            //
-            //     hardLock.m_Damping = 1f;
-            //     aim.m_Damping = 1f;
-            // }
+            if (World.Has<InWorldCamera>(camera) && !cinemachinePreset.Brain.IsBlending && !followTarget.enabled)
+            {
+                var virtualCamera = cinemachinePreset.InWorldCameraData.Camera;
+
+                followTarget.transform.SetPositionAndRotation(virtualCamera.transform.position, virtualCamera.transform.rotation);
+                virtualCamera.Follow = followTarget.transform;
+                virtualCamera.LookAt = followTarget.transform;
+                followTarget.enabled = true;
+
+                var hardLock = virtualCamera.GetCinemachineComponent<CinemachineHardLockToTarget>();
+                hardLock.m_Damping = 0f;
+                var aim = virtualCamera.GetCinemachineComponent<CinemachineSameAsFollowTarget>();
+                aim.m_Damping = 0f;
+
+                cinemachinePreset.Brain.ManualUpdate();
+
+                hardLock.m_Damping = 1f;
+                aim.m_Damping = 1f;
+            }
 
             if (inputSchema.ToggleInWorld!.triggered)
             {
@@ -92,9 +93,9 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
             hud.SetActive(false); // TODO (Vit):Temporary solution, will be replaced by MVC
             World.Remove<InWorldCamera>(camera);
 
-            // var virtualCamera = cinemachinePreset.InWorldCameraData.Camera;
-            // virtualCamera.Follow = null;
-            // followTarget.enabled = false;
+            cinemachinePreset.InWorldCameraData.Camera.Follow = null;
+            cinemachinePreset.InWorldCameraData.Camera.LookAt = null;
+            followTarget.enabled = false;
 
             camera.GetCameraComponent(World).Mode = CameraMode.ThirdPerson;
 
@@ -121,10 +122,9 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
 
                     Vector3 lookDirection = cinemachinePreset.FirstPersonCameraData.Camera.transform.forward;
                     Vector3 behindPosition = cinemachinePreset.FirstPersonCameraData.Camera.transform.position - (lookDirection * 3f) + (Vector3.up * 0.5f);
-                    cinemachinePreset.InWorldCameraData.Camera.transform.position = behindPosition;
 
-                    cinemachinePreset.InWorldCameraData.POV.m_HorizontalAxis.Value = cinemachinePreset.FirstPersonCameraData.POV.m_HorizontalAxis.Value;
-                    cinemachinePreset.InWorldCameraData.POV.m_VerticalAxis.Value = cinemachinePreset.FirstPersonCameraData.POV.m_VerticalAxis.Value;
+                    cinemachinePreset.InWorldCameraData.Camera.transform.position = behindPosition;
+                    cinemachinePreset.InWorldCameraData.Camera.transform.rotation = cinemachinePreset.FirstPersonCameraData.Camera.transform.rotation;
             }
             else
                 cinemachinePreset.InWorldCameraData.Camera.m_Transitions.m_InheritPosition = true;

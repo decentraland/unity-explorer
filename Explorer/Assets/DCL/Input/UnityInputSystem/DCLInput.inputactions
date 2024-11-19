@@ -2938,6 +2938,33 @@
             "id": "941cde24-4210-40c2-b2a7-fb1737e2e30c",
             "actions": [
                 {
+                    "name": "ToggleInWorld",
+                    "type": "Button",
+                    "id": "1c0e90f7-a879-4d52-a0a1-03f102d8a464",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Screenshot",
+                    "type": "Button",
+                    "id": "7710aa41-5a63-496b-9e59-a35bacb9a6b0",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Rotation",
+                    "type": "Value",
+                    "id": "09e6172f-a1e5-4be7-95e0-b37ffa54dab8",
+                    "expectedControlType": "Vector2",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
+                },
+                {
                     "name": "Translation",
                     "type": "Value",
                     "id": "136e837d-9685-4d5d-bc2e-26686a2258e4",
@@ -2956,27 +2983,9 @@
                     "initialStateCheck": true
                 },
                 {
-                    "name": "Rotation",
-                    "type": "Value",
-                    "id": "09e6172f-a1e5-4be7-95e0-b37ffa54dab8",
-                    "expectedControlType": "Vector2",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": true
-                },
-                {
-                    "name": "Screenshot",
+                    "name": "Run",
                     "type": "Button",
-                    "id": "7710aa41-5a63-496b-9e59-a35bacb9a6b0",
-                    "expectedControlType": "Button",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": false
-                },
-                {
-                    "name": "ToggleInWorld",
-                    "type": "Button",
-                    "id": "1c0e90f7-a879-4d52-a0a1-03f102d8a464",
+                    "id": "ad452450-abd8-40d1-9dbf-16deecefd5d5",
                     "expectedControlType": "Button",
                     "processors": "",
                     "interactions": "",
@@ -3117,28 +3126,6 @@
                     "isPartOfComposite": false
                 },
                 {
-                    "name": "",
-                    "id": "67618fc3-7aae-4057-96fc-02acde036027",
-                    "path": "<Keyboard>/space",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "Screenshot",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "b172c6f9-d4bc-43e8-93c8-49b1040d8568",
-                    "path": "<Keyboard>/c",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "ToggleInWorld",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
                     "name": "1D Axis",
                     "id": "a34cb645-f736-460b-8a27-b7f4b911fc29",
                     "path": "1DAxis",
@@ -3203,6 +3190,61 @@
                     "action": "Panning",
                     "isComposite": false,
                     "isPartOfComposite": true
+                },
+                {
+                    "name": "",
+                    "id": "7971e86a-be75-41d4-a5db-fd8e26414e8f",
+                    "path": "<Keyboard>/leftShift",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Run",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "ff886156-4733-4a09-be56-75927b0718ea",
+                    "path": "<Gamepad>/rightTrigger",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Run",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "eb3ab56f-4e70-4dc1-8bec-c16a25b2ff65",
+                    "path": "<XInputController>/rightTrigger",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Run",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "b172c6f9-d4bc-43e8-93c8-49b1040d8568",
+                    "path": "<Keyboard>/c",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "ToggleInWorld",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "67618fc3-7aae-4057-96fc-02acde036027",
+                    "path": "<Keyboard>/space",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Screenshot",
+                    "isComposite": false,
+                    "isPartOfComposite": false
                 },
                 {
                     "name": "",

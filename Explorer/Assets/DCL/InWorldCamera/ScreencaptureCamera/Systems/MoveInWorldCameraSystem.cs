@@ -40,30 +40,30 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
         {
             if (World.TryGet(camera, out InWorldCamera inWorldCamera))
             {
-                // Translate(t, inWorldCamera.FollowTarget);
-                // Rotate(t, inWorldCamera.FollowTarget.transform);
+                Translate(t, inWorldCamera.FollowTarget);
+                Rotate(t, inWorldCamera.FollowTarget.transform);
 
-                HandleFreeCameraMovement(cinemachinePreset, t);
+                // HandleFreeCameraMovement(cinemachinePreset, t);
 
                 cinemachinePreset.Brain.ManualUpdate(); // Update the brain manually
             }
         }
 
-        private void HandleFreeCameraMovement(ICinemachinePreset cinemachinePreset, float deltaTime)
-        {
-            var virtualCamera = cinemachinePreset.InWorldCameraData.Camera;
-            var transform = virtualCamera.transform;
-            Vector2 input = inputSchema.Translation.ReadValue<Vector2>();
-
-            Vector3 moveDir = new Vector3(input.x, 0, input.y);
-            moveDir = transform.TransformDirection(moveDir);
-            moveDir.y = inputSchema.Panning.ReadValue<float>();
-            // float speed = input.Sprint ? moveSpeed * 2 : moveSpeed; // Optional: sprint modifier
-
-            axis += Damper.Damp(moveDir - axis, 1f, deltaTime);
-
-            transform.position += axis * (TRANSLATION_SPEED * deltaTime);
-        }
+        // private void HandleFreeCameraMovement(ICinemachinePreset cinemachinePreset, float deltaTime)
+        // {
+        //     var virtualCamera = cinemachinePreset.InWorldCameraData.Camera;
+        //     var transform = virtualCamera.transform;
+        //     Vector2 input = inputSchema.Translation.ReadValue<Vector2>();
+        //
+        //     Vector3 moveDir = new Vector3(input.x, 0, input.y);
+        //     moveDir = transform.TransformDirection(moveDir);
+        //     moveDir.y = inputSchema.Panning.ReadValue<float>();
+        //     // float speed = input.Sprint ? moveSpeed * 2 : moveSpeed; // Optional: sprint modifier
+        //
+        //     axis += Damper.Damp(moveDir - axis, 1f, deltaTime);
+        //
+        //     transform.position += axis * (TRANSLATION_SPEED * deltaTime);
+        // }
 
         private Vector3 axis;
 
@@ -110,7 +110,9 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
             Vector3 horizontal = target.right.normalized * input.x;
             Vector3 vertical = target.up.normalized * inputSchema.Panning.ReadValue<float>();
 
-            return (forward + horizontal + vertical) * (moveSpeed * deltaTime);
+            float speed = inputSchema.Run.IsPressed() ? moveSpeed * 2 : moveSpeed;
+
+            return (forward + horizontal + vertical) * (speed * deltaTime);
         }
 
         private static Vector3 RestrictedMovementBySemiSphere(Vector3 playerPosition, Transform target, Vector3 movementVector, float maxDistanceFromPlayer)
