@@ -16,6 +16,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
 
         private readonly ContextMenuView view;
         private readonly RectTransform controlsRectTransform;
+        private readonly RectTransform controlsParentRectTransform;
         private readonly Rect backgroundButtonRect;
 
         public event Action<CameraReelResponseCompact, bool> SetPublicRequested;
@@ -36,6 +37,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
             this.view.backgroundCloseButton.onClick.AddListener(() => AnyControlClicked?.Invoke());
 
             this.controlsRectTransform = this.view.controlsParent.GetComponent<RectTransform>();
+            this.controlsParentRectTransform = this.view.controlsParent.transform.parent.GetComponent<RectTransform>();
             this.backgroundButtonRect = this.view.backgroundCloseButton.GetComponent<RectTransform>().GetWorldRect();
 
             view.shareOnX.onClick.AddListener(() =>
@@ -75,7 +77,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
             view.setAsPublic.isOn = imageData.isPublic;
             view.setAsPublic.onValueChanged.AddListener(SetAsPublicInvoke);
 
-            view.controlsParent.transform.position = GetControlsPosition(anchorPosition);
+            controlsRectTransform.localPosition = GetControlsPosition(anchorPosition);
         }
 
         private Vector3 GetOffsetByDirection(ContextMenuOpenDirection direction)
@@ -92,7 +94,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
 
         private Vector3 GetControlsPosition(Vector3 anchorPosition)
         {
-            Vector3 position = anchorPosition;
+            Vector3 position = controlsParentRectTransform.InverseTransformPoint(anchorPosition);
             position.x += controlsRectTransform.rect.width / 2;
             position.y -= controlsRectTransform.rect.height / 2;
 
@@ -134,10 +136,10 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
 
         private Rect GetProjectedRect(Vector3 newPosition)
         {
-            Vector3 originalPosition = view.controlsParent.transform.position;
-            view.controlsParent.transform.position = newPosition;
+            Vector3 originalPosition = controlsRectTransform.localPosition;
+            controlsRectTransform.localPosition = newPosition;
             Rect rect = controlsRectTransform.GetWorldRect();
-            view.controlsParent.transform.position = originalPosition;
+            controlsRectTransform.localPosition = originalPosition;
 
             return rect;
         }

@@ -327,7 +327,7 @@ MonoBehaviour:
   copyLink: {fileID: 9172762623700419208}
   download: {fileID: 8912886943391370634}
   delete: {fileID: 6705755724379186506}
-  offsetFromTarget: {x: 55, y: -6, z: 0}
+  offsetFromTarget: {x: 14, y: 18, z: 0}
 --- !u!1 &1106820289145627350
 GameObject:
   m_ObjectHideFlags: 0

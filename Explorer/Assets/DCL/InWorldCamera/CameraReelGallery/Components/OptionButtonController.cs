@@ -8,6 +8,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
     {
         private readonly OptionButtonView view;
         private readonly ContextMenuController contextMenuController;
+        private readonly RectTransform buttonRectTransform;
 
         public event Action Hide;
 
@@ -15,6 +16,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
             ContextMenuController contextMenuController)
         {
             this.view = view;
+            this.buttonRectTransform = view.GetComponent<RectTransform>();
 
             this.view.optionButton.onClick.AddListener(OnOptionClicked);
             this.contextMenuController = contextMenuController;
@@ -43,7 +45,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
         private void OnOptionClicked()
         {
             if (!contextMenuController.IsOpen())
-                contextMenuController.Show(view.gameObject.transform.position);
+                contextMenuController.Show(buttonRectTransform.position);
             else
                 contextMenuController.Hide();
         }
