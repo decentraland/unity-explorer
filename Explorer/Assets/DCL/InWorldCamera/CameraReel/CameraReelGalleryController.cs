@@ -44,10 +44,10 @@ namespace DCL.InWorldCamera.CameraReel
         private const int GRID_POOL_DEFAULT_CAPACITY = 10;
         private const int GRID_POOL_MAX_SIZE = 500;
         private const int ANIMATION_DELAY = 300;
+        private const int MINIMUM_ELEMENTS_FOR_WAITING_LAYOUT = 30;
 
         private readonly CameraReelGalleryView view;
         private readonly ICameraReelStorageService cameraReelStorageService;
-        private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
         private readonly IExplorePanelEscapeAction explorePanelEscapeAction;
         private readonly ReelGalleryPoolManager reelGalleryPoolManager;
         private readonly Dictionary<DateTime, MonthGridController> monthViews = new ();
@@ -60,6 +60,8 @@ namespace DCL.InWorldCamera.CameraReel
         private bool isDragging = false;
         private float previousY = 1f;
         private CancellationTokenSource loadNextPageCts = new ();
+        private CancellationTokenSource showSuccessCts = new ();
+        private CancellationTokenSource showFailureCts = new ();
         private ReelThumbnailController[] thumbnailImages;
         private int beginVisible;
         private int endVisible;
@@ -78,7 +80,6 @@ namespace DCL.InWorldCamera.CameraReel
         {
             this.view = view;
             this.cameraReelStorageService = cameraReelStorageService;
-            this.cameraReelScreenshotsStorage = cameraReelScreenshotsStorage;
             this.explorePanelEscapeAction = explorePanelEscapeAction;
             this.view.Disable += OnDisable;
             this.view.scrollRectDragHandler.BeginDrag += ScrollBeginDrag;
@@ -113,7 +114,7 @@ namespace DCL.InWorldCamera.CameraReel
                             cameraReelRes.isPublic = publicFlag;
                             await ShowSuccessNotificationAsync("Photo successfully updated");
                         }
-                        catch (Exception)
+                        catch (UnityWebRequestException)
                         {
                             await ShowFailureNotificationAsync();
                         }
@@ -219,13 +220,13 @@ namespace DCL.InWorldCamera.CameraReel
 
                 if (view.successNotificationView is null) return;
 
-                await ShowSuccessNotificationAsync("Photo successfully deleted", ct);
+                await ShowSuccessNotificationAsync("Photo successfully deleted");
             }
             catch (Exception)
             {
                 if (view.errorNotificationView is null) return;
 
-                await ShowFailureNotificationAsync(ct);
+                await ShowFailureNotificationAsync();
             }
         }
 
@@ -245,19 +246,39 @@ namespace DCL.InWorldCamera.CameraReel
             view.scrollRect.onValueChanged.AddListener(OnScrollRectValueChanged);
         }
 
-        private async UniTask ShowSuccessNotificationAsync(string message, CancellationToken ct = default)
+        private void HideSuccessNotification()
         {
-            view.successNotificationView.SetText(message);
-            view.successNotificationView.Show();
-            await UniTask.Delay((int) view.errorSuccessToastDuration * 1000, cancellationToken: ct);
-            view.successNotificationView.Hide();
+            showSuccessCts = showSuccessCts.SafeRestart();
+            view.successNotificationView.CanvasGroup.DOKill();
+            view.successNotificationView.CanvasGroup.alpha = 0f;
         }
 
-        private async UniTask ShowFailureNotificationAsync(CancellationToken ct = default)
+        private void HideFailureNotification()
         {
-            view.errorNotificationView.Show();
-            await UniTask.Delay((int) view.errorSuccessToastDuration * 1000, cancellationToken: ct);
-            view.errorNotificationView.Hide();
+            showFailureCts = showFailureCts.SafeRestart();
+            view.errorNotificationView.CanvasGroup.DOKill();
+            view.errorNotificationView.CanvasGroup.alpha = 0f;
+        }
+
+        private async UniTask ShowSuccessNotificationAsync(string message)
+        {
+            HideSuccessNotification();
+            HideFailureNotification();
+
+            view.successNotificationView.SetText(message);
+            view.successNotificationView.Show(showSuccessCts.Token);
+            await UniTask.Delay((int) view.errorSuccessToastDuration * 1000, cancellationToken: showSuccessCts.Token);
+            view.successNotificationView.Hide(false, showSuccessCts.Token);
+        }
+
+        private async UniTask ShowFailureNotificationAsync()
+        {
+            HideSuccessNotification();
+            HideSuccessNotification();
+
+            view.errorNotificationView.Show(showFailureCts.Token);
+            await UniTask.Delay((int) view.errorSuccessToastDuration * 1000, cancellationToken: showFailureCts.Token);
+            view.errorNotificationView.Hide(false, showFailureCts.Token);
         }
 
         private MonthGridController GetMonthGrid(DateTime dateTime)
@@ -296,7 +317,7 @@ namespace DCL.InWorldCamera.CameraReel
             endVisible = currentSize - 1;
 
             //Wait for layout to update after the addition of new elements
-            await UniTask.WaitWhile(() => Mathf.Approximately(view.verticalScrollbar.handleRect.rect.height, handleHeight), cancellationToken: ct);
+            await UniTask.WaitWhile(() => Mathf.Approximately(view.verticalScrollbar.handleRect.rect.height, handleHeight) && currentSize > MINIMUM_ELEMENTS_FOR_WAITING_LAYOUT, cancellationToken: ct);
 
             HandleElementsVisibility(ScrollDirection.UP);
 
