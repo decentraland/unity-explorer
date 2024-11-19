@@ -465,11 +465,6 @@ ImageResult texturesfuse_cmp_image_from_memory(
 
     const unsigned int bitsLength = *width * *height * 4; // since 1 byte per channel
 
-    if (cmpFormat == CMP_FORMAT_BC5)
-    {
-        SwapRGBAtoBGRA(bits, bitsLength);
-    }
-
     FreeImage_OutputMessageProc(FIF_UNKNOWN, "Encoding with compress option is: %d", compressOptions.encodeWith);
 
     const CMP_FORMAT sourceFormat = CMP_FORMAT_BGRA_8888;
