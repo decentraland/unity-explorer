@@ -250,9 +250,9 @@ namespace DCL.PluginSystem.Global
 
             NavmapZoomController zoomController = new (navmapView.zoomView, dclInput);
 
-            ObjectPool<PlaceElementView> placeElementsPool = await InitializePlaceElementsPool(navmapView.SearchBarResultPanel, ct);
-            ObjectPool<EventElementView> eventElementsPool = await InitializeEventElementsForPlacePool(navmapView.PlacesAndEventsPanelView.PlaceInfoPanelView, ct);
-            ObjectPool<EventScheduleElementView> eventScheduleElementsPool = await InitializeEventScheduleElementsPool(navmapView.PlacesAndEventsPanelView.EventInfoPanelView, ct);
+            ObjectPool<PlaceElementView> placeElementsPool = await InitializePlaceElementsPoolAsync(navmapView.SearchBarResultPanel, ct);
+            ObjectPool<EventElementView> eventElementsPool = await InitializeEventElementsForPlacePoolAsync(navmapView.PlacesAndEventsPanelView.PlaceInfoPanelView, ct);
+            ObjectPool<EventScheduleElementView> eventScheduleElementsPool = await InitializeEventScheduleElementsPoolAsync(navmapView.PlacesAndEventsPanelView.EventInfoPanelView, ct);
 
             searchResultPanelController = new SearchResultPanelController(navmapView.SearchBarResultPanel,
                 placeElementsPool, navmapBus);
@@ -309,7 +309,7 @@ namespace DCL.PluginSystem.Global
             inputHandler = new ExplorePanelInputHandler(dclInput, mvcManager);
         }
 
-        private async UniTask<ObjectPool<PlaceElementView>> InitializePlaceElementsPool(SearchResultPanelView view, CancellationToken ct)
+        private async UniTask<ObjectPool<PlaceElementView>> InitializePlaceElementsPoolAsync(SearchResultPanelView view, CancellationToken ct)
         {
             PlaceElementView asset = (await assetsProvisioner.ProvideInstanceAsync(view.ResultRef, ct: ct)).Value;
 
@@ -328,7 +328,7 @@ namespace DCL.PluginSystem.Global
             }
         }
 
-        private async UniTask<ObjectPool<EventElementView>> InitializeEventElementsForPlacePool(PlaceInfoPanelView view, CancellationToken ct)
+        private async UniTask<ObjectPool<EventElementView>> InitializeEventElementsForPlacePoolAsync(PlaceInfoPanelView view, CancellationToken ct)
         {
             EventElementView asset = (await assetsProvisioner.ProvideInstanceAsync(view.EventElementViewRef, ct: ct)).Value;
 
@@ -347,7 +347,7 @@ namespace DCL.PluginSystem.Global
             }
         }
 
-        private async UniTask<ObjectPool<EventScheduleElementView>> InitializeEventScheduleElementsPool(EventInfoPanelView view, CancellationToken ct)
+        private async UniTask<ObjectPool<EventScheduleElementView>> InitializeEventScheduleElementsPoolAsync(EventInfoPanelView view, CancellationToken ct)
         {
             EventScheduleElementView asset = (await assetsProvisioner.ProvideInstanceAsync(view.ScheduleElementRef, ct: ct)).Value;
 

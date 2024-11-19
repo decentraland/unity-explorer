@@ -254,7 +254,7 @@ namespace DCL.Navmap
 
             async UniTaskVoid RateAsync(CancellationToken ct)
             {
-                await placesAPIService.RatePlace(isEnabled ? true : null, place!.id, ct);
+                await placesAPIService.RatePlaceAsync(isEnabled ? true : null, place!.id, ct);
                 likeButton.SetButtonState(isEnabled);
                 dislikeButton.SetButtonState(false);
             }
@@ -268,7 +268,7 @@ namespace DCL.Navmap
 
             async UniTaskVoid RateAsync(CancellationToken ct)
             {
-                await placesAPIService.RatePlace(isEnabled ? false : null, place!.id, ct);
+                await placesAPIService.RatePlaceAsync(isEnabled ? false : null, place!.id, ct);
                 likeButton.SetButtonState(false);
                 dislikeButton.SetButtonState(isEnabled);
             }

@@ -35,7 +35,7 @@ namespace DCL.EventsApi
             if (onlyLiveEvents)
                 urlBuilder.AppendParameter(new URLParameter("list", "live"));
 
-            return await FetchEventList(urlBuilder.Build(), ct);
+            return await FetchEventListAsync(urlBuilder.Build(), ct);
         }
 
         public async UniTask<IReadOnlyList<EventDTO>> GetEventsByParcelAsync(ISet<string> parcels, CancellationToken ct,
@@ -50,7 +50,7 @@ namespace DCL.EventsApi
             if (onlyLiveEvents)
                 urlBuilder.AppendParameter(new URLParameter("list", "live"));
 
-            return await FetchEventList(urlBuilder.Build(), ct);
+            return await FetchEventListAsync(urlBuilder.Build(), ct);
         }
 
         public async UniTask<IReadOnlyList<EventDTO>> GetEventsByParcelAsync(string parcel, CancellationToken ct,
@@ -63,7 +63,7 @@ namespace DCL.EventsApi
             if (onlyLiveEvents)
                 urlBuilder.AppendParameter(new URLParameter("list", "live"));
 
-            return await FetchEventList(urlBuilder.Build(), ct);
+            return await FetchEventListAsync(urlBuilder.Build(), ct);
         }
 
         public async UniTask MarkAsInterestedAsync(string eventId, CancellationToken ct)
@@ -106,7 +106,7 @@ namespace DCL.EventsApi
                 throw new EventsApiException($"Error on trying to create attend intention to event {eventId}");
         }
 
-        private async UniTask<IReadOnlyList<EventDTO>> FetchEventList(URLAddress url, CancellationToken ct)
+        private async UniTask<IReadOnlyList<EventDTO>> FetchEventListAsync(URLAddress url, CancellationToken ct)
         {
             ulong timestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
 
