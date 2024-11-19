@@ -48,7 +48,11 @@ namespace DCL.Navmap
             searchResultController.Show();
 
             searchPlacesCancellationToken = searchPlacesCancellationToken.SafeRestart();
-            searchBarController.SearchAndShowAsync(searchPlacesCancellationToken.Token).Forget();
+
+            searchBarController.SearchAndShowAsync("",
+                                    NavmapSearchPlaceFilter.All, NavmapSearchPlaceSorting.MostActive,
+                                    searchPlacesCancellationToken.Token)
+                               .Forget();
         }
 
         public void Toggle(Section section)
@@ -78,7 +82,7 @@ namespace DCL.Navmap
             view.CollapseButton.gameObject.SetActive(true);
             view.ExpandButton.gameObject.SetActive(false);
 
-            RectTransform transform = (RectTransform) view.transform;
+            RectTransform transform = (RectTransform)view.transform;
 
             collapseExpandCancellationToken = collapseExpandCancellationToken.SafeRestart();
 
@@ -92,7 +96,7 @@ namespace DCL.Navmap
             view.CollapseButton.gameObject.SetActive(false);
             view.ExpandButton.gameObject.SetActive(true);
 
-            RectTransform transform = (RectTransform) view.transform;
+            RectTransform transform = (RectTransform)view.transform;
 
             collapseExpandCancellationToken = collapseExpandCancellationToken.SafeRestart();
 
