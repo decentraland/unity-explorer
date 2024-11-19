@@ -119,8 +119,8 @@ namespace DCL.UserInAppInitializationFlow
 
                 if (parameters.FromLogout)
                 {
-                    // If we are coming from a logout, we teleport the user to Genesis Plaza
-                    var teleportResult = await realmNavigator.TryInitializeTeleportToParcelAsync(Vector2Int.zero, ct);
+                    // If we are coming from a logout, we teleport the user to Genesis Plaza and force realm change to reset the scene properly
+                    var teleportResult = await realmNavigator.TryInitializeTeleportToParcelAsync(Vector2Int.zero, ct, forceChangeRealm: true);
                     // Restart livekit connection
                     await roomHub.StartAsync().Timeout(TimeSpan.FromSeconds(10));
                     result = teleportResult.Success ? teleportResult : Result.ErrorResult(teleportResult.ErrorMessage);

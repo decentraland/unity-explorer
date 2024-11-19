@@ -278,7 +278,7 @@ namespace Global.Dynamic
         }
 
         public async UniTask<Result> TryInitializeTeleportToParcelAsync(Vector2Int parcel, CancellationToken ct,
-            bool isLocal = false)
+            bool isLocal = false, bool forceChangeRealm = false)
         {
             ct.ThrowIfCancellationRequested();
 
@@ -286,7 +286,7 @@ namespace Global.Dynamic
             if (!parcelCheckResult.Success)
                 return parcelCheckResult;
 
-            if (!isLocal && !IsGenesisRealm())
+            if (forceChangeRealm || (!isLocal && !IsGenesisRealm()))
             {
                 var url = URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Genesis));
                 return await TryChangeRealmAsync(url, ct, parcel);
