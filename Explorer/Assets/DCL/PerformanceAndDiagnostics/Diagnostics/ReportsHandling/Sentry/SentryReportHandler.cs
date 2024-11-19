@@ -52,6 +52,13 @@ namespace DCL.Diagnostics.Sentry
             scope.SetTag("current_scene.name", sceneInfo.Name);
         }
 
+        public void AddRealmInfoToScope(Scope scope, string baseCatalystUrl, string baseContentUrl, string baseLambdaUrl)
+        {
+            scope.SetTag("base_catalyst_url", baseCatalystUrl);
+            scope.SetTag("base_content_url", baseContentUrl);
+            scope.SetTag("base_lambda_url", baseLambdaUrl);
+        }
+
         public void AddScopeConfigurator(ConfigureScope configureScope)
         {
             scopeConfigurators.Add(configureScope);

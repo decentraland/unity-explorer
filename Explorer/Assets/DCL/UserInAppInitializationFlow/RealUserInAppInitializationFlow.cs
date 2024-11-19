@@ -58,7 +58,8 @@ namespace DCL.UserInAppInitializationFlow
             IAppArgs appParameters,
             IDebugSettings debugSettings,
             IPortableExperiencesController portableExperiencesController,
-            IRoomHub roomHub
+            IRoomHub roomHub,
+            DiagnosticsContainer diagnosticsContainer
         )
         {
             this.loadingStatus = loadingStatus;
@@ -78,6 +79,7 @@ namespace DCL.UserInAppInitializationFlow
             restartRealmStartupOperation = new RestartRealmStartupOperation(loadingStatus, realmController);
             var teleportStartupOperation = new TeleportStartupOperation(loadingStatus, realmNavigator, startParcel);
             var loadGlobalPxOperation = new LoadGlobalPortableExperiencesStartupOperation(loadingStatus, selfProfile, featureFlagsCache, debugSettings, portableExperiencesController);
+            var sentryDiagnostics = new SentryDiagnosticStartupOperation(realmController, diagnosticsContainer);
 
             startupOperation = new SequentialStartupOperation(
                 loadingStatus,
@@ -90,7 +92,8 @@ namespace DCL.UserInAppInitializationFlow
                 checkOnboardingStartupOperation,
                 restartRealmStartupOperation,
                 teleportStartupOperation,
-                loadGlobalPxOperation
+                loadGlobalPxOperation,
+                sentryDiagnostics
             ).WithHandleExceptions();
         }
 

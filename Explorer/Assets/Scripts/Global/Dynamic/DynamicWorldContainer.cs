@@ -391,7 +391,8 @@ namespace Global.Dynamic
                 dynamicWorldParams.AppParameters,
                 bootstrapContainer.DebugSettings,
                 staticContainer.PortableExperiencesController,
-                container.RoomHub
+                container.RoomHub,
+                bootstrapContainer.DiagnosticsContainer
             );
 
             var worldInfoHub = new LocationBasedWorldInfoHub(
