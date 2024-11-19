@@ -101,7 +101,10 @@ namespace DCL.SceneLoadingScreens.Tests
             mvc.ShowAsync(Arg.Any<ShowCommand<SceneLoadingScreenView, SceneLoadingScreenController.Params>>(), Arg.Any<CancellationToken>())
                .Returns<UniTask>(async info =>
                 {
-                    mvcCancellation = info.Arg<ShowCommand<SceneLoadingScreenView, SceneLoadingScreenController.Params>>().InputData.LoadingProcessIsFinished;
+                    mvcCancellation = info.Arg<ShowCommand<SceneLoadingScreenView, SceneLoadingScreenController.Params>>()
+                                          .InputData.AsyncLoadProcessReport.WaitUntilFinished()
+                                          .ToCancellationToken();
+
                     await UniTask.Never(mvcCancellation).SuppressCancellationThrow();
                     mvcFinished = true;
                 });
@@ -139,7 +142,9 @@ namespace DCL.SceneLoadingScreens.Tests
             mvc.ShowAsync(Arg.Any<ShowCommand<SceneLoadingScreenView, SceneLoadingScreenController.Params>>(), Arg.Any<CancellationToken>())
                .Returns<UniTask>(async info =>
                 {
-                    mvcCancellation = info.Arg<ShowCommand<SceneLoadingScreenView, SceneLoadingScreenController.Params>>().InputData.LoadingProcessIsFinished;
+                    mvcCancellation = info.Arg<ShowCommand<SceneLoadingScreenView, SceneLoadingScreenController.Params>>()
+                                          .InputData.AsyncLoadProcessReport.WaitUntilFinished()
+                                          .ToCancellationToken();
                     await UniTask.Never(mvcCancellation).SuppressCancellationThrow();
                 });
 
@@ -180,7 +185,7 @@ namespace DCL.SceneLoadingScreens.Tests
             IMVCManager? sub = Substitute.For<IMVCManager>();
 
             sub.ShowAsync(Arg.Any<ShowCommand<SceneLoadingScreenView, SceneLoadingScreenController.Params>>(), Arg.Any<CancellationToken>())
-               .Returns(info => UniTask.WaitUntilCanceled(info.Arg<ShowCommand<SceneLoadingScreenView, SceneLoadingScreenController.Params>>().InputData.LoadingProcessIsFinished));
+               .Returns(info => info.Arg<ShowCommand<SceneLoadingScreenView, SceneLoadingScreenController.Params>>().InputData.AsyncLoadProcessReport.WaitUntilFinished());
 
             return sub;
         }

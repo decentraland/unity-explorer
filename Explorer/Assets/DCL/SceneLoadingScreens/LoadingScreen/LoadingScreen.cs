@@ -88,17 +88,16 @@ namespace DCL.SceneLoadingScreens.LoadingScreen
 
             async UniTask<Result> ExecuteLoadingScreen()
             {
-                // Bind loading screen with load report 1-to-1 via a cancellation token:
+                // The loading screen will be bound via load report 1-to-1 as ExecuteOperationAsync ensures the state of LoadReport:
                 // 1. if the operation has finished -> cancel the loading screen with Fade
                 // 2. if timeout has fired -> cancel the loading screen with Fade
                 // 3. if the outer cancellation token has fired -> cancel the loading screen immediately
-                CancellationToken loadingScreenCancellationToken = CancellationTokenSource.CreateLinkedTokenSource(timeOut.Token, operationFinished.Token).Token;
 
                 Result result = await mvcManager.ShowAsync(
-                                                     SceneLoadingScreenController.IssueCommand(new SceneLoadingScreenController.Params(loadReport, loadingScreenCancellationToken)), ct)
+                                                     SceneLoadingScreenController.IssueCommand(new SceneLoadingScreenController.Params(loadReport)), ct)
                                                 .SuppressToResultAsync(ReportCategory.SCENE_LOADING);
 
-                if (finalResult == null)
+                if (loadReport.GetStatus().TaskStatus == UniTaskStatus.Pending)
                     ReportHub.LogError(ReportCategory.SCENE_LOADING, "Loading screen finished unexpectedly, but the loading process continues");
 
                 return result;
