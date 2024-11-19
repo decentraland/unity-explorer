@@ -248,6 +248,8 @@ namespace DCL.PluginSystem.Global
             INavmapBus navmapBus = new NavmapCommandBus(CreateSearchPlaceCommand,
                 CreateShowPlaceCommand, CreateShowEventCommand);
 
+            NavmapZoomController zoomController = new (navmapView.zoomView, dclInput);
+
             ObjectPool<PlaceElementView> placeElementsPool = await InitializePlaceElementsPool(navmapView.SearchBarResultPanel, ct);
             ObjectPool<EventElementView> eventElementsPool = await InitializeEventElementsForPlacePool(navmapView.PlacesAndEventsPanelView.PlaceInfoPanelView, ct);
             ObjectPool<EventScheduleElementView> eventScheduleElementsPool = await InitializeEventScheduleElementsPool(navmapView.PlacesAndEventsPanelView.EventInfoPanelView, ct);
@@ -271,9 +273,8 @@ namespace DCL.PluginSystem.Global
                 userCalendar, shareContextMenu, webBrowser);
 
             placesAndEventsPanelController = new PlacesAndEventsPanelController(navmapView.PlacesAndEventsPanelView,
-                searchBarController, searchResultPanelController, placeInfoPanelController, eventInfoPanelController);
-
-            NavmapZoomController zoomController = new (navmapView.zoomView, dclInput);
+                searchBarController, searchResultPanelController, placeInfoPanelController, eventInfoPanelController,
+                zoomController);
 
             IMapRenderer mapRenderer = mapRendererContainer.MapRenderer;
 
