@@ -1,8 +1,8 @@
 using AOT;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using Plugins.TexturesFuse.TexturesServerWrap.CompressShaders;
 using System;
-using System.IO;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Profiling;
@@ -30,10 +30,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
 
             initOptions = initOptions.NewWithMode(options.Mode);
             initOptions.outputMessage = debug ? OutputMessage : null;
-
-            initOptions.pluginsPath = Application.isEditor
-                ? Path.Combine(Directory.GetCurrentDirectory(), "plugins")
-                : "plugins";
+            initOptions.pluginsPath = ICompressShaders.ShadersDir();
 
             ReportHub.Log(ReportCategory.TEXTURES, $"TexturesFuse, Plugins Path is set to - {initOptions.pluginsPath}");
 
