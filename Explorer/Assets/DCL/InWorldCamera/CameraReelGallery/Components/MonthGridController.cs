@@ -23,10 +23,10 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
         }
 
         public List<ReelThumbnailController> Setup(DateTime bucket,
-            List<CameraReelResponse> images,
+            List<CameraReelResponseCompact> images,
             OptionButtonController optionsButton,
-            Action<CameraReelResponse, Sprite> onThumbnailLoaded,
-            Action<CameraReelResponse> onThumbnailClicked)
+            Action<CameraReelResponseCompact, Sprite> onThumbnailLoaded,
+            Action<CameraReelResponseCompact> onThumbnailClicked)
         {
             this.DateTimeBucket = bucket;
             view.monthText.SetText(bucket.ToString("MMMM yyyy", CultureInfo.InvariantCulture));

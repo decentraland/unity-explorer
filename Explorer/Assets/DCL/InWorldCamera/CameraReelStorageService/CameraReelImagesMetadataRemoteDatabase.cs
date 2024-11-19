@@ -57,6 +57,22 @@ namespace DCL.InWorldCamera.CameraReelStorageService
             return responseData;
         }
 
+        public async UniTask<CameraReelResponsesCompact> GetCompactScreenshotsAsync(string userAddress, int limit, int offset, CancellationToken ct)
+        {
+            URLAddress url = urlBuilder.AppendDomain(userDomain)
+                                       .AppendSubDirectory(URLSubdirectory.FromString(userAddress))
+                                       .AppendSubDirectory(URLSubdirectory.FromString($"images?limit={limit}&offset={offset}&compact=true"))
+                                       .Build();
+
+            urlBuilder.Clear();
+
+            CameraReelResponsesCompact responseData = await webRequestController
+                                                           .SignedFetchGetAsync(url, string.Empty, ct)
+                                                           .CreateFromJson<CameraReelResponsesCompact>(WRJsonParser.Unity);
+
+            return responseData;
+        }
+
         public async UniTask<CameraReelStorageResponse> DeleteScreenshotAsync(string uuid, CancellationToken ct)
         {
             URLAddress url = urlBuilder.AppendDomain(imageDomain)

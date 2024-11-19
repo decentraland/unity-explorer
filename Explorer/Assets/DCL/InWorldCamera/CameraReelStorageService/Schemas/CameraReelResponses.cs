@@ -12,6 +12,24 @@ namespace DCL.InWorldCamera.CameraReelStorageService.Schemas
     }
 
     [Serializable]
+    public class CameraReelResponsesCompact
+    {
+        public List<CameraReelResponseCompact> images = new ();
+        public int currentImages;
+        public int maxImages;
+    }
+
+    [Serializable]
+    public class CameraReelResponseCompact
+    {
+        public string id;
+        public string url;
+        public string thumbnailUrl;
+        public bool isPublic;
+        public string dateTime;
+    }
+
+    [Serializable]
     public class CameraReelResponse
     {
         public string id;

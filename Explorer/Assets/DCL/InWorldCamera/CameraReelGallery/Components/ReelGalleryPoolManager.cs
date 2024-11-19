@@ -59,7 +59,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
                 gridMaxSize);
         }
 
-        public ReelThumbnailController GetThumbnailElement(CameraReelResponse cameraReelResponse, GridLayoutGroup parent, OptionButtonController optionsButton)
+        public ReelThumbnailController GetThumbnailElement(CameraReelResponseCompact cameraReelResponse, GridLayoutGroup parent, OptionButtonController optionsButton)
         {
             ReelThumbnailController result = reelThumbnailPool.Get();
             result.view.transform.SetParent(parent.transform, false);

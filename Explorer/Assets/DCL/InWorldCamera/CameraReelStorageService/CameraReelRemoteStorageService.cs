@@ -28,6 +28,9 @@ namespace DCL.InWorldCamera.CameraReelStorageService
         public async UniTask<CameraReelResponses> GetScreenshotGalleryAsync(string userAddress, int limit, int offset, CancellationToken ct) =>
             await imagesMetadataDatabase.GetScreenshotsAsync(userAddress, limit, offset, ct);
 
+        public async UniTask<CameraReelResponsesCompact> GetCompactScreenshotGalleryAsync(string userAddress, int limit, int offset, CancellationToken ct) =>
+            await imagesMetadataDatabase.GetCompactScreenshotsAsync(userAddress, limit, offset, ct);
+
         public async UniTask<CameraReelStorageStatus> DeleteScreenshotAsync(string uuid, CancellationToken ct = default)
         {
             CameraReelStorageResponse response = await imagesMetadataDatabase.DeleteScreenshotAsync(uuid, ct);

@@ -36,7 +36,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
             }
         }
 
-        public event Action<CameraReelResponse> ThumbnailClicked;
+        public event Action<CameraReelResponseCompact> ThumbnailClicked;
         public event Action<CameraReelStorageStatus> StorageUpdated;
 
         private const int THUMBNAIL_POOL_DEFAULT_CAPACITY = 100;
@@ -51,7 +51,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
         private readonly IExplorePanelEscapeAction explorePanelEscapeAction;
         private readonly ReelGalleryPoolManager reelGalleryPoolManager;
         private readonly Dictionary<DateTime, MonthGridController> monthViews = new ();
-        private readonly Dictionary<CameraReelResponse, Sprite> reelThumbnailCache = new ();
+        private readonly Dictionary<CameraReelResponseCompact, Sprite> reelThumbnailCache = new ();
         private readonly OptionButtonController optionButtonController;
         private readonly ContextMenuController contextMenuController;
         private readonly Rect elementMaskRect;
@@ -66,7 +66,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
         private int beginVisible;
         private int endVisible;
         private int currentSize;
-        private CameraReelResponse reelToDelete;
+        private CameraReelResponseCompact reelToDelete;
         private PagedCameraReelManager pagedCameraReelManager;
 
         public CameraReelGalleryController(CameraReelGalleryView view,
@@ -182,7 +182,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
             {
                 await UniTask.Delay(ANIMATION_DELAY);
                 if (reelToDelete is not null)
-                    DeleteScreenshotsAsync(new ReelToDeleteInfo(reelToDelete.id, reelToDelete.metadata.dateTime)).Forget();
+                    DeleteScreenshotsAsync(new ReelToDeleteInfo(reelToDelete.id, reelToDelete.dateTime)).Forget();
 
                 reelToDelete = null;
                 HideDeleteModal();
@@ -298,7 +298,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
         private async UniTask LoadMorePageAsync(CancellationToken ct)
         {
             isLoading = true;
-            Dictionary<DateTime, List<CameraReelResponse>> result = await pagedCameraReelManager.FetchNextPageAsync(ct);
+            Dictionary<DateTime, List<CameraReelResponseCompact>> result = await pagedCameraReelManager.FetchNextPageAsync(ct);
             float handleHeight = view.verticalScrollbar.handleRect.rect.height;
 
             foreach (var bucket in result)

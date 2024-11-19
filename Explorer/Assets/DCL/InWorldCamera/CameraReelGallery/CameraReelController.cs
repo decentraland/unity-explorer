@@ -46,7 +46,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
             //TODO (Lorenzo): Close gallery and open camera
         }
 
-        private void ThumbnailClicked(CameraReelResponse cameraReelResponse)
+        private void ThumbnailClicked(CameraReelResponseCompact cameraReelResponse)
         {
             //TODO (Lorenzo): Open full screen preview
         }

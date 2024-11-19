@@ -24,7 +24,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
 
         public bool IsContextMenuOpen() => contextMenuController.IsOpen();
 
-        public void Show(CameraReelResponse cameraReelResponse, Transform parent, Vector3 offsetPosition = default)
+        public void Show(CameraReelResponseCompact cameraReelResponse, Transform parent, Vector3 offsetPosition = default)
         {
             view.transform.SetParent(parent);
             view.transform.localPosition = offsetPosition;

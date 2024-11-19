@@ -17,10 +17,10 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
         private OptionButtonController optionButton;
         private CancellationTokenSource loadImageCts;
 
-        public event Action<CameraReelResponse, Sprite> ThumbnailLoaded;
-        public event Action<CameraReelResponse> ThumbnailClicked;
+        public event Action<CameraReelResponseCompact, Sprite> ThumbnailLoaded;
+        public event Action<CameraReelResponseCompact> ThumbnailClicked;
 
-        public CameraReelResponse CameraReelResponse { get; private set; }
+        public CameraReelResponseCompact CameraReelResponse { get; private set; }
 
         public ReelThumbnailController(ReelThumbnailView view,
             ICameraReelScreenshotsStorage cameraReelScreenshotsStorageService)
@@ -31,7 +31,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
             this.view.PointerExit += OnPointerExit;
         }
 
-        public void Setup(CameraReelResponse cameraReelData, OptionButtonController optionsButton)
+        public void Setup(CameraReelResponseCompact cameraReelData, OptionButtonController optionsButton)
         {
             this.CameraReelResponse = cameraReelData;
             this.optionButton = optionsButton;

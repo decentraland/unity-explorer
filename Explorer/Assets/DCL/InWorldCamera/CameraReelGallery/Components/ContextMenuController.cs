@@ -18,15 +18,15 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
         private readonly RectTransform controlsRectTransform;
         private readonly Rect backgroundButtonRect;
 
-        public event Action<CameraReelResponse, bool> SetPublicRequested;
-        public event Action<CameraReelResponse> ShareToXRequested;
-        public event Action<CameraReelResponse> CopyPictureLinkRequested;
-        public event Action<CameraReelResponse> DownloadRequested;
-        public event Action<CameraReelResponse> DeletePictureRequested;
+        public event Action<CameraReelResponseCompact, bool> SetPublicRequested;
+        public event Action<CameraReelResponseCompact> ShareToXRequested;
+        public event Action<CameraReelResponseCompact> CopyPictureLinkRequested;
+        public event Action<CameraReelResponseCompact> DownloadRequested;
+        public event Action<CameraReelResponseCompact> DeletePictureRequested;
 
         public event Action AnyControlClicked;
 
-        private CameraReelResponse imageData;
+        private CameraReelResponseCompact imageData;
 
         public ContextMenuController(ContextMenuView view)
         {
@@ -148,7 +148,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
         public bool IsOpen() =>
             view.gameObject.activeSelf;
 
-        public void SetImageData(CameraReelResponse cameraReelResponse) =>
+        public void SetImageData(CameraReelResponseCompact cameraReelResponse) =>
             imageData = cameraReelResponse;
 
         public void Dispose()

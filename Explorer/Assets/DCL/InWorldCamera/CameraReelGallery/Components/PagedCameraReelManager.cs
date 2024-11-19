@@ -32,21 +32,21 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
         }
 
 
-        public async UniTask<Dictionary<DateTime, List<CameraReelResponse>>> FetchNextPageAsync(CancellationToken ct)
+        public async UniTask<Dictionary<DateTime, List<CameraReelResponseCompact>>> FetchNextPageAsync(CancellationToken ct)
         {
-            CameraReelResponses response = await cameraReelStorageService.GetScreenshotGalleryAsync(walletAddress, pageSize, currentOffset, ct);
+            CameraReelResponsesCompact response = await cameraReelStorageService.GetCompactScreenshotGalleryAsync(walletAddress, pageSize, currentOffset, ct);
             currentOffset += pageSize;
 
             currentLoadedImages += response.images.Count;
             AllImagesLoaded = currentLoadedImages == totalImages;
 
-            Dictionary<DateTime, List<CameraReelResponse>> elements = new ();
+            Dictionary<DateTime, List<CameraReelResponseCompact>> elements = new ();
             for (int i = 0; i < response.images.Count; i++)
             {
                 DateTime imageBucket = GetImageDateTime(response.images[i]);
 
                 if (!elements.ContainsKey(imageBucket))
-                    elements[imageBucket] = new List<CameraReelResponse>();
+                    elements[imageBucket] = new List<CameraReelResponseCompact>();
 
                 elements[imageBucket].Add(response.images[i]);
             }
@@ -54,8 +54,8 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
             return elements;
         }
 
-        public static DateTime GetImageDateTime(CameraReelResponse image) =>
-            GetDateTimeFromString(image.metadata.dateTime);
+        public static DateTime GetImageDateTime(CameraReelResponseCompact image) =>
+            GetDateTimeFromString(image.dateTime);
 
         public static DateTime GetDateTimeFromString(string epochString)
         {
