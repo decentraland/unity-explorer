@@ -74,6 +74,21 @@ bool CMP_Log(float progress, CMP_DWORD_PTR user1, CMP_DWORD_PTR user2)
     return true;
 }
 
+KernelOptions NewKernelOptionsFromCustomOptions(
+    const CMP_FORMAT cmpFormat,
+    const CMP_CustomOptions &compressOptions)
+{
+    KernelOptions kOpt;
+    memset(&kOpt, 0, sizeof(KernelOptions));
+
+    kOpt.encodeWith = compressOptions.encodeWith;
+    kOpt.format = cmpFormat;
+    kOpt.fquality = compressOptions.fQuality;
+    kOpt.threads = compressOptions.dwnumThreads;
+
+    return kOpt;
+}
+
 int MipSetFrom(const CMP_DWORD width, const CMP_DWORD height, CMIPS *CMips, CMP_BYTE *data, const CMP_DWORD dataSize, CMP_MipSet *mipSet)
 {
     memset(mipSet, 0, sizeof(CMP_MipSet));
@@ -173,14 +188,16 @@ ImageResult texturesfuse_initialize(InitOptions initOptions, context **contextOu
     const char *pluginsPath = initOptions.pluginsPath;
     std::string result = env + pluginsPath;
 
-    if (_putenv(result.c_str()) == 0) {
+    if (_putenv(result.c_str()) == 0)
+    {
         AL_Log("Environment variable AMDCOMPRESS_PLUGINS set successfully.\n");
-    } else {
+    }
+    else
+    {
         AL_Log("Failed to set environment variable");
     }
 #endif
 
-    //Ensure to provide environment variable DCL_PLUGINS_DIR to the plugins path
     CMP_InitFramework();
     PrintStatusLine = Log;
 
@@ -455,46 +472,56 @@ ImageResult texturesfuse_cmp_image_from_memory(
 
     FreeImage_OutputMessageProc(FIF_UNKNOWN, "Encoding with compress option is: %d", compressOptions.encodeWith);
 
-    KernelOptions kOpt;
-    memset(&kOpt, 0, sizeof(KernelOptions));
+    const CMP_FORMAT sourceFormat = CMP_FORMAT_BGRA_8888;
 
-    kOpt.encodeWith = compressOptions.encodeWith;
-    kOpt.format = cmpFormat;
-    kOpt.fquality = compressOptions.fQuality;
-    kOpt.threads = compressOptions.dwnumThreads;
+    if (compressOptions.encodeWith == CMP_Compute_type::CMP_CPU)
+    {
+        CMP_Texture sourceTexture = {0};
+        sourceTexture.dwSize = sizeof(CMP_Texture);
+        sourceTexture.dwWidth = *width;
+        sourceTexture.dwHeight = *height;
+        sourceTexture.dwPitch = 0;
+        sourceTexture.format = sourceFormat;
+        sourceTexture.dwDataSize = bitsLength;
+        sourceTexture.pData = bits;
 
-    CMP_FORMAT sourceFormat = CMP_FORMAT_BGRA_8888;
+        // Set up destination texture
+        CMP_Texture destTexture = {0};
+        destTexture.dwSize = sizeof(CMP_Texture);
+        destTexture.dwWidth = *width;
+        destTexture.dwHeight = *height;
+        destTexture.dwPitch = 0;
+        destTexture.format = cmpFormat;
+        destTexture.dwDataSize = CMP_CalculateBufferSize(&destTexture);
+        destTexture.pData = new CMP_BYTE[destTexture.dwDataSize];
 
-    // CMP_Texture sourceTexture = {0};
-    // sourceTexture.dwSize = sizeof(CMP_Texture);
-    // sourceTexture.dwWidth = *width;
-    // sourceTexture.dwHeight = *height;
-    // sourceTexture.dwPitch = 0;
-    // sourceTexture.format = sourceFormat;
-    // sourceTexture.dwDataSize = bitsLength;
-    // sourceTexture.pData = bits;
+        CMP_CompressOptions options = {0};
+        options.dwSize = sizeof(CMP_CompressOptions);
+        options.fquality = compressOptions.fQuality;
+        options.bDisableMultiThreading = compressOptions.disableMultithreading;
+        options.dwnumThreads = compressOptions.dwnumThreads;
+        options.nEncodeWith = compressOptions.encodeWith;
 
-    // // Set up destination texture (BC5 format)
-    // CMP_Texture destTexture = {0};
-    // destTexture.dwSize = sizeof(CMP_Texture);
-    // destTexture.dwWidth = *width;
-    // destTexture.dwHeight = *height;
-    // destTexture.dwPitch = 0;
-    // destTexture.format = cmpFormat;
-    // destTexture.dwDataSize = CMP_CalculateBufferSize(&destTexture); // Calculate required memory for BC5 compression
-    // destTexture.pData = new CMP_BYTE[destTexture.dwDataSize];
+        auto cmpResult = CMP_ConvertTexture(&sourceTexture, &destTexture, &options, nullptr);
+        FreeImage_Unload(image);
 
-    // // len shouldn't be too long
-    // *outputLength = static_cast<int>(destTexture.dwDataSize);
+        if (cmpResult != CMP_OK)
+        {
+            FreeImage_OutputMessageProc(FIF_UNKNOWN, "Error during decoding CMP: %d", cmpResult);
 
-    // *outputBytes = destTexture.pData;
+            delete[] destTexture.pData;
+            return ErrorBC5;
+        }
 
-    CMP_CompressOptions options = {0};
-    options.dwSize = sizeof(CMP_CompressOptions);
-    options.fquality = compressOptions.fQuality;
-    options.bDisableMultiThreading = compressOptions.disableMultithreading;
-    options.dwnumThreads = compressOptions.dwnumThreads;
-    options.nEncodeWith = compressOptions.encodeWith;
+        *outputBytes = destTexture.pData;
+        *outputLength = static_cast<int>(destTexture.dwDataSize);
+
+        *releaseHandle = context->handles.registerHandle(*outputBytes);
+
+        return Success;
+    }
+
+    KernelOptions kOpt = NewKernelOptionsFromCustomOptions(cmpFormat, compressOptions);
 
     std::unique_ptr<CMIPS> cmip(new CMIPS);
 
@@ -514,26 +541,6 @@ ImageResult texturesfuse_cmp_image_from_memory(
         return ErrorUnknown;
     }
 
-    // std::unique_ptr<CMIPS> cmip(new CMIPS);
-
-    // CMP_ERROR cmpResult = CMP_CreateComputeLibrary(&srcMipSet, &kOpt, cmip.get());
-    // if (cmpResult != CMP_OK)
-    // {
-    //     FreeImage_OutputMessageProc(FIF_UNKNOWN, "Cannot create library CMP: %d", cmpResult);
-    // }
-    // options.format_support_hostEncoder = cmpResult == CMP_OK;
-    // FreeImage_OutputMessageProc(FIF_UNKNOWN, "Linked file for decoding: %d", kOpt.srcfile);
-
-    // cmpResult = CMP_ConvertTexture(&sourceTexture, &destTexture, &options, nullptr);
-
-    // srcMipSet.pData
-
-    // memset(&srcMipSet, 0, sizeof(CMP_MipSet));
-    // if (CMP_LoadTexture(pszSourceFile, &MipSetIn) != CMP_OK) {
-    //     std::printf("Error: Loading source file!\n");
-    //     return -1;
-    //   }
-
     CMP_MipSet dstMipSet = {0};
 
     CMP_ERROR cmpResult = CMP_ProcessTexture(&srcMipSet, &dstMipSet, kOpt, CMP_Log);
@@ -544,7 +551,10 @@ ImageResult texturesfuse_cmp_image_from_memory(
     {
         FreeImage_OutputMessageProc(FIF_UNKNOWN, "Error during decoding CMP: %d", cmpResult);
 
-        // delete[] destTexture.pData; TODO
+        if (dstMipSet.pData)
+        {
+            delete[] dstMipSet.pData;
+        }
         return ErrorBC5;
     }
 

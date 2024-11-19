@@ -652,6 +652,7 @@ add_subdirectory(${COMPRESSATOR_ORIGIN_ROOT}/cmp_core build/cmp_core)
 add_subdirectory(${COMPRESSATOR_ORIGIN_ROOT}/cmp_compressonatorlib build/cmp_compressonatorlib)
 add_subdirectory(${COMPRESSATOR_ORIGIN_ROOT}/cmp_framework build/cmp_framework)
 
+target_link_libraries(texturesfuse CMP_Compressonator) 
 target_link_libraries(texturesfuse CMP_Framework) 
 
 if (NOT TARGET anylog)
