@@ -9,6 +9,7 @@ using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.Input.Component;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.Platforms;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.SceneLoadingScreens.SplashScreen;
@@ -16,6 +17,8 @@ using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using Global.AppArgs;
 using MVC;
+using Plugins.TexturesFuse.TexturesServerWrap.CompressShaders;
+using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using SceneRunner.Debugging;
 using System;
 using System.Linq;
@@ -95,7 +98,18 @@ namespace Global.Dynamic
 #else
                 Environment.GetCommandLineArgs()
 #endif
-                );
+            );
+
+            ITexturesFuse texturesFuse = ITexturesFuse.NewDefault();
+            ICompressShaders compressShaders = new CompressShaders(texturesFuse, IPlatform.DEFAULT);
+
+            if (applicationParametersParser.HasFlag(ICompressShaders.CMD_ARGS))
+            {
+                await compressShaders.WarmUpIfRequiredAsync(ct);
+                IPlatform.DEFAULT.Quit();
+                return;
+            }
+
             ISystemMemoryCap memoryCap = new SystemMemoryCap(MemoryCapMode.MAX_SYSTEM_MEMORY); // we use max memory on the loading screen
 
             settings.ApplyConfig(applicationParametersParser);
@@ -118,7 +132,7 @@ namespace Global.Dynamic
 
                 bool isLoaded;
                 Entity playerEntity = world.Create(new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY));
-                (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugViewsCatalog, playerEntity, memoryCap, ct);
+                (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugViewsCatalog, playerEntity, texturesFuse, memoryCap, ct);
 
                 if (!isLoaded)
                 {

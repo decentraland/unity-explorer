@@ -79,6 +79,7 @@ namespace Global.Dynamic
             PluginSettingsContainer globalPluginSettingsContainer,
             DebugViewsCatalog debugViewsCatalog,
             Entity playerEntity,
+            ITexturesFuse texturesFuse,
             ISystemMemoryCap memoryCap,
             CancellationToken ct
         ) =>
@@ -87,7 +88,7 @@ namespace Global.Dynamic
                 bootstrapContainer.AssetsProvisioner,
                 bootstrapContainer.ReportHandlingSettings,
                 appArgs,
-                ITexturesFuse.NewDefault(),
+                texturesFuse,
                 debugViewsCatalog,
                 globalPluginSettingsContainer,
                 bootstrapContainer.DiagnosticsContainer,
