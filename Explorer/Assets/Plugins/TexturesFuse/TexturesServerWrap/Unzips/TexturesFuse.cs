@@ -26,17 +26,16 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
         public TexturesFuse(NativeMethods.InitOptions initOptions, ITexturesFuse.IOptions options, bool debug)
         {
             this.options = options;
-            sampler = CustomSampler.Create("ProcessImage");
+            sampler = CustomSampler.Create("ProcessImage")!;
 
             initOptions = initOptions.NewWithMode(options.Mode);
             initOptions.outputMessage = debug ? OutputMessage : null;
 
-            //TODO for build too.
-            if (Application.isEditor)
-            {
-                initOptions.pluginsPath = Path.Combine(Directory.GetCurrentDirectory(), "plugins");
-                ReportHub.Log(ReportCategory.TEXTURES, $"TexturesFuse, Plugins Path is set to - {initOptions.pluginsPath}");
-            }
+            initOptions.pluginsPath = Application.isEditor
+                ? Path.Combine(Directory.GetCurrentDirectory(), "plugins")
+                : "plugins";
+
+            ReportHub.Log(ReportCategory.TEXTURES, $"TexturesFuse, Plugins Path is set to - {initOptions.pluginsPath}");
 
             var result = NativeMethods.TexturesFuseInitialize(initOptions, out context);
 
