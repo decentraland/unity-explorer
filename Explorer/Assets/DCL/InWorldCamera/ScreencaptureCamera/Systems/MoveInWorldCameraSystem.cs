@@ -1,5 +1,6 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
+using Cinemachine.Utility;
 using DCL.CharacterCamera;
 using DCL.CharacterCamera.Components;
 using DCL.Diagnostics;
@@ -39,12 +40,32 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
         {
             if (World.TryGet(camera, out InWorldCamera inWorldCamera))
             {
-                Translate(t, inWorldCamera.FollowTarget);
-                Rotate(t, inWorldCamera.FollowTarget.transform);
+                // Translate(t, inWorldCamera.FollowTarget);
+                // Rotate(t, inWorldCamera.FollowTarget.transform);
+
+                HandleFreeCameraMovement(cinemachinePreset, t);
 
                 cinemachinePreset.Brain.ManualUpdate(); // Update the brain manually
             }
         }
+
+        private void HandleFreeCameraMovement(ICinemachinePreset cinemachinePreset, float deltaTime)
+        {
+            var virtualCamera = cinemachinePreset.InWorldCameraData.Camera;
+            var transform = virtualCamera.transform;
+            Vector2 input = inputSchema.Translation.ReadValue<Vector2>();
+
+            Vector3 moveDir = new Vector3(input.x, 0, input.y);
+            moveDir = transform.TransformDirection(moveDir);
+            moveDir.y = inputSchema.Panning.ReadValue<float>();
+            // float speed = input.Sprint ? moveSpeed * 2 : moveSpeed; // Optional: sprint modifier
+
+            axis += Damper.Damp(moveDir - axis, 1f, deltaTime);
+
+            transform.position += axis * (TRANSLATION_SPEED * deltaTime);
+        }
+
+        private Vector3 axis;
 
         private Vector2 currentRotation;
         private Vector2 rotationVelocity;

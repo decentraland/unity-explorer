@@ -59,19 +59,24 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
 
         protected override void Update(float t)
         {
-            if (World.Has<InWorldCamera>(camera) && !cinemachinePreset.Brain.IsBlending && !followTarget.enabled)
-            {
-                var virtualCamera = cinemachinePreset.InWorldCameraData.Camera;
-
-                followTarget.transform.SetPositionAndRotation(virtualCamera.transform.position, virtualCamera.transform.rotation);
-                virtualCamera.Follow = followTarget.transform;
-                followTarget.enabled = true;
-
-                var transposer = virtualCamera.GetCinemachineComponent<CinemachineTransposer>();
-                transposer.m_XDamping = transposer.m_YDamping = transposer.m_ZDamping = 0f;
-                cinemachinePreset.Brain.ManualUpdate();
-                transposer.m_XDamping = transposer.m_YDamping = transposer.m_ZDamping = 1f;
-            }
+            // if (World.Has<InWorldCamera>(camera) && !cinemachinePreset.Brain.IsBlending && !followTarget.enabled)
+            // {
+            //     var virtualCamera = cinemachinePreset.InWorldCameraData.Camera;
+            //
+            //     followTarget.transform.SetPositionAndRotation(virtualCamera.transform.position, virtualCamera.transform.rotation);
+            //     virtualCamera.Follow = followTarget.transform;
+            //     followTarget.enabled = true;
+            //
+            //     var hardLock = virtualCamera.GetCinemachineComponent<CinemachineHardLockToTarget>();
+            //     hardLock.m_Damping = 0f;
+            //     var aim = virtualCamera.GetCinemachineComponent<CinemachineSameAsFollowTarget>();
+            //     aim.m_Damping = 0f;
+            //
+            //     cinemachinePreset.Brain.ManualUpdate();
+            //
+            //     hardLock.m_Damping = 1f;
+            //     aim.m_Damping = 1f;
+            // }
 
             if (inputSchema.ToggleInWorld!.triggered)
             {
@@ -87,10 +92,9 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
             hud.SetActive(false); // TODO (Vit):Temporary solution, will be replaced by MVC
             World.Remove<InWorldCamera>(camera);
 
-            var virtualCamera = cinemachinePreset.InWorldCameraData.Camera;
-
-            virtualCamera.Follow = null;
-            followTarget.enabled = false;
+            // var virtualCamera = cinemachinePreset.InWorldCameraData.Camera;
+            // virtualCamera.Follow = null;
+            // followTarget.enabled = false;
 
             camera.GetCameraComponent(World).Mode = CameraMode.ThirdPerson;
 
