@@ -39,6 +39,7 @@ namespace DCL.MapRenderer.MapLayers.Categories
         private int zoomLevel;
         private float baseZoom;
         private float zoom;
+        private bool arePlacesLoaded;
 
         public CategoryMarkersController(
             IPlacesAPIService placesAPIService,
@@ -62,6 +63,11 @@ namespace DCL.MapRenderer.MapLayers.Categories
 
         public async UniTask InitializeAsync(CancellationToken cancellationToken)
         {
+
+        }
+
+        private async UniTask LoadPlaces(CancellationToken cancellationToken)
+        {
             List<PlacesData.CategoryPlaceData> placesOfCategory = await placesAPIService.GetPlacesByCategoryListAsync(MapLayerUtils.MapLayerToCategory[mapLayer], cancellationToken);
 
             foreach (PlacesData.CategoryPlaceData placeInfo in placesOfCategory)
@@ -82,6 +88,8 @@ namespace DCL.MapRenderer.MapLayers.Categories
                 if (isEnabled)
                     mapCullingController.StartTracking(marker, this);
             }
+
+            arePlacesLoaded = true;
         }
 
         private static bool IsEmptyParcel(PlacesData.CategoryPlaceData sceneInfo) =>
@@ -116,14 +124,16 @@ namespace DCL.MapRenderer.MapLayers.Categories
             return UniTask.CompletedTask;
         }
 
-        public UniTask Enable(CancellationToken cancellationToken)
+        public async UniTask Enable(CancellationToken cancellationToken)
         {
+            if(!arePlacesLoaded)
+                await LoadPlaces(cancellationToken);
+
             foreach (ICategoryMarker marker in markers.Values)
                 mapCullingController.StartTracking(marker, this);
 
             isEnabled = true;
             clusterController.UpdateClusters(zoomLevel, baseZoom, zoom, markers);
-            return UniTask.CompletedTask;
         }
 
         public void ResetToBaseScale()
