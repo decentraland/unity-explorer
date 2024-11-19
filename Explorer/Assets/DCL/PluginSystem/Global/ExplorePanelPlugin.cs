@@ -40,6 +40,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using DCL.Chat.MessageBus;
+using DCL.Clipboard;
 using DCL.EventsApi;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Settings.Settings;
@@ -94,6 +95,7 @@ namespace DCL.PluginSystem.Global
         private readonly WorldVolumeMacBus worldVolumeMacBus;
         private readonly IEventsApiService eventsApiService;
         private readonly IUserCalendar userCalendar;
+        private readonly ISystemClipboard clipboard;
 
         private NavmapController? navmapController;
         private SettingsController? settingsController;
@@ -144,7 +146,8 @@ namespace DCL.PluginSystem.Global
             ISystemMemoryCap systemMemoryCap,
             WorldVolumeMacBus worldVolumeMacBus,
             IEventsApiService eventsApiService,
-            IUserCalendar userCalendar)
+            IUserCalendar userCalendar,
+            ISystemClipboard clipboard)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -184,6 +187,7 @@ namespace DCL.PluginSystem.Global
             this.worldVolumeMacBus = worldVolumeMacBus;
             this.eventsApiService = eventsApiService;
             this.userCalendar = userCalendar;
+            this.clipboard = clipboard;
         }
 
         public void Dispose()
@@ -255,13 +259,16 @@ namespace DCL.PluginSystem.Global
                 navmapView.HistoryRecordPanelView, navmapView.PlacesAndEventsPanelView.SearchFiltersView,
                 inputBlock, searchHistory, navmapBus);
 
+            SharePlacesAndEventsContextMenuController shareContextMenu = new (navmapView.PlacesAndEventsPanelView.ShareContextMenuView,
+                navmapView.WorldsWarningNotificationView, clipboard, webBrowser);
+
             placeInfoPanelController = new PlaceInfoPanelController(navmapView.PlacesAndEventsPanelView.PlaceInfoPanelView,
                 webRequestController, placesAPIService, mapPathEventBus, navmapBus, chatMessagesBus, eventsApiService,
-                eventElementsPool);
+                eventElementsPool, shareContextMenu);
 
             eventInfoPanelController = new EventInfoPanelController(navmapView.PlacesAndEventsPanelView.EventInfoPanelView,
                 webRequestController, navmapBus, chatMessagesBus, eventsApiService, eventScheduleElementsPool,
-                userCalendar);
+                userCalendar, shareContextMenu);
 
             placesAndEventsPanelController = new PlacesAndEventsPanelController(navmapView.PlacesAndEventsPanelView,
                 searchBarController, searchResultPanelController, placeInfoPanelController, eventInfoPanelController);

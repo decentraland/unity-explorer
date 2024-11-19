@@ -7,15 +7,14 @@ using DCL.MapRenderer.MapCameraController;
 using DCL.MapRenderer.MapLayers;
 using DCL.MapRenderer.MapLayers.Pins;
 using DCL.MapRenderer.MapLayers.PlayerMarker;
+using DCL.Navmap.FilterPanel;
 using DCL.PlacesAPIService;
 using DCL.UI;
 using ECS;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using System.Threading;
-using DCL.Navmap.FilterPanel;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Utility;
@@ -43,7 +42,6 @@ namespace DCL.Navmap
         private readonly Mouse mouse;
         private readonly StringBuilder parcelTitleStringBuilder = new ();
         private readonly NavmapLocationController navmapLocationController;
-        private readonly NavmapFilterPanelController navmapFilterPanelController;
         private readonly EventInfoCardController eventInfoCardController;
 
         private CancellationTokenSource? animationCts;
@@ -101,10 +99,10 @@ namespace DCL.Navmap
 
             navmapView.DestinationInfoElement.gameObject.SetActive(false);
 
-            navmapView.WorldsWarningNotificationView.SetText(WORLDS_WARNING_MESSAGE);
+            navmapView.WorldsWarningNotificationView.Text.text = WORLDS_WARNING_MESSAGE;
             navmapView.WorldsWarningNotificationView.Hide();
             mouse = InputSystem.GetDevice<Mouse>();
-            navmapFilterPanelController = new NavmapFilterPanelController(mapRenderer, navmapView.LocationView.FiltersPanel);
+            NavmapFilterPanelController navmapFilterPanelController = new (mapRenderer, navmapView.LocationView.FiltersPanel);
             navmapLocationController = new NavmapLocationController(navmapView.LocationView, world, playerEntity, navmapFilterPanelController);
         }
 
@@ -210,15 +208,12 @@ namespace DCL.Navmap
         public void Animate(int triggerId)
         {
             navmapView.PanelAnimator.SetTrigger(triggerId);
-            navmapView.HeaderAnimator.SetTrigger(triggerId);
         }
 
         public void ResetAnimator()
         {
             navmapView.PanelAnimator.Rebind();
-            navmapView.HeaderAnimator.Rebind();
             navmapView.PanelAnimator.Update(0);
-            navmapView.HeaderAnimator.Update(0);
         }
 
         public RectTransform GetRectTransform() =>
