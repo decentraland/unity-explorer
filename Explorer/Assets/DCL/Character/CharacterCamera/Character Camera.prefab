@@ -453,12 +453,8 @@ MonoBehaviour:
     <Camera>k__BackingField: {fileID: 4997933640858091397}
     <Speed>k__BackingField: 10
     <DefaultPosition>k__BackingField: {x: 0, y: 25, z: 0}
-  inWorldCameraData:
-    <Camera>k__BackingField: {fileID: 8825178219543001937}
-    <Speed>k__BackingField: 5
-    <DefaultPosition>k__BackingField: {x: 0, y: 10, z: 0}
   shoulderChangeSpeed: 4
-  <DefaultCameraMode>k__BackingField: 2
+  <DefaultCameraMode>k__BackingField: 1
   <Brain>k__BackingField: {fileID: 1924827267997815873}
 --- !u!1 &2902897560403827600
 GameObject:
