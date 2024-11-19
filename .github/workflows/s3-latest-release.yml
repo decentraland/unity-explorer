@@ -9,7 +9,13 @@ on:
 jobs:
   check-latest-release:
     runs-on: ubuntu-latest
+    container:
+      image: amazon/aws-cli:latest
     steps:
+      - name: Install jq and curl
+        run: |
+          yum update -y
+          yum install -y jq curl
       - name: Check if current release is the latest release
         id: check_latest
         run: |
@@ -43,6 +49,4 @@ jobs:
             "version": "${{ env.latest_release }}",
             "timestamp": "'$(date -u +"%Y-%m-%dT%H:%M:%SZ")'"
           }' > latest.json
-          cat latest.json
-          aws s3 ls s3://$EXPLORER_TEAM_S3_BUCKET/
-          aws s3 cp latest.json s3://$EXPLORER_TEAM_S3_BUCKET/$RELEASES_PATH/latest.json --debug
+          aws s3 cp latest.json s3://$EXPLORER_TEAM_S3_BUCKET/$RELEASES_PATH/latest.json
