@@ -175,7 +175,7 @@ namespace Global.Dynamic
             return loadResult;
         }
 
-        private static async UniTask<Result> ExecuteTeleportOperations(TeleportParams teleportParams, ITeleportOperation[] ops, string logOpName, int attemptsCount, CancellationToken ct)
+        private static async UniTask<Result> ExecuteTeleportOperationsAsync(TeleportParams teleportParams, ITeleportOperation[] ops, string logOpName, int attemptsCount, CancellationToken ct)
         {
             var lastOpResult = Result.SuccessResult();
 
@@ -228,7 +228,7 @@ namespace Global.Dynamic
                     CurrentDestinationRealm = realm, ParentReport = parentLoadReport, LoadingStatus = loadingStatus
                 };
 
-                Result opResult = await ExecuteTeleportOperations(teleportParams, realmChangeOperations, LOG_NAME, MAX_REALM_CHANGE_RETRIES, ct);
+                Result opResult = await ExecuteTeleportOperationsAsync(teleportParams, realmChangeOperations, LOG_NAME, MAX_REALM_CHANGE_RETRIES, ct);
 
                 if (opResult.Success)
                     return opResult;
@@ -239,7 +239,7 @@ namespace Global.Dynamic
                 teleportParams.CurrentDestinationRealm = currentRealm;
                 teleportParams.CurrentDestinationParcel = currentParcel;
 
-                opResult = await ExecuteTeleportOperations(teleportParams, realmChangeOperations, FALLBACK_LOG_NAME, 1, ct);
+                opResult = await ExecuteTeleportOperationsAsync(teleportParams, realmChangeOperations, FALLBACK_LOG_NAME, 1, ct);
 
                 if (!opResult.Success)
                     parentLoadReport.SetProgress(1);
@@ -322,7 +322,7 @@ namespace Global.Dynamic
                     ParentReport = parentLoadReport, CurrentDestinationParcel = parcel, LoadingStatus = loadingStatus
                 };
 
-                Result result = await ExecuteTeleportOperations(teleportParams, teleportInSameRealmOperation, LOG_NAME, 1, ct);
+                Result result = await ExecuteTeleportOperationsAsync(teleportParams, teleportInSameRealmOperation, LOG_NAME, 1, ct);
                 parentLoadReport.SetProgress(1);
                 return result;
             };

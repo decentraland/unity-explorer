@@ -41,7 +41,7 @@ namespace DCL.AsyncLoadReporting
         ///     Translates internals that can throw exceptions into a result free from exceptions
         /// </summary>
         /// <returns></returns>
-        public async UniTask<Status> WaitUntilFinished()
+        public async UniTask<Status> WaitUntilFinishedAsync()
         {
             try { await completionSource.Task; }
             catch (Exception e) { return new Status(e, completionSource.UnsafeGetStatus()); }

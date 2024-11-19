@@ -37,7 +37,7 @@ namespace DCL.SceneLoadingScreens.LoadingScreen
             var loadReport = AsyncLoadProcessReport.Create(timeOut.Token);
 
             // Timeout will fire if the parent cancellation is fired or the operation takes too long
-            async UniTask<Result> ExecuteTimeOutOrCancelled()
+            async UniTask<Result> ExecuteTimeOutOrCancelledAsync()
             {
                 bool isCancelled = await UniTask.Delay(loadingScreenTimeout.Value, cancellationToken: ct).SuppressCancellationThrow();
 
@@ -63,10 +63,10 @@ namespace DCL.SceneLoadingScreens.LoadingScreen
 
             Result? finalResult = null;
 
-            async UniTask WaitForOperationResultOrTimeout()
+            async UniTask WaitForOperationResultOrTimeoutAsync()
             {
                 // one or another
-                (int winArgumentIndex, Result opResult, Result timeoutResult) = await UniTask.WhenAny(ExecuteOperationAsync(), ExecuteTimeOutOrCancelled());
+                (int winArgumentIndex, Result opResult, Result timeoutResult) = await UniTask.WhenAny(ExecuteOperationAsync(), ExecuteTimeOutOrCancelledAsync());
 
                 switch (winArgumentIndex)
                 {
@@ -86,7 +86,7 @@ namespace DCL.SceneLoadingScreens.LoadingScreen
                 }
             }
 
-            async UniTask<Result> ExecuteLoadingScreen()
+            async UniTask<Result> ExecuteLoadingScreenAsync()
             {
                 // The loading screen will be bound via load report 1-to-1 as ExecuteOperationAsync ensures the state of LoadReport:
                 // 1. if the operation has finished -> cancel the loading screen with Fade
@@ -103,7 +103,7 @@ namespace DCL.SceneLoadingScreens.LoadingScreen
                 return result;
             }
 
-            await UniTask.WhenAll(WaitForOperationResultOrTimeout(), ExecuteLoadingScreen());
+            await UniTask.WhenAll(WaitForOperationResultOrTimeoutAsync(), ExecuteLoadingScreenAsync());
             return finalResult!.Value;
         }
     }

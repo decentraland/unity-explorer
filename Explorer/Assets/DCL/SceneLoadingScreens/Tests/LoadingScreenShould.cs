@@ -102,7 +102,7 @@ namespace DCL.SceneLoadingScreens.Tests
                .Returns<UniTask>(async info =>
                 {
                     mvcCancellation = info.Arg<ShowCommand<SceneLoadingScreenView, SceneLoadingScreenController.Params>>()
-                                          .InputData.AsyncLoadProcessReport.WaitUntilFinished()
+                                          .InputData.AsyncLoadProcessReport.WaitUntilFinishedAsync()
                                           .ToCancellationToken();
 
                     await UniTask.Never(mvcCancellation).SuppressCancellationThrow();
@@ -143,7 +143,7 @@ namespace DCL.SceneLoadingScreens.Tests
                .Returns<UniTask>(async info =>
                 {
                     mvcCancellation = info.Arg<ShowCommand<SceneLoadingScreenView, SceneLoadingScreenController.Params>>()
-                                          .InputData.AsyncLoadProcessReport.WaitUntilFinished()
+                                          .InputData.AsyncLoadProcessReport.WaitUntilFinishedAsync()
                                           .ToCancellationToken();
                     await UniTask.Never(mvcCancellation).SuppressCancellationThrow();
                 });
@@ -185,7 +185,7 @@ namespace DCL.SceneLoadingScreens.Tests
             IMVCManager? sub = Substitute.For<IMVCManager>();
 
             sub.ShowAsync(Arg.Any<ShowCommand<SceneLoadingScreenView, SceneLoadingScreenController.Params>>(), Arg.Any<CancellationToken>())
-               .Returns(info => info.Arg<ShowCommand<SceneLoadingScreenView, SceneLoadingScreenController.Params>>().InputData.AsyncLoadProcessReport.WaitUntilFinished());
+               .Returns(info => info.Arg<ShowCommand<SceneLoadingScreenView, SceneLoadingScreenController.Params>>().InputData.AsyncLoadProcessReport.WaitUntilFinishedAsync());
 
             return sub;
         }

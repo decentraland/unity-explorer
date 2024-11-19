@@ -119,7 +119,7 @@ namespace DCL.SceneLoadingScreens
             RotateTipsOverTimeAsync(tips.Duration, tipsRotationCancellationToken.Token).Forget();
 
             // Waiting should spin no longer than the async load report itself, the life-cycle of the load report is secured by the upper layer
-            var combinedToken = inputData.AsyncLoadProcessReport.WaitUntilFinished().ToCancellationToken(ct);
+            var combinedToken = inputData.AsyncLoadProcessReport.WaitUntilFinishedAsync().ToCancellationToken(ct);
 
             await UniTask.WhenAll(WaitUntilWorldIsLoadedAsync(0.8f, combinedToken), WaitTimeThresholdAsync(0.2f, combinedToken))
                          .SuppressCancellationThrow();
