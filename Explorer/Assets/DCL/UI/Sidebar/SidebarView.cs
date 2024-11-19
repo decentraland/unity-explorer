@@ -26,6 +26,7 @@ namespace DCL.UI.Sidebar
         [field: SerializeField] public PersistentEmoteWheelOpenerView PersistentEmoteWheelOpener { get; private set; }
         [field: SerializeField] internal Button mapButton { get; private set; }
         [field: SerializeField] internal Button backpackButton { get; private set; }
+        [field: SerializeField] internal Button cameraReelButton { get; private set; }
         [field: SerializeField] internal Button settingsButton { get; private set; }
 
 
