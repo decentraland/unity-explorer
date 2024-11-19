@@ -71,6 +71,7 @@ namespace DCL.Character.CharacterCamera.Systems
         }
 
         [Query]
+        [None(typeof(InWorldCamera.ScreencaptureCamera.InWorldCamera))]
         private void HandleZooming(ref CameraComponent cameraComponent, ref CameraInput input, in CursorComponent cursorComponent)
         {
             if (cursorComponent.IsOverUI)
@@ -84,6 +85,7 @@ namespace DCL.Character.CharacterCamera.Systems
         }
 
         [Query]
+        [None(typeof(InWorldCamera.ScreencaptureCamera.InWorldCamera))]
         private void HandleSwitchState(ref CameraComponent cameraComponent, in CameraInput input)
         {
             if (!input.SwitchState)
@@ -94,6 +96,7 @@ namespace DCL.Character.CharacterCamera.Systems
         }
 
         [Query]
+        [None(typeof(InWorldCamera.ScreencaptureCamera.InWorldCamera))]
         private void HandleFreeFlyState(ref CameraComponent cameraComponent, in CameraInput input)
         {
             if (input.SetFreeFly)
@@ -101,6 +104,7 @@ namespace DCL.Character.CharacterCamera.Systems
         }
 
         [Query]
+        [None(typeof(InWorldCamera.ScreencaptureCamera.InWorldCamera))]
         private void HandleOffset([Data] float dt, ref CameraComponent cameraComponent, ref ICinemachinePreset cinemachinePreset, in CameraInput input, in CursorComponent cursorComponent)
         {
             if (cameraComponent.Mode is not (CameraMode.DroneView or CameraMode.ThirdPerson))
@@ -200,6 +204,7 @@ namespace DCL.Character.CharacterCamera.Systems
                             cinemachinePreset.ThirdPersonCameraData.Camera.m_YAxis.Value = (90 + cinemachinePreset.FirstPersonCameraData.POV.m_VerticalAxis.Value) / 180f;
                             break;
                         case CameraMode.DroneView:
+                        case CameraMode.InWorld:
                             cinemachinePreset.ThirdPersonCameraData.Camera.m_Transitions.m_InheritPosition = true;
                             break;
                     }
@@ -214,7 +219,14 @@ namespace DCL.Character.CharacterCamera.Systems
                     break;
                 case CameraMode.Free:
                     SetActiveCamera(ref cameraState, cinemachinePreset.FreeCameraData.Camera);
-                    SetDefaultFreeCameraPosition(in cinemachinePreset);
+
+                    // take previous position from third person camera
+                    Vector3 tpPos = cinemachinePreset.ThirdPersonCameraData.Camera.transform.position;
+                    cinemachinePreset.FreeCameraData.Camera.transform.position = tpPos + cinemachinePreset.FreeCameraData.DefaultPosition;
+
+                    // copy POV
+                    cinemachinePreset.FreeCameraData.POV.m_HorizontalAxis.Value = cinemachinePreset.ThirdPersonCameraData.Camera.m_XAxis.Value;
+                    cinemachinePreset.FreeCameraData.POV.m_VerticalAxis.Value = cinemachinePreset.ThirdPersonCameraData.Camera.m_YAxis.Value;
                     break;
             }
 
@@ -294,17 +306,6 @@ namespace DCL.Character.CharacterCamera.Systems
             }
 
             return false;
-        }
-
-        private static void SetDefaultFreeCameraPosition(in ICinemachinePreset preset)
-        {
-            // take previous position from third person camera
-            Vector3 tpPos = preset.ThirdPersonCameraData.Camera.transform.position;
-            preset.FreeCameraData.Camera.transform.position = tpPos + preset.FreeCameraData.DefaultPosition;
-
-            // copy POV
-            preset.FreeCameraData.POV.m_HorizontalAxis.Value = preset.ThirdPersonCameraData.Camera.m_XAxis.Value;
-            preset.FreeCameraData.POV.m_VerticalAxis.Value = preset.ThirdPersonCameraData.Camera.m_YAxis.Value;
         }
 
         private CameraMode GetCurrentCameraMode(CinemachineVirtualCameraBase currentCamera, ICinemachinePreset cinemachinePreset)

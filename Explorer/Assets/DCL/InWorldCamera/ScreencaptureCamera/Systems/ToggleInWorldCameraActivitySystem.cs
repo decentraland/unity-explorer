@@ -52,10 +52,27 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
             followTarget.height = 0.2f;
 
             followTarget.enabled = false;
+
+            cinemachinePreset = World.Get<ICinemachinePreset>(camera);
+            cinemachinePreset.InWorldCameraData.Camera.enabled = false;
         }
 
         protected override void Update(float t)
         {
+            if (World.Has<InWorldCamera>(camera) && !cinemachinePreset.Brain.IsBlending && !followTarget.enabled)
+            {
+                var virtualCamera = cinemachinePreset.InWorldCameraData.Camera;
+
+                followTarget.transform.SetPositionAndRotation(virtualCamera.transform.position, virtualCamera.transform.rotation);
+                virtualCamera.Follow = followTarget.transform;
+                followTarget.enabled = true;
+
+                var transposer = virtualCamera.GetCinemachineComponent<CinemachineTransposer>();
+                transposer.m_XDamping = transposer.m_YDamping = transposer.m_ZDamping = 0f;
+                cinemachinePreset.Brain.ManualUpdate();
+                transposer.m_XDamping = transposer.m_YDamping = transposer.m_ZDamping = 1f;
+            }
+
             if (inputSchema.ToggleInWorld!.triggered)
             {
                 if (World.Has<InWorldCamera>(camera))
@@ -65,6 +82,24 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
             }
         }
 
+        private void DisableCamera()
+        {
+            hud.SetActive(false); // TODO (Vit):Temporary solution, will be replaced by MVC
+            World.Remove<InWorldCamera>(camera);
+
+            var virtualCamera = cinemachinePreset.InWorldCameraData.Camera;
+
+            virtualCamera.Follow = null;
+            followTarget.enabled = false;
+
+            camera.GetCameraComponent(World).Mode = CameraMode.ThirdPerson;
+
+            SingleInstanceEntity inputMap = World.CacheInputMap();
+            ref InputMapComponent inputMapComponent = ref inputMap.GetInputMapComponent(World);
+            inputMapComponent.UnblockInput(InputMapComponent.Kind.PLAYER);
+            inputMapComponent.BlockInput(InputMapComponent.Kind.IN_WORLD_CAMERA);
+        }
+
         private void EnableCamera()
         {
             hud.SetActive(true); // TODO (Vit):Temporary solution, will be replaced by MVC
@@ -72,42 +107,33 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
             World.Add(camera, new InWorldCamera { FollowTarget = followTarget });
 
             ref CameraComponent cameraComponent = ref camera.GetCameraComponent(World);
-            cameraComponent.Mode = CameraMode.InWorld;
 
             ref CinemachineCameraState cameraState = ref World.Get<CinemachineCameraState>(camera);
-
             cameraState.CurrentCamera.enabled = false;
+
+            if(cameraComponent.Mode == CameraMode.FirstPerson)
+            {
+                    cinemachinePreset.InWorldCameraData.Camera.m_Transitions.m_InheritPosition = false;
+
+                    Vector3 lookDirection = cinemachinePreset.FirstPersonCameraData.Camera.transform.forward;
+                    Vector3 behindPosition = cinemachinePreset.FirstPersonCameraData.Camera.transform.position - (lookDirection * 3f) + (Vector3.up * 0.5f);
+                    cinemachinePreset.InWorldCameraData.Camera.transform.position = behindPosition;
+
+                    cinemachinePreset.InWorldCameraData.POV.m_HorizontalAxis.Value = cinemachinePreset.FirstPersonCameraData.POV.m_HorizontalAxis.Value;
+                    cinemachinePreset.InWorldCameraData.POV.m_VerticalAxis.Value = cinemachinePreset.FirstPersonCameraData.POV.m_VerticalAxis.Value;
+            }
+            else
+                cinemachinePreset.InWorldCameraData.Camera.m_Transitions.m_InheritPosition = true;
+
+            cameraComponent.Mode = CameraMode.InWorld;
             cameraState.CurrentCamera = cinemachinePreset.InWorldCameraData.Camera;
             cameraState.CurrentCamera.enabled = true;
-
-            cameraState.CurrentCamera.Follow = followTarget.transform;
-            cameraState.CurrentCamera.LookAt = followTarget.transform;
-
-            followTarget.transform.position = cinemachinePreset.ThirdPersonCameraData.Camera.transform.position;
-            followTarget.transform.rotation = cinemachinePreset.ThirdPersonCameraData.Camera.transform.rotation;
-            followTarget.enabled = true;
-
-            // copy Position and POV
-            cinemachinePreset.InWorldCameraData.Camera.transform.position = cinemachinePreset.ThirdPersonCameraData.Camera.transform.position;
-            cinemachinePreset.InWorldCameraData.Camera.transform.rotation = cinemachinePreset.ThirdPersonCameraData.Camera.transform.rotation;
 
             // Input block
             SingleInstanceEntity inputMap = World.CacheInputMap();
             ref InputMapComponent inputMapComponent = ref inputMap.GetInputMapComponent(World);
             inputMapComponent.UnblockInput(InputMapComponent.Kind.IN_WORLD_CAMERA);
             inputMapComponent.BlockInput(InputMapComponent.Kind.PLAYER);
-        }
-
-        private void DisableCamera()
-        {
-            hud.SetActive(false); // TODO (Vit):Temporary solution, will be replaced by MVC
-            World.Remove<InWorldCamera>(camera);
-            camera.GetCameraComponent(World).Mode = CameraMode.ThirdPerson;
-
-            SingleInstanceEntity inputMap = World.CacheInputMap();
-            ref InputMapComponent inputMapComponent = ref inputMap.GetInputMapComponent(World);
-            inputMapComponent.UnblockInput(InputMapComponent.Kind.PLAYER);
-            inputMapComponent.BlockInput(InputMapComponent.Kind.IN_WORLD_CAMERA);
         }
     }
 }
