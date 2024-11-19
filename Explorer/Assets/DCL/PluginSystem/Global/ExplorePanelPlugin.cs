@@ -46,7 +46,6 @@ using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Settings.Settings;
-using Global.AppArgs;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Audio;
@@ -69,7 +68,6 @@ namespace DCL.PluginSystem.Global
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly ICameraReelStorageService cameraReelStorageService;
         private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
-        private readonly IAppArgs appArgs;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IWearableStorage wearableStorage;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
@@ -101,6 +99,8 @@ namespace DCL.PluginSystem.Global
         private readonly ISystemMemoryCap systemMemoryCap;
         private readonly WorldVolumeMacBus worldVolumeMacBus;
 
+        private readonly bool includeCameraReel;
+
         private NavmapController? navmapController;
         private SettingsController? settingsController;
         private BackpackSubPlugin? backpackSubPlugin;
@@ -115,7 +115,6 @@ namespace DCL.PluginSystem.Global
             IWeb3IdentityCache web3IdentityCache,
             ICameraReelStorageService cameraReelStorageService,
             ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
-            IAppArgs appArgs,
             IDecentralandUrlsSource decentralandUrlsSource,
             IWearableStorage wearableStorage,
             ICharacterPreviewFactory characterPreviewFactory,
@@ -147,7 +146,8 @@ namespace DCL.PluginSystem.Global
             Entity playerEntity,
             IChatMessagesBus chatMessagesBus,
             ISystemMemoryCap systemMemoryCap,
-            WorldVolumeMacBus worldVolumeMacBus)
+            WorldVolumeMacBus worldVolumeMacBus,
+            bool includeCameraReel)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -157,7 +157,6 @@ namespace DCL.PluginSystem.Global
             this.web3IdentityCache = web3IdentityCache;
             this.cameraReelStorageService = cameraReelStorageService;
             this.cameraReelScreenshotsStorage = cameraReelScreenshotsStorage;
-            this.appArgs = appArgs;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.wearableStorage = wearableStorage;
             this.characterPreviewFactory = characterPreviewFactory;
@@ -190,6 +189,7 @@ namespace DCL.PluginSystem.Global
             this.chatMessagesBus = chatMessagesBus;
             this.systemMemoryCap = systemMemoryCap;
             this.worldVolumeMacBus = worldVolumeMacBus;
+            this.includeCameraReel = includeCameraReel;
         }
 
         public void Dispose()
@@ -248,7 +248,6 @@ namespace DCL.PluginSystem.Global
             await navmapController.InitializeAssetsAsync(assetsProvisioner, ct);
             await backpackSubPlugin.InitializeAsync(settings.BackpackSettings, explorePanelView.GetComponentInChildren<BackpackView>(), ct);
 
-            bool includeCameraReel = appArgs.HasCameraReelsFlag() || Application.isEditor;
             inputHandler = new ExplorePanelInputHandler(dclInput, mvcManager, includeCameraReel);
 
             CameraReelView cameraReelView = explorePanelView.GetComponentInChildren<CameraReelView>();

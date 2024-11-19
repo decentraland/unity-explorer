@@ -98,8 +98,6 @@ namespace Global.Dynamic
 {
     public class DynamicWorldContainer : DCLWorldContainer<DynamicWorldSettings>
     {
-        private const string PARAMS_FORCED_EMOTES_FLAG = "self-force-emotes";
-
         private ECSReloadScene? reloadSceneController;
         private LocalSceneDevelopmentController? localSceneDevelopmentController;
         private IWearablesProvider? wearablesProvider;
@@ -392,7 +390,8 @@ namespace Global.Dynamic
                 dynamicWorldParams.AppParameters,
                 bootstrapContainer.DebugSettings,
                 staticContainer.PortableExperiencesController,
-                container.RoomHub
+                container.RoomHub,
+                bootstrapContainer.DiagnosticsContainer
             );
 
             var worldInfoHub = new LocationBasedWorldInfoHub(
@@ -468,6 +467,8 @@ namespace Global.Dynamic
             ICameraReelImagesMetadataDatabase cameraReelImagesMetadataDatabase = new CameraReelImagesMetadataRemoteDatabase(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
             ICameraReelScreenshotsStorage cameraReelScreenshotsStorage = new CameraReelS3BucketScreenshotsStorage(staticContainer.WebRequestsContainer.WebRequestController);
             CameraReelRemoteStorageService cameraReelStorageService = new CameraReelRemoteStorageService(cameraReelImagesMetadataDatabase, cameraReelScreenshotsStorage);
+
+            bool includeCameraReel = appArgs.HasFlag(AppArgsFlags.CAMERA_REEL) || Application.isEditor;
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
@@ -547,7 +548,6 @@ namespace Global.Dynamic
                     identityCache,
                     cameraReelStorageService,
                     cameraReelStorageService,
-                    appArgs,
                     bootstrapContainer.DecentralandUrlsSource,
                     wearableCatalog,
                     characterPreviewFactory,
@@ -579,7 +579,8 @@ namespace Global.Dynamic
                     playerEntity,
                     container.ChatMessagesBus,
                     staticContainer.MemoryCap,
-                    bootstrapContainer.WorldVolumeMacBus
+                    bootstrapContainer.WorldVolumeMacBus,
+                    includeCameraReel
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
@@ -647,7 +648,7 @@ namespace Global.Dynamic
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);
 
-            if (appArgs.HasCameraReelsFlag() || Application.isEditor)
+            if (includeCameraReel)
                 globalPlugins.Add(new InWorldCameraPlugin(dclInput, assetsProvisioner, selfProfile, staticContainer.RealmData, playerEntity, placesAPIService, staticContainer.CharacterContainer.CharacterObject, coroutineRunner, cameraReelStorageService));
 
             if (dynamicWorldParams.EnableAnalytics)
@@ -694,7 +695,7 @@ namespace Global.Dynamic
 
         private static void ParseParamsForcedEmotes(IAppArgs appParams, ref List<URN> parsedEmotes)
         {
-            if (appParams.TryGetValue(PARAMS_FORCED_EMOTES_FLAG, out string? csv) && !string.IsNullOrEmpty(csv))
+            if (appParams.TryGetValue(AppArgsFlags.FORCED_EMOTES, out string? csv) && !string.IsNullOrEmpty(csv))
                 parsedEmotes.AddRange(csv.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(emote => new URN(emote)));
         }
     }
