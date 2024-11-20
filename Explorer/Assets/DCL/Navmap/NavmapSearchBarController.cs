@@ -83,16 +83,16 @@ namespace DCL.Navmap
             view.clearSearchButton.onClick.RemoveAllListeners();
         }
 
-        public async UniTask SearchAndShowAsync(string text, NavmapSearchPlaceFilter filter, NavmapSearchPlaceSorting sorting, CancellationToken ct)
+        public async UniTask DoDefaultSearch(CancellationToken ct)
         {
-            currentSearchText = text;
-            currentPlaceFilter = filter;
-            currentPlaceSorting = sorting;
-            searchFiltersView.Toggle(sorting);
-            searchFiltersView.Toggle(filter);
-            view.inputField.SetTextWithoutNotify(text);
+            currentSearchText = string.Empty;
+            currentPlaceFilter = NavmapSearchPlaceFilter.All;
+            currentPlaceSorting = NavmapSearchPlaceSorting.MostActive;
+            searchFiltersView.Toggle(currentPlaceFilter);
+            searchFiltersView.Toggle(currentPlaceSorting);
+            view.inputField.SetTextWithoutNotify(currentSearchText);
 
-            await navmapBus.SearchForPlaceAsync(currentSearchText, currentPlaceFilter, currentPlaceSorting, ct);
+            await navmapBus.SearchForPlaceAsync(currentPlaceFilter, currentPlaceSorting, ct);
         }
 
         public void SetInputText(string text) =>

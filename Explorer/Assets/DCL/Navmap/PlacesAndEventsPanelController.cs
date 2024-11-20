@@ -49,9 +49,7 @@ namespace DCL.Navmap
 
             searchPlacesCancellationToken = searchPlacesCancellationToken.SafeRestart();
 
-            searchBarController.SearchAndShowAsync("",
-                                    NavmapSearchPlaceFilter.All, NavmapSearchPlaceSorting.MostActive,
-                                    searchPlacesCancellationToken.Token)
+            searchBarController.DoDefaultSearch(searchPlacesCancellationToken.Token)
                                .Forget();
         }
 
