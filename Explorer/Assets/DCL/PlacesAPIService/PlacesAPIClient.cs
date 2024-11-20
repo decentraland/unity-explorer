@@ -257,7 +257,7 @@ namespace DCL.PlacesAPIService
                                       .WithCustomExceptionAsync(static exc => new PlacesAPIException(exc, "Error setting place favorite:"));
         }
 
-        public async UniTask RatePlace(bool? isUpvote, string placeUUID, CancellationToken ct)
+        public async UniTask RatePlaceAsync(bool? isUpvote, string placeUUID, CancellationToken ct)
         {
             string url = baseURL + "/{0}/likes";
             const string LIKE_PAYLOAD = "{\"like\": true}";

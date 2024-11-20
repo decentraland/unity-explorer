@@ -138,10 +138,10 @@ namespace DCL.Navmap
             UIAudioEventsBus.Instance.SendPlayAudioEvent(view.OnShowAudio);
 
             cts = new CancellationTokenSource();
-            FetchAndSetupPlaceInfo(parcel).Forget();
+            FetchAndSetupPlaceInfoAsync(parcel).Forget();
         }
 
-        private async UniTaskVoid FetchAndSetupPlaceInfo(Vector2Int parcel)
+        private async UniTaskVoid FetchAndSetupPlaceInfoAsync(Vector2Int parcel)
         {
             try
             {

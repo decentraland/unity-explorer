@@ -49,6 +49,9 @@ namespace DCL.Navmap
             commands.Push(command);
         }
 
+        public async UniTask SearchForPlaceAsync(NavmapSearchPlaceFilter filter, NavmapSearchPlaceSorting sorting, CancellationToken ct) =>
+            await SearchForPlaceAsync(string.Empty, filter, sorting, ct);
+
         public async UniTask SearchForPlaceAsync(string place, NavmapSearchPlaceFilter filter, NavmapSearchPlaceSorting sorting,
             CancellationToken ct)
         {

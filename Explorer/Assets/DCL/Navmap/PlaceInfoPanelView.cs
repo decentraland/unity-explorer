@@ -108,6 +108,9 @@ namespace DCL.Navmap
         [field: SerializeField]
         public GameObject EventsTabSelected { get; private set; }
 
+        [field: SerializeField]
+        public GameObject EmptyEventsContainer { get; private set; }
+
         [Serializable]
         public struct AppearsOnCategory
         {

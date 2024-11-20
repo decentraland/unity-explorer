@@ -7,7 +7,7 @@ namespace CommunicationData.URLHelpers
     {
         private readonly StringBuilder stringBuilder = new ();
 
-        private byte parametersCount;
+        private ushort parametersCount;
 
         public URLDomain? URLDomain { get; private set; }
         public URLPath? URLPath { get; private set; }
