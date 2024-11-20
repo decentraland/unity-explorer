@@ -6,6 +6,7 @@ namespace DCL.Platforms
         {
             Windows,
             Mac,
+            Linux
         }
 
         Kind CurrentPlatform();

@@ -62,6 +62,16 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
 
         public static ITexturesFuse NewDefault(IOptions? options = null, int? workersCount = null)
         {
+            if (IPlatform.DEFAULT.Is(IPlatform.Kind.Linux))
+            {
+                ReportHub.Log(
+                    ReportCategory.TEXTURES,
+                    "Native ITexturesFuse is not supported on Linux, using managed implementation instead."
+                );
+
+                return NewTestInstance();
+            }
+
             var init = NativeMethods.InitOptions.NewDefault();
 
             if (options == null)
@@ -104,7 +114,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
         {
             return new PooledTexturesFuse(
                 () => new ManagedTexturesFuse(),
-                3
+                1
             );
         }
     }
