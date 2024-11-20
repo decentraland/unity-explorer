@@ -9,7 +9,8 @@ namespace DCL.Navmap
 {
     public class NavmapCommandBus : INavmapBus
     {
-        public delegate INavmapCommand SearchPlaceFactory(string search, NavmapSearchPlaceFilter filter, NavmapSearchPlaceSorting sorting);
+        public delegate INavmapCommand SearchPlaceFactory(string search, NavmapSearchPlaceFilter filter, NavmapSearchPlaceSorting sorting,
+            Action<IReadOnlyList<PlacesData.PlaceInfo>> callback);
         public delegate INavmapCommand ShowPlaceInfoFactory(PlacesData.PlaceInfo placeInfo);
         public delegate INavmapCommand ShowEventInfoFactory(EventDTO @event, PlacesData.PlaceInfo? place = null);
 
@@ -20,6 +21,7 @@ namespace DCL.Navmap
 
         public event Action<PlacesData.PlaceInfo>? OnJumpIn;
         public event Action<PlacesData.PlaceInfo>? OnDestinationSelected;
+        public event Action<IReadOnlyList<PlacesData.PlaceInfo>>? OnPlaceSearched;
         public event Action<string?>? OnFilterByCategory;
 
         public NavmapCommandBus(SearchPlaceFactory searchPlaceFactory,
@@ -55,7 +57,7 @@ namespace DCL.Navmap
         public async UniTask SearchForPlaceAsync(string place, NavmapSearchPlaceFilter filter, NavmapSearchPlaceSorting sorting,
             CancellationToken ct)
         {
-            INavmapCommand command = searchPlaceFactory.Invoke(place, filter, sorting);
+            INavmapCommand command = searchPlaceFactory.Invoke(place, filter, sorting, OnSearchPlacePerformed);
 
             await command.ExecuteAsync(ct);
 
@@ -89,5 +91,8 @@ namespace DCL.Navmap
 
         public void FilterByCategory(string? category) =>
             OnFilterByCategory?.Invoke(category);
+
+        private void OnSearchPlacePerformed(IReadOnlyList<PlacesData.PlaceInfo> places) =>
+            OnPlaceSearched?.Invoke(places);
     }
 }
