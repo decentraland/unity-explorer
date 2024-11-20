@@ -75,8 +75,8 @@ namespace DCL.InWorldCamera.CameraReelGallery
             IWebBrowser webBrowser,
             IDecentralandUrlsSource decentralandUrlsSource,
             IExplorePanelEscapeAction explorePanelEscapeAction,
-            OptionButtonView optionButtonView = null,
-            ContextMenuView contextMenuView = null)
+            OptionButtonView? optionButtonView = null,
+            ContextMenuView? contextMenuView = null)
         {
             this.view = view;
             this.cameraReelStorageService = cameraReelStorageService;
@@ -106,7 +106,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
             {
                 this.contextMenuController.SetPublicRequested += (cameraReelRes, publicFlag) =>
                 {
-                    async UniTask SetPublicFlagAsync()
+                    async UniTaskVoid SetPublicFlagAsync()
                     {
                         try
                         {
