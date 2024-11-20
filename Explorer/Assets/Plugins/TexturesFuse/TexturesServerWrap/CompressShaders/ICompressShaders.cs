@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Platforms;
 using System.IO;
 using System.Threading;
 using UnityEngine;
@@ -15,7 +16,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.CompressShaders
 
         static string ShadersDir()
         {
-            char ps = Path.PathSeparator;
+            char ps = IPlatform.DEFAULT.Is(IPlatform.Kind.Windows) ? '\\' : '/';
 
             return Application.isEditor
                 ? Path.Combine(Directory.GetCurrentDirectory(), $"Assets{ps}StreamingAssets{ps}plugins")
