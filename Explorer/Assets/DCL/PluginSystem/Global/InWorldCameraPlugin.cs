@@ -15,7 +15,6 @@ using UnityEngine;
 using UnityEngine.AddressableAssets;
 using Utility;
 using static DCL.PluginSystem.Global.InWorldCameraPlugin;
-using Object = UnityEngine.Object;
 
 namespace DCL.PluginSystem.Global
 {
@@ -29,8 +28,8 @@ namespace DCL.PluginSystem.Global
         private readonly IPlacesAPIService placesAPIService;
         private readonly ICharacterObject characterObject;
         private readonly ICoroutineRunner coroutineRunner;
+        private readonly InWorldCameraFactory factory;
 
-        private ProvidedAsset<GameObject> hudPrefab;
         private ScreenRecorder recorder;
         private GameObject hud;
         private ScreenshotMetadataBuilder metadataBuilder;
@@ -46,46 +45,26 @@ namespace DCL.PluginSystem.Global
             this.placesAPIService = placesAPIService;
             this.characterObject = characterObject;
             this.coroutineRunner = coroutineRunner;
+
+            factory = new InWorldCameraFactory();
         }
 
         public async UniTask InitializeAsync(InWorldCameraSettings settings, CancellationToken ct)
         {
-            hudPrefab = await assetsProvisioner.ProvideMainAssetAsync(settings.ScreencaptureHud, ct);
-
-            hudPrefab.Value.SetActive(false);
-            hud = Object.Instantiate(hudPrefab.Value, Vector3.zero, Quaternion.identity);
+            hud = factory.CreateScreencaptureHud(await assetsProvisioner.ProvideMainAssetAsync(settings.ScreencaptureHud, ct));
 
             recorder = new ScreenRecorder(hud.GetComponent<RectTransform>());
             metadataBuilder = new ScreenshotMetadataBuilder(selfProfile, characterObject.Controller, realmData, placesAPIService);
         }
 
-        private CharacterController CreateFollowTarget()
-        {
-            var followTarget = new GameObject("InWorldCameraFollowTarget").AddComponent<CharacterController>();
-            followTarget.gameObject.layer = LayerMask.NameToLayer("CharacterController");
-
-            followTarget.slopeLimit = 0;
-            followTarget.stepOffset = 0;
-            followTarget.skinWidth = 0.01f;
-
-            followTarget.minMoveDistance = 0;
-            followTarget.center = Vector3.zero;
-            followTarget.radius = 0.1f;
-            followTarget.height = 0.2f;
-
-            followTarget.enabled = false;
-
-            return followTarget;
-        }
-
         public void Dispose()
         {
-            hudPrefab.Dispose();
+            factory.Dispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            ToggleInWorldCameraActivitySystem.InjectToWorld(ref builder, input.InWorldCamera, hud, CreateFollowTarget());
+            ToggleInWorldCameraActivitySystem.InjectToWorld(ref builder, input.InWorldCamera, hud, factory.CreateFollowTarget());
             EmitInWorldCameraInputSystem.InjectToWorld(ref builder, input.InWorldCamera);
             MoveInWorldCameraSystem.InjectToWorld(ref builder, characterObject.Controller.transform);
             CaptureScreenshotSystem.InjectToWorld(ref builder, recorder, hud.GetComponent<ScreenshotHudView>(), playerEntity, metadataBuilder, coroutineRunner);

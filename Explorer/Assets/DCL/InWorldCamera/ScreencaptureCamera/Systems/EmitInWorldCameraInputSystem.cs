@@ -39,6 +39,8 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
                 input.Aim = inputSchema.Rotation.ReadValue<Vector2>();
                 input.MouseIsDragging = inputSchema.MouseDrag.IsPressed();
                 input.Zoom = inputSchema.Zoom.ReadValue<float>();
+
+                input.TakeScreenshot = inputSchema.Screenshot.triggered;
             }
         }
     }

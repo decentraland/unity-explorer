@@ -2,9 +2,8 @@
 
 namespace DCL.InWorldCamera.ScreencaptureCamera
 {
-    public struct InWorldCamera
-    {
-    }
+    public struct InWorldCamera { }
+    public struct CameraTarget { public CharacterController Value; }
 
     public struct InWorldCameraInput
     {
@@ -17,11 +16,6 @@ namespace DCL.InWorldCamera.ScreencaptureCamera
         public float Zoom;
 
         public bool TakeScreenshot;
-    }
-
-    public struct CameraTarget
-    {
-        public CharacterController Value;
     }
 
     public struct CameraDampedFOV
