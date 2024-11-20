@@ -10,6 +10,8 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.CompressShaders
     {
         const string CMD_ARGS = "compile-shaders-and-exit";
 
+        const string PLUGINS_PATH = "plugins";
+
         bool AreReady();
 
         UniTask WarmUpAsync(CancellationToken token);
@@ -19,7 +21,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.CompressShaders
             char ps = IPlatform.DEFAULT.Is(IPlatform.Kind.Windows) ? '\\' : '/';
 
             return Application.isEditor
-                ? Path.Combine(Directory.GetCurrentDirectory(), $"Assets{ps}StreamingAssets{ps}plugins")
+                ? $"Assets{ps}StreamingAssets{ps}plugins"
                 : $"Decentraland_Data{ps}StreamingAssets{ps}plugins";
         }
     }
