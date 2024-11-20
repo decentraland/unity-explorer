@@ -10,7 +10,7 @@ using UnityEngine;
 namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
 {
     [UpdateInGroup(typeof(CameraGroup))]
-    [UpdateAfter(typeof(ToggleInWorldCameraActivitySystem))]
+    [UpdateAfter(typeof(EmitInWorldCameraInputSystem))]
     [LogCategory(ReportCategory.IN_WORLD_CAMERA)]
     public partial class MoveInWorldCameraSystem : BaseUnityLoopSystem
     {
@@ -31,17 +31,15 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
         private const float MIN_VERTICAL_ANGLE = -90f;
         private const float MAX_VERTICAL_ANGLE = 90f;
 
-        private readonly DCLInput.InWorldCameraActions inputSchema;
         private readonly Transform playerTransform;
 
         private SingleInstanceEntity camera;
         private ICinemachinePreset cinemachinePreset;
         private CinemachineVirtualCamera virtualCamera;
 
-        public MoveInWorldCameraSystem(World world, Transform playerTransform, DCLInput.InWorldCameraActions inputSchema) : base(world)
+        public MoveInWorldCameraSystem(World world, Transform playerTransform) : base(world)
         {
             this.playerTransform = playerTransform;
-            this.inputSchema = inputSchema;
         }
 
         public override void Initialize()
@@ -55,20 +53,20 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
         {
             if (World.Has<InWorldCamera>(camera))
             {
+                var input = World.Get<InWorldCameraInput>(camera);
                 var followTarget = World.Get<CameraTarget>(camera).Value;
-                Translate(t, followTarget);
 
-                if (!inputSchema.MouseDrag.IsPressed())
-                    Rotate(t, followTarget.transform, ref World.Get<CameraDampedAim>(camera));
+                Translate(followTarget, input, t);
 
-                Zoom(t, ref World.Get<CameraDampedFOV>(camera));
+                if (!input.MouseIsDragging)
+                    Rotate(ref World.Get<CameraDampedAim>(camera), followTarget.transform, input.Aim, t);
+
+                Zoom(ref World.Get<CameraDampedFOV>(camera), input.Zoom, t);
             }
         }
 
-        private void Zoom(float deltaTime, ref CameraDampedFOV fov)
+        private void Zoom(ref CameraDampedFOV fov, float zoomInput, float deltaTime)
         {
-            float zoomInput = inputSchema.Zoom.ReadValue<float>();
-
             if (!Mathf.Approximately(zoomInput, 0f))
                 fov.Target -= zoomInput * FOV_CHANGE_SPEED * deltaTime;
 
@@ -78,10 +76,8 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
             virtualCamera.m_Lens.FieldOfView = fov.Current;
         }
 
-        private void Rotate(float deltaTime, Transform target, ref CameraDampedAim aim)
+        private void Rotate(ref CameraDampedAim aim, Transform target, Vector2 lookInput, float deltaTime)
         {
-            Vector2 lookInput = inputSchema.Rotation.ReadValue<Vector2>();
-
             Vector2 targetRotation = lookInput * ROTATION_SPEED;
             aim.Current = Vector2.SmoothDamp(aim.Current, targetRotation, ref aim.Velocity, ROTATION_DAMPING);
 
@@ -97,34 +93,30 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
             target.localRotation = Quaternion.Euler(newVerticalAngle, target.eulerAngles.y, 0f);
         }
 
-        private void Translate(float deltaTime, CharacterController followTarget)
+        private void Translate(CharacterController followTarget, InWorldCameraInput input, float deltaTime)
         {
-            Vector3 moveVector = GetMoveVectorFromInput(followTarget.transform, TRANSLATION_SPEED, deltaTime);
+            Vector3 moveVector = GetMoveVectorFromInput(followTarget.transform, TRANSLATION_SPEED, deltaTime, input);
 
-            if (inputSchema.MouseDrag.IsPressed())
-                moveVector += GetMousePanDelta(deltaTime, followTarget);
+            if (input.MouseIsDragging)
+                moveVector += GetMousePanDelta(deltaTime, followTarget, input.Aim);
 
             Vector3 restrictedMovement = RestrictedMovementBySemiSphere(playerTransform.position, followTarget.transform, moveVector, MAX_DISTANCE_FROM_PLAYER);
             followTarget.Move(restrictedMovement);
         }
 
-        private Vector3 GetMoveVectorFromInput(Transform target, float moveSpeed, float deltaTime)
+        private Vector3 GetMoveVectorFromInput(Transform target, float moveSpeed, float deltaTime, InWorldCameraInput input)
         {
-            Vector2 input = inputSchema.Translation.ReadValue<Vector2>();
+            Vector3 forward = target.forward.normalized * input.Translation.y;
+            Vector3 horizontal = target.right.normalized * input.Translation.x;
+            Vector3 vertical = target.up.normalized * input.Panning;
 
-            Vector3 forward = target.forward.normalized * input.y;
-            Vector3 horizontal = target.right.normalized * input.x;
-            Vector3 vertical = target.up.normalized * inputSchema.Panning.ReadValue<float>();
-
-            float speed = inputSchema.Run.IsPressed() ? moveSpeed * RUN_SPEED_MULTIPLAYER : moveSpeed;
+            float speed = input.IsRunning ? moveSpeed * RUN_SPEED_MULTIPLAYER : moveSpeed;
 
             return (forward + horizontal + vertical) * (speed * deltaTime);
         }
 
-        private Vector3 GetMousePanDelta(float deltaTime, CharacterController followTarget)
+        private Vector3 GetMousePanDelta(float deltaTime, CharacterController followTarget, Vector2 mouseDelta)
         {
-            Vector2 mouseDelta = inputSchema.Rotation.ReadValue<Vector2>();
-
             var dragMove = new Vector3(mouseDelta.x, mouseDelta.y, 0);
             dragMove = followTarget.transform.TransformDirection(dragMove);
             return dragMove * (MOUSE_TRANSLATION_SPEED * deltaTime);

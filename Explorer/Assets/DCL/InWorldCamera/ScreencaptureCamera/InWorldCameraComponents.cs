@@ -6,6 +6,19 @@ namespace DCL.InWorldCamera.ScreencaptureCamera
     {
     }
 
+    public struct InWorldCameraInput
+    {
+        public Vector2 Translation;
+        public float Panning;
+        public bool IsRunning;
+
+        public Vector2 Aim;
+        public bool MouseIsDragging;
+        public float Zoom;
+
+        public bool TakeScreenshot;
+    }
+
     public struct CameraTarget
     {
         public CharacterController Value;

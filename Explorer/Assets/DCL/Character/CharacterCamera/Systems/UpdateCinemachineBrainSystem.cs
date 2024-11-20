@@ -23,7 +23,7 @@ namespace DCL.Character.CharacterCamera.Systems
         [None(typeof(CameraLookAtIntent))]
         private void ManualBrainUpdateQuery(ref ICinemachinePreset cinemachinePreset)
         {
-            // We update brain manually
+            // We update brain manually in order to handle properly CameraLookAtIntent component
             cinemachinePreset.Brain.ManualUpdate();
         }
     }

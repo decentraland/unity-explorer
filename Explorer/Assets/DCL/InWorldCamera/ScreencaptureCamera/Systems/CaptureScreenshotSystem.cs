@@ -23,20 +23,18 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
         private readonly ScreenRecorder recorder;
         private readonly ScreenshotMetadataBuilder metadataBuilder;
         private readonly ScreenshotHudView hud;
-        private readonly DCLInput.InWorldCameraActions inputSchema;
 
         private readonly ICoroutineRunner coroutineRunner;
         private readonly CancellationTokenSource ctx;
         private readonly Entity playerEntity;
 
-        private SingleInstanceEntity cameraEntity;
+        private SingleInstanceEntity camera;
 
-        public CaptureScreenshotSystem(World world, ScreenRecorder recorder, DCLInput.InWorldCameraActions inputSchema, ScreenshotHudView hud,
+        public CaptureScreenshotSystem(World world, ScreenRecorder recorder, ScreenshotHudView hud,
             Entity playerEntity, ScreenshotMetadataBuilder metadataBuilder, ICoroutineRunner coroutineRunner)
             : base(world)
         {
             this.recorder = recorder;
-            this.inputSchema = inputSchema;
             this.hud = hud;
             this.playerEntity = playerEntity;
             this.metadataBuilder = metadataBuilder;
@@ -47,7 +45,7 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
 
         public override void Initialize()
         {
-            cameraEntity = World.CacheCamera();
+            camera = World.CacheCamera();
         }
 
         public override void Dispose()
@@ -72,7 +70,7 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
                 return;
             }
 
-            if (recorder.State == RecordingState.IDLE && inputSchema.Screenshot.triggered && World.Has<InWorldCamera>(cameraEntity))
+            if (recorder.State == RecordingState.IDLE && World.TryGet<InWorldCameraInput>(camera, out var input) && input.TakeScreenshot)
             {
                 hud.Canvas.enabled = false;  // TODO (Vit): This is a temporary solution for debug puproses. Will be replaced by proper MVC
                 coroutineRunner.StartCoroutine(recorder.CaptureScreenshot());
@@ -82,7 +80,7 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
 
         private void CollectMetadata()
         {
-            GetScaledFrustumPlanes(cameraEntity.GetCameraComponent(World).Camera, ScreenRecorder.FRAME_SCALE, out var frustumPlanes);
+            GetScaledFrustumPlanes(camera.GetCameraComponent(World).Camera, ScreenRecorder.FRAME_SCALE, out var frustumPlanes);
 
             metadataBuilder.Init(sceneParcel: World.Get<CharacterTransform>(playerEntity).Position.ToParcel(), frustumPlanes);
 
