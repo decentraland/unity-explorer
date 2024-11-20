@@ -10,6 +10,7 @@ using DCL.Input;
 using DCL.Input.Component;
 using ECS.Abstract;
 using UnityEngine;
+using static DCL.Input.Component.InputMapComponent;
 
 namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
 {
@@ -28,63 +29,36 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
 
         private readonly DCLInput.InWorldCameraActions inputSchema;
         private readonly GameObject hud;
+        private readonly CharacterController followTarget;
 
         private SingleInstanceEntity camera;
-        private ICinemachinePreset cinemachinePreset;
-        private CharacterController followTarget;
+        private SingleInstanceEntity inputMap;
 
-        public ToggleInWorldCameraActivitySystem(World world, DCLInput.InWorldCameraActions inputSchema, GameObject hud) : base(world)
+        private ICinemachinePreset cinemachinePreset;
+        private CinemachineVirtualCamera inWorldVirtualCamera;
+
+        public ToggleInWorldCameraActivitySystem(World world, DCLInput.InWorldCameraActions inputSchema, GameObject hud, CharacterController followTarget) : base(world)
         {
             this.inputSchema = inputSchema;
             this.hud = hud;
+            this.followTarget = followTarget;
         }
 
         public override void Initialize()
         {
             camera = World.CacheCamera();
+            inputMap = World.CacheInputMap();
 
             cinemachinePreset = World.Get<ICinemachinePreset>(camera);
-            cinemachinePreset.InWorldCameraData.Camera.enabled = false;
 
-            followTarget = new GameObject("InWorldCameraFollowTarget").AddComponent<CharacterController>();
-            followTarget.gameObject.layer = LayerMask.NameToLayer("CharacterController");
-
-            followTarget.slopeLimit = 0;
-            followTarget.stepOffset = 0;
-            followTarget.skinWidth = 0.01f;
-
-            followTarget.minMoveDistance = 0;
-            followTarget.center = Vector3.zero;
-            followTarget.radius = 0.1f;
-            followTarget.height = 0.2f;
-
-            followTarget.enabled = false;
-
-            cinemachinePreset = World.Get<ICinemachinePreset>(camera);
-            cinemachinePreset.InWorldCameraData.Camera.enabled = false;
+            inWorldVirtualCamera = cinemachinePreset.InWorldCameraData.Camera;
+            inWorldVirtualCamera.enabled = false;
         }
 
         protected override void Update(float t)
         {
-            if (World.Has<InWorldCamera>(camera) && !cinemachinePreset.Brain.IsBlending && !followTarget.enabled)
-            {
-                var virtualCamera = cinemachinePreset.InWorldCameraData.Camera;
-
-                followTarget.transform.SetPositionAndRotation(virtualCamera.transform.position, virtualCamera.transform.rotation);
-                virtualCamera.Follow = followTarget.transform;
-                virtualCamera.LookAt = followTarget.transform;
-                followTarget.enabled = true;
-
-                var hardLock = virtualCamera.GetCinemachineComponent<CinemachineHardLockToTarget>();
-                hardLock.m_Damping = 0f;
-                var aim = virtualCamera.GetCinemachineComponent<CinemachineSameAsFollowTarget>();
-                aim.m_Damping = 0f;
-
-                cinemachinePreset.Brain.ManualUpdate();
-
-                hardLock.m_Damping = TRANSLATION_DAMPING;
-                aim.m_Damping = AIM_DAMPING;
-            }
+            if (World.Has<InWorldCamera>(camera) && BlendingHasFinished())
+                SetFollowTarget();
 
             if (inputSchema.ToggleInWorld!.triggered)
             {
@@ -93,23 +67,38 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
                 else
                     EnableCamera();
             }
+
+            bool BlendingHasFinished() =>
+                !followTarget.enabled && !cinemachinePreset.Brain.IsBlending;
+        }
+
+        private void SetFollowTarget()
+        {
+            followTarget.transform.SetPositionAndRotation(inWorldVirtualCamera.transform.position, inWorldVirtualCamera.transform.rotation);
+            inWorldVirtualCamera.Follow = followTarget.transform;
+            inWorldVirtualCamera.LookAt = followTarget.transform;
+            followTarget.enabled = true;
+
+            CinemachineHardLockToTarget? hardLock = inWorldVirtualCamera.GetCinemachineComponent<CinemachineHardLockToTarget>();
+            CinemachineSameAsFollowTarget? aim = inWorldVirtualCamera.GetCinemachineComponent<CinemachineSameAsFollowTarget>();
+
+            hardLock.m_Damping = 0f;
+            aim.m_Damping = 0f;
+
+            cinemachinePreset.Brain.ManualUpdate();
+
+            hardLock.m_Damping = TRANSLATION_DAMPING;
+            aim.m_Damping = AIM_DAMPING;
         }
 
         private void DisableCamera()
         {
             hud.SetActive(false); // TODO (Vit):Temporary solution, will be replaced by MVC
+
             World.Remove<InWorldCamera>(camera);
 
-            cinemachinePreset.InWorldCameraData.Camera.Follow = null;
-            cinemachinePreset.InWorldCameraData.Camera.LookAt = null;
-            followTarget.enabled = false;
-
-            camera.GetCameraComponent(World).Mode = CameraMode.ThirdPerson;
-
-            SingleInstanceEntity inputMap = World.CacheInputMap();
-            ref InputMapComponent inputMapComponent = ref inputMap.GetInputMapComponent(World);
-            inputMapComponent.UnblockInput(InputMapComponent.Kind.PLAYER);
-            inputMapComponent.BlockInput(InputMapComponent.Kind.IN_WORLD_CAMERA);
+            SwitchToThirdPersonCamera();
+            SwitchCameraInput(to: Kind.PLAYER);
         }
 
         private void EnableCamera()
@@ -118,38 +107,69 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
 
             World.Add(camera, new InWorldCamera { FollowTarget = followTarget });
 
+            SwitchToInWorldCamera();
+            SwitchCameraInput(to: Kind.IN_WORLD_CAMERA);
+        }
+
+        private void SwitchToThirdPersonCamera()
+        {
+            inWorldVirtualCamera.Follow = null;
+            inWorldVirtualCamera.LookAt = null;
+            followTarget.enabled = false;
+            camera.GetCameraComponent(World).Mode = CameraMode.ThirdPerson;
+        }
+
+        private void SwitchToInWorldCamera()
+        {
             ref CameraComponent cameraComponent = ref camera.GetCameraComponent(World);
 
             ref CinemachineCameraState cameraState = ref World.Get<CinemachineCameraState>(camera);
             cameraState.CurrentCamera.enabled = false;
 
-            if(cameraComponent.Mode == CameraMode.FirstPerson)
+            SetCameraTransition(cameraComponent.Mode);
+
+            cameraState.CurrentCamera = inWorldVirtualCamera;
+            cameraState.CurrentCamera.enabled = true;
+            cameraComponent.Mode = CameraMode.InWorld;
+        }
+
+        private void SetCameraTransition(CameraMode currentCameraMode)
+        {
+            if (currentCameraMode == CameraMode.FirstPerson)
             {
-                    cinemachinePreset.InWorldCameraData.Camera.m_Transitions.m_InheritPosition = false;
-
-                    Vector3 lookDirection = cinemachinePreset.FirstPersonCameraData.Camera.transform.forward;
-                    Vector3 behindPosition = cinemachinePreset.FirstPersonCameraData.Camera.transform.position - (lookDirection * BEHIND_DIRECTION_OFFSET) + behindUpOffset;
-
-                    cinemachinePreset.InWorldCameraData.Camera.transform.position = behindPosition;
-                    cinemachinePreset.InWorldCameraData.Camera.transform.rotation = cinemachinePreset.FirstPersonCameraData.Camera.transform.rotation;
-
-                    cinemachinePreset.InWorldCameraData.Camera.m_Lens.FieldOfView = cinemachinePreset.FirstPersonCameraData.Camera.m_Lens.FieldOfView;
+                inWorldVirtualCamera.m_Transitions.m_InheritPosition = false;
+                inWorldVirtualCamera.transform.position = CalculateBehindPosition();
+                inWorldVirtualCamera.transform.rotation = cinemachinePreset.FirstPersonCameraData.Camera.transform.rotation;
+                inWorldVirtualCamera.m_Lens.FieldOfView = cinemachinePreset.FirstPersonCameraData.Camera.m_Lens.FieldOfView;
             }
             else
             {
-                cinemachinePreset.InWorldCameraData.Camera.m_Transitions.m_InheritPosition = true;
-                cinemachinePreset.InWorldCameraData.Camera.m_Lens.FieldOfView = cinemachinePreset.ThirdPersonCameraData.Camera.m_Lens.FieldOfView;
+                inWorldVirtualCamera.m_Transitions.m_InheritPosition = true;
+                inWorldVirtualCamera.m_Lens.FieldOfView = cinemachinePreset.ThirdPersonCameraData.Camera.m_Lens.FieldOfView;
             }
+        }
 
-            cameraComponent.Mode = CameraMode.InWorld;
-            cameraState.CurrentCamera = cinemachinePreset.InWorldCameraData.Camera;
-            cameraState.CurrentCamera.enabled = true;
+        private Vector3 CalculateBehindPosition()
+        {
+            Vector3 lookDirection = cinemachinePreset.FirstPersonCameraData.Camera.transform.forward;
+            return cinemachinePreset.FirstPersonCameraData.Camera.transform.position - (lookDirection * BEHIND_DIRECTION_OFFSET) + behindUpOffset;
+        }
 
-            // Input block
-            SingleInstanceEntity inputMap = World.CacheInputMap();
+        private void SwitchCameraInput(Kind to)
+        {
             ref InputMapComponent inputMapComponent = ref inputMap.GetInputMapComponent(World);
-            inputMapComponent.UnblockInput(InputMapComponent.Kind.IN_WORLD_CAMERA);
-            inputMapComponent.BlockInput(InputMapComponent.Kind.PLAYER);
+
+            switch (to)
+            {
+                case Kind.IN_WORLD_CAMERA:
+                    inputMapComponent.UnblockInput(Kind.IN_WORLD_CAMERA);
+                    inputMapComponent.BlockInput(Kind.PLAYER);
+                    break;
+                case Kind.PLAYER:
+                    inputMapComponent.UnblockInput(Kind.PLAYER);
+                    inputMapComponent.BlockInput(Kind.IN_WORLD_CAMERA);
+                    break;
+            }
         }
     }
 }

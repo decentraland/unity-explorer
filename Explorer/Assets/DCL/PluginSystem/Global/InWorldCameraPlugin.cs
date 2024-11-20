@@ -59,6 +59,25 @@ namespace DCL.PluginSystem.Global
             metadataBuilder = new ScreenshotMetadataBuilder(selfProfile, characterObject.Controller, realmData, placesAPIService);
         }
 
+        private CharacterController CreateFollowTarget()
+        {
+            var followTarget = new GameObject("InWorldCameraFollowTarget").AddComponent<CharacterController>();
+            followTarget.gameObject.layer = LayerMask.NameToLayer("CharacterController");
+
+            followTarget.slopeLimit = 0;
+            followTarget.stepOffset = 0;
+            followTarget.skinWidth = 0.01f;
+
+            followTarget.minMoveDistance = 0;
+            followTarget.center = Vector3.zero;
+            followTarget.radius = 0.1f;
+            followTarget.height = 0.2f;
+
+            followTarget.enabled = false;
+
+            return followTarget;
+        }
+
         public void Dispose()
         {
             hudPrefab.Dispose();
@@ -66,7 +85,7 @@ namespace DCL.PluginSystem.Global
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            ToggleInWorldCameraActivitySystem.InjectToWorld(ref builder, input.InWorldCamera, hud);
+            ToggleInWorldCameraActivitySystem.InjectToWorld(ref builder, input.InWorldCamera, hud, CreateFollowTarget());
             MoveInWorldCameraSystem.InjectToWorld(ref builder, characterObject.Controller.transform, input.InWorldCamera);
             CaptureScreenshotSystem.InjectToWorld(ref builder, recorder, input.InWorldCamera, hud.GetComponent<ScreenshotHudView>(), playerEntity, metadataBuilder, coroutineRunner);
         }
