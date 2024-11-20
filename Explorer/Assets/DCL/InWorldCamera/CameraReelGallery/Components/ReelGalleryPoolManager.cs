@@ -28,9 +28,9 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
                     return new ReelThumbnailController(view, cameraReelScreenshotsStorageService);
                 },
                 thumbnail =>
-                    thumbnail.OnPoolGet(),
+                    thumbnail.PoolGet(),
                 thumbnail =>
-                    thumbnail.OnPoolRelease(unusedThumbnailPoolObjectParent.transform),
+                    thumbnail.PoolRelease(unusedThumbnailPoolObjectParent.transform),
                 thumbnail =>
                 {
                     GameObject.Destroy(thumbnail.view.gameObject);

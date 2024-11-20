@@ -27,8 +27,8 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
         {
             this.view = view;
             this.cameraReelScreenshotsStorage = cameraReelScreenshotsStorageService;
-            this.view.PointerEnter += OnPointerEnter;
-            this.view.PointerExit += OnPointerExit;
+            this.view.PointerEnter += PointerEnter;
+            this.view.PointerExit += PointerExit;
         }
 
         public void Setup(CameraReelResponseCompact cameraReelData, OptionButtonController optionsButton)
@@ -44,7 +44,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
             LoadImageAsync(loadImageCts.Token).Forget();
         }
 
-        private async UniTask LoadImageAsync(CancellationToken token)
+        private async UniTaskVoid LoadImageAsync(CancellationToken token)
         {
             view.loadingBrightView.StartLoadingAnimation(view.thumbnailImage.gameObject);
 
@@ -68,14 +68,14 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
             loadImageCts.SafeCancelAndDispose();
         }
 
-        public void OnPoolGet()
+        public void PoolGet()
         {
             view.gameObject.SetActive(true);
             view.thumbnailImage.enabled = true;
             view.thumbnailImage.sprite = null;
         }
 
-        public void OnPoolRelease(Transform parent)
+        public void PoolRelease(Transform parent)
         {
             view.transform.SetParent(parent, false);
             view.gameObject.SetActive(false);
@@ -98,14 +98,14 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
             loadImageCts.SafeCancelAndDispose();
         }
 
-        private void OnPointerEnter()
+        private void PointerEnter()
         {
             view.transform.DOScale(Vector3.one * view.scaleFactorOnHover, view.scaleAnimationDuration);
             optionButton?.Show(CameraReelResponse, view.optionButtonContainer.transform, view.optionButtonOffset);
             view.outline.SetActive(true);
         }
 
-        private void OnPointerExit()
+        private void PointerExit()
         {
             if (optionButton != null)
             {
