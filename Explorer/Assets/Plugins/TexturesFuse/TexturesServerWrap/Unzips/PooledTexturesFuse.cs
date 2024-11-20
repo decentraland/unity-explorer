@@ -12,7 +12,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
     internal class PooledTexturesFuse : ITexturesFuse
     {
         private readonly IReadOnlyList<ITexturesFuse> uniqueUnzips;
-        private readonly TimeSpan timeout = TimeSpan.FromSeconds(15);
+        private readonly TimeSpan timeout = TimeSpan.FromSeconds(70);
         private readonly ConcurrentQueue<ITexturesFuse> workers;
 
         public PooledTexturesFuse(Func<ITexturesFuse> ctor, int count) : this(
