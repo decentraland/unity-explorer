@@ -176,6 +176,7 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
                 marker.OnBecameInvisible();
             }
 
+            clusterController.Disable();
             isEnabled = false;
 
             return UniTask.CompletedTask;

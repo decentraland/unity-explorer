@@ -161,6 +161,7 @@ namespace DCL.MapRenderer.MapLayers.Favorites
                 mapCullingController.StopTracking(marker);
                 marker.OnBecameInvisible();
             }
+            clusterController.Disable();
 
             isEnabled = false;
 
