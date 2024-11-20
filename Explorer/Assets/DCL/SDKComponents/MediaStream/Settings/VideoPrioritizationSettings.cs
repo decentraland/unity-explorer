@@ -64,26 +64,26 @@ namespace DCL.SDKComponents.MediaStream.Settings
         /// <summary>
         /// Gets the weight of the 'size in screen of the video renderers' factor in the calculation of video priorities.
         /// </summary>
-        public float SizeInScreenWeight { get => sizeInScreenWeight; }
+        public float SizeInScreenWeight => sizeInScreenWeight;
 
         /// <summary>
         /// Gets the weight of the 'distance from the camera to the video renderers' factor in the calculation of video priorities.
         /// </summary>
-        public float DistanceWeight { get => distanceWeight; }
+        public float DistanceWeight => distanceWeight;
 
         /// <summary>
         /// Gets the weight of the 'angle of the camera with respect the video renderers' factor in the calculation of video priorities.
         /// </summary>
-        public float AngleWeight { get => angleWeight; }
+        public float AngleWeight => angleWeight;
 
         /// <summary>
         /// Gets a normalized value that determines which videos will be paused, without being prioritized, when their size in screen is below it.
         /// </summary>
-        public float MinimumSizeLimit { get => minimumSizeLimit; }
+        public float MinimumSizeLimit => minimumSizeLimit;
 
         /// <summary>
         /// Gets a value that determines which videos will be paused, without being prioritized, when their distance to the camera is above it.
         /// </summary>
-        public float MaximumDistanceLimit { get => maximumDistanceLimit; }
+        public float MaximumDistanceLimit => maximumDistanceLimit;
     }
 }

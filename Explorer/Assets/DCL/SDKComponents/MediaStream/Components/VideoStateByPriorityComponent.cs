@@ -21,12 +21,12 @@ namespace DCL.SDKComponents.MediaStream
         /// <summary>
         /// The entity that has the MediaPlayer.
         /// </summary>
-        public Entity Entity;
+        public readonly Entity Entity;
 
         /// <summary>
         /// Half of the size of the mesh renderer (or mesh renderer group that consume the same video texture).
         /// </summary>
-        public float HalfSize;
+        public readonly float HalfSize;
 
         /// <summary>
         /// Whether the video should be playing according to its priority.
@@ -41,6 +41,18 @@ namespace DCL.SDKComponents.MediaStream
         /// <summary>
         /// A mesh renderer used for visually debugging the priority of each video.
         /// </summary>
-        public MeshRenderer DebugPrioritySign;
+        public MeshRenderer? DebugPrioritySign;
+
+        public VideoStateByPriorityComponent(Entity entity, float halfSize, bool wantsToPlay)
+        {
+            Entity = entity;
+            HalfSize = halfSize;
+            WantsToPlay = wantsToPlay;
+
+            Score = 0.0f;
+            IsPlaying = false;
+            MediaPlayStartTime = float.MinValue;
+            DebugPrioritySign = null;
+        }
     }
 }
