@@ -1,9 +1,11 @@
+using System;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace DCL.Navmap
 {
-    public class PlacesAndEventsPanelView : MonoBehaviour
+    public class PlacesAndEventsPanelView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
         [field: SerializeField]
         public Button ExpandButton { get; private set; }
@@ -22,5 +24,14 @@ namespace DCL.Navmap
 
         [field: SerializeField]
         public SharePlacesAndEventsContextMenuView ShareContextMenuView { get; private set; }
+
+        public event Action? PointerEnter;
+        public event Action? PointerExit;
+
+        public void OnPointerEnter(PointerEventData eventData) =>
+            PointerEnter?.Invoke();
+
+        public void OnPointerExit(PointerEventData eventData) =>
+            PointerExit?.Invoke();
     }
 }

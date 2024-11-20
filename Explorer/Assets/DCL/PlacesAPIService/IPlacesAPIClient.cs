@@ -40,7 +40,7 @@ namespace DCL.PlacesAPIService
 
         UniTask SetPlaceFavoriteAsync(string placeUUID, bool isFavorite, CancellationToken ct);
 
-        UniTask RatePlace(bool? isUpvote, string placeUUID, CancellationToken ct);
+        UniTask RatePlaceAsync(bool? isUpvote, string placeUUID, CancellationToken ct);
 
         UniTask<List<string>> GetPointsOfInterestCoordsAsync(CancellationToken ct);
 

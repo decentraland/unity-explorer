@@ -13,6 +13,7 @@ namespace DCL.Navmap
         private readonly SearchResultPanelController searchResultController;
         private readonly PlaceInfoPanelController placeInfoPanelController;
         private readonly EventInfoPanelController eventInfoPanelController;
+        private readonly NavmapZoomController navmapZoomController;
 
         private CancellationTokenSource? searchPlacesCancellationToken;
         private CancellationTokenSource? collapseExpandCancellationToken;
@@ -22,18 +23,23 @@ namespace DCL.Navmap
             NavmapSearchBarController searchBarController,
             SearchResultPanelController searchResultController,
             PlaceInfoPanelController placeInfoPanelController,
-            EventInfoPanelController eventInfoPanelController)
+            EventInfoPanelController eventInfoPanelController,
+            NavmapZoomController navmapZoomController)
         {
             this.view = view;
             this.searchBarController = searchBarController;
             this.searchResultController = searchResultController;
             this.placeInfoPanelController = placeInfoPanelController;
             this.eventInfoPanelController = eventInfoPanelController;
+            this.navmapZoomController = navmapZoomController;
 
             view.CollapseButton.gameObject.SetActive(true);
             view.ExpandButton.gameObject.SetActive(false);
             view.CollapseButton.onClick.AddListener(Collapse);
             view.ExpandButton.onClick.AddListener(Expand);
+
+            view.PointerEnter += DisableMapZoom;
+            view.PointerExit += EnableMapZoom;
         }
 
         public void Show()
@@ -42,7 +48,9 @@ namespace DCL.Navmap
             searchResultController.Show();
 
             searchPlacesCancellationToken = searchPlacesCancellationToken.SafeRestart();
-            searchBarController.SearchAndShowAsync(searchPlacesCancellationToken.Token).Forget();
+
+            searchBarController.DoDefaultSearch(searchPlacesCancellationToken.Token)
+                               .Forget();
         }
 
         public void Toggle(Section section)
@@ -72,7 +80,7 @@ namespace DCL.Navmap
             view.CollapseButton.gameObject.SetActive(true);
             view.ExpandButton.gameObject.SetActive(false);
 
-            RectTransform transform = (RectTransform) view.transform;
+            RectTransform transform = (RectTransform)view.transform;
 
             collapseExpandCancellationToken = collapseExpandCancellationToken.SafeRestart();
 
@@ -86,7 +94,7 @@ namespace DCL.Navmap
             view.CollapseButton.gameObject.SetActive(false);
             view.ExpandButton.gameObject.SetActive(true);
 
-            RectTransform transform = (RectTransform) view.transform;
+            RectTransform transform = (RectTransform)view.transform;
 
             collapseExpandCancellationToken = collapseExpandCancellationToken.SafeRestart();
 
@@ -94,6 +102,12 @@ namespace DCL.Navmap
                      .ToUniTask(cancellationToken: collapseExpandCancellationToken.Token)
                      .Forget();
         }
+
+        private void EnableMapZoom() =>
+            navmapZoomController.SetBlockZoom(false);
+
+        private void DisableMapZoom() =>
+            navmapZoomController.SetBlockZoom(true);
 
         public enum Section
         {

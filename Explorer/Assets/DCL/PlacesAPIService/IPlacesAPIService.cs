@@ -27,7 +27,7 @@ namespace DCL.PlacesAPIService
 
         UniTask<List<PlacesData.CategoryPlaceData>> GetPlacesByCategoryListAsync(string category, CancellationToken ct);
 
-        UniTask RatePlace(bool? isUpvote, string placeUUID, CancellationToken ct);
+        UniTask RatePlaceAsync(bool? isUpvote, string placeUUID, CancellationToken ct);
 
         UniTask SetPlaceFavoriteAsync(string placeUUID, bool isFavorite, CancellationToken ct);
 

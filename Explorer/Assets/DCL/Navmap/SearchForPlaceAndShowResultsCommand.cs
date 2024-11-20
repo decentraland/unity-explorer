@@ -56,8 +56,8 @@ namespace DCL.Navmap
             placesAndEventsPanelController.Toggle(PlacesAndEventsPanelController.Section.SEARCH);
             searchResultPanelController.SetLoadingState();
 
-            await ProcessPlaces(ct);
-            await ProcessLiveEvents(ct);
+            await ProcessPlacesAsync(ct);
+            await ProcessLiveEventsAsync(ct);
 
             callback.Invoke(places!);
         }
@@ -76,7 +76,7 @@ namespace DCL.Navmap
             placesWithLiveEvents = null;
         }
 
-        private async UniTask ProcessLiveEvents(CancellationToken ct)
+        private async UniTask ProcessLiveEventsAsync(CancellationToken ct)
         {
             if (places == null) return;
 
@@ -106,7 +106,7 @@ namespace DCL.Navmap
             searchResultPanelController.SetLiveEvents(placesWithLiveEvents);
         }
 
-        private async UniTask ProcessPlaces(CancellationToken ct)
+        private async UniTask ProcessPlacesAsync(CancellationToken ct)
         {
             searchBarController.SetInputText(searchText);
             searchBarController.Interactable = true;
