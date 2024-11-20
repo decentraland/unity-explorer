@@ -2,6 +2,7 @@ using DCL.MapRenderer;
 using DCL.MapRenderer.MapLayers;
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace DCL.Navmap
 {
@@ -9,11 +10,13 @@ namespace DCL.Navmap
     {
         private readonly List<CategoryToggleView> categoryToggles;
         private readonly IMapRenderer mapRenderer;
+        private readonly INavmapBus navmapBus;
 
-        public CategoryFilterController(List<CategoryToggleView> categoryToggles, IMapRenderer mapRenderer)
+        public CategoryFilterController(List<CategoryToggleView> categoryToggles, IMapRenderer mapRenderer, INavmapBus navmapBus)
         {
             this.categoryToggles = categoryToggles;
             this.mapRenderer = mapRenderer;
+            this.navmapBus = navmapBus;
 
             foreach (CategoryToggleView categoryToggleView in this.categoryToggles)
             {
@@ -24,6 +27,7 @@ namespace DCL.Navmap
 
         private void OnCategoryToggleChanged(MapLayer mapLayer, bool isOn)
         {
+            navmapBus.FilterByCategory(isOn ? mapLayer.ToString() : null);
             mapRenderer.SetSharedLayer(mapLayer, isOn);
         }
 
