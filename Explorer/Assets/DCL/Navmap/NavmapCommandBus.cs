@@ -20,6 +20,7 @@ namespace DCL.Navmap
 
         public event Action<PlacesData.PlaceInfo>? OnJumpIn;
         public event Action<PlacesData.PlaceInfo>? OnDestinationSelected;
+        public event Action<string?>? OnFilterByCategory;
 
         public NavmapCommandBus(SearchPlaceFactory searchPlaceFactory,
             ShowPlaceInfoFactory showPlaceInfoFactory,
@@ -82,5 +83,8 @@ namespace DCL.Navmap
 
         public void JumpIn(PlacesData.PlaceInfo place) =>
             OnJumpIn?.Invoke(place);
+
+        public void FilterByCategory(string? category) =>
+            OnFilterByCategory?.Invoke(category);
     }
 }

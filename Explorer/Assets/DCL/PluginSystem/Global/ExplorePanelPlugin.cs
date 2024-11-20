@@ -203,6 +203,8 @@ namespace DCL.PluginSystem.Global
 
         public async UniTask InitializeAsync(ExplorePanelSettings settings, CancellationToken ct)
         {
+            INavmapBus navmapBus = new NavmapCommandBus(CreateSearchPlaceCommand,
+                CreateShowPlaceCommand, CreateShowEventCommand);
             backpackSubPlugin = new BackpackSubPlugin(
                 assetsProvisioner,
                 web3IdentityCache,
@@ -241,12 +243,9 @@ namespace DCL.PluginSystem.Global
             settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>(), settingsMenuConfiguration.Value, generalAudioMixer.Value, realmPartitionSettings.Value, landscapeData.Value, qualitySettingsAsset.Value, controlsSettingsAsset.Value, systemMemoryCap, worldVolumeMacBus);
 
             navmapView = explorePanelView.GetComponentInChildren<NavmapView>();
-            categoryFilterController = new CategoryFilterController(navmapView.categoryToggles, mapRendererContainer.MapRenderer);
+            categoryFilterController = new CategoryFilterController(navmapView.categoryToggles, mapRendererContainer.MapRenderer, navmapBus);
 
             searchHistory = new PlayerPrefsSearchHistory();
-
-            INavmapBus navmapBus = new NavmapCommandBus(CreateSearchPlaceCommand,
-                CreateShowPlaceCommand, CreateShowEventCommand);
 
             ObjectPool<PlaceElementView> placeElementsPool = await InitializePlaceElementsPool(navmapView.SearchBarResultPanel, ct);
             ObjectPool<EventElementView> eventElementsPool = await InitializeEventElementsForPlacePool(navmapView.PlacesAndEventsPanelView.PlaceInfoPanelView, ct);
