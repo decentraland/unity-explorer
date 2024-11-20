@@ -93,6 +93,8 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
                 reportData: ReportCategory.UI
             )!;
 
+            await UniTask.SwitchToMainThread();
+
             Texture2D texture = currentOwnedTexture.Texture;
 
             textureContainer.AddChunk(chunkId, texture);
