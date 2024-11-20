@@ -19,6 +19,7 @@ namespace DCL.Navmap
         private readonly string searchText;
         private readonly NavmapSearchPlaceFilter filter;
         private readonly NavmapSearchPlaceSorting sorting;
+        private readonly Action<IReadOnlyList<PlacesData.PlaceInfo>> callback;
         private readonly int pageNumber;
         private readonly int pageSize;
         private List<PlacesData.PlaceInfo>? places;
@@ -33,6 +34,7 @@ namespace DCL.Navmap
             string searchText,
             NavmapSearchPlaceFilter filter,
             NavmapSearchPlaceSorting sorting,
+            Action<IReadOnlyList<PlacesData.PlaceInfo>> callback,
             int pageNumber = 0,
             int pageSize = 8)
         {
@@ -44,6 +46,7 @@ namespace DCL.Navmap
             this.searchText = searchText;
             this.filter = filter;
             this.sorting = sorting;
+            this.callback = callback;
             this.pageNumber = pageNumber;
             this.pageSize = pageSize;
         }
@@ -55,6 +58,8 @@ namespace DCL.Navmap
 
             await ProcessPlaces(ct);
             await ProcessLiveEvents(ct);
+
+            callback.Invoke(places!);
         }
 
         public void Undo()
@@ -128,7 +133,8 @@ namespace DCL.Navmap
                 }
                 else if (filter == NavmapSearchPlaceFilter.Visited)
                 {
-                    // TODO: implement visited places in local storage
+                    // TODO: implement visited places
+                    places = new List<PlacesData.PlaceInfo>(0);
                 }
             }
 
