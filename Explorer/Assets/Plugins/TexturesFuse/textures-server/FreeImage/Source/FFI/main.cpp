@@ -190,7 +190,7 @@ ImageResult texturesfuse_initialize(InitOptions initOptions, context **contextOu
 
     if (_putenv(result.c_str()) == 0)
     {
-        AL_Log("Environment variable AMDCOMPRESS_PLUGINS set successfully.\n");
+        AL_Log("Environment variable AMDCOMPRESS_PLUGINS set successfully: %s\n", pluginsPath);
     }
     else
     {
