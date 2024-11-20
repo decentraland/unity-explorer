@@ -100,7 +100,7 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
             float originalAspect = camera.aspect;
 
             // Calculate new FOV and aspect ratio for the scaled view
-            camera.fieldOfView = Mathf.Atan(Mathf.Tan(originalFOV * 0.5f * Mathf.Deg2Rad) * scaleFactor) * 2f * Mathf.Rad2Deg;
+            camera.fieldOfView = Mathf.Atan(Mathf.Tan(originalFOV * Mathf.Deg2Rad / 2f) * scaleFactor) * 2f * Mathf.Rad2Deg;
             camera.aspect = originalAspect; // Maintain the same aspect ratio since we're scaling uniformly
 
             // Get the scaled frustum planes

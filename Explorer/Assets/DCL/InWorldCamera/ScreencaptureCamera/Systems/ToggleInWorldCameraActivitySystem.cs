@@ -8,6 +8,7 @@ using DCL.CharacterCamera.Systems;
 using DCL.Diagnostics;
 using DCL.Input;
 using DCL.Input.Component;
+using DCL.InWorldCamera.ScreencaptureCamera.Settings;
 using ECS.Abstract;
 using UnityEngine;
 using static DCL.Input.Component.InputMapComponent;
@@ -20,13 +21,9 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
     [LogCategory(ReportCategory.IN_WORLD_CAMERA)]
     public partial class ToggleInWorldCameraActivitySystem : BaseUnityLoopSystem
     {
-        private const float BEHIND_DIRECTION_OFFSET = 3f;
-        private const float BEHIND_UP_OFFSET = 0.5f;
-        private const float TRANSLATION_DAMPING = 1f;
-        private const float AIM_DAMPING = 1f;
+        private readonly Vector3 behindUpOffset;
 
-        private readonly Vector3 behindUpOffset = Vector3.up * BEHIND_UP_OFFSET;
-
+        private readonly InWorldCameraTransitionSettings settings;
         private readonly DCLInput.InWorldCameraActions inputSchema;
         private readonly GameObject hud;
         private readonly CharacterController followTarget;
@@ -37,11 +34,14 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
         private ICinemachinePreset cinemachinePreset;
         private CinemachineVirtualCamera inWorldVirtualCamera;
 
-        public ToggleInWorldCameraActivitySystem(World world, DCLInput.InWorldCameraActions inputSchema, GameObject hud, CharacterController followTarget) : base(world)
+        public ToggleInWorldCameraActivitySystem(World world, InWorldCameraTransitionSettings settings, DCLInput.InWorldCameraActions inputSchema, GameObject hud, CharacterController followTarget) : base(world)
         {
+            this.settings = settings;
             this.inputSchema = inputSchema;
             this.hud = hud;
             this.followTarget = followTarget;
+
+            behindUpOffset = Vector3.up * settings.BehindUpOffset;
         }
 
         public override void Initialize()
@@ -87,8 +87,8 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
 
             cinemachinePreset.Brain.ManualUpdate();
 
-            hardLock.m_Damping = TRANSLATION_DAMPING;
-            aim.m_Damping = AIM_DAMPING;
+            hardLock.m_Damping = settings.TranslationDamping;
+            aim.m_Damping = settings.AimDamping;
         }
 
         private void DisableCamera()
@@ -158,7 +158,7 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
         private Vector3 CalculateBehindPosition()
         {
             Vector3 lookDirection = cinemachinePreset.FirstPersonCameraData.Camera.transform.forward;
-            return cinemachinePreset.FirstPersonCameraData.Camera.transform.position - (lookDirection * BEHIND_DIRECTION_OFFSET) + behindUpOffset;
+            return cinemachinePreset.FirstPersonCameraData.Camera.transform.position - (lookDirection * settings.BehindDirectionOffset) + behindUpOffset;
         }
 
         private void SwitchCameraInput(Kind to)

@@ -4,6 +4,7 @@ using Cinemachine;
 using DCL.CharacterCamera;
 using DCL.CharacterCamera.Components;
 using DCL.Diagnostics;
+using DCL.InWorldCamera.ScreencaptureCamera.Settings;
 using ECS.Abstract;
 using UnityEngine;
 
@@ -14,31 +15,16 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
     [LogCategory(ReportCategory.IN_WORLD_CAMERA)]
     public partial class MoveInWorldCameraSystem : BaseUnityLoopSystem
     {
-        private const float MAX_DISTANCE_FROM_PLAYER = 16f;
-        private const float TRANSLATION_SPEED = 5f;
-        private const float RUN_SPEED_MULTIPLAYER = 2;
-
-        private const float FOV_CHANGE_SPEED = 3;
-        private const float FOV_DAMPING = 0.5f;
-        private const float MIN_FOV = 0;
-        private const float MAX_FOV = 170;
-
-        private const float MOUSE_TRANSLATION_SPEED = 0.05f;
-
-        private const float ROTATION_SPEED = 2;
-        private const float MAX_ROTATION_PER_FRAME = 10f;
-        private const float ROTATION_DAMPING = 0.1f;
-        private const float MIN_VERTICAL_ANGLE = -90f;
-        private const float MAX_VERTICAL_ANGLE = 90f;
-
+        private readonly InWorldCameraMovementSettings settings;
         private readonly Transform playerTransform;
 
         private SingleInstanceEntity camera;
         private ICinemachinePreset cinemachinePreset;
         private CinemachineVirtualCamera virtualCamera;
 
-        public MoveInWorldCameraSystem(World world, Transform playerTransform) : base(world)
+        public MoveInWorldCameraSystem(World world, InWorldCameraMovementSettings settings, Transform playerTransform) : base(world)
         {
+            this.settings = settings;
             this.playerTransform = playerTransform;
         }
 
@@ -53,8 +39,8 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
         {
             if (World.Has<InWorldCamera>(camera))
             {
-                var input = World.Get<InWorldCameraInput>(camera);
-                var followTarget = World.Get<CameraTarget>(camera).Value;
+                InWorldCameraInput input = World.Get<InWorldCameraInput>(camera);
+                CharacterController? followTarget = World.Get<CameraTarget>(camera).Value;
 
                 Translate(followTarget, input, t);
 
@@ -68,39 +54,39 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
         private void Zoom(ref CameraDampedFOV fov, float zoomInput, float deltaTime)
         {
             if (!Mathf.Approximately(zoomInput, 0f))
-                fov.Target -= zoomInput * FOV_CHANGE_SPEED * deltaTime;
+                fov.Target -= zoomInput * settings.FOVChangeSpeed * deltaTime;
 
-            fov.Target = Mathf.Clamp(fov.Target, MIN_FOV, MAX_FOV);
-            fov.Current = Mathf.SmoothDamp(fov.Current, fov.Target, ref fov.Velocity, FOV_DAMPING);
+            fov.Target = Mathf.Clamp(fov.Target, settings.MinFOV, settings.MaxFOV);
+            fov.Current = Mathf.SmoothDamp(fov.Current, fov.Target, ref fov.Velocity, settings.FOVDamping);
 
             virtualCamera.m_Lens.FieldOfView = fov.Current;
         }
 
         private void Rotate(ref CameraDampedAim aim, Transform target, Vector2 lookInput, float deltaTime)
         {
-            Vector2 targetRotation = lookInput * ROTATION_SPEED;
-            aim.Current = Vector2.SmoothDamp(aim.Current, targetRotation, ref aim.Velocity, ROTATION_DAMPING);
+            Vector2 targetRotation = lookInput * settings.RotationSpeed;
+            aim.Current = Vector2.SmoothDamp(aim.Current, targetRotation, ref aim.Velocity, settings.RotationDamping);
 
-            float horizontalRotation = Mathf.Clamp(aim.Current.x * deltaTime, -MAX_ROTATION_PER_FRAME, MAX_ROTATION_PER_FRAME);
-            float verticalRotation = Mathf.Clamp(aim.Current.y * deltaTime, -MAX_ROTATION_PER_FRAME, MAX_ROTATION_PER_FRAME);
+            float horizontalRotation = Mathf.Clamp(aim.Current.x * deltaTime, -settings.MaxRotationPerFrame, settings.MaxRotationPerFrame);
+            float verticalRotation = Mathf.Clamp(aim.Current.y * deltaTime, -settings.MaxRotationPerFrame, settings.MaxRotationPerFrame);
 
             target.Rotate(Vector3.up, horizontalRotation, Space.World);
 
             float newVerticalAngle = target.eulerAngles.x - verticalRotation;
             if (newVerticalAngle > 180f) newVerticalAngle -= 360f;
-            newVerticalAngle = Mathf.Clamp(newVerticalAngle, MIN_VERTICAL_ANGLE, MAX_VERTICAL_ANGLE);
+            newVerticalAngle = Mathf.Clamp(newVerticalAngle, settings.MinVerticalAngle, settings.MaxVerticalAngle);
 
             target.localRotation = Quaternion.Euler(newVerticalAngle, target.eulerAngles.y, 0f);
         }
 
         private void Translate(CharacterController followTarget, InWorldCameraInput input, float deltaTime)
         {
-            Vector3 moveVector = GetMoveVectorFromInput(followTarget.transform, TRANSLATION_SPEED, deltaTime, input);
+            Vector3 moveVector = GetMoveVectorFromInput(followTarget.transform, settings.TranslationSpeed, deltaTime, input);
 
             if (input.MouseIsDragging)
                 moveVector += GetMousePanDelta(deltaTime, followTarget, input.Aim);
 
-            Vector3 restrictedMovement = RestrictedMovementBySemiSphere(playerTransform.position, followTarget.transform, moveVector, MAX_DISTANCE_FROM_PLAYER);
+            Vector3 restrictedMovement = RestrictedMovementBySemiSphere(playerTransform.position, followTarget.transform, moveVector, settings.MaxDistanceFromPlayer);
             followTarget.Move(restrictedMovement);
         }
 
@@ -110,7 +96,7 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
             Vector3 horizontal = target.right.normalized * input.Translation.x;
             Vector3 vertical = target.up.normalized * input.Panning;
 
-            float speed = input.IsRunning ? moveSpeed * RUN_SPEED_MULTIPLAYER : moveSpeed;
+            float speed = input.IsRunning ? moveSpeed * settings.RunSpeedMultiplayer : moveSpeed;
 
             return (forward + horizontal + vertical) * (speed * deltaTime);
         }
@@ -119,7 +105,7 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
         {
             var dragMove = new Vector3(mouseDelta.x, mouseDelta.y, 0);
             dragMove = followTarget.transform.TransformDirection(dragMove);
-            return dragMove * (MOUSE_TRANSLATION_SPEED * deltaTime);
+            return dragMove * (settings.MouseTranslationSpeed * deltaTime);
         }
 
         private static Vector3 RestrictedMovementBySemiSphere(Vector3 playerPosition, Transform target, Vector3 movementVector, float maxDistanceFromPlayer)

@@ -642,11 +642,10 @@ MonoBehaviour:
     - rid: 6849204534543122434
       type: {class: InWorldCameraPlugin/InWorldCameraSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
-        <ScreencaptureHud>k__BackingField:
-          m_AssetGUID: 73f988cecacd42e48920937e996e446d
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
+        <ScreencaptureHud>k__BackingField: {fileID: 405257682719442044, guid: 73f988cecacd42e48920937e996e446d, type: 3}
+        <FollowTarget>k__BackingField: {fileID: 9209778991738672599, guid: ace53bd2bc5e2b8439785bb3122b12e3, type: 3}
+        <TransitionSettings>k__BackingField: {fileID: 11400000, guid: 230436585dd166a4e98f1c0953e3a5f6, type: 2}
+        <MovementSettings>k__BackingField: {fileID: 11400000, guid: 9c104547ad3a8454baeb79e1bb45ce4c, type: 2}
     - rid: 7162477498503790594
       type: {class: ExternalUrlPromptPlugin/ExternalUrlPromptSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
