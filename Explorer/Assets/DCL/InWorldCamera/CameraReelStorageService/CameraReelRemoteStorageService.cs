@@ -11,7 +11,7 @@ namespace DCL.InWorldCamera.CameraReelStorageService
         private readonly ICameraReelImagesMetadataDatabase imagesMetadataDatabase;
         private readonly ICameraReelScreenshotsStorage screenshotsStorage;
 
-        public event Action<CameraReelResponse, CameraReelStorageStatus> ScreenshotUploaded;
+        public event Action<CameraReelResponse, CameraReelStorageStatus>? ScreenshotUploaded;
 
         public CameraReelRemoteStorageService(ICameraReelImagesMetadataDatabase imagesMetadataDatabase, ICameraReelScreenshotsStorage screenshotsStorage)
         {

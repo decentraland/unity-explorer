@@ -6,8 +6,8 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
 {
     public class ScrollDragHandler : MonoBehaviour, IBeginDragHandler, IEndDragHandler, IDisposable
     {
-        public event Action BeginDrag;
-        public event Action EndDrag;
+        public event Action? BeginDrag;
+        public event Action? EndDrag;
 
         public void OnBeginDrag(PointerEventData eventData) =>
             BeginDrag?.Invoke();

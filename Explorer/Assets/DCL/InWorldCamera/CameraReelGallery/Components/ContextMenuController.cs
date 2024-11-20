@@ -19,13 +19,13 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
         private readonly RectTransform controlsParentRectTransform;
         private readonly Rect backgroundButtonRect;
 
-        public event Action<CameraReelResponseCompact, bool> SetPublicRequested;
-        public event Action<CameraReelResponseCompact> ShareToXRequested;
-        public event Action<CameraReelResponseCompact> CopyPictureLinkRequested;
-        public event Action<CameraReelResponseCompact> DownloadRequested;
-        public event Action<CameraReelResponseCompact> DeletePictureRequested;
+        public event Action<CameraReelResponseCompact, bool>? SetPublicRequested;
+        public event Action<CameraReelResponseCompact>? ShareToXRequested;
+        public event Action<CameraReelResponseCompact>? CopyPictureLinkRequested;
+        public event Action<CameraReelResponseCompact>? DownloadRequested;
+        public event Action<CameraReelResponseCompact>? DeletePictureRequested;
 
-        public event Action AnyControlClicked;
+        public event Action? AnyControlClicked;
 
         private CameraReelResponseCompact imageData;
 

@@ -21,8 +21,8 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
         [SerializeField] internal float scaleAnimationDuration = 0.3f;
         [SerializeField] internal float thumbnailLoadedAnimationDuration = 0.3f;
 
-        internal event Action PointerEnter;
-        internal event Action PointerExit;
+        internal event Action? PointerEnter;
+        internal event Action? PointerExit;
 
         public void OnPointerEnter(PointerEventData eventData) =>
             PointerEnter?.Invoke();

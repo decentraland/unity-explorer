@@ -10,7 +10,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
         private readonly ContextMenuController contextMenuController;
         private readonly RectTransform buttonRectTransform;
 
-        public event Action Hide;
+        public event Action? Hide;
 
         public OptionButtonController(OptionButtonView view,
             ContextMenuController contextMenuController)

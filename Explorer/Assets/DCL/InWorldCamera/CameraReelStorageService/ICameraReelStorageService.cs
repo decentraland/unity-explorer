@@ -8,7 +8,7 @@ namespace DCL.InWorldCamera.CameraReelStorageService
 {
     public interface ICameraReelStorageService
     {
-        event Action<CameraReelResponse, CameraReelStorageStatus> ScreenshotUploaded;
+        event Action<CameraReelResponse, CameraReelStorageStatus>? ScreenshotUploaded;
 
         UniTask<CameraReelStorageStatus> GetUserGalleryStorageInfoAsync(string userAddress, CancellationToken ct = default);
 

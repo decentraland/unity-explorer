@@ -38,7 +38,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
         [SerializeField] internal MonthGridView monthGridPrefab;
         [SerializeField] internal GameObject unusedGridViewObject;
 
-        internal event Action Disable;
+        internal event Action? Disable;
 
         private void OnDisable() => Disable?.Invoke();
 

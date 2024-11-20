@@ -36,8 +36,8 @@ namespace DCL.InWorldCamera.CameraReelGallery
             }
         }
 
-        public event Action<CameraReelResponseCompact> ThumbnailClicked;
-        public event Action<CameraReelStorageStatus> StorageUpdated;
+        public event Action<CameraReelResponseCompact>? ThumbnailClicked;
+        public event Action<CameraReelStorageStatus>? StorageUpdated;
 
         private const int THUMBNAIL_POOL_DEFAULT_CAPACITY = 100;
         private const int THUMBNAIL_POOL_MAX_SIZE = 10000;

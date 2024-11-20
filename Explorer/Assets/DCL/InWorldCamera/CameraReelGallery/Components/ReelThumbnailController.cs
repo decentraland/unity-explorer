@@ -17,8 +17,8 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
         private OptionButtonController optionButton;
         private CancellationTokenSource loadImageCts;
 
-        public event Action<CameraReelResponseCompact, Sprite> ThumbnailLoaded;
-        public event Action<CameraReelResponseCompact> ThumbnailClicked;
+        public event Action<CameraReelResponseCompact, Sprite>? ThumbnailLoaded;
+        public event Action<CameraReelResponseCompact>? ThumbnailClicked;
 
         public CameraReelResponseCompact CameraReelResponse { get; private set; }
 
