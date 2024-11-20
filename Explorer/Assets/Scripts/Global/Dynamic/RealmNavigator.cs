@@ -35,6 +35,7 @@ using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Assertions;
 using Utility;
+using Utility.TeleportBus;
 using Utility.Types;
 
 namespace Global.Dynamic
@@ -58,6 +59,7 @@ namespace Global.Dynamic
         private readonly CameraSamplingData cameraSamplingData;
         private readonly bool isLocalSceneDevelopment;
         private readonly FeatureFlagsCache featureFlagsCache;
+        private readonly ITeleportBusController teleportBusController;
 
         private URLDomain currentRealm;
         private Vector2Int currentParcel;
@@ -88,7 +90,8 @@ namespace Global.Dynamic
             ILoadingStatus loadingStatus,
             ICacheCleaner cacheCleaner,
             IMemoryUsageProvider memoryUsageProvider,
-            FeatureFlagsCache featureFlagsCache)
+            FeatureFlagsCache featureFlagsCache,
+            ITeleportBusController teleportBusController)
         {
             this.loadingScreen = loadingScreen;
             this.mapRenderer = mapRenderer;
@@ -106,6 +109,7 @@ namespace Global.Dynamic
             this.globalWorld = globalWorld;
             this.loadingStatus = loadingStatus;
             this.featureFlagsCache = featureFlagsCache;
+            this.teleportBusController = teleportBusController;
             var livekitTimeout = TimeSpan.FromSeconds(10f);
 
             realmChangeOperations = new ITeleportOperation[]
@@ -285,6 +289,8 @@ namespace Global.Dynamic
             Result parcelCheckResult = IsParcelInsideTerrain(parcel, isLocal, IsGenesisRealm());
             if (!parcelCheckResult.Success)
                 return parcelCheckResult;
+
+            teleportBusController.PushTeleportOperation(parcel);
 
             if (!isLocal && !IsGenesisRealm())
             {

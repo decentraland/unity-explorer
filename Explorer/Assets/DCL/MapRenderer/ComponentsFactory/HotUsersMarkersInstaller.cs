@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Pool;
+using Utility.TeleportBus;
 
 namespace DCL.MapRenderer.ComponentsFactory
 {
@@ -31,6 +32,7 @@ namespace DCL.MapRenderer.ComponentsFactory
             IMapRendererSettings settings,
             IWebRequestController webRequestController,
             IDecentralandUrlsSource decentralandUrls,
+            ITeleportBusController teleportBusController,
             CancellationToken cancellationToken)
         {
             assetsProvisioner = assetsProv;
@@ -48,7 +50,7 @@ namespace DCL.MapRenderer.ComponentsFactory
 
             var wrapsPool = new ObjectPool<IHotUserMarker>(CreateWrap, actionOnRelease: m => m.Dispose(), defaultCapacity: HOT_USER_MARKERS_PREWARM_COUNT);
 
-            var controller = new UsersMarkersHotAreaController(objectsPool, wrapsPool, configuration.HotUserMarkersRoot, coordsUtils, cullingController, webRequestController, decentralandUrls);
+            var controller = new UsersMarkersHotAreaController(objectsPool, wrapsPool, configuration.HotUserMarkersRoot, coordsUtils, cullingController, webRequestController, decentralandUrls, teleportBusController);
             await controller.InitializeAsync(cancellationToken);
             writer.Add(MapLayer.HotUsersMarkers, controller);
         }

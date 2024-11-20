@@ -10,6 +10,7 @@ using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using Utility.TeleportBus;
 
 namespace Global.Dynamic
 {
@@ -34,6 +35,7 @@ namespace Global.Dynamic
             IPlacesAPIService placesAPIService,
             IMapPathEventBus mapPathEventBus,
             INotificationsBusController notificationsBusController,
+            ITeleportBusController teleportBusController,
             CancellationToken ct)
         {
             var mapRendererContainer = new MapRendererContainer(assetsProvisioner, new MapRendererTextureContainer());
@@ -48,6 +50,7 @@ namespace Global.Dynamic
                     c.TextureContainer,
                     placesAPIService,
                     mapPathEventBus,
+                    teleportBusController,
                     notificationsBusController));
 
                 await mapRenderer.InitializeAsync(ct);
