@@ -10,7 +10,6 @@ using DCL.CharacterCamera.Settings;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.Input.Systems;
-using DCL.InWorldCamera.ScreencaptureCamera;
 using ECS.Abstract;
 using UnityEngine;
 

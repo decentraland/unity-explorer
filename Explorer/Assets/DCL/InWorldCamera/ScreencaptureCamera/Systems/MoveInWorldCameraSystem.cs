@@ -1,7 +1,6 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
 using Cinemachine;
-using Cinemachine.Utility;
 using DCL.CharacterCamera;
 using DCL.CharacterCamera.Components;
 using DCL.Diagnostics;
@@ -32,21 +31,12 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
         private const float MIN_VERTICAL_ANGLE = -90f;
         private const float MAX_VERTICAL_ANGLE = 90f;
 
-        private readonly Transform playerTransform;
         private readonly DCLInput.InWorldCameraActions inputSchema;
+        private readonly Transform playerTransform;
 
         private SingleInstanceEntity camera;
         private ICinemachinePreset cinemachinePreset;
-
-        private float currentFOV = 60f; // Starting FOV
-        private float fovVelocity; // For SmoothDamp
-        private float targetFOV = 60f; // Add explicit target tracking
-
-        private Vector3 axis;
-
-        private Vector2 currentRotation;
-        private Vector2 rotationVelocity;
-
+        private CinemachineVirtualCamera virtualCamera;
 
         public MoveInWorldCameraSystem(World world, Transform playerTransform, DCLInput.InWorldCameraActions inputSchema) : base(world)
         {
@@ -58,45 +48,47 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
         {
             camera = World.CacheCamera();
             cinemachinePreset = World.Get<ICinemachinePreset>(camera);
+            virtualCamera = cinemachinePreset.InWorldCameraData.Camera;
         }
 
         protected override void Update(float t)
         {
-            if (World.TryGet(camera, out InWorldCamera inWorldCamera))
+            if (World.Has<InWorldCamera>(camera))
             {
-                Translate(t, inWorldCamera.FollowTarget);
-                Rotate(t, inWorldCamera.FollowTarget.transform);
-                HandleZoom(t);
+                var followTarget = World.Get<CameraTarget>(camera).Value;
+                Translate(t, followTarget);
+
+                if (!inputSchema.MouseDrag.IsPressed())
+                    Rotate(t, followTarget.transform, ref World.Get<CameraDampedAim>(camera));
+
+                Zoom(t, ref World.Get<CameraDampedFOV>(camera));
 
                 cinemachinePreset.Brain.ManualUpdate(); // Update the brain manually
             }
         }
 
-        private void HandleZoom(float deltaTime)
+        private void Zoom(float deltaTime, ref CameraDampedFOV fov)
         {
             float zoomInput = inputSchema.Zoom.ReadValue<float>();
 
             if (!Mathf.Approximately(zoomInput, 0f))
-                targetFOV -= zoomInput * FOV_CHANGE_SPEED * deltaTime;
+                fov.Target -= zoomInput * FOV_CHANGE_SPEED * deltaTime;
 
-            targetFOV = Mathf.Clamp(targetFOV, MIN_FOV, MAX_FOV);
-            currentFOV = Mathf.SmoothDamp(currentFOV, targetFOV, ref fovVelocity, FOV_DAMPING);
+            fov.Target = Mathf.Clamp(fov.Target, MIN_FOV, MAX_FOV);
+            fov.Current = Mathf.SmoothDamp(fov.Current, fov.Target, ref fov.Velocity, FOV_DAMPING);
 
-            CinemachineVirtualCamera virtualCamera = cinemachinePreset.InWorldCameraData.Camera;
-            virtualCamera.m_Lens.FieldOfView = currentFOV;
+            virtualCamera.m_Lens.FieldOfView = fov.Current;
         }
 
-        private void Rotate(float deltaTime, Transform target)
+        private void Rotate(float deltaTime, Transform target, ref CameraDampedAim aim)
         {
-            if (inputSchema.MouseDrag.IsPressed()) return;
-
             Vector2 lookInput = inputSchema.Rotation.ReadValue<Vector2>();
 
             Vector2 targetRotation = lookInput * ROTATION_SPEED;
-            currentRotation = Vector2.SmoothDamp(currentRotation, targetRotation, ref rotationVelocity, ROTATION_DAMPING);
+            aim.Current = Vector2.SmoothDamp(aim.Current, targetRotation, ref aim.Velocity, ROTATION_DAMPING);
 
-            float horizontalRotation = Mathf.Clamp(currentRotation.x * deltaTime, -MAX_ROTATION_PER_FRAME, MAX_ROTATION_PER_FRAME);
-            float verticalRotation = Mathf.Clamp(currentRotation.y * deltaTime, -MAX_ROTATION_PER_FRAME, MAX_ROTATION_PER_FRAME);
+            float horizontalRotation = Mathf.Clamp(aim.Current.x * deltaTime, -MAX_ROTATION_PER_FRAME, MAX_ROTATION_PER_FRAME);
+            float verticalRotation = Mathf.Clamp(aim.Current.y * deltaTime, -MAX_ROTATION_PER_FRAME, MAX_ROTATION_PER_FRAME);
 
             target.Rotate(Vector3.up, horizontalRotation, Space.World);
 
@@ -112,13 +104,7 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
             Vector3 moveVector = GetMoveVectorFromInput(followTarget.transform, TRANSLATION_SPEED, deltaTime);
 
             if (inputSchema.MouseDrag.IsPressed())
-            {
-                Vector2 mouseDelta = inputSchema.Rotation.ReadValue<Vector2>();
-
-                var dragMove = new Vector3(mouseDelta.x, mouseDelta.y, 0);
-                dragMove = followTarget.transform.TransformDirection(dragMove);
-                moveVector += dragMove * (MOUSE_TRANSLATION_SPEED * deltaTime);
-            }
+                moveVector += GetMousePanDelta(deltaTime, followTarget);
 
             Vector3 restrictedMovement = RestrictedMovementBySemiSphere(playerTransform.position, followTarget.transform, moveVector, MAX_DISTANCE_FROM_PLAYER);
             followTarget.Move(restrictedMovement);
@@ -135,6 +121,15 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
             float speed = inputSchema.Run.IsPressed() ? moveSpeed * RUN_SPEED_MULTIPLAYER : moveSpeed;
 
             return (forward + horizontal + vertical) * (speed * deltaTime);
+        }
+
+        private Vector3 GetMousePanDelta(float deltaTime, CharacterController followTarget)
+        {
+            Vector2 mouseDelta = inputSchema.Rotation.ReadValue<Vector2>();
+
+            var dragMove = new Vector3(mouseDelta.x, mouseDelta.y, 0);
+            dragMove = followTarget.transform.TransformDirection(dragMove);
+            return dragMove * (MOUSE_TRANSLATION_SPEED * deltaTime);
         }
 
         private static Vector3 RestrictedMovementBySemiSphere(Vector3 playerPosition, Transform target, Vector3 movementVector, float maxDistanceFromPlayer)

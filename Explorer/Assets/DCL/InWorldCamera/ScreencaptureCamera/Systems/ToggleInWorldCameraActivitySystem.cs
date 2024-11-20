@@ -95,7 +95,7 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
         {
             hud.SetActive(false); // TODO (Vit):Temporary solution, will be replaced by MVC
 
-            World.Remove<InWorldCamera>(camera);
+            World.Remove<InWorldCamera, CameraTarget, CameraDampedFOV, CameraDampedAim>(camera);
 
             SwitchToThirdPersonCamera();
             SwitchCameraInput(to: Kind.PLAYER);
@@ -105,7 +105,11 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
         {
             hud.SetActive(true); // TODO (Vit):Temporary solution, will be replaced by MVC
 
-            World.Add(camera, new InWorldCamera { FollowTarget = followTarget });
+            World.Add(camera,
+                new InWorldCamera (),
+                new CameraTarget { Value = followTarget },
+                new CameraDampedFOV { Current = 60f, Velocity = 0f, Target = 60f },
+                new CameraDampedAim { Current = Vector2.up, Velocity = Vector2.up });
 
             SwitchToInWorldCamera();
             SwitchCameraInput(to: Kind.IN_WORLD_CAMERA);
@@ -116,6 +120,7 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
             inWorldVirtualCamera.Follow = null;
             inWorldVirtualCamera.LookAt = null;
             followTarget.enabled = false;
+
             camera.GetCameraComponent(World).Mode = CameraMode.ThirdPerson;
         }
 
