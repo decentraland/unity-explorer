@@ -94,7 +94,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
         {
             showCancellationTokenSource = showCancellationTokenSource.SafeRestart();
             view.gameObject.SetActive(true);
-            ShowAsync(showCancellationTokenSource.Token).Forget();
+            ShowAsync(showCancellationTokenSource.Token).SuppressCancellationThrow().Forget();
         }
 
         public void Deactivate()
