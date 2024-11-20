@@ -316,7 +316,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
             {
                 MonthGridController monthGridView = GetMonthGrid(bucket.Key);
 
-                List<ReelThumbnailController> thumbnailViews = monthGridView.Setup(bucket.Key, bucket.Value, optionButtonController,
+                IReadOnlyList<ReelThumbnailController> thumbnailViews = monthGridView.Setup(bucket.Key, bucket.Value, optionButtonController,
                     (cameraReelResponse, sprite) => reelThumbnailCache.Add(cameraReelResponse, sprite),
                     cameraReelResponse => ThumbnailClicked?.Invoke(cameraReelResponse));
 

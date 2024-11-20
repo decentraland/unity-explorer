@@ -22,9 +22,9 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
             this.reelGalleryPoolManager = reelGalleryPool;
         }
 
-        public List<ReelThumbnailController> Setup(DateTime bucket,
+        public IReadOnlyList<ReelThumbnailController> Setup(DateTime bucket,
             List<CameraReelResponseCompact> images,
-            OptionButtonController optionsButton,
+            OptionButtonController? optionsButton,
             Action<CameraReelResponseCompact, Sprite> onThumbnailLoaded,
             Action<CameraReelResponseCompact> onThumbnailClicked)
         {

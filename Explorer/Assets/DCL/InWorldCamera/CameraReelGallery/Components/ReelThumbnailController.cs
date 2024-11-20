@@ -14,7 +14,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
         internal readonly ReelThumbnailView view;
         private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
 
-        private OptionButtonController optionButton;
+        private OptionButtonController? optionButton;
         private CancellationTokenSource loadImageCts;
 
         public event Action<CameraReelResponseCompact, Sprite>? ThumbnailLoaded;
@@ -31,7 +31,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
             this.view.PointerExit += PointerExit;
         }
 
-        public void Setup(CameraReelResponseCompact cameraReelData, OptionButtonController optionsButton)
+        public void Setup(CameraReelResponseCompact cameraReelData, OptionButtonController? optionsButton)
         {
             this.CameraReelResponse = cameraReelData;
             this.optionButton = optionsButton;
@@ -64,7 +64,8 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
             ThumbnailLoaded = null;
             ThumbnailClicked = null;
             view.button.onClick.RemoveAllListeners();
-            optionButton.Hide -= ToNormalAnimation;
+            if (optionButton != null)
+                optionButton.Hide -= ToNormalAnimation;
             loadImageCts.SafeCancelAndDispose();
         }
 
@@ -94,7 +95,8 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
             ThumbnailClicked = null;
             view.button.onClick.RemoveAllListeners();
             view.outline.SetActive(false);
-            optionButton.Hide -= ToNormalAnimation;
+            if (optionButton != null)
+                optionButton.Hide -= ToNormalAnimation;
             loadImageCts.SafeCancelAndDispose();
         }
 
