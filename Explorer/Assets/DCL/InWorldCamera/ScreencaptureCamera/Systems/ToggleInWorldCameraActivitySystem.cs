@@ -19,6 +19,13 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
     [LogCategory(ReportCategory.IN_WORLD_CAMERA)]
     public partial class ToggleInWorldCameraActivitySystem : BaseUnityLoopSystem
     {
+        private const float BEHIND_DIRECTION_OFFSET = 3f;
+        private const float BEHIND_UP_OFFSET = 0.5f;
+        private const float TRANSLATION_DAMPING = 1f;
+        private const float AIM_DAMPING = 1f;
+
+        private readonly Vector3 behindUpOffset = Vector3.up * BEHIND_UP_OFFSET;
+
         private readonly DCLInput.InWorldCameraActions inputSchema;
         private readonly GameObject hud;
 
@@ -75,8 +82,8 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
 
                 cinemachinePreset.Brain.ManualUpdate();
 
-                hardLock.m_Damping = 1f;
-                aim.m_Damping = 1f;
+                hardLock.m_Damping = TRANSLATION_DAMPING;
+                aim.m_Damping = AIM_DAMPING;
             }
 
             if (inputSchema.ToggleInWorld!.triggered)
@@ -121,7 +128,7 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
                     cinemachinePreset.InWorldCameraData.Camera.m_Transitions.m_InheritPosition = false;
 
                     Vector3 lookDirection = cinemachinePreset.FirstPersonCameraData.Camera.transform.forward;
-                    Vector3 behindPosition = cinemachinePreset.FirstPersonCameraData.Camera.transform.position - (lookDirection * 3f) + (Vector3.up * 0.5f);
+                    Vector3 behindPosition = cinemachinePreset.FirstPersonCameraData.Camera.transform.position - (lookDirection * BEHIND_DIRECTION_OFFSET) + behindUpOffset;
 
                     cinemachinePreset.InWorldCameraData.Camera.transform.position = behindPosition;
                     cinemachinePreset.InWorldCameraData.Camera.transform.rotation = cinemachinePreset.FirstPersonCameraData.Camera.transform.rotation;

@@ -1,5 +1,6 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
+using Cinemachine;
 using Cinemachine.Utility;
 using DCL.CharacterCamera;
 using DCL.CharacterCamera.Components;
@@ -16,12 +17,36 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
     {
         private const float MAX_DISTANCE_FROM_PLAYER = 16f;
         private const float TRANSLATION_SPEED = 5f;
+        private const float RUN_SPEED_MULTIPLAYER = 2;
+
+        private const float FOV_CHANGE_SPEED = 3;
+        private const float FOV_DAMPING = 0.5f;
+        private const float MIN_FOV = 0;
+        private const float MAX_FOV = 170;
+
+        private const float MOUSE_TRANSLATION_SPEED = 0.05f;
+
+        private const float ROTATION_SPEED = 2;
+        private const float MAX_ROTATION_PER_FRAME = 10f;
+        private const float ROTATION_DAMPING = 0.1f;
+        private const float MIN_VERTICAL_ANGLE = -90f;
+        private const float MAX_VERTICAL_ANGLE = 90f;
 
         private readonly Transform playerTransform;
         private readonly DCLInput.InWorldCameraActions inputSchema;
 
         private SingleInstanceEntity camera;
         private ICinemachinePreset cinemachinePreset;
+
+        private float currentFOV = 60f; // Starting FOV
+        private float fovVelocity; // For SmoothDamp
+        private float targetFOV = 60f; // Add explicit target tracking
+
+        private Vector3 axis;
+
+        private Vector2 currentRotation;
+        private Vector2 rotationVelocity;
+
 
         public MoveInWorldCameraSystem(World world, Transform playerTransform, DCLInput.InWorldCameraActions inputSchema) : base(world)
         {
@@ -33,7 +58,6 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
         {
             camera = World.CacheCamera();
             cinemachinePreset = World.Get<ICinemachinePreset>(camera);
-
         }
 
         protected override void Update(float t)
@@ -48,61 +72,37 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
             }
         }
 
-        private const float FOV_CHANGE_SPEED = 3;
-        private const float FOV_DAMPING = 0.5f; // Adjust for smoother/faster transitions
-
-        private float currentFOV = 60f; // Starting FOV
-        private float fovVelocity; // For SmoothDamp
-        private float targetFOV = 60f;  // Add explicit target tracking
-
         private void HandleZoom(float deltaTime)
         {
             float zoomInput = inputSchema.Zoom.ReadValue<float>();
 
-            // Immediately update target when input changes
             if (!Mathf.Approximately(zoomInput, 0f))
                 targetFOV -= zoomInput * FOV_CHANGE_SPEED * deltaTime;
 
-            // Always smooth towards target
-            currentFOV = Mathf.SmoothDamp(
-                currentFOV,
-                targetFOV,
-                ref fovVelocity,
-                FOV_DAMPING
-            );
+            targetFOV = Mathf.Clamp(targetFOV, MIN_FOV, MAX_FOV);
+            currentFOV = Mathf.SmoothDamp(currentFOV, targetFOV, ref fovVelocity, FOV_DAMPING);
 
-            var virtualCamera = cinemachinePreset.InWorldCameraData.Camera;
+            CinemachineVirtualCamera virtualCamera = cinemachinePreset.InWorldCameraData.Camera;
             virtualCamera.m_Lens.FieldOfView = currentFOV;
         }
 
-        private Vector3 axis;
-
-        private Vector2 currentRotation;
-        private Vector2 rotationVelocity;
-
-        private float rotationSpeed = 2;
-        private float maxRotationPerFrame = 10f;
-        private float rotationDamping =  0.1f;
-        private float minVerticalAngle = -90f;
-        private float maxVerticalAngle = 90f;
-
-        private void Rotate(float deltaTime, Transform target )
+        private void Rotate(float deltaTime, Transform target)
         {
             if (inputSchema.MouseDrag.IsPressed()) return;
 
-            var lookInput = inputSchema.Rotation.ReadValue<Vector2>();
+            Vector2 lookInput = inputSchema.Rotation.ReadValue<Vector2>();
 
-            Vector2 targetRotation = lookInput * rotationSpeed;
-            currentRotation = Vector2.SmoothDamp(currentRotation, targetRotation, ref rotationVelocity, rotationDamping);
+            Vector2 targetRotation = lookInput * ROTATION_SPEED;
+            currentRotation = Vector2.SmoothDamp(currentRotation, targetRotation, ref rotationVelocity, ROTATION_DAMPING);
 
-            float horizontalRotation = Mathf.Clamp(currentRotation.x * deltaTime, -maxRotationPerFrame, maxRotationPerFrame);
-            float verticalRotation = Mathf.Clamp(currentRotation.y * deltaTime, -maxRotationPerFrame, maxRotationPerFrame);
+            float horizontalRotation = Mathf.Clamp(currentRotation.x * deltaTime, -MAX_ROTATION_PER_FRAME, MAX_ROTATION_PER_FRAME);
+            float verticalRotation = Mathf.Clamp(currentRotation.y * deltaTime, -MAX_ROTATION_PER_FRAME, MAX_ROTATION_PER_FRAME);
 
             target.Rotate(Vector3.up, horizontalRotation, Space.World);
 
             float newVerticalAngle = target.eulerAngles.x - verticalRotation;
             if (newVerticalAngle > 180f) newVerticalAngle -= 360f;
-            newVerticalAngle = Mathf.Clamp(newVerticalAngle, minVerticalAngle, maxVerticalAngle);
+            newVerticalAngle = Mathf.Clamp(newVerticalAngle, MIN_VERTICAL_ANGLE, MAX_VERTICAL_ANGLE);
 
             target.localRotation = Quaternion.Euler(newVerticalAngle, target.eulerAngles.y, 0f);
         }
@@ -115,9 +115,9 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
             {
                 Vector2 mouseDelta = inputSchema.Rotation.ReadValue<Vector2>();
 
-                Vector3 dragMove = new Vector3(mouseDelta.x, mouseDelta.y, 0);
+                var dragMove = new Vector3(mouseDelta.x, mouseDelta.y, 0);
                 dragMove = followTarget.transform.TransformDirection(dragMove);
-                moveVector += dragMove * (TRANSLATION_SPEED * 0.01f * deltaTime); // Adjust multiplier for sensitivity
+                moveVector += dragMove * (MOUSE_TRANSLATION_SPEED * deltaTime);
             }
 
             Vector3 restrictedMovement = RestrictedMovementBySemiSphere(playerTransform.position, followTarget.transform, moveVector, MAX_DISTANCE_FROM_PLAYER);
@@ -132,7 +132,7 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
             Vector3 horizontal = target.right.normalized * input.x;
             Vector3 vertical = target.up.normalized * inputSchema.Panning.ReadValue<float>();
 
-            float speed = inputSchema.Run.IsPressed() ? moveSpeed * 2 : moveSpeed;
+            float speed = inputSchema.Run.IsPressed() ? moveSpeed * RUN_SPEED_MULTIPLAYER : moveSpeed;
 
             return (forward + horizontal + vertical) * (speed * deltaTime);
         }
