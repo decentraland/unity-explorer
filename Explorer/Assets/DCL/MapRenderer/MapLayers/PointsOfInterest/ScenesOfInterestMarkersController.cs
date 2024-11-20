@@ -37,9 +37,9 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
         private Vector2Int decodePointer;
 
         private bool isEnabled;
-        private int zoomLevel;
-        private float baseZoom;
-        private float zoom;
+        private int zoomLevel = 1;
+        private float baseZoom = 1;
+        private float zoom = 1;
 
         public ScenesOfInterestMarkersController(
             IPlacesAPIService placesAPIService,
@@ -155,7 +155,7 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
             foreach (ISceneOfInterestMarker marker in markers.Values)
                 marker.SetZoom(coordsUtils.ParcelSize, baseZoom, zoom);
 
-            if(isEnabled)
+            if (isEnabled)
                 clusterController.UpdateClusters(zoomLevel, baseZoom, zoom, markers);
 
             clusterController.ApplyCameraZoom(baseZoom, zoom);
