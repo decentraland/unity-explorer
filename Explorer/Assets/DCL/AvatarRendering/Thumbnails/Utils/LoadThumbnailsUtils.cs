@@ -48,6 +48,9 @@ namespace DCL.AvatarRendering.Thumbnails.Utils
             var sceneAbDto = await webRequestController.GetAsync(new CommonArguments(urlBuilder.Build(), attemptsCount: 1), ct, reportCategory)
                                                        .CreateFromJson<SceneAbDto>(WRJsonParser.Unity, WRThreadFlags.SwitchBackToMainThread);
 
+            if (!sceneAbDto.ValidateVersion())
+                ReportHub.LogError(new ReportData(ReportCategory.ASSET_BUNDLES, ReportHint.SessionStatic), $"Asset bundle {hash} for Wearable has a version that is not supported, requires rebuild");
+
             return new SceneAssetBundleManifest(assetBundleURL, sceneAbDto.Version, sceneAbDto.Files, hash, sceneAbDto.Date);
         }
 
