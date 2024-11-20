@@ -1,5 +1,7 @@
 using Cysharp.Threading.Tasks;
+using DCL.Platforms;
 using DCL.Utilities.Extensions;
+using Plugins.TexturesFuse.TexturesServerWrap.CompressShaders;
 using Plugins.TexturesFuse.TexturesServerWrap.Playground.Displays;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System;
@@ -41,6 +43,8 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground
             fuse = overrideDefaultUnzip
                 ? new Unzips.TexturesFuse(options.InitOptions, options, debugOutputFromNative).WithLog(string.Empty)
                 : ITexturesFuse.NewDefault();
+
+            await new CompressShaders.CompressShaders(fuse, IPlatform.DEFAULT).WarmUpIfRequiredAsync(destroyCancellationToken);
 
             buffer = await BufferAsync(pathOrUri);
             print($"Original size: {buffer.Length} bytes");
