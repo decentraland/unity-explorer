@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using Plugins.TexturesFuse.TexturesServerWrap.CompressShaders;
 using System;
+using System.IO;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Profiling;
@@ -32,7 +33,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
             initOptions.outputMessage = debug ? OutputMessage : null;
 
             //TODO investigate it later, for some reason this option won't work with AMDCOMPRESS_PLUGINS, for now it's easier to copy
-            initOptions.pluginsPath = "ignore";// ICompressShaders.ShadersDir();
+            initOptions.pluginsPath = Directory.GetCurrentDirectory();// ICompressShaders.ShadersDir();
 
             ReportHub.Log(ReportCategory.TEXTURES, $"TexturesFuse, Plugins Path is set to - {initOptions.pluginsPath}");
 
