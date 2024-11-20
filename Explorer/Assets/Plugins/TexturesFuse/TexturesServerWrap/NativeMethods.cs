@@ -1,4 +1,5 @@
 using DCL.Diagnostics;
+using DCL.Platforms;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System;
 using System.Diagnostics.CodeAnalysis;
@@ -361,7 +362,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap
                     fQuality = 1f,
                     disableMultithreading = true,
                     dwnumThreads = 1,
-                    encodeWith = CMP_Compute_type.CMP_CPU,
+                    encodeWith = IPlatform.DEFAULT.Is(IPlatform.Kind.Windows) ? CMP_Compute_type.CMP_GPU_DXC : CMP_Compute_type.CMP_CPU,
                 };
         };
 
