@@ -34,17 +34,18 @@ namespace Global.Dynamic
             this.analytics = analytics;
         }
 
-        public void PreInitializeSetup(UIDocument cursorRoot, UIDocument debugUiRoot, CancellationToken ct)
+        public UniTask PreInitializeSetupAsync(UIDocument cursorRoot, UIDocument debugUiRoot, CancellationToken ct)
         {
             analytics.Track(General.INITIAL_LOADING, new JsonObject
             {
                 { STAGE_KEY, "0 - started" },
             });
 
-            core.PreInitializeSetup(cursorRoot, debugUiRoot, ct);
+            return core.PreInitializeSetupAsync(cursorRoot, debugUiRoot, ct);
         }
 
-        public async UniTask<(StaticContainer?, bool)> LoadStaticContainerAsync(BootstrapContainer bootstrapContainer, PluginSettingsContainer globalPluginSettingsContainer, DebugViewsCatalog debugViewsCatalog, Entity playerEntity, ITexturesFuse texturesFuse, ISystemMemoryCap memoryCap, CancellationToken ct)
+        public async UniTask<(StaticContainer?, bool)> LoadStaticContainerAsync(BootstrapContainer bootstrapContainer, PluginSettingsContainer globalPluginSettingsContainer, DebugViewsCatalog debugViewsCatalog, Entity playerEntity, ITexturesFuse texturesFuse,
+            ISystemMemoryCap memoryCap, CancellationToken ct)
         {
             (StaticContainer? container, bool isSuccess) result = await core.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugViewsCatalog, playerEntity, texturesFuse, memoryCap, ct);
 
@@ -136,12 +137,11 @@ namespace Global.Dynamic
         public async UniTask UserInitializationAsync(DynamicWorldContainer dynamicWorldContainer, GlobalWorld globalWorld, Entity playerEntity, CancellationToken ct)
         {
             await core.UserInitializationAsync(dynamicWorldContainer, globalWorld, playerEntity, ct);
+
             analytics.Track(General.INITIAL_LOADING, new JsonObject
             {
                 { STAGE_KEY, "8 - end" },
             });
         }
-
-
     }
 }

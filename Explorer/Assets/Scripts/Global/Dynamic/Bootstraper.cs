@@ -62,11 +62,13 @@ namespace Global.Dynamic
             this.world = world;
         }
 
-        public void PreInitializeSetup(UIDocument cursorRoot,
+        public async UniTask PreInitializeSetupAsync(UIDocument cursorRoot,
             UIDocument debugUiRoot,
-            CancellationToken _)
+            CancellationToken token)
         {
             splashScreen.Show();
+            await compressShaders.WarmUpIfRequiredAsync(token);
+
             cursorRoot.EnsureNotNull();
 
             startingRealm = URLDomain.FromString(realmLaunchSettings.GetStartingRealm(decentralandUrlsSource));
@@ -88,12 +90,8 @@ namespace Global.Dynamic
             ITexturesFuse texturesFuse,
             ISystemMemoryCap memoryCap,
             CancellationToken ct
-        )
-        {
-            splashScreen.Show();
-            await compressShaders.WarmUpIfRequiredAsync(ct);
-
-            return await StaticContainer.CreateAsync(
+        ) =>
+            await StaticContainer.CreateAsync(
                 bootstrapContainer.DecentralandUrlsSource,
                 bootstrapContainer.AssetsProvisioner,
                 bootstrapContainer.ReportHandlingSettings,
@@ -114,7 +112,6 @@ namespace Global.Dynamic
                 bootstrapContainer.Analytics,
                 ct
             );
-        }
 
         public async UniTask<(DynamicWorldContainer?, bool)> LoadDynamicWorldContainerAsync(BootstrapContainer bootstrapContainer,
             StaticContainer staticContainer,

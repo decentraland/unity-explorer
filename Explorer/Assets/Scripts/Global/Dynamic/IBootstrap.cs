@@ -17,7 +17,7 @@ namespace Global.Dynamic
 {
     public interface IBootstrap
     {
-        void PreInitializeSetup(UIDocument cursorRoot, UIDocument debugUiRoot, CancellationToken ct);
+        UniTask PreInitializeSetupAsync(UIDocument cursorRoot, UIDocument debugUiRoot, CancellationToken ct);
 
         UniTask<(StaticContainer?, bool)> LoadStaticContainerAsync(BootstrapContainer bootstrapContainer, PluginSettingsContainer globalPluginSettingsContainer, DebugViewsCatalog debugViewsCatalog, Entity playerEntity, ITexturesFuse texturesFuse, ISystemMemoryCap memoryCap, CancellationToken ct);
 

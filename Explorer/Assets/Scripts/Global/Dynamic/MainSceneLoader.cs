@@ -135,7 +135,7 @@ namespace Global.Dynamic
 
             try
             {
-                bootstrap.PreInitializeSetup(cursorRoot, debugUiRoot, destroyCancellationToken);
+                await bootstrap.PreInitializeSetupAsync(cursorRoot, debugUiRoot, destroyCancellationToken);
 
                 bool isLoaded;
                 Entity playerEntity = world.Create(new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY));
