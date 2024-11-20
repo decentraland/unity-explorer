@@ -63,6 +63,8 @@ namespace DCL.InWorldCamera.CameraReelGallery
         private CancellationTokenSource loadNextPageCts = new ();
         private CancellationTokenSource showSuccessCts = new ();
         private CancellationTokenSource showFailureCts = new ();
+        private CancellationTokenSource setPublicCts = new ();
+        private CancellationTokenSource deleteScreenshotCts = new ();
         private ReelThumbnailController[] thumbnailImages;
         private int beginVisible;
         private int endVisible;
@@ -108,11 +110,11 @@ namespace DCL.InWorldCamera.CameraReelGallery
             {
                 this.contextMenuController.SetPublicRequested += (cameraReelRes, publicFlag) =>
                 {
-                    async UniTaskVoid SetPublicFlagAsync()
+                    async UniTaskVoid SetPublicFlagAsync(CancellationToken ct)
                     {
                         try
                         {
-                            await this.cameraReelStorageService.UpdateScreenshotVisibilityAsync(cameraReelRes.id, publicFlag);
+                            await this.cameraReelStorageService.UpdateScreenshotVisibilityAsync(cameraReelRes.id, publicFlag, ct);
                             cameraReelRes.isPublic = publicFlag;
                             await ShowSuccessNotificationAsync("Photo successfully updated");
                         }
@@ -122,7 +124,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
                         }
                     }
 
-                    SetPublicFlagAsync().Forget();
+                    SetPublicFlagAsync(setPublicCts.Token).Forget();
                 };
 
                 this.contextMenuController.ShareToXRequested += cameraReelResponse =>
@@ -184,7 +186,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
             {
                 await UniTask.Delay(ANIMATION_DELAY);
                 if (reelToDelete is not null)
-                    DeleteScreenshotsAsync(new ReelToDeleteInfo(reelToDelete.id, reelToDelete.dateTime)).Forget();
+                    DeleteScreenshotsAsync(new ReelToDeleteInfo(reelToDelete.id, reelToDelete.dateTime), deleteScreenshotCts.Token).Forget();
 
                 reelToDelete = null;
                 HideDeleteModal();
@@ -235,7 +237,9 @@ namespace DCL.InWorldCamera.CameraReelGallery
 
         public async UniTask ShowWalletGalleryAsync(string walletAddress, CancellationToken ct, CameraReelStorageStatus? storageStatus = null)
         {
-            loadNextPageCts = loadNextPageCts.SafeRestart();
+            loadNextPageCts = loadNextPageCts.SafeRestartLinked(ct);
+            setPublicCts = setPublicCts.SafeRestart();
+            deleteScreenshotCts = deleteScreenshotCts.SafeRestart();
 
             view.scrollRect.verticalNormalizedPosition = 1f;
             previousY = 1f;
@@ -450,6 +454,8 @@ namespace DCL.InWorldCamera.CameraReelGallery
             view.scrollRect.onValueChanged.RemoveListener(OnScrollRectValueChanged);
 
             loadNextPageCts.SafeCancelAndDispose();
+            setPublicCts.SafeCancelAndDispose();
+            deleteScreenshotCts.SafeCancelAndDispose();
         }
 
         public void Dispose()
