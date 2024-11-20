@@ -1,4 +1,4 @@
-﻿using JetBrains.Annotations;
+﻿using DCL.DebugUtilities.UIBindings;
 using System;
 
 namespace DCL.DebugUtilities
@@ -8,10 +8,13 @@ namespace DCL.DebugUtilities
     /// </summary>
     public class DebugButtonDef : IDebugElementDef
     {
-        public readonly string Text;
+        public readonly ElementBinding<string> Text;
         public readonly Action OnClick;
 
-        public DebugButtonDef([CanBeNull] string text, Action onClick)
+        public DebugButtonDef(string? text, Action onClick)
+            : this(new ElementBinding<string>(text!), onClick) { }
+
+        public DebugButtonDef(ElementBinding<string> text, Action onClick)
         {
             Text = text;
             OnClick = onClick;

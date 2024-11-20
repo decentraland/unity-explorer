@@ -1,4 +1,5 @@
-﻿using CommunicationData.URLHelpers;
+﻿using System;
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.MapRenderer.ComponentsFactory;
@@ -9,6 +10,9 @@ using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System.Threading;
 using UnityEngine;
 using Utility;
+using UnityEngine.AddressableAssets;
+using UnityEngine.ResourceManagement.AsyncOperations;
+using Object = UnityEngine.Object;
 
 namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
 {
@@ -84,18 +88,28 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
                 ReportCategory.UI
             );
 
+            Texture2D texture;
+
             currentOwnedTexture?.Dispose();
             currentOwnedTexture = null;
 
-            currentOwnedTexture = await textureTask!.SuppressExceptionWithFallbackAsync(
-                OwnedTexture2D.NewEmptyTexture(),
-                SuppressExceptionWithFallback.Behaviour.SuppressAnyException,
-                reportData: ReportCategory.UI
-            )!;
+            try
+            {
+                currentOwnedTexture = await textureTask!.SuppressExceptionWithFallbackAsync(
+                    OwnedTexture2D.NewEmptyTexture(),
+                    SuppressExceptionWithFallback.Behaviour.SuppressAnyException,
+                    reportData: ReportCategory.UI
+                )!;
 
-            await UniTask.SwitchToMainThread();
+                await UniTask.SwitchToMainThread();
 
-            Texture2D texture = currentOwnedTexture.Texture;
+                texture = currentOwnedTexture.Texture;
+            }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, ReportCategory.UI);
+                texture = await Addressables.LoadAssetAsync<Texture2D>($"{chunkId.x},{chunkId.y}").Task;
+            }
 
             textureContainer.AddChunk(chunkId, texture);
 

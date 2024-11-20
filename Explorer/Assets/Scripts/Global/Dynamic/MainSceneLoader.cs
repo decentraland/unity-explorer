@@ -25,10 +25,11 @@ using System.Linq;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UIElements;
+using Utility;
 
 namespace Global.Dynamic
 {
-    public class MainSceneLoader : MonoBehaviour
+    public class MainSceneLoader : MonoBehaviour, ICoroutineRunner
     {
         [Header("Startup Config")] [SerializeField]
         private RealmLaunchSettings launchSettings = null!;
@@ -92,7 +93,7 @@ namespace Global.Dynamic
 
         private async UniTask InitializeFlowAsync(CancellationToken ct)
         {
-            var applicationParametersParser = new ApplicationParametersParser(
+            IAppArgs applicationParametersParser = new ApplicationParametersParser(
 #if UNITY_EDITOR
                 debugSettings.AppParameters
 #else
@@ -152,6 +153,7 @@ namespace Global.Dynamic
                 (dynamicWorldContainer, isLoaded) = await bootstrap.LoadDynamicWorldContainerAsync(bootstrapContainer, staticContainer!, scenePluginSettingsContainer, settings,
                     dynamicSettings, uiToolkitRoot, cursorRoot, backgroundMusic, worldInfoTool.EnsureNotNull(), playerEntity,
                     applicationParametersParser,
+                    coroutineRunner: this,
                     destroyCancellationToken);
 
                 if (!isLoaded)
@@ -199,15 +201,15 @@ namespace Global.Dynamic
             }
         }
 
-        private async UniTask<bool> DoesApplicationRequireVersionUpdateAsync(ApplicationParametersParser applicationParametersParser, SplashScreen splashScreen, CancellationToken ct)
+        private async UniTask<bool> DoesApplicationRequireVersionUpdateAsync(IAppArgs applicationParametersParser, SplashScreen splashScreen, CancellationToken ct)
         {
-            applicationParametersParser.TryGetValue(ApplicationVersionGuard.SIMULATE_VERSION_CLI_ARG, out string? version);
+            applicationParametersParser.TryGetValue(AppArgsFlags.SIMULATE_VERSION, out string? version);
             string? currentVersion = version ?? Application.version;
 
             bool runVersionControl = debugSettings.EnableVersionUpdateGuard;
 
             if (applicationParametersParser.HasDebugFlag() && !Application.isEditor)
-                runVersionControl = applicationParametersParser.TryGetValue(ApplicationVersionGuard.ENABLE_VERSION_CONTROL_CLI_ARG, out string? enforceDebugMode) && enforceDebugMode == "true";
+                runVersionControl = applicationParametersParser.TryGetValue(AppArgsFlags.ENABLE_VERSION_CONTROL, out string? enforceDebugMode) && enforceDebugMode == "true";
 
             if (!runVersionControl)
                 return false;

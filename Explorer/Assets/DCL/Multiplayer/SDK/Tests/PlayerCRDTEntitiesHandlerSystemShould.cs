@@ -38,12 +38,16 @@ namespace DCL.Multiplayer.SDK.Tests
 
             scene1World = World.Create();
             scene1Facade = SceneFacadeUtils.CreateSceneFacadeSubstitute(Vector2Int.zero, scene1World);
-            scene1Facade.PersistentEntities.Returns(new PersistentEntities(scene1World.Create(new PlayerSceneCRDTEntity(SpecialEntitiesID.PLAYER_ENTITY)), Entity.Null, Entity.Null));
+            scene1Facade.PersistentEntities.Returns(new PersistentEntities(
+                scene1World.Create(new PlayerSceneCRDTEntity(SpecialEntitiesID.PLAYER_ENTITY)), Entity.Null,
+                Entity.Null, Entity.Null));
             scenesCache.Add(scene1Facade, new[] { scene1Facade.Info.BaseParcel });
 
             scene2World = World.Create();
             scene2Facade = SceneFacadeUtils.CreateSceneFacadeSubstitute(Vector2Int.one, scene2World);
-            scene2Facade.PersistentEntities.Returns(new PersistentEntities(scene2World.Create(new PlayerSceneCRDTEntity(SpecialEntitiesID.PLAYER_ENTITY)), Entity.Null, Entity.Null));
+            scene2Facade.PersistentEntities.Returns(new PersistentEntities(
+                scene2World.Create(new PlayerSceneCRDTEntity(SpecialEntitiesID.PLAYER_ENTITY)), Entity.Null,
+                Entity.Null, Entity.Null));
             scenesCache.Add(scene2Facade, new[] { scene2Facade.Info.BaseParcel });
 
             fakeCharacterUnityTransform = new GameObject("fake-character").transform;

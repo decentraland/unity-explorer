@@ -7,6 +7,7 @@ using DCL.Optimization.PerformanceBudgeting;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
+using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.Web3.Identities;
 using Global.AppArgs;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
@@ -14,6 +15,7 @@ using SceneRunner.Debugging;
 using Segment.Serialization;
 using System.Threading;
 using UnityEngine.UIElements;
+using Utility;
 using static DCL.PerformanceAndDiagnostics.Analytics.AnalyticsEvents;
 
 namespace Global.Dynamic
@@ -65,11 +67,12 @@ namespace Global.Dynamic
             WorldInfoTool worldInfoTool,
             Entity playerEntity,
             IAppArgs appArgs,
+            ICoroutineRunner coroutineRunner,
             CancellationToken ct)
         {
             (DynamicWorldContainer? container, bool) result =
                 await core.LoadDynamicWorldContainerAsync(bootstrapContainer, staticContainer, scenePluginSettingsContainer,
-                    settings, dynamicSettings, uiToolkitRoot, cursorRoot, backgroundMusic, worldInfoTool, playerEntity, appArgs, ct);
+                    settings, dynamicSettings, uiToolkitRoot, cursorRoot, backgroundMusic, worldInfoTool, playerEntity, appArgs, coroutineRunner, ct);
 
             analytics.Track(General.INITIAL_LOADING, new JsonObject
             {

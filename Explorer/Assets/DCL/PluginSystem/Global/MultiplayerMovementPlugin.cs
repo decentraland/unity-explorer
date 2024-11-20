@@ -21,7 +21,6 @@ namespace DCL.PluginSystem.Global
 {
     public class MultiplayerMovementPlugin : IDCLGlobalPlugin<MultiplayerCommunicationSettings>
     {
-        private const string COMPRESSION_ARG_FLAG = "compression";
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly MultiplayerMovementMessageBus messageBus;
         private readonly IDebugContainerBuilder debugBuilder;
@@ -72,7 +71,7 @@ namespace DCL.PluginSystem.Global
 
         private void ConfigureCompressionUsage()
         {
-            if (appArgs.TryGetValue(COMPRESSION_ARG_FLAG, out string? compression))
+            if (appArgs.TryGetValue(AppArgsFlags.Multiplayer.COMPRESSION, out string? compression))
             {
                 this.settings.Value.UseCompression = compression == "true";
                 return;

@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.AssetsProvision.CodeResolver;
 using DCL.Browser.DecentralandUrls;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
@@ -23,6 +24,7 @@ using NSubstitute;
 using System;
 using System.Threading;
 using DCL.PerformanceAndDiagnostics.Analytics;
+using SceneRuntime.Factory.WebSceneSource;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using UnityEngine.AddressableAssets;
 
@@ -41,6 +43,9 @@ namespace Global.Tests.PlayMode
             IDecentralandUrlsSource dclUrls = new DecentralandUrlsSource(DecentralandEnvironment.Org);
 
             IWeb3IdentityCache identityCache = new MemoryWeb3IdentityCache();
+
+            IWebJsSources webJsSources = new WebJsSources(new JsCodeResolver(new WebRequestController(
+                identityCache)));
 
             IReportsHandlingSettings? reportSettings = Substitute.For<IReportsHandlingSettings>();
             reportSettings.IsEnabled(ReportHandler.DebugLog).Returns(true);
@@ -87,7 +92,8 @@ namespace Global.Tests.PlayMode
                     Substitute.For<IPopupCloserView>()
                 ),
                 new IMessagePipesHub.Fake(),
-                Substitute.For<IRemoteMetadata>()
+                Substitute.For<IRemoteMetadata>(),
+                webJsSources
             );
 
             return (staticContainer, sceneSharedContainer);

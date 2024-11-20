@@ -46,6 +46,7 @@ namespace DCL.DebugUtilities
                             IDebugContainerBuilder.Categories.ROOM_ISLAND,
                             IDebugContainerBuilder.Categories.PERFORMANCE,
                             IDebugContainerBuilder.Categories.MEMORY,
+                            IDebugContainerBuilder.Categories.REALM
                         }
                 )
             );

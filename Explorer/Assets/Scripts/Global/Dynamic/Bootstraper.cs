@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.AssetsProvision.CodeResolver;
 using DCL.Audio;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
@@ -22,10 +23,13 @@ using MVC;
 using Plugins.TexturesFuse.TexturesServerWrap.CompressShaders;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using SceneRunner.Debugging;
+using SceneRuntime.Factory.WebSceneSource;
+using SceneRuntime.Factory.WebSceneSource.Cache;
 using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UIElements;
+using Utility;
 
 namespace Global.Dynamic
 {
@@ -124,6 +128,7 @@ namespace Global.Dynamic
             WorldInfoTool worldInfoTool,
             Entity playerEntity,
             IAppArgs appArgs,
+            ICoroutineRunner coroutineRunner,
             CancellationToken ct)
         {
             dynamicWorldDependencies = new DynamicWorldDependencies
@@ -164,6 +169,8 @@ namespace Global.Dynamic
                 playerEntity,
                 appArgs,
                 staticContainer.SceneRestrictionBusController,
+                staticContainer.LoadingStatus,
+                coroutineRunner,
                 ct);
         }
 
@@ -199,6 +206,16 @@ namespace Global.Dynamic
             Entity playerEntity
         )
         {
+            IWebJsSources webJsSources = new WebJsSources(new JsCodeResolver(
+                staticContainer.WebRequestsContainer.WebRequestController));
+
+            if (!realmLaunchSettings.IsLocalSceneDevelopmentRealm)
+            {
+                MemoryJsSourcesCache cache = new ();
+                staticContainer.CacheCleaner.Register(cache);
+                webJsSources = new CachedWebJsSources(webJsSources, cache);
+            }
+
             SceneSharedContainer sceneSharedContainer = SceneSharedContainer.Create(
                 in staticContainer,
                 bootstrapContainer.DecentralandUrlsSource,
@@ -210,7 +227,7 @@ namespace Global.Dynamic
                 dynamicWorldContainer.MvcManager,
                 dynamicWorldContainer.MessagePipesHub,
                 dynamicWorldContainer.RemoteMetadata,
-                !realmLaunchSettings.IsLocalSceneDevelopmentRealm
+                webJsSources
             );
 
             GlobalWorld globalWorld = dynamicWorldContainer.GlobalWorldFactory.Create(sceneSharedContainer.SceneFactory,

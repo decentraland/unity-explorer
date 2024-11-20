@@ -3,6 +3,7 @@ using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
+using System;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System.Linq;
 using System.Threading;
@@ -18,6 +19,7 @@ namespace DCL.InWorldCamera.CameraReelStorageService.Playground
 
         public DecentralandEnvironment Env;
 
+        [Space(5)]
         public CameraReelStorageResponse Storage;
 
         [Header("GALLERY")]
@@ -30,7 +32,9 @@ namespace DCL.InWorldCamera.CameraReelStorageService.Playground
         public Texture2D ThumbnailTexture;
 
         [Header("UPLOAD")]
-        public string ThumbnailUrl;
+        public ScreenshotMetadata Metadata;
+        [Space(5)]
+        public string ResultThumbnailUrl;
 
         private ICameraReelScreenshotsStorage screenshotsStorageInternal;
         private ICameraReelScreenshotsStorage screenshotsStorage => screenshotsStorageInternal ??= new CameraReelS3BucketScreenshotsStorage(webRequestController);
@@ -63,21 +67,63 @@ namespace DCL.InWorldCamera.CameraReelStorageService.Playground
             ThumbnailTexture = await screenshotsStorage.GetScreenshotThumbnailAsync(screenshot.thumbnailUrl);
         }
 
-        [ContextMenu("UPLOAD IMAGE")]
-        public async void UploadImageAsync()
-        {
-            CameraReelUploadResponse response = await metadataDatabase.UploadScreenshotAsync(ImageTexture.EncodeToJPG(), Result.images.First().metadata, ct);
-
-            Storage.currentImages = response.currentImages;
-            Storage.maxImages = response.maxImages;
-
-            ThumbnailUrl = response.image.thumbnailUrl;
-        }
-
         [ContextMenu("DELETE IMAGE")]
         public async void DeleteImageAsync()
         {
             Storage = await metadataDatabase.DeleteScreenshotAsync(Result.images.First().id, ct);
+        }
+
+        [ContextMenu("UPLOAD IMAGE")]
+        public async void UploadImageAsync()
+        {
+            Metadata.dateTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString();
+
+            Texture2D readableCopy = MakeReadableCopy(ImageTexture);
+
+            try
+            {
+                CameraReelUploadResponse response = await metadataDatabase.UploadScreenshotAsync(readableCopy.EncodeToJPG(), Metadata, ct);
+
+                Storage.currentImages = response.currentImages;
+                Storage.maxImages = response.maxImages;
+
+                ResultThumbnailUrl = response.image.thumbnailUrl;
+            }
+            finally
+            {
+                if (readableCopy != null)
+                    Destroy(readableCopy);
+            }
+        }
+
+        private static Texture2D MakeReadableCopy(Texture source)
+        {
+            var renderTexture = RenderTexture.GetTemporary(
+                source.width,
+                source.height,
+                0,
+                RenderTextureFormat.Default,
+                RenderTextureReadWrite.Linear
+            );
+
+            Graphics.Blit(source, renderTexture);
+
+            var readableTexture = new Texture2D(
+                source.width,
+                source.height,
+                TextureFormat.RGBA32,
+                false
+            );
+
+            RenderTexture previous = RenderTexture.active;
+            RenderTexture.active = renderTexture;
+            readableTexture.ReadPixels(new Rect(0, 0, renderTexture.width, renderTexture.height), 0, 0);
+            readableTexture.Apply();
+
+            RenderTexture.active = previous;
+            RenderTexture.ReleaseTemporary(renderTexture);
+
+            return readableTexture;
         }
     }
 }
