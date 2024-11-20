@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Clipboard;
+using DCL.Diagnostics;
 using DCL.ExplorePanel.Components;
 using DCL.InWorldCamera.CameraReelGallery.Components;
 using DCL.InWorldCamera.CameraReelStorageService;
@@ -118,8 +119,9 @@ namespace DCL.InWorldCamera.CameraReelGallery
                             cameraReelRes.isPublic = publicFlag;
                             await ShowSuccessNotificationAsync("Photo successfully updated");
                         }
-                        catch (UnityWebRequestException)
+                        catch (UnityWebRequestException e)
                         {
+                            ReportHub.LogException(e, new ReportData(ReportCategory.CAMERA_REEL));
                             await ShowFailureNotificationAsync();
                         }
                     }
@@ -227,8 +229,10 @@ namespace DCL.InWorldCamera.CameraReelGallery
 
                 await ShowSuccessNotificationAsync("Photo successfully deleted");
             }
-            catch (UnityWebRequestException)
+            catch (UnityWebRequestException e)
             {
+                ReportHub.LogException(e, new ReportData(ReportCategory.CAMERA_REEL));
+
                 if (view.errorNotificationView is null) return;
 
                 await ShowFailureNotificationAsync();
