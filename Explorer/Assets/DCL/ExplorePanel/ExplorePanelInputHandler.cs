@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine.InputSystem;
 
-namespace DCL.ExplorePanel.Component
+namespace DCL.ExplorePanel
 {
     public class ExplorePanelInputHandler : IDisposable, IExplorePanelEscapeAction
     {
