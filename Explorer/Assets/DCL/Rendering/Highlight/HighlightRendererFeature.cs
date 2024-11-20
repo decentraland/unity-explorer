@@ -25,10 +25,10 @@ namespace DCL.Rendering.Highlight
         [SerializeField] internal float DepthSensitivity = 0.05f;
         [SerializeField] internal float NormalsSensitivity = 1.0f;
         [SerializeField] internal float ColorSensitivity = 0.5f;
-        [SerializeField] internal Color OutlineColor = new (1.0f, 1.0f, 1.0f, 0.5f);
+        //[SerializeField] internal Color OutlineColor = new (1.0f, 1.0f, 1.0f, 0.5f);
     }
 
-    public partial class HighlightRendererFeature : ScriptableRendererFeature
+    public partial class HighlightRendererFeature //: ScriptableRendererFeature
     {
         private const string k_ShaderName_HighlightInput = "DCL/HighlightInput_Override";
         private const string k_ShaderName_HighlightInputBlur = "DCL/HighlightInput_Blur";
@@ -83,11 +83,11 @@ namespace DCL.Rendering.Highlight
         {
             // Highlight Input - Override Material & Shader, Colour & Depth Render Targets and pass setups
             {
-                if (highlightInputMaterial == null)
+                if (!highlightInputMaterial)
                 {
                     m_ShaderHighlightInput = Shader.Find(k_ShaderName_HighlightInput);
 
-                    if (m_ShaderHighlightInput == null)
+                    if (!m_ShaderHighlightInput)
                     {
                         ReportHub.LogError(m_ReportData, "m_ShaderHighlightInput not found.");
                         return;
@@ -95,14 +95,14 @@ namespace DCL.Rendering.Highlight
 
                     highlightInputMaterial = CoreUtils.CreateEngineMaterial(m_ShaderHighlightInput);
 
-                    if (highlightInputMaterial == null)
+                    if (!highlightInputMaterial)
                     {
                         ReportHub.LogError(m_ReportData, "highlightInputMaterial not found.");
                         return;
                     }
                 }
 
-                if (highlightInputBlurMaterial == null)
+                if (!highlightInputBlurMaterial)
                 {
                     m_ShaderHighlightInputBlur = Shader.Find(k_ShaderName_HighlightInputBlur);
 
@@ -114,7 +114,7 @@ namespace DCL.Rendering.Highlight
 
                     highlightInputBlurMaterial = CoreUtils.CreateEngineMaterial(m_ShaderHighlightInputBlur);
 
-                    if (highlightInputBlurMaterial == null)
+                    if (!highlightInputBlurMaterial)
                     {
                         ReportHub.LogError(m_ReportData, "highlightInputBlurMaterial not found.");
                         return;
@@ -123,81 +123,90 @@ namespace DCL.Rendering.Highlight
 
                 // Highlight - Colour Texture
                 {
-                    var desc = new RenderTextureDescriptor();
-                    desc.autoGenerateMips = false;
-                    desc.bindMS = false;
-                    desc.colorFormat = RenderTextureFormat.ARGB32;
-                    desc.depthBufferBits = 0;
-                    desc.depthStencilFormat = GraphicsFormat.None;
-                    desc.dimension = TextureDimension.Tex2D;
-                    desc.enableRandomWrite = false;
-                    desc.graphicsFormat = GraphicsFormat.R8G8B8A8_UNorm;
-                    desc.height = _renderingData.cameraData.cameraTargetDescriptor.height;
-                    desc.memoryless = RenderTextureMemoryless.None;
-                    desc.mipCount = 0;
-                    desc.msaaSamples = 1;
-                    desc.shadowSamplingMode = ShadowSamplingMode.None;
-                    desc.sRGB = false;
-                    desc.stencilFormat = GraphicsFormat.None;
-                    desc.useDynamicScale = false;
-                    desc.useMipMap = false;
-                    desc.volumeDepth = 0;
-                    desc.vrUsage = VRTextureUsage.None;
-                    desc.width = _renderingData.cameraData.cameraTargetDescriptor.width;
+                    var desc = new RenderTextureDescriptor
+                        {
+                            autoGenerateMips = false,
+                            bindMS = false,
+                            colorFormat = RenderTextureFormat.ARGB32,
+                            depthBufferBits = 0,
+                            depthStencilFormat = GraphicsFormat.None,
+                            dimension = TextureDimension.Tex2D,
+                            enableRandomWrite = false,
+                            graphicsFormat = GraphicsFormat.R8G8B8A8_UNorm,
+                            height = _renderingData.cameraData.cameraTargetDescriptor.height,
+                            memoryless = RenderTextureMemoryless.None,
+                            mipCount = 0,
+                            msaaSamples = 1,
+                            shadowSamplingMode = ShadowSamplingMode.None,
+                            sRGB = false,
+                            stencilFormat = GraphicsFormat.None,
+                            useDynamicScale = false,
+                            useMipMap = false,
+                            volumeDepth = 0,
+                            vrUsage = VRTextureUsage.None,
+                            width = _renderingData.cameraData.cameraTargetDescriptor.width,
+                        };
+
                     highlightRTDescriptor_Colour = desc;
                     RenderingUtils.ReAllocateIfNeeded(ref highlightRTHandle_Colour, highlightRTDescriptor_Colour, FilterMode.Point, TextureWrapMode.Clamp, isShadowMap: false, anisoLevel: 1, mipMapBias: 0F, name: "_Highlight_ColourTexture");
                 }
 
                 // Highlight - Depth Texture
                 {
-                    var desc = new RenderTextureDescriptor();
-                    desc.autoGenerateMips = false;
-                    desc.bindMS = false;
-                    desc.colorFormat = RenderTextureFormat.Shadowmap;
-                    desc.depthBufferBits = 32;
-                    desc.depthStencilFormat = GraphicsFormat.D32_SFloat;
-                    desc.dimension = TextureDimension.Tex2D;
-                    desc.enableRandomWrite = false;
-                    desc.graphicsFormat = GraphicsFormat.R8G8B8A8_UNorm;
-                    desc.height = _renderingData.cameraData.cameraTargetDescriptor.height;
-                    desc.memoryless = RenderTextureMemoryless.None;
-                    desc.mipCount = 0;
-                    desc.msaaSamples = 1;
-                    desc.shadowSamplingMode = ShadowSamplingMode.None;
-                    desc.sRGB = false;
-                    desc.stencilFormat = GraphicsFormat.None;
-                    desc.useDynamicScale = false;
-                    desc.useMipMap = false;
-                    desc.volumeDepth = 0;
-                    desc.vrUsage = VRTextureUsage.None;
-                    desc.width = _renderingData.cameraData.cameraTargetDescriptor.width;
+                    var desc = new RenderTextureDescriptor
+                        {
+                            autoGenerateMips = false,
+                            bindMS = false,
+                            colorFormat = RenderTextureFormat.Shadowmap,
+                            depthBufferBits = 32,
+                            depthStencilFormat = GraphicsFormat.D32_SFloat,
+                            dimension = TextureDimension.Tex2D,
+                            enableRandomWrite = false,
+                            graphicsFormat = GraphicsFormat.R8G8B8A8_UNorm,
+                            height = _renderingData.cameraData.cameraTargetDescriptor.height,
+                            memoryless = RenderTextureMemoryless.None,
+                            mipCount = 0,
+                            msaaSamples = 1,
+                            shadowSamplingMode = ShadowSamplingMode.None,
+                            sRGB = false,
+                            stencilFormat = GraphicsFormat.None,
+                            useDynamicScale = false,
+                            useMipMap = false,
+                            volumeDepth = 0,
+                            vrUsage = VRTextureUsage.None,
+                            width = _renderingData.cameraData.cameraTargetDescriptor.width,
+                        };
+
                     highlightRTDescriptor_Depth = desc;
                     RenderingUtils.ReAllocateIfNeeded(ref highlightRTHandle_Depth, highlightRTDescriptor_Depth, FilterMode.Point, TextureWrapMode.Clamp, isShadowMap: false, anisoLevel: 1, mipMapBias: 0F, name: "_Highlight_DepthTexture");
                 }
 
                 // Highlight - Blur Texture (PING & PONG)
                 {
-                    var desc = new RenderTextureDescriptor();
-                    desc.autoGenerateMips = false;
-                    desc.bindMS = false;
-                    desc.colorFormat = RenderTextureFormat.ARGB32;
-                    desc.depthBufferBits = 0;
-                    desc.depthStencilFormat = GraphicsFormat.None;
-                    desc.dimension = TextureDimension.Tex2D;
-                    desc.enableRandomWrite = false;
-                    desc.graphicsFormat = GraphicsFormat.R8G8B8A8_UNorm;
-                    desc.height = _renderingData.cameraData.cameraTargetDescriptor.height;
-                    desc.memoryless = RenderTextureMemoryless.None;
-                    desc.mipCount = 0;
-                    desc.msaaSamples = 1;
-                    desc.shadowSamplingMode = ShadowSamplingMode.None;
-                    desc.sRGB = false;
-                    desc.stencilFormat = GraphicsFormat.None;
-                    desc.useDynamicScale = false;
-                    desc.useMipMap = false;
-                    desc.volumeDepth = 0;
-                    desc.vrUsage = VRTextureUsage.None;
-                    desc.width = _renderingData.cameraData.cameraTargetDescriptor.width;
+                    var desc = new RenderTextureDescriptor
+                        {
+                            autoGenerateMips = false,
+                            bindMS = false,
+                            colorFormat = RenderTextureFormat.ARGB32,
+                            depthBufferBits = 0,
+                            depthStencilFormat = GraphicsFormat.None,
+                            dimension = TextureDimension.Tex2D,
+                            enableRandomWrite = false,
+                            graphicsFormat = GraphicsFormat.R8G8B8A8_UNorm,
+                            height = _renderingData.cameraData.cameraTargetDescriptor.height,
+                            memoryless = RenderTextureMemoryless.None,
+                            mipCount = 0,
+                            msaaSamples = 1,
+                            shadowSamplingMode = ShadowSamplingMode.None,
+                            sRGB = false,
+                            stencilFormat = GraphicsFormat.None,
+                            useDynamicScale = false,
+                            useMipMap = false,
+                            volumeDepth = 0,
+                            vrUsage = VRTextureUsage.None,
+                            width = _renderingData.cameraData.cameraTargetDescriptor.width,
+                        };
+
                     highlightRTDescriptor_Colour_Blur = desc;
                     RenderingUtils.ReAllocateIfNeeded(ref highlightRTHandle_Colour_Blur_Ping, highlightRTDescriptor_Colour_Blur, FilterMode.Point, TextureWrapMode.Clamp, isShadowMap: false, anisoLevel: 1, mipMapBias: 0F, name: "_Highlight_ColourTexture_Blur_Ping");
                     RenderingUtils.ReAllocateIfNeeded(ref highlightRTHandle_Colour_Blur_Pong, highlightRTDescriptor_Colour_Blur, FilterMode.Point, TextureWrapMode.Clamp, isShadowMap: false, anisoLevel: 1, mipMapBias: 0F, name: "_Highlight_ColourTexture_Blur_Pong");
@@ -218,11 +227,11 @@ namespace DCL.Rendering.Highlight
 
             // Highlight Output Material, Shader, RenderTarget and pass setups
             {
-                if (highlightOutputMaterial == null)
+                if (!highlightOutputMaterial)
                 {
                     m_ShaderHighlightOutput = Shader.Find(k_ShaderName_HighlightOutput);
 
-                    if (m_ShaderHighlightOutput == null)
+                    if (!m_ShaderHighlightOutput)
                     {
                         ReportHub.LogError(m_ReportData, "m_ShaderHighlightOutput not found.");
                         return;
@@ -230,7 +239,7 @@ namespace DCL.Rendering.Highlight
 
                     highlightOutputMaterial = CoreUtils.CreateEngineMaterial(m_ShaderHighlightOutput);
 
-                    if (highlightOutputMaterial == null)
+                    if (!highlightOutputMaterial)
                     {
                         ReportHub.LogError(m_ReportData, "highlightOutputMaterial not found.");
                         return;
@@ -244,10 +253,12 @@ namespace DCL.Rendering.Highlight
         public override void AddRenderPasses(ScriptableRenderer _renderer, ref RenderingData _renderingData)
         {
             // Highlight Input
-            if (highlightInputMaterial != null && m_ShaderHighlightInput != null && highlightRTHandle_Colour != null) { _renderer.EnqueuePass(highlightInputRenderPass); }
+            if (highlightInputMaterial && m_ShaderHighlightInput && highlightRTHandle_Colour != null)
+                _renderer.EnqueuePass(highlightInputRenderPass);
 
             // HighLight Output
-            if (highlightOutputMaterial != null && m_ShaderHighlightOutput != null) { _renderer.EnqueuePass(highlightOutputRenderPass); }
+            if (highlightOutputMaterial && m_ShaderHighlightOutput)
+                _renderer.EnqueuePass(highlightOutputRenderPass);
         }
 
         protected override void Dispose(bool _bDisposing)
