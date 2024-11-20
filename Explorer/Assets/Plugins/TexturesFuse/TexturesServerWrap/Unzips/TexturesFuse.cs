@@ -30,7 +30,9 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
 
             initOptions = initOptions.NewWithMode(options.Mode);
             initOptions.outputMessage = debug ? OutputMessage : null;
-            initOptions.pluginsPath = ICompressShaders.ShadersDir();
+
+            //TODO investigate it later, for some reason this option won't work with AMDCOMPRESS_PLUGINS, for now it's easier to copy
+            initOptions.pluginsPath = "ignore";// ICompressShaders.ShadersDir();
 
             ReportHub.Log(ReportCategory.TEXTURES, $"TexturesFuse, Plugins Path is set to - {initOptions.pluginsPath}");
 
