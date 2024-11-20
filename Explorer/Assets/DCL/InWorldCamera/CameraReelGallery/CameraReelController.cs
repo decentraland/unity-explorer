@@ -57,7 +57,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
         private void StorageFullIconExit() =>
             view.storageFullToast.DOFade(0f, view.storageFullToastFadeTime);
 
-        private async UniTask OnShowAsync(CancellationToken ct)
+        private async UniTask ShowAsync(CancellationToken ct)
         {
             view.emptyState.SetActive(false);
             view.loadingSpinner.SetActive(true);
@@ -94,7 +94,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
         {
             showCancellationTokenSource = showCancellationTokenSource.SafeRestart();
             view.gameObject.SetActive(true);
-            OnShowAsync(showCancellationTokenSource.Token).Forget();
+            ShowAsync(showCancellationTokenSource.Token).Forget();
         }
 
         public void Deactivate()
