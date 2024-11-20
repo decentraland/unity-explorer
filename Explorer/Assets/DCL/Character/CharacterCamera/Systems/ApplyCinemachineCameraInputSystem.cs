@@ -68,9 +68,6 @@ namespace DCL.CharacterCamera.Systems
             cameraInput.SetFreeFly = isFreeCameraAllowed && input.Camera.ToggleFreeFly!.triggered;
             cameraInput.SwitchState = input.Camera.SwitchState!.WasPressedThisFrame();
             cameraInput.ChangeShoulder = input.Camera.ChangeShoulder!.WasPressedThisFrame();
-
-            // Update the brain manually
-            cinemachinePreset.Brain.ManualUpdate();
         }
 
         [Query]

@@ -62,8 +62,6 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
                     Rotate(t, followTarget.transform, ref World.Get<CameraDampedAim>(camera));
 
                 Zoom(t, ref World.Get<CameraDampedFOV>(camera));
-
-                cinemachinePreset.Brain.ManualUpdate(); // Update the brain manually
             }
         }
 
