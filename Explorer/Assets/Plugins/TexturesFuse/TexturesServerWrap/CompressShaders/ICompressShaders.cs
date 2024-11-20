@@ -13,10 +13,14 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.CompressShaders
 
         UniTask WarmUpAsync(CancellationToken token);
 
-        static string ShadersDir() =>
-            Application.isEditor
-                ? Path.Combine(Directory.GetCurrentDirectory(), "Assets/StreamingAssets/plugins")
-                : "Decentraland_Data/StreamingAssets/plugins";
+        static string ShadersDir()
+        {
+            char ps = Path.PathSeparator;
+
+            return Application.isEditor
+                ? Path.Combine(Directory.GetCurrentDirectory(), $"Assets{ps}StreamingAssets{ps}plugins")
+                : $"Decentraland_Data{ps}StreamingAssets{ps}plugins";
+        }
     }
 
     public static class CompressShadersExtensions
