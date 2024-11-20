@@ -40,6 +40,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using DCL.Chat.MessageBus;
+using DCL.Clipboard;
 using DCL.ExplorePanel.Component;
 using DCL.InWorldCamera.CameraReelGallery;
 using DCL.InWorldCamera.CameraReelStorageService;
@@ -68,6 +69,7 @@ namespace DCL.PluginSystem.Global
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly ICameraReelStorageService cameraReelStorageService;
         private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
+        private readonly ISystemClipboard systemClipboard;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IWearableStorage wearableStorage;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
@@ -115,6 +117,7 @@ namespace DCL.PluginSystem.Global
             IWeb3IdentityCache web3IdentityCache,
             ICameraReelStorageService cameraReelStorageService,
             ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
+            ISystemClipboard systemClipboard,
             IDecentralandUrlsSource decentralandUrlsSource,
             IWearableStorage wearableStorage,
             ICharacterPreviewFactory characterPreviewFactory,
@@ -157,6 +160,7 @@ namespace DCL.PluginSystem.Global
             this.web3IdentityCache = web3IdentityCache;
             this.cameraReelStorageService = cameraReelStorageService;
             this.cameraReelScreenshotsStorage = cameraReelScreenshotsStorage;
+            this.systemClipboard = systemClipboard;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.wearableStorage = wearableStorage;
             this.characterPreviewFactory = characterPreviewFactory;
@@ -253,7 +257,7 @@ namespace DCL.PluginSystem.Global
             CameraReelView cameraReelView = explorePanelView.GetComponentInChildren<CameraReelView>();
             var cameraReelController = new CameraReelController(cameraReelView,
                 new CameraReelGalleryController(cameraReelView.cameraReelGalleryView, this.cameraReelStorageService,
-                    cameraReelScreenshotsStorage, webBrowser, decentralandUrlsSource, inputHandler, cameraReelView.optionsButton, cameraReelView.contextMenu),
+                    cameraReelScreenshotsStorage, webBrowser, decentralandUrlsSource, inputHandler, systemClipboard, cameraReelView.optionsButton, cameraReelView.contextMenu),
                 cameraReelStorageService,
                 web3IdentityCache);
 

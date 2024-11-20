@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
+using DCL.Clipboard;
 using DCL.ExplorePanel.Components;
 using DCL.InWorldCamera.CameraReelGallery.Components;
 using DCL.InWorldCamera.CameraReelStorageService;
@@ -75,6 +76,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
             IWebBrowser webBrowser,
             IDecentralandUrlsSource decentralandUrlsSource,
             IExplorePanelEscapeAction explorePanelEscapeAction,
+            ISystemClipboard systemClipboard,
             OptionButtonView? optionButtonView = null,
             ContextMenuView? contextMenuView = null)
         {
@@ -129,13 +131,13 @@ namespace DCL.InWorldCamera.CameraReelGallery
                     string url = $"{decentralandUrlsSource.Url(DecentralandUrl.CameraReelLink)}/{cameraReelResponse.id}";
                     string xUrl = $"https://x.com/intent/post?text={description}&hashtags=DCLCamera&url={url}";
 
-                    GUIUtility.systemCopyBuffer = xUrl;
+                    systemClipboard.Set(xUrl);
                     webBrowser.OpenUrl(xUrl);
                 };
 
                 this.contextMenuController.CopyPictureLinkRequested += cameraReelResponse =>
                 {
-                    GUIUtility.systemCopyBuffer = $"{decentralandUrlsSource.Url(DecentralandUrl.CameraReelLink)}/{cameraReelResponse.id}";
+                    systemClipboard.Set($"{decentralandUrlsSource.Url(DecentralandUrl.CameraReelLink)}/{cameraReelResponse.id}");
                     ShowSuccessNotificationAsync("Link copied!").Forget();
                 };
 

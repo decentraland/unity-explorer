@@ -17,6 +17,7 @@ using DCL.Chat;
 using DCL.Chat.Commands;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
+using DCL.Clipboard;
 using DCL.DebugUtilities;
 using DCL.Input;
 using DCL.InWorldCamera.CameraReelStorageService;
@@ -468,6 +469,8 @@ namespace Global.Dynamic
             ICameraReelScreenshotsStorage cameraReelScreenshotsStorage = new CameraReelS3BucketScreenshotsStorage(staticContainer.WebRequestsContainer.WebRequestController);
             CameraReelRemoteStorageService cameraReelStorageService = new CameraReelRemoteStorageService(cameraReelImagesMetadataDatabase, cameraReelScreenshotsStorage);
 
+            ISystemClipboard clipboard = new UnityClipboard();
+
             bool includeCameraReel = appArgs.HasFlag(AppArgsFlags.CAMERA_REEL) || Application.isEditor;
 
             var globalPlugins = new List<IDCLGlobalPlugin>
@@ -548,6 +551,7 @@ namespace Global.Dynamic
                     identityCache,
                     cameraReelStorageService,
                     cameraReelStorageService,
+                    clipboard,
                     bootstrapContainer.DecentralandUrlsSource,
                     wearableCatalog,
                     characterPreviewFactory,
