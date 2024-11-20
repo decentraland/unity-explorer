@@ -3,6 +3,7 @@ using DCL.AssetsProvision;
 using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapLayers;
+using DCL.MapRenderer.MapLayers.Categories;
 using DCL.MapRenderer.MapLayers.Favorites;
 using DCL.PlacesAPIService;
 using System.Collections.Generic;
@@ -29,6 +30,7 @@ namespace DCL.MapRenderer.ComponentsFactory
             IPlacesAPIService placesAPI,
             IAssetsProvisioner assetsProv,
             IMapRendererSettings settings,
+            ObjectPool<ClusterMarkerObject> clusterObjectsPool,
             CancellationToken cancellationToken
         )
         {
@@ -49,7 +51,8 @@ namespace DCL.MapRenderer.ComponentsFactory
                 CreateMarker,
                 configuration.FavoritesMarkersRoot,
                 coordsUtils,
-                cullingController
+                cullingController,
+                new ClusterController(cullingController, clusterObjectsPool, CreateClusterMarker, coordsUtils, MapLayer.Favorites, mapSettings.CategoryIconMappings)
             );
 
             writer.Add(MapLayer.Favorites, controller);
@@ -70,6 +73,9 @@ namespace DCL.MapRenderer.ComponentsFactory
 
         private static IFavoritesMarker CreateMarker(IObjectPool<FavoriteMarkerObject> objectsPool, IMapCullingController cullingController, ICoordsUtils coordsUtils) =>
             new FavoritesMarker(objectsPool, cullingController, coordsUtils);
+
+        private static IClusterMarker CreateClusterMarker(IObjectPool<ClusterMarkerObject> objectsPool, IMapCullingController cullingController, ICoordsUtils coordsUtils) =>
+            new ClusterMarker(objectsPool, cullingController, coordsUtils);
 
         private async UniTask<FavoriteMarkerObject> GetPrefabAsync(CancellationToken cancellationToken) =>
             (await assetsProvisioner.ProvideMainAssetAsync(mapSettings.FavoriteMarker, cancellationToken)).Value.GetComponent<FavoriteMarkerObject>();

@@ -3,6 +3,7 @@ using DCL.AssetsProvision;
 using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapLayers;
+using DCL.MapRenderer.MapLayers.Categories;
 using DCL.MapRenderer.MapLayers.PointsOfInterest;
 using DCL.PlacesAPIService;
 using System.Collections.Generic;
@@ -29,6 +30,7 @@ namespace DCL.MapRenderer.ComponentsFactory
             IAssetsProvisioner assetsProv,
             IMapRendererSettings settings,
             IPlacesAPIService placesAPI,
+            ObjectPool<ClusterMarkerObject> clusterObjectsPool,
             CancellationToken cancellationToken
         )
         {
@@ -49,7 +51,8 @@ namespace DCL.MapRenderer.ComponentsFactory
                 CreateMarker,
                 configuration.ScenesOfInterestMarkersRoot,
                 coordsUtils,
-                cullingController
+                cullingController,
+                new ClusterController(cullingController, clusterObjectsPool, CreateClusterMarker, coordsUtils, MapLayer.ScenesOfInterest, mapSettings.CategoryIconMappings)
             );
 
             await controller.InitializeAsync(cancellationToken);
@@ -71,6 +74,9 @@ namespace DCL.MapRenderer.ComponentsFactory
 
         private static ISceneOfInterestMarker CreateMarker(IObjectPool<SceneOfInterestMarkerObject> objectsPool, IMapCullingController cullingController, ICoordsUtils coordsUtils) =>
             new SceneOfInterestMarker(objectsPool, cullingController, coordsUtils);
+
+        private static IClusterMarker CreateClusterMarker(IObjectPool<ClusterMarkerObject> objectsPool, IMapCullingController cullingController, ICoordsUtils coordsUtils) =>
+            new ClusterMarker(objectsPool, cullingController, coordsUtils);
 
         private async UniTask<SceneOfInterestMarkerObject> GetPrefabAsync(CancellationToken cancellationToken) =>
             (await assetsProvisioner.ProvideMainAssetAsync(mapSettings.SceneOfInterestMarker, cancellationToken)).Value;

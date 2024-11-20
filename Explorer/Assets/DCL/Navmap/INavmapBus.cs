@@ -10,6 +10,7 @@ namespace DCL.Navmap
     {
         event Action<PlacesData.PlaceInfo> OnJumpIn;
         event Action<PlacesData.PlaceInfo>? OnDestinationSelected;
+        event Action<string?>? OnFilterByCategory;
 
         UniTask SelectPlaceAsync(PlacesData.PlaceInfo place, CancellationToken ct);
 
@@ -26,5 +27,7 @@ namespace DCL.Navmap
         void SelectDestination(PlacesData.PlaceInfo place);
 
         void JumpIn(PlacesData.PlaceInfo place);
+
+        void FilterByCategory(string? category);
     }
 }

@@ -142,7 +142,7 @@ namespace DCL.MapRenderer.MapLayers.Pins
             marker.OnBecameInvisible();
         }
 
-        public void ApplyCameraZoom(float baseZoom, float zoom)
+        public void ApplyCameraZoom(float baseZoom, float zoom, int zoomLevel)
         {
             foreach (IPinMarker marker in markers.Values)
                 marker.SetZoom(coordsUtils.ParcelSize, baseZoom, zoom);

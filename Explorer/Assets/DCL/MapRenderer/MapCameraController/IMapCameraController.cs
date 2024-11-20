@@ -33,7 +33,7 @@ namespace DCL.MapRenderer.MapCameraController
         /// Zoom level normalized between 0 and 1
         /// </summary>
         /// <param name="value"></param>
-        void SetZoom(float value);
+        void SetZoom(float value, int zoomLevel);
 
         /// <summary>
         /// Sets Camera Position
