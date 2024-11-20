@@ -15,8 +15,8 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.CompressShaders
 
         static string ShadersDir() =>
             Application.isEditor
-                ? Path.Combine(Directory.GetCurrentDirectory(), "plugins")
-                : "plugins";
+                ? Path.Combine(Directory.GetCurrentDirectory(), "Assets/StreamingAssets/plugins")
+                : "Decentraland_Data/StreamingAssets/plugins";
     }
 
     public static class CompressShadersExtensions
