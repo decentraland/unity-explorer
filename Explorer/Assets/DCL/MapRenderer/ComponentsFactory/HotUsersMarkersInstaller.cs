@@ -1,10 +1,13 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.Browser.DecentralandUrls;
 using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapLayers;
 using DCL.MapRenderer.MapLayers.Users;
 using DCL.MapRenderer.MapLayers.UsersMarker;
+using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.WebRequests;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -26,6 +29,8 @@ namespace DCL.MapRenderer.ComponentsFactory
             IMapCullingController cullingController,
             IAssetsProvisioner assetsProv,
             IMapRendererSettings settings,
+            IWebRequestController webRequestController,
+            IDecentralandUrlsSource decentralandUrls,
             CancellationToken cancellationToken)
         {
             assetsProvisioner = assetsProv;
@@ -43,8 +48,8 @@ namespace DCL.MapRenderer.ComponentsFactory
 
             var wrapsPool = new ObjectPool<IHotUserMarker>(CreateWrap, actionOnRelease: m => m.Dispose(), defaultCapacity: HOT_USER_MARKERS_PREWARM_COUNT);
 
-            var controller = new UsersMarkersHotAreaController(objectsPool, wrapsPool, configuration.HotUserMarkersRoot, coordsUtils, cullingController);
-
+            var controller = new UsersMarkersHotAreaController(objectsPool, wrapsPool, configuration.HotUserMarkersRoot, coordsUtils, cullingController, webRequestController, decentralandUrls);
+            await controller.InitializeAsync(cancellationToken);
             writer.Add(MapLayer.HotUsersMarkers, controller);
         }
 
