@@ -85,9 +85,9 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.GatekeeperStatus => $"https://comms-gatekeeper.decentraland.{ENV}/status",
                 DecentralandUrl.Genesis => GENESIS_URL,
                 DecentralandUrl.Badges => $"https://badges.decentraland.{ENV}",
-                DecentralandUrl.CameraReelUsers =>  $"https://camera-reel-service.decentraland.zone/api/users",
-                DecentralandUrl.CameraReelImages => $"https://camera-reel-service.decentraland.zone/api/images",
-                DecentralandUrl.CameraReelLink => $"https://reels.decentraland.zone",
+                DecentralandUrl.CameraReelUsers =>  $"https://camera-reel-service.decentraland.{ENV}/api/users",
+                DecentralandUrl.CameraReelImages => $"https://camera-reel-service.decentraland.{ENV}/api/images",
+                DecentralandUrl.CameraReelLink => $"https://reels.decentraland.{ENV}",
                 _ => throw new ArgumentOutOfRangeException(nameof(decentralandUrl), decentralandUrl, null!)
             };
     }
