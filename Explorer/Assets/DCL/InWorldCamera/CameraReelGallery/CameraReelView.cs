@@ -31,13 +31,13 @@ namespace DCL.InWorldCamera.CameraReelGallery
         [SerializeField] internal Animator panelAnimator;
         [SerializeField] internal Animator headerAnimator;
 
-        internal event Action OnMouseEnter;
-        internal event Action OnMouseExit;
+        internal event Action MouseEnter;
+        internal event Action MouseExit;
 
         public void OnPointerEnter() =>
-            OnMouseEnter?.Invoke();
+            MouseEnter?.Invoke();
         public void OnPointerExit() =>
-            OnMouseExit?.Invoke();
+            MouseExit?.Invoke();
 
         private void Awake()
         {

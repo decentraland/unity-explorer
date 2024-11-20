@@ -46,10 +46,10 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
             return newViews;
         }
 
-        public void OnPoolGet() =>
+        public void PoolGet() =>
             view.gameObject.SetActive(true);
 
-        public void OnPoolRelease(Transform parent)
+        public void PoolRelease(Transform parent)
         {
             view.transform.SetParent(parent, false);
             view.gameObject.SetActive(false);

@@ -46,9 +46,9 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
                     MonthGridView view = GameObject.Instantiate(monthViewPrefab);
                     return new MonthGridController(view, this);
                 },
-                grid => grid.OnPoolGet(),
+                grid => grid.PoolGet(),
                 grid =>
-                    grid.OnPoolRelease(unusedGridPoolObjectParent.transform),
+                    grid.PoolRelease(unusedGridPoolObjectParent.transform),
                 grid =>
                 {
                     GameObject.Destroy(grid.view.gameObject);

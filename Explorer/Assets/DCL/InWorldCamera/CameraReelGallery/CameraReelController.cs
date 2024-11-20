@@ -34,8 +34,8 @@ namespace DCL.InWorldCamera.CameraReelGallery
 
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
 
-            this.view.OnMouseEnter += OnStorageFullIconEnter;
-            this.view.OnMouseExit += OnStorageFullIconExit;
+            this.view.MouseEnter += StorageFullIconEnter;
+            this.view.MouseExit += StorageFullIconExit;
             this.cameraReelGalleryController.ThumbnailClicked += ThumbnailClicked;
             this.cameraReelGalleryController.StorageUpdated += SetStorageStatus;
             this.view.goToCameraButton.onClick.AddListener(OnGoToCameraButtonClicked);
@@ -51,10 +51,10 @@ namespace DCL.InWorldCamera.CameraReelGallery
             //TODO (Lorenzo): Open full screen preview
         }
 
-        private void OnStorageFullIconEnter() =>
+        private void StorageFullIconEnter() =>
             view.storageFullToast.DOFade(1f, view.storageFullToastFadeTime);
 
-        private void OnStorageFullIconExit() =>
+        private void StorageFullIconExit() =>
             view.storageFullToast.DOFade(0f, view.storageFullToastFadeTime);
 
         private async UniTask OnShowAsync(CancellationToken ct)
@@ -122,8 +122,8 @@ namespace DCL.InWorldCamera.CameraReelGallery
 
         public void Dispose()
         {
-            view.OnMouseEnter -= OnStorageFullIconEnter;
-            view.OnMouseExit -= OnStorageFullIconExit;
+            view.MouseEnter -= StorageFullIconEnter;
+            view.MouseExit -= StorageFullIconExit;
             cameraReelGalleryController.Dispose();
             view.goToCameraButton.onClick.RemoveAllListeners();
         }
