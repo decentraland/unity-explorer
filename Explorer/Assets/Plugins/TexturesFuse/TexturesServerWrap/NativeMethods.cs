@@ -359,7 +359,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap
             public static CMP_CustomOptions NewDefault() =>
                 new()
                 {
-                    fQuality = 1f,
+                    fQuality = IPlatform.DEFAULT.Is(IPlatform.Kind.Windows) ? 0.05f : 1f,
                     disableMultithreading = true,
                     dwnumThreads = 1,
                     encodeWith = IPlatform.DEFAULT.Is(IPlatform.Kind.Windows) ? CMP_Compute_type.CMP_GPU_DXC : CMP_Compute_type.CMP_CPU,
