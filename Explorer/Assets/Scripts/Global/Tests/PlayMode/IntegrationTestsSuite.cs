@@ -44,8 +44,11 @@ namespace Global.Tests.PlayMode
 
             IWeb3IdentityCache identityCache = new MemoryWeb3IdentityCache();
 
-            IWebJsSources webJsSources = new WebJsSources(new JsCodeResolver(new WebRequestController(
-                identityCache)));
+            IWebJsSources webJsSources = new WebJsSources(
+                new JsCodeResolver(
+                    IWebRequestController.DEFAULT
+                )
+            );
 
             IReportsHandlingSettings? reportSettings = Substitute.For<IReportsHandlingSettings>();
             reportSettings.IsEnabled(ReportHandler.DebugLog).Returns(true);
