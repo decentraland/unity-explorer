@@ -89,53 +89,29 @@ KernelOptions NewKernelOptionsFromCustomOptions(
     return kOpt;
 }
 
-int MipSetFrom(const CMP_DWORD width, const CMP_DWORD height, CMIPS *CMips, CMP_BYTE *data, const CMP_DWORD dataSize, CMP_MipSet *mipSet)
+int MipSetFrom(const CMP_DWORD width, const CMP_DWORD height, const CMP_BYTE *data, const CMP_DWORD dataSize, CMP_MipSet *mipSet)
 {
+    CMIPS CMips = {0};
+
     memset(mipSet, 0, sizeof(CMP_MipSet));
-    mipSet->dwWidth = width;
-    mipSet->dwHeight = height;
-    mipSet->m_format = CMP_FORMAT_BGRA_8888;
 
-    // Set the channel formats and mip levels
-    mipSet->m_ChannelFormat = CF_8bit;
-    mipSet->m_TextureDataType = TDT_ARGB; // TODO check if need normal maps
-    mipSet->m_dwFourCC = 0;
-    mipSet->m_dwFourCC2 = 0;
-    mipSet->m_TextureType = TT_2D;
-    mipSet->m_nDepth = 1; // depthsupport
-
-    // Allocate default MipSet header
-    CMips->AllocateMipSet(mipSet,
-                          mipSet->m_ChannelFormat,
-                          mipSet->m_TextureDataType,
-                          mipSet->m_TextureType,
-                          width,
-                          height,
-                          mipSet->m_nDepth);
-
-    FreeImage_OutputMessageProc(FIF_UNKNOWN, "Levels");
-
-    // Determine buffer size and set Mip Set Levels we want to use for now
-    MipLevel *mipLevel = CMips->GetMipLevel(mipSet, 0);
-    mipSet->m_nMipLevels = 1;
+    auto createResult= CMP_CreateMipSet(mipSet, width, height, 1,CF_8bit, TT_2D);
+    if(createResult)
+    {
+        return createResult;
+    }
 
     FreeImage_OutputMessageProc(FIF_UNKNOWN, "Allocated data");
 
-    mipLevel->m_nWidth = mipSet->m_nWidth;
-    mipLevel->m_nHeight = mipSet->m_nHeight;
-    mipLevel->m_dwLinearSize = dataSize;
-    mipLevel->m_pbData = data;
+    CMP_BYTE *pData = (CMP_BYTE *)(mipSet->pData);
 
-    CMP_BYTE *pData = (CMP_BYTE *)(mipLevel->m_pbData);
-
-    if (mipLevel->m_dwLinearSize != dataSize)
+    if (mipSet->dwDataSize != dataSize)
     {
         FreeImage_OutputMessageProc(FIF_UNKNOWN, "WRONG data");
         return 1; // fatal case
     }
 
     FreeImage_OutputMessageProc(FIF_UNKNOWN, "Copy data");
-
     memcpy(pData, data, dataSize);
     return 0;
 }
@@ -522,14 +498,11 @@ ImageResult texturesfuse_cmp_image_from_memory(
 
     KernelOptions kOpt = NewKernelOptionsFromCustomOptions(cmpFormat, compressOptions);
 
-    std::unique_ptr<CMIPS> cmip(new CMIPS);
-
     CMP_MipSet srcMipSet;
 
     auto mipResult = MipSetFrom(
         *width,
         *height,
-        cmip.get(),
         bits,
         bitsLength,
         &srcMipSet);
@@ -550,7 +523,6 @@ ImageResult texturesfuse_cmp_image_from_memory(
     if (cmpResult != CMP_OK)
     {
         FreeImage_OutputMessageProc(FIF_UNKNOWN, "Error during decoding CMP: %d", cmpResult);
-        
         CMP_FreeMipSet(&dstMipSet);
         return ErrorBC5;
     }
@@ -562,7 +534,8 @@ ImageResult texturesfuse_cmp_image_from_memory(
     *outputBytes = output;
     *outputLength = length;
 
-    *releaseHandle = context->handles.registerHandle(output);
+    *releaseHandle = context->handles.registerHandle(*outputBytes);
+    
     CMP_FreeMipSet(&dstMipSet);
 
     return Success;
