@@ -54,7 +54,12 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.CompressShaders
             using var texturesFuse = texturesFuseFactory()!;
 
             foreach (TextureType textureType in EnumUtils.Values<TextureType>())
-                await texturesFuse.TextureFromBytesAsync(EMPTY_PNG, textureType, token);
+            {
+                var result = await texturesFuse.TextureFromBytesAsync(EMPTY_PNG, textureType, token);
+
+                if (result.Success)
+                    result.Value.Dispose();
+            }
         }
 
         private bool ShouldIgnorePlatform() =>
