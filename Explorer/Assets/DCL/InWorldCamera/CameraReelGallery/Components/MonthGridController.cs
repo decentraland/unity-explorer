@@ -10,7 +10,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
     {
         internal readonly MonthGridView view;
 
-        private readonly List<ReelThumbnailController> reelThumbnailViews = new ();
+        private readonly List<ReelThumbnailController> reelThumbnailControllers = new ();
         private readonly ReelGalleryPoolManager reelGalleryPoolManager;
 
         public DateTime DateTimeBucket { get; private set; }
@@ -31,57 +31,47 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
             this.DateTimeBucket = bucket;
             view.monthText.SetText(bucket.ToString("MMMM yyyy", CultureInfo.InvariantCulture));
 
-            List<ReelThumbnailController> newViews = new();
+            List<ReelThumbnailController> newControllers = new();
 
             for (int i = 0; i < images.Count; i++)
             {
-                ReelThumbnailController thumbnailView = reelGalleryPoolManager.GetThumbnailElement(images[i], view.gridLayoutGroup, optionsButton);
-                thumbnailView.ThumbnailLoaded += onThumbnailLoaded;
-                thumbnailView.ThumbnailClicked += onThumbnailClicked;
-                newViews.Add(thumbnailView);
+                ReelThumbnailController thumbnailController = reelGalleryPoolManager.GetThumbnailElement(view.gridLayoutGroup);
+                thumbnailController.Setup(images[i], optionsButton);
+                thumbnailController.ThumbnailLoaded += onThumbnailLoaded;
+                thumbnailController.ThumbnailClicked += onThumbnailClicked;
+                newControllers.Add(thumbnailController);
             }
 
-            reelThumbnailViews.AddRange(newViews);
+            reelThumbnailControllers.AddRange(newControllers);
 
-            return newViews;
-        }
-
-        public void PoolGet() =>
-            view.gameObject.SetActive(true);
-
-        public void PoolRelease(Transform parent)
-        {
-            view.transform.SetParent(parent, false);
-            view.gameObject.SetActive(false);
+            return newControllers;
         }
 
         public void RemoveThumbnail(string reelId)
         {
-            for (int i = 0; i < reelThumbnailViews.Count; i++)
-                if (reelThumbnailViews[i].CameraReelResponse.id == reelId)
+            for (int i = 0; i < reelThumbnailControllers.Count; i++)
+                if (reelThumbnailControllers[i].CameraReelResponse.id == reelId)
                 {
-                    reelThumbnailViews[i].Release();
-                    reelGalleryPoolManager.ReleaseThumbnailElement(reelThumbnailViews[i]);
-                    reelThumbnailViews.RemoveAt(i);
+                    reelThumbnailControllers[i].Release();
+                    reelGalleryPoolManager.ReleaseThumbnailElement(reelThumbnailControllers[i]);
+                    reelThumbnailControllers.RemoveAt(i);
                 }
         }
 
         public bool GridIsEmpty() =>
-            reelThumbnailViews.Count == 0;
+            reelThumbnailControllers.Count == 0;
 
         public void Release()
         {
-            for (int i = 0; i < reelThumbnailViews.Count; i++)
+            for (int i = 0; i < reelThumbnailControllers.Count; i++)
             {
-                reelThumbnailViews[i].Release();
-                reelGalleryPoolManager.ReleaseThumbnailElement(reelThumbnailViews[i]);
+                reelThumbnailControllers[i].Release();
+                reelGalleryPoolManager.ReleaseThumbnailElement(reelThumbnailControllers[i]);
             }
-            reelThumbnailViews.Clear();
+            reelThumbnailControllers.Clear();
         }
 
-        public void Dispose()
-        {
-            reelThumbnailViews.Clear();
-        }
+        public void Dispose() =>
+            reelThumbnailControllers.Clear();
     }
 }

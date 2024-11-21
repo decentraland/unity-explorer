@@ -46,25 +46,22 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
                     MonthGridView view = GameObject.Instantiate(monthViewPrefab);
                     return new MonthGridController(view, this);
                 },
-                grid => grid.PoolGet(),
-                grid =>
-                    grid.PoolRelease(unusedGridPoolObjectParent.transform),
+                grid => grid.view.gameObject.SetActive(true),
                 grid =>
                 {
-                    GameObject.Destroy(grid.view.gameObject);
-                    grid.Dispose();
+                    grid.view.transform.SetParent(unusedGridPoolObjectParent.transform, false);
+                    grid.view.gameObject.SetActive(false);
                 },
+                grid => GameObject.Destroy(grid.view.gameObject),
                 true,
                 gridDefaultCapacity,
                 gridMaxSize);
         }
 
-        public ReelThumbnailController GetThumbnailElement(CameraReelResponseCompact cameraReelResponse, GridLayoutGroup parent, OptionButtonController? optionsButton)
+        public ReelThumbnailController GetThumbnailElement(GridLayoutGroup parent)
         {
             ReelThumbnailController result = reelThumbnailPool.Get();
             result.view.transform.SetParent(parent.transform, false);
-            result.Setup(cameraReelResponse, optionsButton);
-
             return result;
         }
 
