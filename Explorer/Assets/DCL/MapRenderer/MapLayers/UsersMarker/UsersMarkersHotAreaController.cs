@@ -34,8 +34,8 @@ namespace DCL.MapRenderer.MapLayers.Users
         private RemovedTrackedPlayersPositionSystem untrackSystem;
 
         private readonly Dictionary<string, IHotUserMarker> markers = new ();
-        private readonly List<string> remoteUsers = new ();
-        private readonly List<string> closebyUsers = new ();
+        private readonly HashSet<string> remoteUsers = new ();
+        private readonly HashSet<string> closebyUsers = new ();
         private CancellationTokenSource cancellationToken;
         private bool isEnabled;
 
@@ -45,15 +45,14 @@ namespace DCL.MapRenderer.MapLayers.Users
             Transform parent,
             ICoordsUtils coordsUtils,
             IMapCullingController cullingController,
-            IWebRequestController webRequestController,
-            IDecentralandUrlsSource decentralandUrls,
-            ITeleportBusController teleportBusController)
+            ITeleportBusController teleportBusController,
+            RemoteUsersRequestController remoteUsersRequestController)
             : base(parent, coordsUtils, cullingController)
         {
             this.objectsPool = objectsPool;
             this.wrapsPool = wrapsPool;
             this.teleportBusController = teleportBusController;
-            remoteUsersRequestController = new RemoteUsersRequestController(webRequestController, decentralandUrls);
+            this.remoteUsersRequestController = remoteUsersRequestController;
             this.teleportBusController.SubscribeToTeleportOperation(OnTeleport);
             cancellationToken = new CancellationTokenSource();
         }
@@ -122,7 +121,7 @@ namespace DCL.MapRenderer.MapLayers.Users
 
         private async UniTask ProcessRemoteUsers(CancellationToken ct)
         {
-            List<RemotePlayersDTOs.RemotePlayerData> remotePlayersData = await remoteUsersRequestController.RequestUsers(ct);
+            List<RemotePlayerData> remotePlayersData = await remoteUsersRequestController.RequestUsers(ct);
 
             //Reset the markers bound to remote users by releasing them
             foreach (string remoteUser in remoteUsers)
@@ -137,7 +136,7 @@ namespace DCL.MapRenderer.MapLayers.Users
             }
             remoteUsers.Clear();
 
-            foreach (RemotePlayersDTOs.RemotePlayerData remotePlayerData in remotePlayersData)
+            foreach (RemotePlayerData remotePlayerData in remotePlayersData)
             {
                 if (closebyUsers.Contains(remotePlayerData.avatarId))
                     continue;

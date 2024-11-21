@@ -290,8 +290,6 @@ namespace Global.Dynamic
             if (!parcelCheckResult.Success)
                 return parcelCheckResult;
 
-            teleportBusController.PushTeleportOperation(parcel);
-
             if (!isLocal && !IsGenesisRealm())
             {
                 var url = URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Genesis));
@@ -305,6 +303,7 @@ namespace Global.Dynamic
                 ReportHub.LogError(ReportCategory.SCENE_LOADING,
                     $"Error trying to teleport to a parcel {parcel}: {loadResult.ErrorMessage}");
             }
+            teleportBusController.PushTeleportOperation(parcel);
 
             return loadResult;
         }

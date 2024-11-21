@@ -23,9 +23,9 @@ namespace DCL.MapRenderer.MapLayers.UsersMarker
             this.decentralandUrlsSource = decentralandUrlsSource;
         }
 
-        public async UniTask<List<RemotePlayersDTOs.RemotePlayerData>> RequestUsers(CancellationToken ct) =>
+        public async UniTask<List<RemotePlayerData>> RequestUsers(CancellationToken ct) =>
             await webRequestController.GetAsync(baseURL, ct, ReportCategory.UI)
-                                      .CreateFromNewtonsoftJsonAsync<List<RemotePlayersDTOs.RemotePlayerData>>(serializerSettings: SERIALIZER_SETTINGS);
+                                      .CreateFromNewtonsoftJsonAsync<List<RemotePlayerData>>(serializerSettings: SERIALIZER_SETTINGS);
     }
 
 }

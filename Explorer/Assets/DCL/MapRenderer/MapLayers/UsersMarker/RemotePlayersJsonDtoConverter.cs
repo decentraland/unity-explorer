@@ -6,9 +6,9 @@ using UnityEngine;
 
 namespace DCL.MapRenderer.MapLayers.UsersMarker
 {
-    public class RemotePlayersJsonDtoConverter : JsonConverter<List<RemotePlayersDTOs.RemotePlayerData>>
+    public class RemotePlayersJsonDtoConverter : JsonConverter<List<RemotePlayerData>>
     {
-        public override void WriteJson(JsonWriter writer, List<RemotePlayersDTOs.RemotePlayerData>? value, JsonSerializer serializer)
+        public override void WriteJson(JsonWriter writer, List<RemotePlayerData>? value, JsonSerializer serializer)
         {
             writer.WriteStartArray();
             foreach (var item in value)
@@ -17,17 +17,17 @@ namespace DCL.MapRenderer.MapLayers.UsersMarker
             writer.WriteEndArray();
         }
 
-        public override List<RemotePlayersDTOs.RemotePlayerData> ReadJson(JsonReader reader, Type objectType, List<RemotePlayersDTOs.RemotePlayerData> existingValue, bool hasExistingValue, JsonSerializer serializer)
+        public override List<RemotePlayerData> ReadJson(JsonReader reader, Type objectType, List<RemotePlayerData> existingValue, bool hasExistingValue, JsonSerializer serializer)
         {
             if (reader.TokenType == JsonToken.Null)
                 return null;
 
-            existingValue ??= new List<RemotePlayersDTOs.RemotePlayerData>();
+            existingValue ??= new List<RemotePlayerData>();
 
             var rootObject = JObject.Load(reader).ToObject<RootObject>();
             foreach (DataObject rootObjectPeer in rootObject.peers)
             {
-                existingValue.Add(new RemotePlayersDTOs.RemotePlayerData()
+                existingValue.Add(new RemotePlayerData()
                 {
                     position = ConvertStringToVector3(rootObjectPeer.position[0], rootObjectPeer.position[2]),
                     avatarId = rootObjectPeer.address
