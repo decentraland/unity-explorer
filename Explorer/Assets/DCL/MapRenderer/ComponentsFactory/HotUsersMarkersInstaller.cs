@@ -1,14 +1,18 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.Browser.DecentralandUrls;
 using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapLayers;
 using DCL.MapRenderer.MapLayers.Users;
 using DCL.MapRenderer.MapLayers.UsersMarker;
+using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.WebRequests;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Pool;
+using Utility.TeleportBus;
 
 namespace DCL.MapRenderer.ComponentsFactory
 {
@@ -26,6 +30,8 @@ namespace DCL.MapRenderer.ComponentsFactory
             IMapCullingController cullingController,
             IAssetsProvisioner assetsProv,
             IMapRendererSettings settings,
+            ITeleportBusController teleportBusController,
+            RemoteUsersRequestController remoteUsersRequestController,
             CancellationToken cancellationToken)
         {
             assetsProvisioner = assetsProv;
@@ -43,8 +49,8 @@ namespace DCL.MapRenderer.ComponentsFactory
 
             var wrapsPool = new ObjectPool<IHotUserMarker>(CreateWrap, actionOnRelease: m => m.Dispose(), defaultCapacity: HOT_USER_MARKERS_PREWARM_COUNT);
 
-            var controller = new UsersMarkersHotAreaController(objectsPool, wrapsPool, configuration.HotUserMarkersRoot, coordsUtils, cullingController);
-
+            var controller = new UsersMarkersHotAreaController(objectsPool, wrapsPool, configuration.HotUserMarkersRoot, coordsUtils, cullingController, teleportBusController, remoteUsersRequestController);
+            await controller.InitializeAsync(cancellationToken);
             writer.Add(MapLayer.HotUsersMarkers, controller);
         }
 

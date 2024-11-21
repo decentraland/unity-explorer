@@ -93,6 +93,7 @@ using UnityEngine.EventSystems;
 using UnityEngine.Pool;
 using Utility.Ownership;
 using Utility.PriorityQueue;
+using Utility.TeleportBus;
 using Object = UnityEngine.Object;
 
 namespace Global.Dynamic
@@ -168,6 +169,7 @@ namespace Global.Dynamic
             IWeb3IdentityCache identityCache = dynamicWorldDependencies.Web3IdentityCache;
             IAssetsProvisioner assetsProvisioner = dynamicWorldDependencies.AssetsProvisioner;
             IDebugContainerBuilder debugBuilder = dynamicWorldDependencies.DebugContainerBuilder;
+            ITeleportBusController teleportBusController = new TeleportBusController();
 
             // If we have many undesired delays when using the third-party providers, it might be useful to cache it at app's bootstrap
             // So far, the chance of using it is quite low, so it's preferable to do it lazy avoiding extra requests & memory allocations
@@ -188,7 +190,7 @@ namespace Global.Dynamic
                 // Init other containers
                 container.DefaultTexturesContainer = await DefaultTexturesContainer.CreateAsync(settingsContainer, assetsProvisioner, ct).ThrowOnFail();
                 container.LODContainer = await LODContainer.CreateAsync(assetsProvisioner, bootstrapContainer.DecentralandUrlsSource, staticContainer, settingsContainer, staticContainer.RealmData, container.DefaultTexturesContainer.TextureArrayContainerFactory, debugBuilder, dynamicWorldParams.EnableLOD, ct).ThrowOnFail();
-                container.MapRendererContainer = await MapRendererContainer.CreateAsync(settingsContainer, staticContainer, bootstrapContainer.DecentralandUrlsSource, assetsProvisioner, placesAPIService, mapPathEventBus, notificationsBusController, ct);
+                container.MapRendererContainer = await MapRendererContainer.CreateAsync(settingsContainer, staticContainer, bootstrapContainer.DecentralandUrlsSource, assetsProvisioner, placesAPIService, mapPathEventBus, notificationsBusController, teleportBusController, ct);
             }
 
             try { await InitializeContainersAsync(dynamicWorldDependencies.SettingsContainer, ct); }
@@ -357,7 +359,8 @@ namespace Global.Dynamic
                 staticContainer.LoadingStatus,
                 staticContainer.CacheCleaner,
                 staticContainer.SingletonSharedDependencies.MemoryBudget,
-                staticContainer.FeatureFlagsCache);
+                staticContainer.FeatureFlagsCache,
+                teleportBusController);
 
             IHealthCheck livekitHealthCheck = bootstrapContainer.DebugSettings.EnableEmulateNoLivekitConnection
                 ? new IHealthCheck.AlwaysFails("Livekit connection is in debug, always fail mode")

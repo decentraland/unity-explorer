@@ -75,6 +75,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.Host => $"https://decentraland.{ENV}",
                 DecentralandUrl.ApiChunks => $"https://api.decentraland.{ENV}/v1/map.png",
                 DecentralandUrl.PeerAbout => $"https://peer.decentraland.{ENV}/about",
+                DecentralandUrl.RemotePeers => $"https://archipelago-ea-stats.decentraland.{ENV}/comms/peers",
                 DecentralandUrl.DAO => $"https://decentraland.{ENV}/dao/",
                 DecentralandUrl.Notification => $"https://notifications.decentraland.{ENV}/notifications",
                 DecentralandUrl.NotificationRead => $"https://notifications.decentraland.{ENV}/notifications/read",
