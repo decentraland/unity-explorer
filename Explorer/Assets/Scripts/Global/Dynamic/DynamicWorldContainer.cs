@@ -101,6 +101,8 @@ namespace Global.Dynamic
         private LocalSceneDevelopmentController? localSceneDevelopmentController;
         private IWearablesProvider? wearablesProvider;
 
+        private MultiplayerMovementMessageBus? multiplayerMovementMessageBus;
+
         public IMVCManager MvcManager { get; private set; } = null!;
 
         public DefaultTexturesContainer DefaultTexturesContainer { get; private set; } = null!;
@@ -135,8 +137,6 @@ namespace Global.Dynamic
         public IProfileBroadcast ProfileBroadcast { get; private set; } = null!;
 
         public IRoomHub RoomHub { get; private set; } = null!;
-
-        private MultiplayerMovementMessageBus? multiplayerMovementMessageBus;
 
         public override void Dispose()
         {
@@ -234,6 +234,7 @@ namespace Global.Dynamic
             var genesisTerrain = new TerrainGenerator(staticContainer.Profiler);
             var worldsTerrain = new WorldTerrainGenerator();
             var satelliteView = new SatelliteFloor();
+
             var landscapePlugin = new LandscapePlugin(satelliteView, genesisTerrain, worldsTerrain, assetsProvisioner,
                 debugBuilder, container.MapRendererContainer.TextureContainer,
                 staticContainer.WebRequestsContainer.WebRequestController, dynamicWorldParams.EnableLandscape,
@@ -252,7 +253,7 @@ namespace Global.Dynamic
             var equippedEmotes = new EquippedEmotes();
             var forceRender = new List<string>();
 
-            List<URN> selfEmotes = new List<URN>();
+            var selfEmotes = new List<URN>();
             ParseParamsForcedEmotes(bootstrapContainer.ApplicationParametersParser, ref selfEmotes);
             ParseDebugForcedEmotes(bootstrapContainer.DebugSettings.EmotesToAddToUserProfile, ref selfEmotes);
 
@@ -305,7 +306,7 @@ namespace Global.Dynamic
             container.RoomHub = localSceneDevelopment ? NullRoomHub.INSTANCE : new RoomHub(archipelagoIslandRoom, gateKeeperSceneRoom);
             container.MessagePipesHub = new MessagePipesHub(container.RoomHub, MultiPoolFactory(), MultiPoolFactory(), memoryPool);
 
-            RoomsStatus roomsStatus = new RoomsStatus(
+            var roomsStatus = new RoomsStatus(
                 container.RoomHub,
 
                 //override allowed only in Editor
@@ -390,7 +391,8 @@ namespace Global.Dynamic
                 bootstrapContainer.DebugSettings,
                 staticContainer.PortableExperiencesController,
                 container.RoomHub,
-                bootstrapContainer.DiagnosticsContainer
+                bootstrapContainer.DiagnosticsContainer,
+                localSceneDevelopment
             );
 
             var worldInfoHub = new LocationBasedWorldInfoHub(
@@ -405,7 +407,7 @@ namespace Global.Dynamic
             var chatHistory = new ChatHistory();
 
             var currentSceneInfo = new CurrentSceneInfo();
-            ConnectionStatusPanelPlugin connectionStatusPanelPlugin = new ConnectionStatusPanelPlugin(container.UserInAppInAppInitializationFlow, container.MvcManager, mainUIView, roomsStatus, currentSceneInfo, container.reloadSceneController, globalWorld, playerEntity, debugBuilder);
+            var connectionStatusPanelPlugin = new ConnectionStatusPanelPlugin(container.UserInAppInAppInitializationFlow, container.MvcManager, mainUIView, roomsStatus, currentSceneInfo, container.reloadSceneController, globalWorld, playerEntity, debugBuilder);
 
             var chatCommandsFactory = new Dictionary<Regex, Func<IChatCommand>>
             {
@@ -419,8 +421,8 @@ namespace Global.Dynamic
                 { ShowEntityInfoChatCommand.REGEX, () => new ShowEntityInfoChatCommand(worldInfoHub) },
                 { ClearChatCommand.REGEX, () => new ClearChatCommand(chatHistory) },
                 { ReloadSceneChatCommand.REGEX, () => new ReloadSceneChatCommand(container.reloadSceneController) },
-                { LoadPortableExperienceChatCommand.REGEX, () => new LoadPortableExperienceChatCommand(portableExperiencesController, staticContainer.FeatureFlagsCache)},
-                { KillPortableExperienceChatCommand.REGEX, () => new KillPortableExperienceChatCommand(portableExperiencesController, staticContainer.FeatureFlagsCache)},
+                { LoadPortableExperienceChatCommand.REGEX, () => new LoadPortableExperienceChatCommand(portableExperiencesController, staticContainer.FeatureFlagsCache) },
+                { KillPortableExperienceChatCommand.REGEX, () => new KillPortableExperienceChatCommand(portableExperiencesController, staticContainer.FeatureFlagsCache) },
             };
 
             IChatMessagesBus coreChatMessageBus = new MultiplayerChatMessagesBus(container.MessagePipesHub, container.ProfileRepository, new MessageDeduplication<double>())

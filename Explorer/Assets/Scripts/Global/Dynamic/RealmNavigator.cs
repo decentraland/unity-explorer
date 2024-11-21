@@ -66,6 +66,9 @@ namespace Global.Dynamic
         private URLDomain currentRealm;
         private Vector2Int currentParcel;
 
+        private bool overrideStartingParcel;
+        private string parcelToTeleportOverride;
+
         public event Action<bool>? RealmChanged;
 
         public RealmNavigator(
@@ -131,6 +134,12 @@ namespace Global.Dynamic
                 new MoveToParcelInSameRealmTeleportOperation(this),
                 new CompleteLoadingStatus(),
             };
+        }
+
+        public void SetOverrideValues(bool overrideStartingParcel, string parcelToTeleportOverride)
+        {
+            this.overrideStartingParcel = overrideStartingParcel;
+            this.parcelToTeleportOverride = parcelToTeleportOverride;
         }
 
         public bool CheckIsNewRealm(URLDomain realm)
@@ -253,9 +262,8 @@ namespace Global.Dynamic
                 waitForSceneReadiness = await TeleportToWorldSpawnPointAsync(parcelToTeleport, teleportLoadReport, ct);
             else
             {
-                if (!isLocalSceneDevelopment && parcelToTeleport == Vector2Int.zero &&
-                    featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.GENESIS_STARTING_PARCEL) &&
-                    featureFlagsCache.Configuration.TryGetTextPayload(FeatureFlagsStrings.GENESIS_STARTING_PARCEL, FeatureFlagsStrings.STRING_VARIANT, out string parcelCoords)) { RealmHelper.TryParseParcelFromString(parcelCoords, out parcelToTeleport); }
+                if (overrideStartingParcel)
+                    RealmHelper.TryParseParcelFromString(parcelToTeleportOverride, out parcelToTeleport);
 
                 waitForSceneReadiness = await TeleportToParcelAsync(parcelToTeleport, teleportLoadReport, ct);
             }
