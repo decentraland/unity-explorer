@@ -160,9 +160,9 @@ namespace DCL.Navmap
         {
             lastParcelClicked = clickedParcel;
             audioEventsBus.SendPlayAudioEvent(navmapView.ClickAudio);
-            // TODO: should we show the toast here? Move it if required..
-            placeToastController.Show();
-            placeToastController.Set(clickedParcel.Parcel);
+            // TODO: move the show of the toast when hovering over map pins after few seconds
+            // placeToastController.Show();
+            // placeToastController.Set(clickedParcel.Parcel);
         }
 
         public void Activate()
