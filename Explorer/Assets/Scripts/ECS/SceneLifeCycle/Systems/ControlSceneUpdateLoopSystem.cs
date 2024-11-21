@@ -8,6 +8,7 @@ using ECS.LifeCycle.Components;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
+using ECS.SceneLifeCycle.Reporting;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
 using SceneRunner.Scene;
@@ -25,32 +26,42 @@ namespace ECS.SceneLifeCycle.Systems
     {
         private readonly IRealmPartitionSettings realmPartitionSettings;
         private readonly CancellationToken destroyCancellationToken;
+        private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
 
         private readonly IScenesCache scenesCache;
 
         internal ControlSceneUpdateLoopSystem(World world,
             IRealmPartitionSettings realmPartitionSettings,
             CancellationToken destroyCancellationToken,
-            IScenesCache scenesCache) : base(world)
+            IScenesCache scenesCache,
+            ISceneReadinessReportQueue sceneReadinessReportQueue) : base(world)
         {
             this.realmPartitionSettings = realmPartitionSettings;
             this.destroyCancellationToken = destroyCancellationToken;
             this.scenesCache = scenesCache;
+            this.sceneReadinessReportQueue = sceneReadinessReportQueue;
         }
 
         protected override void Update(float t)
         {
             ChangeSceneFPSQuery(World);
-            StartSceneQuery(World);
+            HandleNotCreatedScenesQuery(World);
         }
 
         [Query]
         [None(typeof(DeleteEntityIntention), typeof(ISceneFacade))]
-        private void StartScene(in Entity entity, ref AssetPromise<ISceneFacade, GetSceneFacadeIntention> promise,
+        private void HandleNotCreatedScenes(in Entity entity, ref AssetPromise<ISceneFacade, GetSceneFacadeIntention> promise,
             ref PartitionComponent partition)
         {
             // Gracefully consume with the possibility of repetitions (in case the scene loading has failed)
-            if (promise.IsConsumed) return;
+            if (promise.IsConsumed)
+            {
+                // In case there is a failed promise (and it was not re-started) notify the readiness queue accordingly
+                if (promise.TryGetResult(World, out var consumedResult) && !consumedResult.Succeeded)
+                    SceneUtils.ReportException(consumedResult.Exception!, promise.LoadingIntention.DefinitionComponent.Parcels, sceneReadinessReportQueue);
+
+                return;
+            }
 
             if (promise.TryConsume(World, out var result) && result.Succeeded)
             {
