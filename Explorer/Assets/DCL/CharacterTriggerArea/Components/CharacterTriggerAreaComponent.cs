@@ -67,11 +67,11 @@ namespace DCL.CharacterTriggerArea.Components
 
             Transform triggerAreaTransform = monoBehaviour.transform;
 
-            if (transformComponent.Cached.WorldPosition != triggerAreaTransform.position)
-                triggerAreaTransform.position = transformComponent.Cached.WorldPosition;
+            if (transformComponent.Transform.position != triggerAreaTransform.position)
+                triggerAreaTransform.position = transformComponent.Transform.position;
 
-            if (transformComponent.Cached.WorldRotation != triggerAreaTransform.rotation)
-                triggerAreaTransform.rotation = transformComponent.Cached.WorldRotation;
+            if (transformComponent.Transform.rotation != triggerAreaTransform.rotation)
+                triggerAreaTransform.rotation = transformComponent.Transform.rotation;
 
             if (!monoBehaviour.BoxCollider.enabled)
                 monoBehaviour.BoxCollider.enabled = true;
