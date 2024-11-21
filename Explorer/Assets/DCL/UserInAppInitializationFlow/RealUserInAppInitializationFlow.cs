@@ -59,7 +59,8 @@ namespace DCL.UserInAppInitializationFlow
             IDebugSettings debugSettings,
             IPortableExperiencesController portableExperiencesController,
             IRoomHub roomHub,
-            DiagnosticsContainer diagnosticsContainer
+            DiagnosticsContainer diagnosticsContainer,
+            bool localSceneDevelopment
         )
         {
             this.loadingStatus = loadingStatus;
@@ -77,6 +78,7 @@ namespace DCL.UserInAppInitializationFlow
             var loadLandscapeStartupOperation = new LoadLandscapeStartupOperation(loadingStatus, realmNavigator);
             checkOnboardingStartupOperation = new CheckOnboardingStartupOperation(loadingStatus, selfProfile, featureFlagsCache, decentralandUrlsSource, appParameters, realmNavigator);
             restartRealmStartupOperation = new RestartRealmStartupOperation(loadingStatus, realmController);
+            var initializeStartingParcelOperation = new SetOverrideStartingParcelOperation(realmNavigator, startParcel, featureFlagsCache, localSceneDevelopment);
             var teleportStartupOperation = new TeleportStartupOperation(loadingStatus, realmNavigator, startParcel);
             var loadGlobalPxOperation = new LoadGlobalPortableExperiencesStartupOperation(loadingStatus, selfProfile, featureFlagsCache, debugSettings, portableExperiencesController);
             var sentryDiagnostics = new SentryDiagnosticStartupOperation(realmController, diagnosticsContainer);
@@ -91,6 +93,7 @@ namespace DCL.UserInAppInitializationFlow
                 loadLandscapeStartupOperation,
                 checkOnboardingStartupOperation,
                 restartRealmStartupOperation,
+                initializeStartingParcelOperation,
                 teleportStartupOperation,
                 loadGlobalPxOperation,
                 sentryDiagnostics
@@ -106,11 +109,12 @@ namespace DCL.UserInAppInitializationFlow
             loadPlayerAvatarStartupOperation.AssignWorld(parameters.World, parameters.PlayerEntity);
             restartRealmStartupOperation.EnableReload(parameters.ReloadRealm);
 
-            using var playAudioScope = UIAudioEventsBus.Instance.NewPlayAudioScope(backgroundMusic);
+            using UIAudioEventsBus.PlayAudioScope playAudioScope = UIAudioEventsBus.Instance.NewPlayAudioScope(backgroundMusic);
 
             do
             {
                 if (parameters.FromLogout)
+
                     // Disconnect current livekit connection on logout so the avatar is removed from other peers
                     await roomHub.StopAsync().Timeout(TimeSpan.FromSeconds(10));
 
@@ -123,16 +127,18 @@ namespace DCL.UserInAppInitializationFlow
                 if (parameters.FromLogout)
                 {
                     // If we are coming from a logout, we teleport the user to Genesis Plaza and force realm change to reset the scene properly
-                    var teleportResult = await realmNavigator.TryInitializeTeleportToParcelAsync(Vector2Int.zero, ct, forceChangeRealm: true);
+                    Result teleportResult = await realmNavigator.TryInitializeTeleportToParcelAsync(Vector2Int.zero, ct, forceChangeRealm: true);
+
                     // Restart livekit connection
                     await roomHub.StartAsync().Timeout(TimeSpan.FromSeconds(10));
                     result = teleportResult.Success ? teleportResult : Result.ErrorResult(teleportResult.ErrorMessage);
+
                     // We need to flag the process as completed, otherwise the multiplayer systems will not run
                     loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Completed);
                 }
                 else
                 {
-                    var loadingResult = await LoadingScreen(parameters.ShowLoading)
+                    Result loadingResult = await LoadingScreen(parameters.ShowLoading)
                        .ShowWhileExecuteTaskAsync(
                             async parentLoadReport =>
                             {
