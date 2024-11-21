@@ -9,8 +9,12 @@ namespace DCL.Navmap
 {
     public class NavmapCommandBus : INavmapBus
     {
-        public delegate INavmapCommand SearchPlaceFactory(string search, NavmapSearchPlaceFilter filter, NavmapSearchPlaceSorting sorting,
-            Action<IReadOnlyList<PlacesData.PlaceInfo>> callback);
+        public delegate INavmapCommand SearchPlaceFactory(
+            Action<IReadOnlyList<PlacesData.PlaceInfo>> callback,
+            string? search = null,
+            NavmapSearchPlaceFilter filter = NavmapSearchPlaceFilter.All,
+            NavmapSearchPlaceSorting sorting = NavmapSearchPlaceSorting.MostActive,
+            string? category = null);
         public delegate INavmapCommand ShowPlaceInfoFactory(PlacesData.PlaceInfo placeInfo);
         public delegate INavmapCommand ShowEventInfoFactory(EventDTO @event, PlacesData.PlaceInfo? place = null);
 
@@ -44,20 +48,21 @@ namespace DCL.Navmap
 
         public async UniTask SelectEventAsync(EventDTO @event, CancellationToken ct, PlacesData.PlaceInfo? place = null)
         {
-            INavmapCommand command = showEventInfoFactory.Invoke(@event);
+            INavmapCommand command = showEventInfoFactory.Invoke(@event, place);
 
             await command.ExecuteAsync(ct);
 
             commands.Push(command);
         }
 
-        public async UniTask SearchForPlaceAsync(NavmapSearchPlaceFilter filter, NavmapSearchPlaceSorting sorting, CancellationToken ct) =>
-            await SearchForPlaceAsync(string.Empty, filter, sorting, ct);
-
-        public async UniTask SearchForPlaceAsync(string place, NavmapSearchPlaceFilter filter, NavmapSearchPlaceSorting sorting,
-            CancellationToken ct)
+        public async UniTask SearchForPlaceAsync(CancellationToken ct,
+            string? place = null,
+            NavmapSearchPlaceFilter filter = NavmapSearchPlaceFilter.All,
+            NavmapSearchPlaceSorting sorting = NavmapSearchPlaceSorting.MostActive,
+            string? category = null)
         {
-            INavmapCommand command = searchPlaceFactory.Invoke(place, filter, sorting, OnSearchPlacePerformed);
+            INavmapCommand command = searchPlaceFactory.Invoke(OnSearchPlacePerformed,
+                search: place, filter: filter, sorting: sorting, category: category);
 
             await command.ExecuteAsync(ct);
 

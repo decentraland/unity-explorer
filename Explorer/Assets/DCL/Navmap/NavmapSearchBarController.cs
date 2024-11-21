@@ -55,6 +55,7 @@ namespace DCL.Navmap
             historyRecordPanelView.OnClickedHistoryRecord += ClickedHistoryResult;
 
             navmapBus.OnJumpIn += _ => ClearInput();
+            navmapBus.OnFilterByCategory += SearchByCategory;
             view.inputField.onSelect.AddListener(_ => OnSearchBarSelected(true));
             view.inputField.onDeselect.AddListener(_ => OnSearchBarSelected(false));
             view.inputField.onValueChanged.AddListener(OnInputValueChanged);
@@ -92,7 +93,7 @@ namespace DCL.Navmap
             searchFiltersView.Toggle(currentPlaceSorting);
             view.inputField.SetTextWithoutNotify(currentSearchText);
 
-            await navmapBus.SearchForPlaceAsync(currentPlaceFilter, currentPlaceSorting, ct);
+            await navmapBus.SearchForPlaceAsync(ct, filter: currentPlaceFilter, sorting: currentPlaceSorting);
         }
 
         public void SetInputText(string text) =>
@@ -157,7 +158,8 @@ namespace DCL.Navmap
 
                 searchHistory.Add(searchText);
 
-                await navmapBus.SearchForPlaceAsync(currentSearchText, NavmapSearchPlaceFilter.All, NavmapSearchPlaceSorting.None, ct)
+                await navmapBus.SearchForPlaceAsync(ct, place: currentSearchText,
+                                    filter: NavmapSearchPlaceFilter.All, sorting: NavmapSearchPlaceSorting.None)
                                .SuppressCancellationThrow();
             }
         }
@@ -194,7 +196,8 @@ namespace DCL.Navmap
             searchCancellationToken = searchCancellationToken.SafeRestart();
             searchFiltersView.Toggle(filter);
 
-            navmapBus.SearchForPlaceAsync(currentSearchText, filter, currentPlaceSorting, searchCancellationToken.Token)
+            navmapBus.SearchForPlaceAsync(searchCancellationToken.Token, place: currentSearchText,
+                          filter: filter, sorting: currentPlaceSorting)
                      .Forget();
         }
 
@@ -204,7 +207,23 @@ namespace DCL.Navmap
             searchCancellationToken = searchCancellationToken.SafeRestart();
             searchFiltersView.Toggle(sorting);
 
-            navmapBus.SearchForPlaceAsync(currentSearchText, currentPlaceFilter, sorting, searchCancellationToken.Token)
+            navmapBus.SearchForPlaceAsync(searchCancellationToken.Token, place: currentSearchText,
+                          filter: currentPlaceFilter, sorting: sorting)
+                     .Forget();
+        }
+
+        private void SearchByCategory(string? category)
+        {
+            currentSearchText = string.Empty;
+            searchCancellationToken = searchCancellationToken.SafeRestart();
+            currentPlaceSorting = NavmapSearchPlaceSorting.MostActive;
+            currentPlaceFilter = NavmapSearchPlaceFilter.All;
+            searchFiltersView.Toggle(currentPlaceSorting);
+            searchFiltersView.Toggle(currentPlaceFilter);
+
+            navmapBus.SearchForPlaceAsync(searchCancellationToken.Token,
+                          filter: currentPlaceFilter, sorting: currentPlaceSorting,
+                          category: category)
                      .Forget();
         }
     }
