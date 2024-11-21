@@ -92,7 +92,7 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
             metadataBuilder.Init(sceneParcel: World.Get<CharacterTransform>(playerEntity).Position.ToParcel(), frustumPlanes);
 
             AddPeopleInFrameToMetadataQuery(World);
-            metadataBuilder.Build(ctx.Token).Forget();
+            metadataBuilder.BuildAsync(ctx.Token).Forget();
         }
 
         [Query]
