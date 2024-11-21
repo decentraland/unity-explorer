@@ -57,7 +57,6 @@ using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
-using DCL.Settings;
 using DCL.SidebarBus;
 using DCL.UI.MainUI;
 using DCL.StylizedSkybox.Scripts.Plugin;
@@ -89,6 +88,7 @@ using UnityEngine;
 using UnityEngine.Audio;
 using UnityEngine.EventSystems;
 using UnityEngine.Pool;
+using Utility;
 using Utility.Ownership;
 using Utility.PriorityQueue;
 using Object = UnityEngine.Object;
@@ -97,8 +97,6 @@ namespace Global.Dynamic
 {
     public class DynamicWorldContainer : DCLWorldContainer<DynamicWorldSettings>
     {
-        private const string PARAMS_FORCED_EMOTES_FLAG = "self-force-emotes";
-
         private ECSReloadScene? reloadSceneController;
         private LocalSceneDevelopmentController? localSceneDevelopmentController;
         private IWearablesProvider? wearablesProvider;
@@ -158,6 +156,8 @@ namespace Global.Dynamic
             Entity playerEntity,
             IAppArgs appArgs,
             ISceneRestrictionBusController sceneRestrictionBusController,
+            ILoadingStatus loadingStatus,
+            ICoroutineRunner coroutineRunner,
             CancellationToken ct)
         {
             var container = new DynamicWorldContainer();
@@ -389,7 +389,8 @@ namespace Global.Dynamic
                 dynamicWorldParams.AppParameters,
                 bootstrapContainer.DebugSettings,
                 staticContainer.PortableExperiencesController,
-                container.RoomHub
+                container.RoomHub,
+                bootstrapContainer.DiagnosticsContainer
             );
 
             var worldInfoHub = new LocationBasedWorldInfoHub(
@@ -636,6 +637,9 @@ namespace Global.Dynamic
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);
 
+            if (appArgs.HasFlag(AppArgsFlags.CAMERA_REEL))
+                globalPlugins.Add(new InWorldCameraPlugin(dclInput, assetsProvisioner, selfProfile, staticContainer.RealmData, playerEntity, placesAPIService, staticContainer.CharacterContainer.CharacterObject, coroutineRunner, staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource));
+
             if (dynamicWorldParams.EnableAnalytics)
                 globalPlugins.Add(new AnalyticsPlugin(
                         bootstrapContainer.Analytics!,
@@ -680,7 +684,7 @@ namespace Global.Dynamic
 
         private static void ParseParamsForcedEmotes(IAppArgs appParams, ref List<URN> parsedEmotes)
         {
-            if (appParams.TryGetValue(PARAMS_FORCED_EMOTES_FLAG, out string? csv) && !string.IsNullOrEmpty(csv))
+            if (appParams.TryGetValue(AppArgsFlags.FORCED_EMOTES, out string? csv) && !string.IsNullOrEmpty(csv))
                 parsedEmotes.AddRange(csv.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(emote => new URN(emote)));
         }
     }

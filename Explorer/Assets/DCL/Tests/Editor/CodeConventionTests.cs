@@ -15,7 +15,7 @@ namespace DCL.Tests
     [Category(CODE_CONVENTIONS)]
     public class CodeConventionsTests
     {
-        private static readonly string[] EXCLUDED_PATHS = { "/Editor/", "/Tests/", "/EditorTests/", "/Rendering/SkyBox/", "/Ipfs/", "/Plugins/SocketIO" };
+        private static readonly string[] EXCLUDED_PATHS = { "/Editor/", "/Test" , "/Playground", "/EditorTests/", "/Rendering/SkyBox/", "/Ipfs/", "/Plugins/SocketIO" };
 
         private static IEnumerable<string> AllCSharpFiles() =>
             AssetDatabase.FindAssets("t:Script")

@@ -36,7 +36,7 @@ jobs:
       profile: none
       clean_build: true
       cache_strategy: none
-      version: ${{ needs.get-info.outputs.next_short_version }}
+      version: ${{ needs.get-info.outputs.version }}
       sentry_enabled: true
       is_release_build: true
       install_source: ${{ matrix.install_source }}
