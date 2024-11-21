@@ -60,7 +60,6 @@ namespace Global.Dynamic
         private readonly bool isLocalSceneDevelopment;
         private readonly FeatureFlagsCache featureFlagsCache;
 
-        private URLDomain currentRealm;
         private Vector2Int currentParcel;
 
         private readonly ITeleportOperation[] realmChangeOperations;
@@ -137,7 +136,10 @@ namespace Global.Dynamic
 
         public bool CheckIsNewRealm(URLDomain realm)
         {
-            if (realm == currentRealm || realm == realmController.RealmData.Ipfs.CatalystBaseUrl)
+            if (!realmController.RealmData.Configured)
+                return true;
+
+            if (realm == realmController.CurrentDomain || realm == realmController.RealmData.Ipfs.CatalystBaseUrl)
                 return false;
 
             return true;
@@ -158,10 +160,8 @@ namespace Global.Dynamic
         {
             if (ct.IsCancellationRequested)
                 return Result.CancelledResult();
-
-            currentRealm = realmController.RealmData.Ipfs.CatalystBaseUrl;
             var loadResult
-                = await loadingScreen.ShowWhileExecuteTaskAsync(DoChangeRealmAsync(realm, parcelToTeleport), ct);
+                = await loadingScreen.ShowWhileExecuteTaskAsync(DoChangeRealmAsync(realm, realmController.CurrentDomain, parcelToTeleport), ct);
 
             if (!loadResult.Success)
             {
@@ -207,12 +207,18 @@ namespace Global.Dynamic
 
                 if (lastOpResult.Success)
                     break;
+
+                if (ct.IsCancellationRequested)
+                {
+                    lastOpResult = Result.CancelledResult();
+                    break;
+                }
             }
 
             return lastOpResult;
         }
 
-        private Func<AsyncLoadProcessReport, CancellationToken, UniTask<Result>> DoChangeRealmAsync(URLDomain realm, Vector2Int parcelToTeleport)
+        private Func<AsyncLoadProcessReport, CancellationToken, UniTask<Result>> DoChangeRealmAsync(URLDomain realm, URLDomain? fallbackRealm, Vector2Int parcelToTeleport)
         {
             return async (parentLoadReport, ct) =>
             {
@@ -233,10 +239,16 @@ namespace Global.Dynamic
                 if (opResult.Success)
                     return opResult;
 
+                if (!fallbackRealm.HasValue)
+                {
+                    ReportHub.LogWarning(ReportCategory.REALM, "All attempts failed. No fallback realm is provided.");
+                    return opResult;
+                }
+
                 // All retries failed, try with the previous realm and parcel
                 ReportHub.LogWarning(ReportCategory.REALM, "All attempts failed. Trying with previous realm and parcel.");
 
-                teleportParams.CurrentDestinationRealm = currentRealm;
+                teleportParams.CurrentDestinationRealm = fallbackRealm.Value;
                 teleportParams.CurrentDestinationParcel = currentParcel;
 
                 opResult = await ExecuteTeleportOperationsAsync(teleportParams, realmChangeOperations, FALLBACK_LOG_NAME, 1, ct);
@@ -440,11 +452,10 @@ namespace Global.Dynamic
         public async UniTask ChangeRealmAsync(URLDomain realm, CancellationToken ct)
         {
             await realmController.SetRealmAsync(realm, ct);
-            currentRealm = realm;
             SwitchMiscVisibilityAsync();
         }
 
         private bool IsGenesisRealm() =>
-            !isLocalSceneDevelopment && !realmController.RealmData.ScenesAreFixed;
+            !isLocalSceneDevelopment && realmController.RealmData is { Configured: true, ScenesAreFixed: false };
     }
 }

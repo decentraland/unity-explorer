@@ -6,6 +6,8 @@ namespace ECS.SceneLifeCycle.Realm
 {
     public interface IRealmController
     {
+        URLDomain? CurrentDomain { get; }
+
         IRealmData RealmData { get; }
 
         UniTask SetRealmAsync(URLDomain realm, CancellationToken ct);

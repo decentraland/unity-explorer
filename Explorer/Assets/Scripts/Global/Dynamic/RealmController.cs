@@ -49,11 +49,11 @@ namespace Global.Dynamic
 
         private GlobalWorld? globalWorld;
         private Entity realmEntity;
-        private URLDomain? currentDomain;
 
         public IRealmData RealmData => realmData;
 
         private readonly RealmNavigatorDebugView realmNavigatorDebugView;
+        public URLDomain? CurrentDomain { get; private set; }
 
         public GlobalWorld GlobalWorld
         {
@@ -132,17 +132,17 @@ namespace Global.Dynamic
             teleportController.SceneProviderStrategy = sceneProviderStrategy;
             partitionDataContainer.Restart();
 
-            currentDomain = realm;
-            realmNavigatorDebugView.UpdateRealmName(currentDomain.Value.ToString(), result.lambdas.publicUrl,
+            CurrentDomain = realm;
+            realmNavigatorDebugView.UpdateRealmName(CurrentDomain.Value.ToString(), result.lambdas.publicUrl,
                 result.content.publicUrl);
         }
 
         public async UniTask RestartRealmAsync(CancellationToken ct)
         {
-            if (!currentDomain.HasValue)
+            if (!CurrentDomain.HasValue)
                 throw new Exception("Cannot restart realm, no valid domain set. First call SetRealmAsync(domain)");
 
-            await SetRealmAsync(currentDomain.Value, ct);
+            await SetRealmAsync(CurrentDomain.Value, ct);
         }
 
         public async UniTask<bool> IsReachableAsync(URLDomain realm, CancellationToken ct) =>
@@ -204,7 +204,6 @@ namespace Global.Dynamic
             for (var i = 0; i < globalWorld.FinalizeWorldSystems.Count; i++)
                     globalWorld.FinalizeWorldSystems[i].FinalizeComponents(world.Query(in CLEAR_QUERY));
 
-
             // Clear the world from everything connected to the current realm
             world.Destroy(in CLEAR_QUERY);
 
@@ -216,7 +215,7 @@ namespace Global.Dynamic
             await UniTask.WhenAll(loadedScenes.Select(s => s.DisposeAsync()));
             sceneAssetLock.Reset();
 
-            currentDomain = null;
+            CurrentDomain = null;
 
             // Collect garbage, good moment to do it
             GC.Collect();
