@@ -9,15 +9,15 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
 {
     public class PagedCameraReelManager
     {
-        public bool AllImagesLoaded { get; private set; } = false;
+        public bool AllImagesLoaded { get; private set; }
 
         private readonly ICameraReelStorageService cameraReelStorageService;
         private readonly string walletAddress;
         private readonly int pageSize;
         private readonly int totalImages;
 
-        private int currentOffset = 0;
-        private int currentLoadedImages = 0;
+        private int currentOffset;
+        private int currentLoadedImages;
 
         public PagedCameraReelManager(
             ICameraReelStorageService cameraReelStorageService,
