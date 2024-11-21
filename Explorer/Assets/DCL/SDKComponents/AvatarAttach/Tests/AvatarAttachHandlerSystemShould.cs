@@ -59,8 +59,7 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
             entityTransformComponent = AddTransformToEntity(entity);
         }
 
-        [TearDown]
-        public void Teardown()
+        protected override void OnTearDown()
         {
             Object.DestroyImmediate(playerAvatarBase.gameObject);
             Object.DestroyImmediate(entityTransformComponent.Transform.gameObject);

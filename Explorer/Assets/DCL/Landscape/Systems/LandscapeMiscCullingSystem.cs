@@ -60,9 +60,8 @@ namespace DCL.Landscape.Systems
             waterJobHandle = default(JobHandle);
         }
 
-        public override void Dispose()
+        protected override void OnDispose()
         {
-            base.Dispose();
             cliffsJobHandle.Complete();
             waterJobHandle.Complete();
             nativeFrustumPlanes.Dispose();
