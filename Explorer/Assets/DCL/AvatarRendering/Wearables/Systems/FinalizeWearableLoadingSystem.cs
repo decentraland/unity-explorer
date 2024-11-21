@@ -111,20 +111,27 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 URN shortenedPointer = loadingIntentionPointer;
                 loadingIntentionPointer = shortenedPointer.Shorten();
 
-                if (!wearableStorage.TryGetElement(loadingIntentionPointer, out IWearable wearable))
+                if (!wearableStorage.TryGetElement(loadingIntentionPointer, out var wearable))
                 {
-                    wearableStorage.Set(loadingIntentionPointer, IWearable.NewEmpty());
-                    missingPointers.Add(loadingIntentionPointer);
-                    continue;
+                    wearable = IWearable.NewEmpty();
+                    wearableStorage.Set(loadingIntentionPointer, wearable);
                 }
-
+                
                 if (wearable.Model.Succeeded)
                 {
-                    finishedDTOs++;
+                    ConcludeDTO();
                     resolvedDTOs.Add(wearable);
                 }
                 else if (wearable.Model.Exception != null)
+                    ConcludeDTO();
+                else if (!wearable.IsLoading)
+                    missingPointers.Add(loadingIntentionPointer);
+
+                void ConcludeDTO()
+                {
+                    wearable.UpdateLoadingStatus(false);
                     finishedDTOs++;
+                }
             }
 
             if (missingPointers.Count > 0)
@@ -303,6 +310,11 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 new CommonLoadingArguments(realmData.Ipfs.EntitiesActiveEndpoint, cancellationTokenSource: intention.CancellationTokenSource));
 
             var promise = AssetPromise<WearablesDTOList, GetWearableDTOByPointersIntention>.Create(World, wearableDtoByPointersIntention, partitionComponent);
+
+            foreach (var pointerID in promise.LoadingIntention.Pointers)
+                if (storage.TryGetElement(pointerID, out var component))
+                    component.UpdateLoadingStatus(true);
+            
             World.Create(promise, intention.BodyShape, partitionComponent);
         }
 
