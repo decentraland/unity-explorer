@@ -4,14 +4,14 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Character;
 using DCL.InWorldCamera.CameraReelStorageService;
+using DCL.InWorldCamera.PhotoDetail;
 using DCL.InWorldCamera.ScreencaptureCamera;
 using DCL.InWorldCamera.ScreencaptureCamera.Systems;
 using DCL.InWorldCamera.ScreencaptureCamera.UI;
-using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PlacesAPIService;
 using DCL.Profiles.Self;
-using DCL.WebRequests;
 using ECS;
+using MVC;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -33,6 +33,7 @@ namespace DCL.PluginSystem.Global
         private readonly ICharacterObject characterObject;
         private readonly ICoroutineRunner coroutineRunner;
         private readonly ICameraReelStorageService cameraReelStorageService;
+        private readonly IMVCManager mvcManager;
 
         private ProvidedAsset<GameObject> hudPrefab;
         private ScreenRecorder recorder;
@@ -41,7 +42,7 @@ namespace DCL.PluginSystem.Global
 
         public InWorldCameraPlugin(DCLInput input, IAssetsProvisioner assetsProvisioner, SelfProfile selfProfile,
             RealmData realmData, Entity playerEntity, IPlacesAPIService placesAPIService, ICharacterObject characterObject, ICoroutineRunner coroutineRunner,
-            ICameraReelStorageService cameraReelStorageService)
+            ICameraReelStorageService cameraReelStorageService, IMVCManager mvcManager)
         {
             this.input = input;
             this.assetsProvisioner = assetsProvisioner;
@@ -52,17 +53,22 @@ namespace DCL.PluginSystem.Global
             this.characterObject = characterObject;
             this.coroutineRunner = coroutineRunner;
             this.cameraReelStorageService = cameraReelStorageService;
+            this.mvcManager = mvcManager;
         }
 
         public async UniTask InitializeAsync(InWorldCameraSettings settings, CancellationToken ct)
         {
             hudPrefab = await assetsProvisioner.ProvideMainAssetAsync(settings.ScreencaptureHud, ct);
+            PhotoDetailView photoDetailViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.PhotoDetailPrefab, ct: ct)).GetComponent<PhotoDetailView>();
+            ControllerBase<PhotoDetailView, PhotoDetailParameter>.ViewFactoryMethod viewFactoryMethod = PhotoDetailController.Preallocate(photoDetailViewAsset, null, out PhotoDetailView explorePanelView);
 
             hudPrefab.Value.SetActive(false);
             hud = Object.Instantiate(hudPrefab.Value, Vector3.zero, Quaternion.identity);
 
             recorder = new ScreenRecorder(hud.GetComponent<RectTransform>());
             metadataBuilder = new ScreenshotMetadataBuilder(selfProfile, characterObject.Controller, realmData, placesAPIService);
+
+            mvcManager.RegisterController(new PhotoDetailController(viewFactoryMethod));
         }
 
         public void Dispose()
@@ -82,6 +88,9 @@ namespace DCL.PluginSystem.Global
         {
             [field: Header(nameof(InWorldCameraSettings))]
             [field: SerializeField] internal AssetReferenceGameObject ScreencaptureHud { get; private set; }
+
+            [field: Header("Photo detail")]
+            [field: SerializeField] internal AssetReferenceGameObject PhotoDetailPrefab { get; private set; }
         }
     }
 }
