@@ -91,12 +91,9 @@ KernelOptions NewKernelOptionsFromCustomOptions(
 
 int MipSetFrom(const CMP_DWORD width, const CMP_DWORD height, const CMP_BYTE *data, const CMP_DWORD dataSize, CMP_MipSet *mipSet)
 {
-    CMIPS CMips = {0};
-
     memset(mipSet, 0, sizeof(CMP_MipSet));
-
-    auto createResult= CMP_CreateMipSet(mipSet, width, height, 1,CF_8bit, TT_2D);
-    if(createResult)
+    auto createResult = CMP_CreateMipSet(mipSet, width, height, 1, CF_8bit, TT_2D);
+    if (createResult)
     {
         return createResult;
     }
@@ -528,14 +525,14 @@ ImageResult texturesfuse_cmp_image_from_memory(
     }
 
     CMP_DWORD length = dstMipSet.dwDataSize;
-    CMP_BYTE* output = new CMP_BYTE[length];
+    CMP_BYTE *output = new CMP_BYTE[length];
     memcpy(output, dstMipSet.pData, length);
 
     *outputBytes = output;
     *outputLength = length;
 
     *releaseHandle = context->handles.registerHandle(*outputBytes);
-    
+
     CMP_FreeMipSet(&dstMipSet);
 
     return Success;
