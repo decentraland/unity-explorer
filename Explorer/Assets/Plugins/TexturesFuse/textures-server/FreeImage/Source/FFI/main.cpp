@@ -544,23 +544,26 @@ ImageResult texturesfuse_cmp_image_from_memory(
 
     CMP_ERROR cmpResult = CMP_ProcessTexture(&srcMipSet, &dstMipSet, kOpt, CMP_Log);
 
+    CMP_FreeMipSet(&srcMipSet);
     FreeImage_Unload(image);
 
     if (cmpResult != CMP_OK)
     {
         FreeImage_OutputMessageProc(FIF_UNKNOWN, "Error during decoding CMP: %d", cmpResult);
-
-        if (dstMipSet.pData)
-        {
-            delete[] dstMipSet.pData;
-        }
+        
+        CMP_FreeMipSet(&dstMipSet);
         return ErrorBC5;
     }
 
-    *outputBytes = dstMipSet.pData;
-    *outputLength = dstMipSet.dwDataSize;
+    CMP_DWORD length = dstMipSet.dwDataSize;
+    CMP_BYTE* output = new CMP_BYTE[length];
+    memcpy(output, dstMipSet.pData, length);
 
-    *releaseHandle = context->handles.registerHandle(*outputBytes);
+    *outputBytes = output;
+    *outputLength = length;
+
+    *releaseHandle = context->handles.registerHandle(output);
+    CMP_FreeMipSet(&dstMipSet);
 
     return Success;
 }
