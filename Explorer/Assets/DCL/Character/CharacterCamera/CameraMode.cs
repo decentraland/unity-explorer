@@ -2,16 +2,15 @@
 {
     public enum CameraMode : byte
     {
-        Unknown = 0,
-        FirstPerson = 1,
-        ThirdPerson = 2,
-        DroneView = 3,
-        SDKCamera = 4,
+        FirstPerson = 0,
+        ThirdPerson = 1,
+        DroneView = 2,
+        SDKCamera = 3,
 
         /// <summary>
         ///     Free-fly, does not follow character, intercepts controls designated for character movement
         /// </summary>
-        Free = 5,
-        InWorld = 6,
+        Free = 4,
+        InWorld = 5,
     }
 }

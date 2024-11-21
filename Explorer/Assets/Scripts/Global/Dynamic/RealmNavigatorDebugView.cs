@@ -17,7 +17,7 @@ namespace Global.Dynamic
             currentCatalystContent = new ElementBinding<string>("");
 
             debugContainerBuilder
-                .TryAddWidget("Realm")?
+                .TryAddWidget(IDebugContainerBuilder.Categories.REALM)?
                 .AddCustomMarker(new ElementBinding<string>("Current Realm"))
                 .AddCustomMarker(currentRealmName)
                 .AddCustomMarker(new ElementBinding<string>("Current Lambdas Catalyst"))

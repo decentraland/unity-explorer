@@ -5,6 +5,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Character.Components;
 using DCL.CharacterCamera;
 using DCL.Diagnostics;
+using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.InWorldCamera.ScreencaptureCamera.UI;
 using DCL.Multiplayer.Profiles.Entities;
 using DCL.Profiles;
@@ -18,20 +19,22 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
     [UpdateInGroup(typeof(CameraGroup))]
     [UpdateAfter(typeof(ToggleInWorldCameraActivitySystem))]
     [LogCategory(ReportCategory.IN_WORLD_CAMERA)]
-    public partial class CaptureScreenshotSystem : BaseUnityLoopSystem
+    public sealed partial class CaptureScreenshotSystem : BaseUnityLoopSystem
     {
         private readonly ScreenRecorder recorder;
         private readonly ScreenshotMetadataBuilder metadataBuilder;
         private readonly ScreenshotHudView hud;
 
         private readonly ICoroutineRunner coroutineRunner;
+        private readonly ICameraReelStorageService cameraReelStorageService;
         private readonly CancellationTokenSource ctx;
         private readonly Entity playerEntity;
 
         private SingleInstanceEntity camera;
 
-        public CaptureScreenshotSystem(World world, ScreenRecorder recorder, ScreenshotHudView hud,
-            Entity playerEntity, ScreenshotMetadataBuilder metadataBuilder, ICoroutineRunner coroutineRunner)
+        public CaptureScreenshotSystem(World world, ScreenRecorder recorder,
+            ScreenshotHudView hud, Entity playerEntity, ScreenshotMetadataBuilder metadataBuilder, ICoroutineRunner coroutineRunner,
+            ICameraReelStorageService cameraReelStorageService)
             : base(world)
         {
             this.recorder = recorder;
@@ -39,6 +42,7 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
             this.playerEntity = playerEntity;
             this.metadataBuilder = metadataBuilder;
             this.coroutineRunner = coroutineRunner;
+            this.cameraReelStorageService = cameraReelStorageService;
 
             ctx = new CancellationTokenSource();
         }
@@ -64,6 +68,9 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
                 {
                     hud.Screenshot = recorder.GetScreenshotAndReset();
                     hud.Metadata = metadataBuilder.GetMetadataAndReset();
+
+                    cameraReelStorageService.UploadScreenshotAsync(hud.Screenshot, hud.Metadata, ctx.Token).Forget();
+
                     hud.Canvas.enabled = true;
                 }
 

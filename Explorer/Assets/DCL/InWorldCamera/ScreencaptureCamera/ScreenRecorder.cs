@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using UnityEngine;
+using Utility;
 using Object = UnityEngine.Object;
 
 namespace DCL.InWorldCamera.ScreencaptureCamera
@@ -13,18 +14,19 @@ namespace DCL.InWorldCamera.ScreencaptureCamera
         SCREENSHOT_READY = 3,
     }
 
-    public class ScreenRecorder
+    public sealed class ScreenRecorder : IDisposable
     {
+        // Defines the target resolution of the screenshot. Final screenshot is adjusted to this resolution after cropping to the "Rule of three" frame.
         private const int TARGET_FRAME_WIDTH = 1920;
         private const int TARGET_FRAME_HEIGHT = 1080;
-        public const float FRAME_SCALE = 0.87f; // Defines the scale of the frame in relation to the screen
+
+        // Relation of screen Canvas to the Scale of the "Rule of three" frame that is an area of the target screenshot. Used in calculation for upscaling screenshot to the target resolution.
+        public const float FRAME_SCALE = 0.87f;
 
         private readonly float targetAspectRatio;
         private readonly RectTransform canvasRectTransform;
 
         private readonly Texture2D screenshot = new (TARGET_FRAME_WIDTH, TARGET_FRAME_HEIGHT, TextureFormat.RGB24, false);
-
-        private readonly WaitForEndOfFrame waitForEndOfFrame = new ();
 
         private RenderTexture originalBaseTargetTexture;
 
@@ -35,19 +37,28 @@ namespace DCL.InWorldCamera.ScreencaptureCamera
         public ScreenRecorder(RectTransform canvasRectTransform)
         {
             targetAspectRatio = (float)TARGET_FRAME_WIDTH / TARGET_FRAME_HEIGHT;
-            Debug.Assert(targetAspectRatio != 0, "Target aspect ratio cannot be null");
+            Debug.Assert(targetAspectRatio != 0, "Target aspect ratio cannot be zero");
 
             this.canvasRectTransform = canvasRectTransform;
         }
 
-        public virtual IEnumerator CaptureScreenshot()
+        public void Dispose()
+        {
+            if(screenshot != null)
+                Object.Destroy(screenshot);
+
+            if (originalBaseTargetTexture != null)
+                RenderTexture.ReleaseTemporary(originalBaseTargetTexture);
+        }
+
+        public IEnumerator CaptureScreenshot()
         {
             State = RecordingState.CAPTURING;
 
-            yield return waitForEndOfFrame; // for UI to appear on screenshot. Converting to UniTask didn't work :(
+            yield return GameObjectExtensions.WAIT_FOR_END_OF_FRAME; // for UI to appear on screenshot. Converting to UniTask didn't work :(
 
             ScreenFrameData currentScreenFrame = CalculateCurrentScreenFrame();
-            (_, float targetRescale) = CalculateTargetScreenFrame(currentScreenFrame);
+            float targetRescale = CalculateScaleFactorToTargetSize(currentScreenFrame);
             int roundedUpscale = Mathf.CeilToInt(targetRescale);
 
             // Hotfix for MacOS Desktop crashing on taking screenshot when Explore panel is open
@@ -123,7 +134,7 @@ namespace DCL.InWorldCamera.ScreencaptureCamera
             return screenFrameData;
         }
 
-        private static (ScreenFrameData data, float targetRescale) CalculateTargetScreenFrame(ScreenFrameData currentScreenFrameData)
+        private static float CalculateScaleFactorToTargetSize(ScreenFrameData currentScreenFrameData)
         {
             var screenFrameData = new ScreenFrameData();
 
@@ -131,16 +142,14 @@ namespace DCL.InWorldCamera.ScreencaptureCamera
             float upscaleFrameHeight = TARGET_FRAME_HEIGHT / currentScreenFrameData.FrameHeight;
             Debug.Assert(Math.Abs(upscaleFrameWidth - upscaleFrameHeight) < 0.01f, "Screenshot upscale factors should be the same");
 
-            float targetRescale = upscaleFrameWidth;
-
             screenFrameData.ScreenWidth = currentScreenFrameData.ScreenWidth * upscaleFrameWidth;
-            screenFrameData.ScreenHeight = currentScreenFrameData.ScreenHeight * upscaleFrameWidth;
+            screenFrameData.ScreenHeight = currentScreenFrameData.ScreenHeight * upscaleFrameHeight;
             screenFrameData.FrameWidth = currentScreenFrameData.FrameWidth * upscaleFrameWidth;
-            screenFrameData.FrameHeight = currentScreenFrameData.FrameHeight * upscaleFrameWidth;
+            screenFrameData.FrameHeight = currentScreenFrameData.FrameHeight * upscaleFrameHeight;
             Debug.Assert(Math.Abs(screenFrameData.FrameWidth - TARGET_FRAME_WIDTH) < 0.1f, "Calculated screenshot width should be the same as target width");
             Debug.Assert(Math.Abs(screenFrameData.FrameHeight - TARGET_FRAME_HEIGHT) < 0.1f, "Calculated screenshot height should be the same as target height");
 
-            return (screenFrameData, targetRescale);
+            return upscaleFrameWidth;
         }
 
         private static ScreenFrameData CalculateRoundRescaledScreenFrame(ScreenFrameData rescalingScreenFrame, int roundedRescaleFactor) =>

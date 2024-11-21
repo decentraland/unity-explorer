@@ -93,10 +93,10 @@ namespace Global.Dynamic
             await bootstrapContainer.InitializeContainerAsync<BootstrapContainer, BootstrapSettings>(settingsContainer, ct, async container =>
             {
                 container.reportHandlingSettings = await ProvideReportHandlingSettingsAsync(container.AssetsProvisioner!, container.settings, ct);
-                (container.Bootstrap, container.Analytics) = await CreateBootstrapperAsync(debugSettings, applicationParametersParser, container, container.settings, realmLaunchSettings, world, ct);
+                (container.Bootstrap, container.Analytics) = await CreateBootstrapperAsync(debugSettings, applicationParametersParser, container, container.settings, realmLaunchSettings, world, container.settings.BuildData, ct);
                 (container.IdentityCache, container.VerifiedEthereumApi, container.Web3Authenticator) = CreateWeb3Dependencies(sceneLoaderSettings, web3AccountFactory, browser, container, decentralandUrlsSource);
 
-                bool enableSceneDebugConsole = realmLaunchSettings.IsLocalSceneDevelopmentRealm || applicationParametersParser.HasFlag("scene-console");
+                bool enableSceneDebugConsole = realmLaunchSettings.IsLocalSceneDevelopmentRealm || applicationParametersParser.HasFlag(AppArgsFlags.SCENE_CONSOLE);
                 container.DiagnosticsContainer = container.enableAnalytics
                     ? DiagnosticsContainer.Create(container.ReportHandlingSettings, enableSceneDebugConsole, (ReportHandler.DebugLog, new CriticalLogsAnalyticsHandler(container.Analytics)))
                     : DiagnosticsContainer.Create(container.ReportHandlingSettings, enableSceneDebugConsole);
@@ -119,6 +119,7 @@ namespace Global.Dynamic
             BootstrapSettings bootstrapSettings,
             RealmLaunchSettings realmLaunchSettings,
             World world,
+            BuildData buildData,
             CancellationToken ct)
         {
             AnalyticsConfiguration analyticsConfig = (await container.AssetsProvisioner.ProvideMainAssetAsync(bootstrapSettings.AnalyticsConfigRef, ct)).Value;
@@ -133,8 +134,8 @@ namespace Global.Dynamic
             {
                 IAnalyticsService service = CreateAnalyticsService(analyticsConfig, ct);
 
-                appArgs.TryGetValue("launcher_anonymous_id", out string? launcherAnonymousId);
-                appArgs.TryGetValue("session_id", out string? sessionId);
+                appArgs.TryGetValue(AppArgsFlags.Analytics.LAUNCHER_ID, out string? launcherAnonymousId);
+                appArgs.TryGetValue(AppArgsFlags.Analytics.SESSION_ID, out string? sessionId);
 
                 LauncherTraits launcherTraits = new LauncherTraits
                 {
@@ -142,7 +143,7 @@ namespace Global.Dynamic
                     SessionId = sessionId!,
                 };
 
-                var analyticsController = new AnalyticsController(service, appArgs, analyticsConfig, launcherTraits);
+                var analyticsController = new AnalyticsController(service, appArgs, analyticsConfig, launcherTraits, buildData);
 
                 return (new BootstrapAnalyticsDecorator(coreBootstrap, analyticsController), analyticsController);
             }
@@ -235,11 +236,10 @@ namespace Global.Dynamic
     public class BootstrapSettings : IDCLPluginSettings
     {
         [field: SerializeField] public AnalyticsConfigurationRef AnalyticsConfigRef;
-        [field: SerializeField]
-        public ReportHandlingSettingsRef ReportHandlingSettingsDevelopment { get; private set; }
+        [field: SerializeField] public ReportHandlingSettingsRef ReportHandlingSettingsDevelopment { get; private set; }
+        [field: SerializeField] public ReportHandlingSettingsRef ReportHandlingSettingsProduction { get; private set; }
+        [field: SerializeField] public BuildData BuildData { get; private set; }
 
-        [field: SerializeField]
-        public ReportHandlingSettingsRef ReportHandlingSettingsProduction { get; private set; }
 
         [Serializable]
         public class ReportHandlingSettingsRef : AssetReferenceT<ReportsHandlingSettings>

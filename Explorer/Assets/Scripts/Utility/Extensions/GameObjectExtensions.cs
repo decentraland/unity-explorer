@@ -4,6 +4,8 @@ namespace Utility
 {
     public static class GameObjectExtensions
     {
+        public static readonly WaitForEndOfFrame WAIT_FOR_END_OF_FRAME = new ();
+
         public static T TryAddComponent<T>(this GameObject gameObject) where T: Component
         {
             T component = gameObject.GetComponent<T>();

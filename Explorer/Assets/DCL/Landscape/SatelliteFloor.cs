@@ -1,6 +1,7 @@
 ﻿using DCL.Landscape.Settings;
 using DCL.MapRenderer.ComponentsFactory;
 using Cysharp.Threading.Tasks;
+using Cysharp.Threading.Tasks.Triggers;
 using UnityEngine;
 using Utility;
 
@@ -23,8 +24,9 @@ namespace DCL.Landscape
         private MaterialPropertyBlock materialPropertyBlock;
         private LandscapeData landscapeData;
 
-        private bool satelliteRenderersEnabled;
-        private bool Initialized;
+        private bool initialized;
+        private bool currentlyInGenesis;
+        private bool debugSettingEnabled;
 
         public void Initialize(LandscapeData config)
         {
@@ -34,6 +36,8 @@ namespace DCL.Landscape
             materialPropertyBlock = new MaterialPropertyBlock();
 
             satelliteRenderers = new Renderer[SATELLITE_MAP_RESOLUTION * SATELLITE_MAP_RESOLUTION];
+
+            debugSettingEnabled = landscapeData.showSatelliteView;
         }
 
         public void Create(MapRendererTextureContainer textureContainer)
@@ -67,22 +71,32 @@ namespace DCL.Landscape
                 satelliteRenderers[x + (y * SATELLITE_MAP_RESOLUTION)] = satelliteRenderer;
             }
 
-            Initialized = true;
-            SwitchVisibilityAsync(landscapeData.showSatelliteView);
+            initialized = true;
+            SwitchVisibility();
         }
 
-
-        public async UniTask SwitchVisibilityAsync(bool isVisible)
+        public void SetCurrentlyInGenesis(bool isGenesis)
         {
-            if (satelliteRenderersEnabled == isVisible) return;
+            currentlyInGenesis = isGenesis;
+            SwitchVisibility();
+        }
 
-            if (!Initialized)
-                await UniTask.WaitUntil(() => Initialized);
+        public void SwitchVisibilitySetting(bool newValue)
+        {
+            debugSettingEnabled = newValue;
+            SwitchVisibility();
+        }
 
-            satelliteRenderersEnabled = isVisible;
+        private void SwitchVisibility()
+        {
+            var newVisibilityState = debugSettingEnabled && currentlyInGenesis;
+    
+            if (!initialized)
+                return;
 
+            // Set rendering state for each renderer
             foreach (Renderer satelliteRenderer in satelliteRenderers)
-                satelliteRenderer.forceRenderingOff = !isVisible;
+                satelliteRenderer.forceRenderingOff = !newVisibilityState;
         }
     }
 }

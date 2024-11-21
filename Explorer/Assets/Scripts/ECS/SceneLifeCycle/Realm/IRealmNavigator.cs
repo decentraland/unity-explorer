@@ -28,13 +28,13 @@ namespace ECS.SceneLifeCycle.Realm
         UniTask<bool> CheckRealmIsReacheableAsync(URLDomain realm, CancellationToken ct);
 
         UniTask<Result> TryInitializeTeleportToParcelAsync(Vector2Int parcel, CancellationToken ct,
-            bool isLocal = false);
+            bool isLocal = false, bool forceChangeRealm = false);
 
         UniTask InitializeTeleportToSpawnPointAsync(AsyncLoadProcessReport teleportLoadReport, CancellationToken ct, Vector2Int parcelToTeleport = default);
 
         UniTask LoadTerrainAsync(AsyncLoadProcessReport loadReport, CancellationToken ct);
 
-        UniTask SwitchMiscVisibilityAsync();
+        void SwitchMiscVisibilityAsync();
 
         UniTask ChangeRealmAsync(URLDomain realm, CancellationToken ct);
 

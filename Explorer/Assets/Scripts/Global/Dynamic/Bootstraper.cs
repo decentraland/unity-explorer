@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.AssetsProvision.CodeResolver;
 using DCL.Audio;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
@@ -20,6 +21,8 @@ using Global.AppArgs;
 using Global.Dynamic.DebugSettings;
 using MVC;
 using SceneRunner.Debugging;
+using SceneRuntime.Factory.WebSceneSource;
+using SceneRuntime.Factory.WebSceneSource.Cache;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -75,8 +78,14 @@ namespace Global.Dynamic
         }
 
         public async UniTask<(StaticContainer?, bool)> LoadStaticContainerAsync(BootstrapContainer bootstrapContainer, PluginSettingsContainer globalPluginSettingsContainer, DebugViewsCatalog debugViewsCatalog, Entity playerEntity, ISystemMemoryCap memoryCap, CancellationToken ct) =>
-            await StaticContainer.CreateAsync(bootstrapContainer.DecentralandUrlsSource, bootstrapContainer.AssetsProvisioner, bootstrapContainer.ReportHandlingSettings, appArgs, debugViewsCatalog, globalPluginSettingsContainer,
-                bootstrapContainer.DiagnosticsContainer, bootstrapContainer.IdentityCache, bootstrapContainer.VerifiedEthereumApi, bootstrapContainer.LocalSceneDevelopment, bootstrapContainer.UseRemoteAssetBundles, world, playerEntity, memoryCap, bootstrapContainer.WorldVolumeMacBus, EnableAnalytics, bootstrapContainer.Analytics, ct);
+            await StaticContainer.CreateAsync(bootstrapContainer.DecentralandUrlsSource,
+                bootstrapContainer.AssetsProvisioner, bootstrapContainer.ReportHandlingSettings,
+                appArgs, debugViewsCatalog, globalPluginSettingsContainer,
+                bootstrapContainer.DiagnosticsContainer, bootstrapContainer.IdentityCache,
+                bootstrapContainer.VerifiedEthereumApi, bootstrapContainer.LocalSceneDevelopment,
+                bootstrapContainer.UseRemoteAssetBundles, world, playerEntity, memoryCap,
+                bootstrapContainer.WorldVolumeMacBus, EnableAnalytics, bootstrapContainer.Analytics,
+                ct);
 
         public async UniTask<(DynamicWorldContainer?, bool)> LoadDynamicWorldContainerAsync(BootstrapContainer bootstrapContainer,
             StaticContainer staticContainer,
@@ -168,6 +177,16 @@ namespace Global.Dynamic
             Entity playerEntity
         )
         {
+            IWebJsSources webJsSources = new WebJsSources(new JsCodeResolver(
+                staticContainer.WebRequestsContainer.WebRequestController));
+
+            if (!realmLaunchSettings.IsLocalSceneDevelopmentRealm)
+            {
+                MemoryJsSourcesCache cache = new ();
+                staticContainer.CacheCleaner.Register(cache);
+                webJsSources = new CachedWebJsSources(webJsSources, cache);
+            }
+
             SceneSharedContainer sceneSharedContainer = SceneSharedContainer.Create(
                 in staticContainer,
                 bootstrapContainer.DecentralandUrlsSource,
@@ -179,7 +198,7 @@ namespace Global.Dynamic
                 dynamicWorldContainer.MvcManager,
                 dynamicWorldContainer.MessagePipesHub,
                 dynamicWorldContainer.RemoteMetadata,
-                !realmLaunchSettings.IsLocalSceneDevelopmentRealm
+                webJsSources
             );
 
             GlobalWorld globalWorld = dynamicWorldContainer.GlobalWorldFactory.Create(sceneSharedContainer.SceneFactory,
