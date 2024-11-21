@@ -42,7 +42,6 @@ namespace DCL.InWorldCamera.CameraReelGallery
             this.view.goToCameraButton.onClick.AddListener(OnGoToCameraButtonClicked);
 
             view.storageProgressBar.SetLabelString(storageProgressBarLabelText);
-            view.storageProgressBar.MinRealValue = 0;
         }
 
         private void OnGoToCameraButtonClicked()
@@ -80,8 +79,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
 
         private void SetStorageStatus(CameraReelStorageStatus storageStatus)
         {
-            view.storageProgressBar.MaxRealValue = storageStatus.MaxScreenshots;
-            view.storageProgressBar.SetPercentageValue((storageStatus.ScreenshotsAmount * 1.0f / storageStatus.MaxScreenshots) * 100);
+            view.storageProgressBar.SetPercentageValue((storageStatus.ScreenshotsAmount * 1.0f / storageStatus.MaxScreenshots) * 100, 0 , storageStatus.MaxScreenshots);
             view.storageFullIcon.SetActive(!storageStatus.HasFreeSpace);
 
             if (storageStatus.ScreenshotsAmount == 0)

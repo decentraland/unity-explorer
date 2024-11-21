@@ -12,12 +12,12 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
 
         private string labelString = "Storage {0}/{1} photos taken";
 
-        [Range(MIN_VALUE, MAX_VALUE)] public float valuePercentage;
+        [Range(MIN_VALUE, MAX_VALUE), SerializeField] private float valuePercentage;
 
         [Space]
         [Header("Configuration")]
-        public float? MaxRealValue;
-        public float? MinRealValue;
+        [SerializeField] private float maxRealValue;
+        [SerializeField] private float minRealValue;
 
         [Space]
         [Header("Internal references")]
@@ -25,12 +25,11 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
         [SerializeField] private RectTransform foreground;
         [SerializeField] private TMP_Text label;
 
-        public void SetPercentageValue(float value)
+        public void SetPercentageValue(float value, float min, float max)
         {
-            if (!MaxRealValue.HasValue || !MinRealValue.HasValue)
-                throw new Exception("MaxRealValue and MinRealValue must be set before setting a value");
-
-            this.valuePercentage = Mathf.Clamp(value, MinRealValue.Value, MaxRealValue.Value);
+            this.minRealValue = min;
+            this.maxRealValue = max;
+            this.valuePercentage = Mathf.Clamp(value, minRealValue, maxRealValue);
             UpdateGraphics();
         }
 
@@ -46,13 +45,11 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
 
         private void UpdateGraphics()
         {
-            string numerator = MaxRealValue.HasValue && MinRealValue.HasValue ? Mathf.RoundToInt(Mathf.Lerp(MinRealValue.Value, MaxRealValue.Value, valuePercentage / MAX_VALUE)).ToString() : "-";
-            string denominator = MaxRealValue.HasValue ? MaxRealValue.Value.ToString(CultureInfo.InvariantCulture) : "-";
+            bool isFractionAllZero = minRealValue == 0 && maxRealValue == 0;
+            string numerator = !isFractionAllZero ? Mathf.RoundToInt(Mathf.Lerp(minRealValue, maxRealValue, valuePercentage / MAX_VALUE)).ToString() : "-";
+            string denominator = !isFractionAllZero ? maxRealValue.ToString(CultureInfo.InvariantCulture) : "-";
 
             label.SetText(string.Format(labelString, numerator, denominator));
-
-            if (!MaxRealValue.HasValue || !MinRealValue.HasValue)
-                return;
 
             foreground.sizeDelta = new Vector2(valuePercentage * (background.rect.width / 100f), foreground.sizeDelta.y);
         }
