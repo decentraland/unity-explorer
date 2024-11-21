@@ -85,7 +85,7 @@ namespace DCL.SDKComponents.MediaStream
         private void UpdateMediaPlayerPosition(ref MediaPlayerComponent mediaPlayer, ref TransformComponent transformComponent)
         {
             // Needed for positional sound
-            mediaPlayer.MediaPlayer.transform.position = transformComponent.Transform.position;
+            mediaPlayer.MediaPlayer.transform.position = transformComponent.Cached.WorldPosition;
         }
 
         [Query]
