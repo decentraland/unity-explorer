@@ -122,7 +122,12 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
             inWorldVirtualCamera.LookAt = null;
             followTarget.enabled = false;
 
-            camera.GetCameraComponent(World).Mode = CameraMode.ThirdPerson;
+            float distanceToThirdPersonView =
+                Mathf.Abs(cinemachinePreset.ThirdPersonCameraData.Camera.transform.localPosition.z - inWorldVirtualCamera.transform.localPosition.z);
+            float distanceToDroneCameraView =
+                Mathf.Abs(cinemachinePreset.DroneViewCameraData.Camera.transform.localPosition.z - inWorldVirtualCamera.transform.localPosition.z);
+
+            camera.GetCameraComponent(World).Mode = distanceToDroneCameraView < distanceToThirdPersonView ? CameraMode.DroneView : CameraMode.ThirdPerson;
         }
 
         private void SwitchToInWorldCamera()
