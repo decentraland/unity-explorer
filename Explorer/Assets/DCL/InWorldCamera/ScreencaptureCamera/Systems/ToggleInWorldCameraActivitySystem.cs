@@ -95,25 +95,25 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
         {
             hud.SetActive(false); // TODO (Vit):Temporary solution, will be replaced by MVC
 
-            World.Remove<InWorldCamera, CameraTarget, CameraDampedFOV, CameraDampedAim, InWorldCameraInput>(camera);
-
             SwitchToThirdPersonCamera();
             SwitchCameraInput(to: Kind.PLAYER);
+
+            World.Remove<InWorldCamera, CameraTarget, CameraDampedFOV, CameraDampedAim, InWorldCameraInput>(camera);
         }
 
         private void EnableCamera()
         {
             hud.SetActive(true); // TODO (Vit):Temporary solution, will be replaced by MVC
 
+            SwitchToInWorldCamera();
+            SwitchCameraInput(to: Kind.IN_WORLD_CAMERA);
+
             World.Add(camera,
                 new InWorldCamera(),
                 new CameraTarget { Value = followTarget },
-                new CameraDampedFOV { Current = 60f, Velocity = 0f, Target = 60f },
+                new CameraDampedFOV { Current = inWorldVirtualCamera.m_Lens.FieldOfView, Velocity = 0f, Target = inWorldVirtualCamera.m_Lens.FieldOfView },
                 new CameraDampedAim { Current = Vector2.up, Velocity = Vector2.up },
                 new InWorldCameraInput());
-
-            SwitchToInWorldCamera();
-            SwitchCameraInput(to: Kind.IN_WORLD_CAMERA);
         }
 
         private void SwitchToThirdPersonCamera()
@@ -146,14 +146,21 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
                 inWorldVirtualCamera.m_Transitions.m_InheritPosition = false;
                 inWorldVirtualCamera.transform.position = CalculateBehindPosition();
                 inWorldVirtualCamera.transform.rotation = cinemachinePreset.FirstPersonCameraData.Camera.transform.rotation;
-                inWorldVirtualCamera.m_Lens.FieldOfView = cinemachinePreset.FirstPersonCameraData.Camera.m_Lens.FieldOfView;
             }
             else
-            {
                 inWorldVirtualCamera.m_Transitions.m_InheritPosition = true;
-                inWorldVirtualCamera.m_Lens.FieldOfView = cinemachinePreset.ThirdPersonCameraData.Camera.m_Lens.FieldOfView;
-            }
+
+            inWorldVirtualCamera.m_Lens.FieldOfView = CurrentFov(currentCameraMode);
         }
+
+        private float CurrentFov(CameraMode currentCameraMode) =>
+            currentCameraMode switch
+            {
+                CameraMode.FirstPerson => cinemachinePreset.FirstPersonCameraData.Camera.m_Lens.FieldOfView,
+                CameraMode.ThirdPerson => cinemachinePreset.ThirdPersonCameraData.Camera.m_Lens.FieldOfView,
+                CameraMode.DroneView => cinemachinePreset.DroneViewCameraData.Camera.m_Lens.FieldOfView,
+                _ => 60f,
+            };
 
         private Vector3 CalculateBehindPosition()
         {
