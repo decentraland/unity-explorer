@@ -101,8 +101,10 @@ namespace Global.Dynamic
 #endif
             );
 
-            ITexturesFuse texturesFuse = ITexturesFuse.NewDefault();
-            ICompressShaders compressShaders = new CompressShaders(texturesFuse, IPlatform.DEFAULT);
+            static ITexturesFuse TextureFuseFactory() =>
+                ITexturesFuse.NewDefault();
+
+            ICompressShaders compressShaders = new CompressShaders(TextureFuseFactory, IPlatform.DEFAULT);
 
             if (applicationParametersParser.HasFlag(ICompressShaders.CMD_ARGS))
             {
@@ -140,7 +142,7 @@ namespace Global.Dynamic
 
                 bool isLoaded;
                 Entity playerEntity = world.Create(new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY));
-                (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugViewsCatalog, playerEntity, texturesFuse, memoryCap, ct);
+                (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugViewsCatalog, playerEntity, TextureFuseFactory(), memoryCap, ct);
 
                 if (!isLoaded)
                 {

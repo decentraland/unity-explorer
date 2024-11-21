@@ -40,7 +40,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground.PrewarmShaders
         private async UniTaskVoid StartAsync()
         {
             IPlatform platform = new ConstPlatform(platformKind);
-            ICompressShaders compressShaders = new CompressShaders.CompressShaders(ITexturesFuse.NewDefault(), platform);
+            ICompressShaders compressShaders = new CompressShaders.CompressShaders(() => ITexturesFuse.NewDefault(), platform);
             ReportHub.Log(ReportData.UNSPECIFIED, $"Shaders are ready: {compressShaders.AreReady()}");
 
             var timer = System.Diagnostics.Stopwatch.StartNew();

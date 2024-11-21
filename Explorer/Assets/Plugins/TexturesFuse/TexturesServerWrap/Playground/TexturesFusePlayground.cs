@@ -40,11 +40,9 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground
         {
             display.EnsureNotNull();
 
-            fuse = overrideDefaultUnzip
-                ? new Unzips.TexturesFuse(options.InitOptions, options, debugOutputFromNative).WithLog(string.Empty)
-                : ITexturesFuse.NewDefault();
+            await new CompressShaders.CompressShaders(NewTextureFuse, IPlatform.DEFAULT).WarmUpIfRequiredAsync(destroyCancellationToken);
 
-            await new CompressShaders.CompressShaders(fuse, IPlatform.DEFAULT).WarmUpIfRequiredAsync(destroyCancellationToken);
+            fuse = NewTextureFuse();
 
             buffer = await BufferAsync(pathOrUri);
             print($"Original size: {buffer.Length} bytes");
@@ -52,6 +50,11 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground
             var result = await FetchedAndOverrideTextureAsync();
             display.Display(result.Texture);
         }
+
+        private ITexturesFuse NewTextureFuse() =>
+            overrideDefaultUnzip
+                ? new Unzips.TexturesFuse(options.InitOptions, options, debugOutputFromNative).WithLog(string.Empty)
+                : ITexturesFuse.NewDefault();
 
         private async UniTask<IOwnedTexture2D> FetchedAndOverrideTextureAsync()
         {
