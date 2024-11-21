@@ -11,17 +11,14 @@ namespace DCL.PlacesAPIService
     {
         private static readonly ListObjectPool<Vector2Int> COORDS_TO_REQ_POOL = new ();
 
-        internal readonly Dictionary<string, PlacesData.PlaceInfo> placesById = new ();
-        internal readonly Dictionary<Vector2Int, PlacesData.PlaceInfo> placesByCoords = new ();
-        internal readonly Dictionary<string, bool> localFavorites = new ();
-
+        private readonly Dictionary<string, PlacesData.PlaceInfo> placesById = new ();
+        private readonly Dictionary<Vector2Int, PlacesData.PlaceInfo> placesByCoords = new ();
+        private readonly Dictionary<string, bool> localFavorites = new ();
         private readonly IPlacesAPIClient client;
-
         private readonly CancellationTokenSource disposeCts = new ();
 
-        //Favorites
-        internal bool composedFavoritesDirty = true;
-        internal UniTaskCompletionSource<PlacesData.IPlacesAPIResponse>? serverFavoritesCompletionSource;
+        private bool composedFavoritesDirty = true;
+        private UniTaskCompletionSource<PlacesData.IPlacesAPIResponse>? serverFavoritesCompletionSource;
         private List<string>? pointsOfInterestCoords;
         private DateTime serverFavoritesLastRetrieval = DateTime.MinValue;
 
@@ -186,18 +183,9 @@ namespace DCL.PlacesAPIService
             await client.SetPlaceFavoriteAsync(placeUUID, isFavorite, ct);
         }
 
-        public async UniTask RatePlace(bool? isUpvote, string placeUUID, CancellationToken ct)
+        public async UniTask RatePlaceAsync(bool? isUpvote, string placeUUID, CancellationToken ct)
         {
-            await client.RatePlace(isUpvote, placeUUID, ct);
-        }
-
-        private void TryCachePlace(PlacesData.PlaceInfo? placeInfo)
-        {
-            if (placeInfo == null)
-                return;
-
-            placesById[placeInfo.id] = placeInfo;
-            foreach (Vector2Int placeInfoPosition in placeInfo.Positions) { placesByCoords[placeInfoPosition] = placeInfo; }
+            await client.RatePlaceAsync(isUpvote, placeUUID, ct);
         }
 
         public async UniTask<IReadOnlyList<string>> GetPointsOfInterestCoordsAsync(CancellationToken ct, bool renewCache = false)
@@ -215,6 +203,15 @@ namespace DCL.PlacesAPIService
         {
             disposeCts.Cancel();
             disposeCts.Dispose();
+        }
+
+        private void TryCachePlace(PlacesData.PlaceInfo? placeInfo)
+        {
+            if (placeInfo == null)
+                return;
+
+            placesById[placeInfo.id] = placeInfo;
+            foreach (Vector2Int placeInfoPosition in placeInfo.Positions) { placesByCoords[placeInfoPosition] = placeInfo; }
         }
     }
 }

@@ -83,8 +83,17 @@ namespace DCL.Navmap
             view.clearSearchButton.onClick.RemoveAllListeners();
         }
 
-        public async UniTask SearchAndShowAsync(CancellationToken ct) =>
-            await navmapBus.SearchForPlaceAsync(currentSearchText, currentPlaceFilter, currentPlaceSorting, ct);
+        public async UniTask DoDefaultSearch(CancellationToken ct)
+        {
+            currentSearchText = string.Empty;
+            currentPlaceFilter = NavmapSearchPlaceFilter.All;
+            currentPlaceSorting = NavmapSearchPlaceSorting.MostActive;
+            searchFiltersView.Toggle(currentPlaceFilter);
+            searchFiltersView.Toggle(currentPlaceSorting);
+            view.inputField.SetTextWithoutNotify(currentSearchText);
+
+            await navmapBus.SearchForPlaceAsync(currentPlaceFilter, currentPlaceSorting, ct);
+        }
 
         public void SetInputText(string text) =>
             view.inputField.SetTextWithoutNotify(text);
@@ -185,14 +194,8 @@ namespace DCL.Navmap
             searchCancellationToken = searchCancellationToken.SafeRestart();
             searchFiltersView.Toggle(filter);
 
-            SearchAsync(searchCancellationToken.Token).Forget();
-
-            return;
-
-            async UniTaskVoid SearchAsync(CancellationToken ct)
-            {
-                await navmapBus.SearchForPlaceAsync(currentSearchText, filter, currentPlaceSorting, ct);
-            }
+            navmapBus.SearchForPlaceAsync(currentSearchText, filter, currentPlaceSorting, searchCancellationToken.Token)
+                     .Forget();
         }
 
         private void Search(NavmapSearchPlaceSorting sorting)
@@ -201,14 +204,8 @@ namespace DCL.Navmap
             searchCancellationToken = searchCancellationToken.SafeRestart();
             searchFiltersView.Toggle(sorting);
 
-            SearchAsync(searchCancellationToken.Token).Forget();
-
-            return;
-
-            async UniTaskVoid SearchAsync(CancellationToken ct)
-            {
-                await navmapBus.SearchForPlaceAsync(currentSearchText, currentPlaceFilter, sorting, ct);
-            }
+            navmapBus.SearchForPlaceAsync(currentSearchText, currentPlaceFilter, sorting, searchCancellationToken.Token)
+                     .Forget();
         }
     }
 }

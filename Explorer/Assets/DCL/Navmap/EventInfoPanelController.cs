@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Browser;
 using DCL.Chat.Commands;
 using DCL.Chat.MessageBus;
 using DCL.EventsApi;
@@ -23,6 +24,7 @@ namespace DCL.Navmap
         private readonly ObjectPool<EventScheduleElementView> scheduleElementPool;
         private readonly IUserCalendar userCalendar;
         private readonly SharePlacesAndEventsContextMenuController shareContextMenu;
+        private readonly IWebBrowser webBrowser;
         private readonly ImageController thumbnailController;
         private readonly MultiStateButtonController interestedButtonController;
         private readonly List<EventScheduleElementView> scheduleElements = new ();
@@ -38,7 +40,8 @@ namespace DCL.Navmap
             IEventsApiService eventsApiService,
             ObjectPool<EventScheduleElementView> scheduleElementPool,
             IUserCalendar userCalendar,
-            SharePlacesAndEventsContextMenuController shareContextMenu)
+            SharePlacesAndEventsContextMenuController shareContextMenu,
+            IWebBrowser webBrowser)
         {
             this.view = view;
             this.navmapBus = navmapBus;
@@ -47,6 +50,7 @@ namespace DCL.Navmap
             this.scheduleElementPool = scheduleElementPool;
             this.userCalendar = userCalendar;
             this.shareContextMenu = shareContextMenu;
+            this.webBrowser = webBrowser;
             thumbnailController = new ImageController(view.Thumbnail, webRequestController);
             interestedButtonController = new MultiStateButtonController(view.InterestedButton, true);
             interestedButtonController.OnButtonClicked += SetInterested;
@@ -97,6 +101,7 @@ namespace DCL.Navmap
             interestedButtonController.SetButtonState(@event.attending);
             view.HostAndPlaceLabel.text = $"hosted by <b>{@event.user_name}</b> - at <b>{place.title} ({@event.x}, {@event.y})</b>";
             view.DescriptionLabel.text = @event.description;
+            view.DescriptionLabel.ConvertUrlsToClickeableLinks(OpenUrl);
             thumbnailController.RequestImage(@event.image);
 
             updateLayoutCancellationToken = updateLayoutCancellationToken.SafeRestart();
@@ -105,6 +110,9 @@ namespace DCL.Navmap
             ClearScheduleElements();
             AddRecurrentEvents(@event);
         }
+
+        private void OpenUrl(string url) =>
+            webBrowser.OpenUrl(url);
 
         private void AddRecurrentEvents(EventDTO @event)
         {
