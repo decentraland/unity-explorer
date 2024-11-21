@@ -36,9 +36,9 @@ namespace DCL.MapRenderer.MapLayers.Categories
 
         private Vector2Int decodePointer;
         private bool isEnabled;
-        private int zoomLevel;
-        private float baseZoom;
-        private float zoom;
+        private int zoomLevel = 1;
+        private float baseZoom = 1;
+        private float zoom = 1;
         private bool arePlacesLoaded;
 
         public CategoryMarkersController(
@@ -101,7 +101,7 @@ namespace DCL.MapRenderer.MapLayers.Categories
             this.zoom = zoom;
             this.zoomLevel = zoomLevel;
 
-            if(isEnabled)
+            if (isEnabled)
                 clusterController.UpdateClusters(zoomLevel, baseZoom, zoom, markers);
 
             foreach (ICategoryMarker marker in markers.Values)
