@@ -278,13 +278,17 @@ ImageResult texturesfuse_processed_image_from_memory(
     *height = FreeImage_GetHeight(image);
     *bitsPerPixel = FreeImage_GetBPP(image);
     *colorType = imageColorType;
-    *releaseHandle = 1; // TODO
-    *outputBytes = bits;
+
+    unsigned int size = *width * *height * *bitsPerPixel;
+    BYTE *output = new BYTE[size];
+    memcpy(output, bits, size);
+
+    *outputBytes = output;
+    *releaseHandle = context->handles.registerHandle(output);
 
     LogImageInfo(image, "Prepared image without ASTC: ");
 
-    // TODO release FIBITMAP
-    // FreeImage_Unload(image);
+    FreeImage_Unload(image);
 
     return Success;
 }
