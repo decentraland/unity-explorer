@@ -261,7 +261,7 @@ namespace DCL.PluginSystem.Global
                 navmapView.HistoryRecordPanelView, navmapView.PlacesAndEventsPanelView.SearchFiltersView,
                 inputBlock, searchHistory, navmapBus);
 
-            SharePlacesAndEventsContextMenuController shareContextMenu = new (navmapView.PlacesAndEventsPanelView.ShareContextMenuView,
+            SharePlacesAndEventsContextMenuController shareContextMenu = new (navmapView.ShareContextMenuView,
                 navmapView.WorldsWarningNotificationView, clipboard, webBrowser);
 
             placeInfoPanelController = new PlaceInfoPanelController(navmapView.PlacesAndEventsPanelView.PlaceInfoPanelView,
@@ -278,11 +278,14 @@ namespace DCL.PluginSystem.Global
 
             IMapRenderer mapRenderer = mapRendererContainer.MapRenderer;
 
-            EventInfoCardController eventInfoCardController = new (navmapView.eventInfoCardView, placesAPIService,
-                webRequestController, mapPathEventBus, chatMessagesBus, zoomController, navmapBus);
-
             SatelliteController satelliteController = new (navmapView.GetComponentInChildren<SatelliteView>(),
                 navmapView.MapCameraDragBehaviorData, mapRenderer, webBrowser);
+
+            PlaceInfoToastController placeToastController = new (navmapView.PlaceToastView,
+                new PlaceInfoPanelController(navmapView.PlaceToastView.PlacePanelView,
+                    webRequestController, placesAPIService, mapPathEventBus, navmapBus, chatMessagesBus, eventsApiService,
+                    eventElementsPool, shareContextMenu, webBrowser),
+                placesAPIService, eventsApiService);
 
             navmapController = new NavmapController(navmapView,
                 mapRenderer,
@@ -295,8 +298,8 @@ namespace DCL.PluginSystem.Global
                 placesAndEventsPanelController,
                 searchBarController,
                 zoomController,
-                eventInfoCardController,
-                satelliteController);
+                satelliteController,
+                placeToastController);
 
             await backpackSubPlugin.InitializeAsync(settings.BackpackSettings, explorePanelView.GetComponentInChildren<BackpackView>(), ct);
 
