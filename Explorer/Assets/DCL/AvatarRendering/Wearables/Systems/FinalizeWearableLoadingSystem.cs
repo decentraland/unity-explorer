@@ -119,19 +119,17 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 
                 if (wearable.Model.Succeeded)
                 {
-                    ConcludeDTO();
+                    finishedDTOs++;
                     resolvedDTOs.Add(wearable);
                 }
                 else if (wearable.Model.Exception != null)
-                    ConcludeDTO();
-                else if (!wearable.IsLoading)
-                    missingPointers.Add(loadingIntentionPointer);
-
-                void ConcludeDTO()
-                {
-                    wearable.UpdateLoadingStatus(false);
                     finishedDTOs++;
+                else if (!wearable.IsLoading)
+                {
+                    wearable.UpdateLoadingStatus(true);
+                    missingPointers.Add(loadingIntentionPointer);
                 }
+
             }
 
             if (missingPointers.Count > 0)
@@ -310,10 +308,6 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 new CommonLoadingArguments(realmData.Ipfs.EntitiesActiveEndpoint, cancellationTokenSource: intention.CancellationTokenSource));
 
             var promise = AssetPromise<WearablesDTOList, GetWearableDTOByPointersIntention>.Create(World, wearableDtoByPointersIntention, partitionComponent);
-
-            foreach (var pointerID in promise.LoadingIntention.Pointers)
-                if (storage.TryGetElement(pointerID, out var component))
-                    component.UpdateLoadingStatus(true);
             
             World.Create(promise, intention.BodyShape, partitionComponent);
         }
