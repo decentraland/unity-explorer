@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using TMPro;
 using UnityEngine;
 
@@ -9,7 +10,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
         private const float MIN_VALUE = 0f;
         private const float MAX_VALUE = 100f;
 
-        private const string LABEL_PLACEHOLDER = "Storage {0}/{1} photos taken";
+        private string labelString = "Storage {0}/{1} photos taken";
 
         [Range(MIN_VALUE, MAX_VALUE)] public float valuePercentage;
 
@@ -33,6 +34,9 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
             UpdateGraphics();
         }
 
+        public void SetLabelString(string labelStr) =>
+            this.labelString = labelStr;
+
         private void OnValidate()
         {
             if (background is null || foreground is null || label is null) return;
@@ -42,14 +46,15 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
 
         private void UpdateGraphics()
         {
+            string numerator = MaxRealValue.HasValue && MinRealValue.HasValue ? Mathf.RoundToInt(Mathf.Lerp(MinRealValue.Value, MaxRealValue.Value, valuePercentage / MAX_VALUE)).ToString() : "-";
+            string denominator = MaxRealValue.HasValue ? MaxRealValue.Value.ToString(CultureInfo.InvariantCulture) : "-";
+
+            label.SetText(string.Format(labelString, numerator, denominator));
+
             if (!MaxRealValue.HasValue || !MinRealValue.HasValue)
-            {
-                label.SetText("Storage -/- photos taken");
                 return;
-            }
 
             foreground.sizeDelta = new Vector2(valuePercentage * (background.rect.width / 100f), foreground.sizeDelta.y);
-            label.SetText(LABEL_PLACEHOLDER, Mathf.RoundToInt(Mathf.Lerp(MinRealValue.Value, MaxRealValue.Value, valuePercentage / MAX_VALUE)), MaxRealValue.Value);
         }
     }
 }

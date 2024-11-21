@@ -25,7 +25,8 @@ namespace DCL.InWorldCamera.CameraReelGallery
             CameraReelView view,
             CameraReelGalleryController cameraReelGalleryController,
             ICameraReelStorageService cameraReelStorageService,
-            IWeb3IdentityCache web3IdentityCache)
+            IWeb3IdentityCache web3IdentityCache,
+            string storageProgressBarLabelText)
         {
             this.view = view;
             this.cameraReelStorageService = cameraReelStorageService;
@@ -39,6 +40,9 @@ namespace DCL.InWorldCamera.CameraReelGallery
             this.cameraReelGalleryController.ThumbnailClicked += ThumbnailClicked;
             this.cameraReelGalleryController.StorageUpdated += SetStorageStatus;
             this.view.goToCameraButton.onClick.AddListener(OnGoToCameraButtonClicked);
+
+            view.storageProgressBar.SetLabelString(storageProgressBarLabelText);
+            view.storageProgressBar.MinRealValue = 0;
         }
 
         private void OnGoToCameraButtonClicked()
@@ -77,7 +81,6 @@ namespace DCL.InWorldCamera.CameraReelGallery
         private void SetStorageStatus(CameraReelStorageStatus storageStatus)
         {
             view.storageProgressBar.MaxRealValue = storageStatus.MaxScreenshots;
-            view.storageProgressBar.MinRealValue = 0;
             view.storageProgressBar.SetPercentageValue((storageStatus.ScreenshotsAmount * 1.0f / storageStatus.MaxScreenshots) * 100);
             view.storageFullIcon.SetActive(!storageStatus.HasFreeSpace);
 

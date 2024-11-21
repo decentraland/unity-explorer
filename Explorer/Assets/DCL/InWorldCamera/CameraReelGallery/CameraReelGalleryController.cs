@@ -57,9 +57,10 @@ namespace DCL.InWorldCamera.CameraReelGallery
         private readonly OptionButtonController optionButtonController;
         private readonly ContextMenuController contextMenuController;
         private readonly Rect elementMaskRect;
+        private readonly string photoSuccessfullyDeletedMessage;
 
-        private bool isLoading = false;
-        private bool isDragging = false;
+        private bool isLoading;
+        private bool isDragging;
         private float previousY = 1f;
         private CancellationTokenSource loadNextPageCts = new ();
         private CancellationTokenSource showSuccessCts = new ();
@@ -80,12 +81,17 @@ namespace DCL.InWorldCamera.CameraReelGallery
             IDecentralandUrlsSource decentralandUrlsSource,
             IExplorePanelEscapeAction explorePanelEscapeAction,
             ISystemClipboard systemClipboard,
+            string shareToXMessage,
+            string photoSuccessfullyDeletedMessage,
+            string photoSuccessfullyUpdatedMessage,
+            string linkCopiedMessage,
             OptionButtonView? optionButtonView = null,
             ContextMenuView? contextMenuView = null)
         {
             this.view = view;
             this.cameraReelStorageService = cameraReelStorageService;
             this.explorePanelEscapeAction = explorePanelEscapeAction;
+            this.photoSuccessfullyDeletedMessage = photoSuccessfullyDeletedMessage;
             this.view.Disable += OnDisable;
             this.view.scrollRectDragHandler.BeginDrag += ScrollBeginDrag;
             this.view.scrollRectDragHandler.EndDrag += ScrollEndDrag;
@@ -117,7 +123,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
                         {
                             await this.cameraReelStorageService.UpdateScreenshotVisibilityAsync(cameraReelRes.id, publicFlag, ct);
                             cameraReelRes.isPublic = publicFlag;
-                            await ShowSuccessNotificationAsync("Photo successfully updated");
+                            await ShowSuccessNotificationAsync(photoSuccessfullyUpdatedMessage);
                         }
                         catch (UnityWebRequestException e)
                         {
@@ -131,7 +137,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
 
                 this.contextMenuController.ShareToXRequested += cameraReelResponse =>
                 {
-                    string description = "Check out what I'm doing in Decentraland right now and join me!".Replace(" ", "%20");
+                    string description = shareToXMessage.Replace(" ", "%20");
                     string url = $"{decentralandUrlsSource.Url(DecentralandUrl.CameraReelLink)}/{cameraReelResponse.id}";
                     string xUrl = $"https://x.com/intent/post?text={description}&hashtags=DCLCamera&url={url}";
 
@@ -142,7 +148,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
                 this.contextMenuController.CopyPictureLinkRequested += cameraReelResponse =>
                 {
                     systemClipboard.Set($"{decentralandUrlsSource.Url(DecentralandUrl.CameraReelLink)}/{cameraReelResponse.id}");
-                    ShowSuccessNotificationAsync("Link copied!").Forget();
+                    ShowSuccessNotificationAsync(linkCopiedMessage).Forget();
                 };
 
                 this.contextMenuController.DownloadRequested += cameraReelResponse => { webBrowser.OpenUrl(cameraReelResponse.url); };
@@ -227,7 +233,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
 
                 if (view.successNotificationView is null) return;
 
-                await ShowSuccessNotificationAsync("Photo successfully deleted");
+                await ShowSuccessNotificationAsync(photoSuccessfullyDeletedMessage);
             }
             catch (UnityWebRequestException e)
             {

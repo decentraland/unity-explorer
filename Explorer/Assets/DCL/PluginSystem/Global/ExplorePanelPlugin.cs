@@ -256,9 +256,12 @@ namespace DCL.PluginSystem.Global
             CameraReelView cameraReelView = explorePanelView.GetComponentInChildren<CameraReelView>();
             var cameraReelController = new CameraReelController(cameraReelView,
                 new CameraReelGalleryController(cameraReelView.cameraReelGalleryView, this.cameraReelStorageService,
-                    cameraReelScreenshotsStorage, webBrowser, decentralandUrlsSource, inputHandler, systemClipboard, cameraReelView.optionsButton, cameraReelView.contextMenu),
+                    cameraReelScreenshotsStorage, webBrowser, decentralandUrlsSource, inputHandler, systemClipboard,
+                    settings.CameraReelGalleryShareToXMessage, settings.PhotoSuccessfullyDeletedMessage, settings.PhotoSuccessfullyUpdatedMessage, settings.LinkCopiedMessage,
+                   cameraReelView.optionsButton, cameraReelView.contextMenu),
                 cameraReelStorageService,
-                web3IdentityCache);
+                web3IdentityCache,
+                settings.StorageProgressBarText);
 
             mvcManager.RegisterController(new
                 ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackSubPlugin.backpackController!, cameraReelController,
@@ -297,6 +300,19 @@ namespace DCL.PluginSystem.Global
 
             [field: SerializeField]
             public AssetReferenceT<ControlsSettingsAsset> ControlsSettingsAsset { get; private set; }
+
+            [field: Header("Camera Reel")]
+            [field: SerializeField]
+            [field: Tooltip("Spaces will be HTTP sanitized, care for special characters")]
+            public string CameraReelGalleryShareToXMessage { get; private set; }
+            [field: SerializeField]
+            public string PhotoSuccessfullyUpdatedMessage { get; private set; }
+            [field: SerializeField]
+            public string PhotoSuccessfullyDeletedMessage { get; private set; }
+            [field: SerializeField]
+            public string LinkCopiedMessage { get; private set; }
+            [field: SerializeField]
+            public string StorageProgressBarText { get; private set; }
 
             public IReadOnlyCollection<URN> EmbeddedEmotesAsURN() =>
                 EmbeddedEmotes.Select(s => new URN(s)).ToArray();

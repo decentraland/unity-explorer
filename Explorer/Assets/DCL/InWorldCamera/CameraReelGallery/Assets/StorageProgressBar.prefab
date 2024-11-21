@@ -337,7 +337,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2f8342c4ffce4feaa90334a1468086a2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  valuePercentage: 0
+  valuePercentage: 1.2
   background: {fileID: 3660427853438842173}
   foreground: {fileID: 4461350349728300166}
   label: {fileID: 1598000652067421378}
