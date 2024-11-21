@@ -17,7 +17,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
 
         ApiPlaces,
         POI,
-        PlacesByCategory,
+        Map,
         ContentModerationReport,
 
         ApiEvents,

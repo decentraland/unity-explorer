@@ -7,15 +7,16 @@ using UnityEngine;
 
 namespace DCL.PlacesAPIService
 {
-    public partial class PlacesAPIService : IPlacesAPIService
+    public class PlacesAPIService : IPlacesAPIService
     {
-        private static readonly ListObjectPool<Vector2Int> COORDS_TO_REQ_POOL = new ();
+        private static readonly ListObjectPool<string> COORDS_TO_REQ_POOL = new ();
 
         private readonly Dictionary<string, PlacesData.PlaceInfo> placesById = new ();
         private readonly Dictionary<Vector2Int, PlacesData.PlaceInfo> placesByCoords = new ();
         private readonly Dictionary<string, bool> localFavorites = new ();
         private readonly IPlacesAPIClient client;
         private readonly CancellationTokenSource disposeCts = new ();
+        private readonly string[] singlePositionBuffer = new string[1];
 
         private bool composedFavoritesDirty = true;
         private UniTaskCompletionSource<PlacesData.IPlacesAPIResponse>? serverFavoritesCompletionSource;
@@ -27,10 +28,12 @@ namespace DCL.PlacesAPIService
             this.client = client;
         }
 
-        public async UniTask<PlacesData.IPlacesAPIResponse> SearchPlacesAsync(string searchText, int pageNumber, int pageSize,
+        public async UniTask<PlacesData.IPlacesAPIResponse> SearchPlacesAsync(int pageNumber, int pageSize,
             CancellationToken ct,
+            string? searchText = null,
             IPlacesAPIService.SortBy sortBy = IPlacesAPIService.SortBy.NONE,
-            IPlacesAPIService.SortDirection sortDirection = IPlacesAPIService.SortDirection.DESC)
+            IPlacesAPIService.SortDirection sortDirection = IPlacesAPIService.SortDirection.DESC,
+            string? category = null)
         {
             string sortByStr = string.Empty;
             string sortDirectionStr = string.Empty;
@@ -41,8 +44,9 @@ namespace DCL.PlacesAPIService
                 sortDirectionStr = sortDirection.ToString().ToLower();
             }
 
-            return await client.SearchPlacesAsync(searchText, pageNumber, pageSize, ct,
-                sortByStr, sortDirectionStr);
+            return await client.GetPlacesAsync(ct,
+                searchString: searchText, pagination: (pageNumber, pageSize),
+                sortByStr, sortDirectionStr, category, addRealmDetails: true);
         }
 
         public async UniTask<PlacesData.PlaceInfo?> GetPlaceAsync(Vector2Int coords, CancellationToken ct, bool renewCache = false)
@@ -52,27 +56,35 @@ namespace DCL.PlacesAPIService
             else if (placesByCoords.TryGetValue(coords, out PlacesData.PlaceInfo placeInfo))
                 return placeInfo;
 
-            PlacesData.PlaceInfo? place = await client.GetPlaceAsync(coords, ct);
+            singlePositionBuffer[0] = $"{coords.x},{coords.y}";
+            PlacesData.PlacesAPIResponse response = await client.GetPlacesAsync(ct, addRealmDetails: true,
+                positions: singlePositionBuffer);
+
+            if (!response.ok)
+                return null;
+
+            PlacesData.PlaceInfo place = response.data[0];
             TryCachePlace(place);
             return place;
         }
 
-        public async UniTask<PlacesData.PlaceInfo?> GetPlaceAsync(string placeUUID, CancellationToken ct, bool renewCache = false)
+        public async UniTask<PlacesData.PlaceInfo?> GetPlaceAsync(string placeId, CancellationToken ct, bool renewCache = false)
         {
             if (renewCache)
-                placesById.Remove(placeUUID);
-            else if (placesById.TryGetValue(placeUUID, out PlacesData.PlaceInfo placeInfo))
+                placesById.Remove(placeId);
+            else if (placesById.TryGetValue(placeId, out PlacesData.PlaceInfo placeInfo))
                 return placeInfo;
 
-            PlacesData.PlaceInfo? place = await client.GetPlaceAsync(placeUUID, ct);
+            PlacesData.PlaceInfo? place = await client.GetPlaceAsync(placeId, ct);
             TryCachePlace(place);
             return place;
         }
 
-        public async UniTask<PoolExtensions.Scope<List<PlacesData.PlaceInfo>>> GetPlacesByCoordsListAsync(IEnumerable<Vector2Int> coordsList, CancellationToken ct, bool renewCache = false)
+        public async UniTask<PoolExtensions.Scope<List<PlacesData.PlaceInfo>>> GetPlacesByCoordsListAsync(
+            IEnumerable<Vector2Int> coordsList, CancellationToken ct, bool renewCache = false)
         {
             using PoolExtensions.Scope<List<PlacesData.PlaceInfo>> rentedAlreadyCachedPlaces = PlacesData.PLACE_INFO_LIST_POOL.AutoScope();
-            using PoolExtensions.Scope<List<Vector2Int>> coordsToRequest = COORDS_TO_REQ_POOL.AutoScope();
+            using PoolExtensions.Scope<List<string>> coordsToRequest = COORDS_TO_REQ_POOL.AutoScope();
 
             List<PlacesData.PlaceInfo> alreadyCachedPlaces = rentedAlreadyCachedPlaces.Value;
 
@@ -81,14 +93,14 @@ namespace DCL.PlacesAPIService
                 if (renewCache)
                 {
                     placesByCoords.Remove(coords);
-                    coordsToRequest.Value.Add(coords);
+                    coordsToRequest.Value.Add($"{coords.x},{coords.y}");
                 }
                 else
                 {
                     if (placesByCoords.TryGetValue(coords, out PlacesData.PlaceInfo placeInfo))
                         alreadyCachedPlaces.Add(placeInfo);
                     else
-                        coordsToRequest.Value.Add(coords);
+                        coordsToRequest.Value.Add($"{coords.x},{coords.y}");
                 }
             }
 
@@ -97,7 +109,7 @@ namespace DCL.PlacesAPIService
 
             if (coordsToRequest.Value.Count > 0)
             {
-                places = await client.GetPlacesByCoordsListAsync(coordsToRequest.Value, places, ct);
+                await client.GetPlacesAsync(ct, positions: coordsToRequest.Value, resultBuffer: places, addRealmDetails: true);
 
                 foreach (PlacesData.PlaceInfo place in places)
                     TryCachePlace(place);
@@ -107,12 +119,13 @@ namespace DCL.PlacesAPIService
             return rentedPlaces;
         }
 
-        public async UniTask<List<PlacesData.CategoryPlaceData>> GetPlacesByCategoryListAsync(string category, CancellationToken ct) =>
-            await client.GetPlacesByCategoryListAsync(category, ct);
+        public async UniTask<IReadOnlyList<OptimizedPlaceInMapResponse>> GetOptimizedPlacesFromTheMap(string category, CancellationToken ct) =>
+            await client.GetOptimizedPlacesFromTheMap(category, ct);
 
         public async UniTask<PoolExtensions.Scope<List<PlacesData.PlaceInfo>>> GetFavoritesAsync(int pageNumber, int pageSize, CancellationToken ct, bool renewCache = false,
             IPlacesAPIService.SortBy sortByBy = IPlacesAPIService.SortBy.MOST_ACTIVE,
-            IPlacesAPIService.SortDirection sortDirection = IPlacesAPIService.SortDirection.DESC)
+            IPlacesAPIService.SortDirection sortDirection = IPlacesAPIService.SortDirection.DESC,
+            string? category = null)
         {
             const int CACHE_EXPIRATION = 30; // Seconds
 
@@ -161,12 +174,15 @@ namespace DCL.PlacesAPIService
                 string sortByParam = sortByBy.ToString().ToLower();
                 string sortDirectionParam = sortDirection.ToString().ToLower();
 
-                // We dont use the ct param, otherwise the whole flow would be cancel if the first call is cancelled
+                // We dont use the ct param, otherwise the whole flow would be cancelled if the first call is cancelled
                 if (pageNumber == -1 && pageSize == -1)
-                    favorites = await client.GetAllFavoritesAsync(ct, sortByParam, sortDirectionParam);
+                    favorites = await client.GetPlacesAsync(ct, sortBy: sortByParam, sortDirection: sortDirectionParam,
+                        onlyFavorites: true, addRealmDetails: true);
                 else
-                    favorites = await client.GetFavoritesAsync(pageNumber, pageSize, disposeCts.Token,
-                        sortByParam, sortDirectionParam);
+                    favorites = await client.GetPlacesAsync(disposeCts.Token,
+                        onlyFavorites: true, addRealmDetails: true,
+                        pagination: (pageNumber, pageSize),
+                        sortBy: sortByParam, sortDirection: sortDirectionParam);
 
                 foreach (PlacesData.PlaceInfo place in favorites.Data)
                     TryCachePlace(place);
@@ -176,16 +192,16 @@ namespace DCL.PlacesAPIService
             }
         }
 
-        public async UniTask SetPlaceFavoriteAsync(string placeUUID, bool isFavorite, CancellationToken ct)
+        public async UniTask SetPlaceFavoriteAsync(string placeId, bool isFavorite, CancellationToken ct)
         {
-            localFavorites[placeUUID] = isFavorite;
+            localFavorites[placeId] = isFavorite;
             composedFavoritesDirty = true;
-            await client.SetPlaceFavoriteAsync(placeUUID, isFavorite, ct);
+            await client.SetPlaceFavoriteAsync(placeId, isFavorite, ct);
         }
 
-        public async UniTask RatePlaceAsync(bool? isUpvote, string placeUUID, CancellationToken ct)
+        public async UniTask RatePlaceAsync(bool? isUpvote, string placeId, CancellationToken ct)
         {
-            await client.RatePlaceAsync(isUpvote, placeUUID, ct);
+            await client.RatePlaceAsync(isUpvote, placeId, ct);
         }
 
         public async UniTask<IReadOnlyList<string>> GetPointsOfInterestCoordsAsync(CancellationToken ct, bool renewCache = false)
@@ -211,7 +227,9 @@ namespace DCL.PlacesAPIService
                 return;
 
             placesById[placeInfo.id] = placeInfo;
-            foreach (Vector2Int placeInfoPosition in placeInfo.Positions) { placesByCoords[placeInfoPosition] = placeInfo; }
+
+            foreach (Vector2Int placeInfoPosition in placeInfo.Positions)
+                placesByCoords[placeInfoPosition] = placeInfo;
         }
     }
 }
