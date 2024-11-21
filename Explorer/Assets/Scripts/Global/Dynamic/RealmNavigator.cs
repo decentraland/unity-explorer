@@ -258,7 +258,7 @@ namespace Global.Dynamic
                     featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.GENESIS_STARTING_PARCEL) &&
                     featureFlagsCache.Configuration.TryGetTextPayload(FeatureFlagsStrings.GENESIS_STARTING_PARCEL, FeatureFlagsStrings.STRING_VARIANT, out string parcelCoords))
                 {
-                    RealmHelper.TryParseParcelFromString(parcelCoords, out parcelToTeleport);
+                    //RealmHelper.TryParseParcelFromString(parcelCoords, out parcelToTeleport);
                 }
                 waitForSceneReadiness = await TeleportToParcelAsync(parcelToTeleport, teleportLoadReport, ct);
             }
