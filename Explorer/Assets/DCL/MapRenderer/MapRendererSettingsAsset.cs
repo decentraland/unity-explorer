@@ -28,6 +28,9 @@ namespace DCL.MapRenderer
         public IMapRendererSettings.SceneOfInterestMarkerObjectRef SceneOfInterestMarker { get; private set; }
 
         [field: SerializeField]
+        public IMapRendererSettings.SearchResultMarkerObjectRef SearchResultMarker { get; private set; }
+
+        [field: SerializeField]
         public IMapRendererSettings.CategoryMarkerObjectRef CategoryMarker { get; private set; }
 
         [field: SerializeField]

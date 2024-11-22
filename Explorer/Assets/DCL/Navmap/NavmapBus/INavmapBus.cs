@@ -31,5 +31,7 @@ namespace DCL.Navmap
         void JumpIn(PlacesData.PlaceInfo place);
 
         void FilterByCategory(string? category);
+
+        void OnSearchPlacePerformed(IReadOnlyList<PlacesData.PlaceInfo> places);
     }
 }

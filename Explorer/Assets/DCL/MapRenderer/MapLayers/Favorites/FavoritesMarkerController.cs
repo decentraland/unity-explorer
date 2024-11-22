@@ -103,7 +103,7 @@ namespace DCL.MapRenderer.MapLayers.Favorites
 
             // if it was possible to update them then we need to cache by parcel coordinates instead
             // and recalculate the parcels centers accordingly
-            if (markers.ContainsKey(GetParcelsCenter(sceneInfo)))
+            if (markers.ContainsKey(MapLayerUtils.GetParcelsCenter(sceneInfo)))
                 return;
 
             if (IsEmptyParcel(sceneInfo))
@@ -111,43 +111,15 @@ namespace DCL.MapRenderer.MapLayers.Favorites
 
             var marker = builder(objectsPool, mapCullingController, coordsUtils);
 
-            var centerParcel = GetParcelsCenter(sceneInfo);
+            var centerParcel = MapLayerUtils.GetParcelsCenter(sceneInfo);
             var position = coordsUtils.CoordsToPosition(centerParcel);
 
             marker.SetData(sceneInfo.title, position);
 
-            markers.Add(GetParcelsCenter(sceneInfo), marker);
+            markers.Add(MapLayerUtils.GetParcelsCenter(sceneInfo), marker);
 
             if (isEnabled)
                 mapCullingController.StartTracking(marker, this);
-        }
-
-        private static Vector2Int GetParcelsCenter(PlacesData.PlaceInfo sceneInfo)
-        {
-            Vector2 centerTile = Vector2.zero;
-
-            for (var i = 0; i < sceneInfo.Positions.Length; i++)
-            {
-                Vector2Int parcel = sceneInfo.Positions[i];
-                centerTile += parcel;
-            }
-
-            centerTile /= sceneInfo.Positions.Length;
-            float distance = float.PositiveInfinity;
-            Vector2Int centerParcel = Vector2Int.zero;
-
-            for (var i = 0; i < sceneInfo.Positions.Length; i++)
-            {
-                var parcel = sceneInfo.Positions[i];
-
-                if (Vector2.Distance(centerTile, parcel) < distance)
-                {
-                    distance = Vector2Int.Distance(centerParcel, parcel);
-                    centerParcel = parcel;
-                }
-            }
-
-            return centerParcel;
         }
 
         private static bool IsEmptyParcel(PlacesData.PlaceInfo sceneInfo) =>

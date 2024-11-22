@@ -77,18 +77,18 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
             // non-blocking retrieval of scenes of interest happens independently on the minimap rendering
             foreach (PlacesData.PlaceInfo placeInfo in placesByCoordsListAsync.Value)
             {
-                if (markers.ContainsKey(GetParcelsCenter(placeInfo)))
+                if (markers.ContainsKey(MapLayerUtils.GetParcelsCenter(placeInfo)))
                     continue;
 
                 if (IsEmptyParcel(placeInfo))
                     continue;
 
                 var marker = builder(objectsPool, mapCullingController, coordsUtils);
-                var centerParcel = GetParcelsCenter(placeInfo);
+                var centerParcel = MapLayerUtils.GetParcelsCenter(placeInfo);
                 var position = coordsUtils.CoordsToPosition(centerParcel);
 
                 marker.SetData(placeInfo.title, position);
-                markers.Add(GetParcelsCenter(placeInfo), marker);
+                markers.Add(MapLayerUtils.GetParcelsCenter(placeInfo), marker);
 
                 if (isEnabled)
                     mapCullingController.StartTracking(marker, this);
@@ -113,34 +113,6 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
         public void OnMapObjectCulled(ISceneOfInterestMarker marker)
         {
             marker.OnBecameInvisible();
-        }
-
-        private static Vector2Int GetParcelsCenter(PlacesData.PlaceInfo sceneInfo)
-        {
-            Vector2 centerTile = Vector2.zero;
-
-            for (var i = 0; i < sceneInfo.Positions.Length; i++)
-            {
-                Vector2Int parcel = sceneInfo.Positions[i];
-                centerTile += parcel;
-            }
-
-            centerTile /= sceneInfo.Positions.Length;
-            float distance = float.PositiveInfinity;
-            Vector2Int centerParcel = Vector2Int.zero;
-
-            for (var i = 0; i < sceneInfo.Positions.Length; i++)
-            {
-                var parcel = sceneInfo.Positions[i];
-
-                if (Vector2.Distance(centerTile, parcel) < distance)
-                {
-                    distance = Vector2Int.Distance(centerParcel, parcel);
-                    centerParcel = parcel;
-                }
-            }
-
-            return centerParcel;
         }
 
         private static bool IsEmptyParcel(PlacesData.PlaceInfo sceneInfo) =>

@@ -12,6 +12,7 @@ using DCL.MapRenderer.MapLayers.Pins;
 using DCL.MapRenderer.MapLayers.SatelliteAtlas;
 using DCL.MapRenderer.MapLayers.UsersMarker;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Navmap;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.PlacesAPIService;
 using DCL.WebRequests;
@@ -38,12 +39,14 @@ namespace DCL.MapRenderer.ComponentsFactory
         private readonly IMapPathEventBus mapPathEventBus;
         private readonly ITeleportBusController teleportBusController;
         private readonly INotificationsBusController notificationsBusController;
+        private readonly INavmapBus navmapBus;
         private PlayerMarkerInstaller playerMarkerInstaller { get; }
         private SceneOfInterestsMarkersInstaller sceneOfInterestMarkerInstaller { get; }
         private CategoryScenesMarkersInstaller categoriesMarkerInstaller { get; }
         private PinMarkerInstaller pinMarkerInstaller { get; }
         private FavoritesMarkersInstaller favoritesMarkersInstaller { get; }
         private HotUsersMarkersInstaller hotUsersMarkersInstaller { get; }
+        private SearchResultsMarkersInstaller searchResultsMarkerInstaller { get; }
         private MapPathInstaller mapPathInstaller { get; }
 
         public MapRendererChunkComponentsFactory(
@@ -55,7 +58,8 @@ namespace DCL.MapRenderer.ComponentsFactory
             IPlacesAPIService placesAPIService,
             IMapPathEventBus mapPathEventBus,
             ITeleportBusController teleportBusController,
-            INotificationsBusController notificationsBusController)
+            INotificationsBusController notificationsBusController,
+            INavmapBus navmapBus)
         {
             this.assetsProvisioner = assetsProvisioner;
             mapSettings = settings;
@@ -66,6 +70,7 @@ namespace DCL.MapRenderer.ComponentsFactory
             this.mapPathEventBus = mapPathEventBus;
             this.teleportBusController = teleportBusController;
             this.notificationsBusController = notificationsBusController;
+            this.navmapBus = navmapBus;
         }
 
         async UniTask<MapRendererComponents> IMapRendererComponentsFactory.CreateAsync(CancellationToken cancellationToken)
@@ -111,6 +116,7 @@ namespace DCL.MapRenderer.ComponentsFactory
                 categoriesMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, assetsProvisioner, mapSettings, placesAPIService, clusterObjectsPool, cancellationToken),
                 favoritesMarkersInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, placesAPIService, assetsProvisioner, mapSettings, clusterObjectsPool, cancellationToken),
                 hotUsersMarkersInstaller.InstallAsync(layers, configuration, coordsUtils, cullingController, assetsProvisioner, mapSettings, teleportBusController, remoteUsersRequestController, cancellationToken),
+                searchResultsMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, assetsProvisioner, mapSettings, cullingController, navmapBus, cancellationToken),
                 mapPathInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, mapSettings, assetsProvisioner, mapPathEventBus, notificationsBusController, cancellationToken)
                 /* List of other creators that can be executed in parallel */);
 

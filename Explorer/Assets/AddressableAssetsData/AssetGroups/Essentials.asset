@@ -187,6 +187,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 65104014709704f75838386ed5173c45
+    m_Address: Assets/DCL/MapRenderer/Addressables/SearchResultMarkerObject.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 654e496ed12f12e4f80243ab9f1d97c7
     m_Address: Character Camera
     m_ReadOnly: 0

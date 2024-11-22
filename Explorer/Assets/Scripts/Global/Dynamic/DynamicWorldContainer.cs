@@ -46,6 +46,7 @@ using DCL.Multiplayer.Profiles.Poses;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Multiplayer.SDK.Systems.GlobalWorld;
 using DCL.Nametags;
+using DCL.Navmap;
 using DCL.NftInfoAPIService;
 using DCL.Notifications;
 using DCL.NotificationsBusController.NotificationsBus;
@@ -64,6 +65,7 @@ using DCL.SidebarBus;
 using DCL.StylizedSkybox.Scripts.Plugin;
 using DCL.UI.MainUI;
 using DCL.UserInAppInitializationFlow;
+using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
@@ -170,6 +172,8 @@ namespace Global.Dynamic
             IAssetsProvisioner assetsProvisioner = dynamicWorldDependencies.AssetsProvisioner;
             IDebugContainerBuilder debugBuilder = dynamicWorldDependencies.DebugContainerBuilder;
             ITeleportBusController teleportBusController = new TeleportBusController();
+            ObjectProxy<INavmapBus> explorePanelNavmapBus = new ObjectProxy<INavmapBus>();
+            INavmapBus sharedNavmapCommandBus = new SharedNavmapBus(explorePanelNavmapBus);
 
             // If we have many undesired delays when using the third-party providers, it might be useful to cache it at app's bootstrap
             // So far, the chance of using it is quite low, so it's preferable to do it lazy avoiding extra requests & memory allocations
@@ -190,7 +194,7 @@ namespace Global.Dynamic
                 // Init other containers
                 container.DefaultTexturesContainer = await DefaultTexturesContainer.CreateAsync(settingsContainer, assetsProvisioner, ct).ThrowOnFail();
                 container.LODContainer = await LODContainer.CreateAsync(assetsProvisioner, bootstrapContainer.DecentralandUrlsSource, staticContainer, settingsContainer, staticContainer.RealmData, container.DefaultTexturesContainer.TextureArrayContainerFactory, debugBuilder, dynamicWorldParams.EnableLOD, ct).ThrowOnFail();
-                container.MapRendererContainer = await MapRendererContainer.CreateAsync(settingsContainer, staticContainer, bootstrapContainer.DecentralandUrlsSource, assetsProvisioner, placesAPIService, mapPathEventBus, notificationsBusController, teleportBusController, ct);
+                container.MapRendererContainer = await MapRendererContainer.CreateAsync(settingsContainer, staticContainer, bootstrapContainer.DecentralandUrlsSource, assetsProvisioner, placesAPIService, mapPathEventBus, notificationsBusController, teleportBusController, sharedNavmapCommandBus, ct);
             }
 
             try { await InitializeContainersAsync(dynamicWorldDependencies.SettingsContainer, ct); }
@@ -580,7 +584,8 @@ namespace Global.Dynamic
                     bootstrapContainer.WorldVolumeMacBus,
                     eventsApiService,
                     userCalendar,
-                    clipboard
+                    clipboard,
+                    explorePanelNavmapBus
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),

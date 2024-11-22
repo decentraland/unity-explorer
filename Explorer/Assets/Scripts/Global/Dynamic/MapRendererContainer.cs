@@ -3,6 +3,7 @@ using DCL.AssetsProvision;
 using DCL.MapRenderer;
 using DCL.MapRenderer.ComponentsFactory;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Navmap;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.PlacesAPIService;
 using DCL.PluginSystem;
@@ -36,6 +37,7 @@ namespace Global.Dynamic
             IMapPathEventBus mapPathEventBus,
             INotificationsBusController notificationsBusController,
             ITeleportBusController teleportBusController,
+            INavmapBus navmapBus,
             CancellationToken ct)
         {
             var mapRendererContainer = new MapRendererContainer(assetsProvisioner, new MapRendererTextureContainer());
@@ -51,7 +53,8 @@ namespace Global.Dynamic
                     placesAPIService,
                     mapPathEventBus,
                     teleportBusController,
-                    notificationsBusController));
+                    notificationsBusController,
+                    navmapBus));
 
                 await mapRenderer.InitializeAsync(ct);
                 c.MapRenderer = mapRenderer;

@@ -251,6 +251,7 @@ MonoBehaviour:
   <FriendUserMarkersRoot>k__BackingField: {fileID: 2512951518552392734}
   <ScenesOfInterestMarkersRoot>k__BackingField: {fileID: 195609709436987355}
   <CategoriesMarkersRoot>k__BackingField: {fileID: 4085516147652670838}
+  <SearchResultsMarkersRoot>k__BackingField: {fileID: 5609044988966314515}
   <FavoritesMarkersRoot>k__BackingField: {fileID: 6230479589610019337}
   <HomePointRoot>k__BackingField: {fileID: 7640763729826473348}
   <PlayerMarkerRoot>k__BackingField: {fileID: 3838431434337016036}
@@ -485,7 +486,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5609044988966314515}
   m_Layer: 27
-  m_Name: Cold Users
+  m_Name: SearchResults
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
