@@ -32,13 +32,13 @@ outputs:
 runs:
   using: "composite"
   steps:
-    - name: Fetch main branch and tags
-      run: git fetch --tags origin main
-
     - name: Get latest version tag
       if: ${{ !inputs.tag }}
       id: get_latest_version_tag
-      run: echo "tag=$(git describe --tags --match='v[0-9]*' --long main)" >> $GITHUB_OUTPUT
+      run: |
+        git fetch --tags origin main
+        tag=$(git describe --tags --match='v[0-9]*' --long main)
+        echo "tag=$tag" >> $GITHUB_OUTPUT
       shell: bash
 
     - name: Parse version tag
