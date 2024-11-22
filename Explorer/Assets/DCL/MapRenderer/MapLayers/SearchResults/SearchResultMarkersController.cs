@@ -52,8 +52,9 @@ namespace DCL.MapRenderer.MapLayers.SearchResults
             {
                 mapCullingController.StopTracking(marker);
                 marker.OnBecameInvisible();
-                markers.Remove(key);
             }
+
+            markers.Clear();
 
             foreach (PlacesData.PlaceInfo placeInfo in searchedPlaces)
             {
