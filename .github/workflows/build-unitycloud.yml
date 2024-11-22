@@ -113,6 +113,11 @@ jobs:
         id: get_commit_sha
         run: echo "commit_sha=$(git rev-parse --short $GITHUB_SHA)" >> $GITHUB_OUTPUT
 
+      - name: Debug Commit SHA
+        run: |
+          echo "Commit SHA from Checkout: $(git rev-parse HEAD)"
+          echo "Ref from Pull Request: ${{ github.event.pull_request.head.sha }}"
+
       - name: Get Sentry parameters
         id: get_sentry
         run: |
