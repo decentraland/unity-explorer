@@ -101,8 +101,12 @@ namespace Global.Dynamic
 #endif
             );
 
-            static ITexturesFuse TextureFuseFactory() =>
-                ITexturesFuse.NewDefault();
+            ITexturesFuse TextureFuseFactory()
+            {
+                return applicationParametersParser.HasFlag(AppArgsFlags.FORCE_NO_TEXTURE_COMPRESSION)
+                    ? ITexturesFuse.NewManagedInstance()
+                    : ITexturesFuse.NewDefault();
+            }
 
             ICompressShaders compressShaders = new CompressShaders(TextureFuseFactory, IPlatform.DEFAULT);
 

@@ -110,7 +110,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
         public static ITexturesFuse NewTestInstance() =>
             NewManagedInstance();
 
-        private static ITexturesFuse NewManagedInstance()
+        public static ITexturesFuse NewManagedInstance()
         {
             return new PooledTexturesFuse(
                 () => new ManagedTexturesFuse(),

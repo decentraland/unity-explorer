@@ -21,6 +21,8 @@
 
         public const string CAMERA_REEL = "camera-reel";
 
+        public const string FORCE_NO_TEXTURE_COMPRESSION = "force-no-texture-compression";
+
         public static class Multiplayer
         {
             public const string COMPRESSION = "compression";
