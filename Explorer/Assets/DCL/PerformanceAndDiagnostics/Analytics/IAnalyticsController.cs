@@ -14,6 +14,10 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         AnalyticsConfiguration Configuration { get; }
 
+        public static IAnalyticsController Null => NullAnalytics.Instance;
+
+        void Initialize(IWeb3Identity? web3Identity);
+
         void SetCommonParam(IRealmData realmData, IWeb3IdentityCache? identityCache, IExposedTransform playerTransform);
 
         void Track(string eventName, JsonObject? properties = null);
@@ -22,17 +26,15 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         void Flush();
 
-        public static IAnalyticsController Null => NullAnalytics.Instance;
-
         private sealed class NullAnalytics : IAnalyticsController
         {
-            private NullAnalytics() { }
-
             private static readonly Lazy<NullAnalytics> INSTANCE = new (() => new NullAnalytics());
 
             public static IAnalyticsController Instance => INSTANCE.Value;
 
             public AnalyticsConfiguration Configuration => ScriptableObject.CreateInstance<AnalyticsConfiguration>();
+
+            private NullAnalytics() { }
 
             public void Initialize(IWeb3Identity? web3Identity) { }
 
@@ -44,8 +46,6 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
             public void Flush() { }
         }
-
-        void Initialize(IWeb3Identity? web3Identity);
     }
 
     public static class AnalyticsExtensions
