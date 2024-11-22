@@ -38,7 +38,7 @@ namespace DCL.PluginSystem.World
         private readonly IWebRequestController webRequestController;
         private readonly IFramePrefabs framePrefabs;
         private readonly ILazyMaxSize lazyMaxSize;
-        private readonly IStreamableCache<Texture2DData, GetNFTShapeIntention> cache = new NftShapeCache();
+        private readonly ISizedStreamableCache<Texture2DData, GetNFTShapeIntention> cache = new NftShapeCache();
 
         static NFTShapePlugin()
         {
@@ -110,7 +110,6 @@ namespace DCL.PluginSystem.World
         {
             cache.Dispose();
         }
-
 
         public UniTask InitializeAsync(NFTShapePluginSettings settings, CancellationToken ct)
         {

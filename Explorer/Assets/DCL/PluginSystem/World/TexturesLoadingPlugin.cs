@@ -16,7 +16,7 @@ namespace DCL.PluginSystem.World
     {
         private readonly IWebRequestController webRequestController;
 
-        private readonly TexturesCache texturesCache = new ();
+        private readonly TexturesCache<GetTextureIntention> texturesCache = new ();
 
         public TexturesLoadingPlugin(IWebRequestController webRequestController, CacheCleaner cacheCleaner)
         {

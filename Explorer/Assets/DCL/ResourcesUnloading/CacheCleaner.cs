@@ -2,6 +2,8 @@
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.DebugUtilities;
+using DCL.DebugUtilities.UIBindings;
 using DCL.LOD;
 using DCL.Optimization;
 using DCL.Optimization.PerformanceBudgeting;
@@ -14,8 +16,8 @@ using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.NFTShapes;
 using ECS.StreamableLoading.Textures;
 using ECS.Unity.GLTFContainer.Asset.Cache;
+using System;
 using System.Collections.Generic;
-using UnityEngine;
 
 namespace DCL.ResourcesUnloading
 {
@@ -31,6 +33,10 @@ namespace DCL.ResourcesUnloading
         private const int PROFILE_UNLOAD_CHUNK = 10;
 
         private readonly IPerformanceBudget fpsCapBudget;
+
+        private readonly DebugWidgetBuilder? widgetBuilder;
+        private readonly List<Action> updateCallbacks = new ();
+
         private readonly List<IThrottledClearable> extendedObjectPools;
 
         private IStreamableCache<AssetBundleData, GetAssetBundleIntention>? assetBundleCache;
@@ -51,11 +57,18 @@ namespace DCL.ResourcesUnloading
 
         private readonly IPerformanceBudget unlimitedFPSBudget;
 
-        public CacheCleaner(IPerformanceBudget fpsCapBudget)
+        public CacheCleaner(IPerformanceBudget fpsCapBudget, DebugWidgetBuilder? widgetBuilder)
         {
             this.fpsCapBudget = fpsCapBudget;
+            this.widgetBuilder = widgetBuilder;
             unlimitedFPSBudget = new NullPerformanceBudget();
             extendedObjectPools = new List<IThrottledClearable> { AvatarCustomSkinningComponent.USED_SLOTS_POOL };
+
+            widgetBuilder?.AddSingleButton("Update", () =>
+            {
+                foreach (var callback in updateCallbacks)
+                    callback();
+            });
         }
 
         public void UnloadCache(bool budgeted = true)
@@ -107,11 +120,17 @@ namespace DCL.ResourcesUnloading
         public void Register(IAttachmentsAssetsCache wearableAssetsCache) =>
             this.wearableAssetsCache = wearableAssetsCache;
 
-        public void Register(IStreamableCache<Texture2DData, GetTextureIntention> texturesCache) =>
+        public void Register(ISizedStreamableCache<Texture2DData, GetTextureIntention> texturesCache)
+        {
             this.texturesCache = texturesCache;
+            TryAppendToDebug(texturesCache, "Textures");
+        }
 
-        public void Register(IStreamableCache<Texture2DData, GetNFTShapeIntention> nftShapeCache) =>
+        public void Register(ISizedStreamableCache<Texture2DData, GetNFTShapeIntention> nftShapeCache)
+        {
             this.nftShapeCache = nftShapeCache;
+            TryAppendToDebug(nftShapeCache, "NFT Shapes");
+        }
 
         public void Register(IStreamableCache<AudioClipData, GetAudioClipIntention> audioClipsCache) =>
             this.audioClipsCache = audioClipsCache;
@@ -140,6 +159,26 @@ namespace DCL.ResourcesUnloading
             ProfilingCounters.WearablesAssetsInCatalogAmount.Value = ((WearableStorage)wearableStorage).WearableAssetsInCatalog;
             ProfilingCounters.WearablesAssetsInCacheAmount.Value = wearableAssetsCache.AssetsCount;
 #endif
+        }
+
+        private void TryAppendToDebug<TA, TI>(ISizedStreamableCache<TA, TI> cache, string title)
+        {
+            if (widgetBuilder == null)
+                return;
+
+            ElementBinding<string> totalSize = new (string.Empty);
+            ElementBinding<string> totalCount = new (string.Empty);
+
+            widgetBuilder
+              ?.AddControl(new DebugConstLabelDef(title), null)
+               .AddCustomMarker("Total size", totalSize)
+               .AddCustomMarker("Total count", totalCount);
+
+            updateCallbacks.Add(() =>
+            {
+                totalSize.SetAndUpdate(cache.ToReadableString());
+                totalCount.SetAndUpdate(cache.ItemCount.ToString());
+            });
         }
     }
 }
