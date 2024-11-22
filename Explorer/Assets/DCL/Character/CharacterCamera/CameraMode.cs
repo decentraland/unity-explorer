@@ -11,5 +11,6 @@
         ///     Free-fly, does not follow character, intercepts controls designated for character movement
         /// </summary>
         Free = 4,
+        InWorld = 5,
     }
 }
