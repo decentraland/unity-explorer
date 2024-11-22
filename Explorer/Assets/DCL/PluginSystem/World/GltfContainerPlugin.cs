@@ -80,7 +80,7 @@ namespace DCL.PluginSystem.World
 
             GatherGltfAssetsSystem.InjectToWorld(ref builder, sceneReadinessReportQueue, sharedDependencies.SceneData,
                 buffer, sharedDependencies.SceneStateProvider, globalDeps.MemoryBudget, loadingStatus,
-                persistentEntities.SceneContainer);
+                persistentEntities.SceneContainer, persistentEntities.SceneRoot);
 
             ResetDirtyFlagSystem<PBGltfContainer>.InjectToWorld(ref builder);
 

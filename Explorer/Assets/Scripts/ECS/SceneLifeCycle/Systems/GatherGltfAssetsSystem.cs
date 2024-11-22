@@ -29,6 +29,7 @@ namespace ECS.SceneLifeCycle.Systems
         private HashSet<EntityReference>? entitiesUnderObservation;
 
         private bool concluded;
+        private bool updatedChildrenTransforms;
         private int assetsResolved;
         private int totalAssetsToResolve = -1;
         private float startTime;
@@ -39,12 +40,14 @@ namespace ECS.SceneLifeCycle.Systems
         private readonly MemoryBudget memoryBudget;
         private readonly ILoadingStatus loadingStatus;
         private readonly Entity sceneContainerEntity;
+        private readonly Entity sceneRoot;
 
         internal GatherGltfAssetsSystem(World world, ISceneReadinessReportQueue readinessReportQueue,
             ISceneData sceneData, EntityEventBuffer<GltfContainerComponent> eventsBuffer,
             ISceneStateProvider sceneStateProvider, MemoryBudget memoryBudget,
             ILoadingStatus loadingStatus,
-            Entity sceneContainerEntity) : base(world)
+            Entity sceneContainerEntity,
+            Entity sceneRoot) : base(world)
         {
             this.readinessReportQueue = readinessReportQueue;
             this.sceneData = sceneData;
@@ -53,7 +56,7 @@ namespace ECS.SceneLifeCycle.Systems
             this.memoryBudget = memoryBudget;
             this.loadingStatus = loadingStatus;
             this.sceneContainerEntity = sceneContainerEntity;
-
+            this.sceneRoot = sceneRoot;
             forEachEvent = GatherEntities;
         }
 
@@ -153,16 +156,39 @@ namespace ECS.SceneLifeCycle.Systems
                 }
                 loadingStatus.UpdateAssetsLoaded(assetsResolved, totalAssetsToResolve);
                 sceneData.SceneLoadingConcluded = concluded;
+            } else if (concluded && !updatedChildrenTransforms)
+            {
+                UpdateTransformCaches();
+                updatedChildrenTransforms = true;
             }
 
             void Conclude()
             {
                 concluded = true;
                 sceneData.SceneLoadingConcluded = true;
-                World.Get<TransformComponent>(sceneContainerEntity).Transform.position =
-                    sceneData.Geometry.BaseParcelPosition;
+                World.Get<TransformComponent>(sceneContainerEntity).Transform.position = sceneData.Geometry.BaseParcelPosition;
+            }
+
+            void UpdateTransformCaches()
+            {
+                var sceneRootTransformComponent = World.Get<TransformComponent>(sceneRoot);
+                sceneRootTransformComponent.UpdateCache();
+                UpdateChildrenTransformCaches(ref sceneRootTransformComponent);
             }
         }
+
+        private void UpdateChildrenTransformCaches(ref TransformComponent transformComponent)
+        {
+            foreach (var child in transformComponent.Children)
+            {
+                 if (World.TryGet(child, out TransformComponent childTransformComponent));
+                 {
+                     childTransformComponent.UpdateCache();
+                     UpdateChildrenTransformCaches(ref childTransformComponent);
+                 }
+            }
+        }
+
 
         private void GatherEntities(Entity entity, GltfContainerComponent component)
         {
