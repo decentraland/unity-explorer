@@ -97,7 +97,7 @@ namespace DCL.Navmap
         public void FilterByCategory(string? category) =>
             OnFilterByCategory?.Invoke(category);
 
-        private void OnSearchPlacePerformed(IReadOnlyList<PlacesData.PlaceInfo> places) =>
+        public void OnSearchPlacePerformed(IReadOnlyList<PlacesData.PlaceInfo> places) =>
             OnPlaceSearched?.Invoke(places);
     }
 }

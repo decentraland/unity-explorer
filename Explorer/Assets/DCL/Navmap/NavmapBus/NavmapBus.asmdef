@@ -1,0 +1,19 @@
+{
+    "name": "NavmapBus",
+    "rootNamespace": "",
+    "references": [
+        "GUID:006c0e0a70294dbba8a4cbcfb77e1f7d",
+        "GUID:98798e6d11df4325a3e60a800a0b5808",
+        "GUID:f51ebe6a0ceec4240a699833d6309b23",
+        "GUID:166b65e6dfc848bb9fb075f53c293a38"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

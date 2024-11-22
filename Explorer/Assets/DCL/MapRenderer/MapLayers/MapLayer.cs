@@ -27,6 +27,7 @@ namespace DCL.MapRenderer.MapLayers
         Pins = 1 << 19,
         PlayerMarker = 1 << 20,
         Path = 1 << 21,
+        SearchResults = 1 << 22,
 
         // Add yours
     }

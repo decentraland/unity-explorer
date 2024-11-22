@@ -7,6 +7,7 @@ using DCL.MapRenderer.MapLayers.ParcelHighlight;
 using DCL.MapRenderer.MapLayers.Pins;
 using DCL.MapRenderer.MapLayers.PlayerMarker;
 using DCL.MapRenderer.MapLayers.PointsOfInterest;
+using DCL.MapRenderer.MapLayers.SearchResults;
 using DCL.MapRenderer.MapLayers.Users;
 using DCL.MapRenderer.MapLayers.UsersMarker;
 using System;
@@ -37,6 +38,8 @@ namespace DCL.MapRenderer
         SceneOfInterestMarkerObjectRef SceneOfInterestMarker { get; }
 
         CategoryMarkerObjectRef CategoryMarker { get; }
+
+        SearchResultMarkerObjectRef SearchResultMarker { get; }
 
         ClusterMarkerObjectRef ClusterMarker { get; }
 
@@ -102,6 +105,12 @@ namespace DCL.MapRenderer
         public class ClusterMarkerObjectRef : ComponentReference<ClusterMarkerObject>
         {
             public ClusterMarkerObjectRef(string guid) : base(guid) { }
+        }
+
+        [Serializable]
+        public class SearchResultMarkerObjectRef : ComponentReference<SearchResultMarkerObject>
+        {
+            public SearchResultMarkerObjectRef(string guid) : base(guid) { }
         }
 
         [Serializable]

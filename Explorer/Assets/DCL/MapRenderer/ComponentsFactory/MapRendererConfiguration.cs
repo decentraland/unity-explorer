@@ -29,6 +29,9 @@ namespace DCL.MapRenderer.ComponentsFactory
         public Transform CategoriesMarkersRoot { get; private set; }
 
         [field: SerializeField]
+        public Transform SearchResultsMarkersRoot { get; private set; }
+
+        [field: SerializeField]
         public Transform FavoritesMarkersRoot { get; private set; }
 
         [field: SerializeField]

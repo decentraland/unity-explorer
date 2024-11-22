@@ -18,6 +18,7 @@
         internal const int PIN_MARKER = 19;
         internal const int PIN_MARKER_THUMBNAIL = 20;
         internal const int PLAYER_MARKER = 21;
+        internal const int SEARCH_RESULTS = 22;
         internal const int PARCEL_HIGHLIGHT = 30;
 
     }

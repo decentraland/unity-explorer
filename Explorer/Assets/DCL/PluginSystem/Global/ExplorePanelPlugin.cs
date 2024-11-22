@@ -44,6 +44,7 @@ using DCL.Clipboard;
 using DCL.EventsApi;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Settings.Settings;
+using DCL.Utilities;
 using System;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -96,6 +97,7 @@ namespace DCL.PluginSystem.Global
         private readonly IEventsApiService eventsApiService;
         private readonly IUserCalendar userCalendar;
         private readonly ISystemClipboard clipboard;
+        private readonly ObjectProxy<INavmapBus> explorePanelNavmapBus;
 
         private NavmapController? navmapController;
         private SettingsController? settingsController;
@@ -147,7 +149,8 @@ namespace DCL.PluginSystem.Global
             WorldVolumeMacBus worldVolumeMacBus,
             IEventsApiService eventsApiService,
             IUserCalendar userCalendar,
-            ISystemClipboard clipboard)
+            ISystemClipboard clipboard,
+            ObjectProxy<INavmapBus> explorePanelNavmapBus)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -188,6 +191,7 @@ namespace DCL.PluginSystem.Global
             this.eventsApiService = eventsApiService;
             this.userCalendar = userCalendar;
             this.clipboard = clipboard;
+            this.explorePanelNavmapBus = explorePanelNavmapBus;
         }
 
         public void Dispose()
@@ -205,6 +209,7 @@ namespace DCL.PluginSystem.Global
         {
             INavmapBus navmapBus = new NavmapCommandBus(CreateSearchPlaceCommand,
                 CreateShowPlaceCommand, CreateShowEventCommand);
+            explorePanelNavmapBus.SetObject(navmapBus);
 
             backpackSubPlugin = new BackpackSubPlugin(
                 assetsProvisioner,
