@@ -194,7 +194,7 @@ namespace Global.Dynamic
                 // Init other containers
                 container.DefaultTexturesContainer = await DefaultTexturesContainer.CreateAsync(settingsContainer, assetsProvisioner, ct).ThrowOnFail();
                 container.LODContainer = await LODContainer.CreateAsync(assetsProvisioner, bootstrapContainer.DecentralandUrlsSource, staticContainer, settingsContainer, staticContainer.RealmData, container.DefaultTexturesContainer.TextureArrayContainerFactory, debugBuilder, dynamicWorldParams.EnableLOD, ct).ThrowOnFail();
-                container.MapRendererContainer = await MapRendererContainer.CreateAsync(settingsContainer, staticContainer, bootstrapContainer.DecentralandUrlsSource, assetsProvisioner, placesAPIService, mapPathEventBus, notificationsBusController, teleportBusController, sharedNavmapCommandBus, ct);
+                container.MapRendererContainer = await MapRendererContainer.CreateAsync(settingsContainer, staticContainer, bootstrapContainer.DecentralandUrlsSource, assetsProvisioner, placesAPIService, eventsApiService, mapPathEventBus, notificationsBusController, teleportBusController, sharedNavmapCommandBus, ct);
             }
 
             try { await InitializeContainersAsync(dynamicWorldDependencies.SettingsContainer, ct); }

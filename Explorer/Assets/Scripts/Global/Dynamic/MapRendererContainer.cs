@@ -12,6 +12,7 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using Utility.TeleportBus;
+using DCL.EventsApi;
 
 namespace Global.Dynamic
 {
@@ -34,6 +35,7 @@ namespace Global.Dynamic
             IDecentralandUrlsSource decentralandUrlsSource,
             IAssetsProvisioner assetsProvisioner,
             IPlacesAPIService placesAPIService,
+            IEventsApiService eventsAPIService,
             IMapPathEventBus mapPathEventBus,
             INotificationsBusController notificationsBusController,
             ITeleportBusController teleportBusController,
@@ -51,6 +53,7 @@ namespace Global.Dynamic
                     decentralandUrlsSource,
                     c.TextureContainer,
                     placesAPIService,
+                    eventsAPIService,
                     mapPathEventBus,
                     teleportBusController,
                     notificationsBusController,

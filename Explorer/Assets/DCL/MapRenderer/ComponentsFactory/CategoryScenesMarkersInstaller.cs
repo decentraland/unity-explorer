@@ -31,6 +31,7 @@ namespace DCL.MapRenderer.ComponentsFactory
             IMapRendererSettings settings,
             IPlacesAPIService placesAPI,
             ObjectPool<ClusterMarkerObject> clusterObjectsPool,
+            CategoryMarkerObject prefab,
             CancellationToken cancellationToken
         )
         {
@@ -38,7 +39,6 @@ namespace DCL.MapRenderer.ComponentsFactory
             assetsProvisioner = assetsProv;
             placesAPIService = placesAPI;
             this.writer = layerWriter;
-            CategoryMarkerObject? prefab = await GetPrefabAsync(cancellationToken);
 
             var objectsPool = new ObjectPool<CategoryMarkerObject>(
                 () => CreatePoolMethod(configuration, prefab, coordsUtils),
@@ -120,8 +120,5 @@ namespace DCL.MapRenderer.ComponentsFactory
 
         private static IClusterMarker CreateClusterMarker(IObjectPool<ClusterMarkerObject> objectsPool, IMapCullingController cullingController, ICoordsUtils coordsUtils) =>
             new ClusterMarker(objectsPool, cullingController, coordsUtils);
-
-        private async UniTask<CategoryMarkerObject> GetPrefabAsync(CancellationToken cancellationToken) =>
-            (await assetsProvisioner.ProvideMainAssetAsync(mapSettings.CategoryMarker, cancellationToken)).Value;
     }
 }

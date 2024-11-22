@@ -33,7 +33,7 @@ namespace DCL.Minimap
 {
     public partial class MinimapController : ControllerBase<MinimapView>, IMapActivityOwner
     {
-        private const MapLayer RENDER_LAYERS = MapLayer.SatelliteAtlas | MapLayer.PlayerMarker | MapLayer.ScenesOfInterest | MapLayer.Favorites | MapLayer.HotUsersMarkers | MapLayer.Pins | MapLayer.Path;
+        private const MapLayer RENDER_LAYERS = MapLayer.SatelliteAtlas | MapLayer.PlayerMarker | MapLayer.ScenesOfInterest | MapLayer.Favorites | MapLayer.HotUsersMarkers | MapLayer.Pins | MapLayer.Path | MapLayer.LiveEvents;
         private const float ANIMATION_TIME = 0.2f;
         private const string ORIGIN = "minimap";
 

@@ -24,6 +24,17 @@ namespace DCL.EventsApi
             this.baseUrl = baseUrl;
         }
 
+        public async UniTask<IReadOnlyList<EventDTO>> GetEventsAsync(CancellationToken ct, bool onlyLiveEvents = false)
+        {
+            urlBuilder.Clear();
+            urlBuilder.AppendDomain(baseUrl);
+
+            if (onlyLiveEvents)
+                urlBuilder.AppendParameter(new URLParameter("list", "live"));
+
+            return await FetchEventListAsync(urlBuilder.Build(), ct);
+        }
+
         public async UniTask<IReadOnlyList<EventDTO>> GetEventsByParcelAsync(IEnumerable<Vector2Int> parcels, CancellationToken ct, bool onlyLiveEvents = false)
         {
             urlBuilder.Clear();

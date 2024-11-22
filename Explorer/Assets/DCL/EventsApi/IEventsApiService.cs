@@ -7,6 +7,7 @@ namespace DCL.EventsApi
 {
     public interface IEventsApiService
     {
+        UniTask<IReadOnlyList<EventDTO>> GetEventsAsync(CancellationToken ct, bool onlyLiveEvents = false);
         UniTask<IReadOnlyList<EventDTO>> GetEventsByParcelAsync(IEnumerable<Vector2Int> parcels, CancellationToken ct, bool onlyLiveEvents = false);
 
         /// <param name="parcels">Parcel in format: "x,y"</param>
