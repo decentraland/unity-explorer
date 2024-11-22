@@ -6,7 +6,6 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.Pool;
 using ICoordsUtils = DCL.MapRenderer.CoordsUtils.ICoordsUtils;
-using IPlacesAPIService = DCL.PlacesAPIService.IPlacesAPIService;
 using PlacesData = DCL.PlacesAPIService.PlacesData;
 
 namespace DCL.MapRenderer.MapLayers.SearchResults
@@ -48,7 +47,7 @@ namespace DCL.MapRenderer.MapLayers.SearchResults
 
         private void OnPlaceSearched(IReadOnlyList<PlacesData.PlaceInfo> searchedPlaces)
         {
-            foreach ((Vector2Int key, ISearchResultMarker? marker) in markers)
+            foreach (ISearchResultMarker? marker in markers.Values)
             {
                 mapCullingController.StopTracking(marker);
                 marker.OnBecameInvisible();
@@ -101,6 +100,8 @@ namespace DCL.MapRenderer.MapLayers.SearchResults
         {
             foreach (ISearchResultMarker marker in markers.Values)
                 mapCullingController.StartTracking(marker, this);
+
+            isEnabled = true;
         }
 
         public void ResetToBaseScale()

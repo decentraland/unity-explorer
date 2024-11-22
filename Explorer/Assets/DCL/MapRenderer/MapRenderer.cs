@@ -61,6 +61,7 @@ namespace DCL.MapRenderer
                 }
 
                 layers[MapLayer.SatelliteAtlas].SharedActive = true;
+                layers[MapLayer.SearchResults].SharedActive = true;
                 layers[MapLayer.Art].SharedActive = false;
                 layers[MapLayer.Business].SharedActive = false;
                 layers[MapLayer.Education].SharedActive = false;

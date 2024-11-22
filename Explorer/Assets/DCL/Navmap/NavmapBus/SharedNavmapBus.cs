@@ -42,7 +42,7 @@ namespace DCL.Navmap
             NavmapSearchPlaceFilter filter = NavmapSearchPlaceFilter.All,
             NavmapSearchPlaceSorting sorting = NavmapSearchPlaceSorting.MostActive,
             string? category = null) =>
-            source.Object.SearchForPlaceAsync(ct, place, filter, sorting);
+            source.Object.SearchForPlaceAsync(ct, place, filter, sorting, category);
 
         public UniTask GoBackAsync(CancellationToken ct) =>
             source.Object.GoBackAsync(ct);
