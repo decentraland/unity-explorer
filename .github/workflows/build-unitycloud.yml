@@ -115,6 +115,7 @@ jobs:
 
       - name: Debug Commit SHA
         run: |
+          echo "Ref from Pull Request: ${{ github.event.pull_request.head.sha }}"
           echo "GITHUB_SHA: $GITHUB_SHA"
           echo "Shortened Commit from git rev-parse: $(git rev-parse --short $GITHUB_SHA)"
           echo "Full Commit from git rev-parse: $(git rev-parse $GITHUB_SHA)"

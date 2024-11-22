@@ -4,6 +4,9 @@ inputs:
   tag:
     description: 'Formatted version tag. If not set, it uses the latest version tag (v[0-9]*)'
     required: false
+   commit_sha:
+    description: 'The commit SHA to use for versioning'
+    required: true
 outputs:
   latest_version:
     description: 'Latest available version tag in repo'
@@ -66,7 +69,12 @@ runs:
         fi
 
         # Get the shortened commit hash
-        SHORT_COMMIT_HASH=$(echo "$GITHUB_SHA" | cut -c1-7)
+        # Use the commit SHA from input or fallback to GITHUB_SHA
+        if [ -n "${{ inputs.commit_sha }}" ]; then
+          SHORT_COMMIT_HASH=$(echo "${{ inputs.commit_sha }}" | cut -c1-7)
+        else
+          SHORT_COMMIT_HASH=$(echo "$GITHUB_SHA" | cut -c1-7)
+        fi
 
         # Full version with commit hash
         FULLVER="v${MAJOR}.${MINOR}.$((BUILD))-${NAME}-${BRANCH_NAME}-${SHORT_COMMIT_HASH}"
