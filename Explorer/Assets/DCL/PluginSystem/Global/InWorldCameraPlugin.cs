@@ -13,10 +13,12 @@ using DCL.PlacesAPIService;
 using DCL.Profiles.Self;
 using DCL.WebRequests;
 using ECS;
+using MVC;
 using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using UnityEngine.UI;
 using Utility;
 using static DCL.PluginSystem.Global.InWorldCameraPlugin;
 using Object = UnityEngine.Object;
@@ -36,6 +38,8 @@ namespace DCL.PluginSystem.Global
         private readonly InWorldCameraFactory factory;
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
+        private readonly IMVCManager mvcManager;
+        private readonly Button sidebarButton;
 
         private ScreenRecorder recorder;
         private GameObject hud;
@@ -46,7 +50,7 @@ namespace DCL.PluginSystem.Global
 
         public InWorldCameraPlugin(DCLInput input, SelfProfile selfProfile,
             RealmData realmData, Entity playerEntity, IPlacesAPIService placesAPIService, ICharacterObject characterObject, ICoroutineRunner coroutineRunner,
-            IWebRequestController webRequestController, IDecentralandUrlsSource decentralandUrlsSource)
+            IWebRequestController webRequestController, IDecentralandUrlsSource decentralandUrlsSource, IMVCManager mvcManager, Button sidebarButton)
         {
             this.input = input;
             this.selfProfile = selfProfile;
@@ -57,6 +61,8 @@ namespace DCL.PluginSystem.Global
             this.coroutineRunner = coroutineRunner;
             this.webRequestController = webRequestController;
             this.decentralandUrlsSource = decentralandUrlsSource;
+            this.mvcManager = mvcManager;
+            this.sidebarButton = sidebarButton;
 
             factory = new InWorldCameraFactory();
         }
@@ -77,6 +83,10 @@ namespace DCL.PluginSystem.Global
             metadataBuilder = new ScreenshotMetadataBuilder(selfProfile, characterObject.Controller, realmData, placesAPIService);
 
             cameraReelStorageService = new CameraReelRemoteStorageService(new CameraReelImagesMetadataRemoteDatabase(webRequestController, decentralandUrlsSource));
+
+            var persistentEmoteWheelOpenerController = new InWorldCameraSidebarButtonController(() => sidebarButton, mvcManager);
+
+            mvcManager.RegisterController(persistentEmoteWheelOpenerController);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
