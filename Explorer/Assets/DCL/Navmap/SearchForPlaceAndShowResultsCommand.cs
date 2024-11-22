@@ -1,8 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.EventsApi;
-using DCL.Optimization.Pools;
 using DCL.PlacesAPIService;
-using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine.Pool;
@@ -16,15 +14,11 @@ namespace DCL.Navmap
         private readonly PlacesAndEventsPanelController placesAndEventsPanelController;
         private readonly SearchResultPanelController searchResultPanelController;
         private readonly NavmapSearchBarController searchBarController;
-        private readonly string? searchText;
-        private readonly NavmapSearchPlaceFilter filter;
-        private readonly NavmapSearchPlaceSorting sorting;
-        private readonly string? category;
-        private readonly Action<IReadOnlyList<PlacesData.PlaceInfo>> callback;
-        private readonly int pageNumber;
-        private readonly int pageSize;
+        private readonly INavmapBus.SearchPlaceResultDelegate callback;
+        private readonly INavmapBus.SearchPlaceParams @params;
         private List<PlacesData.PlaceInfo>? places;
         private HashSet<string>? placesWithLiveEvents;
+        private int totalResultCount;
 
         public SearchForPlaceAndShowResultsCommand(
             IPlacesAPIService placesAPIService,
@@ -32,37 +26,28 @@ namespace DCL.Navmap
             PlacesAndEventsPanelController placesAndEventsPanelController,
             SearchResultPanelController searchResultPanelController,
             NavmapSearchBarController searchBarController,
-            Action<IReadOnlyList<PlacesData.PlaceInfo>> callback,
-            string? searchText = null,
-            NavmapSearchPlaceFilter filter = NavmapSearchPlaceFilter.All,
-            NavmapSearchPlaceSorting sorting = NavmapSearchPlaceSorting.MostActive,
-            int pageNumber = 0,
-            int pageSize = 8,
-            string? category = null)
+            INavmapBus.SearchPlaceResultDelegate callback,
+            INavmapBus.SearchPlaceParams @params)
         {
             this.placesAPIService = placesAPIService;
             this.eventsApiService = eventsApiService;
             this.placesAndEventsPanelController = placesAndEventsPanelController;
             this.searchResultPanelController = searchResultPanelController;
             this.searchBarController = searchBarController;
-            this.searchText = searchText;
-            this.filter = filter;
-            this.sorting = sorting;
-            this.category = category;
             this.callback = callback;
-            this.pageNumber = pageNumber;
-            this.pageSize = pageSize;
+            this.@params = @params;
         }
 
         public async UniTask ExecuteAsync(CancellationToken ct)
         {
             placesAndEventsPanelController.Toggle(PlacesAndEventsPanelController.Section.SEARCH);
+            searchResultPanelController.ClearResults();
             searchResultPanelController.SetLoadingState();
 
             await ProcessPlacesAsync(ct);
             await ProcessLiveEventsAsync(ct);
 
-            callback.Invoke(places!);
+            callback.Invoke(@params, places!, totalResultCount);
         }
 
         public void Undo()
@@ -111,7 +96,7 @@ namespace DCL.Navmap
 
         private async UniTask ProcessPlacesAsync(CancellationToken ct)
         {
-            searchBarController.SetInputText(searchText ?? category ?? string.Empty);
+            searchBarController.SetInputText(@params.text ?? @params.category ?? string.Empty);
             searchBarController.Interactable = true;
 
             if (places == null)
@@ -120,37 +105,37 @@ namespace DCL.Navmap
 
                 (IPlacesAPIService.SortBy sort, IPlacesAPIService.SortDirection sortDirection) = GetSorting();
 
-                if (filter == NavmapSearchPlaceFilter.All)
+                if (@params.filter == NavmapSearchPlaceFilter.All)
                 {
-                    using PlacesData.IPlacesAPIResponse response = await placesAPIService.SearchPlacesAsync(pageNumber, pageSize, ct,
-                        searchText: searchText,
+                    using PlacesData.IPlacesAPIResponse response = await placesAPIService.SearchPlacesAsync(@params.page, @params.pageSize, ct,
+                        searchText: @params.text,
                         sortBy: sort, sortDirection: sortDirection,
-                        category: category);
+                        category: @params.category);
                     places.AddRange(response.Data);
+                    totalResultCount = response.Total;
                 }
-                else if (filter == NavmapSearchPlaceFilter.Favorites)
+                else if (@params.filter == NavmapSearchPlaceFilter.Favorites)
                 {
-                    using PoolExtensions.Scope<List<PlacesData.PlaceInfo>> response = await placesAPIService.GetFavoritesAsync(
-                        pageNumber, pageSize, ct,
-                        // We have to renew cache, otherwise it throws an exception by trying to release the list from the pool
-                        // Something is not right there
-                        renewCache: true,
-                        sortByBy: sort, sortDirection: sortDirection,
-                        category: category);
-                    places.AddRange(response.Value);
+                    using PlacesData.IPlacesAPIResponse response = await placesAPIService.GetFavoritesAsync(
+                        ct,
+                        pageNumber: @params.page, pageSize: @params.pageSize,
+                        sortByBy: sort, sortDirection: sortDirection);
+                    places.AddRange(response.Data);
+                    totalResultCount = response.Total;
                 }
-                else if (filter == NavmapSearchPlaceFilter.Visited)
+                else if (@params.filter == NavmapSearchPlaceFilter.Visited)
                 {
                     // TODO: implement visited places
                 }
             }
 
             searchResultPanelController.SetResults(places!);
+            searchResultPanelController.SetPagination(@params.page, @params.pageSize, totalResultCount, @params);
         }
 
         private (IPlacesAPIService.SortBy sort, IPlacesAPIService.SortDirection direction) GetSorting()
         {
-            return sorting switch
+            return @params.sorting switch
                    {
                        NavmapSearchPlaceSorting.Newest => (IPlacesAPIService.SortBy.CREATED_AT, IPlacesAPIService.SortDirection.DESC),
                        NavmapSearchPlaceSorting.BestRated => (IPlacesAPIService.SortBy.LIKE_SCORE, IPlacesAPIService.SortDirection.DESC),

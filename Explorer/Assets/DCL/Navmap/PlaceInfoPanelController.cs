@@ -130,11 +130,9 @@ namespace DCL.Navmap
 
             likeButton.SetButtonState(place.user_like);
             dislikeButton.SetButtonState(place.user_dislike);
+            favoriteButton.SetButtonState(place.user_favorite);
 
             SetCategories(place);
-
-            favoriteCancellationToken = favoriteCancellationToken.SafeRestart();
-            UpdateFavoriteStatusAsync(favoriteCancellationToken.Token).Forget();
 
             UpdateDestinationStatus();
             ClearEventElements();
@@ -170,14 +168,6 @@ namespace DCL.Navmap
             foreach (PlaceInfoPanelView.AppearsOnCategory appearsOnCategory in view.AppearsOnCategories)
                 if (appearsOnCategory.category.Equals(category, StringComparison.OrdinalIgnoreCase))
                     appearsOnCategory.container.SetActive(true);
-        }
-
-        private async UniTaskVoid UpdateFavoriteStatusAsync(CancellationToken ct)
-        {
-            // Need to renew cache, otherwise it throws an exception of the object already been released
-            // Something is not right there
-            bool isFavorite = await placesAPIService.IsFavoritePlaceAsync(place!, ct, true);
-            favoriteButton.SetButtonState(isFavorite);
         }
 
         private void SetAsFavorite(bool isFavorite)
