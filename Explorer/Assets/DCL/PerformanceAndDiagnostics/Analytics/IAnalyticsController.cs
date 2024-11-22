@@ -34,6 +34,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
             public AnalyticsConfiguration Configuration => ScriptableObject.CreateInstance<AnalyticsConfiguration>();
 
+            public void Initialize(IWeb3Identity? web3Identity) { }
+
             public void SetCommonParam(IRealmData _, IWeb3IdentityCache? __, IExposedTransform ___) { }
 
             public void Track(string _, JsonObject? __ = null) { }
@@ -42,6 +44,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
             public void Flush() { }
         }
+
+        void Initialize(IWeb3Identity? web3Identity);
     }
 
     public static class AnalyticsExtensions

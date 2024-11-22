@@ -24,7 +24,11 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             Configuration = configuration;
 
             analytics.AddPlugin(new StaticCommonTraitsPlugin(appArgs, launcherTraits, buildData));
-            analytics.Identify(SystemInfo.deviceUniqueIdentifier!);
+        }
+
+        public void Initialize(IWeb3Identity? web3Identity)
+        {
+            analytics.Identify(web3Identity?.Address ?? "not cached");
             analytics.Flush();
         }
 
@@ -47,6 +51,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             if (identity != null)
             {
                 analytics.Flush();
+
                 analytics.Identify(identity.Address, new JsonObject
                     {
                         ["dcl_eth_address"] = identity.Address != null ? identity.Address.ToString() : UNDEFINED,
