@@ -15,10 +15,6 @@ namespace Global.Dynamic
     [Serializable]
     public class RealmLaunchSettings
     {
-        private const string APP_PARAMETER_REALM = "realm";
-        private const string APP_PARAMETER_LOCAL_SCENE = "local-scene";
-        private const string APP_PARAMETER_POSITION = "position";
-
         [Serializable]
         public struct PredefinedScenes
         {
@@ -91,10 +87,10 @@ namespace Global.Dynamic
 
         public void ApplyConfig(IAppArgs applicationParameters)
         {
-            if (applicationParameters.TryGetValue(APP_PARAMETER_REALM, out string? realm))
+            if (applicationParameters.TryGetValue(AppArgsFlags.REALM, out string? realm))
                 ParseRealmAppParameter(applicationParameters, realm);
 
-            if (applicationParameters.TryGetValue(APP_PARAMETER_POSITION, out string? position))
+            if (applicationParameters.TryGetValue(AppArgsFlags.POSITION, out string? position))
                 ParsePositionAppParameter(position);
         }
 
@@ -102,7 +98,7 @@ namespace Global.Dynamic
         {
             if (string.IsNullOrEmpty(realmParamValue)) return;
 
-            bool isLocalSceneDevelopment = appParameters.TryGetValue(APP_PARAMETER_LOCAL_SCENE, out string localSceneParamValue)
+            bool isLocalSceneDevelopment = appParameters.TryGetValue(AppArgsFlags.LOCAL_SCENE, out string localSceneParamValue)
                                     && ParseLocalSceneParameter(localSceneParamValue)
                                     && IsRealmAValidUrl(realmParamValue);
 

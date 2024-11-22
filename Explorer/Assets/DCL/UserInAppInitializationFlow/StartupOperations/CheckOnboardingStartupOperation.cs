@@ -18,9 +18,7 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
     public class CheckOnboardingStartupOperation : StartUpOperationBase
     {
         private const int TUTORIAL_STEP_DONE_MARK = 256;
-        private const string APP_PARAMETER_REALM = "realm";
-        private const string APP_PARAMETER_LOCAL_SCENE = "local-scene";
-        private const string APP_PARAMETER_POSITION = "position";
+
 
         private readonly ILoadingStatus loadingStatus;
         private readonly ISelfProfile selfProfile;
@@ -58,7 +56,7 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
         private async UniTask CheckOnboardingAsync(CancellationToken ct)
         {
             // It the app is open from any external way, we will ignore the onboarding flow
-            if (appParameters.HasFlag(APP_PARAMETER_REALM) || appParameters.HasFlag(APP_PARAMETER_POSITION) || appParameters.HasFlag(APP_PARAMETER_LOCAL_SCENE))
+            if (appParameters.HasFlag(AppArgsFlags.REALM) || appParameters.HasFlag(AppArgsFlags.POSITION) || appParameters.HasFlag(AppArgsFlags.LOCAL_SCENE))
                 return;
 
             isProfilePendingToBeUpdated = false;

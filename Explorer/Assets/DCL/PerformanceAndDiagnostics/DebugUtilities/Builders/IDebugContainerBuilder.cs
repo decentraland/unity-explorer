@@ -28,6 +28,7 @@ namespace DCL.DebugUtilities
             public const string PERFORMANCE = "Performance";
             public const string MEMORY = "Memory";
             public const string CURRENT_SCENE = "Current scene";
+            public const string REALM = "Realm";
         }
     }
 
