@@ -1,5 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.EventsApi;
 using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapCameraController;
@@ -35,6 +36,7 @@ namespace DCL.MapRenderer.ComponentsFactory
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly MapRendererTextureContainer textureContainer;
         private readonly IPlacesAPIService placesAPIService;
+        private readonly IEventsApiService eventsApiService;
         private readonly IMapRendererSettings mapSettings;
         private readonly IMapPathEventBus mapPathEventBus;
         private readonly ITeleportBusController teleportBusController;
@@ -43,6 +45,7 @@ namespace DCL.MapRenderer.ComponentsFactory
         private PlayerMarkerInstaller playerMarkerInstaller { get; }
         private SceneOfInterestsMarkersInstaller sceneOfInterestMarkerInstaller { get; }
         private CategoryScenesMarkersInstaller categoriesMarkerInstaller { get; }
+        private LiveEventsMarkersInstaller liveEventsMarkersInstaller { get; }
         private PinMarkerInstaller pinMarkerInstaller { get; }
         private FavoritesMarkersInstaller favoritesMarkersInstaller { get; }
         private HotUsersMarkersInstaller hotUsersMarkersInstaller { get; }
@@ -56,6 +59,7 @@ namespace DCL.MapRenderer.ComponentsFactory
             IDecentralandUrlsSource decentralandUrlsSource,
             MapRendererTextureContainer textureContainer,
             IPlacesAPIService placesAPIService,
+            IEventsApiService eventsApiService,
             IMapPathEventBus mapPathEventBus,
             ITeleportBusController teleportBusController,
             INotificationsBusController notificationsBusController,
@@ -67,6 +71,7 @@ namespace DCL.MapRenderer.ComponentsFactory
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.textureContainer = textureContainer;
             this.placesAPIService = placesAPIService;
+            this.eventsApiService = eventsApiService;
             this.mapPathEventBus = mapPathEventBus;
             this.teleportBusController = teleportBusController;
             this.notificationsBusController = notificationsBusController;
@@ -108,12 +113,15 @@ namespace DCL.MapRenderer.ComponentsFactory
                 actionOnGet: obj => obj.gameObject.SetActive(true),
                 actionOnRelease: obj => obj.gameObject.SetActive(false));
 
+            CategoryMarkerObject categoryMarkerPrefab = await GetCategoryMarkerPrefabAsync(cancellationToken);
+
             await UniTask.WhenAll(
                 CreateParcelAtlasAsync(layers, configuration, coordsUtils, cullingController, cancellationToken),
                 CreateSatelliteAtlasAsync(layers, configuration, coordsUtils, cullingController, cancellationToken),
                 playerMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, mapSettings, assetsProvisioner, mapPathEventBus, cancellationToken),
                 sceneOfInterestMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, assetsProvisioner, mapSettings, placesAPIService, clusterObjectsPool, cancellationToken),
-                categoriesMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, assetsProvisioner, mapSettings, placesAPIService, clusterObjectsPool, cancellationToken),
+                categoriesMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, assetsProvisioner, mapSettings, placesAPIService, clusterObjectsPool, categoryMarkerPrefab, cancellationToken),
+                liveEventsMarkersInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, assetsProvisioner, mapSettings, eventsApiService, clusterObjectsPool, categoryMarkerPrefab, cancellationToken),
                 favoritesMarkersInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, placesAPIService, assetsProvisioner, mapSettings, clusterObjectsPool, cancellationToken),
                 hotUsersMarkersInstaller.InstallAsync(layers, configuration, coordsUtils, cullingController, assetsProvisioner, mapSettings, teleportBusController, remoteUsersRequestController, cancellationToken),
                 searchResultsMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, assetsProvisioner, mapSettings, cullingController, navmapBus, cancellationToken),
@@ -130,6 +138,9 @@ namespace DCL.MapRenderer.ComponentsFactory
                 return new MapCameraController.MapCameraController(interactivityController, instance, coordsUtils, cullingController);
             }
         }
+
+        private async UniTask<CategoryMarkerObject> GetCategoryMarkerPrefabAsync(CancellationToken cancellationToken) =>
+            (await assetsProvisioner.ProvideMainAssetAsync(mapSettings.CategoryMarker, cancellationToken)).Value;
 
         private static IClusterMarker CreateClusterMarker(IObjectPool<ClusterMarkerObject> objectsPool, IMapCullingController cullingController, ICoordsUtils coordsUtils) =>
             new ClusterMarker(objectsPool, cullingController, coordsUtils);

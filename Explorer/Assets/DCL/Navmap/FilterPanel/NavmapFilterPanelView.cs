@@ -57,6 +57,7 @@ namespace DCL.Navmap.FilterPanel
             poisToggle.onValueChanged.AddListener((isOn) => OnToggleClicked(MapLayer.ScenesOfInterest, isOn));
             peopleToggle.onValueChanged.AddListener((isOn) => OnToggleClicked(MapLayer.HotUsersMarkers, isOn));
             favoritesToggle.onValueChanged.AddListener((isOn) => OnToggleClicked(MapLayer.Favorites, isOn));
+            liveEventsToggle.onValueChanged.AddListener((isOn) => OnToggleClicked(MapLayer.LiveEvents, isOn));
 
             satelliteButton.onValueChanged.AddListener(ToggleSatelliteMap);
             parcelButton.onValueChanged.AddListener(ToggleParcelMap);

@@ -28,6 +28,7 @@ namespace DCL.MapRenderer.MapLayers
         PlayerMarker = 1 << 20,
         Path = 1 << 21,
         SearchResults = 1 << 22,
+        LiveEvents = 1 << 23,
 
         // Add yours
     }
