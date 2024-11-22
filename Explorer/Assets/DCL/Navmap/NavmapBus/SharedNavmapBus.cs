@@ -37,11 +37,12 @@ namespace DCL.Navmap
         public UniTask SelectEventAsync(EventDTO @event, CancellationToken ct, PlacesData.PlaceInfo place = null) =>
             source.Object.SelectEventAsync(@event, ct, place);
 
-        public UniTask SearchForPlaceAsync(NavmapSearchPlaceFilter filter, NavmapSearchPlaceSorting sorting, CancellationToken ct) =>
-            source.Object.SearchForPlaceAsync(filter, sorting, ct);
-
-        public UniTask SearchForPlaceAsync(string place, NavmapSearchPlaceFilter filter, NavmapSearchPlaceSorting sorting, CancellationToken ct) =>
-            source.Object.SearchForPlaceAsync(place, filter, sorting, ct);
+        public UniTask SearchForPlaceAsync(CancellationToken ct,
+            string? place = null,
+            NavmapSearchPlaceFilter filter = NavmapSearchPlaceFilter.All,
+            NavmapSearchPlaceSorting sorting = NavmapSearchPlaceSorting.MostActive,
+            string? category = null) =>
+            source.Object.SearchForPlaceAsync(ct, place, filter, sorting);
 
         public UniTask GoBackAsync(CancellationToken ct) =>
             source.Object.GoBackAsync(ct);
