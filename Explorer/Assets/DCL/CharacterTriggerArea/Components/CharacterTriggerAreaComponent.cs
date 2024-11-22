@@ -37,7 +37,7 @@ namespace DCL.CharacterTriggerArea.Components
             IsDirty = true;
         }
 
-        public void TryAssignArea(IComponentPool<CharacterTriggerArea> pool, Transform mainPlayerTransform)
+        public void TryAssignArea(IComponentPool<CharacterTriggerArea> pool, Transform mainPlayerTransform, TransformComponent transformComponent)
         {
             if (IsDirty == false) return;
 
@@ -49,32 +49,25 @@ namespace DCL.CharacterTriggerArea.Components
 
                 if (targetOnlyMainPlayer)
                     monoBehaviour!.TargetTransform = mainPlayerTransform;
+
+                Transform triggerAreaTransform = monoBehaviour.transform;
+
+                triggerAreaTransform.SetParent(transformComponent.Transform);
+                triggerAreaTransform.localPosition = Vector3.zero;
+                triggerAreaTransform.localRotation = Quaternion.identity;
             }
 
             monoBehaviour!.BoxCollider.size = AreaSize;
+
+            if (!monoBehaviour.BoxCollider.enabled)
+                monoBehaviour.BoxCollider.enabled = true;
+
         }
 
         public void UpdateAreaSize(Vector3 size)
         {
             AreaSize = size;
             IsDirty = true;
-        }
-
-        public readonly void TryUpdateTransform(ref TransformComponent transformComponent)
-        {
-            if (monoBehaviour == null)
-                return;
-
-            Transform triggerAreaTransform = monoBehaviour.transform;
-
-            if (transformComponent.Transform.position != triggerAreaTransform.position)
-                triggerAreaTransform.position = transformComponent.Transform.position;
-
-            if (transformComponent.Transform.rotation != triggerAreaTransform.rotation)
-                triggerAreaTransform.rotation = transformComponent.Transform.rotation;
-
-            if (!monoBehaviour.BoxCollider.enabled)
-                monoBehaviour.BoxCollider.enabled = true;
         }
 
         public void TryRelease(IComponentPool<CharacterTriggerArea> pool)
