@@ -1,4 +1,5 @@
-﻿using DCL.Web3.Identities;
+﻿using DCL.Diagnostics;
+using DCL.Web3.Identities;
 using ECS;
 using Global.AppArgs;
 using Segment.Serialization;
@@ -11,6 +12,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
     public class AnalyticsController : IAnalyticsController
     {
         private readonly IAnalyticsService analytics;
+
+        private bool isInitialized;
         public AnalyticsConfiguration Configuration { get; }
 
         public AnalyticsController(
@@ -28,8 +31,11 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         public void Initialize(IWeb3Identity? web3Identity)
         {
+            TrackSystemInfo();
             analytics.Identify(web3Identity?.Address ?? "not cached");
             analytics.Flush();
+
+            isInitialized = true;
         }
 
         public void SetCommonParam(IRealmData realmData, IWeb3IdentityCache? identityCache, IExposedTransform playerTransform)
@@ -42,6 +48,9 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         public void Track(string eventName, JsonObject? properties = null)
         {
+            if (!isInitialized)
+                ReportHub.LogError(ReportCategory.ANALYTICS, $"Analytics {nameof(Track)} called before initialization. Event {eventName} won't be tracked.");
+
             if (Configuration.EventIsEnabled(eventName))
                 analytics.Track(eventName, properties);
         }
@@ -59,7 +68,6 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
                     }
                 );
 
-                TrackSystemInfo();
                 analytics.Flush();
             }
         }
