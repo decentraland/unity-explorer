@@ -6,9 +6,9 @@ using UnityEngine;
 
 namespace DCL.PlacesAPIService.Serialization
 {
-    public class PlacesByCategoryJsonDtoConverter : JsonConverter<List<PlacesData.CategoryPlaceData>>
+    public class PlacesByCategoryJsonDtoConverter : JsonConverter<List<OptimizedPlaceInMapResponse>>
     {
-        public override void WriteJson(JsonWriter writer, List<PlacesData.CategoryPlaceData> value, JsonSerializer serializer)
+        public override void WriteJson(JsonWriter writer, List<OptimizedPlaceInMapResponse> value, JsonSerializer serializer)
         {
             writer.WriteStartArray();
             foreach (var item in value)
@@ -17,17 +17,17 @@ namespace DCL.PlacesAPIService.Serialization
             writer.WriteEndArray();
         }
 
-        public override List<PlacesData.CategoryPlaceData> ReadJson(JsonReader reader, Type objectType, List<PlacesData.CategoryPlaceData> existingValue, bool hasExistingValue, JsonSerializer serializer)
+        public override List<OptimizedPlaceInMapResponse> ReadJson(JsonReader reader, Type objectType, List<OptimizedPlaceInMapResponse> existingValue, bool hasExistingValue, JsonSerializer serializer)
         {
             if (reader.TokenType == JsonToken.Null)
                 return null;
 
-            existingValue ??= new List<PlacesData.CategoryPlaceData>();
+            existingValue ??= new List<OptimizedPlaceInMapResponse>();
 
             var rootObject = JObject.Load(reader).ToObject<RootObject>();
             foreach ((string? key, DataObject? value) in rootObject.data)
             {
-                existingValue.Add(new PlacesData.CategoryPlaceData()
+                existingValue.Add(new OptimizedPlaceInMapResponse()
                 {
                     base_position = ConvertStringToVector2Int(key),
                     name = value.title

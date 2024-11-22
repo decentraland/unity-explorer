@@ -1,13 +1,12 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.MapRenderer.Culling;
+using DCL.PlacesAPIService;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Pool;
 using ICoordsUtils = DCL.MapRenderer.CoordsUtils.ICoordsUtils;
 using IPlacesAPIService = DCL.PlacesAPIService.IPlacesAPIService;
-using PlacesData = DCL.PlacesAPIService.PlacesData;
 
 namespace DCL.MapRenderer.MapLayers.Categories
 {
@@ -68,9 +67,9 @@ namespace DCL.MapRenderer.MapLayers.Categories
 
         private async UniTask LoadPlaces(CancellationToken cancellationToken)
         {
-            List<PlacesData.CategoryPlaceData> placesOfCategory = await placesAPIService.GetPlacesByCategoryListAsync(MapLayerUtils.MapLayerToCategory[mapLayer], cancellationToken);
+            IReadOnlyList<OptimizedPlaceInMapResponse> placesOfCategory = await placesAPIService.GetOptimizedPlacesFromTheMap(MapLayerUtils.MapLayerToCategory[mapLayer], cancellationToken);
 
-            foreach (PlacesData.CategoryPlaceData placeInfo in placesOfCategory)
+            foreach (OptimizedPlaceInMapResponse placeInfo in placesOfCategory)
             {
                 if (markers.ContainsKey(placeInfo.base_position))
                     continue;
@@ -92,7 +91,7 @@ namespace DCL.MapRenderer.MapLayers.Categories
             arePlacesLoaded = true;
         }
 
-        private static bool IsEmptyParcel(PlacesData.CategoryPlaceData sceneInfo) =>
+        private static bool IsEmptyParcel(OptimizedPlaceInMapResponse sceneInfo) =>
             sceneInfo.name == EMPTY_PARCEL_NAME;
 
         public void ApplyCameraZoom(float baseZoom, float zoom, int zoomLevel)

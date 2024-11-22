@@ -16,9 +16,10 @@ namespace DCL.Navmap
         private readonly PlacesAndEventsPanelController placesAndEventsPanelController;
         private readonly SearchResultPanelController searchResultPanelController;
         private readonly NavmapSearchBarController searchBarController;
-        private readonly string searchText;
+        private readonly string? searchText;
         private readonly NavmapSearchPlaceFilter filter;
         private readonly NavmapSearchPlaceSorting sorting;
+        private readonly string? category;
         private readonly Action<IReadOnlyList<PlacesData.PlaceInfo>> callback;
         private readonly int pageNumber;
         private readonly int pageSize;
@@ -31,12 +32,13 @@ namespace DCL.Navmap
             PlacesAndEventsPanelController placesAndEventsPanelController,
             SearchResultPanelController searchResultPanelController,
             NavmapSearchBarController searchBarController,
-            string searchText,
-            NavmapSearchPlaceFilter filter,
-            NavmapSearchPlaceSorting sorting,
             Action<IReadOnlyList<PlacesData.PlaceInfo>> callback,
+            string? searchText = null,
+            NavmapSearchPlaceFilter filter = NavmapSearchPlaceFilter.All,
+            NavmapSearchPlaceSorting sorting = NavmapSearchPlaceSorting.MostActive,
             int pageNumber = 0,
-            int pageSize = 8)
+            int pageSize = 8,
+            string? category = null)
         {
             this.placesAPIService = placesAPIService;
             this.eventsApiService = eventsApiService;
@@ -46,6 +48,7 @@ namespace DCL.Navmap
             this.searchText = searchText;
             this.filter = filter;
             this.sorting = sorting;
+            this.category = category;
             this.callback = callback;
             this.pageNumber = pageNumber;
             this.pageSize = pageSize;
@@ -108,7 +111,7 @@ namespace DCL.Navmap
 
         private async UniTask ProcessPlacesAsync(CancellationToken ct)
         {
-            searchBarController.SetInputText(searchText);
+            searchBarController.SetInputText(searchText ?? category ?? string.Empty);
             searchBarController.Interactable = true;
 
             if (places == null)
@@ -119,22 +122,26 @@ namespace DCL.Navmap
 
                 if (filter == NavmapSearchPlaceFilter.All)
                 {
-                    using PlacesData.IPlacesAPIResponse response = await placesAPIService.SearchPlacesAsync(searchText, pageNumber, pageSize, ct,
-                        sort, sortDirection);
+                    using PlacesData.IPlacesAPIResponse response = await placesAPIService.SearchPlacesAsync(pageNumber, pageSize, ct,
+                        searchText: searchText,
+                        sortBy: sort, sortDirection: sortDirection,
+                        category: category);
                     places.AddRange(response.Data);
                 }
                 else if (filter == NavmapSearchPlaceFilter.Favorites)
                 {
-                    using PoolExtensions.Scope<List<PlacesData.PlaceInfo>> response = await placesAPIService.GetFavoritesAsync(pageNumber, pageSize, ct,
+                    using PoolExtensions.Scope<List<PlacesData.PlaceInfo>> response = await placesAPIService.GetFavoritesAsync(
+                        pageNumber, pageSize, ct,
                         // We have to renew cache, otherwise it throws an exception by trying to release the list from the pool
                         // Something is not right there
-                        true, sort, sortDirection);
+                        renewCache: true,
+                        sortByBy: sort, sortDirection: sortDirection,
+                        category: category);
                     places.AddRange(response.Value);
                 }
                 else if (filter == NavmapSearchPlaceFilter.Visited)
                 {
                     // TODO: implement visited places
-                    places = new List<PlacesData.PlaceInfo>(0);
                 }
             }
 

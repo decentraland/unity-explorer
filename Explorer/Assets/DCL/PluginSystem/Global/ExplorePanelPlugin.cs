@@ -370,10 +370,14 @@ namespace DCL.PluginSystem.Global
             }
         }
 
-        private INavmapCommand CreateSearchPlaceCommand(string search, NavmapSearchPlaceFilter filter, NavmapSearchPlaceSorting sorting,
-            Action<IReadOnlyList<PlacesData.PlaceInfo>> callback) =>
+        private INavmapCommand CreateSearchPlaceCommand(Action<IReadOnlyList<PlacesData.PlaceInfo>> callback,
+            string? search = null,
+            NavmapSearchPlaceFilter filter = NavmapSearchPlaceFilter.All,
+            NavmapSearchPlaceSorting sorting = NavmapSearchPlaceSorting.MostActive,
+            string? category = null) =>
             new SearchForPlaceAndShowResultsCommand(placesAPIService, eventsApiService, placesAndEventsPanelController!,
-                searchResultPanelController!, searchBarController!, search, filter, sorting, callback);
+                searchResultPanelController!, searchBarController!, callback,
+                searchText: search, filter: filter, sorting: sorting, category: category);
 
         private INavmapCommand CreateShowPlaceCommand(PlacesData.PlaceInfo placeInfo) =>
             new ShowPlaceInfoCommand(placeInfo, navmapView!, placeInfoPanelController!, placesAndEventsPanelController!, eventsApiService,
