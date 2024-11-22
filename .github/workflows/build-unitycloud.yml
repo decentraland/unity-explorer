@@ -105,7 +105,12 @@ jobs:
       
       - name: Get commit SHA
         id: get_commit_sha
-        run: echo "commit_sha=${{ github.event.pull_request.head.sha }}" >> $GITHUB_OUTPUT
+        run: |
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            echo "commit_sha=${{ github.event.pull_request.head.sha }}" >> $GITHUB_OUTPUT
+          else
+            echo "commit_sha=$GITHUB_SHA" >> $GITHUB_OUTPUT
+          fi
 
       - name: Debug Commit SHA
         run: |
@@ -213,7 +218,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          ref: ${{ github.event.pull_request.head.ref }}
+          ref: ${{ github.event.pull_request.head.ref || github.ref_name }}
 
       - name: Setup python
         uses: actions/setup-python@v5
