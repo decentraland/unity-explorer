@@ -137,6 +137,7 @@ namespace DCL.Rendering.Highlight
                             materialToUse.SetColor(highlightColour, !clear ? settings.Color : Color.clear);
                             materialToUse.SetFloat(outlineWidth, !clear ? settings.Width : 0);
                             materialToUse.SetVector(highlightObjectOffset, Vector3.zero);
+                            commandBuffer.Clear();
                             commandBuffer.DrawRenderer(renderer, materialToUse, 0, 0);
                         }
                     }
