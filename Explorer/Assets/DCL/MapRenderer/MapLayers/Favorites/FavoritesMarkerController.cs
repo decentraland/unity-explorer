@@ -64,8 +64,9 @@ namespace DCL.MapRenderer.MapLayers.Favorites
 
         private async UniTaskVoid GetFavoritesAsync(CancellationToken cancellationToken)
         {
-            using var favoritePlaces = await placesAPIService.GetFavoritesAsync(-1, -1, cancellationToken);
-            foreach (PlacesData.PlaceInfo placeInfo in favoritePlaces.Value)
+            using var favoritePlaces = await placesAPIService.GetFavoritesAsync(cancellationToken);
+
+            foreach (PlacesData.PlaceInfo placeInfo in favoritePlaces.Data)
                 OnMinimapSceneInfoUpdated(placeInfo);
         }
 

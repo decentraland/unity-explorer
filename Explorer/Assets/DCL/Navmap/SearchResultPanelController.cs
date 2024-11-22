@@ -15,6 +15,8 @@ namespace DCL.Navmap
         private readonly ObjectPool<PlaceElementView> resultsPool;
         private readonly INavmapBus navmapBus;
         private CancellationTokenSource? showPlaceInfoCancellationToken;
+        private CancellationTokenSource? fetchMorePlacesCancellationToken;
+        private INavmapBus.SearchPlaceParams paginationSearchParams;
 
         public SearchResultPanelController(SearchResultPanelView view,
             ObjectPool<PlaceElementView> resultsPool,
@@ -24,6 +26,9 @@ namespace DCL.Navmap
             this.resultsPool = resultsPool;
             this.navmapBus = navmapBus;
             usedPoolElements = new Dictionary<string, PlaceElementView>();
+
+            view.NextPageButton.onClick.AddListener(CycleToNextPage);
+            view.PreviousPageButton.onClick.AddListener(CycleToPrevPage);
         }
 
         public void Show()
@@ -71,6 +76,7 @@ namespace DCL.Navmap
             ClearResults();
 
             view.NoResultsContainer.gameObject.SetActive(places.Count == 0);
+            view.PaginationContainer.SetActive(places.Count > 0);
 
             foreach (PlacesData.PlaceInfo placeInfo in places)
             {
@@ -94,6 +100,8 @@ namespace DCL.Navmap
                 });
                 placeElementView.LiveContainer.SetActive(false);
             }
+
+            view.PaginationContainer.transform.SetAsLastSibling();
         }
 
         public void SetLiveEvents(HashSet<string> parcels)
@@ -103,6 +111,30 @@ namespace DCL.Navmap
                 if (!usedPoolElements.TryGetValue(parcel, out PlaceElementView element)) continue;
                 element.LiveContainer.SetActive(true);
             }
+        }
+
+        public void SetPagination(int pageNumber, int pageSize, int totalResultCount,
+            INavmapBus.SearchPlaceParams searchParams)
+        {
+            view.NextPageButton.interactable = totalResultCount / pageSize > pageNumber;
+            view.PreviousPageButton.interactable = pageNumber > 0;
+            paginationSearchParams = searchParams;
+        }
+
+        private void CycleToPrevPage()
+        {
+            fetchMorePlacesCancellationToken = fetchMorePlacesCancellationToken.SafeRestart();
+
+            paginationSearchParams.page--;
+            navmapBus.SearchForPlaceAsync(paginationSearchParams, fetchMorePlacesCancellationToken.Token);
+        }
+
+        private void CycleToNextPage()
+        {
+            fetchMorePlacesCancellationToken = fetchMorePlacesCancellationToken.SafeRestart();
+
+            paginationSearchParams.page++;
+            navmapBus.SearchForPlaceAsync(paginationSearchParams, fetchMorePlacesCancellationToken.Token);
         }
     }
 }

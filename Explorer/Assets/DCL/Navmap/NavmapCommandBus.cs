@@ -10,11 +10,8 @@ namespace DCL.Navmap
     public class NavmapCommandBus : INavmapBus
     {
         public delegate INavmapCommand SearchPlaceFactory(
-            Action<IReadOnlyList<PlacesData.PlaceInfo>> callback,
-            string? search = null,
-            NavmapSearchPlaceFilter filter = NavmapSearchPlaceFilter.All,
-            NavmapSearchPlaceSorting sorting = NavmapSearchPlaceSorting.MostActive,
-            string? category = null);
+            INavmapBus.SearchPlaceResultDelegate callback,
+            INavmapBus.SearchPlaceParams @params);
         public delegate INavmapCommand ShowPlaceInfoFactory(PlacesData.PlaceInfo placeInfo);
         public delegate INavmapCommand ShowEventInfoFactory(EventDTO @event, PlacesData.PlaceInfo? place = null);
 
@@ -25,7 +22,7 @@ namespace DCL.Navmap
 
         public event Action<PlacesData.PlaceInfo>? OnJumpIn;
         public event Action<PlacesData.PlaceInfo>? OnDestinationSelected;
-        public event Action<IReadOnlyList<PlacesData.PlaceInfo>>? OnPlaceSearched;
+        public event INavmapBus.SearchPlaceResultDelegate? OnPlaceSearched;
         public event Action<string?>? OnFilterByCategory;
 
         public NavmapCommandBus(SearchPlaceFactory searchPlaceFactory,
@@ -55,14 +52,9 @@ namespace DCL.Navmap
             commands.Push(command);
         }
 
-        public async UniTask SearchForPlaceAsync(CancellationToken ct,
-            string? place = null,
-            NavmapSearchPlaceFilter filter = NavmapSearchPlaceFilter.All,
-            NavmapSearchPlaceSorting sorting = NavmapSearchPlaceSorting.MostActive,
-            string? category = null)
+        public async UniTask SearchForPlaceAsync(INavmapBus.SearchPlaceParams @params, CancellationToken ct)
         {
-            INavmapCommand command = searchPlaceFactory.Invoke(OnSearchPlacePerformed,
-                search: place, filter: filter, sorting: sorting, category: category);
+            INavmapCommand command = searchPlaceFactory.Invoke(OnSearchPlacePerformed, @params);
 
             await command.ExecuteAsync(ct);
 
@@ -97,7 +89,8 @@ namespace DCL.Navmap
         public void FilterByCategory(string? category) =>
             OnFilterByCategory?.Invoke(category);
 
-        public void OnSearchPlacePerformed(IReadOnlyList<PlacesData.PlaceInfo> places) =>
-            OnPlaceSearched?.Invoke(places);
+        private void OnSearchPlacePerformed(INavmapBus.SearchPlaceParams @params,
+            IReadOnlyList<PlacesData.PlaceInfo> places, int totalResultCount) =>
+            OnPlaceSearched?.Invoke(@params, places, totalResultCount);
     }
 }

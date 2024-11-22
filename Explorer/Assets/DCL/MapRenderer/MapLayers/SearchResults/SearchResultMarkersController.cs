@@ -45,7 +45,8 @@ namespace DCL.MapRenderer.MapLayers.SearchResults
 
         public async UniTask InitializeAsync(CancellationToken cancellationToken) { }
 
-        private void OnPlaceSearched(IReadOnlyList<PlacesData.PlaceInfo> searchedPlaces)
+        private void OnPlaceSearched(INavmapBus.SearchPlaceParams searchParams,
+            IReadOnlyList<PlacesData.PlaceInfo> places, int totalResultCount)
         {
             foreach (ISearchResultMarker? marker in markers.Values)
             {
@@ -55,7 +56,7 @@ namespace DCL.MapRenderer.MapLayers.SearchResults
 
             markers.Clear();
 
-            foreach (PlacesData.PlaceInfo placeInfo in searchedPlaces)
+            foreach (PlacesData.PlaceInfo placeInfo in places)
             {
                 if (markers.ContainsKey(MapLayerUtils.GetParcelsCenter(placeInfo)))
                     continue;
