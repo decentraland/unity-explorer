@@ -59,7 +59,7 @@ namespace DCL.CharacterTriggerArea.Components
 
             monoBehaviour!.BoxCollider.size = AreaSize;
 
-            if (!monoBehaviour.BoxCollider.enabled)
+            if (!monoBehaviour!.BoxCollider.enabled)
                 monoBehaviour.BoxCollider.enabled = true;
 
         }
