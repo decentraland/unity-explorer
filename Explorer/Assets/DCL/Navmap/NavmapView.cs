@@ -23,12 +23,13 @@ namespace DCL.Navmap
         public PlacesAndEventsPanelView PlacesAndEventsPanelView { get; private set; }
 
         [field: SerializeField]
-        public HistoryRecordPanelView HistoryRecordPanelView;
+        public PlaceInfoToastView PlaceToastView { get; private set; }
 
-        [FormerlySerializedAs("eventInfoCard")]
-        [FormerlySerializedAs("floatingPanelView")]
         [field: SerializeField]
-        public EventInfoCardView eventInfoCardView;
+        public SharePlacesAndEventsContextMenuView ShareContextMenuView { get; private set; }
+
+        [field: SerializeField]
+        public HistoryRecordPanelView HistoryRecordPanelView;
 
         [field: SerializeField]
         public NavmapZoomView zoomView;

@@ -35,6 +35,7 @@ namespace DCL.Navmap
         private readonly NavmapSearchBarController searchBarController;
         private readonly RectTransform rectTransform;
         private readonly SatelliteController satelliteController;
+        private readonly PlaceInfoToastController placeToastController;
         private readonly IRealmData realmData;
         private readonly IMapPathEventBus mapPathEventBus;
         private readonly UIAudioEventsBus audioEventsBus;
@@ -42,7 +43,6 @@ namespace DCL.Navmap
         private readonly Mouse mouse;
         private readonly StringBuilder parcelTitleStringBuilder = new ();
         private readonly NavmapLocationController navmapLocationController;
-        private readonly EventInfoCardController eventInfoCardController;
 
         private CancellationTokenSource? animationCts;
         private IMapCameraController? cameraController;
@@ -69,8 +69,8 @@ namespace DCL.Navmap
             PlacesAndEventsPanelController placesAndEventsPanelController,
             NavmapSearchBarController navmapSearchBarController,
             NavmapZoomController navmapZoomController,
-            EventInfoCardController infoCardController,
-            SatelliteController satelliteController)
+            SatelliteController satelliteController,
+            PlaceInfoToastController placeToastController)
         {
             this.navmapView = navmapView;
             this.mapRenderer = mapRenderer;
@@ -84,10 +84,10 @@ namespace DCL.Navmap
 
             zoomController = navmapZoomController;
             searchBarController = navmapSearchBarController;
-            eventInfoCardController = infoCardController;
             navmapBus.OnDestinationSelected += SetDestination;
             this.navmapView.DestinationInfoElement.QuitButton.onClick.AddListener(OnRemoveDestinationButtonClicked);
             this.satelliteController = satelliteController;
+            this.placeToastController = placeToastController;
             mapPathEventBus.OnRemovedDestination += RemoveDestination;
 
             this.navmapView.SatelliteRenderImage.ParcelClicked += OnParcelClicked;
@@ -113,7 +113,6 @@ namespace DCL.Navmap
             navmapView.SatelliteRenderImage.HoveredMapPin -= OnMapPinHovered;
             animationCts?.Dispose();
             zoomController.Dispose();
-            eventInfoCardController.Dispose();
             searchBarController.Dispose();
         }
 
@@ -161,7 +160,9 @@ namespace DCL.Navmap
         {
             lastParcelClicked = clickedParcel;
             audioEventsBus.SendPlayAudioEvent(navmapView.ClickAudio);
-            eventInfoCardController.Show(clickedParcel.Parcel, clickedParcel.PinMarker);
+            // TODO: move the show of the toast when hovering over map pins after few seconds
+            // placeToastController.Show();
+            // placeToastController.Set(clickedParcel.Parcel);
         }
 
         public void Activate()

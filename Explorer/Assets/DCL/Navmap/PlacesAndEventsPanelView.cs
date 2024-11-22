@@ -22,9 +22,6 @@ namespace DCL.Navmap
         [field: SerializeField]
         public SearchFiltersView SearchFiltersView { get; private set; }
 
-        [field: SerializeField]
-        public SharePlacesAndEventsContextMenuView ShareContextMenuView { get; private set; }
-
         public event Action? PointerEnter;
         public event Action? PointerExit;
 

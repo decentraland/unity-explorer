@@ -54,7 +54,7 @@ namespace DCL.Navmap
             searchBarController.EnableBack();
             searchBarController.HideHistoryResults();
 
-            events ??= await eventsApiService.GetEventsByParcelAsync(placeInfo.base_position, ct, true);
+            events ??= await eventsApiService.GetEventsByParcelAsync(placeInfo.Positions, ct, true);
 
             if (events.Count > 0)
                 placeInfoPanelController.SetLiveEvent(events[0]);
