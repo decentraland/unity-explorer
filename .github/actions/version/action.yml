@@ -4,7 +4,7 @@ inputs:
   tag:
     description: 'Formatted version tag. If not set, it uses the latest version tag (v[0-9]*)'
     required: false
-   commit_sha:
+  commit_sha:
     description: 'The commit SHA to use for versioning'
     required: true
 outputs:
