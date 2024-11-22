@@ -32,6 +32,9 @@ outputs:
 runs:
   using: "composite"
   steps:
+    - name: Fetch main branch and tags
+      run: git fetch --tags origin main
+
     - name: Get latest version tag
       if: ${{ !inputs.tag }}
       id: get_latest_version_tag
