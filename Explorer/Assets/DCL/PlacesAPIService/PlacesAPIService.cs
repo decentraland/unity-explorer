@@ -63,8 +63,12 @@ namespace DCL.PlacesAPIService
             if (!response.ok)
                 return null;
 
+            if (response.data.Count == 0)
+                return null;
+
             PlacesData.PlaceInfo place = response.data[0];
             TryCachePlace(place);
+
             return place;
         }
 
