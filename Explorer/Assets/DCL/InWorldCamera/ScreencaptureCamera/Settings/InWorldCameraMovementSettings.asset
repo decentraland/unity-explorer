@@ -12,15 +12,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a50583937ce8443db2484d3a145e33fc, type: 3}
   m_Name: InWorldCameraMovementSettings
   m_EditorClassIdentifier: 
-  <MaxDistanceFromPlayer>k__BackingField: 16
-  <TranslationSpeed>k__BackingField: 5
+  <MaxDistanceFromPlayer>k__BackingField: 50
+  <TranslationSpeed>k__BackingField: 7
   <MouseTranslationSpeed>k__BackingField: 0.05
   <RunSpeedMultiplayer>k__BackingField: 2
-  <FOVChangeSpeed>k__BackingField: 3
+  <FOVChangeSpeed>k__BackingField: 2
   <FOVDamping>k__BackingField: 0.5
-  <MinFOV>k__BackingField: 16
-  <MaxFOV>k__BackingField: 170
-  <RotationSpeed>k__BackingField: 2
+  <MinFOV>k__BackingField: 10
+  <MaxFOV>k__BackingField: 120
+  <RotationSpeed>k__BackingField: 3
   <MaxRotationPerFrame>k__BackingField: 10
   <RotationDamping>k__BackingField: 0.1
   <MinVerticalAngle>k__BackingField: -90
