@@ -2,12 +2,15 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.Browser;
 using DCL.Character;
+using DCL.Clipboard;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.InWorldCamera.PhotoDetail;
 using DCL.InWorldCamera.ScreencaptureCamera;
 using DCL.InWorldCamera.ScreencaptureCamera.Systems;
 using DCL.InWorldCamera.ScreencaptureCamera.UI;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PlacesAPIService;
 using DCL.Profiles.Self;
 using ECS;
@@ -33,7 +36,11 @@ namespace DCL.PluginSystem.Global
         private readonly ICharacterObject characterObject;
         private readonly ICoroutineRunner coroutineRunner;
         private readonly ICameraReelStorageService cameraReelStorageService;
+        private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
         private readonly IMVCManager mvcManager;
+        private readonly ISystemClipboard systemClipboard;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
+        private readonly IWebBrowser webBrowser;
 
         private ProvidedAsset<GameObject> hudPrefab;
         private ScreenRecorder recorder;
@@ -42,7 +49,8 @@ namespace DCL.PluginSystem.Global
 
         public InWorldCameraPlugin(DCLInput input, IAssetsProvisioner assetsProvisioner, SelfProfile selfProfile,
             RealmData realmData, Entity playerEntity, IPlacesAPIService placesAPIService, ICharacterObject characterObject, ICoroutineRunner coroutineRunner,
-            ICameraReelStorageService cameraReelStorageService, IMVCManager mvcManager)
+            ICameraReelStorageService cameraReelStorageService, ICameraReelScreenshotsStorage cameraReelScreenshotsStorage, IMVCManager mvcManager,
+            ISystemClipboard systemClipboard, IDecentralandUrlsSource decentralandUrlsSource, IWebBrowser webBrowser)
         {
             this.input = input;
             this.assetsProvisioner = assetsProvisioner;
@@ -53,7 +61,11 @@ namespace DCL.PluginSystem.Global
             this.characterObject = characterObject;
             this.coroutineRunner = coroutineRunner;
             this.cameraReelStorageService = cameraReelStorageService;
+            this.cameraReelScreenshotsStorage = cameraReelScreenshotsStorage;
             this.mvcManager = mvcManager;
+            this.systemClipboard = systemClipboard;
+            this.decentralandUrlsSource = decentralandUrlsSource;
+            this.webBrowser = webBrowser;
         }
 
         public async UniTask InitializeAsync(InWorldCameraSettings settings, CancellationToken ct)
@@ -68,7 +80,13 @@ namespace DCL.PluginSystem.Global
             recorder = new ScreenRecorder(hud.GetComponent<RectTransform>());
             metadataBuilder = new ScreenshotMetadataBuilder(selfProfile, characterObject.Controller, realmData, placesAPIService);
 
-            mvcManager.RegisterController(new PhotoDetailController(viewFactoryMethod));
+            mvcManager.RegisterController(new PhotoDetailController(viewFactoryMethod,
+                new PhotoDetailInfoController(explorePanelView.GetComponentInChildren<PhotoDetailInfoView>(), cameraReelStorageService),
+                cameraReelScreenshotsStorage,
+                systemClipboard,
+                decentralandUrlsSource,
+                webBrowser,
+                settings.ShareToXMessage));
         }
 
         public void Dispose()
@@ -91,6 +109,7 @@ namespace DCL.PluginSystem.Global
 
             [field: Header("Photo detail")]
             [field: SerializeField] internal AssetReferenceGameObject PhotoDetailPrefab { get; private set; }
+            [field: SerializeField, Tooltip("Spaces will be HTTP sanitized, care for special characters")] internal string ShareToXMessage { get; private set; }
         }
     }
 }

@@ -655,6 +655,13 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+        <PhotoDetailPrefab>k__BackingField:
+          m_AssetGUID: 183d02953ce77467786739e7cfb2d766
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <ShareToXMessage>k__BackingField: Check out what I'm doing in Decentraland
+          right now and join me!
     - rid: 7162477498503790594
       type: {class: ExternalUrlPromptPlugin/ExternalUrlPromptSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:

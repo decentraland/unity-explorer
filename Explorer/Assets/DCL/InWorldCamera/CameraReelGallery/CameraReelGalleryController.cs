@@ -6,6 +6,7 @@ using DCL.ExplorePanel.Components;
 using DCL.InWorldCamera.CameraReelGallery.Components;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
+using DCL.InWorldCamera.ReelActions;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DG.Tweening;
 using System;
@@ -137,21 +138,16 @@ namespace DCL.InWorldCamera.CameraReelGallery
 
                 this.contextMenuController.ShareToXRequested += cameraReelResponse =>
                 {
-                    string description = shareToXMessage.Replace(" ", "%20");
-                    string url = $"{decentralandUrlsSource.Url(DecentralandUrl.CameraReelLink)}/{cameraReelResponse.id}";
-                    string xUrl = $"https://x.com/intent/post?text={description}&hashtags=DCLCamera&url={url}";
-
-                    systemClipboard.Set(xUrl);
-                    webBrowser.OpenUrl(xUrl);
+                    ReelCommonActions.ShareReelToX(shareToXMessage, cameraReelResponse.id, decentralandUrlsSource, systemClipboard, webBrowser);
                 };
 
                 this.contextMenuController.CopyPictureLinkRequested += cameraReelResponse =>
                 {
-                    systemClipboard.Set($"{decentralandUrlsSource.Url(DecentralandUrl.CameraReelLink)}/{cameraReelResponse.id}");
+                    ReelCommonActions.CopyReelLink(cameraReelResponse.id, decentralandUrlsSource, systemClipboard);
                     ShowSuccessNotificationAsync(linkCopiedMessage).Forget();
                 };
 
-                this.contextMenuController.DownloadRequested += cameraReelResponse => { webBrowser.OpenUrl(cameraReelResponse.url); };
+                this.contextMenuController.DownloadRequested += cameraReelResponse => { ReelCommonActions.DownloadReel(cameraReelResponse.url, webBrowser); };
 
                 this.contextMenuController.DeletePictureRequested += cameraReelResponse =>
                 {
