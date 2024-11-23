@@ -104,6 +104,9 @@ namespace DCL.Navmap
             view.inputField.SetTextWithoutNotify(string.Empty);
 
             view.clearSearchButton.gameObject.SetActive(false);
+
+            searchCancellationToken = searchCancellationToken.SafeRestart();
+            DoDefaultSearch(searchCancellationToken.Token).Forget();
         }
 
         public void EnableBack()
@@ -140,6 +143,7 @@ namespace DCL.Navmap
             if (string.IsNullOrEmpty(searchText))
             {
                 historyRecordPanelView.gameObject.SetActive(true);
+                DoDefaultSearch(searchCancellationToken.Token).Forget();
                 return;
             }
 

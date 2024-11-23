@@ -69,17 +69,13 @@ namespace DCL.MapRenderer.MapLayers.Categories
 
         private void OnPlaceSearched(INavmapBus.SearchPlaceParams searchparams, IReadOnlyList<PlacesData.PlaceInfo> places, int totalresultcount)
         {
-            if (string.IsNullOrEmpty(searchparams.category))
-            {
-                ReleaseMarkers();
-                return;
-            }
+            ReleaseMarkers();
 
-            Debug.Log($"category is {searchparams.category} and mapLayer is {mapLayer}");
+            if (string.IsNullOrEmpty(searchparams.category) || !string.IsNullOrEmpty(searchparams.text))
+                return;
+
             if (!string.IsNullOrEmpty(searchparams.category) && searchparams.category == mapLayer.ToString())
-            {
                 ShowPlaces(places);
-            }
         }
 
         public async UniTask InitializeAsync(CancellationToken cancellationToken)
@@ -104,6 +100,7 @@ namespace DCL.MapRenderer.MapLayers.Categories
                 marker.SetData(placeInfo.title, position);
                 marker.SetCategorySprite(categoryIconMappings.GetCategoryImage(mapLayer));
                 markers.Add(MapLayerUtils.GetParcelsCenter(placeInfo), marker);
+                marker.SetZoom(coordsUtils.ParcelSize, baseZoom, zoom);
 
                 if (isEnabled)
                     mapCullingController.StartTracking(marker, this);

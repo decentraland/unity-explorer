@@ -56,6 +56,9 @@ namespace DCL.MapRenderer.MapLayers.SearchResults
 
             markers.Clear();
 
+            if (!string.IsNullOrEmpty(searchParams.category))
+                return;
+
             foreach (PlacesData.PlaceInfo placeInfo in places)
             {
                 if (markers.ContainsKey(MapLayerUtils.GetParcelsCenter(placeInfo)))
