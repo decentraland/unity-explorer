@@ -4,6 +4,7 @@ using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapLayers;
 using DCL.MapRenderer.MapLayers.Categories;
+using DCL.Navmap;
 using DCL.PlacesAPIService;
 using System.Collections.Generic;
 using System.Threading;
@@ -17,7 +18,6 @@ namespace DCL.MapRenderer.ComponentsFactory
         private const int PREWARM_COUNT = 60;
 
         private Dictionary<MapLayer, IMapLayerController> writer;
-        private IAssetsProvisioner assetsProvisioner;
         private IMapRendererSettings mapSettings;
         private IPlacesAPIService placesAPIService;
 
@@ -27,16 +27,15 @@ namespace DCL.MapRenderer.ComponentsFactory
             MapRendererConfiguration configuration,
             ICoordsUtils coordsUtils,
             IMapCullingController cullingController,
-            IAssetsProvisioner assetsProv,
             IMapRendererSettings settings,
             IPlacesAPIService placesAPI,
             ObjectPool<ClusterMarkerObject> clusterObjectsPool,
             CategoryMarkerObject prefab,
+            INavmapBus navmapBus,
             CancellationToken cancellationToken
         )
         {
             mapSettings = settings;
-            assetsProvisioner = assetsProv;
             placesAPIService = placesAPI;
             this.writer = layerWriter;
 
@@ -46,17 +45,17 @@ namespace DCL.MapRenderer.ComponentsFactory
                 actionOnGet: obj => obj.gameObject.SetActive(true),
                 actionOnRelease: obj => obj.gameObject.SetActive(false));
 
-            var artController = CreateCategoryController(MapLayer.Art, objectsPool, clusterObjectsPool, configuration, coordsUtils, cullingController);
-            var gameController = CreateCategoryController(MapLayer.Game, objectsPool, clusterObjectsPool, configuration, coordsUtils, cullingController);
-            var cryptoController = CreateCategoryController(MapLayer.Crypto, objectsPool, clusterObjectsPool, configuration, coordsUtils, cullingController);
-            var educationController = CreateCategoryController(MapLayer.Education, objectsPool, clusterObjectsPool, configuration, coordsUtils, cullingController);
-            var socialController = CreateCategoryController(MapLayer.Social, objectsPool, clusterObjectsPool, configuration, coordsUtils, cullingController);
-            var businessController = CreateCategoryController(MapLayer.Business, objectsPool, clusterObjectsPool, configuration, coordsUtils, cullingController);
-            var casinoController = CreateCategoryController(MapLayer.Casino, objectsPool, clusterObjectsPool, configuration, coordsUtils, cullingController);
-            var fashionController = CreateCategoryController(MapLayer.Fashion, objectsPool, clusterObjectsPool, configuration, coordsUtils, cullingController);
-            var musicController = CreateCategoryController(MapLayer.Music, objectsPool, clusterObjectsPool, configuration, coordsUtils, cullingController);
-            var shopController = CreateCategoryController(MapLayer.Shop, objectsPool, clusterObjectsPool, configuration, coordsUtils, cullingController);
-            var sportsController = CreateCategoryController(MapLayer.Sports, objectsPool, clusterObjectsPool, configuration, coordsUtils, cullingController);
+            var artController = CreateCategoryController(MapLayer.Art, objectsPool, clusterObjectsPool, configuration, coordsUtils, cullingController, navmapBus);
+            var gameController = CreateCategoryController(MapLayer.Game, objectsPool, clusterObjectsPool, configuration, coordsUtils, cullingController, navmapBus);
+            var cryptoController = CreateCategoryController(MapLayer.Crypto, objectsPool, clusterObjectsPool, configuration, coordsUtils, cullingController, navmapBus);
+            var educationController = CreateCategoryController(MapLayer.Education, objectsPool, clusterObjectsPool, configuration, coordsUtils, cullingController, navmapBus);
+            var socialController = CreateCategoryController(MapLayer.Social, objectsPool, clusterObjectsPool, configuration, coordsUtils, cullingController, navmapBus);
+            var businessController = CreateCategoryController(MapLayer.Business, objectsPool, clusterObjectsPool, configuration, coordsUtils, cullingController, navmapBus);
+            var casinoController = CreateCategoryController(MapLayer.Casino, objectsPool, clusterObjectsPool, configuration, coordsUtils, cullingController, navmapBus);
+            var fashionController = CreateCategoryController(MapLayer.Fashion, objectsPool, clusterObjectsPool, configuration, coordsUtils, cullingController, navmapBus);
+            var musicController = CreateCategoryController(MapLayer.Music, objectsPool, clusterObjectsPool, configuration, coordsUtils, cullingController, navmapBus);
+            var shopController = CreateCategoryController(MapLayer.Shop, objectsPool, clusterObjectsPool, configuration, coordsUtils, cullingController, navmapBus);
+            var sportsController = CreateCategoryController(MapLayer.Sports, objectsPool, clusterObjectsPool, configuration, coordsUtils, cullingController, navmapBus);
 
             await InitializeControllerAsync(artController, MapLayer.Art, cancellationToken);
             zoomScalingWriter.Add(artController);
@@ -82,7 +81,7 @@ namespace DCL.MapRenderer.ComponentsFactory
             zoomScalingWriter.Add(sportsController);
         }
 
-        private CategoryMarkersController CreateCategoryController(MapLayer layer, ObjectPool<CategoryMarkerObject> objectsPool, ObjectPool<ClusterMarkerObject> clusterObjectsPool, MapRendererConfiguration configuration, ICoordsUtils coordsUtils, IMapCullingController cullingController)
+        private CategoryMarkersController CreateCategoryController(MapLayer layer, ObjectPool<CategoryMarkerObject> objectsPool, ObjectPool<ClusterMarkerObject> clusterObjectsPool, MapRendererConfiguration configuration, ICoordsUtils coordsUtils, IMapCullingController cullingController, INavmapBus navmapBus)
         {
             return new CategoryMarkersController(
                 placesAPIService,
@@ -93,7 +92,8 @@ namespace DCL.MapRenderer.ComponentsFactory
                 cullingController,
                 mapSettings.CategoryIconMappings,
                 layer,
-                new ClusterController(cullingController, clusterObjectsPool, CreateClusterMarker, coordsUtils, layer, mapSettings.CategoryIconMappings)
+                new ClusterController(cullingController, clusterObjectsPool, CreateClusterMarker, coordsUtils, layer, mapSettings.CategoryIconMappings),
+                navmapBus
             );
         }
 

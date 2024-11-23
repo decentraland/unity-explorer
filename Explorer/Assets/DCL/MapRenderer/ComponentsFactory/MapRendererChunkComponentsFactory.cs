@@ -120,7 +120,7 @@ namespace DCL.MapRenderer.ComponentsFactory
                 CreateSatelliteAtlasAsync(layers, configuration, coordsUtils, cullingController, cancellationToken),
                 playerMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, mapSettings, assetsProvisioner, mapPathEventBus, cancellationToken),
                 sceneOfInterestMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, assetsProvisioner, mapSettings, placesAPIService, clusterObjectsPool, cancellationToken),
-                categoriesMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, assetsProvisioner, mapSettings, placesAPIService, clusterObjectsPool, categoryMarkerPrefab, cancellationToken),
+                categoriesMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, mapSettings, placesAPIService, clusterObjectsPool, categoryMarkerPrefab, navmapBus, cancellationToken),
                 liveEventsMarkersInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, assetsProvisioner, mapSettings, eventsApiService, clusterObjectsPool, categoryMarkerPrefab, cancellationToken),
                 favoritesMarkersInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, placesAPIService, assetsProvisioner, mapSettings, clusterObjectsPool, cancellationToken),
                 hotUsersMarkersInstaller.InstallAsync(layers, configuration, coordsUtils, cullingController, assetsProvisioner, mapSettings, teleportBusController, remoteUsersRequestController, cancellationToken),

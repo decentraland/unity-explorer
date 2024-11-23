@@ -1,12 +1,15 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.MapRenderer.Culling;
+using DCL.Navmap;
 using DCL.PlacesAPIService;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Pool;
 using ICoordsUtils = DCL.MapRenderer.CoordsUtils.ICoordsUtils;
 using IPlacesAPIService = DCL.PlacesAPIService.IPlacesAPIService;
+using PlacesData = DCL.PlacesAPIService.PlacesData;
 
 namespace DCL.MapRenderer.MapLayers.Categories
 {
@@ -30,6 +33,7 @@ namespace DCL.MapRenderer.MapLayers.Categories
         private readonly CategoryIconMappingsSO categoryIconMappings;
         private readonly IPlacesAPIService placesAPIService;
         private readonly ClusterController clusterController;
+        private readonly INavmapBus navmapBus;
 
         private readonly Dictionary<Vector2Int, IClusterableMarker> markers = new();
 
@@ -49,7 +53,8 @@ namespace DCL.MapRenderer.MapLayers.Categories
             IMapCullingController cullingController,
             CategoryIconMappingsSO categoryIconMappings,
             MapLayer mapLayer,
-            ClusterController clusterController)
+            ClusterController clusterController,
+            INavmapBus navmapBus)
             : base(instantiationParent, coordsUtils, cullingController)
         {
             this.placesAPIService = placesAPIService;
@@ -58,6 +63,23 @@ namespace DCL.MapRenderer.MapLayers.Categories
             this.categoryIconMappings = categoryIconMappings;
             this.mapLayer = mapLayer;
             this.clusterController = clusterController;
+            this.navmapBus = navmapBus;
+            this.navmapBus.OnPlaceSearched += OnPlaceSearched;
+        }
+
+        private void OnPlaceSearched(INavmapBus.SearchPlaceParams searchparams, IReadOnlyList<PlacesData.PlaceInfo> places, int totalresultcount)
+        {
+            if (string.IsNullOrEmpty(searchparams.category))
+            {
+                ReleaseMarkers();
+                return;
+            }
+
+            Debug.Log($"category is {searchparams.category} and mapLayer is {mapLayer}");
+            if (!string.IsNullOrEmpty(searchparams.category) && searchparams.category == mapLayer.ToString())
+            {
+                ShowPlaces(places);
+            }
         }
 
         public async UniTask InitializeAsync(CancellationToken cancellationToken)
@@ -65,24 +87,23 @@ namespace DCL.MapRenderer.MapLayers.Categories
 
         }
 
-        private async UniTask LoadPlaces(CancellationToken cancellationToken)
+        private void ShowPlaces(IReadOnlyList<PlacesData.PlaceInfo> places)
         {
-            IReadOnlyList<OptimizedPlaceInMapResponse> placesOfCategory = await placesAPIService.GetOptimizedPlacesFromTheMap(MapLayerUtils.MapLayerToCategory[mapLayer], cancellationToken);
-
-            foreach (OptimizedPlaceInMapResponse placeInfo in placesOfCategory)
+            ReleaseMarkers();
+            foreach (PlacesData.PlaceInfo placeInfo in places)
             {
-                if (markers.ContainsKey(placeInfo.base_position))
+                if (markers.ContainsKey(MapLayerUtils.GetParcelsCenter(placeInfo)))
                     continue;
 
                 if (IsEmptyParcel(placeInfo))
                     continue;
 
                 var marker = builder(objectsPool, mapCullingController, coordsUtils);
-                var position = coordsUtils.CoordsToPosition(placeInfo.base_position);
+                var position = coordsUtils.CoordsToPosition(MapLayerUtils.GetParcelsCenter(placeInfo));
 
-                marker.SetData(placeInfo.name, position);
+                marker.SetData(placeInfo.title, position);
                 marker.SetCategorySprite(categoryIconMappings.GetCategoryImage(mapLayer));
-                markers.Add(placeInfo.base_position, marker);
+                markers.Add(MapLayerUtils.GetParcelsCenter(placeInfo), marker);
 
                 if (isEnabled)
                     mapCullingController.StartTracking(marker, this);
@@ -91,8 +112,8 @@ namespace DCL.MapRenderer.MapLayers.Categories
             arePlacesLoaded = true;
         }
 
-        private static bool IsEmptyParcel(OptimizedPlaceInMapResponse sceneInfo) =>
-            sceneInfo.name == EMPTY_PARCEL_NAME;
+        private static bool IsEmptyParcel(PlacesData.PlaceInfo sceneInfo) =>
+            sceneInfo.title == EMPTY_PARCEL_NAME;
 
         public void ApplyCameraZoom(float baseZoom, float zoom, int zoomLevel)
         {
@@ -125,9 +146,6 @@ namespace DCL.MapRenderer.MapLayers.Categories
 
         public async UniTask Enable(CancellationToken cancellationToken)
         {
-            if(!arePlacesLoaded)
-                await LoadPlaces(cancellationToken);
-
             foreach (ICategoryMarker marker in markers.Values)
                 mapCullingController.StartTracking(marker, this);
 
@@ -159,6 +177,18 @@ namespace DCL.MapRenderer.MapLayers.Categories
         public void OnMapObjectCulled(ICategoryMarker marker)
         {
             marker.OnBecameInvisible();
+        }
+
+        private void ReleaseMarkers()
+        {
+            foreach (ICategoryMarker marker in markers.Values)
+            {
+                mapCullingController.StopTracking(marker);
+                marker.OnBecameInvisible();
+            }
+
+            markers.Clear();
+            clusterController.Disable();
         }
     }
 }
