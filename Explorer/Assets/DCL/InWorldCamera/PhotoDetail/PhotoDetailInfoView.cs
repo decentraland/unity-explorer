@@ -13,7 +13,7 @@ namespace DCL.InWorldCamera.PhotoDetail
         [SerializeField] internal Button ownerProfileButton;
         [SerializeField] internal GameObject unusedVisiblePersonViewContainer;
         [SerializeField] internal RectTransform visiblePersonContainer;
-        [SerializeField] internal GameObject loadingState;
+        [SerializeField] internal InfoSidePanelLoadingView loadingState;
 
         [Header("Prefabs")]
         [SerializeField] internal VisiblePersonView visiblePersonViewPrefab;

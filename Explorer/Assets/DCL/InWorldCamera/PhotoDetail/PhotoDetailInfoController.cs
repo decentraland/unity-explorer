@@ -35,7 +35,7 @@ namespace DCL.InWorldCamera.PhotoDetail
 
         public async UniTask ShowPhotoDetailInfoAsync(string reelId, CancellationToken ct)
         {
-            view.loadingState.SetActive(true);
+            view.loadingState.Show();
             CameraReelResponse reelData = await cameraReelStorageService.GetScreenshotsMetadataAsync(reelId, ct);
 
             view.dateText.SetText(ReelUtility.GetDateTimeFromString(reelData.metadata.dateTime).ToString("MMMM dd, yyyy", CultureInfo.InvariantCulture));
@@ -43,7 +43,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             view.sceneInfo.SetText($"{reelData.metadata.scene.name}, {reelData.metadata.scene.location.x}, {reelData.metadata.scene.location.y}");
 
             await PopulateVisiblePersons(reelData.metadata.visiblePeople, ct);
-            view.loadingState.SetActive(false);
+            view.loadingState.Hide();
         }
 
         private async UniTask PopulateVisiblePersons(VisiblePerson[] visiblePeople, CancellationToken ct)

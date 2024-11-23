@@ -129,13 +129,14 @@ namespace DCL.InWorldCamera.PhotoDetail
             viewInstance!.mainImageLoadingSpinner.gameObject.SetActive(true);
             CameraReelResponseCompact reel = inputData.AllReels[reelIndex];
 
+            UniTask detailInfoTask = photoDetailInfoController.ShowPhotoDetailInfoAsync(reel.id, ct);
             Texture2D reelTexture = await cameraReelScreenshotsStorage.GetScreenshotImageAsync(reel.url, ct);
             viewInstance!.mainImage.sprite = Sprite.Create(reelTexture, new Rect(0, 0, reelTexture.width, reelTexture.height), Vector2.zero);
 
             viewInstance!.mainImageLoadingSpinner.gameObject.SetActive(false);
             viewInstance.mainImageCanvasGroup.DOFade(1, viewInstance.imageFadeInDuration);
 
-            await photoDetailInfoController.ShowPhotoDetailInfoAsync(reel.id, ct);
+            await detailInfoTask;
 
             CheckNavigationButtonVisibility(inputData.AllReels, reelIndex);
         }
