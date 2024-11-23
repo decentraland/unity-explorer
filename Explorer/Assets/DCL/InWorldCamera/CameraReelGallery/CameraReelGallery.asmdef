@@ -18,7 +18,9 @@
         "GUID:029c1c1b674aaae47a6841a0b89ad80e",
         "GUID:b97826ed91484ac1af953a8afc03316e",
         "GUID:3640f3c0b42946b0b8794a1ed8e06ca5",
-        "ReelActions"
+        "ReelActions",
+        "GUID:45f6fff651a0a514f8edfdaf9cce45af",
+        "GUID:c6e727f7851314e679212856f4ce3e53"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

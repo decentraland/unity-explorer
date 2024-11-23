@@ -5,6 +5,7 @@ using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.InWorldCamera.ReelActions;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DG.Tweening;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -82,6 +83,9 @@ namespace DCL.InWorldCamera.PhotoDetail
             viewInstance!.downloadButton.onClick.RemoveListener(DownloadReelClicked);
             viewInstance!.linkButton.onClick.RemoveListener(CopyReelLinkClicked);
             viewInstance!.twitterButton.onClick.RemoveListener(ShareReelClicked);
+
+            viewInstance.mainImageCanvasGroup.alpha = 0;
+            photoDetailInfoController.Release();
         }
 
         protected override void OnBeforeViewShow()
@@ -120,7 +124,6 @@ namespace DCL.InWorldCamera.PhotoDetail
             ShowReelAsync(reelIndex, showReelCts.Token).Forget();
         }
 
-
         private async UniTaskVoid ShowReelAsync(int reelIndex, CancellationToken ct)
         {
             viewInstance!.mainImageLoadingSpinner.gameObject.SetActive(true);
@@ -130,13 +133,14 @@ namespace DCL.InWorldCamera.PhotoDetail
             viewInstance!.mainImage.sprite = Sprite.Create(reelTexture, new Rect(0, 0, reelTexture.width, reelTexture.height), Vector2.zero);
 
             viewInstance!.mainImageLoadingSpinner.gameObject.SetActive(false);
+            viewInstance.mainImageCanvasGroup.DOFade(1, viewInstance.imageFadeInDuration);
 
             await photoDetailInfoController.ShowPhotoDetailInfoAsync(reel.id, ct);
 
             CheckNavigationButtonVisibility(inputData.AllReels, reelIndex);
         }
 
-        private void CheckNavigationButtonVisibility(IReadOnlyList<CameraReelResponseCompact> allReels, int index)
+        private void CheckNavigationButtonVisibility(List<CameraReelResponseCompact> allReels, int index)
         {
             viewInstance!.previousScreenshotButton.gameObject.SetActive(index != 0);
             viewInstance!.nextScreenshotButton.gameObject.SetActive(index != allReels.Count - 1);
@@ -152,11 +156,11 @@ namespace DCL.InWorldCamera.PhotoDetail
 
     public readonly struct PhotoDetailParameter
     {
-        public readonly IReadOnlyList<CameraReelResponseCompact> AllReels;
+        public readonly List<CameraReelResponseCompact> AllReels;
         public readonly int CurrentReelIndex;
         public readonly bool UserOwnedReels;
 
-        public PhotoDetailParameter(IReadOnlyList<CameraReelResponseCompact> allReels, int currentReelIndex, bool userOwnedReels)
+        public PhotoDetailParameter(List<CameraReelResponseCompact> allReels, int currentReelIndex, bool userOwnedReels)
         {
             this.AllReels = allReels;
             this.CurrentReelIndex = currentReelIndex;

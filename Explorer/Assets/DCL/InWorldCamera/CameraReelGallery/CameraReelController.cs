@@ -1,10 +1,13 @@
 using Cysharp.Threading.Tasks;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
+using DCL.InWorldCamera.PhotoDetail;
 using DCL.UI;
 using DCL.Web3.Identities;
 using DG.Tweening;
+using MVC;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using Utility;
@@ -18,6 +21,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
         private readonly ICameraReelStorageService cameraReelStorageService;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly CameraReelGalleryController cameraReelGalleryController;
+        private readonly IMVCManager mvcManager;
 
         private CancellationTokenSource showCancellationTokenSource;
 
@@ -26,12 +30,14 @@ namespace DCL.InWorldCamera.CameraReelGallery
             CameraReelGalleryController cameraReelGalleryController,
             ICameraReelStorageService cameraReelStorageService,
             IWeb3IdentityCache web3IdentityCache,
+            IMVCManager mvcManager,
             string storageProgressBarLabelText)
         {
             this.view = view;
             this.cameraReelStorageService = cameraReelStorageService;
             this.web3IdentityCache = web3IdentityCache;
             this.cameraReelGalleryController = cameraReelGalleryController;
+            this.mvcManager = mvcManager;
 
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
 
@@ -49,10 +55,8 @@ namespace DCL.InWorldCamera.CameraReelGallery
             //TODO (Lorenzo): Close gallery and open camera
         }
 
-        private void ThumbnailClicked(CameraReelResponseCompact cameraReelResponse)
-        {
-            //TODO (Lorenzo): Open full screen preview
-        }
+        private void ThumbnailClicked(List<CameraReelResponseCompact> reels, int index) =>
+            mvcManager.ShowAsync(PhotoDetailController.IssueCommand(new PhotoDetailParameter(reels, index, true)));
 
         private void StorageFullIconEnter() =>
             view.storageFullToast.DOFade(1f, view.storageFullToastFadeTime);

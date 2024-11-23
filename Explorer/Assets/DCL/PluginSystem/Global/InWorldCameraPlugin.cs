@@ -12,7 +12,9 @@ using DCL.InWorldCamera.ScreencaptureCamera.Systems;
 using DCL.InWorldCamera.ScreencaptureCamera.UI;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PlacesAPIService;
+using DCL.Profiles;
 using DCL.Profiles.Self;
+using DCL.WebRequests;
 using ECS;
 using MVC;
 using System;
@@ -41,6 +43,8 @@ namespace DCL.PluginSystem.Global
         private readonly ISystemClipboard systemClipboard;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IWebBrowser webBrowser;
+        private readonly IWebRequestController webRequestController;
+        private readonly IProfileRepository profileRepository;
 
         private ProvidedAsset<GameObject> hudPrefab;
         private ScreenRecorder recorder;
@@ -50,7 +54,8 @@ namespace DCL.PluginSystem.Global
         public InWorldCameraPlugin(DCLInput input, IAssetsProvisioner assetsProvisioner, SelfProfile selfProfile,
             RealmData realmData, Entity playerEntity, IPlacesAPIService placesAPIService, ICharacterObject characterObject, ICoroutineRunner coroutineRunner,
             ICameraReelStorageService cameraReelStorageService, ICameraReelScreenshotsStorage cameraReelScreenshotsStorage, IMVCManager mvcManager,
-            ISystemClipboard systemClipboard, IDecentralandUrlsSource decentralandUrlsSource, IWebBrowser webBrowser)
+            ISystemClipboard systemClipboard, IDecentralandUrlsSource decentralandUrlsSource, IWebBrowser webBrowser, IWebRequestController webRequestController,
+            IProfileRepository profileRepository)
         {
             this.input = input;
             this.assetsProvisioner = assetsProvisioner;
@@ -66,6 +71,8 @@ namespace DCL.PluginSystem.Global
             this.systemClipboard = systemClipboard;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.webBrowser = webBrowser;
+            this.webRequestController = webRequestController;
+            this.profileRepository = profileRepository;
         }
 
         public async UniTask InitializeAsync(InWorldCameraSettings settings, CancellationToken ct)
@@ -81,7 +88,7 @@ namespace DCL.PluginSystem.Global
             metadataBuilder = new ScreenshotMetadataBuilder(selfProfile, characterObject.Controller, realmData, placesAPIService);
 
             mvcManager.RegisterController(new PhotoDetailController(viewFactoryMethod,
-                new PhotoDetailInfoController(explorePanelView.GetComponentInChildren<PhotoDetailInfoView>(), cameraReelStorageService),
+                new PhotoDetailInfoController(explorePanelView.GetComponentInChildren<PhotoDetailInfoView>(), cameraReelStorageService, webRequestController, profileRepository),
                 cameraReelScreenshotsStorage,
                 systemClipboard,
                 decentralandUrlsSource,

@@ -8,7 +8,9 @@ namespace DCL.InWorldCamera.PhotoDetail
     {
         [SerializeField] internal RectTransform rootContainer;
         [SerializeField] internal float sidePanelAnimationDuration = 0.5f;
+        [SerializeField] internal float imageFadeInDuration = 0.3f;
         [SerializeField] internal Image mainImage;
+        [SerializeField] internal CanvasGroup mainImageCanvasGroup;
         [SerializeField] internal GameObject mainImageLoadingSpinner;
 
         [Header("Navigation buttons")]
@@ -27,6 +29,7 @@ namespace DCL.InWorldCamera.PhotoDetail
         private void Awake()
         {
             mainImage.sprite = null;
+            mainImageCanvasGroup.alpha = 0;
         }
     }
 }

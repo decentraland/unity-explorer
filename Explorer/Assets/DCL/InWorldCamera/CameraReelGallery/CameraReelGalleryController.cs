@@ -9,8 +9,10 @@ using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.InWorldCamera.ReelActions;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DG.Tweening;
+using NUnit.Framework;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -39,7 +41,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
             }
         }
 
-        public event Action<CameraReelResponseCompact>? ThumbnailClicked;
+        public event Action<List<CameraReelResponseCompact>, int>? ThumbnailClicked;
         public event Action<CameraReelStorageStatus>? StorageUpdated;
 
         private const int THUMBNAIL_POOL_DEFAULT_CAPACITY = 100;
@@ -216,7 +218,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
                 currentSize--;
                 ResetThumbnailsVisibility();
 
-                MonthGridController monthGridView = GetMonthGrid(PagedCameraReelManager.GetDateTimeFromString(reelToDeleteInfo.Datetime));
+                MonthGridController monthGridView = GetMonthGrid(ReelUtility.GetDateTimeFromString(reelToDeleteInfo.Datetime));
                 monthGridView.RemoveThumbnail(reelToDeleteInfo.Id);
 
                 if (monthGridView.GridIsEmpty())
@@ -320,7 +322,11 @@ namespace DCL.InWorldCamera.CameraReelGallery
 
                 IReadOnlyList<ReelThumbnailController> thumbnailViews = monthGridView.Setup(bucket.Key, bucket.Value, optionButtonController,
                     (cameraReelResponse, sprite) => reelThumbnailCache.Add(cameraReelResponse, sprite),
-                    cameraReelResponse => ThumbnailClicked?.Invoke(cameraReelResponse));
+                    cameraReelResponse =>
+                    {
+                        List<CameraReelResponseCompact> cameraReelResponseList = reelThumbnailCache.Keys.ToList();
+                        ThumbnailClicked?.Invoke(cameraReelResponseList, cameraReelResponseList.IndexOf(cameraReelResponse));
+                    });
 
                 for (int i = 0; i < thumbnailViews.Count; i++)
                     thumbnailImages[currentSize + i] = thumbnailViews[i];

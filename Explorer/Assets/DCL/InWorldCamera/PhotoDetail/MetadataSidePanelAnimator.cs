@@ -28,12 +28,12 @@ namespace DCL.InWorldCamera.PhotoDetail
             if (toFullScreen)
             {
                 currentTween = DOVirtual.Float(rightOffset, 0, duration, UpdateSizeMode);
-                infoButtonImage.DOScale(Vector3.one, duration);
+                infoButtonImage.DOScale(new Vector3(-1, 1, 1), duration);
             }
             else
             {
                 currentTween = DOVirtual.Float(rightOffset, -initOffset, duration, UpdateSizeMode);
-                infoButtonImage.DOScale(new Vector3(-1, 1, 1), duration);
+                infoButtonImage.DOScale(Vector3.one, duration);
             }
         }
 
