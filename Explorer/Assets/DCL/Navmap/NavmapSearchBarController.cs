@@ -87,10 +87,7 @@ namespace DCL.Navmap
         public async UniTask DoDefaultSearch(CancellationToken ct)
         {
             currentSearchText = string.Empty;
-            currentPlaceFilter = NavmapSearchPlaceFilter.All;
-            currentPlaceSorting = NavmapSearchPlaceSorting.MostActive;
-            searchFiltersView.Toggle(currentPlaceFilter);
-            searchFiltersView.Toggle(currentPlaceSorting);
+            UpdateFilterAndSorting(NavmapSearchPlaceFilter.All, NavmapSearchPlaceSorting.None);
             view.inputField.SetTextWithoutNotify(currentSearchText);
 
             await navmapBus.SearchForPlaceAsync(INavmapBus.SearchPlaceParams.CreateWithDefaultParams(
@@ -159,12 +156,14 @@ namespace DCL.Navmap
             {
                 await UniTask.Delay(INPUT_DEBOUNCE_DELAY_MS, cancellationToken: ct).SuppressCancellationThrow();
 
+                UpdateFilterAndSorting(NavmapSearchPlaceFilter.All, currentPlaceSorting);
+
                 searchHistory.Add(searchText);
 
                 await navmapBus.SearchForPlaceAsync(INavmapBus.SearchPlaceParams.CreateWithDefaultParams(
                                     page: 0,
-                                    filter: NavmapSearchPlaceFilter.All,
-                                    sorting: NavmapSearchPlaceSorting.None,
+                                    filter: currentPlaceFilter,
+                                    sorting: currentPlaceSorting,
                                     text: currentSearchText), ct)
                                .SuppressCancellationThrow();
             }
@@ -198,9 +197,9 @@ namespace DCL.Navmap
 
         private void Search(NavmapSearchPlaceFilter filter)
         {
-            currentPlaceFilter = filter;
+            UpdateFilterAndSorting(filter, currentPlaceSorting);
+
             searchCancellationToken = searchCancellationToken.SafeRestart();
-            searchFiltersView.Toggle(filter);
 
             navmapBus.SearchForPlaceAsync(INavmapBus.SearchPlaceParams.CreateWithDefaultParams(
                           page: 0,
@@ -212,9 +211,9 @@ namespace DCL.Navmap
 
         private void Search(NavmapSearchPlaceSorting sorting)
         {
-            currentPlaceSorting = sorting;
+            UpdateFilterAndSorting(currentPlaceFilter, sorting);
+
             searchCancellationToken = searchCancellationToken.SafeRestart();
-            searchFiltersView.Toggle(sorting);
 
             navmapBus.SearchForPlaceAsync(INavmapBus.SearchPlaceParams.CreateWithDefaultParams(
                           page: 0,
@@ -226,12 +225,9 @@ namespace DCL.Navmap
 
         private void SearchByCategory(string? category)
         {
+            UpdateFilterAndSorting(NavmapSearchPlaceFilter.All, NavmapSearchPlaceSorting.None);
             currentSearchText = string.Empty;
             searchCancellationToken = searchCancellationToken.SafeRestart();
-            currentPlaceSorting = NavmapSearchPlaceSorting.MostActive;
-            currentPlaceFilter = NavmapSearchPlaceFilter.All;
-            searchFiltersView.Toggle(currentPlaceSorting);
-            searchFiltersView.Toggle(currentPlaceFilter);
 
             navmapBus.SearchForPlaceAsync(INavmapBus.SearchPlaceParams.CreateWithDefaultParams(
                           page: 0,
@@ -239,6 +235,25 @@ namespace DCL.Navmap
                           sorting: currentPlaceSorting,
                           category: category), searchCancellationToken.Token)
                      .Forget();
+        }
+
+        private void UpdateFilterAndSorting(NavmapSearchPlaceFilter filter, NavmapSearchPlaceSorting sorting)
+        {
+            currentPlaceFilter = filter;
+            searchFiltersView.Toggle(currentPlaceFilter);
+
+            bool isGlobalSearch = filter == NavmapSearchPlaceFilter.All;
+
+            // Enable sorting only for filter: All
+            if (!isGlobalSearch)
+                sorting = NavmapSearchPlaceSorting.None;
+
+            currentPlaceSorting = sorting;
+            searchFiltersView.Toggle(currentPlaceSorting);
+
+            searchFiltersView.NewestButton.interactable = isGlobalSearch;
+            searchFiltersView.MostActiveButton.interactable = isGlobalSearch;
+            searchFiltersView.BestRatedButton.interactable = isGlobalSearch;
         }
     }
 }
