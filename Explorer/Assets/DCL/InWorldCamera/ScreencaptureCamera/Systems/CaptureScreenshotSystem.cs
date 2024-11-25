@@ -77,7 +77,20 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
                 return;
             }
 
-            if (recorder.State == RecordingState.IDLE && World.TryGet<InWorldCameraInput>(camera, out var input) && input.TakeScreenshot)
+            var takeScreenshot = false;
+
+            if (recorder.State == RecordingState.IDLE)
+            {
+                if (World.Has<TakeScreenshotUIRequest>(camera))
+                {
+                    takeScreenshot = true;
+                    World.Remove<TakeScreenshotUIRequest>(camera);
+                }
+                else if (World.TryGet<InWorldCameraInput>(camera, out var input))
+                    takeScreenshot = input.TakeScreenshot;
+            }
+
+            if (takeScreenshot)
             {
                 hud.Canvas.enabled = false;  // TODO (Vit): This is a temporary solution for debug puproses. Will be replaced by proper MVC
                 coroutineRunner.StartCoroutine(recorder.CaptureScreenshot());
