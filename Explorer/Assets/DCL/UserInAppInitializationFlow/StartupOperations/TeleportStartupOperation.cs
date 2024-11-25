@@ -57,7 +57,7 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
                 return;
             }
 
-            //If we are in editor, and its LSD, we want to ignore the feature falg
+            //If we are in editor, and its LSD, we want to ignore the feature flag
             if (isLocalSceneDevelopment)
                 return;
             
