@@ -12,6 +12,7 @@ using NUnit.Framework;
 using System;
 using System.Text.RegularExpressions;
 using System.Threading;
+using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.TestTools;
 using Utility;
@@ -42,7 +43,7 @@ namespace DCL.CharacterMotion.Tests
         }
 
         [Test]
-        public void RestoreCameraDataOnFailure([Values(UniTaskStatus.Faulted, UniTaskStatus.Canceled)] UniTaskStatus status)
+        public async Task RestoreCameraDataOnFailureAsync([Values(UniTaskStatus.Faulted, UniTaskStatus.Canceled)] UniTaskStatus status)
         {
             var cameraSamplingData = new CameraSamplingData();
             cameraSamplingData.Position = new Vector3(50, 50, 0);
@@ -55,11 +56,14 @@ namespace DCL.CharacterMotion.Tests
 
             if (status == UniTaskStatus.Faulted)
             {
-                loadReport.SetException(new Exception(nameof(RestoreCameraDataOnFailure)));
-                LogAssert.Expect(LogType.Exception, new Regex($".*{nameof(RestoreCameraDataOnFailure)}.*"));
+                loadReport.SetException(new Exception(nameof(RestoreCameraDataOnFailureAsync)));
+                LogAssert.Expect(LogType.Exception, new Regex($".*{nameof(RestoreCameraDataOnFailureAsync)}.*"));
             }
             else
                 loadReport.SetCancelled();
+
+            // Consume unobserved UniTask exception, otherwise it will be throws from the destructor
+            await loadReport.WaitUntilFinishedAsync();
 
             system!.Update(0);
 
