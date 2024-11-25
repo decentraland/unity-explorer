@@ -136,9 +136,10 @@ namespace Global.Dynamic
             });
         }
 
-        public void SetupInitialParcel(bool isLocalSceneDevelopment, FeatureFlagsCache featureFlagsCache)
+        public void CheckInitialParcelFeatureFlagOverride(bool isLocalSceneDevelopment,
+            FeatureFlagsCache featureFlagsCache)
         {
-            core.SetupInitialParcel(isLocalSceneDevelopment, featureFlagsCache);
+            core.CheckInitialParcelFeatureFlagOverride(isLocalSceneDevelopment, featureFlagsCache);
             //No analytics to track on this step
         }
 

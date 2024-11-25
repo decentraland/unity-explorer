@@ -14,7 +14,7 @@ namespace Global.Tests.EditMode
             RealmLaunchSettings realmLaunchSettings = new RealmLaunchSettings();
             ApplicationParametersParser applicationParametersParser = new (new[]
             {
-                "decentraland://?realm=http://127.0.0.1:8000&local-scene=true"
+                "decentraland://?realm=http://127.0.0.1:8000&position=100,100&local-scene=true"
             });
             DecentralandUrlsSource dclUrlSource = new (DecentralandEnvironment.Org);
 
@@ -22,6 +22,8 @@ namespace Global.Tests.EditMode
 
             Assert.IsTrue(realmLaunchSettings.IsLocalSceneDevelopmentRealm);
             Assert.AreEqual("http://127.0.0.1:8000", realmLaunchSettings.GetLocalSceneDevelopmentRealm(dclUrlSource));
+            Assert.AreEqual(100, realmLaunchSettings.targetScene.x);
+            Assert.AreEqual(100, realmLaunchSettings.targetScene.y);
         }
 
         [Test]
@@ -38,6 +40,24 @@ namespace Global.Tests.EditMode
 
             Assert.IsFalse(realmLaunchSettings.IsLocalSceneDevelopmentRealm);
             Assert.AreEqual("http://127.0.0.1:8000", realmLaunchSettings.GetStartingRealm(dclUrlSource));
+            Assert.AreEqual(70, realmLaunchSettings.targetScene.x);
+            Assert.AreEqual(70, realmLaunchSettings.targetScene.y);
+        }
+
+        [Test]
+        public void ApplyStartingPositionFromAppArgs()
+        {
+            var realmLaunchSettings = new RealmLaunchSettings();
+            ApplicationParametersParser applicationParametersParser = new(new[]
+            {
+                "--position",
+                "50,50"
+            });
+
+            realmLaunchSettings.ApplyConfig(applicationParametersParser);
+
+            Assert.AreEqual(50, realmLaunchSettings.targetScene.x);
+            Assert.AreEqual(50, realmLaunchSettings.targetScene.y);
         }
 
         [TestCase("https://peer.decentraland.zone")]

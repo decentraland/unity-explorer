@@ -45,6 +45,6 @@ namespace Global.Dynamic
         UniTask UserInitializationAsync(DynamicWorldContainer dynamicWorldContainer, GlobalWorld globalWorld, Entity playerEntity, ISplashScreen splashScreen, CancellationToken ct);
 
         UniTask LoadStartingRealmAsync(DynamicWorldContainer dynamicWorldContainer, CancellationToken ct);
-        void SetupInitialParcel(bool isLocalSceneDevelopment, FeatureFlagsCache featureFlagsCache);
+        void CheckInitialParcelFeatureFlagOverride(bool isLocalSceneDevelopment, FeatureFlagsCache featureFlagsCache);
     }
 }

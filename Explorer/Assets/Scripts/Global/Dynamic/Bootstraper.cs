@@ -124,7 +124,7 @@ namespace Global.Dynamic
                 {
                     StaticLoadPositions = realmLaunchSettings.GetPredefinedParcels(),
                     Realms = settings.Realms,
-                    StartParcel = startingParcel,
+                    StartParcel = realmLaunchSettings.targetScene,
                     IsolateScenesCommunication = realmLaunchSettings.isolateSceneCommunication,
                     EnableLandscape = debugSettings.EnableLandscape,
                     EnableLOD = debugSettings.EnableLOD && !realmLaunchSettings.IsLocalSceneDevelopmentRealm,
@@ -220,9 +220,11 @@ namespace Global.Dynamic
             await dynamicWorldContainer.RealmController.SetRealmAsync(startingRealm.Value, ct);
         }
 
-        public void SetupInitialParcel(bool isLocalSceneDevelopment, FeatureFlagsCache featureFlagsCache)
+        public void CheckInitialParcelFeatureFlagOverride(bool isLocalSceneDevelopment,
+            FeatureFlagsCache featureFlagsCache)
         {
-            startingParcel = realmLaunchSettings.GetStartParcel(appArgs, isLocalSceneDevelopment, featureFlagsCache);
+            realmLaunchSettings.CheckStartParcelFeatureFlagOverride(appArgs, isLocalSceneDevelopment,
+                featureFlagsCache);
         }
 
         public async UniTask UserInitializationAsync(DynamicWorldContainer dynamicWorldContainer,

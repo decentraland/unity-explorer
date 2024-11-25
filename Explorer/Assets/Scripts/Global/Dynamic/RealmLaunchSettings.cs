@@ -94,6 +94,9 @@ namespace Global.Dynamic
         {
             if (applicationParameters.TryGetValue(AppArgsFlags.REALM, out string? realm))
                 ParseRealmAppParameter(applicationParameters, realm);
+
+            if (applicationParameters.TryGetValue(AppArgsFlags.POSITION, out var parcelToTeleportOverride))
+                ParsePositionAppParameter(parcelToTeleportOverride);
         }
 
         private void ParseRealmAppParameter(IAppArgs appParameters, string realmParamValue)
@@ -159,23 +162,18 @@ namespace Global.Dynamic
             Uri.TryCreate(realmParam, UriKind.Absolute, out Uri? uriResult)
             && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
 
-        public Vector2Int GetStartParcel(IAppArgs appArgs, bool isLocalSceneDevelopment,
+        public void CheckStartParcelFeatureFlagOverride(IAppArgs appArgs, bool isLocalSceneDevelopment,
             FeatureFlagsCache featureFlagsCache)
         {
-            string? parcelToTeleportOverride = null;
-
             //First we need to check if the user has passed a position as an argument. This is the case used on local scene development from creator hub/scene args
             //Check https://github.com/decentraland/js-sdk-toolchain/blob/2c002ca9e6feb98a771337190db2945e013d7b93/packages/%40dcl/sdk-commands/src/commands/start/explorer-alpha.ts#L29
-            if (appArgs.TryGetValue(AppArgsFlags.POSITION, out parcelToTeleportOverride))
-            {
-                ParsePositionAppParameter(parcelToTeleportOverride);
-                return targetScene;
-            }
+            //Also, we could be in editor (no app args),  and its LSD, we want to ignore the feature flag
+            if (appArgs.TryGetValue(AppArgsFlags.POSITION, out var parcelToTeleportOverrideFromAppArgs) ||
+                isLocalSceneDevelopment)
+                return;
 
-            //If we are in editor, and its LSD, we want to ignore the feature flag
-            if (isLocalSceneDevelopment)
-                return targetScene;
 
+            string? parcelToTeleportOverride = null;
             //If not, we check the feature flag usage
             var featureFlagOverride =
                 featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.GENESIS_STARTING_PARCEL) &&
@@ -185,8 +183,6 @@ namespace Global.Dynamic
 
             if (featureFlagOverride)
                 ParsePositionAppParameter(parcelToTeleportOverride);
-
-            return targetScene;
         }
     }
 }

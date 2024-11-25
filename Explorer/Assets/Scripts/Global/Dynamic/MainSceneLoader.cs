@@ -143,8 +143,8 @@ namespace Global.Dynamic
 
                 await bootstrap.InitializeFeatureFlagsAsync(bootstrapContainer.IdentityCache!.Identity, bootstrapContainer.DecentralandUrlsSource, staticContainer!, ct);
 
-                bootstrap.SetupInitialParcel(bootstrapContainer.LocalSceneDevelopment,
-                    staticContainer.FeatureFlagsCache);
+                bootstrap.CheckInitialParcelFeatureFlagOverride(bootstrapContainer.LocalSceneDevelopment,
+                    staticContainer!.FeatureFlagsCache);
 
                 if (await DoesApplicationRequireVersionUpdateAsync(applicationParametersParser, splashScreen, ct))
                     return; // stop bootstrapping;
