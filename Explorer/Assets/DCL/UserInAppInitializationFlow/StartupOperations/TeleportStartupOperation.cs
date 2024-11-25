@@ -2,9 +2,6 @@ using Cysharp.Threading.Tasks;
 using DCL.AsyncLoadReporting;
 using ECS.SceneLifeCycle.Realm;
 using System.Threading;
-using DCL.FeatureFlags;
-using Global.AppArgs;
-using Global.Dynamic;
 using UnityEngine;
 using Utility.Types;
 
@@ -14,8 +11,7 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
     {
         private readonly ILoadingStatus loadingStatus;
         private readonly IRealmNavigator realmNavigator;
-        private Vector2Int startParcel;
-
+        private readonly Vector2Int startParcel;
 
         public TeleportStartupOperation(ILoadingStatus loadingStatus, IRealmNavigator realmNavigator,
             Vector2Int startParcel)
@@ -29,11 +25,9 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
         {
             float finalizationProgress = loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.PlayerTeleporting);
             AsyncLoadProcessReport teleportLoadReport = report.CreateChildReport(finalizationProgress);
-
             await realmNavigator.InitializeTeleportToSpawnPointAsync(teleportLoadReport, ct, startParcel);
             report.SetProgress(finalizationProgress);
             return Result.SuccessResult();
         }
-        
     }
 }
