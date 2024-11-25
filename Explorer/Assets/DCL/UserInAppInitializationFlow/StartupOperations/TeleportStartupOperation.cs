@@ -17,17 +17,20 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
         private Vector2Int startParcel;
         private readonly FeatureFlagsCache featureFlagsCache;
         private readonly IAppArgs appArgs;
+        private readonly bool isLocalSceneDevelopment;
 
 
         public TeleportStartupOperation(ILoadingStatus loadingStatus, IRealmNavigator realmNavigator,
             Vector2Int startParcel,
-            FeatureFlagsCache featureFlagsCache, IAppArgs appArgs)
+            FeatureFlagsCache featureFlagsCache, IAppArgs appArgs,
+            bool isLocalSceneDevelopment)
         {
             this.loadingStatus = loadingStatus;
             this.realmNavigator = realmNavigator;
             this.startParcel = startParcel;
             this.featureFlagsCache = featureFlagsCache;
             this.appArgs = appArgs;
+            this.isLocalSceneDevelopment = isLocalSceneDevelopment;
         }
 
         public async UniTask<Result> ExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
@@ -46,7 +49,7 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
         {
             string? parcelToTeleportOverride = null;
 
-            //First we need to check if the user has passed a position as an argument. This is the case used on local scene development
+            //First we need to check if the user has passed a position as an argument. This is the case used on local scene development from creator hub/scene args
             //Check https://github.com/decentraland/js-sdk-toolchain/blob/2c002ca9e6feb98a771337190db2945e013d7b93/packages/%40dcl/sdk-commands/src/commands/start/explorer-alpha.ts#L29
             if (appArgs.TryGetValue(AppArgsFlags.POSITION, out parcelToTeleportOverride))
             {
@@ -54,6 +57,10 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
                 return;
             }
 
+            //If we are in editor, and its LSD, we want to ignore the feature falg
+            if (isLocalSceneDevelopment)
+                return;
+            
             //If not, we check the feature flag usage
             var featureFlagOverride =
                 featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.GENESIS_STARTING_PARCEL) &&

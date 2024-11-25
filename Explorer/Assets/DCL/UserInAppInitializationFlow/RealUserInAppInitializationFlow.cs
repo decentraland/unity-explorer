@@ -59,7 +59,8 @@ namespace DCL.UserInAppInitializationFlow
             IDebugSettings debugSettings,
             IPortableExperiencesController portableExperiencesController,
             IRoomHub roomHub,
-            DiagnosticsContainer diagnosticsContainer)
+            DiagnosticsContainer diagnosticsContainer,
+            bool isLocalSceneDevelopment)
         {
             this.loadingStatus = loadingStatus;
             this.mvcManager = mvcManager;
@@ -77,7 +78,7 @@ namespace DCL.UserInAppInitializationFlow
             checkOnboardingStartupOperation = new CheckOnboardingStartupOperation(loadingStatus, selfProfile, featureFlagsCache, decentralandUrlsSource, appParameters, realmNavigator);
             restartRealmStartupOperation = new RestartRealmStartupOperation(loadingStatus, realmController);
             var teleportStartupOperation = new TeleportStartupOperation(loadingStatus, realmNavigator, startParcel,
-                featureFlagsCache, appParameters);
+                featureFlagsCache, appParameters, isLocalSceneDevelopment);
             var loadGlobalPxOperation = new LoadGlobalPortableExperiencesStartupOperation(loadingStatus, selfProfile, featureFlagsCache, debugSettings, portableExperiencesController);
             var sentryDiagnostics = new SentryDiagnosticStartupOperation(realmController, diagnosticsContainer);
 

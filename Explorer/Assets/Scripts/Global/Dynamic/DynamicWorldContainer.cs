@@ -387,8 +387,8 @@ namespace Global.Dynamic
                 bootstrapContainer.DebugSettings,
                 staticContainer.PortableExperiencesController,
                 container.RoomHub,
-                bootstrapContainer.DiagnosticsContainer
-            );
+                bootstrapContainer.DiagnosticsContainer,
+                localSceneDevelopment);
 
             var worldInfoHub = new LocationBasedWorldInfoHub(
                 new WorldInfoHub(staticContainer.SingletonSharedDependencies.SceneMapping),
