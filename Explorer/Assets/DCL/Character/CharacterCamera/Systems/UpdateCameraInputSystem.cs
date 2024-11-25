@@ -37,6 +37,7 @@ namespace DCL.CharacterCamera.Systems
 
         [Query]
         [All(typeof(CameraBlockerComponent))]
+        [None(typeof(InWorldCamera.ScreencaptureCamera.InWorldCamera))]
         private void ResetInput(ref CameraInput cameraInput)
         {
             cameraInput.ZoomIn = false;
@@ -47,7 +48,7 @@ namespace DCL.CharacterCamera.Systems
         }
 
         [Query]
-        [None(typeof(CameraBlockerComponent))]
+        [None(typeof(CameraBlockerComponent), typeof(InWorldCamera.ScreencaptureCamera.InWorldCamera))]
         private void UpdateInput(ref CameraInput cameraInput, ref CursorComponent cursorComponent)
         {
             if (!cameraActions.enabled)

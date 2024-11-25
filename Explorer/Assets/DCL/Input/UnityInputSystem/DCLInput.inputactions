@@ -2938,13 +2938,13 @@
             "id": "941cde24-4210-40c2-b2a7-fb1737e2e30c",
             "actions": [
                 {
-                    "name": "Translation",
-                    "type": "Value",
-                    "id": "136e837d-9685-4d5d-bc2e-26686a2258e4",
-                    "expectedControlType": "Vector2",
+                    "name": "ToggleInWorld",
+                    "type": "Button",
+                    "id": "1c0e90f7-a879-4d52-a0a1-03f102d8a464",
+                    "expectedControlType": "Button",
                     "processors": "",
                     "interactions": "",
-                    "initialStateCheck": true
+                    "initialStateCheck": false
                 },
                 {
                     "name": "Screenshot",
@@ -2956,9 +2956,54 @@
                     "initialStateCheck": false
                 },
                 {
-                    "name": "ToggleInWorld",
+                    "name": "Rotation",
+                    "type": "Value",
+                    "id": "09e6172f-a1e5-4be7-95e0-b37ffa54dab8",
+                    "expectedControlType": "Vector2",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
+                },
+                {
+                    "name": "Translation",
+                    "type": "Value",
+                    "id": "136e837d-9685-4d5d-bc2e-26686a2258e4",
+                    "expectedControlType": "Vector2",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
+                },
+                {
+                    "name": "Panning",
+                    "type": "Value",
+                    "id": "151eb8ae-530b-4904-8d19-b4776e5dc5ad",
+                    "expectedControlType": "Axis",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
+                },
+                {
+                    "name": "Run",
                     "type": "Button",
-                    "id": "1c0e90f7-a879-4d52-a0a1-03f102d8a464",
+                    "id": "ad452450-abd8-40d1-9dbf-16deecefd5d5",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Zoom",
+                    "type": "Value",
+                    "id": "95af3eff-4816-4d1d-b9e9-88a3ca0a78d5",
+                    "expectedControlType": "Axis",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
+                },
+                {
+                    "name": "MouseDrag",
+                    "type": "Button",
+                    "id": "80c64c42-24a2-41f3-b6aa-f49bfacf0c60",
                     "expectedControlType": "Button",
                     "processors": "",
                     "interactions": "",
@@ -3099,6 +3144,116 @@
                     "isPartOfComposite": false
                 },
                 {
+                    "name": "1D Axis",
+                    "id": "a34cb645-f736-460b-8a27-b7f4b911fc29",
+                    "path": "1DAxis",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Panning",
+                    "isComposite": true,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "Positive",
+                    "id": "9b7ec211-2a23-48bc-bc0b-5abefdfb954a",
+                    "path": "<Keyboard>/r",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Panning",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "Negative",
+                    "id": "240af9c4-cfbf-40b1-930f-f53621d6fbc6",
+                    "path": "<Keyboard>/f",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Panning",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "1D Axis",
+                    "id": "5755bc32-b0ab-4f7d-bb62-9c330023ef43",
+                    "path": "1DAxis",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Panning",
+                    "isComposite": true,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "positive",
+                    "id": "4eb68057-c898-4eb2-a5c2-4da0d39e63cd",
+                    "path": "<Gamepad>/dpad/up",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Panning",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "negative",
+                    "id": "34afde17-2fbe-402a-bb37-b9126d64f2fe",
+                    "path": "<Gamepad>/dpad/down",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Panning",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "",
+                    "id": "7971e86a-be75-41d4-a5db-fd8e26414e8f",
+                    "path": "<Keyboard>/leftShift",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Run",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "ff886156-4733-4a09-be56-75927b0718ea",
+                    "path": "<Gamepad>/rightTrigger",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Run",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "eb3ab56f-4e70-4dc1-8bec-c16a25b2ff65",
+                    "path": "<XInputController>/rightTrigger",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Run",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "b172c6f9-d4bc-43e8-93c8-49b1040d8568",
+                    "path": "<Keyboard>/c",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "ToggleInWorld",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
                     "name": "",
                     "id": "67618fc3-7aae-4057-96fc-02acde036027",
                     "path": "<Keyboard>/space",
@@ -3111,12 +3266,34 @@
                 },
                 {
                     "name": "",
-                    "id": "b172c6f9-d4bc-43e8-93c8-49b1040d8568",
-                    "path": "<Keyboard>/c",
+                    "id": "62dfa0ab-cb90-4b04-98dc-a8ca411c1852",
+                    "path": "<Mouse>/delta",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
-                    "action": "ToggleInWorld",
+                    "action": "Rotation",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "0e5d2aa9-586f-45ea-8752-812bad7b0faf",
+                    "path": "<Mouse>/scroll/y",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Zoom",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "14d2d69a-873a-4446-9057-59e2ff1718bf",
+                    "path": "<Mouse>/leftButton",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "MouseDrag",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

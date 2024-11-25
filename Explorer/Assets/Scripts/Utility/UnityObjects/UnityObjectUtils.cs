@@ -51,6 +51,9 @@ namespace Utility
                 Object.Destroy(@object);
         }
 
+        public static void SelfDestroy(this Object @object) =>
+            SafeDestroy(@object);
+
         /// <summary>
         ///     Gets shared materials instead of materials if called when Application is not playing (from tests)
         /// </summary>
