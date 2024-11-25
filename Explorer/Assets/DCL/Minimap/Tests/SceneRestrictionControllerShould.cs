@@ -27,7 +27,7 @@ namespace DCL.Minimap.Tests
             sceneRestrictionBusController = new SceneRestrictionBusController.SceneRestrictionBus.SceneRestrictionBusController();
             sceneRestrictionsView.RestrictionTextPrefab.Returns(new GameObject("MockPrefab", typeof(TextMeshProUGUI)));
 
-            toastTextParent = new GameObject("ToastTextParentMock", typeof(Transform));
+            toastTextParent = new GameObject("ToastTextParentMock");
             sceneRestrictionsView.ToastTextParent.Returns(toastTextParent);
 
             sceneRestrictionsIcon = new GameObject("IconMock", typeof(RectTransform));
