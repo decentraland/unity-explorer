@@ -28,19 +28,18 @@ namespace DCL.SDKComponents.Tween.Systems
         {
             if (pbTween.ModeCase == PBTween.ModeOneofCase.None) return;
 
-            if (pbTween.ModeCase == PBTween.ModeOneofCase.TextureMove)
-            {
-                var sdkTweenTextureComponent = new SDKTweenTextureComponent(pbTween.TextureMove.MovementType);
-
-                World.Add(entity, sdkTweenTextureComponent);
-            }
-
             var sdkTweenComponent = new SDKTweenComponent
             {
                 IsDirty = true,
             };
 
-            World.Add(entity, sdkTweenComponent);
+            if (pbTween.ModeCase == PBTween.ModeOneofCase.TextureMove)
+            {
+                var sdkTweenTextureComponent = new SDKTweenTextureComponent(pbTween.TextureMove.MovementType);
+
+                World.Add(entity, sdkTweenComponent, sdkTweenTextureComponent);
+            }
+            else { World.Add(entity, sdkTweenComponent); }
         }
     }
 }
